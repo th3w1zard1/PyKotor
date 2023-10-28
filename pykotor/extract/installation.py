@@ -115,25 +115,25 @@ class Installation:
         self._streamwaves: list[FileResource] = []
         self._rims: dict[str, list[FileResource]] = {}
 
+        self.log.add_note("Load chitin...")
+        self.load_chitin()
+        self.log.add_note("Load lips...")
+        self.load_lips()
         self.log.add_note("Load modules...")
         self.load_modules()
         self.log.add_note("Load override...")
         self.load_override()
-        self.log.add_note("Load lips...")
-        self.load_lips()
-        self.log.add_note("Load textures...")
-        self.load_textures()
-        self.log.add_note("Load chitin...")
-        self.load_chitin()
+        self.log.add_note("Load rims...")
+        self.load_rims()
         self.log.add_note("Load streammusic...")
         self.load_streammusic()
         self.log.add_note("Load streamsounds...")
         self.load_streamsounds()
         self.log.add_note(f"Load {'streamvoice' if self.game() == Game.K2 else 'streamwaves'}...")
         self.load_streamwaves()
-        self.log.add_note("Load rims...")
-        self.load_rims()
-        self.log.add_note("Finished loading installation")
+        self.log.add_note("Load textures...")
+        self.load_textures()
+        self.log.add_note("Finished loading the installation")
 
     # region Get Paths
     def path(self) -> CaseAwarePath:
