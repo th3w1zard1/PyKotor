@@ -24,6 +24,7 @@ class ModificationsSSF:
         modifiers: list[ModifySSF] | None = None,
     ):
         self.filename: str = filename
+        self.destination = "Override"
         self.replace_file: bool = replace_file
         self.modifiers: list[ModifySSF] = modifiers if modifiers is not None else []
 

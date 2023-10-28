@@ -9,8 +9,10 @@ if TYPE_CHECKING:
 
 
 class ModificationsTLK:
-    def __init__(self):
+    def __init__(self, filename="dialog.tlk", destination="."):
         self.modifiers: list[ModifyTLK] = []
+        self.filename = filename
+        self.destination = destination
 
     def apply(self, dialog: TLK, memory: PatcherMemory) -> None:
         for modifier in self.modifiers:

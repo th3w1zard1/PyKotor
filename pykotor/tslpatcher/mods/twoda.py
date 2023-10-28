@@ -53,6 +53,7 @@ class Target:
 class Modifications2DA:
     def __init__(self, filename: str):
         self.filename: str = filename
+        self.destination = "Override"
         self.modifiers: list[Modify2DA] = []
 
     def apply(self, twoda: TwoDA, memory: PatcherMemory) -> None:

@@ -343,17 +343,11 @@ class ModificationsGFF:
         filename: str,
         replace_file: bool,
         modifiers: list[ModifyGFF] | None = None,
-        destination: str | CaseAwarePath | None = None,
+        destination: str | None = None,
     ) -> None:
         self.filename: str = filename
         self.replace_file: bool = replace_file
-        if destination is None:
-            self.destination = CaseAwarePath("Override")
-        elif not isinstance(destination, CaseAwarePath):
-            self.destination = CaseAwarePath(destination)
-        else:
-            self.destination = destination
-
+        self.destination = destination or "Override"
         self.modifiers: list[ModifyGFF] = modifiers if modifiers is not None else []
 
     def apply(
