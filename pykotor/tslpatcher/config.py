@@ -296,8 +296,9 @@ class ModInstaller:
 
         self.log.add_note(f"Applying {len(config.patches_tlk.modifiers)} patches from [TLKList]...")
         if len(config.patches_tlk.modifiers) > 0:  # skip if no patches need to be made (faster)
-            output_container_path = self.game_path / config.patches_tlk.destination
-            dialog_tlk_path = output_container_path.joinpath(config.patches_tlk.filename)
+            patch = config.patches_tlk
+            output_container_path = self.game_path / patch.destination
+            dialog_tlk_path = output_container_path.joinpath(patch.filename)
 
             create_backup(self.log, dialog_tlk_path, *self.backup())
             should_patch(config.patches_tlk)
