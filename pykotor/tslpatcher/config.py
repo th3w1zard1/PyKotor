@@ -301,11 +301,11 @@ class ModInstaller:
             dialog_tlk_path = output_container_path.joinpath(patch.filename)
 
             create_backup(self.log, dialog_tlk_path, *self.backup())
-            should_patch(config.patches_tlk)
+            should_patch(patch, dialog_tlk_path.exists())
 
             dialog_tlk = read_tlk(dialog_tlk_path)
 
-            config.patches_tlk.apply(dialog_tlk, memory)
+            patch.apply(dialog_tlk, memory)
             write_tlk(dialog_tlk, dialog_tlk_path)
             self.log.complete_patch()
 
