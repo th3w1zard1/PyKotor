@@ -574,8 +574,8 @@ class Installation:
             self.log.add_error(
                 f"Could not find '{resname}.{restype}' during resource lookup.",
             )
-
-        return None
+            return None
+        return search
 
     def resources(
         self,
