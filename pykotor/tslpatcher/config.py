@@ -34,7 +34,7 @@ from pykotor.tools.misc import (
     is_erf_or_mod_file,
     is_rim_file,
 )
-from pykotor.tools.path import CaseAwarePath
+from pykotor.tools.path import CaseAwarePath, PurePath
 from pykotor.tslpatcher.logger import PatchLogger
 from pykotor.tslpatcher.memory import PatcherMemory
 from pykotor.tslpatcher.mods.install import InstallFolder, create_backup
@@ -42,9 +42,7 @@ from pykotor.tslpatcher.mods.tlk import ModificationsTLK
 
 if TYPE_CHECKING:
     import os
-    from pathlib import Path
 
-    from pykotor.resource.formats.twoda.twoda_data import TwoDA
     from pykotor.tslpatcher.mods.gff import ModificationsGFF
     from pykotor.tslpatcher.mods.nss import ModificationsNSS
     from pykotor.tslpatcher.mods.ssf import ModificationsSSF
@@ -234,17 +232,13 @@ class ModInstaller:
         self._processed_backup_files = set()
         return (self._backup, self._processed_backup_files)
 
-    def get_patch_paths(self, patch) -> tuple[CaseAwarePath, CaseAwarePath]:
-        output_container_path: CaseAwarePath = self.game_path / patch.destination
-        return output_container_path, output_container_path.relative_to(self.game_path)
-
-    def handle_capsule_and_backup(self, patch, output_container_path: CaseAwarePath, rel_output_container_path: CaseAwarePath) -> Capsule | None:
+    def handle_capsule_and_backup(self, patch, output_container_path: CaseAwarePath) -> Capsule | None:
         capsule = None
         if is_capsule_file(patch.destination):
             capsule = Capsule(output_container_path)
-            create_backup(self.log, output_container_path, *self.backup(), rel_output_container_path.parent)
+            create_backup(self.log, output_container_path, *self.backup(), patch.destination.parent)
         else:
-            create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), rel_output_container_path)
+            create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), patch.destination)
         return capsule
 
     def lookup_resource(self, patch, capsule=None):
@@ -258,8 +252,8 @@ class ModInstaller:
     def do_patchlist(self, patch_list, section_name, game=None):
         self.log.add_note(f"Applying {len(patch_list)} patches from [{section_name}]...")
         for patch in patch_list:
-            output_container_path, rel_output_container_path = self.get_patch_paths(patch)
-            capsule = self.handle_capsule_and_backup(patch, output_container_path, rel_output_container_path)
+            output_container_path = self.game_path / patch.destination
+            capsule = self.handle_capsule_and_backup(patch, output_container_path)
             search = self.lookup_resource(patch, capsule)
             if not search:
                 continue
@@ -276,26 +270,23 @@ class ModInstaller:
         def should_patch(
             patch,
             exists: bool = False,
-            subdir: Path | None = None,
             capsule: Capsule | None = None,
             no_replacefile_check: bool | None = None,  # !ReplaceFile handled differently in lookup_resource for GFFList and SSFList
             action: str = "Patching",
         ):
-            local_folder = subdir or patch.destination
-            if local_folder == ".":
-                local_folder = self.game_path.name
+            local_folder = self.game_path.name if patch.destination == "." else patch.destination
             container_type = "folder" if capsule is None else "archive"
             is_replaceable = hasattr(patch, "replace_file")
-            replace_file = is_replaceable and patch.replace_file or no_replacefile_check
+            replace_file = is_replaceable and patch.replace_file
 
-            if replace_file and exists:
+            if (replace_file or no_replacefile_check) and exists:
                 if capsule:
                     self.log.add_note(f"{action} '{patch.filename}' and replacing existing resource in the '{local_folder}' archive")
                 else:
                     self.log.add_note(f"{action} '{patch.filename}' and replacing existing file in the '{local_folder}' folder")
             elif exists and is_replaceable:
                 if capsule and not capsule._path.exists():
-                    self.log.add_error(f"The capsule '{rel_output_container_path}' did not exist when attempting to patch GFF '{patch.filename}'. Skipping file...")
+                    self.log.add_error(f"The capsule '{patch.destination}' did not exist when attempting to patch GFF '{patch.filename}'. Skipping file...")
                 else:
                     self.log.add_warning(f"'{patch.filename}' already exists in the '{local_folder}' {container_type}. Skipping file...")
                 return False
@@ -306,8 +297,7 @@ class ModInstaller:
         self.log.add_note(f"Applying {len(config.patches_tlk.modifiers)} patches from [TLKList]...")
         if len(config.patches_tlk.modifiers) > 0:  # skip if no patches need to be made (faster)
             # def get_patch_paths
-            output_container_path, rel_output_container_path = self.get_patch_paths(config.patches_tlk)
-            dialog_tlk_path = output_container_path.joinpath(config.patches_tlk.filename)
+            dialog_tlk_path = self.game_path.joinpath(config.patches_tlk.filename)
 
             # def handle_encapsulated
             create_backup(self.log, dialog_tlk_path, *self.backup())
@@ -337,10 +327,10 @@ class ModInstaller:
 
         self.log.add_note(f"Applying {len(config.patches_2da)} patches from [2DAList]...")
         for patch in config.patches_2da:
-            output_container_path, rel_output_container_path = self.get_patch_paths(patch)
+            output_container_path = self.game_path / patch.destination
             output_file_path = output_container_path.joinpath(patch.filename)
 
-            create_backup(self.log, output_file_path, *self.backup(), rel_output_container_path)
+            create_backup(self.log, output_file_path, *self.backup(), patch.destination)
             should_patch(patch, output_file_path.exists())
 
             search = self.lookup_resource(patch)
@@ -354,19 +344,19 @@ class ModInstaller:
 
         self.log.add_note(f"Applying {len(config.patches_gff)} patches from [GFFList]...")
         for patch in config.patches_gff:
-            output_container_path, rel_output_container_path = self.get_patch_paths(patch)
+            output_container_path = self.game_path / patch.destination
             capsule: Capsule | None = None
             exists: bool | None = None
 
             if is_capsule_file(patch.destination):
                 capsule = Capsule(output_container_path)
-                create_backup(self.log, output_container_path, *self.backup(), rel_output_container_path.parent)
+                create_backup(self.log, output_container_path, *self.backup(), PurePath(patch.destination).parent)
                 exists = capsule.exists(*ResourceIdentifier.from_path(patch.filename))
             else:
-                create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), rel_output_container_path)
+                create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), patch.destination)
                 exists = output_container_path.joinpath(patch.filename).exists()
 
-            should_patch(patch, exists, rel_output_container_path, capsule, no_replacefile_check=True)
+            should_patch(patch, exists, capsule, no_replacefile_check=True)
 
             search = self.lookup_resource(patch, capsule)
             if not search:
@@ -379,14 +369,13 @@ class ModInstaller:
 
         self.log.add_note(f"Applying {len(config.patches_nss)} patches from [CompileList]...")
         for patch in config.patches_nss:
-            output_container_path, rel_output_container_path = self.get_patch_paths(patch)
+            output_container_path = self.game_path / patch.destination
             ncs_compiled_filename = f"{patch.filename.rsplit('.', 1)[0]}.ncs"
 
-            create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), rel_output_container_path)
+            create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), patch.destination)
             if not should_patch(
                 patch,
                 output_container_path.joinpath(ncs_compiled_filename).exists(),
-                rel_output_container_path,
                 action="Compiling",
             ):
                 continue
@@ -401,11 +390,11 @@ class ModInstaller:
 
         self.log.add_note(f"Applying {len(config.patches_ssf)} patches from [SSFList]...")
         for patch in config.patches_ssf:
-            output_container_path, rel_output_container_path = self.get_patch_paths(patch)
+            output_container_path = self.game_path / patch.destination
             output_file_path = output_container_path.joinpath(patch.filename)
 
-            create_backup(self.log, output_file_path, *self.backup(), rel_output_container_path)
-            should_patch(patch, output_file_path.exists(), rel_output_container_path, no_replacefile_check=True)
+            create_backup(self.log, output_file_path, *self.backup(), patch.destination)
+            should_patch(patch, output_file_path.exists(), no_replacefile_check=True)
 
             search = self.lookup_resource(patch)
             if not search:
