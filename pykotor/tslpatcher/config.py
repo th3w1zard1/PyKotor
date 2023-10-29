@@ -237,11 +237,14 @@ class ModInstaller:
         return capsule
 
     def lookup_resource(self, patch, capsule=None):
-        return self.installation().resource(
-            *ResourceIdentifier.from_path(patch.filename),
+        search_order = (
             [SearchLocation.CUSTOM_FOLDERS]
             if hasattr(patch, "replace_file") and patch.replace_file
-            else [SearchLocation.CUSTOM_MODULES, SearchLocation.OVERRIDE, SearchLocation.CUSTOM_FOLDERS],
+            else [SearchLocation.CUSTOM_MODULES, SearchLocation.OVERRIDE, SearchLocation.CUSTOM_FOLDERS]
+        )
+        return self.installation().resource(
+            *ResourceIdentifier.from_path(patch.filename),
+            search_order,
             capsules=[capsule] if capsule else [],
             folders=[self.mod_path],
         )
@@ -331,24 +334,11 @@ class ModInstaller:
 
             bytes_data = patch.apply(search.data, memory, self.log)
             filename_obj = PurePath(patch.filename)
-            new_suffix = ".ncs" if filename_obj.suffix.lower() == ".nss" else filename_obj.suffix
-            self.write(output_container_path, str(filename_obj.with_suffix(new_suffix)), bytes_data)
+            new_filename = filename_obj.with_suffix(".ncs" if filename_obj.suffix.lower() == ".nss" else filename_obj.suffix)
+            if capsule:
+                capsule.add(*ResourceIdentifier.from_path(new_filename), bytes_data)
+            else:
+                BinaryWriter.dump(output_container_path / new_filename, bytes_data)
             self.log.complete_patch()
 
         self.log.add_note(f"Successfully completed {self.log.patches_completed} total patches.")
-
-    def write(self, destination: CaseAwarePath, filename: str, data: bytes) -> None:
-        if is_rim_file(destination.name):
-            rim = read_rim(BinaryReader.load_file(destination)) if destination.exists() else RIM()
-            rim.set_data(*ResourceIdentifier.from_path(filename), data)
-            write_rim(rim, destination)
-        elif is_erf_or_mod_file(destination.name):
-            erf = (
-                read_erf(BinaryReader.load_file(destination))
-                if destination.exists()
-                else ERF(ERFType.from_extension(destination.name))
-            )
-            erf.set_data(*ResourceIdentifier.from_path(filename), data)
-            write_erf(erf, destination)
-        else:
-            BinaryWriter.dump(destination / filename, data)
