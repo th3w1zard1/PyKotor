@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING, Any, Callable
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import ResRef
 from pykotor.resource.formats.gff import GFF, GFFFieldType, GFFList, GFFStruct
-from pykotor.tools.path import CaseAwarePath, PureWindowsPath
+from pykotor.resource.formats.gff.gff_auto import bytes_gff, read_gff
+from pykotor.tools.path import PureWindowsPath
 
 if TYPE_CHECKING:
     from pykotor.resource.formats.gff.gff_data import _GFFField
@@ -347,14 +348,17 @@ class ModificationsGFF:
     ) -> None:
         self.filename: str = filename
         self.replace_file: bool = replace_file
+        self.no_replacefile_check = True
         self.destination = destination or "Override"
         self.modifiers: list[ModifyGFF] = modifiers if modifiers is not None else []
 
     def apply(
         self,
-        gff: GFF,
+        gff_bytes: bytes,
         memory: PatcherMemory,
         logger: PatchLogger,
-    ) -> None:
+    ) -> bytes:
+        gff: GFF = read_gff(gff_bytes)
         for change_field in self.modifiers:
             change_field.apply(gff.root, memory, logger)
+        return bytes_gff(gff)

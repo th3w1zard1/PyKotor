@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pykotor.common.misc import ResRef
     from pykotor.resource.formats.tlk import TLK
+    from pykotor.tslpatcher.logger import PatchLogger
     from pykotor.tslpatcher.memory import PatcherMemory
 
 
@@ -14,12 +15,13 @@ class ModificationsTLK:
         self.filename = filename
         self.destination = destination
 
-    def apply(self, dialog: TLK, memory: PatcherMemory) -> None:
+    def apply(self, dialog: TLK, memory: PatcherMemory, log: PatchLogger) -> None:
         for modifier in self.modifiers:
             if modifier.is_replacement:
                 modifier.replace(dialog)
             else:
                 modifier.insert(dialog, memory)
+            log.complete_patch()
 
 
 class ModifyTLK:

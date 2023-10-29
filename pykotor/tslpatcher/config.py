@@ -22,13 +22,8 @@ from pykotor.extract.installation import (
 )
 from pykotor.resource.formats.erf import ERF, read_erf, write_erf
 from pykotor.resource.formats.erf.erf_data import ERFType
-from pykotor.resource.formats.gff import read_gff
-from pykotor.resource.formats.gff.gff_auto import bytes_gff
-from pykotor.resource.formats.ncs.ncs_auto import bytes_ncs, compile_nss
 from pykotor.resource.formats.rim import RIM, read_rim, write_rim
-from pykotor.resource.formats.ssf import read_ssf, write_ssf
 from pykotor.resource.formats.tlk import read_tlk, write_tlk
-from pykotor.resource.formats.twoda import read_2da, write_2da
 from pykotor.tools.misc import (
     is_capsule_file,
     is_erf_or_mod_file,
@@ -202,9 +197,9 @@ class ModInstaller:
         return self._installation
 
     def game(self) -> Game:
-        if (self.game_path.joinpath("streamvoice").exists() or self.game_path.joinpath("swkotor2.exe")):
+        if self.game_path.joinpath("streamvoice").exists() or self.game_path.joinpath("swkotor2.exe"):
             return Game(2)
-        if (self.game_path.joinpath("streamwaves").exists() or self.game_path.joinpath("swkotor.exe")):
+        if self.game_path.joinpath("streamwaves").exists() or self.game_path.joinpath("swkotor.exe"):
             return Game(1)
         msg = "Could not determine which KOTOR game to load!"
         raise ValueError(msg)
@@ -244,7 +239,9 @@ class ModInstaller:
     def lookup_resource(self, patch, capsule=None):
         return self.installation().resource(
             *ResourceIdentifier.from_path(patch.filename),
-            [SearchLocation.CUSTOM_FOLDERS] if hasattr(patch, "replace_file") and patch.replace_file else [SearchLocation.CUSTOM_MODULES, SearchLocation.OVERRIDE, SearchLocation.CUSTOM_FOLDERS],
+            [SearchLocation.CUSTOM_FOLDERS]
+            if hasattr(patch, "replace_file") and patch.replace_file
+            else [SearchLocation.CUSTOM_MODULES, SearchLocation.OVERRIDE, SearchLocation.CUSTOM_FOLDERS],
             capsules=[capsule] if capsule else [],
             folders=[self.mod_path],
         )
@@ -261,37 +258,41 @@ class ModInstaller:
             self.save_data(data, patch, memory, output_container_path, game)
             self.log.complete_patch()
 
-
     def install(self) -> None:
         config = self.config()
-        installation = self.installation()
         memory = PatcherMemory()
 
+        # TODO: This method is in serious need of a rewrite
         def should_patch(
             patch,
-            exists: bool = False,
+            exists: bool | None = False,
             capsule: Capsule | None = None,
-            no_replacefile_check: bool | None = None,  # !ReplaceFile handled differently in lookup_resource for GFFList and SSFList
-            action: str = "Patching",
         ):
             local_folder = self.game_path.name if patch.destination == "." else patch.destination
             container_type = "folder" if capsule is None else "archive"
             is_replaceable = hasattr(patch, "replace_file")
             replace_file = is_replaceable and patch.replace_file
+            no_replacefile_check = not hasattr(patch, "no_replacefile_check") or patch.no_replacefile_check
+            action = patch.action if hasattr(patch, "action") else "Patch "
 
-            if (replace_file or no_replacefile_check) and exists:
+            if replace_file and exists:
                 if capsule:
-                    self.log.add_note(f"{action} '{patch.filename}' and replacing existing resource in the '{local_folder}' archive")
+                    self.log.add_note(f"{action[:-1]}ing '{patch.filename}' and replacing existing resource in the '{local_folder}' archive")
                 else:
-                    self.log.add_note(f"{action} '{patch.filename}' and replacing existing file in the '{local_folder}' folder")
-            elif exists and is_replaceable:
+                    self.log.add_note(f"{action[:-1]}ing '{patch.filename}' and replacing existing file in the '{local_folder}' folder")
+            elif no_replacefile_check and exists:
+                if capsule:
+                    self.log.add_note(f"{action[:-1]}ing existing resource '{patch.filename}' in the '{local_folder}' archive")
+                else:
+                    self.log.add_note(f"{action[:-1]}ing existing file '{patch.filename}' in the '{local_folder}' folder")
+            elif is_replaceable and exists:
                 if capsule and not capsule._path.exists():
-                    self.log.add_error(f"The capsule '{patch.destination}' did not exist when attempting to patch GFF '{patch.filename}'. Skipping file...")
+                    self.log.add_error(f"The capsule '{patch.destination}' did not exist when attempting to {action.lower()} '{patch.filename}'. Skipping file...")
                 else:
                     self.log.add_warning(f"'{patch.filename}' already exists in the '{local_folder}' {container_type}. Skipping file...")
                 return False
             else:
-                self.log.add_note(f"{action} '{patch.filename}' and {'adding' if capsule else 'saving'} to the '{local_folder}' {container_type}")
+                self.log.add_note(f"{action[:-1]}ing '{patch.filename}' and {'adding' if capsule else 'saving'} to the '{local_folder}' {container_type}")
             return True
 
         self.log.add_note(f"Applying {len(config.patches_tlk.modifiers)} patches from [TLKList]...")
@@ -304,10 +305,8 @@ class ModInstaller:
             should_patch(patch, dialog_tlk_path.exists())
 
             dialog_tlk = read_tlk(dialog_tlk_path)
-
-            patch.apply(dialog_tlk, memory)
+            patch.apply(dialog_tlk, memory, self.log)
             write_tlk(dialog_tlk, dialog_tlk_path)
-            self.log.complete_patch()
 
         # Move nwscript.nss to Override if there are any nss patches to do
         # if len(config.patches_nss) > 0:
@@ -322,25 +321,8 @@ class ModInstaller:
             folder.apply(self.log, self.mod_path, self.game_path, *self.backup())
             self.log.complete_patch()
 
-        self.log.add_note(f"Applying {len(config.patches_2da)} patches from [2DAList]...")
-        for patch in config.patches_2da:
-            output_container_path = self.game_path / patch.destination
-            output_file_path = output_container_path.joinpath(patch.filename)
-
-            create_backup(self.log, output_file_path, *self.backup(), patch.destination)
-            should_patch(patch, output_file_path.exists())
-
-            search = self.lookup_resource(patch)
-            if not search:
-                continue
-
-            template = read_2da(search.data)
-            patch.apply(template, memory)
-            write_2da(template, output_file_path)
-            self.log.complete_patch()
-
-        self.log.add_note(f"Applying {len(config.patches_gff)} patches from [GFFList]...")
-        for patch in config.patches_gff:
+        remaining_patches = [*config.patches_2da, *config.patches_gff, *config.patches_nss, *config.patches_ssf]
+        for patch in remaining_patches:
             output_container_path = self.game_path / patch.destination
             capsule: Capsule | None = None
             exists: bool | None = None
@@ -353,64 +335,23 @@ class ModInstaller:
                 create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), patch.destination)
                 exists = output_container_path.joinpath(patch.filename).exists()
 
-            should_patch(patch, exists, capsule, no_replacefile_check=True)
-
+            if not should_patch(patch, exists, capsule):
+                continue
             search = self.lookup_resource(patch, capsule)
             if not search:
                 continue
 
-            template = read_gff(search.data)
-            patch.apply(template, memory, self.log)
-            self.write(output_container_path, patch.filename, bytes_gff(template))
-            self.log.complete_patch()
-
-        self.log.add_note(f"Applying {len(config.patches_nss)} patches from [CompileList]...")
-        for patch in config.patches_nss:
-            output_container_path = self.game_path / patch.destination
-            ncs_compiled_filename = f"{patch.filename.rsplit('.', 1)[0]}.ncs"
-
-            create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), patch.destination)
-            if not should_patch(
-                patch,
-                output_container_path.joinpath(ncs_compiled_filename).exists(),
-                action="Compiling",
-            ):
-                continue
-
-            nss_bytes = BinaryReader.load_file(self.mod_path / patch.filename)
-            encoding: str = (chardet and chardet.detect(nss_bytes) or {}).get("encoding") or "utf8"
-            template = [nss_bytes.decode(encoding=encoding, errors="replace")]
-
-            patch.apply(template, memory, self.log)
-            self.write(output_container_path, ncs_compiled_filename, bytes_ncs(compile_nss(template[0], installation.game())))
-            self.log.complete_patch()
-
-        self.log.add_note(f"Applying {len(config.patches_ssf)} patches from [SSFList]...")
-        for patch in config.patches_ssf:
-            output_container_path = self.game_path / patch.destination
-            output_file_path = output_container_path.joinpath(patch.filename)
-
-            create_backup(self.log, output_file_path, *self.backup(), patch.destination)
-            should_patch(patch, output_file_path.exists(), no_replacefile_check=True)
-
-            search = self.lookup_resource(patch)
-            if not search:
-                continue
-
-            template = read_ssf(search.data)
-            patch.apply(template, memory)
-            write_ssf(template, output_file_path)
+            bytes_data = patch.apply(search.data, memory, self.log)
+            filename_obj = PurePath(patch.filename)
+            new_suffix = ".ncs" if filename_obj.suffix.lower() == ".nss" else filename_obj.suffix
+            self.write(output_container_path, str(filename_obj.with_suffix(new_suffix)), bytes_data)
             self.log.complete_patch()
 
         self.log.add_note(f"Successfully completed {self.log.patches_completed} total patches.")
 
     def write(self, destination: CaseAwarePath, filename: str, data: bytes) -> None:
         if is_rim_file(destination.name):
-            rim = (
-                read_rim(BinaryReader.load_file(destination))
-                if destination.exists()
-                else RIM()
-            )
+            rim = read_rim(BinaryReader.load_file(destination)) if destination.exists() else RIM()
             rim.set_data(*ResourceIdentifier.from_path(filename), data)
             write_rim(rim, destination)
         elif is_erf_or_mod_file(destination.name):
