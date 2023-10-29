@@ -246,18 +246,6 @@ class ModInstaller:
             folders=[self.mod_path],
         )
 
-    def do_patchlist(self, patch_list, section_name, game=None):
-        self.log.add_note(f"Applying {len(patch_list)} patches from [{section_name}]...")
-        for patch in patch_list:
-            output_container_path = self.game_path / patch.destination
-            capsule = self.handle_capsule_and_backup(patch, output_container_path)
-            search = self.lookup_resource(patch, capsule)
-            if not search:
-                continue
-            data = self.load_data(search, patch)
-            self.save_data(data, patch, memory, output_container_path, game)
-            self.log.complete_patch()
-
     def install(self) -> None:
         config = self.config()
         memory = PatcherMemory()
@@ -290,6 +278,7 @@ class ModInstaller:
                 return False
             elif capsule is not None and not capsule._path.exists():
                 self.log.add_error(f"The capsule '{patch.destination}' did not exist when attempting to {action.lower().rstrip()} '{patch.filename}'. Skipping file...")
+                return False
             else:
                 self.log.add_note(f"{action[:-1]}ing '{patch.filename}' and {'adding' if capsule else 'saving'} to the '{local_folder}' {container_type}")
             return True
