@@ -114,6 +114,7 @@ class Installation:
         self._streamsounds: list[FileResource] = []
         self._streamwaves: list[FileResource] = []
         self._rims: dict[str, list[FileResource]] = {}
+        self._game: Game | None = None
 
         self.log.add_note("Load chitin...")
         self.load_chitin()
@@ -504,6 +505,8 @@ class Installation:
     # endregion
 
     def game(self) -> Game:
+        if self._game:
+            return self._game
         path = self._path
         def check(x):
             return path.joinpath(x).exists()
@@ -516,10 +519,11 @@ class Installation:
         is_game2_exe = check("swkotor2.exe") and not check("swkotor.exe")
 
         if any([is_game2_stream, is_game2_exe]):
-            return Game(2)
+            self._game = Game(2)
         if any([is_game1_stream, is_game1_exe, is_game1_rims]):
-            return Game(1)
-
+            self._game = Game(1)
+        if self._game is not None:
+            return self._game
         msg = "Could not find the game executable!"
         raise ValueError(msg)
 

@@ -5,7 +5,7 @@ from itertools import zip_longest
 from typing import TYPE_CHECKING, Any, Callable
 
 from pykotor.common.language import LocalizedString
-from pykotor.common.misc import ResRef
+from pykotor.common.misc import Game, ResRef
 from pykotor.resource.formats.gff import GFF, GFFFieldType, GFFList, GFFStruct
 from pykotor.resource.formats.gff.gff_auto import bytes_gff, read_gff
 from pykotor.tools.path import PureWindowsPath
@@ -357,6 +357,7 @@ class ModificationsGFF:
         gff_bytes: bytes,
         memory: PatcherMemory,
         logger: PatchLogger,
+        game: Game,
     ) -> bytes:
         gff: GFF = read_gff(gff_bytes)
         for change_field in self.modifiers:

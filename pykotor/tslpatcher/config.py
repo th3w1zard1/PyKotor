@@ -236,16 +236,20 @@ class ModInstaller:
 
     def handle_capsule_and_backup(self, patch, output_container_path: CaseAwarePath):
         capsule = None
+        filename = PurePath(patch.filename)
+        if filename.suffix.lower() == ".nss":
+            filename.with_suffix(".ncs")
         if is_capsule_file(patch.destination):
             capsule = Capsule(output_container_path)
             create_backup(self.log, output_container_path, *self.backup(), PurePath(patch.destination).parent)
-            exists = capsule.exists(*ResourceIdentifier.from_path(patch.filename))
+            exists = capsule.exists(*ResourceIdentifier.from_path(filename))
         else:
             create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), patch.destination)
-            exists = output_container_path.joinpath(patch.filename).exists()
+            exists = output_container_path.joinpath(filename).exists()
         return (exists, capsule)
 
-    def lookup_resource(self, patch, capsule=None):
+    # TODO: don't ever load the installation in patcher code
+    def lookup_resource(self, patch, exists=None, capsule=None):
         search_order = (
             [SearchLocation.CUSTOM_FOLDERS]
             if hasattr(patch, "replace_file") and patch.replace_file
@@ -320,16 +324,15 @@ class ModInstaller:
             exists, capsule = self.handle_capsule_and_backup(patch, output_container_path)
             if not self.should_patch(patch, exists, capsule):
                 continue
-            search = self.lookup_resource(patch, capsule)
+            search = self.lookup_resource(patch, exists, capsule)
             if not search:
                 continue
-            bytes_data = patch.apply(search.data, memory, self.log)
-            filename_obj = PurePath(patch.filename)
-            new_filename = filename_obj.with_suffix(".ncs" if filename_obj.suffix.lower() == ".nss" else filename_obj.suffix)
+
+            bytes_data = patch.apply(search.data, memory, self.log, self.installation().game())
             if capsule:
-                capsule.add(*ResourceIdentifier.from_path(new_filename), bytes_data)
+                capsule.add(*ResourceIdentifier.from_path(patch.filename), bytes_data)
             else:
-                BinaryWriter.dump(output_container_path / new_filename, bytes_data)
+                BinaryWriter.dump(output_container_path / patch.filename, bytes_data)
             self.log.complete_patch()
 
         self.log.add_note(f"Successfully completed {self.log.patches_completed} total patches.")

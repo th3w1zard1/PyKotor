@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 import chardet
 
 from pykotor.resource.formats.ncs.ncs_auto import bytes_ncs, compile_nss
+from pykotor.tools.path import PurePath
 
 if TYPE_CHECKING:
     from pykotor.common.misc import Game
@@ -38,4 +39,5 @@ class ModificationsNSS:
             source = source[: match.start()] + str(value) + source[match.end() :]
             match = re.search(r"#StrRef\d+#", source)
 
+        self.filename = str(PurePath(self.filename).with_suffix(".ncs"))
         return bytes_ncs(compile_nss(source, game))
