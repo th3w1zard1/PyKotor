@@ -14,6 +14,7 @@ class Language(IntEnum):
     ITALIAN = 3
     SPANISH = 4
     POLISH = 5
+    AUTO = 6  # used for translation
 
     @staticmethod
     def _missing_(value: int) -> IntEnum:
@@ -36,6 +37,10 @@ class Language(IntEnum):
             return "pl"
 
         return None  # or raise an error
+
+    @classmethod
+    def from_name(cls, value: str):
+        return cls(cls.__dict__[value.upper()])
 
 
 class Gender(IntEnum):

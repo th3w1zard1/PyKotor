@@ -25,7 +25,9 @@ if not getattr(sys, "frozen", False):
 
 from typing import TYPE_CHECKING, NoReturn
 
+from pykotor.common.language import Language
 from pykotor.common.misc import CaseInsensitiveDict, Game
+from pykotor.tools.language_translator import TranslationOption, Translator
 from pykotor.tools.misc import striprtf, universal_simplify_exception
 from pykotor.tools.path import CaseAwarePath, Path, locate_game_paths
 from pykotor.tslpatcher.config import ModInstaller, PatcherNamespace
@@ -90,7 +92,7 @@ def parse_args() -> Namespace:
 
 
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.title("HoloPatcher")
 
@@ -98,7 +100,7 @@ class App(tk.Tk):
         self.namespaces = []
 
         self.initialize_logger()
-        self.set_window(width=400, height=500)
+        self.set_window(width=400, height=540)
         self.namespaces_combobox = ttk.Combobox(self, state="readonly")
         self.namespaces_combobox.set("Select the mod to install")
         self.namespaces_combobox.place(x=5, y=5, width=310, height=25)
@@ -151,6 +153,56 @@ class App(tk.Tk):
         cmdline_args = parse_args()
         self.open_mod(cmdline_args.tslpatchdata or CaseAwarePath.cwd())
         self.handle_commandline(cmdline_args)
+
+        self.translator: Translator | None = None
+        self.setup_translator_controls()
+
+    def setup_translator_controls(self) -> None:
+        # Checkbox variable
+        self.translate_check_var = tk.BooleanVar(value=False)
+
+        # Setup the ComboBox for Language
+        self.language_combobox = ttk.Combobox(self, values=[*(lang.name for lang in Language), "auto"], state="readonly")
+        self.language_combobox.set("auto")  # Defaults to what's defined in the game directory.
+
+        # Setup the ComboBox for TranslationOption
+        self.translation_option_combobox = ttk.Combobox(self, values=[opt.name for opt in TranslationOption])
+        self.translation_option_combobox.bind("<<ComboboxSelected>>", self.load_translator)
+        self.translation_option_combobox.set(TranslationOption.DL_TRANSLATE.name)
+
+        # Setup the Checkbox
+        self.translate_checkbox = ttk.Checkbutton(self, text="Translate", variable=self.translate_check_var, command=self.toggle_translation)
+        self.translate_checkbox.place(x=0, y=500, width=100, height=40)
+
+        # Setup Load button
+        self.initialize_translator_button = ttk.Button(self, text="Initialize Translator", command=self.initialize_translator)
+
+        # Initially hide the comboboxes
+        self.toggle_translation(event=None)
+
+    def load_translator(self, event=None):
+        to_lang = Language.from_name(self.language_combobox.get())
+        translate_option = TranslationOption.__dict__[self.translation_option_combobox.get()]
+        if not self.translator:
+            self.translator = Translator(to_lang, translate_option)
+        else:
+            self.translator.language = to_lang
+            self.translator.translation_option = translate_option
+
+    def initialize_translator(self, event=None):
+        self.translator.initialize()
+
+    def toggle_translation(self, event=None):
+        # Check the boolean value of the check_var to determine whether to show or hide the combo boxes
+        if self.translate_check_var.get():
+            self.language_combobox.place(x=100, y=500, width=100, height=20)
+            self.translation_option_combobox.place(x=100, y=520, width=100, height=20)
+            self.initialize_translator_button.place(x=210, y=500, width=150, height=30)
+            self.load_translator()
+        else:
+            self.language_combobox.pack_forget()
+            self.translation_option_combobox.pack_forget()
+            self.initialize_translator_button.pack_forget()
 
     def handle_commandline(self, cmdline_args: Namespace) -> None:
         if cmdline_args.game_dir:
