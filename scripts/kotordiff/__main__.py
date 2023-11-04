@@ -179,20 +179,20 @@ def diff_data(
         tlk1: TLK | None = None
         tlk2: TLK | None = None
         try:
-            log_output(f"Loading TLK '{file1_rel.parent / where}'")
+            log_output(f"Loading TLK '{file1_rel.name}'")
             tlk1 = read_tlk(data1)
         except Exception:  # noqa: BLE001
             return log_output(f"Error loading TLK {file1_rel.parent / where}!")
         try:
-            log_output(f"Loading TLK '{file2_rel.parent / where}'")
+            log_output(f"Loading TLK '{file2_rel.name}'")
             tlk2 = read_tlk(data2)
         except Exception:  # noqa: BLE001
             return log_output(f"Error loading TLK {file2_rel.parent / where}!")
         if tlk1 and not tlk2:
-            message = f"TLK resource missing in memory:\t'{file1_rel.parent / where}'"
+            message = f"TLK resource missing in memory:\t'{file1_rel.name}'"
             return log_output(message)
         if not tlk1 and tlk2:
-            message = f"TLK resource missing in memory:\t'{file2_rel.parent / where}'"
+            message = f"TLK resource missing in memory:\t'{file2_rel.name}'"
             return log_output(message)
         if not tlk1 and not tlk2:
             message = f"Both TLK resources missing in memory:\t'{where}'"

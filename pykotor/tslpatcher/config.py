@@ -5,11 +5,13 @@ from configparser import ConfigParser
 from datetime import datetime, timezone
 from enum import IntEnum
 from typing import TYPE_CHECKING
+from pykotor.common.language import Language
 
 from pykotor.common.misc import Game, decode_bytes_with_fallbacks
 from pykotor.common.stream import BinaryReader, BinaryWriter
 from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceIdentifier
+from pykotor.resource.formats.tlk.tlk_auto import read_tlk
 from pykotor.tools.misc import is_capsule_file
 from pykotor.tools.path import CaseAwarePath, PurePath
 from pykotor.tslpatcher.logger import PatchLogger
@@ -64,7 +66,7 @@ class PatcherConfig:
         self.patches_nss: list[ModificationsNSS] = []
         self.patches_tlk: ModificationsTLK = ModificationsTLK()
 
-    def load(self, ini_text: str, mod_path: os.PathLike | str, logger: PatchLogger | None = None) -> None:
+    def load(self, ini_text: str, mod_path: os.PathLike | str, logger: PatchLogger | None = None, game_language: Language | None = None) -> None:
         from pykotor.tslpatcher.reader import ConfigReader
 
         ini = ConfigParser(
@@ -77,7 +79,7 @@ class PatcherConfig:
         ini.optionxform = lambda optionstr: optionstr  #  type: ignore[method-assign]
         ini.read_string(ini_text)
 
-        ConfigReader(ini, mod_path, logger).load(self)
+        ConfigReader(ini, mod_path, logger, game_language).load(self)
 
     def patch_count(self) -> int:
         return (
@@ -164,8 +166,11 @@ class ModInstaller:
             self.log.add_warning(f"Could not determine encoding of '{self.changes_ini_path.name}'. Attempting to force load...")
             ini_text = ini_file_bytes.decode(encoding="iso-8859-1", errors="replace")
 
+        game_tlk = read_tlk(self.game_path / "dialog.tlk")
+        game_language = game_tlk.language
+
         self._config = PatcherConfig()
-        self._config.load(ini_text, self.mod_path, self.log)
+        self._config.load(ini_text, self.mod_path, self.log, game_language)
 
         if self._config.required_file:
             requiredfile_path: CaseAwarePath = self.game_path / "Override" / self._config.required_file

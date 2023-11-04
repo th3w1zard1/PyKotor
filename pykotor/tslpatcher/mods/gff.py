@@ -20,12 +20,13 @@ from pykotor.tslpatcher.mods.template import PatcherModifications
 if TYPE_CHECKING:
     from pykotor.resource.formats.gff.gff_data import _GFFField
     from pykotor.resource.type import SOURCE_TYPES
+    from pykotor.tools.language_translator import Translator
     from pykotor.tslpatcher.logger import PatchLogger
     from pykotor.tslpatcher.memory import PatcherMemory
 
 
 class LocalizedStringDelta(LocalizedString):
-    def __init__(self, stringref: FieldValue | None = None) -> None:
+    def __init__(self, stringref: FieldValue | None = None, translator: Translator | None = None) -> None:
         super().__init__(0)
         self.stringref: FieldValue | None = stringref
 

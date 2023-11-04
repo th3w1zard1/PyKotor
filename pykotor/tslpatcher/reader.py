@@ -5,7 +5,7 @@ from itertools import tee
 from typing import TYPE_CHECKING
 
 from pykotor.common.geometry import Vector3, Vector4
-from pykotor.common.language import LocalizedString
+from pykotor.common.language import Language, LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, ResRef, decode_bytes_with_fallbacks
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.formats.gff import GFFFieldType, GFFList, GFFStruct
@@ -65,10 +65,11 @@ if TYPE_CHECKING:
 SECTION_NOT_FOUND_ERROR: str = "The [{}] section was not found in the ini, referenced by '{}={}' in [{}]"
 
 class ConfigReader:
-    def __init__(self, ini: ConfigParser, mod_path: os.PathLike | str, logger: PatchLogger | None = None) -> None:
+    def __init__(self, ini: ConfigParser, mod_path: os.PathLike | str, logger: PatchLogger | None = None, game_language: Language | None = None) -> None:
         self.ini = ini
         self.mod_path: CaseAwarePath = mod_path if isinstance(mod_path, CaseAwarePath) else CaseAwarePath(mod_path)
         self.config: PatcherConfig
+        self.game_language = game_language
         self.log = logger or PatchLogger()
 
     @classmethod
@@ -234,7 +235,7 @@ class ConfigReader:
                 if lowercase_key.startswith("strref"):
                     # load append.tlk only if it's needed.
                     if append_tlk_edits is None:
-                        append_tlk_edits = read_tlk(self.mod_path / "append.tlk")
+                        append_tlk_edits = read_tlk(self.mod_path / "append.tlk", self.game_language)
                     if len(append_tlk_edits) == 0:
                         syntax_error_caught = True
                         msg = f"'append.tlk' in mod directory is empty, but is required to perform modifier '{key}={value}' in [TLKList]"
@@ -254,7 +255,7 @@ class ConfigReader:
                         raise ValueError(SECTION_NOT_FOUND_ERROR.format(value, key, value, tlk_list_section))  # noqa: TRY301
 
                     tlk_modifications_path: CaseAwarePath = self.mod_path / value
-                    modifications_tlk_data: TLK = read_tlk(tlk_modifications_path)
+                    modifications_tlk_data: TLK = read_tlk(tlk_modifications_path, self.game_language)
                     if len(modifications_tlk_data) == 0:
                         syntax_error_caught = True
                         msg = f"'{value}' file in mod directory is empty, but is required to perform modifier '{key}={value}' in [TLKList]"

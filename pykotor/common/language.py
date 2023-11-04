@@ -21,6 +21,22 @@ class Language(IntEnum):
             print(f"Missing language int {value}")
         return Language.ENGLISH
 
+    def get_language_code(self):
+        if self == Language.ENGLISH:
+            return "en"
+        if self == Language.FRENCH:
+            return "fr"
+        if self == Language.GERMAN:
+            return "de"
+        if self == Language.ITALIAN:
+            return "it"
+        if self == Language.SPANISH:
+            return "es"
+        if self == Language.POLISH:
+            return "pl"
+
+        return None  # or raise an error
+
 
 class Gender(IntEnum):
     """Gender IDs recognized by both the games in regards to string localization."""

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import dl_translate as dlt
+
 from pykotor.common.language import Language
 from pykotor.common.misc import ResRef, WrappedInt
 from pykotor.common.stream import ArrayHead
@@ -22,9 +24,12 @@ class TLKBinaryReader(ResourceReader):
         source: SOURCE_TYPES,
         offset: int = 0,
         size: int = 0,
+        translate_to_language: Language = Language.ENGLISH,
     ):
         super().__init__(source, offset, size)
         self._tlk: TLK | None = None
+        self._translate_to_language = translate_to_language or Language.ENGLISH
+        self._translator = dlt.TranslationModel("mbart50")
         self._texts_offset = 0
         self._text_headers = []
 
@@ -33,6 +38,21 @@ class TLKBinaryReader(ResourceReader):
         self,
         auto_close: bool = True,
     ) -> TLK:
+        """Loads translation data from a file.
+
+        Args:
+        ----
+            auto_close: Whether to close the file after loading (default True)
+
+        Returns:
+        -------
+            TLK: The loaded translation data
+        Processing Logic:
+            - Reads the file header
+            - Loops through entries and loads each entry
+            - Loops through entries again and loads text for each
+            - Returns the loaded translation data.
+        """
         self._tlk = TLK()
         self._texts_offset = 0
         self._text_headers = []
@@ -92,6 +112,10 @@ class TLKBinaryReader(ResourceReader):
 
         self._reader.seek(text_header.offset + self._texts_offset)
         text = self._reader.read_string(text_header.length)
+
+        # translate the text to the game's language
+        if self._tlk.language != self._translate_to_language:
+            text = self._translator.translate(text, source=self._tlk.language.name, target=self._translate_to_language.name, verbose=True)
 
         self._tlk.entries[stringref].text = text
 
