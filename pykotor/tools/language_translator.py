@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from typing import TYPE_CHECKING
 
-from pykotor.common.language import Language
+if TYPE_CHECKING:
+    from pykotor.common.language import Language
 
 
 # Supported Translators
@@ -50,7 +52,7 @@ class Translator:
         to_lang_code: str = to_lang.get_language_code()  # type: ignore[union-attr]
 
         # Function to chunk the text into segments with a maximum of 500 characters
-        def chunk_text(text, size):
+        def chunk_text(text: str, size):
             chunks = []
             while text:
                 if len(text) <= size:
@@ -67,12 +69,36 @@ class Translator:
                 text = text[cut_off:].lstrip()  # Remove leading whitespace from next chunk
             return chunks
 
-        max_chunk_length = 10000
+        # New function to remove and record punctuation and symbols
+        def extract_and_index_punctuation(text: str):
+            punctuation_indices = []
+            clean_text = ""
+            for index, character in enumerate(text):
+                if character.isalnum() or character.isspace() or character in [".", ",", "!"]:
+                    clean_text += character
+                else:
+                    punctuation_indices.append((index, character))
+            return clean_text, punctuation_indices
+
+        # New function to reintegrate punctuation and symbols
+        def reintegrate_punctuation(translated_chunks, punctuation_indices):
+            full_translation = "".join(translated_chunks)
+            for index, symbol in reversed(punctuation_indices):
+                full_translation = full_translation[:index] + symbol + full_translation[index:]
+            return full_translation
+
+        max_chunk_length = 1024
         if self.translation_option == TranslationOption.TRANSLATE:
             max_chunk_length = 500
 
-        # Break the text into 500-character chunks
-        chunks = chunk_text(text, 500)
+        # Extract punctuation and symbols from the text and get their indices
+        text_to_translate, punctuation_indices = extract_and_index_punctuation(text)
+
+        # Break the text into appropriate chunks
+        chunks = chunk_text(text_to_translate, max_chunk_length)
+
+        translated_chunks: list[str] = []
+        chunk: str
         for chunk in chunks:
             # Ensure not cutting off in the middle of a word
             if len(chunk) == max_chunk_length and not text[len(chunk)].isspace():
@@ -83,23 +109,22 @@ class Translator:
                     chunks[chunks.index(chunk) + 1] = next_chunk
 
             # Translate each chunk
-            partial_translation = ""
             if self.translation_option == TranslationOption.GOOGLETRANS:
-                partial_translation = self._translator.translate(chunk, src=from_lang_code, dest=to_lang_code).text  # type: ignore[attr-defined]
+                translated_chunks.append(self._translator.translate(chunk, src=from_lang_code, dest=to_lang_code).text)  # type: ignore[attr-defined]
             elif self.translation_option == TranslationOption.LIBRE:
                 if from_lang is None:
                     msg = "LibreTranslate requires a specified source language."
                     raise ValueError(msg)
-                partial_translation = self._translator.translate(chunk, source=from_lang_code, target=to_lang_code)  # type: ignore[attr-defined]
+                translated_chunks.append(self._translator.translate(chunk, source=from_lang_code, target=to_lang_code))  # type: ignore[attr-defined]
             elif self.translation_option == TranslationOption.DL_TRANSLATE:
-                partial_translation = self._translator.translate(chunk, source=from_lang.name, target=to_lang.name)  # type: ignore[attr-defined, union-attr]
+                translated_chunks.append(self._translator.translate(chunk, source=from_lang.name, target=to_lang.name))  # type: ignore[attr-defined, union-attr]
             elif self.translation_option == TranslationOption.TRANSLATE:
-                partial_translation = self._translator.translate(chunk)  # type: ignore[attr-defined]
+                translated_chunks.append(self._translator.translate(chunk))  # type: ignore[attr-defined]
             else:
                 msg = "Invalid translation option selected"
                 raise ValueError(msg)
 
-            # Append the partial translation to the full translation
-            translated_text += partial_translation  # type: ignore[reportGeneralTypeIssues]
+        # Reintegrate the punctuation and symbols
+        # translated_text = reintegrate_punctuation(translated_chunks, punctuation_indices)  # type: ignore[reportGeneralTypeIssues]
 
-        return translated_text
+        return " ".join(translated_chunks)
