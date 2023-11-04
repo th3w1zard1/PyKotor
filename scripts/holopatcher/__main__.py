@@ -174,23 +174,21 @@ class App(tk.Tk):
         self.translate_checkbox = ttk.Checkbutton(self, text="Translate", variable=self.translate_check_var, command=self.toggle_translation)
         self.translate_checkbox.place(x=0, y=500, width=100, height=40)
 
-        # Setup Load button
-        self.initialize_translator_button = ttk.Button(self, text="Initialize Translator", command=self.initialize_translator)
+        # Setup Load button (should be disabled when translator is tested and functional as it auto-initializes when needed)
+        self.initialize_translator_button = ttk.Button(self, text="Initialize Translator", command=lambda: self.translator.initialize())
 
         # Initially hide the comboboxes
         self.toggle_translation(event=None)
 
     def load_translator(self, event=None):
-        to_lang = Language.from_name(self.language_combobox.get())
+        from_lang = Language.from_name(self.language_combobox.get())
         translate_option = TranslationOption.__dict__[self.translation_option_combobox.get()]
         if not self.translator:
-            self.translator = Translator(to_lang, translate_option)
+            self.translator = Translator(from_lang, translate_option)
         else:
-            self.translator.language = to_lang
+            self.translator.to_lang = from_lang
             self.translator.translation_option = translate_option
-
-    def initialize_translator(self, event=None):
-        self.translator.initialize()
+        self.translator._initialized = False
 
     def toggle_translation(self, event=None):
         # Check the boolean value of the check_var to determine whether to show or hide the combo boxes
@@ -596,7 +594,7 @@ class App(tk.Tk):
         namespace_mod_path: CaseAwarePath = ini_file_path.parent
 
         self._clear_description_textbox()
-        installer = ModInstaller(namespace_mod_path, self.gamepaths.get(), ini_file_path, self.logger)
+        installer = ModInstaller(namespace_mod_path, self.gamepaths.get(), ini_file_path, self.logger, translator=self.translator)
         try:
             self._execute_mod_install(installer)
         except Exception as e:  # noqa: BLE001

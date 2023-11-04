@@ -60,16 +60,23 @@ if TYPE_CHECKING:
     import os
 
     from pykotor.resource.formats.tlk.tlk_data import TLKEntry
+    from pykotor.tools.language_translator import Translator
     from pykotor.tslpatcher.mods.gff import ModifyGFF
 
 SECTION_NOT_FOUND_ERROR: str = "The [{}] section was not found in the ini, referenced by '{}={}' in [{}]"
 
 class ConfigReader:
-    def __init__(self, ini: ConfigParser, mod_path: os.PathLike | str, logger: PatchLogger | None = None, game_language: Language | None = None) -> None:
+    def __init__(
+            self,
+            ini: ConfigParser,
+            mod_path: os.PathLike | str,
+            logger: PatchLogger | None = None,
+            translator: Translator | None = None,
+        ) -> None:
         self.ini = ini
         self.mod_path: CaseAwarePath = mod_path if isinstance(mod_path, CaseAwarePath) else CaseAwarePath(mod_path)
         self.config: PatcherConfig
-        self.game_language = game_language
+        self.translator: Translator | None = translator
         self.log = logger or PatchLogger()
 
     @classmethod
@@ -214,7 +221,10 @@ class ConfigReader:
                         continue
                     token_id: int = next(value_iter)
                     entry: TLKEntry = tlk_data[token_id]
-                    modifier = ModifyTLK(mod_index, entry.text, entry.voiceover, is_replacement)
+                    text = entry.text
+                    if self.translator:
+                        text = self.translator.translate(text)
+                    modifier = ModifyTLK(mod_index, text, entry.voiceover, is_replacement)
                     self.config.patches_tlk.modifiers.append(modifier)
 
         for i in tlk_list_edits:
@@ -235,7 +245,7 @@ class ConfigReader:
                 if lowercase_key.startswith("strref"):
                     # load append.tlk only if it's needed.
                     if append_tlk_edits is None:
-                        append_tlk_edits = read_tlk(self.mod_path / "append.tlk", self.game_language)
+                        append_tlk_edits = read_tlk(self.mod_path / "append.tlk")
                     if len(append_tlk_edits) == 0:
                         syntax_error_caught = True
                         msg = f"'append.tlk' in mod directory is empty, but is required to perform modifier '{key}={value}' in [TLKList]"
@@ -255,7 +265,7 @@ class ConfigReader:
                         raise ValueError(SECTION_NOT_FOUND_ERROR.format(value, key, value, tlk_list_section))  # noqa: TRY301
 
                     tlk_modifications_path: CaseAwarePath = self.mod_path / value
-                    modifications_tlk_data: TLK = read_tlk(tlk_modifications_path, self.game_language)
+                    modifications_tlk_data: TLK = read_tlk(tlk_modifications_path)
                     if len(modifications_tlk_data) == 0:
                         syntax_error_caught = True
                         msg = f"'{value}' file in mod directory is empty, but is required to perform modifier '{key}={value}' in [TLKList]"
@@ -488,12 +498,12 @@ class ConfigReader:
         else:
             value = FieldValueConstant(string_value.replace("<#LF#>", "\n").replace("<#CR#>", "\r"))
         if "(strref)" in key_lower:
-            value = FieldValueConstant(LocalizedStringDelta(value))
+            value = FieldValueConstant(LocalizedStringDelta(value, self.translator))
             key = key[: key_lower.index("(strref)")]
         elif "(lang" in key_lower:
             substring_id = int(key[key_lower.index("(lang") + 5 : -1])
             language, gender = LocalizedString.substring_pair(substring_id)
-            locstring = LocalizedStringDelta()
+            locstring = LocalizedStringDelta(translator=self.translator)
             locstring.set_data(language, gender, string_value)
             value = FieldValueConstant(locstring)
             key = key[: key_lower.index("(lang")]
@@ -549,7 +559,7 @@ class ConfigReader:
             if field_type.return_type() == LocalizedString:
                 stringref = self.field_value_gff(ini_data["StrRef"])
 
-                l_string_delta = LocalizedStringDelta(stringref)
+                l_string_delta = LocalizedStringDelta(stringref, self.translator)
                 for substring, text in ini_data.items():
                     if not substring.lower().startswith("lang"):
                         continue

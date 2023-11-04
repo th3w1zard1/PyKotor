@@ -29,11 +29,14 @@ class LocalizedStringDelta(LocalizedString):
     def __init__(self, stringref: FieldValue | None = None, translator: Translator | None = None) -> None:
         super().__init__(0)
         self.stringref: FieldValue | None = stringref
+        self.translator: Translator | None = translator
 
     def apply(self, locstring: LocalizedString, memory: PatcherMemory) -> None:
         if self.stringref is not None:
             locstring.stringref = self.stringref.value(memory, GFFFieldType.UInt32)
         for language, gender, text in self:
+            if self.translator:
+                text = self.translator.translate(text)  # noqa: PLW2901
             locstring.set_data(language, gender, text)
 
 

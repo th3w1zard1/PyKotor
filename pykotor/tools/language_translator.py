@@ -13,10 +13,12 @@ class TranslationOption(IntEnum):
     TRANSLATE = 3
 
 class Translator:
-    def __init__(self, language: Language, translation_option: TranslationOption=TranslationOption.DL_TRANSLATE) -> None:
-        self.language: Language = language or Language.ENGLISH
+    def __init__(self, from_lang: Language, translation_option: TranslationOption=TranslationOption.DL_TRANSLATE) -> None:
+        self.to_lang: Language
+        self.from_lang = from_lang or Language.ENGLISH
         self.translation_option: TranslationOption = translation_option
         self._translator = None
+        self._initialized = False
 
     def initialize(self) -> None:
         # Google Translate
@@ -32,16 +34,18 @@ class Translator:
             self._translator = dlt.TranslationModel()
         elif self.translation_option == TranslationOption.TRANSLATE:
             from translate import Translator
-            self._translator = Translator(to_lang=self.language.get_language_code())
+            self._translator = Translator(to_lang=self.to_lang.get_language_code())
         else:
             msg = "Invalid translation option selected"
             raise ValueError(msg)
+        self._initialized = True
 
     def translate(self, text: str, from_lang: Language | None = None, to_lang: Language | None = None) -> str:
-        if self._translator is None:
+        if self._initialized is None:
             self.initialize()
         translated_text = text
-        to_lang = to_lang or self.language
+        to_lang = to_lang or self.to_lang
+        from_lang = (from_lang or self.from_lang)
         from_lang_code: str = from_lang.get_language_code() if from_lang is not None else "auto"
         to_lang_code: str = to_lang.get_language_code()
 

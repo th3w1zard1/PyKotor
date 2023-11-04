@@ -5,7 +5,6 @@ from configparser import ConfigParser
 from datetime import datetime, timezone
 from enum import IntEnum
 from typing import TYPE_CHECKING
-from pykotor.common.language import Language
 
 from pykotor.common.misc import Game, decode_bytes_with_fallbacks
 from pykotor.common.stream import BinaryReader, BinaryWriter
@@ -22,6 +21,8 @@ from pykotor.tslpatcher.mods.tlk import ModificationsTLK
 if TYPE_CHECKING:
     import os
 
+    from pykotor.common.language import Language
+    from pykotor.tools.language_translator import Translator
     from pykotor.tslpatcher.mods.gff import ModificationsGFF
     from pykotor.tslpatcher.mods.nss import ModificationsNSS
     from pykotor.tslpatcher.mods.ssf import ModificationsSSF
@@ -66,7 +67,13 @@ class PatcherConfig:
         self.patches_nss: list[ModificationsNSS] = []
         self.patches_tlk: ModificationsTLK = ModificationsTLK()
 
-    def load(self, ini_text: str, mod_path: os.PathLike | str, logger: PatchLogger | None = None, game_language: Language | None = None) -> None:
+    def load(
+            self,
+            ini_text: str,
+            mod_path: os.PathLike | str,
+            logger: PatchLogger | None = None,
+            translator: Translator | None = None,
+        ) -> None:
         from pykotor.tslpatcher.reader import ConfigReader
 
         ini = ConfigParser(
@@ -79,7 +86,7 @@ class PatcherConfig:
         ini.optionxform = lambda optionstr: optionstr  #  type: ignore[method-assign]
         ini.read_string(ini_text)
 
-        ConfigReader(ini, mod_path, logger, game_language).load(self)
+        ConfigReader(ini, mod_path, logger, translator).load(self)
 
     def patch_count(self) -> int:
         return (
@@ -134,10 +141,12 @@ class ModInstaller:
         game_path: os.PathLike | str,
         changes_ini_path: os.PathLike | str,
         logger: PatchLogger | None = None,
+        translator: Translator | None = None,
     ):
         self.log: PatchLogger = logger or PatchLogger()
         self.game_path: CaseAwarePath = CaseAwarePath(game_path)
         self.mod_path: CaseAwarePath = CaseAwarePath(mod_path)
+        self.translator: Translator | None = translator
         self.changes_ini_path: CaseAwarePath = CaseAwarePath(changes_ini_path)
         if not self.changes_ini_path.exists():  # handle legacy syntax
             self.changes_ini_path = self.mod_path / self.changes_ini_path.name
@@ -168,9 +177,10 @@ class ModInstaller:
 
         game_tlk = read_tlk(self.game_path / "dialog.tlk")
         game_language = game_tlk.language
+        self.translator.to_lang = game_language
 
         self._config = PatcherConfig()
-        self._config.load(ini_text, self.mod_path, self.log, game_language)
+        self._config.load(ini_text, self.mod_path, self.log, self.translator)
 
         if self._config.required_file:
             requiredfile_path: CaseAwarePath = self.game_path / "Override" / self._config.required_file

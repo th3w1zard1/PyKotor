@@ -72,7 +72,6 @@ def read_tlk(
     source: SOURCE_TYPES,
     offset: int = 0,
     size: int | None = None,
-    translate_to_language: Language = Language.ENGLISH,
 ) -> TLK:
     """Returns an TLK instance from the source. The file format (TLK, TLK_XML or TLK_JSON) is automatically determined
     before parsing the data.
@@ -101,7 +100,7 @@ def read_tlk(
         raise ValueError(msg)
 
     if file_format == ResourceType.TLK:
-        return TLKBinaryReader(source, offset, size or 0, translate_to_language).load()
+        return TLKBinaryReader(source, offset, size or 0).load()
     if file_format == ResourceType.TLK_XML:
         return TLKXMLReader(source, offset, size or 0).load()
     if file_format == ResourceType.TLK_JSON:
