@@ -167,7 +167,7 @@ class App(tk.Tk):
         self.translate_check_var = tk.BooleanVar(value=False)
 
         # Setup the ComboBox for Language
-        self.language_combobox = ttk.Combobox(self, values=[*(lang.name for lang in Language), Language.AUTO.name], state="readonly")
+        self.language_combobox = ttk.Combobox(self, values=[lang.name for lang in Language], state="readonly")
         self.language_combobox.bind("<<ComboboxSelected>>", self.load_translator)
         self.language_combobox.set(Language.AUTO.name)  # Defaults to what's defined in the game directory.
 
