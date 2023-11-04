@@ -46,8 +46,8 @@ class Translator:
         translated_text = text
         to_lang = to_lang or self.to_lang
         from_lang = (from_lang or self.from_lang)
-        from_lang_code: str = from_lang.get_language_code()
-        to_lang_code: str = to_lang.get_language_code()
+        from_lang_code: str = from_lang.get_language_code()  # type: ignore[union-attr]
+        to_lang_code: str = to_lang.get_language_code()  # type: ignore[union-attr]
 
         if self.translation_option == TranslationOption.GOOGLETRANS:
             translated_text = self._translator.translate(text, src=from_lang_code, dest=to_lang_code).text  # type: ignore[attr-defined]
