@@ -103,7 +103,7 @@ class TLKBinaryReader(ResourceReader):
         self,
         stringref: int,
     ):
-        text_header = self._text_headers[stringref]
+        text_header: ArrayHead = self._text_headers[stringref]
 
         self._reader.seek(text_header.offset + self._texts_offset)
         text = self._reader.read_string(text_header.length)
@@ -119,7 +119,7 @@ class TLKBinaryWriter(ResourceWriter):
         strip_soundlength=False,
     ):
         super().__init__(target)
-        self._tlk = tlk
+        self._tlk: TLK = tlk
         self._strip_soundlength = strip_soundlength
 
     @autoclose

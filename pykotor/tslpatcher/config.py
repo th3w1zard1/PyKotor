@@ -175,10 +175,6 @@ class ModInstaller:
             self.log.add_warning(f"Could not determine encoding of '{self.changes_ini_path.name}'. Attempting to force load...")
             ini_text = ini_file_bytes.decode(encoding="iso-8859-1", errors="replace")
 
-        game_tlk = read_tlk(self.game_path / "dialog.tlk")
-        game_language = game_tlk.language
-        self.translator.to_lang = game_language
-
         self._config = PatcherConfig()
         self._config.load(ini_text, self.mod_path, self.log, self.translator)
 

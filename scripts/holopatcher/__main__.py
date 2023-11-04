@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, NoReturn
 
 from pykotor.common.language import Language
 from pykotor.common.misc import CaseInsensitiveDict, Game
+from pykotor.resource.formats.tlk import read_tlk
 from pykotor.tools.language_translator import TranslationOption, Translator
 from pykotor.tools.misc import striprtf, universal_simplify_exception
 from pykotor.tools.path import CaseAwarePath, Path, locate_game_paths
@@ -36,6 +37,8 @@ from pykotor.tslpatcher.reader import NamespaceReader
 
 if TYPE_CHECKING:
     from io import TextIOWrapper
+
+    from pykotor.resource.formats.tlk.tlk_data import TLK
 
 
 class ExitCode(IntEnum):
@@ -155,6 +158,8 @@ class App(tk.Tk):
         self.handle_commandline(cmdline_args)
 
         self.translator: Translator | None = None
+        self.game_language: Language | None = None
+        self.game_tlk: TLK | None = None
         self.setup_translator_controls()
 
     def setup_translator_controls(self) -> None:
@@ -162,8 +167,9 @@ class App(tk.Tk):
         self.translate_check_var = tk.BooleanVar(value=False)
 
         # Setup the ComboBox for Language
-        self.language_combobox = ttk.Combobox(self, values=[*(lang.name for lang in Language), "auto"], state="readonly")
-        self.language_combobox.set("auto")  # Defaults to what's defined in the game directory.
+        self.language_combobox = ttk.Combobox(self, values=[*(lang.name for lang in Language), Language.AUTO.name], state="readonly")
+        self.language_combobox.bind("<<ComboboxSelected>>", self.load_translator)
+        self.language_combobox.set(Language.AUTO.name)  # Defaults to what's defined in the game directory.
 
         # Setup the ComboBox for TranslationOption
         self.translation_option_combobox = ttk.Combobox(self, values=[opt.name for opt in TranslationOption])
@@ -186,7 +192,7 @@ class App(tk.Tk):
         if not self.translator:
             self.translator = Translator(from_lang, translate_option)
         else:
-            self.translator.to_lang = from_lang
+            self.translator.from_lang = from_lang
             self.translator.translation_option = translate_option
         self.translator._initialized = False
 
@@ -422,6 +428,11 @@ class App(tk.Tk):
         sys.exit(ExitCode.ABORT_INSTALL_UNSAFE)
 
     def on_gamepaths_chosen(self, event) -> None:
+        game_tlk_path = CaseAwarePath(self.gamepaths.get(), "dialog.tlk")
+        if self.translator and self.game_tlk != game_tlk_path and game_tlk_path.exists():
+            self.game_tlk = read_tlk(game_tlk_path)
+            game_language = self.game_tlk.language
+            self.translator.to_lang = game_language  # type: ignore[assignment]
         self.after(10, self.move_cursor_to_end)
 
     def move_cursor_to_end(self) -> None:
@@ -718,6 +729,13 @@ class App(tk.Tk):
 
     def set_stripped_rtf_text(self, rtf: TextIOWrapper) -> None:
         stripped_content: str = striprtf(rtf.read())
+        if self.translator:
+            game_tlk_path = CaseAwarePath(self.gamepaths.get(), "dialog.tlk")
+            if self.game_tlk != game_tlk_path and game_tlk_path.exists():
+                self.game_tlk = read_tlk(game_tlk_path)
+                game_language = self.game_tlk.language
+                self.translator.to_lang = game_language
+            stripped_content = self.translator.translate(stripped_content)
         self.description_text.config(state=tk.NORMAL)
         self.description_text.delete(1.0, tk.END)
         self.description_text.insert(tk.END, stripped_content)

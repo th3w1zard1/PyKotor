@@ -14,8 +14,8 @@ class TranslationOption(IntEnum):
 
 class Translator:
     def __init__(self, from_lang: Language, translation_option: TranslationOption=TranslationOption.DL_TRANSLATE) -> None:
-        self.to_lang: Language
-        self.from_lang = from_lang or Language.ENGLISH
+        self.to_lang = None
+        self.from_lang = from_lang
         self.translation_option: TranslationOption = translation_option
         self._translator = None
         self._initialized = False
@@ -41,12 +41,12 @@ class Translator:
         self._initialized = True
 
     def translate(self, text: str, from_lang: Language | None = None, to_lang: Language | None = None) -> str:
-        if self._initialized is None:
+        if not self._initialized:
             self.initialize()
         translated_text = text
         to_lang = to_lang or self.to_lang
         from_lang = (from_lang or self.from_lang)
-        from_lang_code: str = from_lang.get_language_code() if from_lang is not None else "auto"
+        from_lang_code: str = from_lang.get_language_code()
         to_lang_code: str = to_lang.get_language_code()
 
         if self.translation_option == TranslationOption.GOOGLETRANS:
