@@ -67,11 +67,15 @@ class Translator:
                 text = text[cut_off:].lstrip()  # Remove leading whitespace from next chunk
             return chunks
 
+        max_chunk_length = 10000
+        if self.translation_option == TranslationOption.TRANSLATE:
+            max_chunk_length = 500
+
         # Break the text into 500-character chunks
         chunks = chunk_text(text, 500)
         for chunk in chunks:
             # Ensure not cutting off in the middle of a word
-            if len(chunk) == 500 and not text[len(chunk)].isspace():
+            if len(chunk) == max_chunk_length and not text[len(chunk)].isspace():
                 cut_off = chunk.rfind(" ")
                 next_chunk = chunk[cut_off:] + (chunks[chunks.index(chunk) + 1] if len(chunks) > chunks.index(chunk) + 1 else "")
                 chunk = chunk[:cut_off]
