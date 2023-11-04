@@ -733,8 +733,8 @@ class App(tk.Tk):
             game_tlk_path = CaseAwarePath(self.gamepaths.get(), "dialog.tlk")
             if self.game_tlk != game_tlk_path and game_tlk_path.exists():
                 self.game_tlk = read_tlk(game_tlk_path)
-                game_language = self.game_tlk.language
-                self.translator.to_lang = game_language
+                game_language: Language = self.game_tlk.language
+                self.translator.to_lang = game_language  # type: ignore[assignment]
             stripped_content = self.translator.translate(stripped_content)
         self.description_text.config(state=tk.NORMAL)
         self.description_text.delete(1.0, tk.END)
