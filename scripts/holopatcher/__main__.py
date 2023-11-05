@@ -100,7 +100,7 @@ class App(tk.Tk):
         self.title("HoloPatcher")
 
         self.mod_path = ""
-        self.namespaces = []
+        self.namespaces: list[PatcherNamespace] = []
 
         self.initialize_logger()
         self.set_window(width=400, height=540)
@@ -552,6 +552,7 @@ class App(tk.Tk):
             if directory_str not in self.gamepaths["values"]:
                 self.gamepaths["values"] = (*self.gamepaths["values"], directory_str)
             self.after(10, self.move_cursor_to_end)
+            self.on_gamepaths_chosen(None)
         except Exception as e:  # noqa: BLE001
             error_name, msg = universal_simplify_exception(e)
             messagebox.showerror(
@@ -729,7 +730,7 @@ class App(tk.Tk):
 
     def set_stripped_rtf_text(self, rtf: TextIOWrapper) -> None:
         stripped_content: str = striprtf(rtf.read())
-        if self.translator:
+        if self.translator and not self.translator:  # disabled
             game_tlk_path = CaseAwarePath(self.gamepaths.get(), "dialog.tlk")
             if self.game_tlk != game_tlk_path and game_tlk_path.exists():
                 self.game_tlk = read_tlk(game_tlk_path)
