@@ -69,35 +69,12 @@ class Translator:
                 text = text[cut_off:].lstrip()  # Remove leading whitespace from next chunk
             return chunks
 
-        # New function to remove and record punctuation and symbols
-        def extract_and_index_punctuation(text: str):
-            punctuation_indices = []
-            clean_text = ""
-            for index, character in enumerate(text):
-                if character.isalnum() or character.isspace() or character in [".", ",", "!"]:
-                    clean_text += character
-                else:
-                    punctuation_indices.append((index, character))
-            return clean_text, punctuation_indices
-
-        # New function to reintegrate punctuation and symbols
-        def reintegrate_punctuation(translated_chunks, punctuation_indices):
-            full_translation = "".join(translated_chunks)
-            for index, symbol in reversed(punctuation_indices):
-                full_translation = full_translation[:index] + symbol + full_translation[index:]
-            return full_translation
-
         max_chunk_length = 1024
         if self.translation_option == TranslationOption.TRANSLATE:
             max_chunk_length = 500
 
-        # Extract punctuation and symbols from the text and get their indices
-        text_to_translate, punctuation_indices = extract_and_index_punctuation(text)
-
         # Break the text into appropriate chunks
-        chunks = chunk_text(text_to_translate, max_chunk_length)
-
-        translated_chunks: list[str] = []
+        chunks = chunk_text(text, max_chunk_length)
         chunk: str
         for chunk in chunks:
             # Ensure not cutting off in the middle of a word
@@ -110,21 +87,18 @@ class Translator:
 
             # Translate each chunk
             if self.translation_option == TranslationOption.GOOGLETRANS:
-                translated_chunks.append(self._translator.translate(chunk, src=from_lang_code, dest=to_lang_code).text)  # type: ignore[attr-defined]
+                translated_text = self._translator.translate(chunk, src=from_lang_code, dest=to_lang_code).text  # type: ignore[attr-defined]
             elif self.translation_option == TranslationOption.LIBRE:
                 if from_lang is None:
                     msg = "LibreTranslate requires a specified source language."
                     raise ValueError(msg)
-                translated_chunks.append(self._translator.translate(chunk, source=from_lang_code, target=to_lang_code))  # type: ignore[attr-defined]
+                translated_text = self._translator.translate(chunk, source=from_lang_code, target=to_lang_code)  # type: ignore[attr-defined]
             elif self.translation_option == TranslationOption.DL_TRANSLATE:
-                translated_chunks.append(self._translator.translate(chunk, source=from_lang.name, target=to_lang.name))  # type: ignore[attr-defined, union-attr]
+                translated_text = self._translator.translate(chunk, source=from_lang.name, target=to_lang.name)  # type: ignore[attr-defined, union-attr]
             elif self.translation_option == TranslationOption.TRANSLATE:
-                translated_chunks.append(self._translator.translate(chunk))  # type: ignore[attr-defined]
+                translated_text = self._translator.translate(chunk)  # type: ignore[attr-defined]
             else:
                 msg = "Invalid translation option selected"
                 raise ValueError(msg)
 
-        # Reintegrate the punctuation and symbols
-        # translated_text = reintegrate_punctuation(translated_chunks, punctuation_indices)  # type: ignore[reportGeneralTypeIssues]
-
-        return " ".join(translated_chunks)
+        return translated_text
