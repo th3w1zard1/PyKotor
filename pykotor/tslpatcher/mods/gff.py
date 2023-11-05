@@ -36,7 +36,7 @@ class LocalizedStringDelta(LocalizedString):
             locstring.stringref = self.stringref.value(memory, GFFFieldType.UInt32)
         for language, gender, text in self:
             if self.translator:
-                text = self.translator.translate(text)  # noqa: PLW2901
+                text = self.translator.translate(text, from_lang=language)  # noqa: PLW2901
             locstring.set_data(language, gender, text)
 
 
