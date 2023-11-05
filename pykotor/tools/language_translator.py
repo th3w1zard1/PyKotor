@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING
 
 from deep_translator import GoogleTranslator as GoogleTranslatorDeep
 from deep_translator import MyMemoryTranslator, PonsTranslator
-from googletrans import Translator as GoogleTranslator
-from libretranslatepy import LibreTranslateAPI
 
 if TYPE_CHECKING:
     from pykotor.common.language import Language
@@ -14,14 +12,11 @@ if TYPE_CHECKING:
 
 # Supported Translators
 class TranslationOption(IntEnum):
-    GOOGLETRANS=0
-    LIBRE=1
     # DL_TRANSLATE = 2  # this translator is LARGE and SLOW  # noqa: ERA001
-    LIBRE_FALLBACK=2
-    GOOGLE_TRANSLATE=3
-    PONS_TRANSLATOR=4
-    MY_MEMORY_TRANSLATOR=5
-    DEEPL=6
+    GOOGLE_TRANSLATE=0
+    PONS_TRANSLATOR=1
+    MY_MEMORY_TRANSLATOR=2
+    DEEPL=3
     #TRANSLATE = 99  # has api limits  # noqa: ERA001
 
 class Translator:
@@ -35,13 +30,7 @@ class Translator:
         self._initialized = False
 
     def initialize(self) -> None:
-        # Google Translate
-        if self.translation_option == TranslationOption.GOOGLETRANS:
-            self._translator = GoogleTranslator()
-        # LibreTranslate
-        elif self.translation_option == TranslationOption.LIBRE:
-            self._translator = LibreTranslateAPI("https://translate.argosopentech.com/")
-        elif self.translation_option == TranslationOption.GOOGLE_TRANSLATE:
+        if self.translation_option == TranslationOption.GOOGLE_TRANSLATE:
             self._translator = GoogleTranslatorDeep
         elif self.translation_option == TranslationOption.PONS_TRANSLATOR:
             self._translator = PonsTranslator
@@ -54,29 +43,6 @@ class Translator:
                     self.translate = None
             self._translator = AbstractTranslator()  # type: ignore[assignment]
             self._translator.translate = deepl_tr  # type: ignore[attr-defined]
-        elif self.translation_option == TranslationOption.LIBRE_FALLBACK:
-            import json
-
-            import requests
-            # Define a temporary object with a translate method
-            class LibreFallbackTranslator:
-                @staticmethod
-                def translate(text: str, source: str, target: str) -> str:
-                    response = requests.post(
-                        "https://libretranslate.com/translate",
-                        headers={"Content-Type": "application/json"},
-                        data=json.dumps(
-                            {
-                                "q": text,
-                                "source": source,
-                                "target": target,
-                            },
-                        ),
-                        timeout=10,
-                    )
-                    return response.json().get("translatedText", "")
-
-            self._translator = LibreFallbackTranslator()  # type: ignore[assignment]
         # this translator is LARGE and SLOW
         #elif self.translation_option == TranslationOption.DL_TRANSLATE:  # noqa: ERA001, RUF100
         #    import dl_translate as dlt  # noqa: ERA001
@@ -119,14 +85,7 @@ class Translator:
 
         def translate_main(chunk: str, option: TranslationOption) -> str:
             translated_chunk: str
-            if option == TranslationOption.GOOGLETRANS:
-                translated_chunk = self._translator.translate(chunk, src=from_lang_code, dest=to_lang_code).text  # type: ignore[attr-defined]
-            elif option in (TranslationOption.LIBRE, TranslationOption.LIBRE_FALLBACK):
-                if from_lang is None and option == TranslationOption.LIBRE:
-                    msg = "LibreTranslate requires a specified source language."
-                    raise ValueError(msg)
-                translated_chunk = self._translator.translate(chunk, source=from_lang_code, target=to_lang_code)  # type: ignore[attr-defined]
-            elif option in (
+            if option in (
                 TranslationOption.GOOGLE_TRANSLATE,
                 TranslationOption.PONS_TRANSLATOR,
                 TranslationOption.MY_MEMORY_TRANSLATOR,
@@ -154,8 +113,8 @@ class Translator:
             return chunk
 
         max_chunk_length = 1024
-        #if self.translation_option == TranslationOption.TRANSLATE:  # has api limits
-        #    max_chunk_length = 500  # noqa: ERA001
+        if self.translation_option == TranslationOption.MY_MEMORY_TRANSLATOR:
+            max_chunk_length = 500
 
         # Break the text into appropriate chunks
         chunks: list[str] = chunk_text(text, max_chunk_length)
@@ -191,7 +150,7 @@ class Translator:
                     translated_text += translate_main(chunk, option)
                     if not translated_text.strip() and chunk.strip():
                         msg = "No text returned."
-                        raise ValueError(msg)
+                        raise ValueError(msg)  # noqa: TRY301
                 # If translation succeeds, break out of the loop
                 break
             except Exception as e:  # noqa: BLE001
