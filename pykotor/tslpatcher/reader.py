@@ -5,7 +5,7 @@ from itertools import tee
 from typing import TYPE_CHECKING
 
 from pykotor.common.geometry import Vector3, Vector4
-from pykotor.common.language import Language, LocalizedString
+from pykotor.common.language import LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, ResRef, decode_bytes_with_fallbacks
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.formats.gff import GFFFieldType, GFFList, GFFStruct
@@ -221,7 +221,7 @@ class ConfigReader:
                         continue
                     token_id: int = next(value_iter)
                     entry: TLKEntry = tlk_data[token_id]
-                    text = entry.text
+                    text: str = entry.text
                     if self.translator:
                         text = self.translator.translate(text)
                     modifier = ModifyTLK(mod_index, text, entry.voiceover, is_replacement)

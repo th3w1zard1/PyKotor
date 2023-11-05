@@ -174,11 +174,10 @@ class App(tk.Tk):
         # Setup the ComboBox for TranslationOption
         self.translation_option_combobox = ttk.Combobox(self, values=[opt.name for opt in TranslationOption])
         self.translation_option_combobox.bind("<<ComboboxSelected>>", self.load_translator)
-        self.translation_option_combobox.set(TranslationOption.DL_TRANSLATE.name)
 
         # Setup the Checkbox
         self.translate_checkbox = ttk.Checkbutton(self, text="Translate", variable=self.translate_check_var, command=self.toggle_translation)
-        self.translate_checkbox.place(x=0, y=500, width=100, height=40)
+        self.translate_checkbox.place(x=0, y=500, width=70, height=40)
 
         # Setup Load button (should be disabled when translator is tested and functional as it auto-initializes when needed)
         self.initialize_translator_button = ttk.Button(self, text="Initialize Translator", command=lambda: self.translator.initialize())
@@ -186,9 +185,13 @@ class App(tk.Tk):
         # Initially hide the comboboxes
         self.toggle_translation(event=None)
 
-    def load_translator(self, event=None):
+    def load_translator(self, event=None) -> None:
         from_lang = Language.from_name(self.language_combobox.get())
-        translate_option = TranslationOption.__dict__[self.translation_option_combobox.get()]
+        translate_option_str: str = self.translation_option_combobox.get().strip()
+        translate_option: TranslationOption = TranslationOption(0)
+        if translate_option_str.strip() in TranslationOption.__members__:
+            translate_option = TranslationOption.__members__[translate_option_str]  # type: ignore[reportGeneralTypeIssues]
+        self.translation_option_combobox.set(translate_option.name)
         if not self.translator:
             self.translator = Translator(from_lang, translate_option)
         else:
@@ -196,11 +199,11 @@ class App(tk.Tk):
             self.translator.translation_option = translate_option
         self.translator._initialized = False
 
-    def toggle_translation(self, event=None):
+    def toggle_translation(self, event=None) -> None:
         # Check the boolean value of the check_var to determine whether to show or hide the combo boxes
         if self.translate_check_var.get():
-            self.language_combobox.place(x=100, y=500, width=100, height=20)
-            self.translation_option_combobox.place(x=100, y=520, width=100, height=20)
+            self.language_combobox.place(x=80, y=500, width=120, height=20)
+            self.translation_option_combobox.place(x=80, y=520, width=120, height=20)
             self.initialize_translator_button.place(x=210, y=500, width=150, height=30)
             self.load_translator()
         else:
@@ -730,7 +733,7 @@ class App(tk.Tk):
 
     def set_stripped_rtf_text(self, rtf: TextIOWrapper) -> None:
         stripped_content: str = striprtf(rtf.read())
-        if self.translator and not self.translator:  # disabled
+        if self.translator:  # disabled
             game_tlk_path = CaseAwarePath(self.gamepaths.get(), "dialog.tlk")
             if self.game_tlk != game_tlk_path and game_tlk_path.exists():
                 self.game_tlk = read_tlk(game_tlk_path)
