@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import json
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
+import requests
 from deep_translator import GoogleTranslator as GoogleTranslatorDeep
 from deep_translator import MyMemoryTranslator, PonsTranslator
 from googletrans import Translator as GoogleTranslator
 from libretranslatepy import LibreTranslateAPI
+from translate import Translator as TranslateTranslator
+
+from pykotor.tools.deepl_scraper import deepl_tr
 
 if TYPE_CHECKING:
     from pykotor.common.language import Language
@@ -48,16 +53,12 @@ class Translator:
         elif self.translation_option == TranslationOption.MY_MEMORY_TRANSLATOR:
             self._translator = MyMemoryTranslator
         elif self.translation_option == TranslationOption.DEEPL:
-            from pykotor.tools.deepl_scraper import deepl_tr
             class AbstractTranslator:
                 def __init__(self):
                     self.translate = None
             self._translator = AbstractTranslator()  # type: ignore[assignment]
             self._translator.translate = deepl_tr  # type: ignore[attr-defined]
         elif self.translation_option == TranslationOption.LIBRE_FALLBACK:
-            import json
-
-            import requests
             # Define a temporary object with a translate method
             class LibreFallbackTranslator:
                 @staticmethod
@@ -83,8 +84,7 @@ class Translator:
         #    self._translator = dlt.TranslationModel()  # noqa: ERA001
         # has api limits
         elif self.translation_option == TranslationOption.TRANSLATE:
-            from translate import Translator
-            self._translator = Translator(to_lang=self.to_lang.get_language_code())
+            self._translator = TranslateTranslator(to_lang=self.to_lang.get_language_code())
         else:
             msg = "Invalid translation option selected"
             raise ValueError(msg)
