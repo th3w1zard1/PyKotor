@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 class TranslationOption(IntEnum):
     GOOGLETRANS=0
     LIBRE=1
-    # DL_TRANSLATE = 2  # this translator is LARGE and SLOW  # noqa: ERA001
+    # DL_TRANSLATE = 2  # this translator is LARGE and SLOW, max text length 1024  # noqa: ERA001
     LIBRE_FALLBACK=2
     GOOGLE_TRANSLATE=3
     PONS_TRANSLATOR=4
     MY_MEMORY_TRANSLATOR=5
     DEEPL=6
-    #TRANSLATE = 99  # has api limits  # noqa: ERA001
+    TRANSLATE = 99  # has api limits max text length 500
 
 class Translator:
     def __init__(self, from_lang: Language, translation_option: TranslationOption=TranslationOption.GOOGLE_TRANSLATE) -> None:
@@ -72,7 +72,7 @@ class Translator:
                                 "target": target,
                             },
                         ),
-                        timeout=10,
+                        timeout=6,
                     )
                     return response.json().get("translatedText", "")
 
@@ -82,15 +82,15 @@ class Translator:
         #    import dl_translate as dlt  # noqa: ERA001
         #    self._translator = dlt.TranslationModel()  # noqa: ERA001
         # has api limits
-        #elif self.translation_option == TranslationOption.TRANSLATE:  # noqa: ERA001, RUF100
-        #    from translate import Translator  # noqa: ERA001
-        #    self._translator = Translator(to_lang=self.to_lang.get_language_code())  # noqa: ERA001
+        elif self.translation_option == TranslationOption.TRANSLATE:
+            from translate import Translator
+            self._translator = Translator(to_lang=self.to_lang.get_language_code())
         else:
             msg = "Invalid translation option selected"
             raise ValueError(msg)
         self._initialized = True
 
-    def translate(self, text: str, from_lang: Language | None = None, to_lang: Language | None = None) -> str:
+    def translate(self, text: str, from_lang: Language | None = None, to_lang: Language | None = None) -> str:  # noqa: C901, PLR0915
         if not self._initialized:
             self.initialize()
         translated_text: str = ""
@@ -191,7 +191,7 @@ class Translator:
                     translated_text += translate_main(chunk, option)
                     if not translated_text.strip() and chunk.strip():
                         msg = "No text returned."
-                        raise ValueError(msg)
+                        raise ValueError(msg)  # noqa: TRY301
                 # If translation succeeds, break out of the loop
                 break
             except Exception as e:  # noqa: BLE001
