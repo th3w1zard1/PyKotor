@@ -14,7 +14,8 @@ from pykotor.tools.misc import is_capsule_file
 from pykotor.tools.path import CaseAwarePath, PurePath
 from pykotor.tslpatcher.logger import PatchLogger
 from pykotor.tslpatcher.memory import PatcherMemory
-from pykotor.tslpatcher.mods.install import InstallFolder, create_backup
+from pykotor.tslpatcher.mods.install import InstallFile, create_backup
+from pykotor.tslpatcher.mods.template import OverrideType
 from pykotor.tslpatcher.mods.tlk import ModificationsTLK
 
 if TYPE_CHECKING:
@@ -48,6 +49,7 @@ class LogLevel(IntEnum):
     information that may be useful for a Modder to see what is happening. Intended for
     Debugging."""
 
+
 class PatcherConfig:
     def __init__(self) -> None:
         self.window_title: str = ""
@@ -57,7 +59,7 @@ class PatcherConfig:
         self.required_file: str | None = None
         self.required_message: str = ""
 
-        self.install_list: list[InstallFolder] = []
+        self.install_list: list[InstallFile] = []
         self.patches_2da: list[Modifications2DA] = []
         self.patches_gff: list[ModificationsGFF] = []
         self.patches_ssf: list[ModificationsSSF] = []
@@ -84,7 +86,7 @@ class PatcherConfig:
             len(self.patches_2da)
             + len(self.patches_gff)
             + len(self.patches_ssf)
-            + 1  # probably dialog.tlk
+            + len(self.patches_tlk.modifiers)
             + len(self.install_list)
             + len(self.patches_nss)
         )
@@ -158,11 +160,11 @@ class ModInstaller:
             return self._config
 
         ini_file_bytes = BinaryReader.load_file(self.changes_ini_path)
-        ini_text = decode_bytes_with_fallbacks(ini_file_bytes)
-
-        if ini_text is None:
+        try:
+            ini_text = decode_bytes_with_fallbacks(ini_file_bytes)
+        except UnicodeDecodeError:
             self.log.add_warning(f"Could not determine encoding of '{self.changes_ini_path.name}'. Attempting to force load...")
-            ini_text = ini_file_bytes.decode(encoding="iso-8859-1", errors="replace")
+            ini_text = ini_file_bytes.decode(encoding="utf-32", errors="replace")
 
         self._config = PatcherConfig()
         self._config.load(ini_text, self.mod_path, self.log)
@@ -177,6 +179,7 @@ class ModInstaller:
         if self._game:
             return self._game
         path = self.game_path
+
         def check(x) -> bool:
             file_path: CaseAwarePath = path.joinpath(x)
             return file_path.exists()
@@ -209,76 +212,103 @@ class ModInstaller:
             if uninstall_dir.exists():
                 shutil.rmtree(uninstall_dir)
         except PermissionError as e:
-            self.log.add_warning(f"Could not initialize backup folder: {e}")
+            self.log.add_warning(f"Could not initialize backup folder: {e!r}")
         backup_dir = backup_dir / "backup" / timestamp
         try:
             backup_dir.mkdir(parents=True, exist_ok=True)
         except PermissionError as e:
-            self.log.add_warning(f"Could not create backup folder: {e}")
+            self.log.add_warning(f"Could not create backup folder: {e!r}")
         self.log.add_note(f"Using backup directory: '{backup_dir}'")
         self._backup = backup_dir
         self._processed_backup_files = set()
         return (self._backup, self._processed_backup_files)
 
-    def handle_capsule_and_backup(self, patch, output_container_path: CaseAwarePath) -> tuple[bool, Capsule | None]:
+    def handle_capsule_and_backup(
+        self,
+        patch: PatcherModifications,
+        output_container_path: CaseAwarePath,
+    ) -> tuple[bool, Capsule | None]:
         capsule = None
-        filename = PurePath(patch.filename)
-        if filename.suffix.lower() == ".nss":
-            filename.with_suffix(".ncs")
         if is_capsule_file(patch.destination):
             capsule = Capsule(output_container_path)
             create_backup(self.log, output_container_path, *self.backup(), PurePath(patch.destination).parent)
-            exists = capsule.exists(*ResourceIdentifier.from_path(filename))
+            exists = capsule.exists(*ResourceIdentifier.from_path(patch.saveas))
         else:
-            create_backup(self.log, output_container_path.joinpath(patch.filename), *self.backup(), patch.destination)
-            exists = output_container_path.joinpath(filename).exists()
+            create_backup(self.log, output_container_path.joinpath(patch.saveas), *self.backup(), patch.destination)
+            exists = output_container_path.joinpath(patch.saveas).exists()
         return (exists, capsule)
 
     def lookup_resource(
         self,
-        patch,
+        patch: PatcherModifications,
         output_container_path: CaseAwarePath,
         exists_at_output_location: bool | None = None,
         capsule: Capsule | None = None,
     ) -> bytes | None:
-        if getattr(patch, "replace_file", None) or not exists_at_output_location:
-            return BinaryReader.load_file(self.mod_path / patch.filename)
-        if capsule is not None:
-            return capsule.resource(*ResourceIdentifier.from_path(patch.filename))
-        return BinaryReader.load_file(output_container_path / patch.filename)
+        try:
+            if patch.replace_file or not exists_at_output_location:
+                return BinaryReader.load_file(self.mod_path / patch.sourcefile)
+            if capsule is None:
+                return BinaryReader.load_file(output_container_path / patch.saveas)
+            return capsule.resource(*ResourceIdentifier.from_path(patch.saveas))
+        except OSError as e:
+            self.log.add_error(f"Could not load source file to {patch.action.lower().strip()}: {e!r}")
+            return None
+
+    def handle_override_type(self, patch: PatcherModifications):
+        override_type = patch.override_type.lower().strip()
+        if not override_type or override_type == OverrideType.IGNORE:
+            return
+
+        override_dir = self.game_path / "Override"
+        override_resource_path = override_dir / patch.saveas
+        if override_resource_path.exists():
+            if override_type == OverrideType.RENAME:
+                new_filepath: CaseAwarePath = override_dir / ("old_" + patch.saveas)
+                i = 2
+                while new_filepath.exists():  # tslpatcher does not do this loop.
+                    stem = new_filepath.stem if i == 2 else (new_filepath.stem[:-4] + f" ({i})")  # noqa: PLR2004
+                    new_filepath = (new_filepath.parent / stem).with_suffix(new_filepath.suffix)
+                    i += 1
+                try:
+                    shutil.move(override_resource_path, new_filepath)
+                except Exception as e:  # noqa: BLE001
+                    # Handle exceptions such as permission errors or file in use.
+                    self.log.add_error(f"Could not rename '{patch.saveas}' to '{new_filepath.name}' in the Override folder: {e!r}")
+            elif override_type == OverrideType.WARN:
+                self.log.add_warning(f"A resource located at '{override_resource_path}' is shadowing this mod's changes in {patch.destination}!")
 
     def should_patch(
         self,
-        patch,
+        patch: PatcherModifications,
         exists: bool | None = False,
         capsule: Capsule | None = None,
     ) -> bool:
         local_folder = self.game_path.name if patch.destination == "." else patch.destination
-        is_replaceable = hasattr(patch, "replace_file")
-        replace_file = is_replaceable and patch.replace_file
-        no_replacefile_check = getattr(patch, "no_replacefile_check", None)
-
-        action = getattr(patch, "action", "Patch" + " ")
         container_type = "folder" if capsule is None else "archive"
 
-        if replace_file and exists:
-            self.log.add_note(f"{action[:-1]}ing '{patch.filename}' and replacing existing file in the '{local_folder}' {container_type}")
+        if patch.replace_file and exists:
+            saveas_str = f"'{patch.saveas}' in" if patch.saveas != patch.sourcefile else "in"
+            self.log.add_note(f"{patch.action[:-1]}ing '{patch.sourcefile}' and replacing existing file {saveas_str} the '{local_folder}' {container_type}")
             return True
 
-        if no_replacefile_check and exists:
-            self.log.add_note(f"{action[:-1]}ing existing file '{patch.filename}' in the '{local_folder}' {container_type}")
+        if not patch.skip_if_not_replace and not patch.replace_file and exists:
+            self.log.add_note(f"{patch.action[:-1]}ing existing file '{patch.saveas}' in the '{local_folder}' {container_type}")
             return True
 
-        if is_replaceable and exists:
-            self.log.add_warning(f"'{patch.filename}' already exists in the '{local_folder}' {container_type}. Skipping file...")
+        if patch.skip_if_not_replace and not patch.replace_file and exists:  # [InstallList] only
+            self.log.add_warning(f"'{patch.saveas}' already exists in the '{local_folder}' {container_type}. Skipping file...")
             return False
 
-        if capsule is not None and not capsule._path.exists():
-            self.log.add_error(f"The capsule '{patch.destination}' did not exist when attempting to {action.lower().rstrip()} '{patch.filename}'. Skipping file...")
+        if capsule is not None and not capsule.path().exists():
+            self.log.add_error(f"The capsule '{patch.destination}' did not exist when attempting to {patch.action.lower().rstrip()} '{patch.sourcefile}'. Skipping file...")
             return False
 
-        save_type: str = "adding" if capsule is not None else "saving"
-        self.log.add_note(f"{action[:-1]}ing '{patch.filename}' and {save_type} to the '{local_folder}' {container_type}")
+        # In capsules, I haven't seen any TSLPatcher mods reach this point. I know TSLPatcher at least supports this portion for non-capsules.
+        # Most mods will use an [InstallList] to ensure the files exist before patching anyways, but not all.
+        save_type: str = "adding" if capsule is not None and patch.saveas == patch.sourcefile else "saving"
+        saving_as_str = f"as '{patch.saveas}' in" if patch.saveas != patch.sourcefile else "to"
+        self.log.add_note(f"{patch.action[:-1]}ing '{patch.sourcefile}' and {save_type} {saving_as_str} the '{local_folder}' {container_type}")
         return True
 
     def install(self) -> None:
@@ -286,38 +316,33 @@ class ModInstaller:
         self.game()  # ensure the KOTOR directory is somewhat valid
         memory = PatcherMemory()
 
-        # Move nwscript.nss to Override if there are any nss patches to do
-        # if len(config.patches_nss) > 0:
-        #    folder_install = InstallFolder("Override")  # noqa: ERA001
-        #    config.install_list.append(folder_install)  # noqa: ERA001
-        #    file_install = InstallFile("nwscript.nss", replace_existing=True)  # noqa: ERA001
-        #    folder_install.files.append(file_install)  # noqa: ERA001
-
-        if len(config.install_list) > 0:
-            self.log.add_note(f"Applying {len(config.install_list)} patches from [InstallList]...")
-            for folder in config.install_list:
-                folder.apply(self.log, self.mod_path, self.game_path, *self.backup())
-                self.log.complete_patch()
-
-        patches_list: list[PatcherModifications] = [*config.patches_2da, *config.patches_gff, *config.patches_nss, *config.patches_ssf]
-        if len(config.patches_tlk.modifiers) > 0:  # skip if no patches need to be made (faster)
-            self.log.add_note(f"Applying {len(config.patches_tlk.modifiers)} patches from [TLKList]...")
-            patches_list.insert(0, config.patches_tlk)  # patching these first is important as their StrRefs are used in other patch lists.
+        patches_list: list[PatcherModifications] = [
+            *config.install_list,
+            *([config.patches_tlk] if config.patches_tlk.modifiers else []),
+            *config.patches_2da,
+            *config.patches_gff,
+            *config.patches_nss,
+            *config.patches_ssf,
+        ]
 
         for patch in patches_list:
             output_container_path = self.game_path / patch.destination
             exists, capsule = self.handle_capsule_and_backup(patch, output_container_path)
-            if not self.should_patch(patch, exists, capsule):  # only returns False for installlist (which currently doesn't use it - todo)
+            if not self.should_patch(patch, exists, capsule):
                 continue
             data_to_patch_bytes = self.lookup_resource(patch, output_container_path, exists, capsule)
-            if not data_to_patch_bytes:
-                self.log.add_error(f"Could not locate resource to patch: '{patch.filename}'")
+            if data_to_patch_bytes is None:  # check None instead of `not data_to_patch_bytes` as sometimes mods will installlist empty files.
+                self.log.add_error(f"Could not locate resource to {patch.action.lower().strip()}: '{patch.sourcefile}'")
                 continue
+            if not data_to_patch_bytes:
+                self.log.add_warning(f"'{patch.sourcefile}' has no content/data and is completely empty.")
+
             patched_bytes_data = patch.apply(data_to_patch_bytes, memory, self.log, self.game())
             if capsule is not None:
-                capsule.add(*ResourceIdentifier.from_path(patch.filename), patched_bytes_data)
+                self.handle_override_type(patch)
+                capsule.add(*ResourceIdentifier.from_path(patch.saveas), patched_bytes_data)
             else:
-                BinaryWriter.dump(output_container_path / patch.filename, patched_bytes_data)
+                BinaryWriter.dump(output_container_path / patch.saveas, patched_bytes_data)
             self.log.complete_patch()
 
         self.log.add_note(f"Successfully completed {self.log.patches_completed} total patches.")

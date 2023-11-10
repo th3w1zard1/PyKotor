@@ -1,18 +1,21 @@
+from __future__ import annotations
+
 import json
 import xml.etree.ElementTree as ElemTree
 import zipfile
 from contextlib import suppress
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import markdown
 import requests
 from config import UPDATE_INFO_LINK
-from toolset.gui.dialogs.asyncloader import AsyncLoader
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem, QWidget
 
+from pykotor.common.misc import decode_bytes_with_fallbacks
 from pykotor.common.stream import BinaryReader
+from toolset.gui.dialogs.asyncloader import AsyncLoader
 
 
 class HelpWindow(QMainWindow):
@@ -56,7 +59,7 @@ class HelpWindow(QMainWindow):
             # self.version = data["version"]
             # self._setupContentsRecJSON(None, data)
 
-    def _setupContentsRecJSON(self, parent: Optional[QTreeWidgetItem], data: Dict) -> None:
+    def _setupContentsRecJSON(self, parent: Optional[QTreeWidgetItem], data: dict) -> None:
         add = self.ui.contentsTree.addTopLevelItem if parent is None else parent.addChild
 
         if "structure" in data:
@@ -105,7 +108,7 @@ class HelpWindow(QMainWindow):
 
     def displayFile(self, filepath: str) -> None:
         try:
-            text = BinaryReader.load_file(filepath).decode()
+            text = decode_bytes_with_fallbacks(BinaryReader.load_file(filepath))
             html = markdown.markdown(text, extensions=["tables", "fenced_code", "codehilite"]) if filepath.lower().endswith(".md") else text
             self.ui.textDisplay.setHtml(html)
         except OSError:

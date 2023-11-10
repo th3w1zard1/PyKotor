@@ -3,8 +3,6 @@ from __future__ import annotations
 from operator import attrgetter
 from typing import TYPE_CHECKING, ClassVar
 
-from toolset.gui.editor import Editor
-from toolset.gui.widgets.settings.installations import GlobalSettings, NoConfigurationSetError
 from PyQt5 import QtCore
 from PyQt5.QtCore import QRect, QRegExp, QSize
 from PyQt5.QtGui import (
@@ -27,7 +25,6 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QWidget,
 )
-from toolset.utils.script import compileScript, decompileScript
 
 from pykotor.common.scriptdefs import (
     KOTOR_CONSTANTS,
@@ -40,11 +37,16 @@ from pykotor.resource.formats.erf import ERF, read_erf, write_erf
 from pykotor.resource.formats.rim import RIM, read_rim, write_rim
 from pykotor.resource.type import ResourceType
 from pykotor.tools.path import Path
+from toolset.gui.editor import Editor
+from toolset.gui.widgets.settings.installations import (
+    GlobalSettings,
+    NoConfigurationSetError,
+)
+from toolset.utils.script import compileScript, decompileScript
 
 if TYPE_CHECKING:
-    from toolset.data.installation import HTInstallation
-
     from pykotor.common.script import ScriptFunction
+    from toolset.data.installation import HTInstallation
 
 
 class NSSEditor(Editor):

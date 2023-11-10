@@ -260,7 +260,7 @@
     {
       "label": "Build HoloPatcher - PyInstaller",
       "type": "shell",
-      "dependsOn": ["requirements.txt"],
+      "dependsOn": ["requirements.txt", "install_pyinstaller"],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
@@ -347,8 +347,23 @@
         "--onefile",
         "--clean",
         "--name=kotordiff",
-        "--path=${workspaceFolder}",
         "scripts${pathSeparator}kotordiff${pathSeparator}__main__.py"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Build K-BatchPatcher",
+      "type": "shell",
+      "dependsOn": ["requirements.txt", "install_pyinstaller"],
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "-m",
+        "PyInstaller",
+        "--console",
+        "--onefile",
+        "--clean",
+        "--name=K_BatchPatcher",
+        "scripts${pathSeparator}k_batchpatcher${pathSeparator}__main__.py"
       ],
       "problemMatcher": []
     },
@@ -364,7 +379,6 @@
         "--onefile",
         "--clean",
         "--name=gui_creator",
-        "--path=${workspaceFolder}",
         "scripts${pathSeparator}guicreator${pathSeparator}__main__.py"
       ],
       "problemMatcher": []
@@ -381,7 +395,6 @@
         "--onefile",
         "--clean",
         "--name=mdl_decompile",
-        "--path=${workspaceFolder}",
         "scripts${pathSeparator}mdl_decompile${pathSeparator}__main__.py"
       ],
       "problemMatcher": []

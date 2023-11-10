@@ -731,7 +731,7 @@ class FieldAccess:
 
         is_global = scoped.is_global
         offset = scoped.offset
-        datatype = scoped.datatype
+        datatype: DynamicDataType = scoped.datatype
 
         for next_ident in self.identifiers[1:]:
             # Check previous datatype to see what members are accessible

@@ -13,13 +13,43 @@ class Language(IntEnum):
     GERMAN = 2
     ITALIAN = 3
     SPANISH = 4
+
+    # Polish requires different 'font' packages with the cp-1251 character set.
     POLISH = 5
 
+    # The following languages are supported in the GFF/TLK file formats, but do not adhere to the 8-bit encoding requirement
+    # therefore are probably incompatible with KOTOR.
+    KOREAN = 128
+    CHINESE_TRADITIONAL = 129
+    CHINESE_SIMPLIFIED = 130
+    JAPANESE = 131
+
     @staticmethod
-    def _missing_(value: int) -> IntEnum:
-        if value != 0x7FFFFFFF:  # unused?
-            print(f"Missing language int {value}")
+    def _missing_(value) -> IntEnum:
+        if not isinstance(value, int):
+            return NotImplemented
+
+        if value != 0x7FFFFFFF:  # 0x7FFFFFFF is unset/disabled/unused
+            print(f"Language integer not found: {value}")
         return Language.ENGLISH
+
+    def get_encoding(self):
+        """Get the encoding for the specified language."""
+        if self in (Language.ENGLISH, Language.FRENCH, Language.GERMAN, Language.ITALIAN, Language.SPANISH):
+            return "windows-1252"
+        if self == Language.POLISH:
+            return "windows-1250"
+
+        if self == Language.KOREAN:
+            return "euc_kr"
+        if self == Language.CHINESE_TRADITIONAL:
+            return "big5"
+        if self == Language.CHINESE_SIMPLIFIED:
+            return "gb18030"
+        if self == Language.JAPANESE:
+            return "shift_jis"
+        msg = f"No encoding defined for language: {self.name}"
+        raise ValueError(msg)
 
 
 class Gender(IntEnum):
@@ -77,12 +107,12 @@ class LocalizedString:
     def __hash__(self):
         return hash(self.stringref)
 
-    @staticmethod
-    def from_invalid() -> LocalizedString:
-        return LocalizedString(-1)
+    @classmethod
+    def from_invalid(cls):
+        return cls(-1)
 
-    @staticmethod
-    def from_english(text: str) -> LocalizedString:
+    @classmethod
+    def from_english(cls, text: str):
         """Returns a new localizedstring object with a english substring.
 
         Args:
@@ -93,7 +123,7 @@ class LocalizedString:
         -------
             a new localizedstring object.
         """
-        locstring = LocalizedString(-1)
+        locstring = cls(-1)
         locstring.set_data(Language.ENGLISH, Gender.MALE, text)
         return locstring
 
