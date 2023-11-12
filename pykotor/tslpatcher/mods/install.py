@@ -3,12 +3,13 @@ from __future__ import annotations
 import shutil
 from typing import TYPE_CHECKING
 
-from pykotor.tools.path import CaseAwarePath, PurePath
+from pykotor.helpers.path import PurePath
 from pykotor.tslpatcher.mods.template import PatcherModifications
 
 if TYPE_CHECKING:
     import os
 
+    from pykotor.tools.path import CaseAwarePath
     from pykotor.tslpatcher.logger import PatchLogger
 
 
@@ -19,6 +20,22 @@ def create_backup(
     processed_files: set,
     subdirectory_path: os.PathLike | str | None = None,
 ):  # sourcery skip: extract-method
+    """Creates a backup of the provided file
+    Args:
+        log: PatchLogger - Logger for logging messages
+        destination_filepath: CaseAwarePath - Filepath to backup
+        backup_folderpath: CaseAwarePath - Folder to store backups
+        processed_files: set - Set of already backed up files
+        subdirectory_path: os.PathLike/str/None - Optional subdirectory path
+    Returns:
+        None
+    Processing Logic:
+        - Checks if file exists at destination_filepath
+        - Copies file to backup folder if it exists
+        - Generates new backup filename if one already exists
+        - Logs backup action
+        - Adds file path to processed_files set.
+    """
     destination_file_str = str(destination_filepath)
     destination_file_str_lower = destination_file_str.lower()
     subdirectory_backup_path = None

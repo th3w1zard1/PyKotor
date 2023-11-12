@@ -7,6 +7,7 @@ from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QListWidgetItem, QWidget
 
 from pykotor.common.stream import BinaryWriter
+from pykotor.helpers.path import Path
 from pykotor.resource.formats.erf import read_erf, write_erf
 from pykotor.resource.formats.rim import read_rim, write_rim
 from pykotor.resource.generics.utc import UTC, bytes_utc
@@ -19,7 +20,6 @@ from pykotor.resource.generics.utt import UTT, bytes_utt
 from pykotor.resource.generics.utw import UTW, bytes_utw
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_erf_or_mod_file, is_rim_file
-from pykotor.tools.path import Path
 from toolset.gui.widgets.settings.installations import GlobalSettings
 
 if TYPE_CHECKING:
@@ -30,6 +30,20 @@ if TYPE_CHECKING:
 
 class InsertInstanceDialog(QDialog):
     def __init__(self, parent: QWidget, installation: HTInstallation, module: Module, restype: ResourceType):
+        """Initialize a resource editor dialog
+        Args:
+            parent: QWidget - Parent widget
+            installation: HTInstallation - HT installation object
+            module: Module - Module object
+            restype: ResourceType - Resource type
+        Returns:
+            None - Does not return anything
+        Initializes the resource editor dialog:
+            - Sets up UI elements
+            - Connects signal handlers
+            - Populates resource list
+            - Initializes location selector.
+        """
         super().__init__(parent)
 
         self._installation: HTInstallation = installation
@@ -64,6 +78,18 @@ class InsertInstanceDialog(QDialog):
         self.ui.locationSelect.setCurrentIndex(self.ui.locationSelect.count() - 1)
 
     def _setupResourceList(self) -> None:
+        """Populates a resource list widget with available resources.
+
+        Args:
+        ----
+            self: The class instance
+        Returns:
+            None
+        Processing Logic:
+            - Loops through installation resources and adds matching type
+            - Loops through module capsules and nested resources, adding matching type
+            - Selects first item if list is populated.
+        """
         for resource in self._installation.chitin_resources():
             if resource.restype() == self._restype:
                 item = QListWidgetItem(resource.resname())
@@ -84,6 +110,17 @@ class InsertInstanceDialog(QDialog):
             self.ui.resourceList.item(0).setSelected(True)
 
     def accept(self) -> None:
+        """Accepts resource selection and updates module accordingly
+        Args:
+            self: Accepts the class instance
+        Returns:
+            None: Does not return anything
+        Processing Logic:
+            - Checks which radio button is selected for reuse, copy or create resource
+            - Sets resource name, file path and data based on selection
+            - Writes data to file if resource is new
+            - Adds resource location to module.
+        """
         super().accept()
 
         new = True

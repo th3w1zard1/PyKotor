@@ -1,7 +1,8 @@
-from toolset.data.settings import Settings
-from toolset.gui.widgets.settings.base import SettingsWidget
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget
+
+from toolset.data.settings import Settings
+from toolset.gui.widgets.settings.base import SettingsWidget
 from toolset.utils.misc import QtKey, QtMouse
 
 
@@ -9,6 +10,19 @@ class GITWidget(SettingsWidget):
     editedSignal = QtCore.pyqtSignal()
 
     def __init__(self, parent: QWidget):
+        """Initializes the GIT settings widget
+        Args:
+            parent (QWidget): The parent widget
+        Returns:
+            None
+        Processing Logic:
+            - Calls the parent __init__ method
+            - Initializes settings object
+            - Loads UI from form
+            - Sets alpha channel allowed for colour pickers
+            - Connects reset buttons to methods
+            - Calls setupValues method.
+        """
         super().__init__(parent)
 
         self.settings = GITSettings()

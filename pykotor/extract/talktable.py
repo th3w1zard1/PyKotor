@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, NamedTuple
 from pykotor.common.language import Language
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryReader
-from pykotor.tools.path import Path
+from pykotor.helpers.path import Path
 
 if TYPE_CHECKING:
     import os
@@ -55,7 +55,7 @@ class TalkTable:
                 stringref,
             )
             reader.seek(texts_offset + text_offset)
-            string = reader.read_string(text_length)
+            string = reader.read_string(text_length, encoding=None)
         reader.close()
         return string
 
@@ -67,11 +67,18 @@ class TalkTable:
 
         Args:
         ----
-            stringref: The entry id.
+            stringref: The entry id. The string reference to lookup the sound for
 
         Returns:
         -------
-            A ResRef.
+            ResRef: The sound resource reference
+        - Opens the binary file for reading
+        - Seeks to the sound entries offset
+        - Reads the number of sound entries
+        - Checks if the string reference is valid
+        - Extracts the sound resource reference if valid
+        - Closes the file reader
+        - Returns the sound resource reference
         """
         reader = BinaryReader.from_file(self._path)
         reader.seek(12)
@@ -146,7 +153,7 @@ class TalkTable:
             ) = self._extract_common_data(reader, stringref)
 
             reader.seek(texts_offset + text_offset)
-            string = reader.read_string(text_length)
+            string = reader.read_string(text_length, encoding=None)
             sound = ResRef(sound_resref)
 
             batch[stringref] = StringResult(string, sound)

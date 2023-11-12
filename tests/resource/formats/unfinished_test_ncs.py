@@ -1,11 +1,18 @@
 import os
+import pathlib
+import sys
+import unittest
 from unittest import TestCase
 
-from pykotor.common.stream import BinaryReader
+if getattr(sys, "frozen", False) is False:
+    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
+    if pykotor_path.exists() and str(pykotor_path) not in sys.path:
+        sys.path.insert(0, str(pykotor_path.parent))
 
-from pykotor.resource.formats.ncs import NCSBinaryReader, NCS
-from pykotor.resource.formats.ncs.ncs_auto import bytes_ncs, write_ncs, read_ncs
-from pykotor.tools.path import Path
+from pykotor.common.stream import BinaryReader
+from pykotor.helpers.path import Path
+from pykotor.resource.formats.ncs import NCS, NCSBinaryReader
+from pykotor.resource.formats.ncs.ncs_auto import bytes_ncs, read_ncs, write_ncs
 
 BINARY_TEST_FILE = "tests/files/test.ncs"
 
@@ -27,3 +34,7 @@ class TestNCS(TestCase):
         self.assertEqual(8, len(ncs.instructions))
 
         self.assertEqual(BinaryReader.load_file(BINARY_TEST_FILE), bytes_ncs(ncs))
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING
 from pykotor.common.language import LocalizedString
 from pykotor.common.module import Module
 from pykotor.extract.installation import Installation, SearchLocation
+from pykotor.helpers.string import ireplace
 from pykotor.resource.formats.erf import ERF, ERFType, write_erf
 from pykotor.resource.formats.gff import write_gff
-from pykotor.resource.formats.lyt.lyt_auto import write_lyt
+from pykotor.resource.formats.lyt import write_lyt
 from pykotor.resource.formats.rim import RIM, read_rim
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, write_tpc
 from pykotor.resource.formats.vis import write_vis
@@ -21,7 +22,6 @@ from pykotor.resource.generics.uts import dismantle_uts
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
 from pykotor.tools.path import CaseAwarePath
-from pykotor.tools.string import ireplace
 
 if TYPE_CHECKING:
     import os
@@ -41,6 +41,21 @@ def clone_module(
     keep_sounds: bool = False,
     keep_pathing: bool = False,
 ) -> None:
+    """Clones a module
+    Args:
+        root: str - The path to the module root
+        identifier: str - The identifier for the new module
+        prefix: str - Prefix for generated textures and lightmaps
+        name: str - Name for the new ARE file
+        installation: Installation - The installation context
+    Returns:
+        None
+    Processing Logic:
+        1. Load resources from old module
+        2. Rename resources and change identifiers
+        3. Copy textures and lightmaps if specified
+        4. Write new module resources to file.
+    """
     old_module = Module(root, installation)
     new_module = ERF(ERFType.MOD)
 

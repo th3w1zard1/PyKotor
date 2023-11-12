@@ -1,12 +1,18 @@
 import os
+import pathlib
+import sys
+import unittest
 from unittest import TestCase
 
-from pykotor.common.geometry import Vector4, Vector3
-from pykotor.common.language import Language, Gender
-from pykotor.resource.formats.gff import GFFBinaryReader, GFF, GFFXMLReader
-from pykotor.resource.formats.gff.gff_auto import write_gff, read_gff
-from pykotor.resource.type import ResourceType
+if getattr(sys, "frozen", False) is False:
+    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
+    if pykotor_path.exists() and str(pykotor_path) not in sys.path:
+        sys.path.insert(0, str(pykotor_path.parent))
 
+from pykotor.common.geometry import Vector3, Vector4
+from pykotor.common.language import Gender, Language
+from pykotor.resource.formats.gff import GFF, GFFBinaryReader, GFFXMLReader, read_gff, write_gff
+from pykotor.resource.type import ResourceType
 
 BINARY_TEST_FILE = "tests/files/test.gff"
 XML_TEST_FILE = "tests/files/test.gff.xml"
@@ -79,3 +85,7 @@ class TestGFF(TestCase):
         else:
             self.assertRaises(IsADirectoryError, write_gff, GFF(), ".", ResourceType.GFF)
         self.assertRaises(ValueError, write_gff, GFF(), ".", ResourceType.INVALID)
+
+
+if __name__ == "__main__":
+    unittest.main()

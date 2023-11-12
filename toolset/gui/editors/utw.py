@@ -1,18 +1,39 @@
-from typing import Optional, Tuple
+from __future__ import annotations
 
-from toolset.data.installation import HTInstallation
-from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
-from toolset.gui.editor import Editor
-from PyQt5.QtWidgets import QWidget
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from pykotor.common.misc import ResRef
 from pykotor.resource.formats.gff import write_gff
 from pykotor.resource.generics.utw import UTW, dismantle_utw, read_utw
 from pykotor.resource.type import ResourceType
+from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
+from toolset.gui.editor import Editor
+
+if TYPE_CHECKING:
+    import os
+
+    from PyQt5.QtWidgets import QWidget
+
+    from toolset.data.installation import HTInstallation
 
 
 class UTWEditor(Editor):
-    def __init__(self, parent: Optional[QWidget], installation: HTInstallation = None):
+    def __init__(self, parent: Optional[QWidget], installation: HTInstallation | None = None):
+        """Initialize Waypoint Editor window
+        Args:
+            parent: {Parent widget}
+            installation: {Installation object}.
+
+        Returns
+        -------
+            None
+        Processing Logic:
+            - Initialize UI elements from designer file
+            - Set up menu bar and signal connections
+            - Load installation data if provided
+            - Initialize UTW object
+            - Create new empty waypoint by default.
+        """
         supported = [ResourceType.UTW]
         super().__init__(parent, "Waypoint Editor", "waypoint", supported, supported, installation)
 
@@ -36,13 +57,24 @@ class UTWEditor(Editor):
         self._installation = installation
         self.ui.nameEdit.setInstallation(installation)
 
-    def load(self, filepath: str, resref: str, restype: ResourceType, data: bytes) -> None:
+    def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes) -> None:
         super().load(filepath, resref, restype, data)
 
         utw = read_utw(data)
         self._loadUTW(utw)
 
     def _loadUTW(self, utw: UTW):
+        """Load UTW data into UI elements
+        Args:
+            utw (UTW): UTW object to load data from
+        Returns:
+            None: No return value
+        Processing Logic:
+            - Load basic UTW data like name, tag and resref into line edits
+            - Load advanced data like map note flags and text into checkboxes and line edit
+            - Load comment text into plain text edit
+            - No return, simply loads UI elements from UTW object.
+        """
         self._utw = utw
 
         # Basic
@@ -59,6 +91,20 @@ class UTWEditor(Editor):
         self.ui.commentsEdit.setPlainText(utw.comment)
 
     def build(self) -> Tuple[bytes, bytes]:
+        """Builds a UTW object from UI controls.
+
+        Args:
+        ----
+            self: The UI object containing controls.
+
+        Returns:
+        -------
+            data: The serialized UTWSave object as bytes.
+            b"": An empty bytes object.
+        - Populate UTW object from UI control values
+        - Serialize UTW to bytes using GFF format
+        - Return bytes and empty bytes
+        """
         utw = self._utw
 
         utw.name = self.ui.nameEdit.locstring()

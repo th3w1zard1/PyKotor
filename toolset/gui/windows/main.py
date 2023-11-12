@@ -1,22 +1,21 @@
 from __future__ import annotations
 
-import json
-import traceback
-from contextlib import suppress
-from datetime import datetime, timedelta, timezone
-
 try:
     from packaging.version import Version as StrictVersion
 except ImportError:
     try:
-        from setuptools.version import StrictVersion
+        from distutils.version import StrictVersion
     except ImportError:
         try:
-            from distutils.version import StrictVersion
+            from setuptools.version import StrictVersion
         except ImportError as e3:
             msg = "Could not import StrictVersion from any known library"
             raise ImportError(msg) from e3
-from pathlib import Path
+
+import json
+import traceback
+from contextlib import suppress
+from datetime import datetime, timedelta, timezone
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, ClassVar
 
@@ -31,10 +30,13 @@ from watchdog.observers import Observer
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.file import FileResource, ResourceIdentifier
 from pykotor.extract.installation import SearchLocation
+from pykotor.helpers.error_handling import assert_with_variable_trace
+from pykotor.helpers.path import Path, PurePath
 from pykotor.resource.formats.mdl import read_mdl, write_mdl
 from pykotor.resource.formats.tpc import read_tpc, write_tpc
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
+from pykotor.tools.misc import is_rim_file
 from pykotor.tools.path import CaseAwarePath
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.about import About
@@ -76,12 +78,37 @@ class ToolWindow(QMainWindow):
 
     overrideFilesUpdate = QtCore.pyqtSignal(object, object)
 
-    GFF_TYPES: ClassVar[list[ResourceType]] = [ResourceType.GFF, ResourceType.UTC, ResourceType.UTP, ResourceType.UTD, ResourceType.UTI,
-                 ResourceType.UTM, ResourceType.UTE, ResourceType.UTT, ResourceType.UTW, ResourceType.UTS,
-                 ResourceType.DLG, ResourceType.GUI, ResourceType.ARE, ResourceType.IFO, ResourceType.GIT,
-                 ResourceType.JRL, ResourceType.ITP]
+    GFF_TYPES: ClassVar[list[ResourceType]] = [
+        ResourceType.GFF,
+        ResourceType.UTC,
+        ResourceType.UTP,
+        ResourceType.UTD,
+        ResourceType.UTI,
+        ResourceType.UTM,
+        ResourceType.UTE,
+        ResourceType.UTT,
+        ResourceType.UTW,
+        ResourceType.UTS,
+        ResourceType.DLG,
+        ResourceType.GUI,
+        ResourceType.ARE,
+        ResourceType.IFO,
+        ResourceType.GIT,
+        ResourceType.JRL,
+        ResourceType.ITP,
+    ]
 
     def __init__(self):
+        """Initializes the main window
+        Args:
+            self: The object instance
+        Processing Logic:
+            - Sets up superclass initialization
+            - Initializes observer and handler objects
+            - Hides unnecessary UI sections on startup
+            - Loads settings from file
+            - Checks for updates on first run.
+        """
         super().__init__()
 
         self.dogObserver = None
@@ -91,6 +118,7 @@ class ToolWindow(QMainWindow):
         self.installations = {}
 
         from toolset.uic.windows.main import Ui_MainWindow
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._setupSignals()
@@ -111,6 +139,18 @@ class ToolWindow(QMainWindow):
         self.checkForUpdates(True)
 
     def _setupSignals(self) -> None:
+        """Connects signals to slots for UI interactions
+        Args:
+            self: {The class instance}: Sets up connections for UI signals
+        Returns:
+            None: No return value
+        {Processing Logic}:
+            - Connects game combo box index changed to change active installation
+            - Connects module/override file updated signals to update handlers
+            - Connects various widget signals like section changed to handler methods
+            - Connects button clicks to extract/open resource methods
+            - Connects menu actions to various editor, dialog and tool openings.
+        """
         self.ui.gameCombo.currentIndexChanged.connect(self.changeActiveInstallation)
 
         self.moduleFilesUpdated.connect(self.onModuleFileUpdated)
@@ -190,8 +230,8 @@ class ToolWindow(QMainWindow):
 
         # Some users may choose to have their RIM files for the same module merged into a single option for the
         # dropdown menu.
-        if self.settings.joinRIMsTogether and moduleFile.endswith(".rim"):
-            resources += self.active.module_resources(moduleFile.replace(".rim", "_s.rim"))
+        if self.settings.joinRIMsTogether and is_rim_file(moduleFile):
+            resources += self.active.module_resources(PurePath(moduleFile).with_suffix("_s.rim").name)
 
         self.active.reload_module(moduleFile)
         self.ui.modulesWidget.setResources(resources)
@@ -208,7 +248,7 @@ class ToolWindow(QMainWindow):
     def onOverrideChanged(self, newDirectory: str) -> None:
         self.ui.overrideWidget.setResources(self.active.override_resources(newDirectory))
 
-    def onOverrideReload(self, directory) -> None:
+    def onOverrideReload(self, directory: str) -> None:
         self.active.load_override(directory)
         self.ui.overrideWidget.setResources(self.active.override_resources(directory))
 
@@ -219,10 +259,19 @@ class ToolWindow(QMainWindow):
         self.ui.texturesWidget.setResources(self.active.texturepack_resources(newTexturepack))
 
     def onExtractResources(self, resources: list[FileResource]) -> None:
+        """Extracts the resources selected in the main UI window.
+
+        Args:
+        ----
+            resources: list[FileResource]: List of selected resources to extract
+        Processing Logic:
+            - If single resource selected, prompt user to save with default or custom name
+            - If multiple resources selected, prompt user for extract directory and extract each with original name.
+        """
         if len(resources) == 1:
             # Player saves resource with a specific name
             default = f"{resources[0].resname()}.{resources[0].restype().extension}"
-            filepath = QFileDialog.getSaveFileName(self, "Save resource", default)[0]
+            filepath: str = QFileDialog.getSaveFileName(self, "Save resource", default)[0]
 
             if filepath:
                 loader = AsyncBatchLoader(self, "Extracting Resources", [], "Failed to Extract Resources")
@@ -231,7 +280,7 @@ class ToolWindow(QMainWindow):
 
         elif len(resources) >= 1:
             # Player saves resources with original name to a specific directory
-            folderpath = QFileDialog.getExistingDirectory(self, "Select directory to extract to")
+            folderpath: str = QFileDialog.getExistingDirectory(self, "Select directory to extract to")
             if folderpath:
                 loader = AsyncBatchLoader(self, "Extracting Resources", [], "Failed to Extract Resources")
 
@@ -244,9 +293,16 @@ class ToolWindow(QMainWindow):
 
     def onOpenResources(self, resources: list[FileResource], useSpecializedEditor: bool | None = None) -> None:
         for resource in resources:
-            filepath, editor = openResourceEditor(resource.filepath(), resource.resname(), resource.restype(),
-                                                  resource.data(reload=True), self.active, self,
-                                                  gff_specialized=useSpecializedEditor)
+            _filepath, _editor = openResourceEditor(
+                resource.filepath(),
+                resource.resname(),
+                resource.restype(),
+                resource.data(reload=True),
+                self.active,
+                self,
+                gff_specialized=useSpecializedEditor,
+            )
+
     # endregion
 
     # region Events
@@ -270,6 +326,7 @@ class ToolWindow(QMainWindow):
                     # Call from_path method as it will throw an error if the file extension is not recognized.
                     ResourceIdentifier.from_path(url.toLocalFile())
                     e.accept()
+
     # endregion
 
     # region Menu Bar
@@ -415,8 +472,14 @@ class ToolWindow(QMainWindow):
                 ).exec_()
         except Exception:
             if not silent:
-                QMessageBox(QMessageBox.Information, "Unable to fetch latest version.",
-                            "Check if you are connected to the internet.", QMessageBox.Ok, self).exec_()
+                QMessageBox(
+                    QMessageBox.Information,
+                    "Unable to fetch latest version.",
+                    "Check if you are connected to the internet.",
+                    QMessageBox.Ok,
+                    self,
+                ).exec_()
+
     # endregion
 
     # region Other
@@ -455,7 +518,7 @@ class ToolWindow(QMainWindow):
                 continue
 
             item = QStandardItem(f"{areaNames[module]} [{module}]")
-            item.setData(module, QtCore.Qt.UserRole)
+            item.setData(module, QtCore.Qt.UserRole)  # type: ignore[reportGeneralTypeIssues]
 
             # Some users may choose to have items representing RIM files to have grey text.
             if self.settings.greyRIMText and module.endswith(".rim"):
@@ -473,7 +536,7 @@ class ToolWindow(QMainWindow):
         sections = []
         for directory in self.active.override_list():
             section = QStandardItem(directory if directory != "" else "[Root]")
-            section.setData(directory, QtCore.Qt.UserRole)
+            section.setData(directory, QtCore.Qt.UserRole)  # type: ignore[reportGeneralTypeIssues]
             sections.append(section)
         self.ui.overrideWidget.setSections(sections)
 
@@ -484,7 +547,7 @@ class ToolWindow(QMainWindow):
         sections = []
         for texturepack in self.active.texturepacks_list():
             section = QStandardItem(texturepack)
-            section.setData(texturepack, QtCore.Qt.UserRole)
+            section.setData(texturepack, QtCore.Qt.UserRole)  # type: ignore[reportGeneralTypeIssues]
             sections.append(section)
 
         self.ui.texturesWidget.setSections(sections)
@@ -571,8 +634,10 @@ class ToolWindow(QMainWindow):
         else:
             # If the installation had not already been loaded previously this session, load it now
             if name not in self.installations:
+
                 def task():
                     return HTInstallation(path, name, tsl, self)
+
                 loader = AsyncLoader(self, "Loading Installation", task, "Failed to load installation")
 
                 if loader.exec_():
@@ -583,12 +648,15 @@ class ToolWindow(QMainWindow):
             if name in self.installations:
                 self.active = self.installations[name]
 
+                assert_with_variable_trace(isinstance(self.active, HTInstallation))
+                assert isinstance(self.active, HTInstallation)  # noqa: S101
+
                 self.ui.coreWidget.setResources(self.active.chitin_resources())
 
                 print("Loading installation resources into UI...")
-                self.refreshModuleList(reload=False)
-                self.refreshOverrideList(reload=False)
-                self.refreshTexturePackList(reload=False)
+                self.refreshModuleList(reload=True)  # TODO: Modules/Override/Textures are loaded twice when HT is first initialized.
+                self.refreshOverrideList(reload=True)
+                self.refreshTexturePackList(reload=True)
                 self.ui.texturesWidget.setInstallation(self.active)
 
                 print("Updating menus...")
@@ -600,7 +668,22 @@ class ToolWindow(QMainWindow):
                 self.ui.gameCombo.setCurrentIndex(0)
 
     def _extractResource(self, resource: FileResource, filepath: os.PathLike | str, loader: AsyncBatchLoader) -> None:
+        """Extracts a resource file from a FileResource object.
 
+        Args:
+        ----
+            resource: {FileResource}: The FileResource object
+            filepath: {os.PathLike | str}: Path to save the extracted file
+            loader: {AsyncBatchLoader}: Loader for async operations
+        Returns:
+            None: No return value
+
+        {Processes the resource based on its type:
+        - Extracts Txi data from TPC files
+        - Decompiles TPC and MDL files
+        - Extracts textures from MDL files
+        - Writes extracted data to the file path}
+        """
         r_filepath = filepath if isinstance(filepath, Path) else Path(filepath)
         folderpath = r_filepath.parent
 
@@ -635,7 +718,7 @@ class ToolWindow(QMainWindow):
         except Exception as e:
             traceback.print_exc()
             msg = f"Failed to extract resource: {resource.resname()}.{resource.restype().extension}"
-            raise Exception(msg) from e
+            raise RuntimeError(msg) from e
 
     def _extractTxi(self, tpc: TPC, filepath: Path):
         with filepath.with_suffix(".txi").open("wb") as file:
@@ -669,7 +752,6 @@ class ToolWindow(QMainWindow):
         except Exception:
             loader.errors.append(ValueError(f"Could not determine textures used in model: '{resource.resname()}'"))
 
-
     def openFromFile(self) -> None:
         filepaths = QFileDialog.getOpenFileNames(self, "Select files to open")[:-1][0]
 
@@ -683,6 +765,7 @@ class ToolWindow(QMainWindow):
                 openResourceEditor(filepath, resref, restype, data, self.active, self)
             except ValueError as e:
                 QMessageBox(QMessageBox.Critical, "Failed to open file", str(e)).exec_()
+
     # endregion
 
 
@@ -712,5 +795,3 @@ class FolderObserver(FileSystemEventHandler):
             if overrideDir.startswith(("\\", "//")):
                 overrideDir = overrideDir[1:]
             self.window.overrideFilesUpdate.emit(overrideDir, event.event_type)
-
-

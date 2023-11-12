@@ -2,21 +2,37 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Optional
 
-from toolset.data.installation import HTInstallation
-from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
-from toolset.gui.editor import Editor
-
 from pykotor.common.misc import ResRef
 from pykotor.resource.formats.gff import write_gff
 from pykotor.resource.generics.utt import UTT, dismantle_utt, read_utt
 from pykotor.resource.type import ResourceType
+from toolset.data.installation import HTInstallation
+from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
+from toolset.gui.editor import Editor
 
 if TYPE_CHECKING:
+    import os
+
     from PyQt5.QtWidgets import QWidget
 
 
 class UTTEditor(Editor):
     def __init__(self, parent: Optional[QWidget], installation: HTInstallation | None = None):
+        """Initialize the trigger editor window
+        Args:
+            parent: {Parent widget}
+            installation: {Installation object}.
+
+        Returns
+        -------
+            None
+        Processing Logic:
+            - Initialize the base editor window
+            - Set up the UI from the designer file
+            - Connect menu and signal handlers
+            - Load data from the provided installation if given
+            - Initialize an empty UTT object.
+        """
         supported = [ResourceType.UTT]
         super().__init__(parent, "Trigger Editor", "trigger", supported, supported, installation)
 
@@ -47,13 +63,26 @@ class UTTEditor(Editor):
         self.ui.factionSelect.setItems(factions.get_column("label"))
         self.ui.trapSelect.setItems(traps.get_column("label"))
 
-    def load(self, filepath: str, resref: str, restype: ResourceType, data: bytes) -> None:
+    def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes) -> None:
         super().load(filepath, resref, restype, data)
 
         utt = read_utt(data)
         self._loadUTT(utt)
 
     def _loadUTT(self, utt: UTT) -> None:
+        """Loads UTT data into UI elements
+        Args:
+            utt: UTT - UTT object to load data from
+        Returns:
+            None - No return value
+        Loads UTT data:{
+            - Sets name, tag, resref from utt
+            - Sets cursor, type indexes from utt
+            - Sets trap properties from utt
+            - Sets scripts from utt
+            - Sets comments from utt
+        }
+        """
         self._utt = utt
 
         # Basic
@@ -91,6 +120,20 @@ class UTTEditor(Editor):
         self.ui.commentsEdit.setPlainText(utt.comment)
 
     def build(self) -> tuple[bytes, bytes]:
+        """Builds an UTT from UI input.
+
+        Args:
+        ----
+            self: The UI class instance.
+
+        Returns:
+        -------
+            tuple[bytes, bytes]: A tuple containing the GFF data (bytes) and any errors (bytes).
+        Processing Logic:
+        - Gets input from various UI elements like name, tag, scripts etc and populates an UTT object
+        - Serializes the UTT to GFF format
+        - Returns the GFF data and any errors
+        """
         utt = self._utt
 
         # Basic

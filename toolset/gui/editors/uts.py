@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
-from toolset.gui.editor import Editor
 from PyQt5 import QtCore
 from PyQt5.QtCore import QBuffer, QIODevice
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -13,14 +11,33 @@ from pykotor.common.misc import ResRef
 from pykotor.resource.formats.gff import write_gff
 from pykotor.resource.generics.uts import UTS, dismantle_uts, read_uts
 from pykotor.resource.type import ResourceType
+from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
+from toolset.gui.editor import Editor
 
 if TYPE_CHECKING:
-    from toolset.data.installation import HTInstallation
+    import os
+
     from PyQt5.QtGui import QCloseEvent
+
+    from toolset.data.installation import HTInstallation
 
 
 class UTSEditor(Editor):
     def __init__(self, parent: QWidget | None, installation: HTInstallation | None = None):
+        """Initialize the Sound Editor window
+        Args:
+            parent: {QWidget}: The parent widget of this window
+            installation: {HTInstallation}: The installation object
+        Returns: 
+            None: Does not return anything
+        Processing Logic:
+            - Initialize supported resource types
+            - Initialize the superclass with window details
+            - Initialize UTS object
+            - Initialize media player and buffer
+            - Load UI from designer file
+            - Set up menus, signals and installation.
+        """
         supported = [ResourceType.UTS]
         super().__init__(parent, "Sound Editor", "sound", supported, supported, installation)
 
@@ -40,6 +57,21 @@ class UTSEditor(Editor):
         self.new()
 
     def _setupSignals(self) -> None:
+        """Sets up signal connections for UI buttons and radio buttons
+        Args:
+            self: The class instance
+        Returns:
+            None: No return value
+        Processing Logic:
+            - Connects addSoundButton click signal to addSound method
+            - Connects removeSoundButton click signal to removeSound method
+            - Connects playSoundButton click signal to playSound method
+            - Connects stopSoundButton click signal to player stop method
+            - Connects moveUpButton and moveDownButton click signals to moveSoundUp and moveSoundDown methods
+            - Connects tagGenerateButton and resrefGenerateButton click signals to generateTag and generateResref methods
+            - Connects style radio buttons toggled signals to changeStyle method
+            - Connects play random/specific/everywhere radio buttons toggled signals to changePlay method.
+        """
         self.ui.addSoundButton.clicked.connect(self.addSound)
         self.ui.removeSoundButton.clicked.connect(self.removeSound)
         self.ui.playSoundButton.clicked.connect(self.playSound)
@@ -62,13 +94,25 @@ class UTSEditor(Editor):
         self._installation = installation
         self.ui.nameEdit.setInstallation(installation)
 
-    def load(self, filepath: str, resref: str, restype: ResourceType, data: bytes) -> None:
+    def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes) -> None:
         super().load(filepath, resref, restype, data)
 
         uts = read_uts(data)
         self._loadUTS(uts)
 
     def _loadUTS(self, uts: UTS):
+        """Loads UTS data into UI controls
+        Args:
+            uts (UTS): UTS object to load
+        Returns:
+            None: No return value, loads data into UI controls
+        Processing Logic:
+            - Sets basic property values like name, tag, etc
+            - Sets advanced playback options like random, specific position
+            - Loads sounds list
+            - Sets positioning options like style, distances
+            - Loads comments.
+        """
         self._uts = uts
 
         # Basic
@@ -125,6 +169,21 @@ class UTSEditor(Editor):
         self.ui.commentsEdit.setPlainText(uts.comment)
 
     def build(self) -> tuple[bytes, bytes]:
+        """Builds a UTS from UI fields.
+
+        Args:
+        ----
+            self: The class instance.
+
+        Returns:
+        -------
+            tuple[bytes, bytes]: A tuple containing the unit data and log.
+        Processing Logic:
+            - Collects input from UI elements and assigns to _uts attribute
+            - Loops through sound list adding each sound to _uts
+            - Writes _uts to bytearray using dismantle_uts and write_gff
+            - Returns bytearray tuple.
+        """
         uts = self._uts
 
         # Basic

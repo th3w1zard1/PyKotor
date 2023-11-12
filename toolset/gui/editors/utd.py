@@ -1,10 +1,8 @@
-from typing import Optional, Tuple
+from __future__ import annotations
 
-from toolset.data.installation import HTInstallation
-from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
-from toolset.gui.editor import Editor
+from typing import TYPE_CHECKING, Optional
+
 from PyQt5.QtWidgets import QMessageBox, QWidget
-from toolset.utils.window import openResourceEditor
 
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryWriter
@@ -13,11 +11,37 @@ from pykotor.resource.generics.dlg import DLG, dismantle_dlg
 from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd
 from pykotor.resource.type import ResourceType
 from pykotor.tools import door
+from toolset.data.installation import HTInstallation
+from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
+from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings
+from toolset.utils.window import openResourceEditor
+
+if TYPE_CHECKING:
+    import os
 
 
 class UTDEditor(Editor):
     def __init__(self, parent: Optional[QWidget], installation: Optional[HTInstallation] = None, *, mainwindow=None):
+        """Initialize the Door Editor.
+
+        Args:
+        ----
+            parent: {QWidget}: The parent widget.
+            installation: {HTInstallation}: The installation object.
+
+        Returns:
+        -------
+            None: Does not return anything.
+        Processing Logic:
+            1. Get supported resource types and call parent initializer.
+            2. Initialize global settings object.
+            3. Get generic doors 2DA cache from installation.
+            4. Initialize UTD object.
+            5. Set up UI from designer file.
+            6. Set up menus, signals and installation.
+            7. Update 3D preview and call new() to initialize editor.
+        """
         supported = [ResourceType.UTD]
         super().__init__(parent, "Door Editor", "door", supported, supported, installation, mainwindow)
 
@@ -36,6 +60,21 @@ class UTDEditor(Editor):
         self.new()
 
     def _setupSignals(self) -> None:
+        """Connect GUI buttons and signals to methods.
+
+        Args:
+        ----
+            self: The class instance.
+
+        Returns:
+        -------
+            None
+        - Connect tagGenerateButton click signal to generateTag method
+        - Connect resrefGenerateButton click signal to generateResref method
+        - Connect conversationModifyButton click signal to editConversation method
+        - Connect appearanceSelect currentIndexChanged signal to update3dPreview method
+        - Connect actionShowPreview triggered signal to togglePreview method.
+        """
         self.ui.tagGenerateButton.clicked.connect(self.generateTag)
         self.ui.resrefGenerateButton.clicked.connect(self.generateResref)
         self.ui.conversationModifyButton.clicked.connect(self.editConversation)
@@ -44,6 +83,20 @@ class UTDEditor(Editor):
         self.ui.actionShowPreview.triggered.connect(self.togglePreview)
 
     def _setupInstallation(self, installation: HTInstallation):
+        """Sets up the installation for editing.
+
+        Args:
+        ----
+            installation: {HTInstallation}: The installation to set up for editing.
+
+        Returns:
+        -------
+            None
+        - Sets the internal installation reference and updates UI elements
+        - Loads required 2da files if not already loaded
+        - Populates appearance and faction dropdowns from loaded 2da files
+        - Shows/hides TSL-specific UI elements based on installation type.
+        """
         self._installation = installation
         self.ui.nameEdit.setInstallation(installation)
         self.ui.previewRenderer.installation = installation
@@ -64,13 +117,23 @@ class UTDEditor(Editor):
         self.ui.difficultyLabel.setVisible(installation.tsl)
         self.ui.difficultyModLabel.setVisible(installation.tsl)
 
-    def load(self, filepath: str, resref: str, restype: ResourceType, data: bytes) -> None:
+    def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes) -> None:
         super().load(filepath, resref, restype, data)
 
         utd = read_utd(data)
         self._loadUTD(utd)
 
     def _loadUTD(self, utd: UTD) -> None:
+        """Loads UTD data into UI elements
+        Args:
+            utd (UTD): UTD object to load data from
+        Returns:
+            None: No return value
+        Processing Logic:
+        - Sets UI element values from UTD object attributes
+        - Divides loading into sections for Basic, Advanced, Lock, Scripts, and Comments
+        - Handles different UI element types like checkboxes, dropdowns, text fields, etc.
+        """
         self._utd = utd
 
         # Basic
@@ -119,7 +182,22 @@ class UTDEditor(Editor):
         # Comments
         self.ui.commentsEdit.setPlainText(utd.comment)
 
-    def build(self) -> Tuple[bytes, bytes]:
+    def build(self) -> tuple[bytes, bytes]:
+        """Builds a UTD object from UI data.
+
+        Args:
+        ----
+            self: The class instance
+
+        Returns:
+        -------
+            tuple[bytes, bytes]: A tuple containing the GFF data (bytes) and errors (bytes)
+
+        Processing Logic:
+        - Sets UTD properties from UI elements like name, tag, resrefs etc
+        - Writes the constructed UTD to a GFF bytearray
+        - Returns the GFF data and any errors
+        """
         utd: UTD = self._utd
 
         # Basic
@@ -131,8 +209,8 @@ class UTDEditor(Editor):
 
         # Advanced
         utd.min1_hp = self.ui.min1HpCheckbox.isChecked()
-        utd.party_interact = self.ui.partyInteractCheckbox.isChecked()  # TODO: find out why this and the below line are undefined
-        utd.useable = self.ui.useableCheckbox.isChecked()
+        # utd.party_interact = self.ui.partyInteractCheckbox.isChecked()  # TODO: find out why this and the below line are undefined
+        # utd.useable = self.ui.useableCheckbox.isChecked()
         utd.plot = self.ui.plotCheckbox.isChecked()
         utd.static = self.ui.staticCheckbox.isChecked()
         utd.not_blastable = self.ui.notBlastableCheckbox.isChecked()
@@ -197,6 +275,17 @@ class UTDEditor(Editor):
             self.ui.resrefEdit.setText("m00xx_dor_000")
 
     def editConversation(self) -> None:
+        """Edits a conversation
+        Args:
+            self: The class instance
+        Returns:
+            None: Does not return anything
+        Processing Logic:
+            1. Gets the conversation name from the UI text field
+            2. Searches the installation for the conversation resource
+            3. If not found, prompts to create a new file in the override folder
+            4. If found or created, opens the resource editor window.
+        """
         resname = self.ui.conversationEdit.text()
         data, filepath = None, None
 
@@ -230,6 +319,16 @@ class UTDEditor(Editor):
         self.update3dPreview()
 
     def update3dPreview(self) -> None:
+        """Updates the 3D preview renderer visibility and size
+        Args:
+            self: The class instance
+        Returns:
+            None: Does not return anything.
+
+        - Checks if the global setting for showing preview is True
+        - If True, calls _update_model() to update the 3D model preview 
+        - If False, sets the fixed size of the window without leaving space for preview
+        """
         self.ui.previewRenderer.setVisible(self.globalSettings.showPreviewUTP)
         self.ui.actionShowPreview.setChecked(self.globalSettings.showPreviewUTP)
 
@@ -239,6 +338,22 @@ class UTDEditor(Editor):
             self.setFixedSize(374, 457)
 
     def _update_model(self):
+        """Updates the model preview.
+
+        Args:
+        ----
+            self: The class instance.
+
+        Returns:
+        -------
+            None: No value is returned.
+        Processing Logic:
+            - Build the model data from the installation data
+            - Get the model name based on the data and installation details
+            - Load the MDL and MDX resources using the model name
+            - If resources are loaded, set them on the preview renderer
+            - If not loaded, clear the existing model from the preview renderer.
+        """
         self.setFixedSize(674, 457)
 
         data, _ = self.build()

@@ -7,12 +7,9 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 from pykotor.common.misc import Game
 from pykotor.common.stream import BinaryReader, BinaryWriter
+from pykotor.helpers.path import Path
 from pykotor.resource.formats.ncs.ncs_auto import bytes_ncs, compile_nss
-from pykotor.tools.path import Path
-from toolset.gui.widgets.settings.installations import (
-    GlobalSettings,
-    NoConfigurationSetError,
-)
+from toolset.gui.widgets.settings.installations import GlobalSettings, NoConfigurationSetError
 
 
 def decompileScript(compiled: bytes, tsl: bool) -> str:
@@ -137,7 +134,7 @@ def compileScript(source: str, tsl: bool) -> bytes:
 
         tempSourcePath = extract_path / "tempscript.nss"
         tempCompiledPath = extract_path / "tempscript.ncs"
-        BinaryWriter.dump(tempSourcePath, source.encode())
+        BinaryWriter.dump(tempSourcePath, source.encode(encoding="windows-1252"))
 
         gameIndex = "2" if tsl else "1"
         command = [global_settings.nssCompilerPath, "-c", tempSourcePath, "--outputdir", global_settings.extractPath, "-g", gameIndex]

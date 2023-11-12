@@ -1,15 +1,24 @@
 from __future__ import annotations
 
-from configparser import ConfigParser
+import pathlib
 import shutil
+import sys
 import tempfile
+import unittest
+from configparser import ConfigParser
+
+if getattr(sys, "frozen", False) is False:
+    pykotor_path = pathlib.Path(__file__).parents[2] / "pykotor"
+    if pykotor_path.exists():
+        sys.path.insert(0, str(pykotor_path.parent))
+
 from pykotor.common.geometry import Vector3, Vector4
 from pykotor.common.language import Gender, Language
 from pykotor.common.misc import ResRef
+from pykotor.helpers.path import Path
 from pykotor.resource.formats.ssf import SSFSound
 from pykotor.resource.formats.tlk import TLK, write_tlk
 from pykotor.resource.type import ResourceType
-from pykotor.tools.path import Path
 from pykotor.tslpatcher.config import PatcherConfig
 from pykotor.tslpatcher.memory import NoTokenUsage, TokenUsage2DA, TokenUsageTLK
 from pykotor.tslpatcher.mods.gff import (
@@ -22,25 +31,24 @@ from pykotor.tslpatcher.mods.gff import (
     ModifyFieldGFF,
 )
 from pykotor.tslpatcher.mods.ssf import ModifySSF
-from pykotor.tslpatcher.mods.tlk import ModifyTLK, ModificationsTLK
+from pykotor.tslpatcher.mods.tlk import ModificationsTLK, ModifyTLK
 from pykotor.tslpatcher.mods.twoda import (
     AddColumn2DA,
     AddRow2DA,
     ChangeRow2DA,
     CopyRow2DA,
-    TargetType,
+    RowValue2DAMemory,
+    RowValueConstant,
+    RowValueRowCell,
     RowValueRowIndex,
     RowValueRowLabel,
-    RowValueRowCell,
-    RowValueConstant,
-    RowValue2DAMemory,
     RowValueTLKMemory,
+    TargetType,
 )
 from pykotor.tslpatcher.reader import ConfigReader
-from unittest import TestCase
 
 
-class TestConfigReader(TestCase):
+class TestConfigReader(unittest.TestCase):
     def setUp(self) -> None:
         self.config = PatcherConfig()
         self.ini = ConfigParser(
@@ -2280,3 +2288,7 @@ class TestConfigReader(TestCase):
         self.assertEqual(5, mod_1.index_to_token)
 
     # endregion
+
+
+if __name__ == "__main__":
+    unittest.main()

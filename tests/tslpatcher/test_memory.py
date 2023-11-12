@@ -1,13 +1,16 @@
+import pathlib
+import sys
+import unittest
 from unittest import TestCase
 
-from pykotor.common.language import LocalizedString, Gender, Language
+if getattr(sys, "frozen", False) is False:
+    pykotor_path = pathlib.Path(__file__).parents[2] / "pykotor"
+    if pykotor_path.exists():
+        sys.path.insert(0, str(pykotor_path.parent))
+
+from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.tslpatcher.memory import PatcherMemory
-from pykotor.tslpatcher.mods.gff import (
-    FieldValue2DAMemory,
-    FieldValueConstant,
-    FieldValueTLKMemory,
-    LocalizedStringDelta,
-)
+from pykotor.tslpatcher.mods.gff import FieldValue2DAMemory, FieldValueConstant, FieldValueTLKMemory, LocalizedStringDelta
 
 
 class TestLocalizedStringDelta(TestCase):
@@ -73,4 +76,8 @@ class TestLocalizedStringDelta(TestCase):
         self.assertEqual(3, len(locstring))
         self.assertEqual("1", locstring.get(Language.ENGLISH, Gender.MALE))
         self.assertEqual("2", locstring.get(Language.GERMAN, Gender.MALE))
-        self.assertEqual("b", locstring.get(Language.FRENCH, Gender.MALE))
+        self.assertEqual("b", locstring.get(Language.FRENCH, Gender.MALE))  # TODO: Why is this 'b'?
+
+
+if __name__ == "__main__":
+    unittest.main()

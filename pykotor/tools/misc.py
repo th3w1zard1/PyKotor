@@ -1,24 +1,7 @@
 from __future__ import annotations
+import os
 
-import hashlib
 import re
-from typing import TYPE_CHECKING
-
-from pykotor.tools.path import Path
-
-if TYPE_CHECKING:
-    import os
-
-
-def generate_filehash_sha256(filepath: os.PathLike | str) -> str:
-    sha1_hash = hashlib.sha256()
-    filepath = filepath if isinstance(filepath, Path) else Path(filepath)
-    with filepath.open("rb") as f:
-        data = f.read(65536)
-        while data:  # read in 64k chunks
-            sha1_hash.update(data)
-            data = f.read(65536)
-    return sha1_hash.hexdigest()
 
 
 def is_int(string: str):
@@ -54,6 +37,7 @@ def is_float(string: str):
 
 
 def is_nss_file(filename: str):
+    """Returns true if the given filename has a NSS file extension."""
     return filename.lower().endswith(".nss")
 
 
@@ -92,11 +76,24 @@ def is_storage_file(filename: str):
     return is_capsule_file(filename) or is_bif_file(filename)
 
 
-def case_insensitive_replace(s: str, old: str, new: str) -> str:
-    return re.sub(re.escape(old), new, s, flags=re.I)
-
-
 def universal_simplify_exception(e):
+    """Simplify exceptions into a standardized format
+    Args:
+        e: Exception - The exception to simplify
+    Returns:
+        error_name: str - The name of the exception
+        error_message: str - A human-readable message for the exception
+    Processing Logic:
+    - Extract the exception name from the type
+    - Handle specific exception types differently
+      - FileNotFoundError uses filename attribute
+      - PermissionError uses filename attribute
+      - TimeoutError uses args[0]
+      - InterruptedError uses errno attribute
+      - ConnectionError uses request attribute if available
+    - Try common exception attributes for a message
+    - Return exception name and args joined as a string if no other info available.
+    """
     error_name = type(e).__name__
     try:
         # Fallback: use the exception type name itself
@@ -139,8 +136,79 @@ def universal_simplify_exception(e):
     return error_name, f"{error_name}: {','.join(e.args)}"
 
 
+
+
+MAX_CHARS_BEFORE_NEWLINE_FORMAT = 20  # Adjust as needed
+
+def format_text(text):
+    text_str = str(text)
+    if "\n" in text_str or len(text_str) > MAX_CHARS_BEFORE_NEWLINE_FORMAT:
+        return f'"""{os.linesep}{text_str}{os.linesep}"""'
+    return f"'{text_str}'"
+
+def first_char_diff_index(str1, str2):
+    """Find the index of the first differing character in two strings."""
+    min_length = min(len(str1), len(str2))
+    for i in range(min_length):
+        if str1[i] != str2[i]:
+            return i
+    if len(str1) != len(str2):
+        return min_length  # Difference due to length
+    return -1  # No difference
+
+def generate_diff_marker_line(index, length):
+    """Generate a line of spaces with a '^' at the specified index."""
+    if index == -1:
+        return ""
+    return " " * index + "^" + " " * (length - index - 1)
+
+def compare_and_format(old_value, new_value):
+    """Compares and formats two values for diff display
+    Args:
+        old_value: The old value to compare
+        new_value: The new value to compare
+    Returns:
+        A tuple of formatted old and new values for diff display
+    Processing Logic:
+        - Converts old_value and new_value to strings and splits into lines
+        - Zips the lines to iterate in parallel
+        - Finds index of first differing character between lines
+        - Generates a diff marker line based on index
+        - Appends lines and marker lines to formatted outputs
+        - Joins lines with line separators and returns a tuple.
+    """
+    old_text = str(old_value)
+    new_text = str(new_value)
+    old_lines = old_text.split("\n")
+    new_lines = new_text.split("\n")
+    formatted_old = []
+    formatted_new = []
+
+    for old_line, new_line in zip(old_lines, new_lines):
+        diff_index = first_char_diff_index(old_line, new_line)
+        marker_line = generate_diff_marker_line(diff_index, max(len(old_line), len(new_line)))
+
+        formatted_old.append(old_line)
+        formatted_new.append(new_line)
+        if marker_line:
+            formatted_old.append(marker_line)
+            formatted_new.append(marker_line)
+
+    return os.linesep.join(formatted_old), os.linesep.join(formatted_new)
+
 def striprtf(text) -> str:  # noqa: C901, PLR0915, PLR0912
-    """Strips RTF encoding utterly and completely."""
+    """Removes RTF tags from a string.
+    Strips RTF encoding utterly and completely
+    Args:
+        text: {String}: The input text possibly containing RTF tags
+    Returns:
+        str: {A plain text string without any RTF tags}
+    Processes the input text by:
+    1. Using regular expressions to find RTF tags and special characters
+    2. Translating RTF tags and special characters to normal text
+    3. Ignoring certain tags and characters inside tags marked as "ignorable"
+    4. Appending/joining resulting text pieces to output.
+    """
     pattern = re.compile(r"\\([a-z]{1,32})(-?\d{1,10})?[ ]?|\\'([0-9a-f]{2})|\\([^a-z])|([{}])|[\r\n]+|(.)", re.I)
     # control words which specify a "destination".
     destinations = frozenset(

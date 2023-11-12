@@ -8,9 +8,9 @@ from PyQt5.QtGui import QImage
 from pykotor.common.geometry import Vector3
 from pykotor.common.misc import CaseInsensitiveDict
 from pykotor.common.stream import BinaryReader
+from pykotor.helpers.path import Path
 from pykotor.resource.formats.bwm import BWM, read_bwm
 from pykotor.resource.generics.utd import UTD, read_utd
-from pykotor.tools.path import Path
 from toolset.utils.misc import get_nums
 
 if TYPE_CHECKING:
@@ -65,6 +65,18 @@ class MDLMDXTuple(NamedTuple):
 
 
 def load_kits(path: os.PathLike | str) -> list[Kit]:
+    """Loads kits from a given path
+    Args:
+        path: os.PathLike | str: The path to load kits from
+    Returns:
+        list[Kit]: A list of loaded Kit objects
+    Processing Logic:
+        - Loops through files in the path to load kit data
+        - Loads kit JSON and populates Kit object
+        - Loads always, textures, lightmaps, skyboxes, doors, components
+        - Populates KitComponent hooks from JSON
+        - Adds loaded Kit to return list.
+    """
     kits = []
 
     kits_path = Path(path)

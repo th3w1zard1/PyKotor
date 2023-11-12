@@ -1,17 +1,15 @@
 import os
-from unittest import TestCase
+import pathlib
+import sys
+import unittest
 
-from pykotor.resource.formats.ssf import (
-    SSF,
-    SSFSound,
-    SSFBinaryReader,
-    detect_ssf,
-    SSFXMLReader,
-    write_ssf,
-    read_ssf,
-)
+if getattr(sys, "frozen", False) is False:
+    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
+    if pykotor_path.exists() and str(pykotor_path) not in sys.path:
+        sys.path.insert(0, str(pykotor_path.parent))
+
+from pykotor.resource.formats.ssf import SSF, SSFBinaryReader, SSFSound, SSFXMLReader, detect_ssf, read_ssf, write_ssf
 from pykotor.resource.type import ResourceType
-
 
 BINARY_TEST_FILE = "tests/files/test.ssf"
 XML_TEST_FILE = "tests/files/test.ssf.xml"
@@ -20,7 +18,7 @@ CORRUPT_BINARY_TEST_FILE = "tests/files/test_corrupted.ssf"
 CORRUPT_XML_TEST_FILE = "tests/files/test_corrupted.ssf.xml"
 
 
-class TestSSF(TestCase):
+class TestSSF(unittest.TestCase):
     def test_binary_io(self):
         self.assertEqual(detect_ssf(BINARY_TEST_FILE), ResourceType.SSF)
 
@@ -90,3 +88,7 @@ class TestSSF(TestCase):
         else:
             self.assertRaises(IsADirectoryError, write_ssf, SSF(), ".", ResourceType.SSF)
         self.assertRaises(ValueError, write_ssf, SSF(), ".", ResourceType.INVALID)
+
+
+if __name__ == "__main__":
+    unittest.main()

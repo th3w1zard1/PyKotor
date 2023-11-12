@@ -1,15 +1,15 @@
 import os
+import pathlib
+import sys
+import unittest
 from unittest import TestCase
 
-from pykotor.resource.formats.lip import (
-    LIP,
-    LIPShape,
-    LIPBinaryReader,
-    detect_lip,
-    write_lip,
-    LIPXMLReader,
-    read_lip,
-)
+if getattr(sys, "frozen", False) is False:
+    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
+    if pykotor_path.exists() and str(pykotor_path) not in sys.path:
+        sys.path.insert(0, str(pykotor_path.parent))
+
+from pykotor.resource.formats.lip import LIP, LIPBinaryReader, LIPShape, LIPXMLReader, detect_lip, read_lip, write_lip
 from pykotor.resource.type import ResourceType
 
 BINARY_TEST_FILE = "tests/files/test.lip"
@@ -66,3 +66,7 @@ class TestLIP(TestCase):
         else:
             self.assertRaises(IsADirectoryError, write_lip, LIP(), ".", ResourceType.LIP)
         self.assertRaises(ValueError, write_lip, LIP(), ".", ResourceType.INVALID)
+
+
+if __name__ == "__main__":
+    unittest.main()

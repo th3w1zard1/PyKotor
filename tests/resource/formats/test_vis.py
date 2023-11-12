@@ -1,10 +1,16 @@
 import os
+import pathlib
+import sys
+import unittest
 from unittest import TestCase
 
-from pykotor.resource.formats.vis import VISAsciiReader, VIS
-from pykotor.resource.formats.vis.vis_auto import write_vis, read_vis
-from pykotor.resource.type import ResourceType
+if getattr(sys, "frozen", False) is False:
+    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
+    if pykotor_path.exists() and str(pykotor_path) not in sys.path:
+        sys.path.insert(0, str(pykotor_path.parent))
 
+from pykotor.resource.formats.vis import VIS, VISAsciiReader, read_vis, write_vis
+from pykotor.resource.type import ResourceType
 
 ASCII_TEST_FILE = "tests/files/test.vis"
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
@@ -54,3 +60,7 @@ class TestVIS(TestCase):
         else:
             self.assertRaises(IsADirectoryError, write_vis, VIS(), ".", ResourceType.VIS)
         self.assertRaises(ValueError, write_vis, VIS(), ".", ResourceType.INVALID)
+
+
+if __name__ == "__main__":
+    unittest.main()

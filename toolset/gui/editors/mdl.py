@@ -6,12 +6,12 @@ from PyQt5.QtWidgets import QMessageBox, QWidget
 
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.installation import SearchLocation
+from pykotor.helpers.path import Path
 from pykotor.resource.formats.erf import read_erf
 from pykotor.resource.formats.mdl import MDL, read_mdl, write_mdl
 from pykotor.resource.formats.rim import read_rim
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_bif_file, is_erf_or_mod_file, is_rim_file
-from pykotor.tools.path import Path
 from toolset.gui.editor import Editor
 
 if TYPE_CHECKING:
@@ -22,6 +22,20 @@ if TYPE_CHECKING:
 
 class MDLEditor(Editor):
     def __init__(self, parent: Optional[QWidget], installation: Optional[HTInstallation] = None):
+        """Initialize the Model Viewer window
+        Args:
+            parent: {QWidget}: The parent widget of this window
+            installation: {HTInstallation}: The installation context
+        Returns:
+            None: Does not return anything
+        Processing Logic:
+            - Initialize the base class with the given parameters
+            - Create an MDL model object
+            - Load the UI from the designer file
+            - Set up menus and connect signals
+            - Set the installation on the model renderer
+            - Call new() to start with a blank state.
+        """
         supported = [ResourceType.MDL]
         super().__init__(parent, "Model Viewer", "none", supported, supported, installation)
 
@@ -43,6 +57,25 @@ class MDLEditor(Editor):
         ...
 
     def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes) -> None:
+        """Loads a model resource and its associated data.
+
+        Args:
+        ----
+            filepath: {Path to the resource file}
+            resref: {Resource reference string}
+            restype: {Resource type (MDL or MDX)}
+            data: {Binary data of the resource}
+
+        Returns:
+        -------
+            None
+
+        Loads associated MDL/MDX data:
+        - Checks file extension and loads associated data from file
+        - Loads associated data from Erf, Rim or Bif files if present
+        - Sets model data on renderer if both MDL and MDX found
+        - Displays error if unable to find associated data.
+        """
         super().load(filepath, resref, restype, data)
         c_filepath = Path(filepath)
 
@@ -51,7 +84,7 @@ class MDLEditor(Editor):
 
         if restype == ResourceType.MDL:
             mdl_data = data
-            if c_filepath.endswith(".mdl"):
+            if c_filepath.suffix.lower == ".mdl":
                 mdx_data = BinaryReader.load_file(str(c_filepath.with_suffix(".mdx")))
             elif is_erf_or_mod_file(c_filepath.name):
                 erf = read_erf(filepath)

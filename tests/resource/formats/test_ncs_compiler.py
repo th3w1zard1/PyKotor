@@ -1,16 +1,23 @@
-from unittest import TestCase
+import pathlib
+import sys
+import unittest
+
+if getattr(sys, "frozen", False) is False:
+    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
+    if pykotor_path.exists() and str(pykotor_path) not in sys.path:
+        sys.path.insert(0, str(pykotor_path.parent))
 
 from pykotor.common.geometry import Vector3
 from pykotor.common.scriptdefs import KOTOR_CONSTANTS, KOTOR_FUNCTIONS
+from pykotor.helpers.path import Path
 from pykotor.resource.formats.ncs import NCS, NCSInstructionType
 from pykotor.resource.formats.ncs.compiler.classes import CompileException
 from pykotor.resource.formats.ncs.compiler.interpreter import Interpreter
 from pykotor.resource.formats.ncs.compiler.lexer import NssLexer
 from pykotor.resource.formats.ncs.compiler.parser import NssParser
-from pykotor.tools.path import Path
 
 
-class TestNSSCompiler(TestCase):
+class TestNSSCompiler(unittest.TestCase):
     def compile(self, script: str, library=None, library_lookup=None) -> NCS:
         nssLexer = NssLexer()
         nssParser = NssParser(
@@ -1841,7 +1848,9 @@ class TestNSSCompiler(TestCase):
             {
                 PrintInteger(123);
             }
-        """.encode()
+        """.encode(
+            encoding="windows-1252"
+        )
 
         ncs = self.compile(
             """
@@ -1885,11 +1894,15 @@ class TestNSSCompiler(TestCase):
             {
                 PrintInteger(value);
             }
-        """.encode()
+        """.encode(
+            encoding="windows-1252"
+        )
 
         second_script = """
             #include "first_script"
-        """.encode()
+        """.encode(
+            encoding="windows-1252"
+        )
 
         ncs = self.compile(
             """
@@ -2032,7 +2045,9 @@ class TestNSSCompiler(TestCase):
     def test_imported_global_variable(self):
         otherscript = """
             int iExperience = 55;
-        """.encode()
+        """.encode(
+            encoding="windows-1252"
+        )
 
         ncs = self.compile(
             """
@@ -2915,3 +2930,7 @@ class TestNSSCompiler(TestCase):
 
         interpreter = Interpreter(ncs)
         interpreter.run()
+
+
+if __name__ == "__main__":
+    unittest.main()
