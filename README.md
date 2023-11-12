@@ -2,12 +2,6 @@ PyKotor
 =======
 A Python library that can read and modify most file formats used by the game Knights of the Old Republic and its sequel.
 
-## Installation
-Install from [PyPI](https://pypi.org/project/PyKotor/).
-```bash
-pip install pykotor
-```
-
 ## Requirements
 PyKotor supports any Python version within 3.8 through 3.12. See requirements.txt for additional pip dependencies.
 PyKotor is supported on most operating systems, including Mac OS and Linux.
@@ -28,7 +22,7 @@ As shown, this will save C_Gammorean01.tga to the current directory.
 ## Cloning the repo
 If you would like to work with the source files directly from github, run the following commands to get yourself setup:
 ```bash
-git clone https://github.com/NickHugi/PyKotor
+git clone https://github.com/th3w1zard1/PyKotor
 cd PyKotor
 pip install -r requirements.txt
 pip install -r toolset/requirements.txt
