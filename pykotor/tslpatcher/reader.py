@@ -70,6 +70,23 @@ class ConfigReader:
 
     @classmethod
     def from_filepath(cls, file_path: os.PathLike | str, logger: PatchLogger | None = None) -> PatcherConfig:
+        """Loads PatcherConfig from an INI file.
+
+        Args:
+        ----
+            file_path: The path to the INI file.
+            logger: Optional logger for logging errors.
+
+        Returns:
+        -------
+            PatcherConfig: The loaded configuration.
+        Processing Logic:
+            1. Resolve the file path.
+            2. Initialize an ConfigParser to parse the INI file. 
+            3. Load and decode the INI file contents.
+            4. Parse the INI sections/keys and populate a PatcherConfig object.
+            5. Return the populated PatcherConfig.
+        """
         resolved_file_path = (file_path if isinstance(file_path, Path) else Path(file_path)).resolve()
 
         ini = ConfigParser(
@@ -187,7 +204,7 @@ class ConfigReader:
             - Parse range strings and handle ignore indices
             - Process TLK entries based on key syntax.
         """
-        tlk_list_section = self.get_section_name("tlklist")
+        tlk_list_section: str | None = self.get_section_name("tlklist")
         if not tlk_list_section:
             self.log.add_note("[TLKList] section missing from ini.")
             return
@@ -555,6 +572,9 @@ class ConfigReader:
                     next_section_dict = CaseInsensitiveDict(self.ini[next_gff_section].items())
                     modifier = self.add_field_gff(next_gff_section, next_section_dict)
                 elif lowercase_key.startswith("2damemory"):
+                    if value.lower() != "!fieldpath" and not value.startswith("2damemory"):
+                        msg = f"Cannot parse '{key}={value}' in [{identifier}]. GFFList only supports 2DAMEMORY#=!FieldPath assignments"
+                        raise ValueError(msg)
                     modifier = Memory2DAModifierGFF(
                         file,
                         int(key[9:]),
@@ -570,15 +590,15 @@ class ConfigReader:
 
         Args:
         ----
-            self: The ModOrganizer instance
+            self: The reader instance
         Returns:
             None
         - Parses the [CompileList] section of the ini file into a dictionary
         - Sets a default destination from an optional key
         - Loops through each identifier/file pair
-                - Creates a ModificationsNSS object
-                - Looks for an optional section for the file
-                - Passes any values to populate the patch
+            - Creates a ModificationsNSS object
+            - Looks for an optional section for the file
+            - Passes any values to populate the patch
         - Adds each patch to the config patches list
         """
         compilelist_section = self.get_section_name("compilelist")
@@ -602,65 +622,115 @@ class ConfigReader:
 
     #################
 
-    def field_value_gff(self, raw_value: str) -> FieldValue:
-        """Parses a raw GFF value into a FieldValue object
-        Args:
-            raw_value: The raw GFF value from the ini as a string
-        Returns:
-            FieldValue: The parsed FieldValue object
-        - Check if raw_value starts with "strref" and parse as TLKMemory
-        - Check if raw_value starts with "2damemory" and parse as TLKMemory
-        - Otherwise parse as Constant.
-        """
-        if raw_value.lower().startswith("strref"):
-            token_id = int(raw_value[6:])
-            return FieldValueTLKMemory(token_id)
-        if raw_value.lower().startswith("2damemory"):
-            token_id = int(raw_value[9:])
-            return FieldValueTLKMemory(token_id)
-        return FieldValueConstant(int(raw_value))
+    @staticmethod
+    def normalize_tslpatcher_float(value_str: str) -> str:
+        return value_str.replace(",", ".")
+    @staticmethod
+    def normalize_tslpatcher_crlf(value_str: str) -> str:
+        return value_str.replace("<#LF#>", "\n").replace("<#CR#>", "\r")
 
-    def modify_field_gff(self, identifier: str, key: str, string_value: str) -> ModifyFieldGFF:
-        """Modifies a field in a GFF based on its identifier, key and string value.
+    @staticmethod
+    def resolve_tslpatcher_field_type(field_type_num_str: str) -> GFFFieldType:
+        fieldname_to_fieldtype = CaseInsensitiveDict(
+            {
+                "Byte": GFFFieldType.UInt8,
+                "Char": GFFFieldType.Int8,
+                "Word": GFFFieldType.UInt16,
+                "Short": GFFFieldType.Int16,
+                "DWORD": GFFFieldType.UInt32,
+                "Int": GFFFieldType.Int32,
+                "Int64": GFFFieldType.Int64,
+                "Float": GFFFieldType.Single,
+                "Double": GFFFieldType.Double,
+                "ExoString": GFFFieldType.String,
+                "ResRef": GFFFieldType.ResRef,
+                "ExoLocString": GFFFieldType.LocalizedString,
+                "Position": GFFFieldType.Vector3,
+                "Orientation": GFFFieldType.Vector4,
+                "Struct": GFFFieldType.Struct,
+                "List": GFFFieldType.List,
+            }.items(),
+        )
+        return fieldname_to_fieldtype[field_type_num_str]
+
+    @staticmethod
+    def field_value_from_memory(raw_value: str) -> FieldValue | None:
+        """Extract field value from memory reference string.
 
         Args:
         ----
-            identifier: str - The section name
-            key: str - The key of the field to modify (part before the =)
-            string_value: str - The raw string (after the =) to assign.
-
+            raw_value: String value to parse
         Returns:
-        -------
-            ModifyFieldGFF - A data class representing the modification
-
+            FieldValue|None: FieldValue object or None
         Processing Logic:
-        - Lowercases the key and value for comparisons only
-        - Parses value based on prefixes like "2DAMemory" or "strref"
-        - Handles localized strings with "(strref)" or "(lang)" in key
-        - Checks for valid assignments if key starts with "2DAMemory"
-        - Returns a ModifyFieldGFF instance
+        - Lowercase the raw value string
+        - Check if it starts with "strref" and extract token ID
+        - Check if it starts with "2damemory" and extract token ID
+        - Return FieldValue memory object with token ID, or None if no match
         """
-        value: FieldValue | None = None
-        string_value_lower = string_value.lower()
+        lower_str_value = raw_value.lower()
+        if lower_str_value.startswith("strref"):
+            token_id = int(raw_value[6:])
+            return FieldValueTLKMemory(token_id)
+        if lower_str_value.startswith("2damemory"):
+            token_id = int(raw_value[9:])
+            return FieldValue2DAMemory(token_id)
+        return None
+
+    @staticmethod
+    def field_value_from_unknown(string_value: str) -> FieldValue:
+        field_value_memory: FieldValue | None = ConfigReader.field_value_from_memory(string_value)
+        if field_value_memory is not None:
+            return field_value_memory
+        if is_int(string_value):
+            return FieldValueConstant(int(string_value))
+        parsed_float: str = ConfigReader.normalize_tslpatcher_float(string_value)
+        if is_float(parsed_float):
+            return FieldValueConstant(float(parsed_float))
+        if string_value.count("|") == 2:
+            components = parsed_float.split("|")
+            return FieldValueConstant(Vector3(*[float(x) for x in components]))
+        if string_value.count("|") == 3:
+            components = parsed_float.split("|")
+            return FieldValueConstant(Vector4(*[float(x) for x in components]))
+
+        return FieldValueConstant(ConfigReader.normalize_tslpatcher_crlf(string_value))
+
+    @staticmethod
+    def field_value_from_type(raw_value: str, field_type: GFFFieldType) -> FieldValue | None:
+        if (value := ConfigReader.field_value_from_memory(raw_value)) is not None:
+            return value
+        if field_type.return_type() == ResRef:
+            return FieldValueConstant(ResRef(raw_value))
+        if field_type.return_type() == str:
+            return FieldValueConstant(ConfigReader.normalize_tslpatcher_crlf(raw_value))
+        if field_type.return_type() == int:
+            return FieldValueConstant(int(raw_value))
+        if field_type.return_type() == float:
+            return FieldValueConstant(float(ConfigReader.normalize_tslpatcher_float(raw_value)))
+        if field_type.return_type() == Vector3:
+            components = [float(ConfigReader.normalize_tslpatcher_float(axis)) for axis in raw_value.split("|")]
+            return FieldValueConstant(Vector3(*components))
+        if field_type.return_type() == Vector4:
+            components = [float(ConfigReader.normalize_tslpatcher_float(axis)) for axis in raw_value.split("|")]
+            return FieldValueConstant(Vector4(*components))
+        return None
+
+    def modify_field_gff(self, identifier: str, key: str, string_value: str) -> ModifyFieldGFF:
+        """Modifies a field in a GFF based on the key(path) and string value
+        Args:
+            identifier: str - The section name (for logging purposes)
+            key: str - The key of the field to modify
+            string_value: str - The string value to set the field to
+        Returns:
+            ModifyFieldGFF - A ModifyFieldGFF object representing the modification
+        Processing Logic:
+            1. Parses the string value into a FieldValue
+            2. Handles special cases for keys containing "(strref)", "(lang)" or starting with "2damemory"
+            3. Returns a ModifyFieldGFF object representing the modification.
+        """
+        value: FieldValue = self.field_value_from_unknown(string_value)
         key_lower = key.lower()
-        if string_value_lower.startswith("2damemory"):
-            token_id = int(string_value[9:])
-            value = FieldValue2DAMemory(token_id)
-        elif string_value_lower.startswith("strref"):
-            token_id = int(string_value[6:])
-            value = FieldValueTLKMemory(token_id)
-        elif is_int(string_value):
-            value = FieldValueConstant(int(string_value))
-        elif is_float(string_value):
-            value = FieldValueConstant(float(string_value.replace(",", ".")))
-        elif string_value.count("|") == 2:
-            components = string_value.split("|")
-            value = FieldValueConstant(Vector3(*(float(x.replace(",", ".")) for x in components)))
-        elif string_value.count("|") == 3:
-            components = string_value.split("|")
-            value = FieldValueConstant(Vector4(*(float(x.replace(",", ".")) for x in components)))
-        else:
-            value = FieldValueConstant(string_value.replace("<#LF#>", "\n").replace("<#CR#>", "\r"))
         if "(strref)" in key_lower:
             value = FieldValueConstant(LocalizedStringDelta(value))
             key = key[: key_lower.index("(strref)")]
@@ -672,6 +742,7 @@ class ConfigReader:
             value = FieldValueConstant(locstring)
             key = key[: key_lower.index("(lang")]
         elif key_lower.startswith("2damemory"):
+            string_value_lower = string_value.lower()
             if string_value_lower != "!fieldpath" and not string_value_lower.startswith("2damemory"):
                 msg = f"Cannot parse '{key}={value}' in [{identifier}]. GFFList only supports 2DAMEMORY#=!FieldPath assignments"
                 raise ValueError(msg)
@@ -682,14 +753,14 @@ class ConfigReader:
     def add_field_gff(
         self,
         identifier: str,
-        ini_data: CaseInsensitiveDict,
+        ini_data: CaseInsensitiveDict[str],
         current_path: PureWindowsPath | None = None,
     ) -> ModifyGFF:  # sourcery skip: extract-method, remove-unreachable-code
         """Parse GFFList's AddField syntax from the ini to determine what fields/structs/lists to add.
 
         Args:
         ----
-            identifier: str - Identifier of the section in the ini file
+            identifier: str - Identifier of the section in the current recursion from the ini file
             ini_data: CaseInsensitiveDict - Data from the ini section
             current_path: PureWindowsPath or None - Current path in the GFF
         Returns:
@@ -701,30 +772,12 @@ class ConfigReader:
             3. Handles nested modifiers and structs in lists
             4. Returns an AddFieldGFF or AddStructToListGFF object based on whether a label is provided.
         """
-        fieldname_to_fieldtype = {
-            "Byte": GFFFieldType.UInt8,
-            "Char": GFFFieldType.Int8,
-            "Word": GFFFieldType.UInt16,
-            "Short": GFFFieldType.Int16,
-            "DWORD": GFFFieldType.UInt32,
-            "Int": GFFFieldType.Int32,
-            "Int64": GFFFieldType.Int64,
-            "Float": GFFFieldType.Single,
-            "Double": GFFFieldType.Double,
-            "ExoString": GFFFieldType.String,
-            "ResRef": GFFFieldType.ResRef,
-            "ExoLocString": GFFFieldType.LocalizedString,
-            "Position": GFFFieldType.Vector3,
-            "Orientation": GFFFieldType.Vector4,
-            "Struct": GFFFieldType.Struct,
-            "List": GFFFieldType.List,
-        }
-        value: FieldValue | None = None
+        value: FieldValue
         text: str
-        struct_id = 0
+        struct_id: int | None = None
 
         # required
-        field_type: GFFFieldType = fieldname_to_fieldtype[ini_data["FieldType"]]
+        field_type: GFFFieldType = self.__class__.resolve_tslpatcher_field_type(ini_data["FieldType"])
         label: str = ini_data["Label"].strip()
 
         # situational/optional
@@ -737,60 +790,39 @@ class ConfigReader:
 
         if raw_value is None:
             if field_type.return_type() == LocalizedString:
-                stringref = self.field_value_gff(ini_data["StrRef"])
-
+                raw_stringref = ini_data["StrRef"]
+                stringref: FieldValue = self.field_value_from_memory(raw_stringref) or FieldValueConstant(int(raw_stringref))
                 l_string_delta = LocalizedStringDelta(stringref)
+
                 for substring, text in ini_data.items():
                     if not substring.lower().startswith("lang"):
                         continue
                     substring_id = int(substring[4:])
                     language, gender = l_string_delta.substring_pair(substring_id)
-                    formatted_text = text.replace("<#LF#>", "\n").replace("<#CR#>", "\r")
+                    formatted_text = self.__class__.normalize_tslpatcher_crlf(text)
                     l_string_delta.set_data(language, gender, formatted_text)
                 value = FieldValueConstant(l_string_delta)
             elif field_type.return_type() == GFFList:
                 value = FieldValueConstant(GFFList())
             elif field_type.return_type() == GFFStruct:
                 raw_struct_id = ini_data["TypeId"].strip()
-                if raw_struct_id and is_int(raw_struct_id):
-                    struct_id = int(raw_struct_id)
-                elif raw_struct_id:
+                if not is_int(raw_struct_id):
                     msg = f"Invalid struct id: expected int but got '{raw_struct_id}' in '[{identifier}]'"
                     raise ValueError(msg)
-                value = FieldValueConstant(GFFStruct(struct_id))
+
+                struct_id = int(raw_struct_id)
                 path /= ">>##INDEXINLIST##<<"  # see the check in mods/gff.py. Perhaps need to check if label is set, first?
+                value = FieldValueConstant(GFFStruct(struct_id))
             else:
                 msg = f"Could not find valid field return type in [{identifier}] matching field type '{field_type}' in this context"
                 raise ValueError(msg)
-        elif raw_value.lower().startswith("2damemory"):
-            token_id = int(raw_value[9:])
-            value = FieldValue2DAMemory(token_id)
-        elif raw_value.lower().endswith("strref"):  # TODO: see if this is necessary, seems unused. Perhaps needs to be 'StrRef\d+'? Or is this already handled elsewhere?
-            token_id = int(raw_value[6:])
-            value = FieldValueTLKMemory(token_id)
-        elif field_type.return_type() == int:
-            value = FieldValueConstant(int(raw_value))
-        elif field_type.return_type() == float:
-            # Replace comma with dot for decimal separator to match TSLPatcher syntax.
-            value = FieldValueConstant(float(raw_value.replace(",", ".")))
-        elif field_type.return_type() == str:
-            value = FieldValueConstant(raw_value.replace("<#LF#>", "\n").replace("<#CR#>", "\r"))
-        elif field_type.return_type() == ResRef:
-            value = FieldValueConstant(ResRef(raw_value))
-        elif field_type.return_type() == Vector3:
-            # Replace comma with dot for decimal separator to match TSLPatcher syntax.
-            components = (float(axis.replace(",", ".")) for axis in raw_value.split("|"))
-            value = FieldValueConstant(Vector3(*components))
-        elif field_type.return_type() == Vector4:
-            # Replace comma with dot for decimal separator to match TSLPatcher syntax.
-            components = (float(axis.replace(",", ".")) for axis in raw_value.split("|"))
-            value = FieldValueConstant(Vector4(*components))
         else:
-            msg = f"Could not parse fieldtype '{field_type}' in section [{identifier}]"
-            raise ValueError(msg)
+            value = self.field_value_from_type(raw_value, field_type)  # type: ignore[assignment]
+            if value is None:
+                msg = f"Could not parse fieldtype '{field_type}' in GFFList section [{identifier}]"
+                raise ValueError(msg)
 
         modifiers: list[ModifyGFF] = []
-
         index_in_list_token = None
         lower_iterated_value: str
         for key, iterated_value in ini_data.items():
@@ -822,7 +854,7 @@ class ConfigReader:
         if not label and field_type.return_type() is GFFStruct:
             return AddStructToListGFF(
                 identifier,
-                struct_id,
+                struct_id or 0,  # TODO: Is the '0' needed? Is this the default value?
                 value,
                 path,
                 index_in_list_token,
@@ -843,7 +875,7 @@ class ConfigReader:
         self,
         key: str,
         identifier: str,
-        modifiers: CaseInsensitiveDict,
+        modifiers: CaseInsensitiveDict[str],
     ) -> Modify2DA | None:
         """Determines the type of 2DA modification based on the key
         Args:
@@ -858,77 +890,69 @@ class ConfigReader:
         - Constructs the appropriate modification object
         - Returns the modification object or None.
         """
-        exclusive_column: str | None
-        modification: Modify2DA | None = None
         lowercase_key = key.lower()
-
-        if lowercase_key.startswith("changerow"):
-            target = self.target_2da(identifier, modifiers)
-            if target is None:
-                return None
-            cells, store_2da, store_tlk = self.cells_2da(identifier, modifiers)
-            modification = ChangeRow2DA(identifier, target, cells, store_2da, store_tlk)
-        elif lowercase_key.startswith("addrow"):
-            exclusive_column = modifiers.pop("ExclusiveColumn")
-            row_label = self.row_label_2da(identifier, modifiers)
-            cells, store_2da, store_tlk = self.cells_2da(identifier, modifiers)
-            modification = AddRow2DA(
+        cells, store_2da, store_tlk = self.cells_2da(identifier, modifiers)
+        if lowercase_key.startswith("addcolumn"):
+            return self.add_2da_column(modifiers, identifier)
+        if lowercase_key.startswith("addrow"):
+            return AddRow2DA(
                 identifier,
-                exclusive_column,
-                row_label,
+                modifiers.pop("ExclusiveColumn", None),
+                self.row_label_2da(identifier, modifiers),
                 cells,
                 store_2da,
                 store_tlk,
             )
-        elif lowercase_key.startswith("copyrow"):
-            target = self.target_2da(identifier, modifiers)
-            if not target:
-                return None
-            exclusive_column = modifiers.pop("ExclusiveColumn")
-            row_label = self.row_label_2da(identifier, modifiers)
-            cells, store_2da, store_tlk = self.cells_2da(identifier, modifiers)
-            modification = CopyRow2DA(
+
+        target = self.target_2da(identifier, modifiers)
+        if target is None:
+            return None
+        if lowercase_key.startswith("changerow"):
+            return ChangeRow2DA(
                 identifier,
                 target,
-                exclusive_column,
-                row_label,
                 cells,
                 store_2da,
                 store_tlk,
             )
-        elif lowercase_key.startswith("addcolumn"):
-            modification = self.add_2da_column(modifiers, identifier)
-        else:
-            msg = f"Could not parse key '{key}={identifier}', expecting one of ['ChangeRow=', 'AddColumn=', 'AddRow=', 'CopyRow=']"
-            raise KeyError(msg)
+        if lowercase_key.startswith("copyrow"):
+            return CopyRow2DA(
+                identifier,
+                target,
+                modifiers.pop("ExclusiveColumn", None),
+                self.row_label_2da(identifier, modifiers),
+                cells,
+                store_2da,
+                store_tlk,
+            )
+        msg = f"Could not parse key '{key}={identifier}', expecting one of ['ChangeRow=', 'AddColumn=', 'AddRow=', 'CopyRow=']"
+        raise KeyError(msg)
 
-        return modification
+    def add_2da_column(self, modifiers: CaseInsensitiveDict[str], identifier: str):
+        """Adds a column to a 2DA table.
 
-    def add_2da_column(self, modifiers: CaseInsensitiveDict, identifier: str):
-        """Adds a column to a 2DA table
         Args:
-            modifiers: CaseInsensitiveDict - Contains column modifiers
-            identifier: str - Identifier of the 2DA table (section name).
-
-        Returns
-        -------
-            AddColumn2DA: Returns an AddColumn2DA object
+        ----
+            modifiers: CaseInsensitiveDict[str]: Modifiers for the column
+            identifier: str: Identifier for the 2DA table
+        Returns:
+            AddColumn2DA: Object to add the column to the 2DA table
         Processing Logic:
-            1. Pops 'ColumnLabel' from modifiers and sets as header
-            2. Pops 'DefaultValue' from modifiers and sets as default
-            3. Calls column_inserts_2da to get insert indexes
-            4. Returns AddColumn2DA object.
+        1. Gets the required 'ColumnLabel' and 'DefaultValue' modifiers
+        2. Checks for missing required modifiers and raises error
+        3. Gets index and label inserts for the new column from column_inserts_2da
+        4. Returns AddColumn2DA object to add the column.
         """
-        header = modifiers.pop("ColumnLabel")
-        if header is None:
-            msg = f"Missing 'ColumnLabel' in [{identifier}]"
-            raise KeyError(msg)
-        default = modifiers.pop("DefaultValue")
-        if default is None:
-            msg = f"Missing 'DefaultValue' in [{identifier}]"
-            raise KeyError(msg)
-        default = default if default != "****" else ""
-        index_insert, label_insert, store_2da = self.column_inserts_2da(  # type: ignore[assignment]
+        def get_required_modifier(key):
+            value = modifiers.pop(key, None)
+            if value is None:
+                msg = f"Missing '{key}' in [{identifier}]"
+                raise KeyError(msg)
+            return value
+        header = get_required_modifier("ColumnLabel")
+        default = get_required_modifier("DefaultValue")
+        default = "" if default == "****" else default
+        index_insert, label_insert, store_2da = self.column_inserts_2da(
             identifier,
             modifiers,
         )
@@ -938,10 +962,10 @@ class ConfigReader:
             default,
             index_insert,
             label_insert,
-            store_2da,  # type: ignore[arg-type]
+            store_2da,
         )
 
-    def target_2da(self, identifier: str, modifiers: CaseInsensitiveDict) -> Target | None:
+    def target_2da(self, identifier: str, modifiers: CaseInsensitiveDict[str]) -> Target | None:
         """Gets or creates a 2D target from modifiers.
 
         Args:
@@ -955,12 +979,11 @@ class ConfigReader:
         - Returns None if no valid key found with warning
         """
         def get_target(target_type: TargetType, key: str, is_int: bool = False) -> Target:
-            value = modifiers.pop(key)
-            if value is None:
+            raw_value: str | None = modifiers.pop(key, None)
+            if raw_value is None:
                 msg = f"'{key}' missing from [{identifier}] in ini."
                 raise ValueError(msg)
-            if is_int:
-                value = int(value)
+            value: str | int = int(raw_value) if is_int else raw_value
             return Target(target_type, value)
 
         if "RowIndex" in modifiers:
@@ -970,7 +993,7 @@ class ConfigReader:
         if "LabelIndex" in modifiers:
             return get_target(TargetType.LABEL_COLUMN, "LabelIndex")
 
-        self.log.add_warning(f"No line set to be modified in [{identifier}].")
+        self.log.add_warning(f"No line set to be modified in [{identifier}].")  # TODO: should raise an exception?
         return None
 
     def cells_2da(
@@ -1032,9 +1055,7 @@ class ConfigReader:
             elif is_store_tlk:
                 token_id = int(modifier[6:])
                 store_tlk[token_id] = row_value
-            elif is_row_label:
-                ...
-            else:
+            elif not is_row_label:
                 cells[modifier] = row_value
 
         return cells, store_2da, store_tlk
