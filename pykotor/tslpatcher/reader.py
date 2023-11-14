@@ -141,8 +141,37 @@ class ConfigReader:
 
         test_dict: dict[str, Any] = dict(serialize_case_insensitive_dict(self.ini_dict).items())
         json_string = json.dumps(test_dict)
+        json_dict = json.loads(json_string)
+
+        def add_sections_to_config(config: ConfigParser, d: dict):
+            for section, content in d.items():
+                if isinstance(content, dict):
+                    if section not in config:
+                        config.add_section(section)
+                    for key, value in content.items():
+                        if isinstance(value, (dict, CaseInsensitiveDict)):
+                            # Recursive call for nested dictionaries
+                            add_sections_to_config(config, {key: value})
+                        else:
+                            config.set(section, key, str(value))
+
+        # Create a ConfigParser object
+        new_config = ConfigParser(
+            delimiters=("="),
+            allow_no_value=True,
+            strict=False,
+            interpolation=None,
+        )
+        # use case-sensitive keys
+        new_config.optionxform = lambda optionstr: optionstr  #  type: ignore[method-assign]
+        add_sections_to_config(new_config, json_dict)
+
         with self.mod_path.joinpath("changes.json").open("w") as f:
             f.write(json_string)
+
+        # Write the ConfigParser object to an INI file
+        with self.mod_path.joinpath("changes_new.ini").open("w") as configfile:
+            new_config.write(configfile)
 
         return self.config
 
@@ -199,7 +228,7 @@ class ConfigReader:
         if not install_list_section:
             self.log.add_note("[InstallList] section missing from ini.")
             return
-        self.ini_dict[install_list_section] = CaseInsensitiveDict({value: CaseInsensitiveDict() for _, value in self.ini[install_list_section].items()}.items())
+        self.ini_dict[install_list_section] = CaseInsensitiveDict(self.ini[install_list_section].items())
 
         self.log.add_note("Loading [InstallList] patches from ini...")
         for key, foldername in self.ini[install_list_section].items():
@@ -569,7 +598,7 @@ class ConfigReader:
             if not file_section_name:
                 raise KeyError(SECTION_NOT_FOUND_ERROR.format(file, identifier, file, gff_list_section))
 
-            self.ini_dict[gff_list_section][file_section_name] = CaseInsensitiveDict({value: key for key, value in self.ini[file_section_name].items()}.items())
+            self.ini_dict[gff_list_section][file_section_name] = CaseInsensitiveDict(self.ini[file_section_name].items())
             replace = identifier.lower().startswith("replace")
             modifications = ModificationsGFF(file, replace)
             self.config.patches_gff.append(modifications)
@@ -680,7 +709,6 @@ class ConfigReader:
         identifier: str,
         ini_data: CaseInsensitiveDict[str],
         current_path: PureWindowsPath | None = None,
-        current_section_path: PurePath | None = None,
         ini_dict: CaseInsensitiveDict[str] | None = None,
     ) -> ModifyGFF:  # sourcery skip: extract-method, remove-unreachable-code
         """Parse GFFList's AddField syntax from the ini to determine what fields/structs/lists to add.
@@ -724,7 +752,6 @@ class ConfigReader:
             path = current_path
         if field_type.return_type() == GFFStruct:
             path /= ">>##INDEXINLIST##<<"
-        current_section_path = current_section_path if current_section_path and current_section_path.name else PurePath(identifier)
 
         modifiers: list[ModifyGFF] = []
         index_in_list_token = None
@@ -747,14 +774,12 @@ class ConfigReader:
                 next_section_name: str | None = self.get_section_name(iterated_value)
                 if not next_section_name:
                     raise KeyError(SECTION_NOT_FOUND_ERROR.format(iterated_value, key, iterated_value, identifier))
-                ini_dict[next_section_name] = CaseInsensitiveDict()
-                ini_dict = create_or_update_nested_dict(current_section_path.parts, CaseInsensitiveDict(self.ini[next_section_name].items()), ini_dict[next_section_name])
+                ini_dict[next_section_name] = CaseInsensitiveDict(self.ini[next_section_name].items())
                 next_nested_section = CaseInsensitiveDict(self.ini[next_section_name].items())
                 nested_modifier: ModifyGFF = self.add_field_gff(
                     next_section_name,
                     next_nested_section,
                     current_path=path / label,
-                    current_section_path = current_section_path / next_section_name,
                     ini_dict = ini_dict,
                 )
                 modifiers.append(nested_modifier)
