@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from configparser import ConfigParser
 from itertools import tee
+import json
 from typing import TYPE_CHECKING, Any
 
 from pykotor.common.geometry import Vector3, Vector4
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, ResRef, decode_bytes_with_fallbacks
 from pykotor.common.stream import BinaryReader
-from pykotor.helpers.path import Path, PureWindowsPath
+from pykotor.helpers.path import Path, PurePath, PureWindowsPath
 from pykotor.resource.formats.gff import GFFFieldType, GFFList, GFFStruct
 from pykotor.resource.formats.ssf import SSFSound
 from pykotor.resource.formats.tlk import TLK, read_tlk
@@ -60,6 +61,18 @@ if TYPE_CHECKING:
 
 SECTION_NOT_FOUND_ERROR: str = "The [{}] section was not found in the ini, referenced by '{}={}' in [{}]"
 
+def serialize_case_insensitive_dict(case_insensitive_dict):
+    serialized_dict = {}
+    for key, value in case_insensitive_dict.items():
+        # Check if the value is an instance of CaseInsensitiveDict
+        if isinstance(value, CaseInsensitiveDict):
+            # If so, recursively serialize this nested CaseInsensitiveDict
+            serialized_dict[key] = serialize_case_insensitive_dict(value)
+        else:
+            # Otherwise, simply copy the value
+            serialized_dict[key] = value
+    return serialized_dict
+
 
 class ConfigReader:
     def __init__(self, ini: ConfigParser, mod_path: os.PathLike | str, logger: PatchLogger | None = None) -> None:
@@ -67,6 +80,7 @@ class ConfigReader:
         self.mod_path: CaseAwarePath = mod_path if isinstance(mod_path, CaseAwarePath) else CaseAwarePath(mod_path)
         self.config: PatcherConfig
         self.log = logger or PatchLogger()
+        self.ini_dict: CaseInsensitiveDict = CaseInsensitiveDict()
 
     @classmethod
     def from_filepath(cls, file_path: os.PathLike | str, logger: PatchLogger | None = None):
@@ -125,6 +139,11 @@ class ConfigReader:
         self.load_compile_list()
         self.load_ssf_list()
 
+        test_dict: dict[str, Any] = dict(serialize_case_insensitive_dict(self.ini_dict).items())
+        json_string = json.dumps(test_dict)
+        with self.mod_path.joinpath("changes.json").open("w") as f:
+            f.write(json_string)
+
         return self.config
 
     def get_section_name(self, section_name: str):
@@ -142,6 +161,7 @@ class ConfigReader:
 
         self.log.add_note("Loading [Settings] section from ini...")
         settings_ini = CaseInsensitiveDict(self.ini[settings_section].items())
+        self.ini_dict[settings_section] = CaseInsensitiveDict(self.ini[settings_section].items())
         self.config.window_title = settings_ini.get("WindowCaption", "")
         self.config.confirm_message = settings_ini.get("ConfirmMessage", "")
         lookup_game_number = settings_ini.get("LookupGameNumber")
@@ -179,6 +199,7 @@ class ConfigReader:
         if not install_list_section:
             self.log.add_note("[InstallList] section missing from ini.")
             return
+        self.ini_dict[install_list_section] = CaseInsensitiveDict({value: CaseInsensitiveDict() for _, value in self.ini[install_list_section].items()}.items())
 
         self.log.add_note("Loading [InstallList] patches from ini...")
         for key, foldername in self.ini[install_list_section].items():
@@ -186,6 +207,7 @@ class ConfigReader:
             if foldername_section is None:
                 raise KeyError(SECTION_NOT_FOUND_ERROR.format(foldername, key, foldername, install_list_section))
 
+            self.ini_dict[install_list_section][foldername] = CaseInsensitiveDict(self.ini[foldername_section].items())
             for key2, filename in self.ini[foldername_section].items():
                 replace_existing = key2.lower().startswith("replace")
                 file_install = InstallFile(filename, replace_existing)
@@ -195,6 +217,7 @@ class ConfigReader:
                 # optional according to tslpatcher readme
                 file_section_name = self.get_section_name(filename)
                 if file_section_name:
+                    self.ini_dict[install_list_section][foldername][file_section_name] = CaseInsensitiveDict(self.ini[file_section_name].items())
                     file_section_dict = CaseInsensitiveDict(self.ini[file_section_name].items())
                     file_install.pop_tslpatcher_vars(file_section_dict, foldername)
 
@@ -222,6 +245,7 @@ class ConfigReader:
 
         self.log.add_note("Loading [TLKList] patches from ini...")
         tlk_list_edits = CaseInsensitiveDict(self.ini[tlk_list_section].items())
+        self.ini_dict[tlk_list_section] = CaseInsensitiveDict(self.ini[tlk_list_section].items())
 
         default_destination = tlk_list_edits.pop("!DefaultDestination", ModificationsTLK.DEFAULT_DESTINATION)
         self.config.patches_tlk.pop_tslpatcher_vars(tlk_list_edits, default_destination)
@@ -361,6 +385,7 @@ class ConfigReader:
                         raise ValueError(SECTION_NOT_FOUND_ERROR.format(value, key, value, tlk_list_section))  # noqa: TRY301
 
                     next_section_dict = CaseInsensitiveDict(self.ini[next_section_name].items())
+                    self.ini_dict[tlk_list_section][next_section_name] = CaseInsensitiveDict(self.ini[next_section_name].items())
                     self.config.patches_tlk.pop_tslpatcher_vars(next_section_dict, default_destination)
 
                     process_tlk_entries(
@@ -429,6 +454,7 @@ class ConfigReader:
         self.log.add_note("Loading [2DAList] patches from ini...")
 
         twoda_section_dict = CaseInsensitiveDict(self.ini[twoda_section_name].items())
+        self.ini_dict[twoda_section_name] = CaseInsensitiveDict(self.ini[twoda_section_name].items())
         default_destination = twoda_section_dict.pop("!DefaultDestination", Modifications2DA.DEFAULT_DESTINATION)
         for identifier, file in twoda_section_dict.items():
             file_section = self.get_section_name(file)
@@ -437,6 +463,7 @@ class ConfigReader:
 
             modifications = Modifications2DA(file)
             file_section_dict = CaseInsensitiveDict(self.ini[file_section].items())
+            self.ini_dict[twoda_section_name][file_section] = CaseInsensitiveDict(self.ini[file_section].items())
             modifications.pop_tslpatcher_vars(file_section_dict)
             if modifications.destination == modifications.DEFAULT_DESTINATION:
                 modifications.destination = default_destination
@@ -446,6 +473,7 @@ class ConfigReader:
                 next_section_name = self.get_section_name(modification_id)
                 if not next_section_name:
                     raise KeyError(SECTION_NOT_FOUND_ERROR.format(modification_id, key, modification_id, file_section))
+                self.ini_dict[twoda_section_name][file_section][next_section_name] = CaseInsensitiveDict(self.ini[next_section_name].items())
                 modification_ids_dict = CaseInsensitiveDict(self.ini[modification_id].items())
                 manipulation: Modify2DA | None = self.discern_2da(
                     key,
@@ -476,6 +504,7 @@ class ConfigReader:
         self.log.add_note("Loading [SSFList] patches from ini...")
 
         ssf_section_dict = CaseInsensitiveDict(self.ini[ssf_list_section].items())
+        self.ini_dict[ssf_list_section] = CaseInsensitiveDict(self.ini[ssf_list_section].items())
         default_destination = ssf_section_dict.pop("!DefaultDestination", ModificationsSSF.DEFAULT_DESTINATION)
 
         for identifier, file in ssf_section_dict.items():
@@ -483,6 +512,7 @@ class ConfigReader:
             if not ssf_file_section:
                 raise KeyError(SECTION_NOT_FOUND_ERROR.format(file, identifier, file, ssf_list_section))
 
+            self.ini_dict[ssf_list_section][ssf_file_section] = CaseInsensitiveDict(self.ini[ssf_file_section].items())
             replace = identifier.lower().startswith("replace")
             modifications = ModificationsSSF(file, replace)
             self.config.patches_ssf.append(modifications)
@@ -531,6 +561,7 @@ class ConfigReader:
         modifier: ModifyGFF | None = None
 
         gff_section_dict = CaseInsensitiveDict(self.ini[gff_list_section].items())
+        self.ini_dict[gff_list_section] = CaseInsensitiveDict()
 
         default_destination = gff_section_dict.pop("!DefaultDestination", ModificationsGFF.DEFAULT_DESTINATION)
         for identifier, file in gff_section_dict.items():
@@ -538,6 +569,7 @@ class ConfigReader:
             if not file_section_name:
                 raise KeyError(SECTION_NOT_FOUND_ERROR.format(file, identifier, file, gff_list_section))
 
+            self.ini_dict[gff_list_section][file_section_name] = CaseInsensitiveDict({value: key for key, value in self.ini[file_section_name].items()}.items())
             replace = identifier.lower().startswith("replace")
             modifications = ModificationsGFF(file, replace)
             self.config.patches_gff.append(modifications)
@@ -553,7 +585,8 @@ class ConfigReader:
                         raise KeyError(SECTION_NOT_FOUND_ERROR.format(value, key, value, file_section_name))
 
                     next_section_dict = CaseInsensitiveDict(self.ini[next_gff_section].items())
-                    modifier = self.add_field_gff(next_gff_section, next_section_dict)
+                    self.ini_dict[gff_list_section][file_section_name][next_gff_section] = CaseInsensitiveDict(self.ini[next_gff_section].items())
+                    modifier = self.add_field_gff(next_gff_section, next_section_dict, ini_dict=self.ini_dict[gff_list_section][file_section_name][next_gff_section])
                 elif lowercase_key.startswith("2damemory"):
                     if value.lower() != "!fieldpath" and not value.startswith("2damemory"):
                         msg = f"Cannot parse '{key}={value}' in [{identifier}]. GFFList only supports 2DAMEMORY#=!FieldPath assignments"
@@ -590,6 +623,7 @@ class ConfigReader:
             return
 
         self.log.add_note("Loading [CompileList] patches from ini...")
+        self.ini_dict[compilelist_section] = CaseInsensitiveDict(self.ini[compilelist_section].items())
         compilelist_section_dict = CaseInsensitiveDict(self.ini[compilelist_section].items())
         default_destination = compilelist_section_dict.pop("!DefaultDestination", ModificationsNSS.DEFAULT_DESTINATION)
 
@@ -600,6 +634,7 @@ class ConfigReader:
 
             optional_file_section_name = self.get_section_name(file)
             if optional_file_section_name is not None:
+                self.ini_dict[compilelist_section][optional_file_section_name] = CaseInsensitiveDict(self.ini[optional_file_section_name].items())
                 file_section_dict = CaseInsensitiveDict(self.ini[optional_file_section_name].items())
                 modifications.pop_tslpatcher_vars(file_section_dict, default_destination)
             self.config.patches_nss.append(modifications)
@@ -645,6 +680,8 @@ class ConfigReader:
         identifier: str,
         ini_data: CaseInsensitiveDict[str],
         current_path: PureWindowsPath | None = None,
+        current_section_path: PurePath | None = None,
+        ini_dict: CaseInsensitiveDict[str] | None = None,
     ) -> ModifyGFF:  # sourcery skip: extract-method, remove-unreachable-code
         """Parse GFFList's AddField syntax from the ini to determine what fields/structs/lists to add.
 
@@ -662,6 +699,17 @@ class ConfigReader:
             3. Handles nested modifiers and structs in lists
             4. Returns an AddFieldGFF or AddStructToListGFF object based on whether a label is provided.
         """
+        def create_or_update_nested_dict(keys: tuple[str, ...], value: Any, existing_dict: CaseInsensitiveDict[str] | None = None) -> CaseInsensitiveDict[str]:
+            nested_dict: CaseInsensitiveDict[str] = existing_dict if existing_dict is not None else CaseInsensitiveDict()
+            current_level: CaseInsensitiveDict[str] = nested_dict
+
+            for key in keys[:-1]:  # Iterate through all keys except the last one
+                if key not in current_level:
+                    current_level[key] = CaseInsensitiveDict()  # Create a new dictionary if key does not exist
+                current_level = current_level[key]  # Move to the next level
+
+            current_level[keys[-1]] = value  # Assign the value to the last key
+            return nested_dict
         # Parse required values
         raw_field_type: str = ini_data.pop("FieldType")  # type: ignore[reportGeneralTypeIssues]
         label: str = ini_data.pop("Label").strip()  # type: ignore[reportGeneralTypeIssues]
@@ -676,6 +724,7 @@ class ConfigReader:
             path = current_path
         if field_type.return_type() == GFFStruct:
             path /= ">>##INDEXINLIST##<<"
+        current_section_path = current_section_path if current_section_path and current_section_path.name else PurePath(identifier)
 
         modifiers: list[ModifyGFF] = []
         index_in_list_token = None
@@ -698,11 +747,15 @@ class ConfigReader:
                 next_section_name: str | None = self.get_section_name(iterated_value)
                 if not next_section_name:
                     raise KeyError(SECTION_NOT_FOUND_ERROR.format(iterated_value, key, iterated_value, identifier))
+                ini_dict[next_section_name] = CaseInsensitiveDict()
+                ini_dict = create_or_update_nested_dict(current_section_path.parts, CaseInsensitiveDict(self.ini[next_section_name].items()), ini_dict[next_section_name])
                 next_nested_section = CaseInsensitiveDict(self.ini[next_section_name].items())
                 nested_modifier: ModifyGFF = self.add_field_gff(
                     next_section_name,
                     next_nested_section,
                     current_path=path / label,
+                    current_section_path = current_section_path / next_section_name,
+                    ini_dict = ini_dict,
                 )
                 modifiers.append(nested_modifier)
 
