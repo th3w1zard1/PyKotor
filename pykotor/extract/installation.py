@@ -6,7 +6,6 @@ from copy import copy
 from enum import IntEnum
 from typing import TYPE_CHECKING, ClassVar, NamedTuple, Optional
 
-from pykotor.helpers.path import Path
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, Game
 from pykotor.common.stream import BinaryReader
@@ -30,6 +29,7 @@ from pykotor.tslpatcher.logger import PatchLogger
 if TYPE_CHECKING:
     import os
 
+    from pykotor.helpers.path import Path
     from pykotor.resource.formats.gff import GFF
 
 

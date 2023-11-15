@@ -6,16 +6,16 @@ from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
 from pykotor.common.misc import decode_bytes_with_fallbacks
-from pykotor.common.stream import BinaryReader, BinaryWriter
+from pykotor.common.stream import BinaryReader
 from pykotor.helpers.path import Path, PurePath
 from pykotor.resource.formats.ncs import bytes_ncs
 from pykotor.resource.formats.ncs import compile_nss as compile_with_builtin
 from pykotor.resource.formats.ncs.compilers import ExternalNCSCompiler
-from pykotor.resource.type import SOURCE_TYPES
 from pykotor.tslpatcher.mods.template import PatcherModifications
 
 if TYPE_CHECKING:
     from pykotor.common.misc import Game
+    from pykotor.resource.type import SOURCE_TYPES
     from pykotor.tslpatcher.logger import PatchLogger
     from pykotor.tslpatcher.memory import PatcherMemory
 
@@ -79,17 +79,16 @@ class ModificationsNSS(PatcherModifications):
         if os.name == "nt":
             # Compile using nwnnsscomp.exe on windows.
             #  1. Create a temporary directory
-            #  2. Dump source script bytes to a temp_script.nss in that directory
-            #  3. Compile script with nwnnsscomp.exe's CLI
-            #  4. Load newly compiled script as bytes and return them.
+            #  2. Compile script with nwnnsscomp.exe's CLI to that directory.
+            #  3. Load newly compiled script as bytes and return them.
+            #  4. cleanup the temp dir
             with TemporaryDirectory() as tempdir:
                 tempdir_path = Path(tempdir)
-                tempscript_path = tempdir_path / "temp_script.nss"
+                source_script = self.nwnnsscomp_path.parent / self.sourcefile
                 tempcompiled_filepath = tempdir_path / "temp_script.ncs"
-                BinaryWriter.dump(tempscript_path, nss_bytes)
 
-                nwnnsscompiler = ExternalNCSCompiler(str(self.nwnnsscomp_path))
-                nwnnsscompiler.compile_script(str(tempscript_path), str(tempcompiled_filepath), game)
+                nwnnsscompiler = ExternalNCSCompiler(self.nwnnsscomp_path)
+                nwnnsscompiler.compile_script(source_script, tempcompiled_filepath, game)
                 compiled_bytes: bytes = BinaryReader.load_file(tempcompiled_filepath)
                 return compiled_bytes
 

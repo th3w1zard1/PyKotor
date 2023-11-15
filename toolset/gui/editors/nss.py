@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from operator import attrgetter
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Optional
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QRect, QRegExp, QSize
@@ -25,6 +26,7 @@ from pykotor.helpers.path import Path
 from pykotor.resource.formats.erf import ERF, read_erf, write_erf
 from pykotor.resource.formats.rim import RIM, read_rim, write_rim
 from pykotor.resource.type import ResourceType
+from pykotor.tools.misc import is_bif_file, is_erf_or_mod_file, is_rim_file
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings, NoConfigurationSetError
 from toolset.utils.script import compileScript, decompileScript
@@ -32,7 +34,7 @@ from toolset.utils.script import compileScript, decompileScript
 if TYPE_CHECKING:
     import os
 
-    from pykotor.common.script import ScriptFunction
+    from pykotor.common.script import ScriptConstant, ScriptFunction
     from toolset.data.installation import HTInstallation
 
 
@@ -122,8 +124,8 @@ class NSSEditor(Editor):
         """
         self._installation = installation
 
-        constants = TSL_CONSTANTS if self._installation.tsl else KOTOR_CONSTANTS
-        functions = TSL_FUNCTIONS if self._installation.tsl else KOTOR_FUNCTIONS
+        constants: list[ScriptConstant] = deepcopy(TSL_CONSTANTS if self._installation.tsl else KOTOR_CONSTANTS)
+        functions: list[ScriptFunction] = deepcopy(TSL_FUNCTIONS if self._installation.tsl else KOTOR_FUNCTIONS)
 
         # sort them alphabetically
         constants.sort(key=attrgetter("name"))
@@ -209,19 +211,19 @@ class NSSEditor(Editor):
             data = compileScript(source, self._installation.tsl)
 
             filepath: Path = self._filepath if self._filepath is not None else Path.cwd() / "untitled_script.ncs"
-            if filepath.endswith((".erf", ".mod")):
+            if is_erf_or_mod_file(filepath.name):
                 savePath = Path(filepath, f"{self._resref}.{self._restype.extension}")
                 erf: ERF = read_erf(filepath)
                 erf.set_data(self._resref, ResourceType.NCS, data)
                 write_erf(erf, filepath)
-            elif filepath.endswith(".rim"):
+            elif is_rim_file(filepath.name):
                 savePath = Path(filepath, f"{self._resref}.{self._restype.extension}")
                 rim: RIM = read_rim(filepath)
                 rim.set_data(self._resref, ResourceType.NCS, data)
                 write_rim(rim, filepath)
             else:
                 savePath = filepath.with_suffix(".ncs")
-                if not filepath or filepath.suffux.lower() == ".bif":
+                if not filepath or is_bif_file(filepath.name):
                     savePath = self._installation.override_path() / f"{self._resref}.ncs"
                 BinaryWriter.dump(savePath, data)
 
@@ -281,7 +283,7 @@ class NSSEditor(Editor):
             insert = f"{function.name}()"
             self.insertTextAtCursor(insert, insert.index("(") + 1)
 
-    def insertTextAtCursor(self, insert: str, offset: int = None) -> None:
+    def insertTextAtCursor(self, insert: str, offset: Optional[int] = None) -> None:
         """Inserts the given text at the cursors location and then shifts the cursor position by the offset specified. If
         no offset is specified then the cursor is moved to the end of the inserted text.
 
