@@ -1,19 +1,14 @@
 from __future__ import annotations
 
-import io
 from contextlib import suppress
 from xml.etree import ElementTree
 
-from pykotor.common.misc import decode_bytes_with_fallbacks
+from defusedxml.ElementTree import fromstring
+
 from pykotor.resource.formats.ssf.ssf_data import SSF, SSFSound
-from pykotor.resource.type import (
-    SOURCE_TYPES,
-    TARGET_TYPES,
-    ResourceReader,
-    ResourceWriter,
-    autoclose,
-)
-from pykotor.tools.indent_xml import indent
+from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES, ResourceReader, ResourceWriter, autoclose
+from pykotor.tools.encoding import decode_bytes_with_fallbacks
+from pykotor.utility.misc import indent
 
 
 class SSFXMLReader(ResourceReader):
@@ -34,7 +29,7 @@ class SSFXMLReader(ResourceReader):
         self._ssf = SSF()
 
         data = decode_bytes_with_fallbacks(self._reader.read_bytes(self._reader.size()))
-        xml_root = ElementTree.parse(io.StringIO(data)).getroot()
+        xml_root = fromstring(data)
 
         for child in xml_root:
             with suppress(ValueError):

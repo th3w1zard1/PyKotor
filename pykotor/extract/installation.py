@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from contextlib import suppress
 from copy import copy
-from enum import IntEnum
+from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, ClassVar, NamedTuple, Optional
 
 from pykotor.common.language import Gender, Language, LocalizedString
@@ -11,12 +11,7 @@ from pykotor.common.misc import CaseInsensitiveDict, Game
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.capsule import Capsule
 from pykotor.extract.chitin import Chitin
-from pykotor.extract.file import (
-    FileResource,
-    LocationResult,
-    ResourceIdentifier,
-    ResourceResult,
-)
+from pykotor.extract.file import FileResource, LocationResult, ResourceIdentifier, ResourceResult
 from pykotor.extract.talktable import TalkTable
 from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.formats.tpc import TPC, read_tpc
@@ -25,12 +20,13 @@ from pykotor.tools.misc import is_capsule_file, is_erf_file, is_mod_file, is_rim
 from pykotor.tools.path import CaseAwarePath
 from pykotor.tools.sound import fix_audio
 from pykotor.tslpatcher.logger import PatchLogger
+from pykotor.utility.path import PurePath
 
 if TYPE_CHECKING:
     import os
 
-    from pykotor.helpers.path import Path
     from pykotor.resource.formats.gff import GFF
+    from pykotor.utility.path import Path
 
 
 # The SearchLocation class is an enumeration that represents different locations for searching.
@@ -83,6 +79,13 @@ class ItemTuple(NamedTuple):
     name: str
     filepath: Path
 
+class TexturePackNames(Enum):
+    """Full list of ERF filenames containing the texture files for both games."""
+
+    TPA = "swpc_tex_tpa.erf"
+    TPB = "swpc_tex_tpb.erf"
+    TPC = "swpc_tex_tpc.erf"
+    GUI = "swpc_tex_gui.erf"
 
 class Installation:
     """Installation provides a centralized location for loading resources stored in the game through its
@@ -99,7 +102,7 @@ class Installation:
         self._path: CaseAwarePath = path if isinstance(path, CaseAwarePath) else CaseAwarePath(path)
         self.log = logger or PatchLogger()
 
-        self._talktable: TalkTable = TalkTable(CaseAwarePath(self._path, "dialog.tlk"))
+        self._talktable: TalkTable = TalkTable(self._path / "dialog.tlk")
 
         self._chitin: list[FileResource] = []
         self._modules: dict[str, list[FileResource]] = {}
@@ -112,7 +115,6 @@ class Installation:
         self._rims: dict[str, list[FileResource]] = {}
         self._game: Game | None = None
 
-        self.log.add_note("Load chitin...")
         self.load_chitin()
         self.load_lips()
         self.load_modules()
@@ -253,7 +255,7 @@ class Installation:
     # region Load Data
 
     def load_resources(self, path: CaseAwarePath, capsule_check=None, recurse=False) -> dict[str, list[FileResource]] | list[FileResource]:
-        """Load resources for a given path and store them in the provided list.
+        """Load resources for a given path and store them in a new list/dict.
 
         Args:
         ----
@@ -269,9 +271,7 @@ class Installation:
         resources: dict[str, list[FileResource]] | list[FileResource] = {} if capsule_check else []
 
         if not path.exists():
-            self.log.add_warning(
-                f"The '{path.name}' folder did not exist at '{self.path()!s}' when loading the installation, skipping...",
-            )
+            self.log.add_warning(f"The '{path.name}' folder did not exist at '{self.path()!s}' when loading the installation, skipping...")
             return resources
 
         files_list: list[CaseAwarePath] = list(path.safe_rglob("*")) if recurse else list(path.safe_iterdir())  # type: ignore[reportGeneralTypeIssues]
@@ -288,7 +288,7 @@ class Installation:
                     )
                     resources.append(resource)  # type: ignore[assignment, call-overload, union-attr]
         if not resources or not files_list:
-            self.log.add_warning(f"No resources found at '{self.path()!s}' when loading the installation, skipping...")
+            self.log.add_warning(f"No resources found at '{path!s}' when loading the installation, skipping...")
         else:
             self.log.add_note(f"Loading '{path.name}' folder from installation...")
         return resources
@@ -297,10 +297,9 @@ class Installation:
         """Reloads the list of resources in the Chitin linked to the Installation."""
         c_path = CaseAwarePath(self._path)
         if not c_path.joinpath("chitin.key").exists():
-            self.log.add_warning(
-                f"The chitin.key file did not exist at '{self._path!s}' when loading the installation, skipping...",
-            )
+            self.log.add_warning(f"The chitin.key file did not exist at '{self._path!s}' when loading the installation, skipping...")
             return
+        self.log.add_note("Load chitin...")
         self._chitin = list(Chitin(kotor_path=c_path))
 
     def load_lips(
@@ -361,6 +360,18 @@ class Installation:
         for folder in target_dirs:
             relative_folder = folder.relative_to(override_path).as_posix()  # '.' if folder is the same as override_path
             self._override[relative_folder] = self.load_resources(folder)  # type: ignore[assignment]
+    def reload_override(self, directory: str) -> None:
+        """Reload the resources in the specified override subdirectory.
+
+        Args:
+        ----
+            directory: Path to directory containing override configuration
+
+        Processing Logic:
+        - Load override configuration from given directory
+        - Override any existing resources with new ones from directory
+        """
+        self.load_override(directory)
 
     def load_streammusic(self) -> None:
         """Reloads the list of resources in the streammusic folder linked to the Installation."""
@@ -467,7 +478,7 @@ class Installation:
         """Returns the list of subdirectories located in override folder
         linked to the Installation.
 
-        Subdirectories are cached and require to be refreshed after a folder
+        Subdirectories are cached and require a refresh after a folder
         is added, deleted or renamed.
 
         Returns
@@ -506,7 +517,7 @@ class Installation:
 
         Processing Logic:
         - Checks for files/folders specific to KOTOR 1 or KOTOR 2
-        - Checks KOTOR 1 first as a rims folder does not exist in KOTOR 2, which is an identifying characteristic.
+        - Checks KOTOR 2 first as a rims folder does not exist in KOTOR 2, which should not be the sole identifying characteristic.
         - Returns Game object with game ID 1 for KOTOR 1 or 2 for KOTOR 2
         - Raises a ValueError if the game cannot be determined
         """
@@ -596,11 +607,9 @@ class Installation:
             capsules=capsules,
             folders=folders,
         )
-        search = batch[query]
+        search: ResourceResult | None = batch[query]
         if not search or not search.data:
-            self.log.add_error(
-                f"Could not find '{resname}.{restype}' during resource lookup.",
-            )
+            self.log.add_error(f"Could not find '{resname}.{restype}' during resource lookup.")
             return None
         return search
 
@@ -814,10 +823,10 @@ class Installation:
             SearchLocation.MODULES: lambda: check_dict(self._modules),
             SearchLocation.LIPS: lambda: check_dict(self._lips),
             SearchLocation.RIMS: lambda: check_dict(self._rims),
-            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks["swpc_tex_tpa.erf"]),
-            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks["swpc_tex_tpb.erf"]),
-            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks["swpc_tex_tpc.erf"]),
-            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks["swpc_tex_gui.erf"]),
+            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks[TexturePackNames.TPA.value]),
+            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks[TexturePackNames.TPB.value]),
+            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks[TexturePackNames.TPC.value]),
+            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks[TexturePackNames.GUI.value]),
             SearchLocation.CHITIN: lambda: check_list(self._chitin),
             SearchLocation.MUSIC: lambda: check_list(self._streammusic),
             SearchLocation.SOUND: lambda: check_list(self._streamsounds),
@@ -906,7 +915,7 @@ class Installation:
             )
         )
 
-        textures: CaseInsensitiveDict[TPC | None] = CaseInsensitiveDict[Optional[TPC]]()
+        textures: CaseInsensitiveDict[TPC | None] = CaseInsensitiveDict()
         texture_types = [ResourceType.TPC, ResourceType.TGA]
         queries = [resname.lower() for resname in queries]
 
@@ -950,10 +959,10 @@ class Installation:
             SearchLocation.MODULES: lambda: check_dict(self._modules),
             SearchLocation.LIPS: lambda: check_dict(self._lips),
             SearchLocation.RIMS: lambda: check_dict(self._rims),
-            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks["swpc_tex_tpa.erf"]),
-            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks["swpc_tex_tpb.erf"]),
-            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks["swpc_tex_tpc.erf"]),
-            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks["swpc_tex_gui.erf"]),
+            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks[TexturePackNames.TPA.value]),
+            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks[TexturePackNames.TPB.value]),
+            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks[TexturePackNames.TPC.value]),
+            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks[TexturePackNames.GUI.value]),
             SearchLocation.CHITIN: lambda: check_list(self._chitin),
             SearchLocation.MUSIC: lambda: check_list(self._streammusic),
             SearchLocation.SOUND: lambda: check_list(self._streamsounds),
@@ -1079,10 +1088,10 @@ class Installation:
             SearchLocation.MODULES: lambda: check_dict(self._modules),
             SearchLocation.LIPS: lambda: check_dict(self._lips),
             SearchLocation.RIMS: lambda: check_dict(self._rims),
-            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks["swpc_tex_tpa.erf"]),
-            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks["swpc_tex_tpb.erf"]),
-            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks["swpc_tex_tpc.erf"]),
-            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks["swpc_tex_gui.erf"]),
+            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks[TexturePackNames.TPA.value]),
+            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks[TexturePackNames.TPB.value]),
+            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks[TexturePackNames.TPC.value]),
+            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks[TexturePackNames.GUI.value]),
             SearchLocation.CHITIN: lambda: check_list(self._chitin),
             SearchLocation.MUSIC: lambda: check_list(self._streammusic),
             SearchLocation.SOUND: lambda: check_list(self._streamsounds),
@@ -1159,7 +1168,7 @@ class Installation:
         -------
             The name of the area for the module.
         """
-        root = self._replace_module_extensions(module_filename)
+        root = self.replace_module_extensions(module_filename)
         if use_hardcoded:
             hardcoded = {
                 "STUNT_00": "Ebon Hawk - Cutscene (Vision Sequences)",
@@ -1243,7 +1252,7 @@ class Installation:
         -------
             The ID of the area for the module.
         """
-        root = self._replace_module_extensions(module_filename)
+        root = self.replace_module_extensions(module_filename)
         if use_hardcoded:
             hardcoded = {
                 "STUNT_00": "000",
@@ -1288,12 +1297,14 @@ class Installation:
 
         return mod_id
 
-    def _replace_module_extensions(self, module_filename: str) -> str:
+    @staticmethod
+    def replace_module_extensions(module_filepath: os.PathLike | str) -> str:
+        module_filename: str = module_filepath.name if isinstance(module_filepath, PurePath) else PurePath(module_filepath).name
         result = re.sub(r"\.mod$", "", module_filename, flags=re.IGNORECASE)
         result = re.sub(r"\.erf$", "", result, flags=re.IGNORECASE)
         result = re.sub(r"\.rim$", "", result, flags=re.IGNORECASE)
-        result = result[:-2] if result.endswith("_s") else result
-        result = result[:-4] if result.endswith("_dlg") else result
+        result = result[:-2] if result.lower().endswith("_s") else result
+        result = result[:-4] if result.lower().endswith("_dlg") else result
         return result  # noqa: RET504
 
     def module_ids(self) -> dict[str, str]:

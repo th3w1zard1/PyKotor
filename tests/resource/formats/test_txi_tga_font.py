@@ -11,12 +11,13 @@ if getattr(sys, "frozen", False) is False:
         sys.path.insert(0, str(pykotor_path.parent))
 
 from pykotor.common.language import Language
+from pykotor.utility.path import Path
 from pykotor.resource.formats.tpc.txi_data import write_bitmap_font
-from pykotor.helpers.path import Path
 
 FONT_PATH = Path("tests/files/roboto/Roboto-Black.ttf")
 
 from PIL import Image
+
 
 class TestWriteBitmapFont(unittest.TestCase):
     def setUp(self):
@@ -33,51 +34,51 @@ class TestWriteBitmapFont(unittest.TestCase):
         target_path = Path("output/font.tga").resolve()
         resolution = (2048, 2048)
         lang = Language.ENGLISH
-        
+
         write_bitmap_font(target_path, FONT_PATH, resolution, lang)
-        
+
         # Verify output files were generated
         self.assertTrue(target_path.exists())
         self.assertTrue(target_path.with_suffix(".txi").exists())
-        
+
         # Verify image file
         img = Image.open(target_path)
         self.assertEqual(img.size, resolution)
         self.assertEqual(img.mode, "RGBA")
-        
+
     def test_invalid_font_path(self):
         # Test with invalid font path
         font_path = "invalid.ttf"
         target_path = "output/font.tga"
         resolution = (256, 256)
         lang = Language.ENGLISH
-        
+
         with self.assertRaises(OSError):
             write_bitmap_font(target_path, font_path, resolution, lang)
-            
+
     def test_invalid_language(self):
         # Test with invalid language
         target_path = "output/font.tga"
         resolution = (256, 256)
         lang = "invalid"
-        
+
         with self.assertRaises((AttributeError, ValueError)):
             write_bitmap_font(target_path, FONT_PATH, resolution, lang)
-            
+
     def test_invalid_resolution(self):
         # Test with invalid resolution
         font_path = "tests/assets/font.ttf"
         target_path = "output/font.tga"
         resolution = (0, 0)
         lang = Language.ENGLISH
-        
+
         with self.assertRaises(ZeroDivisionError):
             write_bitmap_font(target_path, font_path, resolution, lang)
-            
+
 # Edge cases:
 # - Resolution is very small or very large
 # - Font file contains lots of glyphs
-# - Language uses complex script 
+# - Language uses complex script
 
 if __name__ == '__main__':
     unittest.main()

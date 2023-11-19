@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, NamedTuple
 from pykotor.common.language import Language
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryReader
-from pykotor.helpers.path import Path
+from pykotor.utility.path import Path
 
 if TYPE_CHECKING:
     import os
@@ -95,7 +95,7 @@ class TalkTable:
         reader.close()
         return ResRef(sound_resref)
 
-    def _extract_common_data(self, reader: BinaryReader, stringref: int):
+    def _extract_common_data(self, reader: BinaryReader, stringref: int) -> tuple[int, str, int, int, int, int, int]:
         reader.seek(20 + 40 * stringref)
         flags = reader.read_uint32()
         sound_resref = reader.read_string(16)

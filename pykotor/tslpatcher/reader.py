@@ -6,13 +6,12 @@ from typing import TYPE_CHECKING, Any
 
 from pykotor.common.geometry import Vector3, Vector4
 from pykotor.common.language import LocalizedString
-from pykotor.common.misc import CaseInsensitiveDict, ResRef, decode_bytes_with_fallbacks
+from pykotor.common.misc import CaseInsensitiveDict, ResRef
 from pykotor.common.stream import BinaryReader
-from pykotor.helpers.path import Path, PureWindowsPath
 from pykotor.resource.formats.gff import GFFFieldType, GFFList, GFFStruct
 from pykotor.resource.formats.ssf import SSFSound
 from pykotor.resource.formats.tlk import TLK, read_tlk
-from pykotor.tools.misc import is_float, is_int
+from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from pykotor.tools.path import CaseAwarePath
 from pykotor.tslpatcher.config import PatcherConfig, PatcherNamespace
 from pykotor.tslpatcher.logger import PatchLogger
@@ -51,6 +50,8 @@ from pykotor.tslpatcher.mods.twoda import (
     Target,
     TargetType,
 )
+from pykotor.utility.misc import is_float, is_int
+from pykotor.utility.path import Path, PureWindowsPath
 
 if TYPE_CHECKING:
     import os
@@ -142,20 +143,20 @@ class ConfigReader:
 
         self.log.add_note("Loading [Settings] section from ini...")
         settings_ini = CaseInsensitiveDict(self.ini[settings_section].items())
+
         self.config.window_title = settings_ini.get("WindowCaption", "")
         self.config.confirm_message = settings_ini.get("ConfirmMessage", "")
-        lookup_game_number = settings_ini.get("LookupGameNumber")
-        if lookup_game_number:
-            # Try to get the value and convert it to an integer
-            try:
-                self.config.game_number = int(lookup_game_number)
-            except ValueError as e:
-                msg = f"Invalid: 'LookupGameNumber={lookup_game_number}' - cannot start install."
-                raise ValueError(msg) from e
-        else:
-            self.config.game_number = None
         self.config.required_file = settings_ini.get("Required")
         self.config.required_message = settings_ini.get("RequiredMsg", "")
+
+        lookup_game_number = settings_ini.get("LookupGameNumber")
+        if lookup_game_number:
+            if not is_int(lookup_game_number):
+                msg = f"Invalid: 'LookupGameNumber={lookup_game_number}' in [Settings], must be 1 or 2 representing the KOTOR game."
+                raise ValueError(msg)
+            self.config.game_number = int(lookup_game_number)
+        else:
+            self.config.game_number = None
 
     def load_install_list(self) -> None:
         """Loads [InstallList] from ini configuration.
@@ -241,7 +242,7 @@ class ConfigReader:
             Returns:
             -------
                 tuple[int, int | None]: Tuple containing start and end parts as integers or None.
-            - Splits the range string on delimiters like '-' or '.'
+            - Splits the range string on delimiters like '-' or ':'
             - Converts start and end parts to integers if present
             - Returns start and end as a tuple of integers or integer and None
             """
@@ -332,8 +333,7 @@ class ConfigReader:
                 if lowercase_key.startswith("ignore"):
                     continue
                 if lowercase_key.startswith("strref"):
-                    # load append.tlk only if it's needed.
-                    if append_tlk_edits is None:
+                    if append_tlk_edits is None:  # load append.tlk only if it's needed.
                         append_tlk_edits = read_tlk(self.mod_path / self.config.patches_tlk.sourcefile)
                     if len(append_tlk_edits) == 0:
                         syntax_error_caught = True
@@ -397,7 +397,7 @@ class ConfigReader:
                         self.config.patches_tlk.modifiers.append(modifier)
                 else:
                     syntax_error_caught = True
-                    msg = f"Invalid syntax found in [TLKList] '{key}={value}'! Expected '{key}' to be one of ['AppendFile', 'ReplaceFile', '!SourceFile', 'StrRef']"
+                    msg = f"Invalid syntax found in [TLKList] '{key}={value}'! Expected '{key}' to be one of ['AppendFile', 'ReplaceFile', '!SourceFile', 'StrRef', 'Text', 'Sound']"
                     raise ValueError(msg)  # noqa: TRY301
             except ValueError as e:
                 if syntax_error_caught:
@@ -707,10 +707,7 @@ class ConfigReader:
                 modifiers.append(nested_modifier)
 
         # get addfield value based on this recursion level
-        value: FieldValue | None = self._get_addfield_value(ini_data, field_type, identifier)
-        if value is None:
-            msg = f"Could not find valid field return type in [{identifier}] matching field type '{field_type.name}'"
-            raise ValueError(msg)
+        value: FieldValue = self._get_addfield_value(ini_data, field_type, identifier)
 
         # Check if label unset to determine if current ini section is a struct inside a list.
         if not label and field_type.return_type() is GFFStruct:
@@ -737,7 +734,7 @@ class ConfigReader:
         ini_section_dict: CaseInsensitiveDict[str],
         field_type: GFFFieldType,
         identifier: str,
-    ):
+    ) -> FieldValue:
         """Gets the value for an addfield from an ini section dictionary.
 
         Args:
@@ -754,7 +751,7 @@ class ConfigReader:
         - For GFFList and GFFStruct, constructs empty instances to be filled in later - see pykotor/tslpatcher/mods/gff.py
         - Returns None if value cannot be parsed or field type not supported (config err)
         """
-        value: FieldValue | None
+        value: FieldValue | None = None
 
         raw_value: str | None = ini_section_dict.pop("Value", None)
         if raw_value is not None:
@@ -768,15 +765,16 @@ class ConfigReader:
         elif field_type.return_type() == GFFList:
             value = FieldValueConstant(GFFList())
         elif field_type.return_type() == GFFStruct:
-            raw_struct_id: str = ini_section_dict.pop("TypeId", "0").strip()  # TODO: Double check that '0' is the default TypeId
+            raw_struct_id: str = ini_section_dict.pop("TypeId", "0").strip()  # 0 is the default struct id.
             if not is_int(raw_struct_id):
                 msg = f"Invalid TypeId: expected int but got '{raw_struct_id}' in [{identifier}]"
                 raise ValueError(msg)
 
             struct_id = int(raw_struct_id)
             value = FieldValueConstant(GFFStruct(struct_id))
-        else:
-            value = None
+        if value is None:
+            msg = f"Could not find valid field return type in [{identifier}] matching field type '{field_type.name}'"
+            raise ValueError(msg)
         return value
 
     @classmethod
@@ -887,16 +885,17 @@ class ConfigReader:
 
         Returns
         -------
-            FieldValue | None: {Field value object or None}
+            FieldValue: {Field value object}
         Processing Logic:
             - Checks if value already exists in memory as a 2DAMEMORY or StrRef
             - Otherwise, converts raw_value to appropriate type based on field_type
             - Returns FieldValueConstant object wrapping extracted value.
         """
-        value: Any = ConfigReader.field_value_from_memory(raw_value)
-        if value is not None:
-            return value
+        field_value_memory: FieldValue | None = ConfigReader.field_value_from_memory(raw_value)
+        if field_value_memory is not None:
+            return field_value_memory
 
+        value: Any = None
         if field_type.return_type() == ResRef:
             value = ResRef(raw_value)
         elif field_type.return_type() == str:
@@ -911,6 +910,8 @@ class ConfigReader:
         elif field_type.return_type() == Vector4:
             components = [float(ConfigReader.normalize_tslpatcher_float(axis)) for axis in raw_value.split("|")]
             value = Vector4(*components)
+        if value is None:
+            return None
         return FieldValueConstant(value)
 
     #################
@@ -943,7 +944,13 @@ class ConfigReader:
             if target is None:
                 return None
             cells, store_2da, store_tlk = self.cells_2da(identifier, modifiers)
-            modification = ChangeRow2DA(identifier, target, cells, store_2da, store_tlk)
+            modification = ChangeRow2DA(
+                identifier,
+                target,
+                cells,
+                store_2da,
+                store_tlk,
+            )
         elif lowercase_key.startswith("addrow"):
             exclusive_column = modifiers.pop("ExclusiveColumn", None)
             row_label = self.row_label_2da(identifier, modifiers)
@@ -995,9 +1002,7 @@ class ConfigReader:
                 store_2da,  # type: ignore[arg-type]
             )
         else:
-            msg = (
-                f"Could not parse key '{key}={identifier}', expecting one of ['ChangeRow=', 'AddColumn=', 'AddRow=', 'CopyRow=']"
-            )
+            msg = (f"Could not parse key '{key}={identifier}', expecting one of ['ChangeRow=', 'AddColumn=', 'AddRow=', 'CopyRow=']")
             raise KeyError(msg)
 
         return modification
@@ -1165,6 +1170,15 @@ class ConfigReader:
 
     @staticmethod
     def resolve_tslpatcher_ssf_sound(name: str):
+        """Resolves a config string to an SSFSound enum value
+        Args:
+            name (str): The config string name
+        Returns:
+            SSFSound: The resolved SSFSound enum value
+        Processing Logic:
+        - Defines a CaseInsensitiveDict mapping config strings to SSFSound enum values
+        - Looks up the provided name in the dict and returns the corresponding SSFSound value.
+        """
         configstr_to_ssfsound = CaseInsensitiveDict(
             {
                 "Battlecry 1": SSFSound.BATTLE_CRY_1,
@@ -1272,10 +1286,7 @@ class NamespaceReader:
 
         for key, namespace_id in namespace_ids.items():
             # Case-insensitive access to namespace_id
-            namespace_section_key = next(
-                (section for section in self.ini.sections() if section.lower() == namespace_id.lower()),
-                None,
-            )
+            namespace_section_key: str | None = next((section for section in self.ini.sections() if section.lower() == namespace_id.lower()), None)
             if namespace_section_key is None:
                 msg = f"The '[{namespace_id}]' section was not found in the 'namespaces.ini' file, referenced by '{key}={namespace_id}' in [{namespaces_section_name}]."
                 raise KeyError(msg)

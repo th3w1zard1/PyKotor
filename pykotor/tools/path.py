@@ -5,11 +5,11 @@ import pathlib
 import platform
 from typing import TYPE_CHECKING, Any, Callable, Generator, List, Tuple, Union
 
-from pykotor.helpers.misc import is_instance_or_subinstance
-from pykotor.helpers.path import Path as InternalPath
-from pykotor.helpers.path import PurePath as InternalPurePath
-from pykotor.helpers.registry import resolve_reg_key_to_path
 from pykotor.tools.registry import winreg_key
+from pykotor.utility.misc import is_instance_or_subinstance
+from pykotor.utility.path import Path as InternalPath
+from pykotor.utility.path import PurePath as InternalPurePath
+from pykotor.utility.registry import resolve_reg_key_to_path
 
 if TYPE_CHECKING:
     from pykotor.common.misc import Game
@@ -19,12 +19,27 @@ PATH_TYPES = Union[PathElem, List[PathElem], Tuple[PathElem, ...]]
 
 
 def simple_wrapper(fn_name, wrapped_class_type) -> Callable[..., Any]:
+    """Wraps a function to handle case-sensitive pathlib.PurePath arguments.
+    This is a hacky way of ensuring that all args to any pathlib methods have their path case-sensitively resolved.
+    This also resolves self and kwargs for ensured accuracy.
+
+    Args:
+    ----
+        fn_name: The name of the function to wrap
+        wrapped_class_type: The class type that the function belongs to
+    Returns:
+        Callable[..., Any]: A wrapped function with the same signature as the original
+    Processing Logic:
+        1. Gets the original function from the class's _original_methods attribute
+        2. Parses arguments that are paths, resolving case if needed
+        3. Calls the original function with the parsed arguments.
+    """
     def wrapped(self, *args, **kwargs) -> Any:
         orig_fn = wrapped_class_type._original_methods[fn_name]
 
         def parse_arg(arg):
             if is_instance_or_subinstance(arg, InternalPurePath) and CaseAwarePath.should_resolve_case(arg):
-                return CaseAwarePath._get_case_sensitive_path(arg)
+                return CaseAwarePath.get_case_sensitive_path(arg)
 
             return arg
 
@@ -45,11 +60,24 @@ def simple_wrapper(fn_name, wrapped_class_type) -> Callable[..., Any]:
     return wrapped
 
 
-def create_case_insensitive_pathlib_class(cls) -> None:
+def create_case_insensitive_pathlib_class(cls) -> None:  # TODO: move into CaseAwarePath.__getattr__
     # Create a dictionary that'll hold the original methods for this class
+    """Wraps methods of a pathlib class to be case insensitive
+    Args:
+        cls: The pathlib class to wrap
+    Returns:
+        None
+    Processing Logic:
+        1. Create a dictionary to store original methods
+        2. Get the method resolution order and exclude current class
+        3. Store already wrapped methods to avoid wrapping multiple times
+        4. Loop through parent classes and methods
+        5. Check if method and not wrapped before
+        6. Add method to wrapped dictionary and reassign with wrapper.
+    """
     cls._original_methods = {}
     mro = cls.mro()  # Gets the method resolution order
-    parent_classes = mro[1:-1]  # Exclude the current class itself
+    parent_classes = mro[1:-1]  # Exclude the current class itself and the object class
 
     # Store already wrapped methods to avoid wrapping multiple times
     wrapped_methods = set()
@@ -79,18 +107,14 @@ def create_case_insensitive_pathlib_class(cls) -> None:
                 wrapped_methods.add(attr_name)
 
 
-class CaseAwarePath(InternalPath):
-    """A class capable of resolving case-sensitivity in a path. Absolutely essential for working with KOTOR files."""
+class CaseAwarePath(InternalPath):  # TODO: Move to pykotor.common
+    """A class capable of resolving case-sensitivity in a path. Absolutely essential for working with KOTOR files on Unix filesystems."""
 
     def resolve(self, strict=False):
         new_path = super().resolve(strict)
         if self.should_resolve_case(new_path):
-            new_path = self._get_case_sensitive_path(new_path)
+            new_path = self.get_case_sensitive_path(new_path)
         return new_path
-
-    # Call __eq__ when using 'in' keyword
-    def __contains__(self, other_path: os.PathLike | str):
-        return super().__eq__(other_path)
 
     def __hash__(self):
         """Ensures any instance of this class will be treated the same in lists etc, if they're case-insensitive matches."""
@@ -110,11 +134,43 @@ class CaseAwarePath(InternalPath):
         return (
             super().__str__()
             if pathlib.Path(self).exists()
-            else super(self.__class__, self._get_case_sensitive_path(self)).__str__()
+            else super(self.__class__, self.get_case_sensitive_path(self)).__str__()
         )
 
+    def is_relative_to(self, other: PathElem) -> bool:
+        """Check if path is relative to other path
+        Args:
+            self: Path to check
+            other: Path to check against
+        Returns:
+            bool: Whether self is relative to other
+        Processing Logic:
+        - Resolve self and other if they are paths
+        - Get lowercase string representations of self and other
+        - Check if self string starts with other string
+        - Return True if it starts with, False otherwise.
+        """
+        other = other if isinstance(other, InternalPurePath) else InternalPurePath(other)
+        other = other.resolve() if isinstance(other, InternalPath) else other
+        resolved_self = self.resolve() if isinstance(self, InternalPath) else self
+        self_str = str(resolved_self).lower()
+        other_str = str(other).lower()
+        return bool(self_str.startswith(other_str))
+
     @staticmethod
-    def _get_case_sensitive_path(path: os.PathLike | str) -> CaseAwarePath:
+    def get_case_sensitive_path(path: os.PathLike | str) -> CaseAwarePath:
+        """Get a case sensitive path
+        Args:
+            path: The path to resolve case sensitivity for
+        Returns:
+            CaseAwarePath: The path with case sensitivity resolved
+        Processing Logic:
+            - Convert the path to a pathlib Path object
+            - Iterate through each path part starting from index 1
+            - Check if the current path part and the path up to that part exist
+            - If not, find the closest matching file/folder name in the existing path
+            - Return a CaseAwarePath instance with case sensitivity resolved.
+        """
         pathlib_path: pathlib.Path = pathlib.Path(path)
         parts = list(pathlib_path.parts)
 
@@ -124,16 +180,17 @@ class CaseAwarePath(InternalPath):
 
             # Find the first non-existent case-sensitive file/folder in hierarchy
             if not next_path.safe_isdir() and base_path.safe_isdir():
-                base_path_items_generator = (
-                    item for item in base_path.safe_iterdir() if (i == len(parts) - 1) or item.safe_isdir()
-                )
 
                 # if multiple are found, use the one that most closely matches our case
                 # A closest match is defined in this context as the file/folder's name which has the most case-sensitive positional character matches
                 # If two closest matches are identical (e.g. we're looking for TeST and we find TeSt and TesT), it's random.
-                parts[i] = CaseAwarePath._find_closest_match(
+                parts[i] = CaseAwarePath.find_closest_match(
                     parts[i],
-                    base_path_items_generator,
+                    (
+                        item
+                        for item in base_path.safe_iterdir()
+                        if (i == len(parts) - 1) or item.safe_isdir()
+                    ),
                 )
 
             # return a CaseAwarePath instance that resolves the case of existing items on disk, joined with the non-existing
@@ -146,23 +203,20 @@ class CaseAwarePath(InternalPath):
         return CaseAwarePath._create_instance(*parts)
 
     @classmethod
-    def _find_closest_match(cls, target, candidates: Generator[InternalPath, None, None]) -> str:
-        max_matching_chars = -1
-        closest_match = target
+    def find_closest_match(cls, target: str, candidates: Generator[InternalPath, None, None]) -> str:
+        max_matching_chars: int = -1
+        closest_match: str = target
         for candidate in candidates:
-            matching_chars = cls._get_matching_characters_count(
-                candidate.name,
-                target,
-            )
+            matching_chars: int = cls.get_matching_characters_count(candidate.name, target)
             if matching_chars > max_matching_chars:
-                max_matching_chars = matching_chars
                 closest_match = candidate.name
-                if max_matching_chars == len(target):
+                if matching_chars == len(target):  # break if exact match
                     break
+                max_matching_chars = matching_chars
         return closest_match
 
     @staticmethod
-    def _get_matching_characters_count(str1: str, str2: str) -> int:
+    def get_matching_characters_count(str1: str, str2: str) -> int:
         """Returns the number of case sensitive characters that match in each position of the two strings.
         if str1 and str2 are NOT case-insensitive matches, this method will return -1.
         """
@@ -194,6 +248,7 @@ def get_default_paths():
                 r"C:\Program Files\LucasArts\SWKotOR",
                 r"C:\Program Files (x86)\LucasArts\SWKotOR",
                 r"C:\GOG Games\Star Wars - KotOR",
+                r"C:\Amazon Games\Library\Star Wars - Knights of the Old",
             ],
             Game.K2: [
                 r"C:\Program Files\Steam\steamapps\common\Knights of the Old Republic II",
@@ -206,9 +261,14 @@ def get_default_paths():
         "Darwin": {
             Game.K1: [
                 "~/Library/Application Support/Steam/steamapps/common/swkotor/Knights of the Old Republic.app/Contents/Assets",
+                "~/Library/Applications/Steam/steamapps/common/swkotor/Knights of the Old Republic.app/Contents/Assets/",
+                # TODO: app store version of k1
             ],
             Game.K2: [
                 "~/Library/Application Support/Steam/steamapps/common/Knights of the Old Republic II/Knights of the Old Republic II.app/Contents/Assets",
+                "~/Library/Applications/Steam/steamapps/common/Knights of the Old Republic II/Star Wars™: Knights of the Old Republic II.app/Contents/GameData",
+                "~/Applications/Knights of the Old Republic 2.app/Contents/Resources/transgaming/c_drive/Program Files/SWKotOR2/",
+                "/Applications/Knights of the Old Republic 2.app/Contents/Resources/transgaming/c_drive/Program Files/SWKotOR2/",
             ],
         },
         "Linux": {
@@ -216,17 +276,20 @@ def get_default_paths():
                 "~/.local/share/Steam/common/SteamApps/swkotor",
                 "~/.local/share/Steam/common/steamapps/swkotor",
                 "~/.local/share/Steam/common/swkotor",
+                "~/.steam/root/steamapps/common/swkotor",  # executable name is `KOTOR1` no extension
                 # wsl paths
                 "/mnt/C/Program Files/Steam/steamapps/common/swkotor",
                 "/mnt/C/Program Files (x86)/Steam/steamapps/common/swkotor",
                 "/mnt/C/Program Files/LucasArts/SWKotOR",
                 "/mnt/C/Program Files (x86)/LucasArts/SWKotOR",
                 "/mnt/C/GOG Games/Star Wars - KotOR",
+                "/mnt/C/Amazon Games/Library/Star Wars - Knights of the Old",
             ],
             Game.K2: [
                 "~/.local/share/Steam/common/SteamApps/Knights of the Old Republic II",
                 "~/.local/share/Steam/common/steamapps/Knights of the Old Republic II",
                 "~/.local/share/Steam/common/Knights of the Old Republic II",
+                "~/.steam/root/steamapps/common/Knights of the Old Republic II",  # executable name is `KOTOR2` no extension
                 # wsl paths
                 "/mnt/C/Program Files/Steam/steamapps/common/Knights of the Old Republic II",
                 "/mnt/C/Program Files (x86)/Steam/steamapps/common/Knights of the Old Republic II",
@@ -257,8 +320,8 @@ def find_kotor_paths_from_default() -> dict[Game, list[CaseAwarePath]]:
     os_str = platform.system()
 
     # Build hardcoded default kotor locations
-    raw_locations: dict[str, dict[Game, list[str]]] = get_default_paths()
-    locations: dict[Game, set[CaseAwarePath]] = {
+    raw_locations = get_default_paths()
+    locations = {
         game: {case_path for case_path in (CaseAwarePath(path).resolve() for path in paths) if case_path.exists()}
         for game, paths in raw_locations.get(os_str, {}).items()
     }

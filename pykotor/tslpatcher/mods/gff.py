@@ -6,15 +6,8 @@ from typing import TYPE_CHECKING, Any, Callable
 
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Game, ResRef
-from pykotor.helpers.path import PureWindowsPath
-from pykotor.resource.formats.gff import (
-    GFF,
-    GFFFieldType,
-    GFFList,
-    GFFStruct,
-    bytes_gff,
-    read_gff,
-)
+from pykotor.utility.path import PureWindowsPath
+from pykotor.resource.formats.gff import GFF, GFFFieldType, GFFList, GFFStruct, bytes_gff, read_gff
 from pykotor.tslpatcher.mods.template import PatcherModifications
 
 if TYPE_CHECKING:
@@ -192,7 +185,7 @@ class AddStructToListGFF(ModifyGFF):
             memory.memory_2da[self.index_to_token] = str(len(list_container) - 1)
 
         add_field: AddFieldGFF | AddStructToListGFF
-        for add_field in self.modifiers:  # type: ignore[ModifyFieldGFF never should be in modifiers]
+        for add_field in self.modifiers:  # type: ignore[assignment]
             add_field.path = self.path / str(len(list_container) - 1)
             add_field.apply(root_struct, memory, logger)
 
@@ -293,7 +286,7 @@ class AddFieldGFF(ModifyGFF):
         func_map[self.field_type]()
 
         add_field: AddFieldGFF | AddStructToListGFF
-        for add_field in self.modifiers:  # type: ignore[assignment] ModifyFieldGFF never should be in modifiers
+        for add_field in self.modifiers:  # type: ignore[assignment]
             newpath = PureWindowsPath("")
             for part, resolvedpart in zip_longest(add_field.path.parts, self.path.parts):
                 newpath /= resolvedpart or part

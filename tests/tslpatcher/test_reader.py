@@ -20,7 +20,7 @@ if getattr(sys, "frozen", False) is False:
 from pykotor.common.geometry import Vector3, Vector4
 from pykotor.common.language import Gender, Language
 from pykotor.common.misc import ResRef
-from pykotor.helpers.path import Path
+from pykotor.utility.path import Path
 from pykotor.resource.formats.ssf import SSFSound
 from pykotor.resource.formats.tlk import TLK, write_tlk
 from pykotor.resource.type import ResourceType
@@ -2277,7 +2277,6 @@ class TestConfigReader(unittest.TestCase):
             TypeId=111
             2DAMEMORY5=ListIndex
             """
-        # TODO: Add field to struct
 
         ini = ConfigParser(
             delimiters=("="),
