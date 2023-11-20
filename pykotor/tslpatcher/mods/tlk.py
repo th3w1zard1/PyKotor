@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.tlk import TLK
 from pykotor.resource.formats.tlk.tlk_auto import bytes_tlk, read_tlk
 from pykotor.tslpatcher.mods.template import PatcherModifications
 
 if TYPE_CHECKING:
     from pykotor.common.misc import Game, ResRef
-    from pykotor.resource.formats.tlk import TLK
     from pykotor.resource.type import SOURCE_TYPES
     from pykotor.tslpatcher.logger import PatchLogger
     from pykotor.tslpatcher.memory import PatcherMemory
@@ -24,12 +24,11 @@ class ModificationsTLK(PatcherModifications):
 
     def apply(
         self,
-        source_tlk: SOURCE_TYPES,
+        dialog: TLK,
         memory: PatcherMemory,
         log: PatchLogger | None = None,
         game: Game | None = None,
-    ) -> bytes:
-        dialog: TLK = read_tlk(source_tlk)
+    ) -> None:
         for modifier in self.modifiers:
             if modifier.is_replacement:
                 modifier.replace(dialog, memory)
@@ -37,6 +36,18 @@ class ModificationsTLK(PatcherModifications):
                 modifier.insert(dialog, memory)
             if log:
                 log.complete_patch()
+
+    def execute_patch(
+        self,
+        source_tlk: SOURCE_TYPES,
+        memory: PatcherMemory,
+        log: PatchLogger | None = None,
+        game: Game | None = None,
+    ) -> bytes:
+        dialog: TLK | SOURCE_TYPES = source_tlk
+        if not isinstance(source_tlk, TLK):
+            dialog = read_tlk(source_tlk)
+        self.apply(dialog, memory, log, game)
         return bytes_tlk(dialog)
 
     def pop_tslpatcher_vars(self, file_section_dict, default_destination=DEFAULT_DESTINATION):
