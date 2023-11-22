@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.file import FileResource, ResourceIdentifier, ResourceResult
-from pykotor.utility.path import Path
 from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf
 from pykotor.resource.formats.rim import RIM, read_rim, write_rim
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_capsule_file, is_erf_or_mod_file, is_rim_file
+from pykotor.utility.path import Path
 
 if TYPE_CHECKING:
     import os
@@ -298,9 +298,9 @@ class Capsule:
         offset_to_keys = reader.read_uint32()
         offset_to_resources = reader.read_uint32()
 
-        resrefs = []
-        resids = []
-        restypes = []
+        resrefs:  list[str] = []
+        resids:   list[int] = []
+        restypes: list[ResourceType] = []
         reader.seek(offset_to_keys)
         for _ in range(entry_count):
             resrefs.append(reader.read_string(16))
@@ -312,9 +312,7 @@ class Capsule:
         for i in range(entry_count):
             res_offset = reader.read_uint32()
             res_size = reader.read_uint32()
-            self._resources.append(
-                FileResource(resrefs[i], restypes[i], res_size, res_offset, self._path),
-            )
+            self._resources.append(FileResource(resrefs[i], restypes[i], res_size, res_offset, self._path))
 
     def _load_rim(
         self,

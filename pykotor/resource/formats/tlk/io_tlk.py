@@ -4,13 +4,7 @@ from pykotor.common.language import Language
 from pykotor.common.misc import ResRef, WrappedInt
 from pykotor.common.stream import ArrayHead
 from pykotor.resource.formats.tlk import TLK, TLKEntry
-from pykotor.resource.type import (
-    SOURCE_TYPES,
-    TARGET_TYPES,
-    ResourceReader,
-    ResourceWriter,
-    autoclose,
-)
+from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES, ResourceReader, ResourceWriter, autoclose
 
 _FILE_HEADER_SIZE = 20
 _ENTRY_SIZE = 40
@@ -24,9 +18,9 @@ class TLKBinaryReader(ResourceReader):
         size: int = 0,
     ):
         super().__init__(source, offset, size)
-        self._tlk: TLK | None = None
+        self._tlk: TLK
         self._texts_offset = 0
-        self._text_headers = []
+        self._text_headers: list[ArrayHead] = []
 
     @autoclose
     def load(

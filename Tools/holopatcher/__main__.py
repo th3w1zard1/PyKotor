@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import base64
 import contextlib
 import ctypes
+import json
 import os
 import pathlib
 import shutil
 import sys
 import tkinter as tk
 import traceback
+import webbrowser
 from argparse import ArgumentParser, Namespace
 from configparser import ConfigParser
 from datetime import datetime, timedelta, timezone
@@ -36,6 +39,8 @@ from pykotor.utility.string import striprtf
 
 if TYPE_CHECKING:
     from io import TextIOWrapper
+
+CURRENT_VERSION: tuple[int, ...] = (1, 3)
 
 
 class ExitCode(IntEnum):
@@ -104,6 +109,38 @@ def parse_args() -> Namespace:
 
     return kwargs
 
+class ToolTip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tip_window = None
+        self.id = None
+        self.x = self.y = 0
+        self.widget.bind("<Enter>", self.show_tip)
+        self.widget.bind("<Leave>", self.hide_tip)
+
+    def show_tip(self, event=None):
+        """Display text in a tooltip window."""
+        text = self.text().strip()
+        if not text:
+            return
+        x, y, _, _ = self.widget.bbox("insert")
+        x += self.widget.winfo_rootx() + 25
+        y += self.widget.winfo_rooty() + 20
+        self.tip_window = tk.Toplevel(self.widget)
+        self.tip_window.wm_overrideredirect(boolean=True)
+        self.tip_window.wm_geometry(f"+{x}+{y}")
+        label = tk.Label(self.tip_window, text=text, justify=tk.LEFT,
+                         background="#ffffff", relief=tk.SOLID, borderwidth=1,
+                         font=("tahoma", "8", "normal"))
+        label.pack(ipadx=1)
+
+    def hide_tip(self, event=None):
+        """Destroy the tooltip window."""
+        tw = self.tip_window
+        self.tip_window = None
+        if tw:
+            tw.destroy()
 
 class App(tk.Tk):
     def __init__(self):
@@ -115,51 +152,8 @@ class App(tk.Tk):
 
         self.initialize_logger()
         self.set_window(width=400, height=500)
-        self.namespaces_combobox = ttk.Combobox(self, state="readonly")
-        self.namespaces_combobox.set("Select the mod to install")
-        self.namespaces_combobox.place(x=5, y=5, width=310, height=25)
-        self.namespaces_combobox.bind("<<ComboboxSelected>>", self.on_namespace_option_chosen)
-
-        self.browse_button = ttk.Button(self, text="Browse", command=self.open_mod)
-        self.browse_button.place(x=320, y=5, width=75, height=25)
-
-        self.gamepaths = ttk.Combobox(self)
-        self.gamepaths.set("Select your KOTOR directory path")
-        self.gamepaths.place(x=5, y=35, width=310, height=25)
-        self.gamepaths["values"] = [str(path) for game in find_kotor_paths_from_default().values() for path in game]
-        self.gamepaths.bind("<<ComboboxSelected>>", self.on_gamepaths_chosen)
-
-        self.gamepaths_browse_button = ttk.Button(self, text="Browse", command=self.open_kotor)
-        self.gamepaths_browse_button.place(x=320, y=35, width=75, height=25)
-
-        self.exit_button = ttk.Button(self, text="Exit", command=self.handle_exit_button)
-        self.exit_button.place(x=5, y=470, width=75, height=25)
-
-        self.install_button = ttk.Button(self, text="Install", command=self.begin_install)
-        self.install_button.place(x=320, y=470, width=75, height=25)
-
-        self.uninstall_button = ttk.Button(self, text="Uninstall", command=self.uninstall_selected_mod)
-        self.uninstall_button.place(x=160, y=470, width=75, height=25)
-        #self.uninstall_button.place_forget()  # comment this to enable the uninstall button.
-
-        # Create a Frame to hold the Text and Scrollbar widgets
-        text_frame = tk.Frame(self)
-        text_frame.place(x=5, y=65, width=390, height=400)
-
-        # Create the Scrollbar and pack it to the right side of the Frame
-        scrollbar = tk.Scrollbar(text_frame)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-
-        # Create the Text widget with word wrapping and pack it to the left side of the Frame
-        self.description_text = tk.Text(text_frame, wrap=tk.WORD, yscrollcommand=scrollbar.set)
-        # Get the current font properties
-        font_obj = tkfont.Font(font=self.description_text.cget("font"))
-        font_obj.configure(size=9)
-        self.description_text.configure(font=font_obj)
-        self.description_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)
-
-        # Link the Scrollbar to the Text widget
-        scrollbar.config(command=self.description_text.yview)
+        self.initialize_ui_menu()
+        self.initialize_ui_controls()
 
         self.install_running = False
         self.protocol("WM_DELETE_WINDOW", self.handle_exit_button)
@@ -167,6 +161,159 @@ class App(tk.Tk):
         cmdline_args = parse_args()
         self.open_mod(cmdline_args.tslpatchdata or CaseAwarePath.cwd())
         self.handle_commandline(cmdline_args)
+
+    def initialize_logger(self):
+        self.logger = PatchLogger()
+        self.logger.verbose_observable.subscribe(self.write_log)
+        self.logger.note_observable.subscribe(self.write_log)
+        self.logger.warning_observable.subscribe(self.write_log)
+        self.logger.error_observable.subscribe(self.write_log)
+
+    def initialize_ui_menu(self):
+        # Initialize top menu bar
+        self.menu_bar = tk.Menu(self)
+        self.config(menu=self.menu_bar)
+
+        # Version display - non-clickable
+        version_label = f"v{'.'.join(map(str, CURRENT_VERSION))}"
+        self.menu_bar.add_command(label=version_label)
+        self.menu_bar.entryconfig(version_label, state="disabled")
+
+        # About menu
+        about_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_cascade(label="About", menu=about_menu)
+
+        # Adding items to About menu
+        about_menu.add_command(label="Check for Updates", command=self.check_for_updates)
+        about_menu.add_command(label="Homepage", command=self.open_homepage)
+        about_menu.add_command(label="GitHub Source", command=self.open_github)
+
+        # Discord submenu
+        discord_menu = tk.Menu(about_menu, tearoff=0)
+        about_menu.add_cascade(label="Discord", menu=discord_menu)
+        discord_menu.add_command(label="DeadlyStream", command=self.open_deadlystream_discord)
+        discord_menu.add_command(label="r/kotor", command=self.open_kotor_discord)
+
+    def initialize_ui_controls(self):
+        # Use grid layout for main window
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # Configure style for Combobox
+        style = ttk.Style(self)
+        style.configure("TCombobox", font=("Helvetica", 10), padding=4)
+
+        # Top area for comboboxes and buttons
+        top_frame = tk.Frame(self)
+        top_frame.grid(row=0, column=0, sticky="ew")
+        top_frame.grid_columnconfigure(0, weight=1)  # Make comboboxes expand
+        top_frame.grid_columnconfigure(1, weight=0)  # Keep buttons fixed size
+
+        self.namespaces_combobox = ttk.Combobox(top_frame, state="readonly", style="TCombobox")
+        self.namespaces_combobox.set("Select the mod to install")
+        self.namespaces_combobox.grid(row=0, column=0, padx=5, pady=2, sticky="ew")
+        self.namespaces_combobox.bind("<<ComboboxSelected>>", self.on_namespace_option_chosen)
+        self.namespaces_combobox.bind("<FocusIn>", self.on_combobox_focus_in)
+        self.namespaces_combobox.bind("<FocusOut>", self.on_combobox_focus_out)
+        self.namespaces_combobox_state = 0  # used for handling focus events
+        ToolTip(self.namespaces_combobox, lambda: self.on_namespace_option_hover())
+
+        self.browse_button = ttk.Button(top_frame, text="Browse", command=self.open_mod)
+        self.browse_button.grid(row=0, column=1, padx=5, pady=2, sticky="e")
+
+        self.gamepaths = ttk.Combobox(top_frame, style="TCombobox")
+        self.gamepaths.set("Select your KOTOR directory path")
+        self.gamepaths.grid(row=1, column=0, padx=5, pady=2, sticky="ew")
+        self.gamepaths["values"] = [str(path) for game in find_kotor_paths_from_default().values() for path in game]
+        self.gamepaths.bind("<<ComboboxSelected>>", self.on_gamepaths_chosen)
+
+        self.gamepaths_browse_button = ttk.Button(top_frame, text="Browse", command=self.open_kotor)
+        self.gamepaths_browse_button.grid(row=1, column=1, padx=5, pady=2, sticky="e")
+
+        # Middle area for text and scrollbar
+        text_frame = tk.Frame(self)
+        text_frame.grid(row=1, column=0, sticky="nsew")
+        text_frame.grid_rowconfigure(0, weight=1)
+        text_frame.grid_columnconfigure(0, weight=1)
+
+        self.description_text = tk.Text(text_frame, wrap=tk.WORD)
+        font_obj = tkfont.Font(font=self.description_text.cget("font"))
+        font_obj.configure(size=9)
+        self.description_text.configure(font=font_obj)
+        self.description_text.grid(row=0, column=0, sticky="nsew")
+
+        scrollbar = tk.Scrollbar(text_frame, command=self.description_text.yview)
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        self.description_text.config(yscrollcommand=scrollbar.set)
+
+        # Bottom area for buttons
+        bottom_frame = tk.Frame(self)
+        bottom_frame.grid(row=2, column=0, sticky="ew")
+
+        self.exit_button = ttk.Button(bottom_frame, text="Exit", command=self.handle_exit_button)
+        self.exit_button.pack(side="left", padx=5, pady=5)
+
+        self.uninstall_button = ttk.Button(bottom_frame, text="Uninstall", command=self.uninstall_selected_mod)
+        self.uninstall_button.pack(side="right", padx=5, pady=5)
+
+        self.install_button = ttk.Button(bottom_frame, text="Install", command=self.begin_install)
+        self.install_button.pack(side="right", padx=5, pady=5)
+
+
+    def check_for_updates(self) -> None:
+        try:
+            import requests
+            req = requests.get("https://api.github.com/repos/NickHugi/PyKotor/contents/update_info.json", timeout=15)
+            req.raise_for_status()
+            file_data = req.json()
+            base64_content = file_data["content"]
+            decoded_content = base64.b64decode(base64_content)  # Correctly decoding the base64 content
+            updateInfoData = json.loads(decoded_content.decode("utf-8"))
+
+            new_version = tuple(map(int, str(updateInfoData["holopatcherLatestVersion"]).split(".")))
+            if new_version > CURRENT_VERSION:
+                if messagebox.askyesno(
+                    "Update available",
+                    "A newer version of HoloPatcher is available, would you like to download it now?",
+                ):
+                    webbrowser.open_new(updateInfoData["holopatcherDownloadLink"])
+            else:
+                messagebox.showinfo(
+                    "No updates available.",
+                    f"You are already running the latest version of HoloPatcher ({updateInfoData['holopatcherLatestVersion']})",
+                )
+        except Exception as e:
+            messagebox.showerror(
+                "Unable to fetch latest version.",
+                (
+                    f"Error: {e!r}\n"
+                    "Check if you are connected to the internet."
+                ),
+            )
+
+    def open_homepage(self):
+        webbrowser.open_new("https://deadlystream.com/files/file/2243-holopatcher")
+
+    def open_github(self):
+        webbrowser.open_new("https://github.com/NickHugi/PyKotor")
+
+    def open_deadlystream_discord(self):
+        webbrowser.open_new("https://discord.gg/HBwVCpAA")
+
+    def open_kotor_discord(self):
+        webbrowser.open_new("https://discord.com/invite/kotor")
+
+    def on_combobox_focus_in(self, event):
+        if self.namespaces_combobox_state == 2: # no selection, fix the focus
+            self.focus_set()
+            self.namespaces_combobox_state = 0  # base status
+        else:
+            self.namespaces_combobox_state = 1  # combobox clicked
+
+    def on_combobox_focus_out(self, event):
+        if self.namespaces_combobox_state == 1:
+            self.namespaces_combobox_state = 2  # no selection
 
     def handle_commandline(self, cmdline_args: Namespace) -> None:
         """Handle command line arguments passed to the application.
@@ -246,13 +393,6 @@ class App(tk.Tk):
         # messagebox.askyesnocancel = MessageboxOverride.askyesno  # noqa: ERA001
         # messagebox.askretrycancel = MessageboxOverride.askyesno  # noqa: ERA001
 
-    def initialize_logger(self):
-        self.logger = PatchLogger()
-        self.logger.verbose_observable.subscribe(self.write_log)
-        self.logger.note_observable.subscribe(self.write_log)
-        self.logger.warning_observable.subscribe(self.write_log)
-        self.logger.error_observable.subscribe(self.write_log)
-
     def set_window(self, width: int, height: int):
         # Get screen dimensions
         screen_width = self.winfo_screenwidth()
@@ -290,16 +430,7 @@ class App(tk.Tk):
             - Restore files from backup
             - Offer to delete restored backup.
         """
-        if self.install_running:
-            messagebox.showerror("An install is already running!", "Please wait for all operations to finish")
-            return
-        namespace_option = next((x for x in self.namespaces if x.name == self.namespaces_combobox.get()), None)
-        if not self.namespaces or not namespace_option:
-            messagebox.showerror("No mod loaded", "Load/select a mod first.")
-            return
-        destination_folder = Path(self.gamepaths.get())
-        if not destination_folder.exists():
-            messagebox.showerror("No game path selected", "Select your KOTOR directory first")
+        if not self.preinstall_validate_chosen():
             return
         backup_parent_folder = Path(self.mod_path, "backup")
         if not backup_parent_folder.exists():
@@ -330,13 +461,6 @@ class App(tk.Tk):
         most_recent_backup_folder: Path = backup_parent_folder / str(sorted_backup_folders[0][0])
         self.write_log(f"Using backup folder '{most_recent_backup_folder}'")
         delete_list_file = most_recent_backup_folder / "remove these files.txt"
-        if not delete_list_file.exists():
-            # messagebox.showerror(
-            #     "File list missing from backup",
-            #     f"'remove these files.txt' missing from backup '{most_recent_backup_folder}', cannot restore backup.",  # noqa: ERA001
-            # )  # noqa: ERA001, RUF100
-            # return  # noqa: ERA001, RUF100
-            pass
         existing_files = set()
         line: str
         if delete_list_file.exists():
@@ -346,23 +470,23 @@ class App(tk.Tk):
                     line = line.strip()  # noqa: PLW2901
 
                     if line:
-                        if Path(line).safe_isfile():
+                        if Path(line).is_file():
                             existing_files.add(line)
                         else:
                             missing_files = True
                             print(f"ERROR! {line} no longer exists!")
-#            if missing_files:
-#                messagebox.showerror(
-#                    "Backup out of date or mismatched",
-#                    (
-#                        f"This backup doesn't match your current KOTOR installation. Files are missing/changed in your KOTOR install.{os.linesep}"
-#                        f"It is important that you uninstall all mods in their installed order when utilizing this feature.{os.linesep}"
-#                        f"Also ensure you selected the right mod, and the right KOTOR folder."
-#                    ),
-#                )
-#                return
-        all_items_in_backup = list(Path(most_recent_backup_folder).safe_rglob("*"))
-        files_in_backup: list[Path] = [item for item in all_items_in_backup if item.safe_isfile()]
+            if missing_files and not messagebox.askyesno(
+                    "Backup out of date or mismatched",
+                    (
+                        f"This backup doesn't match your current KOTOR installation. Files are missing/changed in your KOTOR install.{os.linesep}"
+                        f"It is important that you uninstall all mods in their installed order when utilizing this feature.{os.linesep}"
+                        f"Also ensure you selected the right mod, and the right KOTOR folder.{os.linesep}"
+                        "Continue anyway?"
+                    ),
+            ):
+                return
+        all_items_in_backup = list(Path(most_recent_backup_folder).rglob("*"))
+        files_in_backup: list[Path] = [item for item in all_items_in_backup if item.is_file()]
         folder_count: int = len(all_items_in_backup) - len(files_in_backup)
 
         if len(files_in_backup) < 6:  # noqa: PLR2004[6 represents a small number of files to display]
@@ -433,18 +557,23 @@ class App(tk.Tk):
         self.destroy()
         sys.exit(ExitCode.ABORT_INSTALL_UNSAFE)
 
-    def on_gamepaths_chosen(self, event) -> None:
-        """Adjust the gamepaths combobox after a short delay."""
-        self.after(10, self.move_cursor_to_end)
+    def on_gamepaths_chosen(self, event: tk.Event) -> None:
+        """Adjust the combobox after a short delay."""
+        self.after(10, lambda: self.move_cursor_to_end(event.widget))
 
-    def move_cursor_to_end(self) -> None:
-        """Shows the rightmost portion of the game paths combobox as that's the most relevant."""
-        self.gamepaths.focus_set()
-        position: int = len(self.gamepaths.get())
-        self.gamepaths.icursor(position)
-        self.gamepaths.xview(position)
+    def move_cursor_to_end(self, combobox: ttk.Combobox) -> None:
+        """Shows the rightmost portion of the specified combobox as that's the most relevant."""
+        combobox.focus_set()
+        position: int = len(combobox.get())
+        combobox.icursor(position)
+        combobox.xview(position)
+        self.focus_set()
 
-    def on_namespace_option_chosen(self, event) -> None:
+    def on_namespace_option_hover(self) -> str:
+        namespace_option: PatcherNamespace | None = next((x for x in self.namespaces if x.name == self.namespaces_combobox.get()), None)
+        return namespace_option.description if namespace_option else ""
+
+    def on_namespace_option_chosen(self, event: tk.Event) -> None:
         """Handles the namespace option being chosen from the combobox
         Args:
             self: The PatcherWindow instance
@@ -459,9 +588,9 @@ class App(tk.Tk):
         try:
             namespace_option: PatcherNamespace = next(x for x in self.namespaces if x.name == self.namespaces_combobox.get())
             changes_ini_path = CaseAwarePath(self.mod_path, "tslpatchdata", namespace_option.changes_filepath())
-            reader = ConfigReader.from_filepath(changes_ini_path)
-            reader.load_settings()
-            game_number: int | None = reader.config.game_number
+            self.reader = ConfigReader.from_filepath(changes_ini_path)
+            self.reader.load_settings()
+            game_number: int | None = self.reader.config.game_number
             if game_number:
                 self._handle_gamepaths_with_mod(game_number)
             info_rtf = CaseAwarePath(self.mod_path, "tslpatchdata", namespace_option.rtf_filepath())
@@ -476,6 +605,8 @@ class App(tk.Tk):
                 error_name,
                 f"An unexpected error occurred while loading the namespace option.{os.linesep*2}{msg}",
             )
+        else:
+            self.after(10, lambda: self.move_cursor_to_end(self.namespaces_combobox))
 
     def check_access(self, directory: Path, recurse=False) -> bool:
         """Check access to a directory
@@ -628,19 +759,19 @@ class App(tk.Tk):
         if self.install_running:
             messagebox.showinfo(
                 "Install already running",
-                "Cannot start an install while the previous installation is still ongoing",
+                "Wait for the previous task to finish.",
             )
             return False
         if not self.mod_path or not CaseAwarePath(self.mod_path).exists():
             return _if_missing(
                 "No mod chosen",
-                "Select your mod directory before starting an install",
+                "Select your mod directory first.",
             )
         game_path = self.gamepaths.get()
         if not game_path or not CaseAwarePath(game_path).exists():
             return _if_missing(
                 "No KOTOR directory chosen",
-                "Select your KOTOR install before starting an install.",
+                "Select your KOTOR directory first.",
             )
         return self.check_access(Path(self.gamepaths.get()))
 
@@ -739,9 +870,14 @@ class App(tk.Tk):
             8. If CLI, exit regardless of success or error.
         """
         self.set_active_install(install_running=True)
+        #profiler = cProfile.Profile()
+        #profiler.enable()
         install_start_time: datetime = datetime.now(timezone.utc).astimezone()
         installer.install()
         total_install_time: timedelta = datetime.now(timezone.utc).astimezone() - install_start_time
+        #profiler.disable()
+        #profiler_output_file = Path("profiler_output.pstat").resolve()
+        #profiler.dump_stats(str(profiler_output_file))
 
         days, remainder = divmod(total_install_time.total_seconds(), 24 * 60 * 60)
         hours, remainder = divmod(remainder, 60 * 60)
@@ -774,6 +910,8 @@ class App(tk.Tk):
                 "Install complete!",
                 f"Check the logs for details etc. Utilize the script in the 'uninstall' folder of the mod directory to revert these changes. Total install time: {time_str}",
             )
+            if self.one_shot:
+                sys.exit(ExitCode.SUCCESS)
 
     def _handle_exception_during_install(self, e: Exception, installer: ModInstaller) -> NoReturn:
         """Handles exceptions during installation

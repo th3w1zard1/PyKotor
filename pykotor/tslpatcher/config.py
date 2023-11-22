@@ -10,12 +10,7 @@ from pykotor.common.stream import BinaryReader, BinaryWriter
 from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.extract.installation import Installation
-from pykotor.resource.formats.gff import GFFContent, bytes_gff
-from pykotor.resource.formats.lip import bytes_lip
-from pykotor.resource.formats.ssf import bytes_ssf
-from pykotor.resource.formats.tlk import bytes_tlk
 from pykotor.resource.formats.tlk.tlk_auto import read_tlk
-from pykotor.resource.formats.twoda import bytes_2da
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from pykotor.tools.misc import is_capsule_file
 from pykotor.tools.path import CaseAwarePath
@@ -292,34 +287,9 @@ class ModInstaller:
         return (exists, capsule)
 
     def load_resource_file(self, resource_path: Path) -> bytes:
-        """Loads a resource file and returns its contents as bytes.
-        BinaryReader.load_file works in all normal scenarios, the
-        format checks are provided for convenience to allow the user to load XML/JSON/CSV type data as well as defaults.
-
-        Args:
-        ----
-            resource_path: Path to the resource file to load.
-
-        Returns:
-        -------
-            bytes: The contents of the resource file as bytes.
-        Processing Logic:
-            - Get the file extension of the resource_path
-            - Check if the extension matches a known GFF type and return bytes of the GFF
-            - Check if the extension matches other known types and return bytes of that type
-            - Otherwise return bytes using the default loader.
-        """
         ext: str = resource_path.suffix.strip() and resource_path.suffix.lower()[1:]
-        if ext in GFFContent.get_valid_types():
-            return bytes_gff(resource_path)
-        if ext == "ssf":
-            return bytes_ssf(resource_path)
         if ext == "tlk":
             return read_tlk(resource_path)
-        if ext == "2da":
-            return bytes_2da(resource_path)
-        if ext == "lip":
-            return bytes_lip(resource_path)
         return BinaryReader.load_file(resource_path)
 
     def lookup_resource(
@@ -445,7 +415,7 @@ class ModInstaller:
             return True
 
         if patch.skip_if_not_replace and not patch.replace_file and exists:  # [InstallList] only
-            self.log.add_warning(f"'{patch.saveas}' already exists in the '{local_folder}' {container_type}. Skipping file...")
+            self.log.add_note(f"'{patch.saveas}' already exists in the '{local_folder}' {container_type}. Skipping file...")
             return False
 
         if capsule is not None and not capsule.path().exists():

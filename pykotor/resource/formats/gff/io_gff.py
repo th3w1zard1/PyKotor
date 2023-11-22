@@ -4,20 +4,8 @@ from typing import Any
 
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryWriter
-from pykotor.resource.formats.gff import (
-    GFF,
-    GFFContent,
-    GFFFieldType,
-    GFFList,
-    GFFStruct,
-)
-from pykotor.resource.type import (
-    SOURCE_TYPES,
-    TARGET_TYPES,
-    ResourceReader,
-    ResourceWriter,
-    autoclose,
-)
+from pykotor.resource.formats.gff import GFF, GFFContent, GFFFieldType, GFFList, GFFStruct
+from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES, ResourceReader, ResourceWriter, autoclose
 
 _COMPLEX_FIELD = {
     GFFFieldType.UInt64,
@@ -84,7 +72,7 @@ class GFFBinaryReader(ResourceReader):
 
         self._labels = []
         self._reader.seek(label_offset)
-        self._labels.extend(self._reader.read_string(16) for _i in range(label_count))
+        self._labels.extend(self._reader.read_string(16) for _ in range(label_count))
         self._load_struct(self._gff.root, 0)
 
         return self._gff
@@ -107,7 +95,7 @@ class GFFBinaryReader(ResourceReader):
             self._load_field(gff_struct, data)
         elif field_count > 1:
             self._reader.seek(self._field_indices_offset + data)
-            indices: list[int] = [self._reader.read_uint32() for _i in range(field_count)]
+            indices: list[int] = [self._reader.read_uint32() for _ in range(field_count)]
             for index in indices:
                 self._load_field(gff_struct, index)
 
@@ -170,12 +158,12 @@ class GFFBinaryReader(ResourceReader):
         elif field_type is GFFFieldType.Single:
             gff_struct.set_single(label, self._reader.read_single())
 
-    def _load_list(self, gff_struct, label):
+    def _load_list(self, gff_struct, label) -> None:
         offset = self._reader.read_uint32()  # relative to list indices
         self._reader.seek(self._list_indices_offset + offset)
         value = GFFList()
         count = self._reader.read_uint32()
-        list_indices: list[int] = [self._reader.read_uint32() for _i in range(count)]
+        list_indices: list[int] = [self._reader.read_uint32() for _ in range(count)]
         for struct_index in list_indices:
             value.add(0)
             child = value.at(len(value) - 1)
@@ -192,11 +180,11 @@ class GFFBinaryWriter(ResourceWriter):
         super().__init__(target)
         self._gff = gff
 
-        self._struct_writer: BinaryWriter = BinaryWriter.to_bytearray()
-        self._field_writer: BinaryWriter = BinaryWriter.to_bytearray()
-        self._field_data_writer: BinaryWriter = BinaryWriter.to_bytearray()
-        self._field_indices_writer: BinaryWriter = BinaryWriter.to_bytearray()
-        self._list_indices_writer: BinaryWriter = BinaryWriter.to_bytearray()
+        self._struct_writer: BinaryWriter = BinaryWriter.from_bytearray()
+        self._field_writer: BinaryWriter = BinaryWriter.from_bytearray()
+        self._field_data_writer: BinaryWriter = BinaryWriter.from_bytearray()
+        self._field_indices_writer: BinaryWriter = BinaryWriter.from_bytearray()
+        self._list_indices_writer: BinaryWriter = BinaryWriter.from_bytearray()
 
         self._labels: list[str] = []
 
