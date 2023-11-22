@@ -46,7 +46,9 @@ class TPCEditor(Editor):
         self._setupSignals()
 
         self._tpc: TPC = TPC()
-        self._tpc.set_single(256, 256, bytes(0 for i in range(256 * 256 * 4)), TPCTextureFormat.RGBA)
+        self._tpc.set_single(
+            256, 256, bytes(0 for _ in range(256 * 256 * 4)), TPCTextureFormat.RGBA
+        )
 
         self.new()
 

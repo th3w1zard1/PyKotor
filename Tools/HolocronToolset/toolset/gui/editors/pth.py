@@ -88,8 +88,7 @@ class PTHEditor(Editor):
         super().load(filepath, resref, restype, data)
 
         order = [SearchLocation.OVERRIDE, SearchLocation.CHITIN, SearchLocation.MODULES]
-        result = self._installation.resource(resref, ResourceType.LYT, order)
-        if result:
+        if result := self._installation.resource(resref, ResourceType.LYT, order):
             self.loadLayout(read_lyt(result.data))
 
         pth = read_pth(data)
@@ -121,8 +120,7 @@ class PTHEditor(Editor):
         self.ui.renderArea.setWalkmeshes(walkmeshes)
 
     def moveCameraToSelection(self):
-        instance = self.ui.renderArea.instanceSelection.last()
-        if instance:
+        if instance := self.ui.renderArea.instanceSelection.last():
             self.ui.renderArea.camera.setPosition(instance.position.x, instance.position.y)
 
     def moveCamera(self, x: float, y: float) -> None:

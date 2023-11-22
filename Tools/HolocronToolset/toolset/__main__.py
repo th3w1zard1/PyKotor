@@ -21,9 +21,7 @@ def is_frozen() -> bool:
     if getattr(sys, "frozen", False):
         return True
     # Check if the executable is in a temp directory (common for frozen apps)
-    if tempfile.gettempdir() in sys.executable:
-        return True
-    return False
+    return tempfile.gettempdir() in sys.executable
 
 def fix_sys_and_cwd_path():
     """Fixes sys.path and current working directory for PyKotor.

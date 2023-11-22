@@ -311,9 +311,7 @@ class UTIEditor(Editor):
             return f"{propName}: {subpropName} [{costName}]"
         if subpropName:
             return f"{propName}: {subpropName}"
-        if costName:
-            return f"{propName}: [{costName}]"
-        return f"{propName}"
+        return f"{propName}: [{costName}]" if costName else f"{propName}"
 
     def onUpdateIcon(self) -> None:
         baseItem = self.ui.baseSelect.currentIndex()

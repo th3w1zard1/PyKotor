@@ -300,8 +300,10 @@ class TextureList(MainWindowList):
 
         self._taskQueue = multiprocessing.JoinableQueue()
         self._resultQueue = multiprocessing.Queue()
-        self._consumers: list[TextureListConsumer] = [TextureListConsumer(self._taskQueue, self._resultQueue) for i in
-                                                      range(multiprocessing.cpu_count())]
+        self._consumers: list[TextureListConsumer] = [
+            TextureListConsumer(self._taskQueue, self._resultQueue)
+            for _ in range(multiprocessing.cpu_count())
+        ]
         for consumer in self._consumers:
             consumer.start()
 

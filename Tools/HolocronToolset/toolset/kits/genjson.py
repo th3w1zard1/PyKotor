@@ -88,7 +88,7 @@ def minimap(bwm_path: os.PathLike | str, png_path: os.PathLike | str):
 def get_nums(node_name: str):
     string = ""
     nums = []
-    for char in node_name + " ":
+    for char in f"{node_name} ":
         if char.isdigit():
             string += char
         elif string != "":
@@ -109,32 +109,33 @@ def roomdict(filepath: os.PathLike | str):
             trans, door, rot = get_nums(node.name)
             hooks.append((trans, door, mdl.global_position(node), rot))
 
-    roomdict = {}
-    roomdict["name"] = filepath.stem.replace("_", " ").title()
+    roomdict = {"name": filepath.stem.replace("_", " ").title()}
     roomdict["id"] = filepath.stem
     roomdict["native"] = 1 if version.K1 else 2  # type: ignore[assignment]
     roomdict["doorhooks"] = []  # type: ignore[assignment]
     for hook in hooks:
-        hookdict = {}
-        hookdict["x"] = hook[2].x
-        hookdict["y"] = hook[2].y
-        hookdict["z"] = hook[2].z
-        hookdict["rotation"] = hook[3]
-        hookdict["door"] = hook[1]
-        hookdict["edge"] = hook[0] + 20
+        hookdict = {
+            "x": hook[2].x,
+            "y": hook[2].y,
+            "z": hook[2].z,
+            "rotation": hook[3],
+            "door": hook[1],
+            "edge": hook[0] + 20,
+        }
         roomdict["doorhooks"].append(hookdict)  # type: ignore[attr-defined]
 
     return roomdict
 
 
 def kitdict(name: str, kit_id: str, version: int, doordata: list[tuple[float, float]]):
-    kitdict = {}
+    kitdict = {
+        "name": name,
+        "id": kit_id,
+        "ht": "3.0.0",
+        "version": version,
+        "components": [],
+    }
 
-    kitdict["name"] = name
-    kitdict["id"] = kit_id
-    kitdict["ht"] = "3.0.0"
-    kitdict["version"] = version  # type: ignore[assignment]
-    kitdict["components"] = []  # type: ignore[assignment]
     this_kit_path = TOOLSET_KIT_PATH / kit_id
     for component_id in [file.stem for file in this_kit_path.iterdir() if file.suffix.lower == ".mdl"]:
         minimap(this_kit_path / f"{component_id}.wok", this_kit_path / f"{component_id}.png")
@@ -142,11 +143,12 @@ def kitdict(name: str, kit_id: str, version: int, doordata: list[tuple[float, fl
 
     kitdict["doors"] = []  # type: ignore[assignment]
     for i, door in enumerate(doordata):
-        doordict = {}
-        doordict["utd_k1"] = f"door{i}_k1"
-        doordict["utd_k2"] = f"door{i}_k2"
-        doordict["width"] = door[0]  # type: ignore[assignment]
-        doordict["height"] = door[1]  # type: ignore[assignment]
+        doordict = {
+            "utd_k1": f"door{i}_k1",
+            "utd_k2": f"door{i}_k2",
+            "width": door[0],
+            "height": door[1],
+        }
         kitdict["doors"].append(doordict)  # type: ignore[attr-defined]
 
     return kitdict

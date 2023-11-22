@@ -282,9 +282,7 @@ class UTSEditor(Editor):
             return
 
         resname = self.ui.soundList.currentItem().text()
-        data = self._installation.sound(resname)
-
-        if data:
+        if data := self._installation.sound(resname):
             self.buffer = QBuffer(self)
             self.buffer.setData(data)
             self.buffer.open(QIODevice.ReadOnly)

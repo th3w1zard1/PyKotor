@@ -287,8 +287,7 @@ class TwoDAEditor(Editor):
 
         for row in rows:
             for cell in row.split("\t"):
-                item = self.model.item(y, x)
-                if item:
+                if item := self.model.item(y, x):
                     item.setText(cell)
                 x += 1
             x = left

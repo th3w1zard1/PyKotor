@@ -333,8 +333,8 @@ class WalkmeshRenderer(QWidget):
         """
         cos = math.cos(-self.camera.rotation())
         sin = math.sin(-self.camera.rotation())
-        x = x / self.camera.zoom()
-        y = y / self.camera.zoom()
+        x /= self.camera.zoom()
+        y /= self.camera.zoom()
         x2 = x*cos - y*sin
         y2 = x*sin + y*cos
         return Vector2(x2, -y2)
@@ -422,9 +422,7 @@ class WalkmeshRenderer(QWidget):
             return not self.hideSounds
         if isinstance(instance, GITWaypoint):
             return not self.hideWaypoints
-        if isinstance(instance, GITStore):
-            return not self.hideStores
-        return None
+        return not self.hideStores if isinstance(instance, GITStore) else None
 
     def instancePixmap(self, instance: GITInstance) -> QPixmap | None:
         if isinstance(instance, GITCreature):
@@ -443,9 +441,7 @@ class WalkmeshRenderer(QWidget):
             return self._pixmapSound
         if isinstance(instance, GITWaypoint):
             return self._pixmapWaypoint
-        if isinstance(instance, GITStore):
-            return self._pixmapMerchant
-        return None
+        return self._pixmapMerchant if isinstance(instance, GITStore) else None
 
     def geomPointsUnderMouse(self) -> list[GeomPoint]:
         return self._geomPointsUnderMouse

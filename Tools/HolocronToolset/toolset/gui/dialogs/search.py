@@ -194,7 +194,7 @@ class FileResults(QDialog):
         self.selection = item.data(QtCore.Qt.UserRole) if item is not None else None
         super().accept()
 
-    def open(self):  # noqa: A003
+    def open(self):    # noqa: A003
         """Opens the current item in the result list.
 
         Args:
@@ -209,8 +209,7 @@ class FileResults(QDialog):
         - Gets the FileResource object from the item's data
         - Opens the resource editor window with the resource's details.
         """
-        item = self.ui.resultList.currentItem()
-        if item:
+        if item := self.ui.resultList.currentItem():
             resource: FileResource = item.data(QtCore.Qt.UserRole)
             openResourceEditor(resource.filepath(), resource.resname(), resource.restype(), resource.data(),
                                self.installation, self.window().parent())

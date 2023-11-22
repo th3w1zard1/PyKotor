@@ -120,8 +120,7 @@ class ToolWindow(QMainWindow):
         self.setWindowIcon(QIcon(QPixmap(":/images/icons/sith.png")))
         self.reloadSettings()
 
-        firstTime = self.settings.firstTime
-        if firstTime:
+        if firstTime := self.settings.firstTime:
             self.settings.firstTime = False
 
             # Create a directory used for dumping temp files
@@ -223,7 +222,7 @@ class ToolWindow(QMainWindow):
         # Some users may choose to have their RIM files for the same module merged into a single option for the
         # dropdown menu.
         if self.settings.joinRIMsTogether and is_rim_file(moduleFile):
-            resources += self.active.module_resources(PurePath(moduleFile).stem + "_s.rim")
+            resources += self.active.module_resources(f"{PurePath(moduleFile).stem}_s.rim")
 
         self.active.reload_module(moduleFile)
         self.ui.modulesWidget.setResources(resources)
@@ -263,17 +262,17 @@ class ToolWindow(QMainWindow):
         if len(resources) == 1:
             # Player saves resource with a specific name
             default = f"{resources[0].resname()}.{resources[0].restype().extension}"
-            filepath: str = QFileDialog.getSaveFileName(self, "Save resource", default)[0]
-
-            if filepath:
+            if filepath := QFileDialog.getSaveFileName(
+                self, "Save resource", default
+            )[0]:
                 loader = AsyncBatchLoader(self, "Extracting Resources", [], "Failed to Extract Resources")
                 loader.addTask(lambda: self._extractResource(resources[0], filepath, loader))
                 loader.exec_()
 
         elif len(resources) >= 1:
-            # Player saves resources with original name to a specific directory
-            folderpath: str = QFileDialog.getExistingDirectory(self, "Select directory to extract to")
-            if folderpath:
+            if folderpath := QFileDialog.getExistingDirectory(
+                self, "Select directory to extract to"
+            ):
                 loader = AsyncBatchLoader(self, "Extracting Resources", [], "Failed to Extract Resources")
 
                 for resource in resources:
@@ -552,7 +551,7 @@ class ToolWindow(QMainWindow):
         # Some users may choose to merge their RIM files under one option in the Modules tab; if this is the case we
         # need to account for this.
         if self.settings.joinRIMsTogether and module.lower().endswith("_s.rim"):
-            module = module.lower()[:-6] + ".rim"
+            module = f"{module.lower()[:-6]}.rim"
 
         self.ui.modulesWidget.changeSection(module)
 

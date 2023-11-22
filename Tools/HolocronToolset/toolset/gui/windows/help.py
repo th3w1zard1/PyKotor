@@ -214,8 +214,7 @@ class HelpWindow(QMainWindow):
     def onContentsClicked(self) -> None:
         if self.ui.contentsTree.selectedItems():
             item = self.ui.contentsTree.selectedItems()[0]
-            filename = item.data(0, QtCore.Qt.UserRole)  # type: ignore[attr-defined]
-            if filename:
+            if filename := item.data(0, QtCore.Qt.UserRole):
                 help_path = Path("./help").resolve()
                 file_path = Path(help_path, filename)
                 self.ui.textDisplay.setSearchPaths([str(help_path), str(file_path.parent)])

@@ -307,7 +307,7 @@ class IndoorMapBuilder(QMainWindow):
         elif QtCore.Qt.MiddleButton in buttons and QtCore.Qt.Key_Control in keys:
             # MMB + CTRL
             self.ui.mapRenderer.rotateCamera(delta.x / 50)
-        elif QtCore.Qt.LeftButton in buttons and QtCore.Qt.Key_Control not in keys:
+        elif QtCore.Qt.LeftButton in buttons:
             # LMB
             rooms = self.ui.mapRenderer.selectedRooms()
             if len(rooms) == 0:
@@ -355,8 +355,7 @@ class IndoorMapBuilder(QMainWindow):
                     self.ui.componentList.setCurrentItem(None)
             else:
                 clearExisting = QtCore.Qt.Key_Shift not in keys
-                room = self.ui.mapRenderer.roomUnderMouse()
-                if room:
+                if room := self.ui.mapRenderer.roomUnderMouse():
                     self.ui.mapRenderer.selectRoom(self.ui.mapRenderer.roomUnderMouse(), clearExisting)
                 else:
                     self.ui.mapRenderer.clearSelectedRooms()
@@ -1109,12 +1108,9 @@ class KitDownloader(QDialog):
                 print(repr(original_exception))
                 return False
             finally:
-                try:
+                with suppress(Exception):
                     if tempdir:
                         shutil.rmtree(tempdir)
-                except Exception:  # noqa: S110, BLE001
-                    pass
-
         if is_frozen() and kits_zip_path.exists():
             kits_zip_path.unlink()
         return True

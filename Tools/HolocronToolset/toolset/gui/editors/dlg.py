@@ -413,8 +413,7 @@ class DLGEditor(Editor):
         3. Opens a localized string dialog with the node's text.
         4. If dialog is accepted and item is not a copy, updates the node's text and item text.
         """
-        indexes = self.ui.dialogTree.selectionModel().selectedIndexes()
-        if indexes:
+        if indexes := self.ui.dialogTree.selectionModel().selectedIndexes():
             item = self.model.itemFromIndex(indexes[0])
             link: DLGLink = item.data(_LINK_ROLE)
             isCopy: bool = item.data(_COPY_ROLE)
@@ -670,10 +669,15 @@ class DLGEditor(Editor):
         """
         self.player.stop()
 
-        data = self._installation.sound(resname, [SearchLocation.VOICE, SearchLocation.SOUND, SearchLocation.OVERRIDE,
-                                                  SearchLocation.CHITIN])
-
-        if data:
+        if data := self._installation.sound(
+            resname,
+            [
+                SearchLocation.VOICE,
+                SearchLocation.SOUND,
+                SearchLocation.OVERRIDE,
+                SearchLocation.CHITIN,
+            ],
+        ):
             self.buffer = QBuffer(self)
             self.buffer.setData(data)
             self.buffer.open(QIODevice.ReadOnly)

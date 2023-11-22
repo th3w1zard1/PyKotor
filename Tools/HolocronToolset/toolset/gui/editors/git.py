@@ -277,8 +277,7 @@ class GITEditor(Editor):
         super().load(filepath, resref, restype, data)
 
         order = [SearchLocation.OVERRIDE, SearchLocation.CHITIN, SearchLocation.MODULES]
-        result = self._installation.resource(resref, ResourceType.LYT, order)
-        if result:
+        if result := self._installation.resource(resref, ResourceType.LYT, order):
             self.loadLayout(read_lyt(result.data))
 
         git = read_git(data)
@@ -405,8 +404,7 @@ class GITEditor(Editor):
         # TODO
 
     def moveCameraToSelection(self):
-        instance = self.ui.renderArea.instanceSelection.last()
-        if instance:
+        if instance := self.ui.renderArea.instanceSelection.last():
             self.ui.renderArea.camera.setPosition(instance.position.x, instance.position.y)
 
     # region Mode Calls
@@ -635,9 +633,7 @@ class _InstanceMode(_Mode):
         - Opens an instance dialog to edit the selected instance properties
         - Rebuilds the instance list after editing.
         """
-        selection = self._ui.renderArea.instanceSelection.all()
-
-        if selection:
+        if selection := self._ui.renderArea.instanceSelection.all():
             instance = selection[-1]
             openInstanceDialog(self._editor, instance, self._installation)
             self.buildList()
@@ -655,34 +651,33 @@ class _InstanceMode(_Mode):
             - Checks if the path contains "override" or is in the module root
             - Opens the resource editor with the file if a path is found.
         """
-        selection = self._ui.renderArea.instanceSelection.all()
+        if not (selection := self._ui.renderArea.instanceSelection.all()):
+            return
+        instance = selection[-1]
+        resname, restype = instance.identifier()
+        filepath = None
 
-        if selection:
-            instance = selection[-1]
-            resname, restype = instance.identifier()
-            filepath = None
+        order = [SearchLocation.CHITIN, SearchLocation.MODULES, SearchLocation.OVERRIDE]
+        search = self._installation.location(resname, restype, order)
 
-            order = [SearchLocation.CHITIN, SearchLocation.MODULES, SearchLocation.OVERRIDE]
-            search = self._installation.location(resname, restype, order)
-
-            for result in search:
-                lowercase_path_parts = [f.lower() for f in result.filepath.parts]
-                lowercase_path_parents = [str(parent).lower() for parent in result.filepath.parents]
-                if "override" in lowercase_path_parts:
-                    filepath = result.filepath
-                else:
-                    module_root = Module.get_root(self._editor.filepath()).lower()
-
-                    # Check if module root is in path parents or is a .rim
-                    if module_root in lowercase_path_parents and (filepath is None or is_rim_file(filepath)):
-                        filepath = result.filepath
-
-            if filepath:
-                data = getResourceFromFile(filepath, *instance.identifier())
-                openResourceEditor(filepath, resname, restype, data, self._installation, self._editor)
+        for result in search:
+            lowercase_path_parts = [f.lower() for f in result.filepath.parts]
+            lowercase_path_parents = [str(parent).lower() for parent in result.filepath.parents]
+            if "override" in lowercase_path_parts:
+                filepath = result.filepath
             else:
-                # TODO Make prompt for override/MOD
-                ...
+                module_root = Module.get_root(self._editor.filepath()).lower()
+
+                # Check if module root is in path parents or is a .rim
+                if module_root in lowercase_path_parents and (filepath is None or is_rim_file(filepath)):
+                    filepath = result.filepath
+
+        if filepath:
+            data = getResourceFromFile(filepath, *instance.identifier())
+            openResourceEditor(filepath, resname, restype, data, self._installation, self._editor)
+        else:
+            # TODO Make prompt for override/MOD
+            ...
 
     def editSelectedInstanceGeometry(self) -> None:
         if self._ui.renderArea.instanceSelection.last():
@@ -1023,8 +1018,7 @@ class _GeometryMode(_Mode):
         pass
 
     def updateStatusBar(self, world: Vector2) -> None:
-        instance = self._ui.renderArea.instanceSelection.last()
-        if instance:
+        if instance := self._ui.renderArea.instanceSelection.last():
             self._editor.statusBar().showMessage(
                 f"({world.x:.1f}, {world.y:.1f}) Editing Geometry of {instance.identifier().resname}",
             )

@@ -701,7 +701,7 @@ class ItemBuilderDialog(QDialog):
             return "Implants"
         if slots & EquipmentSlot.GAUNTLET.value and not droid:
             return "Gauntlets"
-        if slots & EquipmentSlot.IMPLANT.value and droid:
+        if slots & EquipmentSlot.IMPLANT.value:
             return "Droid Utilities"
         if slots & EquipmentSlot.LEFT_ARM.value:
             return "Droid Special Weapons" if droid else "Shields"
@@ -715,9 +715,7 @@ class ItemBuilderDialog(QDialog):
             return "Droid Shields" if droid else "Belts"
         if slots & EquipmentSlot.HIDE.value:
             return "Creature Hide"
-        if slots == 0:
-            return "Miscellaneous"
-        return "Unknown"
+        return "Miscellaneous" if slots == 0 else "Unknown"
 
 
 class ItemBuilderWorker(QThread):
