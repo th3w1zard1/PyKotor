@@ -67,6 +67,7 @@ class ResourceType(Enum):
         extension: File extension associated with the resource type and as recognized by the game.
         category: Short description on what kind of data the resource type stores.
         contents: How the resource type stores data, ie. plaintext, binary, or gff.
+
     """
 
     INVALID = ResourceTuple(0, "", "Undefined", "binary", is_invalid=True)
