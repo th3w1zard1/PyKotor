@@ -158,7 +158,7 @@ class FileResults(QDialog):
             - Save search results and installation object as member variables
             - Sort results alphabetically.
         """
-        super().__init__(self)
+        super().__init__(parent)
 
         from toolset.uic.dialogs.search_result import Ui_Dialog
         self.ui = Ui_Dialog()
