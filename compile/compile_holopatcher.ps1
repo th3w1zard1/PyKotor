@@ -104,11 +104,7 @@ $pyInstallerArgs = $pyInstallerArgs.GetEnumerator() | ForEach-Object {
     } else {
         # Handle key-value pair arguments
         if ($value -eq $true) {
-<<<<<<< HEAD
-            "--$key "
-=======
             "--$key"
->>>>>>> b76e81aa (Fix compile scripts path issue)
         } elseif ($value -eq $false) {
         } else {
             "--$key=$value"

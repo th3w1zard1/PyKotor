@@ -25,49 +25,8 @@ if ( (Get-OS) -eq "Linux" ) {
     . brew install pyqt5
 }
 
-<<<<<<< HEAD
-Write-Host "EXTRA PYTHONPATH: '$env:PYTHONPATH'"
-$pyInstallerArgs = @{
-    'exclude-module' = @(
-        '',
-        'dl_translate',
-        'torch '
-    )
-    'clean' = $true
-    'noconsole' = $true
-    'onefile' = $true
-    'noconfirm' = $true
-    'name' = "HolocronToolset"
-    'distpath'=($rootPath + $pathSep + "dist")
-    'upx-dir' = "C:\GitHub\upx-win32"
-    'icon'="resources/icons/sith.ico"
-}
-$pyInstallerArgsString = ($pyInstallerArgs.GetEnumerator() | ForEach-Object {
-    $key = $_.Key
-    $value = $_.Value
-
-    if ($value -is [System.Array]) {
-        # Handle array values
-        $value -join " --$key="
-        $value = " --$key=$value "
-    } else {
-        # Handle key-value pair arguments
-        if ($value -eq $true) {
-            "--$key "
-        } else {
-            "--$key=$value "
-        }
-    }
-}) -join ''
-
-# Format PYTHONPATH paths and add them to the pyInstallerArgsString
-$pythonPaths = $env:PYTHONPATH -split ';'
-$pythonPathArgs = $pythonPaths | ForEach-Object { "--path=$_" }
-$pythonPathArgsString = $pythonPathArgs -join ' '
-=======
 $current_working_dir = (Get-Location).Path
 Set-Location -LiteralPath (Resolve-Path -LiteralPath "$rootPath/Tools/HolocronToolset/src").Path
->>>>>>> b76e81aa (Fix compile scripts path issue)
 
 # Determine the final executable path
 $finalExecutablePath = $null
