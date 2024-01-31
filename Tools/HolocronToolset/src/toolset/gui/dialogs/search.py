@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class FileSearcher(QDialog):
 
     def __init__(self, parent: QWidget, installations: dict[str, HTInstallation]):
-        super().__init__(self)
+        super().__init__(parent)
 
         from toolset.uic.dialogs import search
         self.ui = search.Ui_Dialog()
