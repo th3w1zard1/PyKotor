@@ -132,10 +132,6 @@ ignore = [
 #    "S605",     # Starting a process with a shell, possible injection detected
 #    "SLF001",   # Private member accessed
 #    "T201",     # `print` found
-<<<<<<< HEAD
-    "TRY003",    # Avoid specifying long messages outside the exception class
-    "EM102",     # Exception must not use an f-string literal, assign to variable first
-=======
 #
 # According to ruff documentation, the following rules should be avoided when using its formatter:
 #
@@ -153,7 +149,6 @@ ignore = [
     "COM819",   # prohibited-trailing-comma
     "ISC001",   # single-line-implicit-string-concatenation
     "ISC002",   # multi-line-implicit-string-concatenation
->>>>>>> 4abbd66c (cleanup pyproject.toml linter config duplicates)
 ]
 unfixable = ["N815", "F841", "ERA001"]
 

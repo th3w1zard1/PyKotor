@@ -20,17 +20,8 @@ from pykotor.tools.misc import is_capsule_file, is_erf_file, is_mod_file, is_rim
 from pykotor.tools.path import CaseAwarePath
 from pykotor.tools.sound import fix_audio
 from utility.error_handling import format_exception_with_variables
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
 from utility.misc import remove_duplicates
 from utility.string import CaseInsensitiveWrappedStr
-=======
->>>>>>> 84014878 (cleanup unused imports)
-=======
->>>>>>> 84014878 (cleanup unused imports)
-=======
->>>>>>> 84014878 (cleanup unused imports)
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
