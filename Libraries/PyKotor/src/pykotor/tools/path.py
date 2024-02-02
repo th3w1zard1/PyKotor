@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Callable, Generator
 
 from pykotor.tools.registry import find_software_key, winreg_key
 from utility.misc import is_instance_or_subinstance
-from utility.system.path import Path as InternalPath
+from utility.system.path import Path as InternalPath, WindowsPath as InternalWindowsPath, PosixPath as InternalPosixPath
 from utility.system.path import PathElem
 from utility.system.path import PurePath as InternalPurePath
 from utility.system.registry import resolve_reg_key_to_path
@@ -127,7 +127,7 @@ def create_case_insensitive_pathlib_class(cls: type):  # TODO: move into CaseAwa
                 wrapped_methods.add(attr_name)
 
  # TODO: Move to pykotor.common
-class CaseAwarePath(InternalPath):  # type: ignore[misc]
+class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPath):  # type: ignore[misc]
     """A class capable of resolving case-sensitivity in a path. Absolutely essential for working with KOTOR files on Unix filesystems."""
 
     def resolve(self, strict=False):  # noqa: FBT002
@@ -211,7 +211,9 @@ class CaseAwarePath(InternalPath):  # type: ignore[misc]
                 break
 
         # return a CaseAwarePath instance
-        return cls._create_instance(*parts)
+        instance = cls._create_instance(*parts)
+        assert instance.__class__.__base__ is (InternalWindowsPath if os.name == "nt" else InternalPosixPath)
+        return instance
 
     @classmethod
     def find_closest_match(cls, target: str, candidates: Generator[InternalPath, None, None]) -> str:

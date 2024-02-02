@@ -16,6 +16,18 @@ if TYPE_CHECKING:
 
 PathElem = Union[str, os.PathLike]
 
+def get_direct_parent(cls: type):
+    parent_map: dict[type, type] = {
+        PurePath: object,
+        PureWindowsPath: pathlib.PurePath,
+        PurePosixPath: pathlib.PurePath,
+        Path: pathlib.PurePath,
+        WindowsPath: pathlib.Path,
+        PosixPath: pathlib.Path,
+    }
+    return parent_map.get(pathlib_to_override(cls), cls.__base__)
+
+
 def override_to_pathlib(cls: type) -> type:
     class_map: dict[type, type] = {
         PurePath: pathlib.PurePath,
@@ -28,14 +40,37 @@ def override_to_pathlib(cls: type) -> type:
 
     return class_map.get(cls, cls)
 
+def pathlib_to_override(cls: type) -> type:
+    class_map: dict[type, type] = {
+        pathlib.PurePath: PurePath,
+        pathlib.PureWindowsPath: PureWindowsPath,
+        pathlib.PurePosixPath: PurePosixPath,
+        pathlib.Path: Path,
+        pathlib.WindowsPath: WindowsPath,
+        pathlib.PosixPath: PosixPath,
+    }
+
+    return class_map.get(cls, cls)
+
 class PurePathType(type):
     def __instancecheck__(cls, instance: object) -> bool: # sourcery skip: instance-method-first-arg-name
-        return cls.__subclasscheck__(type(instance))
+        return cls.__subclasscheck__(instance.__class__)
 
     def __subclasscheck__(cls, subclass: type) -> bool: # sourcery skip: instance-method-first-arg-name
-        return override_to_pathlib(cls) in override_to_pathlib(subclass).__mro__
+        return pathlib_to_override(cls) in pathlib_to_override(subclass).__mro__
 
 class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
+    _flavour: Any
+    _orig_class: type = object
+
+    @property
+    def __class__(self):
+        return pathlib_to_override(self.__class__._orig_class)
+
+    @property
+    def __base__(self):
+        return get_direct_parent(self.__class__)
+
     # pylint: disable-all
     def __new__(
         cls,
@@ -44,14 +79,12 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
     ) -> Self:
         if len(args) == 1 and args[0].__class__ is cls:  # faster to see if it already is our instance
             return args[0]
-
         if cls is not PurePath:
-
-            return super().__new__(cls, *cls.parse_args(args), **kwargs)
-
+            return super().__new__(cls)
         if os.name == "nt":
-            return PureWindowsPath(*args, **kwargs)  # type: ignore[reportReturnType]
-        return PurePosixPath(*args, **kwargs)  # type: ignore[reportReturnType]
+            return object.__new__(PureWindowsPath)
+
+        return object.__new__(PurePosixPath)
 
     @classmethod
     def _create_super_instance(cls, *args, **kwargs) -> Self:
@@ -395,41 +428,50 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
         # Utilize Python's built-in endswith method
         return self_str.endswith(text)
 
-class PurePosixPath(PurePath, pathlib.PurePosixPath):  # type: ignore[misc]
+class PurePosixPath(PurePath, pathlib.PurePosixPath):
     ...
 
-class PureWindowsPath(PurePath, pathlib.PureWindowsPath):  # type: ignore[misc]
+class PureWindowsPath(PurePath, pathlib.PureWindowsPath):
     ...
 
 
-class Path(PurePath, pathlib.Path):  # type: ignore[misc]
+class Path(PurePath, pathlib.Path):
     def __new__(
         cls,
         *args: PathElem,
         **kwargs
     ) -> Self:
-       if cls is not Path and cls.__name__ != "CaseAwarePath":  # don't import
-           return super().__new__(cls, *args, **kwargs)
 
-       if os.name == "nt":
-           return WindowsPath(*args, **kwargs)
-       else:
-           return PosixPath(*args, **kwargs)
+        if cls is Path:
+            instance = WindowsPath(*args, **kwargs) if os.name == "nt" else PosixPath(*args, **kwargs)
+            instance.__class__ = cls
+            #type.__setattr__(instance.__class__, "__base__", get_direct_parent(cls))
+        #base_class = get_direct_parent(cls)
+        #if base_class is Path:
+        #    new_base_class = WindowsPath if os.name == "nt" else PosixPath
+        #    class DynamicPath(new_base_class):
+        #        def __new__(cls, *args, **kwargs):
+        #            return super().__new__(cls, *args, **kwargs)
+
+        #    instance = DynamicPath(*args, **kwargs)
+        #    instance.__class__ = cls
+
+        return super().__new__(cls, *args, **kwargs)
 
     # Safe rglob operation
-    def safe_rglob(  # type: ignore[misc]
-        self: Path,  # type: ignore[reportGeneralTypeIssues]
+    def safe_rglob(
+        self,
         pattern: str,
-    ) -> Generator[Self, Any, None]:  # type: ignore[reportGeneralTypeIssues]
+    ) -> Generator[Self, Any, None]:
         try:
-            iterator: Generator[Self, Any, None] = self.rglob(pattern)  # type: ignore[assignment, reportGeneralTypeIssues]
+            iterator: Generator[Self, Any, None] = self.rglob(pattern)
         except Exception as e:  # noqa: BLE001
             print(format_exception_with_variables(e,  message="This exception has been suppressed and is only relevant for debug purposes."))
             return
         else:
             while True:
                 try:
-                    yield next(iterator)  # type: ignore[misc, reportGeneralTypeIssues]
+                    yield next(iterator)
                 except StopIteration:  # noqa: PERF203
                     break  # StopIteration means there are no more files to iterate over
                 except Exception as e:  # noqa: BLE001
@@ -437,18 +479,16 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                     continue  # Ignore the file that caused an exception and move to the next
 
     # Safe iterdir operation
-    def safe_iterdir(  # type: ignore[misc]
-        self: Path,  # type: ignore[reportGeneralTypeIssues]
-    ) -> Generator[Self, Any, None]:  # type: ignore[reportGeneralTypeIssues]
+    def safe_iterdir(self) -> Generator[Self, Any, None]:
         try:
-            iterator: Generator[Self, Any, None] = self.iterdir()  # type: ignore[assignment, reportGeneralTypeIssues]
+            iterator: Generator[Self, Any, None] = self.iterdir()
         except Exception as e:  # noqa: BLE001
             print(format_exception_with_variables(e,  message="This exception has been suppressed and is only relevant for debug purposes."))
             return
         else:
             while True:
                 try:
-                    yield next(iterator)  # type: ignore[misc, reportGeneralTypeIssues]
+                    yield next(iterator)
                 except StopIteration:  # noqa: PERF203
                     break  # StopIteration means there are no more files to iterate over
                 except Exception as e:  # noqa: BLE001
@@ -456,7 +496,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                     continue  # Ignore the file that caused an exception and move to the next
 
     # Safe is_dir operation
-    def safe_isdir(self: Path) -> bool | None:  # type: ignore[misc]
+    def safe_isdir(self) -> bool | None:
         check: bool | None = None
         try:
             check = self.is_dir()
@@ -467,7 +507,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             return check
 
     # Safe is_file operation
-    def safe_isfile(self: Path) -> bool | None:  # type: ignore[misc]
+    def safe_isfile(self) -> bool | None:
         check: bool | None = None
         try:
             check = self.is_file()
@@ -478,7 +518,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             return check
 
     # Safe exists operation
-    def safe_exists(self: Path) -> bool | None:  # type: ignore[misc]
+    def safe_exists(self) -> bool | None:
         check: bool | None = None
         try:
             check = self.exists()
@@ -489,13 +529,13 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             return check
 
     def walk(
-        self: Path,  # type: ignore[misc]
+        self,
         top_down=True,
         on_error=None,
         follow_symlinks=False,
-    ) -> Generator[tuple[Self, list[str], list[str]], Any, None]:  # type: ignore[reportGeneralTypeIssues]
+    ) -> Generator[tuple[Self, list[str], list[str]], Any, None]:
         """Walk the directory tree from this directory, similar to os.walk()."""  # noqa: D402
-        paths: list[Self] = [self]  # type: ignore[reportGeneralTypeIssues]
+        paths: list[Self] = [self]
 
         while paths:
             path = paths.pop()
@@ -537,55 +577,17 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
 
             paths += [path.joinpath(d) for d in reversed(dirnames)]
 
-    def is_relative_to(self: Path, *args, **kwargs) -> bool:  # type: ignore[misc]
+    def is_relative_to(self, *args, **kwargs) -> bool:
         """Return True if the path is relative to another path or False."""
         if not args or "other" in kwargs:
-            raise TypeError(f"{type(self)}.is_relative_to() missing 1 required positional argument: 'other'")
+            msg = f"{type(self)}.is_relative_to() missing 1 required positional argument: 'other'"
+            raise TypeError(msg)
 
         other, *_deprecated = args
         parsed_other = self.with_segments(other, *_deprecated)
         return parsed_other == self or parsed_other in self.parents
 
-    def get_highest_posix_permission(
-        self: Path,  # type: ignore[reportGeneralTypeIssues]
-        uid: int | None = None,
-        gid: int | None = None,
-    ) -> int:
-        """Similar to get_highest_permission but will not take runtime elevation (e.g. sudo) into account."""
-        if os.name == "nt":
-            msg = "Not supported on Windows."
-            raise OSError(msg)
-
-        # Retrieve the current user's UID and GID
-        current_uid = uid if uid is not None else os.getuid()
-        current_gid = gid if gid is not None else os.getgid()
-
-        # Retrieve the UID and GID of the owner of the path_obj
-        stat_info = self.stat()
-        owner_uid: int = stat_info.st_uid
-        owner_gid: int = stat_info.st_gid
-
-        # Extract user, group, and other permissions from mode
-        mode: int = stat_info.st_mode
-        user_perms: int = (mode >> 6) & 0o7  # sourcery skip: move-assign
-        group_perms: int = (mode >> 3) & 0o7
-        other_perms: int = mode & 0o7
-        highest_perm: int = 0
-
-        # If the user is the owner, user_perms apply
-        if current_uid == owner_uid:
-            highest_perm = user_perms
-
-        # If the user's group matches the file's group, check group_perms
-        if current_gid == owner_gid:
-            highest_perm = max(highest_perm, group_perms)
-
-        # Check against other_perms
-        return max(highest_perm, other_perms)
-
-    def get_highest_permission(
-        self: Path,  # type: ignore[reportGeneralTypeIssues]
-    ) -> int:
+    def get_highest_permission(self) -> int:
         read_permission: bool = os.access(self, os.R_OK)
         write_permission: bool = os.access(self, os.W_OK)
         execute_permission: bool = os.access(self, os.X_OK)
@@ -600,8 +602,8 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
         return permission_value
 
 
-    def has_access(  # type: ignore[misc]
-        self: Path,  # type: ignore[reportGeneralTypeIssues]
+    def has_access(
+        self,
         mode: int = 0o6,
         *,
         recurse: bool = False,
@@ -744,7 +746,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             log_func(f"No permissions to {self}, attempting native access fix...")
             try:
                 self.request_native_access(elevate=False, recurse=recurse, log_func=log_func)
-            except Exception as e:
+            except OSError as e:
                 print(format_exception_with_variables(e, message=f"Error during platform-specific permission request at path '{self}'"))
 
             log_func("Checking access again before attempting elevated native access fix...")
@@ -753,7 +755,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                 log_func("Still no access permitted, attempting to elevate the native access fix...")
                 try:
                     self.request_native_access(elevate=True, recurse=recurse, log_func=log_func)
-                except Exception as e:
+                except OSError as e:
                     print(format_exception_with_variables(e, message=f"Error during elevated platform-specific permission request at path '{self}'"))
 
         if not success:
@@ -772,51 +774,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
 
         return success
 
-    if os.name == "posix":
-        # Inspired by the C# code provided by KOTORModSync's source code at https://github.com/th3w1zard1/KOTORModSync
-        def request_native_access(self, elevate: bool = False, recurse: bool = True):
-            if elevate:
-                if recurse:
-                    # TODO: call os.system so a new terminal is ran, then remove '-n true'
-                    chmod_args = ["sudo", "-n", "true", "chmod", "-R", "777", f"{self}"]
-                    chown_args = ["sudo", "-n", "true", "chown", "-R", "$(whoami)", f"{self}"]
-                else:
-                    chmod_args = ["sudo", "-n", "true", "chmod", "777", f"{self}"]
-                    chown_args = ["sudo", "-n", "true", "chown", "$(whoami)", f"{self}"]
-            elif recurse:
-                chmod_args = ["chmod", "-R", "777", f"{self}"]
-                chown_args = ["chown", "-R", "$(whoami)", f"{self}"]
-            else:
-                chmod_args = ["chmod", "777", f"{self}"]
-                chown_args = ["chown", "$(whoami)", f"{self}"]
-
-            # Note: -c/-v is preferred but is not supported on some unix systems.
-            chmod_result: subprocess.CompletedProcess[str] = subprocess.run(chmod_args, timeout=60, check=False, capture_output=True, text=True)
-            chown_result: subprocess.CompletedProcess[str] = subprocess.run(chown_args, timeout=60, check=False, capture_output=True, text=True)
-
-            if chmod_result.returncode != 0:
-                print(
-                    f"Could not set unix chmod permissions at '{self}':\n"
-                    f"exit code: {chmod_result.returncode}\n"
-                    f"stdout: {chmod_result.stdout}\n"
-                    f"stderr: {chmod_result.stderr}",
-                )
-
-            if chown_result.returncode != 0:
-                print(
-                    f"Could not set unix chmod permissions at '{self}':\n"
-                    f"exit code: {chown_result.returncode}\n"
-                    f"stdout: {chown_result.stdout}\n"
-                    f"stderr: {chown_result.stderr}",
-                )
-
-            print(chmod_result.stdout)
-            print(chown_result.stdout)
-
-
     if os.name == "nt":
-
-        # TODO: move to utility.system
         @staticmethod
         def get_win_attrs(file_path):
             import ctypes
@@ -839,7 +797,6 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
 
             return is_read_only, is_hidden, is_system
 
-        # TODO: move to utility.system
         def run_commands_as_admin(self, cmd: list[str], pause_after_command: bool = True):
             # sourcery skip: extract-method
             with TemporaryDirectory() as tempdir:
@@ -876,6 +833,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
         # Inspired by the C# code provided by KOTORModSync at https://github.com/th3w1zard1/KOTORModSync
         def request_native_access(
             self: Path,  # type: ignore[reportGeneralTypeIssues]
+            *,
             elevate: bool = False,
             recurse: bool = True,
             log_func: Callable[[str], Any] | None = None,
@@ -896,7 +854,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                 commands.append(" ".join(icacls_reset_args))
             else:
                 icacls_reset_result: subprocess.CompletedProcess[str] = subprocess.run(icacls_reset_args, timeout=60, check=False,
-                                                                                  capture_output=True, text=True)
+                                                                                    capture_output=True, text=True)
                 if icacls_reset_result.returncode != 0:
                     log_func(
                         f"Failed reset permissions of {self_path_str}:\n"
@@ -917,7 +875,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                 commands.append(" ".join(takeown_args))
             else:
                 takeown_result: subprocess.CompletedProcess[str] = subprocess.run(takeown_args, timeout=60, check=False,
-                                                                                  capture_output=True, text=True)
+                                                                                    capture_output=True, text=True)
                 if takeown_result.returncode != 0:
                     log_func(
                         f"Failed to take ownership of {self_path_str}:\n"
@@ -936,7 +894,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                 commands.append(" ".join(icacls_args))
             else:
                 icacls_result: subprocess.CompletedProcess[str] = subprocess.run(icacls_args, timeout=60, check=False,
-                                                                                  capture_output=True, text=True)
+                                                                                    capture_output=True, text=True)
                 if icacls_result.returncode != 0:
                     log_func(
                         f"Could not set Windows icacls permissions at '{self_path_str}':\n"
@@ -996,6 +954,80 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             if elevate:
                 self.run_commands_as_admin(commands)
                 return
+
+    if os.name == "posix":
+        def get_highest_posix_permission(
+            self: Path,  # type: ignore[reportGeneralTypeIssues]
+            uid: int | None = None,
+            gid: int | None = None,
+        ) -> int:
+            """Similar to get_highest_permission but will not take runtime elevation (e.g. sudo) into account."""
+            # Retrieve the current user's UID and GID
+            current_uid = uid if uid is not None else os.getuid()
+            current_gid = gid if gid is not None else os.getgid()
+
+            # Retrieve the UID and GID of the owner of the path_obj
+            stat_info = self.stat()
+            owner_uid: int = stat_info.st_uid
+            owner_gid: int = stat_info.st_gid
+
+            # Extract user, group, and other permissions from mode
+            mode: int = stat_info.st_mode
+            user_perms: int = (mode >> 6) & 0o7  # sourcery skip: move-assign
+            group_perms: int = (mode >> 3) & 0o7
+            other_perms: int = mode & 0o7
+            highest_perm: int = 0
+
+            # If the user is the owner, user_perms apply
+            if current_uid == owner_uid:
+                highest_perm = user_perms
+
+            # If the user's group matches the file's group, check group_perms
+            if current_gid == owner_gid:
+                highest_perm = max(highest_perm, group_perms)
+
+            # Check against other_perms
+            return max(highest_perm, other_perms)
+
+        # Inspired by the C# code provided by KOTORModSync's source code at https://github.com/th3w1zard1/KOTORModSync
+        def request_native_access(self, elevate: bool = False, recurse: bool = True):
+            if elevate:
+                if recurse:
+                    # TODO: call os.system so a new terminal is ran, then remove '-n true'
+                    chmod_args = ["sudo", "-n", "true", "chmod", "-R", "777", f"{self}"]
+                    chown_args = ["sudo", "-n", "true", "chown", "-R", "$(whoami)", f"{self}"]
+                else:
+                    chmod_args = ["sudo", "-n", "true", "chmod", "777", f"{self}"]
+                    chown_args = ["sudo", "-n", "true", "chown", "$(whoami)", f"{self}"]
+            elif recurse:
+                chmod_args = ["chmod", "-R", "777", f"{self}"]
+                chown_args = ["chown", "-R", "$(whoami)", f"{self}"]
+            else:
+                chmod_args = ["chmod", "777", f"{self}"]
+                chown_args = ["chown", "$(whoami)", f"{self}"]
+
+            # Note: -c/-v is preferred but is not supported on some unix systems.
+            chmod_result: subprocess.CompletedProcess[str] = subprocess.run(chmod_args, timeout=60, check=False, capture_output=True, text=True)
+            chown_result: subprocess.CompletedProcess[str] = subprocess.run(chown_args, timeout=60, check=False, capture_output=True, text=True)
+
+            if chmod_result.returncode != 0:
+                print(
+                    f"Could not set unix chmod permissions at '{self}':\n"
+                    f"exit code: {chmod_result.returncode}\n"
+                    f"stdout: {chmod_result.stdout}\n"
+                    f"stderr: {chmod_result.stderr}",
+                )
+
+            if chown_result.returncode != 0:
+                print(
+                    f"Could not set unix chmod permissions at '{self}':\n"
+                    f"exit code: {chown_result.returncode}\n"
+                    f"stdout: {chown_result.stdout}\n"
+                    f"stderr: {chown_result.stderr}",
+                )
+
+            print(chmod_result.stdout)
+            print(chown_result.stdout)
 
 
 class PosixPath(Path):  # type: ignore[misc]
