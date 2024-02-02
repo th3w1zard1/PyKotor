@@ -60,6 +60,7 @@ class PurePathType(type):
         return pathlib_to_override(cls) in pathlib_to_override(subclass).__mro__
 
 class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
+<<<<<<< HEAD
     _flavour: Any
     _orig_class: type = object
 
@@ -85,6 +86,24 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
             return object.__new__(PureWindowsPath)
 
         return object.__new__(PurePosixPath)
+=======
+    # pylint: disable-all
+    def __new__(
+        cls,
+        *args,
+        **kwargs
+    ) -> Self:
+        if len(args) == 1 and args[0].__class__ is cls:  # faster to see if it already is our instance
+            return args[0]
+
+        if cls is not PurePath:
+
+            return super().__new__(cls, *cls.parse_args(args), **kwargs)
+
+        if os.name == "nt":
+            return PureWindowsPath(*args, **kwargs)  # type: ignore[reportReturnType]
+        return PurePosixPath(*args, **kwargs)  # type: ignore[reportReturnType]
+>>>>>>> 508fc5b5 (Massively refactor logic in pathlib overrides)
 
     @classmethod
     def _create_super_instance(cls, *args, **kwargs) -> Self:
@@ -428,6 +447,7 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
         # Utilize Python's built-in endswith method
         return self_str.endswith(text)
 
+<<<<<<< HEAD
 class PurePosixPath(PurePath, pathlib.PurePosixPath):
     ...
 
@@ -436,16 +456,36 @@ class PureWindowsPath(PurePath, pathlib.PureWindowsPath):
 
 
 class Path(PurePath, pathlib.Path):
+=======
+class PurePosixPath(PurePath, pathlib.PurePosixPath):  # type: ignore[misc]
+    ...
+
+class PureWindowsPath(PurePath, pathlib.PureWindowsPath):  # type: ignore[misc]
+    ...
+
+
+class Path(PurePath, pathlib.Path):  # type: ignore[misc]
+>>>>>>> 508fc5b5 (Massively refactor logic in pathlib overrides)
     def __new__(
         cls,
         *args: PathElem,
         **kwargs
     ) -> Self:
+<<<<<<< HEAD
 
         if cls is Path:
             return WindowsPath(*args, **kwargs) if os.name == "nt" else PosixPath(*args, **kwargs)
 
         return super().__new__(cls, *args, **kwargs)
+=======
+       if cls is not Path and cls.__name__ != "CaseAwarePath":  # don't import
+           return super().__new__(cls, *args, **kwargs)
+
+       if os.name == "nt":
+           return WindowsPath(*args, **kwargs)
+       else:
+           return PosixPath(*args, **kwargs)
+>>>>>>> 508fc5b5 (Massively refactor logic in pathlib overrides)
 
     # Safe rglob operation
     def safe_rglob(
@@ -906,6 +946,7 @@ class Path(PurePath, pathlib.Path):
             current_uid = uid if uid is not None else os.getuid()
             current_gid = gid if gid is not None else os.getgid()
 
+<<<<<<< HEAD
             # Retrieve the UID and GID of the owner of the path_obj
             stat_info = self.stat()
             owner_uid: int = stat_info.st_uid
@@ -974,5 +1015,11 @@ class PosixPath(Path):  # type: ignore[misc]
     _flavour = pathlib.PurePosixPath._flavour
 
 
+=======
+class PosixPath(Path):  # type: ignore[misc]
+    _flavour = pathlib.PurePosixPath._flavour
+
+
+>>>>>>> 508fc5b5 (Massively refactor logic in pathlib overrides)
 class WindowsPath(Path):  # type: ignore[misc]
     _flavour = pathlib.PureWindowsPath._flavour
