@@ -528,6 +528,7 @@ class Path(PurePath, pathlib.Path):
         else:
             return check
 
+<<<<<<< HEAD
     def walk(
         self,
         top_down=True,
@@ -578,6 +579,9 @@ class Path(PurePath, pathlib.Path):
             paths += [path.joinpath(d) for d in reversed(dirnames)]
 
     def is_relative_to(self, *args, **kwargs) -> bool:
+=======
+    def is_relative_to(self: Path, *args, **kwargs) -> bool:  # type: ignore[misc]
+>>>>>>> 71262a63 (fix branch-unrelated problems.)
         """Return True if the path is relative to another path or False."""
         if not args or "other" in kwargs:
             msg = f"{type(self)}.is_relative_to() missing 1 required positional argument: 'other'"
