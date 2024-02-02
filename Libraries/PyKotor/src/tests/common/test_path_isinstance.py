@@ -70,10 +70,10 @@ class TestPathInheritance(unittest.TestCase):
 
 
     def test_pathlib_pure_windows_path_isinstance(self):
-        self.assertIsInstance(pathlib.PureWindowsPath("mypath"), PurePath)
-        self.assertTrue(issubclass(pathlib.PureWindowsPath, PurePath))
         self.assertIsInstance(PureWindowsPath("mypath"), pathlib.PurePath)
         self.assertTrue(issubclass(PureWindowsPath, pathlib.PurePath))
+        self.assertIsInstance(pathlib.PureWindowsPath("mypath"), PurePath)
+        self.assertTrue(issubclass(pathlib.PureWindowsPath, PurePath))
 
     @unittest.skipIf(os.name != "posix", "Test must be run on Posix os")
     def test_pathlib_pure_posix_path_isinstance(self):

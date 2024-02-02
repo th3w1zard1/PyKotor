@@ -100,12 +100,6 @@ class TestPathlibMixedSlashes(unittest.TestCase):
         #self.run_command(isfile_or_dir_args(["icacls", path_str, "/deny", "dummy_user:(D,WDAC,WO)"]))
         #self.run_command(["cipher", "/e", path_str])
 
-    def run_command(self, cmd):
-        cmd_with_admin: list[str] = self.get_admin_command(cmd)
-        result: subprocess.CompletedProcess[str] = subprocess.run(cmd_with_admin, check=False, capture_output=True, text=True)
-        assert not result.stderr.strip(), result.stderr
-        print(f"stdout: {result.stdout} stderr: {result.stderr}")
-
 
     def test_gain_file_access(self):  # sourcery skip: extract-method
         test_file = Path("this file has no permissions.txt").absolute()
@@ -509,7 +503,7 @@ class TestPathlibMixedSlashes(unittest.TestCase):
                 self.assertEqual(str(PathType("~/folder/")), "~/folder")
 
     def test_custom_path_edge_cases_windows(self):
-        test_classes = [CustomWindowsPath, CustomPureWindowsPath] if os.name == "nt" else [CustomPureWindowsPath]
+        test_classes = [CustomPath, CustomWindowsPath, CustomPureWindowsPath] if os.name == "nt" else [CustomPureWindowsPath]
         for PathType in test_classes:
             with self.subTest(PathType=PathType):
                 # Absolute vs Relative Paths

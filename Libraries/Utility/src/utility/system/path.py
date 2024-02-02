@@ -35,12 +35,23 @@ class PurePathType(type):
     def __subclasscheck__(cls, subclass: type) -> bool: # sourcery skip: instance-method-first-arg-name
         return override_to_pathlib(cls) in override_to_pathlib(subclass).__mro__
 
-class BasePurePath(metaclass=PurePathType):  # type: ignore[misc]
-    """BasePath is a class created to fix some annoyances with pathlib, such as its refusal to resolve mixed/repeating/trailing slashes."""
+class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
+    # pylint: disable-all
+    def __new__(
+        cls,
+        *args,
+        **kwargs
+    ) -> Self:
+        if len(args) == 1 and args[0].__class__ is cls:  # faster to see if it already is our instance
+            return args[0]
 
-    @classmethod
-    def _get_sep(cls) -> str:
-        return cls._flavour.sep  # type: ignore[attr-defined]
+        if cls is not PurePath:
+
+            return super().__new__(cls, *cls.parse_args(args), **kwargs)
+
+        if os.name == "nt":
+            return PureWindowsPath(*args, **kwargs)  # type: ignore[reportReturnType]
+        return PurePosixPath(*args, **kwargs)  # type: ignore[reportReturnType]
 
     @classmethod
     def _create_super_instance(cls, *args, **kwargs) -> Self:
@@ -62,59 +73,16 @@ class BasePurePath(metaclass=PurePathType):  # type: ignore[misc]
     ) -> list[PathElem]:
         args_list = list(args)
         for i, arg in enumerate(args_list):
-            if isinstance(arg, BasePurePath):
+            if isinstance(arg, cls):
                 continue  # Do nothing if already our instance type
 
-            formatted_path_str: str = cls._fix_path_formatting(cls._fspath_str(arg), slash=cls._get_sep())
+            formatted_path_str: str = cls._fix_path_formatting(cls._fspath_str(arg), slash=cls._flavour.sep)
             if formatted_path_str.endswith(":") and "/" not in formatted_path_str and "\\" not in formatted_path_str:
-                formatted_path_str = f"{formatted_path_str}{cls._get_sep()}"  # HACK: cleanup later
+                formatted_path_str = f"{formatted_path_str}{cls._flavour.sep}"  # HACK: cleanup later
 
             args_list[i] = formatted_path_str
 
         return args_list  # type: ignore[return-value]
-
-    def __new__(cls, *args: PathElem, **kwargs) -> Self:
-        return (
-            args[0]  # type: ignore[return-value]
-            if len(args) == 1 and args[0].__class__ == cls
-            else super().__new__(cls, *cls.parse_args(args), **kwargs)
-        )
-
-    def __init__(self, *args, _called_from_pathlib=True):
-        """Initializes a path object. This is used to unify python 3.7-3.11 with most of python 3.12's changes.
-
-        Args:
-        ----
-            *args (os.PathLike | str): the path parts to join and create a path object out of.
-
-        Returns:
-        -------
-            A constructed Path object
-
-        Processing Logic:
-        ----------------
-            - Finds the next class in the MRO that defines __init__ and is not BasePurePath
-            - Return immediately (do nothing here) if the next class with a __init__ is the object class
-            - Gets the __init__ method from the found class
-            - Parses args if called from pathlib and calls __init__ with parsed args
-            - Else directly calls __init__ with passed args.
-        """
-        next_init_method_class: type | type[Self] = next(
-            (cls for cls in self.__class__.mro() if "__init__" in cls.__dict__ and cls is not BasePurePath),
-            self.__class__,
-        )
-        # Check if the class that defines the next __init__ is object
-        if next_init_method_class is object:
-            return
-
-        # If not object, fetch the __init__ of that class
-        init_method = next_init_method_class.__init__  # type: ignore[misc]
-
-        # Parse args if called from pathlib (Python 3.12+)
-        if _called_from_pathlib:
-            init_method(self, *self.parse_args(args))
-        else:
-            init_method(self, *args)
 
     @staticmethod
     def _fix_path_formatting(
@@ -167,7 +135,7 @@ class BasePurePath(metaclass=PurePathType):  # type: ignore[misc]
         # Strip any trailing slashes, don't call rstrip if the formatted path == "/"
         if len(formatted_path) != 1:
             formatted_path = formatted_path.rstrip(slash)
-        return formatted_path
+        return formatted_path or "."
 
     @staticmethod
     def _fspath_str(arg: object) -> str:
@@ -202,7 +170,7 @@ class BasePurePath(metaclass=PurePathType):  # type: ignore[misc]
 
     def __str__(self):
         """Return the result from _fix_path_formatting that was initialized."""
-        return self.as_posix() if self._get_sep() == "/" else self._fix_path_formatting(super().__str__(), slash="\\")
+        return self.as_posix() if self._flavour.sep == "/" else self._fix_path_formatting(super().__str__(), slash="\\")
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self})"
@@ -220,16 +188,16 @@ class BasePurePath(metaclass=PurePathType):  # type: ignore[misc]
             if isinstance(__value, PurePath):
                 other_compare = str(__value)
             else:
-                other_compare = self._fix_path_formatting(self._fspath_str(__value), slash=self._get_sep())
+                other_compare = self._fix_path_formatting(self._fspath_str(__value), slash=self._flavour.sep)
 
-            if self._get_sep() == "\\":
+            if self._flavour.sep == "\\":
                 self_compare = self_compare.lower()
                 other_compare = other_compare.lower()
 
         return self_compare == other_compare
 
     def __hash__(self):
-        return hash(self.as_posix() if self._get_sep() == "/" else self.as_windows())
+        return hash(self.as_posix() if self._flavour.sep == "/" else self.as_windows())
 
     def __bytes__(self):
         """Return the bytes representation of the path.  This is only
@@ -276,7 +244,7 @@ class BasePurePath(metaclass=PurePathType):  # type: ignore[misc]
             self: Path object
             key (path-like object or str path):
         """
-        return self._fix_path_formatting(str(self / key), slash=self._get_sep())
+        return self._fix_path_formatting(str(self / key), slash=self._flavour.sep)
 
     def __radd__(self, key: PathElem) -> str:
         """Implicitly converts the path to a str when used with the addition operator '+'.
@@ -287,7 +255,7 @@ class BasePurePath(metaclass=PurePathType):  # type: ignore[misc]
             self: Path object
             key (path-like object or str path):
         """
-        return self._fix_path_formatting(str(key / self), slash=self._get_sep())
+        return self._fix_path_formatting(str(key / self), slash=self._flavour.sep)
 
     @classmethod
     def pathify(cls, path: PathElem) -> Self:
@@ -427,17 +395,26 @@ class BasePurePath(metaclass=PurePathType):  # type: ignore[misc]
         # Utilize Python's built-in endswith method
         return self_str.endswith(text)
 
-class PurePath(BasePurePath, pathlib.PurePath):  # type: ignore[misc]
-    # pylint: disable-all
-    _flavour = pathlib.PureWindowsPath._flavour if os.name == "nt" else pathlib.PurePosixPath._flavour  # type: ignore[attr-defined]
-
-class PurePosixPath(BasePurePath, pathlib.PurePosixPath):  # type: ignore[misc]
+class PurePosixPath(PurePath, pathlib.PurePosixPath):  # type: ignore[misc]
     ...
 
-class PureWindowsPath(BasePurePath, pathlib.PureWindowsPath):  # type: ignore[misc]
+class PureWindowsPath(PurePath, pathlib.PureWindowsPath):  # type: ignore[misc]
     ...
 
-class BasePath(BasePurePath):
+
+class Path(PurePath, pathlib.Path):  # type: ignore[misc]
+    def __new__(
+        cls,
+        *args: PathElem,
+        **kwargs
+    ) -> Self:
+       if cls is not Path and cls.__name__ != "CaseAwarePath":  # don't import
+           return super().__new__(cls, *args, **kwargs)
+
+       if os.name == "nt":
+           return WindowsPath(*args, **kwargs)
+       else:
+           return PosixPath(*args, **kwargs)
 
     # Safe rglob operation
     def safe_rglob(  # type: ignore[misc]
@@ -726,8 +703,6 @@ class BasePath(BasePurePath):
             >>> path = Path('/my/path')
             >>> path.gain_access(mode=0o7, recurse=True, resolve_symlinks=False)
         """
-        assert isinstance(self, Path), f"self of '{self}' must inherit from BasePath not be literal BasePath instance."
-
         if os.name == "posix":
             print("(Unix) Gain ownership of the folder with os.chown()")
             e = None
@@ -1023,14 +998,9 @@ class BasePath(BasePurePath):
                 return
 
 
-class Path(BasePath, pathlib.Path):  # type: ignore[misc]
-    # pylint: disable-all
-    _flavour = pathlib.PureWindowsPath._flavour if os.name == "nt" else pathlib.PurePosixPath._flavour  # type: ignore[attr-defined]
+class PosixPath(Path):  # type: ignore[misc]
+    _flavour = pathlib.PurePosixPath._flavour
 
 
-class PosixPath(BasePath, pathlib.PosixPath):  # type: ignore[misc]
-    pass
-
-
-class WindowsPath(BasePath, pathlib.WindowsPath):  # type: ignore[misc]
-    pass
+class WindowsPath(Path):  # type: ignore[misc]
+    _flavour = pathlib.PureWindowsPath._flavour
