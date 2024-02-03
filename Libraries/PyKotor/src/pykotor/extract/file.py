@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import TYPE_CHECKING, NamedTuple
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, NamedTuple, NamedTupleMeta
 
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.type import ResourceType
@@ -217,37 +218,56 @@ class LocationResult(NamedTuple):
     offset: int
     size: int
 
-
-class ResourceIdentifier(NamedTuple):
+@dataclass(frozen=True)
+class ResourceIdentifier():
     """Class for storing resource name and type, facilitating case-insensitive object comparisons and hashing equal to their string representations."""
 
     resname: str
     restype: ResourceType
+    _cached_filename_str: str = field(default=None, init=False, repr=False)  # type: ignore[reportArgumentType]
+
+    def __post_init__(self):
+        # Workaround to initialize a field in a frozen dataclass
+        object.__setattr__(self, '_cached_filename_str', None)
 
     def __hash__(
         self,
     ):
-        return hash(str(self).lower())
+        return hash(str(self))
 
     def __repr__(
         self,
     ):
         return f"{self.__class__.__name__}(resname='{self.resname}', restype={self.restype!r})"
 
-    def __str__(
-        self,
-    ):
-        ext: str = self.restype.extension
-        suffix: str = f".{ext}" if ext else ""
-        return f"{self.resname}{suffix}".lower()
+    def __str__(self) -> str:
+        if self._cached_filename_str is None:
+            ext: str = self.restype.extension
+            suffix: str = f".{ext}" if ext else ""
+            cached_str = f"{self.resname}{suffix}".lower()
+            object.__setattr__(self, '_cached_filename_str', cached_str)
+        return self._cached_filename_str
+
+    def __getitem__(self, key: int) -> str | ResourceType:
+        if key == 0:
+            return self.resname
+        if key == 1:
+            return self.restype
+        msg = f"Index out of range for ResourceIdentifier. key: {key}"
+        raise IndexError(msg)
 
     def __eq__(self, other: object):
+<<<<<<< HEAD
         if isinstance(other, str):
             if other.__class__ == str:  # check for wrappedstr inheritors
                 return hash(self) == hash(other.lower())
             return hash(self) == hash(other)
+=======
+>>>>>>> 5b9293ab (cache filename str of ResourceIdentifier instances)
         if isinstance(other, ResourceIdentifier):
-            return hash(self) == hash(other)
+            return str(self) == str(other)
+        if isinstance(other, str):
+            return str(self) == other.lower()
         return NotImplemented
 
     def validate(self, *, strict: bool = False):
