@@ -443,17 +443,7 @@ class Path(PurePath, pathlib.Path):
     ) -> Self:
 
         if cls is Path:
-            instance = WindowsPath(*args, **kwargs) if os.name == "nt" else PosixPath(*args, **kwargs)
-            #type.__setattr__(instance.__class__, "__base__", get_direct_parent(cls))
-        #base_class = get_direct_parent(cls)
-        #if base_class is Path:
-        #    new_base_class = WindowsPath if os.name == "nt" else PosixPath
-        #    class DynamicPath(new_base_class):
-        #        def __new__(cls, *args, **kwargs):
-        #            return super().__new__(cls, *args, **kwargs)
-
-        #    instance = DynamicPath(*args, **kwargs)
-        #    instance.__class__ = cls
+            return WindowsPath(*args, **kwargs) if os.name == "nt" else PosixPath(*args, **kwargs)
 
         return super().__new__(cls, *args, **kwargs)
 
