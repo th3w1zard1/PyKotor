@@ -528,60 +528,7 @@ class Path(PurePath, pathlib.Path):
         else:
             return check
 
-<<<<<<< HEAD
-    def walk(
-        self,
-        top_down=True,
-        on_error=None,
-        follow_symlinks=False,
-    ) -> Generator[tuple[Self, list[str], list[str]], Any, None]:
-        """Walk the directory tree from this directory, similar to os.walk()."""  # noqa: D402
-        paths: list[Self] = [self]
-
-        while paths:
-            path = paths.pop()
-            if isinstance(path, tuple):
-                yield path
-                continue
-
-            # We may not have read permission for self, in which case we can't
-            # get a list of the files the directory contains. os.walk()
-            # always suppressed the exception in that instance, rather than
-            # blow up for a minor reason when (say) a thousand readable
-            # directories are still left to visit. That logic is copied here.
-            try:
-                scandir_it = os.scandir(self)
-            except OSError as error:
-                if on_error is not None:
-                    on_error(error)
-                continue
-
-            with scandir_it:
-                dirnames: list[str] = []
-                filenames: list[str] = []
-                for entry in scandir_it:
-                    try:
-                        is_dir = entry.is_dir(follow_symlinks=follow_symlinks)
-                    except OSError:
-                        # Carried over from os.path.isdir().
-                        is_dir = False
-
-                    if is_dir:
-                        dirnames.append(entry.name)
-                    else:
-                        filenames.append(entry.name)
-
-            if top_down:
-                yield path, dirnames, filenames  # type: ignore[reportGeneralTypeIssues]
-            else:
-                paths.append((path, dirnames, filenames))  # type: ignore[reportGeneralTypeIssues]
-
-            paths += [path.joinpath(d) for d in reversed(dirnames)]
-
     def is_relative_to(self, *args, **kwargs) -> bool:
-=======
-    def is_relative_to(self: Path, *args, **kwargs) -> bool:  # type: ignore[misc]
->>>>>>> 71262a63 (fix branch-unrelated problems.)
         """Return True if the path is relative to another path or False."""
         if not args or "other" in kwargs:
             msg = f"{type(self)}.is_relative_to() missing 1 required positional argument: 'other'"
