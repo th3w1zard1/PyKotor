@@ -444,7 +444,6 @@ class Path(PurePath, pathlib.Path):
 
         if cls is Path:
             instance = WindowsPath(*args, **kwargs) if os.name == "nt" else PosixPath(*args, **kwargs)
-            instance.__class__ = cls
             #type.__setattr__(instance.__class__, "__base__", get_direct_parent(cls))
         #base_class = get_direct_parent(cls)
         #if base_class is Path:
