@@ -419,16 +419,6 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
         # Utilize Python's built-in endswith method
         return self_str.endswith(text)
 
-<<<<<<< HEAD
-class PurePosixPath(PurePath, pathlib.PurePosixPath):
-    ...
-
-class PureWindowsPath(PurePath, pathlib.PureWindowsPath):
-    ...
-
-
-class Path(PurePath, pathlib.Path):
-=======
 class PurePosixPath(PurePath, pathlib.PurePosixPath):  # type: ignore[misc]
     ...
 
@@ -437,19 +427,11 @@ class PureWindowsPath(PurePath, pathlib.PureWindowsPath):  # type: ignore[misc]
 
 
 class Path(PurePath, pathlib.Path):  # type: ignore[misc]
->>>>>>> 508fc5b5 (Massively refactor logic in pathlib overrides)
     def __new__(
         cls,
         *args: PathElem,
         **kwargs
     ) -> Self:
-<<<<<<< HEAD
-
-        if cls is Path:
-            return WindowsPath(*args, **kwargs) if os.name == "nt" else PosixPath(*args, **kwargs)
-
-        return super().__new__(cls, *args, **kwargs)
-=======
        if cls is not Path and cls.__name__ != "CaseAwarePath":  # don't import
            return super().__new__(cls, *args, **kwargs)
 
@@ -457,7 +439,6 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
            return WindowsPath(*args, **kwargs)
        else:
            return PosixPath(*args, **kwargs)
->>>>>>> 508fc5b5 (Massively refactor logic in pathlib overrides)
 
     # Safe rglob operation
     def safe_rglob(
@@ -918,80 +899,9 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             current_uid = uid if uid is not None else os.getuid()
             current_gid = gid if gid is not None else os.getgid()
 
-<<<<<<< HEAD
-            # Retrieve the UID and GID of the owner of the path_obj
-            stat_info = self.stat()
-            owner_uid: int = stat_info.st_uid
-            owner_gid: int = stat_info.st_gid
-
-            # Extract user, group, and other permissions from mode
-            mode: int = stat_info.st_mode
-            user_perms: int = (mode >> 6) & 0o7  # sourcery skip: move-assign
-            group_perms: int = (mode >> 3) & 0o7
-            other_perms: int = mode & 0o7
-            highest_perm: int = 0
-
-            # If the user is the owner, user_perms apply
-            if current_uid == owner_uid:
-                highest_perm = user_perms
-
-            # If the user's group matches the file's group, check group_perms
-            if current_gid == owner_gid:
-                highest_perm = max(highest_perm, group_perms)
-
-            # Check against other_perms
-            return max(highest_perm, other_perms)
-
-        # Inspired by the C# code provided by KOTORModSync's source code at https://github.com/th3w1zard1/KOTORModSync
-        def request_native_access(self, elevate: bool = False, recurse: bool = True):
-            if elevate:
-                if recurse:
-                    # TODO: call os.system so a new terminal is ran, then remove '-n true'
-                    chmod_args = ["sudo", "-n", "true", "chmod", "-R", "777", f"{self}"]
-                    chown_args = ["sudo", "-n", "true", "chown", "-R", "$(whoami)", f"{self}"]
-                else:
-                    chmod_args = ["sudo", "-n", "true", "chmod", "777", f"{self}"]
-                    chown_args = ["sudo", "-n", "true", "chown", "$(whoami)", f"{self}"]
-            elif recurse:
-                chmod_args = ["chmod", "-R", "777", f"{self}"]
-                chown_args = ["chown", "-R", "$(whoami)", f"{self}"]
-            else:
-                chmod_args = ["chmod", "777", f"{self}"]
-                chown_args = ["chown", "$(whoami)", f"{self}"]
-
-            # Note: -c/-v is preferred but is not supported on some unix systems.
-            chmod_result: subprocess.CompletedProcess[str] = subprocess.run(chmod_args, timeout=60, check=False, capture_output=True, text=True)
-            chown_result: subprocess.CompletedProcess[str] = subprocess.run(chown_args, timeout=60, check=False, capture_output=True, text=True)
-
-            if chmod_result.returncode != 0:
-                print(
-                    f"Could not set unix chmod permissions at '{self}':\n"
-                    f"exit code: {chmod_result.returncode}\n"
-                    f"stdout: {chmod_result.stdout}\n"
-                    f"stderr: {chmod_result.stderr}",
-                )
-
-            if chown_result.returncode != 0:
-                print(
-                    f"Could not set unix chmod permissions at '{self}':\n"
-                    f"exit code: {chown_result.returncode}\n"
-                    f"stdout: {chown_result.stdout}\n"
-                    f"stderr: {chown_result.stderr}",
-                )
-
-            print(chmod_result.stdout)
-            print(chown_result.stdout)
-
-
 class PosixPath(Path):  # type: ignore[misc]
     _flavour = pathlib.PurePosixPath._flavour
 
 
-=======
-class PosixPath(Path):  # type: ignore[misc]
-    _flavour = pathlib.PurePosixPath._flavour
-
-
->>>>>>> 508fc5b5 (Massively refactor logic in pathlib overrides)
 class WindowsPath(Path):  # type: ignore[misc]
     _flavour = pathlib.PureWindowsPath._flavour
