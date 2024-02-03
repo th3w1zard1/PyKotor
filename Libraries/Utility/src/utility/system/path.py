@@ -60,33 +60,6 @@ class PurePathType(type):
         return pathlib_to_override(cls) in pathlib_to_override(subclass).__mro__
 
 class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
-<<<<<<< HEAD
-    _flavour: Any
-    _orig_class: type = object
-
-    @property
-    def __class__(self):
-        return pathlib_to_override(self.__class__._orig_class)
-
-    @property
-    def __base__(self):
-        return get_direct_parent(self.__class__)
-
-    # pylint: disable-all
-    def __new__(
-        cls,
-        *args,
-        **kwargs
-    ) -> Self:
-        if len(args) == 1 and args[0].__class__ is cls:  # faster to see if it already is our instance
-            return args[0]
-        if cls is not PurePath:
-            return super().__new__(cls)
-        if os.name == "nt":
-            return object.__new__(PureWindowsPath)
-
-        return object.__new__(PurePosixPath)
-=======
     # pylint: disable-all
     def __new__(
         cls,
@@ -103,7 +76,6 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
         if os.name == "nt":
             return PureWindowsPath(*args, **kwargs)  # type: ignore[reportReturnType]
         return PurePosixPath(*args, **kwargs)  # type: ignore[reportReturnType]
->>>>>>> 508fc5b5 (Massively refactor logic in pathlib overrides)
 
     @classmethod
     def _create_super_instance(cls, *args, **kwargs) -> Self:
