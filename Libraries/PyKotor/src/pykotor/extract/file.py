@@ -257,13 +257,6 @@ class ResourceIdentifier():
         raise IndexError(msg)
 
     def __eq__(self, other: object):
-<<<<<<< HEAD
-        if isinstance(other, str):
-            if other.__class__ == str:  # check for wrappedstr inheritors
-                return hash(self) == hash(other.lower())
-            return hash(self) == hash(other)
-=======
->>>>>>> 5b9293ab (cache filename str of ResourceIdentifier instances)
         if isinstance(other, ResourceIdentifier):
             return str(self) == str(other)
         if isinstance(other, str):
