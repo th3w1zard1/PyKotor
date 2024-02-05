@@ -47,7 +47,7 @@ class FileResource:
 
         self._path_ident_obj: Path = (
             self._filepath / str(self._identifier)
-            if self.inside_capsule or self.inside_bif
+            if self.inside_capsule or self.inside_bif or self.inside_bzf
             else self._filepath
         )
 
@@ -307,7 +307,7 @@ class ResourceIdentifier:
             object.__setattr__(self, '_cached_filename_str', cached_str)
         return self._cached_filename_str
 
-    def __getitem__(self, key: int) -> str | ResourceType:
+    def __getitem__(self, key: int) -> Any:
         if key == 0:
             return self.resname
         if key == 1:
