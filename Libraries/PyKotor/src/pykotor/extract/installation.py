@@ -210,6 +210,7 @@ class Installation:
                 yield from resources
             for resources in self._rims.values():
                 yield from resources
+
         yield from generator()
 
         tlk_path = self._path / "dialog.tlk"
@@ -1610,7 +1611,6 @@ class Installation:
             function_map.get(item, lambda: None)()
 
         return sounds
-
 
     def script(
         self,
