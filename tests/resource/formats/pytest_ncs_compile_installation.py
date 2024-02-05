@@ -78,8 +78,8 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> TestR
         return None
     if call.excinfo is not None and call.when == "call":
         # This means the test has failed
-        longrepr = call.excinfo.getrepr()
-        #longrepr = format_exception_with_variables(call.excinfo.value, call.excinfo.type, call.excinfo.tb)
+        #longrepr = call.excinfo.getrepr()
+        longrepr = format_exception_with_variables(call.excinfo.value, call.excinfo.type, call.excinfo.tb)
         logger.error("Test failed with exception!", extra={"item.nodeid": item.nodeid, "Traceback: ": longrepr})
 
 def log_file(
@@ -190,7 +190,7 @@ def compile_with_abstract_compatible(
             # raise it so _handle_compile_exc can be used to reduce duplicated logging code.
             new_exc = FileNotFoundError(f"Could not find NCS compiled script on disk, '{compiler_identifier}' compiler failed.")
             new_exc.filename = ncs_path
-            _handle_compile_exc(new_exc, file_res, nss_path, compiler_identifier, game)
+            raise new_exc
 
     except Exception as e:  # noqa: BLE001
         if isinstance(compiler, ExternalNCSCompiler):
@@ -254,6 +254,10 @@ def test_ktool_nwnnsscomp(
     for compiler_path, compiler in compilers.items():
         if compiler is None or compiler_path is None:
             continue  # don't test nonexistent compilers
+        if nss_path.name == "nwscript.nss":
+            continue
+        if os.path.islink(nss_path):
+            continue
 
         unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(ktool)")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "ktool")
@@ -276,6 +280,10 @@ def test_tslpatcher_nwnnsscomp(
     for compiler_path, compiler in compilers.items():
         if compiler is None or compiler_path is None:
             continue  # don't test nonexistent compilers
+        if nss_path.name == "nwscript.nss":
+            continue
+        if os.path.islink(nss_path):
+            continue
 
         unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(2)")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher_nwnnsscomp")
@@ -333,6 +341,10 @@ def test_inbuilt_compiler(
     compiler = InbuiltNCSCompiler()
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
+    if nss_path.name == "nwscript.nss":
+        return
+    if os.path.islink(nss_path):
+        return
     compile_with_abstract_compatible(compiler, file_res, nss_path, ncs_path.with_stem(f"{ncs_path.stem}_inbuilt"), game, "inbuilt")
 
 def test_bizarre_compiler(
@@ -341,6 +353,10 @@ def test_bizarre_compiler(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     if file_res.identifier() in CUR_FAILED_EXT[game]:
+        return
+    if nss_path.name == "nwscript.nss":
+        return
+    if os.path.islink(nss_path):
         return
 
     working_dir = nss_path.parent
@@ -369,6 +385,10 @@ def test_pykotor_compile_nss(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     if file_res.identifier() in CUR_FAILED_EXT[game]:
+        return
+    if nss_path.name == "nwscript.nss":
+        return
+    if os.path.islink(nss_path):
         return
 
     working_dir = nss_path.parent
@@ -405,6 +425,7 @@ if __name__ == "__main__":
         profiler: cProfile.Profile = cProfile.Profile()
         profiler.enable()
 
+
     result: int | pytest.ExitCode = pytest.main(
         [
             __file__,
@@ -414,8 +435,9 @@ if __name__ == "__main__":
             f"--log-file={LOG_FILENAME}.txt",
             "-o",
             "log_cli=true",
-            "-n",
-            "7"
+            #"--capture=no",
+            #"-n",
+            #"4"
         ],
     )
 

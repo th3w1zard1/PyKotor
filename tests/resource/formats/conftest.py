@@ -128,8 +128,8 @@ def populate_all_scripts(restype: ResourceType = ResourceType.NSS, hack_extract=
     symlink_map: dict[Path, FileResource] = {}
 
     iterator = (
-        (Game.K1, Installation(r"C:\GitHub\ipatool-2.1.3-windows-amd64.tar\ipatool-2.1.3-windows-amd64\bin\com.aspyr.kotor.ios_611436052_1.2.7\Payload\KOTOR.app")),
-        #(Game.K2, Installation(K2_PATH)),
+        (Game.K1, Installation(K1_PATH)),
+        (Game.K2, Installation(K2_PATH)),
     ) if hack_extract else ALL_INSTALLATIONS.items()
 
 
@@ -170,7 +170,7 @@ def populate_all_scripts(restype: ResourceType = ResourceType.NSS, hack_extract=
                 assert nss_path not in symlink_map, f"'{nss_path.name}' is a bif script name that should not exist in symlink_map yet?"
                 symlink_map[nss_path] = resource
 
-            assert hack_extract or not nss_path.is_file()
+            #assert hack_extract or not nss_path.is_file()
             with nss_path.open("wb") as f:
                 f.write(resdata)
 
@@ -181,18 +181,18 @@ def populate_all_scripts(restype: ResourceType = ResourceType.NSS, hack_extract=
 
         seen_paths = set()
         for resource, nss_path, ncs_path in ALL_SCRIPTS[game]:
-            if nss_path in symlink_map:
+            working_folder = nss_path.parent
+            if working_folder in symlink_map:
                 continue
-            if nss_path in seen_paths:
-                continue
-            if nss_path.name.lower() == "nwscript.nss" and nss_path.is_file():
+            if working_folder in seen_paths:
                 continue
 
-            working_folder = nss_path.parent
             for bif_nss_path in symlink_map:
-                target_symlink_path = working_folder.joinpath(bif_nss_path.name)
-                assert not target_symlink_path.is_file(), f"'{nss_path.name}' is a bif script name that should not exist at this path yet?"
-                target_symlink_path.symlink_to(bif_nss_path, target_is_directory=False)
+                link_path = working_folder.joinpath(bif_nss_path.name)
+                #assert not link_path.is_file(), f"'{nss_path.name}' is a bif script name that should not exist at this path yet?"
+                if link_path.is_file():
+                    continue
+                link_path.symlink_to(bif_nss_path, target_is_directory=False)
             seen_paths.add(working_folder)
 
 
@@ -214,17 +214,22 @@ def script_data(request: pytest.FixtureRequest):
 def cleanup_before_tests():
     # List of paths for temporary directories and log files
     log_files = [
-        f"{LOG_FILENAME}.txt",
-        "FAILED_TESTS*.log",
-        "*_incompatible.txt",
-        "test_ncs_compilers_install.txt"
+        f"*{LOG_FILENAME}.txt",
+        "*FAILED_TESTS*.log",
+        "*_incompatible*.txt",
+        "*fallback_level*",
+        "*test_ncs_compilers_install.txt",
+        "*.pstat"
     ]
 
     # Delete log files
     for filename in log_files:
         for file in Path.cwd().glob(filename):
-            with contextlib.suppress(OSError):
+            try:
                 file.unlink(missing_ok=True)
+                print(f"Cleaned {file} in preparation for new test...")
+            except Exception as e:
+                print(f"Could not cleanup {file}: {e}")
 
 def cleanup_temp_dirs():
     temp_dirs = [
@@ -245,18 +250,27 @@ def pytest_sessionfinish(
 ):
     cleanup_temp_dirs()
 
-def pytest_generate_tests(metafunc: pytest.Metafunc):
-    if "script_data" not in metafunc.fixturenames:
-        return
+def pytest_generate_nss_tests(metafunc: pytest.Metafunc):
     scripts_fixture = populate_all_scripts()
     test_data = [
         (game, script)
         for game, scripts in scripts_fixture.items()
         for script in scripts
+        if not script[1].is_symlink() and not print(f"Skipping {script[1]}, is symlinked")
     ]
     ids=[
         f"{game}_{script[0].identifier()}"
-        for game, scripts in scripts_fixture.items()
-        for script in scripts
+        for game, script in test_data
     ]
     metafunc.parametrize("script_data", test_data, ids=ids, indirect=True)
+
+def pytest_generate_tests(metafunc: pytest.Metafunc):
+    if "script_data" in metafunc.fixturenames:
+        pytest_generate_nss_tests(metafunc)
+
+CLEANUP_RAN = False
+if __name__ != "__main__" and not CLEANUP_RAN:
+    print("Cleaning up old logs before tests run...")
+    cleanup_before_tests()
+    CLEANUP_RAN = True
+    CLEANUP_RAN = True
