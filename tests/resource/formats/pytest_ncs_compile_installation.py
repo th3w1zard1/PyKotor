@@ -435,7 +435,7 @@ if __name__ == "__main__":
             f"--log-file={LOG_FILENAME}.txt",
             "-o",
             "log_cli=true",
-            #"--capture=no",
+            "--capture=no",
             #"-n",
             #"4"
         ],

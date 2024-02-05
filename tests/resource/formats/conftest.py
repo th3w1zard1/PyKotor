@@ -60,7 +60,7 @@ CANNOT_COMPILE_EXT: dict[Game, set[str]] = {
 def pytest_report_teststatus(report: pytest.TestReport, config: pytest.Config) -> tuple[Literal['failed'], Literal['F'], str] | None:
     if report.failed:
         if report.longrepr is None:
-            msg = ""
+            msg = "<unknown error>"
         elif hasattr(report.longrepr, "reprcrash"):
             msg = report.longrepr.reprcrash.message
         else:
@@ -105,9 +105,9 @@ def _setup_and_profile_installation() -> dict[Game, Installation]:
         profiler: cProfile.Profile = cProfile.Profile()
         profiler.enable()
 
-    if K1_PATH and Path(K1_PATH).joinpath("chitin.key").is_file():
+    if K1_PATH and Path(K1_PATH).joinpath("chitin.key").safe_isfile():
         ALL_INSTALLATIONS[Game.K1] = Installation(K1_PATH)
-    if K2_PATH and Path(K2_PATH).joinpath("chitin.key").is_file():
+    if K2_PATH and Path(K2_PATH).joinpath("chitin.key").safe_isfile():
         ALL_INSTALLATIONS[Game.K2] = Installation(K2_PATH)
 
     if profiler:
@@ -134,7 +134,7 @@ def populate_all_scripts(restype: ResourceType = ResourceType.NSS, hack_extract=
 
 
     for i, (game, installation) in enumerate(iterator):
-        for resource in installation: #.override_resources():
+        for resource in installation.override_resources(): #.override_resources():
             if resource.restype() != restype:
                 continue
             res_ident = resource.identifier()
@@ -251,26 +251,31 @@ def pytest_sessionfinish(
     cleanup_temp_dirs()
 
 def pytest_generate_nss_tests(metafunc: pytest.Metafunc):
+    """Any test function with the argument `script_data` used for NSS compile tests."""
     scripts_fixture = populate_all_scripts()
     test_data = [
         (game, script)
         for game, scripts in scripts_fixture.items()
         for script in scripts
-        if not script[1].is_symlink() and not print(f"Skipping {script[1]}, is symlinked")
+        if not script[1].is_symlink()# and not print(f"Skipping test collection for '{script[1]}', already symlinked to '{script[1].resolve()}'")
     ]
+    print(f"Test data collected. Total tests: {len(test_data)}")
     ids=[
         f"{game}_{script[0].identifier()}"
         for game, script in test_data
     ]
+    print(f"Test IDs collected. Total IDs: {len(ids)}")
     metafunc.parametrize("script_data", test_data, ids=ids, indirect=True)
+    print("Tests have finished parametrizing!")
 
 def pytest_generate_tests(metafunc: pytest.Metafunc):
+    print("Generating tests...")
     if "script_data" in metafunc.fixturenames:
+        print("Generating NSS tests...")
         pytest_generate_nss_tests(metafunc)
 
-CLEANUP_RAN = False
+CLEANUP_RAN = False  # TODO: this will never work because it's defined on the module level, need a global level higher than that?
 if __name__ != "__main__" and not CLEANUP_RAN:
     print("Cleaning up old logs before tests run...")
     cleanup_before_tests()
-    CLEANUP_RAN = True
     CLEANUP_RAN = True
