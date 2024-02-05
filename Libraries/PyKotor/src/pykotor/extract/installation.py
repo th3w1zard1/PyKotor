@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 from contextlib import suppress
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from copy import copy
 from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, Generic, NamedTuple, TypeVar
@@ -25,10 +25,7 @@ from pykotor.tools.path import CaseAwarePath
 from pykotor.tools.sound import fix_audio
 from utility.error_handling import format_exception_with_variables
 from utility.misc import remove_duplicates
-<<<<<<< HEAD
 from utility.string import CaseInsensitiveWrappedStr
-=======
->>>>>>> cea29f39 (move the tests to top level (again))
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
@@ -439,14 +436,16 @@ class Installation:
                 executor.submit(self.load_single_resource, file, capsule_check)
                 for file in files_iter
             ]
-            resource = FileResource(
-                resname,
-                restype,
-                file.stat().st_size,
-                0,
-                file,
-            )
-            resources.append(resource)  # type: ignore[assignment, call-overload, union-attr]
+            if isinstance(resources, CaseInsensitiveDict):
+                for future in as_completed(futures):
+                    path2, results = future.result()
+                    resources[path2.name] = [result for result in results if result is not None]
+            else:
+                for future in as_completed(futures):
+                    path2, resource = future.result()  # Retrieve the result
+                    if resource is None:
+                        continue
+                    resources.append(resource)  # Add the valid resource to the list
 
         if not resources:
             print(f"No resources found at '{r_path}' when loading the installation, skipping...")
@@ -1449,11 +1448,7 @@ class Installation:
 
         def check_capsules(values: list[Capsule]):
             for capsule in values:
-<<<<<<< HEAD
-                for case_resname in case_resnames.copy():
-=======
                 for case_resname in copy(resnames):
->>>>>>> b9483208 (Update installation.py)
                     texture_data: bytes | None = None
                     tformat: ResourceType | None = None
                     for tformat in texture_types:
@@ -1590,31 +1585,17 @@ class Installation:
             for resources in values.values():
                 check_list(resources)
 
-<<<<<<< HEAD
         def check_list(resource_dict: list[FileResource]):
             for resource in resource_dict:
                 resname: str = resource.resname()
                 if resource.restype() in sound_formats and resname in case_resnames:
                     case_resnames.remove(resname)  # TODO: maybe check if sound_data is empty first?
-=======
-        def check_list(values: list[FileResource]):
-            for resource in values:
-                case_resname: str = resource.resname().casefold()
-                if case_resname in resnames and resource.restype() in sound_formats:
-                    resnames.remove(case_resname)
->>>>>>> b9483208 (Update installation.py)
                     sound_data: bytes = resource.data()
                     sounds[resname] = fix_audio(sound_data) if sound_data else b""
 
-<<<<<<< HEAD
         def check_capsules(resource_list: list[Capsule]):
             for capsule in resource_list:
                 for case_resname in copy(case_resnames):
-=======
-        def check_capsules(values: list[Capsule]):
-            for capsule in values:
-                for case_resname in copy(resnames):
->>>>>>> b9483208 (Update installation.py)
                     sound_data: bytes | None = None
                     for sformat in sound_formats:
                         sound_data = capsule.resource(case_resname, sformat)
@@ -1622,11 +1603,7 @@ class Installation:
                             break
                     if sound_data is None:  # No sound data found in this list.
                         continue
-<<<<<<< HEAD
                     case_resnames.remove(CaseInsensitiveWrappedStr.cast(case_resname))  # TODO: maybe check if sound_data is empty first?
-=======
-                    resnames.remove(case_resname)
->>>>>>> b9483208 (Update installation.py)
                     sounds[case_resname] = fix_audio(sound_data) if sound_data else b""
 
         def check_folders(values: list[Path]):
@@ -1636,22 +1613,14 @@ class Installation:
                     file
                     for file in folder.safe_rglob("*")
                     if (
-<<<<<<< HEAD
                         file.stem in case_resnames
-=======
-                        file.stem.casefold() in resnames
->>>>>>> b9483208 (Update installation.py)
                         and ResourceType.from_extension(file.suffix) in sound_formats
                         and file.safe_isfile()
                     )
                 )
             for sound_file in queried_sound_files:
-<<<<<<< HEAD
                 case_resname: CaseInsensitiveWrappedStr = CaseInsensitiveWrappedStr(sound_file.stem)
                 case_resnames.remove(case_resname)  # TODO: maybe check if sound_data is empty first?
-=======
-                resnames.remove(sound_file.stem.casefold())
->>>>>>> b9483208 (Update installation.py)
                 sound_data: bytes = BinaryReader.load_file(sound_file)
                 sounds[case_resname] = fix_audio(sound_data) if sound_data else b""
 

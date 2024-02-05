@@ -9,24 +9,12 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.type import ResourceType
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import suppress
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, NamedTuple
-import lzma
-import os
-from typing import TYPE_CHECKING, Any, NamedTuple
-
-from pykotor.common.stream import BinaryReader
-from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_bif_file, is_bzf_file, is_capsule_file
 from utility.misc import generate_hash
 from utility.string import CaseInsensitiveWrappedStr
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
-    import os
-
     from pykotor.common.misc import ResRef
     from utility.string import CaseInsensitiveWrappedStr
 
@@ -43,6 +31,7 @@ class FileResource:
         filepath: os.PathLike | str,
     ):
         assert resname == resname.strip(), f"FileResource cannot be constructed, resource name '{resname}' cannot start/end with whitespace."
+        self._identifier = ResourceIdentifier(resname, restype)
 
         self._resname: str = resname
         self._restype: ResourceType = restype
