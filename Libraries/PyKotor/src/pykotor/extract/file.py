@@ -57,11 +57,6 @@ class FileResource:
         self._file_hash: str = ""
         self._identifier = ResourceIdentifier(self._resname, self._restype)
 
-        self._path_ident_obj: Path
-        if self.inside_capsule or self.inside_bif:
-            self._path_ident_obj = self._filepath / str(self._identifier)
-        else:
-            self._path_ident_obj = self._filepath
         self._path_ident_obj: Path = (
             self._filepath / str(self._identifier)
             if self.inside_capsule or self.inside_bif
@@ -98,30 +93,19 @@ class FileResource:
     def __eq__(  # Checks are ordered from fastest to slowest.
         self,
         other: FileResource | ResourceIdentifier | bytes | bytearray | memoryview | object,
-        other: FileResource | ResourceIdentifier | bytes | bytearray | memoryview | object,
     ):
         if isinstance(other, ResourceIdentifier):
             return self.identifier() == other
         if isinstance(other, FileResource):
             if self is other:
                 return True
-            if (
-                self._offset == other._offset
-                and self._resname == other._resname
-                and self._restype == other._restype
-                and self._filepath == other._filepath
-            ):
-                return True
 
             return self._path_ident_obj == other._path_ident_obj
 
-        if not self._file_hash:
-            return False
+        if not isinstance(other, (os.PathLike, bytes, bytearray, memoryview)):
+            return NotImplemented
 
-        if isinstance(other, (os.PathLike, bytes, bytearray, memoryview)):
-            return self._file_hash == generate_hash(other)
-
-        return NotImplemented
+        return self.get_hash() == generate_hash(other)
 
     def resname(self) -> str:
         return self._resname
