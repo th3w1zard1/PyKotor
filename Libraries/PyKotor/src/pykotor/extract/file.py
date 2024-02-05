@@ -5,7 +5,6 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
 from dataclasses import dataclass, field
-import time
 from typing import TYPE_CHECKING, Any, NamedTuple
 
 from pykotor.common.stream import BinaryReader
@@ -247,14 +246,9 @@ class FileResource:
 
                 if not _internal and not self._task_running:
                     def background_task(res: FileResource, sentdata: bytes):
-                        print(f"Calculating hash for {self._path_ident_obj} ")
                         self._task_running = True
-                        start_time = time.time()
                         res._file_hash = generate_hash(sentdata)  # noqa: SLF001
-                        end_time = time.time()
                         self._task_running = False
-                        duration = end_time - start_time  # Calculate the duration of the hashing operation
-                        print(f"Finished calculating hash for {self._path_ident_obj}. Duration: {duration:.4f} seconds")
 
                     with ThreadPoolExecutor(thread_name_prefix="background_fileresource_sha1hash_calculation") as executor:
                         executor.submit(background_task, self, data)
