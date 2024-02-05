@@ -2,15 +2,13 @@ from __future__ import annotations
 
 import os
 import re
-from contextlib import suppress
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from copy import copy
 from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, Generic, NamedTuple, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
 
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, Game
-from pykotor.common.misc import CaseInsensitiveDict, Game, ResRef
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.capsule import Capsule
 from pykotor.extract.chitin import Chitin
@@ -536,7 +534,7 @@ class Installation:
 
         for folder in target_dirs:
             relative_folder: str = folder.relative_to(override_path).as_posix()  # '.' if folder is the same as override_path
-            self._override[relative_folder] = self.load_resources(folder)  # type: ignore[assignment]
+            self._override[relative_folder] = self.load_resources(folder, recurse=True)  # type: ignore[assignment]
 
 
     def reload_override(
