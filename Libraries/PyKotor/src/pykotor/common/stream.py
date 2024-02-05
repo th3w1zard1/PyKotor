@@ -113,6 +113,40 @@ class BinaryReader:
         return cls(initialized_stream, offset, size)
 
     @classmethod
+    def from_stream(
+        cls,
+        stream: io.IOBase,
+        offset: int = 0,
+        size: int | None = None,
+    ) -> BinaryReader:
+        """Returns a new BinaryReader with a stream.
+
+        Args:
+        ----
+            stream: An object of any stream type derived from io.IOBase.
+            offset: Number of bytes into the stream to consider as position 0.
+            size: Number of bytes allowed to read from the stream. If not specified, uses the whole stream.
+
+        Returns:
+        -------
+            A new BinaryReader instance.
+        """
+        if not isinstance(stream, io.IOBase):
+            msg = "The provided stream must be an instance of io.IOBase or its subclasses."
+            raise TypeError(msg)
+
+        # If the stream supports mmap, you might want to set up mmap here.
+        # However, not all streams will support fileno(), so this is conditional.
+        try:
+            initialized_stream = mmap.mmap(stream.fileno(), length=0, access=mmap.ACCESS_READ)
+        except (AttributeError, ValueError):
+            # For streams that do not support fileno() or where mmap cannot be used,
+            # fall back to using the stream directly.
+            initialized_stream = stream
+
+        return cls(initialized_stream, offset, size)
+
+    @classmethod
     def from_file(
         cls,
         path: os.PathLike | str,
