@@ -259,8 +259,13 @@ class Capsule:
             if file_type == "RIM ":
                 return self._load_rim(reader)
 
+<<<<<<< HEAD
             msg = f"File '{self._path}' must be a ERF/MOD/SAV/RIM capsule."
             raise NotImplementedError(msg)
+=======
+        msg = f"File '{self._path}' must be a ERF/MOD/SAV/RIM capsule."
+        raise NotImplementedError(msg)
+>>>>>>> b3e852da (partial implementation of what's needed for ios bifs)
 
     def add(
         self,

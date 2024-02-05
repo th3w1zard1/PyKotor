@@ -9,7 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 >>>>>>> 12aed458 (use coroutines for loading installation resources)
 from copy import copy
 from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, Generic, NamedTuple, TypeVar
 
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, Game
@@ -31,8 +31,6 @@ from utility.string import CaseInsensitiveWrappedStr
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
-    import os
-
     from pykotor.resource.formats.gff import GFF
 
 
@@ -491,8 +489,12 @@ class Installation:
                         resources.append(resource)
 
         if not resources:
+<<<<<<< HEAD
 >>>>>>> 12aed458 (use coroutines for loading installation resources)
             print(f"No resources found at '{r_path}' when loading the installation, skipping...")
+=======
+            print(f"No resources found at '{path}' when loading the installation, skipping...")
+>>>>>>> b3e852da (partial implementation of what's needed for ios bifs)
         return resources
 
     def load_chitin(self):
@@ -501,7 +503,11 @@ class Installation:
         chitin_exists: bool | None = chitin_path.safe_isfile()
         if chitin_exists:
             print(f"Loading BIFs from chitin.key at '{self._path}'...")
+<<<<<<< HEAD
             self._chitin = list(Chitin(key_path=chitin_path))
+=======
+            self._chitin = list(Chitin(key_path=chitin_path, game=self.game()))
+>>>>>>> b3e852da (partial implementation of what's needed for ios bifs)
         elif chitin_exists is False:
             print(f"The chitin.key file did not exist at '{self._path}' when loading the installation, skipping...")
         elif chitin_exists is None:
