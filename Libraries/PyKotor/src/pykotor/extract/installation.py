@@ -439,13 +439,23 @@ class Installation:
             if isinstance(resources, CaseInsensitiveDict):
                 for future in as_completed(futures):
                     path2, results = future.result()
-                    resources[path2.name] = [result for result in results if result is not None]
+                    if isinstance(results, list):
+                        resources[path2.name] = [result for result in results if result is not None]
+                    elif results is None:
+                        resources[path2.name] = []
+                    else:
+                        msg = f"Incorrect result returned from task, got '{results}'"
+                        raise TypeError(msg)
             else:
                 for future in as_completed(futures):
                     path2, resource = future.result()  # Retrieve the result
-                    if resource is None:
-                        continue
-                    resources.append(resource)  # Add the valid resource to the list
+                    if isinstance(resource, FileResource):
+                        resources.append(resource)  # Add the valid resource to the list
+                    elif resource is None:
+                        ...
+                    else:
+                        msg = f"Incorrect result returned from task, got '{resource}'"
+                        raise TypeError(msg)
 
         if not resources:
             print(f"No resources found at '{r_path}' when loading the installation, skipping...")

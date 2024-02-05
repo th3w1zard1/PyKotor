@@ -277,7 +277,7 @@ class LocationResult(NamedTuple):
     offset: int
     size: int
 
-@dataclass(frozen=True)
+@dataclass
 class ResourceIdentifier:
     """Class for storing resource name and type, facilitating case-insensitive object comparisons and hashing equal to their string representations."""
 
