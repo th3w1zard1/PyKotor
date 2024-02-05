@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from copy import copy
 from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
 
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, Game
+from pykotor.common.misc import CaseInsensitiveDict, Game, ResRef
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.capsule import Capsule
 from pykotor.extract.chitin import Chitin
@@ -359,6 +362,36 @@ class Installation:
     # endregion
 
     # region Load Data
+    def load_single_resource(
+        self,
+        filepath: Path,
+        capsule_check: Callable | None = None,
+    ) -> tuple[Path, list[FileResource] | FileResource | None]:
+        # sourcery skip: extract-method
+        try:
+            if capsule_check:
+                if not capsule_check(filepath):
+                    return filepath, None
+                return filepath, list(Capsule(filepath))
+
+            resname: str
+            restype: ResourceType
+            resname, restype = ResourceIdentifier.from_path(filepath)
+            if restype.is_invalid:
+                return filepath, None
+
+            return filepath, FileResource(
+                resname,
+                restype,
+                filepath.stat().st_size,
+                offset=0,
+                filepath=filepath,
+            )
+        except Exception as e:  # noqa: BLE001
+            with Path("errorlog.txt").open("a") as f:
+                f.write(format_exception_with_variables(e))
+        return filepath, None
+
 
     def load_resources(
         self,
@@ -383,7 +416,7 @@ class Installation:
         """
         resources: CaseInsensitiveDict[list[FileResource]] | list[FileResource] = CaseInsensitiveDict() if capsule_check else []
 
-        r_path = Path(str(path))
+        r_path = Path(path)
         if not r_path.safe_isdir():
             print(f"The '{r_path.name}' folder did not exist when loading the installation at '{self._path}', skipping...")
             return resources
@@ -394,31 +427,35 @@ class Installation:
             if recurse
             else r_path.safe_iterdir()
         )
-        file: Path | None = None
-        for file in files_iter:
-            try:
-                if capsule_check:
-                    if not capsule_check(file):
-                        continue
-                    resources[file.name] = list(Capsule(file))  # type: ignore[assignment, call-overload]
 
-                else:
-                    resname, restype = ResourceIdentifier.from_path(file)
-                    if restype.is_invalid:
-                        continue
+        # Determine number of workers dynamically based on available CPUs
+        num_cores = os.cpu_count() or 1  # Ensure at least one core is returned
+        max_workers = num_cores * 4  # Use 4x the number of cores
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit tasks to the executor
+            futures = [
+                executor.submit(self.load_single_resource, file, capsule_check)
+                for file in files_iter
+            ]
 
-                    resource = FileResource(
-                        resname,
-                        restype,
-                        file.stat().st_size,
-                        0,
-                        file,
-                    )
-                    resources.append(resource)  # type: ignore[assignment, call-overload, union-attr]
-            except Exception as e:  # noqa: BLE001
-                with Path("errorlog.txt").open("a") as f:
-                    f.write(format_exception_with_variables(e))
-        if not resources or file is None:
+            # Gather resources and omit `None` values (errors or skips)
+            if isinstance(resources, CaseInsensitiveDict):
+                for f in futures:
+                    filepath, resource = f.result()
+                    if resource is None:
+                        continue
+                    if not isinstance(resource, list):
+                        continue
+                    resources[filepath.name] = resource
+            else:
+                for f in futures:
+                    filepath, resource = f.result()
+                    if resource is None:
+                        continue
+                    if isinstance(resource, FileResource):
+                        resources.append(resource)
+
+        if not resources:
             print(f"No resources found at '{r_path}' when loading the installation, skipping...")
         return resources
 
