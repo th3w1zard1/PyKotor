@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import os
 import re
+<<<<<<< HEAD
+=======
+from contextlib import suppress
+from concurrent.futures import ThreadPoolExecutor
+>>>>>>> 12aed458 (use coroutines for loading installation resources)
 from copy import copy
 from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
@@ -359,6 +365,36 @@ class Installation:
     # endregion
 
     # region Load Data
+    def load_single_resource(
+        self,
+        filepath: Path | CaseAwarePath,
+        capsule_check: Callable | None = None,
+    ) -> tuple[Path, list[FileResource] | FileResource | None]:
+        # sourcery skip: extract-method
+        try:
+            if capsule_check:
+                if not capsule_check(filepath):
+                    return filepath, None
+                return filepath, list(Capsule(filepath))
+
+            resname: str
+            restype: ResourceType
+            resname, restype = ResourceIdentifier.from_path(filepath)
+            if restype.is_invalid:
+                return filepath, None
+
+            return filepath, FileResource(
+                resname,
+                restype,
+                filepath.stat().st_size,
+                offset=0,
+                filepath=filepath,
+            )
+        except Exception as e:  # noqa: BLE001
+            with Path("errorlog.txt").open("a") as f:
+                f.write(format_exception_with_variables(e))
+        return filepath, None
+
 
     def load_resources(
         self,
@@ -388,6 +424,7 @@ class Installation:
             print(f"The '{r_path.name}' folder did not exist when loading the installation at '{self._path}', skipping...")
             return resources
 
+<<<<<<< HEAD
         print(f"Loading '{r_path.name}' folder from installation...")
         files_iter: Generator[Path, None, None] = (
             r_path.safe_rglob("*")
@@ -419,6 +456,42 @@ class Installation:
                 with Path("errorlog.txt").open("a") as f:
                     f.write(format_exception_with_variables(e))
         if not resources or file is None:
+=======
+        files_iter = (
+            path.safe_rglob("*")
+            if recurse
+            else path.safe_iterdir()
+        )
+
+        # Determine number of workers dynamically based on available CPUs
+        num_cores = os.cpu_count() or 1  # Ensure at least one core is returned
+        max_workers = num_cores * 4  # Use 4x the number of cores
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit tasks to the executor
+            futures = [
+                executor.submit(self.load_single_resource, file, capsule_check)
+                for file in files_iter
+            ]
+
+            # Gather resources and omit `None` values (errors or skips)
+            if isinstance(resources, CaseInsensitiveDict):
+                for f in futures:
+                    filepath, resource = f.result()
+                    if resource is None:
+                        continue
+                    if not isinstance(resource, list):
+                        continue
+                    resources[filepath.name] = resource
+            else:
+                for f in futures:
+                    filepath, resource = f.result()
+                    if resource is None:
+                        continue
+                    if isinstance(resource, FileResource):
+                        resources.append(resource)
+
+        if not resources:
+>>>>>>> 12aed458 (use coroutines for loading installation resources)
             print(f"No resources found at '{r_path}' when loading the installation, skipping...")
         return resources
 
