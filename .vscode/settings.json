@@ -48,6 +48,16 @@
     "5678",
     "--wait-for-client"
   ],
+<<<<<<< HEAD
+=======
+  "python.testing.unittestArgs": [
+    "-v",
+    "-s",
+    "./tests",
+    "-p",
+    "*test*.py"
+  ],
+>>>>>>> 276c77eb (Update settings.json)
   "python.analysis.diagnosticSeverityOverrides": {
     "reportGeneralTypeIssues": "warning",
     "reportOptionalMemberAccess": "warning" // Ignores issues with defs that can optionally be None.
