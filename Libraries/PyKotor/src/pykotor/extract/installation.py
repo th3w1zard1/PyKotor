@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from copy import copy
 from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
@@ -340,21 +340,23 @@ class Installation:
             - Returns the first existing path
             - Raises FileNotFoundError if no path is found and optional is False.
         """
+        notfound_msg = f"Could not find the '{' or '.join(folder_names)}' folder in '{self._path}'."
         try:
             if isinstance(folder_names, str):  # make a tuple
                 folder_names = (folder_names,)
             for folder_name in folder_names:
                 resource_path: CaseAwarePath = self._path / folder_name
-                if resource_path.safe_isdir():
-                    return resource_path
+                if not resource_path.safe_isdir():
+                    continue
+                return resource_path
         except Exception as e:  # noqa: BLE001
             msg = f"An error occurred while finding the '{' or '.join(folder_names)}' folder in '{self._path}'."
             raise OSError(msg) from e
         else:
             if optional:
+                print(notfound_msg, "optional, skipping...")
                 return CaseAwarePath(self._path, folder_names[0])
-        msg = f"Could not find the '{' or '.join(folder_names)}' folder in '{self._path}'."
-        raise FileNotFoundError(msg)
+        raise FileNotFoundError(notfound_msg)
 
     # endregion
 
@@ -418,7 +420,7 @@ class Installation:
             print(f"The '{r_path.name}' folder did not exist when loading the installation at '{self._path}', skipping...")
             return resources
 
-        print(f"Loading '{r_path.name}' folder from installation...")
+        print(f"Loading '{r_path.relative_to(self.path())}' folder from installation...")
         files_iter: Generator[Path, None, None] = (
             r_path.safe_rglob("*")
             if recurse
@@ -430,23 +432,23 @@ class Installation:
         max_workers = num_cores * 4  # Use 4x the number of cores
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit tasks to the executor
-            futures = [
+            futures: Generator[Future[tuple[Path, list[FileResource] | FileResource | None]], None, None] = (
                 executor.submit(self.load_single_resource, file, capsule_check)
                 for file in files_iter
-            ]
+            )
             if isinstance(resources, CaseInsensitiveDict):
                 for future in as_completed(futures):
-                    path2, results = future.result()
-                    if isinstance(results, list):
-                        resources[path2.name] = [result for result in results if result is not None]
-                    elif results is None:
-                        resources[path2.name] = []
+                    result_path, result_resources = future.result()
+                    if isinstance(result_resources, list):
+                        resources[result_path.name] = [result for result in result_resources if result is not None]
+                    elif result_resources is None:
+                        resources[result_path.name] = []
                     else:
-                        msg = f"Incorrect result returned from task, got '{results}'"
+                        msg = f"Incorrect result returned from task, got '{result_resources}'"
                         raise TypeError(msg)
             else:
                 for future in as_completed(futures):
-                    path2, resource = future.result()  # Retrieve the result
+                    result_path, resource = future.result()  # Retrieve the result
                     if isinstance(resource, FileResource):
                         resources.append(resource)  # Add the valid resource to the list
                     elif resource is None:
