@@ -447,6 +447,7 @@ class Installation:
 
         if not resources:
             print(f"No resources found at '{r_path}' when loading the installation, skipping...")
+
         return resources
 
     def load_chitin(self):

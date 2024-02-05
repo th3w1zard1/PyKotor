@@ -262,6 +262,7 @@ class Capsule:
         msg = f"File '{self._path}' must be a ERF/MOD/SAV/RIM capsule."
         raise NotImplementedError(msg)
 
+
     def add(
         self,
         resname: str,

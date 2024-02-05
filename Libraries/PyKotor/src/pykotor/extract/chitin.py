@@ -49,6 +49,7 @@ class Chitin:
     ):
         return len(self._resources)
 
+    def reload(self):
 
     def reload(self):
         """Reload the list of resource info linked from the chitin.key file."""

@@ -10,6 +10,16 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.type import ResourceType
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, NamedTuple
+import lzma
+import os
+from typing import TYPE_CHECKING, Any, NamedTuple
+
+from pykotor.common.stream import BinaryReader
+from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_bif_file, is_bzf_file, is_capsule_file
 from utility.misc import generate_hash
 from utility.system.path import Path, PurePath
@@ -47,6 +57,11 @@ class FileResource:
         self._file_hash: str = ""
         self._identifier = ResourceIdentifier(self._resname, self._restype)
 
+        self._path_ident_obj: Path
+        if self.inside_capsule or self.inside_bif:
+            self._path_ident_obj = self._filepath / str(self._identifier)
+        else:
+            self._path_ident_obj = self._filepath
         self._path_ident_obj: Path = (
             self._filepath / str(self._identifier)
             if self.inside_capsule or self.inside_bif
@@ -83,12 +98,21 @@ class FileResource:
     def __eq__(  # Checks are ordered from fastest to slowest.
         self,
         other: FileResource | ResourceIdentifier | bytes | bytearray | memoryview | object,
+        other: FileResource | ResourceIdentifier | bytes | bytearray | memoryview | object,
     ):
         if isinstance(other, ResourceIdentifier):
             return self.identifier() == other
         if isinstance(other, FileResource):
             if self is other:
                 return True
+            if (
+                self._offset == other._offset
+                and self._resname == other._resname
+                and self._restype == other._restype
+                and self._filepath == other._filepath
+            ):
+                return True
+
             return self._path_ident_obj == other._path_ident_obj
 
         if not self._file_hash:
@@ -242,6 +266,7 @@ class FileResource:
             with BinaryReader.from_file(self._filepath) as file:
                 file.seek(self._offset)
                 data: bytes = file.read_bytes(self._size)
+
                 if self.inside_bzf:
                     data = self.decompress_lzma1(data, self._size)
 
