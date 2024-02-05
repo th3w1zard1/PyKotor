@@ -25,7 +25,15 @@ from pykotor.extract.installation import Installation
 from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.generics.utw import UTW, construct_utw, dismantle_utw
 
+<<<<<<< HEAD:tests/resource/generics/test_utw.py
 TEST_FILE = "src/tests/files/test.utw"
+=======
+from pykotor.resource.formats.gff.gff_data import GFF
+from pykotor.resource.type import ResourceType
+
+
+TEST_FILE = "tests/files/test.utw"
+>>>>>>> b96bab46 (fix the tests):Libraries/PyKotor/src/tests/resource/generics/test_utw.py
 K1_PATH = os.environ.get("K1_PATH")
 K2_PATH = os.environ.get("K2_PATH")
 

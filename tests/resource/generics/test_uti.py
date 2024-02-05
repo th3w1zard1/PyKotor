@@ -25,7 +25,7 @@ from pykotor.extract.installation import Installation
 from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.generics.uti import UTI, construct_uti, dismantle_uti
 
-TEST_FILE = "src/tests/files/test.uti"
+TEST_FILE = "tests/files/test.uti"
 
 K1_PATH = os.environ.get("K1_PATH")
 K2_PATH = os.environ.get("K2_PATH")
