@@ -25,7 +25,10 @@ from pykotor.tools.path import CaseAwarePath
 from pykotor.tools.sound import fix_audio
 from utility.error_handling import format_exception_with_variables
 from utility.misc import remove_duplicates
+<<<<<<< HEAD
 from utility.string import CaseInsensitiveWrappedStr
+=======
+>>>>>>> cea29f39 (move the tests to top level (again))
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
