@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import os
 import re
+from contextlib import suppress
 from concurrent.futures import ThreadPoolExecutor
 from copy import copy
 from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, Generic, NamedTuple, TypeVar
 
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, Game
@@ -28,8 +29,6 @@ from utility.string import CaseInsensitiveWrappedStr
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
-    import os
-
     from pykotor.resource.formats.gff import GFF
 
 
@@ -364,7 +363,7 @@ class Installation:
     # region Load Data
     def load_single_resource(
         self,
-        filepath: Path,
+        filepath: Path | CaseAwarePath,
         capsule_check: Callable | None = None,
     ) -> tuple[Path, list[FileResource] | FileResource | None]:
         # sourcery skip: extract-method
@@ -437,23 +436,14 @@ class Installation:
                 executor.submit(self.load_single_resource, file, capsule_check)
                 for file in files_iter
             ]
-
-            # Gather resources and omit `None` values (errors or skips)
-            if isinstance(resources, CaseInsensitiveDict):
-                for f in futures:
-                    filepath, resource = f.result()
-                    if resource is None:
-                        continue
-                    if not isinstance(resource, list):
-                        continue
-                    resources[filepath.name] = resource
-            else:
-                for f in futures:
-                    filepath, resource = f.result()
-                    if resource is None:
-                        continue
-                    if isinstance(resource, FileResource):
-                        resources.append(resource)
+            resource = FileResource(
+                resname,
+                restype,
+                file.stat().st_size,
+                0,
+                file,
+            )
+            resources.append(resource)  # type: ignore[assignment, call-overload, union-attr]
 
         if not resources:
             print(f"No resources found at '{r_path}' when loading the installation, skipping...")
@@ -465,7 +455,7 @@ class Installation:
         chitin_exists: bool | None = chitin_path.safe_isfile()
         if chitin_exists:
             print(f"Loading BIFs from chitin.key at '{self._path}'...")
-            self._chitin = list(Chitin(key_path=chitin_path))
+            self._chitin = list(Chitin(key_path=chitin_path, game=self.game()))
         elif chitin_exists is False:
             print(f"The chitin.key file did not exist at '{self._path}' when loading the installation, skipping...")
         elif chitin_exists is None:
