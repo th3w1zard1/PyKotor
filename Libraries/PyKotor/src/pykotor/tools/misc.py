@@ -45,9 +45,17 @@ def is_rim_file(filepath: os.PathLike | str) -> bool:
 
 
 def is_bif_file(filepath: os.PathLike | str) -> bool:
+<<<<<<< HEAD
     """Returns true if the given filename has a BIF file extension."""
     return PurePath.pathify(normalize_ext(filepath)).suffix.lower() == ".bif"
+=======
+    """Returns true if the given filename has a BIF or BZF file extension."""
+    return PurePath.pathify(filepath).suffix.lower() in {".bif", ".bzf"}
+>>>>>>> 35746c5d (add is_bzf_file implementation for ios)
 
+def is_bzf_file(filepath: os.PathLike | str) -> bool:
+    """Returns true if the given filename has a BZF file extension (lzma-compressed bif archive usually used on iOS)."""
+    return PurePath.pathify(filepath).suffix.lower() == ".bzf"
 
 def is_capsule_file(filepath: os.PathLike | str) -> bool:
     """Returns true if the given filename has either an ERF, MOD, SAV, or RIM file extension."""
