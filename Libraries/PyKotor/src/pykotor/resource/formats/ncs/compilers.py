@@ -308,12 +308,12 @@ class ExternalNCSCompiler(NCSCompiler):
 
         if "Error:" in stdout:
             stdout_lines: list[str] = stdout.split("\n")
-            error_line: str | None = None
+            error_line: str = ""
             # Find and remove the line with 'Error:'
             filtered_stdout_lines: list[str] = []
             for line in stdout_lines:
                 if "Error:" in line:
-                    error_line = line
+                    error_line += "\n" + line
                 else:
                     filtered_stdout_lines.append(line)
 
@@ -321,7 +321,7 @@ class ExternalNCSCompiler(NCSCompiler):
             stdout = "\n".join(filtered_stdout_lines)
 
             # Append the error line to stderr if it was found
-            if error_line is not None:
+            if error_line:
                 if stderr:  # If there's already content in stderr, add a newline before appending
                     stderr += "\n" + error_line
                 else:
