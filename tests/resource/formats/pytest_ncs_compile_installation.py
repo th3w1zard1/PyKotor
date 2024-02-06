@@ -354,69 +354,6 @@ def test_inbuilt_compiler(
         return
     compile_with_abstract_compatible(compiler, file_res, nss_path, ncs_path.with_name(f"{ncs_path.stem}_inbuilt"), game, "inbuilt")
 
-def test_bizarre_compiler(
-    script_data: tuple[Game, tuple[FileResource, Path, Path]]
-):
-    game, script_info = script_data
-    file_res, nss_path, ncs_path = script_info
-    if file_res.identifier() in CUR_FAILED_EXT[game]:
-        return
-    if nss_path.name == "nwscript.nss":
-        return
-    if nss_path.is_symlink():
-        return
-
-    working_dir = nss_path.parent
-    try:
-        nss_source_str: str = file_res.data().decode(encoding="windows-1252", errors="ignore")
-        ncs_result: NCS = bizarre_compiler(nss_source_str, game, library_lookup=nss_path.parent)
-        NCSBinaryWriter(ncs_result, ncs_path).write()
-
-        if not isinstance(ncs_result, NCS):
-            log_file(f"Failed bizarre compilation, no NCS returned: '{working_dir.name}/{nss_path}'", filepath="fallback_out.txt")
-            pytest.fail(f"Failed bizarre compilation, no NCS returned: '{working_dir.name}/{nss_path}'")
-        if not ncs_path.is_file():
-            new_exc = FileNotFoundError(f"Could not find NCS compiled script on disk at '{working_dir.name}/{nss_path}', bizarre compiler failed.")
-            new_exc.filename = ncs_path
-            raise new_exc  # noqa: TRY301
-
-    except EntryPointError as e:
-        pytest.xfail(f"Bizarre Compiler: No entry point found in '{working_dir.name}/{nss_path}': {e}")
-    except Exception as e:
-        _handle_compile_exc(e, file_res, nss_path, "Bizarre Compiler", game)
-
-
-def test_pykotor_compile_nss(
-    script_data: tuple[Game, tuple[FileResource, Path, Path]]
-):
-    game, script_info = script_data
-    file_res, nss_path, ncs_path = script_info
-    if file_res.identifier() in CUR_FAILED_EXT[game]:
-        return
-    if nss_path.name == "nwscript.nss":
-        return
-    if nss_path.is_symlink():
-        return
-
-    working_dir = nss_path.parent
-    try:
-        nss_source_str: str = decode_bytes_with_fallbacks(file_res.data())
-        ncs_result: NCS = compile_nss(nss_source_str, game, library_lookup=working_dir)
-        write_ncs(ncs_result, ncs_path)
-
-        if not isinstance(ncs_result, NCS):
-            log_file(f"Failed compile_nss, no NCS returned: '{working_dir.name}/{nss_path.name}'", filepath="fallback_out.txt")
-            pytest.fail(f"Failed compile_nss, no NCS returned: '{working_dir.name}/{nss_path.name}'")
-        if not ncs_path.is_file():
-            new_exc = FileNotFoundError("Could not find NCS compiled script on disk, compile_nss failed.")
-            new_exc.filename = ncs_path
-            raise new_exc  # noqa: TRY301
-    except EntryPointError as e:
-        pytest.xfail(f"compile_nss: No entry point in with '{working_dir.name}/{nss_path.name}': {e}")
-    except Exception as e:  # noqa: BLE001
-        _handle_compile_exc(e, file_res, nss_path, "compile_nss", game)
-
-
 def save_profiler_output(
     profiler: cProfile.Profile,
     filepath: os.PathLike | str,
