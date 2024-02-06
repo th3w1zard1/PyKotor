@@ -14,31 +14,30 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
 def add_sys_path(p: pathlib.Path):
     working_dir = str(p)
     if working_dir not in sys.path:
         sys.path.append(working_dir)
-if PYKOTOR_PATH.joinpath("pykotor").is_dir():
+if PYKOTOR_PATH.joinpath("pykotor").exists():
     add_sys_path(PYKOTOR_PATH)
-    os.chdir(PYKOTOR_PATH.parent)
-if UTILITY_PATH.joinpath("utility").is_dir():
+if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
+from pykotor.extract.file import FileResource, ResourceIdentifier  # noqa: E402
 from pykotor.common.misc import Game  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.resource.type import ResourceType  # noqa: E402
 from utility.system.path import Path  # noqa: E402
 
 if TYPE_CHECKING:
-    from pykotor.extract.file import FileResource
     from typing_extensions import Literal
 
-K1_PATH: str | None = os.environ.get("K1_PATH")
-K2_PATH: str | None = os.environ.get("K2_PATH")
+#K1_PATH: str | None = os.environ.get("K1_PATH")
+K1_PATH: str = r"C:\Program Files (x86)\Steam\steamapps\common\swkotor\Override\K1"
+K2_PATH: str | None = None#os.environ.get("K2_PATH")
 LOG_FILENAME = "test_ncs_compilers_install"
 
 ALL_INSTALLATIONS: dict[Game, Installation] | None = None
@@ -105,8 +104,8 @@ def _setup_and_profile_installation() -> dict[Game, Installation]:
         profiler: cProfile.Profile = cProfile.Profile()
         profiler.enable()
 
-    if K1_PATH and Path(K1_PATH).joinpath("chitin.key").safe_isfile():
-        ALL_INSTALLATIONS[Game.K1] = Installation(K1_PATH)
+    #if K1_PATH and Path(K1_PATH).joinpath("chitin.key").safe_isfile():
+    #    ALL_INSTALLATIONS[Game.K1] = Installation(K1_PATH)
     #if K2_PATH and Path(K2_PATH).joinpath("chitin.key").safe_isfile():
     #    ALL_INSTALLATIONS[Game.K2] = Installation(K2_PATH)
 
@@ -114,37 +113,51 @@ def _setup_and_profile_installation() -> dict[Game, Installation]:
         save_profiler_output(profiler, "installation_class_profile.pstat")
     return ALL_INSTALLATIONS
 
-def populate_all_scripts(restype: ResourceType = ResourceType.NSS, hack_extract=False) -> dict[Game, list[tuple[FileResource, Path, Path]]]:
+def populate_all_scripts(
+    restype: ResourceType = ResourceType.NSS,
+    hack_extract=False,
+) -> dict[Game, list[tuple[FileResource, Path, Path]]]:
     global ALL_SCRIPTS
     if ALL_SCRIPTS is not None:
         return ALL_SCRIPTS
 
-    global ALL_INSTALLATIONS
-    if ALL_INSTALLATIONS is None:
-        ALL_INSTALLATIONS = _setup_and_profile_installation()
+    #global ALL_INSTALLATIONS
+    #if ALL_INSTALLATIONS is None:
+    #    ALL_INSTALLATIONS = _setup_and_profile_installation()
 
     ALL_SCRIPTS = {Game.K1: [], Game.K2: []}
 
     symlink_map: dict[Path, FileResource] = {}
 
-    iterator = (
-        (Game.K1, Installation(K1_PATH)),
-        (Game.K2, Installation(K2_PATH)),
-    ) if hack_extract else ALL_INSTALLATIONS.items()
+    iterator_data = (
+        (Game.K1, lambda: Path(K1_PATH).rglob("*")),
+        #(Game.K2, lambda: Path(K2_PATH).rglob("*")),
+    )
 
-
-    for i, (game, installation) in enumerate(iterator):
-        for resource in installation.override_resources(): #.override_resources():
-            if resource.restype() != restype:
+    for i, (game, iterator) in enumerate(iterator_data):
+        for file in iterator():
+            if not file.safe_isfile():
                 continue
+            res_ident = ResourceIdentifier.from_path(file)
+            if res_ident.restype != restype:
+                continue
+            resource = FileResource(
+                *res_ident,
+                size=file.stat().st_size,
+                offset=0,
+                filepath=file
+            )
             res_ident = resource.identifier()
             resdata = resource.data()
             filename = str(res_ident)
 
             if resource.inside_capsule:
                 subfolder = Installation.replace_module_extensions(resource.filepath())
-            elif resource.inside_bif:
-                subfolder = resource.filepath().name
+            elif resource.inside_bif or resource.filepath().parent.name == "scripts.bif":
+                if resource.inside_bif:
+                    subfolder = resource.filepath().name
+                else:
+                    subfolder = resource.filepath().parent.name
             else:
                 subfolder = resource.filepath().parent.name
 
@@ -152,30 +165,21 @@ def populate_all_scripts(restype: ResourceType = ResourceType.NSS, hack_extract=
                 log_file(f"Skipping '{filename}', known incompatible...", filepath="fallback_out.txt")
                 continue
 
-            if not hack_extract:
-                nss_dir = Path(TEMP_NSS_DIRS[game].name)
-            else:
-                nss_dir = Path(r"C:\GitHub\Vanilla_KOTOR_Script_Source\K1").joinpath("iOS") if i == 0 else Path(r"C:\GitHub\Vanilla_KOTOR_Script_Source\K2").joinpath("iOS")
+            nss_dir = Path(TEMP_NSS_DIRS[game].name)
             nss_path: Path = nss_dir.joinpath(subfolder, filename)
             nss_path.parent.mkdir(exist_ok=True, parents=True)
 
-            if not hack_extract:
-                ncs_dir = Path(TEMP_NCS_DIRS[game].name)
-            else:
-                ncs_dir = Path(r"C:\GitHub\Vanilla_KOTOR_Script_Source\K1").joinpath("iOS") if i == 0 else Path(r"C:\GitHub\Vanilla_KOTOR_Script_Source\K2").joinpath("iOS")
+            ncs_dir = Path(TEMP_NCS_DIRS[game].name)
             ncs_path: Path = ncs_dir.joinpath(subfolder, filename).with_suffix(".ncs")
             ncs_path.parent.mkdir(exist_ok=True, parents=True)
 
-            if not hack_extract and resource.inside_bif:
+            if resource.inside_bif or subfolder == "scripts.bif":
                 assert nss_path not in symlink_map, f"'{nss_path.name}' is a bif script name that should not exist in symlink_map yet?"
                 symlink_map[nss_path] = resource
 
-            #assert hack_extract or not nss_path.is_file()
+            assert not nss_path.is_file()
             with nss_path.open("wb") as f:
                 f.write(resdata)
-
-            if hack_extract:
-                continue
 
             ALL_SCRIPTS[game].append((resource, nss_path, ncs_path))
 
@@ -185,6 +189,8 @@ def populate_all_scripts(restype: ResourceType = ResourceType.NSS, hack_extract=
             if working_folder in symlink_map:
                 continue
             if working_folder in seen_paths:
+                continue
+            if working_folder.name == "scripts.bif":
                 continue
 
             for bif_nss_path in symlink_map:

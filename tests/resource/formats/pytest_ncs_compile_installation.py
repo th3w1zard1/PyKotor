@@ -16,16 +16,15 @@ from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
 def add_sys_path(p: pathlib.Path):
     working_dir = str(p)
     if working_dir not in sys.path:
         sys.path.append(working_dir)
-if PYKOTOR_PATH.joinpath("pykotor").is_dir():
+if PYKOTOR_PATH.joinpath("pykotor").exists():
     add_sys_path(PYKOTOR_PATH)
-    os.chdir(PYKOTOR_PATH.parent)
-if UTILITY_PATH.joinpath("utility").is_dir():
+if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
 from pykotor.common.misc import Game  # noqa: E402
@@ -175,6 +174,7 @@ def compile_with_abstract_compatible(
                 stdout, stderr = compiler.compile_script(nss_path, ncs_path, game)
             except EntryPointError as e:
                 pytest.xfail(f"{compiler_identifier}: No entry point found in '{nss_path.name}': {e}")
+                return
             else:
                 if stderr:
                     raise CompileError(f"{stdout}: {stderr}")
@@ -184,7 +184,8 @@ def compile_with_abstract_compatible(
             try:
                 compiler.compile_script(nss_path, ncs_path, game, debug=False)
             except EntryPointError as e:
-                pytest.xfail(f"Inbuilt: No entry point found in '{nss_path.name}': {e}")
+                pytest.xfail(f"{compiler_identifier}: No entry point found in '{nss_path.name}': {e}")
+                return
 
         if not ncs_path.is_file():
             # raise it so _handle_compile_exc can be used to reduce duplicated logging code.
