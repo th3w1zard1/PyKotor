@@ -35,9 +35,8 @@ from utility.system.path import Path  # noqa: E402
 if TYPE_CHECKING:
     from typing_extensions import Literal
 
-#K1_PATH: str | None = os.environ.get("K1_PATH")
-K1_PATH: str = r"C:\Program Files (x86)\Steam\steamapps\common\swkotor\Override\K1"
-K2_PATH: str | None = None#os.environ.get("K2_PATH")
+K1_PATH: str = "../K1"
+K2_PATH: str = "../TSL"
 LOG_FILENAME = "test_ncs_compilers_install"
 
 ALL_INSTALLATIONS: dict[Game, Installation] | None = None
@@ -131,7 +130,7 @@ def populate_all_scripts(
 
     iterator_data = (
         (Game.K1, lambda: Path(K1_PATH).rglob("*")),
-        #(Game.K2, lambda: Path(K2_PATH).rglob("*")),
+        (Game.K2, lambda: Path(K2_PATH).rglob("*")),
     )
 
     for i, (game, iterator) in enumerate(iterator_data):
