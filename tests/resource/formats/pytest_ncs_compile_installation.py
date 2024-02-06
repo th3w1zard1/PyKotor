@@ -12,8 +12,6 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pykotor.extract.file import ResourceIdentifier
-from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
-from pykotor.tools.encoding import decode_bytes_with_fallbacks
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
@@ -251,14 +249,13 @@ def test_tslpatcher_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
-        compiler.change_nwnnsscomp_path(compiler_path)
+        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
             return
 
-        unique_ncs_path = ncs_path.with_name(f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher).ncs")
+        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher")
         with unique_ncs_path.open("rb") as f:
             compiler_result[compiler_path] = f.read()
@@ -273,7 +270,7 @@ def test_inbuilt_compiler(
         return
     if nss_path.is_symlink():
         return
-    compile_with_abstract_compatible(compiler, file_res, nss_path, ncs_path.with_name(f"{ncs_path.stem}_inbuilt"), game, "inbuilt")
+    compile_with_abstract_compatible(compiler, file_res, nss_path, ncs_path.with_stem(f"{ncs_path.stem}_inbuilt"), game, "inbuilt")
 
 def save_profiler_output(
     profiler: cProfile.Profile,
@@ -297,12 +294,14 @@ if __name__ == "__main__":
             "-v",
             "--full-trace",
             "-ra",
-            f"--log-file={LOG_FILENAME}.txt",
             "-o",
             "log_cli=true",
             "--capture=no",
-            #"-n",
-            #"4"
+            "--junitxml=pytest_report.xml",
+            "--html=pytest_report.html",
+            "--self-contained-html",
+            "-n",
+            "auto"
         ],
     )
 

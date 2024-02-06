@@ -1,9 +1,9 @@
 from __future__ import annotations
+import json
 
 from pathlib import Path
 
 import cProfile
-import contextlib
 import os
 import pathlib
 import shutil
@@ -40,7 +40,7 @@ K2_PATH: str = "../TSL"
 LOG_FILENAME = "test_ncs_compilers_install"
 
 ALL_INSTALLATIONS: dict[Game, Installation] | None = None
-ALL_SCRIPTS: dict[Game, list[tuple[FileResource, Path, Path]]] | None = None
+ALL_SCRIPTS: dict[Game, list[tuple[FileResource, Path, Path]]] = {Game.K1: [], Game.K2: []}
 TEMP_NSS_DIRS: dict[Game, TemporaryDirectory[str]] = {
     Game.K1: TemporaryDirectory(),
     Game.K2: TemporaryDirectory()
@@ -112,18 +112,22 @@ def _setup_and_profile_installation() -> dict[Game, Installation]:
         save_profiler_output(profiler, "installation_class_profile.pstat")
     return ALL_INSTALLATIONS
 
+@pytest.fixture(scope="session")
+def scripts_fixture():
+    global ALL_SCRIPTS
+    print("Returning all_scripts global")
+    return ALL_SCRIPTS
+
 def populate_all_scripts(
     restype: ResourceType = ResourceType.NSS,
+    hack_extract=False,
 ) -> dict[Game, list[tuple[FileResource, Path, Path]]]:
-    global ALL_SCRIPTS
-    if ALL_SCRIPTS is not None:
-        return ALL_SCRIPTS
 
     #global ALL_INSTALLATIONS
     #if ALL_INSTALLATIONS is None:
     #    ALL_INSTALLATIONS = _setup_and_profile_installation()
 
-    ALL_SCRIPTS = {Game.K1: [], Game.K2: []}
+    all_scripts: dict[Game, list[tuple[FileResource, Path, Path]]] = {Game.K1: [], Game.K2: []}
 
     symlink_map: dict[Path, FileResource] = {}
 
@@ -133,6 +137,8 @@ def populate_all_scripts(
     )
 
     for i, (game, iterator) in enumerate(iterator_data):
+        game_name = "K1" if game.is_k1() else "TSL"
+        print(f"Populating all {game_name} scripts...")
         for file in iterator():
             if not file.safe_isfile():
                 continue
@@ -146,9 +152,17 @@ def populate_all_scripts(
                 filepath=file
             )
             res_ident = resource.identifier()
-            resdata = resource.data()
             filename = str(res_ident)
-            subfolder = file.parent.name
+
+            if resource.inside_capsule:
+                subfolder = Installation.replace_module_extensions(file)
+            elif resource.inside_bif or file.parent.name == "scripts.bif":
+                if resource.inside_bif:
+                    subfolder = file.name
+                else:
+                    subfolder = file.parent.name
+            else:
+                subfolder = file.parent.name
 
             if res_ident in CANNOT_COMPILE_EXT[game]:
                 log_file(f"Skipping '{filename}', known incompatible...", filepath="fallback_out.txt")
@@ -168,18 +182,21 @@ def populate_all_scripts(
 
             entry = (resource, nss_path, ncs_path)
             if nss_path.is_file():
-                if entry not in ALL_SCRIPTS[game]:
+                if entry not in all_scripts[game]:
                     continue
-                ALL_SCRIPTS[game].append(entry)
+                all_scripts[game].append(entry)
                 continue  # No idea why this happens
 
+            resdata = resource.data()
             with nss_path.open("wb") as f:
                 f.write(resdata)
 
-            ALL_SCRIPTS[game].append(entry)
+            all_scripts[game].append(entry)
 
+        print(f"Populated {len(all_scripts[game])} {game_name} scripts.")
+        print(f"Symlinking {len(symlink_map)} scripts.bif scripts into every subfolder found at path '{Path(K1_PATH if game.is_k1() else K2_PATH).absolute()}'... this may take a while...")
         seen_paths = set()
-        for resource, nss_path, ncs_path in ALL_SCRIPTS[game]:
+        for resource, nss_path, ncs_path in all_scripts[game]:
             if nss_path in symlink_map:
                 continue
             working_folder = nss_path.parent
@@ -187,6 +204,7 @@ def populate_all_scripts(
                 continue
             if working_folder.name == "scripts.bif":
                 continue
+            print(f"Symlinking {len(symlink_map)} bif scripts into {working_folder}...")
 
             for bif_nss_path in symlink_map:
                 link_path = working_folder.joinpath(bif_nss_path.name)
@@ -197,7 +215,8 @@ def populate_all_scripts(
                 link_path.symlink_to(bif_nss_path, target_is_directory=False)
             seen_paths.add(working_folder)
 
-    return ALL_SCRIPTS
+    print("Finished symlinking.")
+    return all_scripts
 
 
 
@@ -242,7 +261,10 @@ def cleanup_temp_dirs():
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 def pytest_sessionstart(session: pytest.Session):
+    global ALL_SCRIPTS
     cleanup_before_tests()
+    scripts_data = populate_all_scripts()
+    ALL_SCRIPTS = scripts_data
 
 def pytest_sessionfinish(
     session: pytest.Session,
@@ -253,7 +275,9 @@ def pytest_sessionfinish(
 def pytest_generate_tests(metafunc: pytest.Metafunc):
     print("Generating tests...")
     if "script_data" in metafunc.fixturenames:
-        scripts_fixture = populate_all_scripts()
+        # Load the data prepared in the session start
+        with Path("scripts_data.json").open("r") as f:
+            scripts_fixture = json.load(f)
         test_data = [
             (game, script)
             for game, scripts in scripts_fixture.items()
