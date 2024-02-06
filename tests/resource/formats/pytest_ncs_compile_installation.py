@@ -47,10 +47,10 @@ if TYPE_CHECKING:
 
 K1_PATH: str | None = os.environ.get("K1_PATH")
 K2_PATH: str | None = os.environ.get("K2_PATH")
-KTOOL_NWNNSSCOMP_PATH: str | None = r"../nwnnsscomp.exe"
-TSLPATCHER_NWNNSSCOMP_PATH: str | None = r"C:\Users\boden\Documents\k1 mods\KillCzerkaJerk\tslpatchdata\nwnnsscomp.exe"
-K_SCRIPT_TOOL_NWNNSSCOMP_PATH: str | None = r"C:/Program Files (x86)/KotOR Scripting Tool/nwnnsscomp.exe"
-V1_NWNNSSCOMP_PATH: str | None = r"C:\Users\boden\Desktop\kotorcomp (1)\nwnnsscomp.exe"
+KTOOL_NWNNSSCOMP_PATH: str = "{game}/KTool/nwnnsscomp.exe"
+TSLPATCHER_NWNNSSCOMP_PATH: str = "{game}/TSLPatcher/nwnnsscomp.exe"
+K_SCRIPT_TOOL_NWNNSSCOMP_PATH: str = "{game}/KScript/nwnnsscomp.exe"
+V1_NWNNSSCOMP_PATH: str = "{game}/V1/nwnnsscomp.exe"
 LOG_FILENAME = "test_ncs_compilers_install"
 
 
@@ -242,19 +242,18 @@ def compare_external_results(
 def test_ktool_nwnnsscomp(
     script_data: tuple[Game, tuple[FileResource, Path, Path]],
 ):
-    compilers: dict[str | None, ExternalNCSCompiler | None] = {
-        KTOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(KTOOL_NWNNSSCOMP_PATH) if KTOOL_NWNNSSCOMP_PATH and Path(KTOOL_NWNNSSCOMP_PATH).is_file() else None,
+    compilers: dict[str, ExternalNCSCompiler] = {
+        KTOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(KTOOL_NWNNSSCOMP_PATH),
     }
 
-    compiler_result: dict[str | None, bytes | None] = {
+    compiler_result: dict[str, bytes | None] = {
         KTOOL_NWNNSSCOMP_PATH: None,
     }
 
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        if compiler is None or compiler_path is None:
-            continue  # don't test nonexistent compilers
+        compiler_path = compiler_path.format(game=("K1" if game.is_k1() else "TSL"))
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
@@ -265,75 +264,80 @@ def test_ktool_nwnnsscomp(
         with unique_ncs_path.open("rb") as f:
             compiler_result[compiler_path] = f.read()
 
-#def test_tslpatcher_nwnnsscomp(
-#    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-#):
-#    compilers: dict[str | None, ExternalNCSCompiler | None] = {
-#        TSLPATCHER_NWNNSSCOMP_PATH: ExternalNCSCompiler(TSLPATCHER_NWNNSSCOMP_PATH) if TSLPATCHER_NWNNSSCOMP_PATH and Path(TSLPATCHER_NWNNSSCOMP_PATH).is_file() else None,
-#    }
+def test_tslpatcher_nwnnsscomp(
+    script_data: tuple[Game, tuple[FileResource, Path, Path]],
+):
+    compilers: dict[str, ExternalNCSCompiler] = {
+        TSLPATCHER_NWNNSSCOMP_PATH: ExternalNCSCompiler(TSLPATCHER_NWNNSSCOMP_PATH),
+    }
 
-#    compiler_result: dict[str | None, bytes | None] = {
-#        TSLPATCHER_NWNNSSCOMP_PATH: None,
-#    }
+    compiler_result: dict[str, bytes | None] = {
+        TSLPATCHER_NWNNSSCOMP_PATH: None,
+    }
 
-#    game, script_info = script_data
-#    file_res, nss_path, ncs_path = script_info
-#    for compiler_path, compiler in compilers.items():
-#        if compiler is None or compiler_path is None:
-#            continue  # don't test nonexistent compilers
-#        if nss_path.name == "nwscript.nss":
-#            continue
-#        if os.path.islink(nss_path):
-#            continue
+    game, script_info = script_data
+    file_res, nss_path, ncs_path = script_info
+    for compiler_path, compiler in compilers.items():
+        compiler_path = compiler_path.format(game=("K1" if game.is_k1() else "TSL"))
+        if nss_path.name == "nwscript.nss":
+            continue
+        if nss_path.is_symlink():
+            return
 
-#        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(2)")
-#        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher_nwnnsscomp")
-#        with unique_ncs_path.open("rb") as f:
-#            compiler_result[compiler_path] = f.read()
+        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)")
+        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher")
+        with unique_ncs_path.open("rb") as f:
+            compiler_result[compiler_path] = f.read()
 
-#def test_kscript_tool_nwnnsscomp(
-#    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-#):
-#    compilers: dict[str | None, ExternalNCSCompiler | None] = {
-#        K_SCRIPT_TOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(K_SCRIPT_TOOL_NWNNSSCOMP_PATH) if K_SCRIPT_TOOL_NWNNSSCOMP_PATH and Path(K_SCRIPT_TOOL_NWNNSSCOMP_PATH).is_file() else None,
-#    }
+def test_kscript_nwnnsscomp(
+    script_data: tuple[Game, tuple[FileResource, Path, Path]],
+):
+    compilers: dict[str, ExternalNCSCompiler] = {
+        K_SCRIPT_TOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(K_SCRIPT_TOOL_NWNNSSCOMP_PATH),
+    }
 
-#    compiler_result: dict[str | None, bytes | None] = {
-#        K_SCRIPT_TOOL_NWNNSSCOMP_PATH: None,
-#    }
+    compiler_result: dict[str, bytes | None] = {
+        K_SCRIPT_TOOL_NWNNSSCOMP_PATH: None,
+    }
 
-#    game, script_info = script_data
-#    file_res, nss_path, ncs_path = script_info
-#    for i, (compiler_path, compiler) in enumerate(compilers.items()):
-#        if compiler is None or compiler_path is None:
-#            continue  # don't test nonexistent compilers
+    game, script_info = script_data
+    file_res, nss_path, ncs_path = script_info
+    for compiler_path, compiler in compilers.items():
+        compiler_path = compiler_path.format(game=("K1" if game.is_k1() else "TSL"))
+        if nss_path.name == "nwscript.nss":
+            continue
+        if nss_path.is_symlink():
+            return
 
-#        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(kscript_tool)")
-#        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "kscript_tool")
-#        with unique_ncs_path.open("rb") as f:
-#            compiler_result[compiler_path] = f.read()
+        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(kscript)")
+        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "kscript")
+        with unique_ncs_path.open("rb") as f:
+            compiler_result[compiler_path] = f.read()
 
-#def test_v1_nwnnsscomp(
-#    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-#):
-#    compilers: dict[str | None, ExternalNCSCompiler | None] = {
-#        V1_NWNNSSCOMP_PATH: ExternalNCSCompiler(V1_NWNNSSCOMP_PATH) if V1_NWNNSSCOMP_PATH and Path(V1_NWNNSSCOMP_PATH).is_file() else None,
-#    }
+def test_v1_nwnnsscomp(
+    script_data: tuple[Game, tuple[FileResource, Path, Path]],
+):
+    compilers: dict[str, ExternalNCSCompiler] = {
+        V1_NWNNSSCOMP_PATH: ExternalNCSCompiler(V1_NWNNSSCOMP_PATH),
+    }
 
-#    compiler_result: dict[str | None, bytes | None] = {
-#        V1_NWNNSSCOMP_PATH: None,
-#    }
+    compiler_result: dict[str, bytes | None] = {
+        V1_NWNNSSCOMP_PATH: None,
+    }
 
-#    game, script_info = script_data
-#    file_res, nss_path, ncs_path = script_info
-#    for i, (compiler_path, compiler) in enumerate(compilers.items()):
-#        if compiler is None or compiler_path is None:
-#            continue  # don't test nonexistent compilers
+    game, script_info = script_data
+    file_res, nss_path, ncs_path = script_info
+    for compiler_path, compiler in compilers.items():
+        compiler_path = compiler_path.format(game=("K1" if game.is_k1() else "TSL"))
+        if nss_path.name == "nwscript.nss":
+            continue
+        if nss_path.is_symlink():
+            return
 
-#        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(v1)")
-#        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "v1")
-#        with unique_ncs_path.open("rb") as f:
-#            compiler_result[compiler_path] = f.read()
+        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(v1)")
+        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "v1")
+        with unique_ncs_path.open("rb") as f:
+            compiler_result[compiler_path] = f.read()
 
 
 def test_inbuilt_compiler(
