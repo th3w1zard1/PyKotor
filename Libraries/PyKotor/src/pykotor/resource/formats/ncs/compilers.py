@@ -168,9 +168,10 @@ class NwnnsscompConfig:
 class ExternalNCSCompiler(NCSCompiler):
 
     def __init__(self, nwnnsscomp_path: os.PathLike | str):
-        self.nwnnsscomp_path: Path
+        self.nwnnsscomp_path: Path = Path.pathify(nwnnsscomp_path)
         self.filehash: str
-        self.change_nwnnsscomp_path(nwnnsscomp_path)
+        if self.nwnnsscomp_path.exists():
+            self.change_nwnnsscomp_path(self.nwnnsscomp_path)
 
     def get_info(self) -> ExternalCompilerConfig:
         return KnownExternalCompilers.from_sha256(self.filehash).value
