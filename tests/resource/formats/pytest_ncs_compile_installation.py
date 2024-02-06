@@ -4,7 +4,6 @@ import cProfile
 import logging
 import os
 import pathlib
-from pathlib import Path
 import sys
 from io import StringIO
 from logging.handlers import RotatingFileHandler
@@ -16,10 +15,10 @@ from pykotor.extract.file import ResourceIdentifier
 from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 
-THIS_SCRIPT_PATH = Path(__file__)
+THIS_SCRIPT_PATH = pathlib.Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
-def add_sys_path(p: Path):
+def add_sys_path(p: pathlib.Path):
     working_dir = str(p)
     if working_dir not in sys.path:
         sys.path.append(working_dir)
@@ -39,6 +38,7 @@ from pykotor.resource.formats.ncs.ncs_auto import compile_nss, write_ncs  # noqa
 from pykotor.resource.formats.ncs.ncs_data import NCS, NCSCompiler  # noqa: E402
 from pykotor.resource.type import ResourceType  # noqa: E402
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception  # noqa: E402
+from utility.system.path import Path  # noqa: E402
 
 if TYPE_CHECKING:
     from _pytest.reports import TestReport
@@ -99,7 +99,7 @@ def log_file(
     filepath = (
         Path.cwd().joinpath(f"{LOG_FILENAME}.txt")
         if filepath is None
-        else Path(filepath)
+        else Path.pathify(filepath)
     )
     with filepath.open(mode="a", encoding="utf-8", errors="strict") as f:
         f.write(msg)
@@ -280,7 +280,7 @@ def save_profiler_output(
     filepath: os.PathLike | str,
 ):
     profiler.disable()
-    profiler_output_file = Path(filepath)
+    profiler_output_file = Path.pathify(filepath)
     profiler_output_file_str = str(profiler_output_file)
     profiler.dump_stats(profiler_output_file_str)
 
