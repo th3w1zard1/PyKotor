@@ -45,10 +45,10 @@ if TYPE_CHECKING:
     from ply import yacc
     from pykotor.extract.file import FileResource
 
-KTOOL_NWNNSSCOMP_PATH: str = "<game>/nwnnsscomp/KTool/nwnnsscomp.exe"
-TSLPATCHER_NWNNSSCOMP_PATH: str = "<game>/nwnnsscomp/TSLPatcher/nwnnsscomp.exe"
-K_SCRIPT_TOOL_NWNNSSCOMP_PATH: str = "<game>/nwnnsscomp/KScript/nwnnsscomp.exe"
-V1_NWNNSSCOMP_PATH: str = "<game>/nwnnsscomp/V1/nwnnsscomp.exe"
+KTOOL_NWNNSSCOMP_PATH: str = "../<game>/nwnnsscomp/KTool/nwnnsscomp.exe"
+TSLPATCHER_NWNNSSCOMP_PATH: str = "../<game>/nwnnsscomp/TSLPatcher/nwnnsscomp.exe"
+K_SCRIPT_TOOL_NWNNSSCOMP_PATH: str = "../<game>/nwnnsscomp/KScript/nwnnsscomp.exe"
+V1_NWNNSSCOMP_PATH: str = "../<game>/nwnnsscomp/V1/nwnnsscomp.exe"
 LOG_FILENAME = "test_ncs_compilers_install"
 
 
