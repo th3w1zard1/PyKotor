@@ -174,7 +174,7 @@ def populate_all_scripts(
             ncs_path: Path = ncs_dir.joinpath(subfolder, filename).with_suffix(".ncs")
             ncs_path.parent.mkdir(exist_ok=True, parents=True)
 
-            if resource.inside_bif or subfolder == "scripts.bif":
+            if (resource.inside_bif or subfolder == "scripts.bif") and "_inc_" in filename.lower():
                 assert nss_path not in symlink_map, f"'{nss_path.name}' is a bif script name that should not exist in symlink_map yet?"
                 symlink_map[nss_path] = resource
 
@@ -274,10 +274,9 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
     print("Generating tests...")
     if "script_data" in metafunc.fixturenames:
         # Load the data prepared in the session start
-        scripts_fixture = ALL_SCRIPTS
         test_data = [
             (game, script)
-            for game, scripts in scripts_fixture.items()
+            for game, scripts in ALL_SCRIPTS.items()
             for script in scripts
             if not script[1].is_symlink()# and not print(f"Skipping test collection for '{script[1]}', already symlinked to '{script[1].resolve()}'")
         ]
