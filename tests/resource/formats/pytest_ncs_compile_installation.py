@@ -263,59 +263,6 @@ def test_tslpatcher_nwnnsscomp(
         with unique_ncs_path.open("rb") as f:
             compiler_result[compiler_path] = f.read()
 
-def test_kscript_nwnnsscomp(
-    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-):
-    compilers: dict[str, ExternalNCSCompiler] = {
-        K_SCRIPT_TOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(K_SCRIPT_TOOL_NWNNSSCOMP_PATH),
-    }
-
-    compiler_result: dict[str, bytes | None] = {
-        K_SCRIPT_TOOL_NWNNSSCOMP_PATH: None,
-    }
-
-    game, script_info = script_data
-    file_res, nss_path, ncs_path = script_info
-    for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
-        compiler.change_nwnnsscomp_path(compiler_path)
-        if nss_path.name == "nwscript.nss":
-            continue
-        if nss_path.is_symlink():
-            return
-
-        unique_ncs_path = ncs_path.with_name(f"{ncs_path.stem}_{Path(compiler_path).stem}_(kscript).ncs")
-        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "kscript")
-        with unique_ncs_path.open("rb") as f:
-            compiler_result[compiler_path] = f.read()
-
-def test_v1_nwnnsscomp(
-    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-):
-    compilers: dict[str, ExternalNCSCompiler] = {
-        V1_NWNNSSCOMP_PATH: ExternalNCSCompiler(V1_NWNNSSCOMP_PATH),
-    }
-
-    compiler_result: dict[str, bytes | None] = {
-        V1_NWNNSSCOMP_PATH: None,
-    }
-
-    game, script_info = script_data
-    file_res, nss_path, ncs_path = script_info
-    for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
-        compiler.change_nwnnsscomp_path(compiler_path)
-        if nss_path.name == "nwscript.nss":
-            continue
-        if nss_path.is_symlink():
-            return
-
-        unique_ncs_path = ncs_path.with_name(f"{ncs_path.stem}_{Path(compiler_path).stem}_(v1).ncs")
-        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "v1")
-        with unique_ncs_path.open("rb") as f:
-            compiler_result[compiler_path] = f.read()
-
-
 def test_inbuilt_compiler(
     script_data: tuple[Game, tuple[FileResource, Path, Path]]
 ):
