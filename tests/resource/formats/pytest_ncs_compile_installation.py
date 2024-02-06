@@ -11,10 +11,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from pykotor.extract.file import ResourceIdentifier
-from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
-from pykotor.tools.encoding import decode_bytes_with_fallbacks
-
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
@@ -28,6 +24,11 @@ if PYKOTOR_PATH.joinpath("pykotor").is_dir():
 if UTILITY_PATH.joinpath("utility").is_dir():
     add_sys_path(UTILITY_PATH)
 
+
+from pykotor.extract.file import ResourceIdentifier
+from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
+from pykotor.resource.generics.git import construct_git, read_git, write_git
+from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from pykotor.common.misc import Game  # noqa: E402
 from pykotor.common.scriptdefs import KOTOR_CONSTANTS, KOTOR_FUNCTIONS  # noqa: E402
 from pykotor.common.scriptlib import KOTOR_LIBRARY, TSL_LIBRARY  # noqa: E402
@@ -279,6 +280,7 @@ def compare_external_results(
 #        with unique_ncs_path.open("rb") as f:
 #            compiler_result[compiler_path] = f.read()
 
+
 def test_tslpatcher_nwnnsscomp(
     script_data: tuple[Game, tuple[FileResource, Path, Path]],
 ):
@@ -301,10 +303,12 @@ def test_tslpatcher_nwnnsscomp(
 
     # Rename the active nwscript.nss based on the game.
     if game.is_k1() and k1_nwscript_path.is_file():
-        nwscript_path.rename(k2_nwscript_path)  # Rename k2's nwscript.nss to k2_nwscript.nss
+        if nwscript_path.exists():
+            nwscript_path.rename(k2_nwscript_path)  # Rename k2's nwscript.nss to k2_nwscript.nss
         k1_nwscript_path.rename(nwscript_path)  # Rename k1_nwscript.nss to nwscript.nss to activate
     if game.is_k2() and k2_nwscript_path.is_file():
-        nwscript_path.rename(k1_nwscript_path)  # Rename k1's nwscript.nss to k1_nwscript.nss
+        if nwscript_path.exists():
+            nwscript_path.rename(k1_nwscript_path)  # Rename k1's nwscript.nss to k1_nwscript.nss
         k2_nwscript_path.rename(nwscript_path)  # Rename k2_nwscript.nss to nwscript.nss to activate
 
     file_res, nss_path, ncs_path = script_info
