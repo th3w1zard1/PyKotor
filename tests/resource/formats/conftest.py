@@ -1,5 +1,4 @@
 from __future__ import annotations
-import json
 
 from pathlib import Path
 
@@ -275,11 +274,9 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
     print("Generating tests...")
     if "script_data" in metafunc.fixturenames:
         # Load the data prepared in the session start
-        with Path("scripts_data.json").open("r") as f:
-            scripts_fixture = json.load(f)
         test_data = [
             (game, script)
-            for game, scripts in scripts_fixture.items()
+            for game, scripts in ALL_SCRIPTS.items()
             for script in scripts
             if not script[1].is_symlink()# and not print(f"Skipping test collection for '{script[1]}', already symlinked to '{script[1].resolve()}'")
         ]
