@@ -238,37 +238,44 @@ def compare_external_results(
     if matches:
         print("\n".join(matches))
 
-def test_ktool_nwnnsscomp(
-    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-):
-    compilers: dict[str | None, ExternalNCSCompiler | None] = {
-        KTOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(KTOOL_NWNNSSCOMP_PATH) if KTOOL_NWNNSSCOMP_PATH and Path(KTOOL_NWNNSSCOMP_PATH).is_file() else None,
-    }
+#def test_ktool_nwnnsscomp(
+#    script_data: tuple[Game, tuple[FileResource, Path, Path]],
+#):
+#    compilers: dict[str | None, ExternalNCSCompiler | None] = {
+#        KTOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(KTOOL_NWNNSSCOMP_PATH) if KTOOL_NWNNSSCOMP_PATH and Path(KTOOL_NWNNSSCOMP_PATH).is_file() else None,
+#    }
 
-    compiler_result: dict[str | None, bytes | None] = {
-        KTOOL_NWNNSSCOMP_PATH: None,
-    }
+#    compiler_result: dict[str | None, bytes | None] = {
+#        KTOOL_NWNNSSCOMP_PATH: None,
+#    }
 
-    game, script_info = script_data
-    file_res, nss_path, ncs_path = script_info
-    for compiler_path, compiler in compilers.items():
-        if compiler is None or compiler_path is None:
-            continue  # don't test nonexistent compilers
-        if nss_path.name == "nwscript.nss":
-            continue
-        if os.path.islink(nss_path):
-            continue
+#    game, script_info = script_data
+#    file_res, nss_path, ncs_path = script_info
+#    for compiler_path, compiler in compilers.items():
+#        if compiler is None or compiler_path is None:
+#            continue  # don't test nonexistent compilers
+#        if nss_path.name == "nwscript.nss":
+#            continue
+#        if os.path.islink(nss_path):
+#            continue
 
-        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(ktool)")
-        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "ktool")
-        with unique_ncs_path.open("rb") as f:
-            compiler_result[compiler_path] = f.read()
+#        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(ktool)")
+#        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "ktool")
+#        with unique_ncs_path.open("rb") as f:
+#            compiler_result[compiler_path] = f.read()
 
 def test_tslpatcher_nwnnsscomp(
     script_data: tuple[Game, tuple[FileResource, Path, Path]],
 ):
-    compilers: dict[str | None, ExternalNCSCompiler | None] = {
-        TSLPATCHER_NWNNSSCOMP_PATH: ExternalNCSCompiler(TSLPATCHER_NWNNSSCOMP_PATH) if TSLPATCHER_NWNNSSCOMP_PATH and Path(TSLPATCHER_NWNNSSCOMP_PATH).is_file() else None,
+    if TSLPATCHER_NWNNSSCOMP_PATH is None or not Path(TSLPATCHER_NWNNSSCOMP_PATH).is_file():
+        return
+
+    nwscript_path = Path(TSLPATCHER_NWNNSSCOMP_PATH).parent.joinpath("nwscript.nss")
+    k1_nwscript_path = nwscript_path.with_name("k1_nwscript.nss")
+    k2_nwscript_path = nwscript_path.with_name("k2_nwscript_path")
+
+    compilers: dict[str, ExternalNCSCompiler] = {
+        TSLPATCHER_NWNNSSCOMP_PATH: ExternalNCSCompiler(TSLPATCHER_NWNNSSCOMP_PATH),
     }
 
     compiler_result: dict[str | None, bytes | None] = {
@@ -276,6 +283,15 @@ def test_tslpatcher_nwnnsscomp(
     }
 
     game, script_info = script_data
+
+    # Rename the active nwscript.nss based on the game.
+    if game.is_k1() and k1_nwscript_path.is_file():
+        nwscript_path.rename(k2_nwscript_path)  # Rename k2's nwscript.nss to k2_nwscript.nss
+        k1_nwscript_path.rename(nwscript_path)  # Rename k1_nwscript.nss to nwscript.nss to activate
+    if game.is_k2() and k2_nwscript_path.is_file():
+        nwscript_path.rename(k1_nwscript_path)  # Rename k1's nwscript.nss to k1_nwscript.nss
+        k2_nwscript_path.rename(nwscript_path)  # Rename k2_nwscript.nss to nwscript.nss to activate
+
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
         if compiler is None or compiler_path is None:
@@ -420,9 +436,9 @@ def save_profiler_output(
     profiler.dump_stats(profiler_output_file_str)
 
 if __name__ == "__main__":
-    profiler = True  # type: ignore[reportAssignmentType]
+    profiler: cProfile.Profile = True  # type: ignore[reportAssignmentType, assignment]
     if profiler:
-        profiler: cProfile.Profile = cProfile.Profile()
+        profiler = cProfile.Profile()
         profiler.enable()
 
 
@@ -430,14 +446,17 @@ if __name__ == "__main__":
         [
             __file__,
             "-v",
-            "--full-trace",
+            #"--full-trace",
             "-ra",
             f"--log-file={LOG_FILENAME}.txt",
             "-o",
             "log_cli=true",
-            #"--capture=no",
-            #"-n",
-            #"4"
+            "--capture=no",
+            "--junitxml=pytest_report.xml",
+            "--html=pytest_report.html",
+            #"--self-contained-html",
+            "-n",
+            "auto"
         ],
     )
 

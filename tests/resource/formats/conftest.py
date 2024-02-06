@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import cProfile
-import contextlib
+from contextlib import suppress
 import os
 import pathlib
 import shutil
@@ -14,27 +12,25 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
 def add_sys_path(p: pathlib.Path):
     working_dir = str(p)
     if working_dir not in sys.path:
         sys.path.append(working_dir)
-if PYKOTOR_PATH.joinpath("pykotor").is_dir():
+if PYKOTOR_PATH.joinpath("pykotor").exists():
     add_sys_path(PYKOTOR_PATH)
-    os.chdir(PYKOTOR_PATH.parent)
-if UTILITY_PATH.joinpath("utility").is_dir():
+if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
+from pykotor.extract.file import FileResource, ResourceIdentifier  # noqa: E402
 from pykotor.common.misc import Game  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.resource.type import ResourceType  # noqa: E402
 from utility.system.path import Path  # noqa: E402
 
 if TYPE_CHECKING:
-    from pykotor.extract.file import FileResource
     from typing_extensions import Literal
 
 K1_PATH: str | None = os.environ.get("K1_PATH")
@@ -42,7 +38,8 @@ K2_PATH: str | None = os.environ.get("K2_PATH")
 LOG_FILENAME = "test_ncs_compilers_install"
 
 ALL_INSTALLATIONS: dict[Game, Installation] | None = None
-ALL_SCRIPTS: dict[Game, list[tuple[FileResource, Path, Path]]] | None = None
+ALL_SCRIPTS: dict[Game, list[tuple[FileResource, Path, Path]]] = {Game.K1: [], Game.K2: []}
+ALL_GFFS: dict[Game, list[tuple[FileResource, Path]]] = {Game.K1: [], Game.K2: []}
 TEMP_NSS_DIRS: dict[Game, TemporaryDirectory[str]] = {
     Game.K1: TemporaryDirectory(),
     Game.K2: TemporaryDirectory()
@@ -50,6 +47,11 @@ TEMP_NSS_DIRS: dict[Game, TemporaryDirectory[str]] = {
 TEMP_NCS_DIRS: dict[Game, TemporaryDirectory[str]] = {
     Game.K1: TemporaryDirectory(),
     Game.K2: TemporaryDirectory()
+}
+
+TEMP_GFF_DIRS: dict[Game, TemporaryDirectory[str]] = {
+    Game.K1: TemporaryDirectory(),
+    Game.K2: TemporaryDirectory(),
 }
 
 CANNOT_COMPILE_EXT: dict[Game, set[str]] = {
@@ -60,12 +62,15 @@ CANNOT_COMPILE_EXT: dict[Game, set[str]] = {
 def pytest_report_teststatus(report: pytest.TestReport, config: pytest.Config) -> tuple[Literal['failed'], Literal['F'], str] | None:
     if report.failed:
         if report.longrepr is None:
-            msg = ""
-        elif hasattr(report.longrepr, "reprcrash"):
-            msg = report.longrepr.reprcrash.message
+            return "failed", "F", f"FAILED: <unknown error>"
+
+        reprcrash = getattr(report.longrepr, "reprcrash", None)
+        if reprcrash is not None:
+            msg = reprcrash.message
         else:
             msg = repr(report.longrepr)
         return "failed", "F", f"FAILED: {msg}"
+    return None
 
 def save_profiler_output(profiler: cProfile.Profile, filepath: os.PathLike | str):
     profiler.disable()
@@ -100,104 +105,146 @@ def _setup_and_profile_installation() -> dict[Game, Installation]:
 
     ALL_INSTALLATIONS = {}
 
-    profiler = True  # type: ignore[reportAssignmentType]
+    profiler: cProfile.Profile = True  # type: ignore[reportAssignmentType, assignment]
     if profiler:
-        profiler: cProfile.Profile = cProfile.Profile()
+        profiler = cProfile.Profile()
         profiler.enable()
 
-    if K1_PATH and Path(K1_PATH).joinpath("chitin.key").is_file():
+    if K1_PATH and Path(K1_PATH).joinpath("chitin.key").safe_isfile():
         ALL_INSTALLATIONS[Game.K1] = Installation(K1_PATH)
-    if K2_PATH and Path(K2_PATH).joinpath("chitin.key").is_file():
+    if K2_PATH and Path(K2_PATH).joinpath("chitin.key").safe_isfile():
         ALL_INSTALLATIONS[Game.K2] = Installation(K2_PATH)
 
     if profiler:
         save_profiler_output(profiler, "installation_class_profile.pstat")
     return ALL_INSTALLATIONS
 
-def populate_all_scripts(restype: ResourceType = ResourceType.NSS, hack_extract=False) -> dict[Game, list[tuple[FileResource, Path, Path]]]:
+@pytest.fixture(scope="session")
+def scripts_fixture() -> dict[Game, list[tuple[FileResource, Path, Path]]]:
     global ALL_SCRIPTS
-    if ALL_SCRIPTS is not None:
-        return ALL_SCRIPTS
+    print("Returning ALL_SCRIPTS global")
+    return ALL_SCRIPTS
+
+@pytest.fixture(scope="session")
+def gffs_fixture() -> dict[Game, list[tuple[FileResource, Path]]]:
+    global ALL_GFFS
+    print("Returning ALL_GFFS global")
+    return ALL_GFFS
+
+def populate_all_gffs(
+    restype: ResourceType = ResourceType.NSS,
+):
+    global ALL_INSTALLATIONS
+    if ALL_INSTALLATIONS is None:
+        ALL_INSTALLATIONS = _setup_and_profile_installation()
+
+    all_gffs: dict[Game, list[tuple[FileResource, Path]]] = {Game.K1: [], Game.K2: []}
+    for game, installation in ALL_INSTALLATIONS.items():
+        gff_convert_dir = Path(TEMP_GFF_DIRS[game].name)
+        for resource in installation:
+            if resource.restype().contents != "gff":
+                continue
+            res_ident = resource.identifier()
+            filename = str(res_ident)
+            filepath = resource.filepath()
+
+            if resource.inside_capsule:
+                subfolder = Installation.replace_module_extensions(filepath)
+            elif resource.inside_bif:
+                subfolder = filepath.name
+            else:
+                subfolder = filepath.parent.name
+            gff_convert_filepath = gff_convert_dir / subfolder / filename
+            all_gffs[game].append((resource, gff_convert_filepath))
+  
+    return all_gffs
+
+
+            
+
+def populate_all_scripts(
+    restype: ResourceType = ResourceType.NSS,
+) -> dict[Game, list[tuple[FileResource, Path, Path]]]:
 
     global ALL_INSTALLATIONS
     if ALL_INSTALLATIONS is None:
         ALL_INSTALLATIONS = _setup_and_profile_installation()
 
-    ALL_SCRIPTS = {Game.K1: [], Game.K2: []}
-
+    all_scripts: dict[Game, list[tuple[FileResource, Path, Path]]] = {Game.K1: [], Game.K2: []}
     symlink_map: dict[Path, FileResource] = {}
 
-    iterator = (
-        (Game.K1, Installation(K1_PATH)),
-        (Game.K2, Installation(K2_PATH)),
-    ) if hack_extract else ALL_INSTALLATIONS.items()
-
-
-    for i, (game, installation) in enumerate(iterator):
-        for resource in installation: #.override_resources():
-            if resource.restype() != restype:
+    for game, installation in ALL_INSTALLATIONS.items():
+        game_name = "K1" if game.is_k1() else "TSL"
+        print(f"Populating all {game_name} scripts...")
+        for resource in installation:
+            res_ident = resource.identifier()
+            if res_ident.restype != restype:
                 continue
             res_ident = resource.identifier()
-            resdata = resource.data()
             filename = str(res_ident)
+            filepath = resource.filepath()
 
             if resource.inside_capsule:
-                subfolder = Installation.replace_module_extensions(resource.filepath())
+                subfolder = Installation.replace_module_extensions(filepath)
             elif resource.inside_bif:
-                subfolder = resource.filepath().name
+                subfolder = filepath.name
             else:
-                subfolder = resource.filepath().parent.name
+                subfolder = filepath.parent.name
 
             if res_ident in CANNOT_COMPILE_EXT[game]:
                 log_file(f"Skipping '{filename}', known incompatible...", filepath="fallback_out.txt")
                 continue
 
-            if not hack_extract:
-                nss_dir = Path(TEMP_NSS_DIRS[game].name)
-            else:
-                nss_dir = Path(r"C:\GitHub\Vanilla_KOTOR_Script_Source\K1").joinpath("iOS") if i == 0 else Path(r"C:\GitHub\Vanilla_KOTOR_Script_Source\K2").joinpath("iOS")
+            nss_dir = Path(TEMP_NSS_DIRS[game].name)
             nss_path: Path = nss_dir.joinpath(subfolder, filename)
             nss_path.parent.mkdir(exist_ok=True, parents=True)
 
-            if not hack_extract:
-                ncs_dir = Path(TEMP_NCS_DIRS[game].name)
-            else:
-                ncs_dir = Path(r"C:\GitHub\Vanilla_KOTOR_Script_Source\K1").joinpath("iOS") if i == 0 else Path(r"C:\GitHub\Vanilla_KOTOR_Script_Source\K2").joinpath("iOS")
+            ncs_dir = Path(TEMP_NCS_DIRS[game].name)
             ncs_path: Path = ncs_dir.joinpath(subfolder, filename).with_suffix(".ncs")
             ncs_path.parent.mkdir(exist_ok=True, parents=True)
 
-            if not hack_extract and resource.inside_bif:
+            if resource.inside_bif and "_inc_" in filename.lower():
                 assert nss_path not in symlink_map, f"'{nss_path.name}' is a bif script name that should not exist in symlink_map yet?"
                 symlink_map[nss_path] = resource
 
-            #assert hack_extract or not nss_path.is_file()
+            entry = (resource, nss_path, ncs_path)
+            if nss_path.is_file():
+                if entry not in all_scripts[game]:
+                    continue
+                all_scripts[game].append(entry)
+                continue  # No idea why this happens
+
+            resdata = resource.data()
             with nss_path.open("wb") as f:
                 f.write(resdata)
 
-            if hack_extract:
-                continue
+            all_scripts[game].append(entry)
 
-            ALL_SCRIPTS[game].append((resource, nss_path, ncs_path))
-
+        print(f"Populated {len(all_scripts[game])} {game_name} scripts.")
+        print(f"Symlinking {len(symlink_map)} scripts.bif scripts into subfolders... this may take a while...")
         seen_paths = set()
-        for resource, nss_path, ncs_path in ALL_SCRIPTS[game]:
-            working_folder = nss_path.parent
-            if working_folder in symlink_map:
+        for resource, nss_path, ncs_path in all_scripts[game]:
+            if nss_path in symlink_map:
                 continue
+            working_folder = nss_path.parent
             if working_folder in seen_paths:
                 continue
+            if working_folder.name == "scripts.bif":
+                continue
+            print(f"Symlinking {len(symlink_map)} bif scripts into {working_folder}...")
 
             for bif_nss_path in symlink_map:
                 link_path = working_folder.joinpath(bif_nss_path.name)
-                #assert not link_path.is_file(), f"'{nss_path.name}' is a bif script name that should not exist at this path yet?"
-                if link_path.is_file():
+                if link_path.exists():
+                    print(f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}")
                     continue
+                #already_exists_msg = f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}"
+                #assert not link_path.is_file(), already_exists_msg
                 link_path.symlink_to(bif_nss_path, target_is_directory=False)
             seen_paths.add(working_folder)
 
-
-
-    return ALL_SCRIPTS
+    print("Finished symlinking.")
+    return all_scripts
 
 
 
@@ -219,7 +266,9 @@ def cleanup_before_tests():
         "*_incompatible*.txt",
         "*fallback_level*",
         "*test_ncs_compilers_install.txt",
-        "*.pstat"
+        "*.pstat",
+        "*pytest_report.html",
+        "*pytest_report.xml",
     ]
 
     # Delete log files
@@ -227,9 +276,14 @@ def cleanup_before_tests():
         for file in Path.cwd().glob(filename):
             try:
                 file.unlink(missing_ok=True)
-                print(f"Cleaned {file} in preparation for new test...")
+                print(f"Cleaned '{file}' in preparation for new test...")
             except Exception as e:
-                print(f"Could not cleanup {file}: {e}")
+                exc_str = str(e)
+                file_path_str = str(file)
+                if file_path_str.lower() in exc_str.lower():
+                    print(f"Cleanup failed: {exc_str}")
+                else:
+                    print(f"Could not cleanup '{file}': {e}")
 
 def cleanup_temp_dirs():
     temp_dirs = [
@@ -237,12 +291,25 @@ def cleanup_temp_dirs():
         TEMP_NCS_DIRS[Game.K1].name,
         TEMP_NSS_DIRS[Game.K2].name,
         TEMP_NCS_DIRS[Game.K2].name,
+        TEMP_GFF_DIRS[Game.K1].name,
+        TEMP_GFF_DIRS[Game.K2].name,
     ]
     for temp_dir in temp_dirs:
-        shutil.rmtree(temp_dir, ignore_errors=True)
+        temp_dirpath = Path(temp_dir)
+        #temp_dirpath.gain_access(recurse=True)
+        for temp_file in temp_dirpath.safe_rglob("*"):
+            with suppress(Exception):
+                temp_file.unlink(missing_ok=True)
+        with suppress(Exception):
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 def pytest_sessionstart(session: pytest.Session):
     cleanup_before_tests()
+
+    global ALL_SCRIPTS
+    ALL_SCRIPTS = populate_all_scripts()
+    global ALL_GFFS
+    ALL_GFFS = populate_all_gffs()
 
 def pytest_sessionfinish(
     session: pytest.Session,
@@ -250,27 +317,29 @@ def pytest_sessionfinish(
 ):
     cleanup_temp_dirs()
 
-def pytest_generate_nss_tests(metafunc: pytest.Metafunc):
-    scripts_fixture = populate_all_scripts()
-    test_data = [
-        (game, script)
-        for game, scripts in scripts_fixture.items()
-        for script in scripts
-        if not script[1].is_symlink() and not print(f"Skipping {script[1]}, is symlinked")
-    ]
-    ids=[
-        f"{game}_{script[0].identifier()}"
-        for game, script in test_data
-    ]
-    metafunc.parametrize("script_data", test_data, ids=ids, indirect=True)
-
 def pytest_generate_tests(metafunc: pytest.Metafunc):
     if "script_data" in metafunc.fixturenames:
-        pytest_generate_nss_tests(metafunc)
+        print("Generating NSS compile tests...")
+        # Load the data prepared in the session start
+        test_data = [
+            (game, script)
+            for game, scripts in ALL_SCRIPTS.items()
+            for script in scripts
+            if not script[1].is_symlink()# and not print(f"Skipping test collection for '{script[1]}', already symlinked to '{script[1].resolve()}'")
+        ]
+        print(f"Test data collected. Total tests: {len(test_data)}")
+        ids=[
+            f"{game}_{script[0].identifier()}"
+            for game, script in test_data
+        ]
+        print(f"Test IDs collected. Total IDs: {len(ids)}")
+        metafunc.parametrize("script_data", test_data, ids=ids, indirect=True)
+        print("Tests have finished parametrizing!")
+    if "gff_data" in metafunc.fixturenames:
+        print("Generating GFF conversion tests...")
 
-CLEANUP_RAN = False
-if __name__ != "__main__" and not CLEANUP_RAN:
-    print("Cleaning up old logs before tests run...")
-    cleanup_before_tests()
-    CLEANUP_RAN = True
-    CLEANUP_RAN = True
+#CLEANUP_RAN = False  # TODO: this will never work because it's defined on the module level, need a global level higher than that?
+#if __name__ != "__main__" and not CLEANUP_RAN:
+#    print("Cleaning up old logs before tests run...")
+#    cleanup_before_tests()
+#    CLEANUP_RAN = True
