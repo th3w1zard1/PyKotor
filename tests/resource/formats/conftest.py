@@ -185,9 +185,6 @@ def populate_all_scripts(
                 all_scripts[game].append(entry)
                 continue  # No idea why this happens
 
-            if resource.inside_bif or file.parent.name == "scripts.bif" or file.parents[1].name == "Rims":
-                continue
-
             resdata = resource.data()
             with nss_path.open("wb") as f:
                 f.write(resdata)
