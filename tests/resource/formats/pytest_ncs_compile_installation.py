@@ -249,7 +249,7 @@ def test_tslpatcher_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
+        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
         compiler.change_nwnnsscomp_path(compiler_path)
         if nss_path.name == "nwscript.nss":
             continue
