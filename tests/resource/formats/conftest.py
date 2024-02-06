@@ -175,9 +175,9 @@ def populate_all_scripts(
 
         seen_paths = set()
         for resource, nss_path, ncs_path in ALL_SCRIPTS[game]:
-            working_folder = nss_path.parent
-            if working_folder in symlink_map:
+            if nss_path in symlink_map:
                 continue
+            working_folder = nss_path.parent
             if working_folder in seen_paths:
                 continue
             if working_folder.name == "scripts.bif":

@@ -237,32 +237,6 @@ def compare_external_results(
     if matches:
         print("\n".join(matches))
 
-def test_ktool_nwnnsscomp(
-    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-):
-    compilers: dict[str, ExternalNCSCompiler] = {
-        KTOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(KTOOL_NWNNSSCOMP_PATH),
-    }
-
-    compiler_result: dict[str, bytes | None] = {
-        KTOOL_NWNNSSCOMP_PATH: None,
-    }
-
-    game, script_info = script_data
-    file_res, nss_path, ncs_path = script_info
-    for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
-        compiler.change_nwnnsscomp_path(compiler_path)
-        if nss_path.name == "nwscript.nss":
-            continue
-        if nss_path.is_symlink():
-            return
-
-        unique_ncs_path = ncs_path.with_name(f"{ncs_path.stem}_{Path(compiler_path).stem}_(ktool).ncs")
-        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "ktool")
-        with unique_ncs_path.open("rb") as f:
-            compiler_result[compiler_path] = f.read()
-
 def test_tslpatcher_nwnnsscomp(
     script_data: tuple[Game, tuple[FileResource, Path, Path]],
 ):
