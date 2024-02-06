@@ -133,7 +133,6 @@ def populate_all_scripts(
 
     iterator_data = (
         (Game.K1, lambda: Path(K1_PATH).rglob("*")),
-        (Game.K2, lambda: Path(K2_PATH).rglob("*")),
     )
 
     for game, iterator in iterator_data:
