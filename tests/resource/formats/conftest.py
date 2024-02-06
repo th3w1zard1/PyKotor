@@ -176,11 +176,17 @@ def populate_all_scripts(
                 assert nss_path not in symlink_map, f"'{nss_path.name}' is a bif script name that should not exist in symlink_map yet?"
                 symlink_map[nss_path] = resource
 
-            assert not nss_path.is_file()
+            entry = (resource, nss_path, ncs_path)
+            if nss_path.is_file():
+                if entry not in ALL_SCRIPTS[game]:
+                    continue
+                ALL_SCRIPTS[game].append(entry)
+                continue  # No idea why this happens
+
             with nss_path.open("wb") as f:
                 f.write(resdata)
 
-            ALL_SCRIPTS[game].append((resource, nss_path, ncs_path))
+            ALL_SCRIPTS[game].append(entry)
 
         seen_paths = set()
         for resource, nss_path, ncs_path in ALL_SCRIPTS[game]:

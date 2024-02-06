@@ -257,8 +257,8 @@ def test_ktool_nwnnsscomp(
             continue  # don't test nonexistent compilers
         if nss_path.name == "nwscript.nss":
             continue
-        if os.path.islink(nss_path):
-            continue
+        if nss_path.is_symlink():
+            return
 
         unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(ktool)")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "ktool")
@@ -344,7 +344,7 @@ def test_inbuilt_compiler(
     file_res, nss_path, ncs_path = script_info
     if nss_path.name == "nwscript.nss":
         return
-    if os.path.islink(nss_path):
+    if nss_path.is_symlink():
         return
     compile_with_abstract_compatible(compiler, file_res, nss_path, ncs_path.with_stem(f"{ncs_path.stem}_inbuilt"), game, "inbuilt")
 
@@ -357,7 +357,7 @@ def test_bizarre_compiler(
         return
     if nss_path.name == "nwscript.nss":
         return
-    if os.path.islink(nss_path):
+    if nss_path.is_symlink():
         return
 
     working_dir = nss_path.parent
@@ -389,7 +389,7 @@ def test_pykotor_compile_nss(
         return
     if nss_path.name == "nwscript.nss":
         return
-    if os.path.islink(nss_path):
+    if nss_path.is_symlink():
         return
 
     working_dir = nss_path.parent
