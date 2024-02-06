@@ -45,8 +45,6 @@ if TYPE_CHECKING:
     from ply import yacc
     from pykotor.extract.file import FileResource
 
-K1_PATH: str | None = os.environ.get("K1_PATH")
-K2_PATH: str | None = os.environ.get("K2_PATH")
 KTOOL_NWNNSSCOMP_PATH: str = "{game}/nwnnsscomp/KTool/nwnnsscomp.exe"
 TSLPATCHER_NWNNSSCOMP_PATH: str = "{game}/nwnnsscomp/TSLPatcher/nwnnsscomp.exe"
 K_SCRIPT_TOOL_NWNNSSCOMP_PATH: str = "{game}/nwnnsscomp/KScript/nwnnsscomp.exe"
