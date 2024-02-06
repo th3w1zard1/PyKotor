@@ -4,6 +4,7 @@ import cProfile
 import logging
 import os
 import pathlib
+from pathlib import Path
 import sys
 from io import StringIO
 from logging.handlers import RotatingFileHandler
@@ -15,10 +16,10 @@ from pykotor.extract.file import ResourceIdentifier
 from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 
-THIS_SCRIPT_PATH = pathlib.Path(__file__)
+THIS_SCRIPT_PATH = Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
-def add_sys_path(p: pathlib.Path):
+def add_sys_path(p: Path):
     working_dir = str(p)
     if working_dir not in sys.path:
         sys.path.append(working_dir)
@@ -38,17 +39,16 @@ from pykotor.resource.formats.ncs.ncs_auto import compile_nss, write_ncs  # noqa
 from pykotor.resource.formats.ncs.ncs_data import NCS, NCSCompiler  # noqa: E402
 from pykotor.resource.type import ResourceType  # noqa: E402
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception  # noqa: E402
-from utility.system.path import Path  # noqa: E402
 
 if TYPE_CHECKING:
     from _pytest.reports import TestReport
     from ply import yacc
     from pykotor.extract.file import FileResource
 
-KTOOL_NWNNSSCOMP_PATH: str = "{game}/nwnnsscomp/KTool/nwnnsscomp.exe"
-TSLPATCHER_NWNNSSCOMP_PATH: str = "{game}/nwnnsscomp/TSLPatcher/nwnnsscomp.exe"
-K_SCRIPT_TOOL_NWNNSSCOMP_PATH: str = "{game}/nwnnsscomp/KScript/nwnnsscomp.exe"
-V1_NWNNSSCOMP_PATH: str = "{game}/nwnnsscomp/V1/nwnnsscomp.exe"
+KTOOL_NWNNSSCOMP_PATH: str = "<game>/nwnnsscomp/KTool/nwnnsscomp.exe"
+TSLPATCHER_NWNNSSCOMP_PATH: str = "<game>/nwnnsscomp/TSLPatcher/nwnnsscomp.exe"
+K_SCRIPT_TOOL_NWNNSSCOMP_PATH: str = "<game>/nwnnsscomp/KScript/nwnnsscomp.exe"
+V1_NWNNSSCOMP_PATH: str = "<game>/nwnnsscomp/V1/nwnnsscomp.exe"
 LOG_FILENAME = "test_ncs_compilers_install"
 
 
@@ -99,7 +99,7 @@ def log_file(
     filepath = (
         Path.cwd().joinpath(f"{LOG_FILENAME}.txt")
         if filepath is None
-        else Path.pathify(filepath)
+        else Path(filepath)
     )
     with filepath.open(mode="a", encoding="utf-8", errors="strict") as f:
         f.write(msg)
@@ -251,13 +251,14 @@ def test_ktool_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
+        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
+        compiler.change_nwnnsscomp_path(compiler_path)
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
             return
 
-        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(ktool)")
+        unique_ncs_path = ncs_path.with_name(f"{ncs_path.stem}_{Path(compiler_path).stem}_(ktool).ncs")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "ktool")
         with unique_ncs_path.open("rb") as f:
             compiler_result[compiler_path] = f.read()
@@ -276,13 +277,14 @@ def test_tslpatcher_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
+        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
+        compiler.change_nwnnsscomp_path(compiler_path)
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
             return
 
-        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)")
+        unique_ncs_path = ncs_path.with_name(f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher).ncs")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher")
         with unique_ncs_path.open("rb") as f:
             compiler_result[compiler_path] = f.read()
@@ -301,13 +303,14 @@ def test_kscript_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
+        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
+        compiler.change_nwnnsscomp_path(compiler_path)
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
             return
 
-        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(kscript)")
+        unique_ncs_path = ncs_path.with_name(f"{ncs_path.stem}_{Path(compiler_path).stem}_(kscript).ncs")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "kscript")
         with unique_ncs_path.open("rb") as f:
             compiler_result[compiler_path] = f.read()
@@ -326,13 +329,14 @@ def test_v1_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
+        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
+        compiler.change_nwnnsscomp_path(compiler_path)
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
             return
 
-        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(v1)")
+        unique_ncs_path = ncs_path.with_name(f"{ncs_path.stem}_{Path(compiler_path).stem}_(v1).ncs")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "v1")
         with unique_ncs_path.open("rb") as f:
             compiler_result[compiler_path] = f.read()
@@ -348,7 +352,7 @@ def test_inbuilt_compiler(
         return
     if nss_path.is_symlink():
         return
-    compile_with_abstract_compatible(compiler, file_res, nss_path, ncs_path.with_stem(f"{ncs_path.stem}_inbuilt"), game, "inbuilt")
+    compile_with_abstract_compatible(compiler, file_res, nss_path, ncs_path.with_name(f"{ncs_path.stem}_inbuilt"), game, "inbuilt")
 
 def test_bizarre_compiler(
     script_data: tuple[Game, tuple[FileResource, Path, Path]]
@@ -418,7 +422,7 @@ def save_profiler_output(
     filepath: os.PathLike | str,
 ):
     profiler.disable()
-    profiler_output_file = Path.pathify(filepath)
+    profiler_output_file = Path(filepath)
     profiler_output_file_str = str(profiler_output_file)
     profiler.dump_stats(profiler_output_file_str)
 

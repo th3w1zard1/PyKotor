@@ -14,10 +14,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-THIS_SCRIPT_PATH = pathlib.Path(__file__)
+THIS_SCRIPT_PATH = Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
-def add_sys_path(p: pathlib.Path):
+def add_sys_path(p: Path):
     working_dir = str(p)
     if working_dir not in sys.path:
         sys.path.append(working_dir)
@@ -30,7 +30,6 @@ from pykotor.extract.file import FileResource, ResourceIdentifier  # noqa: E402
 from pykotor.common.misc import Game  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.resource.type import ResourceType  # noqa: E402
-from utility.system.path import Path  # noqa: E402
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
@@ -67,7 +66,7 @@ def pytest_report_teststatus(report: pytest.TestReport, config: pytest.Config) -
 
 def save_profiler_output(profiler: cProfile.Profile, filepath: os.PathLike | str):
     profiler.disable()
-    profiler_output_file = Path.pathify(filepath)
+    profiler_output_file = Path(filepath)
     profiler_output_file_str = str(profiler_output_file)
     profiler.dump_stats(profiler_output_file_str)
     # Generate reports from the profile stats
@@ -88,7 +87,7 @@ def log_file(
     filepath = (
         Path.cwd().joinpath(f"{LOG_FILENAME}.txt")
         if filepath is None
-        else Path.pathify(filepath)
+        else Path(filepath)
     )
     with filepath.open(mode="a", encoding="utf-8", errors="strict") as f:
         f.write(msg)
@@ -114,15 +113,10 @@ def _setup_and_profile_installation() -> dict[Game, Installation]:
 
 def populate_all_scripts(
     restype: ResourceType = ResourceType.NSS,
-    hack_extract=False,
 ) -> dict[Game, list[tuple[FileResource, Path, Path]]]:
     global ALL_SCRIPTS
     if ALL_SCRIPTS is not None:
         return ALL_SCRIPTS
-
-    #global ALL_INSTALLATIONS
-    #if ALL_INSTALLATIONS is None:
-    #    ALL_INSTALLATIONS = _setup_and_profile_installation()
 
     ALL_SCRIPTS = {Game.K1: [], Game.K2: []}
 
@@ -135,7 +129,7 @@ def populate_all_scripts(
 
     for i, (game, iterator) in enumerate(iterator_data):
         for file in iterator():
-            if not file.safe_isfile():
+            if not file.exists() or not file.is_file():
                 continue
             res_ident = ResourceIdentifier.from_path(file)
             if res_ident.restype != restype:
@@ -149,16 +143,7 @@ def populate_all_scripts(
             res_ident = resource.identifier()
             resdata = resource.data()
             filename = str(res_ident)
-
-            if resource.inside_capsule:
-                subfolder = Installation.replace_module_extensions(resource.filepath())
-            elif resource.inside_bif or resource.filepath().parent.name == "scripts.bif":
-                if resource.inside_bif:
-                    subfolder = resource.filepath().name
-                else:
-                    subfolder = resource.filepath().parent.name
-            else:
-                subfolder = resource.filepath().parent.name
+            subfolder = file.parent.name
 
             if res_ident in CANNOT_COMPILE_EXT[game]:
                 log_file(f"Skipping '{filename}', known incompatible...", filepath="fallback_out.txt")
@@ -200,12 +185,8 @@ def populate_all_scripts(
 
             for bif_nss_path in symlink_map:
                 link_path = working_folder.joinpath(bif_nss_path.name)
-                #already_exists_msg = f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}"
-                #assert not link_path.is_file(), already_exists_msg
-                if link_path.is_file():
-                    already_exists_msg = f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}"
-                    #print(already_exists_msg)
-                    continue
+                already_exists_msg = f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}"
+                assert not link_path.is_file(), already_exists_msg
                 link_path.symlink_to(bif_nss_path, target_is_directory=False)
             seen_paths.add(working_folder)
 
