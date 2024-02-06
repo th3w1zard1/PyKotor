@@ -251,7 +251,7 @@ def test_ktool_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.format(game=("K1" if game.is_k1() else "TSL"))
+        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
@@ -276,7 +276,7 @@ def test_tslpatcher_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.format(game=("K1" if game.is_k1() else "TSL"))
+        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
@@ -301,7 +301,7 @@ def test_kscript_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.format(game=("K1" if game.is_k1() else "TSL"))
+        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
@@ -326,7 +326,7 @@ def test_v1_nwnnsscomp(
     game, script_info = script_data
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
-        compiler_path = compiler_path.format(game=("K1" if game.is_k1() else "TSL"))
+        compiler_path = compiler_path.replace("{game}", ("K1" if game.is_k1() else "TSL"))
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
