@@ -136,7 +136,7 @@ def populate_all_scripts(
         (Game.K2, lambda: Path(K2_PATH).rglob("*")),
     )
 
-    for i, (game, iterator) in enumerate(iterator_data):
+    for game, iterator in iterator_data:
         game_name = "K1" if game.is_k1() else "TSL"
         print(f"Populating all {game_name} scripts...")
         for file in iterator():
