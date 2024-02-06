@@ -107,8 +107,8 @@ def _setup_and_profile_installation() -> dict[Game, Installation]:
 
     if K1_PATH and Path(K1_PATH).joinpath("chitin.key").safe_isfile():
         ALL_INSTALLATIONS[Game.K1] = Installation(K1_PATH)
-    if K2_PATH and Path(K2_PATH).joinpath("chitin.key").safe_isfile():
-        ALL_INSTALLATIONS[Game.K2] = Installation(K2_PATH)
+    #if K2_PATH and Path(K2_PATH).joinpath("chitin.key").safe_isfile():
+    #    ALL_INSTALLATIONS[Game.K2] = Installation(K2_PATH)
 
     if profiler:
         save_profiler_output(profiler, "installation_class_profile.pstat")
@@ -189,13 +189,14 @@ def populate_all_scripts(restype: ResourceType = ResourceType.NSS, hack_extract=
 
             for bif_nss_path in symlink_map:
                 link_path = working_folder.joinpath(bif_nss_path.name)
-                #assert not link_path.is_file(), f"'{nss_path.name}' is a bif script name that should not exist at this path yet?"
+                #already_exists_msg = f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}"
+                #assert not link_path.is_file(), already_exists_msg
                 if link_path.is_file():
+                    already_exists_msg = f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}"
+                    print(already_exists_msg)
                     continue
                 link_path.symlink_to(bif_nss_path, target_is_directory=False)
             seen_paths.add(working_folder)
-
-
 
     return ALL_SCRIPTS
 
@@ -250,29 +251,24 @@ def pytest_sessionfinish(
 ):
     cleanup_temp_dirs()
 
-def pytest_generate_nss_tests(metafunc: pytest.Metafunc):
-    """Any test function with the argument `script_data` used for NSS compile tests."""
-    scripts_fixture = populate_all_scripts()
-    test_data = [
-        (game, script)
-        for game, scripts in scripts_fixture.items()
-        for script in scripts
-        if not script[1].is_symlink()# and not print(f"Skipping test collection for '{script[1]}', already symlinked to '{script[1].resolve()}'")
-    ]
-    print(f"Test data collected. Total tests: {len(test_data)}")
-    ids=[
-        f"{game}_{script[0].identifier()}"
-        for game, script in test_data
-    ]
-    print(f"Test IDs collected. Total IDs: {len(ids)}")
-    metafunc.parametrize("script_data", test_data, ids=ids, indirect=True)
-    print("Tests have finished parametrizing!")
-
 def pytest_generate_tests(metafunc: pytest.Metafunc):
     print("Generating tests...")
     if "script_data" in metafunc.fixturenames:
-        print("Generating NSS tests...")
-        pytest_generate_nss_tests(metafunc)
+        scripts_fixture = populate_all_scripts()
+        test_data = [
+            (game, script)
+            for game, scripts in scripts_fixture.items()
+            for script in scripts
+            if not script[1].is_symlink()# and not print(f"Skipping test collection for '{script[1]}', already symlinked to '{script[1].resolve()}'")
+        ]
+        print(f"Test data collected. Total tests: {len(test_data)}")
+        ids=[
+            f"{game}_{script[0].identifier()}"
+            for game, script in test_data
+        ]
+        print(f"Test IDs collected. Total IDs: {len(ids)}")
+        metafunc.parametrize("script_data", test_data, ids=ids, indirect=True)
+        print("Tests have finished parametrizing!")
 
 CLEANUP_RAN = False  # TODO: this will never work because it's defined on the module level, need a global level higher than that?
 if __name__ != "__main__" and not CLEANUP_RAN:
