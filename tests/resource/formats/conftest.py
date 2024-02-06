@@ -204,7 +204,7 @@ def populate_all_scripts(
                 #assert not link_path.is_file(), already_exists_msg
                 if link_path.is_file():
                     already_exists_msg = f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}"
-                    print(already_exists_msg)
+                    #print(already_exists_msg)
                     continue
                 link_path.symlink_to(bif_nss_path, target_is_directory=False)
             seen_paths.add(working_folder)
