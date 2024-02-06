@@ -245,8 +245,8 @@ class FileResource:
                     data = self.decompress_lzma1(data, self._size)
 
                 if not _internal and not self._task_running:
+                    self._task_running = True
                     def background_task(res: FileResource, sentdata: bytes):
-                        self._task_running = True
                         res._file_hash = generate_hash(sentdata)  # noqa: SLF001
                         self._task_running = False
 
