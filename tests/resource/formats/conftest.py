@@ -281,8 +281,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
         metafunc.parametrize("script_data", test_data, ids=ids, indirect=True)
         print("Tests have finished parametrizing!")
 
-CLEANUP_RAN = False  # TODO: this will never work because it's defined on the module level, need a global level higher than that?
-if __name__ != "__main__" and not CLEANUP_RAN:
-    print("Cleaning up old logs before tests run...")
-    cleanup_before_tests()
-    CLEANUP_RAN = True
+#CLEANUP_RAN = False  # TODO: this will never work because it's defined on the module level, need a global level higher than that?
+#if __name__ != "__main__" and not CLEANUP_RAN:
+#    print("Cleaning up old logs before tests run...")
+#    cleanup_before_tests()
+#    CLEANUP_RAN = True
