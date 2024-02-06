@@ -275,6 +275,12 @@ class NCSBinaryWriter(ResourceWriter):
                 - Relative jump offsets
             - Raises error for unsupported instructions
         """
+        def to_signed_32bit(n):
+            # Assuming n is provided as an unsigned 32-bit integer
+            # Convert it to a signed 32-bit integer
+            if n >= 2**31:
+                n -= 2**32
+            return n
         self._writer.write_uint8(int(instruction.ins_type.value.byte_code))
         self._writer.write_uint8(int(instruction.ins_type.value.qualifier))
 
@@ -284,11 +290,11 @@ class NCSBinaryWriter(ResourceWriter):
             NCSInstructionType.CPDOWNBP,
             NCSInstructionType.CPTOPBP,
         ]:
-            self._writer.write_int32(instruction.args[0], big=True)
+            self._writer.write_int32(to_signed_32bit(instruction.args[0]), big=True)
             self._writer.write_uint16(4, big=True)  # TODO: 12 for float support
 
         elif instruction.ins_type in [NCSInstructionType.CONSTI]:
-            self._writer.write_int32(instruction.args[0], big=True)
+            self._writer.write_int32(to_signed_32bit(instruction.args[0]), big=True)
 
         elif instruction.ins_type in [NCSInstructionType.CONSTF]:
             self._writer.write_single(instruction.args[0], big=True)
@@ -304,7 +310,7 @@ class NCSBinaryWriter(ResourceWriter):
             self._writer.write_uint8(instruction.args[1], big=True)
 
         elif instruction.ins_type in [NCSInstructionType.MOVSP]:
-            self._writer.write_int32(instruction.args[0], big=True)
+            self._writer.write_int32(to_signed_32bit(instruction.args[0]), big=True)
 
         elif instruction.ins_type in [
             NCSInstructionType.JMP,
@@ -313,7 +319,7 @@ class NCSBinaryWriter(ResourceWriter):
             NCSInstructionType.JNZ,
         ]:
             relative = self._offsets[instruction.jump] - self._offsets[instruction]
-            self._writer.write_int32(relative, big=True)
+            self._writer.write_int32(to_signed_32bit(relative), big=True)
 
         elif instruction.ins_type in [NCSInstructionType.DESTRUCT]:
             self._writer.write_uint16(instruction.args[0], big=True)
@@ -326,7 +332,7 @@ class NCSBinaryWriter(ResourceWriter):
             NCSInstructionType.DECIBP,
             NCSInstructionType.INCIBP,
         ]:
-            self._writer.write_int32(instruction.args[0], big=True)
+            self._writer.write_int32(to_signed_32bit(instruction.args[0]), big=True)
 
         elif instruction.ins_type in [NCSInstructionType.STORE_STATE]:
             self._writer.write_uint32(instruction.args[0], big=True)

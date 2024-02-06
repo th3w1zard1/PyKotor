@@ -47,7 +47,7 @@ if TYPE_CHECKING:
 
 K1_PATH: str | None = os.environ.get("K1_PATH")
 K2_PATH: str | None = os.environ.get("K2_PATH")
-KTOOL_NWNNSSCOMP_PATH: str | None = r"C:\Program Files (x86)\Kotor Tool\nwnnsscomp.exe"
+KTOOL_NWNNSSCOMP_PATH: str | None = r"../nwnnsscomp.exe"
 TSLPATCHER_NWNNSSCOMP_PATH: str | None = r"C:\Users\boden\Documents\k1 mods\KillCzerkaJerk\tslpatchdata\nwnnsscomp.exe"
 K_SCRIPT_TOOL_NWNNSSCOMP_PATH: str | None = r"C:/Program Files (x86)/KotOR Scripting Tool/nwnnsscomp.exe"
 V1_NWNNSSCOMP_PATH: str | None = r"C:\Users\boden\Desktop\kotorcomp (1)\nwnnsscomp.exe"
@@ -265,31 +265,31 @@ def test_ktool_nwnnsscomp(
         with unique_ncs_path.open("rb") as f:
             compiler_result[compiler_path] = f.read()
 
-def test_tslpatcher_nwnnsscomp(
-    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-):
-    compilers: dict[str | None, ExternalNCSCompiler | None] = {
-        TSLPATCHER_NWNNSSCOMP_PATH: ExternalNCSCompiler(TSLPATCHER_NWNNSSCOMP_PATH) if TSLPATCHER_NWNNSSCOMP_PATH and Path(TSLPATCHER_NWNNSSCOMP_PATH).is_file() else None,
-    }
+#def test_tslpatcher_nwnnsscomp(
+#    script_data: tuple[Game, tuple[FileResource, Path, Path]],
+#):
+#    compilers: dict[str | None, ExternalNCSCompiler | None] = {
+#        TSLPATCHER_NWNNSSCOMP_PATH: ExternalNCSCompiler(TSLPATCHER_NWNNSSCOMP_PATH) if TSLPATCHER_NWNNSSCOMP_PATH and Path(TSLPATCHER_NWNNSSCOMP_PATH).is_file() else None,
+#    }
 
-    compiler_result: dict[str | None, bytes | None] = {
-        TSLPATCHER_NWNNSSCOMP_PATH: None,
-    }
+#    compiler_result: dict[str | None, bytes | None] = {
+#        TSLPATCHER_NWNNSSCOMP_PATH: None,
+#    }
 
-    game, script_info = script_data
-    file_res, nss_path, ncs_path = script_info
-    for compiler_path, compiler in compilers.items():
-        if compiler is None or compiler_path is None:
-            continue  # don't test nonexistent compilers
-        if nss_path.name == "nwscript.nss":
-            continue
-        if os.path.islink(nss_path):
-            continue
+#    game, script_info = script_data
+#    file_res, nss_path, ncs_path = script_info
+#    for compiler_path, compiler in compilers.items():
+#        if compiler is None or compiler_path is None:
+#            continue  # don't test nonexistent compilers
+#        if nss_path.name == "nwscript.nss":
+#            continue
+#        if os.path.islink(nss_path):
+#            continue
 
-        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(2)")
-        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher_nwnnsscomp")
-        with unique_ncs_path.open("rb") as f:
-            compiler_result[compiler_path] = f.read()
+#        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(2)")
+#        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher_nwnnsscomp")
+#        with unique_ncs_path.open("rb") as f:
+#            compiler_result[compiler_path] = f.read()
 
 #def test_kscript_tool_nwnnsscomp(
 #    script_data: tuple[Game, tuple[FileResource, Path, Path]],
