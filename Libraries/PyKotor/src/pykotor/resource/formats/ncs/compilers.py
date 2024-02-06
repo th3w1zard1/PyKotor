@@ -170,7 +170,7 @@ class ExternalNCSCompiler(NCSCompiler):
     def __init__(self, nwnnsscomp_path: os.PathLike | str):
         self.nwnnsscomp_path: Path = Path.pathify(nwnnsscomp_path)
         self.filehash: str
-        if self.nwnnsscomp_path.exists():
+        if self.nwnnsscomp_path.safe_exists():
             self.change_nwnnsscomp_path(self.nwnnsscomp_path)
 
     def get_info(self) -> ExternalCompilerConfig:
@@ -178,7 +178,7 @@ class ExternalNCSCompiler(NCSCompiler):
 
     def change_nwnnsscomp_path(self, nwnnsscomp_path: os.PathLike | str):
         self.nwnnsscomp_path: Path = Path.pathify(nwnnsscomp_path)
-        self.filehash: str = generate_hash(self.nwnnsscomp_path, hash_algo="sha256").upper()
+        self.filehash = generate_hash(self.nwnnsscomp_path, hash_algo="sha256").upper()
 
     def config(
         self,
