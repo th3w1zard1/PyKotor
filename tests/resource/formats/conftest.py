@@ -12,6 +12,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from utility.error_handling import format_exception_with_variables
+
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
@@ -119,21 +121,9 @@ def _setup_and_profile_installation() -> dict[Game, Installation]:
         save_profiler_output(profiler, "installation_class_profile.pstat")
     return ALL_INSTALLATIONS
 
-@pytest.fixture(scope="session")
-def scripts_fixture() -> dict[Game, list[tuple[FileResource, Path, Path]]]:
-    global ALL_SCRIPTS
-    print("Returning ALL_SCRIPTS global")
-    return ALL_SCRIPTS
-
-@pytest.fixture(scope="session")
-def gffs_fixture() -> dict[Game, list[tuple[FileResource, Path]]]:
-    global ALL_GFFS
-    print("Returning ALL_GFFS global")
-    return ALL_GFFS
-
 def populate_all_gffs(
     restype: ResourceType = ResourceType.NSS,
-):
+) -> dict[Game, list[tuple[FileResource, Path]]]:
     global ALL_INSTALLATIONS
     if ALL_INSTALLATIONS is None:
         ALL_INSTALLATIONS = _setup_and_profile_installation()
@@ -154,7 +144,10 @@ def populate_all_gffs(
                 subfolder = filepath.name
             else:
                 subfolder = filepath.parent.name
-            gff_convert_filepath = gff_convert_dir / subfolder / filename
+
+            subfolder_path = gff_convert_dir / subfolder
+            subfolder_path.mkdir(parents=True, exist_ok=True)
+            gff_convert_filepath = subfolder_path / filename
             all_gffs[game].append((resource, gff_convert_filepath))
   
     return all_gffs
@@ -256,6 +249,9 @@ def game(request: pytest.FixtureRequest) -> Game:
 @pytest.fixture
 def script_data(request: pytest.FixtureRequest):
     return request.param
+@pytest.fixture
+def gff_data(request: pytest.FixtureRequest):
+    return request.param
 
 # TODO: function isn't called early enough.
 def cleanup_before_tests():
@@ -303,11 +299,12 @@ def cleanup_temp_dirs():
         with suppress(Exception):
             shutil.rmtree(temp_dir, ignore_errors=True)
 
-def pytest_sessionstart(session: pytest.Session):
+def pytest_configure():
     cleanup_before_tests()
-
+    print("Prepare all scripts...")
     global ALL_SCRIPTS
     ALL_SCRIPTS = populate_all_scripts()
+    print("Prepare all GFFs...")
     global ALL_GFFS
     ALL_GFFS = populate_all_gffs()
 
@@ -317,29 +314,66 @@ def pytest_sessionfinish(
 ):
     cleanup_temp_dirs()
 
+# pytest hook to check test outcomes
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> pytest.TestReport | None:
+    if "setup" in call.when:
+        # Skip setup phase
+        return None
+    if call.excinfo is not None and call.when == "call":
+        # This means the test has failed
+        # Construct and return a TestReport object
+
+        #longrepr = call.excinfo.getrepr()
+        longrepr = format_exception_with_variables(call.excinfo.value, call.excinfo.type, call.excinfo.tb)
+        report = pytest.TestReport(
+            nodeid=item.nodeid,
+            location=item.location,
+            keywords=item.keywords,
+            outcome="failed",
+            longrepr=longrepr,
+            when=call.when,
+            sections=[],
+            duration=call.stop - call.start,
+            user_properties=item.user_properties,
+        )
+        return report
+    return None
+
 def pytest_generate_tests(metafunc: pytest.Metafunc):
     if "script_data" in metafunc.fixturenames:
         print("Generating NSS compile tests...")
         # Load the data prepared in the session start
-        test_data = [
+        test_script_data = [
             (game, script)
             for game, scripts in ALL_SCRIPTS.items()
             for script in scripts
             if not script[1].is_symlink()# and not print(f"Skipping test collection for '{script[1]}', already symlinked to '{script[1].resolve()}'")
         ]
-        print(f"Test data collected. Total tests: {len(test_data)}")
-        ids=[
-            f"{game}_{script[0].identifier()}"
-            for game, script in test_data
-        ]
+        print(f"Test data collected. Total tests: {len(test_script_data)}")
+        ids = sorted(
+            [
+                f"{game}_{script[0].identifier()}"
+                for game, script in test_script_data
+            ]
+        )
         print(f"Test IDs collected. Total IDs: {len(ids)}")
-        metafunc.parametrize("script_data", test_data, ids=ids, indirect=True)
+        metafunc.parametrize("script_data", test_script_data, ids=ids, indirect=True)
         print("Tests have finished parametrizing!")
+
     if "gff_data" in metafunc.fixturenames:
         print("Generating GFF conversion tests...")
+        # Step 1: Generate IDs along with their corresponding data
+        combined_data = [
+            (f"{game}_{resource._path_ident_obj}", (game, resource, conversion_path))
+            for game, gff_info in ALL_GFFS.items()
+            for resource, conversion_path in gff_info
+        ]
 
-#CLEANUP_RAN = False  # TODO: this will never work because it's defined on the module level, need a global level higher than that?
-#if __name__ != "__main__" and not CLEANUP_RAN:
-#    print("Cleaning up old logs before tests run...")
-#    cleanup_before_tests()
-#    CLEANUP_RAN = True
+        # Step 2 and 3: Sort combined data alphabetically by the ID
+        sorted_combined_data = sorted(combined_data, key=lambda x: x[0])
+
+        # Step 4: Separate the sorted IDs and their corresponding data back into their respective lists
+        sorted_ids = [item[0] for item in sorted_combined_data]
+        sorted_test_gff_data = [item[1] for item in sorted_combined_data]
+        metafunc.parametrize("gff_data", sorted_test_gff_data, ids=sorted_ids, indirect=True)
+        print("Tests have finished parametrizing!")
