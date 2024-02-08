@@ -196,6 +196,23 @@ def compare_external_results(
     if matches:
         print("\n".join(matches))
 
+def compare_bytes(data1: bytes, data2: bytes) -> list[str]:
+    min_len = min(len(data1), len(data2))
+    differences: list[str] = []
+    i = 0
+    while i < min_len:
+        if data1[i] != data2[i]:
+            # Record the first difference in a sequence
+            differences.append(f"Offset 0x{i:02X}: data1 has {data1[i]} and data2 has {data2[i]}")
+            # Move to the end of the differing sequence
+            while i < min_len and data1[i] != data2[i]:
+                i += 1
+        else:
+            i += 1
+    if len(data1) != len(data2):
+        differences.append(f"Data lengths differ: data1 is {len(data1)} bytes, data2 is {len(data2)} bytes")
+    return differences
+
 def test_tslpatcher_nwnnsscomp(
     script_data: tuple[Game, tuple[FileResource, Path, Path]],
 ):
@@ -220,7 +237,16 @@ def test_tslpatcher_nwnnsscomp(
         unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher")
         with unique_ncs_path.open("rb") as f:
-            compiler_result[compiler_path] = f.read()
+            compiled_ncs_data = f.read()
+        original_ncs_path = Path(f"../{('K1' if game.is_k1() else 'TSL')}/Comparisons/{ncs_path.parent.parent.name}/{ncs_path.parent.name}/{file_res.identifier()}")
+        if not original_ncs_path.safe_isfile():
+            pytest.xfail(f"{original_ncs_path} was not found on disk, comparisons cannot be made.")
+        with original_ncs_path.open("rb") as f:
+            original_ncs_data = f.read()
+        differences: list[str] = compare_bytes(compiled_ncs_data, original_ncs_data)
+        if differences:
+            pytest.fail(f"Bytecodes of compiled '{original_ncs_path.name}' does not match with vanilla ncs:\n" + "\n".join(differences))
+        
 
 def test_inbuilt_compiler(
     script_data: tuple[Game, tuple[FileResource, Path, Path]]
