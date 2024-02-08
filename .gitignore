@@ -53,7 +53,6 @@ Tools/HolocronToolset/src/toolset/kits
 Tools/HolocronToolset/src/toolset/kits/*/door0_k1.utd
 Tools/HolocronToolset/src/toolset/kits/*/*
 /Tools/HolocronToolset/toolset/kits/
-<<<<<<< HEAD
 .idea/misc.xml
 .idea/PyKotor.iml
 .idea/misc.xml
@@ -63,5 +62,3 @@ Tools/HolocronToolset/src/toolset/kits/*/*
 .venv
 .venv_wsl
 .secrets
-=======
->>>>>>> 86edcc59 (Revert "Merge branch 'master' into refactor_installation_class")
