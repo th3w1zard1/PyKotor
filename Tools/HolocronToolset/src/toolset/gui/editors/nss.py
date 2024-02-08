@@ -177,7 +177,7 @@ class NSSEditor(Editor):
         if self._restype != ResourceType.NCS:
             return self.ui.codeEdit.toPlainText().encode("windows-1252"), b""
 
-        compiled_bytes: bytes | None = compileScript(self.ui.codeEdit.toPlainText(), self._installation.tsl)
+        compiled_bytes: bytes | None = compileScript(self.ui.codeEdit.toPlainText(), self._installation.tsl, self._installation.path())
         print("compiling script from nsseditor")
         if compiled_bytes is None:
             print("user cancelled the compilation")
@@ -214,7 +214,7 @@ class NSSEditor(Editor):
         """
         try:
             source: str = self.ui.codeEdit.toPlainText()
-            data: bytes | None = compileScript(source, self._installation.tsl)
+            data: bytes | None = compileScript(source, self._installation.tsl, self._installation.path())
             if data is None:  # user cancelled
                 return
 
