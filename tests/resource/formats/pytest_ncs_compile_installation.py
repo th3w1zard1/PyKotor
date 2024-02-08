@@ -255,7 +255,7 @@ def test_tslpatcher_nwnnsscomp(
         if differences:
             msg_info_level = f"Bytecodes of compiled '{file_res.filepath()}' does not match with vanilla ncs:\n"
             log_file(msg_info_level + "\n".join(differences), filepath=f"comparison_results_{'K1' if game.is_k1() else 'TSL'}_{unique_ncs_path.name}.txt")
-            pytest.xfail(msg_info_level + "\n".join(differences[2:]))
+            pytest.fail(msg_info_level + "\n".join(differences[2:]))
 
 
 
