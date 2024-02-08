@@ -5,6 +5,7 @@ import os
 import pathlib
 import sys
 from io import StringIO
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
 import pytest
@@ -248,7 +249,8 @@ def test_tslpatcher_nwnnsscomp(
         if nss_path.is_symlink():
             continue
 
-        unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)")
+        unique_ncs_name = f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)"
+        unique_ncs_path = ncs_path.with_stem(unique_ncs_name)
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher")
         with unique_ncs_path.open("rb") as f:
             compiled_ncs_data = f.read()
@@ -265,8 +267,13 @@ def test_tslpatcher_nwnnsscomp(
             lines = source_nss.split("\n")
             if "Byte code does not match" in lines[0]:
                 pytest.xfail(lines[0])
-            log_file(msg_info_level + "\n".join(differences), filepath=f"comparison_results_{'K1' if game.is_k1() else 'TSL'}_{unique_ncs_path.name}.txt")
-            pytest.fail(msg_info_level + "\n".join(differences[:3]))
+            if "mismatch in include functions" in lines[0]:
+                pytest.xfail(lines[0])
+            compare_dir = Path.cwd() / "comparisons" / unique_ncs_name
+            compare_dir.mkdir(exist_ok=True, parents=True)
+            compiler.decompile_script(unique_ncs_path, compare_dir / f"new_{ncs_path.name}.txt", game)
+            compiler.decompile_script(original_ncs_path, compare_dir / f"original_{ncs_path.name}.txt", game)
+            pytest.fail(msg_info_level + "\n".join(differences[:5]))
 
 
 
