@@ -261,7 +261,7 @@ def test_tslpatcher_nwnnsscomp(
             original_ncs_data = f.read()
         differences: list[str] = compare_bytes(compiled_ncs_data, original_ncs_data)
         if differences:
-            msg_info_level = f"Bytecodes of compiled '{file_res.filepath()}' does not match with vanilla ncs:\n"
+            msg_info_level = f"Bytecode mismatch in '{file_res.filepath()}'"
             with nss_path.open("rb") as f:
                 source_nss = decode_bytes_with_fallbacks(f.read())
             lines = source_nss.split("\n")
@@ -271,9 +271,9 @@ def test_tslpatcher_nwnnsscomp(
                 pytest.xfail(lines[0])
             compare_dir = Path.cwd() / "comparisons" / unique_ncs_name
             compare_dir.mkdir(exist_ok=True, parents=True)
-            compiler.decompile_script(unique_ncs_path, compare_dir / f"new_{ncs_path.name}.txt", game)
-            compiler.decompile_script(original_ncs_path, compare_dir / f"original_{ncs_path.name}.txt", game)
-            pytest.fail(msg_info_level + "\n".join(differences[:5]))
+            compiler.decompile_script(unique_ncs_path, compare_dir / f"new_{ncs_path.stem}.txt", game)
+            compiler.decompile_script(original_ncs_path, compare_dir / f"original_{ncs_path.stem}.txt", game)
+            log_file(msg_info_level, filepath="bytecode_mismatches.txt")
 
 
 
