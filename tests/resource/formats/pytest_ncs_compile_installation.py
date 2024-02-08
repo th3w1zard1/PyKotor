@@ -326,6 +326,7 @@ def test_tslpatcher_nwnnsscomp(
             if "Byte code does not match" in lines[0]:
                 if "ActionStartConversation" in source_nss:
                     alternate_nwscript_compare(script_data)
+                    return
                 pytest.xfail(lines[0])
             if "mismatch in include functions" in lines[0]:
                 pytest.xfail(lines[0])
