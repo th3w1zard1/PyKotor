@@ -14,4 +14,8 @@ autoflake
 pytest
 pytest-xdist
 pytest-html
+<<<<<<< HEAD
 pytest-xdist
+=======
+pytest-xdist
+>>>>>>> af60ab30 (Update requirements-dev.txt)
