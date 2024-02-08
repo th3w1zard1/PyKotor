@@ -244,7 +244,7 @@ def alternate_nwscript_compare(
     for compiler_path, compiler in compilers.items():
         compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
         compiler.change_nwnnsscomp_path(compiler_path)
-        if nss_path.name == "nwscript.nss":
+        if nss_path.name in {"nwscript.nss", "nwscript_orig.nss", "nwscript_asc.nss"}:
             continue
         if nss_path.is_symlink():
             continue
@@ -258,9 +258,9 @@ def alternate_nwscript_compare(
                 nwscript_path.rename(orig_nwscript_path)
             asc_nwscript_path.rename(nwscript_path)
 
-        unique_ncs_name = f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)"
+        unique_ncs_name = f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)_alt"
         unique_ncs_path = ncs_path.with_stem(unique_ncs_name)
-        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher")
+        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher_alt")
         with unique_ncs_path.open("rb") as f:
             compiled_ncs_data = f.read()
         original_ncs_path = Path(f"../{('K1' if game.is_k1() else 'TSL')}/Comparisons/{file_res.filepath().parent.parent.name}/{ncs_path.parent.name}/{file_res.identifier()}").with_suffix(".ncs")
@@ -292,7 +292,7 @@ def test_tslpatcher_nwnnsscomp(
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
         compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
-        if nss_path.name == "nwscript.nss":
+        if nss_path.name in {"nwscript.nss", "nwscript_orig.nss", "nwscript_asc.nss"}:
             continue
         if nss_path.is_symlink():
             continue
