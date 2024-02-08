@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import cProfile
-import logging
 import os
 import pathlib
 import sys
 from io import StringIO
-from logging.handlers import RotatingFileHandler
 from typing import TYPE_CHECKING
 
 import pytest
@@ -34,48 +32,15 @@ from pykotor.resource.formats.ncs.compiler.parser import NssParser  # noqa: E402
 from pykotor.resource.formats.ncs.compilers import ExternalNCSCompiler, InbuiltNCSCompiler  # noqa: E402
 from pykotor.resource.formats.ncs.ncs_auto import compile_nss, write_ncs  # noqa: E402
 from pykotor.resource.formats.ncs.ncs_data import NCS, NCSCompiler  # noqa: E402
-from pykotor.resource.type import ResourceType  # noqa: E402
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception  # noqa: E402
 from utility.system.path import Path  # noqa: E402
 
 if TYPE_CHECKING:
-    from _pytest.reports import TestReport
     from ply import yacc
     from pykotor.extract.file import FileResource
 
-KTOOL_NWNNSSCOMP_PATH: str = "../<game>/nwnnsscomp/KTool/nwnnsscomp.exe"
 TSLPATCHER_NWNNSSCOMP_PATH: str = "../<game>/nwnnsscomp/TSLPatcher/nwnnsscomp.exe"
-K_SCRIPT_TOOL_NWNNSSCOMP_PATH: str = "../<game>/nwnnsscomp/KScript/nwnnsscomp.exe"
-V1_NWNNSSCOMP_PATH: str = "../<game>/nwnnsscomp/V1/nwnnsscomp.exe"
 LOG_FILENAME = "test_ncs_compilers_install"
-
-
-def setup_logger():
-    # Configure logger for failed test cases
-    logger = logging.getLogger('failed_tests_logger')
-    logger.setLevel(logging.DEBUG)
-
-    # Primary log file handler
-    fh = RotatingFileHandler('FAILED_TESTS.log', maxBytes=5*1024*1024, backupCount=5, mode='a')
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
-
-    return logger
-
-logger = setup_logger()
-
-
-# pytest hook to check test outcomes
-def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> TestReport | None:
-    if "setup" in call.when:
-        # Skip setup phase
-        return None
-    if call.excinfo is not None and call.when == "call":
-        # This means the test has failed
-        #longrepr = call.excinfo.getrepr()
-        longrepr = format_exception_with_variables(call.excinfo.value, call.excinfo.type, call.excinfo.tb)
-        logger.error("Test failed with exception!", extra={"item.nodeid": item.nodeid, "Traceback: ": longrepr})
 
 def log_file(
     *args,
@@ -146,8 +111,7 @@ def _handle_compile_exc(
     log_file(msg_info_level, filepath=f"fallback_level_info_{game}_{compiler_identifier}.txt")
     log_file(msg_debug_level, filepath=f"fallback_level_debug_{game}_{compiler_identifier}.txt")
     log_file(f'"{nss_path.name}",', filepath=f"{compiler_identifier}_incompatible_{game}.txt")  # for quick copy/paste into the known_issues hashset
-    logger.log(level=40, msg=msg_debug_level)
-    pytest.fail(msg_info_level)
+    pytest.fail(msg_info_level, pytrace=False)
 
     
 CUR_FAILED_EXT: dict[Game, set[ResourceIdentifier]] = {
@@ -165,23 +129,18 @@ def compile_with_abstract_compatible(
     global CUR_FAILED_EXT
     try:
         if isinstance(compiler, ExternalNCSCompiler):
-            compiler_identifier = f"nwnnsscomp.exe({compiler_identifier})"
             try:
                 stdout, stderr = compiler.compile_script(nss_path, ncs_path, game)
             except EntryPointError as e:
                 pytest.xfail(f"{compiler_identifier}: No entry point found in '{nss_path.name}': {e}")
-                return
             else:
                 if stderr:
-                    raise CompileError(f"{stdout}: {stderr}")
+                    raise CompileError(f"stdout: {stdout}\nstderr: {stderr}")
         else:
-            if ResourceIdentifier.from_path(nss_path) in CUR_FAILED_EXT[game]:
-                return
             try:
                 compiler.compile_script(nss_path, ncs_path, game, debug=False)
             except EntryPointError as e:
                 pytest.xfail(f"{compiler_identifier}: No entry point found in '{nss_path.name}': {e}")
-                return
 
         if not ncs_path.is_file():
             # raise it so _handle_compile_exc can be used to reduce duplicated logging code.
@@ -192,8 +151,8 @@ def compile_with_abstract_compatible(
     except Exception as e:  # noqa: BLE001
         if isinstance(compiler, ExternalNCSCompiler):
             CUR_FAILED_EXT[game].add(ResourceIdentifier.from_path(nss_path))
-            if isinstance(e, FileNotFoundError):
-                return
+        elif ResourceIdentifier.from_path(nss_path) in CUR_FAILED_EXT[game]:
+            pytest.xfail(f"{nss_path.name} could not compile with {compiler_identifier} but also failed with nwnnsscomp: {e}")
         _handle_compile_exc(e, file_res, nss_path, compiler_identifier, game)
 
 
@@ -203,7 +162,9 @@ def compare_external_results(
     """Compare results between compilers. No real point since having any of them match is rare."""
     # Ensure all non-None results are the same
     non_none_results: dict[str, bytes] = {
-        cp: result for cp, result in compiler_result.items() if result is not None and cp is not None
+        cp: result
+        for cp, result in compiler_result.items()
+        if result is not None and cp is not None
     }
 
     if not non_none_results:
@@ -230,20 +191,45 @@ def compare_external_results(
     # Report results
     if mismatches:
         error_report = "\n".join(mismatches + matches)  # Include matches for context
-        pytest.fail(error_report)
+        pytest.fail(error_report, pytrace=False)
 
     if matches:
         print("\n".join(matches))
+
+def compare_bytes(data1: bytes, data2: bytes) -> list[str]:
+    min_len = min(len(data1), len(data2))
+    differences: list[str] = []
+    i = 0
+    while i < min_len:
+        if data1[i] != data2[i]:
+            start_offset = i
+            # Find the end of the difference sequence
+            while i < min_len and data1[i] != data2[i]:
+                i += 1
+            end_offset = i - 1
+            diff_length = end_offset - start_offset + 1
+            data1_diff = data1[start_offset:i]
+            data2_diff = data2[start_offset:i]
+            data1_diff_repr = "b'" + ''.join(f"\\x{byte:02x}" for byte in data1[start_offset:i]) + "'"
+            data2_diff_repr = "b'" + ''.join(f"\\x{byte:02x}" for byte in data2[start_offset:i]) + "'"
+            try:
+                data1_str = data1_diff.decode(encoding='windows-1252', errors="replace")
+                data2_str = data2_diff.decode(encoding='windows-1252', errors="replace")
+                str_repr = f"\nDecoded: '{data1_str}' vs '{data2_str}'"
+            except UnicodeDecodeError:
+                str_repr = ""
+            differences.append(f"Offset 0x{start_offset:02X} to 0x{end_offset:02X}: {diff_length} bytes differ.\nData: {data1_diff_repr} vs {data2_diff_repr}{str_repr}")
+        else:
+            i += 1
+    if len(data1) != len(data2):
+        differences.insert(0, f"Data lengths differ: data1 is {len(data1)} bytes, data2 is {len(data2)} bytes")
+    return differences
 
 def test_tslpatcher_nwnnsscomp(
     script_data: tuple[Game, tuple[FileResource, Path, Path]],
 ):
     compilers: dict[str, ExternalNCSCompiler] = {
         TSLPATCHER_NWNNSSCOMP_PATH: ExternalNCSCompiler(TSLPATCHER_NWNNSSCOMP_PATH),
-    }
-
-    compiler_result: dict[str, bytes | None] = {
-        TSLPATCHER_NWNNSSCOMP_PATH: None,
     }
 
     game, script_info = script_data
@@ -254,38 +240,59 @@ def test_tslpatcher_nwnnsscomp(
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
-            return
+            continue
 
         unique_ncs_path = ncs_path.with_stem(f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)")
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher")
         with unique_ncs_path.open("rb") as f:
-            compiler_result[compiler_path] = f.read()
+            compiled_ncs_data = f.read()
+        original_ncs_path = Path(f"../{('K1' if game.is_k1() else 'TSL')}/Comparisons/{file_res.filepath().parent.parent.name}/{ncs_path.parent.name}/{file_res.identifier()}").with_suffix(".ncs")
+        if not original_ncs_path.safe_isfile():
+            pytest.skip(f"'{original_ncs_path}' was not found on disk, comparisons cannot be made.")
+        with original_ncs_path.open("rb") as f:
+            original_ncs_data = f.read()
+        differences: list[str] = compare_bytes(compiled_ncs_data, original_ncs_data)
+        if differences:
+            msg_info_level = f"Bytecodes of compiled '{file_res.filepath()}' does not match with vanilla ncs:\n"
+            log_file(msg_info_level + "\n".join(differences), filepath=f"comparison_results_{'K1' if game.is_k1() else 'TSL'}_{unique_ncs_path.name}.txt")
+            pytest.fail(msg_info_level + "\n".join(differences[2:]))
 
-def test_inbuilt_compiler(
-    script_data: tuple[Game, tuple[FileResource, Path, Path]]
-):
-    compiler = InbuiltNCSCompiler()
-    game, script_info = script_data
-    file_res, nss_path, ncs_path = script_info
-    if nss_path.name == "nwscript.nss":
-        return
-    if nss_path.is_symlink():
-        return
-    compile_with_abstract_compatible(compiler, file_res, nss_path, ncs_path.with_stem(f"{ncs_path.stem}_inbuilt"), game, "inbuilt")
+
 
 def save_profiler_output(
     profiler: cProfile.Profile,
     filepath: os.PathLike | str,
 ):
     profiler.disable()
-    profiler_output_file = Path.pathify(filepath)
+    profiler_output_file: Path = Path.pathify(filepath)
     profiler_output_file_str = str(profiler_output_file)
     profiler.dump_stats(profiler_output_file_str)
+    # Generate reports from the profile stats
+    #stats = pstats.Stats(profiler_output_file_str).sort_stats('cumulative')
+    #stats.print_stats()
+
+    # Generate some line-execution graphs for flame graphs
+    #profiler.create_stats()
+    #stats_text = pstats.Stats(profiler).sort_stats('cumulative')
+    #stats_text.print_stats()
+    #stats_text.dump_stats(f"{LOG_FILENAME}.pstats")
+    #stats_text.print_callers()
+    #stats_text.print_callees()
+    # Cumulative list of the calls
+    #stats_text.print_stats(100)
+    # Cumulative list of calls per function
+    #stats_text.print_callers(100, 'cumulative')
+    #stats_text.print_callees(100, 'cumulative')
+
+    # Generate some flat line graphs
+    #profiler.print_stats(sort='time')  # (Switch to sort='cumulative' then scroll up to see where time was spent!)
+    #profiler.print_stats(sort='name')  # (toString of OBJ is called the most often, followed by compiler drivers)
+    #profiler.print_stats(sort='cinit') # (A constructor for NCS is where most (<2%) of time is spent)
 
 if __name__ == "__main__":
-    profiler = True  # type: ignore[reportAssignmentType]
+    profiler: cProfile.Profile = True  # type: ignore[reportAssignmentType, assignment]
     if profiler:
-        profiler: cProfile.Profile = cProfile.Profile()
+        profiler = cProfile.Profile()
         profiler.enable()
 
 
@@ -293,7 +300,6 @@ if __name__ == "__main__":
         [
             __file__,
             "-v",
-            "--full-trace",
             "-ra",
             "-o",
             "log_cli=true",
@@ -301,6 +307,7 @@ if __name__ == "__main__":
             "--junitxml=pytest_report.xml",
             "--html=pytest_report.html",
             "--self-contained-html",
+            "--tb=no",
             "-n",
             "auto"
         ],
@@ -308,27 +315,6 @@ if __name__ == "__main__":
 
     if profiler:
         save_profiler_output(profiler, "profiler_output.pstat")
-        # Generate reports from the profile stats
-        #stats = pstats.Stats(profiler_output_file_str).sort_stats('cumulative')
-        #stats.print_stats()
-
-        # Generate some line-execution graphs for flame graphs
-        #profiler.create_stats()
-        #stats_text = pstats.Stats(profiler).sort_stats('cumulative')
-        #stats_text.print_stats()
-        #stats_text.dump_stats(f"{LOG_FILENAME}.pstats")
-        #stats_text.print_callers()
-        #stats_text.print_callees()
-        # Cumulative list of the calls
-        #stats_text.print_stats(100)
-        # Cumulative list of calls per function
-        #stats_text.print_callers(100, 'cumulative')
-        #stats_text.print_callees(100, 'cumulative')
-
-        # Generate some flat line graphs
-        #profiler.print_stats(sort='time')  # (Switch to sort='cumulative' then scroll up to see where time was spent!)
-        #profiler.print_stats(sort='name')  # (toString of OBJ is called the most often, followed by compiler drivers)
-        #profiler.print_stats(sort='cinit') # (A constructor for NCS is where most (<2%) of time is spent)
 
     sys.exit(result)
     # Cleanup temporary directories after use
