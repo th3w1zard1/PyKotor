@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pykotor.extract.file import ResourceIdentifier
+from pykotor.tools.encoding import decode_bytes_with_fallbacks
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
@@ -135,6 +136,11 @@ def compile_with_abstract_compatible(
                 pytest.xfail(f"{compiler_identifier}: No entry point found in '{nss_path.name}': {e}")
             else:
                 if stderr:
+                    with nss_path.open("rb") as f:
+                        source_nss = decode_bytes_with_fallbacks(f.read())
+                    lines = source_nss.split("\n")
+                    if "could not recompile" in lines[0]:
+                        pytest.xfail(lines[0])
                     raise CompileError(f"stdout: {stdout}\nstderr: {stderr}")
         else:
             try:
@@ -254,7 +260,12 @@ def test_tslpatcher_nwnnsscomp(
         differences: list[str] = compare_bytes(compiled_ncs_data, original_ncs_data)
         if differences:
             msg_info_level = f"Bytecodes of compiled '{file_res.filepath()}' does not match with vanilla ncs:\n"
-            log_file(msg_info_level + "\n".join(differences[:5]), filepath=f"comparison_results_{'K1' if game.is_k1() else 'TSL'}_{unique_ncs_path.name}.txt")
+            with nss_path.open("rb") as f:
+                source_nss = decode_bytes_with_fallbacks(f.read())
+            lines = source_nss.split("\n")
+            if "Byte code does not match" in lines[0]:
+                pytest.xfail(lines[0])
+            log_file(msg_info_level + "\n".join(differences), filepath=f"comparison_results_{'K1' if game.is_k1() else 'TSL'}_{unique_ncs_path.name}.txt")
             pytest.fail(msg_info_level + "\n".join(differences[:3]))
 
 
