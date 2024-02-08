@@ -222,7 +222,7 @@ def compare_bytes(data1: bytes, data2: bytes) -> list[str]:
         else:
             i += 1
     if len(data1) != len(data2):
-        differences.insert(0, f"Data lengths differ: data1 is {len(data1)} bytes, data2 is {len(data2)} bytes")
+        differences.insert(0, f"Data lengths differ: compiled data is {len(data1)} bytes, original ncs is {len(data2)} bytes")
     return differences
 
 def test_tslpatcher_nwnnsscomp(
