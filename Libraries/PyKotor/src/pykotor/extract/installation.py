@@ -418,11 +418,10 @@ class Installation:
             print(f"The '{r_path.name}' folder did not exist when loading the installation at '{self._path}', skipping...")
             return resources
 
-        print(f"Loading '{r_path.name}' folder from installation...")
-        files_iter: Generator[Path, None, None] = (
-            r_path.safe_rglob("*")
+        files_iter = (
+            path.safe_rglob("*")
             if recurse
-            else r_path.safe_iterdir()
+            else path.safe_iterdir()
         )
 
         # Determine number of workers dynamically based on available CPUs
@@ -434,30 +433,26 @@ class Installation:
                 executor.submit(self.load_single_resource, file, capsule_check)
                 for file in files_iter
             ]
+
+            # Gather resources and omit `None` values (errors or skips)
             if isinstance(resources, CaseInsensitiveDict):
-                for future in as_completed(futures):
-                    path2, results = future.result()
-                    if isinstance(results, list):
-                        resources[path2.name] = [result for result in results if result is not None]
-                    elif results is None:
-                        resources[path2.name] = []
-                    else:
-                        msg = f"Incorrect result returned from task, got '{results}'"
-                        raise TypeError(msg)
+                for f in futures:
+                    filepath, resource = f.result()
+                    if resource is None:
+                        continue
+                    if not isinstance(resource, list):
+                        continue
+                    resources[filepath.name] = resource
             else:
-                for future in as_completed(futures):
-                    path2, resource = future.result()  # Retrieve the result
+                for f in futures:
+                    filepath, resource = f.result()
+                    if resource is None:
+                        continue
                     if isinstance(resource, FileResource):
-                        resources.append(resource)  # Add the valid resource to the list
-                    elif resource is None:
-                        ...
-                    else:
-                        msg = f"Incorrect result returned from task, got '{resource}'"
-                        raise TypeError(msg)
+                        resources.append(resource)
 
         if not resources:
             print(f"No resources found at '{r_path}' when loading the installation, skipping...")
-
         return resources
 
     def load_chitin(self):
