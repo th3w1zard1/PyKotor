@@ -210,13 +210,15 @@ def compare_bytes(data1: bytes, data2: bytes) -> list[str]:
             diff_length = end_offset - start_offset + 1
             data1_diff = data1[start_offset:i]
             data2_diff = data2[start_offset:i]
+            data1_diff_repr = "b'" + ''.join(f"\\x{byte:02x}" for byte in data1[start_offset:i]) + "'"
+            data2_diff_repr = "b'" + ''.join(f"\\x{byte:02x}" for byte in data2[start_offset:i]) + "'"
             try:
                 data1_str = data1_diff.decode(encoding='windows-1252', errors="replace")
                 data2_str = data2_diff.decode(encoding='windows-1252', errors="replace")
                 str_repr = f"\nDecoded: '{data1_str}' vs '{data2_str}'"
             except UnicodeDecodeError:
                 str_repr = ""
-            differences.append(f"Offset 0x{start_offset:02X} to 0x{end_offset:02X}: {diff_length} bytes differ.\nData: {data1_diff} vs {data2_diff}{str_repr}")
+            differences.append(f"Offset 0x{start_offset:02X} to 0x{end_offset:02X}: {diff_length} bytes differ.\nData: {data1_diff_repr} vs {data2_diff_repr}{str_repr}")
         else:
             i += 1
     if len(data1) != len(data2):
@@ -228,10 +230,6 @@ def test_tslpatcher_nwnnsscomp(
 ):
     compilers: dict[str, ExternalNCSCompiler] = {
         TSLPATCHER_NWNNSSCOMP_PATH: ExternalNCSCompiler(TSLPATCHER_NWNNSSCOMP_PATH),
-    }
-
-    compiler_result: dict[str, bytes | None] = {
-        TSLPATCHER_NWNNSSCOMP_PATH: None,
     }
 
     game, script_info = script_data
