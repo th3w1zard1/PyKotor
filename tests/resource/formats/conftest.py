@@ -63,9 +63,6 @@ def pytest_report_teststatus(
         reprcrash = getattr(report.longrepr, "reprcrash", None)
         msg = reprcrash.message if reprcrash is not None else repr(report.longrepr)
         return "failed", "F", f"FAILED: {msg}"
-    elif "xfail" in report.keywords and report.skipped:
-        reason = report.keywords.get('xfail') or "<reason unknown>"
-        return "skipped", "X", f"XFAILED: {reason}"
     return None
 
 def save_profiler_output(
