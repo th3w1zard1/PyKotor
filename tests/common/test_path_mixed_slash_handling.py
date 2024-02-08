@@ -1,14 +1,8 @@
 # Rigorously test the string result of each pathlib module.
-<<<<<<< HEAD
 # The goal isn't really to test pathlib.Path or utility.path, the goal is to determine if there was a breaking change in a python patch release.
 from __future__ import annotations
 
 import contextlib
-=======
-# The goal isn't really to test pathlib.Path or utility.system.path, the goal is to determine if there was a breaking change in a python patch release.
-from __future__ import annotations
-
->>>>>>> fd91dcce (move the tests to top level (again))
 import ctypes
 import os
 import pathlib
@@ -19,17 +13,12 @@ import unittest
 from ctypes.wintypes import DWORD
 from pathlib import Path, PosixPath, PurePath, PurePosixPath, PureWindowsPath, WindowsPath
 from tempfile import TemporaryDirectory
-<<<<<<< HEAD
 from typing import TYPE_CHECKING
 from unittest import mock
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
 
-=======
-from unittest import mock
-
->>>>>>> fd91dcce (move the tests to top level (again))
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[2]
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("Utility", "src")
