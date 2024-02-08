@@ -191,7 +191,7 @@ def compare_external_results(
     # Report results
     if mismatches:
         error_report = "\n".join(mismatches + matches)  # Include matches for context
-        pytest.fail(error_report)
+        pytest.fail(error_report, pytrace=False)
 
     if matches:
         print("\n".join(matches))
