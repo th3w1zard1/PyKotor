@@ -217,7 +217,7 @@ def populate_all_scripts(
             working_folder: Path = nss_path.parent
             if working_folder in seen_paths:
                 continue
-            if working_folder.name == "scripts.bif":
+            if working_folder.name in {"scripts.bif", "TSLPatcher"}:
                 continue
             print(f"Symlinking {len(symlink_map)} bif scripts into {working_folder}...")
 

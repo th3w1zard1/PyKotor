@@ -238,9 +238,9 @@ def test_tslpatcher_nwnnsscomp(
         compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher")
         with unique_ncs_path.open("rb") as f:
             compiled_ncs_data = f.read()
-        original_ncs_path = Path(f"../{('K1' if game.is_k1() else 'TSL')}/Comparisons/{ncs_path.parent.parent.name}/{ncs_path.parent.name}/{file_res.identifier()}")
+        original_ncs_path = Path(f"../{('K1' if game.is_k1() else 'TSL')}/Comparisons/{file_res.filepath().parent.parent.name}/{ncs_path.parent.name}/{file_res.identifier()}").with_suffix(".ncs")
         if not original_ncs_path.safe_isfile():
-            pytest.xfail(f"{original_ncs_path} was not found on disk, comparisons cannot be made.")
+            pytest.skip(f"'{original_ncs_path}' was not found on disk, comparisons cannot be made.")
         with original_ncs_path.open("rb") as f:
             original_ncs_data = f.read()
         differences: list[str] = compare_bytes(compiled_ncs_data, original_ncs_data)
