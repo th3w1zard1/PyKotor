@@ -195,24 +195,20 @@ class Installation:
     def __iter__(self) -> Generator[FileResource, Any, None]:
         if not self._initialized:
             self.reload_all()
-        def generator() -> Generator[FileResource, Any, None]:
-            yield from self._chitin
-            yield from self._streammusic
-            yield from self._streamsounds
-            yield from self._streamwaves
-            for resources in self._override.values():
-                yield from resources
-            for resources in self._modules.values():
-                yield from resources
-            for resources in self._lips.values():
-                yield from resources
-            for resources in self._texturepacks.values():
-                yield from resources
-            for resources in self._rims.values():
-                yield from resources
-
-        yield from generator()
-
+        yield from self._chitin
+        yield from self._streammusic
+        yield from self._streamsounds
+        yield from self._streamwaves
+        for resources in self._override.values():
+            yield from resources
+        for resources in self._modules.values():
+            yield from resources
+        for resources in self._lips.values():
+            yield from resources
+        for resources in self._texturepacks.values():
+            yield from resources
+        for resources in self._rims.values():
+            yield from resources
         tlk_path = self._path / "dialog.tlk"
         yield FileResource("dialog", ResourceType.TLK, tlk_path.stat().st_size, 0, tlk_path)
         female_tlk_path = self._path / "dialogf.tlk"
