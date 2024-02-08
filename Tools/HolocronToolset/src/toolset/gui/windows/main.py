@@ -737,7 +737,7 @@ class ToolWindow(QMainWindow):
             self.updateMenus()
             print("Setting up watchdog observer...")
             self.dogObserver = Observer()
-            self.dogObserver.schedule(self.dogHandler, self.active.path(), recursive=True)
+            self.dogObserver.schedule(self.dogHandler, active_resource.path(), recursive=True)
             self.dogObserver.start()
         else:
             self.ui.gameCombo.setCurrentIndex(0)
@@ -816,6 +816,7 @@ class ToolWindow(QMainWindow):
             for texture in model.list_textures(data):
                 try:
                     tpc: TPC | None = self.active.texture(texture)
+                    assert tpc is not None
                     if self.ui.tpcTxiCheckbox.isChecked():
                         self._extractTxi(tpc, folderpath.joinpath(f"{texture}.tpc"))
 
