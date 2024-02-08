@@ -256,7 +256,8 @@ def cleanup_before_tests():
         "*_incompatible*.txt",
         "*fallback_level*",
         "*test_ncs_compilers_install.txt",
-        "*.pstat"
+        "*.pstat",
+        "comparison_results_*.txt"
     ]
 
     # Delete log files
