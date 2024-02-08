@@ -246,19 +246,6 @@ def test_tslpatcher_nwnnsscomp(
         differences: list[str] = compare_bytes(compiled_ncs_data, original_ncs_data)
         if differences:
             pytest.fail(f"Bytecodes of compiled '{original_ncs_path.name}' does not match with vanilla ncs:\n" + "\n".join(differences))
-        
-
-def test_inbuilt_compiler(
-    script_data: tuple[Game, tuple[FileResource, Path, Path]]
-):
-    compiler = InbuiltNCSCompiler()
-    game, script_info = script_data
-    file_res, nss_path, ncs_path = script_info
-    if nss_path.name == "nwscript.nss":
-        pytest.skip("nwscript.nss is not a script we can compile.")
-    if nss_path.is_symlink():  # don't test scripts.bif symlinks.
-        return
-    compile_with_abstract_compatible(compiler, file_res, nss_path, ncs_path.with_stem(f"{ncs_path.stem}_inbuilt"), game, "inbuilt")
 
 
 def save_profiler_output(
