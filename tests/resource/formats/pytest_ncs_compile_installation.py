@@ -202,11 +202,21 @@ def compare_bytes(data1: bytes, data2: bytes) -> list[str]:
     i = 0
     while i < min_len:
         if data1[i] != data2[i]:
-            # Record the first difference in a sequence
-            differences.append(f"Offset 0x{i:02X}: data1 has {data1[i]} and data2 has {data2[i]}")
-            # Move to the end of the differing sequence
+            start_offset = i
+            # Find the end of the difference sequence
             while i < min_len and data1[i] != data2[i]:
                 i += 1
+            end_offset = i - 1
+            diff_length = end_offset - start_offset + 1
+            data1_diff = data1[start_offset:i]
+            data2_diff = data2[start_offset:i]
+            try:
+                data1_str = data1_diff.decode(encoding='windows-1252', errors="replace")
+                data2_str = data2_diff.decode(encoding='windows-1252', errors="replace")
+                str_repr = f"\nDecoded: '{data1_str}' vs '{data2_str}'"
+            except UnicodeDecodeError:
+                str_repr = ""
+            differences.append(f"Offset 0x{start_offset:02X} to 0x{end_offset:02X}: {diff_length} bytes differ{str_repr}")
         else:
             i += 1
     if len(data1) != len(data2):
