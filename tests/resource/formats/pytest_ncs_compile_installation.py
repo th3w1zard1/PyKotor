@@ -232,6 +232,55 @@ def compare_bytes(data1: bytes, data2: bytes) -> list[str]:
         differences.insert(0, f"Data lengths differ: compiled data is {len(data1)} bytes, original ncs is {len(data2)} bytes")
     return differences
 
+def alternate_nwscript_compare(
+    alt_data: tuple[Game, tuple[FileResource, Path, Path]]
+):
+    compilers: dict[str, ExternalNCSCompiler] = {
+        TSLPATCHER_NWNNSSCOMP_PATH: ExternalNCSCompiler(TSLPATCHER_NWNNSSCOMP_PATH),
+    }
+
+    game, script_info = alt_data
+    file_res, nss_path, ncs_path = script_info
+    for compiler_path, compiler in compilers.items():
+        compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
+        compiler.change_nwnnsscomp_path(compiler_path)
+        if nss_path.name == "nwscript.nss":
+            continue
+        if nss_path.is_symlink():
+            continue
+
+        compiler_path_obj = Path(compiler_path)
+        orig_nwscript_path = compiler_path_obj.parent.joinpath("nwscript_orig.nss")
+        asc_nwscript_path = compiler_path_obj.parent.joinpath("nwscript_asc.nss")
+        nwscript_path = compiler_path_obj.parent.joinpath("nwscript.nss")
+        if asc_nwscript_path.exists():
+            if nwscript_path.exists():
+                nwscript_path.rename(orig_nwscript_path)
+            asc_nwscript_path.rename(nwscript_path)
+
+        unique_ncs_name = f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)"
+        unique_ncs_path = ncs_path.with_stem(unique_ncs_name)
+        compile_with_abstract_compatible(compiler, file_res, nss_path, unique_ncs_path, game, "tslpatcher")
+        with unique_ncs_path.open("rb") as f:
+            compiled_ncs_data = f.read()
+        original_ncs_path = Path(f"../{('K1' if game.is_k1() else 'TSL')}/Comparisons/{file_res.filepath().parent.parent.name}/{ncs_path.parent.name}/{file_res.identifier()}").with_suffix(".ncs")
+        if not original_ncs_path.safe_isfile():
+            pytest.skip(f"'{original_ncs_path}' was not found on disk, comparisons cannot be made.")
+        with original_ncs_path.open("rb") as f:
+            original_ncs_data = f.read()
+        differences: list[str] = compare_bytes(compiled_ncs_data, original_ncs_data)
+        if differences:
+            msg_info_level = f"Bytecode mismatch in '{file_res.filepath()}'"
+            with nss_path.open("rb") as f:
+                source_nss = decode_bytes_with_fallbacks(f.read())
+            lines = source_nss.split("\n")
+            compare_dir = Path.cwd() / "comparisons" / unique_ncs_name
+            compare_dir.mkdir(exist_ok=True, parents=True)
+            compiler.decompile_script(unique_ncs_path, compare_dir / f"new_{ncs_path.stem}.txt", game)
+            compiler.decompile_script(original_ncs_path, compare_dir / f"original_{ncs_path.stem}.txt", game)
+            log_file(msg_info_level, filepath="bytecode_mismatches.txt")
+            pytest.fail(lines[0])
+
 def test_tslpatcher_nwnnsscomp(
     script_data: tuple[Game, tuple[FileResource, Path, Path]],
 ):
@@ -243,11 +292,20 @@ def test_tslpatcher_nwnnsscomp(
     file_res, nss_path, ncs_path = script_info
     for compiler_path, compiler in compilers.items():
         compiler_path = compiler_path.replace("<game>", ("K1" if game.is_k1() else "TSL"))
-        compiler.change_nwnnsscomp_path(compiler_path)
         if nss_path.name == "nwscript.nss":
             continue
         if nss_path.is_symlink():
             continue
+
+        compiler_path_obj = Path(compiler_path)
+        orig_nwscript_path = compiler_path_obj.parent.joinpath("nwscript_orig.nss")
+        asc_nwscript_path = compiler_path_obj.parent.joinpath("nwscript_asc.nss")
+        nwscript_path = compiler_path_obj.parent.joinpath("nwscript.nss")
+        if orig_nwscript_path.exists():
+            if nwscript_path.exists():
+                nwscript_path.rename(asc_nwscript_path)
+            orig_nwscript_path.rename(nwscript_path)
+        compiler.change_nwnnsscomp_path(compiler_path)
 
         unique_ncs_name = f"{ncs_path.stem}_{Path(compiler_path).stem}_(tslpatcher)"
         unique_ncs_path = ncs_path.with_stem(unique_ncs_name)
@@ -266,6 +324,8 @@ def test_tslpatcher_nwnnsscomp(
                 source_nss = decode_bytes_with_fallbacks(f.read())
             lines = source_nss.split("\n")
             if "Byte code does not match" in lines[0]:
+                if "ActionStartConversation" in source_nss:
+                    alternate_nwscript_compare(script_data)
                 pytest.xfail(lines[0])
             if "mismatch in include functions" in lines[0]:
                 pytest.xfail(lines[0])
