@@ -142,7 +142,8 @@ class NCSBinaryReader(ResourceReader):
             ...
 
         else:
-            raise Exception(f"Tried to read unsupported instruction '{instruction.ins_type.name}' to NCS")
+            msg = f"Tried to read unsupported instruction '{instruction.ins_type.name}' to NCS"
+            raise ValueError(msg)
 
         return instruction
 
@@ -156,7 +157,7 @@ class NCSBinaryWriter(ResourceWriter):
         super().__init__(target)
         self._ncs: NCS = ncs
         self._offsets: dict[NCSInstruction, int] = {}
-        self._sizes: dict[NCSInstruction, int] = {}
+        self._sizes:   dict[NCSInstruction, int] = {}
 
     @autoclose
     def write(
@@ -275,6 +276,16 @@ class NCSBinaryWriter(ResourceWriter):
                 - Relative jump offsets
             - Raises error for unsupported instructions
         """
+        def to_signed_32bit(n):  # FIXME: Presumably this issue happens further up the call stack, fix later.
+            # Assuming n is provided as an unsigned 32-bit integer
+            # Convert it to a signed 32-bit integer
+            if n >= 2**31:
+                n -= 2**32
+            return n
+        def to_signed_16bit(n):  # FIXME: Only seen this issue happen with 32bit but better safe than sorry, remove this once above issue is fixed.
+            if n >= 2**15:
+                n -= 2**16
+            return n
         self._writer.write_uint8(int(instruction.ins_type.value.byte_code))
         self._writer.write_uint8(int(instruction.ins_type.value.qualifier))
 
@@ -284,11 +295,14 @@ class NCSBinaryWriter(ResourceWriter):
             NCSInstructionType.CPDOWNBP,
             NCSInstructionType.CPTOPBP,
         ]:
-            self._writer.write_int32(instruction.args[0], big=True)
-            self._writer.write_uint16(4, big=True)  # TODO: 12 for float support
+            self._writer.write_int32(to_signed_32bit(instruction.args[0]), big=True)
+            #if isinstance(instruction.args[0], float):
+            #    self._writer.write_uint16(12, big=True)  # For float support ?
+            #else:
+            self._writer.write_uint16(4, big=True)  # Original size for integer
 
         elif instruction.ins_type in [NCSInstructionType.CONSTI]:
-            self._writer.write_int32(instruction.args[0], big=True)
+            self._writer.write_int32(to_signed_32bit(instruction.args[0]), big=True)
 
         elif instruction.ins_type in [NCSInstructionType.CONSTF]:
             self._writer.write_single(instruction.args[0], big=True)
@@ -304,7 +318,7 @@ class NCSBinaryWriter(ResourceWriter):
             self._writer.write_uint8(instruction.args[1], big=True)
 
         elif instruction.ins_type in [NCSInstructionType.MOVSP]:
-            self._writer.write_int32(instruction.args[0], big=True)
+            self._writer.write_int32(to_signed_32bit(instruction.args[0]), big=True)
 
         elif instruction.ins_type in [
             NCSInstructionType.JMP,
@@ -312,12 +326,14 @@ class NCSBinaryWriter(ResourceWriter):
             NCSInstructionType.JZ,
             NCSInstructionType.JNZ,
         ]:
-            relative = self._offsets[instruction.jump] - self._offsets[instruction]
-            self._writer.write_int32(relative, big=True)
+            jump = instruction.jump
+            assert jump is not None, f"{instruction} has a NoneType jump."
+            relative = self._offsets[jump] - self._offsets[instruction]
+            self._writer.write_int32(to_signed_32bit(relative), big=True)
 
         elif instruction.ins_type in [NCSInstructionType.DESTRUCT]:
             self._writer.write_uint16(instruction.args[0], big=True)
-            self._writer.write_int16(instruction.args[1], big=True)
+            self._writer.write_int16(to_signed_16bit(instruction.args[1]), big=True)
             self._writer.write_uint16(instruction.args[2], big=True)
 
         elif instruction.ins_type in [
@@ -326,7 +342,7 @@ class NCSBinaryWriter(ResourceWriter):
             NCSInstructionType.DECIBP,
             NCSInstructionType.INCIBP,
         ]:
-            self._writer.write_int32(instruction.args[0], big=True)
+            self._writer.write_int32(to_signed_32bit(instruction.args[0]), big=True)
 
         elif instruction.ins_type in [NCSInstructionType.STORE_STATE]:
             self._writer.write_uint32(instruction.args[0], big=True)
@@ -337,6 +353,13 @@ class NCSBinaryWriter(ResourceWriter):
             NCSInstructionType.NEQUALTT,
         ]:
             self._writer.write_uint16(instruction.args[0], big=True)
+
+        elif instruction.ins_type in [
+            NCSInstructionType.SHLEFTII,
+        ]:
+            # Assuming SHLEFTII takes two integer arguments and shifts the first by the second.
+            self._writer.write_int32(to_signed_32bit(instruction.args[0]), big=True)  # Value to shift
+            self._writer.write_int32(to_signed_32bit(instruction.args[1]), big=True)  # Shift amount
 
         elif instruction.ins_type in [  # noqa: SIM114
             NCSInstructionType.EQUALII,
@@ -463,4 +486,4 @@ class NCSBinaryWriter(ResourceWriter):
 
         else:
             msg = f"Tried to write unsupported instruction ({instruction.ins_type.name}) to NCS"
-            raise Exception(msg)
+            raise ValueError(msg)
