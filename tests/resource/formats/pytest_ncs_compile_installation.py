@@ -216,7 +216,7 @@ def compare_bytes(data1: bytes, data2: bytes) -> list[str]:
                 str_repr = f"\nDecoded: '{data1_str}' vs '{data2_str}'"
             except UnicodeDecodeError:
                 str_repr = ""
-            differences.append(f"Offset 0x{start_offset:02X} to 0x{end_offset:02X}: {diff_length} bytes differ{str_repr}")
+            differences.append(f"Offset 0x{start_offset:02X} to 0x{end_offset:02X}: {diff_length} bytes differ.\nData: {data1_diff} vs {data2_diff}{str_repr}")
         else:
             i += 1
     if len(data1) != len(data2):
