@@ -34,9 +34,9 @@
   "python.testing.unittestArgs": [
     "-v",
     "-s",
-    "${workspaceFolder}/tests",
+    "./tests",
     "-p",
-    "*test*.py",
+    "*test*.py"
   ],
   "python.missingPackage.severity": "Information",
   "python.terminal.launchArgs": [
