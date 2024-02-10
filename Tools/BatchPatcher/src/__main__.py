@@ -537,14 +537,16 @@ def patch_nested_gff(
                     gff_struct.set_uint32("Delay", 0xFFFFFFFF)
                     made_change = True
         if SCRIPT_GLOBALS.set_unskippable:
-            conversationtype = gff.root.acquire("ConversationType", None)
-            if conversationtype not in ("1", 1):
-                sound: ResRef | None = gff_struct.acquire("Sound", None, ResRef)
-                sound_str = str(sound)
-                if sound and sound_str.strip() and sound_str not in ALIEN_SOUNDS:
-                    log_output(f"ConversationType: {conversationtype}", f"Sound: {sound}", f"Conditions passed, setting dialog unskippable for {current_path}")
-                    gff.root.set_uint8("Skippable", 0)
-                    made_change = True
+            skippable = gff.root.acquire("Skippable", None)
+            if skippable not in (0, "0"):
+                conversationtype = gff.root.acquire("ConversationType", None)
+                if conversationtype not in ("1", 1):
+                    sound: ResRef | None = gff_struct.acquire("Sound", None, ResRef)
+                    sound_str = str(sound)
+                    if sound and sound_str.strip() and sound_str not in ALIEN_SOUNDS:
+                        log_output(f"ConversationType: {conversationtype}", f"Sound: {sound}", f"Conditions passed, setting dialog unskippable for {current_path}")
+                        gff.root.set_uint8("Skippable", 0)
+                        made_change = True
 
     current_path = PurePath.pathify(current_path or "GFFRoot")
     for label, ftype, value in gff_struct:
@@ -652,13 +654,15 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
             gff = read_gff(resource.data())
             made_change = False
             if gff.content == GFFContent.DLG and SCRIPT_GLOBALS.set_unskippable:
-                conversationtype = gff.root.acquire("ConversationType", None)
-                if conversationtype not in ("1", 1):
-                    alien_owner: str | None = gff.root.acquire("AlienRaceOwner", None)  # TSL only
-                    if alien_owner in ("0", 0):
-                        made_change = True
-                        gff.root.set_uint8("Skippable", 0)
-                        log_output(f"ConversationType: {conversationtype}", f"alien_owner: {alien_owner}", f"Conditions passed, setting dialog unskippable for {resource._path_ident_obj}")
+                skippable = gff.root.acquire("Skippable", None)
+                if skippable not in (0, "0"):
+                    conversationtype = gff.root.acquire("ConversationType", None)
+                    if conversationtype not in ("1", 1):
+                        alien_owner: str | None = gff.root.acquire("AlienRaceOwner", None)  # TSL only
+                        if alien_owner in ("0", 0):
+                            made_change = True
+                            gff.root.set_uint8("Skippable", 0)
+                            log_output(f"ConversationType: {conversationtype}", f"alien_owner: {alien_owner}", f"Conditions passed, setting dialog unskippable for {resource._path_ident_obj}")
             if patch_nested_gff(
                 gff.root,
                 gff.content,
