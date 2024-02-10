@@ -81,7 +81,10 @@ class ERFBinaryReader(ResourceReader):
         for i in range(entry_count):
             self._reader.seek(resoffsets[i])
             resdata = self._reader.read_bytes(ressizes[i])
-            self._erf.set_data(resrefs[i], ResourceType.from_id(restypes[i]), resdata)
+            if restypes[i] == 0 and resrefs[i] == "inventory":  # SAVEGAME.sav, inventory doesn't have an id for whatever reason (always 0)
+                self._erf.set_data(resrefs[i], ResourceType.RES, resdata)
+            else:
+                self._erf.set_data(resrefs[i], ResourceType.from_id(restypes[i]), resdata)
 
         return self._erf
 

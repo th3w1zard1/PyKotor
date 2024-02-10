@@ -80,6 +80,7 @@ class ToolWindow(QMainWindow):
         ResourceType.UTP,
         ResourceType.UTD,
         ResourceType.UTI,
+        ResourceType.RES,
         ResourceType.UTM,
         ResourceType.UTE,
         ResourceType.UTT,

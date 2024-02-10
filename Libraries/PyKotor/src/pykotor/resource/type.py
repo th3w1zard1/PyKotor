@@ -113,6 +113,7 @@ class ResourceType(Enum):
     DWK = ResourceTuple(2052, "dwk", "Walkmeshes", "binary")
     PWK = ResourceTuple(2053, "pwk", "Walkmeshes", "binary")
     JRL = ResourceTuple(2056, "jrl", "Journals", "gff")
+    SAV = ResourceTuple(2057, "sav", "Save Data", "erf")
     UTW = ResourceTuple(2058, "utw", "Waypoints", "gff")
     SSF = ResourceTuple(2060, "ssf", "Soundsets", "binary")
     NDB = ResourceTuple(2064, "ndb", "Other", "binary")  # ???
@@ -129,7 +130,6 @@ class ResourceType(Enum):
     MDX = ResourceTuple(3008, "mdx", "Models", "binary")
     ERF = ResourceTuple(9997, "erf", "Modules", "binary")
     RES = ResourceTuple(69420, "res", "Save Data", "gff")  # unknown type_id
-    SAV = ResourceTuple(42069, "sav", "Save Data", "erf")  # unknown type_id
 
     # For Toolset Use:
     PLT = ResourceTuple(6, "plt", "Other", "binary")

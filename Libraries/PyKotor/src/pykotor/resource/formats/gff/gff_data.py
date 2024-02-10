@@ -46,6 +46,7 @@ class GFFContent(Enum):
     NFO = "NFO "  # savenfo.res
     PT  = "PT  "  # partytable.res
     GVT = "GVT "  # GLOBALVARS.res
+    INV = "INV "  # inventory in SAVEGAME.res
 
     @classmethod
     def has_value(
