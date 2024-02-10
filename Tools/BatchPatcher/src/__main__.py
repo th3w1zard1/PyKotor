@@ -493,7 +493,7 @@ def log_output(*args, **kwargs):
 
     # Print the captured output to console
     #print(*args, **kwargs)  # noqa: T201
-    SCRIPT_GLOBALS.patchlogger.add_note("\t".join(args))
+    SCRIPT_GLOBALS.patchlogger.add_note("\t".join(str(arg) for arg in args))
 
 
 def visual_length(s: str, tab_length=8) -> int:
@@ -540,7 +540,7 @@ def patch_nested_gff(
         sound: ResRef | None = gff_struct.acquire("Sound", None, ResRef)
         sound_str = str(sound).strip().lower() if sound is not None else ""
         if sound and sound_str.strip() and sound_str in ALIEN_SOUNDS:
-            log_output(sound_str, "found in:", current_path)
+            log_output(sound_str, "found in:", str(current_path))
             alien_vo_count += 1
 
     current_path = PurePath.pathify(current_path or "GFFRoot")
