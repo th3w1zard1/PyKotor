@@ -538,7 +538,7 @@ def patch_nested_gff(
                     gff_struct.set_uint32("Delay", 0xFFFFFFFF)
                     made_change = True
         sound: ResRef | None = gff_struct.acquire("Sound", None, ResRef)
-        sound_str = str(sound)
+        sound_str = str(sound).strip().lower() if sound is not None else ""
         if sound and sound_str.strip() and sound_str in ALIEN_SOUNDS:
             log_output(sound_str, "found in:", current_path)
             alien_vo_count += 1
@@ -580,9 +580,9 @@ def recurse_through_list(
     gff_list: GFFList,
     gff_content: GFFContent,
     gff: GFF,
-    current_path: PurePath,
-    made_change: bool,
-    alien_vo_count: int = -1,
+    current_path: PurePath | Path = None,  # type: ignore[pylance, assignment]
+    made_change: bool = False,
+    alien_vo_count = -1,
 ) -> tuple[bool, int]:
     current_path = PurePath.pathify(current_path or "GFFListRoot")
     for list_index, gff_struct in enumerate(gff_list):
