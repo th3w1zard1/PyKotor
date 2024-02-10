@@ -401,9 +401,6 @@ function Find-Python {
             }
             Write-Host "Find python again now that it's been installed."
             Find-Python -intrnal
-        } else {
-            Write-Host "Find python again now that it's been installed."
-            Find-Python -intrnal
         }
     }
 }
