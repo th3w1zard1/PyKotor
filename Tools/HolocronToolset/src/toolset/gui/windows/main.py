@@ -74,26 +74,7 @@ class ToolWindow(QMainWindow):
 
     overrideFilesUpdate = QtCore.pyqtSignal(object, object)
 
-    GFF_TYPES: ClassVar[list[ResourceType]] = [
-        ResourceType.GFF,
-        ResourceType.UTC,
-        ResourceType.UTP,
-        ResourceType.UTD,
-        ResourceType.UTI,
-        ResourceType.RES,
-        ResourceType.UTM,
-        ResourceType.UTE,
-        ResourceType.UTT,
-        ResourceType.UTW,
-        ResourceType.UTS,
-        ResourceType.DLG,
-        ResourceType.GUI,
-        ResourceType.ARE,
-        ResourceType.IFO,
-        ResourceType.GIT,
-        ResourceType.JRL,
-        ResourceType.ITP,
-    ]
+    GFF_TYPES: ClassVar[list[ResourceType]] = [restype for restype in ResourceType if restype.contents == "gff"]
 
     def __init__(self):
         """Initializes the main window.
