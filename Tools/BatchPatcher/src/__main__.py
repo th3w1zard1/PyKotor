@@ -839,28 +839,37 @@ def patch_install(install_path: os.PathLike | str):
     k_install.reload_all()
     log_output_with_separator("Patching modules...")
     for module_name, resources in k_install._modules.items():
-        _resname, restype = ResourceIdentifier.from_path(module_name)
-        if restype == ResourceType.RIM:
+        res_ident = ResourceIdentifier.from_path(module_name)
+        filename = str(res_ident)
+        filepath = k_install.path().joinpath("Modules", filename)
+        if res_ident.restype == ResourceType.RIM:
+            if filepath.with_suffix(".mod").safe_isfile():
+                log_output(f"Skipping {filepath}, a .mod already exists at this path.")
+                continue
             new_rim = RIM()
             new_rim_filename = patch_erf_or_rim(resources, module_name, new_rim)
             log_output(f"Saving rim {new_rim_filename}")
-            write_rim(new_rim, k_install.path() / new_rim_filename)
+            write_rim(new_rim, filepath.parent / new_rim_filename, res_ident.restype)
 
-        elif restype.name in ERFType.__members__:
-            new_erf = ERF(ERFType.__members__[restype.name])
+        elif res_ident.restype.name in ERFType.__members__:
+            new_erf = ERF(ERFType.__members__[res_ident.restype.name])
             new_erf_filename = patch_erf_or_rim(resources, module_name, new_erf)
             log_output(f"Saving erf {new_erf_filename}")
-            write_erf(new_erf, k_install.path() / new_erf_filename, restype)
+            write_erf(new_erf, filepath.parent / new_erf_filename, res_ident.restype)
 
         else:
             log_output("Unsupported module:", module_name, " - cannot patch")
 
-    log_output_with_separator("Patching rims...")
-    for rim_name, resources in k_install._rims.items():
-        new_rim = RIM()
-        new_rim_filename = patch_erf_or_rim(resources, rim_name, new_rim)
-        log_output(f"Patching in the 'rims' folder {new_rim_filename}")
-        write_rim(new_rim, k_install.path() / new_rim_filename)
+    # nothing by the game uses these rims as far as I can tell
+    #log_output_with_separator("Patching rims...")
+    #for rim_name, resources in k_install._rims.items():
+    #    new_rim = RIM()
+    #    res_ident = ResourceIdentifier.from_path(module_name)
+    #    filename = str(res_ident)
+    #    filepath = k_install.path().joinpath("rims", filename)
+    #    new_rim_filename = patch_erf_or_rim(resources, rim_name, new_rim)
+    #    log_output(f"Patching {new_rim_filename} in the 'rims' folder ")
+    #    write_rim(new_rim, filepath.parent / new_rim_filename)
 
 
     log_output_with_separator("Patching Override...")
@@ -870,7 +879,7 @@ def patch_install(install_path: os.PathLike | str):
         for resource in k_install.override_resources(folder):
             patch_and_save_noncapsule(resource)
 
-    # Patch bif data and save to Override
+    log_output_with_separator("Extract and patch BIF data, saving to Override")
     for resource in k_install.chitin_resources():
         patch_and_save_noncapsule(resource, savedir=override_path)
 
