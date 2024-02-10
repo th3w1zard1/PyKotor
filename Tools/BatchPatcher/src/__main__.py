@@ -537,11 +537,10 @@ def patch_nested_gff(
                     log_output(f"Changing Delay at '{current_path}' from {delay} to -1")
                     gff_struct.set_uint32("Delay", 0xFFFFFFFF)
                     made_change = True
-        if SCRIPT_GLOBALS.set_unskippable:
-            sound: ResRef | None = gff_struct.acquire("Sound", None, ResRef)
-            sound_str = str(sound)
-            if sound and sound_str.strip() and sound_str in ALIEN_SOUNDS:
-                alien_vo_count += 1
+        sound: ResRef | None = gff_struct.acquire("Sound", None, ResRef)
+        sound_str = str(sound)
+        if sound and sound_str.strip() and sound_str in ALIEN_SOUNDS:
+            alien_vo_count += 1
 
     current_path = PurePath.pathify(current_path or "GFFRoot")
     for label, ftype, value in gff_struct:
@@ -674,7 +673,7 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
                 gff,
                 resource._path_ident_obj  # noqa: SLF001
             )
-            if not made_change and alien_vo_count > 3:
+            if not made_change and alien_vo_count > 3 and SCRIPT_GLOBALS.set_unskippable:
                 skippable = gff.root.acquire("Skippable", None)
                 if skippable not in (0, "0"):
                     conversationtype = gff.root.acquire("ConversationType", None)
