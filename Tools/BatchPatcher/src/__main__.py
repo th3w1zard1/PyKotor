@@ -790,7 +790,7 @@ def patch_erf_or_rim(resources: list[FileResource], filename: str, erf_or_rim: R
     for resource in resources:
         patched_data: GFF | TPC | None = patch_resource(resource)
         if isinstance(patched_data, GFF):
-            log_output(f"Adding patched GFF resource '{resource.resname()}' to {new_filename}")
+            log_output(f"Adding patched GFF resource '{resource.identifier()}' to {new_filename}")
             new_data: bytes = bytes_gff(patched_data) if patched_data else resource.data()
             erf_or_rim.set_data(resource.resname(), resource.restype(), new_data)
             omitted_resources.append(resource.identifier())
