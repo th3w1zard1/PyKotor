@@ -116,8 +116,15 @@ class AsyncWorker(QThread):
 
 
 class AsyncBatchLoader(QDialog):
-    def __init__(self, parent: QWidget | None, title: str, tasks: list[Callable], errorTitle: str | None = None, *,
-                 cascade: bool = False):
+    def __init__(
+        self,
+        parent: QWidget | None,
+        title: str,
+        tasks: list[Callable],
+        errorTitle: str | None = None,
+        *,
+        cascade: bool = False,
+    ):
         """Initializes a progress dialog for running multiple tasks asynchronously.
 
         Args:
@@ -220,7 +227,12 @@ class AsyncBatchWorker(QThread):
     failed = QtCore.pyqtSignal(object)
     completed = QtCore.pyqtSignal()
 
-    def __init__(self, parent: QWidget, tasks: list[Callable], cascade: bool):
+    def __init__(
+        self,
+        parent: QWidget,
+        tasks: list[Callable],
+        cascade: bool,
+    ):
         super().__init__(parent)
         self._tasks: list[Callable] = tasks
         self._cascade: bool = cascade
