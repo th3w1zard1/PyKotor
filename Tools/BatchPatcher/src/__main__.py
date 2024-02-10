@@ -581,7 +581,7 @@ def recurse_through_list(
     gff: GFF,
     current_path: PurePath,
     made_change: bool,
-    alien_vo_count: int = 0,
+    alien_vo_count: int = -1,
 ) -> tuple[bool, int]:
     current_path = PurePath.pathify(current_path or "GFFListRoot")
     for list_index, gff_struct in enumerate(gff_list):
