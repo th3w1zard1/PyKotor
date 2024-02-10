@@ -520,10 +520,9 @@ def patch_install(install_path: os.PathLike | str):
     log_output_with_separator(f"Patching install dir:\t{install_path}", above=True)
     log_output()
 
-    log_output_with_separator("Patching modules...")
     k_install = Installation(install_path)
-
-    # Patch modules...
+    k_install.reload_all()
+    log_output_with_separator("Patching modules...")
     for module_name, resources in k_install._modules.items():
         _resname, restype = ResourceIdentifier.from_path(module_name)
         if restype == ResourceType.RIM:
@@ -535,25 +534,26 @@ def patch_install(install_path: os.PathLike | str):
         elif restype.name in ERFType.__members__:
             new_erf = ERF(ERFType.__members__[restype.name])
             new_erf_filename = patch_erf_or_rim(resources, module_name, new_erf)
-            log_output(f"Saving erf {new_rim_filename}")
+            log_output(f"Saving erf {new_erf_filename}")
             write_erf(new_erf, k_install.path() / new_erf_filename, restype)
 
         else:
             log_output("Unsupported module:", module_name, " - cannot patch")
 
-    # Patch rims...
+    log_output_with_separator("Patching rims...")
     for rim_name, resources in k_install._rims.items():
         new_rim = RIM()
         new_rim_filename = patch_erf_or_rim(resources, rim_name, new_rim)
         log_output(f"Patching in the 'rims' folder {new_rim_filename}")
         write_rim(new_rim, k_install.path() / new_rim_filename)
 
-    # Patch Override...
+
+    log_output_with_separator("Patching Override...")
     override_path = k_install.override_path()
     override_path.mkdir(exist_ok=True, parents=True)
     for folder in k_install.override_list():
         for resource in k_install.override_resources(folder):
-            patch_and_save_noncapsule(resource, savedir=override_path)
+            patch_and_save_noncapsule(resource)
 
     # Patch bif data and save to Override
     for resource in k_install.chitin_resources():

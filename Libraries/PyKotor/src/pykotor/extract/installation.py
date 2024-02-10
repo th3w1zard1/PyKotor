@@ -1504,9 +1504,12 @@ class Installation:
             assert isinstance(item, SearchLocation)
             function_map.get(item, lambda: None)()
 
+
         for case_resname, data in txis.items():
-            if case_resname in textures:
-                textures[case_resname].txi = data.decode("ascii", errors="ignore")
+            texture = textures.get(case_resname)
+            if not texture:
+                continue
+            texture.txi = data.decode("ascii", errors="ignore")
 
         return textures
 
@@ -1584,13 +1587,11 @@ class Installation:
             for resources in values.values():
                 check_list(resources)
 
-        def check_list(resource_dict: list[FileResource]):
-            for resource in resource_dict:
-                resname: str = resource.resname()
-                if resource.restype() in sound_formats and resname in case_resnames:
-                    case_resnames.remove(resname)  # TODO: maybe check if sound_data is empty first?
-                    sound_data: bytes = resource.data()
-                    sounds[resname] = fix_audio(sound_data) if sound_data else b""
+        def check_list(values: list[FileResource]):
+            for resource in values:
+                case_resname: str = resource.resname().casefold()
+                if case_resname in case_resnames and resource.restype() in sound_formats:
+                    case_resnames.remove(case_resname)
 
         def check_capsules(resource_list: list[Capsule]):
             for capsule in resource_list:
@@ -1619,7 +1620,7 @@ class Installation:
                 )
             for sound_file in queried_sound_files:
                 case_resname: CaseInsensitiveWrappedStr = CaseInsensitiveWrappedStr(sound_file.stem)
-                case_resnames.remove(case_resname)  # TODO: maybe check if sound_data is empty first?
+                case_resnames.remove(case_resname)
                 sound_data: bytes = BinaryReader.load_file(sound_file)
                 sounds[case_resname] = fix_audio(sound_data) if sound_data else b""
 
