@@ -13,7 +13,13 @@ if TYPE_CHECKING:
 
 
 class AsyncLoader(QDialog):
-    def __init__(self, parent: QWidget, title: str, task: Callable, errorTitle: str | None = None):
+    def __init__(
+        self,
+        parent: QWidget,
+        title: str,
+        task: Callable,
+        errorTitle: str | None = None,
+    ):
         """Initializes a progress dialog.
 
         Args:
@@ -94,7 +100,11 @@ class AsyncWorker(QThread):
     successful = QtCore.pyqtSignal(object)
     failed = QtCore.pyqtSignal(object)
 
-    def __init__(self, parent: QWidget, task: Callable):
+    def __init__(
+        self,
+        parent: QWidget,
+        task: Callable,
+    ):
         super().__init__(parent)
         self._task = task
 
@@ -198,11 +208,10 @@ class AsyncBatchLoader(QDialog):
         errorTitle = self.errorTitle
         if self.failCount:
             errorTitle = f"{self.errorTitle} ({self.failCount} errors)"
-
         QMessageBox(
             QMessageBox.Critical,
             errorTitle,
-            "\n".join(str(error) for error in self.errors),
+            "\n".join(str(universal_simplify_exception(error)) for error in self.errors),
         ).exec_()
 
 
