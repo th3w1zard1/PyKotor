@@ -523,10 +523,11 @@ def patch_nested_gff(
     gff: GFF,
     current_path: PurePath | Path = None,  # type: ignore[pylance, assignment]
     made_change: bool = False,
-) -> bool:
+    alien_vo_count = 0,
+) -> tuple[bool, int]:
     if gff_content != GFFContent.DLG and not SCRIPT_GLOBALS.translate:
         #print(f"Skipping file at '{current_path}', translate not set.")
-        return False
+        return False, alien_vo_count
     if gff_content == GFFContent.DLG:
         if SCRIPT_GLOBALS.fix_dialog_skipping:
             delay = gff_struct.acquire("Delay", None)
@@ -537,16 +538,10 @@ def patch_nested_gff(
                     gff_struct.set_uint32("Delay", 0xFFFFFFFF)
                     made_change = True
         if SCRIPT_GLOBALS.set_unskippable:
-            skippable = gff.root.acquire("Skippable", None)
-            if skippable not in (0, "0"):
-                conversationtype = gff.root.acquire("ConversationType", None)
-                if conversationtype not in ("1", 1):
-                    sound: ResRef | None = gff_struct.acquire("Sound", None, ResRef)
-                    sound_str = str(sound)
-                    if sound and sound_str.strip() and sound_str not in ALIEN_SOUNDS:
-                        log_output(f"ConversationType: {conversationtype}", f"Sound: {sound}", f"Conditions passed, setting dialog unskippable for {current_path}")
-                        gff.root.set_uint8("Skippable", 0)
-                        made_change = True
+            sound: ResRef | None = gff_struct.acquire("Sound", None, ResRef)
+            sound_str = str(sound)
+            if sound and sound_str.strip() and sound_str in ALIEN_SOUNDS:
+                alien_vo_count += 1
 
     current_path = PurePath.pathify(current_path or "GFFRoot")
     for label, ftype, value in gff_struct:
@@ -556,12 +551,14 @@ def patch_nested_gff(
 
         if ftype == GFFFieldType.Struct:
             assert isinstance(value, GFFStruct)  # noqa: S101
-            made_change |= patch_nested_gff(value, gff_content, gff, child_path, made_change)
+            result_made_change, alien_vo_count = patch_nested_gff(value, gff_content, gff, child_path, made_change, alien_vo_count)
+            made_change |= result_made_change
             continue
 
         if ftype == GFFFieldType.List:
             assert isinstance(value, GFFList)  # noqa: S101
-            made_change |= recurse_through_list(value, gff_content, gff, child_path, made_change)
+            result_made_change, alien_vo_count = recurse_through_list(value, gff_content, gff, child_path, made_change, alien_vo_count)
+            made_change |= result_made_change
             continue
 
         if ftype == GFFFieldType.LocalizedString and SCRIPT_GLOBALS.translate:  # and gff_content.value == GFFContent.DLG.value:
@@ -576,14 +573,22 @@ def patch_nested_gff(
                     new_substrings[substring_id] = str(translated_text)
                     made_change = True
             value._substrings = new_substrings
-    return made_change
+    return made_change, alien_vo_count
 
 
-def recurse_through_list(gff_list: GFFList, gff_content: GFFContent, gff: GFF, current_path: PurePath, made_change: bool) -> bool:
+def recurse_through_list(
+    gff_list: GFFList,
+    gff_content: GFFContent,
+    gff: GFF,
+    current_path: PurePath,
+    made_change: bool,
+    alien_vo_count: int = 0,
+) -> tuple[bool, int]:
     current_path = PurePath.pathify(current_path or "GFFListRoot")
     for list_index, gff_struct in enumerate(gff_list):
-        made_change |= patch_nested_gff(gff_struct, gff_content, gff, current_path / str(list_index), made_change)
-    return made_change
+        result_made_change, alien_vo_count = patch_nested_gff(gff_struct, gff_content, gff, current_path / str(list_index), made_change, alien_vo_count)
+        made_change |= result_made_change
+    return made_change, alien_vo_count
 
 def fix_encoding(text: str, encoding: str):
     return text.encode(encoding=encoding, errors="ignore").decode(encoding=encoding, errors="ignore").strip()
@@ -644,7 +649,7 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
         processed_files.add(new_file_path)
 
     if resource.restype().extension.lower() == "tga" and SCRIPT_GLOBALS.convert_tga:
-        log_output(f"Converting TGA at {resource.filepath()} to TPC...")
+        log_output(f"Converting TGA at {resource._path_ident_obj} to TPC...")
         return TPCTGAReader(resource.data()).load()
 
     if resource.restype().name.upper() in {x.name for x in GFFContent}:
@@ -663,20 +668,27 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
                             made_change = True
                             gff.root.set_uint8("Skippable", 0)
                             log_output(f"ConversationType: {conversationtype}", f"alien_owner: {alien_owner}", f"Conditions passed, setting dialog unskippable for {resource._path_ident_obj}")
-            if patch_nested_gff(
+            result_made_change, alien_vo_count = patch_nested_gff(
                 gff.root,
                 gff.content,
                 gff,
                 resource._path_ident_obj  # noqa: SLF001
-            ) or made_change:
+            )
+            if not made_change and alien_vo_count > 3:
+                skippable = gff.root.acquire("Skippable", None)
+                if skippable not in (0, "0"):
+                    conversationtype = gff.root.acquire("ConversationType", None)
+                    if conversationtype not in ("1", 1):
+                        log_output(f"Setting dialog as unskippable in {resource._path_ident_obj}")
+            if made_change or result_made_change:
                 return gff
         except Exception as e:  # noqa: BLE001
-            log_output(format_exception_with_variables(e, message=f"[Error] loading GFF '{resource.identifier()}' at '{resource.filepath()}'!"))
+            log_output(format_exception_with_variables(e, message=f"[Error] loading GFF '{resource._path_ident_obj}'!"))
             #raise
             return None
 
         if not gff:
-            log_output(f"GFF resource '{resource.identifier()}' missing in memory at '{resource.filepath()}'")
+            log_output(f"GFF resource '{resource._path_ident_obj}' missing in memory")
             return None
     return None
 
