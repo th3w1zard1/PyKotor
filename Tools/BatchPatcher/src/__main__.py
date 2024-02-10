@@ -523,7 +523,7 @@ def patch_nested_gff(
     gff: GFF,
     current_path: PurePath | Path = None,  # type: ignore[pylance, assignment]
     made_change: bool = False,
-    alien_vo_count = 0,
+    alien_vo_count = -1,
 ) -> tuple[bool, int]:
     if gff_content != GFFContent.DLG and not SCRIPT_GLOBALS.translate:
         #print(f"Skipping file at '{current_path}', translate not set.")
@@ -673,12 +673,12 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
                 gff,
                 resource._path_ident_obj  # noqa: SLF001
             )
-            if not made_change and alien_vo_count < 3 and SCRIPT_GLOBALS.set_unskippable and gff.content == GFFContent.DLG:
+            if not made_change and alien_vo_count < 3 and alien_vo_count != -1 and SCRIPT_GLOBALS.set_unskippable and gff.content == GFFContent.DLG:
                 skippable = gff.root.acquire("Skippable", None)
                 if skippable not in (0, "0"):
                     conversationtype = gff.root.acquire("ConversationType", None)
                     if conversationtype not in ("1", 1):
-                        log_output(f"Setting dialog as unskippable in {resource._path_ident_obj}")
+                        log_output("Skippable", skippable, "alien_vo_count", alien_vo_count, "ConversationType", conversationtype, f"Setting dialog as unskippable in {resource._path_ident_obj}")
             if made_change or result_made_change:
                 return gff
         except Exception as e:  # noqa: BLE001
