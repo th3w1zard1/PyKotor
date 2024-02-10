@@ -679,6 +679,8 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
                     conversationtype = gff.root.acquire("ConversationType", None)
                     if conversationtype not in ("1", 1):
                         log_output("Skippable", skippable, "alien_vo_count", alien_vo_count, "ConversationType", conversationtype, f"Setting dialog as unskippable in {resource._path_ident_obj}")
+                        made_change = True
+                        gff.root.set_uint8("Skippable", 0)
             if made_change or result_made_change:
                 return gff
         except Exception as e:  # noqa: BLE001
