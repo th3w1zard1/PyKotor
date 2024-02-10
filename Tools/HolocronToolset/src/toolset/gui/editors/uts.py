@@ -277,10 +277,12 @@ class UTSEditor(Editor):
     def playSound(self):
         self.player.stop()
 
-        if not self.ui.soundList.currentItem().text():
+        curItem = self.ui.soundList.currentItem()
+        curItemText = curItem.text() if curItem else None
+        if not curItem or not curItemText:
             return
 
-        resname: str = self.ui.soundList.currentItem().text()
+        resname: str = curItemText
         data: bytes | None = self._installation.sound(resname)
 
         if data:
