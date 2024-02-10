@@ -87,13 +87,13 @@ class AsyncLoader(QDialog):
         self.error = error
         self.reject()
 
-        if self.errorTitle:
-            QMessageBox(QMessageBox.Critical, self.errorTitle, str(universal_simplify_exception(error))).exec_()
-
         with Path("errorlog.txt").open("a", encoding="utf-8") as file:
             lines = format_exception_with_variables(self.error)
             file.writelines(lines)
             file.write("\n----------------------\n")
+
+        if self.errorTitle:
+            QMessageBox(QMessageBox.Critical, self.errorTitle, str(universal_simplify_exception(error))).exec_()
 
 
 class AsyncWorker(QThread):
