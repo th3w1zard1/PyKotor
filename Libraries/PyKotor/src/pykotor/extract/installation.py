@@ -413,6 +413,8 @@ class Installation:
         if not r_path.safe_isdir():
             print(f"The '{r_path.name}' folder did not exist when loading the installation at '{self._path}', skipping...")
             return resources
+        
+        print(f"Loading {r_path.relative_to(self.path())} from installation...")
 
         files_iter = (
             path.safe_rglob("*")

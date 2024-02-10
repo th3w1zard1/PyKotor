@@ -7,6 +7,8 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDialog, QListWidgetItem, QWidget
 from toolset.gui.dialogs.asyncloader import AsyncBatchLoader
 from toolset.utils.window import openResourceEditor
+from utility.error_handling import format_exception_with_variables
+from utility.system.path import Path
 
 if TYPE_CHECKING:
     from pykotor.extract.file import FileResource
@@ -118,21 +120,29 @@ class FileSearcher(QDialog):
                 for folder in installation.override_list():
                     yield from installation.override_resources(folder)
 
-        lowercase_text = text.lower()
+        searchText = text.lower() if caseSensitive else text
 
         def search(resource: FileResource):
-            resource_name: str = resource.resname()
+            try:
+                resource_name: str = resource.resname()
 
-            name_check: bool = text in resource_name if caseSensitive else lowercase_text in resource_name.lower()
-            if name_check:
-                results.append(resource)
-            if name_check or filenamesOnly:
-                return
+                name_check: bool = searchText in (resource_name if caseSensitive else resource_name.lower())
+                if name_check:
+                    results.append(resource)
+                if name_check or filenamesOnly:
+                    return
 
-            resource_data: str = resource.data().decode(encoding="utf-8", errors="ignore")  # TODO: use a library to find strings in binary file data.
-            data_check: bool = text in resource_data if caseSensitive else lowercase_text in resource_data.lower()
-            if data_check:
-                results.append(resource)
+                resource_data: str = resource.data().decode(encoding="utf-8", errors="ignore")  # HACK:
+                data_check: bool = searchText in (resource_data if caseSensitive else resource_data.lower())
+                if data_check:
+                    results.append(resource)
+            except Exception as e:
+                with Path("errorlog.txt").open("a", encoding="utf-8") as file:
+                    try:  # sourcery skip: do-not-use-bare-except
+                        file.writelines(format_exception_with_variables(e))
+                    except:  # noqa: E722
+                        file.writelines(str(e))
+                raise
 
         searchIn: Generator[FileResource, Any, None] = search_generator()
         searches: list[Callable[[FileResource], None]] = [lambda resource=resource: search(resource) for resource in searchIn]
