@@ -54,13 +54,9 @@ class BinaryReader:
         offset: int = 0,
         size: int | None = None,
     ):
-<<<<<<< HEAD
-        self._stream: io.IOBase | mmap.mmap = stream
-=======
         self.auto_close: bool = True
 
         self._stream: io.RawIOBase | io.BufferedIOBase | mmap.mmap = stream
->>>>>>> 041be36f (update SOURCE_TYPES, add pytests, fix stream.py)
         self._offset: int = offset
         self._stream.seek(offset)
 
@@ -86,43 +82,6 @@ class BinaryReader:
         exc_tb: TracebackType | None,
     ):
         self.close()
-<<<<<<< HEAD
-
-    @classmethod
-    def from_stream(
-        cls,
-        stream: io.IOBase,
-        offset: int = 0,
-        size: int | None = None,
-    ) -> BinaryReader:
-        """Returns a new BinaryReader with a stream.
-
-        Args:
-        ----
-            stream: An object of any stream type derived from io.IOBase.
-            offset: Number of bytes into the stream to consider as position 0.
-            size: Number of bytes allowed to read from the stream. If not specified, uses the whole stream.
-
-        Returns:
-        -------
-            A new BinaryReader instance.
-        """
-        if not isinstance(stream, io.IOBase):
-            msg = "The provided stream must be an instance of io.IOBase or its subclasses."
-            raise TypeError(msg)
-
-        # If the stream supports mmap, you might want to set up mmap here.
-        # However, not all streams will support fileno(), so this is conditional.
-        try:
-            initialized_stream = mmap.mmap(stream.fileno(), length=0, access=mmap.ACCESS_READ)
-        except (AttributeError, ValueError):
-            # For streams that do not support fileno() or where mmap cannot be used,
-            # fall back to using the stream directly.
-            initialized_stream = stream
-
-        return cls(initialized_stream, offset, size)
-=======
->>>>>>> 041be36f (update SOURCE_TYPES, add pytests, fix stream.py)
 
     @classmethod
     def from_stream(
