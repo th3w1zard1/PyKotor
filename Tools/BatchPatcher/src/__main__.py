@@ -776,6 +776,7 @@ def patch_capsule_file(c_file: Path):
             erf_or_rim.set_data(resource.resname(), resource.restype(), resource.data())
     for resinfo in new_resources:
         erf_or_rim.set_data(*resinfo)
+
     log_output(f"Saving back to {new_filepath.name}")
     if is_any_erf_type_file(c_file):
         write_erf(erf_or_rim, new_filepath)  # type: ignore[arg-type, reportArgumentType]
