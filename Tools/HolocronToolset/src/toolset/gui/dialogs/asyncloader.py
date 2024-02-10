@@ -180,22 +180,30 @@ class AsyncBatchLoader(QDialog):
         self.errors.append(error)
         self.failCount += 1
         self._progressBar.setValue(self._progressBar.value() + 1)
+        with Path("errorlog.txt").open("a", encoding="utf-8") as file:
+            try:
+                file.writelines(format_exception_with_variables(error))
+            except Exception:  # noqa: BLE001
+                file.writelines(str(error))
 
     def _onAllCompleted(self):
-        if self.errors:
-            self.reject()
-            if self.errorTitle:
-                errorStrings = [str(error)+"\n" for error in self.errors]
-                QMessageBox(QMessageBox.Critical, self.errorTitle, "".join(errorStrings)).exec_()
-            with Path("errorlog.txt").open("a", encoding="utf-8") as file:
-                lines: list[str] = []
-                for e in self.errors:
-                    lines.extend(format_exception_with_variables(e).split("\n"))
-
-                file.writelines(lines)
-                file.write("\n----------------------\n")
-        else:
+        if not self.errors:
             self.accept()
+            return
+
+        self.reject()
+        if not self.errorTitle:
+            return
+
+        errorTitle = self.errorTitle
+        if self.failCount:
+            errorTitle = f"{self.errorTitle} ({self.failCount} errors)"
+
+        QMessageBox(
+            QMessageBox.Critical,
+            errorTitle,
+            "\n".join(str(error) for error in self.errors),
+        ).exec_()
 
 
 class AsyncBatchWorker(QThread):
