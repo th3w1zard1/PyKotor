@@ -673,7 +673,7 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
                 gff,
                 resource._path_ident_obj  # noqa: SLF001
             )
-            if not made_change and alien_vo_count < 3 and SCRIPT_GLOBALS.set_unskippable:
+            if not made_change and alien_vo_count < 3 and SCRIPT_GLOBALS.set_unskippable and gff.content == GFFContent.DLG:
                 skippable = gff.root.acquire("Skippable", None)
                 if skippable not in (0, "0"):
                     conversationtype = gff.root.acquire("ConversationType", None)
