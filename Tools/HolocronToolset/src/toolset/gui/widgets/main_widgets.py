@@ -153,7 +153,7 @@ class ResourceList(MainWindowList):
 
         for item in model.allResourcesItems():
             resource_from_item: FileResource = item.resource
-            if resource_from_item.resname() == resource.resname() and resource_from_item.restype() == resource.restype():
+            if resource_from_item.identifier() == resource.identifier():
                 _parentIndex = model.proxyModel().mapFromSource(item.parent().index())  # TODO: why is this unused
                 itemIndex = model.proxyModel().mapFromSource(item.index())
                 QTimer.singleShot(1, lambda index=itemIndex, item=item: select(item.parent().index(), index))
