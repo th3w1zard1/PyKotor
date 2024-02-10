@@ -540,6 +540,7 @@ def patch_nested_gff(
         sound: ResRef | None = gff_struct.acquire("Sound", None, ResRef)
         sound_str = str(sound)
         if sound and sound_str.strip() and sound_str in ALIEN_SOUNDS:
+            log_output(sound_str, "found in:", current_path)
             alien_vo_count += 1
 
     current_path = PurePath.pathify(current_path or "GFFRoot")
