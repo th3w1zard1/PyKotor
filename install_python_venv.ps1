@@ -223,9 +223,10 @@ function Find-Python {
     if ($null -ne $python3Command) {
         $global:pythonVersion = Get-Python-Version "python3"
         if ($global:pythonVersion -ge $minVersion -and $global:pythonVersion -lt $maxVersion) {
-            Write-Host "Found python3 command"
+            Write-Host "Found python3 command with version $global:pythonVersion"
             $global:pythonInstallPath = Get-Path-From-Command "python3"
         } else {
+            Write-Host "python3 path '$global:pythonInstallPath' version '$global:pythonVersion' not supported"
             $global:pythonInstallPath = ""
             $global:pythonVersion = ""
         }
@@ -238,6 +239,7 @@ function Find-Python {
             Write-Host "Found python command with version $global:pythonVersion"
             $global:pythonInstallPath = Get-Path-From-Command "python"
         } else {
+            Write-Host "python path '$global:pythonInstallPath' version '$global:pythonVersion' not supported"
             $global:pythonInstallPath = ""
             $global:pythonVersion = ""
         }
@@ -397,7 +399,7 @@ function Find-Python {
                     exit 1
                 }
             } elseif ( (Get-OS) -eq "Mac" ) {
-                & bash -c "brew install python@3.8 -y" 2>&1 | Write-Output
+                & bash -c "brew install python@3.8" 2>&1 | Write-Output
             }
             Write-Host "Find python again now that it's been installed."
             Find-Python -intrnal
