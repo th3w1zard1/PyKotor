@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
+import platform
 import re
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from copy import copy
 from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
@@ -162,6 +163,7 @@ class Installation:
 
         self._modules: CaseInsensitiveDict[list[FileResource]] = CaseInsensitiveDict()
         self._lips: CaseInsensitiveDict[list[FileResource]] = CaseInsensitiveDict()
+        self._saves: dict[Path, dict[Path, list[FileResource]]] = {}
         self._texturepacks: CaseInsensitiveDict[list[FileResource]] = CaseInsensitiveDict()
         self._rims: CaseInsensitiveDict[list[FileResource]] = CaseInsensitiveDict()
 
@@ -189,6 +191,7 @@ class Installation:
         elif self.game().is_k2():
             self.load_streamvoice()
         self.load_textures()
+        self.load_saves()
         print(f"Finished loading the installation from {self._path}")
         self._initialized = True
 
@@ -312,6 +315,48 @@ class Installation:
         """
         return self._find_resource_folderpath(("streamvoice", "streamwaves"))
 
+    def save_locations(self) -> list[Path]:
+        """Returns a list of existing save locations (paths where save files can be found)."""
+        save_paths: list[Path] = []
+        save_paths.append(self._find_resource_folderpath("saves"))
+        system = platform.system()
+
+        if system == "Windows":
+            roamingappdata_env: str = os.getenv("APPDATA", "")
+            if not roamingappdata_env.strip() or not Path(roamingappdata_env).safe_isdir():
+                roamingappdata_path = Path.home().joinpath("AppData", "Roaming")
+            else:
+                roamingappdata_path = Path(roamingappdata_env)
+
+            game_folder1 = "kotor" if self.game().is_k1() else "kotor2"  # FIXME: k1 is known but k2's 'kotor2' is a guess
+            save_paths.append(roamingappdata_path.joinpath("LucasArts", game_folder1, "saves"))
+
+            localappdata_env: str = os.getenv("LOCALAPPDATA", "")
+            if not localappdata_env.strip() or not Path(localappdata_env).safe_isdir():
+                localappdata_path = Path.home().joinpath("AppData", "Local")
+            else:
+                localappdata_path = Path(localappdata_env)
+
+            local_virtual_store = localappdata_path / "VirtualStore"
+            game_folder2 = "SWKotOR2" if self.game().is_k2() else "SWKotOR"
+            save_paths.append(local_virtual_store.joinpath("Program Files", "LucasArts", game_folder2, "saves"))
+            save_paths.append(local_virtual_store.joinpath("Program Files (x86)", "LucasArts", game_folder2, "saves"))
+
+        elif system == "Darwin":  # TODO
+            home = Path.home()
+            save_paths.append(home.joinpath("Library", "Application Support", "Star Wars Knights of the Old Republic II", "saves"))
+            save_paths.append(home.joinpath("Library", "Containers", "com.aspyr.kotor2.appstore", "Data", "Library", "Application Support", "Star Wars Knights of the Old Republic II", "saves"))
+
+        elif system == "Linux":  # TODO
+            xdg_data_home = os.getenv("XDG_DATA_HOME", "")
+            remaining_path_parts = PurePath("aspyr-media", "kotor2", "saves")
+            if xdg_data_home.strip() and Path(xdg_data_home).safe_isdir():
+                save_paths.append(Path(xdg_data_home, remaining_path_parts))
+            save_paths.append(Path.home().joinpath(".local", "share", remaining_path_parts))
+
+        # Filter and return existing paths
+        return [path for path in save_paths if path.exists()]
+
     def _find_resource_folderpath(
         self,
         folder_names: tuple[str, ...] | str,
@@ -413,7 +458,7 @@ class Installation:
         if not r_path.safe_isdir():
             print(f"The '{r_path.name}' folder did not exist when loading the installation at '{self._path}', skipping...")
             return resources
-        
+
         print(f"Loading {r_path.relative_to(self.path())} from installation...")
 
         files_iter = (
@@ -498,6 +543,31 @@ class Installation:
     ):
         """Reloads the list of modules files in the texturepacks folder linked to the Installation."""
         self._texturepacks = self.load_resources(self.texturepacks_path(), capsule_check=is_erf_file)  # type: ignore[assignment]
+
+    def load_saves(
+        self,
+    ):
+        """Reloads the list of saves and data in the 'saves' folder linked to the Installation."""
+        self._saves = {}
+        for save_location in self.save_locations():
+            print(f"Found an active save location at '{save_location}'")
+            self._saves[save_location] = {}
+            for this_save_path in save_location.iterdir():
+                print(f"Discovered a save bundle '{this_save_path.name}'")
+                self._saves[save_location][this_save_path] = []
+                for file in this_save_path.rglob("*"):
+                    if is_capsule_file(file):
+                        self._saves[save_location][this_save_path].extend(Capsule(file).resources())
+                    else:
+                        res_ident = ResourceIdentifier.from_path(file)
+                        file_res = FileResource(
+                            res_ident.resname,
+                            res_ident.restype,
+                            file.stat().st_size,
+                            0,
+                            file
+                        )
+                        self._saves[save_location][this_save_path].append(file_res)
 
     def load_override(self, directory: str | None = None):
         """Loads the list of resources in a specific subdirectory of the override folder linked to the Installation.

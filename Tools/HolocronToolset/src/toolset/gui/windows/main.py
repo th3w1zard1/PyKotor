@@ -711,8 +711,28 @@ class ToolWindow(QMainWindow):
         # If the data has been successfully been loaded, dump the data into the models
         if name in self.installations:
             active_resource: HTInstallation = enforce_instance_cast(self.active, HTInstallation)
-            print("Loading installation resources into UI...")
+            print("Loading core resources into UI...")
             self.ui.coreWidget.setResources(active_resource.chitin_resources())
+            print("Loading save resources into UI...")
+            for save_location, resource_dict in active_resource._saves.items():
+                for save_path, resource_list in resource_dict.items():
+                    allResources: list[QStandardItem] = self.ui.saveWidget.modulesModel.allResourcesItems()
+
+                    # Add any missing resources to the list
+                    for resource in resource_list:
+                        for item in allResources:
+                            resource_from_item: FileResource = item.resource
+                            if resource_from_item == resource:
+                                # Update the resource reference. Important when to a new module that share a resource
+                                # with the same name and restype with the old one.
+                                item.resource = resource
+                                break
+                        else:
+                            self.ui.saveWidget.modulesModel.addResource(resource)
+
+            # Remove unused categories
+            self.ui.saveWidget.modulesModel.removeUnusedCategories()
+
             self.ui.texturesWidget.setInstallation(active_resource)
 
             print("Updating menus...")
