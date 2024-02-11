@@ -240,8 +240,10 @@ function Find-Python {
             $global:pythonInstallPath = Get-Path-From-Command "python"
         } else {
             Write-Host "python path '$global:pythonInstallPath' version '$global:pythonVersion' not supported"
-            $global:pythonInstallPath = ""
-            $global:pythonVersion = ""
+            if ( $global:pythonInstallPath -eq "" ) {
+                $global:pythonInstallPath = ""
+                $global:pythonVersion = ""
+            }
         }
     }
 
