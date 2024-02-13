@@ -556,18 +556,15 @@ class Installation:
                 print(f"Discovered a save bundle '{this_save_path.name}'")
                 self._saves[save_location][this_save_path] = []
                 for file in this_save_path.rglob("*"):
-                    if is_capsule_file(file):
-                        self._saves[save_location][this_save_path].extend(Capsule(file).resources())
-                    else:
-                        res_ident = ResourceIdentifier.from_path(file)
-                        file_res = FileResource(
-                            res_ident.resname,
-                            res_ident.restype,
-                            file.stat().st_size,
-                            0,
-                            file
-                        )
-                        self._saves[save_location][this_save_path].append(file_res)
+                    res_ident = ResourceIdentifier.from_path(file)
+                    file_res = FileResource(
+                        res_ident.resname,
+                        res_ident.restype,
+                        file.stat().st_size,
+                        0,
+                        file
+                    )
+                    self._saves[save_location][this_save_path].append(file_res)
 
     def load_override(self, directory: str | None = None):
         """Loads the list of resources in a specific subdirectory of the override folder linked to the Installation.
