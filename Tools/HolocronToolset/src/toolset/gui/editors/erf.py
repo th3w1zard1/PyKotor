@@ -16,6 +16,7 @@ from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.utils.window import openResourceEditor
 from utility.error_handling import universal_simplify_exception
+from utility.error_handling import format_exception_with_variables
 from utility.system.path import Path
 
 if TYPE_CHECKING:
@@ -247,7 +248,7 @@ class ERFEditor(Editor):
             self.model.removeRow(item.row())
 
     def addResources(self, filepaths: list[str]):
-        """Adds resource files to the project.
+        """Adds resources to the capsule.
 
         Args:
         ----
@@ -265,7 +266,7 @@ class ERFEditor(Editor):
         for filepath in filepaths:
             c_filepath = Path(filepath)
             try:
-                resref, restype = ResourceIdentifier.from_path(c_filepath.parent).validate()
+                resref, restype = ResourceIdentifier.from_path(c_filepath).validate()
                 data = BinaryReader.load_file(c_filepath)
                 resource = ERFResource(ResRef(resref), restype, data)
 
@@ -275,6 +276,10 @@ class ERFEditor(Editor):
                 sizeItem = QStandardItem(str(len(resource.data)))
                 self.model.appendRow([resrefItem, restypeItem, sizeItem])
             except Exception as e:
+                with Path("errorlog.txt").open("a", encoding="utf-8") as file:
+                    lines = format_exception_with_variables(e)
+                    file.writelines(lines)
+                    file.write("\n----------------------\n")
                 QMessageBox(
                     QMessageBox.Critical,
                     "Failed to add resource",
