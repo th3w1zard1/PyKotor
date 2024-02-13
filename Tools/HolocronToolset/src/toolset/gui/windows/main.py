@@ -248,6 +248,9 @@ class ToolWindow(QMainWindow):
 
     def onSavepathChanged(self, newSaveDir: str):
         print("Loading save resources into UI...")
+
+        # Clear the entire model before loading new save resources
+        self.ui.savesWidget.modulesModel.invisibleRootItem().removeRows(0, self.ui.savesWidget.modulesModel.rowCount())
         for save_path, resource_list in self.active._saves[Path(newSaveDir)].items():
             # Create a new parent item for the save_path
             save_path_item = QStandardItem(str(save_path.relative_to(save_path.parent.parent)))
