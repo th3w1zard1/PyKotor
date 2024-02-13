@@ -510,7 +510,7 @@ class Installation:
         chitin_exists: bool | None = chitin_path.safe_isfile()
         if chitin_exists:
             print(f"Loading BIFs from chitin.key at '{self._path}'...")
-            self._chitin = list(Chitin(key_path=chitin_path, game=self.game()))
+            self._chitin = list(Chitin(key_path=chitin_path))
         elif chitin_exists is False:
             print(f"The chitin.key file did not exist at '{self._path}' when loading the installation, skipping...")
         elif chitin_exists is None:
