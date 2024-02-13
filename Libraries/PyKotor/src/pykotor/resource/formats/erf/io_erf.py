@@ -81,10 +81,7 @@ class ERFBinaryReader(ResourceReader):
         for i in range(entry_count):
             self._reader.seek(resoffsets[i])
             resdata = self._reader.read_bytes(ressizes[i])
-            if restypes[i] == 0 and resrefs[i] == "inventory":  # SAVEGAME.sav, inventory doesn't have an id for whatever reason (always 0)
-                self._erf.set_data(resrefs[i], ResourceType.RES, resdata)
-            else:
-                self._erf.set_data(resrefs[i], ResourceType.from_id(restypes[i]), resdata)
+            self._erf.set_data(resrefs[i], ResourceType.from_id(restypes[i]), resdata)
 
         return self._erf
 
@@ -128,10 +125,7 @@ class ERFBinaryWriter(ResourceWriter):
             resref_str = str(resource.resref)
             self._writer.write_string(resref_str, string_length=16)
             self._writer.write_uint32(resid)
-            if resource.restype == ResourceType.RES:
-                self._writer.write_uint16(0)  # HACK: fix later.
-            else:
-                self._writer.write_uint16(resource.restype.type_id)
+            self._writer.write_uint16(resource.restype.type_id)
             self._writer.write_uint16(0)
         data_offset = offset_to_resources + ERFBinaryWriter.RESOURCE_ELEMENT_SIZE * entry_count
         for resource in self.erf:

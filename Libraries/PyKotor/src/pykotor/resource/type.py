@@ -68,7 +68,8 @@ class ResourceType(Enum):
         contents: How the resource type stores data, ie. plaintext, binary, or gff.
     """
 
-    INVALID = ResourceTuple(0, "", "Undefined", "binary", is_invalid=True)
+    INVALID = ResourceTuple(-1, "", "Undefined", "binary", is_invalid=True)
+    RES = ResourceTuple(0, "res", "Save Data", "gff")
     BMP = ResourceTuple(1, "bmp", "Images", "binary")  # ???
     TGA = ResourceTuple(3, "tga", "Textures", "binary")
     WAV = ResourceTuple(4, "wav", "Audio", "binary")
@@ -108,6 +109,7 @@ class ResourceType(Enum):
     DWK = ResourceTuple(2052, "dwk", "Walkmeshes", "binary")
     PWK = ResourceTuple(2053, "pwk", "Walkmeshes", "binary")
     JRL = ResourceTuple(2056, "jrl", "Journals", "gff")
+    SAV = ResourceTuple(2057, "sav", "Save Data", "erf")
     UTW = ResourceTuple(2058, "utw", "Waypoints", "gff")
     SSF = ResourceTuple(2060, "ssf", "Soundsets", "binary")
     NDB = ResourceTuple(2064, "ndb", "Other", "binary")  # ???
@@ -123,8 +125,7 @@ class ResourceType(Enum):
     TPC = ResourceTuple(3007, "tpc", "Textures", "binary")
     MDX = ResourceTuple(3008, "mdx", "Models", "binary")
     ERF = ResourceTuple(9997, "erf", "Modules", "binary")
-    RES = ResourceTuple(69420, "res", "Save Data", "gff")  # unknown type_id
-    SAV = ResourceTuple(42069, "sav", "Save Data", "erf")  # unknown type_id
+
 
     # For Toolset Use:
     PLT = ResourceTuple(6, "plt", "Other", "binary")

@@ -343,10 +343,7 @@ class Capsule:
             resrefs.append(resref)
             resids.append(reader.read_uint32())
             restype = reader.read_uint16()
-            if restype == 0 and resref.lower() == "inventory":
-                restypes.append(ResourceType.RES)
-            else:
-                restypes.append(ResourceType.from_id(restype))
+            restypes.append(ResourceType.from_id(restype))
             reader.skip(2)
 
         reader.seek(offset_to_resources)
