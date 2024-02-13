@@ -249,19 +249,46 @@ class ToolWindow(QMainWindow):
     def onSavepathChanged(self, newSaveDir: str):
         print("Loading save resources into UI...")
         for save_path, resource_list in self.active._saves[Path(newSaveDir)].items():
-            allResources: list[QStandardItem] = self.ui.savesWidget.modulesModel.allResourcesItems()
+            # Create a new parent item for the save_path
+            save_path_item = QStandardItem(str(save_path.relative_to(save_path.parent.parent)))
+            self.ui.savesWidget.modulesModel.invisibleRootItem().appendRow(save_path_item)
 
-            # Add any missing resources to the list
+            # Dictionary to keep track of category items under this save_path_item
+            categoryItemsUnderSavePath = {}
+
             for resource in resource_list:
-                for item in allResources:
-                    resource_from_item: FileResource = item.resource
-                    if resource_from_item == resource:
-                        # Update the resource reference. Important when to a new module that share a resource
-                        # with the same name and restype with the old one.
+                resourceType = resource.restype()
+                category = resourceType.category
+
+                # Check if the category item already exists under this save_path_item
+                if category not in categoryItemsUnderSavePath:
+                    # Create new category item similar to _getCategoryItem logic
+                    categoryItem = QStandardItem(category)
+                    categoryItem.setSelectable(False)
+                    unusedItem = QStandardItem("")
+                    unusedItem.setSelectable(False)
+                    save_path_item.appendRow([categoryItem, unusedItem])
+                    categoryItemsUnderSavePath[category] = categoryItem
+
+                # Now, categoryItem is guaranteed to exist
+                categoryItem = categoryItemsUnderSavePath[category]
+
+                # Check if resource is already listed under this category
+                foundResource = False
+                for i in range(categoryItem.rowCount()):
+                    item = categoryItem.child(i)
+                    if item and item.resource == resource:
+                        # Update the resource reference if necessary
                         item.resource = resource
+                        foundResource = True
                         break
-                else:
-                    self.ui.savesWidget.modulesModel.addResource(resource)
+
+                if not foundResource:
+                    # Add new resource under the category
+                    item1 = QStandardItem(resource.resname())
+                    item1.resource = resource
+                    item2 = QStandardItem(resourceType.extension.upper())
+                    categoryItem.appendRow([item1, item2])
 
     def onOverrideReload(self, file: str):
         file_path = Path(file)
