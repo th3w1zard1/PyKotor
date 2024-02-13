@@ -340,9 +340,14 @@ class Capsule:
         restypes: list[ResourceType] = []
         reader.seek(offset_to_keys)
         for _ in range(entry_count):
-            resrefs.append(reader.read_string(16))
+            resref = reader.read_string(16)
+            resrefs.append(resref)
             resids.append(reader.read_uint32())
-            restypes.append(ResourceType.from_id(reader.read_uint16()))
+            restype = reader.read_uint16()
+            if restype == 0 and resref.lower() == "inventory":
+                restypes.append(ResourceType.RES)
+            else:
+                restypes.append(ResourceType.from_id(restype))
             reader.skip(2)
 
         reader.seek(offset_to_resources)
