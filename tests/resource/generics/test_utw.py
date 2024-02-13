@@ -3,10 +3,6 @@ import pathlib
 import sys
 import unittest
 from unittest import TestCase
-
-from pykotor.resource.formats.gff.gff_data import GFF
-from pykotor.resource.type import ResourceType
-
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
@@ -27,6 +23,7 @@ from pykotor.resource.generics.utw import UTW, construct_utw, dismantle_utw
 
 from pykotor.resource.formats.gff.gff_data import GFF
 from pykotor.resource.type import ResourceType
+
 
 TEST_FILE = "tests/files/test.utw"
 K1_PATH = os.environ.get("K1_PATH")

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from pykotor.common.misc import ResRef
@@ -14,7 +13,6 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
-    from pykotor.resource.formats.twoda.twoda_data import TwoDA
     from PyQt5.QtWidgets import QWidget
 
 
@@ -45,7 +43,7 @@ class UTTEditor(Editor):
         self._setupSignals()
         self._setupInstallation(installation)
 
-        self._utt: UTT = UTT()
+        self._utt = UTT()
 
         self.new()
 
@@ -57,9 +55,9 @@ class UTTEditor(Editor):
         self._installation = installation
         self.ui.nameEdit.setInstallation(installation)
 
-        cursors: TwoDA = installation.htGetCache2DA(HTInstallation.TwoDA_CURSORS)
-        factions: TwoDA = installation.htGetCache2DA(HTInstallation.TwoDA_FACTIONS)
-        traps: TwoDA = installation.htGetCache2DA(HTInstallation.TwoDA_TRAPS)
+        cursors = installation.htGetCache2DA(HTInstallation.TwoDA_CURSORS)
+        factions = installation.htGetCache2DA(HTInstallation.TwoDA_FACTIONS)
+        traps = installation.htGetCache2DA(HTInstallation.TwoDA_TRAPS)
 
         self.ui.cursorSelect.setItems(cursors.get_column("label"))
         self.ui.factionSelect.setItems(factions.get_column("label"))
@@ -68,7 +66,7 @@ class UTTEditor(Editor):
     def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes):
         super().load(filepath, resref, restype, data)
 
-        utt: UTT = read_utt(data)
+        utt = read_utt(data)
         self._loadUTT(utt)
 
     def _loadUTT(self, utt: UTT):
@@ -91,7 +89,7 @@ class UTTEditor(Editor):
         # Basic
         self.ui.nameEdit.setLocstring(utt.name)
         self.ui.tagEdit.setText(utt.tag)
-        self.ui.resrefEdit.setText(str(utt.resref))
+        self.ui.resrefEdit.setText(utt.resref.get())
         self.ui.cursorSelect.setCurrentIndex(utt.cursor_id)
         self.ui.typeSelect.setCurrentIndex(utt.type_id)
 
@@ -111,13 +109,13 @@ class UTTEditor(Editor):
         self.ui.trapSelect.setCurrentIndex(utt.trap_type)
 
         # Scripts
-        self.ui.onClickEdit.setText(str(utt.on_click))
-        self.ui.onDisarmEdit.setText(str(utt.on_disarm))
-        self.ui.onEnterEdit.setText(str(utt.on_enter))
-        self.ui.onExitEdit.setText(str(utt.on_exit))
-        self.ui.onHeartbeatEdit.setText(str(utt.on_heartbeat))
-        self.ui.onTrapTriggeredEdit.setText(str(utt.on_trap_triggered))
-        self.ui.onUserDefinedEdit.setText(str(utt.on_user_defined))
+        self.ui.onClickEdit.setText(utt.on_click.get())
+        self.ui.onDisarmEdit.setText(utt.on_disarm.get())
+        self.ui.onEnterEdit.setText(utt.on_enter.get())
+        self.ui.onExitEdit.setText(utt.on_exit.get())
+        self.ui.onHeartbeatEdit.setText(utt.on_heartbeat.get())
+        self.ui.onTrapTriggeredEdit.setText(utt.on_trap_triggered.get())
+        self.ui.onUserDefinedEdit.setText(utt.on_user_defined.get())
 
         # Comments
         self.ui.commentsEdit.setPlainText(utt.comment)
@@ -135,7 +133,7 @@ class UTTEditor(Editor):
         - Serializes the UTT to GFF format
         - Returns the GFF data and any errors
         """
-        utt: UTT = deepcopy(self._utt)
+        utt = self._utt
 
         # Basic
         utt.name = self.ui.nameEdit.locstring()
@@ -182,17 +180,17 @@ class UTTEditor(Editor):
         self._loadUTT(UTT())
 
     def changeName(self):
-        dialog = LocalizedStringDialog(self, self._installation, self.ui.nameEdit.locstring())
+        dialog = LocalizedStringDialog(self, self._installation, self.ui.nameEdit.locstring)
         if dialog.exec_():
-            self._loadLocstring(self.ui.nameEdit.ui.locstringText, dialog.locstring)
+            self._loadLocstring(self.ui.nameEdit, dialog.locstring)
 
     def generateTag(self):
-        if not self.ui.resrefEdit.text():
+        if self.ui.resrefEdit.text() == "":
             self.generateResref()
         self.ui.tagEdit.setText(self.ui.resrefEdit.text())
 
     def generateResref(self):
-        if self._resname:
-            self.ui.resrefEdit.setText(self._resname)
+        if self._resref is not None and self._resref != "":
+            self.ui.resrefEdit.setText(self._resref)
         else:
             self.ui.resrefEdit.setText("m00xx_trg_000")

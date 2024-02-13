@@ -14,7 +14,7 @@
     
     {
       "name": "Python: Current File",
-      "type": "debugpy",
+      "type": "python",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
@@ -26,15 +26,15 @@
     },
     {
       "name": "Debug Unit Test",
-      "type": "debugpy",
+      "type": "python",
       "request": "launch",
       "program": "${file}",
       "purpose": ["debug-test"],
-      "justMyCode": true,
+      "justMyCode": false,
     },
     {
       "name": "Run Holocron Toolset",
-      "type": "debugpy",
+      "type": "python",
       "request": "launch",
       "module": "toolset",
       "cwd": "${workspaceFolder}/Tools/HolocronToolset/src/",
@@ -46,7 +46,7 @@
     },
     {
       "name": "Run HoloPatcher",
-      "type": "debugpy",
+      "type": "python",
       "request": "launch",
       "program": "${workspaceFolder}${pathSeparator}Tools${pathSeparator}HoloPatcher${pathSeparator}src${pathSeparator}__main__.py",
       "cwd": "${workspaceFolder}/Tools/HoloPatcher/src/",

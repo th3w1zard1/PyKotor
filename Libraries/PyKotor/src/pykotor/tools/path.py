@@ -5,15 +5,16 @@ import pathlib
 import platform
 from typing import TYPE_CHECKING, Any, Callable, Generator
 
-from pykotor.tools.registry import find_software_key, winreg_key
+from pykotor.tools.registry import winreg_key
 from utility.misc import is_instance_or_subinstance
-from utility.system.path import Path as InternalPath, WindowsPath as InternalWindowsPath, PosixPath as InternalPosixPath
+from utility.registry import resolve_reg_key_to_path
+from utility.system.path import Path as InternalPath
 from utility.system.path import PathElem
 from utility.system.path import PurePath as InternalPurePath
-from utility.system.registry import resolve_reg_key_to_path
 
 if TYPE_CHECKING:
     from pykotor.common.misc import Game
+    from typing_extensions import Self
 
 def simple_wrapper(fn_name, wrapped_class_type) -> Callable[..., Any]:
     """Wraps a function to handle case-sensitive pathlib.PurePath arguments.
@@ -127,7 +128,7 @@ def create_case_insensitive_pathlib_class(cls: type):  # TODO: move into CaseAwa
                 wrapped_methods.add(attr_name)
 
  # TODO: Move to pykotor.common
-class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPath):  # type: ignore[misc]
+class CaseAwarePath(InternalPath):  # type: ignore[misc]
     """A class capable of resolving case-sensitivity in a path. Absolutely essential for working with KOTOR files on Unix filesystems."""
 
     def resolve(self, strict=False):  # noqa: FBT002
@@ -136,7 +137,7 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
             return super(CaseAwarePath, new_path).resolve(strict)
         return super().resolve(strict)
 
-    def relative_to(self, *args, walk_up=False, **kwargs) -> InternalPath:
+    def relative_to(self, *args, walk_up=False, **kwargs) -> InternalPath | Self:
         if not args or "other" in kwargs:
             raise TypeError("relative_to() missing 1 required positional argument: 'other'")  # noqa: TRY003, EM101
 
@@ -211,9 +212,7 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
                 break
 
         # return a CaseAwarePath instance
-        instance = cls._create_instance(*parts)
-        assert instance.__class__.__base__ is (InternalWindowsPath if os.name == "nt" else InternalPosixPath)
-        return instance
+        return cls._create_instance(*parts)
 
     @classmethod
     def find_closest_match(cls, target: str, candidates: Generator[InternalPath, None, None]) -> str:
@@ -399,9 +398,6 @@ def find_kotor_paths_from_default() -> dict[Game, list[CaseAwarePath]]:
                 path = CaseAwarePath(path_str).resolve() if path_str else None
                 if path and path.name and path.safe_isdir():
                     locations[game].add(path)
-        amazon_k1_path_str: str | None = find_software_key("AmazonGames/Star Wars - Knights of the Old")
-        if amazon_k1_path_str is not None:
-            locations[Game.K1].add(CaseAwarePath(amazon_k1_path_str))
 
     # don't return nested sets, return as lists.
     return {Game.K1: [*locations[Game.K1]], Game.K2: [*locations[Game.K2]]}

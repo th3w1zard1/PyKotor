@@ -1,8 +1,7 @@
 # Rigorously test the string result of each pathlib module.
-# The goal isn't really to test pathlib.Path or utility.path, the goal is to determine if there was a breaking change in a python patch release.
+# The goal isn't really to test pathlib.Path or utility.system.path, the goal is to determine if there was a breaking change in a python patch release.
 from __future__ import annotations
 
-import contextlib
 import ctypes
 import os
 import pathlib
@@ -13,11 +12,7 @@ import unittest
 from ctypes.wintypes import DWORD
 from pathlib import Path, PosixPath, PurePath, PurePosixPath, PureWindowsPath, WindowsPath
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING
 from unittest import mock
-
-if TYPE_CHECKING:
-    from typing_extensions import Literal
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__)
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[2]
@@ -93,7 +88,7 @@ class TestPathlibMixedSlashes(unittest.TestCase):
         # Define the commands
         combined_commands: list[str] = [
             f"icacls \"{path_str}\" /reset",
-            f"attrib +S +R \"{path_str}\"",
+            f"attrib +S \"{path_str}\"",
             f"icacls \"{path_str}\" /inheritance:r",
             f"icacls \"{path_str}\" /deny Everyone:(F)"
         ]

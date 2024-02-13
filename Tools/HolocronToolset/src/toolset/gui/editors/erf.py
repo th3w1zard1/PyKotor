@@ -6,16 +6,15 @@ from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.resource.formats.erf import ERF, ERFResource, ERFType, read_erf, write_erf
-from pykotor.resource.formats.rim import RIM, RIMResource, read_rim, write_rim
+from pykotor.resource.formats.rim import RIM, read_rim, write_rim
 from pykotor.resource.type import ResourceType
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QMimeData
-from PyQt5.QtGui import QDragEnterEvent, QDragMoveEvent, QDropEvent, QStandardItem, QStandardItemModel
+from PyQt5.QtGui import QStandardItem, QStandardItemModel
 from PyQt5.QtWidgets import QFileDialog, QMessageBox, QShortcut, QTableView, QWidget
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.utils.window import openResourceEditor
-from utility.error_handling import universal_simplify_exception
 from utility.error_handling import format_exception_with_variables
 from utility.system.path import Path
 
@@ -60,9 +59,8 @@ class ERFEditor(Editor):
         self.ui.tableView.selectionModel().selectionChanged.connect(self.selectionChanged)
 
         # Disable saving file into module
-        capsule_types = " ".join(f"*.{e.name.lower()}" for e in ERFType) + " *.rim"
-        self._saveFilter = self._saveFilter.replace(f";;Save into module ({capsule_types})", "")
-        self._openFilter = self._openFilter.replace(f";;Load from module ({capsule_types})", "")
+        self._saveFilter = self._saveFilter.replace(";;Save into module (*.erf *.mod *.rim)", "")
+        self._openFilter = self._openFilter.replace(";;Load from module (*.erf *.mod *.rim)", "")
 
         self.new()
 
@@ -120,29 +118,27 @@ class ERFEditor(Editor):
         self.ui.refreshButton.setEnabled(True)
 
         if restype.name in ERFType.__members__:
-            erf: ERF = read_erf(data)
+            erf = read_erf(data)
             for resource in erf:
-                resrefItem = QStandardItem(str(resource.resref))
+                resrefItem = QStandardItem(resource.resref.get())
                 resrefItem.setData(resource)
                 restypeItem = QStandardItem(resource.restype.extension.upper())
                 sizeItem = QStandardItem(str(len(resource.data)))
                 self.model.appendRow([resrefItem, restypeItem, sizeItem])
-
         elif restype == ResourceType.RIM:
-            rim: RIM = read_rim(data)
+            rim = read_rim(data)
             for resource in rim:
-                resrefItem = QStandardItem(str(resource.resref))
+                resrefItem = QStandardItem(resource.resref.get())
                 resrefItem.setData(resource)
                 restypeItem = QStandardItem(resource.restype.extension.upper())
                 sizeItem = QStandardItem(str(len(resource.data)))
                 self.model.appendRow([resrefItem, restypeItem, sizeItem])
-
         else:
             QMessageBox(
                 QMessageBox.Critical,
                 "Unable to load file",
                 "The file specified is not a MOD/ERF type file.",
-                self,
+                parent=self,
             ).show()
 
     def build(self) -> tuple[bytes, bytes]:
@@ -160,22 +156,20 @@ class ERFEditor(Editor):
             - Returns the built data and an empty bytes object.
         """
         data = bytearray()
-        resource: ERFResource | RIMResource
 
         if self._restype == ResourceType.RIM:
             rim = RIM()
             for i in range(self.model.rowCount()):
                 item = self.model.item(i, 0)
                 resource = item.data()
-                rim.set_data(str(resource.resref), resource.restype, resource.data)
+                rim.set_data(resource.resref.get(), resource.restype, resource.data)
             write_rim(rim, data)
-
-        elif self._restype.name in ERFType.__members__:  # sourcery skip: split-or-ifs
+        if self._restype.name in ERFType.__members__:  # sourcery skip: split-or-ifs
             erf = ERF(ERFType.__members__[self._restype.name])
             for i in range(self.model.rowCount()):
                 item = self.model.item(i, 0)
                 resource = item.data()
-                erf.set_data(str(resource.resref), resource.restype, resource.data)
+                erf.set_data(resource.resref.get(), resource.restype, resource.data)
             write_erf(erf, data)
 
         return data, b""
@@ -205,7 +199,7 @@ class ERFEditor(Editor):
 
         self.ui.refreshButton.setEnabled(True)
 
-        data: tuple[bytes, bytes] = self.build()
+        data = self.build()
         self._revert = data[0]
 
         with self._filepath.open("wb") as file:
@@ -224,16 +218,17 @@ class ERFEditor(Editor):
             - Write the resource data to a file in the target folder.
         """
         folderpath_str = QFileDialog.getExistingDirectory(self, "Extract to folder")
-        if not folderpath_str:
-            return
 
-        self.ui.tableView.selectionModel().selectedRows()
-        for index in self.ui.tableView.selectionModel().selectedRows(0):
-            item = self.model.itemFromIndex(index)
-            resource: ERFResource = item.data()
-            file_path = Path(folderpath_str, f"{resource.resref}.{resource.restype.extension}")
-            with file_path.open("wb") as file:
-                file.write(resource.data)
+        if folderpath_str != "":
+            self.ui.tableView.selectionModel().selectedRows()
+            for index in self.ui.tableView.selectionModel().selectedRows(0):
+                item = self.model.itemFromIndex(index)
+                resource = item.data()
+                file_path = Path(folderpath_str, f"{resource.resref}.{resource.restype.extension}")
+                if not file_path.exists():
+                    file_path = file_path.resolve()
+                with file_path.open("wb") as file:
+                    file.write(resource.data)
 
     def removeSelected(self):
         """Removes selected rows from table view.
@@ -243,8 +238,8 @@ class ERFEditor(Editor):
             - Reversing the list to remove from last to first
             - Removing the row from model using row number.
         """
-        for index in reversed([index for index in self.ui.tableView.selectedIndexes() if not index.column()]):
-            item: QStandardItem | None = self.model.itemFromIndex(index)
+        for index in reversed([index for index in self.ui.tableView.selectedIndexes() if index.column() == 0]):
+            item = self.model.itemFromIndex(index)
             self.model.removeRow(item.row())
 
     def addResources(self, filepaths: list[str]):
@@ -265,6 +260,8 @@ class ERFEditor(Editor):
         """
         for filepath in filepaths:
             c_filepath = Path(filepath)
+            if not c_filepath.exists():
+                c_filepath = c_filepath.resolve()
             try:
                 resref, restype = ResourceIdentifier.from_path(c_filepath).validate()
                 data = BinaryReader.load_file(c_filepath)
@@ -283,11 +280,11 @@ class ERFEditor(Editor):
                 QMessageBox(
                     QMessageBox.Critical,
                     "Failed to add resource",
-                    f"Could not add resource at {c_filepath.absolute()}:\n{universal_simplify_exception(e)}",
+                    f"Could not add resource at {c_filepath}.",
                 ).exec_()
 
     def selectFilesToAdd(self):
-        filepaths: list[str] = QFileDialog.getOpenFileNames(self, "Load files into module")[:-1][0]
+        filepaths = QFileDialog.getOpenFileNames(self, "Load files into module")[:-1][0]
         self.addResources(filepaths)
 
     def openSelected(self):
@@ -307,7 +304,7 @@ class ERFEditor(Editor):
 
         for index in self.ui.tableView.selectionModel().selectedRows(0):
             item = self.model.itemFromIndex(index)
-            resource: ERFResource = item.data()
+            resource = item.data()
 
             if resource.restype.name in ERFType.__members__:
                 QMessageBox(
@@ -321,7 +318,7 @@ class ERFEditor(Editor):
 
             tempPath, editor = openResourceEditor(
                 self._filepath,
-                str(resource.resref),
+                resource.resref.get(),
                 resource.restype,
                 resource.data,
                 self._installation,
@@ -330,8 +327,9 @@ class ERFEditor(Editor):
             editor.savedFile.connect(self.resourceSaved)
 
     def refresh(self):
-        data: bytes = BinaryReader.load_file(self._filepath)
-        self.load(self._filepath, self._resname, self._restype, data)
+        with self._filepath.open("rb") as file:
+            data = file.read()
+            self.load(self._filepath, self._resref, self._restype, data)
 
     def selectionChanged(self):
         """Updates UI controls based on table selection.
@@ -352,13 +350,13 @@ class ERFEditor(Editor):
         self.ui.openButton.setEnabled(state)
         self.ui.unloadButton.setEnabled(state)
 
-    def resourceSaved(self, filepath: str, resname: str, restype: ResourceType, data: bytes):
+    def resourceSaved(self, filepath: str, resref: str, restype: ResourceType, data: bytes):
         """Saves resource data to the UI table.
 
         Args:
         ----
             filepath: Filepath of the resource being saved
-            resname: Filestem Reference of the resource being saved
+            resref: Reference of the resource being saved
             restype: Type of the resource being saved
             data: Data being saved for the resource
 
@@ -367,16 +365,16 @@ class ERFEditor(Editor):
             - Check if filepath matches internal filepath
             - Iterate through selected rows in table view
             - Get item from selected index
-            - Check if item resref/resname and restype match parameters
+            - Check if item resref and restype match parameters
             - Set item data to passed in data.
         """
         if filepath != self._filepath:
             return
 
         for index in self.ui.tableView.selectionModel().selectedRows(0):
-            item: ERFResource = self.model.itemFromIndex(index).data()
-            if item.resref == resname and item.restype == restype:
-                item.data = data
+            item = self.model.itemFromIndex(index)
+            if item.data().resref == resref and item.data().restype == restype:
+                item.data().data = data
 
 
 class ERFEditorTable(QTableView):
@@ -385,24 +383,24 @@ class ERFEditorTable(QTableView):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
+    def dragEnterEvent(self, event):
         if event.mimeData().hasUrls:
             event.accept()
         else:
             event.ignore()
 
-    def dragMoveEvent(self, event: QDragMoveEvent):
+    def dragMoveEvent(self, event):
         if event.mimeData().hasUrls:
             event.setDropAction(QtCore.Qt.CopyAction)
             event.accept()
         else:
             event.ignore()
 
-    def dropEvent(self, event: QDropEvent):
+    def dropEvent(self, event):
         if event.mimeData().hasUrls:
             event.setDropAction(QtCore.Qt.CopyAction)
             event.accept()
-            links: list[str] = [str(url.toLocalFile()) for url in event.mimeData().urls()]
+            links = [str(url.toLocalFile()) for url in event.mimeData().urls()]
             self.resourceDropped.emit(links)
         else:
             event.ignore()
@@ -422,17 +420,18 @@ class ERFEditorTable(QTableView):
             - Creates a drag object with the mime data
             - Executes the drag with the allowed actions.
         """
-        tempDir = Path(GlobalSettings().extractPath)
+        tempDir = Path(GlobalSettings().extractPath).resolve()
 
-        if not tempDir or not tempDir.safe_isdir():
-            print(f"Temp directory not valid: {tempDir}")
+        if not tempDir or not tempDir.is_dir():
             return
 
-        urls: list[QtCore.QUrl] = []
-        for index in (index for index in self.selectedIndexes() if not index.column()):
-            resource: ERFResource = self.model().itemData(index)[QtCore.Qt.UserRole + 1]
-            file_stem, file_ext = str(resource.resref), resource.restype.extension
+        urls = []
+        for index in [index for index in self.selectedIndexes() if index.column() == 0]:
+            resource = self.model().itemData(index)[QtCore.Qt.UserRole + 1]
+            file_stem, file_ext = resource.resref.get(), resource.restype.extension
             filepath = Path(tempDir, f"{file_stem}.{file_ext}")
+            if not filepath.exists():
+                filepath = filepath.resolve()
             with filepath.open("wb") as file:
                 file.write(resource.data)
             urls.append(QtCore.QUrl.fromLocalFile(str(filepath)))

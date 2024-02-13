@@ -38,11 +38,11 @@ class TestTalkTable(unittest.TestCase):
 
     def test_voiceover(self):
         talktable = TalkTable(TEST_FILE)
-        self.assertEqual("resref01", talktable.sound(0))
-        self.assertEqual("resref02", talktable.sound(1))
-        self.assertEqual("", talktable.sound(2))
-        self.assertEqual("", talktable.sound(-1))
-        self.assertEqual("", talktable.sound(3))
+        self.assertEqual("resref01", str(talktable.sound(0)))
+        self.assertEqual("resref02", str(talktable.sound(1)))
+        self.assertEqual("", str(talktable.sound(2)))
+        self.assertEqual("", str(talktable.sound(-1)))
+        self.assertEqual("", str(talktable.sound(3)))
 
     def test_batch(self):
         talktable = TalkTable(TEST_FILE)

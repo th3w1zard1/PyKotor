@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QComboBox, QMenu, QWidget
@@ -17,10 +17,11 @@ class ComboBox2DA(QComboBox):
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.onContextMenu)
 
-        self._sortAlphabetically: bool = False
+        self._sortAlphabetically = False
 
     def addItem(self, text: str, row: int | None = None):
-        """Adds the 2DA row into the combobox. If the row index is not specified, then the value will be set to the number of items in the combobox.
+        """Adds the 2DA row into the combobox. If the row index is not specified, then the value will be set to the number
+        of items in the combobox.
 
         Args:
         ----
@@ -37,13 +38,14 @@ class ComboBox2DA(QComboBox):
         self.clear()
 
         for index, text in enumerate(values):
-            new_text: str = text
+            new_text = text
             if cleanupStrings:
                 new_text = text.replace("TRAP_", "")
                 new_text = text.replace("GENDER_", "")
                 new_text = text.replace("_", " ")
-            if not ignoreBlanks or ignoreBlanks and new_text:
-                super().addItem(new_text, index)
+            if ignoreBlanks and new_text == "":
+                continue
+            super().addItem(new_text, index)
 
         self.enableSort() if self._sortAlphabetically else self.disableSort()
 
@@ -58,7 +60,7 @@ class ComboBox2DA(QComboBox):
         self._sortAlphabetically = False
         selected = self.currentData()
 
-        items: list[tuple[Any, str]] = [
+        items = [
             (self.itemData(index), self.itemText(index))
             for index in range(self.count())
         ]
@@ -75,7 +77,7 @@ class ComboBox2DA(QComboBox):
         Args:
         ----
             rowIn2DA: The row index to select.
-        """  # noqa: D205
+        """
         index = None
         for i in range(self.count()):
             if self.itemData(i) == rowIn2DA:

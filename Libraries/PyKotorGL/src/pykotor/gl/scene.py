@@ -712,7 +712,7 @@ class Scene:
                 capsules: list[Capsule] = [] if self.module is None else self.module.capsules()
                 mdl_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDL, SEARCH_ORDER, capsules=capsules)
                 mdx_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDX, SEARCH_ORDER, capsules=capsules)
-                if mdl_search and mdx_search:
+                if mdl_search is not None and mdx_search is not None:
                     mdl_data: bytes = mdl_search.data
                     mdx_data: bytes = mdx_search.data
 

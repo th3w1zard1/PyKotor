@@ -33,7 +33,6 @@ from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_capsule_file, is_rim_file
 from pykotor.tools.model import list_lightmaps, list_textures
 from utility.error_handling import format_exception_with_variables
-from utility.string import CaseInsensitiveWrappedStr
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
@@ -63,7 +62,7 @@ class Module:
     ):
         self.resources: CaseInsensitiveDict[ModuleResource] = CaseInsensitiveDict()
         self._installation: Installation = installation
-        self._root: CaseInsensitiveWrappedStr = CaseInsensitiveWrappedStr.cast(root)
+        self._root: str = root.lower()
 
         # Build list of capsules from all .mods' in the provided installation
         self._capsules: list[Capsule] = [
@@ -280,19 +279,18 @@ class Module:
         """
         # In order to store TGA resources in the same ModuleResource as their TPC counterpart, we use the .TPC extension
         # instead of the .TGA for the dictionary key.
-        filename_ext: CaseInsensitiveWrappedStr = (ResourceType.TPC if restype == ResourceType.TGA else restype).extension
-        filename: str = f"{resname}.{filename_ext}"
-        module_resource: ModuleResource = self.resources.get(filename)
-        if module_resource is None:
-            module_resource = ModuleResource(resname, restype, self._installation)
-            self.resources[filename] = module_resource
-
+        filename_ext = str(ResourceType.TPC if restype == ResourceType.TGA else restype)
+        filename = f"{resname}.{filename_ext}"
+        if filename not in self.resources:
+            self.resources[filename] = ModuleResource(
+                resname,
+                restype,
+                self._installation,
+            )
         self.resources[filename].add_locations(locations)
-
 
     def installation(self) -> Installation:
         return self._installation
-
 
     def resource(
         self,
@@ -365,7 +363,6 @@ class Module:
             ),
             None,
         )
-
 
     def are(
         self,

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from pykotor.common.misc import ResRef
@@ -39,10 +38,10 @@ class UTSEditor(Editor):
             - Load UI from designer file
             - Set up menus, signals and installation.
         """
-        supported: list[ResourceType] = [ResourceType.UTS]
+        supported = [ResourceType.UTS]
         super().__init__(parent, "Sound Editor", "sound", supported, supported, installation)
 
-        self._uts: UTS = UTS()
+        self._uts = UTS()
 
         self.player = QMediaPlayer(self)
         self.buffer = QBuffer(self)
@@ -96,7 +95,7 @@ class UTSEditor(Editor):
     def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes):
         super().load(filepath, resref, restype, data)
 
-        uts: UTS = read_uts(data)
+        uts = read_uts(data)
         self._loadUTS(uts)
 
     def _loadUTS(self, uts: UTS):
@@ -119,7 +118,7 @@ class UTSEditor(Editor):
         # Basic
         self.ui.nameEdit.setLocstring(uts.name)
         self.ui.tagEdit.setText(uts.tag)
-        self.ui.resrefEdit.setText(str(uts.resref))
+        self.ui.resrefEdit.setText(uts.resref.get())
         self.ui.volumeSlider.setValue(uts.volume)
         self.ui.activeCheckbox.setChecked(uts.active)
 
@@ -145,7 +144,7 @@ class UTSEditor(Editor):
         # Sounds
         self.ui.soundList.clear()
         for sound in uts.sounds:
-            item = QListWidgetItem(str(sound))
+            item = QListWidgetItem(sound.get())
             item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
             self.ui.soundList.addItem(item)
 
@@ -183,7 +182,7 @@ class UTSEditor(Editor):
             - Writes _uts to bytearray using dismantle_uts and write_gff
             - Returns bytearray tuple.
         """
-        uts: UTS = deepcopy(self._uts)
+        uts = self._uts
 
         # Basic
         uts.name = self.ui.nameEdit.locstring()
@@ -231,9 +230,9 @@ class UTSEditor(Editor):
         self._loadUTS(UTS())
 
     def changeName(self):
-        dialog = LocalizedStringDialog(self, self._installation, self.ui.nameEdit.locstring())
+        dialog = LocalizedStringDialog(self, self._installation, self.ui.nameEdit.locstring)
         if dialog.exec_():
-            self._loadLocstring(self.ui.nameEdit.ui.locstringText, dialog.locstring)
+            self._loadLocstring(self.ui.nameEdit, dialog.locstring)
 
     def generateTag(self):
         if self.ui.resrefEdit.text() == "":
@@ -241,8 +240,8 @@ class UTSEditor(Editor):
         self.ui.tagEdit.setText(self.ui.resrefEdit.text())
 
     def generateResref(self):
-        if self._resname is not None and self._resname != "":
-            self.ui.resrefEdit.setText(self._resname)
+        if self._resref is not None and self._resref != "":
+            self.ui.resrefEdit.setText(self._resref)
         else:
             self.ui.resrefEdit.setText("m00xx_trg_000")
 
@@ -277,13 +276,11 @@ class UTSEditor(Editor):
     def playSound(self):
         self.player.stop()
 
-        curItem = self.ui.soundList.currentItem()
-        curItemText = curItem.text() if curItem else None
-        if not curItem or not curItemText:
+        if not self.ui.soundList.currentItem().text():
             return
 
-        resname: str = curItemText
-        data: bytes | None = self._installation.sound(resname)
+        resname = self.ui.soundList.currentItem().text()
+        data = self._installation.sound(resname)
 
         if data:
             self.buffer = QBuffer(self)
@@ -307,23 +304,23 @@ class UTSEditor(Editor):
     def moveSoundUp(self):
         if self.ui.soundList.currentRow() == -1:
             return
-        resname: str = self.ui.soundList.currentItem().text()
-        row: int = self.ui.soundList.currentRow()
+        resname = self.ui.soundList.currentItem().text()
+        row = self.ui.soundList.currentRow()
         self.ui.soundList.takeItem(self.ui.soundList.currentRow())
         self.ui.soundList.insertItem(row - 1, resname)
         self.ui.soundList.setCurrentRow(row - 1)
-        item: QListWidgetItem | None = self.ui.soundList.item(row - 1)
+        item = self.ui.soundList.item(row - 1)
         item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
     def moveSoundDown(self):
         if self.ui.soundList.currentRow() == -1:
             return
-        resname: str = self.ui.soundList.currentItem().text()
-        row: int = self.ui.soundList.currentRow()
+        resname = self.ui.soundList.currentItem().text()
+        row = self.ui.soundList.currentRow()
         self.ui.soundList.takeItem(self.ui.soundList.currentRow())
         self.ui.soundList.insertItem(row + 1, resname)
         self.ui.soundList.setCurrentRow(row + 1)
-        item: QListWidgetItem | None = self.ui.soundList.item(row + 1)
+        item = self.ui.soundList.item(row + 1)
         item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
 
     def closeEvent(self, e: QCloseEvent):

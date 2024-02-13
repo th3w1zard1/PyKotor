@@ -140,9 +140,8 @@ def write_jrl(
     jrl: JRL,
     target: TARGET_TYPES,
     file_format: ResourceType = ResourceType.GFF,
-    game: Game = Game.K2,
 ):
-    gff: GFF = dismantle_jrl(jrl, game)
+    gff: GFF = dismantle_jrl(jrl)
     write_gff(gff, target, file_format)
 
 

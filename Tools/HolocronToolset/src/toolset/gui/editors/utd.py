@@ -20,9 +20,6 @@ from toolset.utils.window import openResourceEditor
 if TYPE_CHECKING:
     import os
 
-    from pykotor.extract.file import ResourceResult
-    from pykotor.resource.formats.twoda.twoda_data import TwoDA
-
 
 class UTDEditor(Editor):
     def __init__(self, parent: QWidget | None, installation: HTInstallation | None = None, *, mainwindow=None):
@@ -47,12 +44,12 @@ class UTDEditor(Editor):
             6. Set up menus, signals and installation.
             7. Update 3D preview and call new() to initialize editor.
         """
-        supported: list[ResourceType] = [ResourceType.UTD]
+        supported = [ResourceType.UTD]
         super().__init__(parent, "Door Editor", "door", supported, supported, installation, mainwindow)
 
         self.globalSettings: GlobalSettings = GlobalSettings()
-        self._genericdoors2DA: TwoDA = installation.htGetCache2DA("genericdoors")
-        self._utd: UTD = UTD()
+        self._genericdoors2DA = installation.htGetCache2DA("genericdoors")
+        self._utd = UTD()
 
         from toolset.uic.editors.utd import Ui_MainWindow
         self.ui = Ui_MainWindow()
@@ -71,13 +68,14 @@ class UTDEditor(Editor):
         ----
             self: The class instance.
 
-        Processing Logic:
-        ----------------
-            - Connect tagGenerateButton click signal to generateTag method
-            - Connect resrefGenerateButton click signal to generateResref method
-            - Connect conversationModifyButton click signal to editConversation method
-            - Connect appearanceSelect currentIndexChanged signal to update3dPreview method
-            - Connect actionShowPreview triggered signal to togglePreview method.
+        Returns:
+        -------
+            None
+        - Connect tagGenerateButton click signal to generateTag method
+        - Connect resrefGenerateButton click signal to generateResref method
+        - Connect conversationModifyButton click signal to editConversation method
+        - Connect appearanceSelect currentIndexChanged signal to update3dPreview method
+        - Connect actionShowPreview triggered signal to togglePreview method.
         """
         self.ui.tagGenerateButton.clicked.connect(self.generateTag)
         self.ui.resrefGenerateButton.clicked.connect(self.generateResref)
@@ -93,23 +91,24 @@ class UTDEditor(Editor):
         ----
             installation: {HTInstallation}: The installation to set up for editing.
 
-        Processing Logic:
-        ----------------
-            - Sets the internal installation reference and updates UI elements
-            - Loads required 2da files if not already loaded
-            - Populates appearance and faction dropdowns from loaded 2da files
-            - Shows/hides TSL-specific UI elements based on installation type.
+        Returns:
+        -------
+            None
+        - Sets the internal installation reference and updates UI elements
+        - Loads required 2da files if not already loaded
+        - Populates appearance and faction dropdowns from loaded 2da files
+        - Shows/hides TSL-specific UI elements based on installation type.
         """
         self._installation = installation
         self.ui.nameEdit.setInstallation(installation)
         self.ui.previewRenderer.installation = installation
 
         # Load required 2da files if they have not been loaded already
-        required: list[str] = [HTInstallation.TwoDA_DOORS, HTInstallation.TwoDA_FACTIONS]
+        required = [HTInstallation.TwoDA_DOORS, HTInstallation.TwoDA_FACTIONS]
         installation.htBatchCache2DA(required)
 
-        appearances: TwoDA = installation.htGetCache2DA(HTInstallation.TwoDA_DOORS)
-        factions: TwoDA = installation.htGetCache2DA(HTInstallation.TwoDA_FACTIONS)
+        appearances = installation.htGetCache2DA(HTInstallation.TwoDA_DOORS)
+        factions = installation.htGetCache2DA(HTInstallation.TwoDA_FACTIONS)
 
         self.ui.appearanceSelect.setItems(appearances.get_column("label"))
         self.ui.factionSelect.setItems(factions.get_column("label"))
@@ -135,18 +134,18 @@ class UTDEditor(Editor):
 
         Processing Logic:
         ----------------
-            - Sets UI element values from UTD object attributes
-            - Divides loading into sections for Basic, Advanced, Lock, Scripts, and Comments
-            - Handles different UI element types like checkboxes, dropdowns, text fields, etc.
+        - Sets UI element values from UTD object attributes
+        - Divides loading into sections for Basic, Advanced, Lock, Scripts, and Comments
+        - Handles different UI element types like checkboxes, dropdowns, text fields, etc.
         """
         self._utd = utd
 
         # Basic
         self.ui.nameEdit.setLocstring(utd.name)
         self.ui.tagEdit.setText(utd.tag)
-        self.ui.resrefEdit.setText(str(utd.resref))
+        self.ui.resrefEdit.setText(utd.resref.get())
         self.ui.appearanceSelect.setCurrentIndex(utd.appearance_id)
-        self.ui.conversationEdit.setText(str(utd.conversation))
+        self.ui.conversationEdit.setText(utd.conversation.get())
 
         # Advanced
         self.ui.min1HpCheckbox.setChecked(utd.min1_hp)
@@ -172,17 +171,17 @@ class UTDEditor(Editor):
         self.ui.difficultyModSpin.setValue(utd.unlock_diff_mod)
 
         # Scripts
-        self.ui.onClickEdit.setText(str(utd.on_click))
-        self.ui.onClosedEdit.setText(str(utd.on_closed))
-        self.ui.onDamagedEdit.setText(str(utd.on_damaged))
-        self.ui.onDeathEdit.setText(str(utd.on_death))
-        self.ui.onOpenFailedEdit.setText(str(utd.on_open_failed))
-        self.ui.onHeartbeatEdit.setText(str(utd.on_heartbeat))
-        self.ui.onMeleeAttackEdit.setText(str(utd.on_melee))
-        self.ui.onSpellEdit.setText(str(utd.on_power))
-        self.ui.onOpenEdit.setText(str(utd.on_open))
-        self.ui.onUnlockEdit.setText(str(utd.on_unlock))
-        self.ui.onUserDefinedEdit.setText(str(utd.on_user_defined))
+        self.ui.onClickEdit.setText(utd.on_click.get())
+        self.ui.onClosedEdit.setText(utd.on_closed.get())
+        self.ui.onDamagedEdit.setText(utd.on_damaged.get())
+        self.ui.onDeathEdit.setText(utd.on_death.get())
+        self.ui.onOpenFailedEdit.setText(utd.on_open_failed.get())
+        self.ui.onHeartbeatEdit.setText(utd.on_heartbeat.get())
+        self.ui.onMeleeAttackEdit.setText(utd.on_melee.get())
+        self.ui.onSpellEdit.setText(utd.on_power.get())
+        self.ui.onOpenEdit.setText(utd.on_open.get())
+        self.ui.onUnlockEdit.setText(utd.on_unlock.get())
+        self.ui.onUserDefinedEdit.setText(utd.on_user_defined.get())
 
         # Comments
         self.ui.commentsEdit.setPlainText(utd.comment)
@@ -196,9 +195,9 @@ class UTDEditor(Editor):
 
         Processing Logic:
         ----------------
-            - Sets UTD properties from UI elements like name, tag, resrefs etc
-            - Writes the constructed UTD to a GFF bytearray
-            - Returns the GFF data and any errors
+        - Sets UTD properties from UI elements like name, tag, resrefs etc
+        - Writes the constructed UTD to a GFF bytearray
+        - Returns the GFF data and any errors
         """
         utd: UTD = deepcopy(self._utd)
 
@@ -261,7 +260,7 @@ class UTDEditor(Editor):
     def changeName(self):
         dialog = LocalizedStringDialog(self, self._installation, self.ui.nameEdit.locstring())
         if dialog.exec_():
-            self._loadLocstring(self.ui.nameEdit.ui.locstringText, dialog.locstring)
+            self._loadLocstring(self.ui.nameEdit, dialog.locstring)
 
     def generateTag(self):
         if self.ui.resrefEdit.text() == "":
@@ -269,8 +268,8 @@ class UTDEditor(Editor):
         self.ui.tagEdit.setText(self.ui.resrefEdit.text())
 
     def generateResref(self):
-        if self._resname is not None and self._resname != "":
-            self.ui.resrefEdit.setText(self._resname)
+        if self._resref is not None and self._resref != "":
+            self.ui.resrefEdit.setText(self._resref)
         else:
             self.ui.resrefEdit.setText("m00xx_dor_000")
 
@@ -320,9 +319,9 @@ class UTDEditor(Editor):
 
         Processing Logic:
         ----------------
-            - Checks if the global setting for showing preview is True
-            - If True, calls _update_model() to update the 3D model preview
-            - If False, sets the fixed size of the window without leaving space for preview.
+        - Checks if the global setting for showing preview is True
+        - If True, calls _update_model() to update the 3D model preview
+        - If False, sets the fixed size of the window without leaving space for preview.
         """
         self.ui.previewRenderer.setVisible(self.globalSettings.showPreviewUTP)
         self.ui.actionShowPreview.setChecked(self.globalSettings.showPreviewUTP)
@@ -346,10 +345,10 @@ class UTDEditor(Editor):
         self.setFixedSize(674, 457)
 
         data, _ = self.build()
-        modelname: str = door.get_model(read_utd(data), self._installation, genericdoors=self._genericdoors2DA)
-        mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL)
-        mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX)
-        if mdl is not None and mdx is not None:
+        modelname = door.get_model(read_utd(data), self._installation, genericdoors=self._genericdoors2DA)
+        mdl = self._installation.resource(modelname, ResourceType.MDL)
+        mdx = self._installation.resource(modelname, ResourceType.MDX)
+        if mdl and mdx:
             self.ui.previewRenderer.setModel(mdl.data, mdx.data)
         else:
             self.ui.previewRenderer.clearModel()

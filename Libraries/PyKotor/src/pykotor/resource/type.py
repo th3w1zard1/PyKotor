@@ -1,8 +1,6 @@
 """This module contains the ResourceType class and initializes the static list of ResourceTypes that can be found in both games."""
 from __future__ import annotations
 
-import io
-import mmap
 import os
 import uuid
 from enum import Enum
@@ -10,10 +8,8 @@ from typing import Callable, Iterable, NamedTuple, TypeVar, Union
 from xml.etree.ElementTree import ParseError
 
 from pykotor.common.stream import BinaryReader, BinaryWriter
-from utility.string import CaseInsensitiveWrappedStr, WrappedStr
 
-STREAM_TYPES = Union[io.BufferedIOBase, io.RawIOBase, mmap.mmap]
-SOURCE_TYPES = Union[os.PathLike, str, bytes, bytearray, memoryview, BinaryReader, STREAM_TYPES]
+SOURCE_TYPES = Union[os.PathLike, str, bytes, bytearray, BinaryReader]
 TARGET_TYPES = Union[os.PathLike, str, bytearray, BinaryWriter]
 
 
@@ -70,7 +66,6 @@ class ResourceType(Enum):
         extension: File extension associated with the resource type and as recognized by the game.
         category: Short description on what kind of data the resource type stores.
         contents: How the resource type stores data, ie. plaintext, binary, or gff.
-
     """
 
     INVALID = ResourceTuple(0, "", "Undefined", "binary", is_invalid=True)
@@ -113,7 +108,6 @@ class ResourceType(Enum):
     DWK = ResourceTuple(2052, "dwk", "Walkmeshes", "binary")
     PWK = ResourceTuple(2053, "pwk", "Walkmeshes", "binary")
     JRL = ResourceTuple(2056, "jrl", "Journals", "gff")
-    SAV = ResourceTuple(2057, "sav", "Save Data", "erf")
     UTW = ResourceTuple(2058, "utw", "Waypoints", "gff")
     SSF = ResourceTuple(2060, "ssf", "Soundsets", "binary")
     NDB = ResourceTuple(2064, "ndb", "Other", "binary")  # ???
@@ -130,6 +124,7 @@ class ResourceType(Enum):
     MDX = ResourceTuple(3008, "mdx", "Models", "binary")
     ERF = ResourceTuple(9997, "erf", "Modules", "binary")
     RES = ResourceTuple(69420, "res", "Save Data", "gff")  # unknown type_id
+    SAV = ResourceTuple(42069, "sav", "Save Data", "erf")  # unknown type_id
 
     # For Toolset Use:
     PLT = ResourceTuple(6, "plt", "Other", "binary")
@@ -182,7 +177,7 @@ class ResourceType(Enum):
         is_invalid: bool = False,  # noqa: FBT001, FBT002
     ):
         self.type_id: int = type_id  # type: ignore[misc]
-        self.extension: CaseInsensitiveWrappedStr = CaseInsensitiveWrappedStr.cast(extension.strip().lower())
+        self.extension: str = extension.strip().lower()
         self.category: str = category
         self.contents: str = contents
         self.is_invalid: bool = is_invalid
@@ -208,7 +203,7 @@ class ResourceType(Enum):
         self,
     ) -> str:
         """Returns the extension in all caps."""
-        return str(self.extension.upper())
+        return self.extension.upper()
 
     def __int__(
         self,
@@ -229,7 +224,7 @@ class ResourceType(Enum):
             if self.is_invalid or other.is_invalid:
                 return self.is_invalid and other.is_invalid
             return self.name == other.name
-        if isinstance(other, (str, WrappedStr)):
+        if isinstance(other, str):
             return self.extension == other.lower()
         if isinstance(other, int):
             return self.type_id == other

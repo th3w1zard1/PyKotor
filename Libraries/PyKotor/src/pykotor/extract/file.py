@@ -1,22 +1,17 @@
 from __future__ import annotations
 
-import lzma
-import os
-from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.type import ResourceType
-from pykotor.tools.misc import is_bif_file, is_bzf_file, is_capsule_file
-from utility.misc import generate_hash
-from utility.string import CaseInsensitiveWrappedStr
+from pykotor.tools.misc import is_bif_file, is_capsule_file
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
+    import os
+
     from pykotor.common.misc import ResRef
-    from utility.string import CaseInsensitiveWrappedStr
 
 
 class FileResource:
@@ -31,6 +26,7 @@ class FileResource:
         filepath: os.PathLike | str,
     ):
         assert resname == resname.strip(), f"FileResource cannot be constructed, resource name '{resname}' cannot start/end with whitespace."
+
         self._identifier = ResourceIdentifier(resname, restype)
 
         self._resname: str = resname
@@ -43,26 +39,26 @@ class FileResource:
         if self._identifier == self._filepath.name:
             self.inside_capsule = False  # HACK: For when capsules are the resource themselves.
         self.inside_bif: bool = is_bif_file(self._filepath)
-        self.inside_bzf = is_bzf_file(self._filepath)
 
-        self._file_hash: str = ""
+#        filehash = self.get_hash(reload=True)
+#        self._internal = True
+#        self._file_hash: str = filehash
+#        self._identifier = ResourceIdentifier(self._resname, self._restype)
 
-        self._path_ident_obj: Path = (
-            self._filepath / str(self._identifier)
-            if self.inside_capsule or self.inside_bif or self.inside_bzf
-            else self._filepath
-        )
+        self._path_ident_obj: Path
+        if self.inside_capsule or self.inside_bif:
+            self._path_ident_obj = self._filepath / str(self._identifier)
+        else:
+            self._path_ident_obj = self._filepath
 
         self._sha256_hash: str = ""
         self._internal = False
-        self._task_running = False
 
     def __setattr__(self, __name, __value):
         if (
             hasattr(self, __name)
             and __name not in {"_internal", "_task_running"}
             and not getattr(self, "_internal", True)
-            and not self._task_running
         ):
             msg = f"Cannot modify immutable FileResource instance, attempted `setattr({self!r}, {__name!r}, {__value!r})`"
             raise RuntimeError(msg)
@@ -88,27 +84,43 @@ class FileResource:
 
     def __eq__(  # Checks are ordered from fastest to slowest.
         self,
-        other: FileResource | ResourceIdentifier | bytes | bytearray | memoryview | object,
+        other: FileResource | ResourceIdentifier #| bytes | bytearray | memoryview | object,
     ):
         if isinstance(other, ResourceIdentifier):
             return self.identifier() == other
         if isinstance(other, FileResource):
             if self is other:
                 return True
+            if (
+                self._offset == other._offset
+                and self._resname == other._resname
+                and self._restype == other._restype
+                and self._filepath == other._filepath
+            ):
+                return True
 
-            return self._path_ident_obj == other._path_ident_obj
+        return NotImplemented
+#        self_hash = self.get_hash(reload=False)
+#        if not self_hash:
+#            return False
 
-        if not isinstance(other, (os.PathLike, bytes, bytearray, memoryview)):
-            return NotImplemented
-
-        return self.get_hash() == generate_hash(other)
+#        other_hash: str | None = None
+#        if isinstance(other, FileResource):
+#            other_hash = other.get_hash(reload=False)
+#        if isinstance(other, (bytes, bytearray, memoryview)):
+#            other_hash = generate_hash(other)
+#        if other_hash is None:
+#            return NotImplemented
+#        return self_hash == other_hash
 
     def resname(self) -> str:
         return self._resname
 
-    def resref(self) -> ResRef:
+    def resref(self) -> ResRef | None:
         from pykotor.common.misc import ResRef
-        return ResRef.from_invalid(self._resname)
+        with suppress(ResRef.ExceedsMaxLengthError, ResRef.InvalidEncodingError):
+            return ResRef(self._resname)
+        return None
 
     def restype(
         self,
@@ -151,80 +163,10 @@ class FileResource:
             self._offset = 0
             self._size = self._filepath.stat().st_size
 
-    def decompress_lzma1(  # TODO: move to a utility class or perhaps the chitin.py?
-        self,
-        data: bytes,
-        output_size: int,
-        no_end_marker: bool = False,  # From xoreos but idk what this implies
-    ) -> bytes:
-        temp_filepath = Path.cwd().joinpath(str(self.identifier()))
-        with temp_filepath.open("wb") as f:
-            print(f"Temporarily writing compressed data to '{temp_filepath}'")
-            f.write(data)  # temporarily store the data, remove later once lzma decompress is working.
-
-        props_size = 5  # For LZMA1, the properties size is usually 5 bytes.
-        if len(data) < props_size:
-            msg = "Input data too short to contain LZMA1 properties."
-            raise ValueError(msg)
-
-        # Extract properties and prepare the filter chain.
-        props = data[:props_size]
-        lzma_filter = {
-            'id': lzma.FILTER_LZMA1,
-            'dict_size': 1 << 23,  # You might need to adjust this based on actual properties.
-            'lc': props[0] % 9,
-            'lp': (props[0] // 9) % 5,
-            'pb': props[0] // (9 * 5),
-        }
-        filter_chain = [lzma_filter]
-
-        # Adjust data to exclude the properties bytes.
-        data = data[props_size:]
-
-        try:
-            # Decompress using FORMAT_RAW with the specified filter chain.
-            decompressed_data = lzma.decompress(data, format=lzma.FORMAT_RAW, filters=filter_chain)
-
-            # Check if the decompressed data matches the expected output size, if specified.
-            if len(decompressed_data) != output_size:
-                if no_end_marker and len(decompressed_data) <= output_size:
-                    # Allow for no end marker and data being smaller than expected.
-                    pass
-                else:
-                    msg = "Decompressed data size does not match the expected output size."
-                    raise ValueError(msg)
-
-        except lzma.LZMAError as e:
-            msg = "Failed to decompress LZMA1 data."
-            raise ValueError(msg) from e
-
-        return decompressed_data
-
-        try:
-            # Attempt to decompress using the LZMA alone format, which is used for LZMA1 data.
-            # This assumes the data starts with the LZMA properties header.
-            decompressed_data = lzma.decompress(data, format=lzma.FORMAT_ALONE)
-
-            # If no_end_marker is True and decompression was successful, but we expect no end marker,
-            # we would typically check if the entire output buffer was filled. However, Python's lzma
-            # module does not give us a straightforward way to enforce or check this directly.
-
-            # Check if the decompressed data matches the expected output size if specified.
-            if output_size is not None and len(decompressed_data) != output_size:
-                msg = "Decompressed data size does not match the expected output size."
-                raise ValueError(msg)
-
-        except lzma.LZMAError as e:
-            msg = "Failed to decompress LZMA1 data."
-            raise ValueError(msg) from e
-        else:
-            return decompressed_data
-
     def data(
         self,
         *,
         reload: bool = False,
-        _internal: bool = False,
     ) -> bytes:
         """Opens the file the resource is located at and returns the bytes data of the resource.
 
@@ -244,22 +186,12 @@ class FileResource:
         try:
             if reload:
                 self._index_resource()
+
             with BinaryReader.from_file(self._filepath) as file:
                 file.seek(self._offset)
                 data: bytes = file.read_bytes(self._size)
-
-                if self.inside_bzf:
-                    data = self.decompress_lzma1(data, self._size)
-
-                if not _internal and not self._task_running:
-                    def background_task(res: FileResource, sentdata: bytes):
-                        self._task_running = True
-                        res._file_hash = generate_hash(sentdata)  # noqa: SLF001
-                        self._task_running = False
-
-                    with ThreadPoolExecutor(thread_name_prefix="background_fileresource_sha1hash_calculation") as executor:
-                        executor.submit(background_task, self, data)
-            return data
+                #self._file_hash = generate_hash(data)
+                return data
         finally:
             self._internal = False
 
@@ -269,10 +201,11 @@ class FileResource:
         reload: bool = False,
     ) -> str:
         """Returns a lowercase hex string sha1 hash. If FileResource doesn't exist this returns an empty str."""
-        if reload or not self._file_hash:
-            if not self._filepath.safe_isfile():
-                return ""  # FileResource or the capsule doesn't exist on disk.
-            self._file_hash = generate_hash(self.data())  # Calculate the sha1 hash
+        if reload:
+            if self._filepath.safe_exists():
+                self.data()  # Ensure that the hash is calculated
+            else:
+                return ""
         return self._file_hash
 
     def identifier(self) -> ResourceIdentifier:
@@ -280,7 +213,7 @@ class FileResource:
 
 
 class ResourceResult(NamedTuple):
-    resname: CaseInsensitiveWrappedStr | str
+    resname: str
     restype: ResourceType
     filepath: Path
     data: bytes
@@ -291,64 +224,42 @@ class LocationResult(NamedTuple):
     offset: int
     size: int
 
-@dataclass
-class ResourceIdentifier:
+
+class ResourceIdentifier(NamedTuple):
     """Class for storing resource name and type, facilitating case-insensitive object comparisons and hashing equal to their string representations."""
 
     resname: str
     restype: ResourceType
-    _cached_filename_str: str = field(default=None, init=False, repr=False)  # type: ignore[reportArgumentType]
-
-    def __post_init__(self):
-        # Workaround to initialize a field in a frozen dataclass
-        object.__setattr__(self, '_cached_filename_str', None)
 
     def __hash__(
         self,
     ):
-        return hash(str(self))
+        return hash(str(self).lower())
 
     def __repr__(
         self,
     ):
         return f"{self.__class__.__name__}(resname='{self.resname}', restype={self.restype!r})"
 
-    def __str__(self) -> str:
-        if self._cached_filename_str is None:
-            ext: str = self.restype.extension
-            suffix: str = f".{ext}" if ext else ""
-            cached_str = f"{self.resname}{suffix}".lower()
-            object.__setattr__(self, '_cached_filename_str', cached_str)
-        return self._cached_filename_str
-
-    def __getitem__(self, key: int) -> Any:
-        if key == 0:
-            return self.resname
-        if key == 1:
-            return self.restype
-        msg = f"Index out of range for ResourceIdentifier. key: {key}"
-        raise IndexError(msg)
+    def __str__(
+        self,
+    ):
+        ext: str = self.restype.extension
+        suffix: str = f".{ext}" if ext else ""
+        return f"{self.resname}{suffix}".lower()
 
     def __eq__(self, other: object):
-        if isinstance(other, ResourceIdentifier):
-            return str(self) == str(other)
         if isinstance(other, str):
-            return str(self) == other.lower()
+            return hash(self) == hash(other.lower())
+        if isinstance(other, ResourceIdentifier):
+            return hash(self) == hash(other)
         return NotImplemented
 
-    def validate(self, *, strict: bool = False):
-        from pykotor.common.misc import ResRef
-        _ = strict and ResRef(self.resname)
-
+    def validate(self):
         if self.restype == ResourceType.INVALID:
-            msg = f"Invalid resource: '{self!r}'"
+            msg = f"Invalid resource: '{self}'"
             raise ValueError(msg)
-
         return self
-
-    def as_resref_compatible(self):
-        from pykotor.common.misc import ResRef
-        return self.__class__(str(ResRef.from_invalid(self.resname)), self.restype)
 
     @classmethod
     def identify(cls, obj: ResourceIdentifier | os.PathLike | str):

@@ -6,7 +6,6 @@ from pykotor.common.language import LocalizedString
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QWidget
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
-from utility.error_handling import assert_with_variable_trace
 
 if TYPE_CHECKING:
     from toolset.data.installation import HTInstallation
@@ -39,7 +38,7 @@ class LocalizedStringLineEdit(QWidget):
         self._locstring: LocalizedString = LocalizedString.from_invalid()
 
         self.ui.editButton.clicked.connect(self.editLocstring)
-        self.ui.locstringText.mouseDoubleClickEvent = lambda a0: self.editLocstring()  # noqa: ARG005
+        self.ui.locstringText.mouseDoubleClickEvent = lambda _: self.editLocstring()
 
     def setInstallation(self, installation: HTInstallation):
         self._installation = installation
@@ -68,7 +67,6 @@ class LocalizedStringLineEdit(QWidget):
             self.ui.locstringText.setStyleSheet("QLineEdit {background-color: #fffded;}")
 
     def editLocstring(self):
-        assert self._installation is not None, assert_with_variable_trace(self._installation is not None)
         dialog = LocalizedStringDialog(self, self._installation, self._locstring)
         if dialog.exec_():
             self.setLocstring(dialog.locstring)
