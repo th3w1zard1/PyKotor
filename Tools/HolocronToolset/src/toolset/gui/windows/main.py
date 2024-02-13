@@ -151,6 +151,12 @@ class ToolWindow(QMainWindow):
         self.ui.modulesWidget.requestExtractResource.connect(self.onExtractResources)
         self.ui.modulesWidget.requestOpenResource.connect(self.onOpenResources)
 
+        self.ui.savesWidget.sectionChanged.connect(self.onSavepathChanged)
+        self.ui.savesWidget.requestReload.connect(self.onSaveReload)  # TODO:
+        self.ui.savesWidget.requestRefresh.connect(self.onSaveRefresh)
+        self.ui.savesWidget.requestExtractResource.connect(self.onExtractResources)
+        self.ui.savesWidget.requestOpenResource.connect(self.onOpenResources)
+
         self.ui.overrideWidget.sectionChanged.connect(self.onOverrideChanged)
         self.ui.overrideWidget.requestReload.connect(self.onOverrideReload)
         self.ui.overrideWidget.requestRefresh.connect(self.onOverrideRefresh)
@@ -225,6 +231,12 @@ class ToolWindow(QMainWindow):
     def onModuleRefresh(self):
         self.refreshModuleList()
 
+    def onSaveReload(self, saveDir: str):  # TODO:
+        ...
+
+    def onSaveRefresh(self):
+        self.refreshSavesList()
+
     def onOverrideFileUpdated(self, changedFile: str, eventType: str):
         if eventType == "deleted":
             self.onOverrideRefresh()
@@ -233,6 +245,23 @@ class ToolWindow(QMainWindow):
 
     def onOverrideChanged(self, newDirectory: str):
         self.ui.overrideWidget.setResources(self.active.override_resources(newDirectory))
+
+    def onSavepathChanged(self, newSaveDir: str):
+        print("Loading save resources into UI...")
+        for save_path, resource_list in self.active._saves[Path(newSaveDir)].items():
+            allResources: list[QStandardItem] = self.ui.savesWidget.modulesModel.allResourcesItems()
+
+            # Add any missing resources to the list
+            for resource in resource_list:
+                for item in allResources:
+                    resource_from_item: FileResource = item.resource
+                    if resource_from_item == resource:
+                        # Update the resource reference. Important when to a new module that share a resource
+                        # with the same name and restype with the old one.
+                        item.resource = resource
+                        break
+                else:
+                    self.ui.savesWidget.modulesModel.addResource(resource)
 
     def onOverrideReload(self, file: str):
         file_path = Path(file)
@@ -525,6 +554,8 @@ class ToolWindow(QMainWindow):
             return self.ui.overrideWidget
         if self.ui.resourceTabs.currentWidget() is self.ui.texturesTab:
             return self.ui.texturesWidget
+        if self.ui.resourceTabs.currentWidget() is self.ui.savesTab:
+            return self.ui.savesWidget
         return None
 
     def refreshModuleList(self, reload: bool = True):
@@ -570,6 +601,19 @@ class ToolWindow(QMainWindow):
             section.setData(directory, QtCore.Qt.UserRole)
             sections.append(section)
         self.ui.overrideWidget.setSections(sections)
+
+    def refreshSavesList(self, reload=True):
+        """Refreshes the list of override directories in the overrideFolderCombo combobox."""
+        if reload:
+            self.active.load_saves()
+
+        sections: list[QStandardItem] = []
+        for save_path in self.active._saves:
+            save_path_str = str(save_path)
+            section = QStandardItem(save_path_str)
+            section.setData(save_path_str, QtCore.Qt.UserRole)
+            sections.append(section)
+        self.ui.savesWidget.setSections(sections)
 
     def refreshTexturePackList(self, reload=True):
         if reload:
@@ -683,6 +727,8 @@ class ToolWindow(QMainWindow):
                 self.refreshOverrideList(reload=False)
                 print("Loading texturepacks list into ui...")
                 self.refreshTexturePackList(reload=False)
+                print("Loading saves list into ui...")
+                self.refreshSavesList(reload=False)
                 return self.active
 
             loader_task = task
@@ -698,6 +744,8 @@ class ToolWindow(QMainWindow):
                 self.refreshOverrideList(reload=False)
                 print("Refreshing texturepacks list...")
                 self.refreshTexturePackList(reload=False)
+                print("Refreshing saves list into ui...")
+                self.refreshSavesList(reload=False)
                 return self.active
             loader_task = task2
         #if is_debug_mode():
@@ -713,28 +761,10 @@ class ToolWindow(QMainWindow):
             active_resource: HTInstallation = enforce_instance_cast(self.active, HTInstallation)
             print("Loading core resources into UI...")
             self.ui.coreWidget.setResources(active_resource.chitin_resources())
-            print("Loading save resources into UI...")
-            for save_location, resource_dict in active_resource._saves.items():
-                for save_path, resource_list in resource_dict.items():
-                    allResources: list[QStandardItem] = self.ui.saveWidget.modulesModel.allResourcesItems()
-
-                    # Add any missing resources to the list
-                    for resource in resource_list:
-                        for item in allResources:
-                            resource_from_item: FileResource = item.resource
-                            if resource_from_item == resource:
-                                # Update the resource reference. Important when to a new module that share a resource
-                                # with the same name and restype with the old one.
-                                item.resource = resource
-                                break
-                        else:
-                            self.ui.saveWidget.modulesModel.addResource(resource)
-
             # Remove unused categories
-            self.ui.saveWidget.modulesModel.removeUnusedCategories()
-
+            self.ui.coreWidget.modulesModel.removeUnusedCategories()
+            self.ui.savesWidget.modulesModel.removeUnusedCategories()
             self.ui.texturesWidget.setInstallation(active_resource)
-
             print("Updating menus...")
             self.updateMenus()
             print("Setting up watchdog observer...")
