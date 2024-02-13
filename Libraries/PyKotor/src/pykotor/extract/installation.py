@@ -317,8 +317,14 @@ class Installation:
 
     def save_locations(self) -> list[Path]:
         """Returns a list of existing save locations (paths where save files can be found)."""
-        save_paths: list[Path] = []
-        save_paths.append(self._find_resource_folderpath("saves"))
+        save_paths: list[Path] = [self._find_resource_folderpath("saves")]
+        if self.game().is_k2():
+            cloudsave_dir = self._find_resource_folderpath("cloudsaves")
+            if cloudsave_dir.safe_isdir():
+                for folder in cloudsave_dir.iterdir():
+                    if not folder.safe_isdir():
+                        continue
+                    save_paths.append(folder)
         system = platform.system()
 
         if system == "Windows":
@@ -355,7 +361,7 @@ class Installation:
             save_paths.append(Path.home().joinpath(".local", "share", remaining_path_parts))
 
         # Filter and return existing paths
-        return [path for path in save_paths if path.exists()]
+        return [path for path in save_paths if path.safe_isdir()]
 
     def _find_resource_folderpath(
         self,
