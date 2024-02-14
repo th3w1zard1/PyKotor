@@ -11,10 +11,10 @@ from pykotor.resource.formats.rim import read_rim, write_rim
 from pykotor.resource.type import ResourceType
 from pykotor.tools import module
 from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_capsule_file, is_rim_file
-from pykotor.tools.path import CaseAwarePath
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QFileDialog, QLineEdit, QMainWindow, QMessageBox, QPlainTextEdit, QShortcut, QWidget
+from pykotor.tools.path import CaseAwarePath
 from toolset.gui.dialogs.load_from_module import LoadFromModuleDialog
 from toolset.gui.dialogs.save.to_bif import BifSaveDialog, BifSaveOption
 from toolset.gui.dialogs.save.to_module import SaveToModuleDialog
@@ -221,7 +221,7 @@ class Editor(QMainWindow):
                 self._saveEndsWithOther(data, data_ext)
         except Exception as e:  # noqa: BLE001
             with Path("errorlog.txt").open("a") as file:
-                lines = format_exception_with_variables(e)
+                lines = format_exception_with_variables(e, e.__class__, e.__traceback__)
                 file.writelines(lines)
                 file.write("\n----------------------\n")
             QMessageBox(QMessageBox.Critical, "Failed to write to file", str(e)).exec_()
@@ -321,7 +321,6 @@ class Editor(QMainWindow):
             - Reload the module in the installation cache.
         """
         if not self._filepath.exists():
-            print(f"Call rim_to_mod '{self._filepath}'")
             module.rim_to_mod(self._filepath)
 
         erf = read_erf(self._filepath)
@@ -337,7 +336,7 @@ class Editor(QMainWindow):
         self.savedFile.emit(self._filepath, self._resref, self._restype, data)
 
         # Update installation cache
-        if self._installation is not None and self._filepath.is_relative_to(self._installation.module_path()):
+        if self._installation is not None:
             self._installation.reload_module(self._filepath.name)
 
     def _saveEndsWithOther(self, data: bytes, data_ext: bytes):

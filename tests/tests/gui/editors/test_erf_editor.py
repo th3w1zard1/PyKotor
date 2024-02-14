@@ -6,7 +6,6 @@ import sys
 import unittest
 from unittest import TestCase
 
-
 try:
     from PyQt5.QtTest import QTest
     from PyQt5.QtWidgets import QApplication
@@ -14,7 +13,8 @@ except (ImportError, ModuleNotFoundError):
     QTest, QApplication = None, None  # type: ignore[misc, assignment]
 
 
-TESTS_FILES_PATH = next(f for f in pathlib.Path(__file__).parents if f.name == "tests") / "files"
+absolute_file_path = pathlib.Path(__file__).resolve()
+TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "files"
 
 if getattr(sys, "frozen", False) is False:
     def add_sys_path(p):
@@ -22,16 +22,16 @@ if getattr(sys, "frozen", False) is False:
         if working_dir in sys.path:
             sys.path.remove(working_dir)
         sys.path.append(working_dir)
-    pykotor_path = pathlib.Path(__file__).parents[6] / "Libraries" / "PyKotor" / "src" / "pykotor"
+    pykotor_path = absolute_file_path.parents[6] / "Libraries" / "PyKotor" / "src" / "pykotor"
     if pykotor_path.exists():
         add_sys_path(pykotor_path.parent)
-    gl_path = pathlib.Path(__file__).parents[6] / "Libraries" / "PyKotorGL" / "src" / "pykotor"
+    gl_path = absolute_file_path.parents[6] / "Libraries" / "PyKotorGL" / "src" / "pykotor"
     if gl_path.exists():
         add_sys_path(gl_path.parent)
-    utility_path = pathlib.Path(__file__).parents[6] / "Libraries" / "Utility" / "src" / "utility"
+    utility_path = absolute_file_path.parents[6] / "Libraries" / "Utility" / "src" / "utility"
     if utility_path.exists():
         add_sys_path(utility_path.parent)
-    toolset_path = pathlib.Path(__file__).parents[3] / "toolset"
+    toolset_path = absolute_file_path.parents[3] / "toolset"
     if toolset_path.exists():
         add_sys_path(toolset_path.parent)
 
@@ -92,12 +92,12 @@ class ERFEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k1_installation(self):
         self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
-        for erf_resource in (resource for resource in self.installation if resource.restype() in {ERFType.__members__[erf_type] for erf_type in ERFType.__members__}):
-            old = read_erf(erf_resource.data())
+        for erf_resource in (resource for resource in self.installation if resource.restype() in [ResourceType.WOK, ResourceType.DWK, ResourceType.PWK]):
+            old = read_bwm(erf_resource.data())
             self.editor.load(erf_resource.filepath(), erf_resource.resname(), erf_resource.restype(), erf_resource.data())
 
             data, _ = self.editor.build()
-            new = read_erf(data)
+            new = read_bwm(data)
 
             self.assertDeepEqual(old, new)
 
@@ -107,12 +107,12 @@ class ERFEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k2_installation(self):
         self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
-        for erf_resource in (resource for resource in self.installation if resource.restype() in {ERFType.__members__[erf_type] for erf_type in ERFType.__members__}):
-            old = read_erf(erf_resource.data())
-            self.editor.load(erf_resource.filepath(), erf_resource.resname(), erf_resource.restype(), erf_resource.data())
+        for bwm_resource in (resource for resource in self.installation if resource.restype() in [ResourceType.WOK, ResourceType.DWK, ResourceType.PWK]):
+            old = read_bwm(bwm_resource.data())
+            self.editor.load(bwm_resource.filepath(), bwm_resource.resname(), bwm_resource.restype(), bwm_resource.data())
 
             data, _ = self.editor.build()
-            new = read_erf(data)
+            new = read_bwm(data)
 
             self.assertDeepEqual(old, new)
 

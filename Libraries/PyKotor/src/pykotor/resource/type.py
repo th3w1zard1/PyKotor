@@ -126,7 +126,6 @@ class ResourceType(Enum):
     MDX = ResourceTuple(3008, "mdx", "Models", "binary")
     ERF = ResourceTuple(9997, "erf", "Modules", "binary")
 
-
     # For Toolset Use:
     PLT = ResourceTuple(6, "plt", "Other", "binary")
     ITP = ResourceTuple(2030, "itp", "Palettes", "binary")

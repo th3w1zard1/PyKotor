@@ -5,7 +5,7 @@ import pathlib
 import sys
 import unittest
 
-THIS_SCRIPT_PATH = pathlib.Path(__file__)
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[2]
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("Utility", "src")
 def add_sys_path(p: pathlib.Path):
@@ -113,13 +113,19 @@ class TestResourceIdentifier(unittest.TestCase):
         fail_message = f"\nresname: '{result.resname}' restype: '{result.restype}'\nexpected resname: '{expected_resname}' expected restype: '{expected_restype}'"
         self.assertEqual(result.resname, expected_resname, fail_message)
         self.assertEqual(result.restype, expected_restype, fail_message)
-        self.assert_hashing(result)
+        str_result = str(result)
+        self.assertEqual(result, str_result, f"{result!r} != {str_result!r}")
+        test_set = {result, str_result}
+        self.assertEqual(len(test_set), 1, repr(test_set))
 
     def test_hashing(self):
-        test_resname = "test_ResnamE"
+        test_resname = "test_resname"
         for type_name in ResourceType.__members__:
             test_ident = ResourceIdentifier(test_resname, ResourceType.__members__[type_name])
-            self.assert_hashing(test_ident)
+            str_ident_test = str(test_ident)
+            self.assertEqual(test_ident, str_ident_test, f"{test_ident!r} != {str_ident_test!r}")
+            test_set = {test_ident, str_ident_test}
+            self.assertEqual(len(test_set), 1, repr(test_set))
 
     def test_from_path_mdl(self):
         self.assert_resource_identifier("C:/path/to/resource.mdl", "resource", ResourceType.MDL)

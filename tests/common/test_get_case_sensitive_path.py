@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest import TestCase
 
-THIS_SCRIPT_PATH = pathlib.Path(__file__)
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[2]
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("Utility", "src")
 def add_sys_path(p: pathlib.Path):
@@ -21,7 +21,6 @@ if UTILITY_PATH.joinpath("utility").exists():
 from pykotor.tools.path import CaseAwarePath
 
 
-@unittest.skipIf(os.name == "nt", "Test not available on Windows")
 class TestCaseAwarePath(TestCase):
     def setUp(self):
         self.temp_dir = tempfile.TemporaryDirectory()
@@ -30,17 +29,20 @@ class TestCaseAwarePath(TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
+    @unittest.skipIf(os.name == "nt", "Test not available on Windows")
     def test_join_with_nonexistent_path(self):
         non_existent_path = CaseAwarePath("nonExistentDir")
         existent_path = self.temp_path
         joined_path = existent_path.joinpath(non_existent_path)
         self.assertFalse(joined_path.exists(), f"joined_path is '{joined_path}'")
 
+    @unittest.skipIf(os.name == "nt", "Test not available on Windows")
     def test_truediv_equivalent_to_joinpath(self):
         case_aware_path1 = CaseAwarePath("someDir")
         case_aware_path2 = CaseAwarePath("someFile.txt")
         self.assertEqual(case_aware_path1 / case_aware_path2, case_aware_path1.joinpath(case_aware_path2))
 
+    @unittest.skipIf(os.name == "nt", "Test not available on Windows")
     def test_rtruediv(self):
         case_aware_file_path = str(self.temp_path) / CaseAwarePath("soMeDir", "someFile.TXT")
         expected_path: pathlib.Path = self.temp_path / "SOmeDir" / "SOMEFile.txT"
@@ -50,6 +52,7 @@ class TestCaseAwarePath(TestCase):
         self.assertTrue(case_aware_file_path.exists(), f"expected_path: {expected_path} actual_path: {case_aware_file_path}")
         self.assertEqual(str(case_aware_file_path), str(expected_path))
 
+    @unittest.skipIf(os.name == "nt", "Test not available on Windows")
     def test_make_and_parse_uri(self):
         # Create a temporary directory
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -82,6 +85,7 @@ class TestCaseAwarePath(TestCase):
             # Ensure that the parsed path matches the original path
             self.assertEqual(path, str(sample_file))
 
+    @unittest.skipIf(os.name == "nt", "Test not available on Windows")
     def test_case_change_after_creation(self):
         initial_path: pathlib.Path = self.temp_path / "TestFile.txt"
         case_aware_path = CaseAwarePath(f"{str(self.temp_path)}/testfile.TXT")

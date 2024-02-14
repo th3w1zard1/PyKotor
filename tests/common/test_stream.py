@@ -4,7 +4,7 @@ import sys
 import unittest
 from unittest import TestCase
 
-THIS_SCRIPT_PATH = pathlib.Path(__file__)
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[2]
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("Utility", "src")
 def add_sys_path(p: pathlib.Path):
@@ -105,7 +105,7 @@ class TestBinaryReader(TestCase):
         self.assertEqual(2, self.reader1c.position())
         self.assertEqual(0, self.reader1c.read_uint16())
 
-    def test_skip(self):  # sourcery skip: class-extract-method
+    def test_skip(self):
         self.reader1.read_uint32()
         self.reader1.skip(2)
         self.reader1.skip(1)

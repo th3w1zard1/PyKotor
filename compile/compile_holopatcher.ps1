@@ -14,14 +14,74 @@ Write-Host "Initializing python virtual environment..."
 Write-Host "Installing required packages to build holopatcher..."
 . $pythonExePath -m pip install --upgrade pip --prefer-binary --progress-bar on
 . $pythonExePath -m pip install pyinstaller --prefer-binary --progress-bar on
-. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Tools" + $pathSep + "HoloPatcher" + $pathSep + "requirements.txt") --prefer-binary --progress-bar on -U
-. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Tools" + $pathSep + "HoloPatcher" + $pathSep + "recommended.txt") --prefer-binary --progress-bar on -U
-. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotor" + $pathSep + "requirements.txt") --prefer-binary --progress-bar on -U
+. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Tools" + $pathSep + "HoloPatcher" + $pathSep + "requirements.txt") --prefer-binary --progress-bar on
+. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Tools" + $pathSep + "HoloPatcher" + $pathSep + "recommended.txt") --prefer-binary --progress-bar on
+. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotor" + $pathSep + "requirements.txt") --prefer-binary --progress-bar on
 
-if ( (Get-OS) -eq "Linux" ) {
-    . sudo apt install python3-tk -y
-} elseif ( (Get-OS) -eq "Mac" ) {
-    . brew install python-tk
+if ((Get-OS) -eq "Mac") {
+    brew install python-tk
+} elseif ((Get-OS) -eq "Linux") {
+    if (Test-Path -Path "/etc/os-release") {
+        $osInfo = Get-Content "/etc/os-release" -Raw
+        if ($osInfo -match 'ID=(.*)') {
+            $distro = $Matches[1].Trim('"')
+        }
+        if ($osInfo -match 'VERSION_ID=(.*)') {
+            $versionId = $Matches[1].Trim('"')
+        }
+        $command = ""
+        switch ($distro) {
+            "debian" {
+                $command = "sudo apt install python3-tk -y"
+                break
+            }
+            "ubuntu" {
+                $command = "sudo apt install python3-tk -y"
+                break
+            }
+            "fedora" {
+                $command = "sudo dnf install python3-tkinter python3.10-tkinter"
+                break
+            }
+            "almalinux" {
+                sudo dnf install tk-devel tcl-devel
+                $command = "sudo dnf install python3-tkinter -y"
+                break
+            }
+            "alpine" {
+                $command = "sudo apk add ttf-dejavu fontconfig python3-tkinter"
+                break
+            }
+            "arch" {
+                $command = "sudo pacman -Sy tk mpdecimal --noconfirm"
+            }
+        }
+    
+        if ($command -eq "") {
+            Write-Warning "Dist $distro version $versionId not supported for automated system package install, please install the dependencies if you experience problems."
+        } else {
+            Write-Host "Executing command: $command"
+            Invoke-Expression $command
+        }
+    }
+}
+
+$current_working_dir = (Get-Location).Path
+Set-Location -LiteralPath (Resolve-Path -LiteralPath "$rootPath/Tools/HoloPatcher/src").Path
+
+# Determine the final executable path
+$finalExecutablePath = $null
+if ((Get-OS) -eq "Windows") {
+    $finalExecutablePath = "$rootPath\dist\HoloPatcher.exe"
+} elseif ((Get-OS) -eq "Linux") {
+    $finalExecutablePath = "$rootPath/dist/HoloPatcher"
+} elseif ((Get-OS) -eq "Mac") {
+    $finalExecutablePath = "$rootPath/dist/HoloPatcher.app"
+}
+
+# Delete the final executable if it exists
+if (Test-Path -Path $finalExecutablePath) {
+    Remove-Item -Path $finalExecutablePath -Force
 }
 
 $current_working_dir = (Get-Location).Path

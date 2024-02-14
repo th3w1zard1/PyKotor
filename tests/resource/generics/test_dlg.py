@@ -6,7 +6,8 @@ import sys
 import unittest
 from unittest import TestCase
 
-THIS_SCRIPT_PATH = pathlib.Path(__file__)
+
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
 def add_sys_path(p: pathlib.Path):
@@ -19,9 +20,10 @@ if PYKOTOR_PATH.joinpath("pykotor").exists():
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
+from pykotor.resource.formats.gff import GFF
 from pykotor.common.misc import Game
 from pykotor.extract.installation import Installation
-from pykotor.resource.formats.gff import GFF, read_gff
+from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.generics.dlg import DLG, DLGEntry, DLGReply, construct_dlg, dismantle_dlg
 from pykotor.resource.type import ResourceType
 
