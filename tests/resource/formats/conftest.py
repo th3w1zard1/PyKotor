@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import cProfile
-from contextlib import suppress
 import os
 import pathlib
 import shutil
 import sys
+
+from contextlib import suppress
 from io import StringIO
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
@@ -26,7 +27,6 @@ if PYKOTOR_PATH.joinpath("pykotor").exists():
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
-from pykotor.extract.file import FileResource, ResourceIdentifier  # noqa: E402
 from pykotor.common.misc import Game  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.resource.type import ResourceType  # noqa: E402
@@ -34,6 +34,8 @@ from utility.system.path import Path  # noqa: E402
 
 if TYPE_CHECKING:
     from typing_extensions import Literal
+
+    from pykotor.extract.file import FileResource
 
 K1_PATH: str | None = os.environ.get("K1_PATH")
 K2_PATH: str | None = os.environ.get("K2_PATH")
@@ -57,14 +59,14 @@ TEMP_GFF_DIRS: dict[Game, TemporaryDirectory[str]] = {
 }
 
 CANNOT_COMPILE_EXT: dict[Game, set[str]] = {
-    Game.K1: set(),  #{"nwscript.nss"},
-    Game.K2: set(),  #{"nwscript.nss"},
+    Game.K1: set(),  # {"nwscript.nss"},
+    Game.K2: set(),  # {"nwscript.nss"},
 }
 
-def pytest_report_teststatus(report: pytest.TestReport, config: pytest.Config) -> tuple[Literal['failed'], Literal['F'], str] | None:
+def pytest_report_teststatus(report: pytest.TestReport, config: pytest.Config) -> tuple[Literal["failed"], Literal["F"], str] | None:
     if report.failed:
         if report.longrepr is None:
-            return "failed", "F", f"FAILED: <unknown error>"
+            return "failed", "F", "FAILED: <unknown error>"
 
         reprcrash = getattr(report.longrepr, "reprcrash", None)
         if reprcrash is not None:
@@ -80,8 +82,8 @@ def save_profiler_output(profiler: cProfile.Profile, filepath: os.PathLike | str
     profiler_output_file_str = str(profiler_output_file)
     profiler.dump_stats(profiler_output_file_str)
     # Generate reports from the profile stats
-    #stats = pstats.Stats(profiler_output_file_str).sort_stats('cumulative')
-    #stats.print_stats()
+    # stats = pstats.Stats(profiler_output_file_str).sort_stats('cumulative')
+    # stats.print_stats()
 
 def log_file(
     *args,
@@ -149,11 +151,11 @@ def populate_all_gffs(
             subfolder_path.mkdir(parents=True, exist_ok=True)
             gff_convert_filepath = subfolder_path / filename
             all_gffs[game].append((resource, gff_convert_filepath))
-  
+
     return all_gffs
 
 
-            
+
 
 def populate_all_scripts(
     restype: ResourceType = ResourceType.NSS,
@@ -231,8 +233,8 @@ def populate_all_scripts(
                 if link_path.exists():
                     print(f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}")
                     continue
-                #already_exists_msg = f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}"
-                #assert not link_path.is_file(), already_exists_msg
+                # already_exists_msg = f"'{link_path}' is a bif script that should not exist at this path yet? Symlink test: {link_path.is_symlink()}"
+                # assert not link_path.is_file(), already_exists_msg
                 link_path.symlink_to(bif_nss_path, target_is_directory=False)
             seen_paths.add(working_folder)
 
@@ -292,7 +294,7 @@ def cleanup_temp_dirs():
     ]
     for temp_dir in temp_dirs:
         temp_dirpath = Path(temp_dir)
-        #temp_dirpath.gain_access(recurse=True)
+        # temp_dirpath.gain_access(recurse=True)
         for temp_file in temp_dirpath.safe_rglob("*"):
             with suppress(Exception):
                 temp_file.unlink(missing_ok=True)
@@ -323,7 +325,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> pytes
         # This means the test has failed
         # Construct and return a TestReport object
 
-        #longrepr = call.excinfo.getrepr()
+        # longrepr = call.excinfo.getrepr()
         longrepr = format_exception_with_variables(call.excinfo.value, call.excinfo.type, call.excinfo.tb)
         report = pytest.TestReport(
             nodeid=item.nodeid,
@@ -347,7 +349,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
             (game, script)
             for game, scripts in ALL_SCRIPTS.items()
             for script in scripts
-            if not script[1].is_symlink()# and not print(f"Skipping test collection for '{script[1]}', already symlinked to '{script[1].resolve()}'")
+            if not script[1].is_symlink()  # and not print(f"Skipping test collection for '{script[1]}', already symlinked to '{script[1].resolve()}'")
         ]
         print(f"Test data collected. Total tests: {len(test_script_data)}")
         ids = sorted(

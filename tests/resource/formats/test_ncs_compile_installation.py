@@ -4,6 +4,7 @@ import os
 import pathlib
 import sys
 import unittest
+
 from io import StringIO
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, ClassVar
@@ -31,7 +32,6 @@ from pykotor.resource.formats.ncs.compiler.lexer import NssLexer
 from pykotor.resource.formats.ncs.compiler.parser import NssParser
 from pykotor.resource.formats.ncs.compilers import ExternalNCSCompiler, InbuiltNCSCompiler
 from pykotor.resource.formats.ncs.ncs_auto import compile_nss
-from pykotor.resource.formats.ncs.ncs_data import NCSCompiler
 from pykotor.resource.type import ResourceType
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from utility.error_handling import format_exception_with_variables
@@ -39,7 +39,9 @@ from utility.system.path import Path
 
 if TYPE_CHECKING:
     from ply import yacc
+
     from pykotor.extract.file import FileResource
+    from pykotor.resource.formats.ncs.ncs_data import NCSCompiler
 
 K1_PATH: str | None = os.environ.get("K1_PATH")
 K2_PATH: str | None = os.environ.get("K2_PATH")
@@ -66,7 +68,7 @@ CANNOT_COMPILE_BUILTIN: dict[Game, set[str]] = {
         # Wrong type passed to RemovePartyMember:
         "k_act_bastrmv.nss", "k_act_canderrmv.nss", "k_act_carthrmv.nss", "k_act_hki47rmv.nss", "k_act_juhanirmv.nss", "k_act_joleermv.nss", "k_act_missionrmv.nss", "k_act_t3m3rmv.nss", "k_act_zaalrmv.nss",
         # Function 'EBO_BastilaStartConversation2' already has a prototype or been defined.
-        "k_act_makeitem.nss", "k_con_makeitem.nss", "k_hen_leadchng.nss", "k_inc_ebonhawk.nss", "k_inc_cheat.nss", "k_inc_dan.nss", "k_inc_debug.nss", "k_inc_end.nss", "k_inc_endgame.nss", "k_inc_force.nss", "k_inc_generic.nss", "k_inc_tat.nss", "k_inc_treasure.nss", "k_inc_unk.nss", "k_pebn_galaxy.nss", "k_pdan_belaya02.nss", "k_pdan_droid06.nss", "k_pdan_droid15.nss", "k_pdan_droid50.nss", "k_pdan_elise_d.nss", "k_pdan_murder55.nss", "k_pman_notpaid_c.nss", "k_cht_n_zaalbar.nss", "k_pdan_kath02.nss", "k_pdan_kath04.nss", "k_pdan_murder55.nss","e3_scripts.nss", "k_act_bastadd.nss", "k_pdan_bastila11.nss", "k_act_bastrmv.nss", "k_act_canderrmv.nss", "k_act_carthrmv.nss", "k_pdan_belaya02.nss", "k_pdan_droid02.nss", "k_pdan_droid06.nss", "k_act_hki47rmv.nss", "k_act_joleermv.nss", "k_act_juhanirmv.nss", "k_act_makeitem.nss", "k_act_missionrmv.nss", "k_act_t3m3rmv.nss", "k_pdan_droid07.nss", "k_pdan_droid08.nss", "k_act_zaalrmv.nss", "k_pman_door20.nss", "k_pdan_droid09.nss", "k_pdan_droid13.nss", "k_pman_door32.nss", "k_pdan_droid15.nss", "k_pdan_droid50.nss", "k_pdan_elise_d.nss", "k_con_makeitem.nss", "k_pdan_kath02.nss", "k_pdan_kath04.nss", "k_pdan_murder55.nss", "k_pdan_rapid01.nss", "k_pdan_rapid02.nss", "k_pdan_rapid03.nss", "k_pdan_rapid04.nss", "k_pebn_galaxy.nss", "k_pend_door04.nss", "k_inc_ebonhawk.nss", "k_trg_stealth.nss", "nw_g0_conversat.nss", "nw_s0_lghtnbolt.nss", "a_atkonend.nss", "a_attonspirit.nss", "a_clear_inv.nss", "a_force_combat.nss", "a_give_quest_hk.nss", "a_give_quest_ls.nss", "a_give_q_reward.nss", "a_master_atck.nss", "a_master_half.nss", "a_master_kill.nss", "a_master_setup.nss", "a_rumble.nss", "a_walkways.nss", "a_walkways2.nss", "k_plc_it_eq_glov.nss", "k_plc_it_eq_helm.nss", "k_plc_it_eq_imp.nss", "k_plc_it_up.nss", "k_plc_it_up_a.nss", "k_plc_it_up_l.nss", "k_plc_it_up_l_cr.nss", "k_plc_it_up_m.nss", "k_plc_it_up_r.nss", "k_plc_it_weap.nss", "k_plc_it_weap_bp.nss", "k_plc_it_weap_br.nss", "k_plc_it_weap_l.nss", "k_plc_it_weap_m.nss", "k_plc_treas_disp.nss", "k_plc_treas_empt.nss", "k_plc_treas_less.nss", "k_plc_treas_more.nss", "k_plc_treas_norm.nss", "k_plc_treas_per.nss", "k_plc_tresciv.nss", "k_plc_trescorhig.nss", "k_plc_trescorlow.nss", "k_plc_trescormid.nss", "k_plc_tresdrdhig.nss", "k_plc_tresdrdlow.nss", "k_plc_tresdrdmid.nss", "k_plc_tresmilhig.nss", "k_plc_tresmillow.nss", "k_plc_tresmilmid.nss", "k_plc_tresrakat.nss", "k_plc_tresshahig.nss", "k_plc_tresshalow.nss", "k_plc_tresshamid.nss", "k_plc_tressndppl.nss", "k_sithas_spawn01.nss", "k_sp1_generic.nss", "k_sup_galaxymap.nss", "k_sup_grenade.nss", "k_sup_healing.nss", "k_zon_catalog.nss", "k_zon_control.nss", "nwscript.nss", "unused_conversat.nss", "unused_lghtnbolt.nss", "unused_sandper.nss", "unused_stealth.nss", "k_inc_treas_k2.nss", "a_next_scene.nss", "k_003ebo_enter.nss", "k_inc_hawk.nss", "a_grenn_cut.nss", "k_pman_28c_sur01.nss", "k_pman_arg01.nss", "c_pc_party_not.nss", "k_act_com45.nss", "k_ai_master.nss", "k_amb_prey_spawn.nss", "k_amb_prey_ude.nss", "k_combat_rnd.nss", "k_contain_bash.nss", "k_contain_unlock.nss", "k_death_give_ls.nss", "k_def_ambient.nss", "k_def_ambmob.nss", "k_def_ambmobtrea.nss", "k_def_grenspn.nss", "k_def_repairsp.nss", "k_def_repairsptr.nss", "k_def_rependd.nss", "k_def_repuser.nss", "k_def_spawn01.nss", "k_def_spn_t_drd.nss", "k_def_spn_t_empt.nss", "k_def_spn_t_jedi.nss", "k_def_spn_t_less.nss", "k_def_spn_t_more.nss", "k_def_spn_t_none.nss", "k_def_spn_t_per.nss", "k_def_userdef01.nss", "k_fmine_spawn.nss", "k_hen_attondlg.nss", "k_hen_baodurdlg.nss", "k_hen_discipdlg.nss", "k_hen_g0t0dlg.nss", "k_hen_hanharrdlg.nss", "k_hen_hk47dlg.nss", "k_hen_hndmaiddlg.nss", "k_hen_kreiadlg.nss", "k_hen_leadchng.nss", "k_hen_manddlg.nss", "k_hen_miradlg.nss", "k_hen_remotedlg.nss", "k_hen_retreat.nss", "k_hen_spawn01.nss", "k_hen_t3m4dlg.nss", "k_hen_visasdlg.nss", "k_inc_fakecombat.nss", "k_inc_force.nss", "k_inc_generic.nss", "k_inc_hawk.nss", "k_inc_quest_hk.nss", "k_inc_treas_k2.nss", "k_inc_zone.nss", "k_oei_hench_inc.nss", "k_oei_spawn.nss", "k_oei_userdef.nss", "k_plc_it_arm.nss", "k_plc_it_arm_h.nss", "k_plc_it_arm_l.nss", "k_plc_it_arm_m.nss", "k_plc_it_arm_r.nss", "k_plc_it_d_shld.nss", "k_plc_it_d_stim.nss", "k_plc_it_eq.nss", "k_plc_it_eq_belt.nss",
+        "k_act_makeitem.nss", "k_con_makeitem.nss", "k_hen_leadchng.nss", "k_inc_ebonhawk.nss", "k_inc_cheat.nss", "k_inc_dan.nss", "k_inc_debug.nss", "k_inc_end.nss", "k_inc_endgame.nss", "k_inc_force.nss", "k_inc_generic.nss", "k_inc_tat.nss", "k_inc_treasure.nss", "k_inc_unk.nss", "k_pebn_galaxy.nss", "k_pdan_belaya02.nss", "k_pdan_droid06.nss", "k_pdan_droid15.nss", "k_pdan_droid50.nss", "k_pdan_elise_d.nss", "k_pdan_murder55.nss", "k_pman_notpaid_c.nss", "k_cht_n_zaalbar.nss", "k_pdan_kath02.nss", "k_pdan_kath04.nss", "k_pdan_bastila11.nss", "k_pdan_droid02.nss", "k_pdan_droid07.nss", "k_pdan_droid08.nss", "k_pman_door20.nss", "k_pdan_droid09.nss", "k_pdan_droid13.nss", "k_pman_door32.nss", "k_pdan_rapid01.nss", "k_pdan_rapid02.nss", "k_pdan_rapid03.nss", "k_pdan_rapid04.nss", "k_pend_door04.nss", "k_trg_stealth.nss", "nw_g0_conversat.nss", "nw_s0_lghtnbolt.nss", "a_atkonend.nss", "a_attonspirit.nss", "a_clear_inv.nss", "a_force_combat.nss", "a_give_quest_hk.nss", "a_give_quest_ls.nss", "a_give_q_reward.nss", "a_master_atck.nss", "a_master_half.nss", "a_master_kill.nss", "a_master_setup.nss", "a_rumble.nss", "a_walkways.nss", "a_walkways2.nss", "k_plc_it_eq_glov.nss", "k_plc_it_eq_helm.nss", "k_plc_it_eq_imp.nss", "k_plc_it_up.nss", "k_plc_it_up_a.nss", "k_plc_it_up_l.nss", "k_plc_it_up_l_cr.nss", "k_plc_it_up_m.nss", "k_plc_it_up_r.nss", "k_plc_it_weap.nss", "k_plc_it_weap_bp.nss", "k_plc_it_weap_br.nss", "k_plc_it_weap_l.nss", "k_plc_it_weap_m.nss", "k_plc_treas_disp.nss", "k_plc_treas_empt.nss", "k_plc_treas_less.nss", "k_plc_treas_more.nss", "k_plc_treas_norm.nss", "k_plc_treas_per.nss", "k_plc_tresciv.nss", "k_plc_trescorhig.nss", "k_plc_trescorlow.nss", "k_plc_trescormid.nss", "k_plc_tresdrdhig.nss", "k_plc_tresdrdlow.nss", "k_plc_tresdrdmid.nss", "k_plc_tresmilhig.nss", "k_plc_tresmillow.nss", "k_plc_tresmilmid.nss", "k_plc_tresrakat.nss", "k_plc_tresshahig.nss", "k_plc_tresshalow.nss", "k_plc_tresshamid.nss", "k_plc_tressndppl.nss", "k_sithas_spawn01.nss", "k_sp1_generic.nss", "k_sup_galaxymap.nss", "k_sup_grenade.nss", "k_sup_healing.nss", "k_zon_catalog.nss", "k_zon_control.nss", "unused_conversat.nss", "unused_lghtnbolt.nss", "unused_sandper.nss", "unused_stealth.nss", "k_inc_treas_k2.nss", "a_next_scene.nss", "k_003ebo_enter.nss", "k_inc_hawk.nss", "a_grenn_cut.nss", "k_pman_28c_sur01.nss", "k_pman_arg01.nss", "c_pc_party_not.nss", "k_act_com45.nss", "k_ai_master.nss", "k_amb_prey_spawn.nss", "k_amb_prey_ude.nss", "k_combat_rnd.nss", "k_contain_bash.nss", "k_contain_unlock.nss", "k_death_give_ls.nss", "k_def_ambient.nss", "k_def_ambmob.nss", "k_def_ambmobtrea.nss", "k_def_grenspn.nss", "k_def_repairsp.nss", "k_def_repairsptr.nss", "k_def_rependd.nss", "k_def_repuser.nss", "k_def_spawn01.nss", "k_def_spn_t_drd.nss", "k_def_spn_t_empt.nss", "k_def_spn_t_jedi.nss", "k_def_spn_t_less.nss", "k_def_spn_t_more.nss", "k_def_spn_t_none.nss", "k_def_spn_t_per.nss", "k_def_userdef01.nss", "k_fmine_spawn.nss", "k_hen_attondlg.nss", "k_hen_baodurdlg.nss", "k_hen_discipdlg.nss", "k_hen_g0t0dlg.nss", "k_hen_hanharrdlg.nss", "k_hen_hk47dlg.nss", "k_hen_hndmaiddlg.nss", "k_hen_kreiadlg.nss", "k_hen_manddlg.nss", "k_hen_miradlg.nss", "k_hen_remotedlg.nss", "k_hen_retreat.nss", "k_hen_spawn01.nss", "k_hen_t3m4dlg.nss", "k_hen_visasdlg.nss", "k_inc_fakecombat.nss", "k_inc_quest_hk.nss", "k_inc_zone.nss", "k_oei_hench_inc.nss", "k_oei_spawn.nss", "k_oei_userdef.nss", "k_plc_it_arm.nss", "k_plc_it_arm_h.nss", "k_plc_it_arm_l.nss", "k_plc_it_arm_m.nss", "k_plc_it_arm_r.nss", "k_plc_it_d_shld.nss", "k_plc_it_d_stim.nss", "k_plc_it_eq.nss", "k_plc_it_eq_belt.nss",
     },
     Game.K2: {
         "nwscript.nss",
@@ -78,7 +80,7 @@ CANNOT_COMPILE_BUILTIN: dict[Game, set[str]] = {
         "k_plc_it_weap.nss",
         "k_plc_it_weap_bp.nss",
         "k_plc_it_weap_br.nss",
-        "k_act_makeitem.nss", "k_con_makeitem.nss", "k_hen_leadchng.nss", "k_inc_ebonhawk.nss", "k_inc_cheat.nss", "k_inc_dan.nss", "k_inc_debug.nss", "k_inc_end.nss", "k_inc_endgame.nss", "k_inc_force.nss", "k_inc_generic.nss", "k_inc_tat.nss", "k_inc_treasure.nss", "k_inc_unk.nss", "k_pebn_galaxy.nss", "k_pdan_belaya02.nss", "k_pdan_droid06.nss", "k_pdan_droid15.nss", "k_pdan_droid50.nss", "k_pdan_elise_d.nss", "k_pdan_murder55.nss", "k_pman_notpaid_c.nss", "k_cht_n_zaalbar.nss", "k_pdan_kath02.nss", "k_pdan_kath04.nss", "k_pdan_murder55.nss","e3_scripts.nss", "k_act_bastadd.nss", "k_pdan_bastila11.nss", "k_act_bastrmv.nss", "k_act_canderrmv.nss", "k_act_carthrmv.nss", "k_pdan_belaya02.nss", "k_pdan_droid02.nss", "k_pdan_droid06.nss", "k_act_hki47rmv.nss", "k_act_joleermv.nss", "k_act_juhanirmv.nss", "k_act_makeitem.nss", "k_act_missionrmv.nss", "k_act_t3m3rmv.nss", "k_pdan_droid07.nss", "k_pdan_droid08.nss", "k_act_zaalrmv.nss", "k_pman_door20.nss", "k_pdan_droid09.nss", "k_pdan_droid13.nss", "k_pman_door32.nss", "k_pdan_droid15.nss", "k_pdan_droid50.nss", "k_pdan_elise_d.nss", "k_con_makeitem.nss", "k_pdan_kath02.nss", "k_pdan_kath04.nss", "k_pdan_murder55.nss", "k_pdan_rapid01.nss", "k_pdan_rapid02.nss", "k_pdan_rapid03.nss", "k_pdan_rapid04.nss", "k_pebn_galaxy.nss", "k_pend_door04.nss", "k_inc_ebonhawk.nss", "k_trg_stealth.nss", "nw_g0_conversat.nss", "nw_s0_lghtnbolt.nss", "a_atkonend.nss", "a_attonspirit.nss", "a_clear_inv.nss", "a_force_combat.nss", "a_give_quest_hk.nss", "a_give_quest_ls.nss", "a_give_q_reward.nss", "a_master_atck.nss", "a_master_half.nss", "a_master_kill.nss", "a_master_setup.nss", "a_rumble.nss", "a_walkways.nss", "a_walkways2.nss", "k_plc_it_eq_glov.nss", "k_plc_it_eq_helm.nss", "k_plc_it_eq_imp.nss", "k_plc_it_up.nss", "k_plc_it_up_a.nss", "k_plc_it_up_l.nss", "k_plc_it_up_l_cr.nss", "k_plc_it_up_m.nss", "k_plc_it_up_r.nss", "k_plc_it_weap.nss", "k_plc_it_weap_bp.nss", "k_plc_it_weap_br.nss", "k_plc_it_weap_l.nss", "k_plc_it_weap_m.nss", "k_plc_treas_disp.nss", "k_plc_treas_empt.nss", "k_plc_treas_less.nss", "k_plc_treas_more.nss", "k_plc_treas_norm.nss", "k_plc_treas_per.nss", "k_plc_tresciv.nss", "k_plc_trescorhig.nss", "k_plc_trescorlow.nss", "k_plc_trescormid.nss", "k_plc_tresdrdhig.nss", "k_plc_tresdrdlow.nss", "k_plc_tresdrdmid.nss", "k_plc_tresmilhig.nss", "k_plc_tresmillow.nss", "k_plc_tresmilmid.nss", "k_plc_tresrakat.nss", "k_plc_tresshahig.nss", "k_plc_tresshalow.nss", "k_plc_tresshamid.nss", "k_plc_tressndppl.nss", "k_sithas_spawn01.nss", "k_sp1_generic.nss", "k_sup_galaxymap.nss", "k_sup_grenade.nss", "k_sup_healing.nss", "k_zon_catalog.nss", "k_zon_control.nss", "nwscript.nss", "unused_conversat.nss", "unused_lghtnbolt.nss", "unused_sandper.nss", "unused_stealth.nss", "k_inc_treas_k2.nss", "a_next_scene.nss", "k_003ebo_enter.nss", "k_inc_hawk.nss", "a_grenn_cut.nss", "k_pman_28c_sur01.nss", "k_pman_arg01.nss", "c_pc_party_not.nss", "k_act_com45.nss", "k_ai_master.nss", "k_amb_prey_spawn.nss", "k_amb_prey_ude.nss", "k_combat_rnd.nss", "k_contain_bash.nss", "k_contain_unlock.nss", "k_death_give_ls.nss", "k_def_ambient.nss", "k_def_ambmob.nss", "k_def_ambmobtrea.nss", "k_def_grenspn.nss", "k_def_repairsp.nss", "k_def_repairsptr.nss", "k_def_rependd.nss", "k_def_repuser.nss", "k_def_spawn01.nss", "k_def_spn_t_drd.nss", "k_def_spn_t_empt.nss", "k_def_spn_t_jedi.nss", "k_def_spn_t_less.nss", "k_def_spn_t_more.nss", "k_def_spn_t_none.nss", "k_def_spn_t_per.nss", "k_def_userdef01.nss", "k_fmine_spawn.nss", "k_hen_attondlg.nss", "k_hen_baodurdlg.nss", "k_hen_discipdlg.nss", "k_hen_g0t0dlg.nss", "k_hen_hanharrdlg.nss", "k_hen_hk47dlg.nss", "k_hen_hndmaiddlg.nss", "k_hen_kreiadlg.nss", "k_hen_leadchng.nss", "k_hen_manddlg.nss", "k_hen_miradlg.nss", "k_hen_remotedlg.nss", "k_hen_retreat.nss", "k_hen_spawn01.nss", "k_hen_t3m4dlg.nss", "k_hen_visasdlg.nss", "k_inc_fakecombat.nss", "k_inc_force.nss", "k_inc_generic.nss", "k_inc_hawk.nss", "k_inc_quest_hk.nss", "k_inc_treas_k2.nss", "k_inc_zone.nss", "k_oei_hench_inc.nss", "k_oei_spawn.nss", "k_oei_userdef.nss", "k_plc_it_arm.nss", "k_plc_it_arm_h.nss", "k_plc_it_arm_l.nss", "k_plc_it_arm_m.nss", "k_plc_it_arm_r.nss", "k_plc_it_d_shld.nss", "k_plc_it_d_stim.nss", "k_plc_it_eq.nss", "k_plc_it_eq_belt.nss",
+        "k_act_makeitem.nss", "k_con_makeitem.nss", "k_hen_leadchng.nss", "k_inc_ebonhawk.nss", "k_inc_cheat.nss", "k_inc_dan.nss", "k_inc_debug.nss", "k_inc_end.nss", "k_inc_endgame.nss", "k_inc_force.nss", "k_inc_generic.nss", "k_inc_tat.nss", "k_inc_treasure.nss", "k_inc_unk.nss", "k_pebn_galaxy.nss", "k_pdan_belaya02.nss", "k_pdan_droid06.nss", "k_pdan_droid15.nss", "k_pdan_droid50.nss", "k_pdan_elise_d.nss", "k_pdan_murder55.nss", "k_pman_notpaid_c.nss", "k_cht_n_zaalbar.nss", "k_pdan_kath02.nss", "k_pdan_kath04.nss", "e3_scripts.nss", "k_act_bastadd.nss", "k_pdan_bastila11.nss", "k_act_bastrmv.nss", "k_act_canderrmv.nss", "k_act_carthrmv.nss", "k_pdan_droid02.nss", "k_act_hki47rmv.nss", "k_act_joleermv.nss", "k_act_juhanirmv.nss", "k_act_missionrmv.nss", "k_act_t3m3rmv.nss", "k_pdan_droid07.nss", "k_pdan_droid08.nss", "k_act_zaalrmv.nss", "k_pman_door20.nss", "k_pdan_droid09.nss", "k_pdan_droid13.nss", "k_pman_door32.nss", "k_pdan_rapid01.nss", "k_pdan_rapid02.nss", "k_pdan_rapid03.nss", "k_pdan_rapid04.nss", "k_pend_door04.nss", "k_trg_stealth.nss", "nw_g0_conversat.nss", "nw_s0_lghtnbolt.nss", "a_atkonend.nss", "a_attonspirit.nss", "a_clear_inv.nss", "a_force_combat.nss", "a_give_quest_hk.nss", "a_give_quest_ls.nss", "a_give_q_reward.nss", "a_master_atck.nss", "a_master_half.nss", "a_master_kill.nss", "a_master_setup.nss", "a_walkways.nss", "a_walkways2.nss", "k_plc_it_eq_glov.nss", "k_plc_it_eq_helm.nss", "k_plc_it_eq_imp.nss", "k_plc_it_up.nss", "k_plc_it_up_a.nss", "k_plc_it_up_l.nss", "k_plc_it_up_l_cr.nss", "k_plc_it_weap_l.nss", "k_plc_it_weap_m.nss", "k_plc_treas_disp.nss", "k_plc_treas_empt.nss", "k_plc_treas_less.nss", "k_plc_treas_more.nss", "k_plc_treas_norm.nss", "k_plc_treas_per.nss", "k_plc_tresciv.nss", "k_plc_trescorhig.nss", "k_plc_trescorlow.nss", "k_plc_trescormid.nss", "k_plc_tresdrdhig.nss", "k_plc_tresdrdlow.nss", "k_plc_tresdrdmid.nss", "k_plc_tresmilhig.nss", "k_plc_tresmillow.nss", "k_plc_tresmilmid.nss", "k_plc_tresrakat.nss", "k_plc_tresshahig.nss", "k_plc_tresshalow.nss", "k_plc_tresshamid.nss", "k_plc_tressndppl.nss", "k_sithas_spawn01.nss", "k_sp1_generic.nss", "k_sup_galaxymap.nss", "k_sup_grenade.nss", "k_sup_healing.nss", "k_zon_catalog.nss", "k_zon_control.nss", "unused_conversat.nss", "unused_lghtnbolt.nss", "unused_sandper.nss", "unused_stealth.nss", "k_inc_treas_k2.nss", "a_next_scene.nss", "k_003ebo_enter.nss", "k_inc_hawk.nss", "a_grenn_cut.nss", "k_pman_28c_sur01.nss", "k_pman_arg01.nss", "c_pc_party_not.nss", "k_act_com45.nss", "k_ai_master.nss", "k_amb_prey_spawn.nss", "k_amb_prey_ude.nss", "k_combat_rnd.nss", "k_contain_bash.nss", "k_contain_unlock.nss", "k_death_give_ls.nss", "k_def_ambient.nss", "k_def_ambmob.nss", "k_def_ambmobtrea.nss", "k_def_grenspn.nss", "k_def_repairsp.nss", "k_def_repairsptr.nss", "k_def_rependd.nss", "k_def_repuser.nss", "k_def_spawn01.nss", "k_def_spn_t_drd.nss", "k_def_spn_t_empt.nss", "k_def_spn_t_jedi.nss", "k_def_spn_t_less.nss", "k_def_spn_t_more.nss", "k_def_spn_t_none.nss", "k_def_spn_t_per.nss", "k_def_userdef01.nss", "k_fmine_spawn.nss", "k_hen_attondlg.nss", "k_hen_baodurdlg.nss", "k_hen_discipdlg.nss", "k_hen_g0t0dlg.nss", "k_hen_hanharrdlg.nss", "k_hen_hk47dlg.nss", "k_hen_hndmaiddlg.nss", "k_hen_kreiadlg.nss", "k_hen_manddlg.nss", "k_hen_miradlg.nss", "k_hen_remotedlg.nss", "k_hen_retreat.nss", "k_hen_spawn01.nss", "k_hen_t3m4dlg.nss", "k_hen_visasdlg.nss", "k_inc_fakecombat.nss", "k_inc_quest_hk.nss", "k_inc_zone.nss", "k_oei_hench_inc.nss", "k_oei_spawn.nss", "k_oei_userdef.nss", "k_plc_it_arm.nss", "k_plc_it_arm_h.nss", "k_plc_it_arm_l.nss", "k_plc_it_arm_m.nss", "k_plc_it_arm_r.nss", "k_plc_it_d_shld.nss", "k_plc_it_d_stim.nss", "k_plc_it_eq.nss", "k_plc_it_eq_belt.nss",
     },
 }
 
@@ -111,14 +113,14 @@ def bizarre_compiler(
     (
         not NWNNSSCOMP_PATH
         or not Path(NWNNSSCOMP_PATH).exists()
-        or (
+        or ((
             not K1_PATH
             or not Path(K1_PATH).joinpath("chitin.key").exists()
         )
         and (
             not K2_PATH
             or not Path(K2_PATH).joinpath("chitin.key").exists()
-        )
+        ))
     ),
     "K1_PATH/K2_PATH/NWNNSSCOMP_PATH environment variable is not set or not found on disk.",
 )
@@ -163,7 +165,7 @@ class TestCompileInstallation(unittest.TestCase):
                 cls.setup_extracted_scripts(Game.K2)
         except Exception:
             cls.tearDownClass()
-            raise # to still mark the test as failed.
+            raise  # to still mark the test as failed.
 
     @classmethod
     def tearDownClass(cls):
@@ -262,17 +264,17 @@ class TestCompileInstallation(unittest.TestCase):
                 continue
 
             try:
-                compiled_path: Path | None =  self.compile_with_abstract_compatible(self.inbuilt_compiler, nss_path, ncs_path.with_stem(f"{ncs_path.stem}_inbuilt"), game)
+                compiled_path: Path | None = self.compile_with_abstract_compatible(self.inbuilt_compiler, nss_path, ncs_path.with_stem(f"{ncs_path.stem}_inbuilt"), game)
             except EntryPointError as e:
                 ...
             except CompileError as e:
-                #self.log_file(nss_path.name, filepath="inbuilt_incompatible.txt")
-                self.fail(f"Could not compile {nss_path.name} with inbuilt!{os.linesep*2} {format_exception_with_variables(e)}")
+                # self.log_file(nss_path.name, filepath="inbuilt_incompatible.txt")
+                self.fail(f"Could not compile {nss_path.name} with inbuilt!{os.linesep * 2} {format_exception_with_variables(e)}")
             except Exception as e:
-                #self.log_file(nss_path.name, filepath="inbuilt_incompatible.txt")
-                self.fail(f"Unexpected exception compiling '{nss_path.name}' with inbuilt!{os.linesep*2} {format_exception_with_variables(e)}")
+                # self.log_file(nss_path.name, filepath="inbuilt_incompatible.txt")
+                self.fail(f"Unexpected exception compiling '{nss_path.name}' with inbuilt!{os.linesep * 2} {format_exception_with_variables(e)}")
             else:
-                #if not compiled_path.exists():
+                # if not compiled_path.exists():
                 #    self.log_file(nss_path.name, filepath="inbuilt_incompatible.txt")
                 assert compiled_path.exists(), f"{compiled_path} could not be found on disk, inbuilt compiler failed."  # noqa: S101
 
@@ -289,10 +291,10 @@ class TestCompileInstallation(unittest.TestCase):
             except EntryPointError as e:
                 ...
             except CompileError as e:
-                #self.log_file(nss_path.name, filepath="bizarre_incompatible.txt")
-                self.fail(f"Could not compile {nss_path.name} with bizarre compiler!{os.linesep*2} {format_exception_with_variables(e)}")
+                # self.log_file(nss_path.name, filepath="bizarre_incompatible.txt")
+                self.fail(f"Could not compile {nss_path.name} with bizarre compiler!{os.linesep * 2} {format_exception_with_variables(e)}")
             else:
-                #if not isinstance(ncs_result, NCS):
+                # if not isinstance(ncs_result, NCS):
                 #    self.log_file(nss_path.name, filepath="bizarre_incompatible.txt")
                 assert isinstance(ncs_result, NCS), f"{nss_path.name} was compiled and return as {type(ncs_result)} instead of NCS."  # noqa: S101
 
@@ -308,13 +310,13 @@ class TestCompileInstallation(unittest.TestCase):
             except EntryPointError as e:
                 ...
             except CompileError as e:
-                #self.log_file(nss_path.name, filepath="bizarre_incompatible.txt")
-                self.fail(f"Could not compile {nss_path.name} with compile_nss!{os.linesep*2} {format_exception_with_variables(e)}")
+                # self.log_file(nss_path.name, filepath="bizarre_incompatible.txt")
+                self.fail(f"Could not compile {nss_path.name} with compile_nss!{os.linesep * 2} {format_exception_with_variables(e)}")
             except Exception as e:
-                #self.log_file(nss_path.name, filepath="bizarre_incompatible.txt")
-                self.fail(f"Unexpected exception besides CompileError thrown while compiling {nss_path.name} with compile_nss!{os.linesep*2} {format_exception_with_variables(e)}")
+                # self.log_file(nss_path.name, filepath="bizarre_incompatible.txt")
+                self.fail(f"Unexpected exception besides CompileError thrown while compiling {nss_path.name} with compile_nss!{os.linesep * 2} {format_exception_with_variables(e)}")
             else:
-                #if not isinstance(ncs_result, NCS):
+                # if not isinstance(ncs_result, NCS):
                 #    self.log_file(nss_path.name, filepath="bizarre_incompatible.txt")
                 assert isinstance(ncs_result, NCS), f"{nss_path.name} was compiled and return as {type(ncs_result)} instead of NCS."  # noqa: S101
 

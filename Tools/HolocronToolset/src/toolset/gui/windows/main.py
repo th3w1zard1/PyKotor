@@ -2,12 +2,21 @@ from __future__ import annotations
 
 import base64
 import json
+import traceback
+
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Callable, ClassVar
 
 import requests
+
+from PyQt5 import QtCore, QtGui
+from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap, QStandardItem
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox, QTreeView
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.file import FileResource, ResourceIdentifier, ResourceResult
 from pykotor.extract.installation import SearchLocation
@@ -16,9 +25,6 @@ from pykotor.resource.formats.tpc import read_tpc, write_tpc
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
 from pykotor.tools.misc import is_bif_file, is_rim_file
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap, QStandardItem
-from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox, QTreeView
 from toolset.config import PROGRAM_VERSION, UPDATE_INFO_LINK
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.about import About
@@ -54,19 +60,22 @@ from utility.error_handling import (
     universal_simplify_exception,
 )
 from utility.system.path import Path, PurePath
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
 
 if TYPE_CHECKING:
     import os
 
+    from PyQt5 import QtGui
+    from PyQt5.QtGui import QCloseEvent
+    from PyQt5.QtWidgets import QTreeView
+    from typing_extensions import Literal
+
     from pykotor.common.misc import CaseInsensitiveDict
+    from pykotor.extract.file import FileResource
     from pykotor.resource.formats.mdl.mdl_data import MDL
     from pykotor.resource.formats.tpc import TPC
     from pykotor.resource.type import SOURCE_TYPES
     from pykotor.tools.path import CaseAwarePath
     from toolset.gui.widgets.main_widgets import ResourceList, TextureList
-    from typing_extensions import Literal
 
 
 class ToolWindow(QMainWindow):

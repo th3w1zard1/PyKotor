@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generator
+from typing import TYPE_CHECKING, Iterator
 
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.file import FileResource, ResourceIdentifier, ResourceResult
@@ -12,6 +12,8 @@ from utility.system.path import Path
 
 if TYPE_CHECKING:
     import os
+
+    from collections.abc import Iterator
 
 
 class Capsule:
@@ -64,7 +66,7 @@ class Capsule:
 
     def __iter__(
         self,
-    ) -> Generator[FileResource, Any, None]:
+    ) -> Iterator[FileResource]:
         yield from self._resources
 
     def __len__(

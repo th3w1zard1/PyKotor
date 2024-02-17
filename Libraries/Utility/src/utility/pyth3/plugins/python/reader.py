@@ -1,6 +1,5 @@
-"""
-Write Pyth documents straight in Python, a la Nevow's Stan.
-"""
+"""Write Pyth documents straight in Python, a la Nevow's Stan."""
+from __future__ import annotations
 
 from utility.pyth3.document import *
 from utility.pyth3.format import PythReader
@@ -15,21 +14,19 @@ class PythonReader(PythReader):
 
     @classmethod
     def read(self, source):
-        """
-        source: A list of P objects.
-        """
+        """source: A list of P objects."""
         return Document(content=[_convert(c) for c in source])
 
 
 
-class _Shortcut(object):
+class _Shortcut:
     def __init__(self, key):
         self.key = key
 
     def asDict(self):
-        return dict(((self.key, True),))
-        
-    
+        return {self.key: True}
+
+
 BOLD = _Shortcut("bold")
 ITALIC = _Shortcut("italic")
 UNDERLINE = _Shortcut("underline")
@@ -38,30 +35,28 @@ SUB = _Shortcut("sub")
 
 
 def _MetaPythonBase():
+    """Return a metaclass which implements __getitem__,
+    allowing e.g. P[...] instead of P()[...].
     """
-    Return a metaclass which implements __getitem__,
-    allowing e.g. P[...] instead of P()[...]
-    """
-    
+
     class MagicGetItem(type):
         def __new__(mcs, name, bases, dict):
             klass = type.__new__(mcs, name, bases, dict)
             mcs.__getitem__ = lambda _, k: klass()[k]
             return klass
-            
+
     return MagicGetItem
-        
 
 
-class _PythonBase(object):
-    """
-    Base class for Python markup objects, providing
-    stan-ish interface
+
+class _PythonBase:
+    """Base class for Python markup objects, providing
+    stan-ish interface.
     """
 
     def __init__(self, *shortcuts, **properties):
         self.properties = properties.copy()
-        
+
         for shortcut in shortcuts:
             self.properties.update(shortcut.asDict())
 
@@ -76,19 +71,19 @@ class _PythonBase(object):
     def __getitem__(self, item):
 
         if isinstance(item, (tuple, list)):
-            for i in item: self [i]
+            for i in item: self[i]
         elif isinstance(item, int):
             return self.content[item]
         else:
             self.content.append(item)
 
         return self
-    
+
 
     def __str__(self):
-        return "%s(%s) [ %s ]" % (
+        return "{}({}) [ {} ]".format(
             self.__class__.__name__,
-            ", ".join("%s=%s" % (k, repr(v)) for (k,v) in self.properties.items()),
+            ", ".join(f"{k}={v!r}" for (k, v) in self.properties.items()),
             ", ".join(repr(x) for x in self.content))
 
 

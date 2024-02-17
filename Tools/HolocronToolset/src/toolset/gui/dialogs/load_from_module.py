@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import Qt, QVariant
+from PyQt5.QtCore import QVariant, Qt
 from PyQt5.QtWidgets import QDialog, QListWidgetItem
 
 if TYPE_CHECKING:

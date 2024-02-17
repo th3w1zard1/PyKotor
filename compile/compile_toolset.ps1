@@ -11,15 +11,6 @@ Write-Host "The path to the root directory is: $rootPath"
 Write-Host "Initializing python virtual environment..."
 . $rootPath/install_python_venv.ps1
 
-# Define temporary directories for build and cache
-$tempBuildDir = "/tmp/pip_build/"
-$tempCacheDir = "/tmp/pip_cache/"
-
-# Ensure these temporary directories exist
-Invoke-Expression "mkdir -p $tempBuildDir"
-Invoke-Expression "mkdir -p $tempCacheDir"
-$env:PIP_CACHE_DIR = $tempCacheDir
-
 Write-Host "Installing required packages to build the holocron toolset..."
 . $pythonExePath -m pip install --upgrade pip --prefer-binary --progress-bar on
 . $pythonExePath -m pip install pyinstaller --prefer-binary --progress-bar on
@@ -29,9 +20,7 @@ Write-Host "Installing required packages to build the holocron toolset..."
 . $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotorGL" + $pathSep + "recommended.txt") --prefer-binary --compile --progress-bar on
 
 if ((Get-OS) -eq "Mac") {
-    & "brew install python qt pyqt5 mpdecimal " +
-               "` gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly " +
-               "` pulseaudio fontconfig"
+    & bash -c "brew install python@3.12 pyqt@5 mpdecimal gstreamer pulseaudio fontconfig" 2>&1 | Write-Output 
 } elseif (Test-Path -Path "/etc/os-release") {
     $osInfo = Get-Content "/etc/os-release" -Raw
     if ($osInfo -match 'ID=(.*)') {
@@ -63,7 +52,7 @@ if ((Get-OS) -eq "Mac") {
             break
         }
         "arch" {
-            $command = "sudo pacman -Syu --noconfirm && sudo pacman -S python-opengl mpdecimal python-pyqt5 qt5-base qt5-multimedia qt5-svg pulseaudio pulseaudio-alsa gstreamer mesa libglvnd ttf-dejavu fontconfig gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly --noconfirm"
+            $command = "sudo pacman -Syu --noconfirm && sudo pacman -S libxcb qt5-base qt5-wayland xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil python-opengl libxcomposite gtk3 atk mpdecimal python-pyqt5 qt5-base qt5-multimedia qt5-svg pulseaudio pulseaudio-alsa gstreamer mesa libglvnd ttf-dejavu fontconfig gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly --noconfirm"
             break
         }
     }

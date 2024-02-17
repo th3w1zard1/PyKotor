@@ -5,6 +5,7 @@ import logging
 import os
 import pathlib
 import sys
+
 from io import StringIO
 from logging.handlers import RotatingFileHandler
 from typing import TYPE_CHECKING
@@ -25,27 +26,27 @@ if UTILITY_PATH.joinpath("utility").is_dir():
     add_sys_path(UTILITY_PATH)
 
 
-from pykotor.extract.file import ResourceIdentifier
-from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
-from pykotor.resource.generics.git import construct_git, read_git, write_git
-from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from pykotor.common.misc import Game  # noqa: E402
 from pykotor.common.scriptdefs import KOTOR_CONSTANTS, KOTOR_FUNCTIONS  # noqa: E402
 from pykotor.common.scriptlib import KOTOR_LIBRARY, TSL_LIBRARY  # noqa: E402
+from pykotor.extract.file import ResourceIdentifier
 from pykotor.resource.formats.ncs.compiler.classes import CompileError, EntryPointError  # noqa: E402
 from pykotor.resource.formats.ncs.compiler.lexer import NssLexer  # noqa: E402
 from pykotor.resource.formats.ncs.compiler.parser import NssParser  # noqa: E402
 from pykotor.resource.formats.ncs.compilers import ExternalNCSCompiler, InbuiltNCSCompiler  # noqa: E402
+from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
 from pykotor.resource.formats.ncs.ncs_auto import compile_nss, write_ncs  # noqa: E402
-from pykotor.resource.formats.ncs.ncs_data import NCS, NCSCompiler  # noqa: E402
-from pykotor.resource.type import ResourceType  # noqa: E402
+from pykotor.resource.formats.ncs.ncs_data import NCS  # noqa: E402
+from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception  # noqa: E402
 from utility.system.path import Path  # noqa: E402
 
 if TYPE_CHECKING:
     from _pytest.reports import TestReport
     from ply import yacc
+
     from pykotor.extract.file import FileResource
+    from pykotor.resource.formats.ncs.ncs_data import NCSCompiler
 
 K1_PATH: str | None = os.environ.get("K1_PATH")
 K2_PATH: str | None = os.environ.get("K2_PATH")
@@ -58,12 +59,12 @@ LOG_FILENAME = "test_ncs_compilers_install"
 
 def setup_logger():
     # Configure logger for failed test cases
-    logger = logging.getLogger('failed_tests_logger')
+    logger = logging.getLogger("failed_tests_logger")
     logger.setLevel(logging.DEBUG)
 
     # Primary log file handler
-    fh = RotatingFileHandler('FAILED_TESTS.log', maxBytes=5*1024*1024, backupCount=5, mode='a')
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh = RotatingFileHandler("FAILED_TESTS.log", maxBytes=5 * 1024 * 1024, backupCount=5, mode="a")
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
@@ -81,7 +82,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> TestR
         # This means the test has failed
         # Construct and return a TestReport object
 
-        #longrepr = call.excinfo.getrepr()
+        # longrepr = call.excinfo.getrepr()
         longrepr = format_exception_with_variables(call.excinfo.value, call.excinfo.type, call.excinfo.tb)
         logger.error("Test failed with exception!", extra={"item.nodeid": item.nodeid, "Traceback: ": longrepr})
         report = TestReport(
@@ -170,7 +171,7 @@ def _handle_compile_exc(
     logger.log(level=40, msg=msg_debug_level)
     pytest.fail(msg_info_level)
 
-    
+
 CUR_FAILED_EXT: dict[Game, set[ResourceIdentifier]] = {
     Game.K1: set(),
     Game.K2: set(),
@@ -254,9 +255,9 @@ def compare_external_results(
     if matches:
         print("\n".join(matches))
 
-#def test_ktool_nwnnsscomp(
+# def test_ktool_nwnnsscomp(
 #    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-#):
+# ):
 #    compilers: dict[str | None, ExternalNCSCompiler | None] = {
 #        KTOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(KTOOL_NWNNSSCOMP_PATH) if KTOOL_NWNNSSCOMP_PATH and Path(KTOOL_NWNNSSCOMP_PATH).is_file() else None,
 #    }
@@ -325,9 +326,9 @@ def test_tslpatcher_nwnnsscomp(
         with unique_ncs_path.open("rb") as f:
             compiler_result[compiler_path] = f.read()
 
-#def test_kscript_tool_nwnnsscomp(
+# def test_kscript_tool_nwnnsscomp(
 #    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-#):
+# ):
 #    compilers: dict[str | None, ExternalNCSCompiler | None] = {
 #        K_SCRIPT_TOOL_NWNNSSCOMP_PATH: ExternalNCSCompiler(K_SCRIPT_TOOL_NWNNSSCOMP_PATH) if K_SCRIPT_TOOL_NWNNSSCOMP_PATH and Path(K_SCRIPT_TOOL_NWNNSSCOMP_PATH).is_file() else None,
 #    }
@@ -347,9 +348,9 @@ def test_tslpatcher_nwnnsscomp(
 #        with unique_ncs_path.open("rb") as f:
 #            compiler_result[compiler_path] = f.read()
 
-#def test_v1_nwnnsscomp(
+# def test_v1_nwnnsscomp(
 #    script_data: tuple[Game, tuple[FileResource, Path, Path]],
-#):
+# ):
 #    compilers: dict[str | None, ExternalNCSCompiler | None] = {
 #        V1_NWNNSSCOMP_PATH: ExternalNCSCompiler(V1_NWNNSSCOMP_PATH) if V1_NWNNSSCOMP_PATH and Path(V1_NWNNSSCOMP_PATH).is_file() else None,
 #    }
@@ -465,7 +466,7 @@ if __name__ == "__main__":
         [
             __file__,
             "-v",
-            #"--full-trace",
+            # "--full-trace",
             "-ra",
             f"--log-file={LOG_FILENAME}.txt",
             "-o",
@@ -473,37 +474,38 @@ if __name__ == "__main__":
             "--capture=no",
             "--junitxml=pytest_report.xml",
             "--html=pytest_report.html",
-            #"--self-contained-html",
-            "-n",
-            "auto"
+            "--tb=no",
+            # "--self-contained-html",
+            # "-n",
+            # "auto"
         ],
     )
 
     if profiler:
         save_profiler_output(profiler, "profiler_output.pstat")
         # Generate reports from the profile stats
-        #stats = pstats.Stats(profiler_output_file_str).sort_stats('cumulative')
-        #stats.print_stats()
+        # stats = pstats.Stats(profiler_output_file_str).sort_stats('cumulative')
+        # stats.print_stats()
 
         # Generate some line-execution graphs for flame graphs
-        #profiler.create_stats()
-        #stats_text = pstats.Stats(profiler).sort_stats('cumulative')
-        #stats_text.print_stats()
-        #stats_text.dump_stats(f"{LOG_FILENAME}.pstats")
-        #stats_text.print_callers()
-        #stats_text.print_callees()
+        # profiler.create_stats()
+        # stats_text = pstats.Stats(profiler).sort_stats('cumulative')
+        # stats_text.print_stats()
+        # stats_text.dump_stats(f"{LOG_FILENAME}.pstats")
+        # stats_text.print_callers()
+        # stats_text.print_callees()
         # Cumulative list of the calls
-        #stats_text.print_stats(100)
+        # stats_text.print_stats(100)
         # Cumulative list of calls per function
-        #stats_text.print_callers(100, 'cumulative')
-        #stats_text.print_callees(100, 'cumulative')
+        # stats_text.print_callers(100, 'cumulative')
+        # stats_text.print_callees(100, 'cumulative')
 
         # Generate some flat line graphs
-        #profiler.print_stats(sort='time')  # (Switch to sort='cumulative' then scroll up to see where time was spent!)
-        #profiler.print_stats(sort='name')  # (toString of OBJ is called the most often, followed by compiler drivers)
-        #profiler.print_stats(sort='cinit') # (A constructor for NCS is where most (<2%) of time is spent)
+        # profiler.print_stats(sort='time')  # (Switch to sort='cumulative' then scroll up to see where time was spent!)
+        # profiler.print_stats(sort='name')  # (toString of OBJ is called the most often, followed by compiler drivers)
+        # profiler.print_stats(sort='cinit') # (A constructor for NCS is where most (<2%) of time is spent)
 
     sys.exit(result)
     # Cleanup temporary directories after use
-    #for temp_dir in temp_dirs.values():
+    # for temp_dir in temp_dirs.values():
     #    temp_dir.cleanup()  # noqa: ERA001

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import ctypes
 
 # Constants for file attributes
@@ -11,7 +13,8 @@ def get_win_attrs(file_path):
 
     # If the function fails, it returns INVALID_FILE_ATTRIBUTES
     if attrs == -1:
-        raise FileNotFoundError(f"Cannot access attributes of file: {file_path}")
+        msg = f"Cannot access attributes of file: {file_path}"
+        raise FileNotFoundError(msg)
 
     # Check for specific attributes
     is_read_only = bool(attrs & FILE_ATTRIBUTE_READONLY)
