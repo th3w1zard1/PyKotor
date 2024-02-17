@@ -316,6 +316,7 @@ class Installation:
         return self._find_resource_folderpath(("streamvoice", "streamwaves"))
 
     def save_locations(self) -> list[Path]:
+        # sourcery skip: assign-if-exp, extract-method
         """Returns a list of existing save locations (paths where save files can be found)."""
         save_paths: list[Path] = [self._find_resource_folderpath("saves")]
         if self.game().is_k2():
@@ -345,13 +346,22 @@ class Installation:
 
             local_virtual_store = localappdata_path / "VirtualStore"
             game_folder2 = "SWKotOR2" if self.game().is_k2() else "SWKotOR"
-            save_paths.append(local_virtual_store.joinpath("Program Files", "LucasArts", game_folder2, "saves"))
-            save_paths.append(local_virtual_store.joinpath("Program Files (x86)", "LucasArts", game_folder2, "saves"))
+            save_paths.extend(
+                (
+                    local_virtual_store.joinpath("Program Files", "LucasArts", game_folder2, "saves"),
+                    local_virtual_store.joinpath("Program Files (x86)", "LucasArts", game_folder2, "saves")
+                )
+            )
 
         elif system == "Darwin":  # TODO
             home = Path.home()
-            save_paths.append(home.joinpath("Library", "Application Support", "Star Wars Knights of the Old Republic II", "saves"))
-            save_paths.append(home.joinpath("Library", "Containers", "com.aspyr.kotor2.appstore", "Data", "Library", "Application Support", "Star Wars Knights of the Old Republic II", "saves"))
+            save_paths.extend(
+                (
+                    home.joinpath("Library", "Application Support", "Star Wars Knights of the Old Republic II", "saves"),
+                    home.joinpath("Library", "Containers", "com.aspyr.kotor2.appstore", "Data", "Library", "Application Support",
+                                  "Star Wars Knights of the Old Republic II", "saves")
+                )
+            )
 
         elif system == "Linux":  # TODO
             xdg_data_home = os.getenv("XDG_DATA_HOME", "")
