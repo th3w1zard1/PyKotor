@@ -24,6 +24,7 @@ class _DataTypes(IntEnum):
     COMPRESSED_COLOR_MAPPED_A = 32
     COMPRESSED_COLOR_MAPPED_B = 33
 
+
 class TPCTGAReader(ResourceReader):
     def __init__(
         self,
@@ -111,7 +112,6 @@ class TPCTGAReader(ResourceReader):
             if n == width * height:
                 break
         return data
-
 
     def _process_non_rle_color_mapped(self, width: int, height: int, color_map: list[bytes]) -> bytearray:
         """Process non-RLE color-mapped data."""
@@ -277,7 +277,7 @@ class TPCTGAWriter(ResourceWriter):
         if self._tpc.format() in {TPCTextureFormat.RGB, TPCTextureFormat.DXT1}:
             self._writer.write_uint8(32)  # bits_per_pixel, image_descriptor
             self._writer.write_uint8(0)
-            data: bytes | None = self._tpc.convert(TPCTextureFormat.RGB, 0).data
+            data: bytearray = self._tpc.convert(TPCTextureFormat.RGB, 0).data
             pixel_reader: BinaryReader = BinaryReader.from_bytes(data)
             for _ in range(len(data) // 3):
                 r = pixel_reader.read_uint8()

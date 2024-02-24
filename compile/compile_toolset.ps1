@@ -1,4 +1,5 @@
 param (
+  [string]$venv_name = ".venv",
   [switch]$noprompt
 )
 $this_noprompt = $noprompt
@@ -8,39 +9,67 @@ $rootPath = (Resolve-Path -LiteralPath "$scriptPath/..").Path
 Write-Host "The path to the script directory is: $scriptPath"
 Write-Host "The path to the root directory is: $rootPath"
 
-Write-Host "Initializing python virtual environment..."
-. $rootPath/install_python_venv.ps1
+function Get-OS {
+    if ($IsWindows) {
+        return "Windows"
+    } elseif ($IsMacOS) {
+        return "Mac"
+    } elseif ($IsLinux) {
+        return "Linux"
+    }
+    $os = (Get-WmiObject -Class Win32_OperatingSystem).Caption
+    if ($os -match "Windows") {
+        return "Windows"
+    } elseif ($os -match "Mac") {
+        return "Mac"
+    } elseif ($os -match "Linux") {
+        return "Linux"
+    } else {
+        Write-Error "Unknown Operating System"
+        Write-Host "Press any key to exit..."
+        if (-not $noprompt) {
+            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        }
+        exit
+    }
+}
 
-Write-Host "Installing required packages to build the holocron toolset..."
-. $pythonExePath -m pip install --upgrade pip --prefer-binary --progress-bar on
-. $pythonExePath -m pip install pyinstaller --prefer-binary --progress-bar on
-. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Tools" + $pathSep + "HolocronToolset" + $pathSep + "requirements.txt") --prefer-binary --compile --progress-bar on
-. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotor" + $pathSep + "requirements.txt") --prefer-binary --compile --progress-bar on
-. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotorGL" + $pathSep + "requirements.txt") --prefer-binary --compile --progress-bar on
-. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotorGL" + $pathSep + "recommended.txt") --prefer-binary --compile --progress-bar on
+function Get-Linux-Distro-Name {
+    if (Test-Path "/etc/os-release" -ErrorAction SilentlyContinue) {
+        $osInfo = Get-Content "/etc/os-release" -Raw
+        if ($osInfo -match '\nID="?([^"\n]*)"?') {
+            $distroName = $Matches[1].Trim('"')
+            if ($distroName -eq "ol") {
+                sudo yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+                return "oracle"
+            }
+            return $distroName
+        }
+    }
+    return $null
+}
 
 if ((Get-OS) -eq "Mac") {
-    & bash -c "brew install python@3.12 pyqt@5 mpdecimal gstreamer pulseaudio fontconfig" 2>&1 | Write-Output 
+    & bash -c "brew install pyqt@5 mpdecimal gstreamer pulseaudio fontconfig" 2>&1 | Write-Output 
 } elseif (Test-Path -Path "/etc/os-release") {
-    $osInfo = Get-Content "/etc/os-release" -Raw
-    if ($osInfo -match 'ID=(.*)') {
-        $distro = $Matches[1].Trim('"')
-    }
-    if ($osInfo -match 'VERSION_ID=(.*)') {
-        $versionId = $Matches[1].Trim('"')
-    }
     $command = ""
+    $distro = (Get-Linux-Distro-Name)
     switch ($distro) {
         "debian" {  # untested
-            $command = "sudo apt install python3-opengl python3-pyqt5-sip python3-pyqt5 libpulse-mainloop-glib0 libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly libgstreamer1.0-dev mesa-utils libgl1-mesa-glx libgl1-mesa-dri qt5-default qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libqt5gui5 libqt5core5a libqt5dbus5 libqt5widgets5 -y"
+            $command = "sudo apt-get install python3-opengl python3-pyqt5 libpulse-mainloop-glib0 libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly libgstreamer1.0-dev mesa-utils libgl1-mesa-glx libgl1-mesa-dri qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libqt5gui5 libqt5core5a libqt5dbus5 libqt5widgets5 -y"
             break
         }
         "ubuntu" {  # export LIBGL_ALWAYS_SOFTWARE=1
-            $command = "sudo apt install python3-opengl python3-pyqt5-sip python3-pyqt5 libpulse-mainloop-glib0 libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly libgstreamer1.0-dev mesa-utils libgl1-mesa-glx libgl1-mesa-dri qt5-default qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libqt5gui5 libqt5core5a libqt5dbus5 libqt5widgets5 -y"
+            $command = "sudo apt-get install python3-opengl python3-pyqt5 libpulse-mainloop-glib0 libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly libgstreamer1.0-dev mesa-utils libgl1-mesa-glx libgl1-mesa-dri qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools libgl1-mesa-glx libglu1-mesa libglu1-mesa-dev libqt5gui5 libqt5core5a libqt5dbus5 libqt5widgets5 -y"
             break
         }
         "fedora" {
-            $command = "sudo dnf install binutils python3-pyopengl PyQt5 pulseaudio-libs-glib2 gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugins-bad-free gstreamer1-plugins-ugly-free gstreamer1-devel -y"
+            sudo dnf groupinstall "Development Tools" -y
+            $command = "sudo dnf install binutils mesa-libGL-devel python3-pyopengl PyQt5 pulseaudio-libs-glib2 gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugins-bad-free gstreamer1-plugins-ugly-free gstreamer1-devel -y"
+            break
+        }
+        "oracle" {
+            $command = "sudo dnf install binutils PyQt5 mesa-libGL-devel pulseaudio-libs-glib2 gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugins-bad-free gstreamer1-plugins-ugly-free gstreamer1-devel -y"
             break
         }
         "almalinux" {
@@ -52,18 +81,48 @@ if ((Get-OS) -eq "Mac") {
             break
         }
         "arch" {
-            $command = "sudo pacman -Syu --noconfirm && sudo pacman -S libxcb qt5-base qt5-wayland xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil python-opengl libxcomposite gtk3 atk mpdecimal python-pyqt5 qt5-base qt5-multimedia qt5-svg pulseaudio pulseaudio-alsa gstreamer mesa libglvnd ttf-dejavu fontconfig gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly --noconfirm"
+            Write-Host "Initializing pacman keyring..."
+            sudo pacman-key --init
+            sudo pacman-key --populate archlinux
+            sudo pacman -Sy archlinux-keyring --noconfirm
+            sudo pacman -Syu --noconfirm
+            sudo pacman -S mesa libxcb qt5-base qt5-wayland xcb-util-wm xcb-util-keysyms xcb-util-image xcb-util-renderutil python-opengl libxcomposite gtk3 atk mpdecimal python-pyqt5 qt5-base qt5-multimedia qt5-svg pulseaudio pulseaudio-alsa gstreamer mesa libglvnd ttf-dejavu fontconfig gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly --noconfirm
             break
         }
     }
 
     if ($command -eq "") {
-        Write-Warning "Dist $distro version $versionId not supported for automated system package install, please install the dependencies if you experience problems."
+        Write-Warning "Dist '$distro' not supported for automated system package install, please install the dependencies if you experience problems."
     } else {
         Write-Host "Executing command: $command"
-        Invoke-Expression $command
+        $output = Invoke-Expression $command
+
+        # Check if the output contains the error message
+        if ($distro -eq "arch") {
+            if ($output -match "error: failed to commit transaction (invalid or corrupted package)") {
+                Write-Host "Detected error: No packages were upgraded. Please run the command `sudo pacman-key --refresh-keys` and try again."
+                if (-not $this_noprompt) {
+                    Write-Host "Press any key to exit..."
+                    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+                }
+            }
+        }
     }
 }
+
+Write-Host "Initializing python virtual environment..."
+$this_noprompt_arg = if ($this_noprompt) {'-noprompt'} else {''}
+$venv_name_arg = if ($venv_name) {"-venv_name $venv_name"} else {''}
+. $rootPath/install_python_venv.ps1 $this_noprompt_arg $venv_name_arg
+
+
+Write-Host "Installing required packages to build the holocron toolset..."
+. $pythonExePath -m pip install --upgrade pip --prefer-binary --progress-bar on
+. $pythonExePath -m pip install pyinstaller --prefer-binary --progress-bar on
+. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Tools" + $pathSep + "HolocronToolset" + $pathSep + "requirements.txt") --prefer-binary --compile --progress-bar on
+. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotor" + $pathSep + "requirements.txt") --prefer-binary --compile --progress-bar on
+. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotorGL" + $pathSep + "requirements.txt") --prefer-binary --compile --progress-bar on
+. $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotorGL" + $pathSep + "recommended.txt") --prefer-binary --compile --progress-bar on
 
 $current_working_dir = (Get-Location).Path
 Set-Location -LiteralPath (Resolve-Path -LiteralPath "$rootPath/Tools/HolocronToolset/src").Path
@@ -84,6 +143,7 @@ if (Test-Path -Path $finalExecutablePath) {
 }
 
 Write-Host "Extra PYTHONPATH paths:\n'$env:PYTHONPATH'\n\n"
+$iconExtension = if ((Get-OS) -eq 'Mac') {'icns'} else {'ico'}
 $pyInstallerArgs = @{
     'exclude-module' = @(
         '',
@@ -97,7 +157,7 @@ $pyInstallerArgs = @{
     'name' = "HolocronToolset"
     'distpath'=($rootPath + $pathSep + "dist")
 #    'upx-dir' = "C:\GitHub\upx-win64"
-    'icon'="resources/icons/sith.ico"
+    'icon'="resources/icons/sith.$iconExtension"
 }
 
 $pyInstallerArgs = $pyInstallerArgs.GetEnumerator() | ForEach-Object {
