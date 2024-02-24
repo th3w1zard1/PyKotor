@@ -322,7 +322,7 @@ class Installation:  # noqa: PLR0904
     def save_locations(self) -> list[Path]:
         # sourcery skip: assign-if-exp, extract-method
         """Returns a list of existing save locations (paths where save files can be found)."""
-        save_paths: list[Path] = [self._find_resource_folderpath("saves")]
+        save_paths: list[Path] = [self._find_resource_folderpath("saves", optional=True)]
         if self.game().is_k2():
             cloudsave_dir = self._find_resource_folderpath("cloudsaves")
             if cloudsave_dir.safe_isdir():
