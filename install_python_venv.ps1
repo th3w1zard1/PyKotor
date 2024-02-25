@@ -1,6 +1,6 @@
 param(
-  [string]$venv_name = ".venv",
-  [switch]$noprompt
+  [switch]$noprompt,
+  [string]$venv_name = ".venv"
 )
 
 $repoRootPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
@@ -306,14 +306,17 @@ function Get-Python-Version {
     Param (
         [string]$pythonPath
     )
-    if (Test-Path $pythonPath -ErrorAction SilentlyContinue) {
-        $global:pythonVersionOutput = & $pythonPath --version 2>&1
-        $global:pythonVersionString = $global:pythonVersionOutput -replace '^Python\s+'
-        $numericVersionString = $global:pythonVersionString -replace '(\d+\.\d+\.\d+).*', '$1'
-        $global:pythonVersion = [Version]$numericVersionString
-        return $global:pythonVersion
+    try {
+        if (Test-Path $pythonPath -ErrorAction SilentlyContinue) {
+            $global:pythonVersionOutput = & $pythonPath --version 2>&1
+            $global:pythonVersionString = $global:pythonVersionOutput -replace '^Python\s+'
+            $numericVersionString = $global:pythonVersionString -replace '(\d+\.\d+\.\d+).*', '$1'
+            $global:pythonVersion = [Version]$numericVersionString
+            return $global:pythonVersion
+        }
+    } catch {
+        return [Version]"0.0.0"
     }
-    return [Version]"0.0.0"
 }
 
 $minVersion = [Version]"3.8.0"
@@ -580,6 +583,10 @@ $findVenvExecutable = $true
 if (Get-ChildItem Env:VIRTUAL_ENV -ErrorAction SilentlyContinue) {  # Check if a venv is already activated
     $venvPath = $env:VIRTUAL_ENV
     Write-Host "A virtual environment is currently activated: $venvPath"
+    if ($null -ne $pythonExePath) { # check if this script itself was previously used to activate this venv.
+        Write-Host "install_python_venv.ps1 has already ran and activated this venv, retrying anyway."
+    }
+    deactivate
 } elseif ($venvPath -ne ($repoRootPath + $pathSep) -and (Test-Path $venvPath -ErrorAction SilentlyContinue)) {
     Write-Host "Found existing python virtual environment at '$venvPath'"
 } else {
