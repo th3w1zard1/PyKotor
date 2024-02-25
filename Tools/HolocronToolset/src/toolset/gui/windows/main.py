@@ -897,11 +897,10 @@ class ToolWindow(QMainWindow):
 
                 except Exception as e:  # noqa: PERF203
                     etype, msg = universal_simplify_exception(e)
-                    loader.errors.append(type(e)(f"Could not find or extract tpc: '{texture}'\nReason ({etype}): {msg}"))
-
+                    loader.errors.append(e.__class__(f"Could not find or extract tpc: '{texture}'\nReason ({etype}): {msg}"))
         except Exception as e:
             etype, msg = universal_simplify_exception(e)
-            loader.errors.append(type(e)(f"Could not determine textures used in model: '{resource.resname()}'\nReason ({etype}): {msg}"))
+            loader.errors.append(e.__class__(f"Could not determine textures used in model: '{resource.resname()}'\nReason ({etype}): {msg}"))
 
     def openFromFile(self):
         filepaths: list[str] = QFileDialog.getOpenFileNames(self, "Select files to open")[:-1][0]
