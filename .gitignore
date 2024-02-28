@@ -1,4 +1,6 @@
 .git
+.venv*
+venv
 .idea
 dist
 PyKotor.egg-info
