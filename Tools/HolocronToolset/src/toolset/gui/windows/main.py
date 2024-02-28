@@ -161,7 +161,7 @@ class ToolWindow(QMainWindow):
         self.ui.modulesWidget.requestOpenResource.connect(self.onOpenResources)
 
         self.ui.savesWidget.sectionChanged.connect(self.onSavepathChanged)
-        self.ui.savesWidget.requestReload.connect(self.onSaveReload)  # TODO:
+        self.ui.savesWidget.requestReload.connect(self.onSaveReload)
         self.ui.savesWidget.requestRefresh.connect(self.onSaveRefresh)
         self.ui.savesWidget.requestExtractResource.connect(self.onExtractResources)
         self.ui.savesWidget.requestOpenResource.connect(self.onOpenResources)
@@ -240,8 +240,9 @@ class ToolWindow(QMainWindow):
     def onModuleRefresh(self):
         self.refreshModuleList()
 
-    def onSaveReload(self, saveDir: str):  # TODO:
-        ...
+    def onSaveReload(self, saveDir: str):
+        print(f"Reloading '{saveDir}'")
+        self.onSavepathChanged(saveDir)
 
     def onSaveRefresh(self):
         self.refreshSavesList()
@@ -256,6 +257,10 @@ class ToolWindow(QMainWindow):
         self.ui.overrideWidget.setResources(self.active.override_resources(newDirectory))
 
     def onSavepathChanged(self, newSaveDir: str):
+        if not self.active:
+            print(f"No installation loaded, cannot change to save directory '{newSaveDir}'")
+            return
+
         print("Loading save resources into UI...")
 
         # Clear the entire model before loading new save resources
@@ -302,10 +307,9 @@ class ToolWindow(QMainWindow):
                     item2 = QStandardItem(resourceType.extension.upper())
                     categoryItem.appendRow([item1, item2])
 
-    def onOverrideReload(self, file: str):
-        file_path = Path(file)
-        if not file_path.name:
-            print(f"Cannot reload '{file}': no file loaded")
+    def onOverrideReload(self, file_or_folder: str):
+        if not self.active:
+            print(f"No installation loaded, cannot reload {file_or_folder}")
             return
         if not file_path.is_relative_to(self.active.override_path()):
             print(f"{file_path} is not relative to the override folder, cannot reload")

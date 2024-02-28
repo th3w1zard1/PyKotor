@@ -567,7 +567,7 @@ class Installation:  # noqa: PLR0904
     def load_saves(
         self,
     ):
-        """Reloads the list of saves and data in the 'saves' folder linked to the Installation."""
+        """Reloads the data in the 'saves' folder linked to the Installation."""
         self._saves = {}
         for save_location in self.save_locations():
             print(f"Found an active save location at '{save_location}'")
