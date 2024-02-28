@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import json
+
 from configparser import ConfigParser
 from itertools import tee
-import json
 from typing import TYPE_CHECKING, Any
 
 from pykotor.common.geometry import Vector3, Vector4
