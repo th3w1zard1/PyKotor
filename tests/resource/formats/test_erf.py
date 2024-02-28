@@ -1,23 +1,31 @@
+from __future__ import annotations
+
 import os
 import pathlib
 import sys
 import unittest
 
-if getattr(sys, "frozen", False) is False:
-    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
-    if pykotor_path.joinpath("__init__.py").exists() and str(pykotor_path) not in sys.path:
-        working_dir = str(pykotor_path.parent)
-        if working_dir in sys.path:
-            sys.path.remove(working_dir)
-        sys.path.insert(0, str(pykotor_path.parent))
+from pykotor.resource.formats.erf.erf_data import ERFType
+
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+def add_sys_path(p: pathlib.Path):
+    working_dir = str(p)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
+if PYKOTOR_PATH.joinpath("pykotor").exists():
+    add_sys_path(PYKOTOR_PATH)
+if UTILITY_PATH.joinpath("utility").exists():
+    add_sys_path(UTILITY_PATH)
 
 from unittest import TestCase
 
-from pykotor.helpers.path import Path
 from pykotor.resource.formats.erf import ERF, ERFBinaryReader, read_erf, write_erf
 from pykotor.resource.type import ResourceType
+from utility.system.path import Path
 
-BINARY_TEST_FILE = Path("tests/files/test.erf")
+BINARY_TEST_FILE = Path("tests/files/test.erf").resolve()
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
 CORRUPT_BINARY_TEST_FILE = Path("tests/files/test_corrupted.gff")
 
@@ -49,10 +57,10 @@ class TestERF(TestCase):
 
     def test_write_raises(self):
         if os.name == "nt":
-            self.assertRaises(PermissionError, write_erf, ERF(), ".", ResourceType.ERF)
+            self.assertRaises(PermissionError, write_erf, ERF(ERFType.ERF), ".", ResourceType.ERF)
         else:
-            self.assertRaises(IsADirectoryError, write_erf, ERF(), ".", ResourceType.ERF)
-        self.assertRaises(ValueError, write_erf, ERF(), ".", ResourceType.INVALID)
+            self.assertRaises(IsADirectoryError, write_erf, ERF(ERFType.ERF), ".", ResourceType.ERF)
+        self.assertRaises(ValueError, write_erf, ERF(ERFType.ERF), ".", ResourceType.INVALID)
 
 
 if __name__ == "__main__":

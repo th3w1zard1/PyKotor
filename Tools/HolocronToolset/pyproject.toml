@@ -1,0 +1,121 @@
+[build-system]
+requires = [
+    "setuptools>=67.8.0",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name="HolocronToolset"
+description="A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
+version="2.2.0"
+requires-python = ">= 3.7"
+dependencies = [
+    #tsidna~=3.3  # TODO: can't be found on pip/pypi?
+    "PyQt5~=5.15",
+    "PyQt5-Qt5~=5.15",
+    "PyQt5-sip~=12.10",
+    "urllib3~=1.26",
+    "watchdog>=2.1,<3.1",
+    "Markdown>=3.3,<3.6",
+    "jsmin~=3.0",
+    "requests>=2.27,<2.32",
+    "certifi==2021.10.8",
+    "pyperclip~=1.8",
+#    "pykotor>=1.7",
+#    "pykotor[gl]>=1.7"
+]
+authors = [
+  {name = "NickHugi"},
+]
+maintainers = [
+  {name = "th3w1zard1", email = "halomastar@gmail.com"},
+]
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "GPLv3 License"}
+keywords = ["kotor", "pyqt5", "holocron", "toolset", "pykotor"]
+
+[project.urls]
+Homepage = "https://github.com/NickHugi/PyKotor"
+Documentation = "https://github.com/NickHugi/PyKotor/blob/master/README.md"
+Repository = "https://github.com/NickHugi/PyKotor.git"
+Issues = "https://github.com/NickHugi/PyKotor/issues"
+#Changelog = "https://github.com/NickHugi/PyKotor/blob/master/CHANGELOG.md"
+
+########################################################
+## define only linter configurations below this point ##
+########################################################
+
+[tool.black]
+line-length = 130
+target-version = ['py37']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+| \.hg
+| \.github
+| \.mypy_cache
+| \.tox
+| \.venv
+| venv
+| _build
+| buck-out
+| build
+| __pycache__
+| dist
+| nuitka_dist
+| \.history
+| \.idea
+| \.chat
+| \.ruff_cache
+| \.trunk
+| .mdx
+| .mdl
+)/
+'''
+
+[tool.isort]
+atomic = true
+profile = "black"
+line_length = 130
+skip_gitignore = true
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+ignore = [
+    "N",     # disable case checks for pyqt5
+]
+
+[tool.ruff.isort]
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.per-file-ignores]
+"tests/*.py" = ["ALL"]
+".github/*py" = ["INP001"]
+"__init__.py" = ["I001", "F401"]
+"globalsettings.py" = ["I001", "F401"]
+"./src/toolset/*.py" = ["FBT003", "N802", "N803", "N806", "A001"]
+"./src/toolset/uic/*.py" = ["ALL"]  # uic's are auto-generated
+"resources_rc.py" = ["ALL"]
+".mdx" = ["ALL"]
+".mdl" = ["ALL"]
+"pykotor/resource/formats/ncs/compiler/*.py" = ["ALL"]
+
+[tool.ruff.flake8-pytest-style]
+fixture-parentheses = false
+
+[tool.ruff.pyupgrade]
+keep-runtime-typing = true
+
+[tool.mccabe]
+max-complexity = 25
+
+[tool.style]
+based_on_style = "pep8"
+split_before_named_assigns = true
+split_complex_comprehension = true
+split_arguments_when_comma_terminated = true
+
+[tool.pylintrc]
+max-line-length = 130

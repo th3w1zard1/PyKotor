@@ -1,33 +1,113 @@
+from __future__ import annotations
+
+import os
 import pathlib
 import sys
 import unittest
 
-if getattr(sys, "frozen", False) is False:
-    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
-    if pykotor_path.joinpath("__init__.py").exists() and str(pykotor_path) not in sys.path:
-        working_dir = str(pykotor_path.parent)
-        if working_dir in sys.path:
-            sys.path.remove(working_dir)
-        sys.path.insert(0, str(pykotor_path.parent))
+from pykotor.resource.type import ResourceType
 
-from pykotor.common.misc import Color
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+def add_sys_path(p: pathlib.Path):
+    working_dir = str(p)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
+if PYKOTOR_PATH.joinpath("pykotor").exists():
+    add_sys_path(PYKOTOR_PATH)
+if UTILITY_PATH.joinpath("utility").exists():
+    add_sys_path(UTILITY_PATH)
+
+from typing import TYPE_CHECKING
+
+from pykotor.common.misc import Color, Game
+from pykotor.extract.installation import Installation
 from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.generics.git import construct_git, dismantle_git
 
+if TYPE_CHECKING:
+    from pykotor.resource.formats.gff.gff_data import GFF
+    from pykotor.resource.generics.git import GIT
+
 TEST_FILE = "tests/files/test.git"
+K1_SAME_TEST = "tests/files/k1_same_git_test.git"
+K1_LAST_GOOD_EXTRACT = "tests/files/k1_extracted_git_test.git"
+K1_PATH = os.environ.get("K1_PATH")
+K2_PATH = os.environ.get("K2_PATH")
 
 
 class TestGIT(unittest.TestCase):
-    def test_io(self):
+    def setUp(self):
+        self.log_messages = [os.linesep]
+
+    def log_func(self, message=""):
+        self.log_messages.append(message)
+
+    @unittest.skipIf(
+        not K1_PATH or not pathlib.Path(K1_PATH).joinpath("chitin.key").exists(),
+        "K1_PATH environment variable is not set or not found on disk.",
+    )
+    def test_gff_reconstruct_from_k1_installation(self):
+        self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
+        for git_resource in (resource for resource in self.installation if resource.restype() == ResourceType.GIT):
+            gff: GFF = read_gff(git_resource.data())
+            reconstructed_gff: GFF = dismantle_git(construct_git(gff), Game.K1)
+            self.assertTrue(gff.compare(reconstructed_gff, self.log_func), os.linesep.join(self.log_messages))
+
+    @unittest.skipIf(
+        not K2_PATH or not pathlib.Path(K2_PATH).joinpath("chitin.key").exists(),
+        "K2_PATH environment variable is not set or not found on disk.",
+    )
+    def test_gff_reconstruct_from_k2_installation(self):
+        self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
+        for git_resource in (resource for resource in self.installation if resource.restype() == ResourceType.GIT):
+            gff: GFF = read_gff(git_resource.data())
+            reconstructed_gff: GFF = dismantle_git(construct_git(gff))
+            self.assertTrue(gff.compare(reconstructed_gff, self.log_func, ignore_default_changes=True), os.linesep.join(self.log_messages))
+
+    @unittest.skip("This test is known to fail - fixme")  # FIXME:
+    def test_k1_gff_reconstruct(self):
+        gff: GFF = read_gff(K1_SAME_TEST)
+        reconstructed_gff: GFF = dismantle_git(construct_git(gff), Game.K1)
+        self.assertTrue(gff.compare(reconstructed_gff, self.log_func), os.linesep.join(self.log_messages))
+
+    def test_k2_gff_reconstruct(self):
+        gff: GFF = read_gff(TEST_FILE)
+        reconstructed_gff: GFF = dismantle_git(construct_git(gff), Game.K2)
+        self.assertTrue(gff.compare(reconstructed_gff, self.log_func), os.linesep.join(self.log_messages))
+
+    def test_io_construct(self):
         gff = read_gff(TEST_FILE)
         git = construct_git(gff)
         self.validate_io(git)
 
-        gff = dismantle_git(git)
+    def test_io_reconstruct(self):
+        gff = read_gff(TEST_FILE)
+        gff = dismantle_git(construct_git(gff))
         git = construct_git(gff)
         self.validate_io(git)
 
-    def validate_io(self, git):
+    def assertDeepEqual(self, obj1, obj2, context=""):
+        if isinstance(obj1, dict) and isinstance(obj2, dict):
+            self.assertEqual(set(obj1.keys()), set(obj2.keys()), context)
+            for key in obj1:
+                new_context = f"{context}.{key}" if context else str(key)
+                self.assertDeepEqual(obj1[key], obj2[key], new_context)
+
+        elif isinstance(obj1, (list, tuple)) and isinstance(obj2, (list, tuple)):
+            self.assertEqual(len(obj1), len(obj2), context)
+            for index, (item1, item2) in enumerate(zip(obj1, obj2)):
+                new_context = f"{context}[{index}]" if context else f"[{index}]"
+                self.assertDeepEqual(item1, item2, new_context)
+
+        elif hasattr(obj1, "__dict__") and hasattr(obj2, "__dict__"):
+            self.assertDeepEqual(obj1.__dict__, obj2.__dict__, context)
+
+        else:
+            self.assertEqual(obj1, obj2, context)
+
+    def validate_io(self, git: GIT):
         self.assertEqual(127, git.ambient_volume)
         self.assertEqual(17, git.ambient_sound_id)
         self.assertEqual(1, git.env_audio)

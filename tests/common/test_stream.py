@@ -1,21 +1,29 @@
+from __future__ import annotations
+
+import os
 import pathlib
 import sys
 import unittest
+
 from unittest import TestCase
 
-if getattr(sys, "frozen", False) is False:
-    pykotor_path = pathlib.Path(__file__).parents[2] / "pykotor"
-    if pykotor_path.joinpath("__init__.py").exists():
-        working_dir = str(pykotor_path.parent)
-        if working_dir in sys.path:
-            sys.path.remove(working_dir)
-        sys.path.insert(0, str(pykotor_path.parent))
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[2].joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[2].joinpath("Libraries", "Utility", "src")
+def add_sys_path(p: pathlib.Path):
+    working_dir = str(p)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
+if PYKOTOR_PATH.joinpath("pykotor").exists():
+    add_sys_path(PYKOTOR_PATH)
+if UTILITY_PATH.joinpath("utility").exists():
+    add_sys_path(UTILITY_PATH)
 
 from pykotor.common.stream import BinaryReader
 
 
 class TestBinaryReader(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.data1 = b"\x01" + b"\x02\x00" + b"\x03\x00\x00\x00" + b"\x04\x00\x00\x00\x00\x00\x00\x00"
         self.data2 = b"helloworld\x00"
         self.data3 = b"\xFF" + b"\xFE\xFF" + b"\xFD\xFF\xFF\xFF" + b"\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
@@ -48,7 +56,7 @@ class TestBinaryReader(TestCase):
 
         reader4 = BinaryReader.from_bytes(self.data4)
         self.assertAlmostEqual(-123.456, reader4.read_single(), 3)
-        self.assertAlmostEqual(--123.457, reader4.read_double(), 6)
+        self.assertAlmostEqual(123.457, reader4.read_double(), 6)
 
     def test_size(self):
         self.reader1.read_bytes(4)
@@ -99,7 +107,7 @@ class TestBinaryReader(TestCase):
         self.assertEqual(2, self.reader1c.position())
         self.assertEqual(0, self.reader1c.read_uint16())
 
-    def test_skip(self):
+    def test_skip(self):  # sourcery skip: class-extract-method
         self.reader1.read_uint32()
         self.reader1.skip(2)
         self.reader1.skip(1)

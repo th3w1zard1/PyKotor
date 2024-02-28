@@ -1,15 +1,23 @@
-import pathlib
+from __future__ import annotations
+
+import os
 import sys
 import unittest
+
+from pathlib import Path
 from unittest import TestCase
 
-if getattr(sys, "frozen", False) is False:
-    pykotor_path = pathlib.Path(__file__).parents[2] / "pykotor"
-    if pykotor_path.joinpath("__init__.py").exists():
-        working_dir = str(pykotor_path.parent)
-        if working_dir in sys.path:
-            sys.path.remove(working_dir)
-        sys.path.insert(0, str(pykotor_path.parent))
+THIS_SCRIPT_PATH = Path(__file__)
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[2].joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[2].joinpath("Libraries", "Utility", "src")
+def add_sys_path(p: Path):
+    working_dir = str(p)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
+if PYKOTOR_PATH.joinpath("pykotor").exists():
+    add_sys_path(PYKOTOR_PATH)
+if UTILITY_PATH.joinpath("utility").exists():
+    add_sys_path(UTILITY_PATH)
 
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.tslpatcher.memory import PatcherMemory
@@ -79,7 +87,7 @@ class TestLocalizedStringDelta(TestCase):
         self.assertEqual(3, len(locstring))
         self.assertEqual("1", locstring.get(Language.ENGLISH, Gender.MALE))
         self.assertEqual("2", locstring.get(Language.GERMAN, Gender.MALE))
-        self.assertEqual("b", locstring.get(Language.FRENCH, Gender.MALE))  # TODO: Why is this 'b'?
+        self.assertEqual("b", locstring.get(Language.FRENCH, Gender.MALE))
 
 
 if __name__ == "__main__":

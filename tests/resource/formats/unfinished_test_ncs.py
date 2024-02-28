@@ -1,21 +1,33 @@
+from __future__ import annotations
+
 import os
 import pathlib
 import sys
 import unittest
+
 from unittest import TestCase
 
-if getattr(sys, "frozen", False) is False:
-    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
-    if pykotor_path.joinpath("__init__.py").exists() and str(pykotor_path) not in sys.path:
-        working_dir = str(pykotor_path.parent)
-        if working_dir in sys.path:
-            sys.path.remove(working_dir)
-        sys.path.insert(0, str(pykotor_path.parent))
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+def add_sys_path(p: pathlib.Path):
+    working_dir = str(p)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
+if PYKOTOR_PATH.joinpath("pykotor").exists():
+    add_sys_path(PYKOTOR_PATH)
+if UTILITY_PATH.joinpath("utility").exists():
+    add_sys_path(UTILITY_PATH)
+
+from typing import TYPE_CHECKING
 
 from pykotor.common.stream import BinaryReader
-from pykotor.helpers.path import Path
-from pykotor.resource.formats.ncs import NCS, NCSBinaryReader
+from pykotor.resource.formats.ncs import NCSBinaryReader
 from pykotor.resource.formats.ncs.ncs_auto import bytes_ncs, read_ncs, write_ncs
+from utility.system.path import Path
+
+if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs import NCS
 
 BINARY_TEST_FILE = "tests/files/test.ncs"
 

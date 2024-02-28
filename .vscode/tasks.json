@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "requirements.txt",
+      "label": "all_packages",
       "type": "shell",
       "command": "${command:python.interpreterPath}",
       "args": [
@@ -10,11 +10,121 @@
         "pip",
         "install",
         "-r",
-        "requirements.txt",
+        "${workspaceFolder}${pathSeparator}requirements-dev.txt",
+        "--progress-bar=on",
+        "--prefer-binary",
+        "--compile",
+        "-U",
+        "--upgrade-strategy=\"eager\"",
       ],
       "presentation": {
         "echo": true,
-        "reveal": "always"
+        "showReuseMessage": true,
+        "revealProblems": "onProblem",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "pykotor_requirements",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "Libraries${pathSeparator}PyKotor${pathSeparator}requirements.txt"
+      ],
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "gl_requirements",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "Libraries${pathSeparator}PyKotorGL${pathSeparator}requirements.txt"
+      ],
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "holopatcher_recommended",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "Tools${pathSeparator}HoloPatcher${pathSeparator}recommended.txt"
+      ]
+    },
+    {
+      "label": "toolset_requirements",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "Tools${pathSeparator}HolocronToolset${pathSeparator}requirements.txt"
+      ],
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "batchpatch_requirements",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "Tools${pathSeparator}BatchPatcher${pathSeparator}requirements.txt"
+      ],
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
       },
       "problemMatcher": []
     },
@@ -26,11 +136,16 @@
         "-m",
         "pip",
         "install",
-        "pyinstaller",
+        "pyinstaller"
       ],
       "presentation": {
         "echo": true,
-        "reveal": "always"
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
       },
       "problemMatcher": []
     },
@@ -42,11 +157,16 @@
         "-m",
         "pip",
         "install",
-        "shiv",
+        "shiv"
       ],
       "presentation": {
         "echo": true,
-        "reveal": "always"
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
       },
       "problemMatcher": []
     },
@@ -58,11 +178,16 @@
         "-m",
         "pip",
         "install",
-        "nuitka",
+        "nuitka"
       ],
       "presentation": {
         "echo": true,
-        "reveal": "always"
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
       },
       "problemMatcher": []
     },
@@ -74,11 +199,16 @@
         "-m",
         "pip",
         "install",
-        "pylint",
+        "pylint"
       ],
       "presentation": {
         "echo": true,
-        "reveal": "always"
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
       },
       "problemMatcher": []
     },
@@ -90,11 +220,16 @@
         "-m",
         "pip",
         "install",
-        "ruff",
+        "ruff"
       ],
       "presentation": {
         "echo": true,
-        "reveal": "always"
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
       },
       "problemMatcher": []
     },
@@ -106,11 +241,16 @@
         "-m",
         "pip",
         "install",
-        "mypy",
+        "mypy"
       ],
       "presentation": {
         "echo": true,
-        "reveal": "always"
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
       },
       "problemMatcher": []
     },
@@ -122,39 +262,63 @@
         "-m",
         "pip",
         "install",
-        "pylint",
+        "pylint"
       ],
       "presentation": {
         "echo": true,
-        "reveal": "always"
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
       },
       "problemMatcher": []
     },
     {
-        "label": "pylint: toolset",
-        "dependsOn": ["requirements.txt", "install_pylint"],
-        "type": "shell",
-        "command": "${command:python.interpreterPath} -m pylint --disable=C0301,C0302,C0115,C0116,R0913,C0114,R0903,R0902,W0212,R0914,R0904,W0613,E0611,C0415,I1101 toolset",
-        "presentation": {
-            "reveal": "never",
-            "panel": "shared"
-        },
-        "problemMatcher": []
+      "label": "pylint: toolset",
+      "dependsOn": [
+        "all_packages",
+        "install_pylint"
+      ],
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pylint --disable=C0301,C0302,C0115,C0116,R0913,C0114,R0903,R0902,W0212,R0914,R0904,W0613,E0611,C0415,I1101 Tools${pathSeparator}HolocronToolset${pathSeparator}src${pathSeparator}toolset",
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "close": false
+      },
+      "problemMatcher": []
     },
     {
-        "label": "pylint: pykotor",
-        "dependsOn": ["requirements.txt", "install_pylint"],
-        "type": "shell",
-        "command": "${command:python.interpreterPath} -m pylint --disable=C0301,C0302,C0115,C0116,R0913,C0114,R0903,R0902,W0212,R0914,R0904,W0613,E0611,C0415 pykotor",
-        "presentation": {
-            "reveal": "never",
-            "panel": "shared"
-        },
-        "problemMatcher": []
+      "label": "pylint: pykotor",
+      "dependsOn": [
+        "pykotor_requirements",
+        "install_pylint"
+      ],
+      "type": "shell",
+      "command": "${command:python.interpreterPath} -m pylint --disable=C0301,C0302,C0115,C0116,R0913,C0114,R0903,R0902,W0212,R0914,R0904,W0613,E0611,C0415 pykotor",
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true,
+        "close": false
+      },
+      "problemMatcher": []
     },
     {
       "label": "Python: lint pykotor with mypy",
-      "dependsOn": ["requirements.txt", "install_mypy"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "install_mypy"
+      ],
       "type": "shell",
       "command": "${command:python.interpreterPath}",
       "args": [
@@ -169,8 +333,13 @@
       ],
       "group": "test",
       "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
         "reveal": "always",
-        "panel": "new"
+        "panel": "dedicated",
+        "focus": true,
+        "close": false
       },
       "problemMatcher": {
         "owner": "python",
@@ -190,7 +359,12 @@
     },
     {
       "label": "Python: lint toolset with mypy",
-      "dependsOn": ["install_mypy", "requirements.txt"],
+      "dependsOn": [
+        "install_mypy",
+        "pykotor_requirements",
+        "gl_requirements",
+        "toolset_requirements"
+      ],
       "type": "shell",
       "command": "${command:python.interpreterPath}",
       "args": [
@@ -199,14 +373,19 @@
         "--no-pretty",
         "--show-column-numbers",
         "--package",
-        "toolset",
+        "Tools${pathSeparator}HolocronToolset${pathSeparator}src${pathSeparator}toolset",
         "--check-untyped-defs",
         "--no-strict-optional"
       ],
       "group": "test",
       "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
         "reveal": "always",
-        "panel": "new"
+        "panel": "dedicated",
+        "focus": true,
+        "close": false
       },
       "problemMatcher": {
         "owner": "python",
@@ -227,19 +406,27 @@
     {
       "label": "Python: Ruff check entire project",
       "type": "shell",
-      "dependsOn": ["requirements.txt", "install_ruff"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "install_ruff"
+      ],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
         "ruff",
         "check",
         ".",
-        "--ignore=D101,D102,D103,D107,D205,D417,D205,PLR5501,PLW2901"
+        "--ignore=D101,D102,D103,D107,D205,D417,D205,PLR5501,PLW2901,RUF100"
       ],
       "group": "test",
       "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
         "reveal": "always",
-        "panel": "new"
+        "panel": "dedicated",
+        "focus": true,
+        "close": false
       },
       "problemMatcher": {
         "owner": "python",
@@ -256,50 +443,130 @@
           "message": 5
         }
       }
+    },    {
+      "label": "Cython Compile All",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        ".${pathSeparator}compile${pathSeparator}cython_compile_script.py",
+      ],
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": false,
+        "close": false
+      },
     },
     {
       "label": "Build HoloPatcher - PyInstaller",
       "type": "shell",
-      "dependsOn": ["requirements.txt", "install_pyinstaller"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "holopatcher_recommended",
+        "install_pyinstaller",
+       // "Cython Compile All",
+      ],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
         "PyInstaller",
         "--noconsole",
         "--onefile",
-        "--clean",
+        //"--clean",
         "--noconfirm",
+        "--distpath=${workspaceFolder}${pathSeparator}dist",
+        "--exclude-module=numpy",
+        "--exclude-module=PyQt5",
+        "--exclude-module=PIL",
+        "--exclude-module=matplotlib",
+        "--exclude-module=multiprocessing",
+        "--exclude-module=PyOpenGL",
+        "--exclude-module=PyGLM",
+        "--exclude-module=dl_translate",
+        "--exclude-module=torch",
         "--name=HoloPatcher",
-        "--icon=resources${pathSeparator}icons${pathSeparator}patcher_icon_v2.ico",
-        "scripts${pathSeparator}holopatcher${pathSeparator}__main__.py"
+        "--upx-dir=${env:USERPROFILE}${pathSeparator}Documents${pathSeparator}GitHub${pathSeparator}upx-win32",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src",
+        "--icon=..${pathSeparator}resources${pathSeparator}icons${pathSeparator}patcher_icon_v2.ico",
+        "__main__.py"
       ],
-      "problemMatcher": []
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}${pathSeparator}Tools${pathSeparator}HoloPatcher${pathSeparator}src"
+      },
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": false
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false,
+      }
     },
     {
       "label": "Build HoloPatcher - Nuitka (Windows only, no CLI support)",
       "type": "shell",
-      "dependsOn": ["requirements.txt", "install_nuitka"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "holopatcher_recommended",
+        "install_nuitka"
+      ],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
         "nuitka",
-        "--disable-console",
+        "--standalone",
         "--onefile",
-//        "--mingw64",
-//        "--clang",
         "--output-filename=HoloPatcher",
-        "--windows-icon-from-ico=resources${pathSeparator}icons${pathSeparator}patcher_icon_v2.ico",
+        "--windows-icon-from-ico=..${pathSeparator}resources${pathSeparator}icons${pathSeparator}patcher_icon_v2.ico",
         "--remove-output",
         "--output-dir=${workspaceFolder}${pathSeparator}nuitka_dist",
         "--enable-plugin=tk-inter",
-        "scripts${pathSeparator}holopatcher${pathSeparator}__main__.py",
+        "__main__.py"
       ],
-      "problemMatcher": []
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": false
+      },
+      "options": {
+        "env": {
+          "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src;${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src"
+        },
+        "cwd": "${workspaceFolder}${pathSeparator}Tools${pathSeparator}HoloPatcher${pathSeparator}src"
+      },
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": false,
+      }
     },
     {
       "label": "Build Toolset - PyInstaller",
       "type": "shell",
-      "dependsOn": ["requirements.txt", "install_pyinstaller"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "gl_requirements",
+        "toolset_requirements",
+        "install_pyinstaller"
+      ],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
@@ -309,38 +576,80 @@
         "--clean",
         "--noconfirm",
         "--name=HolocronToolset",
-        "--path=${workspaceFolder}${pathSeparator}toolset",
+        "--distpath=${workspaceFolder}${pathSeparator}dist",
+        "--exclude-module=dl_translate",
+        "--exclude-module=torch",
         "--icon=resources${pathSeparator}icons${pathSeparator}sith.ico",
         "toolset${pathSeparator}__main__.py"
       ],
-      "problemMatcher": []
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": false
+      },
+      "problemMatcher": [],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src;${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotorGL${pathSeparator}src;${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src"
+        },
+        "cwd": "${workspaceFolder}${pathSeparator}Tools${pathSeparator}HolocronToolset${pathSeparator}src"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
     },
     {
       "label": "Build Toolset - Nuitka (Windows - Untested)",
       "type": "shell",
-      "dependsOn": ["requirements.txt", "install_nuitka"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "gl_requirements",
+        "toolset_requirements",
+        "install_nuitka"
+      ],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
         "nuitka",
         "--disable-console",
+        "--standalone",
         "--onefile",
-//        "--mingw64",
-//        "--clang",
         "--output-filename=HolocronToolset",
-        "--windows-icon-from-ico=resources${pathSeparator}icons${pathSeparator}sith.ico",
+        "--windows-icon-from-ico=${workspaceFolder}${pathSeparator}Tools${pathSeparator}HolocronToolset${pathSeparator}resources${pathSeparator}icons${pathSeparator}sith.ico",
         "--remove-output",
         "--output-dir=${workspaceFolder}${pathSeparator}nuitka_dist",
-        "--include-module=pykotor",
         "--enable-plugin=pyqt5",
-        "toolset${pathSeparator}__main__.py",
+        "toolset${pathSeparator}__main__.py"
       ],
-      "problemMatcher": []
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": false
+      },
+      "problemMatcher": [],
+      "options": {
+        "env": {
+          "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src;${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotorGL${pathSeparator}src;${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src"
+        },
+        "cwd": "${workspaceFolder}${pathSeparator}Tools${pathSeparator}HolocronToolset${pathSeparator}src"
+      }
     },
     {
       "label": "Build KotorDiff",
       "type": "shell",
-      "dependsOn": ["requirements.txt", "install_pyinstaller"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "install_pyinstaller"
+      ],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
@@ -350,14 +659,46 @@
         "--clean",
         "--noconfirm",
         "--name=kotordiff",
-        "scripts${pathSeparator}kotordiff${pathSeparator}__main__.py"
+        "--exclude-module=numpy",
+        "--exclude-module=PyQt5",
+        "--exclude-module=PIL",
+        "--exclude-module=matplotlib",
+        "--exclude-module=multiprocessing",
+        "--exclude-module=PyOpenGL",
+        "--exclude-module=PyGLM",
+        "--exclude-module=dl_translate",
+        "--exclude-module=torch",
+        "--distpath=${workspaceFolder}${pathSeparator}dist",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src",
+        "__main__.py"
       ],
-      "problemMatcher": []
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": false
+      },
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}${pathSeparator}Tools${pathSeparator}KotorDiff${pathSeparator}src"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
     },
     {
       "label": "Build K-BatchPatcher",
       "type": "shell",
-      "dependsOn": ["requirements.txt", "install_pyinstaller"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "batchpatch_requirements",
+        "install_pyinstaller"
+      ],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
@@ -367,14 +708,50 @@
         "--clean",
         "--noconfirm",
         "--name=K_BatchPatcher",
-        "scripts${pathSeparator}k_batchpatcher${pathSeparator}__main__.py"
+        "--exclude-module=PyQt5",
+        "--exclude-module=PyOpenGL",
+        "--exclude-module=PyGLM",
+        "--exclude-module=dl_translate",
+        "--exclude-module=torch",
+        "--exclude-module=numpy",
+        "--exclude-module=multiprocessing",
+        "--distpath=${workspaceFolder}${pathSeparator}dist",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotorFont${pathSeparator}src",
+        "__main__.py"
       ],
-      "problemMatcher": []
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": false
+      },
+      "problemMatcher": [],
+      "options": {
+        "shell": {},
+        "env": {},
+        "cwd": "${workspaceFolder}${pathSeparator}Tools${pathSeparator}BatchPatcher${pathSeparator}src"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "icon": {
+        "color":"terminal.ansiGreen",
+        "id":"alert"
+      }
     },
     {
       "label": "Build GUI Creator",
       "type": "shell",
-      "dependsOn": ["requirements.txt", "install_pyinstaller"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "install_pyinstaller"
+      ],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
@@ -384,14 +761,43 @@
         "--clean",
         "--noconfirm",
         "--name=gui_creator",
-        "scripts${pathSeparator}guicreator${pathSeparator}__main__.py"
+        "--exclude-module=numpy",
+        "--exclude-module=PyQt5",
+        "--exclude-module=PIL",
+        "--exclude-module=matplotlib",
+        "--exclude-module=multiprocessing",
+        "--exclude-module=PyOpenGL",
+        "--exclude-module=PyGLM",
+        "--exclude-module=dl_translate",
+        "--exclude-module=torch",
+        "--distpath=${workspaceFolder}${pathSeparator}dist",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src",
+        "__main__.py"
       ],
-      "problemMatcher": []
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": false
+      },
+      "problemMatcher": [],
+      "options": {
+        "shell": {},
+        "env": {},
+        "cwd": "${workspaceFolder}${pathSeparator}tools${pathSeparator}GuiDuplicator${pathSeparator}src"
+      }
     },
     {
       "label": "Build Model ASCII Compiler",
       "type": "shell",
-      "dependsOn": ["requirements.txt", "install_pyinstaller"],
+      "dependsOn": [
+        "pykotor_requirements",
+        "install_pyinstaller"
+      ],
       "command": "${command:python.interpreterPath}",
       "args": [
         "-m",
@@ -401,9 +807,35 @@
         "--clean",
         "--noconfirm",
         "--name=mdl_decompile",
-        "scripts${pathSeparator}mdl_decompile${pathSeparator}__main__.py"
+        "--exclude-module=numpy",
+        "--exclude-module=PyQt5",
+        "--exclude-module=PIL",
+        "--exclude-module=matplotlib",
+        "--exclude-module=multiprocessing",
+        "--exclude-module=PyOpenGL",
+        "--exclude-module=PyGLM",
+        "--exclude-module=dl_translate",
+        "--exclude-module=torch",
+        "--distpath=${workspaceFolder}${pathSeparator}dist",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}Utility${pathSeparator}src",
+        "--path=${workspaceFolder}${pathSeparator}Libraries${pathSeparator}PyKotor${pathSeparator}src",
+        "__main__.py"
       ],
-      "problemMatcher": []
+      "presentation": {
+        "echo": true,
+        "showReuseMessage": true,
+        "revealProblems": "never",
+        "reveal": "always",
+        "panel": "shared",
+        "focus": true,
+        "close": false
+      },
+      "problemMatcher": [],
+      "options": {
+        "shell": {},
+        "env": {},
+        "cwd": "${workspaceFolder}${pathSeparator}Tools${pathSeparator}MDLDecompile${pathSeparator}src"
+      }
     }
   ]
 }

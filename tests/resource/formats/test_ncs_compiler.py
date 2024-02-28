@@ -1,30 +1,51 @@
+from __future__ import annotations
+
+import os
 import pathlib
 import sys
 import unittest
 
-if getattr(sys, "frozen", False) is False:
-    pykotor_path = pathlib.Path(__file__).parents[3] / "pykotor"
-    if pykotor_path.joinpath("__init__.py").exists() and str(pykotor_path) not in sys.path:
-        working_dir = str(pykotor_path.parent)
-        if working_dir in sys.path:
-            sys.path.remove(working_dir)
-        sys.path.insert(0, str(pykotor_path.parent))
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+def add_sys_path(p: pathlib.Path):
+    working_dir = str(p)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
+if PYKOTOR_PATH.joinpath("pykotor").exists():
+    add_sys_path(PYKOTOR_PATH)
+if UTILITY_PATH.joinpath("utility").exists():
+    add_sys_path(UTILITY_PATH)
+
+import math
 
 from pykotor.common.geometry import Vector3
 from pykotor.common.scriptdefs import KOTOR_CONSTANTS, KOTOR_FUNCTIONS
-from pykotor.helpers.path import Path
 from pykotor.resource.formats.ncs import NCS, NCSInstructionType
-from pykotor.resource.formats.ncs.compiler.classes import CompileException
+from pykotor.resource.formats.ncs.compiler.classes import CompileError
 from pykotor.resource.formats.ncs.compiler.interpreter import Interpreter
 from pykotor.resource.formats.ncs.compiler.lexer import NssLexer
 from pykotor.resource.formats.ncs.compiler.parser import NssParser
+from utility.system.path import Path
 
+K1_PATH: str | None = os.environ.get("K1_PATH")
+K2_PATH: str | None = os.environ.get("K2_PATH")
 
 class TestNSSCompiler(unittest.TestCase):
-    def compile(self, script: str, library=None, library_lookup=None) -> NCS:
+    def compile(
+        self,
+        script: str,
+        library: dict[str, bytes] | None = None,
+        library_lookup: list[str | Path] | list[str] | list[Path] | str | Path | None = None,
+    ) -> NCS:
+        if library is None:
+            library = {}
         nssLexer = NssLexer()
         nssParser = NssParser(
-            library=library, constants=KOTOR_CONSTANTS, functions=KOTOR_FUNCTIONS, library_lookup=library_lookup
+            library=library,
+            constants=KOTOR_CONSTANTS,
+            functions=KOTOR_FUNCTIONS,
+            library_lookup=library_lookup
         )
 
         parser = nssParser.parser
@@ -33,6 +54,7 @@ class TestNSSCompiler(unittest.TestCase):
         ncs = NCS()
         t.compile(ncs)
         return ncs
+
 
     # region Engine Call
     def test_enginecall(self):
@@ -112,7 +134,7 @@ class TestNSSCompiler(unittest.TestCase):
             }
         """
 
-        self.assertRaises(CompileException, self.compile, script)
+        self.assertRaises(CompileError, self.compile, script)
 
     def test_enginecall_with_too_many_params(self):
         script = """
@@ -123,7 +145,7 @@ class TestNSSCompiler(unittest.TestCase):
             }
         """
 
-        self.assertRaises(CompileException, self.compile, script)
+        self.assertRaises(CompileError, self.compile, script)
 
     def test_enginecall_delay_command_1(self):
         ncs = self.compile(
@@ -1686,7 +1708,7 @@ class TestNSSCompiler(unittest.TestCase):
         interpreter = Interpreter(ncs)
         interpreter.run()
 
-        self.assertTrue(any((inst for inst in ncs.instructions if inst.ins_type == NCSInstructionType.SAVEBP)))
+        self.assertTrue(any(inst for inst in ncs.instructions if inst.ins_type == NCSInstructionType.SAVEBP))
 
     def test_global_initializations(self):
         ncs = self.compile(
@@ -1711,7 +1733,7 @@ class TestNSSCompiler(unittest.TestCase):
         self.assertEqual(interpreter.action_snapshots[-3].arg_values[0], 0)
         self.assertEqual(interpreter.action_snapshots[-2].arg_values[0], 0.0)
         self.assertEqual(interpreter.action_snapshots[-1].arg_values[0], "")
-        self.assertTrue(any((inst for inst in ncs.instructions if inst.ins_type == NCSInstructionType.SAVEBP)))
+        self.assertTrue(any(inst for inst in ncs.instructions if inst.ins_type == NCSInstructionType.SAVEBP))
 
     def test_global_initialization_with_unary(self):
         ncs = self.compile(
@@ -1873,7 +1895,8 @@ class TestNSSCompiler(unittest.TestCase):
     def test_include_lookup(self):
         includetest_script_path = Path("./tests/files/").resolve()
         if not includetest_script_path.exists():
-            raise FileNotFoundError(f"Could not find includetest.nss in the {includetest_script_path.parent!s} folder!")
+            msg = f"Could not find includetest.nss in the {includetest_script_path.parent} folder!"
+            raise FileNotFoundError(msg)
         ncs = self.compile(
             """
             #include "includetest"
@@ -1935,7 +1958,7 @@ class TestNSSCompiler(unittest.TestCase):
             }
         """
 
-        self.assertRaises(CompileException, self.compile, source)
+        self.assertRaises(CompileError, self.compile, source)
 
     def test_global_int_addition_assignment(self):
         ncs = self.compile(
@@ -2132,7 +2155,7 @@ class TestNSSCompiler(unittest.TestCase):
         )
 
         interpreter = Interpreter(ncs)
-        interpreter.set_mock("Vector", lambda x, y, z: Vector3(x, y, z))
+        interpreter.set_mock("Vector", Vector3)
         interpreter.set_mock("VectorMagnitude", lambda vec: vec.magnitude())
         interpreter.run()
 
@@ -2172,7 +2195,7 @@ class TestNSSCompiler(unittest.TestCase):
         )
 
         interpreter = Interpreter(ncs)
-        interpreter.set_mock("Vector", lambda x, y, z: Vector3(x, y, z))
+        interpreter.set_mock("Vector", Vector3)
         interpreter.run()
 
         self.assertEqual(2.0, interpreter.action_snapshots[-3].arg_values[0])
@@ -2196,7 +2219,7 @@ class TestNSSCompiler(unittest.TestCase):
         )
 
         interpreter = Interpreter(ncs)
-        interpreter.set_mock("Vector", lambda x, y, z: Vector3(x, y, z))
+        interpreter.set_mock("Vector", Vector3)
         interpreter.run()
 
         self.assertEqual(2.0, interpreter.action_snapshots[-3].arg_values[0])
@@ -2246,7 +2269,7 @@ class TestNSSCompiler(unittest.TestCase):
             }
         """
 
-        self.assertRaises(CompileException, self.compile, source)
+        self.assertRaises(CompileError, self.compile, source)
 
     def test_struct_set_members(self):
         ncs = self.compile(
@@ -2276,7 +2299,7 @@ class TestNSSCompiler(unittest.TestCase):
 
         self.assertEqual(123, interpreter.action_snapshots[-3].arg_values[0])
         self.assertEqual("abc", interpreter.action_snapshots[-2].arg_values[0])
-        self.assertEqual(3.14, interpreter.action_snapshots[-1].arg_values[0])
+        self.assertAlmostEqual(3.14, interpreter.action_snapshots[-1].arg_values[0].value)
 
     def test_prefix_increment_sp_int(self):
         ncs = self.compile(
@@ -2625,7 +2648,7 @@ class TestNSSCompiler(unittest.TestCase):
             }
         """
 
-        self.assertRaises(CompileException, self.compile, source)
+        self.assertRaises(CompileError, self.compile, source)
 
     def test_prototype_missing_arg_and_default(self):
         source = """
@@ -2642,7 +2665,7 @@ class TestNSSCompiler(unittest.TestCase):
             }
         """
 
-        self.assertRaises(CompileException, self.compile, source)
+        self.assertRaises(CompileError, self.compile, source)
 
     def test_prototype_default_before_required(self):
         source = """
@@ -2659,7 +2682,7 @@ class TestNSSCompiler(unittest.TestCase):
             }
         """
 
-        self.assertRaises(CompileException, self.compile, source)
+        self.assertRaises(CompileError, self.compile, source)
 
     def test_redefine_function(self):
         script = """
@@ -2673,14 +2696,14 @@ class TestNSSCompiler(unittest.TestCase):
 
             }
         """
-        self.assertRaises(CompileException, self.compile, script)
+        self.assertRaises(CompileError, self.compile, script)
 
     def test_double_prototype(self):
         script = """
             void test();
             void test();
         """
-        self.assertRaises(CompileException, self.compile, script)
+        self.assertRaises(CompileError, self.compile, script)
 
     def test_prototype_after_definition(self):
         script = """
@@ -2691,7 +2714,7 @@ class TestNSSCompiler(unittest.TestCase):
 
             void test();
         """
-        self.assertRaises(CompileException, self.compile, script)
+        self.assertRaises(CompileError, self.compile, script)
 
     def test_prototype_and_definition_param_mismatch(self):
         script = """
@@ -2702,7 +2725,7 @@ class TestNSSCompiler(unittest.TestCase):
 
             }
         """
-        self.assertRaises(CompileException, self.compile, script)
+        self.assertRaises(CompileError, self.compile, script)
 
     def test_prototype_and_definition_default_param_mismatch(self):
         """This test is disabled for now."""
@@ -2714,7 +2737,7 @@ class TestNSSCompiler(unittest.TestCase):
         #
         #     }
         # """
-        # self.assertRaises(CompileException, self.compile, script)
+        # self.assertRaises(CompileError, self.compile, script)
 
     def test_prototype_and_definition_return_mismatch(self):
         script = """
@@ -2725,7 +2748,7 @@ class TestNSSCompiler(unittest.TestCase):
 
             }
         """
-        self.assertRaises(CompileException, self.compile, script)
+        self.assertRaises(CompileError, self.compile, script)
 
     def test_call_undefined(self):
         script = """
@@ -2735,7 +2758,7 @@ class TestNSSCompiler(unittest.TestCase):
             }
         """
 
-        self.assertRaises(CompileException, self.compile, script)
+        self.assertRaises(CompileError, self.compile, script)
 
     def test_call_void_with_no_args(self):
         ncs = self.compile(
@@ -2861,7 +2884,7 @@ class TestNSSCompiler(unittest.TestCase):
             }
         """
 
-        self.assertRaises(CompileException, self.compile, source)
+        self.assertRaises(CompileError, self.compile, source)
 
     # endregion
 

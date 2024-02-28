@@ -1,43 +1,50 @@
+from __future__ import annotations
+
+import os
 import pathlib
 import sys
 import unittest
 
-if getattr(sys, "frozen", False) is False:
-    pykotor_path = pathlib.Path(__file__).parents[2] / "pykotor"
-    if pykotor_path.joinpath("__init__.py").exists() and str(pykotor_path) not in sys.path:
-        working_dir = str(pykotor_path.parent)
-        if working_dir in sys.path:
-            sys.path.remove(working_dir)
-        sys.path.insert(0, str(pykotor_path.parent))
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[2].joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[2].joinpath("Libraries", "Utility", "src")
+def add_sys_path(p: pathlib.Path):
+    working_dir = str(p)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
+if PYKOTOR_PATH.joinpath("pykotor").exists():
+    add_sys_path(PYKOTOR_PATH)
+if UTILITY_PATH.joinpath("utility").exists():
+    add_sys_path(UTILITY_PATH)
 
 from pykotor.extract.installation import Installation
 
 
 class TestReplaceModuleExtensions(unittest.TestCase):
-    def test_replace_module_extensions(self):
+    def testreplace_module_extensions(self):
         # Happy path tests
-        self.assertEqual(Installation._replace_module_extensions(None, "module.mod"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module.erf"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module.rim"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_s.mod"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_s.erf"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_s.rim"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_dlg.mod"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_dlg.erf"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_dlg.rim"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module.mod"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module.erf"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module.rim"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module_s.mod"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module_s.erf"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module_s.rim"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module_dlg.mod"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module_dlg.erf"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module_dlg.rim"), "module")
 
         # Edge cases
-        self.assertEqual(Installation._replace_module_extensions(None, ""), "")
-        self.assertEqual(Installation._replace_module_extensions(None, "module"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_s"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_dlg"), "module")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_s_s"), "module_s")
-        self.assertEqual(Installation._replace_module_extensions(None, "module_dlg_dlg"), "module_dlg")
-        self.assertEqual(Installation._replace_module_extensions(None, "module.mod.mod"), "module.mod")
+        self.assertEqual(Installation.replace_module_extensions(""), "")
+        self.assertEqual(Installation.replace_module_extensions("module"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module_s"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module_dlg"), "module")
+        self.assertEqual(Installation.replace_module_extensions("module_s_s"), "module_s")
+        self.assertEqual(Installation.replace_module_extensions("module_dlg_dlg"), "module_dlg")
+        self.assertEqual(Installation.replace_module_extensions("module.mod.mod"), "module.mod")
 
         # Error cases
-        self.assertRaises(TypeError, Installation._replace_module_extensions, None, None)
-        self.assertRaises(TypeError, Installation._replace_module_extensions, None, 123)
+        self.assertRaises(TypeError, Installation.replace_module_extensions, None)
+        self.assertRaises(TypeError, Installation.replace_module_extensions, 123)
 
 
 if __name__ == "__main__":
