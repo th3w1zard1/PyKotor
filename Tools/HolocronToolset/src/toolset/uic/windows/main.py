@@ -37,18 +37,6 @@ class Ui_MainWindow(object):
         self.coreWidget.setObjectName("coreWidget")
         self.verticalLayout_2.addWidget(self.coreWidget)
         self.resourceTabs.addTab(self.coreTab, "")
-
-        self.savesTab = QtWidgets.QWidget()
-        self.savesTab.setObjectName("savesTab")
-        self.gridLayout = QtWidgets.QGridLayout(self.savesTab)
-        self.gridLayout.setContentsMargins(0, 0, 0, 0)
-        self.gridLayout.setSpacing(0)
-        self.gridLayout.setObjectName("gridLayout")
-        self.savesWidget = ResourceList(self.savesTab)
-        self.savesWidget.setObjectName("savesWidget")
-        self.gridLayout.addWidget(self.savesWidget, 0, 0, 2, 2)
-        self.resourceTabs.addTab(self.savesTab, "")
-
         self.modulesTab = QtWidgets.QWidget()
         self.modulesTab.setObjectName("modulesTab")
         self.gridLayout = QtWidgets.QGridLayout(self.modulesTab)
@@ -59,7 +47,6 @@ class Ui_MainWindow(object):
         self.modulesWidget.setObjectName("modulesWidget")
         self.gridLayout.addWidget(self.modulesWidget, 0, 0, 2, 2)
         self.resourceTabs.addTab(self.modulesTab, "")
-
         self.overrideTab = QtWidgets.QWidget()
         self.overrideTab.setObjectName("overrideTab")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.overrideTab)
@@ -348,7 +335,6 @@ class Ui_MainWindow(object):
         self.resourceTabs.setTabText(self.resourceTabs.indexOf(self.modulesTab), _translate("MainWindow", "Modules"))
         self.resourceTabs.setTabText(self.resourceTabs.indexOf(self.overrideTab), _translate("MainWindow", "Override"))
         self.resourceTabs.setTabText(self.resourceTabs.indexOf(self.texturesTab), _translate("MainWindow", "Textures"))
-        self.resourceTabs.setTabText(self.resourceTabs.indexOf(self.savesTab), _translate("MainWindow", "Saves"))
         self.openButton.setText(_translate("MainWindow", "Open Selected"))
         self.extractButton.setText(_translate("MainWindow", "Extract Selected"))
         self.tpcGroup_2.setTitle(_translate("MainWindow", "TPC"))
@@ -406,7 +392,7 @@ class Ui_MainWindow(object):
         self.actionEditModule.setText(_translate("MainWindow", "Edit Module"))
         self.actionInstructions.setText(_translate("MainWindow", "Instructions"))
         self.actionDiscordHolocronToolset.setText(_translate("MainWindow", "Holocron Toolset"))
-        self.actionDiscordKotOR.setText(_translate("MainWindow", "r/KotOR"))
+        self.actionDiscordKotOR.setText(_translate("MainWindow", "KOTOR Community Portal"))
         self.actionDiscordDeadlyStream.setText(_translate("MainWindow", "Deadly Stream"))
         self.actionModuleDesigner.setText(_translate("MainWindow", "Module Designer"))
 from toolset.gui.widgets.main_widgets import ResourceList, TextureList
