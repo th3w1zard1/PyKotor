@@ -53,7 +53,12 @@ class FileResource:
         self._task_running = False
 
     def __setattr__(self, __name, __value):
-        if hasattr(self, __name) and __name not in {"_internal", "_task_running"} and not self._internal and not self._task_running:
+        if (
+            hasattr(self, __name)
+            and __name not in {"_internal", "_task_running"}
+            and not self._internal
+            and not self._task_running
+        ):
             msg = f"Cannot modify immutable FileResource instance, attempted `setattr({self!r}, {__name!r}, {__value!r})`"
             raise RuntimeError(msg)
 
@@ -122,11 +127,17 @@ class FileResource:
         self,
     ):
         if self.inside_capsule:
-            from pykotor.extract.capsule import Capsule  # Prevent circular imports
+            from pykotor.extract.capsule import Capsule  # Prevent circular imports  # noqa: PLC0415
 
             capsule = Capsule(self._filepath)
             res: FileResource | None = capsule.info(self._resname, self._restype)
-            assert res is not None, f"Resource '{self._identifier}' not found in Capsule at '{self._filepath}'"
+            if res is None and self._identifier == self._filepath.name and self._filepath.safe_isfile():  # the capsule is the resource itself:
+                self._offset = 0
+                self._size = self._filepath.stat().st_size
+                return
+            if res is None:
+                msg = f"Resource '{self._identifier}' not found in Capsule at '{self._filepath}'"
+                raise FileNotFoundError(msg)
 
             self._offset = res.offset()
             self._size = res.size()

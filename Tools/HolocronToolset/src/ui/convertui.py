@@ -23,7 +23,7 @@ def get_ui_files() -> list[Path]:
 
 def compile_ui(ignore_timestamp: bool = False):
     for ui_file in get_ui_files():
-        if not ui_file.safe_isfile():
+        if ui_file.safe_isdir():
             print(f"Skipping {ui_file}, not a file.")
             continue
         relpath = ui_file.relative_to(UI_SOURCE_DIR)
@@ -61,5 +61,5 @@ def compile_qrc(ignore_timestamp: bool = False):
 
 
 if __name__ == "__main__":
-    compile_ui(ignore_timestamp=True)
+    compile_ui(ignore_timestamp=False)
     compile_qrc(ignore_timestamp=True)
