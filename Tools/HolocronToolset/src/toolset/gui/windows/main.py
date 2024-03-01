@@ -2,23 +2,22 @@ from __future__ import annotations
 
 import base64
 import json
-import traceback
 
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Callable, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import requests
 
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtGui import QCloseEvent, QIcon, QPixmap, QStandardItem
-from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox, QTreeView
+from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 from pykotor.common.stream import BinaryReader
-from pykotor.extract.file import FileResource, ResourceIdentifier, ResourceResult
+from pykotor.extract.file import FileResource, ResourceIdentifier
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.mdl import read_mdl, write_mdl
 from pykotor.resource.formats.tpc import read_tpc, write_tpc
@@ -56,7 +55,6 @@ from toolset.utils.misc import openLink
 from toolset.utils.window import addWindow, openResourceEditor
 from utility.error_handling import (
     assert_with_variable_trace,
-    enforce_instance_cast,
     format_exception_with_variables,
     universal_simplify_exception,
 )
@@ -67,16 +65,14 @@ if TYPE_CHECKING:
 
     from PyQt5 import QtGui
     from PyQt5.QtGui import QCloseEvent
-    from PyQt5.QtWidgets import QTreeView
     from typing_extensions import Literal
 
-    from pykotor.common.misc import CaseInsensitiveDict
-    from pykotor.extract.file import FileResource
+    from pykotor.extract.file import FileResource, ResourceResult
     from pykotor.resource.formats.mdl.mdl_data import MDL
     from pykotor.resource.formats.tpc import TPC
     from pykotor.resource.type import SOURCE_TYPES
     from pykotor.tools.path import CaseAwarePath
-    from toolset.gui.widgets.main_widgets import ResourceList, TextureList
+    from toolset.gui.widgets.main_widgets import TextureList
 
 
 class ToolWindow(QMainWindow):
@@ -109,7 +105,7 @@ class ToolWindow(QMainWindow):
         self.settings: GlobalSettings = GlobalSettings()
         self.installations: dict[str, HTInstallation] = {}
 
-        from toolset.uic.windows.main import Ui_MainWindow  # noqa: PLC0415  # pylint: disable=C0415
+        from toolset.uic.windows.main import Ui_MainWindow  # pylint: disable=C0415
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -447,8 +443,8 @@ class ToolWindow(QMainWindow):
     def onOpenResources(
         self,
         resources: list[FileResource],
-        useSpecializedEditor: bool | None = None,  # noqa: FBT001
-        resourceWidget: ResourceList | TextureList | None = None
+        useSpecializedEditor: bool | None = None,
+        resourceWidget: ResourceList | TextureList | None = None,
     ):
         for resource in resources:
             _filepath, _editor = openResourceEditor(
@@ -514,7 +510,7 @@ class ToolWindow(QMainWindow):
 
     # region Menu Bar
     def updateMenus(self):
-        version: Literal['x', '2', '1'] = "x" if self.active is None else "2" if self.active.tsl else "1"
+        version: Literal["x", "2", "1"] = "x" if self.active is None else "2" if self.active.tsl else "1"
 
         dialogIconPath = f":/images/icons/k{version}/dialog.png"
         self.ui.actionNewDLG.setIcon(QIcon(QPixmap(dialogIconPath)))
@@ -700,11 +696,13 @@ class ToolWindow(QMainWindow):
 
         version_check: bool | None = None
         with suppress(Exception):
-            from packaging import version  # noqa: PLC0415
+            from packaging import version
+
             version_check = version.parse(data["toolsetLatestVersion"]) > version.parse(x)
         if version_check is None:
             with suppress(Exception):
-                from distutils.version import LooseVersion  # noqa: PLC0415
+                from distutils.version import LooseVersion
+
                 version_check = LooseVersion(data["toolsetLatestVersion"]) > LooseVersion(x)
         if version_check is False:
             return
@@ -904,8 +902,6 @@ class ToolWindow(QMainWindow):
 
         self.ui.resourceTabs.setEnabled(False)
         self.ui.sidebar.setEnabled(False)
-        old_active = self.active
-        self.active = None
         self.updateMenus()
 
         if self.dogObserver is not None:
@@ -932,67 +928,36 @@ class ToolWindow(QMainWindow):
             return
 
         # If the installation had not already been loaded previously this session, load it now
-        loader_task: Callable[[], HTInstallation]
         if name not in self.installations:
 
             def task() -> HTInstallation:
-                self.active = HTInstallation(path, name, tsl, self)
-                self.active.reload_all()
-                print("Loading module list into ui...")
-                self.refreshModuleList(reload=False)
-                print("Loading Override list into ui...")
-                self.refreshOverrideList(reload=False)
-                print("Loading texturepacks list into ui...")
-                self.refreshTexturePackList(reload=False)
-                print("Loading saves list into ui...")
-                self.refreshSavesList(reload=False)
-                return self.active
-
-            loader_task = task
+                return HTInstallation(path, name, tsl, self)
 
             self.settings.installations()[name].path = path
-        else:
-            def task2() -> HTInstallation:
-                self.active = self.installations[name]
-                #should_reload: bool = old_active is not None and self.active.path() != old_active.path()
-                print("Refreshing module list..")
-                self.refreshModuleList(reload=False)
-                print("Refreshing Override list...")
-                self.refreshOverrideList(reload=False)
-                print("Refreshing texturepacks list...")
-                self.refreshTexturePackList(reload=False)
-                print("Refreshing saves list into ui...")
-                self.refreshSavesList(reload=False)
-                return self.active
-            loader_task = task2
-        #if is_debug_mode():
-        #    if loader_task() and name not in self.installations:
-        #        self.installations[name] = self.active
-        #else:
-        loader = AsyncLoader(self, "Loading Installation" if name not in self.installations else "Refreshing Installation", loader_task, "Failed to load installation")
-        if loader.exec_() and name not in self.installations:
-            self.installations[name] = loader.value
+            loader = AsyncLoader(self, "Loading Installation", task, "Failed to load installation")
+            if loader.exec_():
+                self.installations[name] = loader.value
 
-            assert_with_variable_trace(isinstance(self.active, HTInstallation))
-            assert isinstance(self.active, HTInstallation)  # noqa: S101
+        self.active = self.installations[name]
 
-            print("Loading installation resources into UI...")
-            self.ui.coreWidget.setResources(self.active.chitin_resources())
-            self.refreshModuleList(reload=False)
-            self.refreshOverrideList(reload=False)
-            self.refreshTexturePackList(reload=False)
-            self.ui.coreWidget.modulesModel.removeUnusedCategories()
-            self.ui.savesWidget.modulesModel.removeUnusedCategories()
-            self.ui.texturesWidget.setInstallation(self.active)
+        assert_with_variable_trace(isinstance(self.active, HTInstallation))
+        assert isinstance(self.active, HTInstallation)  # noqa: S101
 
-            print("Updating menus...")
-            self.updateMenus()
-            print("Setting up watchdog observer...")
-            self.dogObserver = Observer()
-            self.dogObserver.schedule(self.dogHandler, self.active.path(), recursive=True)
-            self.dogObserver.start()
-        else:
-            self.ui.gameCombo.setCurrentIndex(0)
+        print("Loading installation resources into UI...")
+        self.ui.coreWidget.setResources(self.active.chitin_resources())
+        self.refreshModuleList(reload=False)
+        self.refreshOverrideList(reload=False)
+        self.refreshTexturePackList(reload=False)
+        print("Loading saves list into ui...")
+        self.refreshSavesList(reload=False)
+        self.ui.texturesWidget.setInstallation(self.active)
+
+        print("Updating menus...")
+        self.updateMenus()
+        print("Setting up watchdog observer...")
+        self.dogObserver = Observer()
+        self.dogObserver.schedule(self.dogHandler, self.active.path(), recursive=True)
+        self.dogObserver.start()
 
     def _extractResource(self, resource: FileResource, filepath: os.PathLike | str, loader: AsyncBatchLoader):
         """Extracts a resource file from a FileResource object.
@@ -1073,7 +1038,7 @@ class ToolWindow(QMainWindow):
                         self._extractTxi(tpc, folderpath.joinpath(f"{texture}.tpc"))
 
                     file_format: Literal[ResourceType.TGA, ResourceType.TPC] = ResourceType.TGA if self.ui.tpcDecompileCheckbox.isChecked() else ResourceType.TPC
-                    extension: Literal['.tga', '.tpc'] = ".tga" if file_format == ResourceType.TGA else ".tpc"
+                    extension: Literal[".tga", ".tpc"] = ".tga" if file_format == ResourceType.TGA else ".tpc"
                     write_tpc(tpc, folderpath.joinpath(f"{texture}{extension}"), file_format)
 
                 except Exception as e:  # noqa: PERF203

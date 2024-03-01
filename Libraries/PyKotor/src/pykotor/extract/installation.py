@@ -3,8 +3,6 @@ from __future__ import annotations
 import os
 import platform
 import re
-from concurrent.futures import ThreadPoolExecutor
-import re
 
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import suppress
@@ -152,7 +150,7 @@ HARDCODED_MODULE_IDS: dict[str, str] = {
 }
 
 
-class Installation:  # noqa: PLR0904
+class Installation:
     """Installation provides a centralized location for loading resources stored in the game through its various folders and formats."""  # noqa: E501
 
     TEXTURES_TYPES: ClassVar[list[ResourceType]] = [
@@ -449,7 +447,7 @@ class Installation:  # noqa: PLR0904
                 filepath=filepath,
             )
         except Exception as e:  # noqa: BLE001
-            with Path("errorlog.txt").open("a") as f:
+            with Path("errorlog.txt").open("a", encoding="utf-8") as f:
                 f.write(format_exception_with_variables(e))
         return filepath, None
 
@@ -459,7 +457,7 @@ class Installation:  # noqa: PLR0904
         capsule_check: Callable | None = None,
         *,
         recurse: bool = False,
-    ) -> CaseInsensitiveDict[list[FileResource]] | list[FileResource]:
+    ) -> dict[str, list[FileResource]] | list[FileResource]:
         """Load resources for a given path and store them in a new list/dict.
 
         Args:
@@ -472,14 +470,15 @@ class Installation:  # noqa: PLR0904
         -------
             list[FileResource]: The list where resources at the path have been stored.
              or
-            CaseInsensitiveDict[list[FileResource]]: A dict keyed by filename to the encapsulated resources
+            dict[str, list[FileResource]]: A dict keyed by filename to the encapsulated resources
         """
-        resources: CaseInsensitiveDict[list[FileResource]] | list[FileResource] = CaseInsensitiveDict() if capsule_check else []
+        resources: dict[str, list[FileResource]] | list[FileResource] = {} if capsule_check else []
 
         r_path = Path(path)
         if not r_path.safe_isdir():
             print(f"The '{r_path.name}' folder did not exist when loading the installation at '{self._path}', skipping...")
             return resources
+
         print(f"Loading {r_path.relative_to(self._path)}...")
         files_iter = (
             path.safe_rglob("*")
@@ -1361,7 +1360,7 @@ class Installation:  # noqa: PLR0904
 
         def check_list(resource_list: list[FileResource]):
             # Index resources by identifier
-            resource_dict: dict[ResourceIdentifier, FileResource] = {resource.identifier(): resource for resource in resource_list}
+            {resource.identifier(): resource for resource in resource_list}
             for query in queries:
                 if query not in lookup_dict:
                     continue
