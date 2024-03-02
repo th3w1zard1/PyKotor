@@ -705,24 +705,21 @@ class ToolWindow(QMainWindow):
 
                 version_check = LooseVersion(data["toolsetLatestVersion"]) > LooseVersion(x)
         if version_check is False:
-            return
+            if silent:
+                return
+            QMessageBox(
+                QMessageBox.Information,
+                "Version is up to date",
+                f"You are running the latest version ({'.'.join(str(i) for i in PROGRAM_VERSION)}).",
+                QMessageBox.Ok,
+                self,
+            ).exec_()
 
         toolsetDownloadLink = data["toolsetDownloadLink"]
         QMessageBox(
             QMessageBox.Information,
             "New version is available.",
             f"New version available for <a href='{toolsetDownloadLink}'>download</a>.<br>{data['toolsetLatestNotes']}",
-            QMessageBox.Ok,
-            self,
-        ).exec_()
-
-        if silent:
-            return
-
-        QMessageBox(
-            QMessageBox.Information,
-            "Version is up to date",
-            f"You are running the latest version ({'.'.join(str(i) for i in PROGRAM_VERSION)}).",
             QMessageBox.Ok,
             self,
         ).exec_()
