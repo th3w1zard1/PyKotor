@@ -573,9 +573,11 @@ class Installation:
             print(f"Found an active save location at '{save_location}'")
             self._saves[save_location] = {}
             for this_save_path in save_location.iterdir():
+                if not this_save_path.safe_isdir():
+                    continue
                 print(f"Discovered a save bundle '{this_save_path.name}'")
                 self._saves[save_location][this_save_path] = []
-                for file in this_save_path.rglob("*"):
+                for file in this_save_path.iterdir():
                     res_ident = ResourceIdentifier.from_path(file)
                     file_res = FileResource(
                         res_ident.resname,
