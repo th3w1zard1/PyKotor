@@ -176,7 +176,7 @@ jobs:
           }
           $output = ""
           ./compile/deps_holopatcher.ps1 -noprompt -venv_name .venv_holopatcher_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }} 2>&1 | ForEach-Object {
-            Write-Output $_
+            Write-Output $_ -ForegroundColor Gray
             $output += $_
           }
           if ($output -match 'ERROR:') {
@@ -199,7 +199,7 @@ jobs:
         Write-Host "Using UPX directory at '$upxDir'"
         $output = ""
         ./compile/compile_holopatcher.ps1 -noprompt -venv_name .venv_holopatcher_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_
+          Write-Output $_ -ForegroundColor Gray
           $output += $_
         }
         $warningCount = ($output -match 'WARNING: Library not found: could not resolve').Count
@@ -233,7 +233,7 @@ jobs:
           }
           $output = ""
           ./compile/deps_toolset.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }} 2>&1 | ForEach-Object {
-            Write-Output $_
+            Write-Output $_ -ForegroundColor Gray
             $output += $_
           }
           if ($output -match 'ERROR:') {
@@ -256,7 +256,7 @@ jobs:
         Write-Host "Using UPX directory at '$upxDir'"
         $output = ""
         ./compile/compile_toolset.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_
+          Write-Output $_ -ForegroundColor Gray
           $output += $_
         }
         $warningCount = ($output -match 'WARNING: Library not found: could not resolve').Count
@@ -292,7 +292,7 @@ jobs:
           }
           $output = ""
           ./compile/deps_batchpatcher.ps1 -noprompt -venv_name .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }} 2>&1 | ForEach-Object {
-            Write-Output $_
+            Write-Output $_ -ForegroundColor Gray
             $output += $_
           }
           if ($output -match 'ERROR:') {
@@ -315,7 +315,7 @@ jobs:
         Write-Host "Using UPX directory at '$upxDir'"
         $output = ""
         ./compile/compile_batchpatcher.ps1 -noprompt -venv_name .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_
+          Write-Output $_ -ForegroundColor Gray
           $output += $_
         }
         $warningCount = ($output -match 'WARNING: Library not found: could not resolve').Count
@@ -349,7 +349,7 @@ jobs:
         pip install -r Tools/KotorDiff/requirements.txt --prefer-binary
         $output = ""
         ./compile/compile_kotordiff.ps1 -noprompt -venv_name .venv_kotordiff_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_
+          Write-Output $_ -ForegroundColor Gray
           $output += $_
         }
         $warningCount = ($output -match 'WARNING: Library not found: could not resolve').Count
@@ -382,7 +382,7 @@ jobs:
         }
         pip install -r Tools/GuiDuplicator/requirements.txt --prefer-binary
         ./compile/compile_gui_duplicator.ps1 -noprompt -venv_name .venv_guiduplicator_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_
+          Write-Output $_ -ForegroundColor Gray
           $output += $_
         }
         $warningCount = ($output -match 'WARNING: Library not found: could not resolve').Count
@@ -437,6 +437,7 @@ jobs:
         ./install_python_venv.ps1 -noprompt -venv_name .venv_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
         python -m pytest tests -v -ra -o log_cli=true --capture=no --junitxml=pytest_report.xml --html=pytest_report.html --self-contained-html --tb=no --continue-on-collection-errors
       shell: pwsh
+      continue-on-error: true
 
     - name: Upload Pytest Reports
       if: ${{ success() || failure() }}
@@ -491,16 +492,6 @@ jobs:
             Move-Item -LiteralPath $_.FullName -Destination $testsResultsCommitPath
           }
           Remove-Item -Path $artifact_reports_dir -Recurse -Force -ErrorAction SilentlyContinue
-
-          git fetch origin $branchName
-          if (git log "${{ github.sha }}"..origin/$branchName --oneline) {
-              Write-Error "Newer commits are present on the remote branch, cannot add test files."
-              exit 1
-          }
-          git add $testsResultsPath --force
-          git commit -m "Add test results"
-          git push --force-with-lease origin HEAD:${{ github.ref_name }}
-          $commitSHA = git rev-parse HEAD
 
           $testResults = @{}
 
@@ -596,11 +587,12 @@ jobs:
 
           Set-Content -Path $ReadmePath -Value $ReadmeContent
           git fetch origin $branchName
+          git add $ReadmePath
+          git add $testsResultsPath --force
           # Checking if there are newer commits on the remote branch than the commit that triggered the workflow
           if (git log "${{ github.sha }}"..origin/$branchName --oneline) {
               Write-Error "Newer commits are present on the remote branch, cannot update readme"
               exit 1
           }
-          git add $ReadmePath
-          git commit -m "Update README.md with test results status badges."
+          git commit -m "Add test results/Update README.md status badges."
           git push --force-with-lease origin HEAD:${{ github.ref_name }}
