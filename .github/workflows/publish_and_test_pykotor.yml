@@ -497,7 +497,7 @@ jobs:
               Write-Error "Newer commits are present on the remote branch, cannot add test files."
               exit 1
           }
-          git add $testsResultsCommitPath --force
+          git add $testsResultsPath --force
           git commit -m "Add test results"
           git push --force-with-lease origin HEAD:${{ github.ref_name }}
           $commitSHA = git rev-parse HEAD
