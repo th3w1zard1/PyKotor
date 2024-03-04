@@ -268,7 +268,13 @@ class ToolWindow(QMainWindow):
 
         # Clear the entire model before loading new save resources
         self.ui.savesWidget.modulesModel.invisibleRootItem().removeRows(0, self.ui.savesWidget.modulesModel.rowCount())
-        for save_path, resource_list in self.active._saves[Path(newSaveDir)].items():
+        newSaveDirPath = CaseAwarePath(newSaveDir)
+        if newSaveDirPath not in self.active._saves:
+            self.active.load_saves()
+            if newSaveDirPath not in self.active._saves:
+                print(f"Cannot load save {newSaveDirPath}: not found in saves list")
+                return
+        for save_path, resource_list in self.active._saves[newSaveDirPath].items():
             # Create a new parent item for the save_path
             save_path_item = QStandardItem(str(save_path.relative_to(save_path.parent.parent)))
             self.ui.savesWidget.modulesModel.invisibleRootItem().appendRow(save_path_item)
