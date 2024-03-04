@@ -59,6 +59,7 @@ from utility.error_handling import (
     universal_simplify_exception,
 )
 from utility.system.path import Path, PurePath
+from pykotor.tools.path import CaseAwarePath
 
 if TYPE_CHECKING:
     import os
@@ -71,7 +72,6 @@ if TYPE_CHECKING:
     from pykotor.resource.formats.mdl.mdl_data import MDL
     from pykotor.resource.formats.tpc import TPC
     from pykotor.resource.type import SOURCE_TYPES
-    from pykotor.tools.path import CaseAwarePath
     from toolset.gui.widgets.main_widgets import TextureList
 
 
