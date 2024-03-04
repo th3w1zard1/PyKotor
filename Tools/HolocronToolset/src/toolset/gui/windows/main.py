@@ -24,6 +24,7 @@ from pykotor.resource.formats.tpc import read_tpc, write_tpc
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
 from pykotor.tools.misc import is_bif_file, is_rim_file
+from pykotor.tools.path import CaseAwarePath
 from toolset.config import PROGRAM_VERSION, UPDATE_INFO_LINK
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.about import About
@@ -59,7 +60,6 @@ from utility.error_handling import (
     universal_simplify_exception,
 )
 from utility.system.path import Path, PurePath
-from pykotor.tools.path import CaseAwarePath
 
 if TYPE_CHECKING:
     import os
