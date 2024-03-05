@@ -946,16 +946,6 @@ class ToolWindow(QMainWindow):
 
         def task(active: HTInstallation | None = None):
             self.active = active or HTInstallation(path, name, tsl, self)
-            self.ui.texturesWidget.setInstallation(self.active)
-            print("Updating menus...")
-            self.updateMenus()
-            print("Setting up watchdog observer...")
-            if self.dogObserver is not None:
-                print("Stopping old watchdog service...")
-                self.dogObserver.stop()
-            self.dogObserver = Observer()
-            self.dogObserver.schedule(self.dogHandler, self.active.path(), recursive=True)
-            self.dogObserver.start()
 
         active = self.installations.get(name)
         loader = AsyncLoader(self, "Loading Installation" if not active else "Refreshing installation", lambda: task(active), "Failed to load installation")
@@ -976,6 +966,16 @@ class ToolWindow(QMainWindow):
             self.refreshSavesList(reload=False)
             print("Loading TexturePack resources into UI...")
             self.refreshTexturePackList(reload=False)
+            self.ui.texturesWidget.setInstallation(self.active)
+            print("Updating menus...")
+            self.updateMenus()
+            print("Setting up watchdog observer...")
+            if self.dogObserver is not None:
+                print("Stopping old watchdog service...")
+                self.dogObserver.stop()
+            self.dogObserver = Observer()
+            self.dogObserver.schedule(self.dogHandler, self.active.path(), recursive=True)
+            self.dogObserver.start()
         print("Loader task completed.")
 
         self.settings.installations()[name].path = path
