@@ -951,6 +951,8 @@ class ToolWindow(QMainWindow):
             self.refreshOverrideList(reload=False)
             print("Loading TexturePack resources into UI...")
             self.refreshTexturePackList(reload=False)
+            print("Loading save resources into UI...")
+            self.refreshSavesList(reload=False)
             self.ui.texturesWidget.setInstallation(self.active)
 
             print("Remove unused categories...")
