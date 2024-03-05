@@ -952,6 +952,10 @@ class ToolWindow(QMainWindow):
             self.refreshTexturePackList(reload=False)
             self.ui.texturesWidget.setInstallation(self.active)
 
+            print("Remove unused categories...")
+            self.ui.coreWidget.modulesModel.removeUnusedCategories()
+            self.ui.savesWidget.modulesModel.removeUnusedCategories()
+            self.ui.texturesWidget.setInstallation(self.active)
             print("Updating menus...")
             self.updateMenus()
             print("Setting up watchdog observer...")
@@ -970,7 +974,7 @@ class ToolWindow(QMainWindow):
             if self.dogObserver is not None:
                 self.dogObserver.stop()
                 self.dogObserver = None
-            print("Loader task completed.")
+        print("Loader task completed.")
 
         self.settings.installations()[name].path = path
 
