@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from pykotor.common.geometry import Vector3
 
+from pykotor.common.geometry import Vector3
 from pykotor.resource.formats.erf import ERF
 from pykotor.resource.formats.erf.erf_auto import read_erf
 from pykotor.resource.formats.erf.erf_data import ERFType
