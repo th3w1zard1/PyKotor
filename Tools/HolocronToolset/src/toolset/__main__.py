@@ -124,3 +124,4 @@ if __name__ == "__main__":
     if profiler:
         profiler.disable()
         profiler.dump_stats(str(Path("profiler_output.pstat")))
+        

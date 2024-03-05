@@ -22,8 +22,8 @@ from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.mdl import read_mdl, write_mdl
 from pykotor.resource.formats.tpc import read_tpc, write_tpc
 from pykotor.resource.type import ResourceType
-from pykotor.tools import model
-from pykotor.tools.misc import is_bif_file, is_rim_file
+from pykotor.tools import model, module
+from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_capsule_file, is_erf_file, is_mod_file, is_rim_file
 from pykotor.tools.path import CaseAwarePath
 from toolset.config import PROGRAM_VERSION, UPDATE_INFO_LINK
 from toolset.data.installation import HTInstallation
@@ -251,6 +251,7 @@ class ToolWindow(QMainWindow):
 
     def onSaveReload(self, saveDir: str):
         print(f"Reloading '{saveDir}'")
+        self.active.load_saves()
         self.onSavepathChanged(saveDir)
 
     def onSaveRefresh(self):
@@ -270,16 +271,16 @@ class ToolWindow(QMainWindow):
             print(f"No installation loaded, cannot change to save directory '{newSaveDir}'")
             return
 
-        print("Loading save resources into UI...")
-
-        # Clear the entire model before loading new save resources
-        self.ui.savesWidget.modulesModel.invisibleRootItem().removeRows(0, self.ui.savesWidget.modulesModel.rowCount())
         newSaveDirPath = CaseAwarePath(newSaveDir)
         if newSaveDirPath not in self.active._saves:
             self.active.load_saves()
             if newSaveDirPath not in self.active._saves:
-                print(f"Cannot load save {newSaveDirPath}: not found in saves list")
+                print(f"Cannot change to '{newSaveDir}', path is not in the saves list.")
                 return
+        print("Loading save resources into UI...")
+
+        # Clear the entire model before loading new save resources
+        self.ui.savesWidget.modulesModel.invisibleRootItem().removeRows(0, self.ui.savesWidget.modulesModel.rowCount())
         for save_path, resource_list in self.active._saves[newSaveDirPath].items():
             # Create a new parent item for the save_path
             save_path_item = QStandardItem(str(save_path.relative_to(save_path.parent.parent)))
