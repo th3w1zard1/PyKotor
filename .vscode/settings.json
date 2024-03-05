@@ -25,8 +25,6 @@
     "./Libraries/PyKotorFont/src",
     "./Libraries/Utility/src",
   ],
-  "git.enabled": false,
-  "git.path": null,
   "git.autofetch": false,
   "python.testing.autoTestDiscoverOnSaveEnabled": true,
   "python.testing.promptToConfigure": true,

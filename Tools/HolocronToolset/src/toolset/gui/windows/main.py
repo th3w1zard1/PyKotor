@@ -915,6 +915,12 @@ class ToolWindow(QMainWindow):
         self.updateMenus()
 
         if index <= 0:
+            print("Index out of range", index)
+            self.ui.gameCombo.setCurrentIndex(0)
+            self.active = None
+            if self.dogObserver is not None:
+                self.dogObserver.stop()
+                self.dogObserver = None
             return
 
         self.ui.resourceTabs.setEnabled(True)
@@ -940,24 +946,6 @@ class ToolWindow(QMainWindow):
 
         def task(active: HTInstallation | None = None):
             self.active = active or HTInstallation(path, name, tsl, self)
-
-            assert_with_variable_trace(isinstance(self.active, HTInstallation))
-            assert isinstance(self.active, HTInstallation)  # noqa: S101
-            print("Loading core installation resources into UI...")
-            self.ui.coreWidget.setResources(self.active.chitin_resources())
-            print("Loading module resources into UI...")
-            self.refreshModuleList(reload=False)
-            print("Loading override resources into UI...")
-            self.refreshOverrideList(reload=False)
-            print("Loading TexturePack resources into UI...")
-            self.refreshTexturePackList(reload=False)
-            print("Loading save resources into UI...")
-            self.refreshSavesList(reload=False)
-            self.ui.texturesWidget.setInstallation(self.active)
-
-            print("Remove unused categories...")
-            self.ui.coreWidget.modulesModel.removeUnusedCategories()
-            self.ui.savesWidget.modulesModel.removeUnusedCategories()
             self.ui.texturesWidget.setInstallation(self.active)
             print("Updating menus...")
             self.updateMenus()
@@ -977,6 +965,17 @@ class ToolWindow(QMainWindow):
             if self.dogObserver is not None:
                 self.dogObserver.stop()
                 self.dogObserver = None
+        else:  # KEEP UI CODE IN MAIN THREAD!
+            print("Loading core installation resources into UI...")
+            self.ui.coreWidget.setResources(self.active.chitin_resources())
+            print("Loading module resources into UI...")
+            self.refreshModuleList(reload=False)
+            print("Loading override resources into UI...")
+            self.refreshOverrideList(reload=False)
+            print("Loading save resources into UI...")
+            self.refreshSavesList(reload=False)
+            print("Loading TexturePack resources into UI...")
+            self.refreshTexturePackList(reload=False)
         print("Loader task completed.")
 
         self.settings.installations()[name].path = path
