@@ -325,7 +325,7 @@ class Installation:
         """Returns a list of existing save locations (paths where save files can be found)."""
         save_paths: list[Path] = [self._find_resource_folderpath("saves", optional=True)]
         if self.game().is_k2():
-            cloudsave_dir = self._find_resource_folderpath("cloudsaves")
+            cloudsave_dir = self._find_resource_folderpath("cloudsaves", optional=True)
             if cloudsave_dir.safe_isdir():
                 for folder in cloudsave_dir.iterdir():
                     if not folder.safe_isdir():
