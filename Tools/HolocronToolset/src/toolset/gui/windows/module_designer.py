@@ -99,7 +99,7 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
         self.hideCameras: bool = False
         self.lockInstances: bool = False
 
-        from toolset.uic.windows.module_designer import Ui_MainWindow  # noqa: PLC0415  # pylint: disable=C0415
+        from toolset.uic.windows.module_designer import Ui_MainWindow  # noqa: PLC0415, RUF100 # pylint: disable=C0415
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -279,7 +279,7 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
             return (new_module, git, walkmeshes)
 
         self.unloadModule()
-        if GlobalSettings().disableRIMSaving and not mod_filepath.is_file():
+        if GlobalSettings().disableRIMSaving and capsule_path.suffix.lower() != ".mod":
             # Create the message box
             msgBox = QMessageBox()
 

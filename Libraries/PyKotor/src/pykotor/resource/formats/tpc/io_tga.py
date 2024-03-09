@@ -244,7 +244,7 @@ class TPCTGAReader(ResourceReader):
         self._tpc.set_data(width, height, [bytes(data)], texture_format)
 
         datacode_name = next((c.name for c in _DataTypes if c.value == datatype_code), _DataTypes.NO_IMAGE_DATA.name)
-        print("tga datatype_code:", datacode_name, "y_flipped:", y_flipped, "bits_per_pixel:", bits_per_pixel)
+        #print("tga datatype_code:", datacode_name, "y_flipped:", y_flipped, "bits_per_pixel:", bits_per_pixel)
         self._tpc.original_datatype_code = _DataTypes.__members__[datacode_name]
         return self._tpc
 

@@ -29,14 +29,36 @@ if TYPE_CHECKING:
 
     from pykotor.gl.scene import Scene
     from pykotor.gl.shader import Shader
+    from pykotor.resource.formats.tpc.tpc_data import TPC
 
 
 class Model:
     def __init__(self, scene: Scene, root: Node):
         self._scene: Scene = scene
         self.root: Node = root
+        self._all_nodes: list[Node] = []
 
-    def draw(self, shader: Shader, transform: mat4, *, override_texture: str | None = None):
+    def all_texture_names(self, cachedTpcs: dict[str, TPC]) -> set[str]:
+        texture_names: set[str] = set()
+
+        def gather_textures(node: Node):
+            if node.mesh and node.mesh.texture != "NULL" and node.mesh.texture not in cachedTpcs:
+                texture_names.add(node.mesh.texture)
+            if node.mesh and node.mesh.lightmap != "NULL" and node.mesh.lightmap not in cachedTpcs:
+                texture_names.add(node.mesh.lightmap)
+            for child in node.children:
+                gather_textures(child)
+
+        gather_textures(self.root)
+        return texture_names
+
+    def draw(
+        self,
+        shader: Shader,
+        transform: mat4,
+        *,
+        override_texture: str | None = None,
+    ):
         self.root.draw(shader, transform, override_texture)
 
     def find(self, name: str) -> Node | None:
@@ -49,13 +71,14 @@ class Model:
         return None
 
     def all(self) -> list[Node]:
-        all_nodes: list[Node] = []
-        search: list[Node] = [self.root]
-        while search:
-            node: Node = search.pop()
-            search.extend(node.children)
-            all_nodes.append(node)
-        return all_nodes
+        if not self._all_nodes:
+            self._all_nodes = []
+            search: list[Node] = [self.root]
+            while search:
+                node: Node = search.pop()
+                search.extend(node.children)
+                self._all_nodes.append(node)
+        return self._all_nodes.copy()  # return a shallow copy
 
     def box(self) -> tuple[vec3, vec3]:
         """Calculates bounding box of the scene.
@@ -143,17 +166,20 @@ class Node:
         self._recalc_transform()
 
     def root(self) -> Node:
-        ancestor: Node | None = self._parent
-        while ancestor:
-            ancestor = ancestor._parent
-        return ancestor
+        # To find the root, keep traversing up until there is no parent
+        current: Node = self
+        while current._parent:
+            current = current._parent
+        return current
 
     def ancestors(self) -> list[Node]:
+        # Collect all ancestors from this node up to the root
         ancestors: list[Node] = []
-        ancestor: Node | None = self._parent
-        while ancestor:
-            ancestors.append(ancestor)
-            ancestor = ancestor._parent
+        current: Node | None = self._parent
+        while current:
+            ancestors.append(current)
+            current = current._parent
+        # reverse for root -> parent
         return list(reversed(ancestors))
 
     def global_position(self) -> vec3:  # sourcery skip: class-extract-method
@@ -205,18 +231,17 @@ class Node:
         self._recalc_transform()
 
     def draw(self, shader: Shader, transform: mat4, override_texture: str | None = None):
-        # TODO: use multi-threading to accumulate texture data, then draw all at once.
         transform = transform * self._transform
 
         if self.mesh and self.render:
             self.mesh.draw(shader, transform, override_texture)
 
-        for child in self.children:  
-            child.draw(shader, transform, override_texture=override_texture)
+        for child in self.children:
+            child.draw(shader, transform, override_texture)
 
 
 class Mesh:
-    def __init__(self, scene, node, texture, lightmap, vertex_data, element_data, block_size, data_bitflags,
+    def __init__(self, scene: Scene, node: Node, texture, lightmap, vertex_data, element_data, block_size, data_bitflags,
                  vertex_offset, normal_offset, texture_offset, lightmap_offset):
         """Initializes a Mesh object.
 
@@ -260,12 +285,16 @@ class Mesh:
 
         glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
         # Convert vertex_data bytearray to MemoryView
-        vertex_data_mv = memoryview(vertex_data)
+        vertex_data_mv = vertex_data
+        if not isinstance(vertex_data_mv, memoryview):
+            vertex_data_mv = memoryview(vertex_data)
         glBufferData(GL_ARRAY_BUFFER, len(vertex_data), vertex_data_mv, GL_STATIC_DRAW)
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
         # Convert element_data bytearray to MemoryView
-        element_data_mv = memoryview(element_data)
+        element_data_mv = element_data
+        if not isinstance(element_data_mv, memoryview):
+            element_data_mv = memoryview(element_data)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(element_data), element_data_mv, GL_STATIC_DRAW)
 
         self._face_count = len(element_data) // 2
@@ -306,7 +335,12 @@ class Mesh:
 
 
 class Cube:
-    def __init__(self, scene: Scene, min_point: vec3 | None = None, max_point: vec3 | None = None):
+    def __init__(
+        self,
+        scene: Scene,
+        min_point: vec3 | None = None,
+        max_point: vec3 | None = None,
+    ):
         """Initializes a cube mesh.
 
         Args:
@@ -322,7 +356,7 @@ class Cube:
             - Binds VAO, VBO and EBO buffers and uploads data
             - Enables vertex attribute arrays.
         """
-        self._scene = scene
+        self._scene: Scene = scene
 
         min_point = vec3(-1.0, -1.0, -1.0) if min_point is None else min_point
         max_point = vec3(1.0, 1.0, 1.0) if max_point is None else max_point

@@ -11,10 +11,20 @@ from glm import mat4, vec3, vec4
 from pykotor.gl.models.mdl import Mesh, Model, Node
 
 if TYPE_CHECKING:
+    from glm import mat4x4
+
     from pykotor.common.stream import BinaryReader
+    from pykotor.gl.scene import Scene
 
 
-def _load_node(scene, node: Node | None, mdl: BinaryReader, mdx: BinaryReader, offset: int, names: list[str]) -> Node:
+def _load_node(
+    scene: Scene,
+    node: Node | None,
+    mdl: BinaryReader,
+    mdx: BinaryReader,
+    offset: int,
+    names: list[str],
+) -> Node:
     """Loads a node from the binary model data.
 
     Args:
@@ -127,7 +137,11 @@ def _load_node(scene, node: Node | None, mdl: BinaryReader, mdx: BinaryReader, o
     return node
 
 
-def gl_load_mdl(scene, mdl: BinaryReader, mdx: BinaryReader) -> Model:
+def gl_load_mdl(
+    scene: Scene,
+    mdl: BinaryReader,
+    mdx: BinaryReader,
+) -> Model:
     """Loads a model from binary files into a scene graph node.
 
     Args:
@@ -165,7 +179,11 @@ def gl_load_mdl(scene, mdl: BinaryReader, mdx: BinaryReader) -> Model:
     return Model(scene, _load_node(scene, None, mdl, mdx, offset, names))
 
 
-def gl_load_stitched_model(scene, mdl: BinaryReader, mdx: BinaryReader) -> Model:
+def gl_load_stitched_model(
+    scene: Scene,
+    mdl: BinaryReader,
+    mdx: BinaryReader,
+) -> Model:
     """Returns a model instance that has meshes with the same textures merged together.
 
     Loads and stitches together a gltf model from binary files
@@ -206,8 +224,8 @@ def gl_load_stitched_model(scene, mdl: BinaryReader, mdx: BinaryReader) -> Model
         names.append(mdl.read_terminated_string("\0"))
 
     # Build list offset to nodes that: 1. Have meshes 2. Will render ingame
-    offsets = []
-    search = [(offset, mat4())]
+    offsets: list[tuple[int, mat4x4]] = []
+    search: list[tuple[int, mat4x4]] = [(offset, mat4())]
     while search:
         offset, transform = search.pop()
 
@@ -242,9 +260,9 @@ def gl_load_stitched_model(scene, mdl: BinaryReader, mdx: BinaryReader) -> Model
             node = Node(scene, root, names[name_list_index])
             root.children.append(node)
             glm.decompose(transform, vec3(), node._rotation, node._position, vec3(), vec4())  # noqa: SLF001  # type: ignore[reportCallIssue, reportArgumentType]
-            node._recalc_transform()
+            node._recalc_transform()  # noqa: SLF001
 
-    merged = {}
+    merged: dict[str, list[tuple[int, mat4x4]]] = {}
     for offset, transform in offsets:
         mdl.seek(offset + 80 + 88)
         texture = mdl.read_terminated_string("\0", 32)

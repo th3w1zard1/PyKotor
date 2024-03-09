@@ -266,9 +266,12 @@ class ModuleRenderer(QOpenGLWidget):
         self.scene.camera.distance = max(self.scene.camera.distance, 0)    # Recalculate the camera's position based on the new distance and orientation
         # This assumes the camera's position is updated elsewhere in the code
         # and that the camera's forward vector is used to maintain the pivot point
-        self.scene.camera.x = self.scene.camera.x - distance * self.scene.camera.forward().x
-        self.scene.camera.y = self.scene.camera.y - distance * self.scene.camera.forward().y
-        self.scene.camera.z = self.scene.camera.z - distance * self.scene.camera.forward().z
+        print(f"adjusting pivot point after zoom of distance {distance}")
+        print("Old position", self.scene.camera.x, self.scene.camera.y, self.scene.camera.z)
+        self.scene.camera.x = self.scene.camera.x - distance * self.scene.camera.forward(ignore_z=False).x
+        self.scene.camera.y = self.scene.camera.y - distance * self.scene.camera.forward(ignore_z=False).y
+        self.scene.camera.z = self.scene.camera.z - distance * self.scene.camera.forward(ignore_z=False).z
+        print("New position", self.scene.camera.x, self.scene.camera.y, self.scene.camera.z)
     # endregion
 
     # region Events
