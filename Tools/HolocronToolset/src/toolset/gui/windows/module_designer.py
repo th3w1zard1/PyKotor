@@ -14,8 +14,8 @@ from pykotor.common.geometry import SurfaceMaterial, Vector2, Vector3, Vector4
 from pykotor.common.misc import Color, ResRef
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.stream import BinaryWriter
+from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceIdentifier
-from pykotor.resource.formats.bwm.bwm_data import BWM
 from pykotor.resource.generics.git import (
     GITCamera,
     GITCreature,
@@ -33,10 +33,14 @@ from pykotor.resource.generics.utt import read_utt
 from pykotor.resource.generics.utw import read_utw
 from pykotor.resource.type import ResourceType
 from pykotor.tools import module
+from pykotor.tools.misc import is_any_erf_type_file, is_erf_file, is_rim_file
+from pykotor.tools.path import CaseAwarePath
+from toolset.data.installation import HTInstallation
 from toolset.data.misc import ControlItem
 from toolset.gui.dialogs.asyncloader import AsyncLoader
 from toolset.gui.dialogs.insert_instance import InsertInstanceDialog
 from toolset.gui.dialogs.select_module import SelectModuleDialog
+from toolset.gui.editor import Editor
 from toolset.gui.editors.git import openInstanceDialog
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.gui.widgets.settings.module_designer import ModuleDesignerSettings
@@ -52,14 +56,10 @@ if TYPE_CHECKING:
     from glm import vec3
 
     from pykotor.gl.scene import Camera
+    from pykotor.resource.formats.bwm.bwm_data import BWM
     from pykotor.resource.generics.are import ARE
-    from pykotor.resource.generics.git import (
-        GIT,
-    )
+    from pykotor.resource.generics.git import GIT
     from pykotor.resource.generics.ifo import IFO
-    from pykotor.tools.path import CaseAwarePath
-    from toolset.data.installation import HTInstallation
-    from toolset.gui.editor import Editor
     from toolset.gui.widgets.renderer.module import ModuleRenderer
     from toolset.gui.widgets.renderer.walkmesh import WalkmeshRenderer
 
@@ -105,7 +105,7 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
         self.ui.setupUi(self)
         self._setupSignals()
 
-        def intColorToQColor(intvalue) -> QColor:
+        def intColorToQColor(int_value: int) -> QColor:
             """Converts an integer color value to a QColor object.
 
             Args:
@@ -122,7 +122,7 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
                 - Multiply each component by 255 to convert to QColor expected value range of 0-255
                 - Pass converted values to QColor constructor to return QColor object.
             """
-            color = Color.from_rgba_integer(intvalue)
+            color = Color.from_rgba_integer(int_value)
             return QColor(int(color.r * 255), int(color.g * 255), int(color.b * 255), int(color.a * 255))
 
         self.materialColors: dict[SurfaceMaterial, QColor] = {
@@ -235,38 +235,84 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
         dialog = SelectModuleDialog(self, self._installation)
 
         if dialog.exec_():
-            mod_filepath = self._installation.module_path().joinpath(f"{dialog.module}.mod")
-            self.openModule(mod_filepath)
+            self.openModule(Path(dialog.module_filepath), dialog.module_root)
 
     #    @with_variable_trace(Exception)
-    def openModule(self, mod_filepath: Path):
+    def openModule(self, capsule_path: Path, mod_root: str | None = None):
         """Opens a module."""
+        mod_root = mod_root or HTInstallation.replace_module_extensions(capsule_path).lower()
+        mod_filepath = CaseAwarePath(capsule_path.parent, mod_root).with_suffix(".mod")
         def task() -> tuple[Module, GIT, list[BWM]]:
-            if GlobalSettings().disableRIMSaving and not mod_filepath.is_file():
-                module.rim_to_mod(mod_filepath)
-                self._installation.load_modules()
+            module_caps: list[Capsule] = []
+            if not mod_filepath.is_file():
+                module_caps = [
+                    Capsule(mod_filepath.parent / module_file.name)
+                    for module_file in mod_filepath.parent.iterdir()
+                    if (
+                        (is_erf_file(module_file) and module_file.name.lower() == f"{mod_root}_dlg.erf")
+                        or (is_rim_file(module_file) and module_file.name.lower() in {f"{mod_root}_s.rim", f"{mod_root}.rim"})
+                    )
+                ]
+            new_module = Module(mod_root, self._installation, module_caps, only_use_custom_capsule=not mod_filepath.is_file())
 
-            new_module = Module(mod_filepath.stem, self._installation)
-            git: GIT | None = new_module.git().resource()
-            assert git is not None, assert_with_variable_trace(
-                git is not None,
-                f"GIT file cannot be found in {new_module.get_id()}"
+            git_res = new_module.git()
+            assert_with_variable_trace(
+                git_res is not None,
+                f"GIT file cannot be found in '{capsule_path}'"
             )
+            assert git_res is not None
+            git: GIT | None = git_res.resource()
+            assert_with_variable_trace(
+                git is not None,
+                f"GIT file cannot be found in '{capsule_path}'"
+            )
+            assert git is not None
             walkmeshes: list[BWM] = []
             for bwm in new_module.resources.values():
                 if bwm.restype() != ResourceType.WOK:
                     continue
                 bwm_res: BWM | None = bwm.resource()
                 if bwm_res is None:
-                    print(f"bwm '{bwm.localized_name()}' '{bwm.resname()}.{bwm.restype()}' returned None resource data, skipping...")
+                    print(f"bwm {bwm.localized_name() or ''} '{bwm.resname()}.{bwm.restype()}' returned None resource data, skipping...")
                     continue
                 walkmeshes.append(bwm_res)
             return (new_module, git, walkmeshes)
 
         self.unloadModule()
+        if GlobalSettings().disableRIMSaving and not mod_filepath.is_file():
+            # Create the message box
+            msgBox = QMessageBox()
+
+            # Set the message box properties
+            msgBox.setIcon(QMessageBox.Question)
+            msgBox.setWindowTitle("RIM saving disable, and no existing .mod to load.")
+            msgBox.setText(
+                f"You've chosen to open '{capsule_path.name}' into the Module Designer. But you also have RIM saving disabled.<br>"
+                f"In order to use the Module Designer without editing RIMS, we must create '{mod_filepath.name}' and combine {mod_root}.rim, {mod_root}_s.rim, and {mod_root}_dlg.erf into a single '{mod_filepath.name}' your Modules folder.<br><br>"
+                "Would you like to create this .MOD module now (recommended), or would you rather open the rims & original choice into the designer?"
+            )
+            msgBox.setInformativeText("Choose one of the options below:")
+            msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Abort)
+            msgBox.setDefaultButton(QMessageBox.Abort)
+
+            # Set the button text
+            msgBox.button(QMessageBox.Yes).setText("Create a new combined .MOD")
+            msgBox.button(QMessageBox.No).setText("Open RIMs & Original Choice Directly")  # type: ignore[union-attr]
+            msgBox.button(QMessageBox.Abort).setText("Cancel")  # type: ignore[union-attr]
+            result = msgBox.exec_()
+            if result == QMessageBox.Yes:
+                print("rim_to_mod")
+                module.rim_to_mod(capsule_path)
+                self._installation.reload_module(capsule_path.name)
+            elif result == QMessageBox.No:
+                print("QMessageBox.No")
+            elif result == QMessageBox.Abort:
+                print("QMessageBox.Abort")
+            else:
+                print("other result")
         loader = AsyncLoader(
             self,
-            f"Loading '{mod_filepath.stem}' into designer...",
+            f"Loading '{capsule_path.stem}' into designer...",
             lambda: task(),
             "Error occurred loading the module designer",
         )
@@ -283,8 +329,7 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
 
     def unloadModule(self):
         self._module = None
-        self.ui.mainRenderer.scene = None
-        self.ui.mainRenderer._init = False
+        self.ui.mainRenderer.unload()
 
     def showHelpWindow(self):
         window = HelpWindow(self, "./help/tools/1-moduleEditor.md")
@@ -377,21 +422,27 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
                 "Failed to open editor",
                 f"Failed to open editor for file: {resource.resname()}.{resource.restype().extension}",
             )
-        else:
+        elif isinstance(editor, Editor):
             editor.savedFile.connect(lambda: self._onSavedResource(resource))
+        else:
+            raise TypeError(f"Unexpected editor type from openResourceEditor: {editor.__class__.__name__}")
 
     def copyResourceToOverride(self, resource: ModuleResource):
         location: CaseAwarePath = self._installation.override_path() / f"{resource.resname()}.{resource.restype().extension}"
         BinaryWriter.dump(location, resource.data())
         resource.add_locations([location])
         resource.activate(location)
-        self.ui.mainRenderer.scene.clearCacheBuffer.append(ResourceIdentifier(resource.resname(), resource.restype()))
+        scene = self.ui.mainRenderer.scene
+        assert scene is not None
+        scene.clearCacheBuffer.append(ResourceIdentifier(resource.resname(), resource.restype()))
 
     def activateResourceFile(self, resource: ModuleResource, location: str):
         resource.activate(location)
-        self.ui.mainRenderer.scene.clearCacheBuffer.append(ResourceIdentifier(resource.resname(), resource.restype()))
+        scene = self.ui.mainRenderer.scene
+        assert scene is not None
+        scene.clearCacheBuffer.append(ResourceIdentifier(resource.resname(), resource.restype()))
 
-    def selectResourceItem(self, instance: GITInstance, clearExisting: bool = True):
+    def selectResourceItem(self, instance: GITInstance, *, clearExisting: bool = True):
         """Select a resource item in the tree.
 
         Args:
@@ -409,15 +460,19 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
         if clearExisting:
             self.ui.resourceTree.clearSelection()
 
+        resident = instance.identifier()
+        if resident is None:
+            raise ValueError("resident cannot be None in selectResourceItem")
         for i in range(self.ui.resourceTree.topLevelItemCount()):
             parent: QTreeWidgetItem | None = self.ui.resourceTree.topLevelItem(i)
+            if not parent:
+                raise ValueError("parent was None")
             for j in range(parent.childCount()):
                 item = parent.child(j)
                 res: ModuleResource = item.data(0, QtCore.Qt.UserRole)
                 if (
-                    instance.identifier() is not None
-                    and res.resname() == instance.identifier().resname
-                    and res.restype() == instance.identifier().restype
+                    res.resname() == resident.resname
+                    and res.restype() == resident.restype
                 ):
                     parent.setExpanded(True)
                     item.setSelected(True)
@@ -472,11 +527,12 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
         self.ui.instanceList.clear()
         items: list[QListWidgetItem] = []
 
-        for instance in self._module.git().resource().instances():
+        git = self._module.git()
+        for instance in git.resource().instances():
             if visibleMapping[instance.__class__]:
                 continue
 
-            struct_index: int = self._module.git().resource().index(instance)
+            struct_index: int = git.resource().index(instance)
 
             icon = QIcon(iconMapping[instance.__class__])
             item = QListWidgetItem(icon, "")
@@ -487,8 +543,10 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
                 item.setToolTip(f"Struct Index: {struct_index}\nCamera ID: {instance.camera_id}\nFOV: {instance.fov}")
                 item.setData(QtCore.Qt.UserRole + 1, "cam" + str(instance.camera_id).rjust(10, "0"))
             else:
-                resource: ModuleResource[ARE] | None = self._module.resource(instance.identifier().resname, instance.identifier().restype)
-                filename: str = instance.identifier().resname
+                resident = instance.identifier()
+                assert resident is not None
+                resource: ModuleResource[ARE] | None = self._module.resource(resident.resname, resident.restype)
+                filename: str = resident.resname
                 name: str = filename
                 tag: str = ""
 
@@ -536,30 +594,33 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
         self.ui.instanceList.clearSelection()
         for i in range(self.ui.instanceList.count()):
             item: QListWidgetItem | None = self.ui.instanceList.item(i)
+            assert item is not None
             data: GITInstance = item.data(QtCore.Qt.UserRole)
             if data is instance:
                 item.setSelected(True)
                 self.ui.instanceList.scrollToItem(item)
 
     def updateToggles(self):
-        self.hideCreatures = self.ui.mainRenderer.scene.hide_creatures = self.ui.flatRenderer.hideCreatures = not self.ui.viewCreatureCheck.isChecked()
-        self.hidePlaceables = self.ui.mainRenderer.scene.hide_placeables = self.ui.flatRenderer.hidePlaceables = not self.ui.viewPlaceableCheck.isChecked()
-        self.hideDoors = self.ui.mainRenderer.scene.hide_doors = self.ui.flatRenderer.hideDoors = not self.ui.viewDoorCheck.isChecked()
-        self.hideTriggers = self.ui.mainRenderer.scene.hide_triggers = self.ui.flatRenderer.hideTriggers = not self.ui.viewTriggerCheck.isChecked()
-        self.hideEncounters = self.ui.mainRenderer.scene.hide_encounters = self.ui.flatRenderer.hideEncounters = not self.ui.viewEncounterCheck.isChecked()
-        self.hideWaypoints = self.ui.mainRenderer.scene.hide_waypoints = self.ui.flatRenderer.hideWaypoints = not self.ui.viewWaypointCheck.isChecked()
-        self.hideSounds = self.ui.mainRenderer.scene.hide_sounds = self.ui.flatRenderer.hideSounds = not self.ui.viewSoundCheck.isChecked()
-        self.hideStores = self.ui.mainRenderer.scene.hide_stores = self.ui.flatRenderer.hideStores = not self.ui.viewStoreCheck.isChecked()
-        self.hideCameras = self.ui.mainRenderer.scene.hide_cameras = self.ui.flatRenderer.hideCameras = not self.ui.viewCameraCheck.isChecked()
+        sceneMainRenderer = self.ui.mainRenderer.scene
+        assert sceneMainRenderer is not None
+        self.hideCreatures = sceneMainRenderer.hide_creatures = self.ui.flatRenderer.hideCreatures = not self.ui.viewCreatureCheck.isChecked()
+        self.hidePlaceables = sceneMainRenderer.hide_placeables = self.ui.flatRenderer.hidePlaceables = not self.ui.viewPlaceableCheck.isChecked()
+        self.hideDoors = sceneMainRenderer.hide_doors = self.ui.flatRenderer.hideDoors = not self.ui.viewDoorCheck.isChecked()
+        self.hideTriggers = sceneMainRenderer.hide_triggers = self.ui.flatRenderer.hideTriggers = not self.ui.viewTriggerCheck.isChecked()
+        self.hideEncounters = sceneMainRenderer.hide_encounters = self.ui.flatRenderer.hideEncounters = not self.ui.viewEncounterCheck.isChecked()
+        self.hideWaypoints = sceneMainRenderer.hide_waypoints = self.ui.flatRenderer.hideWaypoints = not self.ui.viewWaypointCheck.isChecked()
+        self.hideSounds = sceneMainRenderer.hide_sounds = self.ui.flatRenderer.hideSounds = not self.ui.viewSoundCheck.isChecked()
+        self.hideStores = sceneMainRenderer.hide_stores = self.ui.flatRenderer.hideStores = not self.ui.viewStoreCheck.isChecked()
+        self.hideCameras = sceneMainRenderer.hide_cameras = self.ui.flatRenderer.hideCameras = not self.ui.viewCameraCheck.isChecked()
 
-        self.ui.mainRenderer.scene.backface_culling = self.ui.backfaceCheck.isChecked()
-        self.ui.mainRenderer.scene.use_lightmap = self.ui.lightmapCheck.isChecked()
-        self.ui.mainRenderer.scene.show_cursor = self.ui.cursorCheck.isChecked()
+        sceneMainRenderer.backface_culling = self.ui.backfaceCheck.isChecked()
+        sceneMainRenderer.use_lightmap = self.ui.lightmapCheck.isChecked()
+        sceneMainRenderer.show_cursor = self.ui.cursorCheck.isChecked()
 
         self.rebuildInstanceList()
 
 #    @with_variable_trace(Exception)
-    def addInstance(self, instance: GITInstance, walkmeshSnap: bool = True):
+    def addInstance(self, instance: GITInstance, *, walkmeshSnap: bool = True):
         """Adds a GIT instance to the editor.
 
         Args:
@@ -585,11 +646,12 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
             ).z
 
         if not isinstance(instance, GITCamera):
+            assert self._module is not None
             dialog = InsertInstanceDialog(self, self._installation, self._module, instance.identifier().restype)
 
             if dialog.exec_():
                 self.rebuildResourceTree()
-                instance.resref = ResRef(dialog.resname)  # FIXME: resref is undefined here.
+                instance.resref = ResRef(dialog.resname)  # type: ignore[reportAttributeAccessIssue]
                 self._module.git().resource().add(instance)
 
                 if isinstance(instance, GITWaypoint):
@@ -856,20 +918,23 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
             - Connects menu hide signal to reset mouse buttons
         """
         menu = QMenu(self)
+        sceneMainRenderer = self.ui.mainRenderer.scene
+        assert sceneMainRenderer is not None
 
-        view = self.ui.mainRenderer.scene.camera.true_position()
-        rot = self.ui.mainRenderer.scene.camera
-        menu.addAction("Insert Camera").triggered.connect(lambda: self.addInstance(GITCamera(*world), False))
-        menu.addAction("Insert Camera at View").triggered.connect(lambda: self.addInstance(GITCamera(view.x, view.y, view.z, rot.yaw, rot.pitch, 0, 0), False))
+        view = sceneMainRenderer.camera.true_position()
+        rot = sceneMainRenderer.camera
+        world_data = world.x, world.y, world.z
+        menu.addAction("Insert Camera").triggered.connect(lambda: self.addInstance(GITCamera(*world_data), walkmeshSnap=False))
+        menu.addAction("Insert Camera at View").triggered.connect(lambda: self.addInstance(GITCamera(view.x, view.y, view.z, rot.yaw, rot.pitch, 0, 0), walkmeshSnap=False))
         menu.addSeparator()
-        menu.addAction("Insert Creature").triggered.connect(lambda: self.addInstance(GITCreature(*world), True))
-        menu.addAction("Insert Door").triggered.connect(lambda: self.addInstance(GITDoor(*world), False))
-        menu.addAction("Insert Placeable").triggered.connect(lambda: self.addInstance(GITPlaceable(*world), False))
-        menu.addAction("Insert Store").triggered.connect(lambda: self.addInstance(GITStore(*world), False))
-        menu.addAction("Insert Sound").triggered.connect(lambda: self.addInstance(GITSound(*world), False))
-        menu.addAction("Insert Waypoint").triggered.connect(lambda: self.addInstance(GITWaypoint(*world), False))
-        menu.addAction("Insert Encounter").triggered.connect(lambda: self.addInstance(GITEncounter(*world), False))
-        menu.addAction("Insert Trigger").triggered.connect(lambda: self.addInstance(GITTrigger(*world), False))
+        menu.addAction("Insert Creature").triggered.connect(lambda: self.addInstance(GITCreature(*world_data), walkmeshSnap=True))
+        menu.addAction("Insert Door").triggered.connect(lambda: self.addInstance(GITDoor(*world_data), walkmeshSnap=False))
+        menu.addAction("Insert Placeable").triggered.connect(lambda: self.addInstance(GITPlaceable(*world_data), walkmeshSnap=False))
+        menu.addAction("Insert Store").triggered.connect(lambda: self.addInstance(GITStore(*world_data), walkmeshSnap=False))
+        menu.addAction("Insert Sound").triggered.connect(lambda: self.addInstance(GITSound(*world_data), walkmeshSnap=False))
+        menu.addAction("Insert Waypoint").triggered.connect(lambda: self.addInstance(GITWaypoint(*world_data), walkmeshSnap=False))
+        menu.addAction("Insert Encounter").triggered.connect(lambda: self.addInstance(GITEncounter(*world_data), walkmeshSnap=False))
+        menu.addAction("Insert Trigger").triggered.connect(lambda: self.addInstance(GITTrigger(*world_data), walkmeshSnap=False))
 
         menu.popup(self.cursor().pos())
         menu.aboutToHide.connect(self.ui.mainRenderer.resetMouseButtons)
@@ -894,8 +959,8 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
         if self.selectedInstances:
             instance = self.selectedInstances[0]
             if isinstance(instance, GITCamera):
-                menu.addAction("Snap Camera to 3D View").triggered.connect(lambda: self.snapCameraToView(instance))
-                menu.addAction("Snap 3D View to Camera").triggered.connect(lambda: self.snapViewToCamera(instance))
+                menu.addAction("Move Camera to Current View").triggered.connect(lambda: self.snapCameraToView(instance))
+                menu.addAction("Jump to Camera's Perspective").triggered.connect(lambda: self.snapViewToCamera(instance))
                 menu.addSeparator()
 
             menu.addAction("Edit Instance").triggered.connect(lambda: self.editInstance(instance))

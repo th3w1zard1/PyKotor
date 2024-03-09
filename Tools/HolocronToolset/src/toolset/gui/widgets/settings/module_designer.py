@@ -482,3 +482,10 @@ class ModuleDesignerSettings(Settings):
         70,
     )
     # endregion
+
+    # region bools
+    useOverrideTextures = Settings._addSetting(
+        "useOverrideTextures",
+        True,
+    )
+    # endregion

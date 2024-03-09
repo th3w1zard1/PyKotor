@@ -89,6 +89,10 @@ class ModuleRenderer(QOpenGLWidget):
 
         QTimer.singleShot(33, self.loop)
 
+    def unload(self):
+        self.scene = None
+        self._init = False
+
     def loop(self):
         """Repaints and checks for keyboard input on mouse press.
 
@@ -242,7 +246,7 @@ class ModuleRenderer(QOpenGLWidget):
         self.scene.camera.y += upward.y + sideward.y + forward_vec.y
         self.scene.camera.z += upward.z + sideward.z + forward_vec.z
 
-    def rotateCamera(self, yaw: float, pitch: float, snapRotations: bool = True):
+    def rotateCamera(self, yaw: float, pitch: float, *, snapRotations: bool = True):
         """Rotates the camera by the angles (radians) specified.
 
         Args:
@@ -259,7 +263,12 @@ class ModuleRenderer(QOpenGLWidget):
 
     def zoomCamera(self, distance: float):
         self.scene.camera.distance -= distance
-        self.scene.camera.distance = max(self.scene.camera.distance, 0)
+        self.scene.camera.distance = max(self.scene.camera.distance, 0)    # Recalculate the camera's position based on the new distance and orientation
+        # This assumes the camera's position is updated elsewhere in the code
+        # and that the camera's forward vector is used to maintain the pivot point
+        self.scene.camera.x = self.scene.camera.x - distance * self.scene.camera.forward().x
+        self.scene.camera.y = self.scene.camera.y - distance * self.scene.camera.forward().y
+        self.scene.camera.z = self.scene.camera.z - distance * self.scene.camera.forward().z
     # endregion
 
     # region Events

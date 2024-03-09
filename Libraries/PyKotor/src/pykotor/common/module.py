@@ -30,7 +30,7 @@ from pykotor.resource.generics.uts import UTS, bytes_uts, read_uts
 from pykotor.resource.generics.utt import UTT, bytes_utt, read_utt
 from pykotor.resource.generics.utw import UTW, bytes_utw, read_utw
 from pykotor.resource.type import ResourceType
-from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_capsule_file, is_rim_file
+from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_capsule_file, is_erf_file, is_rim_file
 from pykotor.tools.model import list_lightmaps, list_textures
 from utility.error_handling import assert_with_variable_trace, format_exception_with_variables
 from utility.system.path import Path, PurePath
@@ -69,26 +69,36 @@ class Module:  # noqa: PLR0904
     def __init__(
         self,
         root: str,
-        installation: Installation,
-        custom_capsule: Capsule | None = None,
+        installation: Installation | None,
+        custom_capsule: list[Capsule] | Capsule | None = None,
+        only_use_custom_capsule: bool | None = None,
     ):
         self.resources: CaseInsensitiveDict[ModuleResource] = CaseInsensitiveDict()
-        self._installation: Installation = installation
+        self._installation: Installation | None = installation
         self._root: str = root.lower()
 
         # Build list of capsules from all .mods' in the provided installation
-        self._capsules: list[Capsule] = [
-            Capsule(installation.module_path() / module)
-            for module in installation.module_names()
-            if root in module
-        ]
-        # Append the custom capsule if provided
-        if custom_capsule is not None:
+        self._capsules: list[Capsule] = []
+        if not only_use_custom_capsule:
+            self._capsules = [
+                Capsule(installation.module_path() / module)
+                for module in installation.module_names()
+                if (
+                    (is_erf_file(module) and module.lower() == f"{self._root}_dlg.erf")
+                    or (is_rim_file(module) and module.lower() in {f"{self._root}_s.rim", f"{self._root}.rim"})
+                )
+            ]
+
+        if isinstance(custom_capsule, list):
+            self._capsules.extend(custom_capsule)
+        elif isinstance(custom_capsule, Capsule):
             self._capsules.append(custom_capsule)
+        else:
+            raise TypeError(f"Expected capsule or list of capsules, got '{custom_capsule.__class__.__name__}' contents '{custom_capsule}'")
 
         # Fast-fail if capsules list is empty.
         if not self._capsules:
-            msg = f"Module resource with root '{root}' not found in the provided installation."
+            msg = f"Module resource with root '{root}' not found in the provided installation or any provided custom capsules."
             raise FileNotFoundError(msg)
 
         # Find the relevant IFO in the newly constructed capsules.
@@ -405,7 +415,7 @@ class Module:  # noqa: PLR0904
 
     def git(
         self,
-    ) -> ModuleResource[GIT] | None:
+    ) -> ModuleResource[GIT]:
         """Returns the git resource with matching id if found.
 
         Args:
@@ -414,21 +424,18 @@ class Module:  # noqa: PLR0904
 
         Returns:
         -------
-            ModuleResource[GIT] | None: The git resource or None
+            ModuleResource[GIT]: The git resource
 
         Processing Logic:
         ----------------
             - Iterate through all resources in module
             - Check if resource name matches id in lowercase and type is GIT
-            - Return matching resource or None if not found.
+            - Return matching resource.
         """
         return next(
-            (
-                resource
-                for resource in self.resources.values()
-                if resource.resname() == self._id and resource.restype() == ResourceType.GIT
-            ),
-            None,
+            resource
+            for resource in self.resources.values()
+            if resource.resname() == self._id and resource.restype() == ResourceType.GIT
         )
 
     def pth(
@@ -1204,7 +1211,7 @@ class ModuleResource(Generic[T]):
 
         return BinaryReader.load_file(self._active)
 
-    def resource(self) -> T | None:
+    def resource(self) -> T:
         """Returns the cached resource object. If no object has been cached, then it will load the object.
 
         Returns:
@@ -1268,6 +1275,7 @@ class ModuleResource(Generic[T]):
                 data = BinaryReader.load_file(self._active)
                 self._resource_obj = conversions[self._restype](data)
 
+        assert self._resource_obj is not None
         return self._resource_obj
 
     def add_locations(self, filepaths: list[Path]):

@@ -397,6 +397,50 @@ class Editor(QMainWindow):
             write_erf(child_erf_or_rim, data) if isinstance(child_erf_or_rim, ERF) else write_rim(child_erf_or_rim, data)
             this_erf_or_rim.set_data(*child_res_ident.unpack(), bytes(data))
         write_erf(this_erf_or_rim, c_filepath) if isinstance(this_erf_or_rim, ERF) else write_rim(this_erf_or_rim, c_filepath)
+        self.savedFile.emit(str(c_filepath), self._resname, self._restype, data)
+
+        # Update installation cache
+        if self._installation is not None:
+            self._installation.reload_module(c_filepath.name)
+
+    def showRimToModExistencePrompt(self, filepath: os.PathLike | str):
+        assert self._filepath is not None, assert_with_variable_trace(self._filepath is not None)
+        c_filepath = CaseAwarePath.pathify(filepath)
+        folderpath: Path = c_filepath.parent
+        filename: str = f"{Module.get_root(self._filepath)}.mod"
+        mod_filepath = folderpath / filename
+        rel_mod_path = (
+            mod_filepath.relative_to(self._installation)
+            if self._installation is not None and mod_filepath.is_relative_to(self._installation)
+            else mod_filepath
+        )
+        # Create the message box
+        msgBox = QMessageBox()
+
+        # Set the message box properties
+        msgBox.setIcon(QMessageBox.Question)
+        msgBox.setWindowTitle(".MOD already exists.")
+        msgBox.setText(
+            f"Your settings are configured to disable RIM saving, yet the file '{rel_mod_path}' already exists.<br><br>"
+            f"Would you like to overwrite it (with a new module created from existing rim/_s.rim/_dlg.erf files) or use the existing {mod_filepath.name} module?"
+        )
+        msgBox.setInformativeText("Choose one of the options below:")
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No | QMessageBox.Abort)
+        msgBox.setDefaultButton(QMessageBox.Abort)
+
+        # Set the button text
+        msgBox.button(QMessageBox.Yes).setText("Create and Overwrite .MOD")  # type: ignore[union-attr]
+        msgBox.button(QMessageBox.No).setText("Save into Existing .MOD")  # type: ignore[union-attr]
+        msgBox.button(QMessageBox.Abort).setText("Cancel")  # type: ignore[union-attr]
+        if QMessageBox.Yes == msgBox:
+            print(f"user chose to create and overwrite {rel_mod_path}")
+            module.rim_to_mod(mod_filepath)
+        elif QMessageBox.No == msgBox:
+            print(f"user chose to use existing {rel_mod_path}")
+            erf = read_erf(c_filepath)
+        else:
+            print("User cancelled.")
+            return
 
     def _saveEndsWithErf(self, data: bytes, data_ext: bytes):
         # Create the mod file if it does not exist.
@@ -424,20 +468,21 @@ class Editor(QMainWindow):
 
         erftype: ERFType = ERFType.from_extension(self._filepath)
         c_filepath: CaseAwarePath = CaseAwarePath.pathify(self._filepath)
+        mod_root: str = f"{Module.get_root(self._filepath)}"
+        mod_filename = f"{mod_root}.mod"
+        mod_filepath = c_filepath.parent.joinpath(mod_filename)
 
         if c_filepath.is_file():
             erf: ERF = read_erf(c_filepath)
-        elif c_filepath.with_suffix(".rim").is_file():
-            module.rim_to_mod(c_filepath)
-            erf = read_erf(c_filepath)
-        else:  # originally in a bif, user chose to save into erf/mod.
+        elif c_filepath.suffix.lower() == ".mod" and mod_filepath.with_suffix(".rim").is_file():
+            module.rim_to_mod(mod_filepath)
+            erf = read_erf(mod_filepath)
+        else:
             print(f"Saving '{self._resname}.{self._restype}' to a blank new {erftype.name} file at '{c_filepath}'")
             erf = ERF(erftype)  # create a new ERF I guess.
-        erf.erf_type = erftype
 
         # MDL is a special case - we need to save the MDX file with the MDL file.
         if self._restype == ResourceType.MDL:
-            assert data_ext is not None, assert_with_variable_trace(data_ext is not None)
             erf.set_data(self._resname, ResourceType.MDX, data_ext)
 
         erf.set_data(self._resname, self._restype, data)

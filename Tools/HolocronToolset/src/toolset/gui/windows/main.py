@@ -353,7 +353,7 @@ class ToolWindow(QMainWindow):
     def _saveCapsuleFromToolUI(self, module_name: str):
         c_filepath = self.active.module_path() / module_name
 
-        capsuleFilter = "Module file (*.mod);;Encapsulated Resource File (*.erf);;Resource Image File (*.rim);;Save (*.sav);;All Capsule Types (*.erf; *.mod; *.rim; *.sav)"
+        capsuleFilter = "Combined Module file (*.mod);;Encapsulated Resource File (*.erf);;Resource Image File (*.rim);;Save (*.sav);;All Capsule Types (*.erf; *.mod; *.rim; *.sav)"
         capsule_type = "module"
         if is_erf_file(c_filepath):
             capsule_type = "erf"

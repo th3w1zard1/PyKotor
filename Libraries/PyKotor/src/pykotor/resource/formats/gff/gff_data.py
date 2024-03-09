@@ -190,7 +190,13 @@ class GFF:
                     )
                     self.print_tree(gff_struct, indent + 2)
 
-    def compare(self, other_gff: GFF, log_func: Callable = print, path: PureWindowsPath | None = None, ignore_default_changes: bool = False) -> bool:
+    def compare(
+        self,
+        other_gff: GFF,
+        log_func: Callable[[str], None] = print,
+        path: PureWindowsPath | None = None,
+        ignore_default_changes: bool = False,
+    ) -> bool:
         """Compare two GFF objects.
 
         Args:
@@ -209,7 +215,6 @@ class GFF:
             - Compare root nodes of both GFFs
             - Recursively compare child nodes
             - Log any differences found
-            - Write comparison report to given path if provided
             - Return True if no differences found, False otherwise.
         """
         return self.root.compare(other_gff.root, log_func, path, ignore_default_changes)

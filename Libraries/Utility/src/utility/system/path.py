@@ -520,7 +520,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
         else:
             return check
 
-    def is_relative_to(self, *args, **kwargs) -> bool:
+    def is_relative_to(self, *args: PathElem, **kwargs) -> bool:
         """Return True if the path is relative to another path or False."""
         if not args or "other" in kwargs:
             msg = f"{self.__class__.__name__}.is_relative_to() missing 1 required positional argument: 'other'"
