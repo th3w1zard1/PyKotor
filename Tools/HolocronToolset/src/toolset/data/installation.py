@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from PyQt5.QtGui import QImage, QPixmap, QTransform
 
@@ -76,6 +76,16 @@ class HTInstallation(Installation):
 
         self._cache2da: dict[str, TwoDA] = {}
         self._cacheTpc: dict[str, TPC] = {}
+
+    def __getstate__(self) -> dict[str, Any]:
+        # Only include the attributes that are necessary and safe to pickle
+        whitelist = ["texture", "textures", "_override", "_rims", "_texturepacks", "_chitin"]
+        return {attr: getattr(self, attr) for attr in whitelist}
+
+    def __setstate__(self, state):
+        # Restore the instance's state excluding mainWindow
+        self.__dict__.update(state)
+        # mainWindow can be reinitialized or set later if needed
 
     # region Cache 2DA
     def htGetCache2DA(self, resname: str):

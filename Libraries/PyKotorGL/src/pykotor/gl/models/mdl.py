@@ -41,13 +41,15 @@ class Model:
     def all_texture_names(self, cachedTpcs: dict[str, TPC]) -> set[str]:
         texture_names: set[str] = set()
 
-        def gather_textures(node: Node):
+        def gather_textures(node: Node, processed_nodes: set | None = None):
+            processed_nodes: set = processed_nodes or set()
             if node.mesh and node.mesh.texture != "NULL" and node.mesh.texture not in cachedTpcs:
                 texture_names.add(node.mesh.texture)
             if node.mesh and node.mesh.lightmap != "NULL" and node.mesh.lightmap not in cachedTpcs:
                 texture_names.add(node.mesh.lightmap)
             for child in node.children:
-                gather_textures(child)
+                gather_textures(child, processed_nodes)
+            processed_nodes.add(node)
 
         gather_textures(self.root)
         return texture_names

@@ -118,6 +118,11 @@ class Module:  # noqa: PLR0904
     def get_id(self) -> str:
         return self._root
 
+    def __getstate__(self) -> dict[str, Any]:
+        # Only include the attributes that are necessary and safe to pickle
+        whitelist = ["get_id", "texture", "resources", "_root"]
+        return {attr: getattr(self, attr) for attr in whitelist}
+
     @staticmethod
     def get_root(
         filepath: os.PathLike | str,

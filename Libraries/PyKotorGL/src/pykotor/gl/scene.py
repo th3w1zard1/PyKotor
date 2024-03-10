@@ -3,10 +3,10 @@ from __future__ import annotations
 import math
 import multiprocessing
 import os
+import queue
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from copy import copy
-import queue
+from copy import copy, deepcopy
 from threading import Lock, Thread
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -108,11 +108,50 @@ if TYPE_CHECKING:
     from pykotor.resource.generics.utc import UTC
     from pykotor.resource.generics.utd import UTD
     from pykotor.resource.generics.utp import UTP
+    from toolset.data.installation import HTInstallation
 
 SEARCH_ORDER_2DA: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
 SEARCH_ORDER: list[SearchLocation] = [SearchLocation.CUSTOM_MODULES, SearchLocation.OVERRIDE, SearchLocation.CHITIN]
 
 lock = Lock()
+
+class Loader:
+    def __init__(self, texname: str, installation: HTInstallation, module: Module):
+        self.texname: str = texname
+        self.installation: HTInstallation = installation
+        self.module: Module = module
+
+    def __call__(self) -> tuple[str, TPC | None]:
+        return find_tpc_task(self.texname, self.installation, self.module)
+
+def find_tpc_task(name: str, installation: HTInstallation, module: Module) -> tuple[str, TPC | None]:
+    """Like texture(name) but will return TPC instead of a opengl texture."""
+    tpc: TPC | None = None
+    if tpc is not None:
+        return name, tpc
+    try:
+        # Check the textures linked to the module first
+        if module is not None:
+            print(f"Loading tpc '{name}' from '{module.get_id()}'")
+            module_tex = module.texture(name)
+            tpc = module_tex.resource() if module_tex is not None else None
+
+        # Otherwise just search through all relevant game files
+        if tpc is None and installation:
+            print(f"Locating tpc '{name}' from override/bifs...")
+            tpc = installation.texture(name, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.CHITIN])
+        if tpc is None:
+            print(f"NOT FOUND ANYWHERE: Texture '{name}'")
+    except Exception as e:  # noqa: BLE001
+        print(e)
+        # If an error occurs during the loading process, just use a blank image.
+        tpc = None
+
+    print(f"Finished loading tpc '{name}'")
+    return name, tpc
+
+def func(this_loader: Callable[..., tuple[str, TPC]]) -> tuple[str, TPC]:
+    return this_loader()
 
 class Scene:
     SPECIAL_MODELS: ClassVar[list[str]] = ["waypoint", "store", "sound", "camera", "trigger", "encounter", "unknown"]
@@ -277,7 +316,7 @@ class Scene:
         rhand_obj.set_transform(hand_hook.global_transform())
         obj.children.append(rhand_obj)
 
-    def buildTextureCache(self, *obj_groups: list[RenderObject], mode: int = 1):
+    def buildTextureCache(self, *obj_groups: list[RenderObject], mode: int = 3):
         all_objs: list[RenderObject] = []
         print(f"Number of obj groups: {len(obj_groups)}")
         for group in obj_groups:
@@ -309,16 +348,12 @@ class Scene:
                     self._process_texture(texname, tpc)
         elif mode == 2:
             with multiprocessing.Pool(processes=max_workers) as pool:
-                def func(this_loader: Callable[..., tuple[str, TPC]]) -> tuple[str, TPC]:
-                    return this_loader()
                 async_result = pool.map_async(func, all_loaders)
                 results = async_result.get()
                 for texname, tpc in results:
                     self._process_texture(texname, tpc)
         elif mode == 3:
             with multiprocessing.Pool(processes=max_workers) as pool:
-                def func(this_loader: Callable[..., tuple[str, TPC]]) -> tuple[str, TPC]:
-                    return this_loader()
                 results = pool.map(func, all_loaders)
                 for texname, tpc in results:
                     self._process_texture(texname, tpc)
@@ -640,17 +675,22 @@ class Scene:
             result = True
         return result
 
-    def _load_model_textures(self, obj: RenderObject) -> set[Callable[..., tuple[str, TPC]]]:
+    def _load_model_textures(self, obj: RenderObject, processed_objs: set | None = None) -> set[Callable[..., tuple[str, TPC]]]:
+        processed_objs: set[RenderObject] = processed_objs or set()
         loaders = set()
+        if obj in processed_objs:
+            return loaders
         if self.should_hide_obj(obj):
             return loaders
 
         model: Model = self.model(obj.model)
         for texture_name in model.all_texture_names(self._tpc_cache):
-            loaders.add(lambda texname=texture_name: self.tpc(texname))
+            loader = Loader(texture_name, self.installation, self.module)
+            loaders.add(loader)
 
         for child in obj.children:
-            loaders.update(self._load_model_textures(child))
+            loaders.update(self._load_model_textures(child, processed_objs))
+        processed_objs.add(obj)
         return loaders
 
     def _render_object(self, shader: Shader, obj: RenderObject, transform: mat4):
@@ -771,34 +811,6 @@ class Scene:
 
         self.textures[name] = Texture.from_color(0xFF, 0, 0xFF) if tpc is None else Texture.from_tpc(tpc)
         return self.textures[name]
-
-    def tpc(self, name: str) -> tuple[str, TPC | None]:
-        """Like texture(name) but will return TPC instead of a opengl texture."""
-        tpc: TPC | None = None
-        with lock:
-            tpc = self._tpc_cache.get(name)
-        if tpc is not None:
-            return name, tpc
-        try:
-            # Check the textures linked to the module first
-            if self.module is not None:
-                print(f"Loading tpc '{name}' from '{self.module.get_id()}'")
-                module_tex = self.module.texture(name)
-                tpc = module_tex.resource() if module_tex is not None else None
-
-            # Otherwise just search through all relevant game files
-            if tpc is None and self.installation:
-                print(f"Locating tpc '{name}' from override/bifs...")
-                tpc = self.installation.texture(name, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.CHITIN])
-            if tpc is None:
-                print(f"NOT FOUND ANYWHERE: Texture '{name}'")
-        except Exception as e:  # noqa: BLE001
-            print(format_exception_with_variables(e))
-            # If an error occurs during the loading process, just use a blank image.
-            tpc = None
-
-        print(f"Finished loading tpc '{name}'")
-        return name, tpc
 
     def model(self, name: str) -> Model:
         mdl_data = EMPTY_MDL_DATA
