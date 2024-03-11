@@ -6,7 +6,7 @@ import os
 import queue
 
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-from copy import copy, deepcopy
+from copy import copy
 from threading import Lock, Thread
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -91,6 +91,7 @@ from pykotor.resource.generics.git import (
 from pykotor.resource.generics.uts import UTS
 from pykotor.resource.type import ResourceType
 from pykotor.tools import creature
+from toolset.gui.dialogs.asyncloader import FireAndForgetLoader
 from utility.error_handling import format_exception_with_variables
 
 if TYPE_CHECKING:
@@ -113,7 +114,7 @@ if TYPE_CHECKING:
 SEARCH_ORDER_2DA: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
 SEARCH_ORDER: list[SearchLocation] = [SearchLocation.CUSTOM_MODULES, SearchLocation.OVERRIDE, SearchLocation.CHITIN]
 
-lock = Lock()
+tpc_cache_lock = Lock()
 
 class Loader:
     def __init__(self, texname: str, installation: HTInstallation, module: Module):
@@ -139,7 +140,7 @@ def find_tpc_task(name: str, installation: HTInstallation, module: Module) -> tu
         # Otherwise just search through all relevant game files
         if tpc is None and installation:
             print(f"Locating tpc '{name}' from override/bifs...")
-            tpc = installation.texture(name, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.CHITIN])
+            tpc = installation.texture(name, [SearchLocation.CHITIN, SearchLocation.TEXTURES_TPA, SearchLocation.OVERRIDE])
         if tpc is None:
             print(f"NOT FOUND ANYWHERE: Texture '{name}'")
     except Exception as e:  # noqa: BLE001
@@ -185,7 +186,8 @@ class Scene:
         self.module: Module | None = module
         self.camera: Camera = Camera()
         self.cursor: RenderObject = RenderObject("cursor")
-        self._tpc_cache: dict[str, TPC] = {}
+        self._tpc_cache: dict[str, TPC | None] = {}
+        self._tpc_cache_task_running: bool = False
 
         self.textures["NULL"] = Texture.from_color()
 
@@ -316,7 +318,11 @@ class Scene:
         rhand_obj.set_transform(hand_hook.global_transform())
         obj.children.append(rhand_obj)
 
-    def buildTextureCache(self, *obj_groups: list[RenderObject], mode: int = 3):
+    def buildTextureCache(self, *obj_groups: list[RenderObject], mode: int = 7):
+        if self._tpc_cache_task_running:
+            print("Tpc cache already built/building.")
+            return
+        self._tpc_cache_task_running = True
         all_objs: list[RenderObject] = []
         print(f"Number of obj groups: {len(obj_groups)}")
         for group in obj_groups:
@@ -326,12 +332,11 @@ class Scene:
         for obj in all_objs:
             all_loaders.update(self._load_model_textures(obj))
         number_of_loaders = len(all_loaders)
-        print(f"\n\nGathered {number_of_loaders} texture loader callables.")
         if not number_of_loaders:
-            print("No tpcs to cache.")
             return
+        print(f"\n\nGathered {number_of_loaders} texture loader callables.")
         num_cores = os.cpu_count() or 1
-        max_workers = min(number_of_loaders or 1, num_cores) * 2
+        max_workers = min(number_of_loaders or 1, num_cores)
         print(f"Multithreading texture loading with {max_workers} workers")
 
         if mode == 0:
@@ -372,6 +377,31 @@ class Scene:
             while not result_queue.empty():
                 texname, tpc = result_queue.get()
                 self._process_texture(texname, tpc)
+        elif mode == 5:
+            def task():
+                for ldr in all_loaders:
+                    texname, tpc = ldr()
+                    self._process_texture(texname, tpc)
+            async_main_loader = FireAndForgetLoader(None, "Loading necessary textures...", task,
+                                                    "Error loading textures for the module designer.")
+            async_main_loader.setModal(False)
+            async_main_loader.show()
+        elif mode == 6:  # block main thread but load in bulk
+            with multiprocessing.Pool(processes=max_workers) as pool:
+                results = pool.map(func, all_loaders)
+                for texname, tpc in results:
+                    self._process_texture(texname, tpc)
+        elif mode == 7:  # load in bulk but don't block main thread
+            def background_task():
+                with multiprocessing.Pool(processes=max_workers) as pool:
+                    results = pool.map(func, all_loaders)
+                    for texname, tpc in results:
+                        self._process_texture(texname, tpc)
+            Thread(target=background_task).start()
+        elif mode == -1:
+            for loader in all_loaders:
+                texname, tpc = loader()
+                self._process_texture(texname, tpc)
 
         print("All loaders completed!")
 
@@ -381,7 +411,7 @@ class Scene:
                 print(f"'{texname}' already in tpc cache, skipping...")
                 return
             print(f"Adding '{texname}' to the cache...")
-            with lock:
+            with tpc_cache_lock:
                 self._tpc_cache[texname] = tpc
 
     def buildCache(self, *, clear_cache: bool = False):
@@ -601,9 +631,6 @@ class Scene:
             - Render cursor if shown.
         """
         self.buildCache()
-        group1: list[RenderObject] = [obj for obj in self.objects.values() if obj.model not in self.SPECIAL_MODELS]
-        group2: list[RenderObject] = [obj for obj in self.objects.values() if obj.model in self.SPECIAL_MODELS]
-        self.buildTextureCache(group1, group2)
 
         glClearColor(0.5, 0.5, 1, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
@@ -618,6 +645,7 @@ class Scene:
         self.shader.set_matrix4("view", self.camera.view())
         self.shader.set_matrix4("projection", self.camera.projection())
         self.shader.set_bool("enableLightmap", self.use_lightmap)
+        group1: list[RenderObject] = [obj for obj in self.objects.values() if obj.model not in self.SPECIAL_MODELS]
         for obj in group1:
             self._render_object(self.shader, obj, mat4())
 
@@ -627,6 +655,7 @@ class Scene:
         self.plain_shader.set_matrix4("view", self.camera.view())
         self.plain_shader.set_matrix4("projection", self.camera.projection())
         self.plain_shader.set_vector4("color", vec4(0.0, 0.0, 1.0, 0.4))
+        group2: list[RenderObject] = [obj for obj in self.objects.values() if obj.model in self.SPECIAL_MODELS]
         for obj in group2:
             self._render_object(self.plain_shader, obj, mat4())
 
@@ -653,6 +682,8 @@ class Scene:
             self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
             self._render_object(self.plain_shader, self.cursor, mat4())
 
+        self.buildTextureCache(group1, group2)
+
     def should_hide_obj(self, obj: RenderObject) -> bool:
         result = False
         if isinstance(obj.data, GITCreature) and self.hide_creatures:
@@ -676,7 +707,7 @@ class Scene:
         return result
 
     def _load_model_textures(self, obj: RenderObject, processed_objs: set | None = None) -> set[Callable[..., tuple[str, TPC]]]:
-        processed_objs: set[RenderObject] = processed_objs or set()
+        processed_objs = processed_objs or set()
         loaders = set()
         if obj in processed_objs:
             return loaders
@@ -785,27 +816,33 @@ class Scene:
         return Vector3(cursor.x, cursor.y, cursor.z)
 
     def texture(self, name: str) -> Texture:
+        with tpc_cache_lock:
+            tpc: TPC | None = self._tpc_cache.get(name, None)
+        if tpc is not None:  # Update the texture.
+            new_texture = Texture.from_tpc(tpc)
+            self.textures[name] = new_texture
+            with tpc_cache_lock:
+                self._tpc_cache[name] = None
         if name in self.textures:
             return self.textures[name]
-        tpc: TPC | None = self._tpc_cache.get(name)
-        if tpc is None:
-            print(f"tpc '{name}' somehow not in cache??")
-            try:
-                # Check the textures linked to the module first
-                if self.module is not None:
-                    print(f"Loading texture '{name}' from {self.module.get_id()}")
-                    module_tex = self.module.texture(name)
-                    tpc = module_tex.resource() if module_tex is not None else None
 
-                # Otherwise just search through all relevant game files
-                if tpc is None and self.installation:
-                    print(f"Locating texture '{name}' from override/bifs...")
-                    tpc = self.installation.texture(name, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.CHITIN])
-                    print(f"Finished checking installation for texture '{name}'")
-            except Exception as e:  # noqa: BLE001
-                print(format_exception_with_variables(e))
-                # If an error occurs during the loading process, just use a blank image.
-                tpc = None
+        # tpc is not in cache. This probably means it's still async-loading.
+        try:
+            # Check the textures linked to the module first
+            if self.module is not None:
+                print(f"Loading texture '{name}' from {self.module.get_id()}")
+                module_tex = self.module.texture(name)
+                tpc = module_tex.resource() if module_tex is not None else None
+
+            # Otherwise just search through all relevant game files
+            #if tpc is None and self.installation:
+            #    print(f"Locating texture '{name}' in tpa/bifs...")
+            #    tpc = self.installation.texture(name, [SearchLocation.TEXTURES_TPA, SearchLocation.CHITIN])
+            #    print(f"Finished checking installation for texture '{name}'")
+        except Exception as e:  # noqa: BLE001
+            print(format_exception_with_variables(e))
+            # If an error occurs during the loading process, just use a blank image.
+            tpc = None
         if tpc is None:
             print(f"NOT FOUND ANYWHERE: Texture '{name}'")
 

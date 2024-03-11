@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Callable
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, Qt, pyqtSignal
 from PyQt5.QtWidgets import QDialog, QLabel, QMessageBox, QProgressBar, QVBoxLayout
 
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception
@@ -11,8 +11,98 @@ from utility.system.path import Path
 
 if TYPE_CHECKING:
     from PyQt5.QtGui import QCloseEvent
-    from PyQt5.QtWidgets import QWidget
+    from PyQt5.QtWidgets import QMainWindow, QWidget
 
+
+class Worker(QThread):
+    successful = pyqtSignal(object)
+    failed = pyqtSignal(Exception)
+
+    def __init__(self, task: Callable, parent: QWidget | QMainWindow | QDialog | None = None):
+        super().__init__(parent)
+        self.task = task
+
+    def run(self):
+        try:
+            result = self.task()
+            self.successful.emit(result)
+        except Exception as error:
+            self.failed.emit(error)
+
+class FireAndForgetLoader(QDialog):
+    optionalFinishHook = pyqtSignal(object)
+    optionalErrorHook = pyqtSignal(object)
+
+    def __init__(
+        self,
+        parent: QWidget | None,
+        title: str,
+        task: Callable,
+        errorTitle: str | None = None,
+        *,
+        hidden: bool = False,
+        startImmediately: bool = True
+    ):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.errorTitle = errorTitle
+
+        self._setupUI()
+
+        self._worker = Worker(task)
+        self._worker.successful.connect(self._onSuccessful)
+        self._worker.failed.connect(self._onFailed)
+
+        if startImmediately:
+            self.startWorker()
+        if hidden:
+            self.hide()
+        else:
+            self.show()
+
+    def _setupUI(self):
+        self._progressBar = QProgressBar(self)
+        self._infoText = QLabel(self)
+
+        self._progressBar.setMinimum(0)
+        self._progressBar.setMaximum(0)
+        self._progressBar.setTextVisible(False)
+
+        self._infoText.setText("")
+        self._infoText.setVisible(False)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self._progressBar)
+        layout.addWidget(self._infoText)
+        self.setLayout(layout)
+
+        self.setFixedSize(260, 40)
+        self.setWindowFlag(Qt.WindowContextHelpButtonHint, False)
+
+    def startWorker(self):
+        self._worker.start()
+
+    def _onSuccessful(self, result: Any):
+        self.optionalFinishHook.emit(result)
+        self.accept()
+
+    def _onFailed(self, error: Exception):
+        self.optionalErrorHook.emit(error)
+        self._logError(error)
+        self.reject()
+
+    def _logError(self, error: Exception):
+        with Path("errorlog.txt").open("a", encoding="utf-8") as file:
+            lines = "".join(format_exception_with_variables(error, error.__class__, error.__traceback__))
+            file.writelines(lines)
+            file.write("\n----------------------\n")
+
+        if self.errorTitle:
+            QMessageBox.critical(self, self.errorTitle, str(error))
+
+    def closeEvent(self, event: QCloseEvent):
+        self._worker.terminate()
+        super().closeEvent(event)
 
 class AsyncLoader(QDialog):
     optionalFinishHook = QtCore.pyqtSignal(object)
@@ -20,11 +110,12 @@ class AsyncLoader(QDialog):
 
     def __init__(
         self,
-        parent: QWidget,
+        parent: QWidget | None,
         title: str,
         task: Callable,
         errorTitle: str | None = None,
         *,
+        hidden: bool = False,
         startImmediately: bool = True
     ):
         """Initializes a progress dialog.
@@ -74,6 +165,8 @@ class AsyncLoader(QDialog):
         self._worker.failed.connect(self._onFailed)
         if startImmediately:
             self.startWorker()
+        if hidden:
+            self.hide()
 
     def startWorker(self):
         self._worker.start()

@@ -28,8 +28,7 @@ from utility.error_handling import format_exception_with_variables
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtCore import QObject
-    from PyQt5.QtWidgets import QWidget
+    from PyQt5.QtWidgets import QMainWindow, QWidget
     from typing_extensions import Literal
 
     from pykotor.common.language import LocalizedString
@@ -47,7 +46,7 @@ class UTCEditor(Editor):
         parent: QWidget | None,
         installation: HTInstallation | None = None,
         *,
-        mainwindow: QWidget | QObject | None = None,
+        mainwindow: QMainWindow | None = None,
     ):
         """Initializes the Creature Editor window.
 

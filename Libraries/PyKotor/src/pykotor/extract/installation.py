@@ -1727,7 +1727,11 @@ class Installation:  # noqa: PLR0904
 
         return name or root
 
-    def module_names(self) -> dict[str, str]:
+    def module_names(
+        self,
+        *,
+        use_hardcoded: bool = True,
+    ) -> CaseInsensitiveDict[str]:
         """Returns a dictionary mapping module filename to the name of the area.
 
         The name is taken from the LocalizedString "Name" in the relevant module file's ARE resource.
@@ -1736,7 +1740,41 @@ class Installation:  # noqa: PLR0904
         -------
             A dictionary mapping module filename to in-game module area name.
         """
-        return {module: self.module_name(module) for module in self.modules_list()}
+        module_names: CaseInsensitiveDict[str] = CaseInsensitiveDict()
+        for module_filename in self.modules_list():
+            root: str = self.replace_module_extensions(module_filename)
+            capsule = Capsule(self.module_path() / module_filename)
+            capsule_info: FileResource | None = capsule.info("module", ResourceType.IFO)
+            if capsule_info is None:
+                module_names[module_filename] = root
+                continue
+
+            name: str = root
+            try:
+                ifo: GFF = read_gff(capsule_info.data())
+                tag: str = str(ifo.root.get_resref("Mod_Entry_Area"))
+                are_tag_resource: bytes | None = capsule.resource(tag, ResourceType.ARE)
+                if are_tag_resource is None:
+                    module_names[module_filename] = tag
+                    continue
+
+                are: GFF = read_gff(are_tag_resource)
+                locstring: LocalizedString = are.root.get_locstring("Name")
+                if locstring.stringref == -1:
+                    name = locstring.get(Language.ENGLISH, Gender.MALE) or tag
+                else:
+                    name = self.talktable().string(locstring.stringref)
+            except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
+                print(format_exception_with_variables(e, message="This exception has been suppressed in pykotor.extract.installation."))
+                module_names[module_filename] = ""
+            else:
+                module_names[module_filename] = name or ""
+
+        if use_hardcoded:
+            for filename, info_name in module_names.copy().items():
+                if PurePath(filename).stem.upper() in HARDCODED_MODULE_NAMES:
+                    module_names[filename] = info_name
+        return module_names
 
     def module_id(
         self,

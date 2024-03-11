@@ -727,12 +727,13 @@ class ToolWindow(QMainWindow):
             self.active.load_modules()
 
         areaNames: dict[str, str] = self.active.module_names()
+        sortFileNames = self.settings.useModuleFilenames
         sortedKeys: list[str] = sorted(
             areaNames,
             key=lambda moduleFileName:
             (
                 moduleFileName.lower()
-                if self.settings.useModuleFilenames
+                if sortFileNames
                 else areaNames.get(moduleFileName).lower()
             )
         )

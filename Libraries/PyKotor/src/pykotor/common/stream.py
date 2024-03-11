@@ -717,7 +717,7 @@ class BinaryReader:
         ------
             OSError: When the attempted read operation exceeds the number of remaining bytes.
         """
-        if self.position() + num > self.size():
+        if (self._stream.tell() - self._offset) + num > self._size:
             msg = "This operation would exceed the streams boundaries."
             raise OSError(msg)
 
