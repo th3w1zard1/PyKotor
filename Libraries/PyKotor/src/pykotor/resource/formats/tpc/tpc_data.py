@@ -46,6 +46,8 @@ class TPC:
         self.original_datatype_code: _DataTypes = _DataTypes.NO_IMAGE_DATA
 
         # TODO: cube maps
+        self._cubemap_size: int | None = None
+        self._mipmap_count: int | None = None
 
     def mipmap_count(
         self,
