@@ -5,50 +5,12 @@ import re
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.tpc.io_txi_post import process_tpc_animations_data, process_tpc_cubemaps_data
 from pykotor.resource.formats.tpc.tpc_data import TPC, TPCTextureFormat
 from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose
 
 if TYPE_CHECKING:
     from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES
-
-
-def _get_size(
-    width: int,
-    height: int,
-    tpc_format: TPCTextureFormat,
-) -> int | None:
-    """Calculates the size of a texture in bytes based on its format.
-
-    Args:
-    ----
-        width: int - Width of the texture in pixels
-        height: int - Height of the texture in pixels
-        tpc_format: TPCTextureFormat - Format of the texture
-
-    Returns:
-    -------
-        int - Size of the texture in bytes, or None if unknown format
-
-    Processing Logic:
-    ----------------
-        - Calculate size based on format:
-            - Greyscale: width * height * 1 byte per pixel
-            - RGB: width * height * 3 bytes per pixel
-            - RGBA: width * height * 4 bytes per pixel
-            - DXT1/DXT5: Compressed formats, size calculated differently
-        - Return None if invalid format.
-    """
-    if tpc_format is TPCTextureFormat.Greyscale:
-        return width * height * 1
-    if tpc_format is TPCTextureFormat.RGB:
-        return width * height * 3
-    if tpc_format is TPCTextureFormat.RGBA:
-        return width * height * 4
-    if tpc_format is TPCTextureFormat.DXT1:
-        return max(8, ((width + 3) // 4) * ((height + 3) // 4) * 8)
-    if tpc_format is TPCTextureFormat.DXT5:
-        return max(16, ((width + 3) // 4) * ((height + 3) // 4) * 16)
-    return None
 
 
 class TPCBinaryReader(ResourceReader):
@@ -57,9 +19,11 @@ class TPCBinaryReader(ResourceReader):
         source: SOURCE_TYPES,
         offset: int = 0,
         size: int = 0,
+        txi_lines: str | None = None,
     ):
         super().__init__(source, offset, size)
         self._tpc: TPC | None = None
+        self._txi_lines: str | None = None
 
     @autoclose
     def load(
@@ -100,22 +64,14 @@ class TPCBinaryReader(ResourceReader):
         if compressed:
             if color_depth == 2:
                 tpc_format = TPCTextureFormat.DXT1
-                min_size = 8
             elif color_depth == 4:
                 tpc_format = TPCTextureFormat.DXT5
-                min_size = 16
         elif color_depth == 1:
             tpc_format = TPCTextureFormat.Greyscale
-            size = width * height
-            min_size = 1
         elif color_depth == 2:
             tpc_format = TPCTextureFormat.RGB
-            size = width * height * 3
-            min_size = 3
         elif color_depth == 4:
             tpc_format = TPCTextureFormat.RGBA
-            size = width * height * 4
-            min_size = 4
 
         mipmaps: list[bytes] = []
         mm_width, mm_height = width, height
@@ -132,53 +88,26 @@ class TPCBinaryReader(ResourceReader):
         file_size = self._reader.size()
         txi = self._reader.read_string(file_size - self._reader.position(), encoding="ascii")
 
-        self._tpc.txi = txi
+        self._tpc.txi = self._txi_lines or txi
 
-        # Before setting the TPC data, check for cubemap or animated texture
-        if re.search(r"^\s*cube\s+1", txi, re.IGNORECASE):
-            print("make cubemap texture")
-            face_size = _get_size(self._tpc._width, self._tpc._width, self._tpc._texture_format) or min_size
-            self._tpc._cubemap_size = face_size * 6  # There are 6 faces in a cubemap
+        # Since animated textures don't use mipmaps in the same way, we store only the base level
+        cubemap_result = process_tpc_cubemaps_data(self, self._tpc.txi)
+        flipbook_result = process_tpc_animations_data(self, self._tpc.txi)
+        if cubemap_result is None and flipbook_result is None:
+            return self._tpc
+
+        if cubemap_result:
+            face_size, post_count = cubemap_result
+            #tpc_reader._tpc._cubemap_size = face_size * 6  # There are 6 faces in a cubemap. Assign this to a method at some point.
             # We'll store each face as a separate mipmap in the existing _mipmaps list
-            cubemap_mipmaps = [self._reader.read_bytes(face_size) for _ in range(6)]
-            self._tpc._mipmaps = cubemap_mipmaps
+            self._tpc._mipmaps = [self._reader.read_bytes(face_size) for _ in range(6)]
             # Recalculate the mipmap count for the cubemap based on one face's dimensions
-            self._tpc._mipmap_count = int(math.log(self._tpc._width, 2)) + 1
+            #tpc_reader._tpc._mipmap_count = int(math.log(tpc_reader._tpc._width, 2)) + 1
 
-        # Check for animated texture based on the TXI data
-        animated_match = re.search(r"^\s*proceduretype\s+cycle", txi, re.IGNORECASE)
-        if animated_match:
-            print("make animated texture")
-            # Extract the number of frames in the x and y directions
-            numx_match = re.search(r"^\s*numx\s+(\d+)", txi, re.IGNORECASE)
-            numy_match = re.search(r"^\s*numy\s+(\d+)", txi, re.IGNORECASE)
-            numx = int(numx_match.group(1)) if numx_match else 1
-            numy = int(numy_match.group(1)) if numy_match else 1
-
-            # Determine the default width and height of each frame
-            defwidth_match = re.search(r"^\s*defaultwidth\s+(\d+)", txi, re.IGNORECASE)
-            defheight_match = re.search(r"^\s*defaultheight\s+(\d+)", txi, re.IGNORECASE)
-            defwidth = int(defwidth_match.group(1)) if defwidth_match else width // numx
-            defheight = int(defheight_match.group(1)) if defheight_match else height // numy
-
-            # Ensure the default dimensions do not exceed the texture dimensions
-            defwidth = min(defwidth, width // numx)
-            defheight = min(defheight, height // numy)
-
-            # Compute the size for each frame, then for all frames, at each mipmap level
-            total_data_size = 0
-            w, h = defwidth, defheight
-            frame_count = numx * numy
-            while w >= 1 or h >= 1:
-                frame_size = _get_size(w, h, tpc_format) or min_size
-                total_data_size += frame_size * frame_count
-                w >>= 1
-                h >>= 1
-
-            # Since animated textures don't use mipmaps in the same way, we store only the base level
-            animated_mipmaps = [self._reader.read_bytes(frame_size) for _ in range(frame_count)]
-            self._tpc._mipmaps = animated_mipmaps
-            self._tpc._mipmap_count = 1  # Animated textures use a single mipmap level per frame
+        if flipbook_result:
+            post_size, post_count = flipbook_result
+            self._tpc._mipmaps = [self._reader.read_bytes(post_size) for _ in range(post_count)]
+            self._tpc._is_flipbook = True
 
         self._tpc.set_data(width, height, mipmaps, tpc_format)
 

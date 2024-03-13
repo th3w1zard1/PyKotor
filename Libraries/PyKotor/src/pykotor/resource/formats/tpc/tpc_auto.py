@@ -100,26 +100,30 @@ def read_tpc(
         An TPC instance.
     """
     file_format: ResourceType = detect_tpc(source, offset)
-
-    if file_format == ResourceType.TPC:
-        loaded_tpc = TPCBinaryReader(source, offset, size or 0).load()
-    elif file_format == ResourceType.TGA:
-        loaded_tpc = TPCTGAReader(source, offset, size or 0).load()
-    else:
+    if file_format not in {ResourceType.TPC, ResourceType.TGA}:
         msg = "Failed to determine the format of the TPC/TGA file."
         raise ValueError(msg)
+
+    txi_text: str | None = None
+    txi_exists: bool | None = None
     if txi_source is None and isinstance(source, (os.PathLike, str)):
         txi_source = CaseAwarePath.pathify(source).with_suffix(".txi")
-        if not txi_source.safe_isfile():
-            return loaded_tpc
-
-    elif isinstance(txi_source, (os.PathLike, str)):
+        txi_exists = txi_source.safe_isfile()
+    if isinstance(txi_source, (os.PathLike, str)):
         txi_source = CaseAwarePath.pathify(txi_source).with_suffix(".txi")
+        txi_exists = txi_source.safe_isfile()
+        if not txi_exists:
+            raise FileNotFoundError(txi_source)
+    if txi_exists and isinstance(txi_source, CaseAwarePath):
+        with BinaryReader.from_auto(txi_source) as f:
+            txi_text = f.read_all().decode(encoding="ascii", errors="ignore")
 
-    if txi_source is None:
-        return loaded_tpc
-    with BinaryReader.from_auto(txi_source) as f:
-        loaded_tpc.txi = f.read_all().decode(encoding="ascii", errors="ignore")
+    txi_text = txi_text.strip() if txi_text and txi_text.strip() else None
+    if file_format == ResourceType.TPC:
+        loaded_tpc = TPCBinaryReader(source, offset, size or 0, txi_text).load()
+    elif file_format == ResourceType.TGA:
+        loaded_tpc = TPCTGAReader(source, offset, size or 0, txi_text).load()
+
     return loaded_tpc
 
 

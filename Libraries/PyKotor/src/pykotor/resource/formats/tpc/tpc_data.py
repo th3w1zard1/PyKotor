@@ -6,6 +6,7 @@ import itertools as tpc_itertools
 
 from enum import IntEnum
 from typing import NamedTuple, Tuple, cast
+from typing_extensions import Literal
 
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.type import ResourceType
@@ -39,8 +40,8 @@ class TPC:
     ):
         self._texture_format: TPCTextureFormat = TPCTextureFormat.RGB
         self._mipmaps: list[bytes] = [bytes(0 for _ in range(4 * 4 * 3))]
-        self._width: int = 4
-        self._height: int = 4
+        self._width: int = 1
+        self._height: int = 1
         self.txi: str = ""
         from pykotor.resource.formats.tpc.io_tga import _DataTypes
         self.original_datatype_code: _DataTypes = _DataTypes.NO_IMAGE_DATA
@@ -201,6 +202,45 @@ class TPC:
             flipped_data[dest_start:dest_start + row_length] = data[source_start:source_end]
 
         return bytes(flipped_data)
+
+    @staticmethod
+    def _get_size(
+        width: int,
+        height: int,
+        tpc_format: TPCTextureFormat,
+    ) -> int | None:
+        """Calculates the size of a texture in bytes based on its format.
+
+        Args:
+        ----
+            width: int - Width of the texture in pixels
+            height: int - Height of the texture in pixels
+            tpc_format: TPCTextureFormat - Format of the texture
+
+        Returns:
+        -------
+            int - Size of the texture in bytes, or None if unknown format
+
+        Processing Logic:
+        ----------------
+            - Calculate size based on format:
+                - Greyscale: width * height * 1 byte per pixel
+                - RGB: width * height * 3 bytes per pixel
+                - RGBA: width * height * 4 bytes per pixel
+                - DXT1/DXT5: Compressed formats, size calculated differently
+            - Return None if invalid format.
+        """
+        if tpc_format is TPCTextureFormat.Greyscale:
+            return width * height * 1
+        if tpc_format is TPCTextureFormat.RGB:
+            return width * height * 3
+        if tpc_format is TPCTextureFormat.RGBA:
+            return width * height * 4
+        if tpc_format is TPCTextureFormat.DXT1:
+            return max(8, ((width + 3) // 4) * ((height + 3) // 4) * 8)
+        if tpc_format is TPCTextureFormat.DXT5:
+            return max(16, ((width + 3) // 4) * ((height + 3) // 4) * 16)
+        return None
 
     def set_single(
         self,
@@ -780,12 +820,37 @@ class TPCTextureFormat(IntEnum):
     RGB = 1
     RGBA = 2
     DXT1 = 3
-    DXT5 = 4
+    DXT3 = 4
+    DXT5 = 5
 
-    def bytes_per_pixel(self):
-        bytes_per_pixel = 0
+    def bytes_per_pixel(self) -> float | Literal[1, 3, 4]:
+        bytes_per_pixel = -1
         if self == TPCTextureFormat.Greyscale:
             bytes_per_pixel = 1
-        elif self in {TPCTextureFormat.RGB, TPCTextureFormat.RGBA}:
-            bytes_per_pixel = 4 if self == TPCTextureFormat.RGBA else 3
+        elif self == TPCTextureFormat.RGB:
+            bytes_per_pixel = 3
+        elif self == TPCTextureFormat.RGBA:
+            bytes_per_pixel = 4
+
+        # None of these DXT checks have any real usage but are provided for completion.
+        elif self == TPCTextureFormat.DXT1:
+            bytes_per_pixel = 0.5  # DXT1 has an effective 0.5 bytes per pixel in a 4x4 block.
+        elif self in {TPCTextureFormat.DXT3, TPCTextureFormat.DXT5}:
+            bytes_per_pixel = 1  # DXT3 and DXT5 have an effective 1 byte per pixel in a 4x4 block.
         return bytes_per_pixel
+
+    def min_size(self) -> Literal[8, 16, 1, 3, 4]:
+        min_size = -1
+        if self == TPCTextureFormat.DXT1:
+            min_size = 8
+        elif self in {TPCTextureFormat.DXT3, TPCTextureFormat.DXT5}:
+            min_size = 16
+        elif self == TPCTextureFormat.Greyscale:
+            min_size = 1
+        elif self == TPCTextureFormat.RGB:
+            min_size = 3
+        elif self == TPCTextureFormat.RGBA:
+            min_size = 4
+        if min_size == -1:
+            raise ValueError(f"{self!r} does not define a minimum size")
+        return min_size

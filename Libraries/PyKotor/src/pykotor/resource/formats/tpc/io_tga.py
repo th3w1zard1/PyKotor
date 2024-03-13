@@ -31,9 +31,11 @@ class TPCTGAReader(ResourceReader):
         source: SOURCE_TYPES,
         offset: int = 0,
         size: int = 0,
+        txi_lines: str | None = None
     ):
         super().__init__(source, offset, size)
         self._tpc: TPC | None = None
+        self._txi_lines: str | None = None
 
     def _read_color_map(
         self,
