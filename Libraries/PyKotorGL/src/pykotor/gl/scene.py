@@ -74,7 +74,6 @@ from pykotor.gl.shader import (
     Texture,
 )
 from pykotor.resource.formats.lyt import LYTRoom
-from pykotor.resource.formats.tpc import TPC
 from pykotor.resource.formats.twoda import TwoDA, read_2da
 from pykotor.resource.generics.git import (
     GITCamera,
@@ -105,6 +104,7 @@ if TYPE_CHECKING:
     from pykotor.extract.installation import Installation
     from pykotor.gl.models.mdl import Model, Node
     from pykotor.resource.formats.lyt import LYT
+    from pykotor.resource.formats.tpc import TPC
     from pykotor.resource.generics.git import GIT
     from pykotor.resource.generics.utc import UTC
     from pykotor.resource.generics.utd import UTD
@@ -128,8 +128,6 @@ class Loader:
 def find_tpc_task(name: str, installation: HTInstallation, module: Module) -> tuple[str, TPC | None]:
     """Like texture(name) but will return TPC instead of a opengl texture."""
     tpc: TPC | None = None
-    if tpc is not None:
-        return name, tpc
     try:
         # Check the textures linked to the module first
         if module is not None:
@@ -318,7 +316,7 @@ class Scene:
         rhand_obj.set_transform(hand_hook.global_transform())
         obj.children.append(rhand_obj)
 
-    def buildTextureCache(self, *obj_groups: list[RenderObject], mode: int = 7):
+    def buildTextureCache(self, *obj_groups: list[RenderObject], mode: int = 0):
         if self._tpc_cache_task_running:
             print("Tpc cache already built/building.")
             return
