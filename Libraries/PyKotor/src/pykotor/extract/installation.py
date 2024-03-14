@@ -382,7 +382,7 @@ class Installation:
         self,
         folder_names: tuple[str, ...] | str,
         *,
-        optional: bool = False,
+        optional: bool = True,
     ) -> CaseAwarePath:
         """Finds the path to a resource folder.
 
@@ -435,7 +435,7 @@ class Installation:
 
             resname: str
             restype: ResourceType
-            resname, restype = ResourceIdentifier.from_path(filepath)
+            resname, restype = ResourceIdentifier.from_path(filepath).unpack()
             if restype.is_invalid:
                 return filepath, None
 
