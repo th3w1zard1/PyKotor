@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from PyQt5.QtWidgets import QDialog
 
+from pykotor.extract.file import ResourceIdentifier
 from pykotor.resource.type import ResourceType
 
 
@@ -25,3 +26,6 @@ class SaveToModuleDialog(QDialog):
 
     def restype(self) -> ResourceType:
         return ResourceType.from_extension(self.ui.typeCombo.currentText().lower())
+
+    def identifier(self) -> ResourceIdentifier:
+        return ResourceIdentifier(self.resname(), self.restype())

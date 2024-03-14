@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import os
-
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING, Callable, NoReturn
 
 from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import QFileDialog, QLineEdit, QMainWindow, QMessageBox, QPlainTextEdit, QShortcut
 
@@ -29,12 +28,13 @@ from utility.error_handling import assert_with_variable_trace, format_exception_
 from utility.system.path import Path
 
 if TYPE_CHECKING:
+    import os
+
     from PyQt5.QtWidgets import QWidget
 
     from pykotor.common.language import LocalizedString
     from pykotor.resource.formats.rim.rim_data import RIM
     from toolset.data.installation import HTInstallation
-
 
 # TODO: Creating a child editor from this class is not intuitive, document the requirements at some point.
 class Editor(QMainWindow):
@@ -46,6 +46,11 @@ class Editor(QMainWindow):
     newFile = QtCore.pyqtSignal()
     savedFile = QtCore.pyqtSignal(object, object, object, object)
     loadedFile = QtCore.pyqtSignal(object, object, object, object)
+
+    class EditorNotReadyError(AttributeError):
+        """Exception raised when the editor's filepath is not yet set, assumed to mean the editor has unsaved changes from a new creation."""
+        def __init__(self, message="The editor must be saved first.", *args, **kwargs):
+            super().__init__(message, *args, **kwargs)
 
     def __init__(
         self,
@@ -67,7 +72,7 @@ class Editor(QMainWindow):
             readSupported: list[ResourceType]: The supported resource types for reading
             writeSupported: list[ResourceType]: The supported resource types for writing
             installation: HTInstallation | None: The installation context
-            mainwindow: QMainWindow | None: The main window
+            mainWindow: QMainWindow | None: The main window
 
         Initializes editor properties:
             - Sets up title, icon and parent widget
@@ -159,6 +164,62 @@ class Editor(QMainWindow):
         iconPath = f":/images/icons/k{iconVersion}/{iconName}.png"
         self.setWindowIcon(QIcon(QPixmap(iconPath)))
 
+    def handleEditorNotReady(self, attr_name: str | None = None) -> None | NoReturn:
+        choice = QMessageBox.question(  # TODO(th3w1zard1): determine if this message is correct. Not sure this'll always hold true.
+            self,
+            "Editor contains unsaved changes.",
+            "Save your current work first, or abort?",
+            QMessageBox.Abort | QMessageBox.Save,
+            QMessageBox.Abort
+        )
+        if choice == QMessageBox.Save:
+            self.saveAs()
+            choice = QMessageBox.question(
+                self,
+                "Continue last action?",
+                "Would you like to resume your last action,before we prompted you to save?",
+                QMessageBox.Abort | QMessageBox.Ok,
+                QMessageBox.Abort
+            )
+        if choice != QMessageBox.Ok:
+            # Cancel whatever action failed due to editor not being ready.
+            if attr_name is None:
+                raise self.EditorNotReadyError
+            raise self.EditorNotReadyError(attr_name)
+
+    def installation(self) -> HTInstallation:
+        from toolset.gui.windows.main import InstallationNotLoadedError  # Prevent circular imports
+        if self._installation is None:
+            msgBox = QMessageBox(
+                QMessageBox.Critical,
+                "No installation loaded.",
+                (
+                    "This action requires an active installation to be loaded<br>"
+                    "If this message is being shown in error please check the 'errorlog.txt' file."
+                ),
+                parent=self
+            )
+            # Set it to delete itself after being closed to avoid memory leaks
+            msgBox.setAttribute(Qt.WA_DeleteOnClose)
+            msgBox.show()
+            raise InstallationNotLoadedError
+        return self._installation
+
+    def resname(self) -> str:
+        if self._resname is None:
+            raise self.EditorNotReadyError
+        return self._resname
+
+    def restype(self) -> ResourceType:
+        if self._restype is None:
+            raise self.EditorNotReadyError
+        return self._restype
+
+    def filepath(self) -> Path:
+        if self._filepath is None:
+            raise self.EditorNotReadyError
+        return self._filepath
+
     def refreshWindowTitle(self):
         """Refreshes the window title based on the current state.
 
@@ -173,14 +234,14 @@ class Editor(QMainWindow):
 
         if self._filepath is None:
             self.setWindowTitle(self._editorTitle)
-        elif is_capsule_file(self._filepath.name):
-            assert self._restype is not None
-            self.setWindowTitle(f"{self._filepath.name}/{self._resname}.{self._restype.extension} - {installationName} - {self._editorTitle}")
+            return
+
+        if is_capsule_file(self._filepath.name):
+            self.setWindowTitle(f"{self._filepath.name}/{self.resname()}.{self.restype()} - {installationName} - {self._editorTitle}")
         else:
-            assert self._restype is not None
             hierarchy: tuple[str, ...] = self._filepath.parts
             folder = f"{hierarchy[-2]}/" if len(hierarchy) >= 2 else ""
-            self.setWindowTitle(f"{folder}{self._resname}.{self._restype.extension} - {installationName} - {self._editorTitle}")
+            self.setWindowTitle(f"{folder}{self.resname()}.{self.restype().extension} - {installationName} - {self._editorTitle}")
 
     def saveAs(self):
         """Saves the file with the selected filepath.
@@ -198,15 +259,12 @@ class Editor(QMainWindow):
         filepath_str, _filter = QFileDialog.getSaveFileName(self, "Save As", "", self._saveFilter, "")
         if not filepath_str:
             return
-        try:
-            identifier = ResourceIdentifier.from_path(filepath_str).validate()
-        except ValueError as e:
-            print(format_exception_with_variables(e))
-            error_msg = str(universal_simplify_exception(e)).replace("\n", "<br>")
+        identifier = ResourceIdentifier.from_path(filepath_str)
+        if identifier.restype.is_invalid:
             QMessageBox(
                 QMessageBox.Critical,
-                "Invalid filename/extension",
-                f"Check the filename and try again. Could not save!<br><br>{error_msg}",
+                "Could not save!",
+                "Invalid filename. Check the file extension and try again.",
             ).exec_()
             return
 
@@ -301,7 +359,7 @@ class Editor(QMainWindow):
                 self._filepath = r_filepath
                 self.save()
         elif dialog.option == BifSaveOption.Override:
-            self._filepath = self._installation.override_path() / f"{self._resname}.{self._restype.extension}"
+            self._filepath = self.installation().override_path() / f"{self.resname()}.{self.restype().extension}"
             self.save()
         else:
             print(f"User closed out of BifSaveDialog in _saveEndsWithBif (({self._resname}.{self._restype}))")
@@ -321,25 +379,21 @@ class Editor(QMainWindow):
             - Writes data to RIM file
             - Updates installation cache.
         """  # sourcery skip: class-extract-method
-        assert self._filepath is not None, assert_with_variable_trace(self._filepath is not None)
-        assert self._resname is not None, assert_with_variable_trace(self._resname is not None)
-        assert self._restype is not None, assert_with_variable_trace(self._restype is not None)
-
         if self._global_settings.disableRIMSaving:
             dialog = RimSaveDialog(self)
             dialog.exec_()
             if dialog.option == RimSaveOption.MOD:
-                folderpath: Path = self._filepath.parent
-                filename: str = f"{Module.get_root(self._filepath)}.mod"
+                folderpath: Path = self.filepath().parent
+                filename: str = f"{Module.get_root(self.filepath())}.mod"
                 self._filepath = folderpath / filename
                 # Re-save with the updated filepath
                 self.save()
             elif dialog.option == RimSaveOption.Override:
-                self._filepath = self._installation.override_path() / f"{self._resname}.{self._restype.extension}"
+                self._filepath = self.installation().override_path() / f"{self._resname}.{self._restype.extension}"
                 self.save()
             return
 
-        rim: RIM = read_rim(self._filepath)
+        rim: RIM = read_rim(self.filepath())
 
         # MDL is a special case - we need to save the MDX file with the MDL file.
         if self._restype == ResourceType.MDL:
@@ -355,11 +409,7 @@ class Editor(QMainWindow):
             self._installation.reload_module(self._filepath.name)
 
     def _saveNestedCapsule(self, data: bytes, data_ext: bytes):
-        assert self._filepath is not None, assert_with_variable_trace(self._filepath is not None)
-        assert self._resname is not None, assert_with_variable_trace(self._resname is not None)
-        assert self._restype is not None, assert_with_variable_trace(self._restype is not None)
-
-        c_filepath: CaseAwarePath = CaseAwarePath.pathify(self._filepath)
+        c_filepath: CaseAwarePath = CaseAwarePath.pathify(self.filepath())
         nested_capsule_idents: list[ResourceIdentifier] = []
         if is_any_erf_type_file(c_filepath) or is_rim_file(c_filepath):
             nested_capsule_idents.append(ResourceIdentifier.from_path(c_filepath))
@@ -387,10 +437,10 @@ class Editor(QMainWindow):
         for index, (res_ident, this_erf_or_rim) in enumerate(reversed(nested_capsules)):
             if index == 0:
                 if self._is_capsule_editor:
-                    print(f"Not saving '{self._resname}.{self._restype}' to '{res_ident}', is ERF/RIM editor save.")
+                    print(f"Not saving '{self.resname()}.{self.restype()}' to '{res_ident}', is ERF/RIM editor save.")
                     continue
                 print(f"Saving '{self._resname}.{self._restype}' to '{res_ident}'")
-                this_erf_or_rim.set_data(self._resname, self._restype, data)
+                this_erf_or_rim.set_data(self.resname(), self.restype(), data)
                 continue
             child_index = len(nested_capsules) - index
             child_res_ident, child_erf_or_rim = nested_capsules[child_index]
@@ -583,6 +633,3 @@ class Editor(QMainWindow):
             assert self._installation is not None
             setText(self._installation.talktable().string(locstring.stringref))
             textbox.setStyleSheet(className + " {background-color: #fffded;}")
-
-    def filepath(self) -> str | None:
-        return str(self._filepath)

@@ -25,7 +25,7 @@ from toolset.utils.window import openResourceEditor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QMainWindow, QWidget
+    from PyQt5.QtWidgets import QWidget
 
     from pykotor.extract.file import ResourceResult
     from pykotor.resource.formats.twoda.twoda_data import TwoDA
@@ -37,7 +37,7 @@ class UTPEditor(Editor):
         parent: QWidget | None,
         installation: HTInstallation | None = None,
         *,
-        mainWindow: QWidget | QMainWindow | None = None,
+        mainWindow: QWidget | None = None,
     ):
         """Initialize Placeable Editor.
 

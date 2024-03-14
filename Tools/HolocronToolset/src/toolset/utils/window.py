@@ -13,8 +13,6 @@ from utility.error_handling import universal_simplify_exception
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QMainWindow
-
     from gui.editor import Editor
     from toolset.data.installation import HTInstallation
 
@@ -38,10 +36,10 @@ def openResourceEditor(
     restype: ResourceType,
     data: bytes,
     installation: HTInstallation | None = None,
-    parentWindow: QWidget | QMainWindow | None = None,
+    parentWindow: QWidget | None = None,
     *,
     gff_specialized: bool | None = None,
-) -> tuple[os.PathLike | str, Editor | QMainWindow] | tuple[None, None]:
+) -> tuple[os.PathLike | str, Editor | QWidget] | tuple[None, None]:
     """Opens an editor for the specified resource.
 
     If the user settings have the editor set to inbuilt it will return
@@ -120,7 +118,8 @@ def openResourceEditor(
             QMessageBox.warning(parentWindowWidget, "No installation loaded", "The toolset cannot use its full nss editor features until you select an installation.")
             editor = TXTEditor(None, installation)
         else:
-            QMessageBox.warning(parentWindowWidget, "Cannot decompile NCS without an installation active", "Please select an installation from the dropdown before loading an NCS.")
+            QMessageBox.warning(parentWindowWidget, "Cannot decompile NCS without an installation active",
+                                "Please select an installation from the dropdown before loading an NCS.")
             return None, None
 
     if restype in {ResourceType.DLG, ResourceType.DLG_XML}:

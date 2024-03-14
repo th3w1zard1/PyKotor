@@ -368,7 +368,7 @@ class ModuleDesigner(QMainWindow):  # noqa: PLR0904
         self.ui.resourceTree.setSortingEnabled(True)
 
     def openModuleResource(self, resource: ModuleResource):
-        editor: Editor | QMainWindow | None = openResourceEditor(resource.active(), resource.resname(), resource.restype(),
+        editor: Editor | QWidget | None = openResourceEditor(resource.active(), resource.resname(), resource.restype(),
                                                                  resource.data(), self._installation, self)[1]
 
         if editor is None:

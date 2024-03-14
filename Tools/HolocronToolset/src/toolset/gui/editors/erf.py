@@ -225,7 +225,7 @@ class ERFEditor(Editor):
             # saveNested currently broken.
             return
             self._saveNestedCapsule(*data)
-        else:
+        else:  # noqa: RET505
             with self._filepath.open("wb") as file:
                 file.write(data[0])
 
