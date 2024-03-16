@@ -17,7 +17,7 @@ from utility.error_handling import format_exception_with_variables
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget
 
     from pykotor.common.misc import CaseInsensitiveDict
     from pykotor.resource.formats.gff.gff_data import GFF

@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING
 
 import requests
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QPointF, QRectF, QTimer, Qt
-from PyQt5.QtGui import (
+from PySide2 import QtCore
+from PySide2.QtCore import QPointF, QRectF, QTimer, Qt
+from PySide2.QtGui import (
     QColor,
     QKeySequence,
     QPainter,
@@ -22,7 +22,7 @@ from PyQt5.QtGui import (
     QPixmap,
     QTransform,
 )
-from PyQt5.QtWidgets import (
+from PySide2.QtWidgets import (
     QDialog,
     QFileDialog,
     QListWidgetItem,
@@ -50,15 +50,15 @@ from utility.system.path import Path, PurePath
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtCore import QPoint
-    from PyQt5.QtGui import (
+    from PySide2.QtCore import QPoint
+    from PySide2.QtGui import (
         QImage,
         QKeyEvent,
         QMouseEvent,
         QPaintEvent,
         QWheelEvent,
     )
-    from PyQt5.QtWidgets import (
+    from PySide2.QtWidgets import (
         QFormLayout,
     )
 
@@ -442,19 +442,19 @@ class IndoorMapBuilder(QMainWindow):
 
 
 class IndoorMapRenderer(QWidget):
-    mouseMoved = QtCore.pyqtSignal(object, object, object, object)  # screen coords, screen delta, mouse, keys
+    mouseMoved = QtCore.Signal(object, object, object, object)  # screen coords, screen delta, mouse, keys
     """Signal emitted when mouse is moved over the widget."""
 
-    mouseScrolled = QtCore.pyqtSignal(object, object, object)  # screen delta, mouse, keys
+    mouseScrolled = QtCore.Signal(object, object, object)  # screen delta, mouse, keys
     """Signal emitted when mouse is scrolled over the widget."""
 
-    mouseReleased = QtCore.pyqtSignal(object, object, object)  # screen coords, mouse, keys
+    mouseReleased = QtCore.Signal(object, object, object)  # screen coords, mouse, keys
     """Signal emitted when a mouse button is released after being pressed on the widget."""
 
-    mousePressed = QtCore.pyqtSignal(object, object, object)  # screen coords, mouse, keys
+    mousePressed = QtCore.Signal(object, object, object)  # screen coords, mouse, keys
     """Signal emitted when a mouse button is pressed on the widget."""
 
-    mouseDoubleClicked = QtCore.pyqtSignal(object, object, object)  # screen coords, mouse, keys
+    mouseDoubleClicked = QtCore.Signal(object, object, object)  # screen coords, mouse, keys
     """Signal emitted when a mouse button is double clicked on the widget."""
 
     def __init__(self, parent: QWidget):

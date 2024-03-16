@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QWidget
+from PySide2 import QtCore
+from PySide2.QtWidgets import QWidget
 
 from toolset.gui.widgets.settings.installations import GlobalSettings
 
 
 class MiscWidget(QWidget):
-    editedSignal = QtCore.pyqtSignal()
+    editedSignal = QtCore.Signal()
 
     def __init__(self, parent: QWidget):
         super().__init__(parent)

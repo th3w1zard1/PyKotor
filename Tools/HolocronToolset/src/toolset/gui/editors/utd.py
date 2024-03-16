@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from PyQt5.QtWidgets import QMessageBox
+from PySide2.QtWidgets import QMessageBox
 
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryWriter
@@ -21,8 +21,8 @@ from toolset.utils.window import openResourceEditor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtCore import QObject
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtCore import QObject
+    from PySide2.QtWidgets import QWidget
 
     from pykotor.extract.file import ResourceResult
     from pykotor.resource.formats.twoda.twoda_data import TwoDA

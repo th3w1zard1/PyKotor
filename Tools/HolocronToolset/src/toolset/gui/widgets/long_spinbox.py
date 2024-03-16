@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QAbstractSpinBox
+from PySide2 import QtCore
+from PySide2.QtWidgets import QAbstractSpinBox
 
 
 class LongSpinBox(QAbstractSpinBox):
     """Implementation of QAbstractSpinBox that allows for values that exceed a signed 32-bit integer."""
 
-    valueChanged = QtCore.pyqtSignal(object)
+    valueChanged = QtCore.Signal(object)
 
     def __init__(self, parent):
         super().__init__(parent)

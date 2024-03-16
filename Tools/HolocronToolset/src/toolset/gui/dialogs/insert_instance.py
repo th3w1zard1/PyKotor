@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QDialog, QDialogButtonBox, QListWidgetItem
+from PySide2 import QtCore
+from PySide2.QtGui import QColor
+from PySide2.QtWidgets import QDialog, QDialogButtonBox, QListWidgetItem
 
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryWriter
@@ -24,7 +24,7 @@ from toolset.gui.widgets.settings.installations import GlobalSettings
 from utility.system.path import Path
 
 if TYPE_CHECKING:
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget
 
     from pykotor.common.module import Module
     from pykotor.extract.file import FileResource

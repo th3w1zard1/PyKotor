@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QUrl
-from PyQt5.QtGui import QDesktopServices, QKeySequence
+from PySide2 import QtCore
+from PySide2.QtCore import QUrl
+from PySide2.QtGui import QDesktopServices, QKeySequence
 
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.formats.erf import read_erf

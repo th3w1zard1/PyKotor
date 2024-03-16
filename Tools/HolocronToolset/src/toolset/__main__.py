@@ -10,8 +10,8 @@ import traceback
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QThread
-from PyQt5.QtWidgets import QApplication
+from PySide2.QtCore import QThread
+from PySide2.QtWidgets import QApplication
 
 if TYPE_CHECKING:
     from types import TracebackType

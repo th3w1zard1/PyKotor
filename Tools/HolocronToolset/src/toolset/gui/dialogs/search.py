@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Callable, Generator
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QDialog, QListWidgetItem
+from PySide2 import QtCore
+from PySide2.QtWidgets import QDialog, QListWidgetItem
 
 from pykotor.extract.file import FileResource
 from pykotor.resource.type import ResourceType
@@ -13,7 +13,7 @@ from toolset.gui.dialogs.asyncloader import AsyncBatchLoader
 from toolset.utils.window import openResourceEditor
 
 if TYPE_CHECKING:
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget
 
 @dataclass
 class FileSearchQuery:
@@ -30,7 +30,7 @@ class FileSearchQuery:
 
 class FileSearcher(QDialog):
 
-    fileResults = QtCore.pyqtSignal(list, HTInstallation)
+    fileResults = QtCore.Signal(list, HTInstallation)
 
     def __init__(self, parent: QWidget | None, installations: dict[str, HTInstallation]):
         super().__init__(parent)
@@ -147,7 +147,7 @@ class FileSearcher(QDialog):
 
 
 class FileResults(QDialog):
-    selectionSignal = QtCore.pyqtSignal(FileResource)
+    selectionSignal = QtCore.Signal(FileResource)
 
     def __init__(
         self,

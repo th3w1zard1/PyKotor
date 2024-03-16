@@ -6,8 +6,8 @@ import sys
 import unittest
 
 try:
-    from PyQt5.QtTest import QTest
-    from PyQt5.QtWidgets import QApplication
+    from PySide2.QtTest import QTest
+    from PySide2.QtWidgets import QApplication
 except (ImportError, ModuleNotFoundError):
     QTest, QApplication = None, None  # type: ignore[misc, assignment]
 
@@ -49,7 +49,7 @@ from pykotor.resource.type import ResourceType
 )
 @unittest.skipIf(
     QTest is None or not QApplication,
-    "PyQt5 is required, please run pip install -r requirements.txt before running this test.",
+    "PySide2 is required, please run pip install -r requirements.txt before running this test.",
 )
 class UTWEditorTest(unittest.TestCase):
     @classmethod

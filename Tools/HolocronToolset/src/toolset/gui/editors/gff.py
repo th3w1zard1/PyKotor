@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QSortFilterProxyModel
-from PyQt5.QtGui import QBrush, QColor, QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QFileDialog, QListWidgetItem, QMenu, QShortcut
+from PySide2 import QtCore
+from PySide2.QtCore import QSortFilterProxyModel
+from PySide2.QtGui import QBrush, QColor, QStandardItem, QStandardItemModel
+from PySide2.QtWidgets import QFileDialog, QListWidgetItem, QMenu, QShortcut
 
 from pykotor.common.geometry import Vector3, Vector4
 from pykotor.common.language import Gender, Language, LocalizedString
@@ -18,8 +18,8 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtCore import QItemSelectionRange, QModelIndex
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtCore import QItemSelectionRange, QModelIndex
+    from PySide2.QtWidgets import QWidget
 
     from toolset.data.installation import HTInstallation
 

@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QComboBox, QMenu
+from PySide2 import QtCore
+from PySide2.QtWidgets import QComboBox, QMenu
 
 from toolset.gui.dialogs.edit.combo_2da import ModdedValueSpinboxDialog
 
 if TYPE_CHECKING:
-    from PyQt5.QtCore import QPoint
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtCore import QPoint
+    from PySide2.QtWidgets import QWidget
 
 
 class ComboBox2DA(QComboBox):

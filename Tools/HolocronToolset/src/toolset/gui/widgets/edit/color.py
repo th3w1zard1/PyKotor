@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from PyQt5.QtGui import QColor, QImage, QPixmap
-from PyQt5.QtWidgets import QColorDialog, QWidget
+from PySide2.QtGui import QColor, QImage, QPixmap
+from PySide2.QtWidgets import QColorDialog, QWidget
 
 from pykotor.common.misc import Color
 

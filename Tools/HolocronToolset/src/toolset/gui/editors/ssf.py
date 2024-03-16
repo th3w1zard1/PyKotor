@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtWidgets import QFileDialog
+from PySide2.QtWidgets import QFileDialog
 
 from pykotor.extract.talktable import TalkTable
 from pykotor.resource.formats.ssf import SSF, SSFSound, read_ssf, write_ssf
@@ -12,7 +12,7 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QLineEdit, QWidget
+    from PySide2.QtWidgets import QLineEdit, QWidget
 
     from pykotor.extract.installation import Installation
     from pykotor.extract.talktable import StringResult

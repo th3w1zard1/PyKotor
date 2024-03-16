@@ -4,8 +4,8 @@ import math
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QOpenGLWidget
+from PySide2.QtCore import QTimer
+from PySide2.QtWidgets import QOpenGLWidget
 
 from pykotor.common.geometry import Vector2
 from pykotor.common.stream import BinaryReader
@@ -17,8 +17,8 @@ from toolset.gui.widgets.settings.module_designer import ModuleDesignerSettings
 from utility.error_handling import assert_with_variable_trace
 
 if TYPE_CHECKING:
-    from PyQt5.QtGui import QKeyEvent, QMouseEvent, QResizeEvent, QWheelEvent
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtGui import QKeyEvent, QMouseEvent, QResizeEvent, QWheelEvent
+    from PySide2.QtWidgets import QWidget
     from glm import vec3
 
     from pykotor.extract.installation import Installation

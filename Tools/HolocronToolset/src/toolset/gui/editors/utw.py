@@ -13,7 +13,7 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget
 
     from toolset.data.installation import HTInstallation
 

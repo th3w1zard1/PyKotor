@@ -4,9 +4,9 @@ import struct
 
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtGui import QColor, QIcon, QImage, QPixmap
-from PyQt5.QtWidgets import QListWidgetItem, QShortcut
+from PySide2 import QtCore
+from PySide2.QtGui import QColor, QIcon, QImage, QPixmap
+from PySide2.QtWidgets import QListWidgetItem, QShortcut
 
 from pykotor.common.geometry import SurfaceMaterial
 from pykotor.resource.formats.bwm import read_bwm, write_bwm
@@ -17,7 +17,7 @@ from utility.error_handling import assert_with_variable_trace
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget
 
     from pykotor.common.geometry import Vector2, Vector3
     from pykotor.resource.formats.bwm import BWM, BWMFace

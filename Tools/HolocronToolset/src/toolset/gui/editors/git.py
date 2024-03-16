@@ -6,9 +6,9 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtGui import QColor, QIcon, QKeySequence
-from PyQt5.QtWidgets import QDialog, QListWidgetItem, QMenu
+from PySide2 import QtCore
+from PySide2.QtGui import QColor, QIcon, QKeySequence
+from PySide2.QtWidgets import QDialog, QListWidgetItem, QMenu
 
 from pykotor.common.geometry import SurfaceMaterial, Vector2, Vector3
 from pykotor.common.misc import Color
@@ -52,9 +52,9 @@ from toolset.utils.window import openResourceEditor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtCore import QPoint
-    from PyQt5.QtGui import QKeyEvent
-    from PyQt5.QtWidgets import QCheckBox, QWidget
+    from PySide2.QtCore import QPoint
+    from PySide2.QtGui import QKeyEvent
+    from PySide2.QtWidgets import QCheckBox, QWidget
 
     from pykotor.extract.file import LocationResult, ResourceIdentifier, ResourceResult
     from pykotor.resource.formats.bwm.bwm_data import BWM
@@ -92,7 +92,7 @@ def openInstanceDialog(parent: QWidget, instance: GITInstance, installation: HTI
 
 
 class GITEditor(Editor):
-    settingsUpdated = QtCore.pyqtSignal(object)
+    settingsUpdated = QtCore.Signal(object)
 
     def __init__(self, parent: QWidget | None, installation: HTInstallation | None = None):
         """Initializes the GIT editor.

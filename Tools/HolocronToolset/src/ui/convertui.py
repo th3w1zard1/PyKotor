@@ -54,7 +54,7 @@ def compile_ui(*, ignore_timestamp: bool = False):
 
         # Only recompile if source file is newer than the existing target file or ignore_timestamp is set to True
         if source_timestamp > target_timestamp or ignore_timestamp:
-            command = f"pyuic5 {ui_file.relative_to(HERE)} -o {ui_target}"
+            command = f"pyside2-uic {ui_file} -o {ui_target}"
             print(command)
             os.system(command)  # noqa: S605
 
@@ -69,11 +69,11 @@ def compile_qrc(*, ignore_timestamp: bool = False):
 
     # Only recompile if source file is newer than the existing target file or ignore_timestamp is set to True
     if source_timestamp > target_timestamp or ignore_timestamp:
-        command = f"pyrcc5 {qrc_source} -o {qrc_target}"
+        command = f"pyside2-rcc {qrc_source} -o {qrc_target}"
         os.system(command)  # noqa: S605
         print(command)
 
 
 if __name__ == "__main__":
-    compile_ui(ignore_timestamp=False)
+    compile_ui(ignore_timestamp=True)
     compile_qrc(ignore_timestamp=True)

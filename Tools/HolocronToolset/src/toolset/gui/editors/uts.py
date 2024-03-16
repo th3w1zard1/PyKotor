@@ -3,10 +3,10 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QBuffer, QIODevice
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
-from PyQt5.QtWidgets import QListWidgetItem, QMessageBox
+from PySide2 import QtCore
+from PySide2.QtCore import QBuffer, QIODevice
+from PySide2.QtMultimedia import QMediaContent, QMediaPlayer
+from PySide2.QtWidgets import QListWidgetItem, QMessageBox
 
 from pykotor.common.misc import ResRef
 from pykotor.resource.formats.gff import write_gff
@@ -18,9 +18,9 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtCore import QObject
-    from PyQt5.QtGui import QCloseEvent
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtCore import QObject
+    from PySide2.QtGui import QCloseEvent
+    from PySide2.QtWidgets import QWidget
 
     from toolset.data.installation import HTInstallation
 

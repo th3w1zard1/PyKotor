@@ -5,8 +5,8 @@ import io
 from typing import TYPE_CHECKING
 
 from PIL import Image, ImageOps
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap
+from PySide2.QtCore import Qt
+from PySide2.QtGui import QImage, QPixmap
 
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, read_tpc, write_tpc
 from pykotor.resource.formats.tpc.io_tga import _DataTypes
@@ -17,7 +17,7 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget
 
     from pykotor.extract.installation import Installation
 

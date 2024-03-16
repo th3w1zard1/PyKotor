@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QWidget
+from PySide2 import QtCore
+from PySide2.QtWidgets import QWidget
 
 from pykotor.common.language import LocalizedString
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class LocalizedStringLineEdit(QWidget):
-    editingFinished = QtCore.pyqtSignal()
+    editingFinished = QtCore.Signal()
 
     def __init__(self, parent: QWidget):
         """Initialize a locstring edit widget.

@@ -4,7 +4,7 @@ from contextlib import suppress
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from PyQt5.QtWidgets import QMessageBox
+from PySide2.QtWidgets import QMessageBox
 
 from pykotor.common.misc import ResRef
 from pykotor.common.module import Module
@@ -25,7 +25,7 @@ from toolset.utils.window import openResourceEditor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QMainWindow, QWidget
+    from PySide2.QtWidgets import QMainWindow, QWidget
 
     from pykotor.extract.file import ResourceResult
     from pykotor.resource.formats.twoda.twoda_data import TwoDA

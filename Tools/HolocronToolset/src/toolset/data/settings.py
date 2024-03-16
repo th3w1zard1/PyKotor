@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from PyQt5.QtCore import QSettings
+from PySide2.QtCore import QSettings
 
 
 class Settings:

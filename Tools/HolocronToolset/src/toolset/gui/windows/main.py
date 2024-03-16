@@ -7,10 +7,10 @@ from datetime import datetime, timedelta, timezone
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, ClassVar
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon, QPixmap, QStandardItem
-from PyQt5.QtWidgets import QFileDialog, QMainWindow, QMessageBox
+from PySide2 import QtCore
+from PySide2.QtCore import Qt
+from PySide2.QtGui import QIcon, QPixmap, QStandardItem
+from PySide2.QtWidgets import QFileDialog, QMainWindow, QMessageBox
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
@@ -63,8 +63,8 @@ from utility.system.path import Path, PurePath
 if TYPE_CHECKING:
     import os
 
-    from PyQt5 import QtGui
-    from PyQt5.QtGui import QCloseEvent
+    from PySide2 import QtGui
+    from PySide2.QtGui import QCloseEvent
     from watchdog.observers.api import BaseObserver
 
     from pykotor.extract.file import FileResource
@@ -76,9 +76,9 @@ if TYPE_CHECKING:
 
 
 class ToolWindow(QMainWindow):
-    moduleFilesUpdated = QtCore.pyqtSignal(object, object)
+    moduleFilesUpdated = QtCore.Signal(object, object)
 
-    overrideFilesUpdate = QtCore.pyqtSignal(object, object)
+    overrideFilesUpdate = QtCore.Signal(object, object)
 
     GFF_TYPES: ClassVar[list[ResourceType]] = [
         ResourceType.GFF,

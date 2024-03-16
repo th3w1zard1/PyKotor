@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtGui import QColor, QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QMenu, QShortcut, QTreeView
+from PySide2.QtGui import QColor, QStandardItem, QStandardItemModel
+from PySide2.QtWidgets import QMenu, QShortcut, QTreeView
 
 from pykotor.resource.formats.gff import write_gff
 from pykotor.resource.generics.jrl import JRL, JRLEntry, JRLQuest, JRLQuestPriority, dismantle_jrl, read_jrl
@@ -15,8 +15,8 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtCore import QItemSelection, QPoint
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtCore import QItemSelection, QPoint
+    from PySide2.QtWidgets import QWidget
 
     from pykotor.resource.formats.twoda.twoda_data import TwoDA
 

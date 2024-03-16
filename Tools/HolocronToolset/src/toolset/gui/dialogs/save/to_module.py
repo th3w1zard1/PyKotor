@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PyQt5.QtWidgets import QDialog
+from PySide2.QtWidgets import QDialog
 
 from pykotor.resource.type import ResourceType
 

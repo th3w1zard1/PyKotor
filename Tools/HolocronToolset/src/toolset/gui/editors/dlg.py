@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 import pyperclip
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QBuffer, QIODevice, QItemSelectionModel, QTimer
-from PyQt5.QtGui import QBrush, QColor, QStandardItem, QStandardItemModel
-from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
-from PyQt5.QtWidgets import QListWidgetItem, QMenu, QMessageBox, QShortcut
+from PySide2 import QtCore
+from PySide2.QtCore import QBuffer, QIODevice, QItemSelectionModel, QTimer
+from PySide2.QtGui import QBrush, QColor, QStandardItem, QStandardItemModel
+from PySide2.QtMultimedia import QMediaContent, QMediaPlayer
+from PySide2.QtWidgets import QListWidgetItem, QMenu, QMessageBox, QShortcut
 
 from pykotor.common.misc import ResRef
 from pykotor.extract.installation import SearchLocation
@@ -35,9 +35,9 @@ from utility.error_handling import assert_with_variable_trace
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtCore import QItemSelection, QModelIndex, QPoint
-    from PyQt5.QtGui import QKeyEvent, QMouseEvent
-    from PyQt5.QtWidgets import QPlainTextEdit, QWidget
+    from PySide2.QtCore import QItemSelection, QModelIndex, QPoint
+    from PySide2.QtGui import QKeyEvent, QMouseEvent
+    from PySide2.QtWidgets import QPlainTextEdit, QWidget
 
     from pykotor.common.language import LocalizedString
     from pykotor.resource.formats.twoda.twoda_data import TwoDA

@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING, Callable
 
 import markdown
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem
+from PySide2 import QtCore
+from PySide2.QtCore import Qt
+from PySide2.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem
 
 from pykotor.common.stream import BinaryReader
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
@@ -23,7 +23,7 @@ from utility.system.path import Path
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget
 
 class HelpWindow(QMainWindow):
     ENABLE_UPDATES = True

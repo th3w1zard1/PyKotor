@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING, Any
 
 import pyperclip
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor
-from PyQt5.QtWidgets import QHBoxLayout, QLabel, QMenu, QStatusBar, QWidget
+from PySide2.QtCore import Qt
+from PySide2.QtGui import QColor
+from PySide2.QtWidgets import QHBoxLayout, QLabel, QMenu, QStatusBar, QWidget
 
 from pykotor.common.geometry import SurfaceMaterial, Vector2
 from pykotor.common.misc import Color
@@ -28,8 +28,8 @@ if TYPE_CHECKING:
 
     from collections.abc import Callable
 
-    from PyQt5.QtCore import QPoint
-    from PyQt5.QtGui import QKeyEvent, QMouseEvent
+    from PySide2.QtCore import QPoint
+    from PySide2.QtGui import QKeyEvent, QMouseEvent
 
     from pykotor.common.geometry import Vector3
     from pykotor.extract.file import ResourceIdentifier, ResourceResult

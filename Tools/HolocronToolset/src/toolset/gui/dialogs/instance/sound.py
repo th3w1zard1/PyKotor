@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import QDialog
+from PySide2.QtGui import QIcon, QPixmap
+from PySide2.QtWidgets import QDialog
 
 from pykotor.common.misc import ResRef
 
 if TYPE_CHECKING:
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget
 
     from pykotor.resource.generics.git import GITSound
 

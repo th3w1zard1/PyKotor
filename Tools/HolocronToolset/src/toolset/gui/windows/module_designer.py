@@ -5,10 +5,10 @@ import math
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QPoint, QTimer
-from PyQt5.QtGui import QColor, QIcon, QPixmap
-from PyQt5.QtWidgets import QAction, QListWidgetItem, QMainWindow, QMenu, QMessageBox, QTreeWidgetItem
+from PySide2 import QtCore
+from PySide2.QtCore import QPoint, QTimer
+from PySide2.QtGui import QColor, QIcon, QPixmap
+from PySide2.QtWidgets import QAction, QListWidgetItem, QMainWindow, QMenu, QMessageBox, QTreeWidgetItem
 
 from pykotor.common.geometry import SurfaceMaterial, Vector2, Vector3, Vector4
 from pykotor.common.misc import Color, ResRef
@@ -45,8 +45,8 @@ from toolset.utils.window import openResourceEditor
 from utility.error_handling import assert_with_variable_trace
 
 if TYPE_CHECKING:
-    from PyQt5.QtGui import QFont, QKeyEvent
-    from PyQt5.QtWidgets import QCheckBox, QWidget
+    from PySide2.QtGui import QFont, QKeyEvent
+    from PySide2.QtWidgets import QCheckBox, QWidget
     from glm import vec3
 
     from pykotor.gl.scene import Camera

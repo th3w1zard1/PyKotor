@@ -3,10 +3,10 @@ from __future__ import annotations
 from time import sleep
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QSortFilterProxyModel, QThread, Qt
-from PyQt5.QtGui import QStandardItem, QStandardItemModel
-from PyQt5.QtWidgets import QAction, QDialog, QMenu, QMessageBox, QProgressBar, QShortcut, QVBoxLayout
+from PySide2 import QtCore
+from PySide2.QtCore import QSortFilterProxyModel, QThread, Qt
+from PySide2.QtGui import QStandardItem, QStandardItemModel
+from PySide2.QtWidgets import QAction, QDialog, QMenu, QMessageBox, QProgressBar, QShortcut, QVBoxLayout
 
 from pykotor.common.language import Language
 from pykotor.common.misc import ResRef
@@ -21,8 +21,8 @@ from toolset.utils.window import addWindow, openResourceEditor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtCore import QModelIndex
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtCore import QModelIndex
+    from PySide2.QtWidgets import QWidget
 
     from pykotor.extract.file import FileResource
     from toolset.data.installation import HTInstallation
@@ -401,10 +401,10 @@ class LoaderDialog(QDialog):
 
 
 class LoaderWorker(QThread):
-    batch = QtCore.pyqtSignal(object)
-    entryCount = QtCore.pyqtSignal(object)
-    loaded = QtCore.pyqtSignal()
-    language = QtCore.pyqtSignal(object)
+    batch = QtCore.Signal(object)
+    entryCount = QtCore.Signal(object)
+    loaded = QtCore.Signal()
+    language = QtCore.Signal(object)
 
     def __init__(self, fileData, model):
         super().__init__()

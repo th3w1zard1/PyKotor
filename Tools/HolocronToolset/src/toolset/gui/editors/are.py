@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtGui import QColor, QImage, QPixmap
-from PyQt5.QtWidgets import QColorDialog
+from PySide2.QtGui import QColor, QImage, QPixmap
+from PySide2.QtWidgets import QColorDialog
 
 from pykotor.common.geometry import SurfaceMaterial, Vector2
 from pykotor.common.misc import Color, ResRef
@@ -21,7 +21,7 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtWidgets import QLabel, QWidget
+    from PySide2.QtWidgets import QLabel, QWidget
 
     from pykotor.extract.file import ResourceResult
     from pykotor.resource.formats.bwm.bwm_data import BWM

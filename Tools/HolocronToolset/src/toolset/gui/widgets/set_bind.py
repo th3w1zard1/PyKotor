@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QWidget
+from PySide2 import QtCore
+from PySide2.QtWidgets import QWidget
 
 from toolset.utils.misc import getStringFromKey
 
 if TYPE_CHECKING:
-    from PyQt5.QtGui import QKeyEvent
+    from PySide2.QtGui import QKeyEvent
 
     from toolset.data.misc import Bind
 

@@ -6,18 +6,18 @@ from abc import abstractmethod
 from time import sleep
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QPoint, QSortFilterProxyModel, QThread, QTimer, Qt
-from PyQt5.QtGui import QIcon, QImage, QPixmap, QStandardItem, QStandardItemModel, QTransform
-from PyQt5.QtWidgets import QHeaderView, QMenu, QWidget
+from PySide2 import QtCore
+from PySide2.QtCore import QPoint, QSortFilterProxyModel, QThread, QTimer, Qt
+from PySide2.QtGui import QIcon, QImage, QPixmap, QStandardItem, QStandardItemModel, QTransform
+from PySide2.QtWidgets import QHeaderView, QMenu, QWidget
 
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat
 from utility.error_handling import format_exception_with_variables
 
 if TYPE_CHECKING:
-    from PyQt5.QtCore import QModelIndex
-    from PyQt5.QtGui import QResizeEvent
+    from PySide2.QtCore import QModelIndex
+    from PySide2.QtGui import QResizeEvent
 
     from pykotor.common.misc import CaseInsensitiveDict
     from pykotor.extract.file import FileResource
@@ -26,11 +26,11 @@ if TYPE_CHECKING:
 
 
 class MainWindowList(QWidget):
-    requestOpenResource = QtCore.pyqtSignal(object, object)
+    requestOpenResource = QtCore.Signal(object, object)
 
-    requestExtractResource = QtCore.pyqtSignal(object)
+    requestExtractResource = QtCore.Signal(object)
 
-    sectionChanged = QtCore.pyqtSignal(object)
+    sectionChanged = QtCore.Signal(object)
 
     @abstractmethod
     def selectedResources(self) -> list[FileResource]:
@@ -38,9 +38,9 @@ class MainWindowList(QWidget):
 
 
 class ResourceList(MainWindowList):
-    requestReload = QtCore.pyqtSignal(object)
+    requestReload = QtCore.Signal(object)
 
-    requestRefresh = QtCore.pyqtSignal()
+    requestRefresh = QtCore.Signal()
 
     def __init__(self, parent: QWidget):
         """Initializes the ResourceList widget.
@@ -301,10 +301,10 @@ class ResourceModel(QStandardItemModel):
 
 
 class TextureList(MainWindowList):
-    requestReload = QtCore.pyqtSignal(object)  # TODO:
+    requestReload = QtCore.Signal(object)  # TODO:
 
-    requestRefresh = QtCore.pyqtSignal()  # TODO:
-    iconUpdate = QtCore.pyqtSignal(object, object)
+    requestRefresh = QtCore.Signal()  # TODO:
+    iconUpdate = QtCore.Signal(object, object)
 
     def __init__(self, parent: QWidget):
         super().__init__(parent)

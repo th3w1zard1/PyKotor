@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtWidgets import QDialog
+from PySide2.QtWidgets import QDialog
 
 from toolset.config import LOCAL_PROGRAM_INFO
 
 if TYPE_CHECKING:
-    from PyQt5.QtWidgets import QWidget
+    from PySide2.QtWidgets import QWidget
 
 
 class About(QDialog):

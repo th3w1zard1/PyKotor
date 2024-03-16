@@ -3,9 +3,9 @@ from __future__ import annotations
 from operator import attrgetter
 from typing import TYPE_CHECKING, ClassVar
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QRect, QRegExp, QSize
-from PyQt5.QtGui import (
+from PySide2 import QtCore
+from PySide2.QtCore import QRect, QRegExp, QSize
+from PySide2.QtGui import (
     QColor,
     QFont,
     QFontMetricsF,
@@ -14,7 +14,7 @@ from PyQt5.QtGui import (
     QTextCharFormat,
     QTextFormat,
 )
-from PyQt5.QtWidgets import QListWidgetItem, QMessageBox, QPlainTextEdit, QShortcut, QTextEdit, QWidget
+from PySide2.QtWidgets import QListWidgetItem, QMessageBox, QPlainTextEdit, QShortcut, QTextEdit, QWidget
 
 from pykotor.common.scriptdefs import KOTOR_CONSTANTS, KOTOR_FUNCTIONS, TSL_CONSTANTS, TSL_FUNCTIONS
 from pykotor.common.stream import BinaryWriter
@@ -31,7 +31,7 @@ from utility.system.path import Path
 if TYPE_CHECKING:
     import os
 
-    from PyQt5.QtGui import (
+    from PySide2.QtGui import (
         QPaintEvent,
         QResizeEvent,
         QTextBlock,

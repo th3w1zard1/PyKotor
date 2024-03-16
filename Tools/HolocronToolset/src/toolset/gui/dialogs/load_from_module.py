@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt5.QtCore import QVariant, Qt
-from PyQt5.QtWidgets import QDialog, QListWidgetItem
+from PySide2.QtCore import Qt
+from PySide2.QtWidgets import QDialog, QListWidgetItem
 
 if TYPE_CHECKING:
     from pykotor.extract.capsule import Capsule
@@ -41,7 +41,7 @@ class LoadFromModuleDialog(QDialog):
                 continue
             filename = resource.filename()
             item = QListWidgetItem(filename)
-            item.setData(Qt.UserRole, QVariant(resource))
+            item.setData(Qt.UserRole, resource)
             self.ui.resourceList.addItem(item)
 
     def resname(self) -> str | None:
