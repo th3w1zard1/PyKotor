@@ -487,14 +487,7 @@ class Scene:
         """
         self.buildCache()
 
-        glClearColor(0.5, 0.5, 1, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-        if self.backface_culling:
-            glEnable(GL_CULL_FACE)
-        else:
-            glDisable(GL_CULL_FACE)
-
+        self._prepareGL(0.5, 1)
         glDisable(GL_BLEND)
         self.shader.use()
         self.shader.set_matrix4("view", self.camera.view())
@@ -571,14 +564,7 @@ class Scene:
             self._render_object(shader, child, transform)
 
     def picker_render(self):
-        glClearColor(1.0, 1.0, 1.0, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-        if self.backface_culling:
-            glEnable(GL_CULL_FACE)
-        else:
-            glDisable(GL_CULL_FACE)
-
+        self._prepareGL(1.0, 1.0)
         self.picker_shader.use()
         self.picker_shader.set_matrix4("view", self.camera.view())
         self.picker_shader.set_matrix4("projection", self.camera.projection())
@@ -625,15 +611,7 @@ class Scene:
         self.selection.append(actual_target)
 
     def screenToWorld(self, x: int, y: int) -> Vector3:
-        # Setup OpenGL state for rendering
-        glClearColor(0.5, 0.5, 1, 1.0)
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-        if self.backface_culling:
-            glEnable(GL_CULL_FACE)
-        else:
-            glDisable(GL_CULL_FACE)
-
+        self._prepareGL(0.5, 1)
         glDisable(GL_BLEND)
 
         # Use the shader and set matrices
@@ -667,6 +645,15 @@ class Scene:
 
         # Convert numpy array to Vector3 and return
         return Vector3(world_coords[0], world_coords[1], world_coords[2])
+
+    # TODO Rename this here and in `render`, `picker_render` and `screenToWorld`
+    def _prepareGL(self, arg0, arg1):
+        glClearColor(arg0, arg0, arg1, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        if self.backface_culling:
+            glEnable(GL_CULL_FACE)
+        else:
+            glDisable(GL_CULL_FACE)
 
     def texture(self, name: str) -> Texture:
         if name in self.textures:
