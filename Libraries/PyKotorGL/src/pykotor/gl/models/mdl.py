@@ -7,7 +7,6 @@ import struct
 from copy import copy
 from typing import TYPE_CHECKING
 
-import glm
 import numpy as np
 
 from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer
@@ -20,9 +19,8 @@ from OpenGL.raw.GL.VERSION.GL_1_3 import GL_TEXTURE0, GL_TEXTURE1, glActiveTextu
 from OpenGL.raw.GL.VERSION.GL_1_5 import GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, glBindBuffer, glBufferData
 from OpenGL.raw.GL.VERSION.GL_2_0 import glEnableVertexAttribArray
 from OpenGL.raw.GL.VERSION.GL_3_0 import glBindVertexArray
-from glm import mat4, quat, vec3, vec4
 
-from pykotor.common.geometry import Vector3
+from pykotor.common.geometry import Vector3, Vector4
 
 if TYPE_CHECKING:
     from _testbuffer import ndarray
@@ -36,7 +34,7 @@ class Model:
         self._scene: Scene = scene
         self.root: Node = root
 
-    def draw(self, shader: Shader, transform: mat4, *, override_texture: str | None = None):
+    def draw(self, shader: Shader, transform, *, override_texture: str | None = None):
         self.root.draw(shader, transform, override_texture)
 
     def find(self, name: str) -> Node | None:
@@ -57,7 +55,7 @@ class Model:
             all_nodes.append(node)
         return all_nodes
 
-    def box(self) -> tuple[vec3, vec3]:
+    def box(self) -> tuple[Vector3, Vector3]:
         """Calculates bounding box of the scene.
 
         Args:
@@ -66,7 +64,7 @@ class Model:
 
         Returns:
         -------
-            tuple[vec3, vec3]: {Minimum and maximum points of bounding box}
+            tuple[Vector3, Vector3]: {Minimum and maximum points of bounding box}
 
         Processing Logic:
         ----------------
@@ -75,8 +73,8 @@ class Model:
             - Expand bounding box by 0.1 units in each direction
             - Return minimum and maximum points of final bounding box.
         """
-        min_point = vec3(100000, 100000, 100000)
-        max_point = vec3(-100000, -100000, -100000)
+        min_point = Vector3(100000, 100000, 100000)
+        max_point = Vector3(-100000, -100000, -100000)
         self._box_rec(self.root, mat4(), min_point, max_point)
 
         min_point.x -= 0.1
@@ -88,7 +86,7 @@ class Model:
 
         return min_point, max_point
 
-    def _box_rec(self, node: Node, transform: mat4, min_point: vec3, max_point: vec3):
+    def _box_rec(self, node: Node, transform, min_point: Vector3, max_point: Vector3):
         """Calculates bounding box of node and its children recursively.
 
         Call the 'box' function to get started here, don't call this directly.
@@ -97,8 +95,8 @@ class Model:
         ----
             node: {Node object whose bounding box is calculated}
             transform: {Transformation matrix to apply on node}
-            min_point: {vec3 to store minimum point of bounding box}
-            max_point: {vec3 to store maximum point of bounding box}.
+            min_point: {Vector3 to store minimum point of bounding box}
+            max_point: {Vector3 to store maximum point of bounding box}.
 
         Processing Logic:
         ----------------
@@ -116,7 +114,7 @@ class Model:
                 index = i * node.mesh.mdx_size + node.mesh.mdx_vertex
                 data = node.mesh.vertex_data[index:index + 12]
                 x, y, z = struct.unpack("fff", data)
-                position = transform * vec3(x, y, z)
+                position = transform * Vector3(x, y, z)
                 min_point.x = min(min_point.x, position.x)
                 min_point.y = min(min_point.y, position.y)
                 min_point.z = min(min_point.z, position.z)
@@ -133,8 +131,8 @@ class Node:
         self._scene: Scene = scene
         self._parent: Node | None = parent
         self.name: str = name
-        self._transform: mat4 = mat4()
-        self._position: vec3 = glm.vec3()
+        self._transform = mat4()
+        self._position: Vector3 = glm.Vector3()
         self._rotation: quat = glm.quat()
         self.children: list[Node] = []
         self.render: bool = True
@@ -156,14 +154,14 @@ class Node:
             ancestor = ancestor._parent
         return list(reversed(ancestors))
 
-    def global_position(self) -> vec3:  # sourcery skip: class-extract-method
+    def global_position(self) -> Vector3:  # sourcery skip: class-extract-method
         ancestors: list[Node] = [*self.ancestors(), self]
         transform = mat4()
         for ancestor in ancestors:
             transform = transform * glm.translate(ancestor._position)
             transform = transform * glm.mat4_cast(ancestor._rotation)
-        position = vec3()
-        glm.decompose(transform, vec3(), quat(), position, vec3(), vec4())
+        position = Vector3()
+        glm.decompose(transform, Vector3(), quat(), position, Vector3(), Vector4())
         return position
 
     def global_rotation(self) -> quat:
@@ -173,7 +171,7 @@ class Node:
             transform = transform * glm.translate(ancestor._position)
             transform = transform * glm.mat4_cast(ancestor._rotation)
         rotation = quat()
-        glm.decompose(transform, vec3(), rotation, vec3(), vec3(), vec4())
+        glm.decompose(transform, Vector3(), rotation, Vector3(), Vector3(), Vector4())
         return rotation
 
     def global_transform(self) -> mat4:
@@ -190,21 +188,21 @@ class Node:
     def _recalc_transform(self):
         self._transform = glm.translate(self._position) * glm.mat4_cast(quat(self._rotation))
 
-    def position(self) -> vec3:
+    def position(self) -> Vector3:
         return copy(self._position)
 
     def set_position(self, x: float, y: float, z: float):
-        self._position = vec3(x, y, z)
+        self._position = Vector3(x, y, z)
         self._recalc_transform()
 
     def rotation(self) -> quat:
         return copy(self._rotation)
 
     def set_rotation(self, pitch: float, yaw: float, roll: float):
-        self._rotation = quat(vec3(pitch, yaw, roll))
+        self._rotation = quat(Vector3(pitch, yaw, roll))
         self._recalc_transform()
 
-    def draw(self, shader: Shader, transform: mat4, override_texture: str | None = None):
+    def draw(self, shader: Shader, transform, override_texture: str | None = None):
         # TODO: use multi-threading to accumulate texture data, then draw all at once.
         transform = transform * self._transform
 
@@ -290,7 +288,7 @@ class Mesh:
     def draw(
         self,
         shader: Shader,
-        transform: mat4,
+        transform,
         override_texture: str | None = None,
     ):
         shader.set_matrix4("model", transform)
@@ -306,14 +304,14 @@ class Mesh:
 
 
 class Cube:
-    def __init__(self, scene: Scene, min_point: vec3 | None = None, max_point: vec3 | None = None):
+    def __init__(self, scene: Scene, min_point: Vector3 | None = None, max_point: Vector3 | None = None):
         """Initializes a cube mesh.
 
         Args:
         ----
             scene: Scene: The scene object
-            min_point: vec3 | None: The minimum point of the cube (default is (-1, -1, -1))
-            max_point: vec3 | None: The maximum point of the cube (default is (1, 1, 1)).
+            min_point: Vector3 | None: The minimum point of the cube (default is (-1, -1, -1))
+            max_point: Vector3 | None: The maximum point of the cube (default is (1, 1, 1)).
 
         Processing Logic:
         ----------------
@@ -324,8 +322,8 @@ class Cube:
         """
         self._scene = scene
 
-        min_point = vec3(-1.0, -1.0, -1.0) if min_point is None else min_point
-        max_point = vec3(1.0, 1.0, 1.0) if max_point is None else max_point
+        min_point = Vector3(-1.0, -1.0, -1.0) if min_point is None else min_point
+        max_point = Vector3(1.0, 1.0, 1.0) if max_point is None else max_point
 
         vertices = np.array([
             min_point.x, min_point.y, max_point.z,
@@ -353,8 +351,8 @@ class Cube:
             6, 7, 3,
         ], dtype="int16")
 
-        self.min_point: vec3 = min_point
-        self.max_point: vec3 = max_point
+        self.min_point: Vector3 = min_point
+        self.max_point: Vector3 = max_point
 
         self._vao = glGenVertexArrays(1)
         self._vbo = glGenBuffers(1)
@@ -374,7 +372,7 @@ class Cube:
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
 
-    def draw(self, shader: Shader, transform: mat4):
+    def draw(self, shader: Shader, transform):
         shader.set_matrix4("model", transform)
         glBindVertexArray(self._vao)
         glDrawElements(GL_TRIANGLES, self._face_count, GL_UNSIGNED_SHORT, None)
@@ -458,7 +456,7 @@ class Boundary:
             vertices.append(Vector3(x, y, 0) * radius)
         return Boundary(scene, vertices)
 
-    def draw(self, shader: Shader, transform: mat4):
+    def draw(self, shader: Shader, transform):
         shader.set_matrix4("model", transform)
         glBindVertexArray(self._vao)
         glDrawElements(GL_TRIANGLES, self._face_count, GL_UNSIGNED_SHORT, None)
@@ -483,5 +481,5 @@ class Empty:
     def __init__(self, scene: Scene):
         self._scene: Scene = scene
 
-    def draw(self, shader: Shader, transform: mat4):
+    def draw(self, shader: Shader, transform):
         ...

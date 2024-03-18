@@ -495,26 +495,26 @@ class Scene:
         self.shader.set_bool("enableLightmap", self.use_lightmap)
         group1: list[RenderObject] = [obj for obj in self.objects.values() if obj.model not in self.SPECIAL_MODELS]
         for obj in group1:
-            self._render_object(self.shader, obj, mat4())
+            self._render_object(self.shader, obj, np.eye(4))
 
         # Draw all instance types that lack a proper model
         glEnable(GL_BLEND)
         self.plain_shader.use()
         self.plain_shader.set_matrix4("view", self.camera.view())
         self.plain_shader.set_matrix4("projection", self.camera.projection())
-        self.plain_shader.set_vector4("color", vec4(0.0, 0.0, 1.0, 0.4))
+        self.plain_shader.set_vector4("color", Vector4(0.0, 0.0, 1.0, 0.4))
         group2: list[RenderObject] = [obj for obj in self.objects.values() if obj.model in self.SPECIAL_MODELS]
         for obj in group2:
-            self._render_object(self.plain_shader, obj, mat4())
+            self._render_object(self.plain_shader, obj, np.eye(4))
 
         # Draw bounding box for selected objects
-        self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
+        self.plain_shader.set_vector4("color", Vector4(1.0, 0.0, 0.0, 0.4))
         for obj in self.selection:
             obj.cube(self).draw(self.plain_shader, obj.transform())
 
         # Draw boundary for selected objects
         glDisable(GL_CULL_FACE)
-        self.plain_shader.set_vector4("color", vec4(0.0, 1.0, 0.0, 0.8))
+        self.plain_shader.set_vector4("color", Vector4(0.0, 1.0, 0.0, 0.8))
         for obj in self.selection:
             obj.boundary(self).draw(self.plain_shader, obj.transform())
 
@@ -527,8 +527,8 @@ class Scene:
             obj.boundary(self).draw(self.plain_shader, obj.transform())
 
         if self.show_cursor:
-            self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
-            self._render_object(self.plain_shader, self.cursor, mat4())
+            self.plain_shader.set_vector4("color", Vector4(1.0, 0.0, 0.0, 0.4))
+            self._render_object(self.plain_shader, self.cursor, np.eye(4))
 
     def should_hide_obj(self, obj: RenderObject) -> bool:
         result = False
@@ -552,7 +552,7 @@ class Scene:
             result = True
         return result
 
-    def _render_object(self, shader: Shader, obj: RenderObject, transform: mat4):
+    def _render_object(self, shader: Shader, obj: RenderObject, transform):
         if self.should_hide_obj(obj):
             return
 
@@ -577,9 +577,9 @@ class Scene:
             color = Vector3(r / 0xFF, g / 0xFF, b / 0xFF)
             self.picker_shader.set_vector3("colorId", color)
 
-            self._picker_render_object(obj, mat4())
+            self._picker_render_object(obj, np.eye(4))
 
-    def _picker_render_object(self, obj: RenderObject, transform: mat4):
+    def _picker_render_object(self, obj: RenderObject, transform):
         if self.should_hide_obj(obj):
             return
 
@@ -588,11 +588,11 @@ class Scene:
         for child in obj.children:
             self._picker_render_object(child, obj.transform())
 
-    def pick(self, x, y) -> RenderObject:
+    def pick(self, x: float, y: float) -> RenderObject:
         self.picker_render()
         pixel = glReadPixels(x, y, 1, 1, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8)[0][0] >> 8  # type: ignore[]
         instances = list(self.objects.values())
-        return instances[pixel] if pixel != 0xFFFFFF else None
+        return instances[pixel] if pixel != 0xFFFFFF else None  # type: ignore[reportReturnType]  # noqa: PLR2004
 
     def select(self, target: RenderObject | GITInstance, clear_existing: bool = True):
         if clear_existing:
@@ -625,7 +625,7 @@ class Scene:
             self._render_object(self.shader, obj, np.eye(4))  # Using np.eye(4) as the identity matrix
 
         # Read the depth from the pixel
-        zpos = glReadPixels(x, self.camera.height - y, 1, 1, GL_DEPTH_BUFFER_BIT, GL_FLOAT)[0][0]
+        zpos = glReadPixels(x, self.camera.height - y, 1, 1, GL_DEPTH_BUFFER_BIT, GL_FLOAT)[0][0]  # type: ignore[reportIndexIssue]
 
         # Assuming the following functions/methods are correctly adapted to no longer use GLM:
         view_matrix = self.camera.view()
@@ -797,13 +797,13 @@ def create_rotation_matrix(rotation):
         [0, np.cos(roll), -np.sin(roll)],
         [0, np.sin(roll), np.cos(roll)]
     ])
-    
+
     Ry = np.array([
         [np.cos(pitch), 0, np.sin(pitch)],
         [0, 1, 0],
         [-np.sin(pitch), 0, np.cos(pitch)]
     ])
-    
+
     Rz = np.array([
         [np.cos(yaw), -np.sin(yaw), 0],
         [np.sin(yaw), np.cos(yaw), 0],
@@ -904,8 +904,8 @@ class RenderObject:
         obj_min, obj_max = scene.model(obj.model).box()
 
         # Convert Vector3 to numpy array for matrix multiplication, append 1 for homogeneous coordinates
-        obj_min_np = np.dot(transform, np.append(obj_min.to_numpy(), 1))[:3]
-        obj_max_np = np.dot(transform, np.append(obj_max.to_numpy(), 1))[:3]
+        obj_min_np = np.dot(transform, np.append(np.array([*obj_min]), 1))[:3]
+        obj_max_np = np.dot(transform, np.append(np.array([*obj_max]), 1))[:3]
 
         # Update the bounding box corners
         min_point.x = min(min_point.x, obj_min_np[0], obj_max_np[0])
@@ -917,7 +917,7 @@ class RenderObject:
 
         for child in obj.children:
             # Calculate the child's transform matrix by multiplying the parent's transform matrix with the child's
-            child_transform = np.dot(transform, child.transform().to_numpy())
+            child_transform = np.dot(transform, np.array([*child.transform()]))
             self._cube_rec(scene, child_transform, child, min_point, max_point)
 
     def reset_boundary(self):
