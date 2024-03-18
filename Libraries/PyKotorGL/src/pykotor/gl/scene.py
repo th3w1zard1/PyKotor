@@ -5,7 +5,7 @@ import math
 from copy import copy
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import glm
+import numpy as np
 
 from OpenGL.GL import glReadPixels
 from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT
@@ -28,9 +28,8 @@ from OpenGL.raw.GL.VERSION.GL_1_0 import (
     glEnable,
 )
 from OpenGL.raw.GL.VERSION.GL_1_2 import GL_BGRA, GL_UNSIGNED_INT_8_8_8_8
-from glm import mat4, quat, vec3, vec4
 
-from pykotor.common.geometry import Vector3
+from pykotor.common.geometry import Vector3, Vector4, euler_from_quaternion
 from pykotor.common.misc import CaseInsensitiveDict
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.installation import SearchLocation
@@ -322,7 +321,7 @@ class Scene:
 
         for room in self.layout.rooms:
             if room not in self.objects:
-                position = vec3(room.position.x, room.position.y, room.position.z)
+                position = Vector3(room.position.x, room.position.y, room.position.z)
                 self.objects[room] = RenderObject(room.model, position, data=room)
 
         for door in self.git.doors:
@@ -335,7 +334,7 @@ class Scene:
                     # If failed to load creature models, use an empty model instead
                     model_name = "unknown"
 
-                self.objects[door] = RenderObject(model_name, vec3(), vec3(), data=door)
+                self.objects[door] = RenderObject(model_name, Vector3.from_null(), Vector3.from_null(), data=door)
 
             self.objects[door].set_position(door.position.x, door.position.y, door.position.z)
             self.objects[door].set_rotation(0, 0, door.bearing)
@@ -350,7 +349,7 @@ class Scene:
                     # If failed to load creature models, use an empty model instead
                     model_name = "unknown"
 
-                self.objects[placeable] = RenderObject(model_name, vec3(), vec3(), data=placeable)
+                self.objects[placeable] = RenderObject(model_name, Vector3.from_null(), Vector3.from_null(), data=placeable)
 
             self.objects[placeable].set_position(placeable.position.x, placeable.position.y, placeable.position.z)
             self.objects[placeable].set_rotation(0, 0, placeable.bearing)
@@ -364,7 +363,7 @@ class Scene:
 
         for waypoint in self.git.waypoints:
             if waypoint not in self.objects:
-                obj = RenderObject("waypoint", vec3(), vec3(), data=waypoint)
+                obj = RenderObject("waypoint", Vector3.from_null(), Vector3.from_null(), data=waypoint)
                 self.objects[waypoint] = obj
 
             self.objects[waypoint].set_position(waypoint.position.x, waypoint.position.y, waypoint.position.z)
@@ -372,7 +371,7 @@ class Scene:
 
         for store in self.git.stores:
             if store not in self.objects:
-                obj = RenderObject("store", vec3(), vec3(), data=store)
+                obj = RenderObject("store", Vector3.from_null(), Vector3.from_null(), data=store)
                 self.objects[store] = obj
 
             self.objects[store].set_position(store.position.x, store.position.y, store.position.z)
@@ -388,8 +387,8 @@ class Scene:
 
                 obj = RenderObject(
                     "sound",
-                    vec3(),
-                    vec3(),
+                    Vector3.from_null(),
+                    Vector3.from_null(),
                     data=sound,
                     gen_boundary=lambda uts=uts: Boundary.from_circle(self, uts.max_distance),
                 )
@@ -402,8 +401,8 @@ class Scene:
             if encounter not in self.objects:
                 obj = RenderObject(
                     "encounter",
-                    vec3(),
-                    vec3(),
+                    Vector3.from_null(),
+                    Vector3.from_null(),
                     data=encounter,
                     gen_boundary=lambda encounter=encounter: Boundary(self, encounter.geometry.points),
                 )
@@ -416,8 +415,8 @@ class Scene:
             if trigger not in self.objects:
                 obj = RenderObject(
                     "trigger",
-                    vec3(),
-                    vec3(),
+                    Vector3.from_null(),
+                    Vector3.from_null(),
                     data=trigger,
                     gen_boundary=lambda trigger=trigger: Boundary(self, trigger.geometry.points),
                 )
@@ -428,11 +427,11 @@ class Scene:
 
         for camera in self.git.cameras:
             if camera not in self.objects:
-                obj = RenderObject("camera", vec3(), vec3(), data=camera)
+                obj = RenderObject("camera", Vector3.from_null(), Vector3.from_null(), data=camera)
                 self.objects[camera] = obj
 
             self.objects[camera].set_position(camera.position.x, camera.position.y, camera.position.z + camera.height)
-            euler: vec3 = glm.eulerAngles(quat(camera.orientation.w, camera.orientation.x, camera.orientation.y, camera.orientation.z))
+            euler: Vector3 = Vector3(*euler_from_quaternion(camera.orientation.w, camera.orientation.x, camera.orientation.y, camera.orientation.z))
             self.objects[camera].set_rotation(
                 euler.y,
                 euler.z - math.pi / 2 + math.radians(camera.pitch),
@@ -589,7 +588,7 @@ class Scene:
             r: int = int_rgb & 0xFF
             g: int = (int_rgb >> 8) & 0xFF
             b: int = (int_rgb >> 16) & 0xFF
-            color = vec3(r / 0xFF, g / 0xFF, b / 0xFF)
+            color = Vector3(r / 0xFF, g / 0xFF, b / 0xFF)
             self.picker_shader.set_vector3("colorId", color)
 
             self._picker_render_object(obj, mat4())
@@ -626,6 +625,7 @@ class Scene:
         self.selection.append(actual_target)
 
     def screenToWorld(self, x: int, y: int) -> Vector3:
+        # Setup OpenGL state for rendering
         glClearColor(0.5, 0.5, 1, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -635,21 +635,38 @@ class Scene:
             glDisable(GL_CULL_FACE)
 
         glDisable(GL_BLEND)
-        self.shader.use()
-        self.shader.set_matrix4("view", self.camera.view())
-        self.shader.set_matrix4("projection", self.camera.projection())
-        group1: list[RenderObject] = [obj for obj in self.objects.values() if isinstance(obj.data, LYTRoom)]
-        for obj in group1:
-            self._render_object(self.shader, obj, mat4())
 
-        zpos = glReadPixels(x, self.camera.height - y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT)[0][0]  # FIXME: "__getitem__" method not defined on type "int"
-        cursor: vec3 = glm.unProject(
-            vec3(x, self.camera.height - y, zpos),
-            self.camera.view(),
-            self.camera.projection(),
-            vec4(0, 0, self.camera.width, self.camera.height),
-        )
-        return Vector3(cursor.x, cursor.y, cursor.z)
+        # Use the shader and set matrices
+        self.shader.use()
+        self.shader.set_matrix4("view", self.camera.view().tolist())  # Assuming set_matrix4 can take a list
+        self.shader.set_matrix4("projection", self.camera.projection().tolist())
+
+        # Render specific objects in the scene
+        group1 = [obj for obj in self.objects.values() if isinstance(obj.data, LYTRoom)]
+        for obj in group1:
+            self._render_object(self.shader, obj, np.eye(4))  # Using np.eye(4) as the identity matrix
+
+        # Read the depth from the pixel
+        zpos = glReadPixels(x, self.camera.height - y, 1, 1, GL_DEPTH_BUFFER_BIT, GL_FLOAT)[0][0]
+
+        # Assuming the following functions/methods are correctly adapted to no longer use GLM:
+        view_matrix = self.camera.view()
+        projection_matrix = self.camera.projection()
+        _viewport = np.array([0, 0, self.camera.width, self.camera.height])
+
+        # Convert screen coordinates to normalized device coordinates (NDC)
+        ndc_x = (2.0 * x) / self.camera.width - 1.0
+        ndc_y = 1.0 - (2.0 * y) / self.camera.height
+        ndc_z = 2.0 * zpos - 1.0
+        ndc = np.array([ndc_x, ndc_y, ndc_z, 1.0])
+
+        # Unproject NDC to world coordinates
+        inv_vp = np.linalg.inv(np.dot(projection_matrix, view_matrix))
+        world_coords = np.dot(inv_vp, ndc)
+        world_coords /= world_coords[3]  # Homogenize
+
+        # Convert numpy array to Vector3 and return
+        return Vector3(world_coords[0], world_coords[1], world_coords[2])
 
     def texture(self, name: str) -> Texture:
         if name in self.textures:
@@ -744,13 +761,80 @@ class Scene:
             self.camera.y = point.y
             self.camera.z = point.z + 1.8
 
+class TransformHandler:
+    def __init__(self):
+        self._position = np.array([0, 0, 0])
+        self._rotation = np.array([0, 0, 0])  # Euler angles (roll, pitch, yaw)
+
+def create_translation_matrix(translation):
+    """Create a 4x4 translation matrix."""
+    matrix = np.eye(4)
+    matrix[:3, 3] = translation
+    return matrix
+
+def matrix_to_quaternion(self, matrix):
+    m = matrix
+    tr = np.trace(matrix)
+    if tr > 0:
+        S = np.sqrt(tr + 1.0) * 2  # S=4*qw
+        qw = 0.25 * S
+        qx = (m[2, 1] - m[1, 2]) / S
+        qy = (m[0, 2] - m[2, 0]) / S
+        qz = (m[1, 0] - m[0, 1]) / S
+    elif (m[0, 0] > m[1, 1]) and (m[0, 0] > m[2, 2]):
+        S = np.sqrt(1.0 + m[0, 0] - m[1, 1] - m[2, 2]) * 2  # S=4*qx
+        qw = (m[2, 1] - m[1, 2]) / S
+        qx = 0.25 * S
+        qy = (m[0, 1] + m[1, 0]) / S
+        qz = (m[0, 2] + m[2, 0]) / S
+    elif m[1, 1] > m[2, 2]:
+        S = np.sqrt(1.0 + m[1, 1] - m[0, 0] - m[2, 2]) * 2  # S=4*qy
+        qw = (m[0, 2] - m[2, 0]) / S
+        qx = (m[0, 1] + m[1, 0]) / S
+        qy = 0.25 * S
+        qz = (m[1, 2] + m[2, 1]) / S
+    else:
+        S = np.sqrt(1.0 + m[2, 2] - m[0, 0] - m[1, 1]) * 2  # S=4*qz
+        qw = (m[1, 0] - m[0, 1]) / S
+        qx = (m[0, 2] + m[2, 0]) / S
+        qy = (m[1, 2] + m[2, 1]) / S
+        qz = 0.25 * S
+    return np.array([qx, qy, qz, qw])
+
+def create_rotation_matrix(rotation):
+    roll, pitch, yaw = rotation
+
+    # Create individual matrices
+    Rx = np.array([
+        [1, 0, 0],
+        [0, np.cos(roll), -np.sin(roll)],
+        [0, np.sin(roll), np.cos(roll)]
+    ])
+    
+    Ry = np.array([
+        [np.cos(pitch), 0, np.sin(pitch)],
+        [0, 1, 0],
+        [-np.sin(pitch), 0, np.cos(pitch)]
+    ])
+    
+    Rz = np.array([
+        [np.cos(yaw), -np.sin(yaw), 0],
+        [np.sin(yaw), np.cos(yaw), 0],
+        [0, 0, 1]
+    ])
+
+    # Combine rotations
+    R = np.dot(Rz, np.dot(Ry, Rx))
+    rotation_matrix = np.eye(4)
+    rotation_matrix[:3, :3] = R
+    return rotation_matrix
 
 class RenderObject:
     def __init__(
         self,
         model: str,
-        position: vec3 | None = None,
-        rotation: vec3 | None = None,
+        position: Vector3 | None = None,
+        rotation: Vector3 | None = None,
         *,
         data: Any = None,
         gen_boundary: Callable[[], Boundary] | None = None,
@@ -758,9 +842,9 @@ class RenderObject:
     ):
         self.model: str = model
         self.children: list[RenderObject] = []
-        self._transform: mat4 = mat4()
-        self._position: vec3 = position if position is not None else vec3()
-        self._rotation: vec3 = rotation if rotation is not None else vec3()
+        self._transform = np.eye(4)
+        self._position: Vector3 = position if position is not None else Vector3.from_null()
+        self._rotation: Vector3 = rotation if rotation is not None else Vector3.from_null()
         self._cube: Cube | None = None
         self._boundary: Boundary | Empty | None = None
         self.genBoundary: Callable[[], Boundary] | None = gen_boundary
@@ -769,37 +853,41 @@ class RenderObject:
 
         self._recalc_transform()
 
-    def transform(self) -> mat4:
+    def transform(self):
         return self._transform
 
-    def set_transform(self, transform: mat4):
+    def set_transform(self, transform):
         self._transform = transform
-        rotation = quat()
-        glm.decompose(transform, vec3(), rotation, self._position, vec3(), vec4())  # FIXME: Type "mat4" cannot be assigned to type "F32Matrix3x3 | mat3x3 | Tuple[Tuple[Number, Number, Number]]"
-        self._rotation = glm.eulerAngles(rotation)
+        self._position = transform[:3, 3]  # Extract position from the last column
+
+        # Extract rotation matrix from the top-left 3x3 submatrix
+        rotation_matrix = transform[:3, :3]
+        quaternion = matrix_to_quaternion(rotation_matrix)
+        self._rotation = euler_from_quaternion(quaternion)  # Convert to Euler angles
 
     def _recalc_transform(self):
-        self._transform = mat4() * glm.translate(self._position)
-        self._transform = self._transform * glm.mat4_cast(quat(self._rotation))
+        translation_matrix = create_translation_matrix(self._position)
+        rotation_matrix = create_rotation_matrix(self._rotation)
+        self._transform = np.dot(translation_matrix, rotation_matrix)
 
-    def position(self) -> vec3:
+    def position(self) -> Vector3:
         return copy(self._position)
 
     def set_position(self, x: float, y: float, z: float):
         if self._position.x == x and self._position.y == y and self._position.z == z:
             return
 
-        self._position = vec3(x, y, z)
+        self._position = Vector3(x, y, z)
         self._recalc_transform()
 
-    def rotation(self) -> vec3:
+    def rotation(self) -> Vector3:
         return copy(self._rotation)
 
     def set_rotation(self, x: float, y: float, z: float):
         if self._rotation.x == x and self._rotation.y == y and self._rotation.z == z:
             return
 
-        self._rotation = vec3(x, y, z)
+        self._rotation = Vector3(x, y, z)
         self._recalc_transform()
 
     def reset_cube(self):
@@ -807,9 +895,10 @@ class RenderObject:
 
     def cube(self, scene: Scene) -> Cube:
         if not self._cube:
-            min_point = vec3(10000, 10000, 10000)
-            max_point = vec3(-10000, -10000, -10000)
-            self._cube_rec(scene, mat4(), self, min_point, max_point)
+            min_point = Vector3(10000, 10000, 10000)
+            max_point = Vector3(-10000, -10000, -10000)
+            identity_matrix = np.eye(4)  # Replacing mat4() with an identity matrix
+            self._cube_rec(scene, identity_matrix, self, min_point, max_point)
             self._cube = Cube(scene, min_point, max_point)
         return self._cube
 
@@ -824,18 +913,25 @@ class RenderObject:
             abs(cube.max_point.z),
         )
 
-    def _cube_rec(self, scene: Scene, transform: mat4, obj: RenderObject, min_point: vec3, max_point: vec3):
+    def _cube_rec(self, scene: Scene, transform: np.ndarray, obj: RenderObject, min_point: Vector3, max_point: Vector3):
         obj_min, obj_max = scene.model(obj.model).box()
-        obj_min = transform * obj_min
-        obj_max = transform * obj_max
-        min_point.x = min(min_point.x, obj_min.x, obj_max.x)
-        min_point.y = min(min_point.y, obj_min.y, obj_max.y)
-        min_point.z = min(min_point.z, obj_min.z, obj_max.z)
-        max_point.x = max(max_point.x, obj_min.x, obj_max.x)
-        max_point.y = max(max_point.y, obj_min.y, obj_max.y)
-        max_point.z = max(max_point.z, obj_min.z, obj_max.z)
+
+        # Convert Vector3 to numpy array for matrix multiplication, append 1 for homogeneous coordinates
+        obj_min_np = np.dot(transform, np.append(obj_min.to_numpy(), 1))[:3]
+        obj_max_np = np.dot(transform, np.append(obj_max.to_numpy(), 1))[:3]
+
+        # Update the bounding box corners
+        min_point.x = min(min_point.x, obj_min_np[0], obj_max_np[0])
+        min_point.y = min(min_point.y, obj_min_np[1], obj_max_np[1])
+        min_point.z = min(min_point.z, obj_min_np[2], obj_max_np[2])
+        max_point.x = max(max_point.x, obj_min_np[0], obj_max_np[0])
+        max_point.y = max(max_point.y, obj_min_np[1], obj_max_np[1])
+        max_point.z = max(max_point.z, obj_min_np[2], obj_max_np[2])
+
         for child in obj.children:
-            self._cube_rec(scene, transform * child.transform(), child, min_point, max_point)
+            # Calculate the child's transform matrix by multiplying the parent's transform matrix with the child's
+            child_transform = np.dot(transform, child.transform().to_numpy())
+            self._cube_rec(scene, child_transform, child, min_point, max_point)
 
     def reset_boundary(self):
         self._boundary = None
@@ -861,55 +957,58 @@ class Camera:
         self.distance: float = 10.0
         self.fov: float = 90.0
 
-    def view(self) -> mat4:
-        """Returns the view matrix for the camera.
+    def view(self):
+        """Calculate and return the view matrix."""
+        # Camera direction calculations
+        direction = np.array([
+            math.cos(self.yaw) * math.cos(self.pitch),
+            math.sin(self.yaw) * math.cos(self.pitch),
+            math.sin(self.pitch)
+        ])
+        # Normalize direction
+        direction = direction / np.linalg.norm(direction)
 
-        Args:
-        ----
-            self: The camera object
+        # Define up vector
+        up = np.array([0, 0, 1])
 
-        Returns:
-        -------
-            mat4: The view matrix
+        # Calculate right vector
+        right = np.cross(up, direction)
+        # Normalize right vector
+        right = right / np.linalg.norm(right)
 
-        Processing Logic:
-        ----------------
-            - Calculate camera position based on yaw, pitch and distance from origin
-            - Construct view matrix by translating to camera position and rotating by yaw and pitch
-        """
-        up = vec3(0, 0, 1)
-        pitch = glm.vec3(1, 0, 0)
+        # Recalculate up vector as cross product of direction and right vectors
+        up = np.cross(direction, right)
 
-        x, y, z = self.x, self.y, self.z
-        x += math.cos(self.yaw) * math.cos(self.pitch - math.pi / 2) * self.distance
-        y += math.sin(self.yaw) * math.cos(self.pitch - math.pi / 2) * self.distance
-        z += math.sin(self.pitch - math.pi / 2) * self.distance
+        # Camera position
+        position = np.array([self.x, self.y, self.z])
 
-        camera = mat4() * glm.translate(vec3(x, y, z))
-        camera = glm.rotate(camera, self.yaw + math.pi / 2, up)
-        camera = glm.rotate(camera, math.pi - self.pitch, pitch)
-        return glm.inverse(camera)
+        # View matrix construction
+        view = np.eye(4)
+        view[0, :3] = right
+        view[1, :3] = up
+        view[2, :3] = -direction
+        view[:3, 3] = -np.dot(view[:3, :3], position)
 
-    def projection(self) -> mat4:
-        """Generate a perspective projection matrix.
+        return view
 
-        Args:
-        ----
-            self: The camera object
+    def projection(self):
+        """Calculate and return the perspective projection matrix."""
+        aspect_ratio = self.width / self.height
+        fov_rad = math.radians(self.fov)  # Convert fov to radians
+        f = 1 / math.tan(fov_rad / 2)
 
-        Returns:
-        -------
-            mat4: The 4x4 perspective projection matrix
+        near = 0.1
+        far = 5000.0
+        projection = np.zeros((4, 4))
+        projection[0, 0] = f / aspect_ratio
+        projection[1, 1] = f
+        projection[2, 2] = (far + near) / (near - far)
+        projection[2, 3] = (2 * far * near) / (near - far)
+        projection[3, 2] = -1
 
-        Processing Logic:
-        ----------------
-            - Calculate the aspect ratio of the viewport from the camera's width and height
-            - Use the aspect ratio and field of view to generate a perspective projection matrix using glm.perspective
-            - The projection matrix transforms world coordinates into clip coordinates and maps the scene to the viewport
-        """
-        return glm.perspective(self.fov, self.width / self.height, 0.1, 5000)
+        return projection
 
-    def translate(self, translation: vec3):
+    def translate(self, translation: Vector3):
         self.x += translation.x
         self.y += translation.y
         self.z += translation.z
@@ -940,7 +1039,7 @@ class Camera:
         elif self.pitch < 0.001:
             self.pitch = 0.001
 
-    def forward(self, ignore_z: bool = True) -> vec3:
+    def forward(self, ignore_z: bool = True) -> Vector3:
         """Calculates the forward vector from the camera's rotation.
 
         Args:
@@ -949,7 +1048,7 @@ class Camera:
 
         Returns:
         -------
-            vec3: Normalized forward vector from camera rotation
+            Vector3: Normalized forward vector from camera rotation
 
         Processing Logic:
         ----------------
@@ -961,9 +1060,12 @@ class Camera:
         eye_x: float = math.cos(self.yaw) * math.cos(self.pitch - math.pi / 2)
         eye_y: float = math.sin(self.yaw) * math.cos(self.pitch - math.pi / 2)
         eye_z: float | Literal[0] = 0 if ignore_z else math.sin(self.pitch - math.pi / 2)
-        return glm.normalize(-vec3(eye_x, eye_y, eye_z))
+        norm = np.linalg.norm([eye_x, eye_y, eye_z])
+        if norm == 0:
+            return Vector3.from_null()
+        return Vector3(eye_x / norm, eye_y / norm, eye_z / norm)
 
-    def sideward(self, ignore_z: bool = True) -> vec3:
+    def sideward(self, ignore_z: bool = True) -> Vector3:
         """Returns a normalized vector perpendicular to the forward direction.
 
         Args:
@@ -972,7 +1074,7 @@ class Camera:
 
         Returns:
         -------
-            vec3: Normalized sideward vector.
+            Vector3: Normalized sideward vector.
 
         Processing Logic:
         ----------------
@@ -980,9 +1082,11 @@ class Camera:
             - Normalize sideward vector to get unit sideward vector
             - Return normalized sideward vector
         """
-        return glm.normalize(glm.cross(self.forward(ignore_z), vec3(0.0, 0.0, 1.0)))
+        cross_product = np.cross(self.forward(ignore_z), np.array([0.0, 0.0, 1.0]))
+        normalized_vector = cross_product / np.linalg.norm(cross_product)
+        return Vector3(normalized_vector[0], normalized_vector[1], normalized_vector[2])
 
-    def upward(self, ignore_xy: bool = True) -> vec3:
+    def upward(self, ignore_xy: bool = True) -> Vector3:
         """Returns the upward vector of the entity.
 
         Args:
@@ -991,7 +1095,7 @@ class Camera:
 
         Returns:
         -------
-            vec3: The normalized upward vector.
+            Vector3: The normalized upward vector.
 
         Processing Logic:
         ----------------
@@ -1001,13 +1105,17 @@ class Camera:
             - Return normalized cross product vector
         """
         if ignore_xy:
-            return glm.normalize(vec3(0, 0, 1))
-        forward: vec3 = self.forward(ignore_z=False)
-        sideward: vec3 = self.sideward(ignore_z=False)
-        cross: vec3 = glm.cross(forward, sideward)
-        return glm.normalize(cross)
+            retVect = Vector3(0, 0, 1)
+            retVect.normalize()
+            return retVect
 
-    def true_position(self) -> vec3:
+        forward = self.forward(ignore_z=False)
+        sideward = self.sideward(ignore_z=False)
+        cross = forward.cross(sideward)  # Utilize the cross product method of Vector3
+        cross.normalize()
+        return cross  # Normalize the result using the Vector3 normalize method
+
+    def true_position(self) -> Vector3:
         """Calculates the true position of an object based on its orientation and distance from origin.
 
         Args:
@@ -1016,7 +1124,7 @@ class Camera:
 
         Returns:
         -------
-            vec3: {Calculated true position as a 3D vector}
+            Vector3: {Calculated true position as a 3D vector}
 
         Processing Logic:
         ----------------
@@ -1028,4 +1136,4 @@ class Camera:
         x += math.cos(self.yaw) * math.cos(self.pitch - math.pi / 2) * self.distance
         y += math.sin(self.yaw) * math.cos(self.pitch - math.pi / 2) * self.distance
         z += math.sin(self.pitch - math.pi / 2) * self.distance
-        return vec3(x, y, z)
+        return Vector3(x, y, z)

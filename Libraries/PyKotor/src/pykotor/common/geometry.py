@@ -10,6 +10,56 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
+# Code taken from https://automaticaddison.com/how-to-convert-a-quaternion-into-euler-angles-in-python/
+def euler_from_quaternion(x: float, y: float, z: float, w: float) -> tuple[float, float, float]:
+    """Convert a quaternion into euler angles (roll, pitch, yaw)
+    roll is rotation around x in radians (counterclockwise)
+    pitch is rotation around y in radians (counterclockwise)
+    yaw is rotation around z in radians (counterclockwise).
+    """
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    roll_x = math.atan2(t0, t1)
+
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    pitch_y = math.asin(t2)
+
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    yaw_z = math.atan2(t3, t4)
+
+    return roll_x, pitch_y, yaw_z # in radians
+
+# This one was created from reversing the above logic.
+def quaternion_from_euler(roll: float, pitch: float, yaw: float) -> tuple[float, float, float, float]:
+    """Convert Euler angles to a quaternion.
+
+    Args:
+    ----
+        roll: Rotation around the x-axis in radians
+        pitch: Rotation around the y-axis in radians
+        yaw: Rotation around the z-axis in radians
+
+    Returns:
+    -------
+        A tuple of quaternion components (x, y, z, w).
+    """
+    cy = math.cos(yaw * 0.5)
+    sy = math.sin(yaw * 0.5)
+    cp = math.cos(pitch * 0.5)
+    sp = math.sin(pitch * 0.5)
+    cr = math.cos(roll * 0.5)
+    sr = math.sin(roll * 0.5)
+
+    w = cr * cp * cy + sr * sp * sy
+    x = sr * cp * cy - cr * sp * sy
+    y = cr * sp * cy + sr * cp * sy
+    z = cr * cp * sy - sr * sp * cy
+
+    return x, y, z, w
+
 class Vector2:
     """Represents a 2 dimensional vector.
 
@@ -606,6 +656,12 @@ class Vector3:
         b = self.y * other.y
         c = self.z * other.z
         return a + b + c
+
+    def cross(self, other: Vector3):
+        cx = self.y * other.z - self.z * other.y
+        cy = self.z * other.x - self.x * other.z
+        cz = self.x * other.y - self.y * other.x
+        return Vector3(cx, cy, cz)
 
     def distance(
         self,
