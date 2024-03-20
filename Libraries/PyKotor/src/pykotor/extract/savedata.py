@@ -39,8 +39,10 @@ class SaveInfo:
 
         self.area_name: str = ""
         self.cheat_used: bool = False  # Also in PartyTable?
-        self.gameplay_hint: int = 0
+        self.gameplay_hint: int = 0  # Some strref to the tlk, also in loadscreenhints.2da
         self.last_module: str = ""  # Confirmed (e.g. 'tar_m11aa')
+
+        # Xbox live stuff.
         self.live1: str = ""
         self.live2: str = ""
         self.live3: str = ""
@@ -48,12 +50,13 @@ class SaveInfo:
         self.live5: str = ""
         self.live6: str = ""
         self.livecontent: int = 0
+
         # Presumably these are the portraits of the current party.
         self.portrait0: ResRef = ResRef.from_blank()
         self.portrait1: ResRef = ResRef.from_blank()
         self.portrait2: ResRef = ResRef.from_blank()
         self.savegame_name: str = ""  # Confirmed. User-customized save name.
-        self.story_hint: int = 0  # Some enum
+        self.story_hint: int = 0  # Some strref to the tlk, also in loadscreenhints.2da
         self.time_played: int = 0  # Also in PartyTable
 
     def load(self):
@@ -269,7 +272,11 @@ class SaveFolderEntry:
         print("Loading save globals...")
         self.globals.load()
 
+    def save(self):
+        ...
+
 
 if __name__ == "__main__":
     game59_save = SaveFolderEntry(r"C:\Program Files (x86)\Steam\steamapps\common\swkotor\saves\000060 - game59")
     game59_save.load()
+    game59_save.save()
