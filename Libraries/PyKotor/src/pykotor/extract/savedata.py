@@ -7,7 +7,9 @@ from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceIdentifier
+from pykotor.resource.formats.erf.erf_auto import read_erf
 from pykotor.resource.formats.gff.gff_auto import read_gff
+from pykotor.resource.generics.utc import read_utc
 from pykotor.resource.generics.uti import construct_uti_from_struct
 from pykotor.resource.type import ResourceType
 from pykotor.tools.path import CaseAwarePath
@@ -15,7 +17,10 @@ from pykotor.tools.path import CaseAwarePath
 if TYPE_CHECKING:
     import os
 
-    from pykotor.extract.file import FileResource
+    from pykotor.common.module import Module
+    from pykotor.resource.formats.erf.erf_data import ERF
+    from pykotor.resource.formats.gff.gff_data import GFF
+    from pykotor.resource.generics.utc import UTC
     from pykotor.resource.generics.uti import UTI
 
 class SaveInfo:
@@ -51,6 +56,9 @@ class SaveInfo:
         self.story_hint: int = 0  # Some enum
         self.time_played: int = 0  # Also in PartyTable
 
+    def load(self):
+        ...
+
 class JournalEntry:
     def __init__(self):
         self.date: int = -1  # uint32
@@ -67,6 +75,10 @@ class PartyMemberEntry:
     def __init__(self):
         self.is_leader: bool = False
         self.index: int = -1  # probably the index in availnpc or some global ordered list of companions.
+
+class GalaxyMapEntry:
+    def __init__(self):
+        ...
 
 class PartyTable:
     """PARTYTABLE.res
@@ -90,23 +102,24 @@ class PartyTable:
         self.pt_aistate: int = 0
         self.pt_avail_npcs: list[AvailableNPCEntry] = []
         self.pt_cheat_used: bool = False  # Assuming this is a boolean based on the UIInt8 type
-        self.pt_controlled_npc: int = -1  # Default to -1 assuming it represents 'none' or similar
+        self.pt_controlled_npc: int = -1  # Defaults to -1, assuming it represents 'none' or similar
         self.pt_cost_mult_lis: list = []
         self.pt_dlg_msg_list: list = []
         self.pt_fb_msg_list: list = []  # feedback, cbf implementing.
         self.pt_followstate: int = 0
         self.pt_gold: int = 0
-        self.pt_last_gui_pnl: int = 0
+        self.pt_last_gui_pnl: int = 0  # another enum
         self.pt_members: list[PartyMemberEntry] = []
         self.pt_num_members: int = 0
         self.pt_pazaakcards: list = []  # cbf
         self.pt_pazaakdecks: list = []  # cbf
         self.time_played: int = -1
         self.pt_solomode: bool = False  # probably the option in the game that determines whether the party members follow the leader.
-        self.pt_tut_wnd_shown: bytes = b""  # no idea what this is.
+        self.pt_tut_wnd_shown: bytes = b""  # Presumably what tutorial information has already been shown to the user. cbf
         self.pt_xp_pool: int = 0
 
     def load(self):
+        party_table_gff = read_gff(self.party_table_path)
         ...
 
 class GlobalVars:
@@ -164,15 +177,14 @@ class GlobalVars:
 
         # Strings
         global_strings_categories = globalvars_gff.root.get_list("CatString")
-        global_strings = globalvars_gff.root.get_binary("ValString")
-        with BinaryReader.from_bytes(global_strings) as reader:
-            self.global_string = [
-                (
-                    category.get_string("Name"),
-                    reader.read_string(16),
-                )
-                for category in global_strings_categories
-            ]
+        global_strings = globalvars_gff.root.get_list("ValString")
+        self.global_string = [
+            (
+                category.get_string("Name"),
+                value.get_string("String"),
+            )
+            for category, value in zip(global_strings_categories, global_strings)
+        ]
 
 class SaveNestedCapsule:
     """savegame.sav
@@ -190,26 +202,37 @@ class SaveNestedCapsule:
         ident = self.IDENTIFIER if ident is None else ident
         self.nested_capsule_path = CaseAwarePath.pathify(path) / str(ident)
         self.nested_resources_path = Capsule(self.nested_capsule_path)
-        self.cached_modules: list[FileResource] = []  # cached modules inside the sav
+        self.cached_modules: list[ERF] = []  # cached modules inside the sav
+        self.cached_characters: list[UTC] = []  # cached availnpc utc's
         self.inventory: list[UTI] = []
+        self.repute: GFF  # factions file.
 
     def load(self):
-        self.load_cached_modules()
-        self.load_inventory()
+        self.load_cached()
 
-    def load_cached_modules(self, *, reload: bool = False):
+    def load_cached(self, *, reload: bool = False):
         for resource in self.nested_resources_path.resources(reload=reload):
-            if resource.restype() == ResourceType.ERF:
-                self.cached_modules.append(resource)
+            if resource.restype() == ResourceType.SAV:
+                sav = read_erf(resource.data())
+                self.cached_modules.append(sav)
+            if resource.restype() == ResourceType.UTC:
+                utc = read_utc(resource.data())
+                self.cached_characters.append(utc)
             if resource.identifier() == self.INVENTORY_IDENTIFIER:
-                self.load_inventory(resource)
+                inventory_gff = read_gff(resource.data())
+                item_list = inventory_gff.root.get_list("ItemList")
+                for item in item_list:
+                    uti = construct_uti_from_struct(item)
+                    self.inventory.append(uti)
 
-    def load_inventory(self, resource: FileResource):
-        inventory_gff = read_gff(resource.data())
-        item_list = inventory_gff.root.get_list("ItemList")
-        for item in item_list:
-            uti = construct_uti_from_struct(item)
-            self.inventory.append(uti)
+    def update_nested_module(self, module: Module):
+        """Updates a module in a save and retains all of the original bools/strings that were set.
+
+        This function is useful if you've updated a module and don't want to recreate a save to test it.
+        """
+        # Should just copy the resources from the module, and update the static lists that only exist in the save data.
+        # Could diff them but it'd be easier/more readable to hardcode them in.
+        # Might be useful to hook up the toolset's Watchdog up to this in an optional feature the user can activate in Settings.
 
 class SaveFolderEntry:
     """Represents all data in a single save."""
@@ -237,14 +260,14 @@ class SaveFolderEntry:
         self.globals: GlobalVars = GlobalVars(self.save_path)
 
     def load(self):
-        print("loading nested save capsule...")
-        self.sav = SaveNestedCapsule(self.save_path)
-        print("loading party table...")
-        self.partytable = PartyTable(self.save_path)
-        print("loading save info...")
-        self.save_info = SaveInfo(self.save_path)
-        print("loading save globals...")
-        self.globals = GlobalVars(self.save_path)
+        print("Loading nested save capsule...")
+        self.sav.load()
+        print("Loading party table...")
+        self.partytable.load()
+        print("Loading save info...")
+        self.save_info.load()
+        print("Loading save globals...")
+        self.globals.load()
 
 
 if __name__ == "__main__":
