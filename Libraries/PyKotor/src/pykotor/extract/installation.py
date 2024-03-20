@@ -910,7 +910,7 @@ class Installation:
 
     def override_resources(
         self,
-        directory: str,
+        directory: str | None = None,
     ) -> list[FileResource]:
         """Returns a list of FileResources stored in the specified subdirectory located in the 'override' folder linked to the Installation.
 
@@ -1608,7 +1608,7 @@ class Installation:
         *,
         capsules: list[Capsule] | None = None,
         folders: list[Path] | None = None,
-    ) -> set[FileResource]:
+    ) -> set[FileResource]:  # TODO: 2da's have 'strref' columns that we should parse.
         """Finds all gffs that utilize this stringref in their localizedstring.
 
         If no gffs could not be found the value will return None.
@@ -1722,6 +1722,7 @@ class Installation:
                     resname=gff_file.stem,
                     restype=restype,
                     size=gff_file.stat().st_size,
+                    offset=0,
                     filepath=gff_file
                 )
                 gffs.add(fileres)
