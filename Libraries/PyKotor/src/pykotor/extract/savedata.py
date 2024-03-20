@@ -2,22 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pykotor.common.geometry import Vector3, Vector4
+from pykotor.common.geometry import Vector4
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.capsule import Capsule
-from pykotor.extract.file import FileResource, ResourceIdentifier
-from pykotor.resource.formats.erf import ERF
-from pykotor.resource.formats.erf.erf_auto import read_erf
-from pykotor.resource.formats.erf.erf_data import ERFType
-from pykotor.resource.formats.gff import GFF
+from pykotor.extract.file import ResourceIdentifier
 from pykotor.resource.formats.gff.gff_auto import read_gff
-from pykotor.resource.generics.uti import UTI, construct_uti_from_struct
+from pykotor.resource.generics.uti import construct_uti_from_struct
 from pykotor.resource.type import ResourceType
 from pykotor.tools.path import CaseAwarePath
 
 if TYPE_CHECKING:
     import os
+
+    from pykotor.extract.file import FileResource
+    from pykotor.resource.generics.uti import UTI
 
 class SaveInfo:
     """SAVENFO.res
@@ -27,10 +26,10 @@ class SaveInfo:
     # - areaname (last?).
     """
 
-    NAME: ResourceIdentifier = ResourceIdentifier("savenfo", ResourceType.RES)
+    IDENTIFIER: ResourceIdentifier = ResourceIdentifier("savenfo", ResourceType.RES)
 
     def __init__(self, path: os.PathLike | str, ident: ResourceIdentifier | None = None):
-        ident = ident or self.NAME
+        ident = self.IDENTIFIER if ident is None else ident
         self.save_info_path: CaseAwarePath = CaseAwarePath.pathify(path) / str(ident)
 
         self.area_name: str = ""
@@ -82,8 +81,9 @@ class PartyTable:
 
     IDENTIFIER: ResourceIdentifier = ResourceIdentifier("partytable", ResourceType.RES)
 
-    def __init__(self, path: os.PathLike | str):
-        self.party_table_path: CaseAwarePath = CaseAwarePath.pathify(path)
+    def __init__(self, path: os.PathLike | str, ident: ResourceIdentifier | None = None):
+        ident = self.IDENTIFIER if ident is None else ident
+        self.party_table_path: CaseAwarePath = CaseAwarePath.pathify(path) / str(ident)
         self.galaxy_map: dict | None = None
         self.jnl_entries: list[JournalEntry] = []
         self.jnl_sort_order: int = 0
@@ -114,8 +114,8 @@ class GlobalVars:
     IDENTIFIER: ResourceIdentifier = ResourceIdentifier("globalvars", ResourceType.RES)
 
     def __init__(self, path: os.PathLike | str, ident: ResourceIdentifier | None = None):
-        ident = ident or self.IDENTIFIER
-        self.globals_filepath = CaseAwarePath(path, str(ident))
+        ident = self.IDENTIFIER if ident is None else ident
+        self.globals_filepath = CaseAwarePath.pathify(path) / str(ident)
 
         self.global_bools: list[tuple[str, bool]] = []
         self.global_locs: list[tuple[str, Vector4]] = []
@@ -187,8 +187,9 @@ class SaveNestedCapsule:
     INVENTORY_IDENTIFIER: ResourceIdentifier = ResourceIdentifier("inventory", ResourceType.RES)
 
     def __init__(self, path: os.PathLike | str, ident: ResourceIdentifier | None = None):
-        ident = ident or self.IDENTIFIER
-        self.nested_resources_path = Capsule(CaseAwarePath(path, str(ident)))
+        ident = self.IDENTIFIER if ident is None else ident
+        self.nested_capsule_path = CaseAwarePath.pathify(path) / str(ident)
+        self.nested_resources_path = Capsule(self.nested_capsule_path)
         self.cached_modules: list[FileResource] = []  # cached modules inside the sav
         self.inventory: list[UTI] = []
 
