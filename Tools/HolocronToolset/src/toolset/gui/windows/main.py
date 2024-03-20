@@ -297,9 +297,9 @@ class ToolWindow(QMainWindow):
         newSaveDirPath = CaseAwarePath(newSaveDir)
         if newSaveDirPath not in self.active._saves:
             self.active.load_saves()
-            if newSaveDirPath not in self.active._saves:
-                print(f"Cannot load save {newSaveDirPath}: not found in saves list")
-                return
+        if newSaveDirPath not in self.active._saves:
+            print(f"Cannot load save {newSaveDirPath}: not found in saves list")
+            return
         for save_path, resource_list in self.active._saves[newSaveDirPath].items():
             # Create a new parent item for the save_path
             save_path_item = QStandardItem(str(save_path.relative_to(save_path.parent.parent)))
@@ -1029,7 +1029,7 @@ class ToolWindow(QMainWindow):
             return active or HTInstallation(path, name, tsl, self)
 
         active = self.installations.get(name)
-        loader = AsyncLoader(self, "Loading Installation" if not active else "Refreshing installation", lambda: load_task(active), "Failed to load installation")
+        loader = AsyncLoader(self, "Refreshing installation" if active else "Loading Installation", lambda: load_task(active), "Failed to load installation")
         if not loader.exec_():
             self.active = None
             self.ui.gameCombo.setCurrentIndex(0)

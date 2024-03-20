@@ -133,8 +133,6 @@ class ResourceList(MainWindowList):
                 if item.resource in resourceSet:
                     continue
                 item.parent().removeRow(item.row())
-            elif hasattr(item, "resource"):
-                print(f"Skipping {item.resource}")
 
         # Remove unused categories
         self.modulesModel.removeUnusedCategories()
