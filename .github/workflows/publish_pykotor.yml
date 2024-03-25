@@ -210,6 +210,23 @@ jobs:
         # Compile the bootloader
         cd bootloader
         python ./waf distclean all
+
+        # Correctly map matrix.architecture to PyInstaller's expected directory names
+        $archMap = @{
+          'x86' = 'Windows-32bit-intel'
+          'x64' = 'Windows-64bit-intel'
+        }
+        $bootloaderArch = $archMap["${{ matrix.architecture }}"]
+        if (-not $bootloaderArch) {
+          Write-Error "Unsupported architecture: ${{ matrix.architecture }}"
+          exit 1
+        }
+
+        Copy-Item -LiteralPath "./build/debug/run_d.exe" -Destination "../PyInstaller/Bootloader/$bootloaderArch" -Force
+        Copy-Item -LiteralPath "./build/debugw/runw_d.exe" -Destination "../PyInstaller/Bootloader/$bootloaderArch" -Force
+        Copy-Item -LiteralPath "./build/release/run.exe" -Destination "../PyInstaller/Bootloader/$bootloaderArch" -Force
+        Copy-Item -LiteralPath "./build/releasew/runw.exe" -Destination "../PyInstaller/Bootloader/$bootloaderArch" -Force
+
         cd ..
 
         # Install PyInstaller with the newly compiled bootloader
