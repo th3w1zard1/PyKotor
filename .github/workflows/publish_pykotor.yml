@@ -155,10 +155,10 @@ jobs:
         choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.CoreBuildTools"
       shell: pwsh
 
-    - name: Upgrade setuptools and Uninstall PyInstaller
+    - name: Upgrade setuptools/wheel and Uninstall PyInstaller
       if: ${{ runner.os == 'Windows' }}
       run: |
-        python -m pip install setuptools --upgrade
+        python -m pip install setuptools wheel --upgrade
         python -m pip uninstall PyInstaller -y
       shell: pwsh
 
