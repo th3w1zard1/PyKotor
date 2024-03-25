@@ -51,6 +51,7 @@ jobs:
           Write-Host '${{ steps.set_env.outputs.python-version }}'
           Write-Host '${{ steps.set_env.outputs.architecture }}'
           Write-Host '${{ steps.set_env.outputs.python-pypy }}'
+        shell: pwsh
 
   build:
     needs: setup
@@ -202,6 +203,7 @@ jobs:
       run: |
         # Clone the PyInstaller repository
         git clone https://github.com/pyinstaller/pyinstaller
+        git checkout 8bee1749c0d8f29fbc338e2ef6b8bfa5354174c2
         cd pyinstaller
 
         # Compile the bootloader
