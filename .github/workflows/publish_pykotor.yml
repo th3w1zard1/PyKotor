@@ -149,7 +149,37 @@ jobs:
         sudo apt-get update -y
       shell: bash
 
+    - name: Install Visual Studio Build Tools (Compatible with Windows 7)
+      if: ${{ runner.os == 'Windows' }}
+      run: |
+        choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Component.VC.CoreBuildTools"
+      shell: pwsh
+
+    - name: Upgrade setuptools and Uninstall PyInstaller
+      if: ${{ runner.os == 'Windows' }}
+      run: |
+        python -m pip install setuptools --upgrade
+        python -m pip uninstall PyInstaller -y
+      shell: pwsh
+
+    - name: Clone PyInstaller and Compile Custom Bootloader
+      if: ${{ runner.os == 'Windows' }}
+      run: |
+        # Clone the PyInstaller repository
+        git clone https://github.com/pyinstaller/pyinstaller
+        cd pyinstaller
+
+        # Compile the bootloader
+        cd bootloader
+        python ./waf distclean all
+        cd ..
+
+        # Install PyInstaller with the newly compiled bootloader
+        python setup.py install
+      shell: pwsh
+
     - name: Setup python venvs
+      id: venvCreation
       run: |  # create the venv early to work around an issue with the matrix runners' concurrency
         $pythonExeName = "${{ matrix.python_pypy }}"
         if ("${{ runner.os }}" -ne "Windows")
@@ -158,11 +188,129 @@ jobs:
           # LD_LIBRARY_PATH must be updated. However this won't be permanent, just long enough to create the venv.
           $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
         }
-        & $pythonExeName -m venv .venv_holopatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        & $pythonExeName -m venv .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        & $pythonExeName -m venv .venv_guiduplicator_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        & $pythonExeName -m venv .venv_kotordiff_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        & $pythonExeName -m venv .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+        $venvNames = @("holopatcher", "toolset", "guiduplicator", "kotordiff", "batchpatcher")
+        foreach ($venvName in $venvNames) {
+          & $pythonExeName -m venv .venv_$venvName_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+        }
+      
+        # Convert the array directly to JSON
+        $jsonVenvNames = $venvNames | ConvertTo-Json -Depth 5 -Compress
+        Write-Host "jsonVenvNames: $jsonVenvNames"
+
+        # Use a single line of JSON for the venv names to avoid issues
+        $singleLineJsonVenvNames = $jsonVenvNames -replace "`r", ""
+        $singleLineJsonVenvNames = $singleLineJsonVenvNames -replace "`n", ""
+        Write-Host "Venv names JSON:"
+        Write-Host $singleLineJsonVenvNames
+    
+        echo "jsonVenvNames<<EOF" >> $env:GITHUB_OUTPUT
+        echo $singleLineJsonVenvNames >> $env:GITHUB_OUTPUT
+        echo "EOF" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+    
+    - name: Install PyInstaller (Unix)
+      if: ${{ runner.os != 'Windows' }}
+      run: |
+        $jsonVenvNames = "${{ steps.venvCreation.outputs.jsonVenvNames }}"
+        Write-Host "jsonVenvNames: $jsonVenvNames"
+        $venvNames = $jsonVenvNames | ConvertFrom-Json
+        foreach ($venvName in $venvNames) {
+          $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $venvScriptsPath = "$venvPath\bin"
+          . "$venvScriptsPath\Activate.ps1"
+          pip install pyinstaller -U
+        }
+      shell: pwsh
+
+    - name: Install PyInstaller with custom bootloaders in venvs (Windows)
+      if: ${{ runner.os == 'Windows' }}
+      run: |
+        $jsonVenvNames = "${{ steps.venvCreation.outputs.jsonVenvNames }}"
+        Write-Host "jsonVenvNames: $jsonVenvNames"
+        $venvNames = $jsonVenvNames | ConvertFrom-Json
+
+        # Correctly map matrix.architecture to PyInstaller's expected directory names
+        $archMap = @{
+          'x86' = '32bit-intel'
+          'x64' = '64bit-intel'
+        }
+        $bootloaderArch = $archMap["${{ matrix.architecture }}"]
+        if (-not $bootloaderArch) {
+          Write-Error "Unsupported architecture ${{ matrix.architecture }}"
+          exit 1
+        }
+
+        $bootloaderDir = "Windows-$bootloaderArch"
+        $customBootloaderSourcePath = "./custom_bootloaders/$bootloaderDir/*"
+
+        # use for debugging custom_bootloaders dir
+        Write-Host "Listing contents of $customBootloaderSourcePath:"
+        Get-ChildItem -Path $customBootloaderSourcePath -Force | ForEach-Object {
+          $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
+          $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
+          [PSCustomObject]@{
+              Name = $_.Name
+              Size = $size
+              Attributes = $attrs
+          }
+        } | Format-Table -AutoSize
+
+        foreach ($venvName in $venvNames) {
+          $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $venvScriptsPath = "$venvPath\Scripts"
+          . "$venvScriptsPath\Activate.ps1"
+          pip install pyinstaller -U
+
+          $pyinstallerTargetPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller"
+          # use for debugging pyinstallerTargetPath dir
+          Get-ChildItem -Path $pyinstallerTargetPath -Force | ForEach-Object {
+            $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
+            $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
+            [PSCustomObject]@{
+                Name = $_.Name
+                Size = $size
+                Attributes = $attrs
+            }
+          } | Format-Table -AutoSize
+
+          $pyinstallerBootloaderPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller\bootloader"
+          # use for debugging pyinstallerBootloaderPath
+          Write-Host "Listing contents of $pyinstallerBootloaderPath:"
+          Get-ChildItem -Path $pyinstallerBootloaderPath -Force | ForEach-Object {
+            $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
+            $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
+            [PSCustomObject]@{
+                Name = $_.Name
+                Size = $size
+                Attributes = $attrs
+            }
+          } | Format-Table -AutoSize
+
+          $pyinstallerBootloaderTargetPath = "$pyinstallerBootloaderPath/$bootloaderDir"
+          
+          # Ensure the target directory exists before copying
+          if (-not (Test-Path $pyinstallerBootloaderTargetPath)) {
+            New-Item -ItemType Directory -Force -Path $pyinstallerBootloaderTargetPath
+          }
+          
+          Copy-Item -Path $customBootloaderSourcePath -Destination $pyinstallerBootloaderTargetPath -Force -Recurse
+          deactivate
+        }
+      shell: pwsh
+
+    - name: Validate PyInstaller Installation
+      if: ${{ runner.os == 'Windows' }}
+      run: |
+        $jsonVenvNames = "${{ steps.venvCreation.outputs.jsonVenvNames }}"
+        Write-Host "jsonVenvNames: $jsonVenvNames"
+        $venvNames = $jsonVenvNames | ConvertFrom-Json
+        foreach ($venvName in $venvNames) {
+          $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $venvScriptsPath = "$venvPath\Scripts"
+          . "$venvScriptsPath\Activate.ps1"
+          python -m PyInstaller --version
+          deactivate
+        }
       shell: pwsh
 
     - name: Set UPX download URL
@@ -277,17 +425,6 @@ jobs:
           . ./install_python_venv.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
           Write-Host "Python executable path: $pythonExePath"
           & $pythonExePath -m pip install --upgrade pip
-          if ("${{ runner.os }}" -eq "Windows") {
-            if ("${{ matrix.python-version }}" -eq "3.12") {
-              pip install pyinstaller --prefer-binary -U
-            } elseif ("${{ matrix.python-version }}" -eq "3.11") {
-              pip install "pyinstaller==5.13.2" --prefer-binary
-            } else {
-              pip install "pyinstaller==5.4" --prefer-binary
-            }
-          } else {
-            pip install pyinstaller -U --prefer-binary
-          }
           #$env:QT_API = if (-not [string]::IsNullOrEmpty($env:QT_API)) { $env:QT_API } else { "{{ matrix.qt_version }}" }
           $output = ""
           $errorLines = @()
@@ -391,17 +528,6 @@ jobs:
         try {
           . ./install_python_venv.ps1 -noprompt -venv_name .venv_holopatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
           & $pythonExePath -m pip install --upgrade pip
-          if ("${{ runner.os }}" -eq "Windows") {
-            if ("${{ matrix.python-version }}" -eq "3.12") {
-              pip install "pyinstaller==5.13.2" --prefer-binary
-            } elseif ("${{ matrix.python-version }}" -eq "3.11") {
-              pip install "pyinstaller==5.13.2" --prefer-binary
-            } else {
-              pip install "pyinstaller==5.4" --prefer-binary
-            }
-          } else {
-            pip install pyinstaller -U --prefer-binary
-          }
           $output = ""
           $errorLines = @()
           . ./compile/deps_holopatcher.ps1 -noprompt -venv_name .venv_holopatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} 2>&1 | ForEach-Object {
@@ -504,17 +630,6 @@ jobs:
         try {
           . ./install_python_venv.ps1 -noprompt -venv_name .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
           & $pythonExePath -m pip install --upgrade pip
-          if ("${{ runner.os }}" -eq "Windows") {
-            if ("${{ matrix.python-version }}" -eq "3.12") {
-              pip install pyinstaller --prefer-binary -U
-            } elseif ("${{ matrix.python-version }}" -eq "3.11") {
-              pip install "pyinstaller==5.13.2" --prefer-binary
-            } else {
-              pip install "pyinstaller==5.4" --prefer-binary
-            }
-          } else {
-            pip install pyinstaller -U --prefer-binary
-          }
           $output = ""
           $errorLines = @()
           . ./compile/deps_batchpatcher.ps1 -noprompt -venv_name .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} 2>&1 | ForEach-Object {
@@ -617,17 +732,6 @@ jobs:
         Write-Host "Using UPX directory at '$upxDir'"
         . ./install_python_venv.ps1 -noprompt -venv_name .venv_kotordiff_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
         & $pythonExePath -m pip install --upgrade pip
-        if ("${{ runner.os }}" -eq "Windows") {
-          if ("${{ matrix.python-version }}" -eq "3.12") {
-            pip install "pyinstaller==5.13.2" --prefer-binary
-          } elseif ("${{ matrix.python-version }}" -eq "3.11") {
-            pip install "pyinstaller==5.13.2" --prefer-binary
-          } else {
-            pip install "pyinstaller==5.4" --prefer-binary
-          }
-        } else {
-          pip install pyinstaller -U --prefer-binary
-        }
         pip install -r Tools/KotorDiff/requirements.txt --prefer-binary
         $output = ""
         . ./compile/compile_kotordiff.ps1 -noprompt -venv_name .venv_kotordiff_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
@@ -678,17 +782,6 @@ jobs:
         Write-Host "Using UPX directory at '$upxDir'"
         . ./install_python_venv.ps1 -noprompt -venv_name .venv_guiduplicator_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
         & $pythonExePath -m pip install --upgrade pip
-        if ("${{ runner.os }}" -eq "Windows") {
-          if ("${{ matrix.python-version }}" -eq "3.12") {
-            pip install "pyinstaller==5.13.2" --prefer-binary
-          } elseif ("${{ matrix.python-version }}" -eq "3.11") {
-            pip install "pyinstaller==5.13.2" --prefer-binary
-          } else {
-            pip install "pyinstaller==5.4" --prefer-binary
-          }
-        } else {
-          pip install pyinstaller -U --prefer-binary
-        }
         pip install -r Tools/GuiDuplicator/requirements.txt --prefer-binary
         $output = ""
         . ./compile/compile_gui_duplicator.ps1 -noprompt -venv_name .venv_guiduplicator_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
