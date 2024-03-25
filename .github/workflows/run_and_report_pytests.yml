@@ -42,6 +42,7 @@ jobs:
           echo "python-pypy<<EOF" >> $env:GITHUB_OUTPUT
           echo ${{ env.INTERPRETERS_JSON }} >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
+        shell: pwsh
 
       - name: Test github output vars
         run: |

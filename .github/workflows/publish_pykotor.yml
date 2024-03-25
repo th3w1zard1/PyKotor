@@ -43,6 +43,7 @@ jobs:
           echo "python-pypy<<EOF" >> $env:GITHUB_OUTPUT
           echo ${{ env.INTERPRETERS_JSON }} >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
+        shell: pwsh
 
       - name: Test github output vars
         run: |
@@ -203,8 +204,8 @@ jobs:
       run: |
         # Clone the PyInstaller repository
         git clone https://github.com/pyinstaller/pyinstaller
-        git checkout 8bee1749c0d8f29fbc338e2ef6b8bfa5354174c2
         cd pyinstaller
+        git checkout 8bee1749c0d8f29fbc338e2ef6b8bfa5354174c2
 
         # Compile the bootloader
         cd bootloader
@@ -288,9 +289,11 @@ jobs:
           exit 1
         }
 
+        Set-Location -LiteralPath "./pyinstaller"
+
         # use for debugging cwd
         Write-Host "Listing contents of cwd"
-        Get-ChildItem -Path . -Force | ForEach-Object {
+        Get-ChildItem -Path . -Force -Recurse | ForEach-Object {
           $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
           $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
           [PSCustomObject]@{
@@ -301,7 +304,7 @@ jobs:
         } | Format-Table -AutoSize
 
         $bootloaderDir = "bootloader/Windows-$bootloaderArch"
-        $customBootloaderSourcePath = "./pyinstaller/$bootloaderDir/*"
+        $customBootloaderSourcePath = "./$bootloaderDir/*"
 
         # use for debugging pyinstaller dir
         Write-Host "Listing contents of $customBootloaderSourcePath"
