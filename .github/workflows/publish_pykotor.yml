@@ -310,10 +310,10 @@ jobs:
 
           $venvPyinstallerPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller"
 
-          Copy-Item -LiteralPath "$pyinstallerSrcPath/build/debug/run_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
-          Copy-Item -LiteralPath "$pyinstallerSrcPath/build/debugw/runw_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
-          Copy-Item -LiteralPath "$pyinstallerSrcPath/build/release/run.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
-          Copy-Item -LiteralPath "$pyinstallerSrcPath/build/releasew/runw.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "$pyinstallerSrcPath/bootloader/build/debug/run_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "$pyinstallerSrcPath/bootloader/build/debugw/runw_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "$pyinstallerSrcPath/bootloader/build/release/run.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "$pyinstallerSrcPath/bootloader/build/releasew/runw.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
           deactivate
         }
       shell: pwsh
