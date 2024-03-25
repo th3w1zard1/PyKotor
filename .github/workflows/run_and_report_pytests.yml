@@ -30,29 +30,36 @@ jobs:
       - name: Set environment variables
         id: set_env
         run: |
+          # Use a single line of JSON to avoid issues
+
+          $singleLineJson = ${{ env.OS_RUNNERS_JSON }} -replace "`r", ""
+          $singleLineJson = $singleLineJson -replace "`n", ""
+          Write-Host $singleLineJson
           echo "os<<EOF" >> $env:GITHUB_OUTPUT
-          echo ${{ env.OS_RUNNERS_JSON }} >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
+
+          $singleLineJson = ${{ env.OS_RUNNERS_JSON }} -replace "`r", ""
+          $singleLineJson = $singleLineJson -replace "`n", ""
+          Write-Host $singleLineJson
           echo "python-version<<EOF" >> $env:GITHUB_OUTPUT
-          echo ${{ env.PYTHON_VERSIONS_JSON }} >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
+
+          $singleLineJson = ${{ env.OS_RUNNERS_JSON }} -replace "`r", ""
+          $singleLineJson = $singleLineJson -replace "`n", ""
+          Write-Host $singleLineJson
           echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
-          echo ${{ env.ARCHITECTURES_JSON }} >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
+
+          $singleLineJson = ${{ env.OS_RUNNERS_JSON }} -replace "`r", ""
+          $singleLineJson = $singleLineJson -replace "`n", ""
+          Write-Host $singleLineJson
           echo "python-pypy<<EOF" >> $env:GITHUB_OUTPUT
-          echo ${{ env.INTERPRETERS_JSON }} >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
         shell: pwsh
-
-      - name: Test github output vars
-        run: |
-          Write-Host "Testing GITHUB_OUTPUT for set_env step. Outputs"
-          Write-Host '${{ steps.set_env.outputs.os }}'
-          Write-Host '${{ steps.set_env.outputs.python-version }}'
-          Write-Host '${{ steps.set_env.outputs.architecture }}'
-          Write-Host '${{ steps.set_env.outputs.python-pypy }}'
-        shell: pwsh
-
 
   runtests:
     needs: setup

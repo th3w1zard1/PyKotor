@@ -271,17 +271,6 @@ jobs:
         $venvNames = $jsonVenvNames | ConvertFrom-Json
         foreach ($venvName in $venvNames) {
           $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-          # use for debugging venvPath
-          Write-Host "Listing contents of $venvPath"
-          Get-ChildItem -Path $venvPath -Force | ForEach-Object {
-            $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
-            $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
-            [PSCustomObject]@{
-                Name = $_.Name
-                Size = $size
-                Attributes = $attrs
-            }
-          } | Format-Table -AutoSize
           $venvScriptsPath = "$venvPath\bin"
           . "$venvScriptsPath\activate.ps1"
           pip install pyinstaller -U
@@ -298,9 +287,19 @@ jobs:
         $originalPythonSitePackagesPath = & python -c "import site; print(site.getsitepackages()[0])"
         Write-Host "Original Python site-packages path: $originalPythonSitePackagesPath"
         $customBootloaderDir = "$originalPythonSitePackagesPath/PyInstaller/Bootloader"
+        Write-Host "custom bootloader dir: $customBootloaderDir"
+        tree
+        $curPath = Get-Location
+        Write-Host "Current location: $curPath"
 
         foreach ($venvName in $venvNames) {
-          $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $venvPath = "$curPath\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          try {
+            $venvPathItem = Get-Item -Path $venvPath
+            Write-Host $venvPathItem
+          } catch {
+            Write-Host "Venv path doesn't exist: $venvPath"
+          }
           $venvScriptsPath = "$venvPath\Scripts"
           . "$venvScriptsPath\Activate.ps1"
           pip install pyinstaller -U
@@ -515,7 +514,7 @@ jobs:
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } elseif ($warningCount -ge 3) {
-          Write-Output "Many 'library not found' warnings raised, pyinstaller was probably unsuccessful."
+          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } else {
@@ -617,7 +616,7 @@ jobs:
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } elseif ($warningCount -ge 3) {
-          Write-Output "Many 'library not found' warnings raised, pyinstaller was probably unsuccessful."
+          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } else {
@@ -719,7 +718,7 @@ jobs:
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } elseif ($warningCount -ge 3) {
-          Write-Output "Many 'library not found' warnings raised, pyinstaller was probably unsuccessful."
+          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } else {
@@ -769,7 +768,7 @@ jobs:
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } elseif ($warningCount -ge 3) {
-          Write-Output "Many 'library not found' warnings raised, pyinstaller was probably unsuccessful."
+          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } else {
@@ -818,7 +817,7 @@ jobs:
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } elseif ($warningCount -ge 3) {
-          Write-Output "Many 'library not found' warnings raised, pyinstaller was probably unsuccessful."
+          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
           Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
           exit 1
         } else {
@@ -976,17 +975,6 @@ jobs:
 
           # Save artifact names to a file
           $artifactNames | Out-File -FilePath "../artifact-names.txt" -Encoding UTF8
-
-          # use for debug
-          # Get-ChildItem -Force | ForEach-Object {
-          #   $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
-          #   $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
-          #   [PSCustomObject]@{
-          #       Name = $_.Name
-          #       Size = $size
-          #       Attributes = $attrs
-          #   }
-          # } | Format-Table -AutoSize
 
           # Navigate back to the root of the workspace
           Set-Location -Path "../"
