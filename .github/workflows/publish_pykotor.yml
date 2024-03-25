@@ -276,10 +276,13 @@ jobs:
         $jsonVenvNames = '${{ steps.venvCreation.outputs.jsonVenvNames }}'
         Write-Host "jsonVenvNames: $jsonVenvNames"
         $venvNames = $jsonVenvNames | ConvertFrom-Json
+
+        $curPath = Get-Location
+        Write-Host "Current location: $curPath"
         foreach ($venvName in $venvNames) {
-          $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $venvPath = "$curPath\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $venvScriptsPath = "$venvPath\bin"
-          . "$venvScriptsPath\activate.ps1"
+          . "$venvScriptsPath\Activate.ps1"
           $venvScriptsPath\python3 -m pip install --upgrade pip
           $venvScriptsPath\python3 -m pip install pyinstaller -U
         }
@@ -298,12 +301,6 @@ jobs:
 
         foreach ($venvName in $venvNames) {
           $venvPath = "$curPath\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-          try {
-            $venvPathItem = Get-Item -Path $venvPath
-            Write-Host $venvPathItem
-          } catch {
-            Write-Host "Venv path doesn't exist: $venvPath"
-          }
           $venvScriptsPath = "$venvPath\Scripts"
           . "$venvScriptsPath\Activate.ps1"
           python -m pip install --upgrade pip
@@ -325,8 +322,11 @@ jobs:
         $jsonVenvNames = '${{ steps.venvCreation.outputs.jsonVenvNames }}'
         Write-Host "jsonVenvNames: $jsonVenvNames"
         $venvNames = $jsonVenvNames | ConvertFrom-Json
+
+        $curPath = Get-Location
+        Write-Host "Current location: $curPath"
         foreach ($venvName in $venvNames) {
-          $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $venvPath = "$curPath\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $venvScriptsPath = "$venvPath\Scripts"
           . "$venvScriptsPath\Activate.ps1"
           python -m PyInstaller --version
