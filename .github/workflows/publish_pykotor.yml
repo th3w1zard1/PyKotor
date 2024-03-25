@@ -10,6 +10,8 @@ env:
   ARCHITECTURES_JSON: '["x86", "x64"]'
   INTERPRETERS_JSON: '["python"]'
   UPX_VERSION: '4.2.2'
+  USE_UPX: true
+  BUILD_BOOTLOADERS: true
   
 on:
   - push
@@ -245,7 +247,9 @@ jobs:
         }
         $venvNames = @("holopatcher", "toolset", "guiduplicator", "kotordiff", "batchpatcher")
         foreach ($venvName in $venvNames) {
-          & $pythonExeName -m venv .venv_$venvName_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          $matrixVenvPart = '${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}'
+          $venvSpecificName = ".venv_$venvName_$matrixVenvPart"
+          & $pythonExeName -m venv $venvSpecificName
         }
       
         # Convert the array directly to JSON
@@ -304,8 +308,9 @@ jobs:
           . "$venvScriptsPath\Activate.ps1"
           pip install pyinstaller -U
 
-          $venvPyinstallerPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller\bootloader"
-          Copy-Item -Path $customBootloaderDir -Destination $venvPyinstallerPath -Force -Recurse
+          $venvPyinstallerPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller"
+          Remove-Item -LiteralPath "$venvPyinstallerPath\Bootloader" -Force -Recurse
+          Copy-Item -Path $customBootloaderDir -Destination $venvPyinstallerPath -Force
           deactivate
         }
       shell: pwsh
