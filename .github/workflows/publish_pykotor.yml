@@ -232,11 +232,6 @@ jobs:
           exit 1
         }
 
-        Copy-Item -LiteralPath "./build/debug/run_d.exe" -Destination "../PyInstaller/Bootloader/$bootloaderArch" -Force
-        Copy-Item -LiteralPath "./build/debugw/runw_d.exe" -Destination "../PyInstaller/Bootloader/$bootloaderArch" -Force
-        Copy-Item -LiteralPath "./build/release/run.exe" -Destination "../PyInstaller/Bootloader/$bootloaderArch" -Force
-        Copy-Item -LiteralPath "./build/releasew/runw.exe" -Destination "../PyInstaller/Bootloader/$bootloaderArch" -Force
-
         cd ..
 
         # Install PyInstaller with the newly compiled bootloader
@@ -296,13 +291,9 @@ jobs:
         Write-Host "jsonVenvNames: $jsonVenvNames"
         $venvNames = $jsonVenvNames | ConvertFrom-Json
 
-        $originalPythonSitePackagesPath = & python -c "import site; print(site.getsitepackages()[0])"
-        Write-Host "Original Python site-packages path: $originalPythonSitePackagesPath"
-        $customBootloaderDir = "$originalPythonSitePackagesPath/PyInstaller/Bootloader"
-        Write-Host "custom bootloader dir: $customBootloaderDir"
-        tree
         $curPath = Get-Location
         Write-Host "Current location: $curPath"
+        $originalPythonSitePackagesPath = "$curPath/pyinstaller"
 
         foreach ($venvName in $venvNames) {
           $venvPath = "$curPath\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
@@ -317,8 +308,11 @@ jobs:
           pip install pyinstaller -U
 
           $venvPyinstallerPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller"
-          Remove-Item -LiteralPath "$venvPyinstallerPath\Bootloader" -Force -Recurse
-          Copy-Item -Path $customBootloaderDir -Destination $venvPyinstallerPath -Force
+
+          Copy-Item -LiteralPath "./build/debug/run_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "./build/debugw/runw_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "./build/release/run.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "./build/releasew/runw.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
           deactivate
         }
       shell: pwsh
