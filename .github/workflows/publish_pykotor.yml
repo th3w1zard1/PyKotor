@@ -6,7 +6,7 @@ concurrency:
 
 env:
   OS_RUNNERS_JSON: '["windows-2019", "ubuntu-20.04", "macos-12"]'
-  PYTHON_VERSIONS_JSON: '["3.8", "3.9", "3.10", "3.11", "3.12"]'
+  PYTHON_VERSIONS_JSON: '["3.8"]'
   ARCHITECTURES_JSON: '["x86", "x64"]'
   INTERPRETERS_JSON: '["python"]'
   UPX_VERSION: '4.2.2'
@@ -19,7 +19,7 @@ permissions:
   contents: write
 
 jobs:
-  setup:
+  setup:  # This is not used yet, fromJson() doesn't seem to work with these outputs unfortunately...
     runs-on: ubuntu-latest
     outputs:
       os: ${{ steps.set_env.outputs.os }}
@@ -51,7 +51,7 @@ jobs:
       fail-fast: false  # Disable automatic cancellation of other jobs
       matrix:
         os: ["windows-2019", "ubuntu-20.04", "macos-12"]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8"]
         architecture: ["x86", "x64"]
         python_pypy: ["python"]
         #qt_version: ['pyqt5', 'pyqt6', 'pyside2', 'pyside6']
@@ -131,6 +131,7 @@ jobs:
         brew analytics on
         brew update
         brew install ${{ matrix.python_pypy }}@${{ matrix.python-version }} || brew link --overwrite ${{ matrix.python_pypy }}@${{ matrix.python-version }}
+      shell: bash
 
     - name: Set up ${{ matrix.python_pypy }} ${{ matrix.python-version }} ${{ runner.os }}  # macos too?
       if: ${{ runner.os == 'Linux' && matrix.python_pypy == 'python' }}
@@ -242,8 +243,19 @@ jobs:
         $venvNames = $jsonVenvNames | ConvertFrom-Json
         foreach ($venvName in $venvNames) {
           $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          # use for debugging venvPath
+          Write-Host "Listing contents of $venvPath"
+          Get-ChildItem -Path $venvPath -Force | ForEach-Object {
+            $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
+            $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
+            [PSCustomObject]@{
+                Name = $_.Name
+                Size = $size
+                Attributes = $attrs
+            }
+          } | Format-Table -AutoSize
           $venvScriptsPath = "$venvPath\bin"
-          . "$venvScriptsPath\Activate.ps1"
+          . "$venvScriptsPath\activate.ps1"
           pip install pyinstaller -U
         }
       shell: pwsh
@@ -270,7 +282,7 @@ jobs:
         $customBootloaderSourcePath = "./pyinstaller/$bootloaderDir/*"
 
         # use for debugging pyinstaller dir
-        Write-Host "Listing contents of $customBootloaderSourcePath:"
+        Write-Host "Listing contents of $customBootloaderSourcePath"
         Get-ChildItem -Path $customBootloaderSourcePath -Force | ForEach-Object {
           $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
           $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
@@ -289,6 +301,7 @@ jobs:
 
           $pyinstallerTargetPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller"
           # use for debugging pyinstallerTargetPath dir
+          Write-Host "Listing contents of $pyinstallerTargetPath"
           Get-ChildItem -Path $pyinstallerTargetPath -Force | ForEach-Object {
             $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
             $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
@@ -301,7 +314,7 @@ jobs:
 
           $pyinstallerBootloaderPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller\bootloader"
           # use for debugging pyinstallerBootloaderPath
-          Write-Host "Listing contents of $pyinstallerBootloaderPath:"
+          Write-Host "Listing contents of $pyinstallerBootloaderPath"
           Get-ChildItem -Path $pyinstallerBootloaderPath -Force | ForEach-Object {
             $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
             $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'

@@ -18,7 +18,7 @@ permissions:
   contents: write
 
 jobs:
-  setup:
+  setup:  # This is not used yet, fromJson() doesn't seem to work with these outputs unfortunately...
     runs-on: ubuntu-latest
     outputs:
       os: ${{ steps.set_env.outputs.os }}
