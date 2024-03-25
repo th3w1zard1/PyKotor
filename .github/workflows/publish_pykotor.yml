@@ -50,10 +50,10 @@ jobs:
     strategy:
       fail-fast: false  # Disable automatic cancellation of other jobs
       matrix:
-        os: ${{ needs.setup.outputs.os }}
-        python-version: ${{ needs.setup.outputs.python-version }}
-        architecture: ${{ needs.setup.outputs.architecture }}
-        python_pypy: ${{ needs.setup.outputs.python-pypy }}
+        os: ${{ fromJson(needs.setup.outputs.os) }}
+        python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
+        architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
+        python_pypy: ${{ fromJson(needs.setup.outputs.python-pypy) }}
         #qt_version: ['pyqt5', 'pyqt6', 'pyside2', 'pyside6']
         include:
           - arch: x86
