@@ -293,7 +293,7 @@ jobs:
 
         $curPath = Get-Location
         Write-Host "Current location: $curPath"
-        $originalPythonSitePackagesPath = "$curPath/pyinstaller"
+        $pyinstallerSrcPath = "$curPath/pyinstaller"
 
         foreach ($venvName in $venvNames) {
           $venvPath = "$curPath\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
@@ -309,10 +309,10 @@ jobs:
 
           $venvPyinstallerPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller"
 
-          Copy-Item -LiteralPath "./build/debug/run_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
-          Copy-Item -LiteralPath "./build/debugw/runw_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
-          Copy-Item -LiteralPath "./build/release/run.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
-          Copy-Item -LiteralPath "./build/releasew/runw.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "$pyinstallerSrcPath/build/debug/run_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "$pyinstallerSrcPath/build/debugw/runw_d.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "$pyinstallerSrcPath/build/release/run.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
+          Copy-Item -LiteralPath "$pyinstallerSrcPath/build/releasew/runw.exe" -Destination "$venvPyinstallerPath/Bootloader/$bootloaderArch" -Force
           deactivate
         }
       shell: pwsh
