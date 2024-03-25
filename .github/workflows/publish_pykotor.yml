@@ -21,7 +21,7 @@ permissions:
   contents: write
 
 jobs:
-  setup:  # This is not used yet, fromJson() doesn't seem to work with these outputs unfortunately...
+  setup:
     runs-on: ubuntu-latest
     outputs:
       os: ${{ steps.set_env.outputs.os }}
@@ -33,27 +33,35 @@ jobs:
       - name: Set environment variables
         id: set_env
         run: |
-          echo "os<<EOF" >> $env:GITHUB_OUTPUT
-          echo ${{ env.OS_RUNNERS_JSON }} >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
-          echo "python-version<<EOF" >> $env:GITHUB_OUTPUT
-          echo ${{ env.PYTHON_VERSIONS_JSON }} >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
-          echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
-          echo ${{ env.ARCHITECTURES_JSON }} >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
-          echo "python-pypy<<EOF" >> $env:GITHUB_OUTPUT
-          echo ${{ env.INTERPRETERS_JSON }} >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+          # Use a single line of JSON to avoid issues
 
-      - name: Test github output vars
-        run: |
-          Write-Host "Testing GITHUB_OUTPUT for set_env step. Outputs"
-          Write-Host '${{ steps.set_env.outputs.os }}'
-          Write-Host '${{ steps.set_env.outputs.python-version }}'
-          Write-Host '${{ steps.set_env.outputs.architecture }}'
-          Write-Host '${{ steps.set_env.outputs.python-pypy }}'
+          $singleLineJson = '${{ env.OS_RUNNERS_JSON }}' -replace "`r", ""
+          $singleLineJson = $singleLineJson -replace "`n", ""
+          Write-Host $singleLineJson
+          echo "os<<EOF" >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
+          $singleLineJson = '${{ env.OS_RUNNERS_JSON }}' -replace "`r", ""
+          $singleLineJson = $singleLineJson -replace "`n", ""
+          Write-Host $singleLineJson
+          echo "python-version<<EOF" >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
+          $singleLineJson = '${{ env.OS_RUNNERS_JSON }}' -replace "`r", ""
+          $singleLineJson = $singleLineJson -replace "`n", ""
+          Write-Host $singleLineJson
+          echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
+          $singleLineJson = '${{ env.OS_RUNNERS_JSON }}' -replace "`r", ""
+          $singleLineJson = $singleLineJson -replace "`n", ""
+          Write-Host $singleLineJson
+          echo "python-pypy<<EOF" >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
   build:
@@ -62,10 +70,10 @@ jobs:
     strategy:
       fail-fast: false  # Disable automatic cancellation of other jobs
       matrix:
-        os: ["windows-2019", "ubuntu-20.04", "macos-12"]
-        python-version: ["3.8"]
-        architecture: ["x86", "x64"]
-        python_pypy: ["python"]
+        os: ${{ fromJson(needs.setup.outputs.os) }}
+        python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
+        architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
+        python_pypy: ${{ fromJson(needs.setup.outputs.python-pypy) }}
         #qt_version: ['pyqt5', 'pyqt6', 'pyside2', 'pyside6']
         include:
           - arch: x86
