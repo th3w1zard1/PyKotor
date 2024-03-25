@@ -295,45 +295,9 @@ jobs:
         Write-Host "jsonVenvNames: $jsonVenvNames"
         $venvNames = $jsonVenvNames | ConvertFrom-Json
 
-        # Correctly map matrix.architecture to PyInstaller's expected directory names
-        $archMap = @{
-          'x86' = '32bit-intel'
-          'x64' = '64bit-intel'
-        }
-        $bootloaderArch = $archMap["${{ matrix.architecture }}"]
-        if (-not $bootloaderArch) {
-          Write-Error "Unsupported architecture ${{ matrix.architecture }}"
-          exit 1
-        }
-
-        Set-Location -LiteralPath "./pyinstaller"
-
-        # use for debugging cwd
-        Write-Host "Listing contents of cwd"
-        Get-ChildItem -Path . -Force -Recurse | ForEach-Object {
-          $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
-          $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
-          [PSCustomObject]@{
-              Name = $_.Name
-              Size = $size
-              Attributes = $attrs
-          }
-        } | Format-Table -AutoSize
-
-        $bootloaderDir = "bootloader/Windows-$bootloaderArch"
-        $customBootloaderSourcePath = "./$bootloaderDir/*"
-
-        # use for debugging pyinstaller dir
-        Write-Host "Listing contents of $customBootloaderSourcePath"
-        Get-ChildItem -Path $customBootloaderSourcePath -Force | ForEach-Object {
-          $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
-          $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
-          [PSCustomObject]@{
-              Name = $_.Name
-              Size = $size
-              Attributes = $attrs
-          }
-        } | Format-Table -AutoSize
+        $originalPythonSitePackagesPath = & python -c "import site; print(site.getsitepackages()[0])"
+        Write-Host "Original Python site-packages path: $originalPythonSitePackagesPath"
+        $customBootloaderDir = "$originalPythonSitePackagesPath/PyInstaller/Bootloader"
 
         foreach ($venvName in $venvNames) {
           $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
@@ -341,40 +305,8 @@ jobs:
           . "$venvScriptsPath\Activate.ps1"
           pip install pyinstaller -U
 
-          $pyinstallerTargetPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller"
-          # use for debugging pyinstallerTargetPath dir
-          Write-Host "Listing contents of $pyinstallerTargetPath"
-          Get-ChildItem -Path $pyinstallerTargetPath -Force | ForEach-Object {
-            $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
-            $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
-            [PSCustomObject]@{
-                Name = $_.Name
-                Size = $size
-                Attributes = $attrs
-            }
-          } | Format-Table -AutoSize
-
-          $pyinstallerBootloaderPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller\bootloader"
-          # use for debugging pyinstallerBootloaderPath
-          Write-Host "Listing contents of $pyinstallerBootloaderPath"
-          Get-ChildItem -Path $pyinstallerBootloaderPath -Force | ForEach-Object {
-            $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
-            $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
-            [PSCustomObject]@{
-                Name = $_.Name
-                Size = $size
-                Attributes = $attrs
-            }
-          } | Format-Table -AutoSize
-
-          $pyinstallerBootloaderTargetPath = "$pyinstallerBootloaderPath/$bootloaderDir"
-          
-          # Ensure the target directory exists before copying
-          if (-not (Test-Path $pyinstallerBootloaderTargetPath)) {
-            New-Item -ItemType Directory -Force -Path $pyinstallerBootloaderTargetPath
-          }
-          
-          Copy-Item -Path $customBootloaderSourcePath -Destination $pyinstallerBootloaderTargetPath -Force -Recurse
+          $venvPyinstallerPath = "$env:VIRTUAL_ENV\Lib\site-packages\PyInstaller\bootloader"
+          Copy-Item -Path $customBootloaderDir -Destination $venvPyinstallerPath -Force -Recurse
           deactivate
         }
       shell: pwsh
