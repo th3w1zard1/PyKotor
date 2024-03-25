@@ -256,7 +256,7 @@ jobs:
         $venvNames = @("holopatcher", "toolset", "guiduplicator", "kotordiff", "batchpatcher")
         foreach ($venvName in $venvNames) {
           $matrixVenvPart = '${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}'
-          $venvSpecificName = ".venv_$venvName_$matrixVenvPart"
+          $venvSpecificName = ".venv_${venvName}_$matrixVenvPart"
           & $pythonExeName -m venv $venvSpecificName
         }
       
