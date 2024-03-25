@@ -280,7 +280,8 @@ jobs:
           $venvPath = ".\.venv_${venvName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $venvScriptsPath = "$venvPath\bin"
           . "$venvScriptsPath\activate.ps1"
-          pip install pyinstaller -U
+          $venvScriptsPath\python3 -m pip install --upgrade pip
+          $venvScriptsPath\python3 -m pip install pyinstaller -U
         }
       shell: pwsh
 
