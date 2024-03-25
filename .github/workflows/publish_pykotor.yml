@@ -19,15 +19,41 @@ permissions:
   contents: write
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.set_env.outputs.os }}
+      python-version: ${{ steps.set_env.outputs.python-version }}
+      architecture: ${{ steps.set_env.outputs.architecture }}
+      python-pypy: ${{ steps.set_env.outputs.python-pypy }}
+
+    steps:
+      - name: Set environment variables
+        id: set_env
+        run: |
+          echo "os<<EOF" >> $env:GITHUB_OUTPUT
+          echo ${{ env.OS_RUNNERS_JSON }} >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+          echo "python-version<<EOF" >> $env:GITHUB_OUTPUT
+          echo ${{ env.PYTHON_VERSIONS_JSON }} >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+          echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
+          echo ${{ env.ARCHITECTURES_JSON }} >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+          echo "python-pypy<<EOF" >> $env:GITHUB_OUTPUT
+          echo ${{ env.INTERPRETERS_JSON }} >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
   build:
+    needs: setup
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false  # Disable automatic cancellation of other jobs
       matrix:
-        os: [windows-2019, ubuntu-20.04, macos-12]  # make sure you update the above one too.
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        architecture: ['x86', 'x64']
-        python_pypy: ['python']
+        os: ${{ needs.setup.outputs.os }}
+        python-version: ${{ needs.setup.outputs.python-version }}
+        architecture: ${{ needs.setup.outputs.architecture }}
+        python_pypy: ${{ needs.setup.outputs.python-pypy }}
         #qt_version: ['pyqt5', 'pyqt6', 'pyside2', 'pyside6']
         include:
           - arch: x86
@@ -175,7 +201,7 @@ jobs:
         cd ..
 
         # Install PyInstaller with the newly compiled bootloader
-        python setup.py install
+        python -m pip install .
       shell: pwsh
 
     - name: Setup python venvs
@@ -241,9 +267,9 @@ jobs:
         }
 
         $bootloaderDir = "Windows-$bootloaderArch"
-        $customBootloaderSourcePath = "./custom_bootloaders/$bootloaderDir/*"
+        $customBootloaderSourcePath = "./pyinstaller/$bootloaderDir/*"
 
-        # use for debugging custom_bootloaders dir
+        # use for debugging pyinstaller dir
         Write-Host "Listing contents of $customBootloaderSourcePath:"
         Get-ChildItem -Path $customBootloaderSourcePath -Force | ForEach-Object {
           $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
