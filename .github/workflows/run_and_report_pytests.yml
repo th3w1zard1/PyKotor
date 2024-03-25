@@ -42,6 +42,17 @@ jobs:
           echo "python-pypy<<EOF" >> $env:GITHUB_OUTPUT
           echo ${{ env.INTERPRETERS_JSON }} >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
+
+      - name: Test github output vars
+        run: |
+          Write-Host "Testing GITHUB_OUTPUT for set_env step. Outputs"
+          Write-Host '${{ steps.set_env.outputs.os }}'
+          Write-Host '${{ steps.set_env.outputs.python-version }}'
+          Write-Host '${{ steps.set_env.outputs.architecture }}'
+          Write-Host '${{ steps.set_env.outputs.python-pypy }}'
+        shell: pwsh
+
+
   runtests:
     needs: setup
     runs-on: ${{ matrix.os }}
