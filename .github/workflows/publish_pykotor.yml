@@ -44,6 +44,14 @@ jobs:
           echo ${{ env.INTERPRETERS_JSON }} >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
 
+      - name: Test github output vars
+        run: |
+          Write-Host "Testing GITHUB_OUTPUT for set_env step. Outputs"
+          Write-Host '${{ steps.set_env.outputs.os }}'
+          Write-Host '${{ steps.set_env.outputs.python-version }}'
+          Write-Host '${{ steps.set_env.outputs.architecture }}'
+          Write-Host '${{ steps.set_env.outputs.python-pypy }}'
+
   build:
     needs: setup
     runs-on: ${{ matrix.os }}
@@ -278,7 +286,19 @@ jobs:
           exit 1
         }
 
-        $bootloaderDir = "Windows-$bootloaderArch"
+        # use for debugging cwd
+        Write-Host "Listing contents of cwd"
+        Get-ChildItem -Path . -Force | ForEach-Object {
+          $size = if ($_.PSIsContainer) { "N/A" } else { $_.Length }
+          $attrs = $_.Attributes.ToString() -replace 'ReadOnly', 'RO' -replace 'Hidden', 'H' -replace 'System', 'S' -replace 'Archive', 'A' -replace 'Directory', 'D' -replace ', ', '|'
+          [PSCustomObject]@{
+              Name = $_.Name
+              Size = $size
+              Attributes = $attrs
+          }
+        } | Format-Table -AutoSize
+
+        $bootloaderDir = "bootloader/Windows-$bootloaderArch"
         $customBootloaderSourcePath = "./pyinstaller/$bootloaderDir/*"
 
         # use for debugging pyinstaller dir
