@@ -211,7 +211,7 @@ jobs:
     - name: Install PyInstaller (Unix)
       if: ${{ runner.os != 'Windows' }}
       run: |
-        $jsonVenvNames = "${{ steps.venvCreation.outputs.jsonVenvNames }}"
+        $jsonVenvNames = '${{ steps.venvCreation.outputs.jsonVenvNames }}'
         Write-Host "jsonVenvNames: $jsonVenvNames"
         $venvNames = $jsonVenvNames | ConvertFrom-Json
         foreach ($venvName in $venvNames) {
@@ -225,7 +225,7 @@ jobs:
     - name: Install PyInstaller with custom bootloaders in venvs (Windows)
       if: ${{ runner.os == 'Windows' }}
       run: |
-        $jsonVenvNames = "${{ steps.venvCreation.outputs.jsonVenvNames }}"
+        $jsonVenvNames = '${{ steps.venvCreation.outputs.jsonVenvNames }}'
         Write-Host "jsonVenvNames: $jsonVenvNames"
         $venvNames = $jsonVenvNames | ConvertFrom-Json
 
@@ -301,7 +301,7 @@ jobs:
     - name: Validate PyInstaller Installation
       if: ${{ runner.os == 'Windows' }}
       run: |
-        $jsonVenvNames = "${{ steps.venvCreation.outputs.jsonVenvNames }}"
+        $jsonVenvNames = '${{ steps.venvCreation.outputs.jsonVenvNames }}'
         Write-Host "jsonVenvNames: $jsonVenvNames"
         $venvNames = $jsonVenvNames | ConvertFrom-Json
         foreach ($venvName in $venvNames) {
