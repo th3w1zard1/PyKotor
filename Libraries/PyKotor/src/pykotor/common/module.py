@@ -237,8 +237,12 @@ class Module:  # noqa: PLR0904
                     textures.add(texture)
                 for lightmap in list_lightmaps(data):
                     textures.add(lightmap)
-            except Exception as e:
-                print(format_exception_with_variables(e, message=f"Exception occurred when executing {self!r}.reload_resources() with model '{model.resname()}.{model.restype()}'"))
+            except Exception as e:  # noqa: PERF203
+                print(
+                    format_exception_with_variables(
+                        e, message=f"Exception occurred when executing {self!r}.reload_resources() with model '{model.resname()}.{model.restype()}'"
+                    )
+                )
 
         for texture in textures:
             look_for.extend(
@@ -329,7 +333,6 @@ class Module:  # noqa: PLR0904
         Args:
         ----
             self: The Module instance
-            _id: The ID of the layout resource
 
         Returns:
         -------
@@ -744,12 +747,12 @@ class Module:  # noqa: PLR0904
         """
         return [resource for resource in self.resources.values() if resource.restype() == ResourceType.UTE]
 
-    def store(self, resname: str) -> ModuleResource[UTM] | None:
+    def store(self, resname: str | ResRef) -> ModuleResource[UTM] | None:
         """Looks up a material (UTM) resource by the specified resname from this module and returns the resource data.
 
         Args:
         ----
-            resname: Name of the resource to look up
+            resname(str | ResRef): Name of the resource to look up
 
         Returns:
         -------
@@ -762,7 +765,7 @@ class Module:  # noqa: PLR0904
             - Returns the first matching resource
             - Returns None if no match found.
         """
-        lower_resname: str = resname.lower()
+        lower_resname: str = str(resname).lower()
         return next(
             (
                 resource
@@ -1151,19 +1154,7 @@ class ModuleResource(Generic[T]):
             return None
         if isinstance(res, UTC):
             return f"{self._installation.string(res.first_name)} {self._installation.string(res.last_name)}"
-        if isinstance(res, UTP):
-            return self._installation.string(res.name)
-        if isinstance(res, UTD):
-            return self._installation.string(res.name)
-        if isinstance(res, UTW):
-            return self._installation.string(res.name)
-        if isinstance(res, UTT):
-            return self._installation.string(res.name)
-        if isinstance(res, UTE):
-            return self._installation.string(res.name)
-        if isinstance(res, UTM):
-            return self._installation.string(res.name)
-        if isinstance(res, UTS):
+        if isinstance(res, (UTP, UTD, UTW, UTT, UTE, UTM, UTS)):
             return self._installation.string(res.name)
         print(f"Could not find res of type {res.__class__}")
         return None
@@ -1204,12 +1195,15 @@ class ModuleResource(Generic[T]):
 
         return BinaryReader.load_file(self._active)
 
-    def resource(self) -> T | None:
+    def resource(self) -> T:
         """Returns the cached resource object. If no object has been cached, then it will load the object.
 
         Returns:
         -------
             The resource object.
+
+        Raises:
+            ValueError - resource not found somewhere
         """
         if self._resource_obj is None:
             conversions: dict[ResourceType, Callable[[SOURCE_TYPES], Any]] = {
@@ -1237,15 +1231,7 @@ class ModuleResource(Generic[T]):
 
             file_name: str = f"{self._resname}.{self._restype.extension}"
             if self._active is None:
-                try:
-                    assert_with_variable_trace(self._resource_obj is not None)
-                except Exception as e:
-                    with Path("errorlog.txt").open("a", encoding="utf-8") as file:
-                        lines = format_exception_with_variables(e)
-                        file.writelines(lines)
-                        file.write("\n----------------------\n")
-                self._resource_obj = None
-
+                assert_with_variable_trace(self._resource_obj is not None)
             elif is_capsule_file(self._active.name):
                 data: bytes | None = Capsule(self._active).resource(self._resname, self._restype)
                 if data is None:
