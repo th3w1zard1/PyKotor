@@ -98,7 +98,7 @@ if __name__ == "__main__":
         multiprocessing.freeze_support()
     else:
         fix_sys_and_cwd_path()
-    multiprocessing.set_start_method("spawn")
+    multiprocessing.set_start_method("spawn", force=True)
 
     from utility.system.path import Path
 

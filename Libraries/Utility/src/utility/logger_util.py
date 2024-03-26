@@ -115,7 +115,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
     logger = get_root_logger()
     logger.critical("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
 
-sys.excepthook = handle_exception
+#sys.excepthook = handle_exception
 
 # Example usage
 if __name__ == "__main__":
