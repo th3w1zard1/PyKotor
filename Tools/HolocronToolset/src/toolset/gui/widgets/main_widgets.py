@@ -3,6 +3,7 @@ from __future__ import annotations
 import multiprocessing
 
 from abc import abstractmethod
+from multiprocessing import Event
 from time import sleep
 from typing import TYPE_CHECKING
 
@@ -16,6 +17,8 @@ from pykotor.resource.formats.tpc import TPC, TPCTextureFormat
 from utility.error_handling import format_exception_with_variables
 
 if TYPE_CHECKING:
+    from multiprocessing import JoinableQueue, Queue, synchronize
+
     from PyQt5.QtCore import QModelIndex
     from PyQt5.QtGui import QResizeEvent
 
@@ -325,9 +328,11 @@ class TextureList(MainWindowList):
         self.ui.sectionCombo.setModel(self.sectionModel)
 
         self._taskQueue = multiprocessing.JoinableQueue()
+        self._stopEvent = Event()
         self._resultQueue = multiprocessing.Queue()
-        self._consumers: list[TextureListConsumer] = [TextureListConsumer(self._taskQueue, self._resultQueue) for _ in range(multiprocessing.cpu_count())]
+        self._consumers: list[TextureListConsumer] = [TextureListConsumer(self._taskQueue, self._resultQueue, self._stopEvent) for _ in range(multiprocessing.cpu_count())]
         for consumer in self._consumers:
+            consumer.daemon = True
             consumer.start()
 
         self._scanner = QThread(self)
@@ -344,9 +349,11 @@ class TextureList(MainWindowList):
         self.ui.searchEdit.textChanged.connect(self.onTextureListScrolled)
 
     def doTerminations(self):
-        self._scanner.terminate()
+        self._stopEvent.set()
+        self._taskQueue.join()
         for consumer in self._consumers:
-            consumer.terminate()
+            consumer.join()
+        self._scanner.terminate()
 
     def setInstallation(self, installation: HTInstallation):
         self._installation = installation
@@ -484,17 +491,20 @@ class TextureList(MainWindowList):
         self.onTextureListScrolled()
 
 
+
 class TextureListConsumer(multiprocessing.Process):
-    def __init__(self, taskQueue, resultQueue):
-        multiprocessing.Process.__init__(self)
-        self.taskQueue: multiprocessing.JoinableQueue = taskQueue
-        self.resultQueue: multiprocessing.Queue = resultQueue
-        self.stopLoop: bool = False
+    def __init__(self, taskQueue: JoinableQueue, resultQueue: Queue, stopEvent: synchronize.Event):
+        super().__init__()
+        self.taskQueue: JoinableQueue = taskQueue
+        self.resultQueue: Queue = resultQueue
+        self.stopEvent: synchronize.Event = Event() if stopEvent is None else stopEvent
 
     def run(self):
-        while not self.stopLoop:
+        while not self.stopEvent.is_set():
             next_task = self.taskQueue.get()
-
+            if next_task is None:  # Use None as a sentinel value to indicate shutdown
+                self.taskQueue.task_done()
+                break
             answer = next_task()
             self.taskQueue.task_done()
             self.resultQueue.put(answer)

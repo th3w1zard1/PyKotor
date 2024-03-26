@@ -101,7 +101,6 @@ if __name__ == "__main__":
     multiprocessing.set_start_method("spawn")
 
     from utility.system.path import Path
-    from utility.updater.restarter import Restarter
 
     app = QApplication(sys.argv)
 

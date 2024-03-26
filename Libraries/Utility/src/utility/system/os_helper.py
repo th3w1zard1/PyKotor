@@ -18,29 +18,30 @@ if TYPE_CHECKING:
 
 
 def kill_self_pid():
-    # Get the current process id
-    pid = os.getpid()
     # Try to kill all child multiprocessing processes
     try:
         # Get all active child processes spawned by multiprocessing
         import multiprocessing
+
+        from utility.updater.restarter import Restarter
+
         active_children = multiprocessing.active_children()
+        sys32path = Restarter.win_get_system32_dir()
+
         for child in active_children:
             # Send a SIGTERM signal to each child process
             if sys.platform == "win32":
-                from utility.updater.restarter import Restarter
-                sys32path = Restarter.win_get_system32_dir()
                 subprocess.run([str(sys32path / "taskkill.exe"), "/F", "/T", "/PID", str(child.pid)], check=True)
             else:
-                subprocess.run(["/bin/kill", "-TERM", str(child.pid)], check=True)
+                subprocess.run(["/bin/kill", "-9", str(child.pid)], check=True)
 
         # Now kill the main process
-        if sys.platform == "win32":
-            from utility.updater.restarter import Restarter
-            sys32path = Restarter.win_get_system32_dir()
-            subprocess.run([str(sys32path / "taskkill.exe"), "/F", "/T", "/PID", str(pid)], check=True)
-        else:
-            subprocess.run(["/bin/kill", "-9", str(pid)], check=True)
+        # Get the current process id
+        #pid = os.getpid()
+        #if sys.platform == "win32":
+        #    subprocess.run([str(sys32path / "taskkill.exe"), "/F", "/T", "/PID", str(pid)], check=True)
+        #else:
+        #    subprocess.run(["/bin/kill", "-9", str(pid)], check=True)
     except Exception:
         from utility.logger_util import get_root_logger
         log = get_root_logger()
