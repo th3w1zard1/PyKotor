@@ -6,7 +6,6 @@ from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from pykotor.common.misc import Game
-from utility.error_handling import format_exception_with_variables
 from utility.logger_util import get_root_logger
 from utility.misc import ProcessorArchitecture
 from utility.system.path import Path
@@ -264,7 +263,7 @@ class SpoofKotorRegistry:
         self.original_value: str | None = resolve_reg_key_to_path(self.registry_path, self.key)
 
     def __enter__(self) -> Self:
-        if self.spoofed_path == self.original_value:
+        if self.spoofed_path != self.original_value:
             set_registry_key_value(self.registry_path, self.key, str(self.spoofed_path))
         return self
 

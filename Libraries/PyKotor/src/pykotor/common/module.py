@@ -32,7 +32,8 @@ from pykotor.resource.generics.utw import UTW, bytes_utw, read_utw
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_capsule_file, is_rim_file
 from pykotor.tools.model import list_lightmaps, list_textures
-from utility.error_handling import assert_with_variable_trace, format_exception_with_variables
+from utility.error_handling import assert_with_variable_trace
+from utility.logger_util import get_root_logger
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
@@ -76,12 +77,8 @@ class Module:  # noqa: PLR0904
         self._installation: Installation = installation
         self._root: str = root.lower()
 
-        # Build list of capsules from all .mods' in the provided installation
-        self._capsules: list[Capsule] = [
-            Capsule(installation.module_path() / module)
-            for module in installation.module_names()
-            if root in module
-        ]
+        # Build all capsules relevant to this root in the provided installation
+        self._capsules: list[Capsule] = self.get_capsules(installation, self._root)
         # Append the custom capsule if provided
         if custom_capsule is not None:
             self._capsules.append(custom_capsule)
@@ -104,6 +101,15 @@ class Module:  # noqa: PLR0904
         self._id: ResRef = ifo.root.get_resref("Mod_Entry_Area")
 
         self.reload_resources()
+
+    @classmethod
+    def get_capsules(cls, installation: Installation, root: str) -> list[Capsule]:
+        """Takes the root of the module filename and returns all relevant capsules."""
+        return [
+            Capsule(installation.module_path() / module)
+            for module in installation.module_names()
+            if cls.get_root(module).lower() == root
+        ]
 
     def get_id(self) -> str:
         return self._root
@@ -231,18 +237,17 @@ class Module:  # noqa: PLR0904
         look_for = []
         textures: set[str] = set()
         for model in self.models():
+            get_root_logger().info("Finding textures/lightmaps for model %s...", model)
             try:
                 data: bytes = model.data()
                 for texture in list_textures(data):
                     textures.add(texture)
                 for lightmap in list_lightmaps(data):
                     textures.add(lightmap)
-            except Exception as e:  # noqa: PERF203
-                print(
-                    format_exception_with_variables(
-                        e, message=f"Exception occurred when executing {self!r}.reload_resources() with model '{model.resname()}.{model.restype()}'"
-                    )
-                )
+            except OSError:  # noqa: PERF203
+                get_root_logger().debug("Suppressed exception when executing %s.reload_resources() with model '{model.resname()}.{model.restype()}'", repr(self), exc_info=True)
+            except Exception:  # noqa: BLE001
+                get_root_logger().exception("Unexpected exception when executing %s.reload_resources() with model '{model.resname()}.{model.restype()}'", repr(self), exc_info=True)
 
         for texture in textures:
             look_for.extend(
@@ -263,6 +268,7 @@ class Module:  # noqa: PLR0904
             ],
         )
         for identifier, locations in search2.items():
+            get_root_logger().info("Adding %s locations for resource '%s'...", identifier, len(locations))
             if not locations:
                 continue
             self.add_locations(
@@ -272,6 +278,7 @@ class Module:  # noqa: PLR0904
             )
 
         for module_resource in self.resources.values():
+            get_root_logger().info("Activating module resource '%s'...", module_resource.identifier())
             module_resource.activate()
 
     def add_locations(
