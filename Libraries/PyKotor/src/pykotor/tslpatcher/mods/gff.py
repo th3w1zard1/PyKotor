@@ -3,11 +3,11 @@ from __future__ import annotations
 import configparser
 import io
 import json
+import uuid
 
 from abc import ABC, abstractmethod
 from itertools import zip_longest
 from typing import TYPE_CHECKING, Any
-import uuid
 
 import jsonpatch
 
@@ -16,6 +16,7 @@ from pykotor.common.misc import ResRef
 from pykotor.resource.formats.gff import GFF, GFFFieldType, GFFList, GFFStruct, bytes_gff
 from pykotor.resource.formats.gff.gff_data import _GFFField
 from pykotor.resource.formats.gff.io_gff import GFFBinaryReader
+from pykotor.tslpatcher.memory import PatcherMemory
 from pykotor.tslpatcher.mods.template import PatcherModifications
 from utility.logger_util import get_root_logger
 from utility.system.path import PureWindowsPath
@@ -31,7 +32,6 @@ if TYPE_CHECKING:
     from pykotor.common.misc import Game
     from pykotor.resource.type import SOURCE_TYPES
     from pykotor.tslpatcher.logger import PatchLogger
-    from pykotor.tslpatcher.memory import PatcherMemory
     from utility.system.path import PurePath
 
 
@@ -541,6 +541,9 @@ def get_value_by_path(nested_dict: dict[str, Any], path: PurePath) -> Any:
         elif isinstance(current_value, dict) and part in current_value:
             return current_value[part]
         else:
+            #HACK: fix later
+            if part.isdigit():
+                return current_value
             raise KeyError(f"Path {path} not found in the nested dictionary, could not find part '{part}'")
     current_value = nested_dict
     for parent in reversed(path.parents):
@@ -563,30 +566,37 @@ class ModificationsGFF(PatcherModifications):
     def _recurse_modifier(self, config: configparser.ConfigParser, modify_list: list[ModifyGFF], identifier: str, root: bool = False):
         for modifier in modify_list:
             if isinstance(modifier, AddFieldGFF):
-                config.set(identifier, "AddField", f"{modifier.identifier}")
-                config.set(identifier, "FieldType", modifier.field_type.name)
+                new_identifier = modifier.identifier.replace(".", "_") + uuid.uuid4().hex[:5]
+                config.add_section(new_identifier)
+                config.set(new_identifier, "AddField", f"{new_identifier}")
+                config.set(new_identifier, "FieldType", modifier.field_type.name)
                 modifier_value = modifier.value.value(PatcherMemory(), modifier.field_type)
                 if isinstance(modifier_value, GFFStruct):
-                    assert isinstance(modifier_value, FieldValueConstant)
-                    config.set(identifier, "TypeId", str(modifier_value.struct_id))
-                config.set(identifier, "Label", modifier.label)
-                self._recurse_modifier(config, modifier.modifiers, modifier.identifier)
-            if isinstance(modifier, ModifyFieldGFF):
+                    assert isinstance(modifier.value, FieldValueConstant), f"{type(modifier_value).__name__}{modifier_value}: ({modifier_value!r})"
+                    config.set(new_identifier, "TypeId", str(modifier_value.struct_id))
+                config.set(new_identifier, "Label", modifier.label)
+                self._recurse_modifier(config, modifier.modifiers, new_identifier)
+            elif isinstance(modifier, ModifyFieldGFF):
                 config.set(identifier, "Path", str(modifier.path))
-            if isinstance(modifier, AddStructToListGFF):
+            elif isinstance(modifier, AddStructToListGFF):
+                new_identifier = modifier.identifier.replace(".", "_") + uuid.uuid4().hex[:5]
+                config.add_section(new_identifier)
                 if modifier.path.name == ">>##INDEXINLIST##<<":
                     modifier.path = modifier.path.parent  # HACK: idk why conditional parenting is necessary but it works
-                    get_root_logger().debug(f"Removed unique sentinel from AddStructToListGFF instance (ini section [{modifier.identifier}]). Path: '{modifier.path}'")
-                config.set(identifier, "AddField", f"{modifier.identifier}")
-                config.set(identifier, "FieldType", "Struct")
-                config.set(identifier, "Label", "")
+                    get_root_logger().debug(f"Removed unique sentinel from AddStructToListGFF instance (ini section [{new_identifier}]). Path: '{modifier.path}'")
+                config.set(new_identifier, "AddField", f"{new_identifier}")
+                config.set(new_identifier, "FieldType", "Struct")
+                config.set(new_identifier, "Label", "")
                 modifier_value = modifier.value.value(PatcherMemory(), GFFFieldType.Struct)
                 if isinstance(modifier_value, GFFStruct):
                     assert isinstance(modifier_value, FieldValueConstant)
-                    config.set(identifier, "TypeId", str(modifier_value.struct_id))
-                self._recurse_modifier(config, modifier.modifiers, modifier.identifier)
+                    config.set(new_identifier, "TypeId", str(modifier_value.struct_id))
+                self._recurse_modifier(config, modifier.modifiers, new_identifier)
+            else:
+                raise TypeError(f"{type(modifier_value).__name__}{modifier_value}: ({modifier_value!r})")
 
     def as_gfflist_ini(self):
+        """This function is very broken."""
         class CustomConfigParser(configparser.ConfigParser):
             def write(self, fp, space_around_delimiters=False):
                 """Write an .ini-format representation of the configuration state."""
@@ -610,6 +620,7 @@ class ModificationsGFF(PatcherModifications):
             strict=False,
             interpolation=None,
         )
+        config.optionxform = lambda optionstr: optionstr
         config.add_section("GFFList")
         config.set("GFFList", "File", self.sourcefile)
         config.add_section(self.sourcefile)
@@ -639,6 +650,7 @@ class ModificationsGFF(PatcherModifications):
         new_serialized = new.as_dict()
         patch = JsonPatch.from_diff(old_serialized, new_serialized)
         log = get_root_logger()
+        log.info("Created patch: %s", json.dumps(patch.patch, indent=4))
         new_instance = ModificationsGFF(filename, replace=replace_file)
         for raw_operation in patch.patch:
             op: PatchOperation = patch._get_operation(raw_operation)
@@ -651,10 +663,20 @@ class ModificationsGFF(PatcherModifications):
                     log.info("Using parent path of %s as actual op path.", op_path)
                     op_path = op_path.parent
                 else:
-                    raise ValueError(f"op_path not expected: {op_path}")
+                    op_path /= ">>##PLACEHOLDER##<<"
+                    #raise ValueError(f"op_path not expected: {op_path}")
             changed_field_path: PureWindowsPath = op_path.parent
             field_label: str = changed_field_path.name
-            serialized_field = get_value_by_path(new_serialized, changed_field_path)
+            try:
+                serialized_field = get_value_by_path(new_serialized, changed_field_path)
+            except KeyError as e: # it's in the other gff.
+                try:
+                    serialized_field = get_value_by_path(old_serialized, changed_field_path)
+                except KeyError as e2:
+                    raise KeyError("Somehow the key wasn't found in either new_serialized or old_serialized?") from e2
+            if not serialized_field:
+                log.warning(f"Somehow got no serialized field. Path {changed_field_path} led to a blank dict.")
+                continue
             gff_field = _GFFField.from_serializable(serialized_field)
             log.debug("ReplaceOp, lookup from old. Path: %s  Field: %s", changed_field_path, safe_repr(gff_field))
             field_value = gff_field.value()
@@ -675,7 +697,9 @@ class ModificationsGFF(PatcherModifications):
                 log.info("Created ADD modifier: %s", safe_repr(modifier))
                 new_instance.modifiers.append(modifier)
             else:
-                raise NotImplementedError(f"The operation '{op.operation['op']}' is unsupported at this time (path={modify_path}). Please post an issue on the PyKotor repo explaining your use case.")
+                msg = f"The operation '{op.operation['op']}' is unsupported at this time (path={modify_path}). Please post an issue on the PyKotor repo explaining your use case."
+                get_root_logger().error(msg)
+                #raise NotImplementedError(msg)
         return new_instance
 
     @classmethod

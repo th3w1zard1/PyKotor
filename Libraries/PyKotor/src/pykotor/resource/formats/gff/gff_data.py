@@ -345,8 +345,17 @@ class _GFFField:
     @classmethod
     def from_serializable(cls, data: dict) -> _GFFField:
         """Reconstructs a _GFFField instance from its serialized format."""
-        field_type = GFFFieldType.__members__[data[">>##TYPE##<<"]]  # Assuming GFFFieldType is an Enum
-        value = cls.deserialize_value(field_type, data[">>##VALUE##<<"])
+        raw_ftype = data.get(">>##TYPE##<<")
+        raw_struct_id = data.get(">>##STRUCT_ID##<<")
+        if raw_ftype is not None:
+            field_type = GFFFieldType.__members__[raw_ftype]  # Assuming GFFFieldType is an Enum
+            value = cls.deserialize_value(field_type, data[">>##VALUE##<<"])
+        elif raw_struct_id is not None:
+            field_type = GFFFieldType.Struct
+            value = GFFStruct.from_dict(data)
+        else:
+            print(safe_repr(data, max_length=9999999999999))
+            raise ValueError(f"Not found: {data!r}")
         return cls(field_type, value)
 
     @classmethod

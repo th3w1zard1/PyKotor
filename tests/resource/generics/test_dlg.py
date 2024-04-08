@@ -8,6 +8,7 @@ import unittest
 from unittest import TestCase
 
 from pykotor.resource.formats.gff.gff_data import GFFContent, GFFStruct
+from pykotor.tslpatcher.mods.gff import ModificationsGFF
 from utility.logger_util import get_root_logger
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
@@ -97,6 +98,12 @@ class TestDLG(TestCase):
         result = reconstructed_gff.compare(re_reconstructed_gff, self.log_func)
         output = os.linesep.join(self.log_messages)
         self.assertTrue(result, output)
+
+    def test_changes_output(self):
+        gff: GFF = read_gff(TEST_FILE)
+        gff2: GFF = read_gff(TEST_K1_FILE)
+        config = ModificationsGFF.create_patch(gff, gff2, pathlib.PurePath(TEST_FILE).name)
+        print(f"\n\n{config.as_gfflist_ini()}")
 
     def test_k2_reconstruct(self):
         gff: GFF = read_gff(TEST_FILE)
