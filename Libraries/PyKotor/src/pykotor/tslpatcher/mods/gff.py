@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import configparser
+import io
 import json
 
 from abc import ABC, abstractmethod
 from itertools import zip_longest
 from typing import TYPE_CHECKING, Any
+import uuid
 
 import jsonpatch
 
@@ -557,11 +560,75 @@ class ModificationsGFF(PatcherModifications):
         super().__init__(filename, replace)
         self.modifiers: list[ModifyGFF] = modifiers if modifiers is not None else []
 
+    def _recurse_modifier(self, config: configparser.ConfigParser, modify_list: list[ModifyGFF], identifier: str, root: bool = False):
+        for modifier in modify_list:
+            if isinstance(modifier, AddFieldGFF):
+                config.set(identifier, "AddField", f"{modifier.identifier}")
+                config.set(identifier, "FieldType", modifier.field_type.name)
+                modifier_value = modifier.value.value(PatcherMemory(), modifier.field_type)
+                if isinstance(modifier_value, GFFStruct):
+                    assert isinstance(modifier_value, FieldValueConstant)
+                    config.set(identifier, "TypeId", str(modifier_value.struct_id))
+                config.set(identifier, "Label", modifier.label)
+                self._recurse_modifier(config, modifier.modifiers, modifier.identifier)
+            if isinstance(modifier, ModifyFieldGFF):
+                config.set(identifier, "Path", str(modifier.path))
+            if isinstance(modifier, AddStructToListGFF):
+                if modifier.path.name == ">>##INDEXINLIST##<<":
+                    modifier.path = modifier.path.parent  # HACK: idk why conditional parenting is necessary but it works
+                    get_root_logger().debug(f"Removed unique sentinel from AddStructToListGFF instance (ini section [{modifier.identifier}]). Path: '{modifier.path}'")
+                config.set(identifier, "AddField", f"{modifier.identifier}")
+                config.set(identifier, "FieldType", "Struct")
+                config.set(identifier, "Label", "")
+                modifier_value = modifier.value.value(PatcherMemory(), GFFFieldType.Struct)
+                if isinstance(modifier_value, GFFStruct):
+                    assert isinstance(modifier_value, FieldValueConstant)
+                    config.set(identifier, "TypeId", str(modifier_value.struct_id))
+                self._recurse_modifier(config, modifier.modifiers, modifier.identifier)
+
+    def as_gfflist_ini(self):
+        class CustomConfigParser(configparser.ConfigParser):
+            def write(self, fp, space_around_delimiters=False):
+                """Write an .ini-format representation of the configuration state."""
+                if self._defaults:
+                    fp.write("[DEFAULT]\n")
+                    for (key, value) in self._defaults.items():
+                        fp.write(f"{key}={value}\n")
+                    fp.write("\n")
+                for section in self._sections:
+                    fp.write(f"[{section}]\n")
+                    for (key, value) in self._sections[section].items():
+                        if key == "__name__":
+                            continue
+                        if (value is not None) or (self._optcre == self.OPTCRE):
+                            key = "=".join((key, str(value).replace('\n', '\n\t')))
+                        fp.write(f"{key}\n")
+                    fp.write("\n")
+        config = CustomConfigParser(
+            delimiters=("="),
+            allow_no_value=True,
+            strict=False,
+            interpolation=None,
+        )
+        config.add_section("GFFList")
+        config.set("GFFList", "File", self.sourcefile)
+        config.add_section(self.sourcefile)
+        config.set("GFFList", "!Filename", self.saveas)
+        config.set(self.sourcefile, "!SourceFile", self.sourcefile)
+        config.set(self.sourcefile, "!SourceFolder", self.sourcefolder)
+        config.set(self.sourcefile, "!Destination", self.destination)
+        config.set(self.sourcefile, "!OverrideType", self.override_type)
+        self._recurse_modifier(config, self.modifiers, self.sourcefile, True)
+        output = io.StringIO()
+        config.write(output)
+        return output.getvalue()
+
     @classmethod
     def create_patch(cls, old: GFF, new: GFF, filename: str, replace_file: bool = False):
         # sourcery skip: move-assign, remove-unnecessary-else, swap-if-else-branches
         """Returns a ModificationsGFF instance representing the ini sections for each patch."""
-        from jsonpatch import JsonPatch, ReplaceOperation, AddOperation
+        from jsonpatch import AddOperation, JsonPatch, ReplaceOperation
+
         from utility.error_handling import safe_repr
         assert isinstance(old, GFF), f"{type(old).__name__}: {old} ({old!r})"
         assert isinstance(new, GFF), f"{type(new).__name__}: {new} ({new!r})"
@@ -613,7 +680,8 @@ class ModificationsGFF(PatcherModifications):
 
     @classmethod
     def revert_patch(cls, old: GFF, new: GFF, filename: str, replace_file: bool = False):
-        from jsonpatch import JsonPatch, ReplaceOperation, AddOperation, RemoveOperation
+        from jsonpatch import AddOperation, JsonPatch, RemoveOperation, ReplaceOperation
+
         from utility.error_handling import safe_repr
         assert isinstance(old, GFF) and isinstance(new, GFF), "Arguments must be GFF instances"
         if old.content is not new.content:

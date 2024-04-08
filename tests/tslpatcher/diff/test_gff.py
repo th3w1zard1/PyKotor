@@ -10,6 +10,7 @@ import unittest
 
 from pykotor.tslpatcher.config import PatcherConfig
 from pykotor.tslpatcher.reader import ConfigReader
+from utility.logger_util import get_root_logger
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
@@ -69,7 +70,7 @@ class TestDiffGFF(TestCase):
         *,
         replace: bool = False,
         gff: GFF | None = None,
-    ):
+    ):  # sourcery skip: move-assign
         """
         Runs a generic test for modifying a GFF field.
 
@@ -89,7 +90,7 @@ class TestDiffGFF(TestCase):
             getattr(gff.root, set_field_method_name)(field_name, initial_value)
 
         memory = PatcherMemory()
-        config = ModificationsGFF("", replace, [ModifyFieldGFF(path=path, identifier=field_name, value=field_value)])
+        config = ModificationsGFF(f"test_{field_type}.gff", replace, [ModifyFieldGFF(path=path, identifier=field_name, value=field_value)])
         logger = PatchLogger()
         gff2 = read_gff(cast(bytes, config.patch_resource(bytes_gff(gff), memory, logger, Game.K1)))
 
@@ -111,8 +112,9 @@ class TestDiffGFF(TestCase):
 
         config2 = ModificationsGFF.create_patch(gff2, gff, filename=f"test_revert_field_{field_type}")
         gff4 = read_gff(cast(bytes, config2.patch_resource(bytes_gff(gff2), memory, logger, Game.K1)))
-        self.assertEqual(modified_value, getattr(gff4.root, get_field_method_name)(field_name), 
+        self.assertEqual(initial_value, getattr(gff4.root, get_field_method_name)(field_name), 
                         "\n".join(f'[{log.log_type}] {log.message}' for log in logger.all_logs))
+        get_root_logger().debug("As ini: \n%s", config.as_gfflist_ini())
 
     def test_modify_field_uint8(self):
         self.run_modify_field_test('uint8', 1, 2)
@@ -494,6 +496,7 @@ class TestDiffGFF(TestCase):
         gff = read_gff(cast(bytes, config.patch_resource(bytes_gff(gff), memory, PatchLogger(), Game.K1)))
 
         self.assertEqual(123, gff.root.get_locstring("Field1").stringref)
+        get_root_logger().debug("As ini: \n%s", config.as_gfflist_ini())
 
     def test_addlist_listindex(self):
         gff = GFF()
@@ -512,6 +515,7 @@ class TestDiffGFF(TestCase):
         self.assertEqual(5, patched_gff_list.at(0).struct_id)  # type: ignore
         self.assertEqual(3, patched_gff_list.at(1).struct_id)  # type: ignore
         self.assertEqual(1, patched_gff_list.at(2).struct_id)  # type: ignore
+        get_root_logger().debug("As ini: \n%s", config.as_gfflist_ini())
 
     def test_addlist_store_2damemory(self):
         gff = GFF()
@@ -519,9 +523,11 @@ class TestDiffGFF(TestCase):
 
         memory = PatcherMemory()
 
-        config = ModificationsGFF("", False, [])
+        config = ModificationsGFF("test_2damemory.gff", False, [])
         config.modifiers.append(AddStructToListGFF("test1", FieldValueConstant(GFFStruct()), "List"))
         config.modifiers.append(AddStructToListGFF("test2", FieldValueConstant(GFFStruct()), "List", index_to_token=12))
-        gff = read_gff(config.patch_resource(bytes_gff(gff), memory, PatchLogger(), Game.K1))
+        logger = PatchLogger()
+        gff = read_gff(config.patch_resource(bytes_gff(gff), memory, logger, Game.K1))
 
         self.assertEqual("1", memory.memory_2da[12])
+        logger.add_verbose("As ini: \n%s", config.as_gfflist_ini())
