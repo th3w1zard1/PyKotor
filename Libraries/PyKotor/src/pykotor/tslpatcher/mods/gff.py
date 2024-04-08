@@ -611,7 +611,7 @@ class ModificationsGFF(PatcherModifications):
                         if key == "__name__":
                             continue
                         if (value is not None) or (self._optcre == self.OPTCRE):
-                            key = "=".join((key, str(value).replace('\n', '\n\t')))
+                            key = "=".join((key, str(value).replace("\n", "\n\t")))
                         fp.write(f"{key}\n")
                     fp.write("\n")
         config = CustomConfigParser(
@@ -675,7 +675,7 @@ class ModificationsGFF(PatcherModifications):
                 except KeyError as e2:
                     raise KeyError("Somehow the key wasn't found in either new_serialized or old_serialized?") from e2
             if not serialized_field:
-                log.warning(f"Somehow got no serialized field. Path {changed_field_path} led to a blank dict.")
+                log.warning("Somehow got no serialized field. Path %s led to a blank dict.", changed_field_path)
                 continue
             gff_field = _GFFField.from_serializable(serialized_field)
             log.debug("ReplaceOp, lookup from old. Path: %s  Field: %s", changed_field_path, safe_repr(gff_field))
