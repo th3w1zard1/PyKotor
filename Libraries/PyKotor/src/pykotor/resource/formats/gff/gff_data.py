@@ -438,15 +438,15 @@ class GFFStruct:
         return self.from_dict(self.as_dict())
 
     def as_dict(self) -> dict[str, Any]:
-        result = {"struct_id": self.struct_id, ">>##Fields##<<": {}}
+        result = {">>##STRUCT_ID##<<": self.struct_id, ">>##FIELDS##<<": {}}
         for label, field in self._fields.items():
-            result[">>##Fields##<<"][label] = field.as_dict()
+            result[">>##FIELDS##<<"][label] = field.as_dict()
         return result
 
     @classmethod
     def from_dict(cls, serialized_dict: dict[str, Any]) -> Self:
-        new_struct = cls(serialized_dict["struct_id"])
-        fields: dict[str, Any] = serialized_dict[">>##Fields##<<"]
+        new_struct = cls(serialized_dict[">>##STRUCT_ID##<<"])
+        fields: dict[str, Any] = serialized_dict[">>##FIELDS##<<"]
         for label, field_data in fields.items():
             new_struct._fields[label] = _GFFField.from_serializable(field_data)
         return new_struct

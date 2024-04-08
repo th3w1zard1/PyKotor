@@ -59,8 +59,9 @@ FIELD_TYPE_TO_GETTER: dict[GFFFieldType, Callable[[GFFStruct, str], Any]] = {
     GFFFieldType.LocalizedString: GFFStruct.get_locstring,
     GFFFieldType.Vector3: GFFStruct.get_vector3,
     GFFFieldType.Vector4: GFFStruct.get_vector4,
+    GFFFieldType.Binary: GFFStruct.get_binary,
     GFFFieldType.List: GFFStruct.get_list,
-    GFFFieldType.Struct: GFFStruct.get_struct
+    GFFFieldType.Struct: GFFStruct.get_struct,
 }
 
 
@@ -80,8 +81,9 @@ FIELD_TYPE_TO_SETTER: dict[GFFFieldType, Callable[[GFFStruct, str, Any, PatcherM
     GFFFieldType.LocalizedString: set_locstring,
     GFFFieldType.Vector3: lambda s, lbl, v, _m: GFFStruct.set_vector3(s, lbl, v),
     GFFFieldType.Vector4: lambda s, lbl, v, _m: GFFStruct.set_vector4(s, lbl, v),
+    GFFFieldType.Binary: lambda s, lbl, v, _m: GFFStruct.set_binary(s, lbl, v),
     GFFFieldType.List: lambda s, lbl, v, _m: GFFStruct.set_list(s, lbl, v),
-    GFFFieldType.Struct: lambda s, lbl, v, _m: GFFStruct.set_struct(s, lbl, v)
+    GFFFieldType.Struct: lambda s, lbl, v, _m: GFFStruct.set_struct(s, lbl, v),
 }
 
 
@@ -293,8 +295,8 @@ class AddStructToListGFF(ModifyGFF):
         """
         list_container: GFFList | None = None
         if self.path.name == ">>##INDEXINLIST##<<":
-            logger.add_verbose(f"Removing unique sentinel from AddStructToListGFF instance (ini section [{self.identifier}]). Path: '{self.path}'")
             self.path = self.path.parent  # HACK: idk why conditional parenting is necessary but it works
+            logger.add_verbose(f"Removed unique sentinel from AddStructToListGFF instance (ini section [{self.identifier}]). Path: '{self.path}'")
         navigated_container: GFFList | GFFStruct | None = self._navigate_containers(root_struct, self.path) if self.path.name else root_struct
         if navigated_container is root_struct:
             logger.add_note(f"GFF path '{self.path}' not found, defaulting to the gff root struct.")
@@ -368,12 +370,12 @@ class AddFieldGFF(ModifyGFF):
             - Sets the field on the struct instance using the appropriate setter based on field type
             - Applies any modifier patches recursively
         """
-        logger.add_verbose(f"Apply patch from INI section [{self.identifier}] field value {self.field_type} gff path '{self.path}'")
+        logger.add_verbose(f"Apply patch from INI section [{self.identifier}] FieldType: {self.field_type!r}, GFFPath: '{self.path}'")
         navigated_container: GFFList | GFFStruct | None = self._navigate_containers(root_struct, self.path)
         if isinstance(navigated_container, GFFStruct):
             struct_container = navigated_container
         else:
-            reason = "does not exist!" if navigated_container is None else "is not an instance of a GFFStruct."
+            reason = "path does not exist!" if navigated_container is None else "is not an instance of a GFFStruct."
             logger.add_error(f"Unable to add new GFF Field '{self.label}' at GFF Path '{self.path}'! This {reason}")
             return
 
@@ -393,7 +395,7 @@ class AddFieldGFF(ModifyGFF):
                 return
             value = from_container.value(value.name)
             logger.add_verbose(f"Acquired value '{value}' from 2DAMEMORY !FieldPath({stored_fieldpath})")
-        logger.add_verbose(f"AddField: Setting field of type '{self.field_type.name}' at GFF path '{self.path}'. INI section: [{self.identifier}]")
+        logger.add_verbose(f"AddField: Adding field of type '{self.field_type.name}' at GFF path '{self.path}'. INI section: [{self.identifier}]")
 
         FIELD_TYPE_TO_SETTER[self.field_type](struct_container, self.label, value, memory)
 
@@ -559,7 +561,7 @@ class ModificationsGFF(PatcherModifications):
     def create_patch(cls, old: GFF, new: GFF, filename: str, replace_file: bool = False):
         # sourcery skip: move-assign, remove-unnecessary-else, swap-if-else-branches
         """Returns a ModificationsGFF instance representing the ini sections for each patch."""
-        from jsonpatch import JsonPatch, ReplaceOperation
+        from jsonpatch import JsonPatch, ReplaceOperation, AddOperation
         from utility.error_handling import safe_repr
         assert isinstance(old, GFF), f"{type(old).__name__}: {old} ({old!r})"
         assert isinstance(new, GFF), f"{type(new).__name__}: {new} ({new!r})"
@@ -575,6 +577,8 @@ class ModificationsGFF(PatcherModifications):
             op: PatchOperation = patch._get_operation(raw_operation)
             log.debug("Path: %s Location: %s Pointer: %s Key: %s Operation: %s", op.path, op.location, op.pointer, op.key, op.operation)
             op_path: PureWindowsPath = PureWindowsPath(op.location)
+            if isinstance(op, AddOperation):
+                op_path = op_path / ">>##VALUE##<<"
             if op_path.name not in (">>##TYPE##<<", ">>##VALUE##<<"):
                 if op_path.parent.name in (">>##TYPE##<<", ">>##VALUE##<<"):
                     log.info("Using parent path of %s as actual op path.", op_path)
@@ -583,28 +587,83 @@ class ModificationsGFF(PatcherModifications):
                     raise ValueError(f"op_path not expected: {op_path}")
             changed_field_path: PureWindowsPath = op_path.parent
             field_label: str = changed_field_path.name
+            serialized_field = get_value_by_path(new_serialized, changed_field_path)
+            gff_field = _GFFField.from_serializable(serialized_field)
+            log.debug("ReplaceOp, lookup from old. Path: %s  Field: %s", changed_field_path, safe_repr(gff_field))
+            field_value = gff_field.value()
+            if isinstance(field_value, LocalizedString):
+                field_value = LocalizedStringDelta(FieldValueConstant(field_value.stringref))
+            modify_path = changed_field_path.relative_to("/root/>>##FIELDS##<<")
+            if modify_path.parent.name == ">>##FIELDS##<<":
+                new_parts = (part for part in modify_path.parts if part not in (">>##VALUE##<<", ">>##FIELDS##<<"))
+                new_modify_path = PureWindowsPath("\\".join(new_parts))
+                log.info("Sanitizing path %s --> %s", modify_path, new_modify_path)
+                modify_path = new_modify_path
             if isinstance(op, ReplaceOperation):
-                serialized_field = get_value_by_path(new_serialized, changed_field_path)
+                modifier = ModifyFieldGFF(modify_path, FieldValueConstant(field_value), identifier=f"{filename}_{field_label}")
+                log.info("Created REPLACE modifier: %s", safe_repr(modifier))
+                new_instance.modifiers.append(modifier)
+            elif isinstance(op, AddOperation):
+                modifier = AddFieldGFF(f"{filename}_{field_label}", modify_path.name, gff_field.field_type(), FieldValueConstant(field_value), path=modify_path.parent)
+                log.info("Created ADD modifier: %s", safe_repr(modifier))
+                new_instance.modifiers.append(modifier)
+            else:
+                raise NotImplementedError(f"The operation '{op.operation['op']}' is unsupported at this time (path={modify_path}). Please post an issue on the PyKotor repo explaining your use case.")
+        return new_instance
+
+    @classmethod
+    def revert_patch(cls, old: GFF, new: GFF, filename: str, replace_file: bool = False):
+        from jsonpatch import JsonPatch, ReplaceOperation, AddOperation, RemoveOperation
+        from utility.error_handling import safe_repr
+        assert isinstance(old, GFF) and isinstance(new, GFF), "Arguments must be GFF instances"
+        if old.content is not new.content:
+            raise ValueError("The GFFs must be of the same type")
+
+        # Serialize the 'new' and 'old' states to dictionaries for comparison
+        new_serialized = new.as_dict()
+        old_serialized = old.as_dict()
+
+        # Generate a patch to transform 'new' back into 'old'
+        patch = JsonPatch.from_diff(new_serialized, old_serialized)
+        log = get_root_logger()
+        new_instance = cls(filename, replace=replace_file)
+
+        for raw_operation in patch.patch:
+            op = patch._get_operation(raw_operation)
+            op_path = PureWindowsPath(op.location)
+            # Reverse the operation logic: Add becomes Remove, Replace stays, and Remove becomes Add
+            if isinstance(op, AddOperation):
+                # For AddOperation in reverse, we need to remove the added element
+                modifier = RemoveFieldGFF(f"{filename}_{op_path.name}", path=op_path.parent)
+            elif isinstance(op, ReplaceOperation):
+                # ReplaceOperation is symmetric; we just need to swap old and new values
+                changed_field_path = op_path.parent
+                serialized_field = get_value_by_path(old_serialized, changed_field_path)
                 gff_field = _GFFField.from_serializable(serialized_field)
-                log.debug("ReplaceOp, lookup from old. Path: %s  Field: %s", changed_field_path, safe_repr(gff_field))
                 field_value = gff_field.value()
                 if isinstance(field_value, LocalizedString):
                     field_value = LocalizedStringDelta(FieldValueConstant(field_value.stringref))
-                modify_path = changed_field_path.relative_to("/root/>>##Fields##<<")
-                if modify_path.parent.name == ">>##Fields##<<":
-                    new_parts = (part for part in modify_path.parts if part not in (">>##VALUE##<<", ">>##Fields##<<"))
-                    new_modify_path = PureWindowsPath("\\".join(new_parts))
-                    log.info("Sanitizing path %s --> %s", modify_path, new_modify_path)
-                    modify_path = new_modify_path
-                modifier = ModifyFieldGFF(modify_path, FieldValueConstant(field_value), identifier=f"{filename}_{field_label}")
-                log.info("Created modifier: %s", safe_repr(modifier))
-                new_instance.modifiers.append(modifier)
+                modify_path = changed_field_path.relative_to("/root/>>##FIELDS##<<")
+                modifier = ModifyFieldGFF(modify_path, FieldValueConstant(field_value), identifier=f"{filename}_{op_path.name}")
+            elif isinstance(op, RemoveOperation):
+                # For RemoveOperation in reverse, we need to add the removed element back
+                serialized_field = get_value_by_path(old_serialized, op_path)
+                gff_field = _GFFField.from_serializable(serialized_field)
+                field_value = gff_field.value()
+                if isinstance(field_value, LocalizedString):
+                    field_value = LocalizedStringDelta(FieldValueConstant(field_value.stringref))
+                modify_path = op_path.relative_to("/root/>>##FIELDS##<<")
+                modifier = AddFieldGFF(f"{filename}_{op_path.name}", modify_path.name, gff_field.field_type(), FieldValueConstant(field_value), path=modify_path.parent)
             else:
-                raise NotImplementedError(f"todo: {op.operation['op']}")
+                raise NotImplementedError(f"Unsupported operation '{op.operation['op']}' for revert_patch")
+
+            log.info("Created modifier: %s", safe_repr(modifier))
+            new_instance.modifiers.append(modifier)
+
         return new_instance
 
     @staticmethod
-    def revert_patch(old, new):
+    def old_revert_patch(old, new):
         patched_old_to_new = patch.apply(old_serialized)
         patched_diff = DeepDiff(new_serialized, patched_old_to_new, ignore_order=True)
         assert new_serialized == patched_old_to_new, f"\n\nDeepDiff Output: {json.dumps(patched_diff, indent=8)}\n\n"
