@@ -37,7 +37,7 @@
       "request": "launch",
       "program": "${file}",
       "purpose": ["debug-test"],
-      "justMyCode": true,
+      "justMyCode": false,
     },
     {
       "name": "Run Holocron Toolset",

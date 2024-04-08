@@ -1,11 +1,17 @@
 from __future__ import annotations
 
+import base64
 import difflib
+import json
 import math
 
 from copy import copy, deepcopy
 from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
+
+import jsonpatch
+
+from deepdiff import DeepDiff
 
 from pykotor.common.geometry import Vector3, Vector4
 from pykotor.common.language import LocalizedString
@@ -19,6 +25,8 @@ if TYPE_CHECKING:
     import os
 
     from collections.abc import Callable, Generator, Iterator
+
+    from typing_extensions import Self
 
 T = TypeVar("T")
 U = TypeVar("U")
@@ -111,6 +119,17 @@ class GFFContent(Enum):
         return gff_content
 
 
+class UInt8(int): ...
+class Int8(int): ...
+class UInt16(int): ...
+class Int16(int): ...
+class UInt32(int): ...
+class Int32(int): ...
+class UInt64(int): ...
+class Int64(int): ...
+class Single(float): ...
+class Double(float): ...
+
 class GFFFieldType(IntEnum):
     """The different types of fields based off what kind of data it stores."""
 
@@ -133,20 +152,21 @@ class GFFFieldType(IntEnum):
     Vector4 = 16
     Vector3 = 17
 
-    def return_type(
-        self,
-    ) -> type[int | str | ResRef | Vector3 | Vector4 | LocalizedString | GFFStruct | GFFList | bytes | float]:
-        if self in {
-            GFFFieldType.UInt8,
-            GFFFieldType.UInt16,
-            GFFFieldType.UInt32,
-            GFFFieldType.UInt64,
-            GFFFieldType.Int8,
-            GFFFieldType.Int16,
-            GFFFieldType.Int32,
-            GFFFieldType.Int64,
-        }:
-            return int
+    def return_type(self):
+        if self == GFFFieldType.UInt8:
+            return UInt8
+        if self == GFFFieldType.UInt16:
+            return UInt16
+        if self == GFFFieldType.UInt32:
+            return UInt32
+        if self == GFFFieldType.Int8:
+            return Int8
+        if self == GFFFieldType.Int16:
+            return Int16
+        if self == GFFFieldType.Int32:
+            return Int32
+        if self == GFFFieldType.Int64:
+            return Int64
         if self == GFFFieldType.String:
             return str
         if self == GFFFieldType.ResRef:
@@ -163,83 +183,11 @@ class GFFFieldType(IntEnum):
             return GFFList
         if self == GFFFieldType.Binary:
             return bytes
-        if self in {GFFFieldType.Double, GFFFieldType.Single}:
-            return float
+        if self == GFFFieldType.Single:
+            return Single
+        if self == GFFFieldType.Double:
+            return Double
         raise ValueError(self)
-
-
-class Difference:
-    def __init__(self, path: PureWindowsPath | str, old_value: object, new_value: object):
-        """Initializes a Difference instance representing a specific difference between two GFFStructs.
-
-        Args:
-        ----
-            path (PureWindowsPath | str): The path to the value within the GFFStruct where the difference was found.
-            old_value (object): The value from the original GFFStruct at the specified path.
-            new_value (object): The value from the compared GFFStruct at the specified path.
-        """
-        self.path: PureWindowsPath = PureWindowsPath.pathify(path)
-        self.old_value: object = old_value
-        self.new_value: object = new_value
-
-    def __repr__(self):
-        return f"Difference(path={self.path}, old_value={self.old_value}, new_value={self.new_value})"
-
-
-class GFFCompareResult:
-    """A comparison result from gff.compare/GFFStruct.compare.
-
-    Contains enough differential information between the two GFF structs that it can be used to take one gff and reconstruct the other.
-    Helper methods also exist for working with the data in other code.
-
-    Backwards-compatibility note: the original gff.compare used to return a simple boolean. True if the gffs were the same, False if not. This class
-    attempts to keep backwards compatibility while ensuring we can still return a type that's more detailed and informative.
-    """
-
-    def __init__(self):
-        self.differences: list[Difference] = []
-
-    def __bool__(self):
-        # Return False if the list has any contents (meaning the objects are different), True if it's empty.
-        return not self.differences
-
-    def add_difference(self, path, old_value, new_value):
-        """Adds a difference to the collection of tracked differences.
-
-        Args:
-        ----
-            path (str): The path to the value where the difference was found.
-            old_value (Any): The original value at the specified path.
-            new_value (Any): The new value at the specified path that differs from the original.
-        """
-        self.differences.append(Difference(path, old_value, new_value))
-
-    def get_changed_values(self) -> tuple[Difference, ...]:
-        """Returns a tuple of differences where the value has changed from the original.
-
-        Returns:
-        -------
-            tuple[Difference]: A collection of differences with changed values.
-        """
-        return tuple(diff for diff in self.differences if diff.old_value is not None and diff.new_value is not None and diff.old_value != diff.new_value)
-
-    def get_new_values(self) -> tuple[Difference, ...]:
-        """Returns a tuple of differences where a new value is present in the compared GFFStruct.
-
-        Returns:
-        -------
-            tuple[Difference]: A collection of differences with new values.
-        """
-        return tuple(diff for diff in self.differences if diff.old_value is None and diff.new_value is not None)
-
-    def get_removed_values(self) -> tuple[Difference, ...]:
-        """Returns a tuple of differences where a value is present in the original GFFStruct but not in the compared.
-
-        Returns:
-        -------
-            tuple[Difference]: A collection of differences with removed values.
-        """
-        return tuple(diff for diff in self.differences if diff.old_value is not None and diff.new_value is None)
 
 
 class GFF:
@@ -253,6 +201,28 @@ class GFF:
     ):
         self.content: GFFContent = content
         self.root: GFFStruct = GFFStruct(-1)
+
+    def __eq__(self, other):
+        if not isinstance(other, GFF):
+            return NotImplemented
+        return self.content == other.content and self.root == other.root
+
+    def as_dict(self) -> dict[str, Any]:
+        return {"content": self.content.name, "root": self.root.as_dict()}
+
+    @classmethod
+    def from_dict(cls, serialized_dict: dict[str, Any]) -> GFF:
+        new_gff = GFF()
+        new_gff.content = GFFContent.__members__[serialized_dict["content"]]
+        new_gff.root = GFFStruct.from_dict(serialized_dict["root"])
+        return new_gff
+
+    def as_json(self) -> str:
+        return json.dumps(self.as_dict(), indent=4)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> GFF:
+        return cls.from_dict(json.loads(json_str))
 
     def print_tree(
         self,
@@ -307,7 +277,12 @@ class GFF:
             - Write comparison report to given path if provided
             - Return True if no differences found, False otherwise.
         """
-        return self.root.compare(other_gff.root, log_func, path, ignore_default_changes)
+        return self.root.compare(
+            other_gff.root,
+            log_func,
+            path,
+            ignore_default_changes=ignore_default_changes,
+        )
 
 
 class _GFFField:
@@ -340,6 +315,86 @@ class _GFFField:
         self._field_type: GFFFieldType = field_type
         self._value: Any = value
 
+    def as_dict(self) -> dict[str, Any]:
+        """Converts the field's value to a serializable format, including type information."""
+        return {
+            "type": self._field_type.name,  # Assuming GFFFieldType is an Enum
+            "value": self.serialize_value()
+        }
+
+    def serialize_value(self) -> Any:
+        """Serializes the field's value based on its type."""
+        if self._field_type is GFFFieldType.ResRef:
+            assert isinstance(self._value, ResRef)
+            return str(self._value)
+        if self._field_type in {
+            *self.STRING_TYPES,
+            *self.FLOAT_TYPES,
+            *self.INTEGER_TYPES
+        }:
+            return self._value
+        if isinstance(self._value, GFFStruct):
+            return self._value.as_dict()
+        if isinstance(self._value, GFFList):
+            return [item.as_dict() for item in self._value]
+        if isinstance(self._value, LocalizedString):
+            return self._value.as_dict()
+        if isinstance(self._value, (Vector3, Vector4)):
+            return (*self._value,)
+        if isinstance(self._value, bytes):
+            return base64.b64encode(self._value).decode("ascii")
+        raise TypeError(f"Unsupported field type: {self._field_type!r}")
+
+    @classmethod
+    def from_serializable(cls, data: dict) -> _GFFField:
+        """Reconstructs a _GFFField instance from its serialized format."""
+        field_type = GFFFieldType.__members__[data["type"]]  # Assuming GFFFieldType is an Enum
+        value = cls.deserialize_value(field_type, data["value"])
+        return cls(field_type, value)
+
+    @classmethod
+    def deserialize_value(cls, field_type: GFFFieldType, value: Any) -> object:
+        """Deserializes the value based on its type."""
+        if field_type in cls.INTEGER_TYPES: return int(value)
+        if field_type in cls.FLOAT_TYPES: return float(value)
+        if field_type is GFFFieldType.String: return str(value)
+
+        if field_type is GFFFieldType.ResRef:
+            assert isinstance(value, str), f"{type(value).__name__} ({value})"
+            return ResRef(value)
+
+        if field_type is GFFFieldType.Vector3:
+            assert isinstance(value, (list, tuple)), f"{type(value).__name__} ({value})"
+            return Vector3(value[0], value[1], value[2])
+
+        if field_type is GFFFieldType.Vector4:
+            assert isinstance(value, (list, tuple)), f"{type(value).__name__} ({value})"
+            return Vector4(value[0], value[1], value[2], value[3])
+
+        if field_type is GFFFieldType.LocalizedString:
+            assert isinstance(value, dict), f"{type(value).__name__} ({value})"
+            ret = LocalizedString(value["stringref"])
+            substrings: dict[int, str] = value["substrings"].copy()
+            for key, substring in value["substrings"].items():
+                substrings[int(key)] = substring
+            ret._substrings = substrings
+            return ret
+
+        if field_type is GFFFieldType.Struct:
+            assert isinstance(value, dict), f"{type(value).__name__} ({value})"
+            return GFFStruct.from_dict(value)
+
+        if field_type == GFFFieldType.Binary:  # Assuming GFFFieldType.Binary is defined
+            assert isinstance(value, str), f"Expected string for base64 bytes, got {type(value).__name__} ({value})"
+            return base64.b64decode(value)
+
+        if field_type is GFFFieldType.List:
+            assert isinstance(value, list), f"{type(value).__name__} ({value})"
+            this_list = GFFList()
+            this_list._structs = [GFFStruct.from_dict(item) for item in value]  # noqa: SLF001
+            return this_list
+        raise ValueError(f"Unsupported fieldtype: {field_type} ({field_type!r}) or value: {value} ({value!r})")
+
     def field_type(
         self,
     ) -> GFFFieldType:
@@ -362,7 +417,6 @@ class _GFFField:
         """
         return self._value
 
-
 class GFFStruct:
     """Stores a collection of GFFFields.
 
@@ -377,6 +431,59 @@ class GFFStruct:
     ):
         self.struct_id: int = struct_id
         self._fields: dict[str, _GFFField] = {}
+
+    def __eq__(self, other):
+        if not isinstance(other, GFFStruct):
+            return NotImplemented
+        return not DeepDiff(self._fields, other._fields)
+
+    def __deepcopy__(self, memo) -> Self:
+        return self.from_dict(self.as_dict())
+
+    def as_dict(self) -> dict[str, Any]:
+        result = {"struct_id": self.struct_id, "Fields": {}}
+        for label, field in self._fields.items():
+            result["Fields"][label] = field.as_dict()
+        return result
+
+    @classmethod
+    def from_dict(cls, serialized_dict: dict[str, Any]) -> Self:
+        new_struct = cls(serialized_dict["struct_id"])
+        fields: dict[str, Any] = serialized_dict["Fields"]
+        for label, field_data in fields.items():
+            new_struct._fields[label] = _GFFField.from_serializable(field_data)
+        return new_struct
+
+    def as_json(self) -> str:
+        return json.dumps(self.as_dict(), indent=4)
+
+    @classmethod
+    def from_json(cls, json_str: str) -> Self:
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+
+    def set_value(self, label: str, ftype: GFFFieldType, value: object) -> GFFList | GFFStruct | None:
+        setters: dict[GFFFieldType, Callable[[GFFStruct, str, Any], GFFList | GFFStruct | None]] = {
+            GFFFieldType.UInt8: GFFStruct.set_uint8,
+            GFFFieldType.Int8: GFFStruct.set_int8,
+            GFFFieldType.UInt16: GFFStruct.set_uint16,
+            GFFFieldType.Int16: GFFStruct.set_int16,
+            GFFFieldType.UInt32: GFFStruct.set_uint32,
+            GFFFieldType.Int32: GFFStruct.set_int32,
+            GFFFieldType.UInt64: GFFStruct.set_uint64,
+            GFFFieldType.Int64: GFFStruct.set_int64,
+            GFFFieldType.Single: GFFStruct.set_single,
+            GFFFieldType.Double: GFFStruct.set_double,
+            GFFFieldType.String: GFFStruct.set_string,
+            GFFFieldType.ResRef: GFFStruct.set_resref,
+            GFFFieldType.LocalizedString: GFFStruct.set_locstring,
+            GFFFieldType.Binary: GFFStruct.set_binary,
+            GFFFieldType.Struct: GFFStruct.set_struct,
+            GFFFieldType.List: GFFStruct.set_list,
+            GFFFieldType.Vector4: GFFStruct.set_vector4,
+            GFFFieldType.Vector3: GFFStruct.set_vector3,
+        }
+        return setters[ftype](self, label, value)
 
     def __len__(
         self,
@@ -432,6 +539,7 @@ class GFFStruct:
         other_gff_struct: GFFStruct,
         log_func: Callable = print,
         current_path: PureWindowsPath | os.PathLike | str | None = None,
+        *,
         ignore_default_changes: bool = False,
     ) -> bool:
         """Recursively compares two GFFStructs.
@@ -462,7 +570,7 @@ class GFFStruct:
             "EditorInfo",
         }
 
-        def is_ignorable_value(v) -> bool:
+        def is_ignorable_value(v: object) -> bool:
             return not v or str(v) in {"0", "-1"}
 
         def is_ignorable_comparison(
@@ -481,21 +589,33 @@ class GFFStruct:
             log_func(f"Struct ID is different at '{current_path}': '{self.struct_id}' --> '{other_gff_struct.struct_id}'")
             is_same = False
 
-        # Create dictionaries for both old and new structures
         old_dict: dict[str, tuple[GFFFieldType, Any]] = {
-            label or f"gffstruct({idx})": (ftype, value) for idx, (label, ftype, value) in enumerate(self) if label not in ignore_labels
+            label or f"GFFStruct({idx})": (ftype, value)
+            for idx, (label, ftype, value) in enumerate(self) if label not in ignore_labels
         }
         new_dict: dict[str, tuple[GFFFieldType, Any]] = {
-            label or f"gffstruct({idx})": (ftype, value) for idx, (label, ftype, value) in enumerate(other_gff_struct) if label not in ignore_labels
+            label or f"GFFStruct({idx})": (ftype, value)
+            for idx, (label, ftype, value) in enumerate(other_gff_struct) if label not in ignore_labels
         }
 
-        # Union of labels from both old and new structures
         all_labels: set[str] = set(old_dict.keys()) | set(new_dict.keys())
-
         for label in all_labels:
             child_path: PureWindowsPath = current_path / str(label)
             old_ftype, old_value = old_dict.get(label, (None, None))
             new_ftype, new_value = new_dict.get(label, (None, None))
+
+            # Check for missing fields/values in either structure
+            if old_ftype is None or old_value is None:
+                if new_ftype is None:
+                    msg = f"new_ftype shouldn't be None here. Relevance: old_ftype={old_ftype!r}, old_value={old_value!r}, new_value={new_value!r}"
+                    raise RuntimeError(msg)
+                log_func(f"Extra '{new_ftype.name}' field found at '{child_path}': {format_text(safe_repr(new_value))}")
+                is_same = False
+                continue
+            if new_value is None or new_ftype is None:
+                log_func(f"Missing '{old_ftype.name}' field at '{child_path}': {format_text(safe_repr(old_value))}")
+                is_same = False
+                continue
 
             if ignore_default_changes and is_ignorable_comparison(old_value, new_value):
                 continue
@@ -527,7 +647,7 @@ class GFFStruct:
                     log_func(f"Struct ID is different at '{child_path}': '{cur_struct_this.struct_id}'-->'{new_value.struct_id}'")
                     is_same = False
 
-                if not cur_struct_this.compare(new_value, log_func, child_path, ignore_default_changes):
+                if not cur_struct_this.compare(new_value, log_func, child_path, ignore_default_changes=ignore_default_changes):
                     is_same = False
                     continue
             elif old_ftype == GFFFieldType.List:
@@ -1299,6 +1419,11 @@ class GFFList:
     ):
         self._structs: list[GFFStruct] = []
 
+    def __eq__(self, other):
+        if not isinstance(other, GFFList):
+            return NotImplemented
+        return self._structs == other._structs
+
     def __len__(
         self,
     ) -> int:
@@ -1428,7 +1553,7 @@ class GFFList:
         for list_index in common_items:
             old_child: GFFStruct = old_dict[list_index]
             new_child: GFFStruct = new_dict[list_index]
-            if not old_child.compare(new_child, log_func, current_path / str(list_index), ignore_default_changes):
+            if not old_child.compare(new_child, log_func, current_path / str(list_index), ignore_default_changes=ignore_default_changes):
                 is_same_result = False
 
         return is_same_result

@@ -7,6 +7,9 @@ import unittest
 
 from unittest import TestCase
 
+from pykotor.resource.formats.gff.gff_data import GFFContent, GFFStruct
+from utility.logger_util import get_root_logger
+
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
@@ -30,9 +33,9 @@ from pykotor.extract.installation import Installation
 from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.generics.dlg import construct_dlg, dismantle_dlg
 from pykotor.resource.type import ResourceType
+from pykotor.resource.formats.gff import GFF
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.gff import GFF
     from pykotor.resource.generics.dlg import DLG, DLGEntry, DLGReply
 
 TEST_FILE = "tests/files/test.dlg"
@@ -48,27 +51,43 @@ class TestDLG(TestCase):
     def log_func(self, *args):
         self.log_messages.extend(args)
 
+    def test_json_k1(self):
+        import jsonpatch
+        from deepdiff import DeepDiff
+        import json
+
+        gff: GFF = read_gff(TEST_K1_FILE)
+        json_str = gff.root.as_json()
+        reconstructed_gff = GFF(GFFContent.DLG)
+        reconstructed_gff.root = GFFStruct.from_json(json_str)
+        result = gff.compare(reconstructed_gff, self.log_func)
+        output = os.linesep.join(self.log_messages)
+        self.assertTrue(result, output)
+        old_serialized = gff.as_dict()
+        new_serialized = reconstructed_gff.as_dict()
+        patch = jsonpatch.make_patch(old_serialized, new_serialized)
+        patched_old_to_new = patch.apply(old_serialized)
+        patched_diff = DeepDiff(new_serialized, patched_old_to_new, ignore_order=True)
+        assert new_serialized == patched_old_to_new, f"\n\nDeepDiff Output: {json.dumps(patched_diff, indent=8)}\n\n"
+
+        revert = jsonpatch.make_patch(new_serialized, old_serialized)
+        reverted_new_to_old = revert.apply(new_serialized)
+        reverted_diff = DeepDiff(old_serialized, patched_old_to_new, ignore_order=True)
+        assert old_serialized == reverted_new_to_old, f"\n\nDeepDiff Output: {json.dumps(reverted_diff, indent=8)}\n\n"
+
+        deserialized_old = GFF.from_dict(old_serialized)
+        assert deserialized_old.content == gff.content, f"{deserialized_old.content} --> {gff.content}"
+        diff = DeepDiff(gff.root._fields, deserialized_old.root._fields)
+        assert not diff, f"\n\nDeepDiff Output: {json.dumps(diff, indent=8)}\n\n"
+        assert gff == deserialized_old, "__eq__ assertion failed."
+        
+
     def test_k1_reconstruct(self):
         gff: GFF = read_gff(TEST_K1_FILE)
         reconstructed_gff: GFF = dismantle_dlg(construct_dlg(gff), Game.K1)
-        result = gff.compare(reconstructed_gff, self.log_func, ignore_default_changes=True)
+        result = gff.compare(reconstructed_gff, self.log_func)
         output = os.linesep.join(self.log_messages)
-        if not result:
-            expected_output = r"""
-GFFStruct: number of fields have changed at 'GFFRoot\ReplyList\0': '14' --> '15'
-Extra 'Int32' field found at 'GFFRoot\ReplyList\0\PlotIndex': '-1'
-GFFStruct: number of fields have changed at 'GFFRoot\ReplyList\1': '14' --> '15'
-Extra 'Int32' field found at 'GFFRoot\ReplyList\1\PlotIndex': '-1'
-GFFStruct: number of fields have changed at 'GFFRoot\ReplyList\2': '14' --> '15'
-Extra 'Int32' field found at 'GFFRoot\ReplyList\2\PlotIndex': '-1'
-GFFStruct: number of fields have changed at 'GFFRoot\ReplyList\3': '14' --> '15'
-Extra 'Int32' field found at 'GFFRoot\ReplyList\3\PlotIndex': '-1'
-GFFStruct: number of fields have changed at 'GFFRoot\ReplyList\4': '14' --> '15'
-Extra 'Int32' field found at 'GFFRoot\ReplyList\4\PlotIndex': '-1'
-"""
-            self.assertEqual(output.strip().replace("\r\n", "\n"), expected_output.strip(), "Comparison output does not match expected output")
-        else:
-            self.assertTrue(result)
+        self.assertTrue(result, output)
 
     def test_k1_reconstruct_from_reconstruct(self):
         gff: GFF = read_gff(TEST_K1_FILE)
@@ -98,6 +117,7 @@ Extra 'Int32' field found at 'GFFRoot\ReplyList\4\PlotIndex': '-1'
     def test_gff_reconstruct_from_k1_installation(self):
         self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
         for dlg_resource in (resource for resource in self.installation if resource.restype() == ResourceType.DLG):
+            get_root_logger().info(f"Testing {dlg_resource.identifier()}...")
             gff: GFF = read_gff(dlg_resource.data())
             reconstructed_gff: GFF = dismantle_dlg(construct_dlg(gff), Game.K1)
             self.assertTrue(gff.compare(reconstructed_gff, self.log_func, ignore_default_changes=True), os.linesep.join(self.log_messages))

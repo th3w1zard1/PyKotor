@@ -138,9 +138,9 @@ class FieldValue(ABC):
             )
         elif field_type == GFFFieldType.String and not isinstance(value, str):
             value = str(value)
-        elif field_type.return_type() == int and isinstance(value, str):
+        elif issubclass(field_type.return_type(), int) and isinstance(value, str):
             value = int(value) if value.strip() else "0"
-        elif field_type.return_type() == float and isinstance(value, str):
+        elif issubclass(field_type.return_type(), float) and isinstance(value, str):
             value = float(value) if value.strip() else "0.0"
         return value
 

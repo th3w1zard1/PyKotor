@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from typing import TYPE_CHECKING, Any, Generator
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 # BCP 47 language code
@@ -428,7 +432,20 @@ class LocalizedString:
         self.stringref: int = stringref
         self._substrings: dict[int, str] = {}
 
-    def __iter__(self):
+    def as_dict(self) -> dict[str, int | dict[int, str]]:
+        return {
+            "stringref": self.stringref,
+            "substrings": self._substrings.copy()
+        }
+
+    @classmethod
+    def from_dict(cls, serialized_dict: dict[str, Any]) -> Self:
+        new_instance = cls(serialized_dict["stringref"])
+        substrings: dict[int, str] = serialized_dict["substrings"]
+        new_instance._substrings = substrings  # noqa: SLF001
+        return new_instance
+
+    def __iter__(self) -> Generator[tuple[Language, Gender, str], Any, None]:
         """Iterates through the list of substrings. Yields a tuple containing (language, gender, text)."""
         for substring_id, text in self._substrings.items():
             language, gender = LocalizedString.substring_pair(substring_id)
