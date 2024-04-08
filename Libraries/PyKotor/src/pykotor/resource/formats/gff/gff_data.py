@@ -9,15 +9,12 @@ from copy import copy, deepcopy
 from enum import Enum, IntEnum
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-import jsonpatch
-
-from deepdiff import DeepDiff
-
 from pykotor.common.geometry import Vector3, Vector4
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import ResRef
 from pykotor.resource.type import ResourceType
 from utility.error_handling import safe_repr
+from utility.logger_util import get_root_logger
 from utility.string_util import format_text
 from utility.system.path import PureWindowsPath
 
@@ -435,7 +432,7 @@ class GFFStruct:
     def __eq__(self, other):
         if not isinstance(other, GFFStruct):
             return NotImplemented
-        return not DeepDiff(self._fields, other._fields)
+        return self.compare(other, log_func=get_root_logger().debug, current_path=f"GFFStruct({self.struct_id})")
 
     def __deepcopy__(self, memo) -> Self:
         return self.from_dict(self.as_dict())
@@ -651,6 +648,7 @@ class GFFStruct:
                     is_same = False
                     continue
             elif old_ftype == GFFFieldType.List:
+                assert isinstance(new_value, GFFList), f"{type(new_value).__name__}: {new_value}"
                 gff_list: GFFList = old_value
                 if not gff_list.compare(new_value, log_func, child_path, ignore_default_changes=ignore_default_changes):
                     is_same = False

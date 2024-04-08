@@ -79,6 +79,7 @@ class TestDLG(TestCase):
         assert deserialized_old.content == gff.content, f"{deserialized_old.content} --> {gff.content}"
         diff = DeepDiff(gff.root._fields, deserialized_old.root._fields)
         assert not diff, f"\n\nDeepDiff Output: {json.dumps(diff, indent=8)}\n\n"
+        self.assertTrue(gff.compare(deserialized_old), os.linesep.join(self.log_messages))
         assert gff == deserialized_old, "__eq__ assertion failed."
         
 
