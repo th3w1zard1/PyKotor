@@ -315,8 +315,8 @@ class _GFFField:
     def as_dict(self) -> dict[str, Any]:
         """Converts the field's value to a serializable format, including type information."""
         return {
-            "type": self._field_type.name,  # Assuming GFFFieldType is an Enum
-            "value": self.serialize_value()
+            ">>##TYPE##<<": self._field_type.name,  # Assuming GFFFieldType is an Enum
+            ">>##VALUE##<<": self.serialize_value()
         }
 
     def serialize_value(self) -> Any:
@@ -345,8 +345,8 @@ class _GFFField:
     @classmethod
     def from_serializable(cls, data: dict) -> _GFFField:
         """Reconstructs a _GFFField instance from its serialized format."""
-        field_type = GFFFieldType.__members__[data["type"]]  # Assuming GFFFieldType is an Enum
-        value = cls.deserialize_value(field_type, data["value"])
+        field_type = GFFFieldType.__members__[data[">>##TYPE##<<"]]  # Assuming GFFFieldType is an Enum
+        value = cls.deserialize_value(field_type, data[">>##VALUE##<<"])
         return cls(field_type, value)
 
     @classmethod
@@ -438,15 +438,15 @@ class GFFStruct:
         return self.from_dict(self.as_dict())
 
     def as_dict(self) -> dict[str, Any]:
-        result = {"struct_id": self.struct_id, "Fields": {}}
+        result = {"struct_id": self.struct_id, ">>##Fields##<<": {}}
         for label, field in self._fields.items():
-            result["Fields"][label] = field.as_dict()
+            result[">>##Fields##<<"][label] = field.as_dict()
         return result
 
     @classmethod
     def from_dict(cls, serialized_dict: dict[str, Any]) -> Self:
         new_struct = cls(serialized_dict["struct_id"])
-        fields: dict[str, Any] = serialized_dict["Fields"]
+        fields: dict[str, Any] = serialized_dict[">>##Fields##<<"]
         for label, field_data in fields.items():
             new_struct._fields[label] = _GFFField.from_serializable(field_data)
         return new_struct

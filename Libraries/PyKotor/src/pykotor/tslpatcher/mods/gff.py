@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import json
+
 from abc import ABC, abstractmethod
 from itertools import zip_longest
 from typing import TYPE_CHECKING, Any
 
+import jsonpatch
+
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import ResRef
-from pykotor.resource.formats.gff import GFFFieldType, GFFList, GFFStruct, bytes_gff
+from pykotor.resource.formats.gff import GFF, GFFFieldType, GFFList, GFFStruct, bytes_gff
+from pykotor.resource.formats.gff.gff_data import _GFFField
 from pykotor.resource.formats.gff.io_gff import GFFBinaryReader
 from pykotor.tslpatcher.mods.template import PatcherModifications
 from utility.logger_util import get_root_logger
@@ -17,14 +22,14 @@ if TYPE_CHECKING:
 
     from collections.abc import Callable
 
+    from jsonpatch import PatchOperation
     from typing_extensions import Literal
 
     from pykotor.common.misc import Game
-    from pykotor.resource.formats.gff import GFF
-    from pykotor.resource.formats.gff.gff_data import _GFFField
     from pykotor.resource.type import SOURCE_TYPES
     from pykotor.tslpatcher.logger import PatchLogger
     from pykotor.tslpatcher.memory import PatcherMemory
+    from utility.system.path import PurePath
 
 
 def set_locstring(
@@ -190,8 +195,8 @@ class ModifyGFF(ABC):
         logger: PatchLogger,
     ): ...
 
+    @staticmethod
     def _navigate_containers(
-        self,
         root_container: GFFStruct,
         path: PureWindowsPath | os.PathLike | str,
     ) -> GFFList | GFFStruct | None:
@@ -224,14 +229,15 @@ class ModifyGFF(ABC):
 
         return container
 
+    @classmethod
     def _navigate_to_field(
-        self,
+        cls,
         root_container: GFFStruct,
         path: PureWindowsPath | os.PathLike | str,
     ) -> _GFFField | None:
         """Navigates to a field from the root gff struct from a path."""
         path = PureWindowsPath.pathify(path)
-        container: GFFList | GFFStruct | None = self._navigate_containers(root_container, path.parent)
+        container: GFFList | GFFStruct | None = cls._navigate_containers(root_container, path.parent)
         label: str = path.name
 
         # Return the field if the container is a GFFStruct
@@ -516,6 +522,28 @@ class ModifyFieldGFF(ModifyGFF):
 
 # endregion
 
+def get_value_by_path(nested_dict: dict[str, Any], path: PurePath) -> Any:
+    """Retrieves a value from a nested dictionary using a PurePath object for navigation.
+
+    :param nested_dict: The nested dictionary to traverse.
+    :param path: A PurePath object representing the keys path to the desired value.
+    :return: The value found at the specified path within the nested dictionary.
+    """
+    def handle(part, current_value):
+        if isinstance(current_value, list):
+            part = int(part)
+            return current_value[part]
+        elif isinstance(current_value, dict) and part in current_value:
+            return current_value[part]
+        else:
+            raise KeyError(f"Path {path} not found in the nested dictionary, could not find part '{part}'")
+    current_value = nested_dict
+    for parent in reversed(path.parents):
+        part = parent.name
+        if not part:  # skip the / top level.
+            continue
+        current_value = handle(part, current_value)
+    return handle(path.name, current_value)
 
 class ModificationsGFF(PatcherModifications):
     def __init__(
@@ -526,6 +554,72 @@ class ModificationsGFF(PatcherModifications):
     ):
         super().__init__(filename, replace)
         self.modifiers: list[ModifyGFF] = modifiers if modifiers is not None else []
+
+    @classmethod
+    def create_patch(cls, old: GFF, new: GFF, filename: str, replace_file: bool = False):
+        # sourcery skip: move-assign, remove-unnecessary-else, swap-if-else-branches
+        """Returns a ModificationsGFF instance representing the ini sections for each patch."""
+        from jsonpatch import JsonPatch, ReplaceOperation
+        from utility.error_handling import safe_repr
+        assert isinstance(old, GFF), f"{type(old).__name__}: {old} ({old!r})"
+        assert isinstance(new, GFF), f"{type(new).__name__}: {new} ({new!r})"
+        if old.content is not new.content:
+            raise ValueError(f"The two gffs passed to this function must be of the same type (dlg, utc, etc) old's content: {old.content.name}, new's content: {new.content.name}")
+
+        old_serialized = old.as_dict()
+        new_serialized = new.as_dict()
+        patch = JsonPatch.from_diff(old_serialized, new_serialized)
+        log = get_root_logger()
+        new_instance = ModificationsGFF(filename, replace=replace_file)
+        for raw_operation in patch.patch:
+            op: PatchOperation = patch._get_operation(raw_operation)
+            log.debug("Path: %s Location: %s Pointer: %s Key: %s Operation: %s", op.path, op.location, op.pointer, op.key, op.operation)
+            op_path: PureWindowsPath = PureWindowsPath(op.location)
+            if op_path.name not in (">>##TYPE##<<", ">>##VALUE##<<"):
+                if op_path.parent.name in (">>##TYPE##<<", ">>##VALUE##<<"):
+                    log.info("Using parent path of %s as actual op path.", op_path)
+                    op_path = op_path.parent
+                else:
+                    raise ValueError(f"op_path not expected: {op_path}")
+            changed_field_path: PureWindowsPath = op_path.parent
+            field_label: str = changed_field_path.name
+            if isinstance(op, ReplaceOperation):
+                serialized_field = get_value_by_path(new_serialized, changed_field_path)
+                gff_field = _GFFField.from_serializable(serialized_field)
+                log.debug("ReplaceOp, lookup from old. Path: %s  Field: %s", changed_field_path, safe_repr(gff_field))
+                field_value = gff_field.value()
+                if isinstance(field_value, LocalizedString):
+                    field_value = LocalizedStringDelta(FieldValueConstant(field_value.stringref))
+                modify_path = changed_field_path.relative_to("/root/>>##Fields##<<")
+                if modify_path.parent.name == ">>##Fields##<<":
+                    new_parts = (part for part in modify_path.parts if part not in (">>##VALUE##<<", ">>##Fields##<<"))
+                    new_modify_path = PureWindowsPath("\\".join(new_parts))
+                    log.info("Sanitizing path %s --> %s", modify_path, new_modify_path)
+                    modify_path = new_modify_path
+                modifier = ModifyFieldGFF(modify_path, FieldValueConstant(field_value), identifier=f"{filename}_{field_label}")
+                log.info("Created modifier: %s", safe_repr(modifier))
+                new_instance.modifiers.append(modifier)
+            else:
+                raise NotImplementedError(f"todo: {op.operation['op']}")
+        return new_instance
+
+    @staticmethod
+    def revert_patch(old, new):
+        patched_old_to_new = patch.apply(old_serialized)
+        patched_diff = DeepDiff(new_serialized, patched_old_to_new, ignore_order=True)
+        assert new_serialized == patched_old_to_new, f"\n\nDeepDiff Output: {json.dumps(patched_diff, indent=8)}\n\n"
+
+        revert = jsonpatch.make_patch(new_serialized, old_serialized)
+        reverted_new_to_old = revert.apply(new_serialized)
+        reverted_diff = DeepDiff(old_serialized, patched_old_to_new, ignore_order=True)
+        assert old_serialized == reverted_new_to_old, f"\n\nDeepDiff Output: {json.dumps(reverted_diff, indent=8)}\n\n"
+
+        deserialized_old = GFF.from_dict(old_serialized)
+        assert deserialized_old.content == gff.content, f"{deserialized_old.content} --> {gff.content}"
+        diff = DeepDiff(gff.root._fields, deserialized_old.root._fields)
+        assert not diff, f"\n\nDeepDiff Output: {json.dumps(diff, indent=8)}\n\n"
+        self.assertTrue(gff.compare(deserialized_old), os.linesep.join(self.log_messages))
+        assert gff == deserialized_old, "__eq__ assertion failed."
 
     def patch_resource(
         self,
