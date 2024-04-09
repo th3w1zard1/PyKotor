@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+
 from configparser import ConfigParser, ParsingError
 from typing import TYPE_CHECKING
 
@@ -47,6 +48,7 @@ from pykotor.tslpatcher.mods.twoda import (
     TargetType,
 )
 from pykotor.tslpatcher.namespaces import PatcherNamespace
+from utility.logger_util import get_root_logger
 from utility.misc import is_float, is_int
 from utility.system.path import Path, PurePath, PureWindowsPath
 
@@ -182,6 +184,7 @@ class ConfigReader:
         return instance
 
     def load(self, config: PatcherConfig) -> PatcherConfig:
+        # sourcery skip: remove-unused-enumerate
         self.config = config
         self.previously_parsed_sections = set()
 
@@ -200,6 +203,36 @@ class ConfigReader:
             orphaned_sections_str: str = "\n".join(orphaned_sections)
             self.log.add_note(f"There are some orphaned ini sections found in the changes:\n{orphaned_sections_str}")
 
+        reconstructed_ini_text = ""
+        class CustomConfigParser(ConfigParser):
+            def write(self, fp, space_around_delimiters=False):  # noqa: FBT002
+                """Write an .ini-format representation of the configuration state."""
+                if self._defaults:  # type: ignore[reportAttributeAccessIssue]
+                    fp.write("[DEFAULT]\n")
+                    for (key, value) in self._defaults.items():  # type: ignore[reportAttributeAccessIssue]
+                        fp.write(f"{key}={value}\n")
+                    fp.write("\n")
+                for section in self._sections:  # type: ignore[reportAttributeAccessIssue]
+                    fp.write(f"[{section}]\n")
+                    for (key, value) in self._sections[section].items():  # type: ignore[reportAttributeAccessIssue]
+                        if key == "__name__":
+                            continue
+                        if (value is not None) or (self._optcre == self.OPTCRE):  # type: ignore[reportAttributeAccessIssue]
+                            key = "=".join((key, str(value).replace("\n", "\n\t")))  # noqa: PLW2901
+                        fp.write(f"{key}\n")
+                    fp.write("\n")
+        config_writer = CustomConfigParser(
+            delimiters=("="),
+            allow_no_value=True,
+            strict=False,
+            interpolation=None,
+        ) 
+        config_writer.optionxform = lambda optionstr: optionstr
+        for gff_main_mod in self.config.patches_gff:
+            reconstructed_ini_text = gff_main_mod.as_gfflist_ini(config_writer)
+        get_root_logger().debug("Changes INI Test:\n\n %s", reconstructed_ini_text)
+        with Path("test_write_changes.ini").open("w") as output:
+            config_writer.write(output)
         return self.config
 
     def get_section_name(self, section_name: str) -> str | None:
