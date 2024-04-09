@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import configparser
+from configparser import ConfigParser
 import io
 import json
 import uuid
 
 from abc import ABC, abstractmethod
 from itertools import zip_longest
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
 import jsonpatch
 
@@ -22,12 +22,13 @@ from utility.logger_util import get_root_logger
 from utility.system.path import PureWindowsPath
 
 if TYPE_CHECKING:
+    import configparser
     import os
 
     from collections.abc import Callable
 
     from jsonpatch import PatchOperation
-    from typing_extensions import Literal
+    from typing_extensions import Literal, Self
 
     from pykotor.common.misc import Game
     from pykotor.resource.type import SOURCE_TYPES
@@ -565,8 +566,114 @@ class ModificationsGFF(PatcherModifications):
         super().__init__(filename, replace)
         self.modifiers: list[ModifyGFF] = modifiers if modifiers is not None else []
 
-    def _recurse_modifier(self, config: configparser.ConfigParser, modify_list: list[ModifyGFF], identifier: str, memory: PatcherMemory, root: bool = False):
-        for modifier in modify_list:
+    def _handle_addfield_value(
+        self,
+        config: configparser.ConfigParser,
+        modifier: AddFieldGFF,
+        identifier: str,
+        relpath: PureWindowsPath,
+        memory: PatcherMemory,
+        new_identifier: str,
+    ):
+        assert isinstance(modifier, AddFieldGFF)
+        modifier_value = modifier.value
+        if not isinstance(modifier_value, FieldValueConstant):
+            raise TypeError(f"Unsupported FieldValue instance: {modifier_value} ({modifier_value!r}) of type {type(modifier_value).__name__}")
+        if isinstance(modifier_value.stored, LocalizedStringDelta):
+            self._handle_locstring(modifier_value, config, identifier, relpath)
+        elif isinstance(modifier_value.stored, PureWindowsPath):
+            rval = str(modifier_value.stored)
+            assert "object at 0x" not in rval, rval
+            new_memory_index = len(memory.memory_2da)
+            config.set(identifier, f"2DAMEMORY{new_memory_index}", rval)
+        elif isinstance(modifier_value, FieldValue2DAMemory):
+            rval = str(modifier_value.token_id)
+            assert "object at 0x" not in rval, rval
+            new_memory_index = len(memory.memory_2da)
+            memory.memory_2da[new_memory_index] = rval
+            config.set(identifier, f"2DAMEMORY{new_memory_index}", rval)
+        elif isinstance(modifier_value, FieldValueTLKMemory):
+            rval = str(modifier_value.token_id)
+            assert "object at 0x" not in rval, rval
+            new_memory_index = len(memory.memory_str)
+            memory.memory_str[new_memory_index] = modifier_value.token_id
+            config.set(identifier, f"StrRef{new_memory_index}", rval)
+        elif isinstance(modifier, ModifyFieldGFF) or modifier.field_type not in (
+            GFFFieldType.List,
+            GFFFieldType.Struct,
+        ):
+            assert "object at 0x" not in str(modifier_value.stored), str(modifier_value.stored)
+            config.set(new_identifier, "Value", str(modifier_value.stored))
+
+    def _handle_modifyfield_value(
+        self,
+        config: configparser.ConfigParser,
+        modifier: ModifyFieldGFF,
+        identifier: str,
+        relpath: PureWindowsPath,
+        memory: PatcherMemory,
+        inside_list: int | None = None,
+    ):
+        modifier_value = modifier.value
+        if isinstance(modifier_value, FieldValueConstant):
+            if isinstance(modifier_value.stored, LocalizedStringDelta):
+                relpath = relpath / str(inside_list) if inside_list is not None else relpath
+                self._handle_locstring(modifier_value, config, identifier, relpath)
+            elif isinstance(modifier_value.stored, PureWindowsPath):
+                rval = str(modifier_value.stored)
+                assert "object at 0x" not in rval, rval
+                new_memory_index = len(memory.memory_2da)
+                config.set(identifier, f"2DAMEMORY{new_memory_index}", rval)
+            else:
+                rval = str(modifier_value.stored)
+                assert "object at 0x" not in rval, rval
+                config.set(identifier, f"{relpath}", rval)
+        elif isinstance(modifier_value, FieldValue2DAMemory):
+            rval = str(modifier_value.token_id)
+            assert "object at 0x" not in rval, rval
+            new_memory_index = len(memory.memory_2da)
+            memory.memory_2da[new_memory_index] = rval
+            config.set(identifier, f"2DAMEMORY{new_memory_index}", rval)
+        elif isinstance(modifier_value, FieldValueTLKMemory):
+            rval = str(modifier_value.token_id)
+            assert "object at 0x" not in rval, rval
+            new_memory_index = len(memory.memory_str)
+            memory.memory_str[new_memory_index] = modifier_value.token_id
+            config.set(identifier, f"StrRef{new_memory_index}", rval)
+        else:
+            raise TypeError(f"Unsupported FieldValue instance: {modifier_value} ({modifier_value!r}) of type {type(modifier_value).__name__}")
+
+    def _handle_locstring(
+        self,
+        modifier_value: FieldValueConstant,
+        config: ConfigParser,
+        identifier: str,
+        relpath: PureWindowsPath,
+        label: str = "",
+    ):
+        if label and label.strip():
+            relpath = relpath / label
+        locstring: LocalizedString = modifier_value.stored
+        if isinstance(locstring.stringref, FieldValueTLKMemory):
+            rval = f"StrRef{locstring.stringref.token_id}"
+        elif isinstance(locstring.stringref, FieldValueConstant):
+            rval = f"StrRef{locstring.stringref.stored}"
+        else:
+            rval = f"StrRef{locstring.stringref}"
+        assert "object at 0x" not in rval, rval
+        config.set(identifier, f"{relpath}(strref)", rval)
+        for i, substring_id in enumerate(locstring._substrings):
+            config.set(identifier, f"{relpath}(lang={i})", str(substring_id))
+
+    def _recurse_modifier(
+        self,
+        config: configparser.ConfigParser,
+        modify_list: list[ModifyGFF],
+        identifier: str,
+        memory: PatcherMemory,
+        inside_list: int | None = None,
+    ):
+        for i, modifier in enumerate(modify_list):
             assert isinstance(modifier, (AddFieldGFF, AddStructToListGFF, ModifyFieldGFF))
             path = modifier.path.parent.joinpath("ListIndex") if modifier.path.name == ">>##INDEXINLIST##<<" else modifier.path
             relpath = (
@@ -576,122 +683,65 @@ class ModificationsGFF(PatcherModifications):
             )
 
             if isinstance(modifier, AddFieldGFF):
+                fieldtype_to_fieldname = {
+                    GFFFieldType.UInt8: "Byte",
+                    GFFFieldType.Int8: "Char",
+                    GFFFieldType.UInt16: "Word",
+                    GFFFieldType.Int16: "Short",
+                    GFFFieldType.UInt32: "DWORD",
+                    GFFFieldType.Int32: "Int",
+                    GFFFieldType.Int64: "Int64",
+                    GFFFieldType.Single: "Float",
+                    GFFFieldType.Double: "Double",
+                    GFFFieldType.String: "ExoString",
+                    GFFFieldType.ResRef: "ResRef",
+                    GFFFieldType.LocalizedString: "ExoLocString",
+                    GFFFieldType.Vector3: "Position",
+                    GFFFieldType.Vector4: "Orientation",
+                    GFFFieldType.Struct: "Struct",
+                    GFFFieldType.List: "List",
+                }
+                field_name = fieldtype_to_fieldname[modifier.field_type]
                 new_identifier = modifier.identifier.replace(".", "_") + uuid.uuid4().hex[:5]
                 config.add_section(new_identifier)
-                config.set(identifier, "AddField", f"{new_identifier}")
-                config.set(new_identifier, "FieldType", modifier.field_type.name)
+                config.set(identifier, f"AddField{i}", new_identifier)
+                config.set(new_identifier, "FieldType", field_name)
                 modifier_value = modifier.value
-                if not isinstance(modifier_value, FieldValueConstant):
-                    raise TypeError(f"Unsupported FieldValue instance: {modifier_value} ({modifier_value!r}) of type {type(modifier_value).__name__}")
-                if isinstance(modifier_value.stored, LocalizedStringDelta):
-                    locstring = modifier_value.stored
-                    if isinstance(locstring.stringref, FieldValueTLKMemory):
-                        rval = f"StrRef{locstring.stringref.token_id}"
-                    elif isinstance(locstring.stringref, FieldValueConstant):
-                        rval = f"StrRef{locstring.stringref.stored}"
-                    else:
-                        rval = f"StrRef{locstring.stringref}"
-                    assert "object at 0x" not in rval, rval
-                    config.set(identifier, f"{relpath}(strref)", rval)
-                    for i, substring_id in enumerate(locstring._substrings):  # noqa: SLF001
-                        config.set(identifier, f"{relpath}(lang={i})", str(substring_id))
-                elif isinstance(modifier_value.stored, PureWindowsPath):
-                    rval = str(modifier_value.stored)
-                    assert "object at 0x" not in rval, rval
-                    new_memory_index = len(memory.memory_2da)
-                    config.set(identifier, f"2DAMEMORY{new_memory_index}", rval)
-                elif isinstance(modifier_value, FieldValue2DAMemory):
-                    rval = str(modifier_value.token_id)
-                    assert "object at 0x" not in rval, rval
-                    new_memory_index = len(memory.memory_2da)
-                    memory.memory_2da[new_memory_index] = rval
-                    config.set(identifier, f"2DAMEMORY{new_memory_index}", rval)
-                elif isinstance(modifier_value, FieldValueTLKMemory):
-                    rval = str(modifier_value.token_id)
-                    assert "object at 0x" not in rval, rval
-                    new_memory_index = len(memory.memory_str)
-                    memory.memory_str[new_memory_index] = modifier_value.token_id
-                    config.set(identifier, f"StrRef{new_memory_index}", rval)
-                else:
-                    if modifier.field_type != GFFFieldType.List:
-                        assert "object at 0x" not in str(modifier_value.stored), str(modifier_value.stored)
-                        config.set(new_identifier, "Value", str(modifier_value.stored))
+                self._handle_addfield_value(config, modifier, identifier, relpath, memory, new_identifier)
                 config.set(new_identifier, "Label", modifier.label)
                 self._recurse_modifier(config, modifier.modifiers, new_identifier, memory)
             elif isinstance(modifier, ModifyFieldGFF):
-                field_value = modifier.value
-                if isinstance(field_value, FieldValueConstant):
-                    if isinstance(field_value.stored, LocalizedStringDelta):
-                        locstring = field_value.stored
-                        if isinstance(locstring.stringref, FieldValueTLKMemory):
-                            rval = f"StrRef{locstring.stringref.token_id}"
-                        elif isinstance(locstring.stringref, FieldValueConstant):
-                            rval = f"StrRef{locstring.stringref.stored}"
-                        else:
-                            rval = f"StrRef{locstring.stringref}"
-                        assert "object at 0x" not in rval, rval
-                        config.set(identifier, f"{relpath}(strref)", rval)
-                        for i, substring_id in enumerate(locstring._substrings):  # noqa: SLF001
-                            config.set(identifier, f"{relpath}(lang={i})", str(substring_id))
-                    elif isinstance(field_value.stored, PureWindowsPath):
-                        rval = str(field_value.stored)
-                        assert "object at 0x" not in rval, rval
-                        new_memory_index = len(memory.memory_2da)
-                        config.set(identifier, f"2DAMEMORY{new_memory_index}", rval)
-                    else:
-                        rval = str(field_value.stored)
-                        assert "object at 0x" not in rval, rval
-                        config.set(identifier, f"{relpath}", rval)
-                elif isinstance(field_value, FieldValue2DAMemory):
-                    rval = str(field_value.token_id)
-                    assert "object at 0x" not in rval, rval
-                    new_memory_index = len(memory.memory_2da)
-                    memory.memory_2da[new_memory_index] = rval
-                    config.set(identifier, f"2DAMEMORY{new_memory_index}", rval)
-                elif isinstance(field_value, FieldValueTLKMemory):
-                    rval = str(field_value.token_id)
-                    assert "object at 0x" not in rval, rval
-                    new_memory_index = len(memory.memory_str)
-                    memory.memory_str[new_memory_index] = field_value.token_id
-                    config.set(identifier, f"StrRef{new_memory_index}", rval)
-                else:
-                    raise TypeError(f"Unsupported FieldValue instance: {field_value} ({field_value!r}) of type {type(field_value).__name__}")
+                self._handle_modifyfield_value(config, modifier, identifier, relpath, memory, inside_list)
             elif isinstance(modifier, AddStructToListGFF):
                 new_identifier = modifier.identifier.replace(".", "_") + uuid.uuid4().hex[:5]
-                config.set(identifier, "AddField", f"{new_identifier}")
+                config.set(identifier, f"AddField{i}", new_identifier)
                 config.add_section(new_identifier)
-                if relpath.name == ">>##INDEXINLIST##<<":
-                    relpath = relpath.parent  # HACK: idk why conditional parenting is necessary but it works
-                    get_root_logger().debug(f"Removed unique sentinel from AddStructToListGFF instance (ini section [{new_identifier}]). Path: '{relpath}'")
                 config.set(new_identifier, "FieldType", "Struct")
                 config.set(new_identifier, "Label", "")
                 modifier_value = modifier.value.value(memory, GFFFieldType.Struct)
                 if isinstance(modifier_value, GFFStruct):
                     config.set(new_identifier, "TypeId", str(modifier_value.struct_id))
-                self._recurse_modifier(config, modifier.modifiers, new_identifier, memory)
+                self._recurse_modifier(config, modifier.modifiers, new_identifier, memory, inside_list=modifier_value.struct_id)
             else:
                 raise TypeError(f"{type(modifier_value).__name__}{modifier_value}: ({modifier_value!r})")
 
-    def as_gfflist_ini(self, config):
-        """This function is very broken."""
+    def as_gfflist_ini(self, config: configparser.ConfigParser) -> str:
         if "GFFList" not in config.sections():
             config.add_section("GFFList")
         config.set("GFFList", "File", self.sourcefile)
         config.add_section(self.sourcefile)
-        if self.saveas != self.sourcefile:
-            config.set("GFFList", "!Filename", self.saveas)
-        #config.set(self.sourcefile, "!SourceFile", self.sourcefile)
-        if self.sourcefolder != ".":
-            config.set(self.sourcefile, "!SourceFolder", self.sourcefolder)
+        config.set("GFFList", "!Filename", self.saveas)
+        config.set(self.sourcefile, "!SourceFile", self.sourcefile)
+        config.set(self.sourcefile, "!SourceFolder", self.sourcefolder)
         config.set(self.sourcefile, "!Destination", self.destination)
         config.set(self.sourcefile, "!OverrideType", self.override_type)
-        self._recurse_modifier(config, self.modifiers, self.sourcefile, PatcherMemory(), True)  # noqa: FBT003
+        self._recurse_modifier(config, self.modifiers, self.sourcefile, PatcherMemory())  # noqa: FBT003
         output = io.StringIO()
         config.write(output)
         return output.getvalue()
 
     @classmethod
-    def create_patch(cls, old: GFF, new: GFF, filename: str, replace_file: bool = False):
+    def create_patch(cls, old: GFF, new: GFF, filename: str, replace_file: bool = False) -> Self:
         # sourcery skip: move-assign, remove-unnecessary-else, swap-if-else-branches
         """Returns a ModificationsGFF instance representing the ini sections for each patch."""
         from jsonpatch import AddOperation, JsonPatch, ReplaceOperation
@@ -707,11 +757,14 @@ class ModificationsGFF(PatcherModifications):
         patch = JsonPatch.from_diff(old_serialized, new_serialized)
         log = get_root_logger()
         log.info("Created patch: %s", json.dumps(patch.patch, indent=4))
-        new_instance = ModificationsGFF(filename, replace=replace_file)
+        new_instance = cls(filename, replace=replace_file)
         for raw_operation in patch.patch:
             op: PatchOperation = patch._get_operation(raw_operation)
             log.debug("Path: %s Location: %s Pointer: %s Key: %s Operation: %s", op.path, op.location, op.pointer, op.key, op.operation)
             op_path: PureWindowsPath = PureWindowsPath(op.location)
+            if op_path.parent.name == "substrings":
+                log.warning("Skipping op for path %s", op_path)
+                continue
             if isinstance(op, AddOperation):
                 op_path = op_path / ">>##VALUE##<<"
             if op_path.name not in (">>##TYPE##<<", ">>##VALUE##<<"):
@@ -753,7 +806,7 @@ class ModificationsGFF(PatcherModifications):
                 log.info("Created ADD modifier: %s", safe_repr(modifier))
                 new_instance.modifiers.append(modifier)
             else:
-                msg = f"The operation '{op.operation['op']}' is unsupported at this time (path={modify_path}). Please post an issue on the PyKotor repo explaining your use case."
+                msg = f"The operation '{op.operation['op']}' is unsupported at this time (path={modify_path})."
                 get_root_logger().error(msg)
                 #raise NotImplementedError(msg)
         return new_instance

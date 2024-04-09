@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from configparser import ConfigParser
 import os
 import pathlib
 import sys
@@ -102,8 +103,32 @@ class TestDLG(TestCase):
     def test_changes_output(self):
         gff: GFF = read_gff(TEST_FILE)
         gff2: GFF = read_gff(TEST_K1_FILE)
-        config = ModificationsGFF.create_patch(gff, gff2, pathlib.PurePath(TEST_FILE).name)
-        print(f"\n\n{config.as_gfflist_ini()}")
+        class CustomConfigParser(ConfigParser):
+            def write(self, fp, space_around_delimiters=False):  # noqa: FBT002
+                """Write an .ini-format representation of the configuration state."""
+                if self._defaults:  # type: ignore[reportAttributeAccessIssue]
+                    fp.write("[DEFAULT]\n")
+                    for (key, value) in self._defaults.items():  # type: ignore[reportAttributeAccessIssue]
+                        fp.write(f"{key}={value}\n")
+                    fp.write("\n")
+                for section in self._sections:  # type: ignore[reportAttributeAccessIssue]
+                    fp.write(f"[{section}]\n")
+                    for (key, value) in self._sections[section].items():  # type: ignore[reportAttributeAccessIssue]
+                        if key == "__name__":
+                            continue
+                        if (value is not None) or (self._optcre == self.OPTCRE):  # type: ignore[reportAttributeAccessIssue]
+                            key = "=".join((key, str(value).replace("\n", "\n\t")))  # noqa: PLW2901
+                        fp.write(f"{key}\n")
+                    fp.write("\n")
+        config_writer = CustomConfigParser(
+            delimiters=("="),
+            allow_no_value=True,
+            strict=False,
+            interpolation=None,
+        ) 
+        config_writer.optionxform = lambda optionstr: optionstr
+        config = ModificationsGFF.create_patch(gff2, gff, pathlib.PurePath(TEST_FILE).name)
+        print(f"\n\n{config.as_gfflist_ini(config_writer)}")
 
     def test_k2_reconstruct(self):
         gff: GFF = read_gff(TEST_FILE)
