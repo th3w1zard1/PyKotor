@@ -63,6 +63,8 @@ class TestGFF(TestCase):
         data = bytearray()
         write_gff(gff, data, ResourceType.GFF_JSON)
         gff = GFFJSONReader(data).load()
+        gff2 = read_gff(data)
+        assert gff == gff2
         self.validate_io(gff)
 
     def validate_io(self, gff: GFF):
