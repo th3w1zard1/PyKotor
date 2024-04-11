@@ -9,15 +9,29 @@ from multiprocessing import Process, Queue
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, ClassVar
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon, QPixmap, QStandardItem
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox, QStyle
+import qtpy
+
+from qtpy import QtCore
+from qtpy.QtCore import QFile, QMetaObject, QTextStream, Qt
+from qtpy.QtGui import QColor, QIcon, QPalette, QPixmap, QStandardItem
+from qtpy.QtWidgets import (
+    QAction,
+    QApplication,
+    QFileDialog,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QStyle,
+    QVBoxLayout,
+    QWidget,
+)
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 from pykotor.common.stream import BinaryReader
-from pykotor.extract.file import ResourceIdentifier
+from pykotor.extract.file import FileResource, ResourceIdentifier
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.erf.erf_auto import read_erf, write_erf
 from pykotor.resource.formats.erf.erf_data import ERF, ERFType
@@ -60,7 +74,11 @@ from toolset.gui.windows.indoor_builder import IndoorMapBuilder
 from toolset.gui.windows.module_designer import ModuleDesigner
 from toolset.utils.misc import openLink
 from toolset.utils.window import addWindow, openResourceEditor
-from utility.error_handling import format_exception_with_variables, universal_simplify_exception
+from ui import stylesheet_resources  # noqa: F401
+from utility.error_handling import (
+    format_exception_with_variables,
+    universal_simplify_exception,
+)
 from utility.logger_util import get_root_logger
 from utility.misc import ProcessorArchitecture
 from utility.system.path import Path, PurePath
@@ -71,17 +89,117 @@ if TYPE_CHECKING:
 
     from typing import NoReturn
 
-    from PyQt5 import QtGui
-    from PyQt5.QtGui import QCloseEvent
+    from qtpy import QtGui
+    from qtpy.QtGui import QCloseEvent
     from watchdog.observers.api import BaseObserver
 
-    from pykotor.extract.file import FileResource
     from pykotor.resource.formats.mdl.mdl_data import MDL
     from pykotor.resource.formats.tpc import TPC
     from pykotor.resource.type import SOURCE_TYPES
     from pykotor.tools.path import CaseAwarePath
     from toolset.gui.widgets.main_widgets import TextureList
 
+class CustomTitleBar(QWidget):
+    def __init__(self, parent: QMainWindow):
+        super().__init__(parent)
+        self.setAutoFillBackground(True)
+        self.setMinimumHeight(30)
+        self.setParent(parent)
+        self.setLayout(QHBoxLayout(self))
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)
+        self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+
+        # Create a label for the window title
+        self.titleLabel = QLabel("Holocron Toolset", self)
+        self.titleLabel.setAlignment(Qt.AlignCenter)
+
+        # Create system buttons
+        self.minimizeButton = QPushButton("-", self)
+        self.maximizeButton = QPushButton("O", self)
+        self.closeButton = QPushButton("X", self)
+
+        # Remove the title bar and add custom buttons
+        self.layout().addWidget(self.titleLabel, 1)  # type: ignore[reportCallIssue]
+        self.layout().addWidget(self.minimizeButton)
+        self.layout().addWidget(self.maximizeButton)
+        self.layout().addWidget(self.closeButton)
+
+        # Configure button functionality
+        self.minimizeButton.clicked.connect(parent.showMinimized)
+        self.maximizeButton.clicked.connect(self.onMaximizeRestoreClicked)
+        self.closeButton.clicked.connect(parent.close)
+
+        # Style the title bar and buttons for a more native appearance
+        self.setStyleSheet("""
+            CustomTitleBar {
+                background-color: #ececec;
+                color: black;
+            }
+            QLabel {
+                text-align: left;
+            }
+            QPushButton {
+                background-color: #ececec;
+                border: none;
+                border-radius: 0;
+            }
+            QPushButton:hover {
+                background-color: #dcdcdc;
+            }
+            QPushButton:pressed {
+                background-color: #cacaca;
+            }
+        """)
+
+        self.setStyle(self.style())  # Refresh style
+
+    # Overriding mouse event handlers to enable dragging of the window
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._mousePressPos = event.globalPos()  # global position at mouse press
+            self._mouseDragPos = event.globalPos()  # global position for ongoing drag
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton:
+            # Calculate how much the mouse has been moved
+            globalPos = event.globalPos()
+            if globalPos is None or self._mouseDragPos is None:
+                return
+            diff = globalPos - self._mouseDragPos
+            newPos = self.window().frameGeometry().topLeft() + diff
+
+            # Move the window
+            self.window().move(newPos)
+
+            # Update the position for the next move
+            self._mouseDragPos = globalPos
+
+    def mouseReleaseEvent(self, event):
+        self._mousePressPos = None
+        self._mouseDragPos = None
+
+    # Button click event handlers
+    def onMinimizedClicked(self):
+        self.parent().showMinimized()
+
+    def onMaximizeRestoreClicked(self):
+        if self.parent().isMaximized():
+            self.parent().showNormal()
+            self.maximizeButton.setText("O")
+        else:
+            self.parent().showMaximized()
+            self.maximizeButton.setText("❐")
+
+    def onCloseClicked(self):
+        self.parent().close()
+
+    def setWindowTitle(self, title):
+        self.titleLabel.setText(title)
+
+    def updateStyle(self, backgroundColor):
+        # Update the custom title bar style based on the provided background color
+        self.setStyleSheet(f"background-color: {backgroundColor};")
 
 def run_progress_dialog(progress_queue: Queue, title: str = "Operation Progress") -> NoReturn:
     app = QApplication(sys.argv)
@@ -93,9 +211,8 @@ def run_progress_dialog(progress_queue: Queue, title: str = "Operation Progress"
 
 
 class ToolWindow(QMainWindow):
-    moduleFilesUpdated = QtCore.pyqtSignal(object, object)
-
-    overrideFilesUpdate = QtCore.pyqtSignal(object, object)
+    moduleFilesUpdated = QtCore.Signal(object, object)
+    overrideFilesUpdate = QtCore.Signal(object, object)
 
     GFF_TYPES: ClassVar[list[ResourceType]] = [
         ResourceType.GFF,
@@ -140,12 +257,44 @@ class ToolWindow(QMainWindow):
         self.active: HTInstallation | None = None
         self.settings: GlobalSettings = GlobalSettings()
         self.installations: dict[str, HTInstallation] = {}
+        self.original_style = self.style().objectName()
+        self.original_palette = self.palette()
 
-        from toolset.uic.windows.main import Ui_MainWindow  # noqa: PLC0415  # pylint: disable=C0415
+        if qtpy.API_NAME == "PySide2":
+            from toolset.uic.pyside2.windows.main import Ui_MainWindow  # noqa: PLC0415  # pylint: disable=C0415
+        elif qtpy.API_NAME == "PySide6":
+            from toolset.uic.pyside6.windows.main import Ui_MainWindow  # noqa: PLC0415  # pylint: disable=C0415
+        elif qtpy.API_NAME == "PyQt5":
+            from toolset.uic.pyqt5.windows.main import Ui_MainWindow  # noqa: PLC0415  # pylint: disable=C0415
+        elif qtpy.API_NAME == "PyQt6":
+            from toolset.uic.pyqt6.windows.main import Ui_MainWindow  # noqa: PLC0415  # pylint: disable=C0415
+        else:
+            raise ImportError(f"Unsupported Qt bindings: {qtpy.API_NAME}")
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._setupSignals()
+
+        # Custom title bar setup
+        self.titleBar = CustomTitleBar(self)
+        self.titleBar.updateStyle("gray")  # Example color, change as needed
+
+        # Create a container for the custom title bar
+        titleBarContainer = QWidget()
+        titleBarLayout = QVBoxLayout(titleBarContainer)
+        titleBarLayout.setContentsMargins(0, 0, 0, 0)
+        titleBarLayout.addWidget(self.titleBar)
+
+        # Add the custom title bar container to the main window layout
+        mainLayout = QVBoxLayout()
+        mainLayout.setContentsMargins(0, 0, 0, 0)
+        mainLayout.addWidget(titleBarContainer)
+        mainLayout.addWidget(self.ui.centralwidget)
+
+        # Create a placeholder widget to apply the main layout
+        placeholderWidget = QWidget()
+        placeholderWidget.setLayout(mainLayout)
+        self.setCentralWidget(placeholderWidget)
 
         self.ui.coreWidget.hideSection()
         self.ui.coreWidget.hideReloadButton()
@@ -155,11 +304,38 @@ class ToolWindow(QMainWindow):
         firstTime = self.settings.firstTime
         if firstTime:
             self.settings.firstTime = False
+            self.settings.selectedTheme = "Default (Light)"
 
             # Create a directory used for dumping temp files
             with suppress(Exception):
                 self.settings.extractPath = str(Path(str(TemporaryDirectory().name)))
 
+        self.toggle_stylesheet(self.settings.selectedTheme)
+
+    # Overriding mouse event handlers to enable dragging of the window
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._mousePressPos = event.globalPos()
+            self._mouseMovePos = event.globalPos()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton:
+            # Calculate how much the mouse has been moved
+            currPos = self.mapToGlobal(self.pos())
+            globalPos = event.globalPos()
+            diff = globalPos - self._mouseMovePos
+            newPos = self.mapFromGlobal(currPos + diff)
+
+            # Move the window
+            self.move(newPos)
+
+            # Update the position for the next move
+            self._mouseMovePos = globalPos
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._mousePressPos = None
+            self._mouseMovePos = None
 
     def _setupSignals(self):
         """Connects signals to slots for UI interactions.
@@ -177,6 +353,8 @@ class ToolWindow(QMainWindow):
             - Connects menu actions to various editor, dialog and tool openings.
         """
         self.ui.gameCombo.currentIndexChanged.connect(self.changeActiveInstallation)
+
+        self.ui.menuTheme.triggered.connect(self.toggle_stylesheet)
 
         self.moduleFilesUpdated.connect(self.onModuleFileUpdated)
         self.overrideFilesUpdate.connect(self.onOverrideFileUpdated)
@@ -248,6 +426,60 @@ class ToolWindow(QMainWindow):
         self.ui.actionDiscordDeadlyStream.triggered.connect(lambda: openLink("https://discord.com/invite/bRWyshn"))
         self.ui.actionDiscordKotOR.triggered.connect(lambda: openLink("http://discord.gg/kotor"))
         self.ui.actionDiscordHolocronToolset.triggered.connect(lambda: openLink("https://discord.gg/3ME278a9tQ"))
+
+    def toggle_stylesheet(self, theme: QAction | str):
+        # get the QApplication instance,  or crash if not set
+        app = QApplication.instance()
+        if app is None or not isinstance(app, QApplication):
+            raise RuntimeError("No Qt Application found or not a QApplication instance.")
+        # TODO: don't use custom title bar yet, is ugly
+        #self.setWindowFlags(Qt.FramelessWindowHint | Qt.Window)
+        #self.titleBar.show()
+        self.titleBar.hide()
+
+        themeName: str = theme.text() if isinstance(theme, QAction) else theme
+        self.settings.selectedTheme = themeName
+        if themeName == "Breeze (Dark)":
+            file = QFile(":/dark/stylesheet.qss")
+            file.open(QFile.ReadOnly | QFile.Text)
+            stream = QTextStream(file)
+            app.setStyleSheet(stream.readAll())
+            file.close()
+            # Set window flags to remove the standard frame (title bar)
+            self.show()  # Re-apply the window with new flags
+        elif not themeName or themeName == "Default (Light)":
+            app.setStyleSheet("")  # Reset to default style
+            app.setPalette(self.original_palette)  # Reset to default palette
+            app.setStyle(self.original_style)
+            # Reset window flags to default, which includes the title bar
+            self.setWindowFlags(Qt.Window | Qt.WindowCloseButtonHint | Qt.WindowMinimizeButtonHint | Qt.WindowMaximizeButtonHint)
+        elif themeName == "Fusion (Dark)":
+            app.setStyleSheet("")  # Reset to default style
+            app.setStyle("Fusion")
+            #
+            # # Now use a palette to switch to dark colors:
+            dark_palette = QPalette()
+            dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
+            dark_palette.setColor(QPalette.WindowText, Qt.white)
+            dark_palette.setColor(QPalette.Base, QColor(35, 35, 35))
+            dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+            dark_palette.setColor(QPalette.ToolTipBase, QColor(25, 25, 25))
+            dark_palette.setColor(QPalette.ToolTipText, Qt.white)
+            dark_palette.setColor(QPalette.Text, Qt.white)
+            dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
+            dark_palette.setColor(QPalette.ButtonText, Qt.white)
+            dark_palette.setColor(QPalette.BrightText, Qt.red)
+            dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
+            dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+            dark_palette.setColor(QPalette.HighlightedText, QColor(35, 35, 35))
+            dark_palette.setColor(QPalette.Active, QPalette.Button, QColor(53, 53, 53))
+            dark_palette.setColor(QPalette.Disabled, QPalette.ButtonText, Qt.darkGray)
+            dark_palette.setColor(QPalette.Disabled, QPalette.WindowText, Qt.darkGray)
+            dark_palette.setColor(QPalette.Disabled, QPalette.Text, Qt.darkGray)
+            dark_palette.setColor(QPalette.Disabled, QPalette.Light, QColor(53, 53, 53))
+            QApplication.setPalette(dark_palette)
+        print("themeName:", themeName)
+        self.show()  # Re-apply the window with new flags
 
     # region Signal callbacks
     def onModuleFileUpdated(self, changedFile: str, eventType: str):
@@ -360,15 +592,20 @@ class ToolWindow(QMainWindow):
         elif len(resources) >= 1:
             # Player saves resources with original name to a specific directory
             folderpath: str = QFileDialog.getExistingDirectory(self, "Select directory to extract to")
-            if folderpath:
-                loader = AsyncBatchLoader(self, "Extracting Resources", [], "Failed to Extract Resources")
+            if not folderpath:
+                return
+            loader = AsyncBatchLoader(self, "Extracting Resources", [], "Failed to Extract Resources")
 
-                for resource in resources:
-                    filename = f"{resource.resname()}.{resource.restype().extension}"
-                    filepath = str(Path(folderpath, filename))
-                    loader.addTask(lambda a=resource, b=filepath: self._extractResource(a, b, loader))
+            for resource in resources:
+                filename = f"{resource.resname()}.{resource.restype().extension}"
+                filepath = str(Path(folderpath, filename))
+                # Use QMetaObject.invokeMethod to ensure that _extractResource is called in the main thread
+                QMetaObject.invokeMethod(self, "_extractResource", Qt.QueuedConnection,
+                                    Qt.Q_ARG(FileResource, resource),
+                                    Qt.Q_ARG(str, filepath),
+                                    Qt.Q_ARG(AsyncBatchLoader, loader))
 
-                loader.exec_()
+            loader.exec_()
         elif isinstance(resourceWidget, ResourceList) and is_capsule_file(resourceWidget.currentSection()):
             module_name = resourceWidget.currentSection()
             self._saveCapsuleFromToolUI(module_name)
@@ -456,7 +693,13 @@ class ToolWindow(QMainWindow):
         if not res_ident.restype:
             return
         _filepath, _editor = openResourceEditor(
-            erf_filepath, res_ident.resname, res_ident.restype, BinaryReader.load_file(erf_filepath), self.active, self, gff_specialized=useSpecializedEditor
+            erf_filepath,
+            res_ident.resname,
+            res_ident.restype,
+            BinaryReader.load_file(erf_filepath),
+            self.active,
+            self,
+            gff_specialized=useSpecializedEditor,
         )
 
     # endregion

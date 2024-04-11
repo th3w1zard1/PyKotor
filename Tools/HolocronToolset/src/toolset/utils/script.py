@@ -4,7 +4,9 @@ import os
 import re
 import uuid
 
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from contextlib import suppress
+
+from qtpy.QtWidgets import QFileDialog, QMessageBox
 
 from pykotor.common.misc import Game
 from pykotor.common.stream import BinaryReader, BinaryWriter
@@ -104,7 +106,7 @@ def decompileScript(compiled_bytes: bytes, installation_path: Path, *, tsl: bool
             extCompiler.get_info().value.name, reg_spoofer.registry_path,
             installation_path, reg_spoofer.original_value, str(e)
         )
-        log.warning(msg.replace("<br>", "\n"))
+        log.warning(msg.replace("<br>", "\n"), exc_info=True)
         QMessageBox(
             QMessageBox.Warning,
             "Permission denied when attempting to update nwnnsscomp in registry",
