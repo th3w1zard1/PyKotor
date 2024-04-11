@@ -7,6 +7,8 @@ import unittest
 
 from unittest import TestCase
 
+from pykotor.resource.formats.gff.io_gff_json import GFFJSONReader
+
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
 UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
@@ -52,6 +54,15 @@ class TestGFF(TestCase):
         data = bytearray()
         write_gff(gff, data, ResourceType.GFF_XML)
         gff = read_gff(data)
+        self.validate_io(gff)
+
+    def test_json_io(self):
+        gff = GFFBinaryReader(BINARY_TEST_FILE).load()
+        self.validate_io(gff)
+
+        data = bytearray()
+        write_gff(gff, data, ResourceType.GFF_JSON)
+        gff = GFFJSONReader(data).load()
         self.validate_io(gff)
 
     def validate_io(self, gff: GFF):

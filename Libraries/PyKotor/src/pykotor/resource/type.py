@@ -154,7 +154,7 @@ class ResourceType(Enum):
     TTF = ResourceTuple(2072, "ttf", "Fonts", "binary")
     TTC = ResourceTuple(2073, "ttc", "Unused", "binary")
     CUT = ResourceTuple(2074, "cut", "Cutscenes", "gff")
-    KA = ResourceTuple(2075, "ka", "Unused", "xml")  # noqa: E221
+    KA  = ResourceTuple(2075, "ka", "Unused", "xml")  # noqa: E221
     JPG = ResourceTuple(2076, "jpg", "Images", "binary")
     ICO = ResourceTuple(2077, "ico", "Images", "binary")
     OGG = ResourceTuple(2078, "ogg", "Audio", "binary")
@@ -224,6 +224,24 @@ class ResourceType(Enum):
     TLK_JSON = ResourceTuple(50025, "tlk.json", "Talk Tables", "plaintext", target_member="TLK")
     LIP_JSON = ResourceTuple(50026, "lip.json", "Lips", "plaintext", target_member="LIP")
     RES_XML = ResourceTuple(50027, "res.xml", "Save Data", "plaintext", target_member="RES")
+    GFF_JSON = ResourceTuple(50028, "gff.json", "Other", "plaintext", target_member="GFF")
+    RES_JSON = ResourceTuple(50029, "res.json", "Save Data", "plaintext", target_member="RES")
+    UTT_JSON = ResourceTuple(50030, "utt.json", "Triggers", "plaintext", target_member="UTT")
+    UTS_JSON = ResourceTuple(50031, "uts.json", "Sounds", "plaintext", target_member="UTS")
+    FAC_JSON = ResourceTuple(50032, "fac.json", "Factions", "plaintext", target_member="FAC")
+    UTE_JSON = ResourceTuple(50033, "ute.json", "Encounters", "plaintext", target_member="UTE")
+    UTD_JSON = ResourceTuple(50034, "utd.json", "Doors", "plaintext", target_member="UTD")
+    UTP_JSON = ResourceTuple(50035, "utp.json", "Placeables", "plaintext", target_member="UTP")
+    GUI_JSON = ResourceTuple(50036, "gui.json", "GUIs", "plaintext", target_member="GUI")
+    UTM_JSON = ResourceTuple(50037, "utm.json", "Merchants", "plaintext", target_member="UTM")
+    JRL_JSON = ResourceTuple(50038, "jrl.json", "Journals", "plaintext", target_member="JRL")
+    UTW_JSON = ResourceTuple(50039, "utw.json", "Waypoints", "plaintext", target_member="UTW")
+    PTH_JSON = ResourceTuple(50040, "pth.json", "Paths", "plaintext", target_member="PTH")
+    IFO_JSON = ResourceTuple(50041, "ifo.json", "Module Data", "plaintext", target_member="IFO")
+    GIT_JSON = ResourceTuple(50042, "git.json", "Module Data", "plaintext", target_member="GIT")
+    UTI_JSON = ResourceTuple(50043, "uti.json", "Items", "plaintext", target_member="UTI")
+    UTC_JSON = ResourceTuple(50044, "utc.json", "Creatures", "plaintext", target_member="UTC")
+    DLG_JSON = ResourceTuple(50045, "dlg.json", "Dialogs", "plaintext", target_member="DLG")
 
     def __new__(cls, *args, **kwargs):
         obj: ResourceType = object.__new__(cls)  # type: ignore[annotation-unchecked]

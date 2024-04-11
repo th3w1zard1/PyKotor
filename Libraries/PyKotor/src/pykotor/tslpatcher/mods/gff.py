@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from configparser import ConfigParser
 import io
 import json
 import uuid
@@ -26,6 +25,7 @@ if TYPE_CHECKING:
     import os
 
     from collections.abc import Callable
+    from configparser import ConfigParser
 
     from jsonpatch import PatchOperation
     from typing_extensions import Literal, Self

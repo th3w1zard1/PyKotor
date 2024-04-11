@@ -8,7 +8,10 @@ import unittest
 
 from unittest import TestCase
 
+from pykotor.resource.formats.gff.gff_auto import bytes_gff
 from pykotor.resource.formats.gff.gff_data import GFFContent, GFFStruct
+from pykotor.tslpatcher.logger import PatchLogger
+from pykotor.tslpatcher.memory import PatcherMemory
 from pykotor.tslpatcher.mods.gff import ModificationsGFF
 from utility.logger_util import get_root_logger
 
@@ -28,7 +31,7 @@ if PYKOTOR_PATH.joinpath("pykotor").exists():
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from pykotor.common.misc import Game
 from pykotor.extract.installation import Installation
@@ -129,6 +132,9 @@ class TestDLG(TestCase):
         config_writer.optionxform = lambda optionstr: optionstr
         config = ModificationsGFF.create_patch(gff2, gff, pathlib.PurePath(TEST_FILE).name)
         print(f"\n\n{config.as_gfflist_ini(config_writer)}")
+        logger = PatchLogger()
+        gff3 = read_gff(cast(bytes, config.patch_resource(bytes_gff(gff), PatcherMemory(), logger, Game.K1)))
+        assert gff == gff3, "\n".join(f'[{log.log_type}] {log.message}' for log in logger.all_logs)
 
     def test_k2_reconstruct(self):
         gff: GFF = read_gff(TEST_FILE)

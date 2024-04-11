@@ -252,7 +252,13 @@ class GFF:
                     )
                     self.print_tree(gff_struct, indent + 2)
 
-    def compare(self, other_gff: GFF, log_func: Callable = print, path: PureWindowsPath | None = None, ignore_default_changes: bool = False) -> bool:
+    def compare(
+        self,
+        other_gff: GFF,
+        log_func: Callable = print,
+        path: PureWindowsPath | None = None,
+        ignore_default_changes: bool = False,
+    ) -> bool:
         """Compare two GFF objects.
 
         Args:
@@ -453,7 +459,10 @@ class GFFStruct:
         return result
 
     @classmethod
-    def from_dict(cls, serialized_dict: dict[str, Any]) -> Self:
+    def from_dict(
+        cls,
+        serialized_dict: dict[str, Any],
+    ) -> Self:
         new_struct = cls(serialized_dict[">>##STRUCT_ID##<<"])
         fields: dict[str, Any] = serialized_dict[">>##FIELDS##<<"]
         for label, field_data in fields.items():
@@ -464,11 +473,19 @@ class GFFStruct:
         return json.dumps(self.as_dict(), indent=4)
 
     @classmethod
-    def from_json(cls, json_str: str) -> Self:
+    def from_json(
+        cls,
+        json_str: str,
+    ) -> Self:
         data = json.loads(json_str)
         return cls.from_dict(data)
 
-    def set_value(self, label: str, ftype: GFFFieldType, value: object) -> GFFList | GFFStruct | None:
+    def set_value(
+        self,
+        label: str,
+        ftype: GFFFieldType,
+        value: object,
+    ) -> GFFList | GFFStruct | None:
         setters: dict[GFFFieldType, Callable[[GFFStruct, str, Any], GFFList | GFFStruct | None]] = {
             GFFFieldType.UInt8: GFFStruct.set_uint8,
             GFFFieldType.Int8: GFFStruct.set_int8,
