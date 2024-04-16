@@ -660,7 +660,7 @@ class Installation:
             self._log.error("Cannot reload override file. Invalid KOTOR resource:", identifier)
             return
         resource = FileResource(
-            *identifier,
+            *identifier.unpack(),
             filepath.stat().st_size,
             0,
             filepath,
@@ -1517,8 +1517,22 @@ class Installation:
             textures[case_resname] = None
             case_resnames.append(case_resname)
 
-        def check_dict(resources_dict: dict[str, list[FileResource]] | CaseInsensitiveDict[list[FileResource]]):
-            for resources in resources_dict.values():
+        def decode_txi(txi_bytes: bytes) -> str:
+            return txi_bytes.decode("ascii", errors="ignore")
+
+        def get_txi_from_list(resname: str, resource_list: list[FileResource]) -> str:
+            txi_resource: FileResource | None = next(
+                (
+                    resource
+                    for resource in resource_list
+                    if resource.resname() == resname and resource.restype() == ResourceType.TXI
+                ),
+                None,
+            )
+            return "" if txi_resource is None else decode_txi(txi_resource.data())
+
+        def check_dict(values: dict[str, list[FileResource]]):
+            for resources in values.values():
                 check_list(resources)
 
         def check_list(resource_list: list[FileResource]):
@@ -1826,9 +1840,10 @@ class Installation:
             for resource in values:
                 case_resname: str = resource.resname().casefold()
                 if case_resname in case_resnames and resource.restype() in sound_formats:
+                    print(f"Found sound at '{resource.filepath()}'")
                     case_resnames.remove(case_resname)
                     sound_data: bytes = resource.data()
-                    sounds[resource.resname()] = deobfuscate_audio(sound_data) if sound_data else b""
+                    sounds[resource.resname()] = deobfuscate_audio(sound_data)
 
         def check_capsules(resource_list: list[Capsule]):
             for capsule in resource_list:
@@ -1840,8 +1855,9 @@ class Installation:
                             break
                     if sound_data is None:  # No sound data found in this list.
                         continue
+                    print(f"Found sound at '{capsule.path()}'")
                     case_resnames.remove(case_resname)
-                    sounds[case_resname] = deobfuscate_audio(sound_data) if sound_data else b""
+                    sounds[case_resname] = deobfuscate_audio(sound_data)
 
         def check_folders(values: list[Path]):
             queried_sound_files: set[Path] = set()
@@ -1856,10 +1872,10 @@ class Installation:
                     )
                 )
             for sound_file in queried_sound_files:
-                case_resname: CaseInsensitiveWrappedStr = CaseInsensitiveWrappedStr(sound_file.stem)
-                case_resnames.remove(case_resname)
+                print(f"Found sound at '{sound_file}'")
+                case_resnames.remove(sound_file.stem.casefold())
                 sound_data: bytes = BinaryReader.load_file(sound_file)
-                sounds[sound_file.stem] = deobfuscate_audio(sound_data) if sound_data else b""
+                sounds[sound_file.stem] = deobfuscate_audio(sound_data)
 
         function_map: dict[SearchLocation, Callable] = {
             SearchLocation.OVERRIDE: lambda: check_dict(self._override),
