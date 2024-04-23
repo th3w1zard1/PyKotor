@@ -1,15 +1,139 @@
 from __future__ import annotations
 
+from contextlib import suppress
 from enum import IntEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Callable, ClassVar
+
+from typing_extensions import Literal
 
 from pykotor.common.geometry import SurfaceMaterial, Vector3, Vector4
 from pykotor.common.misc import Color
 from pykotor.resource.type import ResourceType
+from utility.logger_util import get_root_logger
 
 if TYPE_CHECKING:
     from pykotor.common.geometry import Vector2
 
+def str2identifier(s: str) -> str:
+    """Convert to lower case. Convert 'null' to empty string."""
+    return "" if (not s or s.lower() == "null") else s.lower()
+
+def ancestor_node(obj, test: Callable[[str], Any]):
+    with suppress(Exception):
+        if test(obj):
+            return obj
+
+    if obj is not None and obj.parent:
+        return ancestor_node(obj.parent, test)
+    return None
+
+def get_action(target, action_name: str):
+    """Get the active action or create one."""
+    # Get animation data, create if needed
+    anim_data = target.animation_data or target.animation_data_create()
+    # Get action, create if needed
+    action = anim_data.action
+    if not action:
+        action = bpy.data.actions.new(name=action_name)
+        # action.use_fake_user = True
+        anim_data.action = action
+    return action
+
+class DummySubtype:
+    NONE      = "NONE"
+    HAND      = "HAND"
+    HEAD      = "HEAD"
+    HEAD_HIT  = "HHIT"
+    IMPACT    = "IMPC"
+    GROUND    = "GRND"
+    USE1      = "USE1"
+    USE2      = "USE2"
+    OPEN1_01  = "O101"
+    OPEN1_02  = "O102"
+    OPEN2_01  = "O201"
+    OPEN2_02  = "O202"
+    CLOSED_01 = "CL01"
+    CLOSED_02 = "CL02"
+
+    SUFFIX_LIST: ClassVar[list[tuple[str, str]]] = [
+        ("use01", USE1),
+        ("use02", USE2),
+        ("hand", HAND),
+        ("head", HEAD),
+        ("head_hit", HEAD_HIT),
+        ("hhit", HEAD_HIT),
+        ("impact", IMPACT),
+        ("impc", IMPACT),
+        ("ground", GROUND),
+        ("grnd", GROUND),
+        ("open1_01", OPEN1_01),
+        ("open1_02", OPEN1_02),
+        ("open2_01", OPEN2_01),
+        ("open2_02", OPEN2_02),
+        ("closed_01", CLOSED_01),
+        ("closed_02", CLOSED_02),
+    ]
+
+    SUFFIX_PWK: ClassVar[dict[str, str]] = {
+        NONE: "",
+        HAND: "hand",
+        HEAD: "head",
+        HEAD_HIT: "head_hit",
+        IMPACT: "impact",
+        GROUND: "ground",
+        USE1: "use01",
+        USE2: "use02",
+    }
+
+    SUFFIX_DWK: ClassVar[dict[str, str]] = {
+        NONE: "",
+        HAND: "hand",
+        HEAD: "head",
+        HEAD_HIT: "hhit",
+        IMPACT: "impc",
+        GROUND: "grnd",
+        USE1: "use01",
+        USE2: "use02",
+        OPEN1_01: "open1_01",
+        OPEN1_02: "open1_02",
+        OPEN2_01: "open2_01",
+        OPEN2_02: "open2_02",
+        CLOSED_01: "closed_01",
+        CLOSED_02: "closed_02",
+    }
+
+def search_node(obj, test: Callable):
+    try:
+        if obj and test(obj):
+            return obj
+        match = None
+        for child in obj.children:
+            match = search_node(child, test)
+            if match is not None:
+                return match
+    except Exception:
+        get_root_logger().debug("Exception in search_node call", exc_info=True)
+    return None
+
+def is_root_dummy(obj, dummytype: str = "MDL"):
+    return obj and (obj.type == "EMPTY") and (obj.kb.dummytype == dummytype)
+
+def search_node_in_model(obj, test: Callable[[str], Any]):
+    """Helper to search through entire model from any starting point in hierarchy;
+    walks up to model root and performs find-one search.
+    """
+    return search_node(ancestor_node(obj, is_root_dummy), test)
+
+def search_node_all(obj, test):
+    nodes = []
+    for child in obj.children:
+        nodes.extend(search_node_all(child, test))
+    try:
+        if obj and test(obj):
+            nodes.append(obj)
+    except Exception:
+        ...
+    return nodes
 
 class MDL:
     """Represents a MDL/MDX file.
@@ -230,6 +354,7 @@ class MDL:
             if (node.mesh and node.mesh.texture_2 != "NULL" and node.mesh.texture_2)
         }
 
+CONST_MDL_ANIMATION_FPS: Literal[30] = 30
 
 # region Animation Data
 class MDLAnimation:
@@ -242,6 +367,37 @@ class MDLAnimation:
         self.transition_length: float = 0.0
         self.events: list[MDLEvent] = []
         self.root: MDLNode = MDLNode()
+
+    @staticmethod
+    def get_fcurve(
+        action,
+        data_path,
+        index: int = 0,
+        group_name: str | None = None,
+    ):
+        """Get the fcurve with specified properties or create one."""
+        fcu = action.fcurves.find(data_path, index=index)
+        if fcu:
+            return fcu
+
+        # Create new Curve
+        fcu = action.fcurves.new(data_path=data_path, index=index)
+        if group_name:  # Add curve to group
+            if group_name in action.groups:
+                group = action.groups[group_name]
+            else:
+                group = action.groups.new(group_name)
+            fcu.group = group
+        return fcu
+
+    @staticmethod
+    def has_keyframes_in_range(
+        fcurve,
+        frame_start: int,
+        frame_end: int,
+    ) -> bool:
+        """Check if the F-Curve has any keyframe points in the specified frame range."""
+        return any(frame_start <= kfp.co[0] <= frame_end for kfp in fcurve.keyframe_points)
 
     def all_nodes(
         self,
@@ -264,7 +420,7 @@ class MDLAnimation:
             - Repeat until scan is empty
             - Return the nodes list containing all nodes.
         """
-        nodes = []
+        nodes: list[MDLNode] = []
         scan = [self.root]
         while scan:
             node = scan.pop()

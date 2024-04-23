@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 from pykotor.common.geometry import AxisAngle, Vector4
 from pykotor.common.stream import BinaryReader, BinaryWriter
 from pykotor.resource.formats.mdl.mdl_data import MDL, MDLControllerType
+from pykotor.resource.type import autoclose
 
 if TYPE_CHECKING:
     from pykotor.resource.formats.mdl.mdl_data import MDLController, MDLNode
@@ -42,9 +43,10 @@ class MDLAsciiWriter:
         self._mdl = mdl
         self._writer = BinaryWriter.to_auto(target)
 
+    @autoclose
     def write(
         self,
-        auto_close: bool = True,
+        auto_close: bool = True,  # noqa: FBT001, FBT002
     ):
         """Writes a 3D model to a .mdl file.
 
@@ -94,9 +96,6 @@ class MDLAsciiWriter:
                 self._write_node(node, anim=True, indent=1)
 
             self._writer.write_line(0, f"doneanim {anim.name} {anim.root_model}")
-
-        if auto_close:
-            self._writer.close()
 
     def _write_node(
         self,
@@ -324,7 +323,7 @@ class MDLAsciiWriter:
     def _node_type(
         self,
         node: MDLNode,
-    ) -> str:
+    ) -> str:  # sourcery skip: assign-if-exp, reintroduce-else
         if node.skin:
             return "skin"
         if node.dangly:
