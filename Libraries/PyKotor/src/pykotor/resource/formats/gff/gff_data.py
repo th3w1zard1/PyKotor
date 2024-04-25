@@ -156,6 +156,8 @@ class GFFFieldType(IntEnum):
             return UInt16
         if self == GFFFieldType.UInt32:
             return UInt32
+        if self == GFFFieldType.UInt64:
+            return UInt64
         if self == GFFFieldType.Int8:
             return Int8
         if self == GFFFieldType.Int16:
