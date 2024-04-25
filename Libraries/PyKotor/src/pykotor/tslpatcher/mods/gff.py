@@ -654,7 +654,7 @@ class ModificationsGFF(PatcherModifications):
         if label and label.strip():
             relpath = relpath / label
         locstring: LocalizedString = modifier_value.stored
-        if isinstance(locstring.stringref, FieldValueTLKMemory):
+        if isinstance(locstring.stringref, (FieldValueTLKMemory, FieldValue2DAMemory)):
             rval = f"StrRef{locstring.stringref.token_id}"
         elif isinstance(locstring.stringref, FieldValueConstant):
             rval = f"StrRef{locstring.stringref.stored}"
@@ -700,6 +700,7 @@ class ModificationsGFF(PatcherModifications):
                     GFFFieldType.Vector4: "Orientation",
                     GFFFieldType.Struct: "Struct",
                     GFFFieldType.List: "List",
+                    GFFFieldType.Binary: "Binary",
                 }
                 field_name = fieldtype_to_fieldname[modifier.field_type]
                 new_identifier = modifier.identifier.replace(".", "_") + uuid.uuid4().hex[:5]

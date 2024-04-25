@@ -231,7 +231,7 @@ class ConfigReader:
             allow_no_value=True,
             strict=False,
             interpolation=None,
-        ) 
+        )
         config_writer.optionxform = lambda optionstr: optionstr
         for gff_main_mod in self.config.patches_gff:
             reconstructed_ini_text = gff_main_mod.as_gfflist_ini(config_writer)
@@ -1127,7 +1127,12 @@ class ConfigReader:
             value = ConfigReader.normalize_tslpatcher_crlf(raw_value)
 
         elif issubclass(field_type.return_type(), int):
-            value = int(raw_value)
+            if isinstance(raw_value, str) and raw_value.startswith(("0x", "0X")):
+                # Convert from hex to int
+                value = int(raw_value, 16)
+            else:
+                # Convert from decimal string to int
+                value = int(raw_value)
 
         elif issubclass(field_type.return_type(), float):
             value = float(ConfigReader.normalize_tslpatcher_float(raw_value))
