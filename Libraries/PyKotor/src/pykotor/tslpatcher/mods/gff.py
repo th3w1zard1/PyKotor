@@ -799,11 +799,14 @@ class ModificationsGFF(PatcherModifications):
                 log.info("Sanitizing path %s --> %s", modify_path, new_modify_path)
                 modify_path = new_modify_path
             if isinstance(op, ReplaceOperation):
+                assert ">>##VALUE##<<" not in modify_path.parts
                 modifier = ModifyFieldGFF(modify_path, FieldValueConstant(field_value), identifier=f"{filename}_{field_label}")
                 log.info("Created REPLACE modifier: %s", safe_repr(modifier))
                 new_instance.modifiers.append(modifier)
             elif isinstance(op, AddOperation):
-                modifier = AddFieldGFF(f"{filename}_{field_label}", modify_path.name, gff_field.field_type(), FieldValueConstant(field_value), path=modify_path.parent)
+                new_parts = (part for part in modify_path.parts if part not in (">>##VALUE##<<", ">>##FIELDS##<<"))
+                new_modify_path = PureWindowsPath("\\".join(new_parts))
+                modifier = AddFieldGFF(f"{filename}_{field_label}", modify_path.name, gff_field.field_type(), FieldValueConstant(field_value), path=new_modify_path.parent)
                 log.info("Created ADD modifier: %s", safe_repr(modifier))
                 new_instance.modifiers.append(modifier)
             else:
