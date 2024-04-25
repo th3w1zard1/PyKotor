@@ -140,7 +140,7 @@ class PTHEditor(Editor):
 
         self.settings = GITSettings()
 
-        def intColorToQColor(num_color) -> QColor:
+        def intColorToQColor(num_color: int) -> QColor:
             color = Color.from_rgba_integer(num_color)
             return QColor(int(color.r * 255), int(color.g * 255), int(color.b * 255), int(color.a * 255))
 
@@ -485,15 +485,15 @@ class PTHControlScheme:
         )
 
         menu = QMenu(self.editor)
-        menu.addAction("Add Node").triggered.connect(lambda _: self.editor.addNode(world.x, world.y))
+        menu.addAction("Add Node").triggered.connect(lambda _=None: self.editor.addNode(world.x, world.y))
         menu.addAction("Copy XY coords").triggered.connect(lambda: pyperclip.copy(str(self.editor.stdout.mouse_pos)))
         if underMouseIndex is not None:
-            menu.addAction("Remove Node").triggered.connect(lambda _: self.editor.removeNode(underMouseIndex))
+            menu.addAction("Remove Node").triggered.connect(lambda _=None: self.editor.removeNode(underMouseIndex))
 
         menu.addSeparator()
 
         if underMouseIndex is not None and selectedIndex is not None:
-            menu.addAction("Add Edge").triggered.connect(lambda _: self.editor.addEdge(selectedIndex, underMouseIndex))
-            menu.addAction("Remove Edge").triggered.connect(lambda _: self.editor.removeEdge(selectedIndex, underMouseIndex))
+            menu.addAction("Add Edge").triggered.connect(lambda _=None: self.editor.addEdge(selectedIndex, underMouseIndex))
+            menu.addAction("Remove Edge").triggered.connect(lambda _=None: self.editor.removeEdge(selectedIndex, underMouseIndex))
 
         menu.popup(screen)

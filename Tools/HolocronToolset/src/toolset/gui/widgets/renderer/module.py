@@ -110,7 +110,12 @@ class ModuleRenderer(QOpenGLWidget):
         delay = max(0, 33 - self._renderTime)
         QTimer.singleShot(delay, self.loop)
 
-    def walkmeshPoint(self, x: float, y: float, default_z: float = 0.0) -> Vector3:
+    def walkmeshPoint(
+        self,
+        x: float,
+        y: float,
+        default_z: float = 0.0,
+    ) -> Vector3:
         """Finds the face and z-height at a point on the walkmesh.
 
         Args:
@@ -237,7 +242,7 @@ class ModuleRenderer(QOpenGLWidget):
     def moveCamera(self, forward: float, right: float, up: float):
         forward_vec: vec3 = forward * self.scene.camera.forward(ignore_z=False)
         sideward = right * self.scene.camera.sideward(ignore_z=False)
-        upward = -up * self.scene.camera.upward(ignore_z=False)
+        upward = -up * self.scene.camera.upward(ignore_xy=False)
 
         self.scene.camera.x += upward.x + sideward.x + forward_vec.x
         self.scene.camera.y += upward.y + sideward.y + forward_vec.y

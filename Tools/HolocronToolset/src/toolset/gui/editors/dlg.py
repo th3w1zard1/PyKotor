@@ -52,13 +52,18 @@ if TYPE_CHECKING:
         DLGStunt,
     )
 
-_LINK_ROLE = QtCore.Qt.UserRole + 1
-_COPY_ROLE = QtCore.Qt.UserRole + 2
+_LINK_ROLE = QtCore.Qt.ItemDataRole.UserRole + 1
+_COPY_ROLE = QtCore.Qt.ItemDataRole.UserRole + 2
 
 
 class GFFFieldSpinBox(QSpinBox):
-
-    def __init__(self, *args, min_value: int = 1200, max_value: int = 65534, **kwargs):
+    def __init__(
+        self,
+        *args,
+        min_value: int = 1200,
+        max_value: int = 65534,
+        **kwargs,
+    ):
         self._no_validate: bool = False
         super().__init__(*args, **kwargs)
         self.specialValueTextMapping: dict[int, str] = {0: "0", -1: "-1"}
@@ -94,7 +99,12 @@ class GFFFieldSpinBox(QSpinBox):
                 self.setValue(self.max_value)
 
     @classmethod
-    def from_spinbox(cls, originalSpin: QSpinBox, min_value: int = 0, max_value: int = 100) -> GFFFieldSpinBox:
+    def from_spinbox(
+        cls,
+        originalSpin: QSpinBox,
+        min_value: int = 0,
+        max_value: int = 100,
+    ) -> GFFFieldSpinBox:
         if not isinstance(originalSpin, QSpinBox):
             raise TypeError("The provided widget is not a QSpinBox.")
 
@@ -133,7 +143,11 @@ class GFFFieldSpinBox(QSpinBox):
         return customSpin
 
 class DLGEditor(Editor):
-    def __init__(self, parent: QWidget | None = None, installation: HTInstallation | None = None):
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        installation: HTInstallation | None = None,
+    ):
         """Initializes the Dialog Editor window.
 
         Args:
@@ -276,7 +290,13 @@ class DLGEditor(Editor):
 
         QShortcut("Del", self).activated.connect(self.deleteSelectedNode)
 
-    def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes):
+    def load(
+        self,
+        filepath: os.PathLike | str,
+        resref: str,
+        restype: ResourceType,
+        data: bytes,
+    ):
         """Loads a dialogue file.
 
         Args:
@@ -555,7 +575,11 @@ class DLGEditor(Editor):
                 item.setText(self._installation.string(node.text, "(continue)"))
                 self._loadLocstring(self.ui.textEdit, node.text)
 
-    def _loadLocstring(self, textbox: QPlainTextEdit, locstring: LocalizedString):
+    def _loadLocstring(
+        self,
+        textbox: QPlainTextEdit,
+        locstring: LocalizedString,
+    ):
         """Load a localized string into a text box.
 
         Args:
@@ -573,7 +597,11 @@ class DLGEditor(Editor):
             textbox.setPlainText(text)
             textbox.setStyleSheet("QPlainTextEdit {background-color: #fffded;}")
 
-    def addNode(self, item: QStandardItem | None, node: DLGNode):
+    def addNode(
+        self,
+        item: QStandardItem | None,
+        node: DLGNode,
+    ):
         """Adds a node to the dialog tree.
 
         Args:
@@ -613,7 +641,13 @@ class DLGEditor(Editor):
     def addCopyLink(self, item: QStandardItem | None, target: DLGNode, source: DLGNode):
         self._add_node_main(source, target.links, True, item)
 
-    def _add_node_main(self, source: DLGNode, target_links: list[DLGLink], _copy_role_data: bool, item: QStandardItem | QStandardItemModel | None):
+    def _add_node_main(
+        self,
+        source: DLGNode,
+        target_links: list[DLGLink],
+        _copy_role_data: bool,
+        item: QStandardItem | QStandardItemModel | None,
+    ):
         newLink = DLGLink(source)
         target_links.append(newLink)
         newItem = QStandardItem()
@@ -622,7 +656,12 @@ class DLGEditor(Editor):
         self.refreshItem(newItem)
         item.appendRow(newItem)
 
-    def addCopy(self, item: QStandardItem, target: DLGNode, source: DLGNode):
+    def addCopy(
+        self,
+        item: QStandardItem,
+        target: DLGNode,
+        source: DLGNode,
+    ):
         """Adds a copy of a node to a target node.
 
         Args:
@@ -873,7 +912,11 @@ class DLGEditor(Editor):
         self.model.appendRow(item)
         return item
 
-    def shiftItem(self, item: QStandardItem, amount: int):
+    def shiftItem(
+        self,
+        item: QStandardItem,
+        amount: int,
+    ):
         """Shifts an item in the tree by a given amount.
 
         Args:
@@ -930,7 +973,11 @@ class DLGEditor(Editor):
 
             menu.popup(self.ui.dialogTree.viewport().mapToGlobal(point))
 
-    def _set_context_menu_actions(self, item: QStandardItem, point: QPoint):
+    def _set_context_menu_actions(
+        self,
+        item: QStandardItem,
+        point: QPoint,
+    ):
         """Sets context menu actions for a dialog tree item.
 
         Args:
@@ -1091,7 +1138,7 @@ class DLGEditor(Editor):
             self.ui.questEdit.setText(node.quest)
             self.ui.questEntrySpin.setValue(node.quest_entry or 0)
 
-            self.ui.cameraIdSpin.setValue(node.camera_id if node.camera_id is not None else -1)
+            self.ui.cameraIdSpin.setValue(-1 if node.camera_id is None else node.camera_id)
             self.ui.cameraAnimSpin.__class__ = GFFFieldSpinBox
             self.ui.cameraAnimSpin.min_value=1200
             self.ui.cameraAnimSpin.max_value=65534
@@ -1099,9 +1146,9 @@ class DLGEditor(Editor):
             self.ui.cameraAnimSpin.setMinimum(-1)
             self.ui.cameraAnimSpin.setMaximum(65534)
 
-            self.ui.cameraAnimSpin.setValue(node.camera_anim if node.camera_anim is not None else -1)
-            self.ui.cameraAngleSelect.setCurrentIndex(node.camera_angle if node.camera_angle is not None else 0)
-            self.ui.cameraEffectSelect.setCurrentIndex(node.camera_effect + 1 if node.camera_effect is not None else 0)
+            self.ui.cameraAnimSpin.setValue(-1 if node.camera_anim is None else node.camera_anim)
+            self.ui.cameraAngleSelect.setCurrentIndex(0 if node.camera_angle is None else node.camera_angle)
+            self.ui.cameraEffectSelect.setCurrentIndex(0 if node.camera_effect is None else node.camera_effect + 1)
 
             self.ui.nodeUnskippableCheckbox.setChecked(node.unskippable)
             self.ui.nodeIdSpin.setValue(node.node_id)
@@ -1219,14 +1266,14 @@ class DLGEditor(Editor):
     def onRemoveStuntClicked(self):
         if self.ui.stuntList.selectedItems():
             item: QListWidgetItem = self.ui.stuntList.selectedItems()[0]
-            stunt: DLGStunt = item.data(QtCore.Qt.UserRole)
+            stunt: DLGStunt = item.data(QtCore.Qt.ItemDataRole.UserRole)
             self._dlg.stunts.remove(stunt)
             self.refreshStuntList()
 
     def onEditStuntClicked(self):
         if self.ui.stuntList.selectedItems():
             item: QListWidgetItem = self.ui.stuntList.selectedItems()[0]
-            stunt: DLGStunt = item.data(QtCore.Qt.UserRole)
+            stunt: DLGStunt = item.data(QtCore.Qt.ItemDataRole.UserRole)
             dialog = CutsceneModelDialog(self, stunt)
             if dialog.exec_():
                 stunt.stunt_model = dialog.stunt().stunt_model
@@ -1238,7 +1285,7 @@ class DLGEditor(Editor):
         for stunt in self._dlg.stunts:
             text = f"{stunt.stunt_model} ({stunt.participant})"
             item = QListWidgetItem(text)
-            item.setData(QtCore.Qt.UserRole, stunt)
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, stunt)
             self.ui.stuntList.addItem(item)
 
     def onAddAnimClicked(self):
@@ -1259,14 +1306,14 @@ class DLGEditor(Editor):
             node: DLGNode = item.data(_LINK_ROLE).node
 
             animItem: QListWidgetItem = self.ui.animsList.selectedItems()[0]
-            anim: DLGAnimation = animItem.data(QtCore.Qt.UserRole)
+            anim: DLGAnimation = animItem.data(QtCore.Qt.ItemDataRole.UserRole)
             node.animations.remove(anim)
             self.refreshAnimList()
 
     def onEditAnimClicked(self):
         if self.ui.animsList.selectedItems():
             animItem: QListWidgetItem = self.ui.animsList.selectedItems()[0]
-            anim: DLGAnimation = animItem.data(QtCore.Qt.UserRole)
+            anim: DLGAnimation = animItem.data(QtCore.Qt.ItemDataRole.UserRole)
             dialog = EditAnimationDialog(self, self._installation, anim)
             if dialog.exec_():
                 anim.animation_id = dialog.animation().animation_id
@@ -1303,5 +1350,5 @@ class DLGEditor(Editor):
                     name = animations_2da.get_cell(anim.animation_id, "name")
                 text: str = f"{name} ({anim.participant})"
                 item = QListWidgetItem(text)
-                item.setData(QtCore.Qt.UserRole, anim)
+                item.setData(QtCore.Qt.ItemDataRole.UserRole, anim)
                 self.ui.animsList.addItem(item)

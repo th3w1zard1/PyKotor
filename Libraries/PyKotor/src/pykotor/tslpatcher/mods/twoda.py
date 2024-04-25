@@ -8,6 +8,7 @@ from pykotor.resource.formats.twoda import bytes_2da, read_2da
 from pykotor.tools.path import CaseAwarePath
 from pykotor.tslpatcher.mods.template import PatcherModifications
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception
+from utility.logger_util import get_root_logger
 from utility.system.path import PureWindowsPath
 
 if TYPE_CHECKING:
@@ -33,7 +34,7 @@ class TargetType(IntEnum):
 
 
 class Target:
-    def __init__(self, target_type: TargetType, value: str | int):
+    def __init__(self, target_type: TargetType, value: str | int | RowValue2DAMemory | RowValueTLKMemory):
         self.target_type: TargetType = target_type
         self.value: str | int | RowValueTLKMemory | RowValue2DAMemory = value
 
@@ -44,7 +45,11 @@ class Target:
     def __repr__(self):
         return f"{self.__class__.__name__}(target_type={self.target_type.__class__.__name__}.{self.target_type.name}, value={self.value!r})"
 
-    def search(self, twoda: TwoDA, memory: PatcherMemory) -> TwoDARow | None:
+    def search(
+        self,
+        twoda: TwoDA,
+        memory: PatcherMemory,
+    ) -> TwoDARow | None:
         """Searches a TwoDA for a row matching the target.
 
         Args:
@@ -165,21 +170,21 @@ class RowValueHigh(RowValue):
             - If column is not None, return maximum value in that column
             - Else return overall maximum label value.
         """
-        return str(twoda.column_max(self.column)) if self.column is not None else str(twoda.label_max())
+        return str(twoda.label_max()) if self.column is None else str(twoda.column_max(self.column))
 
 
 class RowValueRowIndex(RowValue):
     def __init__(self): ...
 
     def value(self, memory: PatcherMemory, twoda: TwoDA, row: TwoDARow | None) -> str:
-        return str(twoda.row_index(row)) if row is not None else ""
+        return "" if row is None else str(twoda.row_index(row))
 
 
 class RowValueRowLabel(RowValue):
     def __init__(self): ...
 
     def value(self, memory: PatcherMemory, twoda: TwoDA, row: TwoDARow | None) -> str:
-        return row.label() if row is not None else ""
+        return "" if row is None else row.label()
 
 
 class RowValueRowCell(RowValue):
@@ -190,7 +195,7 @@ class RowValueRowCell(RowValue):
         return f"{self.__class__.__name__}(column='{self.column}')"
 
     def value(self, memory: PatcherMemory, twoda: TwoDA, row: TwoDARow | None) -> str:
-        return row.get_string(self.column) if row is not None else ""
+        return "" if row is None else row.get_string(self.column)
 
 
 # endregion
@@ -565,10 +570,11 @@ class Modifications2DA(PatcherModifications):
             except Exception as e:  # noqa: PERF203, BLE001
                 msg = f"{universal_simplify_exception(e)} when patching the file '{self.saveas}'"
                 detailed_msg = format_exception_with_variables(e)
-                with CaseAwarePath.cwd().joinpath("errorlog.txt").open("a") as f:
+                with CaseAwarePath.cwd().joinpath("errorlog.txt").open("a", encoding="utf-8") as f:
                     f.write(f"\n{detailed_msg}")
                 if isinstance(e, WarningError):
                     logger.add_warning(msg)
+                    get_root_logger().debug(msg, exc_info=True)
                 else:
                     logger.add_error(msg)
                     break

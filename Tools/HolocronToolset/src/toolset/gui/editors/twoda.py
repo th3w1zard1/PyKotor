@@ -18,6 +18,7 @@ from utility.error_handling import assert_with_variable_trace, universal_simplif
 if TYPE_CHECKING:
     import os
 
+    from qtpy.QtCore import QModelIndex, QPersistentModelIndex
     from qtpy.QtWidgets import QWidget
 
     from toolset.data.installation import HTInstallation
@@ -140,7 +141,7 @@ class TwoDAEditor(Editor):
             self._load_main(data)
         except ValueError as e:
             error_msg = str(universal_simplify_exception(e)).replace("\n", "<br>")
-            QMessageBox(QMessageBox.Critical, "Failed to load file.", f"Failed to open or load file data.<br>{error_msg}").exec_()
+            QMessageBox(QMessageBox.Icon.Critical, "Failed to load file.", f"Failed to open or load file data.<br>{error_msg}").exec_()
             self.proxyModel.setSourceModel(self.model)
             self.new()
 
@@ -199,7 +200,7 @@ class TwoDAEditor(Editor):
 
         for header in headers[1:]:
             action = QAction(header, self)
-            action.triggered.connect(lambda _, header=header: self.setVerticalHeaderOption(VerticalHeaderOption.CELL_VALUE, header))
+            action.triggered.connect(lambda _=None, header=header: self.setVerticalHeaderOption(VerticalHeaderOption.CELL_VALUE, header))
             self.ui.menuSetRowHeader.addAction(action)
         # endregion
 
@@ -462,8 +463,8 @@ class SortFilterProxyModel(QSortFilterProxyModel):
 
     def filterAcceptsRow(
         self,
-        sourceRow,
-        sourceParent,
+        sourceRow: int,
+        sourceParent: QModelIndex | QPersistentModelIndex,
     ) -> bool:
         """Filters rows based on regular expression pattern match.
 

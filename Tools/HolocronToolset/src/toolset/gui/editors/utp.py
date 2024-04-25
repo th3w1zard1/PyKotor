@@ -340,14 +340,14 @@ class UTPEditor(Editor):
         data, filepath = None, None
 
         if resname == "":
-            QMessageBox(QMessageBox.Critical, "Failed to open DLG Editor", "Conversation field cannot be blank.").exec_()
+            QMessageBox(QMessageBox.Icon.Critical, "Failed to open DLG Editor", "Conversation field cannot be blank.").exec_()
             return
 
         search: ResourceResult | None = self._installation.resource(resname, ResourceType.DLG)
 
         if search is None:
-            msgbox: int = QMessageBox(QMessageBox.Information, "DLG file not found", "Do you wish to create a file in the override?", QMessageBox.Yes | QMessageBox.No).exec_()
-            if QMessageBox.Yes == msgbox:
+            msgbox: int = QMessageBox(QMessageBox.Icon.Information, "DLG file not found", "Do you wish to create a file in the override?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No).exec_()
+            if QMessageBox.StandardButton.Yes == msgbox:
                 data = bytearray()
 
                 write_gff(dismantle_dlg(DLG()), data)

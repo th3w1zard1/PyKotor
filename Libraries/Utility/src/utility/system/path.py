@@ -50,6 +50,7 @@ class PurePathType(type):
 
 class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
     # pylint: disable-all
+    @lru_cache(maxsize=10000)
     def __new__(cls, *args, **kwargs) -> Self:
         if cls is PurePath:
             cls = PureWindowsPath if os.name == "nt" else PurePosixPath
@@ -365,7 +366,12 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
         self: PurePath = self  # type: ignore[] # noqa: PLW0127
         return self.with_name(stem + self.suffix)  # type: ignore[return-value]
 
-    def endswith(self, text: str | tuple[str, ...], *, case_sensitive: bool = False) -> bool:  # type: ignore[override]
+    def endswith(
+        self,
+        text: str | tuple[str, ...],
+        *,
+        case_sensitive: bool = False,
+    ) -> bool:  # type: ignore[override]
         """Checks if string ends with the specified str or tuple of strings.
 
         Args:
@@ -713,7 +719,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                 script_path_str = str(script_path)
 
                 # Write the commands to a batch file
-                with script_path.open("w") as file:
+                with script_path.open("w", encoding="utf-8") as file:
                     for command in cmd:
                         file.write(command + "\n")
                     if pause_after_command and not hide_window:
@@ -877,8 +883,8 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
         ) -> int:
             """Similar to get_highest_permission but will not take runtime elevation (e.g. sudo) into account."""
             # Retrieve the current user's UID and GID
-            current_uid = uid if uid is not None else os.getuid()
-            current_gid = gid if gid is not None else os.getgid()
+            current_uid = os.getuid() if uid is None else uid
+            current_gid = os.getuid() if gid is None else gid
 
 
 class PosixPath(Path):  # type: ignore[misc]

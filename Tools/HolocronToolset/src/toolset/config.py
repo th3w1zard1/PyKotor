@@ -15,13 +15,13 @@ from utility.error_handling import universal_simplify_exception
 
 LOCAL_PROGRAM_INFO: dict[str, Any] = {
     # <---JSON_START--->#{
-    "currentVersion": "2.2.1b22",
+    "currentVersion": "3.0.0b1",
     "toolsetLatestVersion": "2.1.2",
-    "toolsetLatestBetaVersion": "2.2.1b22",
+    "toolsetLatestBetaVersion": "3.0.0b1",
     "updateInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HolocronToolset/src/toolset/config.py",
     "updateBetaInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HolocronToolset/src/toolset/config.py?ref=bleeding-edge",
     "toolsetDownloadLink": "https://deadlystream.com/files/file/1982-holocron-toolset",
-    "toolsetBetaDownloadLink": "https://github.com/NickHugi/PyKotor/releases/tag/v2.2.1-toolset-beta22",
+    "toolsetBetaDownloadLink": "https://github.com/NickHugi/PyKotor/releases/tag/v3.0.0b1-toolset",
     "toolsetDirectLinks": {
         "Darwin": {
             "32bit": [],
@@ -51,7 +51,7 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
         }
     },
     "toolsetLatestNotes": "Fixed major bug that was causing most editors to load data incorrectly.",
-    "toolsetLatestBetaNotes": "Performance improvements, bugfixes, and a dialog to upgrade/downgrade your toolset installation straight from github.",
+    "toolsetLatestBetaNotes": "Bug fixes and performance improvements, you know the drill<br>Update when you're able.:)<br><br>- Fixed a bug preventing 'Edit Instance' and/or 'Edit Resource' from being used in the module designer.<br>- Improve toolset startup times by at least 50 percent faster.<br> - Swap to `master` branch for toolset prereleases of v3",
     "kits": {
         "Black Vulkar Base": {"version": 1, "id": "blackvulkar"},
         "Endar Spire": {"version": 1, "id": "endarspire"},
@@ -62,7 +62,11 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
 CURRENT_VERSION = LOCAL_PROGRAM_INFO["currentVersion"]
 
 
-def getRemoteToolsetUpdateInfo(*, useBetaChannel: bool = False, silent: bool = False) -> Exception | dict[str, Any]:
+def getRemoteToolsetUpdateInfo(
+    *,
+    useBetaChannel: bool = False,
+    silent: bool = False,
+) -> Exception | dict[str, Any]:
     if useBetaChannel:
         UPDATE_INFO_LINK = LOCAL_PROGRAM_INFO["updateBetaInfoLink"]
     else:
@@ -98,10 +102,10 @@ def getRemoteToolsetUpdateInfo(*, useBetaChannel: bool = False, silent: bool = F
                 + "<br><br>"
                 + "Would you like to check against the local database instead?"
             ),
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.Yes,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
         )
-        if result not in {QMessageBox.Yes, True}:
+        if result not in {QMessageBox.StandardButton.Yes, True}:
             return e
         remoteInfo = LOCAL_PROGRAM_INFO
     return remoteInfo

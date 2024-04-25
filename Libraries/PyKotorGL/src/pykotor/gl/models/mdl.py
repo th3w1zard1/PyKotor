@@ -36,7 +36,13 @@ class Model:
         self._scene: Scene = scene
         self.root: Node = root
 
-    def draw(self, shader: Shader, transform: mat4, *, override_texture: str | None = None):
+    def draw(
+        self,
+        shader: Shader,
+        transform: mat4,
+        *,
+        override_texture: str | None = None,
+    ):
         self.root.draw(shader, transform, override_texture)
 
     def find(self, name: str) -> Node | None:
@@ -88,7 +94,13 @@ class Model:
 
         return min_point, max_point
 
-    def _box_rec(self, node: Node, transform: mat4, min_point: vec3, max_point: vec3):
+    def _box_rec(
+        self,
+        node: Node,
+        transform: mat4,
+        min_point: vec3,
+        max_point: vec3,
+    ):
         """Calculates bounding box of node and its children recursively.
 
         Call the 'box' function to get started here, don't call this directly.
@@ -129,7 +141,12 @@ class Model:
 
 
 class Node:
-    def __init__(self, scene: Scene, parent: Node | None, name: str):
+    def __init__(
+        self,
+        scene: Scene,
+        parent: Node | None,
+        name: str,
+    ):
         self._scene: Scene = scene
         self._parent: Node | None = parent
         self.name: str = name
@@ -200,11 +217,21 @@ class Node:
     def rotation(self) -> quat:
         return copy(self._rotation)
 
-    def set_rotation(self, pitch: float, yaw: float, roll: float):
+    def set_rotation(
+        self,
+        pitch: float,
+        yaw: float,
+        roll: float,
+    ):
         self._rotation = quat(vec3(pitch, yaw, roll))
         self._recalc_transform()
 
-    def draw(self, shader: Shader, transform: mat4, override_texture: str | None = None):
+    def draw(
+        self,
+        shader: Shader,
+        transform: mat4,
+        override_texture: str | None = None,
+    ):
         transform = transform * self._transform
 
         if self.mesh and self.render:
@@ -215,7 +242,21 @@ class Node:
 
 
 class Mesh:
-    def __init__(self, scene, node, texture, lightmap, vertex_data, element_data, block_size, data_bitflags, vertex_offset, normal_offset, texture_offset, lightmap_offset):
+    def __init__(
+        self,
+        scene: Scene,
+        node: Node,
+        texture: str,
+        lightmap: str,
+        vertex_data: bytearray,
+        element_data: bytearray,
+        block_size: int,
+        data_bitflags: int,
+        vertex_offset: int,
+        normal_offset: int,
+        texture_offset: int,
+        lightmap_offset: int,
+    ):
         """Initializes a Mesh object.
 
         Args:
@@ -224,8 +265,8 @@ class Mesh:
             node: Node - The node object
             texture: str - The texture path
             lightmap: str - The lightmap path
-            vertex_data: list - The vertex data
-            element_data: list - The element data
+            vertex_data: bytearray - The vertex data
+            element_data: bytearray - The element data
             block_size: int - The block size
             data_bitflags: int - The data bitflags
             vertex_offset: int - The vertex offset
@@ -297,7 +338,7 @@ class Mesh:
         self._scene.texture(override_texture or self.texture).use()
 
         glActiveTexture(GL_TEXTURE1)
-        self._scene.texture(self.lightmap).use()
+        self._scene.texture(self.lightmap, lightmap=True).use()
 
         glBindVertexArray(self._vao)
         glDrawElements(GL_TRIANGLES, self._face_count, GL_UNSIGNED_SHORT, None)
@@ -377,7 +418,11 @@ class Cube:
 
 
 class Boundary:
-    def __init__(self, scene: Scene, vertices: list[Vector3]):
+    def __init__(
+        self,
+        scene: Scene,
+        vertices: list[Vector3],
+    ):
         """Initializes a mesh from vertices.
 
         Args:
@@ -416,7 +461,12 @@ class Boundary:
         glBindVertexArray(0)
 
     @classmethod
-    def from_circle(cls, scene: Scene, radius: float, smoothness: int = 10) -> Boundary:
+    def from_circle(
+        cls,
+        scene: Scene,
+        radius: float,
+        smoothness: int = 10,
+    ) -> Boundary:
         """Generates a circular boundary from a circle.
 
         Args:

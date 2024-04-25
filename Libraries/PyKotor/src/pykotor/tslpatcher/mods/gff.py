@@ -180,7 +180,7 @@ class FieldValueTLKMemory(FieldValue):
     def __init__(self, token_id: int):
         self.token_id: int = token_id
 
-    def value(self, memory: PatcherMemory, field_type: GFFFieldType):  # noqa: ANN201
+    def value(self, memory: PatcherMemory, field_type: GFFFieldType,):  # noqa: ANN201
         memory_val: int | None = memory.memory_str.get(self.token_id, None)
         if memory_val is None:
             msg = f"StrRef{self.token_id} was not defined before use!"
@@ -564,7 +564,7 @@ class ModificationsGFF(PatcherModifications):
         modifiers: list[ModifyGFF] | None = None,
     ):
         super().__init__(filename, replace)
-        self.modifiers: list[ModifyGFF] = modifiers if modifiers is not None else []
+        self.modifiers: list[ModifyGFF] = [] if modifiers is None else modifiers
 
     def _handle_addfield_value(
         self,

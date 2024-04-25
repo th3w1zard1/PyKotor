@@ -36,7 +36,7 @@ class UTDEditor(Editor):
         parent: QWidget | None,
         installation: HTInstallation | None = None,
         *,
-        mainwindow: QWidget | QObject | None = None,
+        mainWindow: QWidget | QObject | None = None,
     ):
         """Initialize the Door Editor.
 
@@ -60,7 +60,7 @@ class UTDEditor(Editor):
             7. Update 3D preview and call new() to initialize editor.
         """
         supported: list[ResourceType] = [ResourceType.UTD]
-        super().__init__(parent, "Door Editor", "door", supported, supported, installation, mainwindow)
+        super().__init__(parent, "Door Editor", "door", supported, supported, installation, mainWindow)
 
         self.globalSettings: GlobalSettings = GlobalSettings()
         self._genericdoors2DA: TwoDA = installation.htGetCache2DA("genericdoors")
@@ -317,14 +317,14 @@ class UTDEditor(Editor):
         data, filepath = None, None
 
         if not resname or not resname.strip():
-            QMessageBox(QMessageBox.Critical, "Failed to open DLG Editor", "Conversation field cannot be blank.").exec_()
+            QMessageBox(QMessageBox.Icon.Critical, "Failed to open DLG Editor", "Conversation field cannot be blank.").exec_()
             return
 
         search = self._installation.resource(resname, ResourceType.DLG)
 
         if search is None:
-            msgbox = QMessageBox(QMessageBox.Information, "DLG file not found", "Do you wish to create a file in the override?", QMessageBox.Yes | QMessageBox.No).exec_()
-            if QMessageBox.Yes == msgbox:
+            msgbox = QMessageBox(QMessageBox.Icon.Information, "DLG file not found", "Do you wish to create a file in the override?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No).exec_()
+            if QMessageBox.StandardButton.Yes == msgbox:
                 data = bytearray()
 
                 write_gff(dismantle_dlg(DLG()), data)
