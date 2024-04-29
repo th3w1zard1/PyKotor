@@ -22,9 +22,6 @@ from tkinter import (
 )
 from typing import TYPE_CHECKING, Any
 
-from pykotor.common.misc import ResRef
-from utility.error_handling import format_exception_with_variables, universal_simplify_exception
-
 if getattr(sys, "frozen", False) is False:
 
     def add_sys_path(path: pathlib.Path):
@@ -33,23 +30,24 @@ if getattr(sys, "frozen", False) is False:
             sys.path.append(working_dir)
 
     absolute_file_path = pathlib.Path(__file__).resolve()
-    pykotor_font_path = absolute_file_path.parents[3] / "Libraries" / "PyKotorFont" / "src" / "pykotor"
+    pykotor_font_path = absolute_file_path.parents[4] / "Libraries" / "PyKotorFont" / "src" / "pykotor"
     if pykotor_font_path.is_dir():
         add_sys_path(pykotor_font_path.parent)
-    pykotor_path = absolute_file_path.parents[3] / "Libraries" / "PyKotor" / "src" / "pykotor"
+    pykotor_path = absolute_file_path.parents[4] / "Libraries" / "PyKotor" / "src" / "pykotor"
     if pykotor_path.is_dir():
         add_sys_path(pykotor_path.parent)
-    utility_path = absolute_file_path.parents[3] / "Libraries" / "Utility" / "src" / "utility"
+    utility_path = absolute_file_path.parents[4] / "Libraries" / "Utility" / "src" / "utility"
     if utility_path.is_dir():
         add_sys_path(utility_path.parent)
 
 
 from batchpatcher.translate.language_translator import TranslationOption, Translator
 from pykotor.common.language import Language, LocalizedString
+from pykotor.common.misc import Game, ResRef
 from pykotor.common.stream import BinaryReader, BinaryWriter
 from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import FileResource, ResourceIdentifier
-from pykotor.extract.installation import Installation
+from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.font.draw import write_bitmap_fonts
 from pykotor.resource.formats.erf.erf_auto import write_erf
 from pykotor.resource.formats.erf.erf_data import ERF, ERFType
@@ -61,11 +59,27 @@ from pykotor.resource.formats.tlk import read_tlk, write_tlk
 from pykotor.resource.formats.tpc.io_tga import TPCTGAReader, TPCTGAWriter
 from pykotor.resource.formats.tpc.tpc_auto import bytes_tpc
 from pykotor.resource.formats.tpc.tpc_data import TPC
+from pykotor.resource.generics.are import read_are, write_are
+from pykotor.resource.generics.dlg import read_dlg, write_dlg
+from pykotor.resource.generics.git import read_git, write_git
+from pykotor.resource.generics.jrl import read_jrl, write_jrl
+from pykotor.resource.generics.pth import read_pth, write_pth
+from pykotor.resource.generics.utc import read_utc, write_utc
+from pykotor.resource.generics.utd import read_utd, write_utd
+from pykotor.resource.generics.ute import read_ute, write_ute
+from pykotor.resource.generics.uti import read_uti, write_uti
+from pykotor.resource.generics.utm import read_utm, write_utm
+from pykotor.resource.generics.utp import read_utp, write_utp
+from pykotor.resource.generics.uts import read_uts, write_uts
+from pykotor.resource.generics.utt import read_utt, write_utt
+from pykotor.resource.generics.utw import read_utw, write_utw
 from pykotor.resource.type import ResourceType
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from pykotor.tools.misc import is_any_erf_type_file, is_capsule_file
+from pykotor.tools.model import list_lightmaps, list_textures
 from pykotor.tools.path import CaseAwarePath, find_kotor_paths_from_default
 from pykotor.tslpatcher.logger import LogType, PatchLog, PatchLogger
+from utility.error_handling import format_exception_with_variables, universal_simplify_exception
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
@@ -406,7 +420,10 @@ class Globals:
     def __init__(self):
         self.chosen_languages: list[Language] = []
         self.create_fonts: bool = False
+        self.check_textures: bool = False
         self.convert_tga: bool = False
+        self.k1_convert_gffs: bool = False
+        self.tsl_convert_gffs: bool = False
         self.custom_scaling: float = 1.0
         self.draw_bounds: bool = False
         self.fix_dialog_skipping: bool = False
@@ -415,7 +432,6 @@ class Globals:
         self.install_running: bool = False
         self.install_thread: Thread
         self.max_threads: int = 2
-        self.output_log = "log_batch_patcher.log"
         self.patchlogger = PatchLogger()
         self.path: Path
         self.pytranslator: Translator = Translator(Language.ENGLISH)
@@ -431,6 +447,16 @@ class Globals:
     def __getitem__(self, key):
         # Equivalent to getting an attribute, returns None if not found
         return self.__dict__.get(key, None)
+
+    def is_patching(self):
+        return (
+            self.translate
+            or self.set_unskippable
+            or self.convert_tga
+            or self.fix_dialog_skipping
+            or self.k1_convert_gffs
+            or self.tsl_convert_gffs
+        )
 
 
 SCRIPT_GLOBALS = Globals()
@@ -505,8 +531,8 @@ def log_output(*args, **kwargs):
     msg: str = buffer.getvalue()
 
     # Write the captured output to the file
-    with Path("log_batch_patcher.log").open("a", encoding="utf-8", errors="ignore") as f:
-        f.write(msg)
+    #with Path("log_batch_patcher.log").open("a", encoding="utf-8", errors="ignore") as f:
+    #    f.write(msg)
 
     # Print the captured output to console
     # print(*args, **kwargs)
@@ -619,6 +645,76 @@ def recurse_through_list(
 def fix_encoding(text: str, encoding: str) -> str:
     return text.encode(encoding=encoding, errors="ignore").decode(encoding=encoding, errors="ignore").strip()
 
+def convert_gff_game(
+    from_game: Game,
+    resource: FileResource,
+):
+    to_game = Game.K2 if from_game.is_k1() else Game.K1
+    converted_filepath: Path = resource.filepath().with_name(f"{resource.resname()}_{to_game.name!s}.{resource.restype()!s}")
+    log_output(f"Converting {resource._path_ident_obj.parent}/{resource._path_ident_obj.name} to {to_game.name} and saving as {converted_filepath.name}")
+    generic: Any
+
+    if resource.restype() == ResourceType.ARE:
+        generic = read_are(resource.data(), offset=0, size=resource.size())
+        write_are(generic, converted_filepath, to_game)
+
+    elif resource.restype() == ResourceType.DLG:
+        generic = read_dlg(resource.data(), offset=0, size=resource.size())
+        write_dlg(generic, converted_filepath, to_game)
+
+    elif resource.restype() == ResourceType.GIT:
+        generic = read_git(resource.data(), offset=0, size=resource.size())
+        write_git(generic, converted_filepath, to_game)
+
+    elif resource.restype() == ResourceType.JRL:
+        generic = read_jrl(resource.data(), offset=0, size=resource.size())
+        write_jrl(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.PTH:
+        generic = read_pth(resource.data(), offset=0, size=resource.size())
+        write_pth(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.UTC:
+        generic = read_utc(resource.data(), offset=0, size=resource.size())
+        write_utc(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.UTD:
+        generic = read_utd(resource.data(), offset=0, size=resource.size())
+        write_utd(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.UTE:
+        generic = read_ute(resource.data(), offset=0, size=resource.size())
+        write_ute(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.UTI:
+        generic = read_uti(resource.data(), offset=0, size=resource.size())
+        write_uti(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.UTM:
+        generic = read_utm(resource.data(), offset=0, size=resource.size())
+        write_utm(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.UTP:
+        generic = read_utp(resource.data(), offset=0, size=resource.size())
+        write_utp(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.UTS:
+        generic = read_uts(resource.data(), offset=0, size=resource.size())
+        write_uts(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.UTT:
+        generic = read_utt(resource.data(), offset=0, size=resource.size())
+        write_utt(generic, converted_filepath, game=to_game)
+
+    elif resource.restype() == ResourceType.UTW:
+        generic = read_utw(resource.data(), offset=0, size=resource.size())
+        write_utw(generic, converted_filepath, game=to_game)
+
+    else:
+        log_output(
+            f"Unsupported gff: {resource.identifier()}"
+        )
+
 
 def patch_resource(resource: FileResource) -> GFF | TPC | None:
     def translate_entry(tlkentry: TLKEntry, from_lang: Language) -> tuple[str, str]:
@@ -679,6 +775,10 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
         return TPCTGAReader(resource.data()).load()
 
     if resource.restype().name.upper() in {x.name for x in GFFContent}:
+        if SCRIPT_GLOBALS.k1_convert_gffs:
+            convert_gff_game(Game.K2, resource)
+        if SCRIPT_GLOBALS.tsl_convert_gffs:
+            convert_gff_game(Game.K1, resource)
         gff: GFF | None = None
         try:
             # log_output(f"Loading {resource.resname()}.{resource.restype().extension} from '{resource.filepath().name}'")
@@ -697,20 +797,18 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
                 resource._path_ident_obj,  # noqa: SLF001
             )
             made_change: bool = False
-            if alien_vo_count < 3 and alien_owner in {0, "0", None} and alien_vo_count != -1 and SCRIPT_GLOBALS.set_unskippable and gff.content == GFFContent.DLG:
+            if (
+                SCRIPT_GLOBALS.set_unskippable
+                and alien_owner in {0, "0", None}
+                and alien_vo_count != -1
+                and alien_vo_count < 3
+                and gff.content == GFFContent.DLG
+            ):
                 skippable = gff.root.acquire("Skippable", None)
                 if skippable not in {0, "0"}:
                     conversationtype = gff.root.acquire("ConversationType", None)
                     if conversationtype not in {"1", 1}:
-                        log_output(
-                            "Skippable",
-                            skippable,
-                            "alien_vo_count",
-                            alien_vo_count,
-                            "ConversationType",
-                            conversationtype,
-                            f"Setting dialog as unskippable in {resource._path_ident_obj}",
-                        )
+                        log_output("Skippable", skippable, "alien_vo_count", alien_vo_count, "ConversationType", conversationtype, f"Setting dialog as unskippable in {resource._path_ident_obj}")
                         made_change = True
                         gff.root.set_uint8("Skippable", 0)
             if made_change or result_made_change:
@@ -787,40 +885,44 @@ def patch_capsule_file(c_file: Path):
     new_resources: list[tuple[str, ResourceType, bytes]] = []
     omitted_resources: list[ResourceIdentifier] = []
     for resource in file_capsule:
-        patched_data: GFF | TPC | None = patch_resource(resource)
-        if isinstance(patched_data, GFF):
-            new_data = bytes_gff(patched_data) if patched_data else resource.data()
-            log_output(f"Adding patched GFF resource '{resource.identifier()}' to capsule {new_filepath.name}")
-            new_resources.append((resource.resname(), resource.restype(), new_data))
-            omitted_resources.append(resource.identifier())
+        if SCRIPT_GLOBALS.is_patching():
+            patched_data: GFF | TPC | None = patch_resource(resource)
+            if isinstance(patched_data, GFF):
+                new_data = bytes_gff(patched_data) if patched_data else resource.data()
+                log_output(f"Adding patched GFF resource '{resource.identifier()}' to capsule {new_filepath.name}")
+                new_resources.append((resource.resname(), resource.restype(), new_data))
+                omitted_resources.append(resource.identifier())
 
-        elif isinstance(patched_data, TPC):
-            txi_resource = file_capsule.resource(resource.resname(), ResourceType.TXI)
-            if txi_resource is not None:
-                patched_data.txi = txi_resource.decode("ascii", errors="ignore")
-                omitted_resources.append(ResourceIdentifier(resource.resname(), ResourceType.TXI))
+            elif isinstance(patched_data, TPC):
+                txi_resource = file_capsule.resource(resource.resname(), ResourceType.TXI)
+                if txi_resource is not None:
+                    patched_data.txi = txi_resource.decode("ascii", errors="ignore")
+                    omitted_resources.append(ResourceIdentifier(resource.resname(), ResourceType.TXI))
 
-            new_data = bytes_tpc(patched_data)
-            log_output(f"Adding patched TPC resource '{resource.identifier()}' to capsule {new_filepath.name}")
-            new_resources.append((resource.resname(), ResourceType.TPC, new_data))
-            omitted_resources.append(resource.identifier())
+                new_data = bytes_tpc(patched_data)
+                log_output(f"Adding patched TPC resource '{resource.identifier()}' to capsule {new_filepath.name}")
+                new_resources.append((resource.resname(), ResourceType.TPC, new_data))
+                omitted_resources.append(resource.identifier())
+        elif SCRIPT_GLOBALS.check_textures:
+            check_model(resource, None)
 
-    erf_or_rim: ERF | RIM = (
-        ERF(ERFType.from_extension(new_filepath))
-        if is_any_erf_type_file(c_file)
-        else RIM()
-    )
-    for resource in file_capsule:
-        if resource.identifier() not in omitted_resources:
-            erf_or_rim.set_data(resource.resname(), resource.restype(), resource.data())
-    for resinfo in new_resources:
-        erf_or_rim.set_data(*resinfo)
+    if SCRIPT_GLOBALS.is_patching():
+        erf_or_rim: ERF | RIM = (
+            ERF(ERFType.from_extension(new_filepath))
+            if is_any_erf_type_file(c_file)
+            else RIM()
+        )
+        for resource in file_capsule:
+            if resource.identifier() not in omitted_resources:
+                erf_or_rim.set_data(resource.resname(), resource.restype(), resource.data())
+        for resinfo in new_resources:
+            erf_or_rim.set_data(*resinfo)
 
-    log_output(f"Saving back to {new_filepath.name}")
-    if is_any_erf_type_file(c_file):
-        write_erf(erf_or_rim, new_filepath)  # type: ignore[arg-type, reportArgumentType]
-    else:
-        write_rim(erf_or_rim, new_filepath)  # type: ignore[arg-type, reportArgumentType]
+        log_output(f"Saving back to {new_filepath.name}")
+        if is_any_erf_type_file(c_file):
+            write_erf(erf_or_rim, new_filepath)  # type: ignore[arg-type, reportArgumentType]
+        else:
+            write_rim(erf_or_rim, new_filepath)  # type: ignore[arg-type, reportArgumentType]
 
 
 def patch_erf_or_rim(
@@ -844,7 +946,11 @@ def patch_erf_or_rim(
         elif isinstance(patched_data, TPC):
             log_output(f"Adding patched TPC resource '{resource.resname()}' to {new_filename}")
             txi_resource: FileResource | None = next(
-                (res for res in resources if res.resname() == resource.resname() and res.restype() == ResourceType.TXI),
+                (
+                    res
+                    for res in resources
+                    if res.resname() == resource.resname() and res.restype() == ResourceType.TXI
+                ),
                 None,
             )
             if txi_resource:
@@ -873,15 +979,20 @@ def patch_file(file: os.PathLike | str):
         if restype == ResourceType.INVALID:
             return
 
-        patch_and_save_noncapsule(
-            FileResource(
-                resname,
-                restype,
-                c_file.stat().st_size,
-                0,
-                c_file,
-            ),
+        fileres = FileResource(
+            resname,
+            restype,
+            c_file.stat().st_size,
+            0,
+            c_file,
         )
+        if SCRIPT_GLOBALS.is_patching():
+            patch_and_save_noncapsule(fileres)
+        if (
+            SCRIPT_GLOBALS.check_textures
+            and fileres.restype().extension.lower() in ("mdl")  # TODO(th3w1zard1): determine if we need to check mdx?
+        ):
+            check_model(fileres, None)
 
 
 def patch_folder(folder_path: os.PathLike | str):
@@ -890,6 +1001,175 @@ def patch_folder(folder_path: os.PathLike | str):
     for file_path in c_folderpath.safe_rglob("*"):
         patch_file(file_path)
 
+def check_model(
+    model_resource: FileResource,
+    k_install: Installation | None,
+):
+    if model_resource._path_ident_obj.parent.safe_isdir():
+        #log_output(f"Will include override for model {resource._path_ident_obj}")
+        order = [
+            SearchLocation.OVERRIDE,
+            SearchLocation.TEXTURES_TPC,
+            SearchLocation.TEXTURES_GUI,
+            SearchLocation.CHITIN,
+        ]
+    else:
+        order = [
+            SearchLocation.TEXTURES_TPC,
+            SearchLocation.TEXTURES_GUI,
+            SearchLocation.CHITIN,
+        ]
+    try:
+        texture_names = list_textures(model_resource.data())
+    except Exception as e:
+        log_output(f"Error listing textures in '{model_resource._path_ident_obj}': {e}")
+        return
+    else:
+        if texture_names:
+            mdl_tex_outpath = _write_all_found_in_mdl(
+                texture_names,
+                " textures found in model '",
+                model_resource,
+                "out_model_textures",
+            )
+            # Find missing textures
+            if k_install is not None:
+                mdl_missing_tex_outpath = mdl_tex_outpath.parent.joinpath("missing", mdl_tex_outpath.name)
+                mdl_missing_tex_outpath.parent.mkdir(exist_ok=True)
+                missing_writer = mdl_missing_tex_outpath.open("a", encoding="utf-8")
+                found_missing_texture = False
+                try:
+                    for texture in texture_names:
+                        if texture == "dirt":
+                            continue
+                        texture_tga = ResourceIdentifier(texture, ResourceType.TGA)
+                        texture_tpc = ResourceIdentifier(texture, ResourceType.TPC)
+                        resource_results = k_install.locations([texture_tga, texture_tpc], order)
+                        #if resource_results.get(texture_tga):
+                            #log_output(f"Found texture '{texture_tga}' in the following locations:")
+                            #for location_list in resource_results.values():
+                            #    for location in location_list:
+                            #        log_output(f"    {location.filepath}")
+                        #if resource_results.get(texture_tpc):
+                            #log_output(f"Found texture '{texture_tpc}' in the following locations:")
+                            #for location_list in resource_results.values():
+                            #    for location in location_list:
+                            #        log_output(f"    {location.filepath}")
+                        if not resource_results.get(texture_tga) and not resource_results.get(texture_tpc):
+                            for layout_resource in k_install.chitin_resources():
+                                if layout_resource.restype() is not ResourceType.LYT:
+                                    continue
+                                lyt_content = layout_resource.data().decode(encoding="ascii", errors="ignore")
+                                if model_resource.resname().lower() in lyt_content.lower():
+                                    log_output(f"{model_resource.resname()}: Missing texture for model {model_resource.filename()}: '{texture}' (found in {layout_resource.filepath()}/{layout_resource.filename()})")
+                                    needed_module = f"{layout_resource.resname()}.rim"
+                                    log_output_with_separator(f"Missing texture is needed by Modules/{needed_module}")
+                                    missing_writer.write(f"Module={layout_resource.resname()}, Texture={texture}\n, Layout={layout_resource.filename()}, Path={layout_resource.filepath()}")
+                                    found_missing_texture = True
+                                    break
+                            if not found_missing_texture:
+                                for capsule_name, resources in k_install._modules.items():
+                                    if not capsule_name.lower().endswith(".mod"):
+                                        continue
+                                    for capsule_resource in resources:
+                                        if capsule_resource.restype() is not ResourceType.LYT:
+                                            continue
+                                        lyt_content = capsule_resource.data().decode(encoding="ascii", errors="ignore")
+                                        if model_resource.resname().lower() in lyt_content.lower():
+                                            log_output(f"{model_resource.resname()}: Missing texture: '{texture}'")
+                                            log_output_with_separator(f"missing texture is needed by Modules/{capsule_name}/{capsule_resource.filename()}")
+                                            missing_writer.write(f"Module={k_install.module_name(capsule_name)}, Texture={texture}\n")
+                                            found_missing_texture = True
+                                            break
+                finally:
+                    missing_writer.close()
+                    if not found_missing_texture:
+                        mdl_missing_tex_outpath.unlink(missing_ok=True)
+
+    try:
+        lightmap_names = list_lightmaps(model_resource.data())
+    except Exception as e:
+        log_output(f"Error listing lightmaps in '{model_resource._path_ident_obj}': {e}")
+        return
+    else:
+        if lightmap_names:
+            mdl_lmp_outpath = _write_all_found_in_mdl(
+                lightmap_names,
+                " lightmaps found in model '",
+                model_resource,
+                "out_model_lightmaps",
+            )
+            # Find missing lightmaps
+            if k_install is not None:
+                mdl_missing_lmp_outpath = mdl_lmp_outpath.parent.joinpath("missing", mdl_lmp_outpath.name)
+                mdl_missing_lmp_outpath.parent.mkdir(exist_ok=True)
+                missing_writer = mdl_missing_lmp_outpath.open("a", encoding="utf-8")
+                found_missing_lightmap = False
+                try:
+                    for lightmap in lightmap_names:
+                        lightmap_tga = ResourceIdentifier(lightmap, ResourceType.TGA)
+                        lightmap_tpc = ResourceIdentifier(lightmap, ResourceType.TPC)
+                        resource_results = k_install.locations([lightmap_tga, lightmap_tpc], order)
+                        #if resource_results.get(lightmap_tga):
+                            #log_output(f"Found lightmap '{lightmap_tga}' in the following locations:")
+                            #for location_list in resource_results.values():
+                                #for location in location_list:
+                                    #log_output(f"    {location.filepath}")
+                        #if resource_results.get(lightmap_tpc):
+                            #log_output(f"Found lightmap '{lightmap_tpc}' in the following locations:")
+                            #for location_list in resource_results.values():
+                                #for location in location_list:
+                                    #log_output(f"    {location.filepath}")
+                        if not resource_results.get(lightmap_tga) and not resource_results.get(lightmap_tpc):
+                            for layout_resource in k_install.chitin_resources():
+                                if layout_resource.restype() is not ResourceType.LYT:
+                                    continue
+                                lyt_content = layout_resource.data().decode(encoding="ascii", errors="ignore")
+                                if model_resource.resname().lower() in lyt_content.lower():
+                                    log_output(f"{model_resource.resname()}: Missing lightmap for model {model_resource.filename()}: '{lightmap}' (found in {layout_resource.filepath()}/{layout_resource.filename()})")
+                                    needed_module = f"{layout_resource.resname()}.rim"
+                                    log_output_with_separator(f"Missing lightmap is needed by Modules/{needed_module}")
+                                    missing_writer.write(f"Module={layout_resource.resname()}, Lightmap={lightmap}\n, Layout={layout_resource.filename()}, Path={layout_resource.filepath()}")
+                                    found_missing_lightmap = True
+                                    break
+                            if not found_missing_lightmap:
+                                for capsule_name, resources in k_install._modules.items():
+                                    if not capsule_name.lower().endswith(".mod"):
+                                        continue
+                                    for capsule_resource in resources:
+                                        if capsule_resource.restype() is not ResourceType.LYT:
+                                            continue
+                                        lyt_content = capsule_resource.data().decode(encoding="ascii", errors="ignore")
+                                        if model_resource.resname().lower() in lyt_content.lower():
+                                            log_output(f"{model_resource.resname()}: Missing lightmap: '{lightmap}'")
+                                            log_output_with_separator(f"Missing lightmap is needed by Modules/{capsule_name}/{capsule_resource.filename()}")
+                                            missing_writer.write(f"Module={k_install.module_name(capsule_name)}, Lightmap={lightmap}\n")
+                                            found_missing_lightmap = True
+                                            break
+                finally:
+                    missing_writer.close()
+                    if not found_missing_lightmap:
+                        mdl_missing_lmp_outpath.unlink(missing_ok=True)
+
+
+def _write_all_found_in_mdl(
+    tex_or_lmp_names: list[str],
+    num_found_msg: str,
+    resource: FileResource,
+    out_filestem: str,
+):
+    log_output(f"Checking {len(tex_or_lmp_names)}{num_found_msg}{resource._path_ident_obj.parent.name}/{resource.identifier()}'...")
+
+    # Output all textures from the model.
+    result = Path(out_filestem, resource._path_ident_obj.parent.name, f"{resource.resname()}.txt")
+    if not result.parent.safe_isdir():
+        if result.parent.safe_isfile():
+            result.parent.unlink(missing_ok=True)
+        result.parent.mkdir(parents=True)
+    with result.open("a", encoding="utf-8") as f:
+        f.writelines(f"{name}\n" for name in tex_or_lmp_names)
+
+    return result
 
 def patch_install(install_path: os.PathLike | str):
     log_output()
@@ -897,29 +1177,30 @@ def patch_install(install_path: os.PathLike | str):
     log_output()
 
     k_install = Installation(install_path)
-    k_install.reload_all()
+    #k_install.reload_all()
     log_output_with_separator("Patching modules...")
-    for module_name, resources in k_install._modules.items():  # noqa: SLF001
-        res_ident = ResourceIdentifier.from_path(module_name)
-        filename = str(res_ident)
-        filepath = k_install.path().joinpath("Modules", filename)
-        if res_ident.restype == ResourceType.RIM:
-            if filepath.with_suffix(".mod").safe_isfile():
-                log_output(f"Skipping {filepath}, a .mod already exists at this path.")
-                continue
-            new_rim = RIM()
-            new_rim_filename = patch_erf_or_rim(resources, module_name, new_rim)
-            log_output(f"Saving rim {new_rim_filename}")
-            write_rim(new_rim, filepath.parent / new_rim_filename, res_ident.restype)
+    if SCRIPT_GLOBALS.is_patching():
+        for module_name, resources in k_install._modules.items():  # noqa: SLF001
+            res_ident = ResourceIdentifier.from_path(module_name)
+            filename = str(res_ident)
+            filepath = k_install.path().joinpath("Modules", filename)
+            if res_ident.restype == ResourceType.RIM:
+                if filepath.with_suffix(".mod").safe_isfile():
+                    log_output(f"Skipping {filepath}, a .mod already exists at this path.")
+                    continue
+                new_rim = RIM()
+                new_rim_filename = patch_erf_or_rim(resources, module_name, new_rim)
+                log_output(f"Saving rim {new_rim_filename}")
+                write_rim(new_rim, filepath.parent / new_rim_filename, res_ident.restype)
 
-        elif res_ident.restype.name in ERFType.__members__:
-            new_erf = ERF(ERFType.__members__[res_ident.restype.name])
-            new_erf_filename = patch_erf_or_rim(resources, module_name, new_erf)
-            log_output(f"Saving erf {new_erf_filename}")
-            write_erf(new_erf, filepath.parent / new_erf_filename, res_ident.restype)
+            elif res_ident.restype.name in ERFType.__members__:
+                new_erf = ERF(ERFType.__members__[res_ident.restype.name])
+                new_erf_filename = patch_erf_or_rim(resources, module_name, new_erf)
+                log_output(f"Saving erf {new_erf_filename}")
+                write_erf(new_erf, filepath.parent / new_erf_filename, res_ident.restype)
 
-        else:
-            log_output("Unsupported module:", module_name, " - cannot patch")
+            else:
+                log_output("Unsupported module:", module_name, " - cannot patch")
 
     # nothing by the game uses these rims as far as I can tell
     # log_output_with_separator("Patching rims...")
@@ -937,11 +1218,27 @@ def patch_install(install_path: os.PathLike | str):
     override_path.mkdir(exist_ok=True, parents=True)
     for folder in k_install.override_list():
         for resource in k_install.override_resources(folder):
-            patch_and_save_noncapsule(resource)
+            if SCRIPT_GLOBALS.is_patching():
+                patch_and_save_noncapsule(resource)
+            if (
+                SCRIPT_GLOBALS.check_textures
+                and resource.restype().extension.lower() in ("mdl")  # TODO(th3w1zard1): determine if we need to check mdx?
+            ):
+                check_model(resource, k_install)
 
     log_output_with_separator("Extract and patch BIF data, saving to Override")
     for resource in k_install.chitin_resources():
-        patch_and_save_noncapsule(resource, savedir=override_path)
+        if (
+            SCRIPT_GLOBALS.fix_dialog_skipping
+            or SCRIPT_GLOBALS.translate
+            or SCRIPT_GLOBALS.set_unskippable
+        ):
+            patch_and_save_noncapsule(resource, savedir=override_path)
+        if (
+            SCRIPT_GLOBALS.check_textures
+            and resource.restype().extension.lower() in ("mdl")  # TODO(th3w1zard1): determine if we need to check mdx?
+        ):
+            check_model(resource, k_install)
 
     patch_file(k_install.path().joinpath("dialog.tlk"))
 
@@ -951,7 +1248,7 @@ def is_kotor_install_dir(path: os.PathLike | str) -> bool:
     return bool(c_path.safe_isdir() and c_path.joinpath("chitin.key").safe_isfile())
 
 
-def determine_input_path(path: Path):
+def determine_input_path(path: Path) -> None:
     # sourcery skip: assign-if-exp, reintroduce-else
     if not path.safe_exists() or path.resolve() == Path.cwd().resolve():
         msg = "Path does not exist"
@@ -986,10 +1283,16 @@ def do_main_patchloop() -> str:
             return messagebox.showwarning("No language chosen", "Select a language first if you want to translate")
         if SCRIPT_GLOBALS.create_fonts:
             return messagebox.showwarning("No language chosen", "Select a language first to create fonts.")
-    if SCRIPT_GLOBALS.create_fonts and (not Path(SCRIPT_GLOBALS.font_path).name or not Path(SCRIPT_GLOBALS.font_path).safe_isfile()):
+    if SCRIPT_GLOBALS.create_fonts and (
+        not Path(SCRIPT_GLOBALS.font_path).name
+        or not Path(SCRIPT_GLOBALS.font_path).safe_isfile()
+    ):
         return messagebox.showwarning(f"Font path not found {SCRIPT_GLOBALS.font_path}", "Please set your font path to a valid TTF font file.")
     if SCRIPT_GLOBALS.translate and not SCRIPT_GLOBALS.translation_applied:
-        return messagebox.showwarning("Bad translation args", "Cannot start translation, you have not applied your translation options. (api key, db path, server url etc)")
+        return messagebox.showwarning(
+            "Bad translation args",
+            "Cannot start translation, you have not applied your translation options. (api key, db path, server url etc)",
+        )
 
     # Patching logic
     has_action = False
@@ -1001,14 +1304,14 @@ def do_main_patchloop() -> str:
         has_action = True
         for lang in SCRIPT_GLOBALS.chosen_languages:
             main_translate_loop(lang)
-    if SCRIPT_GLOBALS.set_unskippable or SCRIPT_GLOBALS.convert_tga or SCRIPT_GLOBALS.fix_dialog_skipping:
+    if SCRIPT_GLOBALS.is_patching() or SCRIPT_GLOBALS.check_textures:
         determine_input_path(Path(SCRIPT_GLOBALS.path))
         has_action = True
     if not has_action:
         return messagebox.showwarning("No options chosen", "Select what you want to do.")
 
     log_output(f"Completed batch patcher of {SCRIPT_GLOBALS.path}")
-    return messagebox.showinfo("Patching complete!", "Check the log file log_batch_patcher.log for more information.")
+    return messagebox.showinfo("Patching complete!", "Check the log files for more information.")
 
 
 def main_translate_loop(lang: Language):
@@ -1051,12 +1354,13 @@ def assign_to_globals(instance: KOTORPatchingToolUI):
 class KOTORPatchingToolUI:
     def __init__(self, root: tk.Tk):
         self.root: tk.Tk = root
-        root.title("KOTOR Translate Tool")
+        root.title("KOTOR BatchPatcher")
 
         self.path = tk.StringVar()
         self.set_unskippable = tk.BooleanVar(value=SCRIPT_GLOBALS.set_unskippable)
         self.translate = tk.BooleanVar(value=SCRIPT_GLOBALS.translate)
         self.create_fonts = tk.BooleanVar(value=SCRIPT_GLOBALS.create_fonts)
+        self.check_textures = tk.BooleanVar(value=SCRIPT_GLOBALS.check_textures)
         self.font_path = tk.StringVar()
         self.resolution = tk.IntVar(value=SCRIPT_GLOBALS.resolution)
         self.custom_scaling = tk.DoubleVar(value=SCRIPT_GLOBALS.custom_scaling)
@@ -1064,6 +1368,8 @@ class KOTORPatchingToolUI:
         self.draw_bounds = tk.BooleanVar(value=False)
         self.fix_dialog_skipping = tk.BooleanVar(value=False)
         self.convert_tga = tk.BooleanVar(value=False)
+        self.k1_convert_gffs = tk.BooleanVar(value=False)
+        self.tsl_convert_gffs = tk.BooleanVar(value=False)
 
         # Middle area for text and scrollbar
         self.output_frame = tk.Frame(self.root)
@@ -1134,13 +1440,20 @@ class KOTORPatchingToolUI:
         # Gamepaths Combobox
         self.gamepaths = ttk.Combobox(self.root, textvariable=self.path)
         self.gamepaths.grid(row=row, column=1, columnspan=2, sticky="ew")
-        self.gamepaths["values"] = [str(path) for game in find_kotor_paths_from_default().values() for path in game]
+        self.gamepaths["values"] = [
+            str(path)
+            for game in find_kotor_paths_from_default().values()
+            for path in game
+        ]
         self.gamepaths.bind("<<ComboboxSelected>>", self.on_gamepaths_chosen)
 
         # Browse button
-        browse_button = ttk.Button(self.root, text="Browse", command=self.browse_path)
-        browse_button.grid(row=row, column=3, padx=2)  # Stick to both sides within its cell
-        browse_button.config(width=15)
+        browse_folder_button = ttk.Button(self.root, text="Browse Folder", command=self.browse_source_folder)
+        browse_folder_button.grid(row=row, column=3, padx=2)  # Stick to both sides within its cell
+        browse_folder_button.config(width=15)
+        browse_file_button = ttk.Button(self.root, text="Browse File", command=self.browse_source_file)
+        browse_file_button.grid(row=row, column=4, padx=2)  # Stick to both sides within its cell
+        browse_file_button.config(width=15)
         row += 1
 
         # Skippable
@@ -1149,9 +1462,9 @@ class KOTORPatchingToolUI:
         row += 1
 
         # Fix skippable dialog bug
-        ttk.Label(self.root, text="(experimental) Fix TSL engine dialog skipping bug:").grid(row=row, column=0)
-        ttk.Checkbutton(self.root, text="Yes", variable=self.fix_dialog_skipping).grid(row=row, column=1)
-        row += 1
+        #ttk.Label(self.root, text="(experimental) Fix TSL engine dialog skipping bug:").grid(row=row, column=0)
+        #ttk.Checkbutton(self.root, text="Yes", variable=self.fix_dialog_skipping).grid(row=row, column=1)
+        #row += 1
 
         # TGA -> TPC
         ttk.Label(self.root, text="Convert TGAs to TPCs:").grid(row=row, column=0)
@@ -1195,9 +1508,39 @@ class KOTORPatchingToolUI:
         ttk.Checkbutton(self.root, text="Yes", variable=self.create_fonts).grid(row=row, column=1)
         row += 1
 
+        # Check textures
+        ttk.Label(self.root, text="Check all model's lightmaps/textures").grid(row=row, column=0)
+        ttk.Checkbutton(self.root, text="Yes", variable=self.check_textures).grid(row=row, column=1)
+        row += 1
+
+        # Convert GFFs to K1
+        ttk.Label(self.root, text="Convert GFFs to K1").grid(row=row, column=0)
+        ttk.Checkbutton(self.root, text="Yes", variable=self.k1_convert_gffs).grid(row=row, column=1)
+        row += 1
+
+        # Convert GFFs to TSL
+        ttk.Label(self.root, text="Convert GFFs to TSL").grid(row=row, column=0)
+        ttk.Checkbutton(self.root, text="Yes", variable=self.tsl_convert_gffs).grid(row=row, column=1)
+        row += 1
+
         # Font Path
         ttk.Label(self.root, text="Font Path:").grid(row=row, column=0)
-        ttk.Combobox(self.root, textvariable=self.font_path, values=[str(path_str) for path_str in get_font_paths()]).grid(row=row, column=1)
+        font_paths = [str(path_str) for path_str in get_font_paths()]
+
+        # Calculate the pixel width of the longest string in the list
+        from tkinter.font import Font
+        font = Font(family="TkDefaultFont")  # Use the default font and size used by ttk.Combobox
+        max_width = max(font.measure(path) for path in font_paths)
+
+        # Configure the Combobox to be wide enough for the longest string
+        combobox = ttk.Combobox(self.root, textvariable=self.font_path, values=font_paths)
+        combobox.grid(row=row, column=1)
+
+        # Set the width of the Combobox in characters, not pixels
+        # Find the average character width in pixels and divide max_width by this number
+        avg_char_width = font.measure("0")  # '0' is typically used as an average character
+        combobox_width = max_width // avg_char_width
+        combobox.config(width=combobox_width)
         ttk.Button(self.root, text="Browse", command=self.browse_font_path).grid(row=row, column=2)
         row += 1
 
@@ -1285,13 +1628,19 @@ class KOTORPatchingToolUI:
 
         if value is not None and varname is not None:
             self.translation_applied = False
-            ttk.Button(self.translation_options_frame, text="Apply Options", command=lambda: self.apply_translation_option(varname=varname, value=value)).grid(
-                row=row, column=2
-            )
+            ttk.Button(
+                self.translation_options_frame,
+                text="Apply Options",
+                command=lambda: self.apply_translation_option(varname=varname, value=value),
+            ).grid(row=row, column=2)
         else:
             self.translation_applied = True
 
-    def apply_translation_option(self, varname, value):
+    def apply_translation_option(
+        self,
+        varname: str,
+        value: Any,
+    ):
         setattr(SCRIPT_GLOBALS.pytranslator, varname, value)  # TODO: add all the variable names to __init__ of Translator class
         self.write_log(PatchLog(f"Applied Options for {self.translation_option.get()}: {varname} = {value}", LogType.NOTE))
         cur_toption: TranslationOption = TranslationOption.__members__[self.translation_option.get()]
@@ -1301,7 +1650,7 @@ class KOTORPatchingToolUI:
             return
         self.translation_applied = True
 
-    def create_language_checkbuttons(self, row):
+    def create_language_checkbuttons(self, row: int):
         # Show/Hide Languages
         self.show_hide_language = tk.BooleanVar(value=False)
         ttk.Checkbutton(self.root, text="Show/Hide Languages:", command=lambda: self.toggle_language_frame(self.show_hide_language)).grid(row=row, column=1)
@@ -1338,7 +1687,8 @@ class KOTORPatchingToolUI:
                 self.language_frame,
                 text=lang.name,
                 variable=lang_var,
-                command=lambda lang=lang, lang_var=lang_var: self.update_chosen_languages(lang, lang_var),
+                command=lambda lang=lang,
+                lang_var=lang_var: self.update_chosen_languages(lang, lang_var),
             ).grid(row=row, column=column, sticky="w")
 
             # Alternate between columns
@@ -1346,7 +1696,11 @@ class KOTORPatchingToolUI:
             if column == 0:
                 row += 1
 
-    def update_chosen_languages(self, lang: Language, lang_var: tk.BooleanVar):
+    def update_chosen_languages(
+        self,
+        lang: Language,
+        lang_var: tk.BooleanVar,
+    ):
         if lang_var.get():
             SCRIPT_GLOBALS.chosen_languages.append(lang)
         else:
@@ -1376,8 +1730,13 @@ class KOTORPatchingToolUI:
         else:
             self.output_frame.grid_remove()  # Hide the frame
 
-    def browse_path(self):
+    def browse_source_folder(self):
         directory = filedialog.askdirectory()
+        if directory:
+            self.path.set(directory)
+
+    def browse_source_file(self):
+        directory = filedialog.askopenfilename()
         if directory:
             self.path.set(directory)
 
@@ -1386,7 +1745,7 @@ class KOTORPatchingToolUI:
         if file:
             self.font_path.set(file)
 
-    def start_patching(self):
+    def start_patching(self) -> str | None:
         if SCRIPT_GLOBALS.install_running:
             return messagebox.showerror("Install already running", "Please wait for all operations to complete. Check the console/output for details.")
         self.install_button.config(state="normal")
@@ -1412,7 +1771,7 @@ class KOTORPatchingToolUI:
             self.install_button.config(state=tk.DISABLED)
         return None
 
-def is_running_from_temp():
+def is_running_from_temp() -> bool:
     app_path = Path(sys.executable)
     temp_dir = tempfile.gettempdir()
     return str(app_path).startswith(temp_dir)

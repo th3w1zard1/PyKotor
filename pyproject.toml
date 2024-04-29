@@ -88,6 +88,12 @@ line_length = 175
 skip_gitignore = true
 multi_line_output = 3
 
+[tool.pyright.defineConstant]
+PYQT5 = true
+PYSIDE2 = false
+PYQT6 = false
+PYSIDE6 = false
+
 [tool.yapf]
 column_limit = 175
 ALLOW_SPLIT_BEFORE_DEFAULT_OR_NAMED_ASSIGNS = false
@@ -176,6 +182,7 @@ ignore = [
     "N815",     # Variable `var` in class scope should not be mixedCase
     "PLR0904",  # Too many public methods
     "RUF100",   # Unused `noqa` directive (non-enabled: `PLC0415`)
+    "T201",     # 'print' detected
     "TD001",    # Invalid TODO tag: `FIXME`
     "TRY003",   # Avoid specifying long messages outside the exception class
     "EM101",    # Exception must not use a string literal, assign to variable first

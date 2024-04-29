@@ -1,32 +1,26 @@
 from __future__ import annotations
 
+import tempfile
+import uuid
+
+try:
+    import cProfile
+except ImportError:
+    cProfile = None
 import platform
 import sys
 
 from contextlib import suppress
 from datetime import datetime, timedelta, timezone
 from multiprocessing import Process, Queue
-from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any
 
 import qtpy
 
 from qtpy import QtCore
-from qtpy.QtCore import QFile, QMetaObject, QTextStream, Qt
+from qtpy.QtCore import QCoreApplication, QFile, QMetaObject, QTextStream, Qt
 from qtpy.QtGui import QColor, QIcon, QPalette, QPixmap, QStandardItem
-from qtpy.QtWidgets import (
-    QAction,
-    QApplication,
-    QFileDialog,
-    QHBoxLayout,
-    QLabel,
-    QMainWindow,
-    QMessageBox,
-    QPushButton,
-    QStyle,
-    QVBoxLayout,
-    QWidget,
-)
+from qtpy.QtWidgets import QAction, QApplication, QDialog, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QMessageBox, QPushButton, QStyle, QVBoxLayout, QWidget
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
@@ -291,8 +285,7 @@ class ToolWindow(QMainWindow):
             self.settings.selectedTheme = "Default (Light)"
 
             # Create a directory used for dumping temp files
-            with suppress(Exception):
-                self.settings.extractPath = str(Path(str(TemporaryDirectory().name)))
+            self.settings.extractPath = str(Path(tempfile.gettempdir(), f"toolset_{uuid.uuid4()}_extract"))
 
         title = f"Holocron Toolset ({qtpy.API_NAME})"
         self.setWindowTitle(title)
@@ -310,7 +303,7 @@ class ToolWindow(QMainWindow):
             # Calculate how much the mouse has been moved
             currPos = self.mapToGlobal(self.pos())
             globalPos = event.globalPos()
-            if self._mouseMovePos is None:
+            if getattr(self, "_mouseMovePos", None) is None:
                 return
             diff = globalPos - self._mouseMovePos
             newPos = self.mapFromGlobal(currPos + diff)
@@ -402,23 +395,31 @@ class ToolWindow(QMainWindow):
         self.ui.openAction.triggered.connect(self.openFromFile)
         self.ui.actionSettings.triggered.connect(self.openSettingsDialog)
         self.ui.actionExit.triggered.connect(self.close)
-        self.ui.actionNewTLK.triggered.connect(lambda: TLKEditor(self, self.active).show())
-        self.ui.actionNewDLG.triggered.connect(lambda: DLGEditor(self, self.active).show())
-        self.ui.actionNewNSS.triggered.connect(lambda: NSSEditor(self, self.active).show())
-        self.ui.actionNewUTC.triggered.connect(lambda: UTCEditor(self, self.active).show())
-        self.ui.actionNewUTP.triggered.connect(lambda: UTPEditor(self, self.active).show())
-        self.ui.actionNewUTD.triggered.connect(lambda: UTDEditor(self, self.active).show())
-        self.ui.actionNewUTI.triggered.connect(lambda: UTIEditor(self, self.active).show())
-        self.ui.actionNewUTT.triggered.connect(lambda: UTTEditor(self, self.active).show())
-        self.ui.actionNewUTM.triggered.connect(lambda: UTMEditor(self, self.active).show())
-        self.ui.actionNewUTW.triggered.connect(lambda: UTWEditor(self, self.active).show())
-        self.ui.actionNewUTE.triggered.connect(lambda: UTEEditor(self, self.active).show())
-        self.ui.actionNewUTS.triggered.connect(lambda: UTSEditor(self, self.active).show())
-        self.ui.actionNewGFF.triggered.connect(lambda: GFFEditor(self, self.active).show())
-        self.ui.actionNewERF.triggered.connect(lambda: ERFEditor(self, self.active).show())
-        self.ui.actionNewTXT.triggered.connect(lambda: TXTEditor(self, self.active).show())
-        self.ui.actionNewSSF.triggered.connect(lambda: SSFEditor(self, self.active).show())
-        self.ui.actionCloneModule.triggered.connect(lambda: CloneModuleDialog(self, self.active, self.installations).exec_())
+        def _launchEditor(
+            editor: QWidget
+        ):
+            addWindow(editor)
+            if isinstance(editor, QDialog):
+                editor.exec_()
+            else:
+                editor.show()
+        self.ui.actionNewTLK.triggered.connect(lambda: _launchEditor(TLKEditor(self, self.active)))
+        self.ui.actionNewDLG.triggered.connect(lambda: _launchEditor(DLGEditor(self, self.active)))
+        self.ui.actionNewNSS.triggered.connect(lambda: _launchEditor(NSSEditor(self, self.active)))
+        self.ui.actionNewUTC.triggered.connect(lambda: _launchEditor(UTCEditor(self, self.active)))
+        self.ui.actionNewUTP.triggered.connect(lambda: _launchEditor(UTPEditor(self, self.active)))
+        self.ui.actionNewUTD.triggered.connect(lambda: _launchEditor(UTDEditor(self, self.active)))
+        self.ui.actionNewUTI.triggered.connect(lambda: _launchEditor(UTIEditor(self, self.active)))
+        self.ui.actionNewUTT.triggered.connect(lambda: _launchEditor(UTTEditor(self, self.active)))
+        self.ui.actionNewUTM.triggered.connect(lambda: _launchEditor(UTMEditor(self, self.active)))
+        self.ui.actionNewUTW.triggered.connect(lambda: _launchEditor(UTWEditor(self, self.active)))
+        self.ui.actionNewUTE.triggered.connect(lambda: _launchEditor(UTEEditor(self, self.active)))
+        self.ui.actionNewUTS.triggered.connect(lambda: _launchEditor(UTSEditor(self, self.active)))
+        self.ui.actionNewGFF.triggered.connect(lambda: _launchEditor(GFFEditor(self, self.active)))
+        self.ui.actionNewERF.triggered.connect(lambda: _launchEditor(ERFEditor(self, self.active)))
+        self.ui.actionNewTXT.triggered.connect(lambda: _launchEditor(TXTEditor(self, self.active)))
+        self.ui.actionNewSSF.triggered.connect(lambda: _launchEditor(SSFEditor(self, self.active)))
+        self.ui.actionCloneModule.triggered.connect(lambda: _launchEditor(CloneModuleDialog(self, self.active, self.installations)))
 
         self.ui.actionModuleDesigner.triggered.connect(self.openModuleDesigner)
         self.ui.actionEditTLK.triggered.connect(self.openActiveTalktable)
@@ -786,6 +787,13 @@ class ToolWindow(QMainWindow):
     # region Events
     def closeEvent(self, e: QCloseEvent | None):
         self.ui.texturesWidget.doTerminations()
+        instance = QCoreApplication.instance()
+        if instance is None:
+            print("QCoreApplication.instance() returned None for some reason... calling sys.exit() directly.")
+            sys.exit()
+        else:
+            print("ToolWindow closed, shutting down the app.")
+            instance.quit()
 
     def dropEvent(self, e: QtGui.QDropEvent | None):
         if e is None:
@@ -895,7 +903,14 @@ class ToolWindow(QMainWindow):
         """Opens the Settings dialog and refresh installation combo list if changes."""
         dialog = SettingsDialog(self)
         if dialog.exec_() and dialog.installationEdited:
-            self.reloadSettings()
+            result = QMessageBox(
+                QMessageBox.Icon.Question,
+                "Reload the installations?",
+                "You appear to have made changes to your installations, would you like to reload?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            ).exec_()
+            if result == QMessageBox.StandardButton.Yes:
+                self.reloadSettings()
 
     def openActiveTalktable(self):
         """Opens the talktable for the active (currently selected) installation.
@@ -1099,7 +1114,11 @@ class ToolWindow(QMainWindow):
         progress_process = Process(target=run_progress_dialog, args=(progress_queue, "Holocron Toolset is updating and will restart shortly..."))
         progress_process.start()
         self.hide()
-        def download_progress_hook(data: dict[str, Any], progress_queue: Queue = progress_queue):
+
+        def download_progress_hook(
+            data: dict[str, Any],
+            progress_queue: Queue = progress_queue,
+        ):
             progress_queue.put(data)
 
         # Prepare the list of progress hooks with the method from ProgressDialog
@@ -1117,7 +1136,7 @@ class ToolWindow(QMainWindow):
             CURRENT_VERSION,
             latestVersion,
             downloader=None,
-            progress_hooks=progress_hooks,
+            progress_hooks=progress_hooks,  # type: ignore[arg-type]
             exithook=exitapp
         )
         try:
@@ -1158,7 +1177,10 @@ class ToolWindow(QMainWindow):
         if self.active is None:
             print("No installation is currently loaded, cannot refresh modules list")
             return []
-
+        profiler = None
+        if self.settings.profileToolset and cProfile is not None:
+            profiler = cProfile.Profile()
+            profiler.enable()
         # If specified the user can forcibly reload the resource list for every module
         if reload:
             self.active.load_modules()
@@ -1172,7 +1194,7 @@ class ToolWindow(QMainWindow):
             elif self.settings.moduleSortOption == 0:  # "Sort by filename":
                 sortStr = ""
             elif self.settings.moduleSortOption == 1:  # "Sort by humanized area name":
-                sortStr = areaNames.get(moduleFileName).lower()
+                sortStr = areaNames.get(moduleFileName, "y").lower()
             else:  # alternate mod id that attempts to match to filename.
                 sortStr = self.active.module_id(moduleFileName, use_hardcoded=False, use_alternate=True)
             sortStr += f"_{lowerModuleFileName}".lower()
@@ -1199,6 +1221,9 @@ class ToolWindow(QMainWindow):
                 item.setForeground(self.palette().shadow())
 
             modules.append(item)
+        if self.settings.profileToolset and profiler:
+            profiler.disable()
+            profiler.dump_stats(str(Path("main_getModulesList.pstat").absolute()))
         return modules
 
     def refreshModuleList(
@@ -1340,11 +1365,31 @@ class ToolWindow(QMainWindow):
 
     def reloadInstallations(self):
         """Refresh the list of installations available in the combobox."""
-        self.ui.gameCombo.clear()
-        self.ui.gameCombo.addItem("[None]")
+        self.ui.gameCombo.currentIndexChanged.disconnect(self.changeActiveInstallation)
+        self.ui.gameCombo.clear()  # without above disconnect, would call ToolWindow().changeActiveInstallation(-1)
+        self.ui.gameCombo.addItem("[None]")  # without above disconnect, would call ToolWindow().changeActiveInstallation(0)
 
         for installation in self.settings.installations().values():
             self.ui.gameCombo.addItem(installation.name)
+        self.ui.gameCombo.currentIndexChanged.connect(self.changeActiveInstallation)  # without above disconnect, would NOT call changeActiveInstallation
+
+    def unsetInstallation(self):
+
+        self.ui.gameCombo.setCurrentIndex(0)
+
+        self.ui.coreWidget.setResources([])
+        self.ui.modulesWidget.setSections([])
+        self.ui.modulesWidget.setResources([])
+        self.ui.overrideWidget.setSections([])
+        self.ui.overrideWidget.setResources([])
+
+        self.ui.resourceTabs.setEnabled(False)
+        self.ui.sidebar.setEnabled(False)
+        self.updateMenus()
+        self.active = None
+        if self.dogObserver is not None:
+            self.dogObserver.stop()
+            self.dogObserver = None
 
     def changeActiveInstallation(self, index: int):
         """Changes the active installation selected.
@@ -1357,38 +1402,23 @@ class ToolWindow(QMainWindow):
         ----
             index (int): Index of the installation in the installationCombo combobox.
         """
-        self.ui.gameCombo.setCurrentIndex(index)
-
-        self.ui.coreWidget.setResources([])
-        self.ui.modulesWidget.setSections([])
-        self.ui.modulesWidget.setResources([])
-        self.ui.overrideWidget.setSections([])
-        self.ui.overrideWidget.setResources([])
-
-        self.ui.resourceTabs.setEnabled(False)
-        self.ui.sidebar.setEnabled(False)
-        self.updateMenus()
-
-        if index <= 0:
-            if index < 0:
-                print(f"Index out of range - self.changeActiveInstallation({index})")
-                return  # Comment this line and uncomment below to invalidate the current selected installation.
-                #self.ui.gameCombo.setCurrentIndex(0)
-            self.active = None
-            if self.dogObserver is not None:
-                self.dogObserver.stop()
-                self.dogObserver = None
+        if index < 0:  # self.ui.gameCombo.clear() will call this function with -1
+            print(f"Index out of range - ToolWindow.changeActiveInstallation({index})")
             return
 
-        self.ui.resourceTabs.setEnabled(True)
-        self.ui.sidebar.setEnabled(True)
+        previousIndex: int = self.ui.gameCombo.currentIndex()
+        self.ui.gameCombo.setCurrentIndex(index)
+
+        if index == 0:
+            self.unsetInstallation()
+            return
 
         name: str = self.ui.gameCombo.itemText(index)
         path: str = self.settings.installations()[name].path.strip()
         tsl: bool = self.settings.installations()[name].tsl
 
         # If the user has not set a path for the particular game yet, ask them too.
-        if not path or not Path(path).safe_isdir():
+        if not path or not path.strip() or not Path(path).safe_isdir():
             if path and path.strip():
                 QMessageBox(QMessageBox.Icon.Warning, f"Installation '{path}' not found", "Select another path now.").exec_()
             path = QFileDialog.getExistingDirectory(self, f"Select the game directory for {name}")
@@ -1396,69 +1426,91 @@ class ToolWindow(QMainWindow):
         # If the user still has not set a path, then return them to the [None] option.
         if not path:
             print("User did not choose a path for this installation.")
-            self.ui.gameCombo.setCurrentIndex(0)
-            self.active = None
-            if self.dogObserver is not None:
-                self.dogObserver.stop()
-                self.dogObserver = None
+            self.ui.gameCombo.setCurrentIndex(previousIndex)
             return
-
-        def load_task(active: HTInstallation | None = None) -> HTInstallation:
-            return active or HTInstallation(path, name, tsl, self)
 
         active = self.installations.get(name)
-        loader = AsyncLoader(self, "Refreshing installation" if active else "Loading Installation", lambda: load_task(active), "Failed to load installation")
-        if not loader.exec_():
-            self.active = None
-            self.ui.gameCombo.setCurrentIndex(0)
-            if self.dogObserver is not None:
-                self.dogObserver.stop()
-                self.dogObserver = None
-            return
-        self.active = loader.value
+        if active:
+            self.active = active
+        else:
+            def load_task() -> HTInstallation:
+                profiler = None
+                if self.settings.profileToolset and cProfile is not None:
+                    profiler = cProfile.Profile()
+                    profiler.enable()
+                new_active = HTInstallation(path, name, self, tsl=tsl)
+                if self.settings.profileToolset and profiler:
+                    profiler.disable()
+                    profiler.dump_stats(str(Path("load_ht_installation.pstat").absolute()))
+                return new_active
+            loader = AsyncLoader(self, "Loading Installation", load_task, "Failed to load installation")
+            if not loader.exec_():
+                self.ui.gameCombo.setCurrentIndex(previousIndex)
+                return
+            self.active = loader.value
 
         # KEEP UI CODE IN MAIN THREAD!
+        self.ui.resourceTabs.setEnabled(True)
+        self.ui.sidebar.setEnabled(True)
         def prepare_task() -> tuple[list[QStandardItem] | None, ...]:
-            return (
+            profiler = None
+            if self.settings.profileToolset and cProfile is not None:
+                profiler = cProfile.Profile()
+                profiler.enable()
+            retTuple = (
                 self._getModulesList(reload=False),
                 self._getOverrideList(reload=False),
                 self._getTexturePackList(reload=False),
             )
+            if self.settings.profileToolset and profiler:
+                profiler.disable()
+                profiler.dump_stats(str(Path("prepare_task.pstat").absolute()))
+            return retTuple
 
         prepare_loader = AsyncLoader(self, "Preparing resources...", lambda: prepare_task(), "Failed to load installation")
         if not prepare_loader.exec_():
-            self.active = None
-            self.ui.gameCombo.setCurrentIndex(0)
-            if self.dogObserver is not None:
-                self.dogObserver.stop()
-                self.dogObserver = None
+            self.ui.gameCombo.setCurrentIndex(previousIndex)
             return
-        self.log.info("Loading core installation resources into UI...")
-        self.ui.coreWidget.setResources(self.active.chitin_resources())
-        moduleItems, overrideItems, textureItems = prepare_loader.value
-        self.log.info("Loading saves list into UI...")
-        self.refreshSavesList(reload=False)
-        assert moduleItems is not None
-        assert overrideItems is not None
-        assert textureItems is not None
-        self.ui.modulesWidget.setSections(moduleItems)
-        self.ui.overrideWidget.setSections(overrideItems)
-        self.ui.texturesWidget.setSections(textureItems)
-        self.log.debug("Remove unused categories...")
-        self.ui.coreWidget.modulesModel.removeUnusedCategories()
-        self.ui.texturesWidget.setInstallation(self.active)
-        self.log.debug("Updating menus...")
-        self.updateMenus()
-        self.log.debug("Setting up watchdog observer...")
-        if self.dogObserver is not None:
-            self.log.debug("Stopping old watchdog service...")
-            self.dogObserver.stop()
-        self.dogObserver = Observer()
-        self.dogObserver.schedule(self.dogHandler, self.active.path(), recursive=True)
-        self.dogObserver.start()
-        self.log.info("Loader task completed.")
-        self.settings.installations()[name].path = path
-        self.installations[name] = self.active
+
+        # Any issues past this point must call self.unsetInstallation()
+        try:
+            self.log.debug("Set sections of prepared lists")
+            moduleItems, overrideItems, textureItems = prepare_loader.value
+            assert moduleItems is not None
+            assert overrideItems is not None
+            assert textureItems is not None
+            self.ui.modulesWidget.setSections(moduleItems)
+            self.ui.overrideWidget.setSections(overrideItems)
+            self.ui.texturesWidget.setSections(textureItems)
+
+            self.log.debug("Loading core installation resources into UI...")
+            self.ui.coreWidget.setResources(self.active.chitin_resources())
+            self.log.info("Loading saves list into UI...")
+            self.refreshSavesList(reload=True)
+
+            self.log.debug("Remove unused categories...")
+            self.ui.coreWidget.modulesModel.removeUnusedCategories()
+            self.ui.texturesWidget.setInstallation(self.active)
+            self.log.debug("Updating menus...")
+            self.updateMenus()
+            self.log.debug("Setting up watchdog observer...")
+            if self.dogObserver is not None:
+                self.log.debug("Stopping old watchdog service...")
+                self.dogObserver.stop()
+            self.dogObserver = Observer()
+            self.dogObserver.schedule(self.dogHandler, self.active.path(), recursive=True)
+            self.dogObserver.start()
+            self.log.info("Loader task completed.")
+            self.settings.installations()[name].path = path
+            self.installations[name] = self.active
+        except Exception as e:
+            self.log.exception("Failed to initialize the installation")
+            QMessageBox(
+                QMessageBox.Icon.Critical,
+                "An unexpected error occurred initializing the installation.",
+                f"Failed to initialize the installation {name}<br><br>{e}",
+            ).exec_()
+            self.unsetInstallation()
 
     def _extractResource(
         self,
@@ -1487,11 +1539,11 @@ class ToolWindow(QMainWindow):
         try:
             data: bytes = resource.data()
 
-            if resource.restype() == ResourceType.MDX and self.ui.mdlDecompileCheckbox.isChecked():
+            if resource.restype() is ResourceType.MDX and self.ui.mdlDecompileCheckbox.isChecked():
                 # Ignore extracting MDX files if decompiling MDLs
                 return
 
-            if resource.restype() == ResourceType.TPC:
+            if resource.restype() is ResourceType.TPC:
                 tpc: TPC = read_tpc(data, txi_source=r_filepath)
 
                 if self.ui.tpcTxiCheckbox.isChecked():
@@ -1501,7 +1553,7 @@ class ToolWindow(QMainWindow):
                     data = self._decompileTpc(tpc)
                     r_filepath = r_filepath.with_suffix(".tga")
 
-            if resource.restype() == ResourceType.MDL:
+            if resource.restype() is ResourceType.MDL:
                 if self.ui.mdlDecompileCheckbox.isChecked():
                     data = self._decompileMdl(resource, data)
                     r_filepath = r_filepath.with_suffix(".ascii.mdl")
@@ -1550,7 +1602,7 @@ class ToolWindow(QMainWindow):
                     if self.ui.tpcTxiCheckbox.isChecked():
                         self._extractTxi(tpc, folderpath.joinpath(f"{texture}.tpc"))
                     file_format = ResourceType.TGA if self.ui.tpcDecompileCheckbox.isChecked() else ResourceType.TPC
-                    extension = "tga" if file_format == ResourceType.TGA else "tpc"
+                    extension = "tga" if file_format is ResourceType.TGA else "tpc"
                     write_tpc(tpc, folderpath.joinpath(f"{texture}.{extension}"), file_format)
                 except Exception as e:  # noqa: PERF203
                     etype, msg = universal_simplify_exception(e)

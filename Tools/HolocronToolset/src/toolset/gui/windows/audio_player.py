@@ -11,7 +11,7 @@ import qtpy
 
 from qtpy import QtCore
 from qtpy.QtCore import QBuffer, QIODevice, QUrl
-from qtpy.QtMultimedia import QAudioOutput, QMediaPlayer
+from qtpy.QtMultimedia import QMediaPlayer
 from qtpy.QtWidgets import QFileDialog, QMainWindow
 
 from pykotor.common.stream import BinaryReader
@@ -57,7 +57,7 @@ class AudioPlayer(QMainWindow):
         self.player.positionChanged.connect(self.positionChanged)
         self.destroyed.connect(self.closeEvent)
         if qtpy.API_NAME in {"PySide2", "PyQt5"}:
-            self.player.error.connect(lambda _: self.handleError())
+            self.player.error.connect(lambda _=None: self.handleError())
         else:
             self.player.errorOccurred.connect(lambda *args, **kwargs: self.handleError(*args, **kwargs))
 

@@ -15,13 +15,13 @@ from utility.error_handling import universal_simplify_exception
 
 LOCAL_PROGRAM_INFO: dict[str, Any] = {
     # <---JSON_START--->#{
-    "currentVersion": "2.2.1b22",
+    "currentVersion": "3.0.0b2",
     "toolsetLatestVersion": "2.1.2",
-    "toolsetLatestBetaVersion": "2.2.1b22",
+    "toolsetLatestBetaVersion": "3.0.0b2",
     "updateInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HolocronToolset/src/toolset/config.py",
     "updateBetaInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HolocronToolset/src/toolset/config.py?ref=bleeding-edge",
     "toolsetDownloadLink": "https://deadlystream.com/files/file/1982-holocron-toolset",
-    "toolsetBetaDownloadLink": "https://github.com/NickHugi/PyKotor/releases/tag/v2.2.1-toolset-beta22",
+    "toolsetBetaDownloadLink": "https://github.com/NickHugi/PyKotor/releases/tag/v3.0.0b2-toolset",
     "toolsetDirectLinks": {
         "Darwin": {
             "32bit": [],
@@ -51,7 +51,7 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
         }
     },
     "toolsetLatestNotes": "Fixed major bug that was causing most editors to load data incorrectly.",
-    "toolsetLatestBetaNotes": "Performance improvements, bugfixes, and a dialog to upgrade/downgrade your toolset installation straight from github.",
+    "toolsetLatestBetaNotes": "Large bag of small bugfixes<br>Update when you're able.:)<br><br>- Fix an occasional bug that could happen if QSettings became corrupted, causing editors to fail loading.<br>- Fix a bug preventing most hotkeys from working.<br>- Fix 'Add Instance' when 'create new' chosen in the dialog.<br> - Improve module designer chooser dialog, prompt when .mod must be created. - Ensure UTE/UTT have default geometry to prevent crashes. - Other bugfixes.",
     "kits": {
         "Black Vulkar Base": {"version": 1, "id": "blackvulkar"},
         "Endar Spire": {"version": 1, "id": "endarspire"},

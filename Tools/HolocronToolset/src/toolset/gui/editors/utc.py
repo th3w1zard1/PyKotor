@@ -28,7 +28,6 @@ from toolset.utils.window import openResourceEditor
 if TYPE_CHECKING:
     import os
 
-    from qtpy.QtCore import QObject
     from qtpy.QtWidgets import QMainWindow, QWidget
     from typing_extensions import Literal
 
@@ -47,7 +46,7 @@ class UTCEditor(Editor):
         parent: QWidget | None,
         installation: HTInstallation | None = None,
         *,
-        mainwindow: QMainWindow | None = None,
+        mainWindow: QMainWindow | None = None,
     ):
         """Initializes the Creature Editor window.
 
@@ -71,7 +70,7 @@ class UTCEditor(Editor):
             - Creates new empty creature.
         """
         supported: list[ResourceType] = [ResourceType.UTC]
-        super().__init__(parent, "Creature Editor", "creature", supported, supported, installation, mainwindow)
+        super().__init__(parent, "Creature Editor", "creature", supported, supported, installation, mainWindow)
 
         self.settings: UTCSettings = UTCSettings()
         self.globalSettings: GlobalSettings = GlobalSettings()
