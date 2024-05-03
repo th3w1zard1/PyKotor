@@ -9,7 +9,7 @@ from contextlib import suppress
 from copy import copy
 from enum import Enum, IntEnum
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator
 
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, Game
@@ -85,11 +85,6 @@ class SearchLocation(IntEnum):
     CUSTOM_FOLDERS = 13
     """Resource files stored in the folders specified in the method parameters."""
 
-
-class ItemTuple(NamedTuple):
-    resname: str
-    name: str
-    filepath: Path
 
 class TexturePackNames(Enum):
     """Full list of texturepack ERF filenames for both games."""
@@ -516,7 +511,7 @@ class Installation:
 
         if self.use_multithreading:
             num_cores = os.cpu_count() or 1
-            max_workers = num_cores * 4
+            max_workers = num_cores * 2
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 for future in as_completed(executor.submit(self._build_single_resource, file) for file in files_iter):
                     resource = future.result()
@@ -987,7 +982,7 @@ class Installation:
             check("modules/mainmenu.mod"),
         ]
 
-        game1_xbox_checks: list[bool] = [  # TODO:
+        game1_xbox_checks: list[bool] = [
             check("01_SS_Repair01.ini"),
             check("swpatch.ini"),
             check("dataxbox/_newbif.bif"),
@@ -1240,7 +1235,7 @@ class Installation:
             folders=folders,
         )
         search: ResourceResult | None = batch[query]
-        if not search or not search.data:
+        if search is None:
             self._log.warning(f"Could not find '{query}' during resource lookup.")
             return None
         return search
@@ -1965,7 +1960,7 @@ class Installation:
             for resource in values:
                 case_resname: str = resource.resname().casefold()
                 if case_resname in case_resnames and resource.restype() in sound_formats:
-                    print(f"Found sound at '{resource.filepath()}'")
+                    self._log.debug(f"Found sound at '{resource.filepath()}'")
                     case_resnames.remove(case_resname)
                     sound_data: bytes = resource.data()
                     sounds[resource.resname()] = deobfuscate_audio(sound_data)
@@ -1980,7 +1975,7 @@ class Installation:
                             break
                     if sound_data is None:  # No sound data found in this list.
                         continue
-                    print(f"Found sound at '{capsule.path()}'")
+                    self._log.debug(f"Found sound at '{capsule.path()}'")
                     case_resnames.remove(case_resname)
                     sounds[case_resname] = deobfuscate_audio(sound_data)
 
@@ -1997,7 +1992,7 @@ class Installation:
                     )
                 )
             for sound_file in queried_sound_files:
-                print(f"Found sound at '{sound_file}'")
+                self._log.debug(f"Found sound at '{sound_file}'")
                 case_resnames.remove(sound_file.stem.casefold())
                 sound_data: bytes = BinaryReader.load_file(sound_file)
                 sounds[sound_file.stem] = deobfuscate_audio(sound_data)
@@ -2214,8 +2209,9 @@ class Installation:
         result = re.sub(r"\.rim$", "", module_filename, flags=re.IGNORECASE)
         for erftype_name in ERFType.__members__:
             result = re.sub(rf"\.{erftype_name}$", "", result, flags=re.IGNORECASE)
-        result = result[:-2] if result.lower().endswith("_s") else result
-        result = result[:-4] if result.lower().endswith("_dlg") else result
+        lowercase = result.lower()
+        result = result[:-2] if lowercase.endswith("_s") else result
+        result = result[:-4] if lowercase.endswith("_dlg") else result
         return result  # noqa: RET504
 
     def module_names(self, *, use_hardcoded: bool = True) -> dict[str, str]:
@@ -2350,7 +2346,7 @@ class Installation:
                 if are.root.exists("Name"):
                     actual_ftype = are.root.what_type("Name")
                     if actual_ftype is not GFFFieldType.LocalizedString:
-                        get_root_logger().warning(f"{self.filename()} has IFO with incorrect field 'Mod_Area_List' type '{actual_ftype.name}', expected 'List'")
+                        get_root_logger().warning(f"{area_resource.filename()} has incorrect field 'Name' type '{actual_ftype.name}', expected type 'List'")
                     locstring: LocalizedString = are.root.get_locstring("Name")
                     if locstring.stringref == -1:
                         return locstring.get(Language.ENGLISH, Gender.MALE)
@@ -2366,7 +2362,7 @@ class Installation:
         *,
         use_hardcoded: bool = True,
         use_alternate: bool = False,
-    ) -> str:  # sourcery skip: remove-unreachable-code
+    ) -> str:    # sourcery skip: assign-if-exp, remove-unreachable-code
         """Returns an identifier for the module that matches the filename/IFO/ARE resname.
 
         NOTE: Since this is only used for sorting currently, does not parse Mod_Area_list or Mod_VO_ID.
@@ -2375,8 +2371,7 @@ class Installation:
         ----
             module_filename: str - The name of the module file.
             use_hardcoded: bool - Deprecated (does nothing)
-            use_alternate: bool - Gets the ID that matches the part of the filename. Only really useful for sorting. Normally this function returns
-                the ID name that matches the existing ARE/GIT resources.
+            use_alternate: bool - Gets the ID that matches the part of the filename. Only really useful for sorting. Normally this function returns the ID name that matches the existing ARE/GIT resources.
 
         Returns:
         -------
@@ -2385,28 +2380,31 @@ class Installation:
         root: str = self.replace_module_extensions(module_filename)
 
         try:
+            @lru_cache(maxsize=1000)
             def quick_id(filename: str) -> str:
                 base_name: str = filename.rsplit(".")[0]  # Strip extension
+                if len(base_name) >= 6 and base_name[3:4].lower() == "m" and base_name[4:6].isdigit():  # e.g. 'danm13', 'manm26mg'...
+                    base_name = f"{base_name[:3]}_{base_name[3:]}"
                 parts: list[str] = base_name.split("_")
 
-                if len(parts) == 1:  # noqa: PLR2004
-                    # If there are no underscores, return the base name itself
-                    return base_name
-                if len(parts) == 2:  # noqa: PLR2004
+                mod_id = base_name  # If there are no underscores, return the base name itself
+                if len(parts) == 2:
                     # If there's exactly one underscore, return the part after the underscore
-                    return parts[1]
-                if len(parts) >= 3:  # noqa: PLR2004
+                    if parts[1] in ("s", "dlg"):
+                        mod_id = parts[0]
+                    else:  # ...except when the part after matches a qualifier
+                        mod_id = parts[1]
+                elif len(parts) >= 3:
                     # If there are three or more underscores, return what's between the first two underscores
-                    return (
-                        "_".join(parts[1:-1])
-                        if parts[-1].lower() in ("s", "dlg")
-                        else "_".join(parts[1:2])
-                    )
-
-                return base_name
+                    if parts[-1].lower() in ("s", "dlg"):
+                        mod_id = "_".join(parts[1:-1])
+                    else:  # ...except when the last part matches a qualifier
+                        mod_id = "_".join(parts[1:-2])
+                self._log.debug("parts: %s id: '%s'", parts, mod_id)
+                return mod_id
 
             if use_alternate:
-                return quick_id(module_filename)
+                return quick_id(module_filename).lower()
         except Exception:  # noqa: BLE001
             self._log.exception(f"Could not quick ID capsule '{module_filename}'")
             return root

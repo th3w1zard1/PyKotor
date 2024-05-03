@@ -144,7 +144,6 @@ $pyInstallerArgs = @{
         'qt5-applications'
         'watchdog',
         'Markdown',
-        'pyperclip',
         'setuptools',
         'java',
         'java.lang',

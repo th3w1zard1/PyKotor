@@ -278,6 +278,7 @@ class ToolWindow(QMainWindow):
         self.ui.coreWidget.hideReloadButton()
         self.setWindowIcon(QIcon(QPixmap(":/images/icons/sith.png")))
         self.reloadSettings()
+        self.unsetInstallation()
 
         firstTime = self.settings.firstTime
         if firstTime:
@@ -364,7 +365,7 @@ class ToolWindow(QMainWindow):
                     self.active.module_path() / self.ui.modulesWidget.currentSection(),
                 )
             )
-            addWindow(designerUi)
+            addWindow(designerUi, show=False)
             return designerUi
 
         self.ui.specialActionButton.clicked.connect(openModuleDesigner)
@@ -498,7 +499,7 @@ class ToolWindow(QMainWindow):
         if eventType == "deleted":
             self.onModuleRefresh()
         else:
-            if not changedFile or not changedFile.strip():  # FIXME(th3w1zard1): Why is the watchdog constantly sending invalid filenames?
+            if not changedFile or not changedFile.strip():  # FIXME(th3w1zard1): Why is the watchdog constantly sending invalid filenames? Hasn't happened in awhile actually...
                 print(f"onModuleFileUpdated: can't reload module '{changedFile}', invalid name")
                 return
             # Reload the resource cache for the module
@@ -529,7 +530,7 @@ class ToolWindow(QMainWindow):
         self.ui.modulesWidget.setResources(resources)
 
     def onModuleRefresh(self):
-        self.refreshModuleList(reload=False)
+        self.refreshModuleList(reload=True)
 
     def onSaveReload(self, saveDir: str):
         print(f"Reloading '{saveDir}'")
@@ -631,7 +632,7 @@ class ToolWindow(QMainWindow):
             print("No installation loaded, cannot refresh Override")
             return
         print(f"Refreshing list of override folders available at {self.active.path()}")
-        self.refreshOverrideList(reload=False)
+        self.refreshOverrideList(reload=True)
 
     def onTexturesChanged(self, newTexturepack: str):
         if not self.active:
@@ -907,7 +908,8 @@ class ToolWindow(QMainWindow):
                 QMessageBox.Icon.Question,
                 "Reload the installations?",
                 "You appear to have made changes to your installations, would you like to reload?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                flags=Qt.WindowType.Window | Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint,
             ).exec_()
             if result == QMessageBox.StandardButton.Yes:
                 self.reloadSettings()
@@ -1063,10 +1065,10 @@ class ToolWindow(QMainWindow):
                 parent=None,
                 flags=Qt.WindowType.Window | Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint,
             )
-            upToDateMsgBox.button(QMessageBox.StandardButton.Ok).setText("Reinstall?")
+            upToDateMsgBox.button(QMessageBox.Ok).setText("Reinstall?")
             upToDateMsgBox.setWindowIcon(self.windowIcon())
             result = upToDateMsgBox.exec_()
-            if result == QMessageBox.StandardButton.Ok:
+            if result == QMessageBox.Ok:
                 toolset_updater = UpdateDialog(self)
                 toolset_updater.exec_()
             return
@@ -1074,18 +1076,21 @@ class ToolWindow(QMainWindow):
         betaString = "release " if releaseVersionChecked else "beta "
         newVersionMsgBox = QMessageBox(
             QMessageBox.Icon.Information,
-            f"New toolset {betaString}version available.",
-            f"Your toolset version ({CURRENT_VERSION}) is outdated.<br>A new toolset {betaString}version ({greatestAvailableVersion}) available for <a href='{toolsetDownloadLink}'>download</a>.<br>{toolsetLatestNotes}",
-            QMessageBox.StandardButton.Ok | QMessageBox.Abort,
+            f"Your toolset version {CURRENT_VERSION} is outdated.",
+            f"A new toolset {betaString}version ({greatestAvailableVersion}) available for <a href='{toolsetDownloadLink}'>download</a>.<br><br>{toolsetLatestNotes}",
+            QMessageBox.Ok | QMessageBox.Abort,
             parent=None,
             flags=Qt.WindowType.Window | Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint,
         )
-        newVersionMsgBox.button(QMessageBox.StandardButton.Ok).setText("Install Now")
+        newVersionMsgBox.setDefaultButton(QMessageBox.Abort)
+        #newVersionMsgBox.button(QMessageBox.Ok).setText("Install Now")
+        newVersionMsgBox.button(QMessageBox.Yes).setText("Open")
         newVersionMsgBox.button(QMessageBox.Abort).setText("Ignore")
         newVersionMsgBox.setWindowIcon(self.windowIcon())
         response = newVersionMsgBox.exec_()
-        if response == QMessageBox.StandardButton.Ok:
-            #self.autoupdate_toolset(greatestAvailableVersion, remoteInfo, isRelease=releaseVersionChecked)
+        if response == QMessageBox.Ok:
+            self.autoupdate_toolset(greatestAvailableVersion, remoteInfo, isRelease=releaseVersionChecked)
+        elif response == QMessageBox.Yes:
             toolset_updater = UpdateDialog(self)
             toolset_updater.exec_()
 
@@ -1098,7 +1103,7 @@ class ToolWindow(QMainWindow):
     ):
         """A fast and quick way to auto-install a specific toolset version.
 
-        Deprecated in favor of the UpdateDialog.
+        Uses toolsetDirectLinks and toolsetBetaDirectLinks
         """
         proc_arch = ProcessorArchitecture.from_os()
         assert proc_arch == ProcessorArchitecture.from_python()
@@ -1196,7 +1201,7 @@ class ToolWindow(QMainWindow):
             elif self.settings.moduleSortOption == 1:  # "Sort by humanized area name":
                 sortStr = areaNames.get(moduleFileName, "y").lower()
             else:  # alternate mod id that attempts to match to filename.
-                sortStr = self.active.module_id(moduleFileName, use_hardcoded=False, use_alternate=True)
+                sortStr = self.active.module_id(moduleFileName, use_alternate=True)
             sortStr += f"_{lowerModuleFileName}".lower()
             return sortStr
 
@@ -1237,7 +1242,7 @@ class ToolWindow(QMainWindow):
             action = "Reloading" if reload else "Refreshing"
 
             def task() -> list[QStandardItem]:
-                return self._getModulesList(reload=reload)
+                return self._getModulesList()
 
             loader = AsyncLoader(self, f"{action} modules list...", task, "Error refreshing module list.")
             loader.exec_()
@@ -1281,15 +1286,13 @@ class ToolWindow(QMainWindow):
         overrideItems: list[QStandardItem] | None = None,
     ):
         """Refreshes the list of override directories in the overrideFolderCombo combobox."""
-        if reload:
-            self.active.load_override()
         if not overrideItems:
             action = "Reloading" if reload else "Refreshing"
 
             def task() -> list[QStandardItem]:
-                return self._getOverrideList(reload=reload)
+                return self._getOverrideList()
 
-            loader = AsyncLoader(self, f"{action} override list...", task, "Error refreshing override list.")
+            loader = AsyncLoader(self, f"{action} override list...", task, f"Error {action}ing override list.")
             loader.exec_()
             overrideItems = loader.value
         self.ui.overrideWidget.setSections(overrideItems)

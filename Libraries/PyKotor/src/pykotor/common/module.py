@@ -33,7 +33,6 @@ from pykotor.resource.generics.utw import UTW, bytes_utw, read_utw
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_capsule_file, is_rim_file
 from pykotor.tools.model import list_lightmaps, list_textures
-from utility.error_handling import assert_with_variable_trace
 from utility.logger_util import get_root_logger
 from utility.system.path import Path, PurePath
 
@@ -78,7 +77,8 @@ class Module:  # noqa: PLR0904
     ):
         self.resources: CaseInsensitiveDict[ModuleResource] = CaseInsensitiveDict()
         self._installation: Installation = installation
-        self._root: str = root.lower()
+        self._root: str = self.get_root(root.lower())
+        self._dot_mod: bool = use_dot_mod and installation.module_path().joinpath(f"{self._root}.mod").is_file()
 
         # Build all capsules relevant to this root in the provided installation
         self._capsules: list[Capsule] = self.get_capsules(installation, self._root, use_dot_mod=use_dot_mod)
@@ -124,17 +124,19 @@ class Module:  # noqa: PLR0904
         _s_rim_path = base_path / f"{root}_s.rim"
         rim_path = base_path / f"{root}.rim"
         if installation.game().is_k1():
-            return [
+            capsules = [
                 Capsule(rim_path),
                 Capsule(_s_rim_path)
             ]
-
-        _dlg_erf_path = base_path / f"{root}_dlg.erf"
-        return [
-            Capsule(rim_path),
-            Capsule(_s_rim_path),
-            Capsule(_dlg_erf_path)
-        ]
+        else:
+            _dlg_erf_path = base_path / f"{root}_dlg.erf"
+            capsules = [
+                Capsule(rim_path),
+                Capsule(_s_rim_path),
+                Capsule(_dlg_erf_path)
+            ]
+        get_root_logger().info(f"Using Module instance with the following paths: [{tuple(capsule._path for capsule in capsules)}]")
+        return capsules
 
     def get_id(self) -> str:
         return self._root
@@ -263,7 +265,7 @@ class Module:  # noqa: PLR0904
         look_for = []
         textures: set[str] = set()
         for model in self.models():
-            get_root_logger().info("Finding textures/lightmaps for model '%s'...", model.identifier())
+            get_root_logger().debug("Finding textures/lightmaps for model '%s'...", model.identifier())
             try:
                 data: bytes = model.data()
                 for texture in list_textures(data):
@@ -1264,7 +1266,7 @@ class ModuleResource(Generic[T]):
 
             file_name: str = f"{self._resname}.{self._restype.extension}"
             if self._active is None:
-                assert_with_variable_trace(self._resource_obj is not None)
+                return None
             elif is_capsule_file(self._active.name):
                 data: bytes | None = Capsule(self._active).resource(self._resname, self._restype)
                 if data is None:
