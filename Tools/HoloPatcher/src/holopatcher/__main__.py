@@ -28,7 +28,7 @@ from tkinter import (
     ttk,
 )
 from types import TracebackType
-from typing import TYPE_CHECKING, NoReturn
+from typing import TYPE_CHECKING, Any, NoReturn
 
 
 def is_frozen() -> bool:
@@ -55,7 +55,6 @@ if not is_frozen():
         if utility_path.exists():
             update_sys_path(utility_path.parent)
 
-from types import TracebackType
 
 from holopatcher.config import CURRENT_VERSION, getRemoteHolopatcherUpdateInfo, remoteVersionNewer
 from pykotor.common.misc import Game
@@ -68,7 +67,7 @@ from pykotor.tslpatcher.logger import LogType, PatchLogger
 from pykotor.tslpatcher.patcher import ModInstaller
 from pykotor.tslpatcher.reader import ConfigReader, NamespaceReader
 from pykotor.tslpatcher.uninstall import ModUninstaller
-from utility.error_handling import format_exception_with_variables, universal_simplify_exception
+from utility.error_handling import universal_simplify_exception
 from utility.logger_util import get_root_logger
 from utility.misc import ProcessorArchitecture
 from utility.string_util import striprtf
@@ -497,11 +496,8 @@ class App:
             updater.extract_restart()
             progress_queue.put({"action": "update_status", "text": "Cleaning up..."})
             updater.cleanup()
-        except Exception as e:  # noqa: BLE001
-            with Path("errorlog.txt").open("a", encoding="utf-8") as file:
-                lines = format_exception_with_variables(e)
-                file.writelines(lines)
-                file.write("\n----------------------\n")
+        except Exception:  # noqa: BLE001
+            get_root_logger().critical("Auto-update had an unexpected error", exc_info=True)
         #finally:
         #    exitapp(True)
 
@@ -1089,7 +1085,7 @@ class App:
         directory: Path,
         *,
         recurse: bool = False,
-        should_filter=False,
+        should_filter: bool = False,
     ) -> bool:
         """Check access to a directory.
 

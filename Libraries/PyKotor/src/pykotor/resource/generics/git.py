@@ -4,7 +4,7 @@ import math
 
 from abc import ABC, abstractmethod
 from enum import IntEnum
-from typing import TYPE_CHECKING, NoReturn
+from typing import TYPE_CHECKING, Any, Generator, List, NoReturn, cast
 
 from pykotor.common.geometry import Polygon3, Vector2, Vector3, Vector4
 from pykotor.common.language import LocalizedString
@@ -49,6 +49,44 @@ class GIT:
         self.triggers: list[GITTrigger] = []
         self.waypoints: list[GITWaypoint] = []
 
+    def __iter__(self) -> Generator[ResRef, Any, None]:
+        # Iterate over creatures
+        for creature in self.creatures:
+            yield creature.resref
+        # Iterate over doors
+        for door in self.doors:
+            yield door.resref
+        for encounter in self.encounters:
+            yield encounter.resref
+        for store in self.stores:
+            yield store.resref
+        for placeable in self.placeables:
+            yield placeable.resref
+        for sound in self.sounds:
+            yield sound.resref
+        for trigger in self.triggers:
+            yield trigger.resref
+        for waypoint in self.waypoints:
+            yield waypoint.resref
+
+    def iter_resource_identifiers(self) -> Generator[ResourceIdentifier, Any, None]:
+        for creature in self.creatures:
+            yield ResourceIdentifier(str(creature.resref), ResourceType.UTC)
+        for door in self.doors:
+            yield ResourceIdentifier(str(door.resref), ResourceType.UTD)
+        for encounter in self.encounters:
+            yield ResourceIdentifier(str(encounter.resref), ResourceType.UTE)
+        for store in self.stores:
+            yield ResourceIdentifier(str(store.resref), ResourceType.UTM)
+        for placeable in self.placeables:
+            yield ResourceIdentifier(str(placeable.resref), ResourceType.UTP)
+        for sound in self.sounds:
+            yield ResourceIdentifier(str(sound.resref), ResourceType.UTS)
+        for trigger in self.triggers:
+            yield ResourceIdentifier(str(trigger.resref), ResourceType.UTT)
+        for waypoint in self.waypoints:
+            yield ResourceIdentifier(str(waypoint.resref), ResourceType.UTW)
+
     def instances(
         self,
     ) -> list[GITInstance]:
@@ -58,19 +96,20 @@ class GIT:
         -------
             A list of all stored instances.
         """
-        instances: list[GITInstance] = []
-        # We could just add these all together rather than using the extend method, but then PyCharms would get cranky
-        # about the type hints...
-        instances.extend(self.cameras)
-        instances.extend(self.creatures)
-        instances.extend(self.doors)
-        instances.extend(self.encounters)
-        instances.extend(self.placeables)
-        instances.extend(self.sounds)
-        instances.extend(self.stores)
-        instances.extend(self.triggers)
-        instances.extend(self.waypoints)
-        return instances
+        return cast(
+            List[GITInstance],
+            [
+                *self.cameras,
+                *self.creatures,
+                *self.doors,
+                *self.encounters,
+                *self.placeables,
+                *self.sounds,
+                *self.stores,
+                *self.triggers,
+                *self.waypoints,
+            ]
+        )
 
     def remove(
         self,

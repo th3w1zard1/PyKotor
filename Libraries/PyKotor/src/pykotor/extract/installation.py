@@ -9,7 +9,7 @@ from contextlib import suppress
 from copy import copy
 from enum import Enum, IntEnum
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, Iterable, Sequence
 
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, Game
@@ -18,7 +18,6 @@ from pykotor.extract.capsule import Capsule
 from pykotor.extract.chitin import Chitin
 from pykotor.extract.file import FileResource, LocationResult, ResourceIdentifier, ResourceResult
 from pykotor.extract.talktable import TalkTable
-from pykotor.extract.twoda import K1Columns2DA
 from pykotor.resource.formats.erf.erf_data import ERFType
 from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.formats.gff.gff_data import GFFContent, GFFFieldType, GFFList, GFFStruct
@@ -451,7 +450,7 @@ class Installation:
             self._log.info("The '%s' folder did not exist when loading the installation at '%s', skipping...", r_path.name, self._path)
             return {}
 
-        self._log.info("Loading %s from installation...", r_path.relative_to(self._path))
+        self._log.info("Loading '%s' from installation...", r_path.relative_to(self._path))
         files_iter = path.safe_rglob("*") if recurse else path.safe_iterdir()
 
         resources_dict: dict[str, list[FileResource]] = {}
@@ -1204,7 +1203,7 @@ class Installation:
         restype: ResourceType,
         order: list[SearchLocation] | None = None,
         *,
-        capsules: list[Capsule] | None = None,
+        capsules: Sequence[Capsule] | None = None,
         folders: list[Path] | None = None,
     ) -> ResourceResult | None:
         """Returns a resource matching the specified resref and restype.
@@ -1357,41 +1356,12 @@ class Installation:
             folders=folders,
         )[query]
 
-    def load_search_locations(self, order: list[SearchLocation]):
-        if SearchLocation.OVERRIDE in order and not self._override:
-            self.load_override()
-        if SearchLocation.CHITIN in order and not self._chitin:
-            self.load_chitin()
-        if SearchLocation.LIPS in order and not self._lips:
-            self.load_lips()
-        if (SearchLocation.MODULES in order or SearchLocation.RIMS in order) and not self._modules:
-            self.load_modules()
-        if SearchLocation.MUSIC in order and not self._streammusic:
-            self.load_streammusic()
-        if SearchLocation.RIMS in order and not self._rims and self.game().is_k1():
-            self.load_rims()
-        if SearchLocation.SOUND in order and not self._streamsounds:
-            self.load_streamsounds()
-        if not self._texturepacks and (
-            SearchLocation.TEXTURES_GUI in order
-            or SearchLocation.TEXTURES_TPA in order
-            or SearchLocation.TEXTURES_TPB in order
-            or SearchLocation.TEXTURES_TPC in order
-        ):
-            self.load_textures()
-        if SearchLocation.VOICE in order and not self._streamwaves:
-            game = self.game()
-            if game.is_k1():
-                self.load_streamwaves()
-            elif game.is_k2():
-                self.load_streamvoice()
-
     def locations(
         self,
-        queries: list[ResourceIdentifier] | set[ResourceIdentifier],
+        queries: Iterable[ResourceIdentifier],
         order: list[SearchLocation] | None = None,
         *,
-        capsules: list[Capsule] | None = None,
+        capsules: Sequence[Capsule] | None = None,
         folders: list[Path] | None = None,
     ) -> dict[ResourceIdentifier, list[LocationResult]]:
         """Returns a dictionary mapping the items provided in the queries argument to a list of locations for that respective resource.
@@ -1415,7 +1385,6 @@ class Installation:
                 SearchLocation.MODULES,
                 SearchLocation.CHITIN,
             ]
-        self.load_search_locations(order)
         capsules = [] if capsules is None else capsules
         folders = [] if folders is None else folders
 
@@ -1429,17 +1398,18 @@ class Installation:
 
         def check_list(resource_list: list[FileResource]):
             # Index resources by identifier
+            lookup_dict = {resource.identifier(): resource for resource in resource_list}
             for query in queries:
-                for resource in resource_list:
-                    if resource.identifier() != query:
-                        continue
-                    location = LocationResult(
-                        resource.filepath(),
-                        resource.offset(),
-                        resource.size(),
-                    )
-                    location.set_file_resource(resource)
-                    locations[query].append(location)
+                resource = lookup_dict.get(query)
+                if resource is None:
+                    continue
+                location = LocationResult(
+                    resource.filepath(),
+                    resource.offset(),
+                    resource.size(),
+                )
+                location.set_file_resource(resource)
+                locations[query].append(location)
 
         def check_capsules(values: list[Capsule]):
             for capsule in values:
@@ -1544,7 +1514,7 @@ class Installation:
 
     def textures(
         self,
-        resnames: list[str],
+        resnames: Iterable[str],
         order: list[SearchLocation] | None = None,
         *,
         capsules: list[Capsule] | None = None,
@@ -1573,8 +1543,8 @@ class Installation:
                 SearchLocation.TEXTURES_TPA,
                 SearchLocation.CHITIN,
             ]
-        self.load_search_locations(order)
-        resnames = remove_duplicates(resnames, case_insensitive=True)
+        resnames: set[str] = set(resnames)
+        case_resnames: set[str] = {resname.lower() for resname in resnames}
         capsules = [] if capsules is None else capsules
         folders = [] if folders is None else folders
 
@@ -1589,18 +1559,25 @@ class Installation:
             case_resnames.append(case_resname)
 
         def decode_txi(txi_bytes: bytes) -> str:
-            return txi_bytes.decode("ascii", errors="ignore")
+            return txi_bytes.decode("ascii", errors="ignore").strip()
 
-        def get_txi_from_list(resname: str, resource_list: list[FileResource]) -> str:
+        def get_txi_from_list(case_resname: str, resource_list: list[FileResource]) -> str:
             txi_resource: FileResource | None = next(
                 (
                     resource
                     for resource in resource_list
-                    if resource.resname() == resname and resource.restype() is ResourceType.TXI
+                    if resource.restype() is ResourceType.TXI and resource.identifier().lower_resname == case_resname
                 ),
                 None,
             )
-            return "" if txi_resource is None else decode_txi(txi_resource.data())
+            if txi_resource is not None:
+                self._log.debug("Found txi resource '%s' at %s", txi_resource.identifier(), txi_resource.filepath().relative_to(self._path.parent))
+                contents = decode_txi(txi_resource.data())
+                if contents and not contents.isascii():
+                    self._log.warning("Texture TXI '%s' is not ascii! (found at %s)", txi_resource.identifier(), txi_resource.filepath())
+                return contents
+            self._log.debug("'%s.txi' resource not found during texture lookup.", case_resname)
+            return ""
 
         def check_dict(values: dict[str, list[FileResource]]):
             for resources in values.values():
@@ -1608,23 +1585,16 @@ class Installation:
 
         def check_list(resource_list: list[FileResource]):
             for resource in resource_list:
-                restype: ResourceType = resource.restype()
-                if restype not in texture_types:
+                if resource.restype() not in texture_types:
                     continue
-                case_resname: CaseInsensitiveWrappedStr = CaseInsensitiveWrappedStr.cast(resource.resname())
+                case_resname = resource.identifier().lower_resname
                 if case_resname not in case_resnames:
                     continue
-
-                texture_data: bytes = resource.data()
-                if restype == ResourceType.TXI:
-                    if case_resname not in txis:  # check if it already contains so the search order is prioritized.
-                        txis[case_resname] = texture_data
-                else:
-                    case_resnames.remove(case_resname)
-                    tpc: TPC = read_tpc(resource.data())
-                    if resource.restype() is ResourceType.TGA:
-                        tpc.txi = get_txi_from_list(case_resname, resource_list)
-                    textures[case_resname] = tpc
+                case_resnames.remove(case_resname)
+                tpc: TPC = read_tpc(resource.data())
+                if resource.restype() is ResourceType.TGA:
+                    tpc.txi = get_txi_from_list(case_resname, resource_list)
+                textures[case_resname] = tpc
 
         def check_capsules(values: list[Capsule]):
             for capsule in values:
@@ -1730,33 +1700,45 @@ class Installation:
         found_resources: set[FileResource] = set()
         gff_extensions: set[str] = GFFContent.get_extensions()
         relevant_2da_filenames: dict[str, set[str]] = {}
-        if self.game().is_k1():
-            relevant_2da_filenames = K1Columns2DA.StrRefs.as_dict()  # TODO: KOTOR 2's:
+        from pykotor.extract.twoda import K1Columns2DA, K2Columns2DA
+        if self.game().is_k1():  # TODO(th3w1zard1): TSL:
+            relevant_2da_filenames = K1Columns2DA.StrRefs.as_dict()
+        elif self.game().is_k2():
+            relevant_2da_filenames = K2Columns2DA.StrRefs.as_dict()
 
         def check_2da(resource2da: FileResource) -> bool:
             valid_2da: TwoDA | None = None
             with suppress(ValueError, OSError):
                 valid_2da = read_2da(resource2da.data())
             if not valid_2da:
+                print(f"'{resource2da._path_ident_obj}' cannot be loaded, probably corrupted.")
                 return False
             filename_2da = resource2da.filename().lower()
             for column_name in relevant_2da_filenames[filename_2da]:
                 if column_name == ">>##HEADER##<<":
                     for header in valid_2da.get_headers():
-                        if not header.strip().isdigit():
-                            if header.strip() and header.strip() not in ("****", "*****", "-1"):
-                                self._log.warning(f"header '{header}' in '{filename_2da}' is invalid, expected a stringref number.")
-                            continue
-                        if int(header.strip()) == query_stringref:
-                            return True
+                        try:
+                            stripped_header = header.strip()
+                            if not stripped_header.isdigit():
+                                if stripped_header and stripped_header not in ("****", "*****", "-1"):
+                                    self._log.warning(f"header '{header}' in '{filename_2da}' is invalid, expected a stringref number.")
+                                continue
+                            if int(stripped_header) == query_stringref:
+                                return True
+                        except Exception as e:
+                            get_root_logger().error("Error parsing '%s' header '%s': %s", filename_2da, header, str(e), exc_info=False)
                 else:
-                    for i, cell in enumerate(valid_2da.get_column(column_name)):
-                        if not cell.strip().isdigit():
-                            if cell.strip() and cell.strip() not in ("****", "*****", "-1"):
-                                self._log.warning(f"column '{column_name}' rowindex {i} in '{filename_2da}' is invalid, expected a stringref number. Instead got '{cell}'")
-                            continue
-                        if int(cell.strip()) == query_stringref:
-                            return True
+                    try:
+                        for i, cell in enumerate(valid_2da.get_column(column_name)):
+                            stripped_cell = cell.strip()
+                            if not stripped_cell.isdigit():
+                                if stripped_cell and stripped_cell not in ("****", "*****", "-1"):
+                                    self._log.warning(f"column '{column_name}' rowindex {i} in '{filename_2da}' is invalid, expected a stringref number. Instead got '{cell}'")
+                                continue
+                            if int(stripped_cell) == query_stringref:
+                                return True
+                    except Exception as e:
+                        get_root_logger().error("Error parsing '%s' column '%s': %s", filename_2da, column_name, str(e), exc_info=False)
             return False
 
         def recurse_gff_lists(gff_list: GFFList) -> bool:
@@ -1910,7 +1892,7 @@ class Installation:
 
     def sounds(
         self,
-        resnames: list[str],
+        resnames: Iterable[str],
         order: list[SearchLocation] | None = None,
         *,
         capsules: list[Capsule] | None = None,
@@ -1931,6 +1913,8 @@ class Installation:
         -------
             A dictionary mapping a case-insensitive string to a bytes object or None.
         """
+        resnames: set[str] = set(resnames)
+        case_resnames: set[str] = {resname.casefold() for resname in resnames}
         capsules = [] if capsules is None else capsules
         folders = [] if folders is None else folders
         if order is None:
@@ -1941,7 +1925,6 @@ class Installation:
                 SearchLocation.SOUND,
                 SearchLocation.CHITIN,
             ]
-        self.load_search_locations(order)
 
         sounds: CaseInsensitiveDict[bytes | None] = CaseInsensitiveDict()
         sound_formats: list[ResourceType] = [ResourceType.WAV, ResourceType.MP3]
@@ -1958,12 +1941,15 @@ class Installation:
 
         def check_list(values: list[FileResource]):
             for resource in values:
-                case_resname: str = resource.resname().casefold()
-                if case_resname in case_resnames and resource.restype() in sound_formats:
-                    self._log.debug(f"Found sound at '{resource.filepath()}'")
-                    case_resnames.remove(case_resname)
-                    sound_data: bytes = resource.data()
-                    sounds[resource.resname()] = deobfuscate_audio(sound_data)
+                if resource.restype() not in sound_formats:
+                    continue
+                case_resname = resource.identifier().lower_resname
+                if case_resname not in case_resnames:
+                    continue
+                self._log.debug("Found sound at '%s'", resource.filepath())
+                case_resnames.remove(case_resname)
+                sound_data: bytes = resource.data()
+                sounds[resource.resname()] = deobfuscate_audio(sound_data)
 
         def check_capsules(resource_list: list[Capsule]):
             for capsule in resource_list:
@@ -1975,7 +1961,7 @@ class Installation:
                             break
                     if sound_data is None:  # No sound data found in this list.
                         continue
-                    self._log.debug(f"Found sound at '{capsule.path()}'")
+                    self._log.debug("Found sound at '%s'", capsule.filepath())
                     case_resnames.remove(case_resname)
                     sounds[case_resname] = deobfuscate_audio(sound_data)
 
@@ -1992,7 +1978,7 @@ class Installation:
                     )
                 )
             for sound_file in queried_sound_files:
-                self._log.debug(f"Found sound at '{sound_file}'")
+                self._log.debug("Found sound at '%s'", sound_file)
                 case_resnames.remove(sound_file.stem.casefold())
                 sound_data: bytes = BinaryReader.load_file(sound_file)
                 sounds[sound_file.stem] = deobfuscate_audio(sound_data)
@@ -2400,7 +2386,7 @@ class Installation:
                         mod_id = "_".join(parts[1:-1])
                     else:  # ...except when the last part matches a qualifier
                         mod_id = "_".join(parts[1:-2])
-                self._log.debug("parts: %s id: '%s'", parts, mod_id)
+                #self._log.debug("parts: %s id: '%s'", parts, mod_id)
                 return mod_id
 
             if use_alternate:

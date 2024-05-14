@@ -10,13 +10,14 @@ import uuid
 from contextlib import suppress
 from functools import lru_cache
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from utility.error_handling import format_exception_with_variables
 from utility.logger_util import get_root_logger
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
+    from logging import Logger
 
     from typing_extensions import Self
 
@@ -197,7 +198,7 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
                 self_compare = self_compare.lower()
                 other_compare = other_compare.lower()
 
-        return self_compare == other_compare
+        return cast(bool, self_compare == other_compare)
 
     def __hash__(self):
         return hash(self.as_posix() if self._flavour.sep == "/" else self.as_windows())  # type: ignore[reportAttributeAccessIssue]
@@ -693,8 +694,9 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
 
             # If the function fails, it returns INVALID_FILE_ATTRIBUTES
             if attrs == -1:
-                msg = f"Cannot access attributes of file: {file_path}"
-                raise FileNotFoundError(msg)
+                import errno
+                msg = "Cannot access attributes of the file"
+                raise FileNotFoundError(errno.ENOENT, msg, str(file_path))
 
             # Check for specific attributes
             is_read_only = bool(attrs & FILE_ATTRIBUTE_READONLY)
@@ -893,3 +895,23 @@ class PosixPath(Path):  # type: ignore[misc]
 
 class WindowsPath(Path):  # type: ignore[misc]
     _flavour = pathlib.PureWindowsPath._flavour  # noqa: SLF001  # type: ignore[reportAttributeAccessIssue]
+
+
+
+class ChDir:
+    def __init__(
+        self,
+        path: os.PathLike | str,
+        logger: Logger | None = None,
+    ):
+        self.old_dir: Path = Path.cwd()
+        self.new_dir: Path = Path.pathify(path)
+        self.log = logger or get_root_logger()
+
+    def __enter__(self):
+        self.log.debug(f"Changing to Directory --> '{self.new_dir}'")  # noqa: G004
+        os.chdir(self.new_dir)
+
+    def __exit__(self, *args, **kwargs):
+        self.log.debug(f"Moving back to Directory --> '{self.old_dir}'")  # noqa: G004
+        os.chdir(self.old_dir)

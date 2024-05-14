@@ -29,7 +29,7 @@ class ModelRenderer(QOpenGLWidget):
     def __init__(self, parent: QWidget):
         super().__init__(parent)
 
-        self.scene: Scene | None = None
+        self._scene: Scene | None = None
         self.installation: Installation | None = None
         self._modelToLoad: tuple[BinaryReader, BinaryReader] | None = None
         self._creatureToLoad: UTC | None = None
@@ -61,8 +61,14 @@ class ModelRenderer(QOpenGLWidget):
         self.repaint()
         QTimer.singleShot(33, self.loop)
 
+    @property
+    def scene(self) -> Scene:
+        if self._scene is None:
+            raise ValueError("Scene must be constructed before this operation.")
+        return self._scene
+
     def initializeGL(self):
-        self.scene = Scene(installation=self.installation)
+        self._scene = Scene(installation=self.installation)
         self.scene.camera.fov = 70
         self.scene.camera.distance = 4
         self.scene.camera.z = 1.8
@@ -109,7 +115,7 @@ class ModelRenderer(QOpenGLWidget):
         self.scene.render()
 
     def clearModel(self):
-        if self.scene is not None and "model" in self.scene.objects:
+        if self._scene is not None and "model" in self.scene.objects:
             del self.scene.objects["model"]
 
     def setModel(self, data: bytes, data_ext: bytes):
@@ -136,7 +142,7 @@ class ModelRenderer(QOpenGLWidget):
     def resizeEvent(self, e: QResizeEvent):
         super().resizeEvent(e)
 
-        if self.scene is not None:
+        if self._scene is not None:
             self.scene.camera.width = e.size().width()
             self.scene.camera.height = e.size().height()
 

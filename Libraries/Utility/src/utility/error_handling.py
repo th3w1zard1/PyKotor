@@ -8,6 +8,7 @@ import types
 
 from contextlib import suppress
 from contextvars import ContextVar
+from functools import lru_cache
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar
 
@@ -253,7 +254,7 @@ def format_frame_info(
             detailed_message.append(formatted_var)
     return detailed_message
 
-
+@lru_cache(maxsize=128)
 def format_exception_with_variables(
     exc: BaseException,
     etype: type[BaseException] | None = None,
@@ -332,7 +333,7 @@ def enforce_instance_cast(
 
 
 def assert_with_variable_trace(
-    condition: bool,
+    condition: bool,  # noqa: FBT001
     message: str = "Assertion Failed",
 ):
     if condition:
@@ -374,7 +375,7 @@ def with_variable_trace(
     exception_types: type[Exception] | tuple[type[Exception], ...] = Exception,
     return_type: type[RT] = unique_sentinel,  # type: ignore[reportGeneralTypeIssues, assignment]
     *,
-    action="print",
+    action: Literal["print", "stderr"] = "print",
     log: bool = True,
     rethrow: bool = False,
 ) -> Callable[[Callable[..., RT]], Callable[..., RT | None]]:

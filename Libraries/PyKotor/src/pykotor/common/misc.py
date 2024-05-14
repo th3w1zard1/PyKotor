@@ -61,7 +61,7 @@ class ResRef:
     class CaseSensitivityError(ValueError):
         """ResRefs cannot be converted to a different case."""
 
-        def __init__(self, resref: ResRef, func_name, *args, **kwargs):
+        def __init__(self, resref: ResRef, func_name: str, *args, **kwargs):
             super().__init__(f"ResRef's must be case-insensitive, attempted {resref!r}.{func_name}({args, kwargs})")
 
     def __init__(
@@ -84,10 +84,12 @@ class ResRef:
         other,
     ):
         """A ResRef can be compared to another ResRef or a str."""
+        if self is other:
+            return True
         if isinstance(other, ResRef):
-            other_value = other.get().lower()
+            other_value = str(other).lower()
         elif isinstance(other, str):
-            other_value = other.lower()
+            other_value = other.lower().strip()
         else:
             return NotImplemented
         return other_value == self._value.lower()
@@ -133,15 +135,15 @@ class ResRef:
         return cls(resname)
 
     @classmethod
-    def is_valid(self, text: str) -> bool:
+    def is_valid(cls, text: str) -> bool:
         if not isinstance(text, str):
             return False
         return next(
-            (False for char in self.INVALID_CHARACTERS if char in text),
+            (False for char in cls.INVALID_CHARACTERS if char in text),
             (
                 text != ""
                 and text.isascii()
-                and len(text) <= self.MAX_LENGTH
+                and len(text) <= cls.MAX_LENGTH
                 and text == text.strip()
             ),
         )
@@ -267,6 +269,8 @@ class Color:
         other: Color,
     ):
         """Two Color instances are equal if their color components are equal."""
+        if self is other:
+            return True
         if not isinstance(other, Color):
             return NotImplemented
 
@@ -477,6 +481,8 @@ class WrappedInt:
         self,
         other: WrappedInt | int | object,
     ):
+        if self is other:
+            return True
         if isinstance(other, WrappedInt):
             return self.get() == other.get()
         if isinstance(other, int):  # sourcery skip: assign-if-exp
@@ -515,6 +521,8 @@ class InventoryItem:
         self,
         other: object,
     ):
+        if self is other:
+            return True
         if isinstance(other, InventoryItem):
             return self.resref == other.resref and self.droppable == other.droppable  # and self.infinite == other.infinite
         return NotImplemented
@@ -584,13 +592,15 @@ class CaseInsensitiveHashSet(set, Generic[T]):
             for item in other:
                 self.add(item)
 
-    def __contains__(self, item) -> bool:
+    def __contains__(self, item):
         return super().__contains__(self._normalize_key(item))
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other):
+        if self is other:
+            return True
         return super().__eq__({self._normalize_key(item) for item in other})
 
-    def __ne__(self, other) -> bool:
+    def __ne__(self, other):
         return super().__ne__({self._normalize_key(item) for item in other})
 
 
@@ -650,14 +660,21 @@ class CaseInsensitiveDict(Generic[T]):
     #        return GenericAlias(cls, item)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, (dict, CaseInsensitiveDict)):
+        # Quick checks.
+        if self is other:
+            return True
+        is_casedict = isinstance(other, CaseInsensitiveDict)
+        is_dict = isinstance(other, dict) and not is_casedict  # for future implementation when we make CaseInsensitiveDict subclass dict.
+        if not is_dict and not is_casedict:
             return NotImplemented
-
+        # it's a dict of some sort, do some more quick checks.
+        if is_casedict and other._case_map != self._case_map:
+            return False
         other_dict: dict[str, T] = other._dictionary if isinstance(other, CaseInsensitiveDict) else other
-
         if len(self._dictionary) != len(other_dict):
             return False
 
+        # unfortunately we must now iterate over each and compare (slow)
         for key, value in self._dictionary.items():
             other_value: T | None = other_dict.get(key.lower())
             if other_value != value:

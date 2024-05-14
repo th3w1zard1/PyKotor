@@ -79,10 +79,10 @@ def get_body_model(
 
     modeltype = utc_appearance_row.get_string("modeltype", context=f"Fetching model type{context_base}")
     if modeltype != "B":
-        get_root_logger().debug(f"appearance.2da: utc 'modeltype' is '{modeltype}', fetching 'race' model{context_base}")
+        print(f"appearance.2da: utc 'modeltype' is '{modeltype}', fetching 'race' model{context_base}")
         body_model = utc_appearance_row.get_string("race", context=context_base)
     else:
-        get_root_logger().debug("appearance.2da: utc 'modeltype' is 'B'")
+        print("appearance.2da: utc 'modeltype' is 'B'")
         if EquipmentSlot.ARMOR in utc.equipment:
             armor_resref = utc.equipment[EquipmentSlot.ARMOR].resref
             get_root_logger().debug(f"utc is wearing armor, fetch '{armor_resref}.uti'")
@@ -117,7 +117,7 @@ def get_body_model(
             fallback_override_texture = override_texture + tex_append
             if tex_append != "01" and installation.texture(fallback_override_texture) is None:  # e.g. g_lena.utc which uses the twi'lek stripper model (i.e. should be n_twilekfc01 not n_twilekfc05)
                 fallback_override_texture = f"{override_texture}01"
-                print(f"override texture '{fallback_override_texture}' not found, using ")
+                print(f"override texture '{fallback_override_texture}' not found, appending '01' to the end like the game itself would do.")
             override_texture = fallback_override_texture
         else:
             override_texture = None

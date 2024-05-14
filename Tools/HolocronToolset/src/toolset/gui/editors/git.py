@@ -47,7 +47,7 @@ from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow, R
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.renderer.walkmesh import GeomPoint
 from toolset.gui.widgets.settings.git import GITSettings
-from toolset.utils.window import addWindow
+from toolset.utils.window import addWindow, openResourceEditor
 from utility.logger_util import get_root_logger
 
 if TYPE_CHECKING:
@@ -727,18 +727,29 @@ class _InstanceMode(_Mode):
         else:
             assert self._editor._module is not None
             module_root = self._editor._module._root
+
         module_root = module_root.lower()
         for loc in search:
             if (
                 loc.filepath.parent.name.lower() == "modules"
-                and self._installation.replace_module_extensions(loc.filepath.name.lower()) != self._editor._module._root
+                and self._installation.replace_module_extensions(loc.filepath.name.lower()) != module_root
             ):
                 get_root_logger().debug(f"Removing non-module location '{loc.filepath}' (not in our module '{module_root}')")
                 search.remove(loc)
-        if search:
+        if len(search) > 1:
             selectionWindow = FileSelectionWindow(search, self._installation)
             selectionWindow.show()
             selectionWindow.activateWindow()
+            addWindow(selectionWindow)
+        elif search:
+            resource = search[0].as_file_resource()
+            openResourceEditor(
+                resource.filepath(),
+                resource.resname(),
+                resource.restype(),
+                resource.data(),
+                self._installation
+            )
 
     def editSelectedInstanceGeometry(self):
         if self.walkmeshRenderer.instanceSelection.last():
@@ -771,7 +782,8 @@ class _InstanceMode(_Mode):
             - Connects each action to a method on the class to handle the trigger
         """
         menu.addAction("Remove").triggered.connect(self.deleteSelected)
-        menu.addAction("Edit Instance").triggered.connect(self.editSelectedInstance)
+        if isinstance(self._editor, GITEditor):
+            menu.addAction("Edit Instance").triggered.connect(self.editSelectedInstance)
 
         actionEditResource = menu.addAction("Edit Resource")
         actionEditResource.triggered.connect(self.editSelectedInstanceResource)
@@ -796,11 +808,23 @@ class _InstanceMode(_Mode):
         fileMenu = menu.addMenu("File Actions")
         # Get the current position of the mouse cursor
         global_position = QCursor.pos()
+        if isinstance(self._editor, GITEditor):
+            valid_filepaths = [self._editor._filepath]
+        else:
+            valid_filepaths = [res.filepath() for res in self._editor._module.get_capsules() if res is not None]
+        override_path = self._installation.override_path() / str(instance.identifier())
+        valid_filepaths.append(override_path)
 
         # Iterate over each location to create submenus
         for result in locations:
             # Create a submenu for each location
-            location_menu = fileMenu.addMenu(str(result.filepath.joinpath(str(instance.identifier())).relative_to(self._installation.path())))
+            if result.filepath not in valid_filepaths:
+                continue
+            if result.filepath == override_path:
+                abs_display_path = override_path
+            else:
+                abs_display_path = result.filepath.joinpath(str(instance.identifier()))
+            location_menu = fileMenu.addMenu(str(abs_display_path.relative_to(self._installation.path())))
             resourceMenuBuilder = ResourceItems(resources=[result])
             resourceMenuBuilder.build_menu(global_position, location_menu)
         def moreInfo():
@@ -811,6 +835,7 @@ class _InstanceMode(_Mode):
             selectionWindow.show()
             selectionWindow.activateWindow()
             addWindow(selectionWindow)
+
         fileMenu.addAction("Details...").triggered.connect(moreInfo)
         return menu
 
