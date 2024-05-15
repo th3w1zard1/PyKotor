@@ -9,6 +9,7 @@ import subprocess
 import sys
 import time
 
+from abc import ABC
 from collections import OrderedDict
 from contextlib import suppress
 from datetime import datetime
@@ -20,6 +21,7 @@ import send2trash
 from qtpy.QtCore import QUrl, Qt
 from qtpy.QtGui import QDesktopServices, QKeySequence
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QAction,
     QApplication,
     QCheckBox,
@@ -27,7 +29,7 @@ from qtpy.QtWidgets import (
     QDialog,
     QFileDialog,
     QHeaderView,
-    QLineEdit,
+    QInputDialog,
     QMainWindow,
     QMenu,
     QMessageBox,
@@ -37,6 +39,7 @@ from qtpy.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QTreeView,
+    QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
@@ -113,72 +116,192 @@ COLUMN_TO_STAT_MAP = {
     "Flags": "st_flags"
 }
 
-STAT_TO_COLUMN_MAP = {
-    "st_size": "Size",
-    "st_mode": "Mode",
-    "st_atime": "Last Accessed",
-    "st_mtime": "Last Modified",
-    "st_ctime": "Created",
-    "st_nlink": "Hard Links",
-    "st_atime_ns": "Last Accessed (ns)",
-    "st_mtime_ns": "Last Modified (ns)",
-    "st_ctime_ns": "Created (ns)",
-    "st_ino": "Inode",
-    "st_dev": "Device",
-    "st_uid": "User ID",
-    "st_gid": "Group ID",
-    "st_file_attributes": "File Attributes",
-    "st_reparse_tag": "Reparse Tag",
-    "st_blocks": "Blocks Allocated",
-    "st_blksize": "Block Size",
-    "st_rdev": "Device ID",
-    "st_flags": "Flags"
-}
+STAT_TO_COLUMN_MAP = {v: k for k,v in COLUMN_TO_STAT_MAP.items()}
 
 
-def get_sort_key(value):
-    """Process the value to determine the appropriate sort key."""
-    # sourcery skip: assign-if-exp, reintroduce-else
-    if isinstance(value, str):
-        if is_int(value.strip()):
-            return int(value.strip())
-        if is_float(value.strip()):
-            return float(value.strip())
-    if is_int(value):
-        return int(value)
-    if is_float(value):
-        return float(value)
-    return value
+class BaseContextMenu(QMenu):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.menu_actions: OrderedDict[str, tuple[QAction, Callable]] = OrderedDict()
+
+    def create_action(
+        self,
+        menu_dict: OrderedDict[str, tuple[QAction, Callable]],
+        display_name: str,
+        func: Callable,
+    ) -> QAction:
+        action = QAction(display_name)
+        menu_dict[display_name] = (action, func)
+        return action
+
+    def create_context_menu_dict(
+        self,
+        position: QPoint,
+    ) -> OrderedDict[str, tuple[QAction, Callable]]:
+        menu_dict = OrderedDict()
+        parentWidget = self.parentWidget()
+        if isinstance(parentWidget, QTableWidget):
+            tableActions = CommonTableWidgetActions(parentWidget)
+            self.create_action(menu_dict, "Remove Row from Table", tableActions.remove_selected_rows)
+            self.create_action(menu_dict, "Copy as Text", tableActions.copy_selection_to_clipboard).setShortcut(QKeySequence.StandardKey.Copy)
+
+        return menu_dict
+
+    def build_menu(self, position: QPoint):
+        for (action, func) in self.menu_actions.values():
+            action.setParent(self)
+            action.triggered.connect(func)
+            self.addAction(action)
+        self.exec_(self.parent().mapToGlobal(position))
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        parent_widget = self.parentWidget()
+        if isinstance(parent_widget, QMainWindow):
+            self.addAction("Global Action for QMainWindow")
+        elif isinstance(parent_widget, QDialog):
+            self.addAction("Global Action for QDialog")
+
+    def show_confirmation_dialog(
+        self,
+        icon: QMessageBox.Icon | int,
+        title: str,
+        text: str,
+        buttons: QMessageBox.StandardButton | int = QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+        default_button: QMessageBox.StandardButton | int = QMessageBox.StandardButton.No,
+        detailedMsg: str | None = None,
+    ) -> int | QMessageBox.StandardButton:
+        if not detailedMsg or not detailedMsg.strip():
+            selected = cast(Set[FileTableWidgetItem], {*self.selectedItems()})
+            detailedMsg = ""
+            for selection in selected:
+                file_path = selection.filepath
+                detailedMsg += f"{file_path}\n" if detailedMsg else file_path
+
+        reply = QMessageBox(
+            QMessageBox.Icon.Question,
+            title + (" "*1000),
+            text + (" "*1000),
+            buttons,
+            flags=Qt.WindowType.Dialog
+            | Qt.WindowType.WindowDoesNotAcceptFocus
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.WindowSystemMenuHint,
+        )
+        reply.setDefaultButton(default_button)
+        if detailedMsg:
+            reply.setDetailedText(detailedMsg.strip())
+        return reply.exec_()
 
 
-class SortableTableWidgetItem(QTableWidgetItem):
-    def __init__(self, value, sort_key=None):
-        super().__init__(str(value))
-        self.sort_key = sort_key if sort_key is not None else value
+class SortableItem:
+    def __init__(
+        self,
+        value: Any,
+    ):
+        self.sort_key: Any = value
+
+    @staticmethod
+    def get_sort_key(value: Any) -> int | float | str | Any:  # sourcery skip: assign-if-exp, reintroduce-else
+        if isinstance(value, str):
+            if is_int(value.strip()):
+                return int(value.strip())
+            if is_float(value.strip()):
+                return float(value.strip())
+        if is_int(value):
+            return int(value)
+        if is_float(value):
+            return float(value)
+        return value
+
+
+class FileItem(SortableItem):
+    def __init__(
+        self,
+        value: Any,
+        filepath: os.PathLike | str,
+    ):
+        super().__init__(value)
+        self.filepath: Path = Path.pathify(filepath)
+
+    def __eq__(self, other):
+        return isinstance(other, FileItem) and self.filepath == other.filepath
+
+    def __hash__(self):
+        return hash(self.filepath)
+
+
+class ResourceItem(FileItem):
+    def __init__(
+        self,
+        value: Any,
+        resource: FileResource,
+    ):
+        super().__init__(value, resource.filepath())
+        self.resource: FileResource = resource
+
+    def __eq__(self, other):
+        return isinstance(other, ResourceItem) and self.resource == other.resource
+
+    def __hash__(self):
+        return hash(self.resource)
+
+
+class CustomAbstractWidgetBase(QAbstractItemView, ABC):
+    ABS_TYPE: type
+
+    def __init__(
+        self,
+        value: Any,
+        *args,
+        item_handler: SortableItem,
+        **kwargs,
+    ):
+        assert item_handler is not None, f"Expected required arg `item_handler` for instances of {type(self).__name__}, instead got None"
+        assert isinstance(item_handler, self.ABS_TYPE), f"`item_handler` arg must inherit {self.ABS_TYPE.__name__} for instances of {self.__class__.__name__}, instead got {type(item_handler).__name__}"
+        self._item_handler: SortableItem = item_handler
+
+    def create_action(
+        self,
+        menu_dict: OrderedDict[str, tuple[QAction, Callable]],
+        display_name: str,
+        func: Callable,
+    ) -> QAction:
+        action = QAction(display_name)
+        menu_dict[display_name] = (action, func)
+        return action
+
+
+class SortableTableWidgetItem(QTableWidgetItem, CustomAbstractWidgetBase):
+    ABS_TYPE = SortableItem
+
+    def __init__(
+        self,
+        *args,
+        item_handler: SortableItem,
+        **kwargs,
+    ):
+        QTableWidgetItem.__init__(*args, **kwargs)
+        CustomAbstractWidgetBase.__init__(*args, item_handler=item_handler, **kwargs)
+        self._item_handler: SortableItem
 
     def __lt__(self, other):
+        if isinstance(other, SortableItem):
+            return self._item_handler.__lt__(other)
+
+        other_item_handler: SortableItem | None = getattr(other, "_item_handler", None)
+        if isinstance(other_item_handler, SortableItem):
+            return self._item_handler.__lt__(other_item_handler)
+
         if not isinstance(other, QTableWidgetItem):
             return super().__lt__(other)
-        other_sort_key = getattr(other, "sort_key", None)
-        if isinstance(self.sort_key, (int, float)) and isinstance(other_sort_key, (int, float)):
-            return self.sort_key < other.sort_key
-        if isinstance(self.sort_key, str) and isinstance(other_sort_key, str):
-            return self.sort_key.lower() < other_sort_key.lower()
 
         my_data = self.data(Qt.UserRole)
         other_data = other.data(Qt.UserRole)
 
         # Extract and convert data based on your provided logic
-        my_sort_key = (
-            get_sort_key(my_data if my_data is not None else self.text())
-            if self.sort_key is None
-            else self.sort_key
-        )
-        other_sort_key = (
-            get_sort_key(other_data if other_data is not None else other_sort_key)
-            if other_sort_key is None
-            else other_sort_key
-        )
+        my_sort_key = self._item_handler.get_sort_key(self.text() if my_data is None else my_data)
+        other_sort_key = self._item_handler.get_sort_key(self.text() if other_data is None else other_data)
 
         try:
             return my_sort_key < other_sort_key
@@ -187,38 +310,119 @@ class SortableTableWidgetItem(QTableWidgetItem):
 
 
 class FileTableWidgetItem(SortableTableWidgetItem):
-    def __init__(self, *args, filepath: Path, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.filepath: Path = filepath
+    ABS_TYPE = FileItem
 
-    def __eq__(self, other):
-        if self is other:
-            return True
-        return isinstance(other, FileTableWidgetItem) and self.filepath == other.filepath
-
-    def __hash__(self):
-        return hash(self.filepath)
-
-
-class ResourceTableWidgetItem(FileTableWidgetItem):
     def __init__(
         self,
         *args,
-        resource: FileResource,
+        item_handler: FileItem,
         **kwargs,
     ):
-        super().__init__(*args, filepath=resource.filepath(), **kwargs)
-        self.resource: FileResource = resource
+        SortableTableWidgetItem.__init__(self, *args, item_handler=item_handler, **kwargs)
+        self._item_handler: FileItem
 
     def __eq__(self, other):
-        if self is other:
-            return True
-        return isinstance(other, ResourceTableWidgetItem) and self.resource == other.resource
+        return isinstance(other, FileTableWidgetItem) and self._item_handler.filepath == other._item_handler.filepath
 
     def __hash__(self):
-        return hash(self.resource)
+        return hash(self._item_handler.filepath)
 
-class CustomItem:
+
+class ResourceTableWidgetItem(FileTableWidgetItem):
+    ABS_TYPE = ResourceItem
+
+    def __init__(
+        self,
+        *args,
+        item_handler: FileItem,
+        **kwargs,
+    ):
+        SortableTableWidgetItem.__init__(self, *args, item_handler=item_handler, **kwargs)
+        self.item_handler: ResourceItem
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, ResourceTableWidgetItem)
+            and self.item_handler.resource == other.item_handler.resource
+        )
+
+    def __hash__(self):
+        return hash(self.item_handler.resource)
+
+
+class SortableTreeWidgetItem(QTreeWidgetItem, CustomAbstractWidgetBase):
+    ABS_TYPE = SortableItem
+
+    def __init__(
+        self,
+        *args,
+        item_handler: SortableItem,
+        **kwargs,
+    ):
+        QTreeWidgetItem.__init__(*args, **kwargs)
+        CustomAbstractWidgetBase.__init__(*args, item_handler=item_handler, **kwargs)
+        self._item_handler: SortableItem
+
+    def __lt__(self, other):
+        if isinstance(other, SortableItem):
+            return self._item_handler.__lt__(other)
+
+        other_item_handler: SortableItem | None = getattr(other, "_item_handler", None)
+        if isinstance(other_item_handler, SortableItem):
+            return self._item_handler.__lt__(other_item_handler)
+
+        if not isinstance(other, QTreeWidgetItem):
+            return super().__lt__(other)
+
+        column = self.treeWidget().sortColumn()
+        my_data = self.data(column, Qt.UserRole)
+        other_data = other.data(column, Qt.UserRole)
+
+        my_sort_key = self._item_handler.get_sort_key(my_data if my_data is not None else self.text(column))
+        other_sort_key = self._item_handler.get_sort_key(other_data if other_data is not None else other.text(column))
+
+        try:
+            return my_sort_key < other_sort_key
+        except Exception:  # noqa: BLE001
+            return str(my_sort_key) < str(other_sort_key)
+
+class FileTreeWidgetItem(SortableTreeWidgetItem):
+    ABS_TYPE = FileItem
+
+    def __init__(
+        self,
+        *args,
+        item_handler: FileItem,
+        **kwargs,
+    ):
+        SortableTreeWidgetItem.__init__(*args, item_handler=item_handler, **kwargs)
+        self._item_handler: FileItem
+
+    def __eq__(self, other):
+        return isinstance(other, FileTreeWidgetItem) and self._item_handler.filepath == other._item_handler.filepath
+
+    def __hash__(self):
+        return hash(self._item_handler.filepath)
+
+class ResourceTreeWidgetItem(FileTreeWidgetItem):
+    ABS_TYPE = ResourceItem
+
+    def __init__(
+        self,
+        *args,
+        item_handler: ResourceItem,
+        **kwargs,
+    ):
+        SortableTreeWidgetItem.__init__(*args, item_handler=item_handler, **kwargs)
+        self._item_handler: ResourceItem
+
+    def __eq__(self, other):
+        return isinstance(other, ResourceTreeWidgetItem) and self._item_handler.resource == other._item_handler.resource
+
+    def __hash__(self):
+        return hash(self._item_handler.resource)
+
+class OrigCustomItems:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -312,8 +516,8 @@ class CustomItem:
                     item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
 
-class FileItems(CustomItem):
-    def __init__(self, *args, filepaths: list[Path] | None = None, **kwargs):
+class OrigFileItems(OrigCustomItems):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.filepaths: list[Path] = [] if filepaths is None else filepaths
         self.temp_path: Path | None = None
@@ -363,29 +567,10 @@ class FileItems(CustomItem):
         file_path: Path,
         tableItem: FileTableWidgetItem,
     ):
-        class RenameDialog(QDialog):
-            def __init__(self, original_name="", parent=None):
-                super().__init__(parent)
-                self.setWindowTitle("Rename/Move File")
-
-                self.line_edit = QLineEdit(original_name, self)
-                ok_button = QPushButton("OK", self)
-                ok_button.clicked.connect(self.accept)
-                cancel_button = QPushButton("Cancel", self)
-                cancel_button.clicked.connect(self.reject)
-
-                layout = QVBoxLayout(self)
-                layout.addWidget(self.line_edit)
-                layout.addWidget(ok_button)
-                layout.addWidget(cancel_button)
-
-            def get_new_name(self) -> str:
-                return self.line_edit.text()
-        dialog = RenameDialog(file_path.name, None)
-        result = dialog.exec_()
-        new_filename = dialog.get_new_name()
-        get_root_logger().info("Renaming '%s' to '%s'", file_path, new_filename)
-        shutil.move(str(file_path), str(file_path.with_name(new_filename)))
+        new_filename, ok = QInputDialog.getText(tableItem, "Rename File", "Enter new file name:")
+        if ok:
+            get_root_logger().info("Renaming '%s' to '%s'", file_path, new_filename)
+            shutil.move(str(file_path), str(file_path.with_name(new_filename)))
 
     def create_context_menu_dict(
         self,
@@ -627,7 +812,7 @@ class FileItems(CustomItem):
         errMsgBox.exec_()
 
 
-class ResourceItems(FileItems):
+class OrigResourceItems(OrigFileItems):
     def __init__(
         self,
         *args,
@@ -660,7 +845,7 @@ class ResourceItems(FileItems):
         return resource.identifier()
 
     def selectedItems(self) -> list[ResourceTableWidgetItem]:
-        return [ResourceTableWidgetItem(value=res.identifier(), resource=res) for res in self.resources]
+        return [ResourceItem(res) for res in self.resources]
 
     def selected_files_exist(
         self,
@@ -814,7 +999,7 @@ class ResourceItems(FileItems):
             openResourceEditor(resource.filepath(), resource.resname(), resource.restype(), data, installation, gff_specialized=gff_specialized)
 
 
-class CustomTableWidget(CustomItem, QTableWidget):
+class CustomTableWidget(OrigCustomItems, QTableWidget):
     def get_column_index(self, column_name: str) -> int:
         # This method needs to be context-aware for the type of view
         if isinstance(self, QTableWidget):
@@ -830,12 +1015,13 @@ class CustomTableWidget(CustomItem, QTableWidget):
                 if model.headerData(i, Qt.Horizontal) == column_name:
                     return i
         raise ValueError(f"Column name '{column_name}' does not exist in this view.")
-
-class FileTableWidget(FileItems, CustomTableWidget):
-    def selectedItems(self) -> list[FileTableWidgetItem]:
+    def selectedItems(self) -> list[ResourceTableWidgetItem]:
         return QTableWidget.selectedItems(self)
 
-class ResourceTableWidget(FileTableWidget, ResourceItems):
+class FileTableWidget(OrigFileItems, CustomTableWidget):
+    def selectedItems(self) -> list[ResourceTableWidgetItem]:
+        return QTableWidget.selectedItems(self)
+class ResourceTableWidget(FileTableWidget, OrigResourceItems):
     def selectedItems(self) -> list[ResourceTableWidgetItem]:
         return QTableWidget.selectedItems(self)
 
@@ -935,8 +1121,7 @@ class FileSelectionWindow(QMainWindow):
         resource: FileResource,
         sort_key: Any | None = None,
     ) -> ResourceTableWidgetItem:
-        item = ResourceTableWidgetItem(value, sort_key, resource=resource)
-        return item
+        return ResourceTableWidgetItem(value, sort_key, resource=resource)
 
     def populate_table(self):
         self.resource_table.setRowCount(len(self.resource_table.resources))  # Ensure the row count is correctly set
