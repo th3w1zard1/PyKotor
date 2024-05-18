@@ -22,9 +22,26 @@ if TYPE_CHECKING:
 QtKey = QtCore.Qt.Key
 QtMouse = QtCore.Qt.MouseButton
 
+# Keyboard button mappings
+MODIFIER_KEYS = {
+    QtKey.Key_Control: "CTRL",
+    QtKey.Key_Shift: "SHIFT",
+    QtKey.Key_Alt: "ALT",
+    QtKey.Key_Meta: "META",  # Often corresponds to the Windows or Command key
+    QtKey.Key_AltGr: "ALTGR",  # Alt Graph key
+    QtKey.Key_CapsLock: "CAPSLOCK",
+    QtKey.Key_NumLock: "NUMLOCK",
+    QtKey.Key_ScrollLock: "SCROLLLOCK",
+}
+
+# Create a reverse dictionary for easy lookup
+STRING_TO_KEY = {v: k for k, v in MODIFIER_KEYS.items()}
+
 
 def get_nums(string_input: str) -> list[int]:
-    """Returns the numbers stored within a string. Numbers in a string are seperated by any non-numeric character.
+    """Returns the numbers stored within a string.
+
+    Numbers in a string are seperated by any non-numeric character.
 
     Args:
     ----
@@ -34,12 +51,12 @@ def get_nums(string_input: str) -> list[int]:
     -------
         List of numbers.
     """
-    string = ""
-    nums = []
+    string: str = ""
+    nums: list[int] = []
     for char in f"{string_input} ":
         if char.isdigit():
             string += char
-        elif string != "":
+        elif string.strip():
             nums.append(int(string))
             string = ""
     return nums
@@ -57,7 +74,7 @@ def clamp(value: float, minValue: float, maxValue: float) -> float:
 def getStringFromKey(key: int) -> str:
     """Returns the string for the given key code.
 
-    This function will take into account edge cases that QKeySequence.toString() fails to handle properly.
+    This function will take into account edge cases (modifier keys like ctrl/alt) that QKeySequence.toString() fails to handle properly.
 
     Args:
     ----
@@ -67,16 +84,35 @@ def getStringFromKey(key: int) -> str:
     -------
         The matching string.
     """
-    if key == QtCore.Qt.Key.Key_Control:
-        return "CTRL"
-    if key == QtCore.Qt.Key.Key_Alt:
-        return "ALT"
-    if key == QtCore.Qt.Key.Key_Shift:
-        return "SHIFT"
-    return QKeySequence(key).toString()
+    return MODIFIER_KEYS.get(key, QKeySequence(key).toString())
 
 
-def getResourceFromFile(filepath: os.PathLike | str, resname: str, restype: ResourceType) -> bytes:
+def getKeyFromString(string: str) -> int:
+    """Returns the key code for the given string.
+
+    This function handles special cases (modifier keys like ctrl/alt) that QKeySequence.fromString() might not handle properly.
+
+    Args:
+    ----
+        string: The key string.
+
+    Returns:
+    -------
+        The matching key code.
+    """
+    if string in STRING_TO_KEY:
+        return STRING_TO_KEY[string]
+
+    # Convert the string to QKeySequence and extract the key code
+    key_sequence = QKeySequence.fromString(string)
+    return key_sequence[0] if key_sequence.count() > 0 else 0
+
+
+def getResourceFromFile(
+    filepath: os.PathLike | str,
+    resname: str,
+    restype: ResourceType,
+) -> bytes:
     """Gets a resource from a file by name and type.
 
     Args:
@@ -114,3 +150,13 @@ def getResourceFromFile(filepath: os.PathLike | str, resname: str, restype: Reso
         raise ValueError(msg)
 
     return data
+
+if __name__ == "__main__":  # quick test
+    all_keys = [getattr(QtKey, key) for key in dir(QtKey) if key.startswith("Key_")]
+
+    for key in all_keys:
+        key_string = getStringFromKey(key)
+        key_from_string = getKeyFromString(key_string)
+        assert key == key_from_string, f"Key mismatch: {key} != {key_from_string}"
+
+    print("All keys matched successfully!")

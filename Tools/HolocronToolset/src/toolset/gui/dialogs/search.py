@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
 
+
 @dataclass
 class FileSearchQuery:
     """Encapsulates search parameters for file search operations."""
@@ -86,44 +87,25 @@ class FileSearcher(QDialog):
         searchOverride = self.ui.overrideCheck.isChecked()
 
         checkTypes: list[ResourceType] = []
-        if self.ui.typeARECheck.isChecked():
-            checkTypes.append(ResourceType.ARE)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeGITCheck.isChecked():
-            checkTypes.append(ResourceType.GIT)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeIFOCheck.isChecked():
-            checkTypes.append(ResourceType.IFO)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeVISCheck.isChecked():
-            checkTypes.append(ResourceType.VIS)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeLYTCheck.isChecked():
-            checkTypes.append(ResourceType.LYT)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeDLGCheck.isChecked():
-            checkTypes.append(ResourceType.DLG)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeJRLCheck.isChecked():
-            checkTypes.append(ResourceType.JRL)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTCCheck.isChecked():
-            checkTypes.append(ResourceType.UTC)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTDCheck.isChecked():
-            checkTypes.append(ResourceType.UTD)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTECheck.isChecked():
-            checkTypes.append(ResourceType.UTE)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTICheck.isChecked():
-            checkTypes.append(ResourceType.UTI)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTPCheck.isChecked():
-            checkTypes.append(ResourceType.UTP)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTMCheck.isChecked():
-            checkTypes.append(ResourceType.UTM)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTWCheck.isChecked():
-            checkTypes.append(ResourceType.UTW)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTSCheck.isChecked():
-            checkTypes.append(ResourceType.UTS)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeUTTCheck.isChecked():
-            checkTypes.append(ResourceType.UTT)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.type2DACheck.isChecked():
-            checkTypes.append(ResourceType.TwoDA)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeNSSCheck.isChecked():
-            checkTypes.append(ResourceType.NSS)  # noqa: E701  # pylint: disable=multiple-statements
-        if self.ui.typeNCSCheck.isChecked():
-            checkTypes.append(ResourceType.NCS)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeARECheck.isChecked(): checkTypes.append(ResourceType.ARE)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeGITCheck.isChecked(): checkTypes.append(ResourceType.GIT)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeIFOCheck.isChecked(): checkTypes.append(ResourceType.IFO)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeVISCheck.isChecked(): checkTypes.append(ResourceType.VIS)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeLYTCheck.isChecked(): checkTypes.append(ResourceType.LYT)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeDLGCheck.isChecked(): checkTypes.append(ResourceType.DLG)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeJRLCheck.isChecked(): checkTypes.append(ResourceType.JRL)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTCCheck.isChecked(): checkTypes.append(ResourceType.UTC)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTDCheck.isChecked(): checkTypes.append(ResourceType.UTD)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTECheck.isChecked(): checkTypes.append(ResourceType.UTE)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTICheck.isChecked(): checkTypes.append(ResourceType.UTI)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTPCheck.isChecked(): checkTypes.append(ResourceType.UTP)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTMCheck.isChecked(): checkTypes.append(ResourceType.UTM)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTSCheck.isChecked(): checkTypes.append(ResourceType.UTS)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTTCheck.isChecked(): checkTypes.append(ResourceType.UTT)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeUTWCheck.isChecked(): checkTypes.append(ResourceType.UTW)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.type2DACheck.isChecked(): checkTypes.append(ResourceType.TwoDA)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeNSSCheck.isChecked(): checkTypes.append(ResourceType.NSS)  # noqa: E701  # pylint: disable=multiple-statements
+        if self.ui.typeNCSCheck.isChecked(): checkTypes.append(ResourceType.NCS)  # noqa: E701  # pylint: disable=multiple-statements
 
         query = FileSearchQuery(
             installation=installation,
@@ -158,22 +140,19 @@ class FileSearcher(QDialog):
                 for folder in query.installation.override_list():
                     yield from query.installation.override_resources(folder)
 
-        searchText = query.text.lower() if query.caseSensitive else query.text
+        searchText = query.text if query.caseSensitive else query.text.lower()
 
         def _search(resource: FileResource):
-            if resource.restype() not in query.checkTypes:
-                return
-
             resource_name: str = resource.resname()
             name_check: bool = searchText in (resource_name if query.caseSensitive else resource_name.lower())
             if name_check:
                 results.append(resource)
-            if name_check or query.filenamesOnly:
+            if query.filenamesOnly:
                 return
-
-            resource_data: str = resource.data().decode(encoding="utf-8", errors="ignore")  # HACK:
-            data_check: bool = searchText in (resource_data if query.caseSensitive else resource_data.lower())
-            if data_check:
+            if resource.restype() not in query.checkTypes:
+                return
+            resource_data: str = resource.data().decode(encoding="ascii", errors="ignore")  # HACK:
+            if searchText in (resource_data if query.caseSensitive else resource_data.lower()):
                 results.append(resource)
 
         searchIn: Generator[FileResource, Any, None] = search_generator()

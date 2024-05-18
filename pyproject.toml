@@ -88,6 +88,12 @@ line_length = 175
 skip_gitignore = true
 multi_line_output = 3
 
+[tool.pyright.defineConstant]
+PYQT5 = true
+PYSIDE2 = false
+PYQT6 = false
+PYSIDE6 = false
+
 [tool.yapf]
 column_limit = 175
 ALLOW_SPLIT_BEFORE_DEFAULT_OR_NAMED_ASSIGNS = false
@@ -171,6 +177,7 @@ ignore = [
 #    "D403",     # First word of the first line should be capitalized: {} -> {}
 #    "D404",     # First word of the docstring should not be "This"
     "D417",     # Missing argument description in the docstring for {definition}: {name}
+    "G004",     # Logging statement uses f'' string.
     "N802",     # Function name `screenToWorld` should be lowercase
     "N806",     # Variable `jumpToOffset` in function should be lowercase
     "N815",     # Variable `var` in class scope should not be mixedCase

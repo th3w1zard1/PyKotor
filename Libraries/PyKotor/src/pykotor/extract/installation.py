@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import os
-import re
+import platform
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import suppress
 from copy import copy
 from enum import Enum, IntEnum
 from functools import lru_cache
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, Iterable, Sequence
 
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import CaseInsensitiveDict, Game
@@ -17,25 +17,23 @@ from pykotor.extract.capsule import Capsule
 from pykotor.extract.chitin import Chitin
 from pykotor.extract.file import FileResource, LocationResult, ResourceIdentifier, ResourceResult
 from pykotor.extract.talktable import TalkTable
-from pykotor.resource.formats.erf.erf_data import ERFType
 from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.formats.gff.gff_data import GFFContent, GFFFieldType, GFFList, GFFStruct
 from pykotor.resource.formats.tpc import TPC, read_tpc
+from pykotor.resource.formats.twoda.twoda_auto import read_2da
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_capsule_file, is_erf_file, is_mod_file, is_rim_file
 from pykotor.tools.path import CaseAwarePath
 from pykotor.tools.sound import deobfuscate_audio
-from utility.error_handling import format_exception_with_variables
-from utility.logger_util import get_root_logger
+from utility.logger_util import RobustRootLogger
 from utility.system.path import Path, PurePath
 
 if TYPE_CHECKING:
     from logging import Logger
 
-    from typing_extensions import Literal
-
     from pykotor.extract.talktable import StringResult
     from pykotor.resource.formats.gff import GFF
+    from pykotor.resource.formats.twoda.twoda_data import TwoDA
 
 
 # The SearchLocation class is an enumeration that represents different locations for searching.
@@ -83,12 +81,6 @@ class SearchLocation(IntEnum):
     """Resource files stored in the folders specified in the method parameters."""
 
 
-class ItemTuple(NamedTuple):
-    resname: str
-    name: str
-    filepath: Path
-
-
 class TexturePackNames(Enum):
     """Full list of texturepack ERF filenames for both games."""
 
@@ -132,7 +124,7 @@ HARDCODED_MODULE_NAMES: dict[str, str] = {
 }
 
 
-class Installation:  # noqa: PLR0904
+class Installation:
     """Installation provides a centralized location for loading resources stored in the game through its various folders and formats."""  # noqa: E501
 
     TEXTURES_TYPES: ClassVar[list[ResourceType]] = [
@@ -141,10 +133,15 @@ class Installation:  # noqa: PLR0904
         ResourceType.DDS,
     ]
 
-    def __init__(self, path: os.PathLike | str, *, multithread: bool = False):
+    def __init__(
+        self,
+        path: os.PathLike | str,
+        *,
+        multithread: bool = False,
+    ):
         self.use_multithreading: bool = multithread
 
-        self._log: Logger = get_root_logger()
+        self._log: Logger = RobustRootLogger()
         self._path: CaseAwarePath = CaseAwarePath.pathify(path)
 
         self._talktable: TalkTable = TalkTable(self._path / "dialog.tlk")
@@ -180,6 +177,7 @@ class Installation:  # noqa: PLR0904
         elif self.game().is_k2():
             self.load_streamvoice()
         self.load_textures()
+        self.load_saves()
         self._log.info("Finished loading the installation from %s", self._path)
         self._initialized = True
 
@@ -303,6 +301,64 @@ class Installation:  # noqa: PLR0904
         """
         return self._find_resource_folderpath(("streamvoice", "streamwaves"))
 
+    def save_locations(self) -> list[Path]:
+        # sourcery skip: assign-if-exp, extract-method
+        """Returns a list of existing save locations (paths where save files can be found)."""
+        save_paths: list[Path] = [self._find_resource_folderpath("saves", optional=True)]
+        if self.game().is_k2():
+            cloudsave_dir = self._find_resource_folderpath("cloudsaves", optional=True)
+            if cloudsave_dir.safe_isdir():
+                for folder in cloudsave_dir.iterdir():
+                    if not folder.safe_isdir():
+                        continue
+                    save_paths.append(folder)
+        system = platform.system()
+
+        if system == "Windows":
+            roamingappdata_env: str = os.getenv("APPDATA", "")
+            if not roamingappdata_env.strip() or not Path(roamingappdata_env).safe_isdir():
+                roamingappdata_path = Path.home().joinpath("AppData", "Roaming")
+            else:
+                roamingappdata_path = Path(roamingappdata_env)
+
+            game_folder1 = "kotor" if self.game().is_k1() else "kotor2"  # FIXME: k1 is known but k2's 'kotor2' is a guess
+            save_paths.append(roamingappdata_path.joinpath("LucasArts", game_folder1, "saves"))
+
+            localappdata_env: str = os.getenv("LOCALAPPDATA", "")
+            if not localappdata_env.strip() or not Path(localappdata_env).safe_isdir():
+                localappdata_path = Path.home().joinpath("AppData", "Local")
+            else:
+                localappdata_path = Path(localappdata_env)
+
+            local_virtual_store = localappdata_path / "VirtualStore"
+            game_folder2 = "SWKotOR2" if self.game().is_k2() else "SWKotOR"
+            save_paths.extend(
+                (
+                    local_virtual_store.joinpath("Program Files", "LucasArts", game_folder2, "saves"),
+                    local_virtual_store.joinpath("Program Files (x86)", "LucasArts", game_folder2, "saves")
+                )
+            )
+
+        elif system == "Darwin":  # TODO
+            home = Path.home()
+            save_paths.extend(
+                (
+                    home.joinpath("Library", "Application Support", "Star Wars Knights of the Old Republic II", "saves"),
+                    home.joinpath("Library", "Containers", "com.aspyr.kotor2.appstore", "Data", "Library", "Application Support",
+                                  "Star Wars Knights of the Old Republic II", "saves")
+                )
+            )
+
+        elif system == "Linux":  # TODO
+            xdg_data_home = os.getenv("XDG_DATA_HOME", "")
+            remaining_path_parts = PurePath("aspyr-media", "kotor2", "saves")
+            if xdg_data_home.strip() and Path(xdg_data_home).safe_isdir():
+                save_paths.append(Path(xdg_data_home, remaining_path_parts))
+            save_paths.append(Path.home().joinpath(".local", "share", remaining_path_parts))
+
+        # Filter and return existing paths
+        return [path for path in save_paths if path.safe_isdir()]
+
     def _find_resource_folderpath(
         self,
         folder_names: tuple[str, ...] | str,
@@ -334,7 +390,7 @@ class Installation:  # noqa: PLR0904
                 resource_path: CaseAwarePath = self._path / folder_name
                 if resource_path.safe_isdir():
                     return resource_path
-        except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             msg = f"An error occurred while finding the '{' or '.join(folder_names)}' folder in '{self._path}'."
             raise OSError(msg) from e
         else:
@@ -389,7 +445,7 @@ class Installation:  # noqa: PLR0904
             self._log.info("The '%s' folder did not exist when loading the installation at '%s', skipping...", r_path.name, self._path)
             return {}
 
-        self._log.info("Loading %s from installation...", r_path.relative_to(self._path))
+        self._log.info("Loading '%s' from installation...", r_path.relative_to(self._path))
         files_iter = path.safe_rglob("*") if recurse else path.safe_iterdir()
 
         resources_dict: dict[str, list[FileResource]] = {}
@@ -449,7 +505,7 @@ class Installation:  # noqa: PLR0904
 
         if self.use_multithreading:
             num_cores = os.cpu_count() or 1
-            max_workers = num_cores * 4
+            max_workers = num_cores * 2
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 for future in as_completed(executor.submit(self._build_single_resource, file) for file in files_iter):
                     resource = future.result()
@@ -511,6 +567,30 @@ class Installation:  # noqa: PLR0904
     ):
         """Reloads the list of modules files in the texturepacks folder linked to the Installation."""
         self._texturepacks = self.load_resources_dict(self.texturepacks_path(), capsule_check=is_erf_file)
+
+    def load_saves(
+        self,
+    ):
+        """Reloads the data in the 'saves' folder linked to the Installation."""
+        self._saves = {}
+        for save_location in self.save_locations():
+            print(f"Found an active save location at '{save_location}'")
+            self._saves[save_location] = {}
+            for this_save_path in save_location.iterdir():
+                if not this_save_path.safe_isdir():
+                    continue
+                print(f"Discovered a save bundle '{this_save_path.name}'")
+                self._saves[save_location][this_save_path] = []
+                for file in this_save_path.iterdir():
+                    res_ident = ResourceIdentifier.from_path(file)
+                    file_res = FileResource(
+                        res_ident.resname,
+                        res_ident.restype,
+                        file.stat().st_size,
+                        0,
+                        file
+                    )
+                    self._saves[save_location][this_save_path].append(file_res)
 
     def load_override(self, directory: str | None = None):
         """Loads the list of resources in a specific subdirectory of the override folder linked to the Installation.
@@ -749,7 +829,7 @@ class Installation:  # noqa: PLR0904
         """
         r_path: CaseAwarePath = CaseAwarePath.pathify(path)
 
-        def check(x) -> bool:
+        def check(x: str) -> bool:
             c_path: CaseAwarePath = r_path.joinpath(x)
             return c_path.safe_exists() is not False
 
@@ -770,7 +850,26 @@ class Installation:  # noqa: PLR0904
             check("modules/mainmenu.mod"),
         ]
 
-        game1_xbox_checks: list[bool] = [  # TODO:
+        game1_xbox_checks: list[bool] = [
+            check("01_SS_Repair01.ini"),
+            check("swpatch.ini"),
+            check("dataxbox/_newbif.bif"),
+            check("rimsxbox"),
+            check("players.erf"),
+            check("downloader.xbe"),
+            check("rimsxbox/manm28ad_adx.rim"),
+            check("rimsxbox/miniglobal.rim"),
+            check("rimsxbox/miniglobaldx.rim"),
+            check("rimsxbox/STUNT_56a_a.rim"),
+            check("rimsxbox/STUNT_56a_adx.rim"),
+            check("rimsxbox/STUNT_57_adx.rim"),
+            check("rimsxbox/subglobal.rim"),
+            check("rimsxbox/subglobaldx.rim"),
+            check("rimsxbox/unk_m44ac_adx.rim"),
+            check("rimsxbox/M12ab_adx.rim"),
+            check("rimsxbox/mainmenu.rim"),
+            check("rimsxbox/mainmenudx.rim"),
+            check("rimsxbox/manm28ad_adx.rim"),
         ]
 
         game1_ios_checks: list[bool] = [
@@ -827,7 +926,40 @@ class Installation:  # noqa: PLR0904
             check("data/Dialogs.bif"),
         ]
 
-        game2_xbox_checks: list[bool] = [  # TODO:
+        game2_xbox_checks: list[bool] = [
+            check("combat.erf"),
+            check("effects.erf"),
+            check("footsteps.erf"),
+            check("footsteps.rim"),
+            check("SWRC"),
+            check("weapons.ERF"),
+            check("SuperModels/smseta.erf"),
+            check("SuperModels/smsetb.erf"),
+            check("SuperModels/smsetc.erf"),
+            check("SWRC/System/Subtitles_Epilogue.int"),
+            check("SWRC/System/Subtitles_YYY_06.int"),
+            check("SWRC/System/SWRepublicCommando.int"),
+            check("SWRC/System/System.ini"),
+            check("SWRC/System/UDebugMenu.u"),
+            check("SWRC/System/UnrealEd.int"),
+            check("SWRC/System/UnrealEd.u"),
+            check("SWRC/System/User.ini"),
+            check("SWRC/System/UWeb.int"),
+            check("SWRC/System/Window.int"),
+            check("SWRC/System/WinDrv.int"),
+            check("SWRC/System/Xbox"),
+            check("SWRC/System/XboxLive.int"),
+            check("SWRC/System/XGame.u"),
+            check("SWRC/System/XGameList.int"),
+            check("SWRC/System/XGames.int"),
+            check("SWRC/System/XInterface.u"),
+            check("SWRC/System/XInterfaceMP.u"),
+            check("SWRC/System/XMapList.int"),
+            check("SWRC/System/XMaps.int"),
+            check("SWRC/System/YYY_TitleCard.int"),
+            check("SWRC/System/Xbox/Engine.int"),
+            check("SWRC/System/Xbox/XboxLive.int"),
+            check("SWRC/Textures/GUIContent.utx"),
         ]
 
         game2_ios_checks: list[bool] = [
@@ -939,7 +1071,7 @@ class Installation:  # noqa: PLR0904
         restype: ResourceType,
         order: list[SearchLocation] | None = None,
         *,
-        capsules: list[Capsule] | None = None,
+        capsules: Sequence[Capsule] | None = None,
         folders: list[Path] | None = None,
     ) -> ResourceResult | None:
         """Returns a resource matching the specified resref and restype.
@@ -970,7 +1102,7 @@ class Installation:  # noqa: PLR0904
             folders=folders,
         )
         search: ResourceResult | None = batch[query]
-        if not search or not search.data:
+        if search is None:
             self._log.warning(f"Could not find '{query}' during resource lookup.")
             return None
         return search
@@ -980,7 +1112,7 @@ class Installation:  # noqa: PLR0904
         queries: list[ResourceIdentifier] | set[ResourceIdentifier],
         order: list[SearchLocation] | None = None,
         *,
-        capsules: list[Capsule] | None = None,
+        capsules: Sequence[Capsule] | None = None,
         folders: list[Path] | None = None,
     ) -> dict[ResourceIdentifier, ResourceResult | None]:
         """Returns a dictionary mapping the items provided in the queries argument to the resource data if it was found.
@@ -1026,12 +1158,22 @@ class Installation:  # noqa: PLR0904
             handle.seek(location.offset)
             data: bytes = handle.read_bytes(location.size)
 
-            results[query] = ResourceResult(
+            result = ResourceResult(
                 query.resname,
                 query.restype,
                 location.filepath,
                 data,
             )
+            result.set_file_resource(
+                FileResource(
+                    query.resname,
+                    query.restype,
+                    location.size,
+                    location.offset,
+                    location.filepath
+                )
+            )
+            results[query] = result
 
         # Close all open handles
         for handle in handles.values():
@@ -1084,10 +1226,10 @@ class Installation:  # noqa: PLR0904
 
     def locations(
         self,
-        queries: list[ResourceIdentifier] | set[ResourceIdentifier],
+        queries: Iterable[ResourceIdentifier],
         order: list[SearchLocation] | None = None,
         *,
-        capsules: list[Capsule] | None = None,
+        capsules: Sequence[Capsule] | None = None,
         folders: list[Path] | None = None,
     ) -> dict[ResourceIdentifier, list[LocationResult]]:
         """Returns a dictionary mapping the items provided in the queries argument to a list of locations for that respective resource.
@@ -1125,16 +1267,18 @@ class Installation:  # noqa: PLR0904
 
         def check_list(resource_list: list[FileResource]):
             # Index resources by identifier
+            lookup_dict = {resource.identifier(): resource for resource in resource_list}
             for query in queries:
-                for resource in resource_list:
-                    if resource.identifier() != query:
-                        continue
-                    location = LocationResult(
-                        resource.filepath(),
-                        resource.offset(),
-                        resource.size(),
-                    )
-                    locations[query].append(location)
+                resource = lookup_dict.get(query)
+                if resource is None:
+                    continue
+                location = LocationResult(
+                    resource.filepath(),
+                    resource.offset(),
+                    resource.size(),
+                )
+                location.set_file_resource(resource)
+                locations[query].append(location)
 
         def check_capsules(values: list[Capsule]):
             for capsule in values:
@@ -1148,6 +1292,7 @@ class Installation:  # noqa: PLR0904
                         resource.offset(),
                         resource.size(),
                     )
+                    location.set_file_resource(resource)
                     locations[resource.identifier()].append(location)
 
         def check_folders(resource_folders: list[Path]):
@@ -1163,6 +1308,16 @@ class Installation:  # noqa: PLR0904
                         filepath=file,
                         offset=0,
                         size=file.stat().st_size,
+                    )
+
+                    location.set_file_resource(
+                        FileResource(
+                            identifier.resname,
+                            identifier.restype,
+                            location.size,
+                            location.offset,
+                            location.filepath
+                        )
                     )
                     locations[identifier].append(location)
 
@@ -1228,7 +1383,7 @@ class Installation:  # noqa: PLR0904
 
     def textures(
         self,
-        resnames: list[str],
+        resnames: Iterable[str],
         order: list[SearchLocation] | None = None,
         *,
         capsules: list[Capsule] | None = None,
@@ -1257,7 +1412,8 @@ class Installation:  # noqa: PLR0904
                 SearchLocation.TEXTURES_TPA,
                 SearchLocation.CHITIN,
             ]
-        case_resnames: list[str] = [resname.lower() for resname in resnames]
+        resnames: set[str] = set(resnames)
+        case_resnames: set[str] = {resname.lower() for resname in resnames}
         capsules = [] if capsules is None else capsules
         folders = [] if folders is None else folders
 
@@ -1268,18 +1424,25 @@ class Installation:  # noqa: PLR0904
             textures[resname] = None
 
         def decode_txi(txi_bytes: bytes) -> str:
-            return txi_bytes.decode("ascii", errors="ignore")
+            return txi_bytes.decode("ascii", errors="ignore").strip()
 
-        def get_txi_from_list(resname: str, resource_list: list[FileResource]) -> str:
+        def get_txi_from_list(case_resname: str, resource_list: list[FileResource]) -> str:
             txi_resource: FileResource | None = next(
                 (
                     resource
                     for resource in resource_list
-                    if resource.resname() == resname and resource.restype() == ResourceType.TXI
+                    if resource.restype() is ResourceType.TXI and resource.identifier().lower_resname == case_resname
                 ),
                 None,
             )
-            return "" if txi_resource is None else decode_txi(txi_resource.data())
+            if txi_resource is not None:
+                self._log.debug("Found txi resource '%s' at %s", txi_resource.identifier(), txi_resource.filepath().relative_to(self._path.parent))
+                contents = decode_txi(txi_resource.data())
+                if contents and not contents.isascii():
+                    self._log.warning("Texture TXI '%s' is not ascii! (found at %s)", txi_resource.identifier(), txi_resource.filepath())
+                return contents
+            self._log.debug("'%s.txi' resource not found during texture lookup.", case_resname)
+            return ""
 
         def check_dict(values: dict[str, list[FileResource]]):
             for resources in values.values():
@@ -1287,13 +1450,16 @@ class Installation:  # noqa: PLR0904
 
         def check_list(resource_list: list[FileResource]):
             for resource in resource_list:
-                case_resname = resource.resname().casefold()
-                if case_resname in case_resnames and resource.restype() in texture_types:
-                    case_resnames.remove(case_resname)
-                    tpc: TPC = read_tpc(resource.data())
-                    if resource.restype() == ResourceType.TGA:
-                        tpc.txi = get_txi_from_list(case_resname, resource_list)
-                    textures[case_resname] = tpc
+                if resource.restype() not in texture_types:
+                    continue
+                case_resname = resource.identifier().lower_resname
+                if case_resname not in case_resnames:
+                    continue
+                case_resnames.remove(case_resname)
+                tpc: TPC = read_tpc(resource.data())
+                if resource.restype() is ResourceType.TGA:
+                    tpc.txi = get_txi_from_list(case_resname, resource_list)
+                textures[case_resname] = tpc
 
         def check_capsules(values: list[Capsule]):  # NOTE: This function does not support txi's in the Override folder.
             for capsule in values:
@@ -1309,7 +1475,7 @@ class Installation:  # noqa: PLR0904
 
                     case_resnames.remove(case_resname)
                     tpc: TPC = read_tpc(texture_data) if texture_data else TPC()
-                    if tformat == ResourceType.TGA:
+                    if tformat is ResourceType.TGA:
                         tpc.txi = get_txi_from_list(case_resname, capsule.resources())
                     textures[case_resname] = tpc
 
@@ -1361,7 +1527,7 @@ class Installation:  # noqa: PLR0904
         *,
         capsules: list[Capsule] | None = None,
         folders: list[Path] | None = None,
-    ) -> set[FileResource]:  # TODO: 2da's have 'strref' columns that we should parse.
+    ) -> set[FileResource]:
         """Finds all gffs that utilize this stringref in their localizedstring.
 
         If no gffs could not be found the value will return None.
@@ -1389,8 +1555,49 @@ class Installation:  # noqa: PLR0904
                 SearchLocation.MODULES,
             ]
 
-        gffs: set[FileResource] = set()
+        found_resources: set[FileResource] = set()
         gff_extensions: set[str] = GFFContent.get_extensions()
+        relevant_2da_filenames: dict[str, set[str]] = {}
+        from pykotor.extract.twoda import K1Columns2DA, K2Columns2DA
+        if self.game().is_k1():  # TODO(th3w1zard1): TSL:
+            relevant_2da_filenames = K1Columns2DA.StrRefs.as_dict()
+        elif self.game().is_k2():
+            relevant_2da_filenames = K2Columns2DA.StrRefs.as_dict()
+
+        def check_2da(resource2da: FileResource) -> bool:
+            valid_2da: TwoDA | None = None
+            with suppress(ValueError, OSError):
+                valid_2da = read_2da(resource2da.data())
+            if not valid_2da:
+                print(f"'{resource2da._path_ident_obj}' cannot be loaded, probably corrupted.")
+                return False
+            filename_2da = resource2da.filename().lower()
+            for column_name in relevant_2da_filenames[filename_2da]:
+                if column_name == ">>##HEADER##<<":
+                    for header in valid_2da.get_headers():
+                        try:
+                            stripped_header = header.strip()
+                            if not stripped_header.isdigit():
+                                if stripped_header and stripped_header not in ("****", "*****", "-1"):
+                                    self._log.warning(f"header '{header}' in '{filename_2da}' is invalid, expected a stringref number.")
+                                continue
+                            if int(stripped_header) == query_stringref:
+                                return True
+                        except Exception as e:
+                            RobustRootLogger().error("Error parsing '%s' header '%s': %s", filename_2da, header, str(e), exc_info=False)
+                else:
+                    try:
+                        for i, cell in enumerate(valid_2da.get_column(column_name)):
+                            stripped_cell = cell.strip()
+                            if not stripped_cell.isdigit():
+                                if stripped_cell and stripped_cell not in ("****", "*****", "-1"):
+                                    self._log.warning(f"column '{column_name}' rowindex {i} in '{filename_2da}' is invalid, expected a stringref number. Instead got '{cell}'")
+                                continue
+                            if int(stripped_cell) == query_stringref:
+                                return True
+                    except Exception as e:
+                        RobustRootLogger().error("Error parsing '%s' column '%s': %s", filename_2da, column_name, str(e), exc_info=False)
+            return False
 
         def recurse_gff_lists(gff_list: GFFList) -> bool:
             for gff_struct in gff_list:
@@ -1427,6 +1634,12 @@ class Installation:  # noqa: PLR0904
         def check_list(resource_list: list[FileResource]):
             for resource in resource_list:
                 this_restype: ResourceType = resource.restype()
+                if (
+                    resource.filename().lower() in relevant_2da_filenames
+                    and this_restype is ResourceType.TwoDA
+                    and check_2da(resource)
+                ):
+                    found_resources.add(resource)
                 if this_restype.extension not in gff_extensions:
                     continue
                 valid_gff: GFF | None = try_get_gff(resource.data())
@@ -1434,42 +1647,45 @@ class Installation:  # noqa: PLR0904
                     continue
                 if not recurse_gff_structs(valid_gff.root):
                     continue
-                gffs.add(resource)
+                found_resources.add(resource)
 
         def check_capsules(capsules_list: list[Capsule]):
             for capsule in capsules_list:
                 for resource in capsule.resources():
-                    if resource.restype().extension not in gff_extensions:
+                    this_restype: ResourceType = resource.restype()
+                    if (
+                        resource.filename().lower() in relevant_2da_filenames
+                        and this_restype is ResourceType.TwoDA
+                        and check_2da(resource)
+                    ):
+                        found_resources.add(resource)
+                    if this_restype.extension not in gff_extensions:
                         continue
                     valid_gff: GFF | None = try_get_gff(resource.data())
                     if not valid_gff:
                         continue
                     if not recurse_gff_structs(valid_gff.root):
                         continue
-                    gffs.add(resource)
+                    found_resources.add(resource)
 
         def check_folders(values: list[Path]):
-            gff_files: set[Path] = set()
+            relevant_files: set[Path] = set()
             for folder in values:  # Having two loops makes it easier to filter out irrelevant files when stepping through the 2nd
-                gff_files.update(
+                relevant_files.update(
                     file
                     for file in folder.safe_rglob("*")
                     if (
                         file.suffix
-                        and file.suffix[1:].casefold() in gff_extensions
+                        and (
+                            file.suffix[1:].casefold() in gff_extensions
+                            or (file.name.lower() in relevant_2da_filenames and file.suffix.casefold() == ".2da")
+                        )
                         and file.safe_isfile()
                     )
                 )
-            for gff_file in gff_files:
-                gff_data = BinaryReader.load_file(gff_file)
-                valid_gff: GFF | None = None
-                restype: ResourceType | None = None
-                with suppress(ValueError, OSError):
-                    valid_gff = read_gff(gff_data)
-                    restype = ResourceType.from_extension(gff_file.suffix).validate()
-                if not valid_gff or not restype:
-                    continue
-                if not recurse_gff_structs(valid_gff.root):
+            for gff_file in relevant_files:
+                restype: ResourceType | None = ResourceType.from_extension(gff_file.suffix)
+                if not restype:
                     continue
                 fileres = FileResource(
                     resname=gff_file.stem,
@@ -1478,7 +1694,18 @@ class Installation:  # noqa: PLR0904
                     offset=0,
                     filepath=gff_file
                 )
-                gffs.add(fileres)
+                if restype is ResourceType.TwoDA and check_2da(fileres):
+                    found_resources.add(fileres)
+                else:
+                    gff_data = BinaryReader.load_file(gff_file)
+                    valid_gff: GFF | None = None
+                    with suppress(ValueError, OSError):
+                        valid_gff = read_gff(gff_data)
+                    if not valid_gff:
+                        continue
+                    if not recurse_gff_structs(valid_gff.root):
+                        continue
+                    found_resources.add(fileres)
 
         function_map: dict[SearchLocation, Callable] = {
             SearchLocation.OVERRIDE: lambda: check_dict(self._override),
@@ -1493,7 +1720,7 @@ class Installation:  # noqa: PLR0904
             assert isinstance(item, SearchLocation), f"{type(item).__name__}: {item}"
             function_map.get(item, lambda: None)()
 
-        return gffs
+        return found_resources
 
     def sound(
         self,
@@ -1523,7 +1750,7 @@ class Installation:  # noqa: PLR0904
 
     def sounds(
         self,
-        resnames: list[str],
+        resnames: Iterable[str],
         order: list[SearchLocation] | None = None,
         *,
         capsules: list[Capsule] | None = None,
@@ -1544,7 +1771,8 @@ class Installation:  # noqa: PLR0904
         -------
             A dictionary mapping a case-insensitive string to a bytes object or None.
         """
-        case_resnames: list[str] = [resname.casefold() for resname in resnames]
+        resnames: set[str] = set(resnames)
+        case_resnames: set[str] = {resname.casefold() for resname in resnames}
         capsules = [] if capsules is None else capsules
         folders = [] if folders is None else folders
         if order is None:
@@ -1568,12 +1796,15 @@ class Installation:  # noqa: PLR0904
 
         def check_list(values: list[FileResource]):
             for resource in values:
-                case_resname: str = resource.resname().casefold()
-                if case_resname in case_resnames and resource.restype() in sound_formats:
-                    print(f"Found sound at '{resource.filepath()}'")
-                    case_resnames.remove(case_resname)
-                    sound_data: bytes = resource.data()
-                    sounds[resource.resname()] = deobfuscate_audio(sound_data)
+                if resource.restype() not in sound_formats:
+                    continue
+                case_resname = resource.identifier().lower_resname
+                if case_resname not in case_resnames:
+                    continue
+                self._log.debug("Found sound at '%s'", resource.filepath())
+                case_resnames.remove(case_resname)
+                sound_data: bytes = resource.data()
+                sounds[resource.resname()] = deobfuscate_audio(sound_data)
 
         def check_capsules(values: list[Capsule]):
             for capsule in values:
@@ -1585,7 +1816,7 @@ class Installation:  # noqa: PLR0904
                             break
                     if sound_data is None:  # No sound data found in this list.
                         continue
-                    print(f"Found sound at '{capsule.path()}'")
+                    self._log.debug("Found sound at '%s'", capsule.filepath())
                     case_resnames.remove(case_resname)
                     sounds[case_resname] = deobfuscate_audio(sound_data)
 
@@ -1602,7 +1833,7 @@ class Installation:  # noqa: PLR0904
                     )
                 )
             for sound_file in queried_sound_files:
-                print(f"Found sound at '{sound_file}'")
+                self._log.debug("Found sound at '%s'", sound_file)
                 case_resnames.remove(sound_file.stem.casefold())
                 sound_data: bytes = BinaryReader.load_file(sound_file)
                 sounds[sound_file.stem] = deobfuscate_audio(sound_data)
@@ -1689,14 +1920,11 @@ class Installation:  # noqa: PLR0904
 
     @staticmethod
     @lru_cache(maxsize=1000)
-    def replace_module_extensions(module_filepath: os.PathLike | str) -> str:
-        module_filename: str = PurePath(module_filepath).name
-        result = re.sub(r"\.rim$", "", module_filename, flags=re.IGNORECASE)
-        for erftype_name in ERFType.__members__:
-            result = re.sub(rf"\.{erftype_name}$", "", result, flags=re.IGNORECASE)
-        result = result[:-2] if result.lower().endswith("_s") else result
-        result = result[:-4] if result.lower().endswith("_dlg") else result
-        return result  # noqa: RET504
+    def get_module_root(module_filepath: os.PathLike | str) -> str:
+        root: str = PurePath(module_filepath).stem.lower()
+        root = root[:-2] if root.endswith("_s") else root
+        root = root[:-4] if root.endswith("_dlg") else root
+        return root  # noqa: RET504
 
     def module_names(self, *, use_hardcoded: bool = True) -> dict[str, str]:
         """Returns a dictionary mapping module filename to the name of the area.
@@ -1707,25 +1935,82 @@ class Installation:  # noqa: PLR0904
         -------
             A dictionary mapping module filename to in-game module area name.
         """
-        return {module: self.module_name(module, use_hardcoded=use_hardcoded) for module in self.modules_list()}
+        area_names: dict[str, str] = {}
+        root_to_extensions: dict[str, dict[str, str | None]] = {}
 
-    def module_ids(self, *, use_hardcoded: bool = True, use_alternate: bool = False) -> dict[str, str]:
-        """Returns a dictionary mapping module filename to the ID of the module.
+        for module in self._modules:
+            lower_module = module.lower()
+            root = self.get_module_root(lower_module)
+            lower_root = root.lower()
+            qualifier = lower_module[len(root):]
 
-        The ID is taken from the ResRef field "Mod_Entry_Area" in the relevant module file's IFO resource.
+            if lower_root not in root_to_extensions:
+                root_to_extensions[lower_root] = {".rim": None, ".mod": None, "_s.rim": None, "_dlg.erf": None}
 
-        Returns:
-        -------
-            A dictionary mapping module filename to in-game module id.
-        """
-        return {
-            module: self.module_id(
-                module,
-                use_hardcoded=use_hardcoded,
-                use_alternate=use_alternate,
-            )
-            for module in self.modules_list()
-        }
+            if qualifier not in root_to_extensions[lower_root]:
+                self._log.warning(f"No area name found for lonewolf capsule 'Modules/{module}'")
+                continue
+            root_to_extensions[lower_root][qualifier] = module
+
+        for extensions in root_to_extensions.values():
+            mod_filename = extensions[".mod"]
+            rim_link = extensions[".rim"] or mod_filename
+            if rim_link:
+                area_name = self.module_name(rim_link)
+                area_names[rim_link] = area_name
+
+                dlg_erf_filename = extensions["_dlg.erf"]
+                if dlg_erf_filename is not None and dlg_erf_filename not in area_names:
+                    area_names[dlg_erf_filename] = area_name
+                _s_rim_filename = extensions["_s.rim"]
+                if _s_rim_filename is not None and _s_rim_filename not in area_names:
+                    area_names[_s_rim_filename] = area_name
+
+            if rim_link != mod_filename and mod_filename is not None:
+                area_names[mod_filename] = self.module_name(mod_filename)
+
+        return area_names
+
+    def module_ids(
+        self,
+        *,
+        use_hardcoded: bool = True,
+        use_alternate: bool = False,
+    ) -> dict[str, str]:
+        module_idents: dict[str, str] = {}
+        root_to_extensions: dict[str, dict[str, str | None]] = {}
+
+        for module in self._modules:
+            lower_module = module.lower()
+            root = self.get_module_root(lower_module)
+            lower_root = root.lower()
+            qualifier = lower_module[len(root):]
+
+            if lower_root not in root_to_extensions:
+                root_to_extensions[lower_root] = {".rim": None, ".mod": None, "_s.rim": None, "_dlg.erf": None}
+
+            if qualifier not in root_to_extensions[lower_root]:
+                self._log.warning(f"No id found for lonewolf capsule 'Modules/{module}'")
+                continue
+            root_to_extensions[lower_root][qualifier] = module
+
+        for extensions in root_to_extensions.values():
+            mod_filename = extensions[".mod"]
+            rim_link = extensions[".rim"] or mod_filename
+            if rim_link:
+                area_name = self.module_id(rim_link)
+                module_idents[rim_link] = area_name
+                dlg_erf_filename = extensions["_dlg.erf"]
+                if dlg_erf_filename is not None and dlg_erf_filename not in module_idents:
+                    module_idents[dlg_erf_filename] = area_name
+                _s_rim_filename = extensions["_s.rim"]
+                if _s_rim_filename is not None and _s_rim_filename not in module_idents:
+                    module_idents[_s_rim_filename] = area_name
+
+            if rim_link != mod_filename and mod_filename is not None:
+                module_idents[mod_filename] = self.module_id(mod_filename)
+
+        return module_idents
 
     def module_name(
         self,
@@ -1746,55 +2031,42 @@ class Installation:  # noqa: PLR0904
         -------
             The name of the area for the module.
         """
-        root: str = self.replace_module_extensions(module_filename)
-        lower_root: str = root.lower()
-        if use_hardcoded:
-            for key, value in HARDCODED_MODULE_NAMES.items():
-                if key.upper() in root.upper():
-                    return value
-        matching_module_filenames = self._find_matching_erf_rim_from_root(lower_root)
-        name: str | None = root
-        our_erf_rims_module: list[tuple[str, Capsule]] = []
-        _capsule_dict = self._build_capsule_info(
-            lower_root,
-            module_filename,
-            matching_module_filenames,
-            our_erf_rims_module,
+        root: str = self.get_module_root(module_filename)
+        upper_root: str = root.upper()
+        if use_hardcoded and upper_root in HARDCODED_MODULE_NAMES:
+            return HARDCODED_MODULE_NAMES[upper_root]
+        try:
+            module_path: CaseAwarePath = self.module_path()
+            if not is_mod_file(module_filename):
+                relevant_capsule = Capsule(module_path.joinpath(f"{root}.rim"))
+            else:
+                relevant_capsule = Capsule(module_path.joinpath(module_filename))
+        except Exception:  # noqa: BLE001
+            self._log.exception(f"Could not build capsule for 'Modules/{module_filename}'")
+            return root
+
+        area_resource = next(
+            (
+                resource for resource in relevant_capsule.resources()
+                if resource.restype() is ResourceType.ARE
+            ),
+            None
         )
-        mod_ids_to_try: set[str] = set()
-        for mod_id, capsule in our_erf_rims_module:
-            try:
-                are_tag_resource: bytes | None = capsule.resource(mod_id, ResourceType.ARE)
-                if are_tag_resource is None:
-                    continue
-
-                are: GFF = read_gff(are_tag_resource)
-                locstring: LocalizedString = are.root.get_locstring("Name")
-                if locstring.stringref == -1:
-                    name = locstring.get(Language.ENGLISH, Gender.MALE)
-                else:
-                    name = self.talktable().string(locstring.stringref)
-                if name and name.strip():
-                    return name
-            except Exception:  # pylint: disable=W0718  # noqa: BLE001, PERF203
-                self._log.debug("This exception has been suppressed in pykotor.extract.installation.", exc_info=True)
-            mod_ids_to_try.add(mod_id)
-
-        # Deeper check.
-        for mod_id in mod_ids_to_try:
-            for _unfound_mod_id, capsule in our_erf_rims_module:
-                with suppress(Exception):
-                    are_resource = capsule.info(mod_id, ResourceType.ARE)
-                    if are_resource is None:
-                        continue
+        try:
+            if area_resource is not None:
+                are = read_gff(area_resource.data())
+                if are.root.exists("Name"):
+                    actual_ftype = are.root.what_type("Name")
+                    if actual_ftype is not GFFFieldType.LocalizedString:
+                        RobustRootLogger().warning(f"{area_resource.filename()} has incorrect field 'Name' type '{actual_ftype.name}', expected type 'List'")
                     locstring: LocalizedString = are.root.get_locstring("Name")
                     if locstring.stringref == -1:
-                        name = locstring.get(Language.ENGLISH, Gender.MALE)
-                    else:
-                        name = self.talktable().string(locstring.stringref)
-                    if name and name.strip():
-                        return name
-        return name or module_filename
+                        return locstring.get(Language.ENGLISH, Gender.MALE)
+                    return self.talktable().string(locstring.stringref)
+        except Exception:  # noqa: BLE001
+            self._log.exception(f"Could not read ARE for '{module_filename}'")
+            return root
+        return None
 
     def module_id(
         self,
@@ -1802,221 +2074,102 @@ class Installation:  # noqa: PLR0904
         *,
         use_hardcoded: bool = True,
         use_alternate: bool = False,
-        also_return_cached_capsules: bool = False,
-    ) -> str:
-        """Returns the ID of the area for a module from the installations module list.
+    ) -> str:    # sourcery skip: assign-if-exp, remove-unreachable-code
+        """Returns an identifier for the module that matches the filename/IFO/ARE resname.
 
-        The ID is taken from the ResRef field "Mod_Entry_Area"/"Mod_Entry_list"/"Mod_VO_ID" in the relevant module file's IFO resource.
+        NOTE: Since this is only used for sorting currently, does not parse Mod_Area_list or Mod_VO_ID.
 
         Args:
         ----
             module_filename: str - The name of the module file.
             use_hardcoded: bool - Deprecated (does nothing)
-            use_alternate: bool - Gets the ID that matches the part of the filename. Only really useful for sorting. Normally this function returns
-                the ID name that matches the existing ARE/GIT resources.
-            also_return_cached_capsules: bool - prevent unnecessary capsule lookups. Makes the return type tuple[str, dict[Path, Capsule]]
+            use_alternate: bool - Gets the ID that matches the part of the filename. Only really useful for sorting. Normally this function returns the ID name that matches the existing ARE/GIT resources.
 
         Returns:
         -------
             The ID of the area for the module.
         """
-        root: str = self.replace_module_extensions(module_filename)
-        lower_root: str = root.lower()
-        found_mod_id: str = root
-        matching_module_filenames = self._find_matching_erf_rim_from_root(lower_root)
+        root: str = self.get_module_root(module_filename)
+
         try:
-            our_erf_rims_module: list[Capsule] = []
-            _cached_capsules: dict[Path, Capsule] = self._build_capsule_info(
-                lower_root,
-                module_filename,
-                matching_module_filenames,
-                our_erf_rims_module,
-                modid_lookup=False,
-            )
-            mod_id: str = ""
-            is_our_search: bool = False
-            mod_ids_to_try: set[str] = set()
-            for iterated_capsule in our_erf_rims_module:
-                try:
-                    module_ifo_data: bytes | None = iterated_capsule.resource("module", ResourceType.IFO)
-                    if not module_ifo_data:
-                        continue
-                    ifo: GFF = read_gff(module_ifo_data)
+            @lru_cache(maxsize=1000)
+            def quick_id(filename: str) -> str:
+                base_name: str = filename.rsplit(".")[0]  # Strip extension
+                if len(base_name) >= 6 and base_name[3:4].lower() == "m" and base_name[4:6].isdigit():  # e.g. 'danm13', 'manm26mg'...
+                    base_name = f"{base_name[:3]}_{base_name[3:]}"
+                parts: list[str] = base_name.split("_")
 
-                    # Only ever seen this wrong for custom modules.
-                    mod_id, is_our_search = self._process_mod_attribute(ifo, use_alternate, lower_root, iterated_capsule, mod_ids_to_try, "Mod_Area_list", mode=0)
-                    if is_our_search:
-                        found_mod_id = mod_id
-                        break
-                    if mod_id and mod_id.strip():
-                        found_mod_id = mod_id
+                mod_id = base_name  # If there are no underscores, return the base name itself
+                if len(parts) == 2:
+                    # If there's exactly one underscore, return the part after the underscore
+                    if parts[1] in ("s", "dlg"):
+                        mod_id = parts[0]
+                    else:  # ...except when the part after matches a qualifier
+                        mod_id = parts[1]
+                elif len(parts) >= 3:
+                    # If there are three or more underscores, return what's between the first two underscores
+                    if parts[-1].lower() in ("s", "dlg"):
+                        mod_id = "_".join(parts[1:-1])
+                    else:  # ...except when the last part matches a qualifier
+                        mod_id = "_".join(parts[1:-2])
+                #self._log.debug("parts: %s id: '%s'", parts, mod_id)
+                return mod_id
 
-                    # Adding because I'm unsure if the case is maintained.
-                    mod_id, is_our_search = self._process_mod_attribute(ifo, use_alternate, lower_root, iterated_capsule, mod_ids_to_try, "Mod_Area_List", mode=0)
-                    if is_our_search:
-                        found_mod_id = mod_id
-                        break
-                    if mod_id and mod_id.strip():
-                        found_mod_id = mod_id
-
-                    # Sometimes wrong, and sometimes it's not defined.
-                    mod_id, is_our_search = self._process_mod_attribute(ifo, use_alternate, lower_root, iterated_capsule, mod_ids_to_try, "Mod_VO_ID", mode=1)
-                    if is_our_search:
-                        found_mod_id = mod_id
-                        break
-                    if mod_id and mod_id.strip():
-                        found_mod_id = mod_id
-
-                    # This one is sometimes wrong in k1, doesn't seem to be used much (if at all) in k2
-                    mod_id, is_our_search = self._process_mod_attribute(ifo, use_alternate, lower_root, iterated_capsule, mod_ids_to_try, "Mod_Entry_Area", mode=1)
-                    if is_our_search:
-                        found_mod_id = mod_id
-                        break
-                    if mod_id and mod_id.strip():
-                        found_mod_id = mod_id
-
-                except Exception:  # pylint: disable=W0718  # noqa: BLE001
-                    self._log.debug("This exception has been suppressed in pykotor.extract.installation.", exc_info=True)
-
-            if is_our_search:  # Skip ARE validation (faster).
-                # if use_alternate:
-                #    print(f"Alternate: Returning '{found_mod_id}' for '{module_filename}'")
-                # else:
-                #    print(f"Main: returning '{found_mod_id}' for '{module_filename}'")
-                if also_return_cached_capsules:
-                    return found_mod_id, _cached_capsules  # type: ignore[return-value, reportReturnType]
-                return found_mod_id
-            # Validate the ARE exists.
-            for mod_id in mod_ids_to_try:
-                for capsule in our_erf_rims_module:
-                    self._log.debug("Checking for id '%s' in filename str '%s'", mod_id, module_filename)
-                    if capsule.info(mod_id, ResourceType.ARE) is None:
-                        continue
-                    if also_return_cached_capsules:  # Found at this point.
-                        return found_mod_id, _cached_capsules  # type: ignore[return-value, reportReturnType]
-                    return found_mod_id
-                if mod_id and (mod_id.startswith("m") or mod_id[1].isdigit()):
-                    found_mod_id = mod_id
+            if use_alternate:
+                return quick_id(module_filename).lower()
         except Exception:  # noqa: BLE001
-            self._log.exception("Installation.module_id(%s) had an unexpected exception thrown.", module_filename)
-        # print(f"NOT FOUND: Module ID for '{module_filename}', using backup of '{found_mod_id}'")
-        if also_return_cached_capsules:
-            return found_mod_id, _cached_capsules  # type: ignore[return-value, reportReturnType]
-        return found_mod_id
+            self._log.exception(f"Could not quick ID capsule '{module_filename}'")
+            return root
 
-    def _process_mod_attribute(
-        self,
-        ifo: GFF,
-        use_alternate: bool,  # noqa: FBT001
-        lower_root: str,
-        iterated_capsule: Capsule,
-        mod_ids_to_try: set[str],
-        attribute_name: str,
-        mode: Literal[0, 1],
-    ) -> tuple[str, bool]:
-        """Processes a specified mod attribute (Mod_VO_ID or Mod_Entry_Area), extracting its value and handling exceptions."""
-        found_mod_id: str = ""
         try:
-            if ifo.root.exists(attribute_name):
-                if mode == 0:
-                    mod_area_list = ifo.root.get_list(attribute_name)
-                    found_mod_id = self._get_mod_id_from_area_list(mod_area_list)
-                else:
-                    found_mod_id = ifo.root.get_string(attribute_name).strip()
-                if use_alternate and found_mod_id and found_mod_id.lower() in lower_root:
-                    return found_mod_id, True
-        except Exception:  # noqa: BLE001
-            ...  # print(iterated_capsule.filename(), attribute_name, str(e))
-        else:
-            if not use_alternate and found_mod_id and found_mod_id.strip():
-                if iterated_capsule.info(found_mod_id, ResourceType.ARE) is not None:
-                    return found_mod_id, True
-                mod_ids_to_try.add(found_mod_id)
-        return found_mod_id, False
-
-    def _build_item(
-        self,
-        erfrim_filepath: CaseAwarePath,
-        modid_lookup: bool,  # noqa: FBT001
-        mod_id: str,
-        our_erf_rims_module: list[Capsule] | list[tuple[str, Capsule]],
-        cached_capsules: dict[Path, Capsule],
-    ) -> Capsule:
-        capsule: Capsule = cached_capsules.get(erfrim_filepath, Capsule(erfrim_filepath))
-        item: Capsule | tuple[str, Capsule] = (mod_id, capsule) if modid_lookup else capsule
-        our_erf_rims_module.append(item)  # type: ignore[reportArgumentType]
-        return capsule
-
-    def _process_filename_for_capsule(
-        self,
-        rim_or_erf_filename: str,
-        modid_lookup: bool,  # noqa: FBT001
-        mod_id: str,
-        our_erf_rims_module: list[tuple[str, Capsule]] | list[Capsule],
-        cached_capsules: dict[Path, Capsule],
-    ) -> None:
-        """Constructs the filepath from the given filename, checks if the file exists,
-        and attempts to build a capsule from it, catching and handling any exceptions.
-        """
-        filepath = self.module_path() / rim_or_erf_filename
-        if filepath.safe_isfile():
-            try:
-                cached_capsules[filepath] = self._build_item(filepath, modid_lookup, mod_id, our_erf_rims_module, cached_capsules)
-            except Exception as e:  # noqa: BLE001
-                self._log.debug("This exception has been suppressed in pykotor.extract.installation.", exc_info=True)
-
-    def _build_capsule_info(
-        self,
-        lower_root: str,
-        module_filename: str,
-        matching_module_filenames: set[str],
-        our_erf_rims_module: list[tuple[str, Capsule]] | list[Capsule],
-        *,
-        modid_lookup: bool = True,
-    ) -> dict[Path, Capsule]:
-        _cached_capsules: dict[Path, Capsule]
-        mod_id: str
-        mod_id, _cached_capsules = self.module_id(module_filename, also_return_cached_capsules=True) if modid_lookup else ("", {})  # type: ignore[reportAssignmentType]
-
-        mod_filename: str = f"{lower_root}.mod"
-        if module_filename.lower() == mod_filename and mod_filename in matching_module_filenames:
-            mod_filepath = self.module_path() / mod_filename
-            if mod_filepath.safe_isfile():
-                try:
-                    _cached_capsules[mod_filepath] = self._build_item(mod_filepath, modid_lookup, mod_id, our_erf_rims_module, _cached_capsules)
-                except Exception as e:  # noqa: BLE001
-                    print(format_exception_with_variables(e, message="This exception has been suppressed in pykotor.extract.installation."))
-            return _cached_capsules
-
-        # Only consider .rim/_s.rim/_erf.dlg if module_filename does not have a .mod suffix OR if a .mod with this lower_root doesn't exist on disk.
-        rim_filename = f"{lower_root}.rim"
-        if rim_filename in matching_module_filenames:
-            self._process_filename_for_capsule(rim_filename, modid_lookup, mod_id, our_erf_rims_module, _cached_capsules)
-        rim_s_filename = f"{lower_root}_s.rim"
-        if rim_s_filename in matching_module_filenames:
-            self._process_filename_for_capsule(rim_s_filename, modid_lookup, mod_id, our_erf_rims_module, _cached_capsules)
-        _dlg_filename = f"{lower_root}._dlg.erf"
-        if _dlg_filename in matching_module_filenames:
-            self._process_filename_for_capsule(_dlg_filename, modid_lookup, mod_id, our_erf_rims_module, _cached_capsules)
-        return _cached_capsules
-
-    def _find_matching_erf_rim_from_root(self, lower_root: str) -> set[str]:
-        result: set[str] = set()
-        for iterated_module_filename in self.modules_list():
-            lower_iterated_module_filename = iterated_module_filename.lower()
-            if lower_root != self.replace_module_extensions(lower_iterated_module_filename):
-                continue
-            result.add(lower_iterated_module_filename)
-        return result
-
-    def _get_mod_id_from_area_list(self, mod_area_list: GFFList) -> str:
-        mod_id: str = ""
-        for gff_struct in mod_area_list:
-            try:
-                mod_id = str(gff_struct.get_resref("Area_Name"))
-            except Exception:  # noqa: PERF203, BLE001
-                self._log.debug("This exception has been suppressed in pykotor.extract.installation.", exc_info=True)
+            module_path: CaseAwarePath = self.module_path()
+            if not is_mod_file(module_filename):
+                relevant_capsule = Capsule(module_path.joinpath(f"{root}.rim"))
             else:
-                if mod_id and mod_id.strip():
-                    return mod_id
-        return mod_id
+                relevant_capsule = Capsule(module_path.joinpath(module_filename))
+        except Exception:  # noqa: BLE001
+            self._log.exception(f"Could not build capsule for 'Modules/{module_filename}'")
+            return root
+
+        try:
+            return next(
+                (
+                    resource.resname()
+                    for resource in relevant_capsule.resources()
+                    if resource.restype() is ResourceType.GIT
+                ),
+                next(
+                    (
+                        resource.resname()
+                        for resource in relevant_capsule.resources()
+                        if resource.restype() is ResourceType.ARE
+                    ),
+                    quick_id(module_filename)
+                )
+            )
+        except Exception:  # noqa: BLE001
+            self._log.exception("Error occurred while recursing nested resources in func module_id()")
+            return root
+
+        # Old logic.
+        ifo = self.ifo()
+        if ifo.root.exists("Mod_Area_List"):
+            actual_ftype = ifo.root.what_type("Mod_Area_List")
+            if actual_ftype is not GFFFieldType.List:
+                RobustRootLogger().warning(f"{self.filename()} has IFO with incorrect field 'Mod_Area_List' type '{actual_ftype.name}', expected 'List'")
+            else:
+                area_list = ifo.root.get_list("Mod_Area_List")
+                area_localized_name = next(
+                    (
+                        gff_struct.get_resref("Area_Name")
+                        for gff_struct in area_list
+                        if gff_struct.exists("Area_Name")
+                    ),
+                    None
+                )
+                if area_localized_name is not None and str(area_localized_name).strip():
+                    return area_localized_name
+            RobustRootLogger().error(f"{self.filename()}: Module.IFO does not contain a valid Mod_Area_List. Could not get the area name.")
+        else:
+            RobustRootLogger().error(f"{self.filename()}: Module.IFO does not have an existing Mod_Area_List.")
+        raise ValueError(f"Failed to get the area name from module filename '{self.filename()}'")

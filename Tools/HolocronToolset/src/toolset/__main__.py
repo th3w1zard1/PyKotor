@@ -28,14 +28,15 @@ def onAppCrash(
     exc: BaseException,
     tback: TracebackType | None,
 ):
+    from utility.logger_util import RobustRootLogger
 
-    from utility.logger_util import get_root_logger
     if issubclass(etype, KeyboardInterrupt):
         sys.__excepthook__(etype, exc, tback)
         return
     if tback is None:
         with suppress(Exception):
             import inspect
+
             # Get the current stack frames
             current_stack = inspect.stack()
             if current_stack:
@@ -48,7 +49,7 @@ def onAppCrash(
                 exc = exc.with_traceback(fake_traceback)
                 # Now exc has a traceback :)
                 tback = exc.__traceback__
-    logger = get_root_logger()
+    logger = RobustRootLogger()
     logger.critical("Uncaught exception", exc_info=(etype, exc, tback))
 
 
@@ -101,44 +102,30 @@ def set_qt_api():
             continue
 
 
-def is_running_from_temp():
-    app_path = Path(sys.executable)
+def is_running_from_temp() -> bool:
+    app_path = pathlib.Path(sys.executable)
     temp_dir = tempfile.gettempdir()
     return str(app_path).startswith(temp_dir)
 
 
 if __name__ == "__main__":
-    if os.name == "nt":
-        os.environ["QT_MULTIMEDIA_PREFERRED_PLUGINS"] = "windowsmediafoundation"
-    os.environ["QT_DEBUG_PLUGINS"] = "1"
 
-    # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-    # os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
-    # os.environ["QT_SCALE_FACTOR"] = "1"
-
-    multiprocessing.set_start_method("spawn")  # 'spawn' is default on windows, linux/mac defaults to some other start method which breaks the updater.
+    multiprocessing.set_start_method("spawn")  # 'spawn' is default on windows, linux/mac defaults to some other start method (probably 'fork') which breaks the updater.
     if is_frozen():
-        from utility.logger_util import get_root_logger
-        get_root_logger().debug("App is frozen - calling multiprocessing.freeze_support()")
+        from utility.logger_util import RobustRootLogger
+
+        RobustRootLogger().debug("App is frozen - calling multiprocessing.freeze_support()")
         multiprocessing.freeze_support()
         set_qt_api()
     else:
         fix_sys_and_cwd_path()
-        os.environ["QT_API"] = os.environ.get("QT_API", "")  # supports PyQt5, PyQt6, PySide2, PySide6
-        if os.environ["QT_API"] not in ("PyQt5", "PyQt6", "PySide2", "PySide6"):
+        if os.environ.get("QT_API") not in ("PyQt5", "PyQt6", "PySide2", "PySide6"):
             set_qt_api()
 
-    try:
-        import qtpy
-        print(f"Using Qt bindings: {qtpy.API_NAME}")
-    except ImportError as e:
-        print(e)
-        sys.exit("QtPy is not available. Ensure QtPy is installed and accessible.")
-
     if os.name == "nt":
-        os.environ["QT_MULTIMEDIA_PREFERRED_PLUGINS"] = "windowsmediafoundation"
-    os.environ["QT_DEBUG_PLUGINS"] = "1"
-
+        os.environ["QT_MULTIMEDIA_PREFERRED_PLUGINS"] = os.environ.get("QT_MULTIMEDIA_PREFERRED_PLUGINS", "windowsmediafoundation")
+    os.environ["QT_DEBUG_PLUGINS"] = os.environ.get("QT_DEBUG_PLUGINS", "0")
+    os.environ["QT_LOGGING_RULES"] = os.environ.get("QT_LOGGING_RULES", "qt5ct.debug=false")  # Disable specific Qt debug output
     # os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
     # os.environ["QT_SCALE_FACTOR_ROUNDING_POLICY"] = "PassThrough"
     # os.environ["QT_SCALE_FACTOR"] = "1"
@@ -146,17 +133,7 @@ if __name__ == "__main__":
     from qtpy.QtCore import QThread
     from qtpy.QtWidgets import QApplication
 
-    from utility.system.path import Path
-
     app = QApplication(sys.argv)
-
-    from ui import stylesheet_resources  # noqa: F401
-
-    # set stylesheet
-    #file = QFile(":/dark/stylesheet.qss")
-    #file.open(QFile.ReadOnly | QFile.Text)
-    #stream = QTextStream(file)
-    #app.setStyleSheet(stream.readAll())
 
     # font = app.font()
     # font.setPixelSize(15)
@@ -176,21 +153,12 @@ if __name__ == "__main__":
         msgBox.exec_()
         sys.exit("Exiting: Application was run from a temporary or zip directory.")
 
-    from toolset.gui.windows.main import ToolWindow
-
-    profiler = False  # Set to False or None to disable profiler
-    if profiler:
-        profiler = cProfile.Profile()
-        profiler.enable()
-
-    window = ToolWindow()
-    window.show()
-    window.checkForUpdates(silent=True)
     def qt_cleanup():
         """Cleanup so we can exit."""
         from toolset.utils.window import WINDOWS
-        from utility.logger_util import get_root_logger
-        get_root_logger().debug("Closing/destroy all windows from WINDOWS list, (%s to handle)...", len(WINDOWS))
+        from utility.logger_util import RobustRootLogger
+
+        RobustRootLogger().debug("Closing/destroy all windows from WINDOWS list, (%s to handle)...", len(WINDOWS))
         for window in WINDOWS:
             window.close()
             window.destroy()
@@ -198,17 +166,33 @@ if __name__ == "__main__":
 
     def last_resort_cleanup():
         """Prevents the toolset from running in the background after sys.exit is called..."""
-        from utility.logger_util import get_root_logger
-        from utility.system.os_helper import kill_self_pid
-        get_root_logger().info("Fully shutting down Holocron Toolset...")
-        kill_self_pid()
+        from utility.logger_util import RobustRootLogger
+        from utility.system.os_helper import gracefully_shutdown_threads, start_shutdown_process
+
+        RobustRootLogger().info("Fully shutting down Holocron Toolset...")
+        # kill_self_pid()
+        gracefully_shutdown_threads()
+        RobustRootLogger().debug("Starting new shutdown process...")
+        start_shutdown_process()
+        RobustRootLogger().debug("Shutdown process started...")
 
     app.aboutToQuit.connect(qt_cleanup)
     atexit.register(last_resort_cleanup)
+
+    from toolset.gui.windows.main import ToolWindow
+
+    profiler: bool | cProfile.Profile = False  # Set to False or None to disable profiler
+    if profiler:
+        profiler = cProfile.Profile()
+        profiler.enable()
+
+    window = ToolWindow()
+    window.show()
+    window.checkForUpdates(silent=True)
 
     # Start main app loop.
     app.exec_()
 
     if profiler:
         profiler.disable()
-        profiler.dump_stats(str(Path("profiler_output.pstat")))
+        profiler.dump_stats(str(pathlib.Path("profiler_output.pstat")))

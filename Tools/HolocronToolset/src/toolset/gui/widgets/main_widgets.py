@@ -10,16 +10,29 @@ import qtpy
 
 from qtpy import QtCore
 from qtpy.QtCore import QPoint, QSortFilterProxyModel, QThread, QTimer, Qt
-from qtpy.QtGui import QIcon, QImage, QPixmap, QStandardItem, QStandardItemModel, QTransform
-from qtpy.QtWidgets import QHeaderView, QMenu, QWidget
+from qtpy.QtGui import (
+    QCursor,
+    QIcon,
+    QImage,
+    QPixmap,
+    QStandardItem,
+    QStandardItemModel,
+    QTransform,
+)
+from qtpy.QtWidgets import QHeaderView, QMenu, QToolTip, QWidget
 
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat
+from toolset.gui.dialogs.load_from_location_result import ResourceItems
 from utility.error_handling import format_exception_with_variables
+from utility.logger_util import RobustRootLogger
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QModelIndex
-    from qtpy.QtGui import QResizeEvent
+    from qtpy.QtGui import (
+        QMouseEvent,
+        QResizeEvent,
+    )
 
     from pykotor.common.misc import CaseInsensitiveDict
     from pykotor.extract.file import FileResource
@@ -78,6 +91,22 @@ class ResourceList(MainWindowList):
 
         self.sectionModel = QStandardItemModel()
         self.ui.sectionCombo.setModel(self.sectionModel)
+        self.tooltipTimer = QTimer(self)
+        self.tooltipTimer.setSingleShot(True)
+        self.tooltipTimer.timeout.connect(self.showTooltip)
+        self.tooltipText = ""
+        self.setMouseTracking(True)
+        self.ui.resourceTree.setMouseTracking(True)
+        self.ui.resourceTree.viewport().installEventFilter(self)  # Install event filter on the viewport
+
+    def eventFilter(self, obj, event):
+        if obj is self.ui.resourceTree.viewport() and event.type() == QtCore.QEvent.MouseMove:
+            self.mouseMoveEvent(event)
+            return True
+        return super().eventFilter(obj, event)
+
+    def showTooltip(self):
+        QToolTip.showText(QCursor.pos(), self.tooltipText, self.ui.resourceTree)
 
     def setupSignals(self):
         self.ui.searchEdit.textEdited.connect(self.onFilterStringUpdated)
@@ -86,6 +115,39 @@ class ResourceList(MainWindowList):
         self.ui.refreshButton.clicked.connect(self.onRefreshClicked)
         self.ui.resourceTree.customContextMenuRequested.connect(self.onResourceContextMenu)
         self.ui.resourceTree.doubleClicked.connect(self.onResourceDoubleClicked)
+
+    def enterEvent(self, event):
+        self.tooltipTimer.stop()
+        QToolTip.hideText()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.tooltipTimer.stop()
+        QToolTip.hideText()
+        super().leaveEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        index = self.ui.resourceTree.indexAt(event.pos())
+        if index.isValid():
+            # Retrieve the QStandardItem from the model using the index
+            model_index = self.ui.resourceTree.model().mapToSource(index)  # Map proxy index to source index
+            item = self.ui.resourceTree.model().sourceModel().itemFromIndex(model_index)
+            if item is not None:
+                resource: FileResource | None = getattr(item, "resource", None)
+                if resource is not None:
+                    self.tooltipText = str(resource.filepath())
+                    self.tooltipPos = event.globalPos()
+                    self.tooltipTimer.start(1100)  # Set the delay to 3000ms (3 seconds)
+                else:
+                    self.tooltipTimer.stop()
+                    QToolTip.hideText()
+            else:
+                self.tooltipTimer.stop()
+                QToolTip.hideText()
+        else:
+            self.tooltipTimer.stop()
+            QToolTip.hideText()
+        super().mouseMoveEvent(event)
 
     def hideReloadButton(self):
         self.ui.reloadButton.setVisible(False)
@@ -104,6 +166,7 @@ class ResourceList(MainWindowList):
     ):
         for i in range(self.ui.sectionCombo.count()):
             if section in self.ui.sectionCombo.itemText(i):
+                RobustRootLogger().debug("changing to section '%s'", section)
                 self.ui.sectionCombo.setCurrentIndex(i)
 
     def setResources(
@@ -208,34 +271,24 @@ class ResourceList(MainWindowList):
     def onResourceContextMenu(self, point: QPoint):
         """Shows context menu for selected resources.
 
+        an Installation/HTInstallation instance is not available in this code, that is emitted back to the ToolWindow.
+
         Args:
         ----
             point: QPoint - Mouse position for context menu
-
-        Processing Logic:
-        ----------------
-            - Create QMenu at mouse position
-            - Get selected resources
-            - If single resource and GFF type:
-                - Add "Open" and "Open with GFF Editor" actions
-                - Connect actions to emit signals to open resource.
         """
         resources: list[FileResource] = self.selectedResources()
-        if len(resources) == 1:
-            resource: FileResource = resources[0]
-            if resource.restype().contents == "gff":
-                menu = QMenu(self)
-
-                def open1():
-                    return self.requestOpenResource.emit(resources, False)
-
-                def open2():
-                    return self.requestOpenResource.emit(resources, True)
-
-                menu.addAction("Open").triggered.connect(open2)
-                menu.addAction("Open with GFF Editor").triggered.connect(open1)
-
-                menu.popup(self.ui.resourceTree.mapToGlobal(point))
+        if not resources:
+            return
+        menu = QMenu(self)
+        menu.addAction("Open").triggered.connect(lambda: self.requestOpenResource.emit(resources, True))
+        if all(resource.restype().contents == "gff" for resource in resources):
+            menu.addAction("Open with GFF Editor").triggered.connect(lambda: self.requestOpenResource.emit(resources, False))
+        menu.addSeparator()
+        builder = ResourceItems(resources=resources)
+        builder.viewport = lambda: self.ui.resourceTree
+        builder.runContextMenu(point, menu=menu)
+        #menu.popup(self.ui.resourceTree.mapToGlobal(point))
 
     def onResourceDoubleClicked(self):
         self.requestOpenResource.emit(self.selectedResources(), None)
@@ -293,7 +346,8 @@ class ResourceModel(QStandardItemModel):
     ):
         item1 = QStandardItem(resource.resname())
         item1.resource = resource
-        item2 = QStandardItem(resource.restype().extension)
+        #item1.setToolTip(str(resource.filepath()))
+        item2 = QStandardItem(resource.restype().extension.upper())
         self._addResourceIntoCategory(resource.restype(), customCategory).appendRow([item1, item2])
 
     def resourceFromIndexes(
@@ -506,7 +560,9 @@ class TextureList(MainWindowList):
         )
 
         # Emit signals to load textures that have not had their icons assigned
-        for item in [item for item in self.visibleItems() if item.text().casefold() not in self._scannedTextures]:
+        for item in iter(self.visibleItems()):
+            if item.text().casefold() in self._scannedTextures:
+                continue
             item_text = item.text()
 
             # Avoid trying to load the same texture multiple times.
@@ -522,7 +578,7 @@ class TextureList(MainWindowList):
     def onIconUpdate(
         self,
         item: QStandardItem,
-        icon,
+        icon: QIcon | QPixmap,
     ):
         try:  # FIXME: there's a race condition happening somewhere, causing the item to have previously been deleted.
             item.setIcon(icon)

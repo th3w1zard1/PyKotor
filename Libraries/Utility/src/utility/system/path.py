@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import pathlib
 import re
+import shlex
 import subprocess
 import sys
 import uuid
@@ -10,13 +11,14 @@ import uuid
 from contextlib import suppress
 from functools import lru_cache
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Any, Union, cast
 
 from utility.error_handling import format_exception_with_variables
-from utility.logger_util import get_root_logger
+from utility.logger_util import RobustRootLogger
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
+    from logging import Logger
 
     from typing_extensions import Self
 
@@ -197,7 +199,7 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
                 self_compare = self_compare.lower()
                 other_compare = other_compare.lower()
 
-        return self_compare == other_compare
+        return cast(bool, self_compare == other_compare)
 
     def __hash__(self):
         return hash(self.as_posix() if self._flavour.sep == "/" else self.as_windows())  # type: ignore[reportAttributeAccessIssue]
@@ -429,7 +431,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             except StopIteration:  # noqa: PERF203
                 break  # StopIteration means there are no more files to iterate over
             except Exception:  # pylint: disable=W0718  # noqa: BLE001
-                get_root_logger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
+                RobustRootLogger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
                 continue  # Ignore the file that caused an exception and move to the next
 
     # Safe iterdir operation
@@ -441,7 +443,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             except StopIteration:  # noqa: PERF203
                 break  # StopIteration means there are no more files to iterate over
             except Exception:  # pylint: disable=W0718  # noqa: BLE001
-                get_root_logger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
+                RobustRootLogger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
                 continue  # Ignore the file that caused an exception and move to the next
 
     # Safe is_dir operation
@@ -450,7 +452,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
         try:
             check = self.is_dir()
         except (OSError, ValueError):
-            get_root_logger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
+            RobustRootLogger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
             return None
         else:
             return check
@@ -461,7 +463,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
         try:
             check = self.is_file()
         except (OSError, ValueError):
-            get_root_logger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
+            RobustRootLogger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
             return None
         else:
             return check
@@ -472,7 +474,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
         try:
             check = self.exists()
         except (OSError, ValueError):
-            get_root_logger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
+            RobustRootLogger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
             return None
         else:
             return check
@@ -693,8 +695,9 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
 
             # If the function fails, it returns INVALID_FILE_ATTRIBUTES
             if attrs == -1:
-                msg = f"Cannot access attributes of file: {file_path}"
-                raise FileNotFoundError(msg)
+                import errno
+                msg = "Cannot access attributes of the file"
+                raise FileNotFoundError(errno.ENOENT, msg, str(file_path))
 
             # Check for specific attributes
             is_read_only = bool(attrs & FILE_ATTRIBUTE_READONLY)
@@ -736,11 +739,12 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                     hide_window_cmdpart = ""
                     creation_flags = 0
 
-                # Construct the command to run the batch script with elevated privileges
-                run_script_cmd: list[str] = [
+                # Use shlex to escape arguments properly
+                run_script_cmd = [
                     "Powershell",
                     "-Command",
-                    f"Start-Process cmd.exe -ArgumentList '{cmd_switch} \"{script_path_str}\"' -Verb RunAs{hide_window_cmdpart} -Wait",
+                    f"Start-Process cmd.exe -ArgumentList {shlex.quote(f'{cmd_switch} {script_path_str}')}"
+                    f" -Verb RunAs{hide_window_cmdpart} -Wait",
                 ]
 
                 # Execute the batch script
@@ -752,7 +756,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             # Delete the batch script after execution
             with suppress(Exception):
                 if script_path.safe_isfile():
-                    script_path.unlink()
+                    script_path.unlink(missing_ok=True)
 
         # Inspired by the C# code provided by KOTORModSync at https://github.com/th3w1zard1/KOTORModSync
         def request_native_access(
@@ -875,7 +879,6 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                 return
 
     if os.name == "posix":
-
         def get_highest_posix_permission(
             self: Path,  # type: ignore[reportGeneralTypeIssues]
             uid: int | None = None,
@@ -893,3 +896,23 @@ class PosixPath(Path):  # type: ignore[misc]
 
 class WindowsPath(Path):  # type: ignore[misc]
     _flavour = pathlib.PureWindowsPath._flavour  # noqa: SLF001  # type: ignore[reportAttributeAccessIssue]
+
+
+
+class ChDir:
+    def __init__(
+        self,
+        path: os.PathLike | str,
+        logger: Logger | None = None,
+    ):
+        self.old_dir: Path = Path.cwd()
+        self.new_dir: Path = Path.pathify(path)
+        self.log = logger or RobustRootLogger()
+
+    def __enter__(self):
+        self.log.debug(f"Changing to Directory --> '{self.new_dir}'")  # noqa: G004
+        os.chdir(self.new_dir)
+
+    def __exit__(self, *args, **kwargs):
+        self.log.debug(f"Moving back to Directory --> '{self.old_dir}'")  # noqa: G004
+        os.chdir(self.old_dir)

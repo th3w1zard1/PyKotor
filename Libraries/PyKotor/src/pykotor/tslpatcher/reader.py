@@ -132,10 +132,12 @@ class ConfigReader:
         ini: ConfigParser,
         mod_path: os.PathLike | str,
         logger: PatchLogger | None = None,
+        tslpatchdata_path: os.PathLike | str | None = None,
     ):
         self.previously_parsed_sections = set()
         self.ini: ConfigParser = ini
         self.mod_path: CaseAwarePath = CaseAwarePath.pathify(mod_path)
+        self.tslpatchdata_path: CaseAwarePath | None = tslpatchdata_path  # path to the tslpatchdata, optional but we'll use it here for the nwnnsscomp.exe if it exists.
         self.config: PatcherConfig
         self.log: PatchLogger = logger or PatchLogger()
 
@@ -230,8 +232,26 @@ class ConfigReader:
 
         self.config.window_title = settings_ini.get("WindowCaption", "")
         self.config.confirm_message = settings_ini.get("ConfirmMessage", "")
-        self.config.required_file = settings_ini.get("Required")
-        self.config.required_message = settings_ini.get("RequiredMsg", "")
+        for key, value in settings_ini.items():
+            lower_key = key.lower()
+            if (
+                lower_key == "required"
+                or lower_key.startswith("required") and len(key) > len("required") and not key[len("required"):].lower().startswith("msg")
+            ):
+                if lower_key != "required" and not key[len("required"):].isdigit():
+                    raise ValueError(f"Key '{key}' improperly defined in settings ini. Expected (Required) or (RequiredMsg)")
+                these_files = tuple(filename.strip() for filename in value.split(","))
+                self.config.required_files.append(these_files)
+
+            if (
+                lower_key == "requiredmsg"
+                or lower_key.startswith("requiredmsg") and len(key) > len("requiredmsg")
+            ):
+                if lower_key != "requiredmsg" and not key[len("requiredmsg"):].isdigit():
+                    raise ValueError(f"Key '{key}' improperly defined in settings ini. Expected (Required) or (RequiredMsg)")
+                self.config.required_messages.append(value.strip())
+        if len(self.config.required_files) != len(self.config.required_messages):
+            raise ValueError(f"Required files definitions must match required msg count ({len(self.config.required_files)}/{len(self.config.required_messages)})")
         self.config.save_processed_scripts = int(settings_ini.get("SaveProcessedScripts", 0))
         self.config.log_level = LogLevel(int(settings_ini.get("LogLevel", LogLevel.WARNINGS.value)))
 
@@ -660,6 +680,10 @@ class ConfigReader:
         default_destination: str = compilelist_section_dict.pop("!DefaultDestination", ModificationsNSS.DEFAULT_DESTINATION)
         default_source_folder = compilelist_section_dict.pop("!DefaultSourceFolder", ".")
 
+        nwnnsscomp_exepath = self.mod_path / default_source_folder / "nwnnsscomp.exe"
+        if not nwnnsscomp_exepath.safe_isfile():
+            nwnnsscomp_exepath = None if self.tslpatchdata_path is None else self.tslpatchdata_path / "nwnnsscomp.exe"  # TSLPatcher default
+
         for identifier, file in compilelist_section_dict.items():
             replace: bool = identifier.lower().startswith("replace")
             modifications = ModificationsNSS(file, replace)
@@ -671,7 +695,7 @@ class ConfigReader:
                 file_section_dict = CaseInsensitiveDict(self.ini[optional_file_section_name])
                 modifications.pop_tslpatcher_vars(file_section_dict, default_destination, default_source_folder)
 
-            modifications.nwnnsscomp_path = self.mod_path / modifications.sourcefolder / "nwnnsscomp.exe"
+            modifications.nwnnsscomp_path = nwnnsscomp_exepath
             self.config.patches_nss.append(modifications)
 
     def load_hack_list(self):
@@ -1260,9 +1284,9 @@ class ConfigReader:
                 msg = f"[2DAList] parse error: '{key}' missing from [{identifier}] in ini."
                 raise ValueError(msg)
             lower_raw_value = raw_value.lower()
-            if lower_raw_value.startswith("strref"):
+            if lower_raw_value.startswith("strref") and len(raw_value) > "strref" and raw_value[6:].isdigit():
                 value: str | int | RowValue2DAMemory | RowValueTLKMemory = RowValueTLKMemory(int(raw_value[6:]))
-            elif lower_raw_value.startswith("2damemory"):
+            elif lower_raw_value.startswith("2damemory") and len(raw_value) > "2damemory" and raw_value[9:].isdigit():
                 value = RowValue2DAMemory(int(raw_value[9:]))
             else:
                 value = int(raw_value) if is_int else raw_value
@@ -1275,7 +1299,7 @@ class ConfigReader:
         if "LabelIndex" in modifiers:
             return get_target(TargetType.LABEL_COLUMN, "LabelIndex")
 
-        self.log.add_warning(f"No line set to be modified in [{identifier}].")  # TODO: should raise an exception?
+        self.log.add_warning(f"No line set to be modified in [{identifier}].")
         return None
 
     def cells_2da(
@@ -1309,8 +1333,16 @@ class ConfigReader:
             lower_modifier: str = modifier.lower().strip()
             lower_value: str = value.lower()
 
-            is_store_2da: bool = lower_modifier.startswith("2damemory")
-            is_store_tlk: bool = lower_modifier.startswith("strref") and len(lower_modifier) > len("strref")
+            is_store_2da: bool = (
+                lower_modifier.startswith("2damemory")
+                and len(lower_modifier) > len("2damemory")
+                and modifier[9:].isdigit()
+            )
+            is_store_tlk: bool = (
+                modifier.startswith("strref")
+                and len(lower_modifier) > len("strref")
+                and modifier[6:].isdigit()
+            )
             is_row_label: bool = lower_modifier in {"rowlabel", "newrowlabel"}
 
             row_value: RowValue | None = None

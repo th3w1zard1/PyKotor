@@ -50,8 +50,8 @@ class PatcherConfig:
         self.confirm_message: str = ""
         self.game_number: int | None = None
 
-        self.required_file: str | None = None
-        self.required_message: str = ""
+        self.required_files: list[tuple[str, ...]] = []
+        self.required_messages: list[str] = []
         self.save_processed_scripts: int = 0
         self.log_level: LogLevel = LogLevel.WARNINGS
 
@@ -66,7 +66,13 @@ class PatcherConfig:
         # optional hp features
         self.ignore_file_extensions: bool = False
 
-    def load(self, ini_text: str, mod_path: os.PathLike | str, logger: PatchLogger | None = None):
+    def load(
+        self,
+        ini_text: str,
+        mod_path: os.PathLike | str,
+        logger: PatchLogger | None = None,
+        tslpatchdata_path: os.PathLike | str | None = None,
+    ):
         """Loads configuration from a TSLPatcher changes ini text string.
 
         Args:
@@ -94,7 +100,7 @@ class PatcherConfig:
         ini.optionxform = lambda optionstr: optionstr  # type: ignore[method-assign]  # use case-sensitive keys
         ini.read_string(ini_text)
 
-        ConfigReader(ini, mod_path, logger).load(self)
+        ConfigReader(ini, mod_path, logger, tslpatchdata_path).load(self)
 
     @classmethod
     def as_namespace(cls, filepath: CaseAwarePath) -> PatcherNamespace:

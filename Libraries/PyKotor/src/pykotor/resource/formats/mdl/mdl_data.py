@@ -279,7 +279,7 @@ class MDL:
 
     def get_by_node_id(
         self,
-        node_id,
+        node_id: int,
     ) -> MDLNode:
         """Get node by node id.
 

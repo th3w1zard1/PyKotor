@@ -6,7 +6,7 @@ from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from pykotor.common.misc import Game
-from utility.logger_util import get_root_logger
+from utility.logger_util import RobustRootLogger
 from utility.misc import ProcessorArchitecture
 from utility.system.path import Path
 
@@ -69,7 +69,7 @@ def find_software_key(software_name: str) -> str | None:
     return None
 
 
-def resolve_reg_key_to_path(reg_key: str, keystr: str):
+def resolve_reg_key_to_path(reg_key: str, keystr: str) -> str | None:
     r"""Resolves a registry key to a file system path.
 
     Args:
@@ -206,7 +206,7 @@ def set_winreg_path(game: Game, path: str):
 
 def create_registry_path(hive, path):  # sourcery skip: raise-from-previous-error
     """Recursively creates the registry path if it doesn't exist."""
-    log = get_root_logger()
+    log = RobustRootLogger()
     try:
         import winreg
 
@@ -291,7 +291,7 @@ def set_registry_key_value(full_key_path: str, value_name: str, value_data: str)
     ------
         - PermissionError: PyKotor doesn't have permission to change the registry (usually fixed by running as admin).
     """
-    log = get_root_logger()
+    log = RobustRootLogger()
     try:
         import winreg
 

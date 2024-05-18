@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from pykotor.common.geometry import AxisAngle, Vector4
 from pykotor.common.stream import BinaryReader, BinaryWriter
@@ -69,10 +69,7 @@ class MDLAsciiWriter:
             - Closes the writer if auto_close is True.
         """
         self._writer.write_line(0, f"newmodel {self._mdl.name}")
-        self._writer.write_line(
-            0,
-            f"setsupermodel {self._mdl.name} {self._mdl.supermodel}",
-        )
+        self._writer.write_line(0, f"setsupermodel {self._mdl.name} {self._mdl.supermodel}")
         self._writer.write_line(0, f"ignorefog {int(not self._mdl.fog)}")
 
         self._writer.write_line(0, f"beginmodelgeom {self._mdl.name}")
@@ -126,14 +123,8 @@ class MDLAsciiWriter:
         newline(indent + 1, f'parent {"NULL" if parent is None else parent.name}')
 
         if parent is not None or not anim:
-            newline(
-                indent + 1,
-                f"orientation {node.orientation.x} {node.orientation.y} {node.orientation.z} {node.orientation.w}",
-            )
-            newline(
-                indent + 1,
-                f"position {node.position.x} {node.position.y} {node.position.z}",
-            )
+            newline(indent + 1, f"orientation {node.orientation.x} {node.orientation.y} {node.orientation.z} {node.orientation.w}")
+            newline(indent + 1, f"position {node.position.x} {node.position.y} {node.position.z}")
             self._write_controllers(node, node.controllers, indent + 1)
 
             if node.mesh:
@@ -143,7 +134,7 @@ class MDLAsciiWriter:
 
         newline(indent + 0, "endnode")
 
-    def _write_mesh_data(self, newline, indent, node):
+    def _write_mesh_data(self, newline: Callable, indent: int, node: MDLNode):
         """Writes mesh node data to a file in MDL format.
 
         Args:
@@ -186,10 +177,7 @@ class MDLAsciiWriter:
         newline(indent + 1, f"render {int(node.mesh.render)}")
         newline(indent + 1, f"dirt_enabled {int(node.mesh.dirt_enabled)}")
         newline(indent + 1, f"dirt_texture {int(node.mesh.dirt_texture)}")
-        newline(
-            indent + 1,
-            f"hologram_donotdraw {int(node.mesh.hide_in_hologram)}",
-        )
+        newline(indent + 1, f"hologram_donotdraw {int(node.mesh.hide_in_hologram)}")
 
         newline(indent + 1, f"verts {len(node.mesh.vertex_positions)}")
         for vertex_v3 in node.mesh.vertex_positions:
@@ -203,10 +191,7 @@ class MDLAsciiWriter:
         newline(indent + 1, f"faces {len(node.mesh.faces)}")
         for face in node.mesh.faces:
             # 4th value -> smoothing group
-            newline(
-                indent + 2,
-                f"{face.v1} {face.v2} {face.v3}  0  {face.v1} {face.v2} {face.v3}  {face.material.value}",
-            )
+            newline(indent + 2, f"{face.v1} {face.v2} {face.v3}  0  {face.v1} {face.v2} {face.v3}  {face.material.value}")
 
         if node.skin:
             newline(indent + 1, f"weights {len(node.skin.vertex_bones)}")
