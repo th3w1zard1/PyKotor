@@ -135,7 +135,7 @@ class Node:
             "objdata": "distance",
         },
     }
-    EMITTER_KEY_TYPE: ClassVar[dict[str, dict[str, Any]]]] = {
+    EMITTER_KEY_TYPE: ClassVar[dict[str, dict[str, Any]]] = {
         "alphaStart": {
             "values": 1,
             "axes": 1,
@@ -151,12 +151,12 @@ class Node:
         "birthrate": {
             "values": 1,
             "axes": 1,
-            "conversion":float,
+            "conversion": float,
         },
         "m_fRandomBirthRate": {
             "values": 1,
             "axes": 1,
-            "conversion":float,
+            "conversion": float,
         },
         "bounce_co": {
             "values": 1,
@@ -173,17 +173,17 @@ class Node:
         "fps": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "frameEnd": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "frameStart": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "grav": {
             "values": 1,
@@ -252,12 +252,12 @@ class Node:
         "xsize": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "ysize": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "blurlength": {
             "values": 1,
@@ -274,7 +274,7 @@ class Node:
         "lightningSubDiv": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "lightningScale": {
             "values": 1,
@@ -283,7 +283,7 @@ class Node:
         "lightningzigzag": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "percentStart": {
             "values": 1,
@@ -300,12 +300,12 @@ class Node:
         "targetsize": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "numcontrolpts": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "controlptradius": {
             "values": 1,
@@ -314,12 +314,12 @@ class Node:
         "controlptdelay": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "tangentspread": {
             "values": 1,
             "axes": 1,
-            "conversion":int,
+            "conversion": int,
         },
         "tangentlength": {
             "values": 1,
@@ -437,10 +437,8 @@ class Node:
                 self.isEmpty = False
             elif (
                 label in (attr.lower() for attr in self.EMITTER_KEY_TYPE)
-                or label
-                in (f"{attr.lower()}key" for attr in self.EMITTER_KEY_TYPE)
-                or label
-                in (f"{attr.lower()}bezierkey" for attr in self.EMITTER_KEY_TYPE)
+                or label in (f"{attr.lower()}key" for attr in self.EMITTER_KEY_TYPE)
+                or label in (f"{attr.lower()}bezierkey" for attr in self.EMITTER_KEY_TYPE)
             ):
                 # Parse all controllers: unkeyed, keyed, or bezierkeyed
                 attrname = next(attr for attr in self.EMITTER_KEY_TYPE if attr.lower() in label)
@@ -855,7 +853,7 @@ class Animnode:
         for i, line in enumerate(ascii_lines):
             try:
                 label = line[0].lower()
-            except (IndexError, AttributeError):
+            except (IndexError, AttributeError):  # noqa: S112
                 continue  # Probably empty line, skip it
             else:
                 if is_int(label):

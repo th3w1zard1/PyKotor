@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 class Mdl:
     def __init__(self):
         self.nodeDict      = collections.OrderedDict()
-        self.animDict      = dict() # No need to retain order
+        self.animDict = {}  # No need to retain order
 
         self.name           = "UNNAMED"
         self.supermodel     = "NULL"
@@ -310,7 +310,7 @@ class Mdl:
         for line in ascii_lines:
             try:
                 label = line[0].lower()
-            except (IndexError, AttributeError):
+            except (IndexError, AttributeError):  # noqa: S112
                 continue  # Probably empty line, skip it
 
             if label == "newmodel":
@@ -589,7 +589,7 @@ class Xwk(Mdl):
             wkm_name = self.name
             if not wkm_name.lower().endswith(f"_{self.walkmesh_type}"):
                 wkm_name += f"_{self.walkmesh_type}"
-            if mdl_name.lower().endswith("_" + self.walkmesh_type):
+            if mdl_name.lower().endswith(f"_{self.walkmesh_type}"):
                 mdl_name = mdl_name[:-4]
             node = mdlnode.Dummy(wkm_name)
             if self.walkmesh_type == "dwk":
@@ -658,7 +658,7 @@ class Xwk(Mdl):
                 obj.matrix_parent_inverse = obj.parent.matrix_world.inverted()
             else:
                 # Node with invalid parent.
-                raise MalformedMdl(node.name + " has no parent " + node.parentName)
+                raise MalformedMdl(f"{node.name} has no parent {node.parentName}")
 
 
 class Wok(Xwk):
@@ -671,17 +671,22 @@ class Wok(Xwk):
     def geometry_to_ascii(self, bObject, asciiLines, simple):
         nodeType = utils.get_node_type(bObject)
         if nodeType == "aabb":
-            node = mdlnode.Aabb()
-            node.roottype = "wok"
-            node.nodetype = "trimesh"
-            node.get_room_links(bObject.data)
-            node.to_ascii(bObject, asciiLines, simple)
-            return  # We'll take the first aabb object
-        else:
-            for child in bObject.children:
-                self.geometry_to_ascii(child, asciiLines, simple)
+            self._extracted_from_geometry_to_ascii_4(bObject, asciiLines, simple)
+        for child in bObject.children:
+            self.geometry_to_ascii(child, asciiLines, simple)
 
-    def generate_ascii(self, asciiLines, rootDummy, exports = {"ANIMATION", "WALKMESH"}):
+    # TODO Rename this here and in `geometry_to_ascii`
+    def _extracted_from_geometry_to_ascii_4(self, bObject, asciiLines, simple):
+        node = mdlnode.Aabb()
+        node.roottype = "wok"
+        node.nodetype = "trimesh"
+        node.get_room_links(bObject.data)
+        node.to_ascii(bObject, asciiLines, simple)
+        return  # We'll take the first aabb object
+
+    def generate_ascii(self, asciiLines, rootDummy, exports = None):
+        if exports is None:
+            exports = {"ANIMATION", "WALKMESH"}
         self.name = rootDummy.name
 
         # Header
