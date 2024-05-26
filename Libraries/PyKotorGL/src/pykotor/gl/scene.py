@@ -4,7 +4,7 @@ import math
 import threading
 import traceback
 
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from copy import copy
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
@@ -152,8 +152,9 @@ class Scene:
         self.texture_data_futures = {}
         self.textures_data_queue: dict[str, tuple[TPC | None, bool]] = {}  # This will hold the texture data loaded in the background
         self.textures_data_lock: threading.Lock = threading.Lock()
+        self.model_executor = ThreadPoolExecutor(max_workers=4)
         self.model_data_futures = {}
-        self.models_data_queue: dict[str, Any] = {}
+        self.models_data_queue: dict[str, Future] = {}
         self.models_data_lock: threading.Lock = threading.Lock()
 
         self.installation: Installation | None = installation
@@ -800,144 +801,6 @@ class Scene:
         self.executor.submit(self.fetch_texture_data, name, lightmap=lightmap)
         return self.blank_lightmap if lightmap else self.blank_texture
 
-    def loadModel(self, name: str) -> Model:
-        """Load model data asynchronously."""
-        if name in self.models:
-            return self.models[name]
-        with self.models_data_lock:
-            if name not in self.models_data_queue:
-                RobustRootLogger().debug(f"Offloading {name}.mdl")
-                self.executor.submit(self.fetch_model_data, name)
-        return gl_load_stitched_model(
-            self,
-            BinaryReader.from_bytes(EMPTY_MDL_DATA, 12),
-            BinaryReader.from_bytes(EMPTY_MDX_DATA),
-        )
-
-    def fetch_model_data(
-        self,
-        name: str,
-    ):
-        """This function runs in a background thread and handles the I/O and processing to get the model data."""
-        RobustRootLogger().debug(f"async queue {name}.mdl call")
-        mdl_data = EMPTY_MDL_DATA
-        mdx_data = EMPTY_MDX_DATA
-
-        with self.models_data_lock:
-            if name in self.models_data_queue:
-                return
-            self.models_data_queue[name] = None  # Temporary store something to prevent other calls from executing while we're still here.
-        if name == "waypoint":
-            mdl_data = WAYPOINT_MDL_DATA
-            mdx_data = WAYPOINT_MDX_DATA
-        elif name == "sound":
-            mdl_data = SOUND_MDL_DATA
-            mdx_data = SOUND_MDX_DATA
-        elif name == "store":
-            mdl_data = STORE_MDL_DATA
-            mdx_data = STORE_MDX_DATA
-        elif name == "entry":
-            mdl_data = ENTRY_MDL_DATA
-            mdx_data = ENTRY_MDX_DATA
-        elif name == "encounter":
-            mdl_data = ENCOUNTER_MDL_DATA
-            mdx_data = ENCOUNTER_MDX_DATA
-        elif name == "trigger":
-            mdl_data = TRIGGER_MDL_DATA
-            mdx_data = TRIGGER_MDX_DATA
-        elif name == "camera":
-            mdl_data = CAMERA_MDL_DATA
-            mdx_data = CAMERA_MDX_DATA
-        elif name == "empty":
-            mdl_data = EMPTY_MDL_DATA
-            mdx_data = EMPTY_MDX_DATA
-        elif name == "cursor":
-            mdl_data = CURSOR_MDL_DATA
-            mdx_data = CURSOR_MDX_DATA
-        elif name == "unknown":
-            mdl_data = UNKNOWN_MDL_DATA
-            mdx_data = UNKNOWN_MDX_DATA
-        elif self.installation is not None:
-            mdl_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDL, SEARCH_ORDER)
-            mdx_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDX, SEARCH_ORDER)
-            if mdl_search is not None and mdx_search is not None and mdl_search.data:
-                mdl_data: bytes = mdl_search.data
-                mdx_data: bytes = mdx_search.data
-            try:
-                print(f"update from queue: {name}.mdl")
-                mdl_reader = BinaryReader.from_bytes(mdl_data, 12)
-                mdx_reader = BinaryReader.from_bytes(mdx_data)
-                model = gl_load_stitched_model(self, mdl_reader, mdx_reader)
-            except Exception as e:  # noqa: BLE001, PERF203
-                RobustRootLogger().debug(traceback.format_exc())
-                model = gl_load_stitched_model(
-                    self,
-                    BinaryReader.from_bytes(EMPTY_MDL_DATA, 12),
-                    BinaryReader.from_bytes(EMPTY_MDX_DATA),
-                )
-
-        with self.models_data_lock:
-            RobustRootLogger().debug("async finally queue model data to load.")
-            self.models_data_queue[name] = (name, model)
-
-    def model(self, name: str) -> Model:
-        mdl_data = EMPTY_MDL_DATA
-        mdx_data = EMPTY_MDX_DATA
-
-        if name not in self.models:
-            if name == "waypoint":
-                mdl_data = WAYPOINT_MDL_DATA
-                mdx_data = WAYPOINT_MDX_DATA
-            elif name == "sound":
-                mdl_data = SOUND_MDL_DATA
-                mdx_data = SOUND_MDX_DATA
-            elif name == "store":
-                mdl_data = STORE_MDL_DATA
-                mdx_data = STORE_MDX_DATA
-            elif name == "entry":
-                mdl_data = ENTRY_MDL_DATA
-                mdx_data = ENTRY_MDX_DATA
-            elif name == "encounter":
-                mdl_data = ENCOUNTER_MDL_DATA
-                mdx_data = ENCOUNTER_MDX_DATA
-            elif name == "trigger":
-                mdl_data = TRIGGER_MDL_DATA
-                mdx_data = TRIGGER_MDX_DATA
-            elif name == "camera":
-                mdl_data = CAMERA_MDL_DATA
-                mdx_data = CAMERA_MDX_DATA
-            elif name == "empty":
-                mdl_data = EMPTY_MDL_DATA
-                mdx_data = EMPTY_MDX_DATA
-            elif name == "cursor":
-                mdl_data = CURSOR_MDL_DATA
-                mdx_data = CURSOR_MDX_DATA
-            elif name == "unknown":
-                mdl_data = UNKNOWN_MDL_DATA
-                mdx_data = UNKNOWN_MDX_DATA
-            elif self.installation is not None:
-                capsules: list[ModulePieceResource] = [] if self._module is None else self.module.capsules()
-                mdl_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDL, SEARCH_ORDER, capsules=capsules)
-                mdx_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDX, SEARCH_ORDER, capsules=capsules)
-                if mdl_search is not None and mdx_search is not None:
-                    mdl_data: bytes = mdl_search.data
-                    mdx_data: bytes = mdx_search.data
-
-            try:  # TODO(th3w1zard1): offload to another thread.
-                mdl_reader = BinaryReader.from_bytes(mdl_data, 12)
-                mdx_reader = BinaryReader.from_bytes(mdx_data)
-                model = gl_load_stitched_model(self, mdl_reader, mdx_reader)
-            except Exception as e:  # noqa: BLE001
-                #print(format_exception_with_variables(e))
-                model = gl_load_stitched_model(
-                    self,
-                    BinaryReader.from_bytes(EMPTY_MDL_DATA, 12),
-                    BinaryReader.from_bytes(EMPTY_MDX_DATA),
-                )
-
-            self.models[name] = model
-        return self.models[name]
-
     def fetch_texture_data(
         self,
         name: str,
@@ -973,6 +836,116 @@ class Scene:
 
         with self.textures_data_lock:
             self.textures_data_queue[name] = (tpc or TPC(), lightmap)  # Using a dummy TPC class
+
+    def fetch_model_data(self, name: str) -> tuple[str, bytes, bytes]:
+        """This function runs in a background thread and handles the I/O and processing to get the model data."""
+        RobustRootLogger().debug(f"async queue {name}.mdl call")
+
+        mdl_data = EMPTY_MDL_DATA
+        mdx_data = EMPTY_MDX_DATA
+
+        if self.installation is not None:
+            mdl_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDL, SEARCH_ORDER)
+            mdx_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDX, SEARCH_ORDER)
+            if mdl_search is not None and mdx_search is not None and mdl_search.data:
+                mdl_data: bytes = mdl_search.data
+                mdx_data: bytes = mdx_search.data
+
+        return name, mdl_data, mdx_data
+
+    def process_model_data(self, name: str, mdl_data: bytes, mdx_data: bytes):
+        """This function runs in the main thread and handles the model creation."""
+        try:
+            mdl_reader = BinaryReader.from_bytes(mdl_data, 12)
+            mdx_reader = BinaryReader.from_bytes(mdx_data)
+            model = gl_load_stitched_model(self, mdl_reader, mdx_reader)
+        except Exception as e:  # noqa: BLE001
+            RobustRootLogger().debug(traceback.format_exc())
+            model = gl_load_stitched_model(
+                self,
+                BinaryReader.from_bytes(EMPTY_MDL_DATA, 12),
+                BinaryReader.from_bytes(EMPTY_MDX_DATA),
+            )
+
+        with self.models_data_lock:
+            self.models[name] = model
+
+    def loadModel(self, name: str) -> Model:
+        """Load model data asynchronously."""
+        if name in self.models:
+            return self.models[name]
+        with self.models_data_lock:
+            if name not in self.models_data_queue:
+                RobustRootLogger().debug(f"Offloading {name}.mdl")
+                self.models_data_queue[name] = self.model_executor.submit(self.fetch_model_data, name)
+
+        # Return a predefined model initially
+        initial_model = self._get_initial_model(name)
+        return initial_model
+
+    def _get_initial_model(self, name: str) -> Model:
+        """Return an initial predefined model based on the name."""
+        if name == "waypoint":
+            mdl_data = WAYPOINT_MDL_DATA
+            mdx_data = WAYPOINT_MDX_DATA
+        elif name == "sound":
+            mdl_data = SOUND_MDL_DATA
+            mdx_data = SOUND_MDX_DATA
+        elif name == "store":
+            mdl_data = STORE_MDL_DATA
+            mdx_data = STORE_MDX_DATA
+        elif name == "entry":
+            mdl_data = ENTRY_MDL_DATA
+            mdx_data = ENTRY_MDX_DATA
+        elif name == "encounter":
+            mdl_data = ENCOUNTER_MDL_DATA
+            mdx_data = ENCOUNTER_MDX_DATA
+        elif name == "trigger":
+            mdl_data = TRIGGER_MDL_DATA
+            mdx_data = TRIGGER_MDX_DATA
+        elif name == "camera":
+            mdl_data = CAMERA_MDL_DATA
+            mdx_data = CAMERA_MDX_DATA
+        elif name == "empty":
+            mdl_data = EMPTY_MDL_DATA
+            mdx_data = EMPTY_MDX_DATA
+        elif name == "cursor":
+            mdl_data = CURSOR_MDL_DATA
+            mdx_data = CURSOR_MDX_DATA
+        elif name == "unknown":
+            mdl_data = UNKNOWN_MDL_DATA
+            mdx_data = UNKNOWN_MDX_DATA
+        else:
+            return gl_load_stitched_model(
+                self,
+                BinaryReader.from_bytes(EMPTY_MDL_DATA, 12),
+                BinaryReader.from_bytes(EMPTY_MDX_DATA),
+            )
+
+        mdl_reader = BinaryReader.from_bytes(mdl_data, 12)
+        mdx_reader = BinaryReader.from_bytes(mdx_data)
+        return gl_load_stitched_model(self, mdl_reader, mdx_reader)
+
+    def model(self, name: str) -> Model:
+        """Return the model, loading it if necessary."""
+        if name in self.models:
+            return self.models[name]
+
+        self.loadModel(name)
+
+        # Check if the model loading is complete and update the model
+        future = self.models_data_queue.get(name)
+        if future and future.done():
+            try:
+                name, mdl_data, mdx_data = future.result()
+                self.process_model_data(name, mdl_data, mdx_data)
+            except Exception as e:
+                RobustRootLogger().exception(f"Failed to load model {name}")
+                self.models[name] = self._get_initial_model(name)
+            finally:
+                del self.models_data_queue[name]
+
+        return self.models.get(name, self._get_initial_model(name))
 
     def jump_to_entry_location(self):
         if self._module is None:
