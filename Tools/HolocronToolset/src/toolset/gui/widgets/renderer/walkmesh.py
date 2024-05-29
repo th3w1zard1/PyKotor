@@ -6,11 +6,11 @@ from copy import copy
 from typing import TYPE_CHECKING, Generic, NamedTuple, TypeVar
 
 from qtpy import QtCore
-from qtpy.QtCore import QPointF, QRect, QRectF, QTimer
+from qtpy.QtCore import QPoint, QPointF, QRect, QRectF, QTimer
 from qtpy.QtGui import (
     QColor,
+    QCursor,
     QImage,
-    QKeySequence,
     QPainter,
     QPainterPath,
     QPen,
@@ -35,7 +35,6 @@ from pykotor.resource.generics.git import (
 )
 from toolset.utils.misc import clamp
 from utility.error_handling import assert_with_variable_trace
-from utility.logger_util import RobustRootLogger
 
 if TYPE_CHECKING:
     from qtpy.QtGui import (
@@ -227,10 +226,26 @@ class WalkmeshRenderer(QWidget):
 
         self._loop()
 
+    def keysDown(self):
+        return self._keysDown
+
+    def mouseDown(self):
+        return self._mouseDown
+
     def _loop(self):
         """The render loop."""
         self.repaint()
         QTimer.singleShot(33, self._loop)
+
+    def resetButtonsDown(self):
+        self._mouseDown.clear()
+
+    def resetKeysDown(self):
+        self._keysDown.clear()
+
+    def resetAllDown(self):
+        self._mouseDown.clear()
+        self._keysDown.clear()
 
     def setWalkmeshes(self, walkmeshes: list[BWM]):
         """Sets the list of walkmeshes to be rendered.
@@ -285,6 +300,17 @@ class WalkmeshRenderer(QWidget):
     def snapCameraToPoint(self, point: Vector2 | Vector3, zoom: int = 8):
         self.camera.setPosition(point.x, point.y)
         self.camera.setZoom(zoom)
+
+    def doCursorLock(self, mutableScreen: Vector2):
+        """Reset the cursor to the center of the screen to prevent it from going off screen.
+
+        Used with the FreeCam and drag camera movements and drag rotations.
+        """
+        global_old_pos = self.mapToGlobal(QPoint(int(self._mousePrev.x), int(self._mousePrev.y)))
+        QCursor.setPos(global_old_pos)
+        local_old_pos = self.mapFromGlobal(QPoint(global_old_pos.x(), global_old_pos.y()))
+        mutableScreen.x = local_old_pos.x()
+        mutableScreen.y = local_old_pos.y()
 
     def toRenderCoords(self, x: float, y: float) -> Vector2:
         """Returns a screen-space coordinates coverted from the specified world-space coordinates.
@@ -839,8 +865,8 @@ class WalkmeshRenderer(QWidget):
         super().mouseMoveEvent(e)
         coords = Vector2(e.x(), e.y())
         coordsDelta = Vector2(coords.x - self._mousePrev.x, coords.y - self._mousePrev.y)
-        self._mousePrev = coords
         self.mouseMoved.emit(coords, coordsDelta, self._mouseDown, self._keysDown)
+        self._mousePrev = coords
 
         self._instancesUnderMouse: list[GITInstance] = []
         self._geomPointsUnderMouse: list[GeomPoint] = []
@@ -853,7 +879,6 @@ class WalkmeshRenderer(QWidget):
             for instance in instances:
                 position = Vector2(instance.position.x, instance.position.y)
                 if position.distance(world) <= 1 and self.isInstanceVisible(instance):
-                    #get_root_logger().debug(f"Emitting Hovered/UnderMouse for instance {instance!r}")
                     self.instanceHovered.emit(instance)
                     self._instancesUnderMouse.append(instance)
 
@@ -870,42 +895,54 @@ class WalkmeshRenderer(QWidget):
                 if point.distance(world) <= self._pathNodeSize:
                     self._pathNodesUnderMouse.append(point)
 
-    def focusOutEvent(self, e: QFocusEvent):
+    def focusOutEvent(self, e: QFocusEvent | None):
         self._mouseDown.clear()  # Clears the set when focus is lost
         self._keysDown.clear()  # Clears the set when focus is lost
         super().focusOutEvent(e)  # Ensures that the default handler is still executed
-        RobustRootLogger().debug("WalkmeshRenderer.focusOutEvent: clearing all keys/buttons held down.")
+        #RobustRootLogger().debug("WalkmeshRenderer.focusOutEvent: clearing all keys/buttons held down.")
 
-    def mousePressEvent(self, e: QMouseEvent):
+    def mousePressEvent(self, e: QMouseEvent | None):
         super().mousePressEvent(e)
+        if e is None:
+            return
         button = e.button()
         self._mouseDown.add(button)
         coords = Vector2(e.x(), e.y())
         self.mousePressed.emit(coords, self._mouseDown, self._keysDown)
-        RobustRootLogger().debug(f"WalkmeshRenderer.mousePressEvent: {self._mouseDown}, e.button() '{button}'")
+        #RobustRootLogger().debug(f"WalkmeshRenderer.mousePressEvent: {self._mouseDown}, e.button() '{button}'")
 
-    def mouseReleaseEvent(self, e: QMouseEvent):
+    def mouseReleaseEvent(self, e: QMouseEvent | None):
         super().mouseReleaseEvent(e)
+        if e is None:
+            return
         button = e.button()
         self._mouseDown.discard(button)
         coords = Vector2(e.x(), e.y())
-        self.mouseReleased.emit(coords, e.buttons(), self._keysDown)
-        RobustRootLogger().debug(f"WalkmeshRenderer.mouseReleaseEvent: {self._mouseDown}, e.button() '{button}'")
+        self.mouseReleased.emit(coords, self._mouseDown, self._keysDown)
+        #RobustRootLogger().debug(f"WalkmeshRenderer.mouseReleaseEvent: {self._mouseDown}, e.button() '{button}'")
 
-    def keyPressEvent(self, e: QKeyEvent):
+    def keyPressEvent(self, e: QKeyEvent | None):
+        super().keyPressEvent(e)
+        if e is None:
+            return
         key = e.key()
+        if e is None:
+            return
         self._keysDown.add(key)
         if self.underMouse():
             self.keyPressed.emit(self._mouseDown, self._keysDown)
-        key_name = QKeySequence(key).toString()
-        RobustRootLogger().debug(f"WalkmeshRenderer.keyReleaseEvent: {self._keysDown}, e.key() '{key_name}'")
+        #key_name = getQtKeyStringLocalized(key)
+        #RobustRootLogger().debug(f"WalkmeshRenderer.keyReleaseEvent: {self._keysDown}, e.key() '{key_name}'")
 
-    def keyReleaseEvent(self, e: QKeyEvent):
+    def keyReleaseEvent(self, e: QKeyEvent | None):
+        super().keyReleaseEvent(e)
+        if e is None:
+            return
         key = e.key()
         self._keysDown.discard(key)
         if self.underMouse():
             self.keyReleased.emit(self._mouseDown, self._keysDown)
-        key_name = QKeySequence(key).toString()
-        RobustRootLogger().debug(f"WalkmeshRenderer.keyReleaseEvent: {self._keysDown}, e.key() '{key_name}'")
+        #key_name = getQtKeyStringLocalized(key)
+        #RobustRootLogger().debug(f"WalkmeshRenderer.keyReleaseEvent: {self._keysDown}, e.key() '{key_name}'")
 
     # endregion

@@ -64,7 +64,7 @@ if TYPE_CHECKING:
     from pykotor.resource.formats.lyt import LYT
     from pykotor.resource.generics.git import GITInstance
     from toolset.data.installation import HTInstallation
-    from toolset.gui.windows.module_designer import ModuleDesigner
+    from toolset.gui.windows.module_designer import ModuleDesigner  # Keep in type checking block to avoid circular imports
 
 if qtpy.API_NAME in ("PyQt6", "PySide6"):
     from qtpy.QtGui import QUndoStack
@@ -85,26 +85,14 @@ class MoveCommand(QUndoCommand):
         self.instance: GITInstance = instance
         self.old_position: Vector3 = old_position
         self.new_position: Vector3 = new_position
-        self.old_height: float | None = old_height
-        self.new_height: float | None = new_height
 
     def undo(self):
-        RobustRootLogger().debug(f"Undo position: {self.instance.identifier()}")
+        RobustRootLogger().debug(f"Undo position: {self.instance.identifier()} (NEW {self.new_position} --> {self.old_position})")
         self.instance.position = self.old_position
-        if isinstance(self.instance, GITCamera):
-            if self.old_height is None or self.new_height is None:
-                return
-            RobustRootLogger().debug("Also undo height.")
-            self.instance.height = self.old_height
 
     def redo(self):
-        RobustRootLogger().debug(f"Redo position: {self.instance.identifier()}")
+        RobustRootLogger().debug(f"Undo position: {self.instance.identifier()} ({self.old_position} --> NEW {self.new_position})")
         self.instance.position = self.new_position
-        if isinstance(self.instance, GITCamera):
-            if self.old_height is None or self.new_height is None:
-                return
-            RobustRootLogger().debug("Also redo height.")
-            self.instance.height = self.new_height
 
 
 class RotateCommand(QUndoCommand):
@@ -155,7 +143,7 @@ class DuplicateCommand(QUndoCommand):
                 continue
             RobustRootLogger().debug(f"Undo duplicate: {instance.identifier()}")
             if isinstance(self.editor, GITEditor):
-                self.editor._mode.renderer2d.instanceSelection.select([instance])
+                self.editor._mode.renderer2d.instanceSelection.select([instance])  # noqa: SLF001
             else:
                 self.editor.setSelection([instance])
             self.editor.deleteSelected(noUndoStack=True)
@@ -166,11 +154,9 @@ class DuplicateCommand(QUndoCommand):
             self.editor.enterInstanceMode()
             assert isinstance(self.editor._mode, _InstanceMode)  # noqa: SLF001
             self.editor._mode.buildList()  # noqa: SLF001
-            self.editor._mode.renderer2d.instanceSelection.select([])
         else:
             self.editor.enterInstanceMode()
             self.editor.rebuildInstanceList()
-            self.editor.setSelection([])
 
 
     def redo(self):
@@ -180,6 +166,10 @@ class DuplicateCommand(QUndoCommand):
                 continue
             RobustRootLogger().debug(f"Redo duplicate: {instance.identifier()}")
             self.git.add(instance)
+            if isinstance(self.editor, GITEditor):
+                self.editor._mode.renderer2d.instanceSelection.select([instance])  # noqa: SLF001
+            else:
+                self.editor.setSelection([instance])
         self.rebuildInstanceList()
 
 
@@ -196,7 +186,7 @@ class DeleteCommand(QUndoCommand):
         self.editor: GITEditor | ModuleDesigner = editor
 
     def undo(self):
-        RobustRootLogger().debug(f"Undo delete: {[instance.identifier() for instance in self.instances]}")
+        RobustRootLogger().debug(f"Undo delete: {[repr(instance) for instance in self.instances]}")
         for instance in self.instances:
             if instance in self.git.instances():
                 print(f"{instance!r} already found in instances: no deletecommand to undo.")
@@ -209,22 +199,20 @@ class DeleteCommand(QUndoCommand):
             self.editor.enterInstanceMode()
             assert isinstance(self.editor._mode, _InstanceMode)  # noqa: SLF001
             self.editor._mode.buildList()  # noqa: SLF001
-            self.editor._mode.renderer2d.instanceSelection.select([])
         else:
             self.editor.enterInstanceMode()
             self.editor.rebuildInstanceList()
-            self.editor.setSelection([])
 
     def redo(self):
-        RobustRootLogger().debug(f"Redo delete: {[instance.identifier() for instance in self.instances]}")
+        RobustRootLogger().debug(f"Redo delete: {[repr(instance) for instance in self.instances]}")
         self.editor.enterInstanceMode()
         for instance in self.instances:
             if instance not in self.git.instances():
                 print(f"{instance!r} not found in instances: no deletecommand to redo.")
                 continue
-            RobustRootLogger().debug(f"Redo delete: {instance.identifier()}")
+            RobustRootLogger().debug(f"Redo delete: {instance!r}")
             if isinstance(self.editor, GITEditor):
-                self.editor._mode.renderer2d.instanceSelection.select([instance])
+                self.editor._mode.renderer2d.instanceSelection.select([instance])  # noqa: SLF001
             else:
                 self.editor.setSelection([instance])
             self.editor.deleteSelected(noUndoStack=True)
@@ -1273,9 +1261,10 @@ class _InstanceMode(_Mode):
         if not noUndoStack:
             undoStack = self._editor._controls.undoStack if isinstance(self._editor, GITEditor) else self._editor.undoStack
             undoStack.push(DeleteCommand(self._git, selection.copy(), self._editor))
-        for instance in selection:
-            self._git.remove(instance)
-            self.renderer2d.instanceSelection.remove(instance)
+        else:
+            for instance in selection:
+                self._git.remove(instance)
+                self.renderer2d.instanceSelection.remove(instance)
         self.buildList()
 
     def duplicateSelected(self, position: Vector3, *, noUndoStack: bool = False):
@@ -1284,13 +1273,14 @@ class _InstanceMode(_Mode):
             instance: GITInstance = deepcopy(selection[-1])
             if isinstance(instance, GITCamera):
                 instance.camera_id = self._editor.git().next_camera_id()
+            instance.position = position
             if not noUndoStack:
                 undoStack = self._editor._controls.undoStack if isinstance(self._editor, GITEditor) else self._editor.undoStack
                 undoStack.push(DuplicateCommand(self._git, [instance], self._editor))
-            instance.position = position
-            self._git.add(instance)
-            self.buildList()
-            self.setSelection([instance])
+            else:
+                self._git.add(instance)
+                self.buildList()
+                self.setSelection([instance])
 
     def moveSelected(
         self,
@@ -1579,6 +1569,7 @@ class GITControlScheme:
         shouldRotateCamera = self.rotateCamera.satisfied(buttons, keys)
         if shouldPanCamera or shouldRotateCamera:
             if shouldPanCamera:
+                self.editor.ui.renderArea.doCursorLock(screen)
                 moveSens = ModuleDesignerSettings().moveCameraSensitivity2d / 100
                 #RobustRootLogger.debug(f"onMouseScrolled moveCamera (delta.y={screenDelta.y}, sensSetting={moveSens}))")
                 self.editor.moveCamera(-worldDelta.x * moveSens, -worldDelta.y * moveSens)

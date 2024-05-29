@@ -41,12 +41,9 @@ from qtpy.QtWidgets import (
     QStyledItemDelegate,
     QVBoxLayout,
 )
-from typing_extensions import Literal
 from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
 
 from pykotor.common.stream import BinaryReader
-from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import FileResource, ResourceIdentifier
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.erf.erf_auto import read_erf, write_erf
@@ -92,11 +89,23 @@ from toolset.gui.windows.indoor_builder import IndoorMapBuilder
 from toolset.gui.windows.module_designer import ModuleDesigner
 from toolset.utils.misc import openLink
 from toolset.utils.window import addWindow, openResourceEditor
+from ui import stylesheet_resources  # noqa: F401
 from utility.error_handling import universal_simplify_exception
 from utility.logger_util import RobustRootLogger
 from utility.misc import ProcessorArchitecture
 from utility.system.path import Path, PurePath
 from utility.updater.update import AppUpdate
+
+if qtpy.API_NAME == "PySide2":
+    from toolset.rcc import resources_rc_pyside2  # noqa: PLC0415, F401  # pylint: disable=C0415
+elif qtpy.API_NAME == "PySide6":
+    from toolset.rcc import resources_rc_pyside6  # noqa: PLC0415, F401  # pylint: disable=C0415
+elif qtpy.API_NAME == "PyQt5":
+    from toolset.rcc import resources_rc_pyqt5  # noqa: PLC0415, F401  # pylint: disable=C0415
+elif qtpy.API_NAME == "PyQt6":
+    from toolset.rcc import resources_rc_pyqt6  # noqa: PLC0415, F401  # pylint: disable=C0415
+else:
+    raise ImportError(f"Unsupported Qt bindings: {qtpy.API_NAME}")
 
 if TYPE_CHECKING:
     from typing import NoReturn
@@ -109,6 +118,7 @@ if TYPE_CHECKING:
         QMouseEvent,
     )
     from qtpy.QtWidgets import QWidget
+    from typing_extensions import Literal
     from watchdog.events import FileSystemEvent
     from watchdog.observers.api import BaseObserver
 
@@ -124,6 +134,24 @@ def run_progress_dialog(progress_queue: Queue, title: str = "Operation Progress"
     icon = app.style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxInformation)
     dialog.setWindowIcon(QIcon(icon))
     dialog.show()
+    sys.exit(app.exec_())
+
+def run_module_designer(
+    active_path: str,
+    active_name: str,
+    active_tsl: bool,
+    module_path: str | None = None,
+):
+    """An alternative way to start the ModuleDesigner: run this function in a new process so the main tool window doesn't wait on the module designer."""
+    from toolset.__main__ import main_init
+    main_init()
+    app = QApplication([])
+    designerUi = ModuleDesigner(
+        None,
+        HTInstallation(active_path, active_name, tsl=active_tsl),
+        CaseAwarePath(module_path) if module_path is not None else None,
+    )
+    addWindow(designerUi, show=False)
     sys.exit(app.exec_())
 
 
@@ -203,9 +231,13 @@ class ToolWindow(QMainWindow):
         if not QPixmap(icon_path).isNull():
             self.log.debug(f"HT main window Icon loaded successfully from {icon_path}")
             self.setWindowIcon(QIcon(QPixmap(icon_path)))
+            QApplication.instance().setWindowIcon(QIcon(QPixmap(icon_path)))
         else:
             print(f"Failed to load HT main window icon from {icon_path}")
         self.setupModulesTab()
+
+        # Set fixed size based on the current size
+        self.setFixedSize(self.size())
 
     def setupModulesTab(self):
         modulesResourceList = self.ui.modulesWidget.ui
@@ -214,9 +246,9 @@ class ToolWindow(QMainWindow):
         designerButton = self.ui.specialActionButton
 
         # Set size policies
-        modulesSectionCombo.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        refreshButton.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        designerButton.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        modulesSectionCombo.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)  # type: ignore[arg-type]
+        refreshButton.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)  # type: ignore[arg-type]
+        designerButton.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)  # type: ignore[arg-type]
         modulesSectionCombo.setMinimumWidth(30)
 
         modulesResourceList.horizontalLayout_2.removeWidget(modulesSectionCombo)
@@ -309,6 +341,14 @@ class ToolWindow(QMainWindow):
         self.ui.savesWidget.requestOpenResource.connect(self.onOpenResources)
 
         def openModuleDesigner() -> ModuleDesigner:
+            assert self.active is not None
+            active = self.active
+            module_path = self.active.module_path() / self.ui.modulesWidget.currentSection()
+
+            #process = multiprocessing.Process(target=run_module_designer, args=(str(active.path()), active.name, active.tsl, str(module_path)))
+            #process.start()
+            #BetterMessageBox("Module designer process started", "We have triggered the module designer to open, feel free to use the toolset in the meantime.").exec_()
+
             designerUi = (
                 ModuleDesigner(
                     None,
@@ -316,6 +356,12 @@ class ToolWindow(QMainWindow):
                     self.active.module_path() / self.ui.modulesWidget.currentSection(),
                 )
             )
+            icon_path = ":/images/icons/sith.png"
+            if not QPixmap(icon_path).isNull():
+                self.log.debug(f"Module Designer window Icon loaded successfully from {icon_path}")
+                designerUi.setWindowIcon(QIcon(QPixmap(icon_path)))
+            else:
+                print(f"Failed to load Module Designer window icon from {icon_path}")
             addWindow(designerUi, show=False)
             return designerUi
 
@@ -347,31 +393,24 @@ class ToolWindow(QMainWindow):
         self.ui.openAction.triggered.connect(self.openFromFile)
         self.ui.actionSettings.triggered.connect(self.openSettingsDialog)
         self.ui.actionExit.triggered.connect(self.close)
-        def _launchEditor(
-            editor: QWidget
-        ):
-            addWindow(editor)
-            if isinstance(editor, QDialog):
-                editor.exec_()
-            else:
-                editor.show()
-        self.ui.actionNewTLK.triggered.connect(lambda: _launchEditor(TLKEditor(self, self.active)))
-        self.ui.actionNewDLG.triggered.connect(lambda: _launchEditor(DLGEditor(self, self.active)))
-        self.ui.actionNewNSS.triggered.connect(lambda: _launchEditor(NSSEditor(self, self.active)))
-        self.ui.actionNewUTC.triggered.connect(lambda: _launchEditor(UTCEditor(self, self.active)))
-        self.ui.actionNewUTP.triggered.connect(lambda: _launchEditor(UTPEditor(self, self.active)))
-        self.ui.actionNewUTD.triggered.connect(lambda: _launchEditor(UTDEditor(self, self.active)))
-        self.ui.actionNewUTI.triggered.connect(lambda: _launchEditor(UTIEditor(self, self.active)))
-        self.ui.actionNewUTT.triggered.connect(lambda: _launchEditor(UTTEditor(self, self.active)))
-        self.ui.actionNewUTM.triggered.connect(lambda: _launchEditor(UTMEditor(self, self.active)))
-        self.ui.actionNewUTW.triggered.connect(lambda: _launchEditor(UTWEditor(self, self.active)))
-        self.ui.actionNewUTE.triggered.connect(lambda: _launchEditor(UTEEditor(self, self.active)))
-        self.ui.actionNewUTS.triggered.connect(lambda: _launchEditor(UTSEditor(self, self.active)))
-        self.ui.actionNewGFF.triggered.connect(lambda: _launchEditor(GFFEditor(self, self.active)))
-        self.ui.actionNewERF.triggered.connect(lambda: _launchEditor(ERFEditor(self, self.active)))
-        self.ui.actionNewTXT.triggered.connect(lambda: _launchEditor(TXTEditor(self, self.active)))
-        self.ui.actionNewSSF.triggered.connect(lambda: _launchEditor(SSFEditor(self, self.active)))
-        self.ui.actionCloneModule.triggered.connect(lambda: _launchEditor(CloneModuleDialog(self, self.active, self.installations)))
+
+        self.ui.actionNewTLK.triggered.connect(lambda: addWindow(TLKEditor(self, self.active)))
+        self.ui.actionNewDLG.triggered.connect(lambda: addWindow(DLGEditor(self, self.active)))
+        self.ui.actionNewNSS.triggered.connect(lambda: addWindow(NSSEditor(self, self.active)))
+        self.ui.actionNewUTC.triggered.connect(lambda: addWindow(UTCEditor(self, self.active)))
+        self.ui.actionNewUTP.triggered.connect(lambda: addWindow(UTPEditor(self, self.active)))
+        self.ui.actionNewUTD.triggered.connect(lambda: addWindow(UTDEditor(self, self.active)))
+        self.ui.actionNewUTI.triggered.connect(lambda: addWindow(UTIEditor(self, self.active)))
+        self.ui.actionNewUTT.triggered.connect(lambda: addWindow(UTTEditor(self, self.active)))
+        self.ui.actionNewUTM.triggered.connect(lambda: addWindow(UTMEditor(self, self.active)))
+        self.ui.actionNewUTW.triggered.connect(lambda: addWindow(UTWEditor(self, self.active)))
+        self.ui.actionNewUTE.triggered.connect(lambda: addWindow(UTEEditor(self, self.active)))
+        self.ui.actionNewUTS.triggered.connect(lambda: addWindow(UTSEditor(self, self.active)))
+        self.ui.actionNewGFF.triggered.connect(lambda: addWindow(GFFEditor(self, self.active)))
+        self.ui.actionNewERF.triggered.connect(lambda: addWindow(ERFEditor(self, self.active)))
+        self.ui.actionNewTXT.triggered.connect(lambda: addWindow(TXTEditor(self, self.active)))
+        self.ui.actionNewSSF.triggered.connect(lambda: addWindow(SSFEditor(self, self.active)))
+        self.ui.actionCloneModule.triggered.connect(lambda: addWindow(CloneModuleDialog(self, self.active, self.installations)))
 
         self.ui.actionModuleDesigner.triggered.connect(self.openModuleDesigner)
         self.ui.actionEditTLK.triggered.connect(self.openActiveTalktable)
@@ -444,6 +483,7 @@ class ToolWindow(QMainWindow):
                 | Qt.WindowType.WindowMaximizeButtonHint
             )
         elif themeName == "Fusion (Dark)":
+            app.setStyleSheet("")  # Reset to default style
             app.setStyle("Fusion")
             dark_palette = QPalette()
             dark_palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
@@ -714,9 +754,12 @@ class ToolWindow(QMainWindow):
             if self.dogObserver is not None:
                 self.log.debug("Stopping old watchdog service...")
                 self.dogObserver.stop()
-            self.dogObserver = Observer()
-            self.dogObserver.schedule(self.dogHandler, self.active.path(), recursive=True)
-            self.dogObserver.start()
+
+            # FIXME(th3w1zard1): Not once in my life have I seen this watchdog report modified files correctly. Not even in Cortisol's last release version.
+            # Causes a hella slowdown on Linux, something to do with internal logging since it seems to be tracking `os.stat_result` lookups or something.`
+            #self.dogObserver = Observer()
+            #self.dogObserver.schedule(self.dogHandler, self.active.path(), recursive=True)
+            #self.dogObserver.start()
             self.log.info("Loader task completed.")
             self.settings.installations()[name].path = path
             self.installations[name] = self.active
@@ -985,13 +1028,9 @@ class ToolWindow(QMainWindow):
         if self.active is None:
             QMessageBox(QMessageBox.Icon.Information, "No installation loaded.", "Load an installation before opening the Module Designer.").exec_()
             return
-        # Retrieve the icon from self (assuming it's set as window icon)
-        window_icon = self.windowIcon()
-
-        # Initialize the designer and set its window icon
+        #run_module_designer(str(self.active.path()), self.active.name, self.active.tsl)
         designer = ModuleDesigner(None, self.active)
-        designer.setWindowIcon(window_icon)
-        addWindow(designer)
+        addWindow(designer, show=False)
 
     def openSettingsDialog(self):
         """Opens the Settings dialog and refresh installation combo list if changes."""
@@ -1285,20 +1324,22 @@ class ToolWindow(QMainWindow):
             self.ui.modulesWidget.setResourceSelection(resource)
 
         elif tree == self.ui.overrideWidget:
-            assert self.active is not None
-            self.ui.resourceTabs.setCurrentWidget(self.ui.overrideTab)
-            self.ui.overrideWidget.setResourceSelection(resource)
-            subfolder: str = "."
-            for folder_name in self.active.override_list():
-                folder_path: CaseAwarePath = self.active.override_path() / folder_name
-                if resource.filepath().is_relative_to(folder_path) and len(subfolder) < len(folder_path.name):
-                    subfolder = folder_name
-            self.changeOverrideFolder(subfolder)
-
+            self._selectOverrideResource(resource)
         elif tree == self.ui.savesWidget:
             self.ui.resourceTabs.setCurrentWidget(self.ui.savesTab)
             filename = resource.filepath().name
             self.onSaveReload(filename)
+
+    def _selectOverrideResource(self, resource: FileResource):
+        assert self.active is not None
+        self.ui.resourceTabs.setCurrentWidget(self.ui.overrideTab)
+        self.ui.overrideWidget.setResourceSelection(resource)
+        subfolder: str = "."
+        for folder_name in self.active.override_list():
+            folder_path: CaseAwarePath = self.active.override_path() / folder_name
+            if resource.filepath().is_relative_to(folder_path) and len(subfolder) < len(folder_path.name):
+                subfolder = folder_name
+        self.changeOverrideFolder(subfolder)
 
     def reloadInstallations(self):
         """Refresh the list of installations available in the combobox."""
@@ -1338,13 +1379,7 @@ class ToolWindow(QMainWindow):
             print("no installation is currently loaded, cannot refresh core list")
             return
         self.log.info("Loading core installation resources into UI...")
-        all_core_resources: list[FileResource] = self.active.chitin_resources()
-        if self.active.game().is_k1():
-            patch_erf_path = self.active.path().joinpath("patch.erf")
-            if patch_erf_path.safe_isfile():
-                self.log.info("Game is K1 and 'patch.erf' found, loading into Core tab...")
-                all_core_resources.extend(Capsule(patch_erf_path))
-        self.ui.coreWidget.setResources(all_core_resources)
+        self.ui.coreWidget.setResources(self.active.core_resources())
         self.log.debug("Remove unused Core tab categories...")
         self.ui.coreWidget.modulesModel.removeUnusedCategories()
 
