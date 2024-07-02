@@ -7,3 +7,4 @@ playwright>=1.30.0,<1.40
 pyquery==1.4.3
 arabic-reshaper==3.0.0
 Pillow>=9.5
+urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
