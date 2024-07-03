@@ -115,25 +115,3 @@ These represent the currently passing/failing python versions/operating system c
 
 ## License
 This repository falls under the [GPLv3 License](https://github.com/NickHugi/PyKotor/blob/master/LICENSE).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
