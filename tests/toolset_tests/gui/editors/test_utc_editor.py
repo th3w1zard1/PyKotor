@@ -61,7 +61,7 @@ class UTCEditorTest(TestCase):
         # Make sure to configure this environment path before testing!
         from toolset.data.installation import HTInstallation
 
-        cls.INSTALLATION = HTInstallation(K2_PATH, "", tsl=True, mainWindow=None)
+        cls.INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
         from toolset.gui.editors.utc import UTCEditor
@@ -110,7 +110,7 @@ class UTCEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k1_installation(self):
         self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
-        for utc_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTC):
+        for utc_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTC):
             if utc_resource.resname().lower() == "g_assassindrd02":
                 continue  # don't care about Repos_Posy/x
             old = read_gff(utc_resource.data())
@@ -131,7 +131,7 @@ class UTCEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k2_installation(self):
         self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
-        for utc_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTC):
+        for utc_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTC):
             old = read_gff(utc_resource.data())
             self.editor.load(utc_resource.filepath(), utc_resource.resname(), utc_resource.restype(), utc_resource.data())
 

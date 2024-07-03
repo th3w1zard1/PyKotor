@@ -351,7 +351,11 @@ class _GFFField:
         value: Any,
     ):
         self._field_type: GFFFieldType = field_type
-        self._value: Any = value
+        self._value: Any
+        if field_type in self.INTEGER_TYPES:
+            self._value: Any = int(value)
+        else:
+            self._value = value
 
     def field_type(
         self,
@@ -487,7 +491,7 @@ class GFFStruct:
         is_same: bool = True
         current_path = PureWindowsPath(current_path or "GFFRoot")
         if len(self) != len(other_gff_struct) and not ignore_default_changes:  # sourcery skip: class-extract-method
-            log_func()
+            log_func("")
             log_func(f"GFFStruct: number of fields have changed at '{current_path}': '{len(self)}' --> '{len(other_gff_struct)}'")
             is_same = False
         if self.struct_id != other_gff_struct.struct_id:
@@ -602,6 +606,8 @@ class GFFStruct:
 #           and isinstance(self[label], object_type)  # TODO: uncomment this and assert type after fixing all the call typings
         ):
             value = self[label]
+        if object_type is bool and value.__class__ is int:
+            value = bool(value)
         return value
 
     def value(

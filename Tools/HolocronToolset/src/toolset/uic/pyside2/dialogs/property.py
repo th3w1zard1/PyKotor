@@ -12,6 +12,8 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 
+from toolset.gui.widgets.edit.combobox_2da import ComboBox2DA
+
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
@@ -89,7 +91,7 @@ class Ui_Dialog(object):
 
         self.verticalLayout.addWidget(self.label_7)
 
-        self.upgradeSelect = QComboBox(Dialog)
+        self.upgradeSelect = ComboBox2DA(Dialog)
         self.upgradeSelect.setObjectName(u"upgradeSelect")
 
         self.verticalLayout.addWidget(self.upgradeSelect)
@@ -171,3 +173,5 @@ class Ui_Dialog(object):
         self.parameterSelectButton.setText(QCoreApplication.translate("Dialog", u"Select", None))
     # retranslateUi
 
+
+from toolset.rcc import resources_rc_pyside2

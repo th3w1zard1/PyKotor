@@ -1,24 +1,30 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Callable, Collection, cast
 
+from qtpy.QtCore import Qt
 from qtpy.QtGui import QImage, QPixmap, QTransform
+from qtpy.QtWidgets import QAction, QComboBox, QLineEdit, QMenu
 
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.resource.formats.tpc import TPCTextureFormat
 from pykotor.resource.formats.twoda import read_2da
 from pykotor.resource.type import ResourceType
+from toolset.utils.window import addWindow
 
 if TYPE_CHECKING:
-    from qtpy.QtGui import QStandardItemModel
-    from qtpy.QtWidgets import QWidget
-    from typing_extensions import Self
 
+    from qtpy.QtGui import QStandardItemModel
+    from qtpy.QtWidgets import QPlainTextEdit
+    from typing_extensions import Literal, Self
+
+    from pykotor.extract.file import FileResource, LocationResult
     from pykotor.resource.formats.tpc import TPC
     from pykotor.resource.formats.twoda import TwoDA
     from pykotor.resource.generics.uti import UTI
+    from utility.system.path import PurePath
 
 
 class HTInstallation(Installation):
@@ -70,15 +76,13 @@ class HTInstallation(Installation):
         self,
         path: str,
         name: str,
-        mainWindow: QWidget,
         *,
         tsl: bool | None = None,
+        progress_callback: Callable[[int | str, Literal["set_maximum", "increment", "update_maintask_text", "update_subtask_text"]], Any] | None = None
     ):
-        super().__init__(path)
+        super().__init__(path, progress_callback=progress_callback)
 
         self.name: str = name
-
-        self.mainWindow: QWidget = mainWindow
         self.cacheCoreItems: QStandardItemModel | None = None
 
         self._tsl: bool | None = tsl
@@ -92,12 +96,11 @@ class HTInstallation(Installation):
         return self._tsl
 
     @classmethod
-    def as_ht(cls, installation: Installation, mainWindow: QWidget) -> Self:
+    def from_base_instance(cls, installation: Installation) -> Self:
         ht_installation = cast(cls, installation)
 
         ht_installation.name = f"NonHTInit_{installation.__class__.__name__}_{id(installation)}"
-        ht_installation._tsl = installation.game().is_k2()
-        ht_installation.mainWindow = mainWindow
+        ht_installation._tsl = installation.game().is_k2()  # noqa: SLF001
         ht_installation.cacheCoreItems = None
         ht_installation._cache2da = {}  # noqa: SLF001
         ht_installation._cacheTpc = {}  # noqa: SLF001
@@ -105,8 +108,96 @@ class HTInstallation(Installation):
         ht_installation.__class__ = cls
         return ht_installation
 
+    def setupFileContextMenu(
+        self,
+        widget: QPlainTextEdit | QLineEdit | QComboBox,
+        resref_type: list[ResourceType] | list[ResourceIdentifier],
+        order: list[SearchLocation] | None = None,
+    ):
+        from toolset.gui.dialogs.load_from_location_result import ResourceItems
+        def extendContextMenu(pos):
+            if isinstance(widget, QComboBox):
+                rootMenu = QMenu(widget)
+                widgetText = widget.currentText().strip()
+                firstAction = None
+            else:
+                rootMenu = widget.createStandardContextMenu()
+                widgetText = (widget.text() if isinstance(widget, QLineEdit) else widget.toPlainText()).strip()
+                firstAction = rootMenu.actions()[0] if rootMenu.actions() else None
+
+            print("<SDM> [extendContextMenu scope] rootMenu: ", rootMenu)
+            print("<SDM> [extendContextMenu scope] widgetText: ", widgetText)
+
+            if widgetText:
+                fileMenu = QMenu("File...", widget)
+                print("<SDM> [extendContextMenu scope] fileMenu: ", fileMenu)
+
+                if firstAction:
+                    rootMenu.insertMenu(firstAction, fileMenu)
+                    rootMenu.insertSeparator(firstAction)
+                else:
+                    rootMenu.addMenu(fileMenu)
+
+                rootMenu.insertMenu(firstAction, fileMenu)
+                rootMenu.insertSeparator(firstAction)
+                search_order = order or [
+                    SearchLocation.CHITIN,
+                    SearchLocation.OVERRIDE,
+                    SearchLocation.MODULES,
+                    SearchLocation.RIMS,
+                ]
+                print("<SDM> [extendContextMenu scope] search_order: ", search_order)
+
+                locations = self.locations(([widgetText], resref_type if isinstance(resref_type, Collection) and len(resref_type) > 1 and isinstance(resref_type[1], ResourceType) else resref_type), search_order)
+                print("<SDM> [extendContextMenu scope] locations: ", locations)
+
+                flatLocations = [item for sublist in locations.values() for item in sublist] if isinstance(locations, dict) else locations
+                print("<SDM> [extendContextMenu scope] flatLocations: ", flatLocations)
+
+                if flatLocations:
+                    for location in flatLocations:
+                        displayPath = location.filepath.relative_to(self.path())
+                        if location.as_file_resource().inside_bif:
+                            displayPath /= location.as_file_resource().filename()
+                        displayPathStr = str(displayPath)
+                        print("<SDM> [extendContextMenu scope] displayPathStr: ", displayPathStr)
+
+                        locationMenu = fileMenu.addMenu(displayPathStr)
+                        print("<SDM> [extendContextMenu scope] locationMenu: ", locationMenu)
+
+                        resourceMenuBuilder = ResourceItems(resources=[location])
+                        print("<SDM> [extendContextMenu scope] resourceMenuBuilder: ", resourceMenuBuilder)
+
+                        resourceMenuBuilder.build_menu(locationMenu, self)
+
+                    detailsAction = QAction("Details...", fileMenu)
+                    print("<SDM> [extendContextMenu scope] detailsAction: ", detailsAction)
+
+                    detailsAction.triggered.connect(lambda: self._openDetails(flatLocations))
+                    fileMenu.addAction(detailsAction)
+                else:
+                    fileMenu.setDisabled(True)
+                for action in rootMenu.actions():
+                    if action.text() == "File...":
+                        action.setText(f"{len(flatLocations)} file(s) located")
+                        break
+
+            rootMenu.exec_(widget.mapToGlobal(pos))
+
+        widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        widget.customContextMenuRequested.connect(extendContextMenu)
+
+    def _openDetails(self, locations: list[LocationResult]):
+        from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow
+        selectionWindow = FileSelectionWindow(locations, self)
+        print("<SDM> [_openDetails scope] selectionWindow: %s", selectionWindow)
+
+        addWindow(selectionWindow)
+        selectionWindow.activateWindow()
+
+
     # region Cache 2DA
-    def htGetCache2DA(self, resname: str) -> TwoDA:
+    def htGetCache2DA(self, resname: str) -> TwoDA | None:
         """Gets a 2DA resource from the cache or loads it if not present.
 
         Args:
@@ -127,8 +218,42 @@ class HTInstallation(Installation):
         resname = resname.lower()
         if resname not in self._cache2da:
             result = self.resource(resname, ResourceType.TwoDA, [SearchLocation.OVERRIDE, SearchLocation.CHITIN])
+            if result is None:
+                return None
             self._cache2da[resname] = read_2da(result.data)
         return self._cache2da[resname]
+
+    def getRelevantResources(
+        self,
+        restype: ResourceType,
+        src_filepath: PurePath | None = None,
+    ) -> set[FileResource]:
+        """Use logic to get a list of relevant resources for various contexts."""
+        from pykotor.common.module import Module
+        if src_filepath is not None:
+            relevant_resources = {res for res in self.override_resources() if res.restype() is restype}
+            relevant_resources.update(res for res in self.chitin_resources() if res.restype() is restype)
+            if src_filepath.is_relative_to(self.module_path()):
+                relevant_resources.update(
+                    res
+                    for cap in Module.find_capsules(self, src_filepath.name, strict=True)
+                    for res in cap
+                    if res.restype() is restype
+                )
+            elif src_filepath.is_relative_to(self.override_path()):
+                relevant_resources.update(
+                    res
+                    for relevant_reslist in (
+                        reslist
+                        for reslist in self._modules.values()
+                        if any(res.identifier() == src_filepath.name for res in reslist)
+                    )
+                    for res in relevant_reslist
+                    if res.restype() is restype
+                )
+        else:
+            relevant_resources = {res for res in self if res.restype() is restype}
+        return relevant_resources
 
     def htBatchCache2DA(self, resnames: list[str], *, reload: bool = False):
         """Cache 2D array resources in batch.
@@ -183,7 +308,7 @@ class HTInstallation(Installation):
             - Return cached texture or None if not found.
         """
         if resname not in self._cacheTpc:
-            tex = self.texture(resname, [SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_GUI])
+            tex = self.texture(resname, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_GUI])
             if tex is not None:
                 self._cacheTpc[resname] = tex
         return self._cacheTpc.get(resname, None)
@@ -248,6 +373,28 @@ class HTInstallation(Installation):
                 return self._get_icon(texture)
         return pixmap
 
+    def getItemBaseName(self, baseItem: int) -> str:
+        """Get the name of the base item from its ID."""
+        baseitems = self.htGetCache2DA(HTInstallation.TwoDA_BASEITEMS)
+        with suppress(Exception):
+            return baseitems.get_cell(baseItem, "label")
+        return "Unknown"
+
+    def getModelVarName(self, modelVariation: int) -> str:
+        """Get the name of the model variation from its ID."""
+        return "Default" if modelVariation == 0 else f"Variation {modelVariation}"
+
+    def getTextureVarName(self, textureVariation: int) -> str:
+        """Get the name of the texture variation from its ID."""
+        # Assuming texture variations have specific names or descriptions in another table
+        return "Default" if textureVariation == 0 else f"Texture {textureVariation}"
+
+    def getItemIconPath(self, baseItem: int, modelVariation: int, textureVariation: int) -> str:
+        """Get the icon path based on base item, model variation, and texture variation."""
+        itemClass = self.htGetCache2DA(HTInstallation.TwoDA_BASEITEMS).get_cell(baseItem, "itemclass")
+        variation = modelVariation if modelVariation != 0 else textureVariation
+        return f"i{itemClass}_{str(variation).rjust(3, '0')}"
+
     def getItemIcon(
         self,
         baseItem: int,
@@ -274,14 +421,10 @@ class HTInstallation(Installation):
             4. Return icon pixmap from texture if found, else return default.
         """
         pixmap = QPixmap(":/images/inventory/unknown.png")
-        baseitems = self.htGetCache2DA(HTInstallation.TwoDA_BASEITEMS)
+        iconPath = self.getItemIconPath(baseItem, modelVariation, textureVariation)
 
         with suppress(Exception):
-            itemClass = baseitems.get_cell(baseItem, "itemclass")
-            variation = modelVariation if modelVariation != 0 else textureVariation
-            textureResname = f'i{itemClass}_{str(variation).rjust(3, "0")}'
-            texture = self.htGetCacheTPC(textureResname.lower())
-
+            texture = self.htGetCacheTPC(iconPath.lower())
             if texture is not None:
                 return self._get_icon(texture)
         return pixmap

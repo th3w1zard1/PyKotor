@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import atexit
 import logging
 import multiprocessing
 import os
-import re
 import shutil
 import sys
 import threading
@@ -11,19 +11,23 @@ import time
 import uuid
 
 from contextlib import contextmanager, suppress
-from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from queue import Queue
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Tuple, Union, cast
 
 from utility.error_handling import format_exception_with_variables
 
 if TYPE_CHECKING:
-    import datetime
+    import queue
 
+    from contextlib import _GeneratorContextManager
     from io import TextIOWrapper
+    from logging.handlers import QueueListener
+    from multiprocessing.process import BaseProcess
     from types import TracebackType
 
-    from typing_extensions import Literal
+    from typing_extensions import Literal, Self
 
 
 class UTF8StreamWrapper:
@@ -82,13 +86,14 @@ class CustomPrintToLogger:
     def __init__(
         self,
         logger: logging.Logger,
-        original: TextIOWrapper[str],
+        original: TextIOWrapper,
         log_type: Literal["stdout", "stderr"],
     ):
-        self.original_out: TextIOWrapper[str] = original
+        self.original_out: TextIOWrapper = original
         self.log_type: Literal["stdout", "stderr"] = log_type
         self.logger: logging.Logger = logger
         self.configure_logger_stream()
+        self.buffer = ""
 
     def isatty(self) -> Literal[False]:
         return False
@@ -97,23 +102,29 @@ class CustomPrintToLogger:
         utf8_wrapper = UTF8StreamWrapper(self.original_out)
         for handler in self.logger.handlers:
             if isinstance(handler, logging.StreamHandler):
-                handler.setStream(utf8_wrapper)
+                handler.setStream(utf8_wrapper)  # type: ignore[arg-type]
 
-    def write(
-        self,
-        message: str,
-    ):
+    def write(self, message: str):
         if getattr(THREAD_LOCAL, "is_logging", False):
             self.original_out.write(message)
-        elif message.strip():
-            # Use the logging_context to prevent recursive calls
+        else:
+            self.buffer += message
+            while "\n" in self.buffer:
+                line, self.buffer = self.buffer.split("\n", 1)
+                self._log_message(line)
+
+    def flush(self):
+        if self.buffer:
+            self._log_message(self.buffer)
+            self.buffer = ""
+
+    def _log_message(self, message: str):
+        if message and message.strip():
             with logging_context():
                 if self.log_type == "stderr":
                     self.logger.error(message.strip())
                 else:
-                    self.logger.info(message.strip())
-
-    def flush(self): ...
+                    self.logger.debug(message.strip())
 
 
 class SafeEncodingLogger(logging.Logger):
@@ -317,7 +328,7 @@ def get_log_directory(subdir: os.PathLike | str | None = None) -> Path:
     subdir = Path("logs") if subdir is None else Path(subdir)
     try:
         return check(subdir)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         print(f"Failed to init 'logs' dir in cwd '{cwd}': {e}")
         try:
             return check(cwd)
@@ -325,127 +336,45 @@ def get_log_directory(subdir: os.PathLike | str | None = None) -> Path:
             print(f"Failed to init cwd fallback '{cwd}' as log directory: {e2}\noriginal: {e}")
             return check(get_fallback_log_dir())
 
+
 def safe_isfile(path: Path) -> bool:
     with suppress(Exception):
         return path.is_file()
     return False
+
 
 def safe_isdir(path: Path) -> bool:
     with suppress(Exception):
         return path.is_dir()
     return False
 
-class DirectoryRotatingFileHandler(TimedRotatingFileHandler, RotatingFileHandler):
-    """Handler for logging into daily directories with a static filename."""
-    def __init__(
-        self,
-        base_log_dir: os.PathLike | str,
-        filename: os.PathLike | str,
-        mode: str = "a",
-        maxBytes: int = 1048576,  # noqa: N803
-        when: Literal["s", "m", "h", "d", "w", "S", "M", "H", "D", "W", "W0", "W1", "W2", "W3", "W4", "W5", "W6", "w0", "w1", "w2", "w3", "w4", "w5", "w6", "MIDNIGHT", "midnight"] = "h",
-        interval: int = 1,
-        backupCount: int = 0,  # noqa: N803
-        encoding: str | None = None,
-        delay: bool = False,  # noqa: FBT001, FBT002
-        utc: bool = False,  # noqa: FBT001, FBT002
-        atTime: datetime.time | None = None,  # noqa: N803
-    ):
-        self._base_dir = Path(base_log_dir)
-        self._filename = Path(filename).name
 
-        # Initialize both Timed and Rotating handlers
-        TimedRotatingFileHandler.__init__(
-            self, filename=self.baseFilename, when=when, interval=interval,
-            backupCount=backupCount, encoding=encoding, delay=delay, utc=utc, atTime=atTime)
-        RotatingFileHandler.__init__(
-            self, filename=self.baseFilename, mode=mode, maxBytes=maxBytes,
-            backupCount=backupCount, encoding=encoding, delay=delay)
+class MetaLogger(type):
+    def _create_instance(cls: type[RobustRootLogger]) -> RobustRootLogger:  # type: ignore[misc]
+        instance = object.__new__(cls)
+        object.__getattribute__(instance, "__new__")(cls)
+        object.__getattribute__(instance, "__init__")()
+        type.__setattr__(cls, "_instance", instance)
+        return instance
+    def __getattribute__(cls: type[RobustRootLogger], attr_name: str):  # type: ignore[misc]
+        if attr_name.startswith("__") and attr_name.endswith("__"):
+            return super().__getattribute__(attr_name)  # type: ignore[misc]
+        instance: RobustRootLogger | None = type.__getattribute__(RobustRootLogger, "_instance")
+        if instance is None:
+            instance = MetaLogger._create_instance(cls)
+        return getattr(instance, attr_name)
 
-        self.maxBytes: int = maxBytes
-        self.rotator = self._rotate
-
-    @property
-    def baseFilename(self) -> str:
-        if not hasattr(self, "rolloverAt"):
-            # Temporarily assign the base filename
-            return str(self._base_dir / self._filename)  # Use a direct path for initial setup
-        return str(self._get_cur_directory() / self._filename)
-
-    @baseFilename.setter
-    def baseFilename(self, value):
-        ...  # Override to do nothing
-
-    def _get_timestamp_folder_name(self) -> str:
-        """Get the time that this sequence started at and make it a TimeTuple."""
-        currentTime = int(time.time())
-        dstNow = time.localtime(currentTime)[-1]
-        t = self.rolloverAt - self.interval
-        if self.utc:
-            timeTuple = time.gmtime(t)
-        else:
-            timeTuple = time.localtime(t)
-            dstThen = timeTuple[-1]
-            if dstNow != dstThen:
-                addend = 3600 if dstNow else -3600
-                timeTuple = time.localtime(t + addend)
-        return self.rotation_filename(time.strftime(self.suffix, timeTuple))
-
-    def _get_cur_directory(self) -> Path:
-        """Generate the directory path based on the current date or interval."""
-        return get_log_directory(self._base_dir / self._get_timestamp_folder_name())
-
-    def shouldRollover(
-        self,
-        record: logging.LogRecord,
-    ) -> Literal[1, 0]:
-        """Check for rollover based on both size and time."""
-        return RotatingFileHandler.shouldRollover(self, record)
-
-    def _rotate(
-        self,
-        source: os.PathLike | str,
-        dest: os.PathLike | str,
-    ):
-        """Custom rotate method that handles file rotation."""
-        src_path = Path(source)
-        if src_path.exists():
-            src_path.rename(Path(dest))
-
-    def doRollover(self):
-        """Perform a rollover.
-        In this version, old files are never deleted.
-        """
-        if self.stream:
-            self.stream.close()
-            self.stream = None
-
-        current_path = Path(self.baseFilename)
-        root = current_path.stem
-        ext = current_path.suffix
-        directory = current_path.parent
-
-        # Regex to match files that follow the naming pattern 'root.number.ext'
-        pattern = re.compile(rf"^{re.escape(root)}\.(\d+){re.escape(ext)}$")
-
-        # Collect and parse existing log files to determine the next file number
-        files: list[int] = []
-        for f in directory.iterdir():
-            if not safe_isfile(f):
-                continue
-            match = pattern.match(f.name)
-            if match:
-                files.append(int(match.group(1)))
-
-        next_file_number = max(files) + 1 if files else 1
-        new_name = directory / f"{root}.{next_file_number}{ext}"
-        self.rotate(self.baseFilename, str(new_name))
-
-        if not self.delay:
-            self.stream = self._open()
+    def __call__(cls, *args, **kwargs) -> RobustRootLogger:
+        # sourcery skip: assign-if-exp, merge-duplicate-blocks, reintroduce-else, remove-redundant-if, split-or-ifs
+        instance: RobustRootLogger | None = type.__getattribute__(RobustRootLogger, "_instance")
+        if instance is None:
+            instance = MetaLogger._create_instance(cls)  # type: ignore[arg-type]
+        if args or kwargs:
+            instance.info(*args, **kwargs)
+        return instance
 
 
-class RobustRootLogger(logging.Logger):  # noqa: N801
+class RobustRootLogger(logging.Logger, metaclass=MetaLogger):  # noqa: N801
     """Setup a logger with some standard features.
 
     The goal is to have this be callable anywhere anytime regardless of whether a logger is setup yet.
@@ -458,20 +387,76 @@ class RobustRootLogger(logging.Logger):  # noqa: N801
     -------
         logging.Logger: The root logger with the specified handlers and formatters.
     """
-    _logger: logging.Logger = None  # type: ignore[arg-type]
+    _instance: Self | None = None
+    _queue: Queue = Queue()
+    _logger: logging.Logger = None  # type: ignore[assignment]
 
-    def __init__(self, use_level: logging._Level = logging.DEBUG):
-        self.__class__._logger = self()  # noqa: SLF001
+    def __reduce__(self) -> tuple[type[Self], tuple[()]]:
+        return self.__class__, ()
+
+    def _safe_print(self, message: str):
+        print(message, file=sys.__stderr__)
+
+    def __getattribute__(self, attr_name: str) -> Any:
+        our_type: type[Self] = object.__getattribute__(self, "__class__")
+        try:
+            attr_value = super().__getattribute__(attr_name)
+            if attr_name == "_robust_root_lock":
+                return attr_value
+            if object.__getattribute__(self, "_robust_root_lock"):  # noqa: FBT003
+                return attr_value
+            if attr_value is not our_type and not isinstance(attr_value, our_type) and callable(attr_value):
+                def wrapped(*args, **kwargs):
+                    try:
+                        object.__setattr__(self, "_robust_root_lock", True)
+                        return attr_value(*args, **kwargs)
+                    except Exception as e:  # noqa: BLE001
+                        print(f"Exception when accessing attribute {attr_name}: {e}", file=sys.__stderr__)
+                        #print(traceback.format_exc(), file=sys.__stderr__)
+                        print(f"{e.__class__.__name__}: {e}", file=sys.__stderr__)
+                    finally:
+                        object.__setattr__(self, "_robust_root_lock", False)
+                return wrapped
+        except AttributeError:
+            raise
+        except Exception as e:  # noqa: BLE001
+            #if isinstance(e, AttributeError) and type.__getattribute__(our_type, "__getattr__") is not None:
+            #    raise  # python's logger module doesn't define this, but might as well future proof our code.
+
+            print(f"(Caught by RobustRootLogger!) Exception when accessing attribute '{attr_name}': {e}", file=sys.__stderr__)
+            print(f"{e.__class__.__name__}: {e}", file=sys.__stderr__)
+            return ""
+        else:
+            return attr_value
+
+    def __getattr__(self, attr_name: str):
+        logger = object.__getattribute__(self, "_logger")
+        if logger is None:
+            object.__setattr__(self, "_instance", None)
+            object.__getattribute__(self, "__init__")()
+            logger = object.__getattribute__(self, "_logger")
+        assert logger is not None
+        return object.__getattribute__(logger, attr_name)
+
+    def __init__(self):
+        self.listener: QueueListener
+        cls = object.__getattribute__(self, "__class__")
+        if not object.__getattribute__(cls, "_logger"):
+            type.__setattr__(cls, "_logger", object.__getattribute__(self, "_setup_logger")())
+            listener_thread = threading.Thread(target=object.__getattribute__(self, "_start_listener"))
+            listener_thread.daemon = True
+            self.listener_thread = listener_thread
 
     def _setup_logger(
         self,
-        use_level: logging._Level = logging.DEBUG,
     ) -> logging.Logger:
         logger = logging.getLogger()
         if not logger.handlers:
+            from utility.misc import is_debug_mode
+            use_level = logging.DEBUG if is_debug_mode() else logging.INFO
             logger.setLevel(use_level)
 
-            cur_process = multiprocessing.current_process()
+            cur_process: BaseProcess = multiprocessing.current_process()
             console_format_str = "%(levelname)s(%(name)s): %(message)s"
             if cur_process.name == "MainProcess":
                 log_dir = get_log_directory(subdir="logs")
@@ -487,141 +472,99 @@ class RobustRootLogger(logging.Logger):  # noqa: N801
                 exception_log_file = f"exception_pykotor_{cur_process.pid}.log"
                 console_format_str = f"PID={cur_process.pid} - {console_format_str}"
 
+            #our_queue = type.__getattribute__(object.__getattribute__(self, "__class__"), "_queue")
+            #queue_handler = QueueHandler(our_queue)
+            #logger.addHandler(queue_handler)
+
             console_handler = ColoredConsoleHandler()
             formatter = logging.Formatter(console_format_str)
             console_handler.setFormatter(formatter)
             logger.addHandler(console_handler)
 
             # Redirect stdout and stderr
-            sys.stdout = CustomPrintToLogger(logger, sys.__stdout__, log_type="stdout")
-            sys.stderr = CustomPrintToLogger(logger, sys.__stderr__, log_type="stderr")
+            sys.stdout = CustomPrintToLogger(logger, sys.__stdout__, log_type="stdout")  # type: ignore[assignment]
+            sys.stderr = CustomPrintToLogger(logger, sys.__stderr__, log_type="stderr")  # type: ignore[assignment]
 
             default_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
             exception_formatter = CustomExceptionFormatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
             # Handler for everything (DEBUG and above)
-            everything_handler = DirectoryRotatingFileHandler(log_dir, everything_log_file, maxBytes=20*1024*1024, backupCount=10000, delay=True, encoding="utf8")
-            everything_handler.setLevel(logging.DEBUG)
-            everything_handler.setFormatter(default_formatter)
-            logger.addHandler(everything_handler)
+            if use_level == logging.DEBUG:
+                everything_handler = RotatingFileHandler(str(log_dir / everything_log_file), maxBytes=20*1024*1024, backupCount=5, encoding="utf8")
+                everything_handler.setLevel(logging.DEBUG)
+                everything_handler.setFormatter(default_formatter)
+                logger.addHandler(everything_handler)
 
             # Handler for INFO and WARNING
-            info_warning_handler = DirectoryRotatingFileHandler(log_dir, info_warning_log_file, maxBytes=20*1024*1024, backupCount=10000, delay=True, encoding="utf8")
+            info_warning_handler = RotatingFileHandler(str(log_dir / info_warning_log_file), maxBytes=20*1024*1024, backupCount=5, encoding="utf8")
             info_warning_handler.setLevel(logging.INFO)
             info_warning_handler.setFormatter(default_formatter)
             info_warning_handler.addFilter(LogLevelFilter(logging.ERROR, reject=True))
             logger.addHandler(info_warning_handler)
 
             # Handler for ERROR and CRITICAL
-            error_critical_handler = DirectoryRotatingFileHandler(log_dir, error_critical_log_file, maxBytes=20*1024*1024, backupCount=10000, delay=True, encoding="utf8")
+            error_critical_handler = RotatingFileHandler(str(log_dir / error_critical_log_file), maxBytes=20*1024*1024, backupCount=5, encoding="utf8")
             error_critical_handler.setLevel(logging.ERROR)
             error_critical_handler.addFilter(LogLevelFilter(logging.ERROR))
             error_critical_handler.setFormatter(exception_formatter)
             logger.addHandler(error_critical_handler)
 
-            # Handler for EXCEPTIONS ONLY (using CustomExceptionFormatter)
-            exception_handler = DirectoryRotatingFileHandler(log_dir, exception_log_file, maxBytes=20*1024*1024, backupCount=10000, delay=True, encoding="utf8")
+            # Handler for EXCEPTIONS (using CustomExceptionFormatter)
+            exception_handler = RotatingFileHandler(str(log_dir / exception_log_file), maxBytes=20*1024*1024, backupCount=5, encoding="utf8")
             exception_handler.setLevel(logging.ERROR)
             exception_handler.setFormatter(exception_formatter)
-            exception_handler.addFilter(LogLevelFilter(logging.ERROR))  # Only log ERROR and CRITICAL levels
+            exception_handler.addFilter(LogLevelFilter(logging.ERROR))
             logger.addHandler(exception_handler)
+            object.__setattr__(self, "_orig_log_func", logger._log)
+            logger._log = object.__getattribute__(self, "_log")  # doesn't properly work
+
+            # Adding handlers to the queue listener
+            #object.__setattr__(self, "listener", QueueListener(object.__getattribute__(self, "_queue"), console_handler, everything_handler, info_warning_handler, error_critical_handler, exception_handler))
 
         return logger
 
-    def __call__(self) -> logging.Logger:
-        return self._setup_logger() if self._logger is None else self._logger
+    def _start_listener(self):
+        if not hasattr(self, "listener"):
+            object.__getattribute__(self, "_setup_logger")()
+        try:
+            object.__getattribute__(self, "listener_thread").start()
+        except AttributeError:
+            logging.getLogger().handlers = []
+            object.__setattr__(object.__getattribute__(self, "__class__"), "_logger", self._setup_logger())
+            object.__getattribute__(self, "listener_thread").start()
 
-    @classmethod
-    def log(cls, level, msg, *args, **kwargs):
-        cls()._logger.log(level, msg, *args, **kwargs)  # noqa: SLF001
+    def __call__(self, *args, **kwargs) -> RobustRootLogger:
+        _actual_logger: logging.Logger | None = object.__getattribute__(self, "_logger")
+        if _actual_logger is None:
+            object.__getattribute__(self, "__class__")()
+        return self
 
-    @classmethod
-    def debug(cls, msg, *args, **kwargs):
-        cls()._logger.debug(msg, *args, **kwargs)  # noqa: SLF001
+    def _log(self, level: int, msg: str, *args, **kwargs) -> None:  # type: ignore[override]
+        our_queue: queue.Queue = object.__getattribute__(self, "_queue")
+        try:
+            logging_thread_func = object.__getattribute__(self, "logging_thread_func")
+        except AttributeError:
+            # Custom logic to prevent encoding issues
+            def logging_thread_func(
+                queue: queue.Queue,
+                logging_context: Callable[..., _GeneratorContextManager[None]],
+            ):
+                while True:
+                    task = cast(Union[Tuple[int, str, tuple, dict], None], queue.get())
+                    if task is None:
+                        break  # Stop signal
+                    level, msg, args, kwargs = task
+                    orig_log_func = object.__getattribute__(self, "_orig_log_func")
+                    with logging_context():
+                        orig_log_func(level, msg.encode(encoding="utf-8", errors="replace").decode(), *args, **kwargs)  # noqa: SLF001
+                    queue.task_done()
 
-    @classmethod
-    def info(cls, msg, *args, **kwargs):
-        cls()._logger.info(msg, *args, **kwargs)  # noqa: SLF001
+            logging_thread = threading.Thread(target=logging_thread_func, args=(our_queue,logging_context))
+            logging_thread.start()
+            atexit.register(our_queue.put, None)
+            object.__setattr__(self, "logging_thread_func", logging_thread_func)
 
-    @classmethod
-    def warning(cls, msg, *args, **kwargs):
-        cls()._logger.warning(msg, *args, **kwargs)  # noqa: SLF001
-
-    @classmethod
-    def warn(cls, msg, *args, **kwargs):
-        cls()._logger.warning(msg, *args, **kwargs)  # noqa: SLF001
-
-    @classmethod
-    def error(cls, msg, *args, **kwargs):
-        cls()._logger.error(msg, *args, **kwargs)  # noqa: SLF001
-
-    @classmethod
-    def exception(cls, msg, *args, exc_info=True, **kwargs):
-        cls()._logger.exception(msg, *args, exc_info=exc_info, **kwargs)  # noqa: SLF001
-
-    @classmethod
-    def critical(cls, msg, *args, **kwargs):
-        cls()._logger.critical(msg, *args, **kwargs)  # noqa: SLF001
-
-    @classmethod
-    def fatal(cls, msg, *args, **kwargs):
-        cls()._logger.fatal(msg, *args, **kwargs)  # noqa: SLF001
-
-    @classmethod
-    def setLevel(cls, level):
-        cls()._logger.setLevel(level)  # noqa: SLF001
-
-    @classmethod
-    def addHandler(cls, hdlr):
-        cls()._logger.addHandler(hdlr)  # noqa: SLF001
-
-    @classmethod
-    def removeHandler(cls, hdlr):
-        cls()._logger.removeHandler(hdlr)  # noqa: SLF001
-
-    @classmethod
-    def hasHandlers(cls):
-        return cls()._logger.hasHandlers()  # noqa: SLF001
-
-    @classmethod
-    def handle(cls, record):
-        cls()._logger.handle(record)  # noqa: SLF001
-
-    @classmethod
-    def makeRecord(cls, name, level, fn, lno, msg, args, exc_info, func=None, extra=None, sinfo=None):  # noqa: PLR0913
-        return cls()._logger.makeRecord(name, level, fn, lno, msg, args, exc_info, func, extra, sinfo)  # noqa: SLF001
-
-    @classmethod
-    def findCaller(cls, stack_info=False, stacklevel=1):  # noqa: FBT002
-        return cls()._logger.findCaller(stack_info, stacklevel)  # noqa: SLF001
-
-    @classmethod
-    def isEnabledFor(cls, level):
-        return cls()._logger.isEnabledFor(level)  # noqa: SLF001
-
-    @classmethod
-    def getEffectiveLevel(cls):
-        return cls()._logger.getEffectiveLevel()  # noqa: SLF001
-
-    @classmethod
-    def addFilter(cls, filt):
-        cls()._logger.addFilter(filt)  # noqa: SLF001
-
-    @classmethod
-    def removeFilter(cls, filt):
-        cls()._logger.removeFilter(filt)  # noqa: SLF001
-
-    @classmethod
-    def filter(cls, record):
-        return cls()._logger.filter(record)  # noqa: SLF001
-
-    @classmethod
-    def getChild(cls, suffix):
-        return cls()._logger.getChild(suffix)  # noqa: SLF001
-
-    @classmethod
-    def callHandlers(cls, record):
-        cls()._logger.callHandlers(record)  # noqa: SLF001
+        our_queue.put((level, msg, args, kwargs))
 
 
 get_root_logger = RobustRootLogger  # deprecated, provided for backwards compatibility.
@@ -635,6 +578,9 @@ if __name__ == "__main__":
     logger.warning("This is a warning message.")
     logger.error("This is an error message.")
     logger.critical("This is a critical message.")
+
+    # Test various edge case
+    RobustRootLogger("This is a test of __call__")
 
     # Uncomment to test uncaught exception logging
     raise RuntimeError("Test uncaught exception")

@@ -392,24 +392,24 @@ class Scene:
             self.layout = self._getLyt()
 
         for identifier in self.clearCacheBuffer:
-            for git_creature in copy(self.git.creatures):
-                if identifier.resname == git_creature.resref and identifier.restype == ResourceType.UTC:
+            for git_creature in self.git.creatures.copy():
+                if identifier.resname == git_creature.resref and identifier.restype is ResourceType.UTC:
                     del self.objects[git_creature]
-            for placeable in copy(self.git.placeables):
-                if identifier.resname == placeable.resref and identifier.restype == ResourceType.UTP:
+            for placeable in self.git.placeables.copy():
+                if identifier.resname == placeable.resref and identifier.restype is ResourceType.UTP:
                     del self.objects[placeable]
-            for door in copy(self.git.doors):
-                if door.resref == identifier.resname and identifier.restype == ResourceType.UTD:
+            for door in self.git.doors.copy():
+                if door.resref == identifier.resname and identifier.restype is ResourceType.UTD:
                     del self.objects[door]
             if identifier.restype in {ResourceType.TPC, ResourceType.TGA}:
                 del self.textures[identifier.resname]
             if identifier.restype in {ResourceType.MDL, ResourceType.MDX}:
                 del self.models[identifier.resname]
-            if identifier.restype == ResourceType.GIT:
+            if identifier.restype is ResourceType.GIT:
                 for instance in self.git.instances():
                     del self.objects[instance]
                 self.git = self._getGit()
-            if identifier.restype == ResourceType.LYT:
+            if identifier.restype is ResourceType.LYT:
                 for room in self.layout.rooms:
                     del self.objects[room]
                 self.layout = self._getLyt()
@@ -652,6 +652,7 @@ class Scene:
                 del self.textures_data_queue[name]
 
     def update_models(self):
+        """Currently unused."""
         with self.models_data_lock:
             for result in self.models_data_queue.copy().values():
                 if result is None:  # still processing...
@@ -801,7 +802,7 @@ class Scene:
         return self.blank_lightmap if lightmap else self.blank_texture
 
     def loadModel(self, name: str) -> Model:
-        """Load model data asynchronously."""
+        """Load model data asynchronously. Currently unused."""
         if name in self.models:
             return self.models[name]
         with self.models_data_lock:
@@ -818,7 +819,10 @@ class Scene:
         self,
         name: str,
     ):
-        """This function runs in a background thread and handles the I/O and processing to get the model data."""
+        """This function runs in a background thread and handles the I/O and processing to get the model data.
+
+        Currently unused.
+        """
         RobustRootLogger().debug(f"async queue {name}.mdl call")
         mdl_data = EMPTY_MDL_DATA
         mdx_data = EMPTY_MDX_DATA
@@ -954,7 +958,7 @@ class Scene:
             tpc: TPC | None = None
             # Check the textures linked to the module first
             if self._module is not None:
-                RobustRootLogger().info(f"Locating {type_name} '{name}' in module '{self.module.root()}'")
+                RobustRootLogger().debug(f"Locating {type_name} '{name}' in module '{self.module.root()}'")
                 module_tex = self.module.texture(name)
                 if module_tex is not None:
                     RobustRootLogger().debug(f"Loading {type_name} '{name}' from module '{self.module.root()}'")
@@ -962,7 +966,7 @@ class Scene:
 
             # Otherwise just search through all relevant game files
             if tpc is None and self.installation:
-                RobustRootLogger().info(f"Locating and loading {type_name} '{name}' from override/bifs/texturepacks...")
+                RobustRootLogger().debug(f"Locating and loading {type_name} '{name}' from override/bifs/texturepacks...")
                 tpc = self.installation.texture(name, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.CHITIN])
             if tpc is None:
                 RobustRootLogger().warning(f"MISSING {type_name.upper()}: '%s'", name)
@@ -972,7 +976,7 @@ class Scene:
             tpc = TPC()
 
         with self.textures_data_lock:
-            self.textures_data_queue[name] = (tpc or TPC(), lightmap)  # Using a dummy TPC class
+            self.textures_data_queue[name] = (tpc or TPC(), lightmap)
 
     def jump_to_entry_location(self):
         if self._module is None:
@@ -1109,6 +1113,11 @@ class Camera:
         self.distance: float = 10.0
         self.fov: float = 90.0
 
+    def set_position(self, position: Vector3 | vec3):
+        self.x = position.x
+        self.y = position.y
+        self.z = position.z
+
     def view(self) -> mat4:
         """Returns the view matrix for the camera.
 
@@ -1162,7 +1171,15 @@ class Camera:
         self.y += translation.y
         self.z += translation.z
 
-    def rotate(self, yaw: float, pitch: float):
+    def rotate(
+        self,
+        yaw: float,
+        pitch: float,
+        *,
+        clamp: bool = False,
+        lower_limit: float = 0,
+        upper_limit: float = math.pi,
+    ):
         """Rotates the object by yaw and pitch angles.
 
         Args:
@@ -1180,13 +1197,42 @@ class Camera:
             - Increments yaw by yaw argument
             - Clips pitch to valid range between 0 and pi radians to avoid gimbal lock
         """
-        self.pitch += pitch
-        self.yaw += yaw
+        # Update pitch and yaw
+        self.pitch = self.pitch + pitch
+        self.yaw = self.yaw + yaw
 
-        if self.pitch > math.pi - 0.001:
-            self.pitch = math.pi - 0.001
-        elif self.pitch < 0.001:
-            self.pitch = 0.001
+        # ensure yaw doesn't get too large.
+        if self.yaw > 2 * math.pi:
+            self.yaw -= 4 * math.pi
+        elif self.yaw < -2 * math.pi:
+            self.yaw += 4 * math.pi
+
+        if pitch == 0:
+            return
+
+        # ensure pitch doesn't get too large.
+        if self.pitch > 2 * math.pi:
+            self.pitch -= 4 * math.pi
+        elif self.pitch < -2 * math.pi:
+            self.pitch += 4 * math.pi
+
+        if clamp:
+            if self.pitch < lower_limit:
+                self.pitch = lower_limit
+            elif self.pitch > upper_limit:
+                self.pitch = upper_limit
+
+        # Add a small value to pitch to jump to the other side if near the limits
+        gimbal_lock_range = .05
+        pitch_limit = math.pi / 2
+        if pitch_limit - gimbal_lock_range < self.pitch < pitch_limit + gimbal_lock_range:
+            small_value = .02 if pitch > 0 else -.02
+            self.pitch += small_value
+            #RobustRootLogger.debug(f"Avoiding {'positive' if pitch > 0 else 'negative'} pitch gimbal lock. pitch: {self.pitch}, deltaPitch: {pitch}")
+        #else:
+            #RobustRootLogger.debug(f"New rotation yaw: {self.yaw}, pitch: {self.pitch}, deltaPitch: {pitch}")
+
+
 
     def forward(self, *, ignore_z: bool = True) -> vec3:
         """Calculates the forward vector from the camera's rotation.

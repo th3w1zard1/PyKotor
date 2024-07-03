@@ -246,6 +246,12 @@
            <layout class="QVBoxLayout" name="verticalLayout_9">
             <item>
              <widget class="QCheckBox" name="mdlDecompileCheckbox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="toolTip">
+               <string>Decompile feature is not available.</string>
+              </property>
               <property name="text">
                <string>Decompile</string>
               </property>
@@ -316,8 +322,14 @@
      <addaction name="actionNewTXT"/>
      <addaction name="actionNewSSF"/>
     </widget>
+    <widget class="QMenu" name="menuRecentFiles">
+     <property name="title">
+      <string>Recent Files</string>
+     </property>
+    </widget>
     <addaction name="menuNew"/>
     <addaction name="openAction"/>
+    <addaction name="menuRecentFiles"/>
     <addaction name="separator"/>
     <addaction name="actionSettings"/>
     <addaction name="separator"/>
@@ -327,7 +339,6 @@
     <property name="title">
      <string>Edit</string>
     </property>
-    <addaction name="actionRecent_Files"/>
     <addaction name="separator"/>
     <addaction name="actionEditTLK"/>
     <addaction name="actionEditJRL"/>
@@ -337,8 +348,17 @@
      <string>Theme</string>
     </property>
     <addaction name="defaultLight"/>
+    <addaction name="fusionLight"/>
+    <addaction name="fusionDark"/>
+    <addaction name="qDarkStyle"/>
+    <addaction name="amoled"/>
+    <addaction name="aqua"/>
+    <addaction name="consoleStyle"/>
+    <addaction name="elegantDark"/>
+    <addaction name="macOS"/>
+    <addaction name="manjaroMix"/>
+    <addaction name="materialDark"/>
     <addaction name="breezeDark"/>
-    <addaction name="darkManualTheme2"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -679,7 +699,17 @@
   </action>
   <action name="defaultLight">
    <property name="text">
-    <string>Default (Light)</string>
+    <string>Native</string>
+   </property>
+  </action>
+  <action name="fusionLight">
+   <property name="text">
+    <string>Fusion (Light)</string>
+   </property>
+  </action>
+  <action name="fusionDark">
+   <property name="text">
+    <string>Fusion (Dark)</string>
    </property>
   </action>
   <action name="breezeDark">
@@ -687,9 +717,44 @@
     <string>Breeze (Dark)</string>
    </property>
   </action>
-  <action name="darkManualTheme2">
+  <action name="qDarkStyle">
    <property name="text">
-    <string>Fusion (Dark)</string>
+    <string>QDarkStyle</string>
+   </property>
+  </action>
+  <action name="amoled">
+   <property name="text">
+    <string>AMOLED</string>
+   </property>
+  </action>
+  <action name="aqua">
+   <property name="text">
+    <string>Aqua</string>
+   </property>
+  </action>
+  <action name="consoleStyle">
+   <property name="text">
+    <string>ConsoleStyle</string>
+   </property>
+  </action>
+  <action name="elegantDark">
+   <property name="text">
+    <string>ElegantDark</string>
+   </property>
+  </action>
+  <action name="macOS">
+   <property name="text">
+    <string>MacOS</string>
+   </property>
+  </action>
+  <action name="manjaroMix">
+   <property name="text">
+    <string>ManjaroMix</string>
+   </property>
+  </action>
+  <action name="materialDark">
+   <property name="text">
+    <string>MaterialDark</string>
    </property>
   </action>
   <action name="actionIndoorMapBuilder">

@@ -18,10 +18,22 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from pykotor.common.misc import ResRef
+    from pykotor.extract.capsule import LazyCapsule
 
 
 class FileResource:
     """Stores information for a resource regarding its name, type and where the data can be loaded from."""
+    def __new__(cls, resname: str | os.PathLike, *args, **kwargs) -> Self | LazyCapsule:
+        # Check if the resource should be handled by LazyCapsule
+        if cls is FileResource and is_capsule_file(resname):
+            from pykotor.extract.capsule import LazyCapsule
+            cls = LazyCapsule
+
+        # Check if the current class's __new__ is overridden beyond FileResource's __new__
+        if cls.__new__ is not FileResource.__new__:
+            return super().__new__(cls, resname, *args, **kwargs)
+        # If not, proceed with the default object creation process
+        return object.__new__(cls)
 
     def __init__(
         self,
@@ -95,6 +107,17 @@ class FileResource:
         if isinstance(other, FileResource):
             return True if self is other else self._path_ident_obj == other._path_ident_obj
         return NotImplemented
+
+    @classmethod
+    def from_path(cls, path: os.PathLike | str) -> Self:
+        path_obj: Path = Path.pathify(path)
+        return cls(
+            resname=path_obj.stem,
+            restype=ResourceType.from_extension(path_obj.suffix),
+            size=path_obj.stat().st_size,
+            offset=0,
+            filepath=path_obj,
+        )
 
     def identifier(self) -> ResourceIdentifier:
         """Returns the ResourceIdentifier instance for this resource."""
@@ -256,23 +279,25 @@ class ResourceResult:
     data: bytes
     _resource: FileResource | None = field(repr=False, default=None, init=False)  # Metadata is hidden in the representation
 
-    def __post_init__(self):
-        # Use object.__setattr__ to bypass the frozen state to set _metadata initially
-        object.__setattr__(self, "_metadata", None)
-
     def __iter__(self) -> Iterator[str | ResourceType | Path | bytes]:
         """This method enables unpacking like tuple behavior."""
         return iter((self.resname, self.restype, self.filepath, self.data))
 
+    def __hash__(self):
+        return hash(self.identifier())
+
     def set_file_resource(self, value: FileResource) -> None:
-        # Allow _metadata to be set only once
+        # Allow _resource to be set only once
         if self._resource is None:
             object.__setattr__(self, "_resource", value)
         else:
-            raise RuntimeError("Metadata can only be set once.")
+            raise RuntimeError("_resource can only be called once.")
 
     def as_file_resource(self) -> FileResource:
         return self._resource
+
+    def identifier(self) -> ResourceIdentifier:
+        return ResourceIdentifier(self.resname, self.restype)
 
 
 @dataclass(frozen=True)
@@ -282,23 +307,24 @@ class LocationResult:
     size: int
     _resource: FileResource | None = field(repr=False, default=None, init=False)  # Metadata is hidden in the representation
 
-    def __post_init__(self):
-        # Use object.__setattr__ to bypass the frozen state to set _metadata initially
-        object.__setattr__(self, "_metadata", None)
-
     def __iter__(self) -> Iterator[Path | int]:
         """This method enables unpacking like tuple behavior."""
         return iter((self.filepath, self.offset, self.size))
 
     def set_file_resource(self, value: FileResource) -> None:
-        # Allow _metadata to be set only once
+        # Allow _resource to be set only once
         if self._resource is None:
             object.__setattr__(self, "_resource", value)
         else:
-            raise RuntimeError("Metadata can only be set once.")
+            raise RuntimeError("set_file_resource can only be called once.")
 
     def as_file_resource(self) -> FileResource:
         return self._resource
+
+    def identifier(self) -> ResourceIdentifier:
+        if self._resource is None:
+            raise RuntimeError(f"{self!r} unexpectedly never assigned a FileResource instance.")
+        return self._resource.identifier()
 
 
 @dataclass(frozen=True)
@@ -386,7 +412,7 @@ class ResourceIdentifier:
             - Handles exceptions during processing
         """
         try:
-            path_obj = PurePath(file_path)
+            path_obj = PurePath.pathify(file_path)
         except Exception:
             return ResourceIdentifier("", ResourceType.from_extension(""))
 

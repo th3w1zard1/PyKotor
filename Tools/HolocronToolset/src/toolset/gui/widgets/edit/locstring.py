@@ -5,18 +5,18 @@ from typing import TYPE_CHECKING
 import qtpy
 
 from qtpy import QtCore
-from qtpy.QtWidgets import QWidget
+from qtpy.QtWidgets import QAction, QApplication, QWidget
 
 from pykotor.common.language import LocalizedString
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
-from utility.error_handling import assert_with_variable_trace
+from toolset.gui.widgets.settings.installations import GlobalSettings
 
 if TYPE_CHECKING:
     from toolset.data.installation import HTInstallation
 
 
 class LocalizedStringLineEdit(QWidget):
-    editingFinished = QtCore.Signal()
+    editingFinished: QtCore.Signal = QtCore.Signal()
 
     def __init__(self, parent: QWidget):
         """Initialize a locstring edit widget.
@@ -57,6 +57,24 @@ class LocalizedStringLineEdit(QWidget):
     def setInstallation(self, installation: HTInstallation):
         self._installation = installation
 
+    def showContextMenu(self, pos: QtCore.QPoint):
+        menu = self.ui.locstringText.createStandardContextMenu()
+
+        edit_action = QAction("Edit with TLK", self)
+        edit_action.triggered.connect(self.editLocstring)
+        menu.addAction(edit_action)
+
+        copy_action = QAction("Copy", self)
+        copy_action.triggered.connect(self.copyText)
+        menu.addAction(copy_action)
+
+        menu.exec_(self.ui.locstringText.mapToGlobal(pos))
+
+    def copyText(self):
+        """Copies the current text to the clipboard."""
+        clipboard = QApplication.clipboard()
+        clipboard.setText(self.ui.locstringText.text())
+
     def setLocstring(self, locstring: LocalizedString):
         """Sets the localized string for a UI element.
 
@@ -72,16 +90,24 @@ class LocalizedStringLineEdit(QWidget):
             - If not, looks up the string from the talktable and uses a yellow background
         """
         self._locstring = locstring
+        theme = GlobalSettings().selectedTheme
         if locstring.stringref == -1:
             text = str(locstring)
             self.ui.locstringText.setText(text if text != "-1" else "")
-            self.ui.locstringText.setStyleSheet("QLineEdit {background-color: white;}")
+            # Check theme condition for setting stylesheet
+            if theme in ("Native", "Fusion (Light)"):
+                self.ui.locstringText.setStyleSheet(f"{self.ui.locstringText.styleSheet()} QLineEdit {{background-color: white;}}")
+            else:
+                self.ui.locstringText.setStyleSheet(f"{self.ui.locstringText.styleSheet()} QLineEdit {{background-color: white; color: black;}}")
         else:
             self.ui.locstringText.setText(self._installation.talktable().string(locstring.stringref))
-            self.ui.locstringText.setStyleSheet("QLineEdit {background-color: #fffded;}")
+            # Check theme condition for setting stylesheet
+            if theme in ("Native", "Fusion (Light)"):
+                self.ui.locstringText.setStyleSheet(f"{self.ui.locstringText.styleSheet()} QLineEdit {{background-color: #fffded;}}")
+            else:
+                self.ui.locstringText.setStyleSheet(f"{self.ui.locstringText.styleSheet()} QLineEdit {{background-color: #fffded; color: black;}}")
 
     def editLocstring(self):
-        assert self._installation is not None, assert_with_variable_trace(self._installation is not None)
         dialog = LocalizedStringDialog(self, self._installation, self._locstring)
         if dialog.exec_():
             self.setLocstring(dialog.locstring)

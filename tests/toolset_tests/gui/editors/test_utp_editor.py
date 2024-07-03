@@ -63,8 +63,8 @@ class UTPEditorTest(TestCase):
         from toolset.gui.editors.utp import UTPEditor
 
         cls.UTPEditor = UTPEditor
-        # cls.K1_INSTALLATION = HTInstallation(K1_PATH, "", tsl=False, mainWindow=None)
-        cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True, mainWindow=None)
+        # cls.K1_INSTALLATION = HTInstallation(K1_PATH, "", tsl=False)
+        cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
         self.app = QApplication([])
@@ -96,7 +96,7 @@ class UTPEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k1_installation(self):
         self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
-        for utp_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTP):
+        for utp_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTP):
             old = read_gff(utp_resource.data())
             self.editor.load(utp_resource.filepath(), utp_resource.resname(), utp_resource.restype(), utp_resource.data())
 
@@ -112,7 +112,7 @@ class UTPEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k2_installation(self):
         self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
-        for utp_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTP):
+        for utp_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTP):
             old = read_gff(utp_resource.data())
             self.editor.load(utp_resource.filepath(), utp_resource.resname(), utp_resource.restype(), utp_resource.data())
 

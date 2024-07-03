@@ -7,16 +7,19 @@ from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
 from qtpy import QtCore
 from qtpy.QtCore import QThread, QTimer, Qt
-from qtpy.QtWidgets import QDialog, QLabel, QMessageBox, QProgressBar, QSizePolicy, QVBoxLayout
+from qtpy.QtGui import QWindowStateChangeEvent
+from qtpy.QtWidgets import QDialog, QLabel, QMessageBox, QProgressBar, QSizePolicy, QVBoxLayout, QWidget
 
+from toolset.gui.common.widgets.progressbar import AnimatedProgressBar
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception
 from utility.logger_util import RobustRootLogger
 
 if TYPE_CHECKING:
     from multiprocessing import Process, Queue
 
+    from qtpy.QtCore import QEvent
     from qtpy.QtGui import QCloseEvent
-    from qtpy.QtWidgets import QWidget
+    from typing_extensions import Literal
 
 T = TypeVar("T")
 
@@ -31,6 +34,7 @@ class ProgressDialog(QDialog):
     def __init__(self, progress_queue: Queue, title: str = "Operation Progress"):
         super().__init__(None)
         self.progress_queue: Queue = progress_queue
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowStaysOnTopHint & ~QtCore.Qt.WindowContextHelpButtonHint & ~QtCore.Qt.WindowMinMaxButtonsHint)
         self.setWindowTitle(title)
         self.setLayout(QVBoxLayout())
 
@@ -96,6 +100,7 @@ class AsyncLoader(QDialog, Generic[T]):
         errorTitle: str | None = None,
         *,
         startImmediately: bool = True,
+        realtime_progress: bool = False,
     ):
         """Initializes a progress dialog.
 
@@ -117,50 +122,93 @@ class AsyncLoader(QDialog, Generic[T]):
             - Connects callbacks for successful/failed task completion.
         """
         super().__init__(parent)
-        self._progressBar = QProgressBar(self)
-        self._progressBar.setMinimum(0)
-        self._progressBar.setMaximum(0)
-        self._progressBar.setTextVisible(False)
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowStaysOnTopHint & ~QtCore.Qt.WindowContextHelpButtonHint & ~QtCore.Qt.WindowMinMaxButtonsHint)
+        print("AsyncLoader.__init__: realtime_progress:", realtime_progress)
 
-        self._infoText: QLabel = QLabel(self)
-        self._infoText.setText("")
-        self._infoText.setVisible(False)
+        self._progressBar = AnimatedProgressBar(self)
+        self._progressBar.setMinimum(0)
+        self._progressBar.setMaximum(1 if realtime_progress else 0)
+        self._progressBar.setTextVisible(realtime_progress)
+
+        self._mainTaskText: QLabel = QLabel(self)
+        self._mainTaskText.setText("")
+        self._mainTaskText.setVisible(realtime_progress)
+
+        self._subTaskText: QLabel = QLabel(self)
+        self._subTaskText.setText("")
+        self._subTaskText.setVisible(realtime_progress)
 
         self.setLayout(QVBoxLayout())
+        self.layout().addWidget(self._mainTaskText)
         self.layout().addWidget(self._progressBar)
-        self.layout().addWidget(self._infoText)
+        self.layout().addWidget(self._subTaskText)
 
         self.setWindowTitle(title)
         self.setMinimumSize(260, 40)
-        # Update size policy
         self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self.setStyleSheet("""
+    QDialog {
+        border-radius: 10px;
+        padding: 20px;
+        font-size: 12pt;
+    }
+    QLabel {
+        font-size: 12pt 'Arial';
+        margin-top: 6px;
+        margin-bottom: 6px;
+    }
+    QProgressBar {
+        font-size: 12pt 'Arial';
+        min-height: 20px;
+        max-height: 20px;
+        border: 1px solid palette(dark);
+        border-radius: 10px;
+        background-color: palette(base);
+        text-align: center;
+    }
+    QProgressBar::chunk {
+        border-radius: 9px;
+        background: qlineargradient(
+            x1: 0, y1: 0, x2: 1, y2: 0,
+            stop: 0 #008800, stop: 0.5 #00ff00, stop: 1 #008800
+        );
+        border: 1px solid rgba(0, 255, 0, 0.5);
+        margin: 1px;
+    }
+""")
+        self._progressBar.setFixedHeight(20)  # Makes the progress bar taller
+        self._mainTaskText.setAlignment(Qt.AlignCenter)  # Centers the main task text
+        self._subTaskText.setAlignment(Qt.AlignCenter)  # Centers the sub task text
 
-        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
-
-        self.value: T = None  # type: ignore[assignment]
+        self.value: T | None = None  # type: ignore[assignment]
         self.error: Exception | None = None
         self.errorTitle: str | None = errorTitle
+        self._realtime_progress: bool = realtime_progress
 
-        self._worker = AsyncWorker(self, task)
+        self._worker = AsyncWorker(self, task, realtime_progress=realtime_progress)
         self._worker.successful.connect(self._onSuccessful)
         self._worker.failed.connect(self._onFailed)
+        if realtime_progress:
+            self._worker.progress.connect(self._onProgress)
         if startImmediately:
             self.startWorker()
+
+    def changeEvent(self, event: QEvent):
+        if event.type() == QtCore.QEvent.WindowStateChange:
+            self_parent = self.parent()
+            if isinstance(self_parent, QWidget) and isinstance(event, QWindowStateChangeEvent):
+                if self_parent.isMinimized():
+                    self.setWindowState(self.windowState() | QtCore.Qt.WindowMinimized)
+                elif bool(event.oldState() & QtCore.Qt.WindowMinimized):
+                    self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized)
+
+        super().changeEvent(event)
 
     def startWorker(self):
         self._worker.start()
 
     def closeEvent(self, e: QCloseEvent):
         self._worker.terminate()
-
-    def updateInfo(self, text: str):
-        self._infoText.setText(text)
-        if not text:
-            self.setFixedSize(260, 40)
-            self._infoText.setVisible(False)
-        else:
-            self.setFixedSize(260, 60)
-            self._infoText.setVisible(True)
 
     def _onSuccessful(self, result: Any):
         self.value = result
@@ -179,18 +227,40 @@ class AsyncLoader(QDialog, Generic[T]):
             msgBox.setDetailedText(format_exception_with_variables(error))
             msgBox.exec_()
 
+    def _onProgress(self, value: int | str, task_type: str):
+        if task_type == "increment":
+            self._progressBar.setValue(self._progressBar.value() + value)
+        elif task_type == "set_maximum":
+            self._progressBar.setMaximum(value)
+        elif task_type == "update_maintask_text":
+            self._mainTaskText.setText(value)
+        elif task_type == "update_subtask_text":
+            self._subTaskText.setText(value)
+        old_width = self.width()
+        self.adjustSize()
+        self.setMinimumSize(self.size())
+        new_width = self.width()
+        width_change = new_width - old_width
+        if width_change > 0:
+            self.move(self.x() - width_change // 2, self.y())
+
 
 class AsyncWorker(QThread):
     successful = QtCore.Signal(object)
     failed = QtCore.Signal(object)
+    progress = QtCore.Signal(object, str)
 
     def __init__(
         self,
         parent: QWidget,
         task: Callable[..., T],
+        *,
+        realtime_progress: bool = False,
     ):
         super().__init__(parent)
+        print("AsyncWorker.__init__: realtime_progress:", realtime_progress)
         self._task: Callable[..., T] = task
+        self._realtime_progress: bool = realtime_progress
 
     def run(self):
         use_profiler: bool = False # set to False to disable the profiler.
@@ -198,12 +268,22 @@ class AsyncWorker(QThread):
             profiler = cProfile.Profile()
             profiler.enable()
         try:
-            self.successful.emit(self._task())
+            #result = self._task(self.progress_callback)
+            result = self._task()
         except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
             self.failed.emit(e)
+        else:
+            self.successful.emit(result)
         if use_profiler:
             profiler.disable()
             profiler.dump_stats(f"{uuid.uuid1().hex[:7]}_async_worker.pstat")
+
+    def progress_callback(
+        self,
+        value: int | str,
+        task_type: Literal["set_maximum", "increment", "update_maintask_text", "update_subtask_text"],
+    ):
+        self.progress.emit(value, task_type)
 
 
 class AsyncBatchLoader(QDialog):
@@ -232,6 +312,7 @@ class AsyncBatchLoader(QDialog):
             - Connects signals from worker for successful, failed and completed tasks.
         """
         super().__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowStaysOnTopHint & ~QtCore.Qt.WindowContextHelpButtonHint & ~QtCore.Qt.WindowMinMaxButtonsHint)
 
         self._progressBar: QProgressBar = QProgressBar(self)
         self._progressBar.setMinimum(0)
@@ -248,8 +329,6 @@ class AsyncBatchLoader(QDialog):
 
         self.setWindowTitle(title)
         self.setFixedSize(260, 40)
-
-        self.setWindowFlag(Qt.WindowType.WindowContextHelpButtonHint, False)
 
         self.value: list[Any] = []
         self.errors: list[Exception] = []

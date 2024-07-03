@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 import json
+import multiprocessing
 import re
 
 from contextlib import suppress
@@ -12,16 +13,17 @@ import requests
 from qtpy.QtWidgets import QMessageBox
 
 from utility.error_handling import universal_simplify_exception
+from utility.logger_util import RobustRootLogger
 
 LOCAL_PROGRAM_INFO: dict[str, Any] = {
     # <---JSON_START--->#{
-    "currentVersion": "3.0.0b8",
+    "currentVersion": "3.1.0",
     "toolsetLatestVersion": "2.1.2",
-    "toolsetLatestBetaVersion": "3.0.0b8",
+    "toolsetLatestBetaVersion": "3.0.0b9",
     "updateInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HolocronToolset/src/toolset/config.py",
     "updateBetaInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HolocronToolset/src/toolset/config.py?ref=bleeding-edge",
     "toolsetDownloadLink": "https://deadlystream.com/files/file/1982-holocron-toolset",
-    "toolsetBetaDownloadLink": "https://github.com/NickHugi/PyKotor/releases/tag/v3.0.0b6-toolset",
+    "toolsetBetaDownloadLink": "https://github.com/NickHugi/PyKotor/releases/tag/v3.0.0b9-toolset",
     "toolsetDirectLinks": {
         "Darwin": {
             "32bit": [],
@@ -51,7 +53,7 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
         }
     },
     "toolsetLatestNotes": "Fixed major bug that was causing most editors to load data incorrectly.",
-    "toolsetLatestBetaNotes": "A massive release has been pushed, please press 'Update' to see the details.",
+    "toolsetLatestBetaNotes": "Deep-tested various editors and fixed bugs. Improve many things in the Module Designer. Fix a few bugs in the GITEditor undo/redo logic. Various other improvements/features will be noticeable.",
     "kits": {
         "Black Vulkar Base": {"version": 1, "id": "blackvulkar"},
         "Endar Spire": {"version": 1, "id": "endarspire"},
@@ -60,6 +62,13 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
     "help": {"version": 3}
 }  #<---JSON_END--->#
 CURRENT_VERSION = LOCAL_PROGRAM_INFO["currentVersion"]
+
+
+def fetch_update_info(update_link: str, timeout: int = 15) -> Any:
+    req = requests.get(update_link, timeout=timeout)
+    req.raise_for_status()
+    file_data = req.json()
+    return file_data
 
 
 def getRemoteToolsetUpdateInfo(
@@ -72,10 +81,12 @@ def getRemoteToolsetUpdateInfo(
     else:
         UPDATE_INFO_LINK = LOCAL_PROGRAM_INFO["updateInfoLink"]
 
+    # Use multiprocessing pool to handle timeout
+    pool = multiprocessing.Pool(1)  # Create a Pool with a single worker
     try:  # Download this same file config.py from the repo and only parse the json between the markers. This prevents remote execution security issues.
-        req = requests.get(UPDATE_INFO_LINK, timeout=15)
-        req.raise_for_status()
-        file_data = req.json()
+        timeout = 2 if silent else 10
+        result = pool.apply_async(fetch_update_info, [UPDATE_INFO_LINK, timeout])
+        file_data = result.get(timeout=timeout)
         base64_content = file_data["content"]
         decoded_content = base64.b64decode(base64_content)  # Correctly decoding the base64 content
         decoded_content_str = decoded_content.decode(encoding="utf-8")
@@ -92,6 +103,7 @@ def getRemoteToolsetUpdateInfo(
         if not isinstance(remoteInfo, dict):
             raise TypeError(f"Expected remoteInfo to be a dict, instead got type {remoteInfo.__class__.__name__}")  # noqa: TRY301
     except Exception as e:  # noqa: BLE001
+        pool.terminate()  # Terminate the pool
         errMsg = str(universal_simplify_exception(e))
         result = silent or QMessageBox.question(
             None,
@@ -108,6 +120,9 @@ def getRemoteToolsetUpdateInfo(
         if result not in {QMessageBox.StandardButton.Yes, True}:
             return e
         remoteInfo = LOCAL_PROGRAM_INFO
+    finally:
+        pool.close()  # Close the pool
+        pool.join()  # Wait for the worker to finish
     return remoteInfo
 
 
@@ -118,6 +133,7 @@ def remoteVersionNewer(localVersion: str, remoteVersion: str) -> bool | None:
 
         version_check = version.parse(remoteVersion) > version.parse(localVersion)
     if version_check is None:
+        RobustRootLogger.warning(f"Version string might be malformed, attempted 'packaging.version.parse({localVersion}) > packaging.version.parse({remoteVersion})'")
         with suppress(Exception):
             from distutils.version import LooseVersion
 

@@ -1,18 +1,17 @@
 {
-  "justMyCode": false,
   "python.analysis.inlayHints.callArgumentNames": "off",
   "python.analysis.inlayHints.functionReturnTypes": true,
   "python.analysis.inlayHints.variableTypes": false,
-  "python.analysis.typeCheckingMode": "off",
+  "python.analysis.typeCheckingMode": "basic",
   "launch": {
   //  "configurations": [],
     "compounds": [],
     "justMyCode": true,
     "debugStdLib": false,
   },
-  "debug.allowBreakpointsEverywhere": false,
+  "debug.allowBreakpointsEverywhere": true,
   "debugStdLib": true,
-  "python.analysis.enablePytestSupport": false,
+  "python.analysis.enablePytestSupport": true,
   "python.analysis.extraPaths": [
     "./Tools/BatchPatcher/src",
     "./Tools/GuiDuplicator/src",
@@ -31,7 +30,7 @@
   },
   "python.testing.autoTestDiscoverOnSaveEnabled": true,
   "python.testing.promptToConfigure": true,
-  "python.testing.pytestEnabled": false,
+  "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": true,
   "python.testing.unittestArgs": [
     "-v",
@@ -49,15 +48,6 @@
     "5678",
     "--wait-for-client"
   ],
-  "python.analysis.diagnosticSeverityOverrides": {
-    "reportGeneralTypeIssues": "warning",
-    "reportOptionalMemberAccess": "warning", // Ignores issues with defs that can optionally be None.
-    "reportCallIssue": "warning",  // doesn't handle NamedTuple correctly.
-    "reportAssignmentType": "warning",
-    "reportArgumentType": "warning",
-    "reportPrivateImportUsage": "warning",
-  },
-  "python.analysis.autoFormatStrings": true,
   "mypy.extraArguments": [
     "--exclude=./.venv",
     "--exclude=tests/results",
@@ -74,6 +64,6 @@
   ],
   "mypy.runUsingActiveInterpreter": true,
   "mypy-type-checker.preferDaemon": true,
-  "mypy-type-checker.reportingScope": "workspace",
+  "mypy-type-checker.reportingScope": "file",
   "mypy-type-checker.importStrategy": "fromEnvironment",
 }

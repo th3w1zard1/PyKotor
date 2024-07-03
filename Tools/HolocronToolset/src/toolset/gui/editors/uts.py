@@ -20,7 +20,6 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
-    from qtpy.QtCore import QObject
     from qtpy.QtGui import QCloseEvent
     from qtpy.QtWidgets import QWidget
 
@@ -32,8 +31,6 @@ class UTSEditor(Editor):
         self,
         parent: QWidget | None,
         installation: HTInstallation = None,
-        *,
-        mainwindow: QWidget | QObject | None = None,
     ):
         """Initialize the Sound Editor window.
 

@@ -10,7 +10,7 @@ from contextlib import suppress
 from contextvars import ContextVar
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -117,9 +117,11 @@ def safe_repr(
     indent_level: int = 0,
     max_depth: int = 3,
     _depth: int = 0,
+    *,
+    ignore_builtins: bool = True,
 ) -> str:
     """Safely generate a repr string for objects without a custom __repr__, with line wrapping and indentation."""
-    if is_builtin_class_instance(obj):
+    if ignore_builtins and is_builtin_class_instance(obj):
         try:
             obj_repr = repr(obj)
             # Truncate if necessary
@@ -171,7 +173,7 @@ def safe_repr(
             return representation
 
         attrs: list[str] = []
-        for attr_name in vars(obj):
+        for attr_name in cast(dict[str, Any], vars(obj)):
             attr_value = getattr(obj, attr_name)
             if not attr_name.startswith("__") and not callable(attr_value):
                 try:

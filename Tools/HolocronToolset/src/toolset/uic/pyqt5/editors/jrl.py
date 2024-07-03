@@ -65,11 +65,9 @@ class Ui_MainWindow(object):
         self.categoryPlanetSelect = ComboBox2DA(self.categoryPage)
         self.categoryPlanetSelect.setObjectName("categoryPlanetSelect")
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.categoryPlanetSelect)
-        self.categoryPlotSpin = QtWidgets.QSpinBox(self.categoryPage)
-        self.categoryPlotSpin.setMinimum(-2147483648)
-        self.categoryPlotSpin.setMaximum(2147483647)
-        self.categoryPlotSpin.setObjectName("categoryPlotSpin")
-        self.formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.categoryPlotSpin)
+        self.categoryPlotSelect = ComboBox2DA(self.categoryPage)
+        self.categoryPlotSelect.setObjectName("categoryPlotSelect")
+        self.formLayout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.categoryPlotSelect)
         self.label_4 = QtWidgets.QLabel(self.categoryPage)
         self.label_4.setObjectName("label_4")
         self.formLayout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.label_4)
@@ -193,3 +191,5 @@ class Ui_MainWindow(object):
 from toolset.gui.widgets.edit.combobox_2da import ComboBox2DA
 from toolset.gui.widgets.edit.locstring import LocalizedStringLineEdit
 from toolset.gui.widgets.edit.plaintext import HTPlainTextEdit
+
+from toolset.rcc import resources_rc_pyqt5

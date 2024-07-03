@@ -63,8 +63,8 @@ class JRLEditorTest(TestCase):
         cls.JRLEditor = JRLEditor
         from toolset.data.installation import HTInstallation
 
-        # cls.K1_INSTALLATION = HTInstallation(K1_PATH, "", tsl=False, mainWindow=None)
-        cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True, mainWindow=None)
+        # cls.K1_INSTALLATION = HTInstallation(K1_PATH, "", tsl=False)
+        cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
         self.app = QApplication([])
@@ -96,7 +96,7 @@ class JRLEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k1_installation(self):
         self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
-        for jrl_resource in (resource for resource in self.installation if resource.restype() == ResourceType.JRL):
+        for jrl_resource in (resource for resource in self.installation if resource.restype() is ResourceType.JRL):
             old = read_gff(jrl_resource.data())
             self.editor.load(jrl_resource.filepath(), jrl_resource.resname(), jrl_resource.restype(), jrl_resource.data())
 
@@ -112,7 +112,7 @@ class JRLEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k2_installation(self):
         self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
-        for jrl_resource in (resource for resource in self.installation if resource.restype() == ResourceType.JRL):
+        for jrl_resource in (resource for resource in self.installation if resource.restype() is ResourceType.JRL):
             old = read_gff(jrl_resource.data())
             self.editor.load(jrl_resource.filepath(), jrl_resource.resname(), jrl_resource.restype(), jrl_resource.data())
 

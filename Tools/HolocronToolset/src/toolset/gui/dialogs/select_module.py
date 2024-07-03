@@ -33,6 +33,7 @@ class SelectModuleDialog(QDialog):
             - Sets up filtering of module list.
         """
         super().__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.WindowMinMaxButtonsHint & ~QtCore.Qt.WindowContextHelpButtonHint)
 
         self._installation: HTInstallation = installation
 
@@ -56,6 +57,8 @@ class SelectModuleDialog(QDialog):
         self.ui.cancelButton.clicked.connect(self.reject)
         self.ui.browseButton.clicked.connect(self.browse)
         self.ui.moduleList.currentRowChanged.connect(self.onRowChanged)
+        self.ui.moduleList.doubleClicked.connect(self.confirm)
+        self.ui.moduleList.itemDoubleClicked.connect(self.confirm)
         self.ui.filterEdit.textEdited.connect(self.onFilterEdited)
 
         self._buildModuleList()

@@ -61,8 +61,8 @@ class UTWEditorTest(unittest.TestCase):
         from toolset.gui.editors.utw import UTWEditor
 
         cls.UTWEditor = UTWEditor
-        # cls.K1_INSTALLATION = HTInstallation(K1_PATH, "", tsl=False, mainWindow=None)
-        cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True, mainWindow=None)
+        # cls.K1_INSTALLATION = HTInstallation(K1_PATH, "", tsl=False)
+        cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
         self.app = QApplication([])
@@ -94,7 +94,7 @@ class UTWEditorTest(unittest.TestCase):
     )
     def test_gff_reconstruct_from_k1_installation(self):
         self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
-        for utw_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTW):
+        for utw_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTW):
             old = read_gff(utw_resource.data())
             self.editor.load(utw_resource.filepath(), utw_resource.resname(), utw_resource.restype(), utw_resource.data())
 
@@ -110,7 +110,7 @@ class UTWEditorTest(unittest.TestCase):
     )
     def test_gff_reconstruct_from_k2_installation(self):
         self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
-        for utw_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTW):
+        for utw_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTW):
             old = read_gff(utw_resource.data())
             self.editor.load(utw_resource.filepath(), utw_resource.resname(), utw_resource.restype(), utw_resource.data())
 

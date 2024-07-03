@@ -21,6 +21,7 @@ from tkinter import (
 )
 from typing import TYPE_CHECKING, Any
 
+from pykotor.resource.formats.tpc.io_tpc import TPCBinaryReader, TPCBinaryWriter
 from pykotor.resource.salvage import validate_capsule
 
 if getattr(sys, "frozen", False) is False:
@@ -131,7 +132,7 @@ class Globals:
         self.chosen_languages: list[Language] = []
         self.create_fonts: bool = False
         self.check_textures: bool = False
-        self.convert_tga: bool = False
+        self.convert_tga: Literal["TPC to TGA", "TGA to TPC", None] = None
         self.find_unused_textures: bool = False
         self.k1_convert_gffs: bool = False
         self.tsl_convert_gffs: bool = False
@@ -510,9 +511,14 @@ def patch_resource(resource: FileResource) -> GFF | TPC | None:
         write_tlk(tlk, new_file_path)
         processed_files.add(new_file_path)
 
-    if resource.restype().extension.lower() == "tga" and SCRIPT_GLOBALS.convert_tga:
+    if resource.restype().extension.lower() == "tga" and SCRIPT_GLOBALS.convert_tga == "TGA to TPC":
         log_output(f"Converting TGA at {resource._path_ident_obj} to TPC...")
         return TPCTGAReader(resource.data()).load()
+
+    if resource.restype().extension.lower() == "tpc" and SCRIPT_GLOBALS.convert_tga == "TPC to TGA":
+        log_output(f"Converting TPC at {resource._path_ident_obj} to TGA...")
+        return TPCBinaryReader(resource.data()).load()
+
 
     if resource.restype().name.upper() in {x.name for x in GFFContent}:
         if SCRIPT_GLOBALS.k1_convert_gffs and not resource.inside_capsule:
@@ -583,6 +589,7 @@ def patch_and_save_noncapsule(
     if patched_data is None:
         return
     capsule = Capsule(resource.filepath()) if resource.inside_capsule else None
+
     if isinstance(patched_data, GFF):
         new_data = bytes_gff(patched_data)
 
@@ -612,12 +619,17 @@ def patch_and_save_noncapsule(
                 patched_data.txi = txi_text
 
         new_path = (savedir or resource.filepath().parent) / resource.resname()
-        new_path = new_path.with_suffix(".tpc")
+        if SCRIPT_GLOBALS.convert_tga == "TGA to TPC":
+            new_path = new_path.with_suffix(".tpc")
+            writer = TPCBinaryWriter
+        else:
+            new_path = new_path.with_suffix(".tga")
+            writer = TPCTGAWriter
         if new_path.exists():
             log_output(f"Skipping '{new_path}', already exists on disk")
         else:
             log_output(f"Saving converted tpc to '{new_path}'")
-            TPCTGAWriter(patched_data, new_path.with_suffix(".tpc")).write()
+            writer(patched_data, new_path).write()
 
 
 def patch_capsule_file(c_file: Path):
@@ -726,7 +738,7 @@ def patch_file(file: os.PathLike | str):
 
     else:
         resname, restype = ResourceIdentifier.from_path(c_file).unpack()
-        if restype == ResourceType.INVALID:
+        if restype is ResourceType.INVALID:
             return
 
         fileres = FileResource(
@@ -1125,7 +1137,7 @@ def patch_install(install_path: os.PathLike | str):
             res_ident = ResourceIdentifier.from_path(module_name)
             filename = str(res_ident)
             filepath = k_install.path().joinpath("Modules", filename)
-            if res_ident.restype == ResourceType.RIM:
+            if res_ident.restype is ResourceType.RIM:
                 if filepath.with_suffix(".mod").safe_isfile():
                     log_output(f"Skipping {filepath}, a .mod already exists at this path.")
                     continue
@@ -1169,7 +1181,7 @@ def patch_install(install_path: os.PathLike | str):
 
     if SCRIPT_GLOBALS.is_patching():
         log_output_with_separator("Extract and patch BIF data, saving to Override (will not overwrite)")
-    for resource in k_install.chitin_resources():
+    for resource in k_install.core_resources():
         if SCRIPT_GLOBALS.fix_dialog_skipping or SCRIPT_GLOBALS.translate or SCRIPT_GLOBALS.set_unskippable:
             patch_and_save_noncapsule(resource, savedir=override_path)
         if SCRIPT_GLOBALS.check_textures and resource.restype().extension.lower() in ("mdl"):
@@ -1276,7 +1288,7 @@ def assign_to_globals(instance: KOTORPatchingToolUI):
     for attr, value in instance.__dict__.items():
         # Convert tkinter variables to their respective Python types
         if isinstance(value, tk.StringVar):
-            SCRIPT_GLOBALS[attr] = value.get()
+            SCRIPT_GLOBALS[attr] = None if value.get() == "None" or value.get() == "" else value.get()
         elif isinstance(value, tk.BooleanVar):
             SCRIPT_GLOBALS[attr] = bool(value.get())
         elif isinstance(value, tk.IntVar):
@@ -1307,7 +1319,7 @@ class KOTORPatchingToolUI:
         self.font_color = tk.StringVar()
         self.draw_bounds = tk.BooleanVar(value=False)
         self.fix_dialog_skipping = tk.BooleanVar(value=False)
-        self.convert_tga = tk.BooleanVar(value=False)
+        self.convert_tga = tk.StringVar(value="None")
         self.k1_convert_gffs = tk.BooleanVar(value=False)
         self.tsl_convert_gffs = tk.BooleanVar(value=False)
 
@@ -1402,9 +1414,11 @@ class KOTORPatchingToolUI:
         # ttk.Checkbutton(self.root, text="Yes", variable=self.fix_dialog_skipping).grid(row=row, column=1)
         # row += 1
 
-        # TGA -> TPC
-        ttk.Label(self.root, text="Convert TGAs to TPCs:").grid(row=row, column=0)
-        ttk.Checkbutton(self.root, text="Yes", variable=self.convert_tga).grid(row=row, column=1)
+        # TGA <-> TPC
+        ttk.Label(self.root, text="Convert TGAs to TPCs or TPCs to TGAs:").grid(row=row, column=0)
+        self.convert_tga_combobox = ttk.Combobox(self.root, textvariable=self.convert_tga, state="readonly")
+        self.convert_tga_combobox["values"] = ("None", "TGA to TPC", "TPC to TGA")
+        self.convert_tga_combobox.grid(row=row, column=1)
         row += 1
 
         # Translate

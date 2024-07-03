@@ -163,9 +163,11 @@ class LazyCapsule(FileResource):
             - Returns True if a match is found, False otherwise.
         """
         query = ResourceIdentifier(resref, restype)
-        return next(
-            (resource for resource in self.resources() if resource == query),
-            False,
+        return bool(
+            next(
+                (resource for resource in self.resources() if resource == query),
+                False,
+            )
         )
 
     def info(
@@ -437,6 +439,7 @@ class Capsule(LazyCapsule):
         path: os.PathLike | str,
         *,
         create_nonexisting: bool = False,
+        reload: bool = True,
     ):
         """Initialize a Capsule object.
 
@@ -460,7 +463,8 @@ class Capsule(LazyCapsule):
         """
         self._resources: list[FileResource] = []
         super().__init__(path, create_nonexisting=create_nonexisting)
-        self.reload()
+        if reload:
+            self.reload()
 
     def resources(
         self,
@@ -608,13 +612,20 @@ class Capsule(LazyCapsule):
         self._resources = super().resources()
         self._internal = False
 
+    def delete(
+        self,
+        resname: str,
+        restype: ResourceType,
+    ):
+        result = super().delete(resname, restype)
+        self.reload()
+        return result
+
     def add(
         self,
         resname: str,
         restype: ResourceType,
         resdata: bytes,
-        *,
-        reload: bool = True,
     ):
         """Adds a resource to the capsule and writes the updated capsule to the disk.
 
@@ -635,6 +646,6 @@ class Capsule(LazyCapsule):
             - Calls set_data to add the resource
             - Writes the container back to the file.
         """
-        if reload:
-            self.reload()
-        return super().add(resname, restype, resdata)
+        result = super().add(resname, restype, resdata)
+        self.reload()
+        return result

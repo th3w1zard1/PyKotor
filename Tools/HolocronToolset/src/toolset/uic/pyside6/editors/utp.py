@@ -16,12 +16,13 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QGridLayout,
-    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QMainWindow, QMenu, QMenuBar, QPlainTextEdit,
-    QPushButton, QSizePolicy, QSpacerItem, QSpinBox,
-    QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QFrame,
+    QGridLayout, QGroupBox, QHBoxLayout, QLabel,
+    QLineEdit, QMainWindow, QMenu, QMenuBar,
+    QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
+    QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 
+from toolset.gui.common.widgets.combobox import FilterComboBox
 from toolset.gui.widgets.edit.combobox_2da import ComboBox2DA
 from toolset.gui.widgets.edit.locstring import LocalizedStringLineEdit
 from toolset.gui.widgets.renderer.model import ModelRenderer
@@ -30,7 +31,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(674, 457)
+        MainWindow.resize(674, 498)
         self.actionOpen = QAction(MainWindow)
         self.actionOpen.setObjectName(u"actionOpen")
         self.actionSave = QAction(MainWindow)
@@ -183,9 +184,8 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_5 = QHBoxLayout()
         self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
-        self.conversationEdit = QLineEdit(self.groupBox)
+        self.conversationEdit = FilterComboBox(self.groupBox)
         self.conversationEdit.setObjectName(u"conversationEdit")
-        self.conversationEdit.setMaxLength(16)
 
         self.horizontalLayout_5.addWidget(self.conversationEdit)
 
@@ -275,84 +275,99 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.groupBox_17)
 
-        self.groupBox_4 = QGroupBox(self.tab_10)
-        self.groupBox_4.setObjectName(u"groupBox_4")
-        self.formLayout_3 = QFormLayout(self.groupBox_4)
+        self.frame_4 = QFrame(self.tab_10)
+        self.frame_4.setObjectName(u"frame_4")
+        self.formLayout_3 = QFormLayout(self.frame_4)
         self.formLayout_3.setObjectName(u"formLayout_3")
-        self.label_3 = QLabel(self.groupBox_4)
+        self.label_3 = QLabel(self.frame_4)
         self.label_3.setObjectName(u"label_3")
 
         self.formLayout_3.setWidget(0, QFormLayout.LabelRole, self.label_3)
 
-        self.currenHpSpin = QSpinBox(self.groupBox_4)
+        self.currenHpSpin = QSpinBox(self.frame_4)
         self.currenHpSpin.setObjectName(u"currenHpSpin")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.currenHpSpin.sizePolicy().hasHeightForWidth())
+        self.currenHpSpin.setSizePolicy(sizePolicy)
         self.currenHpSpin.setMinimum(-2147483648)
         self.currenHpSpin.setMaximum(2147483647)
 
         self.formLayout_3.setWidget(0, QFormLayout.FieldRole, self.currenHpSpin)
 
-        self.label_26 = QLabel(self.groupBox_4)
+        self.label_26 = QLabel(self.frame_4)
         self.label_26.setObjectName(u"label_26")
 
         self.formLayout_3.setWidget(1, QFormLayout.LabelRole, self.label_26)
 
-        self.label_20 = QLabel(self.groupBox_4)
-        self.label_20.setObjectName(u"label_20")
-
-        self.formLayout_3.setWidget(2, QFormLayout.LabelRole, self.label_20)
-
-        self.hardnessSpin = QSpinBox(self.groupBox_4)
-        self.hardnessSpin.setObjectName(u"hardnessSpin")
-        self.hardnessSpin.setMinimum(-2147483648)
-        self.hardnessSpin.setMaximum(2147483647)
-
-        self.formLayout_3.setWidget(2, QFormLayout.FieldRole, self.hardnessSpin)
-
-        self.label_21 = QLabel(self.groupBox_4)
-        self.label_21.setObjectName(u"label_21")
-
-        self.formLayout_3.setWidget(3, QFormLayout.LabelRole, self.label_21)
-
-        self.fortitudeSpin = QSpinBox(self.groupBox_4)
-        self.fortitudeSpin.setObjectName(u"fortitudeSpin")
-        self.fortitudeSpin.setMinimum(-2147483648)
-        self.fortitudeSpin.setMaximum(2147483647)
-
-        self.formLayout_3.setWidget(3, QFormLayout.FieldRole, self.fortitudeSpin)
-
-        self.label_24 = QLabel(self.groupBox_4)
-        self.label_24.setObjectName(u"label_24")
-
-        self.formLayout_3.setWidget(4, QFormLayout.LabelRole, self.label_24)
-
-        self.reflexSpin = QSpinBox(self.groupBox_4)
-        self.reflexSpin.setObjectName(u"reflexSpin")
-        self.reflexSpin.setMinimum(-2147483648)
-        self.reflexSpin.setMaximum(2147483647)
-
-        self.formLayout_3.setWidget(4, QFormLayout.FieldRole, self.reflexSpin)
-
-        self.label_25 = QLabel(self.groupBox_4)
-        self.label_25.setObjectName(u"label_25")
-
-        self.formLayout_3.setWidget(5, QFormLayout.LabelRole, self.label_25)
-
-        self.willSpin = QSpinBox(self.groupBox_4)
-        self.willSpin.setObjectName(u"willSpin")
-        self.willSpin.setMinimum(-2147483648)
-        self.willSpin.setMaximum(2147483647)
-
-        self.formLayout_3.setWidget(5, QFormLayout.FieldRole, self.willSpin)
-
-        self.maxHpSpin = QSpinBox(self.groupBox_4)
+        self.maxHpSpin = QSpinBox(self.frame_4)
         self.maxHpSpin.setObjectName(u"maxHpSpin")
+        sizePolicy.setHeightForWidth(self.maxHpSpin.sizePolicy().hasHeightForWidth())
+        self.maxHpSpin.setSizePolicy(sizePolicy)
         self.maxHpSpin.setMinimum(-2147483648)
         self.maxHpSpin.setMaximum(2147483647)
 
         self.formLayout_3.setWidget(1, QFormLayout.FieldRole, self.maxHpSpin)
 
+        self.label_20 = QLabel(self.frame_4)
+        self.label_20.setObjectName(u"label_20")
 
-        self.verticalLayout.addWidget(self.groupBox_4)
+        self.formLayout_3.setWidget(2, QFormLayout.LabelRole, self.label_20)
+
+        self.hardnessSpin = QSpinBox(self.frame_4)
+        self.hardnessSpin.setObjectName(u"hardnessSpin")
+        sizePolicy.setHeightForWidth(self.hardnessSpin.sizePolicy().hasHeightForWidth())
+        self.hardnessSpin.setSizePolicy(sizePolicy)
+        self.hardnessSpin.setMinimum(-2147483648)
+        self.hardnessSpin.setMaximum(2147483647)
+
+        self.formLayout_3.setWidget(2, QFormLayout.FieldRole, self.hardnessSpin)
+
+        self.label_21 = QLabel(self.frame_4)
+        self.label_21.setObjectName(u"label_21")
+
+        self.formLayout_3.setWidget(3, QFormLayout.LabelRole, self.label_21)
+
+        self.fortitudeSpin = QSpinBox(self.frame_4)
+        self.fortitudeSpin.setObjectName(u"fortitudeSpin")
+        sizePolicy.setHeightForWidth(self.fortitudeSpin.sizePolicy().hasHeightForWidth())
+        self.fortitudeSpin.setSizePolicy(sizePolicy)
+        self.fortitudeSpin.setMinimum(-2147483648)
+        self.fortitudeSpin.setMaximum(2147483647)
+
+        self.formLayout_3.setWidget(3, QFormLayout.FieldRole, self.fortitudeSpin)
+
+        self.label_24 = QLabel(self.frame_4)
+        self.label_24.setObjectName(u"label_24")
+
+        self.formLayout_3.setWidget(4, QFormLayout.LabelRole, self.label_24)
+
+        self.reflexSpin = QSpinBox(self.frame_4)
+        self.reflexSpin.setObjectName(u"reflexSpin")
+        sizePolicy.setHeightForWidth(self.reflexSpin.sizePolicy().hasHeightForWidth())
+        self.reflexSpin.setSizePolicy(sizePolicy)
+        self.reflexSpin.setMinimum(-2147483648)
+        self.reflexSpin.setMaximum(2147483647)
+
+        self.formLayout_3.setWidget(4, QFormLayout.FieldRole, self.reflexSpin)
+
+        self.label_25 = QLabel(self.frame_4)
+        self.label_25.setObjectName(u"label_25")
+
+        self.formLayout_3.setWidget(5, QFormLayout.LabelRole, self.label_25)
+
+        self.willSpin = QSpinBox(self.frame_4)
+        self.willSpin.setObjectName(u"willSpin")
+        sizePolicy.setHeightForWidth(self.willSpin.sizePolicy().hasHeightForWidth())
+        self.willSpin.setSizePolicy(sizePolicy)
+        self.willSpin.setMinimum(-2147483648)
+        self.willSpin.setMaximum(2147483647)
+
+        self.formLayout_3.setWidget(5, QFormLayout.FieldRole, self.willSpin)
+
+
+        self.verticalLayout.addWidget(self.frame_4)
 
         self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -467,9 +482,8 @@ class Ui_MainWindow(object):
 
         self.formLayout_2.setWidget(0, QFormLayout.LabelRole, self.label_5)
 
-        self.onClosedEdit = QLineEdit(self.tab_2)
+        self.onClosedEdit = FilterComboBox(self.tab_2)
         self.onClosedEdit.setObjectName(u"onClosedEdit")
-        self.onClosedEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(0, QFormLayout.FieldRole, self.onClosedEdit)
 
@@ -538,95 +552,82 @@ class Ui_MainWindow(object):
 
         self.formLayout_2.setWidget(13, QFormLayout.LabelRole, self.label_19)
 
-        self.onDamagedEdit = QLineEdit(self.tab_2)
+        self.onDamagedEdit = FilterComboBox(self.tab_2)
         self.onDamagedEdit.setObjectName(u"onDamagedEdit")
-        self.onDamagedEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(1, QFormLayout.FieldRole, self.onDamagedEdit)
 
-        self.onDeathEdit = QLineEdit(self.tab_2)
+        self.onDeathEdit = FilterComboBox(self.tab_2)
         self.onDeathEdit.setObjectName(u"onDeathEdit")
-        self.onDeathEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(2, QFormLayout.FieldRole, self.onDeathEdit)
 
-        self.onEndConversationEdit = QLineEdit(self.tab_2)
+        self.onEndConversationEdit = FilterComboBox(self.tab_2)
         self.onEndConversationEdit.setObjectName(u"onEndConversationEdit")
-        self.onEndConversationEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(3, QFormLayout.FieldRole, self.onEndConversationEdit)
 
-        self.onOpenFailedEdit = QLineEdit(self.tab_2)
+        self.onOpenFailedEdit = FilterComboBox(self.tab_2)
         self.onOpenFailedEdit.setObjectName(u"onOpenFailedEdit")
-        self.onOpenFailedEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(4, QFormLayout.FieldRole, self.onOpenFailedEdit)
 
-        self.onHeartbeatEdit = QLineEdit(self.tab_2)
+        self.onHeartbeatEdit = FilterComboBox(self.tab_2)
         self.onHeartbeatEdit.setObjectName(u"onHeartbeatEdit")
-        self.onHeartbeatEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(5, QFormLayout.FieldRole, self.onHeartbeatEdit)
 
-        self.onInventoryEdit = QLineEdit(self.tab_2)
+        self.onInventoryEdit = FilterComboBox(self.tab_2)
         self.onInventoryEdit.setObjectName(u"onInventoryEdit")
-        self.onInventoryEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(6, QFormLayout.FieldRole, self.onInventoryEdit)
 
-        self.onMeleeAttackEdit = QLineEdit(self.tab_2)
+        self.onMeleeAttackEdit = FilterComboBox(self.tab_2)
         self.onMeleeAttackEdit.setObjectName(u"onMeleeAttackEdit")
-        self.onMeleeAttackEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(7, QFormLayout.FieldRole, self.onMeleeAttackEdit)
 
-        self.onSpellEdit = QLineEdit(self.tab_2)
+        self.onSpellEdit = FilterComboBox(self.tab_2)
         self.onSpellEdit.setObjectName(u"onSpellEdit")
-        self.onSpellEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(8, QFormLayout.FieldRole, self.onSpellEdit)
 
-        self.onOpenEdit = QLineEdit(self.tab_2)
+        self.onOpenEdit = FilterComboBox(self.tab_2)
         self.onOpenEdit.setObjectName(u"onOpenEdit")
-        self.onOpenEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(9, QFormLayout.FieldRole, self.onOpenEdit)
 
-        self.onLockEdit = QLineEdit(self.tab_2)
+        self.onLockEdit = FilterComboBox(self.tab_2)
         self.onLockEdit.setObjectName(u"onLockEdit")
-        self.onLockEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(10, QFormLayout.FieldRole, self.onLockEdit)
 
-        self.onUnlockEdit = QLineEdit(self.tab_2)
+        self.onUnlockEdit = FilterComboBox(self.tab_2)
         self.onUnlockEdit.setObjectName(u"onUnlockEdit")
-        self.onUnlockEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(11, QFormLayout.FieldRole, self.onUnlockEdit)
 
-        self.onUsedEdit = QLineEdit(self.tab_2)
+        self.onUsedEdit = FilterComboBox(self.tab_2)
         self.onUsedEdit.setObjectName(u"onUsedEdit")
-        self.onUsedEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(12, QFormLayout.FieldRole, self.onUsedEdit)
 
-        self.onUserDefinedEdit = QLineEdit(self.tab_2)
+        self.onUserDefinedEdit = FilterComboBox(self.tab_2)
         self.onUserDefinedEdit.setObjectName(u"onUserDefinedEdit")
-        self.onUserDefinedEdit.setMaxLength(16)
 
         self.formLayout_2.setWidget(13, QFormLayout.FieldRole, self.onUserDefinedEdit)
 
         self.tabWidget.addTab(self.tab_2, "")
-        self.tab_3 = QWidget()
-        self.tab_3.setObjectName(u"tab_3")
-        self.gridLayout_4 = QGridLayout(self.tab_3)
+        self.commentsTab = QWidget()
+        self.commentsTab.setObjectName(u"commentsTab")
+        self.gridLayout_4 = QGridLayout(self.commentsTab)
         self.gridLayout_4.setObjectName(u"gridLayout_4")
-        self.commentsEdit = QPlainTextEdit(self.tab_3)
+        self.commentsEdit = QPlainTextEdit(self.commentsTab)
         self.commentsEdit.setObjectName(u"commentsEdit")
 
         self.gridLayout_4.addWidget(self.commentsEdit, 0, 0, 1, 1)
 
-        self.tabWidget.addTab(self.tab_3, "")
+        self.tabWidget.addTab(self.commentsTab, "")
 
         self.horizontalLayout_2.addWidget(self.tabWidget)
 
@@ -692,7 +693,6 @@ class Ui_MainWindow(object):
         self.groupBox_17.setTitle(QCoreApplication.translate("MainWindow", u"Other", None))
         self.label_41.setText(QCoreApplication.translate("MainWindow", u"Faction:", None))
         self.label_42.setText(QCoreApplication.translate("MainWindow", u"Animation State:", None))
-        self.groupBox_4.setTitle(QCoreApplication.translate("MainWindow", u"Stats", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"Current HP:", None))
         self.label_26.setText(QCoreApplication.translate("MainWindow", u"Max HP:", None))
         self.label_20.setText(QCoreApplication.translate("MainWindow", u"Hardness:", None))
@@ -725,8 +725,10 @@ class Ui_MainWindow(object):
         self.label_22.setText(QCoreApplication.translate("MainWindow", u"OnUsed:", None))
         self.label_19.setText(QCoreApplication.translate("MainWindow", u"OnUserDefined:", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), QCoreApplication.translate("MainWindow", u"Scripts", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), QCoreApplication.translate("MainWindow", u"Comments", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.commentsTab), QCoreApplication.translate("MainWindow", u"Comments", None))
         self.menuNew.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
         self.menuView.setTitle(QCoreApplication.translate("MainWindow", u"View", None))
     # retranslateUi
 
+
+from toolset.rcc import resources_rc_pyside6

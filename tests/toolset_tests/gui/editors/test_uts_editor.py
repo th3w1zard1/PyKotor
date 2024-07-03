@@ -61,8 +61,8 @@ class UTSEditorTest(TestCase):
         # Make sure to configure this environment path before testing!
         from toolset.data.installation import HTInstallation
 
-        # cls.K1_INSTALLATION = HTInstallation(K1_PATH, "", tsl=False, mainWindow=None)
-        cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True, mainWindow=None)
+        # cls.K1_INSTALLATION = HTInstallation(K1_PATH, "", tsl=False)
+        cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
         from toolset.gui.editors.uts import UTSEditor
@@ -96,7 +96,7 @@ class UTSEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k1_installation(self):
         self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
-        for uts_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTS):
+        for uts_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTS):
             old = read_gff(uts_resource.data())
             self.editor.load(uts_resource.filepath(), uts_resource.resname(), uts_resource.restype(), uts_resource.data())
 
@@ -112,7 +112,7 @@ class UTSEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k2_installation(self):
         self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
-        for uts_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTS):
+        for uts_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTS):
             old = read_gff(uts_resource.data())
             self.editor.load(uts_resource.filepath(), uts_resource.resname(), uts_resource.restype(), uts_resource.data())
 

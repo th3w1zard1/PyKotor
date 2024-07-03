@@ -425,9 +425,9 @@ class LocalizedString:
         stringref: An index into the 'dialog.tlk' file. If this value is -1 the game will use the stored substrings.
     """
 
-    def __init__(self, stringref: int):
+    def __init__(self, stringref: int, substrings: dict[int, str] | None = None):
         self.stringref: int = stringref
-        self._substrings: dict[int, str] = {}
+        self._substrings: dict[int, str] = {} if substrings is None else substrings
 
     def __iter__(self):
         """Iterates through the list of substrings. Yields a tuple containing (language, gender, text)."""
@@ -465,6 +465,18 @@ class LocalizedString:
         if other.stringref != self.stringref:
             return False
         return other._substrings == self._substrings
+
+    def to_dict(self) -> dict:
+        return {
+            "stringref": self.stringref,
+            "substrings": self._substrings
+        }
+
+    @staticmethod
+    def from_dict(data: dict) -> LocalizedString:
+        localized_string = LocalizedString(data["stringref"])
+        localized_string._substrings = data.get("substrings", {})
+        return localized_string
 
     @classmethod
     def from_invalid(cls):

@@ -34,10 +34,11 @@ class FileSearchQuery:
 
 
 class FileSearcher(QDialog):
-    fileResults = QtCore.Signal(list, HTInstallation)
+    fileResults = QtCore.Signal(list, HTInstallation)  # type: ignore[private-import]
 
     def __init__(self, parent: QWidget | None, installations: dict[str, HTInstallation]):
         super().__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowMinMaxButtonsHint & ~QtCore.Qt.WindowContextHelpButtonHint)
 
         if qtpy.API_NAME == "PySide2":
             from toolset.uic.pyside2.dialogs import search  # noqa: PLC0415  # pylint: disable=C0415
@@ -57,6 +58,32 @@ class FileSearcher(QDialog):
         self._installations: dict[str, HTInstallation] = installations
         for name, installation in installations.items():
             self.ui.installationSelect.addItem(name, installation)
+
+        # Connect the Select All checkbox signal to the slot
+        self.ui.selectAllCheck.stateChanged.connect(self.toggle_all_checkboxes)
+
+    def toggle_all_checkboxes(self, state):
+        """Toggles the state of all checkboxes based on the Select All checkbox state."""
+        check_state = state == QtCore.Qt.Checked
+        self.ui.typeARECheck.setChecked(check_state)
+        self.ui.typeGITCheck.setChecked(check_state)
+        self.ui.typeIFOCheck.setChecked(check_state)
+        self.ui.typeVISCheck.setChecked(check_state)
+        self.ui.typeLYTCheck.setChecked(check_state)
+        self.ui.typeDLGCheck.setChecked(check_state)
+        self.ui.typeJRLCheck.setChecked(check_state)
+        self.ui.typeUTCCheck.setChecked(check_state)
+        self.ui.typeUTDCheck.setChecked(check_state)
+        self.ui.typeUTECheck.setChecked(check_state)
+        self.ui.typeUTICheck.setChecked(check_state)
+        self.ui.typeUTPCheck.setChecked(check_state)
+        self.ui.typeUTMCheck.setChecked(check_state)
+        self.ui.typeUTWCheck.setChecked(check_state)
+        self.ui.typeUTSCheck.setChecked(check_state)
+        self.ui.typeUTTCheck.setChecked(check_state)
+        self.ui.type2DACheck.setChecked(check_state)
+        self.ui.typeNSSCheck.setChecked(check_state)
+        self.ui.typeNCSCheck.setChecked(check_state)
 
     def accept(self):
         """Submits search parameters and starts search.
@@ -119,7 +146,6 @@ class FileSearcher(QDialog):
         )
 
         self.search(query)
-        # super().accept()  # Uncomment to close FileSearcher instance immediately after search finishes.
 
     def search(self, query: FileSearchQuery):
         """Searches files and resources for text.
@@ -132,7 +158,7 @@ class FileSearcher(QDialog):
 
         def search_generator() -> Generator[FileResource, Any, None]:
             if query.searchCore:
-                yield from query.installation.chitin_resources()
+                yield from query.installation.core_resources()
             if query.searchModules:
                 for module in query.installation.modules_list():
                     yield from query.installation.module_resources(module)
@@ -162,7 +188,7 @@ class FileSearcher(QDialog):
 
 
 class FileResults(QDialog):
-    selectionSignal = QtCore.Signal(FileResource)
+    selectionSignal = QtCore.Signal(FileResource)  # type: ignore[private-import]
 
     def __init__(
         self,
@@ -186,6 +212,7 @@ class FileResults(QDialog):
             - Sort results alphabetically.
         """
         super().__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.WindowMinMaxButtonsHint & ~QtCore.Qt.WindowContextHelpButtonHint)
 
         if qtpy.API_NAME == "PySide2":
             from toolset.uic.pyside2.dialogs.search_result import Ui_Dialog  # noqa: PLC0415  # pylint: disable=C0415
@@ -215,9 +242,9 @@ class FileResults(QDialog):
             item = QListWidgetItem(f"{parent_name}/{filename}")
             item.setData(QtCore.Qt.ItemDataRole.UserRole, result)
             item.setToolTip(str(result.filepath()))
-            self.ui.resultList.addItem(item)
+            self.ui.resultList.addItem(item)  # type: ignore[arg-type]
 
-        self.ui.resultList.sortItems(QtCore.Qt.SortOrder.AscendingOrder)
+        self.ui.resultList.sortItems(QtCore.Qt.SortOrder.AscendingOrder)  # type: ignore[arg-type]
 
     def accept(self):
         """Accepts the current selection from the result list.
@@ -252,7 +279,7 @@ class FileResults(QDialog):
             - Gets the FileResource object from the item's data
             - Opens the resource editor window with the resource's details.
         """
-        item: QListWidgetItem | None = self.ui.resultList.currentItem()
+        item: QListWidgetItem | None = self.ui.resultList.currentItem()  # type: ignore[arg-type]
         if item is None:
             print("Nothing to open, item is None")
             return
@@ -264,5 +291,5 @@ class FileResults(QDialog):
             restype=resource.restype(),
             data=resource.data(),
             installation=self.installation,
-            parentWindow=self.window().parent(),
+            parentWindow=self.window().parent(),  # type: ignore[arg-type]
         )

@@ -1,26 +1,26 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import qtpy
 
+from qtpy import QtCore
 from qtpy.QtWidgets import QDialog
 
-from pykotor.common.language import Gender, Language
+from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.resource.formats.tlk import read_tlk, write_tlk
 from pykotor.tools.path import CaseAwarePath
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
-    from pykotor.common.language import LocalizedString
     from toolset.data.installation import HTInstallation
 
 
 class LocalizedStringDialog(QDialog):
     def __init__(self, parent: QWidget, installation: HTInstallation, locstring: LocalizedString):
         super().__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Dialog | QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowStaysOnTopHint & ~QtCore.Qt.WindowContextHelpButtonHint & ~QtCore.Qt.WindowMinMaxButtonsHint)
 
         if qtpy.API_NAME == "PySide2":
             from toolset.uic.pyside2.dialogs.locstring import Ui_Dialog  # noqa: PLC0415  # pylint: disable=C0415
@@ -35,6 +35,8 @@ class LocalizedStringDialog(QDialog):
 
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
+        self.ui.stringrefNoneButton.setToolTip("Override the TLK with a custom entry.")
+        self.ui.stringrefNewButton.setToolTip("Create a new entry in the TLK.")
         self.setWindowTitle(f"{installation.talktable().language().name.title()} - {installation.name} - Localized String Editor")
 
         self.ui.stringrefSpin.valueChanged.connect(self.stringrefChanged)
@@ -46,7 +48,7 @@ class LocalizedStringDialog(QDialog):
         self.ui.stringEdit.textChanged.connect(self.stringEdited)
 
         self._installation = installation
-        self.locstring = deepcopy(locstring)
+        self.locstring = LocalizedString.from_dict(locstring.to_dict())
         self.ui.stringrefSpin.setValue(locstring.stringref)
 
     def accept(self):

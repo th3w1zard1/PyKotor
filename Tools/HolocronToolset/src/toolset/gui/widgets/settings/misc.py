@@ -15,7 +15,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from toolset.gui.widgets.settings.base import NoScrollEventFilter
+from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.widgets.settings.installations import GlobalSettings
 
 if TYPE_CHECKING:
@@ -46,7 +46,7 @@ class MiscWidget(QWidget):
         self.setupValues()
 
         # Install the event filter on all child widgets
-        self.noScrollEventFilter: NoScrollEventFilter = NoScrollEventFilter()
+        self.noScrollEventFilter: NoScrollEventFilter = NoScrollEventFilter(self)
         self.installEventFilters(self, self.noScrollEventFilter)
 
     def installEventFilters(
@@ -70,7 +70,6 @@ class MiscWidget(QWidget):
             self.installEventFilters(widget, event_filter, include_types)
 
     def setupValues(self):
-        self.ui.alsoCheckReleaseVersion.setChecked(self.settings.alsoCheckReleaseVersion)
         self.ui.useBetaChannel.setChecked(self.settings.useBetaChannel)
         self.ui.profileToolset.setChecked(self.settings.profileToolset)
         self.ui.attemptKeepOldGFFFields.setChecked(self.settings.attemptKeepOldGFFFields)
@@ -87,7 +86,6 @@ class MiscWidget(QWidget):
         self.ui.nssCompEdit.setText(self.settings.nssCompilerPath)
 
     def save(self):
-        self.settings.alsoCheckReleaseVersion = self.ui.alsoCheckReleaseVersion.isChecked()
         self.settings.useBetaChannel = self.ui.useBetaChannel.isChecked()
         self.settings.profileToolset = self.ui.profileToolset.isChecked()
         self.settings.attemptKeepOldGFFFields = self.ui.attemptKeepOldGFFFields.isChecked()

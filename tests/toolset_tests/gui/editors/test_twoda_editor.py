@@ -62,7 +62,7 @@ class TwoDAEditorTest(TestCase):
         # Make sure to configure this environment path before testing!
         from toolset.data.installation import HTInstallation
 
-        cls.INSTALLATION = HTInstallation(K2_PATH, "", tsl=True, mainWindow=None)
+        cls.INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
         from toolset.gui.editors.twoda import TwoDAEditor
@@ -97,7 +97,7 @@ class TwoDAEditorTest(TestCase):
     )
     def test_2da_save_load_from_k1_installation(self):
         self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
-        for twoda_resource in (resource for resource in self.installation if resource.restype() == ResourceType.TwoDA):
+        for twoda_resource in (resource for resource in self.installation if resource.restype() is ResourceType.TwoDA):
             old = read_2da(twoda_resource.data())
             self.editor.load(twoda_resource.filepath(), twoda_resource.resname(), twoda_resource.restype(), twoda_resource.data())
 
@@ -113,7 +113,7 @@ class TwoDAEditorTest(TestCase):
     )
     def test_2da_save_load_from_k2_installation(self):
         self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
-        for twoda_resource in (resource for resource in self.installation if resource.restype() == ResourceType.TwoDA):
+        for twoda_resource in (resource for resource in self.installation if resource.restype() is ResourceType.TwoDA):
             old = read_2da(twoda_resource.data())
             self.editor.load(twoda_resource.filepath(), twoda_resource.resname(), twoda_resource.restype(), twoda_resource.data())
 

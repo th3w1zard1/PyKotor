@@ -16,11 +16,11 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QGridLayout,
-    QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QMainWindow, QMenu, QMenuBar, QPlainTextEdit,
-    QPushButton, QSizePolicy, QSpacerItem, QSpinBox,
-    QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QFrame,
+    QGridLayout, QGroupBox, QHBoxLayout, QLabel,
+    QLineEdit, QMainWindow, QMenu, QMenuBar,
+    QPlainTextEdit, QPushButton, QSizePolicy, QSpacerItem,
+    QSpinBox, QTabWidget, QVBoxLayout, QWidget)
 
 from toolset.gui.widgets.edit.locstring import LocalizedStringLineEdit
 
@@ -28,7 +28,12 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(414, 319)
+        MainWindow.resize(414, 335)
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
+        MainWindow.setSizePolicy(sizePolicy)
         self.actionNew = QAction(MainWindow)
         self.actionNew.setObjectName(u"actionNew")
         self.actionOpen = QAction(MainWindow)
@@ -174,36 +179,43 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_2 = QVBoxLayout()
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.groupBox_2 = QGroupBox(self.tab)
-        self.groupBox_2.setObjectName(u"groupBox_2")
-        self.formLayout_3 = QFormLayout(self.groupBox_2)
+        self.frame_2 = QFrame(self.tab)
+        self.frame_2.setObjectName(u"frame_2")
+        self.formLayout_3 = QFormLayout(self.frame_2)
         self.formLayout_3.setObjectName(u"formLayout_3")
-        self.label_3 = QLabel(self.groupBox_2)
+        self.label_3 = QLabel(self.frame_2)
         self.label_3.setObjectName(u"label_3")
 
         self.formLayout_3.setWidget(0, QFormLayout.LabelRole, self.label_3)
 
-        self.onOpenEdit = QLineEdit(self.groupBox_2)
+        self.onOpenEdit = QLineEdit(self.frame_2)
         self.onOpenEdit.setObjectName(u"onOpenEdit")
+        sizePolicy.setHeightForWidth(self.onOpenEdit.sizePolicy().hasHeightForWidth())
+        self.onOpenEdit.setSizePolicy(sizePolicy)
         self.onOpenEdit.setMaxLength(16)
 
         self.formLayout_3.setWidget(0, QFormLayout.FieldRole, self.onOpenEdit)
 
-        self.label_4 = QLabel(self.groupBox_2)
+        self.label_4 = QLabel(self.frame_2)
         self.label_4.setObjectName(u"label_4")
 
         self.formLayout_3.setWidget(1, QFormLayout.LabelRole, self.label_4)
 
-        self.storeFlagSelect = QComboBox(self.groupBox_2)
+        self.storeFlagSelect = QComboBox(self.frame_2)
         self.storeFlagSelect.addItem("")
         self.storeFlagSelect.addItem("")
         self.storeFlagSelect.addItem("")
         self.storeFlagSelect.setObjectName(u"storeFlagSelect")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Preferred)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.storeFlagSelect.sizePolicy().hasHeightForWidth())
+        self.storeFlagSelect.setSizePolicy(sizePolicy1)
 
         self.formLayout_3.setWidget(1, QFormLayout.FieldRole, self.storeFlagSelect)
 
 
-        self.verticalLayout_2.addWidget(self.groupBox_2)
+        self.verticalLayout_2.addWidget(self.frame_2, 0, Qt.AlignVCenter)
 
 
         self.horizontalLayout_2.addLayout(self.verticalLayout_2)
@@ -214,23 +226,23 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.addLayout(self.horizontalLayout_2)
 
         self.tabWidget.addTab(self.tab, "")
-        self.tab_3 = QWidget()
-        self.tab_3.setObjectName(u"tab_3")
-        self.gridLayout_2 = QGridLayout(self.tab_3)
+        self.commentsTab = QWidget()
+        self.commentsTab.setObjectName(u"commentsTab")
+        self.gridLayout_2 = QGridLayout(self.commentsTab)
         self.gridLayout_2.setObjectName(u"gridLayout_2")
-        self.commentsEdit = QPlainTextEdit(self.tab_3)
+        self.commentsEdit = QPlainTextEdit(self.commentsTab)
         self.commentsEdit.setObjectName(u"commentsEdit")
 
         self.gridLayout_2.addWidget(self.commentsEdit, 0, 0, 1, 1)
 
-        self.tabWidget.addTab(self.tab_3, "")
+        self.tabWidget.addTab(self.commentsTab, "")
 
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 414, 21))
+        self.menubar.setGeometry(QRect(0, 0, 414, 22))
         self.menuFile = QMenu(self.menubar)
         self.menuFile.setObjectName(u"menuFile")
         MainWindow.setMenuBar(self.menubar)
@@ -270,7 +282,6 @@ class Ui_MainWindow(object):
         self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Pricing", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Mark Up", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"Mark Down", None))
-        self.groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"Other", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"OnOpenStore", None))
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"Store", None))
         self.storeFlagSelect.setItemText(0, QCoreApplication.translate("MainWindow", u"Only Buy", None))
@@ -278,7 +289,9 @@ class Ui_MainWindow(object):
         self.storeFlagSelect.setItemText(2, QCoreApplication.translate("MainWindow", u"Buy and Sell", None))
 
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), QCoreApplication.translate("MainWindow", u"Basic", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), QCoreApplication.translate("MainWindow", u"Comments", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.commentsTab), QCoreApplication.translate("MainWindow", u"Comments", None))
         self.menuFile.setTitle(QCoreApplication.translate("MainWindow", u"File", None))
     # retranslateUi
 
+
+from toolset.rcc import resources_rc_pyside6

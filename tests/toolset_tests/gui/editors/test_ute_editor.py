@@ -62,7 +62,7 @@ class UTEEditorTest(TestCase):
         # Make sure to configure this environment path before testing!
         from toolset.data.installation import HTInstallation
 
-        cls.INSTALLATION = HTInstallation(K2_PATH, "", tsl=True, mainWindow=None)
+        cls.INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
         from toolset.gui.editors.ute import UTEEditor
@@ -96,7 +96,7 @@ class UTEEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k1_installation(self):
         self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
-        for ute_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTE):
+        for ute_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTE):
             old = read_gff(ute_resource.data())
             self.editor.load(ute_resource.filepath(), ute_resource.resname(), ute_resource.restype(), ute_resource.data())
 
@@ -112,7 +112,7 @@ class UTEEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k2_installation(self):
         self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
-        for ute_resource in (resource for resource in self.installation if resource.restype() == ResourceType.UTE):
+        for ute_resource in (resource for resource in self.installation if resource.restype() is ResourceType.UTE):
             old = read_gff(ute_resource.data())
             self.editor.load(ute_resource.filepath(), ute_resource.resname(), ute_resource.restype(), ute_resource.data())
 

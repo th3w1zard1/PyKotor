@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import multiprocessing
+
 from contextlib import contextmanager
 from operator import attrgetter
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, NamedTuple
@@ -17,16 +19,22 @@ from qtpy.QtGui import (
     QTextCharFormat,
     QTextFormat,
 )
-from qtpy.QtWidgets import QListWidgetItem, QMessageBox, QPlainTextEdit, QShortcut, QTextEdit, QWidget
+from qtpy.QtWidgets import QDialog, QListWidgetItem, QMessageBox, QPlainTextEdit, QShortcut, QTextEdit, QWidget
 
 from pykotor.common.scriptdefs import KOTOR_CONSTANTS, KOTOR_FUNCTIONS, TSL_CONSTANTS, TSL_FUNCTIONS
+from pykotor.common.stream import BinaryReader
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_rim_file
+from pykotor.tools.path import CaseAwarePath
+from toolset.gui.dialogs.github_selector import GitHubFileSelector
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings, NoConfigurationSetError
 from toolset.utils.script import compileScript, decompileScript
 from utility.error_handling import universal_simplify_exception
-from utility.system.path import Path
+from utility.logger_util import get_log_directory
+from utility.misc import is_debug_mode
+from utility.system.path import Path, PurePath
+from utility.updater.github import download_github_file
 
 if TYPE_CHECKING:
     import os
@@ -40,6 +48,17 @@ if TYPE_CHECKING:
 
     from pykotor.common.script import ScriptConstant, ScriptFunction
     from toolset.data.installation import HTInstallation
+
+
+def download_script(
+    url: str,
+    local_path: str,
+    script_relpath: str,
+):
+    """Downloads a file using `download_github_file` and updates the progress queue."""
+    print(f"Downloading script @ {url}")
+    print(f"Saving to {local_path}")
+    download_github_file(url, local_path, script_relpath)
 
 
 class NSSEditor(Editor):
@@ -85,6 +104,11 @@ class NSSEditor(Editor):
         self.ui.setupUi(self)
         self._setupMenus()
         self._setupSignals()
+
+        self.owner: str = "KOTORCommunityPatches"
+        self.repo: str = "Vanilla_KOTOR_Script_Source"
+        self.sourcerepo_url: str = f"https://github.com/{self.owner}/{self.repo}"
+        self.sourcerepo_forks_url: str = f"{self.sourcerepo_url}/forks"
 
         self._length: int = 0
         self._is_decompiled: bool = False
@@ -209,6 +233,20 @@ class NSSEditor(Editor):
                 self._revert = context.revert
                 self.refreshWindowTitle()
 
+    def determine_script_path(self, resref: str) -> str:
+        script_filename = f"{resref}.nss"
+        script_filename = script_filename.lower()
+        dialog = GitHubFileSelector(self.owner, self.repo, selectedFiles=[script_filename], parent=self)
+        if dialog.exec_() != QDialog.Accepted:
+            raise ValueError("No script selected.")
+
+        selected_path = dialog.getSelectedPath()
+        if not selected_path:
+            raise ValueError("No script selected.")
+        result = selected_path
+        print(f"User selected script path: {result}")
+        return result
+
     def load(
         self,
         filepath: os.PathLike | str,
@@ -234,28 +272,80 @@ class NSSEditor(Editor):
         super().load(filepath, resref, restype, data)
         self._is_decompiled = False
 
-        if restype == ResourceType.NSS:
+        if restype is ResourceType.NSS:
             self.ui.codeEdit.setPlainText(data.decode("windows-1252", errors="ignore"))
-        elif restype == ResourceType.NCS:
+        elif restype is ResourceType.NCS:
+            error_occurred = False
             try:
-                source = decompileScript(data, self._installation.path(), tsl=self._installation.tsl)
-                self.ui.codeEdit.setPlainText(source)
-                self._is_decompiled = True
+                self._handle_user_ncs(data, resref)
             except ValueError as e:
-                QMessageBox(QMessageBox.Icon.Critical, "Decompilation Failed", str(universal_simplify_exception(e))).exec_()
-                self.new()
+                error_occurred = self._handle_exc_debug_mode(
+                    "Decompilation/Download Failed", e
+                )
             except NoConfigurationSetError as e:
-                QMessageBox(QMessageBox.Icon.Critical, "Filepath is not set", str(universal_simplify_exception(e))).exec_()
-                self.new()  # minor TODO(th3w1zard1): should we destroy self here?
+                error_occurred = self._handle_exc_debug_mode("Filepath is not set", e)
+            finally:
+                if error_occurred:
+                    self.new()
+
+    def _handle_exc_debug_mode(self, arg0, e):
+        QMessageBox(
+            QMessageBox.Icon.Critical, arg0, str(universal_simplify_exception(e))
+        ).exec_()
+        if is_debug_mode():
+            raise
+        result = True
+        return result
+
+    def _handle_user_ncs(self, data: dict[str, str], resname: str) -> None:
+        box = QMessageBox(
+            QMessageBox.Icon.Question,
+            "Decompile or Download",
+            f"Would you like to decompile this script, or download it from the <a href='{self.sourcerepo_url}'>Vanilla Source Repository</a>?",
+            buttons=QMessageBox.Yes | QMessageBox.Ok | QMessageBox.Cancel,
+        )
+        box.setDefaultButton(QMessageBox.Cancel)
+        box.button(QMessageBox.Yes).setText("Decompile")
+        box.button(QMessageBox.Ok).setText("Download")
+        choice = box.exec_()
+        print(f"User chose {choice} in the decompile/download messagebox.")
+
+        if choice == QMessageBox.Yes:
+            source = decompileScript(data, self._installation.path(), tsl=self._installation.tsl)
+        elif choice == QMessageBox.Ok:
+            source = self._download_and_load_remote_script(resname)
+        else:
+            return
+        self.ui.codeEdit.setPlainText(source)
+        self._is_decompiled = True
+
+    def _download_and_load_remote_script(self, resref: str) -> str:
+        script_path: str = self.determine_script_path(resref)
+        local_path = CaseAwarePath(get_log_directory(self._global_settings.extractPath), PurePath(script_path).name)
+        print(f"Local path: {local_path}")
+
+        download_process = multiprocessing.Process(
+            target=download_script,
+            args=(f"{self.owner}/{self.repo}", str(local_path), script_path)
+        )
+        download_process.start()
+        download_process.join()
+
+        if not local_path.exists():
+            raise ValueError(f"Failed to download the script: '{local_path}' did not exist after download completed.")  # noqa: TRY301
+
+        result = BinaryReader.load_file(local_path).decode(encoding="windows-1252")
+
+        return result
 
     def build(self) -> tuple[bytes | None, bytes]:
         if self._restype is not ResourceType.NCS:
             return self.ui.codeEdit.toPlainText().encode("windows-1252"), b""
 
-        print("compiling script from nsseditor")
+        self._logger.debug(f"Compiling script '{self._resname}.{self._restype.extension}' from the NSSEditor...")
         compiled_bytes: bytes | None = compileScript(self.ui.codeEdit.toPlainText(), self._installation.path(), tsl=self._installation.tsl)
         if compiled_bytes is None:
-            print("user cancelled the compilation")
+            self._logger.debug(f"User cancelled the compilation of '{self._resname}.{self._restype.extension}'.")
             return None, b""
         return compiled_bytes, b""
 
@@ -686,9 +776,9 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         constants: list[str] = [function.name for function in (TSL_CONSTANTS if installation.tsl else TSL_CONSTANTS)]
 
         rules: list[tuple[str, int, QTextCharFormat]] = []
-        rules += [(r"\b%s\b" % w, 0, self.styles["keyword"]) for w in SyntaxHighlighter.KEYWORDS]
-        rules += [(r"\b%s\b" % w, 0, self.styles["function"]) for w in functions]
-        rules += [(r"\b%s\b" % w, 0, self.styles["constant"]) for w in constants]
+        rules += [(rf"\b{w}\b", 0, self.styles["keyword"]) for w in SyntaxHighlighter.KEYWORDS]
+        rules += [(rf"\b{w}\b", 0, self.styles["function"]) for w in functions]
+        rules += [(rf"\b{w}\b", 0, self.styles["constant"]) for w in constants]
         rules += [(o, 0, self.styles["operator"]) for o in SyntaxHighlighter.OPERATORS]
         rules += [(o, 0, self.styles["brace"]) for o in SyntaxHighlighter.BRACES]
 
