@@ -3,9 +3,9 @@ from __future__ import annotations
 import cProfile
 import os
 import pathlib
+import shutil
 import sys
 from io import StringIO
-from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
 
 import pytest
@@ -274,10 +274,19 @@ def alternate_nwscript_compare(
             with nss_path.open("rb") as f:
                 source_nss = decode_bytes_with_fallbacks(f.read())
             lines = source_nss.split("\n")
-            compare_dir = Path.cwd() / "comparisons" / unique_ncs_name
-            compare_dir.mkdir(exist_ok=True, parents=True)
-            compiler.decompile_script(unique_ncs_path, compare_dir / f"new_{ncs_path.stem}.txt", game)
-            compiler.decompile_script(original_ncs_path, compare_dir / f"original_{ncs_path.stem}.txt", game)
+            compare_dir = Path.cwd() / "comparisons" / f"{('K1' if game.is_k1() else 'TSL')}/{file_res.filepath().parent.parent.name}/{ncs_path.parent.name}"
+            try:
+                compare_dir.mkdir(exist_ok=True, parents=True)
+            except Exception as e:
+                print(f"Could not create comparison directory: {e.__class__.__name__}: {e}", file=sys.stderr)
+                print("Falling back to last known good path")
+                compare_dir = Path.cwd() / "comparisons" / unique_ncs_name
+            else:
+                try:
+                    shutil.copy(str(ncs_path), str(compare_dir))
+                    shutil.copy(str(unique_ncs_path), str(compare_dir))
+                except Exception as e:
+                    print(f"Failed to copy NCS files to '{compare_dir}' for comparison: {e.__class__.__name__}: {e}", file=sys.stderr)
             log_file(msg_info_level, filepath="bytecode_mismatches.txt")
             pytest.fail(lines[0])
 
@@ -330,8 +339,19 @@ def test_tslpatcher_nwnnsscomp(
                 pytest.xfail(lines[0])
             if "mismatch in include functions" in lines[0]:
                 pytest.xfail(lines[0])
-            compare_dir = Path.cwd() / "comparisons" / unique_ncs_name
-            compare_dir.mkdir(exist_ok=True, parents=True)
+            compare_dir = Path.cwd() / "comparisons" / f"{('K1' if game.is_k1() else 'TSL')}/{file_res.filepath().parent.parent.name}/{ncs_path.parent.name}"
+            try:
+                compare_dir.mkdir(exist_ok=True, parents=True)
+            except Exception as e:
+                print(f"Could not create comparison directory: {e.__class__.__name__}: {e}", file=sys.stderr)
+                print("Falling back to last known good path")
+                compare_dir = Path.cwd() / "comparisons" / unique_ncs_name
+            else:
+                try:
+                    shutil.copy(str(ncs_path), str(compare_dir))
+                    shutil.copy(str(unique_ncs_path), str(compare_dir))
+                except Exception as e:
+                    print(f"Failed to copy NCS files to '{compare_dir}' for comparison: {e.__class__.__name__}: {e}", file=sys.stderr)
             compiler.decompile_script(unique_ncs_path, compare_dir / f"new_{ncs_path.stem}.txt", game)
             compiler.decompile_script(original_ncs_path, compare_dir / f"original_{ncs_path.stem}.txt", game)
             log_file(msg_info_level, filepath="bytecode_mismatches.txt")
