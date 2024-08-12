@@ -19,3 +19,4 @@ pytest-html
 types-Pillow
 types-Send2Trash
 send2trash
+tornado>=6.4.1 # not directly required, pinned by Snyk to avoid a vulnerability
