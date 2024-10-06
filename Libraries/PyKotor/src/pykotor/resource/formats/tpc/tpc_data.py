@@ -13,6 +13,7 @@ from pykotor.resource.type import ResourceType
 if TYPE_CHECKING:
     from PIL import Image
     from qtpy.QtGui import QIcon, QImage
+    from typing_extensions import Literal
 
 
 class TPCGetResult(NamedTuple):
@@ -143,7 +144,7 @@ class TPC:
 
         if y_flip:
             bytes_per_pixel = 0
-            if self._texture_format == TPCTextureFormat.Greyscale:
+            if self._texture_format == TPCTextureFormat.GREYSCALE:
                 bytes_per_pixel = 1
             elif self._texture_format in {TPCTextureFormat.RGB, TPCTextureFormat.RGBA}:
                 bytes_per_pixel = 4 if self._texture_format == TPCTextureFormat.RGBA else 3
@@ -153,7 +154,7 @@ class TPC:
                 y_flip = False
 
         data: bytearray = bytearray(raw_data)
-        if convert_format == TPCTextureFormat.Greyscale:
+        if convert_format == TPCTextureFormat.GREYSCALE:
             if self._texture_format == TPCTextureFormat.DXT5:
                 rgba_data = TPC._dxt5_to_rgba(raw_data, width, height)
                 data = TPC._rgba_to_grey(rgba_data, width, height)
@@ -173,7 +174,7 @@ class TPC:
                 data = TPC._dxt1_to_rgba(raw_data, width, height)
             elif self._texture_format == TPCTextureFormat.RGB:
                 data = TPC._rgb_to_rgba(raw_data, width, height)
-            elif self._texture_format == TPCTextureFormat.Greyscale:
+            elif self._texture_format == TPCTextureFormat.GREYSCALE:
                 data = TPC._grey_to_rgba(raw_data, width, height)
 
         if convert_format == TPCTextureFormat.RGB:
@@ -183,7 +184,7 @@ class TPC:
                 data = TPC._dxt1_to_rgb(raw_data, width, height)
             elif self._texture_format == TPCTextureFormat.RGBA:
                 data = TPC._rgba_to_rgb(raw_data, width, height)
-            elif self._texture_format == TPCTextureFormat.Greyscale:
+            elif self._texture_format == TPCTextureFormat.GREYSCALE:
                 rgba_data = TPC._grey_to_rgba(raw_data, width, height)
                 data = TPC._rgba_to_rgb(rgba_data, width, height)
 
@@ -191,7 +192,7 @@ class TPC:
 
     def get_bytes_per_pixel(self):
         bytes_per_pixel = 0
-        if self._texture_format == TPCTextureFormat.Greyscale:
+        if self._texture_format == TPCTextureFormat.GREYSCALE:
             bytes_per_pixel = 1
         elif self._texture_format in {TPCTextureFormat.RGB, TPCTextureFormat.RGBA}:
             bytes_per_pixel = 4 if self._texture_format == TPCTextureFormat.RGBA else 3
@@ -562,11 +563,8 @@ class TPC:
             b = rgb_reader.read_uint8()
             rgb_reader.read_uint8()
             highest = r
-            if g > highest:
-                highest = g
-            if b > highest:
-                highest = b
-            new_data.extend([highest])
+            highest = max(r, g, b)
+            new_data.append(highest)
 
         return new_data
 
@@ -783,24 +781,27 @@ class TPC:
 
 
 class TPCTextureFormat(IntEnum):
-    Invalid = -1
-    Greyscale = 0
+    """Enum for the different texture formats."""
+    INVALID = -1
+    GREYSCALE = 0
     RGB = 1
     RGBA = 2
     DXT1 = 3
     DXT5 = 4
 
-    def bytes_per_pixel(self):
+    def bytes_per_pixel(self) -> Literal[1, 4, 3, 0]:
+        """Get the number of bytes per pixel for the texture format."""
         bytes_per_pixel = 0
-        if self == TPCTextureFormat.Greyscale:
+        if self == TPCTextureFormat.GREYSCALE:
             bytes_per_pixel = 1
         elif self in {TPCTextureFormat.RGB, TPCTextureFormat.RGBA}:
             bytes_per_pixel = 4 if self == TPCTextureFormat.RGBA else 3
         return bytes_per_pixel
 
     def to_qimage_format(self) -> QImage.Format:
+        """Convert the texture format to a QImage format."""
         from qtpy.QtGui import QImage
-        if self == TPCTextureFormat.Greyscale:
+        if self == TPCTextureFormat.GREYSCALE:
             return QImage.Format.Format_Grayscale8
         if self == TPCTextureFormat.RGB:
             return QImage.Format.Format_RGB888
@@ -809,7 +810,8 @@ class TPCTextureFormat(IntEnum):
         return QImage.Format.Format_Invalid
 
     def to_pil_mode(self) -> str:
-        if self == TPCTextureFormat.Greyscale:
+        """Convert the texture format to a PIL mode."""
+        if self == TPCTextureFormat.GREYSCALE:
             return "L"
         if self == TPCTextureFormat.RGB:
             return "RGB"

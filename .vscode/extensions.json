@@ -32,7 +32,6 @@
         "ms-azuretools.vscode-docker",
         "yardensachs.copy-python-path",
         "gnramsay.create-python-module",
-        "christian-kohler.path-intellisense",
         "github.vscode-pull-request-github",
         "ryuta46.multi-command",
         "phohale.pho-pyqt-class-generator",
@@ -42,7 +41,6 @@
         "patrick91.python-dependencies-vscode",
         "kamilturek.vscode-pyproject-toml-snippets",
         "ms-vscode-remote.remote-wsl-recommender",
-        "mefengl.vscode-i-dont-care-about-commit-message",
         "britesnow.vscode-toggle-quotes"
     ]
 }

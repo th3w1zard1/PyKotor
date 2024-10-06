@@ -41,7 +41,7 @@ def compile_ui(qt_version: str, *, ignore_timestamp: bool = False):
         "pyqt5": "pyuic5",
         "pyqt6": "pyuic6"
     }[qt_version]
-    for ui_file in Path(UI_SOURCE_DIR).safe_rglob("*.ui"):
+    for ui_file in Path(UI_SOURCE_DIR).rglob("*.ui"):
         if ui_file.is_dir():
             print(f"Skipping {ui_file}, not a file.")
             continue

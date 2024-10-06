@@ -256,11 +256,11 @@ class InventoryEditor(QDialog):
         """
         itemBuilderDialog = ItemBuilderDialog(self, self._installation, self._capsules)
         if itemBuilderDialog.exec_():
-            if self._installation.cacheCoreItems is None:
+            if self._installation.cache_core_items is None:
                 coreModel = itemBuilderDialog.coreModel
-                self._installation.cacheCoreItems = coreModel
+                self._installation.cache_core_items = coreModel
             else:
-                coreModel = self._installation.cacheCoreItems
+                coreModel = self._installation.cache_core_items
             self.ui.coreTree.setModel(coreModel.proxyModel())
 
             self.ui.modulesTree.setModel(itemBuilderDialog.modulesModel.proxyModel())
@@ -269,7 +269,7 @@ class InventoryEditor(QDialog):
             self.reject()
 
     def getItemImage(self, uti: UTI) -> QPixmap:
-        return self._installation.getItemIconFromUTI(uti)
+        return self._installation.get_item_icon_from_uti(uti)
 
     def getItem(
         self,
@@ -800,7 +800,7 @@ class ItemBuilderDialog(QDialog):  # FIXME(th3w1zard1): There is UI code used in
         self._worker.start()
 
     def utiLoaded(self, uti: UTI, result: ResourceResult):
-        baseitems = self._installation.htGetCache2DA(HTInstallation.TwoDA_BASEITEMS)
+        baseitems = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_BASEITEMS)
         name = result.resname if uti is None else self._installation.string(uti.name, result.resname)
 
         # Split category by base item:
@@ -843,7 +843,7 @@ class ItemBuilderDialog(QDialog):  # FIXME(th3w1zard1): There is UI code used in
             slots: int = -1
             droid: bool = False
         else:
-            baseitems: TwoDA = self._installation.htGetCache2DA(HTInstallation.TwoDA_BASEITEMS)
+            baseitems: TwoDA = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_BASEITEMS)
             slots = baseitems.get_row(uti.base_item).get_integer("equipableslots", 0)
             droid = baseitems.get_row(uti.base_item).get_integer("droidorhuman", 0) == 2
 
@@ -898,7 +898,7 @@ class ItemBuilderWorker(QThread):
             - Emits signals for each loaded UTI and when finished.
         """
         queries: list[ResourceIdentifier] = []
-        if self._installation.cacheCoreItems is None:
+        if self._installation.cache_core_items is None:
             queries.extend(
                 resource.identifier()
                 for resource in self._installation.core_resources() if resource.restype() is ResourceType.UTI

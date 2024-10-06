@@ -118,7 +118,7 @@ def load_kits(path: os.PathLike | str) -> list[Kit]:
 
         skyboxes_path = kits_path / file.stem / "skyboxes"
         if skyboxes_path.is_dir():
-            for skybox_resref_str in (file.stem.upper() for file in skyboxes_path.safe_iterdir() if file.suffix.lower() == ".mdl"):
+            for skybox_resref_str in (file.stem.upper() for file in skyboxes_path.iterdir() if file.suffix.lower() == ".mdl"):
                 mdl_path = skyboxes_path / f"{skybox_resref_str}.mdl"
                 mdx_path = skyboxes_path / f"{skybox_resref_str}.mdx"
                 mdl, mdx = BinaryReader.load_file(mdl_path), BinaryReader.load_file(mdx_path)

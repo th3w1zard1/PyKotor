@@ -66,9 +66,9 @@ class ModInstaller:
             - Handle legacy changes ini path syntax (changes_ini_path used to just be a filename)
             - Initialize other attributes.
         """
-        self.game_path: CaseAwarePath = CaseAwarePath.pathify(game_path)
-        self.mod_path: CaseAwarePath = CaseAwarePath.pathify(mod_path)
-        self.changes_ini_path: CaseAwarePath = CaseAwarePath.pathify(changes_ini_path)
+        self.game_path: CaseAwarePath = CaseAwarePath(game_path)
+        self.mod_path: CaseAwarePath = CaseAwarePath(mod_path)
+        self.changes_ini_path: CaseAwarePath = CaseAwarePath(changes_ini_path)
         self.tslpatchdata_path: CaseAwarePath | None = None
         self.log: PatchLogger = logger or PatchLogger()
         self.game: Game | None = Installation.determine_game(self.game_path)
@@ -477,7 +477,7 @@ class ModInstaller:
         if temp_script_folder.is_dir():
             shutil.rmtree(temp_script_folder, ignore_errors=True)
         temp_script_folder.mkdir(exist_ok=True, parents=True)
-        for file in self.mod_path.safe_iterdir():
+        for file in self.mod_path.iterdir():
             if file.suffix.lower() != ".nss" or not file.is_file():
                 continue
             shutil.copy(file, temp_script_folder)

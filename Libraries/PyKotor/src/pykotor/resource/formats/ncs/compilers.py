@@ -33,7 +33,7 @@ class InbuiltNCSCompiler(NCSCompiler):
         *,
         debug: bool = False,
     ):
-        source_filepath: Path = Path.pathify(source_path)
+        source_filepath: Path = Path(source_path)
         nss_data: bytes = BinaryReader.load_file(source_filepath)
         nss_contents: str = decode_bytes_with_fallbacks(nss_data)
         ncs: NCS = compile_nss(nss_contents, game, optimizers, library_lookup=[source_filepath.parent], debug=debug)
@@ -172,7 +172,7 @@ class ExternalNCSCompiler(NCSCompiler):
         return KnownExternalCompilers.from_sha256(self.filehash)
 
     def change_nwnnsscomp_path(self, nwnnsscomp_path: os.PathLike | str):
-        self.nwnnsscomp_path: Path = Path.pathify(nwnnsscomp_path)
+        self.nwnnsscomp_path: Path = Path(nwnnsscomp_path)
         self.filehash: str = generate_hash(self.nwnnsscomp_path, hash_algo="sha256").upper()
 
     def config(

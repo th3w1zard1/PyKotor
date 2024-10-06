@@ -35,7 +35,7 @@ def _get_size(
             - DXT1/DXT5: Compressed formats, size calculated differently
         - Return None if invalid format.
     """
-    if tpc_format is TPCTextureFormat.Greyscale:
+    if tpc_format is TPCTextureFormat.GREYSCALE:
         return width * height * 1
     if tpc_format is TPCTextureFormat.RGB:
         return width * height * 3
@@ -94,7 +94,7 @@ class TPCBinaryReader(ResourceReader):
         mipmap_count = self._reader.read_uint8()
         self._reader.skip(114)
 
-        tpc_format = TPCTextureFormat.Invalid
+        tpc_format = TPCTextureFormat.INVALID
         if compressed:
             if color_depth == 2:
                 tpc_format = TPCTextureFormat.DXT1
@@ -103,7 +103,7 @@ class TPCBinaryReader(ResourceReader):
                 tpc_format = TPCTextureFormat.DXT5
                 min_size = 16
         elif color_depth == 1:
-            tpc_format = TPCTextureFormat.Greyscale
+            tpc_format = TPCTextureFormat.GREYSCALE
             size = width * height
             min_size = 1
         elif color_depth == 2:
@@ -181,7 +181,7 @@ class TPCBinaryWriter(ResourceWriter):
         elif self._tpc.format() == TPCTextureFormat.RGB:
             encoding = 2
             size = 0
-        elif self._tpc.format() == TPCTextureFormat.Greyscale:
+        elif self._tpc.format() == TPCTextureFormat.GREYSCALE:
             encoding = 1
             size = 0
         elif self._tpc.format() == TPCTextureFormat.DXT1:

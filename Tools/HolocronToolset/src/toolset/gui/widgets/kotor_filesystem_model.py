@@ -3,21 +3,17 @@ from __future__ import annotations
 import os
 import pathlib
 import sys
+
 from abc import abstractmethod
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, TypeVar, Union, cast
 
 import qtpy
+
 from loggerplus import RobustLogger
+
 from pykotor.extract.capsule import LazyCapsule
-<<<<<<< Updated upstream
 from utility.ui_libraries.qt.filesystem.tools.icon_util import qicon_from_file_ext, qpixmap_to_qicon
-=======
-from utility.ui_libraries.qt.filesystem.icon_util import (
-    qicon_from_file_ext,
-    qpixmap_to_qicon,
-)
->>>>>>> Stashed changes
 
 if qtpy.API_NAME in ("PyQt6", "PySide6"):
     QDesktopWidget = None
@@ -74,8 +70,6 @@ if toolset_path.exists():
 
 from pathlib import Path  # noqa: E402
 
-from pykotor.extract.file import FileResource  # noqa: E402
-from pykotor.tools.misc import is_capsule_file  # noqa: E402
 from qtpy.QtCore import (  # noqa: E402, F401
     QAbstractItemModel,
     QDir,
@@ -90,6 +84,12 @@ from qtpy.QtWidgets import (  # noqa: E402
     QLineEdit,
     QPushButton,
 )
+
+from pykotor.extract.file import FileResource  # noqa: E402
+from pykotor.tools.misc import is_capsule_file  # noqa: E402
+from toolset.__main__ import main_init  # noqa: E402
+from toolset.gui.dialogs.load_from_location_result import ResourceItems  # noqa: E402
+from toolset.utils.window import open_resource_editor  # noqa: E402
 from utility.system.os_helper import get_size_on_disk  # noqa: E402
 from utility.ui_libraries.qt.widgets.itemviews.html_delegate import (  # noqa: E402
     _ICONS_DATA_ROLE,
@@ -99,17 +99,13 @@ from utility.ui_libraries.qt.widgets.itemviews.treeview import (
     RobustTreeView,  # noqa: E402
 )
 
-from toolset.__main__ import main_init  # noqa: E402
-from toolset.gui.dialogs.load_from_location_result import ResourceItems  # noqa: E402
-from toolset.utils.window import openResourceEditor  # noqa: E402
-
 if TYPE_CHECKING:
     from qtpy.QtCore import QPoint
     from qtpy.QtGui import QDragEnterEvent, QDragMoveEvent
-    from utility.ui_libraries.qt.filesystem.pyfilesystemmodel import PyFileSystemModel
 
     from toolset.data.installation import HTInstallation
     from toolset.gui.windows.main import ToolWindow
+    from utility.ui_libraries.qt.filesystem.pyfilesystemmodel import PyFileSystemModel
 
 
 class TreeItem:
@@ -121,7 +117,7 @@ class TreeItem:
         parent: DirItem | None = None,
     ):
         super().__init__()
-        self.path: Path = Path.pathify(path)
+        self.path: Path = Path(path)
         self.parent: DirItem | None = parent
 
     def row(self) -> int:
@@ -164,7 +160,7 @@ class DirItem(TreeItem):
         model.beginInsertRows(idx, 0, max(0, self.childCount() - 1))
         print(f"{self.__class__.__name__}({self.path}).load_children, row={self.row()}")
         children: list[TreeItem] = []
-        toplevel_items = list(self.path.safe_iterdir())
+        toplevel_items = list(self.path.iterdir())
         for child_path in sorted(toplevel_items):
             if child_path.is_dir():
                 item = DirItem(child_path, self)
@@ -338,7 +334,7 @@ class ResourceFileSystemWidget(QWidget):
         self.main_layout: QVBoxLayout = QVBoxLayout(self)
         self.main_layout.addLayout(self.address_layout)
         self.main_layout.addWidget(self.fsTreeView)
-        
+
         # Configure the QTreeView
         self.setup_tree_view()
 
@@ -434,7 +430,7 @@ class ResourceFileSystemWidget(QWidget):
             print("<SDM> [fileSystemModelDoubleClick scope] ToolWindow: ", mw)
             if mw is None:
                 return
-            openResourceEditor(item.path, item.resource.resname(), item.resource.restype(), item.resource.data(), installation=mw.active, parentWindow=None)
+            open_resource_editor(item.path, item.resource.resname(), item.resource.restype(), item.resource.data(), installation=mw.active, parent_window=None)
         elif isinstance(item, DirItem):
             if not item.children and isinstance(self.fsModel, (ResourceFileSystemModel, QFileSystemModel)):
                 item.loadChildren(self.fsModel)
@@ -570,13 +566,13 @@ class ResourceFileSystemWidget(QWidget):
         m = QMenu(self)
         print("<SDM> [fileSystemModelContextMenu scope] m: ", m)
 
-        m.addAction("Open").triggered.connect(lambda: [openResourceEditor(r.filepath(), r.resname(), r.restype(), r.data(), installation=active_installation) for r in resources])  # pyright: ignore[reportOptionalMemberAccess]
+        m.addAction("Open").triggered.connect(lambda: [open_resource_editor(r.filepath(), r.resname(), r.restype(), r.data(), installation=active_installation) for r in resources])  # pyright: ignore[reportOptionalMemberAccess]
 
         if all(r.restype().contents == "gff" for r in resources):
-            m.addAction("Open with GFF Editor").triggered.connect(lambda: [openResourceEditor(r.filepath(), r.resname(), r.restype(), r.data(), installation=active_installation, gff_specialized=False) for r in resources])  # pyright: ignore[reportOptionalMemberAccess]
+            m.addAction("Open with GFF Editor").triggered.connect(lambda: [open_resource_editor(r.filepath(), r.resname(), r.restype(), r.data(), installation=active_installation, gff_specialized=False) for r in resources])  # pyright: ignore[reportOptionalMemberAccess]
 
         m.addSeparator()
-        ResourceItems(resources=list(resources), viewport=lambda: self.parent()).runContextMenu(point, installation=active_installation, menu=m)
+        ResourceItems(resources=list(resources), viewport=lambda: self.parent()).run_context_menu(point, installation=active_installation, menu=m)
         print("<SDM> [fileSystemModelContextMenu scope] resources: ", resources)
         self.fsModel.resetInternalData()
 

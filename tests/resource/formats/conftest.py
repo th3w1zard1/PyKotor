@@ -77,7 +77,7 @@ def pytest_report_teststatus(report: pytest.TestReport, config: pytest.Config) -
 
 def save_profiler_output(profiler: cProfile.Profile, filepath: os.PathLike | str):
     profiler.disable()
-    profiler_output_file = Path.pathify(filepath)
+    profiler_output_file = Path(filepath)
     profiler_output_file_str = str(profiler_output_file)
     profiler.dump_stats(profiler_output_file_str)
     # Generate reports from the profile stats
@@ -96,7 +96,7 @@ def log_file(
     msg: str = buffer.getvalue()
     print(*args, **kwargs)  # noqa: T201
 
-    filepath = Path.cwd().joinpath(f"{LOG_FILENAME}.txt") if filepath is None else Path.pathify(filepath)
+    filepath = Path.cwd().joinpath(f"{LOG_FILENAME}.txt") if filepath is None else Path(filepath)
     with filepath.open(mode="a", encoding="utf-8", errors="strict") as f:
         f.write(msg)
 
@@ -294,7 +294,7 @@ def cleanup_temp_dirs():
     for temp_dir in temp_dirs:
         temp_dirpath = Path(temp_dir)
         # temp_dirpath.gain_access(recurse=True)
-        for temp_file in temp_dirpath.safe_rglob("*"):
+        for temp_file in temp_dirpath.rglob("*"):
             with suppress(Exception):
                 temp_file.unlink(missing_ok=True)
         with suppress(Exception):

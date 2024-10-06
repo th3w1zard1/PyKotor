@@ -205,7 +205,7 @@ class TPCTGAReader(ResourceReader):
 
             # Determine the appropriate texture format based on the image mode
             if img.mode == "L":
-                texture_format = TPCTextureFormat.Greyscale
+                texture_format = TPCTextureFormat.GREYSCALE
                 new_img = img.convert("L")  # Convert to Greyscale if not already
             elif img.mode == "RGB":
                 texture_format = TPCTextureFormat.RGB

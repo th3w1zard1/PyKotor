@@ -448,7 +448,7 @@ class PyFileSystemModel(QAbstractItemModel):
 
     def _handle_node_path_arg(self, path: os.PathLike | str, fetch: bool) -> PyFileSystemNode:  # noqa: FBT001, C901, PLR0911, PLR0912, PLR0915
         # sourcery skip: low-code-quality
-        pathObj = Path.pathify(path)
+        pathObj = Path(path)
         if not pathObj.parent.name or pathObj.anchor.startswith(":"):
             print("<SDM> [_handle_node_arg_str scope] path: ", path)
 

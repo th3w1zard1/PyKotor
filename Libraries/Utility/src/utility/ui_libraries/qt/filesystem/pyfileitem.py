@@ -410,7 +410,7 @@ class PyWrappedQFileInfo:
 
     def setFile(self, file: str | os.PathLike, dir: str | os.PathLike | None = None):  # noqa: A002
         """Sets the file path for this object."""
-        file_obj = Path.pathify(file)
+        file_obj = Path(file)
         if dir is None or file_obj.is_absolute():
             self._path: Path = file_obj
         else:

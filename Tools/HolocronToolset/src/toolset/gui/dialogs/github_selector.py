@@ -560,9 +560,8 @@ if __name__ == "__main__":
 
     from qtpy.QtWidgets import QApplication
 
-    from toolset.__main__ import onAppCrash
-
-    sys.excepthook = onAppCrash
+    from toolset.__main__ import on_app_crash
+    sys.excepthook = on_app_crash
 
     owner = "KOTORCommunityPatches"
     repo = "Vanilla_KOTOR_Script_Source"

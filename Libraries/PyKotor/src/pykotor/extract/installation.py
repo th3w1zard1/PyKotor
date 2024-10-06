@@ -149,7 +149,7 @@ class Installation:
         self.use_multithreading: bool = multithread  # Tested. Slower on my machine (th3w1zard1)
 
         self._log: Logger = RobustLogger()
-        self._path: CaseAwarePath = CaseAwarePath.pathify(path)
+        self._path: CaseAwarePath = CaseAwarePath(path)
 
         self._talktable: TalkTable = TalkTable(self._path / "dialog.tlk")
         self._female_talktable: TalkTable = TalkTable(self._path / "dialogf.tlk")
@@ -269,13 +269,13 @@ class Installation:
         -------
             dict[str, list[FileResource]]: A dict keyed by filename to the encapsulated resources
         """
-        r_path = Path.pathify(path)
+        r_path = Path(path)
         if not r_path.is_dir():
             self._log.info("The '%s' folder did not exist when loading the installation at '%s', skipping...", r_path.name, self._path)
             return {}
 
         self._log.info("Loading '%s' from installation...", r_path.relative_to(self._path))
-        files_iter = r_path.safe_rglob("*") if recurse else r_path.safe_iterdir()
+        files_iter = r_path.rglob("*") if recurse else r_path.iterdir()
 
         resources_dict: dict[str, list[FileResource]] = {}
 
@@ -318,16 +318,16 @@ class Installation:
         -------
             list[FileResource]: The list where resources at the path have been stored.
         """
-        r_path = Path.pathify(path)
+        r_path = Path(path)
         if not r_path.is_dir():
             self._log.info("The '%s' folder did not exist when loading the installation at '%s', skipping...", r_path.name, self._path)
             return []
 
         self._log.info("Loading %s from installation...", r_path.relative_to(self._path))
         files_iter = (
-            path.safe_rglob("*")
+            path.rglob("*")
             if recurse
-            else path.safe_iterdir()
+            else path.iterdir()
         )
 
         resources_list: list[FileResource] = []
@@ -443,7 +443,7 @@ class Installation:
                 is_k1 = True
                 RobustLogger().exception("Failed to get the game of your installation!")
             if is_k1:
-                target_dirs = [f for f in override_path.safe_rglob("*") if f.is_dir()]
+                target_dirs = [f for f in override_path.rglob("*") if f.is_dir()]
             target_dirs.append(override_path)
             self._override = {}
 
@@ -476,7 +476,7 @@ class Installation:
         self,
         file: os.PathLike | str,
     ):
-        filepath: Path = Path.pathify(file)
+        filepath: Path = Path(file)
         parent_folder = filepath.parent
         rel_folderpath: str = str(parent_folder.relative_to(self.override_path())) if parent_folder.name else "."
         if rel_folderpath not in self._override:
@@ -920,7 +920,7 @@ class Installation:
             3. Run checks and score games
             4. Return game with highest score or None if scores are equal or all checks fail
         """
-        r_path: CaseAwarePath = CaseAwarePath.pathify(path)
+        r_path: CaseAwarePath = CaseAwarePath(path)
 
         def check(x: str) -> bool:
             c_path: CaseAwarePath = r_path.joinpath(x)
@@ -1417,7 +1417,7 @@ class Installation:
 
         def check_folders(resource_folders: list[Path]):
             for folder in resource_folders:
-                for file in folder.safe_rglob("*"):
+                for file in folder.rglob("*"):
                     if not file.is_file():
                         continue
                     identifier = ResourceIdentifier.from_path(file)
@@ -1604,7 +1604,7 @@ class Installation:
             for folder in resource_folders:
                 queried_texture_files.update(
                     file
-                    for file in folder.safe_rglob("*")
+                    for file in folder.rglob("*")
                     if (
                         file.stem.casefold() in case_resnames
                         and ResourceType.from_extension(file.suffix) in texture_types
@@ -1793,7 +1793,7 @@ class Installation:
             for folder in values:  # Having two loops makes it easier to filter out irrelevant files when stepping through the 2nd
                 relevant_files.update(
                     file
-                    for file in folder.safe_rglob("*")
+                    for file in folder.rglob("*")
                     if (
                         file.suffix
                         and (
@@ -1945,7 +1945,7 @@ class Installation:
             for folder in values:
                 queried_sound_files.update(
                     file
-                    for file in folder.safe_rglob("*")
+                    for file in folder.rglob("*")
                     if (
                         file.stem.casefold() in case_resnames
                         and ResourceType.from_extension(file.suffix) in sound_formats

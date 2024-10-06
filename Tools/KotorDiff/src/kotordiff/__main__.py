@@ -258,8 +258,8 @@ def log_output_with_separator(message, *, below=True, above=False, surround=Fals
 
 
 def diff_files(file1: os.PathLike | str, file2: os.PathLike | str) -> bool | None:
-    c_file1 = Path.pathify(file1).resolve()
-    c_file2 = Path.pathify(file2).resolve()
+    c_file1 = Path(file1).resolve()
+    c_file2 = Path(file2).resolve()
     c_file1_rel: Path = relative_path_from_to(c_file2, c_file1)
     c_file2_rel: Path = relative_path_from_to(c_file1, c_file2)
     is_same_result: bool | None = True
@@ -311,14 +311,14 @@ def diff_files(file1: os.PathLike | str, file2: os.PathLike | str) -> bool | Non
 
 
 def diff_directories(dir1: os.PathLike | str, dir2: os.PathLike | str) -> bool | None:
-    c_dir1 = Path.pathify(dir1).resolve()
-    c_dir2 = Path.pathify(dir2).resolve()
+    c_dir1 = Path(dir1).resolve()
+    c_dir2 = Path(dir2).resolve()
 
     log_output_with_separator(f"Finding differences in the '{c_dir1.name}' folders...", above=True)
 
     # Store relative paths instead of just filenames
-    files_path1: set[str] = {f.relative_to(c_dir1).as_posix().lower() for f in c_dir1.safe_rglob("*") if f.is_file()}
-    files_path2: set[str] = {f.relative_to(c_dir2).as_posix().lower() for f in c_dir2.safe_rglob("*") if f.is_file()}
+    files_path1: set[str] = {f.relative_to(c_dir1).as_posix().lower() for f in c_dir1.rglob("*") if f.is_file()}
+    files_path2: set[str] = {f.relative_to(c_dir2).as_posix().lower() for f in c_dir2.rglob("*") if f.is_file()}
 
     # Merge both sets to iterate over unique relative paths
     all_files: set[str] = files_path1.union(files_path2)
@@ -333,8 +333,8 @@ def diff_directories(dir1: os.PathLike | str, dir2: os.PathLike | str) -> bool |
 
 def diff_installs(install_path1: os.PathLike | str, install_path2: os.PathLike | str) -> bool | None:
     # TODO(th3w1zard1): use pykotor.extract.installation
-    rinstall_path1: CaseAwarePath = CaseAwarePath.pathify(install_path1).resolve()
-    rinstall_path2: CaseAwarePath = CaseAwarePath.pathify(install_path2).resolve()
+    rinstall_path1: CaseAwarePath = CaseAwarePath(install_path1).resolve()
+    rinstall_path2: CaseAwarePath = CaseAwarePath(install_path2).resolve()
     log_output()
     log_output((max(len(str(rinstall_path1)) + 29, len(str(rinstall_path2)) + 30)) * "-")
     log_output("Searching first install dir:", rinstall_path1)
@@ -373,7 +373,7 @@ def diff_installs(install_path1: os.PathLike | str, install_path2: os.PathLike |
 
 
 def is_kotor_install_dir(path: os.PathLike | str) -> bool | None:
-    c_path: CaseAwarePath = CaseAwarePath.pathify(path)
+    c_path: CaseAwarePath = CaseAwarePath(path)
     return c_path.is_dir() and c_path.joinpath("chitin.key").is_file()
 
 
