@@ -1,0 +1,4611 @@
+Here are summaries of some files present in my git repository.
+Do not propose changes to these files, treat them as *read-only*.
+If you need to edit any of these files, ask me to *add them to the chat* first.
+
+Libraries\PyKotorGL\src\pykotor\gl\models\mdl.py:
+⋮...
+│class Node:
+⋮...
+
+Libraries\PyKotor\src\pykotor\common\geometry.py:
+⋮...
+│class Vector2:
+⋮...
+│class Vector3:
+⋮...
+│class Polygon2:
+│    def __init__(
+│        self,
+│        points: list[Vector2] | None = None,
+⋮...
+│    def append(
+│        self,
+│        point: Vector2,
+⋮...
+│    def index(
+│        self,
+│        point: Vector2,
+⋮...
+│class Polygon3:
+│    def __init__(
+│        self,
+│        points: list[Vector3] | None = None,
+⋮...
+│    def append(
+│        self,
+│        point: Vector3,
+⋮...
+│    def index(
+│        self,
+│        point: Vector3,
+⋮...
+
+Libraries\PyKotor\src\pykotor\common\language.py:
+⋮...
+│class LocalizedString:
+│    """Localized strings are a way of the game handling strings that need to be catered to a specif
+│
+│    This is achieved through either referencing a entry in the 'dialog.tlk' or by directly providin
+│    language.
+│
+│    Attributes:
+│    ----------
+│        stringref: An index into the 'dialog.tlk' file. If this value is -1 the game will use the s
+⋮...
+│    def get(
+│        self,
+│        language: Language,
+│        gender: Gender,
+│        *,
+│        use_fallback: bool = False,
+⋮...
+
+Libraries\PyKotor\src\pykotor\common\misc.py:
+⋮...
+│class ResRef(str):
+│    """A string reference to a game resource.
+│
+│    ResRefs are the names of resources without the extension (the file stem).
+│
+│    Used in:
+│    -------
+│        - Encapsulated Resource Files (ERF/MOD/SAV)
+│        - RIM/BIF archives
+│        - Filenames in the Override folder
+│
+⋮...
+│    def get(self) -> str:
+⋮...
+│class Color:
+⋮...
+│class WrappedInt:
+│    def __init__(
+│        self,
+│        value: int = 0,
+⋮...
+│    def get(
+│        self,
+⋮...
+
+Libraries\PyKotor\src\pykotor\common\script.py:
+⋮...
+│class DataType(Enum):
+│    VOID = "void"
+⋮...
+│    def size(self) -> int:
+⋮...
+
+Libraries\PyKotor\src\pykotor\common\stream.py:
+⋮...
+│class BinaryReader:
+│    """Provides easier reading of binary objects that abstracts uniformly to all different stream/d
+│
+⋮...
+│    def size(
+│        self,
+⋮...
+│class BinaryWriter(ABC):
+│    @abstractmethod
+⋮...
+│    @abstractmethod
+│    def size(
+│        self,
+⋮...
+│class BinaryWriterFile(BinaryWriter):
+│    def __init__(
+│        self,
+│        stream: io.BufferedIOBase | io.RawIOBase,
+│        offset: int = 0,
+⋮...
+│    def size(
+│        self,
+⋮...
+│class BinaryWriterBytearray(BinaryWriter):
+│    def __init__(
+│        self,
+│        ba: bytearray,
+│        offset: int = 0,
+⋮...
+│    def size(
+│        self,
+⋮...
+
+Libraries\PyKotor\src\pykotor\extract\file.py:
+⋮...
+│class FileResource:
+│    """Stores information for a resource regarding its name, type and where the data can be loaded 
+⋮...
+│    def size(
+│        self,
+⋮...
+
+Libraries\PyKotor\src\pykotor\extract\installation.py:
+⋮...
+│class Installation:
+│    """Installation provides a centralized location for loading resources stored in the game throug
+│
+⋮...
+│    def game(self) -> Game:
+⋮...
+│    def string(
+│        self,
+│        locstring: LocalizedString,
+│        default: str = "",
+⋮...
+
+Libraries\PyKotor\src\pykotor\extract\keywriter.py:
+⋮...
+│class KEYDataWriter(ABC):
+│    @abstractmethod
+│    def size(self) -> int:
+│        """Get the size of this data file, to write it into the KEY file.
+│
+│        Returns:
+│            The total size of this data file
+⋮...
+
+Libraries\PyKotor\src\pykotor\extract\talktable.py:
+⋮...
+│class TalkTable:  # TODO: dialogf.tlk
+│    """Talktables are for read-only loading of stringrefs stored in a dialog.tlk file.
+│
+│    Files are only opened when accessing a stored string, this means that strings are always up to 
+│    the time of access as opposed to TLK objects which may be out of date with its source file.
+⋮...
+│    def size(
+│        self,
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\bioware_archive.py:
+⋮...
+│class ArchiveResource:
+│    def __init__(
+│        self,
+│        resref: ResRef,
+│        restype: ResourceType,
+│        data: bytes,
+⋮...
+│    @property
+│    def size(self) -> int:
+⋮...
+│    @size.setter
+│    def size(self, value: int) -> None: ...
+│
+⋮...
+│class BiowareArchive(ABC):
+│    BINARY_TYPE: ClassVar[ResourceType]
+⋮...
+│    def get(
+│        self,
+│        resname: str,
+│        restype: ResourceType,
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\gff\gff_data.py:
+⋮...
+│class _GFFField:
+│    """Read-only data structure for items stored in GFFStruct."""
+│
+⋮...
+│    def value(
+│        self,
+⋮...
+│class GFFStruct:
+│    """Stores a collection of GFFFields.
+│
+│    Attributes:
+│    ----------
+│        struct_id: User defined id.
+⋮...
+│    def value(
+│        self,
+│        label: str,
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\lip\lip_data.py:
+⋮...
+│class LIP:
+│    """Represents the data of a LIP file.
+│
+│    Attributes:
+│    ----------
+│        length: The total duration of lip animation.
+│        frames: The keyframes for the lip animation.
+⋮...
+│    def get(
+│        self,
+│        index: int,
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\mdl\io_mdl.py:
+⋮...
+│class _Animation:
+│    def __init__(
+│        self,
+⋮...
+│    def size(self) -> int:
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\mdl\mdl_data.py:
+⋮...
+│class MDL:
+│    """Represents a MDL/MDX file.
+│
+│    Attributes:
+│    ----------
+│        root: The root node of the model.
+│        anims: The animations stored in the model.
+│        name: The model name.
+│        fog: If fog affects the model.
+│        supermodel: Name of another model resource to import extra data from.
+⋮...
+│    def get(
+│        self,
+│        node_name: str,
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\mdl\mdl_types.py:
+⋮...
+│@dataclass
+│class MDLData:
+│    """Represents a MDL/MDX file."""
+│
+⋮...
+│    def get(self, node_name: str) -> MDLNode | None:
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\ncs\compiler\classes.py:
+⋮...
+│class Struct:
+│    def __init__(self, identifier: Identifier, members: list[StructMember]):
+│        self.identifier: Identifier = identifier
+⋮...
+│    def size(self, root: CodeRoot) -> int:
+⋮...
+│class StructMember:
+│    def __init__(self, datatype: DynamicDataType, identifier: Identifier):
+│        self.datatype: DynamicDataType = datatype
+⋮...
+│    def size(self, root: CodeRoot) -> int:
+⋮...
+│class DynamicDataType:
+│    INT: DynamicDataType
+⋮...
+│    def size(self, root: CodeRoot) -> int:
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\ncs\compiler\interpreter.py:
+⋮...
+│class Interpreter:
+│    """This class is not used in the compiling process. This is only partially implemented, mostly 
+│
+⋮...
+│    def print(self):
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\ncs\ncs_data.py:
+⋮...
+│class NCSInstructionTypeValue(NamedTuple):
+⋮...
+│class NCS:
+│    def __init__(self):
+⋮...
+│    def print(self):
+⋮...
+│class NCSInstruction:
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\rim\rim_data.py:
+⋮...
+│class RIM(BiowareArchive):
+│    """Represents the data of a RIM file."""
+│
+⋮...
+│    def get(
+│        self,
+│        resname: str,
+│        restype: ResourceType,
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\ssf\ssf_data.py:
+⋮...
+│class SSF:
+│    """Represents the data stored in a SSF file."""
+│
+⋮...
+│    def get(
+│        self,
+│        sound: SSFSound,
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\tlk\tlk_data.py:
+⋮...
+│class TLK:
+│    BINARY_TYPE = ResourceType.TLK
+│
+⋮...
+│    def get(
+│        self,
+│        stringref: int,
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\tpc\tpc_data.py:
+⋮...
+│@dataclass
+│class TPCMipmap:
+│    """A single mipmap level in a TPC texture."""
+│
+⋮...
+│    @property
+│    def size(self) -> int:
+⋮...
+│class TPC:
+│    """BioWare's TPC texture format used in Knights of the Old Republic."""
+│
+⋮...
+│    def get(self, layer: int, mipmap: int) -> TPCMipmap:
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\formats\txi\txi_data.py:
+⋮...
+│class TXI:
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\generics\gui.py:
+⋮...
+│class GUIControl:
+│    """Base class for all GUI controls."""
+│
+⋮...
+│    @property
+│    def size(self) -> Vector2:
+⋮...
+│    @size.setter
+│    def size(self, value: Vector2):
+⋮...
+│class GUIButton(GUIControl):
+⋮...
+│class GUILabel(GUIControl):
+⋮...
+│class GUIListBox(GUIControl):
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\generics\pth.py:
+⋮...
+│class PTH:
+│    """Stores the path data for a module."""
+│
+⋮...
+│    def get(
+│        self,
+│        index: int,
+⋮...
+
+Libraries\PyKotor\src\pykotor\resource\type.py:
+⋮...
+│class ResourceType(Enum):
+⋮...
+
+Libraries\PyKotor\src\utility\common\more_collections.py:
+⋮...
+│class OrderedSet(list, MutableSet[T]):
+│    def __init__(
+│        self,
+│        iterable: Iterable[T] | None = None,
+⋮...
+│    def append(self, value: T) -> None:
+⋮...
+│class CaseInsensitiveDict(Generic[T]):
+│    """A class exactly like the builtin dict[str, Any], but provides case-insensitive key lookups.
+│
+│    The case-sensitivity of the keys themselves are always preserved.
+⋮...
+│    @overload
+│    def get(self, __key: str) -> T: ...
+│    @overload
+│    def get(self, __key: str, __default: VT = None) -> VT | T: ...
+│
+│    def get(self, __key: str, __default: VT = None) -> VT | T:  # type: ignore[assignment]
+⋮...
+
+Libraries\PyKotor\src\utility\gui\qt\callback.py:
+⋮...
+│class MessageBoxButton(IntEnum):
+│    NoButton = QMessageBox.StandardButton.NoButton  # 0
+⋮...
+│    def get(self) -> QMessageBox.StandardButton:
+⋮...
+
+Libraries\PyKotor\src\utility\gui\qt\common\filesystem\_old_qabstractitemmodel.py:
+⋮...
+│class TreeItem:
+│    def __init__(
+│        self,
+│        path: Path,
+│        parent: TreeItem | None = None,
+⋮...
+│    def data(self) -> str:
+⋮...
+│class ResourceFileSystemModel(QAbstractItemModel):
+│    COLUMN_TO_STAT_MAP: ClassVar[dict[str, str]] = {
+│        "Size": "st_size",
+│        "Mode": "st_mode",
+│        "Last Accessed": "st_atime",
+│        "Last Modified": "st_mtime",
+│        "Created": "st_ctime",
+│        "Hard Links": "st_nlink",
+│        "Last Accessed (ns)": "st_atime_ns",
+│        "Last Modified (ns)": "st_mtime_ns",
+│        "Created (ns)": "st_ctime_ns",
+⋮...
+│    def data(self, index: QModelIndex, role: int = Qt.DisplayRole) -> str | dict[str, Any] | None:
+⋮...
+│    def index(self, row: int, column: int, parent: QModelIndex | None = None) -> QModelIndex:
+⋮...
+│    def parent(self, index: QModelIndex) -> QModelIndex:
+⋮...
+
+Libraries\PyKotor\src\utility\string_util.py:
+⋮...
+│class WrappedStr(str):  # (metaclass=StrType):  # noqa: PLR0904
+│    __slots__: tuple[str, ...] = ("_content",)
+│
+⋮...
+│    def lower(self) -> Self:
+⋮...
+
+Libraries\PyKotor\src\utility\ui_libraries\qt\adapters\filesystem\pyextendedinformation.py:
+⋮...
+│from __future__ import annotations
+│
+⋮...
+│class PyQExtendedInformation(QFileInfo):
+│    Dir, File, System = range(3)
+│
+⋮...
+│    def size(self) -> int:
+⋮...
+
+Libraries\PyKotor\src\utility\ui_libraries\qt\adapters\filesystem\pyfileitem.py:
+⋮...
+│class PyFileInfo:
+│    def __init__(
+│        self,
+│        file: str | Path | PyFileInfo | QFileInfo | None = None,
+│        folder: str | Path | None = None,
+│        parent: QObject | None = None,
+⋮...
+│    def size(self) -> int:
+⋮...
+│class PyWrappedQFileInfo:
+│    def __init__(
+│        self,
+│        file: str | Path | None = None,
+│        folder: str | Path | None = None,
+⋮...
+│    def size(self) -> int:
+⋮...
+
+Libraries\PyKotor\src\utility\ui_libraries\qt\adapters\filesystem\pyfilesystemmodel.py:
+⋮...
+│class PyFileSystemModel(QAbstractItemModel):
+│    def __init__(self, parent: QObject | None = None):
+│        super().__init__(parent)
+│        self._rootDir: QDir = QDir()
+│        self._fileInfoGatherer: PyFileInfoGatherer = PyFileInfoGatherer(self)  # Use QFileInfoGathe
+│        self.__fileInfoGathererLock: QMutex = QMutex()
+│        self._delayedSortTimer: QTimer = QTimer()
+│        self._delayedSortTimer.setSingleShot(True)
+│        self._bypassFilters: dict[PyFileSystemNode, Any] = {}
+│        self._nameFilters: list[str] = []
+│        self._resolvedSymLinks: dict[Any, Any] = {}  # Dictionary for resolved symlinks
+⋮...
+│    def size(self, index: QModelIndex) -> int:
+⋮...
+
+Libraries\PyKotor\src\utility\ui_libraries\qt\adapters\filesystem\pyfilesystemnode.py:
+⋮...
+│class PyFileSystemNode:
+│    iconProvider: QFileIconProvider = QFileIconProvider()
+│
+⋮...
+│    def size(self) -> int:
+⋮...
+
+Libraries\PyKotor\src\utility\ui_libraries\qt\adapters\filesystem\relevant_qt_src\qfileinfo.cpp:
+⋮...
+│qint64 QFileInfo::size() const
+⋮...
+
+Libraries\PyKotor\src\utility\ui_libraries\qt\adapters\filesystem\relevant_qt_src\qfilesystemmodel.c
+⋮...
+│qint64 QFileSystemModel::size(const QModelIndex &index) const
+⋮...
+│QString QFileSystemModelPrivate::size(const QModelIndex &index) const
+⋮...
+│QString QFileSystemModelPrivate::size(qint64 bytes)
+⋮...
+
+Libraries\PyKotor\src\utility\ui_libraries\qt\adapters\filesystem\untested\pyfileitem.py:
+⋮...
+│class PyFileInfo:
+│    def __init__(
+│        self,
+│        file: str | Path | PyFileInfo | QFileInfo | None = None,
+│        folder: str | Path | None = None,
+│        parent: QObject | None = None,
+⋮...
+│    def size(self) -> int:
+⋮...
+│class PyWrappedQFileInfo:
+│    def __init__(
+│        self,
+│        file: str | Path | None = None,
+│        folder: str | Path | None = None,
+⋮...
+│    def size(self) -> int:
+⋮...
+
+Libraries\PyKotor\src\utility\ui_libraries\qt\adapters\filesystem\untested\pyfilesystemmodel.py:
+⋮...
+│class PyFileSystemModel(QAbstractItemModel):
+│    def __init__(self, parent: QObject | None = None):
+│        super().__init__(parent)
+│        self._rootDir: QDir = QDir()
+│        self._fileInfoGatherer: PyFileInfoGatherer = PyFileInfoGatherer(self)  # Use QFileInfoGathe
+│        self.__fileInfoGathererLock: QMutex = QMutex()
+│        self._delayedSortTimer: QTimer = QTimer()
+│        self._delayedSortTimer.setSingleShot(True)
+│        self._bypassFilters: dict[PyFileSystemNode, Any] = {}
+│        self._nameFilters: list[str] = []
+│        self._resolvedSymLinks: dict[Any, Any] = {}  # Dictionary for resolved symlinks
+⋮...
+│    def size(self, index: QModelIndex) -> int:
+⋮...
+│    def parent(self, index: QModelIndex) -> QModelIndex:
+⋮...
+
+Tools\HolocronToolset\src\toolset\data\me_controls.py:
+⋮...
+│class DCVariable:
+│    def __init__(
+│        self,
+│        name: str,
+⋮...
+│    def get(self) -> Any:
+⋮...
+│class DCVariableInt(DCVariable):
+│    def __init__(
+│        self,
+│        name: str,
+│        value: int,
+⋮...
+│    def get(self) -> int:
+⋮...
+│class DCVariableFloat(DCVariable):
+│    def __init__(
+│        self,
+│        name: str,
+│        value: float,
+⋮...
+│    def get(self) -> float:
+⋮...
+│class DCVariableBool(DCVariable):
+│    def __init__(
+│        self,
+│        name: str,
+│        value: bool,  # noqa: FBT001
+⋮...
+│    def get(self) -> bool:
+⋮...
+│class DCVariableString(DCVariable):
+│    def __init__(
+│        self,
+│        name: str,
+│        value: str,
+│        allowed: list[str],
+⋮...
+│    def get(self) -> str:
+⋮...
+
+Tools\HolocronToolset\src\toolset\gui\common\widgets\tree.py:
+⋮...
+│class TreeSettings:
+│    def __init__(
+│        self,
+│        settings_name: str = "RobustTreeView",
+⋮...
+│    def get(
+│        self,
+│        key: str,
+│        default: Any,
+⋮...
+
+Tools\HolocronToolset\src\toolset\gui\editor\file.py:
+⋮...
+│class EditorFile:
+⋮...
+
+Tools\HolocronToolset\src\toolset\gui\editors\dlg\node_editor.py:
+⋮...
+│class Node(QGraphicsRectItem):
+⋮...
+
+Tools\HolocronToolset\src\toolset\gui\editors\dlg\settings.py:
+⋮...
+│class DLGSettings:
+│    def __init__(
+│        self,
+│        settings_name: str = "RobustTreeView",
+⋮...
+│    def get(
+│        self,
+│        key: str,
+│        default: Any,
+⋮...
+
+Tools\HolocronToolset\src\toolset\gui\helpers\callback.py:
+⋮...
+│class MessageBoxButton(IntEnum):
+│    NoButton = QMessageBox.StandardButton.NoButton  # 0
+⋮...
+│    def get(self) -> QMessageBox.StandardButton:
+⋮...
+│class QtUserCommunication(UserCommunication):
+│    widget: QtWidgets.QWidget | QtWidgets.QMainWindow | None = None
+│
+⋮...
+│    def print(self, *args: str):
+⋮...
+
+Tools\HolocronToolset\src\toolset\gui\widgets\renderer\walkmesh.py:
+⋮...
+│class WalkmeshSelection(Generic[T]):
+│    def __init__(self):
+⋮...
+│    def get(self, index: int) -> T:
+⋮...
+
+engine\resource.py:
+⋮...
+│class ResourceProvider(ABC):
+│    """Base class for resource providers, mirroring reone's design."""
+│
+⋮...
+│    @abstractmethod
+│    def get(self, name: str) -> Any | None:
+⋮...
+│class ModelProvider(ResourceProvider):
+│    """Provides 3D models with animation support."""
+│
+│    def get(self, name: str) -> NodePath | None:
+⋮...
+
+engine\system\base.py:
+⋮...
+│class System(ABC):
+⋮...
+
+tests\test_pykotor\resource\formats\conftest.py:
+⋮...
+│@pytest.fixture(params=[Game.K1, Game.K2])
+│def game(request: pytest.FixtureRequest) -> Game:
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\ActionsData.java:
+⋮...
+│public class ActionsData {
+│    private ArrayList actions;
+│    private BufferedReader actionsreader;
+│
+│    public ActionsData(BufferedReader actionsreader) throws IOException {
+│        this.actionsreader = actionsreader;
+│        this.readActions();
+│    }
+│
+│    public String getAction(int index) {
+⋮...
+│    public class Action {
+│        private String name;
+│        private Type returntype;
+│        private int paramsize;
+│        private ArrayList paramlist;
+│
+│        public Action(String type, String name, String params) {
+│            this.name = name;
+│            this.returntype = Type.parseType(type);
+│            this.paramlist = new ArrayList();
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\node\AModBinaryOp.java:
+⋮...
+│public final class AModBinaryOp
+│extends PBinaryOp {
+⋮...
+│    public String toString() {
+│        return this.toString(this._mod_);
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\node\Cast.java:
+⋮...
+│public interface Cast {
+│    public Object cast(Object var1);
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\node\Node.java:
+⋮...
+│public abstract class Node
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\node\Switch.java:
+⋮...
+│public interface Switch {
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\node\TypedLinkedList.java:
+⋮...
+│public class TypedLinkedList
+│extends LinkedList {
+⋮...
+│    public void add(int index, Object element) {
+│        super.add(index, this.cast.cast(element));
+⋮...
+│    public boolean add(Object o) {
+│        return super.add(this.cast.cast(o));
+⋮...
+│    private class TypedLinkedListIterator
+│    implements ListIterator {
+⋮...
+│        public void add(Object o) {
+│            this.iterator.add(TypedLinkedList.this.cast.cast(o));
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\scriptnode\AVarRef.java:
+⋮...
+│public class AVarRef
+│extends ScriptNode
+│implements AExpression {
+⋮...
+│    public Type type() {
+│        return this.var.type();
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\scriptnode\ScriptNode.java:
+⋮...
+│public abstract class ScriptNode {
+│    private ScriptNode parent;
+│    protected String tabs;
+│    protected String newline = System.getProperty("line.separator");
+│
+│    public ScriptNode parent() {
+│        return this.parent;
+│    }
+│
+│    public void parent(ScriptNode parent) {
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\scriptnode\ScriptRootNode.java:
+⋮...
+│public abstract class ScriptRootNode
+│extends ScriptNode {
+⋮...
+│    public int size() {
+│        return this.children.size();
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\stack\LocalStack.java:
+⋮...
+│public class LocalStack
+│implements Cloneable {
+⋮...
+│    public int size() {
+│        return this.stack.size();
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\stack\LocalTypeStack.java:
+⋮...
+│public class LocalTypeStack
+│extends LocalStack {
+⋮...
+│    public Type get(int offset) {
+│        ListIterator it = this.stack.listIterator();
+│        int pos = 0;
+│        while (it.hasNext()) {
+│            Type type = (Type)it.next();
+│            if ((pos += type.size()) > offset) {
+│                return type.getElement(pos - offset + 1);
+│            }
+│            if (pos != offset) continue;
+│            return type.getElement(1);
+⋮...
+│    public Type get(int offset, SubroutineState state) {
+│        Type type;
+│        ListIterator it = this.stack.listIterator();
+│        int pos = 0;
+│        while (it.hasNext()) {
+│            type = (Type)it.next();
+│            if ((pos += type.size()) > offset) {
+│                return type.getElement(pos - offset + 1);
+│            }
+│            if (pos != offset) continue;
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\stack\LocalVarStack.java:
+⋮...
+│public class LocalVarStack
+│extends LocalStack {
+⋮...
+│    public int size() {
+│        int size = 0;
+│        ListIterator it = this.stack.listIterator();
+│        while (it.hasNext()) {
+│            size += ((StackEntry)it.next()).size();
+│        }
+│        return size;
+⋮...
+│    public StackEntry get(int offset) {
+│        ListIterator it = this.stack.listIterator();
+│        int pos = 0;
+│        while (it.hasNext()) {
+│            StackEntry entry = (StackEntry)it.next();
+│            if ((pos += entry.size()) > offset) {
+│                return entry.getElement(pos - offset + 1);
+│            }
+│            if (pos != offset) continue;
+│            return entry.getElement(1);
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\stack\StackEntry.java:
+⋮...
+│public abstract class StackEntry {
+│    protected Type type;
+│    protected int size;
+│
+│    public Type type() {
+│        return this.type;
+│    }
+│
+│    public int size() {
+│        return this.size;
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\stack\Variable.java:
+⋮...
+│public class Variable
+│extends StackEntry
+│implements Comparable {
+⋮...
+│    public void name(String prefix, byte hint) {
+│        this.name = String.valueOf(prefix) + this.type.toString() + new Byte(hint).toString();
+⋮...
+│    public void name(String infix, int hint) {
+│        this.name = String.valueOf(this.type.toString()) + infix + new Integer(hint).toString();
+⋮...
+│    public void name(String name) {
+│        this.name = name;
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\utils\StructType.java:
+⋮...
+│public class StructType
+│extends Type {
+⋮...
+│    public void print() {
+│        System.out.println("Struct has " + new Integer(this.types.size()).toString() + " entries.")
+│        if (this.alltyped) {
+│            System.out.println("They have all been typed");
+│        } else {
+│            System.out.println("They have not all been typed");
+│        }
+│        for (int i = 0; i < this.types.size(); ++i) {
+│            System.out.println("  Type: " + ((Type)this.types.get(i)).toString());
+│        }
+⋮...
+
+vendor\DeNCS\com\knights2end\nwscript\decomp\utils\Type.java:
+⋮...
+│public class Type {
+│    public static final byte VT_NONE = 0;
+│    public static final byte VT_STACK = 1;
+│    public static final byte VT_INTEGER = 3;
+│    public static final byte VT_FLOAT = 4;
+│    public static final byte VT_STRING = 5;
+│    public static final byte VT_OBJECT = 6;
+│    public static final byte VT_EFFECT = 16;
+│    public static final byte VT_EVENT = 17;
+│    public static final byte VT_LOCATION = 18;
+⋮...
+│    public int size() {
+│        return this.size;
+⋮...
+
+vendor\KotOR-Unity\Assets\Scripts\FileObjects\GFFStruct.cs:
+⋮...
+│namespace KotORVR
+│{
+│       public class GFFStruct
+⋮...
+
+vendor\KotOR-Unity\Assets\Scripts\FileObjects\Models\AuroraNode.cs:
+⋮...
+│namespace KotORVR
+│{
+│       public partial class AuroraModel
+│       {
+│               public class Node
+⋮...
+
+vendor\KotOR-Unity\Assets\Scripts\ResourceLoader\GFFLoader.cs:
+⋮...
+│namespace KotORVR {
+│       public class GFFLoader
+│       {
+│               private GFFStruct TopStruct { get; set; }
+│
+│               private const int DWORD_SIZE = 4, STRING_SIZE = 16, STRUCT_SIZE = 12;
+│
+│               private Stream file;
+│               private long structoffset, fieldoffset, labeloffset, fdoffset, fioffset, lioffset;
+│               private int structcount, fieldcount, labelcount, fdcount, ficount, licount;
+│
+⋮...
+│               private byte[] ReadBytes(long offset)
+⋮...
+
+vendor\KotOR-dotNET\AuroraParsers\ERFObject.cs:
+⋮...
+│namespace KotOR_Files.AuroraParsers
+│{
+│    class ERFObject
+│    {
+│
+⋮...
+│        private void Seek(int bytes)
+⋮...
+
+vendor\KotOR-dotNET\AuroraParsers\GFFObject.cs:
+⋮...
+│namespace KotOR_Files.AuroraParsers
+│{
+│    public class GFFObject
+│    {
+│
+⋮...
+│        private void Seek(int bytes)
+⋮...
+
+vendor\KotOR.js\src\BinaryReader.ts:
+⋮...
+│export class BinaryReader {
+│
+│  position: number = 0;
+│  buffer: Buffer;
+│  endians: Endians;
+│
+│  _value: any;
+│
+│  constructor(reader: Buffer, endians = Endians.LITTLE){
+│    //variables
+⋮...
+
+vendor\KotOR.js\src\BinaryWriter.ts:
+⋮...
+│export class BinaryWriter {
+│
+│  position: number = 0;
+│  buffer: Buffer;
+│  length: number;
+│
+│  constructor( buffer = Buffer.alloc(0) ){
+│    //variables
+│    this.position = 0;
+│    this.buffer = buffer;
+⋮...
+
+vendor\KotOR.js\src\INIConfig.ts:
+⋮...
+│export class INIConfig {
+│  ini_path: string;
+│  defaults: any;
+│  options: any = {};
+│  current_section: any;
+│  
+│  static defaultConfigs: any = {
+│    swKotOR: swKotOR.default,
+│    swKotOR2: swKotOR2.default
+│  };
+│
+⋮...
+│  getProperty(key: string) {
+│    //https://stackoverflow.com/a/20424385
+│    const parts = key.split('.');
+│    let o = this.options;
+│    if (parts.length > 1) {
+│      for (let i = 0; i < parts.length - 1; i++) {
+│          if (!o[parts[i]])
+│            o[parts[i]] = {};
+│          o = o[parts[i]];
+│      }
+⋮...
+
+vendor\KotOR.js\src\LoadingScreen.ts:
+⋮...
+│export class LoadingScreen {
+│  static main: LoadingScreen;
+│  message: string;
+│
+│  parent: HTMLElement;
+│  loader: HTMLElement;
+│  background: HTMLElement;
+│  logo_wrapper: HTMLElement;
+│  logo: HTMLImageElement;
+│  loading_container: HTMLElement;
+⋮...
+
+vendor\KotOR.js\src\actions\Action.ts:
+⋮...
+│import { ModuleObjectType } from "../enums/module/ModuleObjectType";
+⋮...
+│export class Action {
+│  
+│  static ActionQueue: typeof ActionQueue = ActionQueue;
+│
+│  type: ActionType;
+│  groupId: number = -1;
+│  owner: ModuleObject;
+│  target: ModuleObject;
+│  parameters: any[];
+│  path: any;
+⋮...
+
+vendor\KotOR.js\src\apps\forge\EditorFile.ts:
+⋮...
+│export class EditorFile extends EventListenerModel {
+│
+│  protocol: EditorFileProtocol;
+│
+│  //handle - is for file handling inside the web environment
+│  handle?: FileSystemFileHandle;
+│  handle2?: FileSystemFileHandle; //for dual file types like mdl/mdx
+│  useGameFileSystem: boolean = false;
+│  useProjectFileSystem: boolean = false;
+│  useSystemFileSystem: boolean = false;
+│
+⋮...
+
+vendor\KotOR.js\src\apps\forge\SceneGraphNode.ts:
+⋮...
+│export class SceneGraphNode extends EventListenerModel {
+│  static NODE_ID = 0;
+│  id: number = 0;
+│  uuid: string;
+│  name: string = '';
+│  icon: string = '';
+│  nodes: SceneGraphNode[] = [];
+│  onClick: (node: SceneGraphNode) => void;
+│  data: any = {};
+│  open: boolean = false;
+⋮...
+
+vendor\KotOR.js\src\apps\forge\UI3DRenderer.tsx:
+⋮...
+│export class UI3DRenderer extends EventListenerModel {
+│
+│  uuid: string;
+│
+│  sceneGraphManager: SceneGraphTreeViewManager;
+│  
+│  time: number;
+│  deltaTime: number;
+│
+│  canvas?: HTMLCanvasElement;
+⋮...
+
+vendor\KotOR.js\src\apps\forge\enum\EditorControlsTool.ts:
+│export enum EditorControlsTool {
+⋮...
+
+vendor\KotOR.js\src\apps\forge\enum\EditorFileProtocol.ts:
+⋮...
+│export enum EditorFileProtocol {
+│  FILE  = 'file:',
+│  BIF   = 'bif:',
+│  ERF   = 'erf:',
+│  MOD   = 'mod:',
+│  RIM   = 'rim:',
+│  ZIP   = 'zip:',
+│  _7ZIP = '7zip:',
+⋮...
+
+vendor\KotOR.js\src\apps\forge\enum\FileLocationType.ts:
+│export enum FileLocationType {
+⋮...
+
+vendor\KotOR.js\src\apps\forge\enum\ProjectType.ts:
+⋮...
+│export enum ProjectType {
+│  MODULE = 1,
+│  OTHER = 2
+⋮...
+
+vendor\KotOR.js\src\apps\forge\interfaces\BaseTabStateOptions.ts:
+⋮...
+│export default interface BaseTabStateOptions {
+│  editorFile?: EditorFile;
+│  enableLayoutContainers?: boolean;
+│  closeable?: boolean;
+│  singleInstance?: boolean;
+│  parentTab?: TabState
+⋮...
+
+vendor\KotOR.js\src\apps\forge\states\modal\ModalManagerState.tsx:
+⋮...
+│export class ModalManagerState extends EventListenerModel {
+│
+│  public modals: ModalState[] = [];
+│
+│  constructor(){
+│    super();
+│  }
+│
+│  getIndexOfModal(modal: ModalState): number {
+│    return this.modals.indexOf(modal);
+⋮...
+
+vendor\KotOR.js\src\apps\forge\states\modal\ModalState.tsx:
+⋮...
+│  #modalView: JSX.Element = (<></>);
+│
+│  constructor(){
+│    super();
+⋮...
+
+vendor\KotOR.js\src\apps\forge\states\tabs\TabState.tsx:
+⋮...
+│export class TabState extends EventListenerModel {
+│
+│  id: number;
+│  type: string = this.constructor.name;
+│
+│  isDestroyed: boolean;
+│  isClosable: boolean = true;
+│  singleInstance: boolean;
+│  visible: boolean;
+│
+⋮...
+
+vendor\KotOR.js\src\engine\CreatureAppearance.ts:
+⋮...
+│export class CreatureAppearance {
+│  id: number = -1;
+│  label: string = '';
+│  string_ref: number = -1;
+│  race: string = '';
+│  walkdist: number = 1.7;
+│  rundist: number = 5.4;
+│  driveanimwalk: number = 1.7;
+│  driveanimrun: number = 5.4;
+│  driveanimrun_pc: number = 5.4; //TSL
+⋮...
+
+vendor\KotOR.js\src\engine\DoorAppearance.ts:
+⋮...
+│export class DoorAppearance {
+│  id: number = -1;
+│  label: string = '';
+│  strref: number = -1;
+│  modelname: string = '';
+│  blocksight: boolean = false;
+│  visiblemodel: boolean = false;
+│  soundapptype: number = -1;
+│  name: string = '';
+│  preciseuse: boolean = false;
+⋮...
+
+vendor\KotOR.js\src\engine\ItemProperty.ts:
+⋮...
+│export class ItemProperty {
+│  template: any;
+│  item: any;
+│  propertyName: any;
+│  subType: any;
+│  costTable: any;
+│  costValue: any;
+│  upgradeType: number;
+│  param1: any;
+│  param1Value: any;
+⋮...
+│  getProperty(){
+│    const _2DA = GameState.TwoDAManager.datatables.get('itempropdef');
+│    if(_2DA){
+│      return _2DA.rows[this.propertyName];
+│    }
+⋮...
+
+vendor\KotOR.js\src\engine\PlaceableAppearance.ts:
+⋮...
+│export class PlaceableAppearance {
+│  id: number = -1;
+│  label: string = '';
+│  strref: number = -1;
+│  modelname: string = '';
+│  lightcolor: number = 0xFFFFFF;
+│  lightoffsetx: number = 0;
+│  lightoffsety: number = 0;
+│  lightoffsetz: number = 0;
+│  soundapptype: number = -1;
+⋮...
+
+vendor\KotOR.js\src\engine\VideoEffect.ts:
+⋮...
+│export class VideoEffect {
+│
+│  id: number = 0;
+│  label: string;
+│
+│  enableSaturation: boolean = false;
+│  enableScanNoise: boolean = false;
+│  enableClairVoyance: boolean = false;
+│  enableForceSight: boolean = false;
+│  enableClairVoyanceFull: boolean = false;
+⋮...
+
+vendor\KotOR.js\src\engine\pathfinding\PathPoint.ts:
+⋮...
+│export class PathPoint {
+│  id: number;
+│  connections: PathPoint[];
+│  first_connection: number;
+│  num_connections: number;
+│  vector: THREE.Vector3;
+│  isTemp: boolean = false;
+│
+│  //search state
+│  h: number = 0;
+⋮...
+
+vendor\KotOR.js\src\engine\rules\SWItemPropsDef.ts:
+⋮...
+│export class SWItemPropsDef {
+│  id: number;
+│  name: number = -1;
+│  label: string = '';
+│  subtyperesref: string = '';
+│  cost: number = 0;
+│  costtableresref: number = 0;
+│  param1resref: number = -1;
+│  gamestrref: number = -1;
+│  description: number = -1;
+│
+⋮...
+
+vendor\KotOR.js\src\enums\ApplicationEnvironment.ts:
+⋮...
+│export enum ApplicationEnvironment {
+│  BROWSER = "BROWSER",
+│  ELECTRON = "ELECTRON",
+⋮...
+
+vendor\KotOR.js\src\enums\actions\ActionStatus.ts:
+⋮...
+│export enum ActionStatus {
+│  FAILED = undefined,
+│  IN_PROGRESS = 1,
+│  COMPLETE = 2,
+│  ERROR = 3,
+│  WAITING = 4,
+⋮...
+
+vendor\KotOR.js\src\enums\audio\AudioEmitterType.ts:
+⋮...
+│export enum AudioEmitterType {
+│  GLOBAL = 0,      //Plays everywhere
+│  RANDOM = 1,      //Plays from a random position
+│  POSITIONAL = 2,  //Plays from a specific position
+⋮...
+
+vendor\KotOR.js\src\enums\audio\AudioEngineChannel.ts:
+⋮...
+│export enum AudioEngineChannel {
+│  SFX = 0,
+│  VO = 1,
+│  MUSIC = 2
+⋮...
+
+vendor\KotOR.js\src\enums\audio\AudioEngineMode.ts:
+⋮...
+│export enum AudioEngineMode {
+│  Software = 0,
+│  Hardware = 1,
+⋮...
+
+vendor\KotOR.js\src\enums\combat\WeaponSize.ts:
+⋮...
+│export enum WeaponSize {
+│  INVALID = 0,
+│  TINY = 1,
+│  SMALL = 2,
+│  MEDIUM = 3,
+│  LARGE = 4,
+│  HUGE = 5,
+⋮...
+
+vendor\KotOR.js\src\enums\combat\WeaponType.ts:
+⋮...
+│export enum WeaponType {
+│  INVALID = 0,
+│  PIERCING = 1,
+│  BLUDGEONING = 2,
+│  SLASHING = 3,
+│  SLASHING_AND_PIERCING = 4,
+│  PIERCE_AND_BLUDGEONING = 5,
+⋮...
+
+vendor\KotOR.js\src\enums\combat\WeaponWield.ts:
+⋮...
+│export enum WeaponWield {
+│  INVALID = 0,
+│  STUN_BATON = 1,
+│  ONE_HANDED_SWORD = 2,
+│  TWO_HANDED_SWORD = 3,
+│  BLASTER_PISTOL = 4,
+│  BLASTER_RIFLE = 5,
+│  BLASTER_HEAVY = 6,
+⋮...
+
+vendor\KotOR.js\src\enums\engine\AutoPauseState.ts:
+⋮...
+│export enum AutoPauseState {
+│  Generic = 0,
+│  CombatRoundEnd = 1,
+│  EnemySighted = 2,
+│  MineSighted = 3,
+│  PartyMemberKilled = 4,
+│  ActionMenuUsed = 5,
+│  NewTargetSelected = 6,
+⋮...
+
+vendor\KotOR.js\src\enums\engine\EngineMode.ts:
+⋮...
+│export enum EngineMode {
+│  LOADING   = -1,
+│  GUI       =  0,
+│  INGAME    =  1,
+│  MINIGAME  =  2,
+│  DIALOG    =  3,
+│  FREELOOK  =  4,
+│  MOVIE     =  5,
+⋮...
+
+vendor\KotOR.js\src\enums\engine\FadeOverlayState.ts:
+⋮...
+│export enum FadeOverlayState {
+│  NONE = 0,
+│  FADING_IN = 1,
+│  FADING_OUT = 2,
+│  FADED_IN = 3,
+│  FADED_OUT = 4
+⋮...
+
+vendor\KotOR.js\src\enums\engine\FeedbackOption.ts:
+⋮...
+│export enum FeedbackOption {
+│  HideUnequippable = 0,
+│  TutorialPopups = 1,
+│  Subtitles = 2,
+│  MiniMap = 3,
+│  FloatingNumbers = 4,
+│  StatusSummary = 5,
+│  HideQuickMenuButtons = 6,
+│  EnableToolTips = 7,
+⋮...
+
+vendor\KotOR.js\src\enums\engine\GameEngineType.ts:
+⋮...
+│export enum GameEngineType {
+│  KOTOR = "KOTOR",
+│  TSL = "TSL",
+⋮...
+
+vendor\KotOR.js\src\enums\engine\TextSprite3DType.ts:
+⋮...
+│export enum TextSprite3DType {
+│  NEUTRAL = 0,
+│  HOSTILE = 1,
+│  FRIENDLY = 2,
+│  INFORMATION = 3,
+⋮...
+
+vendor\KotOR.js\src\enums\graphics\tpc\PixelFormat.ts:
+⋮...
+│export enum PixelFormat {
+│  R8G8B8 = 1,
+│  B8G8R8 = 2,
+│  R8G8B8A8 = 3,
+│  B8G8R8A8 = 4,
+│  A1R5G5B5 = 5,
+│  R5G6B5 = 6,
+│  Depth16 = 7,
+│  DXT1 = 8,
+│  DXT3 = 9,
+⋮...
+
+vendor\KotOR.js\src\enums\graphics\txi\TXIBlending.ts:
+⋮...
+│export enum TXIBlending {
+│  'NONE'= 0,
+│  'ADDITIVE'= 1,
+│  'PUNCHTHROUGH'= 2
+⋮...
+
+vendor\KotOR.js\src\enums\graphics\txi\TXIPROCEDURETYPE.ts:
+⋮...
+│export enum TXIPROCEDURETYPE {
+│  'NONE'= 0,
+│  'CYCLE'= 1,
+│  'WATER'= 2,
+│  'RANDOM'= 3,
+│  'RINGTEXDISTORT'= 4
+⋮...
+
+vendor\KotOR.js\src\enums\graphics\txi\TXITexType.ts:
+⋮...
+│export enum TXITexType {
+│  'DIFFUSE'= 0,
+│  'BUMPMAP'= 1,
+│  'NORMALMAP'= 2,
+│  'ENVMAP'= 3,
+│  'LIGHTMAP'= 4
+⋮...
+
+vendor\KotOR.js\src\enums\gui\Anchor.ts:
+⋮...
+│export enum Anchor {
+│  None = "none",
+│  BottomLeft = "bl",
+│  BottomCenter = "bc",
+│  BottomRight = "br",
+│  TopLeft = "tl",
+│  TopCenter = "tc",
+│  TopRight = "tr",
+│  User = "user"
+⋮...
+
+vendor\KotOR.js\src\enums\gui\GUIControlAlignment.ts:
+⋮...
+│export enum GUIControlAlignment {
+│  //Horizontal
+│  HorizontalLeft =   0x01,
+│  HorizontalCenter = 0x02,
+│  HorizontalRight =  0x04,
+│  HorizontalMask =   0x07,
+│
+│  //Vertical
+│  VerticalTop =      0x08,
+│  VerticalCenter =   0x10,
+⋮...
+
+vendor\KotOR.js\src\enums\gui\MenuContainerMode.ts:
+⋮...
+│export enum MenuContainerMode {
+│  TAKE_ITEMS = 0,
+│  GIVE_ITEMS = 1,
+⋮...
+
+vendor\KotOR.js\src\enums\loaders\TextureType.ts:
+⋮...
+│export enum TextureType {
+│  TEXTURE = 0,
+│  LIGHTMAP = 1,
+│  PARTICLE = 2
+⋮...
+
+vendor\KotOR.js\src\enums\module\ModuleCreatureAnimState.ts:
+⋮...
+│export enum ModuleCreatureAnimState {
+│  IDLE = 10000,
+│  ANIMATING = 4,
+│  //CREATURE
+│  PAUSE = 10000,
+│
+│
+│  //READY - depends on equipped weapons
+│  //1=92,2=133,3=174,4=215,5=223,6=237,7=245,8=249,9=245
+│  READY = 10001,
+│
+⋮...
+
+vendor\KotOR.js\src\enums\module\ModuleDoorAnimState.ts:
+⋮...
+│export enum ModuleDoorAnimState {
+│  DAMAGE    = 10014, // 328 - damage
+│  CLOSED    = 10022, // 333 - closed
+│  OPENED1   = 10050, // 331 - opened1
+│  OPENED2   = 10051, // 332 - opened2
+│  OPENING1  = 10052, // 334 - opening1
+│  OPENING2  = 10053, // 335 - opening2
+│  CLOSING1  = 10054, // 336 - closing1
+│  CLOSING2  = 10055, // 337 - closing2
+│  DEFAULT   = 10072, // 327 - default
+⋮...
+
+vendor\KotOR.js\src\enums\module\WeatherCondition.ts:
+⋮...
+│export enum WeatherCondition {
+│  CLEAR = 0,
+│  RAIN = 1,
+│  SNOW = 2
+⋮...
+
+vendor\KotOR.js\src\enums\odyssey\OdysseyModelClass.ts:
+⋮...
+│export enum OdysseyModelClass {
+│  OTHER       = 0x00,
+│  EFFECT      = 0x01,
+│  TILE        = 0x02,
+│  CREATURE    = 0x04,
+│  DOOR        = 0x08,
+│  LIGHTSABER  = 0x10,
+│  PLACEABLE   = 0x20,
+│  FLYER       = 0x40,
+⋮...
+
+vendor\KotOR.js\src\enums\odyssey\OdysseyModelControllerType.ts:
+⋮...
+│export enum OdysseyModelControllerType {
+│  //Node
+│  Position             =   8,
+│  Orientation          =  20,
+│  Scale                =  36,
+│
+│  //Mesh
+│  SelfIllumColor       = 100,
+│  Alpha                = 132,
+│
+⋮...
+
+vendor\KotOR.js\src\enums\odyssey\OdysseyModelEngine.ts:
+⋮...
+│export enum OdysseyModelEngine {
+│  K1      = 0x0001,
+│  K2      = 0x0002,
+│  K1_XBOX = 0x0004,
+│  K2_XBOX = 0x0008
+⋮...
+
+vendor\KotOR.js\src\enums\resource\Endians.ts:
+⋮...
+│export enum Endians {
+│  LITTLE = 0,
+│  BIG = 1
+⋮...
+
+vendor\KotOR.js\src\enums\resource\SSFType.ts:
+⋮...
+│export enum SSFType {
+│  BATTLE_CRY_1 = 0,
+│  BATTLE_CRY_2 = 1,
+│  BATTLE_CRY_3 = 2,
+│  BATTLE_CRY_4 = 3,
+│  BATTLE_CRY_5 = 4,
+│  BATTLE_CRY_6 = 5,
+│  SELECT_1 = 6,
+│  SELECT_2 = 7,
+│  SELECT_3 = 8,
+⋮...
+
+vendor\KotOR.js\src\gui\GUIButton.ts:
+⋮...
+│export class GUIButton extends GUIControl {
+│  
+│  constructor(menu: GameMenu, control: GFFStruct, parent: GUIControl, scale: boolean = false){
+│    super(menu, control, parent, scale);
+│    this.objectType |= GUIControlTypeMask.GUIButton;
+│    //this.widget.position.z = -2; 
+│  }
+│
+│  onHoverIn(){
+│    super.onHoverIn();
+⋮...
+
+vendor\KotOR.js\src\gui\GUIControl.ts:
+⋮...
+│export class GUIControl {
+│  objectType: number = GUIControlTypeMask.GUIControl;
+│  position: THREE.Vector3 = new THREE.Vector3();
+│  list: GUIListBox;
+│  isProtoItem: boolean;
+│  node: any;
+│  visible: boolean = true;
+│  calculateBox() {
+│    return;
+│  }
+│  
+⋮...
+
+vendor\KotOR.js\src\gui\GUIControlEvent.ts:
+⋮...
+│export class GUIControlEvent {
+│  propagate: boolean = true;
+│  data: any[] = [];
+│  
+│  constructor(){}
+│
+│  stopPropagation(){
+│    this.propagate = false;
+│  }
+⋮...
+
+vendor\KotOR.js\src\gui\GUILabel.ts:
+⋮...
+│export class GUILabel extends GUIControl {
+│  
+│  constructor(menu: GameMenu, control: GFFStruct, parent: GUIControl, scale: boolean = false){
+│    super(menu, control, parent, scale);
+│    this.objectType |= GUIControlTypeMask.GUILabel;
+│
+│    this.onKeyDown = (e: any) => {
+│      // e.stopPropagation();
+│      // console.log('onKeyDown', e);
+│
+⋮...
+
+vendor\KotOR.js\src\gui\GUIListBox.ts:
+⋮...
+│export class GUIListBox extends GUIControl {
+│  listItems: any[];
+│  lastHeight: number;
+│  scroll: number;
+│  maxScroll: number;
+│  GUIProtoItemClass: typeof GUIProtoItem;
+│  onSelected: Function;
+│  hasProtoItem: boolean;
+│  protoItem: GUIControl;
+│  hasScrollBar: boolean;
+⋮...
+
+vendor\KotOR.js\src\gui\GameMenu.ts:
+⋮...
+│export class GameMenu {
+│  gui_resref: string;
+│  menuGFF: GFFObject;
+│  manager: typeof MenuManager;
+│  factory: typeof GUIControlFactory = GUIControlFactory;
+│
+│  //This is for MenuTop
+│  childMenu: GameMenu = undefined;
+│
+│  tGuiPanel: GUIControl;
+⋮...
+
+vendor\KotOR.js\src\index.d.ts:
+⋮...
+│interface ElectronContextBridge {
+│  isMac: () => boolean;
+│  minimize: (profile?: any) => Promise<any>;
+│  maximize: (profile?: any) => Promise<any>;
+│  locate_game_directory: (profile: any) => Promise<string>;
+│  launchProfile: (profile: any) => Promise<any>;
+⋮...
+│interface DialogContextBridge extends Electron.Dialog {
+│  locateDirectoryDialog: (profile?: any) => Promise<string>
+⋮...
+│declare global {
+│  interface String {
+│    titleCase() : string;
+│    equalsIgnoreCase(value: string): boolean;
+│  }
+⋮...
+
+vendor\KotOR.js\src\interface\filesystem\IGameFileSystemReadDirOptions.ts:
+⋮...
+│export interface IGameFileSystemReadDirOptions {
+│  recursive?: boolean,
+│  list_dirs?: boolean;
+⋮...
+
+vendor\KotOR.js\src\interface\gui\IGUIControlColors.ts:
+⋮...
+│export interface IGUIControlColors {
+│    BORDER: THREE.Color;
+│    BORDER_HOVER: THREE.Color;
+│
+│    BORDER_HIGHLIGHT: THREE.Color;
+│    BORDER_HIGHLIGHT_HOVER: THREE.Color;
+│
+│    TEXT: THREE.Color;
+│    TEXT_HIGHLIGHT: THREE.Color;
+⋮...
+
+vendor\KotOR.js\src\interface\odyssey\IOdysseyArrayDefinition.ts:
+⋮...
+│export interface IOdysseyArrayDefinition {
+│  offset: number;
+│  count: number;
+│  count2: number;
+⋮...
+
+vendor\KotOR.js\src\interface\odyssey\IOdysseyFileHeader.ts:
+⋮...
+│export interface IOdysseyFileHeader {
+│  flagBinary: number;
+│  mdlDataSize: number;
+│  mdxDataSize: number;
+│
+│  modelDataOffset: number;
+│  rawDataOffset: number;
+⋮...
+
+vendor\KotOR.js\src\interface\odyssey\IOdysseyModelAABBNode.ts:
+⋮...
+│export interface IOdysseyModelAABBNode {
+│  type: string,
+│  box: THREE.Box3,
+│  _box?: THREE.Box3,
+│  leftNodeOffset: number,
+│  rightNodeOffset: number,
+│  faceIdx: number,
+│  mostSignificantPlane: number,
+│  leftNode?: IOdysseyModelAABBNode,
+│  rightNode?: IOdysseyModelAABBNode,
+⋮...
+
+vendor\KotOR.js\src\interface\odyssey\IOdysseyModelEmitterFlags.ts:
+⋮...
+│export interface IOdysseyModelEmitterFlags {
+│  isP2P: boolean;
+│  isP2PSel: boolean;
+│  affectedByWind: boolean;
+│  isTinted: boolean;
+│  canBounce: boolean;
+│  isRandom: boolean;
+│  canInherit: boolean;
+│  canInheritVelocity: boolean;
+│  canInheritLocal: boolean;
+⋮...
+
+vendor\KotOR.js\src\interface\odyssey\controller\IOdysseyControllerFrameGeneric.ts:
+⋮...
+│export interface IOdysseyControllerFrameGeneric {
+│  a: THREE.Vector3;
+│  b: THREE.Vector3;
+│  c: THREE.Vector3;
+│  isBezier: boolean;
+│  isLinearBezier: boolean;
+│  bezier: THREE.QuadraticBezierCurve3;
+│  time: number;
+│  x: number;
+│  y: number;
+⋮...
+
+vendor\KotOR.js\src\interface\odyssey\controller\IOdysseyControllerGeneric.ts:
+⋮...
+│export interface IOdysseyControllerGeneric {
+│  type: number;
+│  nodeType: number;
+│  frameCount: number;
+│  timeKeyIndex: number;
+│  dataValueIndex: number;
+│  columnCount: number;
+│  data: IOdysseyControllerFrameGeneric[],
+⋮...
+
+vendor\KotOR.js\src\interface\resource\IRIMHeader.ts:
+⋮...
+│export interface IRIMHeader {
+│  fileType: string;
+│  fileVersion: string;
+│  resourceCount: number;
+│  resourcesOffset: number;
+⋮...
+
+vendor\KotOR.js\src\interface\twoDA\ITwoDAAnimation.ts:
+⋮...
+│export interface ITwoDAAnimation {
+│  name: string;
+│  stationary: string;
+│  pause: string;
+│  walking: string;
+│  looping: string;
+│  running: string;
+│  fireforget: string;
+│  overlay: string;
+│  playoutofplace: string;
+⋮...
+
+vendor\KotOR.js\src\managers\ConfigManager.ts:
+⋮...
+│export class ConfigManager{
+│  listeners: any = {};
+│  options: any;
+│
+│  constructor(json_path: string){
+│
+│    let _settings: any = {};
+│    this.listeners = {};
+│
+│    try{
+⋮...
+│  get(path: string = '', defaultValue?:any){
+│    if(Array.isArray(path))
+│      path = path.join('.');
+│
+│    let parts = path.split('.');
+│    let property = this.options;
+│    for(let i = 0, len = parts.length; i < len; i++){
+│      if(typeof property[parts[i]] != 'undefined'){
+│        property = property[parts[i]];
+│      }else{
+⋮...
+
+vendor\KotOR.js\src\managers\MenuManager.ts:
+⋮...
+│export class MenuManager {
+│  static pulseOpacity: number;
+│  static activeMenus: GameMenu[];
+│  static activeModals: GameMenu[];
+│  static pulse: number;
+│
+│  static activeGUIElement: GUIControl;
+│  static hoveredGUIElement: GUIControl;
+│
+│  //References to the game menus
+⋮...
+│  static Add(menu: GameMenu){
+│    if(!menu) return;
+│    
+│    if(!menu.isOverlayGUI){
+│      //Hide the current top most menu in the list before adding the new Menu
+│      if(MenuManager.activeMenus.length)
+│        MenuManager.activeMenus[MenuManager.activeMenus.length-1].hide();
+│
+│      if(menu)
+│        MenuManager.activeMenus.push(menu);
+│  
+⋮...
+
+vendor\KotOR.js\src\module\ModuleArea.ts:
+⋮...
+│export class ModuleArea extends ModuleObject {
+│
+│  static ModuleObject: typeof ModuleObject = ModuleObject;
+│  static ModuleAreaOfEffect: typeof ModuleAreaOfEffect = ModuleAreaOfEffect;
+│  static ModuleCamera: typeof ModuleCamera = ModuleCamera;
+│  static ModuleCreature: typeof ModuleCreature = ModuleCreature;
+│  static ModuleDoor: typeof ModuleDoor = ModuleDoor;
+│  static ModuleEncounter: typeof ModuleEncounter = ModuleEncounter;
+│  static ModuleItem: typeof ModuleItem = ModuleItem;
+│  static ModuleMGEnemy: typeof ModuleMGEnemy = ModuleMGEnemy;
+⋮...
+
+vendor\KotOR.js\src\module\ModuleCalendar.ts:
+⋮...
+│export class ModuleCalendar {
+│  minutesPerHour = 2;
+│  year = 0;
+│  month = 0;
+│  day = 0;
+│  hour = 0;
+│  minute = 0;
+│  second = 0;
+│  milisecond = 0;
+│  pauseDay = 0;
+⋮...
+
+vendor\KotOR.js\src\module\ModuleCreature.ts:
+⋮...
+│export class ModuleCreature extends ModuleObject {
+│  pm_IsDisguised: boolean; //polymorphIsDisguised
+│  pm_Appearance: number; //polymorphAppearance
+│  anim: any;
+│  head: OdysseyModel3D;
+│  aiStyle: number;
+│  isCommandable: boolean;
+│  lookAtObject: any;
+│  lookAtMatrix: THREE.Matrix4;
+│  bodyBag: number;
+⋮...
+
+vendor\KotOR.js\src\module\ModuleItem.ts:
+⋮...
+│export class ModuleItem extends ModuleObject {
+│  equippedRes: any;
+│  baseItemId: number;
+│  baseItem: BaseItem;
+│  addCost: number;
+│  cost: number;
+│  modelVariation: number;
+│  textureVariation: number;
+│  palleteID: number;
+│  loaded: boolean;
+⋮...
+
+vendor\KotOR.js\src\module\ModuleObject.ts:
+⋮...
+│export class ModuleObject {
+│  helperColor: THREE.Color = new THREE.Color(0xFFFFFF);
+│
+│  combatOrder: number;
+│  combatRoundTimer: number;
+│  controlled: boolean;
+│  id: number;
+│  initialized: boolean;
+│  isPlayer: boolean = false;
+│  isPM: boolean = false;
+⋮...
+
+vendor\KotOR.js\src\module\ModulePath.ts:
+⋮...
+│class BinaryHeap<T> {
+│  content: T[];
+│  scoreFunction?: ScoreFunctionType<T>;
+│
+│  constructor(scoreFunction?: ScoreFunctionType<T>){
+│    this.content = [];
+│    this.scoreFunction = scoreFunction;
+│  }
+│
+│  push(element: T) {
+⋮...
+│  pop() {
+│    // Store the first element so we can return it later.
+│    let result = this.content[0];
+│    // Get the element at the end of the array.
+│    let end = this.content.pop();
+│    // If there are any elements left, put the end element at the
+│    // start, and let it bubble up.
+│    if (this.content.length > 0) {
+│      this.content[0] = end;
+│      this.bubbleUp(0);
+⋮...
+│  size() {
+│    return this.content.length;
+⋮...
+
+vendor\KotOR.js\src\nwscript\NWScriptInstance.ts:
+⋮...
+│export class NWScriptInstance {
+│  name: string;
+│  instructions: Map<number, NWScriptInstruction> = new Map();
+│  actionsMap: { [key: number]: INWScriptDefAction; };
+│  globalCache: any = null;
+│  _disposed: boolean = false;
+│  isStoreState: boolean = false;
+│  nwscript: NWScript;
+│  caller: ModuleObject;
+│  scriptVar: number;
+⋮...
+
+vendor\KotOR.js\src\odyssey\OdysseyModel.ts:
+⋮...
+│export class OdysseyModel {
+│
+│  mdlReader: BinaryReader;
+│  mdxReader: BinaryReader;
+│
+│  fileHeader: IOdysseyFileHeader = {} as IOdysseyFileHeader;
+│  geometryHeader: IOdysseyGeometryHeader = {} as IOdysseyGeometryHeader;
+│  modelHeader: IOdysseyModelHeader = {} as IOdysseyModelHeader;
+│
+│  animations: OdysseyModelAnimation[] = [];
+⋮...
+
+vendor\KotOR.js\src\odyssey\OdysseyModelAnimation.ts:
+⋮...
+│export class OdysseyModelAnimation {
+│  _position: THREE.Vector3 = new THREE.Vector3();
+│  _quaternion: THREE.Quaternion = new THREE.Quaternion();
+│  functionPointer0: number;
+│  functionPointer1: number;
+│  name: string;
+│  rootNodeOffset: number;
+│  nodeCount: number;
+│  refCount: number;
+│  geometryType: number;
+⋮...
+
+vendor\KotOR.js\src\odyssey\OdysseyModelAnimationManager.ts:
+⋮...
+│export class OdysseyModelAnimationManager {
+│  model: OdysseyModel3D;
+│  currentAnimation: OdysseyModelAnimation;
+│  currentAnimationState: any;
+│  lastAnimation: OdysseyModelAnimation;
+│  lastAnimationState: any;
+│  overlayAnimation: OdysseyModelAnimation;
+│  overlayAnimationState: any;
+│  _vec3: THREE.Vector3 = new THREE.Vector3();
+│  _quat: THREE.Quaternion = new THREE.Quaternion();
+⋮...
+
+vendor\KotOR.js\src\odyssey\OdysseyModelAnimationNode.ts:
+⋮...
+│export class OdysseyModelAnimationNode extends OdysseyModelNode {
+│  children: OdysseyModelAnimationNode[] = [];
+│  modelNodeCache: any = {};
+│  animation: OdysseyModelAnimation;
+│
+│  constructor(animation?: OdysseyModelAnimation){
+│    super(undefined);
+│    this.animation = animation;
+│    // super(parent);
+│    this.position = new THREE.Vector3();
+⋮...
+
+vendor\KotOR.js\src\odyssey\OdysseyModelNode.ts:
+⋮...
+│export class OdysseyModelNode {
+│  uuid: string = crypto.randomUUID();
+│  parent: OdysseyModelNode;
+│  type: OdysseyModelNodeType;
+│  nodeType: OdysseyModelNodeType;
+│  odysseyModel: OdysseyModel;
+│  children: OdysseyModelNode[] = [];
+│  childOffsets: number[] = [];
+│  controllers: Map<OdysseyModelControllerType, OdysseyController> = new Map();
+│
+⋮...
+
+vendor\KotOR.js\src\resource\CExoLocString.ts:
+⋮...
+│export class CExoLocString {
+│
+│  RESREF: number;
+│  strings: CExoLocSubString[] = [];
+│
+│  constructor(RESREF: number = -1) {
+│    this.RESREF = RESREF;
+│    this.strings = [];
+│  }
+│
+⋮...
+
+vendor\KotOR.js\src\resource\CExoLocSubString.ts:
+⋮...
+│export class CExoLocSubString {
+│
+│  language: number;
+│  gender: number;
+│  StringID: number;
+│  str: string;
+│
+│  constructor(stringId = 0, str?: string) {
+│    this.language = Math.floor(stringId / 2);
+│    this.gender = stringId % 2;
+⋮...
+
+vendor\KotOR.js\src\resource\GFFField.ts:
+⋮...
+│export class GFFField {
+│  uuid: string;
+│  type: number;
+│  label: string;
+│  data: Buffer;
+│  value: any;
+│  childStructs: GFFStruct[] = [];
+│  cexoLocString: CExoLocString;
+│  vector: THREE.Vector3;
+│  orientation: THREE.Quaternion;
+│
+⋮...
+
+vendor\KotOR.js\src\resource\GFFObject.ts:
+⋮...
+│export class GFFObject {
+│  BWStructs: BinaryWriter;
+│  BWFields: BinaryWriter;
+│  BWFieldData: BinaryWriter;
+│  BWLabels: BinaryWriter;
+│  BWFieldIndicies: BinaryWriter;
+│  BWListIndicies: BinaryWriter;
+│  FileType: string;
+│  FileVersion: string;
+│  StructCount: number;
+⋮...
+
+vendor\KotOR.js\src\resource\GFFStruct.ts:
+⋮...
+│export class GFFStruct {
+│  uuid: string;
+│  fields: GFFField[];
+│  type: number;
+│
+│  index: number = 0;
+│  fieldCount: number = 0;
+│
+│  constructor(type = 0){
+│    this.uuid = crypto.randomUUID();
+⋮...
+
+vendor\KotOR.js\src\three\odyssey\OdysseyFace3.ts:
+⋮...
+│export class OdysseyFace3 {
+│
+│       walkIndex:number = 0;
+│       coeff: number = 0;
+│       walkmesh: OdysseyWalkMesh;
+│       surfacemat: SurfaceMaterial;
+│
+│       adjacent: number[] = [];
+│       adjacentDiff: number[] = [];
+│
+⋮...
+
+vendor\KotOR.js\src\three\odyssey\OdysseyModel3D.ts:
+⋮...
+│export class OdysseyModel3D extends OdysseyObject3D {
+│
+│  type = 'OdysseyModel';
+│  box = new THREE.Box3;
+│  sphere = new THREE.Sphere();
+│  context: any = undefined;
+│  meshes: any[] = [];
+│  danglyMeshes: any[] = [];
+│  odysseyAnimations: OdysseyModelAnimation[] = [];
+│  emitters: OdysseyEmitter3D[] = [];
+⋮...
+
+vendor\KotOR.js\src\three\odyssey\OdysseyObject3D.ts:
+⋮...
+│export class OdysseyObject3D extends THREE.Object3D {
+│  odysseyModel: OdysseyModel3D;
+│  odysseyModelNode: OdysseyModelNode;
+│  NodeType: number;
+│  isWalkmesh: boolean;
+│  controllers: Map<number, OdysseyController>;
+│  controllerCache: any;
+│  controllerHelpers: any = {
+│    hasOrientation: false,
+│    hasPosition: false,
+⋮...
+
+vendor\KotOR.js\src\three\odyssey\OdysseyTexture.ts:
+⋮...
+│export class OdysseyTexture extends THREE.Texture {
+│
+│  txi: TXI = new TXI('');
+│  header: any;
+│  pack: number = 0;
+│  bumpMapType: string;
+│
+│  constructor(
+│    image?: HTMLImageElement | HTMLCanvasElement | HTMLVideoElement,
+│    mapping?: THREE.Mapping,
+⋮...
+
+vendor\KotOR.js\src\three\webgl\WebGLLights.ts:
+⋮...
+│function UniformsCache() {
+│
+│       const lights: any = {};
+│
+│       return {
+│
+│               get: function ( light: THREE.Light ) {
+│
+│                       if ( lights[ light.id ] !== undefined ) {
+│
+⋮...
+│function WebGLLights( extensions: any, capabilities: any ) {
+│
+│       //@ts-expect-error
+│       const cache = new UniformsCache();
+│
+│       const shadowCache = ShadowUniformsCache();
+│
+│       const state: any = {
+│
+│               version: 0,
+│
+⋮...
+
+vendor\KotOR.js\src\three\webgl\WebGLRenderStates.ts:
+⋮...
+│function WebGLRenderState( extensions: any, capabilities: any ) {
+│
+│  //@ts-expect-error
+│       const lights = new WebGLLights( extensions, capabilities );
+│
+│       const lightsArray: any[] = [];
+│       const shadowsArray: any[] = [];
+│
+│       function init() {
+│
+⋮...
+│function WebGLRenderStates( extensions: any, capabilities: any ) {
+│
+│       let renderStates = new WeakMap();
+│
+│       function get( scene: any, renderCallDepth = 0 ) {
+│
+│               const renderStateArray = renderStates.get( scene );
+│               let renderState;
+│
+│               if ( renderStateArray === undefined ) {
+│
+│      //@ts-expect-error
+│                       renderState = new WebGLRenderState( extensions, capabilities );
+│                       renderStates.set( scene, [ renderState ] );
+│
+⋮...
+
+vendor\KotOR.js\src\types\jison.d.ts:
+⋮...
+│declare module 'jison' {
+│  export class JisonGenerator {
+│    constructor(grammar: any, options?: any)
+│    generate(): any;
+│    createParser(): any;
+│  }
+│
+│  export class LR0Generator extends JisonGenerator {
+│    constructor(grammar: any, options?: any)
+│  }
+│
+⋮...
+
+vendor\KotOR.js\src\utility\ConfigClient.ts:
+⋮...
+│export class ConfigClient {
+│  static options: any = {};
+│  static UUID: string = ConfigClient.uuidv4();
+│
+│  static async Init() {
+│    ConfigClient.options = Object.assign(
+│      defaults, 
+│      await get('app_settings')
+│    );
+│
+⋮...
+│  static get(path: string|any[] = '', defaultValue?:any){
+│    if(Array.isArray(path))
+│      path = path.join('.');
+│
+│    let parts = path.split('.');
+│    let property = ConfigClient.options;
+│    for(let i = 0, len = parts.length; i < len; i++){
+│      if(typeof property[parts[i]] != 'undefined'){
+│        property = property[parts[i]];
+│      }else{
+⋮...
+
+vendor\KotORStuff\src\ResourceBundleLib\ERF.cs:
+⋮...
+│using System;
+⋮...
+│namespace ResourceBundleLib
+│{
+│    public class ERF
+│    {
+⋮...
+│        public class LocalizedString
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+│        public class ERFKey
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotORStuff\src\ResourceBundleLib\KeyTable.cs:
+⋮...
+│namespace ResourceBundleLib
+│{
+│    public class KeyTable
+│    {
+⋮...
+│        public class BIFFileInfo
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+│        public class KeyInfo
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotORStuff\src\ResourceBundleLib\ResType.cs:
+⋮...
+│namespace ResourceBundleLib
+│{
+│    public class ResourceType
+⋮...
+
+vendor\KotORStuff\src\TPCLib\TXIValueDictionary.cs:
+⋮...
+│namespace TPCLib
+│{
+│
+⋮...
+│    public class TXIValueDictionary : IEnumerator, IEnumerable
+│    {
+⋮...
+│        public void Add(string key, string value)
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\BIF.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public class BIF : KFile
+│    {
+⋮...
+│        public class VariableResourceEntry
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\ERF.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public class ERF : KFile
+│    {
+⋮...
+│        internal override void Write(Stream s)
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\ERF_new.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public class ERF_new : KFile, IEnumerable<ERF_new.Res>
+│    {
+│        //Types
+│        public class Res : IEquatable<Res>
+│        {
+⋮...
+│            public bool Equals(Res other)
+⋮...
+│            public override int GetHashCode()
+⋮...
+│            public override string ToString()
+⋮...
+│        public void Clear()
+⋮...
+│        public bool Contains(Res item)
+⋮...
+│        public bool Contains(string resref, ResourceType type)
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\0_BYTE.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class BYTE : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\1_CHAR.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class CHAR : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\2_WORD.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class WORD : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\3_SHORT.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class SHORT : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\4_DWORD.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class DWORD : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\5_INT.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class INT : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\6_DWORD64.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class DWORD64 : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\7_INT64.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class INT64 : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\8_FLOAT.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class FLOAT : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\9_DOUBLE.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class DOUBLE : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\A_CExoString.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class CExoString : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\B_ResRef.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class ResRef : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\C_CExoLocString.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class CExoLocString : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+│        public struct SubString
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\D_VOID.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class VOID : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\E_Struct.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class STRUCT : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\F_List.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class LIST : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\G_Orientation.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class Orientation : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\H_Vector.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class Vector : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\I_StrRef.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public class StrRef : FIELD
+│        {
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FieldTypes\_FIELD.cs:
+⋮...
+│namespace KotOR_IO
+│{
+│    public partial class GFF
+│    {
+⋮...
+│        public abstract class FIELD
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+│            public override bool Equals(object right)
+⋮...
+│            public override int GetHashCode()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF FileTypes\GffDerivative.cs:
+⋮...
+│namespace KotOR_IO.GffFile
+│{
+│    public abstract class GffDerivative : KFile
+│    {
+⋮...
+│        internal override void Write(Stream s)
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public partial class GFF : KFile
+│    {
+⋮...
+│        internal override void Write(Stream s)
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\GFF_old.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public class GFF_old : KFile
+│    {
+⋮...
+│        internal override void Write(Stream s)
+⋮...
+│        public class GFFStruct
+⋮...
+│        public class CExoLocString
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\KEY.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public class KEY : KFile
+│    {
+⋮...
+│        public override string ToString()
+⋮...
+│        public class FileEntry
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+│        public class KeyEntry
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\KFile.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public abstract class KFile
+│    {
+⋮...
+│        internal abstract void Write(System.IO.Stream s);
+│
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\LYT.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public class LYT : KFile
+│    {
+⋮...
+│        internal override void Write(Stream s)
+⋮...
+│        public override string ToString()
+⋮...
+│        public class Room
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+│        public class ArtPlaceable
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+│        public class DoorHook
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\RIM.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public class RIM : KFile
+│    {
+⋮...
+│        public class rFile // todo: create constructor?
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\TLK.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public class TLK : KFile
+│    {
+⋮...
+│        internal override void Write(Stream s)
+⋮...
+│        public override string ToString()
+⋮...
+│        public class String_Data
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\File Formats\WOK.cs:
+⋮...
+│namespace KotOR_IO
+│{
+⋮...
+│    public class WOK : KFile
+│    {
+⋮...
+│        public override string ToString()
+⋮...
+│        public class Vert
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+│        public class Face
+│        {
+⋮...
+│            public override string ToString()
+⋮...
+
+vendor\KotOR_IO\KotOR_IO\Helpers\KPaths.cs:
+⋮...
+│namespace KotOR_IO.Helpers
+│{
+⋮...
+│    public class KPaths
+│    {
+⋮...
+│        public override string ToString()
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Compiler\Calculator\ASTNode.cs:
+⋮...
+│namespace Kotor.NET.Scripting.Calculator
+│{
+│    public interface ASTNode
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Compiler\Compilation\GlobalVariableDeclaration.cs:
+⋮...
+│namespace Kotor.NET.Scripting.Compilation
+│{
+│    public class GlobalVariableDeclaration : ASTNode
+│    {
+⋮...
+│        public override string ToString()
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Compiler\Compilation\GlobalVariableInitialization.cs:
+⋮...
+│namespace Kotor.NET.Scripting.Compilation
+│{
+│    public class GlobalVariableInitialization : ASTNode
+│    {
+⋮...
+│        public override string ToString()
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Compiler\Compilation\IExpression.cs:
+⋮...
+│namespace Kotor.NET.Scripting.Compilation
+│{
+│    public interface IExpression : ASTNode
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Compiler\Compilation\IStatement.cs:
+⋮...
+│namespace Kotor.NET.Scripting.Compilation
+│{
+│    public interface IStatement
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Compiler\Compilation\IntLiteralExpression.cs:
+⋮...
+│namespace Kotor.NET.Scripting.Compilation
+│{
+│    public class IntLiteralExpression : IExpression
+│    {
+⋮...
+│        public override string ToString() => $"{Value}";
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Compiler\GplexBuffers.cs:
+⋮...
+│namespace QUT.GplexBuffers
+│{
+⋮...
+│    sealed class StringBuffer : ScanBuff
+│    {
+⋮...
+│        public override string ToString() { return "StringBuffer"; }
+⋮...
+│    sealed class LineBuffer : ScanBuff
+│    {
+⋮...
+│        public override string ToString() { return "LineBuffer"; }
+⋮...
+│    class BuildBuffer : ScanBuff
+│    {
+⋮...
+│        public override string ToString()
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Compiler\ShiftReduceParserCode.cs:
+⋮...
+│namespace QUT.Gppg {
+⋮...
+│    public abstract class ShiftReduceParser<TValue, TSpan>
+│#else
+⋮...
+│ where TSpan : IMerge<TSpan>, new() {
+⋮...
+│        public bool Parse() {
+│            Initialize();      // allow derived classes to instantiate rules, states and nonTerminals
+│
+│            NextToken = 0;
+│            FsaState = states[0];
+│
+│            StateStack.Push( FsaState );
+│            valueStack.Push( CurrentSemanticValue );
+│            LocationStack.Push( CurrentLocationSpan );
+│
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Compiler\SymbolTable.cs:
+⋮...
+│namespace Kotor.NET.Scripting
+│{
+⋮...
+│    public class DataType
+│    {
+⋮...
+│        public override string ToString()
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Graphics\Extensions\Matrix4x4Extensions.cs:
+⋮...
+│namespace Kotor.NET.Graphics.Extensions
+│{
+│    public static class Matrix4x4Extensions
+│    {
+│        public static ReadOnlySpan<float> ToFloatSpan(this Matrix4x4 m)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Graphics\Frame.cs:
+⋮...
+│namespace Kotor.NET.Graphics
+│{
+│    public class Frame
+│    {
+⋮...
+│        public void Add(IRenderable renderable)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Graphics\Graphics.cs:
+⋮...
+│namespace Kotor.NET.Graphics
+│{
+│    public class Graphics
+│    {
+⋮...
+│        public Shader GetShader(string name)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Graphics\KotorModelLoader.cs:
+⋮...
+│namespace Kotor.NET.Graphics
+│{
+│    public class KotorModelLoader
+│    {
+⋮...
+│        private class Node
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Patcher\ILogger.cs:
+⋮...
+│namespace Kotor.NET.Patcher
+│{
+│    public interface ILogger
+│    {
+⋮...
+│        void Error(string message);
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Patcher\IMemory.cs:
+⋮...
+│namespace Kotor.NET.Patcher
+│{
+│    public interface IMemory
+│    {
+⋮...
+│        void Clear();
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Patcher\Memory.cs:
+⋮...
+│{
+│    public class Memory : IMemory
+│    {
+⋮...
+│        public void Clear()
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Patcher\Modifiers\Log.cs:
+⋮...
+│namespace Kotor.NET.Patcher.Modifiers
+│{
+│    public class Log
+⋮...
+
+vendor\Kotor.NET\Kotor.NET.Patcher\Modifiers\Logger.cs:
+⋮...
+│namespace Kotor.NET.Patcher.Modifiers
+│{
+│    public class Logger : ILogger
+│    {
+⋮...
+│        public void Error(string message)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\Data\KotorPath.cs:
+⋮...
+│namespace Kotor.NET.Common.Data
+│{
+⋮...
+│    public class KotorPath
+│    {
+⋮...
+│        public KotorPath Join(string path)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\Data\ResRef.cs:
+⋮...
+│namespace Kotor.NET.Common.Data
+│{
+│    public class ResRef
+│    {
+⋮...
+│        public override string ToString()
+⋮...
+│        public override bool Equals(object? obj)
+⋮...
+│        public override int GetHashCode()
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\Data\ResourceReference.cs:
+⋮...
+│namespace Kotor.NET.Common.Data
+│{
+│    public class ResourceReference
+│    {
+⋮...
+│        public override int GetHashCode()
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\Data\ResourceType.cs:
+⋮...
+│namespace Kotor.NET.Common.Data
+│{
+│    public class ResourceType
+│    {
+⋮...
+│        public override string ToString()
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\Geometry\BoundingBox.cs:
+⋮...
+│namespace Kotor.NET.Common.Geometry
+│{
+│    public class BoundingBox
+│    {
+⋮...
+│        public bool Contains(Vector3 vector3, bool includeEdges = true)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\Geometry\Color.cs:
+⋮...
+│namespace Kotor.NET.Common.Geometry
+│{
+│    public class Color
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\Geometry\Vector2.cs:
+⋮...
+│namespace Kotor.NET.Common.Geometry
+│{
+│    public class Vector2
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\Geometry\Vector3.cs:
+⋮...
+│namespace Kotor.NET.Common.Geometry
+│{
+│    public class Vector3
+│    {
+⋮...
+│        public bool Equals(Vector3 other, float margin)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\Geometry\Vector4.cs:
+⋮...
+│namespace Kotor.NET.Common.Geometry
+│{
+│    public class Vector4
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Common\TalkTableEntry.cs:
+⋮...
+│namespace Kotor.NET.Common
+│{
+│    public class TalkTableEntry
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\Kotor2DA\TwoDABinaryStructure.cs:
+⋮...
+│namespace Kotor.NET.Formats.Kotor2DA
+│{
+│    internal class TwoDABinaryStructure
+│    {
+│        public class FileRoot
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class FileHeader
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\Kotor2DA\TwoDABinaryWriter.cs:
+⋮...
+│namespace Kotor.NET.Formats.Kotor2DA
+│{
+│    public class TwoDABinaryWriter : IWriter<TwoDA>
+│    {
+⋮...
+│        public void Write(TwoDA twoda)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorERF\ERFBinaryStructure.cs:
+⋮...
+│namespace Kotor.NET.Formats.KotorERF
+│{
+│    public class ERFBinaryStructure
+│    {
+│        public class FileRoot
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class FileHeader
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class KeyEntry
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class ResourceEntry
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorERF\ERFBinaryWriter.cs:
+⋮...
+│namespace Kotor.NET.Formats.KotorERF
+│{
+│    public class ERFBinaryWriter : IWriter<ERF>
+│    {
+⋮...
+│        public void Write(ERF erf)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorGFF\GFF.cs:
+⋮...
+│namespace Kotor.NET.Formats.KotorGFF
+│{
+⋮...
+│    public class GFFStruct
+⋮...
+│    public class GFFField
+⋮...
+│    public class GFFList : ICollection<GFFStruct>
+│    {
+⋮...
+│        public void Add(GFFStruct item)
+⋮...
+│        public GFFStruct Add()
+⋮...
+│        public void Clear()
+⋮...
+│        public bool Contains(GFFStruct item)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorGFF\GFFBinaryStructure.cs:
+⋮...
+│namespace Kotor.NET.Formats.KotorGFF
+│{
+│    public class GFFBinaryStructure
+│    {
+│        public class FileRoot
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class FileHeader
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class Struct
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class Field
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorMDL\MDL.cs:
+⋮...
+│namespace Kotor.NET.Formats.KotorMDL
+│{
+⋮...
+│    public class Node
+│    {
+⋮...
+│        public override string ToString() => Name;
+⋮...
+│    public class Animation
+│    {
+⋮...
+│        public override string ToString() => Name;
+⋮...
+│    public class Event
+│    {
+⋮...
+│        public override string ToString() => Name;
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorMDL\MDLBinaryStructure.cs:
+⋮...
+│namespace Kotor.NET.Formats.KotorMDL
+│{
+│    public class MDLBinaryStructure
+│    {
+⋮...
+│        public class ModelHeader
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class GeometryHeader
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class EventRoot
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class TrimeshHeader
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class LightHeader
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class EmitterHeader
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class ReferenceHeader
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+│        public class FaceRoot
+│        {
+⋮...
+│            public void Write(BinaryWriter writer)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorNCS\NCS.cs:
+⋮...
+│namespace Kotor.NET.Formats.KotorNCS
+│{
+│    public class NCS
+│    {
+⋮...
+│        public void Add(NCSInstruction instruction)
+⋮...
+│    public abstract class NCSInstruction
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorTLK\TLK.cs:
+⋮...
+│namespace Kotor.NET.Formats.KotorTLK
+│{
+│    public class TLK
+│    {
+⋮...
+│        public void Add(string text)
+⋮...
+│        public void Add(string text, ResRef resref)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorTLK\TLKBinaryWriter.cs:
+⋮...
+│namespace Kotor.NET.Formats.KotorTLK
+│{
+│    public class TLKBinaryWriter
+│    {
+⋮...
+│        public void Write(TLK tlk)
+⋮...
+
+vendor\Kotor.NET\Kotor.NET\Resources\KotorPTH\PTH.cs:
+⋮...
+│namespace Kotor.NET.Resources.KotorPTH
+│{
+⋮...
+│    public class PathPoint
+⋮...
+
+vendor\Kotor.NET\MapBuilder\Data\TerrainData.cs:
+⋮...
+│namespace MapBuilder.Data
+│{
+│    public class TerrainData : Placement
+│    {
+⋮...
+│        public override int GetHashCode()
+⋮...
+
+vendor\NorthernLights-master\Assets\AuroraInput.cs:
+⋮...
+│public partial class @AuroraInput : IInputActionCollection2, IDisposable
+│{
+⋮...
+│    public bool Contains(InputAction action)
+⋮...
+
+vendor\NorthernLights-master\Assets\Editor\CodeGenerator.cs:
+⋮...
+│public class CodeGenerator : EditorWindow
+│{
+⋮...
+│    class ClassDefinition {
+│        public string Name;
+│        public int Level;
+│
+│        public Compatibility Compat;
+│        public ExistsIn ExistsIn;
+│
+│        public Dictionary<string, (string, Compatibility, ExistsIn)> Fields = new Dictionary<string
+│        {
+│            { "structid", ("uint", Compatibility.BOTH, ExistsIn.BOTH) }
+⋮...
+│        public new string ToString()
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\AuroraStruct.cs:
+⋮...
+│[Serializable]
+│public class AuroraStruct
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\DataStructures.cs:
+⋮...
+│using NCSInstructions;
+⋮...
+│public class BasicBlock
+│{
+⋮...
+│    public override string ToString()
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\FileObjects\GFFObject.cs:
+⋮...
+│namespace AuroraEngine
+│{
+│    public class GFFObject
+│    {
+⋮...
+│        [Serializable]
+│        public class CExoString
+│        {
+⋮...
+│            public override string ToString ()
+⋮...
+│        [Serializable]
+│        public class CExoLocString
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\ILInstructions.cs:
+⋮...
+│public abstract class ILInstruction
+│{
+│    public abstract override string ToString();
+⋮...
+│public class NOOP : ILInstruction
+│{
+│    public override string ToString()
+⋮...
+│public class Assignment : ILInstruction
+│{
+│    public override string ToString()
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\Nodes\xNode\NSS\BinaryOperator.cs:
+⋮...
+│namespace XNode
+│{
+│       [ExecuteInEditMode]
+│       public abstract class BinaryOperation : ExecutableNode
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\ResourceLoader\GFFLoader.cs:
+⋮...
+│namespace AuroraEngine
+│{
+│    public class GFFLoader
+│    {
+⋮...
+│        private byte[] ReadBytes(long offset)
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\Systems\StateSystem.cs:
+⋮...
+│public static class LoggedEvents
+│{
+⋮...
+│    public static void Log(string name, string desc)
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\Templates\AuroraObject.cs:
+⋮...
+│namespace AuroraEngine
+│{
+⋮...
+│    [SelectionBase]
+│    public class AuroraObject : MonoBehaviour
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\ncs\NCSReader.cs:
+⋮...
+│public class NCSOperation
+│{
+⋮...
+│    static int ToInt32(byte[] raw_arr, int offset)
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\ncs\control.cs:
+⋮...
+│namespace NCSInstructions
+│{
+⋮...
+│    public class T : NCSInstruction
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\ncs\ncsinstructions.cs:
+⋮...
+│namespace NCSInstructions
+│{
+│    public abstract class NCSInstruction
+│    {
+⋮...
+│        public string ToString()
+⋮...
+
+vendor\NorthernLights-master\Assets\Scripts\ncs\script.cs:
+⋮...
+│public class NCSContext
+│{
+⋮...
+│    public void Log(object obj)
+⋮...
+│public class NCSScript
+⋮...
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Editor\NodeEditorGUILayout.cs:
+⋮...
+│namespace XNodeEditor {
+│    /// <summary> xNode-specific version of <see cref="EditorGUILayout"/> </summary>
+│    public static class NodeEditorGUILayout {
+│
+│        private static readonly Dictionary<UnityEngine.Object, Dictionary<string, ReorderableList>>
+│        private static int reorderableListIndex = -1;
+│
+│        /// <summary> Make a field for a serialized property. Automatically displays relevant node 
+│        public static void PropertyField(SerializedProperty property, bool includeChildren = true, 
+│            PropertyField(property, (GUIContent) null, includeChildren, options);
+│        }
+│
+⋮...
+│        private static System.Type GetType(SerializedProperty property) {
+│            System.Type parentType = property.serializedObject.targetObject.GetType();
+│            System.Reflection.FieldInfo fi = parentType.GetFieldInfo(property.name);
+│            return fi.FieldType;
+⋮...
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Editor\NodeEditorUtilities.cs:
+⋮...
+│namespace XNodeEditor {
+│    /// <summary> A set of editor-only utilities and extensions for xNode </summary>
+│    public static class NodeEditorUtilities {
+│
+│        /// <summary>C#'s Script Icon [The one MonoBhevaiour Scripts have].</summary>
+│        private static Texture2D scriptIcon = (EditorGUIUtility.IconContent("cs Script Icon").image
+│
+│        /// Saves Attribute from Type+Field for faster lookup. Resets on recompiles.
+│        private static Dictionary<Type, Dictionary<string, Dictionary<Type, Attribute>>> typeAttrib
+│
+│        /// Saves ordered PropertyAttribute from Type+Field for faster lookup. Resets on recompiles
+│        private static Dictionary<Type, Dictionary<string, List<PropertyAttribute>>> typeOrderedPro
+│
+⋮...
+│        public class DoCreateCodeFile : UnityEditor.ProjectWindowCallback.EndNameEditAction {
+│            public override void Action(int instanceId, string pathName, string resourceFile) {
+│                Object o = CreateScript(pathName, resourceFile);
+│                ProjectWindowUtil.ShowCreatedAsset(o);
+│            }
+⋮...
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Node.cs:
+⋮...
+│namespace XNode
+│{
+⋮...
+│    [Serializable]
+│    public abstract class Node : ScriptableObject {
+⋮...
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\NodeGraph.cs:
+⋮...
+│namespace XNode {
+│    /// <summary> Base class for all node graphs </summary>
+│    [Serializable]
+│    public abstract class NodeGraph : ScriptableObject {
+│
+│        /// <summary> All nodes in the graph. <para/>
+│        /// See: <see cref="AddNode{T}"/> </summary>
+│        [SerializeField] public List<Node> nodes = new List<Node>();
+│
+│        /// <summary> Add a node to the graph by type (convenience method - will call the System.Ty
+⋮...
+│        public virtual void Clear() {
+│            if (Application.isPlaying) {
+│                for (int i = 0; i < nodes.Count; i++) {
+│                    Destroy(nodes[i]);
+│                }
+│            }
+│            nodes.Clear();
+⋮...
+
+vendor\kotor-gui-editor\src\custom-types\GFF.d.ts:
+⋮...
+│declare interface List extends Label {
+│  struct: Struct[];
+⋮...
+
+vendor\kotor-gui-editor\src\custom-types\ResizeObserver.d.ts:
+⋮...
+│declare class ResizeObserver {
+│  /**
+│   * The **ResizeObserver** constructor creates a new `ResizeObserver` object,
+│   * which can be used to report changes to the content or border box of an
+│   * `Element` or the bounding box of an `SVGElement`.
+│   *
+│   * @example
+│   * var ResizeObserver = new ResizeObserver(callback)
+│   *
+│   * @param callback
+⋮...
+│interface ResizeObserverObserveOptions {
+│  /**
+│   * Sets which box model the observer will observe changes to. Possible values
+│   * are `content-box` (the default), and `border-box`.
+│   *
+│   * @default "content-box"
+│   */
+│  box?: 'content-box' | 'border-box';
+⋮...
+│type ResizeObserverCallback = (entries: ResizeObserverEntry[], observer: ResizeObserver) => void;
+│
+⋮...
+│interface ResizeObserverEntryBoxSize {
+│  /**
+│   * The length of the observed element's border box in the block dimension. For
+│   * boxes with a horizontal
+│   * [writing-mode](https://developer.mozilla.org/en-US/docs/Web/CSS/writing-mode),
+│   * this is the vertical dimension, or height; if the writing-mode is vertical,
+│   * this is the horizontal dimension, or width.
+│   */
+│  blockSize: number;
+│
+⋮...
+
+vendor\phaethon\src\common\filelist.cpp:
+⋮...
+│namespace Common {
+│
+│FileList::FileList() {
+│}
+│
+│FileList::FileList(const UString &directory, int recurseDepth) {
+│       addDirectory(directory, recurseDepth);
+│}
+│
+│FileList::FileList(const FileList &list) {
+⋮...
+│size_t FileList::size() const {
+│       return _files.size();
+⋮...
+
+vendor\phaethon\src\common\memreadstream.cpp:
+⋮...
+│namespace Common {
+│
+│size_t MemoryReadStream::read(void *dataPtr, size_t dataSize) {
+│       assert(dataPtr);
+│
+│       // Read at most as many bytes as are still available...
+│       if (dataSize > _size - _pos) {
+│               dataSize = _size - _pos;
+│               _eos = true;
+│       }
+⋮...
+│size_t MemoryReadStream::size() const {
+│       return _size;
+⋮...
+
+vendor\phaethon\src\common\memwritestream.cpp:
+⋮...
+│namespace Common {
+│
+│size_t MemoryWriteStream::write(const void *dataPtr, size_t dataSize) {
+│       assert(dataPtr);
+│
+│       // Write at most as many bytes as are still available...
+│       if (dataSize > _bufSize - _pos)
+│               dataSize = _bufSize - _pos;
+│
+│       std::memcpy(_ptr, dataPtr, dataSize);
+│
+⋮...
+│size_t MemoryWriteStream::size() const {
+│       return _bufSize;
+⋮...
+│size_t MemoryWriteStreamDynamic::size() const {
+│       return _size;
+⋮...
+
+vendor\phaethon\src\common\readfile.cpp:
+⋮...
+│namespace Common {
+│
+│ReadFile::ReadFile() : _handle(0), _size(kSizeInvalid) {
+│}
+│
+│ReadFile::ReadFile(const UString &fileName) : _handle(0), _size(kSizeInvalid) {
+│       if (!open(fileName))
+│               throw Exception("Can't open file \"%s\"", fileName.c_str());
+│}
+│
+⋮...
+│size_t ReadFile::size() const {
+│       return _size;
+⋮...
+
+vendor\phaethon\src\common\readstream.cpp:
+⋮...
+│namespace Common {
+│
+│const uint32_t ReadStream::kEOF;
+│
+│ReadStream::ReadStream() {
+│}
+│
+│ReadStream::~ReadStream() {
+│}
+│
+⋮...
+│size_t SeekableSubReadStream::size() const {
+│       return _end - _begin;
+⋮...
+
+vendor\phaethon\src\common\ustring.cpp:
+⋮...
+│namespace Common {
+│
+│UString::UString() : _size(0) {
+│}
+│
+│UString::UString(const UString &str) {
+│       *this = str;
+│}
+│
+│UString::UString(const std::string &str) {
+│       *this = str;
+⋮...
+│UString::UString(const char *str) {
+│       *this = str;
+⋮...
+│UString::UString(const char *str, size_t n) {
+│       *this = std::string(str, n);
+⋮...
+│UString::UString(uint32_t c, size_t n) : _size(0) {
+│       while (n-- > 0)
+│               *this += c;
+⋮...
+│UString::UString(iterator sBegin, iterator sEnd) : _size(0) {
+│       for (; (sBegin != sEnd) && *sBegin; ++sBegin)
+│               *this += *sBegin;
+⋮...
+│size_t UString::size() const {
+│       return _size;
+⋮...
+│UString::iterator UString::end() const {
+│       return iterator(_string.end(), _string.begin(), _string.end());
+⋮...
+
+vendor\phaethon\src\common\writefile.cpp:
+⋮...
+│namespace Common {
+│
+│WriteFile::WriteFile() : _handle(0), _size(0) {
+│}
+│
+│WriteFile::WriteFile(const UString &fileName) : _handle(0), _size(0) {
+│       if (!open(fileName))
+│               throw Exception("Can't open file \"%s\" for writing", fileName.c_str());
+│}
+│
+⋮...
+│size_t WriteFile::size() const {
+│       return _size;
+⋮...
+
+vendor\phaethon\src\gui\resourcetree.cpp:
+⋮...
+│namespace GUI {
+│
+│W_OBJECT_IMPL(ResourceTree)
+│
+│ResourceTree::ResourceTree(MainWindow *mainWindow, QObject *parent) : QAbstractItemModel(parent),
+│       _mainWindow(mainWindow) {
+│       _root = std::make_unique<ResourceTreeItem>("Filename");
+│       _iconProvider = std::make_unique<QFileIconProvider>();
+│}
+│
+⋮...
+│QModelIndex ResourceTree::index(int row, int col, const QModelIndex &parent) const {
+│       ResourceTreeItem *item = itemFromIndex(parent)->childAt(row);
+│
+│       if (!item)
+│               return QModelIndex();
+│
+│       return createIndex(row, col, item);
+⋮...
+
+vendor\phaethon\tests\common\ustring.cpp:
+⋮...
+│GTEST_TEST(UString, constructorCString) {
+│       const Common::UString str(kTestString1);
+│
+│       EXPECT_STREQ(str.c_str(), kTestString1);
+│       EXPECT_STRNE(str.c_str(), kTestString2);
+│
+│       EXPECT_FALSE(str.empty());
+│       ASSERT_EQ(str.size(), ARRAYSIZE(kTestString1) - 1);
+│
+│       EXPECT_EQ(*str.begin(), kTestString1[0]);
+⋮...
+│GTEST_TEST(UString, iteratorsASCII) {
+│       const Common::UString str(kTestString1);
+│
+│       ASSERT_EQ(str.size(), ARRAYSIZE(kTestString1) - 1);
+│
+│       Common::UString::iterator it = str.begin();
+│
+│       for (size_t i = 0; i < (ARRAYSIZE(kTestString1) - 1); i++, ++it) {
+│               EXPECT_NE(it, str.end()) << "At index " << i;
+│               EXPECT_EQ(*it, kTestString1[i]) << "At index " << i;
+⋮...
+│GTEST_TEST(UString, iteratorsUTF8) {
+│       const Common::UString str(reinterpret_cast<const char *>(kTestStringUTF8));
+│
+│       ASSERT_EQ(str.size(), ARRAYSIZE(kTestStringUTF32) - 1);
+│
+│       Common::UString::iterator it = str.begin();
+│
+│       for (size_t i = 0; i < (ARRAYSIZE(kTestStringUTF32) - 1); i++, ++it) {
+│               EXPECT_NE(it, str.end()) << "At index " << i;
+│               EXPECT_EQ(*it, kTestStringUTF32[i]) << "At index " << i;
+⋮...
+│GTEST_TEST(UString, caseInsensitiveASCII) {
+│       const Common::UString str(kTestString1);
+│
+│       EXPECT_TRUE(str.equalsIgnoreCase(kTestStringLower1));
+│       EXPECT_TRUE(str.equalsIgnoreCase(kTestStringUpper1));
+⋮...
+│GTEST_TEST(UString, clear) {
+│       Common::UString str(kTestString1);
+│
+│       EXPECT_FALSE(str.empty());
+│       EXPECT_NE(str.size(), 0);
+│
+│       str.clear();
+│
+│       EXPECT_TRUE(str.empty());
+│       EXPECT_EQ(str.size(), 0);
+⋮...
+│GTEST_TEST(UString, upper) {
+│       Common::UString str(kTestString1);
+│
+│       EXPECT_STREQ(str.toUpper().c_str(), kTestStringUpper1);
+│
+│       str.makeUpper();
+│
+│       EXPECT_STREQ(str.c_str(), kTestStringUpper1);
+⋮...
+│GTEST_TEST(UString, lower) {
+│       Common::UString str(kTestString1);
+│
+│       EXPECT_STREQ(str.toLower().c_str(), kTestStringLower1);
+│
+│       str.makeLower();
+│
+│       EXPECT_STREQ(str.c_str(), kTestStringLower1);
+⋮...
+│GTEST_TEST(UString, position) {
+│       const Common::UString str(kTestString1);
+│
+│       EXPECT_EQ(str.getPosition(0), str.begin());
+│       EXPECT_EQ(str.getPosition(str.begin()), 0);
+│
+│       EXPECT_EQ(str.getPosition(1), ++str.begin());
+│       EXPECT_EQ(str.getPosition(++str.begin()), 1);
+│
+│       EXPECT_EQ(str.getPosition(str.size() - 1), --str.end());
+⋮...
+
+vendor\reone\src\apps\dataminer\models.cpp:
+⋮...
+│namespace reone {
+│
+│static const std::unordered_map<ControllerType, std::string> g_ctrlTypeToNameDummy {
+│    {{8, "position"},
+│     {20, "orientation"},
+│     {36, "scale"}}};
+│
+│static const std::unordered_map<ControllerType, std::string> g_ctrlTypeToNameMesh {
+│    {{8, "position"},
+│     {20, "orientation"},
+⋮...
+│struct ModelNodeStats {
+│public:
+│    ControllerStatsMap<float> floatCtrlTypeToStats;
+│    ControllerStatsMap<glm::vec3, float> vecCtrlTypeToStats;
+│    ControllerStatsMap<glm::vec3, float> quatCtrlTypeToStats;
+│
+│    void appendFloat(ControllerType type, float value) {
+│        append(floatCtrlTypeToStats, type, value);
+│    }
+│
+⋮...
+│    void extend(const ModelNodeStats &other) {
+│        extend(floatCtrlTypeToStats, other.floatCtrlTypeToStats);
+│        extend(vecCtrlTypeToStats, other.vecCtrlTypeToStats);
+│        extend(quatCtrlTypeToStats, other.quatCtrlTypeToStats);
+⋮...
+│    template <class T, class U = T>
+│    void append(ControllerStatsMap<T, U> &map, ControllerType type, T value) {
+│        if (map.count(type) == 0) {
+│            map[type] = {value, value, {value}};
+│        } else {
+│            auto &current = map.at(type);
+│            current.min = glm::min(current.min, value);
+│            current.max = glm::max(current.max, value);
+│            current.values.push_back(std::move(value));
+│        }
+⋮...
+│    template <class T, class U = T>
+│    void extend(ControllerStatsMap<T, U> &map, const ControllerStatsMap<T, U> &otherMap) {
+│        for (const auto &[type, stats] : otherMap) {
+│            if (map.count(type) == 0) {
+│                map[type] = stats;
+│            } else {
+│                auto &current = map.at(type);
+│                current.min = glm::min(current.min, stats.min);
+│                current.max = glm::max(current.max, stats.max);
+│                for (const auto &value : stats.values) {
+│                    current.values.push_back(value);
+⋮...
+│struct ModelStats {
+│    ModelNodeStats dummy;
+│    ModelNodeStats mesh;
+│    ModelNodeStats light;
+│    ModelNodeStats emitter;
+│
+│    void extend(const ModelStats &other) {
+│        dummy.extend(other.dummy);
+│        mesh.extend(other.mesh);
+│        light.extend(other.light);
+│        emitter.extend(other.emitter);
+⋮...
+
+vendor\reone\src\apps\dataminer\routines.cpp:
+⋮...
+│namespace reone {
+│
+│static const std::regex kConstRegex = std::regex("^(\\w+)\\s+(\\w+)\\s*=(.*);.*");
+│static const std::regex kConstVecRegex = std::regex("^\\[\\s*([\\.\\d]+f?),\\s*([\\.\\d]+f?),\\s*([
+│
+│static const std::regex kFuncDeclRegex = std::regex("^(\\w+)\\s+(\\w+)\\s*\\((.*)\\);$");
+│static const std::regex kFuncArgRegEx = std::regex("^(\\w+)\\s+(\\w+)(.*)$");
+│static const std::regex kFuncArgDefValRegEx = std::regex("^(\\w+)\\s+(\\w+)\\s*=(.*)$");
+│
+│struct Constant {
+⋮...
+│struct Function {
+│    std::string retType;
+│    std::string name;
+│    std::vector<FunctionArgument> args;
+│
+│    Function() = default;
+│
+│    Function(std::string retType, std::string name, std::vector<FunctionArgument> args) :
+│        retType(retType), name(name), args(std::move(args)) {
+│    }
+⋮...
+
+vendor\reone\src\libs\game\camerastyles.cpp:
+⋮...
+│namespace reone {
+│
+│namespace game {
+│
+│void CameraStyles::init() {
+│    std::shared_ptr<TwoDA> twoDa(_twoDas.get("camerastyle"));
+│    if (!twoDa) {
+│        return;
+│    }
+│    for (int row = 0; row < twoDa->getRowCount(); ++row) {
+│        auto style = std::make_shared<CameraStyle>();
+│        style->name = twoDa->getString(row, "name");
+⋮...
+│std::shared_ptr<CameraStyle> CameraStyles::get(int index) const {
+│    return _styles[index];
+⋮...
+│std::shared_ptr<CameraStyle> CameraStyles::get(const std::string &name) const {
+│    for (auto &style : _styles) {
+│        if (style->name == name) {
+│            return style;
+│        }
+│    }
+│    return nullptr;
+⋮...
+
+vendor\reone\src\libs\game\d20\feats.cpp:
+⋮...
+│namespace reone {
+│
+│namespace game {
+│
+│void Feats::init() {
+│    std::shared_ptr<TwoDA> feats(_twoDas.get("feat"));
+│    if (!feats) {
+│        return;
+│    }
+│
+│    for (int row = 0; row < feats->getRowCount(); ++row) {
+│        std::string name(_strings.getText(feats->getInt(row, "name", -1)));
+⋮...
+│std::shared_ptr<Feat> Feats::get(FeatType type) const {
+│    auto it = _feats.find(type);
+│    return it != _feats.end() ? it->second : nullptr;
+⋮...
+
+vendor\reone\src\libs\game\d20\skills.cpp:
+⋮...
+│namespace reone {
+│
+│namespace game {
+│
+│void Skills::init() {
+│    std::shared_ptr<TwoDA> skills(_twoDas.get("skills"));
+│    if (!skills) {
+│        return;
+│    }
+│
+│    for (int row = 0; row < skills->getRowCount(); ++row) {
+│        std::string name(_strings.getText(skills->getInt(row, "name", -1)));
+⋮...
+│std::shared_ptr<Skill> Skills::get(SkillType type) const {
+│    auto it = _skills.find(type);
+│    return it != _skills.end() ? it->second : nullptr;
+⋮...
+
+vendor\reone\src\libs\game\d20\spells.cpp:
+⋮...
+│namespace reone {
+│
+│namespace game {
+│
+│void Spells::init() {
+│    std::shared_ptr<TwoDA> spells(_twoDas.get("spells"));
+│    if (!spells)
+│        return;
+│
+│    for (int row = 0; row < spells->getRowCount(); ++row) {
+│        std::string name(_strings.getText(spells->getInt(row, "name", -1)));
+│        std::string description(_strings.getText(spells->getInt(row, "spelldesc", -1)));
+⋮...
+│std::shared_ptr<Spell> Spells::get(SpellType type) const {
+│    auto it = _spells.find(type);
+│    return it != _spells.end() ? it->second : nullptr;
+⋮...
+
+vendor\reone\src\libs\game\gui\map.cpp:
+⋮...
+│namespace reone {
+│
+│namespace game {
+│
+│static constexpr int kArrowSize = 32;
+│static constexpr int kMapNoteSize = 16;
+│static constexpr float kSelectedMapNoteScale = 1.5f;
+│
+│Map::Map(Game &game, ServicesView &services) :
+│    _game(game),
+│    _services(services) {
+│    if (game.isTSL()) {
+⋮...
+
+vendor\reone\src\libs\game\script\routines.cpp:
+⋮...
+│namespace reone {
+│
+│namespace game {
+│
+│static constexpr int kBaseItemInvalid = 256;
+│
+│void Routines::init() {
+│    if (_gameId == GameID::TSL) {
+│        registerTslRoutines();
+│    } else {
+│        registerKotorRoutines();
+│    }
+⋮...
+│Routine &Routines::get(int index) {
+│    if (_routines.count(index) == 0) {
+│        throw std::out_of_range("index out of range: " + std::to_string(index));
+│    }
+│    return _routines.at(index);
+⋮...
+
+vendor\reone\src\libs\resource\gff.cpp:
+⋮...
+│namespace reone {
+│
+│namespace resource {
+│
+│bool Gff::getBool(const std::string &name, bool defValue) const {
+│    const Field *field = get(name);
+│    if (!field)
+│        return defValue;
+│
+│    return field->intValue != 0;
+│}
+│
+│const Gff::Field *Gff::get(const std::string &name) const {
+│    auto maybeField = std::find_if(
+│        _fields.begin(),
+│        _fields.end(),
+│        [&](auto &f) { return f.label == name; });
+│
+│    return maybeField != _fields.end() ? &*maybeField : nullptr;
+⋮...
+
+vendor\reone\src\libs\resource\provider\2das.cpp:
+⋮...
+│namespace reone {
+│
+│namespace resource {
+│
+│std::shared_ptr<TwoDA> TwoDAs::get(const std::string &resRef) {
+│    return _cache.getOrAdd(resRef, [this, &resRef]() {
+│        auto res = _resources.find(ResourceId(resRef, ResType::TwoDA));
+│        if (!res) {
+│            return std::shared_ptr<TwoDA>();
+│        }
+│        MemoryInputStream stream(res->data);
+│        TwoDAReader reader(stream);
+│        reader.load();
+│        return reader.twoDA();
+⋮...
+
+vendor\reone\src\libs\resource\provider\cursors.cpp:
+⋮...
+│namespace reone {
+│
+│namespace resource {
+│
+│static std::unordered_map<CursorType, std::pair<uint32_t, uint32_t>> g_groupNamesByType {
+│    {CursorType::Default, {1, 2}},
+│    {CursorType::Talk, {11, 12}},
+│    {CursorType::Door, {23, 24}},
+│    {CursorType::Pickup, {25, 26}},
+│    {CursorType::DisableMine, {33, 34}},
+│    {CursorType::RecoverMine, {37, 38}},
+│    {CursorType::Attack, {51, 52}}};
+│
+⋮...
+│std::shared_ptr<Cursor> Cursors::get(CursorType type) {
+│    auto maybeCursor = _cache.find(type);
+│    if (maybeCursor != _cache.end()) {
+│        return maybeCursor->second;
+│    }
+│    const std::pair<uint32_t, uint32_t> &groupNames = getCursorGroupNames(type);
+│    std::vector<uint32_t> cursorNamesUp(getCursorNamesFromCursorGroup(groupNames.first));
+│    if (cursorNamesUp.empty()) {
+│        return nullptr;
+│    }
+⋮...
+
+vendor\reone\src\libs\resource\provider\gffs.cpp:
+⋮...
+│namespace reone {
+│
+│namespace resource {
+│
+│std::shared_ptr<Gff> Gffs::get(const std::string &resRef, ResType type) {
+│    ResourceId resId(resRef, type);
+│    return _cache.getOrAdd(resId, [this, &resId]() {
+│        auto res = _resources.find(resId);
+│        if (!res) {
+│            return std::shared_ptr<Gff>();
+│        }
+│        MemoryInputStream stream(res->data);
+│        GffReader reader(stream);
+│        reader.load();
+⋮...
+
+vendor\reone\src\libs\resource\provider\models.cpp:
+⋮...
+│namespace reone {
+│
+│namespace resource {
+│
+│void Models::clear() {
+│    _cache.clear();
+│}
+│
+│std::shared_ptr<Model> Models::get(const std::string &resRef) {
+│    if (resRef.empty()) {
+│        return nullptr;
+│    }
+│    auto lcResRef = boost::to_lower_copy(resRef);
+│    auto maybeModel = _cache.find(lcResRef);
+│    if (maybeModel != _cache.end()) {
+│        return maybeModel->second;
+│    }
+│    auto inserted = _cache.insert(std::make_pair(lcResRef, doGet(lcResRef)));
+⋮...
+
+vendor\reone\src\libs\resource\provider\textures.cpp:
+⋮...
+│namespace reone {
+│
+│namespace resource {
+│
+│void Textures::init() {
+│}
+│
+│void Textures::clear() {
+│    _cache.clear();
+│}
+│
+│std::shared_ptr<Texture> Textures::get(const std::string &resRef, TextureUsage usage) {
+│    if (resRef.empty()) {
+│        return nullptr;
+│    }
+│    auto maybeTexture = _cache.find(resRef);
+│    if (maybeTexture != _cache.end()) {
+│        return maybeTexture->second;
+│    }
+│    std::string lcResRef(boost::to_lower_copy(resRef));
+│    auto inserted = _cache.insert(std::make_pair(lcResRef, doGet(lcResRef, usage)));
+│
+⋮...
+
+vendor\reone\src\libs\resource\provider\walkmeshes.cpp:
+⋮...
+│namespace reone {
+│
+│namespace resource {
+│
+│Walkmeshes::Walkmeshes(Resources &resources) :
+│    _resources(resources) {
+│}
+│
+│void Walkmeshes::clear() {
+│    _cache.clear();
+│}
+│
+│std::shared_ptr<Walkmesh> Walkmeshes::get(const std::string &resRef, ResType type) {
+│    auto lcResRef = boost::to_lower_copy(resRef);
+│
+│    auto maybeWalkmesh = _cache.find(lcResRef);
+│    if (maybeWalkmesh != _cache.end()) {
+│        return maybeWalkmesh->second;
+│    }
+│    auto inserted = _cache.insert(std::make_pair(lcResRef, doGet(lcResRef, type)));
+│
+│    return inserted.first->second;
+⋮...
+
+vendor\reone\src\libs\resource\resources.cpp:
+⋮...
+│namespace reone {
+│
+│namespace resource {
+│
+│void Resources::addKEY(const std::filesystem::path &path) {
+│    auto provider = std::make_unique<KeyBifResourceContainer>(path);
+│    provider->init();
+│    _containers.push_front(ResourceContainerLocalPair {std::move(provider), false});
+│}
+│
+│void Resources::addERF(const std::filesystem::path &path, bool local) {
+│    auto provider = std::make_unique<ErfResourceContainer>(path);
+⋮...
+│Resource Resources::get(const ResourceId &id) {
+│    auto data = find(id);
+│    if (!data) {
+│        throw ResourceNotFoundException(id.string());
+│    }
+│    return *data;
+⋮...
+
+vendor\reone\src\libs\scene\graphs.cpp:
+⋮...
+│namespace reone {
+│
+│namespace scene {
+│
+│void SceneGraphs::reserve(std::string name) {
+│    if (_scenes.count(name) > 0) {
+│        return;
+│    }
+│    auto scene = std::make_unique<SceneGraph>(
+│        name,
+│        _renderPipelineFactory,
+│        _graphicsOpt,
+⋮...
+│ISceneGraph &SceneGraphs::get(const std::string &name) {
+│    auto maybeScene = _scenes.find(name);
+│    if (maybeScene == _scenes.end()) {
+│        throw std::logic_error(str(boost::format("Scene not found by name '%s'") % name));
+│    }
+│    return *maybeScene->second;
+⋮...
+
+vendor\reone\src\libs\system\logger.cpp:
+⋮...
+│namespace reone {
+│
+│static const std::unordered_map<LogSeverity, std::string> kSeverityToName {
+│    {LogSeverity::Error, "ERROR"},
+│    {LogSeverity::Warn, "WARN"},
+│    {LogSeverity::Info, "INFO"},
+│    {LogSeverity::Debug, "DEBUG"}};
+│
+│static const std::unordered_map<LogChannel, std::string> kChannelToName {
+│    {LogChannel::Global, "global"},
+⋮...
+│void Logger::append(std::string message,
+│                    LogChannel channel,
+⋮...
+
+vendor\xoreos-tools\src\aurora\bifwriter.cpp:
+⋮...
+│namespace Aurora {
+│
+│BIFWriter::BIFWriter(uint32_t fileCount, Common::SeekableWriteStream &writeStream) :
+│               _maxFiles(fileCount), _currentFiles(0), _dataOffset(0), _writer(writeStream) {
+│       // Write id and version.
+│       writeStream.writeUint32BE(kBIFFID);
+│       writeStream.writeUint32BE(kV1ID);
+│
+│       writeStream.writeUint32LE(fileCount);
+│       writeStream.writeUint32LE(0);
+⋮...
+│uint32_t BIFWriter::size() {
+│       _writer.seek(0, Common::SeekableWriteStream::kOriginEnd);
+│       return _writer.pos();
+⋮...
+
+vendor\xoreos-tools\src\aurora\bzfwriter.cpp:
+⋮...
+│namespace Aurora {
+│
+│BZFWriter::BZFWriter(uint32_t fileCount, Common::SeekableWriteStream &writeStream) :
+│               _maxFiles(fileCount), _currentFiles(0), _dataOffset(0), _writer(writeStream) {
+│       writeStream.writeUint32BE(kBIFFID);
+│       writeStream.writeUint32BE(kV1ID);
+│
+│       writeStream.writeUint32LE(fileCount);
+│       writeStream.writeUint32LE(0);
+│       writeStream.writeUint32LE(20);
+│
+⋮...
+│uint32_t BZFWriter::size() {
+│       _writer.seek(0, Common::SeekableWriteStream::kOriginEnd);
+│       return _writer.pos();
+⋮...
+
+vendor\xoreos-tools\src\common\memreadstream.cpp:
+⋮...
+│namespace Common {
+│
+│size_t MemoryReadStream::read(void *dataPtr, size_t dataSize) {
+│       assert(dataPtr);
+│
+│       // Read at most as many bytes as are still available...
+│       if (dataSize > _size - _pos) {
+│               dataSize = _size - _pos;
+│               _eos = true;
+│       }
+⋮...
+│size_t MemoryReadStream::size() const {
+│       return _size;
+⋮...
+
+vendor\xoreos-tools\src\common\memwritestream.cpp:
+⋮...
+│namespace Common {
+│
+│size_t MemoryWriteStream::write(const void *dataPtr, size_t dataSize) {
+│       assert(dataPtr);
+│
+│       // Write at most as many bytes as are still available...
+│       if (dataSize > _bufSize - _pos)
+│               dataSize = _bufSize - _pos;
+│
+│       std::memcpy(_ptr, dataPtr, dataSize);
+│
+⋮...
+│size_t MemoryWriteStream::size() const {
+│       return _bufSize;
+⋮...
+│size_t MemoryWriteStreamDynamic::size() const {
+│       return _size;
+⋮...
+
+vendor\xoreos-tools\src\common\readfile.cpp:
+⋮...
+│namespace Common {
+│
+│ReadFile::ReadFile() : _handle(0), _size(kSizeInvalid) {
+│}
+│
+│ReadFile::ReadFile(const UString &fileName) : _handle(0), _size(kSizeInvalid) {
+│       if (!open(fileName))
+│               throw Exception("Can't open file \"%s\"", fileName.c_str());
+│}
+│
+⋮...
+│size_t ReadFile::size() const {
+│       return _size;
+⋮...
+
+vendor\xoreos-tools\src\common\readstream.cpp:
+⋮...
+│namespace Common {
+│
+│const uint32_t ReadStream::kEOF;
+│
+│ReadStream::ReadStream() {
+│}
+│
+│ReadStream::~ReadStream() {
+│}
+│
+⋮...
+│size_t SeekableSubReadStream::size() const {
+│       return _end - _begin;
+⋮...
+
+vendor\xoreos-tools\src\common\ustring.cpp:
+⋮...
+│namespace Common {
+│
+│UString::UString() : _size(0) {
+│}
+│
+│UString::UString(const UString &str) {
+│       *this = str;
+│}
+│
+│UString::UString(const std::string &str) {
+⋮...
+│size_t UString::size() const {
+│       return _size;
+⋮...
+
+vendor\xoreos-tools\src\common\writefile.cpp:
+⋮...
+│namespace Common {
+│
+│WriteFile::WriteFile() : _handle(0), _size(0) {
+│}
+│
+│WriteFile::WriteFile(const UString &fileName) : _handle(0), _size(0) {
+│       if (!open(fileName))
+│               throw Exception("Can't open file \"%s\" for writing", fileName.c_str());
+│}
+│
+⋮...
+│size_t WriteFile::size() const {
+│       return _size;
+⋮...
+│size_t WriteFile::seek(ptrdiff_t offset, SeekableWriteStream::Origin whence) {
+│       const size_t oldPos = pos();
+│       const size_t newPos = evalSeek(offset, whence, pos(), 0, size());
+│
+│       if (newPos > _size)
+│               throw Exception(kSeekError);
+│
+│       if (std::fseek(_handle, newPos, SEEK_SET))
+│               throw Exception(kSeekError);
+│
+⋮...
+
+vendor\xoreos-tools\src\convert2da.cpp:
+⋮...
+│enum Format {
+│       kFormat2DA,
+│       kFormat2DAb,
+│       kFormatCSV
+⋮...
+
+vendor\xoreos-tools\src\nwscript\ncsfile.cpp:
+⋮...
+│namespace NWScript {
+│
+│NCSFile::NCSFile(Common::SeekableReadStream &ncs, Aurora::GameID game) :
+│       _game(game), _size(0), _hasStackAnalysis(false), _hasControlFlowAnalysis(false) {
+│
+│       load(ncs);
+│}
+│
+│NCSFile::~NCSFile() {
+│}
+│
+⋮...
+│size_t NCSFile::size() const {
+│       return _size;
+⋮...
+
+vendor\xoreos-tools\src\xml\xmlparser.cpp:
+⋮...
+│namespace XML {
+│
+│static void errorFuncUString(void *ctx, const char *msg, ...) {
+│       Common::UString *str = static_cast<Common::UString *>(ctx);
+│       assert(str);
+│
+│       char buf[STRINGBUFLEN];
+│       va_list va;
+│
+│       va_start(va, msg);
+⋮...
+│Common::UString XMLNode::getProperty(const Common::UString &name, const Common::UString &def) const
+│       Properties::const_iterator property = _properties.find(name);
+│       if (property != _properties.end())
+│               return property->second;
+│
+│       return def;
+⋮...
+
+vendor\xoreos-tools\tests\common\ustring.cpp:
+⋮...
+│GTEST_TEST(UString, constructorCString) {
+│       const Common::UString str(kTestString1);
+│
+│       EXPECT_STREQ(str.c_str(), kTestString1);
+│       EXPECT_STRNE(str.c_str(), kTestString2);
+│
+│       EXPECT_FALSE(str.empty());
+│       ASSERT_EQ(str.size(), ARRAYSIZE(kTestString1) - 1);
+│
+│       EXPECT_EQ(*str.begin(), kTestString1[0]);
+⋮...
+│GTEST_TEST(UString, iteratorsASCII) {
+│       const Common::UString str(kTestString1);
+│
+│       ASSERT_EQ(str.size(), ARRAYSIZE(kTestString1) - 1);
+│
+│       Common::UString::iterator it = str.begin();
+│
+│       for (size_t i = 0; i < (ARRAYSIZE(kTestString1) - 1); i++, ++it) {
+│               EXPECT_NE(it, str.end()) << "At index " << i;
+│               EXPECT_EQ(*it, kTestString1[i]) << "At index " << i;
+⋮...
+│GTEST_TEST(UString, iteratorsUTF8) {
+│       const Common::UString str(reinterpret_cast<const char *>(kTestStringUTF8));
+│
+│       ASSERT_EQ(str.size(), ARRAYSIZE(kTestStringUTF32) - 1);
+│
+│       Common::UString::iterator it = str.begin();
+│
+│       for (size_t i = 0; i < (ARRAYSIZE(kTestStringUTF32) - 1); i++, ++it) {
+│               EXPECT_NE(it, str.end()) << "At index " << i;
+│               EXPECT_EQ(*it, kTestStringUTF32[i]) << "At index " << i;
+⋮...
+│GTEST_TEST(UString, caseInsensitiveASCII) {
+│       const Common::UString str(kTestString1);
+│
+│       EXPECT_TRUE(str.equalsIgnoreCase(kTestStringLower1));
+│       EXPECT_TRUE(str.equalsIgnoreCase(kTestStringUpper1));
+⋮...
+│GTEST_TEST(UString, clear) {
+│       Common::UString str(kTestString1);
+│
+│       EXPECT_FALSE(str.empty());
+│       EXPECT_NE(str.size(), 0);
+│
+│       str.clear();
+│
+│       EXPECT_TRUE(str.empty());
+│       EXPECT_EQ(str.size(), 0);
+⋮...
+│GTEST_TEST(UString, upper) {
+│       Common::UString str(kTestString1);
+│
+│       EXPECT_STREQ(str.toUpper().c_str(), kTestStringUpper1);
+│
+│       str.makeUpper();
+│
+│       EXPECT_STREQ(str.c_str(), kTestStringUpper1);
+⋮...
+│GTEST_TEST(UString, lower) {
+│       Common::UString str(kTestString1);
+│
+│       EXPECT_STREQ(str.toLower().c_str(), kTestStringLower1);
+│
+│       str.makeLower();
+│
+│       EXPECT_STREQ(str.c_str(), kTestStringLower1);
+⋮...
+│GTEST_TEST(UString, position) {
+│       const Common::UString str(kTestString1);
+│
+│       EXPECT_EQ(str.getPosition(0), str.begin());
+│       EXPECT_EQ(str.getPosition(str.begin()), 0);
+│
+│       EXPECT_EQ(str.getPosition(1), ++str.begin());
+│       EXPECT_EQ(str.getPosition(++str.begin()), 1);
+│
+│       EXPECT_EQ(str.getPosition(str.size() - 1), --str.end());
+⋮...
+

@@ -47,12 +47,7 @@ from utility.system.win32.hresult import HRESULT
 from utility.system.win32.winapi.device_iocontrol import FSCTL
 
 if TYPE_CHECKING:
-    from ctypes import (
-        _CArgObject,
-        _CData,
-        _Pointer,
-        c_char,
-    )
+    from ctypes import _CArgObject, _CData, _Pointer, c_char
 
     from typing_extensions import Self
 
@@ -1305,7 +1300,7 @@ if os.name == "nt":
         def get_changes_since_timestamp(
             cls,
             handle: wintypes.HANDLE,
-            path: WindowsPath = None,  # The optional part is currently broken.
+            path: WindowsPath | None = None,  # The optional part is currently broken.
             timestamp: datetime | None = None,
         ) -> dict[WindowsPath, UsnJournalData]:
             """Retrieves the changes from the USN Journal since the provided timestamp."""

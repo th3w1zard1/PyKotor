@@ -60,6 +60,8 @@ class RawBinaryReader:
         offset: int = 0,
         size: int | None = None,
     ):
+        use_remaining = size is None
+        size = size or 0
         self.auto_close: bool = True
 
         self._stream: io.RawIOBase | io.BufferedIOBase | mmap.mmap = stream
@@ -67,24 +69,14 @@ class RawBinaryReader:
         self._stream.seek(offset)
 
         total_size = self.true_size()
-        if self._offset > total_size - (size or 0):
+        if self._offset > total_size - size:
             msg = "Specified offset/size is greater than the number of available bytes."
             raise OSError(msg)
-        if size and size < 0:
-            msg = f"Size must be greater than zero, got {size}"
+        if size < 0:
+            msg = f"Size must be greater than zero, got '{size}'"
             raise ValueError(msg)
 
-        self._size: int = total_size - self._offset if size is None else size
-
-    @property
-    def _true_stream_position(self) -> int:
-        """Private property to access the current position of the stream for debugging purposes.
-
-        Returns:
-        -------
-            int: The current absolute position of the stream pointer.
-        """
-        return self._stream.tell()
+        self._size: int = total_size - self._offset if use_remaining else size
 
     def __enter__(
         self,
@@ -219,9 +211,7 @@ class RawBinaryReader:
             reader.seek(offset)
             return reader.read() if size == -1 else reader.read(size)
 
-    def offset(
-        self,
-    ) -> int:
+    def offset(self) -> int:
         """Returns the offset value.
 
         Args:
@@ -241,9 +231,7 @@ class RawBinaryReader:
         self.seek(self.position() + offset)
         self._offset = offset
 
-    def size(
-        self,
-    ) -> int:
+    def size(self) -> int:
         """Returns the total number of bytes in the stream.
 
         When a BinaryReader is instantiated, it can be given a size argument and an offset argument, and will not
@@ -255,9 +243,7 @@ class RawBinaryReader:
         """
         return self._size
 
-    def true_size(
-        self,
-    ) -> int:
+    def true_size(self) -> int:
         """Returns the total number of bytes in the stream.
 
         This does NOT include the initial offset and size constraint passed to the constructor.
@@ -275,9 +261,7 @@ class RawBinaryReader:
         self._stream.seek(current)
         return size
 
-    def remaining(
-        self,
-    ) -> int:
+    def remaining(self) -> int:
         """Returns the number of bytes remaining in the stream based on current position.
 
         Returns:
@@ -305,16 +289,23 @@ class RawBinaryReader:
         self.exceed_check(length)
         self._stream.read(length)
 
-    def position(
-        self,
-    ) -> int:
-        """Returns the byte offset into the stream.
+    def position(self) -> int:
+        """Returns the byte offset position into the stream.
 
         Returns:
         -------
             The byte offset.
         """
         return self._stream.tell() - self._offset
+
+    def tell(self) -> int:
+        """Returns the byte offset position into the stream.
+
+        Returns:
+        -------
+            The byte offset.
+        """
+        return self.position()
 
     def seek(
         self,
@@ -329,9 +320,7 @@ class RawBinaryReader:
         self.exceed_check(position - self.position())
         self._stream.seek(position + self._offset)
 
-    def read_all(
-        self,
-    ) -> bytes:
+    def read_all(self) -> bytes:
         """Read all remaining bytes from the stream.
 
         Args:
@@ -604,6 +593,7 @@ class RawBinaryReader:
         self,
         encoding: str = "ascii",
         errors: str = "ignore",
+        buffer_size: int = 1024,  # New parameter to control the buffer size
     ) -> str:
         """Reads a line from the stream up to a line ending character.
 
@@ -611,35 +601,38 @@ class RawBinaryReader:
         ----
             encoding: The encoding to use for decoding the line.
             errors: How to handle encoding errors.
+            buffer_size: The size of the buffer to read at once.
 
         Returns:
         -------
             A string representing the line read from the stream.
         """
-        line_bytes = bytearray()
+        line_binary_data = bytearray()
         while True:
-            char: bytes | None = self._stream.read(1)
-
-            if not char:  # End of stream
+            chunk: bytes = self._stream.read(buffer_size)
+            if not chunk:  # End of stream
                 break
 
-            line_bytes.extend(char)
+            line_binary_data.extend(chunk)
 
             # Check for line endings
-            if char == b"\n":
+            if b"\n" in chunk:
+                newline_index = chunk.index(b"\n")
+                line_binary_data = line_binary_data[:len(line_binary_data) - len(chunk) + newline_index + 1]
+                self._stream.seek(len(chunk) - newline_index - 1, 1)
                 break
 
-            if char == b"\r":
-                # Check for \r\n
-                next_char: bytes | None = self._stream.read(1)
-                if not next_char or next_char == b"\n":
-                    break
-
-                # If not \r\n, go back one character
-                self._stream.seek(-1, 1)
+            if b"\r" in chunk:
+                newline_index = chunk.index(b"\r")
+                if newline_index + 1 < len(chunk) and chunk[newline_index + 1] == b"\n":
+                    line_binary_data = line_binary_data[:len(line_binary_data) - len(chunk) + newline_index + 2]
+                    self._stream.seek(len(chunk) - newline_index - 2, 1)
+                else:
+                    line_binary_data = line_binary_data[:len(line_binary_data) - len(chunk) + newline_index + 1]
+                    self._stream.seek(len(chunk) - newline_index - 1, 1)
                 break
 
-        return bytes(line_bytes).decode(encoding=encoding, errors=errors).rstrip("\r\n")
+        return line_binary_data.decode(encoding=encoding, errors=errors).rstrip("\r\n")
 
     def read_bytes(
         self,
@@ -734,32 +727,7 @@ class RawBinaryReader:
             self.skip(remaining_length)
         return string
 
-    def read_locstring(
-        self,
-    ) -> LocalizedString:
-        """Reads the localized string data structure from the stream.
-
-        The binary data structure that is read follows the structure found in the GFF format specification.
-
-        Returns:
-        -------
-            A LocalizedString read from the stream.
-        """
-        locstring: LocalizedString = LocalizedString.from_invalid()
-        self.skip(4)  # total number of bytes of the localized string
-        locstring.stringref = self.read_uint32(max_neg1=True)
-        string_count: int = self.read_uint32()
-        for _ in range(string_count):
-            string_id: int = self.read_uint32()
-            language, gender = LocalizedString.substring_pair(string_id)
-            length: int = self.read_uint32()
-            string: str = self.read_string(length, encoding=language.get_encoding())
-            locstring.set_data(language, gender, string)
-        return locstring
-
-    def read_array_head(
-        self,
-    ) -> ArrayHead:
+    def read_array_head(self) -> ArrayHead:
         return ArrayHead(self.read_uint32(), self.read_uint32())
 
     def peek(
@@ -792,8 +760,34 @@ class RawBinaryReader:
             msg = "This operation would exceed the streams boundaries."
             raise OSError(msg)
 
+    def read_float(
+        self,
+        *,
+        big: bool = False,
+    ) -> int:
+        """Reads a 32-bit floating point number from the stream.
+
+        Args:
+        ----
+            big: Read float bytes as big endian.
+
+        Returns:
+        -------
+            An float from the stream.
+        """
+        self.exceed_check(4)
+        return struct.unpack(f"{_endian_char(big)}f", self._stream.read(4) or b"")[0]
+
 
 class RawBinaryWriter(ABC):
+    def __init__(
+        self,
+        stream: io.RawIOBase,
+        offset: int = 0,
+    ):
+        self._to_write: io.RawIOBase | bytearray = stream
+        self._offset: int = offset
+
     @abstractmethod
     def __enter__(self): ...
 
@@ -815,7 +809,7 @@ class RawBinaryWriter(ABC):
         -------
             A new BinaryWriter instance.
         """
-        return RawBinaryWriterFile(Path(path).open("wb"))  # noqa: SIM115
+        return RawBinaryWriterFile(open(path, "wb"))  # noqa: SIM115
 
     @classmethod
     def to_bytearray(
@@ -840,6 +834,16 @@ class RawBinaryWriter(ABC):
         return RawBinaryWriterBytearray(data)
 
     @classmethod
+    def to_stream(
+        cls,
+        source: io.RawIOBase,
+    ) -> RawBinaryWriter:
+        if isinstance(source, io.RawIOBase):
+            return RawBinaryWriterFile(source, 0)
+        msg = f"Must specify a path, bytes object or an existing BinaryWriter instance. Instead got: {source.__class__.__name__}"
+        raise NotImplementedError(msg)
+
+    @classmethod
     def to_auto(
         cls,
         source: TARGET_TYPES,
@@ -851,7 +855,7 @@ class RawBinaryWriter(ABC):
         if isinstance(source, (bytes, memoryview)):  # is immutable binary data
             return cls.to_bytearray(bytearray(source))
         if isinstance(source, RawBinaryWriterFile):
-            return RawBinaryWriterFile(source._stream, source.offset)  # noqa: SLF001
+            return RawBinaryWriterFile(source._to_write, source.offset)  # noqa: SLF001
         if isinstance(source, RawBinaryWriterBytearray):
             return RawBinaryWriterBytearray(source._ba, source._offset)  # noqa: SLF001
         if isinstance(source, (io.RawIOBase, io.BufferedIOBase, mmap.mmap)):
@@ -871,8 +875,17 @@ class RawBinaryWriter(ABC):
             path: The filepath of the file.
             data: The data to write to the file.
         """
-        with Path(path).open("wb") as file:
+        with open(path, "wb") as file:
             file.write(data)
+
+    def tell(self) -> int:
+        """Returns the byte offset position into the stream.
+
+        Returns:
+        -------
+            The byte offset.
+        """
+        return self.position()
 
     @abstractmethod
     def close(
@@ -881,9 +894,7 @@ class RawBinaryWriter(ABC):
         """Closes the stream."""
 
     @abstractmethod
-    def size(
-        self,
-    ) -> int:
+    def size(self) -> int:
         """Returns the total file size.
 
         Returns:
@@ -892,9 +903,7 @@ class RawBinaryWriter(ABC):
         """
 
     @abstractmethod
-    def data(
-        self,
-    ) -> bytes:
+    def data(self) -> bytes:
         """Returns the full file data.
 
         Returns:
@@ -927,9 +936,7 @@ class RawBinaryWriter(ABC):
         """Moves the pointer for the stream to the end."""
 
     @abstractmethod
-    def position(
-        self,
-    ) -> int:
+    def position(self) -> int:
         """Returns the byte offset into the stream.
 
         Returns:
@@ -1189,23 +1196,6 @@ class RawBinaryWriter(ABC):
             *args: Values to write.
         """
 
-    @abstractmethod
-    def write_locstring(
-        self,
-        value: LocalizedString,
-        *,
-        big: bool = False,
-    ):
-        """Writes the specified localized string to the stream.
-
-        The binary data structure that is read follows the structure found in the GFF format specification.
-
-        Args:
-        ----
-            value: The localized string to be written.
-            big: Write any integers as big endian.
-        """
-
 
 class RawBinaryWriterFile(RawBinaryWriter):
     def __init__(
@@ -1213,11 +1203,19 @@ class RawBinaryWriterFile(RawBinaryWriter):
         stream: io.BufferedIOBase | io.RawIOBase,
         offset: int = 0,
     ):
-        self._stream: io.BufferedIOBase | io.RawIOBase = stream
+        self._to_write: io.BufferedIOBase | io.RawIOBase = stream
         self.offset: int = offset  # FIXME(th3w1zard1): rename to _offset like all the other classes in this file.
-        self.auto_close: bool = True
 
-        self._stream.seek(offset)
+        self._to_write.seek(offset)
+
+    # For backwards compatibility with old api.
+    @property
+    def _stream(self) -> io.BufferedIOBase | io.RawIOBase:
+        return self._to_write
+
+    @_stream.setter
+    def _stream(self, value: io.BufferedIOBase | io.RawIOBase):
+        self._to_write = value
 
     def __enter__(
         self,
@@ -1230,51 +1228,46 @@ class RawBinaryWriterFile(RawBinaryWriter):
         exc_val,
         exc_tb,
     ):
-        if self.auto_close:
-            self.close()
+        self.close()
 
     def close(
         self,
     ):
         """Closes the stream."""
-        self._stream.close()
+        self._to_write.close()
 
-    def size(
-        self,
-    ) -> int:
+    def size(self) -> int:
         """Returns the total file size.
 
         Returns:
         -------
             The total file size.
         """
-        pos: int = self._stream.tell()
-        self._stream.seek(0, 2)
-        size: int = self._stream.tell()
-        self._stream.seek(pos)
+        pos: int = self._to_write.tell()
+        self._to_write.seek(0, 2)
+        size: int = self._to_write.tell()
+        self._to_write.seek(pos)
         return size
 
-    def data(
-        self,
-    ) -> bytes:
+    def data(self) -> bytes:
         """Returns the full file data.
 
         Returns:
         -------
             The full file data.
         """
-        pos: int = self._stream.tell()
-        self._stream.seek(0)
-        data: bytes | None = self._stream.read()
-        self._stream.seek(pos)
+        pos: int = self._to_write.tell()
+        self._to_write.seek(0)
+        data: bytes | None = self._to_write.read()
+        self._to_write.seek(pos)
         return b"" if data is None else data
 
     def clear(
         self,
     ):
         """Clears all the data in the file."""
-        self._stream.seek(0)
-        self._stream.truncate()
+        self._to_write.seek(0)
+        self._to_write.truncate()
 
     def seek(
         self,
@@ -1286,24 +1279,22 @@ class RawBinaryWriterFile(RawBinaryWriter):
         ----
             position: The byte index into stream.
         """
-        self._stream.seek(position + self.offset)
+        self._to_write.seek(position + self.offset)
 
     def end(
         self,
     ):
         """Moves the pointer for the stream to the end."""
-        self._stream.seek(0, 2)
+        self._to_write.seek(0, 2)
 
-    def position(
-        self,
-    ) -> int:
+    def position(self) -> int:
         """Returns the byte offset into the stream.
 
         Returns:
         -------
             The byte offset.
         """
-        return self._stream.tell() - self.offset
+        return self._to_write.tell() - self.offset
 
     def write_uint8(
         self,
@@ -1318,7 +1309,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}B", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}B", value))
 
     def write_int8(
         self,
@@ -1333,7 +1324,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}b", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}b", value))
 
     def write_uint16(
         self,
@@ -1348,7 +1339,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}H", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}H", value))
 
     def write_int16(
         self,
@@ -1363,7 +1354,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}h", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}h", value))
 
     def write_uint32(
         self,
@@ -1386,7 +1377,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
         if max_neg1 and value == -1:
             value = 0xFFFFFFFF
 
-        self._stream.write(struct.pack(f"{_endian_char(big)}I", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}I", value))
 
     def write_int32(
         self,
@@ -1401,7 +1392,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}i", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}i", value))
 
     def write_uint64(
         self,
@@ -1416,7 +1407,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}Q", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}Q", value))
 
     def write_int64(
         self,
@@ -1431,7 +1422,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}q", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}q", value))
 
     def write_single(
         self,
@@ -1446,7 +1437,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value))
 
     def write_double(
         self,
@@ -1461,7 +1452,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}d", value))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}d", value))
 
     def write_vector2(
         self,
@@ -1476,8 +1467,8 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value.x))
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value.y))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value.x))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value.y))
 
     def write_vector3(
         self,
@@ -1492,9 +1483,9 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value.x))
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value.y))
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value.z))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value.x))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value.y))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value.z))
 
     def write_vector4(
         self,
@@ -1509,10 +1500,10 @@ class RawBinaryWriterFile(RawBinaryWriter):
             value: The value to be written.
             big: Write bytes as big endian.
         """
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value.x))
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value.y))
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value.z))
-        self._stream.write(struct.pack(f"{_endian_char(big)}f", value.w))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value.x))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value.y))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value.z))
+        self._to_write.write(struct.pack(f"{_endian_char(big)}f", value.w))
 
     def write_bytes(
         self,
@@ -1524,7 +1515,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
         ----
             value: The bytes to be written.
         """
-        self._stream.write(value)
+        self._to_write.write(value)
 
     def write_string(  # noqa: PLR0913
         self,
@@ -1578,7 +1569,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             while len(value) < string_length:
                 value += padding
             value = value[:string_length]
-        self._stream.write(value.encode(encoding or "windows-1252", errors=errors))
+        self._to_write.write(value.encode(encoding or "windows-1252", errors=errors))
 
     def write_line(
         self,
@@ -1599,7 +1590,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
             line += str(round(arg, 7)) if isinstance(arg, float) else str(arg)
             line += " "
         line += "\n"
-        self._stream.write(line.encode())
+        self._to_write.write(line.encode())
 
     def write_locstring(
         self,
@@ -1636,30 +1627,32 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         ba: bytearray,
         offset: int = 0,
     ):
-        self._ba: bytearray = ba
+        self._to_write: bytearray = ba
         self._offset: int = offset
         self._position: int = 0
 
-    def __enter__(
-        self,
-    ):
+    @property
+    def _ba(self) -> bytearray:
+        return self._to_write
+
+    @_ba.setter
+    def _ba(self, value: bytearray):
+        self._to_write = value
+
+    def __enter__(self):
         return self
 
     def __exit__(
         self,
-        exc_type,
-        exc_val,
-        exc_tb,
-    ): ...
-
-    def close(
-        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ):
-        """Closes the stream."""
+        ...
 
-    def size(
-        self,
-    ) -> int:
+    def close(self): ...
+
+    def size(self) -> int:
         """Returns the total file size.
 
         Returns:
@@ -1668,9 +1661,7 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         """
         return len(self._ba)
 
-    def data(
-        self,
-    ) -> bytes:
+    def data(self) -> bytes:
         """Returns the full file data.
 
         Returns:
@@ -1703,9 +1694,7 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         """Moves the pointer for the stream to the end."""
         self._position = len(self._ba)
 
-    def position(
-        self,
-    ) -> int:
+    def position(self) -> int:
         """Returns the byte offset into the stream.
 
         Returns:

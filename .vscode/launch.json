@@ -2,15 +2,13 @@
     "version": "0.2.0",
     "preLaunchTask": "install_requirements",
     "dependsOn": "install_requirements",
-    "configurations":
-    [
+    "configurations": [
         {
-            "type": "bashdb",
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
             "request": "launch",
-            "name": "Bash-Debug (current file)",
-            "cwd": "${workspaceFolder}",
             "program": "${file}",
-            "args": []
+            "console": "integratedTerminal"
         },
         {
             "name": "PowerShell Launch Current File",
@@ -18,28 +16,6 @@
             "request": "launch",
             "script": "${file}",
             "cwd": "${fileDirname}"
-        },
-        {
-            "name": "Python C++ Debug",
-            "type": "pythoncpp",
-            "request": "launch",
-            "pythonConfig": "default",
-            "cppConfig": "default (win) Attach"
-        },
-        {
-            "name": "Python: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "justMyCode": true,
-            "pythonArgs": [
-                "-Xfrozen_modules=off",
-                "-Xdev"
-            ],
-            "autoReload": {
-                "enable": true,
-            },
         },
         {
             "name": "Run Holocron Toolset",
@@ -51,11 +27,11 @@
                 "-Xfrozen_modules=off",
                 "-Xdev"
             ],
-            "console": "integratedTerminal",
             "justMyCode": false,
             "autoReload": {
                 "enable": true,
             },
+            "console": "integratedTerminal",
         },
         {
             "name": "Toolset: Compile UI",

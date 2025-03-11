@@ -444,7 +444,7 @@ def main():
             or (unknown[0] if len(unknown) > 0 else None)
             or get_lookup_function()("Path to the first K1/TSL install, file, or directory to diff."),
         ).resolve()
-        if PARSER_ARGS.path1.safe_exists():
+        if PARSER_ARGS.path1.exists():
             break
         print("Invalid path:", PARSER_ARGS.path1)
         PARSER.print_help()
@@ -455,7 +455,7 @@ def main():
             or (unknown[1] if len(unknown) > 1 else None)
             or get_lookup_function()("Path to the second K1/TSL install, file, or directory to diff."),
         ).resolve()
-        if PARSER_ARGS.path2.safe_exists():
+        if PARSER_ARGS.path2.exists():
             break
         print("Invalid path:", PARSER_ARGS.path2)
         PARSER.print_help()

@@ -7,7 +7,7 @@ import qtpy
 from qtpy.QtCore import QAbstractTableModel, QItemSelectionModel, QModelIndex, Qt
 from qtpy.QtWidgets import QApplication, QHeaderView, QMenu, QPushButton, QTableView, QVBoxLayout, QWidget
 
-from utility.ui_libraries.qt.widgets.itemviews.abstractview import RobustAbstractItemView
+from .abstractview import RobustAbstractItemView
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QRect

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pykotor-engine"
+version = "0.1.0"
+description = "KotOR Engine Management Library"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.8"
+dependencies = [
+    "pykotor-core>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/pykotor"
+Documentation = "https://pykotor.readthedocs.io" 

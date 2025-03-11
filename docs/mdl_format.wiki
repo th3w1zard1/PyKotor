@@ -1,0 +1,1350 @@
+KotOR Models are separated into two separate files (.mdl/.mdx). All offsets in mdl do not include the first 12 bytes (file header).{{Item}}
+
+== Layout ==
+{| class="article-table"
+|Model Header
+{| class="article-table"
+|Geometry Header
+|}
+|-
+|Name Header
+{| class="article-table"
+|Name Offsets
+|-
+|Names
+|}
+|-
+|Animations
+{| class="article-table"
+|Animation Header
+{| class="article-table"
+|Node
+|-
+|Animation Event
+|}
+|}
+|-
+|Nodes
+{| class="article-table"
+|Node Header
+{| class="article-table"
+|Children Offsets
+|-
+|Controllers
+|-
+|Controller Data
+|}
+|-
+|Trimesh Header
+{| class="article-table"
+|Vertices
+|-
+|Faces
+|}
+|-
+|Skinmesh Header
+{| class="article-table"
+|Bonemap
+|-
+|QBones
+|-
+|TBones
+|-
+|Unknown Array
+|}
+|-
+|Danglymesh Header
+{| class="article-table"
+|Constraints
+|}
+|-
+|Lightsaber Header
+{| class="article-table"
+|Lightsaber Vertices
+|}
+|-
+|Walkmesh AABB Header
+{| class="article-table"
+|AABB Tree Root Node
+|}
+|-
+|Reference Header
+{| class="article-table"
+|
+|}
+|-
+|Emitter Header
+{| class="article-table"
+|
+|}
+|-
+|Light Header
+{| class="article-table"
+|Flare Sizes
+|-
+|Flare Positions
+|-
+|Flare Colour Shifts
+|-
+|Flare Texture Names
+|}
+|}
+|}
+
+== Data ==
+
+=== File Header ===
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Description
+|-
+|Unused
+|UInt32
+|0
+|Always set to 0.
+|-
+|MDL Size
+|UInt32
+|4
+|
+|-
+|MDX Size
+|UInt32
+|8
+|
+|}
+
+=== Model Header ===
+Size is 168 bytes, including the geometry header.
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Descirption
+|-
+|Geometry Header
+|GeometryHeader
+|0
+|
+|-
+|Model Type
+|UInt8
+|80
+|
+|-
+|Unknown
+|UInt8
+|81
+|
+|-
+|Padding
+|UInt8
+|82
+|
+|-
+|Disable Fog
+|UInt8
+|83
+|0 = Fog
+1 = No Fog
+|-
+|Child Model Count
+|UInt32
+|84
+|
+|-
+|Animation Array Offset
+|UInt32
+|88
+|
+|-
+|Animation Count
+|UInt32
+|92
+|
+|-
+|Animation Count
+|UInt32
+|96
+|''duplicate''
+|-
+|Unknown
+|UInt32
+|100
+|
+|-
+|Bounding Box Min
+|Float[3]
+|104
+|
+|-
+|Bounding Box Max
+|Float[3]
+|116
+|
+|-
+|Radius
+|Float
+|128
+|
+|-
+|Animation Scale
+|Float
+|132
+|
+|-
+|Supermodel Name
+|Byte[32]
+|136
+|
+|}
+
+=== Geometry Header ===
+Size of 80 bytes.
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Description
+|-
+|Function Pointer
+|UInt32
+|0
+|K1 = 4273776, K1 Anim = 4273392
+K2 = 4285200, K2 Anim = 4284816
+|-
+|Function Pointer
+|UInt32
+|4
+|K1 = 4216096, K1 Anim = 4451552
+K2 = 4216320, K2 Anim = 4522928
+|-
+|Model Name
+|Byte[32]
+|8
+|
+|-
+|Root Node Offset
+|UInt32
+|40
+|
+|-
+|Node Count
+|UInt32
+|44
+|
+|-
+|Unknown
+|UInt32[7]
+|
+|
+|-
+|Geometry Type
+|Byte
+|
+|0x02 = Root Node
+
+0x05 = Animation Node
+|-
+|Padding
+|Byte[3]
+|77
+|
+|}
+=== Names Header ===
+{| class="article-table"
+!Name
+!Type
+!Description
+|-
+|Offset To Root Node
+|UInt32
+|
+|-
+|Unused
+|UInt32
+|
+|-
+|MDX File Size
+|UInt32
+|
+|-
+|MDX Offset
+|UInt32
+|
+|-
+|Names Array Offset
+|UInt32
+|
+|-
+|Names Count
+|UInt32
+|
+|-
+|Names Count
+|UInt32
+|''duplicate''
+|}
+
+=== Animation Header ===
+{| class="article-table"
+!Name
+!Type
+!Description
+|-
+|Geometry Header
+|Geometry Header
+|
+|-
+|Animation Length
+|Float
+|
+|-
+|Transition Time
+|Float
+|
+|-
+|Animation Root
+|Byte[32]
+|
+|-
+|Event Offset
+|UInt32
+|
+|-
+|Event Count
+|UInt32
+|
+|-
+|Event Count
+|UInt32
+|
+|-
+|Unknown
+|UInt32
+|
+|}
+
+=== Event Structure ===
+{| class="article-table"
+!Name
+!Type
+!Description
+|-
+|Activation Time
+|Float
+|
+|-
+|Event Name
+|String
+|
+|}
+
+=== Controller Structure ===
+Each Controller is 16 bytes in size.
+{| class="article-table"
+!Name
+!Type
+!Description
+|-
+|Type
+|UInt32
+|<u>Header</u><syntaxhighlight lang="xml">
+8  = Position
+20 = Orientation
+36 = Scale
+</syntaxhighlight><u>Mesh</u><syntaxhighlight lang="xml">
+100 = Self Illum Color
+132 = Alpha
+</syntaxhighlight><u>Light</u><syntaxhighlight lang="xml">
+76  = Color
+88  = Radius
+96  = Shadow Radius
+100 = Vertical Displacement
+140 = Multiplier
+</syntaxhighlight><u>Emitter</u><syntaxhighlight lang="xml">
+80  = Alpha End
+84  = Alpha Start
+88  = Birth Rate
+92  = Bounce Co
+96  = Combine Time
+100 = Drag
+104 = FPS
+108 = Frame End
+112 = Frame Start
+116 = Gravity
+120 = Life Expectancy
+124 = Mass
+128 = P2P Bezier 2
+132 = P2P Bezier 3
+136 = Particle Rotation
+140 = Random Velocity
+144 = Size Start
+148 = Size End
+152 = Size Start Y
+156 = Size End Y
+160 = Spread
+164 = Threshold
+168 = Velocity
+172 = X Size
+176 = Y Size
+180 = Blur Length
+184 = Lightning Delay
+188 = Lightning Radius
+192 = Lightning Scale
+196 = Lightning Subdivide
+200 = Lightning Zig Zag
+216 = Alpha Mid
+220 = Percent Start
+224 = Percent Mid
+228 = Percent End
+232 = Size Mid
+236 = Size Mid Y
+240 = Random Birth Rate
+252 = Target Size
+256 = Number of Control Pts
+260 = Control Pt Radius
+264 = Control Pt Delay
+268 = Tangent Spread
+272 = Tangent Length
+284 = Color Mid
+380 = Color End
+392 = Color Start
+502 = Emitter Detonate
+</syntaxhighlight><br />
+|-
+|Unknown
+|UInt16
+|Always 0xFFFF
+|-
+|Data Row Count
+|UInt16
+|
+|-
+|First Key Offset
+|UInt16
+|
+|-
+|First Data Offset
+|UInt16
+|
+|-
+|Column Count
+|Byte
+|
+|-
+|Unknown
+|Byte[3]
+|Padding, so that struct is 4-byte aligned
+|}
+Each row is a new time key containing the values for the data stored in the columns.
+
+=== Node Header ===
+Size is 80 bytes.
+{| class="article-table"
+!Name
+!Type
+!
+!Description
+|-
+|Node Type
+|UInt16
+|0
+|Bitmask for what data the node contains.
+0x00000001 = Header
+
+0x00000002 = Light
+
+0x00000004 = Emitter
+
+0x00000008 = Camera
+
+0x00000010 = Reference
+
+0x00000020 = Mesh
+
+0x00000040 = Skin
+
+0x00000080 = Animation
+
+0x00000100 = Danglymesh
+
+0x00000200 = AABB Walkmesh
+
+0x00000800 = Saber
+|-
+|Index Number
+|UInt16
+|2
+|
+|-
+|Node Number
+|UInt16
+|4
+|
+|-
+|Padding
+|UInt16
+|6
+|
+|-
+|Root Node Offset
+|UInt32
+|8
+|
+|-
+|Parent Node Offset
+|UInt32
+|12
+|
+|-
+|Position
+|Float[3]
+|16
+|
+|-
+|Rotation
+|Float[4]
+|28
+|
+|-
+|Child Array Offset
+|UInt32
+|44
+|Array contains offsets to child nodes
+|-
+|Child Count
+|UInt32
+|48
+|
+|-
+|Child Count
+|UInt32
+|52
+|''duplicate''
+|-
+|Controller Array Offset
+|UInt32
+|56
+|
+|-
+|Controller Count
+|UInt32
+|60
+|
+|-
+|Controller Count
+|UInt32
+|64
+|''duplicate''
+|-
+|Controller Data Offset
+|UInt32
+|68
+|
+|-
+|Controller Data Count
+|UInt32
+|72
+|
+|-
+|Controller Data Count
+|UInt32
+|76
+|''duplicate''
+|}
+
+=== Trimesh Header ===
+Size is 332 bytes for KotOR 1 models, 340 bytes for KotOR 2 models.
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Description
+|-
+|Function Pointer
+|UInt32
+|0
+|K1 = 4216656, K1 Skin = 4216592, K1 Dangly = 4216640
+K2 = 4216880, K2 Skin = 4216816, K2 Dangly = 4216864
+|-
+|Function Pointer
+|UInt32
+|4
+|K1 = 4216672, K1 Skin = 4216608, K1 Dangly = 4216624
+
+K2 = 4216896, K2 Skin = 4216832, K2 Dangly = 4216848
+|-
+|Faces Offset
+|UInt32
+|8
+|
+|-
+|Faces Count
+|UInt32
+|12
+|
+|-
+|Faces Count
+|UInt32
+|16
+|''duplicate''
+|-
+|Bounding Box Min
+|Float[3]
+|20
+|
+|-
+|Bounding Box Max
+|Float[3]
+|32
+|
+|-
+|Radius
+|Float
+|44
+|
+|-
+|Average Point
+|Float[3]
+|48
+|
+|-
+|Diffuse Colour
+|Float[3]
+|60
+|RGB values with a range between 0.0 - 1.0
+|-
+|Ambient Colour
+|Float[3]
+|72
+|RGB values with a range between 0.0 - 1.0
+|-
+|Transparency Hint
+|UInt32
+|84
+|
+|-
+|Texture Name
+|Byte[32]
+|88
+|
+|-
+|Lightmap Name
+|Byte[32]
+|120
+|
+|-
+|Unknown
+|Byte[24]
+|152
+|
+|-
+|Vertex Indices Count Array Offset
+|UInt32
+|176
+|
+|-
+|Vertex Indices Count Array Count
+|UInt32
+|180
+|
+|-
+|Vertex Indices Count Array Count
+|UInt32
+|184
+|''duplicate''
+|-
+|Vertex Offsets Array Offset
+|UInt32
+|188
+|
+|-
+|Vertex Offsets Array Count
+|UInt32
+|192
+|
+|-
+|Vertex Offsets Array Count
+|UInt32
+|196
+|''duplicate''
+|-
+|Inverted Counters Array Offset
+|UInt32
+|200
+|
+|-
+|Inverted Counters Array Count
+|UInt32
+|204
+|
+|-
+|Inverted Counters Array Count
+|UInt32
+|208
+|''duplicate''
+|-
+|Unknown
+|UInt32[3]
+|212
+|Always { -1, -1, 0 }
+|-
+|Saber Values
+|Byte[8]
+|224
+|Unknown what these do.
+Values for non saber always { 3, 0, 0, 0, 0, 0, 0, 0 }
+|-
+|Unknown
+|UInt32
+|232
+|
+|-
+|Unknown
+|Float[4]
+|236
+|''possibly values for UV direction (x and y), UV jitter and UV jitter speed''
+|-
+|MDX Data Size
+|UInt32
+|252
+|Size of the individual data for each vertex.
+|-
+|MDX Data Bitmap
+|UInt32
+|256
+|Bitmask for what data is stored for each vertex in the MDX:
+0x001 = Vertices
+
+0x002 = Diffusemap
+
+0x003 = Lightmap
+
+0x020 = Normals
+
+0x080 = Bumpmap
+|-
+|MDX Vertices Offset
+|UInt32
+|260
+|For most meshes this value is 0. 0xFFFFFFFF for lightsabers or when no vertices are present in the mesh.
+|-
+|MDX Normals Offset
+|UInt32
+|264
+|
+|-
+|MDX Vertex Colors Offset
+|UInt32
+|268
+|
+|-
+|MDX Texture 1 UVs Offset
+|UInt32
+|272
+|
+|-
+|MDX Lightmap UVs Offset
+|UInt32
+|276
+|
+|-
+|MDX Texture 2 UVs Offset
+|UInt32
+|280
+|
+|-
+|MDX Texture 3 UVs Offset
+|UInt32
+|284
+|
+|-
+|MDX Unknown Offset
+|UInt32
+|288
+|Contains the data for bumpmaps
+|-
+|MDX Unknown Offset
+|UInt32
+|292
+|
+|-
+|MDX Unknown Offset
+|UInt32
+|296
+|
+|-
+|MDX Unknown Offset
+|UInt32
+|300
+|
+|-
+|Vertex Count
+|UInt16
+|304
+|
+|-
+|Texture Count
+|UInt16
+|306
+|
+|-
+|Has Lightmap
+|Byte
+|308
+|
+|-
+|Rotate Texture
+|Byte
+|309
+|
+|-
+|Background Geometry
+|Byte
+|310
+|
+|-
+|Has Shadow
+|Byte
+|311
+|
+|-
+|Beaming
+|Byte
+|312
+|
+|-
+|Has Render
+|Byte
+|313
+|
+|-
+|Unknown
+|Byte
+|314
+|''flag UV Animate?''
+|-
+|Unknown
+|Byte
+|315
+|
+|-
+|Total Area
+|Float
+|316
+|
+|-
+|Unknown
+|UInt32
+|320
+|
+|-
+|'''Unknown'''
+|'''UInt32'''
+|<nowiki>- / 324</nowiki>
+|'''Only present in Kotor 2 Models'''
+|-
+|'''Unknown'''
+|'''UInt32'''
+|<nowiki>- / 328</nowiki>
+|'''Only present in Kotor 2 Models'''
+|-
+|MDX Data Offset
+|UInt32
+|324 / 332
+|
+|-
+|Vertices Offset
+|UInt32
+|328 / 336
+|
+|}
+
+=== Danglymesh Header ===
+Total size is 28 bytes
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Description
+|-
+|Offset To Constraints
+|UInt32
+|0
+|
+|-
+|Constraints Count
+|UInt32
+|4
+|
+|-
+|Constraints Count
+|UInt32
+|8
+|
+|-
+|Displacement
+|Float
+|12
+|
+|-
+|Tightness
+|Float
+|16
+|
+|-
+|Period
+|Float
+|20
+|
+|-
+|Unknown
+|UInt32
+|24
+|
+|}
+
+=== Skinmesh Header ===
+Total size is 108 bytes
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Description
+|-
+|Compile Weight Array
+|Int[3]
+|0
+|
+|-
+|Offset To MDX Skin Weights
+|UInt32
+|12
+|
+|-
+|Offset To MDX Skin Bone Refence Indexes
+|UInt32
+|16
+|
+|-
+|Offset To Bones Map
+|UInt32
+|20
+|
+|-
+|Bones Map Count
+|UInt32
+|24
+|
+|-
+|
+|UInt32
+|28
+|QBones
+|-
+|
+|UInt32
+|32
+|
+|-
+|
+|UInt32
+|36
+|
+|-
+|
+|UInt32
+|40
+|TBones
+|-
+|
+|UInt32
+|44
+|
+|-
+|
+|UInt32
+|48
+|
+|-
+|
+|UInt32
+|52
+|?
+|-
+|
+|UInt32
+|56
+|
+|-
+|
+|UInt32
+|60
+|
+|-
+|
+|UInt16[17]
+|64
+|
+|-
+|Padding
+|UInt16
+|98
+|
+|}
+
+=== Sabermesh Header ===
+Total size is 20 bytes
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Description
+|-
+|Offset To Vertices
+|UInt32
+|0
+|
+|-
+|Offset To TexCoords
+|UInt32
+|4
+|
+|-
+|Offset To Normals
+|UInt32
+|8
+|
+|-
+|Unknown
+|UInt32
+|12
+|
+|-
+|Unknown
+|UInt32
+|16
+|
+|}
+
+=== Light Header ===
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Description
+|-
+|Unknown Array
+|UInt32
+|0
+|
+|-
+|Unknown Array Count
+|UInt32
+|4
+|
+|-
+|Unknown Array Count
+|UInt32
+|8
+|duplicate
+|-
+|Lens Flare Sizes Offset
+|UInt32
+|12
+|
+|-
+|Lens Flare Sizes Count
+|UInt32
+|16
+|
+|-
+|Lens Flare Sizes Count
+|UInt32
+|20
+|duplicate
+|-
+|Flare Positions Offset
+|UInt32
+|24
+|
+|-
+|Flare Positions Count
+|UInt32
+|28
+|
+|-
+|Flare Positions Count
+|UInt32
+|32
+|duplicate
+|-
+|Flare Color Shifts Offset
+|UInt32
+|36
+|
+|-
+|Flare Color Shifts Count
+|UInt32
+|40
+|
+|-
+|Flare Color Shifts Count
+|UInt32
+|44
+|duplicate
+|-
+|Flare Texture Names Offset
+|UInt32
+|48
+|
+|-
+|Flare Texture Names Count
+|UInt32
+|52
+|
+|-
+|Flare Texture Names Count
+|UInt32
+|56
+|duplicate
+|-
+|Flare Radius
+|Float
+|60
+|
+|-
+|Light Priority
+|UInt32
+|64
+|
+|-
+|Ambient Only
+|UInt32
+|70
+|
+|-
+|Dynamic Type
+|UInt32
+|74
+|
+|-
+|Affect Dynamic
+|UInt32
+|78
+|
+|-
+|Shadow
+|UInt32
+|82
+|
+|-
+|Flare
+|UInt32
+|86
+|
+|-
+|Fading Light
+|UInt32
+|90
+|
+|}
+
+=== Emitter Header ===
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Description
+|-
+|Dead Space
+|Float
+|
+|
+|-
+|Blast Radius
+|Float
+|
+|
+|-
+|Blast Length
+|Float
+|
+|
+|-
+|Branch Count
+|UInt32
+|
+|
+|-
+|Control Point Smoothing
+|Float
+|
+|
+|-
+|X Grid
+|UInt32
+|
+|
+|-
+|Y Grid
+|UInt32
+|
+|
+|-
+|Update
+|Byte[32]
+|
+|
+|-
+|Render
+|Byte[32]
+|
+|
+|-
+|Blend
+|Byte[32]
+|
+|
+|-
+|Texture
+|Byte[32]
+|
+|
+|-
+|Chunk Name
+|Byte[16]
+|
+|
+|-
+|Twosided Texture
+|UInt32
+|
+|
+|-
+|Loop
+|UInt32
+|
+|
+|-
+|Render Order
+|UInt32
+|
+|
+|-
+|Frame Blending
+|UInt32
+|
+|
+|-
+|Depth Texture Name
+|Byte[32]
+|
+|
+|-
+|Padding
+|Byte
+|
+|
+|-
+|Flags
+|UInt32
+|
+|
+|}
+
+=== Reference Header ===
+{| class="article-table"
+!Name
+!Type
+!Offset
+!Description
+|-
+|Model ResRef
+|Byte[32]
+|
+|
+|-
+|Reattachable
+|UInt32
+|
+|
+|}
+
+=== Vertex ===
+{| class="article-table"
+!Name
+!Type
+!Description
+|-
+|X
+|Float
+|
+|-
+|Y
+|Float
+|
+|-
+|Z
+|Float
+|
+|}
+
+=== Face ===
+{| class="article-table"
+!Name
+!Type
+!Description
+|-
+|Normal
+|Vertex
+|
+|-
+|Plane Coefficient
+|Float
+|
+|-
+|Material
+|UInt32
+|Can be found in surfacemat.2da
+|-
+|Face Adjacency 1
+|UInt16
+|
+|-
+|Face Adjacency 2
+|Uint16
+|
+|-
+|Face Adjacency 3
+|UInt16
+|
+|-
+|Vertex 1
+|UInt16
+|
+|-
+|Vertex 2
+|UInt16
+|
+|-
+|Vertex 3
+|UInt16
+|
+|}
+
+== Editors ==
+* https://deadlystream.com/files/file/1150-mdledit/
+* https://deadlystream.com/files/file/779-mdlops/
+* https://deadlystream.com/topic/3714-toolkaurora/
+* https://deadlystream.com/files/file/889-kotorblender/
+* https://deadlystream.com/files/file/1151-kotormax/
+
+== See Also ==
+* https://deadlystream.com/topic/4501-kotortsl-model-format-mdlmdx-technical-details/
+* https://web.archive.org/web/20151002081059/https://home.comcast.net/~cchargin/kotor/mdl_info.html
+* https://github.com/xoreos/xoreos/blob/master/src/graphics/aurora/model_kotor.h
+* https://github.com/xoreos/xoreos/blob/master/src/graphics/aurora/model_kotor.cpp

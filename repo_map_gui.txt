@@ -1,0 +1,4410 @@
+
+vendor\KotOR-Bioware-Libs\BIF.pm:
+  71  0x07FE => 'gic', 	#game instance comments
+  72: 0x07FF => 'gui', 	#GUI definition (GFF)
+  73  0x0800 => 'css',
+
+vendor\KotOR-Bioware-Libs\ERF.pm:
+  77  0x07FE => 'gic', 	#game instance comments
+  78: 0x07FF => 'gui', 	#GUI definition (GFF)
+  79  0x0800 => 'css',
+
+vendor\KotOR-Bioware-Libs\RIM.pm:
+  74  0x07FE => 'gic', 	#game instance comments
+  75: 0x07FF => 'gui', 	#GUI definition (GFF)
+  76  0x0800 => 'css',
+
+vendor\kotor-gui-editor\src\main\menu.ts:
+  101                package_json_dir: asarPath,
+  102:               product_name: 'KGE: KotOR GUI Editor',
+  103              });
+
+vendor\KotOR-Scripting-Tool\NWN Script\Properties\AssemblyInfo.cs:
+   9  [assembly: AssemblyTitle("KotOR Scripting Tool")]
+  10: [assembly: AssemblyDescription("KotOR GUI Scripting application designed by James Goad. \r\nKotOR Scripting Tool is my attempt at a scripting interface for nwnnsscomp.exe")]
+  11  [assembly: AssemblyConfiguration("")]
+
+vendor\KotOR-Unity\Assets\Oculus\AudioManager\Scripts\Audio\Editor\AudioManagerInspector.cs:
+   82  		if ( DrawHeader( "Default Properties", true ) ) {
+   83: 			EditorGUILayout.BeginVertical( GUI.skin.box );
+   84  			EditorGUILayout.PropertyField( serializedObject.FindProperty( "makePersistent" ), new GUIContent( "Don't Destroy on Load" ) );
+
+  119  		if ( DrawHeader( string.Format( "{0} Properties", soundGroupName ), true ) ) {
+  120: 			EditorGUILayout.BeginVertical( GUI.skin.box );
+  121  			EditorGUILayout.PropertyField( soundGroup.FindPropertyRelative( "mixerGroup" ), new GUIContent( "Override Mixer Group", "Leave empty to use the Audio Manager's default mixer group" ) );
+
+  215  		
+  216: 		Color defaultColor = GUI.contentColor;
+  217  		BeginContents();
+
+  219  		if ( DrawHeader( "Sound FX Groups", true ) ) {
+  220: 			EditorGUILayout.BeginVertical( GUI.skin.box );
+  221  			soundGroups.Clear();
+
+  228  					if ( i == selectedGroup ) {
+  229: 						GUI.contentColor = ( i == editGroup ) ? Color.white : Color.yellow;
+  230  					} else {
+  231: 						GUI.contentColor = defaultColor;
+  232  					}
+
+  282  			// reset the color
+  283: 			GUI.contentColor = defaultColor;
+  284  
+
+  389  			GUILayout.Space(3f);
+  390: 			GUILayout.BeginVertical( GUI.skin.box );
+  391  
+
+  583  		GUILayout.Space(3f);
+  584: 		if (!forceOn && !state) GUI.backgroundColor = new Color(0.8f, 0.8f, 0.8f);
+  585  		GUILayout.BeginHorizontal();
+
+  587  		
+  588: 		GUI.changed = false;
+  589  		text = "<b><size=11>" + text + "</size></b>";
+
+  592  		if (!GUILayout.Toggle(true, text, "dragtab", GUILayout.MinWidth(20f))) state = !state;
+  593: 		if (GUI.changed) EditorPrefs.SetBool(key, state);
+  594  		
+
+  596  		GUILayout.EndHorizontal();
+  597: 		GUI.backgroundColor = Color.white;
+  598  		if (!forceOn && !state) GUILayout.Space(3f);
+
+vendor\KotOR-Unity\Assets\Oculus\AudioManager\Scripts\Audio\Editor\MinMaxPropertyDrawer.cs:
+  51  		contentPosition.width = 50.0f;
+  52: 		if ( GUI.Button( contentPosition, "Reset" ) ) {
+  53  			min.floatValue = minMax.minDefaultVal;
+
+vendor\KotOR-Unity\Assets\Oculus\AudioManager\Scripts\Audio\Editor\OSPPropsPropertyDrawer.cs:
+  38  			posLine.height = 1f;
+  39: 			GUI.Box( posLine, "" );
+  40  			position.y -= 10.0f;
+
+vendor\KotOR-Unity\Assets\Oculus\AudioManager\Scripts\Audio\Editor\SoundFXRefPropertyDrawer.cs:
+  44  			// play button
+  45: 			if ( GUI.Button( buttonPosition, "\u25BA" ) ) {
+  46  				if ( AudioManager.IsSoundPlaying( nameProp.stringValue ) ) {
+
+  53  			// select audio manager
+  54: 			if ( GUI.Button( buttonPosition, "\u2630" ) ) { 
+  55  				Selection.activeGameObject = AudioManager.GetGameObject();
+
+vendor\KotOR-Unity\Assets\Oculus\AudioManager\Scripts\Utils\Editor\DrawerInspectorNote.cs:
+  22  		{
+  23: 			Color color = GUI.color;
+  24  			Color faded = color;
+
+  28  			posExplain.y += 15;
+  29: 			GUI.color = faded;
+  30  			EditorGUI.LabelField(posExplain, note.message, EditorStyles.whiteMiniLabel);
+  31: 			GUI.color = color;
+  32  		}
+
+  36  		posLine.height = 1f;
+  37: 		GUI.Box(posLine, "");
+  38  	}
+
+  59  		if ( !string.IsNullOrEmpty( comment.message ) ) {
+  60: 			Color color = GUI.color;
+  61  			Color faded = color;
+
+  65  			posExplain.y += 15;
+  66: 			GUI.color = faded;
+  67  			EditorGUI.LabelField( posExplain, comment.message, EditorStyles.whiteMiniLabel );
+  68: 			GUI.color = color;
+  69  		}
+
+vendor\KotOR-Unity\Assets\Oculus\Avatar\Scripts\OvrAvatarSettingsEditor.cs:
+  51          EditorGUILayout.LabelField(label);
+  52:         GUI.changed = false;
+  53          var result = EditorGUILayout.TextField(variable);
+  54:         if (GUI.changed)
+  55          {
+  56              EditorUtility.SetDirty(OvrAvatarSettings.Instance);
+  57:             GUI.changed = false;
+  58          }
+
+vendor\KotOR-Unity\Assets\Oculus\LipSync\Scripts\OVRLipSyncMicInput.cs:
+   46  
+   47:     [Tooltip("Enable a keypress to toggle the microphone device selection GUI.")]
+   48      public bool enableMicSelectionGUI = false;
+   49:     [Tooltip("Key to toggle the microphone selection GUI if enabled.")]
+   50      public KeyCode micSelectionGUIKey = KeyCode.M;
+
+  274              {
+  275:                 if (GUI.Button(new Rect(left + ((width + buttonSpaceLeft) * i),
+  276                                          top + ((height + buttonSpaceTop) * i), width, height),
+
+vendor\KotOR-Unity\Assets\Oculus\Platform\Editor\OculusPlatformSettingsEditor.cs:
+  104  
+  105:           GUI.enabled = PlatformSettings.UseStandalonePlatform;
+  106  
+
+  123  
+  124:             GUI.enabled = !isLoggingIn;
+  125              if (GUILayout.Button(loginLabel))
+
+  136              }
+  137:             GUI.enabled = true;
+  138            }
+
+  151  
+  152:           GUI.enabled = true;
+  153          });
+
+  205  
+  206:           GUI.enabled = true;
+  207          });
+
+  225  
+  226:         GUI.changed = true;
+  227          EditorApplication.update -= GetAccessToken;
+
+  235        return GUIHelper.MakeControlWithLabel(label, () => {
+  236:         GUI.changed = false;
+  237          var result = EditorGUILayout.TextField(variable);
+
+  245        return GUIHelper.MakeControlWithLabel(label, () => {
+  246:         GUI.changed = false;
+  247          var result = EditorGUILayout.PasswordField(variable);
+
+  255        return GUIHelper.MakeControlWithLabel(label, () => {
+  256:         GUI.changed = false;
+  257          var result = EditorGUILayout.Toggle(variable);
+
+  264      {
+  265:       if (GUI.changed)
+  266        {
+  267          EditorUtility.SetDirty(PlatformSettings.Instance);
+  268:         GUI.changed = false;
+  269        }
+
+vendor\KotOR-Unity\Assets\Oculus\Spatializer\editor\ONSPAudioSourceEditor.cs:
+  42  	{
+  43: 		GUI.color = Color.white;
+  44  		Undo.RecordObject(m_Component, "OculusSpatializerUserParams");
+
+  76  		
+  77: 		if (GUI.changed)
+  78  		{
+
+  87  	{
+  88: 		GUI.color = new Color(1, 1, 1, 0.25f);
+  89  		GUILayout.Box("", "HorizontalSlider", GUILayout.Height(16));
+  90: 		GUI.color = Color.white;
+  91  	}
+
+vendor\KotOR-Unity\Assets\Oculus\Spatializer\editor\ONSPPropagationGeometryEditor.cs:
+  114      {
+  115:         GUI.color = new Color(1, 1, 1, 0.25f);
+  116          GUILayout.Box("", "HorizontalSlider", GUILayout.Height(16));
+  117:         GUI.color = Color.white;
+  118      }
+
+vendor\KotOR-Unity\Assets\Oculus\Spatializer\editor\ONSPPropagationMaterialEditor.cs:
+  159            Undo.SetCurrentGroupName("Points Removed");
+  160:           GUI.changed = true;
+  161  
+
+  170            Undo.SetCurrentGroupName("Points Added");
+  171:           GUI.changed = true;
+  172  
+
+  197  
+  198:           if(GUI.Button(r2, "–")){
+  199  
+
+  223          EditorGUI.DrawRect(tick, textStyle.normal.textColor);
+  224:         GUI.Label(label, value.ToString("0.000"), textStyle);
+  225          tick.y += label.height;
+
+  252            label.x = tick.x - 2;
+  253:           GUI.Label(label, FrequencyToString(frequency), textStyle);
+  254  
+
+  279  #if UNITY_5
+  280:         GUI.DrawTexture(r, texture, ScaleMode.StretchToFill, false, 0);
+  281:         GUI.DrawTexture(r, texture, ScaleMode.StretchToFill, false, 0);
+  282  #else
+  283:         GUI.DrawTexture(r, texture, ScaleMode.StretchToFill, false, 0, Color.white, 0, radius);
+  284:         GUI.DrawTexture(r, texture, ScaleMode.StretchToFill, false, 0, Color.black, 2, radius);
+  285  #endif
+
+  304                Undo.SetCurrentGroupName("Point Added");
+  305:               GUI.changed = true;
+  306  
+
+  328                  Undo.SetCurrentGroupName("Point Selected");
+  329:                 GUI.changed = true;
+  330  
+
+  375              Undo.SetCurrentGroupName("Point Moved");
+  376:             GUI.changed = true;
+  377              e.Use();
+
+  414        Undo.SetCurrentGroupName("Point Removed");
+  415:       GUI.changed = true;
+  416  
+
+vendor\KotOR-Unity\Assets\Oculus\Spatializer\editor\ONSPReflectionCustomGUI.cs:
+    2  Filename    :   ONSPReflectionCustomGUI.cs
+    3: Content     :   GUI for Oculus Spatializer mixer effect
+    4  Copyright   :   Copyright (c) Facebook Technologies, LLC and its affiliates. All rights reserved.
+
+   49          ONSPSettings.Instance.voiceLimit = EditorGUILayout.IntField(" ", ONSPSettings.Instance.voiceLimit);
+   50:         if (GUI.changed)
+   51          {
+   52:             GUI.changed = false;
+   53              EditorUtility.SetDirty(ONSPSettings.Instance);
+
+  131  	{
+  132: 		GUI.color = new Color(1, 1, 1, 0.25f);
+  133  		GUILayout.Box("", "HorizontalSlider", GUILayout.Height(16));
+  134: 		GUI.color = Color.white;
+  135  	}
+
+vendor\KotOR-Unity\Assets\Oculus\VR\Editor\OVRBuild.cs:
+  110  			GUIContent btnTxt = new GUIContent("Cancel");
+  111: 			var rt = GUILayoutUtility.GetRect(btnTxt, GUI.skin.button, GUILayout.ExpandWidth(false));
+  112  			rt.center = new Vector2(EditorGUIUtility.currentViewWidth / 2, progressRect.height * 2);
+  113: 			if (GUI.Button(rt, btnTxt, GUI.skin.button))
+  114  			{
+
+vendor\KotOR-Unity\Assets\Oculus\VR\Editor\OVRBundleTool.cs:
+  131  
+  132: 			var buildSettingBtnRt = GUILayoutUtility.GetRect(buildSettingsBtnTxt, GUI.skin.button, GUILayout.Width(150));
+  133: 			if (GUI.Button(buildSettingBtnRt, buildSettingsBtnTxt))
+  134  			{
+
+  158  				GUIContent sceneBtnTxt = new GUIContent("Build and Deploy Scene(s)");
+  159: 				var sceneBtnRt = GUILayoutUtility.GetRect(sceneBtnTxt, GUI.skin.button, GUILayout.Width(200));
+  160: 				if (GUI.Button(sceneBtnRt, sceneBtnTxt))
+  161  				{
+
+  222  			GUIContent btnTxt = new GUIContent("Build and Deploy App");
+  223: 			var rt = GUILayoutUtility.GetRect(btnTxt, GUI.skin.button, GUILayout.Width(200));
+  224: 			if (GUI.Button(rt, btnTxt))
+  225  			{
+
+  240  				GUIContent clearDeviceBundlesTxt = new GUIContent("Delete Device Bundles");
+  241: 				var clearDeviceBundlesBtnRt = GUILayoutUtility.GetRect(clearDeviceBundlesTxt, GUI.skin.button, GUILayout.ExpandWidth(true));
+  242: 				if (GUI.Button(clearDeviceBundlesBtnRt, clearDeviceBundlesTxt))
+  243  				{
+
+  247  				GUIContent clearLocalBundlesTxt = new GUIContent("Delete Local Bundles");
+  248: 				var clearLocalBundlesBtnRt = GUILayoutUtility.GetRect(clearLocalBundlesTxt, GUI.skin.button, GUILayout.ExpandWidth(true));
+  249: 				if (GUI.Button(clearLocalBundlesBtnRt, clearLocalBundlesTxt))
+  250  				{
+
+  280  				GUIContent launchBtnTxt = new GUIContent("Launch App");
+  281: 				var launchBtnRt = GUILayoutUtility.GetRect(launchBtnTxt, GUI.skin.button, GUILayout.ExpandWidth(true));
+  282: 				if (GUI.Button(launchBtnRt, launchBtnTxt))
+  283  				{
+
+  286  
+  287: 				var buildSettingBtnRt = GUILayoutUtility.GetRect(buildSettingsBtnTxt, GUI.skin.button, GUILayout.ExpandWidth(true));
+  288: 				if (GUI.Button(buildSettingBtnRt, buildSettingsBtnTxt))
+  289  				{
+
+  293  				GUIContent uninstallTxt = new GUIContent("Uninstall APK");
+  294: 				var uninstallBtnRt = GUILayoutUtility.GetRect(uninstallTxt, GUI.skin.button, GUILayout.ExpandWidth(true));
+  295: 				if (GUI.Button(uninstallBtnRt, uninstallTxt))
+  296  				{
+
+  301  				GUIContent clearLogTxt = new GUIContent("Clear Log");
+  302: 				var clearLogBtnRt = GUILayoutUtility.GetRect(clearLogTxt, GUI.skin.button, GUILayout.ExpandWidth(true));
+  303: 				if (GUI.Button(clearLogBtnRt, clearLogTxt))
+  304  				{
+
+vendor\KotOR-Unity\Assets\Oculus\VR\Editor\OVRLint.cs:
+  214  			EditorGUILayout.BeginHorizontal();
+  215: 			GUI.enabled = !record.complete;
+  216  			if (record.targetObject)
+
+  256  			}
+  257: 			GUI.enabled = true;
+  258  			EditorGUILayout.EndHorizontal();
+
+vendor\KotOR-Unity\Assets\Oculus\VR\Editor\OVRPlatformTool.cs:
+   322  			// Add an Upload button
+   323: 			GUI.enabled = !activeProcess;
+   324  			GUIContent btnTxt = new GUIContent("Upload");
+   325: 			var rt = GUILayoutUtility.GetRect(btnTxt, GUI.skin.button, GUILayout.ExpandWidth(false));
+   326  			var btnYPos = rt.center.y;
+   327  			rt.center = new Vector2(EditorGUIUtility.currentViewWidth / 2 - rt.width / 2 - buttonPadding, btnYPos);
+   328: 			if (GUI.Button(rt, btnTxt, GUI.skin.button))
+   329  			{
+
+   335  			// Add a cancel button
+   336: 			GUI.enabled = activeProcess;
+   337  			btnTxt = new GUIContent("Cancel");
+   338: 			rt = GUILayoutUtility.GetRect(btnTxt, GUI.skin.button, GUILayout.ExpandWidth(false));
+   339  			rt.center = new Vector2(EditorGUIUtility.currentViewWidth / 2 + rt.width / 2 + buttonPadding, btnYPos);
+   340: 			if (GUI.Button(rt, btnTxt, GUI.skin.button))
+   341  			{
+
+   351  
+   352: 			GUI.enabled = true;
+   353  			GUILayout.FlexibleSpace();
+
+   997  			{
+   998: 				Color defaultColor = GUI.backgroundColor;
+   999: 				GUI.backgroundColor = new Color(.9f, 0.5f, 0.5f);
+  1000  				rect = GUILayoutUtility.GetRect(SINGLE_LINE_SPACING, SINGLE_LINE_SPACING, GUILayout.ExpandWidth(false));
+  1001: 				if (GUI.Button(rect, "X"))
+  1002  				{
+
+  1004  				}
+  1005: 				GUI.backgroundColor = defaultColor;
+  1006  			}
+
+  1009  			rect = GUILayoutUtility.GetRect(75f, SINGLE_LINE_SPACING, GUILayout.ExpandWidth(false));
+  1010: 			if (GUI.Button(rect, "Choose ..."))
+  1011  			{
+
+  1041  		{
+  1042: 			if (GUI.changed)
+  1043  			{
+  1044  				EditorUtility.SetDirty(OVRPlatformToolSettings.Instance);
+  1045: 				GUI.changed = false;
+  1046  			}
+
+vendor\KotOR-Unity\Assets\Oculus\VR\Editor\OVRSystemProfilerPanel.cs:
+  137  
+  138: 		EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+  139  
+
+  177  
+  178: 		EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+  179  
+
+vendor\KotOR-Unity\Assets\Oculus\VR\Scripts\Util\OVRDebugInfo.cs:
+   87      {
+   88:         // Create canvas for using new GUI
+   89          debugUIManager = new GameObject();
+
+  249  	/// <summary>
+  250:     /// It's for rift present GUI
+  251      /// </summary>
+
+  418  
+  419:         // Interval ended - update GUI text and start new interval
+  420          if (timeLeft <= 0.0)
+
+vendor\KotOR-Unity\Assets\Oculus\VR\Scripts\Util\OVRGazePointer.cs:
+  78  
+  79:     // Optionally present GUI element displaying progress when using gaze-to-select mechanics
+  80      private OVRProgressIndicator progressIndicator;
+
+vendor\KotOR-Unity\Assets\Oculus\VR\Scripts\Util\OVRProfiler.cs:
+  104  
+  105: 			GUI.enabled = true;
+  106  
+
+vendor\KotOR-Unity\Assets\Scripts\Editor\TemplateEditor.cs:
+  132                  //Draw the model render
+  133:                 GUI.DrawTexture(r, render, ScaleMode.ScaleToFit);
+  134  
+
+  138                      r = new Rect(r.xMax - len, r.yMax - len, len, len);
+  139:                     GUI.DrawTexture(r, targetIconTexture, ScaleMode.ScaleToFit);
+  140                  }
+
+vendor\KotOR-Unity\Assets\Scripts\ResourceLoader\Resources.cs:
+  35  		UTP = 2044,
+  36: 		GUI = 2047,
+  37  		UTM = 2051,
+
+vendor\KotOR.js\LICENSE.md:
+  663  parts of the General Public License.  Of course, your program's commands
+  664: might be different; for a GUI interface, you would use an "about box".
+  665  
+
+vendor\KotOR.js\repo_map_huge.txt:
+  5105  │  LOADING   = -1,
+  5106: │  GUI       =  0,
+  5107  │  INGAME    =  1,
+
+vendor\KotOR.js\repo_map_large.txt:
+  2322  │  LOADING   = -1,
+  2323: │  GUI       =  0,
+  2324  │  INGAME    =  1,
+
+vendor\KotOR.js\repo_map.txt:
+  113  │  LOADING   = -1,
+  114: │  GUI       =  0,
+  115  │  INGAME    =  1,
+
+vendor\KotOR.js\src\GameState.ts:
+  152    
+  153:   static Mode: EngineMode = EngineMode.GUI;
+  154    static holdWorldFadeInForDialog = false;
+
+  573      //AudioEngine.Unmute()
+  574:     GameState.Mode = EngineMode.GUI;
+  575      GameState.State = EngineState.RUNNING;
+
+  921      }else{
+  922:       GameState.Mode = EngineMode.GUI;
+  923      }
+
+vendor\KotOR.js\src\controls\IngameControls.ts:
+  645  
+  646:     KeyMapper.Actions[KeyMapAction.GUI].setProcessor( (keymap) => {
+  647        if(!keymap.keyboardInput?.pressed && !keymap.gamepadInput?.pressed) return;
+
+  649        switch(GameState.Mode){
+  650:         case EngineMode.GUI:
+  651            if(currentMenu != GameState.MenuManager.InGameOverlay){
+
+vendor\KotOR.js\src\controls\KeyMapper.ts:
+  393        break;
+  394:       case EngineMode.GUI:
+  395          KeyMapper.ACTIONS_GUI.map( keymap => {
+
+  450      KeyMapper.Actions[KeyMapAction.LeftLookabout].keyboardInput = keyboard.action.ControlLeft;
+  451:     KeyMapper.Actions[KeyMapAction.GUI].keyboardInput = keyboard.action.Escape;
+  452      KeyMapper.Actions[KeyMapAction.SelectPrev].keyboardInput = keyboard.action.KeyQ;
+
+  546      
+  547:     //GUI
+  548      this.Actions[KeyMapAction.PrevMenu].gamepadInput = gamepad.button_bumper_l;
+
+vendor\KotOR.js\src\enums\controls\KeyMapAction.ts:
+  35    AlternateActions2 = "action222",
+  36:   GUI = "action223",
+  37    Pause = "action224",
+
+vendor\KotOR.js\src\enums\engine\EngineMode.ts:
+  12    LOADING   = -1,
+  13:   GUI       =  0,
+  14    INGAME    =  1,
+
+vendor\KotOR.js\src\game\kotor\swkotor-config.ts:
+  8      "Keyboard Camera DPS": "200.000000",
+  9:     "Hide InGame GUI": "0",
+  10      "Use Small Fonts": "0",
+
+vendor\KotOR.js\src\game\kotor\menu\MenuFeedback.ts:
+  114        const CB_HIDE_MENU = this.LB_OPTIONS.addItem(GameState.TLKManager.GetStringById(LBL_HIDE_MENU).Value) as GUICheckBox;
+  115:       CB_HIDE_MENU.attachINIProperty('Game Options.Hide InGame GUI');
+  116        CB_HIDE_MENU.onValueChanged = () => {
+  117:         if(GameState.iniConfig.getProperty('Game Options.Hide InGame GUI') == 1){
+  118            GameState.FeedbackMessageManager.SetFeedbackTypeEnabled(FeedbackOption.HideQuickMenuButtons, true);
+
+vendor\KotOR.js\src\game\tsl\swkotor2-config.ts:
+  53  		"CurSithLord": "0",
+  54: 		"Hide InGame GUI": "0",
+  55  		"Use Small Fonts": "0",
+
+vendor\KotOR.js\src\game\tsl\menu\MenuFeedback.ts:
+  117        const CB_HIDE_MENU = this.LB_OPTIONS.addItem(GameState.TLKManager.GetStringById(LBL_HIDE_MENU).Value) as GUICheckBox;
+  118:       CB_HIDE_MENU.attachINIProperty('Game Options.Hide InGame GUI');
+  119        CB_HIDE_MENU.onValueChanged = () => {
+  120:         if(GameState.iniConfig.getProperty('Game Options.Hide InGame GUI') == 1){
+  121            GameState.FeedbackMessageManager.SetFeedbackTypeEnabled(FeedbackOption.HideQuickMenuButtons, true);
+
+vendor\KotOR.js\src\gui\GameMenu.ts:
+  66  
+  67:   engineMode: EngineMode = EngineMode.GUI;
+  68  
+
+vendor\KotOR.js\src\managers\FeedbackMessageManager.ts:
+  38      this.FeedbackOptions.StatusSummary = this.INIConfig.getProperty('Game Options.Status Summary') == 1;
+  39:     this.FeedbackOptions.HideQuickMenuButtons = this.INIConfig.getProperty('Game Options.Hide InGame GUI') == 1;
+  40      this.FeedbackOptions.EnableToolTips = this.INIConfig.getProperty('Game Options.Enable Tooltips') == 1;
+
+vendor\KotOR.js\src\nwscript\NWScriptDefK1.ts:
+  3385    265:{
+  3386:     comment: "265: Brings up the level up GUI for the player.  The GUI will only show up\nif the player has gained enough experience points to level up.\n* Returns TRUE if the GUI was successfully brought up; FALSE if not.\n",
+  3387      name: "ShowLevelUpGUI",
+
+  4651    388:{
+  4652:     comment: "388: Spawn a GUI panel for the client that controls oPC.\n- oPC\n- nGUIPanel: GUI_PANEL_*\n* Nothing happens if oPC is not a player character or if an invalid value is\nused for nGUIPanel.\n",
+  4653      name: "PopUpGUIPanel",
+
+  6306    554:{
+  6307:     comment: "554: Spawn in the Death GUI.\nThe default (as defined by BioWare) can be spawned in by PopUpGUIPanel, but\nif you want to turn off the 'Respawn' or 'Wait for Help' buttons, this is the\nfunction to use.\n- oPC\n- bRespawnButtonEnabled: if this is TRUE, the 'Respawn' button will be enabled\non the Death GUI.\n- bWaitForHelpButtonEnabled: if this is TRUE, the 'Wait For Help' button will\nbe enabled on the Death GUI.\n- nHelpStringReference\n- sHelpString\n",
+  6308      name: "PopUpDeathGUIPanel",
+
+  7624    712:{
+  7625:     comment: "712: ShowPartySelectionGUI\nBrings up the party selection GUI for the player to\nselect the members of the party from\nif exit script is specified, will be executed when\nthe GUI is exited\n",
+  7626      name: "ShowPartySelectionGUI",
+
+vendor\KotOR.js\src\nwscript\NWScriptDefK2.ts:
+  1898    265: {
+  1899:     comment: '265: Brings up the level up GUI for the player.  The GUI will only show up\n     if the player has gained enough experience points to level up.\n* Returns TRUE if the GUI was successfully brought up; FALSE if not.',
+  1900      name: 'ShowLevelUpGUI',
+
+  2759    388: {
+  2760:     comment: '388: Spawn a GUI panel for the client that controls oPC.\n- oPC\n- nGUIPanel: GUI_PANEL_*\n* Nothing happens if oPC is not a player character or if an invalid value is\n  used for nGUIPanel.',
+  2761      name: 'PopUpGUIPanel',
+
+  3923    554: {
+  3924:     comment: '554: Spawn in the Death GUI.\nThe default (as defined by BioWare) can be spawned in by PopUpGUIPanel, but\nif you want to turn off the \'Respawn\' or \'Wait for Help\' buttons, this is the\nfunction to use.\n- oPC\n- bRespawnButtonEnabled: if this is TRUE, the \'Respawn\' button will be enabled\n  on the Death GUI.\n- bWaitForHelpButtonEnabled: if this is TRUE, the \'Wait For Help\' button will\n  be enabled on the Death GUI.\n- nHelpStringReference\n- sHelpString',
+  3925      name: 'PopUpDeathGUIPanel',
+
+  5029    712: {
+  5030:     comment: '712: ShowPartySelectionGUI\nBrings up the party selection GUI for the player to\nselect the members of the party from\nif exit script is specified, will be executed when\nthe GUI is exited\nRWT-OEI 08/23/04 - New parameter = nAllowCancel. Passing in TRUE\n to this parameter makes it possible for the player to cancel out\n of the party selection GUI, so be careful that you are okay with\n them cancelling out of it before you pass TRUE.\n Also, in the sExitScript that gets called after the Party Select\n GUI exits, you can use GetRunScriptVar to find out if they\n cancelled. If it returns TRUE, they didn\'t cancel. If it returns\n FALSE, they cancelled.  See me if there\'s questions.',
+  5031      name: 'ShowPartySelectionGUI',
+
+  5460    773: {
+  5461:     comment: 'FAK-OEI 12/15/2003\n773: Start the GUI for Chemical Workshop',
+  5462      name: 'ShowChemicalUpgradeScreen',
+
+  6151    861: {
+  6152:     comment: '861\n//RWT-OEI 09/09/04\nThis will set the specific input class.\nThe valid options are:\n0 - Normal PC control\n1 - Mini game control\n2 - GUI control\n3 - Dialog Control\n4 - Freelook control',
+  6153      name: 'SetInputClass',
+
+vendor\KotOR.js\src\resource\ResourceTypeInfo.ts:
+  44      "gic" : 'Game Comment',
+  45:     "gui" : 'GUI File',
+  46      "utm" : 'Template: Merchant',
+
+vendor\Kotor.NET\Kotor.NET\Common\Data\ResourceType.cs:
+  47          public static ResourceType GIC = new ResourceType(2046, "gic", "Module Data");
+  48:         public static ResourceType GUI = new ResourceType(2047, "gui", "GUIs");
+  49          public static ResourceType UTM = new ResourceType(2051, "utm", "Merchants");
+
+  73              TWODA, TLK, TXI, GIT, BTI, UTI, BTC, UTC, DLG, ITP ,UTT, DDS, UTS, LTR,
+  74:             GFF, FAC, UTE, UTD, UTP, DFT, GIC, GUI, UTM, DWK, PWK, JRL, UTW, SSF,
+  75              NDB, PTM, PTT, JPG, PNG, LYT, VIS, RIM, PTH, LIP, TPC, MDX, ERF, MP3
+
+vendor\Kotor.NET\Kotor.NET\Resources\KotorGUI\GUI.cs:
+  10  {
+  11:     public class GUI
+  12      {
+
+vendor\Kotor.NET\Kotor.NET\Resources\KotorGUI\GUICompiler.cs:
+  13  {
+  14:     public class GUICompiler : IGFFDecompiler<GUI>
+  15      {
+
+  22  
+  23:         public GUI Decompile()
+  24          {
+  25:             var gui = new GUI
+  26              {
+
+vendor\Kotor.NET\Kotor.NET\Resources\KotorGUI\GUIDecompiler.cs:
+  12      {
+  13:         private GUI _gui;
+  14  
+  15:         public GUIDecompiler(GUI gui)
+  16          {
+
+vendor\KotOR_IO\KotOR_IO\KIO.cs:
+  224          /// <summary></summary>
+  225:         [Description("GUI ")]
+  226:         GUI = 2047,
+  227          /// <summary></summary>
+
+  477          /// <summary> Dictionary for conversion of 4 char FileTypes into resource IDs. </summary>
+  478: ⟪ 539 characters skipped ⟫ "UTT ", 2032 }, { "DDS ", 2033 }, { "UTS ", 2035 }, { "LTR ", 2036 }, { "GFF ", 2037 }, { "FAC ", 2038 }, { "UTE ", 2040 }, { "UTD ", 2042 }, { "UTP ", 2044 }, { "DFT ", 2045 }, { "GIC ", 2046 }, { "GUI ", 2047 }, { "UTM ", 2051 }, { "DWK ", 2052 }, { "PWK ", 2053 }, { "JRL ", 2056 }, { "SAV ", 2057 }, { "UTW ", 2058 }, { "SSF ", 2060 }, { "HAK ", 2061 }, { "NDB ", 2064 }, { "PTM ", 2065 }, { "PTT ", 2066 }, { "LYT ", 3000 }, { "VIS ", 3001 }, { "RIM ", 3002 }, { "TPC ", 3007 }, { "MDX ", 3008 }, { "KEY ", 9999 }, { "BIF ", 9998 }, { "ERF ", 9997 } };
+  479  
+
+  486              ResourceType.ARE, ResourceType.BIC, ResourceType.DLG, ResourceType.FAC,
+  487:             ResourceType.GFF, ResourceType.GIC, ResourceType.GIT, ResourceType.GUI,
+  488              ResourceType.IFO, ResourceType.ITP, ResourceType.JRL, ResourceType.PTM,
+
+vendor\kotorblender\io_scene_kotor\constants.py:
+  65      EFFECT = "EFFECT"
+  66:     GUI = "GUI"
+  67      LIGHTSABER = "LIGHTSABER"
+
+vendor\mdlops\mdlops.pl:
+   432  } else {
+   433:   # no files given to command line, so fire up the GUI
+   434    $usegui = "yes";
+
+   945  
+   946:   # GUI: show the instructions/help window
+   947    sub helpview {
+
+  1003  
+  1004: # GUI: handle navigation between option types in options frame
+  1005  sub showoptions {
+
+vendor\NorthernLights-master\Assets\NCSBenchmark.cs:
+  67  
+  68: //         GUI.Label(new Rect(Screen.width / 2 - 100, Screen.height / 2 - 20, 200, 40), "Instructions per second: " + Smooth(ipf * fps).ToString(), style);        
+  69  //     }
+
+vendor\NorthernLights-master\Assets\Cinema Suite\About\Editor\CinemaSuiteWelcome.cs:
+  130          {
+  131:             GUI.skin.label.richText = true;
+  132              
+
+  151                      Rect productsRect = EditorGUILayout.GetControlRect(GUILayout.Width(base.position.width - 22));
+  152:                     GUI.Box(new Rect(productsRect.x-4, productsRect.y, productsRect.width+8, productsRect.height), string.Empty, EditorStyles.toolbar);
+  153                      showInstalledProducts.target = EditorGUI.Foldout(productsRect, showInstalledProducts.target, "Installed Products");
+
+  168                      Rect availProductsRect = EditorGUILayout.GetControlRect(GUILayout.Width(base.position.width - 22));
+  169:                     GUI.Box(new Rect(availProductsRect.x - 4, availProductsRect.y, availProductsRect.width + 8, availProductsRect.height), string.Empty, EditorStyles.toolbar);
+  170                      showAvailableProducts.target = EditorGUI.Foldout(availProductsRect, showAvailableProducts.target, "Available Products");
+
+  259              Rect aboutRect = EditorGUILayout.GetControlRect(GUILayout.Width(base.position.width - 22));
+  260:             GUI.Box(new Rect(aboutRect.x - 4, aboutRect.y, aboutRect.width + 8, aboutRect.height), string.Empty, EditorStyles.toolbar);
+  261              showCinemaSuiteAbout.target = EditorGUI.Foldout(aboutRect, showCinemaSuiteAbout.target, "About Cinema Suite");
+
+vendor\NorthernLights-master\Assets\Cinema Suite\About\Editor\ProductInfo.cs:
+   69  
+   70:             if (GUI.Button(keyImageRect, keyImage, EditorStyles.label))
+   71              {
+
+   76  
+   77:             GUI.skin.button.alignment = TextAnchor.MiddleCenter;
+   78:             GUI.skin.button.imagePosition = ImagePosition.ImageAbove;
+   79  
+
+   82              Rect rect = EditorGUILayout.GetControlRect(GUILayout.Height(42), GUILayout.Width(54));
+   83:             if (GUI.Button(rect, new GUIContent(resourceImage1Label, resourceImage1)))
+   84              {
+
+   88              rect = EditorGUILayout.GetControlRect(GUILayout.Height(42), GUILayout.Width(54));
+   89:             if (GUI.Button(rect, new GUIContent(resourceImage2Label, resourceImage2)))
+   90              {
+
+   94              rect = EditorGUILayout.GetControlRect(GUILayout.Height(42), GUILayout.Width(54));
+   95:             if (GUI.Button(rect, new GUIContent(resourceImage3Label, resourceImage3)))
+   96              {
+
+  100              rect = EditorGUILayout.GetControlRect(GUILayout.Height(42), GUILayout.Width(56));
+  101:             if (GUI.Button(rect, new GUIContent(resourceImage4Label, resourceImage4)))
+  102              {
+
+  106  
+  107:             GUI.skin.label.alignment = TextAnchor.UpperLeft;
+  108  
+
+  112  
+  113:             GUI.skin.label.wordWrap = true;
+  114              Rect heading1Rect = EditorGUILayout.GetControlRect(GUILayout.Height(20));
+
+  117  
+  118:             GUI.Label(heading1Rect, headerText);
+  119:             GUI.Label(heading2Rect, header2Text);
+  120:             GUI.Label(bodyRect, new GUIContent(bodyText));
+  121  
+
+vendor\NorthernLights-master\Assets\Editor\AuroraProjectStatus.cs:
+  312              {
+  313:                 GUI.color = Color.yellow;
+  314              }
+
+  316              {
+  317:                 GUI.color = Color.green;
+  318              }
+
+  320              {
+  321:                 GUI.color = Color.red;
+  322              }
+  323              GUILayout.Label(action.Key + ": " + action.Value);
+  324:             GUI.color = Color.white;
+  325          }
+
+vendor\NorthernLights-master\Assets\Editor\CodeGenerator.cs:
+  48          ResourceType.GIC,
+  49:         ResourceType.GUI,
+  50          ResourceType.BTM, ResourceType.UTM,
+
+vendor\NorthernLights-master\Assets\Editor\KLE\KDialogEditor.cs:
+  377      {
+  378:         GUISkin old = GUI.skin;
+  379:         GUI.skin = (GUISkin)CreateInstance("GUISkin");
+  380:         GUI.skin.button.fontSize = 24;
+  381:         GUI.skin.button.normal.textColor = new Color32(0x00, 0xA4, 0xF4, 0xFF);
+  382:         GUI.skin.button.hover.textColor = new Color32(0xF4, 0xF9, 0x00, 0xFF);
+  383:         GUI.skin.button.wordWrap = true;
+  384  
+  385:         GUI.skin.label.fontSize = 24;
+  386:         GUI.skin.label.normal.textColor = new Color32(0x00, 0xA4, 0xF4, 0xFF);
+  387:         GUI.skin.label.hover.textColor = new Color32(0xF4, 0xF9, 0x00, 0xFF);
+  388:         GUI.skin.label.wordWrap = true;
+  389  
+  390:         GUI.skin.label.alignment = TextAnchor.MiddleCenter;
+  391  
+
+  405  
+  406:         GUI.skin = old;
+  407      }
+
+vendor\NorthernLights-master\Assets\Editor\KLE\KLipEditor.cs:
+  82              {
+  83:                 GUI.DrawTexture(new Rect(0, 0, WIDTH, HEIGHT), audioTexture, ScaleMode.StretchToFill);
+  84              }
+
+vendor\NorthernLights-master\Assets\Editor\KLE\KModuleEditor.cs:
+  174              {
+  175:                 Color col = GUI.color;
+  176  
+
+  178                  {
+  179:                     GUI.color = Color.green;
+  180                  }
+
+  187  
+  188:                 GUI.color = col;
+  189              }
+
+  197                  }
+  198:                 Color col = GUI.color;
+  199  
+
+  201                  {
+  202:                     GUI.color = Color.green;
+  203                  }
+
+  209  
+  210:                 GUI.color = col;
+  211              }
+
+vendor\NorthernLights-master\Assets\Extensions\unitycoder_com\NormalMapMaker\Editor\NormalMapMaker.cs:
+  69  
+  70: 			//  ** Create button GUI **
+  71  			EditorGUILayout.Space();
+  72: 			GUI.enabled = sourceImage&&(normalGroupEnabled||specularGroupEnabled)?true:false; // disabled if no sourceImage selected
+  73  			if(GUILayout.Button (new GUIContent ("Create Map"+(normalGroupEnabled&&specularGroupEnabled?"s":""), "Create Map"+(normalGroupEnabled&&specularGroupEnabled?"s":"")), GUILayout.Height(40))) 
+
+  76  			}
+  77: 			GUI.enabled = true;
+  78  		}
+
+vendor\NorthernLights-master\Assets\NavMeshComponents\Editor\NavMeshComponentsGUIUtility.cs:
+   99              popupRect = EditorGUI.PrefixLabel(popupRect, 0, new GUIContent(labelName));
+  100:             bool pressed = GUI.Button(popupRect, content, EditorStyles.popup);
+  101  
+
+vendor\NorthernLights-master\Assets\Scripts\CombatUI.cs:
+  196          // Draw the overlay texture
+  197:         GUI.Label(new Rect(0, 0, Screen.width, Screen.height), overlayTexture);
+  198  
+
+  215  
+  216:             GUI.DrawTexture(new Rect(
+  217                  Screen.width / 2 + wOffset - iconRadius * factor,
+
+  236                      float buttonRadius = iconRadius / 2;
+  237:                     GUI.DrawTexture(new Rect(
+  238                          Screen.width / 2 + wOffset - 2 * iconRadius + buttonRadius * factor,
+
+vendor\NorthernLights-master\Assets\Scripts\ResourceLoader\Resources.cs:
+  86          GIC = 2046, // Game instance comments, GFF.
+  87:         GUI = 2047, // GUI definition, GFF.
+  88          CSS = 2048, // Script, conditional source script.
+
+vendor\NorthernLights-master\Assets\Scripts\ResourceLoader\TemplateLoader.cs:
+  77          {
+  78:             return data.Get<AuroraGUI>(resref, ResourceType.GUI);
+  79          }
+
+vendor\NorthernLights-master\Assets\Scripts\Systems\DialogSystem.cs:
+   85          }
+   86:         // Set the KotOR-like GUI style
+   87:         GUI.skin.button.fontSize = (int)(fontFactor * (Screen.height / 128));
+   88:         GUI.skin.button.normal.textColor = new Color32(0x00, 0xA4, 0xF4, 0xFF);
+   89:         GUI.skin.button.hover.textColor = new Color32(0xF4, 0xF9, 0x00, 0xFF);
+   90:         GUI.skin.button.wordWrap = true;
+   91  
+   92:         GUI.skin.label.fontSize = (int)(fontFactor * (Screen.height / 128));
+   93:         GUI.skin.label.normal.textColor = new Color32(0x00, 0xA4, 0xF4, 0xFF);
+   94:         GUI.skin.label.hover.textColor = new Color32(0xF4, 0xF9, 0x00, 0xFF);
+   95:         GUI.skin.label.wordWrap = true;
+   96  
+   97:         GUI.skin.label.alignment = TextAnchor.MiddleCenter;
+   98:         //GUI.skin.box.padding = new RectOffset(0, 0, 0, 0);
+   99  
+
+  106                  {
+  107:                     GUI.skin.button.alignment = TextAnchor.MiddleCenter;
+  108  
+
+  111                  {
+  112:                     GUI.skin.button.alignment = TextAnchor.MiddleLeft;
+  113  
+
+vendor\NorthernLights-master\Assets\Scripts\Systems\GUISystem.cs:
+   58      {
+   59:         // Get the default GUI template
+   60          //LoadGUI(guiName);
+
+  112          {
+  113:             UnityEngine.Debug.Log("Not drawing GUI as not initialized");
+  114              return;
+
+  136      {
+  137:         // Draw the GUI
+  138          //foreach (AuroraGUI.ACONTROLS control in gui.CONTROLS)
+
+  167  
+  168:         //    GUI.Label(pos, tex);
+  169          //}
+
+  316              }
+  317:             GUI.Label(
+  318                  new Rect(point.x - 25, Screen.height - point.y - 25, 50, 50),
+
+  327  {
+  328:     // This is the base class that allows GUI windows to be easily rendered
+  329      // with a common structure
+
+vendor\NorthernLights-master\Assets\Scripts\Systems\LoadingSystem.cs:
+  44              // Show a loading screen
+  45:             GUI.DrawTexture(
+  46                  new Rect(0, 0, Screen.width, Screen.height),
+
+  65  
+  66:             GUI.DrawTexture(
+  67                  bar,
+
+  71  
+  72:             GUI.Label(
+  73                  new Rect(Screen.width / 2 - 20, Screen.height / 2 - 20, 40, 40),
+
+vendor\NorthernLights-master\Assets\Scripts\Templates\Placeable.cs:
+  14              {
+  15:                 guiSystem = GameObject.Find("GUI System").GetComponent<GUISystem>();
+  16              }
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Editor\NodeEditorGUI.cs:
+   11  namespace XNodeEditor {
+   12:     /// <summary> Contains GUI methods </summary>
+   13      public partial class NodeEditorWindow {
+
+   18          private int topPadding { get { return isDocked() ? 19 : 22; } }
+   19:         /// <summary> Executed after all other window GUI. Useful if Zoom is ruining your day. Automatically resets after being run.</summary>
+   20          public event Action onLateGUI;
+
+   27              Event e = Event.current;
+   28:             Matrix4x4 m = GUI.matrix;
+   29              if (graph == null) return;
+
+   55  
+   56:             GUI.matrix = m;
+   57          }
+
+  151          public static void BeginZoomed(Rect rect, float zoom, float topPadding) {
+  152:             GUI.EndClip();
+  153  
+
+  156              padding *= zoom;
+  157:             GUI.BeginClip(new Rect(-((rect.width * zoom) - rect.width) * 0.5f, -(((rect.height * zoom) - rect.height) * 0.5f) + (topPadding * zoom),
+  158                  rect.width * zoom,
+
+  167                  0);
+  168:             GUI.matrix = Matrix4x4.TRS(offset, Quaternion.identity, Vector3.one);
+  169          }
+
+  191              // Draw tiled background
+  192:             GUI.DrawTextureWithTexCoords(rect, gridTex, new Rect(tileOffset, tileAmount));
+  193:             GUI.DrawTextureWithTexCoords(rect, crossTex, new Rect(tileOffset + new Vector2(0.5f, 0.5f), tileAmount));
+  194          }
+
+  431  
+  432:             Color col = GUI.color;
+  433              foreach (XNode.Node node in graph.nodes) {
+
+  475                              if (selectedReroutes.Contains(rerouteRef)) {
+  476:                                 GUI.color = NodeEditorPreferences.GetSettings().highlightColor;
+  477:                                 GUI.DrawTexture(rect, NodeEditorResources.dotOuter);
+  478                              }
+  479  
+  480:                             GUI.color = portColor;
+  481:                             GUI.DrawTexture(rect, NodeEditorResources.dot);
+  482                              if (rect.Overlaps(selectionBox)) selection.Add(rerouteRef);
+
+  488              }
+  489:             GUI.color = col;
+  490              if (Event.current.type != EventType.Layout && currentActivity == NodeActivity.DragGrid) selectedReroutes = selection;
+
+  523              //Save guiColor so we can revert it
+  524:             Color guiColor = GUI.color;
+  525  
+
+  569                      style.padding = new RectOffset();
+  570:                     GUI.color = nodeEditor.GetTint();
+  571                      GUILayout.BeginVertical(style);
+  572:                     GUI.color = NodeEditorPreferences.GetSettings().highlightColor;
+  573                      GUILayout.BeginVertical(new GUIStyle(highlightStyle));
+
+  575                      GUIStyle style = new GUIStyle(nodeEditor.GetBodyStyle());
+  576:                     GUI.color = nodeEditor.GetTint();
+  577                      GUILayout.BeginVertical(style);
+
+  579  
+  580:                 GUI.color = guiColor;
+  581  
+
+  587                  {
+  588:                     GUI.color = Color.yellow;
+  589                      suffix = "*";
+
+  591                  nodeEditor.OnHeaderGUI(suffix);
+  592:                 GUI.color = guiColor;
+  593  
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Editor\NodeEditorGUILayout.cs:
+   68                              if (usePropertyAttributes) {
+   69:                                 //GUI Values are from https://github.com/Unity-Technologies/UnityCsReference/blob/master/Editor/Mono/ScriptAttributeGUI/Implementations/DecoratorDrawers.cs
+   70                                  Rect position = GUILayoutUtility.GetRect(0, (EditorGUIUtility.singleLineHeight * 1.5f) - EditorGUIUtility.standardVerticalSpacing); //Layout adds standardVerticalSpacing after rect so we subtract it.
+
+   72                                  position = EditorGUI.IndentedRect(position);
+   73:                                 GUI.Label(position, (attr as HeaderAttribute).header, EditorStyles.boldLabel);
+   74                              } else spacePadding += EditorGUIUtility.singleLineHeight * 1.5f;
+
+  127                              if (usePropertyAttributes) {
+  128:                                 //GUI Values are from https://github.com/Unity-Technologies/UnityCsReference/blob/master/Editor/Mono/ScriptAttributeGUI/Implementations/DecoratorDrawers.cs
+  129                                  Rect position = GUILayoutUtility.GetRect(0, (EditorGUIUtility.singleLineHeight * 1.5f) - EditorGUIUtility.standardVerticalSpacing); //Layout adds standardVerticalSpacing after rect so we subtract it.
+
+  131                                  position = EditorGUI.IndentedRect(position);
+  132:                                 GUI.Label(position, (attr as HeaderAttribute).header, EditorStyles.boldLabel);
+  133                              } else spacePadding += EditorGUIUtility.singleLineHeight * 1.5f;
+
+  267          public static void DrawPortHandle(Rect rect, Color backgroundColor, Color typeColor) {
+  268:             Color col = GUI.color;
+  269:             GUI.color = backgroundColor;
+  270:             GUI.DrawTexture(rect, NodeEditorResources.dotOuter);
+  271:             GUI.color = typeColor;
+  272:             GUI.DrawTexture(rect, NodeEditorResources.dot);
+  273:             GUI.color = col;
+  274          }
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Editor\NodeEditorPreferences.cs:
+  140              settings.gridBgColor = EditorGUILayout.ColorField(" ", settings.gridBgColor);
+  141:             if (GUI.changed) {
+  142                  SavePrefs(key, settings);
+
+  153              settings.openOnCreate = EditorGUILayout.Toggle(new GUIContent("Open Editor on Create", "Disable to prevent openening the editor when creating a new graph"), settings.openOnCreate);
+  154:             if (GUI.changed) SavePrefs(key, settings);
+  155              EditorGUILayout.Space();
+
+  165              settings.dragToCreate = EditorGUILayout.Toggle(new GUIContent("Drag to Create", "Drag a port connection anywhere on the grid to create and connect a node"), settings.dragToCreate);
+  166:             if (GUI.changed) {
+  167                  SavePrefs(key, settings);
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Editor\NodeEditorWindow.cs:
+  143          private void DraggableWindow(int windowID) {
+  144:             GUI.DragWindow();
+  145          }
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Editor\RenamePopup.cs:
+  46              }
+  47:             GUI.SetNextControlName(inputControlName);
+  48              input = EditorGUILayout.TextField(input);
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Editor\SceneGraphEditor.cs:
+  36                      GUILayout.Label("Really remove graph?");
+  37:                     GUI.color = new Color(1, 0.8f, 0.8f);
+  38                      if (GUILayout.Button("Remove")) {
+
+  42                      }
+  43:                     GUI.color = Color.white;
+  44                      if (GUILayout.Button("Cancel")) {
+
+  48                  } else {
+  49:                     GUI.color = new Color(1, 0.8f, 0.8f);
+  50                      if (GUILayout.Button("Remove graph")) {
+
+  52                      }
+  53:                     GUI.color = Color.white;
+  54                  }
+
+vendor\NorthernLights-master\Assets\xNode\Scripts\Editor\Drawers\NodeEnumDrawer.cs:
+  41  			// Display dropdown
+  42: 			if (GUI.Button(position, new GUIContent(enumName), "MiniPopup")) {
+  43  				// Position is all wrong if we show the dropdown during the node draw phase.
+
+vendor\phaethon\src\phaethon.cpp:
+  126  
+  127: 	app.setWindowIcon(GUI::createWindowIcon());
+  128  
+  129: 	GUI::MainWindow mainWindow(0, Version::getProjectNameVersion(), QSize(800, 600), path.c_str());
+  130  	mainWindow.show();
+
+vendor\phaethon\src\aurora\types.h:
+  113  	kFileTypeGIC            =  2046, ///< Game instance comments, GFF.
+  114: 	kFileTypeGUI            =  2047, ///< GUI definition, GFF.
+  115  	kFileTypeCSS            =  2048, ///< Script, conditional source script.
+
+vendor\phaethon\src\gui\icons.cpp:
+   30  
+   31: namespace GUI {
+   32  
+
+  235  
+  236: } // End of namespace GUI
+
+vendor\phaethon\src\gui\icons.h:
+  29  
+  30: namespace GUI {
+  31  
+
+  34  
+  35: } // End of namespace GUI
+  36  
+
+vendor\phaethon\src\gui\mainwindow.cpp:
+   70  
+   71: namespace GUI {
+   72  
+
+  581  
+  582: } // End of namespace GUI
+
+vendor\phaethon\src\gui\mainwindow.h:
+   46  
+   47: namespace GUI {
+   48  
+
+  147  
+  148: } // End of namespace GUI
+  149  
+
+vendor\phaethon\src\gui\panelbase.cpp:
+  31  
+  32: namespace GUI {
+  33  
+
+  50  
+  51: } // End of namespace GUI
+
+vendor\phaethon\src\gui\panelbase.h:
+  36  
+  37: namespace GUI {
+  38  
+
+  50  
+  51: } // End of namespace GUI
+  52  
+
+vendor\phaethon\src\gui\panelmanager.cpp:
+   34  
+   35: namespace GUI {
+   36  
+
+  106  
+  107: } // End of namespace GUI
+
+vendor\phaethon\src\gui\panelmanager.h:
+  34  
+  35: namespace GUI {
+  36  
+
+  57  
+  58: } // End of namespace GUI
+  59  
+
+vendor\phaethon\src\gui\panelpreviewempty.cpp:
+  35  
+  36: namespace GUI {
+  37  
+
+  53  
+  54: } // End of namespace GUI
+
+vendor\phaethon\src\gui\panelpreviewempty.h:
+  29  
+  30: namespace GUI {
+  31  
+
+  38  
+  39: } // End of namespace GUI
+  40  
+
+vendor\phaethon\src\gui\panelpreviewimage.cpp:
+   44  
+   45: namespace GUI {
+   46  
+
+  419  
+  420: } // End of namespace GUI
+
+vendor\phaethon\src\gui\panelpreviewimage.h:
+   36  
+   37: namespace GUI {
+   38  
+
+  103  
+  104: } // End of namespace GUI
+  105  
+
+vendor\phaethon\src\gui\panelpreviewsound.cpp:
+   43  
+   44: namespace GUI {
+   45  
+
+  237  
+  238: } // End of namespace GUI
+
+vendor\phaethon\src\gui\panelpreviewsound.h:
+  31  
+  32: namespace GUI {
+  33  
+
+  76  
+  77: } // End of namespace GUI
+  78  
+
+vendor\phaethon\src\gui\panelpreviewtable.cpp:
+   43  
+   44: namespace GUI {
+   45  
+
+  110  
+  111: } // End of namespace GUI
+
+vendor\phaethon\src\gui\panelpreviewtable.h:
+  37  
+  38: namespace GUI {
+  39  
+
+  61  
+  62: } // End of namespace GUI
+  63  
+
+vendor\phaethon\src\gui\panelpreviewtext.cpp:
+   43  
+   44: namespace GUI {
+   45  
+
+  102  
+  103: } // End of namespace GUI
+
+vendor\phaethon\src\gui\panelpreviewtext.h:
+  31  
+  32: namespace GUI {
+  33  
+
+  60  
+  61: } // End of namespace GUI
+  62  
+
+vendor\phaethon\src\gui\panelresourceinfo.cpp:
+   40  
+   41: namespace GUI {
+   42  
+
+  106  
+  107: void PanelResourceInfo::update(const GUI::ResourceTreeItem *item) {
+  108  	setLabels(item);
+
+  111  
+  112: void PanelResourceInfo::showExportButtons(const GUI::ResourceTreeItem *item) {
+  113  	if (!item || item->getSource() == Source::kSourceDirectory) {
+
+  210  
+  211: } // End of namespace GUI
+
+vendor\phaethon\src\gui\panelresourceinfo.h:
+  29  
+  30: namespace GUI {
+  31  
+
+  40  	/** Decides which of the export buttons are required and shows them. */
+  41: 	void showExportButtons(const GUI::ResourceTreeItem *item);
+  42  	void showExportButtons(bool enableRaw, bool showMP3, bool showWAV, bool showTGA);
+
+  44  	/** Updates the labels which display information about the resource. */
+  45: 	void setLabels(const GUI::ResourceTreeItem *item);
+  46  
+  47  	/** Calls showExportButtons and setLabels. */
+  48: 	void update(const GUI::ResourceTreeItem *item);
+  49  
+
+  93  
+  94: } // End of namespace GUI
+  95  
+
+vendor\phaethon\src\gui\proxymodel.cpp:
+  32  
+  33: namespace GUI {
+  34  
+
+  59  
+  60: } // End of namespace GUI
+
+vendor\phaethon\src\gui\proxymodel.h:
+  31  
+  32: namespace GUI {
+  33  
+
+  43  
+  44: } // End of namespace GUI
+  45  
+
+vendor\phaethon\src\gui\resourcetree.cpp:
+   56  
+   57: namespace GUI {
+   58  
+
+  366  
+  367: } // End of namespace GUI
+
+vendor\phaethon\src\gui\resourcetree.h:
+   60  
+   61: namespace GUI {
+   62  
+
+  126  
+  127: } // End of namespace GUI
+  128  
+
+vendor\phaethon\src\gui\resourcetreeitem.cpp:
+   33  
+   34: namespace GUI {
+   35  
+
+  287  
+  288: } // End of namespace GUI
+
+vendor\phaethon\src\gui\resourcetreeitem.h:
+   47  
+   48: namespace GUI {
+   49  
+
+  127  
+  128: } // End of namespace GUI
+  129  
+
+vendor\phaethon\src\gui\statusbar.cpp:
+  29  
+  30: namespace GUI {
+  31  
+
+  48  
+  49: } // End of namespace GUI
+
+vendor\phaethon\src\gui\statusbar.h:
+  32  
+  33: namespace GUI {
+  34  
+
+  46  
+  47: } // End of namespace GUI
+  48  
+
+vendor\reone\include\reone\game\game.h:
+   69  
+   70: class GUI;
+   71  
+
+  345  
+  346:     // GUI
+  347  
+
+  362  
+  363:     // END GUI
+  364  
+
+  423  
+  424:     // GUI
+  425  
+
+  438          } catch (const std::exception &e) {
+  439:             error(str(boost::format("Error loading GUI: %s") % std::string(e.what())));
+  440              return nullptr;
+
+  443  
+  444:     // END GUI
+  445  
+
+vendor\reone\include\reone\game\gui\chargen.h:
+  170  
+  171:     // Sub GUI
+  172  
+
+  183  
+  184:     // END Sub GUI
+  185  
+
+vendor\reone\include\reone\graphics\types.h:
+  52      Movie,
+  53:     GUI,
+  54      Font,
+
+vendor\reone\include\reone\gui\gui.h:
+   85  
+   86: class GUI : public IGUI, boost::noncopyable {
+   87  public:
+   88:     GUI(
+   89          graphics::GraphicsOptions &options,
+
+  190  
+  191:     // GUI Colors
+  192  
+
+  195  
+  196:     // END GUI Colors
+  197  
+
+vendor\reone\include\reone\gui\control\panel.h:
+  28      Panel(
+  29:         GUI &gui,
+  30          scene::ISceneGraphs &sceneGraphs,
+
+vendor\reone\include\reone\resource\parser\gff\gui.h:
+  114  
+  115: struct GUI : public GUI_BASECONTROL {
+  116      float ALPHA {0.0f};
+
+  121  
+  122: GUI parseGUI(const Gff &gff);
+  123  
+
+vendor\reone\include\reone\scene\types.h:
+  39  enum class ModelUsage {
+  40:     GUI,
+  41      Room,
+
+vendor\reone\include\reone\system\types.h:
+  40      Audio = 16,
+  41:     GUI = 32,
+  42      Perception = 64,
+
+vendor\reone\src\apps\dataminer\guis.cpp:
+  233          if (!boost::ends_with(resId.resRef.value(), "_x") && !boost::ends_with(resId.resRef.value(), "_p")) {
+  234:             throw std::runtime_error("Invalid TSL GUI ResRef");
+  235          }
+
+  247          if (!boost::ends_with(resId.resRef.value(), "_x") && !boost::ends_with(resId.resRef.value(), "_p")) {
+  248:             throw std::runtime_error("Invalid TSL GUI ResRef");
+  249          }
+
+vendor\reone\src\apps\engine\optionsparser.cpp:
+  120      }
+  121:     if ((logChannelsMask & static_cast<int>(LogChannel::GUI)) != 0) {
+  122:         logChannels.insert(LogChannel::GUI);
+  123      }
+
+vendor\reone\src\apps\launcher\frame.cpp:
+  303      logChannelChoices.Add("Audio");
+  304:     logChannelChoices.Add("GUI");
+  305      logChannelChoices.Add("Perception");
+
+  318      _checkListBoxLogChannels->Check(3, _config.logch & static_cast<int>(LogChannel::Audio));
+  319:     _checkListBoxLogChannels->Check(4, _config.logch & static_cast<int>(LogChannel::GUI));
+  320      _checkListBoxLogChannels->Check(5, _config.logch & static_cast<int>(LogChannel::Perception));
+
+  470      if (_checkListBoxLogChannels->IsChecked(4)) {
+  471:         logch |= static_cast<int>(LogChannel::GUI);
+  472      }
+
+vendor\reone\src\libs\game\gui.cpp:
+  58      if (_resRef.empty()) {
+  59:         throw std::logic_error("GUI resRef must not be empty");
+  60      }
+
+  62      if (!_gui) {
+  63:         throw ResourceNotFoundException(str(boost::format("GUI not found: %s") % _resRef));
+  64      }
+
+vendor\reone\src\libs\game\portraits.cpp:
+  72  std::shared_ptr<Texture> Portraits::getPortraitTexture(const Portrait &portrait) const {
+  73:     return _textures.get(portrait.resRef, TextureUsage::GUI);
+  74  }
+
+vendor\reone\src\libs\game\d20\feats.cpp:
+  40          std::string description(_strings.getText(feats->getInt(row, "description", -1)));
+  41:         std::shared_ptr<Texture> icon(_textures.get(feats->getString(row, "icon"), TextureUsage::GUI));
+  42          uint32_t minCharLevel = feats->getHexInt(row, "mincharlevel");
+
+vendor\reone\src\libs\game\d20\skills.cpp:
+  40          std::string description(_strings.getText(skills->getInt(row, "description", -1)));
+  41:         std::shared_ptr<Texture> icon(_textures.get(skills->getString(row, "icon"), TextureUsage::GUI));
+  42  
+
+vendor\reone\src\libs\game\d20\spells.cpp:
+  39          std::string description(_strings.getText(spells->getInt(row, "spelldesc", -1)));
+  40:         std::shared_ptr<Texture> icon(_textures.get(spells->getString(row, "iconresref"), TextureUsage::GUI));
+  41          uint32_t pips = spells->getHexInt(row, "pips");
+
+vendor\reone\src\libs\game\gui\barkbubble.cpp:
+  31  void BarkBubble::preload(IGUI &gui) {
+  32:     gui.setScaling(GUI::ScalingMode::PositionRelativeToCenter);
+  33  }
+
+vendor\reone\src\libs\game\gui\chargen.cpp:
+  391  
+  392:     auto model = sceneGraph.newModel(*_services.resource.models.get("cgbody_light"), ModelUsage::GUI);
+  393      model->attach("cgbody_light", *creature->sceneNode());
+
+vendor\reone\src\libs\game\gui\computer.cpp:
+  32  void ComputerGUI::preload(IGUI &gui) {
+  33:     gui.setScaling(GUI::ScalingMode::Stretch);
+  34  
+
+vendor\reone\src\libs\game\gui\container.cpp:
+  102      }
+  103:     return _services.resource.textures.get(resRef, TextureUsage::GUI);
+  104  }
+
+vendor\reone\src\libs\game\gui\dialog.cpp:
+  87  void DialogGUI::preload(IGUI &gui) {
+  88:     gui.setScaling(GUI::ScalingMode::Stretch);
+  89  }
+
+vendor\reone\src\libs\game\gui\hud.cpp:
+  49      gui.setResolution(800, 600);
+  50:     gui.setScaling(GUI::ScalingMode::PositionRelativeToCenter);
+  51  
+
+  56      for (auto &tag : combatControlTags) {
+  57:         gui.setControlScaling(tag, GUI::ScalingMode::Stretch);
+  58      }
+
+vendor\reone\src\libs\game\gui\mainmenu.cpp:
+  150      }
+  151:     return sceneGraph.newModel(*model, ModelUsage::GUI);
+  152  }
+
+vendor\reone\src\libs\game\gui\map.cpp:
+  66      std::string resRef("lbl_map" + area);
+  67:     _areaTexture = _services.resource.textures.get(resRef, TextureUsage::GUI);
+  68  
+  69      if (!_arrowTexture) {
+  70:         _arrowTexture = _services.resource.textures.get(_arrowResRef, TextureUsage::GUI);
+  71      }
+  72      if (!_noteTexture) {
+  73:         _noteTexture = _services.resource.textures.get("whitetarget", TextureUsage::GUI);
+  74      }
+
+vendor\reone\src\libs\game\gui\saveload.cpp:
+  178          auto tga = MemoryInputStream(*screenData);
+  179:         TgaReader tgaReader(tga, "screen", TextureUsage::GUI);
+  180          tgaReader.load();
+
+vendor\reone\src\libs\game\gui\selectoverlay.cpp:
+   72      _font = _services.resource.fonts.get("dialogfont16x16");
+   73:     _friendlyReticle = _services.resource.textures.get("friendlyreticle", TextureUsage::GUI);
+   74:     _friendlyReticle2 = _services.resource.textures.get("friendlyreticle2", TextureUsage::GUI);
+   75:     _hostileReticle = _services.resource.textures.get("hostilereticle", TextureUsage::GUI);
+   76:     _hostileReticle2 = _services.resource.textures.get("hostilereticle2", TextureUsage::GUI);
+   77:     _friendlyScroll = _services.resource.textures.get("lbl_miscroll_f", TextureUsage::GUI);
+   78:     _hostileScroll = _services.resource.textures.get("lbl_miscroll_h", TextureUsage::GUI);
+   79:     _hilightedScroll = _services.resource.textures.get("lbl_miscroll_hi", TextureUsage::GUI);
+   80      _reticleHeight = _friendlyReticle2->height();
+
+  394      case ActionType::AttackObject:
+  395:         texture = _services.resource.textures.get(g_attackIcon, TextureUsage::GUI);
+  396          break;
+
+vendor\reone\src\libs\game\gui\chargen\classselect.cpp:
+  203  
+  204:     auto model = sceneGraph.newModel(*_services.resource.models.get("cgbody_light"), ModelUsage::GUI);
+  205      model->attach("cgbody_light", *character->sceneNode());
+
+vendor\reone\src\libs\game\gui\chargen\portraitselect.cpp:
+  128      }
+  129:     auto model = sceneGraph.newModel(*_services.resource.models.get("cghead_light"), ModelUsage::GUI);
+  130      model->attach("cghead_light", *creatureModel);
+
+  174      std::string resRef(_filteredPortraits[_currentPortrait].resRef);
+  175:     std::shared_ptr<Texture> portrait(_services.resource.textures.get(resRef, TextureUsage::GUI));
+  176      _controls.LBL_PORTRAIT->setBorderFill(portrait);
+
+vendor\reone\src\libs\game\gui\ingame\abilities.cpp:
+   95          skillInfo.description = _services.resource.strings.getText(skills->getInt(row, "description"));
+   96:         skillInfo.icon = _services.resource.textures.get(skills->getString(row, "icon"), TextureUsage::GUI);
+   97  
+
+  118      }
+  119:     return _services.resource.textures.get(resRef, TextureUsage::GUI);
+  120  }
+
+vendor\reone\src\libs\game\gui\ingame\character.cpp:
+  218  
+  219:     auto sceneModel = sceneGraph.newModel(*_services.resource.models.get("charmain_light"), ModelUsage::GUI);
+  220      sceneModel->attach("charmain_light", *character->sceneNode());
+
+vendor\reone\src\libs\game\gui\ingame\equip.cpp:
+  342  
+  343:     std::shared_ptr<Texture> texture(_services.resource.textures.get(resRef, TextureUsage::GUI));
+  344      auto pair = icons.insert(std::make_pair(slot, texture));
+
+  355          lbItem.text = _services.resource.strings.getText(kStrRefNone);
+  356:         lbItem.iconTexture = _services.resource.textures.get("inone", TextureUsage::GUI);
+  357          lbItem.iconFrame = getItemFrameTexture(1);
+
+  391      }
+  392:     return _services.resource.textures.get(resRef, TextureUsage::GUI);
+  393  }
+
+vendor\reone\src\libs\game\object\item.cpp:
+  146      }
+  147:     _icon = _services.resource.textures.get(iconResRef, TextureUsage::GUI);
+  148  
+
+vendor\reone\src\libs\graphics\textureutil.cpp:
+  136  
+  137:     } else if (usage == TextureUsage::GUI || usage == TextureUsage::Movie) {
+  138          properties.minFilter = Texture::Filtering::Linear;
+
+vendor\reone\src\libs\graphics\format\curreader.cpp:
+  74          TextureType::TwoDim,
+  75:         getTextureProperties(TextureUsage::GUI));
+  76      _texture->setPixels(_width, _width, PixelFormat::BGRA8, Texture::Layer {std::move(pixels)});
+
+vendor\reone\src\libs\gui\control.cpp:
+  114      if (!corner.empty() && corner != "0") {
+  115:         _border->corner = _resourceSvc.textures.get(corner, TextureUsage::GUI);
+  116      }
+  117      if (!edge.empty() && edge != "0") {
+  118:         _border->edge = _resourceSvc.textures.get(edge, TextureUsage::GUI);
+  119      }
+  120      if (!fill.empty() && fill != "0") {
+  121:         _border->fill = _resourceSvc.textures.get(fill, TextureUsage::GUI);
+  122      }
+
+  154      if (!corner.empty() && corner != "0") {
+  155:         _hilight->corner = _resourceSvc.textures.get(corner, TextureUsage::GUI);
+  156      }
+  157      if (!edge.empty() && edge != "0") {
+  158:         _hilight->edge = _resourceSvc.textures.get(edge, TextureUsage::GUI);
+  159      }
+  160      if (!fill.empty() && fill != "0") {
+  161:         _hilight->fill = _resourceSvc.textures.get(fill, TextureUsage::GUI);
+  162      }
+
+  522      if (!resRef.empty()) {
+  523:         texture = _resourceSvc.textures.get(resRef, TextureUsage::GUI);
+  524      }
+
+  566      if (!resRef.empty()) {
+  567:         texture = _resourceSvc.textures.get(resRef, TextureUsage::GUI);
+  568      }
+
+vendor\reone\src\libs\gui\gui.cpp:
+   53  
+   54: void GUI::load(const Gff &gui) {
+   55      auto guiParsed = resource::generated::parseGUI(gui);
+
+   94  
+   95: void GUI::stretchControl(Control &control) {
+   96      float aspectX = _options.width / static_cast<float>(_resolutionX);
+
+  100  
+  101: void GUI::loadControl(const resource::generated::GUI_CONTROLS &gui) {
+  102      auto type = Control::getType(gui);
+
+  105      debug(str(boost::format("Loading control: type=%s, tag='%s', parent='%s'") % static_cast<int>(type) % tag % parentTag),
+  106:           LogChannel::GUI);
+  107  
+
+  137  
+  138: void GUI::positionRelativeToCenter(Control &control) {
+  139      Control::Extent extent(control.extent());
+
+  148  
+  149: bool GUI::handle(const input::Event &event) {
+  150      switch (event.type) {
+
+  177              if (control) {
+  178:                 debug("Control clicked: " + control->get().tag(), LogChannel::GUI);
+  179                  onClick(control->get().tag());
+
+  193  
+  194: bool GUI::handleKeyDown(input::KeyCode key) {
+  195      return false;
+
+  197  
+  198: bool GUI::handleKeyUp(input::KeyCode key) {
+  199      return false;
+
+  201  
+  202: void GUI::updateSelection(int x, int y) {
+  203      auto control = findControlAt(
+
+  220  
+  221: std::optional<std::reference_wrapper<Control>> GUI::findControlAt(int x, int y,
+  222                                                                    const std::function<bool(const Control &)> &test) const {
+
+  242  
+  243: void GUI::update(float dt) {
+  244      if (!_rootControl) {
+
+  249  
+  250: void GUI::render() {
+  251      _graphicsSvc.context.withBlendMode(BlendMode::Normal, [this]() {
+
+  290  
+  291: void GUI::renderBackground(IRenderPass &pass) {
+  292      pass.drawImage(
+
+  297  
+  298: void GUI::clearSelection() {
+  299      if (_selection) {
+
+  305  
+  306: std::shared_ptr<Control> GUI::findControl(const std::string &tag) const {
+  307      for (auto &control : _controls) {
+
+  314  
+  315: std::unique_ptr<Control> GUI::newControl(
+  316      ControlType type,
+
+  347      default:
+  348:         debug("Unsupported control type: " + std::to_string(static_cast<int>(type)), LogChannel::GUI);
+  349          return nullptr;
+
+  356  
+  357: void GUI::addControlToFront(std::shared_ptr<Control> control) {
+  358      _rootControl->get().addChildToFront(*control);
+
+  362  
+  363: void GUI::addControlToBack(std::shared_ptr<Control> control) {
+  364      _rootControl->get().addChildToBack(*control);
+
+vendor\reone\src\libs\gui\guis.cpp:
+  33      }
+  34:     auto gui = std::make_shared<GUI>(_graphicsOpt, _sceneGraphs, _graphicsSvc, _resourceSvc);
+  35      if (preload) {
+
+  37      }
+  38:     info("Loading GUI: " + resRef, LogChannel::GUI);
+  39      gui->load(*gff);
+
+vendor\reone\src\libs\gui\control\progressbar.cpp:
+  43      if (controlStruct.PROGRESS) {
+  44:         _progress.fill = _resourceSvc.textures.get(controlStruct.PROGRESS->FILL, TextureUsage::GUI);
+  45      }
+
+vendor\reone\src\libs\gui\control\scrollbar.cpp:
+  46          auto &dirImage = scrollbarStruct.DIR->IMAGE;
+  47:         _dir.image = _resourceSvc.textures.get(dirImage, TextureUsage::GUI);
+  48      }
+
+  50          auto &thumbImage = scrollbarStruct.THUMB->IMAGE;
+  51:         _thumb.image = _resourceSvc.textures.get(thumbImage, TextureUsage::GUI);
+  52      }
+
+vendor\reone\src\libs\resource\format\gffwriter.cpp:
+  39      {ResType::Git, "GIT"},
+  40:     {ResType::Gui, "GUI"},
+  41      {ResType::Ifo, "IFO"},
+
+vendor\reone\src\libs\resource\parser\gff\gui.cpp:
+  193  
+  194: GUI parseGUI(const Gff &gff) {
+  195:     GUI strct;
+  196      strct.ALPHA = gff.getFloat("ALPHA");
+
+vendor\reone\src\libs\system\logger.cpp:
+  34      {LogChannel::Audio, "audio"},
+  35:     {LogChannel::GUI, "gui"},
+  36      {LogChannel::Perception, "perception"},
+
+vendor\reone\src\libs\tools\legacy\tpc.cpp:
+  62  void TpcTool::toTGA(IInputStream &tpc, IOutputStream &tga, IOutputStream &txi, bool compress) {
+  63:     auto reader = TpcReader(tpc, "", TextureUsage::GUI);
+  64      reader.load();
+
+vendor\tga2tpc\ui.js:
+  149        alphaBlending = Number.parseFloat(matches[1]);
+  150:       // update the GUI also
+  151        queue_item.attr('data-alpha', alphaBlending);
+
+vendor\xoreos\external\imgui\imgui.h:
+  756      // Clipboard Utilities
+  757:     // - Also see the LogToClipboard() function to capture GUI into clipboard, or easily output text data to the clipboard.
+  758      IMGUI_API const char*   GetClipboardText();
+
+vendor\xoreos\src\aurora\types.h:
+  112  	kFileTypeGIC            =  2046, ///< Game instance comments, GFF.
+  113: 	kFileTypeGUI            =  2047, ///< GUI definition, GFF.
+  114  	kFileTypeCSS            =  2048, ///< Script, conditional source script.
+
+vendor\xoreos\src\engines\aurora\gui.cpp:
+   21  /** @file
+   22:  *  A GUI.
+   23   */
+
+   45  
+   46: GUI::GUI(Console *console) : _console(console),
+   47  	_currentWidget(0), _startCode(kStartCodeNone), _returnCode(kReturnCodeNone),
+
+   51  
+   52: GUI::~GUI() {
+   53  	// Delete all widgets
+
+   61  
+   62: void GUI::show() {
+   63  	GfxMan.lockFrame();
+
+   72  
+   73: 	for (std::list<GUI *>::iterator iter = _childGUIs.begin(); iter != _childGUIs.end(); ++iter) {
+   74  		(*iter)->show();
+
+   81  
+   82: void GUI::hide() {
+   83  	GfxMan.lockFrame();
+
+   88  
+   89: 	for (std::list<GUI *>::iterator iter = _childGUIs.begin(); iter != _childGUIs.end(); ++iter) {
+   90  		(*iter)->hide();
+
+   97  
+   98: uint32_t GUI::run(uint32_t startCode) {
+   99  	_startCode  = startCode;
+
+  109  
+  110: 		std::list<GUI *> childGUIs = _childGUIs;
+  111  
+
+  115  		// Call the periodic run callback of the child GUIs
+  116: 		for (std::list<GUI *>::iterator iter = childGUIs.begin(); iter != childGUIs.end(); ++iter) {
+  117  			(*iter)->callbackRun();
+
+  130  			addEvent(event);
+  131: 			for (std::list<GUI *>::iterator iter = childGUIs.begin(); iter != childGUIs.end(); ++iter) {
+  132  				(*iter)->addEvent(event);
+
+  136  		processEventQueue();
+  137: 		for (std::list<GUI *>::iterator iter = childGUIs.begin(); iter != childGUIs.end(); ++iter) {
+  138  			(*iter)->processEventQueue();
+
+  140  
+  141: 		// If the _returnCode changed of a child GUI we propagate it to the main GUI
+  142: 		for (std::list<GUI *>::iterator iter = childGUIs.begin(); iter != childGUIs.end(); ++iter) {
+  143  			if ((*iter)->_returnCode == kReturnCodeNone)
+
+  159  
+  160: void GUI::abort() {
+  161  	_returnCode = kReturnCodeAbort;
+
+  166  
+  167: void GUI::addEvent(const Events::Event &event) {
+  168  	_eventQueue.push_back(event);
+
+  170  
+  171: uint32_t GUI::processEventQueue() {
+  172  	bool hasMove = false;
+
+  226  
+  227: Common::UString GUI::getName() const {
+  228  	return "";
+
+  230  
+  231: void GUI::callbackRun() {
+  232  	_startCode = kStartCodeNone;
+
+  234  
+  235: void GUI::callbackActive(Widget &UNUSED(widget)) {
+  236  }
+  237  
+  238: void GUI::callbackTextInput(const Common::UString &UNUSED(text)) {
+  239  }
+  240  
+  241: void GUI::callbackKeyInput(const Events::Key &UNUSED(key), const Events::EventType &UNUSED(type)) {
+  242  }
+  243  
+  244: void GUI::addChild(GUI *gui) {
+  245  	_childGUIs.push_back(gui);
+
+  248  
+  249: void GUI::removeChild(GUI *gui) {
+  250  	gui->hide();
+
+  253  
+  254: void GUI::addWidget(Widget *widget) {
+  255  	if (!widget)
+
+  270  
+  271: void GUI::removeWidget(Widget *widget) {
+  272  	if (!widget)
+
+  298  
+  299: void GUI::clearWidgets() {
+  300  	// Delete all widgets
+
+  309  
+  310: bool GUI::empty() {
+  311  	return _widgets.empty();
+
+  313  
+  314: bool GUI::hasWidget(const Common::UString &tag) const {
+  315  	return getWidget(tag) != 0;
+
+  317  
+  318: Widget *GUI::getWidget(const Common::UString &tag, bool vital) {
+  319  	// Look up the widget in the map
+
+  330  
+  331: const Widget *GUI::getWidget(const Common::UString &tag, bool vital) const {
+  332  	// Look up the widget in the map
+
+  343  
+  344: void GUI::declareGroup(const std::list<Widget *> &group) {
+  345  	// Mutually add each widget to each widget's group member list
+
+  352  
+  353: uint32_t GUI::sub(GUI &gui, uint32_t startCode, bool showSelf, bool hideSelf) {
+  354  	GfxMan.lockFrame();
+
+  359  
+  360: 	// Show the sub GUI
+  361  	if (startCode == 0)
+
+  375  
+  376: 	// Run the sub GUI
+  377  	uint32_t code = gui.run(startCode);
+
+  380  
+  381: 	// Hide the sub GUI
+  382  	if (hideSelf && showSelf)
+
+  396  
+  397: void GUI::setPosition(float x, float y, float z) {
+  398  	for (WidgetList::iterator w = _widgets.begin(); w != _widgets.end(); ++w) {
+
+  418  
+  419: void GUI::getPosition(float &x, float &y, float &z) const {
+  420  	x = _x;
+
+  424  
+  425: void GUI::removeFocus() {
+  426  	changedWidget(0);
+
+  428  
+  429: void GUI::updateMouse() {
+  430  	// Fabricate a mouse move event at the current position
+
+  442  
+  443: void GUI::mouseDown() {
+  444  }
+  445  
+  446: void GUI::mouseUp() {
+  447  }
+  448  
+  449: Widget *GUI::getWidgetAt(float x, float y) {
+  450  	// Get the GFX object at the position
+
+  458  
+  459: void GUI::changedWidget(Widget *widget) {
+  460  	// Leave the now obsolete current widget
+
+  471  
+  472: void GUI::checkWidgetActive(Widget *widget) {
+  473  	if (!widget)
+
+  493  	} else
+  494: 		// This is a standalone widget, call the GUI's active callback
+  495  		callbackActive(*widget);
+
+  500  
+  501: void GUI::mouseMove(const Events::Event &event) {
+  502  	Widget *widget = getWidgetAt(event.motion.x, event.motion.y);
+
+  514  
+  515: void GUI::mouseDown(const Events::Event &event) {
+  516  	if (event.button.button != SDL_BUTTON_LMASK)
+
+  527  
+  528: void GUI::mouseUp(const Events::Event &event) {
+  529  	if (event.button.button != SDL_BUTTON_LMASK)
+
+  546  
+  547: void GUI::mouseWheel(const Events::Event &event) {
+  548  	int x,y;
+
+  557  
+  558: void GUI::textInput(const Events::Event &event) {
+  559  	callbackTextInput(event.text.text);
+
+  561  
+  562: void GUI::keyDown(const Events::Event &event) {
+  563  	callbackKeyInput(Events::Key(event.key.keysym.sym), Events::kEventKeyDown);
+
+  565  
+  566: void GUI::keyUp(const Events::Event &event) {
+  567  	callbackKeyInput(Events::Key(event.key.keysym.sym), Events::kEventKeyUp);
+
+  569  
+  570: float GUI::toGUIX(int x) {
+  571  	float sW = WindowMan.getWindowWidth();
+
+  575  
+  576: float GUI::toGUIY(int y) {
+  577  	float sH = WindowMan.getWindowHeight();
+
+  581  
+  582: void GUI::mouseMove(Widget *widget, const Events::Event &event) {
+  583  	if (widget)
+
+  586  
+  587: void GUI::mouseDown(Widget *widget, const Events::Event &event) {
+  588  	if (widget)
+
+  591  
+  592: void GUI::mouseUp(Widget *widget, const Events::Event &event) {
+  593  	if (widget) {
+
+  614  
+  615: void GUI::mouseWheel(Widget *widget, const Events::Event &event) {
+  616  	if (widget) {
+
+vendor\xoreos\src\engines\aurora\gui.h:
+   21  /** @file
+   22:  *  A GUI.
+   23   */
+
+   39  
+   40: /** A GUI. */
+   41: class GUI {
+   42  public:
+
+   47  
+   48: 	GUI(Console *console = 0);
+   49: 	virtual ~GUI();
+   50  
+   51: 	GUI(const GUI &) = delete;
+   52: 	GUI &operator=(const GUI &) = delete;
+   53  
+
+   55  
+   56: 	virtual void show(); ///< Show the GUI.
+   57: 	virtual void hide(); ///< Hide the GUI.
+   58  
+   59: 	/** Run the GUI. */
+   60  	uint32_t run(uint32_t startCode = kStartCodeNone);
+   61: 	/** Abort the currently running GUI. */
+   62  	virtual void abort();
+   63  
+   64: 	/** Add a single event for consideration into the GUI event queue. */
+   65  	void addEvent(const Events::Event &event);
+
+   76  
+   77: 	uint32_t _startCode;  ///< The GUI's start code.
+   78: 	uint32_t _returnCode; ///< The GUI's return code.
+   79  
+   80: 	GUI *_sub; ///< The currently running sub GUI.
+   81  
+
+   94  
+   95: 	/** Does this specific widget exist within the GUI? */
+   96  	bool hasWidget(const Common::UString &tag) const;
+   97  
+   98: 	/** Return a widget in the GUI. */
+   99  	Widget *getWidget(const Common::UString &tag, bool vital = false);
+  100: 	/** Return a widget in the GUI. */
+  101  	const Widget *getWidget(const Common::UString &tag, bool vital = false) const;
+
+  115  
+  116: 	/** Open up a sub GUI. */
+  117: 	uint32_t sub(GUI &gui, uint32_t startCode = kStartCodeNone, bool showSelf = true, bool hideSelf = true);
+  118  
+  119: 	/** Set the GUI's position. */
+  120  	void setPosition(float x, float y, float z);
+  121  
+  122: 	/** Get the GUI's position. */
+  123  	void getPosition(float &x, float &y, float &z) const;
+
+  133  
+  134: 	/** Add a child GUI object to this GUI. Ownership of the pointer is not transferred. */
+  135: 	void addChild(GUI *gui);
+  136: 	/** Remove a child GUI object from this GUI. Pointer will not be deallocated. */
+  137: 	void removeChild(GUI *gui);
+  138  
+
+  142  
+  143: 	std::list<GUI *> _childGUIs;
+  144  
+  145: 	WidgetList _widgets;   ///< All widgets in the GUI.
+  146: 	WidgetMap  _widgetMap; ///< All widgets in the GUI, index by their tag.
+  147  
+  148: 	float _x; ///< The GUI X position.
+  149: 	float _y; ///< The GUI Y position.
+  150: 	float _z; ///< The GUI Z position.
+  151  
+  152: 	std::list<Events::Event> _eventQueue; ///< The GUI event queue.
+  153  
+
+  167  
+  168: 	float toGUIX(int x); // Convert an event X coordinate to a GUI X coordinate
+  169: 	float toGUIY(int y); // Convert an event Y coordinate to a GUI Y coordinate
+  170  
+
+vendor\xoreos\src\engines\aurora\model.cpp:
+  75  	} catch (...) {
+  76: 		Common::exceptionDispatcherWarning("Failed to load GUI model \"%s\"", resref.c_str());
+  77  	}
+
+vendor\xoreos\src\engines\aurora\widget.cpp:
+  21  /** @file
+  22:  *  A widget in a GUI.
+  23   */
+
+  33  
+  34: Widget::Widget(GUI &gui, const Common::UString &tag) : _gui(&gui), _tag(tag),
+  35  	_parent(0), _owner(0),
+
+vendor\xoreos\src\engines\aurora\widget.h:
+   21  /** @file
+   22:  *  A widget in a GUI.
+   23   */
+
+   34  
+   35: class GUI;
+   36  
+   37: /** A widget in a GUI. */
+   38  class Widget {
+   39  public:
+   40: 	Widget(GUI &gui, const Common::UString &tag);
+   41  	virtual ~Widget();
+
+   97  
+   98: 	void remove(); ///< Remove the widget from the GUI.
+   99  
+
+  108  protected:
+  109: 	GUI *_gui; ///< The GUI the widget belongs to.
+  110  
+
+  140  
+  141: 	friend class GUI;
+  142  };
+
+vendor\xoreos\src\engines\jade\gui\gui.cpp:
+   21  /** @file
+   22:  *  A Jade Empire GUI.
+   23   */
+
+   48  
+   49: GUI::WidgetContext::WidgetContext(const Aurora::GFF3Struct &s, Widget *p) {
+   50  	strct = &s;
+
+   62  
+   63: GUI::GUI(::Engines::Console *console) : ::Engines::GUI(console), _widgetZ(0), _guiHeight(480.0f), _guiWidth(640.0f) {
+   64  }
+   65  
+   66: GUI::~GUI() {
+   67  }
+   68  
+   69: void GUI::show() {
+   70  	if (_background)
+   71  		_background->show();
+   72: 	::Engines::GUI::show();
+   73  }
+   74  
+   75: void GUI::hide() {
+   76  	if (_background)
+   77  		_background->hide();
+   78: 	::Engines::GUI::hide();
+   79  }
+   80  
+   81: void GUI::convertToXoreos(float &x, float &y, const float widgetHeight) const {
+   82  	x = x - (_guiWidth / 2.0f);
+
+   85  
+   86: void GUI::convertToGUI(float &x, float &y, const float widgetHeight) const {
+   87  	x = x + (_guiWidth / 2.0f);
+
+   90  
+   91: Common::UString GUI::getName() const {
+   92  	return _name;
+
+   94  
+   95: void GUI::mouseDown() {
+   96  	CursorMan.setState("down");
+
+   98  
+   99: void GUI::mouseUp() {
+  100  	CursorMan.setState("up");
+
+  102  
+  103: void GUI::load(const Common::UString &resref) {
+  104  	// This is only relevant to Jade Empire.
+  105: 	// LTI prefixed GUI definitions for the Windows version of Jade Empire
+  106  	// with lti_ to support mouse and keyboard control.
+
+  114  	} catch (Common::Exception &e) {
+  115: 		e.add("Can't load GUI \"%s\"", _name.c_str());
+  116  		throw;
+
+  119  
+  120: void GUI::loadWidget(const Aurora::GFF3Struct &strct, Widget *parent) {
+  121  
+
+  156  
+  157: void GUI::createWidget(WidgetContext &ctx) {
+  158  	if      (ctx.type == kWidgetTypePanel)
+
+  183  
+  184: void GUI::initWidget(Widget &UNUSED(widget)) {
+  185  }
+  186  
+  187: Odyssey::WidgetPanel *GUI::getPanel(const Common::UString &tag, bool vital) {
+  188  	Widget *widget = getWidget(tag, vital);
+
+  198  
+  199: Odyssey::WidgetLabel *GUI::getLabel(const Common::UString &tag, bool vital) {
+  200  	Widget *widget = getWidget(tag, vital);
+
+  210  
+  211: Odyssey::WidgetProtoItem *GUI::getProtoItem(const Common::UString &tag, bool vital) {
+  212  	Widget *widget = getWidget(tag, vital);
+
+  222  
+  223: Odyssey::WidgetButton *GUI::getButton(const Common::UString &tag, bool vital) {
+  224  	Widget *widget = getWidget(tag, vital);
+
+  234  
+  235: Odyssey::WidgetCheckBox *GUI::getCheckBox(const Common::UString &tag, bool vital) {
+  236  	Widget *widget = getWidget(tag, vital);
+
+  246  
+  247: Odyssey::WidgetSlider *GUI::getSlider(const Common::UString &tag, bool vital) {
+  248  	Widget *widget = getWidget(tag, vital);
+
+  258  
+  259: Odyssey::WidgetScrollbar *GUI::getScrollbar(const Common::UString &tag, bool vital) {
+  260  	Widget *widget = getWidget(tag, vital);
+
+  270  
+  271: Odyssey::WidgetProgressbar *GUI::getProgressbar(const Common::UString &tag, bool vital) {
+  272  	Widget *widget = getWidget(tag, vital);
+
+  282  
+  283: Odyssey::WidgetListBox *GUI::getListBox(const Common::UString &tag, bool vital) {
+  284  	Widget *widget = getWidget(tag, vital);
+
+  294  
+  295: void GUI::addBackground(const Common::UString &background, bool front) {
+  296  	if (!_background)
+
+  301  
+  302: void GUI::setCheckBoxState(const Common::UString &tag, bool state) {
+  303  	Odyssey::WidgetCheckBox &checkbox = *getCheckBox(tag, true);
+
+  306  
+  307: bool GUI::getCheckBoxState(const Common::UString &tag) {
+  308  	Odyssey::WidgetCheckBox &checkbox = *getCheckBox(tag, true);
+
+vendor\xoreos\src\engines\jade\gui\gui.h:
+  21  /** @file
+  22:  *  A Jade Empire GUI.
+  23   */
+
+  56  
+  57: /** A Jade Empire GUI. */
+  58: class GUI : public Engines::GUI {
+  59  public:
+  60: 	GUI(::Engines::Console *console = 0);
+  61: 	~GUI();
+  62  
+  63: 	virtual void show(); ///< Show the GUI.
+  64: 	virtual void hide(); ///< Hide the GUI.
+  65  
+  66  	/**
+  67: 	 * Converts Jade Empire' GUI coordinates with a coordinate origin
+  68  	 * in the upper left corner to the Xoreos coordinate system
+
+  73  	 * Converts Xoreos' coordinates with a coordinate origin
+  74: 	 * in the center to Jade Empire's GUI coordinates
+  75  	 * with the coordinate origin in the the upper left corner.
+
+vendor\xoreos\src\engines\jade\gui\chargen\charactergeneration.h:
+  35  
+  36: class CharacterGeneration : public GUI {
+  37  public:
+
+  58  
+  59: 	GUI *_current;
+  60: 	std::unique_ptr<GUI> _selection;
+  61: 	std::unique_ptr<GUI> _name;
+  62: 	std::unique_ptr<GUI> _summary;
+  63  };
+
+vendor\xoreos\src\engines\jade\gui\chargen\charactergenerationbase.h:
+  34  
+  35: class CharacterGenerationBase : public GUI {
+  36  public:
+
+vendor\xoreos\src\engines\jade\gui\chargen\charactername.cpp:
+  92  
+  93: 	GUI::show();
+  94  }
+
+vendor\xoreos\src\engines\jade\gui\chargen\charactersummary.cpp:
+  42  
+  43: 	GUI::show();
+  44  }
+
+vendor\xoreos\src\engines\jade\gui\main\main.cpp:
+   51  
+   52: MainMenu::MainMenu(Module &module, ::Engines::Console *console) : ::Engines::Jade::GUI(console),
+   53  	_module(&module), _background(0) {
+
+   95  		_background->show();
+   96: 	::Engines::Jade::GUI::show();
+   97  }
+
+  101  		_background->hide();
+  102: 	::Engines::Jade::GUI::hide();
+  103  }
+
+vendor\xoreos\src\engines\jade\gui\main\main.h:
+  36  
+  37: class MainMenu : public ::Engines::Jade::GUI {
+  38  public:
+
+  41  
+  42: 	void show(); ///< Show the GUI.
+  43: 	void hide(); ///< Hide the GUI.
+  44  
+
+  53  
+  54: 	std::unique_ptr<GUI> _options;
+  55  
+
+vendor\xoreos\src\engines\jade\gui\main\options.cpp:
+  45  
+  46: OptionsMenu::OptionsMenu(Console *console) : GUI(console) {
+  47  	load("options");
+
+vendor\xoreos\src\engines\jade\gui\main\options.h:
+  43  
+  44: class OptionsMenu : public Engines::Jade::GUI {
+  45  public:
+
+  54  
+  55: 	std::unique_ptr<GUI> _audioOptions;
+  56: 	std::unique_ptr<GUI> _videoOptions;
+  57: 	std::unique_ptr<GUI> _difficultyOptions;
+  58: 	std::unique_ptr<GUI> _gameInfoOptions;
+  59: 	std::unique_ptr<GUI> _controlOptions;
+  60  
+
+vendor\xoreos\src\engines\jade\gui\options\audio.cpp:
+  32  
+  33: AudioOptionsMenu::AudioOptionsMenu(Console *console) : GUI(console) {
+  34  	load("opt_audio");
+
+vendor\xoreos\src\engines\jade\gui\options\audio.h:
+  33  
+  34: class AudioOptionsMenu : public Engines::Jade::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\jade\gui\options\control.cpp:
+  32  
+  33: ControlOptionsMenu::ControlOptionsMenu(Console *console) : GUI(console) {
+  34  	load("LTI_OPT_CONT");
+
+vendor\xoreos\src\engines\jade\gui\options\control.h:
+  33  
+  34: class ControlOptionsMenu : public Engines::Jade::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\jade\gui\options\diff.cpp:
+  32  
+  33: DifficultyOptionsMenu::DifficultyOptionsMenu(Console *console) : GUI(console) {
+  34  	load("opt_diff");
+
+vendor\xoreos\src\engines\jade\gui\options\diff.h:
+  33  
+  34: class DifficultyOptionsMenu : public Engines::Jade::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\jade\gui\options\feed.cpp:
+  32  
+  33: GameInfoOptionsMenu::GameInfoOptionsMenu(Console *console) : GUI(console) {
+  34  	load("opt_feed");
+
+vendor\xoreos\src\engines\jade\gui\options\feed.h:
+  33  
+  34: class GameInfoOptionsMenu : public Engines::Jade::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\jade\gui\options\video.cpp:
+  32  
+  33: VideoOptionsMenu::VideoOptionsMenu(Console *console) : GUI(console) {
+  34  	load("opt_video");
+
+vendor\xoreos\src\engines\jade\gui\options\video.h:
+  33  
+  34: class VideoOptionsMenu : public Engines::Jade::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor\kotor.cpp:
+  247  	} else {
+  248: 		// The Windows/Mac versions have the GUI textures here
+  249: 		progress.step("Loading GUI textures");
+  250  		indexMandatoryArchive("swpc_tex_gui.erf", 60);
+
+vendor\xoreos\src\engines\kotor\module.h:
+  37  
+  38: 	// GUI creation
+  39  
+
+vendor\xoreos\src\engines\kotor\gui\dialog.cpp:
+  21  /** @file
+  22:  *  Dialog GUI for Star Wars: Knights of the Old Republic.
+  23   */
+
+vendor\xoreos\src\engines\kotor\gui\dialog.h:
+  21  /** @file
+  22:  *  Dialog GUI for Star Wars: Knights of the Old Republic.
+  23   */
+
+vendor\xoreos\src\engines\kotor\gui\saveload.cpp:
+  52                             bool frontBackground) :
+  53: 		KotORBase::GUI(console),
+  54  		_module(&module),
+
+vendor\xoreos\src\engines\kotor\gui\saveload.h:
+  49  
+  50: class SaveLoadMenu : public KotORBase::GUI {
+  51  public:
+
+vendor\xoreos\src\engines\kotor\gui\chargen\charactergeneration.cpp:
+  55                                                   Console *console) :
+  56: 		KotORBase::GUI(console),
+  57  		_module(module),
+
+vendor\xoreos\src\engines\kotor\gui\chargen\charactergeneration.h:
+  42  
+  43: class CharacterGenerationMenu : public KotORBase::GUI {
+  44  public:
+
+  69  
+  70: 	std::unique_ptr<GUI> _quickOrCustom;
+  71: 	std::unique_ptr<GUI> _quickChar;
+  72: 	std::unique_ptr<GUI> _customChar;
+  73  
+
+vendor\xoreos\src\engines\kotor\gui\chargen\chargenbase.cpp:
+  34                                                           Engines::Console *console) :
+  35: 		KotORBase::GUI(console),
+  36  		_info(info),
+
+vendor\xoreos\src\engines\kotor\gui\chargen\chargenbase.h:
+  37  
+  38: class CharacterGenerationBaseMenu : public KotORBase::GUI {
+  39  public:
+
+vendor\xoreos\src\engines\kotor\gui\chargen\classselection.cpp:
+  40  
+  41: ClassSelectionMenu::ClassSelectionMenu(KotORBase::Module *module, ::Engines::Console *console) : KotORBase::GUI(console),
+  42  	_hoveredButton(0), _module(module) {
+
+vendor\xoreos\src\engines\kotor\gui\chargen\classselection.h:
+  44  
+  45: class ClassSelectionMenu : public KotORBase::GUI {
+  46  public:
+
+  50  private:
+  51: 	std::unique_ptr<KotORBase::GUI> _charGen;
+  52  
+
+vendor\xoreos\src\engines\kotor\gui\chargen\customchar.cpp:
+  33  CustomCharPanel::CustomCharPanel(CharacterGenerationMenu *charGenMenu, Console *console) :
+  34: 		KotORBase::GUI(console),
+  35  		_charGen(charGenMenu) {
+
+vendor\xoreos\src\engines\kotor\gui\chargen\customchar.h:
+  35  
+  36: class CustomCharPanel : public KotORBase::GUI {
+  37  public:
+
+vendor\xoreos\src\engines\kotor\gui\chargen\quickchar.cpp:
+  34  QuickCharPanel::QuickCharPanel(CharacterGenerationMenu *charGenMenu, Console *console) :
+  35: 		KotORBase::GUI(console),
+  36  		_charGen(charGenMenu) {
+
+vendor\xoreos\src\engines\kotor\gui\chargen\quickchar.h:
+  35  
+  36: class QuickCharPanel : public KotORBase::GUI {
+  37  public:
+
+vendor\xoreos\src\engines\kotor\gui\chargen\quickorcustom.cpp:
+  34  QuickOrCustomPanel::QuickOrCustomPanel(CharacterGenerationMenu *charGenMenu, Console *console) :
+  35: 		KotORBase::GUI(console),
+  36  		_charGenMenu(charGenMenu) {
+
+vendor\xoreos\src\engines\kotor\gui\chargen\quickorcustom.h:
+  35  
+  36: class QuickOrCustomPanel : public KotORBase::GUI {
+  37  public:
+
+vendor\xoreos\src\engines\kotor\gui\dialogs\confirm.cpp:
+  34  ConfirmDialog::ConfirmDialog(Console *console) :
+  35: 		KotORBase::GUI(console),
+  36  		_accepted(false) {
+
+vendor\xoreos\src\engines\kotor\gui\dialogs\confirm.h:
+  35  
+  36: class ConfirmDialog : public KotORBase::GUI {
+  37  public:
+
+vendor\xoreos\src\engines\kotor\gui\ingame\container.cpp:
+  41  
+  42: ContainerMenu::ContainerMenu(Console *console) : KotORBase::GUI(console) {
+  43  	load("container");
+
+  48  	Odyssey::WidgetListBox *lbItems = getListBox("LB_ITEMS");
+  49: 	lbItems->setItemWidgetFactoryFunction([](Engines::GUI &gui, const Common::UString &tag) { return new KotORBase::WidgetInventoryItem(gui, tag); });
+  50  	lbItems->setPadding(18);
+
+vendor\xoreos\src\engines\kotor\gui\ingame\container.h:
+  38  
+  39: class ContainerMenu : public KotORBase::GUI {
+  40  public:
+
+vendor\xoreos\src\engines\kotor\gui\ingame\hud.cpp:
+  226  	if (!mapView) {
+  227: 		warning("No such GUI element \"LBL_MAPVIEW\"");
+  228  		return;
+
+vendor\xoreos\src\engines\kotor\gui\ingame\ingame.cpp:
+  21  /** @file
+  22:  *  In-game GUI for Star Wars: Knights of the Old Republic.
+  23   */
+
+vendor\xoreos\src\engines\kotor\gui\ingame\ingame.h:
+  21  /** @file
+  22:  *  In-game GUI for Star Wars: Knights of the Old Republic.
+  23   */
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu_equ.cpp:
+  68  	if (lbItems) {
+  69: 		lbItems->setItemWidgetFactoryFunction([](Engines::GUI &gui, const Common::UString &tag) { return new KotORBase::WidgetInventoryItem(gui, tag); });
+  70  		lbItems->setHideScrollbar(false);
+
+  86  void MenuEquipment::show() {
+  87: 	GUI::show();
+  88  
+
+  96  
+  97: 	GUI::hide();
+  98  }
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu_jou.cpp:
+  32  
+  33: MenuJournal::MenuJournal(Console *console) : KotORBase::GUI(console) {
+  34  	load("journal");
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu_jou.h:
+  33  
+  34: class MenuJournal : public KotORBase::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu_map.cpp:
+  38  
+  39: MenuMap::MenuMap(Console *console) : KotORBase::GUI(console) {
+  40  	load("map");
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu_map.h:
+  33  
+  34: class MenuMap : public KotORBase::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu_msg.cpp:
+  32  
+  33: MenuMessages::MenuMessages(Console *console) : KotORBase::GUI(console) {
+  34  	load("messages");
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu_msg.h:
+  33  
+  34: class MenuMessages : public KotORBase::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu_opt.cpp:
+  35  MenuOptions::MenuOptions(Console *console) :
+  36: 		KotORBase::GUI(console),
+  37  		_selectedItem(0) {
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu_opt.h:
+  42  
+  43: class MenuOptions : public KotORBase::GUI {
+  44  public:
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu.cpp:
+  37  Menu::Menu(KotORBase::Module &module, Console *console) :
+  38: 		KotORBase::GUI(console),
+  39  		_module(module),
+
+vendor\xoreos\src\engines\kotor\gui\ingame\menu.h:
+  48  
+  49: class Menu : public KotORBase::GUI {
+  50  public:
+
+  80  
+  81: 		std::unique_ptr<KotORBase::GUI> menu;
+  82  
+
+vendor\xoreos\src\engines\kotor\gui\ingame\partyselection.cpp:
+  21  /** @file
+  22:  *  Party selection GUI for Star Wars: Knights of the Old Republic.
+  23   */
+
+vendor\xoreos\src\engines\kotor\gui\ingame\partyselection.h:
+  21  /** @file
+  22:  *  Party selection GUI for Star Wars: Knights of the Old Republic.
+  23   */
+
+vendor\xoreos\src\engines\kotor\gui\main\main.cpp:
+  62  MainMenu::MainMenu(const Version &gameVersion, KotORBase::Module &module, ::Engines::Console *console) :
+  63: 		KotORBase::GUI(console),
+  64  		_module(&module),
+
+vendor\xoreos\src\engines\kotor\gui\main\main.h:
+  43  
+  44: class MainMenu : public KotORBase::GUI {
+  45  public:
+
+  60  
+  61: 	std::unique_ptr<GUI> _classSelection;
+  62: 	std::unique_ptr<GUI> _movies;
+  63: 	std::unique_ptr<GUI> _options;
+  64: 	std::unique_ptr<GUI> _loadGame;
+  65  
+
+vendor\xoreos\src\engines\kotor\gui\main\movies.cpp:
+  32  
+  33: MoviesMenu::MoviesMenu(::Engines::Console *console) : KotORBase::GUI(console) {
+  34  	load("titlemovie");
+
+vendor\xoreos\src\engines\kotor\gui\main\movies.h:
+  34  /** The KotOR movies menu. */
+  35: class MoviesMenu : public KotORBase::GUI {
+  36  public:
+
+vendor\xoreos\src\engines\kotor\gui\main\options.cpp:
+  44  
+  45: OptionsMenu::OptionsMenu(const Version &gameVersion, ::Engines::Console *console) : KotORBase::GUI(console) {
+  46  	load("optionsmain");
+
+vendor\xoreos\src\engines\kotor\gui\main\options.h:
+  41  
+  42: class OptionsMenu : public KotORBase::GUI {
+  43  public:
+
+  50  private:
+  51: 	std::unique_ptr<KotORBase::GUI> _gameplay;
+  52: 	std::unique_ptr<KotORBase::GUI> _feedback;
+  53: 	std::unique_ptr<KotORBase::GUI> _autopause;
+  54: 	std::unique_ptr<KotORBase::GUI> _graphics;
+  55: 	std::unique_ptr<KotORBase::GUI> _sound;
+  56  };
+
+vendor\xoreos\src\engines\kotor\gui\options\autopause.cpp:
+  36  
+  37: OptionsAutoPauseMenu::OptionsAutoPauseMenu(::Engines::Console *console) : KotORBase::GUI(console) {
+  38  	load("optautopause");
+
+  59  
+  60: 	GUI::show();
+  61  }
+
+vendor\xoreos\src\engines\kotor\gui\options\autopause.h:
+  33  
+  34: class OptionsAutoPauseMenu : public KotORBase::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor\gui\options\feedback.cpp:
+  32  
+  33: OptionsFeedbackMenu::OptionsFeedbackMenu(::Engines::Console *console) : KotORBase::GUI(console) {
+  34  	load("optfeedback");
+
+vendor\xoreos\src\engines\kotor\gui\options\feedback.h:
+  33  
+  34: class OptionsFeedbackMenu : public KotORBase::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor\gui\options\gameplay.cpp:
+  43  
+  44: OptionsGameplayMenu::OptionsGameplayMenu(::Engines::Console *console) : KotORBase::GUI(console) {
+  45  	load("optgameplay");
+
+  72  
+  73: 	GUI::show();
+  74  }
+
+vendor\xoreos\src\engines\kotor\gui\options\gameplay.h:
+  35  
+  36: class OptionsGameplayMenu : public KotORBase::GUI {
+  37  public:
+
+  53  
+  54: 	std::unique_ptr<KotORBase::GUI> _mousesettings;
+  55: 	std::unique_ptr<KotORBase::GUI> _keyboardconfiguration;
+  56  
+
+vendor\xoreos\src\engines\kotor\gui\options\graphics.cpp:
+  38  
+  39: OptionsGraphicsMenu::OptionsGraphicsMenu(::Engines::Console *console) : KotORBase::GUI(console) {
+  40  	load("optgraphics");
+
+  60  
+  61: 	GUI::show();
+  62  }
+
+vendor\xoreos\src\engines\kotor\gui\options\graphics.h:
+  35  
+  36: class OptionsGraphicsMenu : public KotORBase::GUI {
+  37  public:
+
+  49  
+  50: 	std::unique_ptr<KotORBase::GUI> _resolution;
+  51: 	std::unique_ptr<KotORBase::GUI> _advanced;
+  52  
+
+vendor\xoreos\src\engines\kotor\gui\options\graphicsadv.cpp:
+  40  
+  41: OptionsGraphicsAdvancedMenu::OptionsGraphicsAdvancedMenu(::Engines::Console *console) : KotORBase::GUI(console) {
+  42  	load("optgraphicsadv");
+
+  72  
+  73: 	GUI::show();
+  74  }
+
+vendor\xoreos\src\engines\kotor\gui\options\graphicsadv.h:
+  33  
+  34: class OptionsGraphicsAdvancedMenu : public KotORBase::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor\gui\options\keyboardconfig.cpp:
+  33  OptionsKeyboardConfigurationMenu::OptionsKeyboardConfigurationMenu(::Engines::Console *console) :
+  34: 		KotORBase::GUI(console) {
+  35  
+
+vendor\xoreos\src\engines\kotor\gui\options\keyboardconfig.h:
+  33  
+  34: class OptionsKeyboardConfigurationMenu : public KotORBase::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor\gui\options\mousesettings.cpp:
+  36  
+  37: OptionsMouseSettingsMenu::OptionsMouseSettingsMenu(::Engines::Console *console) : KotORBase::GUI(console) {
+  38  	load("optmouse");
+
+  53  
+  54: 	GUI::show();
+  55  }
+
+vendor\xoreos\src\engines\kotor\gui\options\mousesettings.h:
+  33  
+  34: class OptionsMouseSettingsMenu : public KotORBase::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor\gui\options\resolution.cpp:
+  50  
+  51: OptionsResolutionMenu::OptionsResolutionMenu(Console *console) : KotORBase::GUI(console), _newWidth(0), _newHeight(0) {
+  52  	load("optresolution");
+
+vendor\xoreos\src\engines\kotor\gui\options\resolution.h:
+  35  
+  36: class OptionsResolutionMenu : public KotORBase::GUI {
+  37  public:
+
+vendor\xoreos\src\engines\kotor\gui\options\sound.cpp:
+  33  
+  34: OptionsSoundMenu::OptionsSoundMenu(::Engines::Console *console) : KotORBase::GUI(console) {
+  35  	load("optsound");
+
+vendor\xoreos\src\engines\kotor\gui\options\sound.h:
+  35  
+  36: class OptionsSoundMenu : public KotORBase::GUI {
+  37  public:
+
+  44  private:
+  45: 	std::unique_ptr<KotORBase::GUI> _advanced;
+  46  };
+
+vendor\xoreos\src\engines\kotor\gui\options\soundadv.cpp:
+  40  
+  41: OptionsSoundAdvancedMenu::OptionsSoundAdvancedMenu(::Engines::Console *console) : KotORBase::GUI(console) {
+  42  	load("optsoundadv");
+
+  62  
+  63: 	GUI::show();
+  64  }
+
+vendor\xoreos\src\engines\kotor\gui\options\soundadv.h:
+  33  
+  34: class OptionsSoundAdvancedMenu : public KotORBase::GUI {
+  35  public:
+
+vendor\xoreos\src\engines\kotor2\module.h:
+  44  
+  45: 	// GUI creation
+  46  
+
+vendor\xoreos\src\engines\kotor2\gui\dialog.cpp:
+  21  /** @file
+  22:  *  Dialog GUI for Star Wars: Knights of the Old Republic II - The Sith Lords.
+  23   */
+
+vendor\xoreos\src\engines\kotor2\gui\dialog.h:
+  21  /** @file
+  22:  *  Dialog GUI for Star Wars: Knights of the Old Republic II - The Sith Lords.
+  23   */
+
+vendor\xoreos\src\engines\kotor2\gui\gui.cpp:
+  21  /** @file
+  22:  *  GUI utility functions for Star Wars: Knights of the Old Republic II - The Sith Lords.
+  23   */
+
+vendor\xoreos\src\engines\kotor2\gui\gui.h:
+  21  /** @file
+  22:  *  GUI utility functions for Star Wars: Knights of the Old Republic II - The Sith Lords.
+  23   */
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\charactergeneration.cpp:
+  46                                           Engines::Console *console) :
+  47: 		KotORBase::GUI(console),
+  48  		_module(module),
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\charactergeneration.h:
+  40  
+  41: class CharacterGeneration : public KotORBase::GUI {
+  42  public:
+
+  69  
+  70: 	std::unique_ptr<GUI> _quickOrCustomPanel;
+  71: 	std::unique_ptr<GUI> _quickCharPanel;
+  72: 	std::unique_ptr<GUI> _customCharPanel;
+  73  
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\chargenbase.cpp:
+  31  CharacterGenerationBaseMenu::CharacterGenerationBaseMenu(KotORBase::CharacterGenerationInfo &info, Engines::Console *console) :
+  32: 		KotORBase::GUI(console),
+  33  		_info(info),
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\chargenbase.h:
+  37  
+  38: class CharacterGenerationBaseMenu : public KotORBase::GUI {
+  39  public:
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\classselection.cpp:
+  35  ClassSelection::ClassSelection(KotORBase::Module *module, Console *console) :
+  36: 		KotORBase::GUI(console) {
+  37  
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\classselection.h:
+  42  
+  43: class ClassSelection : public KotORBase::GUI {
+  44  public:
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\customchar.cpp:
+  33  CustomCharPanel::CustomCharPanel(CharacterGeneration *chargen, Console *console) :
+  34: 		KotORBase::GUI(console),
+  35  		_chargenMenu(chargen) {
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\customchar.h:
+  36  
+  37: class CustomCharPanel : public KotORBase::GUI {
+  38  public:
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\quickchar.cpp:
+  33  QuickCharPanel::QuickCharPanel(CharacterGeneration *chargen, Console *console) :
+  34: 		KotORBase::GUI(console),
+  35  		_chargenMenu(chargen) {
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\quickchar.h:
+  34  
+  35: class QuickCharPanel : public KotORBase::GUI {
+  36  public:
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\quickorcustom.cpp:
+  33  QuickOrCustomPanel::QuickOrCustomPanel(CharacterGeneration *chargenMenu, Console *console) :
+  34: 		KotORBase::GUI(console),
+  35  		_chargenMenu(chargenMenu) {
+
+vendor\xoreos\src\engines\kotor2\gui\chargen\quickorcustom.h:
+  36  
+  37: class QuickOrCustomPanel : public KotORBase::GUI {
+  38  public:
+
+vendor\xoreos\src\engines\kotor2\gui\ingame\ingame.cpp:
+  21  /** @file
+  22:  *  In-game GUI for Star Wars: Knights of the Old Republic II - The Sith Lords.
+  23   */
+
+vendor\xoreos\src\engines\kotor2\gui\ingame\ingame.h:
+  21  /** @file
+  22:  *  In-game GUI for Star Wars: Knights of the Old Republic II - The Sith Lords.
+  23   */
+
+vendor\xoreos\src\engines\kotor2\gui\ingame\partyselection.cpp:
+  21  /** @file
+  22:  *  Party selection GUI for Star Wars: Knights of the Old Republic II - The Sith Lords.
+  23   */
+
+vendor\xoreos\src\engines\kotor2\gui\ingame\partyselection.h:
+  21  /** @file
+  22:  *  Party selection GUI for Star Wars: Knights of the Old Republic II - The Sith Lords.
+  23   */
+
+vendor\xoreos\src\engines\kotor2\gui\main\main.cpp:
+  46  MainMenu::MainMenu(KotORBase::Module &module, ::Engines::Console *console) :
+  47: 		KotORBase::GUI(console),
+  48  		_module(&module) {
+
+vendor\xoreos\src\engines\kotor2\gui\main\main.h:
+  35  
+  36: class MainMenu : public KotORBase::GUI {
+  37  public:
+
+  52  
+  53: 	std::unique_ptr<GUI> _classSelection;
+  54  
+
+vendor\xoreos\src\engines\kotorbase\module.h:
+  160  
+  161: 	/** Show the party selection GUI. */
+  162  	void showPartySelectionGUI(int forceNPC1, int forceNPC2);
+
+  167  
+  168: 	// GUI management
+  169  
+
+  226  
+  227: 	// GUI creation
+  228  
+
+  257  protected:
+  258: 	std::unique_ptr<IngameGUI> _ingame; ///< The ingame GUI.
+  259: 	std::unique_ptr<DialogGUI> _dialog; ///< Conversation/cutscene GUI.
+  260: 	std::unique_ptr<PartySelectionGUI> _partySelection; ///< The party selection GUI.
+  261  
+
+vendor\xoreos\src\engines\kotorbase\gui\dialog.cpp:
+  21  /** @file
+  22:  *  Dialog GUI for KotOR games.
+  23   */
+
+  72  	CursorMan.setGroup("default");
+  73: 	GUI::show();
+  74  	_frame->show();
+
+  78  	_frame->hide();
+  79: 	GUI::hide();
+  80  }
+
+vendor\xoreos\src\engines\kotorbase\gui\dialog.h:
+  21  /** @file
+  22:  *  Base dialog GUI for KotOR games.
+  23   */
+
+  48  
+  49: class DialogGUI : public GUI, Events::Notifyable {
+  50  public:
+
+vendor\xoreos\src\engines\kotorbase\gui\gui.cpp:
+   21  /** @file
+   22:  *  GUI for KotOR games.
+   23   */
+
+   48  
+   49: GUI::WidgetContext::WidgetContext(const Aurora::GFF3Struct &s, Widget *p) {
+   50  	strct = &s;
+
+   62  
+   63: GUI::GUI(::Engines::Console *console) :
+   64: 		::Engines::GUI(console),
+   65  		_widgetZ(0),
+
+   69  
+   70: GUI::~GUI() {
+   71  }
+   72  
+   73: void GUI::show() {
+   74  	if (_background)
+   75  		_background->show();
+   76: 	::Engines::GUI::show();
+   77  }
+   78  
+   79: void GUI::hide() {
+   80  	if (_background)
+   81  		_background->hide();
+   82: 	::Engines::GUI::hide();
+   83  }
+   84  
+   85: void GUI::convertToXoreos(float &x, float &y, const float widgetHeight) const {
+   86  	x = x - (_guiWidth / 2.0f);
+
+   89  
+   90: void GUI::convertToGUI(float &x, float &y, const float widgetHeight) const {
+   91  	x = x + (_guiWidth / 2.0f);
+
+   94  
+   95: Common::UString GUI::getName() const {
+   96  	return _name;
+
+   98  
+   99: void GUI::mouseDown() {
+  100  	CursorMan.set(CursorMan.getCurrentGroup(), "down");
+
+  102  
+  103: void GUI::mouseUp() {
+  104  	CursorMan.set(CursorMan.getCurrentGroup(), "up");
+
+  106  
+  107: void GUI::load(const Common::UString &resref) {
+  108  	if (!empty())
+
+  114  	// This is only relevant to Jade Empire.
+  115: 	// LTI prefixed GUI definitions for the Windows version of Jade Empire
+  116  	// with lti_ to support mouse and keyboard control.
+
+  124  	} catch (Common::Exception &e) {
+  125: 		e.add("Can't load GUI \"%s\"", _name.c_str());
+  126  		throw;
+
+  129  
+  130: void GUI::loadWidget(const Aurora::GFF3Struct &strct, Widget *parent) {
+  131  
+
+  161  
+  162: void GUI::createWidget(WidgetContext &ctx) {
+  163  	if      (ctx.type == kWidgetTypePanel)
+
+  192  
+  193: void GUI::initWidget(Widget &UNUSED(widget)) {
+  194  }
+  195  
+  196: Odyssey::WidgetPanel *GUI::getPanel(const Common::UString &tag, bool vital) {
+  197  	Widget *widget = getWidget(tag, vital);
+
+  207  
+  208: Odyssey::WidgetLabel *GUI::getLabel(const Common::UString &tag, bool vital) {
+  209  	Widget *widget = getWidget(tag, vital);
+
+  219  
+  220: Odyssey::WidgetProtoItem *GUI::getProtoItem(const Common::UString &tag, bool vital) {
+  221  	Widget *widget = getWidget(tag, vital);
+
+  231  
+  232: Odyssey::WidgetButton *GUI::getButton(const Common::UString &tag, bool vital) {
+  233  	Widget *widget = getWidget(tag, vital);
+
+  243  
+  244: Odyssey::WidgetCheckBox *GUI::getCheckBox(const Common::UString &tag, bool vital) {
+  245  	Widget *widget = getWidget(tag, vital);
+
+  255  
+  256: Odyssey::WidgetSlider *GUI::getSlider(const Common::UString &tag, bool vital) {
+  257  	Widget *widget = getWidget(tag, vital);
+
+  267  
+  268: Odyssey::WidgetScrollbar *GUI::getScrollbar(const Common::UString &tag, bool vital) {
+  269  	Widget *widget = getWidget(tag, vital);
+
+  279  
+  280: Odyssey::WidgetProgressbar *GUI::getProgressbar(const Common::UString &tag, bool vital) {
+  281  	Widget *widget = getWidget(tag, vital);
+
+  291  
+  292: Odyssey::WidgetListBox *GUI::getListBox(const Common::UString &tag, bool vital) {
+  293  	Widget *widget = getWidget(tag, vital);
+
+  303  
+  304: void GUI::addBackground(const Common::UString &background, bool front) {
+  305  	if (!_background)
+
+  310  
+  311: void GUI::setCheckBoxState(const Common::UString &tag, bool state) {
+  312  	Odyssey::WidgetCheckBox &checkbox = *getCheckBox(tag, true);
+
+  315  
+  316: bool GUI::getCheckBoxState(const Common::UString &tag) {
+  317  	Odyssey::WidgetCheckBox &checkbox = *getCheckBox(tag, true);
+
+vendor\xoreos\src\engines\kotorbase\gui\gui.h:
+  21  /** @file
+  22:  *  GUI for KotOR games.
+  23   */
+
+  56  
+  57: class GUI : public Engines::GUI {
+  58  public:
+  59: 	GUI(::Engines::Console *console = 0);
+  60: 	~GUI();
+  61  
+  62: 	virtual void show(); ///< Show the GUI.
+  63: 	virtual void hide(); ///< Hide the GUI.
+  64  
+  65  	/**
+  66: 	 * Converts Kotor' GUI coordinates with a coordinate origin
+  67  	 * in the upper left corner to the Xoreos coordinate system
+
+  72  	 * Converts Xoreos' coordinates with a coordinate origin
+  73: 	 * in the center to Kotor's GUI coordinates
+  74  	 * with the coordinate origin in the the upper left corner.
+
+vendor\xoreos\src\engines\kotorbase\gui\hud.cpp:
+  43  HUD::HUD(Module &module, Console *console) :
+  44: 		GUI(console),
+  45  		_module(module),
+
+vendor\xoreos\src\engines\kotorbase\gui\hud.h:
+  41  
+  42: class HUD : public GUI {
+  43  public:
+
+vendor\xoreos\src\engines\kotorbase\gui\ingame.cpp:
+  21  /** @file
+  22:  *  Base in-game GUI for KotOR games.
+  23   */
+
+vendor\xoreos\src\engines\kotorbase\gui\ingame.h:
+  21  /** @file
+  22:  *  Base in-game GUI for KotOR games.
+  23   */
+
+  38  
+  39: class IngameGUI : public KotORBase::GUI {
+  40  public:
+
+vendor\xoreos\src\engines\kotorbase\gui\inventoryitem.cpp:
+  35  
+  36: WidgetInventoryItem::WidgetInventoryItem(Engines::GUI &gui, const Common::UString &tag) : WidgetProtoItem(gui, tag) {
+  37  	setDisableHighlight(true);
+
+vendor\xoreos\src\engines\kotorbase\gui\inventoryitem.h:
+  35  public:
+  36: 	WidgetInventoryItem(Engines::GUI &gui, const Common::UString &tag);
+  37  
+
+vendor\xoreos\src\engines\kotorbase\gui\loadscreen.cpp:
+  34  
+  35: LoadScreen::LoadScreen(const Common::UString &UNUSED(name), Console *console) : GUI(console) {
+  36  }
+
+vendor\xoreos\src\engines\kotorbase\gui\loadscreen.h:
+  21  /** @file
+  22:  *  Loading screen GUI for KotOR games.
+  23   */
+
+  41  
+  42: class LoadScreen : public GUI {
+  43  public:
+
+vendor\xoreos\src\engines\kotorbase\gui\menubase.cpp:
+  39  MenuBase::MenuBase(Module &module, Console *console) :
+  40: 		GUI(console),
+  41  		_module(&module) {
+
+vendor\xoreos\src\engines\kotorbase\gui\menubase.h:
+  35  
+  36: class MenuBase : public GUI {
+  37  public:
+
+vendor\xoreos\src\engines\kotorbase\gui\partyselection.cpp:
+  21  /** @file
+  22:  *  Party selection GUI for KotOR games.
+  23   */
+
+vendor\xoreos\src\engines\kotorbase\gui\partyselection.h:
+  21  /** @file
+  22:  *  Party selection GUI for KotOR games.
+  23   */
+
+  35  
+  36: class PartySelectionGUI : public GUI {
+  37  public:
+
+vendor\xoreos\src\engines\nwn\creature.h:
+   58  
+   59: 	/** Last time info was changed that's displayed in the GUI. */
+   60  	uint32_t lastChangedGUIDisplay() const;
+
+  321  
+  322: 	/** The time a GUI relevant property was changed last. */
+  323  	uint32_t _lastChangedGUIDisplay;
+
+vendor\xoreos\src\engines\nwn\module.h:
+  186  
+  187: 	std::unique_ptr<IngameGUI> _ingameGUI; ///< The ingame GUI elements.
+  188  
+
+vendor\xoreos\src\engines\nwn\nwn.cpp:
+  246  
+  247: 	progress.step("Loading GUI textures");
+  248  	indexMandatoryArchive("gui_32bit.erf", 50);
+
+vendor\xoreos\src\engines\nwn\gui\gui.cpp:
+   21  /** @file
+   22:  *  A NWN GUI.
+   23   */
+
+   55  
+   56: GUI::WidgetContext::WidgetContext(const Aurora::GFF3Struct &s, Widget *p) {
+   57  	strct = &s;
+
+   71  
+   72: GUI::GUI(::Engines::Console *console) : ::Engines::GUI(console) {
+   73  }
+   74  
+   75: GUI::~GUI() {
+   76  }
+   77  
+   78: void GUI::load(const Common::UString &resref) {
+   79  	_name = resref;
+
+   87  	} catch (Common::Exception &e) {
+   88: 		e.add("Can't load GUI \"%s\"", resref.c_str());
+   89  		throw;
+
+   92  
+   93: void GUI::loadWidget(const Aurora::GFF3Struct &strct, Widget *parent) {
+   94  	WidgetContext ctx(strct, parent);
+
+  105  	} else {
+  106: 		// We'll ignore these for now, centering the GUI
+  107  	}
+
+  119  
+  120: void GUI::createWidget(WidgetContext &ctx) {
+  121  	// ...BioWare...
+
+  153  
+  154: void GUI::initWidget(WidgetContext &ctx, WidgetLabel &widget) {
+  155  	float width = ctx.strct->getDouble("Obj_Label_Width") * 100.0;
+
+  171  
+  172: void GUI::initWidget(WidgetContext &ctx, ModelWidget &widget) {
+  173  	initCaption(ctx, widget);
+
+  187  
+  188: void GUI::initCaption(WidgetContext &ctx, NWNWidgetWithCaption &widget) {
+  189  	if (!ctx.strct->hasField("Obj_Caption"))
+
+  211  
+  212: void GUI::initWidget(WidgetContext &ctx) {
+  213  
+
+  216  
+  217: void GUI::fixWidgetType(const Common::UString &UNUSED(tag), WidgetType &UNUSED(type)) {
+  218  }
+  219  
+  220: void GUI::initWidget(Widget &UNUSED(widget)) {
+  221  }
+  222  
+  223: WidgetFrame *GUI::getFrame(const Common::UString &tag, bool vital) {
+  224  	Widget *widget = getWidget(tag, vital);
+
+  234  
+  235: WidgetClose *GUI::getClose(const Common::UString &tag, bool vital) {
+  236  	Widget *widget = getWidget(tag, vital);
+
+  246  
+  247: WidgetCheckBox *GUI::getCheckBox(const Common::UString &tag, bool vital) {
+  248  	Widget *widget = getWidget(tag, vital);
+
+  258  
+  259: WidgetPanel *GUI::getPanel(const Common::UString &tag, bool vital) {
+  260  	Widget *widget = getWidget(tag, vital);
+
+  270  
+  271: WidgetLabel *GUI::getLabel(const Common::UString &tag, bool vital) {
+  272  	Widget *widget = getWidget(tag, vital);
+
+  282  
+  283: WidgetSlider *GUI::getSlider(const Common::UString &tag, bool vital) {
+  284  	Widget *widget = getWidget(tag, vital);
+
+  294  
+  295: WidgetEditBox *GUI::getEditBox(const Common::UString &tag, bool vital) {
+  296  	Widget *widget = getWidget(tag, vital);
+
+  306  
+  307: WidgetButton *GUI::getButton(const Common::UString &tag, bool vital) {
+  308  	Widget *widget = getWidget(tag, vital);
+
+  318  
+  319: WidgetListBox *GUI::getListBox(const Common::UString &tag, bool vital) {
+  320  	Widget *widget = getWidget(tag, vital);
+
+  330  
+  331: WidgetScrollbar *GUI::getScrollbar(const Common::UString &tag, bool vital) {
+  332  	Widget *widget = getWidget(tag, vital);
+
+vendor\xoreos\src\engines\nwn\gui\gui.h:
+  21  /** @file
+  22:  *  A NWN GUI.
+  23   */
+
+  52  
+  53: /** A NWN GUI. */
+  54: class GUI : public ::Engines::GUI {
+  55  public:
+  56: 	GUI(::Engines::Console *console = 0);
+  57: 	~GUI();
+  58  
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charalignment.cpp:
+  79  void CharAlignment::show() {
+  80: 	Engines::GUI::show();
+  81  
+
+  89  void CharAlignment::hide() {
+  90: 	Engines::GUI::hide();
+  91  
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charappearance.cpp:
+  21  /** @file
+  22:  *  The character appearance GUI in CharGen.
+  23   */
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charappearance.h:
+  21  /** @file
+  22:  *  The character appearance GUI in CharGen.
+  23   */
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charattributes.cpp:
+  193  
+  194: 	Engines::GUI::show();
+  195  }
+
+  197  void CharAttributes::hide() {
+  198: 	Engines::GUI::hide();
+  199  
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charclass.cpp:
+  56  	if (tag == "ClassListBox")
+  57: 		type = NWN::GUI::kWidgetTypeListBox;
+  58  }
+
+  67  void CharClass::hide() {
+  68: 	Engines::GUI::hide();
+  69  
+
+vendor\xoreos\src\engines\nwn\gui\chargen\chardomain.cpp:
+   45  
+   46: WidgetListItemDomain::WidgetListItemDomain(::Engines::GUI &gui, const Common::UString &name,
+   47                                             const Common::UString &icon, const Common::UString &desc,
+
+  105  
+  106: void CharDomain::fixWidgetType(const Common::UString &tag, NWN::GUI::WidgetType &type) {
+  107  	if (tag == "DomainListBox")
+  108: 		type = NWN::GUI::kWidgetTypeListBox;
+  109  }
+
+vendor\xoreos\src\engines\nwn\gui\chargen\chardomain.h:
+  40  public:
+  41: 	WidgetListItemDomain(::Engines::GUI &gui, const Common::UString &title, const Common::UString &icon, const Common::UString &desc, uint8_t domainId);
+  42  	~WidgetListItemDomain();
+
+  62  	void reset();
+  63: 	void fixWidgetType(const Common::UString &tag, NWN::GUI::WidgetType &type);
+  64  
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charfeats.cpp:
+   21  /** @file
+   22:  *  The feats selection GUI.
+   23   */
+
+   50  
+   51: WidgetListItemFeat::WidgetListItemFeat(::Engines::GUI &gui, FeatItem &feat) :
+   52                                         WidgetListItemButton(gui, "ctl_cg_btn_feat",
+
+  117  
+  118: void CharFeats::fixWidgetType(const Common::UString &tag, NWN::GUI::WidgetType &type) {
+  119  	if (tag == "AvailBox" || tag == "KnownBox")
+  120: 		type = NWN::GUI::kWidgetTypeListBox;
+  121  }
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charfeats.h:
+  21  /** @file
+  22:  *  The feats selection GUI.
+  23   */
+
+  46  public:
+  47: 	WidgetListItemFeat (::Engines::GUI &gui, FeatItem &feat);
+  48  	~WidgetListItemFeat();
+
+  66  	void reset();
+  67: 	void fixWidgetType(const Common::UString &tag, NWN::GUI::WidgetType &type);
+  68  
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charfeatspopup.cpp:
+  21  /** @file
+  22:  *  Feat popup GUI.
+  23   */
+
+  36  
+  37: CharFeatsPopup::CharFeatsPopup(::Engines::Console *console) : GUI(console) {
+  38  	load("cg_feats_popup");
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charfeatspopup.h:
+  21  /** @file
+  22:  *  Feat popup GUI.
+  23   */
+
+  36  
+  37: class CharFeatsPopup : public GUI {
+  38  public:
+
+vendor\xoreos\src\engines\nwn\gui\chargen\chargenbase.cpp:
+  36  
+  37: CharGenBase::CharGenBase(::Engines::Console *console) : GUI(console) {
+  38  	_choices = 0;
+
+vendor\xoreos\src\engines\nwn\gui\chargen\chargenbase.h:
+  36  
+  37: class CharGenBase : public GUI {
+  38  public:
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charhelp.cpp:
+  21  /** @file
+  22:  *  Help popup GUI.
+  23   */
+
+  35  
+  36: CharHelp::CharHelp(const Common::UString &GUIResRef, ::Engines::Console *console) : GUI(console) {
+  37  	load(GUIResRef);
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charhelp.h:
+  21  /** @file
+  22:  *  Help popup GUI.
+  23   */
+
+  38  
+  39: class CharHelp : public GUI {
+  40  public:
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charinfovoice.cpp:
+  21  /** @file
+  22:  *  The character information GUI in CharGen.
+  23   */
+
+  41  
+  42: WidgetListItemVoice::WidgetListItemVoice(::Engines::GUI &gui, const Common::UString &title, const Common::UString &soundSet, uint16_t soundSetID) :
+  43      WidgetListItemButton(gui, "ctl_cg_btn_snds", title, "", kNoButton), _soundSetID(soundSetID) {
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charinfovoice.h:
+  21  /** @file
+  22:  *  The character information GUI in CharGen.
+  23   */
+
+  42  public:
+  43: 	WidgetListItemVoice(::Engines::GUI &gui, const Common::UString &title,
+  44  	                    const Common::UString &soundSet, uint16_t soundSetID);
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charpackage.cpp:
+   21  /** @file
+   22:  *  The package selection GUI.
+   23   */
+
+   67  
+   68: 	Engines::GUI::show();
+   69  }
+
+  101  
+  102: 			// Add spell GUI if needed
+  103  			const Aurora::TwoDAFile &twodaClasses = TwoDAReg.get2DA("classes");
+
+  114  			}
+  115: 			//TODO: Add animal companion/familiar GUI
+  116  		}
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charpackage.h:
+  21  /** @file
+  22:  *  The package selection GUI.
+  23   */
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charportrait.cpp:
+   42  
+   43: WidgetGridItemPortrait::WidgetGridItemPortrait(NWN::GUI &gui, const Common::UString &portrait) :
+   44  	WidgetListItem(gui) {
+
+  131  
+  132: 	Engines::GUI::show();
+  133  }
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charportrait.h:
+  40  public:
+  41: 	WidgetGridItemPortrait(GUI &gui, const Common::UString &portrait);
+  42  	~WidgetGridItemPortrait();
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charrace.cpp:
+  84  void CharRace::hide() {
+  85: 	Engines::GUI::hide();
+  86  
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charschool.cpp:
+  71  void CharSchool::hide() {
+  72: 	Engines::GUI::hide();
+  73  
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charsex.cpp:
+  63  void CharSex::hide() {
+  64: 	Engines::GUI::hide();
+  65  
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charskills.cpp:
+  21  /** @file
+  22:  *  The skills selection GUI.
+  23   */
+
+  49  
+  50: WidgetListItemSkill::WidgetListItemSkill(::Engines::GUI &gui, const SkillItem &skill) :
+  51  	WidgetListItemButton(gui, "ctl_cg_btn_skill", skill.name, skill.icon),
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charskills.h:
+  21  /** @file
+  22:  *  The skills selection GUI.
+  23   */
+
+  40  public:
+  41: 	WidgetListItemSkill(::Engines::GUI &gui, const SkillItem &skill);
+  42  	~WidgetListItemSkill();
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charspells.cpp:
+   21  /** @file
+   22:  *  The spells selection GUI in CharGen.
+   23   */
+
+   48  
+   49: WidgetListItemSpell::WidgetListItemSpell(::Engines::GUI &gui, Spell spell, bool isRight) :
+   50      WidgetListItemButton(gui, "ctl_cg_btn_feat", spell.name, spell.icon, kMoveButton | kHelpButton) {
+
+  113  
+  114: void CharSpells::fixWidgetType(const Common::UString &tag, GUI::WidgetType &type) {
+  115  	if (tag.beginsWith("SpellLevel"))
+
+vendor\xoreos\src\engines\nwn\gui\chargen\charspells.h:
+  21  /** @file
+  22:  *  The spells selection GUI in CharGen.
+  23   */
+
+  49  public:
+  50: 	WidgetListItemSpell(::Engines::GUI &gui, Spell spell, bool isRight = true);
+  51  	~WidgetListItemSpell();
+
+  67  	void reset();
+  68: 	void fixWidgetType(const Common::UString &tag, NWN::GUI::WidgetType &type);
+  69  
+
+vendor\xoreos\src\engines\nwn\gui\dialogs\okcancel.cpp:
+  38  		const Common::UString &ok, const Common::UString &cancel,
+  39: 		::Engines::Console *console) : GUI(console),
+  40  	_msg(msg), _ok(ok), _cancel(cancel) {
+
+  76  
+  77: 	GUI::show();
+  78  }
+
+vendor\xoreos\src\engines\nwn\gui\dialogs\okcancel.h:
+  36  /** The NWN okay/cancel dialog. */
+  37: class OKCancelDialog : public GUI {
+  38  public:
+
+vendor\xoreos\src\engines\nwn\gui\dialogs\yesnocancel.cpp:
+  37  			const Common::UString &no, const Common::UString &cancel,
+  38: 			::Engines::Console *console) : GUI(console),
+  39  	_msg(msg), _yes(yes), _no(no), _cancel(cancel) {
+
+  80  
+  81: 	GUI::show();
+  82  }
+
+vendor\xoreos\src\engines\nwn\gui\dialogs\yesnocancel.h:
+  36  /** The NWN yes/no/cancel dialog. */
+  37: class YesNoCancelDialog : public GUI {
+  38  public:
+
+vendor\xoreos\src\engines\nwn\gui\ingame\charinfo.h:
+  38  /** A NWN character info panel. */
+  39: class CharacterInfo : public GUI {
+  40  public:
+
+vendor\xoreos\src\engines\nwn\gui\ingame\compass.cpp:
+  43  //       alongside the transparency problem once I've revamped models...
+  44: CompassWidget::CompassWidget(::Engines::GUI &gui, const Common::UString &tag) :
+  45  	ModelWidget(gui, tag, "ctl_compass") {
+
+vendor\xoreos\src\engines\nwn\gui\ingame\compass.h:
+  40  public:
+  41: 	CompassWidget(::Engines::GUI &gui, const Common::UString &tag);
+  42  	~CompassWidget();
+
+  47  /** The NWN ingame compass. */
+  48: class Compass : public GUI, public Events::Notifyable {
+  49  public:
+
+vendor\xoreos\src\engines\nwn\gui\ingame\ingame.cpp:
+  21  /** @file
+  22:  *  The NWN ingame GUI elements.
+  23   */
+
+vendor\xoreos\src\engines\nwn\gui\ingame\ingame.h:
+  21  /** @file
+  22:  *  The NWN ingame GUI elements.
+  23   */
+
+  55  
+  56: /** The NWN ingame GUI elements. */
+  57  class IngameGUI {
+
+  64  
+  65: 	void show(); ///< Show the ingame GUI elements.
+  66: 	void hide(); ///< Hide the ingame GUI elements.
+  67  
+
+vendor\xoreos\src\engines\nwn\gui\ingame\main.cpp:
+  48  IngameMainMenu::IngameMainMenu(const Version &gameVersion, ::Engines::Console *console) :
+  49: 	GUI(console), _gameVersion(&gameVersion) {
+  50  
+
+vendor\xoreos\src\engines\nwn\gui\ingame\main.h:
+  38  /** The NWN ingame main menu. */
+  39: class IngameMainMenu : public GUI {
+  40  public:
+
+  51  
+  52: 	std::unique_ptr<GUI> _game;
+  53: 	std::unique_ptr<GUI> _video;
+  54: 	std::unique_ptr<GUI> _sound;
+  55: 	std::unique_ptr<GUI> _controls;
+  56  
+  57: 	std::unique_ptr<GUI> _quitPrompt;
+  58  };
+
+vendor\xoreos\src\engines\nwn\gui\ingame\quickbar.cpp:
+  43  
+  44: QuickbarButton::QuickbarButton(::Engines::GUI &gui, size_t n) : NWNWidget(gui, ""),
+  45  	_buttonNumber(n) {
+
+vendor\xoreos\src\engines\nwn\gui\ingame\quickbar.h:
+  46  public:
+  47: 	QuickbarButton(::Engines::GUI &gui, size_t n);
+  48  	~QuickbarButton();
+
+  66  /** The NWN ingame quickbar. */
+  67: class Quickbar : public GUI, public Events::Notifyable {
+  68  public:
+
+vendor\xoreos\src\engines\nwn\gui\ingame\quickchat.cpp:
+  42  
+  43: ChatModeButton::ChatModeButton(::Engines::GUI &gui, const Common::UString &tag,
+  44                                 const Common::UString &model, ChatMode mode) :
+
+vendor\xoreos\src\engines\nwn\gui\ingame\quickchat.h:
+  52  public:
+  53: 	ChatModeButton(::Engines::GUI &gui, const Common::UString &tag,
+  54  	               const Common::UString &model, ChatMode mode);
+
+  63  /** The NWN ingame quickchat. */
+  64: class Quickchat : public GUI, public Events::Notifyable {
+  65  public:
+
+vendor\xoreos\src\engines\nwn\gui\main\charpremade.cpp:
+   55  
+   56: WidgetListItemCharacter::WidgetListItemCharacter(::Engines::GUI &gui, const Common::UString &font,
+   57                                                   const Common::UString &name,
+
+  112  
+  113: CharPremadeMenu::CharPremadeMenu(Module &module, ::Engines::Console *console) : GUI(console),
+  114  	_module(&module) {
+
+  142  
+  143: 	GUI::show();
+  144  }
+
+vendor\xoreos\src\engines\nwn\gui\main\charpremade.h:
+  47  public:
+  48: 	WidgetListItemCharacter(::Engines::GUI &gui, const Common::UString &font,
+  49  	                        const Common::UString &name    , const Common::UString &classes,
+
+  64  /** The NWN character creator. */
+  65: class CharPremadeMenu : public GUI {
+  66  public:
+
+  93  
+  94: 	std::unique_ptr<GUI> _charGen;
+  95  
+
+vendor\xoreos\src\engines\nwn\gui\main\chartype.cpp:
+  33  
+  34: CharTypeMenu::CharTypeMenu(Module &module, ::Engines::Console *console) : GUI(console),
+  35  	_module(&module) {
+
+vendor\xoreos\src\engines\nwn\gui\main\chartype.h:
+  38  /** The NWN new/premade character selection menu. */
+  39: class CharTypeMenu : public GUI {
+  40  public:
+
+  49  
+  50: 	std::unique_ptr<GUI> _charGen;
+  51: 	std::unique_ptr<GUI> _charPremade;
+  52  };
+
+vendor\xoreos\src\engines\nwn\gui\main\main.cpp:
+   45  
+   46: MainMenu::MainMenu(Module &module, ::Engines::Console *console) : GUI(console),
+   47  	_module(&module) {
+
+  108  void MainMenu::show() {
+  109: 	GUI::show();
+  110  
+
+  117  
+  118: 	GUI::abort();
+  119  }
+
+vendor\xoreos\src\engines\nwn\gui\main\main.h:
+  38  /** The NWN main menu. */
+  39: class MainMenu : public GUI {
+  40  public:
+
+  55  
+  56: 	std::unique_ptr<GUI> _charType;
+  57  
+  58: 	std::unique_ptr<GUI> _new;
+  59: 	std::unique_ptr<GUI> _movies;
+  60: 	std::unique_ptr<GUI> _options;
+  61  
+
+vendor\xoreos\src\engines\nwn\gui\main\moviesbase.cpp:
+  33  
+  34: MoviesBaseMenu::MoviesBaseMenu(::Engines::Console *console) : GUI(console) {
+  35  	load("pre_movies");
+
+vendor\xoreos\src\engines\nwn\gui\main\moviesbase.h:
+  34  /** The NWN base game movies menu. */
+  35: class MoviesBaseMenu : public GUI {
+  36  public:
+
+vendor\xoreos\src\engines\nwn\gui\main\moviescamp.cpp:
+  36  
+  37: MoviesCampMenu::MoviesCampMenu(::Engines::Console *console) : GUI(console) {
+  38  	load("pre_camp_movies");
+
+  69  	if        (widget.getTag() == "NWNXP1Button") {
+  70: 		// No GUI file? Hardcoded?
+  71  
+
+  77  	} else if (widget.getTag() == "NWNXP2Button") {
+  78: 		// No GUI file? Harcoded?
+  79  
+
+vendor\xoreos\src\engines\nwn\gui\main\moviescamp.h:
+  36  /** The NWN campaign movies menu. */
+  37: class MoviesCampMenu : public GUI {
+  38  public:
+
+  45  private:
+  46: 	std::unique_ptr<GUI> _base;
+  47  };
+
+vendor\xoreos\src\engines\nwn\gui\main\new.cpp:
+  35  
+  36: NewMenu::NewMenu(Module &module, GUI &charType, ::Engines::Console *console) : GUI(console),
+  37  	_module(&module), _charType(&charType) {
+
+vendor\xoreos\src\engines\nwn\gui\main\new.h:
+  38  /** The NWN new game menu. */
+  39: class NewMenu : public GUI {
+  40  public:
+  41: 	NewMenu(Module &module, GUI &charType, ::Engines::Console *console = 0);
+  42  	~NewMenu();
+
+  51  
+  52: 	GUI *_charType;
+  53  
+  54: 	std::unique_ptr<GUI> _modules;
+  55  
+
+vendor\xoreos\src\engines\nwn\gui\main\newcamp.cpp:
+  39  
+  40: NewCampMenu::NewCampMenu(Module &module, GUI &charType, ::Engines::Console *console) : GUI(console),
+  41  	_module(&module), _charType(&charType) {
+
+vendor\xoreos\src\engines\nwn\gui\main\newcamp.h:
+  38  /** The NWN new campaign menu. */
+  39: class NewCampMenu : public GUI {
+  40  public:
+  41: 	NewCampMenu(Module &module, GUI &charType, ::Engines::Console *console = 0);
+  42  	~NewCampMenu();
+
+  49  
+  50: 	GUI *_charType;
+  51  
+  52: 	std::unique_ptr<GUI> _base;
+  53: 	std::unique_ptr<GUI> _xp1;
+  54: 	std::unique_ptr<GUI> _xp2;
+  55: 	std::unique_ptr<GUI> _modules;
+  56: 	std::unique_ptr<GUI> _premium;
+  57  };
+
+vendor\xoreos\src\engines\nwn\gui\main\newmodule.cpp:
+   47  
+   48: WidgetListItemModule::WidgetListItemModule(::Engines::GUI &gui,
+   49      const Common::UString &font, const Common::UString &text, float spacing) :
+
+  121  
+  122: NewModuleMenu::NewModuleMenu(Module &module, GUI &charType, ::Engines::Console *console) : GUI(console),
+  123  	_module(&module), _charType(&charType) {
+
+  134  
+  135: 	GUI::show();
+  136  }
+
+vendor\xoreos\src\engines\nwn\gui\main\newmodule.h:
+  46  public:
+  47: 	WidgetListItemModule(::Engines::GUI &gui, const Common::UString &font,
+  48  	                     const Common::UString &text, float spacing = 0.0f);
+
+  72  /** The NWN new module menu. */
+  73: class NewModuleMenu : public GUI {
+  74  public:
+  75: 	NewModuleMenu(Module &module, GUI &charType, ::Engines::Console *console = 0);
+  76  	~NewModuleMenu();
+
+  89  
+  90: 	GUI *_charType;
+  91  
+
+vendor\xoreos\src\engines\nwn\gui\main\newpremium.cpp:
+   49  
+   50: WidgetListItemPremium::WidgetListItemPremium(::Engines::GUI &gui,
+   51      const Common::UString &font, const Common::UString &text, float spacing) :
+
+  123  
+  124: NewPremiumMenu::NewPremiumMenu(Module &module, GUI &charType, ::Engines::Console *console) : GUI(console),
+  125  	_module(&module), _charType(&charType) {
+
+  136  
+  137: 	GUI::show();
+  138  }
+
+vendor\xoreos\src\engines\nwn\gui\main\newpremium.h:
+  46  public:
+  47: 	WidgetListItemPremium(::Engines::GUI &gui, const Common::UString &font,
+  48  	                      const Common::UString &text, float spacing = 0.0f);
+
+  72  /** The NWN new premium module menu. */
+  73: class NewPremiumMenu : public GUI {
+  74  public:
+  75: 	NewPremiumMenu(Module &module, GUI &charType, ::Engines::Console *console = 0);
+  76  	~NewPremiumMenu();
+
+  90  
+  91: 	GUI *_charType;
+  92  
+
+vendor\xoreos\src\engines\nwn\gui\main\newxp1.cpp:
+  36  
+  37: NewXP1Menu::NewXP1Menu(Module &module, GUI &charType, ::Engines::Console *console) : GUI(console),
+  38  	_module(&module), _charType(&charType) {
+
+vendor\xoreos\src\engines\nwn\gui\main\newxp1.h:
+  36  /** The NWN new game menu, expansion 1. */
+  37: class NewXP1Menu : public GUI {
+  38  public:
+  39: 	NewXP1Menu(Module &module, GUI &charType, ::Engines::Console *console = 0);
+  40  	~NewXP1Menu();
+
+  48  
+  49: 	GUI *_charType;
+  50  
+
+vendor\xoreos\src\engines\nwn\gui\main\newxp2.cpp:
+  36  
+  37: NewXP2Menu::NewXP2Menu(Module &module, GUI &charType, ::Engines::Console *console) : GUI(console),
+  38  	_module(&module), _charType(&charType) {
+
+vendor\xoreos\src\engines\nwn\gui\main\newxp2.h:
+  36  /** The NWN new game menu, expansion 2. */
+  37: class NewXP2Menu : public GUI {
+  38  public:
+  39: 	NewXP2Menu(Module &module, GUI &charType, ::Engines::Console *console = 0);
+  40  	~NewXP2Menu();
+
+  48  
+  49: 	GUI *_charType;
+  50  
+
+vendor\xoreos\src\engines\nwn\gui\main\options.cpp:
+  42  
+  43: OptionsMenu::OptionsMenu(const Version &gameVersion, ::Engines::Console *console) : GUI(console),
+  44  	_gameVersion(&gameVersion) {
+
+vendor\xoreos\src\engines\nwn\gui\main\options.h:
+  38  /** The NWN options menu. */
+  39: class OptionsMenu : public GUI {
+  40  public:
+
+  50  
+  51: 	std::unique_ptr<GUI> _game;
+  52: 	std::unique_ptr<GUI> _video;
+  53: 	std::unique_ptr<GUI> _sound;
+  54: 	std::unique_ptr<GUI> _controls;
+  55  };
+
+vendor\xoreos\src\engines\nwn\gui\options\controls.cpp:
+  32  
+  33: OptionsControlsMenu::OptionsControlsMenu(bool isMain, ::Engines::Console *console) : GUI(console) {
+  34  	load("options_controls");
+
+vendor\xoreos\src\engines\nwn\gui\options\controls.h:
+  34  /** The NWN controls options menu. */
+  35: class OptionsControlsMenu : public GUI {
+  36  public:
+
+vendor\xoreos\src\engines\nwn\gui\options\feedback.cpp:
+  43  
+  44: OptionsFeedbackMenu::OptionsFeedbackMenu(bool isMain, ::Engines::Console *console) : GUI(console) {
+  45  	load("options_feedback");
+
+  92  
+  93: 	GUI::show();
+  94  }
+
+vendor\xoreos\src\engines\nwn\gui\options\feedback.h:
+  34  /** The NWN feedback options menu. */
+  35: class OptionsFeedbackMenu : public GUI {
+  36  public:
+
+vendor\xoreos\src\engines\nwn\gui\options\game.cpp:
+  42  
+  43: OptionsGameMenu::OptionsGameMenu(bool isMain, ::Engines::Console *console) : GUI(console) {
+  44  	load("options_game");
+
+  79  
+  80: 	GUI::show();
+  81  }
+
+vendor\xoreos\src\engines\nwn\gui\options\game.h:
+  36  /** The NWN game options menu. */
+  37: class OptionsGameMenu : public GUI {
+  38  public:
+
+  52  
+  53: 	std::unique_ptr<GUI> _gorepass;
+  54: 	std::unique_ptr<GUI> _feedback;
+  55  
+
+vendor\xoreos\src\engines\nwn\gui\options\gorepass.cpp:
+  32  
+  33: OptionsGorePasswordMenu::OptionsGorePasswordMenu(bool isMain, ::Engines::Console *console) : GUI(console) {
+  34  	load("options_gorepass");
+
+vendor\xoreos\src\engines\nwn\gui\options\gorepass.h:
+  34  /** The NWN violence/gore password options menu. */
+  35: class OptionsGorePasswordMenu : public GUI {
+  36  public:
+
+vendor\xoreos\src\engines\nwn\gui\options\resolution.cpp:
+  40  
+  41: OptionsResolutionMenu::OptionsResolutionMenu(bool isMain, ::Engines::Console *console) : GUI(console) {
+  42  	load("options_vidmodes");
+
+  59  
+  60: 	GUI::show();
+  61  }
+
+vendor\xoreos\src\engines\nwn\gui\options\resolution.h:
+  38  /** The NWN resolution options menu. */
+  39: class OptionsResolutionMenu : public GUI {
+  40  public:
+
+vendor\xoreos\src\engines\nwn\gui\options\sound.cpp:
+   40  
+   41: OptionsSoundMenu::OptionsSoundMenu(bool isMain, ::Engines::Console *console) : GUI(console) {
+   42  	load("options_sound");
+
+  101  
+  102: 	GUI::show();
+  103  }
+
+vendor\xoreos\src\engines\nwn\gui\options\sound.h:
+  38  /** The NWN sound options menu. */
+  39: class OptionsSoundMenu : public GUI {
+  40  public:
+
+  50  private:
+  51: 	std::unique_ptr<GUI> _advanced;
+  52  
+
+vendor\xoreos\src\engines\nwn\gui\options\soundadv.cpp:
+  32  
+  33: OptionsSoundAdvancedMenu::OptionsSoundAdvancedMenu(bool isMain, ::Engines::Console *console) : GUI(console) {
+  34  	load("options_advsound");
+
+vendor\xoreos\src\engines\nwn\gui\options\soundadv.h:
+  34  /** The NWN advanced sound options menu. */
+  35: class OptionsSoundAdvancedMenu : public GUI {
+  36  public:
+
+vendor\xoreos\src\engines\nwn\gui\options\video.cpp:
+  43  
+  44: OptionsVideoMenu::OptionsVideoMenu(bool isMain, ::Engines::Console *console) : GUI(console) {
+  45  	load("options_video");
+
+  93  
+  94: 	GUI::show();
+  95  }
+
+vendor\xoreos\src\engines\nwn\gui\options\video.h:
+  36  /** The NWN video options menu. */
+  37: class OptionsVideoMenu : public GUI {
+  38  public:
+
+  48  private:
+  49: 	std::unique_ptr<GUI> _resolution;
+  50: 	std::unique_ptr<GUI> _advanced;
+  51  
+
+vendor\xoreos\src\engines\nwn\gui\options\videoadv.cpp:
+   44  
+   45: OptionsVideoAdvancedMenu::OptionsVideoAdvancedMenu(bool isMain, ::Engines::Console *console) : GUI(console) {
+   46  	load("options_adv_vid");
+
+  100  
+  101: 	GUI::show();
+  102  }
+
+vendor\xoreos\src\engines\nwn\gui\options\videoadv.h:
+  34  /** The NWN advanced video options menu. */
+  35: class OptionsVideoAdvancedMenu : public GUI {
+  36  public:
+
+vendor\xoreos\src\engines\nwn\gui\widgets\button.cpp:
+  37  
+  38: WidgetButton::WidgetButton(::Engines::GUI &gui, const Common::UString &tag,
+  39                             const Common::UString &model, const Common::UString &sound) :
+
+vendor\xoreos\src\engines\nwn\gui\widgets\button.h:
+  33  
+  34: class GUI;
+  35  
+
+  46  
+  47: 	WidgetButton(::Engines::GUI &gui, const Common::UString &tag,
+  48  	             const Common::UString &model, const Common::UString &sound = "gui_button");
+
+vendor\xoreos\src\engines\nwn\gui\widgets\checkbox.cpp:
+  38  
+  39: WidgetCheckBox::WidgetCheckBox(::Engines::GUI &gui, const Common::UString &tag,
+  40                                 const Common::UString &model) :
+
+vendor\xoreos\src\engines\nwn\gui\widgets\checkbox.h:
+  35  
+  36: class GUI;
+  37  
+
+  42  public:
+  43: 	WidgetCheckBox(::Engines::GUI &gui, const Common::UString &tag,
+  44  	               const Common::UString &model);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\close.cpp:
+  37  
+  38: WidgetClose::WidgetClose(::Engines::GUI &gui, const Common::UString &tag,
+  39                           const Common::UString &model) : ModelWidget(gui, tag, model) {
+
+vendor\xoreos\src\engines\nwn\gui\widgets\close.h:
+  35  
+  36: class GUI;
+  37  
+
+  42  public:
+  43: 	WidgetClose(::Engines::GUI &gui, const Common::UString &tag,
+  44  	            const Common::UString &model);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\editbox.cpp:
+  36  
+  37: WidgetEditBox::WidgetEditBox(::Engines::GUI &gui, const Common::UString &tag,
+  38                               const Common::UString &model) :
+
+vendor\xoreos\src\engines\nwn\gui\widgets\editbox.h:
+  37  
+  38: class GUI;
+  39  
+
+  44  public:
+  45: 	WidgetEditBox(::Engines::GUI &gui, const Common::UString &tag,
+  46  	              const Common::UString &model);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\frame.cpp:
+  30  
+  31: WidgetFrame::WidgetFrame(::Engines::GUI &gui, const Common::UString &tag,
+  32                           const Common::UString &model) : ModelWidget(gui, tag, model) {
+
+vendor\xoreos\src\engines\nwn\gui\widgets\frame.h:
+  35  
+  36: class GUI;
+  37  
+
+  42  public:
+  43: 	WidgetFrame(::Engines::GUI &gui, const Common::UString &tag,
+  44  	            const Common::UString &model);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\gridbox.cpp:
+  40  
+  41: WidgetGridBox::WidgetGridBox(::Engines::GUI &gui, const Common::UString &tag,
+  42                               const Common::UString &model, float innerHSpace, float innerVSpace) :
+
+vendor\xoreos\src\engines\nwn\gui\widgets\gridbox.h:
+  35  
+  36: class GUI;
+  37  
+
+  41  public:
+  42: 	WidgetGridBox(::Engines::GUI &gui, const Common::UString &tag, const Common::UString &model,
+  43  	              float innerHSpace = 0.0f, float InnerVSpace = 0.0f);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\label.cpp:
+  37  
+  38: WidgetLabel::WidgetLabel(::Engines::GUI &gui, const Common::UString &tag) :
+  39  	NWNWidgetWithCaption(gui, tag), _width(0.0), _height(0.0) {
+
+vendor\xoreos\src\engines\nwn\gui\widgets\label.h:
+  35  
+  36: class GUI;
+  37  
+
+  42  public:
+  43: 	WidgetLabel(::Engines::GUI &gui, const Common::UString &tag);
+  44  	~WidgetLabel();
+
+vendor\xoreos\src\engines\nwn\gui\widgets\listbox.cpp:
+   54  
+   55: WidgetListItem::WidgetListItem(::Engines::GUI &gui) : NWNWidget(gui, ""), _itemNumber(0xFFFFFFFF), _state(false) {
+   56  }
+
+  146  
+  147: WidgetListItemTextLine::WidgetListItemTextLine(::Engines::GUI &gui,
+  148      const Common::UString &font, const Common::UString &text, float spacing) :
+
+  234  
+  235: WidgetListBox::WidgetListBox(::Engines::GUI &gui, const Common::UString &tag,
+  236                               const Common::UString &model) :
+
+vendor\xoreos\src\engines\nwn\gui\widgets\listbox.h:
+   42  
+   43: class GUI;
+   44  
+
+   52  public:
+   53: 	WidgetListItem(::Engines::GUI &gui);
+   54  	~WidgetListItem();
+
+   83  public:
+   84: 	WidgetListItemTextLine(::Engines::GUI &gui, const Common::UString &font,
+   85  	                       const Common::UString &text, float spacing = 0.0f);
+
+  122  
+  123: 	WidgetListBox(::Engines::GUI &gui, const Common::UString &tag,
+  124  	              const Common::UString &model);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\listitembutton.cpp:
+   42  
+   43: WidgetListItemBaseButton::WidgetListItemBaseButton(::Engines::GUI &gui,
+   44                                                     const Common::UString &button, float spacing,
+
+  124  
+  125: WidgetListItemButton::WidgetListItemButton(::Engines::GUI &gui, const Common::UString &button,
+  126                                             const Common::UString &text, const Common::UString &icon,
+
+vendor\xoreos\src\engines\nwn\gui\widgets\listitembutton.h:
+  42  public:
+  43: 	WidgetListItemBaseButton(::Engines::GUI &gui, const Common::UString &button,
+  44  	                     float spacing = 0.0f, const Common::UString &soundClick = "gui_button");
+
+  79  public:
+  80: 	WidgetListItemButton(::Engines::GUI &gui, const Common::UString &button,
+  81  	                     const Common::UString &text, const Common::UString &icon,
+
+vendor\xoreos\src\engines\nwn\gui\widgets\modelwidget.cpp:
+  38  
+  39: ModelWidget::ModelWidget(::Engines::GUI &gui, const Common::UString &tag,
+  40                           const Common::UString &model) : NWNWidgetWithCaption(gui, tag) {
+
+vendor\xoreos\src\engines\nwn\gui\widgets\modelwidget.h:
+  46  public:
+  47: 	ModelWidget(::Engines::GUI &gui, const Common::UString &tag,
+  48  	            const Common::UString &model);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\nwnwidget.cpp:
+  33  
+  34: NWNWidget::NWNWidget(::Engines::GUI &gui, const Common::UString &tag) : Widget(gui, tag) {
+  35  }
+
+vendor\xoreos\src\engines\nwn\gui\widgets\nwnwidget.h:
+  46  public:
+  47: 	NWNWidget(::Engines::GUI &gui, const Common::UString &tag);
+  48  	~NWNWidget();
+
+vendor\xoreos\src\engines\nwn\gui\widgets\nwnwidgetwithcaption.cpp:
+  37  
+  38: NWNWidgetWithCaption::NWNWidgetWithCaption(::Engines::GUI &gui, const Common::UString &tag) :
+  39  	NWNWidget(gui, tag), _r(1.0f), _g(1.0f), _b(1.0f), _a(1.0f) {
+
+vendor\xoreos\src\engines\nwn\gui\widgets\nwnwidgetwithcaption.h:
+  48  public:
+  49: 	NWNWidgetWithCaption(::Engines::GUI &gui, const Common::UString &tag);
+  50  	~NWNWidgetWithCaption();
+
+vendor\xoreos\src\engines\nwn\gui\widgets\panel.cpp:
+  30  
+  31: WidgetPanel::WidgetPanel(::Engines::GUI &gui, const Common::UString &tag,
+  32                           const Common::UString &model) : ModelWidget(gui, tag, model) {
+
+vendor\xoreos\src\engines\nwn\gui\widgets\panel.h:
+  35  
+  36: class GUI;
+  37  
+
+  42  public:
+  43: 	WidgetPanel(::Engines::GUI &gui, const Common::UString &tag,
+  44  	            const Common::UString &model);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\portrait.cpp:
+  287  
+  288: PortraitWidget::PortraitWidget(::Engines::GUI &gui, const Common::UString &tag,
+  289                 const Common::UString &name, Portrait::Size size, float border,
+
+vendor\xoreos\src\engines\nwn\gui\widgets\portrait.h:
+  122  public:
+  123: 	PortraitWidget(::Engines::GUI &gui, const Common::UString &tag,
+  124  	               const Common::UString &name, Portrait::Size size, float border = 0.0f,
+
+vendor\xoreos\src\engines\nwn\gui\widgets\quadwidget.cpp:
+  35  
+  36: QuadWidget::QuadWidget(::Engines::GUI &gui, const Common::UString &tag,
+  37                         const Common::UString &texture,
+
+vendor\xoreos\src\engines\nwn\gui\widgets\quadwidget.h:
+  41  
+  42: class GUI;
+  43  
+
+  50  public:
+  51: 	QuadWidget(::Engines::GUI &gui, const Common::UString &tag,
+  52  	           const Common::UString &texture,
+
+vendor\xoreos\src\engines\nwn\gui\widgets\scrollbar.cpp:
+   21  /** @file
+   22:  *  The GUI scrollbar model.
+   23   */
+
+  317  
+  318: WidgetScrollbar::WidgetScrollbar(::Engines::GUI &gui, const Common::UString &tag,
+  319                                   Scrollbar::Type type, float range) :
+
+vendor\xoreos\src\engines\nwn\gui\widgets\scrollbar.h:
+   41  
+   42: class GUI;
+   43  
+
+  111  public:
+  112: 	WidgetScrollbar(::Engines::GUI &gui, const Common::UString &tag,
+  113  	                Scrollbar::Type type, float range);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\slider.cpp:
+  38  
+  39: WidgetSlider::WidgetSlider(::Engines::GUI &gui, const Common::UString &tag,
+  40                             const Common::UString &model) :
+
+vendor\xoreos\src\engines\nwn\gui\widgets\slider.h:
+  35  
+  36: class GUI;
+  37  
+
+  42  public:
+  43: 	WidgetSlider(::Engines::GUI &gui, const Common::UString &tag,
+  44  	             const Common::UString &model);
+
+vendor\xoreos\src\engines\nwn\gui\widgets\tooltip.h:
+  51  	enum Type {
+  52: 		kTypeHelp,     ///< Help string when mousing over a GUI widget.
+  53  		kTypeFeedback, ///< Name and/or portrait of an object in the 3D world.
+
+vendor\xoreos\src\engines\nwn2\roster.h:
+  52  
+  53: 	/** Limit on number of Roster NPCs added via Party Selection GUI. */
+  54  	uint32_t getRosterNPCPartyLimit();
+
+vendor\xoreos\src\engines\odyssey\button.cpp:
+  36  
+  37: WidgetButton::WidgetButton(GUI &gui, const Common::UString &tag) :
+  38  		Widget(gui, tag),
+
+vendor\xoreos\src\engines\odyssey\button.h:
+  43  public:
+  44: 	WidgetButton(GUI &gui, const Common::UString &tag);
+  45  
+
+vendor\xoreos\src\engines\odyssey\checkbox.cpp:
+  38  
+  39: WidgetCheckBox::WidgetCheckBox(GUI &gui, const Common::UString &tag) :
+  40  		Widget(gui, tag),
+
+vendor\xoreos\src\engines\odyssey\checkbox.h:
+  43  public:
+  44: 	WidgetCheckBox(GUI &gui, const Common::UString &tag);
+  45  
+
+vendor\xoreos\src\engines\odyssey\label.cpp:
+  30  
+  31: WidgetLabel::WidgetLabel(GUI &gui, const Common::UString &tag) :
+  32  		Widget(gui, tag),
+
+vendor\xoreos\src\engines\odyssey\label.h:
+  35  public:
+  36: 	WidgetLabel(GUI &gui, const Common::UString &tag);
+  37  
+
+vendor\xoreos\src\engines\odyssey\listbox.cpp:
+  44  
+  45: WidgetListBox::WidgetListBox(GUI &gui, const Common::UString &tag) :
+  46  		Widget(gui, tag),
+
+vendor\xoreos\src\engines\odyssey\listbox.h:
+  38  
+  39: typedef std::function<WidgetProtoItem *(GUI &gui, const Common::UString &tag)> ItemWidgetFactoryFunc;
+  40  
+
+  42  public:
+  43: 	WidgetListBox(GUI &gui, const Common::UString &tag);
+  44  
+
+vendor\xoreos\src\engines\odyssey\panel.cpp:
+  30  
+  31: WidgetPanel::WidgetPanel(GUI &gui, const Common::UString &tag) : Widget(gui, tag) {
+  32  }
+  33  
+  34: WidgetPanel::WidgetPanel(GUI &gui,
+  35                           const Common::UString &tag,
+
+vendor\xoreos\src\engines\odyssey\panel.h:
+  39  public:
+  40: 	WidgetPanel(GUI &gui, const Common::UString &tag);
+  41  
+  42: 	WidgetPanel(GUI &gui,
+  43  	            const Common::UString &tag,
+
+vendor\xoreos\src\engines\odyssey\progressbar.cpp:
+  32  
+  33: WidgetProgressbar::WidgetProgressbar(GUI &gui, const Common::UString &tag) :
+  34  		Widget(gui, tag),
+
+vendor\xoreos\src\engines\odyssey\progressbar.h:
+  37  public:
+  38: 	WidgetProgressbar(GUI &gui, const Common::UString &tag);
+  39  
+
+vendor\xoreos\src\engines\odyssey\protoitem.cpp:
+  35  
+  36: WidgetProtoItem::WidgetProtoItem(GUI &gui, const Common::UString &tag, WidgetListBox *parentList) :
+  37  		Widget(gui, tag),
+
+vendor\xoreos\src\engines\odyssey\protoitem.h:
+  43  public:
+  44: 	WidgetProtoItem(GUI &gui, const Common::UString &tag, WidgetListBox *parentList = 0);
+  45  
+
+vendor\xoreos\src\engines\odyssey\scrollbar.cpp:
+  34  
+  35: WidgetScrollbar::WidgetScrollbar(GUI &gui, const Common::UString &tag) :
+  36  		Widget(gui, tag),
+
+vendor\xoreos\src\engines\odyssey\scrollbar.h:
+  39  public:
+  40: 	WidgetScrollbar(GUI &gui, const Common::UString &tag);
+  41  
+
+vendor\xoreos\src\engines\odyssey\slider.cpp:
+  30  
+  31: WidgetSlider::WidgetSlider(GUI &gui, const Common::UString &tag) : Widget(gui, tag) {
+  32  }
+
+vendor\xoreos\src\engines\odyssey\slider.h:
+  35  public:
+  36: 	WidgetSlider(GUI &gui, const Common::UString &tag);
+  37  };
+
+vendor\xoreos\src\engines\odyssey\widget.cpp:
+  64  
+  65: Widget::Widget(GUI &gui, const Common::UString &tag) :
+  66  		Engines::Widget(gui, tag),
+
+vendor\xoreos\src\engines\odyssey\widget.h:
+  50  public:
+  51: 	Widget(GUI &gui, const Common::UString &tag);
+  52  
+
+vendor\xoreos\src\events\notifications.h:
+  44   *
+  45:  *  One example would be a change in the display resolution: GUI elements with
+  46   *  an affinity to a screen edge or corner need to told that this change
+
+vendor\xoreos\src\graphics\graphics.cpp:
+  485  
+  486: 	/* GUI scaling has changed, which affects the gui ortho view. Setup the view parameters
+  487  	 * again to compensate.
+
+  495  
+  496: 	/* GUI size has changed, which affects the gui ortho view. Setup the view parameters
+  497  	 * again to compensate.
+
+  825  
+  826: 	// GUI front objects
+  827  	QueueMan.lockQueue(kQueueVisibleGUIFrontObject);
+
+  835  
+  836: 	// GUI back objects
+  837  	QueueMan.lockQueue(kQueueVisibleGUIBackObject);
+
+  897  
+  898: 	// Map the screen coordinates to our OpenGL GUI screen coordinates
+  899  	if (_scalingType == kScalingNone) {
+
+  911  
+  912: 	// Go through the GUI elements, from nearest to furthest
+  913  	for (std::list<Queueable *>::const_iterator g = gui.begin(); g != gui.end(); ++g) {
+
+vendor\xoreos\src\graphics\graphics.h:
+   99  
+  100: 	/** Configure scaling type for the GUI. */
+  101  	void setGUIScale(ScalingType scaling);
+  102: 	/** Configure the original size of the GUI. */
+  103  	void setGUISize(int guiWidth, int guiHeight);
+
+vendor\xoreos\src\graphics\guielement.h:
+  21  /** @file
+  22:  *  A GUI element.
+  23   */
+
+  31  
+  32: /** An element of the GUI. */
+  33  class GUIElement : public Renderable {
+
+vendor\xoreos\src\graphics\types.h:
+  79  	kQueueVisibleWorldObject       , ///< A visible object in 3D space.
+  80: 	kQueueGUIFrontObject           , ///< A GUI object, in front of the world objects.
+  81: 	kQueueGUIBackObject            , ///< A GUI object, behind the world objects.
+  82: 	kQueueGUIConsoleObject         , ///< A Debug Console object, in front of the Front GUI.
+  83: 	kQueueVisibleGUIFrontObject    , ///< A visible GUI object, in front of the world objects.
+  84: 	kQueueVisibleGUIBackObject     , ///< A visible GUI object, behind the world objects.
+  85: 	kQueueVisibleGUIConsoleObject  , ///< A visible Debug Console object, in front of the Front GUI.
+  86  	kQueueVideo                    , ///< A video.
+
+vendor\xoreos\src\graphics\aurora\guiquad.cpp:
+  21  /** @file
+  22:  *  A textured quad for a GUI element.
+  23   */
+
+vendor\xoreos\src\graphics\aurora\guiquad.h:
+  21  /** @file
+  22:  *  A textured quad for a GUI element.
+  23   */
+
+vendor\xoreos\src\graphics\aurora\model_nwn.cpp:
+  189  	if (_type == kModelTypeGUIFront) {
+  190: 		// NWN GUI objects use 0.01 units / pixel
+  191  		_scale[0] = _scale[1] = 100.0f;
+
+vendor\xoreos\src\graphics\aurora\types.h:
+  52  	kModelTypeObject   = kRenderableTypeObject,  ///< A real object in the game world.
+  53: 	kModelTypeGUIFront = kRenderableTypeGUIFront ///< An element of the front GUI.
+  54  };
+
+vendor\xoreos-tools\src\aurora\types.h:
+  114  	kFileTypeGIC            =  2046, ///< Game instance comments, GFF.
+  115: 	kFileTypeGUI            =  2047, ///< GUI definition, GFF.
+  116  	kFileTypeCSS            =  2048, ///< Script, conditional source script.

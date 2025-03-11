@@ -13,17 +13,8 @@ import traceback
 from contextlib import suppress
 from copy import deepcopy
 from threading import Thread
-from tkinter import (
-    colorchooser,
-    filedialog,
-    font as tkfont,
-    messagebox,
-    ttk,
-)
+from tkinter import colorchooser, filedialog, font as tkfont, messagebox, ttk
 from typing import TYPE_CHECKING, Any
-
-from pykotor.resource.formats.tpc.io_tpc import TPCBinaryReader, TPCBinaryWriter
-from pykotor.resource.salvage import validate_capsule
 
 if getattr(sys, "frozen", False) is False:
 
@@ -57,23 +48,11 @@ from pykotor.extract.capsule import Capsule, LazyCapsule
 from pykotor.extract.file import FileResource, ResourceIdentifier
 from pykotor.extract.installation import Installation
 from pykotor.font.draw import write_bitmap_fonts
-from pykotor.resource.formats.erf.erf_auto import write_erf
-from pykotor.resource.formats.erf.erf_data import ERF, ERFType
-from pykotor.resource.formats.gff import (
-    GFF,
-    GFFContent,
-    GFFFieldType,
-    GFFList,
-    GFFStruct,
-    read_gff,
-)
-from pykotor.resource.formats.gff.gff_auto import bytes_gff
-from pykotor.resource.formats.rim.rim_auto import write_rim
-from pykotor.resource.formats.rim.rim_data import RIM
+from pykotor.resource.formats.erf import ERF, ERFType, write_erf
+from pykotor.resource.formats.gff import GFF, GFFContent, GFFFieldType, GFFList, GFFStruct, bytes_gff, read_gff
+from pykotor.resource.formats.rim import RIM, write_rim
 from pykotor.resource.formats.tlk import read_tlk, write_tlk
-from pykotor.resource.formats.tpc.io_tga import TPCTGAReader, TPCTGAWriter
-from pykotor.resource.formats.tpc.tpc_auto import bytes_tpc
-from pykotor.resource.formats.tpc.tpc_data import TPC
+from pykotor.resource.formats.tpc import TPC, TPCBinaryReader, TPCBinaryWriter, TPCTGAReader, TPCTGAWriter, bytes_tpc
 from pykotor.resource.generics.are import read_are, write_are
 from pykotor.resource.generics.dlg import read_dlg, write_dlg
 from pykotor.resource.generics.git import read_git, write_git
@@ -88,6 +67,7 @@ from pykotor.resource.generics.utp import read_utp, write_utp
 from pykotor.resource.generics.uts import read_uts, write_uts
 from pykotor.resource.generics.utt import read_utt, write_utt
 from pykotor.resource.generics.utw import read_utw, write_utw
+from pykotor.resource.salvage import validate_capsule
 from pykotor.resource.type import ResourceType
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from pykotor.tools.misc import is_any_erf_type_file, is_capsule_file
@@ -100,8 +80,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Literal
 
-    from pykotor.resource.formats.tlk import TLK
-    from pykotor.resource.formats.tlk.tlk_data import TLKEntry
+    from pykotor.resource.formats.tlk import TLK, TLKEntry
 
 APP: KOTORPatchingToolUI
 OUTPUT_LOG: Path
@@ -190,7 +169,7 @@ def get_font_paths_windows() -> list[Path]:
             font_path: Path = fonts_dir / value[1]
             if font_path.suffix.lower() == ".ttf":  # Filtering for .ttf files
                 font_paths.add(font_path)
-    for file in fonts_dir.safe_rglob("*"):
+    for file in fonts_dir.rglob("*"):
         if file.suffix.lower() == ".ttf" and file.is_file():
             font_paths.add(file)
 
@@ -474,7 +453,7 @@ def process_translations(tlk: TLK, from_lang: Language):
             try:
                 original_text, translated_text = future.result()
                 if translated_text.strip():
-                    translated_text = fix_encoding(translated_text, SCRIPT_GLOBALS.pytranslator.to_lang.get_encoding())
+                    translated_text = fix_encoding(translated_text, SCRIPT_GLOBALS.pytranslator.to_lang.get_encoding() or "utf-8")
                     tlk.replace(strref, translated_text)
                     log_output(f"#{strref} Translated {original_text} --> {translated_text}")
             except Exception as exc:  # pylint: disable=W0718  # noqa: BLE001
@@ -739,7 +718,7 @@ def patch_file(file: os.PathLike | str):
 def patch_folder(folder_path: os.PathLike | str):
     c_folderpath = Path(folder_path)
     log_output_with_separator(f"Recursing through resources in the '{c_folderpath.name}' folder...", above=True)
-    for file_path in c_folderpath.safe_rglob("*"):
+    for file_path in c_folderpath.rglob("*"):
         patch_file(file_path)
 
 
@@ -826,7 +805,7 @@ def is_kotor_install_dir(path: os.PathLike | str) -> bool:
 
 def determine_input_path(path: Path) -> None:
     # sourcery skip: assign-if-exp, reintroduce-else
-    if not path.safe_exists() or path.resolve() == Path.cwd().resolve():
+    if not path.exists() or path.resolve() == Path.cwd().resolve():
         import errno
 
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), str(path))
@@ -1318,7 +1297,7 @@ class KOTORPatchingToolUI:
             except OSError as e:
                 return messagebox.showerror("Error", f"Invalid path '{SCRIPT_GLOBALS.path}'\n{universal_simplify_exception(e)}")
             else:
-                if not path.safe_exists():
+                if not path.exists():
                     return messagebox.showerror("Error", "Invalid path")
             SCRIPT_GLOBALS.pytranslator = Translator(Language.ENGLISH)
             SCRIPT_GLOBALS.pytranslator.translation_option = TranslationOption[self.translation_option.get()]
@@ -1328,7 +1307,7 @@ class KOTORPatchingToolUI:
             SCRIPT_GLOBALS.install_thread.start()
         except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
             RobustLogger().exception("Unhandled exception during the patching process.")
-            messagebox.showerror("Unhandled exception", str(universal_simplify_exception(e) + "\n" + traceback.format_exc()))
+            messagebox.showerror("Unhandled exception", str(universal_simplify_exception(e)) + "\n" + traceback.format_exc())
             SCRIPT_GLOBALS.install_running = False
             self.install_button.config(state=tk.DISABLED)
         return None

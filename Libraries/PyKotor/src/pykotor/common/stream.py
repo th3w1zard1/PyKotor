@@ -6,16 +6,21 @@ import io
 import mmap
 import os
 
-from pathlib import Path
+from abc import abstractmethod
+from typing import TYPE_CHECKING
 
 from pykotor.common.language import LocalizedString
 from utility.common.stream import ArrayHead as _ArrayHead, RawBinaryReader, RawBinaryWriter, RawBinaryWriterBytearray, RawBinaryWriterFile
+
+if TYPE_CHECKING:
+    from pykotor.resource.type import TARGET_TYPES
 
 ArrayHead = _ArrayHead  # backwards compatibility
 
 
 class BinaryReader(RawBinaryReader):
     """Provides easier reading of binary objects that abstracts uniformly to all different stream/data types."""
+
 
     def read_locstring(
         self,
@@ -42,12 +47,54 @@ class BinaryReader(RawBinaryReader):
 
 
 class BinaryWriter(RawBinaryWriter):
+    @abstractmethod
     def write_locstring(
         self,
         value: LocalizedString,
         *,
         big: bool = False,
-    ): ...
+    ):
+        """Writes the specified localized string to the stream.
+
+        The binary data structure that is read follows the structure found in the GFF format specification.
+
+        Args:
+        ----
+            value: The localized string to be written.
+            big: Write any integers as big endian.
+        """
+
+    @classmethod
+    def to_stream(
+        cls,
+        source: RawBinaryWriter,
+    ) -> BinaryWriter:
+        if isinstance(source, RawBinaryWriterFile):
+            return BinaryWriterFile(source._stream, source.offset)
+        if isinstance(source, RawBinaryWriterBytearray):
+            return BinaryWriterBytearray(source._ba, source._offset)
+        msg = f"Must specify a path, bytes object or an existing BinaryWriter instance. Instead got: {source.__class__.__name__}"
+        raise NotImplementedError(msg)
+
+    @classmethod
+    def to_auto(
+        cls,
+        source: TARGET_TYPES,
+    ) -> BinaryWriter:
+        if isinstance(source, (os.PathLike, str)):  # is path
+            return cls.to_file(source)
+        if isinstance(source, bytearray):  # is mutable binary data
+            return cls.to_bytearray(source)
+        if isinstance(source, (bytes, memoryview)):  # is immutable binary data
+            return cls.to_bytearray(bytearray(source))
+        if isinstance(source, RawBinaryWriterFile):
+            return BinaryWriterFile(source._stream, source.offset)  # noqa: SLF001
+        if isinstance(source, RawBinaryWriterBytearray):
+            return BinaryWriterBytearray(source._ba, source._offset)  # noqa: SLF001
+        if isinstance(source, (io.RawIOBase, io.BufferedIOBase, mmap.mmap)):
+            return BinaryWriterFile(source, 0)
+        msg = f"Must specify a path, bytes object or an existing BinaryWriter instance. Instead got: {source.__class__.__name__}"
+        raise NotImplementedError(msg)
 
     @classmethod
     def to_bytearray(
@@ -76,10 +123,10 @@ class BinaryWriter(RawBinaryWriter):
         cls,
         path: str | os.PathLike,
     ) -> BinaryWriterFile:
-        return BinaryWriterFile(Path(path).open("wb"))
+        return BinaryWriterFile(open(path, "wb"))
 
 
-class BinaryWriterFile(RawBinaryWriterFile):
+class BinaryWriterFile(BinaryWriter, RawBinaryWriterFile):
     def write_locstring(
         self,
         value: LocalizedString,
@@ -95,7 +142,7 @@ class BinaryWriterFile(RawBinaryWriterFile):
             value: The localized string to be written.
             big: Write any integers as big endian.
         """
-        bw: RawBinaryWriterBytearray = RawBinaryWriter.to_bytearray()
+        bw: BinaryWriterBytearray = BinaryWriter.to_bytearray()
         bw.write_uint32(value.stringref, big=big, max_neg1=True)
         bw.write_uint32(len(value), big=big)
 
@@ -109,7 +156,7 @@ class BinaryWriterFile(RawBinaryWriterFile):
         self.write_bytes(locstring_data)
 
 
-class BinaryWriterBytearray(RawBinaryWriterBytearray):
+class BinaryWriterBytearray(BinaryWriter, RawBinaryWriterBytearray):
     def write_locstring(
         self,
         value: LocalizedString,
@@ -318,19 +365,3 @@ if __name__ == "__main__":
         print(f"Speed Ratio (Slowest/Fastest): {results[-1][3] / fastest_total_time:.2f}\n")
 
     main()
-
-
-def get_aurora_scale(obj) -> float:
-    """If the scale is uniform, i.e, x=y=z, we will return
-    the value. Else we'll return 1.
-    """
-    scale = obj.scale
-    if scale[0] == scale[1] == scale[2]:
-        return scale[0]
-
-    return 1.0
-
-
-def get_aurora_rot_from_object(obj) -> list[float]:
-    q = obj.rotation_quaternion
-    return [q.axis[0], q.axis[1], q.axis[2], q.angle]

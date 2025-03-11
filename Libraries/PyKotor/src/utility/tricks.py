@@ -100,7 +100,7 @@ def safe_dir(obj_or_cls: Any) -> list[str]:  # sourcery skip: assign-if-exp, rei
     obj_or_cls_dict: dict[str, Any] | object = fallback_unknown_getattr(obj_or_cls, "__dict__")
     if obj_or_cls_dict is SENTINEL:
         return []
-    return list(obj_or_cls_dict.keys())
+    return list(obj_or_cls_dict.keys()) if isinstance(obj_or_cls_dict, dict) else []
 
 
 def inherits_type_or_object(obj: object | type) -> bool | object:

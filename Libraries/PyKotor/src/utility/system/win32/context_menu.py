@@ -116,7 +116,10 @@ def get_cursor_pos(c_getcursorpos: Callable, *, use_pywin32: bool) -> _Vector2:
     return cast(_Vector2, pt)
 
 
-def show_context_menu(context_menu: CDispatch | ShellFolderItemVerbs, hwnd: int | None):
+def show_context_menu(
+    context_menu: CDispatch | ShellFolderItemVerbs,
+    hwnd: int | None,
+) -> None:
     # assert isinstance(context_menu, Iterable)  # this fails!
     assert hasattr(context_menu, "__iter__")  # this also fails!
     if not hasattr(context_menu, "__getitem__"):

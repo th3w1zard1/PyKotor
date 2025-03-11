@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QSortFilterProxyModel, Qt
+from qtpy.QtCore import QSortFilterProxyModel, Qt, QModelIndex  # pyright: ignore[reportAttributeAccessIssue]
 from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QApplication, QTableView
 
@@ -27,18 +27,18 @@ class ERFSortFilterProxyModel(QSortFilterProxyModel):
         super().__init__()
         self.setDynamicSortFilter(True)
 
-    def get_sort_value(self, index: QtCore.QModelIndex) -> int:
+    def get_sort_value(self, index: QModelIndex) -> int:
         """Return the sort value based on the column."""
         srcModel = self.sourceModel()
         assert isinstance(srcModel, QStandardItemModel)
         if index.column() == 2:
-            resource: ERFResource = srcModel.item(index.row(), 0).data()
+            resource: ERFResource = srcModel.item(index.row(), 0).data()  # pyright: ignore[reportOptionalMemberAccess]
             return len(resource.data)
         src_model = self.sourceModel()
         assert isinstance(src_model, QStandardItemModel)
         return src_model.data(index)
 
-    def lessThan(self, left: QtCore.QModelIndex, right: QtCore.QModelIndex) -> bool:
+    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
         srcModel = self.sourceModel()
         assert isinstance(srcModel, QStandardItemModel)
         left_data = self.get_sort_value(left)
@@ -62,7 +62,10 @@ def create_model(init_colleciton) -> QStandardItemModel:
         model.appendRow(row)
     return model
 
-def verify_sorting(proxy: ERFSortFilterProxyModel, expected_order):
+def verify_sorting(
+    proxy: ERFSortFilterProxyModel,
+    expected_order: list[str],
+) -> None:
     actual_order = [proxy.index(row, 0).data() for row in range(proxy.rowCount())]
     assert actual_order == expected_order, f"Actual order {actual_order} does not match expected {expected_order}"
 

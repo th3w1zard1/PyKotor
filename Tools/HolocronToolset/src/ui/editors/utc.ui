@@ -44,6 +44,36 @@
      </widget>
     </item>
     <item>
+     <layout class="QVBoxLayout" name="verticalLayout_renderer">
+      <item>
+       <widget class="FilterComboBox" name="textureComboBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="placeholderText">
+         <string>Texture Source</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="FilterComboBox" name="modelComboBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="placeholderText">
+         <string>Model Source</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
        <number>0</number>

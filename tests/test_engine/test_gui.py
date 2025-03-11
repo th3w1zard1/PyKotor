@@ -2,9 +2,26 @@
 
 from __future__ import annotations
 
+import pathlib
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[1].joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[1].joinpath("Libraries", "Utility", "src")
+
+
+def add_sys_path(p: pathlib.Path):
+    working_dir = str(p)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
+
+
+if PYKOTOR_PATH.joinpath("pykotor").exists():
+    add_sys_path(PYKOTOR_PATH)
+if UTILITY_PATH.joinpath("utility").exists():
+    add_sys_path(UTILITY_PATH)
 
 from pykotor.engine.core import KotorEngine
 from pykotor.engine.graphics import GUIManager
@@ -14,7 +31,7 @@ if TYPE_CHECKING:
 
 
 K1_PATH = Path("C:/Program Files (x86)/Steam/steamapps/common/swkotor")
-K2_PATH = Path("C:/Program Files (x86)/Steam/steamapps/common/kotor2")
+K2_PATH = Path("C:/Program Files (x86)/Steam/steamapps/common/Star Wars Knights of the Old Republic II")
 
 
 def test_load_gui_k1() -> None:

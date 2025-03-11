@@ -5,8 +5,7 @@ from typing import TYPE_CHECKING
 
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Color, Game, ResRef
-from pykotor.resource.formats.gff import GFF, GFFContent, GFFList, GFFStruct, read_gff, write_gff
-from pykotor.resource.formats.gff.gff_auto import bytes_gff
+from pykotor.resource.formats.gff import GFF, GFFContent, GFFList, GFFStruct, bytes_gff, read_gff, write_gff
 from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector2
 

@@ -6,9 +6,7 @@ from loggerplus import RobustLogger
 
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import EquipmentSlot, Game, InventoryItem, ResRef
-from pykotor.resource.formats.gff import GFF, GFFContent, GFFList, read_gff, write_gff
-from pykotor.resource.formats.gff.gff_auto import bytes_gff
-from pykotor.resource.formats.gff.gff_data import GFFFieldType
+from pykotor.resource.formats.gff import GFF, GFFContent, GFFFieldType, GFFList, GFFStruct, bytes_gff, read_gff, write_gff
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
@@ -205,6 +203,9 @@ class UTC:
         # self.on_rested: ResRef = ResRef.from_blank()
         self.subrace_name: str = ""
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(resref={self.resref!r}, tag={self.tag!r}, comment={self.comment!r})"
+
 
 class UTCClass:
     def __init__(
@@ -338,14 +339,53 @@ def construct_utc(
         skill_list.add(6).set_uint8("Rank", 0)
         skill_list.add(7).set_uint8("Rank", 0)
     skill_list: GFFList = root.acquire("SkillList", GFFList())
-    utc.computer_use = skill_list.at(0).acquire("Rank", 0)
-    utc.demolitions = skill_list.at(1).acquire("Rank", 0)
-    utc.stealth = skill_list.at(2).acquire("Rank", 0)
-    utc.awareness = skill_list.at(3).acquire("Rank", 0)
-    utc.persuade = skill_list.at(4).acquire("Rank", 0)
-    utc.repair = skill_list.at(5).acquire("Rank", 0)
-    utc.security = skill_list.at(6).acquire("Rank", 0)
-    utc.treat_injury = skill_list.at(7).acquire("Rank", 0)
+    computer_use_struct = skill_list.at(0)
+    if computer_use_struct is None:
+        RobustLogger().warning("Computer Use skill struct missing from UTC SkillList")
+        computer_use_struct = GFFStruct()
+    utc.computer_use = computer_use_struct.acquire("Rank", 0)
+
+    demolitions_struct = skill_list.at(1)
+    if demolitions_struct is None:
+        RobustLogger().warning("Demolitions skill struct missing from UTC SkillList")
+        demolitions_struct = GFFStruct()
+    utc.demolitions = demolitions_struct.acquire("Rank", 0)
+
+    stealth_struct = skill_list.at(2)
+    if stealth_struct is None:
+        RobustLogger().warning("Stealth skill struct missing from UTC SkillList")
+        stealth_struct = GFFStruct()
+    utc.stealth = stealth_struct.acquire("Rank", 0)
+
+    awareness_struct = skill_list.at(3)
+    if awareness_struct is None:
+        RobustLogger().warning("Awareness skill struct missing from UTC SkillList")
+        awareness_struct = GFFStruct()
+    utc.awareness = awareness_struct.acquire("Rank", 0)
+
+    persuade_struct = skill_list.at(4)
+    if persuade_struct is None:
+        RobustLogger().warning("Persuade skill struct missing from UTC SkillList")
+        persuade_struct = GFFStruct()
+    utc.persuade = persuade_struct.acquire("Rank", 0)
+
+    repair_struct = skill_list.at(5)
+    if repair_struct is None:
+        RobustLogger().warning("Repair skill struct missing from UTC SkillList")
+        repair_struct = GFFStruct()
+    utc.repair = repair_struct.acquire("Rank", 0)
+
+    security_struct = skill_list.at(6)
+    if security_struct is None:
+        RobustLogger().warning("Security skill struct missing from UTC SkillList")
+        security_struct = GFFStruct()
+    utc.security = security_struct.acquire("Rank", 0)
+
+    treat_injury_struct = skill_list.at(7)
+    if treat_injury_struct is None:
+        RobustLogger().warning("Treat Injury skill struct missing from UTC SkillList")
+        treat_injury_struct = GFFStruct()
+    utc.treat_injury = treat_injury_struct.acquire("Rank", 0)
 
     # Not sure why there's extras... some utc's in k1 have 20 structs in the SkillList.
     if len(skill_list._structs) > 8:

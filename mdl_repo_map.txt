@@ -1,0 +1,1458 @@
+374 results - 145 files
+
+pykotor_repo_map.txt:
+   250  ⋮...
+   251: │class MDL:
+   252: │    """Represents a MDL/MDX file.
+   253  │
+
+   270  │class MDLData:
+   271: │    """Represents a MDL/MDX file."""
+   272  │
+
+  3259  
+  3260: vendor\Kotor.NET\Kotor.NET\Formats\KotorMDL\MDL.cs:
+  3261  ⋮...
+
+.venv\Lib\site-packages\numpy\distutils\cpuinfo.py:
+  487  
+  488:             prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"
+  489                                r"\s+stepping\s+(?P<STP>\d+)", re.IGNORECASE)
+
+  513                                      info[-1]["Family"]=int(srch.group("FML"))
+  514:                                     info[-1]["Model"]=int(srch.group("MDL"))
+  515                                      info[-1]["Stepping"]=int(srch.group("STP"))
+
+Libraries\PyKotor\src\pykotor\common\module.py:
+    59      from pykotor.resource.formats.gff.gff_data import GFF, GFFList
+    60:     from pykotor.resource.formats.mdl.mdl_data import MDL
+    61      from pykotor.resource.formats.rim.rim_data import RIM
+
+  1257          resname: str,
+  1258:     ) -> ModuleResource[MDL] | None:
+  1259          """Returns a ModuleResource object for the given resource name if it exists in this module.
+
+  1271              - Loops through all resources stored in self.resources
+  1272:             - Checks if the resource name matches the given name and the resource type is MDL
+  1273              - Returns the matching resource if found, None otherwise.
+
+  1276          return next(
+  1277:             (resource for resource in self.resources.values() if resource.restype() is ResourceType.MDL and lower_resname == resource.identifier().lower_resname),
+  1278              None,
+
+  1307          self,
+  1308:     ) -> list[ModuleResource[MDL]]:
+  1309:         """Returns a list of MDL model resources.
+  1310  
+
+  1316          -------
+  1317:             list[ModuleResource[MDL]]: A list of MDL model resources
+  1318  
+
+  1320              - Loops through each value in the resources dictionary
+  1321:             - Checks if the resource type is MDL
+  1322              - Adds matching resources to the return list.
+  1323          """
+  1324:         return [resource for resource in self.resources.values() if resource.restype() is ResourceType.MDL]
+  1325  
+
+  1375          self,
+  1376:     ) -> list[ModuleResource[MDL]]:
+  1377          """Generates a list of texture resources from this module.
+
+  1384          -------
+  1385:             list[ModuleResource[MDL]]: List of texture resources
+  1386  
+
+Libraries\PyKotor\src\pykotor\merge\module.py:
+  117          # Extract texture and model dependencies
+  118:         if mod_res.restype() in {ResourceType.MDL, ResourceType.MDX}:
+  119              model_data: bytes | None = mod_res.data()
+
+Libraries\PyKotor\src\pykotor\resource\resource_auto.py:
+   21  from pykotor.resource.formats.lyt.lyt_data import LYT
+   22: from pykotor.resource.formats.mdl import MDL, bytes_mdl, read_mdl
+   23  from pykotor.resource.formats.ncs import bytes_ncs, read_ncs
+
+  210  def resource_to_bytes(  # noqa: PLR0912, C901, PLR0911
+  211:     resource: BWM | ERF | GFF | LIP | LTR | LYT | MDL | NCS | RIM | SSF | TLK | TPC | TwoDA | VIS | GFF_GENERICS,
+  212  ) -> bytes:
+
+  226          return bytes_lyt(resource)
+  227:     if isinstance(resource, MDL):
+  228          return bytes_mdl(resource)
+
+Libraries\PyKotor\src\pykotor\resource\salvage.py:
+  175              return bytes_lyt(read_lyt(data))
+  176:         if restype is ResourceType.MDL:
+  177              return bytes_mdl(read_mdl(data))
+
+Libraries\PyKotor\src\pykotor\resource\type.py:
+  150      TEX = ResourceTuple(2001, "tex", "Textures", "binary")  # pyright: ignore[reportCallIssue]
+  151:     MDL = ResourceTuple(2002, "mdl", "Models", "binary")  # pyright: ignore[reportCallIssue]
+  152      THG = ResourceTuple(2003, "thg", "Unused", "binary")  # pyright: ignore[reportCallIssue]
+
+Libraries\PyKotor\src\pykotor\resource\formats\lyt\lyt_data.py:
+  31          for room in self.rooms:
+  32:             yield ResourceIdentifier(room.model, ResourceType.MDL)
+  33              yield ResourceIdentifier(room.model, ResourceType.MDX)
+
+Libraries\PyKotor\src\pykotor\resource\formats\mdl\__init__.py:
+   2  from pykotor.resource.formats.mdl.mdl_data import (
+   3:     MDL,
+   4      MDLNode,
+
+  31      "MDLSaber",
+  32:     "MDL",
+  33      "MDLAnimation",
+
+Libraries\PyKotor\src\pykotor\resource\formats\mdl\io_mdl_ascii.py:
+   14  class MDLAsciiWriter:
+   15:     """Writer for ASCII MDL files."""
+   16  
+
+   23      def write_mdl(self, mdl: MDLData) -> None:
+   24:         """Write MDL data to ASCII format."""
+   25:         self.write_line(0, "# ASCII MDL")
+   26          self.write_line(0, "filedependancy unknown.tga")
+
+  446  class MDLAsciiReader:
+  447:     """Reader for ASCII MDL files."""
+  448  
+
+  451      def read_mdl(self) -> MDLData:
+  452:         """Read MDL data from ASCII format."""
+  453:         # TODO: Implement ASCII MDL reader
+  454:         raise NotImplementedError("ASCII MDL reader not implemented yet")
+
+Libraries\PyKotor\src\pykotor\resource\formats\mdl\io_mdl.py:
+     7  from pykotor.resource.formats.mdl.mdl_data import (
+     8:     MDL,
+     9      MDLAnimation,
+
+  1256          auto_close: bool = True,  # noqa: FBT002, FBT001
+  1257:     ) -> MDL:
+  1258:         self._mdl: MDL = MDL()
+  1259          self._names: list[str] = []
+
+  1491          self,
+  1492:         mdl: MDL,
+  1493          target: TARGET_TYPES,
+
+  1495      ):
+  1496:         self._mdl: MDL = mdl
+  1497  
+
+  1946  
+  1947:         # Write to MDL
+  1948          mdl_writer: BinaryWriter = BinaryWriter.to_auto(self._target)
+
+Libraries\PyKotor\src\pykotor\resource\formats\mdl\mdl_auto.py:
+   10  if TYPE_CHECKING:
+   11:     from pykotor.resource.formats.mdl.mdl_data import MDL
+   12      from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES
+
+   18  ) -> ResourceType:
+   19:     """Returns what format the MDL data is believed to be in.
+   20  
+
+   24      ----
+   25:         source: Source of the MDL data.
+   26          offset: Offset into the source data.
+
+   35      -------
+   36:         The format of the MDL data.
+   37      """
+
+   40          if first4 == b"\x00\x00\x00\x00":
+   41:             return ResourceType.MDL
+   42          return ResourceType.MDL_ASCII
+
+   69      size_ext: int = 0,
+   70: ) -> MDL:
+   71:     """Returns an MDL instance from the source.
+   72  
+   73:     The file format (MDL or MDL_ASCII) is automatically determined before parsing the data.
+   74  
+
+   92      -------
+   93:         An MDL instance.
+   94      """
+
+   96  
+   97:     if file_format is ResourceType.MDL:
+   98          return MDLBinaryReader(
+
+  107          return MDLAsciiReader(source, offset, size or 0).load()
+  108:     msg = "Failed to determine the format of the MDL file."
+  109      raise ValueError(msg)
+
+  112  def write_mdl(
+  113:     mdl: MDL,
+  114      target: TARGET_TYPES,
+  115:     file_format: ResourceType = ResourceType.MDL,
+  116      target_ext: TARGET_TYPES | None = None,
+  117  ):
+  118:     """Writes the MDL data to the target location with the specified format (MDL or MDL_ASCII).
+  119  
+
+  121      ----
+  122:         mdl: The MDL file being written.
+  123          target: The location to write the data to.
+  124          file_format: The file format.
+  125:         target_ext: The location to write the MDX data to (if file format is MDL).
+  126  
+
+  132      """
+  133:     if file_format is ResourceType.MDL:
+  134          MDLBinaryWriter(mdl, target, target_ext or target).write()
+
+  137      else:
+  138:         msg = "Unsupported format specified; use MDL or MDL_ASCII."
+  139          raise ValueError(msg)
+
+  142  def bytes_mdl(
+  143:     mdl: MDL,
+  144:     file_format: ResourceType = ResourceType.MDL,
+  145  ) -> bytes:
+  146:     """Returns the MDL data in the specified format (MDL or MDL_ASCII) as a bytes object.
+  147  
+
+  151      ----
+  152:         mdl: MDL: The target MDL.
+  153          file_format: The file format.
+
+  160      -------
+  161:         The MDL data.
+  162      """
+
+Libraries\PyKotor\src\pykotor\resource\formats\mdl\mdl_data.py:
+   14  
+   15: class MDL:
+   16:     """Represents a MDL/MDX file.
+   17  
+
+   26  
+   27:     BINARY_TYPE = ResourceType.MDL
+   28  
+
+  202      ) -> list[MDLNode]:
+  203:         """Returns all nodes in the MDL tree including children recursively.
+  204  
+
+  206          ----
+  207:             self: The MDL tree object
+  208  
+
+  250  class MDLNode:
+  251:     """A node in the MDL tree that can store additional nodes or some extra data related to the model such as geometry or lighting.
+  252  
+
+Libraries\PyKotor\src\pykotor\resource\formats\mdl\mdl_types.py:
+    1: """Type definitions and data structures for MDL/MDX files."""
+    2  
+
+  229  class MDLModelHeader:
+  230:     """Header data for MDL/MDX files."""
+  231  
+
+  526  class MDLNode:
+  527:     """A node in the MDL tree that can store additional nodes or some extra data related to the model such as geometry or lighting."""
+  528  
+
+  573  class MDLData:
+  574:     """Represents a MDL/MDX file."""
+  575  
+
+Libraries\PyKotor\src\pykotor\tools\model.py:
+  715      # The data we need to change:
+  716:     #    1. The vertices stored in the MDL
+  717      #    2. The vertex positions, normals, stored in the MDX
+
+  829  
+  830:     # Update the MDL vertices
+  831      for count, start_offset in mdl_vertex_offsets:
+
+Libraries\PyKotor\src\pykotor\tools\module.py:
+  199  
+  200:             mdl_resource: ResourceResult | None = installation.resource(old_model_name, ResourceType.MDL)
+  201              mdl_data: None | bytes = None if mdl_resource is None else mdl_resource.data
+
+  267              mdl_data = model.rename(mdl_data, new_model_name)
+  268:             new_module.set_data(new_model_name, ResourceType.MDL, mdl_data)
+  269              new_module.set_data(new_model_name, ResourceType.MDX, mdx_data)
+
+Libraries\PyKotorEngine\src\pykotor\engine\animation\animation.py:
+  106      def from_mdl(cls, mdl_nodes: list[MDLNode]) -> Skeleton:
+  107:         """Create a skeleton from MDL node data."""
+  108          skeleton = cls()
+
+  154      def from_mdl(cls, mdl_anim: MDLAnimation) -> Animation:
+  155:         """Create an animation from MDL animation data."""
+  156          animation: Self = cls(mdl_anim.name, mdl_anim.anim_length)
+
+  355      def from_mdl(cls, mesh_node: NodePath, skeleton: Skeleton, mdl_skin: MDLSkin) -> SkinnedMesh:
+  356:         """Create a skinned mesh from MDL skin data."""
+  357          skinned_mesh = cls(mesh_node, skeleton)
+
+Libraries\PyKotorEngine\src\pykotor\engine\animation\manager.py:
+   30      from pykotor.engine.core import KotorEngine
+   31:     from pykotor.resource.formats.mdl import MDL, MDLNode
+   32  
+
+   85          name: str,
+   86:         mdl: MDL,
+   87      ) -> AnimatedModel | None:
+   88:         """Create an animated model from MDL data."""
+   89          try:
+
+   91              resource_manager: ResourceManager = cast(ResourceManager, self.engine.services.get(ResourceManager))
+   92:             model_node = resource_manager.get_rersource(name, ResourceType.MDL)
+   93              if model_node is None:
+
+  107  
+  108:             # Create skeleton from MDL data
+  109              skeleton: Skeleton = Skeleton.from_mdl([mdl.root] if mdl.root else [])
+
+  141      ) -> None:
+  142:         """Process an MDL node recursively."""
+  143          try:
+
+Libraries\PyKotorEngine\src\pykotor\engine\core\module.py:
+  149              # Load character model
+  150:             mdl: ResourceResult | None = self.engine.asset_provider.resource(f"{character_id}", ResourceType.MDL)
+  151              if not mdl:
+
+  204          try:
+  205:             area_result: ResourceResult | None = self.engine.asset_provider.resource(f"areas/{self.name}", ResourceType.MDL)
+  206              if not area_result:
+
+  212              # Load area model
+  213:             area_model: NodePath | None = resource_manager.get_resource(f"areas/{self.name}", ResourceType.MDL)
+  214              if area_model:
+
+Libraries\PyKotorEngine\src\pykotor\engine\entity\base.py:
+   15  if TYPE_CHECKING:
+   16:     from pykotor.resource.formats.mdl import MDL
+   17  
+
+  190          self,
+  191:         mdl_data: MDL,
+  192      ) -> KotorEntity | None:
+  193:         """Create an entity from MDL data.
+  194  
+  195          Args:
+  196:             mdl_data: MDL resource data
+  197  
+
+  208  
+  209:             # TODO: Add other components based on MDL data
+  210              # - Mesh component
+
+  217          except Exception as e:
+  218:             self.logger.exception(f"Failed to create entity from MDL: {e}")
+  219              return None
+
+Libraries\PyKotorEngine\src\pykotor\engine\graphics\component.py:
+   29  
+   30:     from pykotor.resource.formats.mdl.mdl_data import MDL, MDLAnimation, MDLMesh as KotorMesh, MDLNode
+   31  
+
+   81  
+   82:     def load_from_mdl(self, mdl_data: MDL, node: MDLNode) -> None:
+   83:         """Load mesh data from KotOR MDL format.
+   84  
+   85          Args:
+   86:             mdl_data: PyKotor MDL data
+   87              node: Node containing mesh data
+
+  131          except Exception as e:
+  132:             self.logger.exception(f"Failed to load MDL data: {e}")
+  133  
+
+  138      ) -> None:
+  139:         """Convert MDL animation data for a node.
+  140  
+
+Libraries\PyKotorEngine\src\pykotor\engine\resource\loader.py:
+   41      from pykotor.extract.file import ResourceResult
+   42:     from pykotor.resource.formats.mdl import MDL
+   43      from pykotor.resource.formats.tpc import TPC
+
+  170          """
+  171:         Acquires a MDL and returns a Ursina NodePath object.
+  172  
+
+  183  
+  184:             mdl_resource: ResourceResult | None = self.resource(name, ResourceType.MDL)
+  185              if mdl_resource is None:
+  186:                 self.logger.error(f"Failed to find MDL '{name}.mdl' in the installation.")
+  187                  return None
+  188  
+  189:             mdl: MDL = read_mdl(mdl_resource.data)
+  190  
+  191:             # Process MDL data using the engine's MDLProcessor
+  192              node: tuple[NodePath, Skeleton, list[Animation]] | None = self.engine.services.get(MDLProcessor).process_mdl(mdl, mdx_data)
+  193              if node is None:
+  194:                 self.logger.error(f"Failed to process MDL data for model '{name}.mdl'.")
+  195                  return None
+
+Libraries\PyKotorEngine\src\pykotor\engine\resource\mdl_processor.py:
+    1: """MDL Processing System.
+    2  
+    3: This module provides specialized handling for BioWare's MDL format,
+    4  converting it into Ursina compatible structures while preserving
+
+   20  from pykotor.engine.graphics import GraphicsManager
+   21: from pykotor.resource.formats.mdl import MDL, MDLControllerType, MDLNode, MDLNodeFlags
+   22  from utility.common.geometry import Vector3
+
+   40  class MDLProcessor:
+   41:     """Handles conversion of MDL data to Ursina structures."""
+   42  
+
+   51          self,
+   52:         mdl: MDL,
+   53          mdx_data: bytes | None = None,
+   54      ) -> tuple[NodePath, Skeleton, list[Animation]] | None:
+   55:         """Process an MDL file into Ursina compatible structures."""
+   56          try:
+
+   58              root = NodePath(mdl.name)
+   59:             root.set_python_tag("mdl", mdl)  # Store MDL reference for skin processing
+   60  
+
+   76          except Exception as e:
+   77:             self.logger.exception(f"Error processing MDL {mdl.name}: {e}")
+   78              return None
+
+   84      ) -> NodePath:
+   85:         """Process an MDL node and its children."""
+   86          # Create node
+
+  141          try:
+  142:             # Calculate particle system parameters from MDL emitter properties
+  143  
+
+  326          try:
+  327:             # Get the parent MDL from the root node
+  328              root: NodePath[PandaNode] = node
+
+  332              if not root:
+  333:                 self.logger.error("Could not find root node with MDL data")
+  334                  return
+  335  
+  336:             mdl: MDL | None = root.get_python_tag("mdl")
+  337:             if not isinstance(mdl, MDL):
+  338:                 self.logger.error("Invalid MDL data stored on root node")
+  339                  return
+
+  401          self,
+  402:         mdl: MDL,
+  403      ) -> Skeleton:
+  404:         """Create a skeleton from MDL data."""
+  405          from pykotor.engine.animation import Skeleton
+
+Libraries\PyKotorGL\src\pykotor\gl\scene\scene.py:
+  352                  del self.textures[identifier.resname]
+  353:             if identifier.restype in {ResourceType.MDL, ResourceType.MDX}:
+  354                  del self.models[identifier.resname]
+
+  818                  capsules: list[ModulePieceResource] = [] if self._module is None else self.module.capsules()
+  819:                 mdl_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDL, SEARCH_ORDER, capsules=capsules)
+  820                  mdx_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDX, SEARCH_ORDER, capsules=capsules)
+
+tests\test_pykotor\resource\test_resource_from_path.py:
+  141      def test_from_path_mdl(self):
+  142:         self.assert_resource_identifier("C:/path/to/resource.mdl", "resource", ResourceType.MDL)
+  143  
+
+tests\test_pykotor\resource\formats\test_bif.py:
+  91          self.assertEqual(res1.size, 182290, f"{res1.size} != 182290")
+  92:         self.assertEqual(res1.restype, ResourceType.MDL, f"{res1.restype} != ResourceType.MDL")
+  93  
+
+Tools\HolocronToolset\src\toolset\data\indoormap.py:
+  309              modelname (str): Name of the model
+  310:             mdl_data (bytes): MDL file data
+  311              mdx_data (bytes): MDX file data
+
+  314          ----------------
+  315:             - Sets the MDL file data for the given modelname using ResourceType.MDL
+  316              - Sets the MDX file data for the given modelname using ResourceType.MDX
+
+  318          """
+  319:         self.mod.set_data(modelname, ResourceType.MDL, mdl_data)
+  320          self.mod.set_data(modelname, ResourceType.MDX, mdx_data)
+
+  461                          pad_mdl = model.change_lightmaps(pad_mdl, lmRenames)
+  462:                         self.mod.set_data(padding_name, ResourceType.MDL, pad_mdl)
+  463                          self.mod.set_data(padding_name, ResourceType.MDX, kit.top_padding[door_index][padding_key].mdx)
+
+  499                          pad_mdl = model.change_lightmaps(pad_mdl, lmRenames)
+  500:                         self.mod.set_data(padding_name, ResourceType.MDL, pad_mdl)
+  501                          self.mod.set_data(padding_name, ResourceType.MDX, kit.side_padding[door_index][padding_key].mdx)
+
+  531              mdl: bytes = model.change_textures(mdl, self.tex_renames)
+  532:             self.mod.set_data(model_name, ResourceType.MDL, mdl)
+  533              self.mod.set_data(model_name, ResourceType.MDX, mdx)
+
+Tools\HolocronToolset\src\toolset\data\indoorkit\indoorkit_utils.py:
+  30          padding_size: Size of the padding
+  31:         mdl: MDL file contents
+  32          mdx: MDX file contents
+
+Tools\HolocronToolset\src\toolset\gui\dialogs\extract_options.py:
+  28      def mdl_decompile(self) -> bool:
+  29:         """Get whether MDL decompile is enabled."""
+  30          return self.ui.mdlDecompileCheckbox.isChecked()
+
+  33      def mdl_extract_textures(self) -> bool:
+  34:         """Get whether MDL texture extraction is enabled."""
+  35          return self.ui.mdlTexturesCheckbox.isChecked()
+
+Tools\HolocronToolset\src\toolset\gui\dialogs\insert_instance.py:
+  214                  elif (
+  215:                     resource.restype() in (ResourceType.MDL, ResourceType.MDX)
+  216                      and any((
+
+  222                      data = resource.data()
+  223:                     if resource.restype() is ResourceType.MDL:
+  224                          mdl_data = data
+
+  240                              erf = read_erf(resource.filepath())
+  241:                             mdl_data = erf.get(resource.resname(), ResourceType.MDL)
+  242                          elif is_rim_file(resource.filepath().name):
+  243                              rim = read_rim(resource.filepath())
+  244:                             mdl_data = rim.get(resource.resname(), ResourceType.MDL)
+  245                          elif is_bif_file(resource.filepath().name):
+  246:                             mdl_res: ResourceResult | None = self._installation.resource(resource.resname(), ResourceType.MDL)
+  247                              if mdl_res is not None:
+
+  261          mdl: ResourceResult | None = self._installation.resource(
+  262:             modelname, ResourceType.MDL
+  263          )
+
+Tools\HolocronToolset\src\toolset\gui\editor\base.py:
+  340  
+  341:         if self._restype is ResourceType.MDL:
+  342              rim.set_data(self._resname, ResourceType.MDX, data_ext)
+
+  440  
+  441:         if self._restype is ResourceType.MDL:
+  442              erf.set_data(self._resname, ResourceType.MDX, data_ext)
+
+  456          self._filepath.write_bytes(data)
+  457:         if self._restype is ResourceType.MDL:
+  458              self._filepath.with_suffix(".mdx").write_bytes(data_ext)
+
+Tools\HolocronToolset\src\toolset\gui\editors\mdl.py:
+   10  from pykotor.resource.formats.mdl.mdl_auto import read_mdl, write_mdl
+   11: from pykotor.resource.formats.mdl.mdl_data import MDL
+   12  from pykotor.resource.formats.rim import read_rim
+
+   36              - Initialize the base class with the given parameters
+   37:             - Create an MDL model object
+   38              - Load the UI from the designer file
+
+   42          """
+   43:         supported: list[ResourceType] = [ResourceType.MDL]
+   44          super().__init__(parent, "Model Viewer", "none", supported, supported, installation)
+   45  
+   46:         self._mdl: MDL = MDL()
+   47          self._installation = installation
+
+   68              resref: {Resource reference string}
+   69:             restype: {Resource type (MDL or MDX)}
+   70              data: {Binary data of the resource}
+   71  
+   72:         Loads associated MDL/MDX data:
+   73              - Checks file extension and loads associated data from file
+   74              - Loads associated data from Erf, Rim or Bif files if present
+   75:             - Sets model data on renderer if both MDL and MDX found
+   76              - Displays error if unable to find associated data.
+
+   83  
+   84:         if restype is ResourceType.MDL:
+   85              mdl_data = data
+
+  101                  erf = read_erf(filepath)
+  102:                 mdl_data = erf.get(resref, ResourceType.MDL)
+  103              elif is_rim_file(c_filepath.name):
+  104                  rim = read_rim(filepath)
+  105:                 mdl_data = rim.get(resref, ResourceType.MDL)
+  106              elif is_bif_file(c_filepath.name):
+  107:                 mdl_data = self._installation.resource(resref, ResourceType.MDL, [SearchLocation.CHITIN]).data
+  108  
+  109          if mdl_data is None or mdx_data is None:
+  110:             QMessageBox(QMessageBox.Icon.Critical, f"Could not find the '{c_filepath.stem}' MDL/MDX", "").exec()
+  111              return
+
+  115  
+  116:     def _loadMDL(self, mdl: MDL):
+  117:         """Load an MDL model into the editor.
+  118  
+
+  120          ----
+  121:             mdl: {MDL}: The MDL model to load
+  122          """
+
+  127          data_ext = bytearray()
+  128:         write_mdl(self._mdl, data, ResourceType.MDL, data_ext)
+  129          return data, data_ext
+
+  132          super().new()
+  133:         self._mdl = MDL()
+  134          self.ui.modelRenderer.clearModel()
+
+Tools\HolocronToolset\src\toolset\gui\editors\utd.py:
+  399              - Get the model name based on the data and installation details
+  400:             - Load the MDL and MDX resources using the model name
+  401              - If resources are loaded, set them on the preview renderer
+
+  407          modelname: str = door.get_model(read_utd(data), self._installation, genericdoors=self._genericdoors_2da)
+  408:         mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL)
+  409          mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX)
+
+Tools\HolocronToolset\src\toolset\gui\editors\utp.py:
+  442              - Build the data and model name from the provided data
+  443:             - Get the MDL and MDX resources from the installation based on the model name
+  444              - If both resources exist, set them on the preview renderer
+
+  460              - Build the data and model name from the provided data
+  461:             - Get the MDL and MDX resources from the installation based on the model name
+  462              - If both resources exist, set them on the preview renderer
+
+  475              return
+  476:         mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL)
+  477          mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX)
+
+Tools\HolocronToolset\src\toolset\gui\editors\dlg\editor.py:
+  1157          self.ui.onAbortCombo.populate_combo_box(relevant_script_resnames)
+  1158:         self.ui.cameraModelSelect.populate_combo_box(sorted({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.MDL, self._filepath)}))
+  1159  
+
+  1280          self.ui.ambientTrackCombo.set_button_delegate("Play", lambda text: self.play_sound(text))
+  1281:         installation.setup_file_context_menu(self.ui.cameraModelSelect, [ResourceType.MDL], [SearchLocation.CHITIN, SearchLocation.OVERRIDE])
+  1282          installation.setup_file_context_menu(self.ui.ambientTrackCombo, [ResourceType.WAV, ResourceType.MP3], [SearchLocation.MUSIC])
+
+Tools\HolocronToolset\src\toolset\gui\widgets\renderer\lyt_editor.py:
+    61  
+    62:     from pykotor.common.module import MDL, Module, ModuleResource
+    63      from pykotor.gl.scene import Boundary, Camera, RenderObject, Scene
+
+   630  
+   631:     def load_textures_task(self) -> list[ModuleResource[MDL]]:
+   632          # Implement texture loading logic here
+
+  1272  
+  1273:             # Get room bounds from MDL
+  1274              bounds: Boundary = self.scene.objects.get(mdl_res.filename()).boundary()
+
+  1709  
+  1710:         # Create room with data from MDL/ARE
+  1711          room: LYTRoom = LYTRoom(
+
+Tools\HolocronToolset\src\toolset\gui\windows\main.py:
+    94      from pykotor.extract.file import LocationResult, ResourceResult
+    95:     from pykotor.resource.formats.mdl import MDL
+    96      from pykotor.resource.formats.tpc import TPC
+
+  1216                  save_path = save_path.with_suffix(".tga")
+  1217:             elif resource.restype() is ResourceType.MDL and self.ui.mdlDecompileCheckbox.isChecked():
+  1218                  save_path = save_path.with_suffix(".mdl.ascii")
+
+  1305                  loader.errors.append(e)
+  1306:         if resource.restype() is ResourceType.MDL:
+  1307              if self.ui.mdlTexturesCheckbox.isChecked():
+
+  1330          mdxData: bytes = mdx_resource_lookup.data
+  1331:         mdl: MDL | None = read_mdl(data, 0, 0, mdxData, 0, 0)
+  1332          data = bytearray()
+
+Tools\HolocronToolset\src\toolset\gui\windows\module_designer.py:
+  515              ResourceType.FAC: QTreeWidgetItem(["Factions"]),
+  516:             ResourceType.MDL: QTreeWidgetItem(["Models"]),
+  517              ResourceType.TGA: QTreeWidgetItem(["Textures"]),
+
+  521          }
+  522:         categories[ResourceType.MDX] = categories[ResourceType.MDL]
+  523:         categories[ResourceType.WOK] = categories[ResourceType.MDL]
+  524          categories[ResourceType.TPC] = categories[ResourceType.TGA]
+
+Tools\HolocronToolset\src\toolset\utils\window.py:
+  302  
+  303:     if restype in {ResourceType.MDL, ResourceType.MDX}:
+  304          editor = MDLEditor(None, installation)
+
+Tools\HolocronToolset\src\ui\dialogs\extract_options_ui.py:
+  57          self.tpcTxiCheckbox.setText(_translate("ExtractOptionsDialog", "Extract TXI"))
+  58:         self.mdlGroup.setTitle(_translate("ExtractOptionsDialog", "MDL Options"))
+  59          self.mdlDecompileCheckbox.setToolTip(_translate("ExtractOptionsDialog", "Decompile feature is not available."))
+
+Tools\HolocronToolset\src\ui\dialogs\extract_options.ui:
+  42       <property name="title">
+  43:       <string>MDL Options</string>
+  44       </property>
+
+Tools\HolocronToolset\src\ui\windows\main_ui.py:
+  371          self.tpcTxiCheckbox.setText(_translate("MainWindow", "Extract TXI"))
+  372:         self.mdlGroup_2.setTitle(_translate("MainWindow", "MDL"))
+  373          self.mdlDecompileCheckbox.setToolTip(_translate("MainWindow", "Decompile feature is not available."))
+
+Tools\HolocronToolset\src\ui\windows\main.ui:
+  243                        <property name="title">
+  244:                         <string>MDL</string>
+  245                        </property>
+
+vendor\KotOR-dotNET\AuroraParsers\MDLObject.cs:
+  92              if (fileHeader.FlagBinary != 0)
+  93:                 throw new Exception("Unsupported KotOR ASCII MDL");
+  94  
+
+vendor\KotOR.js\src\GameState.ts:
+  401      GameState.staticCameras = [];
+  402:     //Animates Camera's are MDL files that have a camera_hook and animations for use in dialog
+  403      GameState.animatedCameras = [];
+
+vendor\KotOR.js\src\apps\forge\EditorFile.ts:
+  381              erf.load().then( async (archive: KotOR.ERFObject) => {
+  382:               //MDL
+  383                if(!isBuffer(this.buffer) || !this.buffer?.length){
+
+  400              rim.load().then( async (archive: KotOR.RIMObject) => {
+  401:               //MDL
+  402                if(!isBuffer(this.buffer) || !this.buffer?.length){
+
+  425                try{
+  426:                 //MDL
+  427                  if(!isBuffer(this.buffer) || !this.buffer?.length) this.buffer = await KotOR.GameFileSystem.readFile(this.path);
+
+  440                try{
+  441:                 //MDL
+  442                  if(!isBuffer(this.buffer) || !this.buffer?.length) this.buffer = await ProjectFileSystem.readFile(this.path);
+
+  470                }else{
+  471:                 //MDL
+  472                  let granted = false;
+
+vendor\KotOR.js\src\enums\odyssey\OdysseyModelEmitterFlag.ts:
+  8   * @license {@link https://www.gnu.org/licenses/gpl-3.0.txt|GPLv3}
+  9:  * @see https://bitbucket.org/bead-v/mdledit/src/678765df0b1369a4a86bc901188e5e3975b10e8a/MDL.h?at=master&fileviewer=file-view-default
+  10   * @enum
+
+vendor\KotOR.js\src\loaders\MDLLoader.ts:
+  58              console.error(e);
+  59:             console.error('MDL 404', resref);
+  60              reject(e);
+
+vendor\KotOR.js\src\odyssey\OdysseyModel.ts:
+  15   * 
+  16:  * The OdysseyModel class takes an MDL & MDX file and decode the values to later be passed to a 
+  17   * OdysseyModel3D class to be converted into an object that can be added to the scene graph.
+
+vendor\KotOR.js\src\shaders\ShaderOdysseyModel.ts:
+  185      uniform float time;
+  186:     uniform vec4 animatedUV; // MDL animatedUV properties
+  187      uniform vec4 animationVector; // Water TXI animation
+
+vendor\Kotor.NET\Kotor.NET\Common\Data\ResourceType.cs:
+  17          public static ResourceType TXT = new ResourceType(10, "txt", "Others");
+  18:         public static ResourceType MDL = new ResourceType(2002, "mdl", "Models");
+  19          public static ResourceType NSS = new ResourceType(2009, "nss", "Scripts");
+
+  71          {
+  72:             BMP, TGA, WAV, PLT, INI, TXT, MDL, NSS, NCS, MOD, ARE, SET, IFO, WOK,
+  73              TWODA, TLK, TXI, GIT, BTI, UTI, BTC, UTC, DLG, ITP ,UTT, DDS, UTS, LTR,
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorMDL\MDL.cs:
+   9  {
+  10:     public class MDL
+  11      {
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorMDL\MDLBinaryReader.cs:
+  14  {
+  15:     public class MDLBinaryReader : IReader<MDL>
+  16      {
+
+  18          private BinaryReader _mdxReader;
+  19:         private MDL? _mdl;
+  20          private FileRoot _bin;
+
+  47  
+  48:         public MDL Read()
+  49          {
+  50:             _mdl = new MDL();
+  51  
+
+vendor\Kotor.NET\Kotor.NET\Formats\KotorMDL\MDLBinaryWriter.cs:
+   8  {
+   9:     public class MDLBinaryWriter : IWriter<MDL>
+  10      {
+
+  17  
+  18:         private MDL? _mdl;
+  19          private FileRoot _binaryMDL;
+
+  38  
+  39:         public byte[] Bytes(MDL mdl)
+  40          {
+
+  53  
+  54:         public void Write(MDL mdl)
+  55          {
+
+vendor\Kotor.NET\Kotor.NET.Tests\Tests\FileFormats\KotorMDL\TestMDLBinaryReaderAndWriter.cs:
+  42  
+  43:         public MDL AssertRead(byte[] data, byte[] mdxData)
+  44          {
+
+vendor\Kotor.NET\MapBuilder\Data\AssetData.cs:
+  10      {
+  11:         public required byte[] MDL { get; init; }
+  12          public required byte[] MDX { get; set; }
+
+vendor\KotOR_IO\KotOR_IO\KIO.cs:
+  134          /// <summary>Simulation Model</summary>
+  135:         [Description("MDL ")]
+  136:         MDL = 2002,
+  137          /// <summary>Sound Set</summary>
+
+  477          /// <summary> Dictionary for conversion of 4 char FileTypes into resource IDs. </summary>
+  478:         public static Dictionary<string, int> TypeCodes = new Dictionary<string, int>() { { "NULL", 0 }, { "BMP ", 1 }, { "TGA ", 3 }, { "WAV ", 4 }, { "PLT ", 6 }, { "INI ", 7 }, { "TXT ", 10 }, { "MDL ", 2002 }, { "NSS ", 2009 }, { "MOD ", 2011 }, { "NCS ", 2010 }, { "ARE ", 2012 }, { "SET ", 2013 }, { "IFO ", 2014 }, { "BIC ", 2015 }, { "WOK ", 2016 }, { "2DA ", 2017 }, { "TLK ", 2018 }, { "TXI ", 2022 }, { "GIT ", 2023 }, { "BTI ", 2024 }, { "UTI ", 2025 }, { "BTC ", 2026 }, { "UTC ", 2027 }, { "DLG ", 2029 }, { "ITP ", 2030 }, { "UTT ", 2032 }, { "DDS ", 2033 }, { "UTS ", 2035 }, { "LTR ", 2036 }, { "GFF ", 2037 }, { "FAC ", 2038 }, { "UTE ", 2040 }, { "UTD ", 2042 }, { "UTP ", 2044 }, { "DFT ", 2045 }, { "GIC ", 2046 }, { "GUI ", 2047 }, { "UTM ", 2051 }, { "DWK ", 2052 }, { "PWK ", 2053 }, { "JRL ", 2056 }, { "SAV ", 2057 }, { "UTW ", 2058 }, { "SSF ", 2060 }, { "HAK ", 2061 }, { "NDB ", 2064 }, { "PTM ", 2065 }, { "PTT ", 2066 }, { "LYT ", 3000 }, { "VIS ", 3001 }, { "RIM ", 3002 }, { "TPC ", 3007 }, { "MDX ", 3008 }, { "KEY ", 9999 }, { "BIF ", 9998 }, { "ERF ", 9997 } };
+  479  
+
+vendor\kotorblender\io_scene_kotor\format\mdl\reader.py:
+  146          if self.mdl.read_uint32() != 0:
+  147:             raise RuntimeError("Invalid MDL signature")
+  148          self.mdl_size: int = self.mdl.read_uint32()
+
+vendor\kotorblender\io_scene_kotor\io\mdl.py:
+   99  
+  100:     # Find MDL root
+  101      mdl_root = next(
+
+  112  
+  113:     # Ensure MDL root is selected and is in OBJECT mode
+  114      mdl_root.select_set(True)
+
+  117  
+  118:     # Export MDL
+  119      model = Model.from_mdl_root(mdl_root, options)
+
+vendor\kotorblender\io_scene_kotor\ops\mdl\export.py:
+  31      bl_idname = "kb.mdlexport"
+  32:     bl_label = "Export KotOR MDL"
+  33  
+
+  38      export_for_tsl: bpy.props.BoolProperty(
+  39:         name="Export for TSL", description="Use The Sith Lords MDL format"
+  40      )
+
+  42      export_for_xbox: bpy.props.BoolProperty(
+  43:         name="Export for Xbox", description="Use Xbox MDL format"
+  44      )
+
+vendor\kotorblender\io_scene_kotor\ops\mdl\importop.py:
+  33      bl_idname = "kb.mdlimport"
+  34:     bl_label = "Import KotOR MDL"
+  35      bl_options = {"UNDO"}
+
+  59      build_armature: bpy.props.BoolProperty(
+  60:         name="Build Armature", description="Build armature from MDL root"
+  61      )
+
+vendor\kotorblender\io_scene_kotor\scene\armature.py:
+  34  
+  35:     # MDL root must have at least one skinmesh
+  36      skinmeshes = find_objects(mdl_root, is_skin_mesh)
+
+vendor\kotorblender\io_scene_kotor\scene\model.py:
+  220  
+  221:         # Ignore transformations up to MDL root
+  222          if not parent:
+
+vendor\kotorblender\io_scene_kotor\ui\props\object.py:
+  97              (DummyType.NONE, "None", "", 0),
+  98:             (DummyType.MDLROOT, "MDL Root", "Root of MDL model", 1),
+  99              (DummyType.DWKROOT, "DWK Root", "Root of door walkmesh", 2),
+
+vendor\mdlops\KotOR_Tutorial.txt:
+  51  
+  52: 2. Under the "General Utils" title click the "Set Environ" button. Now click on the "MDL Loading" title to open it. Next, click the "Browse" button under "Filename" and find your Desktop. Double-click on "w_blstrrfl_001-ascii.mdl". Make sure "Import Geom Only" is checked. Click "Import".
+  53  
+
+vendor\mdlops\mdl_format_detailed.md:
+   105    Unused     UInt32   0        Always set to 0.
+   106:   MDL Size   UInt32   4
+   107    MDX Size   UInt32   8
+
+   734  
+   735: The MDX file contains additional mesh data that complements the MDL file. The data is organized in rows with specific bit flags indicating presence of different data types.
+   736  
+
+   942  
+   943: The first 4 bytes of an MDL file determine whether it's a binary or ASCII format:
+   944  
+
+  1171  
+  1172: ## ASCII MDL Format
+  1173  
+
+  1478  3. Steps 1-2 are repeated for each child node, cycling the split axis, until max depth or <4 faces per node
+  1479: 4. The resulting binary AABB tree is stored in the MDL, with each node containing:
+  1480     - Two child node offsets (or face index and count for leaf nodes)
+
+vendor\mdlops\mdl_format.wiki:
+  107  |-
+  108: |MDL Size
+  109  |UInt32
+
+vendor\mdlops\mdlops.pl:
+    1  ##########################################################
+    2: # MUCH MUCH MUCH thanks to Torlack for his NWN MDL info!
+    3  # without that this script could not exist!
+
+   38  #
+   39: # NOTE: For binary models you must have the .MDL and .MDX
+   40  #       in the same directory
+   41  #
+   42: # NOTE: For importing models with supermodels, the supermodel .MDL 
+   43  #       must be in the same directory.
+
+  117    --replacer                    Use Taina's replacer mode
+  118:   --bmdl MODEL                  Binary MDL file to use
+  119    --bmesh NAME                  Name of mesh to replace in binary model
+  120:   --amdl MODEL                  ASCII Text MDL file to replace from
+  121    --amesh NAME                  Name of mesh to inject into binary model
+
+vendor\mdlops\p2_MDLOpsM.pm:
+   8    
+   9:     MDLOpsM::File::open(\$fh, '<', $filepath) or die "can't open MDL file: $filepath\n";
+  10      binmode($fh);
+
+  36    
+  37:     MDLOpsM::File::open(\$fh, '<', $filepath) or die "can't open MDL file: $filepath\n";
+  38      binmode($fh);
+
+vendor\mdlops\p3_readbinarymdl.pm:
+  44  
+  45:     MDLOpsM::File::open(\*MODELMDL, '<', $filepath.".mdl") or die "can't open MDL file: $filepath\n";
+  46      binmode(MODELMDL);
+
+vendor\mdlops\p8_MDLOpsM.pm:
+  74    $filepath = $1;
+  75:   MDLOpsM::File::open(\$ASCIIMDL, '<', "$filepath.$extension") or die "can't open MDL file $filepath.$extension\n";
+  76    $model{'source'} = "ascii";
+
+vendor\mdlops\p9_MDLOpsM.pm:
+   27    $nodenum = $model->{'nodes'}{'truenodenum'};
+   28:   MDLOpsM::File::open(\*BMDLOUT, ">", "$filepath-$version-bin.mdl") or die "can't open MDL file $filepath-$version-bin.mdl\n";
+   29    binmode(BMDLOUT);
+
+  137  
+  138:   #write out binary MDL
+  139    #write out the file header
+
+vendor\mdlops\p11_MDLOpsM.pm:
+  29    $nodenum = $model->{'nodes'}{'truenodenum'};
+  30:   MDLOpsM::File::open(\$BMDLOUT, ">", $filepath."-$version-r-bin.mdl") or die "can't open MDL file $filepath-$version-r-bin.mdl\n";
+  31    binmode($BMDLOUT);
+
+  47  
+  48:   #write out binary MDL
+  49    #write out the file header
+
+vendor\mdlops\Quick_tutorial.txt:
+  69  21) Select the w_blstrcrbn_001 object (the Aurora Base), rename it to "w_blstrcrbn_001-ascii", and click on the modify tab. In the
+  70:     "MDL Base Parameters" rollout, click "Export Geom only".
+  71  
+
+vendor\mdlops\readme_MDLOps.txt:
+   79  ----------------
+   80:  MUCH MUCH MUCH thanks to Torlack for his NWN MDL info!
+   81   Without his info this script could not exist!
+
+  187  
+  188:  4: For binary models you must have the .MDL and .MDX
+  189      in the same directory
+
+  202   2) click 'select file'
+  203:  3) browse to directory that has your .MDL file.
+  204:     Select the .MDL and click 'open'
+  205   4) To quickly convert the model click 'Read and write model'
+
+  221   2) click 'select file'
+  222:  3) browse to directory that has your .MDL file.
+  223:     Select the .MDL and click 'open'
+  224   4) click on 'read model'
+
+vendor\mdlops\src\pymdlops\controllers.py:
+  1: """Controller definitions for MDL nodes."""
+  2  
+
+vendor\mdlops\src\pymdlops\structures.py:
+  2  
+  3: # Structure definitions for parsing MDL files
+  4  from __future__ import annotations
+
+vendor\mdlops\src\pymdlops\io\__init__.py:
+  1: """I/O operations for MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\ascii\__init__.py:
+  1: """ASCII I/O operations for MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\ascii\read_ascii_animations.py:
+  1: """Function for reading ASCII MDL animation section."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\ascii\read_ascii_header.py:
+  1: """Function for reading ASCII MDL header section."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\ascii\read_ascii_nodes.py:
+  1: """Function for reading ASCII MDL node section."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\ascii\write_ascii_animations.py:
+  1: """Function for writing ASCII MDL animation section."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\ascii\write_ascii_header.py:
+  1: """Function for writing ASCII MDL header section."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\ascii\write_ascii_nodes.py:
+  1: """Function for writing ASCII MDL node section."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\__init__.py:
+  1: """Binary MDL file I/O functionality."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\aabb.py:
+  1: """Functions for handling AABB node data in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\animation_data.py:
+  1: """Functions for handling animation node data in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\animation_nodes.py:
+  1: """Functions for handling MDL animation node data."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\arrays.py:
+  1: """Functions for handling array data in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\controllers.py:
+  1: """Functions for handling controller data in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\dangly.py:
+  1: """Functions for handling dangly node data in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\faces.py:
+  1: """Functions for handling face data in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\mdx.py:
+  1: """Functions for handling MDX data in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\node_list.py:
+  1: """Functions for handling node lists in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\node_order.py:
+  1: """Functions for handling node order in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\node_types.py:
+  1: """Node type constants for MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\read_animation_data.py:
+  1: """Function for reading binary MDL animation node data."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\read_animations.py:
+  1: """Functions for reading binary MDL animation data."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\read_binary_model.py:
+   1: """Functions for reading binary MDL files."""
+   2  
+
+  19  def readbinarymdl(reader: BinaryReader) -> dict[str, Any]:
+  20:     """Read binary MDL file.
+  21  
+
+  59          if PRINT_ALL:
+  60:             print(f"Failed to read binary MDL: {str(e)}")
+  61              print(f"At position: {reader.position():08X}")
+
+vendor\mdlops\src\pymdlops\io\binary\read_geometry_header.py:
+  1: """Functions for reading binary MDL geometry header data."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\read_name_header.py:
+  1: """Functions for reading binary MDL name header data."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\read_names.py:
+  1: """Functions for reading binary MDL name data."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\read_node_data.py:
+  1: """Functions for reading binary MDL node data."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\read_nodes.py:
+  1: """Functions for reading binary MDL node data."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\saber.py:
+  1: """Functions for handling saber mesh data in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\skin.py:
+  1: """Functions for handling skin node data in MDL files."""
+  2  
+
+vendor\mdlops\src\pymdlops\io\binary\write_binary_model.py:
+   1: """Function for writing binary MDL files."""
+   2  
+
+  11  def writebinarymdl(model: dict[str, Any], filepath: str) -> None:
+  12:     """Write model data to a binary MDL file.
+  13  
+
+  72          if PRINT_ALL:
+  73:             print(f"Failed to write binary MDL file: {str(e)}")
+  74          raise
+
+vendor\mdlops\src\pymdlops\io\binary\write_raw_binary.py:
+   1: """Functions for writing raw binary MDL data."""
+   2  
+
+  27          if PRINT_ALL:
+  28:             print(f"Failed to write raw binary MDL file: {str(e)}")
+  29          raise
+
+vendor\mdlops\src\pymdlops\utils\__init__.py:
+  1: """Utility functions for MDL operations."""
+  2  
+
+vendor\mdlops\src\pymdlops\utils\modeltype.py:
+   1: """Functions for determining MDL model type and version."""
+   2  from __future__ import annotations
+
+  45      Args:
+  46:         filepath: Path to the MDL file
+  47  
+
+  63      Args:
+  64:         filepath: Path to the MDL file
+  65  
+
+vendor\NorthernLights\Assets\Editor\AuroraProjectStatus.cs:
+  66          // {
+  67:         //     // Type code for MDL
+  68:         //     if (key == ResourceType.MDL && resref.Contains(model_name))
+  69          //     {
+
+  84          // {
+  85:         //     // Type code for MDL
+  86:         //     if (key == ResourceType.MDL && resref.Contains(model_name))
+  87          //     {
+
+vendor\NorthernLights\Assets\Editor\ModelExplorer.cs:
+  12      
+  13:     public MDL mdlObj;
+  14      Vector2 scroll;
+
+  27          {
+  28:             mdlLocation = EditorGUILayout.TextField("MDL Location", mdlLocation);
+  29              mdxLocation = EditorGUILayout.TextField("MDX Location", mdxLocation);
+
+  75              //    {
+  76:             //        // Show the MDL object's information
+  77              //        ShowMDL();
+
+vendor\NorthernLights\Assets\Editor\KLE\KItemPicker.cs:
+  34      {
+  35:         { ItemType.MODEL, AuroraEngine.ResourceType.MDL },
+  36          { ItemType.CREATURE, AuroraEngine.ResourceType.UTC },
+
+  51      {
+  52:         { AuroraEngine.ResourceType.MDL, ItemType.MODEL},
+  53          { AuroraEngine.ResourceType.UTC, ItemType.CREATURE },
+
+vendor\NorthernLights\Assets\Packages\Microsoft.Msagl.1.1.3\lib\net40\Microsoft.Msagl.XML:
+  13583              <summary>
+  13584:             MDL layout settings
+  13585              </summary>
+
+vendor\NorthernLights\Assets\Scripts\GameData.cs:
+  40      //{
+  41:     //    { ResourceType.MDL, "mdl" },
+  42      //    { ResourceType.UTC, "utc" },
+
+  54      {
+  55:         { "mdl", ResourceType.MDL },
+  56          { "mdx", ResourceType.MDX },
+
+vendor\NorthernLights\Assets\Scripts\AuroraBinary\Types\MDL.cs:
+  8  [System.Serializable]
+  9: public class MDL : BinaryStructure
+  10  {
+
+vendor\NorthernLights\Assets\Scripts\FileObjects\Models\AuroraModel.cs:
+  14  
+  15:         public MDL mdlObject;
+  16  
+
+  19  			this.importFrom = importFrom;
+  20:             mdlObject = new MDL();
+  21              Dictionary<string, Stream> other = new Dictionary<string, Stream>
+
+vendor\NorthernLights\Assets\Scripts\ResourceLoader\ModelLoader.cs:
+  409              //}
+  410:             Stream mdl = data.GetStream(resref, ResourceType.MDL), mdx = data.GetStream(resref, ResourceType.MDX);
+  411  
+
+vendor\NorthernLights\Assets\Scripts\ResourceLoader\Resources.cs:
+  46          TEX = 2001, // Texture.
+  47:         MDL = 2002, // Geometry, BioWare model.
+  48          THG = 2003,
+
+vendor\NorthernLights\Assets\Scripts\Templates\Creature.cs:
+  41  
+  42:             if (Resources.data.GetStream(modelRef, ResourceType.MDL) == null)
+  43              {
+
+vendor\reone\include\reone\graphics\types.h:
+  176  
+  177: // MDL
+  178  
+
+  291  
+  292: // END MDL
+  293  
+
+vendor\reone\src\libs\graphics\format\mdlmdxreader.cpp:
+  153      if (flags & 0xf408) {
+  154:         throw ValidationException("Unsupported MDL node flags: " + std::to_string(flags));
+  155      }
+
+vendor\reone\test\graphics\format\mdlmdxreader.cpp:
+  34                          .append("\x00\x00\x00\x00", 4) // unknown
+  35:                         .append("\x2e\x01\x00\x00", 4) // MDL size
+  36                          .append("\x00\x00\x00\x00", 4) // MDX size
+
+vendor\test\NorthernLights\Assets\Editor\AuroraProjectStatus.cs:
+  66          // {
+  67:         //     // Type code for MDL
+  68:         //     if (key == ResourceType.MDL && resref.Contains(model_name))
+  69          //     {
+
+  84          // {
+  85:         //     // Type code for MDL
+  86:         //     if (key == ResourceType.MDL && resref.Contains(model_name))
+  87          //     {
+
+vendor\test\NorthernLights\Assets\Editor\ModelExplorer.cs:
+  12      
+  13:     public MDL mdlObj;
+  14      Vector2 scroll;
+
+  27          {
+  28:             mdlLocation = EditorGUILayout.TextField("MDL Location", mdlLocation);
+  29              mdxLocation = EditorGUILayout.TextField("MDX Location", mdxLocation);
+
+  75              //    {
+  76:             //        // Show the MDL object's information
+  77              //        ShowMDL();
+
+vendor\test\NorthernLights\Assets\Editor\KLE\KItemPicker.cs:
+  34      {
+  35:         { ItemType.MODEL, AuroraEngine.ResourceType.MDL },
+  36          { ItemType.CREATURE, AuroraEngine.ResourceType.UTC },
+
+  51      {
+  52:         { AuroraEngine.ResourceType.MDL, ItemType.MODEL},
+  53          { AuroraEngine.ResourceType.UTC, ItemType.CREATURE },
+
+vendor\test\NorthernLights\Assets\Packages\Microsoft.Msagl.1.1.3\lib\net40\Microsoft.Msagl.XML:
+  13583              <summary>
+  13584:             MDL layout settings
+  13585              </summary>
+
+vendor\test\NorthernLights\Assets\Scripts\GameData.cs:
+  40      //{
+  41:     //    { ResourceType.MDL, "mdl" },
+  42      //    { ResourceType.UTC, "utc" },
+
+  54      {
+  55:         { "mdl", ResourceType.MDL },
+  56          { "mdx", ResourceType.MDX },
+
+vendor\test\NorthernLights\Assets\Scripts\AuroraBinary\Types\MDL.cs:
+  8  [System.Serializable]
+  9: public class MDL : BinaryStructure
+  10  {
+
+vendor\test\NorthernLights\Assets\Scripts\FileObjects\Models\AuroraModel.cs:
+  14  
+  15:         public MDL mdlObject;
+  16  
+
+  19  			this.importFrom = importFrom;
+  20:             mdlObject = new MDL();
+  21              Dictionary<string, Stream> other = new Dictionary<string, Stream>
+
+vendor\test\NorthernLights\Assets\Scripts\ResourceLoader\ModelLoader.cs:
+  409              //}
+  410:             Stream mdl = data.GetStream(resref, ResourceType.MDL), mdx = data.GetStream(resref, ResourceType.MDX);
+  411  
+
+vendor\test\NorthernLights\Assets\Scripts\ResourceLoader\Resources.cs:
+  46          TEX = 2001, // Texture.
+  47:         MDL = 2002, // Geometry, BioWare model.
+  48          THG = 2003,
+
+vendor\test\NorthernLights\Assets\Scripts\Templates\Creature.cs:
+  41  
+  42:             if (Resources.data.GetStream(modelRef, ResourceType.MDL) == null)
+  43              {
+
+vendor\xoreos\src\graphics\aurora\model_jade.cpp:
+   21  /** @file
+   22:  *  Loading MDL/MDX files found in Jade Empire
+   23   */
+
+  100  		if (!(mdl = ResMan.getResource(name, ::Aurora::kFileTypeMDL)))
+  101: 			throw Common::Exception("No such MDL \"%s\"", name.c_str());
+  102  		if (!(mdx = ResMan.getResource(name, ::Aurora::kFileTypeMDX)))
+
+  166  	if (version != 0x00008700)
+  167: 		throw Common::Exception("Unsupported MDL: 0x%08X", version);
+  168  
+
+  170  
+  171: 	// Size of the MDL file, without the 20 byte header
+  172  	ctx.mdlSize = ctx.mdl->readUint32LE();
+
+  192  	ctx.mdl->skip(24); // Unknown
+  193: 	ctx.mdl->skip( 4); // Pointer to the MDL file
+  194  
+
+  313  
+  314: 	ctx.mdl->skip(4); // Pointer to the MDL file
+  315  	ctx.mdl->skip(4); // Pointer to the parent Model
+
+  428  
+  429: 	// Offset of the face indices into the MDL. If 0, use faceOffsetMDX.
+  430  	uint32_t faceOffsetMDL = ctx.mdl->readUint32LE();
+
+vendor\xoreos\src\graphics\aurora\model_jade.h:
+  21  /** @file
+  22:  *  Loading MDL/MDX files found in Jade Empire
+  23   */
+
+  40  
+  41: /** A 3D model in the Jade Empire MDL/MDX format. */
+  42  class Model_Jade : public Model {
+
+vendor\xoreos\src\graphics\aurora\model_kotor.cpp:
+   21  /** @file
+   22:  *  Loading MDL files found in Star Wars: Knights of the Old Republic.
+   23   */
+
+  130  		if (!(mdl = ResMan.getResource(name, ::Aurora::kFileTypeMDL)))
+  131: 			throw Common::Exception("No such MDL \"%s\"", name.c_str());
+  132  		if (!(mdx = ResMan.getResource(name, ::Aurora::kFileTypeMDX)))
+
+  185  	if (ctx.mdl->readUint32LE() != 0)
+  186: 		throw Common::Exception("Unsupported KotOR ASCII MDL");
+  187  
+
+vendor\xoreos\src\graphics\aurora\model_kotor.h:
+  21  /** @file
+  22:  *  Loading MDL files found in Star Wars: Knights of the Old Republic.
+  23   */
+
+  40  
+  41: /** A 3D model in the NWN binary MDL format. */
+  42  class Model_KotOR : public Model {
+
+vendor\xoreos\src\graphics\aurora\model_nwn.cpp:
+    21  /** @file
+    22:  *  Loading MDL files found in Neverwinter Nights.
+    23   */
+    24  
+    25: /* Based on the binary MDL specs by Torlack.
+    26   *
+
+   132  	if (!mdl)
+   133: 		throw Common::Exception("No such MDL \"%s\"", name.c_str());
+   134  
+
+   341  		} else {
+   342: 			// warning("Unknown MDL command \"%s\"", line[0].c_str());
+   343  		}
+
+  1180  		} else {
+  1181: 			// warning("Unknown MDL node command \"%s\"", line[0].c_str());
+  1182  		}
+
+vendor\xoreos\src\graphics\aurora\model_nwn.h:
+  21  /** @file
+  22:  *  Loading MDL files found in Neverwinter Nights.
+  23   */
+
+  42  
+  43: /** A 3D model in the NWN MDL format. */
+  44  class Model_NWN : public Model {
+
+vendor\xoreos\src\graphics\aurora\model_witcher.cpp:
+  24  
+  25: /* Based in parts on the binary MDL specs by Torlack
+  26   * (<https://github.com/xoreos/xoreos-docs/tree/master/specs/torlack>)
+
+vendor\xoreos-docs\specs\gmax_nwn_mdl_0.3b.ms:
+   270  	(
+   271: 		MessageBox("Binary MDL Files not supported.  Convert model to ASCII");
+   272  		return false
+
+  1450  
+  1451: rollout ImportRollout "Import MDL" width:160 height:192
+  1452  (
+
+  1496  (
+  1497: 	button export_mdl_button "MDL" pos:[8,8] width:64 height:24
+  1498  	button export_node_button "Node" pos:[88,8] width:64 height:24
+
+  2171  		
+  2172: wayland_NWN_mdl_tool = newRolloutFloater "NWN MDL Tool" 189 480 0 100
+  2173  addRollout ImportRollout	wayland_NWN_mdl_tool
+
+vendor\xoreos-docs\specs\torlack\basics.html:
+   99  <tr><td>TEX</td><td>0x07D1</td></tr>
+  100: <tr><td>MDL</td><td>0x07D2</td></tr>
+  101  <tr><td>THG</td><td>0x07D3</td></tr>
+
+vendor\xoreos-tools\python\src\archives.cpp:
+  88        .value("TXT", Aurora::kFileTypeTXT)
+  89:       .value("MDL", Aurora::kFileTypeMDL)
+  90        .value("NSS", Aurora::kFileTypeNSS)
+
+vendor\xoreos-wiki\TODO.mw:
+  207  
+  208: === MDL supermodels and animations ===
+  209  * Mostly working in NWN thanks to jbowtie's work

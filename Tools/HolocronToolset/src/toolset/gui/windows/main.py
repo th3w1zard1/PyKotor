@@ -39,7 +39,6 @@ from pykotor.extract.file import FileResource, ResourceIdentifier
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.erf.erf_auto import read_erf, write_erf
 from pykotor.resource.formats.erf.erf_data import ERF, ERFType
-from pykotor.resource.formats.mdl import read_mdl, write_mdl
 from pykotor.resource.formats.rim.rim_auto import read_rim, write_rim
 from pykotor.resource.formats.rim.rim_data import RIM
 from pykotor.resource.formats.tpc import read_tpc, write_tpc

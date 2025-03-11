@@ -7,14 +7,14 @@ from panda3d.core import WindowProperties
 
 from pykotor.common.module import Module
 from pykotor.extract.installation import Installation
-from pykotor.gl.panda3d.scene import KotorRenderer
+from pykotor.gl.panda3d.scene import Panda3dScene
 
 if TYPE_CHECKING:
     from pykotor.extract.installation import Installation
 
 
 print("Starting demo...")
-demo: KotorRenderer | None = None
+demo: Panda3dScene | None = None
 
 if __name__ == "__main__":
     from pathlib import Path
@@ -257,7 +257,7 @@ if __name__ == "__main__":
         print(f"Selected Level: {selected_level}")
 
         # Now create and run the renderer
-        demo = KotorRenderer(
+        demo = Panda3dScene(
             installation=selected_installation,
             module=Module(str(selected_level), selected_installation),
         )

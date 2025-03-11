@@ -43,6 +43,7 @@ write_twine(dlg, "story.html", format="html", metadata=metadata)
 ## Format Details
 
 ### HTML Format
+
 The HTML format follows Twine 2's standard format:
 
 ```html
@@ -64,6 +65,7 @@ The HTML format follows Twine 2's standard format:
 ```
 
 ### JSON Format
+
 The JSON format provides a more compact representation:
 
 ```json
@@ -95,6 +97,7 @@ The JSON format provides a more compact representation:
 ## Feature Mapping
 
 ### KotOR -> Twine
+
 - Dialog entries become passages with `entry` tag
 - Dialog replies become passages with `reply` tag
 - Links preserve their child status and activation scripts
@@ -102,6 +105,7 @@ The JSON format provides a more compact representation:
 - Quest/VO data stored in passage metadata
 
 ### Twine -> KotOR
+
 - Passages with `entry` tag become dialog entries
 - Passages with `reply` tag become dialog replies
 - Link text becomes the node text
@@ -111,6 +115,7 @@ The JSON format provides a more compact representation:
 ## Metadata Preservation
 
 Both formats preserve:
+
 - Node positions in Twine editor
 - Node sizes
 - Tag colors
@@ -118,7 +123,9 @@ Both formats preserve:
 - Custom styles/scripts
 
 ### KotOR-specific Features
+
 The following KotOR features are preserved in Twine metadata:
+
 - Animation IDs
 - Camera settings
 - Fade effects
@@ -126,7 +133,9 @@ The following KotOR features are preserved in Twine metadata:
 - Sound/VO data
 
 ### Twine-specific Features
+
 The following Twine features are preserved in KotOR metadata:
+
 - Custom CSS
 - Custom JavaScript
 - Tag colors
@@ -135,12 +144,14 @@ The following Twine features are preserved in KotOR metadata:
 ## Best Practices
 
 1. Use meaningful passage names:
+
 ```python
 entry = DLGEntry()
 entry.speaker = "Bastila"  # Will become passage name
 ```
 
 2. Preserve metadata:
+
 ```python
 metadata = {
     "style": existing_style,
@@ -151,6 +162,7 @@ write_twine(dlg, "story.html", metadata=metadata)
 ```
 
 3. Handle errors:
+
 ```python
 try:
     dlg = read_twine("story.html")
@@ -178,6 +190,7 @@ except FileNotFoundError:
 ## Contributing
 
 When adding features:
+
 1. Add proper type hints
 2. Include tests for edge cases
 3. Update documentation

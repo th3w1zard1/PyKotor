@@ -26,14 +26,12 @@ packages = [
     { include = "pykotor", from = "Libraries/PyKotor/src" },
     { include = "pykotorfont", from = "Libraries/PyKotorFont/src" },
     { include = "pykotorgl", from = "Libraries/PyKotorGL/src" },
-    { include = "utility", from = "Libraries/Utility/src" },
 ]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 loggerplus = "^0.1.3"
 pykotor = { path = "Libraries/PyKotor", develop = true }
-utility = { path = "Libraries/Utility", develop = true }
 pykotorfont = { path = "Libraries/PyKotorFont", develop = true, optional = true }
 pykotorgl = { path = "Libraries/PyKotorGL", develop = true, optional = true }
 holocrontoolset = { path = "Tools/HolocronToolset", develop = true, optional = true }

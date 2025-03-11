@@ -242,7 +242,6 @@ class TPCTGAWriter(ResourceWriter):
     def write(self):
         if self._tpc is None:
             raise ValueError("TPC instance is not set.")
-        width, height = self._tpc.dimensions()
 
         self._writer.write_uint8(0)  # id length
         self._writer.write_uint8(0)  # colormap_type
@@ -250,6 +249,7 @@ class TPCTGAWriter(ResourceWriter):
         self._writer.write_bytes(bytes(5))  # colormap_origin
         self._writer.write_uint16(0)  # colormap_length, colormap_depth
         self._writer.write_uint16(0)  # x,y origin
+        width, height = self._tpc.dimensions()
         self._writer.write_uint16(width)
         self._writer.write_uint16(height)
         self._tpc.convert(TPCTextureFormat.RGBA)

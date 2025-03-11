@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any
 from direct.showbase.ShowBase import ShowBase
 from direct.showbase.ShowBaseGlobal import globalClock
 from direct.task.Task import Task
+from loggerplus import RobustLogger
 from panda3d.core import (
     AmbientLight,
     DirectionalLight,
@@ -87,7 +88,7 @@ def create_test_triangle() -> NodePath:
     return NodePath(node)
 
 
-class KotorRenderer(ShowBase):
+class Panda3dScene(ShowBase):
     """Panda3D renderer with KotOR module loading support."""
 
     def __init__(
@@ -95,6 +96,8 @@ class KotorRenderer(ShowBase):
         *,
         installation: Installation | None = None,
         module: Module | None = None,
+        width: int = 800,
+        height: int = 600,
     ):
         # Enable hardware animation and advanced shaders
         loadPrcFileData("", """
@@ -102,7 +105,20 @@ class KotorRenderer(ShowBase):
             basic-shaders-only false
         """)
 
+        loadPrcFileData("", f"win-size {width} {height}")
+        loadPrcFileData("", "window-title KotOR Panda3D")
         super().__init__()
+
+        # Window setup
+        self.win.setClearColor((0, 0, 0, 1))
+        props = WindowProperties()
+        props.setSize(width, height)
+        self.win.requestProperties(props)  # pyright: ignore[reportAttributeAccessIssue]
+
+        # Mouse control properties
+        self._mouse_locked = False
+        self._last_mouse_x = 0
+        self._last_mouse_y = 0
 
         # Set up camera
         self.camera.setPos(0, -10, 0)  # Move camera back to see test objects
@@ -162,10 +178,20 @@ class KotorRenderer(ShowBase):
         self.module_root.setMaterial(self.default_material)
 
         # Camera movement variables
-        self.camera_speed = 30.0  # Units per second
-        self.mouse_sensitivity = 0.3
-        self.last_mouse = None
-        self.keys = {}
+        self.camera_speed: float = 30.0  # Units per second
+        self.mouse_sensitivity: float = 300
+        self._movement_speed: float = 10.0  # Base movement speed for flycam
+        self.last_mouse: tuple[float, float] | None = None
+        self.keys: dict[str, bool] = {}
+
+        # Center the mouse initially
+        props = WindowProperties()
+        props.setCursorHidden(True)
+        props.setMouseMode(WindowProperties.M_relative)
+        self.win.requestProperties(props)  # pyright: ignore[reportAttributeAccessIssue]
+
+        # Recenter mouse on window focus
+        self.accept("window-event", self._handle_window_event)
 
         # Set up input handling
         self.accept("w", self.update_key, ["w", True])
@@ -180,6 +206,8 @@ class KotorRenderer(ShowBase):
         self.accept("space-up", self.update_key, ["space", False])
         self.accept("shift", self.update_key, ["shift", True])
         self.accept("shift-up", self.update_key, ["shift", False])
+        self.accept("control", self.update_key, ["control", True])
+        self.accept("control-up", self.update_key, ["control", False])
 
         # Add the camera update task
         self.taskMgr.add(self.update_camera, "UpdateCameraTask")
@@ -189,7 +217,7 @@ class KotorRenderer(ShowBase):
         props = WindowProperties()
         props.setCursorHidden(True)
         props.setMouseMode(WindowProperties.M_relative)
-        self.win.requestProperties(props)
+        self.win.requestProperties(props)  # pyright: ignore[reportAttributeAccessIssue]
 
         # Load module if provided
         if module:
@@ -231,6 +259,7 @@ class KotorRenderer(ShowBase):
             self.git = git_resource.resource()
             self.layout = lyt_resource.resource()
         else:
+            RobustLogger().error("No GIT or LYT found in module")
             return
 
         # Load rooms
@@ -238,6 +267,7 @@ class KotorRenderer(ShowBase):
             self._load_rooms(self.layout)
 
         if self.git is None:
+            RobustLogger().error("No GIT found in module")
             return
 
         self._load_cameras(self.git)
@@ -254,9 +284,11 @@ class KotorRenderer(ShowBase):
         """Load room models from layout."""
         for room in layout.rooms:
             room_node = self._load_model(room.model)
-            if room_node:
-                room_node.reparentTo(self.module_root)
-                room_node.setPos(room.position.x, room.position.y, room.position.z)
+            if not room_node:
+                RobustLogger().error(f"No room model found for {room.model}")
+                return
+            room_node.reparentTo(self.module_root)
+            room_node.setPos(room.position.x, room.position.y, room.position.z)
 
     def _load_doors(self, git: GIT) -> None:
         """Load door models from GIT."""
@@ -267,15 +299,21 @@ class KotorRenderer(ShowBase):
             door_node.setH(door.bearing)
 
             door_resource = self._module.door(str(door.resref))
-            if door_resource:
-                utd = door_resource.resource()
-                if utd:
-                    model_name = self.table_doors.get_row(utd.appearance_id).get_string("modelname")
-                    door_node = self._load_model(model_name)
-                    if door_node:
-                        door_node.reparentTo(self.module_root)
-                        door_node.setPos(door.position.x, door.position.y, door.position.z)
-                        door_node.setH(door.bearing)
+            if not door_resource:
+                RobustLogger().error(f"No door resource found for {door.resref}")
+                return
+            utd = door_resource.resource()
+            if not utd:
+                RobustLogger().error(f"No UTD found for {door.resref}")
+                return
+            model_name = self.table_doors.get_row(utd.appearance_id).get_string("modelname")
+            door_node = self._load_model(model_name)
+            if not door_node:
+                RobustLogger().error(f"No door model found for {model_name}")
+                return
+            door_node.reparentTo(self.module_root)
+            door_node.setPos(door.position.x, door.position.y, door.position.z)
+            door_node.setH(door.bearing)
 
     def _load_placeables(self, git: GIT) -> None:
         """Load placeable models from GIT."""
@@ -286,15 +324,21 @@ class KotorRenderer(ShowBase):
             placeable_node.setH(placeable.bearing)
 
             placeable_resource = self._module.placeable(str(placeable.resref))
-            if placeable_resource:
-                utp = placeable_resource.resource()
-                if utp:
-                    model_name = self.table_placeables.get_row(utp.appearance_id).get_string("modelname")
-                    placeable_node = self._load_model(model_name)
-                    if placeable_node:
-                        placeable_node.reparentTo(self.module_root)
-                        placeable_node.setPos(placeable.position.x, placeable.position.y, placeable.position.z)
-                        placeable_node.setH(placeable.bearing)
+            if not placeable_resource:
+                RobustLogger().error(f"No placeable resource found for {placeable.resref}")
+                return
+            utp = placeable_resource.resource()
+            if not utp:
+                RobustLogger().error(f"No UTP found for {placeable.resref}")
+                return
+            model_name = self.table_placeables.get_row(utp.appearance_id).get_string("modelname")
+            placeable_node = self._load_model(model_name)
+            if not placeable_node:
+                RobustLogger().error(f"No placeable model found for {model_name}")
+                return
+            placeable_node.reparentTo(self.module_root)
+            placeable_node.setPos(placeable.position.x, placeable.position.y, placeable.position.z)
+            placeable_node.setH(placeable.bearing)
 
     def _load_creatures(self, git: GIT) -> None:
         """Load creature models from GIT."""
@@ -307,31 +351,46 @@ class KotorRenderer(ShowBase):
             creature_resource = self._module.creature(str(git_creature.resref))
             if creature_resource and self.installation:
                 utc = creature_resource.resource()
-                if utc:
-                    # Get body model
-                    body_model, body_tex = creature.get_body_model(utc, self.installation, appearance=self.table_creatures, baseitems=self.table_baseitems)
+                if not utc:
+                    RobustLogger().error(f"No UTC found for {git_creature.resref}")
+                    return
+                # Get body model
+                body_model, body_tex = creature.get_body_model(utc, self.installation, appearance=self.table_creatures, baseitems=self.table_baseitems)
 
-                    if body_model:
-                        creature_node = self._load_model(body_model)
-                        if creature_node:
-                            creature_node.reparentTo(self.module_root)
-                            creature_node.setPos(git_creature.position.x, git_creature.position.y, git_creature.position.z)
-                            creature_node.setH(git_creature.bearing)
+                if not body_model:
+                    RobustLogger().error(f"No body model found for {git_creature.resref}")
+                    return
+                creature_node = self._load_model(body_model)
+                if not creature_node:
+                    RobustLogger().error(f"No creature model found for {body_model}")
+                    return
+                creature_node.reparentTo(self.module_root)
+                creature_node.setPos(git_creature.position.x, git_creature.position.y, git_creature.position.z)
+                creature_node.setH(git_creature.bearing)
 
-                            if body_tex:
-                                self._load_texture(body_tex, creature_node)
+                if body_tex:
+                    self._load_texture(body_tex, creature_node)
 
-                            # Load head if present
-                            head_model, head_tex = creature.get_head_model(utc, self.installation, appearance=self.table_creatures, heads=self.table_heads)
+                # Load head if present
+                head_model, head_tex = creature.get_head_model(utc, self.installation, appearance=self.table_creatures, heads=self.table_heads)
 
-                            if head_model and head_model.strip():
-                                head_hook = creature_node.find("**/headhook")
-                                if not head_hook.isEmpty():
-                                    head_node = self._load_model(head_model)
-                                    if head_node is not None:
-                                        head_node.reparentTo(head_hook)
-                                        if head_tex and head_tex.strip():
-                                            self._load_texture(head_tex, head_node)
+                if not head_model or not head_model.strip():
+                    RobustLogger().error(f"No head model found for {git_creature.resref}")
+                    return
+                head_hook = creature_node.find("**/headhook")
+                if head_hook.isEmpty():
+                    RobustLogger().error(f"No head hook found for {git_creature.resref}")
+                    return
+                head_node = self._load_model(head_model)
+                if not head_node:
+                    RobustLogger().error(f"No head model found for {head_model}")
+                    return
+                head_node.reparentTo(head_hook)
+
+                if not head_tex or not head_tex.strip():
+                    RobustLogger().error(f"No head texture found for {git_creature.resref}")
+                    return
+                self._load_texture(head_tex, head_node)
 
     def _load_cameras(self, git: GIT) -> None:
         """Load camera nodes from GIT."""
@@ -382,21 +441,23 @@ class KotorRenderer(ShowBase):
 
         mdl = self.installation.resource(name, ResourceType.MDL, SEARCH_ORDER)
         mdx = self.installation.resource(name, ResourceType.MDX, SEARCH_ORDER)
-        if mdl is not None and mdx is not None:
-            # Pass full MDL data instead of skipping bytes
-            node = load_mdl(mdl.data[12:], mdx.data)
-            if node:
-                # Enable backface culling for better performance
-                node.setTwoSided(False)
-                # Make sure model is visible and can receive lighting
-                node.show()
-                # Set up material properties for proper lighting
-                node.setShaderAuto()
-                # Enable vertex colors
-                node.setColorOff()
-                # Apply default material
-                node.setMaterial(self.default_material)
-            return node
+        if mdl is None or mdx is None:
+            raise ValueError(f"No MDL or MDX found for {name}")
+        # Pass full MDL data instead of skipping bytes
+        node = load_mdl(mdl.data[12:], mdx.data)
+        if node is None:
+            raise ValueError(f"Failed to load model {name}")
+        # Enable backface culling for better performance
+        node.setTwoSided(False)
+        # Make sure model is visible and can receive lighting
+        node.show()
+        # Set up material properties for proper lighting
+        node.setShaderAuto()
+        # Enable vertex colors
+        node.setColorOff()
+        # Apply default material
+        node.setMaterial(self.default_material)
+        return node
 
         return None
 
@@ -404,29 +465,64 @@ class KotorRenderer(ShowBase):
         """Load TPC from module or installation and apply to model."""
         assert self.installation is not None
 
-        # Try installation
-        tpc = self.installation.texture(
-            name,
-            [
-                SearchLocation.CUSTOM_MODULES,
-                SearchLocation.OVERRIDE,
-                SearchLocation.TEXTURES_TPA,
-                SearchLocation.CHITIN,
-            ],
-            capsules=None if self._module is None else self._module.capsules(),
-        )
-        if tpc is not None:
-            tex = load_tpc(tpc)
-            if tex:
-                # Apply texture to all child nodes
-                for child in model.getChildren():
-                    child.setTexture(tex, 1)  # Use 1 as priority to override any existing textures
-                # Also apply to parent node
-                model.setTexture(tex, 1)
+        # Skip empty texture names
+        if not name or name.lower() == "null":
+            return
+
+        # Try module first
+        tpc = None
+        if self._module is not None:
+            module_tex = self._module.texture(name)
+            if module_tex is not None:
+                tpc = module_tex.resource()
+
+        # Try installation if not found in module
+        if tpc is None:
+            tpc = self.installation.texture(
+                name,
+                [
+                    SearchLocation.CUSTOM_MODULES,
+                    SearchLocation.OVERRIDE,
+                    SearchLocation.TEXTURES_TPA,
+                    SearchLocation.CHITIN,
+                ],
+                capsules=None if self._module is None else self._module.capsules(),
+            )
+
+        if tpc is None:
+            raise ValueError(f"No TPC found for {name}")
+        tex = load_tpc(tpc)
+        if tex is None:
+            raise ValueError(f"Failed to load texture {name}")
+        # Create a material to ensure proper texture application
+        material = Material()
+        material.setAmbient((1, 1, 1, 1))
+        material.setDiffuse((1, 1, 1, 1))
+
+        # Apply texture and material to all child nodes
+        for child in model.getChildren():
+            if isinstance(child.node(), GeomNode):
+                child.setMaterial(material)
+                child.setTexture(tex)
+
+        # Also apply to parent node if it's a GeomNode
+        if isinstance(model.node(), GeomNode):
+            model.setMaterial(material)
+            model.setTexture(tex)
 
     def update_key(self, key: str, value: bool) -> None:
         """Update the key state dictionary."""
         self.keys[key] = value
+
+    def _handle_window_event(self, window):
+        """Handle window events to maintain proper mouse mode."""
+        props = window.getProperties()
+        if props.getForeground():
+            wp = WindowProperties()
+            wp.setMouseMode(WindowProperties.M_relative)
+            wp.setCursorHidden(True)
+            window.requestProperties(wp)
+            self.last_mouse = None
 
     def update_camera(self, task: Task) -> int:
         """Update camera position and rotation based on input."""
@@ -442,10 +538,10 @@ class KotorRenderer(ShowBase):
                 dy = y - self.last_mouse[1]
 
                 # Update camera rotation
-                h = self.camera.getH() - dx * self.mouse_sensitivity * 100
-                p = self.camera.getP() - dy * self.mouse_sensitivity * 100
-                p = max(-89, min(89, p))  # Clamp pitch to prevent flipping
-                self.camera.setHpr(h, p, 0)
+                heading = self.camera.getH() - dx * self.mouse_sensitivity
+                pitch = self.camera.getP() - dy * self.mouse_sensitivity
+                pitch = max(-89, min(89, pitch))  # Clamp pitch to prevent flipping
+                self.camera.setHpr(heading, pitch, 0)
 
             self.last_mouse = (x, y)
 
@@ -458,13 +554,13 @@ class KotorRenderer(ShowBase):
         move_vec = Point3(0, 0, 0)
 
         if self.keys.get("w"):
-            move_vec += forward
-        if self.keys.get("s"):
             move_vec -= forward
+        if self.keys.get("s"):
+            move_vec += forward
         if self.keys.get("a"):
-            move_vec += left
-        if self.keys.get("d"):
             move_vec -= left
+        if self.keys.get("d"):
+            move_vec += left
         if self.keys.get("space"):
             move_vec += up
         if self.keys.get("shift"):
@@ -477,5 +573,101 @@ class KotorRenderer(ShowBase):
             if self.keys.get("control"):  # Sprint
                 speed *= 2.0
             self.camera.setPos(self.camera.getPos() + move_vec * speed * dt)
+
+        return Task.cont
+
+    def toggle_mouse_lock(self, locked: bool) -> None:
+        """Toggle mouse cursor lock state."""
+        props = WindowProperties()
+        if locked:
+            # Store current mouse position before locking
+            mouse_data = self.win.getPointer(0)
+            self._last_mouse_x = mouse_data.getX()
+            self._last_mouse_y = mouse_data.getY()
+
+            # Configure mouse lock
+            props.setCursorHidden(True)
+            props.setMouseMode(WindowProperties.M_confined)
+            # Center the mouse
+            self.win.movePointer(0, int(self.win.getXSize() / 2), int(self.win.getYSize() / 2))
+        else:
+            # Restore mouse cursor
+            props.setCursorHidden(False)
+            props.setMouseMode(WindowProperties.M_absolute)
+            # Restore last known position
+            self.win.movePointer(0, int(self._last_mouse_x), int(self._last_mouse_y))
+
+        self.win.requestProperties(props)  # pyright: ignore[reportAttributeAccessIssue]
+        self._mouse_locked = locked
+
+    def start_flycam(self) -> None:
+        """Start the flycam mode."""
+        if not self._flycam_active:
+            self._flycam_active = True
+            self.taskMgr.add(self._flycam_task, "flycam_task")
+            self.toggle_mouse_lock(True)
+
+    def stop_flycam(self) -> None:
+        """Stop the flycam mode."""
+        if self._flycam_active:
+            self._flycam_active = False
+            self.taskMgr.remove("flycam_task")
+            self.toggle_mouse_lock(False)
+
+    def _flycam_task(self, task: Task) -> int:
+        """Handle flycam movement and rotation."""
+        dt = globalClock.getDt()
+
+        if not self._mouse_locked:
+            return Task.cont
+
+        # Get the mouse position
+        mouse_data = self.win.getPointer(0)
+        mouse_x = mouse_data.getX()
+        mouse_y = mouse_data.getY()
+
+        # Get window center
+        win_center_x = self.win.getXSize() / 2
+        win_center_y = self.win.getYSize() / 2
+
+        # Calculate mouse movement from center
+        dx = mouse_x - win_center_x
+        dy = mouse_y - win_center_y
+
+        # Only process mouse if it has moved from center
+        if dx != 0 or dy != 0:
+            # Reset mouse to center
+            self.win.movePointer(0, int(win_center_x), int(win_center_y))
+
+            # Update camera rotation
+            heading = self.camera.getH() - dx * self.mouse_sensitivity
+            pitch = self.camera.getP() - dy * self.mouse_sensitivity
+
+            # Clamp pitch to prevent camera flipping
+            pitch = max(-89, min(89, pitch))
+
+            self.camera.setH(heading)
+            self.camera.setP(pitch)
+
+        # Handle keyboard movement
+        move_speed = self._movement_speed * dt
+
+        # Forward/Backward
+        if self.keys["w"]:
+            self.camera.setPos(self.camera, 0, move_speed, 0)
+        if self.keys["s"]:
+            self.camera.setPos(self.camera, 0, -move_speed, 0)
+
+        # Left/Right
+        if self.keys["a"]:
+            self.camera.setPos(self.camera, -move_speed, 0, 0)
+        if self.keys["d"]:
+            self.camera.setPos(self.camera, move_speed, 0, 0)
+
+        # Up/Down
+        if self.keys["space"]:
+            self.camera.setPos(self.camera, 0, 0, move_speed)
+        if self.keys["shift"]:
+            self.camera.setPos(self.camera, 0, 0, -move_speed)
 
         return Task.cont

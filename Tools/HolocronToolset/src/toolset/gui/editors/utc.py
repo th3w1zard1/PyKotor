@@ -82,7 +82,7 @@ class UTCEditor(Editor):
 
         from toolset.uic.qtpy.editors.utc import Ui_MainWindow
 
-        self.ui = Ui_MainWindow()
+        self.ui: Ui_MainWindow = Ui_MainWindow()
         self.ui.setupUi(self)
         self.resize(798, 553)
         self._setup_menus()

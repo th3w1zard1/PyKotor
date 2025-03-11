@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.formats.mdl.io_mdl import MDLBinaryReader, MDLBinaryWriter
-from pykotor.resource.formats.mdl.io_mdl_ascii import MDLAsciiReader, MDLAsciiWriter
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:

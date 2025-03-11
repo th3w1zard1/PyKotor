@@ -8,8 +8,7 @@ from loggerplus import RobustLogger
 
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Color, Game, ResRef
-from pykotor.resource.formats.gff.gff_auto import bytes_gff, read_gff, write_gff
-from pykotor.resource.formats.gff.gff_data import GFF, GFFContent, GFFList
+from pykotor.resource.formats.gff import GFF, GFFContent, GFFList, bytes_gff, read_gff, write_gff
 from pykotor.resource.generics.dlg.anims import DLGAnimation
 from pykotor.resource.generics.dlg.base import DLG, DLGComputerType, DLGConversationType
 from pykotor.resource.generics.dlg.links import DLGLink
@@ -376,14 +375,7 @@ def dismantle_dlg(  # noqa: PLR0912, C901, PLR0915
         anim_list: GFFList = gff_struct.set_list("AnimList", GFFList())
         for anim in node.animations:
             anim_struct: GFFStruct = anim_list.add(0)
-            anim_struct.set_uint16(
-                "Animation",
-                (  # HACK(th3w1zard1): can't remember why the 10000 check is needed.
-                    anim.animation_id
-                    if anim.animation_id <= 10000  # noqa: PLR2004
-                    else anim.animation_id + 10000
-                ),
-            )
+            anim_struct.set_uint16("Animation", anim.animation_id + 10000)
             anim_struct.set_string("Participant", anim.participant)
 
         if node.quest.strip() and node.quest_entry:

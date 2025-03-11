@@ -24,10 +24,8 @@ if GL_PATH.joinpath("pykotor").exists():
     add_sys_path(GL_PATH)
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
-try:
-    from pykotor.gl.scene import Frustum, Plane
-except ImportError:
-    print("PyKotor not found, skipping tests")
+
+from pykotor.gl.scene import Frustum, Plane
 
 
 class TestPlane(unittest.TestCase):

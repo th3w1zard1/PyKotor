@@ -83,6 +83,7 @@
         "editor.formatOnSave": false
     },
     "cmake.sourceDirectory": "C:/GitHub/PyKotor/vendor/reone/src/apps/engine",
-    "problems.decorations.enabled": false
+    "problems.decorations.enabled": false,
+    "FSharp.suggestGitignore": false
 
 }

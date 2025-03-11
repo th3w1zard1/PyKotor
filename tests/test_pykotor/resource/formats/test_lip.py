@@ -61,12 +61,18 @@ class TestLIP(TestCase):
         lip: LIP,
     ):
         self.assertAlmostEqual(lip.length, 1.50, 3)
-        assert lip.get(0).shape == LIPShape.NEUTRAL, f"Expected {LIPShape.NEUTRAL!r} but got {lip.get(0).shape!r}"
-        assert lip.get(1).shape == LIPShape.OOH, f"Expected {LIPShape.OOH!r} but got {lip.get(1).shape!r}"
-        assert lip.get(2).shape == LIPShape.TH, f"Expected {LIPShape.TH!r} but got {lip.get(2).shape!r}"
-        self.assertAlmostEqual(0.0, lip.get(0).time, 4, f"Expected 0.0 but got {lip.get(0).time}")
-        self.assertAlmostEqual(0.7777, lip.get(1).time, 4, f"Expected 0.7777 but got {lip.get(1).time}")
-        self.assertAlmostEqual(1.25, lip.get(2).time, 4, f"Expected 1.25 but got {lip.get(2).time}")
+        lip_0 = lip.get(0)
+        assert lip_0 is not None
+        assert lip_0.shape == LIPShape.NEUTRAL, f"Expected {LIPShape.NEUTRAL!r} but got {lip_0.shape!r}"
+        lip_1 = lip.get(1)
+        assert lip_1 is not None
+        assert lip_1.shape == LIPShape.OOH, f"Expected {LIPShape.OOH!r} but got {lip_1.shape!r}"
+        lip_2 = lip.get(2)
+        assert lip_2 is not None
+        assert lip_2.shape == LIPShape.TH, f"Expected {LIPShape.TH!r} but got {lip_2.shape!r}"
+        self.assertAlmostEqual(0.0, lip_0.time, 4, f"Expected 0.0 but got {lip_0.time}")
+        self.assertAlmostEqual(0.7777, lip_1.time, 4, f"Expected 0.7777 but got {lip_1.time}")
+        self.assertAlmostEqual(1.25, lip_2.time, 4, f"Expected 1.25 but got {lip_2.time}")
 
     def test_read_raises(self):
         if os.name == "nt":

@@ -15,7 +15,6 @@ autoflake
 pytest
 pytest-xdist
 pytest-html
-#aqtinstall
 types-Pillow
 types-Send2Trash
 send2trash

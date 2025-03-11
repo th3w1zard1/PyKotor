@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import atexit
-import faulthandler
 import importlib
 import multiprocessing
 import os
@@ -10,8 +9,15 @@ import sys
 import tempfile
 
 from typing import TYPE_CHECKING
-
-from loggerplus import RobustLogger
+try:
+    from loggerplus import RobustLogger
+except ImportError:
+    import sys
+    from pathlib import Path
+    pykotor_path = str(Path(__file__).absolute().parent.parent.parent.parent.joinpath("Libraries", "PyKotor", "src"))
+    print(f"Adding PyKotor path to sys.path: {pykotor_path}")
+    sys.path.append(pykotor_path)
+    from loggerplus import RobustLogger
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -53,6 +59,7 @@ def fix_sys_and_cwd_path():
     """
 
     def update_sys_path(path: pathlib.Path):
+        print(f"Updating sys.path with '{path}'")
         working_dir = str(path)
         if working_dir not in sys.path:
             sys.path.append(working_dir)
@@ -65,13 +72,9 @@ def fix_sys_and_cwd_path():
     pykotor_gl_path = file_absolute_path.parents[4] / "Libraries" / "PyKotorGL" / "src" / "pykotor"
     if pykotor_gl_path.exists():
         update_sys_path(pykotor_gl_path.parent)
-    utility_path = file_absolute_path.parents[4] / "Libraries" / "Utility" / "src"
-    if utility_path.exists():
-        update_sys_path(utility_path)
     toolset_path = file_absolute_path.parents[1] / "toolset"
     if toolset_path.exists():
         update_sys_path(toolset_path.parent)
-        os.chdir(toolset_path)
 
 
 def fix_qt_env_var():
@@ -140,9 +143,9 @@ def main_init():
     else:
         fix_sys_and_cwd_path()
         fix_qt_env_var()
-    # Do not use `faulthandler.enable()` in the toolset!
-    # https://bugreports.qt.io/browse/PYSIDE-2359
-    faulthandler.enable()
+        # uncomment for testing, do not forget to recomment before release though.
+        # https://bugreports.qt.io/browse/PYSIDE-2359
+        # faulthandler.enable()
 
 
 def last_resort_cleanup():

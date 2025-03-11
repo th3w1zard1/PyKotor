@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 import qtpy
 
+from utility.ui_libraries.qt.widgets.theme.theme_dialog import ThemeDialog
 from qtpy.QtCore import (
     QDir,
     QDirIterator,
@@ -23,9 +24,6 @@ from qtpy.QtWidgets import (
     QStyle,
     QStyleFactory,
 )
-
-from toolset.gui.widgets.settings.widgets.misc import GlobalSettings
-from utility.ui_libraries.qt.widgets.theme.theme_dialog import ThemeDialog
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QCoreApplication, QObject, QPoint
@@ -55,7 +53,6 @@ class ThemeManager:
             print(file)
             themes.append(os.path.splitext(os.path.basename(file))[0].lower())  # noqa: PTH122, PTH119
         return tuple(themes)
-
 
     @staticmethod
     def get_default_styles() -> tuple[str, ...]:
@@ -200,6 +197,7 @@ class ThemeManager:
 
         theme_name: str | None = theme.text() if isinstance(theme, QAction) else theme
         assert isinstance(theme_name, str)
+        from toolset.gui.widgets.settings.installations import GlobalSettings
         GlobalSettings().selectedTheme = theme_name
 
         if theme_name == "QDarkStyle":

@@ -290,9 +290,11 @@ def get_mask_model(
     if head_equip is not None:
         resref: ResRef = head_equip.resref
         if not resref:
+            RobustLogger().error(f"UTC has no head equipment resref: {utc!r}")
             return None
         resource: ResourceResult | None = installation.resource(str(resref), ResourceType.UTI)
         if resource is None:
+            RobustLogger().error(f"UTC has no head equipment resource: {resref}.uti")
             return None
         uti: UTI = read_uti(resource.data)
         model = "I_Mask_" + str(uti.model_variation).rjust(3, "0")

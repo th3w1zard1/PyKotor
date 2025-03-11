@@ -124,7 +124,7 @@ Write-Host "Final executable path: $finalExecutablePath"
 if ($pyInstallerArgs.clean -and (Test-Path $pyInstallerArgs.workpath -ErrorAction SilentlyContinue)) { Remove-Item -LiteralPath $pyInstallerArgs.workpath -Recurse -Force }
 
 # Ensure pyinstaller is actually excluding the other Qt bindings.
-if (-not $env:QT_API) { $env:QT_API = "PyQt5" }
+if (-not $env:QT_API) { $env:QT_API = "PyQt6" }
 $apiMapping = @{
     "pyqt5" = "PyQt5"
     "pyqt6" = "PyQt6"

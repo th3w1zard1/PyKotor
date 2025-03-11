@@ -15,9 +15,11 @@ from xml.etree.ElementTree import ParseError
 
 from pykotor.common.stream import BinaryReader, BinaryWriter
 from utility.common.misc_string.mutable_str import WrappedStr
+from utility.common.stream import RawBinaryWriter
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from types import TracebackType
 
     from typing_extensions import Literal, Self  # pyright: ignore[reportMissingModuleSource]
 
@@ -26,7 +28,7 @@ if TYPE_CHECKING:
 STREAM_TYPES = Union[io.BufferedIOBase, io.RawIOBase, mmap.mmap]
 BASE_SOURCE_TYPES = Union[os.PathLike, str, bytes, bytearray, memoryview]
 SOURCE_TYPES = Union[BASE_SOURCE_TYPES, STREAM_TYPES, BytesIO, BinaryReader]
-TARGET_TYPES = Union[os.PathLike, str, bytearray, BytesIO, BinaryWriter]
+TARGET_TYPES = Union[os.PathLike, str, bytearray, BytesIO, RawBinaryWriter]
 
 
 R = TypeVar("R")
@@ -62,9 +64,10 @@ class ResourceReader:
         offset: int = 0,
         size: int | None = None,
         *,
-        use_binary_reader: bool = True,
+        use_high_level_reader: bool = True,
     ):
-        if use_binary_reader:
+        if use_high_level_reader:
+            self._source = source
             self._reader: BinaryReader = BinaryReader.from_auto(source, offset)
             self._size: int = size or self._reader.remaining()
         else:
@@ -88,11 +91,27 @@ class ResourceReader:
 
             self._offset: int = offset
             self._size: int = len(loaded_src)
-            self._source: bytearray = loaded_src[offset : self._size]
+            self._source: SOURCE_TYPES = loaded_src[offset : self._size]
+
+    def __del__(self):
+        self.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ):
+        self.close()
 
     def close(
         self,
     ):
+        if not hasattr(self, "_reader"):
+            return
         self._reader.close()
 
 
@@ -100,12 +119,39 @@ class ResourceWriter:
     def __init__(
         self,
         target: TARGET_TYPES,
+        *,
+        use_high_level_writer: bool = True,
     ):
-        self._writer: BinaryWriterFile | BinaryWriterBytearray = BinaryWriter.to_auto(target)  # pyright: ignore[reportAttributeAccessIssue]
+        self._target: TARGET_TYPES = target
+        if use_high_level_writer:
+            self._writer: BinaryWriterFile | BinaryWriterBytearray = BinaryWriter.to_auto(target)  # pyright: ignore[reportAttributeAccessIssue]
+        else:
+            if isinstance(target, RawBinaryWriter):
+                self._writer = BinaryWriter.to_stream(target)
+            else:
+                loaded_tgt = target if isinstance(target, bytearray) else bytearray(target)
+
+            self._target = loaded_tgt
+
+    def __del__(self):
+        self.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ):
+        self.close()
 
     def close(
         self,
     ):
+        if not hasattr(self, "_writer"):
+            return
         self._writer.close()
 
 
@@ -377,7 +423,11 @@ class ResourceType(Enum):
             return f"{self.__class__.__name__}.{self.name}"
 
         return (  # For dynamically constructed invalid members
-            f"{self.__class__.__name__}.from_invalid(" f"{f'type_id={self.type_id}, '}" f"{f'extension={self.extension}, ' if self.extension else ''}" f"{f'category={self.category}, ' if self.category else ''}" f"contents={self.contents})"
+            f"{self.__class__.__name__}.from_invalid("
+            f"{f'type_id={self.type_id}, '}"
+            f"{f'extension={self.extension}, ' if self.extension else ''}"
+            f"{f'category={self.category}, ' if self.category else ''}"
+            f"contents={self.contents})"
         )
 
     def __str__(

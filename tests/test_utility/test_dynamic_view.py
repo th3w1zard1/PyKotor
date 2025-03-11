@@ -6,7 +6,7 @@ import unittest
 from typing import cast
 from unittest.mock import Mock
 
-from qtpy.QtCore import QRect, QSize, QTimer
+from qtpy.QtCore import QRect, QSize, QTimer  # pyright: ignore[reportAttributeAccessIssue]
 from qtpy.QtWidgets import QApplication
 
 from utility.ui_libraries.qt.widgets.widgets.stacked_view import DynamicStackedView

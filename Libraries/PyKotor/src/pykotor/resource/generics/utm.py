@@ -4,12 +4,11 @@ from typing import TYPE_CHECKING
 
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Game, InventoryItem, ResRef
-from pykotor.resource.formats.gff import GFF, GFFContent, GFFList, read_gff, write_gff
-from pykotor.resource.formats.gff.gff_auto import bytes_gff
+from pykotor.resource.formats.gff import GFF, GFFContent, GFFList, bytes_gff, read_gff, write_gff
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.gff.gff_data import GFFStruct
+    from pykotor.resource.formats.gff import GFFStruct
     from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES
 
 

@@ -377,7 +377,11 @@ class CodeRoot:
         # If some optional parameters were not specified, add the defaults to the arguments list
         while len(definition.parameters) > len(args_list):
             param_index = len(args_list)
-            args_list.append(definition.parameters[param_index].default)
+            default_value = definition.parameters[param_index].default
+            if default_value is None:
+                msg = f"Required argument missing in call to '{name}'."
+                raise CompileError(msg)
+            args_list.append(default_value)
 
         offset = 0
         for param, arg in zip(definition.parameters, args_list):

@@ -10,8 +10,9 @@ from glm import vec3
 from loggerplus import RobustLogger
 from qtpy.QtCore import QPoint, QTimer
 from qtpy.QtGui import QCursor
-from qtpy.QtWidgets import QOpenGLWidget
+from qtpy.QtWidgets import QOpenGLWidget  # pyright: ignore[reportPrivateImportUsage]
 
+from pykotor.common.stream import BinaryReader
 from pykotor.gl.models.read_mdl import gl_load_mdl
 from pykotor.gl.scene import RenderObject, Scene
 from pykotor.resource.generics.git import GIT
@@ -24,9 +25,9 @@ if TYPE_CHECKING:
     from qtpy.QtGui import QFocusEvent, QKeyEvent, QMouseEvent, QResizeEvent, QWheelEvent
     from qtpy.QtWidgets import QWidget
 
-    from pykotor.common.stream import BinaryReader
     from pykotor.extract.installation import Installation
     from pykotor.resource.generics.utc import UTC
+    from utility.common.stream import SOURCE_TYPES
 
 
 class ModelRenderer(QOpenGLWidget):
@@ -92,10 +93,13 @@ class ModelRenderer(QOpenGLWidget):
 
     def set_model(
         self,
-        data: bytes,
-        data_ext: bytes,
+        data: SOURCE_TYPES,
+        data_ext: SOURCE_TYPES,
     ):
-        self._model_to_load = (data[12:], data_ext)
+        self._model_to_load = (
+            BinaryReader.from_auto(data, 12),
+            BinaryReader.from_auto(data_ext),
+        )
 
     def set_creature(self, utc: UTC):
         self._creature_to_load = utc
