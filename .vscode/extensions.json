@@ -1,7 +1,6 @@
 {
     "recommendations": [
         "arturock.gitstash",
-        "ms-python.mypy-type-checker",
         "ms-python.vscode-pylance",
         "ms-python.python",
         "charliermarsh.ruff",
@@ -9,7 +8,6 @@
         "ms-vscode.powershell",
         "ms-python.debugpy",
         "tylerleonhardt.vscode-inline-values-powershell",
-        "almenon.arepl",
         "rogalmic.bash-debug",
         "mads-hartmann.bash-ide-vscode",
         "formulahendry.github-actions",
@@ -27,12 +25,10 @@
         "hyesun.py-paste-indent",
         "redhat.vscode-xml",
         "siddharthverma.python-super-debugger-mode",
-        "sourcegraph.cody-ai",
         "ms-vscode-remote.remote-containers",
         "ms-azuretools.vscode-docker",
         "yardensachs.copy-python-path",
         "gnramsay.create-python-module",
-        "github.vscode-pull-request-github",
         "ryuta46.multi-command",
         "phohale.pho-pyqt-class-generator",
         "mgesbert.python-path",
@@ -40,7 +36,6 @@
         "mukundan.python-docs",
         "patrick91.python-dependencies-vscode",
         "kamilturek.vscode-pyproject-toml-snippets",
-        "ms-vscode-remote.remote-wsl-recommender",
-        "britesnow.vscode-toggle-quotes"
+        "ms-vscode-remote.remote-wsl-recommender"
     ]
 }
