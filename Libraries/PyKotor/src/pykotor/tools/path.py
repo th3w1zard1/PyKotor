@@ -8,10 +8,14 @@ import tempfile
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-import pathlib2
-
 from pykotor.tools.registry import find_software_key, winreg_key
 from utility.string_util import ireplace
+from utility.system.path import (
+    Path as InternalPath,
+    PosixPath as InternalPosixPath,
+    PurePath as InternalPurePath,
+    WindowsPath as InternalWindowsPath,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
@@ -20,10 +24,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.common.misc import Game
-
-# Type alias for path-like objects
-StrBytesOrPathLike = str | bytes | os.PathLike
-PathElem = str | os.PathLike
+    from utility.system.path import StrBytesOrPathLike
 
 
 def is_filesystem_case_sensitive(
@@ -45,58 +46,177 @@ def is_filesystem_case_sensitive(
         return None
 
 
+def simple_wrapper(
+    fn_name: str,
+    wrapped_class_type: type[CaseAwarePath],
+) -> Callable[..., Any]:
+    """Wraps a function to handle case-sensitive pathlib.PurePath arguments.
 
+    This is a hacky way of ensuring that all args to any pathlib methods have their path case-sensitively resolved.
+    This also resolves self, *args, and **kwargs for ensured accuracy.
+
+    Args:
+    ----
+        fn_name: The name of the function to wrap
+        wrapped_class_type: The class type that the function belongs to
+
+    Returns:
+    -------
+        Callable[..., Any]: A wrapped function with the same signature as the original
+
+    Processing Logic:
+    ----------------
+        1. Gets the original function from the class's _original_methods attribute
+        2. Parses arguments that are paths, resolving case if needed
+        3. Calls the original function with the parsed arguments.
+    """
+
+    def wrapped(
+        self,  # noqa: ANN001
+        *args,
+        **kwargs,
+    ) -> Any:
+        """Wraps a function to handle case-sensitive path resolution.
+
+        Args:
+        ----
+            self: The object the method is called on
+            *args: Variable length argument list
+            **kwargs: Arbitrary keyword arguments
+
+        Returns:
+        -------
+            Any: The return value of the wrapped function
+
+        Processing Logic:
+        ----------------
+            - Parse self, args and kwargs to resolve case-sensitive paths where needed
+            - Call the original function, passing the parsed arguments
+            - Return the result
+        """
+        orig_fn = wrapped_class_type._original_methods[fn_name]  # noqa: SLF001
+        # Do not use. CaseAwarePath's performance depends on only resolving case when it absolutely has to.
+        # if fn_name == "__new__":
+        #    path_obj = pathlib.Path(*args, **kwargs)
+        #    if "called_from_getcase" not in kwargs and not path_obj.exists():
+        #        return CaseAwarePath.get_case_sensitive_path(path_obj)
+
+        def parse_arg(arg: Any) -> CaseAwarePath | Any:
+            if not hasattr(arg, "__bases__") and hasattr(arg, "__fspath__") and arg.__class__ is not CaseAwarePath:
+                pathlib_path_obj = pathlib.Path(arg)
+                new_cls = arg.__class__
+                if pathlib_path_obj.absolute() and not pathlib_path_obj.exists():
+                    instance = CaseAwarePath.get_case_sensitive_path(arg)
+                    if arg.__class__ in CaseAwarePath.__bases__ and arg.__class__ is not object:
+                        return new_cls(instance)
+                    return instance
+            return arg
+
+        actual_self_or_cls: CaseAwarePath | type = parse_arg(self)
+        new_args: tuple[CaseAwarePath | Any, ...] = tuple(parse_arg(arg) for arg in args)
+        new_kwargs: dict[str, CaseAwarePath | Any] = {k: parse_arg(v) for k, v in kwargs.items()}
+
+        # TODO(th3w1zard1): when orig_fn doesn't exist, the AttributeException should be raised by
+        # the prior stack instead of here, as that's what would normally happen.
+
+        return orig_fn(actual_self_or_cls, *new_args, **new_kwargs)
+
+    return wrapped
+
+
+def create_case_insensitive_pathlib_class(
+    cls: type[CaseAwarePath],
+) -> None:
+    """Wraps methods of a pathlib class to be case insensitive.
+
+    Args:
+    ----
+        cls: The pathlib class to wrap
+
+    Processing Logic:
+    ----------------
+        1. Create a dictionary to store original methods
+        2. Get the method resolution order and exclude current class
+        3. Store already wrapped methods to avoid wrapping multiple times
+        4. Loop through parent classes and methods
+        5. Check if method and not wrapped before
+        6. Add method to wrapped dictionary and reassign with wrapper.
+    """
+    mro: list[type] = cls.mro()  # Gets the method resolution order
+    parent_classes: list[type] = mro[1:-1]  # Exclude the current class itself and the object class
+    cls_methods: set[str] = {method for method in cls.__dict__ if callable(getattr(cls, method))}  # define names of methods in the cls, excluding inherited
+
+    # Store already wrapped methods to avoid wrapping multiple times
+    wrapped_methods = set()
+
+    # ignore these methods
+    ignored_methods: set[str] = {
+        "__instancecheck__",
+        "__getattribute__",
+        "__setattribute__",
+        "_fix_path_formatting",
+        "__getattr__",
+        "__setattr__",
+        "__init__",
+        "__fspath__",
+        "__truediv__",
+        "_fspath_str",
+        "_init",
+        "__new__",
+        "pathify",
+        "__str__",  # Don't wrap __str__ to avoid recursion issues
+        *cls_methods,
+    }
+
+    for parent in parent_classes:
+        for attr_name, attr_value in parent.__dict__.items():
+            # Check if it's a method and hasn't been wrapped before
+            if not callable(attr_value):
+                continue
+            if attr_name in wrapped_methods:
+                continue
+            if attr_name in ignored_methods:
+                continue
+            cls._original_methods[attr_name] = attr_value  # type: ignore[attr-defined]  # pylint: disable=protected-access
+            setattr(cls, attr_name, simple_wrapper(attr_name, cls))
+            wrapped_methods.add(attr_name)
 
 
 # TODO(th3w1zard1): Move to pykotor.common
-class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixPath):  # type: ignore[misc]
+class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPath):  # type: ignore[misc]
     """A class capable of resolving case-sensitivity in a path. Absolutely essential for working with KOTOR files on Unix filesystems."""
 
-    __slots__ = ()  # Empty slots for inheritance compatibility
+    __slots__: tuple[str] = ()
+    _original_methods: ClassVar[dict[str, Callable[..., Any]]] = {}
 
     def __new__(cls, *args, **kwargs):
-        # Handle input validation
-        if not args:
-            return super().__new__(cls, *args, **kwargs)
+        """Override __new__ to ensure proper object creation and initialization."""
+        # Create the object using the parent pathlib classes directly to avoid inheritance issues
+        if os.name == "nt":
+            # Windows case
+            import pathlib
+            instance = pathlib.WindowsPath.__new__(cls, *args, **kwargs)
+        else:
+            # Unix case  
+            import pathlib
+            instance = pathlib.PosixPath.__new__(cls, *args, **kwargs)
         
-        # Check for invalid argument types
-        for arg in args:
-            if not isinstance(arg, (str, bytes, os.PathLike)):
-                raise TypeError(f"argument should be a str, bytes or os.PathLike object, not '{type(arg).__name__}'")
+        # Ensure we return the right type
+        if not isinstance(instance, cls):
+            # If pathlib returned wrong type, create a proper instance
+            # This is a fallback that should rarely be needed
+            instance = object.__new__(cls)
         
-        # Handle different argument types
-        if len(args) == 1 and isinstance(args[0], pathlib.PurePath):
-            # Convert pathlib.Path to string and normalize
-            path_str = cls.str_norm(str(args[0]))
-            args = (path_str,)
-        elif len(args) > 1:
-            # Join multiple path segments using normalized paths
-            str_args = []
-            for arg in args:
-                if isinstance(arg, pathlib.PurePath):
-                    str_args.append(cls.str_norm(str(arg)))
-                else:
-                    str_args.append(cls.str_norm(str(arg)))
-            
-            # Use pathlib2's logic for joining paths
-            temp_path = pathlib2.Path(str_args[0])
-            for part in str_args[1:]:
-                temp_path = temp_path / part
-            args = (str(temp_path),)
-        elif len(args) == 1:
-            # Single string argument - normalize it
-            args = (cls.str_norm(str(args[0])),)
-        
-        return super().__new__(cls, *args, **kwargs)
+        return instance
 
     @staticmethod
     def extract_absolute_prefix(
-        relative_path: pathlib2.Path,
-        absolute_path: pathlib2.Path,
+        relative_path: InternalPath,
+        absolute_path: InternalPath,
     ) -> tuple[str, ...]:
         # Ensure the absolute path is absolute and the relative path is resolved relative to it
         absolute_path = absolute_path.absolute()
-        relative_path_resolved: pathlib2.Path = (absolute_path.parent / relative_path).absolute()
+        relative_path_resolved: InternalPath = (absolute_path.parent / relative_path).absolute()
 
         # Convert to lists of parts for comparison
         abs_parts: tuple[str, ...] = absolute_path.parts
@@ -159,20 +279,20 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
         *args: StrBytesOrPathLike,
         walk_up: bool = False,
         **kwargs,
-    ) -> pathlib.Path:  # Return standard pathlib.Path for test compatibility
+    ) -> InternalPath:
         if not args or "other" in kwargs:
             raise TypeError("relative_to() missing 1 required positional argument: 'other'")  # noqa: TRY003, EM101
 
         other, *_deprecated = args
         resolved_self: Self = self
-        if isinstance(resolved_self, pathlib2.Path):
-            if not isinstance(other, pathlib2.Path):
+        if isinstance(resolved_self, InternalPath):
+            if not isinstance(other, InternalPath):
                 other = self.__class__(other)
             parsed_other: Self = self.__class__(other, *_deprecated).absolute()
             resolved_self = resolved_self.absolute()
         else:
-            parsed_other = other if isinstance(other, pathlib2.PurePath) else pathlib2.PurePath(other)
-            parsed_other = pathlib2.PurePath(other, *_deprecated)
+            parsed_other = other if isinstance(other, InternalPurePath) else InternalPurePath(other)
+            parsed_other = InternalPurePath(other, *_deprecated)
 
         self_str, other_str = map(str, (resolved_self, parsed_other))
         replacement: str = ireplace(self_str, other_str, "").lstrip("\\").lstrip("/")
@@ -181,24 +301,9 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
             raise ValueError(msg)
 
         if isinstance(self, CaseAwarePath) and not pathlib.Path(replacement).exists():
-            prefixes: tuple[str, ...] = self.extract_absolute_prefix(pathlib2.Path(replacement), pathlib2.Path(parsed_other))
-            resolved_replacement = self.get_case_sensitive_path(replacement, prefixes)
-            result_str = str(resolved_replacement)
-        else:
-            result_str = replacement
-        
-        # Create a custom Path class that can equal strings for test compatibility
-        class CompatPath(pathlib.Path):
-            def __eq__(self, other):
-                if isinstance(other, str):
-                    # For test compatibility, compare normalized strings
-                    # Normalize both to the same separator for comparison
-                    self_normalized = str(self).replace("\\", "/")
-                    other_normalized = other.replace("\\", "/")
-                    return self_normalized == other_normalized
-                return super().__eq__(other)
-        
-        return CompatPath(result_str)
+            prefixes: tuple[str, ...] = self.extract_absolute_prefix(InternalPath(replacement), InternalPath(parsed_other))
+            return self.get_case_sensitive_path(replacement, prefixes)
+        return self.__class__(replacement)
 
     @classmethod
     def get_case_sensitive_path(  # noqa: ANN206
@@ -228,14 +333,14 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
             return cls(path)
 
         prefixes = prefixes or []
-        pathlib_path = pathlib2.Path(path)
-        pathlib_abspath = pathlib2.Path(*prefixes, path).absolute() if prefixes else pathlib_path.absolute()
+        pathlib_path = pathlib.Path(path)
+        pathlib_abspath = pathlib.Path(*prefixes, path).absolute() if prefixes else pathlib_path.absolute()
         num_differing_parts = len(pathlib_abspath.parts) - len(pathlib_path.parts)  # keeps the path relative if it already was.
         parts = list(pathlib_abspath.parts)
 
         for i in range(1, len(parts)):  # ignore the root (/, C:\\, etc)
-            base_path: pathlib2.Path = pathlib2.Path(*parts[:i])
-            next_path: pathlib2.Path = pathlib2.Path(*parts[: i + 1])
+            base_path: InternalPath = InternalPath(*parts[:i])
+            next_path: InternalPath = InternalPath(*parts[: i + 1])
 
             if not next_path.exists() and base_path.exists():
                 # Find the first non-existent case-sensitive file/folder in hierarchy
@@ -248,7 +353,7 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
                     (item for item in base_path.iterdir() if last_part or item.exists()),
                 )
 
-            elif not (hasattr(next_path, 'safe_exists') and next_path.safe_exists()) and not next_path.exists():
+            elif not next_path.exists():
                 break
 
         # return a CaseAwarePath instance
@@ -258,14 +363,14 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
     def find_closest_match(
         cls,
         target: str,
-        candidates: Generator[pathlib2.Path, None, None],
+        candidates: Generator[InternalPath, None, None],
     ) -> str:
         """Finds the closest match from candidates to the target string.
 
         Args:
         ----
             target: str - The target string to find closest match for
-            candidates: Generator[pathlib2.Path, None, None] - Generator of candidate paths
+            candidates: Generator[pathlib.Path, None, None] - Generator of candidate paths
 
         Returns:
         -------
@@ -292,18 +397,6 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
                 max_matching_chars = matching_chars
 
         return closest_match or target
-
-    @staticmethod
-    @lru_cache(maxsize=10000)
-    def get_matching_characters_count(
-        str1: str,
-        str2: str,
-    ) -> int:
-        """Returns the number of case sensitive characters that match in each position of the two strings.
-
-        if str1 and str2 are NOT case-insensitive matches, this method will return -1.
-        """
-        return sum(a == b for a, b in zip(str1, str2)) if str1.lower() == str2.lower() else -1
 
     @classmethod
     def str_norm(
@@ -338,6 +431,26 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
             formatted_path = formatted_path.rstrip(slash)
         return formatted_path or "."
 
+    @staticmethod
+    @lru_cache(maxsize=10000)
+    def get_matching_characters_count(
+        str1: str,
+        str2: str,
+    ) -> int:
+        """Returns the number of case sensitive characters that match in each position of the two strings.
+
+        if str1 and str2 are NOT case-insensitive matches, this method will return -1.
+        """
+        return sum(a == b for a, b in zip(str1, str2)) if str1.lower() == str2.lower() else -1
+
+    def as_windows(self) -> str:
+        """Convert path to a Windows path string."""
+        return str(self).replace("/", "\\")
+
+    def endswith(self, suffix: str) -> bool:
+        """Case-insensitive endswith check."""
+        return str(self).lower().endswith(suffix.lower())
+
     def is_relative_to(self, *args, **kwargs) -> bool:
         """Return True if the path is relative to another path or False."""
         if not args or "other" in kwargs:
@@ -347,31 +460,6 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
         other, *_deprecated = args
         parsed_other = self.__class__(other, *_deprecated)
         return parsed_other == self or parsed_other in self.parents
-
-    def __truediv__(self, key: StrBytesOrPathLike) -> Self:
-        """Join paths using the / operator with proper normalization."""
-        return self.joinpath(key)
-
-    def joinpath(self, *args: StrBytesOrPathLike) -> Self:
-        """Appends one or more path-like objects and/or relative paths to self.
-
-        If any path being joined is already absolute, it will override and replace self instead of join us.
-
-        Args:
-        ----
-            args: path-like objects or str paths to join
-        """
-        # Normalize all arguments using str_norm
-        normalized_args = []
-        for arg in args:
-            if isinstance(arg, pathlib.PurePath):
-                normalized_args.append(self.str_norm(str(arg)))
-            else:
-                normalized_args.append(self.str_norm(str(arg)))
-        
-        # Use pathlib2's joinpath with normalized arguments
-        result = super().joinpath(*normalized_args)
-        return self.__class__(result)
 
     def split_filename(self, dots: int = 1) -> tuple[str, str]:
         """Splits a filename into a tuple of stem and extension.
@@ -408,12 +496,8 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
 
         return ".".join(parts[: -abs(dots)]), ".".join(parts[-abs(dots) :])
 
-    def endswith(self, suffix: str) -> bool:
-        """Case-insensitive endswith check."""
-        return str(self).lower().endswith(suffix.lower())
-
     def __hash__(self):
-        return hash(str(self).lower())
+        return hash(self.as_windows())
 
     def __eq__(
         self,
@@ -425,54 +509,50 @@ class CaseAwarePath(pathlib2.WindowsPath if os.name == "nt" else pathlib2.PosixP
         if not isinstance(other, (os.PathLike, str)):
             return NotImplemented
         if isinstance(other, CaseAwarePath):
-            return str(self).lower() == str(other).lower()
+            return self.as_posix().lower() == other.as_posix().lower()
 
-        return self.str_norm(str(other), slash="/").lower() == str(self).replace("\\", "/").lower()
+        return self.str_norm(str(other), slash="/").lower() == self.as_posix().lower()
 
     def __repr__(self):
-        str_path = str(self)
+        str_path = self._flavour.sep.join(str(part) for part in self.parts)
         return f'{self.__class__.__name__}("{str_path}")'
 
     def __str__(self):
-        # Use pathlib2's __str__ directly to avoid recursion
-        path_str = super().__str__()
-        if os.name == "nt" or pathlib.Path(path_str).exists():
-            return path_str
-
-        # Try to resolve case sensitivity
+        # Get the string representation from the parent utility path class
+        # Use explicit class reference instead of super() to avoid metaclass issues
         try:
-            case_resolved_path = self.get_case_sensitive_path(path_str)
-            return str(case_resolved_path)
+            parent_str = InternalPosixPath.__str__(self) if os.name != "nt" else InternalWindowsPath.__str__(self)
+        except Exception as e:
+            # Fallback to utility PurePath.__str__ if InternalPath.__str__ fails
+            try:
+                parent_str = super(CaseAwarePath, self).__str__()
+            except Exception:
+                # Last resort - use cached_str directly if available
+                parent_str = getattr(self, '_cached_str', '/tmp')
+        
+        # On Windows, just return the parent string representation
+        if os.name == "nt":
+            return parent_str
+        
+        # On Unix systems, check if path exists or try case-sensitive resolution
+        try:
+            path_obj = pathlib.Path(parent_str)
+            if path_obj.exists():
+                return parent_str
+            
+            # Try case-sensitive resolution - but only if the path looks reasonable
+            if parent_str and parent_str != '/' and len(parent_str) > 1:
+                case_resolved_path = self.get_case_sensitive_path(parent_str)
+                return str(case_resolved_path)
+            else:
+                return parent_str
         except Exception:  # noqa: BLE001
-            return path_str
-
-    def exists(self):
-        """Override exists to handle case-insensitive matching."""
-        # First try exact match using pathlib2's exists
-        if super().exists():
-            return True
-        
-        # On case-sensitive filesystems, try case-insensitive matching
-        if os.name != "nt":
-            return self._case_insensitive_exists()
-        return False
-    
-    def _case_insensitive_exists(self):
-        """Find case-insensitive match on case-sensitive filesystem."""
-        if not self.parent.exists():
-            return False
-        
-        target_name = self.name.lower()
-        try:
-            for item in self.parent.iterdir():
-                if item.name.lower() == target_name:
-                    return True
-        except (OSError, PermissionError):
-            pass
-        return False
+            # Fallback to parent string if anything goes wrong
+            return parent_str
 
 
-
+if os.name != "nt":  # Wrapping is unnecessary on Windows
+    create_case_insensitive_pathlib_class(CaseAwarePath)
 
 
 def get_default_paths() -> dict[str, dict[Game, list[str]]]:  # TODO(th3w1zard1): Many of these paths are incomplete and need community input.
@@ -576,7 +656,7 @@ def find_kotor_paths_from_default() -> dict[Game, list[CaseAwarePath]]:
         game: {
             case_path
             for case_path in (
-                CaseAwarePath(path).expanduser().absolute()
+                CaseAwarePath(path).expanduser().resolve()
                 for path in paths
             )
             if case_path.exists()
@@ -591,11 +671,11 @@ def find_kotor_paths_from_default() -> dict[Game, list[CaseAwarePath]]:
         for game, possible_game_paths in ((Game.K1, winreg_key(Game.K1)), (Game.K2, winreg_key(Game.K2))):
             for reg_key, reg_valname in possible_game_paths:
                 path_str: str | None = resolve_reg_key_to_path(reg_key, reg_valname)
-                path: CaseAwarePath | None = CaseAwarePath(path_str).absolute() if path_str else None
+                path: CaseAwarePath | None = CaseAwarePath(path_str).resolve() if path_str else None
                 if path and path.name and path.exists():
                     locations[game].add(path)
         amazon_k1_path_str: str | None = find_software_key("AmazonGames/Star Wars - Knights of the Old")
-        if amazon_k1_path_str is not None and pathlib2.Path(amazon_k1_path_str).exists():
+        if amazon_k1_path_str is not None and InternalPath(amazon_k1_path_str).exists():
             locations[Game.K1].add(CaseAwarePath(amazon_k1_path_str))
 
     # don't return nested sets, return as lists.
