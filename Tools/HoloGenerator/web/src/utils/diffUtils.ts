@@ -1,8 +1,6 @@
 import { diffLines, diffWordsWithSpace } from 'diff';
 import { FileContent, DiffResult, GeneratedConfig, ConfigSection, WordDiffPart } from '../types';
 
-let diffCounter = 0;
-
 export const generateDiffId = (): string => {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substr(2, 9);
@@ -51,9 +49,6 @@ export const generateUnifiedDiff = (original: string, modified: string, fileName
     `+++ modified/${fileName}`
   ];
   
-  let originalLineNumber = 1;
-  let modifiedLineNumber = 1;
-  
   for (const part of diff) {
     const lines = part.value.split('\n');
     if (lines[lines.length - 1] === '') {
@@ -63,14 +58,10 @@ export const generateUnifiedDiff = (original: string, modified: string, fileName
     for (const line of lines) {
       if (part.added) {
         result.push(`+${line}`);
-        modifiedLineNumber++;
       } else if (part.removed) {
         result.push(`-${line}`);
-        originalLineNumber++;
       } else {
         result.push(` ${line}`);
-        originalLineNumber++;
-        modifiedLineNumber++;
       }
     }
   }
