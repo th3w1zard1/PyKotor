@@ -1,26 +1,32 @@
 import { useHotkeys } from 'react-hotkeys-hook';
-import { useHistory } from './useHistory';
 
-export const useKeyboardShortcuts = () => {
-  const { undo, redo, canUndo, canRedo } = useHistory();
+interface KeyboardShortcutsOptions {
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
+}
+
+export const useKeyboardShortcuts = (options: KeyboardShortcutsOptions = {}) => {
+  const { onUndo, onRedo, canUndo = false, canRedo = false } = options;
 
   useHotkeys('ctrl+z', () => {
-    if (canUndo) {
-      undo();
+    if (canUndo && onUndo) {
+      onUndo();
     }
-  }, [canUndo, undo]);
+  }, [canUndo, onUndo]);
 
   useHotkeys('ctrl+y', () => {
-    if (canRedo) {
-      redo();
+    if (canRedo && onRedo) {
+      onRedo();
     }
-  }, [canRedo, redo]);
+  }, [canRedo, onRedo]);
 
   useHotkeys('ctrl+shift+z', () => {
-    if (canRedo) {
-      redo();
+    if (canRedo && onRedo) {
+      onRedo();
     }
-  }, [canRedo, redo]);
+  }, [canRedo, onRedo]);
 
-  return { undo, redo, canUndo, canRedo };
+  return { onUndo, onRedo, canUndo, canRedo };
 };
