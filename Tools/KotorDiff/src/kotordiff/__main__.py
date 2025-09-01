@@ -409,8 +409,23 @@ def main():
     PARSER.add_argument("--ignore-lips", type=bool, help="Whether to compare LIPS (default is False)")
     PARSER.add_argument("--logging", type=bool, help="Whether to log the results to a file or not (default is True)")
     PARSER.add_argument("--use-profiler", type=bool, default=False, help="Use cProfile to find where most of the execution time is taking place in source code.")
+    PARSER.add_argument("--generate-config", action="store_true", help="Generate a changes.ini file compatible with HoloPatcher")
+    PARSER.add_argument("--config-output", type=str, help="Output path for the generated changes.ini file", default="changes.ini")
+    PARSER.add_argument("--gui", action="store_true", help="Launch the GUI interface")
 
     PARSER_ARGS, unknown = PARSER.parse_known_args()
+    
+    # Handle GUI mode
+    if PARSER_ARGS.gui:
+        try:
+            from kotordiff.gui import main as gui_main
+            gui_main()
+            return
+        except ImportError as e:
+            print(f"GUI mode not available: {e}")
+            print("Please ensure tkinter is installed.")
+            return
+    
     LOGGING_ENABLED = bool(PARSER_ARGS.logging is None or PARSER_ARGS.logging)
 
     lookup_function: Callable[[str], str] | None = None  # pyright: ignore[reportRedeclaration, reportAssignmentType]
@@ -486,6 +501,24 @@ def main():
             PARSER_ARGS.path1,
             PARSER_ARGS.path2,
         )
+
+        # Generate configuration if requested
+        if PARSER_ARGS.generate_config:
+            try:
+                from kotordiff.config_generator import ConfigurationGenerator
+                log_output("Generating HoloPatcher configuration...")
+                generator = ConfigurationGenerator()
+                config_content = generator.generate_config(
+                    PARSER_ARGS.path1,
+                    PARSER_ARGS.path2,
+                    Path(PARSER_ARGS.config_output)
+                )
+                log_output(f"Configuration generated and saved to: {PARSER_ARGS.config_output}")
+                log_output(f"Generated {len(config_content.splitlines())} lines")
+            except ImportError as e:
+                log_output(f"Configuration generation not available: {e}")
+            except Exception as e:
+                log_output(f"Error generating configuration: {e}")
 
         if profiler is not None:
             _stop_profiler(profiler)
