@@ -119,7 +119,7 @@ class KotorDiffer:
         tlk2_path = path2 / "dialog.tlk"
         
         if tlk1_path.exists() and tlk2_path.exists():
-            change = self._diff_tlk_files(tlk1_path, tlk2_path)
+            change = self._diff_tlk_files(tlk1_path, tlk2_path, "dialog.tlk")
             if change:
                 result.add_change(change)
         elif tlk1_path.exists() and not tlk2_path.exists():
