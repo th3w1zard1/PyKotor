@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
 """
-KOTOR Configuration Generator GUI
+HoloGenerator GUI Interface
 
-A tkinter-based GUI application for generating HoloPatcher changes.ini files
-from the differences between two KOTOR installations.
+Tkinter-based graphical interface for the configuration generator.
+All tkinter imports are protected with try-catch blocks.
 """
 
 from __future__ import annotations
@@ -11,15 +10,20 @@ from __future__ import annotations
 import sys
 import threading
 from pathlib import Path
-from tkinter import filedialog, messagebox, scrolledtext, ttk
 from typing import TYPE_CHECKING
 
-# Try to import tkinter, handle gracefully if not available
+# Protected tkinter imports
 try:
     import tkinter as tk
+    from tkinter import filedialog, messagebox, scrolledtext, ttk
+    TKINTER_AVAILABLE = True
 except ImportError:
-    print("Error: tkinter is not available. Please install tkinter to use the GUI.")
-    sys.exit(1)
+    TKINTER_AVAILABLE = False
+    tk = None
+    ttk = None
+    filedialog = None
+    messagebox = None
+    scrolledtext = None
 
 # Add the PyKotor library to the path
 if getattr(sys, "frozen", False) is False:
@@ -29,28 +33,33 @@ if getattr(sys, "frozen", False) is False:
             sys.path.remove(working_dir)
         sys.path.append(working_dir)
 
-    pykotor_path = Path(__file__).parents[3] / "Libraries" / "PyKotor" / "src" / "pykotor"
+    pykotor_path = Path(__file__).parents[5] / "Libraries" / "PyKotor" / "src" / "pykotor"
     if pykotor_path.exists():
         update_sys_path(pykotor_path.parent)
 
-from kotordiff.config_generator import ConfigurationGenerator
-
-if TYPE_CHECKING:
+if TYPE_CHECKING and TKINTER_AVAILABLE:
     from tkinter import Event
 
+if TKINTER_AVAILABLE:
+    from hologenerator.core.generator import ConfigurationGenerator
 
-class KotorConfigGeneratorGUI:
-    """Main GUI application for the KOTOR Configuration Generator."""
+
+class HoloGeneratorGUI:
+    """Main GUI application for the HoloGenerator."""
     
     def __init__(self, root: tk.Tk):
+        if not TKINTER_AVAILABLE:
+            raise ImportError("tkinter is not available")
+            
         self.root = root
-        self.root.title("KOTOR Configuration Generator for HoloPatcher")
-        self.root.geometry("800x600")
+        self.root.title("HoloGenerator - KOTOR Configuration Generator")
+        self.root.geometry("900x700")
         
         # Variables for paths
         self.path1_var = tk.StringVar()
         self.path2_var = tk.StringVar()
         self.output_var = tk.StringVar(value="changes.ini")
+        self.file_mode_var = tk.BooleanVar()
         
         # Configuration generator
         self.generator = ConfigurationGenerator()
@@ -75,51 +84,75 @@ class KotorConfigGeneratorGUI:
         # Title
         title_label = ttk.Label(
             main_frame, 
-            text="KOTOR Configuration Generator", 
-            font=("Arial", 16, "bold")
+            text="HoloGenerator", 
+            font=("Arial", 18, "bold")
         )
-        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 20))
+        title_label.grid(row=0, column=0, columnspan=3, pady=(0, 5))
+        
+        subtitle_label = ttk.Label(
+            main_frame, 
+            text="KOTOR Configuration Generator for HoloPatcher", 
+            font=("Arial", 12)
+        )
+        subtitle_label.grid(row=1, column=0, columnspan=3, pady=(0, 20))
         
         # Description
         desc_text = (
-            "Select two KOTOR installations to compare and generate a changes.ini file\n"
-            "compatible with HoloPatcher. The first path should be the original installation,\n"
-            "and the second path should be the modified installation."
+            "Generate changes.ini files for HoloPatcher by comparing KOTOR installations or individual files.\n"
+            "Select the original and modified paths, then click Generate to create the configuration."
         )
         desc_label = ttk.Label(main_frame, text=desc_text, justify=tk.CENTER)
-        desc_label.grid(row=1, column=0, columnspan=3, pady=(0, 20))
+        desc_label.grid(row=2, column=0, columnspan=3, pady=(0, 20))
+        
+        # Mode selection
+        mode_frame = ttk.LabelFrame(main_frame, text="Comparison Mode", padding="5")
+        mode_frame.grid(row=3, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=(0, 15))
+        
+        ttk.Radiobutton(
+            mode_frame, 
+            text="Installation Mode (compare full KOTOR installations)",
+            variable=self.file_mode_var,
+            value=False
+        ).grid(row=0, column=0, sticky=tk.W, pady=2)
+        
+        ttk.Radiobutton(
+            mode_frame,
+            text="File Mode (compare individual files)",
+            variable=self.file_mode_var,
+            value=True
+        ).grid(row=1, column=0, sticky=tk.W, pady=2)
         
         # Path 1 selection
-        ttk.Label(main_frame, text="Original KOTOR Installation:").grid(
-            row=2, column=0, sticky=tk.W, pady=5
+        ttk.Label(main_frame, text="Original Path:").grid(
+            row=4, column=0, sticky=tk.W, pady=5
         )
-        ttk.Entry(main_frame, textvariable=self.path1_var, width=50).grid(
-            row=2, column=1, sticky=(tk.W, tk.E), padx=5, pady=5
+        ttk.Entry(main_frame, textvariable=self.path1_var, width=60).grid(
+            row=4, column=1, sticky=(tk.W, tk.E), padx=5, pady=5
         )
         ttk.Button(main_frame, text="Browse", command=self.browse_path1).grid(
-            row=2, column=2, padx=5, pady=5
+            row=4, column=2, padx=5, pady=5
         )
         
         # Path 2 selection
-        ttk.Label(main_frame, text="Modified KOTOR Installation:").grid(
-            row=3, column=0, sticky=tk.W, pady=5
+        ttk.Label(main_frame, text="Modified Path:").grid(
+            row=5, column=0, sticky=tk.W, pady=5
         )
-        ttk.Entry(main_frame, textvariable=self.path2_var, width=50).grid(
-            row=3, column=1, sticky=(tk.W, tk.E), padx=5, pady=5
+        ttk.Entry(main_frame, textvariable=self.path2_var, width=60).grid(
+            row=5, column=1, sticky=(tk.W, tk.E), padx=5, pady=5
         )
         ttk.Button(main_frame, text="Browse", command=self.browse_path2).grid(
-            row=3, column=2, padx=5, pady=5
+            row=5, column=2, padx=5, pady=5
         )
         
         # Output file selection
-        ttk.Label(main_frame, text="Output changes.ini file:").grid(
-            row=4, column=0, sticky=tk.W, pady=5
+        ttk.Label(main_frame, text="Output changes.ini:").grid(
+            row=6, column=0, sticky=tk.W, pady=5
         )
-        ttk.Entry(main_frame, textvariable=self.output_var, width=50).grid(
-            row=4, column=1, sticky=(tk.W, tk.E), padx=5, pady=5
+        ttk.Entry(main_frame, textvariable=self.output_var, width=60).grid(
+            row=6, column=1, sticky=(tk.W, tk.E), padx=5, pady=5
         )
         ttk.Button(main_frame, text="Browse", command=self.browse_output).grid(
-            row=4, column=2, padx=5, pady=5
+            row=6, column=2, padx=5, pady=5
         )
         
         # Generate button
@@ -129,27 +162,27 @@ class KotorConfigGeneratorGUI:
             command=self.generate_config,
             style="Accent.TButton"
         )
-        self.generate_button.grid(row=5, column=0, columnspan=3, pady=20)
+        self.generate_button.grid(row=7, column=0, columnspan=3, pady=20)
         
         # Progress bar
         self.progress = ttk.Progressbar(
             main_frame, 
             mode='indeterminate', 
-            length=400
+            length=500
         )
-        self.progress.grid(row=6, column=0, columnspan=3, pady=10, sticky=(tk.W, tk.E))
+        self.progress.grid(row=8, column=0, columnspan=3, pady=10, sticky=(tk.W, tk.E))
         
         # Status label
         self.status_var = tk.StringVar(value="Ready")
         self.status_label = ttk.Label(main_frame, textvariable=self.status_var)
-        self.status_label.grid(row=7, column=0, columnspan=3, pady=5)
+        self.status_label.grid(row=9, column=0, columnspan=3, pady=5)
         
         # Output text area
-        output_frame = ttk.LabelFrame(main_frame, text="Output", padding="5")
-        output_frame.grid(row=8, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=10)
+        output_frame = ttk.LabelFrame(main_frame, text="Output Log", padding="5")
+        output_frame.grid(row=10, column=0, columnspan=3, sticky=(tk.W, tk.E, tk.N, tk.S), pady=10)
         output_frame.columnconfigure(0, weight=1)
         output_frame.rowconfigure(0, weight=1)
-        main_frame.rowconfigure(8, weight=1)
+        main_frame.rowconfigure(10, weight=1)
         
         self.output_text = scrolledtext.ScrolledText(
             output_frame, 
@@ -161,12 +194,15 @@ class KotorConfigGeneratorGUI:
         
         # Buttons frame
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=9, column=0, columnspan=3, pady=10)
+        button_frame.grid(row=11, column=0, columnspan=3, pady=10)
         
         ttk.Button(button_frame, text="Clear Output", command=self.clear_output).pack(
             side=tk.LEFT, padx=5
         )
         ttk.Button(button_frame, text="Save Output", command=self.save_output).pack(
+            side=tk.LEFT, padx=5
+        )
+        ttk.Button(button_frame, text="About", command=self.show_about).pack(
             side=tk.LEFT, padx=5
         )
         ttk.Button(button_frame, text="Exit", command=self.root.quit).pack(
@@ -183,20 +219,32 @@ class KotorConfigGeneratorGUI:
         self.root.geometry(f'{width}x{height}+{x}+{y}')
     
     def browse_path1(self):
-        """Browse for the first KOTOR installation path."""
-        path = filedialog.askdirectory(
-            title="Select Original KOTOR Installation Directory",
-            initialdir=self.path1_var.get() or "/"
-        )
+        """Browse for the first path."""
+        if self.file_mode_var.get():
+            path = filedialog.askopenfilename(
+                title="Select Original File",
+                initialdir=self.path1_var.get() or "/"
+            )
+        else:
+            path = filedialog.askdirectory(
+                title="Select Original KOTOR Installation Directory",
+                initialdir=self.path1_var.get() or "/"
+            )
         if path:
             self.path1_var.set(path)
     
     def browse_path2(self):
-        """Browse for the second KOTOR installation path."""
-        path = filedialog.askdirectory(
-            title="Select Modified KOTOR Installation Directory", 
-            initialdir=self.path2_var.get() or "/"
-        )
+        """Browse for the second path."""
+        if self.file_mode_var.get():
+            path = filedialog.askopenfilename(
+                title="Select Modified File",
+                initialdir=self.path2_var.get() or "/"
+            )
+        else:
+            path = filedialog.askdirectory(
+                title="Select Modified KOTOR Installation Directory", 
+                initialdir=self.path2_var.get() or "/"
+            )
         if path:
             self.path2_var.set(path)
     
@@ -220,32 +268,34 @@ class KotorConfigGeneratorGUI:
         if not path1 or not path1.exists():
             messagebox.showerror(
                 "Invalid Path", 
-                "Please select a valid original KOTOR installation directory."
+                "Please select a valid original path."
             )
             return False
         
         if not path2 or not path2.exists():
             messagebox.showerror(
                 "Invalid Path",
-                "Please select a valid modified KOTOR installation directory."
+                "Please select a valid modified path."
             )
             return False
         
-        if not (path1 / "chitin.key").exists():
-            messagebox.showerror(
-                "Invalid KOTOR Installation",
-                f"The original path '{path1}' does not appear to be a valid KOTOR installation.\n"
-                "chitin.key file not found."
-            )
-            return False
-        
-        if not (path2 / "chitin.key").exists():
-            messagebox.showerror(
-                "Invalid KOTOR Installation", 
-                f"The modified path '{path2}' does not appear to be a valid KOTOR installation.\n"
-                "chitin.key file not found."
-            )
-            return False
+        # Validate installation mode
+        if not self.file_mode_var.get():
+            if not (path1 / "chitin.key").exists():
+                messagebox.showerror(
+                    "Invalid KOTOR Installation",
+                    f"The original path '{path1}' does not appear to be a valid KOTOR installation.\n"
+                    "chitin.key file not found."
+                )
+                return False
+            
+            if not (path2 / "chitin.key").exists():
+                messagebox.showerror(
+                    "Invalid KOTOR Installation", 
+                    f"The modified path '{path2}' does not appear to be a valid KOTOR installation.\n"
+                    "chitin.key file not found."
+                )
+                return False
         
         if not output:
             messagebox.showerror(
@@ -279,13 +329,17 @@ class KotorConfigGeneratorGUI:
             path2 = Path(self.path2_var.get().strip())
             output_path = Path(self.output_var.get().strip())
             
-            self.log_message(f"Starting comparison between:")
+            self.log_message(f"Starting comparison:")
             self.log_message(f"  Original: {path1}")
             self.log_message(f"  Modified: {path2}")
+            self.log_message(f"  Mode: {'File comparison' if self.file_mode_var.get() else 'Installation comparison'}")
             self.log_message("")
             
             # Generate the configuration
-            result = self.generator.generate_config(path1, path2, output_path)
+            if self.file_mode_var.get():
+                result = self.generator.generate_from_files(path1, path2)
+            else:
+                result = self.generator.generate_config(path1, path2, output_path)
             
             # Update UI in main thread
             self.root.after(0, self._generation_complete, result, output_path)
@@ -300,28 +354,37 @@ class KotorConfigGeneratorGUI:
         self.generate_button.config(state='normal')
         self.status_var.set("Configuration generated successfully!")
         
-        self.log_message("Configuration generation completed successfully!")
-        self.log_message(f"Output saved to: {output_path}")
-        self.log_message(f"Generated {len(result.splitlines())} lines")
-        self.log_message("")
-        self.log_message("Preview of generated changes.ini:")
-        self.log_message("-" * 50)
-        
-        # Show preview of first 30 lines
-        lines = result.splitlines()
-        preview_lines = lines[:30]
-        for line in preview_lines:
-            self.log_message(line)
-        
-        if len(lines) > 30:
-            self.log_message(f"... and {len(lines) - 30} more lines")
-        
-        messagebox.showinfo(
-            "Success",
-            f"Configuration file generated successfully!\n\n"
-            f"File saved to: {output_path}\n"
-            f"Lines generated: {len(lines)}"
-        )
+        if result:
+            self.log_message("Configuration generation completed successfully!")
+            self.log_message(f"Output saved to: {output_path}")
+            self.log_message(f"Generated {len(result.splitlines())} lines")
+            self.log_message("")
+            self.log_message("Preview of generated changes.ini:")
+            self.log_message("-" * 50)
+            
+            # Show preview of first 30 lines
+            lines = result.splitlines()
+            preview_lines = lines[:30]
+            for line in preview_lines:
+                self.log_message(line)
+            
+            if len(lines) > 30:
+                self.log_message(f"... and {len(lines) - 30} more lines")
+            
+            messagebox.showinfo(
+                "Success",
+                f"Configuration file generated successfully!\n\n"
+                f"File saved to: {output_path}\n"
+                f"Lines generated: {len(lines)}"
+            )
+        else:
+            self.log_message("No differences found between the paths.")
+            self.log_message("The files/installations appear to be identical.")
+            messagebox.showinfo(
+                "No Changes",
+                "No differences found between the selected paths.\n"
+                "The files or installations appear to be identical."
+            )
     
     def _generation_error(self, error_message: str):
         """Handle generation error."""
@@ -362,21 +425,40 @@ class KotorConfigGeneratorGUI:
                 messagebox.showinfo("Success", f"Output saved to {file_path}")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to save file:\n{e}")
+    
+    def show_about(self):
+        """Show about dialog."""
+        about_text = (
+            "HoloGenerator v1.0.0\n\n"
+            "KOTOR Configuration Generator for HoloPatcher\n\n"
+            "Automatically generates changes.ini files by comparing\n"
+            "KOTOR installations or individual files.\n\n"
+            "Part of the PyKotor toolkit.\n"
+            "© th3w1zard1"
+        )
+        messagebox.showinfo("About HoloGenerator", about_text)
 
 
 def main():
     """Main function to run the GUI application."""
+    if not TKINTER_AVAILABLE:
+        print("Error: tkinter is not available. Please install tkinter to use the GUI.")
+        sys.exit(1)
+    
     try:
         root = tk.Tk()
         
         # Set up themed styles
         style = ttk.Style()
-        style.theme_use('clam')  # Use a modern theme
+        try:
+            style.theme_use('clam')  # Use a modern theme
+        except tk.TclError:
+            pass  # Use default theme if clam is not available
         
         # Configure styles
         style.configure('Accent.TButton', font=('Arial', 10, 'bold'))
         
-        app = KotorConfigGeneratorGUI(root)
+        app = HoloGeneratorGUI(root)
         
         # Handle window close event
         def on_closing():

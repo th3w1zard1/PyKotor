@@ -33,10 +33,26 @@ from pykotor.tools.misc import is_capsule_file
 from pykotor.tools.path import CaseAwarePath
 from utility.error_handling import universal_simplify_exception
 from utility.misc import generate_hash
-from utility.system.agnostics import askdirectory, askopenfilename
+
+# Protected imports for dialog functions
+try:
+    from utility.system.agnostics import askdirectory, askopenfilename
+    DIALOGS_AVAILABLE = True
+except ImportError:
+    DIALOGS_AVAILABLE = False
+    askdirectory = None
+    askopenfilename = None
 
 if os.name == "nt":
-    from utility.system.win32.com.windialogs import open_file_and_folder_dialog
+    try:
+        from utility.system.win32.com.windialogs import open_file_and_folder_dialog
+        WIN32_DIALOGS_AVAILABLE = True
+    except ImportError:
+        WIN32_DIALOGS_AVAILABLE = False
+        open_file_and_folder_dialog = None
+else:
+    WIN32_DIALOGS_AVAILABLE = False
+    open_file_and_folder_dialog = None
 
 if TYPE_CHECKING:
     from pathlib import PurePath
@@ -409,22 +425,9 @@ def main():
     PARSER.add_argument("--ignore-lips", type=bool, help="Whether to compare LIPS (default is False)")
     PARSER.add_argument("--logging", type=bool, help="Whether to log the results to a file or not (default is True)")
     PARSER.add_argument("--use-profiler", type=bool, default=False, help="Use cProfile to find where most of the execution time is taking place in source code.")
-    PARSER.add_argument("--generate-config", action="store_true", help="Generate a changes.ini file compatible with HoloPatcher")
-    PARSER.add_argument("--config-output", type=str, help="Output path for the generated changes.ini file", default="changes.ini")
-    PARSER.add_argument("--gui", action="store_true", help="Launch the GUI interface")
+
 
     PARSER_ARGS, unknown = PARSER.parse_known_args()
-    
-    # Handle GUI mode
-    if PARSER_ARGS.gui:
-        try:
-            from kotordiff.gui import main as gui_main
-            gui_main()
-            return
-        except ImportError as e:
-            print(f"GUI mode not available: {e}")
-            print("Please ensure tkinter is installed.")
-            return
     
     LOGGING_ENABLED = bool(PARSER_ARGS.logging is None or PARSER_ARGS.logging)
 
@@ -434,7 +437,13 @@ def main():
         nonlocal lookup_function
         if lookup_function is not None:
             return lookup_function
-        if os.name == "nt":
+        
+        if not DIALOGS_AVAILABLE:
+            def lookup_function(title: str) -> str:
+                return input(f"{title}: ").strip()
+            return lookup_function
+            
+        if os.name == "nt" and WIN32_DIALOGS_AVAILABLE:
             def lookup_function(title: str) -> str:
                 result = open_file_and_folder_dialog(title=title)
                 return result[0] if result else ""
@@ -444,13 +453,13 @@ def main():
                 file_or_dir_choice = input("Do you want to pick a file? (No for directory) (y/N)").strip().lower()
                 if file_or_dir_choice == "yes":
                     def lookup_function(title: str) -> str:
-                        return askopenfilename(title=title)
+                        return askopenfilename(title=title) if askopenfilename else input(f"{title}: ").strip()
                 else:
                     def lookup_function(title: str) -> str:
-                        return askdirectory(title=title)
+                        return askdirectory(title=title) if askdirectory else input(f"{title}: ").strip()
             else:
                 def lookup_function(title: str) -> str:
-                    return input(title)
+                    return input(f"{title}: ").strip()
         return lookup_function
 
     while True:
@@ -501,24 +510,6 @@ def main():
             PARSER_ARGS.path1,
             PARSER_ARGS.path2,
         )
-
-        # Generate configuration if requested
-        if PARSER_ARGS.generate_config:
-            try:
-                from kotordiff.config_generator import ConfigurationGenerator
-                log_output("Generating HoloPatcher configuration...")
-                generator = ConfigurationGenerator()
-                config_content = generator.generate_config(
-                    PARSER_ARGS.path1,
-                    PARSER_ARGS.path2,
-                    Path(PARSER_ARGS.config_output)
-                )
-                log_output(f"Configuration generated and saved to: {PARSER_ARGS.config_output}")
-                log_output(f"Generated {len(config_content.splitlines())} lines")
-            except ImportError as e:
-                log_output(f"Configuration generation not available: {e}")
-            except Exception as e:
-                log_output(f"Error generating configuration: {e}")
 
         if profiler is not None:
             _stop_profiler(profiler)

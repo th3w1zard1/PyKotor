@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Configuration Generator for HoloPatcher
 
@@ -8,7 +7,6 @@ based on the differences between two KOTOR installations.
 
 from __future__ import annotations
 
-import os
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -21,12 +19,12 @@ if getattr(sys, "frozen", False) is False:
             sys.path.remove(working_dir)
         sys.path.append(working_dir)
 
-    pykotor_path = Path(__file__).parents[3] / "Libraries" / "PyKotor" / "src" / "pykotor"
+    pykotor_path = Path(__file__).parents[5] / "Libraries" / "PyKotor" / "src" / "pykotor"
     if pykotor_path.exists():
         update_sys_path(pykotor_path.parent)
 
-from kotordiff.differ import KotorDiffer
-from kotordiff.generators.changes_ini import ChangesIniGenerator
+from hologenerator.core.differ import KotorDiffer
+from hologenerator.core.changes_ini import ChangesIniGenerator
 
 if TYPE_CHECKING:
     from pathlib import Path as PathType
@@ -68,6 +66,36 @@ class ConfigurationGenerator:
             output_path.write_text(changes_ini_content, encoding='utf-8')
         
         return changes_ini_content
+    
+    def generate_from_files(
+        self,
+        file1: PathType,
+        file2: PathType,
+    ) -> str:
+        """Generate a configuration snippet from two individual files.
+        
+        Args:
+        ----
+            file1: Path to the first file (original)
+            file2: Path to the second file (modified)
+            
+        Returns:
+        -------
+            str: The generated changes.ini content snippet
+        """
+        # Compare the files
+        change = self.differ.diff_files(file1, file2)
+        
+        if not change:
+            return ""
+        
+        # Create a minimal diff result
+        from hologenerator.core.differ import DiffResult
+        diff_result = DiffResult()
+        diff_result.add_change(change)
+        
+        # Generate the changes.ini content
+        return self.generator.generate_from_diff(diff_result)
 
 
 if __name__ == "__main__":

@@ -7,14 +7,27 @@ This module converts diff results into HoloPatcher-compatible changes.ini format
 from __future__ import annotations
 
 import re
+import sys
 from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+# Add the PyKotor library to the path
+if getattr(sys, "frozen", False) is False:
+    def update_sys_path(path):
+        working_dir = str(path)
+        if working_dir in sys.path:
+            sys.path.remove(working_dir)
+        sys.path.append(working_dir)
+
+    pykotor_path = Path(__file__).parents[5] / "Libraries" / "PyKotor" / "src" / "pykotor"
+    if pykotor_path.exists():
+        update_sys_path(pykotor_path.parent)
+
 from pykotor.resource.formats import gff, twoda, tlk, ssf
 
 if TYPE_CHECKING:
-    from kotordiff.differ import DiffResult, FileChange
+    from hologenerator.core.differ import DiffResult, FileChange
 
 
 class ChangesIniGenerator:
