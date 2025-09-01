@@ -459,8 +459,73 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
 
         other, *_deprecated = args
         parsed_other = self.__class__(other, *_deprecated)
-        return parsed_other == self or parsed_other in self.parents
+        
+        # Check if self starts with other (case-insensitive)
+        self_str = str(self).lower().replace('\\', '/')
+        other_str = str(parsed_other).lower().replace('\\', '/')
+        
+        # Normalize trailing slashes
+        if other_str != '/' and other_str.endswith('/'):
+            other_str = other_str.rstrip('/')
+        if self_str != '/' and self_str.endswith('/'):
+            self_str = self_str.rstrip('/')
+            
+        # Check if self starts with other (or is equal)
+        if self_str == other_str:
+            return True
+        
+        # Check if self starts with other followed by a separator
+        return self_str.startswith(other_str + '/')
 
+    @property
+    def name(self) -> str:
+        """The final path component, if any."""
+        path_str = str(self)
+        if not path_str or path_str in ('/', '\\'):
+            return ''
+        # Get the last component after splitting by both separators
+        parts = path_str.replace('\\', '/').split('/')
+        return parts[-1] if parts and parts[-1] else ''
+    
+    @property
+    def parts(self) -> tuple[str, ...]:
+        """A tuple giving access to the path's components."""
+        path_str = str(self)
+        if not path_str:
+            return ()
+        
+        # Normalize path and split into parts
+        if os.name == "nt":
+            # Windows: handle drive letters
+            if len(path_str) >= 2 and path_str[1] == ':':
+                drive = path_str[:2]
+                rest = path_str[2:].lstrip('\\/')
+                parts = [drive]
+                if rest:
+                    parts.extend(rest.split('\\'))
+                return tuple(parts)
+            else:
+                # UNC path or relative path
+                return tuple(path_str.split('\\'))
+        else:
+            # Unix: handle absolute vs relative paths
+            if path_str.startswith('/'):
+                parts = ['/']
+                rest = path_str[1:]
+                if rest:
+                    parts.extend(rest.split('/'))
+                return tuple(parts)
+            else:
+                return tuple(path_str.split('/'))
+    
+    @property
+    def parent(self):
+        """The logical parent of the path."""
+        parts = self.parts
+        if len(parts) <= 1:
+            return self.__class__('.' if not parts or parts[0] != '/' else '/')
+        return self.__class__(*parts[:-1])
+    
     def split_filename(self, dots: int = 1) -> tuple[str, str]:
         """Splits a filename into a tuple of stem and extension.
 
@@ -497,7 +562,7 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
         return ".".join(parts[: -abs(dots)]), ".".join(parts[-abs(dots) :])
 
     def __hash__(self):
-        return hash(self.as_windows())
+        return hash(str(self).lower())
 
     def __eq__(
         self,
@@ -509,12 +574,13 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
         if not isinstance(other, (os.PathLike, str)):
             return NotImplemented
         if isinstance(other, CaseAwarePath):
-            return self.as_posix().lower() == other.as_posix().lower()
+            return str(self).lower() == str(other).lower()
 
-        return self.str_norm(str(other), slash="/").lower() == self.as_posix().lower()
+        return self.str_norm(str(other), slash="/").lower() == str(self).replace("\\", "/").lower()
 
     def __repr__(self):
-        str_path = self._flavour.sep.join(str(part) for part in self.parts)
+        # Use our __str__ method to get the correct path representation
+        str_path = str(self)
         return f'{self.__class__.__name__}("{str_path}")'
 
     def __str__(self):
