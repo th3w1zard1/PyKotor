@@ -33,26 +33,10 @@ from pykotor.tools.misc import is_capsule_file
 from pykotor.tools.path import CaseAwarePath
 from utility.error_handling import universal_simplify_exception
 from utility.misc import generate_hash
-
-# Protected imports for dialog functions
-try:
-    from utility.system.agnostics import askdirectory, askopenfilename
-    DIALOGS_AVAILABLE = True
-except ImportError:
-    DIALOGS_AVAILABLE = False
-    askdirectory = None
-    askopenfilename = None
+from utility.system.agnostics import askdirectory, askopenfilename
 
 if os.name == "nt":
-    try:
-        from utility.system.win32.com.windialogs import open_file_and_folder_dialog
-        WIN32_DIALOGS_AVAILABLE = True
-    except ImportError:
-        WIN32_DIALOGS_AVAILABLE = False
-        open_file_and_folder_dialog = None
-else:
-    WIN32_DIALOGS_AVAILABLE = False
-    open_file_and_folder_dialog = None
+    from utility.system.win32.com.windialogs import open_file_and_folder_dialog
 
 if TYPE_CHECKING:
     from pathlib import PurePath
@@ -333,8 +317,8 @@ def diff_directories(dir1: os.PathLike | str, dir2: os.PathLike | str) -> bool |
     log_output_with_separator(f"Finding differences in the '{c_dir1.name}' folders...", above=True)
 
     # Store relative paths instead of just filenames
-    files_path1: set[str] = {f.relative_to(c_dir1).as_posix().lower() for f in c_dir1.rglob("*") if f.is_file()}
-    files_path2: set[str] = {f.relative_to(c_dir2).as_posix().lower() for f in c_dir2.rglob("*") if f.is_file()}
+    files_path1: set[str] = {f.relative_to(c_dir1).as_posix().lower() for f in c_dir1.safe_rglob("*") if f.is_file()}
+    files_path2: set[str] = {f.relative_to(c_dir2).as_posix().lower() for f in c_dir2.safe_rglob("*") if f.is_file()}
 
     # Merge both sets to iterate over unique relative paths
     all_files: set[str] = files_path1.union(files_path2)
@@ -394,10 +378,10 @@ def is_kotor_install_dir(path: os.PathLike | str) -> bool | None:
 
 
 def run_differ_from_args(path1: Path, path2: Path) -> bool | None:
-    if not path1.exists():
+    if not path1.safe_exists():
         log_output(f"--path1='{path1}' does not exist on disk, cannot diff")
         return None
-    if not path2.exists():
+    if not path2.safe_exists():
         log_output(f"--path2='{path2}' does not exist on disk, cannot diff")
         return None
     if is_kotor_install_dir(path1) and is_kotor_install_dir(path2):
@@ -426,9 +410,7 @@ def main():
     PARSER.add_argument("--logging", type=bool, help="Whether to log the results to a file or not (default is True)")
     PARSER.add_argument("--use-profiler", type=bool, default=False, help="Use cProfile to find where most of the execution time is taking place in source code.")
 
-
     PARSER_ARGS, unknown = PARSER.parse_known_args()
-    
     LOGGING_ENABLED = bool(PARSER_ARGS.logging is None or PARSER_ARGS.logging)
 
     lookup_function: Callable[[str], str] | None = None  # pyright: ignore[reportRedeclaration, reportAssignmentType]
@@ -437,13 +419,7 @@ def main():
         nonlocal lookup_function
         if lookup_function is not None:
             return lookup_function
-        
-        if not DIALOGS_AVAILABLE:
-            def lookup_function(title: str) -> str:
-                return input(f"{title}: ").strip()
-            return lookup_function
-            
-        if os.name == "nt" and WIN32_DIALOGS_AVAILABLE:
+        if os.name == "nt":
             def lookup_function(title: str) -> str:
                 result = open_file_and_folder_dialog(title=title)
                 return result[0] if result else ""
@@ -453,13 +429,13 @@ def main():
                 file_or_dir_choice = input("Do you want to pick a file? (No for directory) (y/N)").strip().lower()
                 if file_or_dir_choice == "yes":
                     def lookup_function(title: str) -> str:
-                        return askopenfilename(title=title) if askopenfilename else input(f"{title}: ").strip()
+                        return askopenfilename(title=title)
                 else:
                     def lookup_function(title: str) -> str:
-                        return askdirectory(title=title) if askdirectory else input(f"{title}: ").strip()
+                        return askdirectory(title=title)
             else:
                 def lookup_function(title: str) -> str:
-                    return input(f"{title}: ").strip()
+                    return input(title)
         return lookup_function
 
     while True:
@@ -468,7 +444,7 @@ def main():
             or (unknown[0] if len(unknown) > 0 else None)
             or get_lookup_function()("Path to the first K1/TSL install, file, or directory to diff."),
         ).resolve()
-        if PARSER_ARGS.path1.exists():
+        if PARSER_ARGS.path1.safe_exists():
             break
         print("Invalid path:", PARSER_ARGS.path1)
         PARSER.print_help()
@@ -479,7 +455,7 @@ def main():
             or (unknown[1] if len(unknown) > 1 else None)
             or get_lookup_function()("Path to the second K1/TSL install, file, or directory to diff."),
         ).resolve()
-        if PARSER_ARGS.path2.exists():
+        if PARSER_ARGS.path2.safe_exists():
             break
         print("Invalid path:", PARSER_ARGS.path2)
         PARSER.print_help()
