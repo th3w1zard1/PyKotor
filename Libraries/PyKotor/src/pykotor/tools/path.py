@@ -339,8 +339,9 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
         parts = list(pathlib_abspath.parts)
 
         for i in range(1, len(parts)):  # ignore the root (/, C:\\, etc)
-            base_path: InternalPath = InternalPath(*parts[:i])
-            next_path: InternalPath = InternalPath(*parts[: i + 1])
+            # Use standard pathlib.Path to avoid internal state issues
+            base_path: pathlib.Path = pathlib.Path(*parts[:i])
+            next_path: pathlib.Path = pathlib.Path(*parts[: i + 1])
 
             if not next_path.exists() and base_path.exists():
                 # Find the first non-existent case-sensitive file/folder in hierarchy
@@ -348,10 +349,12 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
                 # A closest match is defined, in this context, as the file/folder's name that contains the most case-sensitive positional character matches
                 # If two closest matches are identical (e.g. we're looking for TeST and we find TeSt and TesT), it's probably random.
                 last_part: bool = i == len(parts) - 1
-                parts[i] = cls.find_closest_match(
-                    parts[i],
-                    (item for item in base_path.iterdir() if last_part or item.exists()),
-                )
+                try:
+                    candidates = (item for item in base_path.iterdir() if last_part or item.exists())
+                    parts[i] = cls.find_closest_match(parts[i], candidates)
+                except (OSError, PermissionError):
+                    # If we can't iterate the directory, keep the original part
+                    pass
 
             elif not next_path.exists():
                 break
@@ -363,7 +366,7 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
     def find_closest_match(
         cls,
         target: str,
-        candidates: Generator[InternalPath, None, None],
+        candidates: Generator[pathlib.Path, None, None],
     ) -> str:
         """Finds the closest match from candidates to the target string.
 
