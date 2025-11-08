@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import atexit
+import cProfile
+import datetime
 import gc
 import importlib
 import multiprocessing
@@ -15,7 +17,10 @@ from types import TracebackType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QSettings
+    from qtpy.QtWidgets import QApplication
+
+
+DEBUGGER_ACTIVE = sys.gettrace() is not None
 
 
 def is_frozen() -> bool:
@@ -133,6 +138,7 @@ def is_running_from_temp() -> bool:
 def qt_cleanup():
     """Cleanup so we can exit."""
     from loggerplus import RobustLogger
+    from qtpy import QtCore
 
     from toolset.utils.window import WINDOWS
     from utility.system.process import terminate_child_processes
@@ -143,9 +149,10 @@ def qt_cleanup():
         window.destroy()
     WINDOWS.clear()
     gc.collect()
+    qt_thread_type = getattr(QtCore, "QThread", None)
     for obj in gc.get_objects():
         with suppress(RuntimeError):  # wrapped C/C++ object of type QThread has been deleted
-            if isinstance(obj, QThread) and obj.isRunning():
+            if qt_thread_type is not None and isinstance(obj, qt_thread_type) and obj.isRunning():
                 RobustLogger().info(f"Terminating QThread: {obj}")
                 obj.terminate()
                 obj.wait()
@@ -160,11 +167,18 @@ def last_resort_cleanup():
 
     from utility.system.process import gracefully_shutdown_threads, start_shutdown_process
 
-    RobustLogger().info("Fully shutting down Holocron Toolset...")
+    debugger_active = DEBUGGER_ACTIVE or sys.gettrace() is not None
+    logger = RobustLogger()
+    logger.info("last_resort_cleanup invoked; debugger_active=%s", debugger_active)
+    if debugger_active:
+        logger.debug("Skipping last_resort_cleanup execution; debugger_active=%s", debugger_active)
+        return
+
+    logger.info("Fully shutting down Holocron Toolset...")
     gracefully_shutdown_threads()
-    RobustLogger().debug("Starting new shutdown process...")
+    logger.debug("Starting new shutdown process with debugger_active=%s...", debugger_active)
     start_shutdown_process()
-    RobustLogger().debug("Shutdown process started...")
+    logger.debug("Shutdown process started with debugger_active=%s...", debugger_active)
 
 
 def setupPreInitSettings():
@@ -202,18 +216,19 @@ def main_init():
         fix_sys_and_cwd_path()
         fix_qt_env_var()
         # DO NOT USE `faulthandler` IN THIS TOOLSET!!
-        #import faulthandler
+        import faulthandler
         # https://bugreports.qt.io/browse/PYSIDE-2359
-        #faulthandler.enable()
+        faulthandler.enable()
 
 
-def setupPostInitSettings():
+def setupPostInitSettings(app: QApplication):
     from qtpy.QtGui import QFont
+    from qtpy.QtWidgets import QApplication
 
     from toolset.gui.widgets.settings.application import ApplicationSettings
     settings_widget = ApplicationSettings()
-    toolset_qsettings: QSettings = settings_widget.settings
-    app.setFont(toolset_qsettings.value("GlobalFont", QApplication.font(), QFont))
+    toolset_qsettings = settings_widget.settings
+    app.setFont(toolset_qsettings.value("GlobalFont", app.font(), QFont))
 
     for attr_name, attr_value in settings_widget.__dict__.items():
         if attr_value is None:  # attr not available in this qt version.
@@ -237,10 +252,38 @@ def setupToolsetDefaultEnv():
         os.environ["QT_LOGGING_RULES"] = os.environ.get("QT_LOGGING_RULES", "qt5ct.debug=false")  # Disable specific Qt debug output
 
 
-if __name__ == "__main__":
+def should_profile_with_debugpy() -> bool:
+    debugpy_env = any(
+        os.environ.get(var) for var in ("DEBUGPY_LAUNCHER_PORT", "DEBUGPY_PORT", "DEBUGPY_LISTEN")
+    )
+    if debugpy_env:
+        return True
+
+    debugpy_module = sys.modules.get("debugpy")
+    if debugpy_module is not None:
+        is_client_connected = getattr(debugpy_module, "is_client_connected", None)
+        if callable(is_client_connected):
+            try:
+                return bool(is_client_connected())
+            except Exception:
+                return True
+        return True
+    return False
+
+
+def dump_profile_stats(profile: cProfile.Profile) -> pathlib.Path:
+    logs_dir = pathlib.Path(__file__).resolve().parent / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.datetime.now(datetime.timezone.utc).astimezone().strftime("%Y%m%d_%H%M%S")
+    stats_path = logs_dir / f"debugpy_profile_{timestamp}.prof"
+    profile.dump_stats(str(stats_path))
+    return stats_path
+
+
+def run_toolset():
     main_init()
 
-    from qtpy.QtCore import QThread
+    from qtpy import QtCore
     from qtpy.QtGui import QSurfaceFormat
     from qtpy.QtWidgets import QApplication, QMessageBox
 
@@ -262,10 +305,12 @@ if __name__ == "__main__":
     app.setApplicationName("HolocronToolsetV3")
     app.setOrganizationName("PyKotor")
     app.setOrganizationDomain("github.com/NickHugi/PyKotor")
-    app.thread().setPriority(QThread.Priority.HighestPriority)  # pyright: ignore[reportOptionalMemberAccess]
+    qt_thread_type = getattr(QtCore, "QThread", None)
+    if qt_thread_type is not None:
+        app.thread().setPriority(qt_thread_type.Priority.HighestPriority)  # pyright: ignore[reportOptionalMemberAccess]
     app.aboutToQuit.connect(qt_cleanup)
 
-    setupPostInitSettings()
+    setupPostInitSettings(app)
     setupToolsetDefaultEnv()
 
     if is_running_from_temp():
@@ -283,3 +328,21 @@ if __name__ == "__main__":
     toolWindow.show()
     toolWindow.checkForUpdates(silent=True)
     app.exec_()  # pyright: ignore[reportAttributeAccessIssue]
+
+
+def main():
+    if should_profile_with_debugpy():
+        profiler = cProfile.Profile()
+        try:
+            profiler.enable()
+            run_toolset()
+        finally:
+            profiler.disable()
+            stats_path = dump_profile_stats(profiler)
+            print(f"cProfile stats written to {stats_path}")
+    else:
+        run_toolset()
+
+
+if __name__ == "__main__":
+    main()
