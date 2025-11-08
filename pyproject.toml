@@ -119,10 +119,10 @@ skip_gitignore = true
 multi_line_output = 3
 
 [tool.pyright.defineConstant]
-PYQT5 = true
+PYQT5 = false
 PYSIDE2 = false
 PYQT6 = false
-PYSIDE6 = false
+PYSIDE6 = true
 
 [tool.yapf]
 column_limit = 175
