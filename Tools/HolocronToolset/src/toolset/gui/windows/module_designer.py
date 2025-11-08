@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Callable, Sequence
 import qtpy
 
 from qtpy import QtCore
-from qtpy.QtCore import QPoint, QTimer
+from qtpy.QtCore import QPoint, QTimer, Qt
 from qtpy.QtGui import QColor, QCursor, QIcon, QPixmap
 from qtpy.QtWidgets import QAction, QApplication, QHBoxLayout, QLabel, QListWidgetItem, QMainWindow, QMenu, QMessageBox, QStatusBar, QTreeWidgetItem, QVBoxLayout
 
@@ -129,11 +129,12 @@ class ModuleDesigner(QMainWindow):
         self.settings: ModuleDesignerSettings = ModuleDesignerSettings()
         self.log: RobustLogger = RobustLogger()
 
-        self.baseFrameRate = 60
+        self.targetFrameRate = 120  # Target higher for smoother camera
         self.cameraUpdateTimer = QTimer()
         self.cameraUpdateTimer.timeout.connect(self.update_camera)
-        self.cameraUpdateTimer.start(int(1000 / self.baseFrameRate))  # ~60 FPS
+        self.cameraUpdateTimer.start(int(1000 / self.targetFrameRate))
         self.lastFrameTime: float = time.time()
+        self.frameTimeSamples: list[float] = []  # For adaptive timing
 
         self.hideCreatures: bool = False
         self.hidePlaceables: bool = False
@@ -452,25 +453,37 @@ class ModuleDesigner(QMainWindow):
                 mod_filepath = orig_filepath
 
         def task() -> tuple[Module, GIT, list[BWM]]:
-            combined_module = Module(mod_root, self._installation, use_dot_mod=is_mod_file(mod_filepath))
-            git_resource = combined_module.git()
-            if git_resource is None:
-                raise ValueError(f"This module '{mod_root}' is missing a GIT!")
+            import logging
+            # Temporarily reduce logging verbosity during module load
+            kotor_logger = logging.getLogger("root")
+            original_level = kotor_logger.level
+            kotor_logger.setLevel(logging.WARNING)  # Only show warnings and errors
 
-            git: GIT | None = git_resource.resource()
-            assert git is not None
-            walkmeshes: list[BWM] = []
-            for bwm in combined_module.resources.values():
-                if bwm.restype() is not ResourceType.WOK:
-                    assert bwm.restype().name.lower() != "wok"
-                    continue
-                bwm_res: BWM | None = bwm.resource()
-                if bwm_res is None:
-                    self.log.warning("bwm '%s.%s' returned None resource data, skipping...", bwm.resname(), bwm.restype())
-                    continue
-                self.log.info("Adding walkmesh '%s.%s'", bwm.resname(), bwm.restype())
-                walkmeshes.append(bwm_res)
-            return (combined_module, git, walkmeshes)
+            try:
+                combined_module = Module(mod_root, self._installation, use_dot_mod=is_mod_file(mod_filepath))
+                git_resource = combined_module.git()
+                if git_resource is None:
+                    raise ValueError(f"This module '{mod_root}' is missing a GIT!")
+
+                git: GIT | None = git_resource.resource()
+                assert git is not None
+
+                # Load walkmeshes - only log count, not each one
+                walkmeshes: list[BWM] = []
+                wok_count = 0
+                for bwm in combined_module.resources.values():
+                    if bwm.restype() is not ResourceType.WOK:
+                        continue
+                    bwm_res: BWM | None = bwm.resource()
+                    if bwm_res is not None:
+                        walkmeshes.append(bwm_res)
+                        wok_count += 1
+
+                self.log.info("Loaded %d walkmeshes for module '%s'", wok_count, mod_root)
+                return (combined_module, git, walkmeshes)
+            finally:
+                # Restore original logging level
+                kotor_logger.setLevel(original_level)
 
         # Point of no return: unload any previous module and load the new one.
         self.unloadModule()
@@ -535,13 +548,16 @@ class ModuleDesigner(QMainWindow):
             - Adding category items and resource items
             - Sorting items alphabetically.
         """
-        self.ui.resourceTree.clear()
-        self.ui.resourceTree.setEnabled(True)
-
         # Only build if module is loaded
         if self._module is None:
             self.ui.resourceTree.setEnabled(False)
             return
+
+        # Block signals and sorting during bulk update for better performance
+        self.ui.resourceTree.blockSignals(True)
+        self.ui.resourceTree.setSortingEnabled(False)
+        self.ui.resourceTree.clear()
+        self.ui.resourceTree.setEnabled(True)
 
         categories = {
             ResourceType.UTC: QTreeWidgetItem(["Creatures"]),
@@ -581,8 +597,11 @@ class ModuleDesigner(QMainWindow):
             category = categories.get(resource.restype(), categories[ResourceType.INVALID])
             category.addChild(item)
 
-        self.ui.resourceTree.sortByColumn(0, QtCore.Qt.SortOrder.AscendingOrder)
+        self.ui.resourceTree.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.ui.resourceTree.setSortingEnabled(True)
+
+        # Restore signals after bulk update
+        self.ui.resourceTree.blockSignals(False)
 
     def openModuleResource(self, resource: ModuleResource):
         editor: Editor | QMainWindow | None = openResourceEditor(
@@ -685,7 +704,6 @@ class ModuleDesigner(QMainWindow):
             - Add each instance to the list with icon, text, tooltips from the instance data.
         """
         self.log.debug("rebuildInstanceList called.")
-        self.ui.instanceList.clear()
 
         # Only build if module is loaded
         if self._module is None:
@@ -693,6 +711,9 @@ class ModuleDesigner(QMainWindow):
             self.ui.instanceList.setVisible(False)
             return
 
+        # Block signals during bulk update for better performance
+        self.ui.instanceList.blockSignals(True)
+        self.ui.instanceList.clear()
         self.ui.instanceList.setEnabled(True)
         self.ui.instanceList.setVisible(True)
 
@@ -777,6 +798,9 @@ class ModuleDesigner(QMainWindow):
 
         for item in sorted(items, key=lambda i: i.data(QtCore.Qt.ItemDataRole.UserRole + 1)):
             self.ui.instanceList.addItem(item)
+
+        # Restore signals after bulk update
+        self.ui.instanceList.blockSignals(False)
 
     def selectInstanceItemOnList(self, instance: GITInstance):
         """Select an instance item on the instance list.
@@ -885,6 +909,7 @@ class ModuleDesigner(QMainWindow):
                     instance.tag = utd.tag
         else:
             self._module.git().resource().add(instance)
+        self.ui.mainRenderer.scene.invalidate_cache()
         self.rebuildInstanceList()
 
     #    @with_variable_trace()
@@ -1008,6 +1033,7 @@ class ModuleDesigner(QMainWindow):
             self._module.git().resource().remove(instance)
         self.selectedInstances.clear()
         self.ui.mainRenderer.scene.selection.clear()
+        self.ui.mainRenderer.scene.invalidate_cache()
         self.ui.flatRenderer.instanceSelection.clear()
         self.rebuildInstanceList()
 
@@ -1411,12 +1437,20 @@ class ModuleDesigner(QMainWindow):
 
     def on3dSceneInitialized(self):
         self.log.debug("ModuleDesigner on3dSceneInitialized")
-        self.rebuildResourceTree()
-        self.rebuildInstanceList()
         self._refreshWindowTitle()
-        self.enterInstanceMode()
         self.show()
         self.activateWindow()
+
+        # Defer UI population to avoid blocking during module load
+        QTimer.singleShot(50, self._deferredInitialization)
+
+    def _deferredInitialization(self):
+        """Complete initialization after window is shown."""
+        self.log.debug("Building resource tree and instance list...")
+        self.rebuildResourceTree()
+        self.rebuildInstanceList()
+        self.enterInstanceMode()
+        self.log.info("Module designer ready")
 
     def on2dMouseMoved(self, screen: Vector2, delta: Vector2, buttons: set[int], keys: set[int]):
         #self.log.debug("on2dMouseMoved, screen: %s, delta: %s, buttons: %s, keys: %s", screen, delta, buttons, keys)
@@ -1498,9 +1532,13 @@ class ModuleDesigner(QMainWindow):
         timeSinceLastFrame = curTime - self.lastFrameTime
         self.lastFrameTime = curTime
 
-        # Calculate rotation delta
+        # Skip if frame time is too large (e.g., window was minimized)
+        if timeSinceLastFrame > 0.1:
+            return
+
+        # Calculate rotation delta with frame-independent timing
         normRotateUnitsSetting = self.settings.rotateCameraSensitivity3d / 1000
-        normRotateUnitsSetting *= self.baseFrameRate * timeSinceLastFrame  # apply modifier based on user's fps
+        normRotateUnitsSetting *= self.targetFrameRate * timeSinceLastFrame
         angleUnitsDelta = (math.pi / 4) * normRotateUnitsSetting
 
         # Rotate camera based on key inputs
@@ -1531,7 +1569,7 @@ class ModuleDesigner(QMainWindow):
 
 
         moveUnitsDelta /= 500  # normalize
-        moveUnitsDelta *= timeSinceLastFrame * self.baseFrameRate  # apply modifier based on user's fps
+        moveUnitsDelta *= timeSinceLastFrame * self.targetFrameRate  # apply modifier based on frame time
 
         # Zoom camera based on inputs
         if movement_keys["in"]:
@@ -1591,7 +1629,7 @@ class ModuleDesignerControls3d:
         """
         self.editor: ModuleDesigner = editor
         self.renderer: ModuleRenderer = renderer
-        self.renderer.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
+        self.renderer.setCursor(Qt.CursorShape.ArrowCursor)
         if self.renderer._scene is not None:
             self.renderer._scene.show_cursor = True
 
@@ -1626,25 +1664,44 @@ class ModuleDesignerControls3d:
         moveCameraPlaneSatisfied = self.moveCameraPlane.satisfied(buttons, keys)
         rotateCameraSatisfied = self.rotateCamera.satisfied(buttons, keys)
         zoomCameraSatisfied = self.zoomCameraMM.satisfied(buttons, keys)
+
         if moveXyCameraSatisfied or moveCameraPlaneSatisfied or rotateCameraSatisfied or zoomCameraSatisfied:
             self.editor.doCursorLock(mutableScreen=screen, centerMouse=False, doRotations=False)
             moveStrength = self.settings.moveCameraSensitivity3d / 1000
+
             if moveXyCameraSatisfied:
                 forward = -screenDelta.y * self.renderer.scene.camera.forward()
                 sideward = screenDelta.x * self.renderer.scene.camera.sideward()
                 self.renderer.scene.camera.x -= (forward.x + sideward.x) * moveStrength
                 self.renderer.scene.camera.y -= (forward.y + sideward.y) * moveStrength
-            if moveCameraPlaneSatisfied:  # sourcery skip: extract-method
+
+            if moveCameraPlaneSatisfied:
+                # Middle mouse button: pan up/down/left/right
                 upward = screenDelta.y * self.renderer.scene.camera.upward(ignore_xy=False)
                 sideward = screenDelta.x * self.renderer.scene.camera.sideward()
                 self.renderer.scene.camera.z -= (upward.z + sideward.z) * moveStrength
                 self.renderer.scene.camera.y -= (upward.y + sideward.y) * moveStrength
                 self.renderer.scene.camera.x -= (upward.x + sideward.x) * moveStrength
-            rotateStrength = self.settings.moveCameraSensitivity3d / 10000
-            if rotateCameraSatisfied:
-                self.renderer.rotateCamera(-screenDelta.x * rotateStrength, screenDelta.y * rotateStrength, clampRotations=True)
+
             if zoomCameraSatisfied:
-                self.renderer.scene.camera.distance -= screenDelta.y * rotateStrength
+                # Right mouse button: horizontal drag = zoom, vertical drag = pan
+                zoomStrength = self.settings.zoomCameraSensitivity3d / 1000
+
+                # Horizontal movement = zoom in/out
+                if abs(screenDelta.x) > abs(screenDelta.y):
+                    self.renderer.scene.camera.distance -= screenDelta.x * zoomStrength
+                else:
+                    # Vertical movement = pan (same as middle mouse)
+                    upward = screenDelta.y * self.renderer.scene.camera.upward(ignore_xy=False)
+                    sideward = screenDelta.x * self.renderer.scene.camera.sideward()
+                    self.renderer.scene.camera.z -= (upward.z + sideward.z) * moveStrength
+                    self.renderer.scene.camera.y -= (upward.y + sideward.y) * moveStrength
+                    self.renderer.scene.camera.x -= (upward.x + sideward.x) * moveStrength
+
+            if rotateCameraSatisfied and not self.editor.selectedInstances:
+                # Left mouse button: orbit around cursor position
+                rotateStrength = self.settings.rotateCameraSensitivity3d / 10000
+                self._orbitAroundCursor(screenDelta, rotateStrength)
 
         # Handle movement of selected instances.
         if self.editor.ui.lockInstancesCheck.isChecked():
@@ -1684,6 +1741,35 @@ class ModuleDesignerControls3d:
                     self.editor.initialRotations[instance] = Vector4(*instance.orientation) if isinstance(instance, GITCamera) else instance.bearing
                 self.editor.log.debug("3d rotate set isDragRotating")
             self.editor.rotateSelected(screenDelta.x, screenDelta.y)
+
+    def _orbitAroundCursor(self, screenDelta: Vector2, strength: float):
+        """Orbit camera around the cursor position.
+
+        Args:
+        ----
+            screenDelta: Screen delta movement
+            strength: Rotation strength multiplier
+        """
+        scene = self.renderer.scene
+        assert scene is not None, "Scene is None"
+
+        # Calculate vector from cursor to camera
+        cam_x = scene.camera.x + math.cos(scene.camera.yaw) * math.cos(scene.camera.pitch - math.pi / 2) * scene.camera.distance
+        cam_y = scene.camera.y + math.sin(scene.camera.yaw) * math.cos(scene.camera.pitch - math.pi / 2) * scene.camera.distance
+        cam_z = scene.camera.z + math.sin(scene.camera.pitch - math.pi / 2) * scene.camera.distance
+
+        # Rotate camera view
+        self.renderer.rotateCamera(-screenDelta.x * strength, screenDelta.y * strength, clampRotations=True)
+
+        # Calculate new camera position to maintain orbit around cursor
+        new_cam_x = cam_x - math.cos(scene.camera.yaw) * math.cos(scene.camera.pitch - math.pi / 2) * scene.camera.distance
+        new_cam_y = cam_y - math.sin(scene.camera.yaw) * math.cos(scene.camera.pitch - math.pi / 2) * scene.camera.distance
+        new_cam_z = cam_z - math.sin(scene.camera.pitch - math.pi / 2) * scene.camera.distance
+
+        # Adjust camera position to orbit around cursor
+        scene.camera.x = new_cam_x
+        scene.camera.y = new_cam_y
+        scene.camera.z = new_cam_z
 
     def onMousePressed(self, screen: Vector2, buttons: set[int], keys: set[int]):
         """Handle mouse press events in the editor.
@@ -1789,6 +1875,9 @@ class ModuleDesignerControls3d:
             return
         if self.toggleInstanceLock.satisfied(buttons, keys):
             self.editor.ui.lockInstancesCheck.setChecked(not self.editor.ui.lockInstancesCheck.isChecked())
+            return
+        if self.resetCameraView.satisfied(buttons, keys):
+            self.editor.snapCameraToEntryLocation()
 
     @property
     def moveXYCamera(self) -> ControlItem:
@@ -1977,6 +2066,12 @@ class ModuleDesignerControls3d:
         return ControlItem(self.settings.speedBoostCamera3dBind)
     @speedBoostControl.setter
     def speedBoostControl(self, value): ...
+
+    @property
+    def resetCameraView(self) -> ControlItem:
+        return ControlItem(self.settings.resetCameraView3dBind)
+    @resetCameraView.setter
+    def resetCameraView(self, value): ...
 
     @property
     def settings(self) -> ModuleDesignerSettings:

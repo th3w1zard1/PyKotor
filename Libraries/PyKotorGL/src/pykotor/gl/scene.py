@@ -171,6 +171,11 @@ class Scene:
         self.layout: LYT | None = None
         self.clearCacheBuffer: list[ResourceIdentifier] = []
 
+        # Performance optimization flags
+        self._cache_dirty: bool = True
+        self._last_git_hash: int | None = None
+        self._last_layout_hash: int | None = None
+
         self.picker_shader: Shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
         self.plain_shader: Shader = Shader(PLAIN_VSHADER, PLAIN_FSHADER)
         self.shader: Shader = Shader(KOTOR_VSHADER, KOTOR_FSHADER)
@@ -363,12 +368,14 @@ class Scene:
         self,
         *,
         clear_cache: bool = False,
+        force_rebuild: bool = False,
     ):
         """Builds and caches game objects from the module.
 
         Args:
         ----
             clear_cache (bool): Whether to clear the existing cache
+            force_rebuild (bool): Force a full rebuild even if cache is clean
 
         Processing Logic:
         ----------------
@@ -382,14 +389,22 @@ class Scene:
 
         if clear_cache:
             self.objects = {}
+            self._cache_dirty = True
+
+        # Skip rebuild if cache is clean and not forced
+        if not self._cache_dirty and not force_rebuild and not self.clearCacheBuffer:
+            return
 
         if self.git is None:
             self.git = self._getGit()
+            self._cache_dirty = True
 
         if self.layout is None:
             self.layout = self._getLyt()
+            self._cache_dirty = True
 
         for identifier in self.clearCacheBuffer:
+            self._cache_dirty = True
             for git_creature in self.git.creatures.copy():
                 if identifier.resname == git_creature.resref and identifier.restype is ResourceType.UTC:
                     del self.objects[git_creature]
@@ -526,6 +541,9 @@ class Scene:
         for obj in copy(self.objects):
             self._del_git_objects(obj, self.git, self.objects)
 
+        # Mark cache as clean
+        self._cache_dirty = False
+
     def _fetch2da(self, resname: str, installation: Installation) -> ResourceResult:
         result = installation.resource(resname, ResourceType.TwoDA, SEARCH_ORDER_2DA)
         if result is None:
@@ -592,7 +610,17 @@ class Scene:
 
         self._prepare_gl_and_shader()
         self.shader.set_bool("enableLightmap", self.use_lightmap)
-        group1: list[RenderObject] = [obj for obj in self.objects.values() if obj.model not in self.SPECIAL_MODELS]
+
+        # Apply frustum culling for better performance
+        visible_objects: list[RenderObject] = []
+        for obj in self.objects.values():
+            obj_pos = obj.position()
+            # Use a rough estimate for radius based on model type
+            radius = 10.0 if obj.model in self.SPECIAL_MODELS else 20.0
+            if self.camera.is_in_frustum(obj_pos, radius):
+                visible_objects.append(obj)
+
+        group1: list[RenderObject] = [obj for obj in visible_objects if obj.model not in self.SPECIAL_MODELS]
         for obj in group1:
             self._render_object(self.shader, obj, mat4())
 
@@ -603,7 +631,7 @@ class Scene:
         self.plain_shader.set_matrix4("view", self.camera.view())
         self.plain_shader.set_matrix4("projection", self.camera.projection())
         self.plain_shader.set_vector4("color", vec4(0.0, 0.0, 1.0, 0.4))
-        group2: list[RenderObject] = [obj for obj in self.objects.values() if obj.model in self.SPECIAL_MODELS]
+        group2: list[RenderObject] = [obj for obj in visible_objects if obj.model in self.SPECIAL_MODELS]
         for obj in group2:
             self._render_object(self.plain_shader, obj, mat4())
 
@@ -761,6 +789,11 @@ class Scene:
         self.selection.append(actual_target)
 
     def screenToWorld(self, x: int, y: int) -> Vector3:
+        # Validate coordinates are within bounds to prevent OpenGL errors
+        if x < 0 or y < 0 or x >= self.camera.width or y >= self.camera.height:
+            # Return a default position at the camera's focus point for out-of-bounds coordinates
+            return Vector3(self.camera.x, self.camera.y, self.camera.z)
+
         self._prepare_gl_and_shader()
         group1: list[RenderObject] = [obj for obj in self.objects.values() if isinstance(obj.data, LYTRoom)]
         for obj in group1:
@@ -990,6 +1023,10 @@ class Scene:
             self.camera.y = point.y
             self.camera.z = point.z + 1.8
 
+    def invalidate_cache(self):
+        """Mark the cache as dirty to force a rebuild on next render."""
+        self._cache_dirty = True
+
 
 class RenderObject:
     def __init__(
@@ -1012,6 +1049,7 @@ class RenderObject:
         self.genBoundary: Callable[[], Boundary] | None = gen_boundary
         self.data: Any = data
         self.override_texture: str | None = override_texture
+        self._transform_dirty: bool = True
 
         self._recalc_transform()
 
@@ -1025,8 +1063,11 @@ class RenderObject:
         self._rotation = glm.eulerAngles(rotation)
 
     def _recalc_transform(self):
+        if not self._transform_dirty:
+            return
         self._transform = mat4() * glm.translate(self._position)
         self._transform = self._transform * glm.mat4_cast(quat(self._rotation))
+        self._transform_dirty = False
 
     def position(self) -> vec3:
         return copy(self._position)
@@ -1036,6 +1077,7 @@ class RenderObject:
             return
 
         self._position = vec3(x, y, z)
+        self._transform_dirty = True
         self._recalc_transform()
 
     def rotation(self) -> vec3:
@@ -1046,6 +1088,7 @@ class RenderObject:
             return
 
         self._rotation = vec3(x, y, z)
+        self._transform_dirty = True
         self._recalc_transform()
 
     def reset_cube(self):
@@ -1324,3 +1367,27 @@ class Camera:
         y += math.sin(self.yaw) * math.cos(self.pitch - math.pi / 2) * self.distance
         z += math.sin(self.pitch - math.pi / 2) * self.distance
         return vec3(x, y, z)
+
+    def is_in_frustum(self, position: vec3, radius: float = 5.0) -> bool:
+        """Check if a sphere is within the camera's view frustum (simplified).
+
+        Args:
+        ----
+            position: Center position of the sphere
+            radius: Radius of the bounding sphere
+
+        Returns:
+        -------
+            bool: True if the sphere is (potentially) visible
+        """
+        # Simple distance-based culling - cull objects too far away
+        cam_pos = self.true_position()
+        distance = math.sqrt(
+            (position.x - cam_pos.x) ** 2 +
+            (position.y - cam_pos.y) ** 2 +
+            (position.z - cam_pos.z) ** 2
+        )
+
+        # Cull if too far (adjust this value based on your scene scale)
+        max_distance = 500.0
+        return distance - radius <= max_distance
