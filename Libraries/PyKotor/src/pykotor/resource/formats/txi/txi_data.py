@@ -673,6 +673,10 @@ class TXIFeatures:
         # Font height in normalized coordinates (0.0-1.0)
         self.fontheight: float | None = None
         
+        # vendor/KotOR.js/src/resource/TXI.ts:224,225
+        # Font width in normalized coordinates (0.0-1.0)
+        self.fontwidth: float | None = None
+        
         # vendor/KotOR.js/src/resource/TXI.ts:35,205-207
         # Baseline height for font rendering (0.0-1.0)
         self.baselineheight: float | None = None
@@ -709,6 +713,7 @@ class TXIFeatures:
         self.alphamean: float | None = None
         self.arturoheight: int | None = None
         self.arturowidth: int | None = None
+        self.candownsample: bool | None = None
         self.channelscale: list[float] | None = None
         self.channeltranslate: list[float] | None = None
         self.clamp: bool | None = None

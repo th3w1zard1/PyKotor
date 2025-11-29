@@ -90,6 +90,7 @@ class NssLexer:
         "BITWISE_OR",
         "BITWISE_LEFT",
         "BITWISE_RIGHT",
+        "BITWISE_UNSIGNED_RIGHT",
         "BITWISE_XOR",
         "BITWISE_NOT",
         "INCLUDE",
@@ -98,11 +99,19 @@ class NssLexer:
         "SUBTRACTION_ASSIGNMENT_OPERATOR",
         "MULTIPLICATION_ASSIGNMENT_OPERATOR",
         "DIVISION_ASSIGNMENT_OPERATOR",
+        "MOD_ASSIGNMENT_OPERATOR",
+        "BITWISE_AND_ASSIGNMENT_OPERATOR",
+        "BITWISE_OR_ASSIGNMENT_OPERATOR",
+        "BITWISE_XOR_ASSIGNMENT_OPERATOR",
+        "BITWISE_LEFT_ASSIGNMENT_OPERATOR",
+        "BITWISE_RIGHT_ASSIGNMENT_OPERATOR",
+        "BITWISE_UNSIGNED_RIGHT_ASSIGNMENT_OPERATOR",
         "CONTINUE_CONTROL",
         "STRUCT",
         "INCREMENT",
         "DECREMENT",
         "NOP",
+        "CONST",
     ]
 
     literals: ClassVar[list[str]] = [
@@ -117,6 +126,7 @@ class NssLexer:
         ".",
         "[",
         "]",
+        "?",
     ]
 
     t_ignore: str = " \t\r"
@@ -216,6 +226,10 @@ class NssLexer:
         t.value = ControlKeyword.RETURN
         return t
 
+    def t_CONST(self, t):
+        r"const\b"  # noqa: D300, D400, D415
+        return t
+
     # endregion
 
     # region Type Tokens
@@ -293,8 +307,16 @@ class NssLexer:
         return t
 
     def t_STRING_VALUE(self, t):
-        r"\"[^\"]*\" "  # noqa: D300, D400, D415, D210
-        t.value = StringExpression(t.value[1:-1])
+        r"\"([^\"\\]|\\.)*\""  # noqa: D300, D400, D415, D210
+        # Handle escape sequences: \\, \", \n, \r, \t
+        value = t.value[1:-1]  # Remove quotes
+        # Basic escape sequence handling (order matters - do \\ first)
+        value = value.replace("\\\\", "\\")
+        value = value.replace("\\\"", "\"")
+        value = value.replace("\\n", "\n")
+        value = value.replace("\\r", "\r")
+        value = value.replace("\\t", "\t")
+        t.value = StringExpression(value)
         return t
 
     def t_FLOAT_VALUE(self, t):
@@ -350,6 +372,34 @@ class NssLexer:
         r"/\="  # noqa: D300, D400, D415
         return t
 
+    def t_MOD_ASSIGNMENT_OPERATOR(self, t):
+        r"%\="  # noqa: D300, D400, D415
+        return t
+
+    def t_BITWISE_AND_ASSIGNMENT_OPERATOR(self, t):
+        r"&\="  # noqa: D300, D400, D415
+        return t
+
+    def t_BITWISE_OR_ASSIGNMENT_OPERATOR(self, t):
+        r"\|\="  # noqa: D300, D400, D415
+        return t
+
+    def t_BITWISE_XOR_ASSIGNMENT_OPERATOR(self, t):
+        r"\^\="  # noqa: D300, D400, D415
+        return t
+
+    def t_BITWISE_LEFT_ASSIGNMENT_OPERATOR(self, t):
+        r"<<\="  # noqa: D300, D400, D415
+        return t
+
+    def t_BITWISE_RIGHT_ASSIGNMENT_OPERATOR(self, t):
+        r">>\="  # noqa: D300, D400, D415
+        return t
+
+    def t_BITWISE_UNSIGNED_RIGHT_ASSIGNMENT_OPERATOR(self, t):
+        r">>>\="  # noqa: D300, D400, D415
+        return t
+
     # region Operators
     def t_BITWISE_LEFT(self, t):
         "<<"  # noqa: D300, D400, D415
@@ -357,6 +407,16 @@ class NssLexer:
             unary=[],
             binary=[
                 BinaryOperatorMapping(NCSInstructionType.SHLEFTII, DataType.INT, DataType.INT, DataType.INT),
+            ],
+        )
+        return t
+
+    def t_BITWISE_UNSIGNED_RIGHT(self, t):
+        ">>>"  # noqa: D300, D400, D415
+        t.value = OperatorMapping(
+            unary=[],
+            binary=[
+                BinaryOperatorMapping(NCSInstructionType.USHRIGHTII, DataType.INT, DataType.INT, DataType.INT),
             ],
         )
         return t

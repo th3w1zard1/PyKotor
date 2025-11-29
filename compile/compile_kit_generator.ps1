@@ -65,9 +65,6 @@ try {
     $pyInstallerArgs = @{
         'exclude-module' = @(
             'numpy',
-            'PyQt5',
-            'PIL',
-            'Pillow',
             'matplotlib',
             'PyOpenGL',
             'PyGLM',
@@ -78,8 +75,6 @@ try {
             'playwright',
             'pyquery',
             'arabic-reshaper',
-            'PyQt5-Qt5',
-            'PyQt5-sip',
             'watchdog',
             'Markdown',
             'setuptools',

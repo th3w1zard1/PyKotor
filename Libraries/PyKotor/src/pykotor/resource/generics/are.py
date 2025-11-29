@@ -13,8 +13,10 @@ from utility.common.geometry import Vector2
 if TYPE_CHECKING:
     from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES
 
+from pykotor.resource.generics.base import GenericBase
 
-class ARE:
+
+class ARE(GenericBase):
     """Stores static area data.
     
     ARE files are GFF-based format files that store static area information including
@@ -111,6 +113,7 @@ class ARE:
     def __init__(
         self,
     ):
+        super().__init__()
         # vendor/reone/src/libs/resource/parser/gff/are.cpp:302
         # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:13
         # vendor/KotOR.js/src/module/ModuleArea.ts:140
@@ -517,6 +520,18 @@ def construct_are(
         force_rating = room_struct.acquire("ForceRating", 0)
         are.rooms.append(ARERoom(room_name, disable_weather, env_audio, force_rating, ambient_scale))
 
+    # Preserve original values for fields not in UI
+    are.preserve_original()
+    # Store all field values as original
+    are._store_original('version', are.version)
+    are._store_original('player_vs_player', are.player_vs_player)
+    are._store_original('moon_fog', are.moon_fog)
+    are._store_original('moon_fog_near', are.moon_fog_near)
+    are._store_original('moon_fog_far', are.moon_fog_far)
+    are._store_original('moon_fog_color', are.moon_fog_color)
+    are._store_original('map_point_1', are.map_point_1)
+    are._store_original('map_point_2', are.map_point_2)
+
     return are
 
 
@@ -554,16 +569,22 @@ def dismantle_are(
     map_struct.set_int32("MapZoom", are.map_zoom)
     map_struct.set_int32("MapResX", are.map_res_x)
     map_struct.set_int32("NorthAxis", are.north_axis.value)
-    map_struct.set_single("MapPt1X", are.map_point_1.x)
-    map_struct.set_single("MapPt1Y", are.map_point_1.y)
-    map_struct.set_single("MapPt2X", are.map_point_2.x)
-    map_struct.set_single("MapPt2Y", are.map_point_2.y)
+    # Use original values for map points if current values are at default
+    default_map_point = Vector2.from_null()
+    map_pt1 = are.get_original_or_current('map_point_1', are.map_point_1, default_map_point)
+    map_pt2 = are.get_original_or_current('map_point_2', are.map_point_2, default_map_point)
+    map_struct.set_single("MapPt1X", map_pt1.x)
+    map_struct.set_single("MapPt1Y", map_pt1.y)
+    map_struct.set_single("MapPt2X", map_pt2.x)
+    map_struct.set_single("MapPt2Y", map_pt2.y)
     map_struct.set_single("WorldPt1X", are.world_point_1.x)
     map_struct.set_single("WorldPt1Y", are.world_point_1.y)
     map_struct.set_single("WorldPt2X", are.world_point_2.x)
     map_struct.set_single("WorldPt2Y", are.world_point_2.y)
 
-    root.set_uint32("Version", are.version)
+    # Use original value for version if current is at default (0)
+    version = are.get_original_or_current('version', are.version, 0)
+    root.set_uint32("Version", version)
 
     root.set_uint32("SunAmbientColor", are.sun_ambient.rgb_integer())
     root.set_uint32("SunDiffuseColor", are.sun_diffuse.rgb_integer())
@@ -639,8 +660,11 @@ def dismantle_are(
         root.set_uint32("MoonAmbientColor", are.moon_ambient)
         root.set_uint32("MoonDiffuseColor", are.moon_diffuse)
         root.set_uint8("MoonFogOn", are.moon_fog)
-        root.set_single("MoonFogNear", are.moon_fog_near)
-        root.set_single("MoonFogFar", are.moon_fog_far)
+        # Use original values for moon fog if current values are at default (0.0)
+        moon_fog_near = are.get_original_or_current('moon_fog_near', are.moon_fog_near, 0.0)
+        moon_fog_far = are.get_original_or_current('moon_fog_far', are.moon_fog_far, 0.0)
+        root.set_single("MoonFogNear", moon_fog_near)
+        root.set_single("MoonFogFar", moon_fog_far)
         root.set_uint32("MoonFogColor", are.moon_fog_color)
         root.set_uint8("MoonShadows", are.moon_shadows)
         root.set_uint8("IsNight", are.is_night)
@@ -650,7 +674,9 @@ def dismantle_are(
         root.set_uint8("NoRest", are.no_rest)
         root.set_uint8("NoHangBack", are.no_hang_back)
         root.set_uint8("PlayerOnly", are.player_only)
-        root.set_uint8("PlayerVsPlayer", are.player_vs_player)
+        # Use original value for PlayerVsPlayer if current is at default (0)
+        player_vs_player = are.get_original_or_current('player_vs_player', are.player_vs_player, 0)
+        root.set_uint8("PlayerVsPlayer", player_vs_player)
         root.set_list("Expansion_List", GFFList())
 
     return gff

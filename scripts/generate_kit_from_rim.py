@@ -21,7 +21,7 @@ if str(UTILITY_PATH) not in sys.path:
     sys.path.insert(0, str(UTILITY_PATH))
 
 from pykotor.extract.installation import Installation  # noqa: E402
-from pykotor.tools.kit import extract_kit_from_rim  # noqa: E402
+from pykotor.tools.kit import extract_kit  # noqa: E402
 
 if __name__ == "__main__":
     import argparse
@@ -34,7 +34,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     installation = Installation(args.k1_path)
-    extract_kit_from_rim(installation, args.module_name, Path(args.output_path), kit_id=args.kit_id)
+    extract_kit(installation, args.module_name, Path(args.output_path), kit_id=args.kit_id)
     print(f"Kit generated successfully at {args.output_path}")
 
 

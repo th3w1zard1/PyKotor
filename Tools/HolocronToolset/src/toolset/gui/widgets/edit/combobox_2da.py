@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable
 
 from qtpy import QtCore
-from qtpy.QtCore import Qt
+from qtpy.QtCore import QAbstractItemModel, Qt
 from qtpy.QtGui import QPainter, QPalette, QPen
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
@@ -43,7 +43,7 @@ class ComboBox2DA(QComboBox):
         self._installation: HTInstallation | None = None
         self._resname: str | None = None
 
-    def paintEvent(self, event: QPaintEvent):
+    def paintEvent(self, event: QPaintEvent):  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         super().paintEvent(event)
         if super().currentIndex() == -1:
             painter: QPainter = QPainter(self)
@@ -51,7 +51,7 @@ class ComboBox2DA(QComboBox):
             text_color: QColor = self.palette().color(QPalette.ColorRole.Text)
             painter.setPen(QPen(text_color))
             text_rect: QtCore.QRect = self.rect().adjusted(2, 0, 0, 0)
-            painter.drawText(text_rect, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, self.placeholderText())
+            painter.drawText(text_rect, int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft), self.placeholderText())
             painter.end()
 
     def currentIndex(self) -> int:
@@ -67,7 +67,7 @@ class ComboBox2DA(QComboBox):
         row_index = self.itemData(current_index, _ROW_INDEX_DATA_ROLE)
         return row_index or 0
 
-    def setCurrentIndex(self, row_in_2da: int):
+    def setCurrentIndex(self, row_in_2da: int):  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         """Selects the item with the specified row index: This is NOT the index into the combobox like it would be with a normal QCombobox.
 
         If the index cannot be found, it will create an item with the matching index.
@@ -87,7 +87,7 @@ class ComboBox2DA(QComboBox):
 
         super().setCurrentIndex(index)
 
-    def addItem(
+    def addItem(  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         text: str,
         row: int | None = None,
@@ -111,17 +111,17 @@ class ComboBox2DA(QComboBox):
         self.setItemData(self.count() - 1, row, _ROW_INDEX_DATA_ROLE)
         self.setItemData(self.count() - 1, text, _REAL_2DA_TEXT_ROLE)
 
-    def insertItem(self, index: int, text: str):
+    def insertItem(self, index: int, text: str):  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         """Raises NotImplementedError because inserting an item without specifying a row index is not supported."""
         msg = "Inserting an item using insertItem is not supported. Use addItem to add a new entry to the combobox."
         raise NotImplementedError(msg)
 
-    def addItems(self, texts: list[str]):
+    def addItems(self, texts: list[str]):  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         """Raises NotImplementedError because bulk adding items without specifying row indices is not supported."""
         msg = "Bulk adding items using addItems is not supported. Use set_items to add multiple items with proper row indices."
         raise NotImplementedError(msg)
 
-    def insertItems(self, index: int, texts: list[str]):
+    def insertItems(self, index: int, texts: list[str]):  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
         """Raises NotImplementedError because bulk inserting items without specifying row indices is not supported."""
         msg = "Bulk inserting items using insertItems is not supported. Use set_items to insert multiple items with proper row indices."
         raise NotImplementedError(msg)
@@ -183,14 +183,18 @@ class ComboBox2DA(QComboBox):
     def enable_sort(self):  # sourcery skip: class-extract-method
         """Sorts the combobox alphabetically. This is a custom method."""
         self._sort_alphabetically = True
-        model: QStandardItemModel = self.model()
+        model: QAbstractItemModel = self.model()
+        if not isinstance(model, QStandardItemModel):
+            return
         model.setSortRole(_REAL_2DA_TEXT_ROLE)
         model.sort(0)
 
     def disable_sort(self):
         """Sorts the combobox by row index. This is a custom method."""
         self._sort_alphabetically = False
-        model: QStandardItemModel = self.model()
+        model: QAbstractItemModel = self.model()
+        if not isinstance(model, QStandardItemModel):
+            return
         model.setSortRole(_ROW_INDEX_DATA_ROLE)
         model.sort(0)
 

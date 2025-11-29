@@ -2,6 +2,7 @@ import os
 import pytest
 import sys
 import cProfile
+import logging
 import pstats
 import signal
 import time
@@ -48,8 +49,8 @@ if str(PYKOTORGL_PATH) not in sys.path:
 from toolset.data.installation import HTInstallation
 from toolset.main_settings import setup_pre_init_settings
 
-# Module-level flag to ensure installation pre-warming happens only once
-_installation_prewarmed = False
+# Module-level set to track which installations have been pre-warmed
+_prewarmed_installations = set()
 
 @pytest.fixture(scope="session")
 def k1_path():
@@ -58,45 +59,93 @@ def k1_path():
         pytest.skip("K1_PATH environment variable not set")
     return path
 
-def _prewarm_installation(installation: HTInstallation) -> None:
+@pytest.fixture(scope="session")
+def k2_path():
+    path = os.environ.get("K2_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II")
+    if not path:
+        pytest.skip("K2_PATH environment variable not set")
+    return path
+
+def _prewarm_installation(installation: HTInstallation, skip_streams: bool = True, skip_2da: bool = True) -> None:
     """Pre-warm installation cache to ensure expensive operations in _setup_installation
-    are only performed once across all tests.
+    are only performed once per installation across all tests.
+    
+    Args:
+    ----
+        installation: The installation to pre-warm
+        skip_streams: If True, skip loading stream resources (WAVES, sounds, music) which are expensive
+                     and not needed for most tests. Set to False if tests need stream resources.
+        skip_2da: If True, skip caching 2DA files which takes ~31 seconds. Set to False if tests need 2DA files.
+                  Tests that need 2DA files can call ht_batch_cache_2da themselves.
     
     This includes:
     - Caching 2DA files (ht_batch_cache_2da is idempotent, but we pre-warm for clarity)
+      (only if skip_2da=False)
     - Accessing stream resources (_streamwaves, _streamsounds, _streammusic) which triggers scanning
+      (only if skip_streams=False)
     """
-    global _installation_prewarmed
-    if _installation_prewarmed:
+    # Use installation path as unique identifier to track pre-warming per installation
+    installation_id = id(installation)
+    if installation_id in _prewarmed_installations:
         return
     
-    # Pre-warm 2DA caches for all editors that use _setup_installation
-    # DLGEditor (K1)
-    installation.ht_batch_cache_2da([
-        HTInstallation.TwoDA_VIDEO_EFFECTS,
-        HTInstallation.TwoDA_DIALOG_ANIMS,
-    ])
-    # DLGEditor (K2) and other editors
-    installation.ht_batch_cache_2da([
-        HTInstallation.TwoDA_EMOTIONS,
-        HTInstallation.TwoDA_EXPRESSIONS,
-        HTInstallation.TwoDA_VIDEO_EFFECTS,
-        HTInstallation.TwoDA_DIALOG_ANIMS,
-    ])
+    # Temporarily disable logging to avoid expensive flush operations during prewarm
+    import logging
+    root_logger = logging.getLogger()
+    original_level = root_logger.level
+    original_handlers = root_logger.handlers[:]
     
-    # Pre-warm stream resources by accessing them once (triggers scanning, but only once)
-    # This is the expensive operation that takes ~16 seconds
-    _ = list(installation._streamwaves)  # noqa: SLF001
-    _ = list(installation._streamsounds)  # noqa: SLF001
-    _ = list(installation._streammusic)  # noqa: SLF001
+    # Disable all handlers temporarily to prevent flush operations
+    for handler in root_logger.handlers:
+        handler.setLevel(logging.ERROR)
+    root_logger.setLevel(logging.ERROR)
     
-    _installation_prewarmed = True
+    try:
+        # Pre-warm 2DA caches for all editors that use _setup_installation
+        # This takes ~31 seconds - skip by default for kit generation tests
+        if not skip_2da:
+            # DLGEditor (K1)
+            installation.ht_batch_cache_2da([
+                HTInstallation.TwoDA_VIDEO_EFFECTS,
+                HTInstallation.TwoDA_DIALOG_ANIMS,
+            ])
+            # DLGEditor (K2) and other editors
+            installation.ht_batch_cache_2da([
+                HTInstallation.TwoDA_EMOTIONS,
+                HTInstallation.TwoDA_EXPRESSIONS,
+                HTInstallation.TwoDA_VIDEO_EFFECTS,
+                HTInstallation.TwoDA_DIALOG_ANIMS,
+            ])
+    
+        # Pre-warm stream resources by accessing them once (triggers scanning, but only once)
+        # This is the expensive operation that takes ~45 seconds - skip by default
+        if not skip_streams:
+            _ = list(installation._streamwaves)  # noqa: SLF001
+            _ = list(installation._streamsounds)  # noqa: SLF001
+            _ = list(installation._streammusic)  # noqa: SLF001
+    finally:
+        # Restore original logging configuration
+        root_logger.setLevel(original_level)
+        for handler, orig_handler in zip(root_logger.handlers, original_handlers):
+            if hasattr(orig_handler, 'level'):
+                handler.setLevel(orig_handler.level)
+    
+    _prewarmed_installations.add(installation_id)
 
 @pytest.fixture(scope="session")
 def installation(k1_path):
-    """Creates a shared HTInstallation instance for the session."""
+    """Creates a shared HTInstallation instance for K1 (session-scoped singleton)."""
     inst = HTInstallation(k1_path, "Test Installation", tsl=False)
-    _prewarm_installation(inst)
+    # Skip stream loading for most tests - saves ~45 seconds
+    _prewarm_installation(inst, skip_streams=True)
+    return inst
+
+@pytest.fixture(scope="session")
+def tsl_installation(k2_path):
+    """Creates a shared HTInstallation instance for K2/TSL (session-scoped singleton, lazy-loaded)."""
+    inst = HTInstallation(k2_path, "Test TSL Installation", tsl=True)
+    # Skip stream loading for most tests - saves ~45 seconds
+    _prewarm_installation(inst, skip_streams=True)
     return inst
 
 @pytest.fixture(scope="session", autouse=True)
@@ -136,6 +185,24 @@ def pytest_configure(config):
     """
     global _shared_k1_installation, _conftest_profiler
     
+    # Configure logging to suppress 'Loading ... from installation...' messages during tests
+    class InstallationLoadingFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            # Filter out messages containing "Loading" and "from installation"
+            message = record.getMessage()
+            if "Loading" in message and "from installation" in message:
+                return False
+            return True
+    
+    # Apply filter to root logger
+    root_logger = logging.getLogger()
+    installation_filter = InstallationLoadingFilter()
+    root_logger.addFilter(installation_filter)
+    
+    # Also set root logger level to WARNING to suppress INFO messages
+    # But keep the filter in case some handlers bypass the level
+    root_logger.setLevel(logging.WARNING)
+    
     # Start profiling conftest operations
     _conftest_profiler = cProfile.Profile()
     _conftest_profiler.enable()
@@ -145,7 +212,8 @@ def pytest_configure(config):
         k1_path = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
         if k1_path and os.path.exists(k1_path):
             _shared_k1_installation = HTInstallation(k1_path, "Shared Test Installation", tsl=False)
-            _prewarm_installation(_shared_k1_installation)
+            # Skip stream loading and 2DA caching for unittest tests - saves ~76 seconds total
+            _prewarm_installation(_shared_k1_installation, skip_streams=True, skip_2da=True)
     finally:
         _conftest_profiler.disable()
         duration = time.time() - start_time
@@ -257,8 +325,9 @@ def pytest_runtest_protocol(item, nextitem):
             
             # Rotate old prof files (keep only last 50)
             _rotate_prof_files(prof_dir)
-        else:
+        # uncomment to always print cprofile stats even if within target duration.
+        #else:
             # Still print stats for debugging, but don't save file
-            stats = pstats.Stats(profiler).sort_stats('cumtime')
-            print(f"\nProfile stats for {item.name} (duration: {duration:.2f}s, not saved - < 30s):")
-            stats.print_stats(20)
+        #    stats = pstats.Stats(profiler).sort_stats('cumtime')
+        #    print(f"\nProfile stats for {item.name} (duration: {duration:.2f}s, not saved - < 30s):")
+        #    stats.print_stats(20)

@@ -46,21 +46,25 @@ def test_read_txi(sample_txi_data: LiteralString, sample_txi: TXI):
     assert sample_txi.features.filter == False
     assert sample_txi.features.numchars == 256
     assert sample_txi.features.fontheight == 0.5
+    assert sample_txi.features.upperleftcoords is not None
     assert len(sample_txi.features.upperleftcoords) == 256
+    assert sample_txi.features.lowerrightcoords is not None
     assert len(sample_txi.features.lowerrightcoords) == 256
 
 
 def test_write_txi(sample_txi: TXI):
-    output = bytearray()
-    write_txi(sample_txi, output)
-    output.seek(0)
-    written_txi = read_txi(output)
+    output_bytes = bytes_txi(sample_txi)
+    written_txi = read_txi(io.BytesIO(output_bytes))
 
     assert written_txi.features.mipmap == sample_txi.features.mipmap
     assert written_txi.features.filter == sample_txi.features.filter
     assert written_txi.features.numchars == sample_txi.features.numchars
     assert written_txi.features.fontheight == sample_txi.features.fontheight
+    assert written_txi.features.upperleftcoords is not None
+    assert sample_txi.features.upperleftcoords is not None
     assert len(written_txi.features.upperleftcoords) == len(sample_txi.features.upperleftcoords)
+    assert written_txi.features.lowerrightcoords is not None
+    assert sample_txi.features.lowerrightcoords is not None
     assert len(written_txi.features.lowerrightcoords) == len(sample_txi.features.lowerrightcoords)
 
 

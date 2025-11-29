@@ -12,17 +12,17 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
+from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
 from qtpy import QtCore
 from qtpy.QtCore import (
-    QFileInfo,  # pyright: ignore[reportPrivateImportUsage]
-    QModelIndex,  # pyright: ignore[reportPrivateImportUsage]
-    QPoint,  # pyright: ignore[reportPrivateImportUsage]
-    QSortFilterProxyModel,  # pyright: ignore[reportPrivateImportUsage]
-    QTimer,  # pyright: ignore[reportPrivateImportUsage]
-    Qt,  # pyright: ignore[reportPrivateImportUsage]
-    Signal,  # pyright: ignore[reportPrivateImportUsage]
-    Slot,  # pyright: ignore[reportPrivateImportUsage]
+    QFileInfo,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
+    QModelIndex,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
+    QPoint,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
+    QSortFilterProxyModel,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
+    QTimer,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
+    Qt,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
+    Signal,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
+    Slot,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
 )
 from qtpy.QtGui import QCursor, QIcon, QImage, QImageReader, QPixmap, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QFileIconProvider, QHeaderView, QInputDialog, QListView, QMenu, QStyle, QToolTip, QWidget
@@ -32,28 +32,20 @@ from pykotor.resource.formats.tpc.tpc_auto import read_tpc, write_tpc
 from pykotor.resource.formats.tpc.tpc_data import TPC, TPCMipmap, TPCTextureFormat
 from pykotor.resource.type import ResourceType
 from toolset.data.installation import HTInstallation
-from pykotor.extract.installation import SearchLocation
-from pykotor.resource.formats.gff import GFFContent
-from pykotor.resource.formats.tpc import TPC, TPCTextureFormat
-from pykotor.resource.type import ResourceType
 from toolset.gui.dialogs.load_from_location_result import ResourceItems
 from toolset.gui.widgets.settings.installations import GlobalSettings
 
-try:
-    from toolset.gui.widgets.texture_loader import TextureLoaderProcess, deserialize_mipmap
-except Exception:  # noqa: BLE001
-    TextureLoaderProcess = None
-    deserialize_mipmap = None
+from toolset.gui.widgets.texture_loader import TextureLoaderProcess, deserialize_mipmap
 
 if TYPE_CHECKING:
-    from PIL.Image import Image
+    from PIL.Image import Image as PILImage
     from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QRect
     from qtpy.QtGui import QMouseEvent, QResizeEvent, QShowEvent
     from qtpy.QtWidgets import QScrollBar, _QMenu
     from qtpy.sip import voidptr
 
-    from pykotor.resource.formats.tpc.tpc_data import TPC
     from toolset.data.installation import HTInstallation
+    from toolset.gui.widgets.texture_loader import TextureLoaderProcess
     from utility.ui_libraries.qt.widgets.itemviews.listview import RobustListView
 
 
@@ -196,7 +188,7 @@ class ResourceList(MainWindowList):
         self,
         resource: FileResource,
     ):
-        model: QStandardItemModel = cast(QSortFilterProxyModel, self.ui.resourceTree.model()).sourceModel()  # type: ignore[attribute-access]
+        model: QAbstractItemModel = cast(QSortFilterProxyModel, self.ui.resourceTree.model()).sourceModel()  # type: ignore[attribute-access]
         if not isinstance(model, ResourceModel):
             RobustLogger().warning("Could not find model for resource list")
             return
@@ -294,36 +286,85 @@ class ResourceList(MainWindowList):
             RobustLogger().exception(f"Error showing context menu: {e}")
     
     def _is_saves_widget(self) -> bool:
-        """Check if this widget is the saves widget."""
-        try:
-            parent_widget = self.parent()
-            depth = 0
-            max_depth = 10  # Prevent infinite loops
-            while parent_widget and depth < max_depth:
-                parent_name = parent_widget.objectName() if hasattr(parent_widget, 'objectName') else ''
+        """Check if this widget is the saves widget.
+        
+        This function determines if the ResourceList instance is specifically
+        the saves widget used in the main window's saves tab. It checks:
+        1. The widget's objectName (set during UI initialization)
+        2. Parent widget hierarchy for saves-related identifiers
+        3. The top-level window's UI structure for savesWidget reference
+        
+        Returns:
+            bool: True if this widget is the saves widget, False otherwise
+        """
+        # Direct check: savesWidget has objectName "savesWidget" set in UI
+        if self.objectName() == "savesWidget":
+            return True
+        
+        # Check parent widget hierarchy for saves-related names
+        parent_obj: QObject | None = self.parent()
+        depth: int = 0
+        max_depth: int = 10  # Prevent infinite loops
+        
+        while parent_obj is not None and depth < max_depth:
+            if isinstance(parent_obj, QWidget):
+                parent_name: str = parent_obj.objectName()
                 if 'saves' in parent_name.lower():
                     return True
-                if hasattr(parent_widget, 'ui') and hasattr(parent_widget.ui, 'savesWidget'):
-                    return True
-                parent_widget = parent_widget.parent() if hasattr(parent_widget, 'parent') and callable(parent_widget.parent) else None
-                depth += 1
-            return False
-        except Exception:
-            return False
+                
+                # Check if parent has ui.savesWidget attribute by attempting direct access
+                try:
+                    parent_ui = parent_obj.ui  # type: ignore[attr-defined]
+                    if parent_ui is not None:
+                        saves_widget = parent_ui.savesWidget  # type: ignore[attr-defined]
+                        if saves_widget is self:
+                            return True
+                except AttributeError:
+                    # Parent doesn't have ui attribute, continue checking
+                    pass
+                
+                parent_obj = parent_obj.parent()
+            elif isinstance(parent_obj, QObject):
+                # Parent is QObject but not QWidget, get next parent
+                parent_obj = parent_obj.parent()
+            else:
+                break
+            
+            depth += 1
+        
+        # Check top-level window structure - use isinstance for type checking
+        top_level_window: QWidget | None = self.window()
+        if isinstance(top_level_window, QWidget):
+            # Check if it's a ToolWindow-like structure with ui.savesWidget
+            try:
+                window_ui = top_level_window.ui  # type: ignore[attr-defined]
+                if window_ui is not None:
+                    saves_widget = window_ui.savesWidget  # type: ignore[attr-defined]
+                    if isinstance(saves_widget, ResourceList) and saves_widget is self:
+                        return True
+            except AttributeError:
+                # Window doesn't have expected structure, continue
+                pass
+        
+        return False
     
     def on_open_save_editor_from_context(self):
         """Signal the main window to open the save editor."""
         # Get the main window and call its open_save_editor method
+        from toolset.gui.windows.main import ToolWindow
+        
         main_window = self.window()
-        if hasattr(main_window, 'on_open_save_editor'):
+        if isinstance(main_window, ToolWindow):
             main_window.on_open_save_editor()
     
     def on_fix_save_corruption_from_context(self):
         """Signal the main window to fix save corruption."""
         try:
             # Get the main window and call its fix_save_corruption_for_path method
+            from toolset.gui.windows.main import ToolWindow
+            
             main_window = self.window()
-            if not hasattr(main_window, 'active') or not main_window.active:
+            if not isinstance(main_window, ToolWindow) or main_window.active is None:
                 return
             
             # Get the selected save path from the tree
@@ -358,8 +399,7 @@ class ResourceList(MainWindowList):
                     current_save_location = Path(combo_data)
                     for save_path in main_window.active.saves.get(current_save_location, {}):
                         if save_name in str(save_path):
-                            if hasattr(main_window, 'fix_save_corruption_for_path'):
-                                main_window.fix_save_corruption_for_path(save_path)
+                            main_window.fix_save_corruption_for_path(save_path)
                             break
                     break
         except Exception as e:
@@ -567,11 +607,10 @@ class TextureList(MainWindowList):
                 poll_timer.stop()
         
         self._executor.shutdown(wait=False)
-        loader: multiprocessing.Process | None = getattr(self, "_loader", None)
+        loader: TextureLoaderProcess | None = getattr(self, "_loader", None)
         if loader is not None:
             try:
-                if hasattr(loader, "request_shutdown"):
-                    loader.request_shutdown()
+                loader.request_shutdown()
                 loader.terminate()
             except Exception:  # noqa: BLE001
                 RobustLogger().exception("Failed to terminate texture loader process during cleanup")
@@ -605,10 +644,9 @@ class TextureList(MainWindowList):
         
         # Stop poll timer and terminate old loader if exists
         self._poll_timer.stop()
-        loader: multiprocessing.Process | None = getattr(self, "_loader", None)
+        loader: TextureLoaderProcess | None = getattr(self, "_loader", None)
         if loader is not None:
-            if hasattr(loader, "request_shutdown"):
-                loader.request_shutdown()
+            loader.request_shutdown()
             loader.terminate()
             self._loader = None
         
@@ -916,7 +954,6 @@ class TextureList(MainWindowList):
                     self._loading_resources.discard(resource)
                 
                 if error is not None:
-                    # Only log non-None errors (None means texture simply not found, which is expected)
                     RobustLogger().warning(f"Texture load error: {error}")
                     continue
                     
@@ -1025,7 +1062,7 @@ def get_image_from_pillow(resource: FileResource, icon_size: int = 64) -> TPCMip
     from PIL import Image
 
     with Image.open(BytesIO(resource.data())) as img:
-        rgba_img: Image = img.convert("RGBA")
+        rgba_img: PILImage = img.convert("RGBA")
     return TPCMipmap(
         icon_size,
         icon_size,
@@ -1041,12 +1078,12 @@ def get_image_from_qt(
     """Get an image using Qt."""
     from qtpy.QtGui import QImage  # pylint: disable=redefined-outer-name,reimported
 
-    qimg = QImage()
+    qimg: QImage = QImage()
     if not qimg.loadFromData(resource.data()):
         icon_provider: QFileIconProvider = QFileIconProvider()
         icon: QIcon = icon_provider.icon(QFileInfo(str(resource.filepath())))
         pixmap: QPixmap = icon.pixmap(icon_size, icon_size)
-        qimg: QImage = pixmap.toImage()
+        qimg = pixmap.toImage()
 
     return qimg_to_tpc_get_result(qimg, icon_size)
 

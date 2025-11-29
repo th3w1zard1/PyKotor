@@ -433,7 +433,9 @@ class Installation:
 
         resources_list: list[FileResource] = []
         str_path = str(r_path)
-        RobustLogger().info(f"Loading '{os.path.relpath(str_path, self._path)}' from installation...")
+        # Use debug level instead of info to reduce logging overhead during prewarm
+        # This is called hundreds of times and causes expensive flush operations
+        RobustLogger().debug(f"Loading '{os.path.relpath(str_path, self._path)}' from installation...")
 
         try:
             for entry in os.scandir(str_path):
@@ -1213,7 +1215,7 @@ class Installation:
         -------
             A dictionary mapping the given items in the queries argument to a list of ResourceResult objects.
         """
-        order_list: list[SearchLocation] | None = list(order) if order is not None else []
+        order_list: list[SearchLocation] | None = list(order) if order is not None else None
         results: dict[ResourceIdentifier, ResourceResult | None] = {}
         locations: dict[ResourceIdentifier, list[LocationResult]] = self.locations(
             queries,
@@ -1332,7 +1334,7 @@ class Installation:
         """
         capsules = [] if capsules is None else capsules
         folders = [] if folders is None else folders
-        order_list: list[SearchLocation] | None = list(order) if order is not None else []
+        order_list: list[SearchLocation] | None = list(order) if order is not None else None
         query: ResourceIdentifier
 
         if isinstance(restype, list) or restype is None:
@@ -1832,11 +1834,11 @@ class Installation:
                 from io import BytesIO
                 try:
                     wav = read_wav(BytesIO(sound_data))
-                    sounds[resource.resname()] = bytes_wav(wav, ResourceType.INVALID)
+                    sounds[resource.resname()] = bytes_wav(wav, ResourceType.WAV_DEOB)
                 except (ValueError, OSError) as e:
-                    RobustLogger().warning("Failed to load WAV file '%s': %s", resource.filepath(), e)
-                    # Skip invalid WAV files instead of crashing
-                    continue
+                    RobustLogger().warning("Failed to load WAV file '%s': %s. Returning raw bytes as fallback.", resource.filepath(), e)
+                    # Return raw bytes as fallback if WAV parsing fails
+                    sounds[resource.resname()] = sound_data
 
         def check_capsules(values: Sequence[LazyCapsule]):
             for capsule in values:
@@ -1853,11 +1855,11 @@ class Installation:
                     from io import BytesIO
                     try:
                         wav = read_wav(BytesIO(sound_data))
-                        sounds[case_resname] = bytes_wav(wav, ResourceType.INVALID)
+                        sounds[case_resname] = bytes_wav(wav, ResourceType.WAV_DEOB)
                     except (ValueError, OSError) as e:
-                        RobustLogger().warning("Failed to load WAV file from capsule '%s': %s", capsule.filepath(), e)
-                        # Skip invalid WAV files instead of crashing
-                        continue
+                        RobustLogger().warning("Failed to load WAV file from capsule '%s': %s. Returning raw bytes as fallback.", capsule.filepath(), e)
+                        # Return raw bytes as fallback if WAV parsing fails
+                        sounds[case_resname] = sound_data
 
         def check_folders(values: list[Path]):
             queried_sound_files: set[Path] = set()
@@ -1874,11 +1876,11 @@ class Installation:
                 from io import BytesIO
                 try:
                     wav = read_wav(BytesIO(sound_data))
-                    sounds[sound_file.stem] = bytes_wav(wav, ResourceType.INVALID)
+                    sounds[sound_file.stem] = bytes_wav(wav, ResourceType.WAV_DEOB)
                 except (ValueError, OSError) as e:
-                    RobustLogger().warning("Failed to load WAV file '%s': %s", sound_file, e)
-                    # Skip invalid WAV files instead of crashing
-                    continue
+                    RobustLogger().warning("Failed to load WAV file '%s': %s. Returning raw bytes as fallback.", sound_file, e)
+                    # Return raw bytes as fallback if WAV parsing fails
+                    sounds[sound_file.stem] = sound_data
 
         function_map: dict[SearchLocation, Callable] = {
             SearchLocation.OVERRIDE: lambda: check_dict(self._override),

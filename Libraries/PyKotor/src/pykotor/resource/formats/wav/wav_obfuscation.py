@@ -52,10 +52,26 @@ def deobfuscate_audio(
 
     b0x4 = struct.unpack("I", data[0:4])[0]
     b4x8 = struct.unpack("I", data[4:8])[0]
-    b16x20 = struct.unpack("I", data[16:20])[0]
-    if b0x4 == 1179011410 and b4x8 == 50 and b16x20 == 18:  # noqa: PLR2004
-        return data[8:]
-    if b0x4 == 3294688255:  # noqa: PLR2004
+    if len(data) >= 20:
+        b16x20 = struct.unpack("I", data[16:20])[0]
+        if b0x4 == 1179011410 and b4x8 == 50 and b16x20 == 18:  # noqa: PLR2004
+            # VO obfuscation detected
+            # Our format uses 20-byte header with value 18 at offset 16 in header
+            # Original KotOR format used 8-byte header with value 18 in data at offset 8
+            # Check which format: if bytes 20:24 is "RIFF", it's our 20-byte format
+            # If bytes 8:12 is "RIFF", it's original 8-byte format
+            if len(data) > 24 and data[20:24] == b"RIFF":
+                # Our format: 20-byte header
+                return data[20:]
+            elif len(data) > 12 and data[8:12] == b"RIFF":
+                # Original format: 8-byte header
+                return data[8:]
+            else:
+                # Default to 8 bytes for backward compatibility
+                return data[8:]
+    # SFX obfuscation: check for magic number 0xFFFFFFFF (4294967295) or 3294688255
+    # Our format uses 0xFFFFFFFF, original KotOR might use 3294688255
+    if b0x4 == 4294967295 or b0x4 == 3294688255:  # noqa: PLR2004
         return data[470:]
     return data
 
@@ -93,12 +109,12 @@ def obfuscate_audio(
         ] + [0x55] * 442)  # Pad with 0x55 until 470 bytes
         return bytes(header) + data
     if wav_type == "VO":
-        # Create 8-byte VO header
-        header = bytearray(8)
+        # Create 20-byte VO header (deobfuscation checks offset 16 for value 18)
+        # Header structure: [0-3: 1179011410] [4-7: 50] [8-15: padding] [16-19: 18] [20+: data]
+        header = bytearray(20)
         struct.pack_into("I", header, 0, 1179011410)  # noqa: PLR2004
         struct.pack_into("I", header, 4, 50)  # noqa: PLR2004
-        # Bytes 8-16 would be part of the data, but we only prepend 8 bytes
-        # The value 18 check is at offset 16, which would be in the data itself
+        struct.pack_into("I", header, 16, 18)  # noqa: PLR2004 - Required for deobfuscation check at offset 16
         return bytes(header) + data
     return data
 

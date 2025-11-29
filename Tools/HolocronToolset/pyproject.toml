@@ -124,15 +124,15 @@ reportIncompatibleMethodOverride = false
 reportOptionalMemberAccess = false
 
 [tool.pyright.defineConstant]
-PYQT5 = false
+PYQT5 = true
 PYSIDE2 = false
 PYQT6 = false
-PYSIDE6 = true
+PYSIDE6 = false
 [tool.basedpyright.defineConstant]
-PYQT5 = false
+PYQT5 = true
 PYSIDE2 = false
 PYQT6 = false
-PYSIDE6 = true
+PYSIDE6 = false
 
 
 [tool.ruff]

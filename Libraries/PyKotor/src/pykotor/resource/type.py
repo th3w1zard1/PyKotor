@@ -266,6 +266,7 @@ class ResourceType(Enum):
 
     # For Toolset Use:
     MP3 = ResourceTuple(25014, "mp3", "Audio", "binary")  # pyright: ignore[reportCallIssue]
+    WAV_DEOB = ResourceTuple(25015, "wav", "Audio", "binary")  # Deobfuscated WAV (type_id 4 is obfuscated)  # pyright: ignore[reportCallIssue]
     TLK_XML = ResourceTuple(50001, "tlk.xml", "Talk Tables", "plaintext")  # pyright: ignore[reportCallIssue]
     MDL_ASCII = ResourceTuple(50002, "mdl.ascii", "Models", "plaintext")  # pyright: ignore[reportCallIssue]
     TwoDA_CSV = ResourceTuple(50003, "2da.csv", "2D Arrays", "plaintext")  # pyright: ignore[reportCallIssue]

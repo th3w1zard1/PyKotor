@@ -163,7 +163,8 @@ def decompile_ncs(file_path: str | io.BufferedIOBase, actions: ActionsData) -> s
         while subs.has_next():
             subs.next().apply(destroytree)
         mainsub.apply(destroytree)
-        return data
+        data.generate_code()
+        return data.get_code()
     except Exception as e:
         import traceback
         traceback.print_exc()

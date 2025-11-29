@@ -102,12 +102,15 @@ class FileScriptData:
                 fcnbuff.append(str(state) + newline)
             globs = ""
             if self.globals is not None:
-                globs = "// Globals" + newline + state.to_string_globals() + newline
+                globs = "// Globals" + newline + self.globals.to_string_globals() + newline
             protohdr = ""
             if len(protobuff) > 0:
                 protohdr = "// Prototypes" + newline
                 protobuff.append(newline)
-            self.code = str(self.subdata.get_struct_declarations()) + globs + protohdr + "".join(protobuff) + "".join(fcnbuff)
+            struct_decls = ""
+            if self.subdata is not None:
+                struct_decls = str(self.subdata.get_struct_declarations())
+            self.code = struct_decls + globs + protohdr + "".join(protobuff) + "".join(fcnbuff)
         finally:
             protobuff = None
             fcnbuff = None

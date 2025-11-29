@@ -30,6 +30,7 @@ Please do not create .md documentation unless it delivers public-facing informat
 ## Conventions
 
 - When developing code, please ensure you ALWAYS check the .gitmodules and the ./vendor folder to find semantically similar code. For any hits, please always comment in the python code what relpath/line number it can be found at and any differences if any. This should be as full and complete as possible.
+- Do NOT use `hasattr` or `getattr` in most cases; prefer static type conditionals with e.g. `isinstance` or `issubclass`. tldr: prefer solutions that can be statically type checked with e.g. mypy/pyright.
 
 ## Reference Material
 

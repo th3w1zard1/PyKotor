@@ -41,6 +41,14 @@ class AnalysisAdapter:
     def case_node(self, node: Node):
         self.default_case(node)
 
+    def case_start(self, node):
+        from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
+        self.default_case(node)
+
+    def case_eof(self, node):
+        from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
+        self.default_case(node)
+
     def case_a_program(self, node):
         self.default_case(node)
 
@@ -150,5 +158,95 @@ class AnalysisAdapter:
         self.default_case(node)
 
     def case_a_rsadd_command(self, node):
+        self.default_case(node)
+
+    def case_t_jz(self, node):
+        self.default_case(node)
+
+    def case_t_jnz(self, node):
+        self.default_case(node)
+
+    def case_a_zero_jump_if(self, node):
+        self.default_case(node)
+
+    def case_a_nonzero_jump_if(self, node):
+        self.default_case(node)
+
+    def case_a_conditional_jump_command(self, node):
+        self.default_case(node)
+
+    def case_a_cond_jump_cmd(self, node):
+        self.default_case(node)
+
+    def case_a_copydownbp_cmd(self, node):
+        self.default_case(node)
+
+    def case_a_copytopbp_cmd(self, node):
+        self.default_case(node)
+
+    def case_a_copy_down_bp_command(self, node):
+        self.default_case(node)
+
+    def case_a_copy_top_bp_command(self, node):
+        self.default_case(node)
+
+    def case_t_cpdownbp(self, node):
+        self.default_case(node)
+
+    def case_t_cptopbp(self, node):
+        self.default_case(node)
+
+    def case_a_destruct_cmd(self, node):
+        self.default_case(node)
+
+    def case_a_destruct_command(self, node):
+        self.default_case(node)
+
+    def case_t_destruct(self, node):
+        self.default_case(node)
+
+    def case_a_bp_cmd(self, node):
+        self.default_case(node)
+
+    def case_a_bp_command(self, node):
+        self.default_case(node)
+
+    def case_a_savebp_bp_op(self, node):
+        self.default_case(node)
+
+    def case_a_restorebp_bp_op(self, node):
+        self.default_case(node)
+
+    def case_t_savebp(self, node):
+        self.default_case(node)
+
+    def case_t_restorebp(self, node):
+        self.default_case(node)
+
+    def case_a_store_state_cmd(self, node):
+        self.default_case(node)
+
+    def case_a_store_state_command(self, node):
+        self.default_case(node)
+
+    def case_t_storestate(self, node):
+        self.default_case(node)
+
+    def case_a_binary_command(self, node):
+        self.default_case(node)
+
+    def case_a_unary_command(self, node):
+        self.default_case(node)
+
+    def case_a_logii_command(self, node):
+        self.default_case(node)
+
+    def case_a_binary_cmd(self, node):
+        self.default_case(node)
+
+    def case_a_unary_cmd(self, node):
+        self.default_case(node)
+
+    def case_a_logii_cmd(self, node):
         self.default_case(node)
 

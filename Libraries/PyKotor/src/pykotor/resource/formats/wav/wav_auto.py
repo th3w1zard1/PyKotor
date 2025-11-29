@@ -49,13 +49,14 @@ def write_wav(
     """Writes the WAV data to the target location with automatic obfuscation.
 
     If file_format is ResourceType.WAV, the data will be automatically obfuscated
-    based on the WAV's type (SFX or VO). Otherwise, writes standard RIFF/WAVE format.
+    based on the WAV's type (SFX or VO). If file_format is ResourceType.WAV_DEOB,
+    writes standard RIFF/WAVE format. Otherwise, writes standard RIFF/WAVE format.
 
     Args:
     ----
         wav: The WAV file being written.
         target: The location to write the data to.
-        file_format: The file format (WAV for obfuscated, any other for standard).
+        file_format: The file format (WAV for obfuscated, WAV_DEOB or any other for standard).
 
     Raises:
     ------
@@ -76,12 +77,13 @@ def bytes_wav(
     """Returns the WAV data as a bytes object with automatic obfuscation handling.
 
     If file_format is ResourceType.WAV, the data will be automatically obfuscated
-    based on the WAV's type (SFX or VO). Otherwise, returns standard RIFF/WAVE format.
+    based on the WAV's type (SFX or VO). If file_format is ResourceType.WAV_DEOB,
+    returns standard RIFF/WAVE format. Otherwise, returns standard RIFF/WAVE format.
 
     Args:
     ----
         wav: The target WAV object.
-        file_format: The file format (WAV for obfuscated, any other for standard).
+        file_format: The file format (WAV for obfuscated, WAV_DEOB or any other for standard).
 
     Raises:
     ------
@@ -89,7 +91,7 @@ def bytes_wav(
 
     Returns:
     -------
-        The WAV data (automatically obfuscated if file_format is WAV).
+        The WAV data (automatically obfuscated if file_format is WAV, standard format otherwise).
     """
     data = bytearray()
     write_wav(wav, data, file_format)

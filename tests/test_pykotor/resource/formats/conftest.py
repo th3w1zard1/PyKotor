@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import cProfile
+import logging
 import os
 import pathlib
 import shutil
@@ -46,6 +47,40 @@ if TYPE_CHECKING:
 K1_PATH: str | None = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
 K2_PATH: str | None = os.environ.get("K2_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II")
 LOG_FILENAME = "test_ncs_compilers_install"
+
+
+@pytest.fixture(scope="session")
+def k1_path():
+    """Returns the K1 installation path (session-scoped)."""
+    path = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
+    if not path:
+        pytest.skip("K1_PATH environment variable not set")
+    return path
+
+
+@pytest.fixture(scope="session")
+def k2_path():
+    """Returns the K2 installation path (session-scoped)."""
+    path = os.environ.get("K2_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II")
+    if not path:
+        pytest.skip("K2_PATH environment variable not set")
+    return path
+
+
+@pytest.fixture(scope="session")
+def installation(k1_path):
+    """Creates a shared Installation instance for K1 (session-scoped singleton, lazy-loaded)."""
+    if not Path(k1_path).joinpath("chitin.key").is_file():
+        pytest.skip(f"K1 installation not found at {k1_path}")
+    return Installation(k1_path)
+
+
+@pytest.fixture(scope="session")
+def tsl_installation(k2_path):
+    """Creates a shared Installation instance for K2/TSL (session-scoped singleton, lazy-loaded)."""
+    if not Path(k2_path).joinpath("chitin.key").is_file():
+        pytest.skip(f"K2 installation not found at {k2_path}")
+    return Installation(k2_path)
 
 
 def pytest_report_teststatus(
@@ -176,3 +211,24 @@ def pytest_runtest_makereport(
         )
         return report
     return None
+
+
+def pytest_configure(config):
+    """Configure logging to suppress 'Loading ... from installation...' messages during tests."""
+    # Suppress INFO level messages from root logger that contain "Loading" and "from installation"
+    class InstallationLoadingFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            # Filter out messages containing "Loading" and "from installation"
+            message = record.getMessage()
+            if "Loading" in message and "from installation" in message:
+                return False
+            return True
+    
+    # Apply filter to root logger
+    root_logger = logging.getLogger()
+    installation_filter = InstallationLoadingFilter()
+    root_logger.addFilter(installation_filter)
+    
+    # Also set root logger level to WARNING to suppress INFO messages
+    # But keep the filter in case some handlers bypass the level
+    root_logger.setLevel(logging.WARNING)

@@ -5,9 +5,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstruction, NCSInstructionType  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_program import AProgram  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
 
 
-def convert_ncs_to_ast(ncs: NCS) -> AProgram:
+def convert_ncs_to_ast(ncs: NCS) -> Start:
     """Convert NCSInstruction[] to DeNCS AST format.
 
     This replaces the Decoder -> Lexer -> Parser chain by directly
@@ -16,11 +17,14 @@ def convert_ncs_to_ast(ncs: NCS) -> AProgram:
     from pykotor.resource.formats.ncs.dencs.node.a_program import AProgram  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
 
+    from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
+    
     program = AProgram()
 
     instructions = ncs.instructions
     if not instructions:
-        return program
+        return Start(program, EOF())
 
     # Find subroutines (JSR targets)
     subroutine_starts = set()
@@ -59,7 +63,9 @@ def convert_ncs_to_ast(ncs: NCS) -> AProgram:
         if sub:
             program.add_subroutine(sub)
 
-    return program
+    from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
+    return Start(program, EOF())
 
 
 def _convert_instruction_range_to_subroutine(
@@ -109,8 +115,10 @@ def _convert_instruction_to_cmd(inst: NCSInstruction, pos: int, instructions: li
         return _convert_const_cmd(inst, pos)
     elif ins_type == NCSInstructionType.ACTION:
         return _convert_action_cmd(inst, pos)
-    elif ins_type in {NCSInstructionType.JMP, NCSInstructionType.JSR, NCSInstructionType.JZ, NCSInstructionType.JNZ}:
+    elif ins_type in {NCSInstructionType.JMP, NCSInstructionType.JSR}:
         return _convert_jump_cmd(inst, pos, instructions)
+    elif ins_type in {NCSInstructionType.JZ, NCSInstructionType.JNZ}:
+        return _convert_conditional_jump_cmd(inst, pos, instructions)
     elif ins_type == NCSInstructionType.RETN:
         return _convert_retn_cmd(inst, pos)
     elif ins_type in {NCSInstructionType.CPDOWNSP, NCSInstructionType.CPTOPSP}:
@@ -127,7 +135,16 @@ def _convert_instruction_to_cmd(inst: NCSInstruction, pos: int, instructions: li
         return _convert_bp_cmd(inst, pos)
     elif ins_type == NCSInstructionType.STORE_STATE:
         return _convert_store_state_cmd(inst, pos)
-    # Add binary/unary/logic ops...
+    elif inst.is_arithmetic() or inst.is_comparison() or inst.is_bitwise():
+        # Binary operations (arithmetic, comparison, bitwise)
+        # Unary operations like NEG, NOT, COMP are also handled here
+        if inst.is_arithmetic() and inst.ins_type in {NCSInstructionType.NEGI, NCSInstructionType.NEGF, NCSInstructionType.NOTI, NCSInstructionType.COMPI}:
+            return _convert_unary_cmd(inst, pos)
+        else:
+            return _convert_binary_cmd(inst, pos)
+    elif inst.is_logical():
+        # Logic operations (LOGANDII, LOGORII)
+        return _convert_logii_cmd(inst, pos)
 
     return None
 
@@ -145,7 +162,6 @@ def _convert_const_cmd(inst: NCSInstruction, pos: int):
     from pykotor.resource.formats.ncs.dencs.node.t_float_constant import TFloatConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_string_literal import TStringLiteral  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
 
     const_cmd = AConstCmd()
     const_command = AConstCommand()
@@ -192,7 +208,6 @@ def _convert_action_cmd(inst: NCSInstruction, pos: int):
     from pykotor.resource.formats.ncs.dencs.node.t_action import TAction  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
 
     action_cmd = AActionCmd()
     action_command = AActionCommand()
@@ -203,7 +218,7 @@ def _convert_action_cmd(inst: NCSInstruction, pos: int):
     ins_type = inst.ins_type
     type_val = ins_type.value.qualifier if hasattr(ins_type, 'value') and hasattr(ins_type.value, 'qualifier') else 0
     action_command.set_type(TIntegerConstant(str(type_val), pos, 0))
-    
+
     # ACTION args: [routine_id (uint16), arg_count (uint8)]
     id_val = 0
     arg_count_val = 0
@@ -230,7 +245,7 @@ def _convert_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInst
     from pykotor.resource.formats.ncs.dencs.node.t_jsr import TJsr  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
-    
+
     ins_type = inst.ins_type
     type_val = ins_type.value.qualifier if hasattr(ins_type, 'value') and hasattr(ins_type.value, 'qualifier') else 0
 
@@ -268,13 +283,58 @@ def _convert_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInst
         return jump_cmd
 
 
+def _convert_conditional_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
+    """Convert JZ/JNZ instruction to ACondJumpCmd."""
+    from pykotor.resource.formats.ncs.dencs.node.a_cond_jump_cmd import ACondJumpCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_conditional_jump_command import AConditionalJumpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_zero_jump_if import AZeroJumpIf  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_nonzero_jump_if import ANonzeroJumpIf  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_jz import TJz  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_jnz import TJnz  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
+
+    ins_type = inst.ins_type
+    type_val = ins_type.value.qualifier if hasattr(ins_type, 'value') and hasattr(ins_type.value, 'qualifier') else 0
+
+    offset = 0
+    if inst.jump is not None and instructions is not None:
+        try:
+            jump_idx = instructions.index(inst.jump)
+            offset = jump_idx - pos
+        except ValueError:
+            offset = 0
+
+    cond_jump_cmd = ACondJumpCmd()
+    cond_jump_command = AConditionalJumpCommand()
+
+    if ins_type == NCSInstructionType.JZ:
+        zero_jump_if = AZeroJumpIf()
+        zero_jump_if.set_jz(TJz(pos, 0))
+        cond_jump_command.set_jump_if(zero_jump_if)
+    else:  # JNZ
+        nonzero_jump_if = ANonzeroJumpIf()
+        nonzero_jump_if.set_jnz(TJnz(pos, 0))
+        cond_jump_command.set_jump_if(nonzero_jump_if)
+
+    cond_jump_command.set_pos(TIntegerConstant(str(pos), pos, 0))
+    cond_jump_command.set_type(TIntegerConstant(str(type_val), pos, 0))
+    cond_jump_command.set_offset(TIntegerConstant(str(offset), pos, 0))
+    cond_jump_command.set_semi(TSemi(pos, 0))
+
+    cond_jump_cmd.set_conditional_jump_command(cond_jump_command)
+
+    return cond_jump_cmd
+
+
 def _convert_retn(inst: NCSInstruction, pos: int):
     """Convert RETN instruction to AReturn (for subroutine return)."""
     from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_retn import TRetn  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
-    
+
     ret = AReturn()
     ret.set_retn(TRetn(pos, 0))
     ret.set_pos(TIntegerConstant(str(pos), pos, 0))
@@ -290,7 +350,7 @@ def _convert_retn(inst: NCSInstruction, pos: int):
 def _convert_retn_cmd(inst: NCSInstruction, pos: int):
     """Convert RETN instruction to AReturnCmd (for command block)."""
     from pykotor.resource.formats.ncs.dencs.node.a_return_cmd import AReturnCmd  # pyright: ignore[reportMissingImports]
-    
+
     retn_cmd = AReturnCmd()
     retn = _convert_retn(inst, pos)
     retn_cmd.set_return(retn)
@@ -341,7 +401,43 @@ def _convert_copy_sp_cmd(inst: NCSInstruction, pos: int):
 
 def _convert_copy_bp_cmd(inst: NCSInstruction, pos: int):
     """Convert CPDOWNBP/CPTOPBP instruction to appropriate cmd."""
-    return None
+    from pykotor.resource.formats.ncs.dencs.node.a_copydownbp_cmd import ACopydownbpCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copytopbp_cmd import ACopytopbpCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_cpdownbp import TCpdownbp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_cptopbp import TCptopbp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
+
+    ins_type = inst.ins_type
+    type_val = ins_type.value.qualifier if hasattr(ins_type, 'value') and hasattr(ins_type.value, 'qualifier') else 0
+    offset = inst.args[0] if inst.args and len(inst.args) > 0 else 0
+    size = inst.args[1] if inst.args and len(inst.args) > 1 else 0
+
+    if ins_type == NCSInstructionType.CPDOWNBP:
+        cmd = ACopydownbpCmd()
+        command = ACopyDownBpCommand()
+        command.set_cpdownbp(TCpdownbp(pos, 0))
+        command.set_pos(TIntegerConstant(str(pos), pos, 0))
+        command.set_type(TIntegerConstant(str(type_val), pos, 0))
+        command.set_offset(TIntegerConstant(str(offset), pos, 0))
+        command.set_size(TIntegerConstant(str(size), pos, 0))
+        command.set_semi(TSemi(pos, 0))
+        cmd.set_copy_down_bp_command(command)
+        return cmd
+    else:  # CPTOPBP
+        cmd = ACopytopbpCmd()
+        command = ACopyTopBpCommand()
+        command.set_cptopbp(TCptopbp(pos, 0))
+        command.set_pos(TIntegerConstant(str(pos), pos, 0))
+        command.set_type(TIntegerConstant(str(type_val), pos, 0))
+        command.set_offset(TIntegerConstant(str(offset), pos, 0))
+        command.set_size(TIntegerConstant(str(size), pos, 0))
+        command.set_semi(TSemi(pos, 0))
+        cmd.set_copy_top_bp_command(command)
+        return cmd
 
 
 def _convert_movesp_cmd(inst: NCSInstruction, pos: int):
@@ -391,16 +487,222 @@ def _convert_rsadd_cmd(inst: NCSInstruction, pos: int):
 
 
 def _convert_destruct_cmd(inst: NCSInstruction, pos: int):
-    """Placeholder - needs full implementation"""
-    return None
+    """Convert DESTRUCT instruction to ADestructCmd."""
+    from pykotor.resource.formats.ncs.dencs.node.a_destruct_cmd import ADestructCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_destruct import TDestruct  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+
+    ins_type = inst.ins_type
+    type_val = ins_type.value.qualifier if hasattr(ins_type, 'value') and hasattr(ins_type.value, 'qualifier') else 0
+
+    # DESTRUCT args: [sizeRem (uint16), offset (uint16), sizeSave (uint16)]
+    size_rem = inst.args[0] if inst.args and len(inst.args) > 0 else 0
+    offset = inst.args[1] if inst.args and len(inst.args) > 1 else 0
+    size_save = inst.args[2] if inst.args and len(inst.args) > 2 else 0
+
+    cmd = ADestructCmd()
+    command = ADestructCommand()
+    command.set_destruct(TDestruct(pos, 0))
+    command.set_pos(TIntegerConstant(str(pos), pos, 0))
+    command.set_type(TIntegerConstant(str(type_val), pos, 0))
+    command.set_size_rem(TIntegerConstant(str(size_rem), pos, 0))
+    command.set_offset(TIntegerConstant(str(offset), pos, 0))
+    command.set_size_save(TIntegerConstant(str(size_save), pos, 0))
+    command.set_semi(TSemi(pos, 0))
+    cmd.set_destruct_command(command)
+
+    return cmd
 
 
 def _convert_bp_cmd(inst: NCSInstruction, pos: int):
-    """Placeholder - needs full implementation"""
-    return None
+    """Convert SAVEBP/RESTOREBP instruction to ABpCmd."""
+    from pykotor.resource.formats.ncs.dencs.node.a_bp_cmd import ABpCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_bp_command import ABpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_savebp_bp_op import ASavebpBpOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_restorebp_bp_op import ARestorebpBpOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_savebp import TSavebp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_restorebp import TRestorebp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
+
+    ins_type = inst.ins_type
+    type_val = ins_type.value.qualifier if hasattr(ins_type, 'value') and hasattr(ins_type.value, 'qualifier') else 0
+
+    cmd = ABpCmd()
+    command = ABpCommand()
+
+    if ins_type == NCSInstructionType.SAVEBP:
+        bp_op = ASavebpBpOp()
+        bp_op.set_savebp(TSavebp(pos, 0))
+        command.set_bp_op(bp_op)
+    else:  # RESTOREBP
+        bp_op = ARestorebpBpOp()
+        bp_op.set_restorebp(TRestorebp(pos, 0))
+        command.set_bp_op(bp_op)
+
+    command.set_pos(TIntegerConstant(str(pos), pos, 0))
+    command.set_type(TIntegerConstant(str(type_val), pos, 0))
+    command.set_semi(TSemi(pos, 0))
+    cmd.set_bp_command(command)
+
+    return cmd
 
 
 def _convert_store_state_cmd(inst: NCSInstruction, pos: int):
-    """Placeholder - needs full implementation"""
-    return None
+    """Convert STORE_STATE instruction to AStoreStateCmd."""
+    from pykotor.resource.formats.ncs.dencs.node.a_store_state_cmd import AStoreStateCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_store_state_command import AStoreStateCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_storestate import TStorestate  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+
+    # STORE_STATE has 2 args according to ncs_data.py: [offset (uint16), sizeBp (uint8), sizeSp (uint8)]
+    # The args are packed, so we need to extract them properly
+    offset = inst.args[0] if inst.args and len(inst.args) > 0 else 0
+    # The second arg contains both sizeBp and sizeSp packed together
+    # Assuming args[1] is the packed value (sizeBp in low byte, sizeSp in high byte) or separate args
+    size_bp = inst.args[1] if inst.args and len(inst.args) > 1 else 0
+    size_sp = inst.args[2] if inst.args and len(inst.args) > 2 else 0
+
+    cmd = AStoreStateCmd()
+    command = AStoreStateCommand()
+    command.set_storestate(TStorestate(pos, 0))
+    command.set_pos(TIntegerConstant(str(pos), pos, 0))
+    command.set_offset(TIntegerConstant(str(offset), pos, 0))
+    command.set_size_bp(TIntegerConstant(str(size_bp), pos, 0))
+    command.set_size_sp(TIntegerConstant(str(size_sp), pos, 0))
+    command.set_semi(TSemi(pos, 0))
+    cmd.set_store_state_command(command)
+
+    return cmd
+
+
+def _convert_binary_cmd(inst: NCSInstruction, pos: int):
+    """Convert binary operation instruction (ADD, SUB, MUL, DIV, MOD, comparisons, bitwise) to ABinaryCmd/ABinaryCommand."""
+    from pykotor.resource.formats.ncs.dencs.node.a_binary_cmd import ABinaryCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+    
+    # Get type qualifier
+    type_val = inst.ins_type.value.qualifier if hasattr(inst.ins_type, 'value') and hasattr(inst.ins_type.value, 'qualifier') else 0
+    
+    # Map instruction type to operator token and node
+    # TODO: Create full operator classes (AAddBinaryOp, ASubBinaryOp, etc.)
+    # For now, create a placeholder operator node
+    binary_op = _create_binary_operator(inst.ins_type, pos)
+    
+    cmd = ABinaryCmd()
+    command = ABinaryCommand()
+    command.set_binary_op(binary_op)
+    command.set_pos(TIntegerConstant(str(pos), pos, 0))
+    command.set_type(TIntegerConstant(str(type_val), pos, 0))
+    
+    # Calculate size based on result type
+    result_size = 1  # Default to 1, will be refined when Type system is fully integrated
+    command.set_size(TIntegerConstant(str(result_size), pos, 0))
+    command.set_semi(TSemi(pos, 0))
+    cmd.set_binary_command(command)
+    
+    return cmd
+
+
+def _convert_unary_cmd(inst: NCSInstruction, pos: int):
+    """Convert unary operation instruction (NEG, NOT, COMP) to AUnaryCmd/AUnaryCommand."""
+    from pykotor.resource.formats.ncs.dencs.node.a_unary_cmd import AUnaryCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+    
+    # Get type qualifier
+    type_val = inst.ins_type.value.qualifier if hasattr(inst.ins_type, 'value') and hasattr(inst.ins_type.value, 'qualifier') else 0
+    
+    # Create unary operator
+    unary_op = _create_unary_operator(inst.ins_type, pos)
+    
+    cmd = AUnaryCmd()
+    command = AUnaryCommand()
+    command.set_unary_op(unary_op)
+    command.set_pos(TIntegerConstant(str(pos), pos, 0))
+    command.set_type(TIntegerConstant(str(type_val), pos, 0))
+    command.set_semi(TSemi(pos, 0))
+    cmd.set_unary_command(command)
+    
+    return cmd
+
+
+def _convert_logii_cmd(inst: NCSInstruction, pos: int):
+    """Convert logic operation instruction (LOGANDII, LOGORII) to ALogiiCmd/ALogiiCommand."""
+    from pykotor.resource.formats.ncs.dencs.node.a_logii_cmd import ALogiiCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+    
+    # Get type qualifier
+    type_val = inst.ins_type.value.qualifier if hasattr(inst.ins_type, 'value') and hasattr(inst.ins_type.value, 'qualifier') else 0
+    
+    # Create logic operator
+    logii_op = _create_logii_operator(inst.ins_type, pos)
+    
+    cmd = ALogiiCmd()
+    command = ALogiiCommand()
+    command.set_logii_op(logii_op)
+    command.set_pos(TIntegerConstant(str(pos), pos, 0))
+    command.set_type(TIntegerConstant(str(type_val), pos, 0))
+    command.set_semi(TSemi(pos, 0))
+    cmd.set_logii_command(command)
+    
+    return cmd
+
+
+def _create_binary_operator(ins_type: NCSInstructionType, pos: int):
+    """Create a PBinaryOp node for the given instruction type."""
+    from pykotor.resource.formats.ncs.dencs.node.p_binary_op import PBinaryOp  # pyright: ignore[reportMissingImports]
+    
+    # TODO: Create specific operator classes (AAddBinaryOp, ASubBinaryOp, etc.)
+    # For now, return a placeholder that can be expanded later
+    class PlaceholderBinaryOp(PBinaryOp):
+        def __init__(self):
+            super().__init__()
+            self._ins_type = ins_type
+        
+        def apply(self, sw):
+            sw.case_node(self)
+    
+    return PlaceholderBinaryOp()
+
+
+def _create_unary_operator(ins_type: NCSInstructionType, pos: int):
+    """Create a PUnaryOp node for the given instruction type."""
+    from pykotor.resource.formats.ncs.dencs.node.p_unary_op import PUnaryOp  # pyright: ignore[reportMissingImports]
+    
+    # TODO: Create specific operator classes (ANegUnaryOp, ANotUnaryOp, ACompUnaryOp)
+    class PlaceholderUnaryOp(PUnaryOp):
+        def __init__(self):
+            super().__init__()
+            self._ins_type = ins_type
+        
+        def apply(self, sw):
+            sw.case_node(self)
+    
+    return PlaceholderUnaryOp()
+
+
+def _create_logii_operator(ins_type: NCSInstructionType, pos: int):
+    """Create a PLogiiOp node for the given instruction type."""
+    from pykotor.resource.formats.ncs.dencs.node.p_logii_op import PLogiiOp  # pyright: ignore[reportMissingImports]
+    
+    # TODO: Create specific operator classes (AAndLogiiOp, AOrLogiiOp)
+    class PlaceholderLogiiOp(PLogiiOp):
+        def __init__(self):
+            super().__init__()
+            self._ins_type = ins_type
+        
+        def apply(self, sw):
+            sw.case_node(self)
+    
+    return PlaceholderLogiiOp()
 

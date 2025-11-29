@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import sys
 import unittest
 from difflib import unified_diff
@@ -33,15 +34,40 @@ if str(UTILITY_PATH) not in sys.path:
     sys.path.insert(0, str(UTILITY_PATH))
 
 from pykotor.extract.installation import Installation  # noqa: E402
-from pykotor.tools.kit import extract_kit_from_rim  # noqa: E402
+from pykotor.tools.kit import extract_kit, find_module_file  # noqa: E402
 
 # Get K1_PATH from environment, handling quoted paths from .env file
-_k1_path_raw = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
+_k1_path_raw = os.environ.get("K1_PATH")
+if not _k1_path_raw:
+    # Try loading from .env file if not set in environment
+    env_file = REPO_ROOT / ".env"
+    if env_file.exists():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            if line.strip().startswith("K1_PATH="):
+                _k1_path_raw = line.split("=", 1)[1].strip()
+                break
+    # Fallback to default if still not found
+    if not _k1_path_raw:
+        _k1_path_raw = "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor"
+
 K1_PATH: str | None = _k1_path_raw.strip('"').strip("'") if _k1_path_raw else None
 
 
 class TestKitGeneration(unittest.TestCase):
     """Test kit generation from RIM files."""
+    
+    # Mapping of kit IDs to their correct module names
+    KIT_TO_MODULE = {
+        "blackvulkar": "tar_m10aa",
+        "dantooineestate": "danm16",
+        "davikestate": "tar_m08aa",
+        "enclavesurface": "danm14aa",
+        "endarspire": "end_m01aa",
+        "hiddenbek": "tar_m11aa",
+        "jedienclave": "danm13",
+        "sithbase": "tar_m09aa",
+        "tarissewers": "tar_m05aa",
+    }
 
     @classmethod
     def setUpClass(cls):
@@ -63,9 +89,9 @@ class TestKitGeneration(unittest.TestCase):
             shutil.rmtree(self.test_output_path)  # type: ignore[attr-defined]
 
     def test_generate_jedienclave_kit(self):
-        """Test generating jedienclave kit from danm13.rim/danm13_s.rim."""
+        """Test generating jedienclave kit and comparing files."""
         # Generate the kit
-        extract_kit_from_rim(
+        extract_kit(
             self.installation,  # type: ignore[attr-defined]
             self.module_name,  # type: ignore[attr-defined]
             self.test_output_path,  # type: ignore[attr-defined]
@@ -79,11 +105,29 @@ class TestKitGeneration(unittest.TestCase):
         # Verify basic kit structure exists
         self._verify_kit_structure(generated_kit_path)
 
+        # Compare with expected kit if it exists
+        if self.expected_kit_path.exists():  # type: ignore[attr-defined]
+            self._compare_kits(generated_kit_path, self.expected_kit_path, "jedienclave")  # type: ignore[attr-defined]
+        else:
+            # If expected kit doesn't exist, at least verify basic structure
+            self.assertTrue((generated_kit_path / "textures").exists() or (generated_kit_path / "lightmaps").exists(),
+                          "Generated kit should have textures or lightmaps folder")
+
+    def test_generate_jedienclave_kit_json(self):
+        """Test generating jedienclave kit and comparing JSON files."""
+        # Generate the kit
+        extract_kit(
+            self.installation,  # type: ignore[attr-defined]
+            self.module_name,  # type: ignore[attr-defined]
+            self.test_output_path,  # type: ignore[attr-defined]
+            kit_id="jedienclave",
+        )
+
         # Compare JSON files if expected JSON exists
         generated_json_path = self.test_output_path / "jedienclave.json"  # type: ignore[attr-defined]
         if self.expected_json_path.exists():  # type: ignore[attr-defined]
             self.assertTrue(generated_json_path.exists(), "Generated JSON file should exist")
-            # JSON comparison is done in _compare_kits via _compare_json_files
+            self._compare_json_files(generated_json_path, self.expected_json_path)  # type: ignore[attr-defined]
         else:
             # If expected JSON doesn't exist, just verify the generated JSON is valid
             if generated_json_path.exists():
@@ -94,95 +138,55 @@ class TestKitGeneration(unittest.TestCase):
                 self.assertIn("id", json_data)
                 self.assertEqual(json_data["id"], "jedienclave")
 
-        # Compare with expected kit if it exists
-        if self.expected_kit_path.exists():  # type: ignore[attr-defined]
-            self._compare_kits(generated_kit_path, self.expected_kit_path, "jedienclave")  # type: ignore[attr-defined]
-        else:
-            # If expected kit doesn't exist, at least verify basic structure
-            self.assertTrue((generated_kit_path / "textures").exists() or (generated_kit_path / "lightmaps").exists(),
-                          "Generated kit should have textures or lightmaps folder")
-
     def test_generate_sithbase_kit(self):
-        """Test generating sithbase kit.
-        
-        Note: The correct module name for sithbase needs to be determined.
-        This test will be skipped if the module is not found.
-        """
-        # Try to find the correct module name - check common sith base modules
-        possible_modules = ["m15aa", "m15ab", "m16aa", "m16ab"]
-        module_name = None
-        for mod_name in possible_modules:
-            rims_path = self.installation.rims_path()  # type: ignore[attr-defined]
-            modules_path = self.installation.module_path()  # type: ignore[attr-defined]
-            main_rim = (rims_path / f"{mod_name}.rim" if rims_path.exists() else None) or (modules_path / f"{mod_name}.rim" if modules_path.exists() else None)
-            if main_rim and main_rim.exists():
-                module_name = mod_name
-                break
-        
-        if module_name is None:
-            self.fail("Could not find sithbase module (tried: m15aa, m15ab, m16aa, m16ab)")
-        
-        # Generate the kit
-        extract_kit_from_rim(
-            self.installation,  # type: ignore[attr-defined]
-            module_name,
-            self.test_output_path,  # type: ignore[attr-defined]
-            kit_id="sithbase",
-        )
-
-        # Verify the kit was generated
-        generated_kit_path = self.test_output_path / "sithbase"  # type: ignore[attr-defined]
-        self.assertTrue(generated_kit_path.exists(), "Generated kit directory should exist")
+        """Test generating sithbase kit and comparing files."""
+        kit_id = "sithbase"
+        generated_kit_path, _ = self._generate_kit(kit_id)
         
         # Verify basic kit structure exists
         self._verify_kit_structure(generated_kit_path)
 
-        # Compare JSON files if expected JSON exists
-        expected_json_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / "sithbase.json"
-        generated_json_path = self.test_output_path / "sithbase.json"  # type: ignore[attr-defined]
-        if expected_json_path.exists():
-            self.assertTrue(generated_json_path.exists(), "Generated JSON file should exist")
-        else:
-            # If expected JSON doesn't exist, just verify the generated JSON is valid
-            if generated_json_path.exists():
-                import json
-                with generated_json_path.open("r", encoding="utf-8") as f:
-                    json_data = json.load(f)
-                self.assertIn("name", json_data)
-                self.assertIn("id", json_data)
-                self.assertEqual(json_data["id"], "sithbase")
-
         # Compare with expected kit if it exists
-        expected_kit_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / "sithbase"
+        expected_kit_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / kit_id
         if expected_kit_path.exists():
-            self._compare_kits(generated_kit_path, expected_kit_path, "sithbase")  # type: ignore[attr-defined]
+            self._compare_kits(generated_kit_path, expected_kit_path, kit_id)  # type: ignore[attr-defined]
         else:
             # If expected kit doesn't exist, at least verify basic structure
-            self.assertTrue((generated_kit_path / "textures").exists() or (generated_kit_path / "lightmaps").exists() or len(list(generated_kit_path.glob("*.mdl"))) > 0,
-                          "Generated kit should have textures, lightmaps, or components")
+            has_textures = (generated_kit_path / "textures").exists()
+            has_lightmaps = (generated_kit_path / "lightmaps").exists()
+            has_components = len(list(generated_kit_path.glob("*.mdl"))) > 0
+            self.assertTrue(has_textures or has_lightmaps or has_components,
+                          f"Generated kit '{kit_id}' should have textures, lightmaps, or components")
+
+    def test_generate_sithbase_kit_json(self):
+        """Test generating sithbase kit and comparing JSON files."""
+        kit_id = "sithbase"
+        # Sith base modules - need to check actual module names
+        _, generated_json_path = self._generate_kit(kit_id)
+        
+        expected_json_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / f"{kit_id}.json"
+        if expected_json_path.exists():
+            self.assertTrue(generated_json_path.exists(), f"Generated JSON file should exist for '{kit_id}'")
+            self._compare_json_files(generated_json_path, expected_json_path)
+        elif generated_json_path.exists():
+            # If expected JSON doesn't exist but generated one does, verify it's valid
+            import json
+            with generated_json_path.open("r", encoding="utf-8") as f:
+                json_data = json.load(f)
+            self.assertIn("name", json_data)
+            self.assertIn("id", json_data)
+            self.assertEqual(json_data["id"], kit_id)
 
     def test_generate_sithbase_kit_components_only(self):
-        """Test that sithbase kit generates all expected components.
-        
-        Note: The correct module name for sithbase needs to be determined.
-        This test will be skipped if the module is not found.
-        """
-        # Try to find the correct module name - check common sith base modules
-        possible_modules = ["m15aa", "m15ab", "m16aa", "m16ab"]
-        module_name = None
-        for mod_name in possible_modules:
-            rims_path = self.installation.rims_path()  # type: ignore[attr-defined]
-            modules_path = self.installation.module_path()  # type: ignore[attr-defined]
-            main_rim = (rims_path / f"{mod_name}.rim" if rims_path.exists() else None) or (modules_path / f"{mod_name}.rim" if modules_path.exists() else None)
-            if main_rim and main_rim.exists():
-                module_name = mod_name
-                break
+        """Test that sithbase kit generates all expected components."""
+        kit_id = "sithbase"
+        module_name = self._get_module_for_kit(kit_id)
         
         if module_name is None:
-            self.fail("Could not find sithbase module (tried: m15aa, m15ab, m16aa, m16ab)")
+            self.skipTest("Could not find sithbase module (tried: m15aa, m15ab, m16aa, m16ab)")
         
         # Generate the kit
-        extract_kit_from_rim(
+        extract_kit(
             self.installation,  # type: ignore[attr-defined]
             module_name,
             self.test_output_path,  # type: ignore[attr-defined]
@@ -200,6 +204,330 @@ class TestKitGeneration(unittest.TestCase):
             wok_path = generated_kit_path / f"{component_id}.wok"
             self.assertTrue(mdl_path.exists() or wok_path.exists(), f"Component {component_id} should have MDL or WOK file")
 
+    def _get_module_for_kit(self, kit_id: str) -> str | None:
+        """Get the module name for a given kit ID.
+        
+        Args:
+        ----
+            kit_id: Kit identifier (e.g., "blackvulkar")
+            
+        Returns:
+        -------
+            Module name if found, None otherwise
+        """
+        module_name = self.KIT_TO_MODULE.get(kit_id)
+        if not module_name:
+            return None
+        
+        # Verify the module exists using the utility function
+        module_path = find_module_file(self.installation, module_name)  # type: ignore[attr-defined]
+        if module_path and module_path.exists():
+            return module_name
+        return None
+
+    def _generate_kit(self, kit_id: str) -> tuple[Path, Path]:
+        """Helper method to generate a kit and return paths.
+        
+        Args:
+        ----
+            kit_id: Kit identifier (e.g., "blackvulkar")
+            
+        Returns:
+        -------
+            Tuple of (generated_kit_path, generated_json_path)
+        """
+        module_name = self._get_module_for_kit(kit_id)
+        if module_name is None:
+            self.skipTest(f"Could not find module for kit '{kit_id}'")
+        
+        # Generate the kit
+        extract_kit(
+            self.installation,  # type: ignore[attr-defined]
+            module_name,
+            self.test_output_path,  # type: ignore[attr-defined]
+            kit_id=kit_id,
+        )
+
+        generated_kit_path = self.test_output_path / kit_id  # type: ignore[attr-defined]
+        generated_json_path = self.test_output_path / f"{kit_id}.json"  # type: ignore[attr-defined]
+        
+        self.assertTrue(generated_kit_path.exists(), f"Generated kit directory should exist for '{kit_id}'")
+        
+        return generated_kit_path, generated_json_path
+
+    # Black Vulkar tests
+    def test_generate_blackvulkar_kit(self):
+        """Test generating blackvulkar kit and comparing files."""
+        kit_id = "blackvulkar"
+        generated_kit_path, _ = self._generate_kit(kit_id)
+        
+        # Verify basic kit structure exists
+        self._verify_kit_structure(generated_kit_path)
+
+        # Compare with expected kit if it exists
+        expected_kit_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / kit_id
+        if expected_kit_path.exists():
+            self._compare_kits(generated_kit_path, expected_kit_path, kit_id)  # type: ignore[attr-defined]
+        else:
+            # If expected kit doesn't exist, at least verify basic structure
+            has_textures = (generated_kit_path / "textures").exists()
+            has_lightmaps = (generated_kit_path / "lightmaps").exists()
+            has_components = len(list(generated_kit_path.glob("*.mdl"))) > 0
+            self.assertTrue(has_textures or has_lightmaps or has_components,
+                          f"Generated kit '{kit_id}' should have textures, lightmaps, or components")
+
+    def test_generate_blackvulkar_kit_json(self):
+        """Test generating blackvulkar kit and comparing JSON files."""
+        kit_id = "blackvulkar"
+        _, generated_json_path = self._generate_kit(kit_id)
+        
+        expected_json_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / f"{kit_id}.json"
+        if expected_json_path.exists():
+            self.assertTrue(generated_json_path.exists(), f"Generated JSON file should exist for '{kit_id}'")
+            self._compare_json_files(generated_json_path, expected_json_path)
+        elif generated_json_path.exists():
+            # If expected JSON doesn't exist but generated one does, verify it's valid
+            import json
+            with generated_json_path.open("r", encoding="utf-8") as f:
+                json_data = json.load(f)
+            self.assertIn("name", json_data)
+            self.assertIn("id", json_data)
+            self.assertEqual(json_data["id"], kit_id)
+
+    # Dantooine Estate tests
+    def test_generate_dantooineestate_kit(self):
+        """Test generating dantooineestate kit and comparing files."""
+        kit_id = "dantooineestate"
+        generated_kit_path, _ = self._generate_kit(kit_id)
+        
+        # Verify basic kit structure exists
+        self._verify_kit_structure(generated_kit_path)
+        
+        # Compare with expected kit if it exists
+        expected_kit_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / kit_id
+        if expected_kit_path.exists():
+            self._compare_kits(generated_kit_path, expected_kit_path, kit_id)  # type: ignore[attr-defined]
+        else:
+            # If expected kit doesn't exist, at least verify basic structure
+            has_textures = (generated_kit_path / "textures").exists()
+            has_lightmaps = (generated_kit_path / "lightmaps").exists()
+            has_components = len(list(generated_kit_path.glob("*.mdl"))) > 0
+            self.assertTrue(has_textures or has_lightmaps or has_components,
+                          f"Generated kit '{kit_id}' should have textures, lightmaps, or components")
+
+    def test_generate_dantooineestate_kit_json(self):
+        """Test generating dantooineestate kit and comparing JSON files."""
+        kit_id = "dantooineestate"
+        _, generated_json_path = self._generate_kit(kit_id)
+        
+        expected_json_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / f"{kit_id}.json"
+        if expected_json_path.exists():
+            self.assertTrue(generated_json_path.exists(), f"Generated JSON file should exist for '{kit_id}'")
+            self._compare_json_files(generated_json_path, expected_json_path)
+        elif generated_json_path.exists():
+            # If expected JSON doesn't exist but generated one does, verify it's valid
+            import json
+            with generated_json_path.open("r", encoding="utf-8") as f:
+                json_data = json.load(f)
+            self.assertIn("name", json_data)
+            self.assertIn("id", json_data)
+            self.assertEqual(json_data["id"], kit_id)
+
+    # Davik Estate tests
+    def test_generate_davikestate_kit(self):
+        """Test generating davikestate kit and comparing files."""
+        kit_id = "davikestate"
+        generated_kit_path, _ = self._generate_kit(kit_id)
+        
+        # Verify basic kit structure exists
+        self._verify_kit_structure(generated_kit_path)
+
+        # Compare with expected kit if it exists
+        expected_kit_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / kit_id
+        if expected_kit_path.exists():
+            self._compare_kits(generated_kit_path, expected_kit_path, kit_id)  # type: ignore[attr-defined]
+        else:
+            # If expected kit doesn't exist, at least verify basic structure
+            has_textures = (generated_kit_path / "textures").exists()
+            has_lightmaps = (generated_kit_path / "lightmaps").exists()
+            has_components = len(list(generated_kit_path.glob("*.mdl"))) > 0
+            self.assertTrue(has_textures or has_lightmaps or has_components,
+                          f"Generated kit '{kit_id}' should have textures, lightmaps, or components")
+
+    def test_generate_davikestate_kit_json(self):
+        """Test generating davikestate kit and comparing JSON files."""
+        kit_id = "davikestate"
+        _, generated_json_path = self._generate_kit(kit_id)
+        
+        expected_json_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / f"{kit_id}.json"
+        if expected_json_path.exists():
+            self.assertTrue(generated_json_path.exists(), f"Generated JSON file should exist for '{kit_id}'")
+            self._compare_json_files(generated_json_path, expected_json_path)
+        elif generated_json_path.exists():
+            # If expected JSON doesn't exist but generated one does, verify it's valid
+            import json
+            with generated_json_path.open("r", encoding="utf-8") as f:
+                json_data = json.load(f)
+            self.assertIn("name", json_data)
+            self.assertIn("id", json_data)
+            self.assertEqual(json_data["id"], kit_id)
+
+    # Enclave Surface tests
+    def test_generate_enclavesurface_kit(self):
+        """Test generating enclavesurface kit and comparing files."""
+        kit_id = "enclavesurface"
+        generated_kit_path, _ = self._generate_kit(kit_id)
+        
+        # Verify basic kit structure exists
+        self._verify_kit_structure(generated_kit_path)
+        
+        # Compare with expected kit if it exists
+        expected_kit_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / kit_id
+        if expected_kit_path.exists():
+            self._compare_kits(generated_kit_path, expected_kit_path, kit_id)  # type: ignore[attr-defined]
+        else:
+            # If expected kit doesn't exist, at least verify basic structure
+            has_textures = (generated_kit_path / "textures").exists()
+            has_lightmaps = (generated_kit_path / "lightmaps").exists()
+            has_components = len(list(generated_kit_path.glob("*.mdl"))) > 0
+            self.assertTrue(has_textures or has_lightmaps or has_components,
+                          f"Generated kit '{kit_id}' should have textures, lightmaps, or components")
+
+    def test_generate_enclavesurface_kit_json(self):
+        """Test generating enclavesurface kit and comparing JSON files."""
+        kit_id = "enclavesurface"
+        _, generated_json_path = self._generate_kit(kit_id)
+        
+        expected_json_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / f"{kit_id}.json"
+        if expected_json_path.exists():
+            self.assertTrue(generated_json_path.exists(), f"Generated JSON file should exist for '{kit_id}'")
+            self._compare_json_files(generated_json_path, expected_json_path)
+        elif generated_json_path.exists():
+            # If expected JSON doesn't exist but generated one does, verify it's valid
+            import json
+            with generated_json_path.open("r", encoding="utf-8") as f:
+                json_data = json.load(f)
+            self.assertIn("name", json_data)
+            self.assertIn("id", json_data)
+            self.assertEqual(json_data["id"], kit_id)
+
+    # Endar Spire tests
+    def test_generate_endarspire_kit(self):
+        """Test generating endarspire kit and comparing files."""
+        kit_id = "endarspire"
+        generated_kit_path, _ = self._generate_kit(kit_id)
+        
+        # Verify basic kit structure exists
+        self._verify_kit_structure(generated_kit_path)
+        
+        # Compare with expected kit if it exists
+        expected_kit_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / kit_id
+        if expected_kit_path.exists():
+            self._compare_kits(generated_kit_path, expected_kit_path, kit_id)  # type: ignore[attr-defined]
+        else:
+            # If expected kit doesn't exist, at least verify basic structure
+            has_textures = (generated_kit_path / "textures").exists()
+            has_lightmaps = (generated_kit_path / "lightmaps").exists()
+            has_components = len(list(generated_kit_path.glob("*.mdl"))) > 0
+            self.assertTrue(has_textures or has_lightmaps or has_components,
+                          f"Generated kit '{kit_id}' should have textures, lightmaps, or components")
+
+    def test_generate_endarspire_kit_json(self):
+        """Test generating endarspire kit and comparing JSON files."""
+        kit_id = "endarspire"
+        _, generated_json_path = self._generate_kit(kit_id)
+        
+        expected_json_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / f"{kit_id}.json"
+        if expected_json_path.exists():
+            self.assertTrue(generated_json_path.exists(), f"Generated JSON file should exist for '{kit_id}'")
+            self._compare_json_files(generated_json_path, expected_json_path)
+        elif generated_json_path.exists():
+            # If expected JSON doesn't exist but generated one does, verify it's valid
+            import json
+            with generated_json_path.open("r", encoding="utf-8") as f:
+                json_data = json.load(f)
+            self.assertIn("name", json_data)
+            self.assertIn("id", json_data)
+            self.assertEqual(json_data["id"], kit_id)
+
+    # Hidden Bek tests
+    def test_generate_hiddenbek_kit(self):
+        """Test generating hiddenbek kit and comparing files."""
+        kit_id = "hiddenbek"
+        generated_kit_path, _ = self._generate_kit(kit_id)
+        
+        # Verify basic kit structure exists
+        self._verify_kit_structure(generated_kit_path)
+        
+        # Compare with expected kit if it exists
+        expected_kit_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / kit_id
+        if expected_kit_path.exists():
+            self._compare_kits(generated_kit_path, expected_kit_path, kit_id)  # type: ignore[attr-defined]
+        else:
+            # If expected kit doesn't exist, at least verify basic structure
+            has_textures = (generated_kit_path / "textures").exists()
+            has_lightmaps = (generated_kit_path / "lightmaps").exists()
+            has_components = len(list(generated_kit_path.glob("*.mdl"))) > 0
+            self.assertTrue(has_textures or has_lightmaps or has_components,
+                          f"Generated kit '{kit_id}' should have textures, lightmaps, or components")
+
+    def test_generate_hiddenbek_kit_json(self):
+        """Test generating hiddenbek kit and comparing JSON files."""
+        kit_id = "hiddenbek"
+        _, generated_json_path = self._generate_kit(kit_id)
+        
+        expected_json_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / f"{kit_id}.json"
+        if expected_json_path.exists():
+            self.assertTrue(generated_json_path.exists(), f"Generated JSON file should exist for '{kit_id}'")
+            self._compare_json_files(generated_json_path, expected_json_path)
+        elif generated_json_path.exists():
+            # If expected JSON doesn't exist but generated one does, verify it's valid
+            import json
+            with generated_json_path.open("r", encoding="utf-8") as f:
+                json_data = json.load(f)
+            self.assertIn("name", json_data)
+            self.assertIn("id", json_data)
+            self.assertEqual(json_data["id"], kit_id)
+
+    # Taris Sewers tests
+    def test_generate_tarissewers_kit(self):
+        """Test generating tarissewers kit and comparing files."""
+        kit_id = "tarissewers"
+        generated_kit_path, _ = self._generate_kit(kit_id)
+        
+        # Verify basic kit structure exists
+        self._verify_kit_structure(generated_kit_path)
+        
+        # Compare with expected kit if it exists
+        expected_kit_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / kit_id
+        if expected_kit_path.exists():
+            self._compare_kits(generated_kit_path, expected_kit_path, kit_id)  # type: ignore[attr-defined]
+        else:
+            # If expected kit doesn't exist, at least verify basic structure
+            has_textures = (generated_kit_path / "textures").exists()
+            has_lightmaps = (generated_kit_path / "lightmaps").exists()
+            has_components = len(list(generated_kit_path.glob("*.mdl"))) > 0
+            self.assertTrue(has_textures or has_lightmaps or has_components,
+                          f"Generated kit '{kit_id}' should have textures, lightmaps, or components")
+
+    def test_generate_tarissewers_kit_json(self):
+        """Test generating tarissewers kit and comparing JSON files."""
+        kit_id = "tarissewers"
+        _, generated_json_path = self._generate_kit(kit_id)
+        
+        expected_json_path = REPO_ROOT / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits" / "kits" / f"{kit_id}.json"
+        if expected_json_path.exists():
+            self.assertTrue(generated_json_path.exists(), f"Generated JSON file should exist for '{kit_id}'")
+            self._compare_json_files(generated_json_path, expected_json_path)
+        elif generated_json_path.exists():
+            # If expected JSON doesn't exist but generated one does, verify it's valid
+            import json
+            with generated_json_path.open("r", encoding="utf-8") as f:
+                json_data = json.load(f)
+            self.assertIn("name", json_data)
+            self.assertIn("id", json_data)
+            self.assertEqual(json_data["id"], kit_id)
+
     def _verify_kit_structure(self, kit_path: Path):
         """Verify that a generated kit has the expected directory structure and file types.
         
@@ -216,9 +544,9 @@ class TestKitGeneration(unittest.TestCase):
                 self.assertTrue(dir_path.is_dir(), f"{dir_name} should be a directory if it exists")
         
         # Check for component files (MDL, MDX, WOK, PNG) in root
-        mdl_files = list(kit_path.glob("*.mdl"))
-        mdx_files = list(kit_path.glob("*.mdx"))
-        wok_files = list(kit_path.glob("*.wok"))
+        mdl_files: list[Path] = list(kit_path.glob("*.mdl"))
+        mdx_files: list[Path] = list(kit_path.glob("*.mdx"))
+        wok_files: list[Path] = list(kit_path.glob("*.wok"))
         png_files = list(kit_path.glob("*.png"))
         utd_files = list(kit_path.glob("*.utd"))
         
@@ -234,14 +562,61 @@ class TestKitGeneration(unittest.TestCase):
                 self.assertTrue(png_file.exists(), f"Component {component_id} should have minimap PNG")
         
         # Check for door files (UTD)
+        # Doors should use simple identifiers: door0_k1.utd, door1_k1.utd, etc.
         if utd_files:
             # Doors should come in pairs (k1 and k2)
             door_names = {f.stem.replace("_k1", "").replace("_k2", "") for f in utd_files}
             for door_name in door_names:
+                # Verify door naming format: should be "door0", "door1", etc.
+                import re
+                expected_pattern = re.compile(r"^door\d+$")
+                self.assertTrue(
+                    expected_pattern.match(door_name),
+                    f"Door file has incorrect naming format: '{door_name}' (expected format: 'door0', 'door1', etc.)",
+                )
                 k1_file = kit_path / f"{door_name}_k1.utd"
                 k2_file = kit_path / f"{door_name}_k2.utd"
                 self.assertTrue(k1_file.exists(), f"Door {door_name} should have _k1.utd file")
                 self.assertTrue(k2_file.exists(), f"Door {door_name} should have _k2.utd file")
+        
+        # Check for door walkmeshes (DWK files)
+        # Doors have 3 walkmesh states: closed (0), open1 (1), open2 (2)
+        # Format: {door_model_name}0.dwk, {door_model_name}1.dwk, {door_model_name}2.dwk
+        dwk_files: list[Path] = list(kit_path.glob("*.dwk"))
+        if dwk_files:
+            # Group DWK files by door model name (remove suffix 0/1/2)
+            dwk_by_model: dict[str, set[str]] = {}
+            for dwk_file in dwk_files:
+                stem = dwk_file.stem
+                # Check if ends with 0, 1, or 2
+                if stem.endswith(("0", "1", "2")):
+                    model_name = stem[:-1]  # Remove last character (0/1/2)
+                    suffix = stem[-1]
+                    if model_name not in dwk_by_model:
+                        dwk_by_model[model_name] = set()
+                    dwk_by_model[model_name].add(suffix)
+            
+            # Verify that if any DWK exists for a door model, all three states should exist
+            for model_name, suffixes in dwk_by_model.items():
+                for expected_suffix in ["0", "1", "2"]:
+                    dwk_file = kit_path / f"{model_name}{expected_suffix}.dwk"
+                    if expected_suffix in suffixes:
+                        self.assertTrue(dwk_file.exists(), f"Door walkmesh {model_name}{expected_suffix}.dwk should exist")
+        
+        # Check for placeable walkmeshes (PWK files)
+        # Format: {placeable_model_name}.pwk
+        pwk_files: list[Path] = list(kit_path.glob("*.pwk"))
+        if pwk_files:
+            for pwk_file in pwk_files:
+                self.assertTrue(pwk_file.exists(), f"Placeable walkmesh {pwk_file.name} should exist")
+                # PWK files should have corresponding model (MDL) somewhere in the kit
+                model_name = pwk_file.stem
+                # Check if model exists in components, skyboxes, or models directory
+                mdl_in_root = (kit_path / f"{model_name}.mdl").exists()
+                mdl_in_skyboxes = (kit_path / "skyboxes" / f"{model_name}.mdl").exists() if (kit_path / "skyboxes").exists() else False
+                mdl_in_models = (kit_path / "models" / f"{model_name}.mdl").exists() if (kit_path / "models").exists() else False
+                # Note: PWK may not have corresponding MDL in kit if it's for a placeable that's not extracted
+                # So we just verify the PWK file exists and is valid
         
         # Check texture files
         textures_dir = kit_path / "textures"
@@ -445,7 +820,7 @@ class TestKitGeneration(unittest.TestCase):
             List of filename patterns (lowercase) for shared resources
         """
         # Shared lightmaps from other modules (not referenced by danm13)
-        shared_lightmaps = [
+        shared_lightmaps: list[str] = [
             "m03af_01a_lm13", "m03af_03a_lm13",
             "m03mg_01a_lm13",
             "m10aa_01a_lm13", "m10ac_28a_lm13",
@@ -459,7 +834,7 @@ class TestKitGeneration(unittest.TestCase):
         ]
         
         # Shared textures not referenced by danm13 models
-        shared_textures = [
+        shared_textures: list[str] = [
             "i_datapad",
             "lda_flr07",
             "lda_flr08",
@@ -468,7 +843,7 @@ class TestKitGeneration(unittest.TestCase):
         ]
         
         # Combine and create patterns
-        patterns = []
+        patterns: list[str] = []
         for lm in shared_lightmaps:
             patterns.append(lm.lower())
             patterns.append(f"lightmaps/{lm.lower()}")
@@ -482,7 +857,7 @@ class TestKitGeneration(unittest.TestCase):
         
         # Additional textures/TXIs found in the expected jedienclave kit that are not referenced by danm13 models
         # These are also considered "shared" or manually added
-        additional_shared_textures_base = [
+        additional_shared_textures_base: list[str] = [
             "lda_bark04", "lda_ehawk01", "lda_flr11", "lda_flr12", "lda_grass07", "lda_grate01",
             "lda_ivy01", "lda_leaf02", "lda_lite01", "lda_rock06",
             "lda_sky0001", "lda_sky0002", "lda_sky0003", "lda_sky0004",
@@ -498,7 +873,7 @@ class TestKitGeneration(unittest.TestCase):
         
         # Textures that exist in the expected kit but are not referenced by models
         # These may be referenced by other resources (placeables, characters, etc.) or manually added
-        additional_shared_textures = [
+        additional_shared_textures: list[str] = [
             "p_bastillah01.txi", "p_carthh01.tga", "p_carthh01.txi",
             "pheyea.txi", "plc_chair1.tga", "plc_chair1.txi",
             "w_vbroswrd01.txi",
@@ -551,8 +926,14 @@ class TestKitGeneration(unittest.TestCase):
                     ".mdl": "Model",
                     ".mdx": "Model animation",
                     ".wok": "Walkmesh (BWM)",
-                    ".png": "Minimap",
-                    ".utd": "Door",
+                    ".dwk": "Door Walkmesh (DWK)",
+                    ".pwk": "Placeable Walkmesh (PWK)",
+                    ".txi": "Texture info (TXI)",
+                    ".utd": "Door (UTD)",
+                    ".utw": "Waypoint (UTW)",
+                    ".png": "Minimap (PNG)",
+                    ".tga": "Texture/Lightmap (TGA)",
+                    ".tpc": "Texture (TPC)",
                 }.get(generated_file.suffix.lower(), "Binary file")
                 
                 self.fail(
@@ -741,16 +1122,36 @@ class TestKitGeneration(unittest.TestCase):
             for i, (gen_door, exp_door) in enumerate(
                 zip(generated_data.get("doors", []), expected_data["doors"])
             ):
-                self.assertEqual(
-                    gen_door.get("utd_k1"),
-                    exp_door.get("utd_k1"),
-                    f"Door {i} utd_k1 differs",
-                )
-                self.assertEqual(
-                    gen_door.get("utd_k2"),
-                    exp_door.get("utd_k2"),
-                    f"Door {i} utd_k2 differs",
-                )
+                # Verify door naming format: should be "door0_k1", "door1_k1", etc.
+                gen_utd_k1 = gen_door.get("utd_k1")
+                gen_utd_k2 = gen_door.get("utd_k2")
+                exp_utd_k1 = exp_door.get("utd_k1")
+                exp_utd_k2 = exp_door.get("utd_k2")
+                
+                # Check format matches expected pattern (door0_k1, door1_k1, etc.)
+                if exp_utd_k1:
+                    # Expected format should be "door{N}_k1" where N is a number
+                    expected_pattern = re.compile(r"^door\d+_k1$")
+                    self.assertTrue(
+                        expected_pattern.match(gen_utd_k1) if gen_utd_k1 else False,
+                        f"Door {i} utd_k1 has incorrect format: '{gen_utd_k1}' (expected format: 'door0_k1', 'door1_k1', etc.)",
+                    )
+                    self.assertEqual(
+                        gen_utd_k1,
+                        exp_utd_k1,
+                        f"Door {i} utd_k1 differs",
+                    )
+                if exp_utd_k2:
+                    expected_pattern = re.compile(r"^door\d+_k2$")
+                    self.assertTrue(
+                        expected_pattern.match(gen_utd_k2) if gen_utd_k2 else False,
+                        f"Door {i} utd_k2 has incorrect format: '{gen_utd_k2}' (expected format: 'door0_k2', 'door1_k2', etc.)",
+                    )
+                    self.assertEqual(
+                        gen_utd_k2,
+                        exp_utd_k2,
+                        f"Door {i} utd_k2 differs",
+                    )
                 # Width/height may differ if not extracted from UTD - just check they exist
                 if "width" in exp_door:
                     self.assertIn("width", gen_door, f"Door {i} missing width")

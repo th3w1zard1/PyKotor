@@ -52,22 +52,8 @@ class TXIBinaryReader(ResourceReader):
                 if not parsed_line:
                     continue
 
-                if mode == TXIReaderMode.UPPER_LEFT_COORDS:
-                    coords = list(map(float, map(str.strip, parsed_line.split())))
-                    self._txi.features.upperleftcoords.append(coords)
-                    cur_coords += 1
-                    if cur_coords >= len(self._txi.features.upperleftcoords):
-                        mode = TXIReaderMode.NORMAL
-                    continue
-
-                if mode == TXIReaderMode.LOWER_RIGHT_COORDS:
-                    coords = list(map(float, map(str.strip, parsed_line.split())))
-                    self._txi.features.lowerrightcoords.append(coords)
-                    cur_coords += 1
-                    if cur_coords >= len(self._txi.features.lowerrightcoords):
-                        mode = TXIReaderMode.NORMAL
-                    continue
-
+                # Check if this line is a command (starts with a known TXI command)
+                # This allows commands to interrupt coordinate parsing
                 raw_cmd, args = (
                     parsed_line.split(" ", maxsplit=1)
                     if " " in parsed_line
@@ -77,7 +63,57 @@ class TXIBinaryReader(ResourceReader):
                     )
                 )
                 parsed_cmd_str: str = raw_cmd.strip().upper()
-                if not parsed_cmd_str or parsed_cmd_str not in TXICommand.__members__:
+                is_command = parsed_cmd_str in TXICommand.__members__
+
+                if mode == TXIReaderMode.UPPER_LEFT_COORDS:
+                    if is_command:
+                        # Command encountered, exit coordinate mode and process the command
+                        mode = TXIReaderMode.NORMAL
+                    else:
+                        # Try to parse as coordinates
+                        try:
+                            parts = parsed_line.split()
+                            coords: tuple[float, float, int] = (
+                                float(parts[0].strip()),
+                                float(parts[1].strip()),
+                                int(parts[2].strip()),
+                            )
+                            if self._txi.features.upperleftcoords is not None and cur_coords < len(self._txi.features.upperleftcoords):
+                                self._txi.features.upperleftcoords[cur_coords] = coords
+                            cur_coords += 1
+                            if self._txi.features.upperleftcoords is not None and cur_coords >= len(self._txi.features.upperleftcoords):
+                                mode = TXIReaderMode.NORMAL
+                            continue
+                        except (ValueError, IndexError):
+                            # Not a valid coordinate line, might be a command, exit coordinate mode
+                            mode = TXIReaderMode.NORMAL
+                            # Fall through to process as command or skip
+
+                if mode == TXIReaderMode.LOWER_RIGHT_COORDS:
+                    if is_command:
+                        # Command encountered, exit coordinate mode and process the command
+                        mode = TXIReaderMode.NORMAL
+                    else:
+                        # Try to parse as coordinates
+                        try:
+                            parts = parsed_line.split()
+                            coords: tuple[float, float, int] = (
+                                float(parts[0].strip()),
+                                float(parts[1].strip()),
+                                int(parts[2].strip()),
+                            )
+                            if self._txi.features.lowerrightcoords is not None and cur_coords < len(self._txi.features.lowerrightcoords):
+                                self._txi.features.lowerrightcoords[cur_coords] = coords
+                            cur_coords += 1
+                            if self._txi.features.lowerrightcoords is not None and cur_coords >= len(self._txi.features.lowerrightcoords):
+                                mode = TXIReaderMode.NORMAL
+                            continue
+                        except (ValueError, IndexError):
+                            # Not a valid coordinate line, might be a command, exit coordinate mode
+                            mode = TXIReaderMode.NORMAL
+                            # Fall through to process as command or skip
+
+                if not is_command:
                     #RobustLogger().warning(f"Invalid TXI command: '{raw_cmd}'")
                     continue
                 command: TXICommand = TXICommand.__members__[parsed_cmd_str]
@@ -93,7 +129,7 @@ class TXIBinaryReader(ResourceReader):
                     self._txi.features.arturowidth = int(args)
                     self._empty = False
                 elif command == TXICommand.BASELINEHEIGHT:
-                    self._txi.features.baselineheight = int(args)
+                    self._txi.features.baselineheight = float(args)
                     self._empty = False
                 elif command == TXICommand.BLENDING:
                     self._txi.features.blending = TXI.parse_blending(args)
@@ -111,7 +147,7 @@ class TXIBinaryReader(ResourceReader):
                     self._txi.features.candownsample = bool(int(args))
                     self._empty = False
                 elif command == TXICommand.CARETINDENT:
-                    self._txi.features.caretindent = int(args)
+                    self._txi.features.caretindent = float(args)
                     self._empty = False
                 elif command == TXICommand.CHANNELSCALE:
                     self._txi.features.channelscale = list(map(float, args.split()))
@@ -180,10 +216,10 @@ class TXIBinaryReader(ResourceReader):
                     self._txi.features.filter = bool(int(args))
                     self._empty = False
                 elif command == TXICommand.FONTHEIGHT:
-                    self._txi.features.fontheight = int(args)
+                    self._txi.features.fontheight = float(args)
                     self._empty = False
                 elif command == TXICommand.FONTWIDTH:
-                    self._txi.features.fontwidth = int(args)
+                    self._txi.features.fontwidth = float(args)
                     self._empty = False
                 elif command == TXICommand.FPS:
                     self._txi.features.fps = float(args)
@@ -254,7 +290,7 @@ class TXIBinaryReader(ResourceReader):
                     self._txi.features.temporary = bool(int(args))
                     self._empty = False
                 elif command == TXICommand.TEXTUREWIDTH:
-                    self._txi.features.texturewidth = int(args)
+                    self._txi.features.texturewidth = float(args)
                     self._empty = False
                 elif command == TXICommand.UNIQUE:
                     self._txi.features.unique = bool(int(args))
@@ -290,7 +326,11 @@ class TXIBinaryWriter(ResourceWriter):
 
         lines: list[str] = []
         for attr, value in vars(self._txi.features).items():
-            if not value:
+            if value is None:
+                continue
+            if isinstance(value, list) and len(value) == 0:
+                continue
+            if isinstance(value, str) and len(value) == 0:
                 continue
             upper_attr = attr.upper()
             if upper_attr not in TXICommand.__members__:
@@ -306,7 +346,7 @@ class TXIBinaryWriter(ResourceWriter):
                     TXICommand.UPPERLEFTCOORDS.value.lower(),
                     TXICommand.LOWERRIGHTCOORDS.value.lower(),
                 ]:
-                    lines.append(command.value)
+                    lines.append(f"{command.value} {len(value)}")
                     lines.extend(" ".join(map(str, coord)) for coord in value)
                 else:
                     lines.append(f"{command.value} {' '.join(map(str, value))}")

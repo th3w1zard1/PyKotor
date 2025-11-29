@@ -66,8 +66,11 @@ class WAVBinaryReader(ResourceReader):
         # Determine WAV type based on whether deobfuscation occurred
         if len(deobfuscated_data) < len(raw_data):
             # Deobfuscation occurred - determine type
-            if len(raw_data) - len(deobfuscated_data) == 470:  # 0x1D6
+            removed_bytes = len(raw_data) - len(deobfuscated_data)
+            if removed_bytes == 470:  # 0x1D6
                 wav_type = WAVType.SFX
+            elif removed_bytes in (8, 20):  # VO format: 8-byte (original) or 20-byte (our format)
+                wav_type = WAVType.VO
             else:
                 wav_type = WAVType.VO
         else:
@@ -115,14 +118,29 @@ class WAVBinaryReader(ResourceReader):
             reader.skip(fmt_size - 0x10)
 
         # Find data chunk
-        while True:
-            chunk_id: bytes = reader.read_bytes(4)
-            chunk_size: int = reader.read_uint32()
+        chunk_id: bytes = b""
+        chunk_size: int = 0
+        while reader.remaining() >= 8:
+            chunk_id = reader.read_bytes(4)
+            chunk_size = reader.read_uint32()
 
             if chunk_id == b"data":
                 break
 
+            if chunk_size > reader.remaining():
+                msg = "Chunk size exceeds remaining data"
+                raise ValueError(msg)
+            
             reader.skip(chunk_size)
+            if chunk_size % 2 == 1:
+                reader.skip(1)
+
+        if chunk_id != b"data":
+            msg = "Data chunk not found"
+            raise ValueError(msg)
+
+        if chunk_size > reader.remaining():
+            chunk_size = reader.remaining()
 
         # Read audio data
         audio_data: bytes = reader.read_bytes(chunk_size)
@@ -168,7 +186,7 @@ class WAVBinaryWriter(ResourceWriter):
         from pykotor.common.stream import BinaryWriter
         
         clean_buffer = BytesIO()
-        clean_writer = BinaryWriter(clean_buffer)
+        clean_writer = BinaryWriter.to_stream(clean_buffer)
         
         # Calculate sizes
         data_size: int = len(self.wav.data)

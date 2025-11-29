@@ -153,7 +153,7 @@ class Interpreter:
             NCSInstructionType.ADDSS,
             NCSInstructionType.ADDVV,
         }:
-            self._stack.addition_op()
+            self._stack.addition_op(cursor.ins_type)
 
         elif cursor.ins_type in {
             NCSInstructionType.SUBII,
@@ -162,7 +162,7 @@ class Interpreter:
             NCSInstructionType.SUBFI,
             NCSInstructionType.SUBVV,
         }:
-            self._stack.subtraction_op()
+            self._stack.subtraction_op(cursor.ins_type)
 
         elif cursor.ins_type in {
             NCSInstructionType.MULII,
@@ -172,7 +172,7 @@ class Interpreter:
             NCSInstructionType.MULVF,
             NCSInstructionType.MULFV,
         }:
-            self._stack.multiplication_op()
+            self._stack.multiplication_op(cursor.ins_type)
 
         elif cursor.ins_type in {
             NCSInstructionType.DIVII,
@@ -181,7 +181,7 @@ class Interpreter:
             NCSInstructionType.DIVFI,
             NCSInstructionType.DIVVF,
         }:
-            self._stack.division_op()
+            self._stack.division_op(cursor.ins_type)
 
         elif cursor.ins_type == NCSInstructionType.MODII:
             self._stack.modulus_op()
@@ -258,6 +258,9 @@ class Interpreter:
 
         elif cursor.ins_type == NCSInstructionType.SHRIGHTII:
             self._stack.bitwise_rightshift_op()
+
+        elif cursor.ins_type == NCSInstructionType.USHRIGHTII:
+            self._stack.bitwise_unsigned_rightshift_op()
 
         elif cursor.ins_type == NCSInstructionType.INCxBP:
             self._stack.increment_bp(cursor.args[0])
@@ -429,6 +432,10 @@ class Interpreter:
             )
             raise ValueError(msg)
 
+        # DEBUG: Log stack state before popping arguments
+        print(f"DEBUG do_action: function={function.name}, args={args}")
+        print(f"DEBUG do_action: stack before pop: {[f'{obj.data_type.name}={obj.value}' for obj in self._stack.state()[-10:]]}")
+        
         args_snap = []
 
         # Pop arguments from stack in reverse order (last param popped first)
@@ -461,6 +468,18 @@ class Interpreter:
                         f"Stack underflow while popping argument for '{function.name}'"
                     )
                     raise RuntimeError(msg) from e
+
+        # DEBUG: Log args_snap before reverse
+        print(f"DEBUG: args_snap before reverse: {[f'{obj.data_type.name}={obj.value}' for obj in args_snap]}")
+        
+        # We compiled arguments in reverse order (last first), so when we pop them (last-in-first-out),
+        # args_snap[0] is the last parameter and args_snap[-1] is the first parameter.
+        # We need to reverse to match function.params order (first parameter at index 0).
+        args_snap.reverse()
+        
+        # DEBUG: Log args_snap after reverse and function params
+        print(f"DEBUG: args_snap after reverse: {[f'{obj.data_type.name}={obj.value}' for obj in args_snap]}")
+        print(f"DEBUG: function.params: {[(p.name, p.datatype.name) for p in function.params]}")
 
         # Validate argument types
         for i in range(args):
@@ -1034,29 +1053,19 @@ class Stack:
 
         remaining = abs(offset)
         index = -1  # Start from the top of the stack
-        print(
-            f"DEBUG _stack_index: offset={offset}, remaining={remaining}, stack_len={len(self._stack)}, stack={[str(x) for x in self._stack]}"
-        )
 
         while True:
-            print(
-                f"DEBUG _stack_index: index={index}, -index={-index}, len={len(self._stack)}, check={-index > len(self._stack)}"
-            )
             if -index > len(self._stack):
                 msg = f"Stack offset {offset} is out of range"
                 raise ValueError(msg)
 
             element = self._stack[index]
             element_size = element.data_type.size()
-            print(
-                f"DEBUG _stack_index: element={element}, element_size={element_size}, remaining={remaining}"
-            )
             if element_size <= 0:
                 msg = f"Unsupported element size {element_size} for {element.data_type}"
                 raise ValueError(msg)
 
             if remaining <= element_size:
-                print(f"DEBUG _stack_index: returning index={index}")
                 return index
 
             remaining -= element_size
@@ -1158,16 +1167,9 @@ class Stack:
         # Let's find the target indices first
         target_indices = []
         temp_offset = offset
-        print(
-            f"DEBUG copy_down: offset={offset}, size={size}, num_elements={num_elements}, stack_len={len(self._stack)}, stack={[str(x) for x in self._stack]}"
-        )
 
         for _ in range(num_elements):
-            print(
-                f"DEBUG copy_down: calling _stack_index with temp_offset={temp_offset}"
-            )
             target_index = self._stack_index(temp_offset)
-            print(f"DEBUG copy_down: _stack_index returned {target_index}")
             target_indices.append(target_index)
             temp_offset += 4  # Move to the next position
 
@@ -1390,8 +1392,26 @@ class Stack:
             raise TypeError(msg)
         self._stack[index] = new_value
 
-    def addition_op(self):
+    def addition_op(self, instruction_type: NCSInstructionType | None = None):
         """Perform addition operation on top two stack values."""
+        # Handle vector addition (ADDVV)
+        if instruction_type == NCSInstructionType.ADDVV:
+            if len(self._stack) < 6:
+                msg = "Stack underflow in vector addition operation"
+                raise IndexError(msg)
+            # Pop vectors (each is 3 floats: z, y, x from top to bottom)
+            z2 = self._stack.pop().value
+            y2 = self._stack.pop().value
+            x2 = self._stack.pop().value
+            z1 = self._stack.pop().value
+            y1 = self._stack.pop().value
+            x1 = self._stack.pop().value
+            # Add component-wise and push result (x, y, z order)
+            self.add(DataType.FLOAT, x1 + x2)
+            self.add(DataType.FLOAT, y1 + y2)
+            self.add(DataType.FLOAT, z1 + z2)
+            return
+            
         if len(self._stack) < 2:
             msg = "Stack underflow in addition operation"
             raise IndexError(msg)
@@ -1427,8 +1447,26 @@ class Stack:
         )
         raise TypeError(msg)
 
-    def subtraction_op(self):
+    def subtraction_op(self, instruction_type: NCSInstructionType | None = None):
         """Perform subtraction operation on top two stack values."""
+        # Handle vector subtraction (SUBVV)
+        if instruction_type == NCSInstructionType.SUBVV:
+            if len(self._stack) < 6:
+                msg = "Stack underflow in vector subtraction operation"
+                raise IndexError(msg)
+            # Pop vectors (each is 3 floats: z, y, x from top to bottom)
+            z2 = self._stack.pop().value
+            y2 = self._stack.pop().value
+            x2 = self._stack.pop().value
+            z1 = self._stack.pop().value
+            y1 = self._stack.pop().value
+            x1 = self._stack.pop().value
+            # Subtract component-wise (v1 - v2) and push result (x, y, z order)
+            self.add(DataType.FLOAT, x1 - x2)
+            self.add(DataType.FLOAT, y1 - y2)
+            self.add(DataType.FLOAT, z1 - z2)
+            return
+            
         if len(self._stack) < 2:
             msg = "Stack underflow in subtraction operation"
             raise IndexError(msg)
@@ -1446,8 +1484,40 @@ class Stack:
         self._stack.pop()
         self.add(value2.data_type, result)
 
-    def multiplication_op(self):
+    def multiplication_op(self, instruction_type: NCSInstructionType | None = None):
         """Perform multiplication operation on top two stack values."""
+        # Handle vector multiplication
+        if instruction_type == NCSInstructionType.MULVF:
+            # MULVF: vector * float (vector is lhs, float is rhs, so float is on top)
+            if len(self._stack) < 4:
+                msg = "Stack underflow in vector multiplication operation"
+                raise IndexError(msg)
+            # Stack: [x, y, z, scalar] with scalar on top
+            scalar = self._stack.pop().value
+            z = self._stack.pop().value
+            y = self._stack.pop().value
+            x = self._stack.pop().value
+            # Multiply component-wise and push result (x, y, z order)
+            self.add(DataType.FLOAT, x * scalar)
+            self.add(DataType.FLOAT, y * scalar)
+            self.add(DataType.FLOAT, z * scalar)
+            return
+        elif instruction_type == NCSInstructionType.MULFV:
+            # MULFV: float * vector (float is lhs, vector is rhs, so vector is on top)
+            if len(self._stack) < 4:
+                msg = "Stack underflow in vector multiplication operation"
+                raise IndexError(msg)
+            # Stack: [scalar, x, y, z] with z on top
+            z = self._stack.pop().value
+            y = self._stack.pop().value
+            x = self._stack.pop().value
+            scalar = self._stack.pop().value
+            # Multiply component-wise and push result (x, y, z order)
+            self.add(DataType.FLOAT, x * scalar)
+            self.add(DataType.FLOAT, y * scalar)
+            self.add(DataType.FLOAT, z * scalar)
+            return
+            
         if len(self._stack) < 2:
             msg = "Stack underflow in multiplication operation"
             raise IndexError(msg)
@@ -1465,8 +1535,28 @@ class Stack:
         self._stack.pop()
         self.add(value2.data_type, result)
 
-    def division_op(self):
+    def division_op(self, instruction_type: NCSInstructionType | None = None):
         """Perform division operation on top two stack values."""
+        # Handle vector division (DIVVF: vector / float)
+        if instruction_type == NCSInstructionType.DIVVF:
+            if len(self._stack) < 4:
+                msg = "Stack underflow in vector division operation"
+                raise IndexError(msg)
+            # DIVVF: vector / float (vector is lhs, float is rhs, so float is on top)
+            # Stack: [x, y, z, scalar] with scalar on top
+            scalar = self._stack.pop().value
+            if scalar == 0:
+                msg = "Division by zero in vector division operation"
+                raise ZeroDivisionError(msg)
+            z = self._stack.pop().value
+            y = self._stack.pop().value
+            x = self._stack.pop().value
+            # Divide component-wise and push result (x, y, z order)
+            self.add(DataType.FLOAT, x / scalar)
+            self.add(DataType.FLOAT, y / scalar)
+            self.add(DataType.FLOAT, z / scalar)
+            return
+            
         if len(self._stack) < 2:
             msg = "Stack underflow in division operation"
             raise IndexError(msg)
@@ -1483,6 +1573,9 @@ class Stack:
             msg = "Division by zero in NCS interpreter"
             raise ZeroDivisionError(msg)
         result = float(value2.value) / float(value1.value)
+        # For integer division, truncate toward zero
+        if value1.data_type == DataType.INT and value2.data_type == DataType.INT:
+            result = int(result) if result >= 0 else int(result)
         self._stack.pop()
         self._stack.pop()
         self.add(value2.data_type, result)
@@ -1645,6 +1738,26 @@ class Stack:
             msg = "Bitwise shift requires integer operands"
             raise TypeError(msg)
         self.add(value1.data_type, value2.value >> value1.value)
+
+    def bitwise_unsigned_rightshift_op(self):
+        """Perform unsigned bitwise right shift on top two stack values."""
+        if len(self._stack) < 2:
+            msg = "Stack underflow in unsigned right shift operation"
+            raise IndexError(msg)
+        value1 = self._stack.pop()
+        value2 = self._stack.pop()
+        if not isinstance(value1.value, int) or not isinstance(value2.value, int):
+            msg = "Bitwise shift requires integer operands"
+            raise TypeError(msg)
+        # Perform unsigned right shift by treating value2 as unsigned
+        # Python doesn't have >>> operator, so we use ctypes or manual conversion
+        import ctypes
+        unsigned_value2 = ctypes.c_uint32(value2.value).value
+        result = (unsigned_value2 >> value1.value) & 0xFFFFFFFF
+        # Convert back to signed int if needed (handle sign extension)
+        if result & 0x80000000:
+            result = ctypes.c_int32(result).value
+        self.add(value1.data_type, result)
 
     def compare_greaterthan_op(self):
         """Perform greater-than comparison on top two stack values."""

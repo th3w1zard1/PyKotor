@@ -69,11 +69,11 @@ class SubroutineAnalysisData:
             print("Printing state for subroutine at " + str(self.nodedata.get_pos(node)))
             state.print_state()
 
-    def global_state(self) -> SubScriptState | None:
+    def global_state(self, globalstate: SubScriptState | None = None) -> SubScriptState | None:
+        if globalstate is not None:
+            self.globalstate = globalstate
+            return None
         return self.globalstate
-
-    def global_state(self, globalstate: SubScriptState):
-        self.globalstate = globalstate
 
     def get_globals_sub(self) -> ASubroutine | None:
         return self.globalsub
@@ -130,18 +130,20 @@ class SubroutineAnalysisData:
         state = self.substates.get(sub)
         return state is not None and state.is_totally_prototyped()
 
-    def add_struct(self, struct: StructType):
-        if struct not in self.globalstructs:
-            self.globalstructs.append(struct)
-            struct.type_name("structtype" + str(len(self.globalstructs)))
-
-    def add_struct(self, struct: VarStruct):
-        structtype = struct.struct_type()
-        if structtype not in self.globalstructs:
-            self.globalstructs.append(structtype)
-            structtype.type_name("structtype" + str(len(self.globalstructs)))
-        else:
-            struct.struct_type(self.get_struct_prototype(structtype))
+    def add_struct(self, struct: StructType | VarStruct):
+        from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
+        if isinstance(struct, VarStruct):
+            structtype = struct.struct_type()
+            if structtype not in self.globalstructs:
+                self.globalstructs.append(structtype)
+                structtype.type_name("structtype" + str(len(self.globalstructs)))
+            else:
+                struct.struct_type(self.get_struct_prototype(structtype))
+        elif isinstance(struct, StructType):
+            if struct not in self.globalstructs:
+                self.globalstructs.append(struct)
+                struct.type_name("structtype" + str(len(self.globalstructs)))
 
     def get_struct_declarations(self) -> str:
         newline = os.linesep
@@ -150,7 +152,7 @@ class SubroutineAnalysisData:
             structtype = self.globalstructs[i]
             if not structtype.is_vector():
                 buff.append(str(structtype.to_decl_string()) + " {" + newline)
-                types = structtype.types()
+                types = structtype.types_list()
                 for j in range(len(types)):
                     buff.append("\t" + types[j].to_decl_string() + " " + structtype.element_name(j) + ";" + newline)
                 buff.append("};" + newline + newline)
@@ -173,15 +175,11 @@ class SubroutineAnalysisData:
         self.subroutines[pos] = node
         self.add_sub_state(node, id)
 
-    def add_sub_state(self, sub: object, id: int):
+    def add_sub_state(self, sub: object, id: int, type: Type | None = None):
         from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
         state = SubroutineState(self.nodedata, sub, id)
-        self.substates[sub] = state
-
-    def add_sub_state(self, sub: object, id: int, type: Type):
-        from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
-        state = SubroutineState(self.nodedata, sub, id)
-        state.set_return_type(type, 1)
+        if type is not None:
+            state.set_return_type(type, 1)
         self.substates[sub] = state
 
     def add_main(self, sub: ASubroutine, conditional: bool):
@@ -207,7 +205,11 @@ class SubroutineAnalysisData:
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         conditional = NodeUtils.is_conditional_program(ast)
         from pykotor.resource.formats.ncs.dencs.node.a_program import AProgram  # pyright: ignore[reportMissingImports]
-        subroutines = AProgram(ast.get_p_program()).get_subroutine()
+        p_program = ast.get_p_program()
+        if not isinstance(p_program, AProgram):
+            raise RuntimeError(f"Expected AProgram but got {type(p_program)}")
+        subroutines_list = p_program.get_subroutine()
+        subroutines = subroutines_list.copy()
         node = subroutines.pop(0)
         if len(subroutines) > 0 and self.is_globals_sub(node):
             self.add_globals(node)

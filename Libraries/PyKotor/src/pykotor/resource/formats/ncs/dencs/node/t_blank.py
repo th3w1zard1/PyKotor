@@ -1,0 +1,24 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs.dencs.node.token import Token
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis
+
+
+class TBlank(Token):
+    def __init__(self, line: int = 0, pos: int = 0):
+        from pykotor.resource.formats.ncs.dencs.node.token import Token
+        super().__init__("")
+        self.line = line
+        self.pos = pos
+
+    def clone(self) -> Token:
+        return TBlank(self.get_line(), self.get_pos())
+
+    def apply(self, sw: Analysis):
+        sw.case_t_blank(self)
+
+    def set_text(self, text: str):
+        raise RuntimeError("Cannot change TBlank text.")

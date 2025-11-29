@@ -6,11 +6,9 @@ import io
 import mmap
 import os
 
-from types import TracebackType
-from typing import Any, IO
-
+from abc import ABC, abstractmethod
 from pathlib import Path
-from typing_extensions import Self
+from typing import IO, Any
 
 from pykotor.common.language import LocalizedString
 from utility.common.stream import ArrayHead as _ArrayHead, RawBinaryReader, RawBinaryWriter, RawBinaryWriterBytearray, RawBinaryWriterFile
@@ -18,7 +16,7 @@ from utility.common.stream import ArrayHead as _ArrayHead, RawBinaryReader, RawB
 ArrayHead = _ArrayHead  # backwards compatibility
 
 
-class BinaryReader(RawBinaryReader):
+class BinaryReader(RawBinaryReader, ABC):
     """Provides easier reading of binary objects that abstracts uniformly to all different stream/data types."""
 
     def read_locstring(
@@ -45,20 +43,8 @@ class BinaryReader(RawBinaryReader):
         return locstring
 
 
-class BinaryWriter(RawBinaryWriter):
-    def __enter__(
-        self,
-    ) -> Self:
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        self.close()
-
+class BinaryWriter(RawBinaryWriter, ABC):
+    @abstractmethod
     def write_locstring(
         self,
         value: LocalizedString,
@@ -96,7 +82,7 @@ class BinaryWriter(RawBinaryWriter):
         return BinaryWriterFile(Path(path).open("wb"))
 
 
-class BinaryWriterFile(RawBinaryWriterFile):
+class BinaryWriterFile(BinaryWriter, RawBinaryWriterFile):
     def write_locstring(
         self,
         value: LocalizedString,
@@ -126,7 +112,7 @@ class BinaryWriterFile(RawBinaryWriterFile):
         self.write_bytes(locstring_data)
 
 
-class BinaryWriterBytearray(RawBinaryWriterBytearray):
+class BinaryWriterBytearray(BinaryWriter, RawBinaryWriterBytearray):
     def write_locstring(
         self,
         value: LocalizedString,

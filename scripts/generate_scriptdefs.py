@@ -23,12 +23,27 @@ if TYPE_CHECKING:
 
 try:
     # Import from PyKotor - scriptdefs.py should be a minimal stub before generation
+    # Import lexer and classes directly to avoid importing scriptdefs.py
+    # We need to temporarily suppress scriptdefs import errors
+    import importlib.util
+    import types
+    
+    # Suppress scriptdefs import errors by monkey-patching sys.modules
+    # This allows us to import the compiler modules even if scriptdefs.py is broken
+    scriptdefs_module = types.ModuleType('pykotor.common.scriptdefs')
+    scriptdefs_module.KOTOR_CONSTANTS = []
+    scriptdefs_module.KOTOR_FUNCTIONS = []
+    scriptdefs_module.TSL_CONSTANTS = []
+    scriptdefs_module.TSL_FUNCTIONS = []
+    sys.modules['pykotor.common.scriptdefs'] = scriptdefs_module
+    
     from pykotor.resource.formats.ncs.compiler.lexer import NssLexer  # type: ignore[import-not-found, note]
     from pykotor.resource.formats.ncs.compiler.classes import (  # type: ignore[import-not-found, note]
         Identifier,  # pyright: ignore[reportUnusedImport]  # noqa: F401
         IntExpression,  # pyright: ignore[reportUnusedImport]  # noqa: F401
         FloatExpression,  # pyright: ignore[reportUnusedImport]  # noqa: F401
         StringExpression,  # pyright: ignore[reportUnusedImport]  # noqa: F401
+        VectorExpression,  # pyright: ignore[reportUnusedImport]  # noqa: F401
     )
     from pykotor.common.misc import Game  # type: ignore[import-not-found, note]
 except ImportError as e:
@@ -325,9 +340,30 @@ def parse_function_params(param_tokens: list) -> list[dict]:
             # Check for default value
             if len(group) >= 4 and group[2].type == '=':
                 default_token = group[3]
-                # Special handling: vector defaults with [ should be None (matches backup)
+                # Special handling: vector defaults like [0.0,0.0,0.0]
+                # Pattern: [ FLOAT_VALUE , FLOAT_VALUE , FLOAT_VALUE ]
                 if param_type == 'vector' and default_token.type == '[':
-                    default_value = None
+                    # Try to parse vector literal: [ FLOAT_VALUE , FLOAT_VALUE , FLOAT_VALUE ]
+                    if (len(group) >= 10 and
+                        group[3].type == '[' and
+                        group[4].type == 'FLOAT_VALUE' and
+                        group[5].type == ',' and
+                        group[6].type == 'FLOAT_VALUE' and
+                        group[7].type == ',' and
+                        group[8].type == 'FLOAT_VALUE' and
+                        group[9].type == ']'):
+                        # Extract the three float values
+                        x_expr = group[4].value
+                        y_expr = group[6].value
+                        z_expr = group[8].value
+                        x = x_expr.value if hasattr(x_expr, 'value') else float(str(x_expr).rstrip('f'))
+                        y = y_expr.value if hasattr(y_expr, 'value') else float(str(y_expr).rstrip('f'))
+                        z = z_expr.value if hasattr(z_expr, 'value') else float(str(z_expr).rstrip('f'))
+                        # Generate Python vector representation
+                        default_value = f'Vector3({x}, {y}, {z})'
+                    else:
+                        # Vector literal not in expected format, set to None as fallback
+                        default_value = None
                 elif default_token.type == 'INT_VALUE':
                     # Extract value from IntExpression
                     expr = default_token.value
@@ -384,13 +420,9 @@ def parse_function_params(param_tokens: list) -> list[dict]:
                     else:
                         default_value = str(hex_str)
                 elif default_token.type == '[':
-                    # Vector or array default - backup uses None for vector defaults
-                    # Check if this is a vector parameter
-                    if param_type == 'vector':
-                        default_value = None
-                    else:
-                        # For other types, this shouldn't happen, but set to None
-                        default_value = None
+                    # Vector or array default - should have been handled above for vector type
+                    # This is a fallback for non-vector types with [ token
+                    default_value = None
                 else:
                     # Try to extract value from expression object
                     # Never use str() or repr() on expression objects - always extract .value
@@ -409,6 +441,9 @@ def parse_function_params(param_tokens: list) -> list[dict]:
                                 elif isinstance(expr, FloatExpression):
                                     # For floats, convert to string
                                     default_value = str(expr.value)
+                                elif isinstance(expr, VectorExpression):
+                                    # For vectors, generate Vector3 representation
+                                    default_value = f'Vector3({expr.x}, {expr.y}, {expr.z})'
                                 else:
                                     # Unknown expression type, try to get value
                                     default_value = str(expr.value) if hasattr(expr, 'value') else None
@@ -603,12 +638,15 @@ def generate_function_python(func: dict, constants: list[dict]) -> str:
             if isinstance(default, str):
                 # Check if it's a constant reference (all caps with underscores, not a string literal)
                 if default.isupper() and '_' in default and not default.startswith('"'):
-                    # Special handling: OBJECT_INVALID and OBJECT_SELF defaults should be None for OBJECT parameters
-                    # These represent "no object" semantically
-                    if param['type'] == 'object' and default in ['OBJECT_INVALID', 'OBJECT_SELF']:
-                        default = None
+                    # For OBJECT_SELF and OBJECT_INVALID, keep as string
+                    # The compiler will look them up as constants by name
+                    # Do NOT convert to None - that would make the parameter required
+                    # We'll format it as a string literal in the code generation step
+                    if default in ['OBJECT_SELF', 'OBJECT_INVALID']:
+                        # Keep as string - will be formatted as string literal later
+                        pass
                     else:
-                        # Always resolve constant references to their actual values
+                        # Try to resolve other constant references to their actual values
                         # This prevents NameError when the module is imported
                         resolved = resolve_constant_value(default, constants)
                         if resolved is not None:
@@ -632,8 +670,30 @@ def generate_function_python(func: dict, constants: list[dict]) -> str:
             if default is None:
                 params_py.append(f'ScriptParam({param_type_py}, "{param_name}", None)')
             else:
+                # Format default value for Python code
+                # If default is a string, check if it should be a string literal or Python code
+                if isinstance(default, str):
+                    # Check if it's already a formatted string literal (starts/ends with quotes)
+                    if (default.startswith('"') and default.endswith('"')) or (default.startswith("'") and default.endswith("'")):
+                        # Already formatted, use as-is
+                        default_formatted = default
+                    # Check if it looks like Python code (function calls, etc.)
+                    elif default.startswith('Vector3('):
+                        # It's Python code (Vector3 constructor), use as-is (don't quote it)
+                        default_formatted = default
+                    # OBJECT_SELF and OBJECT_INVALID are defined as constants at module level
+                    # Use them directly (not as string literals)
+                    elif default in ['OBJECT_SELF', 'OBJECT_INVALID']:
+                        # Use the constant name directly - it's defined at module level
+                        default_formatted = default
+                    else:
+                        # Need to format as string literal
+                        default_formatted = repr(default)
+                else:
+                    # Not a string, use directly
+                    default_formatted = str(default)
                 # Use the default value directly in Python code
-                params_py.append(f'ScriptParam({param_type_py}, "{param_name}", {default})')
+                params_py.append(f'ScriptParam({param_type_py}, "{param_name}", {default_formatted})')
         else:
             params_py.append(f'ScriptParam({param_type_py}, "{param_name}", None)')
     
@@ -661,6 +721,10 @@ import math
 
 from pykotor.common.script import DataType, ScriptConstant, ScriptFunction, ScriptParam
 from utility.common.geometry import Vector3
+
+# Built-in object constants (not defined in NSS files but used as defaults)
+OBJECT_SELF = 0
+OBJECT_INVALID = 1
 
 '''
     

@@ -588,19 +588,26 @@ def test_are_editor_manipulate_weather_checkboxes(qtbot, installation: HTInstall
     
     # Test rain checkbox
     # Ensure checkbox is enabled and visible (it may be hidden for K1 installations)
-    editor.ui.rainCheck.setEnabled(True)
-    editor.ui.rainCheck.setVisible(True)
-    editor.ui.rainCheck.show()  # Ensure checkbox is shown, not just visible
-    # Set checkbox state directly to ensure it's checked
+    editor.show()  # Ensure the editor window is shown so widgets are properly initialized
+    qtbot.wait(10)  # Wait for widget to be shown
+    
+    # Ensure checkbox and all parent widgets are enabled and visible
+    from qtpy.QtWidgets import QWidget
+    widget = editor.ui.rainCheck
+    while widget is not None:
+        widget.setEnabled(True)
+        widget.setVisible(True)
+        widget = widget.parentWidget() if isinstance(widget, QWidget) else None
+    
     editor.ui.rainCheck.setChecked(True)
-    qtbot.wait(100)  # Wait longer for Qt to process the checkbox state change
-    # Process events to ensure state is synchronized
-    from qtpy.QtWidgets import QApplication
-    QApplication.processEvents()
+    qtbot.wait(10)  # Wait for Qt to process the state change
+    
+    # Verify checkbox state before building
     assert editor.ui.rainCheck.isChecked(), "Rain checkbox should be checked"
+    
     data, _ = editor.build()
     modified_are = read_are(data)
-    assert modified_are.chance_rain == 100, f"Expected chance_rain to be 100, got {modified_are.chance_rain}"
+    assert modified_are.chance_rain == 100, f"Expected chance_rain to be 100, got {modified_are.chance_rain}. Checkbox checked={editor.ui.rainCheck.isChecked()}, enabled={editor.ui.rainCheck.isEnabled()}, visible={editor.ui.rainCheck.isVisible()}, installation.tsl={installation.tsl if installation else None}"
     
     if editor.ui.rainCheck.isChecked():
         qtbot.mouseClick(editor.ui.rainCheck, Qt.MouseButton.LeftButton)
@@ -815,17 +822,14 @@ def test_are_editor_manipulate_grass_probability_spins(qtbot, installation: HTIn
         modified_are = read_are(data)
         assert abs(modified_are.grass_prob_ur - prob_ur) < 0.001
 
-def test_are_editor_manipulate_dirt_colors(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_are_editor_manipulate_dirt_colors(qtbot, tsl_installation: HTInstallation, test_files_dir: Path):
     """Test manipulating dirt color fields (TSL only)."""
-    editor = AREEditor(None, installation)
+    editor = AREEditor(None, tsl_installation)
     qtbot.addWidget(editor)
     
     are_file = test_files_dir / "tat001.are"
     if not are_file.exists():
         pytest.skip("tat001.are not found")
-    
-    if not installation.tsl:
-        pytest.skip("Dirt colors are TSL-only")
     
     original_data = are_file.read_bytes()
     editor.load(are_file, "tat001", ResourceType.ARE, original_data)
@@ -849,17 +853,14 @@ def test_are_editor_manipulate_dirt_colors(qtbot, installation: HTInstallation, 
     modified_are = read_are(data)
     assert abs(modified_are.dirty_argb_3.r - dirt3_color.r) < 0.01
 
-def test_are_editor_manipulate_dirt_formula_spins(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_are_editor_manipulate_dirt_formula_spins(qtbot, tsl_installation: HTInstallation, test_files_dir: Path):
     """Test manipulating dirt formula spin boxes (TSL only)."""
-    editor = AREEditor(None, installation)
+    editor = AREEditor(None, tsl_installation)
     qtbot.addWidget(editor)
     
     are_file = test_files_dir / "tat001.are"
     if not are_file.exists():
         pytest.skip("tat001.are not found")
-    
-    if not installation.tsl:
-        pytest.skip("Dirt formulas are TSL-only")
     
     original_data = are_file.read_bytes()
     editor.load(are_file, "tat001", ResourceType.ARE, original_data)
@@ -882,17 +883,14 @@ def test_are_editor_manipulate_dirt_formula_spins(qtbot, installation: HTInstall
         modified_are = read_are(data)
         assert modified_are.dirty_formula_3 == formula
 
-def test_are_editor_manipulate_dirt_function_spins(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_are_editor_manipulate_dirt_function_spins(qtbot, tsl_installation: HTInstallation, test_files_dir: Path):
     """Test manipulating dirt function spin boxes (TSL only)."""
-    editor = AREEditor(None, installation)
+    editor = AREEditor(None, tsl_installation)
     qtbot.addWidget(editor)
     
     are_file = test_files_dir / "tat001.are"
     if not are_file.exists():
         pytest.skip("tat001.are not found")
-    
-    if not installation.tsl:
-        pytest.skip("Dirt functions are TSL-only")
     
     original_data = are_file.read_bytes()
     editor.load(are_file, "tat001", ResourceType.ARE, original_data)
@@ -915,17 +913,14 @@ def test_are_editor_manipulate_dirt_function_spins(qtbot, installation: HTInstal
         modified_are = read_are(data)
         assert modified_are.dirty_func_3 == func
 
-def test_are_editor_manipulate_dirt_size_spins(qtbot, installation: HTInstallation, test_files_dir: Path):
+def test_are_editor_manipulate_dirt_size_spins(qtbot, tsl_installation: HTInstallation, test_files_dir: Path):
     """Test manipulating dirt size spin boxes (TSL only)."""
-    editor = AREEditor(None, installation)
+    editor = AREEditor(None, tsl_installation)
     qtbot.addWidget(editor)
     
     are_file = test_files_dir / "tat001.are"
     if not are_file.exists():
         pytest.skip("tat001.are not found")
-    
-    if not installation.tsl:
-        pytest.skip("Dirt sizes are TSL-only")
     
     original_data = are_file.read_bytes()
     editor.load(are_file, "tat001", ResourceType.ARE, original_data)
@@ -1497,7 +1492,7 @@ def test_are_editor_gff_roundtrip_comparison(qtbot, installation: HTInstallation
         log_messages.append("\t".join(str(a) for a in args))
     
     diff = original_gff.compare(new_gff, log_func, ignore_default_changes=True)
-    assert diff, f"GFF comparison failed:\n{chr(10).join(log_messages)}"
+    assert diff, f"GFF comparison failed - structures differ:\n{chr(10).join(log_messages)}"
 
 def test_are_editor_gff_roundtrip_with_modifications(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test GFF roundtrip with modifications still produces valid GFF."""

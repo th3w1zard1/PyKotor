@@ -39,6 +39,7 @@ class AREEditor(Editor):
         self.setMinimumSize(400, 600)  # Lock the window size
 
         self._are: ARE = ARE()
+        self._loaded_are: ARE | None = None  # Store reference to loaded ARE to preserve original values
         self._minimap: TPC | None = None
         self._rooms: list[ARERoom] = []  # TODO(th3w1zard1): define somewhere in ui.
 
@@ -134,6 +135,7 @@ class AREEditor(Editor):
         super().load(filepath, resref, restype, data)
 
         are: ARE = read_are(data)
+        self._loaded_are = are  # Store reference to preserve original values
         self._loadARE(are)
         self.adjustSize()
 
@@ -237,6 +239,12 @@ class AREEditor(Editor):
 
     def build(self) -> tuple[bytes, bytes]:
         self._are = self._buildARE()
+        
+        # Copy original values from loaded ARE to new ARE for roundtrip preservation
+        if getattr(self, '_loaded_are', None) is not None:
+            if getattr(self._loaded_are, '_has_original', False):
+                self._are._has_original = True
+                self._are._original_values = getattr(self._loaded_are, '_original_values', {}).copy()
 
         if self._installation:
             game = self._installation.game()
@@ -292,19 +300,11 @@ class AREEditor(Editor):
         are.sun_diffuse = self.ui.diffuseColorEdit.color()
         are.dynamic_light = self.ui.dynamicColorEdit.color()
         are.wind_power = AREWindPower(self.ui.windPowerSelect.currentIndex())
-        # Read checkbox state - for K1 installations, these checkboxes are hidden/disabled and default to 0
-        # For TSL or when made visible/enabled in tests, read the actual checkbox state
-        # If checkbox is checked and (TSL installation OR checkbox is enabled OR visible), use 100
-        is_tsl = self._installation is not None and self._installation.tsl
-        rain_checked = self.ui.rainCheck.isChecked()
-        rain_active = is_tsl or self.ui.rainCheck.isEnabled() or self.ui.rainCheck.isVisible()
-        are.chance_rain = 100 if (rain_checked and rain_active) else 0
-        snow_checked = self.ui.snowCheck.isChecked()
-        snow_active = is_tsl or self.ui.snowCheck.isEnabled() or self.ui.snowCheck.isVisible()
-        are.chance_snow = 100 if (snow_checked and snow_active) else 0
-        lightning_checked = self.ui.lightningCheck.isChecked()
-        lightning_active = is_tsl or self.ui.lightningCheck.isEnabled() or self.ui.lightningCheck.isVisible()
-        are.chance_lightning = 100 if (lightning_checked and lightning_active) else 0
+        # Read checkbox state - if checkbox is checked, use 100; otherwise use 0
+        # The enabled/visible state is only for UI display, not for value determination
+        are.chance_rain = 100 if self.ui.rainCheck.isChecked() else 0
+        are.chance_snow = 100 if self.ui.snowCheck.isChecked() else 0
+        are.chance_lightning = 100 if self.ui.lightningCheck.isChecked() else 0
         are.shadows = self.ui.shadowsCheck.isChecked()
         are.shadow_opacity = self.ui.shadowsSpin.value()
 
@@ -348,6 +348,7 @@ class AREEditor(Editor):
 
     def new(self):
         super().new()
+        self._loaded_are = None  # Clear loaded ARE reference for new files
         self._loadARE(ARE())
 
     def redoMinimap(self):

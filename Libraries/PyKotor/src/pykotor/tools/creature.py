@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
 
@@ -69,10 +69,11 @@ def get_body_model(  # noqa: C901, PLR0912, PLR0915
         log.debug("appearance.2da: utc 'modeltype' is 'B'")
 
         # Handle armor or default model/texture
+        # tex_column: Literal["texaevil", "texa", "texbevil", "texb", "texc", "texd", "texi", "texlevil", "texl", "texnevil", "texn", "texfevil", "texf", "texgevil", "texg", "texhevil", "texh", "texivevil", "texi", "texjevil", "texj", "texkevil", "texk", "texlevil", "texl", "texmevil", "texm", "texnevil", "texn", "texovevil", "texo", "texpevil", "texp", "texqevil", "texq", "texrevevil", "texr", "texsevil", "texs", "textevil", "text", "texuevil", "texu", "texvevil", "texv", "texwevil", "texw", "texxevil", "texx", "texyevil", "texy", "texzevil", "texz"]
         if EquipmentSlot.ARMOR not in utc.equipment or not utc.equipment[EquipmentSlot.ARMOR].resref:
             model_column = "modela"
             body_model = utc_appearance_row.get_string(model_column, context=f"Fetching model 'modela'{context_base}")
-            tex_column: Literal["texaevil", "texa"] = "texaevil" if utc.alignment <= 25 else "texa"
+            tex_column = "texaevil" if utc.alignment <= 25 else "texa"
             tex_append = "01"
             override_texture = utc_appearance_row.get_string(tex_column, context=f"Fetching default texture{context_base}")
         else:
@@ -262,27 +263,28 @@ def get_head_model(  # noqa: C901, PLR0912
                 utc.appearance_id,
                 exc_info=True,
             )
-        model = head_row.get_string("head")
-        head_column_name: str | None = None
-        if utc.alignment < 10:  # noqa: PLR2004
-            head_column_name = "headtexvvve"
-        elif utc.alignment < 20:  # noqa: PLR2004
-            head_column_name = "headtexvve"
-        elif utc.alignment < 30:  # noqa: PLR2004
-            head_column_name = "headtexve"
-        elif utc.alignment < 40:  # noqa: PLR2004
-            head_column_name = "headtexe"
-        elif "alttexture" in heads.get_headers():
-            if not installation.game().is_k2():  # TSL only override.
-                RobustLogger().error("'alttexture' column in heads.2da should never exist in a K1 installation.")
-            else:
-                head_column_name = "alttexture"
-        if head_column_name is not None:
-            try:
-                texture = head_row.get_string(head_column_name)
-                texture = texture if texture and texture.strip() else None
-            except KeyError:
-                RobustLogger().error("Cannot find %s in heads.2da", head_column_name, exc_info=True)
+        else:
+            model = head_row.get_string("head")
+            head_column_name: str | None = None
+            if utc.alignment < 10:  # noqa: PLR2004
+                head_column_name = "headtexvvve"
+            elif utc.alignment < 20:  # noqa: PLR2004
+                head_column_name = "headtexvve"
+            elif utc.alignment < 30:  # noqa: PLR2004
+                head_column_name = "headtexve"
+            elif utc.alignment < 40:  # noqa: PLR2004
+                head_column_name = "headtexe"
+            elif "alttexture" in heads.get_headers():
+                if not installation.game().is_k2():  # TSL only override.
+                    RobustLogger().error("'alttexture' column in heads.2da should never exist in a K1 installation.")
+                else:
+                    head_column_name = "alttexture"
+            if head_column_name is not None:
+                try:
+                    texture = head_row.get_string(head_column_name)
+                    texture = texture if texture and texture.strip() else None
+                except KeyError:
+                    RobustLogger().error("Cannot find %s in heads.2da", head_column_name, exc_info=True)
 
     return model, texture
 

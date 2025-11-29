@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Collection, NoReturn, cast
+from typing import TYPE_CHECKING, NoReturn, Sequence, cast
 
 from ply import yacc
 
@@ -9,6 +9,12 @@ from pykotor.resource.formats.ncs.compiler.classes import (
     AdditionAssignment,
     Assignment,
     BinaryOperatorExpression,
+    BitwiseAndAssignment,
+    BitwiseLeftAssignment,
+    BitwiseOrAssignment,
+    BitwiseRightAssignment,
+    BitwiseUnsignedRightAssignment,
+    BitwiseXorAssignment,
     BreakStatement,
     CodeBlock,
     CodeRoot,
@@ -18,11 +24,13 @@ from pykotor.resource.formats.ncs.compiler.classes import (
     ContinueStatement,
     DeclarationStatement,
     DefaultSwitchLabel,
+    TernaryConditionalExpression,
     DivisionAssignment,
     DoWhileLoopBlock,
     DynamicDataType,
     EmptyStatement,
     EngineCallExpression,
+    Expression,
     ExpressionStatement,
     ExpressionSwitchLabel,
     FieldAccess,
@@ -37,6 +45,7 @@ from pykotor.resource.formats.ncs.compiler.classes import (
     Identifier,
     IdentifierExpression,
     IncludeScript,
+    ModuloAssignment,
     MultiplicationAssignment,
     NopStatement,
     PostfixDecrementExpression,
@@ -58,10 +67,9 @@ from pykotor.resource.formats.ncs.compiler.classes import (
 from pykotor.resource.formats.ncs.compiler.lexer import NssLexer
 
 if TYPE_CHECKING:
-    import os
-
-    from pykotor.common.script import ScriptConstant, ScriptFunction
-    from pykotor.resource.formats.ncs.compiler.classes import Expression
+    from pykotor.common.script import DataType, ScriptConstant, ScriptFunction
+else:
+    from pykotor.common.script import DataType
 
 
 class NssParser:
@@ -83,7 +91,7 @@ class NssParser:
         functions: list[ScriptFunction],
         constants: list[ScriptConstant],
         library: dict[str, bytes],
-        library_lookup: list[str] | list[os.PathLike] | None,
+        library_lookup: Sequence[str | Path] | None = None,
         errorlog: yacc.NullLogger | None = yacc.NullLogger(),  # noqa: B008
         *,
         debug: bool = False,
@@ -97,16 +105,15 @@ class NssParser:
         self.functions: list[ScriptFunction] = functions
         self.constants: list[ScriptConstant] = constants
         self.library: dict[str, bytes] = library
-        self.library_lookup: list[Path] = []
-        if library_lookup:
-            if not isinstance(library_lookup, list):
-                library_lookup = [library_lookup]
-            self.library_lookup = [Path(item) for item in library_lookup]
+        library_lookup = [] if library_lookup is None else list(library_lookup)
+        self.library_lookup = [Path(item) for item in library_lookup]
 
     tokens: list[str] = NssLexer.tokens
     literals: list[str] = NssLexer.literals
 
     precedence: tuple[tuple[str, ...], ...] = (
+        ("right", "=", "ADDITION_ASSIGNMENT_OPERATOR", "SUBTRACTION_ASSIGNMENT_OPERATOR", "MULTIPLICATION_ASSIGNMENT_OPERATOR", "DIVISION_ASSIGNMENT_OPERATOR", "MOD_ASSIGNMENT_OPERATOR", "BITWISE_AND_ASSIGNMENT_OPERATOR", "BITWISE_OR_ASSIGNMENT_OPERATOR", "BITWISE_XOR_ASSIGNMENT_OPERATOR", "BITWISE_LEFT_ASSIGNMENT_OPERATOR", "BITWISE_RIGHT_ASSIGNMENT_OPERATOR", "BITWISE_UNSIGNED_RIGHT_ASSIGNMENT_OPERATOR"),
+        ("right", "?"),
         ("left", "OR"),
         ("left", "AND"),
         ("left", "BITWISE_OR"),
@@ -114,7 +121,7 @@ class NssParser:
         ("left", "BITWISE_AND"),
         ("left", "EQUALS", "NOT_EQUALS"),
         ("left", "GREATER_THAN", "LESS_THAN", "GREATER_THAN_OR_EQUALS", "LESS_THAN_OR_EQUALS"),
-        ("left", "BITWISE_LEFT", "BITWISE_RIGHT"),
+        ("left", "BITWISE_LEFT", "BITWISE_RIGHT", "BITWISE_UNSIGNED_RIGHT"),
         ("left", "ADD", "MINUS"),
         ("left", "MULTIPLY", "DIVIDE", "MOD"),
         ("right", "BITWISE_NOT", "NOT"),
@@ -185,11 +192,23 @@ class NssParser:
         """  # noqa: D200, D400, D212, D415
         p[0] = GlobalVariableInitialization(p[2], p[1], p[4])
 
+    def p_global_variable_initialization_const(self, p):
+        """
+        global_variable_initialization : CONST data_type IDENTIFIER '=' expression ';'
+        """  # noqa: D200, D400, D212, D415
+        p[0] = GlobalVariableInitialization(p[3], p[2], p[5], is_const=True)
+
     def p_global_variable_declaration(self, p):
         """
         global_variable_declaration : data_type IDENTIFIER ';'
         """  # noqa: D200, D400, D212, D415
         p[0] = GlobalVariableDeclaration(p[2], p[1])
+
+    def p_global_variable_declaration_const(self, p):
+        """
+        global_variable_declaration : CONST data_type IDENTIFIER ';'
+        """  # noqa: D200, D400, D212, D415
+        p[0] = GlobalVariableDeclaration(p[3], p[2], is_const=True)
 
     def p_function_forward_declaration(self, p):
         """
@@ -269,8 +288,14 @@ class NssParser:
     def p_for_loop(self, p):
         """
         for_loop : FOR_CONTROL '(' expression ';' expression ';' expression ')' '{' code_block '}'
+                 | FOR_CONTROL '(' declaration_statement expression ';' expression ')' '{' code_block '}'
         """  # noqa: D200, D400, D212, D415
-        p[0] = ForLoopBlock(p[3], p[5], p[7], p[10])
+        if len(p) == 12:
+            # for (expression; expression; expression)
+            p[0] = ForLoopBlock(p[3], p[5], p[7], p[10])
+        else:
+            # for (declaration_statement; expression; expression) - len is 13
+            p[0] = ForLoopBlock(p[3], p[5], p[7], p[11])
 
     def p_scoped_block(self, p):
         """
@@ -301,7 +326,9 @@ class NssParser:
         """
         statement : NOP STRING_VALUE ';'
         """  # noqa: D200, D400, D403, D212, D415
-        p[0] = NopStatement(p[2].value)
+        # p[2] is a StringExpression object from the lexer, access its .value attribute
+        string_expr = p[2]
+        p[0] = NopStatement(string_expr.value)
 
     def p_expression_statement(self, p):
         """
@@ -326,6 +353,12 @@ class NssParser:
         declaration_statement : data_type variable_declarators ';'
         """  # noqa: D200, D400, D212, D415
         p[0] = DeclarationStatement(p[1], p[2])
+
+    def p_declaration_statement_const(self, p):
+        """
+        declaration_statement : CONST data_type variable_declarators ';'
+        """  # noqa: D200, D400, D212, D415
+        p[0] = DeclarationStatement(p[2], p[3], is_const=True)
 
     def p_variable_declarators(self, p):
         """
@@ -379,6 +412,48 @@ class NssParser:
         assignment : field_access DIVISION_ASSIGNMENT_OPERATOR expression
         """  # noqa: D200, D400, D403, D212, D415
         p[0] = DivisionAssignment(p[1], p[3])
+
+    def p_modulo_assignment(self, p):
+        """
+        assignment : field_access MOD_ASSIGNMENT_OPERATOR expression
+        """  # noqa: D200, D400, D403, D212, D415
+        p[0] = ModuloAssignment(p[1], p[3])
+
+    def p_bitwise_and_assignment(self, p):
+        """
+        assignment : field_access BITWISE_AND_ASSIGNMENT_OPERATOR expression
+        """  # noqa: D200, D400, D403, D212, D415
+        p[0] = BitwiseAndAssignment(p[1], p[3])
+
+    def p_bitwise_or_assignment(self, p):
+        """
+        assignment : field_access BITWISE_OR_ASSIGNMENT_OPERATOR expression
+        """  # noqa: D200, D400, D403, D212, D415
+        p[0] = BitwiseOrAssignment(p[1], p[3])
+
+    def p_bitwise_xor_assignment(self, p):
+        """
+        assignment : field_access BITWISE_XOR_ASSIGNMENT_OPERATOR expression
+        """  # noqa: D200, D400, D403, D212, D415
+        p[0] = BitwiseXorAssignment(p[1], p[3])
+
+    def p_bitwise_left_assignment(self, p):
+        """
+        assignment : field_access BITWISE_LEFT_ASSIGNMENT_OPERATOR expression
+        """  # noqa: D200, D400, D403, D212, D415
+        p[0] = BitwiseLeftAssignment(p[1], p[3])
+
+    def p_bitwise_right_assignment(self, p):
+        """
+        assignment : field_access BITWISE_RIGHT_ASSIGNMENT_OPERATOR expression
+        """  # noqa: D200, D400, D403, D212, D415
+        p[0] = BitwiseRightAssignment(p[1], p[3])
+
+    def p_bitwise_unsigned_right_assignment(self, p):
+        """
+        assignment : field_access BITWISE_UNSIGNED_RIGHT_ASSIGNMENT_OPERATOR expression
+        """  # noqa: D200, D400, D403, D212, D415
+        p[0] = BitwiseUnsignedRightAssignment(p[1], p[3])
 
     # region If Statement
     def p_condition_statement(self, p):
@@ -469,9 +544,16 @@ class NssParser:
                    | expression BITWISE_AND expression
                    | expression BITWISE_LEFT expression
                    | expression BITWISE_RIGHT expression
+                   | expression BITWISE_UNSIGNED_RIGHT expression
                    | expression MOD expression
         """  # noqa: D400, D212, D403, D415, D205
         p[0] = BinaryOperatorExpression(p[1], p[3], p[2].binary)
+
+    def p_ternary_expression(self, p):
+        """
+        expression : expression '?' expression ':' expression
+        """  # noqa: D200, D400, D403, D212, D415
+        p[0] = TernaryConditionalExpression(p[1], p[3], p[5])
 
     def p_unary_expression(self, p):
         """
@@ -481,7 +563,7 @@ class NssParser:
         """  # noqa: D400, D212, D403, D415, D205
         p[0] = UnaryOperatorExpression(p[2], p[1].unary)
 
-    def p_return_statement(self, p: Collection):
+    def p_return_statement(self, p: yacc.YaccProduction):
         """
         return_statement : RETURN ';'
                          | RETURN expression ';'
@@ -489,7 +571,8 @@ class NssParser:
         if len(p) == 3:
             p[0] = ReturnStatement()
         elif len(p) == 4:
-            p[0] = ReturnStatement(p[2])
+            expr = cast(Expression, p[2])
+            p[0] = ReturnStatement(expr)
 
     def p_expression(self, p):
         """
@@ -526,10 +609,12 @@ class NssParser:
         identifier = p[1]
         args: list[Expression] = p[3]
 
-        engine_function = next((x for x in self.functions if x.name == identifier), None)
+        # identifier is an Identifier object, need to get its label for comparison
+        identifier_label = identifier.label if isinstance(identifier, Identifier) else str(identifier)
+        engine_function = next((x for x in self.functions if x.name == identifier_label), None)
         if engine_function:
             routine_id = self.functions.index(engine_function)
-            data_type = engine_function.returntype
+            data_type = DynamicDataType(engine_function.returntype)
             p[0] = EngineCallExpression(engine_function, routine_id, data_type, args)
         else:
             args = p[3]
@@ -564,11 +649,18 @@ class NssParser:
                   | VECTOR_TYPE
                   | ACTION_TYPE
                   | STRUCT IDENTIFIER
+                  | IDENTIFIER
         """  # noqa: D400, D212, D415, D205
         if len(p) == 3:  # noqa: PLR2004
+            # STRUCT IDENTIFIER
             p[0] = DynamicDataType(p[1], p[2].label)
-        else:
-            p[0] = DynamicDataType(p[1])
+        elif len(p) == 2:
+            if isinstance(p[1], Identifier):
+                # IDENTIFIER (struct type)
+                p[0] = DynamicDataType(DataType.STRUCT, p[1].label)
+            else:
+                # Built-in type
+                p[0] = DynamicDataType(p[1])
 
     def p_field_access(self, p):
         """
