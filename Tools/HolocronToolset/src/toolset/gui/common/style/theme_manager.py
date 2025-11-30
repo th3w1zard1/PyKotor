@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib
 import json
 import os
-import re
 
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -46,9 +45,9 @@ class ThemeManager:
         """Initialize the theme manager."""
         self.original_style: str = original_style or ThemeDialog.get_original_style()
 
-    @staticmethod
-    def get_available_themes() -> tuple[str, ...]:
-        """List all available themes including QSS files and VS Code JSON themes."""
+    @classmethod
+    def get_available_themes(cls) -> tuple[str, ...]:
+        """List all available themes including QSS files, VS Code JSON themes, and hardcoded themes."""
         themes: list[str] = []
         
         # Get themes from QSS files in resources
@@ -72,15 +71,24 @@ class ThemeManager:
             if extra_themes_path.exists() and extra_themes_path.is_dir():
                 try:
                     for json_file in extra_themes_path.glob("*.json"):
-                        # Skip config and settings files
-                        if "config" in json_file.stem.lower() or "settings" in json_file.stem.lower():
+                        # Skip config, settings, and template files
+                        stem_lower = json_file.stem.lower()
+                        if "config" in stem_lower or "settings" in stem_lower or stem_lower == "template":
                             continue
-                        theme_name = json_file.stem.lower()
+                        theme_name = stem_lower
                         if theme_name and theme_name not in themes:
                             themes.append(theme_name)
                 except Exception:
                     continue
                 break
+        
+        # Add all hardcoded themes from _build_builtin_theme_configs
+        # Create a temporary instance to access the method
+        temp_manager = cls()
+        builtin_configs = temp_manager._build_builtin_theme_configs()
+        for theme_key in builtin_configs:
+            if theme_key and theme_key.lower() not in [t.lower() for t in themes]:
+                themes.append(theme_key)
         
         return tuple(sorted(themes))
 
@@ -280,31 +288,12 @@ class ThemeManager:
             "sheet": "",  # No QSS file for VS Code themes, palette handles it
         }
 
-    def _get_theme_config(
-        self,
-        theme_name: str,
-    ) -> dict[str, Any]:
-        """Get the configuration for a specific theme with expertly-crafted color palettes.
+    def _build_builtin_theme_configs(self) -> dict[str, dict[str, Any]]:
+        """Build and return all built-in theme configurations.
         
-        Supports both built-in themes and VS Code themes from extra_themes folder.
-        VS Code themes are loaded dynamically from JSON files.
+        This method centralizes all hardcoded theme definitions to allow
+        get_available_themes() to dynamically list them.
         """
-        # First check if it's a VS Code theme (try to load from JSON)
-        vscode_config = self._load_vscode_theme(f"{theme_name}.json")
-        if vscode_config:
-            return vscode_config
-        
-        # Try alternative naming patterns for VS Code themes
-        alt_names = [
-            f"{theme_name}-color-theme.json",
-            f"{theme_name}-dark.json",
-            f"{theme_name}-light.json",
-        ]
-        for alt_name in alt_names:
-            vscode_config = self._load_vscode_theme(alt_name)
-            if vscode_config:
-                return vscode_config
-        
         # Built-in theme configurations
         configs: dict[str, dict[str, Any]] = {
             "native": {
@@ -741,17 +730,17 @@ class ThemeManager:
                 # Green Abyss Color Theme (dark)
                 "palette": lambda: self.create_palette("#00180c", "#062106", "#9dcaac", "#12411ce8", "#6b917c70", "#FFFFFF"),
             },
-            "gruvbox-dark-hard": {
+            "gruvbox-dark-hard2": {
                 "style": "Fusion",
                 # Gruvbox Dark Hard (dark)
                 "palette": lambda: self.create_palette("#1d2021", "#1d2021", "#ebdbb2", "#1d2021", "#689d6a40", "#ebdbb2"),
             },
-            "gruvbox-dark-medium": {
+            "gruvbox-dark-medium2": {
                 "style": "Fusion",
                 # Gruvbox Dark Medium (dark)
                 "palette": lambda: self.create_palette("#282828", "#282828", "#ebdbb2", "#282828", "#689d6a40", "#ebdbb2"),
             },
-            "gruvbox-dark-soft": {
+            "gruvbox-dark-soft2": {
                 "style": "Fusion",
                 # Gruvbox Dark Soft (dark)
                 "palette": lambda: self.create_palette("#32302f", "#32302f", "#ebdbb2", "#32302f", "#689d6a40", "#ebdbb2"),
@@ -1116,52 +1105,52 @@ class ThemeManager:
                 # Bearded Theme Black Ruby (dark)
                 "palette": lambda: self.create_palette("#111418", "#0c0f11", "#a0acbb", "#1c2027", "#c62f524d", "#a0acbb"),
             },
-            "bearded-theme-black-amethyst-soft": {
+            "bearded-theme-black-amethyst-soft2": {
                 "style": "Fusion",
                 # Bearded Theme Black Amethyst Soft (dark)
                 "palette": lambda: self.create_palette("#171626", "#13121f", "#acabc3AA", "#211f36", "#a85ff140", "#acabc3AA"),
             },
-            "bearded-theme-black-amethyst": {
+            "bearded-theme-black-amethyst2": {
                 "style": "Fusion",
                 # Bearded Theme Black Amethyst (dark)
                 "palette": lambda: self.create_palette("#111418", "#0c0f11", "#a8adb3AA", "#1c2027", "#a85ff140", "#a8adb3AA"),
             },
-            "bearded-theme-black-diamond-soft": {
+            "bearded-theme-black-diamond-soft2": {
                 "style": "Fusion",
                 # Bearded Theme Black Diamond Soft (dark)
                 "palette": lambda: self.create_palette("#161d26", "#12181f", "#abb6c3AA", "#1f2936", "#11b7d440", "#abb6c3AA"),
             },
-            "bearded-theme-black-diamond": {
+            "bearded-theme-black-diamond2": {
                 "style": "Fusion",
                 # Bearded Theme Black Diamond (dark)
                 "palette": lambda: self.create_palette("#111418", "#0c0f11", "#a8adb3AA", "#1c2027", "#11b7d440", "#a8adb3AA"),
             },
-            "bearded-theme-black-emerald-soft": {
+            "bearded-theme-black-emerald-soft2": {
                 "style": "Fusion",
                 # Bearded Theme Black Emerald Soft (dark)
                 "palette": lambda: self.create_palette("#162226", "#121c1f", "#abbdc3AA", "#1f3036", "#38c7bd40", "#abbdc3AA"),
             },
-            "bearded-theme-black-emerald": {
+            "bearded-theme-black-emerald2": {
                 "style": "Fusion",
                 # Bearded Theme Black Emerald (dark)
                 "palette": lambda: self.create_palette("#111418", "#0c0f11", "#a8adb3AA", "#1c2027", "#38c7bd40", "#a8adb3AA"),
             },
-            "bearded-theme-black-gold-soft": {
+            "bearded-theme-black-gold-soft2": {
                 "style": "Fusion",
                 # Bearded Theme Black Gold Soft (dark)
                 "palette": lambda: self.create_palette("#221f1d", "#1c1918", "#b8b8b8AA", "#302c29", "#c7910c40", "#b8b8b8AA"),
             },
-            "bearded-theme-black-gold": {
+            "bearded-theme-black-gold2": {
                 "style": "Fusion",
                 # Bearded Theme Black Gold (dark)
                 "palette": lambda: self.create_palette("#111418", "#0c0f11", "#a8adb3AA", "#1c2027", "#c7910c40", "#a8adb3AA"),
             },
-            "bearded-theme-black-ruby-soft": {
+            "bearded-theme-black-ruby-soft2": {
                 "style": "Fusion",
                 # Bearded Theme Black Ruby Soft (dark)
                 "palette": lambda: self.create_palette("#281a21", "#21161b", "#c2b2baAA", "#37242e", "#c62f5240", "#c2b2baAA"),
             },
-            "bearded-theme-black-ruby": {
+            "bearded-theme-black-ruby2": {
                 "style": "Fusion",
                 # Bearded Theme Black Ruby (dark)
                 "palette": lambda: self.create_palette("#111418", "#0c0f11", "#a8adb3AA", "#1c2027", "#c62f5240", "#a8adb3AA"),
@@ -1681,7 +1670,7 @@ class ThemeManager:
                 # Dracula Soft (dark)
                 "palette": lambda: self.create_palette("#282A36", "#262626", "#f6f6f4", "#282A36", "#44475A", "#f6f6f4"),
             },
-            "dracula": {
+            "dracula2": {
                 "style": "Fusion",
                 # Dracula (dark)
                 "palette": lambda: self.create_palette("#282A36", "#21222C", "#F8F8F2", "#282A36", "#44475A", "#F8F8F2"),
@@ -2011,7 +2000,7 @@ class ThemeManager:
                 # Material Theme Darker High Contrast (dark)
                 "palette": lambda: self.create_palette("#212121", "#1a1a1a", "#EEFFFF", "#212121", "#61616150", "#EEFFFF"),
             },
-            "material-theme-darker": {
+            "material-theme-darker2": {
                 "style": "Fusion",
                 # Material Theme Darker (dark)
                 "palette": lambda: self.create_palette("#212121", "#212121", "#EEFFFF", "#212121", "#61616150", "#EEFFFF"),
@@ -2031,7 +2020,7 @@ class ThemeManager:
                 # Material Theme Default High Contrast (dark)
                 "palette": lambda: self.create_palette("#263238", "#192227", "#EEFFFF", "#263238", "#80CBC420", "#EEFFFF"),
             },
-            "material-theme-default": {
+            "material-theme-default2": {
                 "style": "Fusion",
                 # Material Theme Default (dark)
                 "palette": lambda: self.create_palette("#263238", "#263238", "#EEFFFF", "#263238", "#80CBC420", "#EEFFFF"),
@@ -2056,7 +2045,7 @@ class ThemeManager:
                 # Material Theme Palenight High Contrast (dark)
                 "palette": lambda: self.create_palette("#292D3E", "#1B1E2B", "#babed8", "#292D3E", "#717CB450", "#babed8"),
             },
-            "material-theme-palenight": {
+            "material-theme-palenight2": {
                 "style": "Fusion",
                 # Material Theme Palenight (dark)
                 "palette": lambda: self.create_palette("#292D3E", "#292D3E", "#babed8", "#292D3E", "#717CB450", "#babed8"),
@@ -2136,7 +2125,7 @@ class ThemeManager:
                 # Monokai Pro Filter Spectrum (dark)
                 "palette": lambda: self.create_palette("#222222", "#191919", "#f7f1ff", "#363537", "#bab6c026", "#f7f1ff"),
             },
-            "monokai-pro": {
+            "monokai-pro2": {
                 "style": "Fusion",
                 # Monokai Pro (dark)
                 "palette": lambda: self.create_palette("#2d2a2e", "#221f22", "#fcfcfa", "#403e41", "#c1c0c026", "#fcfcfa"),
@@ -2271,7 +2260,7 @@ class ThemeManager:
                 # Oceanicnext Light (light)
                 "palette": lambda: self.create_palette("#D8DEE9", "#CDD3DE", "#4F5B66", "#D8DEE9", "#C0C5CE", "#4F5B66"),
             },
-            "onedark": {
+            "onedark2": {
                 "style": "Fusion",
                 # Onedark (dark)
                 "palette": lambda: self.create_palette("#282C34", "#21252B", "#ABB2BF", "#21252B", "#3E4451", "#FFFFFF"),
@@ -2811,7 +2800,43 @@ class ThemeManager:
                 # Vue Theme Color Theme (dark)
                 "palette": lambda: self.create_palette("#1E1E1E", "#1E1E1E", "#FFFFFF", "#1E1E1E", "#0078D4", "#FFFFFF"),
             },
+            "template": {
+                "style": "Fusion",
+                # Template: Solarized Dark based theme from template.json
+                # Primary: #003847 (input.background), Secondary: #00212b (sideBar.background)
+                # Text: #93a1a1, Highlight: #2aa198 (teal accent), Bright: #d6dbdb
+                "palette": lambda: self.create_palette("#003847", "#00212b", "#93a1a1", "#004052", "#2aa198", "#d6dbdb"),
+            },
         }
+        return configs
+
+    def _get_theme_config(
+        self,
+        theme_name: str,
+    ) -> dict[str, Any]:
+        """Get the configuration for a specific theme with expertly-crafted color palettes.
+        
+        Supports both built-in themes and VS Code themes from extra_themes folder.
+        VS Code themes are loaded dynamically from JSON files.
+        """
+        # First check if it's a VS Code theme (try to load from JSON)
+        vscode_config = self._load_vscode_theme(f"{theme_name}.json")
+        if vscode_config:
+            return vscode_config
+        
+        # Try alternative naming patterns for VS Code themes
+        alt_names = [
+            f"{theme_name}-color-theme.json",
+            f"{theme_name}-dark.json",
+            f"{theme_name}-light.json",
+        ]
+        for alt_name in alt_names:
+            vscode_config = self._load_vscode_theme(alt_name)
+            if vscode_config:
+                return vscode_config
+        
+        # Built-in theme configurations
+        configs = self._build_builtin_theme_configs()
         
         # Try to find theme with case-insensitive matching and common variations
         theme_lower = theme_name.lower()
@@ -2897,9 +2922,17 @@ class ThemeManager:
             app.setPalette(app_style.standardPalette())
             app.setStyleSheet(qdarkstyle.load_stylesheet())
         else:
+            # Handle None theme_name by using default
+            if theme_name is None:
+                theme_name = "fusion (light)"
+            assert theme_name is not None, "theme_name should not be None at this point"
             config: dict[str, Any] = self._get_theme_config(theme_name)
-            sheet: str = config["sheet"](app) if callable(config["sheet"]) else config["sheet"]
-            palette: QPalette | None = config["palette"]() if callable(config["palette"]) else config["palette"]
+            # Safely get sheet with default empty string if not present
+            sheet_value = config.get("sheet", "")
+            sheet: str = sheet_value(app) if callable(sheet_value) else str(sheet_value)
+            # Safely get palette with default None if not present
+            palette_value = config.get("palette", None)
+            palette: QPalette | None = palette_value() if callable(palette_value) else (palette_value if isinstance(palette_value, QPalette) else None)
 
             # Determine effective style:
             # - Empty string ("") means use native/system default (self.original_style)

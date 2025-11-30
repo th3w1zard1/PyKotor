@@ -39,6 +39,7 @@ if TYPE_CHECKING:
     from pykotor.resource.formats.bwm import BWMFace
     from pykotor.resource.formats.bwm.bwm_data import BWM
     from toolset.data.indoorkit import KitComponent, KitComponentHook
+    from toolset.data.indoormap import MissingRoomInfo
 
 
 class IndoorMapBuilder(QMainWindow):
@@ -85,7 +86,12 @@ class IndoorMapBuilder(QMainWindow):
         self.ui.actionSave.triggered.connect(self.save)
         self.ui.actionSaveAs.triggered.connect(self.save_as)
         self.ui.actionBuild.triggered.connect(self.build_map)
-        self.ui.actionSettings.triggered.connect(lambda: IndoorMapSettings(self, self._installation, self._map, self._kits).exec())
+        if self._installation:
+            assert isinstance(self._installation, HTInstallation), "Installation is not set in IndoorMapBuilder"
+            inst: HTInstallation = self._installation
+            self.ui.actionSettings.triggered.connect(lambda: IndoorMapSettings(self, inst, self._map, self._kits).exec())
+        else:
+            self.ui.actionSettings.setEnabled(False)
         self.ui.actionDeleteSelected.triggered.connect(self.delete_selected)
         self.ui.actionDownloadKits.triggered.connect(self.open_kit_downloader)
         self.ui.actionInstructions.triggered.connect(self.show_help_window)
@@ -189,13 +195,92 @@ class IndoorMapBuilder(QMainWindow):
         filepath, _ = QFileDialog.getOpenFileName(self, "Open Map", "", "Indoor Map File (*.indoor)")
         if filepath and str(filepath).strip():
             try:
-                self._map.load(Path(filepath).read_bytes(), self._kits)
+                missing_rooms = self._map.load(Path(filepath).read_bytes(), self._kits)
                 self._map.rebuild_room_connections()
                 self._filepath = filepath
                 self._refresh_window_title()
+                
+                if missing_rooms:
+                    self._show_missing_rooms_dialog(missing_rooms)
             except OSError as e:
                 from toolset.gui.common.localization import translate as tr, trf
                 QMessageBox(QMessageBox.Icon.Critical, tr("Failed to load file"), trf("{error}", error=str(universal_simplify_exception(e)))).exec()
+
+    def _show_missing_rooms_dialog(self, missing_rooms: list[MissingRoomInfo]):
+        """Show a dialog with information about missing rooms/kits.
+        
+        Args:
+        ----
+            missing_rooms: List of MissingRoomInfo tuples
+        """
+        from toolset.data.indoormap import MissingRoomInfo
+        from toolset.gui.common.localization import translate as tr, trf
+        
+        # Group missing rooms by reason
+        missing_kits: list[MissingRoomInfo] = [r for r in missing_rooms if r.reason == "kit_missing"]
+        missing_components: list[MissingRoomInfo] = [r for r in missing_rooms if r.reason == "component_missing"]
+        
+        # Build main message
+        room_count = len(missing_rooms)
+        missing_kit_names = {r.kit_name for r in missing_rooms if r.reason == "kit_missing"}
+        missing_component_pairs = {(r.kit_name, r.component_name) for r in missing_rooms if r.reason == "component_missing" and r.component_name}
+        
+        main_parts: list[str] = []
+        if missing_kit_names:
+            kit_list = ", ".join(f"'{name}'" for name in sorted(missing_kit_names))
+            main_parts.append(trf("Missing kit{plural}: {kits}", plural="s" if len(missing_kit_names) != 1 else "", kits=kit_list))
+        if missing_component_pairs:
+            component_list = ", ".join(f"'{comp}' ({kit})" for kit, comp in sorted(missing_component_pairs))
+            main_parts.append(trf("Missing component{plural}: {components}", plural="s" if len(missing_component_pairs) != 1 else "", components=component_list))
+        
+        main_text = trf(
+            "{count} room{plural} failed to load.\n\n{details}",
+            count=room_count,
+            plural="s" if room_count != 1 else "",
+            details="\n".join(main_parts)
+        )
+        
+        # Build detailed text with filepaths
+        detailed_lines: list[str] = []
+        
+        if missing_kits:
+            detailed_lines.append("=== Missing Kits ===")
+            for room_info in missing_kits:
+                kit_name = room_info.kit_name
+                # Expected kit JSON file path
+                kit_json_path = Path("./kits") / f"{kit_name}.json"
+                detailed_lines.append(f"\nRoom: Kit '{kit_name}'")
+                if room_info.component_name:
+                    detailed_lines.append(f"  Component: {room_info.component_name}")
+                detailed_lines.append(f"  Expected Kit JSON: {kit_json_path}")
+                detailed_lines.append(f"  Expected Kit Directory: {Path('./kits') / kit_name}")
+        
+        if missing_components:
+            detailed_lines.append("\n=== Missing Components ===")
+            for room_info in missing_components:
+                kit_name = room_info.kit_name
+                component_name = room_info.component_name or "Unknown"
+                # Expected component directory path
+                component_path = Path("./kits") / kit_name / "components" / component_name
+                detailed_lines.append(f"\nRoom: Kit '{kit_name}', Component '{component_name}'")
+                detailed_lines.append(f"  Expected Component Directory: {component_path}")
+                detailed_lines.append(f"  Expected Files:")
+                detailed_lines.append(f"    - {component_path / f'{component_name}.mdl'}")
+                detailed_lines.append(f"    - {component_path / f'{component_name}.mdx'}")
+                detailed_lines.append(f"    - {component_path / f'{component_name}.bwm'}")
+                detailed_lines.append(f"    - {component_path / f'{component_name}.png'}")
+        
+        detailed_text = "\n".join(detailed_lines)
+        
+        # Show messagebox
+        msg_box = QMessageBox(
+            QMessageBox.Icon.Warning,
+            tr("Some Rooms Failed to Load"),
+            main_text,
+            flags=Qt.WindowType.Dialog | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint,
+        )
+        msg_box.setDetailedText(detailed_text)
+        msg_box.exec()
 
     def open_kit_downloader(self):
         KitDownloader(self).exec()
@@ -230,7 +315,7 @@ class IndoorMapBuilder(QMainWindow):
         y: float,
         z: float,
     ):
-        self._map.warpPoint = Vector3(x, y, z)
+        self._map.warp_point = Vector3(x, y, z)
 
     def on_kit_selected(self):
         """Selects a kit and populates component list.
@@ -437,13 +522,13 @@ class IndoorMapBuilder(QMainWindow):
 
         menu.popup(self.ui.mapRenderer.mapToGlobal(point))
 
-    def keyPressEvent(
+    def keyPressEvent(  # type: ignore[reportIncompatibleMethodOverride]
         self,
         e: QKeyEvent,
     ):
         self.ui.mapRenderer.keyPressEvent(e)
 
-    def keyReleaseEvent(
+    def keyReleaseEvent(  # type: ignore[reportIncompatibleMethodOverride]
         self,
         e: QKeyEvent,
     ):
@@ -948,7 +1033,7 @@ class IndoorMapRenderer(QWidget):
             for hook_index, hook in enumerate(room.component.hooks):
                 if room.hooks[hook_index] is None:
                     continue
-                hook_pos: Vector3 = room.hook_position(hook)
+                hook_pos = room.hook_position(hook)
                 xd: float = math.cos(math.radians(hook.rotation + room.rotation)) * hook.door.width / 2
                 yd: float = math.sin(math.radians(hook.rotation + room.rotation)) * hook.door.width / 2
                 painter.setPen(QPen(QColor(0, 255, 0), 2 / self._cam_scale))

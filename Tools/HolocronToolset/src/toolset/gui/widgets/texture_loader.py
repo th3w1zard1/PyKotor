@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any
 
 from loggerplus import RobustLogger
 
-from pykotor.extract.installation import Installation
+from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, read_tpc
 from pykotor.resource.formats.tpc.tpc_data import TPCMipmap
 from pykotor.resource.type import ResourceType
@@ -133,8 +133,18 @@ class TextureLoaderProcess(multiprocessing.Process):
         Returns:
             Serialized TPCMipmap data that can be sent across process boundary
         """
-        # Get texture data from installation
-        texture_data = installation.resource(resref, restype)
+        # Get texture data from installation with proper search order
+        # Include texture pack locations (TEXTURES_GUI, TEXTURES_TPA) which are not in the default order
+        search_order = [
+            SearchLocation.OVERRIDE,
+            SearchLocation.MODULES,
+            SearchLocation.TEXTURES_GUI,
+            SearchLocation.TEXTURES_TPA,
+            SearchLocation.TEXTURES_TPB,
+            SearchLocation.TEXTURES_TPC,
+            SearchLocation.CHITIN,
+        ]
+        texture_data = installation.resource(resref, restype, order=search_order)
         if texture_data is None:
             raise FileNotFoundError(f"Texture not found: {resref}.{restype.extension}")
 

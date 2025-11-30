@@ -65,6 +65,7 @@ from toolset.gui.dialogs.about import About
 from toolset.gui.dialogs.asyncloader import AsyncLoader
 from toolset.gui.dialogs.clone_module import CloneModuleDialog
 from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow
+from toolset.gui.dialogs.tslpatchdata_editor import TSLPatchDataEditor
 from toolset.gui.dialogs.save.generic_file_saver import FileSaveHandler
 from toolset.gui.dialogs.search import FileResults, FileSearcher
 from toolset.gui.dialogs.settings import SettingsDialog
@@ -88,6 +89,7 @@ from toolset.gui.widgets.main_widgets import ResourceList, ResourceModel, Resour
 from toolset.gui.widgets.settings.widgets.misc import GlobalSettings
 from toolset.gui.windows.help import HelpWindow
 from toolset.gui.windows.indoor_builder import IndoorMapBuilder
+from toolset.gui.windows.kotordiff import KotorDiffWindow
 from toolset.gui.windows.module_designer import ModuleDesigner
 from toolset.gui.windows.update_manager import UpdateManager
 from toolset.utils.misc import open_link
@@ -404,6 +406,8 @@ class ToolWindow(QMainWindow):
         self.ui.actionEditJRL.triggered.connect(self.open_active_journal)
         self.ui.actionFileSearch.triggered.connect(self.open_file_search_dialog)
         self.ui.actionIndoorMapBuilder.triggered.connect(self.open_indoor_map_builder)
+        self.ui.actionKotorDiff.triggered.connect(self.open_kotordiff)
+        self.ui.actionTSLPatchDataEditor.triggered.connect(self.open_tslpatchdata_editor)
 
         self.ui.actionInstructions.triggered.connect(self.open_instructions_window)
         self.ui.actionHelpUpdates.triggered.connect(self.update_manager.check_for_updates)
@@ -415,6 +419,13 @@ class ToolWindow(QMainWindow):
         # Setup Theme menu with both stylesheet themes and application styles in the same menu
         current_theme = self.settings.selectedTheme or "fusion (light)"
         current_style = self.settings.selectedStyle or ""
+        
+        # Configure menu to be scrollable with single column layout
+        # Set maximum height to enable scrolling (Qt will show scroll arrows when needed)
+        # This prevents the menu from flooding the screen with multiple columns
+        self.ui.menuTheme.setMaximumHeight(600)  # Adjust height as needed (pixels)
+        # Ensure single column layout (prevent multi-column flooding)
+        self.ui.menuTheme.setStyleSheet("QMenu { menu-scrollable: 1; }")
         
         # Add stylesheet themes directly to Theme menu
         available_themes = sorted(set(self.theme_manager.get_available_themes()))
@@ -1367,6 +1378,28 @@ class ToolWindow(QMainWindow):
         builder.show()
         builder.activateWindow()
         add_window(builder)
+
+    @Slot()
+    def open_kotordiff(self):
+        """Open the KotorDiff window."""
+        kotordiff_window = KotorDiffWindow(
+            None,
+            self.installations,
+            self.active,
+        )
+        kotordiff_window.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        kotordiff_window.show()
+        kotordiff_window.activateWindow()
+        add_window(kotordiff_window)
+
+    @Slot()
+    def open_tslpatchdata_editor(self):
+        """Open the TSLPatchData editor dialog."""
+        editor = TSLPatchDataEditor(None, self.active)
+        editor.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        editor.show()
+        editor.activateWindow()
+        add_window(editor)
 
     def open_instructions_window(self):
         """Opens the instructions window."""

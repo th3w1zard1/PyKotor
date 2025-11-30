@@ -611,6 +611,7 @@ class CodeBlock:
         if self.temp_stack != 0:
             # If the temp stack is 0 after the whole block has compiled there must be a logic error
             # in the implementation of one of the expression/statement classes
+            print(f"DEBUG CodeBlock.compile: temp_stack={self.temp_stack} after all statements compiled")
             msg = (
                 f"Internal compiler error: Temporary stack not cleared after block compilation\n"
                 f"  Temp stack size: {self.temp_stack}\n"
@@ -628,14 +629,17 @@ class CodeBlock:
         offset: int | None = None,
     ) -> GetScopedResult:
         offset = -self.temp_stack if offset is None else offset - self.temp_stack
+        print(f"DEBUG CodeBlock.get_scoped: identifier={identifier.label}, temp_stack={self.temp_stack}, initial_offset={offset}, scope_size={len(self.scope)}")
         for scoped in self.scope:
             offset -= scoped.data_type.size(root)
+            print(f"DEBUG CodeBlock.get_scoped: checking {scoped.identifier.label}, size={scoped.data_type.size(root)}, offset={offset}")
             if scoped.identifier == identifier:
                 break
         else:
             if self._parent is not None:
                 return self._parent.get_scoped(identifier, root, offset)
             return root.get_scoped(identifier, root)
+        print(f"DEBUG CodeBlock.get_scoped: found {identifier.label}, final_offset={offset}")
         return GetScopedResult(is_global=False, datatype=scoped.data_type, offset=offset, is_const=scoped.is_const)
 
     def scope_size(self, root: CodeRoot) -> int:
@@ -986,6 +990,7 @@ class FieldAccess:
         is_global: bool = scoped.is_global
         offset: int = scoped.offset
         datatype: DynamicDataType = scoped.datatype
+        is_const: bool = scoped.is_const  # Get is_const from the first call
 
         for next_ident in self.identifiers[1:]:
             # Check previous datatype to see what members are accessible
@@ -1013,11 +1018,6 @@ class FieldAccess:
             else:
                 msg = f"Attempting to access unknown member '{next_ident}' on datatype '{datatype}'."
                 raise CompileError(msg)
-
-        # Check if the variable is const by looking it up in scope
-        first: Identifier = self.identifiers[0]
-        scoped: GetScopedResult = block.get_scoped(first, root)
-        is_const: bool = scoped.is_const
         
         return GetScopedResult(is_global, datatype, offset, is_const)
 
@@ -1354,12 +1354,15 @@ class EngineCallExpression(Expression):
             ),
         )
         # ACTION consumes all arguments, so subtract their total size
+        print(f"DEBUG EngineCallExpression: before ACTION, temp_stack={block.temp_stack}, this_stack={this_stack}")
         block.temp_stack -= this_stack
+        print(f"DEBUG EngineCallExpression: after ACTION, temp_stack={block.temp_stack}")
         # For non-void functions, the return value is left on the stack
         # Add it to temp_stack so ExpressionStatement knows to pop it
         return_type = DynamicDataType(self._function.returntype)
         if return_type != DynamicDataType.VOID:
             block.temp_stack += return_type.size(root)
+            print(f"DEBUG EngineCallExpression: added return value, temp_stack={block.temp_stack}")
         return return_type
 
 
@@ -1580,10 +1583,12 @@ class Assignment(Expression):
             block.temp_stack += variable_type.size(root)
         
         # Get variable location - get_scoped uses temp_stack (including expression result) in its calculation
+        print(f"DEBUG Assignment: before get_scoped, temp_stack={block.temp_stack}, variable_type={variable_type}")
         is_global, expression_type, stack_index, is_const = self.field_access.get_scoped(
             block,
             root,
         )
+        print(f"DEBUG Assignment: after get_scoped, stack_index={stack_index}, is_global={is_global}, expression_type={expression_type}")
         
         if is_const and not allow_const:
             var_name = ".".join(str(ident) for ident in self.field_access.identifiers)
@@ -1608,12 +1613,10 @@ class Assignment(Expression):
             NCSInstruction(instruction_type, [stack_index, expression_type.size(root)]),
         )
 
-        # Remove the expression result from the stack after copying it down
-        ncs.add(NCSInstructionType.MOVSP, args=[-variable_type.size(root)])
-        
-        # Remove the expression result from temp_stack tracking
-        # The expression's compile method added it to temp_stack, so we subtract it here
-        block.temp_stack -= variable_type.size(root)
+        # Don't remove the expression result from the stack - leave it for ExpressionStatement to clean up
+        # This matches the behavior of other assignment operations (+=, -=, etc.)
+        # The result is copied to the variable location but remains on top of stack
+        # ExpressionStatement will remove it based on temp_stack tracking
 
         return variable_type
 
@@ -2321,6 +2324,7 @@ class ExpressionStatement(Statement):
                 print(f"DEBUG ExpressionStatement.compile: removing {expression_size} bytes from stack (temp_stack={block.temp_stack})")
                 ncs.add(NCSInstructionType.MOVSP, args=[-expression_size])
                 block.temp_stack -= expression_size
+                print(f"DEBUG ExpressionStatement.compile: after removal, temp_stack={block.temp_stack}")
             elif temp_stack_after == temp_stack_before:
                 # Expression didn't add to temp_stack, but result is still on the stack (e.g., StringExpression, IntExpression)
                 # We need to remove it from the stack (but don't update temp_stack since it wasn't tracking it)
@@ -2436,6 +2440,7 @@ class VariableInitializer:
         is_const: bool = False,
     ):
         initial_temp_stack = block.temp_stack
+        print(f"DEBUG VariableInitializer.compile: identifier={self.identifier.label}, initial_temp_stack={initial_temp_stack}")
 
         # Reuse existing declarator logic for allocation
         declarator = VariableDeclarator(self.identifier)
@@ -2444,11 +2449,20 @@ class VariableInitializer:
         # Emit assignment using existing machinery (keeps stack bookkeeping consistent)
         # Allow const variables to be initialized (but not reassigned)
         assignment = Assignment(FieldAccess([self.identifier]), self.expression)
-        assignment.compile(ncs, root, block, allow_const=True)
-
-        # Assignment.compile already manages temp_stack correctly (adds and subtracts the expression result),
-        # so temp_stack should be back to initial_temp_stack. No need to reset it.
-        # Note: We don't reset temp_stack here because Assignment.compile should have balanced it.
+        result_type = assignment.compile(ncs, root, block, allow_const=True)
+        print(f"DEBUG VariableInitializer.compile: after assignment, temp_stack={block.temp_stack}, initial_temp_stack={initial_temp_stack}")
+        
+        # Assignment leaves result on stack for ExpressionStatement to clean up,
+        # but VariableInitializer is NOT in an ExpressionStatement, so we need to clean it up ourselves
+        result_size = result_type.size(root)
+        if block.temp_stack > initial_temp_stack:
+            # Assignment left result on stack, remove it
+            print(f"DEBUG VariableInitializer.compile: removing {result_size} bytes from stack")
+            ncs.add(NCSInstructionType.MOVSP, args=[-result_size])
+            block.temp_stack -= result_size
+            print(f"DEBUG VariableInitializer.compile: after cleanup, temp_stack={block.temp_stack}")
+        else:
+            print(f"DEBUG VariableInitializer.compile: no cleanup needed (temp_stack={block.temp_stack} <= initial_temp_stack={initial_temp_stack})")
 
 
 class ConditionalBlock(Statement):

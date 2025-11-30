@@ -30,8 +30,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from kotordiff.app import KotorDiffConfig, run_application  # type: ignore[import-not-found]
 from pykotor.extract.installation import Installation
+from pykotor.tslpatcher.diff import DiffConfig, run_application
 
 if TYPE_CHECKING:
     from toolset.data.installation import HTInstallation
@@ -43,7 +43,7 @@ class KotorDiffThread(QThread):
     output_signal = QtCore.Signal(str)  # pyright: ignore[reportPrivateImportUsage]
     finished_signal = QtCore.Signal(int)  # pyright: ignore[reportPrivateImportUsage]
 
-    def __init__(self, config: KotorDiffConfig):
+    def __init__(self, config: DiffConfig):
         super().__init__()
         self.config = config
 
@@ -409,7 +409,7 @@ class KotorDiffWindow(QMainWindow):
                 paths.append(path_obj)
 
         # Build configuration
-        config = KotorDiffConfig(
+        config = DiffConfig(
             paths=paths,
             tslpatchdata_path=Path(self.tslpatchdata_edit.text().strip()) if self.tslpatchdata_check.isChecked() and self.tslpatchdata_edit.text().strip() else None,
             ini_filename=self.ini_name_edit.text().strip() or "changes.ini",

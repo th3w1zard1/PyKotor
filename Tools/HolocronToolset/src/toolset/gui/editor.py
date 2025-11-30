@@ -370,7 +370,7 @@ class Editor(QMainWindow):
             if action.text() == "Save":
                 action.triggered.connect(self.save)
             if action.text() == "Save As":
-                action.triggered.connect(self.saveAs)
+                action.triggered.connect(self.save_as)
             if action.text() == "Revert":
                 action.triggered.connect(self.revert)
             if action.text() == "Revert":
@@ -380,7 +380,7 @@ class Editor(QMainWindow):
         QShortcut("Ctrl+N", self).activated.connect(self.new)
         QShortcut("Ctrl+O", self).activated.connect(self.open)
         QShortcut("Ctrl+S", self).activated.connect(self.save)
-        QShortcut("Ctrl+Shift+S", self).activated.connect(self.saveAs)
+        QShortcut("Ctrl+Shift+S", self).activated.connect(self.save_as)
         QShortcut("Ctrl+R", self).activated.connect(self.revert)
         QShortcut("Ctrl+Q", self).activated.connect(self.exit)
     
@@ -513,7 +513,7 @@ class Editor(QMainWindow):
             )
         return ""
 
-    def saveAs(self):
+    def save_as(self):
         """Saves the file with the selected filepath.
 
         Processing Logic:
@@ -581,7 +581,7 @@ class Editor(QMainWindow):
             - Catches any exceptions and writes to an error log.
         """
         if self._filepath is None:
-            self.saveAs()
+            self.save_as()
             return
 
         try:

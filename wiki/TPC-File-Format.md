@@ -104,7 +104,7 @@ TPC supports the following encodings (documented in `TPCTextureFormat`):
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/graphics/format/tpcreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/tpcreader.cpp)  
   - [`vendor/xoreos-tools/src/graphics/tpc.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/graphics/tpc.cpp)  
-  - [`vendor/tga2tpc`](https://github.com/th3w1zard1/tga2tpc) (Bioware’s original converter)  
+  - [`vendor/tga2tpc`](https://github.com/th3w1zard1/tga2tpc)
   - [`vendor/KotOR.js/src/loaders/TextureLoader.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/loaders/TextureLoader.ts)  
 
 All of the engines listed above treat the header and mipmap data identically. The only notable difference is that KotOR.js stores textures as WebGL-friendly blobs internally, but it imports/exports the same TPC binary format.

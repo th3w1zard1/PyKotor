@@ -36,6 +36,7 @@ class ModelRenderer(QOpenGLWidget):
         self.installation: Installation | None = None
         self._model_to_load: tuple[bytes, bytes] | None = None
         self._creature_to_load: UTC | None = None
+        self._pending_camera_reset: bool = False
 
         self._keys_down: set[int] = set()
         self._mouse_down: set[int] = set()
@@ -95,9 +96,21 @@ class ModelRenderer(QOpenGLWidget):
         elif self._creature_to_load is not None:
             self.scene.objects["model"] = self.scene.get_creature_render_object(None, self._creature_to_load)
             self._creature_to_load = None
-            self.reset_camera()
+            # Mark that we need to reset camera, but wait for model to load
+            self._pending_camera_reset = True
 
+        # Render first to poll async resources
         self.scene.render()
+
+        # After rendering, check if we need to reset camera and if model is ready
+        pending_reset = getattr(self, "_pending_camera_reset", False)
+        if pending_reset and "model" in self.scene.objects:
+            model_obj: RenderObject = self.scene.objects["model"]
+            # Check if the model (and all its child models) have finished loading
+            model_ready = self._is_model_ready(model_obj)
+            if model_ready:
+                self.reset_camera()
+                self._pending_camera_reset = False
 
     def closeEvent(self, event: QCloseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         self.shutdown_renderer()
@@ -115,6 +128,8 @@ class ModelRenderer(QOpenGLWidget):
     def clear_model(self):
         if self._scene is not None and "model" in self.scene.objects:
             del self.scene.objects["model"]
+        if hasattr(self, "_pending_camera_reset"):
+            self._pending_camera_reset = False
 
     def set_model(
         self,
@@ -126,17 +141,33 @@ class ModelRenderer(QOpenGLWidget):
     def set_creature(self, utc: UTC):
         self._creature_to_load = utc
 
+    def _is_model_ready(self, obj: RenderObject) -> bool:
+        """Check if a RenderObject's model and all child models have finished loading."""
+        # Check if this model is still loading
+        if obj.model in self.scene._pending_model_futures:
+            return False
+        # Check if the model exists and is not the empty placeholder
+        if obj.model not in self.scene.models:
+            return False
+        # Check all child models
+        for child in obj.children:
+            if not self._is_model_ready(child):
+                return False
+        return True
+
     def reset_camera(self):
         scene: Scene | None = self.scene
         assert scene is not None, assert_with_variable_trace(scene is not None)
         if "model" in scene.objects:
             model: RenderObject = scene.objects["model"]
-            scene.camera.x = 0
-            scene.camera.y = 0
-            scene.camera.z = (model.cube(scene).max_point.z - model.cube(scene).min_point.z) / 2
-            scene.camera.pitch = math.pi / 16 * 9
-            scene.camera.yaw = math.pi / 16 * 7
-            scene.camera.distance = model.radius(scene) + 2
+            # Only reset camera if model is actually loaded (not empty placeholder)
+            if model.model in scene.models and model.model not in scene._pending_model_futures:
+                scene.camera.x = 0
+                scene.camera.y = 0
+                scene.camera.z = (model.cube(scene).max_point.z - model.cube(scene).min_point.z) / 2
+                scene.camera.pitch = math.pi / 16 * 9
+                scene.camera.yaw = math.pi / 16 * 7
+                scene.camera.distance = model.radius(scene) + 2
 
     # region Events
     def focusOutEvent(self, e: QFocusEvent):  # pyright: ignore[reportIncompatibleMethodOverride]

@@ -1,63 +1,50 @@
 /* Monokai Dark Theme */
-:root {
-    --primary-bg: #272822;
-    --secondary-bg: #1E1F1C;
-    --accent: #F92672;
-    --text-primary: #F8F8F2;
-    --text-secondary: #75715E;
-    --highlight: #49483E;
-    --border: #3E3D32;
-    
-    --error: #F92672;
-    --warning: #E6DB74;
-    --success: #A6E22E;
-}
 
 QWidget {
-    background-color: var(--primary-bg);
-    color: var(--text-primary);
+    background-color: #272822;
+    color: #F8F8F2;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
-    selection-background-color: var(--highlight);
-    selection-color: var(--accent);
+    selection-background-color: #49483E;
+    selection-color: #F92672;
 }
 
 QPushButton {
-    background-color: var(--secondary-bg);
-    color: var(--text-primary);
-    border: 2px solid var(--border);
+    background-color: #1E1F1C;
+    color: #F8F8F2;
+    border: 2px solid #3E3D32;
     border-radius: 6px;
     padding: 8px 16px;
 }
 
 QPushButton:hover {
-    background-color: var(--highlight);
-    color: var(--accent);
+    background-color: #49483E;
+    color: #F92672;
 }
 
 QLineEdit, QTextEdit {
-    background-color: var(--secondary-bg);
-    color: var(--text-primary);
-    border: 2px solid var(--border);
+    background-color: #1E1F1C;
+    color: #F8F8F2;
+    border: 2px solid #3E3D32;
     border-radius: 6px;
     padding: 8px;
 }
 
 QComboBox {
-    background-color: var(--secondary-bg);
-    color: var(--text-primary);
-    border: 2px solid var(--border);
+    background-color: #1E1F1C;
+    color: #F8F8F2;
+    border: 2px solid #3E3D32;
     border-radius: 6px;
 }
 
 QTabBar::tab {
-    background-color: var(--secondary-bg);
-    color: var(--text-primary);
-    border: 2px solid var(--border);
+    background-color: #1E1F1C;
+    color: #F8F8F2;
+    border: 2px solid #3E3D32;
     border-radius: 6px;
     padding: 8px 16px;
 }
 
 QTabBar::tab:selected {
-    background-color: var(--highlight);
-    color: var(--accent);
+    background-color: #49483E;
+    color: #F92672;
 } 

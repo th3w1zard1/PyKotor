@@ -1179,11 +1179,11 @@ class Installation:
         )
         search: ResourceResult | None = batch[query]
         if search is None:
-            # Use debug level for texture resources (TPC/TGA) as missing textures are expected when browsing
-            if query.restype in (ResourceType.TPC, ResourceType.TGA):
-                RobustLogger().debug(f"Could not find '{query}' during resource lookup.")
-            else:
-                RobustLogger().warning(f"Could not find '{query}' during resource lookup.")
+            from utility.error_handling import format_exception_with_variables
+            try:
+                raise Exception("test")
+            except Exception as e:
+                RobustLogger().warning(f"Could not find '{query}' during resource lookup! {format_exception_with_variables(e)}")
             return None
         return search
 

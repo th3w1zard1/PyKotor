@@ -12,12 +12,13 @@ from qtpy.QtWidgets import (
     QMenu,
     QMessageBox,
 )
+from qtpy.QtGui import QStandardItemModel
 
 from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QPoint
-    from qtpy.QtGui import QColor, QPaintEvent, QStandardItemModel
+    from qtpy.QtGui import QColor, QPaintEvent
     from qtpy.QtWidgets import QWidget
 
     from pykotor.resource.formats.twoda.twoda_data import TwoDA

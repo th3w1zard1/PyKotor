@@ -107,7 +107,7 @@ class TPCEditor(Editor):
         self.ui.actionNew.triggered.connect(self.new)
         self.ui.actionOpen.triggered.connect(self.open)
         self.ui.actionSave.triggered.connect(self.save)
-        self.ui.actionSaveAs.triggered.connect(self.saveAs)
+        self.ui.actionSaveAs.triggered.connect(self.save_as)
         self.ui.actionRevert.triggered.connect(self.revert)
         self.ui.actionExit.triggered.connect(self.close)
 

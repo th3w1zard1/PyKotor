@@ -103,6 +103,8 @@ class ResourceList(MainWindowList):
         # Set context menu policy and selection mode
         self.ui.resourceTree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.resourceTree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        # Disable editing to prevent rename on double-click (read-only like other tabs)
+        self.ui.resourceTree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
         # Connect the header context menu request signal
         tree_view_header: QHeaderView | None = self.ui.resourceTree.header()

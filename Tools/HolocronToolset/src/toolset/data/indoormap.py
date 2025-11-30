@@ -56,6 +56,12 @@ class MinimapData(NamedTuple):
     worldPointMax: Vector2
 
 
+class MissingRoomInfo(NamedTuple):
+    kit_name: str
+    component_name: str | None
+    reason: str  # "kit_missing" or "component_missing"
+
+
 class IndoorMap:
     def __init__(self):
         self.rooms: list[IndoorMapRoom] = []
@@ -147,10 +153,10 @@ class IndoorMap:
         """
         for room in self.rooms:
             self.used_rooms.add(room.component)
-        for room in self.used_rooms:
-            self.scan_mdls.add(room.mdl)
-            self.used_kits.add(room.kit)
-            for door_padding_dict in list(room.kit.top_padding.values()) + list(room.kit.side_padding.values()):
+        for kit_room in self.used_rooms:
+            self.scan_mdls.add(kit_room.mdl)
+            self.used_kits.add(kit_room.kit)
+            for door_padding_dict in list(kit_room.kit.top_padding.values()) + list(kit_room.kit.side_padding.values()):
                 for padding_model in door_padding_dict.values():
                     self.scan_mdls.add(padding_model.mdl)
 
@@ -627,7 +633,7 @@ class IndoorMap:
             - Sets area_name attribute of IFO object to module ID resource reference
             - Sets identifier attribute of IFO object to module ID resource reference
             - Calls set_all_visible() method on vis object to set all objects visible
-            - Sets entry_position attribute of IFO object to warpPoint.
+            - Sets entry_position attribute of IFO object to warp_point.
         """
         self.ifo.tag = self.module_id
         self.ifo.area_name = ResRef(self.module_id)
@@ -760,13 +766,17 @@ class IndoorMap:
         self,
         raw: bytes,
         kits: list[Kit],
-    ):
+    ) -> list[MissingRoomInfo]:
         """Load raw data and initialize the map.
 
         Args:
         ----
             raw: Raw bytes data to load
             kits: List of available kits
+
+        Returns:
+        -------
+            list[MissingRoomInfo]: List of rooms that failed to load due to missing kits/components
 
         Processing Logic:
         ----------------
@@ -778,7 +788,7 @@ class IndoorMap:
         data: dict[str, Any] = json.loads(raw)
 
         try:
-            self._load_data(data, kits)
+            return self._load_data(data, kits)
         except KeyError as e:
             msg = "Map file is corrupted."
             raise ValueError(msg) from e
@@ -787,7 +797,7 @@ class IndoorMap:
         self,
         data: dict[str, Any],
         kits: list[Kit],
-    ):
+    ) -> list[MissingRoomInfo]:
         """Load data into an indoor map object.
 
         Args:
@@ -798,7 +808,7 @@ class IndoorMap:
 
         Returns:
         -------
-            None: Loads the data into the indoor map object
+            list[MissingRoomInfo]: List of rooms that failed to load due to missing kits/components
 
         Processing Logic:
         ----------------
@@ -809,6 +819,8 @@ class IndoorMap:
                 - Find matching kit and component
                 - Create room with position, rotation, flips.
         """
+        missing_rooms: list[MissingRoomInfo] = []
+        
         self.name = LocalizedString(data["name"]["stringref"])
         for substring_id in (key for key in data["name"] if key.isnumeric()):
             language, gender = LocalizedString.substring_pair(int(substring_id))
@@ -824,16 +836,26 @@ class IndoorMap:
         for room_data in data["rooms"]:
             sKit: Kit | None = next((kit for kit in kits if kit.name == room_data["kit"]), None)
             if sKit is None:
-                msg = f"""Required kit is missing '{room_data["kit"]}'."""
-                raise ValueError(msg)
+                RobustLogger().warning(f"Kit '{room_data['kit']}' is missing, skipping room.")
+                missing_rooms.append(MissingRoomInfo(
+                    kit_name=room_data["kit"],
+                    component_name=room_data.get("component"),
+                    reason="kit_missing"
+                ))
+                continue
 
             s_component: KitComponent | None = next(
                 (component for component in sKit.components if component.name == room_data["component"]),
                 None,
             )
             if s_component is None:
-                msg = f"""Required component '{room_data["component"]}' is missing in kit '{sKit.name}'."""
-                raise ValueError(msg)
+                RobustLogger().warning(f"Component '{room_data['component']}' is missing in kit '{sKit.name}', skipping room.")
+                missing_rooms.append(MissingRoomInfo(
+                    kit_name=room_data["kit"],
+                    component_name=room_data["component"],
+                    reason="component_missing"
+                ))
+                continue
 
             room: IndoorMapRoom = IndoorMapRoom(
                 s_component,
@@ -843,6 +865,8 @@ class IndoorMap:
                 flip_y=bool(room_data.get("flip_y", False)),
             )
             self.rooms.append(room)
+        
+        return missing_rooms
 
     def reset(self):
         self.rooms.clear()

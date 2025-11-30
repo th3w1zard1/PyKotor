@@ -44,7 +44,7 @@ class MDLEditor(Editor):
     def _setup_signals(self):
         ...
 
-    def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes):
+    def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes | bytearray):
         """Loads a model resource and its associated data.
 
         Args:
@@ -60,39 +60,39 @@ class MDLEditor(Editor):
             - Sets model data on renderer if both MDL and MDX found
             - Displays error if unable to find associated data.
         """
-        c_filepath: CaseAwarePath = CaseAwarePath(filepath)
-        super().load(c_filepath, resref, restype, data)
+        p_filepath: Path = Path(filepath)
+        super().load(p_filepath, resref, restype, data)
 
         mdl_data: bytes | None = None
         mdx_data: bytes | None = None
 
         if restype is ResourceType.MDL:
             mdl_data = data
-            if c_filepath.suffix.lower() == ".mdl":
-                mdx_data = c_filepath.with_suffix(".mdx").read_bytes()
-            elif is_any_erf_type_file(c_filepath.name):
+            if p_filepath.suffix.lower() == ".mdl":
+                mdx_data = p_filepath.with_suffix(".mdx").read_bytes()
+            elif is_any_erf_type_file(p_filepath.name):
                 erf = read_erf(filepath)
                 mdx_data = erf.get(resref, ResourceType.MDX)
-            elif is_rim_file(c_filepath.name):
+            elif is_rim_file(p_filepath.name):
                 rim = read_rim(filepath)
                 mdx_data = rim.get(resref, ResourceType.MDX)
-            elif is_bif_file(c_filepath.name):
+            elif is_bif_file(p_filepath.name):
                 mdx_data = self._installation.resource(resref, ResourceType.MDX, [SearchLocation.CHITIN]).data
         elif restype is ResourceType.MDX:
             mdx_data = data
-            if c_filepath.suffix.lower() == ".mdx":
-                mdl_data = c_filepath.with_suffix(".mdl").read_bytes()
-            elif is_any_erf_type_file(c_filepath.name):
+            if p_filepath.suffix.lower() == ".mdx":
+                mdl_data = p_filepath.with_suffix(".mdl").read_bytes()
+            elif is_any_erf_type_file(p_filepath.name):
                 erf = read_erf(filepath)
                 mdl_data = erf.get(resref, ResourceType.MDL)
-            elif is_rim_file(c_filepath.name):
+            elif is_rim_file(p_filepath.name):
                 rim = read_rim(filepath)
                 mdl_data = rim.get(resref, ResourceType.MDL)
-            elif is_bif_file(c_filepath.name):
+            elif is_bif_file(p_filepath.name):
                 mdl_data = self._installation.resource(resref, ResourceType.MDL, [SearchLocation.CHITIN]).data
 
         if mdl_data is None or mdx_data is None:
-            QMessageBox(QMessageBox.Icon.Critical, f"Could not find the '{c_filepath.stem}' MDL/MDX", "").exec()
+            QMessageBox(QMessageBox.Icon.Critical, f"Could not find the '{p_filepath.stem}' MDL/MDX", "").exec()
             return
 
         self.ui.modelRenderer.set_model(mdl_data, mdx_data)

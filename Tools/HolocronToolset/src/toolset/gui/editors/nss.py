@@ -6,15 +6,17 @@ import multiprocessing
 import os
 import sys
 import traceback
+
 from contextlib import contextmanager
 from operator import attrgetter
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any, Callable, Generator, NamedTuple, Sequence, cast
 
 from loggerplus import RobustLogger, get_log_directory  # type: ignore[import-untyped]
-from qtpy.QtCore import QDir, QModelIndex, QRect, QSettings, QStringListModel, Qt  # pyright: ignore[reportPrivateImportUsage]
-from qtpy.QtGui import QFont, QKeySequence, QShortcut, QTextBlock, QTextCursor, QTextDocument
+from qtpy.QtCore import QAbstractItemModel, QCoreApplication, QDir, QModelIndex, QRect, QSettings, QStringListModel, Qt  # pyright: ignore[reportPrivateImportUsage]
+from qtpy.QtGui import QFont, QGuiApplication, QKeySequence, QTextBlock, QTextCursor, QTextDocument
 from qtpy.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QCompleter,
     QDialog,
@@ -28,6 +30,7 @@ from qtpy.QtWidgets import (
     QMessageBox,  # pyright: ignore[reportPrivateImportUsage]
     QPlainTextDocumentLayout,
     QPlainTextEdit,
+    QShortcut,
     QTabBar,
     QToolTip,
     QTreeWidgetItem,
@@ -49,12 +52,12 @@ if __name__ == "__main__":
 
 
 from pykotor.extract.file import FileResource  # pyright: ignore[reportPrivateImportUsage]
+from pykotor.resource.formats.ncs import read_ncs  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.ncs.compiler.classes import FunctionDefinition, GlobalVariableDeclaration, StructDefinition  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.ncs.compiler.lexer import NssLexer  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.ncs.compiler.parser import NssParser  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.resource.type import ResourceType  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_rim_file  # pyright: ignore[reportPrivateImportUsage]
-from pykotor.tools.path import CaseAwarePath  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.debugger import Debugger, DebuggerState  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.widgets.breadcrumbs_widget import BreadcrumbsWidget  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.widgets.command_palette import CommandPalette  # pyright: ignore[reportPrivateImportUsage]
@@ -62,13 +65,13 @@ from toolset.gui.common.widgets.debug_callstack_widget import DebugCallStackWidg
 from toolset.gui.common.widgets.debug_variables_widget import DebugVariablesWidget  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.widgets.debug_watch_widget import DebugWatchWidget  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.widgets.find_replace_widget import FindReplaceWidget  # pyright: ignore[reportPrivateImportUsage]
-from toolset.gui.common.widgets.test_config_widget import TestConfigDialog  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.widgets.syntax_highlighter import SyntaxHighlighter  # pyright: ignore[reportPrivateImportUsage]
+from toolset.gui.common.widgets.test_config_widget import TestConfigDialog  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.dialogs.github_selector import GitHubFileSelector  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.editor import Editor  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.widgets.settings.installations import GlobalSettings, NoConfigurationSetError  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.widgets.terminal_widget import TerminalWidget  # pyright: ignore[reportPrivateImportUsage]
-from toolset.utils.script import ht_compile_script, ht_decompile_script  # pyright: ignore[reportPrivateImportUsage]
+from toolset.utils.script import ht_compile_script  # pyright: ignore[reportPrivateImportUsage]
 from toolset.utils.window import open_resource_editor  # pyright: ignore[reportPrivateImportUsage]
 from utility.error_handling import universal_simplify_exception  # pyright: ignore[reportPrivateImportUsage]
 from utility.misc import is_debug_mode  # pyright: ignore[reportPrivateImportUsage]
@@ -86,7 +89,7 @@ if TYPE_CHECKING:
         QWheelEvent,
     )
 
-    from pykotor.common.script import ScriptConstant, ScriptFunction  # pyright: ignore[reportPrivateImportUsage]
+    from pykotor.common.script import ScriptConstant, ScriptFunction, ScriptParam  # pyright: ignore[reportPrivateImportUsage]
     from pykotor.resource.formats.ncs.compiler.classes import CodeRoot  # pyright: ignore[reportPrivateImportUsage]
     from toolset.data.installation import HTInstallation  # pyright: ignore[reportPrivateImportUsage]
 
@@ -522,7 +525,7 @@ class NSSEditor(Editor):
                 # Remove the old table
                 old_table = self.ui.debugTable
                 if old_table is not None:
-                    old_table.setParent(None)  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+                    old_table.setParent(None)  # type: ignore[arg-type, call-overload]  # pyright: ignore[reportArgumentType]
                     old_table.deleteLater()
                 
                 # Create tab widget for debug panels
@@ -564,7 +567,7 @@ class NSSEditor(Editor):
             {"id": "file.new", "label": "New File", "category": "File"},
             {"id": "file.open", "label": "Open File...", "category": "File"},
             {"id": "file.save", "label": "Save", "category": "File"},
-            {"id": "file.saveAs", "label": "Save As...", "category": "File"},
+            {"id": "file.save_as", "label": "Save As...", "category": "File"},
             {"id": "file.saveAll", "label": "Save All", "category": "File"},
             {"id": "file.close", "label": "Close", "category": "File"},
             {"id": "file.closeAll", "label": "Close All", "category": "File"},
@@ -617,7 +620,7 @@ class NSSEditor(Editor):
             "file.new": self.new,
             "file.open": self.open,
             "file.save": self.save,
-            "file.saveAs": self.save_as,
+            "file.save_as": self.save_as,
             "file.close": self.close,
             "edit.undo": lambda: self.ui.codeEdit.undo(),
             "edit.redo": lambda: self.ui.codeEdit.redo(),
@@ -719,8 +722,10 @@ class NSSEditor(Editor):
         if self._filepath and self._filepath.exists():
             try:
                 # Try to set working directory to file's parent
-                if hasattr(self.terminal, 'set_working_directory'):
-                    self.terminal.set_working_directory(str(self._filepath.parent))
+                # TerminalWidget may have set_working_directory method dynamically added
+                set_working_dir = getattr(self.terminal, 'set_working_directory', None)  # pyright: ignore[reportAttributeAccessIssue]
+                if set_working_dir is not None and callable(set_working_dir):
+                    set_working_dir(str(self._filepath.parent))
             except Exception:
                 # Terminal might not support this, that's okay
                 pass
@@ -1240,7 +1245,7 @@ class NSSEditor(Editor):
                     child_identifier = child_text.strip()
                 if child_identifier.lower() == word.lower():
                     # Go to parent definition
-                    self.ui.codeEdit.on_outline_item_double_clicked(item, 0)  # pyright: ignore[reportArgumentType]
+                    self.ui.codeEdit.on_outline_item_double_clicked(tree_item, 0)  # pyright: ignore[reportArgumentType]
                     found = True
                     break
             if found:
@@ -1366,7 +1371,7 @@ class NSSEditor(Editor):
             return
         
         # Filter files matching search text
-        def filter_recursive(parent_index):
+        def filter_recursive(parent_index: QModelIndex):
             for i in range(self.file_system_model.rowCount(parent_index)):
                 index = self.file_system_model.index(i, 0, parent_index)
                 if not index.isValid():
@@ -1384,13 +1389,15 @@ class NSSEditor(Editor):
                     matches = matches or child_matches
                 
                 # Hide if no match
-                view_index = self.ui.fileExplorerView.model().index(i, 0, parent_index)
-                if view_index.isValid():
+                file_system_model: QAbstractItemModel | None = self.ui.fileExplorerView.model()
+                assert isinstance(file_system_model, QFileSystemModel), "File system model should be a QFileSystemModel"
+                assert file_system_model is not None, "File system model should not be None"
+                view_index: QModelIndex | None = file_system_model.index(i, 0, parent_index)
+                if view_index is not None and view_index.isValid():
                     self.ui.fileExplorerView.setRowHidden(i, parent_index, not matches)
-                
                 return matches if matches else False
         
-        filter_recursive(self.ui.fileExplorerView.rootIndex())
+        filter_recursive(self.ui.fileExplorerView.rootIndex())  # pyright: ignore[reportArgumentType]
     
     def _refresh_file_explorer(self):
         """Refresh the file explorer view."""
@@ -1524,7 +1531,7 @@ class NSSEditor(Editor):
     def _setup_enhanced_completer(self):
         """Set up enhanced auto-completion with better presentation."""
         # Set completer to show more items
-        popup: QWidget | None = self.completer.popup()
+        popup: QAbstractItemView | None = self.completer.popup()
         if popup is not None:
             popup.setMaximumHeight(300)
             popup.setAlternatingRowColors(True)
@@ -1631,7 +1638,7 @@ class NSSEditor(Editor):
         word_lower: str = word.lower().strip()
         
         # Get palette colors for theme-aware tooltips
-        app: QApplication | None = QApplication.instance()
+        app: QCoreApplication | None = QApplication.instance()
         if app is None:
             # Fallback colors if no application instance
             text_color = "#000000"
@@ -1641,6 +1648,7 @@ class NSSEditor(Editor):
             bright_text = "#666666"
             desc_color = "#333333"
         else:
+            assert isinstance(app, QGuiApplication), "Application should be a QGuiApplication"
             palette = app.palette()
             text_color = palette.color(palette.ColorRole.ToolTipText).name()
             highlight_color = palette.color(palette.ColorRole.Highlight).name()
@@ -1659,15 +1667,17 @@ class NSSEditor(Editor):
                 
                 # Build signature
                 signature_parts: list[str] = []
-                if hasattr(func, 'return_type') and func.return_type is not None:
-                    return_type: str = getattr(func, 'return_type', 'unknown')
+                return_type: str = getattr(func, 'return_type', 'unknown')
+                if return_type and return_type is not None:
+                    return_type = getattr(func, 'return_type', 'unknown')
                     signature_parts.append(f"<span style='color: {link_color};'>{return_type}</span>")
                 signature_parts.append(f"<b style='color: {highlight_color};'>{func.name}</b>")
                 
                 # Add parameters if available
                 params: list[str] = []
-                if hasattr(func, 'parameters') and func.parameters is not None:
-                    for param in func.parameters:
+                parameters: list[ScriptParam] = getattr(func, 'parameters', [])
+                if parameters:
+                    for param in parameters:
                         param_type: str = getattr(param, 'type', 'unknown')
                         param_name: str = getattr(param, 'name', 'unknown')
                         params.append(f"<span style='color: {bright_text};'>{param_name}</span>: <span style='color: {link_color};'>{param_type}</span>")
@@ -1730,7 +1740,7 @@ class NSSEditor(Editor):
             # self._restype is NSS
             with self._snapshotResTypeContext():
                 # Do something that might change self._restype to NCS.
-                self.saveAs()
+                self.save_as()
             # after the with statement, self._restype is returned to NSS.
         """
         if saved_file_callback:
@@ -1752,7 +1762,8 @@ class NSSEditor(Editor):
             yield context
         finally:
             if context.saved_connection:
-                self.disconnect(context.saved_connection)
+                self.disconnect(context.saved_connection)  # type: ignore[call-arg]
+#                self.sig_saved_file.disconnect(context.saved_connection)
             # If _restype changed, unwind all the changes that may have been made.
             if self._restype != context.restype:
                 self._filepath = context.filepath
@@ -1778,7 +1789,7 @@ class NSSEditor(Editor):
         filepath: os.PathLike | str,
         resref: str,
         restype: ResourceType,
-        data: bytes,
+        data: bytes | bytearray,
     ):
         super().load(filepath, resref, restype, data)
         self._is_decompiled = False
@@ -1833,22 +1844,76 @@ class NSSEditor(Editor):
         box.setDefaultButton(QMessageBox.StandardButton.Cancel)
         box.button(QMessageBox.StandardButton.Yes).setText(tr("Decompile"))
         box.button(QMessageBox.StandardButton.Ok).setText(tr("Download"))
-        choice = box.exec_()
+        choice = box.exec()
         print(f"User chose '{choice}' in the decompile/download messagebox.")
 
         if choice == QMessageBox.StandardButton.Yes:
             assert self._installation is not None, "Installation not set, cannot determine path"
-            source = ht_decompile_script(data, self._installation.path(), tsl=self._installation.tsl)
+            print(f"Decompiling NCS data: {data}")
+            source = self._decompile_ncs_dencs(data)
         elif choice == QMessageBox.StandardButton.Ok:
+            print(f"Downloading NCS data: {data}")
             source = self._download_and_load_remote_script(resname)
         else:
             return
         self.ui.codeEdit.setPlainText(source)
         self._is_decompiled = True
 
+    def _decompile_ncs_dencs(self, ncs_data: bytes) -> str:
+        """Decompile NCS bytecode using the DeNCS decompiler.
+        
+        Args:
+        ----
+            ncs_data: The bytes of the compiled NCS script.
+            
+        Returns:
+        -------
+            The decompiled NSS source code string.
+            
+        Raises:
+        ------
+            ValueError: If decompilation fails.
+        """
+        from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData
+        from pykotor.resource.formats.ncs.dencs.decompile_ncs import decompile_ncs
+        
+        # Try to load nwscript.nss from the override folder for actions data
+        actions = None
+        if self._installation is not None:
+            override_path = self._installation.override_path()
+            nwscript_path = override_path / "nwscript.nss"
+            
+            if nwscript_path.is_file():
+                try:
+                    # Read nwscript.nss and create ActionsData from it
+                    # ActionsData expects a file-like object with function definitions
+                    nwscript_content = nwscript_path.read_text(encoding="windows-1252", errors="replace")
+                    actions_reader = io.StringIO(nwscript_content)
+                    actions = ActionsData(actions_reader)
+                except Exception as e:
+                    RobustLogger().warning(f"Failed to load nwscript.nss from {nwscript_path}: {e}")
+        
+        # If nwscript.nss wasn't found or failed to load, create an empty ActionsData
+        if actions is None:
+            # Create minimal ActionsData with just the marker line
+            empty_actions_reader = io.StringIO("// 0\n")
+            actions = ActionsData(empty_actions_reader)
+        
+        # Create BytesIO from NCS data
+        ncs_stream = io.BytesIO(ncs_data)
+        
+        # Decompile using DeNCS
+        result = decompile_ncs(ncs_stream, actions)
+        
+        if result is None:
+            raise ValueError("Decompilation failed: decompile_ncs returned None")
+        
+        # Return the decompiled source code (result should be a string at this point)
+        return result
+
     def _download_and_load_remote_script(self, resref: str) -> str:
         script_path: str = self.determine_script_path(resref)
-        local_path = CaseAwarePath(get_log_directory(self._global_settings.extractPath), PurePath(script_path).name)
+        local_path = Path(get_log_directory(self._global_settings.extractPath), PurePath(script_path).name)
         print(f"Local path: {local_path}")
 
         download_process = multiprocessing.Process(target=download_script, args=(f"{self.owner}/{self.repo}", str(local_path), script_path))
@@ -2260,7 +2325,7 @@ class NSSEditor(Editor):
         self.ui.actionK1.triggered.connect(lambda: self._on_game_changed(0))
         self.ui.actionTSL.triggered.connect(lambda: self._on_game_changed(1))
 
-    def wheelEvent(self, event: QWheelEvent):
+    def wheelEvent(self, event: QWheelEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Handle mouse wheel events for zooming."""
         if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             if event.angleDelta().y() > 0:
@@ -2352,8 +2417,8 @@ class NSSEditor(Editor):
         text = self.ui.codeEdit.toPlainText()
         if text.strip():
             try:
-                from pykotor.resource.formats.ncs.compiler.parser import NssParser
                 from pykotor.resource.formats.ncs.compiler.lexer import NssLexer
+                from pykotor.resource.formats.ncs.compiler.parser import NssParser
                 
                 lexer = NssLexer()
                 library_lookup: list[str] | None = None if self._filepath is None else [str(self._filepath.parent)]
@@ -2686,7 +2751,7 @@ class NSSEditor(Editor):
         
         # Clear previous results
         self.ui.findResultsTree.clear()
-        self._find_results = []
+        self._find_results.clear()
         
         # Search files
         self._search_in_directory(Path(search_dir), search_text)
@@ -2699,7 +2764,6 @@ class NSSEditor(Editor):
         self,   
         directory: Path,
         search_text: str,
-        find_results: list[dict[str, Any]],
     ) -> None:
         """Recursively search for text in .nss files."""
         if not directory.exists() or not directory.is_dir():
@@ -2876,14 +2940,14 @@ class NSSEditor(Editor):
     
     def _show_replace(self):
         """Show the replace widget with selected text if any."""
-        cursor = self.ui.codeEdit.textCursor()
-        selected_text = cursor.selectedText() if cursor.hasSelection() else ""
+        cursor: QTextCursor = self.ui.codeEdit.textCursor()
+        selected_text: str = cursor.selectedText() if cursor.hasSelection() else ""
         # Replace paragraph separator with newline
         if selected_text:
-            selected_text = selected_text.replace('\u2029', '\n')
+            selected_text = selected_text.replace("\u2029", "\n")
             # If multiline, just use first line
-            if '\n' in selected_text:
-                selected_text = selected_text.split('\n')[0]
+            if "\n" in selected_text:
+                selected_text = selected_text.split("\n")[0]
         
         if self._find_replace_widget:
             self._find_replace_widget.show_replace(selected_text if selected_text else None)
@@ -2912,9 +2976,15 @@ class NSSEditor(Editor):
         self._find_replace_widget.activateWindow()
         self._find_replace_widget.setFocus()
     
-    def _on_find_requested(self, text: str, case_sensitive: bool, whole_words: bool, regex: bool):
+    def _on_find_requested(
+        self,
+        text: str | None = "",
+        case_sensitive: bool = False,
+        whole_words: bool = False,
+        regex: bool = False,
+    ):
         """Handle find request from widget."""
-        self._current_find_text = text
+        self._current_find_text = text if text and text.strip() else ""
         self._current_find_flags = {
             "case_sensitive": case_sensitive,
             "whole_words": whole_words,
@@ -3062,25 +3132,25 @@ class NSSEditor(Editor):
             return
         
         issues: list[str] = []
-        lines: list[str] = text.split('\n')
+        lines: list[str] = text.split("\n")
         
         for i, line in enumerate(lines, 1):
             stripped: str = line.strip()
             # Check for common issues
-            if stripped and not stripped.startswith('//'):
+            if stripped and not stripped.startswith("//"):
                 # Check for missing semicolons (heuristic)
-                if any(keyword in stripped for keyword in ['return', 'break', 'continue']):
-                    if not stripped.endswith(';') and not stripped.endswith('{') and not stripped.endswith('}'):
+                if any(keyword in stripped for keyword in ["return", "break", "continue"]):
+                    if not stripped.endswith(";") and not stripped.endswith("{") and not stripped.endswith("}"):
                         issues.append(f"Line {i}: Possible missing semicolon")
                 # Check for empty if/while/for blocks
-                if any(keyword in stripped for keyword in ['if', 'while', 'for']):
-                    if stripped.endswith('{') and i < len(lines):
-                        next_line = lines[i].strip() if i < len(lines) else ""
-                        if next_line == '}':
+                if any(keyword in stripped for keyword in ["if", "while", "for"]):
+                    if stripped.endswith("{") and i < len(lines):
+                        next_line: str = lines[i].strip() if i < len(lines) else ""
+                        if next_line == "}":
                             issues.append(f"Line {i}: Empty block detected")
         
         if issues:
-            message = "Code Analysis Results:\n\n" + "\n".join(issues[:20])  # Limit to 20 issues
+            message: str = "Code Analysis Results:\n\n" + "\n".join(issues[:20])  # Limit to 20 issues
             if len(issues) > 20:
                 message += f"\n\n... and {len(issues) - 20} more issues"
             QMessageBox.information(self, "Code Analysis", message)
@@ -3209,8 +3279,9 @@ Code Operations:
             game = Game.K2 if self._is_tsl else Game.K1
             
             # Compile script
+            assert self._installation is not None, "Installation not set, cannot determine path"
             try:
-                ncs = ht_compile_script(text, self.library, self.functions, self.constants)
+                ncs = ht_compile_script(text, self._installation.path(), tsl=self._is_tsl)
             except Exception as e:
                 QMessageBox.critical(
                     self,
@@ -3219,9 +3290,12 @@ Code Operations:
                 )
                 return
             
+            if ncs is None:
+                return  # User cancelled compilation
+            
             # Create debugger/test runner
             from pykotor.resource.formats.ncs.compiler.interpreter import Interpreter
-            interpreter = Interpreter(ncs, game)
+            interpreter = Interpreter(read_ncs(ncs), game)
             
             # Set up mocks based on test configuration
             for func_name, mock_func in test_config["mocks"].items():
@@ -3232,7 +3306,7 @@ Code Operations:
                     RobustLogger().debug(f"Failed to set mock for {func_name}: {e}")
             
             # Create debugger wrapper with pre-configured interpreter
-            self._debugger = Debugger(ncs, game)
+            self._debugger = Debugger(read_ncs(ncs), game)
             
             # Set up debugger callbacks
             self._debugger.on_breakpoint = self._on_debugger_breakpoint
@@ -3402,7 +3476,7 @@ Code Operations:
         
         Uses the line_number field on NCSInstruction when available,
         otherwise falls back to a heuristic.
-        
+
         Args:
         ----
             instruction_index: int: Instruction index to map
@@ -3455,8 +3529,8 @@ Code Operations:
         """Update visual indicators for debugging (breakpoints, current line)."""
         # Update code editor with breakpoint and current line indicators
         assert self.ui.codeEdit is not None, "Code editor should not be None"
-        self.ui.codeEdit.set_breakpoint_lines(self._breakpoint_lines)
-        self.ui.codeEdit.set_current_debug_line(self._current_debug_line)
+        self.ui.codeEdit.breakpoint_lines = self._breakpoint_lines.copy()
+        self.ui.codeEdit.current_debug_line = self._current_debug_line
         
         # Trigger repaint
         self.ui.codeEdit.update()

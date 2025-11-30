@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import Qt, QEvent  # pyright: ignore[reportAttributeAccessIssue]
+from qtpy.QtCore import QEvent, Qt  # pyright: ignore[reportAttributeAccessIssue]
 from qtpy.QtGui import QImage, QPixmap
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -15,7 +15,6 @@ from qtpy.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
 )
-from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow
 
 from pykotor.common.misc import ResRef
 from pykotor.extract.savedata import (
@@ -28,6 +27,7 @@ from pykotor.extract.savedata import (
 from pykotor.resource.generics.utc import UTC
 from pykotor.resource.type import ResourceType
 from toolset.gui.common.filters import NoScrollEventFilter
+from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow
 from toolset.gui.editor import Editor
 from utility.common.geometry import Vector4
 
@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 
     from qtpy.QtWidgets import QWidget
 
+    from pykotor.common.language import LocalizedString
     from toolset.data.installation import HTInstallation
 
 
@@ -422,6 +423,34 @@ class SaveGameEditor(Editor):
             
             self.ui.listWidgetPartyMembers.addItem(item)
     
+    def _resolve_localized_string(self, localized_string: LocalizedString | str | None, fallback: str = "") -> str:
+        """Resolve a LocalizedString to actual text using the installation's talktable.
+        
+        Args:
+        ----
+            localized_string: LocalizedString object or None
+            fallback: Fallback text if resolution fails
+            
+        Returns:
+        -------
+            str: Resolved text string
+        """
+        if not localized_string:
+            return fallback
+        
+        # If it's already a string, return it
+        if isinstance(localized_string, str):
+            return localized_string.strip() if localized_string.strip() else fallback
+        
+        # Resolve using installation's talktable
+        if self._installation:
+            resolved = self._installation.string(localized_string, fallback)
+            if resolved and resolved.strip():
+                return resolved.strip()
+        
+        # Fallback to string representation if installation not available
+        return str(localized_string).strip() if str(localized_string).strip() else fallback
+    
     def _get_party_member_name(self, member) -> str:
         """Get the display name for a party member.
         
@@ -451,7 +480,7 @@ class SaveGameEditor(Editor):
                 for res_id, char in self._nested_capsule.cached_characters.items():
                     # Check if this character matches the PC name
                     if char.first_name:
-                        char_name = str(char.first_name).strip()
+                        char_name = self._resolve_localized_string(char.first_name, "").strip()
                         if char_name == pc_name_to_match:
                             # Also check is_pc flag if available
                             if hasattr(char, 'is_pc') and char.is_pc:
@@ -464,7 +493,7 @@ class SaveGameEditor(Editor):
                 for char in self._nested_capsule.cached_characters.values():
                     if hasattr(char, 'is_pc') and char.is_pc:
                         if char.first_name:
-                            name = str(char.first_name).strip()
+                            name = self._resolve_localized_string(char.first_name, "").strip()
                             if name and name != "Unnamed":
                                 return name
             
@@ -472,7 +501,7 @@ class SaveGameEditor(Editor):
             if self._nested_capsule:
                 for char in self._nested_capsule.cached_characters.values():
                     if char.first_name:
-                        name = str(char.first_name).strip()
+                        name = self._resolve_localized_string(char.first_name, "").strip()
                         if name and name != "Unnamed":
                             return name
             
@@ -515,11 +544,11 @@ class SaveGameEditor(Editor):
         """
         # Try first name first
         if char.first_name:
-            name = str(char.first_name).strip()
+            name = self._resolve_localized_string(char.first_name, "").strip()
             if name and name != "Unnamed":
                 # Add last name if available
                 if char.last_name:
-                    last_name = str(char.last_name).strip()
+                    last_name = self._resolve_localized_string(char.last_name, "").strip()
                     if last_name and last_name != "Unnamed":
                         return f"{name} {last_name}"
                 return name
@@ -579,9 +608,11 @@ class SaveGameEditor(Editor):
                 if self._save_info and self._save_info.pc_name:
                     pc_name_to_match = self._save_info.pc_name.strip()
                     for res_id, candidate_char in self._nested_capsule.cached_characters.items():
-                        if candidate_char.first_name and str(candidate_char.first_name).strip() == pc_name_to_match:
-                            char = candidate_char
-                            break
+                        if candidate_char.first_name:
+                            resolved_name = self._resolve_localized_string(candidate_char.first_name, "").strip()
+                            if resolved_name == pc_name_to_match:
+                                char = candidate_char
+                                break
                         # Also check is_pc flag
                         if hasattr(candidate_char, 'is_pc') and candidate_char.is_pc:
                             char = candidate_char
@@ -613,9 +644,9 @@ class SaveGameEditor(Editor):
             lines.append("<hr>")
             lines.append("<b>Character Details</b><br>")
             
-            # Names
-            first_name = str(char.first_name).strip() if char.first_name else "N/A"
-            last_name = str(char.last_name).strip() if char.last_name else "N/A"
+            # Names - resolve LocalizedString objects using installation talktable
+            first_name = self._resolve_localized_string(char.first_name, "N/A")
+            last_name = self._resolve_localized_string(char.last_name, "N/A")
             full_name = f"{first_name} {last_name}".strip() if last_name != "N/A" else first_name
             lines.append(f"<b>Full Name:</b> {full_name if full_name != 'N/A' else 'Unnamed'}<br>")
             if char.first_name and char.last_name:
@@ -741,8 +772,8 @@ class SaveGameEditor(Editor):
             return None
         
         try:
-            from toolset.data.installation import HTInstallation
             from pykotor.resource.formats.twoda.twoda_data import TwoDA
+            from toolset.data.installation import HTInstallation
             
             classes: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_CLASSES)
             if classes and 0 <= class_id < classes.get_height():
@@ -767,8 +798,8 @@ class SaveGameEditor(Editor):
             return None
         
         try:
-            from toolset.data.installation import HTInstallation
             from pykotor.resource.formats.twoda.twoda_data import TwoDA
+            from toolset.data.installation import HTInstallation
             
             races: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_RACES)
             if races and 0 <= race_id < races.get_height():
@@ -800,8 +831,8 @@ class SaveGameEditor(Editor):
             return None
         
         try:
-            from toolset.data.installation import HTInstallation
             from pykotor.resource.formats.twoda.twoda_data import TwoDA
+            from toolset.data.installation import HTInstallation
             
             genders: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_GENDERS)
             if genders and 0 <= gender_id < genders.get_height():
@@ -1097,10 +1128,12 @@ class SaveGameEditor(Editor):
                 # PC might be the first character or have a specific identifier
                 # Try to find it in cached_characters
                 for char in self._nested_capsule.cached_characters.values():
-                    if char.first_name and str(char.first_name) == self._save_info.pc_name:
-                        self._current_character = char
-                        self.populate_character_details(self._current_character)
-                        return
+                    if char.first_name:
+                        resolved_name = self._resolve_localized_string(char.first_name, "").strip()
+                        if resolved_name == self._save_info.pc_name.strip():
+                            self._current_character = char
+                            self.populate_character_details(self._current_character)
+                            return
                 # If not found, use first character as fallback
                 if self._nested_capsule.cached_characters:
                     self._current_character = next(iter(self._nested_capsule.cached_characters.values()))
@@ -1126,15 +1159,17 @@ class SaveGameEditor(Editor):
         is_pc = False
         if self._save_info and self._save_info.pc_name:
             pc_name_to_match = self._save_info.pc_name.strip()
-            # Check if first name matches
-            if char.first_name and str(char.first_name).strip() == pc_name_to_match:
-                is_pc = True
+            # Check if first name matches - resolve LocalizedString first
+            if char.first_name:
+                resolved_name = self._resolve_localized_string(char.first_name, "").strip()
+                if resolved_name == pc_name_to_match:
+                    is_pc = True
             # Also check is_pc flag if available
-            elif hasattr(char, 'is_pc') and char.is_pc:
+            if not is_pc and hasattr(char, 'is_pc') and char.is_pc:
                 is_pc = True
         
-        # Stats
-        self.ui.lineEditCharName.setText(str(char.first_name) if char.first_name else "")
+        # Stats - resolve LocalizedString to actual text
+        self.ui.lineEditCharName.setText(self._resolve_localized_string(char.first_name, ""))
         self.ui.spinBoxCharHP.setValue(char.current_hp)
         self.ui.spinBoxCharMaxHP.setValue(char.max_hp)
         self.ui.spinBoxCharFP.setValue(char.fp)
@@ -1232,7 +1267,16 @@ class SaveGameEditor(Editor):
             return
         
         # Update stats
-        self._current_character.first_name = self.ui.lineEditCharName.text()
+        # Convert string to LocalizedString for first_name
+        from pykotor.common.language import LocalizedString
+        name_text = self.ui.lineEditCharName.text().strip()
+        if name_text:
+            # Create LocalizedString from English text
+            self._current_character.first_name = LocalizedString.from_english(name_text)
+        else:
+            # Use invalid LocalizedString if empty
+            self._current_character.first_name = LocalizedString.from_invalid()
+        
         self._current_character.current_hp = self.ui.spinBoxCharHP.value()
         self._current_character.max_hp = self.ui.spinBoxCharMaxHP.value()
         self._current_character.fp = self.ui.spinBoxCharFP.value()
@@ -1300,8 +1344,8 @@ class SaveGameEditor(Editor):
         slot, current_item = data
         
         # Search for UTI resources in the installation
-        from pykotor.extract.installation import SearchLocation
         from pykotor.extract.file import ResourceIdentifier
+        from pykotor.extract.installation import SearchLocation
         
         # Get all UTI resources from the installation
         locations = self._installation.locations(
@@ -1680,6 +1724,7 @@ class SaveGameEditor(Editor):
         
         try:
             from io import BytesIO
+
             from pykotor.resource.formats.tpc.tga import read_tga
             
             # Read TGA file from bytes - this handles origin flipping automatically

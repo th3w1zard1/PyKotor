@@ -15,6 +15,7 @@ This module provides:
 from __future__ import annotations
 
 from pykotor.tslpatcher.diff.analyzers import DiffAnalyzerFactory
+from pykotor.tslpatcher.diff.application import DiffConfig, run_application
 from pykotor.tslpatcher.diff.cache import DiffCache, load_diff_cache, restore_strref_cache_from_cache, save_diff_cache
 from pykotor.tslpatcher.diff.engine import (
     CachedFileComparison,
@@ -57,6 +58,7 @@ __all__ = [
     "DefaultFormatter",
     "DiffAnalyzerFactory",
     "DiffCache",
+    "DiffConfig",
     "DiffContext",
     "DiffEngine",
     "DiffFormat",
@@ -83,6 +85,7 @@ __all__ = [
     "load_diff_cache",
     "resolve_resource_in_installation",
     "restore_strref_cache_from_cache",
+    "run_application",
     "save_diff_cache",
     "validate_tslpatchdata_arguments",
 ]

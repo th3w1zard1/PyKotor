@@ -1360,7 +1360,7 @@ class TestNCSCompiler(CompilerTestBase):
         interpreter = Interpreter(ncs)
         interpreter.run()
 
-        assert abs(interpreter.action_snapshots[-2].arg_values[0].value - 3.141592) < 0.000001
+        assert abs(interpreter.action_snapshots[-2].arg_values[0] - 3.141592) < 0.000001
         assert interpreter.action_snapshots[-1].arg_values[0] == "Hello"
 
     def test_const_local_declaration(self):
@@ -2837,7 +2837,7 @@ class TestNCSCompiler(CompilerTestBase):
 
         assert interpreter.action_snapshots[-3].arg_values[0] == 123
         assert interpreter.action_snapshots[-2].arg_values[0] == "abc"
-        self.assertAlmostEqual(3.14, interpreter.action_snapshots[-1].arg_values[0].value)
+        self.assertAlmostEqual(3.14, interpreter.action_snapshots[-1].arg_values[0])
 
     # endregion
 

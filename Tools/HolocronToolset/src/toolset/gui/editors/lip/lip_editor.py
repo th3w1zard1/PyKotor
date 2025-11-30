@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import wave
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, cast, Any
 
+import qtpy
 from qtpy.QtCore import QTimer, QUrl, Qt
 from qtpy.QtGui import QKeySequence
 from qtpy.QtMultimedia import QAudioOutput, QMediaPlayer
@@ -101,10 +102,18 @@ class LIPEditor(Editor):
 
         # Preview playback
         self.player = QMediaPlayer()
-        self.audio_output = QAudioOutput()
-        self.player.setAudioOutput(self.audio_output)
+        self.audio_output: QAudioOutput | None = None
+        
+        # Qt6 requires explicit audio output setup
+        if qtpy.QT6:
+            self.audio_output = QAudioOutput()
+            self.audio_output.setVolume(1)
+            player: Any = cast(Any, self.player)
+            player.setAudioOutput(self.audio_output)  # type: ignore[attr-defined]
+        
         self.player.positionChanged.connect(self.on_playback_position_changed)
-        self.player.playbackStateChanged.connect(self.on_playback_state_changed)
+        state_changed = self.player.stateChanged if qtpy.QT5 else self.player.playbackStateChanged  # type: ignore[attr-defined]
+        state_changed.connect(self.on_playback_state_changed)
 
         self.preview_timer = QTimer()
         self.preview_timer.setInterval(16)  # ~60fps
@@ -292,7 +301,12 @@ class LIPEditor(Editor):
                 self.time_input.setMaximum(self.duration)
 
             # Set up media player
-            self.player.setSource(QUrl.fromLocalFile(file_path))
+            if qtpy.QT5:
+                from qtpy.QtMultimedia import QMediaContent  # pyright: ignore[reportAttributeAccessIssue]
+                self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))  # pyright: ignore[reportAttributeAccessIssue]
+            elif qtpy.QT6:
+                player: Any = cast(Any, self.player)
+                player.setSource(QUrl.fromLocalFile(file_path))  # type: ignore[attr-defined]
 
     def add_keyframe(self):
         """Add a keyframe to the LIP file."""
@@ -423,9 +437,10 @@ class LIPEditor(Editor):
         else:
             self.preview_label.setText("None")
 
-    def on_playback_state_changed(self, state: QMediaPlayer.PlaybackState):
+    def on_playback_state_changed(self, state: int):
         """Handle playback state changes."""
-        if state == QMediaPlayer.PlaybackState.StoppedState:
+        state_enum = QMediaPlayer.State if qtpy.QT5 else QMediaPlayer.PlaybackState  # type: ignore[attr-defined]
+        if state == state_enum.StoppedState:
             if self.preview_label:
                 self.preview_label.setText("None")
             self.preview_timer.stop()
@@ -436,7 +451,7 @@ class LIPEditor(Editor):
         filepath: os.PathLike | str,
         resref: str,
         restype: ResourceType,
-        data: bytes,
+        data: bytes | bytearray,
     ) -> None:
         """Load a LIP file."""
         super().load(filepath, resref, restype, data)

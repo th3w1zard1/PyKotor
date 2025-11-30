@@ -107,7 +107,7 @@ class UTIEditor(Editor):
         self,
         installation: HTInstallation,
     ):
-        self._installation = installation
+        self._installation = installation  # pyright: ignore[reportIncompatibleVariableOverride]
         self.ui.nameEdit.set_installation(installation)
         self.ui.descEdit.set_installation(installation)
 
@@ -157,7 +157,7 @@ class UTIEditor(Editor):
         filepath: os.PathLike | str,
         resref: str,
         restype: ResourceType,
-        data: bytes,
+        data: bytes | bytearray,
     ):
         super().load(filepath, resref, restype, data)
 

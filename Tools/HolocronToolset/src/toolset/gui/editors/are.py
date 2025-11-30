@@ -134,6 +134,9 @@ class AREEditor(Editor):
     ):
         super().load(filepath, resref, restype, data)
 
+        if not data:
+            raise ValueError("The ARE file data is empty or invalid.")
+
         are: ARE = read_are(data)
         self._loaded_are = are  # Store reference to preserve original values
         self._loadARE(are)
