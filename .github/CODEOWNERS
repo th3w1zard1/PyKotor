@@ -1,0 +1,32 @@
+# Code owners for PyKotor repository
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Core libraries
+/Libraries/PyKotor/ @th3w1zard1
+/Libraries/PyKotorGL/ @th3w1zard1
+/Libraries/PyKotorFont/ @th3w1zard1
+
+# Tools
+/Tools/HolocronToolset/ @th3w1zard1
+/Tools/HoloPatcher/ @th3w1zard1
+/Tools/BatchPatcher/ @th3w1zard1
+/Tools/KotorDiff/ @th3w1zard1
+/Tools/GuiConverter/ @th3w1zard1
+
+# Configuration files
+/pyproject.toml @th3w1zard1
+/.github/ @th3w1zard1
+/CONTRIBUTING.md @th3w1zard1
+/CODE_OF_CONDUCT.md @th3w1zard1
+/SECURITY.md @th3w1zard1
+
+# Documentation
+/docs/ @th3w1zard1
+/README.md @th3w1zard1
+
+# CI/CD
+/.github/workflows/ @th3w1zard1
+
+# All Python files
+*.py @th3w1zard1
+

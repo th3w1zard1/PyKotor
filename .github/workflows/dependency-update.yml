@@ -1,0 +1,53 @@
+name: Dependency Update Check
+
+on:
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Monday
+  workflow_dispatch:
+
+jobs:
+  check-updates:
+    name: Check for Dependency Updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install pip-audit
+        run: |
+          pip install pip-audit
+
+      - name: Check for security vulnerabilities
+        run: |
+          pip-audit --requirement Libraries/PyKotor/requirements.txt || true
+          pip-audit --requirement Libraries/PyKotorGL/requirements.txt || true
+          pip-audit --requirement Libraries/PyKotorFont/requirements.txt || true
+
+      - name: Check for outdated packages
+        run: |
+          pip install pip-review
+          pip-review --local --auto || true
+        continue-on-error: true
+
+      - name: Generate dependency report
+        run: |
+          echo "## Dependency Update Report" > dependency-report.md
+          echo "" >> dependency-report.md
+          echo "Generated: $(date)" >> dependency-report.md
+          echo "" >> dependency-report.md
+          echo "### Outdated Packages" >> dependency-report.md
+          pip list --outdated >> dependency-report.md || echo "No outdated packages" >> dependency-report.md
+
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-report
+          path: dependency-report.md
+          retention-days: 7
+

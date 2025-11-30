@@ -1,0 +1,41 @@
+name: Repository Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    name: Create Repository Backup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Create archive
+        run: |
+          tar -czf pykotor-backup-$(date +%Y%m%d).tar.gz \
+            --exclude='.git' \
+            --exclude='.venv' \
+            --exclude='venv' \
+            --exclude='__pycache__' \
+            --exclude='*.pyc' \
+            --exclude='dist' \
+            --exclude='build' \
+            --exclude='.pytest_cache' \
+            .
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-backup-$(date +%Y%m%d)
+          path: pykotor-backup-*.tar.gz
+          retention-days: 90
+

@@ -1,0 +1,25 @@
+name: Check License Headers
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  license-headers:
+    name: Check License Headers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check license headers
+        uses: Lluis Campos/license-checker-action@v1
+        with:
+          path: Libraries Tools
+          license: LGPL-3.0
+          exclude: vendor .venv venv __pycache__ dist build
+        continue-on-error: true
+

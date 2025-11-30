@@ -2,10 +2,9 @@ __pycache__/
 
 .history
 .history/
-.history/**/*.py */
+.history/**/*.py
 .*
 !.cursorrules
-!.cursorrules.txt
 !.env
 !.gitignore
 !.gitmodules

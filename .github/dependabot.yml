@@ -1,0 +1,108 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    ignore:
+      - dependency-name: "ply"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "numpy"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "PyOpenGL"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "pip"
+    directory: "/Libraries/PyKotor"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(pykotor)"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/Libraries/PyKotorGL"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(pykotorgl)"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/Libraries/PyKotorFont"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(pykotorfont)"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/Tools/HolocronToolset"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(toolset)"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/Tools/HoloPatcher"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(holopatcher)"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/Tools/BatchPatcher"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(batchpatcher)"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/Tools/KotorDiff"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(kotordiff)"
+      include: "scope"
+
+  - package-ecosystem: "pip"
+    directory: "/Tools/GuiConverter"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(guiconverter)"
+      include: "scope"

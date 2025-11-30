@@ -4,6 +4,7 @@ import errno
 import os
 import pathlib
 import sys
+import tempfile
 import textwrap
 import traceback
 import unittest
@@ -4794,38 +4795,40 @@ class TestNssNcsRoundtripGranular(unittest.TestCase):
             ],
         )
 
-    def test_roundtrip_include_resolution(self, tmp_path: Path):
+    def test_roundtrip_include_resolution(self):
         """Test roundtrip with include directives."""
-        include_path = tmp_path / "rt_helper.nss"
-        include_path.write_text(
-            _dedent(
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            include_path = tmp_path / "rt_helper.nss"
+            include_path.write_text(
+                _dedent(
+                    """
+                    int HelperFunction(int value)
+                    {
+                        return value * 2;
+                    }
+                    """
+                ),
+                encoding="utf-8",
+            )
+
+            source = _dedent(
                 """
-                int HelperFunction(int value)
+                #include "rt_helper"
+
+                void main()
                 {
-                    return value * 2;
+                    int result = HelperFunction(5);
+                    SetLocalInt(OBJECT_SELF, "helper", result);
                 }
                 """
-            ),
-            encoding="utf-8",
-        )
+            )
 
-        source = _dedent(
-            """
-            #include "rt_helper"
-
-            void main()
-            {
-                int result = HelperFunction(5);
-                SetLocalInt(OBJECT_SELF, "helper", result);
-            }
-            """
-        )
-
-        decompiled = _assert_bidirectional_roundtrip(
-            source,
-            Game.K1,
-            library_lookup=[tmp_path],
-        )
+            decompiled = _assert_bidirectional_roundtrip(
+                source,
+                Game.K1,
+                library_lookup=[tmp_path],
+            )
         _assert_substrings(
             decompiled,
             [

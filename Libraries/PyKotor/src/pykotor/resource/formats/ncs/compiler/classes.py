@@ -505,9 +505,14 @@ class CodeRoot:
 
         offset = 0
         for param, arg in zip(definition.parameters, args_list):
+            temp_stack_before = block.temp_stack
             arg_datatype: DynamicDataType = arg.compile(ncs, self, block)
+            temp_stack_after = block.temp_stack
             offset += arg_datatype.size(self)
-            block.temp_stack += arg_datatype.size(self)
+            # Only add to temp_stack if the argument's compile method didn't already add it
+            # (FunctionCallExpression and EngineCallExpression already add their return values)
+            if temp_stack_after == temp_stack_before:
+                block.temp_stack += arg_datatype.size(self)
             if param.data_type != arg_datatype:
                 msg = (
                     f"Parameter type mismatch in call to '{definition.identifier}'\n"
@@ -515,6 +520,7 @@ class CodeRoot:
                     f"  Got: {arg_datatype.builtin.name}"
                 )
                 raise CompileError(msg)
+        # JSR consumes all arguments, so subtract their total size
         block.temp_stack -= offset
         ncs.add(NCSInstructionType.JSR, jump=start_instruction)
 
@@ -1323,12 +1329,9 @@ class EngineCallExpression(Expression):
 
                 ncs.instructions.append(after_command)
             else:
-                print(f"DEBUG EngineCallExpression: before compiling arg[{i}], temp_stack={block.temp_stack}, this_stack={this_stack}")
                 added = arg.compile(ncs, root, block)
-                print(f"DEBUG EngineCallExpression: after compiling arg[{i}], added.size={added.size(root)}, temp_stack={block.temp_stack}")
                 block.temp_stack += added.size(root)
                 this_stack += added.size(root)
-                print(f"DEBUG EngineCallExpression: after updating, temp_stack={block.temp_stack}, this_stack={this_stack}")
 
                 if added != param_type:
                     param = self._function.params[param_index]
@@ -1351,14 +1354,12 @@ class EngineCallExpression(Expression):
             ),
         )
         # ACTION consumes all arguments, so subtract their total size
-        print(f"DEBUG EngineCallExpression: this_stack={this_stack}, temp_stack before subtract={block.temp_stack}")
         block.temp_stack -= this_stack
-        print(f"DEBUG EngineCallExpression: temp_stack after subtract={block.temp_stack}")
         # For non-void functions, the return value is left on the stack
+        # Add it to temp_stack so ExpressionStatement knows to pop it
         return_type = DynamicDataType(self._function.returntype)
         if return_type != DynamicDataType.VOID:
             block.temp_stack += return_type.size(root)
-        print(f"DEBUG EngineCallExpression: final temp_stack={block.temp_stack}, return_type={return_type}")
         return return_type
 
 
@@ -1565,11 +1566,18 @@ class Assignment(Expression):
         self.field_access: FieldAccess = field_access
         self.expression: Expression = value
 
-    def compile(self, ncs: NCS, root: CodeRoot, block: CodeBlock) -> DynamicDataType:
-        # Compile expression - this updates temp_stack
+    def compile(self, ncs: NCS, root: CodeRoot, block: CodeBlock, allow_const: bool = False) -> DynamicDataType:
+        # Save temp_stack before compiling expression to check if expression already added to it
+        temp_stack_before = block.temp_stack
+        # Compile expression - expressions may or may not add to temp_stack themselves
         variable_type = self.expression.compile(ncs, root, block)
-        # Explicitly track that expression result is on the stack
-        block.temp_stack += variable_type.size(root)
+        temp_stack_after = block.temp_stack
+        
+        # Only add to temp_stack if the expression didn't already add it
+        # (FunctionCallExpression and EngineCallExpression already add their return values)
+        if temp_stack_after == temp_stack_before:
+            # Expression didn't add to temp_stack, so we need to add it
+            block.temp_stack += variable_type.size(root)
         
         # Get variable location - get_scoped uses temp_stack (including expression result) in its calculation
         is_global, expression_type, stack_index, is_const = self.field_access.get_scoped(
@@ -1577,7 +1585,7 @@ class Assignment(Expression):
             root,
         )
         
-        if is_const:
+        if is_const and not allow_const:
             var_name = ".".join(str(ident) for ident in self.field_access.identifiers)
             msg = f"Cannot assign to const variable '{var_name}'"
             raise CompileError(msg)
@@ -1600,10 +1608,12 @@ class Assignment(Expression):
             NCSInstruction(instruction_type, [stack_index, expression_type.size(root)]),
         )
 
-        # Note: We do NOT remove the expression result from the stack here.
-        # The result remains on the stack so that ExpressionStatement can pop it.
-        # We also do NOT subtract from temp_stack here - ExpressionStatement will handle that.
-        # The result is still on the stack (copied to variable location but also remains on top).
+        # Remove the expression result from the stack after copying it down
+        ncs.add(NCSInstructionType.MOVSP, args=[-variable_type.size(root)])
+        
+        # Remove the expression result from temp_stack tracking
+        # The expression's compile method added it to temp_stack, so we subtract it here
+        block.temp_stack -= variable_type.size(root)
 
         return variable_type
 
@@ -2294,12 +2304,42 @@ class ExpressionStatement(Statement):
         break_instruction: NCSInstruction | None,
         continue_instruction: NCSInstruction | None,
     ):
+        temp_stack_before = block.temp_stack
         expression_type = self.expression.compile(ncs, root, block)
+        temp_stack_after = block.temp_stack
+        print(f"DEBUG ExpressionStatement.compile: expression={type(self.expression).__name__}, type={expression_type.builtin.name}, temp_stack before={temp_stack_before}, after={temp_stack_after}")
         # Expression compiled, remove its result from stack and temp_stack tracking
-        print(f"DEBUG ExpressionStatement: expression_type={expression_type}, size={expression_type.size(root)}, temp_stack before pop={block.temp_stack}")
-        ncs.add(NCSInstructionType.MOVSP, args=[-expression_type.size(root)])
-        block.temp_stack -= expression_type.size(root)
-        print(f"DEBUG ExpressionStatement: temp_stack after pop={block.temp_stack}")
+        # Note: Some expressions (like Assignment) already remove their result from the stack,
+        # so we only need to remove it from temp_stack if it's still on the stack.
+        # We check temp_stack to see if the result is still tracked.
+        # For void expressions, we still need to check if temp_stack increased (e.g., from nested function calls)
+        if expression_type != DynamicDataType.VOID:
+            expression_size = expression_type.size(root)
+            # Check if expression added to temp_stack
+            if temp_stack_after > temp_stack_before:
+                # Expression added to temp_stack, so result is on the stack - remove it
+                print(f"DEBUG ExpressionStatement.compile: removing {expression_size} bytes from stack (temp_stack={block.temp_stack})")
+                ncs.add(NCSInstructionType.MOVSP, args=[-expression_size])
+                block.temp_stack -= expression_size
+            elif temp_stack_after == temp_stack_before:
+                # Expression didn't add to temp_stack, but result is still on the stack (e.g., StringExpression, IntExpression)
+                # We need to remove it from the stack (but don't update temp_stack since it wasn't tracking it)
+                print(f"DEBUG ExpressionStatement.compile: expression didn't add to temp_stack, removing {expression_size} bytes from stack")
+                ncs.add(NCSInstructionType.MOVSP, args=[-expression_size])
+            else:
+                # temp_stack decreased, which means the expression already removed its result
+                print(f"DEBUG ExpressionStatement.compile: expression already removed result (temp_stack={block.temp_stack}, expression_type.size={expression_size})")
+        else:
+            # Void expression - check if temp_stack increased (shouldn't happen, but clean up if it did)
+            if temp_stack_after > temp_stack_before:
+                # Something was left on the stack (e.g., from nested function call arguments)
+                cleanup_size = temp_stack_after - temp_stack_before
+                print(f"DEBUG ExpressionStatement.compile: void expression left {cleanup_size} bytes on stack, cleaning up (temp_stack={block.temp_stack})")
+                ncs.add(NCSInstructionType.MOVSP, args=[-cleanup_size])
+                block.temp_stack -= cleanup_size
+            else:
+                print(f"DEBUG ExpressionStatement.compile: void expression, no cleanup needed (temp_stack={block.temp_stack})")
+        # If temp_stack < expression_type.size(root), the expression already removed it
 
 
 class DeclarationStatement(Statement):
@@ -2402,12 +2442,13 @@ class VariableInitializer:
         declarator.compile(ncs, root, block, data_type, is_const)
 
         # Emit assignment using existing machinery (keeps stack bookkeeping consistent)
+        # Allow const variables to be initialized (but not reassigned)
         assignment = Assignment(FieldAccess([self.identifier]), self.expression)
-        assignment.compile(ncs, root, block)
+        assignment.compile(ncs, root, block, allow_const=True)
 
-        # Assignment.compile already manages temp_stack correctly, no need to remove expression result
-        # Restore temporary stack tracking to its pre-initializer state
-        block.temp_stack = initial_temp_stack
+        # Assignment.compile already manages temp_stack correctly (adds and subtracts the expression result),
+        # so temp_stack should be back to initial_temp_stack. No need to reset it.
+        # Note: We don't reset temp_stack here because Assignment.compile should have balanced it.
 
 
 class ConditionalBlock(Statement):
@@ -2614,8 +2655,15 @@ class ForLoopBlock(Statement):
                 self.initial.compile(ncs, root, block, return_instruction, break_instruction, continue_instruction)
             else:
                 # For expressions, compile and clean up stack
+                # Note: Assignment expressions already clean up the stack themselves,
+                # so we only need to clean up if it's not an Assignment
                 initial_type = self.initial.compile(ncs, root, block)
-                ncs.add(NCSInstructionType.MOVSP, args=[-initial_type.size(root)])
+                # Assignment is defined earlier in this file, so we can reference it directly
+                if not isinstance(self.initial, Assignment):
+                    # Only remove from stack if the expression left a value on it
+                    # (Assignment already cleaned up, so skip it)
+                    ncs.add(NCSInstructionType.MOVSP, args=[-initial_type.size(root)])
+                    block.temp_stack -= initial_type.size(root)
 
         loopstart = ncs.add(NCSInstructionType.NOP, args=[])
         updatestart = NCSInstruction(NCSInstructionType.NOP, args=[])
@@ -2629,12 +2677,31 @@ class ForLoopBlock(Statement):
             )
             raise CompileError(msg)
 
+        # The condition result is on the stack. JZ consumes it, so adjust temp_stack.
+        # The condition's compile method should have added the result to temp_stack,
+        # but we need to ensure it's tracked correctly. If the condition didn't add to
+        # temp_stack (e.g., simple IdentifierExpression), we need to add it.
+        # Then JZ consumes it, so we subtract it.
+        condition_size = condition_type.size(root)
+        # Check if condition added to temp_stack by ensuring it's at least condition_size
+        # If temp_stack is less than condition_size, the condition didn't add it, so add it
+        if block.temp_stack < condition_size:
+            block.temp_stack += condition_size
+        # JZ consumes the condition, so subtract it
+        block.temp_stack -= condition_size
         ncs.add(NCSInstructionType.JZ, jump=loopend)
         self.block.compile(ncs, root, block, return_instruction, loopend, updatestart)
 
         ncs.instructions.append(updatestart)
+        temp_stack_before_iteration = block.temp_stack
         iteration_type = self.iteration.compile(ncs, root, block)
+        temp_stack_after_iteration = block.temp_stack
+        # Check if expression already added to temp_stack
+        if temp_stack_after_iteration == temp_stack_before_iteration:
+            # Expression didn't add to temp_stack, so we need to add it
+            block.temp_stack += iteration_type.size(root)
         ncs.add(NCSInstructionType.MOVSP, args=[-iteration_type.size(root)])
+        block.temp_stack -= iteration_type.size(root)
 
         ncs.add(NCSInstructionType.JMP, jump=loopstart)
         ncs.instructions.append(loopend)

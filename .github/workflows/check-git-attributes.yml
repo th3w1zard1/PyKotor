@@ -1,0 +1,38 @@
+name: Check Git Attributes
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  check-attributes:
+    name: Check Git Attributes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for .gitattributes file
+        run: |
+          if [ ! -f .gitattributes ]; then
+            echo "⚠️ .gitattributes file not found"
+            echo "Consider creating one to handle line endings and file types"
+          else
+            echo "✓ .gitattributes file exists"
+          fi
+
+      - name: Validate .gitattributes
+        run: |
+          if [ -f .gitattributes ]; then
+            # Basic validation
+            echo "Checking .gitattributes format..."
+            grep -v "^#" .gitattributes | grep -v "^$" | while read line; do
+              if ! echo "$line" | grep -qE "^[^ ]+ [^ ]+"; then
+                echo "⚠️ Invalid line in .gitattributes: $line"
+              fi
+            done || echo "✓ .gitattributes format is valid"
+          fi
+

@@ -1,0 +1,69 @@
+name: Compatibility Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:
+
+jobs:
+  compatibility:
+    name: Test Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        exclude:
+          - os: macos-latest
+            python-version: "3.8"
+          - os: windows-latest
+            python-version: "3.8"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Test pip installation
+        run: |
+          uv pip install --upgrade pip setuptools wheel
+          uv pip install -e Libraries/PyKotor
+          python -c "import pykotor; print('✓ pip installation works')"
+
+      - name: Test poetry installation
+        run: |
+          pip install poetry
+          cd Libraries/PyKotor && poetry install || echo "Poetry test skipped"
+        continue-on-error: true
+
+      - name: Test package import
+        run: |
+          python -c "import pykotor; print('✓ PyKotor imports successfully')"
+          python -c "import pykotor.gl; print('✓ PyKotorGL imports successfully')" || echo "PyKotorGL optional"
+          python -c "import pykotor.font; print('✓ PyKotorFont imports successfully')" || echo "PyKotorFont optional"
+
+      - name: Test basic functionality
+        run: |
+          python -c "
+          from pykotor.resource.type import ResourceType
+          from pykotor.common.misc import Game
+          print('✓ Basic imports work')
+          print(f'✓ ResourceType enum has {len(ResourceType)} types')
+          print(f'✓ Game enum has {len(Game)} games')
+          "
+

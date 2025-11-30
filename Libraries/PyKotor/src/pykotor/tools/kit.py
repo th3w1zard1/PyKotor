@@ -287,6 +287,7 @@ def extract_kit(
     
     main_archive: RIM | ERF | None = None
     data_archive: RIM | ERF | None = None
+    using_dot_mod: bool = False  # Track if we're using a .mod file (affects Module class initialization)
 
     if is_erf:
         # ERF file specified - try to load it directly or search for it
@@ -297,15 +298,22 @@ def extract_kit(
         if module_path.is_absolute() or module_path.exists():
             erf_path = module_path
         else:
-            # Search in modules directory
-            for ext in [".erf", ".mod", ".hak", ".sav"]:
+            # Search in modules directory - prioritize .mod files (they override .rim files)
+            for ext in [".mod", ".erf", ".hak", ".sav"]:  # .mod first!
                 candidate = modules_path / f"{module_name_clean}{ext}"
                 if candidate.exists():
                     erf_path = candidate
+                    if ext == ".mod":
+                        using_dot_mod = True
+                        logger.info(f"Found .mod file: {candidate} - will use .mod format")
                     break
 
         if erf_path and erf_path.exists():
             logger.info(f"Loading ERF file: {erf_path}")
+            # Check if this is a .mod file
+            if extension == ".mod" or (erf_path.suffix.lower() == ".mod"):
+                using_dot_mod = True
+                logger.info("Detected .mod file - will use .mod format for Module class")
             try:
                 main_archive = read_erf(erf_path)
             except Exception as e:  # noqa: BLE001
@@ -343,52 +351,70 @@ def extract_kit(
 
     else:
         # No extension - search for both RIM and ERF files
+        # PRIORITY: .mod files take precedence over .rim files (as per KOTOR resolution order)
         logger.info("No extension detected, searching for RIM or ERF files...")
 
-        # Try RIM files first (module_name.rim and module_name_s.rim)
-        main_rim_path = None
-        data_rim_path = None
-
-        for search_path in [rims_path, modules_path]:
-            if search_path and search_path.exists():
-                candidate_main = search_path / f"{module_name_clean}.rim"
-                candidate_data = search_path / f"{module_name_clean}_s.rim"
-                if candidate_main.exists():
-                    main_rim_path = candidate_main
-                if candidate_data.exists():
-                    data_rim_path = candidate_data
-
-        if main_rim_path or data_rim_path:
-            logger.info(f"Found RIM files: main={main_rim_path}, data={data_rim_path}")
-            if main_rim_path and main_rim_path.exists():
-                try:
-                    main_archive = read_rim(main_rim_path)
-                except Exception as e:  # noqa: BLE001
-                    logger.error(f"Failed to read RIM file '{main_rim_path}': {e}")
-                    raise
-            if data_rim_path and data_rim_path.exists():
-                try:
-                    data_archive = read_rim(data_rim_path)
-                except Exception as e:  # noqa: BLE001
-                    logger.error(f"Failed to read RIM file '{data_rim_path}': {e}")
-                    raise
-        else:
-            # Try ERF files
-            erf_path = None
-            if modules_path and modules_path.exists():
-                for ext in [".erf", ".mod", ".hak", ".sav"]:
+        # FIRST: Check for .mod file (highest priority - .mod files override .rim files)
+        erf_path = None
+        if modules_path and modules_path.exists():
+            # Check for .mod first (highest priority)
+            mod_candidate = modules_path / f"{module_name_clean}.mod"
+            if mod_candidate.exists():
+                erf_path = mod_candidate
+                using_dot_mod = True
+                logger.info(f"Found .mod file: {erf_path} (using .mod format, will ignore .rim files)")
+            else:
+                # Try other ERF files (but not .mod, already checked)
+                for ext in [".erf", ".hak", ".sav"]:
                     candidate = modules_path / f"{module_name_clean}{ext}"
                     if candidate.exists():
                         erf_path = candidate
                         break
 
-            if erf_path and erf_path.exists():
-                logger.info(f"Found ERF file: {erf_path}")
-                try:
-                    main_archive = read_erf(erf_path)
-                except Exception as e:  # noqa: BLE001
-                    logger.error(f"Failed to read ERF file '{erf_path}': {e}")
-                    raise
+        # If .mod file found, use it (don't check for .rim files)
+        if erf_path and erf_path.exists() and using_dot_mod:
+            logger.info(f"Loading .mod file: {erf_path}")
+            try:
+                main_archive = read_erf(erf_path)
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"Failed to read ERF file '{erf_path}': {e}")
+                raise
+        elif erf_path and erf_path.exists():
+            # Other ERF file (not .mod)
+            logger.info(f"Found ERF file: {erf_path}")
+            try:
+                main_archive = read_erf(erf_path)
+            except Exception as e:  # noqa: BLE001
+                logger.error(f"Failed to read ERF file '{erf_path}': {e}")
+                raise
+        else:
+            # No ERF file found, try RIM files
+            main_rim_path = None
+            data_rim_path = None
+
+            for search_path in [rims_path, modules_path]:
+                if search_path and search_path.exists():
+                    candidate_main = search_path / f"{module_name_clean}.rim"
+                    candidate_data = search_path / f"{module_name_clean}_s.rim"
+                    if candidate_main.exists():
+                        main_rim_path = candidate_main
+                    if candidate_data.exists():
+                        data_rim_path = candidate_data
+
+            if main_rim_path or data_rim_path:
+                logger.info(f"Found RIM files: main={main_rim_path}, data={data_rim_path}")
+                if main_rim_path and main_rim_path.exists():
+                    try:
+                        main_archive = read_rim(main_rim_path)
+                    except Exception as e:  # noqa: BLE001
+                        logger.error(f"Failed to read RIM file '{main_rim_path}': {e}")
+                        raise
+                if data_rim_path and data_rim_path.exists():
+                    try:
+                        data_archive = read_rim(data_rim_path)
+                    except Exception as e:  # noqa: BLE001
+                        logger.error(f"Failed to read RIM file '{data_rim_path}': {e}")
+                        raise
             else:
                 msg = f"Neither RIM nor ERF files found for module '{module_name_clean}'"
                 raise FileNotFoundError(msg)
@@ -429,7 +455,12 @@ def extract_kit(
 
     # Create a Module instance to access all module resources (including from chitin)
     # This is needed to get LYT room models and GIT placeables/doors
-    module = Module(module_name, installation, use_dot_mod=False)
+    # Use use_dot_mod=True if we detected a .mod file (it takes priority over .rim files)
+    module = Module(module_name_clean, installation, use_dot_mod=using_dot_mod)
+    if using_dot_mod:
+        logger.info(f"Using .mod format for Module class (module_name: {module_name_clean})")
+    else:
+        logger.info(f"Using .rim format for Module class (module_name: {module_name_clean})")
     
     # Get LYT to find all room models (which have WOK files)
     # Reference: vendor/reone/src/libs/game/object/area.cpp (room loading)

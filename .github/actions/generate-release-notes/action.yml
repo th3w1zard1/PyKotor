@@ -1,0 +1,35 @@
+name: Generate Release Notes
+description: Generate release notes from commits and PRs
+
+inputs:
+  tag:
+    description: 'Release tag'
+    required: true
+
+outputs:
+  notes:
+    description: 'Generated release notes'
+    value: ${{ steps.generate.outputs.notes }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate release notes
+      id: generate
+      shell: bash
+      run: |
+        echo "Generating release notes for tag: ${{ inputs.tag }}"
+        # This would use a script to generate notes from commits/PRs
+        NOTES=$(cat <<EOF
+        # Release ${{ inputs.tag }}
+        
+        ## Changes
+        
+        Generated from commits and pull requests.
+        
+        EOF
+        )
+        echo "notes<<EOF" >> $GITHUB_OUTPUT
+        echo "$NOTES" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+

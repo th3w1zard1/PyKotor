@@ -2,28 +2,14 @@ __pycache__
 
 .history
 .history/
-.history/**/*.py */
+.history/**/*.py
 .*
-./vendor
-.aider.chat.history.md
-.aider.input.history
-.aiderignore
-.env
-.git
-.history
-.history*
-.history/
-.idea
-.idea/*
-.idea/misc.xml
-.idea/PyKotor.iml
-.mypy_cache
-.secrets
-.venv
-.venv_wsl
-.venv*
-.vscode/PythonImportHelper-v2-Completion.json
-.vscode/PythonImportHelper*.json
+!.cursorrules
+!.env
+!.gitignore
+!.gitmodules
+!.github
+!.vscode
 *.cpuprofile
 *.egg-info*
 *.exe.manifest
