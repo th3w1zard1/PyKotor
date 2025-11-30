@@ -1,0 +1,367 @@
+name: Release Readiness Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: 'Tool to check release readiness for'
+        required: true
+        type: choice
+        options:
+          - toolset
+          - holopatcher
+          - kotordiff
+          - guiconverter
+          - batchpatcher
+          - kitgenerator
+      version:
+        description: 'Version to release (e.g., 3.1.3)'
+        required: true
+      run_full_build:
+        description: 'Run full builds for all platforms'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: release-ready-${{ github.event.inputs.tool }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  TOOL: ${{ github.event.inputs.tool }}
+  VERSION: ${{ github.event.inputs.version }}
+
+jobs:
+  validate-version:
+    name: Validate Version Format
+    runs-on: ubuntu-latest
+    outputs:
+      valid: ${{ steps.validate.outputs.valid }}
+      tag_name: ${{ steps.validate.outputs.tag_name }}
+      config_file: ${{ steps.validate.outputs.config_file }}
+      version_key: ${{ steps.validate.outputs.version_key }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate version format and config
+        id: validate
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          TOOL="${{ github.event.inputs.tool }}"
+          
+          echo "=== Validating version $VERSION for $TOOL ==="
+          
+          # Validate version format (semver)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9.]+)?$'; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "   Expected format: MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-suffix"
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "✓ Version format is valid"
+          
+          # Determine config file and key
+          case "$TOOL" in
+            toolset)
+              CONFIG_FILE="Tools/HolocronToolset/src/toolset/config.py"
+              VERSION_KEY="currentVersion"
+              TAG_NAME="v$VERSION-toolset"
+              ;;
+            holopatcher)
+              CONFIG_FILE="Tools/HoloPatcher/src/holopatcher/config.py"
+              VERSION_KEY="currentVersion"
+              TAG_NAME="v$VERSION-patcher"
+              ;;
+            kotordiff)
+              CONFIG_FILE="Tools/KotorDiff/src/kotordiff/__main__.py"
+              VERSION_KEY="CURRENT_VERSION"
+              TAG_NAME="v$VERSION-kotordiff"
+              ;;
+            guiconverter)
+              CONFIG_FILE="Tools/GuiConverter/src/gui_converter/__init__.py"
+              VERSION_KEY="__version__"
+              TAG_NAME="v$VERSION-guiconverter"
+              ;;
+            *)
+              echo "❌ Unknown tool: $TOOL"
+              echo "valid=false" >> $GITHUB_OUTPUT
+              exit 1
+              ;;
+          esac
+          
+          echo "config_file=$CONFIG_FILE" >> $GITHUB_OUTPUT
+          echo "version_key=$VERSION_KEY" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          
+          # Check if config file exists
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "❌ Config file not found: $CONFIG_FILE"
+            echo "valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          echo "✓ Config file exists: $CONFIG_FILE"
+          
+          # Check current version in config
+          if [ "$TOOL" = "kotordiff" ]; then
+            CURRENT=$(grep -oP 'CURRENT_VERSION\s*=\s*"\K[^"]+' "$CONFIG_FILE" || true)
+          else
+            CURRENT=$(grep -oP '"currentVersion":\s*"\K[^"]+' "$CONFIG_FILE" || true)
+          fi
+          
+          echo "  Current version in config: $CURRENT"
+          echo "  Target version: $VERSION"
+          
+          if [ "$CURRENT" = "$VERSION" ]; then
+            echo "⚠️  Warning: Version already set to $VERSION"
+          fi
+          
+          echo "valid=true" >> $GITHUB_OUTPUT
+          echo ""
+          echo "=== Version validation passed ==="
+          echo "  Tool: $TOOL"
+          echo "  Version: $VERSION"
+          echo "  Tag: $TAG_NAME"
+          echo "  Config: $CONFIG_FILE"
+        shell: bash
+
+  check-tag:
+    name: Check Tag Availability
+    runs-on: ubuntu-latest
+    needs: validate-version
+    if: needs.validate-version.outputs.valid == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if tag already exists
+        run: |
+          TAG="${{ needs.validate-version.outputs.tag_name }}"
+          
+          git fetch --tags
+          
+          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "⚠️  Warning: Tag $TAG already exists"
+            echo "   This tag will be overwritten if you proceed with the release"
+            
+            # Get the commit the tag points to
+            TAG_COMMIT=$(git rev-list -n 1 "refs/tags/$TAG" 2>/dev/null || echo "unknown")
+            echo "   Current tag commit: $TAG_COMMIT"
+          else
+            echo "✓ Tag $TAG is available"
+          fi
+        shell: bash
+
+  check-dependencies:
+    name: Check Dependencies
+    runs-on: ubuntu-latest
+    needs: validate-version
+    if: needs.validate-version.outputs.valid == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Check tool imports
+        run: |
+          TOOL="${{ github.event.inputs.tool }}"
+          
+          # Install base dependencies
+          pip install -e Libraries/PyKotor --quiet
+          
+          case "$TOOL" in
+            toolset)
+              pip install -e Tools/HolocronToolset --quiet 2>/dev/null || true
+              python -c "from toolset.config import CURRENT_VERSION; print(f'✓ Toolset imports OK, version: {CURRENT_VERSION}')"
+              ;;
+            holopatcher)
+              pip install -e Tools/HoloPatcher --quiet 2>/dev/null || true
+              python -c "from holopatcher.config import CURRENT_VERSION; print(f'✓ HoloPatcher imports OK, version: {CURRENT_VERSION}')"
+              ;;
+            kotordiff)
+              pip install -e Tools/KotorDiff --quiet 2>/dev/null || true
+              python -c "from kotordiff import CURRENT_VERSION; print(f'✓ KotorDiff imports OK, version: {CURRENT_VERSION}')" 2>/dev/null || \
+              python -c "import kotordiff.__main__; print(f'✓ KotorDiff imports OK, version: {kotordiff.__main__.CURRENT_VERSION}')"
+              ;;
+          esac
+        shell: bash
+
+  check-compile-scripts:
+    name: Check Compile Scripts
+    runs-on: ubuntu-latest
+    needs: validate-version
+    if: needs.validate-version.outputs.valid == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify compile scripts exist
+        run: |
+          TOOL="${{ github.event.inputs.tool }}"
+          
+          COMPILE_SCRIPT="compile/compile_$TOOL.ps1"
+          DEPS_SCRIPT="compile/deps_$TOOL.ps1"
+          
+          echo "=== Checking compile scripts for $TOOL ==="
+          
+          if [ -f "$COMPILE_SCRIPT" ]; then
+            echo "✓ Compile script exists: $COMPILE_SCRIPT"
+          else
+            echo "❌ Compile script NOT found: $COMPILE_SCRIPT"
+            exit 1
+          fi
+          
+          if [ -f "$DEPS_SCRIPT" ]; then
+            echo "✓ Dependencies script exists: $DEPS_SCRIPT"
+          else
+            echo "⚠️  Dependencies script not found: $DEPS_SCRIPT (may not be required)"
+          fi
+        shell: bash
+
+  dry-run-build:
+    name: Dry Run Build (${{ matrix.os }})
+    needs: [validate-version, check-dependencies, check-compile-scripts]
+    if: needs.validate-version.outputs.valid == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Build validation (dry run)
+        uses: ./.github/actions/build-tool
+        with:
+          tool_name: ${{ github.event.inputs.tool }}
+          python_version: '3.8'
+          architecture: x64
+          qt_version: 'PyQt5'
+          dry_run: ${{ github.event.inputs.run_full_build != 'true' && 'true' || 'false' }}
+          upload_artifact: ${{ github.event.inputs.run_full_build }}
+          artifact_retention_days: '3'
+
+  full-build-matrix:
+    name: Full Build (${{ matrix.os }} ${{ matrix.architecture }})
+    needs: [validate-version, check-dependencies, check-compile-scripts]
+    if: needs.validate-version.outputs.valid == 'true' && github.event.inputs.run_full_build == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04, macos-12]
+        architecture: [x64, x86]
+        exclude:
+          - os: ubuntu-20.04
+            architecture: x86
+          - os: macos-12
+            architecture: x86
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Build tool
+        uses: ./.github/actions/build-tool
+        with:
+          tool_name: ${{ github.event.inputs.tool }}
+          python_version: '3.8'
+          architecture: ${{ matrix.architecture }}
+          qt_version: 'PyQt5'
+          dry_run: 'false'
+          upload_artifact: 'true'
+          artifact_retention_days: '7'
+
+  summary:
+    name: Release Readiness Summary
+    needs: [validate-version, check-tag, check-dependencies, check-compile-scripts, dry-run-build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# 🚀 Release Readiness Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tool:** ${{ github.event.inputs.tool }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ needs.validate-version.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Checklist" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Version validation
+          if [ "${{ needs.validate-version.result }}" = "success" ]; then
+            echo "- ✅ Version format validated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Version validation failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Tag check
+          if [ "${{ needs.check-tag.result }}" = "success" ]; then
+            echo "- ✅ Tag availability checked" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Tag check failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Dependencies
+          if [ "${{ needs.check-dependencies.result }}" = "success" ]; then
+            echo "- ✅ Dependencies validated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Dependencies check failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Compile scripts
+          if [ "${{ needs.check-compile-scripts.result }}" = "success" ]; then
+            echo "- ✅ Compile scripts found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Compile scripts check failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Build validation
+          if [ "${{ needs.dry-run-build.result }}" = "success" ]; then
+            echo "- ✅ Build validation passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Build validation failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          ALL_PASSED="true"
+          if [ "${{ needs.validate-version.result }}" != "success" ] || \
+             [ "${{ needs.check-dependencies.result }}" != "success" ] || \
+             [ "${{ needs.check-compile-scripts.result }}" != "success" ] || \
+             [ "${{ needs.dry-run-build.result }}" != "success" ]; then
+            ALL_PASSED="false"
+          fi
+          
+          if [ "$ALL_PASSED" = "true" ]; then
+            echo "🎉 **All checks passed!** You're ready to release." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "1. Update \`currentVersion\` to \`${{ github.event.inputs.version }}\` in the config file" >> $GITHUB_STEP_SUMMARY
+            echo "2. Commit and push to master" >> $GITHUB_STEP_SUMMARY
+            echo "3. Create a pre-release with tag: \`${{ needs.validate-version.outputs.tag_name }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "4. The release workflow will handle everything else automatically" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Some checks failed.** Please fix the issues before releasing." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Review the failed jobs above and address any errors." >> $GITHUB_STEP_SUMMARY
+          fi
+        shell: bash
+

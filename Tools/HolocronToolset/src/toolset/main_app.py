@@ -5,10 +5,10 @@ import cProfile
 import os
 import pstats
 import sys
-from datetime import datetime
-from pathlib import Path
 
 from contextlib import suppress
+from datetime import datetime
+from pathlib import Path
 
 from loggerplus import RobustLogger
 from qtpy.QtCore import QThread

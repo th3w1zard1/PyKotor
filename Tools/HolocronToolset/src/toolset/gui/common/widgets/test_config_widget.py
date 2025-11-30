@@ -13,7 +13,6 @@ from qtpy.QtWidgets import (
     QGroupBox,
     QLabel,
     QLineEdit,
-    QPushButton,
     QSpinBox,
     QVBoxLayout,
     QWidget,

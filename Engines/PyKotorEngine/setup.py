@@ -3,7 +3,7 @@
 A Panda3D-based game engine for Knights of the Old Republic.
 """
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name="pykotorengine",

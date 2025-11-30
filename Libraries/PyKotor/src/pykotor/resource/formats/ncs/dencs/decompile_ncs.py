@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import io
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData
-    from pykotor.resource.formats.ncs.dencs.decoder import Decoder
+    import io
 
+    from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData
 
 def decompile_ncs(file_path: str | io.BufferedIOBase, actions: ActionsData) -> str | None:
     data = None
@@ -28,8 +27,8 @@ def decompile_ncs(file_path: str | io.BufferedIOBase, actions: ActionsData) -> s
         return None
     try:
         from pykotor.resource.formats.ncs.dencs.utils.file_script_data import FileScriptData  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.io_ncs import read_ncs  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.ncs_to_ast_converter import convert_ncs_to_ast  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.ncs_auto import read_ncs  # pyright: ignore[reportMissingImports]
         data = FileScriptData()
         
         # Use existing io_ncs to read NCS file
@@ -165,10 +164,11 @@ def decompile_ncs(file_path: str | io.BufferedIOBase, actions: ActionsData) -> s
         mainsub.apply(destroytree)
         data.generate_code()
         return data.get_code()
-    except Exception as e:
+    except Exception:
         import traceback
         traceback.print_exc()
-        return None
+        # Re-raise the exception to preserve the full traceback
+        raise
     finally:
         data = None
         setdest = None

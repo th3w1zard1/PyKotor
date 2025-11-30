@@ -4,18 +4,10 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pykotor.resource.formats.ncs.dencs.scriptnode.a_sub import ASub  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.scriptutils.sub_script_state import SubScriptState  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.subroutine_analysis_data import SubroutineAnalysisData  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptutils.sub_script_state import SubScriptState  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.a_code_block import ACodeBlock  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression_statement import AExpressionStatement  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.a_modify_exp import AModifyExp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
-
 
 class CleanupPass:
     def __init__(self, root: ASub, nodedata: NodeAnalysisData, subdata: SubroutineAnalysisData, state: SubScriptState):
@@ -42,25 +34,23 @@ class CleanupPass:
             self.root.add_children(children)
 
     def _apply(self, rootnode: ScriptRootNode):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression_statement import AExpressionStatement  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_modify_exp import AModifyExp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
         
         children = rootnode.get_children()
         for i, node1 in enumerate(children):
             # Process struct var declarations
             if isinstance(node1, AVarDecl):
-                var = node1.var()
+                var = node1.var_var()
                 if var is not None and var.is_struct():
-                    struct = node1.var().varstruct()
+                    struct = node1.var_var().varstruct()
                     structdec = AVarDecl(struct)
                     # Find and merge consecutive struct declarations
                     j = i + 1
-                    while j < len(children) and isinstance(children[j], AVarDecl) and struct.equals(children[j].var().varstruct()):
+                    while j < len(children) and isinstance(children[j], AVarDecl) and struct.equals(children[j].var_var().varstruct()):
                         children.pop(j)
                     if j < len(children):
                         structdec.parent(children[j].parent())
@@ -72,7 +62,7 @@ class CleanupPass:
                 node2 = children[i + 1]
                 if isinstance(node2, AExpressionStatement) and isinstance(node2.exp(), AModifyExp):
                     modexp = node2.exp()
-                    if node1.var() == modexp.var_ref().var():
+                    if node1.var_var() == modexp.var_ref().var():
                         children.pop(i + 1)
                         node1.initialize_exp(modexp.expression())
             

@@ -7,7 +7,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
 from functools import lru_cache
-from pathlib import Path, PurePath
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Collection, Generic, TypeVar, TypedDict, cast
 
 from loggerplus import RobustLogger
@@ -54,7 +54,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.common.misc import Game
-    from pykotor.extract.file import FileResource, LocationResult, ResourceResult
+    from pykotor.extract.file import LocationResult, ResourceResult
     from pykotor.extract.installation import Installation
     from pykotor.resource.formats.erf.erf_data import ERF
     from pykotor.resource.formats.gff.gff_data import GFF, GFFList
@@ -637,7 +637,7 @@ class Module:  # noqa: PLR0904
             if capsule is None:
                 continue
             # No idea why static types aren't working here as that's the whole point of the TypedDict...
-            typed_capsule: ModulePieceResource = cast(ModulePieceResource, capsule)
+            typed_capsule: ModulePieceResource = cast("ModulePieceResource", capsule)
             for resource in typed_capsule:
                 RobustLogger().info("Adding location '%s' for resource '%s' from erf/rim '%s'", typed_capsule.filepath(), resource.identifier(), typed_capsule.identifier())
                 self.add_locations(resource.resname(), resource.restype(), [typed_capsule.filepath()])

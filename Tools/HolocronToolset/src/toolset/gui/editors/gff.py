@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 from qtpy.QtCore import QItemSelectionRange, QModelIndex, QSortFilterProxyModel, Qt
-from qtpy.QtGui import QBrush, QClipboard, QColor, QFont, QStandardItem, QStandardItemModel
+from qtpy.QtGui import QBrush, QColor, QFont, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     import os
 
     from qtpy.QtCore import QAbstractItemModel, QItemSelectionModel, QItemSelectionRange, QModelIndex, QPoint
-    from qtpy.QtGui import QPalette
+    from qtpy.QtGui import QClipboard, QPalette
     from qtpy.QtWidgets import QLayout, QLayoutItem, QWidget, _QMenu
 
     from toolset.data.installation import HTInstallation
@@ -267,7 +267,7 @@ class GFFEditor(Editor):
         for i in range(item.rowCount()):
             child: QStandardItem | None = item.child(i, 0)
             assert child is not None, f"child cannot be None in {self!r}._build_list({item!r}, {gff_list!r})"
-            struct_id: int = cast(int, child.data(_VALUE_NODE_ROLE))
+            struct_id: int = cast("int", child.data(_VALUE_NODE_ROLE))
             gff_struct: GFFStruct = gff_list.add(struct_id)
             self._build_struct(child, gff_struct)
 
@@ -389,7 +389,7 @@ class GFFEditor(Editor):
             copy_button: QPushButton | None = QPushButton("Copy Binary Data")
             assert copy_button is not None, "copy_button cannot be None"
             layout.addWidget(copy_button)
-            copy_button.clicked.connect(lambda: cast(QClipboard, QApplication.clipboard()).setText(hex_data_str))
+            copy_button.clicked.connect(lambda: cast("QClipboard", QApplication.clipboard()).setText(hex_data_str))
         elif item_type == GFFFieldType.LocalizedString:
             locstring: LocalizedString = item.data(_VALUE_NODE_ROLE)
             self.ui.pages.setCurrentWidget(self.ui.substringPage)
@@ -411,7 +411,7 @@ class GFFEditor(Editor):
         source_index: QModelIndex = self.proxy_model.mapToSource(proxy_index)
         item: QStandardItem | None = self.model.itemFromIndex(source_index)
         assert item is not None, "item cannot be None"
-        item_type: GFFFieldType = cast(GFFFieldType, item.data(_TYPE_NODE_ROLE))
+        item_type: GFFFieldType = cast("GFFFieldType", item.data(_TYPE_NODE_ROLE))
 
         item.setData(self.ui.labelEdit.text(), _LABEL_NODE_ROLE)
 
@@ -439,7 +439,7 @@ class GFFEditor(Editor):
             vec4 = Vector4(self.ui.xVec4Spin.value(), self.ui.yVec4Spin.value(), self.ui.zVec4Spin.value(), self.ui.wVec4Spin.value())
             item.setData(vec4, _VALUE_NODE_ROLE)
         elif item_type == GFFFieldType.LocalizedString:
-            value_locstring: LocalizedString = cast(LocalizedString, item.data(_VALUE_NODE_ROLE))
+            value_locstring: LocalizedString = cast("LocalizedString", item.data(_VALUE_NODE_ROLE))
             value_locstring.stringref = self.ui.stringrefSpin.value()
         elif item_type == GFFFieldType.Struct or item_type is None:
             item.setData(self.ui.intSpin.value(), _VALUE_NODE_ROLE)

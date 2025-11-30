@@ -12,7 +12,7 @@ import qtpy
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtCore import QByteArray, QDir, QFile, QFileInfo, QItemSelectionModel, QModelIndex, QObject, QPersistentModelIndex, QSettings, QSize, QUrl, Qt
-from qtpy.QtGui import QFontMetrics, QKeyEvent, QKeySequence, QPainter, QPalette, QStandardItemModel
+from qtpy.QtGui import QFontMetrics, QKeyEvent, QKeySequence, QPalette, QStandardItemModel
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QAction,  # pyright: ignore[reportPrivateImportUsage]
@@ -34,10 +34,9 @@ from qtpy.QtWidgets import (
     QShortcut,  # pyright: ignore[reportPrivateImportUsage]
     QSizePolicy,
     QStyle,
-    QStylePainter,
     QStyleOptionComboBox,
+    QStylePainter,
     QTreeView,
-    QWidget,
 )
 
 from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QUrlModel
@@ -47,11 +46,15 @@ from utility.ui_libraries.qt.tools.unifiers import sip_enum_to_int
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QAbstractProxyModel, QCoreApplication, QObject, QPoint, QRect
     from qtpy.QtGui import QKeyEvent, QPaintEvent, QStandardItem
-    from qtpy.QtWidgets import QHeaderView, QPushButton
+    from qtpy.QtWidgets import (
+        QHeaderView,
+        QPushButton,
+        QWidget,
+    )
 
     from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qfiledialog_p import QFileDialogPrivate
     from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QSidebar
-    from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog, QFileDialogOptions  # noqa: TC004
+    from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog, QFileDialog as PublicQFileDialog, QFileDialogOptions  # noqa: TC004
     from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.ui_qfiledialog import Ui_QFileDialog
 
 
@@ -1081,7 +1084,7 @@ class QFileDialogPrivate:
         q = self._public
         root_dir = QDir(self.model.rootDirectory())
         if root_dir.isRoot():
-            newDirectory = cast(str, self.model.myComputer())
+            newDirectory = cast("str", self.model.myComputer())
         else:
             root_dir.cdUp()
             newDirectory = root_dir.absolutePath()
@@ -1132,7 +1135,7 @@ class QFileDialogPrivate:
         self.qFileDialogUi.detailModeButton.setDown(False)
         self.qFileDialogUi.treeView.hide()
         self.qFileDialogUi.listView.show()
-        parent_widget: QWidget | None = cast(QWidget, self.qFileDialogUi.listView.parentWidget())
+        parent_widget: QWidget | None = cast("QWidget", self.qFileDialogUi.listView.parentWidget())
         if parent_widget is not None:
             self.qFileDialogUi.stackedWidget.setCurrentWidget(parent_widget)
         self.qFileDialogUi.listView.doItemsLayout()
@@ -1152,7 +1155,7 @@ class QFileDialogPrivate:
         self.qFileDialogUi.detailModeButton.setDown(True)
         self.qFileDialogUi.listView.hide()
         self.qFileDialogUi.treeView.show()
-        parent_widget: QWidget | None = cast(QWidget, self.qFileDialogUi.treeView.parentWidget())
+        parent_widget: QWidget | None = cast("QWidget", self.qFileDialogUi.treeView.parentWidget())
         if parent_widget is not None:
             self.qFileDialogUi.stackedWidget.setCurrentWidget(parent_widget)
         self.qFileDialogUi.treeView.doItemsLayout()
@@ -2359,9 +2362,8 @@ class QFileDialogComboBox(QComboBox):
         self.setEditable(False)
 
     def _d_ptr(self) -> QFileDialogPrivate:
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as PublicQFileDialog
 
-        return typing.cast(PublicQFileDialog, self)._private  # noqa: SLF001
+        return typing.cast("PublicQFileDialog", self)._private  # noqa: SLF001
 
     def showPopup(self) -> None:  # noqa: C901
         model_of_self: QAbstractItemModel | None = self.model()
@@ -2495,9 +2497,8 @@ class QFileDialogLineEdit(QLineEdit):
         # super().keyPressEvent(e)
 
     def _d_ptr(self) -> QFileDialogPrivate:
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as PublicQFileDialog
 
-        return typing.cast(PublicQFileDialog, self)._private  # noqa: SLF001
+        return typing.cast("PublicQFileDialog", self)._private  # noqa: SLF001
 
     def setFileDialogPrivate(
         self,
@@ -2534,9 +2535,8 @@ class QFileDialogTreeView(QTreeView):
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
 
     def _d_ptr(self) -> QFileDialogPrivate:
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as PublicQFileDialog
 
-        return typing.cast(PublicQFileDialog, self.parent())._private  # noqa: SLF001
+        return typing.cast("PublicQFileDialog", self.parent())._private  # noqa: SLF001
 
     def keyPressEvent(
         self,
@@ -2581,9 +2581,8 @@ class QFileDialogListView(QListView):
         super().setCurrentIndex(index)
 
     def _d_ptr(self) -> QFileDialogPrivate:
-        from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog as PublicQFileDialog
 
-        return typing.cast(PublicQFileDialog, self)._private  # noqa: SLF001
+        return typing.cast("PublicQFileDialog", self)._private  # noqa: SLF001
 
     def sizeHint(self) -> QSize:
         height: int = max(10, self.sizeHintForRow(0))

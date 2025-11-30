@@ -1,21 +1,19 @@
 from __future__ import annotations
 
 import os
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptutils.sub_script_state import SubScriptState  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.check_is_globals import CheckIsGlobals  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.scriptutils.sub_script_state import SubScriptState  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
-
 
 class SubroutineAnalysisData:
     def __init__(self, nodedata: NodeAnalysisData):
@@ -131,15 +129,15 @@ class SubroutineAnalysisData:
         return state is not None and state.is_totally_prototyped()
 
     def add_struct(self, struct: StructType | VarStruct):
-        from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
         if isinstance(struct, VarStruct):
             structtype = struct.struct_type()
             if structtype not in self.globalstructs:
                 self.globalstructs.append(structtype)
                 structtype.type_name("structtype" + str(len(self.globalstructs)))
             else:
-                struct.struct_type(self.get_struct_prototype(structtype))
+                struct.set_struct_type(self.get_struct_prototype(structtype))
         elif isinstance(struct, StructType):
             if struct not in self.globalstructs:
                 self.globalstructs.append(struct)

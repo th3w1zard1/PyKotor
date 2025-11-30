@@ -38,7 +38,6 @@ from qtpy.QtWidgets import (
     QMenu,
     QMessageBox,
     QPushButton,
-    QStatusBar,
     QVBoxLayout,
     QWidget,
 )
@@ -56,7 +55,11 @@ if TYPE_CHECKING:
 
     from qtpy.QtCore import QAbstractItemModel, QModelIndex, QPoint
     from qtpy.QtGui import QClipboard, QDragEnterEvent, QDragMoveEvent, QDropEvent, QResizeEvent, _QAction
-    from qtpy.QtWidgets import QWidget, _QMenu
+    from qtpy.QtWidgets import (
+        QStatusBar,
+        QWidget,
+        _QMenu,
+    )
     from qtpy.sip import voidptr
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource, reportAttributeAccessIssue]
 
@@ -270,23 +273,23 @@ class FileSystemExplorerWidget(QMainWindow):
         self.ui.dynamicView.selectionModel().selectionChanged.connect(self.update_preview)
 
     def on_task_started(self, task_id: int):
-        cast(QStatusBar, self.statusBar()).showMessage(f"Task {task_id} started")
+        cast("QStatusBar", self.statusBar()).showMessage(f"Task {task_id} started")
 
     def on_task_completed(self, task_id: int, result: Any):
-        cast(QStatusBar, self.statusBar()).showMessage(f"Task {task_id} completed")
+        cast("QStatusBar", self.statusBar()).showMessage(f"Task {task_id} completed")
         self.refresh()
 
     def on_task_failed(self, task_id: int, error: Exception):
-        cast(QStatusBar, self.statusBar()).showMessage(f"Task {task_id} failed: {error}")
+        cast("QStatusBar", self.statusBar()).showMessage(f"Task {task_id} failed: {error}")
 
     def on_task_cancelled(self, task_id: int):
-        cast(QStatusBar, self.statusBar()).showMessage(f"Task {task_id} cancelled")
+        cast("QStatusBar", self.statusBar()).showMessage(f"Task {task_id} cancelled")
 
     def on_task_progress(self, task_id: int, progress: float):
-        cast(QStatusBar, self.statusBar()).showMessage(f"Task {task_id} progress: {progress:.2f}%")
+        cast("QStatusBar", self.statusBar()).showMessage(f"Task {task_id} progress: {progress:.2f}%")
 
     def on_all_tasks_completed(self):
-        cast(QStatusBar, self.statusBar()).showMessage("All tasks completed")
+        cast("QStatusBar", self.statusBar()).showMessage("All tasks completed")
         self.refresh()
 
     def toggle_task_status_widget(self) -> None:

@@ -24,17 +24,19 @@ from typing import TYPE_CHECKING
 from loggerplus import RobustLogger
 
 if TYPE_CHECKING:
+    from pykotor.extract.file import LocationResult, ResourceResult
     from pykotor.extract.installation import Installation
-    from pykotor.resource.formats.bwm import BWMEdge, BWMFace
+    from pykotor.resource.formats.bwm import BWM, BWMEdge, BWMFace
     from pykotor.resource.formats.erf import ERF
+    from pykotor.resource.formats.mdl import MDL, MDLNode
     from pykotor.resource.formats.rim import RIM
 
 from pykotor.common.module import Module
-from pykotor.extract.file import LocationResult, ResourceIdentifier, ResourceResult
-from pykotor.extract.installation import Installation, SearchLocation
-from pykotor.resource.formats.bwm import BWM, read_bwm
+from pykotor.extract.file import ResourceIdentifier
+from pykotor.extract.installation import SearchLocation
+from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.formats.erf import read_erf
-from pykotor.resource.formats.mdl import MDL, MDLNode, read_mdl
+from pykotor.resource.formats.mdl import read_mdl
 from pykotor.resource.formats.rim import read_rim
 from pykotor.resource.formats.tpc import read_tpc, write_tpc
 from pykotor.resource.generics.utd import read_utd
@@ -1004,8 +1006,8 @@ def extract_kit(
     # Extract placeable walkmeshes (PWK files)
     # Reference: vendor/reone/src/libs/game/object/placeable.cpp:73
     # Format: <modelname>.pwk
-    from pykotor.tools import placeable as placeable_tools
     from pykotor.resource.generics.utp import read_utp
+    from pykotor.tools import placeable as placeable_tools
     
     for placeable_name, placeable_data in placeables.items():
         try:

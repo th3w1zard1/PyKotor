@@ -13,11 +13,11 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar
 from pykotor.resource.formats import gff, tlk, twoda
 
 if TYPE_CHECKING:
-    from utility.common.geometry import Vector3, Vector4
     from pykotor.common.language import LocalizedString
     from pykotor.common.misc import ResRef
     from pykotor.resource.formats import lip
     from pykotor.resource.formats.gff.gff_data import GFFList, GFFStruct
+    from utility.common.geometry import Vector3, Vector4
 
 T = TypeVar("T")
 

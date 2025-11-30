@@ -7,16 +7,26 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import qtpy
 
 from qtpy.QtCore import (
+    QPoint,
     QRect,
     QSettings,
     QSize,
     QStringListModel,
-    Qt,
     QTimer,
+    Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtCore import QPoint
-from qtpy.QtGui import QColor, QMouseEvent, QPainter, QPalette, QTextCharFormat, QTextCursor, QTextDocument, QTextFormat
+from qtpy.QtGui import (
+    QColor,
+    QFont,
+    QFontMetrics,
+    QPainter,
+    QPalette,
+    QTextCharFormat,
+    QTextCursor,
+    QTextDocument,
+    QTextFormat,
+)
 from qtpy.QtWidgets import (
     QCheckBox,
     QCompleter,
@@ -33,19 +43,37 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from toolset.gui.common.style.vscode_style import (
+    DEFAULT_TAB_SIZE,
+    configure_code_editor_font,
+    get_editor_stylesheet,
+)
+
 if qtpy.QT5:
     from qtpy.QtCore import QRegExp  # pyright: ignore[reportAttributeAccessIssue]
 elif qtpy.QT6:
     from qtpy.QtCore import QRegularExpression  # pyright: ignore[reportAttributeAccessIssue]
 
-from pykotor.resource.formats.ncs.compiler.classes import FunctionDefinition
-from toolset.gui.common.localization import translate as tr
+from qtpy.QtCore import QPoint
+
+from pykotor.resource.formats.ncs.compiler.classes import FunctionDefinition  # noqa: F401 - Used for type annotations in outline view
+from toolset.gui.common.localization import translate as tr, trf
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from utility.ui_libraries.qt.widgets.itemviews.treewidget import RobustTreeWidget
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QAbstractItemModel, QMimeData, QPoint
-    from qtpy.QtGui import QDragEnterEvent, QDropEvent, QFocusEvent, QFont, QFontMetrics, QKeyEvent, QMoveEvent, QPaintEvent, QResizeEvent, QTextBlock
+    from qtpy.QtCore import QAbstractItemModel, QMimeData
+    from qtpy.QtGui import (
+        QDragEnterEvent,
+        QDropEvent,
+        QFocusEvent,
+        QKeyEvent,
+        QMouseEvent,
+        QMoveEvent,
+        QPaintEvent,
+        QResizeEvent,
+        QTextBlock,
+    )
     from qtpy.QtWidgets import QAbstractItemView, QScrollBar, QTreeWidgetItem
     from typing_extensions import Literal, Self  # noqa: F401  # pyright: ignore[reportMissingModuleSource]
 
@@ -53,6 +81,9 @@ if TYPE_CHECKING:
 class CodeEditor(QPlainTextEdit):
     """CodeEditor shows the line numbers on the side of the text editor and highlights the row the cursor is on.
 
+    Provides VS Code-like appearance with proper monospace fonts, consistent character spacing,
+    and professional styling.
+    
     Adapted from the C++ code at: https://doc.qt.io/qt-5/qtwidgets-widgets-codeeditor-example.html
     """
 
@@ -72,6 +103,10 @@ class CodeEditor(QPlainTextEdit):
         self._length: int = len(self.toPlainText())
 
         self.find_dialog: QDialog | None = None
+
+        # Configure VS Code-like monospace font FIRST before any other setup
+        # This ensures consistent character width for proper code alignment
+        self._configure_vscode_font()
 
         self.blockCountChanged.connect(self._update_line_number_area_width)
         self.updateRequest.connect(self._update_line_number_area)
@@ -99,12 +134,15 @@ class CodeEditor(QPlainTextEdit):
 
         self.setMouseTracking(True)
 
-        # Completer
+        # Completer - VS Code style autocomplete
         self.completer: QCompleter = QCompleter(self)
         self.completer.setWidget(self)
         self.completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
         self.completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.completer.setWrapAround(False)
+        self.completer.setFilterMode(Qt.MatchFlag.MatchContains)  # Match anywhere in string
+        self.completer.setMaxVisibleItems(12)  # VS Code shows about 12 items
+        self._configure_completer_popup()
         self.update_completer_model()
 
         self.modified_lines: set[int] = set()
@@ -124,6 +162,85 @@ class CodeEditor(QPlainTextEdit):
         # Code folding state
         self._folded_block_numbers: set[int] = set()  # Block numbers that are folded (blocks that start foldable regions)
         self._foldable_regions: dict[int, int] = {}  # Map start block number to end block number for foldable regions
+        
+        # VS Code-like settings
+        self._show_indent_guides: bool = True  # Draw vertical lines at indent levels
+        self._indent_guide_width: int = DEFAULT_TAB_SIZE  # Characters per indent level
+        
+        # Apply VS Code-like stylesheet
+        self._apply_vscode_stylesheet()
+    
+    def _configure_vscode_font(self):
+        """Configure VS Code-like monospace font for the editor.
+        
+        This sets up a proper monospace font with:
+        - Consistent character width (essential for code alignment)
+        - Proper tab stop distance
+        - Disabled kerning for uniform spacing
+        - Appropriate size for readability
+        """
+        # Use the vscode_style helper to get the best available monospace font
+        self._editor_font = configure_code_editor_font(self, size=14)
+        
+        # Also configure the line number area to use the same font (slightly smaller)
+        line_num_font = QFont(self._editor_font)
+        line_num_font.setPointSize(max(9, self._editor_font.pointSize() - 1))
+        self._line_number_font = line_num_font
+    
+    def _apply_vscode_stylesheet(self):
+        """Apply VS Code-like stylesheet to the editor."""
+        self.setStyleSheet(get_editor_stylesheet())
+        
+        # Configure cursor to blink at VS Code rate
+        self.setCursorWidth(2)  # VS Code uses 2px cursor
+        
+        # Set word wrap mode (VS Code default is off)
+        self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+    
+    def _configure_completer_popup(self):
+        """Configure the autocomplete popup with VS Code-like styling."""
+        popup = self.completer.popup()
+        if popup is None:
+            return
+        
+        # Set monospace font for the popup (for code completions)
+        if hasattr(self, '_editor_font'):
+            popup_font = QFont(self._editor_font)
+            popup_font.setPointSize(max(10, self._editor_font.pointSize() - 1))
+            popup.setFont(popup_font)
+        
+        # Style the popup - VS Code style
+        popup.setStyleSheet("""
+            QListView, QAbstractItemView {
+                background-color: palette(window);
+                color: palette(window-text);
+                border: 1px solid palette(mid);
+                border-radius: 4px;
+                padding: 4px;
+                selection-background-color: palette(highlight);
+                selection-color: palette(highlighted-text);
+            }
+            QListView::item, QAbstractItemView::item {
+                padding: 4px 8px;
+                border-radius: 2px;
+            }
+            QListView::item:hover, QAbstractItemView::item:hover {
+                background-color: palette(alternate-base);
+            }
+            QListView::item:selected, QAbstractItemView::item:selected {
+                background-color: palette(highlight);
+                color: palette(highlighted-text);
+            }
+            QScrollBar:vertical {
+                width: 10px;
+                background: transparent;
+            }
+            QScrollBar::handle:vertical {
+                background-color: palette(mid);
+                border-radius: 3px;
+                min-height: 20px;
+            }
+        """)
 
     def toggle_comment(self):
         """Toggle comment for the current line or selected lines."""
@@ -171,26 +288,37 @@ class CodeEditor(QPlainTextEdit):
         self,
         e: QPaintEvent,
     ):
-        """Draws line numbers in the line number area.
+        """Draws line numbers in the line number area with VS Code-like styling.
 
         Args:
         ----
             e (QPaintEvent): Paint event
         """
         painter: QPainter = QPainter(self._line_number_area)
-        painter.fillRect(e.rect(), self.palette().color(QPalette.ColorRole.AlternateBase))
+        
+        # Use a slightly different background for the gutter (VS Code style)
+        gutter_bg = self.palette().color(QPalette.ColorRole.AlternateBase)
+        painter.fillRect(e.rect(), gutter_bg)
 
         block: QTextBlock = self.firstVisibleBlock()
         block_number: int = block.blockNumber()
         top: float = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
         bottom: float = top + self.blockBoundingRect(block).height()
 
-        font_metrics: QFontMetrics = self.fontMetrics()
+        # Use the line number font for consistent sizing
+        if hasattr(self, '_line_number_font'):
+            painter.setFont(self._line_number_font)
+        
         line_number_area_width: int = self._line_number_area.width()
-        font_height: int = font_metrics.height()
+        # Use editor font height for line alignment
+        font_height: int = self.fontMetrics().height()
 
+        # Use a dimmer color for line numbers (VS Code style)
         text_color: QColor = self.palette().color(QPalette.ColorRole.Text)
-        painter.setPen(text_color)
+        # Make line numbers slightly dimmer
+        dim_color = QColor(text_color)
+        dim_color.setAlphaF(0.6)
+        painter.setPen(dim_color)
 
         while block.isValid() and top <= e.rect().bottom():
             if block.isVisible() and bottom >= e.rect().top():
@@ -425,7 +553,7 @@ class CodeEditor(QPlainTextEdit):
         self._line_number_area.update()
 
     def _highlight_current_line(self):
-        """Highlights the current line in the text editor.
+        """Highlights the current line in the text editor with VS Code-like appearance.
 
         Args:
         ----
@@ -435,7 +563,7 @@ class CodeEditor(QPlainTextEdit):
 
         if not self.isReadOnly():
             selection = QTextEdit.ExtraSelection()
-            # Use palette color for current line highlight
+            # Use palette color for current line highlight - VS Code style
             line_color: QColor = self.palette().color(QPalette.ColorRole.AlternateBase)
             if not hasattr(selection, "format"):
                 selection.format = QTextCharFormat()  # type: ignore[attr-value]
@@ -447,6 +575,84 @@ class CodeEditor(QPlainTextEdit):
             extra_selections.append(selection)
 
         self.setExtraSelections(extra_selections)
+    
+    def paintEvent(self, event: QPaintEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Override paintEvent to draw VS Code-like indent guides."""
+        # Call parent paintEvent first
+        super().paintEvent(event)
+        
+        # Draw indent guides if enabled
+        if self._show_indent_guides:
+            self._draw_indent_guides(event)
+    
+    def _draw_indent_guides(self, event: QPaintEvent):
+        """Draw VS Code-like vertical indent guides.
+        
+        These are subtle vertical lines drawn at each indentation level
+        to help visualize code structure.
+        """
+        painter = QPainter(self.viewport())
+        
+        # Get indent guide color - subtle, semi-transparent
+        guide_color = QColor(self.palette().color(QPalette.ColorRole.Mid))
+        guide_color.setAlphaF(0.3)  # Very subtle
+        painter.setPen(guide_color)
+        
+        # Calculate character width for indentation
+        font_metrics = self.fontMetrics()
+        char_width = font_metrics.horizontalAdvance(' ')
+        indent_width = char_width * self._indent_guide_width
+        
+        # Get visible area
+        content_offset = self.contentOffset()
+        first_visible_block = self.firstVisibleBlock()
+        
+        # Draw guides for each visible block
+        block = first_visible_block
+        while block.isValid():
+            block_geometry = self.blockBoundingGeometry(block).translated(content_offset)
+            
+            # Stop if we're past the visible area
+            if block_geometry.top() > event.rect().bottom():
+                break
+            
+            if block.isVisible() and block_geometry.bottom() >= event.rect().top():
+                text = block.text()
+                
+                # Count leading spaces/tabs to determine indent level
+                leading_spaces = len(text) - len(text.lstrip()) if text.strip() else 0
+                
+                # For tabs, convert to space equivalent
+                if text and '\t' in text[:leading_spaces + 1]:
+                    # Count tabs and convert to spaces
+                    tab_count = text[:leading_spaces + 1].count('\t')
+                    leading_spaces = tab_count * self._indent_guide_width + (leading_spaces - tab_count)
+                
+                # Calculate number of indent levels
+                indent_levels = leading_spaces // self._indent_guide_width
+                
+                # Draw vertical guide lines at each indent level
+                for level in range(1, indent_levels + 1):
+                    x = int(level * indent_width - char_width // 2)
+                    y_top = int(block_geometry.top())
+                    y_bottom = int(block_geometry.bottom())
+                    
+                    # Only draw if x is in the visible area
+                    if x >= 0 and x <= self.viewport().width():
+                        painter.drawLine(x, y_top, x, y_bottom)
+            
+            block = block.next()
+        
+        painter.end()
+    
+    def set_show_indent_guides(self, show: bool):
+        """Enable or disable indent guides.
+        
+        Args:
+            show: Whether to show indent guides.
+        """
+        self._show_indent_guides = show
+        self.viewport().update()
     
     def _match_brackets(self):
         """Highlight matching brackets (VS Code feature)."""
@@ -1049,15 +1255,34 @@ class CodeEditor(QPlainTextEdit):
         self,
         increase: bool = True,  # noqa: FBT001, FBT002
     ):  # noqa: FBT001, FBT002
-        """Change the font size of the code editor."""
+        """Change the font size of the code editor while maintaining VS Code-like properties."""
         font: QFont = self.font()
         size: int = font.pointSize()
         if increase:
             size += 1
         else:
-            size = max(1, size - 1)
+            size = max(6, size - 1)  # Minimum size of 6 for readability
         font.setPointSize(size)
         self.setFont(font)
+        
+        # Update editor font reference
+        if hasattr(self, '_editor_font'):
+            self._editor_font = font
+        
+        # Update line number font proportionally
+        if hasattr(self, '_line_number_font'):
+            self._line_number_font.setPointSize(max(6, size - 1))
+        
+        # Update tab stop distance to match new font size
+        metrics = QFontMetrics(font)
+        tab_width = metrics.horizontalAdvance(' ') * DEFAULT_TAB_SIZE
+        if hasattr(self, 'setTabStopDistance'):
+            self.setTabStopDistance(tab_width)
+        elif hasattr(self, 'setTabStopWidth'):
+            self.setTabStopWidth(int(tab_width))
+        
+        # Force line number area update
+        self._update_line_number_area_width(0)
 
     def move_line_up_or_down(
         self,

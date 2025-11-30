@@ -699,7 +699,7 @@ class ResourceFileSystemModel(QAbstractItemModel):
             return get_sort_key(value)
 
         def sort_items(items: Sequence[TreeItem]):
-            cast(list[TreeItem], items).sort(key=sort_key, reverse=(order == Qt.SortOrder.DescendingOrder))
+            cast("list[TreeItem]", items).sort(key=sort_key, reverse=(order == Qt.SortOrder.DescendingOrder))
             for item in items:
                 if isinstance(item, DirItem):
                     sort_items(item.children)

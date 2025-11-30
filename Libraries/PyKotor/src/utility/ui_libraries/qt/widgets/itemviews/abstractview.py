@@ -205,7 +205,7 @@ class RobustAbstractItemView(RobustBaseWidget, QAbstractItemView if TYPE_CHECKIN
             if index == self.currentIndex() and self.hasFocus():
                 option.state |= QStyle.StateFlag.State_HasFocus
             if not self.isEnabled():
-                option.state = cast(QStyle.StateFlag, option.state & ~QStyle.StateFlag.State_Enabled)
+                option.state = cast("QStyle.StateFlag", option.state & ~QStyle.StateFlag.State_Enabled)
 
             # Additional properties
             check_state_data: Any = index.data(Qt.ItemDataRole.CheckStateRole)

@@ -20,9 +20,28 @@ if TYPE_CHECKING:
 
     from pykotor.gl.models.node import Node
     from pykotor.gl.scene import Scene
-    from pykotor.gl.shader import Shader
+    from pykotor.gl.shader import Shader, Texture
+
 
 class Mesh:
+    """Mesh class for rendering 3D geometry.
+    
+    Performance notes:
+    - Uses __slots__ to reduce memory and improve attribute access speed
+    - VAO/VBO/EBO are created once and reused
+    - Texture lookups go through scene.texture() which has its own caching
+    
+    Note: We intentionally do NOT cache texture references at the mesh level because:
+    1. Textures can be loaded asynchronously and replaced
+    2. Scene.texture() already provides O(1) dict lookup
+    3. Caching stale texture references causes rendering bugs (wrong textures)
+    """
+    
+    __slots__ = (
+        "_scene", "_node", "texture", "lightmap", "vertex_data", 
+        "mdx_size", "mdx_vertex", "_vao", "_vbo", "_ebo", "_face_count"
+    )
+    
     def __init__(
         self,
         scene: Scene,
@@ -88,13 +107,25 @@ class Mesh:
         transform: mat4,
         override_texture: str | None = None,
     ):
+        """Draw the mesh.
+        
+        Args:
+            shader: The shader program to use.
+            transform: The model transformation matrix.
+            override_texture: Optional texture name to use instead of the mesh's texture.
+        """
         shader.set_matrix4("model", transform)
 
+        # Get textures from scene (scene.texture() has O(1) dict lookup + caching)
+        tex_name = override_texture if override_texture else self.texture
+        texture = self._scene.texture(tex_name)
+        lightmap = self._scene.texture(self.lightmap, lightmap=True)
+        
         glActiveTexture(GL_TEXTURE0)
-        self._scene.texture(override_texture or self.texture).use()
-
+        texture.use()
+        
         glActiveTexture(GL_TEXTURE1)
-        self._scene.texture(self.lightmap, lightmap=True).use()
+        lightmap.use()
 
         glBindVertexArray(self._vao)
         glDrawElements(GL_TRIANGLES, self._face_count, GL_UNSIGNED_SHORT, None)

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
-from typing import TYPE_CHECKING
 
 from functools import singledispatch
-from typing import cast
+from pathlib import Path
+from typing import TYPE_CHECKING, cast
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped]
 from qtpy.QtCore import Qt
@@ -310,7 +309,7 @@ def _open_resource_editor_impl(  # noqa: C901, PLR0913, PLR0912, PLR0915
 
     elif restype.category == "Audio":
         editor = AudioPlayer(None)
-        editor.setWindowIcon(cast(QApplication, QApplication.instance()).windowIcon())
+        editor.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
 
     elif restype.name in (ResourceType.ERF, ResourceType.SAV, ResourceType.MOD, ResourceType.RIM, ResourceType.BIF):
         editor = ERFEditor(None, installation)

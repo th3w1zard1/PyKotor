@@ -172,11 +172,11 @@ def compile_nss(
     # Create parser with game-appropriate function and constant definitions
     if isinstance(library_lookup, Sequence) and not isinstance(library_lookup, (str, Path, os.PathLike)):
         lookup_arg = cast(
-            LibraryLookupType,
+            "LibraryLookupType",
             list(library_lookup),
         )
     else:
-        lookup_arg = cast(LibraryLookupType, library_lookup)
+        lookup_arg = cast("LibraryLookupType", library_lookup)
 
     nss_parser = NssParser(
         functions=KOTOR_FUNCTIONS if game.is_k1() else TSL_FUNCTIONS,
@@ -242,4 +242,4 @@ def decompile_ncs(
         }
     """
     decompiler = NCSDecompiler(ncs, game, functions, constants)
-    return decompiler.decompile()
+    return decompiler.decompile_dencs()

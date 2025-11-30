@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from qtpy.QtCore import Qt, Signal
+from qtpy.QtCore import Signal
 from qtpy.QtWidgets import (
     QHBoxLayout,
     QLabel,

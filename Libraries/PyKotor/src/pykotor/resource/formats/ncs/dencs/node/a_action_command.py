@@ -2,18 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.node.p_action_command import PActionCommand  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_action_command import PActionCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_action import TAction  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
-
 
 class AActionCommand(PActionCommand):
     def __init__(self):
-        from pykotor.resource.formats.ncs.dencs.node.p_action_command import PActionCommand  # pyright: ignore[reportMissingImports]
         super().__init__()
         self._action: TAction | None = None
         self._pos: TIntegerConstant | None = None

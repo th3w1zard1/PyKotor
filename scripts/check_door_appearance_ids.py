@@ -1,6 +1,7 @@
 """Check appearance_ids of all doors in danm13_s.rim."""
 import os
 import sys
+
 from pathlib import Path
 
 # Add paths for imports

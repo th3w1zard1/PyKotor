@@ -24,8 +24,8 @@ from pykotor.extract.chitin import Chitin
 from pykotor.extract.file import FileResource, ResourceIdentifier
 from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.extract.talktable import TalkTable
-from pykotor.resource.formats.tpc.tpc_data import TPC
 from pykotor.extract.twoda import TwoDARegistry
+from pykotor.resource.formats.tpc.tpc_data import TPC
 from pykotor.resource.formats.twoda import read_2da
 from pykotor.resource.formats.twoda.twoda_data import TwoDA
 from pykotor.resource.type import ResourceType
@@ -33,10 +33,6 @@ from pykotor.tools.misc import is_capsule_file, is_erf_file, is_mod_file, is_rim
 from toolset.utils.window import add_window
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    import os
-
 
     from qtpy.QtGui import QStandardItemModel
     from qtpy.QtWidgets import QPlainTextEdit

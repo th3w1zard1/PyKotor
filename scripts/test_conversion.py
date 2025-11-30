@@ -2,6 +2,7 @@
 """Test the conversion function."""
 import re
 
+
 def convert_old_format_to_headers(content: str) -> str:
     """Convert old format (**`FunctionName`** and - `CONSTANT_NAME`) to header format (####)."""
     lines = content.split('\n')

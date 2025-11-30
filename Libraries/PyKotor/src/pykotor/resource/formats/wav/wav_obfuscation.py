@@ -1,79 +1,151 @@
 """WAV obfuscation utilities for KotOR audio files.
 
-KotOR audio files (VO and SFX) have obfuscation headers that need to be removed
-for standard media players. This module handles both deobfuscation (for reading)
-and obfuscation (for writing) of these headers.
+KotOR audio files have various obfuscation formats that need to be handled:
 
-**Internal Module**: The functions in this module (`deobfuscate_audio` and `obfuscate_audio`)
-are internal implementation details and should only be called from within the wav folder
-(e.g., `io_wav.py`). External code should use the public API in `wav_auto.py`:
-- `read_wav()` for reading WAV files (automatically handles deobfuscation)
-- `write_wav()` / `bytes_wav()` for writing WAV files (automatically handles obfuscation)
+1. **SFX Format** (streammusic, some sounds):
+   - Header: 0xFF 0xF3 0x60 0xC4 (little-endian: 0xC460F3FF = 3294888959)
+   - Skip 470 bytes (0x1DA), then standard RIFF/WAVE follows
+   
+2. **MP3-in-WAV Format** (some music):
+   - Header: RIFF with riffSize == 50
+   - Skip 58 bytes, then raw MP3 data follows
+   
+3. **Standard WAV** (streamvoice, most dialog):
+   - Standard RIFF/WAVE format, no obfuscation
+
+**Internal Module**: The functions in this module are internal implementation details
+and should only be called from within the wav folder (e.g., `io_wav.py`).
+External code should use the public API in `wav_auto.py`.
 
 References:
 ----------
+    vendor/reone/src/libs/audio/format/wavreader.cpp:30-38
+        - Shows magic "\xff\xf3\x60\xc4" detection and seek to 0x1DA
+    vendor/KotOR.js/src/audio/AudioFile.ts:9-162
+        - fakeHeaderTest = [0xFF, 0xF3, 0x60, 0xC4] → skip 470 bytes
+        - riffSize == 50 → skip 58 bytes → MP3
     vendor/SithCodec/src/codec.cpp (Audio codec implementation)
     vendor/SWKotOR-Audio-Encoder/ (Full audio encoder/decoder)
-    vendor/reone/src/libs/audio/format/wavreader.cpp (WAV reading with header handling)
-    Note: Magic numbers 1179011410 and 3294688255 are KotOR-specific audio obfuscation
 """
 
 from __future__ import annotations
 
 import struct
+from enum import IntEnum
 
 
-def deobfuscate_audio(
-    data: bytes,
-) -> bytes:  # sourcery skip: remove-redundant-slice-index
-    """Removes the junk data at the start of a kotor audio file to make it playable by most media players.
+class DeobfuscationResult(IntEnum):
+    """Result type from deobfuscation indicating what format was detected."""
+    STANDARD = 0       # Standard RIFF/WAVE, no header removed
+    SFX_HEADER = 1     # SFX 470-byte header removed, data is WAVE
+    MP3_IN_WAV = 2     # MP3-in-WAV 58-byte header removed, data is MP3
 
-    KotOR audio files (VO and SFX) have obfuscation headers that need to be removed
-    for standard media players. This function detects and removes these headers.
+
+# Magic numbers for detection
+# vendor/reone/src/libs/audio/format/wavreader.cpp:34
+# "\xff\xf3\x60\xc4" as bytes (0xFFF360C4 big-endian, 0xC460F3FF little-endian)
+SFX_MAGIC_BYTES = b"\xff\xf3\x60\xc4"
+SFX_MAGIC_LE = 0xC460F3FF  # Little-endian interpretation: 3294888959
+
+# RIFF header magic
+RIFF_MAGIC = b"RIFF"
+RIFF_MAGIC_LE = 0x46464952  # "RIFF" as little-endian uint32: 1179011410
+
+# MP3-in-WAV format has riffSize == 50
+MP3_IN_WAV_RIFF_SIZE = 50
+MP3_IN_WAV_HEADER_SIZE = 58  # Skip 58 bytes for MP3 data
+
+# SFX header size
+SFX_HEADER_SIZE = 470  # 0x1DA bytes
+
+
+def detect_audio_format(data: bytes) -> tuple[DeobfuscationResult, int]:
+    """Detect the audio format and return the header size to skip.
+    
+    Args:
+        data: Raw audio file bytes
+        
+    Returns:
+        Tuple of (format_type, header_size_to_skip)
+        
+    References:
+        vendor/reone/src/libs/audio/format/wavreader.cpp:30-38
+        vendor/KotOR.js/src/audio/AudioFile.ts:111-146
+    """
+    if len(data) < 12:
+        return DeobfuscationResult.STANDARD, 0
+    
+    # Check first 4 bytes
+    first_four = data[:4]
+    
+    # Check for SFX header: 0xFF 0xF3 0x60 0xC4
+    # Reference: vendor/reone/src/libs/audio/format/wavreader.cpp:34
+    if first_four == SFX_MAGIC_BYTES:
+        return DeobfuscationResult.SFX_HEADER, SFX_HEADER_SIZE
+    
+    # Check for RIFF header
+    if first_four == RIFF_MAGIC:
+        # Read the riffSize (bytes 4-8)
+        riff_size = struct.unpack("<I", data[4:8])[0]
+        
+        # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:134
+        # if(riffSize == 50) → MP3 wrapped in WAV
+        if riff_size == MP3_IN_WAV_RIFF_SIZE:
+            return DeobfuscationResult.MP3_IN_WAV, MP3_IN_WAV_HEADER_SIZE
+        
+        # Standard RIFF/WAVE
+        return DeobfuscationResult.STANDARD, 0
+    
+    # Unknown format, assume standard
+    return DeobfuscationResult.STANDARD, 0
+
+
+def deobfuscate_audio(data: bytes) -> bytes:
+    """Removes obfuscation headers from KotOR audio files.
+    
+    This function detects and removes KotOR-specific audio headers to produce
+    data playable by standard media players.
 
     Args:
-    ----
-        data: bytes - Audio data bytes
+        data: Raw audio data bytes from KotOR installation
 
     Returns:
-    -------
-        bytes: Fixed audio data bytes
+        Cleaned audio data bytes (RIFF/WAVE or raw MP3)
 
     Processing Logic:
-    ----------------
-        - Unpack first 4 bytes and check for magic number 1179011410
-        - Unpack bytes 4-8 and check for value 50
-        - Unpack bytes 16-20 and check for value 18
-        - If matches, trim first 8 bytes
-        - Else if matches 3294688255, trim first 470 bytes.
+        1. Check for SFX header (0xFF 0xF3 0x60 0xC4) → skip 470 bytes
+        2. Check for MP3-in-WAV (RIFF with size 50) → skip 58 bytes (returns MP3!)
+        3. Otherwise return unchanged (standard WAV)
+        
+    References:
+        vendor/reone/src/libs/audio/format/wavreader.cpp:30-38
+        vendor/KotOR.js/src/audio/AudioFile.ts:111-162
     """
-    if len(data) < 20:
-        return data
-
-    b0x4 = struct.unpack("I", data[0:4])[0]
-    b4x8 = struct.unpack("I", data[4:8])[0]
-    if len(data) >= 20:
-        b16x20 = struct.unpack("I", data[16:20])[0]
-        if b0x4 == 1179011410 and b4x8 == 50 and b16x20 == 18:  # noqa: PLR2004
-            # VO obfuscation detected
-            # Our format uses 20-byte header with value 18 at offset 16 in header
-            # Original KotOR format used 8-byte header with value 18 in data at offset 8
-            # Check which format: if bytes 20:24 is "RIFF", it's our 20-byte format
-            # If bytes 8:12 is "RIFF", it's original 8-byte format
-            if len(data) > 24 and data[20:24] == b"RIFF":
-                # Our format: 20-byte header
-                return data[20:]
-            elif len(data) > 12 and data[8:12] == b"RIFF":
-                # Original format: 8-byte header
-                return data[8:]
-            else:
-                # Default to 8 bytes for backward compatibility
-                return data[8:]
-    # SFX obfuscation: check for magic number 0xFFFFFFFF (4294967295) or 3294688255
-    # Our format uses 0xFFFFFFFF, original KotOR might use 3294688255
-    if b0x4 == 4294967295 or b0x4 == 3294688255:  # noqa: PLR2004
-        return data[470:]
+    format_type, skip_size = detect_audio_format(data)
+    
+    if skip_size > 0 and len(data) > skip_size:
+        return data[skip_size:]
+    
     return data
+
+
+def get_deobfuscation_result(data: bytes) -> tuple[bytes, DeobfuscationResult]:
+    """Deobfuscate audio and return both the data and the format detected.
+    
+    This is useful when you need to know whether the result is WAVE or MP3.
+    
+    Args:
+        data: Raw audio data bytes
+        
+    Returns:
+        Tuple of (deobfuscated_data, format_type)
+    """
+    format_type, skip_size = detect_audio_format(data)
+    
+    if skip_size > 0 and len(data) > skip_size:
+        return data[skip_size:], format_type
+    
+    return data, format_type
 
 
 def obfuscate_audio(
@@ -83,38 +155,30 @@ def obfuscate_audio(
     """Adds obfuscation header to audio data for KotOR compatibility.
 
     Args:
-    ----
-        data: bytes - Clean audio data bytes
-        wav_type: str - Type of WAV ("SFX" or "VO"). Defaults to "SFX".
+        data: Clean audio data bytes (RIFF/WAVE format)
+        wav_type: Type of WAV ("SFX" or "VO"). Defaults to "SFX".
 
     Returns:
-    -------
-        bytes: Obfuscated audio data bytes
+        Obfuscated audio data bytes
 
     Processing Logic:
-    ----------------
-        - For SFX files, prepend 470-byte header with magic number 3294688255
-        - For VO files, prepend 8-byte header with magic numbers 1179011410, 50, 18
+        - For SFX files, prepend 470-byte header with SFX magic number
+        - For VO files, return data unchanged (standard WAV)
+        
+    Note:
+        VO files in KotOR are standard WAV format and don't need obfuscation.
+        Only SFX files (streammusic) use the 470-byte header format.
     """
     if wav_type == "SFX":
-        # Create 470-byte SFX header matching io_wav.py format
-        header = bytearray([
-            0xff, 0xff, 0xff, 0xff,  # 0x00: Magic number
-            0xff, 0xff, 0xff, 0xf3,  # 0x04: Magic number
-            0x60, 0xc4, 0x00, 0x00,  # 0x08: Unknown
-            0x00, 0x03, 0x48, 0x00,  # 0x0C: Unknown
-            0x00, 0x00, 0x00, 0x4c,  # 0x10: Unknown
-            0x41, 0x4d, 0x45, 0x33,  # 0x14: "LAME3"
-            0x2e, 0x39, 0x33, 0x55,  # 0x18: ".93U"
-        ] + [0x55] * 442)  # Pad with 0x55 until 470 bytes
+        # Create 470-byte SFX header
+        # Reference: vendor/reone/src/libs/audio/format/wavreader.cpp:34
+        # Header starts with 0xFF 0xF3 0x60 0xC4
+        header = bytearray(SFX_HEADER_SIZE)
+        header[0:4] = SFX_MAGIC_BYTES
+        # Fill remaining bytes with pattern (the exact pattern doesn't matter
+        # as long as the magic is correct - game just skips to offset 0x1DA)
+        # Using 0x00 for the rest is safe
         return bytes(header) + data
-    if wav_type == "VO":
-        # Create 20-byte VO header (deobfuscation checks offset 16 for value 18)
-        # Header structure: [0-3: 1179011410] [4-7: 50] [8-15: padding] [16-19: 18] [20+: data]
-        header = bytearray(20)
-        struct.pack_into("I", header, 0, 1179011410)  # noqa: PLR2004
-        struct.pack_into("I", header, 4, 50)  # noqa: PLR2004
-        struct.pack_into("I", header, 16, 18)  # noqa: PLR2004 - Required for deobfuscation check at offset 16
-        return bytes(header) + data
+    
+    # VO files don't need obfuscation
     return data
-

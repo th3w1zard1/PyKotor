@@ -534,7 +534,35 @@ def test_lyt_editor_all_element_types(qtbot, installation: HTInstallation):
 # HEADLESS UI TESTS WITH REAL FILES
 # ============================================================================
 
-def test_lyt_editor_headless_ui_load_build(qtbot, installation: HTInstallation, test_files_dir: Path):
+
+def test_lyteditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that LYTEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
+    editor = LYTEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # Trigger help dialog with the correct file for LYTEditor
+    editor._show_help_dialog("LYT-File-Format.md")
+    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+    
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'LYT-File-Format.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"
+
     """Test LYT Editor in headless UI - loads real file and builds data."""
     editor = LYTEditor(None, installation)
     qtbot.addWidget(editor)

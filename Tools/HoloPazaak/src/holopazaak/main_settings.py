@@ -4,11 +4,10 @@ import os
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QApplication
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QCoreApplication, QSettings
+    from qtpy.QtCore import QCoreApplication
 
 
 def setup_pre_init_settings():

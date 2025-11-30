@@ -589,6 +589,7 @@ def create_model_from_intermediate(
     MUST be called in main process with active OpenGL context.
     """
     import glm
+
     from pykotor.gl.models.mdl import Mesh, Model, Node
     
     def build_node(

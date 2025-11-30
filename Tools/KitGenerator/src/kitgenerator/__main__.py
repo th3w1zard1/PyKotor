@@ -4,6 +4,7 @@ import atexit
 import pathlib
 import sys
 import tempfile
+
 from contextlib import suppress
 from types import TracebackType
 from typing import TYPE_CHECKING

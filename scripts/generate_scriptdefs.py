@@ -9,17 +9,23 @@ from __future__ import annotations
 
 import re
 import sys
+
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
-
-from ply.lex import LexToken  # type: ignore[import-untyped]
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "Libraries" / "PyKotor" / "src"))
 
 if TYPE_CHECKING:
-    from pykotor.common.script import DataType, ScriptConstant, ScriptFunction, ScriptParam  # type: ignore[import-not-found]  # pyright: ignore[reportUnusedImport]  # noqa: F401
+    from ply.lex import LexToken
+
+    from pykotor.common.script import (  # type: ignore[import-not-found]  # pyright: ignore[reportUnusedImport]  # noqa: F401
+        DataType,
+        ScriptConstant,
+        ScriptFunction,
+        ScriptParam,
+    )
 
 try:
     # Import from PyKotor - scriptdefs.py should be a minimal stub before generation
@@ -37,15 +43,15 @@ try:
     scriptdefs_module.TSL_FUNCTIONS = []
     sys.modules['pykotor.common.scriptdefs'] = scriptdefs_module
     
-    from pykotor.resource.formats.ncs.compiler.lexer import NssLexer  # type: ignore[import-not-found, note]
+    from pykotor.common.misc import Game  # type: ignore[import-not-found, note]
     from pykotor.resource.formats.ncs.compiler.classes import (  # type: ignore[import-not-found, note]
+        FloatExpression,  # pyright: ignore[reportUnusedImport]  # noqa: F401
         Identifier,  # pyright: ignore[reportUnusedImport]  # noqa: F401
         IntExpression,  # pyright: ignore[reportUnusedImport]  # noqa: F401
-        FloatExpression,  # pyright: ignore[reportUnusedImport]  # noqa: F401
         StringExpression,  # pyright: ignore[reportUnusedImport]  # noqa: F401
         VectorExpression,  # pyright: ignore[reportUnusedImport]  # noqa: F401
     )
-    from pykotor.common.misc import Game  # type: ignore[import-not-found, note]
+    from pykotor.resource.formats.ncs.compiler.lexer import NssLexer  # type: ignore[import-not-found, note]
 except ImportError as e:
     print(f"Error importing PyKotor modules: {e}")
     print("Make sure you're running from the project root and dependencies are installed.")

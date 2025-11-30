@@ -709,7 +709,7 @@ def construct_gui(gff: GFF) -> GUI:
 
         # CheckBox specific
         if isinstance(control, GUICheckBox):
-            control.selected = cast(Optional[GUISelected], read_border_like(struct, "SELECTED"))
+            control.selected = cast("Optional[GUISelected]", read_border_like(struct, "SELECTED"))
             control.hilight_selected = read_hilight_selected(struct)
             control.is_selected = bool(struct.get_uint8("ISSELECTED", 0))
 

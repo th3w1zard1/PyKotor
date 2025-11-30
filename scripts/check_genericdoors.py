@@ -1,6 +1,7 @@
 """Check if genericdoors.2da exists in installation."""
 import os
 import sys
+
 from pathlib import Path
 
 # Add paths for imports

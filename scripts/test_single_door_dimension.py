@@ -1,6 +1,7 @@
 """Test door dimension extraction for a single door."""
 import os
 import sys
+
 from pathlib import Path
 
 # Add paths for imports
@@ -9,14 +10,14 @@ PYKOTOR_PATH = REPO_ROOT / "Libraries" / "PyKotor" / "src"
 if str(PYKOTOR_PATH) not in sys.path:
     sys.path.insert(0, str(PYKOTOR_PATH))
 
-from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.extract.file import ResourceIdentifier
+from pykotor.extract.installation import Installation, SearchLocation
+from pykotor.resource.formats.mdl import read_mdl
 from pykotor.resource.formats.rim import read_rim
+from pykotor.resource.formats.twoda import read_2da
 from pykotor.resource.generics.utd import read_utd
 from pykotor.resource.type import ResourceType
 from pykotor.tools import door as door_tools
-from pykotor.resource.formats.mdl import read_mdl
-from pykotor.resource.formats.twoda import read_2da
 from utility.common.geometry import Vector3
 
 # Get K1_PATH

@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 
 from copy import copy
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, ClassVar, TypeVar
 
 import glm
 
@@ -29,10 +29,20 @@ SEARCH_ORDER_2DA: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocatio
 SEARCH_ORDER: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
 
 
-
-
 class SceneCache:
-    """Handles caching of scene objects and their states."""
+    """Optimized scene cache with incremental updates.
+    
+    Performance optimizations:
+    - Only rebuilds when cache buffer has changes or clear_cache is True
+    - Tracks last GIT/LYT state to detect changes without full iteration
+    - Position/rotation updates are O(1) for existing objects
+    
+    Reference: Standard game engine practice - incremental scene graph updates
+    """
+    
+    # Class-level tracking for change detection
+    _last_git_hash: ClassVar[dict[int, int]] = {}  # scene id -> git hash
+    _last_layout_hash: ClassVar[dict[int, int]] = {}  # scene id -> layout hash
 
     @staticmethod
     def build_cache(  # noqa: C901, PLR0912, PLR0915

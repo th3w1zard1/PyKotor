@@ -63,8 +63,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from pykotor.resource.bioware_archive import ArchiveResource, BiowareArchive
 from pykotor.common.misc import ResRef
+from pykotor.resource.bioware_archive import ArchiveResource, BiowareArchive
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_erf_file, is_mod_file, is_sav_file
 

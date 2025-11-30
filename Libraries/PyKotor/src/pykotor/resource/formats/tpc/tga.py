@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import io
 import struct
+
 from dataclasses import dataclass
 from typing import BinaryIO
-
 
 TGA_TYPE_TRUE_COLOR = 2
 TGA_TYPE_GRAYSCALE = 3

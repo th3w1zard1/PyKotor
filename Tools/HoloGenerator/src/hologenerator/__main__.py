@@ -9,6 +9,7 @@ This tool is designed exclusively for GUI usage.
 from __future__ import annotations
 
 import sys
+
 from pathlib import Path
 
 # Add the PyKotor library to the path

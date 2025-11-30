@@ -7,7 +7,6 @@ from pykotor.resource.formats.ncs.dencs.node.token import Token
 if TYPE_CHECKING:
     from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
 
-
 class EOF(Token):
     def __init__(self, line: int = 0, pos: int = 0):
         super().__init__("")

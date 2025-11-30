@@ -1,13 +1,13 @@
-# PyKotor Release Workflows
+# PyKotor CI/CD Workflows
 
-Automated release workflows for all PyKotor tools.
+Automated release and validation workflows for all PyKotor tools.
 
 ## 📚 Documentation
 
 1. **[RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md)** - Complete production workflow guide
-   - How to create releases
-   - What happens automatically
-   - Troubleshooting
+   - Industry-standard release flow
+   - PR validation, pre-release testing, production releases
+   - Troubleshooting guide
 
 2. **[QUICK_TEST_GUIDE.md](QUICK_TEST_GUIDE.md)** - Safe testing guide
    - Test without affecting users
@@ -19,162 +19,217 @@ Automated release workflows for all PyKotor tools.
    - Comparison with production
    - Advanced testing scenarios
 
-## 🚀 Quick Start
+## 🚀 The Release Flow
 
-### To Release (Production)
-
-```bash
-# On GitHub: Create pre-release with tag like v3.1.4-toolset
-# Everything else is automatic!
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  DEVELOPMENT: Create PR → Build validation runs automatically   │
+│  PRE-RELEASE: Run Release Readiness Check (optional)            │
+│  RELEASE: Bump version → Create pre-release → Automatic builds  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### To Test (Safe)
+## 🔧 Quick Start
 
-```bash
-# Create test release (never touches master)
-git tag test-v3.1.99-toolset
-git push origin test-v3.1.99-toolset
-gh release create test-v3.1.99-toolset --prerelease --title "TEST" --notes "Testing"
+### Option 1: One-Click Release (Easiest)
 
-# Cleanup
-gh release delete test-v3.1.99-toolset --yes
-git push origin --delete test-v3.1.99-toolset
+1. Go to **Actions** → **Create Release**
+2. Select tool, enter version
+3. Click **Run workflow**
+4. Done! Everything is automatic.
+
+### Option 2: Helper Script
+
+```powershell
+# Preview what will change
+.\scripts\bump_version.ps1 -Tool toolset -Version 3.1.3 -DryRun
+
+# Bump version, commit, and create release
+.\scripts\bump_version.ps1 -Tool toolset -Version 3.1.3 -Commit -CreateRelease
 ```
 
-## 📋 Production Workflows
+### Option 3: Manual (Traditional)
+
+```bash
+# 1. Update currentVersion in config.py
+# 2. Commit and push
+# 3. Create pre-release with tag: v3.1.3-toolset
+```
+
+## 📋 Workflow Reference
+
+### PR & Validation Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `build-pr.yml` | PR changes | **Validates builds before merge** |
+| `release-ready.yml` | Manual | **Pre-release validation** |
+| `create-release.yml` | Manual | **One-click release creation** |
+
+### Production Release Workflows
 
 | Workflow | Tag Pattern | Tool |
 |----------|-------------|------|
-| `release_toolset.yml` | `v*.*.*-toolset` | HolocronToolset |
-| `release_kotordiff.yml` | `v*.*.*-kotordiff` | KotorDiff |
-| `release_holopatcher.yml` | `v*.*.*-patcher` or `v*.*.*-holopatcher` | HoloPatcher |
-| `release_guiconverter.yml` | `v*.*.*-guiconverter` | GuiConverter |
-| `release_translator.yml` | `v*.*.*-translator` | Translator |
+| `release_toolset.yml` | `v*-toolset` | HolocronToolset |
+| `release_holopatcher.yml` | `v*-patcher` | HoloPatcher |
+| `release_kotordiff.yml` | `v*-kotordiff` | KotorDiff |
+| `release_guiconverter.yml` | `v*-guiconverter` | GuiConverter |
 
-## 🧪 Test Workflows
+### Test Workflows
 
-| Workflow | Tag Pattern | Updates Branch |
-|----------|-------------|----------------|
-| `TEST_release_toolset.yml` | `test-v*.*.*-toolset` | `test-release` |
+| Workflow | Tag Pattern | Branch Modified |
+|----------|-------------|-----------------|
+| `TEST_release_toolset.yml` | `test-v*-toolset` | `test-release` |
 
-Generate more test workflows:
+## 🛠️ Reusable Components
 
-```powershell
-.\create_test_workflow.ps1 -ToolName "kotordiff"
+### Build Action
+
+The `.github/actions/build-tool` action provides reusable build functionality:
+
+```yaml
+- uses: ./.github/actions/build-tool
+  with:
+    tool_name: toolset        # toolset, holopatcher, kotordiff, etc.
+    python_version: '3.8'
+    architecture: x64         # x64 or x86
+    qt_version: 'PyQt5'       # For GUI tools
+    dry_run: 'true'           # Validate without full build
 ```
 
-## 🔄 Two-Stage Update Process
+## 🧪 Testing Before Release
+
+### Method 1: PR Build Validation (Automatic)
+
+Create a PR that touches tool files → Build validation runs automatically:
+
+- Detects affected tools
+- Validates version config files
+- Runs dry-run builds
+- Posts summary comment on PR
+
+### Method 2: Release Readiness Check (Manual)
+
+1. Go to **Actions** → **Release Readiness Check**
+2. Select tool and version
+3. Optionally enable full builds
+4. Review the summary
+
+### Method 3: Test Release Workflow
+
+```bash
+# Create test release (never modifies master)
+git tag test-v99.0.0-toolset
+git push origin test-v99.0.0-toolset
+gh release create test-v99.0.0-toolset --prerelease --title "TEST" --notes "Test"
+
+# Cleanup
+gh release delete test-v99.0.0-toolset --yes
+git push origin --delete test-v99.0.0-toolset
+```
+
+## 🔄 Two-Stage Version Update
 
 ### Stage 1: Pre-Build
 
 - Updates `currentVersion`
-- Commits to master (or test-release for tests)
-- Ensures binaries have correct version
+- Ensures binaries have correct version string
 
 ### Stage 2: Post-Upload
 
 - Updates `toolsetLatestVersion`, `toolsetLatestBetaVersion`
-- Commits to master (or test-release for tests)
-- Regenerates release source archives
-- Converts to full release (production only)
+- Triggers auto-update for users
+- Converts pre-release to full release
 
 ## ⚙️ Workflow Architecture
 
 ```mermaid
 graph TD
-    A[Create Pre-Release] --> B[Validate Tag]
-    B --> C{Tag Matches?}
-    C -->|Yes| D[Update Version Pre-Build]
-    C -->|No| Z[Skip]
-    D --> E[Build Binaries]
-    E --> F[Upload to Release]
-    F --> G[Update Latest Versions]
-    G --> H[Regenerate Source]
-    H --> I[Convert to Full Release]
-    I --> J[Done]
+    A[Create PR] --> B[Build Validation]
+    B --> C{Passes?}
+    C -->|Yes| D[Merge PR]
+    C -->|No| E[Fix Issues]
+    E --> B
+    D --> F[Release Readiness Check]
+    F --> G{Ready?}
+    G -->|Yes| H[Create Release]
+    G -->|No| I[Fix Issues]
+    I --> F
+    H --> J[Build Workflow]
+    J --> K[Upload Artifacts]
+    K --> L[Finalize Release]
+    L --> M[Done! 🎉]
 ```
 
 ## 🛡️ Safety Features
 
+- **PR Build Validation**: Catches build issues before merge
 - **Tag validation**: Only runs for matching tool patterns
 - **Branch isolation**: Test workflows use separate branch
 - **Pre-release default**: Stays pre-release if workflow fails
-- **Manual override**: Can still edit/delete releases manually
-- **Rollback support**: Can revert master commits if needed
+- **Dry-run mode**: Validate without full compilation
 
 ## 📦 Artifacts
 
-Each release includes:
+Each release includes platform-specific builds:
 
-**Windows**:
-
-- `HolocronToolset_Windows_PyQt5_x86.zip`
-- `HolocronToolset_Windows_PyQt5_x64.zip`
-
-**Linux**:
-
-- `HolocronToolset_Linux_PyQt5_x64.zip`
-
-**macOS**:
-
-- `HolocronToolset_macOS_PyQt5_x64.zip`
-
-**Source**:
-
-- Auto-generated by GitHub (tar.gz, zip)
-- Regenerated after version updates
+| Platform | Architectures |
+|----------|---------------|
+| Windows | x86, x64 |
+| Linux | x64 |
+| macOS | x64 |
 
 ## 🐛 Troubleshooting
 
-### Workflow doesn't trigger
+### PR Build Validation Fails
 
-- Ensure tag matches pattern exactly
+1. Check the Actions tab for detailed logs
+2. Common issues:
+   - Import errors → Check dependencies
+   - Missing files → Check paths in changes
+3. Fix issues and push to PR
+
+### Release Workflow Doesn't Trigger
+
+- Ensure tag contains tool name (e.g., `toolset`)
 - Check it's marked as pre-release
-- View Actions tab for runs
+- Verify workflows are enabled
 
-### Build fails
+### Build Fails
 
-- Check Actions logs for details
+- Check Actions logs for specific errors
 - Common: dependency issues, PyInstaller errors
-- Fallback upload will attempt if primary fails
-
-### Version not updating
-
-- Verify file paths in workflow
-- Check commit was made
-- View Git history
+- Try running Release Readiness Check first
 
 ### Need Help?
 
-1. Check [RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md) for detailed production guide
-2. Check [QUICK_TEST_GUIDE.md](QUICK_TEST_GUIDE.md) for safe testing
-3. Check [TESTING_RELEASES.md](TESTING_RELEASES.md) for advanced testing
-4. Check workflow logs in Actions tab
-5. Open an issue on GitHub
+1. Check [RELEASE_WORKFLOW.md](RELEASE_WORKFLOW.md) for detailed guide
+2. Check [QUICK_TEST_GUIDE.md](QUICK_TEST_GUIDE.md) for testing
+3. Review workflow logs in Actions tab
+4. Open an issue on GitHub
 
-## 🔧 Maintenance
+## 📁 Files Reference
 
-### Updating Workflows
+### Core Workflows
 
-1. Make changes to production workflow
-2. Test with TEST workflow first
-3. If test passes, production is ready
-4. Optional: Test on fork for final validation
-
-### Adding New Tool
-
-1. Copy existing workflow (e.g., `release_toolset.yml`)
-2. Replace tool name and tag pattern
-3. Update file paths and version fields
-4. Create corresponding TEST workflow
-5. Test thoroughly before first production use
-
-## 📄 Files
-
+- `build-pr.yml` - PR build validation
+- `release-ready.yml` - Release readiness check
+- `create-release.yml` - One-click release creation
 - `release_*.yml` - Production release workflows
-- `TEST_release_*.yml` - Test release workflows  
-- `RELEASE_WORKFLOW.md` - Production workflow guide
-- `TESTING_RELEASES.md` - Test workflow details
-- `QUICK_TEST_GUIDE.md` - Quick testing guide
-- `create_test_workflow.ps1` - Generate test workflows
+- `TEST_release_*.yml` - Test release workflows
+
+### Reusable Components
+
+- `.github/actions/build-tool/` - Reusable build action
+
+### Documentation
+
 - `README.md` - This file
+- `RELEASE_WORKFLOW.md` - Production workflow guide
+- `QUICK_TEST_GUIDE.md` - Quick testing guide
+- `TESTING_RELEASES.md` - Detailed testing docs
+
+### Helper Scripts
+
+- `scripts/bump_version.ps1` - Version bump helper
+- `create_test_workflow.ps1` - Generate test workflows

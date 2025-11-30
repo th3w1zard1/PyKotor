@@ -37,11 +37,13 @@ from kitgenerator import __version__  # noqa: E402
 from kitgenerator.extract import extract_kit  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.tools.path import CaseAwarePath, find_kotor_paths_from_default  # noqa: E402
-from pykotor.tslpatcher.logger import LogType, PatchLog, PatchLogger  # noqa: E402
+from pykotor.tslpatcher.logger import LogType, PatchLogger  # noqa: E402
 from utility.error_handling import universal_simplify_exception  # noqa: E402
 
 if TYPE_CHECKING:
     from argparse import Namespace
+
+    from pykotor.tslpatcher.logger import PatchLog
 
 VERSION_LABEL = __version__
 

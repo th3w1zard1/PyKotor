@@ -4,8 +4,6 @@ import math
 
 from typing import TYPE_CHECKING
 
-import qtpy
-
 from qtpy import QtCore
 from qtpy.QtGui import QIcon, QPixmap
 from qtpy.QtWidgets import QDialog

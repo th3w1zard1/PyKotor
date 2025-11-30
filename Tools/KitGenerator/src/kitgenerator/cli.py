@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import sys
-from argparse import ArgumentParser, Namespace
+
+from argparse import ArgumentParser
 from pathlib import Path
-from threading import Event
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
@@ -13,6 +13,7 @@ from kitgenerator.extract import extract_kit
 from pykotor.extract.installation import Installation
 
 if TYPE_CHECKING:
+    from argparse import Namespace
     pass
 
 CURRENT_VERSION = __version__

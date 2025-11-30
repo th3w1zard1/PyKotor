@@ -9,7 +9,6 @@ from typing import Any
 # The JSON in this file is what gets fetched from GitHub during updates.
 # All code should import from toolset.config (which uses the modular structure),
 # but this file must exist and contain the JSON for the update mechanism.
-
 # Import functions from modular structure (but not LOCAL_PROGRAM_INFO - that's defined below)
 from toolset.config.config_update import (
     fetch_update_info,
@@ -102,6 +101,8 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
         "Black Vulkar Base": {"version": 1, "id": "blackvulkar"},
         "Endar Spire": {"version": 1, "id": "endarspire"},
         "Hidden Bek Base": {"version": 1, "id": "hiddenbek"},
+        "repository": "th3w1zard1/ToolsetData",
+        "release_tag": "latest",
     },
     "help": {"version": 3},
 }  # <---JSON_END--->#

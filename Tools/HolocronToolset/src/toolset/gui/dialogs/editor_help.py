@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 import markdown
 
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QDialog, QTextBrowser, QVBoxLayout
 
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
@@ -55,7 +54,7 @@ class EditorHelpDialog(QDialog):
             wiki_filename: Name of the markdown file in the wiki directory (e.g., "GFF-File-Format.md")
         """
         super().__init__(parent)
-        from toolset.gui.common.localization import translate as tr, trf
+        from toolset.gui.common.localization import trf
         self.setWindowTitle(trf("Help - {filename}", filename=wiki_filename))
         self.setWindowFlags(
             Qt.WindowType.Dialog

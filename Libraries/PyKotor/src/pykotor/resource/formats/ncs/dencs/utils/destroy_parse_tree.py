@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import AnalysisAdapter  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import AnalysisAdapter  # pyright: ignore[reportMissingImports]
 
 
 class DestroyParseTree(AnalysisAdapter):
     def __init__(self):
-        from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import AnalysisAdapter  # pyright: ignore[reportMissingImports]
         super().__init__()
 
     def case_start(self, node):

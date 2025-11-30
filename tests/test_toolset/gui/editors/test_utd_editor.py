@@ -1305,7 +1305,35 @@ def test_utd_editor_preview_toggle(qtbot, installation: HTInstallation):
     assert hasattr(editor, 'update3dPreview')
     assert callable(editor.update3dPreview)
 
-def test_utd_editor_preview_updates_on_appearance_change(qtbot, installation: HTInstallation, test_files_dir: Path):
+
+def test_utdeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that UTDEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
+    editor = UTDEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # Trigger help dialog with the correct file for UTDEditor
+    editor._show_help_dialog("GFF-UTD.md")
+    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+    
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'GFF-UTD.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"
+
     """Test preview updates when appearance changes."""
     editor = UTDEditor(None, installation)
     qtbot.addWidget(editor)

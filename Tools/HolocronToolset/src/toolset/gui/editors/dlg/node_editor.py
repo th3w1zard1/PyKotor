@@ -75,7 +75,7 @@ class Connection(QGraphicsPathItem):
         self.animation.setDuration(200)
 
         # Visual style
-        q_app_style: QApplication | None = cast(Optional[QApplication], QApplication.style())
+        q_app_style: QApplication | None = cast("Optional[QApplication]", QApplication.style())
         if q_app_style is None:
             raise RuntimeError("QApplication style is not available?")
 
@@ -108,7 +108,7 @@ class Connection(QGraphicsPathItem):
         self,
         event: QGraphicsSceneHoverEvent,
     ):
-        q_app_style: QApplication | None = cast(Optional[QApplication], QApplication.style())
+        q_app_style: QApplication | None = cast("Optional[QApplication]", QApplication.style())
         if q_app_style is None:
             raise RuntimeError("QApplication style is not available?")
         self.setPen(QPen(q_app_style.palette().color(QPalette.ColorRole.Highlight), 3, Qt.PenStyle.SolidLine))
@@ -118,7 +118,7 @@ class Connection(QGraphicsPathItem):
         self,
         event: QGraphicsSceneHoverEvent,
     ):
-        q_app_style: QApplication | None = cast(Optional[QApplication], QApplication.style())
+        q_app_style: QApplication | None = cast("Optional[QApplication]", QApplication.style())
         if q_app_style is None:
             raise RuntimeError("QApplication style is not available?")
         self.setPen(QPen(q_app_style.palette().color(QPalette.ColorRole.Text), 2, Qt.PenStyle.SolidLine))

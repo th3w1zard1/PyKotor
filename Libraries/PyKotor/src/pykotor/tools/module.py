@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
@@ -26,11 +25,13 @@ from pykotor.resource.generics.uts import dismantle_uts
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
 from pykotor.tools.misc import is_mod_file
-from utility.common.misc_string.util import ireplace
 from pykotor.tools.path import CaseAwarePath
+from utility.common.misc_string.util import ireplace
 
 if TYPE_CHECKING:
     import os
+
+    from pathlib import Path
 
     from pykotor.common.misc import Game
     from pykotor.common.module import ModuleResource

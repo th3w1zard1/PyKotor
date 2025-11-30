@@ -17,6 +17,7 @@ from qtpy import QtCore
 from qtpy.QtCore import (
     QFileInfo,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
     QModelIndex,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
+    QObject,
     QPoint,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
     QSortFilterProxyModel,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
     QTimer,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
@@ -29,23 +30,22 @@ from qtpy.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QFileIc
 
 from pykotor.extract.file import FileResource
 from pykotor.resource.formats.tpc.tpc_auto import read_tpc, write_tpc
-from pykotor.resource.formats.tpc.tpc_data import TPC, TPCMipmap, TPCTextureFormat
+from pykotor.resource.formats.tpc.tpc_data import TPCMipmap, TPCTextureFormat
 from pykotor.resource.type import ResourceType
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.load_from_location_result import ResourceItems
 from toolset.gui.widgets.settings.installations import GlobalSettings
-
 from toolset.gui.widgets.texture_loader import TextureLoaderProcess, deserialize_mipmap
 
 if TYPE_CHECKING:
     from PIL.Image import Image as PILImage
-    from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QRect
+    from qtpy.QtCore import QAbstractItemModel, QModelIndex, QRect
     from qtpy.QtGui import QMouseEvent, QResizeEvent, QShowEvent
     from qtpy.QtWidgets import QScrollBar, _QMenu
     from qtpy.sip import voidptr
 
+    from pykotor.resource.formats.tpc.tpc_data import TPC
     from toolset.data.installation import HTInstallation
-    from toolset.gui.widgets.texture_loader import TextureLoaderProcess
     from utility.ui_libraries.qt.widgets.itemviews.listview import RobustListView
 
 
@@ -190,7 +190,7 @@ class ResourceList(MainWindowList):
         self,
         resource: FileResource,
     ):
-        model: QAbstractItemModel = cast(QSortFilterProxyModel, self.ui.resourceTree.model()).sourceModel()  # type: ignore[attribute-access]
+        model: QAbstractItemModel = cast("QSortFilterProxyModel", self.ui.resourceTree.model()).sourceModel()  # type: ignore[attribute-access]
         if not isinstance(model, ResourceModel):
             RobustLogger().warning("Could not find model for resource list")
             return
@@ -271,8 +271,6 @@ class ResourceList(MainWindowList):
             menu.addSeparator()
             save_editor_action = menu.addAction("Open Save Editor")
             save_editor_action.triggered.connect(self.on_open_save_editor_from_context)
-            fix_corruption_action = menu.addAction("Fix savegame corruption")
-            fix_corruption_action.triggered.connect(self.on_fix_save_corruption_from_context)
         
         menu.addSeparator()
         builder = ResourceItems(resources=local_resources)
@@ -415,10 +413,10 @@ class ResourceList(MainWindowList):
         """Show the tooltip when the mouse moves over a resource."""
         proxy_index: QModelIndex = self.ui.resourceTree.indexAt(event.pos())  # type: ignore[arg-type]
         if proxy_index.isValid():
-            src_index: QModelIndex = cast(QSortFilterProxyModel, self.ui.resourceTree.model()).mapToSource(proxy_index)  # pyright: ignore[reportArgumentType]
+            src_index: QModelIndex = cast("QSortFilterProxyModel", self.ui.resourceTree.model()).mapToSource(proxy_index)  # pyright: ignore[reportArgumentType]
             item: ResourceStandardItem | QStandardItem | None = cast(
-                QStandardItemModel,
-                cast(QSortFilterProxyModel, self.ui.resourceTree.model()).sourceModel(),
+                "QStandardItemModel",
+                cast("QSortFilterProxyModel", self.ui.resourceTree.model()).sourceModel(),
             ).itemFromIndex(src_index)
             if isinstance(item, ResourceStandardItem):
                 QToolTip.showText(QCursor.pos(), str(item.resource.filepath()), self.ui.resourceTree)

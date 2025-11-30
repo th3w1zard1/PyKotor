@@ -261,7 +261,7 @@ class ActionsDispatcher:
         shift_held = bool(QApplication.keyboardModifiers() & shift_mod) or bool(QApplication.queryKeyboardModifiers() & shift_mod)
         if not index.isValid():
             return self.menus.create_menu(context=MenuContext.EMPTY, shift=shift_held)
-        proxy_model: QAbstractProxyModel | None = cast(Union[None, QAbstractProxyModel], self.dialog.proxyModel())
+        proxy_model: QAbstractProxyModel | None = cast("Union[None, QAbstractProxyModel]", self.dialog.proxyModel())
         source_index: QModelIndex = index if proxy_model is None else proxy_model.mapToSource(index)
         if self.fs_model.isDir(source_index):
             return self.menus.create_menu(context=MenuContext.DIR, shift=shift_held)
@@ -324,7 +324,7 @@ class ActionsDispatcher:
 
     def toggle_sort_order(self):
         # stubs are wrong, cast it as correct type.
-        proxy_model: QAbstractProxyModel | None = cast(Union[None, QAbstractProxyModel], self.dialog.proxyModel())
+        proxy_model: QAbstractProxyModel | None = cast("Union[None, QAbstractProxyModel]", self.dialog.proxyModel())
         if isinstance(proxy_model, QSortFilterProxyModel):
             current_column = proxy_model.sortColumn()
             current_order = proxy_model.sortOrder()

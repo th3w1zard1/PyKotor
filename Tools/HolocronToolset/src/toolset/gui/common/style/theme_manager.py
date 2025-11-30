@@ -3117,13 +3117,13 @@ class ThemeManager:
 
         # Special handling for PyQt5 and PyQt6
         if qtpy.QT5:
-            extra_roles = {
+            extra_roles: dict[QPalette.ColorRole, QColor] = {
                 QPalette.ColorRole.Background: self.adjust_color(primary, lightness=110),  # pyright: ignore[reportAttributeAccessIssue]
                 QPalette.ColorRole.Foreground: self.adjust_color(text, lightness=95),  # pyright: ignore[reportAttributeAccessIssue]
             }
         else:
             # In PyQt6, Background and Foreground are handled with Window and WindowText respectively
-            extra_roles: dict[QPalette.ColorRole, QColor] = {
+            extra_roles = {
                 QPalette.ColorRole.Window: self.adjust_color(secondary, lightness=110),
                 QPalette.ColorRole.WindowText: self.adjust_color(text, lightness=95),
             }

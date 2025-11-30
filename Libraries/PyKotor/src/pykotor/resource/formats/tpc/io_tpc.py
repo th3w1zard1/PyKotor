@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import itertools
 import math
+
 from typing import TYPE_CHECKING
 
 from pykotor.resource.formats.tpc.manipulate.rotate import rotate_rgb_rgba  # noqa: F401

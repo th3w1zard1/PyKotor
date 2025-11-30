@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-import struct
-
-from pathlib import PurePath
 from typing import TYPE_CHECKING
 
 from pykotor.common.stream import BinaryReader
@@ -15,6 +11,7 @@ if TYPE_CHECKING:
     import os
 
     from collections.abc import Iterator
+    from pathlib import Path
 
     from pykotor.common.misc import Game
 

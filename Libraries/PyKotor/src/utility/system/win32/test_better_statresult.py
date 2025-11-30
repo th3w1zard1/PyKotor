@@ -289,7 +289,7 @@ if os.name == "nt":
             def to_byref_if_needed(param: T | _CArgObject) -> T | _CArgObject:
                 if param.__class__.__name__ == "CArgObject":
                     return param
-                return byref(typing.cast(T, param))
+                return byref(typing.cast("T", param))
 
             # Call DeviceIoControl with appropriate parameters
             success = ctypes.windll.kernel32.DeviceIoControl(

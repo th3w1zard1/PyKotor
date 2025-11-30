@@ -907,7 +907,35 @@ def test_save_game_editor_global_vars_modify(qtbot, installation: HTInstallation
 # HEADLESS UI TESTS WITH REAL FILES
 # ============================================================================
 
-def test_savegame_editor_headless_ui_load_build(qtbot, installation: HTInstallation, real_save_folder: Path):
+
+def test_savegameeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that SaveGameEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
+    editor = SaveGameEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # Trigger help dialog with the correct file for SaveGameEditor
+    editor._show_help_dialog("GFF-File-Format.md")
+    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+    
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'GFF-File-Format.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"
+
     """Test SaveGame Editor in headless UI - loads real save and builds data."""
     editor = SaveGameEditor(None, installation)
     qtbot.addWidget(editor)

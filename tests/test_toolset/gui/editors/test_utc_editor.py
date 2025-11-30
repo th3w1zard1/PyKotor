@@ -2355,7 +2355,35 @@ def test_utc_editor_inventory_button(qtbot, installation: HTInstallation):
     # But we verify the signal is connected
     assert editor.ui.inventoryButton.receivers(editor.ui.inventoryButton.clicked) > 0
 
-def test_utc_editor_comments_widget(qtbot, installation: HTInstallation):
+
+def test_utceditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that UTCEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
+    editor = UTCEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # Trigger help dialog with the correct file for UTCEditor
+    editor._show_help_dialog("GFF-UTC.md")
+    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+    
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'GFF-UTC.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"
+
     """Test comments widget."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)

@@ -6,12 +6,13 @@ for the KitGenerator tool.
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
-from loggerplus import RobustLogger
-
 if TYPE_CHECKING:
+    from pathlib import Path
+
+    from loggerplus import RobustLogger
+
     from pykotor.extract.installation import Installation
 
 # Import the business logic from the library

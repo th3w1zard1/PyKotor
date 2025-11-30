@@ -2,10 +2,6 @@
 """Script to expand translation dictionaries with all common strings found in toolset."""
 from __future__ import annotations
 
-import json
-import re
-from pathlib import Path
-
 # Common strings found across toolset
 COMMON_STRINGS = {
     # Error and status messages from main.py

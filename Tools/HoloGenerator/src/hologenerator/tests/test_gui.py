@@ -4,14 +4,15 @@ Only runs when tkinter is available.
 """
 
 import unittest
-import sys
-from unittest.mock import Mock, patch, MagicMock
+
+from unittest.mock import Mock, patch
 
 # Test if GUI is available
 try:
     from hologenerator.gui import GUI_AVAILABLE
     if GUI_AVAILABLE:
         import tkinter as tk
+
         from hologenerator.gui.main import HoloGeneratorGUI
 except ImportError:
     GUI_AVAILABLE = False

@@ -74,16 +74,6 @@
                           </widget>
                         </item>
                         <item>
-                          <widget class="QPushButton" name="fixCorruptionButton">
-                            <property name="text">
-                              <string>Fix Corruption</string>
-                            </property>
-                            <property name="toolTip">
-                              <string>Fixes all possible save corruption in all saves</string>
-                            </property>
-                          </widget>
-                        </item>
-                        <item>
                           <spacer name="horizontalSpacerSaves">
                             <property name="orientation">
                               <enum>Qt::Horizontal</enum>

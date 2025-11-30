@@ -17,7 +17,6 @@ from pykotor.resource.generics.pth import PTH, bytes_pth, read_pth
 from pykotor.resource.type import ResourceType
 from toolset.data.misc import ControlItem
 from toolset.gui.editor import Editor
-from toolset.gui.helpers.callback import BetterMessageBox
 from toolset.gui.widgets.settings.editor_settings.git import GITSettings
 from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
 from utility.common.geometry import SurfaceMaterial, Vector2

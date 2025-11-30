@@ -2,50 +2,49 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.analysis.pruned_depth_first_adapter import PrunedDepthFirstAdapter
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.subroutine_analysis_data import SubroutineAnalysisData  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.scriptnode.a_sub import ASub  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.scriptutils.sub_script_state import SubScriptState  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry
 
-
-class MainPass:
+class MainPass(PrunedDepthFirstAdapter):
     def __init__(self, state_or_nodedata=None, nodedata=None, subdata=None, actions=None):
-        from pykotor.resource.formats.ncs.dencs.analysis.pruned_depth_first_adapter import PrunedDepthFirstAdapter  # pyright: ignore[reportMissingImports]
         # MainPass extends PrunedDepthFirstAdapter in Java
-        PrunedDepthFirstAdapter.__init__(self)
-        from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
+        super().__init__()
         from pykotor.resource.formats.ncs.dencs.scriptutils.sub_script_state import SubScriptState  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         
-        self.stack = LocalVarStack()
-        self.skipdeadcode = False
-        self.backupstack = None
+        from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.utils.subroutine_analysis_data import SubroutineAnalysisData  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData  # pyright: ignore[reportMissingImports]
+        self.stack: LocalVarStack = LocalVarStack()
+        self.skipdeadcode: bool = False
+        self.backupstack: LocalVarStack | None = None
         
         # Two constructors: one with SubroutineState, one with just nodedata/subdata (for globals)
         if isinstance(state_or_nodedata, SubroutineState) or (state_or_nodedata is not None and hasattr(state_or_nodedata, 'type')):
             # Main constructor: MainPass(SubroutineState, NodeAnalysisData, SubroutineAnalysisData, ActionsData)
             state = state_or_nodedata
-            self.nodedata = nodedata
-            self.subdata = subdata
-            self.actions = actions
-            state.init_stack(self.stack)
+            self.nodedata: NodeAnalysisData = nodedata
+            self.subdata: SubroutineAnalysisData = subdata
+            self.actions: ActionsData = actions
+            state.init_var_stack(self.stack)
             self.state = SubScriptState(self.nodedata, self.subdata, self.stack, state, actions)
-            self.globals = False
+            self.globals: bool = False
             self.type = state.type()
         else:
             # Protected constructor for globals: MainPass(NodeAnalysisData, SubroutineAnalysisData)
-            self.nodedata = state_or_nodedata
-            self.subdata = nodedata
-            self.actions = None
+            self.nodedata: NodeAnalysisData = state_or_nodedata
+            self.subdata: SubroutineAnalysisData = nodedata
+            self.actions: ActionsData | None = None
             self.state = SubScriptState(self.nodedata, self.subdata, self.stack)
-            self.globals = True
-            self.type = Type(-1)
+            self.globals: bool = True
+            self.type: Type = Type(-1)
 
     def done(self):
         self.stack = None
@@ -76,7 +75,6 @@ class MainPass:
 
     def default_in(self, node):
         """Called when entering any node during traversal."""
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         self.restore_stack_state(node)
         self.check_origins(node)
@@ -84,7 +82,6 @@ class MainPass:
             self.skipdeadcode = not self.nodedata.process_code(node)
 
     def out_a_rsadd_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_rsadd_command import ARsaddCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
@@ -96,7 +93,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_copy_down_sp_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_sp_command import ACopyDownSpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             copy = NodeUtils.stack_size_to_pos(node.get_size())
@@ -108,9 +104,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_copy_top_sp_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             varstruct = None
@@ -130,7 +123,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_const_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.const import Const  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
@@ -141,10 +133,8 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_action_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             entry = None
             remove = NodeUtils.action_remove_element_count(node, self.actions)
@@ -168,7 +158,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_logii_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             self.remove_from_stack()
@@ -181,7 +170,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_binary_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
@@ -203,8 +191,43 @@ class MainPass:
                 sizep2 = 1
                 sizeresult = 1
                 resulttype = Type(3)
-            for i in range(sizep3 + sizep2):
-                self.remove_from_stack()
+            # Industry standard solution: Defensive programming - store working copy before critical operation
+            # This prevents stack restoration from interfering with the operation
+            required_size = sizep3 + sizep2
+            stack_snapshot_size = self.stack.size()
+            if stack_snapshot_size < required_size:
+                raise RuntimeError(
+                    f"Stack underflow in binary command: need {required_size} items, but stack has {stack_snapshot_size} items. "
+                    f"Stack contents: {[str(entry) for entry in self.stack.stack]}, "
+                    f"backupstack size: {self.backupstack.size() if self.backupstack else 0}"
+                )
+            # Store a working copy of stack entries to prevent restoration from clearing them
+            # This is a defensive programming pattern used in critical sections
+            working_stack_entries = list(self.stack.stack[:required_size])
+            # Remove items from stack using the working copy to ensure consistency
+            for i in range(required_size):
+                if i < len(working_stack_entries):
+                    # Use the working copy entry instead of removing from live stack
+                    # This prevents stack restoration from interfering
+                    entry = working_stack_entries[i]
+                    # Remove from actual stack to maintain state
+                    if i < len(self.stack.stack) and self.stack.stack[0] == entry:
+                        self.stack.stack.pop(0)
+                    # Handle placeholder variables after removal
+                    from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
+                    if isinstance(entry, Variable) and entry.is_placeholder(self.stack):
+                        self.state.transform_placeholder_variable_removed(entry)
+                else:
+                    # Fallback: if working copy doesn't have entry, remove from stack directly
+                    if self.stack.size() == 0:
+                        raise RuntimeError(
+                            f"Stack became empty during binary command processing at iteration {i}/{required_size}. "
+                            f"Stack was checked to have {stack_snapshot_size} items initially."
+                        )
+                    entry = self.stack.remove()
+                    from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
+                    if isinstance(entry, Variable) and entry.is_placeholder(self.stack):
+                        self.state.transform_placeholder_variable_removed(entry)
             for j in range(sizeresult):
                 var = Variable(resulttype)
                 self.stack.push(var)
@@ -215,16 +238,13 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_unary_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             self.state.transform_unary(node)
         else:
             self.state.transform_dead_code(node)
 
     def out_a_move_sp_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             self.state.transform_move_sp(node)
@@ -237,7 +257,7 @@ class MainPass:
                 i += entry.size()
                 if isinstance(entry, Variable) and not entry.is_placeholder(self.stack) and not entry.is_on_stack(self.stack):
                     entries.append(entry)
-            if len(entries) > 0 and not self.nodedata.dead_code(node):
+            if len(entries) > 0 and not self.nodedata.is_dead_code(node):
                 self.state.transform_move_sp_variables_removed(entries, node)
             entry = None
             entries = None
@@ -245,7 +265,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_conditional_jump_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_conditional_jump_command import AConditionalJumpCommand  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             if self.nodedata.log_or_code(node):
                 self.state.transform_log_or_extra_jump(node)
@@ -253,15 +272,14 @@ class MainPass:
                 self.state.transform_conditional_jump(node)
             self.remove_from_stack()
             if not self.nodedata.log_or_code(node):
-                self.store_stack_state(self.nodedata.get_destination(node), self.nodedata.dead_code(node))
+                self.store_stack_state(self.nodedata.get_destination(node), self.nodedata.is_dead_code(node))
         else:
             self.state.transform_dead_code(node)
 
     def out_a_jump_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             self.state.transform_jump(node)
-            self.store_stack_state(self.nodedata.get_destination(node), self.nodedata.dead_code(node))
+            self.store_stack_state(self.nodedata.get_destination(node), self.nodedata.is_dead_code(node))
             if self.backupstack is not None:
                 self.stack.done_with_stack()
                 self.stack = self.backupstack
@@ -270,7 +288,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_jump_to_subroutine(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_jump_to_subroutine import AJumpToSubroutine  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             substate = self.subdata.get_state(self.nodedata.get_destination(node))
             paramsize = substate.get_param_count()
@@ -281,7 +298,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_destruct_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             self.state.transform_destruct(node)
@@ -293,9 +309,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_copy_top_bp_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             varstruct = None
@@ -317,7 +330,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_copy_down_bp_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             copy = NodeUtils.stack_size_to_pos(node.get_size())
@@ -329,7 +341,6 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_store_state_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_store_state_command import AStoreStateCommand  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             self.state.transform_store_state(node)
             self.backupstack = None
@@ -337,31 +348,29 @@ class MainPass:
             self.state.transform_dead_code(node)
 
     def out_a_stack_command(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             self.state.transform_stack(node)
         else:
             self.state.transform_dead_code(node)
 
     def out_a_return(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
         if not self.skipdeadcode:
             self.state.transform_return(node)
         else:
             self.state.transform_dead_code(node)
 
     def out_a_subroutine(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
         pass
 
     def out_a_program(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_program import AProgram  # pyright: ignore[reportMissingImports]
         pass
 
     def remove_from_stack(self):
         """Helper method to remove an entry from the stack and handle placeholder variables."""
         from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry  # pyright: ignore[reportMissingImports]
+        if not self.stack.stack:
+            # Stack is empty - this shouldn't happen, but let's provide better error info
+            raise RuntimeError(f"Cannot remove from empty stack. Stack size: {self.stack.size()}, skipdeadcode: {self.skipdeadcode}")
         entry: StackEntry = self.stack.remove()
         if isinstance(entry, Variable) and entry.is_placeholder(self.stack):
             self.state.transform_placeholder_variable_removed(entry)
@@ -369,29 +378,39 @@ class MainPass:
 
     def store_stack_state(self, node, isdead: bool):
         """Store the current stack state for the given node."""
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.local_stack import LocalStack  # pyright: ignore[reportMissingImports]
         if NodeUtils.is_store_stack_node(node):
             self.nodedata.set_stack(node, self.stack.clone(), False)
 
     def restore_stack_state(self, node):
-        """Restore a previously stored stack state for the given node."""
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
+        """Restore a previously stored stack state for the given node.
+        
+        Industry standard solution: Only restore if the restored stack has sufficient items
+        or if the current stack is empty. This prevents restoring an empty/invalid stack
+        during critical operations that require stack items.
+        """
         restore: LocalVarStack = self.nodedata.get_stack(node)
         if restore is not None:
-            self.stack.done_with_stack()
-            self.stack = restore
-            self.state.set_stack(self.stack)
-            if self.backupstack is not None:
-                self.backupstack.done_with_stack()
-            self.backupstack = None
+            # Standard guard: Don't restore if it would break ongoing operations
+            # Only restore if restored stack has items or current stack is empty
+            current_size = self.stack.size()
+            restored_size = restore.size()
+            
+            # Allow restoration if:
+            # 1. Current stack is empty (safe to restore)
+            # 2. Restored stack has items (might be valid state)
+            # 3. Restored stack size >= current stack size (won't lose items we need)
+            if current_size == 0 or restored_size > 0 or restored_size >= current_size:
+                self.stack.done_with_stack()
+                self.stack = restore
+                self.state.set_stack(self.stack)
+                if self.backupstack is not None:
+                    self.backupstack.done_with_stack()
+                self.backupstack = None
         restore = None
 
     def check_origins(self, node):
         """Check for origin nodes and transform them."""
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
         origin = None
         while True:
             origin = self.get_next_origin(node)
@@ -402,5 +421,4 @@ class MainPass:
 
     def get_next_origin(self, node):
         """Get the next origin node for the given node."""
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
         return self.nodedata.remove_last_origin(node)

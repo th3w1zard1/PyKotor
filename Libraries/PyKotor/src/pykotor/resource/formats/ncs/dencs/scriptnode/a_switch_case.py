@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.scriptnode.a_const import AConst  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.scriptnode.a_unk_loop_control import AUnkLoopControl  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
 
-
 class ASwitchCase(ScriptRootNode):
     def __init__(self, start: int, val: AConst | None = None):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
         super().__init__(start, -1)
         if val is not None:
             self.val(val)

@@ -12,19 +12,24 @@ References:
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from direct.showbase.ShowBase import ShowBase
+from pykotor.engine.panda3d.materials import Panda3DMaterialManager
+from pykotor.engine.panda3d.scene_graph import Panda3DSceneGraph
+
 from panda3d.core import (
     AmbientLight,
     AntialiasAttrib,
     DirectionalLight,
     Vec4,
     loadPrcFileData,
-    NodePath,
 )
 
-from pykotor.engine.panda3d.scene_graph import Panda3DSceneGraph
-from pykotor.engine.panda3d.materials import Panda3DMaterialManager
+if TYPE_CHECKING:
+    from panda3d.core import (
+        NodePath,
+    )
 
 
 class KotorEngine(ShowBase):

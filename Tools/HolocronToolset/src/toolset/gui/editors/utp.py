@@ -349,7 +349,7 @@ class UTPEditor(Editor):
         self._loadUTP(UTP())
 
     def update_item_count(self):
-        from toolset.gui.common.localization import translate as tr, trf
+        from toolset.gui.common.localization import trf
         self.ui.inventoryCountLabel.setText(trf("Total Items: {count}", count=len(self._utp.inventory)))
 
     def change_name(self):

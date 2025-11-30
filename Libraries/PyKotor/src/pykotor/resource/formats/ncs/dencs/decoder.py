@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import struct
-from io import BufferedIOBase
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from io import BufferedIOBase
 
 
 class Decoder:

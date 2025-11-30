@@ -5,10 +5,9 @@ from typing import TYPE_CHECKING
 from pykotor.resource.formats.ncs.dencs.node.node import Node
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_program import PProgram  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
-
+    from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.p_program import PProgram  # pyright: ignore[reportMissingImports]
 
 class Start(Node):
     def __init__(self, p_program: PProgram | None = None, eof: EOF | None = None):
@@ -24,8 +23,6 @@ class Start(Node):
             self.set_eof(EOF())
 
     def clone(self) -> Start:
-        from pykotor.resource.formats.ncs.dencs.node.p_program import PProgram  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
         p_program_clone = None
         if self._p_program is not None:
             p_program_clone = self._p_program.clone()  # type: ignore[assignment]
@@ -44,7 +41,6 @@ class Start(Node):
         return self._p_program
 
     def set_p_program(self, node: PProgram | None):
-        from pykotor.resource.formats.ncs.dencs.node.p_program import PProgram  # pyright: ignore[reportMissingImports]
         if self._p_program is not None:
             self._p_program.set_parent(None)
         if node is not None:
@@ -57,7 +53,6 @@ class Start(Node):
         return self._eof
 
     def set_eof(self, node: EOF | None):
-        from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
         if self._eof is not None:
             self._eof.set_parent(None)
         if node is not None:
@@ -74,8 +69,6 @@ class Start(Node):
             self._eof = None
 
     def replace_child(self, old_child: Node, new_child: Node):
-        from pykotor.resource.formats.ncs.dencs.node.p_program import PProgram  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
         if self._p_program == old_child:
             self.set_p_program(new_child)  # type: ignore[arg-type]
             return

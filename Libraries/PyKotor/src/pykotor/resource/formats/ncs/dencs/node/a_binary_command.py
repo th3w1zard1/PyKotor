@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.node.p_binary_command import PBinaryCommand  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_binary_command import PBinaryCommand  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_binary_op import PBinaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
 
-
 class ABinaryCommand(PBinaryCommand):
     def __init__(self, binary_op: PBinaryOp | None = None, pos: TIntegerConstant | None = None, type_val: TIntegerConstant | None = None, size: TIntegerConstant | None = None, semi: TSemi | None = None):
-        from pykotor.resource.formats.ncs.dencs.node.p_binary_command import PBinaryCommand  # pyright: ignore[reportMissingImports]
         super().__init__()
         
         self._binary_op_: PBinaryOp | None = None

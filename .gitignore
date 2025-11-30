@@ -115,3 +115,7 @@ vendor/PYKOTOR_VENDOR_REFERENCE_ANALYSIS.md
 .history/
 .history/**/*.py */
 tests/test_toolset/test_files/generated_kit
+Tools/HolocronToolset/src/toolset/toolset_profile_20251129_215942.txt
+Tools/HolocronToolset/src/toolset/toolset_profile_20251129_223427.txt
+Tools/HolocronToolset/src/toolset/toolset_profile_20251130_053447.txt
+Tools/HolocronToolset/src/toolset/toolset_profile_20251130_064247.txt

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import io
+
 from typing import TYPE_CHECKING
 
 from pykotor.resource.formats.tpc.tga import read_tga
-from pykotor.resource.formats.tpc.tpc_data import TPC, TPCLayer, TPCMipmap, TPCTextureFormat
+from pykotor.resource.formats.tpc.tpc_data import TPC, TPCLayer, TPCTextureFormat
 from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose
 
 if TYPE_CHECKING:
+    from pykotor.resource.formats.tpc.tpc_data import TPCMipmap
     from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES
 
 

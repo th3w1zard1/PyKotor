@@ -643,6 +643,72 @@ def download_github_file(
                 f.write(chunk)
 
 
+def download_github_release_asset(
+    owner: str,
+    repo: str,
+    tag_name: str,
+    asset_name: str,
+    local_path: os.PathLike | str,
+    timeout: int | None = None,
+) -> bool:
+    """Download an asset from a GitHub release.
+    
+    Args:
+    ----
+        owner: GitHub repository owner
+        repo: GitHub repository name
+        tag_name: Release tag name (e.g., "v1.0.0" or "latest")
+        asset_name: Name of the asset to download (e.g., "kits.zip")
+        local_path: Local path where the asset will be saved
+        timeout: Request timeout in seconds (default: 180)
+        
+    Returns:
+    -------
+        bool: True if download was successful, False otherwise
+        
+    Raises:
+    ------
+        ValueError: If the release or asset is not found
+        requests.exceptions.RequestException: If download fails
+    """
+    import requests
+    timeout = 180 if timeout is None else timeout
+    local_path = Path(local_path).absolute()
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Get release info
+    if tag_name.lower() == "latest":
+        api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
+    else:
+        api_url = f"https://api.github.com/repos/{owner}/{repo}/releases/tags/{tag_name}"
+    
+    release_info: dict[str, Any] = _request_api_data(api_url)
+    
+    # Find the asset
+    assets: list[dict[str, Any]] = release_info.get("assets", [])
+    asset_url: str | None = None
+    for asset in assets:
+        if asset["name"] == asset_name:
+            asset_url = asset["browser_download_url"]
+            break
+    
+    if asset_url is None:
+        available_assets = [a["name"] for a in assets]
+        raise ValueError(
+            f"Asset '{asset_name}' not found in release '{tag_name}'. "
+            f"Available assets: {', '.join(available_assets) if available_assets else 'none'}"
+        )
+    
+    # Download the asset
+    with requests.get(asset_url, stream=True, timeout=timeout) as r:
+        r.raise_for_status()
+        with local_path.open("wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+    
+    return True
+
+
 def download_github_directory(
     repo: str | tuple[str, str],
     local_dir: os.PathLike | str,

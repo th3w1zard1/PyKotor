@@ -630,7 +630,7 @@ Should return 1 or 0, representing a boolean.
             if evaluate_conditions(item):
                 matching_items.append(item)
             for row in range(item.rowCount()):
-                child_item: DLGStandardItem = cast(DLGStandardItem, item.child(row))
+                child_item: DLGStandardItem = cast("DLGStandardItem", item.child(row))
                 if child_item:
                     search_item(child_item)
 
@@ -638,11 +638,11 @@ Should return 1 or 0, representing a boolean.
             parent_item: DLGStandardItem,
         ):
             for row in range(parent_item.rowCount()):
-                child_item: DLGStandardItem = cast(DLGStandardItem, parent_item.child(row))
+                child_item: DLGStandardItem = cast("DLGStandardItem", parent_item.child(row))
                 search_item(child_item)
                 search_children(child_item)
 
-        search_children(cast(DLGStandardItem, self.model.invisibleRootItem()))
+        search_children(cast("DLGStandardItem", self.model.invisibleRootItem()))
         return list({*matching_items})
 
     def highlight_result(
@@ -789,7 +789,7 @@ Should return 1 or 0, representing a boolean.
             QMessageBox(QMessageBox.Icon.Information, "No target specified", "Select a position in the tree to insert this orphan at then try again.")
             return
         selected_tree_item: DLGStandardItem | None = cast(
-            Optional[DLGStandardItem],
+            "Optional[DLGStandardItem]",
             self.model.itemFromIndex(selected_tree_indexes[0]),
         )
         if selected_tree_item is None:
@@ -854,7 +854,7 @@ Should return 1 or 0, representing a boolean.
         all_tips_action: _QAction | None = self.ui.menubar.addAction("Help")  # pyright: ignore[reportAssignmentType, reportAttributeAccessIssue]
         assert all_tips_action is not None, "Failed to create 'Help' action."
         all_tips_action.triggered.connect(self.show_all_tips)
-        whats_this_action: _QAction = QAction(cast(QStyle, self.style()).standardIcon(QStyle.StandardPixmap.SP_TitleBarContextHelpButton), "", self)
+        whats_this_action: _QAction = QAction(cast("QStyle", self.style()).standardIcon(QStyle.StandardPixmap.SP_TitleBarContextHelpButton), "", self)
         assert whats_this_action is not None, "Failed to create 'WhatsThis' action."
         whats_this_action.triggered.connect(QWhatsThis.enterWhatsThisMode)
         whats_this_action.setToolTip("Enter WhatsThis? mode.")
@@ -1639,7 +1639,7 @@ Should return 1 or 0, representing a boolean.
         else:
             menu = QMenu(self)
             if not self._focused:
-                add_entry_action = cast(QAction, menu.addAction("Add Entry"))  # pyright: ignore[reportInvalidTypeForm]
+                add_entry_action = cast("QAction", menu.addAction("Add Entry"))  # pyright: ignore[reportInvalidTypeForm]
                 assert add_entry_action is not None, "Failed to create 'Add Entry' action."
                 add_entry_action.triggered.connect(self.model.add_root_node)
             else:
@@ -1647,7 +1647,7 @@ Should return 1 or 0, representing a boolean.
                 def reset_tree(*args):
                     self._load_dlg(self.core_dlg)
 
-                reset_tree_action = cast(QAction, menu.addAction("Reset Tree"))  # pyright: ignore[reportInvalidTypeForm]
+                reset_tree_action = cast("QAction", menu.addAction("Reset Tree"))  # pyright: ignore[reportInvalidTypeForm]
                 assert reset_tree_action is not None, "Failed to create 'Reset Tree' action."
                 reset_tree_action.triggered.connect(reset_tree)
         view_port: QWidget | None = self.ui.dialogTree.viewport()
@@ -1683,7 +1683,7 @@ Should return 1 or 0, representing a boolean.
         elif not is_root:
             self.ui.dialogTree.collapse(item_index)
         for row in range(item.rowCount()):
-            child_item: DLGStandardItem = cast(DLGStandardItem, item.child(row))
+            child_item: DLGStandardItem = cast("DLGStandardItem", item.child(row))
             if child_item is None:
                 continue
             child_index: QModelIndex = child_item.index()

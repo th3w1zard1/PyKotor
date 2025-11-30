@@ -1,6 +1,7 @@
 """Compare generated and expected kit JSON files."""
 import json
 import sys
+
 from pathlib import Path
 
 # Add paths for imports

@@ -8,7 +8,6 @@ from typing_extensions import Literal
 
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.stream import BinaryReader
-from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceResult
 from pykotor.extract.installation import SearchLocation
 from pykotor.gl.models.mdl import Model, Node
@@ -56,6 +55,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.common.module import Module, ModulePieceResource, ModuleResource
+    from pykotor.extract.capsule import Capsule
     from pykotor.extract.file import ResourceIdentifier, ResourceResult
     from pykotor.extract.installation import Installation
     from pykotor.gl.models.mdl import Model, Node
@@ -227,7 +227,16 @@ class SceneBase:
         self,
         instance: GITCreature | None = None,
         utc: UTC | None = None,
+        *,
+        sync: bool = False,
     ) -> RenderObject:
+        """Get a RenderObject for a creature.
+        
+        Args:
+            instance: Optional GITCreature instance to get the UTC from.
+            utc: Optional UTC object to use directly.
+            sync: If True, force synchronous model loading (required for hook finding).
+        """
         assert self.installation is not None
         try:
             if instance is not None and utc is None:
@@ -269,26 +278,29 @@ class SceneBase:
 
             obj = RenderObject(body_model, data=instance, override_texture=body_texture)
 
-            head_hook: Node | None = self.model(body_model).find("headhook")
+            # Use synchronous model loading for hook finding to ensure model is loaded
+            body_model_obj: Model = self.model_sync(body_model) if sync else self.model(body_model)
+            head_hook: Node | None = body_model_obj.find("headhook")
             if head_model and head_hook:
                 head_obj = RenderObject(head_model, override_texture=head_texture)
                 head_obj.set_transform(head_hook.global_transform())
                 obj.children.append(head_obj)
 
-            rhand_hook: Node | None = self.model(body_model).find("rhand")
+            rhand_hook: Node | None = body_model_obj.find("rhand")
             if rhand_model and rhand_hook:
                 rhand_obj = RenderObject(rhand_model)
                 rhand_obj.set_transform(rhand_hook.global_transform())
                 obj.children.append(rhand_obj)
-            lhand_hook: Node | None = self.model(body_model).find("lhand")
+            lhand_hook: Node | None = body_model_obj.find("lhand")
             if lhand_model and lhand_hook:
                 lhand_obj = RenderObject(lhand_model)
                 lhand_obj.set_transform(lhand_hook.global_transform())
                 obj.children.append(lhand_obj)
             if head_hook is None:
-                mask_hook: Node | None = self.model(body_model).find("gogglehook")
+                mask_hook = body_model_obj.find("gogglehook")
             elif head_model:
-                mask_hook = self.model(head_model).find("gogglehook")
+                head_model_obj: Model = self.model_sync(head_model) if sync else self.model(head_model)
+                mask_hook = head_model_obj.find("gogglehook")
             if mask_model and mask_hook:
                 mask_obj = RenderObject(mask_model)
                 mask_obj.set_transform(mask_hook.global_transform())
@@ -515,6 +527,84 @@ class SceneBase:
         
         self.textures[name] = Texture.from_tpc(tpc)
         return self.textures[name]
+
+    def model_sync(
+        self,
+        name: str,
+    ) -> Model:
+        """Load a model synchronously, bypassing async loading.
+        
+        This is useful when you need the model immediately (e.g., for finding hooks).
+        The model will be cached for future use.
+        
+        Args:
+            name: The model name to load.
+            
+        Returns:
+            The loaded Model object.
+        """
+        # Already cached?
+        if name in self.models:
+            return self.models[name]
+        
+        # Cancel any pending async load for this model
+        if name in self._pending_model_futures:
+            self._pending_model_futures[name].cancel()
+            del self._pending_model_futures[name]
+        
+        # Handle predefined models
+        predefined_models = {
+            "waypoint": (WAYPOINT_MDL_DATA, WAYPOINT_MDX_DATA),
+            "sound": (SOUND_MDL_DATA, SOUND_MDX_DATA),
+            "store": (STORE_MDL_DATA, STORE_MDX_DATA),
+            "entry": (ENTRY_MDL_DATA, ENTRY_MDX_DATA),
+            "encounter": (ENCOUNTER_MDL_DATA, ENCOUNTER_MDX_DATA),
+            "trigger": (TRIGGER_MDL_DATA, TRIGGER_MDX_DATA),
+            "camera": (CAMERA_MDL_DATA, CAMERA_MDX_DATA),
+            "empty": (EMPTY_MDL_DATA, EMPTY_MDX_DATA),
+            "cursor": (CURSOR_MDL_DATA, CURSOR_MDX_DATA),
+            "unknown": (UNKNOWN_MDL_DATA, UNKNOWN_MDX_DATA),
+        }
+        
+        if name in predefined_models:
+            mdl_data, mdx_data = predefined_models[name]
+            try:
+                mdl_reader: BinaryReader = BinaryReader.from_bytes(mdl_data, 12)
+                mdx_reader: BinaryReader = BinaryReader.from_bytes(mdx_data)
+                model: Model = gl_load_stitched_model(self, mdl_reader, mdx_reader)  # pyright: ignore[reportArgumentType]
+                self.models[name] = model
+                return model
+            except Exception:  # noqa: BLE001
+                RobustLogger().exception(f"Could not load predefined model '{name}'.")
+        
+        # Synchronous loading from installation
+        fallback_mdl_data: bytes = EMPTY_MDL_DATA
+        fallback_mdx_data: bytes = EMPTY_MDX_DATA
+        
+        if self.installation is not None:
+            capsules: list[ModulePieceResource] = [] if self._module is None else self.module.capsules()
+            mdl_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDL, SEARCH_ORDER, capsules=capsules)
+            mdx_search: ResourceResult | None = self.installation.resource(name, ResourceType.MDX, SEARCH_ORDER, capsules=capsules)
+            if mdl_search is not None and mdx_search is not None:
+                fallback_mdl_data = mdl_search.data
+                fallback_mdx_data = mdx_search.data
+            else:
+                RobustLogger().warning(f"Model '{name}' not found in installation (MDL: {mdl_search is not None}, MDX: {mdx_search is not None})")
+
+        try:
+            mdl_reader = BinaryReader.from_bytes(fallback_mdl_data, 12)
+            mdx_reader = BinaryReader.from_bytes(fallback_mdx_data)
+            model = gl_load_stitched_model(self, mdl_reader, mdx_reader)  # pyright: ignore[reportArgumentType]
+        except Exception:  # noqa: BLE001
+            RobustLogger().warning(f"Could not load model '{name}'.")
+            model = gl_load_stitched_model(
+                self,  # pyright: ignore[reportArgumentType]
+                BinaryReader.from_bytes(EMPTY_MDL_DATA, 12),
+                BinaryReader.from_bytes(EMPTY_MDX_DATA),
+            )
+
+        self.models[name] = model
+        return model
 
     def model(  # noqa: C901, PLR0912
         self,

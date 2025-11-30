@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import sys
 import tempfile
+
 from pathlib import Path
 
 # Add the PyKotor library to the path
@@ -25,6 +26,7 @@ if getattr(sys, "frozen", False) is False:
         update_sys_path(pykotor_path.parent)
 
 from kotordiff.config_generator import ConfigurationGenerator
+
 from kotordiff.differ import DiffResult, FileChange
 
 

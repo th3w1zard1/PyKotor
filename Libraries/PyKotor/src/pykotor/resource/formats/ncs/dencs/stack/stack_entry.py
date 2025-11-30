@@ -4,21 +4,20 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.stack.local_stack import LocalStack  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
-
+    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
 
 class StackEntry(ABC):
     def __init__(self):
-        self.type: Type | None = None
-        self.size: int = 0
+        self._type: Type | None = None
+        self._size: int = 0
 
     def type(self) -> Type:
-        return self.type
+        return self._type
 
     def size(self) -> int:
-        return self.size
+        return self._size
 
     @abstractmethod
     def removed_from_stack(self, stack: LocalStack):
@@ -37,9 +36,9 @@ class StackEntry(ABC):
         pass
 
     def close(self):
-        if self.type is not None:
-            self.type.close()
-        self.type = None
+        if self._type is not None:
+            self._type.close()
+        self._type = None
 
     @abstractmethod
     def done_parse(self):

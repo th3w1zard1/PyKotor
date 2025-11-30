@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+
 class Theme:
     REPUBLIC = {
         "name": "Republic",

@@ -171,7 +171,7 @@ class CustomListView(QListView):
 
             option.rect = self.visualRect(index)
             button_width: int = QFontMetrics(option.font).horizontalAdvance(self.button_text) + 20
-            left_limit: int = min(option.rect.right() - button_width, cast(QWidget, self.parent()).width() - button_width)
+            left_limit: int = min(option.rect.right() - button_width, cast("QWidget", self.parent()).width() - button_width)
 
             if left_limit <= viewport_pos.x() <= option.rect.right():
                 self.combobox.force_stay_popped_up = True

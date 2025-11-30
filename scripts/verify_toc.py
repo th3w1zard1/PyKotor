@@ -2,6 +2,7 @@
 """Verify that all sections are in the TOC."""
 
 import re
+
 from pathlib import Path
 
 md_path = Path(__file__).parent.parent / "wiki" / "NSS-File-Format.md"

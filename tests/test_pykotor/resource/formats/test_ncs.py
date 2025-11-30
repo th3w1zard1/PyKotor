@@ -4886,6 +4886,60 @@ def test_binary_roundtrip_samples(relative_path: str, game: Game):
 
 
 # ============================================================================
+# K1_NCS_Un-decompilable Roundtrip Tests (NCS -> NSS -> NCS)
+# ============================================================================
+
+K1_UNDECOMPILABLE_DIR = Path(__file__).resolve().parents[3] / "test_pykotor" / "test_files" / "K1_NCS_Un-decompilable"
+
+
+def _collect_k1_undecompilable_files() -> list[tuple[Path, str]]:
+    """Collect all NCS files from K1_NCS_Un-decompilable directory."""
+    if not K1_UNDECOMPILABLE_DIR.exists():
+        return []
+    
+    files = []
+    for ncs_file in K1_UNDECOMPILABLE_DIR.rglob("*.ncs"):
+        # Create a test identifier from the relative path
+        rel_path = ncs_file.relative_to(K1_UNDECOMPILABLE_DIR.parent)
+        test_id = str(rel_path).replace("\\", "/")
+        files.append((ncs_file, test_id))
+    
+    return sorted(files)
+
+
+K1_UNDECOMPILABLE_FILES = _collect_k1_undecompilable_files()
+
+
+@pytest.mark.parametrize(("ncs_path", "test_id"), K1_UNDECOMPILABLE_FILES)
+def test_k1_undecompilable_roundtrip(ncs_path: Path, test_id: str):
+    """Test NCS -> NSS -> NCS roundtrip for K1 undecompilable files.
+    
+    These files were previously marked as undecompilable but should now
+    decompile and recompile to byte-identical NCS.
+    """
+    assert ncs_path.is_file(), f"Test NCS file '{ncs_path}' is missing"
+    
+    # Read original NCS
+    original = read_ncs(ncs_path)
+    original_bytes = _canonical_bytes(original)
+    
+    # Decompile to NSS
+    decompiled = decompile_ncs(original, Game.K1)
+    assert len(decompiled.strip()) > 0, f"Decompiled source should not be empty for {test_id}"
+    
+    # Recompile to NCS
+    recompiled = compile_nss(decompiled, Game.K1)
+    recompiled_bytes = _canonical_bytes(recompiled)
+    
+    # Assert byte-identical roundtrip
+    assert original_bytes == recompiled_bytes, (
+        f"Roundtrip failed for {test_id}: "
+        f"original has {len(original.instructions)} instructions, "
+        f"recompiled has {len(recompiled.instructions)} instructions"
+    )
+
+
+# ============================================================================
 # TSL-Specific Compilation Tests
 # ============================================================================
 

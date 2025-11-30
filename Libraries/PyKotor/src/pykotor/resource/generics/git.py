@@ -140,7 +140,7 @@ class GIT:
             A list of all stored instances.
         """
         return cast(
-            list[GITInstance],
+            "list[GITInstance]",
             [
                 *self.cameras,
                 *self.creatures,

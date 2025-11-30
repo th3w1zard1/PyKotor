@@ -217,7 +217,7 @@ class InventoryEditor(QDialog):
             # HACK(NickHugi): isinstance is not working (possibly due to how DropFrame is imported in _ui.py file.
             # Also make sure there is an item in the slot otherwise the GFF will create a struct for each slot.
             if "DropFrame" in widget.__class__.__name__ and getattr(widget, "resname", None):
-                casted_widget: DropFrame = cast(DropFrame, widget)
+                casted_widget: DropFrame = cast("DropFrame", widget)
                 self.equipment[casted_widget.slot] = InventoryItem(ResRef(casted_widget.resname), casted_widget.droppable, casted_widget.infinite)
 
     def build_items(self):
@@ -301,11 +301,11 @@ class InventoryEditor(QDialog):
         text: str,
     ):
         self.ui.coreSearchEdit.setText(text)
-        cast(QSortFilterProxyModel, self.ui.coreTree.model()).setFilterFixedString(text)
+        cast("QSortFilterProxyModel", self.ui.coreTree.model()).setFilterFixedString(text)
         self.ui.modulesSearchEdit.setText(text)
-        cast(QSortFilterProxyModel, self.ui.modulesTree.model()).setFilterFixedString(text)
+        cast("QSortFilterProxyModel", self.ui.modulesTree.model()).setFilterFixedString(text)
         self.ui.overrideSearchEdit.setText(text)
-        cast(QSortFilterProxyModel, self.ui.overrideTree.model()).setFilterFixedString(text)
+        cast("QSortFilterProxyModel", self.ui.overrideTree.model()).setFilterFixedString(text)
 
     def open_item_context_menu(
         self,
@@ -332,7 +332,7 @@ class InventoryEditor(QDialog):
             menu.addAction("No Item").setEnabled(False)
 
         menu.addSeparator()
-        menu.addAction("Set Item ResRef").triggered.connect(lambda: self.prompt_set_item_resref_dialog(cast(DropFrame, widget)))
+        menu.addAction("Set Item ResRef").triggered.connect(lambda: self.prompt_set_item_resref_dialog(cast("DropFrame", widget)))
         menu.exec(widget.mapToGlobal(point))
 
     def prompt_set_item_resref_dialog(
@@ -468,7 +468,7 @@ class DropFrame(ItemContainer, QFrame):
 
     def remove_item(self):
         ItemContainer.remove_item(self)
-        cast(InventoryEditor, self.window()).set_equipment(self.slot, "")  # type: ignore[arg-type]
+        cast("InventoryEditor", self.window()).set_equipment(self.slot, "")  # type: ignore[arg-type]
 
     def toggle_droppable(self):
         ItemContainer.toggle_droppable(self)
@@ -493,7 +493,7 @@ class InventoryTable(QTableWidget):
     ):
         rowID: int = self.rowCount()
         self.insertRow(rowID)
-        filepath, name, uti = cast(InventoryEditor, self.window()).get_item(resname, "")
+        filepath, name, uti = cast("InventoryEditor", self.window()).get_item(resname, "")
         icon_item: QTableWidgetItem = self._set_uti(uti)
         name_item = QTableWidgetItem(name)
         name_item.setFlags(name_item.flags() ^ Qt.ItemFlag.ItemIsEditable)
@@ -521,7 +521,7 @@ class InventoryTable(QTableWidget):
             event.accept()
             rowID: int = self.rowCount()
             self.insertRow(rowID)
-            filepath, name, uti = cast(InventoryEditor, self.window()).get_item(item.data(_RESNAME_ROLE), item.data(_FILEPATH_ROLE))
+            filepath, name, uti = cast("InventoryEditor", self.window()).get_item(item.data(_RESNAME_ROLE), item.data(_FILEPATH_ROLE))
             icon_item: QTableWidgetItem = self._set_uti(uti)
             name_item = QTableWidgetItem(item.text())
             name_item.setFlags(name_item.flags() ^ Qt.ItemFlag.ItemIsEditable)
@@ -543,7 +543,7 @@ class InventoryTable(QTableWidget):
         self,
         uti: UTI,
     ) -> QTableWidgetItem:
-        pixmap: QPixmap = cast(InventoryEditor, self.window()).get_item_image(uti)
+        pixmap: QPixmap = cast("InventoryEditor", self.window()).get_item_image(uti)
         result: QTableWidgetItem = QTableWidgetItem(QIcon(pixmap), "")
         result.setSizeHint(QSize(48, 48))
         result.setFlags(result.flags() ^ Qt.ItemFlag.ItemIsEditable)
@@ -554,8 +554,8 @@ class InventoryTable(QTableWidget):
         table_item: QTableWidgetItem,
     ):
         if isinstance(table_item, InventoryTableResnameItem):
-            filepath, name, uti = cast(InventoryEditor, self.window()).get_item(table_item.text(), "")
-            icon = QIcon(cast(InventoryEditor, self.window()).get_item_image(uti))
+            filepath, name, uti = cast("InventoryEditor", self.window()).get_item(table_item.text(), "")
+            icon = QIcon(cast("InventoryEditor", self.window()).get_item_image(uti))
 
             table_item.set_item(table_item.text(), filepath, name, droppable=table_item.droppable, infinite=table_item.infinite)
             item = self.item(table_item.row(), 0)

@@ -6,6 +6,7 @@ HoloGenerator is a GUI-only tool for KOTOR configuration generation.
 
 import subprocess
 import sys
+
 from pathlib import Path
 
 

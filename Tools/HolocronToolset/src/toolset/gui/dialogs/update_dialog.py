@@ -111,7 +111,7 @@ class UpdateDialog(QDialog):
         current_version: str = LOCAL_PROGRAM_INFO["currentVersion"]
         version_color: str = "#FFA500" if is_remote_version_newer(current_version, toolset_tag_to_version(self.get_selected_tag())) else "#00FF00"
         version_text: str = f"<span style='font-size:16px; font-weight:bold; color:{version_color};'>{current_version}</span>"
-        from toolset.gui.common.localization import translate as tr, trf
+        from toolset.gui.common.localization import trf
         current_version_label: QLabel = QLabel(trf("Holocron Toolset Current Version: {version}", version=version_text))
         current_version_label.setFont(QFont("Arial", 12))
         current_version_layout.addWidget(current_version_label)

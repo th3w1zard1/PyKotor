@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.token import Token  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.ncs.dencs.node.token import Token  # pyright: ignore[reportMissingImports]
 
+if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
 
 class TCptopbp(Token):
     def __init__(self, line: int = 0, pos: int = 0):
-        from pykotor.resource.formats.ncs.dencs.node.token import Token  # pyright: ignore[reportMissingImports]
         super().__init__("CPTOPBP")
         self.line = line
         self.pos = pos

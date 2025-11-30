@@ -24,13 +24,11 @@ from pykotor.resource.formats.ncs.compiler.classes import (
     ContinueStatement,
     DeclarationStatement,
     DefaultSwitchLabel,
-    TernaryConditionalExpression,
     DivisionAssignment,
     DoWhileLoopBlock,
     DynamicDataType,
     EmptyStatement,
     EngineCallExpression,
-    Expression,
     ExpressionStatement,
     ExpressionSwitchLabel,
     FieldAccess,
@@ -58,6 +56,7 @@ from pykotor.resource.formats.ncs.compiler.classes import (
     SubtractionAssignment,
     SwitchBlock,
     SwitchStatement,
+    TernaryConditionalExpression,
     UnaryOperatorExpression,
     VariableDeclarator,
     VariableInitializer,
@@ -68,6 +67,9 @@ from pykotor.resource.formats.ncs.compiler.lexer import NssLexer
 
 if TYPE_CHECKING:
     from pykotor.common.script import DataType, ScriptConstant, ScriptFunction
+    from pykotor.resource.formats.ncs.compiler.classes import (
+        Expression,
+    )
 else:
     from pykotor.common.script import DataType
 
@@ -138,7 +140,7 @@ class NssParser:
                   |
         """  # noqa: D205, D415, D400, D212
         if len(p) == 3:
-            code_root = cast(CodeRoot, p[1])
+            code_root = cast("CodeRoot", p[1])
             code_root.objects.append(p[2])
             p[0] = code_root
         else:
@@ -169,7 +171,7 @@ class NssParser:
                        |
         """  # noqa: D415, D400, D212, D205
         if len(p) == 3:  # noqa: PLR2004
-            cast(list, p[1]).append(p[2])
+            cast("list", p[1]).append(p[2])
             p[0] = p[1]
         else:
             p[0] = []
@@ -237,7 +239,7 @@ class NssParser:
                                    |
         """  # noqa: D400, D212, D415, D205
         if len(p) == 4:
-            cast(list, p[1]).append(p[3])
+            cast("list", p[1]).append(p[3])
             p[0] = p[1]
         elif len(p) == 2:
             p[0] = [p[1]]
@@ -571,7 +573,7 @@ class NssParser:
         if len(p) == 3:
             p[0] = ReturnStatement()
         elif len(p) == 4:
-            expr = cast(Expression, p[2])
+            expr = cast("Expression", p[2])
             p[0] = ReturnStatement(expr)
 
     def p_expression(self, p):

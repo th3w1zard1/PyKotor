@@ -3,15 +3,22 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node
+    from pykotor.resource.formats.ncs.dencs.scriptnode.a_control_loop import AControlLoop
+    from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression
+    from pykotor.resource.formats.ncs.dencs.scriptnode.a_sub import ASub  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase
+    from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl
+    from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode
+    from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.stack.const import Const
+    from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry
+    from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.subroutine_analysis_data import SubroutineAnalysisData  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.a_sub import ASub  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-
 
 class SubScriptState:
     STATE_DONE = -1
@@ -24,7 +31,6 @@ class SubScriptState:
 
     def __init__(self, nodedata: NodeAnalysisData, subdata: SubroutineAnalysisData, stack: LocalVarStack, protostate: SubroutineState | None = None, actions: ActionsData | None = None):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_sub import ASub  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
         
         self.nodedata = nodedata
         self.subdata = subdata
@@ -45,12 +51,11 @@ class SubScriptState:
     def _get_params(self, paramcount: int) -> list:
         # This method is implemented below in get_params - it's a duplicate name issue
         # The actual implementation is in the get_params method defined later
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         params = []
         for i in range(1, paramcount + 1):
             var: Variable = self.stack.get(i)
-            var.name("Param", i)
+            var.set_name_with_hint("Param", i)
             varref = AVarRef(var)
             params.append(varref)
         return params
@@ -105,35 +110,31 @@ class SubScriptState:
         return self.root.name() if hasattr(self.root, 'name') else ""
 
     def set_name(self, name: str):
-        if hasattr(self.root, 'name'):
-            self.root.name(name)
+        if hasattr(self.root, 'set_name'):
+            self.root.set_name(name)
 
     def is_main(self, ismain: bool = None):
         if ismain is not None:
-            if hasattr(self.root, 'is_main'):
-                self.root.is_main(ismain)
+            if hasattr(self.root, 'set_is_main'):
+                self.root.set_is_main(ismain)
         else:
             return self.root.is_main() if hasattr(self.root, 'is_main') else False
 
     def transform_placeholder_variable_removed(self, var: Variable):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
         vardec: AVarDecl = self.vardecs.get(var)
         if vardec is not None and vardec.is_fcn_return():
             exp = vardec.exp()
             parent: ScriptRootNode = vardec.parent()
-            if exp is not None:
-                parent.replace_child(vardec, exp)
-            else:
-                parent.remove_child(vardec)
-            self.vardecs.remove(var)
+            if parent is not None:
+                if exp is not None:
+                    parent.replace_child(vardec, exp)
+                else:
+                    parent.remove_child(vardec)
+            if var in self.vardecs:
+                del self.vardecs[var]
 
     def transform_move_sp_variables_removed(self, vars_list, node):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_code_block import ACodeBlock  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if self.at_last_command(node) and self.current_contains_vars(vars_list):
             return
@@ -162,7 +163,6 @@ class SubScriptState:
             self.current.condition(self.remove_last_exp(False))
 
     def transform_origin_found(self, destination, origin):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_control_loop import AControlLoop  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
         loop: AControlLoop = self.get_loop(destination, origin)
         self.current.add_child(loop)
@@ -174,8 +174,8 @@ class SubScriptState:
         self.remove_last_exp(True)
 
     def assert_state(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
         if self.state == 0:
             return
         if self.state == 2 and not isinstance(node, AJumpCommand):
@@ -187,7 +187,6 @@ class SubScriptState:
 
     def check_start(self, node):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
         self.assert_state(node)
         if self.current.has_children():
             last_node: ScriptNode = self.current.get_last_child()
@@ -195,13 +194,12 @@ class SubScriptState:
                 self.current = last_node.get_first_case()
 
     def check_end(self, node):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_else import AElse  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_do_loop import ADoLoop  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_else import AElse  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         while self.current is not None:
             if self.nodedata.get_pos(node) != self.current.get_end():
@@ -256,8 +254,6 @@ class SubScriptState:
         self.check_end(node)
 
     def transform_const(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.const import Const  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_const import AConst  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         theconst: Const = self.stack.get(1)
@@ -266,13 +262,11 @@ class SubScriptState:
         self.check_end(node)
 
     def transform_move_sp(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         self.check_switch_end(node)
         self.check_end(node)
 
     def transform_copy_down_sp(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_sp_command import ACopyDownSpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_return_statement import AReturnStatement  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         exp = self.remove_last_exp(False)
@@ -286,9 +280,7 @@ class SubScriptState:
         self.check_end(node)
 
     def transform_rs_add(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_rsadd_command import ARsaddCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         var: Variable = self.stack.get(1)
         self.update_var_count(var)
@@ -298,21 +290,18 @@ class SubScriptState:
         self.check_end(node)
 
     def transform_copy_top_sp(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         exp = self.get_var_to_copy(node)
         self.current.add_child(exp)
         self.check_end(node)
 
     def transform_copy_top_bp(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         exp = self.get_var_to_copy_bp(node)
         self.current.add_child(exp)
         self.check_end(node)
 
     def transform_copy_down_bp(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         varref = self.get_var_to_assign_to_bp(node)
         exp = self.remove_last_exp(False)
@@ -321,18 +310,14 @@ class SubScriptState:
         self.check_end(node)
 
     def transform_destruct(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         self.update_struct_var(node)
         self.check_end(node)
 
     def transform_action(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_action_exp import AActionExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         params = self.remove_action_params(node)
         act = AActionExp(NodeUtils.get_action_name(node, self.actions), NodeUtils.get_action_id(node), params)
@@ -341,9 +326,9 @@ class SubScriptState:
             var: Variable = self.stack.get(1)
             if type_val.equals(-16):
                 var = var.varstruct()
-            act.stackentry(var)
+            act.set_stackentry(var)
             vardec = AVarDecl(var)
-            vardec.is_fcn_return(True)
+            vardec.set_is_fcn_return(True)
             vardec.initialize_exp(act)
             self.update_var_count(var)
             self.current.add_child(vardec)
@@ -353,10 +338,8 @@ class SubScriptState:
         self.check_end(node)
 
     def transform_binary(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_binary_exp import ABinaryExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_conditional_exp import AConditionalExp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         right = self.remove_last_exp(False)
@@ -367,33 +350,31 @@ class SubScriptState:
             if not NodeUtils.is_conditional_op(node):
                 raise RuntimeError(f"Unknown binary op at {self.nodedata.get_pos(node)}")
             exp = AConditionalExp(left, right, NodeUtils.get_op(node))
-        exp.stackentry(self.stack.get(1))
+        exp.set_stackentry(self.stack.get(1))
         self.current.add_child(exp)
         self.check_end(node)
 
     def transform_unary(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_unary_exp import AUnaryExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         exp = self.remove_last_exp(False)
         unexp = AUnaryExp(exp, NodeUtils.get_op(node))
-        unexp.stackentry(self.stack.get(1))
+        unexp.set_stackentry(self.stack.get(1))
         self.current.add_child(unexp)
         self.check_end(node)
 
     def transform_logii(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_conditional_exp import AConditionalExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_conditional_exp import AConditionalExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         if not self.current.has_children() and isinstance(self.current, AIf) and isinstance(self.current.parent(), AIf):
             right = self.current
             left = self.current.parent()
             conexp = AConditionalExp(left.condition(), right.condition(), NodeUtils.get_op(node))
-            conexp.stackentry(self.stack.get(1))
+            conexp.set_stackentry(self.stack.get(1))
             self.current = self.current.parent()
             self.current.condition(conexp)
             self.current.remove_last_child()
@@ -402,24 +383,23 @@ class SubScriptState:
             if not self.current.has_children() and isinstance(self.current, AIf):
                 left2 = self.current.condition()
                 conexp = AConditionalExp(left2, right2, NodeUtils.get_op(node))
-                conexp.stackentry(self.stack.get(1))
+                conexp.set_stackentry(self.stack.get(1))
                 self.current.condition(conexp)
             elif not self.current.has_children() and isinstance(self.current, AWhileLoop):
                 left2 = self.current.condition()
                 conexp = AConditionalExp(left2, right2, NodeUtils.get_op(node))
-                conexp.stackentry(self.stack.get(1))
+                conexp.set_stackentry(self.stack.get(1))
                 self.current.condition(conexp)
             else:
                 left2 = self.remove_last_exp(False)
                 conexp = AConditionalExp(left2, right2, NodeUtils.get_op(node))
-                conexp.stackentry(self.stack.get(1))
+                conexp.set_stackentry(self.stack.get(1))
                 self.current.add_child(conexp)
         self.check_end(node)
 
     def transform_stack(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_unary_mod_exp import AUnaryModExp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         last = self.current.get_last_child()
@@ -431,35 +411,31 @@ class SubScriptState:
             self.state = 5
             prefix = True
         unexp = AUnaryModExp(varref, NodeUtils.get_op(node), prefix)
-        unexp.stackentry(self.stack.get(1))
+        unexp.set_stackentry(self.stack.get(1))
         self.current.add_child(unexp)
         self.check_end(node)
 
     def transform_jsr(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_jump_to_subroutine import AJumpToSubroutine  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_fcn_call_exp import AFcnCallExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         jsr = AFcnCallExp(self.get_fcn_id(node), self.remove_fcn_params(node))
         if not self.get_fcn_type(node).equals(0):
             last_child = self.current.get_last_child()
             if isinstance(last_child, AVarDecl):
-                last_child.is_fcn_return(True)
+                last_child.set_is_fcn_return(True)
                 last_child.initialize_exp(jsr)
-                jsr.stackentry(self.stack.get(1))
+                jsr.set_stackentry(self.stack.get(1))
         else:
             self.current.add_child(jsr)
         self.check_end(node)
 
     def transform_jump(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_action_arg_exp import AActionArgExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_break_statement import ABreakStatement  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_continue_statement import AContinueStatement  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_return_statement import AReturnStatement  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_unk_loop_control import AUnkLoopControl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         dest: Node = self.nodedata.get_destination(node)
@@ -472,9 +448,9 @@ class SubScriptState:
             from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
             if not isinstance(self.current, AIf) or self.nodedata.get_pos(node) != self.current.get_end():
                 if self.state == 4:
+                    from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
                     from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
                     from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
-                    from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
                     aswitch = self.current.get_last_child()
                     if isinstance(aswitch, ASwitch):
                         aprevcase = aswitch.get_last_case()
@@ -513,15 +489,13 @@ class SubScriptState:
         self.check_end(node)
 
     def transform_conditional_jump(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_conditional_jump_command import AConditionalJumpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_conditional_exp import AConditionalExp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_const import AConst  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_const import AConst  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_conditional_exp import AConditionalExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         self.check_start(node)
         if self.state == 3:
@@ -576,12 +550,11 @@ class SubScriptState:
 
     # Helper methods
     def _get_params(self, paramcount: int) -> list:
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         params = []
         for i in range(1, paramcount + 1):
             var: Variable = self.stack.get(i)
-            var.name("Param", i)
+            var.set_name_with_hint("Param", i)
             varref = AVarRef(var)
             params.append(varref)
         return params
@@ -601,20 +574,20 @@ class SubScriptState:
             return exp
 
     def remove_last_exp(self, force_one_only: bool):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         if not self.current.has_children() and isinstance(self.current, AIf):
             return self.remove_if_as_exp()
         anode: ScriptNode = self.current.remove_last_child()
         if isinstance(anode, AExpression):
-            if not force_one_only and isinstance(anode, AVarRef) and not anode.var().is_assigned() and not anode.var().is_param() and self.current.has_children():
+            if not force_one_only and isinstance(anode, AVarRef) and not anode.var().is_assigned and not anode.var().is_param and self.current.has_children():
                 last = self.current.get_last_child()
-                if isinstance(last, AExpression) and anode.var().equals(last.stackentry()):
+                # Use identity comparison (is) instead of equals() - standard Python approach
+                if isinstance(last, AExpression) and anode.var() is last.stackentry():
                     return self.remove_last_exp(False)
-                if isinstance(last, AVarDecl) and anode.var().equals(last.var()) and last.exp() is not None:
+                if isinstance(last, AVarDecl) and anode.var() is last.var_var() and last.exp() is not None:
                     return self.remove_last_exp(False)
             return anode
         if not force_one_only and isinstance(anode, AVarDecl) and anode.exp() is not None:
@@ -625,7 +598,6 @@ class SubScriptState:
     def get_last_exp(self):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
         anode: ScriptNode = self.current.get_last_child()
         if isinstance(anode, AExpression):
             return anode
@@ -635,11 +607,9 @@ class SubScriptState:
         raise RuntimeError(f"Last child not an expression {anode}")
 
     def get_loop(self, destination, origin):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_control_loop import AControlLoop  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_do_loop import ADoLoop  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
         before_jump: Node = NodeUtils.get_previous_command(origin, self.nodedata)
         if NodeUtils.is_jz_past_one(before_jump):
             doloop = ADoLoop(self.nodedata.get_pos(destination), self.nodedata.get_pos(origin))
@@ -650,8 +620,6 @@ class SubScriptState:
     def get_enclosing_loop(self, start):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_do_loop import ADoLoop  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
         node: ScriptNode = start
         while node is not None:
             if isinstance(node, ADoLoop) or isinstance(node, AWhileLoop):
@@ -661,10 +629,8 @@ class SubScriptState:
 
     def get_breakable(self):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_do_loop import ADoLoop  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
         node: ScriptNode = self.current
         while node is not None:
             if isinstance(node, ADoLoop) or isinstance(node, AWhileLoop) or isinstance(node, ASwitchCase):
@@ -677,7 +643,6 @@ class SubScriptState:
 
     def is_modify_conditional(self) -> bool:
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
         if not self.current.has_children():
             return True
         if self.current.size() == 1:
@@ -693,9 +658,7 @@ class SubScriptState:
             return not self.root.type().equals(0) and self.stack.size() == NodeUtils.stack_offset_to_pos(node.get_offset())
 
     def is_return_jump(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         dest: Node = NodeUtils.get_command_child(self.nodedata.get_destination(node))
         if NodeUtils.is_return(dest):
@@ -706,10 +669,9 @@ class SubScriptState:
         return False
 
     def get_return_exp(self):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_modify_exp import AModifyExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression_statement import AExpressionStatement  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_modify_exp import AModifyExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_return_statement import AReturnStatement  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
         last: ScriptNode = self.current.remove_last_child()
         if isinstance(last, AModifyExp):
             return last.expression()
@@ -722,9 +684,8 @@ class SubScriptState:
 
     def check_switch_end(self, node):
         from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         if isinstance(self.current, ASwitchCase) and isinstance(node, AMoveSpCommand):
             entry: StackEntry = self.stack.get(1)
@@ -734,10 +695,8 @@ class SubScriptState:
                 self.update_switch_unknowns(parent)
 
     def update_switch_unknowns(self, aswitch):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_continue_statement import AContinueStatement  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_break_statement import ABreakStatement  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_continue_statement import AContinueStatement  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_unk_loop_control import AUnkLoopControl  # pyright: ignore[reportMissingImports]
         acase: ASwitchCase = None
         while True:
@@ -752,18 +711,15 @@ class SubScriptState:
                         acase.replace_unknown(unk, ABreakStatement())
 
     def update_var_count(self, var):
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         count = 1
         key = var.type()
         curcount = self.varcounts.get(key, 0)
         if curcount != 0:
             count += curcount
-        var.name(self.varprefix, count)
+        var.set_name_with_hint(self.varprefix, count)
         self.varcounts[key] = count
 
     def set_var_struct_name(self, varstruct):
-        from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         if varstruct.name() is None:
             count = 1
@@ -771,12 +727,10 @@ class SubScriptState:
             curcount = self.varcounts.get(key, 0)
             if curcount != 0:
                 count += curcount
-            varstruct.name(self.varprefix, count)
+            varstruct.set_name(self.varprefix, count)
             self.varcounts[key] = count
 
     def get_variables(self):
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
         vars_list = list(self.vardecs.keys())
         varstructs = []
         for var in vars_list[:]:
@@ -825,7 +779,7 @@ class SubScriptState:
                     print(f"not a variable at loc {loc}")
                     print(self.stack)
                 var = entry
-            var.assigned()
+            var.assign()
             return AVarRef(var)
 
     def get_var_to_copy(self, node):
@@ -844,9 +798,8 @@ class SubScriptState:
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_const import AConst  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.const import Const  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         isstruct = copy > 1
         entry: StackEntry = stack.get(loc)
         if not isinstance(entry, Variable) and assign:
@@ -856,11 +809,11 @@ class SubScriptState:
         var: Variable = entry
         if not isstruct:
             if assign:
-                var.assigned()
+                var.assign()
             return AVarRef(var)
         if var.is_struct():
             if assign:
-                var.varstruct().assigned()
+                var.varstruct().assign()
             state.set_var_struct_name(var.varstruct())
             return AVarRef(var.varstruct())
         newstruct = VarStruct()
@@ -869,7 +822,7 @@ class SubScriptState:
             var = stack.get(i)
             newstruct.add_var(var)
         if assign:
-            newstruct.assigned()
+            newstruct.assign()
         self.subdata.add_struct(newstruct)
         state.set_var_struct_name(newstruct)
         return AVarRef(newstruct)
@@ -887,8 +840,8 @@ class SubScriptState:
         return params
 
     def get_exp_size(self, exp):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_const import AConst  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         if isinstance(exp, AVarRef):
             return exp.var().size()
         if isinstance(exp, AConst):
@@ -899,7 +852,6 @@ class SubScriptState:
         from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_vector_const_exp import AVectorConstExp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         params = []
         if isinstance(node, AActionCommand):
             paramtypes = NodeUtils.get_action_param_types(node, self.actions)
@@ -943,8 +895,6 @@ class SubScriptState:
         return 0
 
     def update_name(self, varref, exp):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_action_exp import AActionExp  # pyright: ignore[reportMissingImports]
         # TODO: Implement name generation from action
         # if isinstance(exp, AActionExp):
         #     name = NameGenerator.getNameFromAction(exp)
@@ -957,7 +907,6 @@ class SubScriptState:
         from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if isinstance(node, ADestructCommand):
             varref = self.get_last_exp()
@@ -973,12 +922,11 @@ class SubScriptState:
                 varref.choose_struct_element(var)
 
     def at_last_command(self, node) -> bool:
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_sub import ASub  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_else import AElse  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_sub import ASub  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch_case import ASwitchCase  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if self.nodedata.get_pos(node) == self.current.get_end():
             return True
@@ -997,10 +945,9 @@ class SubScriptState:
         return False
 
     def is_middle_of_return(self, node) -> bool:
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_return_statement import AReturnStatement  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_return_statement import AReturnStatement  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.root.type().equals(0) and self.current.has_children() and isinstance(self.current.get_last_child(), AReturnStatement):
             return True
@@ -1011,9 +958,6 @@ class SubScriptState:
         return False
 
     def current_contains_vars(self, vars_list) -> bool:
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
         for var in vars_list:
             if var.is_param():
                 continue
@@ -1033,7 +977,6 @@ class SubScriptState:
 
     def removing_switch_var(self, vars_list, node) -> bool:
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_ref import AVarRef  # pyright: ignore[reportMissingImports]
         if len(vars_list) == 1 and self.current.has_children() and isinstance(self.current.get_last_child(), ASwitch):
             exp: AExpression = self.current.get_last_child().switch_exp()
@@ -1042,7 +985,6 @@ class SubScriptState:
         return False
 
     def get_earlier_dec(self, vardec, earliestdec: int) -> int:
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
         if vardec is None:
             return earliestdec
         location = self.current.get_child_location(vardec)
@@ -1057,7 +999,6 @@ class SubScriptState:
     def get_previous_exp(self, pos: int):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_var_decl import AVarDecl  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
         node: ScriptNode = self.current.get_previous_child(pos)
         if node is None:
             return None

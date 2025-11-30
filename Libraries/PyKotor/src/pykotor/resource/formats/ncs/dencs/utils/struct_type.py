@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
 
 
 class StructType(Type):
     def __init__(self):
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         super().__init__(-15)
         self.types: list[Type] = []
         self.alltyped: bool = True
@@ -37,14 +33,14 @@ class StructType(Type):
         self.types.append(type_val)
         if type_val.equals(Type(-1)):
             self.alltyped = False
-        self.size += type_val.size
+        self.size += type_val.size()
 
     def add_type_stack_order(self, type_val: Type):
         from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         self.types.insert(0, type_val)
         if type_val.equals(Type(-1)):
             self.alltyped = False
-        self.size += type_val.size
+        self.size += type_val.size()
 
     def is_vector(self) -> bool:
         from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
@@ -73,7 +69,6 @@ class StructType(Type):
                 return
 
     def equals(self, obj) -> bool:
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         return isinstance(obj, StructType) and self.types == obj.types()
 
     def type_name(self, name: str | None = None) -> str | None:
@@ -93,16 +88,15 @@ class StructType(Type):
         return self.elements[i]
 
     def get_element(self, pos: int) -> Type:
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         curpos = 0
         if len(self.types) == 0:
             raise RuntimeError("Pos was greater than struct size")
         for entry in self.types:
             oldpos = pos
-            pos -= entry.size
+            pos -= entry.size()
             if pos <= 0:
                 return entry.get_element(curpos - pos + 1)
-            curpos += entry.size
+            curpos += entry.size()
         raise RuntimeError("Pos was greater than struct size")
 
     def set_element_names(self):

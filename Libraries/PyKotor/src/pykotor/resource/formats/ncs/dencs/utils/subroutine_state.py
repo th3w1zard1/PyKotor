@@ -4,17 +4,10 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.stack.local_type_stack import LocalTypeStack  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
-
 
 class SubroutineState:
     PROTO_NO = 0
@@ -48,12 +41,12 @@ class SubroutineState:
     def __init__(self, nodedata: NodeAnalysisData, root: Node, id_val: int):
         from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         self.nodedata: NodeAnalysisData = nodedata
-        self.params: list[Type] = []
+        self._params: list[Type] = []
         self.decisionqueue: list[SubroutineState.DecisionData] = []
         self.paramstyped: bool = True
         self.paramsize: int = 0
         self.status: int = 0
-        self.type: Type = Type(0)
+        self._type: Type = Type(0)
         self.root: Node = root
         self.id: int = id_val
         self.returndepth: int = 0
@@ -68,20 +61,20 @@ class SubroutineState:
             for decision in self.decisionqueue:
                 decision.close()
         self.decisionqueue = None
-        self.params = None
+        self._params = None
         self.root = None
         self.nodedata = None
-        if self.type is not None:
-            self.type.close()
-        self.type = None
+        if self._type is not None:
+            self._type.close()
+        self._type = None
 
     def print_state(self):
-        print("Return type is " + str(self.type))
+        print("Return type is " + str(self._type))
         print("There are " + str(self.paramsize) + " parameters")
         if self.paramsize > 0:
             buff = []
             buff.append(" Types: ")
-            for param in self.params:
+            for param in self._params:
                 buff.append(str(param) + " ")
             print("".join(buff))
 
@@ -103,14 +96,14 @@ class SubroutineState:
 
     def __str__(self, main: bool = False) -> str:
         buff = []
-        buff.append(str(self.type) + " ")
+        buff.append(str(self._type) + " ")
         if main:
             buff.append("main(")
         else:
             buff.append("sub" + str(self.id) + "(")
         link = ""
         for i in range(self.paramsize):
-            ptype = self.params[i]
+            ptype = self._params[i]
             buff.append(link + ptype.to_decl_string() + " param" + str(i))
             link = ", "
         buff.append(")")
@@ -133,7 +126,7 @@ class SubroutineState:
         return self.status == 1
 
     def is_totally_prototyped(self) -> bool:
-        return self.status == 2 and self.paramstyped and self.type.is_typed()
+        return self.status == 2 and self.paramstyped and self._type.is_typed()
 
     def get_skip_start(self, pos: int) -> bool:
         if self.decisionqueue is None or len(self.decisionqueue) == 0:
@@ -159,75 +152,73 @@ class SubroutineState:
             self.paramstyped = False
             if self.returndepth <= params:
                 from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
-                self.type = Type(0)
+                self._type = Type(0)
 
     def get_param_count(self) -> int:
         return self.paramsize
 
     def type(self) -> Type:
-        return self.type
+        return self._type
 
     def params(self) -> list[Type]:
-        return self.params
+        return self._params
 
     def set_return_type(self, type_val: Type, depth: int):
-        self.type = type_val
+        self._type = type_val
         self.returndepth = depth
 
     def update_params(self, types: list[Type]):
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         self.paramstyped = True
-        redo = len(self.params) > 0
+        redo = len(self._params) > 0
         if len(types) != self.paramsize:
             raise RuntimeError("Parameter count does not match: expected " + str(self.paramsize) + " and got " + str(len(types)))
         for i in range(len(types)):
             newtype = types[i]
-            if redo and not self.params[i].is_typed():
-                self.params[i] = newtype
+            if redo and not self._params[i].is_typed():
+                self._params[i] = newtype
             elif not redo:
-                self.params.append(newtype)
-            if not self.params[i].is_typed():
+                self._params.append(newtype)
+            if not self._params[i].is_typed():
                 self.paramstyped = False
 
     def get_param_type(self, pos: int) -> Type:
         from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
-        if len(self.params) < pos:
+        if len(self._params) < pos:
             return Type(0)
-        return self.params[pos - 1]
+        return self._params[pos - 1]
 
     def init_stack(self, stack: LocalTypeStack):
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         if self.is_prototyped():
-            if self.type.is_typed() and not self.type.equals(0):
-                if isinstance(self.type, StructType):
-                    structtypes = self.type.types()
+            if self._type.is_typed() and not self._type.equals(0):
+                if isinstance(self._type, StructType):
+                    structtypes = self._type.types()
                     for structtype in structtypes:
                         stack.push(structtype)
                 else:
-                    stack.push(self.type)
-            if self.paramsize == len(self.params):
+                    stack.push(self._type)
+            if self.paramsize == len(self._params):
                 for j in range(self.paramsize):
-                    stack.push(self.params[j])
+                    stack.push(self._params[j])
             else:
                 for j in range(self.paramsize):
                     stack.push(Type(-1))
 
-    def init_stack(self, stack: LocalVarStack):
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
+    def init_var_stack(self, stack: LocalVarStack):
         from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
-        if not self.type.equals(0):
-            if isinstance(self.type, StructType):
-                retvar = VarStruct(self.type)
+        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
+        if not self._type.equals(0):
+            if isinstance(self._type, StructType):
+                retvar = VarStruct(self._type)
             else:
-                retvar = Variable(self.type)
-            retvar.is_return(True)
+                retvar = Variable(self._type)
+            retvar.set_return(True)
             stack.push(retvar)
         for i in range(self.paramsize):
-            paramvar = Variable(self.params[i])
-            paramvar.is_param(True)
+            paramvar = Variable(self._params[i])
+            paramvar.set_param(True)
             stack.push(paramvar)
 
     def get_id(self) -> int:
@@ -238,7 +229,6 @@ class SubroutineState:
 
     def get_end(self) -> int:
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
         return NodeUtils.get_sub_end(self.root)
 
     def add_decision(self, node: Node, destination: int):

@@ -64,6 +64,7 @@ class AudioPlayer(QMainWindow):
         # sourcery skip: extract-method
         self.player.stop()
         from io import BytesIO
+
         from pykotor.resource.formats.wav.wav_auto import bytes_wav, read_wav  # type: ignore[import-not-found] # pyright: ignore[reportMissingImports]
         from pykotor.resource.type import ResourceType
         wav = read_wav(BytesIO(data))
@@ -94,7 +95,7 @@ class AudioPlayer(QMainWindow):
             buffer.open(QIODevice.OpenModeFlag.ReadOnly)
 
             # Set up player
-            player: PyQt6MediaPlayer | PySide6MediaPlayer = cast(Any, self.player)
+            player: PyQt6MediaPlayer | PySide6MediaPlayer = cast("Any", self.player)
             audio_output = QAudioOutput(self)  # type: ignore[call-overload]
             audio_output.setVolume(1)
             player.setAudioOutput(audio_output)
@@ -123,7 +124,7 @@ class AudioPlayer(QMainWindow):
         restype: ResourceType,
         data: bytes,
     ):
-        from toolset.gui.common.localization import translate as tr, trf
+        from toolset.gui.common.localization import trf
         self.setWindowTitle(trf("{name}.{ext} - Audio Player", name=resname, ext=restype.extension))
         self.set_media(data, restype)  # Use the refined set_media method
 

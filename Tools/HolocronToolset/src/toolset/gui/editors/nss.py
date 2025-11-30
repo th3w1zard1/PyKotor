@@ -10,13 +10,12 @@ import traceback
 from contextlib import contextmanager
 from operator import attrgetter
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING, Any, Callable, Generator, NamedTuple, Sequence, cast
+from typing import TYPE_CHECKING, Any, Callable, Generator, NamedTuple, cast
 
 from loggerplus import RobustLogger, get_log_directory  # type: ignore[import-untyped]
-from qtpy.QtCore import QAbstractItemModel, QCoreApplication, QDir, QModelIndex, QRect, QSettings, QStringListModel, Qt  # pyright: ignore[reportPrivateImportUsage]
-from qtpy.QtGui import QFont, QGuiApplication, QKeySequence, QTextBlock, QTextCursor, QTextDocument
+from qtpy.QtCore import QDir, QRect, QSettings, QStringListModel, Qt  # pyright: ignore[reportPrivateImportUsage]
+from qtpy.QtGui import QKeySequence, QTextCursor, QTextDocument
 from qtpy.QtWidgets import (
-    QAbstractItemView,
     QApplication,
     QCompleter,
     QDialog,
@@ -51,14 +50,16 @@ if __name__ == "__main__":
     update_path(Path(__file__).parent.parent.parent.parent)
 
 
+import os
+
 from pykotor.extract.file import FileResource  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.ncs import read_ncs  # pyright: ignore[reportPrivateImportUsage]
-from pykotor.resource.formats.ncs.compiler.classes import FunctionDefinition, GlobalVariableDeclaration, StructDefinition  # pyright: ignore[reportPrivateImportUsage]
-from pykotor.resource.formats.ncs.compiler.lexer import NssLexer  # pyright: ignore[reportPrivateImportUsage]
-from pykotor.resource.formats.ncs.compiler.parser import NssParser  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.resource.type import ResourceType  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_rim_file  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.debugger import Debugger, DebuggerState  # pyright: ignore[reportPrivateImportUsage]
+
+# Import VS Code style helpers for tooltips and editor configuration
+from toolset.gui.common.style.vscode_style import apply_tooltip_style_to_app
 from toolset.gui.common.widgets.breadcrumbs_widget import BreadcrumbsWidget  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.widgets.command_palette import CommandPalette  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.widgets.debug_callstack_widget import DebugCallStackWidget  # pyright: ignore[reportPrivateImportUsage]
@@ -78,20 +79,27 @@ from utility.misc import is_debug_mode  # pyright: ignore[reportPrivateImportUsa
 from utility.updater.github import download_github_file  # pyright: ignore[reportPrivateImportUsage]
 
 if TYPE_CHECKING:
-    import os
-
     from types import TracebackType
 
-    from qtpy.QtCore import QPoint  # pyright: ignore[reportPrivateImportUsage, reportAttributeAccessIssue]
+    from qtpy.QtCore import (
+        QAbstractItemModel,
+        QCloseEvent,  # pyright: ignore[reportPrivateImportUsage]
+        QModelIndex,
+        QPoint,  # pyright: ignore[reportPrivateImportUsage, reportAttributeAccessIssue]
+    )
     from qtpy.QtGui import (
         QAction,  # pyright: ignore[reportPrivateImportUsage]
         QMouseEvent,
+        QTextBlock,
         QWheelEvent,
+    )
+    from qtpy.QtWidgets import (
+        QAbstractItemView,
     )
 
     from pykotor.common.script import ScriptConstant, ScriptFunction, ScriptParam  # pyright: ignore[reportPrivateImportUsage]
-    from pykotor.resource.formats.ncs.compiler.classes import CodeRoot  # pyright: ignore[reportPrivateImportUsage]
     from toolset.data.installation import HTInstallation  # pyright: ignore[reportPrivateImportUsage]
+    from toolset.gui.common.language_server_client import LanguageServerClient
 
 
 def download_script(
@@ -130,6 +138,10 @@ class NSSEditor(Editor):
         self.ui.setupUi(self)
         self._setup_menus()
         self._add_help_action()
+        
+        # Apply VS Code-like tooltip styling to the application
+        # This ensures tooltips are readable in all themes
+        apply_tooltip_style_to_app()
         
         # Setup scrollbar event filter to prevent scrollbar interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
@@ -172,6 +184,31 @@ class NSSEditor(Editor):
         self._breakpoint_lines: set[int] = set()  # Line numbers with breakpoints (1-indexed)
         self._current_debug_line: int | None = None  # Current line being debugged
         self._line_to_instruction_map: dict[int, list[int]] = {}  # Map source lines to instruction indices
+        
+        # PERFORMANCE: Language Server runs in a subprocess
+        # This avoids blocking the UI thread and eliminates GIL contention
+        # Parser is initialized ONCE in the subprocess (~900ms), not on every keystroke
+        self._ls_client: LanguageServerClient | None = None
+        self._ls_pending_analysis: int = -1  # Track pending analysis request
+        
+        # Simple debounce timer for text changes (batches rapid keystrokes)
+        from qtpy.QtCore import QTimer
+        self._analysis_debounce_timer: QTimer = QTimer(self)
+        self._analysis_debounce_timer.setSingleShot(True)
+        self._analysis_debounce_timer.setInterval(250)  # 250ms debounce
+        self._analysis_debounce_timer.timeout.connect(self._request_analysis)
+        
+        # Hover debounce (minimal delay for responsiveness)
+        self._hover_debounce_timer: QTimer = QTimer(self)
+        self._hover_debounce_timer.setSingleShot(True)
+        self._hover_debounce_timer.setInterval(50)  # 50ms debounce for hover
+        self._hover_debounce_timer.timeout.connect(self._do_hover_lookup)
+        self._pending_hover_pos: tuple[int, int] | None = None
+        
+        # PERFORMANCE: Throttle hover documentation
+        self._last_hover_word: str = ""
+        self._last_hover_time: float = 0.0
+        self._hover_throttle_ms: int = 100  # Minimum ms between hover updates
 
         self._setupUI()
         self._update_game_specific_data()
@@ -411,7 +448,8 @@ class NSSEditor(Editor):
         self.ui.outlineView.setRootIsDecorated(True)
         self.ui.outlineView.setHeaderHidden(True)
         self.ui.codeEdit.textChanged.connect(self.ui.codeEdit.on_text_changed)
-        self.ui.codeEdit.textChanged.connect(self._update_outline)
+        # Connect to language server analysis (replaces individual debounced updates)
+        self.ui.codeEdit.textChanged.connect(self._on_text_changed)
         if self._is_tsl:
             self.ui.actionK1.setChecked(False)
             self.ui.actionTSL.setChecked(True)
@@ -431,15 +469,14 @@ class NSSEditor(Editor):
 
         self.ui.codeEdit.setMouseTracking(True)
         self.ui.codeEdit.mouseMoveEvent = self._show_hover_documentation  # type: ignore[assignment]
-        self.ui.codeEdit.textChanged.connect(self._update_outline)
+        # NOTE: _update_outline is already connected above, don't connect twice!
 
         # Use the existing outputEdit widget from UI file with proper encoding
         self.output_text_edit = self.ui.outputEdit
         self.output_text_edit.setReadOnly(True)
-        # Set proper font for output
-        output_font = QFont("Consolas" if sys.platform == "win32" else "Monaco", 10)
-        output_font.setStyleHint(QFont.StyleHint.Monospace)
-        self.output_text_edit.setFont(output_font)
+        # Set proper monospace font for output using VS Code-like configuration
+        from toolset.gui.common.style.vscode_style import configure_code_editor_font
+        configure_code_editor_font(self.output_text_edit, size=11)
 
         # Initialize the terminal widget
         self._setup_terminal()
@@ -471,8 +508,7 @@ class NSSEditor(Editor):
         # Enhanced auto-completion with IntelliSense-style hints
         self._setup_enhanced_completer()
         
-        # Connect compilation errors to error visualization
-        self.ui.codeEdit.textChanged.connect(self._update_error_diagnostics)
+        # Diagnostics now handled by language server via _on_text_changed
     
     def _validate_bookmarks(self):
         """Validate and update bookmark line numbers when text changes."""
@@ -495,7 +531,6 @@ class NSSEditor(Editor):
         
         if items_to_remove:
             self._save_bookmarks()
-        self._update_bookmark_visualization()
         self._update_bookmark_visualization()
     
     def _update_bookmark_visualization(self):
@@ -913,6 +948,18 @@ class NSSEditor(Editor):
 
         self._update_completer_model(self.constants, self.functions)
         self._highlighter.update_rules(is_tsl=self._is_tsl)
+        
+        # Update language server with new game data
+        if self._ls_client is not None:
+            self._ls_client.update_config(
+                is_tsl=self._is_tsl,
+                functions=self.functions,
+                constants=self.constants,
+                library=self.library,
+            )
+            self._ls_client.invalidate_cache()
+            # Re-analyze current document with new config
+            self._request_analysis()
 
     def _setup_signals(self):
         self.ui.actionCompile.triggered.connect(self.compile_current_script)
@@ -1547,170 +1594,312 @@ class NSSEditor(Editor):
         # Implementation can be enhanced further if needed
         pass
     
-    def _update_error_diagnostics(self):
-        """Update error/warning indicators in the gutter based on compilation errors."""
-        text: str = self.ui.codeEdit.toPlainText()
-        if not text.strip():
-            self._error_lines.clear()
-            self._warning_lines.clear()
-            self.ui.codeEdit.set_error_lines(self._error_lines)
-            self.ui.codeEdit.set_warning_lines(self._warning_lines)
+    def _ensure_language_server(self) -> bool:
+        """Ensure language server is running.
+        
+        Returns:
+            True if server is running or was started, False on failure.
+        """
+        if self._ls_client is None:
+            from toolset.gui.common.language_server_client import LanguageServerClient
+            self._ls_client = LanguageServerClient(
+                is_tsl=self._is_tsl,
+                functions=self.functions if self.functions else None,
+                constants=self.constants if self.constants else None,
+                library=self.library if self.library else None,
+            )
+        
+        if not self._ls_client.is_running:
+            return self._ls_client.start(timeout=10.0)
+        return True
+    
+    def _on_text_changed(self):
+        """Handle text changes - debounce analysis requests.
+        
+        This is the ONLY method connected to textChanged for analysis.
+        It batches rapid keystrokes and sends a single request to the
+        language server after 250ms of inactivity.
+        """
+        # Restart the debounce timer
+        self._analysis_debounce_timer.start()
+    
+    def _request_analysis(self):
+        """Request analysis from language server (called after debounce)."""
+        if not self._ensure_language_server():
+            RobustLogger().warning("Language server not available")
             return
         
+        text = self.ui.codeEdit.toPlainText()
+        filepath = self._filepath
+        
+        # Send analysis request with callback
+        assert self._ls_client is not None
+        self._ls_pending_analysis = self._ls_client.request_analysis(
+            text=text,
+            filepath=filepath,
+            callback=self._on_analysis_complete,
+        )
+    
+    def _on_analysis_complete(self, result: dict[str, Any]):
+        """Handle analysis results from language server.
+        
+        This is called asynchronously when the language server completes analysis.
+        Updates diagnostics, outline, and breadcrumbs from the result.
+        """
+        try:
+            if 'error' in result:
+                RobustLogger().error(f"Language server error: {result['error']}")
+                return
+            
+            # Update diagnostics
+            diagnostics = result.get('diagnostics', [])
+            self._update_diagnostics_from_ls(diagnostics)
+            
+            # Update outline/symbols
+            symbols = result.get('symbols', [])
+            self._update_outline_from_ls(symbols)
+            
+            # Update breadcrumbs (use current cursor position)
+            self._update_breadcrumbs_from_symbols(symbols)
+            
+        except Exception as e:
+            RobustLogger().error(f"Error processing analysis result: {e}")
+    
+    def _update_diagnostics_from_ls(self, diagnostics: list[dict[str, Any]]):
+        """Update error/warning visualization from language server diagnostics."""
         error_lines: set[int] = set()
         warning_lines: set[int] = set()
         
-        try:
-            # Try to parse the code to detect syntax errors
-            lexer = NssLexer()
-            library_lookup = None if self._filepath is None else [str(self._filepath.parent)]
+        for diag in diagnostics:
+            severity = diag.get('severity', 1)
+            range_info = diag.get('range', {})
+            start = range_info.get('start', {})
+            line = start.get('line', 0) + 1  # Convert to 1-indexed
             
-            # Use None for errorlog - we'll catch exceptions instead
-            parser = NssParser(
-                functions=self.functions,
-                constants=self.constants,
-                library=self.library,
-                library_lookup=library_lookup,
-                errorlog=None,
-            )
-            
-            try:
-                parser.parser.parse(text, lexer=lexer.lexer)
-            except Exception as parse_exc:
-                # Extract line number from error message if possible
-                error_msg = str(parse_exc)
-                import re
-                line_match = re.search(r'line (\d+)', error_msg, re.IGNORECASE)
-                if line_match:
-                    line_num = int(line_match.group(1))
-                    error_lines.add(line_num)
-                else:
-                    # If we can't extract line number, mark current line
-                    cursor = self.ui.codeEdit.textCursor()
-                    error_lines.add(cursor.blockNumber() + 1)
-                
-                # Log the error
-                RobustLogger().debug(f"Parse error: {parse_exc}")
-        except Exception:
-            # If parsing completely fails, try to find obvious syntax errors
-            lines: list[str] = text.split('\n')
-            for i, line in enumerate(lines, 1):
-                stripped = line.strip()
-                # Check for common syntax issues
-                if stripped.endswith(';') and not stripped.startswith('//'):
-                    # Check for double semicolons
-                    if ';;' in stripped:
-                        warning_lines.add(i)
-                # Check for missing semicolons on statements (heuristic)
-                if stripped and not stripped.startswith('//') and not stripped.endswith((';', '{', '}', ':')):
-                    # This is a warning, not an error
-                    if any(keyword in stripped for keyword in ['if', 'while', 'for', 'return']):
-                        # These might need semicolons depending on context
-                        pass
+            if severity == 1:  # Error
+                error_lines.add(line)
+            elif severity == 2:  # Warning
+                warning_lines.add(line)
         
         self._error_lines = error_lines
         self._warning_lines = warning_lines
         self.ui.codeEdit.set_error_lines(error_lines)
         self.ui.codeEdit.set_warning_lines(warning_lines)
+    
+    def _update_outline_from_ls(self, symbols: list[dict[str, Any]]):
+        """Update outline view from language server symbols."""
+        self.ui.outlineView.clear()
+        
+        for symbol in symbols:
+            item = QTreeWidgetItem(self.ui.outlineView)
+            name = symbol.get('name', 'unknown')
+            kind = symbol.get('kind', 'unknown')
+            detail = symbol.get('detail', '')
+            
+            # Format display based on kind
+            if kind == 'function':
+                item.setText(0, f"🔷 {name}")
+            elif kind == 'struct':
+                item.setText(0, f"📦 {name}")
+            elif kind == 'variable':
+                item.setText(0, f"🌐 {name}")
+            else:
+                item.setText(0, name)
+            
+            item.setToolTip(0, detail)
+            item.setData(0, Qt.ItemDataRole.UserRole, symbol)
+            
+            # Add children
+            for child in symbol.get('children', []):
+                child_item = QTreeWidgetItem(item)
+                child_name = child.get('name', 'unknown')
+                child_kind = child.get('kind', 'unknown')
+                child_detail = child.get('detail', '')
+                
+                if child_kind == 'parameter':
+                    child_item.setText(0, f"  📝 {child_name}: {child_detail}")
+                else:
+                    child_item.setText(0, f"  • {child_name}: {child_detail}")
+                child_item.setToolTip(0, child_detail)
+        
+        self.ui.outlineView.expandAll()
+    
+    def _update_breadcrumbs_from_symbols(self, symbols: list[dict[str, Any]]):
+        """Update breadcrumbs based on current cursor position and symbols."""
+        cursor = self.ui.codeEdit.textCursor()
+        current_line = cursor.blockNumber()  # 0-indexed
+        
+        breadcrumb_path: list[str] = []
+        
+        # Add filename
+        if self._filepath:
+            breadcrumb_path.append(self._filepath.name)
+        else:
+            breadcrumb_path.append("Untitled")
+        
+        # Find containing symbol
+        for symbol in symbols:
+            range_info = symbol.get('range', {})
+            start_line = range_info.get('start', {}).get('line', 0)
+            end_line = range_info.get('end', {}).get('line', 0)
+            
+            if start_line <= current_line <= end_line:
+                kind = symbol.get('kind', '')
+                name = symbol.get('name', '')
+                if kind and name:
+                    breadcrumb_path.append(f"{kind.title()}: {name}")
+                break
+        
+        if hasattr(self, '_breadcrumbs'):
+            self._breadcrumbs.set_path(breadcrumb_path)
 
     def _show_hover_documentation(self, e: QMouseEvent):
-        """Show rich tooltip documentation on hover."""
+        """Show rich tooltip documentation on hover.
+        
+        PERFORMANCE: Uses language server for hover info with debouncing.
+        Only updates tooltip if the word under cursor changed.
+        """
+        import time
+        
         cursor: QTextCursor = self.ui.codeEdit.cursorForPosition(e.pos())
         cursor.select(QTextCursor.SelectionType.WordUnderCursor)
-        word: str = cursor.selectedText()
-
-        if word and word.strip():
-            doc: str | None = self._get_documentation(word.strip())
-            if doc and doc.strip():
-                global_pos: QPoint = self.ui.codeEdit.mapToGlobal(e.pos())
-                # Use rich text tooltip with proper formatting
-                QToolTip.showText(global_pos, doc, self.ui.codeEdit, QRect(), 5000)
-            else:
-                QToolTip.hideText()
+        word: str = cursor.selectedText().strip()
+        
+        # Throttle: Skip if same word and recent
+        current_time = time.time() * 1000
+        time_since_last = current_time - self._last_hover_time
+        
+        if word == self._last_hover_word and time_since_last < self._hover_throttle_ms:
+            QPlainTextEdit.mouseMoveEvent(self.ui.codeEdit, e)
+            return
+        
+        self._last_hover_time = current_time
+        self._last_hover_word = word
+        
+        if word:
+            # Get cursor position for hover request
+            line = cursor.blockNumber()
+            character = cursor.columnNumber()
+            self._pending_hover_pos = (line, character)
+            
+            # Debounce hover request
+            self._hover_debounce_timer.start()
         else:
             QToolTip.hideText()
-
-        # Call the original mouseMoveEvent properly
+        
         QPlainTextEdit.mouseMoveEvent(self.ui.codeEdit, e)
+    
+    def _do_hover_lookup(self):
+        """Perform hover lookup via language server."""
+        if self._pending_hover_pos is None:
+            return
+        
+        line, character = self._pending_hover_pos
+        
+        # Try local documentation first (faster for built-in functions/constants)
+        text = self.ui.codeEdit.toPlainText()
+        lines = text.split('\n')
+        if 0 <= line < len(lines):
+            current_line = lines[line]
+            # Find word at position
+            word_start = character
+            word_end = character
+            while word_start > 0 and (current_line[word_start - 1].isalnum() or current_line[word_start - 1] == '_'):
+                word_start -= 1
+            while word_end < len(current_line) and (current_line[word_end].isalnum() or current_line[word_end] == '_'):
+                word_end += 1
+            word = current_line[word_start:word_end]
+            
+            if word:
+                # Get local documentation (fast path)
+                doc = self._get_documentation(word)
+                if doc:
+                    cursor = self.ui.codeEdit.textCursor()
+                    rect = self.ui.codeEdit.cursorRect(cursor)
+                    global_pos = self.ui.codeEdit.mapToGlobal(rect.topLeft())
+                    QToolTip.showText(global_pos, doc, self.ui.codeEdit, QRect(), 5000)
+                    return
+        
+        # Fall back to language server for project-defined symbols
+        if not self._ensure_language_server():
+            return
+        
+        assert self._ls_client is not None
+        self._ls_client.request_hover(
+            text=self.ui.codeEdit.toPlainText(),
+            line=line,
+            character=character,
+            callback=self._on_hover_complete,
+        )
+    
+    def _on_hover_complete(self, result: dict[str, Any] | None):
+        """Handle hover result from language server."""
+        if result is None or 'contents' not in result:
+            return
+        
+        contents = result.get('contents', '')
+        if contents:
+            cursor = self.ui.codeEdit.textCursor()
+            rect = self.ui.codeEdit.cursorRect(cursor)
+            global_pos = self.ui.codeEdit.mapToGlobal(rect.topLeft())
+            QToolTip.showText(global_pos, contents, self.ui.codeEdit, QRect(), 5000)
 
     def _get_documentation(self, word: str) -> str | None:
-        """Get the documentation for a word with rich formatting."""
-        word_lower: str = word.lower().strip()
+        """Get the documentation for a word with VS Code-like formatting.
         
-        # Get palette colors for theme-aware tooltips
-        app: QCoreApplication | None = QApplication.instance()
-        if app is None:
-            # Fallback colors if no application instance
-            text_color = "#000000"
-            highlight_color = "#0066CC"
-            link_color = "#0066CC"
-            base_color = "#FFFFFF"
-            bright_text = "#666666"
-            desc_color = "#333333"
-        else:
-            assert isinstance(app, QGuiApplication), "Application should be a QGuiApplication"
-            palette = app.palette()
-            text_color = palette.color(palette.ColorRole.ToolTipText).name()
-            highlight_color = palette.color(palette.ColorRole.Highlight).name()
-            link_color = palette.color(palette.ColorRole.Link).name()
-            base_color = palette.color(palette.ColorRole.ToolTipBase).name()
-            # Use bright text for secondary elements if available
-            bright_text = palette.color(palette.ColorRole.BrightText).name()
-            # Use window text for descriptions
-            desc_color = palette.color(palette.ColorRole.WindowText).name()
+        Uses theme-aware colors that automatically adapt to light/dark themes
+        for proper readability.
+        """
+        from toolset.gui.common.style.vscode_style import get_documentation_tooltip_html
+        
+        word_lower: str = word.lower().strip()
         
         # Search functions
         for func in self.functions:
             if func.name.lower() == word_lower:
-                # Build rich documentation string with theme-aware colors
-                doc_parts = [f"<b style='color: {highlight_color}; font-size: 14px;'>{func.name}</b>"]
-                
                 # Build signature
-                signature_parts: list[str] = []
-                return_type: str = getattr(func, 'return_type', 'unknown')
-                if return_type and return_type is not None:
-                    return_type = getattr(func, 'return_type', 'unknown')
-                    signature_parts.append(f"<span style='color: {link_color};'>{return_type}</span>")
-                signature_parts.append(f"<b style='color: {highlight_color};'>{func.name}</b>")
-                
-                # Add parameters if available
-                params: list[str] = []
+                return_type: str = getattr(func, 'return_type', 'void')
+                params_list: list[str] = []
                 parameters: list[ScriptParam] = getattr(func, 'parameters', [])
-                if parameters:
-                    for param in parameters:
-                        param_type: str = getattr(param, 'type', 'unknown')
-                        param_name: str = getattr(param, 'name', 'unknown')
-                        params.append(f"<span style='color: {bright_text};'>{param_name}</span>: <span style='color: {link_color};'>{param_type}</span>")
-                    signature_parts.append(f"({', '.join(params)})")
-                else:
-                    signature_parts.append("()")
+                for param in parameters:
+                    param_type: str = getattr(param, 'type', 'unknown')
+                    param_name: str = getattr(param, 'name', 'param')
+                    params_list.append(f"{param_type} {param_name}")
                 
-                doc_parts.append(" ".join(signature_parts))
+                params_str = ", ".join(params_list) if params_list else ""
+                signature = f"{return_type} {func.name}({params_str})"
                 
-                # Add description
-                if hasattr(func, 'description') and func.description:
-                    doc_parts.append(f"<p style='margin-top: 6px; color: {desc_color}; line-height: 1.4;'>{func.description}</p>")
+                # Get description
+                description = getattr(func, 'description', None)
                 
-                # Improved font styling with better readability
-                return f"""<div style='font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif; font-size: 13px; line-height: 1.5; color: {text_color}; padding: 2px;'>""" + "<br>".join(doc_parts) + "</div>"
+                return get_documentation_tooltip_html(
+                    title=func.name,
+                    signature=signature,
+                    description=description,
+                    widget=self.ui.codeEdit,
+                )
 
         # Search constants
         for const in self.constants:
             if const.name.lower() == word_lower:
-                const_value: str = getattr(const, 'value', 'unknown')
+                const_value: str = str(getattr(const, 'value', ''))
                 const_type: str = getattr(const, 'type', '')
-                doc_parts: list[str] = [f"<b style='color: {highlight_color}; font-size: 14px;'>{const.name}</b>"]
                 
+                # Build signature-like display
                 if const_type:
-                    doc_parts.append(f"<span style='color: {link_color};'>({const_type})</span>")
+                    signature = f"const {const_type} = {const_value}"
+                else:
+                    signature = f"= {const_value}"
                 
-                doc_parts.append(f"<br><span style='color: {bright_text};'>Value: {const_value}</span>")
+                # Get description
+                description = getattr(const, 'description', None)
                 
-                if hasattr(const, 'description') and const.description:
-                    doc_parts.append(f"<p style='margin-top: 6px; color: {desc_color}; line-height: 1.4;'>{const.description}</p>")
-                
-                # Improved font styling with better readability
-                return f"""<div style='font-family: "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif; font-size: 13px; line-height: 1.5; color: {text_color}; padding: 2px;'>""" + " ".join(doc_parts) + "</div>"
+                return get_documentation_tooltip_html(
+                    title=const.name,
+                    signature=signature,
+                    description=description,
+                    widget=self.ui.codeEdit,
+                )
 
         return None
 
@@ -2049,85 +2238,13 @@ class NSSEditor(Editor):
             item.setHidden(lower_string not in item.text().lower())
 
     def _update_outline(self):
-        """Update the outline view with better error handling."""
-        self.ui.outlineView.clear()
-        text: str = self.ui.codeEdit.toPlainText()
+        """Request outline update via language server.
         
-        if not text.strip():
-            return
-
-        try:
-            lexer = NssLexer()
-            library_lookup: list[str] | None = None if self._filepath is None else [str(self._filepath.parent)]
-            parser = NssParser(
-                functions=self.functions,
-                constants=self.constants,
-                library=self.library,
-                library_lookup=library_lookup,
-                errorlog=None,
-            )
-
-            ast: CodeRoot = parser.parser.parse(text, lexer=lexer.lexer)
-            self._populate_outline(ast)
-            self.ui.outlineView.expandAll()
-        except Exception as exc:
-            # Silently fail - outline is not critical
-            RobustLogger().debug(f"Failed to update outline: {exc}")
-
-    def _populate_outline(self, ast: CodeRoot):
-        """Populate outline view with symbols from AST."""
-        # Clear existing items
-        self.ui.outlineView.clear()
-        
-        # Sort objects by line number for better organization
-        sorted_objects: Sequence[ScriptFunction | ScriptConstant | StructDefinition | GlobalVariableDeclaration | None] = sorted(ast.objects, key=lambda o: getattr(o, 'line_num', 0) if hasattr(o, 'line_num') else 0)  # type: ignore[arg-type]
-        
-        for obj in sorted_objects:
-            if isinstance(obj, FunctionDefinition):
-                item = QTreeWidgetItem(self.ui.outlineView)
-                # Get return type if available
-                return_type: str = getattr(obj, 'return_type', 'void')
-                # Get parameter count
-                param_count: int = len(getattr(obj, 'parameters', []))
-                item.setText(0, f"🔷 {obj.identifier}({param_count}) → {return_type}")
-                item.setData(0, Qt.ItemDataRole.UserRole, obj)
-                item.setToolTip(0, f"Function: {obj.identifier}\nReturn type: {return_type}\nParameters: {param_count}")
-                
-                # Add parameters as children
-                for param in getattr(obj, 'parameters', []):
-                    param_item = QTreeWidgetItem(item)
-                    param_type = getattr(param, 'type', 'unknown')
-                    param_name = getattr(param, 'identifier', 'unknown')
-                    param_item.setText(0, f"  📝 {param_name}: {param_type}")
-                    param_item.setToolTip(0, f"Parameter: {param_name}\nType: {param_type}")
-
-            elif isinstance(obj, StructDefinition):
-                item = QTreeWidgetItem(self.ui.outlineView)
-                member_count: int = len(getattr(obj, 'members', []))
-                item.setText(0, f"📦 {obj.identifier} ({member_count} members)")
-                item.setData(0, Qt.ItemDataRole.UserRole, obj)
-                item.setToolTip(0, f"Struct: {obj.identifier}\nMembers: {member_count}")
-
-                # Add members as children
-                for member in getattr(obj, 'members', []):
-                    member_item = QTreeWidgetItem(item)
-                    member_type: str = getattr(member, 'type', 'unknown')
-                    member_name: str = getattr(member, 'identifier', 'unknown')
-                    member_item.setText(0, f"  • {member_name}: {member_type}")
-                    member_item.setToolTip(0, f"Member: {member_name}\nType: {member_type}")
-
-            elif isinstance(obj, GlobalVariableDeclaration):
-                item = QTreeWidgetItem(self.ui.outlineView)
-                var_type: str = getattr(obj, 'type', 'unknown')
-                item.setText(0, f"🌐 {obj.identifier}: {var_type}")
-                item.setData(0, Qt.ItemDataRole.UserRole, obj)
-                item.setToolTip(0, f"Global variable: {obj.identifier}\nType: {var_type}")
-        
-        # Expand all by default for better visibility
-        self.ui.outlineView.expandAll()
-        
-        # Set column width to fit content
-        self.ui.outlineView.resizeColumnToContents(0)
+        DEPRECATED: Outline updates are now handled via _request_analysis callback.
+        This method is kept for compatibility but does nothing.
+        """
+        # Outline updates are now batched with diagnostics via _request_analysis
+        pass
 
     def _setup_shortcuts(self):
         """Set up all keyboard shortcuts with VS Code-like behavior."""
@@ -2400,54 +2517,14 @@ class NSSEditor(Editor):
         self._breadcrumbs.clear()
     
     def _update_breadcrumbs(self):
-        """Update breadcrumbs based on current cursor position."""
-        cursor = self.ui.codeEdit.textCursor()
-        current_line = cursor.blockNumber() + 1
+        """Update breadcrumbs when cursor position changes.
         
-        # Try to find context (function, struct, etc.) from outline
-        breadcrumb_path: list[str] = []
-        
-        # Get filename if available
-        if self._filepath:
-            breadcrumb_path.append(self._filepath.name)
-        else:
-            breadcrumb_path.append("Untitled")
-        
-        # Try to find current function/scope from outline
-        text = self.ui.codeEdit.toPlainText()
-        if text.strip():
-            try:
-                from pykotor.resource.formats.ncs.compiler.lexer import NssLexer
-                from pykotor.resource.formats.ncs.compiler.parser import NssParser
-                
-                lexer = NssLexer()
-                library_lookup: list[str] | None = None if self._filepath is None else [str(self._filepath.parent)]
-                parser = NssParser(
-                    functions=self.functions,
-                    constants=self.constants,
-                    library=self.library,
-                    library_lookup=library_lookup,
-                    errorlog=None,
-                )
-                
-                ast = parser.parser.parse(text, lexer=lexer.lexer)
-                
-                # Find function/struct containing current line
-                for obj in ast.objects:
-                    obj_line = getattr(obj, 'line_num', -1)
-                    if obj_line > 0 and obj_line <= current_line:
-                        if hasattr(obj, 'identifier'):
-                            if isinstance(obj, FunctionDefinition):
-                                breadcrumb_path.append(f"Function: {obj.identifier}")
-                            elif hasattr(obj, 'members'):  # StructDefinition
-                                breadcrumb_path.append(f"Struct: {obj.identifier}")
-                            elif hasattr(obj, 'type'):  # GlobalVariableDeclaration
-                                breadcrumb_path.append(f"Variable: {obj.identifier}")
-            except Exception:
-                # Silently fail - breadcrumbs are not critical
-                pass
-        
-        self._breadcrumbs.set_path(breadcrumb_path)
+        PERFORMANCE: Breadcrumbs are now updated from the last analysis result
+        via _update_breadcrumbs_from_symbols, not by parsing.
+        """
+        # Breadcrumbs are updated when analysis completes via _on_analysis_complete
+        # For cursor position changes, we use the cached symbols from the last analysis
+        pass
     
     def _on_breadcrumb_clicked(self, segment: str):
         """Handle breadcrumb segment click - navigate to that context."""
@@ -2539,9 +2616,9 @@ class NSSEditor(Editor):
             self.ui.panelTabs.setVisible(True)
     
     def _reset_zoom(self):
-        """Reset editor font size to default."""
-        default_font: QFont = QFont("Consolas" if sys.platform == "win32" else "Monaco", 12)
-        self.ui.codeEdit.setFont(default_font)
+        """Reset editor font size to default VS Code-like font."""
+        from toolset.gui.common.style.vscode_style import configure_code_editor_font
+        configure_code_editor_font(self.ui.codeEdit, size=14)
     
     def _toggle_line_numbers(self):
         """Toggle line numbers visibility."""
@@ -2824,7 +2901,7 @@ class NSSEditor(Editor):
             # open_resource_editor returns a tuple, get the editor
             editor: NSSEditor | None = None
             if isinstance(result, tuple):
-                _, editor = cast(tuple[None, NSSEditor], result)
+                _, editor = cast("tuple[None, NSSEditor]", result)
             else:
                 editor = result
             ui = None if editor is None else editor.ui
@@ -3600,6 +3677,26 @@ Code Operations:
         word = cursor.selectedText().strip()
         if word:
             self._find_all_references(word)
+    
+    def closeEvent(self, event: QCloseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Handle editor close - clean up language server."""
+        # Stop language server subprocess
+        if self._ls_client is not None:
+            try:
+                self._ls_client.stop()
+            except Exception as e:
+                RobustLogger().debug(f"Error stopping language server: {e}")
+            finally:
+                self._ls_client = None
+        
+        # Stop timers
+        if hasattr(self, '_analysis_debounce_timer') and self._analysis_debounce_timer is not None:
+            self._analysis_debounce_timer.stop()
+        if hasattr(self, '_hover_debounce_timer') and self._hover_debounce_timer is not None:
+            self._hover_debounce_timer.stop()
+        
+        # Call parent close
+        super().closeEvent(event)
 
 
 if __name__ == "__main__":

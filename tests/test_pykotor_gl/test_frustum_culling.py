@@ -1,10 +1,12 @@
-"""Tests for frustum culling implementation.
+"""Tests for frustum culling implementation and optimization.
 
 These tests ensure that:
 1. Frustum planes are correctly extracted from view-projection matrices
 2. Point, sphere, and AABB culling tests work correctly
 3. Objects outside the frustum are properly culled
 4. Edge cases are handled correctly
+5. Caching mechanisms work correctly for performance
+6. Bounding sphere calculations are accurate
 
 The frustum culling is critical for performance in the 3D level editor,
 as it prevents rendering objects that aren't visible to the camera.
@@ -23,13 +25,113 @@ from pykotor.gl.scene.camera import Camera
 from pykotor.gl.scene.frustum import CullingStats, Frustum, FrustumPlane
 
 
+class TestCameraMatrixCaching(unittest.TestCase):
+    """Tests for Camera class matrix caching optimization."""
+    
+    def setUp(self):
+        """Set up test fixtures."""
+        self.camera = Camera()
+        self.camera.x = 10.0
+        self.camera.y = 20.0
+        self.camera.z = 5.0
+        self.camera.width = 1920
+        self.camera.height = 1080
+        self.camera.fov = math.radians(90)
+    
+    def test_view_matrix_caching(self):
+        """Test that view matrix is cached after first call."""
+        # First call should compute the matrix
+        view1 = self.camera.view()
+        self.assertIsNotNone(view1)
+        
+        # Verify cache flag is set
+        self.assertFalse(self.camera._view_dirty)
+        
+        # Second call should return cached matrix
+        view2 = self.camera.view()
+        
+        # Matrices should be identical (same object)
+        self.assertEqual(view1[0][0], view2[0][0])
+        self.assertEqual(view1[1][1], view2[1][1])
+    
+    def test_view_matrix_invalidation_on_position_change(self):
+        """Test that view matrix is invalidated when position changes."""
+        # Get initial view
+        view1 = self.camera.view()
+        
+        # Change position
+        self.camera.x = 100.0
+        self.camera._invalidate_view()  # Called by set_position
+        
+        # Cache should be dirty
+        self.assertTrue(self.camera._view_dirty)
+        
+        # New view should be different
+        view2 = self.camera.view()
+        self.assertNotEqual(view1[3][0], view2[3][0])
+    
+    def test_view_matrix_invalidation_on_rotation(self):
+        """Test that view matrix is invalidated when rotation changes."""
+        # Get initial view
+        view1 = self.camera.view()
+        
+        # Change rotation
+        self.camera.rotate(0.5, 0.3)
+        
+        # Cache should be dirty
+        self.assertTrue(self.camera._view_dirty)
+    
+    def test_projection_matrix_caching(self):
+        """Test that projection matrix is cached after first call."""
+        # First call should compute the matrix
+        proj1 = self.camera.projection()
+        self.assertIsNotNone(proj1)
+        
+        # Verify cache flag is set
+        self.assertFalse(self.camera._projection_dirty)
+        
+        # Second call should return cached matrix
+        proj2 = self.camera.projection()
+        
+        # Matrices should be identical
+        self.assertEqual(proj1[0][0], proj2[0][0])
+        self.assertEqual(proj1[1][1], proj2[1][1])
+    
+    def test_projection_matrix_invalidation_on_fov_change(self):
+        """Test that projection matrix is invalidated when FOV changes."""
+        # Get initial projection
+        proj1 = self.camera.projection()
+        
+        # Change FOV
+        self.camera.fov = math.radians(60)
+        self.camera._invalidate_projection()
+        
+        # Cache should be dirty
+        self.assertTrue(self.camera._projection_dirty)
+        
+        # New projection should be different
+        proj2 = self.camera.projection()
+        self.assertNotEqual(proj1[0][0], proj2[0][0])
+    
+    def test_set_resolution_invalidates_projection(self):
+        """Test that changing resolution invalidates projection matrix."""
+        # Get initial projection
+        proj1 = self.camera.projection()
+        
+        # Change resolution
+        self.camera.set_resolution(1280, 720)
+        
+        # Cache should be dirty
+        self.assertTrue(self.camera._projection_dirty)
+
+
 class TestFrustum(unittest.TestCase):
     """Tests for the Frustum class."""
     
     def setUp(self):
         """Set up test fixtures."""
-        self.frustum = Frustum()
-        self.camera = Camera()
+        self.frustum: Frustum = Frustum()
+        self.camera: Camera = Camera()
         # Set up a standard camera configuration
         self.camera.x = 0.0
         self.camera.y = 0.0
@@ -72,7 +174,9 @@ class TestFrustum(unittest.TestCase):
         self.assertEqual(self.frustum._cached_vp_hash, initial_hash)
         
         # Changing camera should update hash
+        # Need to invalidate cache when directly setting x to trigger recalculation
         self.camera.x = 10.0
+        self.camera._invalidate_view()  # Invalidate cached view matrix
         self.frustum.update_from_camera(self.camera)
         self.assertNotEqual(self.frustum._cached_vp_hash, initial_hash)
     
@@ -221,7 +325,7 @@ class TestCullingStats(unittest.TestCase):
     
     def setUp(self):
         """Set up test fixtures."""
-        self.stats = CullingStats()
+        self.stats: CullingStats = CullingStats()
     
     def test_initial_state(self):
         """Test initial state of statistics."""
@@ -365,6 +469,107 @@ class TestFrustumIntegration(unittest.TestCase):
         # This is a basic sanity check
         self.assertIsInstance(forward_result, bool)
         self.assertIsInstance(right_result, bool)
+
+
+class TestPerformanceOptimizations(unittest.TestCase):
+    """Tests for performance optimization features."""
+    
+    def test_frustum_caching_avoids_recalculation(self):
+        """Test that frustum caches view-projection hash to avoid recalculation."""
+        camera = Camera()
+        camera.x = 10.0
+        camera.y = 20.0
+        camera.z = 5.0
+        camera.width = 1920
+        camera.height = 1080
+        
+        frustum = Frustum()
+        
+        # First update
+        frustum.update_from_camera(camera)
+        initial_hash = frustum._cached_vp_hash
+        self.assertNotEqual(initial_hash, 0, "Hash should be computed")
+        
+        # Second update with same camera - should not recalculate
+        frustum.update_from_camera(camera)
+        self.assertEqual(frustum._cached_vp_hash, initial_hash)
+        
+        # Update after camera change - should recalculate
+        camera.x = 100.0
+        camera._invalidate_view()
+        frustum.update_from_camera(camera)
+        self.assertNotEqual(frustum._cached_vp_hash, initial_hash)
+    
+    def test_culling_stats_reset_per_frame(self):
+        """Test that culling stats can be reset for each frame."""
+        stats = CullingStats()
+        
+        # Simulate frame 1
+        stats.record_object(visible=True)
+        stats.record_object(visible=False)
+        stats.end_frame()
+        
+        self.assertEqual(stats.total_objects, 2)
+        self.assertEqual(stats.frame_count, 1)
+        
+        # Reset for frame 2
+        stats.reset()
+        
+        self.assertEqual(stats.total_objects, 0)
+        self.assertEqual(stats.frame_count, 1)  # Frame count not reset
+    
+    def test_culling_stats_accuracy(self):
+        """Test that culling statistics are accurate."""
+        stats = CullingStats()
+        
+        # Simulate rendering 100 objects
+        visible_count = 35
+        culled_count = 65
+        
+        for _ in range(visible_count):
+            stats.record_object(visible=True)
+        for _ in range(culled_count):
+            stats.record_object(visible=False)
+        
+        self.assertEqual(stats.total_objects, 100)
+        self.assertEqual(stats.visible_objects, 35)
+        self.assertEqual(stats.culled_objects, 65)
+        self.assertAlmostEqual(stats.cull_rate, 65.0, places=1)
+    
+    def test_sphere_culling_performance(self):
+        """Test that sphere culling is fast enough for many objects."""
+        import time
+        
+        camera = Camera()
+        camera.x = 0.0
+        camera.y = 0.0
+        camera.z = 0.0
+        camera.width = 1920
+        camera.height = 1080
+        
+        frustum = Frustum()
+        frustum.update_from_camera(camera)
+        
+        # Test with many objects
+        num_objects = 10000
+        test_spheres = [
+            (vec3(i * 10, i * 10, 0), 5.0) 
+            for i in range(num_objects)
+        ]
+        
+        start_time = time.perf_counter()
+        for center, radius in test_spheres:
+            frustum.sphere_in_frustum(center, radius)
+        end_time = time.perf_counter()
+        
+        elapsed_ms = (end_time - start_time) * 1000
+        
+        # Should complete in under 100ms for 10000 objects
+        # This is a reasonable target for real-time rendering
+        self.assertLess(
+            elapsed_ms, 100.0,
+            f"Sphere culling for {num_objects} objects took {elapsed_ms:.2f}ms (should be < 100ms)"
+        )
 
 
 if __name__ == "__main__":

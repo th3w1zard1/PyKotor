@@ -21,13 +21,15 @@ from typing import TYPE_CHECKING, Any
 from loggerplus import RobustLogger
 
 from pykotor.extract.installation import Installation, SearchLocation
-from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, read_tpc
+from pykotor.resource.formats.tpc import TPCTextureFormat, read_tpc
 from pykotor.resource.formats.tpc.tpc_data import TPCMipmap
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
     from multiprocessing import Queue
     from multiprocessing.synchronize import Event as MPEvent
+
+    from pykotor.resource.formats.tpc import TPC
 
 
 class TextureLoaderProcess(multiprocessing.Process):

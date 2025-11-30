@@ -4,6 +4,7 @@ import inspect
 import multiprocessing
 import pickle
 import queue
+import sys
 import threading
 import uuid
 
@@ -16,11 +17,10 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum, auto
 from multiprocessing import Manager
-from multiprocessing.managers import RemoteError, ValueProxy
+from multiprocessing.managers import RemoteError
 from typing import Any, Callable, ClassVar, cast
 
 import qtpy
-import sys
 
 Future = _ConcurrentFuture
 sys.modules.setdefault("FileActionsExecutor", sys.modules[__name__])
@@ -44,7 +44,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from concurrent.futures import Future
     from multiprocessing import Queue
-    from multiprocessing.managers import DictProxy, SyncManager
+    from multiprocessing.managers import DictProxy, SyncManager, ValueProxy
 
 
 class TaskStatus(Enum):
@@ -310,7 +310,7 @@ class FileActionsExecutor(QObject):
         RobustLogger().debug(f"Attempting to pause task: {task_id}")
         task: Task | None = self.get_task(task_id)
         if task and task.status == TaskStatus.RUNNING:
-            cast(ValueProxy, task.kwargs["pause_flag"]).value = True
+            cast("ValueProxy", task.kwargs["pause_flag"]).value = True
             task.status = TaskStatus.PAUSED
             self.tasks[task_id] = task  # Update the task in the shared dictionary
             self.TaskPaused.emit(task_id)
@@ -325,7 +325,7 @@ class FileActionsExecutor(QObject):
         RobustLogger().debug(f"Attempting to resume task: {task_id}")
         task: Task | None = self.get_task(task_id)
         if task and task.status == TaskStatus.PAUSED:
-            cast(ValueProxy, task.kwargs["pause_flag"]).value = False
+            cast("ValueProxy", task.kwargs["pause_flag"]).value = False
             task.status = TaskStatus.RUNNING
             self.tasks[task_id] = task  # Update the task in the shared dictionary
             self.TaskResumed.emit(task_id)

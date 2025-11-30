@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 import os
-
-if TYPE_CHECKING:
-    pass
 
 
 class ScriptNode:
@@ -13,13 +9,14 @@ class ScriptNode:
         self.tabs: str = ""
         self.newline: str = os.linesep
 
-    def parent(self) -> ScriptNode | None:
-        return self._parent
-
-    def parent(self, parent: ScriptNode | None):
+    def parent(self, parent: ScriptNode | None = ...) -> ScriptNode | None:
+        """Get or set parent. Call without args to get, with arg to set."""
+        if parent is ...:
+            return self._parent
         self._parent = parent
         if parent is not None:
             self.tabs = parent.tabs + "\t"
+        return None
 
     def close(self):
         self._parent = None

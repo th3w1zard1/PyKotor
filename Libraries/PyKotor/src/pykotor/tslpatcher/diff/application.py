@@ -13,7 +13,7 @@ import traceback
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, TextIO
+from typing import TYPE_CHECKING
 
 from pykotor.common.misc import Game
 from pykotor.extract.installation import Installation
@@ -24,7 +24,6 @@ from pykotor.tslpatcher.diff.engine import (
     diff_data,
     get_module_root,
     run_differ_from_args_impl,
-    DiffContext,
 )
 from pykotor.tslpatcher.diff.generator import (
     TSLPatchDataGenerator,
@@ -35,6 +34,9 @@ from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from pykotor.tools.reference_cache import TwoDAMemoryReferenceCache
+    from pykotor.tslpatcher.diff.engine import (
+        DiffContext,
+    )
 
 
 @dataclass

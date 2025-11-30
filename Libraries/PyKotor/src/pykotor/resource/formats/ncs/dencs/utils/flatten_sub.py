@@ -2,32 +2,33 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.analysis.pruned_depth_first_adapter import PrunedDepthFirstAdapter  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_command_block import ACommandBlock  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_action_cmd import AActionCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_action_jump_cmd import AActionJumpCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_add_var_cmd import AAddVarCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_const_cmd import AConstCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_copydownsp_cmd import ACopydownspCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_copytopsp_cmd import ACopytopspCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_copydownbp_cmd import ACopydownbpCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_copytopbp_cmd import ACopytopbpCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_movesp_cmd import AMovespCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_logii_cmd import ALogiiCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_unary_cmd import AUnaryCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_binary_cmd import ABinaryCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_destruct_cmd import ADestructCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_bp_cmd import ABpCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_action_cmd import AActionCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_command_block import ACommandBlock  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_const_cmd import AConstCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copydownbp_cmd import ACopydownbpCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copydownsp_cmd import ACopydownspCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copytopbp_cmd import ACopytopbpCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copytopsp_cmd import ACopytopspCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_destruct_cmd import ADestructCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand
+    from pykotor.resource.formats.ncs.dencs.node.a_logii_cmd import ALogiiCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_movesp_cmd import AMovespCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn
     from pykotor.resource.formats.ncs.dencs.node.a_stack_op_cmd import AStackOpCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_store_state_command import AStoreStateCommand
+    from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_unary_cmd import AUnaryCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.analysis.pruned_depth_first_adapter import PrunedDepthFirstAdapter  # pyright: ignore[reportMissingImports]
-
 
 class FlattenSub(PrunedDepthFirstAdapter):
     def __init__(self, sub: ASubroutine, nodedata: NodeAnalysisData):
-        from pykotor.resource.formats.ncs.dencs.analysis.pruned_depth_first_adapter import PrunedDepthFirstAdapter  # pyright: ignore[reportMissingImports]
         super().__init__()
         self.set_sub(sub)
         self.actionjumpfound: bool = False
@@ -52,12 +53,9 @@ class FlattenSub(PrunedDepthFirstAdapter):
                 self.i += 1
 
     def case_a_action_jump_cmd(self, node: AActionJumpCmd):
-        from pykotor.resource.formats.ncs.dencs.node.a_store_state_command import AStoreStateCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_store_state_cmd import AStoreStateCmd  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_cmd import AJumpCmd  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_return_cmd import AReturnCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_store_state_cmd import AStoreStateCmd  # pyright: ignore[reportMissingImports]
         sscommand: AStoreStateCommand = node.get_store_state_command()
         jmpcommand: AJumpCommand = node.get_jump_command()
         cmdblock: ACommandBlock = node.get_command_block()

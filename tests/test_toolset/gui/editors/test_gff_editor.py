@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, TextIO
 from unittest import TestCase
 
 from utility.error_handling import format_exception_with_variables
+from pykotor.extract.file import ResourceIdentifier, FileResource, ResourceResult
 
 try:
     from qtpy.QtTest import QTest
@@ -18,10 +19,8 @@ except (ImportError, ModuleNotFoundError):
 absolute_file_path = pathlib.Path(__file__).resolve()
 TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "test_toolset/test_files"
 
-if (
-    __name__ == "__main__"
-    and getattr(sys, "frozen", False) is False
-):
+if __name__ == "__main__" and getattr(sys, "frozen", False) is False:
+
     def add_sys_path(p):
         working_dir = str(p)
         if working_dir in sys.path:
@@ -147,7 +146,7 @@ class GFFEditorTest(TestCase):
 
     def setUp(self):
         self.log_messages: list[str] = [os.linesep]
-        self.app: QApplication
+        self.app
 
     def log_func(self, *args):
         self.log_messages.append("\t".join(args))
@@ -172,7 +171,7 @@ class GFFEditorTest(TestCase):
     )
     def test_gff_reconstruct_from_k1_installation(self):
         editor = self.Editor(None, self.get_installation_k1())
-        for gff_resource in (resource for resource in editor._installation if resource.restype().contents == "gff"):
+        for gff_resource in (resource for resource in editor._installation if resource.restype().is_gff()):
             print("Load ", gff_resource.identifier())
             old = read_gff(gff_resource.data())
             editor.load(gff_resource.filepath(), gff_resource.resname(), gff_resource.restype(), gff_resource.data())
@@ -190,7 +189,7 @@ class GFFEditorTest(TestCase):
     def test_gff_reconstruct_from_k2_installation(self):
         editor = self.Editor(None, self.get_installation_tsl())
         self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
-        for gff_resource in (resource for resource in editor._installation if resource.restype().contents == "gff"):
+        for gff_resource in (resource for resource in editor._installation if resource.restype().is_gff()):
             old = read_gff(gff_resource.data())
             editor.load(gff_resource.filepath(), gff_resource.resname(), gff_resource.restype(), gff_resource.data())
 
@@ -215,43 +214,70 @@ import pytest
 from toolset.gui.editors.gff import GFFEditor
 from toolset.data.installation import HTInstallation
 from pykotor.resource.type import ResourceType
+from pykotor.extract.installation import ResourceResult
 
-def test_gff_editor_headless_ui_load_build(qtbot, installation: HTInstallation, test_files_dir: pathlib.Path):
+
+def test_gffeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that GFFEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+
+    editor = GFFEditor(None, installation)
+    qtbot.addWidget(editor)
+
+    # Trigger help dialog with the correct file for GFFEditor
+    editor._show_help_dialog("GFF-File-Format.md")
+    qtbot.wait(200)  # Wait for dialog to be created
+
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, f"Help file 'GFF-File-Format.md' should be found, but error was shown. HTML: {html[:500]}"
+
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"
+
+
+def test_gff_editor_headless_ui_load_build(qtbot, installation: HTInstallation):
     """Test GFF Editor in headless UI - loads real file and builds data."""
     editor = GFFEditor(None, installation)
     qtbot.addWidget(editor)
-    
+
     # Try to find a GFF file
-    gff_file = test_files_dir / "zio001.git"  # GIT files are GFF format
+    gff_file = TESTS_FILES_PATH / "zio001.git"  # GIT files are GFF format
     if not gff_file.exists():
         # Try to get one from installation
-        gff_resources = [r for r in installation.resources(ResourceType.GIT)][:1]
+        gff_resources: dict[ResourceIdentifier, ResourceResult | None] = installation.resources([ResourceIdentifier("zio001", ResourceType.GIT)])
         if not gff_resources:
             # Try any GFF-based resource
-            gff_resources = [r for r in installation.resources(ResourceType.ARE)][:1]
+            gff_resources = installation.resources([ResourceIdentifier("zio001", ResourceType.GFF)])
         if not gff_resources:
             pytest.skip("No GFF files available for testing")
-        gff_resource = gff_resources[0]
-        gff_data = installation.resource(gff_resource.identifier)
+        gff_resource: ResourceResult | None = gff_resources.get(ResourceIdentifier("zio001", ResourceType.GIT)) or gff_resources.get(ResourceIdentifier("zio001", ResourceType.GFF))
+        if gff_resource is None:
+            pytest.skip("No GFF files found!")
+        gff_data = gff_resource.data
         if not gff_data:
-            pytest.skip(f"Could not load GFF data for {gff_resource.identifier}")
-        editor.load(
-            gff_resource.filepath if hasattr(gff_resource, 'filepath') else pathlib.Path("module.gff"),
-            gff_resource.resname,
-            gff_resource.restype,
-            gff_data
-        )
+            pytest.skip(f"Could not load GFF data for {gff_resource.identifier()}")
+        editor.load(gff_resource.filepath if hasattr(gff_resource, "filepath") else pathlib.Path("module.gff"), gff_resource.resname, gff_resource.restype, gff_data)
     else:
         original_data = gff_file.read_bytes()
         editor.load(gff_file, "zio001", ResourceType.GIT, original_data)
-    
+
     # Verify editor loaded the data
     assert editor is not None
-    
+
     # Build and verify it works
     data, _ = editor.build()
     assert len(data) > 0
-    
+
     # Verify we can read it back
     loaded_gff = read_gff(data)
     assert loaded_gff is not None

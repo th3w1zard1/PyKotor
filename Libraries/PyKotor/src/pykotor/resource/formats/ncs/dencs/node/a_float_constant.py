@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_constant import PConstant  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_float_constant import TFloatConstant  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.ncs.dencs.node.p_constant import PConstant  # pyright: ignore[reportMissingImports]
 
+if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_float_constant import TFloatConstant  # pyright: ignore[reportMissingImports]
 
 class AFloatConstant(PConstant):
     def __init__(self):
-        from pykotor.resource.formats.ncs.dencs.node.p_constant import PConstant  # pyright: ignore[reportMissingImports]
         super().__init__()
         self._float_constant: TFloatConstant | None = None
 

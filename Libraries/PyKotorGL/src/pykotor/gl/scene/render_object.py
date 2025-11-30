@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 from copy import copy
 from typing import TYPE_CHECKING, Any, Callable, Union
 
@@ -15,6 +17,21 @@ if TYPE_CHECKING:
 
 
 class RenderObject:
+    """Render object with cached bounding sphere for efficient frustum culling.
+    
+    Performance optimization: Bounding sphere radius and center are cached to avoid
+    expensive recalculation during frustum culling. The cache is invalidated when
+    position changes or cube is reset.
+    
+    Reference: Standard game engine practice (Unity BoundingSphere, UE4 FBoundingSphere)
+    """
+    
+    __slots__ = (
+        "model", "children", "_transform", "_position", "_rotation",
+        "_cube", "_boundary", "gen_boundary", "data", "override_texture",
+        "_cached_radius", "_cached_center", "_bounds_dirty"
+    )
+    
     def __init__(
         self,
         model: str,
@@ -35,6 +52,11 @@ class RenderObject:
         self.gen_boundary: Callable[[], Boundary] | None = gen_boundary
         self.data: Any = data
         self.override_texture: str | None = override_texture
+        
+        # Cached bounding sphere for frustum culling
+        self._cached_radius: float = -1.0  # -1 means not computed
+        self._cached_center: vec3 | None = None
+        self._bounds_dirty: bool = True
 
         self._recalc_transform()
 
@@ -52,6 +74,7 @@ class RenderObject:
         perspective = vec4()
         glm.decompose(transform, scale, rotation, self._position, skew, perspective)  # pyright: ignore[reportArgumentType, reportCallIssue]
         self._rotation = glm.eulerAngles(rotation)
+        self._bounds_dirty = True
 
     def _recalc_transform(self):
         self._transform = mat4() * glm.translate(self._position)
@@ -71,6 +94,7 @@ class RenderObject:
 
         self._position = vec3(x, y, z)
         self._recalc_transform()
+        self._bounds_dirty = True
 
     def rotation(self) -> vec3:
         return copy(self._rotation)
@@ -86,9 +110,13 @@ class RenderObject:
 
         self._rotation = vec3(x, y, z)
         self._recalc_transform()
+        self._bounds_dirty = True
 
     def reset_cube(self):
         self._cube = None
+        self._bounds_dirty = True
+        self._cached_radius = -1.0
+        self._cached_center = None
 
     def cube(
         self,
@@ -99,6 +127,7 @@ class RenderObject:
             max_point = vec3(-10000, -10000, -10000)
             self._cube_rec(scene, mat4(), self, min_point, max_point)
             self._cube = Cube(scene, min_point, max_point)
+            self._bounds_dirty = True
         return self._cube
 
     def radius(
@@ -115,6 +144,70 @@ class RenderObject:
             abs(cube.max_point.z),
         )
 
+    def bounding_sphere(
+        self,
+        scene: Scene,
+        default_radius: float = 5.0,
+    ) -> tuple[vec3, float]:
+        """Get cached bounding sphere center and radius for frustum culling.
+        
+        This is optimized for fast access during rendering - values are cached
+        and only recomputed when the object's bounds change.
+        
+        Args:
+            scene: The scene for model lookups.
+            default_radius: Default radius if bounds cannot be computed.
+            
+        Returns:
+            Tuple of (center, radius) for the bounding sphere.
+        """
+        # Fast path: return cached values if valid
+        if not self._bounds_dirty and self._cached_radius >= 0 and self._cached_center is not None:
+            # Update center position (cheap operation)
+            pos = self._position
+            return vec3(
+                pos.x + self._cached_center.x,
+                pos.y + self._cached_center.y,
+                pos.z + self._cached_center.z,
+            ), self._cached_radius
+        
+        # Slow path: compute bounding sphere
+        try:
+            cube = self.cube(scene)
+            min_pt = cube.min_point
+            max_pt = cube.max_point
+            
+            # Calculate bounding sphere from AABB
+            dx = max_pt.x - min_pt.x
+            dy = max_pt.y - min_pt.y
+            dz = max_pt.z - min_pt.z
+            
+            # Radius is half the diagonal of the AABB
+            self._cached_radius = math.sqrt(dx * dx + dy * dy + dz * dz) / 2.0
+            
+            # Center offset relative to object position
+            self._cached_center = vec3(
+                (min_pt.x + max_pt.x) / 2.0,
+                (min_pt.y + max_pt.y) / 2.0,
+                (min_pt.z + max_pt.z) / 2.0,
+            )
+            self._bounds_dirty = False
+            
+            # Return world-space center
+            pos = self._position
+            return vec3(
+                pos.x + self._cached_center.x,
+                pos.y + self._cached_center.y,
+                pos.z + self._cached_center.z,
+            ), self._cached_radius
+            
+        except Exception:  # noqa: BLE001
+            # Fallback to default values
+            self._cached_radius = default_radius
+            self._cached_center = vec3(0, 0, 0)
+            self._bounds_dirty = False
+            return self._position, default_radius
+
     def _cube_rec(
         self,
         scene: Scene,
@@ -124,8 +217,8 @@ class RenderObject:
         max_point: vec3,
     ):
         obj_min, obj_max = scene.model(obj.model).box()
-        obj_min: vec3 = transform * obj_min
-        obj_max: vec3 = transform * obj_max
+        obj_min = transform * obj_min
+        obj_max = transform * obj_max
         min_point.x = min(min_point.x, obj_min.x, obj_max.x)
         min_point.y = min(min_point.y, obj_min.y, obj_max.y)
         min_point.z = min(min_point.z, obj_min.z, obj_max.z)

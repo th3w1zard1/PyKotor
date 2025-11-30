@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.node.p_logii_command import PLogiiCommand  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_logii_command import PLogiiCommand  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_logii_op import PLogiiOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
 
-
 class ALogiiCommand(PLogiiCommand):
     def __init__(self, logii_op: PLogiiOp | None = None, pos: TIntegerConstant | None = None, type_val: TIntegerConstant | None = None, semi: TSemi | None = None):
-        from pykotor.resource.formats.ncs.dencs.node.p_logii_command import PLogiiCommand  # pyright: ignore[reportMissingImports]
         super().__init__()
         
         self._logii_op_: PLogiiOp | None = None

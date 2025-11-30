@@ -19,7 +19,7 @@ from qtpy.QtCore import (
     Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtGui import QIcon, QPixmap
+from qtpy.QtGui import QAction, QIcon, QPixmap
 from qtpy.QtMultimedia import QMediaPlayer
 from qtpy.QtWidgets import (
     QApplication,
@@ -27,13 +27,11 @@ from qtpy.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMenu,
-    QMenuBar,
     QMessageBox,
     QPlainTextEdit,  # pyright: ignore[reportPrivateImportUsage]  # pyright: ignore[reportPrivateImportUsage]
     QShortcut,
     QStyle,
 )
-from qtpy.QtGui import QAction
 
 from pykotor.common.module import Module
 from pykotor.extract.capsule import Capsule
@@ -65,7 +63,11 @@ if TYPE_CHECKING:
     from PySide6.QtMultimedia import QMediaPlayer as PySide6MediaPlayer  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
     from qtpy.QtCore import QRect
     from qtpy.QtGui import QScreen, _QAction
-    from qtpy.QtWidgets import QWidget, _QMenu
+    from qtpy.QtWidgets import (
+        QMenuBar,
+        QWidget,
+        _QMenu,
+    )
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.common.language import LocalizedString
@@ -636,7 +638,7 @@ class Editor(QMainWindow):
         # Check if any parent in the filepath is a .sav file
         self._is_save_game_resource = self._detect_save_game_resource(self._filepath)
         
-        menu_bar: QMenuBar | None = cast(Optional[QMenuBar], self.menuBar())
+        menu_bar: QMenuBar | None = cast("Optional[QMenuBar]", self.menuBar())
         assert menu_bar is not None, "Menu bar is None somehow? This should be impossible."
         menu_bar_actions: Sequence[_QAction] = menu_bar.actions()  # pyright: ignore[reportAssignmentType]
         if len(menu_bar_actions) > 0:
@@ -681,7 +683,7 @@ class Editor(QMainWindow):
         self._revert = b""
         self._is_save_game_resource = False
         self._filepath = self.setup_extract_path() / f"{self._resname}.{self._restype.extension}"
-        menu_bar: QMenuBar | None = cast(Optional[QMenuBar], self.menuBar())
+        menu_bar: QMenuBar | None = cast("Optional[QMenuBar]", self.menuBar())
         assert menu_bar is not None, "Menu bar is None somehow? This should be impossible."
         menu: _QMenu | None = menu_bar.actions()[0].menu()
         assert menu is not None, "Menu is somehow None"
@@ -756,7 +758,7 @@ class Editor(QMainWindow):
             buffer.open(QIODevice.OpenModeFlag.ReadOnly)
 
             # Set up player
-            player: PyQt6MediaPlayer | PySide6MediaPlayer = cast(Any, self.media_player.player)
+            player: PyQt6MediaPlayer | PySide6MediaPlayer = cast("Any", self.media_player.player)
             audio_output = QAudioOutput(self)
             audio_output.setVolume(1)
             player.setAudioOutput(audio_output)

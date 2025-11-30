@@ -46,10 +46,12 @@ from qtpy.QtWidgets import (
     QTreeView,
     QVBoxLayout,
 )
+from toolset.gui.widgets.settings.misc import GlobalSettings
+from utility.logger_util import RobustRootLogger
 from watchdog.events import FileSystemEventHandler
 
 from pykotor.common.stream import BinaryReader
-from pykotor.extract.file import FileResource, LocationResult, ResourceIdentifier, ResourceResult
+from pykotor.extract.file import FileResource, ResourceIdentifier, ResourceResult
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.erf.erf_auto import read_erf, write_erf
 from pykotor.resource.formats.erf.erf_data import ERF, ERFType
@@ -91,7 +93,6 @@ from toolset.gui.editors.utt import UTTEditor
 from toolset.gui.editors.utw import UTWEditor
 from toolset.gui.helpers.callback import BetterMessageBox
 from toolset.gui.widgets.main_widgets import ResourceList
-from toolset.gui.widgets.settings.misc import GlobalSettings
 from toolset.gui.windows.help import HelpWindow
 from toolset.gui.windows.indoor_builder import IndoorMapBuilder
 from toolset.gui.windows.module_designer import ModuleDesigner
@@ -99,7 +100,6 @@ from toolset.utils.misc import openLink
 from toolset.utils.window import addWindow, openResourceEditor
 from ui import stylesheet_resources  # noqa: F401
 from utility.error_handling import universal_simplify_exception
-from utility.logger_util import RobustRootLogger
 from utility.misc import ProcessorArchitecture, is_debug_mode
 from utility.system.path import Path, PurePath
 from utility.tricks import debug_reload_pymodules
@@ -126,6 +126,7 @@ if TYPE_CHECKING:
     from watchdog.events import FileSystemEvent
     from watchdog.observers.api import BaseObserver
 
+    from pykotor.extract.file import LocationResult
     from pykotor.resource.formats.mdl.mdl_data import MDL
     from pykotor.resource.formats.tpc import TPC
     from pykotor.resource.type import SOURCE_TYPES
@@ -154,7 +155,7 @@ def run_module_designer(
     if not QPixmap(icon_path).isNull():
         designerUi.log.debug(f"HT main window Icon loaded successfully from {icon_path}")
         designerUi.setWindowIcon(QIcon(QPixmap(icon_path)))
-        cast(QApplication, QApplication.instance()).setWindowIcon(QIcon(QPixmap(icon_path)))
+        cast("QApplication", QApplication.instance()).setWindowIcon(QIcon(QPixmap(icon_path)))
     else:
         print(f"Failed to load HT main window icon from {icon_path}")
     addWindow(designerUi, show=False)
@@ -276,7 +277,7 @@ class ToolWindow(QMainWindow):
         if not QPixmap(icon_path).isNull():
             self.log.debug(f"HT main window Icon loaded successfully from {icon_path}")
             self.setWindowIcon(QIcon(QPixmap(icon_path)))
-            cast(QApplication, QApplication.instance()).setWindowIcon(QIcon(QPixmap(icon_path)))
+            cast("QApplication", QApplication.instance()).setWindowIcon(QIcon(QPixmap(icon_path)))
         else:
             print(f"Failed to load HT main window icon from {icon_path}")
         self.setupModulesTab()
@@ -289,7 +290,7 @@ class ToolWindow(QMainWindow):
         self.erfEditorButton.hide()
 
         modulesResourceList = self.ui.modulesWidget.ui
-        modulesSectionCombo: FilterComboBox = cast(FilterComboBox, modulesResourceList.sectionCombo)  # type: ignore[]
+        modulesSectionCombo: FilterComboBox = cast("FilterComboBox", modulesResourceList.sectionCombo)  # type: ignore[]
         modulesSectionCombo.__class__ = FilterComboBox
         modulesSectionCombo.__init__(init=False)
         modulesSectionCombo.setEditable(False)
@@ -2552,7 +2553,7 @@ class ToolWindow(QMainWindow):
 
         main_subfolder = folderpath.joinpath(f"model_{resource.resname()}")
 
-        all_locresults = cast(Dict[str, Dict[ResourceIdentifier, List[LocationResult]]], seen_resources.setdefault("all_locresults", {}))
+        all_locresults = cast("Dict[str, Dict[ResourceIdentifier, List[LocationResult]]]", seen_resources.setdefault("all_locresults", {}))
 
         for texlm in textures_and_lightmaps:
             if texlm in seenTextures:

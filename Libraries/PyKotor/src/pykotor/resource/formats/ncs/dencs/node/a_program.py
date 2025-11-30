@@ -2,20 +2,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.node.p_program import PProgram  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_program import PProgram  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.p_subroutine import PSubroutine  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.p_jump_to_subroutine import PJumpToSubroutine  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_return import PReturn  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_rsadd_command import PRsaddCommand  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.p_jump_to_subroutine import PJumpToSubroutine  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_size import PSize  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
-
+    from pykotor.resource.formats.ncs.dencs.node.p_subroutine import PSubroutine  # pyright: ignore[reportMissingImports]
 
 class AProgram(PProgram):
     def __init__(self):
-        from pykotor.resource.formats.ncs.dencs.node.p_program import PProgram  # pyright: ignore[reportMissingImports]
         super().__init__()
         self._size: PSize | None = None
         self._conditional: PRsaddCommand | None = None
@@ -24,10 +23,6 @@ class AProgram(PProgram):
         self._subroutine: list[PSubroutine] = []
 
     def clone(self):
-        from pykotor.resource.formats.ncs.dencs.node.p_size import PSize  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.p_rsadd_command import PRsaddCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.p_jump_to_subroutine import PJumpToSubroutine  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.p_return import PReturn  # pyright: ignore[reportMissingImports]
         return AProgram(
             self.clone_node(self._size),
             self.clone_node(self._conditional),

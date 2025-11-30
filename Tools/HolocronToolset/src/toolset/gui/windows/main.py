@@ -16,9 +16,7 @@ import qtpy
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy import QtCore
 from qtpy.QtCore import (
-    QAbstractItemModel,
     QCoreApplication,
-    QModelIndex,
     QSortFilterProxyModel,
     QThread,
     QTimer,
@@ -26,7 +24,7 @@ from qtpy.QtCore import (
     Signal,  # pyright: ignore[reportPrivateImportUsage]
     Slot,  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtGui import QIcon, QPixmap, QStandardItem, QStandardItemModel
+from qtpy.QtGui import QIcon, QPixmap, QStandardItem
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QApplication,
@@ -55,7 +53,6 @@ from pykotor.tools.path import CaseAwarePath
 from toolset.config import get_remote_toolset_update_info
 from toolset.data.installation import HTInstallation
 from toolset.gui.common.localization import (
-    ToolsetLanguage,
     set_language,
     translate as tr,
     trf,
@@ -65,10 +62,10 @@ from toolset.gui.dialogs.about import About
 from toolset.gui.dialogs.asyncloader import AsyncLoader
 from toolset.gui.dialogs.clone_module import CloneModuleDialog
 from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow
-from toolset.gui.dialogs.tslpatchdata_editor import TSLPatchDataEditor
 from toolset.gui.dialogs.save.generic_file_saver import FileSaveHandler
 from toolset.gui.dialogs.search import FileResults, FileSearcher
 from toolset.gui.dialogs.settings import SettingsDialog
+from toolset.gui.dialogs.tslpatchdata_editor import TSLPatchDataEditor
 from toolset.gui.editors.dlg import DLGEditor
 from toolset.gui.editors.erf import ERFEditor
 from toolset.gui.editors.gff import GFFEditor
@@ -85,7 +82,7 @@ from toolset.gui.editors.utp import UTPEditor
 from toolset.gui.editors.uts import UTSEditor
 from toolset.gui.editors.utt import UTTEditor
 from toolset.gui.editors.utw import UTWEditor
-from toolset.gui.widgets.main_widgets import ResourceList, ResourceModel, ResourceStandardItem
+from toolset.gui.widgets.main_widgets import ResourceList, ResourceStandardItem
 from toolset.gui.widgets.settings.widgets.misc import GlobalSettings
 from toolset.gui.windows.help import HelpWindow
 from toolset.gui.windows.indoor_builder import IndoorMapBuilder
@@ -97,21 +94,27 @@ from toolset.utils.window import add_window, open_resource_editor
 from utility.error_handling import universal_simplify_exception
 from utility.misc import is_debug_mode
 from utility.tricks import debug_reload_pymodules
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
 
 if TYPE_CHECKING:
     from qtpy import QtGui
-    from qtpy.QtCore import QPoint
-    from qtpy.QtGui import QCloseEvent, QKeyEvent, QMouseEvent, QPalette, _QAction
+    from qtpy.QtCore import (
+        QAbstractItemModel,
+        QModelIndex,  # pyright: ignore[reportPrivateImportUsage]
+        QPoint,
+    )
+    from qtpy.QtGui import QCloseEvent, QKeyEvent, QMouseEvent, QPalette, QStandardItemModel, _QAction
     from qtpy.QtWidgets import QComboBox, QStyle, QWidget
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.extract.file import LocationResult, ResourceResult
-    from pykotor.resource.formats.mdl import MDL
     from pykotor.resource.formats.mdl.mdl_data import MDL
     from pykotor.resource.formats.tpc import TPC
     from pykotor.resource.type import SOURCE_TYPES
-    from toolset.gui.widgets.main_widgets import TextureList
+    from toolset.gui.common.localization import (
+        ToolsetLanguage,
+    )
+    from toolset.gui.widgets.main_widgets import ResourceModel, TextureList
+    from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
 
 def run_module_designer(
     active_path: str,
@@ -274,7 +277,7 @@ class ToolWindow(QMainWindow):
         if is_debug_mode():
             self.ui.menubar.addAction("Debug Reload").triggered.connect(debug_reload_pymodules)  # pyright: ignore[reportOptionalMemberAccess]
 
-        self.setWindowIcon(cast(QApplication, QApplication.instance()).windowIcon())
+        self.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
         self.setup_modules_tab()
 
     def setup_modules_tab(self):
@@ -326,9 +329,8 @@ class ToolWindow(QMainWindow):
         self.ui.savesWidget.sig_request_open_resource.connect(self.on_open_resources)
         self.sig_installation_changed.connect(self.ui.savesWidget.set_installation)
         
-        # Save Editor and corruption fix buttons
+        # Save Editor button
         self.ui.openSaveEditorButton.clicked.connect(self.on_open_save_editor)
-        self.ui.fixCorruptionButton.clicked.connect(self.on_fix_all_corruption)
         
         # Enable/disable Open Save Editor button based on selection
         selectionModel = self.ui.savesWidget.ui.resourceTree.selectionModel()
@@ -355,7 +357,7 @@ class ToolWindow(QMainWindow):
                 if module_path is not None:
                     QTimer.singleShot(33, lambda: designer_window.open_module(module_path))
 
-            designer_window.setWindowIcon(cast(QApplication, QApplication.instance()).windowIcon())
+            designer_window.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
             add_window(designer_window)
 
         self.ui.specialActionButton.clicked.connect(open_module_designer)
@@ -618,12 +620,10 @@ class ToolWindow(QMainWindow):
         self.ui.openButton.setText(tr("Open Selected"))
         self.ui.extractButton.setText(tr("Extract Selected"))
         self.ui.openSaveEditorButton.setText(tr("Open Save Editor"))
-        self.ui.fixCorruptionButton.setText(tr("Fix Corruption"))
         self.ui.specialActionButton.setText(tr("Designer"))
         
         # Translate tooltips
         self.ui.openSaveEditorButton.setToolTip(tr("Open the selected save in the Save Editor"))
-        self.ui.fixCorruptionButton.setToolTip(tr("Fixes all possible save corruption in all saves"))
         
         # Translate group boxes
         self.ui.tpcGroup_2.setTitle(tr("TPC"))
@@ -760,10 +760,7 @@ class ToolWindow(QMainWindow):
                 save_path_item.setBackground(QBrush(QColor(255, 220, 220)))  # Light red background
                 save_path_item.setForeground(QBrush(QColor(139, 0, 0)))  # Dark red text
                 # Add tooltip
-                save_path_item.setToolTip(
-                    tr("This save is corrupted.\n"
-                    "Right click and press <i>'Fix savegame corruption'</i> to fix this.")
-                )
+                save_path_item.setToolTip(tr("This save is corrupted."))
             
             self.ui.savesWidget.modules_model.invisibleRootItem().appendRow(save_path_item)  # pyright: ignore[reportOptionalMemberAccess]
             category_items_under_save_path: dict[str, QStandardItem] = {}
@@ -909,65 +906,6 @@ class ToolWindow(QMainWindow):
             )
             RobustLogger().exception(f"Failed to open save editor for '{save_path}'")
     
-    @Slot()
-    def on_fix_all_corruption(self):
-        """Fix EventQueue corruption in all saves."""
-        if self.active is None:
-            return
-        
-        fixed_count = 0
-        failed_count = 0
-        
-        # Fix all saves in all locations
-        for save_location in self.active.saves:
-            for save_path in self.active.saves[save_location]:
-                try:
-                    if self.active.fix_save_corruption(save_path):
-                        fixed_count += 1
-                except Exception as e:
-                    RobustLogger().error(f"Failed to fix corruption in '{save_path}': {e}")
-                    failed_count += 1
-        
-        # Show results
-        if fixed_count > 0 or failed_count > 0:
-            msg = trf("Fixed corruption in {count} save(s).", count=fixed_count)
-            if failed_count > 0:
-                msg += "\n" + trf("Failed to fix {count} save(s).", count=failed_count)
-            QMessageBox.information(self, tr("Fix Corruption Complete"), msg)
-        else:
-            QMessageBox.information(self, tr("No Corruption Found"), tr("No corrupted saves were found."))
-        
-        # Refresh the saves list to update corruption indicators
-        self.refresh_saves_list()
-    
-    def fix_save_corruption_for_path(self, save_path: Path):
-        """Fix EventQueue corruption for a specific save path."""
-        if self.active is None:
-            return
-        
-        try:
-            if self.active.fix_save_corruption(save_path):
-                QMessageBox.information(
-                    self,
-                    tr("Corruption Fixed"),
-                    trf("Successfully fixed corruption in save:\n{name}", name=save_path.name),
-                )
-                # Refresh the saves list to update corruption indicators
-                self.refresh_saves_list()
-            else:
-                QMessageBox.warning(
-                    self,
-                    tr("Fix Failed"),
-                    trf("Failed to fix corruption in save:\n{name}", name=save_path.name),
-                )
-        except Exception as e:
-            QMessageBox.critical(
-                self,
-                tr("Error"),
-                trf("An error occurred while fixing corruption:\n{error}", error=str(e)),
-            )
-            RobustLogger().exception(f"Failed to fix corruption for '{save_path}'")
-
     def on_override_file_updated(
         self,
         changed_file: str,
@@ -1807,7 +1745,7 @@ class ToolWindow(QMainWindow):
                     self._extract_resource(resource, save_path, loader, seen_resources)
 
             # quick main thread/ui check.
-            if QThread.currentThread() != cast(QApplication, QApplication.instance()).thread():
+            if QThread.currentThread() != cast("QApplication", QApplication.instance()).thread():
                 return
             if loader.errors:
                 msg_box = QMessageBox(
@@ -1886,6 +1824,7 @@ class ToolWindow(QMainWindow):
             raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), repr(resource))
         mdxData: bytes = mdx_resource_lookup.data
         mdl: MDL | None = read_mdl(data, 0, 0, mdxData, 0, 0)
+        assert mdl is not None, "mdl is None in _decompile_mdl"
         data = bytearray()
         write_mdl(mdl, data, ResourceType.MDL_ASCII)
         return data

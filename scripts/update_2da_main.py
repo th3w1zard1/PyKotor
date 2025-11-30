@@ -2,6 +2,7 @@
 """Update 2DA-File-Format.md by replacing extracted sections with links."""
 
 import re
+
 from pathlib import Path
 
 wiki_dir = Path("wiki")

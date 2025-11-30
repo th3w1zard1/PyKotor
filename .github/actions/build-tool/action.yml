@@ -1,0 +1,304 @@
+name: 'Build PyKotor Tool'
+description: 'Reusable action to build a PyKotor tool with PyInstaller'
+
+inputs:
+  tool_name:
+    description: 'Name of the tool to build (toolset, holopatcher, kotordiff, etc.)'
+    required: true
+  python_version:
+    description: 'Python version to use'
+    required: false
+    default: '3.8'
+  architecture:
+    description: 'Architecture (x86 or x64)'
+    required: false
+    default: 'x64'
+  qt_version:
+    description: 'Qt version for GUI tools (PyQt5, PyQt6, etc.)'
+    required: false
+    default: 'PyQt5'
+  upx_version:
+    description: 'UPX version for compression'
+    required: false
+    default: '4.2.2'
+  upload_artifact:
+    description: 'Whether to upload the built artifact'
+    required: false
+    default: 'true'
+  artifact_retention_days:
+    description: 'Number of days to retain the artifact'
+    required: false
+    default: '7'
+  dry_run:
+    description: 'If true, only validates build without full compilation'
+    required: false
+    default: 'false'
+
+outputs:
+  build_success:
+    description: 'Whether the build succeeded'
+    value: ${{ steps.build.outputs.success }}
+  artifact_name:
+    description: 'Name of the uploaded artifact'
+    value: ${{ steps.artifact_name.outputs.name }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Determine artifact name
+      id: artifact_name
+      shell: pwsh
+      run: |
+        $toolName = "${{ inputs.tool_name }}"
+        $toolNameMap = @{
+          "toolset" = "HolocronToolset"
+          "holopatcher" = "HoloPatcher"
+          "kotordiff" = "KotorDiff"
+          "guiconverter" = "GuiConverter"
+          "batchpatcher" = "BatchPatcher"
+          "kitgenerator" = "KitGenerator"
+        }
+        $displayName = if ($toolNameMap.ContainsKey($toolName.ToLower())) { $toolNameMap[$toolName.ToLower()] } else { $toolName }
+        $artifactName = "${displayName}_${{ runner.os }}_${{ inputs.architecture }}"
+        if ("${{ inputs.qt_version }}" -ne "" -and "${{ inputs.tool_name }}" -eq "toolset") {
+          $artifactName = "${displayName}_${{ runner.os }}_${{ inputs.qt_version }}_${{ inputs.architecture }}"
+        }
+        echo "name=$artifactName" >> $env:GITHUB_OUTPUT
+        echo "display_name=$displayName" >> $env:GITHUB_OUTPUT
+
+    - name: Install PowerShell (non-Windows)
+      if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        if [ -f "./install_powershell.sh" ]; then
+          bash ./install_powershell.sh
+        fi
+
+    - name: Reset APT sources (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        echo "Resetting APT sources to default Ubuntu repositories"
+        sudo rm -f /etc/apt/sources.list
+        echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs) main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+        echo "deb http://security.ubuntu.com/ubuntu $(lsb_release -cs)-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+        sudo apt-get update -y
+
+    - name: Download and prepare UPX
+      if: runner.os != 'macOS' && inputs.dry_run != 'true'
+      shell: pwsh
+      run: |
+        $upxVersion = "${{ inputs.upx_version }}"
+        $archiveName = ""
+        if ("${{ runner.os }}" -eq "Windows") {
+          $archiveName = if ("${{ inputs.architecture }}" -eq "x86") { "upx-$upxVersion-win32.zip" } else { "upx-$upxVersion-win64.zip" }
+        } elseif ("${{ runner.os }}" -eq "Linux") {
+          $archiveName = "upx-$upxVersion-amd64_linux.tar.xz"
+        }
+        if ($archiveName) {
+          $url = "https://github.com/upx/upx/releases/download/v$upxVersion/$archiveName"
+          if ("${{ runner.os }}" -eq "Windows") {
+            Invoke-WebRequest -Uri $url -OutFile $archiveName
+          } else {
+            curl -L $url -o $archiveName
+          }
+          New-Item -ItemType Directory -Force -Path "upx-dir" -ErrorAction SilentlyContinue
+          if ($archiveName -like "*.zip") {
+            $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($archiveName)
+            Expand-Archive -Path $archiveName -DestinationPath "temp_folder_upx"
+            Get-ChildItem -LiteralPath "temp_folder_upx/$fileNameWithoutExtension" -Recurse | Move-Item -Destination "upx-dir"
+            Remove-Item "temp_folder_upx" -Recurse -Force -ErrorAction SilentlyContinue
+          } else {
+            tar -xvf $archiveName --strip-components=1 -C "upx-dir"
+          }
+          Remove-Item $archiveName -ErrorAction SilentlyContinue
+        }
+
+    - name: Set UPX directory path
+      if: runner.os != 'macOS' && inputs.dry_run != 'true'
+      shell: pwsh
+      run: |
+        $upx_dir = $([System.IO.Path]::GetFullPath('./upx-dir'))
+        echo "UPX_DIR=$upx_dir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+    - name: Install Visual Studio C++ Redistributable (Windows)
+      if: runner.os == 'Windows' && inputs.dry_run != 'true'
+      shell: pwsh
+      run: |
+        $redistUrl = if ("${{ inputs.architecture }}" -eq "x86") { 
+          "https://aka.ms/vs/17/release/vc_redist.x86.exe" 
+        } else { 
+          "https://aka.ms/vs/17/release/vc_redist.x64.exe" 
+        }
+        Invoke-WebRequest -Uri $redistUrl -OutFile "vc_redist.exe"
+        Start-Process "vc_redist.exe" -ArgumentList '/install', '/quiet', '/norestart' -Wait
+        Remove-Item -Path "vc_redist.exe"
+
+    - name: Setup Python environment and install dependencies
+      id: deps
+      shell: pwsh
+      run: |
+        try {
+          $toolName = "${{ inputs.tool_name }}".ToLower()
+          $venvName = ".venv_${toolName}_${{ runner.os }}_${{ inputs.python_version }}_${{ inputs.architecture }}"
+          
+          . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ inputs.python_version }}
+          
+          & $pythonExePath -m pip install --upgrade pip
+          
+          # Install PyInstaller
+          if ("${{ runner.os }}" -eq "Windows") {
+            $pyVersion = "${{ inputs.python_version }}"
+            if ($pyVersion -eq "3.12") {
+              pip install pyinstaller --prefer-binary -U
+            } else {
+              pip install "pyinstaller==5.13.2" --prefer-binary
+            }
+            pip install comtypes pywin32 -U
+          } else {
+            pip install pyinstaller -U --prefer-binary
+          }
+          
+          # Install tool-specific dependencies
+          $depsScript = "./compile/deps_$toolName.ps1"
+          if (Test-Path $depsScript) {
+            if ("${{ inputs.tool_name }}" -eq "toolset") {
+              $env:QT_API = "${{ inputs.qt_version }}"
+            }
+            . $depsScript -noprompt -venv_name $venvName 2>&1 | ForEach-Object { Write-Output $_.ToString() }
+          }
+          
+          # Additional deps for toolset
+          if ("${{ inputs.tool_name }}" -eq "toolset") {
+            pip install "setuptools==69.5.1"
+            pip install qdarkstyle -U
+          }
+          
+          echo "success=true" >> $env:GITHUB_OUTPUT
+          echo "venv_name=$venvName" >> $env:GITHUB_OUTPUT
+        } catch {
+          Write-Host -ForegroundColor Red "Error: $($_.Exception.Message)"
+          echo "success=false" >> $env:GITHUB_OUTPUT
+          exit 1
+        }
+
+    - name: Validate build configuration (dry run)
+      if: inputs.dry_run == 'true'
+      shell: pwsh
+      run: |
+        $toolName = "${{ inputs.tool_name }}".ToLower()
+        $compileScript = "./compile/compile_$toolName.ps1"
+        
+        Write-Host "=== DRY RUN: Validating build configuration ==="
+        
+        # Check compile script exists
+        if (-not (Test-Path $compileScript)) {
+          Write-Error "Compile script not found: $compileScript"
+          exit 1
+        }
+        Write-Host "✓ Compile script exists: $compileScript"
+        
+        # Verify dependencies installed
+        . ./install_python_venv.ps1 -noprompt -venv_name "${{ steps.deps.outputs.venv_name }}"
+        
+        # Check PyInstaller
+        $pyinstallerVersion = pip show pyinstaller 2>$null | Select-String "Version"
+        if ($pyinstallerVersion) {
+          Write-Host "✓ PyInstaller installed: $pyinstallerVersion"
+        } else {
+          Write-Error "PyInstaller not found"
+          exit 1
+        }
+        
+        # Validate imports
+        $toolPaths = @{
+          "toolset" = "toolset"
+          "holopatcher" = "holopatcher"
+          "kotordiff" = "kotordiff"
+          "guiconverter" = "gui_converter"
+          "batchpatcher" = "batchpatcher"
+        }
+        $importPath = $toolPaths[$toolName]
+        if ($importPath) {
+          $importTest = & $pythonExePath -c "import $importPath; print('OK')" 2>&1
+          if ($importTest -eq "OK") {
+            Write-Host "✓ Import test passed: $importPath"
+          } else {
+            Write-Error "Import test failed: $importTest"
+            exit 1
+          }
+        }
+        
+        Write-Host ""
+        Write-Host "=== DRY RUN COMPLETE: Build configuration validated ==="
+
+    - name: Build tool
+      id: build
+      if: inputs.dry_run != 'true'
+      shell: pwsh
+      run: |
+        try {
+          $toolName = "${{ inputs.tool_name }}".ToLower()
+          $venvName = "${{ steps.deps.outputs.venv_name }}"
+          $upxDir = $env:UPX_DIR
+          $compileScript = "./compile/compile_$toolName.ps1"
+          
+          if (-not (Test-Path $compileScript)) {
+            Write-Error "Compile script not found: $compileScript"
+            echo "success=false" >> $env:GITHUB_OUTPUT
+            exit 1
+          }
+          
+          $env:PYTHONOPTIMIZE = "1"
+          if ("${{ inputs.tool_name }}" -eq "toolset") {
+            $env:QT_API = "${{ inputs.qt_version }}"
+          }
+          
+          $output = ""
+          $errorLines = @()
+          . $compileScript -noprompt -venv_name $venvName -upx_dir $upxDir 2>&1 | ForEach-Object {
+            Write-Output $_.ToString()
+            $output += $_.ToString() + "`n"
+            if ($_ -match 'ERROR:') {
+              $errorLines += $_.ToString()
+            }
+          }
+          
+          $warningCount = 0
+          $output -split "`n" | ForEach-Object {
+            if ($_ -match 'WARNING: Library not found: could not resolve' -or
+                $_ -match 'WARNING: Cannot find ' -or
+                $_ -match 'WARNING: lib not found:' -or
+                $_ -match 'WARNING: Tcl modules directory' -or
+                $_ -match 'WARNING: Failed to upx strip') {
+              $warningCount++
+            }
+          }
+          
+          if ($errorLines.Count -gt 0) {
+            $errorLines | ForEach-Object { Write-Error $_ }
+            echo "success=false" >> $env:GITHUB_OUTPUT
+            exit 1
+          } elseif ($warningCount -ge 3) {
+            Write-Output "Many warnings raised, pyinstaller may have issues."
+            echo "success=false" >> $env:GITHUB_OUTPUT
+            exit 1
+          } else {
+            echo "success=true" >> $env:GITHUB_OUTPUT
+          }
+        } catch {
+          Write-Host -ForegroundColor Red "Build error: $($_.Exception.Message)"
+          echo "success=false" >> $env:GITHUB_OUTPUT
+          exit 1
+        }
+
+    - name: Upload build artifact
+      if: inputs.upload_artifact == 'true' && inputs.dry_run != 'true' && steps.build.outputs.success == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.artifact_name.outputs.name }}
+        path: ./dist/**
+        retention-days: ${{ inputs.artifact_retention_days }}
+

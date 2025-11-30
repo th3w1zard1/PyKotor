@@ -33,41 +33,13 @@ if not is_frozen():
         update_sys_path(pathlib.Path(__file__).parents[1])
 
 
-from pathlib import Path  # noqa: E402
+from pathlib import Path  # noqa: E402  # noqa: E402, F401
 
-from loggerplus import RobustLogger  # noqa: E402
-
-from holopatcher.config import (  # noqa: E402
-    CURRENT_VERSION,
-    getRemoteHolopatcherUpdateInfo,
-    remoteVersionNewer,
-)
-from pykotor.common.misc import Game  # noqa: E402
-from pykotor.extract.file import ResourceIdentifier  # noqa: E402
-from pykotor.tools.encoding import decode_bytes_with_fallbacks  # noqa: E402
-from pykotor.tools.path import (  # noqa: E402
-    CaseAwarePath,
-    find_kotor_paths_from_default,
-)
-from pykotor.tslpatcher.config import LogLevel  # noqa: E402
-from pykotor.tslpatcher.logger import LogType, PatchLogger  # noqa: E402
-from pykotor.tslpatcher.patcher import ModInstaller  # noqa: E402
-from pykotor.tslpatcher.reader import ConfigReader, NamespaceReader  # noqa: E402
-from pykotor.tslpatcher.uninstall import ModUninstaller  # noqa: E402
-from utility.common.misc_string.util import striprtf  # noqa: E402
-from utility.error_handling import universal_simplify_exception  # noqa: E402
-from utility.misc import ProcessorArchitecture  # noqa: E402
-from utility.system.app_process.shutdown import terminate_main_process  # noqa: E402
-from utility.system.os_helper import win_get_system32_dir  # noqa: E402
-from utility.tkinter.tooltip import ToolTip  # noqa: E402
-from utility.tkinter.updater import TkProgressDialog  # noqa: E402
-from pathlib import Path  # noqa: E402, F401
-
-from loggerplus import RobustLogger  # noqa: E402, F401
+from loggerplus import RobustLogger  # noqa: E402  # noqa: E402, F401
 
 from holopatcher import core  # noqa: E402, F401
-from utility.error_handling import universal_simplify_exception  # noqa: E402, F401
-from utility.system.app_process.shutdown import terminate_main_process  # noqa: E402, F401  # noqa: E402, F401
+from utility.error_handling import universal_simplify_exception  # noqa: E402  # noqa: E402, F401
+from utility.system.app_process.shutdown import terminate_main_process  # noqa: E402  # noqa: E402, F401  # noqa: E402, F401
 
 if TYPE_CHECKING:
     from argparse import Namespace

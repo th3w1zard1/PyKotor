@@ -4,20 +4,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable
 
 from qtpy import QtCore
-from qtpy.QtCore import QAbstractItemModel, Qt
-from qtpy.QtGui import QPainter, QPalette, QPen
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QPainter, QPalette, QPen, QStandardItemModel
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QComboBox,
     QMenu,
     QMessageBox,
 )
-from qtpy.QtGui import QStandardItemModel
 
 from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QPoint
+    from qtpy.QtCore import QAbstractItemModel, QPoint
     from qtpy.QtGui import QColor, QPaintEvent
     from qtpy.QtWidgets import QWidget
 

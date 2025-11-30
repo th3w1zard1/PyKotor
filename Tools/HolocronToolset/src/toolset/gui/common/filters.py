@@ -11,7 +11,6 @@ from qtpy.QtWidgets import QAbstractSpinBox, QApplication, QComboBox, QDoubleSpi
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QModelIndex
-    from qtpy.QtCore import QModelIndex
     from qtpy.QtGui import QKeyEvent
 
 
@@ -141,7 +140,7 @@ class HoverEventFilter(QObject):
         elif event_type == QEvent.Type.HoverLeave:
             if self.current_widget == obj:
                 self.current_widget = None
-        elif event_type == QEvent.Type.KeyPress and cast(QKeyEvent, event).key() == self.debug_key:
+        elif event_type == QEvent.Type.KeyPress and cast("QKeyEvent", event).key() == self.debug_key:
             if self.current_widget:
                 print(f"Hovered control: {self.current_widget.__class__.__name__} ({self.current_widget.objectName()})")
             else:

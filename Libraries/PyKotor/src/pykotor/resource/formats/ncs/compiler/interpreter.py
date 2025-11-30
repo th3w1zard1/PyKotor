@@ -7,12 +7,11 @@ from copy import copy
 from inspect import signature
 from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
+from pykotor.common.misc import Game
 from pykotor.common.script import DataType
 from pykotor.common.scriptdefs import KOTOR_FUNCTIONS
-from pykotor.resource.formats.ncs import NCSInstructionType
+from pykotor.resource.formats.ncs import NCSInstruction, NCSInstructionType
 from utility.common.geometry import Vector3
-from pykotor.common.misc import Game
-from pykotor.resource.formats.ncs import NCSInstruction
 
 log = logging.getLogger(__name__)
 

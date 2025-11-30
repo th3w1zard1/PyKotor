@@ -6,13 +6,14 @@ Provides breakpoint support, step execution, variable inspection, and call stack
 from __future__ import annotations
 
 import threading
+
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable
 
 from pykotor.common.misc import Game
-from pykotor.resource.formats.ncs import NCS, NCSInstruction
 
 if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs import NCS, NCSInstruction
     from pykotor.resource.formats.ncs.compiler.interpreter import Interpreter, Stack, StackObject
 
 # Import interpreter at runtime to avoid circular dependencies

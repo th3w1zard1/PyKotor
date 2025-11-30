@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from holopazaak.data.opponents import OpponentProfile
+from typing import TYPE_CHECKING
+
 from holopazaak.game.card import Card, CardType
-from holopazaak.game.engine import PazaakGame
 from holopazaak.game.player import Player
+
+if TYPE_CHECKING:
+    from holopazaak.data.opponents import OpponentProfile
+    from holopazaak.game.engine import PazaakGame
 
 
 class AIPlayer(Player):

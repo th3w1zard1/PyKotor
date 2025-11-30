@@ -147,7 +147,7 @@ class RobustAddressBar(QWidget):
         self.fs_model: QFileSystemModel = QFileSystemModel(self)
 
         self.setLayout(QHBoxLayout(self))
-        layout: QHBoxLayout | None = cast(QHBoxLayout, self.layout())
+        layout: QHBoxLayout | None = cast("QHBoxLayout", self.layout())
         assert layout is not None, "layout is None somehow, this shouldn't happen"
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -161,7 +161,7 @@ class RobustAddressBar(QWidget):
 
         self.toolbar.setStyleSheet("QToolBar { border: none; }")
         backButton: QAction | None = self.toolbar.addAction(
-            cast(QStyle, self.style()).standardIcon(QStyle.StandardPixmap.SP_ArrowBack),
+            cast("QStyle", self.style()).standardIcon(QStyle.StandardPixmap.SP_ArrowBack),
             "Back",
         )
         assert backButton is not None, "backButton is None somehow, this shouldn't happen"
@@ -170,7 +170,7 @@ class RobustAddressBar(QWidget):
         self.backButton.triggered.connect(self.go_back)
 
         forwardButton: QAction | None = self.toolbar.addAction(
-            cast(QStyle, self.style()).standardIcon(QStyle.StandardPixmap.SP_ArrowForward),
+            cast("QStyle", self.style()).standardIcon(QStyle.StandardPixmap.SP_ArrowForward),
             "Forward",
         )
         assert forwardButton is not None, "forwardButton is None somehow, this shouldn't happen"
@@ -179,7 +179,7 @@ class RobustAddressBar(QWidget):
         self.forwardButton.setIcon(QIcon.fromTheme("go-next"))
 
         upButton: QAction | None = self.toolbar.addAction(
-            cast(QStyle, self.style()).standardIcon(QStyle.StandardPixmap.SP_ArrowUp),
+            cast("QStyle", self.style()).standardIcon(QStyle.StandardPixmap.SP_ArrowUp),
             "Up",
         )
         assert upButton is not None, "upButton is None somehow, this shouldn't happen"

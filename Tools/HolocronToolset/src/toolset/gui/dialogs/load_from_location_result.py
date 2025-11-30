@@ -20,7 +20,7 @@ import qtpy
 import send2trash
 
 from qtpy.QtCore import QUrl, Qt
-from qtpy.QtGui import QDesktopServices, QKeySequence, QScreen
+from qtpy.QtGui import QDesktopServices, QKeySequence
 from qtpy.QtWidgets import (
     QAction,
     QApplication,
@@ -67,6 +67,7 @@ if __name__ == "__main__":
 from pathlib import Path
 
 from loggerplus import RobustLogger
+from qtpy.QtWidgets import QWidget
 
 from pykotor.common.misc import Game
 from pykotor.common.stream import BinaryWriterFile
@@ -87,7 +88,8 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from qtpy.QtCore import QAbstractItemModel, QPoint
-    from qtpy.QtWidgets import QTableWidgetSelectionRange, QWidget
+    from qtpy.QtGui import QScreen
+    from qtpy.QtWidgets import QTableWidgetSelectionRange
 
     from pykotor.common.module import ERF, RIM
     from pykotor.extract.file import LocationResult, ResourceResult
@@ -488,7 +490,7 @@ class FileItems(CustomItem):
         app = QApplication.instance()
         if app is None:
             return
-        active_window = cast(QApplication, app).activeWindow()
+        active_window = cast("QApplication", app).activeWindow()
         if active_window is None:
             return
         windows_context_menu_file(file_path, int(active_window.winId()))
@@ -659,7 +661,7 @@ class ResourceItems(FileItems):
         **kwargs,
     ):
         if "viewport" in kwargs:
-            self.viewport = cast(Callable, kwargs.pop("viewport"))
+            self.viewport = cast("Callable", kwargs.pop("viewport"))
         self.resources: list[FileResource] = []
         if resources is not None:
             self._unify_resources(resources)
@@ -866,7 +868,7 @@ class ResourceItems(FileItems):
                             rim.remove(resource.resname(), resource.restype())
                             write_rim(rim, filepath)
         # After None check above, executed_action is guaranteed to be QAction
-        return cast(QAction, executed_action)
+        return cast("QAction", executed_action)
 
     def handle_post_run_actions(
         self,
@@ -994,11 +996,11 @@ class CustomTableWidget(CustomItem, QTableWidget):
 
 class FileTableWidget(FileItems, CustomTableWidget):
     def selectedItems(self) -> list[FileTableWidgetItem]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return cast(List[FileTableWidgetItem], QTableWidget.selectedItems(self))
+        return cast("List[FileTableWidgetItem]", QTableWidget.selectedItems(self))
 
 class ResourceTableWidget(FileTableWidget, ResourceItems):
     def selectedItems(self) -> list[ResourceTableWidgetItem]:  # pyright: ignore[reportIncompatibleMethodOverride]
-        return cast(List[ResourceTableWidgetItem], QTableWidget.selectedItems(self))
+        return cast("List[ResourceTableWidgetItem]", QTableWidget.selectedItems(self))
 
 
 class FileSelectionWindow(QMainWindow):
@@ -1092,15 +1094,12 @@ class FileSelectionWindow(QMainWindow):
         width = vert_header.width() + 4  # 4 for the frame
         for i in range(self.resource_table.columnCount()):
             width += self.resource_table.columnWidth(i)
-        if qtpy.QT5:
-            from qtpy.QtGui import QDesktopWidget
-            width = min(width, QDesktopWidget().availableGeometry().width())
-        elif qtpy.QT6:
-            from qtpy.QtGui import QGuiApplication
-            primary_screen: QScreen | None = QGuiApplication.primaryScreen()
-            if primary_screen is None:
-                raise ValueError("Primary screen is not set")
-            width = min(width, primary_screen.availableGeometry().width())
+        # Use QApplication.primaryScreen() which works for both Qt5 and Qt6
+        # QDesktopWidget is deprecated in Qt6
+        primary_screen: QScreen | None = QApplication.primaryScreen()
+        if primary_screen is None:
+            raise ValueError("Primary screen is not set")
+        width = min(width, primary_screen.availableGeometry().width())
         height = self.height()  # keep the current height
         self.resize(width, height)
         self.center_and_adjust_window()
@@ -1266,7 +1265,7 @@ if __name__ == "__main__":
     resname, restype = ResourceIdentifier.from_path("dan14_juhani.utc").unpack()
     found_kotors: dict[Game, list[CaseAwarePath]] = find_kotor_paths_from_default()
     installation = Installation(found_kotors[Game.K1][0])
-    search: list[FileResource | ResourceResult | LocationResult] = cast(list[FileResource | ResourceResult | LocationResult], list(installation.location(resname, restype)))
+    search: list[FileResource | ResourceResult | LocationResult] = cast("list[FileResource | ResourceResult | LocationResult]", list(installation.location(resname, restype)))
     if not search:
         raise ValueError("No files found")
     res_result = installation.resource("m02ab", ResourceType.GIT)

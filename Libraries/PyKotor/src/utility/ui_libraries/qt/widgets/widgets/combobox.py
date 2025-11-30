@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, Any, Callable, Sequence, cast
 
 import qtpy
 
-from qtpy.QtCore import QMargins, QModelIndex, QRect, QSize, QSortFilterProxyModel, QStringListModel, QTimer, Qt
+from qtpy.QtCore import QModelIndex, QRect, QSize, QSortFilterProxyModel, QStringListModel, QTimer, Qt
 from qtpy.QtGui import QFontMetrics, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QApplication, QComboBox, QLineEdit, QListView, QMainWindow, QSizePolicy, QStyleOptionViewItem, QStyledItemDelegate, QVBoxLayout, QWidget
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QPoint
+    from qtpy.QtCore import QAbstractItemModel, QMargins, QModelIndex, QObject, QPoint
     from qtpy.QtGui import QKeyEvent, QMouseEvent, QPainter
     from qtpy.QtWidgets import QAbstractItemDelegate, QAbstractItemView, QPushButton
 
@@ -163,7 +163,7 @@ class CustomListView(QListView):
         option.initFrom(self)
         option.rect = self.visualRect(index)
         button_width: int = QFontMetrics(option.font).horizontalAdvance(self.button_text) + 20
-        left_limit: int = min(option.rect.right() - button_width, cast(QWidget, self.parent()).width() - button_width)
+        left_limit: int = min(option.rect.right() - button_width, cast("QWidget", self.parent()).width() - button_width)
         if left_limit <= viewport_pos.x() <= option.rect.right():
             self.combobox.force_stay_popped_up = True
             self.button_callback(index.data(Qt.ItemDataRole.DisplayRole))
@@ -205,7 +205,7 @@ class FilterComboBox(QComboBox):
         self.filter_line_edit.keyPressEvent = lambda event: filter_line_edit_key_press_event(self.filter_line_edit, event, self)  # type: ignore[method-assign, assignment]
         main_view: CustomListView = CustomListView(self)
         main_view.combobox = self
-        margins: QMargins = cast(QMargins, main_view.viewportMargins())
+        margins: QMargins = cast("QMargins", main_view.viewportMargins())
         main_view.setViewportMargins(margins.left(), margins.top() + self.filter_line_edit.height(), margins.right(), margins.bottom())
         self.setView(main_view)
         self.setMinimumWidth(200)
@@ -294,7 +294,7 @@ class FilterComboBox(QComboBox):
         self.resize(self.old_width, self.height())
         self.is_popped_up = True
         self.filter_line_edit.setFocus()
-        cast(CustomListView, self.view()).repaint()
+        cast("CustomListView", self.view()).repaint()
 
     def hidePopup(self):
         if self.force_stay_popped_up:

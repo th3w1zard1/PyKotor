@@ -4,7 +4,6 @@ from dataclasses import dataclass
 
 from holopazaak.game.card import CardType
 
-
 # All opponents from pazaak-eggborne have been ported to this file.
 # Deck configurations, stand_at values, and tie_chance values match the original.
 # References: vendor/pazaak-eggborne/src/scripts/characters.js

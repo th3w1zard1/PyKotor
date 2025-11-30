@@ -6,7 +6,6 @@ import pathlib
 import sys
 
 from copy import deepcopy
-from pathlib import Path
 
 from pykotor.tools.path import CaseAwarePath
 
@@ -23,15 +22,14 @@ from typing import TYPE_CHECKING
 from pykotor.resource.formats.gff import GFF, GFFContent, read_gff, write_gff
 from utility.system.agnostics import (
     askdirectory,
-    askopenfilenames,
-    askretrycancel,
-    showinfo,
 )
 
 if os.name == "nt":
-    from utility.system.win32.com.windialogs import open_file_and_folder_dialog
+    pass
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from pykotor.resource.formats.gff.gff_data import GFFList, GFFStruct
 
 LOGGING_ENABLED = True

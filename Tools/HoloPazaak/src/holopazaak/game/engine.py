@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import random
 
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from holopazaak.game.card import Card, CardType
-from holopazaak.game.player import Player
+
+if TYPE_CHECKING:
+    from holopazaak.game.player import Player
 
 
 class PazaakGame:

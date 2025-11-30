@@ -17,12 +17,12 @@ import io
 import mmap
 import os
 import struct
+import uuid
 
 from enum import Enum
 from functools import lru_cache
 from io import BytesIO
 from typing import TYPE_CHECKING, NamedTuple, TypeVar, Union, cast
-import uuid
 from xml.etree.ElementTree import ParseError
 
 from pykotor.common.stream import BinaryReader, BinaryWriter

@@ -2,18 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_jump_command import PJumpCommand  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_jmp import TJmp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.ncs.dencs.node.p_jump_command import PJumpCommand  # pyright: ignore[reportMissingImports]
 
+if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_jmp import TJmp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
 
 class AJumpCommand(PJumpCommand):
     def __init__(self):
-        from pykotor.resource.formats.ncs.dencs.node.p_jump_command import PJumpCommand  # pyright: ignore[reportMissingImports]
         super().__init__()
         self._jmp: TJmp | None = None
         self._pos: TIntegerConstant | None = None

@@ -16,7 +16,6 @@ from pykotor.resource.formats.tlk.tlk_auto import read_tlk
 from pykotor.resource.formats.twoda.twoda_auto import read_2da
 
 if TYPE_CHECKING:
-    from utility.common.geometry import Vector3, Vector4
     from pykotor.common.language import LocalizedString
     from pykotor.common.misc import ResRef
     from pykotor.resource.formats.gff.gff_data import GFFList, GFFStruct
@@ -33,6 +32,7 @@ if TYPE_CHECKING:
         TLKEntryDiff,
         TwoDADiffResult,
     )
+    from utility.common.geometry import Vector3, Vector4
 
 
 class StructuredDiffEngine:

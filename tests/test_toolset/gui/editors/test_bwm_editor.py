@@ -196,7 +196,35 @@ def test_bwm_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     loaded_bwm = read_bwm(data)
     assert loaded_bwm is not None
 
-def test_bwm_editor(qtbot, installation: HTInstallation):
+
+def test_bwmeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that BWMEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
+    editor = BWMEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # Trigger help dialog with the correct file for BWMEditor
+    editor._show_help_dialog("BWM-File-Format.md")
+    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+    
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'BWM-File-Format.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"
+
     """Test BWM Editor."""
     editor = BWMEditor(None, installation)
     qtbot.addWidget(editor)

@@ -11,14 +11,15 @@ Reference implementations:
 from __future__ import annotations
 
 import math
+
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
-import glm
-
-from glm import mat4, vec3, vec4
+from glm import vec3, vec4
 
 if TYPE_CHECKING:
+    from glm import mat4
+
     from pykotor.gl.scene import Camera
 
 

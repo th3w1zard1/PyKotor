@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import sys
 import threading
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 # Protected tkinter imports
 try:
     import tkinter as tk
+
     from tkinter import filedialog, messagebox, scrolledtext, ttk
     TKINTER_AVAILABLE = True
 except ImportError:
@@ -38,7 +40,7 @@ if getattr(sys, "frozen", False) is False:
         update_sys_path(pykotor_path.parent)
 
 if TYPE_CHECKING and TKINTER_AVAILABLE:
-    from tkinter import Event
+    pass
 
 if TKINTER_AVAILABLE:
     from hologenerator.core.generator import ConfigurationGenerator

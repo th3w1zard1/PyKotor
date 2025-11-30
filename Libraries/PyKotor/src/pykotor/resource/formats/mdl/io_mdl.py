@@ -18,7 +18,7 @@ from pykotor.resource.formats.mdl.mdl_data import (
     MDLSkin,
 )
 from pykotor.resource.formats.mdl.mdl_types import MDLControllerType
-from utility.common.geometry import SurfaceMaterial, Vector2, Vector3, Vector4
+from utility.common.geometry import Vector2, Vector3, Vector4
 
 if TYPE_CHECKING:
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
@@ -1365,7 +1365,6 @@ def _compress_quaternion(quat: Vector4) -> int:
     -----
         Values are clamped to [-1, 1] range before packing to prevent overflow.
     """
-    import math
     
     # Clamp values to valid range
     x = max(-1.0, min(1.0, quat.x))
@@ -1707,7 +1706,7 @@ class MDLBinaryReader:
             node.mesh.radius = bin_node.trimesh.radius
             node.mesh.average = bin_node.trimesh.average
             node.mesh.area = bin_node.trimesh.total_area
-            node.mesh.saber_unknowns = cast(tuple[int, int, int, int, int, int, int, int], bin_node.trimesh.saber_unknowns)
+            node.mesh.saber_unknowns = cast("tuple[int, int, int, int, int, int, int, int]", bin_node.trimesh.saber_unknowns)
 
             node.mesh.vertex_positions = bin_node.trimesh.vertices
 

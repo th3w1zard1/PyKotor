@@ -2,6 +2,7 @@
 """Update Home.md to add all 2DA files to the TOC under the 2DA File Format entry."""
 
 import re
+
 from pathlib import Path
 
 wiki_dir = Path("wiki")

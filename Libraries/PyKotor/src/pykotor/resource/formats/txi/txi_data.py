@@ -49,6 +49,7 @@ from enum import Enum
 from typing import ClassVar
 
 from loggerplus import RobustLogger
+
 from pykotor.resource.formats._base import ComparableMixin
 
 

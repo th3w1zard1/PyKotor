@@ -2,367 +2,293 @@
 
 ## Overview
 
-The release workflow has been streamlined to require minimal manual intervention. You only need to create a pre-release on GitHub, and the workflow handles everything else automatically.
+PyKotor uses an industry-standard CI/CD pipeline for releases. The workflow is designed to **catch issues early** through PR validation, provide **pre-release testing**, and ensure **smooth production releases**.
 
-## Workflow for Each Tool
+## The Release Flow
 
-The following tools have automated release workflows:
-
-- **HolocronToolset** (`*toolset*` tags)
-- **KotorDiff** (`*kotordiff*` tags)
-- **HoloPatcher** (`*patcher*` or `*holopatcher*` tags)
-- **GuiConverter** (`*guiconverter*` tags)
-- **Translator** (`*translator*` tags)
-
-## Testing Before Production Release
-
-⚠️ **IMPORTANT**: Before using production workflows, test them safely!
-
-See [QUICK_TEST_GUIDE.md](QUICK_TEST_GUIDE.md) for complete testing instructions.
-
-**Quick test command**:
-
-```bash
-# Create test release (uses test-release branch, never touches master)
-git tag test-v3.1.99-toolset
-git push origin test-v3.1.99-toolset
-gh release create test-v3.1.99-toolset --prerelease --title "TEST" --notes "Testing"
-
-# Cleanup after test
-gh release delete test-v3.1.99-toolset --yes
-git push origin --delete test-v3.1.99-toolset
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           DEVELOPMENT PHASE                                  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  1. Create PR with your changes                                             │
+│  2. PR Build Validation runs automatically                                  │
+│     - Detects which tools are affected                                      │
+│     - Validates version config files                                        │
+│     - Runs dry-run builds to catch compile issues                          │
+│  3. Fix any issues, iterate until PR checks pass                           │
+│  4. Merge PR when ready                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        PRE-RELEASE VALIDATION                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  5. Run "Release Readiness Check" workflow (optional but recommended)       │
+│     - Validates version format                                              │
+│     - Checks tag availability                                               │
+│     - Validates dependencies                                                │
+│     - Runs dry-run or full builds                                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           RELEASE PHASE                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  6. Bump version in config.py (use bump_version.ps1 helper)                 │
+│  7. Commit and push to master                                               │
+│  8. Create pre-release on GitHub with proper tag                            │
+│  9. Release workflow runs automatically                                     │
+│     - Builds all platform binaries                                          │
+│     - Uploads to release                                                    │
+│     - Updates latest version in config                                      │
+│     - Converts to full release                                              │
+│ 10. Go to bed happy! 🎉                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Test workflows are available:
+## Supported Tools
 
-- `TEST_release_toolset.yml` - Tests toolset release process
-- Use `create_test_workflow.ps1` to generate test workflows for other tools
+| Tool | Tag Pattern | Config File | Version Key |
+|------|-------------|-------------|-------------|
+| **HolocronToolset** | `v3.1.3-toolset` | `Tools/HolocronToolset/src/toolset/config.py` | `currentVersion` |
+| **HoloPatcher** | `v1.8.0-patcher` | `Tools/HoloPatcher/src/holopatcher/config.py` | `currentVersion` |
+| **KotorDiff** | `v1.0.1-kotordiff` | `Tools/KotorDiff/src/kotordiff/__main__.py` | `CURRENT_VERSION` |
+| **GuiConverter** | `v1.0.0-guiconverter` | `Tools/GuiConverter/src/gui_converter/__init__.py` | `__version__` |
 
-## How to Release (Streamlined Process)
+## Quick Start: Release a New Version
 
-### Step 1: Create a Pre-Release on GitHub
+### Option 1: Using the Helper Script (Recommended)
 
-1. Go to your repository on GitHub
-2. Click on "Releases" → "Draft a new release"
-3. Create a tag following the pattern: `vMAJOR.MINOR.PATCH-<tool>`
-   - For Toolset: `v3.1.3-toolset`
-   - For KotorDiff: `v1.0.1-kotordiff`
-   - For HoloPatcher: `v1.7.1-patcher` or `v1.7.1-holopatcher`
-   - For GuiConverter: `v1.0.0-guiconverter`
-   - For Translator: `v1.0.0-translator`
-4. Add release notes in the description (optional but recommended)
-5. **Check "Set as a pre-release"**
-6. Click "Publish release"
+```powershell
+# Preview what will change
+.\scripts\bump_version.ps1 -Tool toolset -Version 3.1.3 -DryRun
 
-### Step 2: Wait for Automation
+# Bump version, commit, and create release in one command
+.\scripts\bump_version.ps1 -Tool toolset -Version 3.1.3 -Commit -CreateRelease
+```
 
-The workflow will automatically:
+### Option 2: Manual Process
 
-1. **Validate** that the tag matches the tool pattern
-2. **Extract** the version from the tag (e.g., `v3.1.3-toolset` → `3.1.3`)
-3. **Update version (pre-build)**:
-   - Updates `currentVersion` in config files
-   - Commits to master
-   - Updates release tag to point to the new commit
-   - This ensures binaries are built with the correct version
-4. **Build** binaries for all platforms (Windows x86/x64, Linux x64, macOS x64)
-5. **Upload** compiled artifacts to the release
-6. **Update version (post-upload)**:
-   - Toolset: Updates `toolsetLatestVersion` and `toolsetLatestBetaVersion`
-   - HoloPatcher: Updates `holopatcherLatestVersion` and `holopatcherLatestBetaVersion`
-   - Commits to master
-   - Updates release tag to point to the new commit
-   - This triggers release source archive regeneration
-7. **Convert** the pre-release to a full release automatically
+1. **Update version in config file:**
 
-### Step 3: Done
+   ```python
+   # Tools/HolocronToolset/src/toolset/config.py
+   LOCAL_PROGRAM_INFO: dict[str, Any] = {
+       "currentVersion": "3.1.3",  # ← Update this
+       ...
+   }
+   ```
 
-No further action needed. The release is now live with all artifacts uploaded and version files updated.
+2. **Commit and push:**
 
-## What Changed from the Old Workflow
+   ```bash
+   git add Tools/HolocronToolset/src/toolset/config.py
+   git commit -m "chore(toolset): bump version to 3.1.3"
+   git push origin master
+   ```
 
-### Old Workflow (Manual)
+3. **Create pre-release on GitHub:**
+   - Go to [Releases](https://github.com/NickHugi/PyKotor/releases/new)
+   - Tag: `v3.1.3-toolset`
+   - Title: `toolset v3.1.3`
+   - Check "Set as a pre-release"
+   - Publish
 
-1. ❌ Manually bump `currentVersion` in config.py
-2. ❌ Create a new branch for the release
-3. ❌ Create the release with tag as pre-release
-4. ❌ Wait for workflows to run
-5. ❌ Manually bump `toolsetLatestVersion`/`toolsetLatestBetaVersion`
-6. ❌ Manually update release notes
-7. ❌ Manually convert pre-release to full release
+4. **Wait for automation** - the workflow handles everything else!
 
-### New Workflow (Automated)
+## PR Build Validation
 
-1. ✅ Create pre-release with tag → **Everything else is automatic**
+When you create a PR that touches tool files, the **PR Build Validation** workflow runs automatically:
 
-## Workflow Triggers
+### What It Checks
 
-Each workflow triggers on:
+1. **Change Detection**: Identifies which tools are affected by your PR
+2. **Version Consistency**: Validates that version config files are properly formatted
+3. **Dry-Run Builds**: Validates that the tool can be built (imports work, dependencies install, PyInstaller config valid)
+
+### Trigger Paths
+
+The workflow triggers on changes to:
+
+- `Tools/HolocronToolset/**` → Tests toolset
+- `Tools/HoloPatcher/**` → Tests holopatcher
+- `Tools/KotorDiff/**` → Tests kotordiff
+- `Libraries/**` → Tests ALL tools (shared code)
+- `compile/**` → Tests ALL tools (build scripts)
+
+### What Happens
+
+1. **Dry-run builds** validate that builds will succeed:
+   - Python environment setup
+   - Dependency installation
+   - Import validation
+   - PyInstaller configuration check
+
+2. **Summary comment** posted to PR with results
+
+3. **Must pass** before merge (recommended to set as required check)
+
+## Release Readiness Check
+
+Run this workflow before releasing to validate everything is ready:
+
+1. Go to **Actions** → **Release Readiness Check**
+2. Click **Run workflow**
+3. Select tool and enter version
+4. Optionally enable full builds
+
+### What It Validates
+
+- ✅ Version format (semver)
+- ✅ Tag availability
+- ✅ Config file exists and is valid
+- ✅ Dependencies can be installed
+- ✅ Compile scripts exist
+- ✅ Builds succeed (dry-run or full)
+
+## Workflow Architecture
+
+### Reusable Components
+
+```
+.github/
+├── actions/
+│   └── build-tool/           # Reusable build action
+│       └── action.yml
+└── workflows/
+    ├── build-pr.yml          # PR validation (automatic)
+    ├── release-ready.yml     # Pre-release checks (manual)
+    ├── release_toolset.yml   # Production release
+    ├── release_holopatcher.yml
+    ├── release_kotordiff.yml
+    └── TEST_release_toolset.yml  # Test workflow
+```
+
+### Build Action
+
+The `.github/actions/build-tool` action is reusable across all workflows:
 
 ```yaml
-on:
-  release:
-    types: [prereleased]
-  workflow_dispatch:
+- uses: ./.github/actions/build-tool
+  with:
+    tool_name: toolset
+    python_version: '3.8'
+    architecture: x64
+    qt_version: 'PyQt5'
+    dry_run: 'true'  # Set to 'false' for full build
 ```
 
-- **`prereleased`**: Triggers when you create a pre-release on GitHub
-- **`workflow_dispatch`**: Allows manual triggering from Actions tab (for testing)
+## Testing Releases Safely
 
-## Tag Validation
+### Option 1: Test Workflow
 
-Each workflow validates that the tag matches its pattern:
+Use the `TEST_release_toolset.yml` workflow:
 
-```bash
-# Example for toolset
-TAG="${{ github.event.release.tag_name }}"
-if [[ "$TAG" == *"toolset"* ]]; then
-  # Proceed with workflow
-else
-  # Skip workflow
-fi
-```
+1. Create tag: `test-v3.1.99-toolset`
+2. Create pre-release with that tag
+3. Workflow runs against `test-release` branch
+4. **Does NOT modify master**
+5. Cleanup when done:
 
-This ensures that creating a `v3.1.3-toolset` release won't trigger the KotorDiff workflow.
+   ```bash
+   gh release delete test-v3.1.99-toolset --yes
+   git push origin --delete test-v3.1.99-toolset
+   ```
 
-## Version Extraction
+### Option 2: Release Readiness with Full Build
 
-Version is extracted from the tag automatically:
-
-- `v3.1.3-toolset` → `3.1.3`
-- `v1.0.0-kotordiff` → `1.0.0`
-- `v1.7.1-holopatcher` → `1.7.1`
-
-The workflow uses `sed` to strip the `v` prefix and tool suffix.
-
-## Version File Updates
-
-### HolocronToolset
-
-Updates `Tools/HolocronToolset/src/toolset/config.py`:
-
-```python
-LOCAL_PROGRAM_INFO: dict[str, Any] = {
-    "currentVersion": "3.1.3",  # ← Updated
-    "toolsetLatestVersion": "3.1.2",
-    "toolsetLatestBetaVersion": "3.1.3",  # ← Updated
-    # ... other fields ...
-    "toolsetLatestNotes": "Your release notes",  # ← Updated
-    "toolsetLatestBetaNotes": "Your release notes",  # ← Updated
-}
-```
-
-### KotorDiff
-
-Updates `Tools/KotorDiff/src/kotordiff/__main__.py`:
-
-```python
-CURRENT_VERSION = "1.0.1"  # ← Updated
-```
-
-### HoloPatcher
-
-Updates `Tools/HoloPatcher/src/holopatcher/config.py`:
-
-```python
-LOCAL_PROGRAM_INFO: dict[str, Any] = {
-    "currentVersion": "1.7.1",  # ← Updated
-    "holopatcherLatestVersion": "1.7.0",
-    "holopatcherLatestBetaVersion": "1.7.1",  # ← Updated
-    # ... other fields ...
-    "holopatcherLatestNotes": "Your release notes",  # ← Updated
-    "holopatcherLatestBetaNotes": "Your release notes",  # ← Updated
-}
-```
-
-## Workflow Jobs
-
-Each workflow consists of 6 jobs:
-
-### 1. `validate`
-
-- Checks if the tag matches the tool pattern
-- Extracts version from tag
-- Outputs `should_run`, `version`, and `tag_name` for subsequent jobs
-
-### 2. `update_version_pre_build`
-
-- **First version update** (before build)
-- Checks out master branch
-- Updates `currentVersion` in config files
-- Commits to master
-- Force-updates release tag to point to this commit
-- **Purpose**: Ensures binaries are built with correct version
-
-### 3. `setup`
-
-- Sets up the build matrix (OS, Python versions, architectures)
-- Only runs if validation passes
-
-### 4. `build`
-
-- Builds binaries for all platform combinations
-- Uses the updated version from pre-build step
-- Uploads artifacts
-- Only runs if validation passes
-
-### 5. `package`
-
-- Downloads all build artifacts
-- Compresses into release archives
-- Uploads to the GitHub release
-- Only runs if validation passes
-
-### 6. `finalize`
-
-- **Second version update** (after upload)
-- Checks out master branch
-- Updates `toolsetLatestVersion`/`toolsetLatestBetaVersion` (Toolset)
-- Updates `holopatcherLatestVersion`/`holopatcherLatestBetaVersion` (HoloPatcher)
-- Updates release notes
-- Commits to master
-- Force-updates release tag to point to this commit
-- **Triggers GitHub to regenerate source archives**
-- Converts pre-release to full release via GitHub API
-- Only runs if all previous jobs succeeded
-
-## Pre-Release to Release Conversion
-
-The workflow uses the GitHub API to convert the pre-release:
-
-```bash
-curl -X PATCH \
-  -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-  -H "Accept: application/vnd.github.v3+json" \
-  "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID" \
-  -d '{"prerelease": false}'
-```
-
-This happens automatically after all artifacts are uploaded and version files are updated.
-
-## Manual Workflow Dispatch
-
-You can also trigger workflows manually from the GitHub Actions tab:
-
-1. Go to Actions → Select the workflow
-2. Click "Run workflow"
-3. Select the branch
-4. Click "Run workflow"
-
-Note: For manual dispatch, you'll need to ensure a matching tag exists.
+1. Run **Release Readiness Check** workflow
+2. Enable "Run full builds for all platforms"
+3. All artifacts uploaded to workflow run (not a release)
+4. Download and test binaries manually
 
 ## Troubleshooting
 
-### Workflow doesn't trigger
+### PR Build Fails
 
-- Ensure you created a **pre-release** (not a full release)
-- Check that the tag matches the pattern (e.g., contains `toolset`)
-- Verify the workflow file exists in `.github/workflows/`
+1. Check the **Actions** tab for detailed logs
+2. Common issues:
+   - Import errors → Check dependencies in `requirements.txt`
+   - PyInstaller errors → Check spec file or `compile/` scripts
+   - Missing files → Check paths in your changes
 
-### Build fails
+### Release Workflow Fails
 
-- Check the Actions tab for detailed logs
-- Common issues: dependency installation, PyInstaller errors
-- The workflow will attempt fallback upload if the primary method fails
+1. Check if the tag matches the pattern (e.g., `*toolset*` for toolset)
+2. Verify pre-release was created (not full release)
+3. Check workflow logs for specific errors
+4. If upload fails, workflow attempts fallback upload
 
-### Version not updated
+### Version Not Updating
 
-- Check that the version file path is correct
-- Verify the workflow has write permissions (`permissions: contents: write`)
-- Check Git configuration in the finalize job
-
-### Release not converting to full release
-
-- Check that all previous jobs succeeded
-- Verify the GitHub API call in the finalize job logs
-- Ensure the GITHUB_TOKEN has sufficient permissions
+1. Verify config file path is correct
+2. Check that `sed` patterns match your file format
+3. Verify workflow has write permissions
 
 ## Best Practices
 
-1. **Use semantic versioning**: `MAJOR.MINOR.PATCH`
-2. **Add release notes**: They'll be automatically added to config files
-3. **Test on a fork first**: Before using in production
-4. **Monitor the Actions tab**: Watch for any failures
-5. **Keep tag patterns consistent**: Don't mix naming conventions
+1. **Always test via PR first** - Create a PR even for version bumps
+2. **Use semver** - `MAJOR.MINOR.PATCH` format
+3. **Run Release Readiness** before production releases
+4. **Monitor Actions tab** - Watch the workflow run
+5. **Don't skip pre-release** - The automation depends on it
 
-## Example Release Timeline
+## Version Update Strategy
 
-```
-00:00 - You create pre-release v3.1.3-toolset
-00:01 - Validate job runs (extracts version: 3.1.3)
-00:02 - Update_version_pre_build job runs:
-        - Updates currentVersion to 3.1.3
-        - Commits to master
-        - Updates tag to point to new commit
-00:03 - Setup job runs (configures build matrix)
-00:04 - Build jobs start (6 parallel jobs: 3 OS × 2 architectures)
-        - Binaries now contain version 3.1.3
-00:16 - Build jobs complete
-00:17 - Package job runs (compresses and uploads artifacts)
-00:19 - Finalize job runs:
-        - Updates toolsetLatestVersion to 3.1.3
-        - Updates toolsetLatestBetaVersion to 3.1.3
-        - Updates release notes
-        - Commits to master
-        - Updates tag to point to new commit
-        - GitHub regenerates source archives
-        - Converts pre-release to full release
-00:20 - ✅ Release is now live with all artifacts and updated source!
-```
+The release workflow uses a **two-stage update**:
+
+### Stage 1: Pre-Build
+
+- Updates `currentVersion` (what the binary reports)
+- Commits to master
+- Tags point to this commit
+- **Purpose**: Built binaries have correct version
+
+### Stage 2: Post-Upload
+
+- Updates `toolsetLatestVersion` and `toolsetLatestBetaVersion`
+- Updates release notes in config
+- Commits to master
+- Tags updated again
+- **Purpose**: Enables auto-update for users
 
 ## Migration from Old Workflow
 
-No action needed on your part! The old manual steps are now automated:
-
 | Old Manual Step | New Automated Step |
 |-----------------|-------------------|
-| Bump currentVersion | Finalize job updates automatically |
-| Create release branch | Not needed (commits directly to tag) |
-| Create pre-release | You still do this (only manual step) |
-| Wait for workflows | Workflows trigger automatically |
-| Bump toolsetLatestVersion | Finalize job updates automatically |
-| Convert to full release | Finalize job does this via API |
+| Manually bump currentVersion | Use `bump_version.ps1` or edit config |
+| Hope the build works | PR Build Validation catches issues |
+| Create release branch | Not needed |
+| Wait and pray | Release Readiness Check validates first |
+| Manually bump latestVersion | Finalize job does this |
+| Convert to full release | Automatic |
 
-## Two-Stage Version Update Strategy
+## Workflow Files Reference
 
-The workflow uses a **two-stage update** approach:
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `build-pr.yml` | PR changes | Validates builds before merge |
+| `release-ready.yml` | Manual | Pre-release validation |
+| `release_toolset.yml` | Pre-release with `*toolset*` tag | Production toolset release |
+| `release_holopatcher.yml` | Pre-release with `*patcher*` tag | Production HoloPatcher release |
+| `release_kotordiff.yml` | Pre-release with `*kotordiff*` tag | Production KotorDiff release |
+| `TEST_release_toolset.yml` | Pre-release with `test-*toolset*` tag | Safe testing |
 
-### Stage 1: Pre-Build (update_version_pre_build job)
+## Example Timeline
 
-**Updates**: `currentVersion`
+```
+Day 1, 10:00 AM  - Create PR with toolset changes
+Day 1, 10:02 AM  - PR Build Validation starts
+Day 1, 10:10 AM  - ✅ Dry-run builds pass, PR approved
+Day 1, 10:15 AM  - Merge PR to master
 
-**Purpose**: Ensures the built binaries report the correct version
+Day 2, 09:00 AM  - Run Release Readiness Check for v3.1.3
+Day 2, 09:05 AM  - ✅ All checks pass
 
-**Pushes to**:
-
-- ✅ master branch
-- ✅ Release tag (force-updated to master)
-
-### Stage 2: Post-Upload (finalize job)
-
-**Updates**: `toolsetLatestVersion`, `toolsetLatestBetaVersion`, release notes
-
-**Purpose**: Activates auto-update functionality in the application
-
-**Pushes to**:
-
-- ✅ master branch
-- ✅ Release tag (force-updated to master)
-- ✅ Triggers GitHub to regenerate source archives
-
-**Why two stages?**
-
-- Stage 1 ensures binaries contain correct version strings
-- Stage 2 updates auto-update metadata only after artifacts are confirmed uploaded
-- Both stages push to master to keep it synchronized
-- Release tag is force-updated twice to include all changes in source archives
-
-## Additional Notes
-
-- The workflow commits to **both master and the release tag**
-- Version files are updated in **two stages** (pre-build and post-upload)
-- If any job fails, the finalize job won't run (release stays as pre-release)
-- You can still manually edit releases if needed
-- The workflow respects the tag pattern to avoid cross-triggering
-- Source archives are automatically regenerated when the tag is updated
-- The tag always points to the same commit as master after finalize completes
+Day 2, 09:10 AM  - Run: .\scripts\bump_version.ps1 -Tool toolset -Version 3.1.3 -Commit -CreateRelease
+Day 2, 09:11 AM  - Pre-release created automatically
+Day 2, 09:12 AM  - Release workflow starts
+Day 2, 09:30 AM  - ✅ All builds complete, artifacts uploaded
+Day 2, 09:31 AM  - ✅ Config updated, release finalized
+Day 2, 09:32 AM  - 🎉 Go to bed happy!
+```

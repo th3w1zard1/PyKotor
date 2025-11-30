@@ -80,7 +80,7 @@ class DynamicStackedView(QStackedWidget):
                 actual_view.setSelectionModel(self.common_selection_model)
 
     def all_widgets(self) -> tuple[QWidget, ...]:
-        return tuple(cast(QWidget, self.widget(i)) for i in range(self.count()))
+        return tuple(cast("QWidget", self.widget(i)) for i in range(self.count()))
 
     def set_widgets(self, value: Iterable[QWidget]) -> None:
         for i, widget in enumerate(value):
@@ -106,9 +106,9 @@ class DynamicStackedView(QStackedWidget):
         cls: type[T] = QAbstractItemView,
     ) -> T:
         if isinstance(widget, QAbstractItemView):
-            return cast(cls, widget)
+            return cast("cls", widget)
         for child in widget.findChildren(QAbstractItemView):
-            return cast(cls, child)
+            return cast("cls", child)
         raise ValueError(f"No view of type {cls.__name__} found in widget {widget.__class__.__name__}")
 
     def setModel(
@@ -133,31 +133,31 @@ class DynamicStackedView(QStackedWidget):
     def list_view(self) -> QListView | None:
         for view in self.all_views():
             if isinstance(view, QListView):
-                return cast(QListView, view)
+                return cast("QListView", view)
         return None
 
     def table_view(self) -> QTableView | None:
         for view in self.all_views():
             if isinstance(view, QTableView):
-                return cast(QTableView, view)
+                return cast("QTableView", view)
         return None
 
     def header_view(self) -> QHeaderView | None:
         for view in self.all_views():
             if isinstance(view, QHeaderView):
-                return cast(QHeaderView, view)
+                return cast("QHeaderView", view)
         return None
 
     def column_view(self) -> QColumnView | None:
         for view in self.all_views():
             if isinstance(view, QColumnView):
-                return cast(QColumnView, view)
+                return cast("QColumnView", view)
         return None
 
     def tree_view(self) -> QTreeView | None:
         for view in self.all_views():
             if isinstance(view, QTreeView):
-                return cast(QTreeView, view)
+                return cast("QTreeView", view)
         return None
 
     def wheelEvent(self, event: QWheelEvent) -> None:
@@ -332,7 +332,7 @@ if __name__ == "__main__":
 
     model = QStandardItemModel()
 
-    qapp: QApplication | None = cast(Optional[QApplication], QApplication.instance())
+    qapp: QApplication | None = cast("Optional[QApplication]", QApplication.instance())
     assert qapp is not None
     q_app_style: QStyle | None = qapp.style()
     assert q_app_style is not None

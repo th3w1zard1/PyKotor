@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import itertools
-from logging import Logger
 import os
 import platform
 import sys
@@ -11,8 +10,7 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum
 from functools import lru_cache
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, overload
-from typing import Generator, Iterable, Sequence
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Generator, Iterable, Sequence, overload
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingModuleSource]
 
@@ -27,9 +25,9 @@ from pykotor.resource.formats.gff.gff_auto import read_gff
 from pykotor.resource.formats.gff.gff_data import GFFFieldType
 from pykotor.resource.formats.tpc.tpc_auto import read_tpc
 from pykotor.resource.formats.tpc.tpc_data import TPC
+from pykotor.resource.formats.wav.wav_auto import bytes_wav, read_wav
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_capsule_file, is_erf_file, is_mod_file
-from pykotor.resource.formats.wav.wav_auto import bytes_wav, read_wav
 from pykotor.tools.path import CaseAwarePath
 from utility.common.more_collections import CaseInsensitiveDict
 
@@ -37,15 +35,15 @@ if TYPE_CHECKING:
     import io
 
     from collections.abc import Generator, Iterable, Sequence
+    from logging import Logger
 
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
+    from pykotor.common.language import LocalizedString
     from pykotor.common.misc import Game
     from pykotor.extract.capsule import LazyCapsule
-    from pykotor.resource.formats.gff.gff_data import GFF
-
-    from pykotor.common.language import LocalizedString
     from pykotor.extract.talktable import StringResult
+    from pykotor.resource.formats.gff.gff_data import GFF
 
 
 @dataclass
@@ -1168,6 +1166,8 @@ class Installation:
         -------
             A ResourceResult object if the specified resource is found, otherwise None.
         """
+        if not resname:
+            return None
         query = ResourceIdentifier(resname, restype)
         batch: dict[ResourceIdentifier, ResourceResult | None] = self.resources(
             [query],

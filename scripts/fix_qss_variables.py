@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import re
+
 from pathlib import Path
+
 
 def extract_variables(content: str) -> dict[str, str]:
     """Extract CSS variable definitions from content."""

@@ -16,9 +16,16 @@ import certifi
 import requests
 import urllib3
 
-from Crypto.Cipher import AES
-from Crypto.Util import Counter
 from loggerplus import RobustLogger
+
+try:
+    from Crypto.Cipher import AES
+    from Crypto.Util import Counter
+    _CRYPTO_AVAILABLE = True
+except ImportError:
+    _CRYPTO_AVAILABLE = False
+    AES = None  # type: ignore[assignment, misc]
+    Counter = None  # type: ignore[assignment, misc]
 
 from utility.updater.crypto import (
     a32_to_str,
@@ -333,6 +340,11 @@ def _download_file(
     file: dict[str, Any] | None = None,
     progress_hooks: list[Callable[[dict[str, Any]], Any]] | None = None,
 ):
+    if not _CRYPTO_AVAILABLE:
+        raise ImportError(
+            "pycryptodome is required for MEGA file downloads. "
+            "Install it with: pip install pycryptodome"
+        )
     dest_path = Path(dest or Path.cwd()).absolute()
     if file is None:
         if is_public:

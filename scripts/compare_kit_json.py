@@ -1,5 +1,6 @@
 """Compare generated kit JSON with expected structure from other kits."""
 import json
+
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent

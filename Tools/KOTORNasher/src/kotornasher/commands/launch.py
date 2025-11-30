@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 import subprocess
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -11,7 +10,6 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from logging import Logger
 
-from kotornasher.cfg_parser import load_config
 from kotornasher.commands.install import cmd_install, find_kotor_install_dir
 
 

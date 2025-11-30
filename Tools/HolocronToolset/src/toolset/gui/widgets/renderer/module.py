@@ -26,13 +26,11 @@ from utility.error_handling import assert_with_variable_trace
 if TYPE_CHECKING:
     from glm import vec3  # pyright: ignore[reportMissingImports]
     from qtpy.QtCore import QPoint  # pyright: ignore[reportAttributeAccessIssue]
-    from qtpy.QtGui import QFocusEvent, QKeyEvent, QMouseEvent, QOpenGLContext, QWheelEvent
+    from qtpy.QtGui import QFocusEvent, QKeyEvent, QMouseEvent, QOpenGLContext, QResizeEvent, QWheelEvent
     from qtpy.QtWidgets import QWidget
 
     from pykotor.common.module import Module, ModuleResource
     from pykotor.gl.scene import RenderObject
-    from qtpy.QtGui import QResizeEvent
-
     from pykotor.resource.formats.bwm import BWMFace
     from pykotor.resource.formats.lyt.lyt_data import LYT, LYTDoorHook, LYTObstacle, LYTRoom, LYTTrack
     from toolset.data.installation import HTInstallation
@@ -93,19 +91,7 @@ class ModuleRenderer(QOpenGLWidget):
 
         self.do_select: bool = False  # Set to true to select object at mouse pointer
         self.free_cam: bool = False  # Changes how screenDelta is calculated in mouseMoveEvent
-        self.delta: float = 0.0166  # Target 60 FPS
-        
-        # Frame rate management for adaptive quality
-        self._frame_times: list[float] = []
-        self._max_frame_samples: int = 30
-        self._target_fps: float = 60.0
-        self._min_fps: float = 30.0
-        self._last_frame_time: float = 0.0
-        
-        # Dirty flags for optimization
-        self._needs_redraw: bool = True
-        self._camera_dirty: bool = True
-        self._last_camera_state: tuple[float, ...] = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        self.delta: float = 0.0166  # Approx 60 FPS frame time
 
     @property
     def scene(self) -> Scene:
@@ -306,18 +292,25 @@ class ModuleRenderer(QOpenGLWidget):
             self.update_lyt_preview()
 
     def paintGL(self):
+        """Optimized paintGL with lazy cursor updates.
+        
+        Performance optimizations:
+        - Cursor world position only calculated when mouse is within bounds
+        - screen_to_world only called when cursor position has changed significantly
+        - Selection picking separated from rendering
+        
+        Reference: Standard game engine practice - minimize expensive per-frame operations
+        """
         if not self.loop_timer.isActive():
-            RobustLogger().debug("ModuleDesigner.paintGL - loop timer is paused or not started.")
             return
         if not self.isReady():
-            RobustLogger().warning("ModuleDesigner.paintGL - not initialized.")
             return  # Do nothing if not initialized
 
         # Ensure OpenGL context is current before any GL calls
         self.makeCurrent()
-        #get_root_logger().debug("ModuleDesigner.paintGL called.")
         super().paintGL()
-        start: datetime = datetime.now(tz=timezone.utc).astimezone()
+        
+        # Handle object selection (only when requested)
         if self.do_select:
             self.do_select = False
             obj: RenderObject | None = self.scene.pick(self._mouse_prev.x, self.height() - self._mouse_prev.y)
@@ -328,80 +321,43 @@ class ModuleRenderer(QOpenGLWidget):
                 self.scene.selection.clear()
                 self.sig_object_selected.emit(None)
 
+        # Update cursor position only when mouse is within bounds
+        # This is an expensive operation so we throttle it
         screen_cursor: QPoint = self.mapFromGlobal(self.cursor().pos())
-        world_cursor: Vector3 = self.scene.screen_to_world(screen_cursor.x(), screen_cursor.y())
-        if screen_cursor.x() < self.width() and screen_cursor.x() >= 0 and screen_cursor.y() < self.height() and screen_cursor.y() >= 0:
-            self.scene.cursor.set_position(world_cursor.x, world_cursor.y, world_cursor.z)
+        cursor_in_bounds = (
+            0 <= screen_cursor.x() < self.width() and
+            0 <= screen_cursor.y() < self.height()
+        )
+        
+        if cursor_in_bounds:
+            # Only update world cursor if screen position has changed enough
+            # This avoids expensive screen_to_world calls every frame
+            cursor_delta = abs(screen_cursor.x() - self._mouse_prev.x) + abs(screen_cursor.y() - self._mouse_prev.y)
+            if cursor_delta > 2 or not hasattr(self, "_last_cursor_update"):  # Threshold of 2 pixels
+                world_cursor: Vector3 = self.scene.screen_to_world(screen_cursor.x(), screen_cursor.y())
+                self.scene.cursor.set_position(world_cursor.x, world_cursor.y, world_cursor.z)
+                self._last_cursor_update = True
 
+        # Main render pass
         self.scene.render()
-        self._render_time = int((datetime.now(tz=timezone.utc).astimezone() - start).total_seconds() * 1000)
 
     def loop(self):
         """Repaints and checks for keyboard input on mouse press.
 
         Processing Logic:
         ----------------
-            - Checks if a repaint is needed using dirty flags
-            - Calls repaint() to redraw the canvas
+            - Always repaints to ensure smooth rendering
             - Checks if mouse is over object and keyboard keys are pressed
             - Emits keyboardPressed signal with mouse/key info
-            - Tracks frame time for adaptive quality
         """
-        import time
-        frame_start = time.time()
-        
-        # Check if camera has changed
-        if self._scene is not None:
-            camera = self._scene.camera
-            current_state = (
-                camera.x, camera.y, camera.z,
-                camera.yaw, camera.pitch, camera.distance
-            )
-            if current_state != self._last_camera_state:
-                self._camera_dirty = True
-                self._needs_redraw = True
-                self._last_camera_state = current_state
-        
-        # Only repaint if needed or if there are inputs
-        if self._needs_redraw or self._keys_down or self._mouse_down or self.free_cam:
-            self.repaint()
-            self._needs_redraw = False
+        # Always repaint - trying to conditionally skip frames causes:
+        # 1. Input lag (camera changes happen externally before loop() runs)
+        # 2. Stale rendering (async resources load but don't get displayed)
+        # 3. Teleporting effect when camera finally updates
+        self.repaint()
         
         if self.underMouse() and self.free_cam and len(self._keys_down) > 0:
             self.sig_keyboard_pressed.emit(self._mouse_down, self._keys_down)
-        
-        # Track frame time for performance monitoring
-        frame_end = time.time()
-        frame_time = frame_end - frame_start
-        self._frame_times.append(frame_time)
-        if len(self._frame_times) > self._max_frame_samples:
-            self._frame_times.pop(0)
-        
-        # Calculate average FPS
-        if self._frame_times:
-            avg_frame_time = sum(self._frame_times) / len(self._frame_times)
-            self.delta = avg_frame_time if avg_frame_time > 0 else 0.0166
-    
-    def mark_dirty(self):
-        """Mark the renderer as needing a redraw.
-        
-        Call this when something in the scene has changed.
-        """
-        self._needs_redraw = True
-        self._camera_dirty = True
-    
-    def get_fps(self) -> float:
-        """Get the current frames per second.
-        
-        Returns:
-            Current FPS based on recent frame times.
-        """
-        if not self._frame_times:
-            return 0.0
-        avg_frame_time = sum(self._frame_times) / len(self._frame_times)
-        if avg_frame_time <= 0:
-            return 0.0
-        return 1.0 / avg_frame_time
 
     def walkmesh_point(
         self,

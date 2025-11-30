@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Update GFF-File-Format.md to replace generic type sections with links."""
 
-from pathlib import Path
 import re
+
+from pathlib import Path
 
 wiki_dir = Path("wiki")
 gff_file = wiki_dir / "GFF-File-Format.md"

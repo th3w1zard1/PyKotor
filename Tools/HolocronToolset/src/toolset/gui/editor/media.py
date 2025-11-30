@@ -22,6 +22,36 @@ if TYPE_CHECKING:
     from toolset.gui.editor.base import Editor
 
 
+def _detect_audio_extension(data: bytes) -> str:
+    """Detect audio format from file magic bytes.
+    
+    Returns appropriate file extension for media player compatibility.
+    
+    References:
+        vendor/KotOR.js/src/audio/AudioFile.ts:9-16 - Magic byte constants
+    """
+    if len(data) < 4:
+        return ".wav"
+    
+    # Check for MP3 signatures
+    # ID3 header (ID3v2 tags at start of MP3)
+    if data[:3] == b"ID3":
+        return ".mp3"
+    # MP3 frame sync (0xFF 0xFB, 0xFF 0xFA, 0xFF 0xF3, 0xFF 0xF2)
+    if len(data) >= 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0:
+        return ".mp3"
+    # LAME header
+    if data[:4] == b"LAME":
+        return ".mp3"
+    
+    # Check for RIFF/WAVE
+    if data[:4] == b"RIFF":
+        return ".wav"
+    
+    # Default to wav
+    return ".wav"
+
+
 class EditorMedia:
     def __init__(
         self,
@@ -48,13 +78,17 @@ class EditorMedia:
         elif qtpy.QT6:
             from qtpy.QtMultimedia import QAudioOutput
 
-            temp_file: tempfile._TemporaryFileWrapper[bytes] = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")  # noqa: SIM115
+            # Detect audio format for proper file extension
+            # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:348-354
+            suffix = _detect_audio_extension(data)
+            
+            temp_file: tempfile._TemporaryFileWrapper[bytes] = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)  # noqa: SIM115
             temp_file.write(data)  # pyright: ignore[reportArgumentType, reportCallIssue]
             temp_file.flush()
             temp_file.seek(0)
             temp_file.close()
 
-            player: PyQt6MediaPlayer | PySide6MediaPlayer = cast(Any, self.editor.media_player.player)
+            player: PyQt6MediaPlayer | PySide6MediaPlayer = cast("Any", self.editor.media_player.player)
             audio_output = QAudioOutput(self.editor)  # pyright: ignore[reportCallIssue, reportArgumentType]
             audio_output.setVolume(1)
             player.setAudioOutput(audio_output)  # pyright: ignore[reportArgumentType]

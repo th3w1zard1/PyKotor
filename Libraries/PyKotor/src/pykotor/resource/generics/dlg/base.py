@@ -277,7 +277,7 @@ class DLG:
 
                 # Cast to handle type variance
                 self._find_paths_recursive(
-                    cast(Sequence[DLGLink[T]], node.links),
+                    cast("Sequence[DLGLink[T]]", node.links),
                     target,
                     current_path / node_path / link_list_name,
                     paths,
@@ -355,7 +355,7 @@ class DLG:
             seen_entries.add(entry)
             for reply_link in entry.links:
                 reply: DLGNode = reply_link.node
-                entries.extend(self._all_entries(cast(Sequence[DLGLink[DLGEntry]], reply.links), seen_entries))
+                entries.extend(self._all_entries(cast("Sequence[DLGLink[DLGEntry]]", reply.links), seen_entries))
 
         return entries
 
@@ -408,6 +408,6 @@ class DLG:
                 entry: DLGNode | None = entry_link.node
                 if entry is None:
                     continue
-                replies.extend(self._all_replies(cast(Sequence[DLGLink], entry.links), seen_replies))
+                replies.extend(self._all_replies(cast("Sequence[DLGLink]", entry.links), seen_replies))
 
         return replies

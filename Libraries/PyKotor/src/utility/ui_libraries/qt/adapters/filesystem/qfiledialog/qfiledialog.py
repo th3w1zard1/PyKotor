@@ -27,8 +27,8 @@ from qtpy.QtCore import (
     Signal,  # pyright: ignore[reportAttributeAccessIssue]
 )
 from qtpy.QtWidgets import (
-    QAction,  # pyright: ignore[reportPrivateImportUsage]
     QAbstractItemView,
+    QAction,  # pyright: ignore[reportPrivateImportUsage]
     QApplication,
     QDialog,
     QDialogButtonBox,

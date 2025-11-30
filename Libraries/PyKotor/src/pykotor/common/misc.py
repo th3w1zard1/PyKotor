@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import warnings
-from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, Any, ClassVar, Generic, Iterable, TypeVar
 
 from collections.abc import Iterable
 from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Iterable, TypeVar
 
 from utility.common.geometry import Vector3
 

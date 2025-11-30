@@ -2,6 +2,7 @@
 """Sort the TOC in NSS-File-Format.md alphabetically within each section."""
 
 import re
+
 from pathlib import Path
 
 wiki_dir = Path("wiki")

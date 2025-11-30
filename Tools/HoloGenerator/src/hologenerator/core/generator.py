@@ -8,6 +8,7 @@ based on the differences between two KOTOR installations.
 from __future__ import annotations
 
 import sys
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -23,8 +24,8 @@ if getattr(sys, "frozen", False) is False:
     if pykotor_path.exists():
         update_sys_path(pykotor_path.parent)
 
-from hologenerator.core.differ import KotorDiffer
 from hologenerator.core.changes_ini import ChangesIniGenerator
+from hologenerator.core.differ import KotorDiffer
 
 if TYPE_CHECKING:
     from pathlib import Path as PathType

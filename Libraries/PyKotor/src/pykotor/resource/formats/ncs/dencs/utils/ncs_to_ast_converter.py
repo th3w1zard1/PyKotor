@@ -1,12 +1,38 @@
+"""NCS to AST Converter - Comprehensive instruction conversion.
+
+This module provides comprehensive conversion of NCS (NWScript Compiled Script) bytecode
+instructions directly to DeNCS AST (Abstract Syntax Tree) format, bypassing the traditional
+Decoder -> Lexer -> Parser chain for improved performance and accuracy.
+
+The converter handles all NCS instruction types comprehensively:
+- Constants: CONSTI, CONSTF, CONSTS, CONSTO
+- Control flow: JMP, JSR, JZ, JNZ, RETN
+- Stack operations: CPDOWNSP, CPTOPSP, CPDOWNBP, CPTOPBP, MOVSP, INCxSP, DECxSP, INCxBP, DECxBP
+- RSADD variants: RSADDI, RSADDF, RSADDS, RSADDO, RSADDEFF, RSADDEVT, RSADDLOC, RSADDTAL
+- Function calls: ACTION
+- Stack management: SAVEBP, RESTOREBP, STORE_STATE, DESTRUCT
+- Arithmetic: ADDxx, SUBxx, MULxx, DIVxx, MODxx, NEGx
+- Comparison: EQUALxx, NEQUALxx, GTxx, GEQxx, LTxx, LEQxx
+- Logical: LOGANDxx, LOGORxx, NOTx
+- Bitwise: BOOLANDxx, INCORxx, EXCORxx, SHLEFTxx, SHRIGHTxx, USHRIGHTxx, COMPx
+- No-ops: NOP, NOP2, RESERVED (typically skipped during conversion)
+
+References:
+----------
+    vendor/reone/src/libs/script/format/ncsreader.cpp - NCS instruction reading
+    vendor/xoreos/src/aurora/nwscript/ncsfile.cpp - NCS instruction execution
+    DeNCS - Original NCS decompiler implementation
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstruction, NCSInstructionType  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_program import AProgram  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
 
+if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstruction
 
 def convert_ncs_to_ast(ncs: NCS) -> Start:
     """Convert NCSInstruction[] to DeNCS AST format.
@@ -15,10 +41,9 @@ def convert_ncs_to_ast(ncs: NCS) -> Start:
     converting NCSInstruction objects to AST nodes.
     """
     from pykotor.resource.formats.ncs.dencs.node.a_program import AProgram  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
-
-    from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
     
     program = AProgram()
 
@@ -63,10 +88,9 @@ def convert_ncs_to_ast(ncs: NCS) -> Start:
         if sub:
             program.add_subroutine(sub)
 
-    from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
     return Start(program, EOF())
-
 
 def _convert_instruction_range_to_subroutine(
     instructions: list[NCSInstruction],
@@ -75,8 +99,8 @@ def _convert_instruction_range_to_subroutine(
     sub_id: int
 ):
     """Convert a range of instructions to an ASubroutine."""
-    from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_command_block import ACommandBlock  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
 
     if start_idx >= end_idx or start_idx >= len(instructions):
         return None
@@ -104,62 +128,115 @@ def _convert_instruction_range_to_subroutine(
 
     return sub
 
-
 def _convert_instruction_to_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
-    """Convert a single NCSInstruction to an AST command node."""
+    """Convert a single NCSInstruction to an AST command node.
+    
+    Handles all NCS instruction types comprehensively:
+    - Constants: CONSTI, CONSTF, CONSTS, CONSTO
+    - Control flow: JMP, JSR, JZ, JNZ, RETN
+    - Stack operations: CPDOWNSP, CPTOPSP, CPDOWNBP, CPTOPBP, MOVSP, INCxSP, DECxSP, INCxBP, DECxBP
+    - RSADD variants: RSADDI, RSADDF, RSADDS, RSADDO, RSADDEFF, RSADDEVT, RSADDLOC, RSADDTAL
+    - Function calls: ACTION
+    - Stack management: SAVEBP, RESTOREBP, STORE_STATE, DESTRUCT
+    - Arithmetic: ADDxx, SUBxx, MULxx, DIVxx, MODxx, NEGx
+    - Comparison: EQUALxx, NEQUALxx, GTxx, GEQxx, LTxx, LEQxx
+    - Logical: LOGANDxx, LOGORxx, NOTx
+    - Bitwise: BOOLANDxx, INCORxx, EXCORxx, SHLEFTxx, SHRIGHTxx, USHRIGHTxx, COMPx
+    - No-ops: NOP, NOP2, RESERVED
+    """
     from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
 
     ins_type = inst.ins_type
 
+    # Constants
     if ins_type in {NCSInstructionType.CONSTI, NCSInstructionType.CONSTF, NCSInstructionType.CONSTS, NCSInstructionType.CONSTO}:
         return _convert_const_cmd(inst, pos)
+    
+    # Function calls
     elif ins_type == NCSInstructionType.ACTION:
         return _convert_action_cmd(inst, pos)
+    
+    # Control flow - unconditional jumps
     elif ins_type in {NCSInstructionType.JMP, NCSInstructionType.JSR}:
         return _convert_jump_cmd(inst, pos, instructions)
+    
+    # Control flow - conditional jumps
     elif ins_type in {NCSInstructionType.JZ, NCSInstructionType.JNZ}:
         return _convert_conditional_jump_cmd(inst, pos, instructions)
+    
+    # Control flow - return
     elif ins_type == NCSInstructionType.RETN:
         return _convert_retn_cmd(inst, pos)
+    
+    # Stack copy operations - stack pointer
     elif ins_type in {NCSInstructionType.CPDOWNSP, NCSInstructionType.CPTOPSP}:
         return _convert_copy_sp_cmd(inst, pos)
+    
+    # Stack copy operations - base pointer
     elif ins_type in {NCSInstructionType.CPDOWNBP, NCSInstructionType.CPTOPBP}:
         return _convert_copy_bp_cmd(inst, pos)
+    
+    # Stack move operations
     elif ins_type == NCSInstructionType.MOVSP:
         return _convert_movesp_cmd(inst, pos)
-    elif ins_type in {NCSInstructionType.RSADDI, NCSInstructionType.RSADDF, NCSInstructionType.RSADDS, NCSInstructionType.RSADDO}:
+    
+    # Stack increment/decrement operations
+    elif ins_type in {NCSInstructionType.INCxSP, NCSInstructionType.DECxSP, NCSInstructionType.INCxBP, NCSInstructionType.DECxBP}:
+        return _convert_stack_op_cmd(inst, pos)
+    
+    # RSADD variants (all types)
+    elif ins_type in {
+        NCSInstructionType.RSADDI, NCSInstructionType.RSADDF, NCSInstructionType.RSADDS, NCSInstructionType.RSADDO,
+        NCSInstructionType.RSADDEFF, NCSInstructionType.RSADDEVT, NCSInstructionType.RSADDLOC, NCSInstructionType.RSADDTAL
+    }:
         return _convert_rsadd_cmd(inst, pos)
+    
+    # Stack management
     elif ins_type == NCSInstructionType.DESTRUCT:
         return _convert_destruct_cmd(inst, pos)
     elif ins_type in {NCSInstructionType.SAVEBP, NCSInstructionType.RESTOREBP}:
         return _convert_bp_cmd(inst, pos)
     elif ins_type == NCSInstructionType.STORE_STATE:
         return _convert_store_state_cmd(inst, pos)
+    
+    # No-operation instructions (NOP, NOP2, RESERVED)
+    elif ins_type in {NCSInstructionType.NOP, NCSInstructionType.NOP2, NCSInstructionType.RESERVED, NCSInstructionType.RESERVED_01}:
+        # NOP instructions are typically removed during optimization, but we convert them for completeness
+        # They don't produce any meaningful AST nodes, so we return None (they'll be skipped)
+        return None
+    
+    # Unary operations (NEG, NOT, COMP)
+    elif inst.ins_type in {NCSInstructionType.NEGI, NCSInstructionType.NEGF, NCSInstructionType.NOTI, NCSInstructionType.COMPI}:
+        return _convert_unary_cmd(inst, pos)
+    
+    # Binary operations (arithmetic, comparison, bitwise)
     elif inst.is_arithmetic() or inst.is_comparison() or inst.is_bitwise():
-        # Binary operations (arithmetic, comparison, bitwise)
-        # Unary operations like NEG, NOT, COMP are also handled here
-        if inst.is_arithmetic() and inst.ins_type in {NCSInstructionType.NEGI, NCSInstructionType.NEGF, NCSInstructionType.NOTI, NCSInstructionType.COMPI}:
-            return _convert_unary_cmd(inst, pos)
-        else:
-            return _convert_binary_cmd(inst, pos)
-    elif inst.is_logical():
-        # Logic operations (LOGANDII, LOGORII)
+        return _convert_binary_cmd(inst, pos)
+    
+    # Logical operations (LOGANDII, LOGORII, and bitwise logical ops)
+    elif inst.is_logical() or inst.ins_type in {
+        NCSInstructionType.BOOLANDII, NCSInstructionType.INCORII, NCSInstructionType.EXCORII
+    }:
         return _convert_logii_cmd(inst, pos)
-
+    
+    # Unknown instruction type - log warning but don't crash
+    # This allows the converter to continue processing other instructions
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Unknown instruction type at position {pos}: {ins_type.name} (value: {ins_type.value if hasattr(ins_type, 'value') else 'N/A'})")
     return None
-
 
 def _convert_const_cmd(inst: NCSInstruction, pos: int):
     """Convert CONST instruction to AConstCmd."""
     from pykotor.resource.formats.ncs.dencs.node.a_const_cmd import AConstCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_float_constant import AFloatConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_int_constant import AIntConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_string_constant import AStringConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_const import TConst  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_float_constant import TFloatConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_int_constant import AIntConstant  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_float_constant import AFloatConstant  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_string_constant import AStringConstant  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_float_constant import TFloatConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_string_literal import TStringLiteral  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
 
@@ -200,7 +277,6 @@ def _convert_const_cmd(inst: NCSInstruction, pos: int):
 
     return const_cmd
 
-
 def _convert_action_cmd(inst: NCSInstruction, pos: int):
     """Convert ACTION instruction to AActionCmd."""
     from pykotor.resource.formats.ncs.dencs.node.a_action_cmd import AActionCmd  # pyright: ignore[reportMissingImports]
@@ -234,16 +310,15 @@ def _convert_action_cmd(inst: NCSInstruction, pos: int):
 
     return action_cmd
 
-
 def _convert_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
     """Convert JMP/JSR/JZ/JNZ instruction to appropriate cmd."""
     from pykotor.resource.formats.ncs.dencs.node.a_jump_cmd import AJumpCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_jump_sub_cmd import AJumpSubCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_jump_sub_cmd import AJumpSubCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_jump_to_subroutine import AJumpToSubroutine  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_jmp import TJmp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_jsr import TJsr  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
 
     ins_type = inst.ins_type
@@ -282,16 +357,15 @@ def _convert_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInst
         jump_cmd.set_jump_command(jump_command)
         return jump_cmd
 
-
 def _convert_conditional_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
     """Convert JZ/JNZ instruction to ACondJumpCmd."""
     from pykotor.resource.formats.ncs.dencs.node.a_cond_jump_cmd import ACondJumpCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_conditional_jump_command import AConditionalJumpCommand  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_zero_jump_if import AZeroJumpIf  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_nonzero_jump_if import ANonzeroJumpIf  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_jz import TJz  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_jnz import TJnz  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_zero_jump_if import AZeroJumpIf  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_jnz import TJnz  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_jz import TJz  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
 
@@ -327,12 +401,11 @@ def _convert_conditional_jump_cmd(inst: NCSInstruction, pos: int, instructions: 
 
     return cond_jump_cmd
 
-
 def _convert_retn(inst: NCSInstruction, pos: int):
     """Convert RETN instruction to AReturn (for subroutine return)."""
     from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_retn import TRetn  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_retn import TRetn  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
 
     ret = AReturn()
@@ -346,7 +419,6 @@ def _convert_retn(inst: NCSInstruction, pos: int):
 
     return ret
 
-
 def _convert_retn_cmd(inst: NCSInstruction, pos: int):
     """Convert RETN instruction to AReturnCmd (for command block)."""
     from pykotor.resource.formats.ncs.dencs.node.a_return_cmd import AReturnCmd  # pyright: ignore[reportMissingImports]
@@ -357,13 +429,12 @@ def _convert_retn_cmd(inst: NCSInstruction, pos: int):
 
     return retn_cmd
 
-
 def _convert_copy_sp_cmd(inst: NCSInstruction, pos: int):
     """Convert CPDOWNSP/CPTOPSP instruction to appropriate cmd."""
-    from pykotor.resource.formats.ncs.dencs.node.a_copydownsp_cmd import ACopydownspCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_copytopsp_cmd import ACopytopspCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_copy_down_sp_command import ACopyDownSpCommand  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copydownsp_cmd import ACopydownspCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copytopsp_cmd import ACopytopspCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_cpdownsp import TCpdownsp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_cptopsp import TCptopsp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
@@ -398,13 +469,12 @@ def _convert_copy_sp_cmd(inst: NCSInstruction, pos: int):
         cmd.set_copy_top_sp_command(command)
         return cmd
 
-
 def _convert_copy_bp_cmd(inst: NCSInstruction, pos: int):
     """Convert CPDOWNBP/CPTOPBP instruction to appropriate cmd."""
-    from pykotor.resource.formats.ncs.dencs.node.a_copydownbp_cmd import ACopydownbpCmd  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_copytopbp_cmd import ACopytopbpCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copydownbp_cmd import ACopydownbpCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copytopbp_cmd import ACopytopbpCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_cpdownbp import TCpdownbp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_cptopbp import TCptopbp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
@@ -439,13 +509,12 @@ def _convert_copy_bp_cmd(inst: NCSInstruction, pos: int):
         cmd.set_copy_top_bp_command(command)
         return cmd
 
-
 def _convert_movesp_cmd(inst: NCSInstruction, pos: int):
     """Convert MOVSP instruction to AMovespCmd."""
-    from pykotor.resource.formats.ncs.dencs.node.a_movesp_cmd import AMovespCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_movsp import TMovsp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_movesp_cmd import AMovespCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_movsp import TMovsp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
 
     ins_type = inst.ins_type
@@ -463,13 +532,17 @@ def _convert_movesp_cmd(inst: NCSInstruction, pos: int):
 
     return cmd
 
-
 def _convert_rsadd_cmd(inst: NCSInstruction, pos: int):
-    """Convert RSADD instruction to ARsaddCmd."""
+    """Convert RSADD instruction to ARsaddCmd.
+    
+    Handles all RSADD variants:
+    - RSADDI, RSADDF, RSADDS, RSADDO (basic types)
+    - RSADDEFF, RSADDEVT, RSADDLOC, RSADDTAL (complex types)
+    """
     from pykotor.resource.formats.ncs.dencs.node.a_rsadd_cmd import ARsaddCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_rsadd_command import ARsaddCommand  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_rsadd import TRsadd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_rsadd import TRsadd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
 
     ins_type = inst.ins_type
@@ -485,6 +558,62 @@ def _convert_rsadd_cmd(inst: NCSInstruction, pos: int):
 
     return cmd
 
+def _convert_stack_op_cmd(inst: NCSInstruction, pos: int):
+    """Convert stack increment/decrement instructions (INCxSP, DECxSP, INCxBP, DECxBP) to AStackOpCmd.
+    
+    These instructions adjust the stack or base pointer by a specified offset.
+    """
+    from pykotor.resource.formats.ncs.dencs.node.a_decibp_stack_op import ADecibpStackOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_decisp_stack_op import ADecispStackOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_incibp_stack_op import AIncibpStackOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_incisp_stack_op import AIncispStackOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_stack_op_cmd import AStackOpCmd  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_decibp import TDecibp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_decisp import TDecisp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_incibp import TIncibp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_incisp import TIncisp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
+
+    ins_type = inst.ins_type
+    type_val = ins_type.value.qualifier if hasattr(ins_type, 'value') and hasattr(ins_type.value, 'qualifier') else 0
+    offset = inst.args[0] if inst.args and len(inst.args) > 0 else 0
+
+    # Create appropriate stack operation node
+    if ins_type == NCSInstructionType.INCxSP:
+        stack_op = AIncispStackOp()
+        stack_op.set_incisp(TIncisp(pos, 0))
+    elif ins_type == NCSInstructionType.DECxSP:
+        stack_op = ADecispStackOp()
+        stack_op.set_decisp(TDecisp(pos, 0))
+    elif ins_type == NCSInstructionType.INCxBP:
+        stack_op = AIncibpStackOp()
+        stack_op.set_incibp(TIncibp(pos, 0))
+    elif ins_type == NCSInstructionType.DECxBP:
+        stack_op = ADecibpStackOp()
+        stack_op.set_decibp(TDecibp(pos, 0))
+    else:
+        # Should not reach here, but handle gracefully
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Unexpected instruction type in _convert_stack_op_cmd: {ins_type.name}")
+        return None
+
+    # Create stack command
+    stack_command = AStackCommand()
+    stack_command.set_stack_op(stack_op)
+    stack_command.set_pos(TIntegerConstant(str(pos), pos, 0))
+    stack_command.set_type(TIntegerConstant(str(type_val), pos, 0))
+    stack_command.set_offset(TIntegerConstant(str(offset), pos, 0))
+    stack_command.set_semi(TSemi(pos, 0))
+
+    # Create and return command
+    cmd = AStackOpCmd()
+    cmd.set_stackCommand(stack_command)
+
+    return cmd
 
 def _convert_destruct_cmd(inst: NCSInstruction, pos: int):
     """Convert DESTRUCT instruction to ADestructCmd."""
@@ -515,16 +644,15 @@ def _convert_destruct_cmd(inst: NCSInstruction, pos: int):
 
     return cmd
 
-
 def _convert_bp_cmd(inst: NCSInstruction, pos: int):
     """Convert SAVEBP/RESTOREBP instruction to ABpCmd."""
     from pykotor.resource.formats.ncs.dencs.node.a_bp_cmd import ABpCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_bp_command import ABpCommand  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_savebp_bp_op import ASavebpBpOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_restorebp_bp_op import ARestorebpBpOp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_savebp import TSavebp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_restorebp import TRestorebp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_savebp_bp_op import ASavebpBpOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_restorebp import TRestorebp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_savebp import TSavebp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
 
@@ -550,14 +678,13 @@ def _convert_bp_cmd(inst: NCSInstruction, pos: int):
 
     return cmd
 
-
 def _convert_store_state_cmd(inst: NCSInstruction, pos: int):
     """Convert STORE_STATE instruction to AStoreStateCmd."""
     from pykotor.resource.formats.ncs.dencs.node.a_store_state_cmd import AStoreStateCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_store_state_command import AStoreStateCommand  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.t_storestate import TStorestate  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.t_storestate import TStorestate  # pyright: ignore[reportMissingImports]
 
     # STORE_STATE has 2 args according to ncs_data.py: [offset (uint16), sizeBp (uint8), sizeSp (uint8)]
     # The args are packed, so we need to extract them properly
@@ -578,7 +705,6 @@ def _convert_store_state_cmd(inst: NCSInstruction, pos: int):
     cmd.set_store_state_command(command)
 
     return cmd
-
 
 def _convert_binary_cmd(inst: NCSInstruction, pos: int):
     """Convert binary operation instruction (ADD, SUB, MUL, DIV, MOD, comparisons, bitwise) to ABinaryCmd/ABinaryCommand."""
@@ -609,7 +735,6 @@ def _convert_binary_cmd(inst: NCSInstruction, pos: int):
     
     return cmd
 
-
 def _convert_unary_cmd(inst: NCSInstruction, pos: int):
     """Convert unary operation instruction (NEG, NOT, COMP) to AUnaryCmd/AUnaryCommand."""
     from pykotor.resource.formats.ncs.dencs.node.a_unary_cmd import AUnaryCmd  # pyright: ignore[reportMissingImports]
@@ -632,7 +757,6 @@ def _convert_unary_cmd(inst: NCSInstruction, pos: int):
     cmd.set_unary_command(command)
     
     return cmd
-
 
 def _convert_logii_cmd(inst: NCSInstruction, pos: int):
     """Convert logic operation instruction (LOGANDII, LOGORII) to ALogiiCmd/ALogiiCommand."""
@@ -657,52 +781,190 @@ def _convert_logii_cmd(inst: NCSInstruction, pos: int):
     
     return cmd
 
-
 def _create_binary_operator(ins_type: NCSInstructionType, pos: int):
-    """Create a PBinaryOp node for the given instruction type."""
-    from pykotor.resource.formats.ncs.dencs.node.p_binary_op import PBinaryOp  # pyright: ignore[reportMissingImports]
+    """Create a PBinaryOp node for the given instruction type.
     
-    # TODO: Create specific operator classes (AAddBinaryOp, ASubBinaryOp, etc.)
-    # For now, return a placeholder that can be expanded later
-    class PlaceholderBinaryOp(PBinaryOp):
-        def __init__(self):
-            super().__init__()
-            self._ins_type = ins_type
+    Handles all binary operations:
+    - Arithmetic: ADDxx, SUBxx, MULxx, DIVxx, MODxx
+    - Comparison: EQUALxx, NEQUALxx, GTxx, GEQxx, LTxx, LEQxx
+    - Bitwise: SHLEFTxx, SHRIGHTxx, USHRIGHTxx
+    """
+    from pykotor.resource.formats.ncs.dencs.node.a_add_binary_op import AAddBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_sub_binary_op import ASubBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_mul_binary_op import AMulBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_div_binary_op import ADivBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_mod_binary_op import AModBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_equal_binary_op import AEqualBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_nequal_binary_op import ANequalBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_gt_binary_op import AGtBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_lt_binary_op import ALtBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_geq_binary_op import AGeqBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_leq_binary_op import ALeqBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_shleft_binary_op import AShleftBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_shright_binary_op import AShrightBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_unright_binary_op import AUnrightBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
+    
+    # Map instruction type to operator class
+    # Use exact matches for better type safety
+    if ins_type == NCSInstructionType.USHRIGHTII:
+        return AUnrightBinaryOp()
+    
+    ins_name = ins_type.name
+    
+    # Arithmetic operators
+    if ins_name.startswith("ADD"):
+        return AAddBinaryOp()
+    elif ins_name.startswith("SUB"):
+        return ASubBinaryOp()
+    elif ins_name.startswith("MUL"):
+        return AMulBinaryOp()
+    elif ins_name.startswith("DIV"):
+        return ADivBinaryOp()
+    elif ins_name.startswith("MOD"):
+        return AModBinaryOp()
+    # Comparison operators
+    elif ins_name.startswith("EQUAL"):
+        return AEqualBinaryOp()
+    elif ins_name.startswith("NEQUAL"):
+        return ANequalBinaryOp()
+    elif ins_name.startswith("GT"):
+        return AGtBinaryOp()
+    elif ins_name.startswith("LT"):
+        return ALtBinaryOp()
+    elif ins_name.startswith("GEQ"):
+        return AGeqBinaryOp()
+    elif ins_name.startswith("LEQ"):
+        return ALeqBinaryOp()
+    # Bitwise shift operators
+    elif ins_name.startswith("SHLEFT"):
+        return AShleftBinaryOp()
+    elif ins_name.startswith("SHRIGHT"):
+        return AShrightBinaryOp()
+    elif ins_name.startswith("USHRIGHT"):
+        return AUnrightBinaryOp()
+    else:
+        # Fallback: return a placeholder for unknown operators
+        # This should rarely happen if all instruction types are properly handled
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Unknown binary operator: {ins_type.name}, creating placeholder")
         
-        def apply(self, sw):
-            sw.case_node(self)
-    
-    return PlaceholderBinaryOp()
-
+        from pykotor.resource.formats.ncs.dencs.node.p_binary_op import PBinaryOp  # pyright: ignore[reportMissingImports]
+        class PlaceholderBinaryOp(PBinaryOp):
+            def __init__(self):
+                super().__init__()
+                self._ins_type = ins_type
+            
+            def apply(self, sw):
+                sw.case_node(self)
+        
+        return PlaceholderBinaryOp()
 
 def _create_unary_operator(ins_type: NCSInstructionType, pos: int):
-    """Create a PUnaryOp node for the given instruction type."""
-    from pykotor.resource.formats.ncs.dencs.node.p_unary_op import PUnaryOp  # pyright: ignore[reportMissingImports]
+    """Create a PUnaryOp node for the given instruction type.
     
-    # TODO: Create specific operator classes (ANegUnaryOp, ANotUnaryOp, ACompUnaryOp)
-    class PlaceholderUnaryOp(PUnaryOp):
-        def __init__(self):
-            super().__init__()
-            self._ins_type = ins_type
+    Handles all unary operations:
+    - Arithmetic: NEGI, NEGF (negation)
+    - Logical: NOTI (logical not)
+    - Bitwise: COMPI (bitwise complement)
+    """
+    from pykotor.resource.formats.ncs.dencs.node.a_neg_unary_op import ANegUnaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_not_unary_op import ANotUnaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_comp_unary_op import ACompUnaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
+    
+    # Map instruction type to operator class
+    # Use exact matches for better type safety
+    if ins_type in {NCSInstructionType.NEGI, NCSInstructionType.NEGF}:
+        return ANegUnaryOp()
+    elif ins_type == NCSInstructionType.NOTI:
+        return ANotUnaryOp()
+    elif ins_type == NCSInstructionType.COMPI:
+        return ACompUnaryOp()
+    
+    # Fallback to name-based matching for any variants
+    ins_name = ins_type.name
+    
+    if ins_name.startswith("NEG"):
+        return ANegUnaryOp()
+    elif ins_name.startswith("NOT"):
+        return ANotUnaryOp()
+    elif ins_name.startswith("COMP"):
+        return ACompUnaryOp()
+    else:
+        # Fallback: return a placeholder for unknown operators
+        # This should rarely happen if all instruction types are properly handled
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Unknown unary operator: {ins_type.name}, creating placeholder")
         
-        def apply(self, sw):
-            sw.case_node(self)
-    
-    return PlaceholderUnaryOp()
-
+        from pykotor.resource.formats.ncs.dencs.node.p_unary_op import PUnaryOp  # pyright: ignore[reportMissingImports]
+        class PlaceholderUnaryOp(PUnaryOp):
+            def __init__(self):
+                super().__init__()
+                self._ins_type = ins_type
+            
+            def apply(self, sw):
+                sw.case_node(self)
+        
+        return PlaceholderUnaryOp()
 
 def _create_logii_operator(ins_type: NCSInstructionType, pos: int):
-    """Create a PLogiiOp node for the given instruction type."""
-    from pykotor.resource.formats.ncs.dencs.node.p_logii_op import PLogiiOp  # pyright: ignore[reportMissingImports]
+    """Create a PLogiiOp node for the given instruction type.
     
-    # TODO: Create specific operator classes (AAndLogiiOp, AOrLogiiOp)
-    class PlaceholderLogiiOp(PLogiiOp):
-        def __init__(self):
-            super().__init__()
-            self._ins_type = ins_type
+    Handles all logical and bitwise logical operations:
+    - Logical: LOGANDxx, LOGORxx
+    - Bitwise logical: BOOLANDxx, INCORxx, EXCORxx
+    """
+    from pykotor.resource.formats.ncs.dencs.node.a_and_logii_op import AAndLogiiOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_or_logii_op import AOrLogiiOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_bit_and_logii_op import ABitAndLogiiOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_excl_or_logii_op import AExclOrLogiiOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_incl_or_logii_op import AInclOrLogiiOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
+    
+    # Map instruction type to operator class
+    # Use exact matches for better type safety where possible
+    if ins_type == NCSInstructionType.LOGANDII:
+        return AAndLogiiOp()
+    elif ins_type == NCSInstructionType.LOGORII:
+        return AOrLogiiOp()
+    elif ins_type == NCSInstructionType.BOOLANDII:
+        return ABitAndLogiiOp()
+    elif ins_type == NCSInstructionType.EXCORII:
+        return AExclOrLogiiOp()
+    elif ins_type == NCSInstructionType.INCORII:
+        return AInclOrLogiiOp()
+    
+    # Fallback to name-based matching for any variants
+    ins_name = ins_type.name
+    
+    if ins_name.startswith("LOGAND"):
+        return AAndLogiiOp()
+    elif ins_name.startswith("LOGOR"):
+        return AOrLogiiOp()
+    elif ins_name.startswith("BOOLAND"):
+        return ABitAndLogiiOp()
+    elif ins_name.startswith("EXCOR"):
+        return AExclOrLogiiOp()
+    elif ins_name.startswith("INCOR"):
+        return AInclOrLogiiOp()
+    else:
+        # Fallback: return a placeholder for unknown operators
+        # This should rarely happen if all instruction types are properly handled
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Unknown logical operator: {ins_type.name}, creating placeholder")
         
-        def apply(self, sw):
-            sw.case_node(self)
-    
-    return PlaceholderLogiiOp()
+        from pykotor.resource.formats.ncs.dencs.node.p_logii_op import PLogiiOp  # pyright: ignore[reportMissingImports]
+        class PlaceholderLogiiOp(PLogiiOp):
+            def __init__(self):
+                super().__init__()
+                self._ins_type = ins_type
+            
+            def apply(self, sw):
+                sw.case_node(self)
+        
+        return PlaceholderLogiiOp()
 

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pykotor.resource.formats.ncs.ncs_types import NCSType, NCSTypeCode
-
 
 class Type:
     """Wrapper around NCSType to match DeNCS Type.java interface.
@@ -40,10 +38,10 @@ class Type:
     def __init__(self, type_val: int | str):
         if isinstance(type_val, str):
             self.type = self.decode(type_val)
-            self.size = self.type_size(self.type) // 4
+            self._size = self.type_size_static(self.type) // 4
         else:
             self.type = type_val
-            self.size = 1
+            self._size = 1
 
     @staticmethod
     def parse_type(type_str: str):
@@ -56,11 +54,14 @@ class Type:
         return self.type
 
     def __str__(self) -> str:
-        return self.to_string(self.type)
+        return Type.to_string_static(self.type)
 
     @staticmethod
-    def to_string(atype):
-        return Type.to_string(atype.type)
+    def to_string(atype) -> str:
+        """Convert Type or int to string representation."""
+        if isinstance(atype, Type):
+            return Type.to_string_static(atype.type)
+        return Type.to_string_static(atype)
 
     @staticmethod
     def to_string_static(type_val: int) -> str:
@@ -123,7 +124,7 @@ class Type:
         return self.__str__()
 
     def size(self) -> int:
-        return self.size
+        return self._size
 
     def is_typed(self) -> bool:
         return self.type != -1
@@ -163,12 +164,12 @@ class Type:
             raise RuntimeError("Attempted to get unknown type " + type_str)
 
     def type_size(self) -> int:
-        return self.type_size(self.type)
+        return Type.type_size_static(self.type)
 
     @staticmethod
-    def type_size(type_val: int | str) -> int:
+    def type_size_static(type_val: int | str) -> int:
         if isinstance(type_val, str):
-            return Type.type_size(Type.decode(type_val))
+            return Type.type_size_static(Type.decode(type_val))
         if type_val == 3:
             return 4
         elif type_val == 4:

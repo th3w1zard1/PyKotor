@@ -8,7 +8,7 @@ import qtpy
 
 from loggerplus import RobustLogger
 from qtpy.QtCore import QPoint, QTimer
-from qtpy.QtGui import QCloseEvent, QCursor
+from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import QOpenGLWidget  # pyright: ignore[reportPrivateImportUsage]
 
 from pykotor.gl import vec3
@@ -21,7 +21,7 @@ from utility.common.geometry import Vector2
 from utility.error_handling import assert_with_variable_trace
 
 if TYPE_CHECKING:
-    from qtpy.QtGui import QFocusEvent, QKeyEvent, QMouseEvent, QResizeEvent, QWheelEvent
+    from qtpy.QtGui import QCloseEvent, QFocusEvent, QKeyEvent, QMouseEvent, QResizeEvent, QWheelEvent
     from qtpy.QtWidgets import QWidget
 
     from pykotor.extract.installation import Installation
@@ -87,6 +87,9 @@ class ModelRenderer(QOpenGLWidget):
         if ctx is None or not ctx.isValid():
             return
 
+        # Ensure OpenGL context is current before rendering
+        self.makeCurrent()
+
         if self._model_to_load is not None:
             self.scene.models["model"] = gl_load_mdl(self.scene, *self._model_to_load)
             self.scene.objects["model"] = RenderObject("model")
@@ -94,10 +97,12 @@ class ModelRenderer(QOpenGLWidget):
             self.reset_camera()
 
         elif self._creature_to_load is not None:
-            self.scene.objects["model"] = self.scene.get_creature_render_object(None, self._creature_to_load)
+            # Use sync=True to force synchronous model loading for the preview renderer
+            # This ensures hooks (headhook, rhand, lhand, gogglehook) are found correctly
+            self.scene.objects["model"] = self.scene.get_creature_render_object(None, self._creature_to_load, sync=True)
             self._creature_to_load = None
-            # Mark that we need to reset camera, but wait for model to load
-            self._pending_camera_reset = True
+            # Reset camera immediately since we loaded synchronously
+            self.reset_camera()
 
         # Render first to poll async resources
         self.scene.render()

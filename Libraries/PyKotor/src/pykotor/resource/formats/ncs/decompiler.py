@@ -14,13 +14,19 @@ from __future__ import annotations
 
 import logging
 
-from base64 import b64encode
 from dataclasses import dataclass, field
-from textwrap import wrap
 from typing import TYPE_CHECKING
 
 from pykotor.common.misc import Game
 from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType
+
+try:
+    from utility.error_handling import format_exception_with_variables  # pyright: ignore[reportMissingImports]
+except ImportError:
+    # Fallback if utility module not available
+    def format_exception_with_variables(exc: BaseException, *args, **kwargs) -> str:
+        import traceback
+        return "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
 
 if TYPE_CHECKING:
     from pykotor.common.misc import Game
@@ -237,9 +243,10 @@ class NCSDecompiler:
             DecompileError: If decompilation fails
         """
         try:
-            from pykotor.resource.formats.ncs.dencs.decompile_ncs import decompile_ncs
-            from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData
             import io
+
+            from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData
+            from pykotor.resource.formats.ncs.dencs.decompile_ncs import decompile_ncs
 
             # Convert NCS to bytes for Decoder
             from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
@@ -248,12 +255,15 @@ class NCSDecompiler:
             writer.write()
 
             # Create ActionsData from functions
-            # For now, create a simple adapter - full implementation would read from nwscript.nss
+            # ActionsData expects format with "// 0" marker, then function definitions
+            # Type names must be lowercase for DeNCS Type decoder
             actions_reader = io.StringIO()
+            # Write the marker that ActionsData.read_actions() looks for
+            actions_reader.write("// 0\n")
             # Write function definitions in DeNCS format
             for i, func in enumerate(self.functions):
-                params_str = ", ".join(f"{param.type.name} {param.name}" for param in func.parameters)
-                actions_reader.write(f"{func.return_type.name} {func.name}({params_str});\n")
+                params_str = ", ".join(f"{param.datatype.name.lower()} {param.name}" for param in func.params)
+                actions_reader.write(f"{func.returntype.name.lower()} {func.name}({params_str});\n")
             actions_reader.seek(0)
             actions = ActionsData(actions_reader)
 
@@ -264,7 +274,9 @@ class NCSDecompiler:
                 raise DecompileError("DeNCS decompilation returned None")
             return result.get_code() if hasattr(result, 'get_code') else str(result)
         except Exception as e:
-            logger.exception("DeNCS decompilation failed")
+            import traceback
+            tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+            logger.error("DeNCS decompilation failed:\n%s", tb_str)
             msg = f"DeNCS decompilation failed: {e}"
             raise DecompileError(msg) from e
 
@@ -304,20 +316,11 @@ class NCSDecompiler:
             result = "\n".join(self.decompiled_code)
             if not result.strip():
                 result = "// Decompiled NCS script\nvoid main() {\n    // Empty script\n}"
-            bytecode_block = self._encode_bytecode_block()
-            if bytecode_block:
-                if result and not result.endswith("\n"):
-                    result += "\n"
-                if result:
-                    result = f"{result}\n{bytecode_block}"
-                else:
-                    result = bytecode_block
+            return result
         except Exception as e:
             logger.exception("Decompilation failed")
             msg = f"Decompilation failed: {e}"
             raise DecompileError(msg) from e
-        else:
-            return result
 
     def _build_basic_blocks(self):
         """Build basic blocks from instructions."""
@@ -434,7 +437,7 @@ class NCSDecompiler:
         for i, block in enumerate(self.basic_blocks):
             if not block.instructions:
                 continue
-            last_inst = block.instructions[-1]
+            last_inst: NCSInstruction = block.instructions[-1]
             if last_inst.ins_type == NCSInstructionType.JZ and last_inst.jump:
                 # Potential if statement
                 jz_target_idx = self.ncs.get_instruction_index(last_inst.jump)
@@ -751,20 +754,3 @@ class NCSDecompiler:
             self.variables[offset] = f"var_{var_num}"
         return self.variables[offset]
 
-    def _encode_bytecode_block(self) -> str:
-        """Encode the current NCS bytecode into a base64 block for lossless roundtripping."""
-        try:
-            data = bytearray()
-            from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
-
-            writer = NCSBinaryWriter(self.ncs, data)
-            writer.write()
-            encoded = b64encode(bytes(data)).decode("ascii")
-        except Exception as exc:  # pragma: no cover - fallback shouldn't crash decompilation
-            logger.warning("Failed to encode NCS bytecode: %s", exc)
-            return ""
-
-        lines = ["/*__NCS_BYTECODE__"]
-        lines.extend(wrap(encoded, 76))
-        lines.append("__END_NCS_BYTECODE__*/")
-        return "\n".join(lines)

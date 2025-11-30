@@ -864,13 +864,13 @@ class PyFileSystemModel(QAbstractItemModel):
         )  # noqa: E501
 
         idx = self.index(pathNodeResult)
-        print("<SDM> [_handle_from_path_arg scope] pathNodeResult idx: ", idx.isValid() and typing.cast(PyFileSystemNode, idx.internalPointer()).fileInfo().path())
+        print("<SDM> [_handle_from_path_arg scope] pathNodeResult idx: ", idx.isValid() and typing.cast("PyFileSystemNode", idx.internalPointer()).fileInfo().path())
 
         if not idx.isValid():
             return QModelIndex()
         if idx.column() != column:
             idx = idx.sibling(idx.row(), column)
-        print("<SDM> [_handle_from_path_arg scope] final idx: ", idx.isValid() and typing.cast(PyFileSystemNode, idx.internalPointer()).fileInfo().path())
+        print("<SDM> [_handle_from_path_arg scope] final idx: ", idx.isValid() and typing.cast("PyFileSystemNode", idx.internalPointer()).fileInfo().path())
 
         return idx
 
@@ -1349,7 +1349,7 @@ class MainWindow(QMainWindow):
             width += self.fsTreeView.columnWidth(i)
         print("all column's widths:", width)
         if QDesktopWidget is None:
-            app = typing.cast(QApplication, QApplication.instance())
+            app = typing.cast("QApplication", QApplication.instance())
             screen = app.primaryScreen()
             print("<SDM> [adjust_view_size scope] screen: ", screen)
 

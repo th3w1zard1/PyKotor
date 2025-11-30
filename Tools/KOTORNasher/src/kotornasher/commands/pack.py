@@ -13,7 +13,6 @@ References:
 from __future__ import annotations
 
 import glob
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -21,11 +20,12 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from logging import Logger
 
+from pykotor.resource.formats.erf import ERF, ERFType, write_erf
+from pykotor.resource.type import ResourceType
+
 from kotornasher.cfg_parser import load_config
 from kotornasher.commands.compile import cmd_compile
 from kotornasher.commands.convert import cmd_convert
-from pykotor.resource.formats.erf import ERF, ERFType, write_erf
-from pykotor.resource.type import ResourceType
 
 
 def should_overwrite_file(file_path: Path, source_newest: float, mode: str, logger: Logger) -> bool:

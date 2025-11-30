@@ -1,9 +1,34 @@
+"""KotOR WAV file reader/writer with automatic obfuscation handling.
+
+This module handles reading and writing WAV files from KotOR, including:
+- Standard RIFF/WAVE files (streamvoice, dialog audio)
+- SFX files with 470-byte obfuscation header (streammusic, sound effects)
+- MP3 wrapped in WAV container (some music files)
+
+References:
+----------
+    vendor/reone/src/libs/audio/format/wavreader.cpp - WAV reading & format detection
+    vendor/KotOR.js/src/audio/AudioFile.ts - Audio format handling
+    vendor/xoreos/src/sound/decoders/wave.cpp - Standard WAV parsing
+    vendor/SithCodec/src/codec.cpp - Audio codec implementation
+"""
 from __future__ import annotations
 
+from io import BytesIO
 from typing import TYPE_CHECKING
 
-from pykotor.resource.formats.wav.wav_data import WAV, WAVType, WaveEncoding
-from pykotor.resource.formats.wav.wav_obfuscation import deobfuscate_audio, obfuscate_audio
+from pykotor.common.stream import BinaryReader
+from pykotor.resource.formats.wav.wav_data import (
+    WAV,
+    AudioFormat,
+    WAVType,
+    WaveEncoding,
+)
+from pykotor.resource.formats.wav.wav_obfuscation import (
+    DeobfuscationResult,
+    get_deobfuscation_result,
+    obfuscate_audio,
+)
 from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose
 
 if TYPE_CHECKING:
@@ -11,20 +36,27 @@ if TYPE_CHECKING:
 
 
 class WAVBinaryReader(ResourceReader):
-    """Handles reading WAV binary data.
+    """Handles reading WAV binary data with automatic deobfuscation.
     
-    WAV files store audio data. KotOR uses both standard RIFF/WAVE format (VO) and
-    Bioware-encrypted format (SFX) with a 470-byte header.
+    WAV files in KotOR come in several formats:
+    
+    1. **Standard RIFF/WAVE** - Most voice-over files (streamvoice/)
+       - Standard PCM or IMA ADPCM encoding
+       - No obfuscation header
+       
+    2. **SFX Format** - Sound effects and some music (streammusic/)
+       - 470-byte header starting with 0xFF 0xF3 0x60 0xC4
+       - After header removal, standard RIFF/WAVE follows
+       
+    3. **MP3-in-WAV** - Some music files
+       - RIFF header with size == 50
+       - After 58-byte header removal, raw MP3 data follows
     
     References:
     ----------
-        vendor/reone/src/libs/audio/format/wavreader.cpp (WAV reading)
-        vendor/SithCodec/src/codec.cpp (Audio codec implementation)
-        vendor/SWKotOR-Audio-Encoder/ (Full audio encoder with GUI)
-    
-    Missing Features:
-    ----------------
-        - Full audio codec support (SithCodec/SWKotOR-Audio-Encoder provide encoding/decoding)
+        vendor/reone/src/libs/audio/format/wavreader.cpp:30-56
+        vendor/KotOR.js/src/audio/AudioFile.ts:111-162
+        vendor/xoreos/src/sound/decoders/wave.cpp:38-106
     """
     def __init__(
         self,
@@ -40,114 +72,140 @@ class WAVBinaryReader(ResourceReader):
         """Load WAV file with automatic deobfuscation.
 
         Returns:
-        -------
             WAV: The loaded WAV object (deobfuscated)
 
         Processing Logic:
-        ----------------
-            - Read all data and deobfuscate if needed
-            - Parse RIFF/WAVE format
-            - Read wave format data
-            - Read audio data
+            1. Read all raw data
+            2. Detect and remove obfuscation header
+            3. If MP3 format, return WAV object with MP3 data
+            4. Otherwise parse RIFF/WAVE structure
         """
-        # Read all data first - save current position
-        saved_pos = self._reader.position()
+        # Read all data
         self._reader.seek(0)
-        
-        # Read all available data using RawBinaryReader API
         raw_data = self._reader.read_all()
         
-        # Restore position
-        self._reader.seek(saved_pos)
+        # Deobfuscate and get format info
+        deobfuscated_data, format_type = get_deobfuscation_result(raw_data)
         
-        # Deobfuscate the data
-        deobfuscated_data: bytes = deobfuscate_audio(raw_data)
-        
-        # Determine WAV type based on whether deobfuscation occurred
-        if len(deobfuscated_data) < len(raw_data):
-            # Deobfuscation occurred - determine type
-            removed_bytes = len(raw_data) - len(deobfuscated_data)
-            if removed_bytes == 470:  # 0x1D6
-                wav_type = WAVType.SFX
-            elif removed_bytes in (8, 20):  # VO format: 8-byte (original) or 20-byte (our format)
-                wav_type = WAVType.VO
-            else:
-                wav_type = WAVType.VO
+        # Determine WAV type based on deobfuscation result
+        if format_type == DeobfuscationResult.SFX_HEADER:
+            wav_type = WAVType.SFX
         else:
             wav_type = WAVType.VO
         
-        # Create a new reader from deobfuscated data
-        from pykotor.common.stream import BinaryReader
-        from io import BytesIO
-        deobfuscated_stream = BytesIO(deobfuscated_data)
-        reader = BinaryReader(deobfuscated_stream)
+        # If MP3-in-WAV format detected, return MP3 data directly
+        # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:134-140
+        if format_type == DeobfuscationResult.MP3_IN_WAV:
+            return WAV(
+                wav_type=wav_type,
+                audio_format=AudioFormat.MP3,
+                encoding=WaveEncoding.MP3,
+                channels=2,  # Default stereo for MP3
+                sample_rate=44100,  # Default sample rate
+                bits_per_sample=16,
+                data=deobfuscated_data
+            )
         
-        # Read first 4 bytes to check format
-        riff_tag: bytes = reader.read_bytes(4)
-
+        # Parse as RIFF/WAVE
+        return self._parse_riff_wave(deobfuscated_data, wav_type)
+    
+    def _parse_riff_wave(self, data: bytes, wav_type: WAVType) -> WAV:
+        """Parse RIFF/WAVE format data.
+        
+        Args:
+            data: Deobfuscated audio data (should start with RIFF)
+            wav_type: The determined WAV type (VO/SFX)
+            
+        Returns:
+            Parsed WAV object
+            
+        References:
+            vendor/xoreos/src/sound/decoders/wave.cpp:38-106
+            vendor/KotOR.js/src/audio/AudioFile.ts:250-262
+        """
+        reader = BinaryReader(BytesIO(data))
+        
+        # Read RIFF header
+        # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:39-41
+        riff_tag = reader.read_bytes(4)
         if riff_tag != b"RIFF":
-            msg = "Not a valid RIFF/WAVE file"
+            msg = f"Not a valid RIFF file, got: {riff_tag!r}"
             raise ValueError(msg)
 
-        # Read WAVE header
-        _file_size: int = reader.read_uint32()
-        wave_tag: bytes = reader.read_bytes(4)
-
+        file_size = reader.read_uint32()
+        wave_tag = reader.read_bytes(4)
+        
+        # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:45-47
         if wave_tag != b"WAVE":
-            msg = "Not a valid WAVE file"
+            msg = f"Not a valid WAVE file, got: {wave_tag!r}"
             raise ValueError(msg)
 
-        # Read format chunk
-        fmt_tag: bytes = reader.read_bytes(4)
-        if fmt_tag != b"fmt ":
-            msg = "Missing format chunk"
-            raise ValueError(msg)
-
-        fmt_size: int = reader.read_uint32()
-
-        # Parse format data
-        encoding: WaveEncoding = WaveEncoding(reader.read_uint16())
-        channels: int = reader.read_uint16()
-        sample_rate: int = reader.read_uint32()
-        bytes_per_sec: int = reader.read_uint32()
-        block_align: int = reader.read_uint16()
-        bits_per_sample: int = reader.read_uint16()
-
-        # Skip any extra format bytes
-        if fmt_size > 0x10:
-            reader.skip(fmt_size - 0x10)
-
-        # Find data chunk
-        chunk_id: bytes = b""
-        chunk_size: int = 0
+        # Initialize format values with defaults
+        encoding = WaveEncoding.PCM
+        channels = 1
+        sample_rate = 44100
+        bytes_per_sec = 88200
+        block_align = 2
+        bits_per_sample = 16
+        audio_data = b""
+        
+        # Parse chunks until we find 'data'
+        # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:49-77
         while reader.remaining() >= 8:
             chunk_id = reader.read_bytes(4)
             chunk_size = reader.read_uint32()
 
-            if chunk_id == b"data":
-                break
+            if chunk_id == b"fmt ":
+                # Parse format chunk
+                # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:57-66
+                # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:214-228
+                encoding_value = reader.read_uint16()
+                try:
+                    encoding = WaveEncoding(encoding_value)
+                except ValueError:
+                    # Store as raw int value for unsupported encodings
+                    encoding = encoding_value  # type: ignore[assignment]
+                    
+                channels = reader.read_uint16()
+                sample_rate = reader.read_uint32()
+                bytes_per_sec = reader.read_uint32()
+                block_align = reader.read_uint16()
+                bits_per_sample = reader.read_uint16()
 
-            if chunk_size > reader.remaining():
-                msg = "Chunk size exceeds remaining data"
-                raise ValueError(msg)
-            
-            reader.skip(chunk_size)
-            if chunk_size % 2 == 1:
-                reader.skip(1)
+                # Skip any extra format bytes
+                # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:66
+                if chunk_size > 16:
+                    reader.skip(chunk_size - 16)
 
-        if chunk_id != b"data":
-            msg = "Data chunk not found"
+            elif chunk_id == b"data":
+                # Read audio data
+                # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:79-80
+                actual_size = min(chunk_size, reader.remaining())
+                audio_data = reader.read_bytes(actual_size)
+                break  # Found data, stop parsing
+
+            elif chunk_id == b"fact":
+                # Skip fact chunk (contains sample count for compressed formats)
+                # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:230-234
+                reader.skip(chunk_size)
+                
+            else:
+                # Skip unknown chunks
+                if chunk_size > reader.remaining():
+                    break  # Malformed chunk, stop
+                reader.skip(chunk_size)
+                # RIFF chunks are word-aligned
+                if chunk_size % 2 == 1 and reader.remaining() > 0:
+                    reader.skip(1)
+
+        if not audio_data:
+            msg = "No audio data chunk found in WAV file"
             raise ValueError(msg)
-
-        if chunk_size > reader.remaining():
-            chunk_size = reader.remaining()
-
-        # Read audio data
-        audio_data: bytes = reader.read_bytes(chunk_size)
 
         # Create WAV object
         self._wav = WAV(
             wav_type=wav_type,
+            audio_format=AudioFormat.WAVE,
             encoding=encoding,
             channels=channels,
             sample_rate=sample_rate,
@@ -161,7 +219,12 @@ class WAVBinaryReader(ResourceReader):
 
 
 class WAVBinaryWriter(ResourceWriter):
-    """Handles writing WAV binary data."""
+    """Handles writing WAV binary data with optional obfuscation.
+    
+    For VO files: Writes standard RIFF/WAVE format
+    For SFX files: Adds 470-byte obfuscation header before RIFF/WAVE
+    For MP3 data: Wraps in appropriate container based on wav_type
+    """
 
     def __init__(
         self,
@@ -176,21 +239,28 @@ class WAVBinaryWriter(ResourceWriter):
         """Write WAV data to target with automatic obfuscation.
 
         Processing Logic:
-        ----------------
-            - Build clean RIFF/WAVE data
-            - Obfuscate based on WAV type
-            - Write obfuscated data to target
+            1. Build clean RIFF/WAVE data (or use MP3 directly)
+            2. Obfuscate based on WAV type (SFX adds header, VO is unchanged)
+            3. Write obfuscated data to target
         """
-        # Build clean WAV data first
-        from io import BytesIO
         from pykotor.common.stream import BinaryWriter
         
+        # For MP3 format, just obfuscate and write
+        if self.wav.audio_format == AudioFormat.MP3:
+            wav_type_str = "SFX" if self.wav.wav_type == WAVType.SFX else "VO"
+            obfuscated_data = obfuscate_audio(self.wav.data, wav_type_str)
+            self._writer.write_bytes(obfuscated_data)
+            return
+        
+        # Build clean WAV data
         clean_buffer = BytesIO()
         clean_writer = BinaryWriter.to_stream(clean_buffer)
         
         # Calculate sizes
-        data_size: int = len(self.wav.data)
-        file_size: int = 0x24 + data_size  # Standard RIFF size calculation
+        data_size = len(self.wav.data)
+        fmt_chunk_size = 16
+        # RIFF size = 4 (WAVE) + 8 (fmt header) + fmt_chunk_size + 8 (data header) + data_size
+        file_size = 4 + 8 + fmt_chunk_size + 8 + data_size
 
         # Write RIFF header
         clean_writer.write_bytes(b"RIFF")
@@ -199,20 +269,14 @@ class WAVBinaryWriter(ResourceWriter):
 
         # Write format chunk
         clean_writer.write_bytes(b"fmt ")
-        clean_writer.write_uint32(0x10)  # Standard format chunk size
-        clean_writer.write_uint16(self.wav.encoding.value)
+        clean_writer.write_uint32(fmt_chunk_size)
+        clean_writer.write_uint16(self.wav.encoding if isinstance(self.wav.encoding, int) else self.wav.encoding.value)
         clean_writer.write_uint16(self.wav.channels)
         clean_writer.write_uint32(self.wav.sample_rate)
-        bytes_per_sec: int = self.wav.sample_rate * self.wav.block_align
+        bytes_per_sec = self.wav.bytes_per_sec or (self.wav.sample_rate * self.wav.block_align)
         clean_writer.write_uint32(bytes_per_sec)
         clean_writer.write_uint16(self.wav.block_align)
         clean_writer.write_uint16(self.wav.bits_per_sample)
-
-        # Write fact chunk if needed
-        if self.wav.wav_type == WAVType.VO:
-            clean_writer.write_bytes(b"fact")
-            clean_writer.write_uint32(4)  # Fact chunk size
-            clean_writer.write_uint32(0)  # Fact data
 
         # Write data chunk
         clean_writer.write_bytes(b"data")

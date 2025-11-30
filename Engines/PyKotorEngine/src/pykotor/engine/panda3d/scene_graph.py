@@ -13,18 +13,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from panda3d.core import (
-    NodePath,
     AmbientLight,
     DirectionalLight,
     PointLight,
     Vec3,
     Vec4,
 )
-
-from pykotor.engine.scene.base import ISceneGraph, FogProperties
+from pykotor.engine.scene.base import FogProperties, ISceneGraph
 
 if TYPE_CHECKING:
-    from panda3d.core import Camera
+    from panda3d.core import (
+        NodePath,
+    )
+    pass
 
 
 class Panda3DSceneGraph(ISceneGraph):

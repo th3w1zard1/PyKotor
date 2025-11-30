@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import qtpy
+
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QKeyEvent
 from qtpy.QtWidgets import (
     QCheckBox,
     QHBoxLayout,
@@ -16,10 +18,13 @@ from qtpy.QtWidgets import (
 
 from toolset.gui.common.localization import translate as tr
 
+if TYPE_CHECKING:
+    from qtpy.QtGui import QKeyEvent
+
 if qtpy.QT5:
-    from qtpy.QtCore import QRegExp  # pyright: ignore[reportAttributeAccessIssue]
+    pass  # pyright: ignore[reportAttributeAccessIssue]
 elif qtpy.QT6:
-    from qtpy.QtCore import QRegularExpression  # pyright: ignore[reportAttributeAccessIssue]
+    pass  # pyright: ignore[reportAttributeAccessIssue]
 
 
 class FindReplaceWidget(QWidget):

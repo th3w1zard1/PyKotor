@@ -1,5 +1,6 @@
 """Check door dimensions in generated JSON."""
 import json
+
 from pathlib import Path
 
 gen = Path("tests/test_toolset/test_files/generated_kit/jedienclave.json")

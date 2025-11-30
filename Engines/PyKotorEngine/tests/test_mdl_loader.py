@@ -12,6 +12,7 @@ References:
 
 import sys
 import unittest
+
 from pathlib import Path
 
 # Add PyKotor to path
@@ -19,20 +20,20 @@ pykotor_path = Path(__file__).parents[3] / "Libraries" / "PyKotor" / "src"
 if str(pykotor_path) not in sys.path:
     sys.path.insert(0, str(pykotor_path))
 
-from utility.common.geometry import Vector3
 from pykotor.resource.formats.mdl import MDL
 from pykotor.resource.formats.mdl.mdl_data import (
-    MDLNode,
-    MDLMesh,
-    MDLFace,
     MDLAnimation,
     MDLController,
     MDLControllerRow,
+    MDLFace,
+    MDLMesh,
+    MDLNode,
 )
 from pykotor.resource.formats.mdl.mdl_types import (
-    MDLGeometryType,
     MDLControllerType,
+    MDLGeometryType,
 )
+from utility.common.geometry import Vector3
 
 
 class TestMDLDataStructures(unittest.TestCase):
@@ -196,7 +197,7 @@ class TestTangentSpaceCalculation(unittest.TestCase):
             Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1449-1578 - _calculate_tangent_space()
             vendor/mdlops/MDLOpsM.pm:5477-5596 - Tangent space calculation
         """
-        from pykotor.resource.formats.mdl.io_mdl import _calculate_tangent_space, _calculate_face_normal
+        from pykotor.resource.formats.mdl.io_mdl import _calculate_face_normal, _calculate_tangent_space
         
         # Create a simple triangle
         v0 = Vector3(0, 0, 0)
@@ -232,7 +233,7 @@ class TestTangentSpaceCalculation(unittest.TestCase):
             Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1560-1576 - Orthogonalization
             vendor/mdlops/MDLOpsM.pm:5570-5585 - TBN orthogonality
         """
-        from pykotor.resource.formats.mdl.io_mdl import _calculate_tangent_space, _calculate_face_normal
+        from pykotor.resource.formats.mdl.io_mdl import _calculate_face_normal, _calculate_tangent_space
         
         # Create triangle
         v0 = Vector3(0, 0, 0)

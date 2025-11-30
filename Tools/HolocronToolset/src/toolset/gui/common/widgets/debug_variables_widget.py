@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QHeaderView,
     QTableWidget,

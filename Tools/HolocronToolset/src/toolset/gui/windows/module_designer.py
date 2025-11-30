@@ -45,7 +45,6 @@ from toolset.gui.dialogs.insert_instance import InsertInstanceDialog
 from toolset.gui.dialogs.select_module import SelectModuleDialog
 from toolset.gui.editor import Editor
 from toolset.gui.editors.git import DeleteCommand, MoveCommand, RotateCommand, _GeometryMode, _InstanceMode, _SpawnMode, open_instance_dialog
-from toolset.gui.widgets.renderer.lyt_renderer import LYTRenderer
 from toolset.gui.widgets.renderer.module import ModuleRenderer
 from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
 from toolset.gui.windows.designer_controls import ModuleDesignerControls2d, ModuleDesignerControls3d, ModuleDesignerControlsFreeCam
@@ -57,19 +56,18 @@ from utility.error_handling import safe_repr
 
 if TYPE_CHECKING:
 
+
     from qtpy.QtGui import QCloseEvent, QFont, QKeyEvent, QShowEvent
     from qtpy.QtWidgets import QCheckBox, _QMenu
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.common.module import UTT, UTW
-    from pathlib import Path
-
     from pykotor.gl.scene import Camera
     from pykotor.resource.formats.bwm import BWM
-    from pykotor.resource.formats.lyt import LYT
     from pykotor.resource.generics.are import ARE
     from pykotor.resource.generics.git import GIT
     from pykotor.resource.generics.ifo import IFO
+    from toolset.gui.widgets.renderer.lyt_renderer import LYTRenderer
     from toolset.gui.widgets.renderer.walkmesh import WalkmeshRenderer
 
 if qtpy.QT5:
@@ -105,7 +103,7 @@ def run_module_designer(
     if not QPixmap(icon_path).isNull():
         designer_ui.log.debug(f"HT main window Icon loaded successfully from {icon_path}")
         designer_ui.setWindowIcon(QIcon(QPixmap(icon_path)))
-        cast(QApplication, QApplication.instance()).setWindowIcon(QIcon(QPixmap(icon_path)))
+        cast("QApplication", QApplication.instance()).setWindowIcon(QIcon(QPixmap(icon_path)))
     else:
         print(f"Failed to load HT main window icon from {icon_path}")
     sys.exit(app.exec())
@@ -269,15 +267,15 @@ class ModuleDesigner(QMainWindow):
         self.ui.lightmapCheck.toggled.connect(self.update_toggles)
         self.ui.cursorCheck.toggled.connect(self.update_toggles)
 
-        self.ui.viewCreatureCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewCreatureCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
-        self.ui.viewPlaceableCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewPlaceableCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
-        self.ui.viewDoorCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewDoorCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
-        self.ui.viewSoundCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewSoundCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
-        self.ui.viewTriggerCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewTriggerCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
-        self.ui.viewEncounterCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewEncounterCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
-        self.ui.viewWaypointCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewWaypointCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
-        self.ui.viewCameraCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewCameraCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
-        self.ui.viewStoreCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewStoreCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
+        self.ui.viewCreatureCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewCreatureCheck)  # type: ignore[method-assign]  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
+        self.ui.viewPlaceableCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewPlaceableCheck)  # type: ignore[method-assign]  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
+        self.ui.viewDoorCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewDoorCheck)  # type: ignore[method-assign]  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
+        self.ui.viewSoundCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewSoundCheck)  # type: ignore[method-assign]  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
+        self.ui.viewTriggerCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewTriggerCheck)  # type: ignore[method-assign]  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
+        self.ui.viewEncounterCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewEncounterCheck)  # type: ignore[method-assign]  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
+        self.ui.viewWaypointCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewWaypointCheck)  # type: ignore[method-assign]  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
+        self.ui.viewCameraCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewCameraCheck)  # type: ignore[method-assign]  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
+        self.ui.viewStoreCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewStoreCheck)  # type: ignore[method-assign]  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue, reportArgumentType]
 
         self.ui.instanceList.clicked.connect(self.on_instance_list_single_clicked)
         self.ui.instanceList.doubleClicked.connect(self.on_instance_list_double_clicked)
@@ -353,31 +351,47 @@ class ModuleDesigner(QMainWindow):
         keys: set[Qt.Key],
         renderer: WalkmeshRenderer | ModuleRenderer,
     ):
+        """Update the status bar, using rich text formatting for improved clarity."""
+
         if isinstance(mouse_pos, QPoint):
             assert not isinstance(mouse_pos, Vector2)
-            # QPoint.x() and QPoint.y() are methods that return int
             norm_mouse_pos = Vector2(float(mouse_pos.x()), float(mouse_pos.y()))
         else:
             norm_mouse_pos = mouse_pos
-        # Update mouse position
-        world_pos: Vector2 | Vector3
-        world_pos_3d: Vector3 | None = None
+
+        # Mouse and camera info
         if isinstance(renderer, ModuleRenderer):
             pos = renderer.scene.cursor.position()
             world_pos_3d = Vector3(pos.x, pos.y, pos.z)
             world_pos = world_pos_3d
-            self.mouse_pos_label.setText(f"Mouse Coords: {world_pos_3d.y:.2f}, {world_pos_3d.z:.2f}")
+            self.mouse_pos_label.setText(
+                f"<b>🖱&nbsp;Coords:</b> "
+                f"<span style='color:#0055B0'>{world_pos_3d.y:.2f}</span>, "
+                f"<span style='color:#228800'>{world_pos_3d.z:.2f}</span>"
+            )
 
-            # Update view camera info
             camera = renderer.scene.camera
-            self.view_camera_label.setText(f"View: Pos ({camera.x:.2f}, {camera.y:.2f}, {camera.z:.2f}), " f"Pitch: {camera.pitch:.2f}, Yaw: {camera.yaw:.2f}, " f"FOV: {camera.fov:.2f}")
+            cam_text = (
+                f"<b>🎥&nbsp;View:</b> "
+                f"<span style='color:#c46811'>Pos ("
+                f"{camera.x:.2f}, {camera.y:.2f}, {camera.z:.2f}</span>), "
+                f"Pitch: <span style='color:#a13ac8'>{camera.pitch:.2f}</span>, "
+                f"Yaw: <span style='color:#a13ac8'>{camera.yaw:.2f}</span>, "
+                f"FOV: <span style='color:#0b7d96'>{camera.fov:.2f}</span>"
+            )
+            self.view_camera_label.setText(cam_text)
         else:
             if isinstance(norm_mouse_pos, Vector2):
                 norm_mouse_pos = Vector2(float(norm_mouse_pos.x), float(norm_mouse_pos.y))
             else:
                 norm_mouse_pos = Vector2(float(norm_mouse_pos.x()), float(norm_mouse_pos.y()))
             world_pos = renderer.to_world_coords(norm_mouse_pos.x, norm_mouse_pos.y)
-            self.mouse_pos_label.setText(f"Mouse Coords: {world_pos.y:.2f}")
+            self.mouse_pos_label.setText(
+                f"<b>🖱&nbsp;Coords:</b> <span style='color:#0055B0'>{world_pos.y:.2f}</span>"
+            )
+            self.view_camera_label.setText(
+                "<b>🎥&nbsp;View:</b> <span style='font-style:italic; color:#888'>— not available —</span>"
+            )
 
         # Sort keys and buttons with modifiers at the beginning
         def sort_with_modifiers(
@@ -396,18 +410,42 @@ class ModuleDesigner(QMainWindow):
         sorted_buttons = sort_with_modifiers(buttons, get_qt_button_string, "QtMouse")
         sorted_keys = sort_with_modifiers(keys, get_qt_key_string, "QtKey")
 
-        # Update keys/mouse buttons
-        buttons_str = "+".join([get_qt_button_string(button) for button in sorted_buttons])
-        keys_str = "+".join([get_qt_key_string(key) for key in sorted_keys])
-        self.buttons_keys_pressed_label.setText(f"Keys/Buttons: {keys_str} {buttons_str}")
+        # Keys/Buttons format: use color and separation for modifiers vs interaction
+        def fmt_keys_str(keys_seq):
+            return "<span style='color:#a13ac8'>" + "</span>&nbsp;+&nbsp;<span style='color:#a13ac8'>".join(
+                [get_qt_key_string(key) for key in keys_seq]
+            ) + "</span>" if keys_seq else ""
 
-        # Update selected instance
+        def fmt_buttons_str(btn_seq):
+            return "<span style='color:#228800'>" + "</span>&nbsp;+&nbsp;<span style='color:#228800'>".join(
+                [get_qt_button_string(button) for button in btn_seq]
+            ) + "</span>" if btn_seq else ""
+
+        keys_str = fmt_keys_str(sorted_keys)
+        buttons_str = fmt_buttons_str(sorted_buttons)
+        sep = " + " if keys_str and buttons_str else ""
+        self.buttons_keys_pressed_label.setText(
+            f"<b>⌨&nbsp;Keys/🖱&nbsp;Buttons:</b> {keys_str}{sep}{buttons_str}"
+        )
+
+        # Selected instance with better style
         if self.selected_instances:
             instance = self.selected_instances[0]
-            instance_name = repr(instance) if isinstance(instance, GITCamera) else instance.identifier()
-            self.selected_instance_label.setText(f"Selected Instance: {instance_name}")
+            if isinstance(instance, GITCamera):
+                instance_name = f"<span style='color:#B05500'>[Camera]</span> <code>{repr(instance)}</code>"
+            else:
+                instance_name = (
+                    f"<span style='color:#0055B0'>"
+                    f"{instance.identifier()}</span>"
+                )
+            self.selected_instance_label.setText(
+                f"<b>🟦&nbsp;Selected Instance:</b> {instance_name}"
+            )
         else:
-            self.selected_instance_label.setText("Selected Instance: None")
+            self.selected_instance_label.setText(
+                "<b>🟦&nbsp;Selected Instance:</b> <span style='color:#a6a6a6'><i>None</i></span>"
+            )
+
 
     def _refresh_window_title(self):
         if self._module is None:

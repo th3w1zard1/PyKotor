@@ -4,7 +4,6 @@ from __future__ import annotations
 import glob
 import shutil
 import subprocess
-
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,12 +11,12 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from logging import Logger
 
-from kotornasher.cfg_parser import load_config
 from pykotor.common.misc import Game
 from pykotor.resource.formats.ncs.compilers import (
-    ExternalNCSCompiler,
     InbuiltNCSCompiler,
 )
+
+from kotornasher.cfg_parser import load_config
 
 
 def get_game_from_config() -> Game:

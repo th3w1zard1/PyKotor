@@ -540,6 +540,82 @@ def test_editor_wiki_map_values_are_strings_or_none():
                 f"{editor_name} wiki_file should end with .md: {wiki_file}"
 
 
+def test_editor_wiki_map_files_exist():
+    """Test that all wiki files referenced in EDITOR_WIKI_MAP actually exist in the wiki directory."""
+    from toolset.gui.dialogs.editor_help import get_wiki_path
+    
+    wiki_path = get_wiki_path()
+    
+    # Skip test if wiki path doesn't exist (e.g., in CI without wiki)
+    if not wiki_path.exists():
+        import pytest
+        pytest.skip(f"Wiki path does not exist: {wiki_path}")
+    
+    missing_files = []
+    for editor_name, wiki_file in EDITOR_WIKI_MAP.items():
+        if wiki_file is not None:
+            file_path = wiki_path / wiki_file
+            if not file_path.exists():
+                missing_files.append((editor_name, wiki_file, file_path))
+    
+    if missing_files:
+        error_msg = "The following editors reference wiki files that do not exist:\n"
+        for editor_name, wiki_file, file_path in missing_files:
+            error_msg += f"  - {editor_name}: {wiki_file} (expected at {file_path})\n"
+        error_msg += f"\nWiki path: {wiki_path}"
+        raise AssertionError(error_msg)
+
+
+def test_dlg_editor_uses_correct_wiki_file():
+    """Test that DLGEditor uses GFF-DLG.md, not GFF-File-Format.md."""
+    assert "DLGEditor" in EDITOR_WIKI_MAP
+    assert EDITOR_WIKI_MAP["DLGEditor"] == "GFF-DLG.md", \
+        f"DLGEditor should use 'GFF-DLG.md', not '{EDITOR_WIKI_MAP['DLGEditor']}'"
+
+
+def test_gff_specific_editors_use_specific_files():
+    """Test that GFF-based editors use their specific GFF-*.md files, not the generic GFF-File-Format.md."""
+    # Editors that should use specific GFF files
+    specific_gff_editors = {
+        "AREEditor": "GFF-ARE.md",
+        "DLGEditor": "GFF-DLG.md",
+        "GITEditor": "GFF-GIT.md",
+        "IFOEditor": "GFF-IFO.md",
+        "JRLEditor": "GFF-JRL.md",
+        "PTHEditor": "GFF-PTH.md",
+        "UTCEditor": "GFF-UTC.md",
+        "UTDEditor": "GFF-UTD.md",
+        "UTEEditor": "GFF-UTE.md",
+        "UTIEditor": "GFF-UTI.md",
+        "UTMEditor": "GFF-UTM.md",
+        "UTPEditor": "GFF-UTP.md",
+        "UTSEditor": "GFF-UTS.md",
+        "UTTEditor": "GFF-UTT.md",
+        "UTWEditor": "GFF-UTW.md",
+    }
+    
+    for editor_name, expected_file in specific_gff_editors.items():
+        if editor_name in EDITOR_WIKI_MAP:
+            actual_file = EDITOR_WIKI_MAP[editor_name]
+            assert actual_file == expected_file, \
+                f"{editor_name} should use '{expected_file}', not '{actual_file}'"
+
+
+def test_generic_gff_editors_use_generic_file():
+    """Test that generic GFF editors (GFFEditor, SaveGameEditor, MetadataEditor) use GFF-File-Format.md."""
+    generic_gff_editors = {
+        "GFFEditor": "GFF-File-Format.md",
+        "SaveGameEditor": "GFF-File-Format.md",
+        "MetadataEditor": "GFF-File-Format.md",
+    }
+    
+    for editor_name, expected_file in generic_gff_editors.items():
+        if editor_name in EDITOR_WIKI_MAP:
+            actual_file = EDITOR_WIKI_MAP[editor_name]
+            assert actual_file == expected_file, \
+                f"{editor_name} should use '{expected_file}', not '{actual_file}'"
+
+
 # ============================================================================
 # F1 SHORTCUT TESTS
 # ============================================================================

@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, cast
 
 import qtpy
 
-from qtpy.QtCore import QAbstractItemModel, Qt
+from qtpy.QtCore import Qt
 from qtpy.QtGui import QPalette, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QHeaderView, QMenu, QPushButton, QStyleOptionViewItem, QTreeView, QVBoxLayout
 
@@ -12,7 +12,7 @@ from utility.ui_libraries.qt.widgets.itemviews.abstractview import RobustAbstrac
 from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QModelIndex
+    from qtpy.QtCore import QAbstractItemModel, QModelIndex
     from qtpy.QtGui import QResizeEvent, QWheelEvent
     from qtpy.QtWidgets import QAbstractItemDelegate, QStyledItemDelegate, QWidget
 
@@ -53,7 +53,7 @@ class RobustTreeView(RobustAbstractItemView, QTreeView):
         self._add_simple_action(
             tree_view_menu,
             "Resize Column To Contents",
-            lambda: None if self.model() is None else (self.resizeColumnToContents(i) for i in range(cast(QAbstractItemModel, self.model()).columnCount())),
+            lambda: None if self.model() is None else (self.resizeColumnToContents(i) for i in range(cast("QAbstractItemModel", self.model()).columnCount())),
         )
         self._add_simple_action(tree_view_menu, "Expand All", self.expandAll)
         self._add_simple_action(tree_view_menu, "Collapse All", self.collapseAll)

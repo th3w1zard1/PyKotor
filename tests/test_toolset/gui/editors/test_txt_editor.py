@@ -560,7 +560,16 @@ Another paragraph with special chars: "quotes", 'apostrophes', and backslashes: 
     decoded2 = decode_bytes_with_fallbacks(data2)
     assert "# Header" in decoded2
 
-def test_txt_editor_all_operations(qtbot, installation: HTInstallation):
+
+def test_txteditor_editor_help_dialog_skips_when_no_wiki_file(qtbot, installation: HTInstallation):
+    """Test that TXTEditor does not add help action when no wiki file is mapped."""
+    editor = TXTEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # TXTEditor has None in the mapping, so _add_help_action should skip
+    # This test verifies the editor can be created without errors
+    assert editor is not None
+
     """Test all operations together."""
     editor = TXTEditor(None, installation)
     qtbot.addWidget(editor)

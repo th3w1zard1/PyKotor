@@ -22,8 +22,8 @@ from OpenGL.raw.GL.VERSION.GL_1_5 import GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFE
 from OpenGL.raw.GL.VERSION.GL_2_0 import glEnableVertexAttribArray
 from OpenGL.raw.GL.VERSION.GL_3_0 import glBindVertexArray
 
-from utility.common.geometry import Vector3
 from pykotor.gl import glm, mat4, quat, vec3, vec4
+from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
     from pykotor.gl.scene import Scene

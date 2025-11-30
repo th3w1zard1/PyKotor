@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.token import Token
-    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis
+from pykotor.resource.formats.ncs.dencs.node.token import Token
 
+if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis
 
 class TDecibp(Token):
     def __init__(self, line: int = 0, pos: int = 0):
-        from pykotor.resource.formats.ncs.dencs.node.token import Token
         super().__init__("DECIBP")
         self.line = line
         self.pos = pos

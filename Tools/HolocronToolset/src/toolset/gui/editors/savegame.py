@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QEvent, Qt  # pyright: ignore[reportAttributeAccessIssue]
+from qtpy.QtCore import Qt  # pyright: ignore[reportAttributeAccessIssue]
 from qtpy.QtGui import QImage, QPixmap
 from qtpy.QtWidgets import (
     QCheckBox,
@@ -18,13 +18,8 @@ from qtpy.QtWidgets import (
 
 from pykotor.common.misc import ResRef
 from pykotor.extract.savedata import (
-    GlobalVars,
-    PartyTable,
     SaveFolderEntry,
-    SaveInfo,
-    SaveNestedCapsule,
 )
-from pykotor.resource.generics.utc import UTC
 from pykotor.resource.type import ResourceType
 from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow
@@ -37,6 +32,14 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
     from pykotor.common.language import LocalizedString
+    from pykotor.extract.savedata import (
+        GlobalVars,
+        PartyTable,
+        SaveInfo,
+        SaveNestedCapsule,
+    )
+    from pykotor.resource.formats.twoda.twoda_data import TwoDA
+    from pykotor.resource.generics.utc import UTC
     from toolset.data.installation import HTInstallation
 
 
@@ -772,7 +775,6 @@ class SaveGameEditor(Editor):
             return None
         
         try:
-            from pykotor.resource.formats.twoda.twoda_data import TwoDA
             from toolset.data.installation import HTInstallation
             
             classes: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_CLASSES)
@@ -798,7 +800,6 @@ class SaveGameEditor(Editor):
             return None
         
         try:
-            from pykotor.resource.formats.twoda.twoda_data import TwoDA
             from toolset.data.installation import HTInstallation
             
             races: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_RACES)
@@ -831,7 +832,6 @@ class SaveGameEditor(Editor):
             return None
         
         try:
-            from pykotor.resource.formats.twoda.twoda_data import TwoDA
             from toolset.data.installation import HTInstallation
             
             genders: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_GENDERS)
@@ -1344,7 +1344,6 @@ class SaveGameEditor(Editor):
         slot, current_item = data
         
         # Search for UTI resources in the installation
-        from pykotor.extract.file import ResourceIdentifier
         from pykotor.extract.installation import SearchLocation
         
         # Get all UTI resources from the installation
@@ -1609,7 +1608,6 @@ class SaveGameEditor(Editor):
         plot_names = {}
         if self._installation:
             try:
-                from pykotor.resource.formats.twoda.twoda_data import TwoDA
                 from toolset.data.installation import HTInstallation
                 plot_2da: TwoDA | None = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_PLOT)
                 if plot_2da:

@@ -2,18 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.node.p_copy_down_bp_command import PCopyDownBpCommand  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_copy_down_bp_command import PCopyDownBpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_cpdownbp import TCpdownbp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
-
 
 class ACopyDownBpCommand(PCopyDownBpCommand):
     def __init__(self):
-        from pykotor.resource.formats.ncs.dencs.node.p_copy_down_bp_command import PCopyDownBpCommand  # pyright: ignore[reportMissingImports]
         super().__init__()
         self._cpdownbp: TCpdownbp | None = None
         self._pos: TIntegerConstant | None = None

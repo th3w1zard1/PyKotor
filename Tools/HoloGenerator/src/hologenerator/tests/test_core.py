@@ -2,13 +2,14 @@
 Unit tests for the HoloGenerator core functionality.
 """
 
-import unittest
 import tempfile
+import unittest
+
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from hologenerator.core.differ import KotorDiffer, DiffResult, FileChange
 from hologenerator.core.changes_ini import ChangesIniGenerator
+from hologenerator.core.differ import DiffResult, FileChange, KotorDiffer
 from hologenerator.core.generator import ConfigurationGenerator
 
 

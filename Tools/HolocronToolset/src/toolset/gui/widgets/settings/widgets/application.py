@@ -5,6 +5,7 @@ import os
 from typing import TYPE_CHECKING, Any, Callable, ClassVar
 
 import qtpy
+
 from qtpy import QtCore
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QCursor, QFont, QGuiApplication

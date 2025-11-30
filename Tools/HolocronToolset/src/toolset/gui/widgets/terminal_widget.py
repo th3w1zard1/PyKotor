@@ -8,11 +8,12 @@ import sys
 from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QProcess, Qt, Signal  # pyright: ignore[reportPrivateImportUsage]
-from qtpy.QtGui import QColor, QFont, QKeyEvent, QPalette, QTextCursor  # pyright: ignore[reportPrivateImportUsage]
+from qtpy.QtGui import QColor, QFont, QPalette, QTextCursor  # pyright: ignore[reportPrivateImportUsage]
 from qtpy.QtWidgets import QPlainTextEdit, QVBoxLayout, QWidget  # pyright: ignore[reportPrivateImportUsage]
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QByteArray  # pyright: ignore[reportPrivateImportUsage]
+    from qtpy.QtGui import QKeyEvent
 
 
 class TerminalWidget(QWidget):

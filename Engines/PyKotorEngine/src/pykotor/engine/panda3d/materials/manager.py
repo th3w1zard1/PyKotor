@@ -16,13 +16,15 @@ from panda3d.core import (  # type: ignore[import]
     Shader,
     Texture,
     TextureStage,
-    NodePath,
 )
-
 from pykotor.engine.materials.base import IMaterial, IMaterialManager
 
 if TYPE_CHECKING:
     from direct.showbase.Loader import Loader  # type: ignore[import]
+
+    from panda3d.core import (  # type: ignore[import]
+        NodePath,
+    )
     from pykotor.resource.formats.mdl.mdl_data import MDLMesh
 
 

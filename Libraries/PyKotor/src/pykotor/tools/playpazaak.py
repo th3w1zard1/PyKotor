@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import ClassVar
 
-
 """Pazaak card game implementation and rules.
 
 References:

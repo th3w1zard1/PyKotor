@@ -2,18 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.stack.local_stack import LocalStack  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct
+
 if TYPE_CHECKING:
     from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.local_stack import LocalStack  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.subroutine_analysis_data import SubroutineAnalysisData  # pyright: ignore[reportMissingImports]
-
+    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
 
 class LocalVarStack(LocalStack):
     def __init__(self):
-        from pykotor.resource.formats.ncs.dencs.stack.local_stack import LocalStack  # pyright: ignore[reportMissingImports]
         super().__init__()
         # Use list like LocalStack, but we'll use insert(0, ...) and pop(0) for addFirst/removeFirst semantics
         self.stack = []
@@ -60,6 +58,8 @@ class LocalVarStack(LocalStack):
         return self.get(offset).type()
 
     def remove(self) -> StackEntry:
+        if not self.stack:
+            raise RuntimeError("Cannot remove from empty stack")
         entry = self.stack.pop(0)
         entry.removed_from_stack(self)
         return entry

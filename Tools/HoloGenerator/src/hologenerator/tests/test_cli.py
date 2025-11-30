@@ -2,12 +2,11 @@
 Unit tests for the HoloGenerator CLI functionality.
 """
 
-import unittest
-import sys
 import tempfile
+import unittest
+
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from io import StringIO
+from unittest.mock import Mock, patch
 
 # Import the CLI module
 from hologenerator.__main__ import main

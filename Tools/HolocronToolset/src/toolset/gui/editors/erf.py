@@ -28,13 +28,13 @@ from qtpy.QtWidgets import (
 
 from pykotor.common.misc import ResRef
 from pykotor.extract.file import FileResource, ResourceIdentifier
-from toolset.gui.common.localization import translate as tr
 from pykotor.resource.formats.bif import read_bif
 from pykotor.resource.formats.erf import ERF, ERFResource, ERFType, read_erf, write_erf
 from pykotor.resource.formats.rim import RIM, read_rim, write_rim
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_capsule_file
 from toolset.gui.common.filters import RobustSortFilterProxyModel
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.save.generic_file_saver import FileSaveHandler
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings
@@ -645,8 +645,8 @@ class ERFEditorTable(RobustTableView):
         if mime_data.hasUrls():
             event.setDropAction(Qt.DropAction.CopyAction)
             event.accept()
-            filter_model: ERFSortFilterProxyModel = cast(ERFSortFilterProxyModel, self.model())
-            source_model: QStandardItemModel = cast(QStandardItemModel, filter_model.sourceModel())
+            filter_model: ERFSortFilterProxyModel = cast("ERFSortFilterProxyModel", self.model())
+            source_model: QStandardItemModel = cast("QStandardItemModel", filter_model.sourceModel())
             existing_items: set[str] = {
                 f"{source_model.index(row, 0).data()}.{source_model.index(row, 1).data()}".strip().lower()
                 for row in range(source_model.rowCount())
@@ -752,8 +752,8 @@ class ERFEditorTable(RobustTableView):
             return
 
         urls: list[QUrl] = []
-        filter_model: ERFSortFilterProxyModel = cast(ERFSortFilterProxyModel, self.model())
-        source_model: QStandardItemModel = cast(QStandardItemModel, filter_model.sourceModel())
+        filter_model: ERFSortFilterProxyModel = cast("ERFSortFilterProxyModel", self.model())
+        source_model: QStandardItemModel = cast("QStandardItemModel", filter_model.sourceModel())
         for index in (index for index in self.selectedIndexes() if not index.column()):
             resource: ERFResource = source_model.data(
                 filter_model.mapToSource(index),

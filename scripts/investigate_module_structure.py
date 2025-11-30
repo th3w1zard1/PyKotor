@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import os
 import sys
+
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parents[1]
@@ -23,12 +24,12 @@ if str(PYKOTOR_PATH) not in sys.path:
 if str(UTILITY_PATH) not in sys.path:
     sys.path.insert(0, str(UTILITY_PATH))
 
-from pykotor.extract.installation import Installation
-from pykotor.resource.formats.rim import read_rim
-from pykotor.resource.formats.lyt.lyt_auto import read_lyt
-from pykotor.resource.formats.gff.gff_auto import read_gff
-from pykotor.resource.type import ResourceType
 from pykotor.common.module import Module
+from pykotor.extract.installation import Installation
+from pykotor.resource.formats.gff.gff_auto import read_gff
+from pykotor.resource.formats.lyt.lyt_auto import read_lyt
+from pykotor.resource.formats.rim import read_rim
+from pykotor.resource.type import ResourceType
 
 
 def investigate_module(module_name: str, installation: Installation):
@@ -122,7 +123,7 @@ def investigate_module(module_name: str, installation: Installation):
             
             # Get textures/lightmaps from MDL
             if has_mdl:
-                from pykotor.tools.model import iterate_textures, iterate_lightmaps
+                from pykotor.tools.model import iterate_lightmaps, iterate_textures
                 mdl_data = all_resources[mdl_key]
                 textures = set(iterate_textures(mdl_data))
                 lightmaps = set(iterate_lightmaps(mdl_data))

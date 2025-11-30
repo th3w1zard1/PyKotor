@@ -6,6 +6,8 @@ import sys
 import unittest
 from unittest import TestCase
 
+from pykotor.extract.file import ResourceIdentifier, ResourceResult
+
 try:
     from qtpy.QtTest import QTest
     from qtpy.QtWidgets import QApplication
@@ -75,7 +77,7 @@ class GITEditorTest(TestCase):
         cls.INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
-        self.app = QApplication([])
+        self.app = QApplication([])  # pyright: ignore[reportOptionalCall]
         self.editor = self.GITEditor(None, self.INSTALLATION)
         self.log_messages: list[str] = [os.linesep]
 
@@ -155,13 +157,15 @@ def test_git_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     git_file = test_files_dir / "zio001.git"
     if not git_file.exists():
         # Try to get one from installation
-        git_resources = list(installation.resources(ResourceType.GIT))
+        git_resources: dict[ResourceIdentifier, ResourceResult | None] = installation.resources(([ResourceIdentifier("zio001", ResourceType.GIT)]))
         if not git_resources:
             pytest.skip("No GIT files available for testing")
-        git_resource = git_resources[0]
-        git_data = installation.resource(git_resource.identifier)
+        git_resource: ResourceResult | None = git_resources.get(ResourceIdentifier("zio001", ResourceType.GIT))
+        if git_resource is None:
+            pytest.fail("No GIT files found with name 'zio001.git'!")
+        git_data = git_resource.data
         if not git_data:
-            pytest.skip(f"Could not load GIT data for {git_resource.identifier}")
+            pytest.fail(f"Could not load GIT data for 'zio001.git'!")
         editor.load(
             git_resource.filepath if hasattr(git_resource, 'filepath') else pathlib.Path("module.git"),
             git_resource.resname,
@@ -184,28 +188,31 @@ def test_git_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     loaded_git = read_gff(data)
     assert loaded_git is not None
 
-def test_git_editor_specifics(qtbot, installation: HTInstallation, test_files_dir: pathlib.Path):
-    """Specific granular tests for GIT Editor (common enough to warrant specific attention)."""
+
+def test_giteditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that GITEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
     editor = GITEditor(None, installation)
     qtbot.addWidget(editor)
     
-    git_file = test_files_dir / "zio001.git"
-    if not git_file.exists():
-        pytest.skip("zio001.git not found")
-        
-    editor.load(git_file, "zio001", ResourceType.GIT, git_file.read_bytes())
+    # Trigger help dialog with the correct file for GITEditor
+    editor._show_help_dialog("GFF-GIT.md")
+    qtbot.wait(200)  # Wait for dialog to be created
     
-    # Test Geometry/Environment/etc tabs if they exist
-    # Check specific widget: Tag
-    # GIT doesn't strictly have a "Tag" field in the root struct like UTI, but usually has one?
-    # Actually GIT is Area Properties mostly.
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
     
-    # Let's test the lists (Creatures, Placeables, etc.)
-    # Assuming ui.creatureList, ui.placeableList, etc.
-    if hasattr(editor.ui, "creatureList"):
-        assert editor.ui.creatureList.count() >= 0
-        
-    # Check generic properties if any
-    if hasattr(editor.ui, "environmentPage"):
-        # navigate to environment page
-        pass
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'GFF-GIT.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"

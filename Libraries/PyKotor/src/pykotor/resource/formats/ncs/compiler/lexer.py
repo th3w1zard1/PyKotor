@@ -136,7 +136,7 @@ class NssLexer:
         t.lexer.lineno += len(t.value)
 
     def t_NOP(self, t):
-        "nop"  # noqa: D300, D400, D415, D403
+        r"[Nn][Oo][Pp]"  # noqa: D300, D400, D415, D403
         return t
 
     def t_COMMENT(self, t):

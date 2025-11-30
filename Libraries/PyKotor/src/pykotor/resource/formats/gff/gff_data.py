@@ -35,7 +35,6 @@ from pykotor.resource.formats._base import ComparableMixin
 from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector3, Vector4
 from utility.common.misc_string.util import format_text
-from utility.error_handling import safe_repr
 from utility.error_handling import safe_repr  # pyright: ignore[reportMissingImports]
 from utility.string_util import format_text  # pyright: ignore[reportMissingImports]
 
@@ -1878,9 +1877,9 @@ class GFFList(ComparableMixin):
         # Build content-based lookup to detect moved/reordered structs
         def _hashable_value(value: Any) -> Any:
             """Convert a GFF field value into a hashable, comparable representation."""
-            from utility.common.geometry import Vector3, Vector4  # Local import to avoid circular deps
             from pykotor.common.language import LocalizedString
             from pykotor.common.misc import ResRef
+            from utility.common.geometry import Vector3, Vector4  # Local import to avoid circular deps
             if value is None or isinstance(value, (int, float, str, bool, bytes)):
                 return value
             if isinstance(value, ResRef):

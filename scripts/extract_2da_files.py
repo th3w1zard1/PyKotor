@@ -2,6 +2,7 @@
 """Extract individual 2DA file sections from 2DA-File-Format.md into separate files."""
 
 import re
+
 from pathlib import Path
 
 wiki_dir = Path("wiki")

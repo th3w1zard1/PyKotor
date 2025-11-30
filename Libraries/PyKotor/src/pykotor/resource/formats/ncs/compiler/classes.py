@@ -314,7 +314,15 @@ class StructMember:
         elif self.datatype.builtin == DataType.OBJECT:
             ncs.add(NCSInstructionType.RSADDO, args=[])
         elif self.datatype.builtin == DataType.STRUCT:
-            root.struct_map[self.identifier.label].initialize(ncs, root)
+            # Use the struct type name from datatype, not the member name
+            struct_type_name = self.datatype._struct
+            if struct_type_name is None:
+                msg = f"Struct member '{self.identifier.label}' has no struct type name"
+                raise CompileError(msg)
+            if struct_type_name not in root.struct_map:
+                msg = f"Unknown struct type '{struct_type_name}' for member '{self.identifier.label}'"
+                raise CompileError(msg)
+            root.struct_map[struct_type_name].initialize(ncs, root)
         else:
             msg = (
                 f"Unsupported struct member type: {self.datatype.builtin.name}\n"
@@ -572,6 +580,9 @@ class CodeBlock:
         continue_instruction: NCSInstruction | None,
     ):
         self._parent = block
+        # Reset temp_stack at the start of block compilation
+        # Each block tracks its own temporary stack independently
+        self.temp_stack = 0
 
         for statement in self._statements:
             if not isinstance(statement, ReturnStatement):
@@ -611,7 +622,6 @@ class CodeBlock:
         if self.temp_stack != 0:
             # If the temp stack is 0 after the whole block has compiled there must be a logic error
             # in the implementation of one of the expression/statement classes
-            print(f"DEBUG CodeBlock.compile: temp_stack={self.temp_stack} after all statements compiled")
             msg = (
                 f"Internal compiler error: Temporary stack not cleared after block compilation\n"
                 f"  Temp stack size: {self.temp_stack}\n"
@@ -629,17 +639,14 @@ class CodeBlock:
         offset: int | None = None,
     ) -> GetScopedResult:
         offset = -self.temp_stack if offset is None else offset - self.temp_stack
-        print(f"DEBUG CodeBlock.get_scoped: identifier={identifier.label}, temp_stack={self.temp_stack}, initial_offset={offset}, scope_size={len(self.scope)}")
         for scoped in self.scope:
             offset -= scoped.data_type.size(root)
-            print(f"DEBUG CodeBlock.get_scoped: checking {scoped.identifier.label}, size={scoped.data_type.size(root)}, offset={offset}")
             if scoped.identifier == identifier:
                 break
         else:
             if self._parent is not None:
                 return self._parent.get_scoped(identifier, root, offset)
             return root.get_scoped(identifier, root)
-        print(f"DEBUG CodeBlock.get_scoped: found {identifier.label}, final_offset={offset}")
         return GetScopedResult(is_global=False, datatype=scoped.data_type, offset=offset, is_const=scoped.is_const)
 
     def scope_size(self, root: CodeRoot) -> int:
@@ -833,7 +840,7 @@ class IncludeScript(TopLevelObject):
         from pykotor.resource.formats.ncs.compiler.parser import NssParser  # noqa: PLC0415
 
         lookup_paths = cast(
-            list[str] | None,
+            "list[str] | None",
             [str(path) for path in root.library_lookup] if root.library_lookup else None,
         )
 
@@ -1299,9 +1306,6 @@ class EngineCallExpression(Expression):
                     self._args.append(ObjectExpression(int(constant.value)))
         this_stack = 0
         # DEBUG: Log arguments before compilation
-        print(f"DEBUG EngineCallExpression.compile: function={self._function.name}, arg_count={len(self._args)}")
-        print(f"DEBUG EngineCallExpression.compile: self._args={[type(arg).__name__ for arg in self._args]}")
-        print(f"DEBUG EngineCallExpression.compile: function.params={[(p.name, p.datatype.name) for p in self._function.params]}")
         
         # Compile arguments in FORWARD order (left to right, first argument first)
         # NCS bytecode pushes arguments left-to-right, so when the interpreter
@@ -1315,7 +1319,6 @@ class EngineCallExpression(Expression):
         for i in range(len(self._args)):  # Iterate in forward order
             arg = self._args[i]
             param_index = i  # Parameter index in forward order
-            print(f"DEBUG EngineCallExpression.compile: compiling arg[{i}]={type(arg).__name__}, param[{param_index}]={self._function.params[param_index].name} ({self._function.params[param_index].datatype.name})")
             param_type = DynamicDataType(self._function.params[param_index].datatype)
             if param_type == DataType.ACTION:
                 after_command = NCSInstruction()
@@ -1329,8 +1332,12 @@ class EngineCallExpression(Expression):
 
                 ncs.instructions.append(after_command)
             else:
+                temp_stack_before_arg = block.temp_stack
                 added = arg.compile(ncs, root, block)
-                block.temp_stack += added.size(root)
+                # Only add to temp_stack if the expression didn't already add it
+                # (nested EngineCallExpression/FunctionCallExpression already add their return values)
+                if block.temp_stack == temp_stack_before_arg:
+                    block.temp_stack += added.size(root)
                 this_stack += added.size(root)
 
                 if added != param_type:
@@ -1354,15 +1361,12 @@ class EngineCallExpression(Expression):
             ),
         )
         # ACTION consumes all arguments, so subtract their total size
-        print(f"DEBUG EngineCallExpression: before ACTION, temp_stack={block.temp_stack}, this_stack={this_stack}")
         block.temp_stack -= this_stack
-        print(f"DEBUG EngineCallExpression: after ACTION, temp_stack={block.temp_stack}")
         # For non-void functions, the return value is left on the stack
         # Add it to temp_stack so ExpressionStatement knows to pop it
         return_type = DynamicDataType(self._function.returntype)
         if return_type != DynamicDataType.VOID:
             block.temp_stack += return_type.size(root)
-            print(f"DEBUG EngineCallExpression: added return value, temp_stack={block.temp_stack}")
         return return_type
 
 
@@ -1403,10 +1407,18 @@ class BinaryOperatorExpression(Expression):
         self.compatibility: list[BinaryOperatorMapping] = mapping
 
     def compile(self, ncs: NCS, root: CodeRoot, block: CodeBlock) -> DynamicDataType:  # noqa: A003
+        temp_stack_before_expr1 = block.temp_stack
         type1 = self.expression1.compile(ncs, root, block)
-        block.temp_stack += 4
+        type1_size = type1.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr1:
+            block.temp_stack += type1_size
+        temp_stack_before_expr2 = block.temp_stack
         type2 = self.expression2.compile(ncs, root, block)
-        block.temp_stack += 4
+        type2_size = type2.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr2:
+            block.temp_stack += type2_size
 
         for x in self.compatibility:
             if type1 == x.lhs and type2 == x.rhs:
@@ -1423,8 +1435,11 @@ class BinaryOperatorExpression(Expression):
             )
             raise CompileError(msg)
 
-        block.temp_stack -= 8
-        return DynamicDataType(x.result)
+        result_type = DynamicDataType(x.result)
+        result_size = result_type.size(root)
+        # Binary operation consumed both operands and left result on stack
+        block.temp_stack -= (type1_size + type2_size - result_size)
+        return result_type
 
 
 class TernaryConditionalExpression(Expression):
@@ -1583,12 +1598,10 @@ class Assignment(Expression):
             block.temp_stack += variable_type.size(root)
         
         # Get variable location - get_scoped uses temp_stack (including expression result) in its calculation
-        print(f"DEBUG Assignment: before get_scoped, temp_stack={block.temp_stack}, variable_type={variable_type}")
         is_global, expression_type, stack_index, is_const = self.field_access.get_scoped(
             block,
             root,
         )
-        print(f"DEBUG Assignment: after get_scoped, stack_index={stack_index}, is_global={is_global}, expression_type={expression_type}")
         
         if is_const and not allow_const:
             var_name = ".".join(str(ident) for ident in self.field_access.identifiers)
@@ -1647,8 +1660,12 @@ class AdditionAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expresion_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expresion_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        # (FunctionCallExpression and EngineCallExpression already add their return values)
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expresion_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expresion_type == DynamicDataType.INT:
@@ -1661,13 +1678,15 @@ class AdditionAssignment(Expression):
             arthimetic_instruction = NCSInstructionType.ADDFI
         elif variable_type == DynamicDataType.STRING and expresion_type == DynamicDataType.STRING:
             arthimetic_instruction = NCSInstructionType.ADDSS
+        elif variable_type == DynamicDataType.VECTOR and expresion_type == DynamicDataType.VECTOR:
+            arthimetic_instruction = NCSInstructionType.ADDVV
         else:
             var_name = ".".join(str(ident) for ident in self.field_access.identifiers)
             msg = (
                 f"Type mismatch in += operation on '{var_name}'\n"
                 f"  Variable type: {variable_type.builtin.name}\n"
                 f"  Expression type: {expresion_type.builtin.name}\n"
-                f"  Supported: int+=int, float+=float/int, string+=string"
+                f"  Supported: int+=int, float+=float/int, string+=string, vector+=vector"
             )
             raise CompileError(msg)
 
@@ -1678,15 +1697,16 @@ class AdditionAssignment(Expression):
         # The arithmetic operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if is_global else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if is_global else stack_index - expresion_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if is_global else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Arithmetic operation consumed variable copy and expression (2 values), left result (1 value)
         # Result is still on stack (copied to variable location but also remains on top for ExpressionStatement)
         # temp_stack currently = variable_size + expression_size
-        # After ADD: stack has 1 result, so temp_stack should be = result_size (variable_type)
-        # Net change: subtract expression_size (one operand was consumed)
-        block.temp_stack -= expresion_type.size(root)  # ADD consumed expression, result type is variable_type
+        # After operation: stack has 1 result of variable_type size
+        # Net change: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expresion_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -1709,8 +1729,12 @@ class SubtractionAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expresion_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expresion_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        # (FunctionCallExpression and EngineCallExpression already add their return values)
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expresion_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expresion_type == DynamicDataType.INT:
@@ -1729,26 +1753,27 @@ class SubtractionAssignment(Expression):
                 f"Type mismatch in -= operation on '{var_name}'\n"
                 f"  Variable type: {variable_type.builtin.name}\n"
                 f"  Expression type: {expresion_type.builtin.name}\n"
-                f"  Supported: int-=int, float-=float/int"
+                f"  Supported: int-=int, float-=float/int, vector-=vector"
             )
             raise CompileError(msg)
 
-        # Add the expression and our temp variable copy together
+        # Subtract the expression from our temp variable copy
         ncs.add(arthimetic_instruction)
 
         # Copy the result to the original variable in the stack
         # The arithmetic operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if isglobal else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if isglobal else stack_index - expresion_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if isglobal else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Arithmetic operation consumed variable copy and expression (2 values), left result (1 value)
         # Result is still on stack (copied to variable location but also remains on top for ExpressionStatement)
         # temp_stack currently = variable_size + expression_size
-        # After ADD: stack has 1 result, so temp_stack should be = result_size (variable_type)
-        # Net change: subtract expression_size (one operand was consumed)
-        block.temp_stack -= expresion_type.size(root)  # ADD consumed expression, result type is variable_type
+        # After operation: stack has 1 result of variable_type size
+        # Net change: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expresion_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -1771,8 +1796,11 @@ class MultiplicationAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expresion_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expresion_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expresion_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expresion_type == DynamicDataType.INT:
@@ -1791,26 +1819,27 @@ class MultiplicationAssignment(Expression):
                 f"Type mismatch in *= operation on '{var_name}'\n"
                 f"  Variable type: {variable_type.builtin.name}\n"
                 f"  Expression type: {expresion_type.builtin.name}\n"
-                f"  Supported: int*=int, float*=float/int"
+                f"  Supported: int*=int, float*=float/int, vector*=float"
             )
             raise CompileError(msg)
 
-        # Add the expression and our temp variable copy together
+        # Multiply the temp variable copy by the expression
         ncs.add(arthimetic_instruction)
 
         # Copy the result to the original variable in the stack
         # The arithmetic operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if isglobal else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if isglobal else stack_index - expresion_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if isglobal else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Arithmetic operation consumed variable copy and expression (2 values), left result (1 value)
         # Result is still on stack (copied to variable location but also remains on top for ExpressionStatement)
         # temp_stack currently = variable_size + expression_size
-        # After ADD: stack has 1 result, so temp_stack should be = result_size (variable_type)
-        # Net change: subtract expression_size (one operand was consumed)
-        block.temp_stack -= expresion_type.size(root)  # ADD consumed expression, result type is variable_type
+        # After operation: stack has 1 result of variable_type size
+        # Net change: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expresion_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -1833,8 +1862,11 @@ class DivisionAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expresion_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expresion_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expresion_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expresion_type == DynamicDataType.INT:
@@ -1853,26 +1885,27 @@ class DivisionAssignment(Expression):
                 f"Type mismatch in /= operation on '{var_name}'\n"
                 f"  Variable type: {variable_type.builtin.name}\n"
                 f"  Expression type: {expresion_type.builtin.name}\n"
-                f"  Supported: int/=int, float/=float/int"
+                f"  Supported: int/=int, float/=float/int, vector/=float"
             )
             raise CompileError(msg)
 
-        # Add the expression and our temp variable copy together
+        # Divide the temp variable copy by the expression
         ncs.add(arthimetic_instruction)
 
         # Copy the result to the original variable in the stack
         # The arithmetic operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if isglobal else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if isglobal else stack_index - expresion_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if isglobal else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Arithmetic operation consumed variable copy and expression (2 values), left result (1 value)
         # Result is still on stack (copied to variable location but also remains on top for ExpressionStatement)
         # temp_stack currently = variable_size + expression_size
-        # After ADD: stack has 1 result, so temp_stack should be = result_size (variable_type)
-        # Net change: subtract expression_size (one operand was consumed)
-        block.temp_stack -= expresion_type.size(root)  # ADD consumed expression, result type is variable_type
+        # After operation: stack has 1 result of variable_type size
+        # Net change: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expresion_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -1895,8 +1928,11 @@ class ModuloAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expresion_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expresion_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expresion_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expresion_type == DynamicDataType.INT:
@@ -1911,22 +1947,23 @@ class ModuloAssignment(Expression):
             )
             raise CompileError(msg)
 
-        # Add the expression and our temp variable copy together
+        # Apply modulo operation
         ncs.add(arthimetic_instruction)
 
         # Copy the result to the original variable in the stack
         # The arithmetic operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if isglobal else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if isglobal else stack_index - expresion_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if isglobal else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Arithmetic operation consumed variable copy and expression (2 values), left result (1 value)
         # Result is still on stack (copied to variable location but also remains on top for ExpressionStatement)
         # temp_stack currently = variable_size + expression_size
-        # After ADD: stack has 1 result, so temp_stack should be = result_size (variable_type)
-        # Net change: subtract expression_size (one operand was consumed)
-        block.temp_stack -= expresion_type.size(root)  # ADD consumed expression, result type is variable_type
+        # After operation: stack has 1 result of variable_type size
+        # Net change: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expresion_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -1949,8 +1986,11 @@ class BitwiseAndAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expression_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expression_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expression_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expression_type == DynamicDataType.INT:
@@ -1972,15 +2012,13 @@ class BitwiseAndAssignment(Expression):
         # The bitwise operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if is_global else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if is_global else stack_index - expression_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if is_global else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Bitwise operation consumed variable copy and expression (2 values), left result (1 value)
-        # Result is still on stack, so temp_stack should reflect: result_size
-        # The result type is the same as variable_type (bitwise ops preserve the variable type)
-        block.temp_stack -= variable_type.size(root)  # Subtract consumed variable copy
-        block.temp_stack -= expression_type.size(root)  # Subtract consumed expression
-        block.temp_stack += variable_type.size(root)  # Add result that's still on stack
+        # Result is still on stack, temp_stack: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expression_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -2003,8 +2041,11 @@ class BitwiseOrAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expression_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expression_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expression_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expression_type == DynamicDataType.INT:
@@ -2026,15 +2067,13 @@ class BitwiseOrAssignment(Expression):
         # The bitwise operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if is_global else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if is_global else stack_index - expression_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if is_global else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Bitwise operation consumed variable copy and expression (2 values), left result (1 value)
-        # Result is still on stack, so temp_stack should reflect: result_size
-        # The result type is the same as variable_type (bitwise ops preserve the variable type)
-        block.temp_stack -= variable_type.size(root)  # Subtract consumed variable copy
-        block.temp_stack -= expression_type.size(root)  # Subtract consumed expression
-        block.temp_stack += variable_type.size(root)  # Add result that's still on stack
+        # Result is still on stack, temp_stack: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expression_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -2057,8 +2096,11 @@ class BitwiseXorAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expression_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expression_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expression_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expression_type == DynamicDataType.INT:
@@ -2080,15 +2122,13 @@ class BitwiseXorAssignment(Expression):
         # The bitwise operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if is_global else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if is_global else stack_index - expression_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if is_global else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Bitwise operation consumed variable copy and expression (2 values), left result (1 value)
-        # Result is still on stack, so temp_stack should reflect: result_size
-        # The result type is the same as variable_type (bitwise ops preserve the variable type)
-        block.temp_stack -= variable_type.size(root)  # Subtract consumed variable copy
-        block.temp_stack -= expression_type.size(root)  # Subtract consumed expression
-        block.temp_stack += variable_type.size(root)  # Add result that's still on stack
+        # Result is still on stack, temp_stack: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expression_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -2111,8 +2151,11 @@ class BitwiseLeftAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expression_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expression_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expression_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expression_type == DynamicDataType.INT:
@@ -2134,15 +2177,13 @@ class BitwiseLeftAssignment(Expression):
         # The bitwise operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if is_global else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if is_global else stack_index - expression_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if is_global else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Bitwise operation consumed variable copy and expression (2 values), left result (1 value)
-        # Result is still on stack, so temp_stack should reflect: result_size
-        # The result type is the same as variable_type (bitwise ops preserve the variable type)
-        block.temp_stack -= variable_type.size(root)  # Subtract consumed variable copy
-        block.temp_stack -= expression_type.size(root)  # Subtract consumed expression
-        block.temp_stack += variable_type.size(root)  # Add result that's still on stack
+        # Result is still on stack, temp_stack: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expression_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -2165,8 +2206,11 @@ class BitwiseRightAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expression_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expression_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expression_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expression_type == DynamicDataType.INT:
@@ -2188,15 +2232,13 @@ class BitwiseRightAssignment(Expression):
         # The bitwise operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if is_global else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if is_global else stack_index - expression_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if is_global else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Bitwise operation consumed variable copy and expression (2 values), left result (1 value)
-        # Result is still on stack, so temp_stack should reflect: result_size
-        # The result type is the same as variable_type (bitwise ops preserve the variable type)
-        block.temp_stack -= variable_type.size(root)  # Subtract consumed variable copy
-        block.temp_stack -= expression_type.size(root)  # Subtract consumed expression
-        block.temp_stack += variable_type.size(root)  # Add result that's still on stack
+        # Result is still on stack, temp_stack: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expression_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -2219,8 +2261,11 @@ class BitwiseUnsignedRightAssignment(Expression):
         block.temp_stack += variable_type.size(root)
 
         # Add the result of the expression to the stack
+        temp_stack_before_expr = block.temp_stack
         expression_type = self.expression.compile(ncs, root, block)
-        block.temp_stack += expression_type.size(root)
+        # Only add to temp_stack if the expression didn't already add it
+        if block.temp_stack == temp_stack_before_expr:
+            block.temp_stack += expression_type.size(root)
 
         # Determine what instruction to apply to the two values
         if variable_type == DynamicDataType.INT and expression_type == DynamicDataType.INT:
@@ -2242,15 +2287,13 @@ class BitwiseUnsignedRightAssignment(Expression):
         # The bitwise operation consumed both operands and left the result on stack
         # After CPDOWNSP, the result is still on stack (for ExpressionStatement to clean up)
         ins_cpdown = NCSInstructionType.CPDOWNBP if is_global else NCSInstructionType.CPDOWNSP
-        offset_cpdown = stack_index if is_global else stack_index - expression_type.size(root)
+        # Result (variable_type size) is on stack; offset to original variable accounts for this
+        offset_cpdown = stack_index if is_global else stack_index - variable_type.size(root)
         ncs.add(ins_cpdown, args=[offset_cpdown, variable_type.size(root)])
 
         # Bitwise operation consumed variable copy and expression (2 values), left result (1 value)
-        # Result is still on stack, so temp_stack should reflect: result_size
-        # The result type is the same as variable_type (bitwise ops preserve the variable type)
-        block.temp_stack -= variable_type.size(root)  # Subtract consumed variable copy
-        block.temp_stack -= expression_type.size(root)  # Subtract consumed expression
-        block.temp_stack += variable_type.size(root)  # Add result that's still on stack
+        # Result is still on stack, temp_stack: both operands consumed, result pushed
+        block.temp_stack = block.temp_stack - variable_type.size(root) - expression_type.size(root) + variable_type.size(root)
         # Return variable_type (the result type) so ExpressionStatement knows what size to clean up
         return variable_type
 
@@ -2310,7 +2353,6 @@ class ExpressionStatement(Statement):
         temp_stack_before = block.temp_stack
         expression_type = self.expression.compile(ncs, root, block)
         temp_stack_after = block.temp_stack
-        print(f"DEBUG ExpressionStatement.compile: expression={type(self.expression).__name__}, type={expression_type.builtin.name}, temp_stack before={temp_stack_before}, after={temp_stack_after}")
         # Expression compiled, remove its result from stack and temp_stack tracking
         # Note: Some expressions (like Assignment) already remove their result from the stack,
         # so we only need to remove it from temp_stack if it's still on the stack.
@@ -2321,29 +2363,23 @@ class ExpressionStatement(Statement):
             # Check if expression added to temp_stack
             if temp_stack_after > temp_stack_before:
                 # Expression added to temp_stack, so result is on the stack - remove it
-                print(f"DEBUG ExpressionStatement.compile: removing {expression_size} bytes from stack (temp_stack={block.temp_stack})")
                 ncs.add(NCSInstructionType.MOVSP, args=[-expression_size])
                 block.temp_stack -= expression_size
-                print(f"DEBUG ExpressionStatement.compile: after removal, temp_stack={block.temp_stack}")
             elif temp_stack_after == temp_stack_before:
                 # Expression didn't add to temp_stack, but result is still on the stack (e.g., StringExpression, IntExpression)
                 # We need to remove it from the stack (but don't update temp_stack since it wasn't tracking it)
-                print(f"DEBUG ExpressionStatement.compile: expression didn't add to temp_stack, removing {expression_size} bytes from stack")
                 ncs.add(NCSInstructionType.MOVSP, args=[-expression_size])
             else:
                 # temp_stack decreased, which means the expression already removed its result
-                print(f"DEBUG ExpressionStatement.compile: expression already removed result (temp_stack={block.temp_stack}, expression_type.size={expression_size})")
+                pass
         else:
             # Void expression - check if temp_stack increased (shouldn't happen, but clean up if it did)
             if temp_stack_after > temp_stack_before:
                 # Something was left on the stack (e.g., from nested function call arguments)
                 cleanup_size = temp_stack_after - temp_stack_before
-                print(f"DEBUG ExpressionStatement.compile: void expression left {cleanup_size} bytes on stack, cleaning up (temp_stack={block.temp_stack})")
                 ncs.add(NCSInstructionType.MOVSP, args=[-cleanup_size])
                 block.temp_stack -= cleanup_size
-            else:
-                print(f"DEBUG ExpressionStatement.compile: void expression, no cleanup needed (temp_stack={block.temp_stack})")
-        # If temp_stack < expression_type.size(root), the expression already removed it
+            # else: no cleanup needed - void expression with balanced stack
 
 
 class DeclarationStatement(Statement):
@@ -2440,7 +2476,6 @@ class VariableInitializer:
         is_const: bool = False,
     ):
         initial_temp_stack = block.temp_stack
-        print(f"DEBUG VariableInitializer.compile: identifier={self.identifier.label}, initial_temp_stack={initial_temp_stack}")
 
         # Reuse existing declarator logic for allocation
         declarator = VariableDeclarator(self.identifier)
@@ -2450,19 +2485,15 @@ class VariableInitializer:
         # Allow const variables to be initialized (but not reassigned)
         assignment = Assignment(FieldAccess([self.identifier]), self.expression)
         result_type = assignment.compile(ncs, root, block, allow_const=True)
-        print(f"DEBUG VariableInitializer.compile: after assignment, temp_stack={block.temp_stack}, initial_temp_stack={initial_temp_stack}")
         
         # Assignment leaves result on stack for ExpressionStatement to clean up,
         # but VariableInitializer is NOT in an ExpressionStatement, so we need to clean it up ourselves
         result_size = result_type.size(root)
         if block.temp_stack > initial_temp_stack:
             # Assignment left result on stack, remove it
-            print(f"DEBUG VariableInitializer.compile: removing {result_size} bytes from stack")
             ncs.add(NCSInstructionType.MOVSP, args=[-result_size])
             block.temp_stack -= result_size
-            print(f"DEBUG VariableInitializer.compile: after cleanup, temp_stack={block.temp_stack}")
-        else:
-            print(f"DEBUG VariableInitializer.compile: no cleanup needed (temp_stack={block.temp_stack} <= initial_temp_stack={initial_temp_stack})")
+        # else: no cleanup needed - assignment already handled stack
 
 
 class ConditionalBlock(Statement):
@@ -2576,6 +2607,9 @@ class WhileLoopBlock(Statement):
 
         loopstart = ncs.add(NCSInstructionType.NOP, args=[])
         loopend = NCSInstruction(NCSInstructionType.NOP, args=[])
+        
+        # Save temp_stack before condition (condition pushes a value, JZ consumes it)
+        initial_temp_stack = block.temp_stack
         condition_type = self.condition.compile(ncs, root, block)
 
         if condition_type != DynamicDataType.INT:
@@ -2585,7 +2619,11 @@ class WhileLoopBlock(Statement):
             )
             raise CompileError(msg)
 
+        # JZ consumes the condition value from stack
         ncs.add(NCSInstructionType.JZ, jump=loopend)
+        # Restore temp_stack since JZ consumed the condition
+        block.temp_stack = initial_temp_stack
+        
         self.block.compile(ncs, root, block, return_instruction, loopend, loopstart)
         ncs.add(NCSInstructionType.JMP, jump=loopstart)
 
@@ -2624,6 +2662,9 @@ class DoWhileLoopBlock(Statement):
         )
 
         ncs.instructions.append(conditionstart)
+        
+        # Save temp_stack before condition (condition pushes a value, JZ consumes it)
+        initial_temp_stack = block.temp_stack
         condition_type = self.condition.compile(ncs, root, block)
         if condition_type != DynamicDataType.INT:
             msg = (
@@ -2632,7 +2673,11 @@ class DoWhileLoopBlock(Statement):
             )
             raise CompileError(msg)
 
+        # JZ consumes the condition value from stack
         ncs.add(NCSInstructionType.JZ, jump=loopend)
+        # Restore temp_stack since JZ consumed the condition
+        block.temp_stack = initial_temp_stack
+        
         ncs.add(NCSInstructionType.JMP, jump=loopstart)
         ncs.instructions.append(loopend)
 
@@ -2669,20 +2714,22 @@ class ForLoopBlock(Statement):
                 self.initial.compile(ncs, root, block, return_instruction, break_instruction, continue_instruction)
             else:
                 # For expressions, compile and clean up stack
-                # Note: Assignment expressions already clean up the stack themselves,
-                # so we only need to clean up if it's not an Assignment
+                temp_stack_before = block.temp_stack
                 initial_type = self.initial.compile(ncs, root, block)
-                # Assignment is defined earlier in this file, so we can reference it directly
-                if not isinstance(self.initial, Assignment):
-                    # Only remove from stack if the expression left a value on it
-                    # (Assignment already cleaned up, so skip it)
-                    ncs.add(NCSInstructionType.MOVSP, args=[-initial_type.size(root)])
-                    block.temp_stack -= initial_type.size(root)
+                # Check if expression added to temp_stack
+                if block.temp_stack == temp_stack_before:
+                    # Expression didn't add to temp_stack, so we need to add it
+                    block.temp_stack += initial_type.size(root)
+                # Clean up the result from stack
+                ncs.add(NCSInstructionType.MOVSP, args=[-initial_type.size(root)])
+                block.temp_stack -= initial_type.size(root)
 
         loopstart = ncs.add(NCSInstructionType.NOP, args=[])
         updatestart = NCSInstruction(NCSInstructionType.NOP, args=[])
         loopend = NCSInstruction(NCSInstructionType.NOP, args=[])
 
+        # Save temp_stack before condition (condition pushes a value, JZ consumes it)
+        initial_temp_stack = block.temp_stack
         condition_type = self.condition.compile(ncs, root, block)
         if condition_type != DynamicDataType.INT:
             msg = (
@@ -2691,19 +2738,11 @@ class ForLoopBlock(Statement):
             )
             raise CompileError(msg)
 
-        # The condition result is on the stack. JZ consumes it, so adjust temp_stack.
-        # The condition's compile method should have added the result to temp_stack,
-        # but we need to ensure it's tracked correctly. If the condition didn't add to
-        # temp_stack (e.g., simple IdentifierExpression), we need to add it.
-        # Then JZ consumes it, so we subtract it.
-        condition_size = condition_type.size(root)
-        # Check if condition added to temp_stack by ensuring it's at least condition_size
-        # If temp_stack is less than condition_size, the condition didn't add it, so add it
-        if block.temp_stack < condition_size:
-            block.temp_stack += condition_size
-        # JZ consumes the condition, so subtract it
-        block.temp_stack -= condition_size
+        # JZ consumes the condition value from stack
         ncs.add(NCSInstructionType.JZ, jump=loopend)
+        # Restore temp_stack since JZ consumed the condition
+        block.temp_stack = initial_temp_stack
+        
         self.block.compile(ncs, root, block, return_instruction, loopend, updatestart)
 
         ncs.instructions.append(updatestart)

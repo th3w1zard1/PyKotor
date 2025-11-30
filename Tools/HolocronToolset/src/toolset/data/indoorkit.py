@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING, NamedTuple
 
 from qtpy.QtGui import QImage
 
-from utility.common.geometry import Vector3
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.generics.utd import read_utd
 from toolset.utils.misc import get_nums
+from utility.common.geometry import Vector3
 from utility.common.more_collections import CaseInsensitiveDict
 
 if TYPE_CHECKING:

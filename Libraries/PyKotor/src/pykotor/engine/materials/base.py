@@ -12,11 +12,15 @@ References:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pykotor.resource.formats.mdl.mdl_data import MDLMesh
 
 if False:  # pragma: no cover - typing imports only
-    from pykotor.resource.formats.mdl.mdl_data import MDLMesh
+    pass
 
 
 class TextureLoader(Protocol):

@@ -12,7 +12,6 @@ from qtpy.QtCore import (
     QEvent,
     Qt,
 )
-from qtpy.QtGui import QMouseEvent
 from qtpy.QtWidgets import QApplication, QFileDialog, QFileSystemModel, QMessageBox, QWidget
 
 from utility.ui_libraries.qt.common.actions_dispatcher import ActionsDispatcher
@@ -23,6 +22,7 @@ from utility.ui_libraries.qt.widgets.widgets.stacked_view import DynamicStackedV
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QAbstractItemModel, QModelIndex, QObject, QPoint
+    from qtpy.QtGui import QMouseEvent
     from qtpy.QtWidgets import QAbstractItemView, QListView, QTreeView
 
 
@@ -68,7 +68,7 @@ class QFileDialogExtended(QFileDialog):
 
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Type.MouseMove:
-            mouse_event = cast(QMouseEvent, event)
+            mouse_event = cast("QMouseEvent", event)
             print("MouseMove event", mouse_event.pos())
             widget = self.childAt(mouse_event.pos())
             if widget:
@@ -107,7 +107,7 @@ class QFileDialogExtended(QFileDialog):
         self.ui.listView.show()
         parent = self.ui.listView.parent()
         assert parent is self.ui.page, f"{type(self).__name__}._q_showListView: parent is not self.ui.page"
-        self.ui.stackedWidget.setCurrentWidget(cast(QWidget, parent))
+        self.ui.stackedWidget.setCurrentWidget(cast("QWidget", parent))
         self.setViewMode(QFileDialog.ViewMode.List)
 
     def _q_showDetailsView(self) -> None:
@@ -124,7 +124,7 @@ class QFileDialogExtended(QFileDialog):
         self.ui.treeView.show()
         parent = self.ui.treeView.parent()
         assert parent is self.ui.page_2, f"{type(self).__name__}._q_showDetailsView: parent is not self.ui.page"
-        self.ui.stackedWidget.setCurrentWidget(cast(QWidget, parent))
+        self.ui.stackedWidget.setCurrentWidget(cast("QWidget", parent))
         self.setViewMode(QFileDialog.ViewMode.Detail)
 
     def override_ui(self):
@@ -140,9 +140,9 @@ class QFileDialogExtended(QFileDialog):
         self.ui.treeView.__class__ = RobustTreeView
         assert isinstance(self.ui.treeView, RobustTreeView)
         RobustTreeView.__init__(self.ui.treeView, self.ui.page_2, should_call_qt_init=False)
-        cast(RobustTreeView, self.ui.treeView).setParent(self.ui.page_2)
-        cast(RobustTreeView, self.ui.treeView).setObjectName("treeView")
-        cast(RobustTreeView, self.ui.treeView).setModel(self.model)
+        cast("RobustTreeView", self.ui.treeView).setParent(self.ui.page_2)
+        cast("RobustTreeView", self.ui.treeView).setObjectName("treeView")
+        cast("RobustTreeView", self.ui.treeView).setModel(self.model)
         self.ui.vboxlayout2.update()
 
         self.ui.listModeButton.clicked.connect(self._q_showListView)

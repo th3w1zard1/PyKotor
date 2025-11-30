@@ -19,8 +19,6 @@ from qtpy.QtCore import (
 )
 from qtpy.QtGui import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
-    QIcon,
-    QKeyEvent,
     QStandardItemModel,
 )
 from qtpy.QtWidgets import (
@@ -46,6 +44,8 @@ if TYPE_CHECKING:
         QAbstractFileIconProvider,
         QDragEnterEvent,
         QFocusEvent,
+        QIcon,
+        QKeyEvent,
         QPixmap,
         _QAction,
     )
@@ -191,7 +191,7 @@ class QUrlModel(QStandardItemModel):
 
             if index.data() != newName:
                 self.setData(index, newName)
-            oldIcon: QIcon = cast(QIcon, index.data(Qt.ItemDataRole.DecorationRole))
+            oldIcon: QIcon = cast("QIcon", index.data(Qt.ItemDataRole.DecorationRole))
             if oldIcon.cacheKey() != newIcon.cacheKey():
                 self.setData(index, newIcon, Qt.ItemDataRole.DecorationRole)
 
@@ -223,7 +223,7 @@ class QUrlModel(QStandardItemModel):
 
             for j in range(self.rowCount()):
                 if move:
-                    local = cast(QUrl, self.index(j, 0).data(self.UrlRole)).toLocalFile()
+                    local = cast("QUrl", self.index(j, 0).data(self.UrlRole)).toLocalFile()
                     if (
                         clean_url.casefold() == local.casefold()
                         if os.name == "nt"
@@ -288,7 +288,7 @@ class QUrlModel(QStandardItemModel):
     def changed(self, path: str):
         for i in range(self.rowCount()):
             idx: QModelIndex = self.index(i, 0)
-            if cast(QUrl, idx.data(self.UrlRole)).toLocalFile() == path:
+            if cast("QUrl", idx.data(self.UrlRole)).toLocalFile() == path:
                 self.setData(idx, idx.data(self.UrlRole))
 
     class WatchItem:  # noqa: D106
@@ -361,7 +361,7 @@ class QSidebar(QListView):
         actions: list[_QAction] = []
         if self.indexAt(position).isValid():
             action = QAction(self.tr("Remove"), self)
-            if cast(QUrl, self.indexAt(position).data(QUrlModel.UrlRole)).path().strip():
+            if cast("QUrl", self.indexAt(position).data(QUrlModel.UrlRole)).path().strip():
                 action.setEnabled(False)
             action.triggered.connect(self.removeEntry)
             actions.append(action)
@@ -378,7 +378,7 @@ class QSidebar(QListView):
         indexes: list[QModelIndex] = sel_model.selectedIndexes()
         persistent_indexes: list[QPersistentModelIndex] = [QPersistentModelIndex(idx) for idx in indexes]
         for persistent in persistent_indexes:
-            if cast(QUrl, persistent.data(QUrlModel.UrlRole)).path().strip():
+            if cast("QUrl", persistent.data(QUrlModel.UrlRole)).path().strip():
                 continue
             sidebar_model.removeRow(persistent.row())
 
@@ -399,7 +399,7 @@ class QSidebar(QListView):
 
     def event(self, event: QEvent) -> bool:
         if event.type() == QEvent.Type.KeyRelease:
-            key_event = cast(QKeyEvent, event)
+            key_event = cast("QKeyEvent", event)
             if key_event.key() == Qt.Key.Key_Delete:
                 self.removeEntry()
                 return True

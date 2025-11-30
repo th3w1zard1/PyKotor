@@ -2,7 +2,9 @@
 """Script to add missing properties dock widget to tpc.ui file."""
 
 import xml.etree.ElementTree as ET
+
 from pathlib import Path
+
 
 def fix_tpc_ui():
     ui_file = Path("Tools/HolocronToolset/src/ui/editors/tpc.ui")

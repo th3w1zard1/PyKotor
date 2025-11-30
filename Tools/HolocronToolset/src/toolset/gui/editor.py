@@ -395,7 +395,6 @@ class Editor(QMainWindow):
             wiki_filename: Name of the markdown file in the wiki directory (e.g., "GFF-File-Format.md").
                           If None, will try to auto-detect from editor class name.
         """
-        from toolset.gui.dialogs.editor_help import EditorHelpDialog
         from toolset.gui.editors.editor_wiki_mapping import EDITOR_WIKI_MAP
         
         # Auto-detect wiki file if not provided

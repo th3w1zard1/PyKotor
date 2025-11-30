@@ -238,7 +238,7 @@ class NestedCapsuleItem(CapsuleItem, CapsuleChildItem):
 
 class ResourceFileSystemTreeView(RobustTreeView):
     def parent(self) -> ResourceFileSystemWidget:
-        return cast(ResourceFileSystemWidget, super().parent())
+        return cast("ResourceFileSystemWidget", super().parent())
 
     def build_context_menu(self) -> _QMenu:
         rootMenu = super().build_context_menu()

@@ -6,14 +6,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PIL import Image
-from qtpy.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPoint, QBuffer, QIODevice  # type: ignore[attr-defined]
+from qtpy.QtCore import QBuffer, QEasingCurve, QIODevice, QPropertyAnimation, Qt  # type: ignore[attr-defined]
 from qtpy.QtGui import (
+    QDrag,
     QIcon,
     QImage,
     QImageReader,
     QPixmap,
-    QWheelEvent,
-    QDrag,
 )
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
@@ -31,6 +30,10 @@ from toolset.gui.editor import Editor
 if TYPE_CHECKING:
     import os
 
+    from qtpy.QtCore import QPoint
+    from qtpy.QtGui import (
+        QWheelEvent,
+    )
     from qtpy.QtWidgets import QWidget
 
     from pykotor.extract.installation import Installation

@@ -2,28 +2,27 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode
+from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression
+from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
-
 
 class AVarRef(ScriptNode, AExpression):
     def __init__(self, var: Variable | VarStruct):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression  # pyright: ignore[reportMissingImports]
         super().__init__()
-        self.var_var(var)
+        self.set_var(var)
 
     def type(self) -> Type:
-        return self.var_var().type()
+        return self.var().type()
 
-    def var_var(self) -> Variable:
+    def var(self) -> Variable:
         return self._var
 
-    def var_var(self, var: Variable | VarStruct):
+    def set_var(self, var: Variable | VarStruct):
         if isinstance(var, VarStruct):
             self._var = var
         else:
@@ -42,9 +41,8 @@ class AVarRef(ScriptNode, AExpression):
     def stackentry(self) -> StackEntry:
         return self._var
 
-    def stackentry(self, stackentry: StackEntry):
-        from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-        self.var_var(stackentry)
+    def set_stackentry(self, stackentry: StackEntry):
+        self.set_var(stackentry)  # type: ignore
 
     def close(self):
         super().close()

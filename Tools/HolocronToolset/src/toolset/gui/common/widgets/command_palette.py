@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtGui import QKeyEvent
 from qtpy.QtWidgets import (
     QAbstractItemView,
     QDialog,
@@ -14,8 +13,13 @@ from qtpy.QtWidgets import (
     QListWidget,
     QListWidgetItem,
     QVBoxLayout,
-    QWidget,
 )
+
+if TYPE_CHECKING:
+    from qtpy.QtGui import QKeyEvent
+    from qtpy.QtWidgets import (
+        QWidget,
+    )
 
 
 class CommandPalette(QDialog):

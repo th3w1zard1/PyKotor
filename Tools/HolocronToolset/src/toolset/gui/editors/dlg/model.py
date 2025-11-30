@@ -24,7 +24,14 @@ from qtpy.QtWidgets import QApplication, QStyle
 
 from pykotor.extract.installation import SearchLocation  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
 from pykotor.resource.generics.dlg import DLGEntry, DLGLink, DLGNode, DLGReply  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
-from toolset.gui.editors.dlg.constants import QT_STANDARD_ITEM_FORMAT, _COPY_ROLE, _DLG_MIME_DATA_ROLE, _DUMMY_ITEM, _LINK_PARENT_NODE_PATH_ROLE, _MODEL_INSTANCE_ID_ROLE  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
+from toolset.gui.editors.dlg.constants import (  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
+    QT_STANDARD_ITEM_FORMAT,
+    _COPY_ROLE,
+    _DLG_MIME_DATA_ROLE,
+    _DUMMY_ITEM,
+    _LINK_PARENT_NODE_PATH_ROLE,
+    _MODEL_INSTANCE_ID_ROLE,
+)
 from toolset.gui.editors.dlg.list_widget_base import DLGListWidgetItem  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
 from utility.ui_libraries.qt.widgets.itemviews.html_delegate import ICONS_DATA_ROLE  # type: ignore[import-untyped]  # pyright: ignore[reportMissingModuleSource]
 
@@ -134,7 +141,7 @@ class DLGStandardItem(QStandardItem):
         self,
         item: QStandardItem | DLGStandardItem,
     ):
-        assert isinstance(item, DLGStandardItem) or cast(QStandardItem, item).data(_DUMMY_ITEM)
+        assert isinstance(item, DLGStandardItem) or cast("QStandardItem", item).data(_DUMMY_ITEM)
         super().appendRow(item)
         model: DLGStandardItemModel | None = self.model()
         if (
@@ -156,7 +163,7 @@ class DLGStandardItem(QStandardItem):
         row: int,
         item: DLGStandardItem,
     ):
-        assert isinstance(item, DLGStandardItem) or cast(QStandardItem, item).data(_DUMMY_ITEM)
+        assert isinstance(item, DLGStandardItem) or cast("QStandardItem", item).data(_DUMMY_ITEM)
         super().insertRow(row, item)
         model: DLGStandardItemModel | None = self.model()
         if (
@@ -190,7 +197,7 @@ class DLGStandardItem(QStandardItem):
                 if not isinstance(item, DLGStandardItem):
                     continue
                 model._remove_link_from_parent(self, item.link)  # noqa: SLF001
-        return cast(List[DLGStandardItem], items)
+        return cast("List[DLGStandardItem]", items)
 
     def removeRows(
         self,
@@ -207,7 +214,7 @@ class DLGStandardItem(QStandardItem):
     ):
         super().setChild(row, *args)
         item: QStandardItem | DLGStandardItem | None = args[1] if len(args) == 3 else args[0]  # noqa: PLR2004
-        assert isinstance(item, DLGStandardItem) or cast(QStandardItem, item).data(_DUMMY_ITEM)
+        assert isinstance(item, DLGStandardItem) or cast("QStandardItem", item).data(_DUMMY_ITEM)
         model: DLGStandardItemModel | None = self.model()
         if (
             model is not None  # noqa: PLR2004
@@ -249,7 +256,7 @@ class DLGStandardItem(QStandardItem):
                 if not isinstance(item, DLGStandardItem):
                     continue
                 model._remove_link_from_parent(self, item.link)  # noqa: SLF001
-        return cast(List[DLGStandardItem], items)
+        return cast("List[DLGStandardItem]", items)
 
     def data(
         self,
@@ -419,7 +426,7 @@ class DLGStandardItemModel(QStandardItemModel):
         row: int,
         column: int = 0,
     ) -> DLGStandardItem:
-        item: DLGStandardItem = cast(DLGStandardItem, super().takeItem(row, column))
+        item: DLGStandardItem = cast("DLGStandardItem", super().takeItem(row, column))
         if not self.ignoring_updates:
             self._remove_link_from_parent(None, item.link)
         return item
@@ -428,7 +435,7 @@ class DLGStandardItemModel(QStandardItemModel):
         self,
         row: int,
     ) -> list[DLGStandardItem]:
-        items: list[DLGStandardItem] = cast(List[DLGStandardItem], super().takeRow(row))
+        items: list[DLGStandardItem] = cast("List[DLGStandardItem]", super().takeRow(row))
         if not items:
             return items
         if self.ignoring_updates:

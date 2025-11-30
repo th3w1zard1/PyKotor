@@ -2,17 +2,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.node.p_subroutine import PSubroutine  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_subroutine import PSubroutine  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_command_block import PCommandBlock  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_return import PReturn  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
-
 
 class ASubroutine(PSubroutine):
     def __init__(self):
-        from pykotor.resource.formats.ncs.dencs.node.p_subroutine import PSubroutine  # pyright: ignore[reportMissingImports]
         super().__init__()
         self._command_block: PCommandBlock | None = None
         self._return: PReturn | None = None

@@ -260,16 +260,31 @@ def test_erf_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     loaded_erf = read_erf(data)
     assert loaded_erf is not None
 
-def test_erf_editor(qtbot, installation: HTInstallation, test_files_dir):
-    """Test ERF Editor."""
+
+def test_erfeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that ERFEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
     editor = ERFEditor(None, installation)
     qtbot.addWidget(editor)
-    editor.show()
     
-    assert editor.isVisible()
+    # Trigger help dialog with the correct file for ERFEditor
+    editor._show_help_dialog("ERF-File-Format.md")
+    qtbot.wait(200)  # Wait for dialog to be created
     
-    # Load ERF if available
-    erf_file = test_files_dir / "001EBO_dlg.erf"
-    if erf_file.exists():
-        editor.load(erf_file, "001EBO_dlg", ResourceType.ERF, erf_file.read_bytes())
-        assert editor.ui.tableWidget.rowCount() > 0
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+    
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'ERF-File-Format.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"

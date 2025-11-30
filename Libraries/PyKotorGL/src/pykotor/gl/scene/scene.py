@@ -30,6 +30,20 @@ SEARCH_ORDER: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CH
 
 
 class Scene(SceneBase):
+    """Optimized scene renderer with caching and batched operations.
+    
+    Performance optimizations:
+    - Cached object categorization (avoids list comprehensions every frame)
+    - Cached view/projection matrices (set once per frame, not per object)
+    - Cached bounding spheres for frustum culling
+    - Incremental cache building (only rebuilds when dirty)
+    - Lazy cursor position calculation
+    
+    Reference implementations:
+    - reone: src/graphics/renderpipeline.cpp
+    - kotor.js: src/engine/renderer.ts
+    """
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.picker_shader: Shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
@@ -42,41 +56,129 @@ class Scene(SceneBase):
         self.enable_frustum_culling: bool = True
         # Default bounding sphere radius for objects without computed bounds
         self.default_cull_radius: float = 5.0
+        
+        # Cached object lists for render batching (rebuilt when objects change)
+        self._cached_regular_objects: list[RenderObject] | None = None
+        self._cached_special_objects: list[RenderObject] | None = None
+        self._cached_sound_objects: list[RenderObject] | None = None
+        self._cached_encounter_objects: list[RenderObject] | None = None
+        self._cached_trigger_objects: list[RenderObject] | None = None
+        self._objects_dirty: bool = True
+        self._last_objects_count: int = 0
+        
+        # Cached camera matrices (set once per frame, used by multiple shaders)
+        self._cached_view: mat4 | None = None
+        self._cached_projection: mat4 | None = None
+    
+    def _invalidate_object_cache(self):
+        """Mark object caches as dirty. Call when objects are added/removed."""
+        self._objects_dirty = True
+        self._cached_regular_objects = None
+        self._cached_special_objects = None
+        self._cached_sound_objects = None
+        self._cached_encounter_objects = None
+        self._cached_trigger_objects = None
+    
+    def _rebuild_object_caches(self):
+        """Rebuild cached object lists for efficient iteration."""
+        if not self._objects_dirty and len(self.objects) == self._last_objects_count:
+            return
+        
+        special_models = frozenset(self.SPECIAL_MODELS)
+        
+        regular = []
+        special = []
+        sounds = []
+        encounters = []
+        triggers = []
+        
+        for obj in self.objects.values():
+            model = obj.model
+            if model in special_models:
+                special.append(obj)
+                if model == "sound":
+                    sounds.append(obj)
+                elif model == "encounter":
+                    encounters.append(obj)
+                elif model == "trigger":
+                    triggers.append(obj)
+            else:
+                regular.append(obj)
+        
+        self._cached_regular_objects = regular
+        self._cached_special_objects = special
+        self._cached_sound_objects = sounds
+        self._cached_encounter_objects = encounters
+        self._cached_trigger_objects = triggers
+        self._objects_dirty = False
+        self._last_objects_count = len(self.objects)
+    
+    def _update_camera_matrices(self):
+        """Update cached camera matrices.
+        
+        Camera.view() and Camera.projection() already have internal caching
+        that only recomputes when dirty. We just store the results for use
+        in multiple shaders per frame.
+        """
+        # Camera has internal dirty tracking, so these calls are cheap when unchanged
+        self._cached_view = self.camera.view()
+        self._cached_projection = self.camera.projection()
 
     def render(self):
         # Poll for completed async resources (non-blocking) - MAIN PROCESS ONLY
         self.poll_async_resources()
         
+        # ALWAYS build cache - it updates object positions for existing objects!
+        # SceneCache.build_cache updates positions (set_position/set_rotation) 
+        # even for objects already in scene.objects. Skipping this causes:
+        # 1. Objects not moving when dragged
+        # 2. Camera snapping not working until rotation
         SceneCache.build_cache(self)
+        
+        # Rebuild object lists if objects changed (cheap check)
+        if self._objects_dirty or len(self.objects) != self._last_objects_count:
+            self._rebuild_object_caches()
+        
+        # Update camera matrices once per frame
+        self._update_camera_matrices()
         
         # Update frustum for culling
         if self.enable_frustum_culling:
             self.frustum.update_from_camera(self.camera)
+        
+        if self.enable_frustum_culling:
             self.culling_stats.reset()
 
-        self._prepare_gl_and_shader()
+        # Prepare GL state and main shader
+        self._prepare_gl_and_shader_optimized()
         self.shader.set_bool("enableLightmap", self.use_lightmap)
-        group1: list[RenderObject] = [obj for obj in self.objects.values() if obj.model not in self.SPECIAL_MODELS]
-        for obj in group1:
+        
+        # Render regular objects (models)
+        assert self._cached_regular_objects is not None
+        identity = mat4()  # Create once, reuse
+        for obj in self._cached_regular_objects:
             if self.enable_frustum_culling and not self._is_object_visible(obj):
                 self.culling_stats.record_object(visible=False)
                 continue
             self.culling_stats.record_object(visible=True)
-            self._render_object(self.shader, obj, mat4())
+            self._render_object(self.shader, obj, identity)
 
-        # Draw all instance types that lack a proper model
+        # Setup plain shader for special objects (once)
         glEnable(GL_BLEND)
         self.plain_shader.use()
-        self.plain_shader.set_matrix4("view", self.camera.view())
-        self.plain_shader.set_matrix4("projection", self.camera.projection())
+        assert self._cached_view is not None and self._cached_projection is not None
+        self.plain_shader.set_matrix4("view", self._cached_view)
+        self.plain_shader.set_matrix4("projection", self._cached_projection)
         self.plain_shader.set_vector4("color", vec4(0.0, 0.0, 1.0, 0.4))
-        group2: list[RenderObject] = [obj for obj in self.objects.values() if obj.model in self.SPECIAL_MODELS]
-        for obj in group2:
+        
+        # Render special objects (icons)
+        assert self._cached_special_objects is not None
+        for obj in self._cached_special_objects:
             if self.enable_frustum_culling and not self._is_object_visible(obj):
                 self.culling_stats.record_object(visible=False)
                 continue
             self.culling_stats.record_object(visible=True)
-            self._render_object(self.plain_shader, obj, mat4())
+            self._render_object(self.plain_shader, obj, identity)
 
         # Draw bounding box for selected objects
         self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
@@ -89,29 +191,53 @@ class Scene(SceneBase):
         for obj in self.selection:
             obj.boundary(self).draw(self.plain_shader, obj.transform())
 
-        # Draw non-selected boundaries (only if visible)
-        for obj in (obj for obj in self.objects.values() if obj.model == "sound" and not self.hide_sound_boundaries):
-            if not self.enable_frustum_culling or self._is_object_visible(obj):
-                obj.boundary(self).draw(self.plain_shader, obj.transform())
-        for obj in (obj for obj in self.objects.values() if obj.model == "encounter" and not self.hide_encounter_boundaries):
-            if not self.enable_frustum_culling or self._is_object_visible(obj):
-                obj.boundary(self).draw(self.plain_shader, obj.transform())
-        for obj in (obj for obj in self.objects.values() if obj.model == "trigger" and not self.hide_trigger_boundaries):
-            if not self.enable_frustum_culling or self._is_object_visible(obj):
-                obj.boundary(self).draw(self.plain_shader, obj.transform())
+        # Draw non-selected boundaries (only if visible and enabled)
+        if not self.hide_sound_boundaries:
+            assert self._cached_sound_objects is not None
+            for obj in self._cached_sound_objects:
+                if not self.enable_frustum_culling or self._is_object_visible(obj):
+                    obj.boundary(self).draw(self.plain_shader, obj.transform())
+        
+        if not self.hide_encounter_boundaries:
+            assert self._cached_encounter_objects is not None
+            for obj in self._cached_encounter_objects:
+                if not self.enable_frustum_culling or self._is_object_visible(obj):
+                    obj.boundary(self).draw(self.plain_shader, obj.transform())
+        
+        if not self.hide_trigger_boundaries:
+            assert self._cached_trigger_objects is not None
+            for obj in self._cached_trigger_objects:
+                if not self.enable_frustum_culling or self._is_object_visible(obj):
+                    obj.boundary(self).draw(self.plain_shader, obj.transform())
 
         if self.show_cursor:
             self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
-            self._render_object(self.plain_shader, self.cursor, mat4())
+            self._render_object(self.plain_shader, self.cursor, identity)
         
         # End frame statistics
         if self.enable_frustum_culling:
             self.culling_stats.end_frame()
     
+    def _prepare_gl_and_shader_optimized(self):
+        """Optimized GL state preparation using cached matrices."""
+        glClearColor(0.5, 0.5, 1, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  # type: ignore[]
+        if self.backface_culling:
+            glEnable(GL_CULL_FACE)
+        else:
+            glDisable(GL_CULL_FACE)
+        glDisable(GL_BLEND)
+        self.shader.use()
+        
+        # Use cached matrices instead of recalculating
+        assert self._cached_view is not None and self._cached_projection is not None
+        self.shader.set_matrix4("view", self._cached_view)
+        self.shader.set_matrix4("projection", self._cached_projection)
+    
     def _is_object_visible(self, obj: RenderObject) -> bool:
         """Check if an object is visible within the frustum.
         
-        Uses bounding sphere test for efficiency.
+        Uses cached bounding sphere from RenderObject for efficiency.
         
         Args:
             obj: The render object to test.
@@ -119,31 +245,8 @@ class Scene(SceneBase):
         Returns:
             True if the object should be rendered.
         """
-        # Get object position
-        pos = obj.position()
-        center = vec3(pos.x, pos.y, pos.z)
-        
-        # Calculate bounding radius from the model's bounding box if available
-        try:
-            cube = obj.cube(self)
-            # Use the diagonal of the bounding box as radius
-            min_pt = cube.min_point
-            max_pt = cube.max_point
-            dx = max_pt.x - min_pt.x
-            dy = max_pt.y - min_pt.y
-            dz = max_pt.z - min_pt.z
-            import math
-            radius = math.sqrt(dx * dx + dy * dy + dz * dz) / 2.0
-            # Offset center to account for bounding box center
-            center = vec3(
-                pos.x + (min_pt.x + max_pt.x) / 2.0,
-                pos.y + (min_pt.y + max_pt.y) / 2.0,
-                pos.z + (min_pt.z + max_pt.z) / 2.0,
-            )
-        except Exception:  # noqa: BLE001
-            # Fall back to default radius
-            radius = self.default_cull_radius
-        
+        # Use cached bounding sphere from RenderObject
+        center, radius = obj.bounding_sphere(self, self.default_cull_radius)
         return self.frustum.sphere_in_frustum(center, radius)
 
     def should_hide_obj(
@@ -188,27 +291,38 @@ class Scene(SceneBase):
             self._render_object(shader, child, transform)
 
     def picker_render(self):
-        glClearColor(1.0, 1.0, 1.0, 1.0)  # Sets the clear color for the OpenGL color buffer to pure white
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  # Clears the color and depth buffers. Clean slate for rendering.  # pyright: ignore[reportOperatorIssue]
+        """Render scene for object picking with unique colors per object.
+        
+        Optimized to use cached matrices and enumerate for O(1) index access.
+        """
+        glClearColor(1.0, 1.0, 1.0, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  # pyright: ignore[reportOperatorIssue]
 
         if self.backface_culling:
-            glEnable(GL_CULL_FACE)  # Enables backface culling to improve rendering performance by ignoring back faces of polygons.
+            glEnable(GL_CULL_FACE)
         else:
-            glDisable(GL_CULL_FACE)  # Disables backface culling.
+            glDisable(GL_CULL_FACE)
 
-        self.picker_shader.use()  # Activates the shader program for rendering.
-        self.picker_shader.set_matrix4("view", self.camera.view())  # Sets the view matrix for the shader.
-        self.picker_shader.set_matrix4("projection", self.camera.projection())  # Sets the projection matrix for the shader.
+        self.picker_shader.use()
+        
+        # Use cached matrices if available, otherwise compute
+        if self._cached_view is not None and self._cached_projection is not None:
+            self.picker_shader.set_matrix4("view", self._cached_view)
+            self.picker_shader.set_matrix4("projection", self._cached_projection)
+        else:
+            self.picker_shader.set_matrix4("view", self.camera.view())
+            self.picker_shader.set_matrix4("projection", self.camera.projection())
+        
+        # Use enumerate instead of list.index() which is O(n) per call
+        identity = mat4()
         instances: list[RenderObject] = list(self.objects.values())
-        for obj in instances:
-            int_rgb: int = instances.index(obj)  # Gets the index of the object in the list and converts it to an integer.
-            r: int = int_rgb & 0xFF
-            g: int = (int_rgb >> 8) & 0xFF
-            b: int = (int_rgb >> 16) & 0xFF
+        for idx, obj in enumerate(instances):
+            r: int = idx & 0xFF
+            g: int = (idx >> 8) & 0xFF
+            b: int = (idx >> 16) & 0xFF
             color = vec3(r / 0xFF, g / 0xFF, b / 0xFF)
             self.picker_shader.set_vector3("colorId", color)
-
-            self._picker_render_object(obj, mat4())
+            self._picker_render_object(obj, identity)
 
     def _picker_render_object(self, obj: RenderObject, transform: mat4):
         if self.should_hide_obj(obj):
@@ -239,27 +353,56 @@ class Scene(SceneBase):
             self.selection.clear()
 
         SceneCache.build_cache(self)
-        actual_target: RenderObject
+        actual_target: RenderObject | None = None
         if isinstance(target, GITInstance):
             for obj in self.objects.values():
-                if obj.data is not target:
-                    continue
-                actual_target = obj
-                break
+                if obj.data is target:
+                    actual_target = obj
+                    break
         else:
             actual_target = target
 
-        self.selection.append(actual_target)
+        if actual_target is not None:
+            self.selection.append(actual_target)
 
     def screen_to_world(
         self,
         x: int,
         y: int,
     ) -> Vector3:
-        self._prepare_gl_and_shader()
-        group1: list[RenderObject] = [obj for obj in self.objects.values() if isinstance(obj.data, LYTRoom)]
-        for obj in group1:
-            self._render_object(self.shader, obj, mat4())
+        """Convert screen coordinates to world coordinates.
+        
+        Optimized to:
+        - Use cached room objects list
+        - Use cached view/projection matrices
+        - Minimize GL state changes
+        """
+        # Prepare GL state efficiently
+        glClearColor(0.5, 0.5, 1, 1.0)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  # type: ignore[]
+        if self.backface_culling:
+            glEnable(GL_CULL_FACE)
+        else:
+            glDisable(GL_CULL_FACE)
+        glDisable(GL_BLEND)
+        self.shader.use()
+        
+        # Use cached matrices if available
+        if self._cached_view is not None and self._cached_projection is not None:
+            view = self._cached_view
+            projection = self._cached_projection
+        else:
+            view = self.camera.view()
+            projection = self.camera.projection()
+        
+        self.shader.set_matrix4("view", view)
+        self.shader.set_matrix4("projection", projection)
+        
+        # Only render room geometry for depth calculation
+        identity = mat4()
+        for obj in self.objects.values():
+            if isinstance(obj.data, LYTRoom):
+                self._render_object(self.shader, obj, identity)
 
         zpos = glReadPixels(
             x,
@@ -269,15 +412,17 @@ class Scene(SceneBase):
             GL_DEPTH_COMPONENT,
             GL_FLOAT,
         )[0][0]  # type: ignore[]
+        
         cursor: vec3 = glm.unProject(
             vec3(x, self.camera.height - y, zpos),
-            self.camera.view(),
-            self.camera.projection(),
+            view,
+            projection,
             vec4(0, 0, self.camera.width, self.camera.height),
         )
         return Vector3(cursor.x, cursor.y, cursor.z)
 
     def _prepare_gl_and_shader(self):
+        """Legacy method for backward compatibility."""
         glClearColor(0.5, 0.5, 1, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  # type: ignore[]
         if self.backface_culling:

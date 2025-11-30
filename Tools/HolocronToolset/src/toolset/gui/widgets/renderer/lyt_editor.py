@@ -47,7 +47,6 @@ from qtpy.QtWidgets import (
 
 from pykotor.resource.formats.bwm import BWM, BWMFace
 from pykotor.resource.formats.lyt import LYT, LYTDoorHook, LYTObstacle, LYTRoom, LYTTrack
-from toolset.gui.widgets.renderer.module import ModuleRenderer
 from toolset.gui.widgets.renderer.texture_browser import TextureBrowser
 from toolset.uic.qtpy.editors.lyt import Ui_LYTEditor
 from utility.common.geometry import Vector2, Vector3, Vector4
@@ -63,6 +62,7 @@ if TYPE_CHECKING:
     from pykotor.gl.scene import Boundary, Camera, RenderObject, Scene
     from pykotor.gl.shader import Texture
     from pykotor.resource.formats.tpc import TPC
+    from toolset.gui.widgets.renderer.module import ModuleRenderer
 
 
 class LYTEditor(QWidget):
@@ -238,7 +238,7 @@ class LYTEditor(QWidget):
         self.texture_browser.sig_texture_selected.connect(self.on_texture_selected)
 
         # Connect parent signals
-        parent: ModuleRenderer = cast(ModuleRenderer, self.parent())
+        parent: ModuleRenderer = cast("ModuleRenderer", self.parent())
         parent.sig_scene_initialized.connect(self.update)
 
     def get_lyt(self) -> LYT:

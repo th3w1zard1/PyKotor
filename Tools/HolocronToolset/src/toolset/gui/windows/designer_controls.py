@@ -11,7 +11,7 @@ from qtpy import QtCore
 from qtpy.QtCore import QPoint, Qt
 
 from pykotor.gl.scene import Scene
-from pykotor.gl.scene.camera_controller import CameraController, CameraControllerSettings, CameraMode, InputState
+from pykotor.gl.scene.camera_controller import CameraController, CameraControllerSettings, InputState
 from pykotor.resource.generics.git import GITCamera, GITCreature, GITDoor, GITInstance, GITPlaceable, GITStore, GITWaypoint
 from toolset.data.misc import ControlItem
 from toolset.gui.editors.git import DuplicateCommand, _GeometryMode, _InstanceMode, calculate_zoom_strength

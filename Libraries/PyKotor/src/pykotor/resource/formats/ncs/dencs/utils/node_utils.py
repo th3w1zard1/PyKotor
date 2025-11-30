@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
-
+    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
 
 class NodeUtils:
     CMDSIZE_JUMP = 6
@@ -16,7 +16,6 @@ class NodeUtils:
     @staticmethod
     def is_store_stack_node(node: Node) -> bool:
         from pykotor.resource.formats.ncs.dencs.node.a_logii_cmd import ALogiiCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_or_logii_op import AOrLogiiOp  # pyright: ignore[reportMissingImports]
         if isinstance(node, ALogiiCmd):
             lnode: ALogiiCommand = node.get_logii_command()
@@ -38,25 +37,25 @@ class NodeUtils:
 
     @staticmethod
     def is_command_node(node: Node) -> bool:
+        from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_bp_command import ABpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_conditional_jump_command import AConditionalJumpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_sp_command import ACopyDownSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_to_subroutine import AJumpToSubroutine  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_sp_command import ACopyDownSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_rsadd_command import ARsaddCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_rsadd_command import ARsaddCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_bp_command import ABpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_store_state_command import AStoreStateCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
         return isinstance(node, (AConditionalJumpCommand, AJumpCommand, AJumpToSubroutine, AReturn,
                                 ACopyDownSpCommand, ACopyTopSpCommand, ACopyDownBpCommand, ACopyTopBpCommand,
                                 AMoveSpCommand, ARsaddCommand, AConstCommand, AActionCommand, ALogiiCommand,
@@ -65,25 +64,25 @@ class NodeUtils:
 
     @staticmethod
     def get_command_pos(node: Node) -> int:
+        from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_bp_command import ABpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_conditional_jump_command import AConditionalJumpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_sp_command import ACopyDownSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_to_subroutine import AJumpToSubroutine  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_sp_command import ACopyDownSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_rsadd_command import ARsaddCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_rsadd_command import ARsaddCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_bp_command import ABpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_store_state_command import AStoreStateCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
         if isinstance(node, AConditionalJumpCommand):
             return int(node.get_pos().get_text())
         if isinstance(node, AJumpCommand):
@@ -151,11 +150,11 @@ class NodeUtils:
     def is_conditional_op(node) -> bool:
         from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_equal_binary_op import AEqualBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_nequal_binary_op import ANequalBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_lt_binary_op import ALtBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_leq_binary_op import ALeqBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_gt_binary_op import AGtBinaryOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_geq_binary_op import AGeqBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_gt_binary_op import AGtBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_leq_binary_op import ALeqBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_lt_binary_op import ALtBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_nequal_binary_op import ANequalBinaryOp  # pyright: ignore[reportMissingImports]
         if not isinstance(node, ABinaryCommand):
             return False
         op = node.get_binary_op()
@@ -163,14 +162,14 @@ class NodeUtils:
 
     @staticmethod
     def is_arithmetic_op(node) -> bool:
-        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_add_binary_op import AAddBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_sub_binary_op import ASubBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_div_binary_op import ADivBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_mul_binary_op import AMulBinaryOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_mod_binary_op import AModBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_mul_binary_op import AMulBinaryOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_shleft_binary_op import AShleftBinaryOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_shright_binary_op import AShrightBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_sub_binary_op import ASubBinaryOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_unright_binary_op import AUnrightBinaryOp  # pyright: ignore[reportMissingImports]
         if not isinstance(node, ABinaryCommand):
             return False
@@ -180,11 +179,11 @@ class NodeUtils:
 
     @staticmethod
     def is_vector_allowed_op(node) -> bool:
-        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_add_binary_op import AAddBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_sub_binary_op import ASubBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_div_binary_op import ADivBinaryOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_mul_binary_op import AMulBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_sub_binary_op import ASubBinaryOp  # pyright: ignore[reportMissingImports]
         if not isinstance(node, ABinaryCommand):
             return False
         op = node.get_binary_op()
@@ -192,36 +191,36 @@ class NodeUtils:
 
     @staticmethod
     def get_op(node) -> str:
-        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_neg_unary_op import ANegUnaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_comp_unary_op import ACompUnaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_not_unary_op import ANotUnaryOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_add_binary_op import AAddBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_sub_binary_op import ASubBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_and_logii_op import AAndLogiiOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_bit_and_logii_op import ABitAndLogiiOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_comp_unary_op import ACompUnaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_decibp_stack_op import ADecibpStackOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_decisp_stack_op import ADecispStackOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_div_binary_op import ADivBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_mul_binary_op import AMulBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_equal_binary_op import AEqualBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_excl_or_logii_op import AExclOrLogiiOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_geq_binary_op import AGeqBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_gt_binary_op import AGtBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_incibp_stack_op import AIncibpStackOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_incisp_stack_op import AIncispStackOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_incl_or_logii_op import AInclOrLogiiOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_leq_binary_op import ALeqBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_lt_binary_op import ALtBinaryOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_mod_binary_op import AModBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_mul_binary_op import AMulBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_neg_unary_op import ANegUnaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_nequal_binary_op import ANequalBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_not_unary_op import ANotUnaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_or_logii_op import AOrLogiiOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_shleft_binary_op import AShleftBinaryOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_shright_binary_op import AShrightBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_sub_binary_op import ASubBinaryOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_unright_binary_op import AUnrightBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_equal_binary_op import AEqualBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_nequal_binary_op import ANequalBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_lt_binary_op import ALtBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_leq_binary_op import ALeqBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_gt_binary_op import AGtBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_geq_binary_op import AGeqBinaryOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_and_logii_op import AAndLogiiOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_or_logii_op import AOrLogiiOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_incl_or_logii_op import AInclOrLogiiOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_excl_or_logii_op import AExclOrLogiiOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_bit_and_logii_op import ABitAndLogiiOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_decisp_stack_op import ADecispStackOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_decibp_stack_op import ADecibpStackOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_incisp_stack_op import AIncispStackOp  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_incibp_stack_op import AIncibpStackOp  # pyright: ignore[reportMissingImports]
         if isinstance(node, AUnaryCommand):
             op = node.get_unary_op()
             if isinstance(op, ANegUnaryOp):
@@ -286,9 +285,9 @@ class NodeUtils:
 
     @staticmethod
     def is_global_stack_op(node) -> bool:
-        from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_incibp_stack_op import AIncibpStackOp  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_decibp_stack_op import ADecibpStackOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_incibp_stack_op import AIncibpStackOp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
         if not isinstance(node, AStackCommand):
             return False
         op = node.get_stack_op()
@@ -318,21 +317,25 @@ class NodeUtils:
     @staticmethod
     def get_const_value(node):
         from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_int_constant import AIntConstant  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_float_constant import AFloatConstant  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_int_constant import AIntConstant  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_string_constant import AStringConstant  # pyright: ignore[reportMissingImports]
         if not isinstance(node, AConstCommand):
             return None
         pconst = node.get_constant()
         type_val = NodeUtils.get_type(node)
         if type_val.byte_value() == 3:
-            return int(AIntConstant(pconst).get_integer_constant().get_text())
+            if isinstance(pconst, AIntConstant):
+                return int(pconst.get_integer_constant().get_text())
         if type_val.byte_value() == 4:
-            return float(AFloatConstant(pconst).get_float_constant().get_text())
+            if isinstance(pconst, AFloatConstant):
+                return float(pconst.get_float_constant().get_text())
         if type_val.byte_value() == 5:
-            return AStringConstant(pconst).get_string_literal().get_text()
+            if isinstance(pconst, AStringConstant):
+                return pconst.get_string_literal().get_text()
         if type_val.byte_value() == 6:
-            return int(AIntConstant(pconst).get_integer_constant().get_text())
+            if isinstance(pconst, AIntConstant):
+                return int(pconst.get_integer_constant().get_text())
         raise RuntimeError("Invalid const type " + str(type_val))
 
     @staticmethod
@@ -384,28 +387,28 @@ class NodeUtils:
     def get_command_child(node: Node) -> Node:
         if NodeUtils.is_command_node(node):
             return node
-        from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_command_block import ACommandBlock  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_add_var_cmd import AAddVarCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_action_cmd import AActionCmd  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_action_jump_cmd import AActionJumpCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_const_cmd import AConstCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copydownsp_cmd import ACopydownspCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copytopsp_cmd import ACopytopspCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copydownbp_cmd import ACopydownbpCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copytopbp_cmd import ACopytopbpCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_add_var_cmd import AAddVarCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_binary_cmd import ABinaryCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_bp_cmd import ABpCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_command_block import ACommandBlock  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_cond_jump_cmd import ACondJumpCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_const_cmd import AConstCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copydownbp_cmd import ACopydownbpCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copydownsp_cmd import ACopydownspCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copytopbp_cmd import ACopytopbpCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copytopsp_cmd import ACopytopspCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_destruct_cmd import ADestructCmd  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_cmd import AJumpCmd  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_sub_cmd import AJumpSubCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_movesp_cmd import AMovespCmd  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_logii_cmd import ALogiiCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_unary_cmd import AUnaryCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_binary_cmd import ABinaryCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_destruct_cmd import ADestructCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_bp_cmd import ABpCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_action_cmd import AActionCmd  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_stack_op_cmd import AStackOpCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_movesp_cmd import AMovespCmd  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_return_cmd import AReturnCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_stack_op_cmd import AStackOpCmd  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_store_state_cmd import AStoreStateCmd  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_unary_cmd import AUnaryCmd  # pyright: ignore[reportMissingImports]
         if isinstance(node, ASubroutine):
             return NodeUtils.get_command_child(node.get_command_block())
         if isinstance(node, ACommandBlock):
@@ -456,9 +459,8 @@ class NodeUtils:
 
     @staticmethod
     def get_previous_command(node: Node, nodedata: NodeAnalysisData) -> Node | None:
-        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_command_block import ACommandBlock  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
         if isinstance(node, AReturn):
             ablock: ACommandBlock = node.parent().get_command_block()
             cmds = ablock.get_cmd()
@@ -497,31 +499,31 @@ class NodeUtils:
 
     @staticmethod
     def is_return(node: Node) -> bool:
-        from pykotor.resource.formats.ncs.dencs.node.a_return_cmd import AReturnCmd  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_return_cmd import AReturnCmd  # pyright: ignore[reportMissingImports]
         return isinstance(node, (AReturnCmd, AReturn))
 
     @staticmethod
     def get_type(node: Node) -> Type:
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_bp_command import ABpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_conditional_jump_command import AConditionalJumpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_sp_command import ACopyDownSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_jump_to_subroutine import AJumpToSubroutine  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_sp_command import ACopyDownSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_sp_command import ACopyTopSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_rsadd_command import ARsaddCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_const_command import AConstCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_logii_command import ALogiiCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_move_sp_command import AMoveSpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_return import AReturn  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_rsadd_command import ARsaddCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_stack_command import AStackCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_destruct_command import ADestructCommand  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.node.a_bp_command import ABpCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.node.a_unary_command import AUnaryCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         if isinstance(node, AConditionalJumpCommand):
             return Type(int(node.get_type().get_text()))
         if isinstance(node, AJumpCommand):
@@ -562,9 +564,9 @@ class NodeUtils:
 
     @staticmethod
     def get_return_type(node: Node, actions: ActionsData = None) -> Type:
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_action_command import AActionCommand  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.node.a_binary_command import ABinaryCommand  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         if isinstance(node, AActionCommand):
             return actions.get_return_type(NodeUtils.get_action_id(node))
         if isinstance(node, ABinaryCommand):

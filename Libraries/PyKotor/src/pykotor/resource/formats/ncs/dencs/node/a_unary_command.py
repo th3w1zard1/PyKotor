@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.node.p_unary_command import PUnaryCommand  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.p_unary_command import PUnaryCommand  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_unary_op import PUnaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_integer_constant import TIntegerConstant  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_semi import TSemi  # pyright: ignore[reportMissingImports]
 
-
 class AUnaryCommand(PUnaryCommand):
     def __init__(self, unary_op: PUnaryOp | None = None, pos: TIntegerConstant | None = None, type_val: TIntegerConstant | None = None, semi: TSemi | None = None):
-        from pykotor.resource.formats.ncs.dencs.node.p_unary_command import PUnaryCommand  # pyright: ignore[reportMissingImports]
         super().__init__()
         
         self._unary_op_: PUnaryOp | None = None

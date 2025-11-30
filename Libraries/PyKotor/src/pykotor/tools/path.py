@@ -253,7 +253,7 @@ if _fuse_available:
 
         def link(self, target: str, name: str) -> None:
             """Create hard link."""
-            return os.link(self._full_path(name), self._full_path(target))  # noqa: PTH200
+            return os.link(self._full_path(name), self._full_path(target))
 
         def utimens(self, path: str, times: tuple[float, float] | None = None) -> None:
             """Update file access and modification times."""

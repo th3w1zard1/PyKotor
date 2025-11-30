@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import re
+
 from pathlib import Path
+
 
 def find_strings_in_file(file_path: Path) -> list[tuple[int, str]]:
     """Find hardcoded English strings in a Python file."""

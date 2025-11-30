@@ -1,9 +1,16 @@
 from __future__ import annotations
 
-from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout, QWidget
+from typing import TYPE_CHECKING
 
-from holopazaak.data.opponents import OPPONENTS, OpponentProfile
+from qtpy.QtCore import Qt
+from qtpy.QtWidgets import QDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QPushButton, QVBoxLayout
+
+from holopazaak.data.opponents import OPPONENTS
+
+if TYPE_CHECKING:
+    from qtpy.QtWidgets import QWidget
+
+    from holopazaak.data.opponents import OpponentProfile
 
 
 class OpponentSelectionDialog(QDialog):

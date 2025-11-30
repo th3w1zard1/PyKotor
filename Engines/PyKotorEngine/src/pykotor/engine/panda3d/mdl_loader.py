@@ -14,6 +14,7 @@ References:
 from __future__ import annotations
 
 import sys
+
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -32,15 +33,13 @@ from panda3d.core import (
     GeomVertexWriter,
     InternalName,
     NodePath,
-    Vec3,
 )
-
 from pykotor.resource.formats.mdl import read_mdl
 from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.mdl.mdl_data import MDL, MDLNode, MDLMesh, MDLFace
-from pykotor.engine.materials.base import IMaterialManager
+    from pykotor.engine.materials.base import IMaterialManager
+    from pykotor.resource.formats.mdl.mdl_data import MDL, MDLMesh, MDLNode
 
 
 class MDLLoader:
@@ -358,7 +357,7 @@ class MDLLoader:
             Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1449-1578
             vendor/mdlops/MDLOpsM.pm:5470-5596 - Tangent space calculation
         """
-        from pykotor.resource.formats.mdl.io_mdl import _calculate_tangent_space, _calculate_face_normal
+        from pykotor.resource.formats.mdl.io_mdl import _calculate_face_normal, _calculate_tangent_space
         
         vertex_tangents: dict[int, list[Vector3]] = {}
         vertex_binormals: dict[int, list[Vector3]] = {}

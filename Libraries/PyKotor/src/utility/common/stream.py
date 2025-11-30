@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, cast
 from loggerplus import RobustLogger
 
 from pykotor.common.language import LocalizedString
+
 # decode_bytes_with_fallbacks is imported lazily in the function that uses it to avoid circular imports
 from utility.common.geometry import Vector2, Vector3, Vector4
 
@@ -939,7 +940,7 @@ class RawBinaryWriter(ABC):
         if not isinstance(stream, (io.BufferedIOBase, io.RawIOBase)):
             msg = "Stream must be a buffered or raw binary IO object."
             raise TypeError(msg)
-        validated_stream = cast(io.BufferedIOBase | io.RawIOBase, stream)
+        validated_stream = cast("io.BufferedIOBase | io.RawIOBase", stream)
         return RawBinaryWriterFile(validated_stream, offset)
 
     @classmethod

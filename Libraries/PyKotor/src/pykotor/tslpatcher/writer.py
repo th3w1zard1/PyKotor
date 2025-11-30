@@ -23,7 +23,6 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any, Callable, Iterable
 
-from utility.common.geometry import Vector3, Vector4
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import ResRef
 from pykotor.extract.capsule import Capsule
@@ -71,6 +70,7 @@ from pykotor.tslpatcher.mods.twoda import (  # noqa: PLC0415
     Target,
     TargetType,
 )
+from utility.common.geometry import Vector3, Vector4
 from utility.common.more_collections import CaseInsensitiveDict
 
 if TYPE_CHECKING:

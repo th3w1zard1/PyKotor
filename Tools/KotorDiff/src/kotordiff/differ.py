@@ -9,17 +9,15 @@ from __future__ import annotations
 
 import difflib
 import hashlib
+
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from pykotor.extract.capsule import Capsule
 from pykotor.resource.formats import gff, lip, ssf, tlk, twoda
-from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_capsule_file
-from pykotor.tools.path import CaseAwarePath
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
 
     from pykotor.extract.file import FileResource
 

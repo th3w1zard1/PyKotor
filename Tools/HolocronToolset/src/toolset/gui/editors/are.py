@@ -11,7 +11,6 @@ from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.formats.gff import read_gff, write_gff
 from pykotor.resource.formats.lyt import read_lyt
-from pykotor.resource.formats.tpc import TPC
 from pykotor.resource.generics.are import ARE, ARENorthAxis, AREWindPower, dismantle_are, read_are
 from pykotor.resource.type import ResourceType
 from toolset.data.installation import HTInstallation
@@ -27,6 +26,7 @@ if TYPE_CHECKING:
     from pykotor.extract.file import ResourceResult
     from pykotor.resource.formats.bwm import BWM
     from pykotor.resource.formats.lyt import LYT
+    from pykotor.resource.formats.tpc import TPC
     from pykotor.resource.formats.twoda import TwoDA
     from pykotor.resource.generics.are import ARERoom
     from toolset.gui.widgets.long_spinbox import LongSpinBox
@@ -47,7 +47,7 @@ class AREEditor(Editor):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._setup_menus()
-        self._add_help_action()  # Auto-detects "GFF-File-Format.md" for ARE
+        self._add_help_action()  # Auto-detects "GFF-ARE.md" for ARE
         self._setup_signals()
         if installation is not None:  # will only be none in the unittests
             self._setup_installation(installation)

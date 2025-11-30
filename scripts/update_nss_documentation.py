@@ -19,18 +19,22 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
-from typing import Callable
+
 from collections import defaultdict
 from pathlib import Path
+from typing import TYPE_CHECKING, Callable
 from urllib.parse import quote
+
+if TYPE_CHECKING:
+    from pykotor.common.script import ScriptConstant, ScriptFunction
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "Libraries" / "PyKotor" / "src"))
 
 try:
-    from pykotor.common.script import DataType, ScriptConstant, ScriptFunction  # type: ignore[import]
     from pykotor.common import scriptdefs, scriptlib  # type: ignore[import]
+    from pykotor.common.script import DataType  # type: ignore[import]
 except ImportError as e:
     print(f"Error importing PyKotor modules: {e}")
     print("Make sure you're running from the project root and dependencies are installed.")

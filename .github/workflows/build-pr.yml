@@ -1,0 +1,442 @@
+name: PR Build Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      # Trigger on tool changes
+      - 'Tools/HolocronToolset/**'
+      - 'Tools/HoloPatcher/**'
+      - 'Tools/KotorDiff/**'
+      - 'Tools/GuiConverter/**'
+      - 'Tools/BatchPatcher/**'
+      - 'Tools/KitGenerator/**'
+      # Trigger on library changes (affects all tools)
+      - 'Libraries/PyKotor/**'
+      - 'Libraries/PyKotorGL/**'
+      - 'Libraries/PyKotorFont/**'
+      - 'Libraries/Utility/**'
+      # Trigger on compile script changes
+      - 'compile/**'
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: 'Tool to build (toolset, holopatcher, kotordiff, etc.)'
+        required: false
+        default: 'all-affected'
+      full_build:
+        description: 'Run full build instead of dry-run'
+        required: false
+        default: 'false'
+        type: boolean
+
+concurrency:
+  group: pr-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # Detect which tools were affected by the PR
+  detect-changes:
+    name: Detect Changed Tools
+    runs-on: ubuntu-latest
+    outputs:
+      toolset: ${{ steps.changes.outputs.toolset }}
+      holopatcher: ${{ steps.changes.outputs.holopatcher }}
+      kotordiff: ${{ steps.changes.outputs.kotordiff }}
+      guiconverter: ${{ steps.changes.outputs.guiconverter }}
+      batchpatcher: ${{ steps.changes.outputs.batchpatcher }}
+      kitgenerator: ${{ steps.changes.outputs.kitgenerator }}
+      libraries: ${{ steps.changes.outputs.libraries }}
+      compile: ${{ steps.changes.outputs.compile }}
+      any_tool: ${{ steps.changes.outputs.any_tool }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        id: changes
+        run: |
+          # Get changed files
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1)
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Check each tool
+          TOOLSET="false"
+          HOLOPATCHER="false"
+          KOTORDIFF="false"
+          GUICONVERTER="false"
+          BATCHPATCHER="false"
+          KITGENERATOR="false"
+          LIBRARIES="false"
+          COMPILE="false"
+          
+          if echo "$CHANGED_FILES" | grep -q "^Tools/HolocronToolset/"; then
+            TOOLSET="true"
+          fi
+          if echo "$CHANGED_FILES" | grep -q "^Tools/HoloPatcher/"; then
+            HOLOPATCHER="true"
+          fi
+          if echo "$CHANGED_FILES" | grep -q "^Tools/KotorDiff/"; then
+            KOTORDIFF="true"
+          fi
+          if echo "$CHANGED_FILES" | grep -q "^Tools/GuiConverter/"; then
+            GUICONVERTER="true"
+          fi
+          if echo "$CHANGED_FILES" | grep -q "^Tools/BatchPatcher/"; then
+            BATCHPATCHER="true"
+          fi
+          if echo "$CHANGED_FILES" | grep -q "^Tools/KitGenerator/"; then
+            KITGENERATOR="true"
+          fi
+          if echo "$CHANGED_FILES" | grep -q "^Libraries/"; then
+            LIBRARIES="true"
+          fi
+          if echo "$CHANGED_FILES" | grep -q "^compile/"; then
+            COMPILE="true"
+          fi
+          
+          # If libraries or compile changed, mark all tools as affected
+          if [ "$LIBRARIES" = "true" ] || [ "$COMPILE" = "true" ]; then
+            TOOLSET="true"
+            HOLOPATCHER="true"
+            KOTORDIFF="true"
+            GUICONVERTER="true"
+            BATCHPATCHER="true"
+            KITGENERATOR="true"
+          fi
+          
+          # Check if any tool changed
+          ANY_TOOL="false"
+          if [ "$TOOLSET" = "true" ] || [ "$HOLOPATCHER" = "true" ] || [ "$KOTORDIFF" = "true" ] || \
+             [ "$GUICONVERTER" = "true" ] || [ "$BATCHPATCHER" = "true" ] || [ "$KITGENERATOR" = "true" ]; then
+            ANY_TOOL="true"
+          fi
+          
+          echo "toolset=$TOOLSET" >> $GITHUB_OUTPUT
+          echo "holopatcher=$HOLOPATCHER" >> $GITHUB_OUTPUT
+          echo "kotordiff=$KOTORDIFF" >> $GITHUB_OUTPUT
+          echo "guiconverter=$GUICONVERTER" >> $GITHUB_OUTPUT
+          echo "batchpatcher=$BATCHPATCHER" >> $GITHUB_OUTPUT
+          echo "kitgenerator=$KITGENERATOR" >> $GITHUB_OUTPUT
+          echo "libraries=$LIBRARIES" >> $GITHUB_OUTPUT
+          echo "compile=$COMPILE" >> $GITHUB_OUTPUT
+          echo "any_tool=$ANY_TOOL" >> $GITHUB_OUTPUT
+          
+          echo ""
+          echo "Summary:"
+          echo "  Toolset: $TOOLSET"
+          echo "  HoloPatcher: $HOLOPATCHER"
+          echo "  KotorDiff: $KOTORDIFF"
+          echo "  GuiConverter: $GUICONVERTER"
+          echo "  BatchPatcher: $BATCHPATCHER"
+          echo "  KitGenerator: $KITGENERATOR"
+          echo "  Libraries: $LIBRARIES"
+          echo "  Compile scripts: $COMPILE"
+          echo "  Any tool affected: $ANY_TOOL"
+        shell: bash
+
+  # Validate version consistency in config files
+  version-check:
+    name: Version Consistency Check
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.any_tool == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version files are valid
+        run: |
+          errors=0
+          
+          # Check toolset config.py
+          if [ -f "Tools/HolocronToolset/src/toolset/config.py" ]; then
+            echo "Checking toolset config.py..."
+            CURRENT=$(grep -oP '"currentVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config.py || true)
+            LATEST=$(grep -oP '"toolsetLatestVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config.py || true)
+            BETA=$(grep -oP '"toolsetLatestBetaVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config.py || true)
+            
+            if [ -z "$CURRENT" ]; then
+              echo "❌ Toolset: currentVersion not found"
+              errors=$((errors + 1))
+            else
+              echo "✓ Toolset currentVersion: $CURRENT"
+            fi
+            
+            if [ -z "$LATEST" ]; then
+              echo "❌ Toolset: toolsetLatestVersion not found"
+              errors=$((errors + 1))
+            else
+              echo "✓ Toolset latestVersion: $LATEST"
+            fi
+            
+            if [ -z "$BETA" ]; then
+              echo "❌ Toolset: toolsetLatestBetaVersion not found"
+              errors=$((errors + 1))
+            else
+              echo "✓ Toolset betaVersion: $BETA"
+            fi
+          fi
+          
+          # Check HoloPatcher config.py
+          if [ -f "Tools/HoloPatcher/src/holopatcher/config.py" ]; then
+            echo ""
+            echo "Checking holopatcher config.py..."
+            CURRENT=$(grep -oP '"currentVersion":\s*"\K[^"]+' Tools/HoloPatcher/src/holopatcher/config.py || true)
+            
+            if [ -z "$CURRENT" ]; then
+              echo "❌ HoloPatcher: currentVersion not found"
+              errors=$((errors + 1))
+            else
+              echo "✓ HoloPatcher currentVersion: $CURRENT"
+            fi
+          fi
+          
+          # Check KotorDiff __main__.py
+          if [ -f "Tools/KotorDiff/src/kotordiff/__main__.py" ]; then
+            echo ""
+            echo "Checking kotordiff __main__.py..."
+            CURRENT=$(grep -oP 'CURRENT_VERSION\s*=\s*"\K[^"]+' Tools/KotorDiff/src/kotordiff/__main__.py || true)
+            
+            if [ -z "$CURRENT" ]; then
+              echo "❌ KotorDiff: CURRENT_VERSION not found"
+              errors=$((errors + 1))
+            else
+              echo "✓ KotorDiff currentVersion: $CURRENT"
+            fi
+          fi
+          
+          if [ $errors -gt 0 ]; then
+            echo ""
+            echo "❌ Found $errors version configuration errors"
+            exit 1
+          fi
+          
+          echo ""
+          echo "✓ All version files are valid"
+        shell: bash
+
+  # Build validation for Toolset (dry run by default)
+  build-toolset:
+    name: Build Toolset (${{ matrix.os }})
+    needs: [detect-changes, version-check]
+    if: needs.detect-changes.outputs.toolset == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04]
+        include:
+          - os: windows-latest
+            architecture: x64
+          - os: ubuntu-20.04
+            architecture: x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Build Toolset (validation)
+        uses: ./.github/actions/build-tool
+        with:
+          tool_name: toolset
+          python_version: '3.8'
+          architecture: ${{ matrix.architecture }}
+          qt_version: 'PyQt5'
+          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
+          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
+          artifact_retention_days: '3'
+
+  # Build validation for HoloPatcher
+  build-holopatcher:
+    name: Build HoloPatcher (${{ matrix.os }})
+    needs: [detect-changes, version-check]
+    if: needs.detect-changes.outputs.holopatcher == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04]
+        include:
+          - os: windows-latest
+            architecture: x64
+          - os: ubuntu-20.04
+            architecture: x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Build HoloPatcher (validation)
+        uses: ./.github/actions/build-tool
+        with:
+          tool_name: holopatcher
+          python_version: '3.8'
+          architecture: ${{ matrix.architecture }}
+          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
+          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
+          artifact_retention_days: '3'
+
+  # Build validation for KotorDiff
+  build-kotordiff:
+    name: Build KotorDiff (${{ matrix.os }})
+    needs: [detect-changes, version-check]
+    if: needs.detect-changes.outputs.kotordiff == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04]
+        include:
+          - os: windows-latest
+            architecture: x64
+          - os: ubuntu-20.04
+            architecture: x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Build KotorDiff (validation)
+        uses: ./.github/actions/build-tool
+        with:
+          tool_name: kotordiff
+          python_version: '3.8'
+          architecture: ${{ matrix.architecture }}
+          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
+          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
+          artifact_retention_days: '3'
+
+  # Summary job that reports overall status
+  build-summary:
+    name: Build Summary
+    needs: [detect-changes, version-check, build-toolset, build-holopatcher, build-kotordiff]
+    if: always() && needs.detect-changes.outputs.any_tool == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check build results
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const jobs = {
+              'version-check': '${{ needs.version-check.result }}',
+              'build-toolset': '${{ needs.build-toolset.result }}',
+              'build-holopatcher': '${{ needs.build-holopatcher.result }}',
+              'build-kotordiff': '${{ needs.build-kotordiff.result }}'
+            };
+            
+            const changes = {
+              toolset: '${{ needs.detect-changes.outputs.toolset }}' === 'true',
+              holopatcher: '${{ needs.detect-changes.outputs.holopatcher }}' === 'true',
+              kotordiff: '${{ needs.detect-changes.outputs.kotordiff }}' === 'true'
+            };
+            
+            let summary = '## 🔨 Build Validation Summary\n\n';
+            let hasFailures = false;
+            let hasSkipped = false;
+            
+            // Version check
+            const versionStatus = jobs['version-check'];
+            if (versionStatus === 'success') {
+              summary += '✅ **Version Check**: Passed\n';
+            } else if (versionStatus === 'failure') {
+              summary += '❌ **Version Check**: Failed\n';
+              hasFailures = true;
+            } else {
+              summary += '⏭️ **Version Check**: Skipped\n';
+            }
+            
+            summary += '\n### Tool Builds\n\n';
+            
+            const toolMap = {
+              toolset: { name: 'HolocronToolset', job: 'build-toolset' },
+              holopatcher: { name: 'HoloPatcher', job: 'build-holopatcher' },
+              kotordiff: { name: 'KotorDiff', job: 'build-kotordiff' }
+            };
+            
+            for (const [key, info] of Object.entries(toolMap)) {
+              if (changes[key]) {
+                const status = jobs[info.job];
+                if (status === 'success') {
+                  summary += `✅ **${info.name}**: Build validated\n`;
+                } else if (status === 'failure') {
+                  summary += `❌ **${info.name}**: Build failed\n`;
+                  hasFailures = true;
+                } else if (status === 'skipped') {
+                  summary += `⏭️ **${info.name}**: Skipped\n`;
+                  hasSkipped = true;
+                } else {
+                  summary += `⚠️ **${info.name}**: ${status || 'Unknown'}\n`;
+                }
+              } else {
+                summary += `➖ **${info.name}**: Not affected\n`;
+              }
+            }
+            
+            summary += '\n---\n';
+            
+            if (hasFailures) {
+              summary += '\n⚠️ **Some builds failed.** Please review the logs and fix any issues before merging.\n';
+            } else if (hasSkipped) {
+              summary += '\n📝 All validations passed. Ready for review.\n';
+            } else {
+              summary += '\n🎉 All builds validated successfully! This PR is ready for merge.\n';
+            }
+            
+            // Post or update comment on PR
+            if (context.eventName === 'pull_request') {
+              const { owner, repo } = context.repo;
+              const issue_number = context.issue.number;
+              
+              // Find existing comment
+              const comments = await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number
+              });
+              
+              const botComment = comments.data.find(c => 
+                c.user.type === 'Bot' && c.body.includes('Build Validation Summary')
+              );
+              
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: botComment.id,
+                  body: summary
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body: summary
+                });
+              }
+            }
+            
+            // Fail if any builds failed
+            if (hasFailures) {
+              core.setFailed('One or more builds failed');
+            }
+

@@ -13,6 +13,20 @@ if TYPE_CHECKING:
 
 
 class Camera:
+    """Camera with cached view/projection matrices.
+    
+    Performance optimization: view() and projection() matrix calculations are
+    cached and only recomputed when camera parameters change. This provides
+    significant speedup when matrices are accessed multiple times per frame.
+    
+    Reference: Standard game engine practice (Unity, Unreal use similar caching)
+    """
+    
+    __slots__ = (
+        "x", "y", "z", "width", "height", "pitch", "yaw", "distance", "fov",
+        "_cached_view", "_cached_projection", "_view_dirty", "_projection_dirty"
+    )
+    
     def __init__(self):
         self.x: float = 40.0
         self.y: float = 130.0
@@ -23,43 +37,86 @@ class Camera:
         self.yaw: float = 0.0
         self.distance: float = 10.0
         self.fov: float = 90.0
+        
+        # Cached matrices
+        self._cached_view: mat4 | None = None
+        self._cached_projection: mat4 | None = None
+        self._view_dirty: bool = True
+        self._projection_dirty: bool = True
+
+    def _invalidate_view(self):
+        """Mark view matrix as needing recalculation."""
+        self._view_dirty = True
+    
+    def _invalidate_projection(self):
+        """Mark projection matrix as needing recalculation."""
+        self._projection_dirty = True
 
     def set_resolution(
         self,
         width: int,
         height: int,
     ):
-        self.width, self.height = width, height
+        if self.width != width or self.height != height:
+            self.width, self.height = width, height
+            self._invalidate_projection()
 
     def set_position(
         self,
         position: Union[Vector3, vec3],
     ):
-        self.x = position.x
-        self.y = position.y
-        self.z = position.z
+        if self.x != position.x or self.y != position.y or self.z != position.z:
+            self.x = position.x
+            self.y = position.y
+            self.z = position.z
+            self._invalidate_view()
 
     def view(self) -> mat4:
+        """Get view matrix with caching.
+        
+        Matrix is recalculated only when camera position/orientation changes.
+        """
+        if not self._view_dirty and self._cached_view is not None:
+            return self._cached_view
+        
         up: vec3 = vec3(0, 0, 1)
-        pitch: vec3 = glm.vec3(1, 0, 0)
+        pitch_axis: vec3 = glm.vec3(1, 0, 0)
 
         x, y, z = self.x, self.y, self.z
-        x += math.cos(self.yaw) * math.cos(self.pitch - math.pi / 2) * self.distance
-        y += math.sin(self.yaw) * math.cos(self.pitch - math.pi / 2) * self.distance
-        z += math.sin(self.pitch - math.pi / 2) * self.distance
+        cos_yaw = math.cos(self.yaw)
+        sin_yaw = math.sin(self.yaw)
+        pitch_offset = self.pitch - math.pi / 2
+        cos_pitch = math.cos(pitch_offset)
+        sin_pitch = math.sin(pitch_offset)
+        
+        x += cos_yaw * cos_pitch * self.distance
+        y += sin_yaw * cos_pitch * self.distance
+        z += sin_pitch * self.distance
 
         camera: mat4 = mat4() * glm.translate(vec3(x, y, z))
         camera = glm.rotate(camera, self.yaw + math.pi / 2, up)
-        camera = glm.rotate(camera, math.pi - self.pitch, pitch)
-        return glm.inverse(camera)
+        camera = glm.rotate(camera, math.pi - self.pitch, pitch_axis)
+        
+        self._cached_view = glm.inverse(camera)
+        self._view_dirty = False
+        return self._cached_view
 
     def projection(self) -> mat4:
-        return glm.perspective(
+        """Get projection matrix with caching.
+        
+        Matrix is recalculated only when FOV or aspect ratio changes.
+        """
+        if not self._projection_dirty and self._cached_projection is not None:
+            return self._cached_projection
+        
+        self._cached_projection = glm.perspective(
             self.fov,
             self.width / self.height,
             0.1,
             5000,
         )
+        self._projection_dirty = False
+        return self._cached_projection
 
     def translate(
         self,
@@ -68,6 +125,7 @@ class Camera:
         self.x += translation.x
         self.y += translation.y
         self.z += translation.z
+        self._invalidate_view()
 
     def rotate(
         self,
@@ -81,6 +139,7 @@ class Camera:
         # Update pitch and yaw
         self.pitch = self.pitch + pitch
         self.yaw = self.yaw + yaw
+        self._invalidate_view()
 
         # ensure yaw doesn't get too large.
         if self.yaw > 2 * math.pi:

@@ -1,6 +1,7 @@
 """Check what's in genericdoors.2da for a specific appearance_id."""
 import os
 import sys
+
 from pathlib import Path
 
 # Add paths for imports
@@ -9,8 +10,8 @@ PYKOTOR_PATH = REPO_ROOT / "Libraries" / "PyKotor" / "src"
 if str(PYKOTOR_PATH) not in sys.path:
     sys.path.insert(0, str(PYKOTOR_PATH))
 
-from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.extract.file import ResourceIdentifier
+from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.resource.formats.twoda import read_2da
 from pykotor.resource.type import ResourceType
 

@@ -2,22 +2,21 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
+
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.stack.stack_entry import StackEntry  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.subroutine_analysis_data import SubroutineAnalysisData  # pyright: ignore[reportMissingImports]
-
 
 class VarStruct(Variable):
     def __init__(self, structtype: StructType | None = None):
         from pykotor.resource.formats.ncs.dencs.stack.variable import Variable  # pyright: ignore[reportMissingImports]
-        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         super().__init__(Type(-15))
         self.vars: list[Variable] = []
-        self.size = 0
+        self._size = 0
         if structtype is None:
             self.structtype = StructType()
         else:
@@ -40,46 +39,46 @@ class VarStruct(Variable):
 
     def add_var(self, var: Variable):
         self.vars.insert(0, var)
-        var.varstruct(self)
+        var.set_varstruct(self)
         self.structtype.add_type(var.type())
-        self.size += var.size()
+        self._size += var.size()
 
     def add_var_stack_order(self, var: Variable):
         self.vars.append(var)
-        var.varstruct(self)
+        var.set_varstruct(self)
         self.structtype.add_type_stack_order(var.type())
-        self.size += var.size()
+        self._size += var.size()
 
-    def name(self, prefix: str, count: int):
-        self.name = prefix + "struct" + str(count)
+    def set_name(self, prefix: str, count: int):
+        self._name = prefix + "struct" + str(count)
 
     def name(self) -> str:
-        return self.name
+        return self._name
 
-    def struct_type(self, structtype: StructType):
+    def set_struct_type(self, structtype: StructType):
         self.structtype = structtype
 
     def __str__(self) -> str:
-        return str(self.name) if self.name is not None else ""
+        return str(self._name) if self._name is not None else ""
 
     def type_name(self) -> str:
         return self.structtype.type_name()
 
     def to_decl_string(self) -> str:
-        return str(self.structtype.to_decl_string()) + " " + str(self.name)
+        return str(self.structtype.to_decl_string()) + " " + str(self._name)
 
     def update_names(self):
         if self.structtype.is_vector():
-            self.vars[0].name("z")
-            self.vars[1].name("y")
-            self.vars[2].name("x")
+            self.vars[0].set_name("z")
+            self.vars[1].set_name("y")
+            self.vars[2].set_name("x")
         else:
             for i in range(len(self.vars)):
-                self.vars[i].name(self.structtype.element_name(len(self.vars) - i - 1))
+                self.vars[i].set_name(self.structtype.element_name(len(self.vars) - i - 1))
 
-    def assigned(self):
+    def assign(self):
         for var in self.vars:
-            var.assigned()
+            var.assign()
 
     def added_to_stack(self, stack: LocalStack):
         for var in self.vars:

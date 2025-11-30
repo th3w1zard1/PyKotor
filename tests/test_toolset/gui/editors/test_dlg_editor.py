@@ -1022,6 +1022,35 @@ def test_dlg_editor_condition_params_full(qtbot, installation: HTInstallation):
     assert root_item.link.active2_param6 == "cond2_str"
 
 
+def test_dlg_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that DLGEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
+    editor = DLGEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # Trigger help dialog with the correct file for DLG editor
+    editor._show_help_dialog("GFF-DLG.md")
+    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+    
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'GFF-DLG.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"
+
+
 def test_dlg_editor_script_params_full(qtbot, installation: HTInstallation):
     """Test all script parameters for both scripts (TSL-specific).
     
@@ -3005,6 +3034,7 @@ def test_dlg_editor_manipulate_all_file_fields_combination(qtbot, installation: 
     assert str(modified_dlg.camera_model) == "test_camera"
 
 def test_dlg_editor_manipulate_all_node_fields_combination(qtbot, installation: HTInstallation, test_files_dir: Path):
+
     """Test manipulating all node-level fields simultaneously."""
     editor = DLGEditor(None, installation)
     qtbot.addWidget(editor)

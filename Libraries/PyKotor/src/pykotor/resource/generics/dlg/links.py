@@ -4,14 +4,13 @@ from __future__ import annotations
 
 import uuid
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from pykotor.common.misc import Color, ResRef
 from pykotor.resource.generics.dlg.nodes import DLGNode
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Sequence
 
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
@@ -135,7 +134,7 @@ class DLGLink(Generic[T_co]):
             if not current.node:
                 continue
             # Cast node.links to correct type since we know they're compatible
-            stack.extend(cast(Sequence[DLGLink[T_co]], current.node.links))
+            stack.extend(cast("Sequence[DLGLink[T_co]]", current.node.links))
 
     def __repr__(self) -> str:
         comment_str = str(self.comment)

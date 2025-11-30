@@ -21,7 +21,6 @@ from qtpy.QtCore import (
     QByteArray,
     QEvent,
     QMimeData,
-    QModelIndex,
     QPoint,
     QSettings,
     QSize,
@@ -78,7 +77,11 @@ else:
 if TYPE_CHECKING:
     from concurrent.futures import Future
 
-    from qtpy.QtCore import QAbstractItemModel, QObject
+    from qtpy.QtCore import (
+        QAbstractItemModel,
+        QModelIndex,
+        QObject,
+    )
     from qtpy.QtGui import (
         QCloseEvent,
         QContextMenuEvent,
@@ -971,7 +974,7 @@ class LYTEditorWidget(QWidget):
             self.add_lyt_component(component_data, event.pos())  # FIXME: add_lyt_component attribute not found
         elif mime_data is not None and mime_data.hasFormat("application/x-qabstractitemmodeldatalist"):
             # Handle drag and drop from texture browser
-            model: QAbstractItemModel | None = cast(QModelIndex, event.source()).model()  # pyright: ignore[reportAssignmentType]
+            model: QAbstractItemModel | None = cast("QModelIndex", event.source()).model()  # pyright: ignore[reportAssignmentType]
             index: QModelIndex | None = event.source().currentIndex()  # FIXME: currentIndex attribute not found
             if index is not None:
                 texture_name = model.data(index, Qt.ItemDataRole.DisplayRole)
@@ -1124,7 +1127,7 @@ class LYTEditorWidget(QWidget):
 
     def focusInEvent(self, event: QFocusEvent):
         super().focusInEvent(event)
-        cast(QApplication, QApplication.instance()).focusChanged.connect(self.on_focus_changed)
+        cast("QApplication", QApplication.instance()).focusChanged.connect(self.on_focus_changed)
 
     def on_focus_changed(self, old: QWidget, new: QWidget):
         if new and new.parent() == self:

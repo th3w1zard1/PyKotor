@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import wave
 
-from typing import TYPE_CHECKING, Optional, cast, Any
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 import qtpy
+
 from qtpy.QtCore import QTimer, QUrl, Qt
 from qtpy.QtGui import QKeySequence
 from qtpy.QtMultimedia import QAudioOutput, QMediaPlayer
@@ -108,7 +109,7 @@ class LIPEditor(Editor):
         if qtpy.QT6:
             self.audio_output = QAudioOutput()
             self.audio_output.setVolume(1)
-            player: Any = cast(Any, self.player)
+            player: Any = cast("Any", self.player)
             player.setAudioOutput(self.audio_output)  # type: ignore[attr-defined]
         
         self.player.positionChanged.connect(self.on_playback_position_changed)
@@ -305,7 +306,7 @@ class LIPEditor(Editor):
                 from qtpy.QtMultimedia import QMediaContent  # pyright: ignore[reportAttributeAccessIssue]
                 self.player.setMedia(QMediaContent(QUrl.fromLocalFile(file_path)))  # pyright: ignore[reportAttributeAccessIssue]
             elif qtpy.QT6:
-                player: Any = cast(Any, self.player)
+                player: Any = cast("Any", self.player)
                 player.setSource(QUrl.fromLocalFile(file_path))  # type: ignore[attr-defined]
 
     def add_keyframe(self):

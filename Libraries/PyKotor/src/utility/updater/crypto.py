@@ -8,7 +8,12 @@ import struct
 
 from typing import TYPE_CHECKING, Any
 
-from Crypto.Cipher import AES
+try:
+    from Crypto.Cipher import AES
+    _CRYPTO_AVAILABLE = True
+except ImportError:
+    _CRYPTO_AVAILABLE = False
+    AES = None  # type: ignore[assignment, misc]
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -51,6 +56,11 @@ def base64_url_encode(data) -> str:
 
 
 def aes_cbc_decrypt(data: bytes, key: bytes) -> bytes:
+    if not _CRYPTO_AVAILABLE or AES is None:
+        raise ImportError(
+            "pycryptodome is required for MEGA file decryption. "
+            "Install it with: pip install pycryptodome"
+        )
     aes_cipher = AES.new(key, AES.MODE_CBC, codecs.latin_1_encode("\0" * 16)[0])
     return aes_cipher.decrypt(data)
 

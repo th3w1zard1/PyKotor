@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+
 from typing import Any, Literal
 
 from utility.error_handling import safe_repr

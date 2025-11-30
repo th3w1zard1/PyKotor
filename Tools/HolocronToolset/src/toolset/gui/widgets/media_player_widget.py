@@ -30,15 +30,15 @@ class MediaPlayerWidget(QWidget):
         self.current_speed_index: int = 0
 
         self.play_pause_button: QPushButton = QPushButton()
-        self.play_pause_button.setIcon(cast(QStyle, self.style()).standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+        self.play_pause_button.setIcon(cast("QStyle", self.style()).standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
         self.play_pause_button.setFixedSize(24, 24)
 
         self.stop_button: QPushButton = QPushButton()
-        self.stop_button.setIcon(cast(QStyle, self.style()).standardIcon(QStyle.StandardPixmap.SP_MediaStop))
+        self.stop_button.setIcon(cast("QStyle", self.style()).standardIcon(QStyle.StandardPixmap.SP_MediaStop))
         self.stop_button.setFixedSize(24, 24)
 
         self.mute_button: QPushButton = QPushButton()
-        self.mute_button.setIcon(cast(QStyle, self.style()).standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
+        self.mute_button.setIcon(cast("QStyle", self.style()).standardIcon(QStyle.StandardPixmap.SP_MediaVolume))
         self.mute_button.setFixedSize(24, 24)
 
         button_layout: QHBoxLayout = QHBoxLayout()

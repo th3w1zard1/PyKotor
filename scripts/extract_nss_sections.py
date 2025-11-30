@@ -2,6 +2,7 @@
 """Extract individual NSS function/constant category sections from NSS-File-Format.md into separate files."""
 
 import re
+
 from pathlib import Path
 
 wiki_dir = Path("wiki")

@@ -3,11 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, TextIO
 
-from pykotor.resource.formats.mdl.mdl_data import MDLDangly, MDLMesh, MDLSkin
+from pykotor.resource.formats.mdl.mdl_data import MDLDangly, MDLSkin
 from pykotor.resource.formats.mdl.mdl_types import MDLControllerType
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.mdl.mdl_data import MDL, MDLController, MDLEmitter, MDLFace, MDLLight, MDLNode, MDLReference, MDLSaber, MDLWalkmesh
+    from pykotor.resource.formats.mdl.mdl_data import MDL, MDLController, MDLEmitter, MDLFace, MDLLight, MDLMesh, MDLNode, MDLReference, MDLSaber, MDLWalkmesh
     from utility.common.geometry import Vector3, Vector4
 
 

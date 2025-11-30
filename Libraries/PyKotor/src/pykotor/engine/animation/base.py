@@ -12,10 +12,7 @@ References:
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    from pykotor.resource.formats.mdl.mdl_data import MDLController, MDLControllerRow, MDLAnimation
+from typing import Any
 
 
 class IAnimationController(ABC):

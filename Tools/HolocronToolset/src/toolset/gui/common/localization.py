@@ -6,12 +6,8 @@ Supports multiple languages matching the KotOR game languages.
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import TYPE_CHECKING
 
 from pykotor.common.language import Language
-
-if TYPE_CHECKING:
-    from typing_extensions import TypedDict
 
 
 class ToolsetLanguage(IntEnum):

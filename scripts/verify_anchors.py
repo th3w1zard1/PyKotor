@@ -2,6 +2,7 @@
 """Verify that all functions and constants have anchors."""
 
 import re
+
 from pathlib import Path
 
 md_path = Path(__file__).parent.parent / "wiki" / "NSS-File-Format.md"

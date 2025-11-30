@@ -2,6 +2,7 @@
 """Extract GFF generic type sections from GFF-File-Format.md into separate files."""
 
 import re
+
 from pathlib import Path
 
 wiki_dir = Path("wiki")

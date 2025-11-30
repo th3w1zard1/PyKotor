@@ -5,11 +5,9 @@ This is a 1:1 implementation of nasher's syntax for KOTOR development.
 """
 from __future__ import annotations
 
-import os
 import pathlib
 import sys
-
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser
 from typing import TYPE_CHECKING
 
 # Configure sys.path for development mode

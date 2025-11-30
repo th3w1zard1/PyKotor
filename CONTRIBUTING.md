@@ -22,11 +22,14 @@ This project adheres to a code of conduct that all contributors are expected to 
 
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/PyKotor.git
    cd PyKotor
    ```
+
 3. **Add the upstream repository**:
+
    ```bash
    git remote add upstream https://github.com/th3w1zard1/PyKotor.git
    ```
@@ -40,6 +43,7 @@ PyKotor supports multiple package managers. Choose the one that works best for y
 `uv` is a fast Python package installer and resolver written in Rust.
 
 1. **Install uv** (if not already installed):
+
    ```bash
    # Windows (PowerShell)
    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
@@ -49,11 +53,13 @@ PyKotor supports multiple package managers. Choose the one that works best for y
    ```
 
 2. **Install dependencies**:
+
    ```bash
    uv sync
    ```
 
 3. **Activate the virtual environment**:
+
    ```bash
    # Windows
    .venv\Scripts\activate
@@ -63,6 +69,7 @@ PyKotor supports multiple package managers. Choose the one that works best for y
    ```
 
 4. **Install the project in editable mode**:
+
    ```bash
    # Install core library
    uv pip install -e Libraries/PyKotor
@@ -80,6 +87,7 @@ PyKotor supports multiple package managers. Choose the one that works best for y
 Poetry is a dependency management and packaging tool.
 
 1. **Install Poetry** (if not already installed):
+
    ```bash
    # Windows (PowerShell)
    (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
@@ -89,16 +97,19 @@ Poetry is a dependency management and packaging tool.
    ```
 
 2. **Install dependencies**:
+
    ```bash
    poetry install
    ```
 
 3. **Activate the virtual environment**:
+
    ```bash
    poetry shell
    ```
 
 4. **Install with optional dependencies**:
+
    ```bash
    # Install with all extensions
    poetry install --extras "all-extensions"
@@ -112,6 +123,7 @@ Poetry is a dependency management and packaging tool.
 Standard pip installation for those who prefer it.
 
 1. **Create a virtual environment**:
+
    ```bash
    # Windows
    python -m venv .venv
@@ -123,6 +135,7 @@ Standard pip installation for those who prefer it.
    ```
 
 2. **Install dependencies**:
+
    ```bash
    # Install core library
    pip install -e Libraries/PyKotor
@@ -136,6 +149,7 @@ Standard pip installation for those who prefer it.
    ```
 
 3. **Install development dependencies**:
+
    ```bash
    pip install -e .[dev]
    ```
@@ -172,6 +186,7 @@ PyKotor/
 ## Making Changes
 
 1. **Create a new branch** for your changes:
+
    ```bash
    git checkout -b feature/your-feature-name
    # or
@@ -181,6 +196,7 @@ PyKotor/
 2. **Make your changes** following the code style guidelines
 
 3. **Test your changes**:
+
    ```bash
    # Run all tests
    pytest
@@ -195,12 +211,14 @@ PyKotor/
 4. **Update documentation** if needed
 
 5. **Commit your changes**:
+
    ```bash
    git add .
    git commit -m "Description of your changes"
    ```
 
    Use clear, descriptive commit messages. Follow the format:
+
    ```
    type(scope): brief description
    
@@ -239,6 +257,7 @@ pytest --cov=pykotor --cov-report=term-missing
 - Include edge cases
 
 Example test structure:
+
 ```python
 from pykotor.resource.formats.tpc import read_tpc
 
@@ -299,12 +318,14 @@ pre-commit install
 ## Submitting Changes
 
 1. **Update your branch** with the latest changes:
+
    ```bash
    git fetch upstream
    git rebase upstream/main
    ```
 
 2. **Push your changes** to your fork:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -328,6 +349,7 @@ pre-commit install
 - Add examples for complex functions
 
 Example:
+
 ```python
 def read_tpc(file_path: Path) -> TPC:
     """Read a TPC texture file from disk.
@@ -355,11 +377,13 @@ def read_tpc(file_path: Path) -> TPC:
 ### Working on a Library
 
 1. Navigate to the library directory:
+
    ```bash
    cd Libraries/PyKotor
    ```
 
 2. Install in editable mode:
+
    ```bash
    pip install -e .
    ```
@@ -367,6 +391,7 @@ def read_tpc(file_path: Path) -> TPC:
 3. Make your changes
 
 4. Test your changes:
+
    ```bash
    pytest ../../tests/test_pykotor/
    ```
@@ -374,11 +399,13 @@ def read_tpc(file_path: Path) -> TPC:
 ### Working on a Tool
 
 1. Navigate to the tool directory:
+
    ```bash
    cd Tools/HolocronToolset
    ```
 
 2. Install in editable mode:
+
    ```bash
    pip install -e .
    ```
@@ -386,6 +413,7 @@ def read_tpc(file_path: Path) -> TPC:
 3. Make your changes
 
 4. Test your changes:
+
    ```bash
    pytest ../../tests/test_toolset/
    ```
@@ -425,4 +453,3 @@ uv build
 By contributing, you agree that your contributions will be licensed under the LGPL-3.0-or-later License.
 
 Thank you for contributing to PyKotor! 🎉
-

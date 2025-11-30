@@ -444,7 +444,35 @@ def test_uti_editor_context_menu(qtbot, installation: HTInstallation):
         # The actual menu opening requires real display, but signal connection verifies setup
         assert editor.ui.iconLabel.receivers(editor.ui.iconLabel.customContextMenuRequested) > 0
 
-def test_uti_editor_name_desc_dialogs(qtbot, installation: HTInstallation):
+
+def test_utieditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that UTIEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
+    editor = UTIEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # Trigger help dialog with the correct file for UTIEditor
+    editor._show_help_dialog("GFF-UTI.md")
+    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+    
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'GFF-UTI.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"
+
     """Test name and description edit dialogs."""
     editor = UTIEditor(None, installation)
     qtbot.addWidget(editor)

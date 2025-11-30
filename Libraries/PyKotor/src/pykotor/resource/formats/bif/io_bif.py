@@ -4,7 +4,6 @@ import lzma
 
 from typing import TYPE_CHECKING
 
-
 from pykotor.common.misc import ResRef
 from pykotor.resource.formats.bif.bif_data import BIF, BIFResource, BIFType
 from pykotor.resource.type import ResourceReader, ResourceType, ResourceWriter, autoclose

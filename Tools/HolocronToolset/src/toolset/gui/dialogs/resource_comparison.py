@@ -35,7 +35,7 @@ class ResourceComparisonDialog(QDialog):
         resource2: FileResource | None = None,
     ):
         super().__init__(parent)
-        from toolset.gui.common.localization import translate as tr, trf
+        from toolset.gui.common.localization import trf
         self.setWindowTitle(trf("Compare: {name}.{ext}", name=resource1.resname(), ext=resource1.restype().extension))
         self.resize(1200, 700)
 

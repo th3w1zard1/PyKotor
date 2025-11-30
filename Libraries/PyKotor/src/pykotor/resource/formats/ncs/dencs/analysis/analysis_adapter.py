@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
 
-
 class AnalysisAdapter:
     def __init__(self):
         self._in: dict[Node, Any] = {}
@@ -42,11 +41,9 @@ class AnalysisAdapter:
         self.default_case(node)
 
     def case_start(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
         self.default_case(node)
 
     def case_eof(self, node):
-        from pykotor.resource.formats.ncs.dencs.node.eof import EOF  # pyright: ignore[reportMissingImports]
         self.default_case(node)
 
     def case_a_program(self, node):
