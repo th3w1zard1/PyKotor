@@ -178,7 +178,7 @@ jobs:
           # Install available tools
           pip install holopatcher $INDEX_ARGS || echo "holopatcher not available"
           pip install kotor-diff $INDEX_ARGS || echo "kotor-diff not available"
-          pip install kotornasher $INDEX_ARGS || echo "kotornasher not available"
+          pip install kotorcli $INDEX_ARGS || echo "kotorcli not available"
         shell: bash
       
       - name: Test holopatcher CLI
@@ -191,9 +191,9 @@ jobs:
           python -m kotordiff --help 2>&1 || echo "kotordiff help not available"
         continue-on-error: true
       
-      - name: Test kotornasher CLI
+      - name: Test kotorcli CLI
         run: |
-          kotornasher --help 2>&1 || python -m kotornasher --help 2>&1 || echo "kotornasher help not available"
+          kotorcli --help 2>&1 || python -m kotorcli --help 2>&1 || echo "kotorcli help not available"
         continue-on-error: true
 
   report:

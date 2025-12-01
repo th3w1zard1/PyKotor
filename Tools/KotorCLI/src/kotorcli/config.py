@@ -1,8 +1,8 @@
-"""Configuration management for KOTORNasher."""
+"""Configuration management for KotorCLI."""
 from __future__ import annotations
 
 VERSION = "1.0.0"
-APP_NAME = "KOTORNasher"
+APP_NAME = "KotorCLI"
 APP_AUTHOR = "PyKotor"
 
 

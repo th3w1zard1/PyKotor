@@ -223,7 +223,7 @@ class TestEntryPoints:
     EXPECTED_ENTRY_POINTS: dict[str, list[str]] = {
         "HoloPatcher": ["holopatcher"],
         "KotorDiff": ["kotor-diff", "kotordiff"],
-        "KOTORNasher": ["kotornasher"],
+        "KOTORCli": ["kotorcli"],
         "KitGenerator": ["kit-generator", "kitgenerator"],
         "GuiConverter": ["gui-converter"],
     }

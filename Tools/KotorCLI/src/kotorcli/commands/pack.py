@@ -23,9 +23,9 @@ if TYPE_CHECKING:
 from pykotor.resource.formats.erf import ERF, ERFType, write_erf
 from pykotor.resource.type import ResourceType
 
-from kotornasher.cfg_parser import load_config
-from kotornasher.commands.compile import cmd_compile
-from kotornasher.commands.convert import cmd_convert
+from kotorcli.cfg_parser import load_config
+from kotorcli.commands.compile import cmd_compile
+from kotorcli.commands.convert import cmd_convert
 
 
 def should_overwrite_file(file_path: Path, source_newest: float, mode: str, logger: Logger) -> bool:
@@ -115,10 +115,10 @@ def cmd_pack(args: Namespace, logger: Logger) -> int:
                 return compile_result
 
         # Get cache directory
-        cache_dir = config.root_dir / ".kotornasher" / "cache" / target_name
+        cache_dir = config.root_dir / ".kotorcli" / "cache" / target_name
         if not cache_dir.exists():
             logger.error(f"Cache directory not found: {cache_dir}")
-            logger.info("Run 'kotornasher convert' and 'kotornasher compile' first")
+            logger.info("Run 'kotorcli convert' and 'kotorcli compile' first")
             return 1
 
         # Determine output file

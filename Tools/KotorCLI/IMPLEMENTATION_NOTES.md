@@ -1,15 +1,15 @@
-# KOTORNasher Implementation Notes
+# KotorCLI Implementation Notes
 
 ## Overview
 
-KOTORNasher is a 1:1 implementation of nasher's syntax for KOTOR development, built entirely on PyKotor's comprehensive libraries. Unlike nasher which uses external tools, KOTORNasher leverages PyKotor's native Python implementations for all file format operations.
+KotorCLI is a 1:1 implementation of cli's syntax for KOTOR development, built entirely on PyKotor's comprehensive libraries. Unlike cli which uses external tools, KotorCLI leverages PyKotor's native Python implementations for all file format operations.
 
 ## Architecture
 
 ### Core Components
 
 1. **`__main__.py`** - Entry point and argument parsing
-2. **`cfg_parser.py`** - TOML configuration file parser (nasher-compatible)
+2. **`cfg_parser.py`** - TOML configuration file parser (cli-compatible)
 3. **`logger.py`** - Colored logging system
 4. **`config.py`** - Version and metadata
 
@@ -29,7 +29,7 @@ All commands are in the `commands/` subdirectory:
 
 ## PyKotor Integration
 
-KOTORNasher is built entirely on PyKotor and uses the following implementations:
+KotorCLI is built entirely on PyKotor and uses the following implementations:
 
 ### GFF Format Handling
 - **Location**: `Libraries/PyKotor/src/pykotor/resource/formats/gff/`
@@ -75,7 +75,7 @@ KOTORNasher is built entirely on PyKotor and uses the following implementations:
 
 ## Vendor Code References
 
-KOTORNasher's implementation is extensively informed by code in PyKotor's vendor directory:
+KotorCLI's implementation is extensively informed by code in PyKotor's vendor directory:
 
 ### Primary References (High Quality)
 
@@ -127,7 +127,7 @@ KOTORNasher's implementation is extensively informed by code in PyKotor's vendor
 
 ### 1. Built-in NSS Compiler
 
-**Major Advantage over nasher**: KOTORNasher includes PyKotor's native NSS compiler, eliminating the need for external tools.
+**Major Advantage over cli**: KotorCLI includes PyKotor's native NSS compiler, eliminating the need for external tools.
 
 ```python
 from pykotor.resource.formats.ncs.compilers import InbuiltNCSCompiler
@@ -177,7 +177,7 @@ write_erf(erf, output_file)
 
 ## Configuration File Format
 
-KOTORNasher uses TOML format for `kotornasher.cfg`, which is compatible with nasher's syntax:
+KotorCLI uses TOML format for `KotorCLI.cfg`, which is compatible with cli's syntax:
 
 ```toml
 [package]
@@ -211,7 +211,7 @@ description = "Default target"
 3. **If not found**: Use PyKotor's `InbuiltNCSCompiler`
 4. **Fallback**: Always available due to built-in compiler
 
-This is a significant improvement over nasher, which requires external tools.
+This is a significant improvement over cli, which requires external tools.
 
 ### GFF Conversion Strategy
 
@@ -222,7 +222,7 @@ This is a significant improvement over nasher, which requires external tools.
 
 ### Variable Expansion
 
-Supports nasher-compatible variable expansion:
+Supports cli-compatible variable expansion:
 - `$variable` or `${variable}` syntax
 - Package-level variables
 - Target-level variables
@@ -236,54 +236,54 @@ Targets can inherit from:
 - Package-level defaults
 - Reduces configuration duplication
 
-## Differences from nasher
+## Differences from cli
 
-While KOTORNasher maintains nasher's command syntax, there are important differences:
+While KotorCLI maintains cli's command syntax, there are important differences:
 
 ### 1. File Formats
-- **nasher**: Uses neverwinter.nim's implementations
-- **KOTORNasher**: Uses PyKotor's native Python implementations
+- **cli**: Uses neverwinter.nim's implementations
+- **KotorCLI**: Uses PyKotor's native Python implementations
 
 ### 2. Script Compiler
-- **nasher**: Requires nwnsc or nwn_script_comp
-- **KOTORNasher**: Built-in compiler + optional external compiler support
+- **cli**: Requires nwnsc or nwn_script_comp
+- **KotorCLI**: Built-in compiler + optional external compiler support
 
 ### 3. Games Supported
-- **nasher**: Neverwinter Nights / NWN:EE
-- **KOTORNasher**: KOTOR / KOTOR II
+- **cli**: Neverwinter Nights / NWN:EE
+- **KotorCLI**: KOTOR / KOTOR II
 
 ### 4. Dependencies
-- **nasher**: Nim + neverwinter.nim + nwnsc/nwn_script_comp
-- **KOTORNasher**: Python 3.8+ + PyKotor (nwnnsscomp optional)
+- **cli**: Nim + neverwinter.nim + nwnsc/nwn_script_comp
+- **KotorCLI**: Python 3.8+ + PyKotor (nwnnsscomp optional)
 
 ### 5. Text Format
-- **nasher**: JSON or NWNT
-- **KOTORNasher**: JSON only (PyKotor native)
+- **cli**: JSON or NWNT
+- **KotorCLI**: JSON only (PyKotor native)
 
 ## Testing
 
-To test KOTORNasher with vendor code references:
+To test KotorCLI with vendor code references:
 
 ```bash
 # Install in development mode
-cd Tools/KOTORNasher
+cd Tools/KotorCLI
 pip install -e .
 
 # Test basic workflow
-kotornasher init test_project
+KotorCLI init test_project
 cd test_project
-kotornasher list
-kotornasher pack
+KotorCLI list
+KotorCLI pack
 
 # Test built-in compiler
 # (Should work without nwnnsscomp installed)
 echo 'void main() {}' > src/test.nss
-kotornasher compile
+KotorCLI compile
 
 # Test JSON conversion
-kotornasher unpack --file /path/to/module.mod
+KotorCLI unpack --file /path/to/module.mod
 # Verify JSON files created
-kotornasher convert
+KotorCLI convert
 # Verify GFF files in cache
 ```
 
@@ -325,9 +325,9 @@ When referencing vendor code:
 
 ## Contributing
 
-When contributing to KOTORNasher:
+When contributing to KotorCLI:
 
-1. **Maintain nasher syntax compatibility**
+1. **Maintain cli syntax compatibility**
 2. **Use PyKotor implementations** (don't reinvent the wheel)
 3. **Add vendor references** in code comments
 4. **Follow PyKotor conventions** (see CONVENTIONS.md)
@@ -336,7 +336,7 @@ When contributing to KOTORNasher:
 
 ## References
 
-- [nasher](https://github.com/squattingmonk/nasher) - Original NWN build tool
+- [cli](https://github.com/squattingmonk/cli) - Original NWN build tool
 - [neverwinter.nim](https://github.com/niv/neverwinter.nim) - NWN tools in Nim
 - [NWNT](https://github.com/WilliamDraco/NWNT) - Alternative text format
 - [PyKotor](https://github.com/th3w1zard1/PyKotor) - KOTOR modding library

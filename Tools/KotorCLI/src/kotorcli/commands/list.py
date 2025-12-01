@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from logging import Logger
 
-from kotornasher.cfg_parser import load_config
+from kotorcli.cfg_parser import load_config
 
 
 def cmd_list(args: Namespace, logger: Logger) -> int:
@@ -33,7 +33,7 @@ def cmd_list(args: Namespace, logger: Logger) -> int:
     # Get all targets
     all_targets = config.targets
     if not all_targets:
-        logger.info("No targets defined in kotornasher.cfg")
+        logger.info("No targets defined in kotorcli.cfg")
         return 0
 
     # Filter targets if specific ones were requested

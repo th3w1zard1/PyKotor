@@ -1,4 +1,4 @@
-"""KOTORNasher - A build tool for KOTOR projects inspired by nasher.
+"""KotorCLI - A build tool for KOTOR projects inspired by cli.
 
 This tool provides a command-line interface for managing KOTOR module development,
 including packing, unpacking, compiling, and installing modules, ERFs, and haks.

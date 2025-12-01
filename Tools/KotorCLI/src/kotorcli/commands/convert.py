@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 from pykotor.resource.formats.gff import read_gff, write_gff
 from pykotor.resource.type import ResourceType
 
-from kotornasher.cfg_parser import load_config
+from kotorcli.cfg_parser import load_config
 
 
 def cmd_convert(args: Namespace, logger: Logger) -> int:
@@ -65,7 +65,7 @@ def cmd_convert(args: Namespace, logger: Logger) -> int:
         logger.info(f"Converting target: {target_name}")
 
         # Get cache directory
-        cache_dir = config.root_dir / ".kotornasher" / "cache" / target_name
+        cache_dir = config.root_dir / ".kotorcli" / "cache" / target_name
         if args.clean and cache_dir.exists():
             logger.info(f"Cleaning cache: {cache_dir}")
             shutil.rmtree(cache_dir)

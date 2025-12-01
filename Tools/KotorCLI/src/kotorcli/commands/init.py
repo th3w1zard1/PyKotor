@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from logging import Logger
 
 
-DEFAULT_CONFIG_TEMPLATE = """# KOTORNasher Package Configuration
-# This file uses TOML format and is compatible with nasher syntax
+DEFAULT_CONFIG_TEMPLATE = """# KotorCLI Package Configuration
+# This file uses TOML format and is compatible with cli syntax
 
 [package]
 name = "{package_name}"
@@ -63,7 +63,7 @@ def prompt(message: str, default: str = "") -> str:
 
 
 def cmd_init(args: Namespace, logger: Logger) -> int:
-    """Handle init command - create a new kotornasher package.
+    """Handle init command - create a new kotorcli package.
 
     Args:
     ----
@@ -82,7 +82,7 @@ def cmd_init(args: Namespace, logger: Logger) -> int:
     target_dir.mkdir(parents=True, exist_ok=True)
 
     # Check if already initialized
-    config_path = target_dir / "kotornasher.cfg"
+    config_path = target_dir / "kotorcli.cfg"
     if config_path.exists():
         msg = f"Package already initialized at {target_dir}"
         logger.warning(msg)
@@ -91,7 +91,7 @@ def cmd_init(args: Namespace, logger: Logger) -> int:
             logger.info("Initialization cancelled")
             return 0
 
-    msg = f"Initializing kotornasher package in {target_dir}"
+    msg = f"Initializing kotorcli package in {target_dir}"
     logger.info(msg)
 
     # Gather package information
@@ -152,14 +152,14 @@ def cmd_init(args: Namespace, logger: Logger) -> int:
     for subdir in subdirs:
         (target_dir / subdir).mkdir(parents=True, exist_ok=True)
 
-    # Create .kotornasher directory for local config
-    kotornasher_dir = target_dir / ".kotornasher"
-    kotornasher_dir.mkdir(exist_ok=True)
+    # Create .kotorcli directory for local config
+    kotorcli_dir = target_dir / ".kotorcli"
+    kotorcli_dir.mkdir(exist_ok=True)
 
     # Create .gitignore
-    gitignore_content = """# KOTORNasher
-.kotornasher/cache/
-.kotornasher/user.cfg
+    gitignore_content = """# KotorCLI
+.kotorcli/cache/
+.kotorcli/user.cfg
 *.log
 
 # Build output
@@ -221,7 +221,7 @@ __pycache__/
         msg = f"Unpacking initial file: {init_file}"
         logger.info(msg)
         # Import and call unpack command
-        from kotornasher.commands.unpack import cmd_unpack  # noqa: PLC0415
+        from kotorcli.commands.unpack import cmd_unpack  # noqa: PLC0415
 
         class UnpackArgs:
             target = None
@@ -238,10 +238,10 @@ __pycache__/
 
     logger.info(f"\nPackage initialized successfully in {target_dir}")
     logger.info("Next steps:")
-    logger.info("  1. Edit kotornasher.cfg to configure your package")
+    logger.info("  1. Edit kotorcli.cfg to configure your package")
     logger.info("  2. Place your source files in the src/ directory")
-    logger.info("  3. Run 'kotornasher list' to see available targets")
-    logger.info("  4. Run 'kotornasher pack' to build your module")
+    logger.info("  3. Run 'kotorcli list' to see available targets")
+    logger.info("  4. Run 'kotorcli pack' to build your module")
 
     return 0
 

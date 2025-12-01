@@ -1,4 +1,4 @@
-"""Logging utilities for KOTORNasher."""
+"""Logging utilities for KotorCLI."""
 from __future__ import annotations
 
 import logging
@@ -61,7 +61,7 @@ def setup_logger(level: str = "INFO", use_color: bool = True) -> Logger:
     -------
         Configured logger instance
     """
-    logger = logging.getLogger("kotornasher")
+    logger = logging.getLogger("kotorcli")
     logger.setLevel(getattr(logging, level.upper(), logging.INFO))
 
     # Remove existing handlers

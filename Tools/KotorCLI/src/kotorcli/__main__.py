@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""KOTORNasher - A build tool for KOTOR projects.
+"""KotorCLI - A build tool for KOTOR projects.
 
-This is a 1:1 implementation of nasher's syntax for KOTOR development.
+This is a 1:1 implementation of cli's syntax for KOTOR development.
 """
 from __future__ import annotations
 
@@ -24,11 +24,11 @@ if not getattr(sys, "frozen", False):
     utility_path = pathlib.Path(__file__).parents[4] / "Libraries" / "Utility" / "src" / "utility"
     if utility_path.exists():
         update_sys_path(utility_path.parent)
-    kotornasher_path = pathlib.Path(__file__).parent
-    if kotornasher_path.exists():
-        update_sys_path(kotornasher_path.parent)
+    kotorcli_path = pathlib.Path(__file__).parent
+    if kotorcli_path.exists():
+        update_sys_path(kotorcli_path.parent)
 
-from kotornasher.commands import (  # noqa: E402
+from kotorcli.commands import (
     cmd_compile,
     cmd_config,
     cmd_convert,
@@ -39,8 +39,8 @@ from kotornasher.commands import (  # noqa: E402
     cmd_pack,
     cmd_unpack,
 )
-from kotornasher.config import VERSION  # noqa: E402
-from kotornasher.logger import setup_logger  # noqa: E402
+from kotorcli.config import VERSION
+from kotorcli.logger import setup_logger
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -49,12 +49,12 @@ if TYPE_CHECKING:
 def create_parser() -> ArgumentParser:
     """Create the main argument parser."""
     parser = ArgumentParser(
-        prog="kotornasher",
-        description="A build tool for KOTOR projects (nasher-compatible syntax)",
+        prog="kotorcli",
+        description="A build tool for KOTOR projects (cli-compatible syntax)",
     )
 
     # Global options
-    parser.add_argument("--version", action="version", version=f"KOTORNasher {VERSION}")
+    parser.add_argument("--version", action="version", version=f"KotorCLI {VERSION}")
     parser.add_argument("-h", "--help", action="store_true", help="Show this help message and exit")
     parser.add_argument("--yes", action="store_true", help="Automatically answer yes to all prompts")
     parser.add_argument("--no", action="store_true", help="Automatically answer no to all prompts")
@@ -84,7 +84,7 @@ def create_parser() -> ArgumentParser:
     # init command
     init_parser = subparsers.add_parser(
         "init",
-        help="Create a new kotornasher package",
+        help="Create a new kotorcli package",
     )
     init_parser.add_argument("dir", nargs="?", default=".", help="Directory to initialize (default: current directory)")
     init_parser.add_argument("file", nargs="?", help="File to unpack into the new package")
@@ -95,7 +95,7 @@ def create_parser() -> ArgumentParser:
     # list command
     list_parser = subparsers.add_parser(
         "list",
-        help="List all targets defined in kotornasher.cfg",
+        help="List all targets defined in kotorcli.cfg",
     )
     list_parser.add_argument("targets", nargs="*", help="Specific targets to list")
     list_parser.add_argument("--quiet", action="store_true", help="List only target names")
@@ -198,7 +198,7 @@ def create_parser() -> ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None):
-    """Main entry point for KOTORNasher."""
+    """Main entry point for KotorCLI."""
     parser = create_parser()
     args = parser.parse_args(argv)
 

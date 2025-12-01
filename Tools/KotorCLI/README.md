@@ -1,16 +1,16 @@
-# KOTORNasher
+# KotorCLI
 
-A build tool for KOTOR projects with nasher-compatible syntax.
+A build tool for KOTOR projects with cli-compatible syntax.
 
 ## Overview
 
-KOTORNasher is a command-line tool for converting KOTOR modules, ERFs, and haks between binary and text-based source files. This allows git-based version control and team collaboration for KOTOR modding projects.
+KotorCLI is a command-line tool for converting KOTOR modules, ERFs, and haks between binary and text-based source files. This allows git-based version control and team collaboration for KOTOR modding projects.
 
-**Built on PyKotor** - KOTORNasher leverages PyKotor's comprehensive KOTOR file format libraries, providing native support for all KOTOR formats without external dependencies.
+**Built on PyKotor** - KotorCLI leverages PyKotor's comprehensive KOTOR file format libraries, providing native support for all KOTOR formats without external dependencies.
 
 ### Features
 
-- **nasher-compatible syntax** - Uses the same command structure as nasher for familiarity
+- **cli-compatible syntax** - Uses the same command structure as cli for familiarity
 - **Git-friendly workflow** - Convert binary KOTOR files to JSON for version control
 - **Built-in NSS compiler** - Compile scripts without external dependencies using PyKotor's native compiler
 - **Fast** - Built on PyKotor's high-performance libraries
@@ -23,7 +23,7 @@ KOTORNasher is a command-line tool for converting KOTOR modules, ERFs, and haks 
 ### From Source
 
 ```bash
-cd Tools/KOTORNasher
+cd Tools/KotorCLI
 pip install -e .
 ```
 
@@ -38,14 +38,14 @@ pip install -e .
 ### 1. Initialize a new project
 
 ```bash
-kotornasher init myproject
+KotorCLI init myproject
 cd myproject
 ```
 
 ### 2. Unpack an existing module
 
 ```bash
-kotornasher unpack --file path/to/mymodule.mod
+KotorCLI unpack --file path/to/mymodule.mod
 ```
 
 ### 3. Edit source files
@@ -55,12 +55,12 @@ Edit the files in the `src/` directory as needed.
 ### 4. Pack and install
 
 ```bash
-kotornasher install
+KotorCLI install
 ```
 
 ## PyKotor Integration
 
-KOTORNasher is built on PyKotor and uses the following modules:
+KotorCLI is built on PyKotor and uses the following modules:
 
 - **GFF/JSON Conversion**: `pykotor.resource.formats.gff` - Reads/writes GFF files in binary and JSON format
 - **ERF/Module Handling**: `pykotor.resource.formats.erf` - Reads/writes ERF, MOD, SAV files
@@ -70,7 +70,7 @@ KOTORNasher is built on PyKotor and uses the following modules:
 
 ### Vendor Code References
 
-KOTORNasher's implementation is informed by code from PyKotor's vendor directory:
+KotorCLI's implementation is informed by code from PyKotor's vendor directory:
 
 - **xoreos-tools** (`vendor/xoreos-tools/`) - C++ reference for GFF, ERF, and NSS formats
 - **KotOR.js** (`vendor/KotOR.js/`) - TypeScript reference for all KOTOR formats
@@ -84,29 +84,29 @@ KOTORNasher's implementation is informed by code from PyKotor's vendor directory
 Get, set, or unset user-defined configuration options.
 
 ```bash
-kotornasher config <key> [<value>]
-kotornasher config --list
-kotornasher config --global nssCompiler /path/to/nwnnsscomp
+KotorCLI config <key> [<value>]
+KotorCLI config --list
+KotorCLI config --global nssCompiler /path/to/nwnnsscomp
 ```
 
 ### init
 
-Create a new kotornasher package.
+Create a new KotorCLI package.
 
 ```bash
-kotornasher init [dir] [file]
-kotornasher init myproject
-kotornasher init myproject --file mymodule.mod
+KotorCLI init [dir] [file]
+KotorCLI init myproject
+KotorCLI init myproject --file mymodule.mod
 ```
 
 ### list
 
-List all targets defined in kotornasher.cfg.
+List all targets defined in KotorCLI.cfg.
 
 ```bash
-kotornasher list
-kotornasher list [target]
-kotornasher list --verbose
+KotorCLI list
+KotorCLI list [target]
+KotorCLI list --verbose
 ```
 
 ### unpack
@@ -114,9 +114,9 @@ kotornasher list --verbose
 Unpack a file into the project source tree.
 
 ```bash
-kotornasher unpack [target] [file]
-kotornasher unpack
-kotornasher unpack --file mymodule.mod
+KotorCLI unpack [target] [file]
+KotorCLI unpack
+KotorCLI unpack --file mymodule.mod
 ```
 
 ### convert
@@ -124,10 +124,10 @@ kotornasher unpack --file mymodule.mod
 Convert all JSON sources to their GFF counterparts.
 
 ```bash
-kotornasher convert [targets...]
-kotornasher convert
-kotornasher convert all
-kotornasher convert demo test
+KotorCLI convert [targets...]
+KotorCLI convert
+KotorCLI convert all
+KotorCLI convert demo test
 ```
 
 ### compile
@@ -137,9 +137,9 @@ Compile all NWScript sources for target.
 **Note**: Uses PyKotor's built-in compiler by default. External compiler (nwnnsscomp) used if found in PATH.
 
 ```bash
-kotornasher compile [targets...]
-kotornasher compile
-kotornasher compile --file myscript.nss
+KotorCLI compile [targets...]
+KotorCLI compile
+KotorCLI compile --file myscript.nss
 ```
 
 ### pack
@@ -147,10 +147,10 @@ kotornasher compile --file myscript.nss
 Convert, compile, and pack all sources for target.
 
 ```bash
-kotornasher pack [targets...]
-kotornasher pack
-kotornasher pack all
-kotornasher pack demo --clean
+KotorCLI pack [targets...]
+KotorCLI pack
+KotorCLI pack all
+KotorCLI pack demo --clean
 ```
 
 ### install
@@ -158,10 +158,10 @@ kotornasher pack demo --clean
 Convert, compile, pack, and install target.
 
 ```bash
-kotornasher install [targets...]
-kotornasher install
-kotornasher install demo
-kotornasher install --installDir /path/to/kotor
+KotorCLI install [targets...]
+KotorCLI install
+KotorCLI install demo
+KotorCLI install --installDir /path/to/kotor
 ```
 
 ### launch
@@ -169,15 +169,15 @@ kotornasher install --installDir /path/to/kotor
 Convert, compile, pack, install, and launch target in-game.
 
 ```bash
-kotornasher launch [target]
-kotornasher serve [target]
-kotornasher play [target]
-kotornasher test [target]
+KotorCLI launch [target]
+KotorCLI serve [target]
+KotorCLI play [target]
+KotorCLI test [target]
 ```
 
 ## Configuration File
 
-The `kotornasher.cfg` file uses TOML format and is compatible with nasher's syntax.
+The `KotorCLI.cfg` file uses TOML format and is compatible with cli's syntax.
 
 ### Example Configuration
 
@@ -204,9 +204,9 @@ file = "mymod.mod"
 description = "Default module target"
 ```
 
-## Differences from nasher
+## Differences from cli
 
-While KOTORNasher maintains nasher's command syntax for familiarity, it has key differences:
+While KotorCLI maintains cli's command syntax for familiarity, it has key differences:
 
 1. **Built on PyKotor** - Uses PyKotor's native Python libraries instead of neverwinter.nim
 2. **Built-in Compiler** - Includes a native NSS compiler, no external tools required
@@ -219,7 +219,7 @@ MIT License - See LICENSE file for details.
 
 ## Credits
 
-- **Syntax inspired by**: [nasher](https://github.com/squattingmonk/nasher) by squattingmonk
+- **Syntax inspired by**: [cli](https://github.com/squattingmonk/cli) by squattingmonk
 - **Built on**: [PyKotor](https://github.com/th3w1zard1/PyKotor)
 - **Format references**: xoreos-tools, KotOR.js, reone, Kotor.NET (in vendor/)
 

@@ -4,7 +4,7 @@
 # Packages published:
 # - Libraries: pykotor, pykotorgl, pykotorfont
 # - Tools: holocrontoolset, holopatcher, kotor-diff, batchpatcher, gui-converter,
-#          holopazaak, kit-generator, kotornasher, holocron-ai, hologenerator
+#          holopazaak, kit-generator, kotorcli, holocron-ai, hologenerator
 #
 # Triggers:
 # - Manual dispatch with version bump options
@@ -33,7 +33,7 @@ on:
           - gui-converter
 #          - holopazaak
           - kit-generator
-#          - kotornasher
+#          - kotorcli
 #          - holocron-ai
           - hologenerator
       publish_target:
@@ -94,7 +94,7 @@ jobs:
             ["gui-converter"]="Tools/GuiConverter"
             ["holopazaak"]="Tools/HoloPazaak"
             ["kit-generator"]="Tools/KitGenerator"
-            ["kotornasher"]="Tools/KOTORNasher"
+            ["kotorcli"]="Tools/KOTORCli"
             ["holocron-ai"]="Tools/HolocronAI"
             ["hologenerator"]="Tools/HoloGenerator"
           )

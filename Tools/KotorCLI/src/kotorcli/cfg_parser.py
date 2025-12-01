@@ -1,4 +1,4 @@
-"""Configuration file parser for kotornasher.cfg (TOML format, nasher-compatible)."""
+"""Configuration file parser for kotorcli.cfg (TOML format, cli-compatible)."""
 from __future__ import annotations
 
 import os
@@ -14,8 +14,8 @@ except ModuleNotFoundError:
     import tomli as tomllib  # type: ignore[import-not-found, no-redef]
 
 
-class KOTORNasherConfig:
-    """Represents a kotornasher.cfg configuration."""
+class KotorCLIConfig:
+    """Represents a kotorcli.cfg configuration."""
 
     def __init__(self, config_path: Path):
         self.config_path = config_path
@@ -160,13 +160,13 @@ class KOTORNasherConfig:
 
 
 def find_config_file(start_dir: Path | None = None) -> Path | None:
-    """Find kotornasher.cfg by walking up the directory tree."""
+    """Find kotorcli.cfg by walking up the directory tree."""
     if start_dir is None:
         start_dir = Path.cwd()
 
     current = start_dir.resolve()
     while True:
-        config_path = current / "kotornasher.cfg"
+        config_path = current / "kotorcli.cfg"
         if config_path.exists():
             return config_path
 
@@ -176,8 +176,8 @@ def find_config_file(start_dir: Path | None = None) -> Path | None:
         current = parent
 
 
-def load_config(logger: Logger, config_path: Path | None = None) -> KOTORNasherConfig | None:
-    """Load the kotornasher.cfg configuration file.
+def load_config(logger: Logger, config_path: Path | None = None) -> KotorCLIConfig | None:
+    """Load the kotorcli.cfg configuration file.
 
     Args:
     ----
@@ -192,11 +192,11 @@ def load_config(logger: Logger, config_path: Path | None = None) -> KOTORNasherC
         config_path = find_config_file()
 
     if config_path is None:
-        logger.error("This is not a kotornasher repository. Please run 'kotornasher init'")
+        logger.error("This is not a kotorcli repository. Please run 'kotorcli init'")
         return None
 
     try:
-        return KOTORNasherConfig(config_path)
+        return KotorCLIConfig(config_path)
     except Exception:
         logger.exception("Failed to load configuration")
         return None

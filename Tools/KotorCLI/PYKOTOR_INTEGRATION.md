@@ -1,6 +1,6 @@
 # PyKotor Integration Guide
 
-This document details how KOTORNasher leverages PyKotor's comprehensive libraries and vendor code references.
+This document details how KotorCLI leverages PyKotor's comprehensive libraries and vendor code references.
 
 ## Key Advantages Over Initial Implementation
 
@@ -229,7 +229,7 @@ write_erf(erf, "output.mod")
    - Field accessors
    - Type safety
 
-**Usage in KOTORNasher**:
+**Usage in KotorCLI**:
 - `convert.py`: JSON → GFF conversion
 - `unpack.py`: GFF → JSON conversion
 - Both use PyKotor's implementations, vendor for reference
@@ -252,7 +252,7 @@ write_erf(erf, "output.mod")
    - Performance patterns
    - Edge cases
 
-**Usage in KOTORNasher**:
+**Usage in KotorCLI**:
 - `pack.py`: Creating ERF/MOD/HAK files
 - `unpack.py`: Reading ERF/MOD/HAK files
 
@@ -274,7 +274,7 @@ write_erf(erf, "output.mod")
    - Instruction set
    - Stack operations
 
-**Usage in KOTORNasher**:
+**Usage in KotorCLI**:
 - `compile.py`: Uses PyKotor's InbuiltNCSCompiler
 - Fallback to external compiler if available
 
@@ -360,8 +360,8 @@ pytest tests/resource/formats/test_erf.py
 
 ```bash
 # Test without external compiler
-cd Tools/KOTORNasher
-kotornasher compile --clean
+cd Tools/KotorCLI
+KotorCLI compile --clean
 # Should use InbuiltNCSCompiler
 ```
 
@@ -370,7 +370,7 @@ kotornasher compile --clean
 ```bash
 # Compare output with vendor implementations
 # Use files from vendor/Vanilla_KOTOR_Script_Source for testing
-kotornasher unpack --file /path/to/module.mod
+KotorCLI unpack --file /path/to/module.mod
 # Verify JSON matches vendor expectations
 ```
 
@@ -395,15 +395,15 @@ kotornasher unpack --file /path/to/module.mod
 
 ## Summary
 
-KOTORNasher successfully leverages PyKotor's comprehensive KOTOR modding library while maintaining nasher's familiar syntax. Key achievements:
+KotorCLI successfully leverages PyKotor's comprehensive KOTOR modding library while maintaining cli's familiar syntax. Key achievements:
 
 1. **100% PyKotor Integration** - All file operations use PyKotor
 2. **Built-in Compiler** - No external tools required
 3. **Vendor-Informed** - Implementation guided by multiple references
 4. **Type-Safe** - Leverages PyKotor's resource type system
-5. **nasher-Compatible** - Maintains familiar command syntax
+5. **cli-Compatible** - Maintains familiar command syntax
 
-This makes KOTORNasher a powerful, self-contained KOTOR modding tool with the ergonomics of nasher and the capabilities of PyKotor.
+This makes KotorCLI a powerful, self-contained KOTOR modding tool with the ergonomics of cli and the capabilities of PyKotor.
 
 
 

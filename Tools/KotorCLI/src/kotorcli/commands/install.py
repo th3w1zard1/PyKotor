@@ -10,8 +10,8 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from logging import Logger
 
-from kotornasher.cfg_parser import load_config
-from kotornasher.commands.pack import cmd_pack, should_overwrite_file
+from kotorcli.cfg_parser import load_config
+from kotorcli.commands.pack import cmd_pack, should_overwrite_file
 
 
 def find_kotor_install_dir() -> Path | None:

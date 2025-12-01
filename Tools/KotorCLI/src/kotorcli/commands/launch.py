@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from logging import Logger
 
-from kotornasher.commands.install import cmd_install, find_kotor_install_dir
+from kotorcli.commands.install import cmd_install, find_kotor_install_dir
 
 
 def find_kotor_executable() -> Path | None:

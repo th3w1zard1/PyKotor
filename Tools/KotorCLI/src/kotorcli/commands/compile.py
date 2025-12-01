@@ -16,7 +16,7 @@ from pykotor.resource.formats.ncs.compilers import (
     InbuiltNCSCompiler,
 )
 
-from kotornasher.cfg_parser import load_config
+from kotorcli.cfg_parser import load_config
 
 
 def get_game_from_config() -> Game:
@@ -153,7 +153,7 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
         logger.info(f"Compiling target: {target_name}")
 
         # Get cache directory
-        cache_dir = config.root_dir / ".kotornasher" / "cache" / target_name
+        cache_dir = config.root_dir / ".kotorcli" / "cache" / target_name
         if args.clean and cache_dir.exists():
             logger.info(f"Cleaning cache: {cache_dir}")
             shutil.rmtree(cache_dir)

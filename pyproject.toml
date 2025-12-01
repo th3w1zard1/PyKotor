@@ -28,7 +28,7 @@ holopatcher = ["holopatcher>=1.5.3"]
 kotor-diff = ["kotor-diff>=1.0.0"]
 batchpatcher = ["batchpatcher>=2.2.0"]
 gui-converter = ["gui-converter>=1.0.0"]
-kotornasher = ["kotornasher>=1.0.0"]
+kotorcli = ["kotorcli>=1.0.0"]
 holopazaak = ["holopazaak>=1.0.0"]
 kit-generator = ["kit-generator>=1.0.0"]
 all-tools = [
@@ -37,7 +37,7 @@ all-tools = [
     "kotor-diff>=1.0.0",
     "batchpatcher>=2.2.0",
     "gui-converter>=1.0.0",
-    "kotornasher>=1.0.0",
+    "kotorcli>=1.0.0",
     "holopazaak>=1.0.0",
     "kit-generator>=1.0.0",
 ]
@@ -51,7 +51,7 @@ all = [
     "kotor-diff>=1.0.0",
     "batchpatcher>=2.2.0",
     "gui-converter>=1.0.0",
-    "kotornasher>=1.0.0",
+    "kotorcli>=1.0.0",
     "holopazaak>=1.0.0",
     "kit-generator>=1.0.0",
 ]
@@ -118,13 +118,13 @@ holopatcher = ["holopatcher"]
 kotor-diff = ["kotor-diff"]
 batchpatcher = ["batchpatcher"]
 gui-converter = ["gui-converter"]
-kotornasher = ["kotornasher"]
+kotorcli = ["kotorcli"]
 holopazaak = ["holopazaak"]
 kit-generator = ["kit-generator"]
-all-tools = ["holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotornasher", "holopazaak", "kit-generator"]
+all-tools = ["holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
 
 # Everything
-all = ["pykotorfont", "pykotorgl", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotornasher", "holopazaak", "kit-generator"]
+all = ["pykotorfont", "pykotorgl", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
 
 [project.urls]
 homepage = "https://github.com/th3w1zard1/PyKotor"

@@ -1,14 +1,14 @@
-# KOTORNasher Implementation Summary
+# KotorCLI Implementation Summary
 
 ## Overview
 
-KOTORNasher is a complete implementation of a nasher-compatible build tool for KOTOR, built entirely on PyKotor's comprehensive libraries. It maintains 1:1 syntax compatibility with nasher while leveraging PyKotor's native Python implementations and extensive vendor code references.
+KotorCLI is a complete implementation of a cli-compatible build tool for KOTOR, built entirely on PyKotor's comprehensive libraries. It maintains 1:1 syntax compatibility with cli while leveraging PyKotor's native Python implementations and extensive vendor code references.
 
 ## What Was Accomplished
 
 ### 1. Complete Command Implementation (9 Commands)
 
-All nasher commands implemented with identical syntax:
+All cli commands implemented with identical syntax:
 
 1. **config** - Get/set user configuration
 2. **init** - Create new packages
@@ -104,8 +104,8 @@ All commands include inline references to vendor code with file paths and notes 
 ### 5. Project Structure
 
 ```
-Tools/KOTORNasher/
-├── src/kotornasher/
+Tools/KotorCLI/
+├── src/KotorCLI/
 │   ├── __main__.py              # Entry point
 │   ├── config.py                # Version metadata
 │   ├── logger.py                # Logging
@@ -131,44 +131,44 @@ Tools/KOTORNasher/
 ├── SUMMARY.md                   # This file
 ├── CHANGELOG.md                 # Version history
 ├── .gitignore                   # Git ignores
-└── KOTORNasher.code-workspace      # VS Code workspace
+└── KotorCLI.code-workspace      # VS Code workspace
 ```
 
 **Total Lines of Code**: ~2,500 lines
 **Total Documentation**: ~1,800 lines
 
-## Key Advantages Over nasher
+## Key Advantages Over cli
 
 ### 1. Built-in NSS Compiler ⭐
 
-**Major Feature**: KOTORNasher includes PyKotor's native NSS compiler.
+**Major Feature**: KotorCLI includes PyKotor's native NSS compiler.
 
-- **nasher**: Requires external nwnsc/nwnnsscomp
-- **KOTORNasher**: Works without external dependencies
+- **cli**: Requires external nwnsc/nwnnsscomp
+- **KotorCLI**: Works without external dependencies
 - **Fallback**: Still uses external compiler if available for performance
 
 ### 2. Pure Python Implementation
 
-- **nasher**: Nim + neverwinter.nim + C tools
-- **KOTORNasher**: Python 3.8+ + PyKotor
+- **cli**: Nim + neverwinter.nim + C tools
+- **KotorCLI**: Python 3.8+ + PyKotor
 - **Benefit**: Easier installation, better Python ecosystem integration
 
 ### 3. Type-Safe Resource Handling
 
-- **nasher**: String-based type checking
-- **KOTORNasher**: `ResourceType` enum with `.is_gff()` method
+- **cli**: String-based type checking
+- **KotorCLI**: `ResourceType` enum with `.is_gff()` method
 - **Benefit**: Catches errors at runtime
 
 ### 4. Multiple Vendor References
 
-- **nasher**: Based on neverwinter.nim only
-- **KOTORNasher**: Cross-referenced with xoreos, KotOR.js, reone, Kotor.NET
+- **cli**: Based on neverwinter.nim only
+- **KotorCLI**: Cross-referenced with xoreos, KotOR.js, reone, Kotor.NET
 - **Benefit**: Cross-validated implementations
 
 ### 5. Comprehensive Documentation
 
-- **nasher**: README + wiki
-- **KOTORNasher**: 6 documentation files + inline references
+- **cli**: README + wiki
+- **KotorCLI**: 6 documentation files + inline references
 - **Benefit**: Better maintainability and onboarding
 
 ## Technical Highlights
@@ -227,7 +227,7 @@ write_erf(erf, "mymod.mod")
 ## Verification Status
 
 ### ✅ Syntax Compatibility: 100%
-All nasher commands implemented with identical syntax.
+All cli commands implemented with identical syntax.
 
 ### ✅ PyKotor Integration: 100%
 All file operations use PyKotor's native implementations.
@@ -254,7 +254,7 @@ All commands reference relevant vendor code.
 ### Installation
 
 ```bash
-cd Tools/KOTORNasher
+cd Tools/KotorCLI
 pip install -e .
 ```
 
@@ -262,23 +262,23 @@ pip install -e .
 
 ```bash
 # 1. Create new project
-kotornasher init mymod
+KotorCLI init mymod
 
 # 2. Unpack existing module
 cd mymod
-kotornasher unpack --file /path/to/existing.mod
+KotorCLI unpack --file /path/to/existing.mod
 
 # 3. Edit source files
 # ... edit src/*.json, src/*.nss ...
 
 # 4. Pack and install
-kotornasher install --installDir /path/to/kotor
+KotorCLI install --installDir /path/to/kotor
 ```
 
 ## Example Configuration
 
 ```toml
-# kotornasher.cfg
+# KotorCLI.cfg
 [package]
 name = "My KOTOR Mod"
 description = "An awesome mod"
@@ -329,22 +329,22 @@ Potential improvements:
 
 ## Credits
 
-- **Syntax inspired by**: [nasher](https://github.com/squattingmonk/nasher) by squattingmonk
+- **Syntax inspired by**: [cli](https://github.com/squattingmonk/cli) by squattingmonk
 - **Built on**: [PyKotor](https://github.com/th3w1zard1/PyKotor) by NickHugi
 - **Format references**: xoreos-tools, KotOR.js, reone, Kotor.NET
 
 ## Conclusion
 
-**KOTORNasher successfully delivers a complete, production-ready build tool for KOTOR modding that:**
+**KotorCLI successfully delivers a complete, production-ready build tool for KOTOR modding that:**
 
-1. ✅ Maintains 100% syntax compatibility with nasher
+1. ✅ Maintains 100% syntax compatibility with cli
 2. ✅ Leverages PyKotor's comprehensive libraries
 3. ✅ References multiple vendor implementations for accuracy
 4. ✅ Includes built-in NSS compiler (major improvement!)
 5. ✅ Provides comprehensive documentation
 6. ✅ Delivers clean, maintainable code
 
-**KOTORNasher is ready for production use and provides the familiar ergonomics of nasher with the power and flexibility of PyKotor.**
+**KotorCLI is ready for production use and provides the familiar ergonomics of cli with the power and flexibility of PyKotor.**
 
 ---
 

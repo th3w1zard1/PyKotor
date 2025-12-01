@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kotornasher"
+name = "kotorcli"
 version = "1.0.0"
-description = "A build tool for KOTOR projects (nasher-compatible syntax)"
+description = "A build tool for KOTOR projects (cli-compatible syntax)"
 authors = [
     {name = "PyKotor Contributors"}
 ]
@@ -14,7 +14,7 @@ requires-python = ">=3.8"
 license = {text = "MIT"}
 keywords = [
     "kotor", "kotor1", "kotor2", "tsl",
-    "nasher", "build-tool", "automation",
+    "cli", "build-tool", "automation",
     "modding", "nwscript", "pykotor",
 ]
 classifiers = [
@@ -47,7 +47,7 @@ dev = [
 ]
 
 [project.scripts]
-kotornasher = "kotornasher.__main__:main"
+kotorcli = "kotorcli.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/th3w1zard1/PyKotor"
@@ -58,14 +58,14 @@ Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 
 # Poetry configuration
 [tool.poetry]
-name = "kotornasher"
+name = "kotorcli"
 version = "1.0.0"
-description = "A build tool for KOTOR projects (nasher-compatible syntax)"
+description = "A build tool for KOTOR projects (cli-compatible syntax)"
 authors = ["PyKotor Contributors", "Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
 license = "MIT"
-packages = [{ include = "kotornasher", from = "src" }]
+packages = [{ include = "kotorcli", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -74,7 +74,7 @@ tomli = {version = ">=2.0.0", python = "<3.11"}
 tomli-w = ">=1.0.0"
 
 [tool.poetry.scripts]
-kotornasher = "kotornasher.__main__:main"
+kotorcli = "kotorcli.__main__:main"
 
 [tool.poetry.urls]
 Homepage = "https://github.com/th3w1zard1/PyKotor"
@@ -83,7 +83,7 @@ Issues = "https://github.com/th3w1zard1/PyKotor/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["kotornasher*"]
+include = ["kotorcli*"]
 
 [tool.ruff]
 line-length = 120

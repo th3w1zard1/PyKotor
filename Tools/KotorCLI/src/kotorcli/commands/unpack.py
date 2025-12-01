@@ -26,7 +26,7 @@ from pykotor.resource.formats.gff import read_gff, write_gff
 from pykotor.resource.formats.rim import read_rim
 from pykotor.resource.type import ResourceType
 
-from kotornasher.cfg_parser import load_config
+from kotorcli.cfg_parser import load_config
 
 
 def compute_file_hash(file_path: Path) -> str:
@@ -117,7 +117,7 @@ def cmd_unpack(args: Namespace, logger: Logger) -> int:
         sources = config.get_target_sources(target)
 
         # Create cache directory for tracking
-        cache_dir = config.root_dir / ".kotornasher" / "cache" / target_name
+        cache_dir = config.root_dir / ".kotorcli" / "cache" / target_name
         cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Track unpacked files

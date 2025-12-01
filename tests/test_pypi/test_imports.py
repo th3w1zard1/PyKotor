@@ -130,7 +130,7 @@ class TestToolImports:
     @pytest.mark.parametrize("tool_module,package_path", [
         ("holopatcher", "Tools/HoloPatcher/src"),
         ("kotordiff", "Tools/KotorDiff/src"),
-        ("kotornasher", "Tools/KOTORNasher/src"),
+        ("kotorcli", "Tools/KOTORCli/src"),
         ("gui_converter", "Tools/GuiConverter/src"),
         ("kitgenerator", "Tools/KitGenerator/src"),
     ])

@@ -150,7 +150,7 @@ jobs:
         tool:
           - holopatcher
           - kotor-diff
-          - kotornasher
+          - kotorcli
     steps:
       - uses: actions/checkout@v4
       
@@ -186,8 +186,8 @@ jobs:
             kotor-diff)
               python -m kotordiff --help || echo "Help flag test"
               ;;
-            kotornasher)
-              kotornasher --help || python -m kotornasher --help || echo "Help flag test"
+            kotorcli)
+              kotorcli --help || python -m kotorcli --help || echo "Help flag test"
               ;;
           esac
           echo "✓ CLI entry point works"

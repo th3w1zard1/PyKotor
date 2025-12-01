@@ -1,14 +1,14 @@
-# KOTORNasher Verification Checklist
+# KotorCLI Verification Checklist
 
-This document verifies that KOTORNasher achieves 1:1 syntax compatibility with nasher while properly leveraging PyKotor and vendor code references.
+This document verifies that KotorCLI achieves 1:1 syntax compatibility with cli while properly leveraging PyKotor and vendor code references.
 
 ## ✅ Command Syntax Verification
 
 ### Config Command
-- ✅ `kotornasher config <key> [<value>]` - Get/set configuration
-- ✅ `kotornasher config --list` - List all configuration
-- ✅ `kotornasher config --global` - Global configuration support
-- ✅ Supported keys match nasher exactly:
+- ✅ `KotorCLI config <key> [<value>]` - Get/set configuration
+- ✅ `KotorCLI config --list` - List all configuration
+- ✅ `KotorCLI config --global` - Global configuration support
+- ✅ Supported keys match cli exactly:
   - userName, userEmail
   - nssCompiler, erfUtil, gffUtil, tlkUtil
   - installDir, gameBin, serverBin
@@ -19,87 +19,87 @@ This document verifies that KOTORNasher achieves 1:1 syntax compatibility with n
   - overwritePackedFile, overwriteInstalledFile
   - skipCompile
 
-**nasher Reference**: `src/nasher/config.nim`
-**Implementation**: `src/kotornasher/commands/config.py`
+**cli Reference**: `src/cli/config.nim`
+**Implementation**: `src/KotorCLI/commands/config.py`
 
 ### Init Command
-- ✅ `kotornasher init [dir] [file]` - Create new package
-- ✅ Generates `kotornasher.cfg` in TOML format
+- ✅ `KotorCLI init [dir] [file]` - Create new package
+- ✅ Generates `KotorCLI.cfg` in TOML format
 - ✅ Optional `--file` to initialize from existing module
 
-**nasher Reference**: `src/nasher/init.nim`
-**Implementation**: `src/kotornasher/commands/init.py`
+**cli Reference**: `src/cli/init.nim`
+**Implementation**: `src/KotorCLI/commands/init.py`
 
 ### List Command
-- ✅ `kotornasher list [target]` - List targets
-- ✅ `kotornasher list --verbose` - Detailed information
+- ✅ `KotorCLI list [target]` - List targets
+- ✅ `KotorCLI list --verbose` - Detailed information
 - ✅ Shows target name, file, description
 
-**nasher Reference**: `src/nasher/list.nim`
-**Implementation**: `src/kotornasher/commands/list.py`
+**cli Reference**: `src/cli/list.nim`
+**Implementation**: `src/KotorCLI/commands/list.py`
 
 ### Unpack Command
-- ✅ `kotornasher unpack [target] [file]` - Unpack to source tree
-- ✅ `kotornasher unpack --file <file>` - Unpack specific file
+- ✅ `KotorCLI unpack [target] [file]` - Unpack to source tree
+- ✅ `KotorCLI unpack --file <file>` - Unpack specific file
 - ✅ Extracts to directories based on rules
 - ✅ Converts GFF to JSON automatically
 
-**nasher Reference**: `src/nasher/unpack.nim`
-**Implementation**: `src/kotornasher/commands/unpack.py`
+**cli Reference**: `src/cli/unpack.nim`
+**Implementation**: `src/KotorCLI/commands/unpack.py`
 
 ### Convert Command
-- ✅ `kotornasher convert [targets...]` - Convert JSON to GFF
+- ✅ `KotorCLI convert [targets...]` - Convert JSON to GFF
 - ✅ Converts all JSON sources to binary GFF
 - ✅ Outputs to cache directory
 
-**nasher Reference**: `src/nasher/convert.nim`
-**Implementation**: `src/kotornasher/commands/convert.py`
+**cli Reference**: `src/cli/convert.nim`
+**Implementation**: `src/KotorCLI/commands/convert.py`
 
 ### Compile Command
-- ✅ `kotornasher compile [targets...]` - Compile NSS sources
-- ✅ `kotornasher compile --file <file>` - Compile specific file
+- ✅ `KotorCLI compile [targets...]` - Compile NSS sources
+- ✅ `KotorCLI compile --file <file>` - Compile specific file
 - ✅ Searches for external compiler
 - ✅ **BONUS**: Falls back to built-in PyKotor compiler
 
-**nasher Reference**: `src/nasher/compile.nim`
-**Implementation**: `src/kotornasher/commands/compile.py`
+**cli Reference**: `src/cli/compile.nim`
+**Implementation**: `src/KotorCLI/commands/compile.py`
 
 ### Pack Command
-- ✅ `kotornasher pack [targets...]` - Pack sources
-- ✅ `kotornasher pack --clean` - Clean cache first
+- ✅ `KotorCLI pack [targets...]` - Pack sources
+- ✅ `KotorCLI pack --clean` - Clean cache first
 - ✅ Runs convert, compile, then packs
 - ✅ Creates MOD/ERF/HAK files
 
-**nasher Reference**: `src/nasher/pack.nim`
-**Implementation**: `src/kotornasher/commands/pack.py`
+**cli Reference**: `src/cli/pack.nim`
+**Implementation**: `src/KotorCLI/commands/pack.py`
 
 ### Install Command
-- ✅ `kotornasher install [targets...]` - Pack and install
-- ✅ `kotornasher install --installDir <dir>` - Custom install path
+- ✅ `KotorCLI install [targets...]` - Pack and install
+- ✅ `KotorCLI install --installDir <dir>` - Custom install path
 - ✅ Installs to KOTOR directory
 
-**nasher Reference**: `src/nasher/install.nim`
-**Implementation**: `src/kotornasher/commands/install.py`
+**cli Reference**: `src/cli/install.nim`
+**Implementation**: `src/KotorCLI/commands/install.py`
 
 ### Launch Command
-- ✅ `kotornasher launch [target]` - Install and launch game
+- ✅ `KotorCLI launch [target]` - Install and launch game
 - ✅ Aliases: `serve`, `play`, `test`
 - ✅ Starts game after installation
 
-**nasher Reference**: `src/nasher/launch.nim`
-**Implementation**: `src/kotornasher/commands/launch.py`
+**cli Reference**: `src/cli/launch.nim`
+**Implementation**: `src/KotorCLI/commands/launch.py`
 
 ## ✅ Configuration File Compatibility
 
 ### TOML Format
-- ✅ Uses TOML (compatible with nasher's format)
+- ✅ Uses TOML (compatible with cli's format)
 - ✅ `[package]` section for package metadata
 - ✅ `[package.sources]` for source rules
 - ✅ `[package.rules]` for file-to-directory mapping
 - ✅ `[target]` sections for build targets
 
-**nasher Reference**: nasher uses similar TOML-like format
-**Implementation**: `src/kotornasher/cfg_parser.py`
+**cli Reference**: cli uses similar TOML-like format
+**Implementation**: `src/KotorCLI/cfg_parser.py`
 
 ### Configuration Keys
 ```toml
@@ -136,8 +136,8 @@ parent = "base_target"         # ✅ Supported (inheritance)
 - ✅ Auto-detection with `detect_gff()`
 
 **Files**:
-- `src/kotornasher/commands/convert.py`: JSON → GFF
-- `src/kotornasher/commands/unpack.py`: GFF → JSON
+- `src/KotorCLI/commands/convert.py`: JSON → GFF
+- `src/KotorCLI/commands/unpack.py`: GFF → JSON
 
 **Vendor References**:
 - ✅ `vendor/xoreos-tools/src/aurora/gff3file.cpp` - Referenced
@@ -151,8 +151,8 @@ parent = "base_target"         # ✅ Supported (inheritance)
 - ✅ Supports MOD, ERF, SAV, HAK types
 
 **Files**:
-- `src/kotornasher/commands/pack.py`: Creates ERF/MOD files
-- `src/kotornasher/commands/unpack.py`: Reads ERF/MOD files
+- `src/KotorCLI/commands/pack.py`: Creates ERF/MOD files
+- `src/KotorCLI/commands/unpack.py`: Reads ERF/MOD files
 
 **Vendor References**:
 - ✅ `vendor/xoreos-tools/src/aurora/erffile.cpp` - Referenced
@@ -164,7 +164,7 @@ parent = "base_target"         # ✅ Supported (inheritance)
 - ✅ Reads RIM archives
 
 **Files**:
-- `src/kotornasher/commands/unpack.py`: Reads RIM files
+- `src/KotorCLI/commands/unpack.py`: Reads RIM files
 
 **Vendor References**:
 - ✅ `vendor/xoreos-tools/src/aurora/rimfile.cpp` - Referenced
@@ -176,7 +176,7 @@ parent = "base_target"         # ✅ Supported (inheritance)
 - ✅ Falls back to built-in if external not found
 
 **Files**:
-- `src/kotornasher/commands/compile.py`: Compiles NSS to NCS
+- `src/KotorCLI/commands/compile.py`: Compiles NSS to NCS
 
 **Vendor References**:
 - ✅ `vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts` - Referenced
@@ -220,9 +220,9 @@ parent = "base_target"         # ✅ Supported (inheritance)
 
 ### Directory Layout
 ```
-Tools/KOTORNasher/
+Tools/KotorCLI/
 ├── src/
-│   └── kotornasher/
+│   └── KotorCLI/
 │       ├── __init__.py           # ✅ Package init
 │       ├── __main__.py           # ✅ Entry point
 │       ├── config.py             # ✅ Version metadata
@@ -249,34 +249,34 @@ Tools/KOTORNasher/
 ├── VERIFICATION.md               # ✅ This file
 ├── CHANGELOG.md                  # ✅ Version history
 ├── .gitignore                    # ✅ Git ignore rules
-└── KOTORNasher.code-workspace       # ✅ VS Code workspace
+└── KotorCLI.code-workspace       # ✅ VS Code workspace
 ```
 
-## ✅ Key Improvements Over nasher
+## ✅ Key Improvements Over cli
 
 ### 1. Built-in NSS Compiler
-- **nasher**: Requires nwnsc or nwn_script_comp (external)
-- **KOTORNasher**: Includes PyKotor's InbuiltNCSCompiler
+- **cli**: Requires nwnsc or nwn_script_comp (external)
+- **KotorCLI**: Includes PyKotor's InbuiltNCSCompiler
 - **Benefit**: Works without external dependencies
 
 ### 2. Pure Python
-- **nasher**: Nim + neverwinter.nim + C tools
-- **KOTORNasher**: Pure Python + PyKotor
+- **cli**: Nim + neverwinter.nim + C tools
+- **KotorCLI**: Pure Python + PyKotor
 - **Benefit**: Easier to install and extend
 
 ### 3. Type Safety
-- **nasher**: String-based type handling
-- **KOTORNasher**: ResourceType enum with type checking
+- **cli**: String-based type handling
+- **KotorCLI**: ResourceType enum with type checking
 - **Benefit**: Catches errors at runtime
 
 ### 4. Comprehensive Documentation
-- **nasher**: README + wiki
-- **KOTORNasher**: README + QUICKSTART + IMPLEMENTATION_NOTES + PYKOTOR_INTEGRATION + inline references
+- **cli**: README + wiki
+- **KotorCLI**: README + QUICKSTART + IMPLEMENTATION_NOTES + PYKOTOR_INTEGRATION + inline references
 - **Benefit**: Better maintainability
 
 ### 5. Vendor Code Integration
-- **nasher**: Uses neverwinter.nim (single reference)
-- **KOTORNasher**: References xoreos, KotOR.js, reone, Kotor.NET (multiple references)
+- **cli**: Uses neverwinter.nim (single reference)
+- **KotorCLI**: References xoreos, KotOR.js, reone, Kotor.NET (multiple references)
 - **Benefit**: Cross-validated implementations
 
 ## ✅ Testing Verification
@@ -285,43 +285,43 @@ Tools/KOTORNasher/
 
 ```bash
 # 1. Installation
-cd Tools/KOTORNasher
+cd Tools/KotorCLI
 pip install -e .
-kotornasher --version  # ✅ Should show version
+KotorCLI --version  # ✅ Should show version
 
 # 2. Init
-kotornasher init test_project
+KotorCLI init test_project
 cd test_project
-# ✅ Should create kotornasher.cfg
+# ✅ Should create KotorCLI.cfg
 
 # 3. List
-kotornasher list
+KotorCLI list
 # ✅ Should show default target
 
 # 4. Compile (built-in)
 echo 'void main() {}' > src/test.nss
-kotornasher compile
+KotorCLI compile
 # ✅ Should compile without external compiler
 
 # 5. Convert
 echo '{"__type": "UTC", "fields": []}' > src/test.utc.json
-kotornasher convert
+KotorCLI convert
 # ✅ Should create cache/test.utc
 
 # 6. Pack
-kotornasher pack
+KotorCLI pack
 # ✅ Should create dist/test_project.mod
 
 # 7. Unpack
-kotornasher unpack --file dist/test_project.mod
+KotorCLI unpack --file dist/test_project.mod
 # ✅ Should extract JSON files
 
 # 8. Install (requires KOTOR path)
-# kotornasher install --installDir /path/to/kotor
+# KotorCLI install --installDir /path/to/kotor
 # ✅ Should install to modules directory
 
 # 9. Config
-kotornasher config --list
+KotorCLI config --list
 # ✅ Should list all configuration
 ```
 
@@ -375,7 +375,7 @@ write_erf(erf, "test.mod")
 ## Summary
 
 ### ✅ Syntax Compatibility: 100%
-All nasher commands implemented with identical syntax.
+All cli commands implemented with identical syntax.
 
 ### ✅ PyKotor Integration: 100%
 All file operations use PyKotor's native implementations.
@@ -391,18 +391,18 @@ No linter errors, proper typing, comprehensive error handling.
 
 ## Final Verdict
 
-**KOTORNasher successfully achieves 1:1 syntax compatibility with nasher while fully leveraging PyKotor's capabilities and properly referencing vendor code implementations.**
+**KotorCLI successfully achieves 1:1 syntax compatibility with cli while fully leveraging PyKotor's capabilities and properly referencing vendor code implementations.**
 
 Key achievements:
-1. ✅ Complete nasher command syntax compatibility
+1. ✅ Complete cli command syntax compatibility
 2. ✅ 100% PyKotor integration (no reimplementation)
-3. ✅ Built-in NSS compiler (major improvement over nasher)
+3. ✅ Built-in NSS compiler (major improvement over cli)
 4. ✅ Comprehensive vendor code references
 5. ✅ High-quality documentation
 6. ✅ Type-safe resource handling
 7. ✅ Clean, maintainable code
 
-KOTORNasher is ready for use and provides a powerful, self-contained KOTOR modding workflow with the familiar syntax of nasher and the comprehensive capabilities of PyKotor.
+KotorCLI is ready for use and provides a powerful, self-contained KOTOR modding workflow with the familiar syntax of cli and the comprehensive capabilities of PyKotor.
 
 
 
