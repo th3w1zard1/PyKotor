@@ -84,10 +84,10 @@ jobs:
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
 
-      - name: Update currentVersion in config.py
+      - name: Update currentVersion in config_info.py
         run: |
           VERSION="${{ needs.validate.outputs.version }}"
-          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config.py"
+          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config/config_info.py"
           
           echo "Updating $CONFIG_FILE currentVersion to $VERSION (pre-build)"
           
@@ -100,7 +100,7 @@ jobs:
 
       - name: Commit and push to master
         run: |
-          git add Tools/HolocronToolset/src/toolset/config.py
+          git add Tools/HolocronToolset/src/toolset/config/config_info.py
           git commit -m "chore: Bump currentVersion to ${{ needs.validate.outputs.version }} (pre-build)"
           git push origin master
         shell: bash
@@ -700,10 +700,10 @@ jobs:
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
 
-      - name: Update toolsetLatestVersion and toolsetLatestBetaVersion in config.py
+      - name: Update toolsetLatestVersion and toolsetLatestBetaVersion in config_info.py
         run: |
           VERSION="${{ needs.validate.outputs.version }}"
-          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config.py"
+          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config/config_info.py"
           
           echo "Updating $CONFIG_FILE with toolsetLatestVersion and toolsetLatestBetaVersion to $VERSION (post-upload)"
           
@@ -720,13 +720,13 @@ jobs:
             sed -i "s/\"toolsetLatestBetaNotes\": \"[^\"]*\"/\"toolsetLatestBetaNotes\": \"$ESCAPED_NOTES\"/" "$CONFIG_FILE"
           fi
           
-          echo "Updated config.py:"
+          echo "Updated config_info.py:"
           grep -A 5 "toolsetLatestVersion" "$CONFIG_FILE"
         shell: bash
 
       - name: Commit and push to master
         run: |
-          git add Tools/HolocronToolset/src/toolset/config.py
+          git add Tools/HolocronToolset/src/toolset/config/config_info.py
           git commit -m "chore: Update toolset latest versions to ${{ needs.validate.outputs.version }} (post-release)"
           git push origin master
         shell: bash

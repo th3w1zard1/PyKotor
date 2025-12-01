@@ -945,6 +945,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             renderer.start_warp_drag()
             return
 
+        # Check if we're in placement mode (component selected for placing)
         if renderer.cursor_component is not None:
             # Place new room
             component: KitComponent | None = self.selected_component()
@@ -954,21 +955,27 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                     renderer.set_cursor_component(None)
                     self.ui.componentList.clearSelection()
                     self.ui.componentList.setCurrentItem(None)
+                return  # Exit after placing room
+        
+        # Not in placement mode - handle room selection and dragging
+        room: IndoorMapRoom | None = renderer.room_under_mouse()
+        if room is not None:
+            # Clicking on a room
+            if room in renderer.selected_rooms():
+                # Room already selected - start drag without changing selection
+                renderer.start_drag(room)
             else:
-                # Check if clicking on a room
-                room: IndoorMapRoom | None = renderer.room_under_mouse()
-                if room is not None:
-                    # Select room (shift to add to selection)
-                    clear_existing: bool = Qt.Key.Key_Shift not in keys
-                    renderer.select_room(room, clear_existing=clear_existing)
-                    # Start drag tracking
-                    renderer.start_drag(room)
-                else:
-                    # No room clicked - start marquee selection OR clear selection
-                    if Qt.Key.Key_Shift not in keys:
-                        renderer.clear_selected_rooms()
-                    # Start marquee selection
-                    renderer.start_marquee(screen)
+                # Select room (shift to add to selection, otherwise clear existing)
+                clear_existing: bool = Qt.Key.Key_Shift not in keys
+                renderer.select_room(room, clear_existing=clear_existing)
+                # Start drag tracking
+                renderer.start_drag(room)
+        else:
+            # No room clicked - start marquee selection OR clear selection
+            if Qt.Key.Key_Shift not in keys:
+                renderer.clear_selected_rooms()
+            # Start marquee selection
+            renderer.start_marquee(screen)
 
     def on_mouse_released(
         self,
@@ -1331,7 +1338,12 @@ class IndoorMapRenderer(QWidget):
         flip_x: bool = False,
         flip_y: bool = False,
     ) -> SnapResult:
-        """Find if position can snap to a hook on existing rooms."""
+        """Find if position can snap to a hook on existing rooms.
+        
+        This checks ALL possible hook pairs between the room being placed/dragged
+        and existing rooms, calculating the snap position for each pair and
+        returning the closest one within the snap threshold.
+        """
         if not self.snap_to_hooks:
             return SnapResult(position=position, snapped=False)
 
@@ -1350,7 +1362,8 @@ class IndoorMapRenderer(QWidget):
         
         best_distance = float('inf')
         best_snap: SnapResult = SnapResult(position=position, snapped=False)
-        snap_threshold = 2.0 / self._cam_scale  # Larger threshold when zoomed out
+        # Snap threshold scales with zoom - larger when zoomed out for easier snapping
+        snap_threshold = max(3.0, 5.0 / self._cam_scale)
 
         for existing_room in self._map.rooms:
             if room is not None and existing_room is room:
@@ -1358,27 +1371,31 @@ class IndoorMapRenderer(QWidget):
             if existing_room in self._selected_rooms:
                 continue
 
-            hook1, hook2 = self.get_connected_hooks(test_room, existing_room)
-            if hook1 is None or hook2 is None:
-                continue
+            # Check ALL hook pairs for potential snap positions
+            for test_hook in test_room.component.hooks:
+                test_hook_local = test_room.hook_position(test_hook, world_offset=False)
+                
+                for existing_hook in existing_room.component.hooks:
+                    existing_hook_world = existing_room.hook_position(existing_hook)
+                    
+                    # Calculate where test_room would need to be positioned
+                    # so that test_hook aligns with existing_hook
+                    snapped_pos = Vector3(
+                        existing_hook_world.x - test_hook_local.x,
+                        existing_hook_world.y - test_hook_local.y,
+                        existing_hook_world.z - test_hook_local.z,
+                    )
 
-            # Calculate snap position
-            snapped_pos = (
-                existing_room.position
-                - test_room.hook_position(hook1, world_offset=False)
-                + existing_room.hook_position(hook2, world_offset=False)
-            )
-
-            distance = Vector2.from_vector3(position).distance(Vector2.from_vector3(snapped_pos))
-            if distance < snap_threshold and distance < best_distance:
-                best_distance = distance
-                best_snap = SnapResult(
-                    position=snapped_pos,
-                    snapped=True,
-                    hook_from=hook1,
-                    hook_to=hook2,
-                    target_room=existing_room,
-                )
+                    distance = Vector2.from_vector3(position).distance(Vector2.from_vector3(snapped_pos))
+                    if distance < snap_threshold and distance < best_distance:
+                        best_distance = distance
+                        best_snap = SnapResult(
+                            position=snapped_pos,
+                            snapped=True,
+                            hook_from=test_hook,
+                            hook_to=existing_hook,
+                            target_room=existing_room,
+                        )
 
         return best_snap
 

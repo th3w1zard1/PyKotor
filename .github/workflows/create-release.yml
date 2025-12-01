@@ -52,7 +52,7 @@ jobs:
           
           case "$TOOL" in
             toolset)
-              CONFIG_FILE="Tools/HolocronToolset/src/toolset/config.py"
+              CONFIG_FILE="Tools/HolocronToolset/src/toolset/config/config_info.py"
               TAG_NAME="v$VERSION-toolset"
               DISPLAY_NAME="HolocronToolset"
               ;;

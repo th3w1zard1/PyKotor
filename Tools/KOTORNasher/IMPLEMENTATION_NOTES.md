@@ -339,7 +339,7 @@ When contributing to KOTORNasher:
 - [nasher](https://github.com/squattingmonk/nasher) - Original NWN build tool
 - [neverwinter.nim](https://github.com/niv/neverwinter.nim) - NWN tools in Nim
 - [NWNT](https://github.com/WilliamDraco/NWNT) - Alternative text format
-- [PyKotor](https://github.com/NickHugi/PyKotor) - KOTOR modding library
+- [PyKotor](https://github.com/th3w1zard1/PyKotor) - KOTOR modding library
 - [xoreos-tools](https://github.com/xoreos/xoreos-tools) - File format tools
 - [KotOR.js](https://github.com/KobaltBlu/KotOR.js) - Web-based engine
 - [reone](https://github.com/seedhartha/reone) - KOTOR engine reimplementation

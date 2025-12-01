@@ -26,7 +26,7 @@ setup(
     long_description_content_type="text/markdown",
     author="PyKotor Team",
     author_email="",
-    url="https://github.com/NickHugi/PyKotor",
+    url="https://github.com/th3w1zard1/PyKotor",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     python_requires=">=3.8",

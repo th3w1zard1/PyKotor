@@ -123,7 +123,7 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("HolocronToolset")
     app.setOrganizationName("PyKotor")
-    app.setOrganizationDomain("github.com/NickHugi/PyKotor")
+    app.setOrganizationDomain("github.com/th3w1zard1/PyKotor")
     app.setApplicationVersion(CURRENT_VERSION)
     app.setDesktopFileName("com.pykotor.toolset")
     app.setApplicationDisplayName("Holocron Toolset")

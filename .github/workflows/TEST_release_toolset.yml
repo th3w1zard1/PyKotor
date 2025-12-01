@@ -98,10 +98,10 @@ jobs:
           fi
         shell: bash
 
-      - name: Update currentVersion in config.py (TEST BRANCH ONLY)
+      - name: Update currentVersion in config_info.py (TEST BRANCH ONLY)
         run: |
           VERSION="${{ needs.validate.outputs.version }}"
-          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config.py"
+          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config/config_info.py"
           
           echo "⚠️  TEST MODE: Updating $CONFIG_FILE currentVersion to $VERSION on test-release branch"
           echo "⚠️  This will NOT affect master or production auto-updates"
@@ -115,7 +115,7 @@ jobs:
 
       - name: Commit and push to test-release branch
         run: |
-          git add Tools/HolocronToolset/src/toolset/config.py
+          git add Tools/HolocronToolset/src/toolset/config/config_info.py
           git commit -m "chore: [TEST] Bump currentVersion to ${{ needs.validate.outputs.version }} (pre-build)"
           git push origin test-release
         shell: bash
@@ -519,7 +519,7 @@ jobs:
       - name: Update toolsetLatestVersion and toolsetLatestBetaVersion (TEST BRANCH ONLY)
         run: |
           VERSION="${{ needs.validate.outputs.version }}"
-          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config.py"
+          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config/config_info.py"
           
           echo "⚠️  TEST MODE: Updating Latest versions on test-release branch"
           echo "⚠️  This will NOT affect master or production auto-updates"
@@ -536,13 +536,13 @@ jobs:
             sed -i "s/\"toolsetLatestBetaNotes\": \"[^\"]*\"/\"toolsetLatestBetaNotes\": \"[TEST] $ESCAPED_NOTES\"/" "$CONFIG_FILE"
           fi
           
-          echo "Updated config.py:"
+          echo "Updated config_info.py:"
           grep -A 5 "toolsetLatestVersion" "$CONFIG_FILE"
         shell: bash
 
       - name: Commit and push to test-release branch
         run: |
-          git add Tools/HolocronToolset/src/toolset/config.py
+          git add Tools/HolocronToolset/src/toolset/config/config_info.py
           git commit -m "chore: [TEST] Update toolset latest versions to ${{ needs.validate.outputs.version }} (post-release)"
           git push origin test-release
         shell: bash

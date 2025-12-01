@@ -122,7 +122,7 @@ git push origin fix-some-bug
 
 # Create a PR to trigger build validation
 git checkout -b bump-toolset-313
-git add Tools/HolocronToolset/src/toolset/config.py
+git add Tools/HolocronToolset/src/toolset/config/config_info.py
 git commit -m "chore(toolset): bump version to 3.1.3"
 git push origin bump-toolset-313
 # Create PR and wait for validation

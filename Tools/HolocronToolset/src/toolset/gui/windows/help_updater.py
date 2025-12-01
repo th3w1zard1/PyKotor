@@ -80,7 +80,7 @@ class HelpUpdater:
         help_path = Path("./help").resolve()
         help_path.mkdir(parents=True, exist_ok=True)
         help_zip_path = Path("./help.zip").resolve()
-        download_github_file("NickHugi/PyKotor", help_zip_path, "/Tools/HolocronToolset/downloads/help.zip")
+        download_github_file("th3w1zard1/PyKotor", help_zip_path, "/Tools/HolocronToolset/downloads/help.zip")
 
         # Extract the ZIP file
         with zipfile.ZipFile(help_zip_path) as zip_file:

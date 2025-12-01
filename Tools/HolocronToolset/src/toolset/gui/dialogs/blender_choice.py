@@ -210,11 +210,14 @@ def show_blender_choice_dialog(
 
     # Check if Blender is available
     blender_info = settings.get_blender_info()
-    if not blender_info.is_valid or not blender_info.has_kotorblender:
-        # No Blender available, use built-in
+    
+    # Always show dialog if Blender is detected (even without kotorblender)
+    # This allows user to see the option and install kotorblender if needed
+    if not blender_info.is_valid:
+        # No Blender available, use built-in without showing dialog
         return ("builtin", False)
 
-    # Show dialog
+    # Show dialog (will inform user if kotorblender is missing)
     dialog = BlenderChoiceDialog(parent, blender_info, context)
     result = dialog.exec_()
 

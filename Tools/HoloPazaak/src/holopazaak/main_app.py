@@ -26,7 +26,7 @@ def main():
     app = QApplication(sys.argv)
     app.setApplicationName("HoloPazaak")
     app.setOrganizationName("PyKotor")
-    app.setOrganizationDomain("github.com/NickHugi/PyKotor")
+    app.setOrganizationDomain("github.com/th3w1zard1/PyKotor")
     app.setApplicationVersion(CURRENT_VERSION)
     app.setDesktopFileName("com.pykotor.holopazaak")
     app.setApplicationDisplayName("HoloPazaak")

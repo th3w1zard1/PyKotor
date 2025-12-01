@@ -170,8 +170,8 @@ gh release create test-v3.1.3-toolset --prerelease --title "Test Release 3.1.3" 
 # Fetch test-release
 git fetch origin test-release
 
-# View config.py on test-release
-git show origin/test-release:Tools/HolocronToolset/src/toolset/config.py | grep -A 5 "currentVersion"
+# View config_info.py on test-release
+git show origin/test-release:Tools/HolocronToolset/src/toolset/config/config_info.py | grep -A 5 "currentVersion"
 ```
 
 Expected output:
@@ -184,7 +184,7 @@ Expected output:
 ### Check master Branch (Should be unchanged)
 
 ```bash
-git show origin/master:Tools/HolocronToolset/src/toolset/config.py | grep -A 5 "currentVersion"
+git show origin/master:Tools/HolocronToolset/src/toolset/config/config_info.py | grep -A 5 "currentVersion"
 ```
 
 Expected output:
@@ -272,7 +272,7 @@ To create a test workflow for KotorDiff, HoloPatcher, etc.:
 2. Replace all instances of:
    - `toolset` → `kotordiff`
    - `HolocronToolset` → `KotorDiff`
-   - `Tools/HolocronToolset/src/toolset/config.py` → `Tools/KotorDiff/src/kotordiff/__main__.py`
+   - `Tools/HolocronToolset/src/toolset/config/config_info.py` → `Tools/KotorDiff/src/kotordiff/__main__.py`
    - `currentVersion` → `CURRENT_VERSION`
    - `toolsetLatestVersion` → (remove, KotorDiff doesn't have this)
 3. Adjust the build steps to match the tool's build process

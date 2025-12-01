@@ -5,7 +5,8 @@ from toolset.config.config_version import (
     toolset_tag_to_version,
 )
 from toolset.config.config_info import LOCAL_PROGRAM_INFO, CURRENT_VERSION
-from toolset.config.config_update import (
+
+from toolset.config.config_update import (  # noqa: E402
     fetch_update_info,
     is_remote_version_newer,
     get_remote_toolset_update_info,

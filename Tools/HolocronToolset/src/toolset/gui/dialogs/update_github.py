@@ -34,7 +34,7 @@ def fetch_fork_releases(
 def fetch_and_cache_forks() -> dict[str, list[GithubRelease]]:
     """Fetch all forks and their releases."""
     forks_cache: dict[str, list[GithubRelease]] = {}
-    forks_url = "https://api.github.com/repos/NickHugi/PyKotor/forks"
+    forks_url = "https://api.github.com/repos/th3w1zard1/PyKotor/forks"
     try:
         forks_response: requests.Response = requests.get(forks_url, timeout=15)
         forks_response.raise_for_status()

@@ -20,7 +20,7 @@ pip install pykotor
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/NickHugi/PyKotor
+   git clone https://github.com/th3w1zard1/PyKotor
    cd PyKotor
    ```
 
@@ -60,8 +60,8 @@ python Tools/HolocronToolset/src/toolset/__main__.py
 python Tools/KotorDiff/src/kotordiff/__main__.py
 ```
 
-See [HoloPatcher's readme](https://github.com/NickHugi/PyKotor/tree/master/Tools/HoloPatcher#readme) and  
-[HolocronToolset's readme](https://github.com/NickHugi/PyKotor/tree/master/Tools/HolocronToolset#readme) for more information.
+See [HoloPatcher's readme](https://github.com/th3w1zard1/PyKotor/tree/master/Tools/HoloPatcher#readme) and  
+[HolocronToolset's readme](https://github.com/th3w1zard1/PyKotor/tree/master/Tools/HolocronToolset#readme) for more information.
 
 Optionally, install all dev requirements in one shot:
 
@@ -71,7 +71,7 @@ pip install -r requirements-dev.txt --prefer-binary
 
 We use `--prefer-binary` as building pip packages from source can occasionally fail on some operating systems/python environments.
 
-For more information on running our Powershell scripts, please see [POWERSHELL.md](https://github.com/NickHugi/PyKotor/blob/master/POWERSHELL.md).  
+For more information on running our Powershell scripts, please see [POWERSHELL.md](https://github.com/th3w1zard1/PyKotor/blob/master/POWERSHELL.md).  
 If Powershell is not an option, you can install Python manually from <https://www.python.org/> and set your environment variable `PYTHONPATH` manually by looking inside the `.env` file in the root of this repo.
 
 ## Development
@@ -110,8 +110,8 @@ write_tpc(tex, "./C_Gammorean01.tga", ResourceType.TGA)
 ```
 
 This saves `C_Gammorean01.tga` to the current directory.  
-[More examples](https://github.com/NickHugi/PyKotor/blob/master/Libraries/PyKotor/docs/installation.md)
+[More examples](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/docs/installation.md)
 
 ## License
 
-This repository falls under the [LGPL-3.0-or-later License](https://github.com/NickHugi/PyKotor/blob/master/LICENSE).
+This repository falls under the [LGPL-3.0-or-later License](https://github.com/th3w1zard1/PyKotor/blob/master/LICENSE).

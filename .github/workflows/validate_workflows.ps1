@@ -97,7 +97,7 @@ Write-Host ""
 # Check version files exist
 Write-Host "Checking version files..." -ForegroundColor Yellow
 $versionFiles = @{
-    "Toolset" = "../../Tools/HolocronToolset/src/toolset/config.py"
+    "Toolset" = "../../Tools/HolocronToolset/src/toolset/config/config_info.py"
     "KotorDiff" = "../../Tools/KotorDiff/src/kotordiff/__main__.py"
     "HoloPatcher" = "../../Tools/HoloPatcher/src/holopatcher/config.py"
 }

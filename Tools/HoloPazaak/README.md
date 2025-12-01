@@ -29,7 +29,7 @@ PYTHONPATH=$PWD/src python src/holopazaak/app.py
 
 ## Local Development
 
-- Clone [PyKotor](https://github.com/NickHugi/PyKotor) and run the `install_python_venv.ps1` script in your powershell terminal. That's it!
+- Clone [PyKotor](https://github.com/th3w1zard1/PyKotor) and run the `install_python_venv.ps1` script in your powershell terminal. That's it!
 
 ## Building
 

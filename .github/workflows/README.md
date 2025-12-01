@@ -51,7 +51,7 @@ Automated release and validation workflows for all PyKotor tools.
 ### Option 3: Manual (Traditional)
 
 ```bash
-# 1. Update currentVersion in config.py
+# 1. Update currentVersion in config/config_info.py
 # 2. Commit and push
 # 3. Create pre-release with tag: v3.1.3-toolset
 ```

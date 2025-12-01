@@ -17,6 +17,7 @@ gh release create v3.1.4-toolset \
 ```
 
 **What happens automatically**:
+
 1. Updates `currentVersion` → commits to master
 2. Builds binaries with new version
 3. Uploads artifacts to release
@@ -35,7 +36,7 @@ gh release create test-v3.1.99-toolset --prerelease --title "TEST" --notes "Test
 # 2. Wait ~20 minutes - workflow runs
 
 # 3. Verify (master should be unchanged)
-git show origin/master:Tools/HolocronToolset/src/toolset/config.py | grep currentVersion
+git show origin/master:Tools/HolocronToolset/src/toolset/config/config_info.py | grep currentVersion
 
 # 4. Cleanup
 gh release delete test-v3.1.99-toolset --yes
@@ -43,6 +44,7 @@ git push origin --delete test-v3.1.99-toolset
 ```
 
 **What's different in test mode**:
+
 - ❌ Never touches `master` (uses `test-release` branch)
 - ❌ Doesn't convert to full release
 - ❌ Won't trigger auto-update for users
@@ -51,6 +53,7 @@ git push origin --delete test-v3.1.99-toolset
 ## 📋 Tag Patterns
 
 ### Production
+
 ```
 v3.1.4-toolset      → HolocronToolset
 v1.0.1-kotordiff    → KotorDiff
@@ -60,6 +63,7 @@ v1.0.0-translator   → Translator
 ```
 
 ### Test
+
 ```
 test-v3.1.99-toolset      → HolocronToolset (TEST)
 test-v1.0.99-kotordiff    → KotorDiff (TEST)
@@ -98,12 +102,14 @@ test-v1.0.99-translator   → Translator (TEST)
 ## 🆘 Emergency Commands
 
 ### Cancel Running Workflow
+
 ```bash
 gh run cancel <run-id>
 # Or via GitHub Actions tab → Cancel workflow
 ```
 
 ### Revert Bad Release
+
 ```bash
 # If caught before finalize completes:
 gh release delete v3.1.4-toolset --yes
@@ -116,12 +122,13 @@ gh release delete v3.1.4-toolset --yes
 ```
 
 ### Fix Version Manually
+
 ```bash
-# Edit config.py locally
-vim Tools/HolocronToolset/src/toolset/config.py
+# Edit config_info.py locally
+vim Tools/HolocronToolset/src/toolset/config/config_info.py
 
 # Commit and push
-git add Tools/HolocronToolset/src/toolset/config.py
+git add Tools/HolocronToolset/src/toolset/config/config_info.py
 git commit -m "fix: Correct version info"
 git push origin master
 ```
@@ -152,8 +159,8 @@ gh release create test-v3.1.99-toolset --prerelease --title "TEST" --notes "Firs
 
 # 4. Verify test-release branch created (master untouched)
 git fetch origin test-release
-git show origin/test-release:Tools/HolocronToolset/src/toolset/config.py | grep currentVersion
-git show origin/master:Tools/HolocronToolset/src/toolset/config.py | grep currentVersion
+git show origin/test-release:Tools/HolocronToolset/src/toolset/config/config_info.py | grep currentVersion
+git show origin/master:Tools/HolocronToolset/src/toolset/config/config_info.py | grep currentVersion
 
 # 5. Cleanup
 gh release delete test-v3.1.99-toolset --yes
@@ -176,4 +183,3 @@ git push origin --delete test-v3.1.99-toolset
 - Test Guide: `QUICK_TEST_GUIDE.md`
 - Full Guide: `RELEASE_WORKFLOW.md`
 - Create Test Workflow: `.\create_test_workflow.ps1 -ToolName "kotordiff"`
-

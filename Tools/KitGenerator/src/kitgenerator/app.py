@@ -1,6 +1,9 @@
+"""KitGenerator GUI application.
+
+This module provides the KitGenerator GUI, inheriting from the base tkinter app framework.
+"""
 from __future__ import annotations
 
-import ctypes
 import logging
 import os
 import pathlib
@@ -9,8 +12,8 @@ import tkinter as tk
 
 from contextlib import suppress
 from pathlib import Path
-from threading import Event, Thread
-from tkinter import filedialog, font as tkfont, messagebox, ttk
+from threading import Event
+from tkinter import filedialog, messagebox, ttk
 from typing import TYPE_CHECKING, cast
 
 if not getattr(sys, "frozen", False):
@@ -37,8 +40,9 @@ from kitgenerator import __version__  # noqa: E402
 from kitgenerator.extract import extract_kit  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.tools.path import CaseAwarePath, find_kotor_paths_from_default  # noqa: E402
-from pykotor.tslpatcher.logger import LogType, PatchLogger  # noqa: E402
+from pykotor.tslpatcher.logger import LogType  # noqa: E402
 from utility.error_handling import universal_simplify_exception  # noqa: E402
+from utility.tkinter.base_app import BaseApp  # noqa: E402
 
 if TYPE_CHECKING:
     from argparse import Namespace
@@ -48,35 +52,38 @@ if TYPE_CHECKING:
 VERSION_LABEL = __version__
 
 
-class App:
+class App(BaseApp):
+    """KitGenerator GUI application."""
+
     def __init__(self):
-        self.root = tk.Tk()
-        self.root.title(f"KitGenerator {VERSION_LABEL}")
-
-        self.set_window(width=600, height=500)
-
-        # Map the title bar's X button to our handle_exit_button function
-        self.root.protocol("WM_DELETE_WINDOW", self.handle_exit_button)
-
-        self.task_running: bool = False
-        self.task_thread: Thread | None = None
+        # KitGenerator-specific state
         self.installation_path: str = ""
         self.module_name: str = ""
         self.output_path: str = ""
         self.kit_id: str = ""
-        self.pykotor_logger = RobustLogger()
-        self.one_shot: bool = False
-        self.log_level = None  # Will be set if needed for filtering
         self.current_installation: Installation | None = None
 
-        self.initialize_logger()
-        self.initialize_ui_controls()
+        super().__init__(
+            title="KitGenerator",
+            version=VERSION_LABEL,
+            default_width=600,
+            default_height=500,
+        )
+
+        # Additional widgets stored during UI initialization
+        self.installation_paths: ttk.Combobox
+        self.installation_browse_button: ttk.Button
+        self.module_combobox: ttk.Combobox
+        self.output_entry: tk.Entry
+        self.kit_id_entry: tk.Entry
+        self.extract_button: ttk.Button
+        self.exit_button: ttk.Button
+
         self.show_onboarding_info()
 
         cmdline_args: Namespace | None = None
         try:
             from kitgenerator.cli import parse_args
-
             cmdline_args = parse_args()
             self.execute_commandline(cmdline_args)
         except Exception:  # noqa: BLE001
@@ -84,30 +91,8 @@ class App:
 
         self.pykotor_logger.debug("Init complete")
 
-    def set_window(
-        self,
-        width: int,
-        height: int,
-    ):
-        # Get screen dimensions
-        screen_width: int = self.root.winfo_screenwidth()
-        screen_height: int = self.root.winfo_screenheight()
-
-        # Calculate position to center the window
-        x_position = int((screen_width / 2) - (width / 2))
-        y_position = int((screen_height / 2) - (height / 2))
-
-        # Set the dimensions and position
-        self.root.geometry(f"{width}x{height}+{x_position}+{y_position}")
-        self.root.resizable(width=True, height=True)
-        self.root.minsize(width=width, height=height)
-
-    def initialize_logger(self):
-        self.logger = PatchLogger()
-        self.logger.verbose_observable.subscribe(self.write_log)
-        self.logger.note_observable.subscribe(self.write_log)
-        self.logger.warning_observable.subscribe(self.write_log)
-        self.logger.error_observable.subscribe(self.write_log)
+    def get_app_name(self) -> str:
+        return "KitGenerator"
 
     def initialize_ui_controls(self):
         # Use grid layout for main window
@@ -178,30 +163,11 @@ class App:
         self.extract_button = ttk.Button(bottom_frame, text="Extract", command=self.begin_extract)
         self.extract_button.pack(side="right", padx=5, pady=5)
 
-        self.simple_thread_event: Event = Event()
         self.progress_value = tk.IntVar(value=0)
 
         # Progress bar
         self.progress_bar = ttk.Progressbar(bottom_frame, maximum=100, variable=self.progress_value)
         self.progress_bar.pack(side="bottom", fill="x", padx=5, pady=5)
-
-    def set_text_font(
-        self,
-        text_frame: tk.Text,
-    ):
-        font_obj = tkfont.Font(font=text_frame.cget("font"))
-        font_obj.configure(size=9)
-        text_frame.configure(font=font_obj)
-
-        # Define a bold and slightly larger font
-        bold_font = tkfont.Font(font=text_frame.cget("font"))
-        bold_font.configure(size=10, weight="bold")
-
-        self.main_text.tag_configure("DEBUG", foreground="#6495ED")  # Cornflower Blue
-        self.main_text.tag_configure("INFO", foreground="#000000")  # Black
-        self.main_text.tag_configure("WARNING", foreground="#CC4E00", background="#FFF3E0", font=bold_font)  # Orange with bold font
-        self.main_text.tag_configure("ERROR", foreground="#DC143C", font=bold_font)  # Firebrick with bold font
-        self.main_text.tag_configure("CRITICAL", foreground="#FFFFFF", background="#8B0000", font=bold_font)  # White on Dark Red with bold font
 
     def on_installation_paths_chosen(
         self,
@@ -211,17 +177,6 @@ class App:
         self.root.after(10, lambda: self.move_cursor_to_end(cast("ttk.Combobox", event.widget)))
         # Populate modules when installation is selected
         self.populate_modules()
-
-    def move_cursor_to_end(
-        self,
-        combobox: ttk.Combobox,
-    ):
-        """Shows the rightmost portion of the specified combobox as that's the most relevant."""
-        combobox.focus_set()
-        position: int = len(combobox.get())
-        combobox.icursor(position)
-        combobox.xview(position)
-        self.root.focus_set()
 
     def browse_installation(
         self,
@@ -371,64 +326,6 @@ class App:
                 self.hide_console()
             self.begin_extract_thread(self.simple_thread_event)
 
-    def hide_console(self):
-        """Hide the console window in GUI mode."""
-        # Windows
-        if os.name == "nt":
-            ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
-
-    def handle_exit_button(self):
-        """Handle exit button click during extraction."""
-        if not self.task_running or not self.task_thread or not self.task_thread.is_alive():
-            print("Goodbye!")
-            sys.exit(0)
-            return
-
-        # Handle unsafe exit
-        if self.task_running and not messagebox.askyesno(
-            "Really cancel the current extraction?",
-            "A task is currently running. Exiting now may not be safe. Really continue?",
-        ):
-            return
-        self.simple_thread_event.set()
-        import time
-
-        time.sleep(1)
-        print("Extraction thread is still alive, attempting force close...")
-        i = 0
-        while self.task_thread.is_alive():
-            try:
-                self.task_thread._stop()  # type: ignore[attr-defined]  # pylint: disable=protected-access  # noqa: SLF001
-                print("force terminate of extraction thread succeeded")
-            except BaseException as e:  # pylint: disable=W0718  # noqa: BLE001
-                self._handle_general_exception(e, "Error using self.task_thread._stop()", msgbox=False)
-            print(f"Extraction thread is still alive after {i} seconds, waiting...")
-            time.sleep(1)
-            i += 1
-            if i == 2:
-                break
-
-        print("Destroying self")
-        self.root.destroy()
-        print("Goodbye!")
-        sys.exit(0)
-
-    def _handle_general_exception(
-        self,
-        exc: BaseException,
-        custom_msg: str = "Unexpected error.",
-        title: str = "",
-        *,
-        msgbox: bool = True,
-    ):
-        self.pykotor_logger.exception(custom_msg, exc_info=exc)
-        error_name, msg = universal_simplify_exception(exc)
-        if msgbox:
-            messagebox.showerror(
-                title or error_name,
-                f"{(error_name + os.linesep * 2) if title else ''}{custom_msg}.{os.linesep * 2}{msg}",
-            )
-
     def pre_extract_validate(self) -> bool:
         """Validates prerequisites for starting an extraction."""
         if self.task_running:
@@ -497,8 +394,7 @@ class App:
             if not self.pre_extract_validate():
                 return
             self.pykotor_logger.debug("Prevalidate finished, starting extract thread")
-            self.task_thread = Thread(target=self.begin_extract_thread, args=(self.simple_thread_event,), name="KitGenerator_extract_thread")
-            self.task_thread.start()
+            self.start_task_thread(self.begin_extract_thread, args=(self.simple_thread_event,), name="KitGenerator_extract_thread")
         except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
             self._handle_general_exception(e, "An unexpected error occurred during the extraction and the program was forced to exit")
             sys.exit(1)
@@ -531,6 +427,7 @@ class App:
         self.pykotor_logger.debug("set ui state")
         self.set_state(state=True)
         self.clear_main_text()
+        assert self.main_text is not None, "Main text is None"
         self.main_text.config(state=tk.NORMAL)
         self.main_text.insert(tk.END, f"Starting kit extraction...{os.linesep}")
         self.main_text.see(tk.END)
@@ -594,9 +491,7 @@ class App:
     ):
         """Sets the active thread task state. Disables UI controls until this function is called again with state=False."""
         if state:
-            self.progress_bar["value"] = 0
-            self.progress_bar["maximum"] = 100
-            self.progress_value.set(0)
+            self.reset_progress_bar()
             self.task_running = True
             self.extract_button.config(state=tk.DISABLED)
             self.installation_browse_button.config(state=tk.DISABLED)
@@ -607,14 +502,6 @@ class App:
             self.extract_button.config(state=tk.NORMAL)
             self.installation_browse_button.config(state=tk.NORMAL)
             self.module_combobox.config(state="readonly")
-
-    def clear_main_text(self):
-        self.main_text.config(state=tk.NORMAL)
-        self.main_text.delete(1.0, tk.END)
-        for tag in self.main_text.tag_names():
-            if tag not in ["sel"]:
-                self.main_text.tag_delete(tag)
-        self.main_text.config(state=tk.DISABLED)
 
     def _handle_exception_during_extract(
         self,
@@ -631,8 +518,7 @@ class App:
         if self.one_shot:
             sys.exit(1)
 
-    @property
-    def log_file_path(self) -> Path:
+    def get_log_file_path(self) -> Path | None:
         """Returns the path to the log file."""
         if self.output_path:
             return Path(self.output_path) / "kitgenerator_log.txt"
@@ -675,6 +561,7 @@ Configuration:
 {'=' * 80}
 Ready to extract kit resources!
 """
+        assert self.main_text is not None, "Main text is None"
         self.main_text.config(state=tk.NORMAL)
         self.main_text.insert(tk.END, onboarding_text, "INFO")
         self.main_text.see(tk.END)
@@ -686,13 +573,6 @@ Ready to extract kit resources!
     ):
         """Writes a message to the log."""
 
-        def log_type_to_level() -> LogType:
-            # Default to showing all logs if log_level not set
-            if self.log_level is None:
-                return LogType.VERBOSE
-            # Map log levels (simplified - always show all for now)
-            return LogType.VERBOSE
-
         def log_to_tag(this_log: PatchLog) -> str:
             if this_log.log_type == LogType.NOTE:
                 return "INFO"
@@ -700,17 +580,19 @@ Ready to extract kit resources!
                 return "DEBUG"
             return this_log.log_type.name
 
-        try:
-            # Write to log file
-            self.log_file_path.parent.mkdir(parents=True, exist_ok=True)
-            with self.log_file_path.open("a", encoding="utf-8") as log_file:
-                log_file.write(f"{log.formatted_message}\n")
-            if log.log_type.value < log_type_to_level().value:
-                return
-        except OSError as e:
-            RobustLogger().error(f"Failed to write the log file at '{self.log_file_path}': {e.__class__.__name__}: {e}")
+        # Write to log file
+        log_file_path = self.get_log_file_path()
+        if log_file_path:
+            try:
+                log_file_path.parent.mkdir(parents=True, exist_ok=True)
+                with log_file_path.open("a", encoding="utf-8") as log_file:
+                    log_file.write(f"{log.formatted_message}\n")
+            except OSError as e:
+                RobustLogger().error(f"Failed to write the log file at '{log_file_path}': {e.__class__.__name__}: {e}")
 
+        # Write to UI
         try:
+            assert self.main_text is not None, "Main text is None"
             self.main_text.config(state=tk.NORMAL)
             self.main_text.insert(tk.END, log.formatted_message + os.linesep, log_to_tag(log))
             self.main_text.see(tk.END)

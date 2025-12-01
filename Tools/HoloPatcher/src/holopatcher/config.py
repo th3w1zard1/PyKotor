@@ -14,22 +14,22 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
     "currentVersion": "1.80",
     "holopatcherLatestVersion": "1.5.2",
     "holopatcherLatestBetaVersion": "1.7.0b1",
-    "updateInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HoloPatcher/src/config.py",
-    "updateBetaInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HoloPatcher/src/config.py?ref=bleeding-edge",
+    "updateInfoLink": "https://api.github.com/repos/th3w1zard1/PyKotor/contents/Tools/HoloPatcher/src/config.py",
+    "updateBetaInfoLink": "https://api.github.com/repos/th3w1zard1/PyKotor/contents/Tools/HoloPatcher/src/config.py?ref=bleeding-edge",
     "holopatcherDownloadLink": "https://deadlystream.com/files/file/1982-holocron-holopatcher",
-    "holopatcherBetaDownloadLink": "https://github.com/NickHugi/PyKotor/releases/tag/v1.70-patcher-beta1",
+    "holopatcherBetaDownloadLink": "https://github.com/th3w1zard1/PyKotor/releases/tag/v1.70-patcher-beta1",
     "holopatcherDirectLinks": {
         "Darwin": {
             "32bit": [],
-            "64bit": ["https://github.com/NickHugi/PyKotor/releases/download/{tag}/HoloPatcher_Mac.zip"]
+            "64bit": ["https://github.com/th3w1zard1/PyKotor/releases/download/{tag}/HoloPatcher_Mac.zip"]
         },
         "Linux": {
             "32bit": [],
-            "64bit": ["https://github.com/NickHugi/PyKotor/releases/download/{tag}/HoloPatcher_Linux.zip"]
+            "64bit": ["https://github.com/th3w1zard1/PyKotor/releases/download/{tag}/HoloPatcher_Linux.zip"]
         },
         "Windows": {
-            "32bit": ["https://github.com/NickHugi/PyKotor/releases/download/{tag}/HoloPatcher_Windows.zip"],
-            "64bit": ["https://github.com/NickHugi/PyKotor/releases/download/{tag}/HoloPatcher_Windows.zip"]
+            "32bit": ["https://github.com/th3w1zard1/PyKotor/releases/download/{tag}/HoloPatcher_Windows.zip"],
+            "64bit": ["https://github.com/th3w1zard1/PyKotor/releases/download/{tag}/HoloPatcher_Windows.zip"]
         }
     },
     "holopatcherLatestNotes": "",

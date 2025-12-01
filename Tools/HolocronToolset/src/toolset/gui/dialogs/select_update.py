@@ -126,7 +126,7 @@ class UpdateDialog(QDialog):
         # Fork Selection Layout
         self.fork_combo_box = QComboBox()
         self.fork_combo_box.setFixedWidth(300)
-        # self.forkComboBox.addItem("NickHugi/PyKotor")  # Default repository
+        # self.forkComboBox.addItem("th3w1zard1/PyKotor")  # Default repository
         self.fork_combo_box.currentIndexChanged.connect(self.on_fork_changed)
         form_layout.addRow("Select Fork:", self.fork_combo_box)
 
@@ -180,13 +180,13 @@ class UpdateDialog(QDialog):
     def init_config(self):
         self.set_prerelease(False)
         self.fetch_and_cache_forks_with_releases()
-        self.forks_cache["NickHugi/PyKotor"] = self.fetch_fork_releases("NickHugi/PyKotor", include_all=True)
+        self.forks_cache["th3w1zard1/PyKotor"] = self.fetch_fork_releases("th3w1zard1/PyKotor", include_all=True)
         self.populate_fork_combo_box()
         self.on_fork_changed(self.fork_combo_box.currentIndex())
 
     def fetch_and_cache_forks_with_releases(self):
         self.forks_cache.clear()
-        forks_url = "https://api.github.com/repos/NickHugi/PyKotor/forks"
+        forks_url = "https://api.github.com/repos/th3w1zard1/PyKotor/forks"
         try:
             forks_response: requests.Response = requests.get(forks_url, timeout=15)
             forks_response.raise_for_status()
@@ -218,7 +218,7 @@ class UpdateDialog(QDialog):
 
     def populate_fork_combo_box(self):
         self.fork_combo_box.clear()
-        self.fork_combo_box.addItem("NickHugi/PyKotor")
+        self.fork_combo_box.addItem("th3w1zard1/PyKotor")
         for fork in self.forks_cache:
             self.fork_combo_box.addItem(fork)
 

@@ -330,7 +330,7 @@ Potential improvements:
 ## Credits
 
 - **Syntax inspired by**: [nasher](https://github.com/squattingmonk/nasher) by squattingmonk
-- **Built on**: [PyKotor](https://github.com/NickHugi/PyKotor) by NickHugi
+- **Built on**: [PyKotor](https://github.com/th3w1zard1/PyKotor) by NickHugi
 - **Format references**: xoreos-tools, KotOR.js, reone, Kotor.NET
 
 ## Conclusion

@@ -7,9 +7,8 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
-namespaces = false
-include = ["toolset", "toolset.*"]
-exclude = ["plugin", "plugin.*", "*plugin*"]
+include = ["toolset*"]
+exclude = ["plugin*", "*.plugin*", "*plugin*", "plugin"]
 
 [project]
 name = "holocrontoolset"

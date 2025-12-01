@@ -1,3 +1,7 @@
+"""HoloPatcher GUI application.
+
+This module provides the HoloPatcher GUI, inheriting from the base tkinter app framework.
+"""
 from __future__ import annotations
 
 import ctypes
@@ -17,10 +21,10 @@ import webbrowser
 from contextlib import suppress
 from datetime import datetime, timezone
 from multiprocessing import Queue
+from pathlib import Path
 from threading import Event, Thread
 from tkinter import (
     filedialog,
-    font as tkfont,
     messagebox,
     ttk,
 )
@@ -54,8 +58,6 @@ if not is_frozen():
         update_sys_path(pathlib.Path(__file__).parents[1])
 
 
-from pathlib import Path  # noqa: E402
-
 from loggerplus import RobustLogger  # noqa: E402
 
 from holopatcher import core  # noqa: E402
@@ -74,6 +76,7 @@ from utility.error_handling import universal_simplify_exception  # noqa: E402
 from utility.misc import ProcessorArchitecture  # noqa: E402
 from utility.string_util import striprtf  # noqa: E402
 from utility.system.os_helper import win_get_system32_dir  # noqa: E402
+from utility.tkinter.base_app import BaseApp  # noqa: E402
 from utility.tkinter.tooltip import ToolTip  # noqa: E402
 from utility.tkinter.updater import TkProgressDialog  # noqa: E402
 
@@ -97,29 +100,34 @@ def parse_args() -> Namespace:
     return core.parse_args()
 
 
-class App:
+class App(BaseApp):
+    """HoloPatcher GUI application."""
+
     def __init__(self):
-        self.root = tk.Tk()
-        self.root.title(f"HoloPatcher {VERSION_LABEL}")
-
-        self.set_window(width=400, height=500)
-
-        # Map the title bar's X button to our handle_exit_button function.
-        # This probably also means this will be called when attempting to 'End Task' in e.g. task manager.
-        self.root.protocol("WM_DELETE_WINDOW", self.handle_exit_button)
-
+        # HoloPatcher-specific state
         self.install_running: bool = False
-        self.task_running: bool = False
-        self.task_thread: Thread | None = None
         self.mod_path: str = ""
         self.log_level: LogLevel = LogLevel.WARNINGS
-        self.pykotor_logger = RobustLogger()
         self.namespaces: list[PatcherNamespace] = []
-        self.one_shot: bool = False
 
-        self.initialize_logger()
+        super().__init__(
+            title="HoloPatcher",
+            version=CURRENT_VERSION,
+            default_width=400,
+            default_height=500,
+        )
+
+        # Additional widgets stored during UI initialization
+        self.namespaces_combobox: ttk.Combobox
+        self.browse_button: ttk.Button
+        self.expand_namespace_description_button: ttk.Button
+        self.gamepaths: ttk.Combobox
+        self.gamepaths_browse_button: ttk.Button
+        self.exit_button: ttk.Button
+        self.install_button: ttk.Button
+        self.namespaces_combobox_state: int = 0
+
         self.initialize_top_menu()
-        self.initialize_ui_controls()
 
         cmdline_args: Namespace = parse_args()
         if cmdline_args.tslpatchdata:
@@ -135,33 +143,16 @@ class App:
                     self.load_namespace(mod_info.namespaces, mod_info.config_reader)
                 except FileNotFoundError:
                     self.pykotor_logger.debug("No mod found in current directory or specified path", exc_info=True)
-                    # Don't auto-open file browser, let user click Browse button
                 except Exception:  # noqa: BLE001
                     self.pykotor_logger.exception("An unexpected error occurred while loading the mod from current directory")
-                    # Don't auto-open file browser, let user click Browse button
-        # No else clause - don't auto-open file browser on startup
         self.execute_commandline(cmdline_args)
         self.pykotor_logger.debug("Init complete")
 
-    def set_window(
-        self,
-        width: int,
-        height: int,
-    ):
-        # Get screen dimensions
-        screen_width: int = self.root.winfo_screenwidth()
-        screen_height: int = self.root.winfo_screenheight()
-
-        # Calculate position to center the window
-        x_position = int((screen_width / 2) - (width / 2))
-        y_position = int((screen_height / 2) - (height / 2))
-
-        # Set the dimensions and position
-        self.root.geometry(f"{width}x{height}+{x_position}+{y_position}")
-        self.root.resizable(width=True, height=True)
-        self.root.minsize(width=width, height=height)
+    def get_app_name(self) -> str:
+        return "HoloPatcher"
 
     def initialize_logger(self):
+        """Initialize the PatchLogger and subscribe to log events."""
         self.logger = PatchLogger()
         self.logger.verbose_observable.subscribe(self.write_log)
         self.logger.note_observable.subscribe(self.write_log)
@@ -208,7 +199,7 @@ class App:
         about_menu = tk.Menu(self.menu_bar, tearoff=0)
         about_menu.add_command(label="Check for Updates", command=self.check_for_updates)
         about_menu.add_command(label="HoloPatcher Home", command=lambda: webbrowser.open_new("https://deadlystream.com/files/file/2243-holopatcher"))
-        about_menu.add_command(label="GitHub Source", command=lambda: webbrowser.open_new("https://github.com/NickHugi/PyKotor"))
+        about_menu.add_command(label="GitHub Source", command=lambda: webbrowser.open_new("https://github.com/th3w1zard1/PyKotor"))
         self.menu_bar.add_cascade(label="About", menu=about_menu)
 
     def initialize_ui_controls(self):
@@ -226,7 +217,7 @@ class App:
         top_frame.grid_columnconfigure(1, weight=0)  # Keep buttons fixed size
 
         # Setup the namespaces/changes ini combobox (selected mod)
-        self.namespaces_combobox: ttk.Combobox = ttk.Combobox(top_frame, state="readonly", style="TCombobox")
+        self.namespaces_combobox = ttk.Combobox(top_frame, state="readonly", style="TCombobox")
         self.namespaces_combobox.grid(row=0, column=0, padx=5, pady=2, sticky="ew")
         self.namespaces_combobox.set("Select the mod to install")
         ToolTip(self.namespaces_combobox, self.get_namespace_description)
@@ -234,11 +225,11 @@ class App:
         # Handle annoyances with Focus Events
         self.namespaces_combobox.bind("<FocusIn>", self.on_combobox_focus_in)
         self.namespaces_combobox.bind("<FocusOut>", self.on_combobox_focus_out)
-        self.namespaces_combobox_state: int = 0
+        self.namespaces_combobox_state = 0
         # Browse for a tslpatcher mod
-        self.browse_button: ttk.Button = ttk.Button(top_frame, text="Browse", command=self.open_mod)
+        self.browse_button = ttk.Button(top_frame, text="Browse", command=self.open_mod)
         self.browse_button.grid(row=0, column=1, padx=5, pady=2, sticky="e")
-        self.expand_namespace_description_button: ttk.Button = ttk.Button(
+        self.expand_namespace_description_button = ttk.Button(
             top_frame,
             width=1,
             text="?",
@@ -247,7 +238,7 @@ class App:
                 self.get_namespace_description(*args),
             ),
         )
-        self.expand_namespace_description_button.grid(row=0, column=2, padx=2, pady=2, stick="e")
+        self.expand_namespace_description_button.grid(row=0, column=2, padx=2, pady=2, sticky="e")
 
         # Store all discovered KOTOR install paths
         self.gamepaths = ttk.Combobox(top_frame, style="TCombobox")
@@ -287,7 +278,6 @@ class App:
         self.exit_button.pack(side="left", padx=5, pady=5)
         self.install_button = ttk.Button(bottom_frame, text="Install", command=self.begin_install)
         self.install_button.pack(side="right", padx=5, pady=5)
-        self.simple_thread_event: Event = Event()
         self.progress_value = tk.IntVar(value=0)
         # Bottom area for buttons and progress bar
         bottom_frame = tk.Frame(self.root)
@@ -318,27 +308,11 @@ class App:
         value: int = 1,
     ):
         """Actual update to the progress bar, guaranteed to run in the main thread."""
+        if self.progress_value is None or self.progress_bar is None:
+            return
         new_value = self.progress_value.get() + value
         self.progress_value.set(new_value)
         self.progress_bar["value"] = new_value
-
-    def set_text_font(
-        self,
-        text_frame: tk.Text,
-    ):
-        font_obj = tkfont.Font(font=text_frame.cget("font"))  # use the original font
-        font_obj.configure(size=9)
-        text_frame.configure(font=font_obj)
-
-        # Define a bold and slightly larger font
-        bold_font = tkfont.Font(font=text_frame.cget("font"))
-        bold_font.configure(size=10, weight="bold")
-
-        self.main_text.tag_configure("DEBUG", foreground="#6495ED")  # Cornflower Blue
-        self.main_text.tag_configure("INFO", foreground="#000000")   # Black
-        self.main_text.tag_configure("WARNING", foreground="#CC4E00", background="#FFF3E0", font=bold_font)  # Orange with bold font
-        self.main_text.tag_configure("ERROR", foreground="#DC143C", font=bold_font)  # Firebrick with bold font
-        self.main_text.tag_configure("CRITICAL", foreground="#FFFFFF", background="#8B0000", font=bold_font)  # White on Dark Red with bold font
 
     def on_combobox_focus_in(
         self,
@@ -553,12 +527,6 @@ class App:
         # messagebox.askyesnocancel = MessageboxOverride.askyesno
         # messagebox.askretrycancel = MessageboxOverride.askyesno
 
-    def hide_console(self):
-        """Hide the console window in GUI mode."""
-        # Windows
-        if os.name == "nt":
-            ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
-
     def uninstall_selected_mod(self):
         """Uninstalls the selected mod using the most recent backup folder created during the last install.
 
@@ -692,17 +660,6 @@ class App:
         """Adjust the combobox after a short delay."""
         self.root.after(10, lambda: self.move_cursor_to_end(cast("ttk.Combobox", event.widget)))
 
-    def move_cursor_to_end(
-        self,
-        combobox: ttk.Combobox,
-    ):
-        """Shows the rightmost portion of the specified combobox as that's the most relevant."""
-        combobox.focus_set()
-        position: int = len(combobox.get())
-        combobox.icursor(position)
-        combobox.xview(position)
-        self.root.focus_set()
-
     def get_namespace_description(self) -> str:
         """Show the expanded description from namespaces.ini when hovering over an option."""
         return core.get_namespace_description(self.namespaces, self.namespaces_combobox.get())
@@ -746,7 +703,7 @@ class App:
                                 self.logger.add_note(f"Renaming {str_dir_path} to '{new_dir_path.name}'")
                                 dir_path.rename(str_new_dir_path)
                                 made_change = True
-                    Path(directory).rename(Path.str_norm(str(directory).lower()))
+                    Path(directory).rename(str(directory).lower())
                 except Exception as e:  # noqa: BLE001
                     self._handle_general_exception(e)
                 finally:
@@ -822,22 +779,6 @@ class App:
             self._handle_general_exception(e, "An unexpected error occurred while loading the patcher namespace.")
         else:
             self.root.after(10, lambda: self.move_cursor_to_end(self.namespaces_combobox))
-
-    def _handle_general_exception(
-        self,
-        exc: BaseException,
-        custom_msg: str = "Unexpected error.",
-        title: str = "",
-        *,
-        msgbox: bool = True,
-    ):
-        self.pykotor_logger.exception(custom_msg, exc_info=exc)
-        error_name, msg = universal_simplify_exception(exc)
-        if msgbox:
-            messagebox.showerror(
-                title or error_name,
-                f"{(error_name + os.linesep * 2) if title else ''}{custom_msg}.{os.linesep * 2}{msg}",
-            )
 
     def load_namespace(
         self,
@@ -988,9 +929,9 @@ class App:
                 self.clear_main_text()
                 self.logger.add_note("Please wait, this may take awhile...")
                 try:
-                    access: bool = path.gain_access(recurse=True, log_func=self.logger.add_verbose)
+                    access: tuple[bool, int, int] = core.gain_directory_access(str(path), self.logger)
                     # self.play_complete_sound()
-                    if not access:
+                    if not access[0]:
                         if not directory:
                             messagebox.showerror("Could not acquire permission!", "Permissions denied! Check the logs for more details.")
                         else:
@@ -1063,15 +1004,15 @@ class App:
             def filter_results(x: Path) -> bool:
                 return not ResourceIdentifier.from_path(x).restype.is_invalid
 
-        if directory.has_access(recurse=recurse, filter_results=filter_results):
+        if core.check_directory_access(directory, recurse=recurse, should_filter=should_filter):
             return True
         if messagebox.askyesno(
             "Permission error",
             f"HoloPatcher does not have permissions to the path '{directory}', would you like to attempt to gain permission automatically?",
         ):
-            directory.gain_access(recurse=recurse)
+            core.gain_directory_access(str(directory), self.logger)
             self.on_namespace_option_chosen(tk.Event())
-        if not directory.has_access(recurse=recurse):
+        if not core.check_directory_access(directory, recurse=recurse):
             return messagebox.askyesno(
                 "Unauthorized",
                 (
@@ -1185,6 +1126,7 @@ class App:
         self.set_state(state=True)
         self.install_running = True
         self.clear_main_text()
+        assert self.main_text is not None, "Main text is None"
         self.main_text.config(state=tk.NORMAL)
         self.main_text.insert(tk.END, f"Starting install...{os.linesep}")
         self.main_text.see(tk.END)
@@ -1239,8 +1181,10 @@ class App:
             - Handles enabling/disabling buttons during task process.
         """
         if state:
+            assert self.progress_bar is not None, "Progress bar is None"
             self.progress_bar["value"] = 0
             self.progress_bar["maximum"] = 100
+            assert self.progress_value is not None, "Progress value is None"
             self.progress_value.set(0)
             self.task_running = True
             self.install_button.config(state=tk.DISABLED)
@@ -1252,14 +1196,6 @@ class App:
             self.install_button.config(state=tk.NORMAL)
             self.gamepaths_browse_button.config(state=tk.NORMAL)
             self.browse_button.config(state=tk.NORMAL)
-
-    def clear_main_text(self):
-        self.main_text.config(state=tk.NORMAL)
-        self.main_text.delete(1.0, tk.END)
-        for tag in self.main_text.tag_names():
-            if tag not in ["sel"]:
-                self.main_text.tag_delete(tag)
-        self.main_text.config(state=tk.DISABLED)
 
     def _execute_mod_install(
         self,
@@ -1297,6 +1233,7 @@ class App:
             ):
                 return
             if progress_update_func is not None:
+                assert self.progress_bar is not None, "Progress bar is None"
                 self.progress_bar["maximum"] = len(
                 [
                     *installer.config().install_list,  # Note: TSLPatcher executes [InstallList] after [TLKList]
@@ -1314,7 +1251,9 @@ class App:
             installer.install(should_cancel_thread, progress_update_func)
             total_install_time: timedelta = datetime.now(timezone.utc).astimezone() - install_start_time
             if progress_update_func is not None:
+                assert self.progress_value is not None, "Progress value is None"
                 self.progress_value.set(99)
+                assert self.progress_bar is not None, "Progress bar is None"
                 self.progress_bar["value"] = 99
                 self.progress_bar["maximum"] = 100
                 self.update_progress_bar_directly()
@@ -1377,6 +1316,9 @@ class App:
     def log_file_path(self) -> Path:
         return Path(self.mod_path) / "installlog.txt"
 
+    def get_log_file_path(self) -> Path | None:
+        return self.log_file_path if self.mod_path else None
+
     def _handle_exception_during_install(
         self,
         e: Exception,
@@ -1414,6 +1356,8 @@ class App:
         self,
         rte_content: str | bytes | bytearray | None = None,
     ):
+        if self.main_text is None:
+            return
         self.clear_main_text()
         self.main_text.config(state=tk.NORMAL)
         if rte_content is None:
@@ -1440,6 +1384,8 @@ class App:
         self.main_text.config(state=tk.DISABLED)
 
     def load_rtf_file(self, file_path: os.PathLike | str):
+        if self.main_text is None:
+            return
         from utility.pyth3.plugins.plaintext.writer import PlaintextWriter  # pyright: ignore[reportMissingImports]
         from utility.pyth3.plugins.rtf15.reader import Rtf15Reader  # pyright: ignore[reportMissingImports]
 
@@ -1456,6 +1402,8 @@ class App:
         rtf_text: str,
     ):
         """Strips the info.rtf of all RTF related text and displays it in the UI."""
+        if self.main_text is None:
+            return
         stripped_content: str = striprtf(rtf_text)
         self.clear_main_text()
         self.main_text.config(state=tk.NORMAL)
@@ -1503,6 +1451,8 @@ class App:
         except OSError as e:
             RobustLogger().error(f"Failed to write the log file at '{self.log_file_path}': {e.__class__.__name__}: {e}")
 
+        if self.main_text is None:
+            return
         self.main_text.config(state=tk.NORMAL)
         self.main_text.insert(tk.END, log.formatted_message + os.linesep, log_to_tag(log))
         self.main_text.see(tk.END)

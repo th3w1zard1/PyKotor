@@ -123,13 +123,13 @@ class UpdateDialog(QDialog):
     def init_config(self):
         self.set_prerelease(False)
         self.forks_cache = fetch_and_cache_forks()
-        self.forks_cache["NickHugi/PyKotor"] = fetch_fork_releases("NickHugi/PyKotor", include_all=True)
+        self.forks_cache["th3w1zard1/PyKotor"] = fetch_fork_releases("th3w1zard1/PyKotor", include_all=True)
         self.populate_fork_combo_box()
         self.on_fork_changed(self.fork_combo_box.currentIndex())
 
     def populate_fork_combo_box(self):
         self.fork_combo_box.clear()
-        self.fork_combo_box.addItem("NickHugi/PyKotor")
+        self.fork_combo_box.addItem("th3w1zard1/PyKotor")
         for fork in self.forks_cache:
             self.fork_combo_box.addItem(fork)
 

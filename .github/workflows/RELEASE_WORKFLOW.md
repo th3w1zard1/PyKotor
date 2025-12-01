@@ -34,7 +34,7 @@ PyKotor uses an industry-standard CI/CD pipeline for releases. The workflow is d
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           RELEASE PHASE                                      │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│  6. Bump version in config.py (use bump_version.ps1 helper)                 │
+│  6. Bump version in config/config_info.py (use bump_version.ps1 helper)     │
 │  7. Commit and push to master                                               │
 │  8. Create pre-release on GitHub with proper tag                            │
 │  9. Release workflow runs automatically                                     │
@@ -50,7 +50,7 @@ PyKotor uses an industry-standard CI/CD pipeline for releases. The workflow is d
 
 | Tool | Tag Pattern | Config File | Version Key |
 |------|-------------|-------------|-------------|
-| **HolocronToolset** | `v3.1.3-toolset` | `Tools/HolocronToolset/src/toolset/config.py` | `currentVersion` |
+| **HolocronToolset** | `v3.1.3-toolset` | `Tools/HolocronToolset/src/toolset/config/config_info.py` | `currentVersion` |
 | **HoloPatcher** | `v1.8.0-patcher` | `Tools/HoloPatcher/src/holopatcher/config.py` | `currentVersion` |
 | **KotorDiff** | `v1.0.1-kotordiff` | `Tools/KotorDiff/src/kotordiff/__main__.py` | `CURRENT_VERSION` |
 | **GuiConverter** | `v1.0.0-guiconverter` | `Tools/GuiConverter/src/gui_converter/__init__.py` | `__version__` |
@@ -72,7 +72,7 @@ PyKotor uses an industry-standard CI/CD pipeline for releases. The workflow is d
 1. **Update version in config file:**
 
    ```python
-   # Tools/HolocronToolset/src/toolset/config.py
+   # Tools/HolocronToolset/src/toolset/config/config_info.py
    LOCAL_PROGRAM_INFO: dict[str, Any] = {
        "currentVersion": "3.1.3",  # ← Update this
        ...
@@ -82,13 +82,13 @@ PyKotor uses an industry-standard CI/CD pipeline for releases. The workflow is d
 2. **Commit and push:**
 
    ```bash
-   git add Tools/HolocronToolset/src/toolset/config.py
+   git add Tools/HolocronToolset/src/toolset/config/config_info.py
    git commit -m "chore(toolset): bump version to 3.1.3"
    git push origin master
    ```
 
 3. **Create pre-release on GitHub:**
-   - Go to [Releases](https://github.com/NickHugi/PyKotor/releases/new)
+   - Go to [Releases](https://github.com/th3w1zard1/PyKotor/releases/new)
    - Tag: `v3.1.3-toolset`
    - Title: `toolset v3.1.3`
    - Check "Set as a pre-release"

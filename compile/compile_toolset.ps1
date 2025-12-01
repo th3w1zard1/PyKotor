@@ -34,6 +34,14 @@ if (Test-Path -LiteralPath $wikiPath -ErrorAction SilentlyContinue) {
 }
 
 $pyInstallerArgs = @{
+    'hidden-import' = @(
+        'utility',
+        'utility.error_handling',
+        'utility.common',
+        'utility.system',
+        'utility.ui_libraries',
+        'utility.updater'
+    )
     'exclude-module' = @(
         'dl_translate',
         'torch'
@@ -90,12 +98,28 @@ $pyInstallerArgs = @{
     'distpath'=($repoRootPath + $pathSep + "dist")
     'upx-dir' = $upx_dir
     'icon'="resources/icons/sith.$iconExtension"
-    'path'=''
+    'path'=@()
 }
 
 $toolSrcDir = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Tools$($pathSep)$($pyInstallerArgs.name)$($pathSep)src").Path
 $pyInstallerArgs.workpath = "$toolSrcDir$($pathSep)build"
 $pyInstallerArgs.path += $toolSrcDir
+# Add paths for local libraries that PyInstaller needs to find
+$utilityPath = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Libraries$($pathSep)Utility$($pathSep)src").Path
+$pykotorPath = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Libraries$($pathSep)PyKotor$($pathSep)src").Path
+$pykotorGLPath = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Libraries$($pathSep)PyKotorGL$($pathSep)src").Path
+if (Test-Path -LiteralPath $utilityPath -ErrorAction SilentlyContinue) {
+    $pyInstallerArgs.path += $utilityPath
+    Write-Host "Including Utility library path: $utilityPath"
+}
+if (Test-Path -LiteralPath $pykotorPath -ErrorAction SilentlyContinue) {
+    $pyInstallerArgs.path += $pykotorPath
+    Write-Host "Including PyKotor library path: $pykotorPath"
+}
+if (Test-Path -LiteralPath $pykotorGLPath -ErrorAction SilentlyContinue) {
+    $pyInstallerArgs.path += $pykotorGLPath
+    Write-Host "Including PyKotorGL library path: $pykotorGLPath"
+}
 Write-Host "toolSrcDir: '$toolSrcDir'"
 
 

@@ -159,12 +159,12 @@ jobs:
         run: |
           errors=0
           
-          # Check toolset config.py
-          if [ -f "Tools/HolocronToolset/src/toolset/config.py" ]; then
-            echo "Checking toolset config.py..."
-            CURRENT=$(grep -oP '"currentVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config.py || true)
-            LATEST=$(grep -oP '"toolsetLatestVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config.py || true)
-            BETA=$(grep -oP '"toolsetLatestBetaVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config.py || true)
+          # Check toolset config_info.py
+          if [ -f "Tools/HolocronToolset/src/toolset/config/config_info.py" ]; then
+            echo "Checking toolset config_info.py..."
+            CURRENT=$(grep -oP '"currentVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config/config_info.py || true)
+            LATEST=$(grep -oP '"toolsetLatestVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config/config_info.py || true)
+            BETA=$(grep -oP '"toolsetLatestBetaVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config/config_info.py || true)
             
             if [ -z "$CURRENT" ]; then
               echo "❌ Toolset: currentVersion not found"

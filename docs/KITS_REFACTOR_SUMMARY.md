@@ -249,7 +249,7 @@ Done!
 **Old:** GitHub Contents API (for master branch files)
 
 ```
-GET /repos/NickHugi/PyKotor/contents/Tools/HolocronToolset/downloads/kits.zip
+GET /repos/th3w1zard1/PyKotor/contents/Tools/HolocronToolset/downloads/kits.zip
 ```
 
 **New:** GitHub Releases API (for release assets)

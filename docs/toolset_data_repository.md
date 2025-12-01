@@ -204,7 +204,7 @@ The toolset compares versions and shows "Update Available" when remote is newer.
 ## Migration from Old System
 
 The old system downloaded from:
-- `NickHugi/PyKotor` repository
+- `th3w1zard1/PyKotor` repository
 - Branch: `master`
 - Path: `Tools/HolocronToolset/downloads/kits.zip`
 

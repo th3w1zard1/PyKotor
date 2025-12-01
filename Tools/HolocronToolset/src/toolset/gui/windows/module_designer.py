@@ -40,7 +40,7 @@ from pykotor.resource.generics.utw import read_utw
 from pykotor.resource.type import ResourceType
 from pykotor.tools import module
 from pykotor.tools.misc import is_mod_file
-from toolset.blender import BlenderEditorMode, check_blender_and_ask
+from toolset.blender import BlenderEditorMode, check_blender_and_ask, get_blender_settings
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.insert_instance import InsertInstanceDialog
@@ -125,6 +125,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         # Initialize Blender integration
         self._init_blender_integration(BlenderEditorMode.MODULE_DESIGNER)
         self._use_blender_mode: bool = use_blender
+        self._blender_choice_made: bool = False  # Track if we've already asked about Blender
 
         self._installation: HTInstallation = installation
         self._module: Module | None = None
@@ -479,6 +480,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             mod_filepath = self._installation.module_path().joinpath(dialog.module)
 
             # Check for Blender and ask user preference
+            self._blender_choice_made = True  # Mark that we've checked
             use_blender, blender_info = check_blender_and_ask(self, "Module Designer")
             if blender_info is not None:
                 self._use_blender_mode = use_blender
@@ -491,6 +493,29 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         mod_filepath: Path,
     ):
         """Opens a module."""
+        # Check for Blender if not already checked (when opening directly via constructor or file)
+        if not self._blender_choice_made:
+            self._blender_choice_made = True
+            blender_settings = get_blender_settings()
+            
+            # Check if user has a remembered preference
+            if blender_settings.remember_choice:
+                # Use remembered preference
+                self._use_blender_mode = blender_settings.prefer_blender
+            else:
+                # Show dialog to ask user (if Blender is detected)
+                blender_info = blender_settings.get_blender_info()
+                if blender_info.is_valid:
+                    use_blender, blender_info_result = check_blender_and_ask(self, "Module Designer")
+                    if blender_info_result is not None:
+                        self._use_blender_mode = use_blender
+                    # If user cancelled, default to built-in
+                    elif use_blender is False and blender_info_result is None:
+                        self._use_blender_mode = False
+                else:
+                    # Blender not available, use built-in
+                    self._use_blender_mode = False
+        
         mod_root: str = self._installation.get_module_root(mod_filepath)
         mod_filepath = self._ensure_mod_file(mod_filepath, mod_root)
 

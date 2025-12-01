@@ -37,7 +37,7 @@ While we're not sure what the exact problem is, it seems newer python versions w
 
 ## Local Development
 
-- Clone [PyKotor](https://github.com/NickHugi/PyKotor) and run the `install_python_venv.ps1` script in your powershell terminal. That's it!
+- Clone [PyKotor](https://github.com/th3w1zard1/PyKotor) and run the `install_python_venv.ps1` script in your powershell terminal. That's it!
 
 
 ## Accessing the GUI Designer

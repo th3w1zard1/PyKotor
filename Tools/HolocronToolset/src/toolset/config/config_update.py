@@ -12,8 +12,9 @@ import requests
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtWidgets import QMessageBox
 
-from toolset.config.config_info import LOCAL_PROGRAM_INFO
-from utility.error_handling import universal_simplify_exception
+# LOCAL_PROGRAM_INFO is imported inside functions to avoid circular import
+# config.py imports from config_update, so we can't import config.py at module level
+from utility.error_handling import universal_simplify_exception  # noqa: E402
 
 
 def _clean_json_trailing_commas(json_str: str) -> str:
@@ -56,10 +57,13 @@ def get_remote_toolset_update_info(
     use_beta_channel: bool = False,
     silent: bool = False,
 ) -> Exception | dict[str, Any]:
+    # Import here to avoid circular import (config.py imports from this module)
+    from toolset.config.config_info import LOCAL_PROGRAM_INFO  # noqa: PLC0415
+    
     if use_beta_channel:
         update_info_link: str = LOCAL_PROGRAM_INFO["updateBetaInfoLink"]
     else:
-        update_info_link: str = LOCAL_PROGRAM_INFO["updateInfoLink"]
+        update_info_link = LOCAL_PROGRAM_INFO["updateInfoLink"]
 
     try:
         timeout: Literal[2, 10] = 2 if silent else 10
@@ -88,7 +92,7 @@ def get_remote_toolset_update_info(
         )
         if result not in {QMessageBox.StandardButton.Yes, True}:
             return e
-        remote_info: dict[str, Any] = LOCAL_PROGRAM_INFO
+        remote_info = LOCAL_PROGRAM_INFO
     return remote_info
 
 
