@@ -25,7 +25,8 @@ setup(
     name="holocrontoolset",
     version="3.1.1",
     description="A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files",
-    packages=find_packages(where="src", include=["toolset*"], exclude=["plugin*", "build*", "logs*"]),
+    # Explicitly find only toolset package to avoid issues when building from git subdirectory
+    packages=find_packages(where="src", include=["toolset", "toolset.*"]),
     package_dir={"": "src"},
     install_requires=read_requirements(),
     python_requires=">=3.8",
