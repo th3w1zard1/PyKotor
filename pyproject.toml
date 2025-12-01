@@ -19,8 +19,8 @@ dependencies = [
 [project.optional-dependencies]
 # Extension libraries
 font = ["pykotorfont>=1.8.0"]
-gl = ["pykotorgl>=1.8.0"]
-all-extensions = ["pykotorfont>=1.8.0", "pykotorgl>=1.8.0"]
+gl = ["pykotorgl[moderngl]>=1.8.0"]
+all-extensions = ["pykotorfont>=1.8.0", "pykotorgl[moderngl]>=1.8.0"]
 
 # Tools (lowercase PyPI names)
 holocrontoolset = ["holocrontoolset>=3.1.1"]
@@ -45,7 +45,7 @@ all-tools = [
 # Everything
 all = [
     "pykotorfont>=1.8.0",
-    "pykotorgl>=1.8.0",
+    "pykotorgl[moderngl]>=1.8.0",
     "holocrontoolset>=3.1.1",
     "holopatcher>=1.5.3",
     "kotor-diff>=1.0.0",
@@ -109,8 +109,8 @@ flake8 = "*"
 [tool.poetry.extras]
 # Extension libraries
 font = ["pykotorfont"]
-gl = ["pykotorgl"]
-all-extensions = ["pykotorfont", "pykotorgl"]
+gl = ["pykotorgl[moderngl]"]
+all-extensions = ["pykotorfont", "pykotorgl[moderngl]"]
 
 # Tools
 holocrontoolset = ["holocrontoolset"]
@@ -124,7 +124,7 @@ kit-generator = ["kit-generator"]
 all-tools = ["holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
 
 # Everything
-all = ["pykotorfont", "pykotorgl", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
+all = ["pykotorfont", "pykotorgl[moderngl]", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
 
 [project.urls]
 homepage = "https://github.com/th3w1zard1/PyKotor"

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from collections import deque
+import os
 from copy import copy, deepcopy
 from datetime import datetime, timedelta, timezone
+from time import perf_counter
 from typing import TYPE_CHECKING
 
 import qtpy
@@ -30,10 +33,48 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
     from pykotor.common.module import Module, ModuleResource
+    from pykotor.gl.modern_renderer import ModernGLRenderer
     from pykotor.gl.scene import RenderObject
     from pykotor.resource.formats.bwm import BWMFace
     from pykotor.resource.formats.lyt.lyt_data import LYT, LYTDoorHook, LYTObstacle, LYTRoom, LYTTrack
     from toolset.data.installation import HTInstallation
+
+
+class FrameStats:
+    """Lightweight frame statistics tracker used to estimate FPS."""
+
+    __slots__ = ("_timestamps", "_frame_count")
+
+    def __init__(self, max_samples: int = 512):
+        self._timestamps: deque[float] = deque(maxlen=max_samples)
+        self._frame_count: int = 0
+
+    def reset(self) -> None:
+        self._timestamps.clear()
+        self._frame_count = 0
+
+    def frame_rendered(self) -> None:
+        self._timestamps.append(perf_counter())
+        self._frame_count += 1
+
+    @property
+    def frame_count(self) -> int:
+        return self._frame_count
+
+    def average_fps(self, window_seconds: float | None = 1.0) -> float:
+        """Return the average frames-per-second over the requested window."""
+        if len(self._timestamps) < 2:
+            return 0.0
+
+        if window_seconds is not None:
+            cutoff = self._timestamps[-1] - window_seconds
+            while len(self._timestamps) > 2 and self._timestamps[0] < cutoff:
+                self._timestamps.popleft()
+
+        elapsed = self._timestamps[-1] - self._timestamps[0]
+        if elapsed <= 0:
+            return float("inf")
+        return (len(self._timestamps) - 1) / elapsed
 
 
 class ModuleRenderer(QOpenGLWidget):
@@ -92,6 +133,13 @@ class ModuleRenderer(QOpenGLWidget):
         self.do_select: bool = False  # Set to true to select object at mouse pointer
         self.free_cam: bool = False  # Changes how screenDelta is calculated in mouseMoveEvent
         self.delta: float = 0.0166  # Approx 60 FPS frame time
+        self._frame_stats: FrameStats = FrameStats()
+        self._modern_renderer: ModernGLRenderer | None = None
+        self._modern_context: moderngl.Context | None = None
+        # Default to ModernGL if available, fallback to PyOpenGL
+        default_moderngl = bool(int(os.environ.get("PYKOTOR_USE_MODERNGL", "1")))
+        self._use_moderngl = default_moderngl
+        self._gl_initialized = False  # Track if initializeGL has been called
 
     @property
     def scene(self) -> Scene:
@@ -129,10 +177,42 @@ class ModuleRenderer(QOpenGLWidget):
             RobustLogger().error("Widget or its window is not visible; OpenGL context may not be initialized.")
             raise RuntimeError("The OpenGL context is not available because the widget or its parent window is not visible.")
 
-        # After ensuring visibility, finally check if a context is available.
-        if not self.context():
-            RobustLogger().error("initializeGL was not called or did not complete successfully.")
+        # Wait for OpenGL context to be created and initialized
+        # Qt calls initializeGL() when the widget is first shown, but this may happen asynchronously
+        # In headless/offscreen mode, we need to wait a bit longer and process events
+        max_attempts = 50
+        for attempt in range(max_attempts):
+            ctx = self.context()
+            if ctx is not None and ctx.isValid():
+                # Try to make the context current to ensure initializeGL was called
+                try:
+                    self.makeCurrent()
+                    # Force initializeGL call if it hasn't been called yet (headless mode workaround)
+                    # Qt should call it automatically, but in headless mode we may need to ensure it
+                    if hasattr(self, '_gl_initialized') and not self._gl_initialized:
+                        self.initializeGL()
+                        self._gl_initialized = True
+                    break  # Context is ready
+                except Exception:
+                    pass  # Context exists but not ready yet
+            
+            # Process events to allow Qt to call initializeGL
+            QApplication.processEvents()
+            QApplication.processEvents()  # Process twice to ensure events are handled
+            
+            if attempt < max_attempts - 1:
+                from time import sleep
+                sleep(0.01)  # Small delay to allow Qt to initialize
+        
+        # Final check if a context is available
+        ctx = self.context()
+        if ctx is None or not ctx.isValid():
+            RobustLogger().error("initializeGL was not called or did not complete successfully after waiting.")
             raise RuntimeError("Failed to initialize OpenGL context. Ensure that the widget is visible and properly integrated into the application's window.")
+
+        # Ensure OpenGL context is current before creating Scene
+        # Note: makeCurrent() returns None in PyQt5, so we can't check its return value
+        self.makeCurrent()
 
         self._installation = installation
         self._module = module
@@ -155,13 +235,27 @@ class ModuleRenderer(QOpenGLWidget):
         self.makeCurrent()
 
         super().initializeGL()
+        self._gl_initialized = True  # Mark as initialized
         RobustLogger().debug("ModuleRenderer.initializeGL - opengl context setup.")
+        if self._use_moderngl:
+            try:
+                import moderngl  # pyright: ignore[reportMissingImports]  # noqa: WPS433
+                from pykotor.gl.modern_renderer import ModernGLRenderer  # noqa: WPS433
 
-    def resizeEvent(self, e: QResizeEvent):
+                self._modern_context = moderngl.create_context()
+                self._modern_renderer: ModernGLRenderer = ModernGLRenderer(self._modern_context)
+                RobustLogger().info("ModernGL renderer initialised successfully")
+            except Exception as exc:  # noqa: BLE001
+                self._modern_renderer = None
+                self._modern_context = None
+                self._use_moderngl = False
+                RobustLogger().warning("Failed to initialise ModernGL renderer: %s", exc)
+
+    def resizeEvent(self, e: QResizeEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         RobustLogger().debug("ModuleRenderer resizeEvent called.")
         super().resizeEvent(e)
 
-    def resizeGL(
+    def resizeGL(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         width: int,
         height: int,
@@ -192,6 +286,7 @@ class ModuleRenderer(QOpenGLWidget):
         """Stops the rendering loop, unloads the module and installation, and attempts to destroy the OpenGL context."""
         RobustLogger().debug("ModuleRenderer - shutdownRenderer called.")
         self.pause_render_loop()
+        self._frame_stats.reset()
         self._module = None
         self._installation = None
         self._lyt = None
@@ -201,6 +296,13 @@ class ModuleRenderer(QOpenGLWidget):
         if gl_context:
             gl_context.doneCurrent()  # Ensure the context is not current
             self.update()  # Trigger an update which will indirectly handle context recreation when needed
+        self._modern_renderer = None
+        if self._modern_context is not None:
+            try:
+                self._modern_context.release()
+            except Exception:  # noqa: BLE001
+                pass
+            self._modern_context = None
 
         self.hide()
         self._scene = None
@@ -339,7 +441,11 @@ class ModuleRenderer(QOpenGLWidget):
                 self._last_cursor_update = True
 
         # Main render pass
+        if self._modern_renderer is not None and self._use_moderngl:
+            self._modern_renderer.render(self.scene)
+        else:
         self.scene.render()
+        self._frame_stats.frame_rendered()
 
     def loop(self):
         """Repaints and checks for keyboard input on mouse press.
@@ -358,6 +464,50 @@ class ModuleRenderer(QOpenGLWidget):
         
         if self.underMouse() and self.free_cam and len(self._keys_down) > 0:
             self.sig_keyboard_pressed.emit(self._mouse_down, self._keys_down)
+
+    @property
+    def frame_stats(self) -> FrameStats:
+        """Expose frame statistics for diagnostics and tests."""
+        return self._frame_stats
+
+    def average_fps(self, window_seconds: float | None = 1.0) -> float:
+        """Return the average FPS calculated over the requested time window."""
+        return self._frame_stats.average_fps(window_seconds)
+
+    def set_renderer_type(self, use_moderngl: bool) -> None:
+        """Set the renderer type to use.
+        
+        Args:
+            use_moderngl: If True, use ModernGL renderer; if False, use PyOpenGL renderer.
+        """
+        if self._use_moderngl == use_moderngl:
+            return  # No change needed
+        
+        self._use_moderngl = use_moderngl
+        
+        # If switching to ModernGL and not already initialized, initialize it
+        if use_moderngl and self._modern_renderer is None:
+            self.makeCurrent()
+            try:
+                import moderngl  # noqa: WPS433
+                from pykotor.gl.modern_renderer import ModernGLRenderer  # noqa: WPS433
+
+                self._modern_context = moderngl.create_context()
+                self._modern_renderer = ModernGLRenderer(self._modern_context)
+                RobustLogger().info("ModernGL renderer initialized on demand")
+            except Exception as exc:  # noqa: BLE001
+                self._modern_renderer = None
+                self._modern_context = None
+                self._use_moderngl = False
+                RobustLogger().warning("Failed to initialize ModernGL renderer: %s", exc)
+                raise RuntimeError(f"Failed to initialize ModernGL renderer: {exc}") from exc
+
+    @property
+    def renderer_type(self) -> str:
+        """Return the current renderer type as a string."""
+        if self._use_moderngl and self._modern_renderer is not None:
+            return "moderngl"
+        return "pyopengl"
 
     def walkmesh_point(
         self,
@@ -495,7 +645,7 @@ class ModuleRenderer(QOpenGLWidget):
         #super().mouseMoveEvent(e)
         if e is None:
             return
-        pos: QPoint = e.pos() if qtpy.QT5 else e.position().toPoint()
+        pos: QPoint = e.pos() if qtpy.QT5 else e.position().toPoint()  # type: ignore[attr-defined] # pyright: ignore[reportAttributeAccessIssue]
         screen: Vector2 = Vector2(pos.x(), pos.y())
         if self.free_cam:
             screenDelta = Vector2(screen.x - self.width() / 2, screen.y - self.height() / 2)
@@ -512,7 +662,7 @@ class ModuleRenderer(QOpenGLWidget):
         self._mouse_press_time = datetime.now(tz=timezone.utc).astimezone()
         button: Qt.MouseButton = e.button()
         self._mouse_down.add(button)
-        pos: QPoint = e.pos() if qtpy.QT5 else e.position().toPoint()
+        pos: QPoint = e.pos() if qtpy.QT5 else e.position().toPoint()  # type: ignore[attr-defined] # pyright: ignore[reportAttributeAccessIssue]
         coords: Vector2 = Vector2(pos.x(), pos.y())
         self.sig_mouse_pressed.emit(coords, self._mouse_down, self._keys_down)
         #RobustLogger().debug(f"ModuleRenderer.mousePressEvent: {self._mouse_down}, e.button() '{button}'")
@@ -522,12 +672,12 @@ class ModuleRenderer(QOpenGLWidget):
         button = e.button()
         self._mouse_down.discard(button)
 
-        pos: QPoint = e.pos() if qtpy.QT5 else e.position().toPoint()
+        pos: QPoint = e.pos() if qtpy.QT5 else e.position().toPoint()  # type: ignore[attr-defined] # pyright: ignore[reportAttributeAccessIssue]
         coords: Vector2 = Vector2(pos.x(), pos.y())
         self.sig_mouse_released.emit(coords, self._mouse_down, self._keys_down)
         #RobustLogger().debug(f"ModuleRenderer.mouseReleaseEvent: {self._mouse_down}, e.button() '{button}'")
 
-    def keyPressEvent(
+    def keyPressEvent(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         e: QKeyEvent | None,
         bubble: bool = True,  # noqa: FBT001, FBT002
@@ -542,7 +692,7 @@ class ModuleRenderer(QOpenGLWidget):
         #key_name = get_qt_key_string_localized(key)
         #RobustLogger().debug(f"ModuleRenderer.keyPressEvent: {self._keys_down}, e.key() '{key_name}'")
 
-    def keyReleaseEvent(
+    def keyReleaseEvent(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
         e: QKeyEvent | None,
         bubble: bool = True,  # noqa: FBT002, FBT001

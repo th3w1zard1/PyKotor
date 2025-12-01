@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
+from pathlib import Path
 
 from collections.abc import Callable
 from enum import Enum, IntFlag
@@ -710,6 +711,11 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
         self.setDirectory(adirectory.absolutePath())
 
     @setDirectory.register  # type: ignore[attr-defined]
+    def _(self, directory: Path) -> None:
+        """Sets the file dialog's current directory from a Path object."""
+        self.setDirectory(str(directory))
+
+    @setDirectory.register  # type: ignore[attr-defined]
     def _(self, directory: str) -> None:
         """Sets the file dialog's current directory.
 
@@ -769,16 +775,20 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
     # File operations
     def selectFile(
         self,
-        filename: str | None,  # noqa: B006
+        filename: str | Path | None,  # noqa: B006
     ) -> None:
         """Selects the given filename in the file dialog.
 
         Args:
-            filename (str): The filename to select.
+            filename (str | Path): The filename to select.
         """
         d: QFileDialogPrivate = self._private
         if not filename:
             return
+        
+        # Convert Path objects to strings
+        if isinstance(filename, Path):
+            filename = str(filename)
 
         if not d.usingWidgets():
             url = QUrl()
@@ -1086,7 +1096,11 @@ class QFileDialog(RealQFileDialog if TYPE_CHECKING else QDialog):  # pyright: ig
 
             hide_name_filter_details: int = sip_enum_to_int(RealQFileDialog.Option.HideNameFilterDetails)
             if bool(changed & hide_name_filter_details):
+                # Update the combo box items when HideNameFilterDetails option changes
                 self.setNameFilters(self._private.options.nameFilters())
+                # Process events to ensure UI updates
+                if d.usingWidgets():
+                    QApplication.processEvents()
 
         show_dirs_only: int = sip_enum_to_int(RealQFileDialog.Option.ShowDirsOnly)
         if bool(changed & show_dirs_only):

@@ -5,6 +5,8 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 UTP files define placeable object templates including containers, furniture, switches, workbenches, and interactive environmental objects. Placeables can have inventories, be destroyed, locked, trapped, and trigger scripts.
 
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Door/Placeable format specification, see [Bioware Aurora Door/Placeable GFF Format](Bioware-Aurora-DoorPlaceableGFF).
+
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utp.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utp.py)
 
 ## Core Identity Fields

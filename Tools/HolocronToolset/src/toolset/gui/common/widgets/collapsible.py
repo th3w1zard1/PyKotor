@@ -27,18 +27,26 @@ class CollapsibleGroupBox(QGroupBox):
         layout.addWidget(some_widget)
     """
     
-    def __init__(self, title: str = "", parent: QWidget | None = None):
+    def __init__(self, title: str | QWidget = "", parent: QWidget | None = None):
+        # Handle case where pyuic5 generates: CollapsibleGroupBox(parent)
+        # In that case, title is actually the parent widget
+        if isinstance(title, QWidget) and parent is None:
+            parent = title
+            title = ""
+        
         super().__init__(title, parent)
+        
+        # Store the original size policy BEFORE enabling checkable behavior
+        self._original_size_policy: QSizePolicy = self.sizePolicy()
         
         # Enable checkable behavior
         self.setCheckable(True)
-        self.setChecked(True)
         
         # Connect toggle signal to collapse/expand handler
         self.toggled.connect(self._on_toggled)
         
-        # Store the original size policy
-        self._original_size_policy: QSizePolicy = self.sizePolicy()
+        # Set checked state (this will trigger _on_toggled via signal)
+        self.setChecked(True)
 
     def _on_toggled(self, checked: bool):
         """Handle the toggled signal to collapse/expand contents."""
@@ -57,7 +65,12 @@ class CollapsibleGroupBox(QGroupBox):
         
         # Adjust size policy when collapsed
         if checked:
-            self.setSizePolicy(self._original_size_policy)
+            # Restore original size policy if it exists, otherwise use current
+            if hasattr(self, '_original_size_policy'):
+                self.setSizePolicy(self._original_size_policy)
+            else:
+                # Fallback: store current policy as original
+                self._original_size_policy = self.sizePolicy()
         else:
             policy = QSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
             self.setSizePolicy(policy)

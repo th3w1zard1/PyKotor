@@ -19,37 +19,146 @@ class Camera:
     cached and only recomputed when camera parameters change. This provides
     significant speedup when matrices are accessed multiple times per frame.
     
+    All position/orientation attributes (x, y, z, pitch, yaw, distance) use
+    properties that automatically invalidate the view cache when modified.
+    Similarly, width/height/fov invalidate the projection cache.
+    
     Reference: Standard game engine practice (Unity, Unreal use similar caching)
     """
     
     __slots__ = (
-        "x", "y", "z", "width", "height", "pitch", "yaw", "distance", "fov",
+        "_x", "_y", "_z", "_width", "_height", "_pitch", "_yaw", "_distance", "_fov",
         "_cached_view", "_cached_projection", "_view_dirty", "_projection_dirty"
     )
     
     def __init__(self):
-        self.x: float = 40.0
-        self.y: float = 130.0
-        self.z: float = 0.5
-        self.width: int = 1920
-        self.height: int = 1080
-        self.pitch: float = math.pi / 2
-        self.yaw: float = 0.0
-        self.distance: float = 10.0
-        self.fov: float = 90.0
+        # Initialize internal attributes directly to avoid property setters
+        # triggering invalidation during construction
+        self._x: float = 40.0
+        self._y: float = 130.0
+        self._z: float = 0.5
+        self._width: int = 1920
+        self._height: int = 1080
+        self._pitch: float = math.pi / 2
+        self._yaw: float = 0.0
+        self._distance: float = 10.0
+        self._fov: float = 90.0
         
         # Cached matrices
         self._cached_view: mat4 | None = None
         self._cached_projection: mat4 | None = None
         self._view_dirty: bool = True
         self._projection_dirty: bool = True
+    
+    # Position properties - invalidate view cache on change
+    @property
+    def x(self) -> float:
+        return self._x
+    
+    @x.setter
+    def x(self, value: float) -> None:
+        if self._x != value:
+            self._x = value
+            self._view_dirty = True
+    
+    @property
+    def y(self) -> float:
+        return self._y
+    
+    @y.setter
+    def y(self, value: float) -> None:
+        if self._y != value:
+            self._y = value
+            self._view_dirty = True
+    
+    @property
+    def z(self) -> float:
+        return self._z
+    
+    @z.setter
+    def z(self, value: float) -> None:
+        if self._z != value:
+            self._z = value
+            self._view_dirty = True
+    
+    # Orientation properties - invalidate view cache on change
+    @property
+    def pitch(self) -> float:
+        return self._pitch
+    
+    @pitch.setter
+    def pitch(self, value: float) -> None:
+        if self._pitch != value:
+            self._pitch = value
+            self._view_dirty = True
+    
+    @property
+    def yaw(self) -> float:
+        return self._yaw
+    
+    @yaw.setter
+    def yaw(self, value: float) -> None:
+        if self._yaw != value:
+            self._yaw = value
+            self._view_dirty = True
+    
+    @property
+    def distance(self) -> float:
+        return self._distance
+    
+    @distance.setter
+    def distance(self, value: float) -> None:
+        if self._distance != value:
+            self._distance = value
+            self._view_dirty = True
+    
+    # Viewport/projection properties - invalidate projection cache on change
+    @property
+    def width(self) -> int:
+        return self._width
+    
+    @width.setter
+    def width(self, value: int) -> None:
+        if self._width != value:
+            self._width = value
+            self._projection_dirty = True
+    
+    @property
+    def height(self) -> int:
+        return self._height
+    
+    @height.setter
+    def height(self, value: int) -> None:
+        if self._height != value:
+            self._height = value
+            self._projection_dirty = True
+    
+    @property
+    def fov(self) -> float:
+        return self._fov
+    
+    @fov.setter
+    def fov(self, value: float) -> None:
+        if self._fov != value:
+            self._fov = value
+            self._projection_dirty = True
 
     def _invalidate_view(self):
-        """Mark view matrix as needing recalculation."""
+        """Mark view matrix as needing recalculation.
+        
+        Note: This is now called automatically by property setters for
+        x, y, z, pitch, yaw, and distance. Manual calls are only needed
+        for bulk updates or special cases.
+        """
         self._view_dirty = True
     
     def _invalidate_projection(self):
-        """Mark projection matrix as needing recalculation."""
+        """Mark projection matrix as needing recalculation.
+        
+        Note: This is now called automatically by property setters for
+        width, height, and fov. Manual calls are only needed for bulk
+        updates or special cases.
+        """
         self._projection_dirty = True
 
     def set_resolution(
@@ -57,19 +166,18 @@ class Camera:
         width: int,
         height: int,
     ):
-        if self.width != width or self.height != height:
-            self.width, self.height = width, height
-            self._invalidate_projection()
+        # Properties handle cache invalidation automatically
+        self.width = width
+        self.height = height
 
     def set_position(
         self,
         position: Union[Vector3, vec3],
     ):
-        if self.x != position.x or self.y != position.y or self.z != position.z:
+        # Properties handle cache invalidation automatically
             self.x = position.x
             self.y = position.y
             self.z = position.z
-            self._invalidate_view()
 
     def view(self) -> mat4:
         """Get view matrix with caching.
@@ -122,10 +230,10 @@ class Camera:
         self,
         translation: vec3,
     ):
+        # Properties handle cache invalidation automatically
         self.x += translation.x
         self.y += translation.y
         self.z += translation.z
-        self._invalidate_view()
 
     def rotate(
         self,
@@ -136,10 +244,9 @@ class Camera:
         lower_limit: float = 0,
         upper_limit: float = math.pi,
     ):
-        # Update pitch and yaw
+        # Update pitch and yaw (properties handle cache invalidation)
         self.pitch = self.pitch + pitch
         self.yaw = self.yaw + yaw
-        self._invalidate_view()
 
         # ensure yaw doesn't get too large.
         if self.yaw > 2 * math.pi:

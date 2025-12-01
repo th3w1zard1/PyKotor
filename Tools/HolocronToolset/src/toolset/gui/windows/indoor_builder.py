@@ -56,12 +56,17 @@ from utility.updater.github import download_github_release_asset
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QPoint
-    from qtpy.QtGui import QImage, QKeyEvent, QMouseEvent, QPaintEvent, QWheelEvent
+    from qtpy.QtGui import QCloseEvent, QImage, QKeyEvent, QMouseEvent, QPaintEvent, QWheelEvent
 
     from pykotor.resource.formats.bwm import BWMFace
     from pykotor.resource.formats.bwm.bwm_data import BWM
     from toolset.data.indoorkit import KitComponent, KitComponentHook
     from toolset.data.indoormap import MissingRoomInfo
+    try:
+        from qtpy.QtGui import QCloseEvent  # type: ignore[assignment]
+    except ImportError:
+        # Fallback for Qt6 where QCloseEvent may be in QtCore
+        from qtpy.QtCore import QCloseEvent  # type: ignore[assignment]
 
 
 # =============================================================================
@@ -431,33 +436,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if missing_files:
             self._show_missing_files_dialog(missing_files)
 
-        if len(self._kits) == 0:
-            # Check for headless mode before scheduling dialog to prevent crashes
-            # In headless mode (used by tests and CI/CD), skip dialogs entirely
-            # This is an industry-standard approach: detect headless mode early and skip GUI operations
-            import os
-            qt_platform = os.environ.get("QT_QPA_PLATFORM", "").lower()
-            is_headless = qt_platform in ("offscreen", "minimal", "vnc", "vncserver")
-            
-            # Additional check: try to detect via QApplication platform name if not already detected
-            # But only if we haven't already determined we're headless to avoid unnecessary Qt calls
-            if not is_headless:
-                app = QApplication.instance()
-                if app is not None and isinstance(app, QApplication):
-                    try:
-                        # QApplication.platformName() is available in Qt 5.7+
-                        platform_name = getattr(app, 'platformName', lambda: "")().lower()
-                        if platform_name:
-                            is_headless = platform_name in ("offscreen", "minimal", "vnc", "vncserver")
-                    except Exception:
-                        # If platform name check fails, assume GUI mode and show dialog
-                        pass
-            
-            if not is_headless:
-                # Only defer dialog in GUI mode - this prevents crashes in headless mode
-                # Using QTimer.singleShot ensures the dialog appears after the window is fully initialized
-                # and allows the event loop to process other initialization tasks first
-                QTimer.singleShot(0, self._show_no_kits_dialog)
+        # Kits are deprecated and optional - modules provide the same functionality
+        # No need to show a dialog when kits are missing since modules can be used instead
+        # if len(self._kits) == 0:
+        #     ... (removed - kits are deprecated, modules handle this functionality)
 
         for kit in self._kits:
             self.ui.kitSelect.addItem(kit.name, kit)
@@ -473,13 +455,12 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         
         # Show dialog in GUI mode using exec()
         # Headless check happens before this method is scheduled, so this is safe
-        no_kit_prompt = QMessageBox(
-            QMessageBox.Icon.Warning,
-            tr("No Kits Available"),
-            tr("No kits were detected, would you like to open the Kit downloader?"),
-            buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            defaultButton=QMessageBox.StandardButton.No,
-        )
+        no_kit_prompt = QMessageBox(self)
+        no_kit_prompt.setIcon(QMessageBox.Icon.Warning)
+        no_kit_prompt.setWindowTitle(tr("No Kits Available"))
+        no_kit_prompt.setText(tr("No kits were detected, would you like to open the Kit downloader?"))
+        no_kit_prompt.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        no_kit_prompt.setDefaultButton(QMessageBox.StandardButton.No)
         
         # Use exec() for proper modal behavior in GUI mode
         result = no_kit_prompt.exec()
@@ -1259,6 +1240,90 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 continue
             self.add_connected_to_selection(hook)
 
+    def closeEvent(self, e: QCloseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Handle window close event - ensure proper cleanup of all resources."""
+        # Stop renderer loop first
+        if hasattr(self.ui, 'mapRenderer'):
+            try:
+                self.ui.mapRenderer._loop_active = False
+                # Process events to allow renderer to stop gracefully
+                QApplication.processEvents()
+            except Exception:
+                pass
+        
+        # Disconnect all signals to prevent callbacks after destruction
+        try:
+            # Disconnect UI signals
+            if hasattr(self.ui, 'kitSelect'):
+                self.ui.kitSelect.currentIndexChanged.disconnect()
+            if hasattr(self.ui, 'componentList'):
+                self.ui.componentList.currentItemChanged.disconnect()
+            if hasattr(self.ui, 'moduleSelect'):
+                self.ui.moduleSelect.currentIndexChanged.disconnect()
+            if hasattr(self.ui, 'moduleComponentList'):
+                self.ui.moduleComponentList.currentItemChanged.disconnect()
+            
+            # Disconnect renderer signals
+            if hasattr(self.ui, 'mapRenderer'):
+                renderer = self.ui.mapRenderer
+                try:
+                    renderer.customContextMenuRequested.disconnect()
+                    renderer.sig_mouse_moved.disconnect()
+                    renderer.sig_mouse_pressed.disconnect()
+                    renderer.sig_mouse_released.disconnect()
+                    renderer.sig_mouse_scrolled.disconnect()
+                    renderer.sig_mouse_double_clicked.disconnect()
+                    renderer.sig_rooms_moved.disconnect()
+                    renderer.sig_warp_moved.disconnect()
+                    renderer.sig_marquee_select.disconnect()
+                except Exception:
+                    pass
+            
+            # Disconnect undo stack signals
+            if hasattr(self, '_undo_stack') and self._undo_stack is not None:
+                try:
+                    self._undo_stack.canUndoChanged.disconnect()
+                    self._undo_stack.canRedoChanged.disconnect()
+                    self._undo_stack.undoTextChanged.disconnect()
+                    self._undo_stack.redoTextChanged.disconnect()
+                except Exception:
+                    pass
+        except Exception:
+            # Some signals may already be disconnected
+            pass
+        
+        # Clear references
+        self._kits.clear()
+        self._clipboard.clear()
+        self._current_module_kit = None
+        if hasattr(self, '_module_kit_manager') and self._module_kit_manager is not None:
+            try:
+                self._module_kit_manager.clear_cache()
+            except Exception:
+                pass
+        
+        # Process any pending events before destruction
+        QApplication.processEvents()
+        
+        # Call parent closeEvent (this will trigger BlenderEditorMixin cleanup if needed)
+        # Wrap in try-except to handle case where widget is already being destroyed
+        try:
+            # Check if widget is still valid by accessing a safe property
+            if hasattr(self, 'isVisible'):
+                super().closeEvent(e)
+            else:
+                # Widget is already destroyed, just accept the event
+                e.accept()
+        except RuntimeError:
+            # Widget has been deleted, just accept the event
+            e.accept()
+        except Exception:
+            # Any other error, try to accept the event
+            try:
+                e.accept()
+            except Exception:
+                pass
+
 
 # =============================================================================
 # Renderer Widget
@@ -1336,14 +1401,74 @@ class IndoorMapRenderer(QWidget):
         self._hovering_warp: bool = False
         self.warp_point_radius: float = 1.0
 
+        # Render loop control
+        self._loop_active: bool = True
+        
+        # Connect to destroyed signal as safety mechanism
+        # This ensures the loop stops immediately when widget is destroyed
+        self.destroyed.connect(self._on_destroyed)
+
         self._loop()
+    
+    def _on_destroyed(self):
+        """Called when widget is destroyed - ensures loop stops."""
+        self._loop_active = False
 
     def _loop(self):
-        """Optimized render loop - only repaint when dirty."""
-        if self._dirty or self._dragging or self.cursor_component is not None:
-            self.repaint()
-            self._dirty = False
-        QTimer.singleShot(16, self._loop)  # ~60 FPS
+        """Optimized render loop - only repaint when dirty.
+        
+        Uses standard safety checks to prevent access violations:
+        - Checks loop_active flag before any operations
+        - Validates widget state before repainting
+        - Handles RuntimeError from widget destruction
+        - Only schedules next iteration if widget is still valid
+        """
+        # Primary safety check: stop if loop is deactivated
+        if not self._loop_active:
+            return
+        
+        # Secondary safety check: validate widget is still valid
+        # Qt widgets can be in various states during destruction
+        try:
+            # Check if widget is being destroyed or already destroyed
+            # QWidget.isVisible() returns False during destruction
+            # parent() becomes None during destruction
+            widget_valid = (
+                self.isVisible() or 
+                self.parent() is not None or
+                hasattr(self, '_loop_active')  # Widget still has attributes
+            )
+            
+            if not widget_valid:
+                self._loop_active = False
+                return
+        except RuntimeError:
+            # Widget is in process of destruction - Qt may raise RuntimeError
+            # when accessing properties of a destroyed widget
+            self._loop_active = False
+            return
+        
+        # Perform repaint only if widget is still valid
+        try:
+            if self._dirty or self._dragging or self.cursor_component is not None:
+                # Only repaint if widget is still valid
+                if self._loop_active and widget_valid:
+                    self.repaint()
+                    self._dirty = False
+        except (RuntimeError, AttributeError):
+            # Widget may be in process of destruction
+            # AttributeError can occur if widget properties are accessed during destruction
+            self._loop_active = False
+            return
+        
+        # Only schedule next loop iteration if still active and widget is valid
+        if self._loop_active and widget_valid:
+            try:
+                QTimer.singleShot(16, self._loop)  # ~60 FPS
+            except RuntimeError:
+                # Cannot schedule timer if widget is being destroyed
+                self._loop_active = False
+                return
 
     def mark_dirty(self):
         """Mark the renderer as needing a repaint."""
@@ -2042,6 +2167,51 @@ class IndoorMapRenderer(QWidget):
     def keyReleaseEvent(self, e: QKeyEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         self._keys_down.discard(e.key())
         self.mark_dirty()
+
+    def closeEvent(self, e: QCloseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Handle widget close event - stop render loop and clean up resources."""
+        # Stop the render loop immediately - this prevents any further timer callbacks
+        # Setting this flag ensures _loop() will return early and not schedule more timers
+        self._loop_active = False
+        
+        # Disconnect all signals to prevent callbacks after destruction
+        try:
+            self.sig_mouse_moved.disconnect()
+            self.sig_mouse_scrolled.disconnect()
+            self.sig_mouse_released.disconnect()
+            self.sig_mouse_pressed.disconnect()
+            self.sig_mouse_double_clicked.disconnect()
+            self.sig_rooms_moved.disconnect()
+            self.sig_warp_moved.disconnect()
+            self.sig_marquee_select.disconnect()
+        except Exception:
+            # Signals may already be disconnected
+            pass
+        
+        # Clear references to prevent circular dependencies
+        self._map = IndoorMap()
+        self._undo_stack = None
+        self._selected_rooms.clear()
+        self._cached_walkmeshes.clear()
+        self.cursor_component = None
+        
+        # Process any pending events before destruction
+        QApplication.processEvents()
+        
+        # Call parent closeEvent
+        # Wrap in try-except to handle case where widget is already being destroyed
+        try:
+            if hasattr(self, 'isVisible'):
+                super().closeEvent(e)
+            else:
+                e.accept()
+        except RuntimeError:
+            e.accept()
+        except Exception:
+            try:
+                e.accept()
+            except Exception:
+                pass
 
 
 # =============================================================================

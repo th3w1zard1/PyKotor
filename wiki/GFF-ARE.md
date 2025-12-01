@@ -4,6 +4,8 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ARE files define static area properties including lighting, weather, ambient audio, grass rendering, fog settings, script hooks, and minimap data. ARE files contain environmental and atmospheric data for game areas, while dynamic object placement is handled by GIT files.
 
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine ARE format specification, see [Bioware Aurora Area File Format](Bioware-Aurora-AreaFile).
+
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/are.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py)
 
 ## Core Identity Fields

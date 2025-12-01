@@ -216,9 +216,7 @@ class RenderObject:
         min_point: vec3,
         max_point: vec3,
     ):
-        obj_min, obj_max = scene.model(obj.model).box()
-        obj_min = transform * obj_min
-        obj_max = transform * obj_max
+        obj_min, obj_max = scene.model(obj.model).bounds(transform)
         min_point.x = min(min_point.x, obj_min.x, obj_max.x)
         min_point.y = min(min_point.y, obj_min.y, obj_max.y)
         min_point.z = min(min_point.z, obj_min.z, obj_max.z)

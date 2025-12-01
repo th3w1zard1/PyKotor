@@ -66,9 +66,13 @@ class Model:
         return all_nodes
 
     def box(self) -> tuple[vec3, vec3]:
+        return self.bounds(mat4())
+
+    def bounds(self, transform: mat4) -> tuple[vec3, vec3]:
+        """Calculate the bounding box of the model with the given transform."""
         min_point = vec3(100000, 100000, 100000)
         max_point = vec3(-100000, -100000, -100000)
-        self._box_rec(self.root, mat4(), min_point, max_point)
+        self._box_rec(self.root, transform, min_point, max_point)
 
         min_point.x -= 0.1
         min_point.y -= 0.1

@@ -5,6 +5,8 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 UTS files define sound object templates for ambient and environmental audio. These can be positional 3D sounds or global stereo sounds, with looping, randomization, and volume control.
 
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Sound Object format specification, see [Bioware Aurora Sound Object Format](Bioware-Aurora-SoundObject).
+
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/uts.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uts.py)
 
 ## Core Identity Fields

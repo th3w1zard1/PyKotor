@@ -3,7 +3,12 @@
 This module provides functionality to:
 - Detect Blender installations from registry, common paths, and PATH
 - Get Blender version information
+- Install kotorblender addon
 - Launch Blender with IPC server script
+
+References:
+    vendor/kotorblender/README.md (installation instructions)
+    Libraries/PyKotor/src/pykotor/tools/path.py (find_kotor_paths_from_default pattern)
 """
 
 from __future__ import annotations
@@ -14,11 +19,16 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 @dataclass
@@ -101,90 +111,140 @@ def _get_windows_registry_blender_paths() -> list[Path]:
     return paths
 
 
+def _get_default_blender_paths() -> dict[str, list[str]]:
+    """Get default Blender installation paths by OS.
+    
+    Similar to find_kotor_paths_from_default pattern in pykotor.tools.path.
+    """
+    return {
+        "Windows": [
+            # Blender Foundation standard paths
+            r"{ProgramFiles}\Blender Foundation\Blender *\blender.exe",
+            r"{ProgramFiles(x86)}\Blender Foundation\Blender *\blender.exe",
+            r"{LOCALAPPDATA}\Blender Foundation\Blender *\blender.exe",
+            # Steam
+            r"{ProgramFiles}\Steam\steamapps\common\Blender\blender.exe",
+            r"{ProgramFiles(x86)}\Steam\steamapps\common\Blender\blender.exe",
+            r"~\Steam\steamapps\common\Blender\blender.exe",
+            # Chocolatey
+            r"C:\ProgramData\chocolatey\lib\blender\tools\blender.exe",
+            # Portable/custom
+            r"C:\Blender\blender.exe",
+            r"~\Blender\blender.exe",
+        ],
+        "Darwin": [
+            # Standard macOS installation
+            "/Applications/Blender.app/Contents/MacOS/Blender",
+            "~/Applications/Blender.app/Contents/MacOS/Blender",
+            # Versioned installations
+            "/Applications/Blender*.app/Contents/MacOS/Blender",
+            "~/Applications/Blender*.app/Contents/MacOS/Blender",
+            # Homebrew
+            "/opt/homebrew/bin/blender",
+            "/usr/local/bin/blender",
+        ],
+        "Linux": [
+            # Package manager installations
+            "/usr/bin/blender",
+            "/usr/local/bin/blender",
+            # Snap
+            "/snap/bin/blender",
+            "/var/lib/snapd/snap/bin/blender",
+            # Flatpak
+            "~/.local/share/flatpak/exports/bin/org.blender.Blender",
+            "/var/lib/flatpak/exports/bin/org.blender.Blender",
+            # Manual/portable installations
+            "~/.local/bin/blender",
+            "/opt/blender/blender",
+            "/opt/blender*/blender",
+            "~/blender*/blender",
+            # Steam (Proton/Linux native)
+            "~/.steam/steam/steamapps/common/Blender/blender",
+            "~/.local/share/Steam/steamapps/common/Blender/blender",
+        ],
+    }
+
+
+def _expand_path_pattern(pattern: str) -> Iterator[Path]:
+    """Expand a path pattern with environment variables and globs.
+    
+    Supports:
+    - {EnvVar} syntax for environment variables
+    - ~ for home directory
+    - * wildcards for glob matching
+    """
+    # Expand environment variables in {VAR} format
+    def expand_env(m: re.Match) -> str:
+        return os.environ.get(m.group(1), m.group(0))
+    
+    expanded = re.sub(r"\{(\w+)\}", expand_env, pattern)
+    
+    # Expand ~ to home directory
+    expanded = os.path.expanduser(expanded)
+    
+    # If pattern contains wildcards, use glob
+    if "*" in expanded:
+        from glob import glob
+        for match in glob(expanded):
+            yield Path(match)
+    else:
+        path = Path(expanded)
+        if path.exists():
+            yield path
+
+
 def _get_common_blender_paths() -> list[Path]:
     """Get common Blender installation paths based on OS."""
     paths: list[Path] = []
     system = platform.system()
 
+    # Get paths from default patterns
+    default_paths = _get_default_blender_paths()
+    patterns = default_paths.get(system, [])
+    
+    for pattern in patterns:
+        for path in _expand_path_pattern(pattern):
+            if path.is_file():
+                paths.append(path)
+            elif path.is_dir():
+                # Check for blender executable in directory
+                for name in ["blender", "blender.exe", "Blender"]:
+                    exe = path / name
+                    if exe.is_file():
+                        paths.append(exe)
+                        break
+
+    # Additional directory scanning for versioned installations
     if system == "Windows":
-        # Common Windows installation paths
-        program_files = os.environ.get("ProgramFiles", r"C:\Program Files")
-        program_files_x86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
-        local_appdata = os.environ.get("LOCALAPPDATA", "")
-
-        common_dirs = [
-            Path(program_files) / "Blender Foundation",
-            Path(program_files_x86) / "Blender Foundation",
-            Path.home() / "AppData" / "Local" / "Blender Foundation",
-        ]
-
-        # Steam installation
-        steam_paths = [
-            Path(program_files_x86) / "Steam" / "steamapps" / "common" / "Blender",
-            Path(program_files) / "Steam" / "steamapps" / "common" / "Blender",
-            Path.home() / "Steam" / "steamapps" / "common" / "Blender",
-        ]
-        common_dirs.extend(steam_paths)
-
-        for base_dir in common_dirs:
-            if base_dir.is_dir():
-                # Look for version subdirectories
-                for item in base_dir.iterdir():
-                    if item.is_dir():
+        for base_env in ["ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"]:
+            base = os.environ.get(base_env, "")
+            if not base:
+                continue
+            bf_path = Path(base) / "Blender Foundation"
+            if bf_path.is_dir():
+                for item in bf_path.iterdir():
+                    if item.is_dir() and item.name.lower().startswith("blender"):
                         exe = item / "blender.exe"
-                        if exe.is_file():
+                        if exe.is_file() and exe not in paths:
                             paths.append(exe)
-                # Also check directly in base
-                exe = base_dir / "blender.exe"
-                if exe.is_file():
-                    paths.append(exe)
-
-    elif system == "Darwin":  # macOS
-        # Standard macOS installation paths
-        app_paths = [
-            Path("/Applications/Blender.app/Contents/MacOS/Blender"),
-            Path.home() / "Applications" / "Blender.app" / "Contents" / "MacOS" / "Blender",
-        ]
-
-        # Check for versioned installations
+    
+    elif system == "Darwin":
         for apps_dir in [Path("/Applications"), Path.home() / "Applications"]:
             if apps_dir.is_dir():
                 for item in apps_dir.iterdir():
                     if item.name.startswith("Blender") and item.suffix == ".app":
                         exe = item / "Contents" / "MacOS" / "Blender"
-                        if exe.is_file():
+                        if exe.is_file() and exe not in paths:
                             paths.append(exe)
-
-        paths.extend([p for p in app_paths if p.is_file()])
-
-    else:  # Linux
-        # Standard Linux installation paths
-        linux_paths = [
-            Path("/usr/bin/blender"),
-            Path("/usr/local/bin/blender"),
-            Path("/snap/bin/blender"),
-            Path.home() / ".local" / "bin" / "blender",
-            Path("/opt/blender/blender"),
-        ]
-
-        # Flatpak
-        flatpak_path = Path.home() / ".local" / "share" / "flatpak" / "exports" / "bin" / "org.blender.Blender"
-        if flatpak_path.is_file():
-            paths.append(flatpak_path)
-
-        # Check common locations
-        for p in linux_paths:
-            if p.is_file():
-                paths.append(p)
-
-        # Check for extracted tar.gz installations
-        opt_blender = Path("/opt")
-        if opt_blender.is_dir():
-            for item in opt_blender.iterdir():
-                if item.is_dir() and item.name.lower().startswith("blender"):
-                    exe = item / "blender"
-                    if exe.is_file():
-                        paths.append(exe)
+    
+    elif system == "Linux":
+        for opt_dir in [Path("/opt"), Path.home()]:
+            if opt_dir.is_dir():
+                for item in opt_dir.iterdir():
+                    if item.is_dir() and item.name.lower().startswith("blender"):
+                        exe = item / "blender"
+                        if exe.is_file() and exe not in paths:
+                            paths.append(exe)
 
     return paths
 
@@ -207,12 +267,13 @@ def get_blender_version(executable: Path) -> tuple[int, int, int] | None:
         Tuple of (major, minor, patch) version numbers, or None if failed
     """
     try:
+        kwargs: dict = {"capture_output": True, "text": True, "timeout": 10}
+        if sys.platform == "win32":
+            kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+        
         result = subprocess.run(
             [str(executable), "--version"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+            **kwargs,
         )
 
         # Parse version from output like "Blender 4.2.0"
@@ -258,7 +319,7 @@ def _get_blender_config_paths(version: tuple[int, int, int]) -> tuple[Path | Non
     return addons_path, extensions_path
 
 
-def _check_kotorblender_installed(info: BlenderInfo) -> bool:
+def check_kotorblender_installed(info: BlenderInfo) -> bool:
     """Check if kotorblender is installed and get its version.
 
     Args:
@@ -290,33 +351,20 @@ def _check_kotorblender_installed(info: BlenderInfo) -> bool:
     return True
 
 
-def find_blender_executable(
-    custom_path: Path | str | None = None,
+def find_all_blender_installations(
     min_version: tuple[int, int, int] = (3, 6, 0),
-) -> BlenderInfo | None:
-    """Find a valid Blender installation.
+) -> list[BlenderInfo]:
+    """Find ALL valid Blender installations on the system.
+    
+    Similar to find_kotor_paths_from_default pattern.
 
     Args:
-        custom_path: Optional custom path to Blender executable
         min_version: Minimum required Blender version (default 3.6.0)
 
     Returns:
-        BlenderInfo if found, None otherwise
+        List of BlenderInfo for all found installations, sorted by version (newest first)
     """
     candidates: list[Path] = []
-
-    # Custom path takes priority
-    if custom_path:
-        custom = Path(custom_path)
-        if custom.is_file():
-            candidates.append(custom)
-        elif custom.is_dir():
-            # Check for blender executable in directory
-            for name in ["blender", "blender.exe", "Blender"]:
-                exe = custom / name
-                if exe.is_file():
-                    candidates.append(exe)
-                    break
 
     # Check PATH
     path_blender = _get_blender_from_path()
@@ -334,15 +382,17 @@ def find_blender_executable(
     seen: set[Path] = set()
     unique_candidates: list[Path] = []
     for c in candidates:
-        resolved = c.resolve()
-        if resolved not in seen:
-            seen.add(resolved)
-            unique_candidates.append(c)
+        try:
+            resolved = c.resolve()
+            if resolved not in seen:
+                seen.add(resolved)
+                unique_candidates.append(c)
+        except (OSError, RuntimeError):
+            continue
 
-    # Find best candidate
-    best_info: BlenderInfo | None = None
-    best_version: tuple[int, int, int] = (0, 0, 0)
-
+    # Build info for each valid installation
+    installations: list[BlenderInfo] = []
+    
     for candidate in unique_candidates:
         version = get_blender_version(candidate)
         if version is None:
@@ -362,21 +412,65 @@ def find_blender_executable(
             is_valid=True,
         )
 
-        info.has_kotorblender = _check_kotorblender_installed(info)
+        info.has_kotorblender = check_kotorblender_installed(info)
+        installations.append(info)
 
-        # Prefer installations with kotorblender, then by version
-        if info.has_kotorblender and (best_info is None or not best_info.has_kotorblender):
-            best_info = info
-            best_version = version
-        elif info.has_kotorblender == (best_info.has_kotorblender if best_info else False):
-            if version > best_version:
-                best_info = info
-                best_version = version
-        elif best_info is None:
-            best_info = info
-            best_version = version
+    # Sort by version (newest first), then by kotorblender status
+    installations.sort(key=lambda x: (x.has_kotorblender, x.version or (0, 0, 0)), reverse=True)
+    
+    return installations
 
-    return best_info
+
+def find_blender_executable(
+    custom_path: Path | str | None = None,
+    min_version: tuple[int, int, int] = (3, 6, 0),
+) -> BlenderInfo | None:
+    """Find a valid Blender installation.
+
+    Args:
+        custom_path: Optional custom path to Blender executable
+        min_version: Minimum required Blender version (default 3.6.0)
+
+    Returns:
+        BlenderInfo if found, None otherwise
+    """
+    # Custom path takes priority
+    if custom_path:
+        custom = Path(custom_path)
+        executable: Path | None = None
+        
+        if custom.is_file():
+            executable = custom
+        elif custom.is_dir():
+            # Check for blender executable in directory
+            for name in ["blender", "blender.exe", "Blender"]:
+                exe = custom / name
+                if exe.is_file():
+                    executable = exe
+                    break
+            # macOS .app bundle
+            if executable is None and custom.suffix == ".app":
+                exe = custom / "Contents" / "MacOS" / "Blender"
+                if exe.is_file():
+                    executable = exe
+        
+        if executable:
+            version = get_blender_version(executable)
+            if version and version >= min_version:
+                addons_path, extensions_path = _get_blender_config_paths(version)
+                info = BlenderInfo(
+                    executable=executable,
+                    version=version,
+                    addons_path=addons_path,
+                    extensions_path=extensions_path,
+                    is_valid=True,
+                )
+                info.has_kotorblender = check_kotorblender_installed(info)
+                return info
+
+    # Find all installations and return the best one
+    installations = find_all_blender_installations(min_version)
+    return installations[0] if installations else None
 
 
 def detect_blender(
@@ -404,10 +498,144 @@ def detect_blender(
     if not info.has_kotorblender:
         info.error = (
             f"Blender {info.version_string} found but kotorblender add-on is not installed. "
-            "Please install kotorblender from https://deadlystream.com/files/file/1853-kotorblender/"
+            "Click 'Install kotorblender' to install it automatically."
         )
 
     return info
+
+
+def _get_kotorblender_source_path() -> Path | None:
+    """Find the kotorblender source directory.
+    
+    Works for both:
+    - Running from source: vendor/kotorblender/io_scene_kotor
+    - PyInstaller builds: bundled in _MEIPASS/kotorblender/io_scene_kotor
+    
+    Returns:
+        Path to io_scene_kotor directory, or None if not found
+    """
+    # Check for PyInstaller frozen build
+    if getattr(sys, "frozen", False):
+        # Running as PyInstaller bundle
+        bundle_dir = Path(sys._MEIPASS)  # type: ignore[attr-defined]
+        
+        # Check bundled location
+        bundled_path = bundle_dir / "kotorblender" / "io_scene_kotor"
+        if bundled_path.is_dir() and (bundled_path / "__init__.py").is_file():
+            return bundled_path
+        
+        # Alternative bundled location
+        bundled_path2 = bundle_dir / "io_scene_kotor"
+        if bundled_path2.is_dir() and (bundled_path2 / "__init__.py").is_file():
+            return bundled_path2
+    
+    # Running from source - find repo root
+    current_file = Path(__file__).resolve()
+    
+    # Go up from Tools/HolocronToolset/src/toolset/blender/detection.py to repo root
+    for parent in current_file.parents:
+        vendor_path = parent / "vendor" / "kotorblender" / "io_scene_kotor"
+        if vendor_path.is_dir() and (vendor_path / "__init__.py").is_file():
+            return vendor_path
+    
+    return None
+
+
+def install_kotorblender(
+    info: BlenderInfo,
+    source_path: Path | str | None = None,
+) -> tuple[bool, str]:
+    """Install kotorblender addon to Blender's addons/extensions directory.
+    
+    Works for both source installations and PyInstaller builds.
+    Installation is idempotent - safe to call multiple times.
+
+    Args:
+        info: BlenderInfo with valid Blender installation
+        source_path: Optional custom path to kotorblender source (io_scene_kotor dir)
+
+    Returns:
+        Tuple of (success: bool, message: str)
+    """
+    if not info.is_valid:
+        return False, "Invalid Blender installation"
+
+    kotorblender_dest = info.kotorblender_path
+    if kotorblender_dest is None:
+        return False, "Cannot determine kotorblender installation path for this Blender version"
+
+    # Find kotorblender source
+    if source_path:
+        kotorblender_src = Path(source_path)
+    else:
+        kotorblender_src = _get_kotorblender_source_path()
+    
+    if kotorblender_src is None or not kotorblender_src.is_dir():
+        return False, (
+            "kotorblender source not found.\n\n"
+            "Please download kotorblender manually from:\n"
+            "https://deadlystream.com/files/file/1853-kotorblender/\n\n"
+            "Then extract and select the io_scene_kotor folder."
+        )
+    
+    init_file = kotorblender_src / "__init__.py"
+    if not init_file.is_file():
+        return False, f"Invalid kotorblender source: {kotorblender_src} (missing __init__.py)"
+
+    try:
+        # Create parent directory if needed
+        kotorblender_dest.parent.mkdir(parents=True, exist_ok=True)
+
+        # Remove existing installation if present (idempotent)
+        if kotorblender_dest.exists():
+            shutil.rmtree(kotorblender_dest)
+
+        # Copy kotorblender to Blender directory
+        shutil.copytree(kotorblender_src, kotorblender_dest)
+
+        # Verify installation
+        info.has_kotorblender = check_kotorblender_installed(info)
+        
+        if info.has_kotorblender:
+            version_msg = f" (v{info.kotorblender_version})" if info.kotorblender_version else ""
+            return True, f"kotorblender{version_msg} installed successfully to:\n{kotorblender_dest}"
+        else:
+            return False, f"Installation completed but verification failed at:\n{kotorblender_dest}"
+
+    except PermissionError as e:
+        return False, f"Permission denied: {e}\n\nTry running as administrator."
+    except OSError as e:
+        return False, f"Installation failed: {e}"
+
+
+def uninstall_kotorblender(info: BlenderInfo) -> tuple[bool, str]:
+    """Uninstall kotorblender addon from Blender.
+
+    Args:
+        info: BlenderInfo with valid Blender installation
+
+    Returns:
+        Tuple of (success: bool, message: str)
+    """
+    if not info.is_valid:
+        return False, "Invalid Blender installation"
+
+    kotorblender_path = info.kotorblender_path
+    if kotorblender_path is None:
+        return False, "Cannot determine kotorblender path"
+
+    if not kotorblender_path.exists():
+        return True, "kotorblender is not installed"
+
+    try:
+        shutil.rmtree(kotorblender_path)
+        info.has_kotorblender = False
+        info.kotorblender_version = ""
+        return True, f"kotorblender uninstalled from:\n{kotorblender_path}"
+    except PermissionError as e:
+        return False, f"Permission denied: {e}\n\nTry running as administrator."
+    except OSError as e:
+        return False, f"Uninstall failed: {e}"
 
 
 def is_blender_available(
@@ -519,65 +747,24 @@ except Exception as e:
 
 
 # Settings integration
+@dataclass
 class BlenderSettings:
     """Settings for Blender integration."""
 
-    def __init__(self):
-        self._custom_path: str = ""
-        self._auto_launch: bool = True
-        self._ipc_port: int = 7531
-        self._prefer_blender: bool = False
-        self._remember_choice: bool = False
-
-    @property
-    def custom_path(self) -> str:
-        """Custom Blender executable path."""
-        return self._custom_path
-
-    @custom_path.setter
-    def custom_path(self, value: str):
-        self._custom_path = value
-
-    @property
-    def auto_launch(self) -> bool:
-        """Automatically launch Blender when needed."""
-        return self._auto_launch
-
-    @auto_launch.setter
-    def auto_launch(self, value: bool):
-        self._auto_launch = value
-
-    @property
-    def ipc_port(self) -> int:
-        """Port for IPC communication."""
-        return self._ipc_port
-
-    @ipc_port.setter
-    def ipc_port(self, value: int):
-        self._ipc_port = value
-
-    @property
-    def prefer_blender(self) -> bool:
-        """Prefer Blender over built-in editor when available."""
-        return self._prefer_blender
-
-    @prefer_blender.setter
-    def prefer_blender(self, value: bool):
-        self._prefer_blender = value
-
-    @property
-    def remember_choice(self) -> bool:
-        """Remember editor choice and don't ask again."""
-        return self._remember_choice
-
-    @remember_choice.setter
-    def remember_choice(self, value: bool):
-        self._remember_choice = value
+    custom_path: str = ""
+    auto_launch: bool = True
+    ipc_port: int = 7531
+    prefer_blender: bool = False
+    remember_choice: bool = False
 
     def get_blender_info(self) -> BlenderInfo:
         """Get BlenderInfo using current settings."""
-        custom = Path(self._custom_path) if self._custom_path else None
+        custom = Path(self.custom_path) if self.custom_path else None
         return detect_blender(custom)
+
+    def get_all_installations(self) -> list[BlenderInfo]:
+        """Get all Blender installations found on system."""
+        return find_all_blender_installations()
 
 
 # Global settings instance
@@ -590,4 +777,3 @@ def get_blender_settings() -> BlenderSettings:
     if _blender_settings is None:
         _blender_settings = BlenderSettings()
     return _blender_settings
-

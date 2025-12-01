@@ -8,7 +8,7 @@ version = "1.8.0"
 description = "Read, modify and write files used by KotOR's game engine."
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
-readme = {file = "../../README.md", content-type = "text/markdown"}
+readme = "README.md"
 license = {text = "LGPL-3.0-or-later"}
 keywords = [
     "kotor", "kotor1", "kotor2", "tsl",
@@ -122,4 +122,5 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-namespaces = false
+namespaces = true
+

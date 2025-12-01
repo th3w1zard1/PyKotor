@@ -44,9 +44,15 @@ class Model:
         return all_nodes
 
     def box(self) -> tuple[vec3, vec3]:
+        return self.bounds(mat4())
+
+    def bounds(
+        self,
+        transform: mat4,
+    ) -> tuple[vec3, vec3]:
         min_point = vec3(100000, 100000, 100000)
         max_point = vec3(-100000, -100000, -100000)
-        self._box_rec(self.root, mat4(), min_point, max_point)
+        self._bounds_rec(self.root, transform, min_point, max_point)
 
         min_point.x -= 0.1
         min_point.y -= 0.1
@@ -57,29 +63,24 @@ class Model:
 
         return min_point, max_point
 
-    def _box_rec(
+    def _bounds_rec(
         self,
         node: Node,
         transform: mat4,
         min_point: vec3,
         max_point: vec3,
     ):
-        transform = transform * glm.translate(node._position)  # noqa: SLF001
-        transform = transform * glm.mat4_cast(node._rotation)  # noqa: SLF001
+        local_transform = transform * glm.translate(node._position)  # noqa: SLF001
+        local_transform = local_transform * glm.mat4_cast(node._rotation)  # noqa: SLF001
 
         if node.mesh and node.render:
-            vertex_count = len(node.mesh.vertex_data) // node.mesh.mdx_size
-            for i in range(vertex_count):
-                index = i * node.mesh.mdx_size + node.mesh.mdx_vertex
-                data = node.mesh.vertex_data[index : index + 12]
-                x, y, z = struct.unpack("fff", data)
-                position = transform * vec3(x, y, z)
-                min_point.x = min(min_point.x, position.x)
-                min_point.y = min(min_point.y, position.y)
-                min_point.z = min(min_point.z, position.z)
-                max_point.x = max(max_point.x, position.x)
-                max_point.y = max(max_point.y, position.y)
-                max_point.z = max(max_point.z, position.z)
+            mesh_min, mesh_max = node.mesh.bounds(local_transform)
+            min_point.x = min(min_point.x, mesh_min.x)
+            min_point.y = min(min_point.y, mesh_min.y)
+            min_point.z = min(min_point.z, mesh_min.z)
+            max_point.x = max(max_point.x, mesh_max.x)
+            max_point.y = max(max_point.y, mesh_max.y)
+            max_point.z = max(max_point.z, mesh_max.z)
 
         for child in node.children:
-            self._box_rec(child, transform, min_point, max_point)
+            self._bounds_rec(child, local_transform, min_point, max_point)

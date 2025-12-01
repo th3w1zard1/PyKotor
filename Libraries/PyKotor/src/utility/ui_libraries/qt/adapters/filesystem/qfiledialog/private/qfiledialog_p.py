@@ -52,7 +52,7 @@ if TYPE_CHECKING:
         QWidget,
     )
 
-    from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qfiledialog_p import QFileDialogPrivate
+    # QFileDialogPrivate is defined in this module, so no import needed
     from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QSidebar
     from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog, QFileDialog as PublicQFileDialog, QFileDialogOptions  # noqa: TC004
     from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.ui_qfiledialog import Ui_QFileDialog
@@ -1017,7 +1017,9 @@ class QFileDialogPrivate:
         This provides visual feedback about the availability of history navigation.
         """
         assert self.qFileDialogUi is not None, f"{type(self).__name__}._updateNavigationButtons: No UI setup."
-        self.qFileDialogUi.forwardButton.setEnabled(len(self.currentHistory) - self.currentHistoryLocation > 1)
+        # Forward button enabled if there's at least one item forward (currentHistoryLocation < len - 1)
+        # Back button enabled if there's at least one item back (currentHistoryLocation > 0)
+        self.qFileDialogUi.forwardButton.setEnabled(self.currentHistoryLocation < len(self.currentHistory) - 1)
         self.qFileDialogUi.backButton.setEnabled(self.currentHistoryLocation > 0)
 
     def _q_navigateBackward(self) -> None:
@@ -1029,6 +1031,9 @@ class QFileDialogPrivate:
             self.saveHistorySelection()
             self.currentHistoryLocation -= 1
             self._navigateToHistoryItem(self.currentHistory[self.currentHistoryLocation])
+            # Ensure buttons are updated after navigation
+            QApplication.processEvents()
+            self._updateNavigationButtons()
 
     def _q_navigateForward(self) -> None:
         """Implements the functionality for the forward button.
@@ -1039,6 +1044,9 @@ class QFileDialogPrivate:
             self.saveHistorySelection()
             self.currentHistoryLocation += 1
             self._navigateToHistoryItem(self.currentHistory[self.currentHistoryLocation])
+            # Ensure buttons are updated after navigation
+            QApplication.processEvents()
+            self._updateNavigationButtons()
 
     def _navigateToHistoryItem(
         self,
@@ -1053,6 +1061,8 @@ class QFileDialogPrivate:
         self._ignoreHistoryChange = True
         try:
             q.setDirectory(item.path)
+            # Process events to ensure directory change completes
+            QApplication.processEvents()
         finally:
             self._ignoreHistoryChange = False
         for i, persistent_index in enumerate(item.selection):
@@ -1073,6 +1083,10 @@ class QFileDialogPrivate:
                 listview_sel_model.select(index, QItemSelectionModel.SelectionFlag.Select)
             else:
                 RobustLogger().warning(f"{type(self).__name__}._navigateToHistoryItem: Failed to create valid QModelIndex from persistent index.")
+        # Note: _updateNavigationButtons() is already called in _q_pathChanged, but we ensure it's called here too
+        # after all state is restored, in case the directory change didn't trigger it properly
+        QApplication.processEvents()
+        self._updateNavigationButtons()
 
     def _q_navigateToParent(self) -> None:
         """Implements the functionality for the "Up" or "Parent Directory" button.
@@ -1207,7 +1221,10 @@ class QFileDialogPrivate:
             RobustLogger().warning(f"{type(self).__name__}._add_file_context_menu_actions: No file system model setup.")
             return
 
-        ro: bool = self.model.isReadOnly()
+        # Check ReadOnly option from dialog, not just model
+        q = self._public
+        read_only_option = sip_enum_to_int(RealQFileDialog.Option.ReadOnly)
+        ro: bool = bool(sip_enum_to_int(q.options()) & read_only_option)
         p: int = self.model.fileInfo(index).permissions()  # pyright: ignore[reportAssignmentType]
 
         if self.renameAction is not None:

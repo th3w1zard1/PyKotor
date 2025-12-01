@@ -5,6 +5,8 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 DLG files store conversation trees, forming the core of KotOR's narrative interaction. A dialogue consists of a hierarchy of Entry nodes (NPC lines) and Reply nodes (Player options), connected by Links.
 
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Conversation format specification, see [Bioware Aurora Conversation Format](Bioware-Aurora-Conversation).
+
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/dlg/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/generics/dlg/)
 
 ## Conversation Properties

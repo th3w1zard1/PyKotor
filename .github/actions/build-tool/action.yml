@@ -219,6 +219,7 @@ runs:
           "kotordiff" = "kotordiff"
           "guiconverter" = "gui_converter"
           "batchpatcher" = "batchpatcher"
+          "kitgenerator" = "kitgenerator"
         }
         $importPath = $toolPaths[$toolName]
         if ($importPath) {

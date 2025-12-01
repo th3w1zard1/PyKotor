@@ -5,6 +5,8 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 UTI files define item templates for all objects in creature inventories, containers, and stores. Items range from weapons and armor to quest items, upgrades, and consumables.
 
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Item format specification, see [Bioware Aurora Item Format](Bioware-Aurora-Item).
+
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py)
 
 ## Core Identity Fields

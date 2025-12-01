@@ -86,7 +86,11 @@ Add the following to your Claude Desktop configuration file:
   "mcpServers": {
     "kotormcp": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/th3w1zard1/PyKotor.git", "kotormcp"],
+      "args": [
+        "--from",
+        "kotormcp @ git+https://github.com/th3w1zard1/KotorMCP.git",
+        "kotormcp"
+      ],
       "env": {
         "K1_PATH": "C:\\Program Files\\steamapps\\common\\swkotor",
         "K2_PATH": "C:\\Program Files\\steamapps\\common\\Knights of the Old Republic II"
@@ -105,7 +109,11 @@ Add to your MCP configuration:
   "mcpServers": {
     "kotormcp": {
       "command": "uvx",
-      "args": ["--from", "git+https://github.com/th3w1zard1/PyKotor.git", "kotormcp"],
+      "args": [
+        "--from",
+        "kotormcp @ git+https://github.com/th3w1zard1/KotorMCP.git",
+        "kotormcp"
+      ],
       "env": {
         "K1_PATH": "C:\\Program Files\\steamapps\\common\\swkotor",
         "K2_PATH": "C:\\Program Files\\steamapps\\common\\Knights of the Old Republic II"

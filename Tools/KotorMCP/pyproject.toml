@@ -37,7 +37,8 @@ classifiers = [
 ]
 dependencies = [
     "mcp>=0.1.1",
-    "pykotor>=1.8.0",
+    "pykotor @ git+https://github.com/th3w1zard1/pykotor-lib.git",
+    "uvicorn[standard]>=0.30.0",
 ]
 
 [project.optional-dependencies]
@@ -52,11 +53,11 @@ dev = [
 kotormcp = "kotormcp.server:main"
 
 [project.urls]
-Homepage = "https://github.com/th3w1zard1/PyKotor"
+Homepage = "https://github.com/th3w1zard1/KotorMCP"
 Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
-Repository = "https://github.com/th3w1zard1/PyKotor.git"
-Issues = "https://github.com/th3w1zard1/PyKotor/issues"
-Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
+Repository = "https://github.com/th3w1zard1/KotorMCP.git"
+Issues = "https://github.com/th3w1zard1/KotorMCP/issues"
+Changelog = "https://github.com/th3w1zard1/KotorMCP/releases"
 
 [tool.setuptools.packages.find]
 where = ["src"]

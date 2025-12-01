@@ -27,6 +27,31 @@ Please do not create .md documentation unless it delivers public-facing informat
 - Setup venvs with `./install_python_venv.ps1` following its parameters closely `param( [switch]$noprompt, [string]$venv_name = ".venv", [string]$force_python_version )`. NEVER use `python -m venv`
 - If python isn't installed, ask the user if they want to install it (if yes, run install_python_venv with python 3.9 as the target). Ensure you explain to them what you will be doing if you require a yes or no answer.
 
+### Running Tests
+
+**IMPORTANT**: Always run tests with a timeout to prevent indefinite hangs. Use `.venv_3.13` virtual environment.
+
+**PowerShell pattern for tests with timeout (2 minutes default):**
+```powershell
+. .\.venv_3.13\Scripts\Activate.ps1
+$proc = Start-Process -FilePath "python" -ArgumentList "-m", "pytest", "<test_path>", "-v", "--tb=short" -PassThru -NoNewWindow
+if (-not $proc.WaitForExit(120000)) { $proc.Kill(); Write-Host "TEST TIMED OUT" } else { Write-Host "Exit code: $($proc.ExitCode)" }
+```
+
+**For multiple tests or full test suites:**
+```powershell
+. .\.venv_3.13\Scripts\Activate.ps1
+$proc = Start-Process -FilePath "python" -ArgumentList "-m", "pytest", "tests/test_utility/", "-v", "--tb=line" -PassThru -NoNewWindow
+if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TEST TIMED OUT after 5 minutes" }
+```
+
+**Key rules:**
+- Never run tests without a timeout - Qt/GUI tests can hang indefinitely
+- Use `Start-Process` with `-PassThru` and `WaitForExit(milliseconds)` for timeout control
+- Kill the process if it times out: `$proc.Kill()`
+- Default timeout: 120 seconds (2 minutes) for individual tests, 300 seconds (5 minutes) for test suites
+- Always use `.venv_3.13` - never use global Python installations
+
 ## Conventions
 
 - When developing code, please ensure you ALWAYS check the .gitmodules and the ./vendor folder to find semantically similar code. For any hits, please always comment in the python code what relpath/line number it can be found at and any differences if any. This should be as full and complete as possible.
@@ -61,6 +86,23 @@ Relevance to pykotor means a few different things. All relevant submodules shoul
 ## Linting
 
 - Always use `ruff`. Don't use anything else!
+
+## Generated Files
+
+- **NEVER modify auto-generated files directly**. These include:
+  - Files in `Tools/*/src/*/uic/` directories (generated from `.ui` files via `pyuic5`/`pyside6-uic`)
+  - Files in `Tools/*/src/*/rcc/` directories (generated from `.qrc` files)
+  - Any file with a comment indicating it was generated (e.g., "Form implementation generated from reading ui file")
+  
+- **To fix issues in generated files:**
+  1. Modify the source file (e.g., `.ui` file for UI definitions)
+  2. Regenerate using the appropriate script (e.g., `Tools/HolocronToolset/src/ui/convertui.py`)
+  3. If a custom widget class needs different initialization, make the class handle both the generated call pattern and manual usage
+
+- **Custom widgets used in UI files** should have flexible `__init__` methods that handle:
+  - Being called with just `parent` (as pyuic5 may generate)
+  - Being called with `title, parent` (as manual usage may require)
+  - Example: `def __init__(self, title: str | QWidget = "", parent: QWidget | None = None)`
 
 See `./CONVENTIONS.md` for more information!
 

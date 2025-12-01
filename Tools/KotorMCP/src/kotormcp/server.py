@@ -15,38 +15,34 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import os
-import sys
+from collections.abc import Iterable, Iterator
 from io import BytesIO
-import hashlib
 from pathlib import Path
-from typing import Any, Iterable, Iterator
+from typing import Any
 
+try:
+    from uvicorn import Config, Server as UvicornServer
+except ImportError:
+    UvicornServer = None  # type: ignore[assignment, misc]
+    Config = None  # type: ignore[assignment, misc]
+
+import mcp.server.sse
 import mcp.server.stdio
-import mcp.types as types
+import mcp.server.streamable_http
+from mcp import types
 from mcp.server.lowlevel import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
-
-# Ensure local imports work regardless of execution context (mirrors Tools/KotorCLI bootstrap)
-REPO_ROOT = Path(__file__).resolve().parents[5]
-LIBRARIES_PATH = REPO_ROOT / "Libraries"
-PYKOTOR_PATH = LIBRARIES_PATH / "PyKotor" / "src"
-UTILITY_PATH = LIBRARIES_PATH / "Utility" / "src"
-
-for candidate in (PYKOTOR_PATH, UTILITY_PATH):
-    candidate_str = str(candidate)
-    if candidate_str not in sys.path:
-        sys.path.insert(0, candidate_str)
-
-from pykotor.common.misc import Game  # noqa: E402
-from pykotor.extract.file import FileResource, ResourceResult  # noqa: E402
-from pykotor.extract.installation import Installation, SearchLocation  # noqa: E402
-from pykotor.resource.formats.gff.gff_auto import read_gff  # noqa: E402
-from pykotor.resource.formats.tlk.tlk_auto import read_tlk  # noqa: E402
-from pykotor.resource.formats.twoda.twoda_auto import read_2da  # noqa: E402
-from pykotor.resource.type import ResourceType  # noqa: E402
-from pykotor.tools.path import CaseAwarePath, find_kotor_paths_from_default  # noqa: E402
+from pykotor.common.misc import Game
+from pykotor.extract.file import FileResource, ResourceResult
+from pykotor.extract.installation import Installation, SearchLocation
+from pykotor.resource.formats.gff.gff_auto import read_gff
+from pykotor.resource.formats.tlk.tlk_auto import read_tlk
+from pykotor.resource.formats.twoda.twoda_auto import read_2da
+from pykotor.resource.type import ResourceType
+from pykotor.tools.path import CaseAwarePath, find_kotor_paths_from_default
 
 SERVER = Server("KotorMCP")
 
@@ -215,15 +211,15 @@ def _iter_resources_for_location(
                 yield f"texturepack:{filename}", resource
     if lowered in {"streammusic", "all"}:
         installation.load_streammusic()
-        for resource in installation._streammusic:  # noqa: SLF001 - Installation exposes cached lists
+        for resource in installation._streammusic:
             yield "streammusic", resource
     if lowered in {"streamsounds", "all"}:
         installation.load_streamsounds()
-        for resource in installation._streamsounds:  # noqa: SLF001
+        for resource in installation._streamsounds:
             yield "streamsounds", resource
     if lowered in {"streamwaves", "voice", "all"}:
         installation.load_streamwaves()
-        for resource in installation._streamwaves:  # noqa: SLF001
+        for resource in installation._streamwaves:
             yield "streamwaves", resource
 
 
@@ -492,7 +488,8 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]) -> types.CallTo
         payload = _journal_entries(installation)
         return _json_content({"count": len(payload), "categories": payload})
 
-    raise ValueError(f"Unknown tool '{name}'")
+    msg = f"Unknown tool '{name}'"
+    raise ValueError(msg)
 
 
 async def _run_stdio() -> None:
@@ -503,19 +500,140 @@ async def _run_stdio() -> None:
             InitializationOptions(
                 server_name="KotorMCP",
                 server_version="0.1.0",
-                capabilities=SERVER.get_capabilities(),
+                capabilities=SERVER.get_capabilities(
+                    notification_options=NotificationOptions(),
+                    experimental_capabilities={},
+                ),
                 notification_options=NotificationOptions(),
             ),
         )
 
 
+async def _run_sse(port: int = 8000, host: str = "localhost") -> None:
+    """Run the server with SSE (Server-Sent Events) transport.
+
+    The SSE transport uses Server-Sent Events for one-way streaming from server to client,
+    and HTTP POST for client-to-server messages.
+    """
+    if UvicornServer is None or Config is None:
+        msg = "uvicorn is required for SSE mode. Install with: pip install uvicorn[standard]"
+        raise ImportError(msg)
+
+    transport = mcp.server.sse.SseServerTransport(endpoint="/mcp")
+
+    async def asgi_app(scope: dict[str, Any], receive: Any, send: Any) -> None:
+        if scope["type"] == "http":
+            path = scope.get("path", "")
+            method = scope.get("method", "")
+            
+            if method == "GET" and path == "/mcp":
+                # SSE connection - establishes Server-Sent Events stream
+                await transport.connect_sse(scope, receive, send)
+            elif method == "POST" and path == "/mcp":
+                # POST message handling - processes MCP messages from client
+                await transport.handle_post_message(scope, receive, send)
+            else:
+                # 404 for other paths
+                await send({
+                    "type": "http.response.start",
+                    "status": 404,
+                    "headers": [[b"content-type", b"text/plain"]],
+                })
+                await send({
+                    "type": "http.response.body",
+                    "body": b"Not Found",
+                })
+        else:
+            msg = f"Unsupported scope type: {scope['type']}"
+            raise ValueError(msg)
+
+    config = Config(
+        app=asgi_app,
+        host=host,
+        port=port,
+        log_level="info",
+    )
+
+    server = UvicornServer(config)
+    await server.serve()
+
+
+async def _run_http(port: int = 8000, host: str = "localhost") -> None:
+    """Run the server with HTTP streaming transport.
+
+    The HTTP streaming transport uses HTTP for bidirectional communication
+    with streaming support for large messages.
+    """
+    if UvicornServer is None or Config is None:
+        msg = "uvicorn is required for HTTP mode. Install with: pip install uvicorn[standard]"
+        raise ImportError(msg)
+
+    # HTTP transport requires mcp_session_id (can be None for new sessions)
+    transport = mcp.server.streamable_http.StreamableHTTPServerTransport(mcp_session_id=None)
+
+    async def asgi_app(scope: dict[str, Any], receive: Any, send: Any) -> None:
+        if scope["type"] == "http":
+            method = scope.get("method", "")
+
+            if method in ("GET", "POST"):
+                # HTTP streaming transport handles all requests
+                # The transport manages the connection and message flow
+                await transport.handle_request(scope, receive, send)
+            else:
+                await send({
+                    "type": "http.response.start",
+                    "status": 405,
+                    "headers": [[b"content-type", b"text/plain"]],
+                })
+                await send({
+                    "type": "http.response.body",
+                    "body": b"Method Not Allowed",
+                })
+        else:
+            msg = f"Unsupported scope type: {scope['type']}"
+            raise ValueError(msg)
+
+    config = Config(
+        app=asgi_app,
+        host=host,
+        port=port,
+        log_level="info",
+    )
+
+    server = UvicornServer(config)
+    await server.serve()
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Run the KotorMCP server.")
-    parser.add_argument("--mode", choices=["stdio"], default="stdio", help="Transport to use (currently stdio only).")
+    parser.add_argument(
+        "--mode",
+        choices=["stdio", "sse", "http"],
+        default="stdio",
+        help="Transport to use (stdio for command-line, sse for Server-Sent Events, http for HTTP streaming)"
+    )
+    parser.add_argument(
+        "--host",
+        default="localhost",
+        help="Host to bind to for HTTP/SSE modes (default: localhost)"
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port to bind to for HTTP/SSE modes (default: 8000)"
+    )
     args = parser.parse_args(argv)
-    if args.mode != "stdio":
-        raise SystemExit("Only stdio mode is supported at the moment.")
-    asyncio.run(_run_stdio())
+
+    if args.mode == "stdio":
+        asyncio.run(_run_stdio())
+    elif args.mode == "sse":
+        asyncio.run(_run_sse(port=args.port, host=args.host))
+    elif args.mode == "http":
+        asyncio.run(_run_http(port=args.port, host=args.host))
+    else:
+        msg = f"Unsupported mode: {args.mode}"
+        raise SystemExit(msg)
 
 
 if __name__ == "__main__":

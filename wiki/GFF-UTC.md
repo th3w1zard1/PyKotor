@@ -5,6 +5,8 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 UTC files define creature templates including NPCs, party members, enemies, and the player character. They are comprehensive GFF files containing all data needed to spawn and control a creature in the game world.
 
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Creature format specification, see [Bioware Aurora Creature Format](Bioware-Aurora-Creature).
+
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py)
 
 ## Core Identity Fields

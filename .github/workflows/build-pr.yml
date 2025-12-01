@@ -27,7 +27,7 @@ on:
       full_build:
         description: 'Run full build instead of dry-run'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 concurrency:
@@ -326,10 +326,109 @@ jobs:
           upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
           artifact_retention_days: '3'
 
+  # Build validation for GuiConverter
+  build-guiconverter:
+    name: Build GuiConverter (${{ matrix.os }})
+    needs: [detect-changes, version-check]
+    if: needs.detect-changes.outputs.guiconverter == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04]
+        include:
+          - os: windows-latest
+            architecture: x64
+          - os: ubuntu-20.04
+            architecture: x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Build GuiConverter (validation)
+        uses: ./.github/actions/build-tool
+        with:
+          tool_name: guiconverter
+          python_version: '3.8'
+          architecture: ${{ matrix.architecture }}
+          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
+          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
+          artifact_retention_days: '3'
+
+  # Build validation for BatchPatcher
+  build-batchpatcher:
+    name: Build BatchPatcher (${{ matrix.os }})
+    needs: [detect-changes, version-check]
+    if: needs.detect-changes.outputs.batchpatcher == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04]
+        include:
+          - os: windows-latest
+            architecture: x64
+          - os: ubuntu-20.04
+            architecture: x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Build BatchPatcher (validation)
+        uses: ./.github/actions/build-tool
+        with:
+          tool_name: batchpatcher
+          python_version: '3.8'
+          architecture: ${{ matrix.architecture }}
+          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
+          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
+          artifact_retention_days: '3'
+
+  # Build validation for KitGenerator
+  build-kitgenerator:
+    name: Build KitGenerator (${{ matrix.os }})
+    needs: [detect-changes, version-check]
+    if: needs.detect-changes.outputs.kitgenerator == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04]
+        include:
+          - os: windows-latest
+            architecture: x64
+          - os: ubuntu-20.04
+            architecture: x64
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+
+      - name: Build KitGenerator (validation)
+        uses: ./.github/actions/build-tool
+        with:
+          tool_name: kitgenerator
+          python_version: '3.8'
+          architecture: ${{ matrix.architecture }}
+          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
+          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
+          artifact_retention_days: '3'
+
   # Summary job that reports overall status
   build-summary:
     name: Build Summary
-    needs: [detect-changes, version-check, build-toolset, build-holopatcher, build-kotordiff]
+    needs: [detect-changes, version-check, build-toolset, build-holopatcher, build-kotordiff, build-guiconverter, build-batchpatcher, build-kitgenerator]
     if: always() && needs.detect-changes.outputs.any_tool == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -343,13 +442,19 @@ jobs:
               'version-check': '${{ needs.version-check.result }}' || 'skipped',
               'build-toolset': '${{ needs.build-toolset.result }}' || 'skipped',
               'build-holopatcher': '${{ needs.build-holopatcher.result }}' || 'skipped',
-              'build-kotordiff': '${{ needs.build-kotordiff.result }}' || 'skipped'
+              'build-kotordiff': '${{ needs.build-kotordiff.result }}' || 'skipped',
+              'build-guiconverter': '${{ needs.build-guiconverter.result }}' || 'skipped',
+              'build-batchpatcher': '${{ needs.build-batchpatcher.result }}' || 'skipped',
+              'build-kitgenerator': '${{ needs.build-kitgenerator.result }}' || 'skipped'
             };
             
             const changes = {
               toolset: '${{ needs.detect-changes.outputs.toolset }}' === 'true',
               holopatcher: '${{ needs.detect-changes.outputs.holopatcher }}' === 'true',
-              kotordiff: '${{ needs.detect-changes.outputs.kotordiff }}' === 'true'
+              kotordiff: '${{ needs.detect-changes.outputs.kotordiff }}' === 'true',
+              guiconverter: '${{ needs.detect-changes.outputs.guiconverter }}' === 'true',
+              batchpatcher: '${{ needs.detect-changes.outputs.batchpatcher }}' === 'true',
+              kitgenerator: '${{ needs.detect-changes.outputs.kitgenerator }}' === 'true'
             };
             
             let summary = '## 🔨 Build Validation Summary\n\n';
@@ -372,7 +477,10 @@ jobs:
             const toolMap = {
               toolset: { name: 'HolocronToolset', job: 'build-toolset' },
               holopatcher: { name: 'HoloPatcher', job: 'build-holopatcher' },
-              kotordiff: { name: 'KotorDiff', job: 'build-kotordiff' }
+              kotordiff: { name: 'KotorDiff', job: 'build-kotordiff' },
+              guiconverter: { name: 'GuiConverter', job: 'build-guiconverter' },
+              batchpatcher: { name: 'BatchPatcher', job: 'build-batchpatcher' },
+              kitgenerator: { name: 'KitGenerator', job: 'build-kitgenerator' }
             };
             
             for (const [key, info] of Object.entries(toolMap)) {

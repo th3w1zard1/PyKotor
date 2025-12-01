@@ -17,12 +17,16 @@ from __future__ import annotations
 from toolset.blender.detection import (
     BlenderInfo,
     BlenderSettings,
+    check_kotorblender_installed,
     detect_blender,
+    find_all_blender_installations,
     find_blender_executable,
     get_blender_settings,
     get_blender_version,
+    install_kotorblender,
     is_blender_available,
     launch_blender_with_ipc,
+    uninstall_kotorblender,
 )
 from toolset.blender.integration import (
     BlenderEditorMixin,
@@ -45,12 +49,16 @@ __all__ = [
     # Detection
     "BlenderInfo",
     "BlenderSettings",
+    "check_kotorblender_installed",
     "detect_blender",
+    "find_all_blender_installations",
     "find_blender_executable",
     "get_blender_settings",
     "get_blender_version",
+    "install_kotorblender",
     "is_blender_available",
     "launch_blender_with_ipc",
+    "uninstall_kotorblender",
     # Integration
     "BlenderEditorMixin",
     "check_blender_and_ask",

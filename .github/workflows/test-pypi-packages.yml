@@ -216,7 +216,7 @@ jobs:
           
           # Install core library with all extensions
           pip install pykotor $INDEX
-          pip install pykotorgl $INDEX || echo "pykotorgl not available yet"
+          pip install "pykotorgl[moderngl]" $INDEX || echo "pykotorgl not available yet"
           pip install pykotorfont $INDEX || echo "pykotorfont not available yet"
         shell: bash
       

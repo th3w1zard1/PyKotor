@@ -44,6 +44,7 @@ This document provides a systematic analysis of all 77 vendor submodules, focusi
 ### Documentation & References
 
 - **xoreos-docs** - 55 files. Technical documentation for xoreos project.
+- **nwn-docs** - 24 PDF files. Original Bioware Aurora documentation for file formats (2DA, GFF, ERF, etc.). Essential authoritative reference material.
 - **kotor_combat_faq** - 5 files. R Markdown analysis of combat mechanics (specialized but useful).
 
 ### Pazaak Implementations (Substantial)

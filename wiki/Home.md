@@ -19,10 +19,37 @@
 - **[TSLPatcher SSFList Syntax Guide](TSLPatcher-SSFList-Syntax)** ← Complete reference for SSF (Sound Set File) modifications
 - [Mod Creation Best Practices](Mod-Creation-Best-Practices)
 
+### Official Bioware Aurora Documentation
+
+The following documents are official Bioware Aurora Engine file format specifications. These are authoritative references for the underlying file formats used by KotOR:
+
+- **[2DA File Format](Bioware-Aurora-2DA)** - Official 2DA (Two-Dimensional Array) format specification
+- **[GFF File Format](Bioware-Aurora-GFF)** - Official Generic File Format specification
+- **[Common GFF Structs](Bioware-Aurora-CommonGFFStructs)** - Common GFF structure definitions
+- **[Area File Format](Bioware-Aurora-AreaFile)** - Official ARE (Area) file format
+- **[Creature Format](Bioware-Aurora-Creature)** - Official UTC (Creature) format
+- **[Item Format](Bioware-Aurora-Item)** - Official UTI (Item) format
+- **[Door/Placeable Format](Bioware-Aurora-DoorPlaceableGFF)** - Official UTD/UTP formats
+- **[Encounter Format](Bioware-Aurora-Encounter)** - Official UTE (Encounter) format
+- **[Trigger Format](Bioware-Aurora-Trigger)** - Official UTT (Trigger) format
+- **[Waypoint Format](Bioware-Aurora-Waypoint)** - Official UTW (Waypoint) format
+- **[Store Format](Bioware-Aurora-Store)** - Official UTM (Store) format
+- **[Sound Object Format](Bioware-Aurora-SoundObject)** - Official UTS (Sound) format
+- **[Journal Format](Bioware-Aurora-Journal)** - Official JRL (Journal) format
+- **[Conversation Format](Bioware-Aurora-Conversation)** - Official DLG (Dialogue) format
+- **[IFO Format](Bioware-Aurora-IFO)** - Official Module Info format
+- **[ERF Format](Bioware-Aurora-ERF)** - Official Encapsulated Resource Format
+- **[Key/BIF Format](Bioware-Aurora-KeyBIF)** - Official Key and BIF file formats
+- **[TalkTable Format](Bioware-Aurora-TalkTable)** - Official TLK (Talk Table) format
+- **[SSF Format](Bioware-Aurora-SSF)** - Official Sound Set File format
+- **[Localized Strings Format](Bioware-Aurora-LocalizedStrings)** - Official localized strings format
+- **[Faction Format](Bioware-Aurora-Faction)** - Official faction data format
+- **[Palette/ITP Format](Bioware-Aurora-PaletteITP)** - Official palette and ITP formats
+
 ### File Formats
 
 - **[MDL/MDX File Format](MDL-MDX-File-Format)** ← Complete reference for 3D model files
-  - **[2DA File Format](2DA-File-Format)** ← Complete reference for Two-Dimensional Array format
+  - **[2DA File Format](2DA-File-Format)** ← Complete reference for Two-Dimensional Array format (see also [Official Bioware 2DA Documentation](Bioware-Aurora-2DA))
   - [acbonus.2da](2DA-acbonus)
   - [actions.2da](2DA-actions)
   - [ai_styles.2da](2DA-ai_styles)
@@ -163,7 +190,7 @@
 - **[GUI File Format](GUI-File-Format)** ← Complete reference for Graphical User Interface format
 - [ERF File Format](ERF-File-Format) ← Encapsulated Resource Format
 - **[Kit Structure Documentation](Kit-Structure-Documentation)** ← Complete reference for indoor kit structure and generation
-- [GFF File Format](GFF-File-Format) ← Generic File Format
+- [GFF File Format](GFF-File-Format) ← Generic File Format (see also [Official Bioware GFF Documentation](Bioware-Aurora-GFF))
   - [ARE (Area)](GFF-ARE)
   - [DLG (Dialogue)](GFF-DLG)
   - [GIT (Game Instance Template)](GFF-GIT)
@@ -185,57 +212,7 @@
 - [LTR File Format](LTR-File-Format) ← Letter format
 - [LYT File Format](LYT-File-Format) ← Layout format
 - [NCS File Format](NCS-File-Format) ← NwScript Compiled Script format
-  - [NSS File Format](NSS-File-Format) ← NwScript Source format (nwscript.nss, function/constant definitions)
-  - [Shared Functions - Abilities and Stats](NSS-Shared-Functions-Abilities-and-Stats)
-  - [Shared Functions - Actions](NSS-Shared-Functions-Actions)
-  - [Shared Functions - Alignment System](NSS-Shared-Functions-Alignment-System)
-  - [Shared Functions - Class System](NSS-Shared-Functions-Class-System)
-  - [Shared Functions - Combat Functions](NSS-Shared-Functions-Combat-Functions)
-  - [Shared Functions - Dialog and Conversation Functions](NSS-Shared-Functions-Dialog-and-Conversation-Functions)
-  - [Shared Functions - Effects System](NSS-Shared-Functions-Effects-System)
-  - [Shared Functions - Global Variables](NSS-Shared-Functions-Global-Variables)
-  - [Shared Functions - Item Management](NSS-Shared-Functions-Item-Management)
-  - [Shared Functions - Item Properties](NSS-Shared-Functions-Item-Properties)
-  - [Shared Functions - Local Variables](NSS-Shared-Functions-Local-Variables)
-  - [Shared Functions - Module and Area Functions](NSS-Shared-Functions-Module-and-Area-Functions)
-  - [Shared Functions - Object Query and Manipulation](NSS-Shared-Functions-Object-Query-and-Manipulation)
-  - [Shared Functions - Other Functions](NSS-Shared-Functions-Other-Functions)
-  - [Shared Functions - Party Management](NSS-Shared-Functions-Party-Management)
-  - [Shared Functions - Player Character Functions](NSS-Shared-Functions-Player-Character-Functions)
-  - [Shared Functions - Skills and Feats](NSS-Shared-Functions-Skills-and-Feats)
-  - [Shared Functions - Sound and Music Functions](NSS-Shared-Functions-Sound-and-Music-Functions)
-  - [K1-Only Functions - Other Functions](NSS-K1-Only-Functions-Other-Functions)
-  - [TSL-Only Functions - Actions](NSS-TSL-Only-Functions-Actions)
-  - [TSL-Only Functions - Class System](NSS-TSL-Only-Functions-Class-System)
-  - [TSL-Only Functions - Combat Functions](NSS-TSL-Only-Functions-Combat-Functions)
-  - [TSL-Only Functions - Dialog and Conversation Functions](NSS-TSL-Only-Functions-Dialog-and-Conversation-Functions)
-  - [TSL-Only Functions - Effects System](NSS-TSL-Only-Functions-Effects-System)
-  - [TSL-Only Functions - Global Variables](NSS-TSL-Only-Functions-Global-Variables)
-  - [TSL-Only Functions - Item Management](NSS-TSL-Only-Functions-Item-Management)
-  - [TSL-Only Functions - Object Query and Manipulation](NSS-TSL-Only-Functions-Object-Query-and-Manipulation)
-  - [TSL-Only Functions - Other Functions](NSS-TSL-Only-Functions-Other-Functions)
-  - [TSL-Only Functions - Party Management](NSS-TSL-Only-Functions-Party-Management)
-  - [TSL-Only Functions - Player Character Functions](NSS-TSL-Only-Functions-Player-Character-Functions)
-  - [TSL-Only Functions - Skills and Feats](NSS-TSL-Only-Functions-Skills-and-Feats)
-  - [TSL-Only Functions - Sound and Music Functions](NSS-TSL-Only-Functions-Sound-and-Music-Functions)
-  - [Shared Constants - Ability Constants](NSS-Shared-Constants-Ability-Constants)
-  - [Shared Constants - Alignment Constants](NSS-Shared-Constants-Alignment-Constants)
-  - [Shared Constants - Class Type Constants](NSS-Shared-Constants-Class-Type-Constants)
-  - [Shared Constants - Inventory Constants](NSS-Shared-Constants-Inventory-Constants)
-  - [Shared Constants - NPC Constants](NSS-Shared-Constants-NPC-Constants)
-  - [Shared Constants - Object Type Constants](NSS-Shared-Constants-Object-Type-Constants)
-  - [Shared Constants - Other Constants](NSS-Shared-Constants-Other-Constants)
-  - [Shared Constants - Planet Constants](NSS-Shared-Constants-Planet-Constants)
-  - [Shared Constants - Visual Effects (VFX)](NSS-Shared-Constants-Visual-Effects-(VFX))
-  - [K1-Only Constants - NPC Constants](NSS-K1-Only-Constants-NPC-Constants)
-  - [K1-Only Constants - Other Constants](NSS-K1-Only-Constants-Other-Constants)
-  - [K1-Only Constants - Planet Constants](NSS-K1-Only-Constants-Planet-Constants)
-  - [TSL-Only Constants - Class Type Constants](NSS-TSL-Only-Constants-Class-Type-Constants)
-  - [TSL-Only Constants - Inventory Constants](NSS-TSL-Only-Constants-Inventory-Constants)
-  - [TSL-Only Constants - NPC Constants](NSS-TSL-Only-Constants-NPC-Constants)
-  - [TSL-Only Constants - Other Constants](NSS-TSL-Only-Constants-Other-Constants)
-  - [TSL-Only Constants - Planet Constants](NSS-TSL-Only-Constants-Planet-Constants)
-  - [TSL-Only Constants - Visual Effects (VFX)](NSS-TSL-Only-Constants-Visual-Effects-(VFX))
+- [NSS File Format](NSS-File-Format) ← NwScript Source format (nwscript.nss, function/constant definitions)
 - [RIM File Format](RIM-File-Format) ← Resource Index Manifest format
 - [SSF File Format](SSF-File-Format) ← Sound Set File format
 - [TLK File Format](TLK-File-Format) ← Talk Table format

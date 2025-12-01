@@ -271,6 +271,72 @@
 
 
 # ===============================
+# PyKotor Libraries (Standalone Repos)
+# ===============================
+
+[submodule "Libraries/PyKotor"]
+	path = Libraries/PyKotor
+	url = https://github.com/th3w1zard1/pykotor-lib.git
+
+[submodule "Libraries/PyKotorGL"]
+	path = Libraries/PyKotorGL
+	url = https://github.com/th3w1zard1/PyKotorGL.git
+
+[submodule "Libraries/PyKotorFont"]
+	path = Libraries/PyKotorFont
+	url = https://github.com/th3w1zard1/PyKotorFont.git
+
+
+# ===============================
+# PyKotor Tools (Standalone Repos)
+# ===============================
+
+[submodule "Tools/BatchPatcher"]
+	path = Tools/BatchPatcher
+	url = https://github.com/th3w1zard1/BatchPatcher.git
+
+[submodule "Tools/GuiConverter"]
+	path = Tools/GuiConverter
+	url = https://github.com/th3w1zard1/GuiConverter.git
+
+[submodule "Tools/HolocronAI"]
+	path = Tools/HolocronAI
+	url = https://github.com/th3w1zard1/HolocronAI.git
+
+[submodule "Tools/HolocronToolset"]
+	path = Tools/HolocronToolset
+	url = https://github.com/th3w1zard1/HolocronToolset.git
+
+[submodule "Tools/HoloGenerator"]
+	path = Tools/HoloGenerator
+	url = https://github.com/th3w1zard1/HoloGenerator.git
+
+[submodule "Tools/HoloPatcher"]
+	path = Tools/HoloPatcher
+	url = https://github.com/th3w1zard1/HoloPatcher.git
+
+[submodule "Tools/HoloPazaak"]
+	path = Tools/HoloPazaak
+	url = https://github.com/th3w1zard1/HoloPazaak.git
+
+[submodule "Tools/KitGenerator"]
+	path = Tools/KitGenerator
+	url = https://github.com/th3w1zard1/KitGenerator.git
+
+[submodule "Tools/KotorCLI"]
+	path = Tools/KotorCLI
+	url = https://github.com/th3w1zard1/KotorCLI.git
+
+[submodule "Tools/KotorDiff"]
+	path = Tools/KotorDiff
+	url = https://github.com/th3w1zard1/KotorDiff.git
+
+[submodule "Tools/KotorMCP"]
+	path = Tools/KotorMCP
+	url = https://github.com/th3w1zard1/KotorMCP.git
+
+
+# ===============================
 # Toolset Data
 # ===============================
 [submodule "Tools/HolocronToolset/src/toolset/kits"]

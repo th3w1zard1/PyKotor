@@ -5,6 +5,8 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 UTT files define trigger templates for invisible volumes that fire scripts when entered, exited, or used. Triggers are essential for area transitions, cutscenes, traps, and game logic.
 
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Trigger format specification, see [Bioware Aurora Trigger Format](Bioware-Aurora-Trigger).
+
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utt.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utt.py)
 
 ## Core Identity Fields

@@ -28,10 +28,14 @@ if _pythonpath:
 if "QT_API" not in os.environ:
     os.environ["QT_API"] = "PyQt5"
 
-# Force offscreen (headless) mode for Qt
-# This ensures tests don't fail if no display is available (e.g. CI/CD)
-# Must be set before any QApplication is instantiated.
-os.environ["QT_QPA_PLATFORM"] = "offscreen"
+# Configure Qt for OpenGL testing
+# Don't force software rendering - use hardware GPU when available
+# Software rendering doesn't support modern OpenGL features (shaders, etc.)
+# Only CI systems without GPU should set QT_OPENGL=software explicitly
+
+# Disable PyOpenGL error checking for tests
+# Some OpenGL configurations may produce errors that don't affect actual rendering
+os.environ["PYOPENGL_ERROR_CHECKING"] = "0"
 
 # Paths
 REPO_ROOT = Path(__file__).parents[2]

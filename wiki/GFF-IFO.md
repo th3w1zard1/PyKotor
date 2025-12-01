@@ -5,6 +5,8 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 IFO files define module-level metadata including entry configuration, expansion requirements, area lists, and module-wide script hooks. IFO files are the "main" descriptor for game modules, specifying where the player spawns and what scripts run at module scope.
 
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine IFO format specification, see [Bioware Aurora IFO Format](Bioware-Aurora-IFO).
+
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/ifo.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/ifo.py)
 
 ## Core Module Identity

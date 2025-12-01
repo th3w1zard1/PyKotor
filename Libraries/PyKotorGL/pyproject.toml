@@ -41,6 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 gl_accel = ["PyOpenGL-accelerate>=3.1.10"]
+moderngl = ["moderngl>=5.8.0"]
 dev = [
     "pytest>=7.0.0",
     "ruff>=0.1.0",
@@ -80,6 +81,7 @@ PyGLM = {version = ">=2.0,<2.8", python = "^3.8", markers = "python_implementati
 
 [tool.poetry.extras]
 gl_accel = ["PyOpenGL-accelerate"]
+moderngl = ["moderngl"]
 
 [tool.poetry.urls]
 Homepage = "https://github.com/th3w1zard1/PyKotor"

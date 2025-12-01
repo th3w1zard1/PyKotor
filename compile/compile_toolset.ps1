@@ -26,11 +26,18 @@ $iconExtension = if ((Get-OS) -eq 'Mac') {'icns'} else {'ico'}
 # Add wiki files to be bundled
 $wikiPath = (Resolve-Path -LiteralPath "$repoRootPath/wiki").Path
 $addDataArgs = @()
+# PyInstaller uses semicolon on Windows, colon on Unix
+$dataSeparator = if (Get-OS -eq "Windows") { ";" } else { ":" }
 if (Test-Path -LiteralPath $wikiPath -ErrorAction SilentlyContinue) {
-    # PyInstaller uses semicolon on Windows, colon on Unix
-    $dataSeparator = if (Get-OS -eq "Windows") { ";" } else { ":" }
     $addDataArgs += "--add-data=$wikiPath$dataSeparator`wiki"
     Write-Host "Including wiki directory: $wikiPath"
+}
+
+# Add kotorblender addon for Blender integration
+$kotorblenderPath = "$repoRootPath/vendor/kotorblender/io_scene_kotor"
+if (Test-Path -LiteralPath $kotorblenderPath -ErrorAction SilentlyContinue) {
+    $addDataArgs += "--add-data=$kotorblenderPath$dataSeparator`kotorblender/io_scene_kotor"
+    Write-Host "Including kotorblender addon: $kotorblenderPath"
 }
 
 $pyInstallerArgs = @{
