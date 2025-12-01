@@ -245,33 +245,6 @@
 
 
 # ===============================
-# Pazaak Card Game Implementations
-# ===============================
-
-## Web/JS-based Implementations
-[submodule "vendor/pazaak-eggborne"]
-	path = vendor/pazaak-eggborne
-	url = https://github.com/th3w1zard1/pazaak-eggborne.git
-[submodule "vendor/vue-pazaak"]
-	path = vendor/vue-pazaak
-	url = https://github.com/th3w1zard1/vue-pazaak.git
-
-## Other pazaak stuff
-[submodule "vendor/pazaak-iron-ginger"]
-	path = vendor/pazaak-iron-ginger
-	url = https://github.com/th3w1zard1/Pazaak-Card-Game.git
-[submodule "vendor/Java_Pazaak"]
-	path = vendor/Java_Pazaak
-	url = https://github.com/th3w1zard1/Java_Pazaak.git
-[submodule "vendor/GetLucky33"]
-	path = vendor/GetLucky33
-	url = https://github.com/th3w1zard1/GetLucky33.git
-[submodule "vendor/PazaakApp"]
-	path = vendor/PazaakApp
-	url = https://github.com/th3w1zard1/PazaakApp.git
-
-
-# ===============================
 # Unorganized Projects
 # ===============================
 
