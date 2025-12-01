@@ -10,8 +10,6 @@ import tempfile
 
 from typing import TYPE_CHECKING
 
-from loggerplus import RobustLogger
-
 if TYPE_CHECKING:
     from types import TracebackType
 
@@ -40,6 +38,7 @@ def on_app_crash(
     if issubclass(etype, KeyboardInterrupt):
         sys.__excepthook__(etype, exc, tback)
         return
+    from loggerplus import RobustLogger  # noqa: PLC0415
     logger = RobustLogger()
     logger.critical("Uncaught exception", exc_info=(etype, exc, tback))
 
@@ -125,6 +124,16 @@ def main_init():
 
     This function should be called before the QApplication is created.
     """
+    # Set up paths BEFORE importing loggerplus (which depends on utility)
+    if is_frozen():
+        fix_frozen_paths()
+    else:
+        fix_sys_and_cwd_path()
+        fix_qt_env_var()
+
+    # Now safe to import loggerplus
+    from loggerplus import RobustLogger  # noqa: PLC0415
+
     sys.excepthook = on_app_crash
     is_main_process: bool = multiprocessing.current_process() == "MainProcess"
     if is_main_process:
@@ -136,9 +145,6 @@ def main_init():
         multiprocessing.freeze_support()
         if is_main_process:
             set_qt_api()
-    else:
-        fix_sys_and_cwd_path()
-        fix_qt_env_var()
     # Do not use `faulthandler.enable()` in the toolset!
     # https://bugreports.qt.io/browse/PYSIDE-2359
     #faulthandler.enable()
