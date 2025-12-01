@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING
 from pykotor.resource.formats.ncs.dencs.node.p_cmd import PCmd  # pyright: ignore[reportMissingImports]
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.p_store_state_command import PStoreStateCommand  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.p_jump_command import PJumpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_command_block import PCommandBlock  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.p_jump_command import PJumpCommand  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.p_return import PReturn  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.p_store_state_command import PStoreStateCommand  # pyright: ignore[reportMissingImports]
 
 
 class AActionJumpCmd(PCmd):

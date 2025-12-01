@@ -39,6 +39,7 @@ if TYPE_CHECKING:
 
     from qtpy.QtCore import (
         QAbstractItemModel,
+        QCloseEvent,  # pyright: ignore[reportPrivateImportUsage]
         QItemSelection,
         QItemSelectionModel,  # pyright: ignore[reportPrivateImportUsage]
         QModelIndex,
@@ -50,7 +51,6 @@ if TYPE_CHECKING:
 
     from pykotor.extract.file import FileResource
     from toolset.data.installation import HTInstallation
-    from qtpy.QtCore import QCloseEvent  # pyright: ignore[reportPrivateImportUsage]
 
 
 class TLKEditor(Editor):

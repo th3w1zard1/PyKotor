@@ -24,12 +24,12 @@ if str(PYKOTOR_PATH) not in sys.path:
 if str(UTILITY_PATH) not in sys.path:
     sys.path.insert(0, str(UTILITY_PATH))
 
-from pykotor.common.module import Module
-from pykotor.extract.installation import Installation
-from pykotor.resource.formats.gff.gff_auto import read_gff
-from pykotor.resource.formats.lyt.lyt_auto import read_lyt
-from pykotor.resource.formats.rim import read_rim
-from pykotor.resource.type import ResourceType
+from pykotor.common.module import Module  # noqa: E402
+from pykotor.extract.installation import Installation  # noqa: E402
+from pykotor.resource.formats.gff.gff_auto import read_gff  # noqa: E402
+from pykotor.resource.formats.lyt.lyt_auto import read_lyt  # noqa: E402
+from pykotor.resource.formats.rim import read_rim  # noqa: E402
+from pykotor.resource.type import ResourceType  # noqa: E402
 
 
 def investigate_module(module_name: str, installation: Installation):
@@ -240,11 +240,11 @@ def investigate_module(module_name: str, installation: Installation):
     print(f"    TXI in RIMs: {len(rim_txis)}")
     
     # Find missing
-    module_texture_names = {str(t).lower() for t in textures_found}
-    module_lightmap_names = {str(l).lower() for l in lightmaps_found}
+    module_texture_names = {str(tex).lower() for tex in textures_found}
+    module_lightmap_names = {str(lmp).lower() for lmp in lightmaps_found}
     
-    missing_textures = module_texture_names - {t.lower() for t in rim_textures}
-    missing_lightmaps = module_lightmap_names - {l.lower() for l in rim_lightmaps}
+    missing_textures = module_texture_names - {tex.lower() for tex in rim_textures}
+    missing_lightmaps = module_lightmap_names - {lmp.lower() for lmp in rim_lightmaps}
     
     if missing_textures:
         print(f"\n    Missing textures from RIMs ({len(missing_textures)}):")

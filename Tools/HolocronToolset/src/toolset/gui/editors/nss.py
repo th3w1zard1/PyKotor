@@ -50,7 +50,6 @@ if __name__ == "__main__":
     update_path(Path(__file__).parent.parent.parent.parent)
 
 
-import os
 
 from pykotor.extract.file import FileResource  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.ncs import read_ncs  # pyright: ignore[reportPrivateImportUsage]

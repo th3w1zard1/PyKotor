@@ -4,11 +4,11 @@ import os
 
 from functools import singledispatch
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped]
 from qtpy.QtCore import Qt
-from qtpy.QtWidgets import QApplication, QMainWindow, QMessageBox, QWidget
+from qtpy.QtWidgets import QMainWindow, QMessageBox, QWidget
 
 from pykotor.extract.file import FileResource  # type: ignore[import-not-found]
 from pykotor.resource.type import ResourceType  # type: ignore[import-not-found]

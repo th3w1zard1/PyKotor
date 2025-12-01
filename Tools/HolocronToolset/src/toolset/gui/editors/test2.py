@@ -38,7 +38,6 @@ pykotor_path = file_absolute_path.parents[6] / "Libraries" / "PyKotor" / "src"
 if pykotor_path.exists():
     update_sys_path(pykotor_path)
 
-from pathlib import Path  # noqa: E402
 
 from pykotor.common.language import LocalizedString  # noqa: E402
 from pykotor.resource.generics.dlg import DLG, DLGEntry, DLGLink, DLGReply  # noqa: E402

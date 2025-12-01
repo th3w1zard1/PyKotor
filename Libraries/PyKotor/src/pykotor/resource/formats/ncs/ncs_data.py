@@ -883,5 +883,5 @@ class NCSOptimizer(ABC):
 
 class NCSCompiler(ABC):
     @abstractmethod
-    def compile_script(self, source_path: os.PathLike | str, output_path: os.PathLike | str, game: Game, optimizers: list[NCSOptimizer] | None = None, *, debug: bool = False):
+    def compile_script(self, source_file: os.PathLike | str, output_file: os.PathLike | str, game: Game | int, timeout: int = 5, *, debug: bool = False) -> tuple[str, str]:
         ...

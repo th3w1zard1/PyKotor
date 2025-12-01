@@ -16,7 +16,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Callable, List, cast
 
-import qtpy
 import send2trash
 
 from qtpy.QtCore import QUrl, Qt
@@ -64,10 +63,8 @@ if __name__ == "__main__":
             update_sys_path(toolset_path.parent)
             os.chdir(toolset_path)
 
-from pathlib import Path
 
 from loggerplus import RobustLogger
-from qtpy.QtWidgets import QWidget
 
 from pykotor.common.misc import Game
 from pykotor.common.stream import BinaryWriterFile

@@ -9,8 +9,6 @@ This module handles serialization of:
 
 from __future__ import annotations
 
-import math
-
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -145,7 +143,6 @@ def _serialize_door(door: GITDoor) -> dict[str, Any]:
 
 def _serialize_encounter(encounter: GITEncounter) -> dict[str, Any]:
     """Serialize GITEncounter-specific data."""
-    from utility.common.geometry import Vector3
 
     geometry = [serialize_vector3(v) for v in encounter.geometry]
     spawn_points = [

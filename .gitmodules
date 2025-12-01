@@ -40,6 +40,9 @@
 [submodule "vendor/nwscript-mode.el"]
 	path = vendor/nwscript-mode.el
 	url = https://github.com/th3w1zard1/nwscript-mode.el.git
+[submodule "vendor/nwscript-ts-mode"]
+	path = vendor/nwscript-ts-mode
+	url = https://github.com/th3w1zard1/nwscript-ts-mode.git
 [submodule "vendor/HoloLSP"]
 	path = vendor/HoloLSP
 	url = https://github.com/th3w1zard1/HoloLSP.git
@@ -118,6 +121,9 @@
 [submodule "vendor/KOTOR_Registry_Install_Path_Editor"]
 	path = vendor/KOTOR_Registry_Install_Path_Editor
 	url = https://github.com/th3w1zard1/KOTOR_Registry_Install_Path_Editor.git
+[submodule "vendor/TSLPatcher"]
+	path = vendor/TSLPatcher
+	url = https://github.com/th3w1zard1/TSLPatcher.git
 
 # Shaders & Graphics Fixes
 [submodule "vendor/3C-FD-Patcher"]
@@ -126,6 +132,9 @@
 [submodule "vendor/HoloPatcher.NET"]
 	path = vendor/HoloPatcher.NET
 	url = https://github.com/th3w1zard1/HoloPatcher.NET.git
+[submodule "vendor/KOTR-II-ShaderOverride-Injector"]
+	path = vendor/KOTR-II-ShaderOverride-Injector
+	url = https://github.com/th3w1zard1/KOTR-II-ShaderOverride-Injector.git
 
 ## Speedrunning Tools, Randomizer & Challenge Mods
 #
@@ -160,9 +169,15 @@
 [submodule "vendor/K1_Community_Patch"]
 	path = vendor/K1_Community_Patch
 	url = https://github.com/th3w1zard1/K1_Community_Patch.git
+[submodule "vendor/TSL_Community_Patch"]
+	path = vendor/TSL_Community_Patch
+	url = https://github.com/th3w1zard1/TSL_Community_Patch.git
 [submodule "vendor/Kotor.NET"]
 	path = vendor/Kotor.NET
 	url = https://github.com/th3w1zard1/Kotor.NET.git
+[submodule "vendor/KotOR-Bioware-Libs"]
+	path = vendor/KotOR-Bioware-Libs
+	url = https://github.com/th3w1zard1/KotOR-Bioware-Libs.git
 
 ## Miscellaneous/Other Mods & Fixes
 [submodule "vendor/CHORD"]
@@ -192,6 +207,9 @@
 [submodule "vendor/KotOR-Switch-modding"]
 	path = vendor/KotOR-Switch-modding
 	url = https://github.com/th3w1zard1/KotOR-Switch-modding.git
+[submodule "vendor/KotOR-Modding-Guide"]
+	path = vendor/KotOR-Modding-Guide
+	url = https://github.com/th3w1zard1/KotOR-Modding-Guide.git
 
 
 # ===============================
@@ -226,9 +244,6 @@
 [submodule "vendor/pazaak-eggborne"]
 	path = vendor/pazaak-eggborne
 	url = https://github.com/th3w1zard1/pazaak-eggborne.git
-[submodule "vendor/react-pazaak"]
-	path = vendor/react-pazaak
-	url = https://github.com/th3w1zard1/react-pazaak.git
 [submodule "vendor/vue-pazaak"]
 	path = vendor/vue-pazaak
 	url = https://github.com/th3w1zard1/vue-pazaak.git
@@ -237,57 +252,15 @@
 [submodule "vendor/pazaak-iron-ginger"]
 	path = vendor/pazaak-iron-ginger
 	url = https://github.com/th3w1zard1/Pazaak-Card-Game.git
-[submodule "vendor/pure-pazaak-michaeljoelphillips"]
-	path = vendor/pure-pazaak-michaeljoelphillips
-	url = https://github.com/th3w1zard1/pure-pazaak-michaeljoelphillips.git
-[submodule "vendor/pazaak-loomisdf"]
-	path = vendor/pazaak-loomisdf
-	url = https://github.com/th3w1zard1/pazaak-loomisdf.git
-[submodule "vendor/pazaak-alexander-ye"]
-	path = vendor/pazaak-alexander-ye
-	url = https://github.com/th3w1zard1/pazaak-alexander-ye.git
 [submodule "vendor/Java_Pazaak"]
 	path = vendor/Java_Pazaak
 	url = https://github.com/th3w1zard1/Java_Pazaak.git
 [submodule "vendor/GetLucky33"]
 	path = vendor/GetLucky33
 	url = https://github.com/th3w1zard1/GetLucky33.git
-[submodule "vendor/Pazaak-sKm-games"]
-	path = vendor/Pazaak-sKm-games
-	url = https://github.com/th3w1zard1/Pazaak-sKm-games.git
-[submodule "vendor/Star-Wars-Cantina-Games"]
-	path = vendor/Star-Wars-Cantina-Games
-	url = https://github.com/th3w1zard1/Star-Wars-Cantina-Games.git
-[submodule "vendor/Pazaak-Camputron"]
-	path = vendor/Pazaak-Camputron
-	url = https://github.com/th3w1zard1/Pazaak-Camputron.git
-[submodule "vendor/pazaak-EclecticTaco"]
-	path = vendor/pazaak-EclecticTaco
-	url = https://github.com/th3w1zard1/pazaak-EclecticTaco.git
-[submodule "vendor/pazaak-eMonk42"]
-	path = vendor/pazaak-eMonk42
-	url = https://github.com/th3w1zard1/pazaak-eMonk42.git
-[submodule "vendor/Pazaak-ebc1201"]
-	path = vendor/Pazaak-ebc1201
-	url = https://github.com/th3w1zard1/Pazaak-ebc1201.git
-[submodule "vendor/Pazaak-JustWaltuh"]
-	path = vendor/Pazaak-JustWaltuh
-	url = https://github.com/th3w1zard1/Pazaak-JustWaltuh.git
-[submodule "vendor/pure-pazaak-LinkWentz"]
-	path = vendor/pure-pazaak-LinkWentz
-	url = https://github.com/th3w1zard1/pure-pazaak-LinkWentz.git
 [submodule "vendor/PazaakApp"]
 	path = vendor/PazaakApp
 	url = https://github.com/th3w1zard1/PazaakApp.git
-[submodule "vendor/ConsolePazaak"]
-	path = vendor/ConsolePazaak
-	url = https://github.com/th3w1zard1/ConsolePazaak.git
-[submodule "vendor/pazaak-KhanRayhanAli"]
-	path = vendor/pazaak-KhanRayhanAli
-	url = https://github.com/th3w1zard1/pazaak-KhanRayhanAli.git
-[submodule "vendor/Pazaak-Handensaken"]
-	path = vendor/Pazaak-Handensaken
-	url = https://github.com/th3w1zard1/Pazaak-Handensaken.git
 
 
 # ===============================
@@ -303,6 +276,15 @@
 [submodule "vendor/ds-kotor-modding-wiki"]
 	path = vendor/ds-kotor-modding-wiki
 	url = https://github.com/th3w1zard1/ds-kotor-modding-wiki.git
+[submodule "vendor/KOTOR2-TOMB"]
+	path = vendor/KOTOR2-TOMB
+	url = https://github.com/th3w1zard1/KOTOR2-TOMB.git
+[submodule "vendor/kotormods"]
+	path = vendor/kotormods
+	url = https://github.com/th3w1zard1/kotormods.git
+[submodule "vendor/cs403-final"]
+	path = vendor/cs403-final
+	url = https://github.com/th3w1zard1/cs403-final.git
 
 
 # ===============================
@@ -311,3 +293,61 @@
 [submodule "Tools/HolocronToolset/src/toolset/kits"]
 	path = Tools/HolocronToolset/src/toolset/kits
 	url = https://github.com/th3w1zard1/ToolsetData.git
+
+
+# ===============================
+# Dead/Removed Pazaak Submodules (404 - Repositories Deleted or Useless)
+# ===============================
+# These submodules were removed because their repositories no longer exist (404 Not Found)
+# or were determined to be useless/incomplete implementations
+# Uncommented below so git recognizes them, but kept in this section to indicate they're not useful
+
+[submodule "vendor/react-pazaak"]
+	path = vendor/react-pazaak
+	url = https://github.com/th3w1zard1/react-pazaak.git
+[submodule "vendor/Star-Wars-Cantina-Games"]
+	path = vendor/Star-Wars-Cantina-Games
+	url = https://github.com/th3w1zard1/Star-Wars-Cantina-Games.git
+[submodule "vendor/PurePazaak"]
+	path = vendor/PurePazaak
+	url = https://github.com/th3w1zard1/PurePazaak.git
+# Commented out and moved to bottom for reference/history
+#[submodule "vendor/pure-pazaak-michaeljoelphillips"]
+#	path = vendor/pure-pazaak-michaeljoelphillips
+#	url = https://github.com/th3w1zard1/pure-pazaak-michaeljoelphillips.git
+#[submodule "vendor/pazaak-loomisdf"]
+#	path = vendor/pazaak-loomisdf
+#	url = https://github.com/th3w1zard1/pazaak-loomisdf.git
+#[submodule "vendor/pazaak-alexander-ye"]
+#	path = vendor/pazaak-alexander-ye
+#	url = https://github.com/th3w1zard1/pazaak-alexander-ye.git
+#[submodule "vendor/Pazaak-sKm-games"]
+#	path = vendor/Pazaak-sKm-games
+#	url = https://github.com/th3w1zard1/Pazaak-sKm-games.git
+#[submodule "vendor/Pazaak-Camputron"]
+#	path = vendor/Pazaak-Camputron
+#	url = https://github.com/th3w1zard1/Pazaak-Camputron.git
+#[submodule "vendor/pazaak-EclecticTaco"]
+#	path = vendor/pazaak-EclecticTaco
+#	url = https://github.com/th3w1zard1/pazaak-EclecticTaco.git
+#[submodule "vendor/pazaak-eMonk42"]
+#	path = vendor/pazaak-eMonk42
+#	url = https://github.com/th3w1zard1/pazaak-eMonk42.git
+#[submodule "vendor/Pazaak-ebc1201"]
+#	path = vendor/Pazaak-ebc1201
+#	url = https://github.com/th3w1zard1/Pazaak-ebc1201.git
+#[submodule "vendor/Pazaak-JustWaltuh"]
+#	path = vendor/Pazaak-JustWaltuh
+#	url = https://github.com/th3w1zard1/Pazaak-JustWaltuh.git
+#[submodule "vendor/pure-pazaak-LinkWentz"]
+#	path = vendor/pure-pazaak-LinkWentz
+#	url = https://github.com/th3w1zard1/pure-pazaak-LinkWentz.git
+#[submodule "vendor/ConsolePazaak"]
+#	path = vendor/ConsolePazaak
+#	url = https://github.com/th3w1zard1/ConsolePazaak.git
+#[submodule "vendor/pazaak-KhanRayhanAli"]
+#	path = vendor/pazaak-KhanRayhanAli
+#	url = https://github.com/th3w1zard1/pazaak-KhanRayhanAli.git
+#[submodule "vendor/Pazaak-Handensaken"]
+#	path = vendor/Pazaak-Handensaken
+#	url = https://github.com/th3w1zard1/Pazaak-Handensaken.git

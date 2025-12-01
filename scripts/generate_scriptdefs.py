@@ -31,16 +31,15 @@ try:
     # Import from PyKotor - scriptdefs.py should be a minimal stub before generation
     # Import lexer and classes directly to avoid importing scriptdefs.py
     # We need to temporarily suppress scriptdefs import errors
-    import importlib.util
     import types
     
     # Suppress scriptdefs import errors by monkey-patching sys.modules
     # This allows us to import the compiler modules even if scriptdefs.py is broken
     scriptdefs_module = types.ModuleType('pykotor.common.scriptdefs')
-    scriptdefs_module.KOTOR_CONSTANTS = []
-    scriptdefs_module.KOTOR_FUNCTIONS = []
-    scriptdefs_module.TSL_CONSTANTS = []
-    scriptdefs_module.TSL_FUNCTIONS = []
+    scriptdefs_module.KOTOR_CONSTANTS = []  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+    scriptdefs_module.KOTOR_FUNCTIONS = []  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+    scriptdefs_module.TSL_CONSTANTS = []  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+    scriptdefs_module.TSL_FUNCTIONS = []  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
     sys.modules['pykotor.common.scriptdefs'] = scriptdefs_module
     
     from pykotor.common.misc import Game  # type: ignore[import-not-found, note]

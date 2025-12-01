@@ -60,16 +60,16 @@ for tex_name in test_textures[:5]:  # Test first 5
                     for loc in loc_list[:2]:
                         print(f"       - {loc.filepath.name} (offset: {loc.offset}, size: {loc.size})")
                 else:
-                    print(f"       WARNING: loc_list is empty or None!")
+                    print("       WARNING: loc_list is empty or None!")
         else:
-            print(f"     No results returned (results is empty dict)")
+            print("     No results returned (results is empty dict)")
     except Exception as e:
         print(f"     Exception: {e}")
         import traceback
         traceback.print_exc()
     
     # Test 2: Check if ResourceIdentifier is case-sensitive
-    print(f"  2. Check ResourceIdentifier case handling:")
+    print("  2. Check ResourceIdentifier case handling:")
     ri1 = ResourceIdentifier(resname=tex_name, restype=ResourceType.TXI)
     ri2 = ResourceIdentifier(resname=tex_name.upper(), restype=ResourceType.TXI)
     ri3 = ResourceIdentifier(resname=tex_name.capitalize(), restype=ResourceType.TXI)
@@ -77,7 +77,7 @@ for tex_name in test_textures[:5]:  # Test first 5
     print(f"     '{tex_name}' == '{tex_name.capitalize()}': {ri1 == ri3}")
     
     # Test 3: Try with different case variations
-    print(f"  3. Try different case variations:")
+    print("  3. Try different case variations:")
     for variant in [tex_name, tex_name.upper(), tex_name.capitalize()]:
         try:
             results = inst.locations(

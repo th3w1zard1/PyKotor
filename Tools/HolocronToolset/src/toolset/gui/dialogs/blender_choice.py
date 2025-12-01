@@ -12,7 +12,6 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QCheckBox,
     QDialog,
-    QDialogButtonBox,
     QFrame,
     QHBoxLayout,
     QLabel,

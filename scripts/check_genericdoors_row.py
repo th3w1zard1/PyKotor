@@ -67,14 +67,14 @@ if genericdoors_2da is None:
     sys.exit(1)
 
 # Check row 11 (appearance_id 11)
-print(f"\nChecking row 11 (appearance_id 11):")
+print("\nChecking row 11 (appearance_id 11):")
 try:
     row = genericdoors_2da.get_row(11)
     print(f"  Row exists: {row is not None}")
     if row:
         modelname = row.get_string("modelname")
         print(f"  Model name: {modelname}")
-        print(f"  All columns in row:")
+        print("  All columns in row:")
         for col in genericdoors_2da.get_headers():
             val = row.get_string(col)
             if val:
@@ -83,7 +83,7 @@ except Exception as e:
     print(f"  ERROR accessing row 11: {e}")
 
 # Check a few other rows to see the pattern
-print(f"\nChecking first 5 rows:")
+print("\nChecking first 5 rows:")
 for i in range(5):
     try:
         row = genericdoors_2da.get_row(i)
@@ -94,7 +94,7 @@ for i in range(5):
         print(f"  Row {i}: ERROR - {e}")
 
 # Check if there's a row with a valid model
-print(f"\nSearching for rows with valid model names (not 'mydoor.mdl'):")
+print("\nSearching for rows with valid model names (not 'mydoor.mdl'):")
 valid_models = []
 for i in range(100):  # Check first 100 rows
     try:

@@ -12,8 +12,8 @@ repo_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(repo_root / "Libraries" / "PyKotor" / "src"))
 sys.path.insert(0, str(repo_root / "Libraries" / "Utility" / "src"))
 
-from pykotor.resource.formats.bwm import read_bwm  # ruff: noqa: E402
-from pykotor.resource.formats.bwm.io_bwm import BWMBinaryWriter  # ruff: noqa: E402
+from pykotor.resource.formats.bwm import read_bwm  # noqa: E402
+from pykotor.resource.formats.bwm.io_bwm import BWMBinaryWriter  # noqa: E402
 
 # Find test file
 test_file = repo_root / "tests" / "test_toolset" / "test_files" / "zio006j.wok"

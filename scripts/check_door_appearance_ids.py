@@ -26,7 +26,7 @@ if not K1_PATH:
                 break
 
 if not K1_PATH or not Path(K1_PATH).exists():
-    print(f"ERROR: K1_PATH not set or invalid!")
+    print("ERROR: K1_PATH not set or invalid!")
     sys.exit(1)
 
 inst = Installation(K1_PATH)
@@ -52,7 +52,7 @@ for door_name, appearance_id in door_utds:
     print(f"  {door_name:30s} - appearance_id: {appearance_id}")
 
 # Check if "mydoor" model exists
-print(f"\nChecking if 'mydoor' model exists...")
+print("\nChecking if 'mydoor' model exists...")
 mydoor_result = inst.resource("mydoor", ResourceType.MDL)
 if mydoor_result and mydoor_result.data:
     print("  ✓ mydoor.mdl exists")
@@ -60,7 +60,7 @@ else:
     print("  ✗ mydoor.mdl does NOT exist")
 
 # Check if "MyDoor" model exists (with capital M)
-print(f"\nChecking if 'MyDoor' model exists...")
+print("\nChecking if 'MyDoor' model exists...")
 mydoor_cap_result = inst.resource("MyDoor", ResourceType.MDL)
 if mydoor_cap_result and mydoor_cap_result.data:
     print("  ✓ MyDoor.mdl exists")

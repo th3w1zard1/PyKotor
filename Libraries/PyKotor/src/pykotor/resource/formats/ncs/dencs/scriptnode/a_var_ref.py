@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode
 from pykotor.resource.formats.ncs.dencs.scriptnode.a_expression import AExpression
+from pykotor.resource.formats.ncs.dencs.scriptnode.script_node import ScriptNode
 from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct
 
 if TYPE_CHECKING:

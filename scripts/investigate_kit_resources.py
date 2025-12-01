@@ -20,11 +20,11 @@ if str(UTILITY_PATH) not in sys.path:
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
-from pykotor.common.module import Module
-from pykotor.extract.file import ResourceIdentifier
-from pykotor.extract.installation import Installation, SearchLocation
-from pykotor.resource.type import ResourceType
-from pykotor.tools.model import iterate_lightmaps, iterate_textures
+from pykotor.common.module import Module  # noqa: E402
+from pykotor.extract.file import ResourceIdentifier  # noqa: E402
+from pykotor.extract.installation import Installation, SearchLocation  # noqa: E402
+from pykotor.resource.type import ResourceType  # noqa: E402
+from pykotor.tools.model import iterate_lightmaps, iterate_textures  # noqa: E402
 
 k1_path = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
 inst = Installation(k1_path)
@@ -70,7 +70,7 @@ for mdl in module.models():
             for tex in iterate_textures(mdl_data):
                 all_textures_from_models.add(tex.lower())
     except Exception as e:
-        pass
+        print(f"Error iterating lightmaps or textures for model {mdl.identifier()}: {e}")
 
 print(f"  Found {len(all_lightmaps_from_models)} lightmaps and {len(all_textures_from_models)} textures from danm13 models")
 
@@ -95,9 +95,9 @@ for lm in missing_lms:
                 print(f"    - {source}: {loc.filepath.name} (in {loc.filepath.parent.name})")
         # Check if referenced by danm13 models
         if lm.lower() in all_lightmaps_from_models:
-            print(f"    -> Referenced by danm13 models: YES")
+            print("    -> Referenced by danm13 models: YES")
         else:
-            print(f"    -> Referenced by danm13 models: NO")
+            print("    -> Referenced by danm13 models: NO")
     else:
         print(f"  {lm}: NOT FOUND in installation")
 
@@ -119,15 +119,15 @@ for tex in missing_textures[:10]:  # Check first 10
                 source = "RIM" if ".rim" in str(loc.filepath).lower() else "BIF" if ".bif" in str(loc.filepath).lower() else "Other"
                 print(f"    - {source}: {loc.filepath.name} (in {loc.filepath.parent.name})")
         if tex.lower() in all_textures_from_models:
-            print(f"    -> Referenced by danm13 models: YES")
+            print("    -> Referenced by danm13 models: YES")
         else:
-            print(f"    -> Referenced by danm13 models: NO")
+            print("    -> Referenced by danm13 models: NO")
     else:
         print(f"  {tex}: NOT FOUND in installation")
 
 # 3. Check what modules these lightmaps belong to
 print("\n3. Analyzing lightmap module origins...")
-module_lightmaps = {}
+module_lightmaps: dict[str, list[str]] = {}
 for lm in missing_lms:
     # Extract module prefix (e.g., m03af from m03af_01a_lm13)
     parts = lm.split("_")
@@ -144,7 +144,8 @@ for mod_prefix, lms in sorted(module_lightmaps.items()):
     try:
         test_module = Module(mod_prefix, inst, use_dot_mod=False)
         print(f"      -> Module '{mod_prefix}' exists")
-    except:
+    except Exception as e:
+        print(f"Error checking module '{mod_prefix}': {e.__class__.__name__}: {e}")
         print(f"      -> Module '{mod_prefix}' not found or invalid")
 
 # 4. Check if these are shared/common resources

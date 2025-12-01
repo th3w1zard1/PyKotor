@@ -43,8 +43,8 @@ def find_strings_in_file(file_path: Path) -> list[tuple[int, str]]:
                 # Filter out very short strings, paths, URLs, technical terms
                 if (len(text) > 3 and 
                     not text.startswith('http') and
-                    not '\\' in text and
-                    not '/' in text and
+                    '\\' not in text and
+                    '/' not in text and
                     text[0].isupper() and  # Start with capital (likely user-facing)
                     any(c.isalpha() for c in text)):  # Contains letters
                     strings.append((i, text))

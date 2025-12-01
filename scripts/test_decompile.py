@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 """Quick test for decompilation."""
-from pykotor.resource.formats.ncs.ncs_auto import compile_nss, decompile_ncs
-from pykotor.common.misc import Game
 import sys
 import traceback
+
+from pykotor.common.misc import Game
+from pykotor.resource.formats.ncs.ncs_auto import compile_nss, decompile_ncs
 
 source = """void main() { int a = 1; }"""
 

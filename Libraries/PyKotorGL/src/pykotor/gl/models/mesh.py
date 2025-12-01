@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     from pykotor.gl.models.node import Node
     from pykotor.gl.scene import Scene
-    from pykotor.gl.shader import Shader, Texture
+    from pykotor.gl.shader import Shader
 
 
 class Mesh:

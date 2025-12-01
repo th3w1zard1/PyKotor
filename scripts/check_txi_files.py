@@ -17,9 +17,9 @@ if str(UTILITY_PATH) not in sys.path:
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
-from pykotor.extract.file import ResourceIdentifier
-from pykotor.extract.installation import Installation, SearchLocation
-from pykotor.resource.type import ResourceType
+from pykotor.extract.file import ResourceIdentifier  # noqa: E402
+from pykotor.extract.installation import Installation, SearchLocation  # noqa: E402
+from pykotor.resource.type import ResourceType  # noqa: E402
 
 k1_path = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
 inst = Installation(k1_path)

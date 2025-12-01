@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING
 from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import AnalysisAdapter
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.start import Start
-    from pykotor.resource.formats.ncs.dencs.node.node import Node
+    from pykotor.resource.formats.ncs.dencs.node.a_command_block import ACommandBlock
     from pykotor.resource.formats.ncs.dencs.node.a_program import AProgram
     from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine
-    from pykotor.resource.formats.ncs.dencs.node.a_command_block import ACommandBlock
+    from pykotor.resource.formats.ncs.dencs.node.node import Node
+    from pykotor.resource.formats.ncs.dencs.node.start import Start
 
 
 class PrunedDepthFirstAdapter(AnalysisAdapter):

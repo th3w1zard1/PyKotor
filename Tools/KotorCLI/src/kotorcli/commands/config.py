@@ -28,9 +28,9 @@ def get_config_dir() -> Path:
     if system == "Windows":
         base = Path(os.environ.get("APPDATA", str(Path.home() / "AppData" / "Roaming")))
         return base / "kotorcli"
-    else:  # Linux, Mac
-        base = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
-        return base / "kotorcli"
+    # Linux, Mac
+    base = Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
+    return base / "kotorcli"
 
 
 def get_global_config_path() -> Path:
@@ -118,9 +118,8 @@ def cmd_config(args: Namespace, logger: Logger) -> int:
             save_config_file(config_path, config_data)
             logger.info(f"Unset {scope} config: {args.key}")
             return 0
-        else:
-            logger.warning(f"Key not found in {scope} config: {args.key}")
-            return 0
+        logger.warning(f"Key not found in {scope} config: {args.key}")
+        return 0
 
     # Handle get operation (default if only key provided)
     if args.key and not args.value and not args.set:

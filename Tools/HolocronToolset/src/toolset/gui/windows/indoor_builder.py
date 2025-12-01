@@ -38,10 +38,10 @@ else:
     raise ValueError(f"Invalid QT_API: '{qtpy.API_NAME}'")
 
 from pykotor.common.stream import BinaryWriter
-from toolset.blender import BlenderEditorMode, check_blender_and_ask
+from toolset.blender import BlenderEditorMode
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
-from toolset.data.indoorkit import Kit, load_kits
+from toolset.data.indoorkit import Kit, ModuleKit, ModuleKitManager, load_kits
 from toolset.data.indoormap import IndoorMap, IndoorMapRoom
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.asyncloader import AsyncLoader
@@ -57,7 +57,6 @@ from utility.updater.github import download_github_release_asset
 if TYPE_CHECKING:
     from qtpy.QtCore import QPoint
     from qtpy.QtGui import QImage, QKeyEvent, QMouseEvent, QPaintEvent, QWheelEvent
-    from qtpy.QtWidgets import QAbstractButton
 
     from pykotor.resource.formats.bwm import BWMFace
     from pykotor.resource.formats.bwm.bwm_data import BWM
@@ -313,6 +312,14 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._kits: list[Kit] = []
         self._map: IndoorMap = IndoorMap()
         self._filepath: str = ""
+        
+        # Module kit management (lazy loading)
+        # ModuleKitManager handles converting game modules to kit-like components
+        if installation is not None:
+            self._module_kit_manager: ModuleKitManager = ModuleKitManager(installation)
+        else:
+            self._module_kit_manager = None  # type: ignore[assignment]
+        self._current_module_kit: ModuleKit | None = None
 
         # Undo/Redo stack
         self._undo_stack: QUndoStack = QUndoStack(self)
@@ -327,6 +334,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._setup_signals()
         self._setup_undo_redo()
         self._setup_kits()
+        self._setup_modules()
         self._refresh_window_title()
 
         self.ui.mapRenderer.set_map(self._map)
@@ -337,6 +345,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # Kit/component selection
         self.ui.kitSelect.currentIndexChanged.connect(self.on_kit_selected)
         self.ui.componentList.currentItemChanged.connect(self.onComponentSelected)
+        
+        # Module/component selection
+        self.ui.moduleSelect.currentIndexChanged.connect(self.on_module_selected)
+        self.ui.moduleComponentList.currentItemChanged.connect(self.on_module_component_selected)
 
         # File menu
         self.ui.actionNew.triggered.connect(self.new)
@@ -473,6 +485,89 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         result = no_kit_prompt.exec()
         if result == QMessageBox.StandardButton.Yes or no_kit_prompt.clickedButton() == QMessageBox.StandardButton.Yes:
             self.open_kit_downloader()
+
+    def _setup_modules(self):
+        """Set up the module selection combobox with available modules from the installation.
+        
+        Uses ModuleKitManager to get module roots and display names.
+        Modules are loaded lazily when selected.
+        """
+        self.ui.moduleSelect.clear()
+        self.ui.moduleComponentList.clear()
+        
+        if not self._installation:
+            # Disable modules UI if no installation is available
+            if hasattr(self.ui, 'modulesGroupBox'):
+                self.ui.modulesGroupBox.setEnabled(False)
+            return
+        
+        # Get module roots from the kit manager
+        module_roots = self._module_kit_manager.get_module_roots()
+        
+        # Populate the combobox with module names
+        for module_root in module_roots:
+            display_name = self._module_kit_manager.get_module_display_name(module_root)
+            self.ui.moduleSelect.addItem(display_name, module_root)
+    
+    def on_module_selected(self, index: int = -1):
+        """Handle module selection from the combobox.
+        
+        Loads module components lazily when a module is selected in the combobox.
+        Uses ModuleKitManager to convert module resources into kit components.
+        """
+        self.ui.moduleComponentList.clear()
+        
+        if hasattr(self.ui, 'moduleComponentImage'):
+            self.ui.moduleComponentImage.clear()
+        
+        module_root: str | None = self.ui.moduleSelect.currentData()
+        if not module_root or not self._installation:
+            return
+        
+        try:
+            # Use the ModuleKitManager to get a ModuleKit for this module
+            module_kit = self._module_kit_manager.get_module_kit(module_root)
+            
+            # Ensure the kit is loaded (lazy loading)
+            if not module_kit.ensure_loaded():
+                from loggerplus import RobustLogger
+                RobustLogger().warning(f"No components found for module '{module_root}'")
+                return
+            
+            # Populate the list with components from the module kit
+            for component in module_kit.components:
+                item = QListWidgetItem(component.name)
+                item.setData(Qt.ItemDataRole.UserRole, component)
+                self.ui.moduleComponentList.addItem(item)
+                
+        except Exception:  # noqa: BLE001
+            from loggerplus import RobustLogger
+            RobustLogger().exception(f"Failed to load module '{module_root}'")
+    
+    def on_module_component_selected(self, item: QListWidgetItem | None = None):
+        """Handle module component selection from the list."""
+        if item is None:
+            if hasattr(self.ui, 'moduleComponentImage'):
+                self.ui.moduleComponentImage.clear()
+            self.ui.mapRenderer.set_cursor_component(None)
+            return
+        
+        component: KitComponent | None = item.data(Qt.ItemDataRole.UserRole)
+        if component is None:
+            return
+        
+        # Display component image in the preview
+        if hasattr(self.ui, 'moduleComponentImage') and component.image is not None:
+            pixmap = QPixmap.fromImage(component.image)
+            scaled = pixmap.scaled(
+                self.ui.moduleComponentImage.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            self.ui.moduleComponentImage.setPixmap(scaled)
+        
+        # Set as current cursor component for placement
+        self.ui.mapRenderer.set_cursor_component(component)
 
     def _refresh_window_title(self):
         from toolset.gui.common.localization import translate as tr, trf

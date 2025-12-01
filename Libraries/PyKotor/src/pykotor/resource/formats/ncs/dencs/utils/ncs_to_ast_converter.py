@@ -790,18 +790,18 @@ def _create_binary_operator(ins_type: NCSInstructionType, pos: int):
     - Bitwise: SHLEFTxx, SHRIGHTxx, USHRIGHTxx
     """
     from pykotor.resource.formats.ncs.dencs.node.a_add_binary_op import AAddBinaryOp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_sub_binary_op import ASubBinaryOp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_mul_binary_op import AMulBinaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_div_binary_op import ADivBinaryOp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_mod_binary_op import AModBinaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_equal_binary_op import AEqualBinaryOp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_nequal_binary_op import ANequalBinaryOp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_gt_binary_op import AGtBinaryOp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_lt_binary_op import ALtBinaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_geq_binary_op import AGeqBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_gt_binary_op import AGtBinaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_leq_binary_op import ALeqBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_lt_binary_op import ALtBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_mod_binary_op import AModBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_mul_binary_op import AMulBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_nequal_binary_op import ANequalBinaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_shleft_binary_op import AShleftBinaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_shright_binary_op import AShrightBinaryOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_sub_binary_op import ASubBinaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_unright_binary_op import AUnrightBinaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
     
@@ -869,9 +869,9 @@ def _create_unary_operator(ins_type: NCSInstructionType, pos: int):
     - Logical: NOTI (logical not)
     - Bitwise: COMPI (bitwise complement)
     """
+    from pykotor.resource.formats.ncs.dencs.node.a_comp_unary_op import ACompUnaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_neg_unary_op import ANegUnaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_not_unary_op import ANotUnaryOp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_comp_unary_op import ACompUnaryOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
     
     # Map instruction type to operator class
@@ -918,10 +918,10 @@ def _create_logii_operator(ins_type: NCSInstructionType, pos: int):
     - Bitwise logical: BOOLANDxx, INCORxx, EXCORxx
     """
     from pykotor.resource.formats.ncs.dencs.node.a_and_logii_op import AAndLogiiOp  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.ncs.dencs.node.a_or_logii_op import AOrLogiiOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_bit_and_logii_op import ABitAndLogiiOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_excl_or_logii_op import AExclOrLogiiOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_incl_or_logii_op import AInclOrLogiiOp  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_or_logii_op import AOrLogiiOp  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
     
     # Map instruction type to operator class

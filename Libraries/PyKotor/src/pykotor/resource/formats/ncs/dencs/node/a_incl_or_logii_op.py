@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING
 from pykotor.resource.formats.ncs.dencs.node.p_logii_op import PLogiiOp  # pyright: ignore[reportMissingImports]
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.t_incorii import TIncorii  # pyright: ignore[reportMissingImports]
 
 

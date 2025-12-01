@@ -94,7 +94,7 @@ def demonstrate_config_generation():
         try:
             result = generator.generate_config(original_path, modified_path, output_path)
             
-            print(f"   Configuration generated successfully!")
+            print("   Configuration generated successfully!")
             print(f"   Output file: {output_path}")
             print(f"   Content length: {len(result)} characters")
             print(f"   Number of lines: {len(result.splitlines())}")

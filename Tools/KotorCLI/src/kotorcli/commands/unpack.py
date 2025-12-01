@@ -172,11 +172,11 @@ def cmd_unpack(args: Namespace, logger: Logger) -> int:
                 # Convert GFF to JSON using PyKotor's JSON writer
                 try:
                     gff = read_gff(resource_data)
-                    
+
                     # Write as JSON
                     json_dest = destination.with_suffix(destination.suffix + ".json")
                     write_gff(gff, json_dest, file_format=ResourceType.GFF_JSON)
-                    
+
                     destination = json_dest
                     logger.debug(f"Converted {filename} to JSON: {destination.relative_to(config.root_dir)}")
                 except Exception as e:

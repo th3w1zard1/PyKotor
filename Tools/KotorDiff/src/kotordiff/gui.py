@@ -34,17 +34,14 @@ if not getattr(sys, "frozen", False):
     with suppress(Exception):
         update_sys_path(pathlib.Path(__file__).parents[1])
 
-from loggerplus import RobustLogger  # noqa: E402
 
 from kotordiff.app import KotorDiffConfig, run_application  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.tools.path import find_kotor_paths_from_default  # noqa: E402
 from pykotor.tslpatcher.logger import LogType  # noqa: E402
-from utility.error_handling import universal_simplify_exception  # noqa: E402
 from utility.tkinter.base_app import ThemedApp  # noqa: E402
 
 if TYPE_CHECKING:
-    from argparse import Namespace
 
     from pykotor.tslpatcher.logger import PatchLog
 

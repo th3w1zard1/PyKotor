@@ -42,18 +42,22 @@ class InbuiltNCSCompiler(NCSCompiler):
 
     def compile_script(  # noqa: PLR0913
         self,
-        source_path: os.PathLike | str,
-        output_path: os.PathLike | str,
-        game: Game,
-        optimizers: list[NCSOptimizer] | None = None,
+        source_file: os.PathLike | str,
+        output_file: os.PathLike | str,
+        game: Game | int,
+        timeout: int = 5,  # noqa: ARG002
         *,
         debug: bool = False,
-    ):
-        source_filepath: Path = Path(source_path)
+        optimizers: list[NCSOptimizer] | None = None,
+    ) -> tuple[str, str]:
+        if not isinstance(game, Game):
+            game = Game(game)
+        source_filepath: Path = Path(source_file)
         nss_data: bytes = source_filepath.read_bytes()
         nss_contents: str = decode_bytes_with_fallbacks(nss_data)
         ncs: NCS = compile_nss(nss_contents, game, optimizers, library_lookup=[source_filepath.parent], debug=debug)
-        write_ncs(ncs, output_path)
+        write_ncs(ncs, output_file)
+        return "", ""
 
 
 class ExternalCompilerConfig(NamedTuple):
@@ -193,8 +197,6 @@ class NwnnsscompConfig:
 
 class ExternalNCSCompiler(NCSCompiler):
     def __init__(self, nwnnsscomp_path: os.PathLike | str):
-        self.nwnnsscomp_path: Path
-        self.filehash: str
         self.change_nwnnsscomp_path(nwnnsscomp_path)
 
     def get_info(self) -> KnownExternalCompilers:

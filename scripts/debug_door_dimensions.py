@@ -10,15 +10,15 @@ PYKOTOR_PATH = REPO_ROOT / "Libraries" / "PyKotor" / "src"
 if str(PYKOTOR_PATH) not in sys.path:
     sys.path.insert(0, str(PYKOTOR_PATH))
 
-from pykotor.extract.file import ResourceIdentifier
-from pykotor.extract.installation import Installation, SearchLocation
-from pykotor.resource.formats.mdl import read_mdl
-from pykotor.resource.formats.rim import read_rim
-from pykotor.resource.formats.twoda import read_2da
-from pykotor.resource.generics.utd import read_utd
-from pykotor.resource.type import ResourceType
-from pykotor.tools import door as door_tools
-from utility.common.geometry import Vector3
+from pykotor.extract.file import ResourceIdentifier  # noqa: E402
+from pykotor.extract.installation import Installation, SearchLocation  # noqa: E402
+from pykotor.resource.formats.mdl import read_mdl  # noqa: E402
+from pykotor.resource.formats.rim import read_rim  # noqa: E402
+from pykotor.resource.formats.twoda import read_2da  # noqa: E402
+from pykotor.resource.generics.utd import read_utd  # noqa: E402
+from pykotor.resource.type import ResourceType  # noqa: E402
+from pykotor.tools import door as door_tools  # noqa: E402
+from utility.common.geometry import Vector3  # noqa: E402
 
 # Get K1_PATH
 K1_PATH = os.getenv("K1_PATH")
@@ -122,7 +122,7 @@ try:
         print(f"  ✓ Successfully loaded MDL: {model_name}")
         print(f"  Root node: {mdl.root.name if mdl.root else 'None'}")
     else:
-        print(f"  ✗ MDL resource not found or has no data")
+        print("  ✗ MDL resource not found or has no data")
         sys.exit(1)
 except Exception as e:
     print(f"  ✗ Failed to load MDL: {e}")
@@ -164,7 +164,7 @@ while nodes_to_check:
                 bb_max.y = max(bb_max.y, vertex.y)
                 bb_max.z = max(bb_max.z, vertex.z)
         else:
-            print(f"    WARNING: Mesh has no bounding box or vertices!")
+            print("    WARNING: Mesh has no bounding box or vertices!")
     
     # Check child nodes
     nodes_to_check.extend(node.children)
@@ -177,7 +177,7 @@ if bb_min.x < 1000000:
     height = abs(bb_max.z - bb_min.z)
     depth = abs(bb_max.x - bb_min.x)
     
-    print(f"\n  Calculated dimensions:")
+    print("\n  Calculated dimensions:")
     print(f"    Width (Y): {width:.3f}")
     print(f"    Height (Z): {height:.3f}")
     print(f"    Depth (X): {depth:.3f}")
@@ -185,7 +185,7 @@ if bb_min.x < 1000000:
     if 0.1 < width < 50.0 and 0.1 < height < 50.0:
         print(f"\n  ✓ Valid dimensions extracted: {width:.2f} x {height:.2f}")
     else:
-        print(f"\n  ✗ Dimensions out of range, will use defaults")
+        print("\n  ✗ Dimensions out of range, will use defaults")
 else:
     print("\n  ✗ Invalid bounding box calculated")
 

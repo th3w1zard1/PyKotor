@@ -30,7 +30,7 @@ from pykotor.resource.formats.lyt import read_lyt
 from pykotor.resource.generics.git import GIT, GITCamera, GITCreature, GITDoor, GITEncounter, GITPlaceable, GITSound, GITStore, GITTrigger, GITWaypoint, bytes_git, read_git
 from pykotor.resource.type import ResourceType
 from pykotor.tools.template import extract_name, extract_tag_from_gff
-from toolset.blender import BlenderEditorMode, check_blender_and_ask
+from toolset.blender import BlenderEditorMode
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.data.misc import ControlItem
 from toolset.gui.dialogs.instance.camera import CameraDialog

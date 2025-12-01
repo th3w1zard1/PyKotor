@@ -141,9 +141,8 @@ def execute_cli(cmdline_args: Namespace):
     Args:
         cmdline_args: Parsed command line arguments
     """
-    from pykotor.extract.installation import Installation
-
     from kotordiff.app import KotorDiffConfig, run_application
+    from pykotor.extract.installation import Installation
 
     # Configure console for UTF-8 output on Windows
     if sys.platform == "win32":

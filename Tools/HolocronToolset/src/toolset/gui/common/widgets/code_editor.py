@@ -54,7 +54,6 @@ if qtpy.QT5:
 elif qtpy.QT6:
     from qtpy.QtCore import QRegularExpression  # pyright: ignore[reportAttributeAccessIssue]
 
-from qtpy.QtCore import QPoint
 
 from pykotor.resource.formats.ncs.compiler.classes import FunctionDefinition  # noqa: F401 - Used for type annotations in outline view
 from toolset.gui.common.localization import translate as tr, trf

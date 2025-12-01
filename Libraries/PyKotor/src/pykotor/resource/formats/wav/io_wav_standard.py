@@ -15,10 +15,8 @@ References:
 
 from __future__ import annotations
 
-from io import BytesIO
 from typing import TYPE_CHECKING
 
-from pykotor.common.stream import BinaryWriter
 from pykotor.resource.formats.wav.wav_data import (
     WAV,
     AudioFormat,

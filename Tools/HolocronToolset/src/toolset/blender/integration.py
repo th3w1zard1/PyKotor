@@ -8,19 +8,18 @@ and Indoor Map Builder.
 from __future__ import annotations
 
 import subprocess
+
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
-
-from qtpy.QtCore import QTimer, Qt
+from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QMessageBox, QWidget
 
-from toolset.blender import BlenderInfo, detect_blender, launch_blender_with_ipc
+from toolset.blender import BlenderInfo, launch_blender_with_ipc
 from toolset.blender.commands import BlenderEditorController, BlenderEditorMode, get_blender_controller
 from toolset.blender.detection import get_blender_settings
-from toolset.blender.ipc_client import ConnectionState, get_ipc_client
-from toolset.blender.serializers import serialize_git, serialize_lyt
+from toolset.blender.ipc_client import ConnectionState
 
 if TYPE_CHECKING:
     from pykotor.resource.formats.bwm import BWM

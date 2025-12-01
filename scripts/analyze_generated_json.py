@@ -15,7 +15,7 @@ gen_data = json.loads(generated_json.read_text(encoding="utf-8"))
 print("="*80)
 print("GENERATED JEDIENCLAVE JSON ANALYSIS")
 print("="*80)
-print(f"\nTop Level:")
+print("\nTop Level:")
 print(f"  Name: {gen_data.get('name')}")
 print(f"  ID: {gen_data.get('id')}")
 print(f"  HT: {gen_data.get('ht')}")
@@ -31,7 +31,7 @@ print(f"\nDoors: {len(doors)}")
 default_dims = sum(1 for d in doors if d.get("width") == 2.0 and d.get("height") == 3.0)
 custom_dims = len(doors) - default_dims
 
-print(f"\nDoor Dimensions Analysis:")
+print("\nDoor Dimensions Analysis:")
 print(f"  Doors with default dimensions (2.0 x 3.0): {default_dims}/{len(doors)}")
 print(f"  Doors with custom dimensions: {custom_dims}/{len(doors)}")
 
@@ -40,7 +40,7 @@ if default_dims == len(doors):
     print("     This suggests door dimension extraction is not working.")
     print("     Expected: Doors should have varying dimensions extracted from models/textures.")
 
-print(f"\nDoor Details:")
+print("\nDoor Details:")
 for i, door in enumerate(doors):
     utd_k1 = door.get("utd_k1", "")
     width = door.get("width", 0)
@@ -69,7 +69,7 @@ if sithbase_json.exists():
 print("\n" + "="*80)
 print("SUMMARY")
 print("="*80)
-print(f"Generated JSON structure is valid.")
+print("Generated JSON structure is valid.")
 print(f"All {len(doors)} doors are using default dimensions (2.0 x 3.0).")
 print("This indicates door dimension extraction needs to be fixed.")
 

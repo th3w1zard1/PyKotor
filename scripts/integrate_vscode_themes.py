@@ -6,17 +6,18 @@ import json
 import re
 
 from pathlib import Path
+from typing import Any
 
 
 def strip_json_comments(text: str) -> str:
     """Strip JavaScript-style comments from JSON."""
-    lines = text.split('\n')
-    result = []
+    lines: list[str] = text.split('\n')
+    result: list[str] = []
     in_string = False
     escape_next = False
     
     for line in lines:
-        new_line = []
+        new_line: list[str] = []
         i = 0
         while i < len(line):
             char = line[i]
@@ -218,7 +219,7 @@ def process_themes():
             for j in range(i - 1, -1, -1):
                 if lines[j].strip() == "}":
                     # This is the closing brace - insert before this
-                    insertion_point = sum(len(l) + 1 for l in lines[:j])  # +1 for newline
+                    insertion_point = sum(len(ln) + 1 for ln in lines[:j])  # +1 for newline
                     break
             break
     
@@ -241,9 +242,10 @@ def process_themes():
                 return
     
     # Process each theme
-    new_entries = []
+    new_entries: list[str] = []
     processed = 0
     failed = 0
+    theme_data: dict[str, Any] | None = None
     
     for theme_file in theme_files:
         try:
@@ -279,7 +281,7 @@ def process_themes():
                     pass
             
             # Try normal JSON parsing
-            if 'theme_data' not in locals() or not theme_data:
+            if theme_data is None:
                 try:
                     theme_data = json.loads(cleaned_content)
                 except json.JSONDecodeError:
@@ -310,8 +312,8 @@ def process_themes():
                         else:
                             print(f"  Error: {theme_file.name} - {str(e)[:100]}")
                             continue
-            
-            theme_colors = extract_theme_colors(theme_data)
+            assert theme_data is not None, f"Theme data is None for {theme_file.name}"
+            theme_colors: dict[str, str] | None = extract_theme_colors(theme_data)
             if not theme_colors:
                 print(f"  Skipping {theme_file.name}: No colors found")
                 failed += 1
@@ -369,7 +371,7 @@ def process_themes():
                             # Look ahead for closing brace
                             if j + 2 < len(lines) and 'theme_lower' in lines[j+2]:
                                 # Calculate insertion point
-                                insertion_point = sum(len(l) + 1 for l in lines[:j+1])
+                                insertion_point = sum(len(ln) + 1 for ln in lines[:j+1])
                                 indent = "            "
                                 break
                     if insertion_point:
@@ -389,7 +391,7 @@ def process_themes():
     with open(theme_manager_path, "w", encoding="utf-8") as f:
         f.write(new_content)
     
-    print(f"\nCompleted!")
+    print("\nCompleted!")
     print(f"  Processed: {processed} themes")
     print(f"  Failed: {failed} themes")
     print(f"  Added {len(new_entries)} theme entries to theme_manager.py")

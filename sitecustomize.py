@@ -16,8 +16,6 @@ Unix/Linux/macOS (colons) regardless of the format in .env file.
 from __future__ import annotations
 
 import os
-import sys
-from pathlib import Path
 
 
 def _normalize_pythonpath() -> None:

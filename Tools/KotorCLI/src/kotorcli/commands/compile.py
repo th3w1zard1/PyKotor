@@ -83,22 +83,22 @@ def use_builtin_compiler(
     compiler = InbuiltNCSCompiler()
     compiled_count = 0
     error_count = 0
-    
+
     for nss_path in nss_files:
         try:
             output_file = cache_dir / nss_path.with_suffix(".ncs").name
             compiler.compile_script(
-                source_path=nss_path,
-                output_path=output_file,
+                source_file=nss_path,
+                output_file=output_file,
                 game=game,
                 debug=False,
             )
-            logger.debug(f"Compiled: {nss_path.name} -> {output_file.name}")
+            logger.debug(f"Compiled: {nss_path.name} -> {output_file.name}")  # noqa: G004
             compiled_count += 1
-        except Exception as e:
-            logger.error(f"Compilation failed for {nss_path.name}: {e}")
+        except Exception:
+            logger.exception(f"Compilation failed for {nss_path.name}")  # noqa: G004
             error_count += 1
-    
+
     return compiled_count, error_count
 
 
@@ -122,12 +122,12 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
     # Check for external compiler (optional)
     external_compiler = find_nss_compiler()
     use_external = external_compiler is not None
-    
+
     if use_external:
         logger.info(f"Using external compiler: {external_compiler}")
     else:
         logger.info("Using PyKotor's built-in NSS compiler")
-    
+
     # Determine game version
     game = get_game_from_config()
 
@@ -227,7 +227,7 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
             # Use external compiler
             compiled_count = 0
             error_count = 0
-            
+
             for nss_path in nss_files:
                 try:
                     output_file = cache_dir / nss_path.with_suffix(".ncs").name
@@ -242,7 +242,7 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
 
                     result = subprocess.run(
                         cmd,
-                        capture_output=True,
+                        check=False, capture_output=True,
                         text=True,
                         cwd=config.root_dir,
                     )

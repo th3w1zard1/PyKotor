@@ -13,11 +13,11 @@ from __future__ import annotations
 import argparse
 import re
 import struct
+
 from pathlib import Path
-from typing import List, Tuple
 
 # NCS opcode definitions
-OPCODES = {
+OPCODES: dict[str, int | tuple[int, int]] = {
     "CPDOWNSP": 0x01, "CPTOPSP": 0x03, "CONST": 0x04, "ACTION": 0x05,
     "LOGANDII": 0x06, "LOGORII": 0x07, "INCORII": 0x08, "EXCORII": 0x09,
     "BOOLANDII": 0x0A, "EQII": 0x0B, "NEQII": 0x0C, "GEQII": 0x0D,
@@ -73,14 +73,14 @@ class Instruction:
         return f"Instruction(off={self.offset:08X}, op={self.opcode:02X}, qual={self.qualifier:02X}, args={self.args.hex()})"
 
 
-def parse_pcode_file(pcode_path: Path) -> Tuple[int, List[Instruction]]:
+def parse_pcode_file(pcode_path: Path) -> tuple[int, list[Instruction]]:
     """Parse a pcode file and return file size and instructions.
     
     Returns:
         Tuple of (file_size, list of Instructions)
     """
-    instructions = []
-    file_size = 0
+    instructions: list[Instruction] = []
+    file_size: int = 0
     
     # Regex to match instruction lines
     # Format: OFFSET OPCODE QUALIFIER [ARGS...] INSTRUCTION_NAME [HUMAN_READABLE]
@@ -109,7 +109,7 @@ def parse_pcode_file(pcode_path: Path) -> Tuple[int, List[Instruction]]:
                 continue
                 
             # Try to match instruction line
-            match = simple_pattern.match(line)
+            match: re.Match[str] | None = simple_pattern.match(line)
             if not match:
                 continue
                 
@@ -132,7 +132,7 @@ def parse_pcode_file(pcode_path: Path) -> Tuple[int, List[Instruction]]:
             remaining = line[match.end():].strip()
             
             # Extract any hex values before the instruction name
-            hex_parts = []
+            hex_parts: list[str] = []
             for part in remaining.split():
                 # Stop at instruction name or human-readable args
                 if part.upper() in OPCODES or part.startswith('"') or part == 'str':
@@ -144,12 +144,12 @@ def parse_pcode_file(pcode_path: Path) -> Tuple[int, List[Instruction]]:
                     break
             
             # Combine all args
-            all_args_hex = args_hex + ''.join(hex_parts)
+            all_args_hex: str = args_hex + ''.join(hex_parts)
             
             # Handle string constants specially
             if opcode == 0x04 and qualifier == 0x05:  # CONSTS
                 # Extract string from the line
-                string_match = re.search(r'"([^"]*)"', line)
+                string_match: re.Match[str] | None = re.search(r'"([^"]*)"', line)
                 if string_match:
                     string_val = string_match.group(1)
                     # Handle escape sequences
@@ -175,7 +175,7 @@ def parse_pcode_file(pcode_path: Path) -> Tuple[int, List[Instruction]]:
     return file_size, instructions
 
 
-def build_ncs_binary(file_size: int, instructions: List[Instruction]) -> bytes:
+def build_ncs_binary(file_size: int, instructions: list[Instruction]) -> bytes:
     """Build binary NCS from instructions.
     
     Args:

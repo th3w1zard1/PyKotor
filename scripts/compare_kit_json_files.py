@@ -50,7 +50,7 @@ print(f"Generated components: {len(gen_components)}")
 print(f"Expected components:  {len(exp_components)}")
 
 if len(gen_components) != len(exp_components):
-    print(f"  WARNING: Component count differs!")
+    print("  WARNING: Component count differs!")
 else:
     print("  Component count matches")
 
@@ -96,7 +96,7 @@ print(f"Generated doors: {len(gen_doors)}")
 print(f"Expected doors:  {len(exp_doors)}")
 
 if len(gen_doors) != len(exp_doors):
-    print(f"  WARNING: Door count differs!")
+    print("  WARNING: Door count differs!")
 else:
     print("  Door count matches")
 

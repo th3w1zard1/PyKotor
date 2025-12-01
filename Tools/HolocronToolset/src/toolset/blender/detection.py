@@ -15,14 +15,10 @@ import shutil
 import subprocess
 import sys
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 @dataclass

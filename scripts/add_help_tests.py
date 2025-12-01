@@ -1,6 +1,7 @@
 """Script to add help dialog tests to all editor test files."""
-from pathlib import Path
 import re
+
+from pathlib import Path
 
 # Mapping of test file names to editor class names and wiki files
 EDITOR_MAPPING = {

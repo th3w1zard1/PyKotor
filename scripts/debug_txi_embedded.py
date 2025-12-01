@@ -17,10 +17,10 @@ if str(UTILITY_PATH) not in sys.path:
 
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
-from pykotor.extract.file import ResourceIdentifier
-from pykotor.extract.installation import Installation, SearchLocation
-from pykotor.resource.formats.tpc import read_tpc
-from pykotor.resource.type import ResourceType
+from pykotor.extract.file import ResourceIdentifier  # noqa: E402
+from pykotor.extract.installation import Installation, SearchLocation  # noqa: E402
+from pykotor.resource.formats.tpc import read_tpc  # noqa: E402
+from pykotor.resource.type import ResourceType  # noqa: E402
 
 k1_path = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
 inst = Installation(k1_path)
@@ -55,7 +55,7 @@ for tex_name in test_textures:
                 if tpc.txi and tpc.txi.strip():
                     print(f"    Embedded TXI: YES ({len(tpc.txi)} chars)")
                 else:
-                    print(f"    Embedded TXI: NO")
+                    print("    Embedded TXI: NO")
             except Exception as e:
                 print(f"    Error reading TPC: {e}")
     
@@ -75,5 +75,5 @@ for tex_name in test_textures:
             for loc in loc_list[:2]:
                 print(f"    - {loc.filepath.name}")
         else:
-            print(f"  Standalone TXI: NOT FOUND (empty list)")
+            print("  Standalone TXI: NOT FOUND (empty list)")
 

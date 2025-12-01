@@ -331,7 +331,7 @@ class HoloGeneratorGUI:
             path2 = Path(self.path2_var.get().strip())
             output_path = Path(self.output_var.get().strip())
             
-            self.log_message(f"Starting comparison:")
+            self.log_message("Starting comparison:")
             self.log_message(f"  Original: {path1}")
             self.log_message(f"  Modified: {path2}")
             self.log_message(f"  Mode: {'File comparison' if self.file_mode_var.get() else 'Installation comparison'}")

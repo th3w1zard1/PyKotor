@@ -1171,7 +1171,7 @@ class Stack:
 
         if not copied or sum(obj.data_type.size() for obj in copied) != size:
             # If we can't copy the exact block, try to gracefully handle it
-            print(f"DEBUG copy_to_top: unable to copy exact block, pushing defaults instead")
+            print("DEBUG copy_to_top: unable to copy exact block, pushing defaults instead")
             words = size // 4
             for _ in range(words):
                 self._stack.append(StackObject(DataType.INT, 0))

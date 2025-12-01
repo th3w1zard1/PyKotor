@@ -67,6 +67,7 @@ def read_mdl(
     source_ext: SOURCE_TYPES | None = None,
     offset_ext: int = 0,
     size_ext: int = 0,
+    file_format: ResourceType | None = None,
 ) -> MDL:
     """Returns an MDL instance from the source.
 
@@ -80,6 +81,7 @@ def read_mdl(
         source_ext: Source of the MDX data, if available.
         offset_ext: Offset into the source_ext data.
         size_ext: The number of bytes to read from the MDX source.
+        file_format: The file format to use (ResourceType.MDL or ResourceType.MDL_ASCII). If not specified, it will be detected automatically.
 
     Raises:
     ------
@@ -92,19 +94,14 @@ def read_mdl(
     -------
         An MDL instance.
     """
-    file_format = detect_mdl(source, offset)
+    if file_format is None:
+        file_format = detect_mdl(source, offset)
 
     if file_format is ResourceType.MDL:
-        return MDLBinaryReader(
-            source,
-            offset,
-            size or 0,
-            source_ext,
-            offset_ext,
-            size_ext,
-        ).load()
+        return MDLBinaryReader(source, offset, size or 0, source_ext, offset_ext, size_ext).load()
     if file_format is ResourceType.MDL_ASCII:
         return MDLAsciiReader(source, offset, size or 0).load()
+
     msg = "Failed to determine the format of the MDL file."
     raise ValueError(msg)
 

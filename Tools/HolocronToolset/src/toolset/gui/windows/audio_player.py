@@ -5,7 +5,6 @@ import time
 import traceback
 import uuid
 
-from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
@@ -30,14 +29,14 @@ from pykotor.extract.file import ResourceIdentifier  # type: ignore[import-not-f
 from pykotor.resource.type import ResourceType  # type: ignore[import-not-found] # pyright: ignore[reportMissingImports]
 from pykotor.tools.misc import is_any_erf_type_file, is_bif_file, is_capsule_file, is_rim_file  # type: ignore[import-not-found] # pyright: ignore[reportMissingImports]
 from toolset.gui.dialogs.save.to_module import SaveToModuleDialog  # type: ignore[import-not-found] # pyright: ignore[reportMissingImports]
-from utility.error_handling import format_exception_with_variables, universal_simplify_exception  # type: ignore[import-not-found] # pyright: ignore[reportMissingImports]
+from utility.error_handling import universal_simplify_exception  # type: ignore[import-not-found] # pyright: ignore[reportMissingImports]
 from utility.system.os_helper import remove_any  # type: ignore[import-not-found] # pyright: ignore[reportMissingImports]
 
 if TYPE_CHECKING:
     import os
 
     from PyQt6.QtMultimedia import QMediaPlayer as PyQt6MediaPlayer  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
-    from PySide6.QtMultimedia import QMediaPlayer as PySide6MediaPlayer  # type: ignore: import-not-found  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
+    from PySide6.QtMultimedia import QMediaPlayer as PySide6MediaPlayer  # type: ignore[import-not-found]  # pyright: ignore[reportMissingImports, reportAttributeAccessIssue]
     from qtpy.QtGui import QCloseEvent
     from qtpy.QtWidgets import QWidget
 
@@ -437,6 +436,7 @@ class AudioPlayer(QMainWindow):
         if is_wav:
             try:
                 from io import BytesIO
+
                 from pykotor.resource.formats.wav.wav_auto import bytes_wav, read_wav  # type: ignore[import-not-found] # pyright: ignore[reportMissingImports]
                 wav = read_wav(BytesIO(data))
                 data = bytes_wav(wav, ResourceType.INVALID)
@@ -462,8 +462,8 @@ class AudioPlayer(QMainWindow):
                 self.player.setMedia(QMediaContent(), self.buffer)  # pyright: ignore[reportAttributeAccessIssue]
             else:
                 # For non-WAV formats in Qt5, use temporary file
-                from qtpy.QtMultimedia import QMediaContent  # pyright: ignore[reportAttributeAccessIssue]
                 from qtpy.QtCore import QUrl  # pyright: ignore[reportAttributeAccessIssue]
+                from qtpy.QtMultimedia import QMediaContent  # pyright: ignore[reportAttributeAccessIssue]
                 
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)  # noqa: SIM115
                 temp_file.write(original_data)  # Use original data, not potentially modified data

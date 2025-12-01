@@ -57,14 +57,14 @@ if data_rim_path and data_rim_path.exists():
 
 # Check module resources
 module = Module("danm13", inst, use_dot_mod=False)
-print(f"\nChecking module resources:")
+print("\nChecking module resources:")
 for res_ident, loc_list in module.resources().items():
     resname_lower = res_ident.resname.lower()
     if resname_lower in [t.lower() for t in missing_textures] and res_ident.restype in (ResourceType.TPC, ResourceType.TGA):
         print(f"  Found: {res_ident.resname}.{res_ident.restype.extension}")
 
 # Check if they're referenced by models
-print(f"\nChecking if referenced by models:")
+print("\nChecking if referenced by models:")
 all_texture_refs = set()
 for model_resource in module.models():
     try:

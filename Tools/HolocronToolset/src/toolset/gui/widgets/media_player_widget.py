@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import qtpy
 
-from qtpy.QtCore import QBuffer, QPoint, Qt, QTimer, Signal
+from qtpy.QtCore import QBuffer, QPoint, QTimer, Qt, Signal
 from qtpy.QtGui import QKeyEvent, QKeySequence, QWheelEvent
 from qtpy.QtMultimedia import QMediaPlayer
 from qtpy.QtWidgets import (
@@ -19,7 +19,7 @@ from qtpy.QtWidgets import (
 )
 
 if TYPE_CHECKING:
-    from qtpy.QtGui import QFocusEvent, QMouseEvent, QShowEvent
+    from qtpy.QtGui import QMouseEvent, QShowEvent
     from qtpy.QtMultimedia import QAudioOutput
 
 

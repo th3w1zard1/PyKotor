@@ -159,6 +159,7 @@ def create_exception_hook(
         tback: TracebackType | None,
     ):
         from loggerplus import RobustLogger
+
         from utility.error_handling import universal_simplify_exception
 
         title, short_msg = universal_simplify_exception(exc)

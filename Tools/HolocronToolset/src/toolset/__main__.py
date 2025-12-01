@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import sys
+
 from pathlib import Path
+
 
 # Set up paths BEFORE importing anything that might import loggerplus (which depends on utility)
 # This is critical for both frozen and non-frozen builds

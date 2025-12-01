@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 import subprocess
+from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from argparse import Namespace
     from logging import Logger
 
 
@@ -62,47 +62,14 @@ def prompt(message: str, default: str = "") -> str:
     return response if response else default
 
 
-def cmd_init(args: Namespace, logger: Logger) -> int:
-    """Handle init command - create a new kotorcli package.
-
-    Args:
-    ----
-        args: Parsed command line arguments
-        logger: Logger instance
-
-    Returns:
-    -------
-        Exit code (0 for success, non-zero for error)
-    """
-    # Determine target directory
-    target_dir = Path(args.dir if args.dir else ".")
-    target_dir = target_dir.resolve()
-
-    # Create directory if it doesn't exist
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    # Check if already initialized
-    config_path = target_dir / "kotorcli.cfg"
-    if config_path.exists():
-        msg = f"Package already initialized at {target_dir}"
-        logger.warning(msg)
-        overwrite = prompt("Overwrite existing configuration? (yes/no)", "no")
-        if overwrite.lower() not in ("yes", "y"):
-            logger.info("Initialization cancelled")
-            return 0
-
-    msg = f"Initializing kotorcli package in {target_dir}"
-    logger.info(msg)
-
-    # Gather package information
+def _gather_package_info(args: Namespace, target_dir: Path, logger: Logger) -> tuple[str, str, str, str]:
+    """Gather package information from user or use defaults."""
     if args.default:
-        # Use defaults
         package_name = target_dir.name
         description = ""
         author = ""
         target_file = f"{package_name}.mod"
     else:
-        # Interactive mode
         logger.info("\nPackage Configuration")
         logger.info("---------------------")
         package_name = prompt("Package name", target_dir.name)
@@ -113,26 +80,15 @@ def cmd_init(args: Namespace, logger: Logger) -> int:
         logger.info("--------------------")
         target_file = prompt("Target filename (e.g., mymod.mod, myhak.hak)", f"{package_name}.mod")
 
-    # Create configuration content
-    config_content = DEFAULT_CONFIG_TEMPLATE.format(
-        package_name=package_name,
-        description=description,
-        author=author,
-        target_file=target_file,
-    )
+    return package_name, description, author, target_file
 
-    # Write configuration file
-    config_path.write_text(config_content, encoding="utf-8")
-    msg = f"Created {config_path}"
-    logger.info(msg)
 
-    # Create directory structure
+def _create_directory_structure(target_dir: Path, logger: Logger) -> None:
+    """Create the standard directory structure for a kotorcli package."""
     src_dir = target_dir / "src"
     src_dir.mkdir(exist_ok=True)
-    msg = f"Created {src_dir}"
-    logger.info(msg)
+    logger.info(f"Created {src_dir}")  # noqa: G004
 
-    # Create subdirectories
     subdirs = [
         "src/scripts",
         "src/dialogs",
@@ -152,11 +108,12 @@ def cmd_init(args: Namespace, logger: Logger) -> int:
     for subdir in subdirs:
         (target_dir / subdir).mkdir(parents=True, exist_ok=True)
 
-    # Create .kotorcli directory for local config
     kotorcli_dir = target_dir / ".kotorcli"
     kotorcli_dir.mkdir(exist_ok=True)
 
-    # Create .gitignore
+
+def _create_gitignore(target_dir: Path, logger: Logger) -> None:
+    """Create .gitignore file if it doesn't exist."""
     gitignore_content = """# KotorCLI
 .kotorcli/cache/
 .kotorcli/user.cfg
@@ -183,60 +140,102 @@ __pycache__/
     gitignore_path = target_dir / ".gitignore"
     if not gitignore_path.exists():
         gitignore_path.write_text(gitignore_content, encoding="utf-8")
-        msg = f"Created {gitignore_path}"
-        logger.info(msg)
+        logger.info(f"Created {gitignore_path}")  # noqa: G004
 
-    # Initialize git repository if requested
-    if args.vcs == "git":
-        try:
-            subprocess.run(
-                ["git", "init"],
-                cwd=target_dir,
-                check=True,
-                capture_output=True,
-            )
-            logger.info("Initialized git repository")
 
-            # Create .gitattributes for CRLF handling
-            gitattributes_content = """# Auto detect text files and perform LF normalization
+def _initialize_git_repo(target_dir: Path, logger: Logger) -> None:
+    """Initialize git repository if requested."""
+    try:
+        subprocess.run(
+            ["git", "init"],
+            cwd=target_dir,
+            check=True,
+            capture_output=True,
+        )
+        logger.info("Initialized git repository")
+
+        gitattributes_content = """# Auto detect text files and perform LF normalization
 * text=auto
 
 # Scripts should use LF
 *.nss text eol=lf
 *.ncs binary
 """
-            gitattributes_path = target_dir / ".gitattributes"
-            gitattributes_path.write_text(gitattributes_content, encoding="utf-8")
-            msg = f"Created {gitattributes_path}"
-            logger.info(msg)
+        gitattributes_path = target_dir / ".gitattributes"
+        gitattributes_path.write_text(gitattributes_content, encoding="utf-8")
+        logger.info(f"Created {gitattributes_path}")  # noqa: G004
 
-        except subprocess.CalledProcessError:
-            logger.warning("Failed to initialize git repository (git not found or error occurred)")
-        except FileNotFoundError:
-            logger.warning("Git not found, skipping repository initialization")
+    except subprocess.CalledProcessError:
+        logger.warning("Failed to initialize git repository (git not found or error occurred)")
+    except FileNotFoundError:
+        logger.warning("Git not found, skipping repository initialization")
 
-    # Handle initial file unpacking if specified
+
+def _unpack_initial_file(args: Namespace, init_file: str, logger: Logger) -> None:
+    """Unpack initial file if specified."""
+    logger.info(f"Unpacking initial file: {init_file}")  # noqa: G004
+    from kotorcli.commands.unpack import cmd_unpack  # noqa: PLC0415
+
+    unpack_args = Namespace(
+        target=None,
+        file=init_file,
+        unpack_file=init_file,
+        removeDeleted=False,
+        debug=args.debug if hasattr(args, "debug") else False,
+        quiet=args.quiet if hasattr(args, "quiet") else False,
+        verbose=args.verbose if hasattr(args, "verbose") else False,
+        no_color=args.no_color if hasattr(args, "no_color") else False,
+    )
+    cmd_unpack(unpack_args, logger)
+
+
+def cmd_init(args: Namespace, logger: Logger) -> int:
+    """Handle init command - create a new kotorcli package.
+
+    Args:
+    ----
+        args: Parsed command line arguments
+        logger: Logger instance
+
+    Returns:
+    -------
+        Exit code (0 for success, non-zero for error)
+    """
+    target_dir = Path(args.dir if args.dir else ".").resolve()
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    config_path = target_dir / "kotorcli.cfg"
+    if config_path.exists():
+        logger.warning(f"Package already initialized at {target_dir}")  # noqa: G004
+        overwrite = prompt("Overwrite existing configuration? (yes/no)", "no")
+        if overwrite.lower() not in ("yes", "y"):
+            logger.info("Initialization cancelled")
+            return 0
+
+    logger.info(f"Initializing kotorcli package in {target_dir}")  # noqa: G004
+
+    package_name, description, author, target_file = _gather_package_info(args, target_dir, logger)
+
+    config_content = DEFAULT_CONFIG_TEMPLATE.format(
+        package_name=package_name,
+        description=description,
+        author=author,
+        target_file=target_file,
+    )
+    config_path.write_text(config_content, encoding="utf-8")
+    logger.info(f"Created {config_path}")  # noqa: G004
+
+    _create_directory_structure(target_dir, logger)
+    _create_gitignore(target_dir, logger)
+
+    if args.vcs == "git":
+        _initialize_git_repo(target_dir, logger)
+
     init_file = args.init_file or args.file
     if init_file:
-        msg = f"Unpacking initial file: {init_file}"
-        logger.info(msg)
-        # Import and call unpack command
-        from kotorcli.commands.unpack import cmd_unpack  # noqa: PLC0415
+        _unpack_initial_file(args, init_file, logger)
 
-        class UnpackArgs:
-            target = None
-            file = init_file
-            unpack_file = init_file
-            removeDeleted = False
-            debug = args.debug if hasattr(args, "debug") else False
-            quiet = args.quiet if hasattr(args, "quiet") else False
-            verbose = args.verbose if hasattr(args, "verbose") else False
-            no_color = args.no_color if hasattr(args, "no_color") else False
-
-        unpack_args = UnpackArgs()
-        cmd_unpack(unpack_args, logger)
-
-    logger.info(f"\nPackage initialized successfully in {target_dir}")
+    logger.info(f"\nPackage initialized successfully in {target_dir}")  # noqa: G004
     logger.info("Next steps:")
     logger.info("  1. Edit kotorcli.cfg to configure your package")
     logger.info("  2. Place your source files in the src/ directory")
