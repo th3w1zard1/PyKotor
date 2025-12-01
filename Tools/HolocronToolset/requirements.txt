@@ -1,5 +1,5 @@
-pykotor>=1.8.0
-pykotorgl>=1.8.0
+pykotor @ git+https://github.com/th3w1zard1/PyKotor.git#subdirectory=Libraries/PyKotor
+pykotorgl @ git+https://github.com/th3w1zard1/PyKotor.git#subdirectory=Libraries/PyKotorGL
 certifi>=2021.10.8
 idna>=3.11
 jsmin>=3.0.1

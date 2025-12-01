@@ -8,8 +8,8 @@ description = "A PyQt5-backed program with a collection of tools and editors tha
 version = "3.1.1"
 requires-python = ">= 3.8"
 dependencies = [
-  "pykotor>=1.8.0",
-  "pykotorgl>=1.8.0",
+  "pykotor @ git+https://github.com/th3w1zard1/PyKotor.git#subdirectory=Libraries/PyKotor",
+  "pykotorgl @ git+https://github.com/th3w1zard1/PyKotor.git#subdirectory=Libraries/PyKotorGL",
   "certifi>=2021.10.8",
   "idna>=3.11",                                           # Tested with 3.3
   "jsmin>=3.0.1",
@@ -80,8 +80,8 @@ packages = [{ include = "toolset", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
-pykotorgl = "^1.8.0"
+pykotor = { git = "https://github.com/th3w1zard1/PyKotor.git", subdirectory = "Libraries/PyKotor" }
+pykotorgl = { git = "https://github.com/th3w1zard1/PyKotor.git", subdirectory = "Libraries/PyKotorGL" }
 idna = "*"
 urllib3 = "~1.26"
 Markdown = ">=3.3,<3.6"

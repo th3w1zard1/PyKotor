@@ -13,7 +13,7 @@ license = {text = "LGPL-3.0-or-later License"}
 keywords = ["kotor", "opengl", "rendering", "pykotor", "gl", "3d", "mdl", "mdx"]
 requires-python = ">=3.8"
 dependencies = [
-    "pykotor>=1.8.0",
+    "pykotor @ git+https://github.com/th3w1zard1/PyKotor.git#subdirectory=Libraries/PyKotor",
     "numpy>=1.22",
     "PyOpenGL~=3.1",
     "PyGLM>=2.0,<2.8; python_implementation == 'CPython'",
@@ -49,7 +49,7 @@ packages = [{ include = "pykotor", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
+pykotor = { git = "https://github.com/th3w1zard1/PyKotor.git", subdirectory = "Libraries/PyKotor" }
 numpy = ">=1.22"
 PyOpenGL = "~3.1"
 PyGLM = ">=2.0,<2.8; python_implementation == 'CPython'"
