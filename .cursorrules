@@ -63,3 +63,20 @@ Relevance to pykotor means a few different things. All relevant submodules shoul
 - Always use `ruff`. Don't use anything else!
 
 See `./CONVENTIONS.md` for more information!
+
+## KotorCLI Usage (Agents)
+
+- Always run the CLI from the repo root so that `Libraries/` is on `sys.path`. Prefer `uv run python -m kotorcli <command>`; for example `pwsh -c "uv run python -m kotorcli list"` or `bash -lc 'uv run python -m kotorcli search-archive --file $Env:K1_PATH/chitin.key --pattern global'`.
+- Installation roots: when a user explicitly says *K1*, resolve `$Env:K1_PATH` first, then fall back to `find_kotor_paths_from_default()[Game.K1]`. When they say *K2*/*TSL*, try `$Env:K2_PATH`, `$Env:TSL_PATH`, `$Env:KOTOR2_PATH`, and finally `$Env:K1_PATH` before checking `find_kotor_paths_from_default()[Game.K2]`. If no game is specified, probe both trees and choose whichever contains the referenced asset.
+- General pipeline for investigative prompts:
+  1. Scope the corpus with `kotorcli list` (targets) or `kotorcli list-archive --file <capsule>` to understand which assets are relevant.
+  2. Pull concrete resources with `kotorcli extract --file ... --filter <resref>` followed by the necessary converters (`gff2json`, `gff2xml`, `2da2csv`, `tlk2xml`, etc.) so that downstream tools/scripts can diff or inspect.
+  3. Run semantic search using `kotorcli search-archive --file <capsule> --pattern <needle> [--content]` whenever you need “find everything that references X” behaviour; combine with format converters to inspect matches.
+  4. For deltas or regressions, rely on `kotorcli diff`, `kotorcli validate`, and `kotorcli stats` to baseline assets before/after mutations.
+- Plot/quest analysis workflow (e.g., “list everything that modifies a plot point”):
+  1. `kotorcli search-archive --file $Env:K1_PATH/chitin.key --pattern global` to locate `global.jrl` plus overrides.
+  2. `kotorcli extract --file <capsule> --filter global.jrl && kotorcli gff2json global.jrl` to materialize the quest table.
+  3. Cross-reference journal updates by grepping scripts/dialogs: `kotorcli search-archive --file <module rim> --pattern "SetJournalEntry" --content`.
+  4. When scripts need inspection, decompile/disassemble with `kotorcli decompile` or `kotorcli disassemble`, then reuse the resulting `.nss` with `grep/stats`.
+- Targeted module deep dives should mirror the logic in `scripts/investigate_module_structure.py` and `scripts/investigate_module_structure.py` (room+resource introspection), `scripts/check_missing_resources.py` (override integrity), and related helpers under `scripts/`. Those scripts demonstrate how to chain `pykotor.extract.installation.Installation`, module RIM readers, and the CLI commands above—use them as references before crafting new flows.
+- Prefer bulk automation through the CLI instead of ad-hoc Python: most tasks (diffing, conversions, packing) already live under `Tools/KotorCLI/src/kotorcli/commands`. Only fall back to ad-hoc scripts if you need custom logic that the CLI cannot express yet.

@@ -207,6 +207,9 @@
 [submodule "vendor/xoreos-docs"]
 	path = vendor/xoreos-docs
 	url = https://github.com/xoreos/xoreos-docs
+[submodule "vendor/nwn-docs"]
+	path = vendor/nwn-docs
+	url = https://github.com/kucik/nwn-docs.git
 [submodule "vendor/KotOR-Switch-modding"]
 	path = vendor/KotOR-Switch-modding
 	url = https://github.com/th3w1zard1/KotOR-Switch-modding.git

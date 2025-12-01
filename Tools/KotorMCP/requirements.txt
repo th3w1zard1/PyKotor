@@ -1,0 +1,13 @@
+# KotorMCP Requirements
+# Model Context Protocol server for Knights of the Old Republic resources
+
+# Core dependencies
+mcp>=0.1.1
+pykotor>=1.8.0
+
+# Development dependencies (optional)
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# ruff>=0.1.0
+# mypy>=1.0.0
+
