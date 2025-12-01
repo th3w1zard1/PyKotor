@@ -23,10 +23,10 @@ def read_requirements() -> list[str]:
 
 setup(
     name="holocrontoolset",
-    version="3.1.1",
+    version="4.0.0a1",
     description="A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files",
     # Explicitly find only toolset package to avoid issues when building from git subdirectory
-    packages=find_packages(where="src", include=["toolset", "toolset.*"]),
+    packages=find_packages(where="src", include=["toolset", "toolset.*"], exclude=["plugin", "plugin.*", "*plugin*"]),
     package_dir={"": "src"},
     install_requires=read_requirements(),
     python_requires=">=3.8",

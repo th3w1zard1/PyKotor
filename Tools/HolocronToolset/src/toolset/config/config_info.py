@@ -4,9 +4,9 @@ from typing import Any
 
 LOCAL_PROGRAM_INFO: dict[str, Any] = {
     # <---JSON_START--->#{
-    "currentVersion": "3.1.2",
+    "currentVersion": "4.0.0a1",
     "toolsetLatestVersion": "3.1.1",
-    "toolsetLatestBetaVersion": "3.1.1",
+    "toolsetLatestBetaVersion": "4.0.0a1",
     "updateInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HolocronToolset/src/toolset/config.py",
     "updateBetaInfoLink": "https://api.github.com/repos/NickHugi/PyKotor/contents/Tools/HolocronToolset/src/toolset/config.py?ref=bleeding-edge",
     "toolsetDownloadLink": "https://deadlystream.com/files/file/1982-holocron-toolset",

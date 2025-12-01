@@ -7,13 +7,14 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["toolset"]
-exclude = []
+namespaces = false
+include = ["toolset", "toolset.*"]
+exclude = ["plugin", "plugin.*", "*plugin*"]
 
 [project]
 name = "holocrontoolset"
 description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
-version = "3.1.1"
+version = "4.0.0a1"
 requires-python = ">= 3.8"
 dependencies = [
   "pykotor>=1.8.0",
@@ -98,7 +99,7 @@ Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 # Optional Poetry configuration for those who prefer it
 [tool.poetry]
 name = "holocrontoolset"
-version = "3.1.1"
+version = "4.0.0a1"
 description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
