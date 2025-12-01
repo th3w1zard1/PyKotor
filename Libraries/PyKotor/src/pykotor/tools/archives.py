@@ -694,7 +694,7 @@ def create_key_from_directory(
     from pykotor.common.misc import ResRef
     from pykotor.resource.formats.bif.bif_auto import read_bif
     from pykotor.resource.formats.key.key_auto import write_key
-    from pykotor.resource.formats.key.key_data import BifEntry, KEY, KeyEntry
+    from pykotor.resource.formats.key.key_data import KEY, BifEntry, KeyEntry
     from pykotor.resource.type import ResourceType
 
     key = KEY()

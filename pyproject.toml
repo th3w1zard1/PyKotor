@@ -134,6 +134,47 @@ issues = "https://github.com/th3w1zard1/PyKotor/issues"
 #Changelog = "https://github.com/th3w1zard1/PyKotor/blob/master/CHANGELOG.md"
 
 ########################################################
+## UV workspace configuration                         ##
+########################################################
+
+[tool.uv]
+# Use local workspace packages only - PyPI has outdated pykotor 1.6.2
+dev-dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "Libraries/PyKotor",
+    "Libraries/PyKotorFont",
+    "Libraries/PyKotorGL",
+    "Tools/BatchPatcher",
+    "Tools/GuiConverter",
+    "Tools/HolocronAI",
+    "Tools/HolocronToolset",
+    "Tools/HoloGenerator",
+    "Tools/HoloPatcher",
+    "Tools/HoloPazaak",
+    "Tools/KitGenerator",
+    "Tools/KotorCLI",
+    "Tools/KotorDiff",
+]
+
+[tool.uv.sources]
+# Use workspace members instead of PyPI
+pykotor = { workspace = true }
+pykotorfont = { workspace = true }
+pykotorgl = { workspace = true }
+batchpatcher = { workspace = true }
+gui-converter = { workspace = true }
+holocron-ai = { workspace = true }
+holocrontoolset = { workspace = true }
+hologenerator = { workspace = true }
+holopatcher = { workspace = true }
+holopazaak = { workspace = true }
+kit-generator = { workspace = true }
+kotorcli = { workspace = true }
+kotor-diff = { workspace = true }
+
+########################################################
 ## define only linter configurations below this point ##
 ########################################################
 

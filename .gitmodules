@@ -40,9 +40,10 @@
 [submodule "vendor/nwscript-mode.el"]
 	path = vendor/nwscript-mode.el
 	url = https://github.com/th3w1zard1/nwscript-mode.el.git
-[submodule "vendor/nwscript-ts-mode"]
-	path = vendor/nwscript-ts-mode
-	url = https://github.com/th3w1zard1/nwscript-ts-mode.git
+# nwscript-ts-mode - Removed: Empty directory, no code
+# [submodule "vendor/nwscript-ts-mode"]
+#	path = vendor/nwscript-ts-mode
+#	url = https://github.com/th3w1zard1/nwscript-ts-mode.git
 [submodule "vendor/HoloLSP"]
 	path = vendor/HoloLSP
 	url = https://github.com/th3w1zard1/HoloLSP.git
@@ -132,9 +133,10 @@
 [submodule "vendor/HoloPatcher.NET"]
 	path = vendor/HoloPatcher.NET
 	url = https://github.com/th3w1zard1/HoloPatcher.NET.git
-[submodule "vendor/KOTR-II-ShaderOverride-Injector"]
-	path = vendor/KOTR-II-ShaderOverride-Injector
-	url = https://github.com/th3w1zard1/KOTR-II-ShaderOverride-Injector.git
+# KOTR-II-ShaderOverride-Injector - Removed: Binary only (EXE), no source code
+# [submodule "vendor/KOTR-II-ShaderOverride-Injector"]
+#	path = vendor/KOTR-II-ShaderOverride-Injector
+#	url = https://github.com/th3w1zard1/KOTR-II-ShaderOverride-Injector.git
 
 ## Speedrunning Tools, Randomizer & Challenge Mods
 #
@@ -180,9 +182,10 @@
 	url = https://github.com/th3w1zard1/KotOR-Bioware-Libs.git
 
 ## Miscellaneous/Other Mods & Fixes
-[submodule "vendor/CHORD"]
-	path = vendor/CHORD
-	url = https://github.com/th3w1zard1/CHORD.git
+# CHORD - Removed: Only README, no source code or implementation files
+# [submodule "vendor/CHORD"]
+#	path = vendor/CHORD
+#	url = https://github.com/th3w1zard1/CHORD.git
 
 
 # ===============================
@@ -207,9 +210,10 @@
 [submodule "vendor/KotOR-Switch-modding"]
 	path = vendor/KotOR-Switch-modding
 	url = https://github.com/th3w1zard1/KotOR-Switch-modding.git
-[submodule "vendor/KotOR-Modding-Guide"]
-	path = vendor/KotOR-Modding-Guide
-	url = https://github.com/th3w1zard1/KotOR-Modding-Guide.git
+# KotOR-Modding-Guide - Removed: Only README with outline/stub, no actual content
+# [submodule "vendor/KotOR-Modding-Guide"]
+#	path = vendor/KotOR-Modding-Guide
+#	url = https://github.com/th3w1zard1/KotOR-Modding-Guide.git
 
 
 # ===============================
@@ -222,9 +226,10 @@
 [submodule "vendor/KotORStuff"]
 	path = vendor/KotORStuff
 	url = https://github.com/th3w1zard1/KotORStuff.git
-[submodule "vendor/SWKOTOR2RotationPuzzle"]
-	path = vendor/SWKOTOR2RotationPuzzle
-	url = https://github.com/th3w1zard1/SWKOTOR2RotationPuzzle.git
+# SWKOTOR2RotationPuzzle - Removed: Single trivial Python script (~163 lines), very limited single-purpose tool
+# [submodule "vendor/SWKOTOR2RotationPuzzle"]
+#	path = vendor/SWKOTOR2RotationPuzzle
+#	url = https://github.com/th3w1zard1/SWKOTOR2RotationPuzzle.git
 [submodule "vendor/FoundryVTT_SWKOTOR"]
 	path = vendor/FoundryVTT_SWKOTOR
 	url = https://github.com/th3w1zard1/FoundryVTT_SWKOTOR.git
@@ -267,9 +272,10 @@
 # Unorganized Projects
 # ===============================
 
-[submodule "vendor/Item-Finder-StarWars-KOTOR"]
-	path = vendor/Item-Finder-StarWars-KOTOR
-	url = https://github.com/th3w1zard1/Item-Finder-StarWars-KOTOR.git
+# Item-Finder-StarWars-KOTOR - Removed: Simple student project with hardcoded paths, non-portable, minimal implementation
+# [submodule "vendor/Item-Finder-StarWars-KOTOR"]
+#	path = vendor/Item-Finder-StarWars-KOTOR
+#	url = https://github.com/th3w1zard1/Item-Finder-StarWars-KOTOR.git
 [submodule "vendor/kotorAPI"]
 	path = vendor/kotorAPI
 	url = https://github.com/th3w1zard1/kotorAPI.git
@@ -282,9 +288,10 @@
 [submodule "vendor/kotormods"]
 	path = vendor/kotormods
 	url = https://github.com/th3w1zard1/kotormods.git
-[submodule "vendor/cs403-final"]
-	path = vendor/cs403-final
-	url = https://github.com/th3w1zard1/cs403-final.git
+# cs403-final - Removed: Empty student project stub, only README, no code
+# [submodule "vendor/cs403-final"]
+#	path = vendor/cs403-final
+#	url = https://github.com/th3w1zard1/cs403-final.git
 
 
 # ===============================
@@ -302,15 +309,10 @@
 # or were determined to be useless/incomplete implementations
 # Uncommented below so git recognizes them, but kept in this section to indicate they're not useful
 
-[submodule "vendor/react-pazaak"]
-	path = vendor/react-pazaak
-	url = https://github.com/th3w1zard1/react-pazaak.git
-[submodule "vendor/Star-Wars-Cantina-Games"]
-	path = vendor/Star-Wars-Cantina-Games
-	url = https://github.com/th3w1zard1/Star-Wars-Cantina-Games.git
-[submodule "vendor/PurePazaak"]
-	path = vendor/PurePazaak
-	url = https://github.com/th3w1zard1/PurePazaak.git
+# PurePazaak - Removed: Repository deleted/doesn't exist
+# [submodule "vendor/PurePazaak"]
+#	path = vendor/PurePazaak
+#	url = https://github.com/th3w1zard1/PurePazaak.git
 # Commented out and moved to bottom for reference/history
 #[submodule "vendor/pure-pazaak-michaeljoelphillips"]
 #	path = vendor/pure-pazaak-michaeljoelphillips

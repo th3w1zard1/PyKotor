@@ -1,17 +1,34 @@
-#!/usr/bin/env python3
+"""Main entry point for HoloPazaak.
+
+This module provides the entry point for running HoloPazaak as a module:
+    python -m holopazaak
+
+The application uses qtpy for Qt abstraction, targeting PyQt6 by default.
+"""
 from __future__ import annotations
 
-try:
-    from holopazaak.main_app import main
-except ImportError:
-    import sys
+import sys
 
-    from pathlib import Path
-    sys.path.append(str(Path(__file__).resolve().parent.parent))  # ./Tools/HoloPazaak/src/
-    from holopazaak.main_app import main
-from holopazaak.main_init import main_init
+
+def main() -> int:
+    """Main entry point for HoloPazaak."""
+    # Import Qt application
+    from qtpy.QtWidgets import QApplication
+    
+    from holopazaak.ui.game_window import PazaakWindow
+    
+    # Create application
+    app = QApplication(sys.argv)
+    app.setApplicationName("HoloPazaak")
+    app.setOrganizationName("PyKotor")
+    
+    # Create and show main window
+    window = PazaakWindow()
+    window.show()
+    
+    # Run event loop
+    return app.exec()
+
 
 if __name__ == "__main__":
-    main_init()
-    main()
-
+    sys.exit(main())

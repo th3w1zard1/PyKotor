@@ -1,4 +1,5 @@
 """Compile command implementation."""
+
 from __future__ import annotations
 
 import glob
@@ -28,11 +29,11 @@ def get_game_from_config() -> Game:
 
 def find_nss_compiler() -> Path | None:
     """Find the NWScript compiler executable.
-    
+
     Searches for external compilers in this order:
     1. nwnnsscomp (preferred, compatible with both K1 and K2)
     2. nwnsc (legacy, Neverwinter Nights compiler)
-    
+
     References:
     ----------
         vendor/xoreos-tools/src/nwscript/compiler.cpp - xoreos NSS compiler
@@ -62,18 +63,18 @@ def use_builtin_compiler(
     logger,
 ) -> tuple[int, int]:
     """Use PyKotor's built-in NSS compiler.
-    
+
     Args:
     ----
         nss_files: List of NSS files to compile
         cache_dir: Directory to output NCS files
         game: Which game version to compile for
         logger: Logger instance
-    
+
     Returns:
     -------
         Tuple of (compiled_count, error_count)
-    
+
     References:
     ----------
         vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts - TypeScript NSS compiler
@@ -141,7 +142,7 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
             target = config.get_target(name)
             if target is None:
                 if name:
-                    logger.error(f"Target not found: {name}")
+                    logger.error(f"Target not found: {name}")  # noqa: G004
                 else:
                     logger.error("No default target found")
                 return 1
@@ -150,12 +151,12 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
     # Process each target
     for target in targets:
         target_name = target.get("name", "unnamed")
-        logger.info(f"Compiling target: {target_name}")
+        logger.info(f"Compiling target: {target_name}")  # noqa: G004
 
         # Get cache directory
         cache_dir = config.root_dir / ".kotorcli" / "cache" / target_name
         if args.clean and cache_dir.exists():
-            logger.info(f"Cleaning cache: {cache_dir}")
+            logger.info(f"Cleaning cache: {cache_dir}")  # noqa: G004
             shutil.rmtree(cache_dir)
         cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -184,7 +185,7 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
                         matches = glob.glob(pattern_path, recursive=True)
                         for match in matches:
                             match_path = Path(match)
-                            if match_path.name == file_spec or match_path.name == f"{file_spec}.nss":
+                            if match_path.name in (file_spec, f"{file_spec}.nss"):
                                 nss_files.append(match_path)
                                 break
         else:
@@ -198,7 +199,7 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
                         # Check against exclude patterns
                         excluded = False
                         for exclude_pattern in exclude_patterns:
-                            import fnmatch
+                            import fnmatch  # noqa: PLC0415
 
                             if fnmatch.fnmatch(str(match_path), str(config.root_dir / exclude_pattern)):
                                 excluded = True
@@ -206,7 +207,7 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
 
                         # Check against skipCompile patterns
                         for skip_pattern in skip_compile_patterns:
-                            import fnmatch
+                            import fnmatch  # noqa: PLC0415
 
                             if fnmatch.fnmatch(match_path.name, skip_pattern):
                                 excluded = True
@@ -272,4 +273,3 @@ def cmd_compile(args: Namespace, logger: Logger) -> int:
             return 1
 
     return 0
-
