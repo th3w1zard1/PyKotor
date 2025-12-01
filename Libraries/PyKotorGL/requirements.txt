@@ -1,4 +1,4 @@
-pykotor>=1.8.0
+pykotor @ git+https://github.com/th3w1zard1/PyKotor.git#subdirectory=Libraries/PyKotor
 numpy>=1.22
 PyOpenGL~=3.1
 PyGLM>=2.0,<2.8; python_implementation == 'CPython'

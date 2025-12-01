@@ -33,7 +33,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "pykotor>=1.8.0",
+    "pykotor @ git+https://github.com/th3w1zard1/PyKotor.git#subdirectory=Libraries/PyKotor",
     "numpy>=1.22",
     "PyOpenGL~=3.1",
     "PyGLM>=2.0,<2.8; python_implementation == 'CPython'",
@@ -73,7 +73,7 @@ packages = [{ include = "pykotor", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
+pykotor = { git = "https://github.com/th3w1zard1/PyKotor.git", subdirectory = "Libraries/PyKotor" }
 numpy = ">=1.22"
 PyOpenGL = "~3.1"
 PyGLM = {version = ">=2.0,<2.8", python = "^3.8", markers = "python_implementation == 'CPython'"}
