@@ -2,7 +2,25 @@ from __future__ import annotations
 
 import asyncio
 import multiprocessing
+import pathlib
+import sys
 import unittest
+
+THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
+
+
+def add_sys_path(p: pathlib.Path):
+    working_dir = str(p)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
+
+
+if PYKOTOR_PATH.joinpath("pykotor").exists():
+    add_sys_path(PYKOTOR_PATH)
+if UTILITY_PATH.joinpath("utility").exists():
+    add_sys_path(UTILITY_PATH)
 
 from utility.system.app_process.consumer_manager import ConsumerManager
 

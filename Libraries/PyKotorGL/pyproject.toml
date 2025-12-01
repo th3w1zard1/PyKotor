@@ -9,9 +9,29 @@ description = "OpenGL rendering module for PyKotor - renders KotOR modules and s
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
 readme = {file = "README.md", content-type = "text/markdown"}
-license = {text = "LGPL-3.0-or-later License"}
-keywords = ["kotor", "opengl", "rendering", "pykotor", "gl", "3d", "mdl", "mdx"]
+license = {text = "LGPL-3.0-or-later"}
+keywords = [
+    "kotor", "kotor1", "kotor2", "tsl",
+    "opengl", "rendering", "3d", "graphics",
+    "mdl", "mdx", "model", "scene",
+    "pykotor", "bioware",
+]
 requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment",
+    "Topic :: Multimedia :: Graphics :: 3D Rendering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "pykotor>=1.8.0",
     "numpy>=1.22",
@@ -22,14 +42,16 @@ dependencies = [
 [project.optional-dependencies]
 gl_accel = ["PyOpenGL-accelerate>=3.1.10"]
 dev = [
-    "pytest>=7.0.0,<8.0.0; python_version>=\"3.8\"",
+    "pytest>=7.0.0",
+    "ruff>=0.1.0",
 ]
 
 [project.urls]
-homepage = "https://github.com/th3w1zard1/PyKotor"
-documentation = "https://github.com/th3w1zard1/PyKotor/blob/master/README.md"
-repository = "https://github.com/th3w1zard1/PyKotor.git"
-issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
@@ -38,6 +60,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 namespaces = false
 
+# Poetry configuration
 [tool.poetry]
 name = "pykotorgl"
 version = "1.8.0"
@@ -45,6 +68,7 @@ description = "OpenGL rendering extension for PyKotor"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
+license = "LGPL-3.0-or-later"
 packages = [{ include = "pykotor", from = "src" }]
 
 [tool.poetry.dependencies]
@@ -52,16 +76,16 @@ python = "^3.8"
 pykotor = "^1.8.0"
 numpy = ">=1.22"
 PyOpenGL = "~3.1"
-PyGLM = ">=2.0,<2.8; python_implementation == 'CPython'"
+PyGLM = {version = ">=2.0,<2.8", python = "^3.8", markers = "python_implementation == 'CPython'"}
 
-[tool.poetry.optional-dependencies]
-PyOpenGL_accelerate = ">=3.1.10"
+[tool.poetry.extras]
+gl_accel = ["PyOpenGL-accelerate"]
 
 [tool.poetry.urls]
-homepage = "https://github.com/th3w1zard1/PyKotor"
-documentation = "https://github.com/th3w1zard1/PyKotor/blob/master/README.md"
-repository = "https://github.com/th3w1zard1/PyKotor.git"
-issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
 
 ########################################################
 ## define only linter configurations below this point ##

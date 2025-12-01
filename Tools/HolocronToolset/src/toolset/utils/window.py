@@ -162,7 +162,7 @@ def _open_resource_editor_impl(  # noqa: C901, PLR0913, PLR0912, PLR0915
     from toolset.gui.editors.uts import UTSEditor  # type: ignore[import-not-found] # noqa: PLC0415
     from toolset.gui.editors.utt import UTTEditor  # type: ignore[import-not-found] # noqa: PLC0415
     from toolset.gui.editors.utw import UTWEditor  # type: ignore[import-not-found] # noqa: PLC0415
-    from toolset.gui.windows.audio_player import AudioPlayer  # type: ignore[import-not-found] # noqa: PLC0415
+    from toolset.gui.editors.wav import WAVEditor  # type: ignore[import-not-found] # noqa: PLC0415
 
     if gff_specialized is None:
         gff_specialized = GlobalSettings().gffSpecializedEditors
@@ -308,8 +308,7 @@ def _open_resource_editor_impl(  # noqa: C901, PLR0913, PLR0912, PLR0915
             editor = GITEditor(None, installation)
 
     elif restype.category == "Audio":
-        editor = AudioPlayer(None)
-        editor.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
+        editor = WAVEditor(None, installation)
 
     elif restype.name in (ResourceType.ERF, ResourceType.SAV, ResourceType.MOD, ResourceType.RIM, ResourceType.BIF):
         editor = ERFEditor(None, installation)

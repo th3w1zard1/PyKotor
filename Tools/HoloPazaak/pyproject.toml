@@ -3,8 +3,8 @@ requires = ["setuptools>=67.8.0,<70", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "HoloPazaak"
-description = "A PyQt5 Pazaak card game implementation for Knights of the Old Republic"
+name = "holopazaak"
+description = "A PyQt5/6 Pazaak card game implementation for Knights of the Old Republic"
 version = "1.0.0"
 requires-python = ">= 3.8"
 dependencies = [
@@ -16,57 +16,88 @@ dependencies = [
 ]
 authors = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
-license = { text = "LGPL-3.0-or-later License" }
+license = { text = "LGPL-3.0-or-later" }
 keywords = [
-  "card-game",
-  "game",
-  "kotor",
-  "kotor1",
-  "kotor2",
-  "tsl",
-  "star-wars",
-  "starwars",
-  "star-wars-knights-of-the-old-republic",
-  "knights-of-the-old-republic",
-  "sith-lords",
-  "pyqt5",
-  "pyqt6",
-  "pyside2",
-  "pyside6",
-  "qt",
-  "qtpy",
-  "pazaak",
-  "pazaak-game",
-  "pazaak-table",
-  "minigame",
-  "card",
-  "cards",
-  "casino",
-  "remake",
-  "reimplementation",
-  "open-source",
-  "python",
-  "python3",
-  "pc-game",
-  "pykotor",
-  "jedi",
-  "sith",
-  "lucasarts",
-  "bioware",
-  "video-game",
-  "windows",
-  "cross-platform",
-  "turn-based",
-  "strategy",
-  "AI-opponent",
-  "singleplayer",
-  "offline",
+  "kotor", "kotor1", "kotor2", "tsl",
+  "star-wars", "knights-of-the-old-republic",
+  "pazaak", "card-game", "minigame",
+  "pyqt5", "pyqt6", "qt", "qtpy",
+  "game", "casino", "cards",
+  "pykotor", "bioware", "lucasarts",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Games/Entertainment",
+  "Topic :: Games/Entertainment :: Board Games",
+  "Environment :: X11 Applications :: Qt",
+  "Environment :: Win32 (MS Windows)",
+]
+
+[project.scripts]
+holopazaak = "holopazaak.__main__:main"
+
+[project.gui-scripts]
+holopazaak-gui = "holopazaak.__main__:main"
+
+[project.optional-dependencies]
+qt6 = ["PyQt6>=6.6.1"]
+pyside6 = ["PySide6>=6.6.3.1"]
+dev = [
+  "pytest>=7.0.0",
+  "pytest-qt>=4.2.0",
+  "ruff>=0.1.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/NickHugi/PyKotor"
-Repository = "https://github.com/NickHugi/PyKotor.git"
-Issues = "https://github.com/NickHugi/PyKotor/issues"
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
+
+# Poetry configuration
+[tool.poetry]
+name = "holopazaak"
+version = "1.0.0"
+description = "A PyQt5/6 Pazaak card game implementation for Knights of the Old Republic"
+authors = ["Benjamin Auquite <halomastar@gmail.com>"]
+maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+readme = "README.md"
+license = "LGPL-3.0-or-later"
+packages = [{ include = "holopazaak", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+qtpy = ">=2.4.3"
+PyQt5 = {version = ">=5.15", optional = true}
+PyQt6 = {version = ">=6.6.1", optional = true}
+
+[tool.poetry.extras]
+qt5 = ["PyQt5"]
+qt6 = ["PyQt6"]
+
+[tool.poetry.scripts]
+holopazaak = "holopazaak.__main__:main"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 ########################################################
 ## define only linter configurations below this point ##

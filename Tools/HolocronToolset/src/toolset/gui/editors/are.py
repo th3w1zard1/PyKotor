@@ -65,6 +65,12 @@ class AREEditor(Editor):
         self.ui.minimapRenderer.highlight_boundaries = False
         self.ui.minimapRenderer.highlight_on_hover = False
 
+        # Set higher precision for map coordinate spinboxes (normalized 0-1 values need more decimals)
+        self.ui.mapImageX1Spin.setDecimals(6)
+        self.ui.mapImageY1Spin.setDecimals(6)
+        self.ui.mapImageX2Spin.setDecimals(6)
+        self.ui.mapImageY2Spin.setDecimals(6)
+
         self.new()
 
     def _setup_signals(self):
@@ -304,10 +310,16 @@ class AREEditor(Editor):
         are.dynamic_light = self.ui.dynamicColorEdit.color()
         are.wind_power = AREWindPower(self.ui.windPowerSelect.currentIndex())
         # Read checkbox state - if checkbox is checked, use 100; otherwise use 0
-        # The enabled/visible state is only for UI display, not for value determination
-        are.chance_rain = 100 if self.ui.rainCheck.isChecked() else 0
-        are.chance_snow = 100 if self.ui.snowCheck.isChecked() else 0
-        are.chance_lightning = 100 if self.ui.lightningCheck.isChecked() else 0
+        # For K1 installations, weather checkboxes are TSL-only and should always be 0
+        if self._installation and self._installation.tsl:
+            are.chance_rain = 100 if self.ui.rainCheck.isChecked() else 0
+            are.chance_snow = 100 if self.ui.snowCheck.isChecked() else 0
+            are.chance_lightning = 100 if self.ui.lightningCheck.isChecked() else 0
+        else:
+            # K1 installations don't support weather checkboxes
+            are.chance_rain = 0
+            are.chance_snow = 0
+            are.chance_lightning = 0
         are.shadows = self.ui.shadowsCheck.isChecked()
         are.shadow_opacity = self.ui.shadowsSpin.value()
 

@@ -3,7 +3,7 @@ requires = ["setuptools>=67.8.0,<70", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "HolocronToolset"
+name = "holocrontoolset"
 description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
 version = "3.1.1"
 requires-python = ">= 3.8"
@@ -11,7 +11,7 @@ dependencies = [
   "pykotor>=1.8.0",
   "pykotorgl>=1.8.0",
   "certifi>=2021.10.8",
-  "idna>=3.11",                                           # Tested with 3.3
+  "idna>=3.11",
   "jsmin>=3.0.1",
   "Markdown>=3.4.4,<3.9; python_version<\"3.9\"",
   "Markdown>=3.4.4; python_version>=\"3.9\"",
@@ -28,33 +28,51 @@ dependencies = [
   "urllib3>=1.26.0; python_version>=\"3.9\"",
   "jsonpickle>=4.1.1",
   "send2trash>=1.8.3",
+  "comtypes>=1.4.0; sys_platform == \"win32\"",
 ]
 authors = [{ name = "NickHugi" }]
 maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
-license = { text = "LGPL-3.0-or-later License" }
+license = { text = "LGPL-3.0-or-later" }
 keywords = [
-  "kotor",
-  "pyqt5",
-  "holocron",
-  "toolset",
-  "pykotor",
-  "star",
-  "wars",
-  "starwars",
-  "toolkit",
-  "opengl",
-  "designer",
-  "module",
-  "modding",
-  "dlgeditor",
-  "AIO",
-  "editor",
-  "GFF",
+  "kotor", "kotor1", "kotor2", "tsl",
+  "star-wars", "knights-of-the-old-republic",
+  "modding", "toolset", "editor",
+  "gff", "dlg", "module-designer",
+  "pyqt5", "opengl", "3d",
+  "holocron", "pykotor", "bioware",
 ]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Games/Entertainment",
+  "Topic :: Games/Entertainment :: Role-Playing",
+  "Topic :: Multimedia :: Graphics :: 3D Modeling",
+  "Topic :: Text Editors :: Integrated Development Environments (IDE)",
+  "Environment :: X11 Applications :: Qt",
+  "Environment :: Win32 (MS Windows)",
+  "Environment :: MacOS X",
+]
+
+[project.scripts]
+holocrontoolset = "toolset.__main__:main"
+
+[project.gui-scripts]
+holocrontoolset-gui = "toolset.__main__:main"
 
 [project.optional-dependencies]
 updater = ["requests>=2.27,<2.32", "certifi==2021.10.8", "pycryptodome>=3.19.0"]
+qt6 = ["PyQt6>=6.6.1"]
+pyside6 = ["PySide6>=6.6.3.1"]
 dev = [
   "pytest-qt>=4.2.0",
   "pytest-xvfb>=3.0.0",
@@ -63,11 +81,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/NickHugi/PyKotor"
-Documentation = "https://github.com/NickHugi/PyKotor/blob/master/README.md"
-Repository = "https://github.com/NickHugi/PyKotor.git"
-Issues = "https://github.com/NickHugi/PyKotor/issues"
-#Changelog = "https://github.com/NickHugi/PyKotor/blob/master/CHANGELOG.md"
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 
 # Optional Poetry configuration for those who prefer it
 [tool.poetry]

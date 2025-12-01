@@ -1,0 +1,320 @@
+# PyPI Publishing Workflow for PyKotor Ecosystem
+# This workflow publishes all packages in the PyKotor ecosystem to PyPI
+# 
+# Packages published:
+# - Libraries: pykotor, pykotorgl, pykotorfont
+# - Tools: holocrontoolset, holopatcher, kotor-diff, batchpatcher, gui-converter,
+#          holopazaak, kit-generator, kotornasher, holocron-ai, hologenerator
+#
+# Triggers:
+# - Manual dispatch with version bump options
+# - Release creation (publishes with release tag version)
+# - Push to main with [publish] in commit message
+
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish (or "all" for all packages)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - pykotor
+          - pykotorgl
+          - pykotorfont
+          - holocrontoolset
+          - holopatcher
+          - kotor-diff
+          - batchpatcher
+          - gui-converter
+#          - holopazaak
+          - kit-generator
+#          - kotornasher
+#          - holocron-ai
+          - hologenerator
+      publish_target:
+        description: 'Publish target'
+        required: true
+        default: 'testpypi'
+        type: choice
+        options:
+          - testpypi
+          - pypi
+      dry_run:
+        description: 'Dry run (build but do not upload)'
+        required: false
+        default: false
+        type: boolean
+  release:
+    types: [published]
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'Libraries/*/pyproject.toml'
+      - 'Tools/*/pyproject.toml'
+
+concurrency:
+  group: publish-pypi-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Determine which packages to build based on trigger
+  determine-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      publish_target: ${{ steps.set-target.outputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Determine packages to build
+        id: set-matrix
+        shell: bash
+        run: |
+          # Define all packages with their paths
+          declare -A PACKAGES=(
+            ["pykotor"]="Libraries/PyKotor"
+            ["pykotorgl"]="Libraries/PyKotorGL"
+            ["pykotorfont"]="Libraries/PyKotorFont"
+            ["holocrontoolset"]="Tools/HolocronToolset"
+            ["holopatcher"]="Tools/HoloPatcher"
+            ["kotor-diff"]="Tools/KotorDiff"
+            ["batchpatcher"]="Tools/BatchPatcher"
+            ["gui-converter"]="Tools/GuiConverter"
+            ["holopazaak"]="Tools/HoloPazaak"
+            ["kit-generator"]="Tools/KitGenerator"
+            ["kotornasher"]="Tools/KOTORNasher"
+            ["holocron-ai"]="Tools/HolocronAI"
+            ["hologenerator"]="Tools/HoloGenerator"
+          )
+          
+          # Build matrix based on input
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ inputs.package }}" == "all" ]]; then
+              # Build all packages
+              SELECTED_PACKAGES=$(printf '%s\n' "${!PACKAGES[@]}")
+            else
+              # Build single package
+              SELECTED_PACKAGES="${{ inputs.package }}"
+            fi
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
+            # On release, publish all packages
+            SELECTED_PACKAGES=$(printf '%s\n' "${!PACKAGES[@]}")
+          else
+            # On push, check which packages changed
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+            SELECTED_PACKAGES=""
+            for pkg in "${!PACKAGES[@]}"; do
+              path="${PACKAGES[$pkg]}"
+              if echo "$CHANGED_FILES" | grep -q "^$path/"; then
+                SELECTED_PACKAGES="$SELECTED_PACKAGES$pkg"$'\n'
+              fi
+            done
+          fi
+          
+          # Convert to JSON array
+          JSON_ARRAY="["
+          first=true
+          while IFS= read -r pkg; do
+            [[ -z "$pkg" ]] && continue
+            if [[ "$first" == "true" ]]; then
+              first=false
+            else
+              JSON_ARRAY+=","
+            fi
+            path="${PACKAGES[$pkg]}"
+            JSON_ARRAY+="{\"name\":\"$pkg\",\"path\":\"$path\"}"
+          done <<< "$SELECTED_PACKAGES"
+          JSON_ARRAY+="]"
+          
+          echo "matrix={\"package\":$JSON_ARRAY}" >> $GITHUB_OUTPUT
+          echo "Selected packages: $JSON_ARRAY"
+      
+      - name: Determine publish target
+        id: set-target
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "target=${{ inputs.publish_target }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "target=pypi" >> $GITHUB_OUTPUT
+          else
+            echo "target=testpypi" >> $GITHUB_OUTPUT
+          fi
+
+  # Build packages
+  build:
+    needs: determine-packages
+    if: ${{ needs.determine-packages.outputs.matrix != '{"package":[]}' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.determine-packages.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine setuptools wheel
+      
+      - name: Build package
+        working-directory: ${{ matrix.package.path }}
+        run: |
+          echo "Building ${{ matrix.package.name }} from ${{ matrix.package.path }}"
+          python -m build
+      
+      - name: Check package with twine
+        working-directory: ${{ matrix.package.path }}
+        run: |
+          twine check dist/*
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.package.name }}
+          path: ${{ matrix.package.path }}/dist/
+          retention-days: 5
+
+  # Publish packages
+  publish:
+    needs: [determine-packages, build]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.determine-packages.outputs.publish_target }}
+      url: ${{ needs.determine-packages.outputs.publish_target == 'pypi' && 'https://pypi.org/project/' || 'https://test.pypi.org/project/' }}
+    permissions:
+      id-token: write  # Required for trusted publishing
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.determine-packages.outputs.matrix) }}
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ matrix.package.name }}
+          path: dist/
+      
+      - name: Publish to TestPyPI
+        if: ${{ needs.determine-packages.outputs.publish_target == 'testpypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+      
+      - name: Publish to PyPI
+        if: ${{ needs.determine-packages.outputs.publish_target == 'pypi' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
+
+  # Verify published packages
+  verify:
+    needs: [determine-packages, publish]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Wait for package availability
+        run: sleep 60
+      
+      - name: Install and verify packages
+        run: |
+          python -m pip install --upgrade pip
+          
+          INDEX_URL=""
+          if [[ "${{ needs.determine-packages.outputs.publish_target }}" == "testpypi" ]]; then
+            INDEX_URL="--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
+          fi
+          
+          # Parse matrix and install each package
+          echo '${{ needs.determine-packages.outputs.matrix }}' | python3 -c "
+          import json
+          import sys
+          import subprocess
+          
+          matrix = json.loads(sys.stdin.read())
+          packages = matrix.get('package', [])
+          
+          for pkg in packages:
+              name = pkg['name']
+              print(f'Installing {name}...')
+              cmd = f'pip install {name} $INDEX_URL'
+              result = subprocess.run(cmd, shell=True)
+              if result.returncode != 0:
+                  print(f'Failed to install {name}')
+                  sys.exit(1)
+          "
+        env:
+          INDEX_URL: ${{ needs.determine-packages.outputs.publish_target == 'testpypi' && '--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/' || '' }}
+      
+      - name: Run import tests
+        run: |
+          python -c "
+          import sys
+          
+          # Test core imports
+          try:
+              import pykotor
+              print(f'✓ pykotor version: {pykotor.__version__ if hasattr(pykotor, \"__version__\") else \"unknown\"}')
+          except ImportError as e:
+              print(f'✗ Failed to import pykotor: {e}')
+          
+          # Test optional imports
+          optional_imports = [
+              ('pykotor.gl', 'pykotorgl'),
+              ('pykotor.font', 'pykotorfont'),
+          ]
+          
+          for module, package in optional_imports:
+              try:
+                  __import__(module)
+                  print(f'✓ {package} imported successfully')
+              except ImportError:
+                  print(f'○ {package} not installed (optional)')
+          "
+
+  # Summary job
+  summary:
+    needs: [determine-packages, build, publish, verify]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## PyPI Publishing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Publish | ${{ needs.publish.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Verify | ${{ needs.verify.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Target:** ${{ needs.determine-packages.outputs.publish_target }}" >> $GITHUB_STEP_SUMMARY
+

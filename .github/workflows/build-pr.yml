@@ -337,11 +337,13 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            // Safely get job results, handling skipped jobs gracefully
+            // When a job is conditionally skipped, needs.job.result is 'skipped' or empty
             const jobs = {
-              'version-check': '${{ needs.version-check.result }}',
-              'build-toolset': '${{ needs.build-toolset.result }}',
-              'build-holopatcher': '${{ needs.build-holopatcher.result }}',
-              'build-kotordiff': '${{ needs.build-kotordiff.result }}'
+              'version-check': '${{ needs.version-check.result }}' || 'skipped',
+              'build-toolset': '${{ needs.build-toolset.result }}' || 'skipped',
+              'build-holopatcher': '${{ needs.build-holopatcher.result }}' || 'skipped',
+              'build-kotordiff': '${{ needs.build-kotordiff.result }}' || 'skipped'
             };
             
             const changes = {

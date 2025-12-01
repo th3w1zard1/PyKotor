@@ -220,10 +220,15 @@ class LazyCapsule(FileResource):
         Processing Logic:
         ----------------
             - Check if capsule exists on disk and print error if not
+            - Check if file is empty (0 bytes) and return empty list if so
             - Open file and read header
             - Call appropriate reload method based on file type
             - Raise error if unknown file type.
         """
+        # Check if file is empty (0 bytes) - empty files cannot be valid capsules
+        if self._filepath.exists() and self._filepath.stat().st_size == 0:
+            return []
+        
         with BinaryReader.from_file(self._filepath) as reader:
             file_type = reader.read_string(4)
             reader.skip(4)  # file version

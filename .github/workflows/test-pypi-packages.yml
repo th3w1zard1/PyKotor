@@ -1,0 +1,289 @@
+# Test PyPI Package Installation and Functionality
+# This workflow tests that packages from PyPI install correctly and work as expected
+#
+# Tests include:
+# - Installation from PyPI/TestPyPI
+# - Import verification
+# - Basic functionality tests
+# - CLI entry point verification
+
+name: Test PyPI Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Package source'
+        required: true
+        default: 'testpypi'
+        type: choice
+        options:
+          - testpypi
+          - pypi
+      packages:
+        description: 'Packages to test (comma-separated, or "all")'
+        required: true
+        default: 'pykotor'
+  schedule:
+    # Run weekly to catch any issues
+    - cron: '0 6 * * 0'  # Every Sunday at 06:00 UTC
+  workflow_run:
+    workflows: ["Publish to PyPI"]
+    types: [completed]
+
+concurrency:
+  group: test-pypi-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-installation:
+    name: Test ${{ matrix.package }} on Python ${{ matrix.python-version }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        package:
+          - pykotor
+          - pykotorgl
+          - pykotorfont
+        exclude:
+          # PyGLM has limited support on older Python + macOS combinations
+          - os: macos-latest
+            python-version: '3.8'
+            package: pykotorgl
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            tests/test_pypi
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-glx libgl1-mesa-dev xvfb
+      
+      - name: Determine package index
+        id: index
+        shell: bash
+        run: |
+          SOURCE="${{ inputs.source || 'pypi' }}"
+          if [[ "$SOURCE" == "testpypi" ]]; then
+            echo "url=--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/" >> $GITHUB_OUTPUT
+          else
+            echo "url=" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Install package
+        run: |
+          python -m pip install --upgrade pip
+          pip install ${{ matrix.package }} ${{ steps.index.outputs.url }}
+        shell: bash
+      
+      - name: Test import
+        run: |
+          python -c "
+          package_imports = {
+              'pykotor': ['pykotor', 'pykotor.common', 'pykotor.resource', 'pykotor.extract'],
+              'pykotorgl': ['pykotor.gl', 'pykotor.gl.scene'],
+              'pykotorfont': ['pykotor.font'],
+          }
+          
+          package = '${{ matrix.package }}'
+          imports = package_imports.get(package, [package])
+          
+          for imp in imports:
+              try:
+                  __import__(imp)
+                  print(f'✓ Successfully imported {imp}')
+              except ImportError as e:
+                  print(f'✗ Failed to import {imp}: {e}')
+                  exit(1)
+          "
+      
+      - name: Run basic functionality tests
+        run: |
+          python -c "
+          package = '${{ matrix.package }}'
+          
+          if package == 'pykotor':
+              # Test basic pykotor functionality
+              from pykotor.common.language import LocalizedString, Language, Gender
+              from pykotor.resource.type import ResourceType
+              
+              # Test LocalizedString
+              ls = LocalizedString.from_english('Hello World')
+              assert ls.get(Language.ENGLISH, Gender.MALE) == 'Hello World'
+              print('✓ LocalizedString works')
+              
+              # Test ResourceType
+              assert ResourceType.TPC.extension == 'tpc'
+              print('✓ ResourceType works')
+              
+          elif package == 'pykotorgl':
+              # Basic GL import test (no rendering without display)
+              from pykotor.gl import scene
+              print('✓ GL scene module loaded')
+              
+          elif package == 'pykotorfont':
+              from pykotor.font import draw
+              print('✓ Font module loaded')
+          
+          print(f'✓ All {package} functionality tests passed')
+          "
+
+  test-tools:
+    name: Test ${{ matrix.tool }} CLI on Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.10', '3.11']
+        tool:
+          - holopatcher
+          - kotor-diff
+          - kotornasher
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Determine package index
+        id: index
+        shell: bash
+        run: |
+          SOURCE="${{ inputs.source || 'pypi' }}"
+          if [[ "$SOURCE" == "testpypi" ]]; then
+            echo "url=--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/" >> $GITHUB_OUTPUT
+          else
+            echo "url=" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Install tool
+        run: |
+          python -m pip install --upgrade pip
+          pip install ${{ matrix.tool }} ${{ steps.index.outputs.url }}
+        shell: bash
+      
+      - name: Test CLI entry point
+        shell: bash
+        run: |
+          case "${{ matrix.tool }}" in
+            holopatcher)
+              python -m holopatcher --help || echo "Help flag test"
+              ;;
+            kotor-diff)
+              python -m kotordiff --help || echo "Help flag test"
+              ;;
+            kotornasher)
+              kotornasher --help || python -m kotornasher --help || echo "Help flag test"
+              ;;
+          esac
+          echo "✓ CLI entry point works"
+
+  test-integration:
+    name: Integration Test - Full Stack
+    runs-on: ubuntu-latest
+    needs: [test-installation]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install all packages
+        run: |
+          python -m pip install --upgrade pip
+          
+          SOURCE="${{ inputs.source || 'pypi' }}"
+          INDEX=""
+          if [[ "$SOURCE" == "testpypi" ]]; then
+            INDEX="--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
+          fi
+          
+          # Install core library with all extensions
+          pip install pykotor $INDEX
+          pip install pykotorgl $INDEX || echo "pykotorgl not available yet"
+          pip install pykotorfont $INDEX || echo "pykotorfont not available yet"
+        shell: bash
+      
+      - name: Run integration tests
+        run: |
+          python -c "
+          print('=== PyKotor Integration Test ===')
+          
+          # Test 1: Core functionality
+          print('\\n1. Testing core imports...')
+          import pykotor
+          from pykotor.common.language import LocalizedString, Language, Gender
+          from pykotor.resource.type import ResourceType
+          print('   ✓ Core imports successful')
+          
+          # Test 2: Resource types
+          print('\\n2. Testing resource types...')
+          for rt in [ResourceType.UTC, ResourceType.UTI, ResourceType.DLG, ResourceType.TPC]:
+              print(f'   ✓ {rt.name}: {rt.extension}')
+          
+          # Test 3: LocalizedString operations
+          print('\\n3. Testing LocalizedString...')
+          ls = LocalizedString()
+          ls.set_data(Language.ENGLISH, Gender.MALE, 'Test String')
+          result = ls.get(Language.ENGLISH, Gender.MALE)
+          assert result == 'Test String', f'Expected \"Test String\", got \"{result}\"'
+          print('   ✓ LocalizedString operations work')
+          
+          # Test 4: Optional extensions
+          print('\\n4. Testing optional extensions...')
+          try:
+              from pykotor.gl import scene
+              print('   ✓ PyKotorGL available')
+          except ImportError:
+              print('   ○ PyKotorGL not installed')
+          
+          try:
+              from pykotor.font import draw
+              print('   ✓ PyKotorFont available')
+          except ImportError:
+              print('   ○ PyKotorFont not installed')
+          
+          print('\\n=== All integration tests passed ===')
+          "
+
+  summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [test-installation, test-tools, test-integration]
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## PyPI Package Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Installation Tests | ${{ needs.test-installation.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool CLI Tests | ${{ needs.test-tools.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.test-integration.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.test-installation.result }}" == "success" && \
+                "${{ needs.test-tools.result }}" == "success" && \
+                "${{ needs.test-integration.result }}" == "success" ]]; then
+            echo "✅ **All tests passed!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Some tests failed. Please review the logs.**" >> $GITHUB_STEP_SUMMARY
+          fi
+

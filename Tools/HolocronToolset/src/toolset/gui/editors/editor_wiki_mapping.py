@@ -32,6 +32,7 @@ EDITOR_WIKI_MAP: dict[str, str | None] = {
     "UTSEditor": "GFF-UTS.md",
     "UTTEditor": "GFF-UTT.md",
     "UTWEditor": "GFF-UTW.md",
+    "WAVEditor": "WAV-File-Format.md",  # WAV/Audio file format
     "SaveGameEditor": "GFF-File-Format.md",  # Save game uses general GFF format doc
     "MetadataEditor": "GFF-File-Format.md",  # Metadata uses general GFF format doc
 }

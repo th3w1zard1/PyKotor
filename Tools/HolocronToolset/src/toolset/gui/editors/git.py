@@ -30,6 +30,8 @@ from pykotor.resource.formats.lyt import read_lyt
 from pykotor.resource.generics.git import GIT, GITCamera, GITCreature, GITDoor, GITEncounter, GITPlaceable, GITSound, GITStore, GITTrigger, GITWaypoint, bytes_git, read_git
 from pykotor.resource.type import ResourceType
 from pykotor.tools.template import extract_name, extract_tag_from_gff
+from toolset.blender import BlenderEditorMode, check_blender_and_ask
+from toolset.blender.integration import BlenderEditorMixin
 from toolset.data.misc import ControlItem
 from toolset.gui.dialogs.instance.camera import CameraDialog
 from toolset.gui.dialogs.instance.creature import CreatureDialog
@@ -286,13 +288,14 @@ def open_instance_dialog(
     return dialog.exec()
 
 
-class GITEditor(Editor):
+class GITEditor(Editor, BlenderEditorMixin):
     sig_settings_updated = Signal(object)  # pyright: ignore[reportPrivateImportUsage]
 
     def __init__(
         self,
         parent: QWidget | None,
         installation: HTInstallation = None,
+        use_blender: bool = False,
     ):
         """Initializes the GIT editor.
 
@@ -300,11 +303,16 @@ class GITEditor(Editor):
         ----
             parent: QWidget | None: The parent widget
             installation: HTInstallation | None: The installation
+            use_blender: bool: Whether to use Blender for editing
 
         Initializes the editor UI and connects signals. Loads default settings. Initializes rendering area and mode. Clears any existing geometry.
         """
         supported = [ResourceType.GIT]
         super().__init__(parent, "GIT Editor", "git", supported, supported, installation)
+
+        # Initialize Blender integration
+        self._init_blender_integration(BlenderEditorMode.GIT_EDITOR)
+        self._use_blender_mode: bool = use_blender
 
         from toolset.uic.qtpy.editors.git import Ui_MainWindow
         self.ui = Ui_MainWindow()

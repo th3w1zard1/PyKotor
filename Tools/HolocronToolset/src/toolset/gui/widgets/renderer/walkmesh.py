@@ -553,48 +553,93 @@ class WalkmeshRenderer(QWidget):
         painter.setTransform(transform)
 
         # Draw the minimap
+        # Reference: vendor/reone/src/libs/game/gui/map.cpp - getMapPosition()
+        # 
+        # MATHEMATICAL DERIVATION:
+        # Reone's getMapPosition converts world -> map texture coordinates:
+        #   mapPos.x = (world.x - worldPoint1.x) * scaleX + mapPoint1.x
+        #   mapPos.y = (world.y - worldPoint1.y) * scaleY + mapPoint1.y
+        # Where:
+        #   scaleX = (mapPoint1.x - mapPoint2.x) / (worldPoint1.x - worldPoint2.x)
+        #   scaleY = (mapPoint1.y - mapPoint2.y) / (worldPoint1.y - worldPoint2.y)
+        #
+        # For rendering, we need the INVERSE: map texture coordinates -> world coordinates
+        # Solving for world.x:
+        #   mapPos.x - mapPoint1.x = (world.x - worldPoint1.x) * scaleX
+        #   (mapPos.x - mapPoint1.x) / scaleX = world.x - worldPoint1.x
+        #   world.x = worldPoint1.x + (mapPos.x - mapPoint1.x) / scaleX
+        #
+        # Substituting scaleX:
+        #   world.x = worldPoint1.x + (mapPos.x - mapPoint1.x) * (worldPoint1.x - worldPoint2.x) / (mapPoint1.x - mapPoint2.x)
+        #
+        # For texture origin (mapPos = 0,0):
+        #   world.x = worldPoint1.x + (0 - mapPoint1.x) * (worldPoint1.x - worldPoint2.x) / (mapPoint1.x - mapPoint2.x)
+        #   world.x = worldPoint1.x - mapPoint1.x * (worldPoint1.x - worldPoint2.x) / (mapPoint1.x - mapPoint2.x)
+        #
+        # For texture end (mapPos = 1,1):
+        #   world.x = worldPoint1.x + (1 - mapPoint1.x) * (worldPoint1.x - worldPoint2.x) / (mapPoint1.x - mapPoint2.x)
+        #
+        # However, reone handles NorthAxis differently:
+        #   Case 0,1: X/Y map directly to X/Y
+        #   Case 2,3: X/Y are swapped (world.x maps to map.y, world.y maps to map.x)
+        #
+        # For our rendering, we need to handle NorthAxis to determine coordinate mapping.
         if self._are and self._minimap_image:
-            axis_to_rotation: dict[ARENorthAxis, int] = {
-                ARENorthAxis.PositiveY: 0,
-                ARENorthAxis.PositiveX: 270,
-                ARENorthAxis.NegativeY: 180,
-                ARENorthAxis.NegativeX: 90,
-            }
-            rotation: int = axis_to_rotation[self._are.north_axis]
-            rads: float = math.radians(-rotation)
+            map_pt1_x: float = self._are.map_point_1.x
+            map_pt1_y: float = self._are.map_point_1.y
+            map_pt2_x: float = self._are.map_point_2.x
+            map_pt2_y: float = self._are.map_point_2.y
+            world_pt1_x: float = self._are.world_point_1.x
+            world_pt1_y: float = self._are.world_point_1.y
+            world_pt2_x: float = self._are.world_point_2.x
+            world_pt2_y: float = self._are.world_point_2.y
 
-            map_point_1_x: float = ((self._are.map_point_1.x - 0.5) * math.cos(rads)) - ((self._are.map_point_1.y - 0.5) * math.sin(rads)) + 0.5
-            map_point_1_y: float = ((self._are.map_point_1.x - 0.5) * math.sin(rads)) + ((self._are.map_point_1.y - 0.5) * math.cos(rads)) + 0.5
-            map_point_2_x: float = ((self._are.map_point_2.x - 0.5) * math.cos(rads)) - ((self._are.map_point_2.y - 0.5) * math.sin(rads)) + 0.5
-            map_point_2_y: float = ((self._are.map_point_2.x - 0.5) * math.sin(rads)) + ((self._are.map_point_2.y - 0.5) * math.cos(rads)) + 0.5
+            # Calculate differences
+            map_dx: float = map_pt1_x - map_pt2_x
+            map_dy: float = map_pt1_y - map_pt2_y
+            world_dx: float = world_pt1_x - world_pt2_x
+            world_dy: float = world_pt1_y - world_pt2_y
 
-            world_point_1_x: float = self._are.world_point_1.x
-            world_point_1_y: float = self._are.world_point_1.y
-            world_point_2_x: float = self._are.world_point_2.x
-            world_point_2_y: float = self._are.world_point_2.y
+            # Calculate scale factors (from reone's getMapPosition formula)
+            # scaleX = (mapPoint1.x - mapPoint2.x) / (worldPoint1.x - worldPoint2.x)
+            # But we need the inverse, so: worldScaleX = (worldPoint1.x - worldPoint2.x) / (mapPoint1.x - mapPoint2.x)
+            world_scale_x: float = world_dx / map_dx if abs(map_dx) > 0.0001 else 0.0
+            world_scale_y: float = world_dy / map_dy if abs(map_dy) > 0.0001 else 0.0
 
-            # X% of the width of the image
-            widthPercent: float = abs(map_point_1_x - map_point_2_x)
-            heightPercent: float = abs(map_point_1_y - map_point_2_y)
-            # Takes up Y amount of WUs.
-            widthWU: float = abs(world_point_1_x - world_point_2_x)
-            heightWU: float = abs(world_point_1_y - world_point_2_y)
+            # Calculate where texture origin (0,0) maps to in world space
+            # world.x = worldPoint1.x + (0 - mapPoint1.x) * worldScaleX
+            origin_x: float = world_pt1_x - map_pt1_x * world_scale_x
+            origin_y: float = world_pt1_y - map_pt1_y * world_scale_y
 
-            # Here we determine how many world units the full texture covers
-            # 100% of the image width/height covers X amount of world units
-            fullWidthWU: float = widthWU / widthPercent
-            fullHeightWU: float = heightWU / heightPercent
+            # Calculate where texture end (1,1) maps to in world space
+            # world.x = worldPoint1.x + (1 - mapPoint1.x) * worldScaleX
+            end_x: float = world_pt1_x + (1.0 - map_pt1_x) * world_scale_x
+            end_y: float = world_pt1_y + (1.0 - map_pt1_y) * world_scale_y
 
-            # Now we can figure out where the X/Y coords of the image go
-            # Remember world_point_1 not the corner of the image, but somewhere within the image, so we must calculate
-            # where the corner of the image is in the world space.
-            imageX: float = world_point_1_x - (fullWidthWU * map_point_1_x)
-            imageY: float = world_point_1_y - (fullHeightWU * (1 - map_point_1_y))
+            # Handle NorthAxis swapping (cases 2,3 swap X/Y)
+            # Reference: reone map.cpp lines 186-192
+            north_axis = self._are.north_axis
+            if north_axis in (ARENorthAxis.PositiveX, ARENorthAxis.NegativeX):
+                # For swapped case: world.x maps to map.y, world.y maps to map.x
+                # So we need to swap our calculated coordinates
+                origin_x, origin_y = origin_y, origin_x
+                end_x, end_y = end_y, end_x
 
-            rotated: QImage = self._minimap_image.transformed(QTransform().rotate(rotation))
+            # Create rectangle (handle negative scales - inverted mappings)
+            min_x: float = min(origin_x, end_x)
+            max_x: float = max(origin_x, end_x)
+            min_y: float = min(origin_y, end_y)
+            max_y: float = max(origin_y, end_y)
 
-            targetRect = QRectF(QPointF(imageX, imageY), QPointF(imageX + fullWidthWU, imageY + fullHeightWU))
-            painter.drawImage(targetRect, rotated)
+            # Flip image if scales are negative (inverted mapping)
+            image_to_draw: QImage = self._minimap_image
+            if world_scale_x < 0:
+                image_to_draw = image_to_draw.mirrored(True, False)
+            if world_scale_y < 0:
+                image_to_draw = image_to_draw.mirrored(False, True)
+
+            targetRect = QRectF(QPointF(min_x, min_y), QPointF(max_x, max_y))
+            painter.drawImage(targetRect, image_to_draw)
 
         pen: QPen = (
             QPen(Qt.PenStyle.NoPen)

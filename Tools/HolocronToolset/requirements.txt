@@ -18,3 +18,4 @@ urllib3>=1.26.0,<2.0.0; python_version<"3.9"
 urllib3>=1.26.0; python_version>="3.9"
 jsonpickle>=4.1.1
 send2trash>=1.8.3
+comtypes>=1.4.0; sys_platform == "win32"

@@ -17,6 +17,7 @@ from qtpy import QtCore
 from qtpy.QtCore import QPointF, QRectF, QTimer, Qt
 from qtpy.QtGui import QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform
 from qtpy.QtWidgets import (
+    QApplication,
     QDialog,
     QFileDialog,
     QFormLayout,
@@ -37,6 +38,8 @@ else:
     raise ValueError(f"Invalid QT_API: '{qtpy.API_NAME}'")
 
 from pykotor.common.stream import BinaryWriter
+from toolset.blender import BlenderEditorMode, check_blender_and_ask
+from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
 from toolset.data.indoorkit import Kit, load_kits
 from toolset.data.indoormap import IndoorMap, IndoorMapRoom
@@ -54,6 +57,7 @@ from utility.updater.github import download_github_release_asset
 if TYPE_CHECKING:
     from qtpy.QtCore import QPoint
     from qtpy.QtGui import QImage, QKeyEvent, QMouseEvent, QPaintEvent, QWheelEvent
+    from qtpy.QtWidgets import QAbstractButton
 
     from pykotor.resource.formats.bwm import BWMFace
     from pykotor.resource.formats.bwm.bwm_data import BWM
@@ -242,6 +246,27 @@ class DuplicateRoomsCommand(QUndoCommand):
         self.indoor_map.rebuild_room_connections()
 
 
+class MoveWarpCommand(QUndoCommand):
+    """Command to move the warp point."""
+
+    def __init__(
+        self,
+        indoor_map: IndoorMap,
+        old_position: Vector3,
+        new_position: Vector3,
+    ):
+        super().__init__("Move Warp Point")
+        self.indoor_map = indoor_map
+        self.old_position = copy(old_position)
+        self.new_position = copy(new_position)
+
+    def undo(self):
+        self.indoor_map.warp_point = copy(self.old_position)
+
+    def redo(self):
+        self.indoor_map.warp_point = copy(self.new_position)
+
+
 # =============================================================================
 # Data structures for clipboard
 # =============================================================================
@@ -271,13 +296,18 @@ class SnapResult:
 # Main Window
 # =============================================================================
 
-class IndoorMapBuilder(QMainWindow):
+class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def __init__(
         self,
         parent: QWidget | None,
         installation: HTInstallation | None = None,
+        use_blender: bool = False,
     ):
         super().__init__(parent)
+
+        # Initialize Blender integration
+        self._init_blender_integration(BlenderEditorMode.INDOOR_BUILDER)
+        self._use_blender_mode: bool = use_blender
 
         self._installation: HTInstallation | None = installation
         self._kits: list[Kit] = []
@@ -320,8 +350,7 @@ class IndoorMapBuilder(QMainWindow):
         # Settings
         if self._installation:
             assert isinstance(self._installation, HTInstallation)
-            inst: HTInstallation = self._installation
-            self.ui.actionSettings.triggered.connect(lambda: IndoorMapSettings(self, inst, self._map, self._kits).exec())
+            self.ui.actionSettings.triggered.connect(self.open_settings)
         else:
             self.ui.actionSettings.setEnabled(False)
 
@@ -351,6 +380,8 @@ class IndoorMapBuilder(QMainWindow):
         self.ui.mapRenderer.sig_mouse_scrolled.connect(self.on_mouse_scrolled)
         self.ui.mapRenderer.sig_mouse_double_clicked.connect(self.onMouseDoubleClicked)
         self.ui.mapRenderer.sig_rooms_moved.connect(self.on_rooms_moved)
+        self.ui.mapRenderer.sig_warp_moved.connect(self.on_warp_moved)
+        self.ui.mapRenderer.sig_marquee_select.connect(self.on_marquee_select)
 
         # Options checkboxes
         self.ui.snapToGridCheck.toggled.connect(lambda v: setattr(self.ui.mapRenderer, 'snap_to_grid', v))
@@ -389,21 +420,59 @@ class IndoorMapBuilder(QMainWindow):
             self._show_missing_files_dialog(missing_files)
 
         if len(self._kits) == 0:
-            from toolset.gui.common.localization import translate as tr
-            no_kit_prompt = QMessageBox(
-                QMessageBox.Icon.Warning,
-                tr("No Kits Available"),
-                tr("No kits were detected, would you like to open the Kit downloader?"),
-            )
-            no_kit_prompt.addButton(QMessageBox.StandardButton.Yes)
-            no_kit_prompt.addButton(QMessageBox.StandardButton.No)
-            no_kit_prompt.setDefaultButton(QMessageBox.StandardButton.No)
-
-            if no_kit_prompt.exec() == QMessageBox.StandardButton.Yes:
-                self.open_kit_downloader()
+            # Check for headless mode before scheduling dialog to prevent crashes
+            # In headless mode (used by tests and CI/CD), skip dialogs entirely
+            # This is an industry-standard approach: detect headless mode early and skip GUI operations
+            import os
+            qt_platform = os.environ.get("QT_QPA_PLATFORM", "").lower()
+            is_headless = qt_platform in ("offscreen", "minimal", "vnc", "vncserver")
+            
+            # Additional check: try to detect via QApplication platform name if not already detected
+            # But only if we haven't already determined we're headless to avoid unnecessary Qt calls
+            if not is_headless:
+                app = QApplication.instance()
+                if app is not None and isinstance(app, QApplication):
+                    try:
+                        # QApplication.platformName() is available in Qt 5.7+
+                        platform_name = getattr(app, 'platformName', lambda: "")().lower()
+                        if platform_name:
+                            is_headless = platform_name in ("offscreen", "minimal", "vnc", "vncserver")
+                    except Exception:
+                        # If platform name check fails, assume GUI mode and show dialog
+                        pass
+            
+            if not is_headless:
+                # Only defer dialog in GUI mode - this prevents crashes in headless mode
+                # Using QTimer.singleShot ensures the dialog appears after the window is fully initialized
+                # and allows the event loop to process other initialization tasks first
+                QTimer.singleShot(0, self._show_no_kits_dialog)
 
         for kit in self._kits:
             self.ui.kitSelect.addItem(kit.name, kit)
+
+    def _show_no_kits_dialog(self):
+        """Show dialog asking if user wants to open kit downloader.
+        
+        This is called asynchronously via QTimer.singleShot to avoid blocking initialization.
+        Headless mode is already checked before this method is scheduled, so it will only
+        be called in GUI mode where exec() is safe.
+        """
+        from toolset.gui.common.localization import translate as tr
+        
+        # Show dialog in GUI mode using exec()
+        # Headless check happens before this method is scheduled, so this is safe
+        no_kit_prompt = QMessageBox(
+            QMessageBox.Icon.Warning,
+            tr("No Kits Available"),
+            tr("No kits were detected, would you like to open the Kit downloader?"),
+            buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            defaultButton=QMessageBox.StandardButton.No,
+        )
+        
+        # Use exec() for proper modal behavior in GUI mode
+        result = no_kit_prompt.exec()
+        if result == QMessageBox.StandardButton.Yes or no_kit_prompt.clickedButton() == QMessageBox.StandardButton.Yes:
+            self.open_kit_downloader()
 
     def _refresh_window_title(self):
         from toolset.gui.common.localization import translate as tr, trf
@@ -513,7 +582,7 @@ class IndoorMapBuilder(QMainWindow):
                 self._filepath = filepath
                 self._undo_stack.clear()
                 self._refresh_window_title()
-
+                
                 if missing_rooms:
                     self._show_missing_rooms_dialog(missing_rooms)
             except OSError as e:
@@ -527,20 +596,20 @@ class IndoorMapBuilder(QMainWindow):
     def _show_missing_files_dialog(self, missing_files: list[tuple[str, Path, str]]):
         """Show a dialog with information about missing kit files."""
         from toolset.gui.common.localization import translate as tr, trf
-
+        
         if not missing_files:
             return
-
+        
         files_by_kit: dict[str, list[tuple[Path, str]]] = {}
         for kit_name, file_path, file_type in missing_files:
             if kit_name not in files_by_kit:
                 files_by_kit[kit_name] = []
             files_by_kit[kit_name].append((file_path, file_type))
-
+        
         file_count = len(missing_files)
         kit_count = len(files_by_kit)
         kit_names = sorted(files_by_kit.keys())
-
+        
         main_text = trf(
             "{count} file{plural} missing from {kit_count} kit{kit_plural}.\n\n"
             "Kit{kit_plural}: {kits}",
@@ -550,7 +619,7 @@ class IndoorMapBuilder(QMainWindow):
             kit_plural="s" if kit_count != 1 else "",
             kits=", ".join(f"'{name}'" for name in kit_names),
         )
-
+        
         detailed_lines: list[str] = []
         for kit_name in sorted(files_by_kit.keys()):
             detailed_lines.append(f"\n=== Kit: '{kit_name}' ===")
@@ -560,12 +629,12 @@ class IndoorMapBuilder(QMainWindow):
                 if file_type not in files_by_type:
                     files_by_type[file_type] = []
                 files_by_type[file_type].append(file_path)
-
+            
             for file_type in sorted(files_by_type.keys()):
                 detailed_lines.append(f"\n  {file_type}:")
                 for file_path in sorted(files_by_type[file_type]):
                     detailed_lines.append(f"    - {file_path}")
-
+        
         msg_box = QMessageBox(
             QMessageBox.Icon.Warning,
             tr("Missing Kit Files"),
@@ -578,10 +647,10 @@ class IndoorMapBuilder(QMainWindow):
     def _show_missing_rooms_dialog(self, missing_rooms: list[MissingRoomInfo]):
         """Show a dialog with information about missing rooms/kits."""
         from toolset.gui.common.localization import translate as tr, trf
-
+        
         missing_kits = [r for r in missing_rooms if r.reason == "kit_missing"]
         missing_components = [r for r in missing_rooms if r.reason == "component_missing"]
-
+        
         room_count = len(missing_rooms)
         missing_kit_names = {r.kit_name for r in missing_rooms if r.reason == "kit_missing"}
         missing_component_pairs = {
@@ -589,7 +658,7 @@ class IndoorMapBuilder(QMainWindow):
             for r in missing_rooms
             if r.reason == "component_missing" and r.component_name
         }
-
+        
         main_parts: list[str] = []
         if missing_kit_names:
             kit_list = ", ".join(f"'{name}'" for name in sorted(missing_kit_names))
@@ -597,14 +666,14 @@ class IndoorMapBuilder(QMainWindow):
         if missing_component_pairs:
             component_list = ", ".join(f"'{comp}' ({kit})" for kit, comp in sorted(missing_component_pairs))
             main_parts.append(trf("Missing component{plural}: {components}", plural="s" if len(missing_component_pairs) != 1 else "", components=component_list))
-
+        
         main_text = trf(
             "{count} room{plural} failed to load.\n\n{details}",
             count=room_count,
             plural="s" if room_count != 1 else "",
             details="\n".join(main_parts),
         )
-
+        
         detailed_lines: list[str] = []
         if missing_kits:
             detailed_lines.append("=== Missing Kits ===")
@@ -616,7 +685,7 @@ class IndoorMapBuilder(QMainWindow):
                     detailed_lines.append(f"  Component: {room_info.component_name}")
                 detailed_lines.append(f"  Expected Kit JSON: {kit_json_path}")
                 detailed_lines.append(f"  Expected Kit Directory: {Path('./kits') / kit_name}")
-
+        
         if missing_components:
             detailed_lines.append("\n=== Missing Components ===")
             for room_info in missing_components:
@@ -625,7 +694,7 @@ class IndoorMapBuilder(QMainWindow):
                 component_path = Path("./kits") / kit_name / "components" / component_name
                 detailed_lines.append(f"\nRoom: Kit '{kit_name}', Component '{component_name}'")
                 detailed_lines.append(f"  Expected Component Directory: {component_path}")
-
+        
         msg_box = QMessageBox(
             QMessageBox.Icon.Warning,
             tr("Some Rooms Failed to Load"),
@@ -638,6 +707,42 @@ class IndoorMapBuilder(QMainWindow):
     def open_kit_downloader(self):
         KitDownloader(self).exec()
         self._setup_kits()
+
+    def open_settings(self):
+        """Open the settings dialog and update the map if changes are made."""
+        if not isinstance(self._installation, HTInstallation):
+            return
+        
+        # Store original values to detect changes
+        old_module_id = self._map.module_id
+        old_name = self._map.name.stringref if hasattr(self._map.name, 'stringref') else None
+        old_skybox = self._map.skybox
+        
+        dialog = IndoorMapSettings(self, self._installation, self._map, self._kits)
+        if dialog.exec():
+            # Settings were accepted - check if anything actually changed
+            module_id_changed = old_module_id != self._map.module_id
+            name_changed = old_name != (self._map.name.stringref if hasattr(self._map.name, 'stringref') else None)
+            skybox_changed = old_skybox != self._map.skybox
+            
+            if module_id_changed or name_changed or skybox_changed:
+                # Mark as having unsaved changes by pushing a no-op command
+                # This ensures the asterisk appears in the window title
+                from qtpy.QtWidgets import QUndoCommand
+                
+                class SettingsChangedCommand(QUndoCommand):
+                    def __init__(self):
+                        super().__init__("Settings Changed")
+                    
+                    def undo(self): ...
+                    def redo(self): ...
+                
+                # Only push if stack is clean to avoid unnecessary undo entries
+                if not self._undo_stack.canUndo():
+                    self._undo_stack.push(SettingsChangedCommand())
+                
+                # Refresh window title to reflect any changes (especially module_id)
+                self._refresh_window_title()
 
     def build_map(self):
         if not isinstance(self._installation, HTInstallation):
@@ -833,26 +938,37 @@ class IndoorMapBuilder(QMainWindow):
             return  # Control is for camera pan
 
         renderer = self.ui.mapRenderer
+        world = renderer.to_world_coords(screen.x, screen.y)
+
+        # Check if clicking on warp point first
+        if renderer.is_over_warp_point(world):
+            renderer.start_warp_drag()
+            return
 
         if renderer.cursor_component is not None:
             # Place new room
             component: KitComponent | None = self.selected_component()
             if component is not None:
                 self._place_new_room(component)
-            if Qt.Key.Key_Shift not in keys:
-                renderer.set_cursor_component(None)
-                self.ui.componentList.clearSelection()
-                self.ui.componentList.setCurrentItem(None)
-        else:
-            # Select room
-            clear_existing: bool = Qt.Key.Key_Shift not in keys
-            room: IndoorMapRoom | None = renderer.room_under_mouse()
-            if room is not None:
-                renderer.select_room(room, clear_existing=clear_existing)
-                # Start drag tracking
-                renderer.start_drag(room)
+                if Qt.Key.Key_Shift not in keys:
+                    renderer.set_cursor_component(None)
+                    self.ui.componentList.clearSelection()
+                    self.ui.componentList.setCurrentItem(None)
             else:
-                renderer.clear_selected_rooms()
+                # Check if clicking on a room
+                room: IndoorMapRoom | None = renderer.room_under_mouse()
+                if room is not None:
+                    # Select room (shift to add to selection)
+                    clear_existing: bool = Qt.Key.Key_Shift not in keys
+                    renderer.select_room(room, clear_existing=clear_existing)
+                    # Start drag tracking
+                    renderer.start_drag(room)
+                else:
+                    # No room clicked - start marquee selection OR clear selection
+                    if Qt.Key.Key_Shift not in keys:
+                        renderer.clear_selected_rooms()
+                    # Start marquee selection
+                    renderer.start_marquee(screen)
 
     def on_mouse_released(
         self,
@@ -876,6 +992,28 @@ class IndoorMapBuilder(QMainWindow):
             cmd = MoveRoomsCommand(self._map, rooms, old_positions, new_positions)
             self._undo_stack.push(cmd)
             self._refresh_window_title()
+
+    def on_warp_moved(
+        self,
+        old_position: Vector3,
+        new_position: Vector3,
+    ):
+        """Called when warp point has been moved via drag."""
+        if old_position.distance(new_position) > 0.001:
+            cmd = MoveWarpCommand(self._map, old_position, new_position)
+            self._undo_stack.push(cmd)
+            self._refresh_window_title()
+
+    def on_marquee_select(
+        self,
+        rooms: list[IndoorMapRoom],
+        additive: bool,
+    ):
+        """Called when marquee selection completes."""
+        if not additive:
+            self.ui.mapRenderer.clear_selected_rooms()
+        for room in rooms:
+            self.ui.mapRenderer.select_room(room, clear_existing=False)
 
     def _place_new_room(self, component: KitComponent):
         """Place a new room at cursor position with undo support."""
@@ -1031,6 +1169,8 @@ class IndoorMapRenderer(QWidget):
     sig_mouse_pressed = QtCore.Signal(object, object, object)
     sig_mouse_double_clicked = QtCore.Signal(object, object, object)
     sig_rooms_moved = QtCore.Signal(object, object, object)  # rooms, old_positions, new_positions
+    sig_warp_moved = QtCore.Signal(object, object)  # old_position, new_position
+    sig_marquee_select = QtCore.Signal(object, object)  # rooms selected, additive
 
     def __init__(self, parent: QWidget):
         super().__init__(parent)
@@ -1061,6 +1201,16 @@ class IndoorMapRenderer(QWidget):
         self._dragging: bool = False
         self._drag_start_positions: list[Vector3] = []
         self._drag_rooms: list[IndoorMapRoom] = []
+        self._drag_mode: str = ""  # "rooms", "warp", "marquee"
+
+        # Marquee selection state
+        self._marquee_active: bool = False
+        self._marquee_start: Vector2 = Vector2.from_null()
+        self._marquee_end: Vector2 = Vector2.from_null()
+
+        # Warp point drag state
+        self._dragging_warp: bool = False
+        self._warp_drag_start: Vector3 = Vector3.from_null()
 
         # Snapping options
         self.snap_to_grid: bool = False
@@ -1079,6 +1229,10 @@ class IndoorMapRenderer(QWidget):
         # Performance: dirty flag for rendering
         self._dirty: bool = True
         self._cached_walkmeshes: dict[int, BWM] = {}
+
+        # Warp point hover detection
+        self._hovering_warp: bool = False
+        self.warp_point_radius: float = 1.0
 
         self._loop()
 
@@ -1269,22 +1423,80 @@ class IndoorMapRenderer(QWidget):
         if room not in self._selected_rooms:
             return
         self._dragging = True
+        self._drag_mode = "rooms"
         self._drag_rooms = self._selected_rooms.copy()
         self._drag_start_positions = [copy(r.position) for r in self._drag_rooms]
 
+    def start_warp_drag(self):
+        """Start dragging the warp point."""
+        self._dragging_warp = True
+        self._drag_mode = "warp"
+        self._warp_drag_start = copy(self._map.warp_point)
+
+    def start_marquee(self, screen_pos: Vector2):
+        """Start marquee selection."""
+        self._marquee_active = True
+        self._drag_mode = "marquee"
+        self._marquee_start = screen_pos
+        self._marquee_end = screen_pos
+
     def end_drag(self):
-        """End dragging and emit move signal if positions changed."""
-        if not self._dragging:
-            return
-        
-        self._dragging = False
-        if self._drag_rooms:
-            new_positions = [copy(r.position) for r in self._drag_rooms]
-            self.sig_rooms_moved.emit(self._drag_rooms, self._drag_start_positions, new_positions)
-        
-        self._drag_rooms = []
-        self._drag_start_positions = []
-        self._snap_indicator = None
+        """End dragging and emit appropriate signal."""
+        if self._drag_mode == "rooms" and self._dragging:
+            self._dragging = False
+            if self._drag_rooms:
+                new_positions = [copy(r.position) for r in self._drag_rooms]
+                self.sig_rooms_moved.emit(self._drag_rooms, self._drag_start_positions, new_positions)
+            self._drag_rooms = []
+            self._drag_start_positions = []
+            self._snap_indicator = None
+
+        elif self._drag_mode == "warp" and self._dragging_warp:
+            self._dragging_warp = False
+            new_pos = copy(self._map.warp_point)
+            if self._warp_drag_start.distance(new_pos) > 0.001:
+                self.sig_warp_moved.emit(self._warp_drag_start, new_pos)
+
+        elif self._drag_mode == "marquee" and self._marquee_active:
+            self._marquee_active = False
+            # Select rooms within marquee
+            rooms_in_marquee = self._get_rooms_in_marquee()
+            additive = Qt.Key.Key_Shift in self._keys_down
+            self.sig_marquee_select.emit(rooms_in_marquee, additive)
+
+        self._drag_mode = ""
+        self.mark_dirty()
+
+    def _get_rooms_in_marquee(self) -> list[IndoorMapRoom]:
+        """Get all rooms that intersect with the marquee rectangle."""
+        # Convert screen coords to world coords
+        start_world = self.to_world_coords(self._marquee_start.x, self._marquee_start.y)
+        end_world = self.to_world_coords(self._marquee_end.x, self._marquee_end.y)
+
+        min_x = min(start_world.x, end_world.x)
+        max_x = max(start_world.x, end_world.x)
+        min_y = min(start_world.y, end_world.y)
+        max_y = max(start_world.y, end_world.y)
+
+        selected: list[IndoorMapRoom] = []
+        for room in self._map.rooms:
+            # Check if room center is within marquee
+            if min_x <= room.position.x <= max_x and min_y <= room.position.y <= max_y:
+                selected.append(room)
+                continue
+
+            # Also check if any walkmesh vertex is within marquee
+            walkmesh = self._get_room_walkmesh(room)
+            for vertex in walkmesh.vertices():
+                if min_x <= vertex.x <= max_x and min_y <= vertex.y <= max_y:
+                    selected.append(room)
+                    break
+
+        return selected
+
+    def is_over_warp_point(self, world_pos: Vector3) -> bool:
+        """Check if world position is over the warp point."""
+        return world_pos.distance(self._map.warp_point) < self.warp_point_radius
 
     # =========================================================================
     # Camera controls
@@ -1422,13 +1634,43 @@ class IndoorMapRenderer(QWidget):
         painter.drawEllipse(QPointF(pos.x, pos.y), 0.8, 0.8)
 
     def _draw_spawn_point(self, painter: QPainter, coords: Vector3):
+        # Highlight when hovering or dragging
+        is_active = self._hovering_warp or self._dragging_warp
+        radius = self.warp_point_radius * (1.3 if is_active else 1.0)
+        alpha = 180 if is_active else 127
+        
         painter.setPen(Qt.PenStyle.NoPen)
-        painter.setBrush(QColor(0, 255, 0, 127))
-        painter.drawEllipse(QPointF(coords.x, coords.y), 1.0, 1.0)
+        painter.setBrush(QColor(0, 255, 0, alpha))
+        painter.drawEllipse(QPointF(coords.x, coords.y), radius, radius)
 
-        painter.setPen(QPen(QColor(0, 255, 0), 0.4))
-        painter.drawLine(QPointF(coords.x, coords.y - 1.0), QPointF(coords.x, coords.y + 1.0))
-        painter.drawLine(QPointF(coords.x - 1.0, coords.y), QPointF(coords.x + 1.0, coords.y))
+        # Draw crosshair
+        line_len = radius * 1.2
+        painter.setPen(QPen(QColor(0, 255, 0), 0.4 if not is_active else 0.6))
+        painter.drawLine(QPointF(coords.x, coords.y - line_len), QPointF(coords.x, coords.y + line_len))
+        painter.drawLine(QPointF(coords.x - line_len, coords.y), QPointF(coords.x + line_len, coords.y))
+        
+        # Draw "W" label when active
+        if is_active:
+            painter.setPen(QPen(QColor(255, 255, 255), 0.1))
+
+    def _draw_marquee(self, painter: QPainter):
+        """Draw the marquee selection rectangle."""
+        if not self._marquee_active:
+            return
+        
+        # Reset transform to draw in screen coords
+        painter.resetTransform()
+        
+        # Calculate rectangle
+        x1, y1 = self._marquee_start.x, self._marquee_start.y
+        x2, y2 = self._marquee_end.x, self._marquee_end.y
+        
+        rect = QRectF(min(x1, x2), min(y1, y2), abs(x2 - x1), abs(y2 - y1))
+        
+        # Draw semi-transparent fill
+        painter.setBrush(QColor(100, 150, 255, 50))
+        painter.setPen(QPen(QColor(100, 150, 255), 1, Qt.PenStyle.DashLine))
+        painter.drawRect(rect)
 
     def _build_face(self, face: BWMFace) -> QPainterPath:
         v1 = Vector2(face.v1.x, face.v1.y)
@@ -1478,7 +1720,7 @@ class IndoorMapRenderer(QWidget):
             # Draw hooks (magnets)
             if not self.hide_magnets:
                 for hook_index, hook in enumerate(room.component.hooks):
-                    if room.hooks[hook_index] is not None:
+                    if room.hooks[hook_index] is None:
                         continue  # Connected hook
 
                     hook_pos = room.hook_position(hook)
@@ -1524,8 +1766,11 @@ class IndoorMapRenderer(QWidget):
         for room in self._selected_rooms:
             self._draw_room_highlight(painter, room, 80, QColor(255, 200, 100))
 
-        # Draw spawn point
+        # Draw spawn point (warp point)
         self._draw_spawn_point(painter, self._map.warp_point)
+
+        # Draw marquee selection (in screen space, so after transform reset)
+        self._draw_marquee(painter)
 
     # =========================================================================
     # Events
@@ -1549,18 +1794,41 @@ class IndoorMapRenderer(QWidget):
         world = self.to_world_coords(coords.x, coords.y)
         self.cursor_point = world
 
-        # Handle dragging
+        # Update warp point hover state
+        self._hovering_warp = self.is_over_warp_point(world)
+
+        # Handle marquee selection
+        if self._marquee_active:
+            self._marquee_end = coords
+            self.mark_dirty()
+            return
+
+        # Handle warp point dragging
+        if self._dragging_warp:
+            world_delta = self.to_world_delta(coords_delta.x, coords_delta.y)
+            self._map.warp_point.x += world_delta.x
+            self._map.warp_point.y += world_delta.y
+            # Apply grid snap to warp point if enabled
+            if self.snap_to_grid:
+                self._map.warp_point = self._snap_to_grid(self._map.warp_point)
+            self.mark_dirty()
+            return
+
+        # Handle room dragging
         if self._dragging and self._drag_rooms:
             world_delta = self.to_world_delta(coords_delta.x, coords_delta.y)
             
-            # Move all selected rooms
+            # Move all selected rooms by delta first
             for room in self._drag_rooms:
                 room.position.x += world_delta.x
                 room.position.y += world_delta.y
                 self._invalidate_walkmesh_cache(room)
 
-            # Try to snap the primary room
+            # Get the primary room for snapping calculations
             active_room = self._drag_rooms[-1] if self._drag_rooms else None
+            snapped = False
+
+            # Try hook snapping first (takes priority if enabled)
             if active_room and self.snap_to_hooks:
                 snap_result = self._find_hook_snap(active_room, active_room.position)
                 if snap_result.snapped:
@@ -1572,12 +1840,21 @@ class IndoorMapRenderer(QWidget):
                         room.position.y += offset_y
                         self._invalidate_walkmesh_cache(room)
                     self._snap_indicator = snap_result
+                    snapped = True
                 else:
                     self._snap_indicator = None
-            elif self.snap_to_grid:
-                # Apply grid snapping
+
+            # Apply grid snapping if enabled (and not already snapped to hook)
+            if self.snap_to_grid and not snapped and active_room:
+                # Snap the active room to grid, then move others by same offset
+                old_pos = copy(active_room.position)
+                snapped_pos = self._snap_to_grid(active_room.position)
+                offset_x = snapped_pos.x - old_pos.x
+                offset_y = snapped_pos.y - old_pos.y
+                
                 for room in self._drag_rooms:
-                    room.position = self._snap_to_grid(room.position)
+                    room.position.x += offset_x
+                    room.position.y += offset_y
                     self._invalidate_walkmesh_cache(room)
 
             self._map.rebuild_room_connections()
@@ -1586,25 +1863,29 @@ class IndoorMapRenderer(QWidget):
 
         # Handle cursor component snapping
         if self.cursor_component:
-            # Apply grid snap first
-            if self.snap_to_grid:
-                self.cursor_point = self._snap_to_grid(self.cursor_point)
-
-            # Then try hook snap
+            snapped = False
+            
+            # Try hook snap first (it's more important for connections)
             if self.snap_to_hooks:
                 snap_result = self._find_hook_snap(
                     None,
-                    self.cursor_point,
+                self.cursor_point,
                     self.cursor_component,
-                    self.cursor_rotation,
+                self.cursor_rotation,
                     self.cursor_flip_x,
                     self.cursor_flip_y,
                 )
                 if snap_result.snapped:
                     self.cursor_point = snap_result.position
                     self._snap_indicator = snap_result
+                    snapped = True
                 else:
                     self._snap_indicator = None
+
+            # Apply grid snap if not snapped to hook
+            if self.snap_to_grid and not snapped:
+                self.cursor_point = self._snap_to_grid(self.cursor_point)
+                
             self.mark_dirty()
 
         # Find room under mouse
@@ -1669,11 +1950,11 @@ class KitDownloader(QDialog):
         from toolset.uic.qtpy.dialogs.indoor_downloader import Ui_Dialog
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-
+        
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
-
+        
         self.ui.downloadAllButton.clicked.connect(self._download_all_button_pressed)
         self._setup_downloads()
 
@@ -1759,19 +2040,19 @@ class KitDownloader(QDialog):
         kits_path = Path("kits").resolve()
         kits_path.mkdir(parents=True, exist_ok=True)
         kits_zip_path = Path("kits.zip")
-
+        
         update_info_data: Exception | dict[str, Any] = get_remote_toolset_update_info(
             use_beta_channel=GlobalSettings().useBetaChannel,
         )
-
+        
         if isinstance(update_info_data, Exception):
             print(f"Failed to get update info: {update_info_data}")
             return False
-
+        
         kits_config = update_info_data.get("kits", {})
         repository = kits_config.get("repository", "th3w1zard1/ToolsetData")
         release_tag = kits_config.get("release_tag", "latest")
-
+        
         try:
             owner, repo = repository.split("/")
             print(f"Downloading kits.zip from {repository} release {release_tag}...")
@@ -1785,14 +2066,14 @@ class KitDownloader(QDialog):
         except Exception as e:
             print(format_exception_with_variables(e, message="Failed to download kits.zip"))
             return False
-
+        
         try:
             with zipfile.ZipFile(kits_zip_path) as zip_file:
                 print(f"Extracting all kits to {kits_path}")
                 with TemporaryDirectory() as tmp_dir:
                     tempdir_path = Path(tmp_dir)
                     zip_file.extractall(tmp_dir)
-
+                    
                     for item in tempdir_path.iterdir():
                         if item.is_dir():
                             dst_path = kits_path / item.name
@@ -1811,20 +2092,20 @@ class KitDownloader(QDialog):
         finally:
             if kits_zip_path.is_file():
                 kits_zip_path.unlink()
-
+        
         return True
-
+    
     def _download_all_button_pressed(self):
         self.ui.downloadAllButton.setText("Downloading All...")
         self.ui.downloadAllButton.setEnabled(False)
-
+        
         def task() -> bool:
             try:
                 return self._download_all_kits()
             except Exception as e:
                 print(format_exception_with_variables(e))
                 raise
-
+        
         if is_debug_mode() and not is_frozen():
             try:
                 task()
@@ -1842,12 +2123,12 @@ class KitDownloader(QDialog):
             else:
                 self.ui.downloadAllButton.setText("Download All Failed")
                 self.ui.downloadAllButton.setEnabled(True)
-
+    
     def _refresh_kit_buttons(self):
         layout: QFormLayout | None = self.ui.groupBox.layout()
         if layout is None:
             return
-
+        
         for i in range(layout.rowCount()):
             item = layout.itemAt(i, QFormLayout.ItemRole.FieldRole)
             if item and isinstance(item.widget(), QPushButton):
@@ -1859,19 +2140,19 @@ class KitDownloader(QDialog):
         kits_path = Path("kits").resolve()
         kits_path.mkdir(parents=True, exist_ok=True)
         kits_zip_path = Path("kits.zip")
-
+        
         update_info_data: Exception | dict[str, Any] = get_remote_toolset_update_info(
             use_beta_channel=GlobalSettings().useBetaChannel,
         )
-
+        
         if isinstance(update_info_data, Exception):
             print(f"Failed to get update info: {update_info_data}")
             return False
-
+        
         kits_config = update_info_data.get("kits", {})
         repository = kits_config.get("repository", "th3w1zard1/ToolsetData")
         release_tag = kits_config.get("release_tag", "latest")
-
+        
         try:
             owner, repo = repository.split("/")
             print(f"Downloading kits.zip from {repository} release {release_tag}...")
@@ -1894,18 +2175,18 @@ class KitDownloader(QDialog):
                     zip_file.extractall(tmp_dir)
                     src_path = tempdir_path / kit_id
                     this_kit_dst_path = kits_path / kit_id
-
+                    
                     if not src_path.exists():
                         msg = f"Kit '{kit_id}' not found in kits.zip"
                         print(msg)
                         return False
-
+                    
                     print(f"Copying '{src_path}' to '{this_kit_dst_path}'...")
                     if this_kit_dst_path.is_dir():
                         print(f"Deleting old {kit_id} kit folder/files...")
                         shutil.rmtree(this_kit_dst_path)
                     shutil.copytree(src_path, str(this_kit_dst_path))
-
+                    
                     this_kit_json_filename = f"{kit_id}.json"
                     src_kit_json_path = tempdir_path / this_kit_json_filename
                     if not src_kit_json_path.is_file():
@@ -1919,5 +2200,5 @@ class KitDownloader(QDialog):
         finally:
             if kits_zip_path.is_file():
                 kits_zip_path.unlink()
-
+        
         return True

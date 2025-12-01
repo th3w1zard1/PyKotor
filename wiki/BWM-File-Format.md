@@ -390,6 +390,7 @@ AABB trees are typically constructed using algorithms that recursively partition
 - **Reference**: [`vendor/kotorblender/io_scene_kotor/aabb.py`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/aabb.py) - AABB tree generation implementation using surface area heuristic
 
 The tree construction process typically involves:
+
 1. Computing bounding boxes for all faces
 2. Recursively splitting space along the best axis (determined by SAH or median)
 3. Creating internal nodes that split space and leaf nodes that contain face indices
@@ -600,6 +601,15 @@ Each `BWMFace` represents a single triangular face in the walkmesh, containing a
 
 **Important**: Adjacency is derived purely from geometry. Two walkable faces are adjacent when they share the same two vertex objects along an edge. The adjacency relationship is computed by comparing vertex references, not by using transition indices.
 
+**Value-Based Equality:**
+
+The `Face` base class (and `BWMFace`) implements value-based equality through `__eq__` and `__hash__` methods:
+
+- Two faces are equal if they have the same vertices (by value, using `Vector3.__eq__` which compares components with approximate tolerance), material, and transition indices
+- This enables faces to be used in sets and as dictionary keys
+- Hash is computed from vertex values (rounded for floating-point consistency), material, and transitions
+- **Reference**: [`Libraries/PyKotor/src/utility/common/geometry.py:1180-1197`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/utility/common/geometry.py#L1180-L1197)
+
 **Reference**: [`vendor/KotOR.js/src/three/odyssey/OdysseyFace3.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/three/odyssey/OdysseyFace3.ts) - TypeScript face implementation with adjacency handling
 
 ### BWMEdge Class
@@ -691,7 +701,7 @@ The binary writer must perform several complex operations to generate a valid BW
    - Median Split: Simpler but less optimal, splits along the median of face positions
    - The tree must be balanced for optimal performance
 
-6. **Compute edges and perimeters from adjacency data**: 
+6. **Compute edges and perimeters from adjacency data**:
    - Identify perimeter edges (edges with `-1` adjacency)
    - Group edges into closed loops (perimeters)
    - Store transition IDs from the runtime model's edge transition data

@@ -22,18 +22,24 @@ font = ["pykotorfont>=1.8.0"]
 gl = ["pykotorgl>=1.8.0"]
 all-extensions = ["pykotorfont>=1.8.0", "pykotorgl>=1.8.0"]
 
-# Tools
+# Tools (lowercase PyPI names)
 holocrontoolset = ["holocrontoolset>=3.1.1"]
 holopatcher = ["holopatcher>=1.5.3"]
 kotor-diff = ["kotor-diff>=1.0.0"]
-batch-patcher = ["batch-patcher>=2.2.0"]
+batchpatcher = ["batchpatcher>=2.2.0"]
 gui-converter = ["gui-converter>=1.0.0"]
+kotornasher = ["kotornasher>=1.0.0"]
+holopazaak = ["holopazaak>=1.0.0"]
+kit-generator = ["kit-generator>=1.0.0"]
 all-tools = [
     "holocrontoolset>=3.1.1",
     "holopatcher>=1.5.3",
     "kotor-diff>=1.0.0",
-    "batch-patcher>=2.2.0",
+    "batchpatcher>=2.2.0",
     "gui-converter>=1.0.0",
+    "kotornasher>=1.0.0",
+    "holopazaak>=1.0.0",
+    "kit-generator>=1.0.0",
 ]
 
 # Everything
@@ -43,8 +49,11 @@ all = [
     "holocrontoolset>=3.1.1",
     "holopatcher>=1.5.3",
     "kotor-diff>=1.0.0",
-    "batch-patcher>=2.2.0",
+    "batchpatcher>=2.2.0",
     "gui-converter>=1.0.0",
+    "kotornasher>=1.0.0",
+    "holopazaak>=1.0.0",
+    "kit-generator>=1.0.0",
 ]
 
 # Development dependencies
@@ -107,12 +116,15 @@ all-extensions = ["pykotorfont", "pykotorgl"]
 holocrontoolset = ["holocrontoolset"]
 holopatcher = ["holopatcher"]
 kotor-diff = ["kotor-diff"]
-batch-patcher = ["batch-patcher"]
+batchpatcher = ["batchpatcher"]
 gui-converter = ["gui-converter"]
-all-tools = ["holocrontoolset", "holopatcher", "kotor-diff", "batch-patcher", "gui-converter"]
+kotornasher = ["kotornasher"]
+holopazaak = ["holopazaak"]
+kit-generator = ["kit-generator"]
+all-tools = ["holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotornasher", "holopazaak", "kit-generator"]
 
 # Everything
-all = ["pykotorfont", "pykotorgl", "holocrontoolset", "holopatcher", "kotor-diff", "batch-patcher", "gui-converter"]
+all = ["pykotorfont", "pykotorgl", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotornasher", "holopazaak", "kit-generator"]
 
 [project.urls]
 homepage = "https://github.com/th3w1zard1/PyKotor"

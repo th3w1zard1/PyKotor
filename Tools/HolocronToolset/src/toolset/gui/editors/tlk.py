@@ -26,6 +26,7 @@ from pykotor.common.misc import ResRef
 from pykotor.extract.file import FileResource
 from pykotor.resource.formats.tlk import TLK, TLKEntry, bytes_tlk, read_tlk, write_tlk
 from pykotor.resource.type import ResourceType
+from toolset.gui.common.localization import tr, trf
 from toolset.gui.dialogs.asyncloader import AsyncLoader
 from toolset.gui.dialogs.search import FileResults
 from toolset.gui.editor import Editor
@@ -49,6 +50,7 @@ if TYPE_CHECKING:
 
     from pykotor.extract.file import FileResource
     from toolset.data.installation import HTInstallation
+    from qtpy.QtCore import QCloseEvent  # pyright: ignore[reportPrivateImportUsage]
 
 
 class TLKEditor(Editor):
@@ -72,10 +74,13 @@ class TLKEditor(Editor):
         self.ui.jumpBox.setVisible(False)
 
         self.language: Language = Language.ENGLISH
+        # Update checkmarks now that language is initialized
+        self._update_language_menu_checkmarks()
 
         self.source_model: QStandardItemModel = QStandardItemModel(self)
         self.proxy_model: QSortFilterProxyModel = QSortFilterProxyModel(self)
         self.proxy_model.setSourceModel(self.source_model)
+        self.proxy_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.ui.talkTable.setModel(self.proxy_model)
         
         # Setup scrollbar event filter to prevent scrollbar interaction with controls
@@ -95,7 +100,27 @@ class TLKEditor(Editor):
             assert isinstance(table_view, RobustTableView)
             proxy_table_model: QAbstractItemModel | None = table_view.model()
             assert isinstance(proxy_table_model, QSortFilterProxyModel)
-            proxy_index: QModelIndex = proxy_table_model.index(self.ui.jumpSpinbox.value(), 0)
+            
+            # Get the source row number from spinbox
+            source_row = self.ui.jumpSpinbox.value()
+            
+            # Validate the row is within bounds
+            if source_row < 0 or source_row >= self.source_model.rowCount():
+                return
+            
+            # Get the source model index
+            source_index: QModelIndex = self.source_model.index(source_row, 0)
+            if not source_index.isValid():
+                return
+            
+            # Map source index to proxy index
+            proxy_index: QModelIndex = proxy_table_model.mapFromSource(source_index)
+            if not proxy_index.isValid():
+                # If the row is filtered out, we can't jump to it
+                # In this case, clear the filter temporarily or just return
+                return
+            
+            # Scroll to and select the index
             self.ui.talkTable.scrollTo(proxy_index)
             self.ui.talkTable.setCurrentIndex(proxy_index)
 
@@ -131,10 +156,23 @@ class TLKEditor(Editor):
         self.ui.talkTable.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.ui.talkTable.customContextMenuRequested.connect(self.on_context_menu)
 
+        self._language_actions: dict[Language, QAction] = {}
+        self._auto_detect_action: QAction | None = None
         self.populate_language_menu()
+        
+        # Connect auto-detect action from UI if it exists
+        if hasattr(self.ui, 'actionAuto_detect_slower'):
+            self.ui.actionAuto_detect_slower.triggered.connect(lambda: self.on_language_selected("auto_detect"))
 
     def populate_language_menu(self):
         self.ui.menuLanguage.clear()
+
+        # Handle auto-detect action
+        auto_detect_action = QAction("Auto-detect (slower)", self)
+        auto_detect_action.setCheckable(True)
+        auto_detect_action.triggered.connect(lambda _checked=None: self.on_language_selected("auto_detect"))
+        self.ui.menuLanguage.addAction(auto_detect_action)
+        self._auto_detect_action = auto_detect_action
 
         # Separator
         self.ui.menuLanguage.addSeparator()
@@ -142,27 +180,57 @@ class TLKEditor(Editor):
         # Add languages from the enum
         for language in Language:
             action = QAction(language.name.replace("_", " "), self)
+            action.setCheckable(True)
             action.triggered.connect(lambda _checked=None, lang=language: self.on_language_selected(lang))
             self.ui.menuLanguage.addAction(action)
+            self._language_actions[language] = action
+
+        # Update checkmarks to reflect current language
+        self._update_language_menu_checkmarks()
+
+    def _update_language_menu_checkmarks(self):
+        """Update the checkmarks in the language menu to reflect the current language."""
+        # Skip if language not yet initialized
+        if not hasattr(self, 'language') or not hasattr(self, '_language_actions'):
+            return
+        
+        # Uncheck all language actions
+        for action in self._language_actions.values():
+            action.setChecked(False)
+        
+        # Check the current language action
+        if self.language in self._language_actions:
+            self._language_actions[self.language].setChecked(True)
+        
+        # Uncheck auto-detect (it's only checked when explicitly selected and no file is loaded)
+        if self._auto_detect_action is not None:
+            self._auto_detect_action.setChecked(False)
 
     def on_language_selected(
         self,
         language: Language | Literal["auto_detect"],
     ):
         if isinstance(language, Language):
-            print(f"Language selected: {language.name}")
             self.change_language(language)
         else:
-            print("Auto detect selected")
-            self.change_language(Language.UNKNOWN)
+            # Auto-detect: read the language from the file if available
+            if self._revert:
+                tlk: TLK = read_tlk(self._revert)
+                self.change_language(tlk.language)
+            else:
+                self.change_language(Language.UNKNOWN)
 
     def change_language(
         self,
         language: Language,
     ):  # sourcery skip: class-extract-method
         self.language = language
+        self._update_language_menu_checkmarks()
+        
+        # Only reload if we have revert data (file was loaded)
         if not self._revert:
             return
+        
         tlk: TLK = read_tlk(self._revert, language=language)
         self.source_model.clear()
         self.source_model.setColumnCount(2)
@@ -175,13 +243,15 @@ class TLKEditor(Editor):
         filepath: os.PathLike | str,
         resref: str,
         restype: ResourceType,
-        data: bytes,
+        data: bytes | bytearray,
     ):
         super().load(filepath, resref, restype, data)  # sourcery skip: class-extract-method
         self.source_model.clear()
         self.source_model.setColumnCount(2)
         self.ui.talkTable.hideColumn(1)
-        dialog = LoaderDialog(self, data, self.source_model)
+        # Ensure data is bytes (not bytearray) for thread safety
+        data_bytes = bytes(data) if isinstance(data, bytearray) else data
+        dialog = LoaderDialog(self, data_bytes, self.source_model)
         self._init_model_dialog(dialog)
 
     def _init_model_dialog(
@@ -189,14 +259,19 @@ class TLKEditor(Editor):
         dialog: LoaderDialog,
     ):
         dialog.exec()
-        self.source_model: QStandardItemModel = dialog.source_model
-        self.proxy_model: QSortFilterProxyModel = QSortFilterProxyModel(self)
+        self.source_model = dialog.source_model
+        self.proxy_model = QSortFilterProxyModel(self)
         self.proxy_model.setSourceModel(self.source_model)
         self.ui.talkTable.setModel(self.proxy_model)
         sel_model: QItemSelectionModel | None = self.ui.talkTable.selectionModel()
         assert sel_model is not None
         sel_model.selectionChanged.connect(self.selection_changed)
         self.ui.jumpSpinbox.setMaximum(self.source_model.rowCount())
+        
+        # Update language from loaded TLK if available
+        if hasattr(dialog, 'language'):
+            self.language = dialog.language
+            self._update_language_menu_checkmarks()
 
     def on_context_menu(
         self,
@@ -352,7 +427,10 @@ class TLKEditor(Editor):
         self.ui.soundEdit.setText(sound)
 
     def update_entry(self):
-        proxy_index: QModelIndex = self.ui.talkTable.selectedIndexes()[0]
+        selected_indexes = self.ui.talkTable.selectedIndexes()
+        if not selected_indexes:
+            return
+        proxy_index: QModelIndex = selected_indexes[0]
         source_index: QModelIndex = self.proxy_model.mapToSource(proxy_index)
 
         col_zero_cell: QStandardItem | None = self.source_model.item(source_index.row(), 0)
@@ -428,7 +506,20 @@ class LoaderDialog(QDialog):
         self.language: Language = language
 
     def on_loaded(self):
+        # Wait for worker thread to finish before closing
+        if self.worker.isRunning():
+            self.worker.wait()
         self.close()
+    
+    def closeEvent(self, event: QCloseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Ensure worker thread is properly cleaned up when dialog closes."""
+        if hasattr(self, 'worker') and self.worker.isRunning():
+            self.worker.quit()
+            self.worker.wait(1000)  # Wait up to 1 second for graceful shutdown
+            if self.worker.isRunning():
+                self.worker.terminate()
+                self.worker.wait(500)
+        super().closeEvent(event)
 
 
 class LoaderWorker(QThread):

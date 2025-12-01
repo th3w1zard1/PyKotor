@@ -40,6 +40,8 @@ from pykotor.resource.generics.utw import read_utw
 from pykotor.resource.type import ResourceType
 from pykotor.tools import module
 from pykotor.tools.misc import is_mod_file
+from toolset.blender import BlenderEditorMode, check_blender_and_ask
+from toolset.blender.integration import BlenderEditorMixin
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.insert_instance import InsertInstanceDialog
 from toolset.gui.dialogs.select_module import SelectModuleDialog
@@ -109,15 +111,20 @@ def run_module_designer(
     sys.exit(app.exec())
 
 
-class ModuleDesigner(QMainWindow):
+class ModuleDesigner(QMainWindow, BlenderEditorMixin):
     def __init__(
         self,
         parent: QWidget | None,
         installation: HTInstallation,
         mod_filepath: Path | None = None,
+        use_blender: bool = False,
     ):
         super().__init__(parent)
         self.setWindowTitle("Module Designer")
+
+        # Initialize Blender integration
+        self._init_blender_integration(BlenderEditorMode.MODULE_DESIGNER)
+        self._use_blender_mode: bool = use_blender
 
         self._installation: HTInstallation = installation
         self._module: Module | None = None
@@ -227,6 +234,9 @@ class ModuleDesigner(QMainWindow):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
+            # Stop Blender mode if active
+            if self.is_blender_mode():
+                self.stop_blender_mode()
             event.accept()  # Let the window close
         else:
             event.ignore()  # Ignore the close event
@@ -467,6 +477,12 @@ class ModuleDesigner(QMainWindow):
 
         if dialog.exec():
             mod_filepath = self._installation.module_path().joinpath(dialog.module)
+
+            # Check for Blender and ask user preference
+            use_blender, blender_info = check_blender_and_ask(self, "Module Designer")
+            if blender_info is not None:
+                self._use_blender_mode = use_blender
+
             self.open_module(mod_filepath)
 
     #    @with_variable_trace(Exception)
@@ -495,11 +511,39 @@ class ModuleDesigner(QMainWindow):
         result: tuple[Module, GIT, list[BWM]] = (combined_module, git, walkmeshes)
         new_module, git, walkmeshes = result
         self._module = new_module
+
+        # Get LYT for Blender mode
+        lyt: LYT | None = None
+        lyt_module = combined_module.layout()
+        if lyt_module is not None:
+            lyt = lyt_module.resource()
+
+        # Start Blender mode if requested
+        if self._use_blender_mode:
+            blender_started = self.start_blender_mode(
+                lyt=lyt,
+                git=git,
+                walkmeshes=walkmeshes,
+                module_root=mod_root,
+                installation_path=self._installation.path(),
+            )
+            if blender_started:
+                self.setWindowTitle(f"Module Designer - {mod_root} (Blender Mode)")
+            else:
+                # Fall back to built-in if Blender fails
+                self._use_blender_mode = False
+                self.log.warning("Blender mode failed, using built-in renderer")
+
+        # Always initialize built-in renderer (for 2D view and fallback)
         self.ui.flatRenderer.set_git(git)
         self.ui.mainRenderer.initialize_renderer(self._installation, new_module)
         self.ui.mainRenderer.scene.show_cursor = self.ui.cursorCheck.isChecked()
         self.ui.flatRenderer.set_walkmeshes(walkmeshes)
         self.ui.flatRenderer.center_camera()
+
+        if not self._use_blender_mode:
+            self.setWindowTitle(f"Module Designer - {mod_root}")
+
         self.show()
         # Inherently calls On3dSceneInitialized when done.
 
@@ -1210,7 +1254,7 @@ class ModuleDesigner(QMainWindow):
         instance_mode.build_list = self.rebuild_instance_list  # type: ignore[method-assign]
         instance_mode.update_visibility = self.update_toggles  # type: ignore[method-assign]
         instance_mode.select_underneath = lambda: self.set_selection(self.ui.flatRenderer.instances_under_mouse())  # type: ignore[method-assign]
-        instance_mode.__init__(self, self._installation, self.git())
+        instance_mode.__init__(self, self._installation, self.git())  # type: ignore[misc]
         # self._controls2d._mode.rotateSelectedToPoint = self.rotateSelected
         self._controls2d._mode = instance_mode  # noqa: SLF001
 
@@ -1498,7 +1542,7 @@ class ModuleDesigner(QMainWindow):
         lyt: LYT | None = layout_module.resource()
         if lyt is None:
             lyt = LYT()
-            layout_module._resource = lyt  # noqa: SLF001
+            layout_module._resource_obj = lyt  # noqa: SLF001
 
         # Create a new room at origin
         room = LYTRoom(
@@ -1550,7 +1594,7 @@ class ModuleDesigner(QMainWindow):
         lyt: LYT | None = layout_module.resource()
         if lyt is None:
             lyt = LYT()
-            layout_module._resource = lyt  # noqa: SLF001
+            layout_module._resource_obj = lyt  # noqa: SLF001
 
         # Create a new track
         track = LYTTrack(
@@ -1575,7 +1619,7 @@ class ModuleDesigner(QMainWindow):
         lyt: LYT | None = layout_module.resource()
         if lyt is None:
             lyt = LYT()
-            layout_module._resource = lyt  # noqa: SLF001
+            layout_module._resource_obj = lyt  # noqa: SLF001
 
         # Create a new obstacle
         obstacle = LYTObstacle(

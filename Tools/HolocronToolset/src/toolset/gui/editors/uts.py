@@ -29,7 +29,7 @@ class UTSEditor(Editor):
     def __init__(
         self,
         parent: QWidget | None,
-        installation: HTInstallation = None,
+        installation: HTInstallation | None = None,
     ):
         """Initialize the Sound Editor window.
 
@@ -64,6 +64,11 @@ class UTSEditor(Editor):
         self._setup_signals()
         if installation is not None:  # will only be none in the unittests
             self._setup_installation(installation)
+
+        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        from toolset.gui.common.filters import NoScrollEventFilter
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
 
         self.new()
 

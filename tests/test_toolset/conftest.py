@@ -9,6 +9,20 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+# Normalize PYTHONPATH for cross-platform compatibility
+# This ensures PYTHONPATH works on Windows (semicolons) and Unix/Linux/macOS (colons)
+_pythonpath = os.environ.get("PYTHONPATH")
+if _pythonpath:
+    correct_sep = os.pathsep
+    if ";" in _pythonpath and correct_sep == ":":
+        # Windows format on Unix - convert to colons
+        paths = [p.strip().strip('"').strip("'") for p in _pythonpath.split(";") if p.strip()]
+        os.environ["PYTHONPATH"] = correct_sep.join(paths)
+    elif ":" in _pythonpath and correct_sep == ";":
+        # Unix format on Windows - convert to semicolons
+        paths = [p.strip().strip('"').strip("'") for p in _pythonpath.split(":") if p.strip()]
+        os.environ["PYTHONPATH"] = correct_sep.join(paths)
+
 # Set Qt API to PyQt5 (default) before any Qt imports
 # qtpy will use this to select the appropriate bindings
 if "QT_API" not in os.environ:

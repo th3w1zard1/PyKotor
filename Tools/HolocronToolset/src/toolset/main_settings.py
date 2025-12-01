@@ -4,7 +4,7 @@ import os
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtGui import QFont
+from qtpy.QtGui import QFont, QFontDatabase
 from qtpy.QtWidgets import QApplication
 
 from toolset.gui.widgets.settings.widgets.application import ApplicationSettings
@@ -55,6 +55,15 @@ def setup_post_init_settings():
     assert app is not None, "QApplication instance not found."
     assert isinstance(app, QApplication), "QApplication instance not a QApplication type object."
 
+    # Configure font database to use system fonts
+    # This addresses Qt warnings about missing font directories by ensuring Qt uses
+    # the system font database instead of looking for fonts in non-existent directories
+    font_db = QFontDatabase()
+    # Initialize the font database by accessing system fonts
+    # On Windows, this uses the native Windows font system (GDI)
+    # On Linux/macOS, this uses fontconfig automatically
+    _ = font_db.families()  # Access families to initialize font database with system fonts
+    
     # Set the global font for the application
     app.setFont(toolset_qsettings.value("GlobalFont", QApplication.font(), QFont))
 
@@ -86,6 +95,12 @@ def setup_toolset_default_env():
     if os.name == "nt":
         os.environ["QT_MULTIMEDIA_PREFERRED_PLUGINS"] = os.environ.get("QT_MULTIMEDIA_PREFERRED_PLUGINS", "windowsmediafoundation")
         os.environ["QT_MEDIA_BACKEND"] = os.environ.get("QT_MEDIA_BACKEND", "windows")
+        # On Windows, Qt uses the native Windows font system (GDI), not fontconfig
+        # The QFontDatabase initialization in setup_post_init_settings ensures system fonts are used
+    else:
+        # On non-Windows platforms (Linux/macOS), fontconfig is the standard font system
+        # Qt will use fontconfig automatically on these platforms
+        pass
     if not is_debug_mode() or is_frozen():
         os.environ["QT_DEBUG_PLUGINS"] = os.environ.get("QT_DEBUG_PLUGINS", "0")
         os.environ["QT_LOGGING_RULES"] = os.environ.get("QT_LOGGING_RULES", "qt5ct.debug=false")  # Disable specific Qt debug output

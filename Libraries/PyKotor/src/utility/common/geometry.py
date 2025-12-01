@@ -1177,6 +1177,25 @@ class Face:
         self.v3: Vector3 = v3
         self.material: SurfaceMaterial = material
 
+    def __eq__(self, other: object) -> bool:
+        """Check equality by comparing vertices and material.
+        
+        Two faces are equal if they have the same three vertices (by value)
+        and the same material. This is value-based equality, not identity-based.
+        """
+        if not isinstance(other, Face):
+            return NotImplemented
+        return (
+            self.v1 == other.v1
+            and self.v2 == other.v2
+            and self.v3 == other.v3
+            and self.material == other.material
+        )
+
+    def __hash__(self) -> int:
+        """Hash based on vertices and material for use in sets/dicts."""
+        return hash((self.v1, self.v2, self.v3, self.material))
+
     def normal(
         self,
     ) -> Vector3:

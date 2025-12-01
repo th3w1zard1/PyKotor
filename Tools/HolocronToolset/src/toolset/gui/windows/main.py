@@ -7,7 +7,7 @@ import sys
 
 from collections import defaultdict
 from contextlib import suppress
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Any, cast
 
@@ -17,6 +17,7 @@ from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy import QtCore
 from qtpy.QtCore import (
     QCoreApplication,
+    QFileSystemWatcher,
     QSortFilterProxyModel,
     QThread,
     QTimer,
@@ -234,35 +235,189 @@ class ToolWindow(QMainWindow):
         self._style_actions: dict[str, _QAction] = {}
         # Initialize language menu action dictionary
         self._language_actions: dict[int, _QAction] = {}
+        
+        # File system watcher for auto-detecting module/override changes
+        self._file_watcher: QFileSystemWatcher = QFileSystemWatcher(self)
+        self._pending_module_changes: list[str] = []
+        self._pending_override_changes: list[str] = []
+        self._last_watcher_update: datetime = datetime.now(tz=timezone.utc).astimezone()
+        # Debounce timer to batch multiple rapid file changes
+        self._watcher_debounce_timer: QTimer = QTimer(self)
+        self._watcher_debounce_timer.setSingleShot(True)
+        self._watcher_debounce_timer.setInterval(500)  # 500ms debounce
+        self._watcher_debounce_timer.timeout.connect(self._process_pending_file_changes)
+        
         self._initUi()
         self._setup_signals()
         # Language system will set the title in apply_translations()
         self.reload_settings()
         self.unset_installation()
 
-    def handle_change(
-        self,
-        path: str,
-    ):
+    def _setup_file_watcher(self):
+        """Set up file system watcher for the current installation's modules and override folders."""
+        # Clear any existing watched paths
+        watched_dirs = self._file_watcher.directories()
+        if watched_dirs:
+            self._file_watcher.removePaths(watched_dirs)
+        watched_files = self._file_watcher.files()
+        if watched_files:
+            self._file_watcher.removePaths(watched_files)
+        
+        # Clear pending changes
+        self._pending_module_changes.clear()
+        self._pending_override_changes.clear()
+        
         if self.active is None:
             return
+        
+        # Watch the modules directory
+        module_path = self.active.module_path()
+        if module_path.is_dir():
+            self._file_watcher.addPath(str(module_path))
+            RobustLogger().debug(f"File watcher watching modules directory: {module_path}")
+        
+        # Watch the override directory
+        override_path = self.active.override_path()
+        if override_path.is_dir():
+            self._file_watcher.addPath(str(override_path))
+            RobustLogger().debug(f"File watcher watching override directory: {override_path}")
 
-        modified_path = os.path.normpath(path)
-        if os.path.isdir(modified_path):  # noqa: PTH112
+    def _clear_file_watcher(self):
+        """Clear all watched paths from the file system watcher."""
+        watched_dirs = self._file_watcher.directories()
+        if watched_dirs:
+            self._file_watcher.removePaths(watched_dirs)
+        watched_files = self._file_watcher.files()
+        if watched_files:
+            self._file_watcher.removePaths(watched_files)
+        self._pending_module_changes.clear()
+        self._pending_override_changes.clear()
+        self._watcher_debounce_timer.stop()
+
+    @Slot(str)
+    def _on_watched_directory_changed(self, path: str):
+        """Handle directory change events from QFileSystemWatcher."""
+        if self.active is None:
             return
+        
+        normalized_path = os.path.normpath(path)
+        module_path = os.path.normpath(str(self.active.module_path()))
+        override_path = os.path.normpath(str(self.active.override_path()))
+        
+        RobustLogger().debug(f"File watcher detected directory change: {normalized_path}")
+        
+        # Determine which type of change this is
+        if normalized_path.lower() == module_path.lower() or normalized_path.lower().startswith(module_path.lower()):
+            if normalized_path not in self._pending_module_changes:
+                self._pending_module_changes.append(normalized_path)
+        elif normalized_path.lower() == override_path.lower() or normalized_path.lower().startswith(override_path.lower()):
+            if normalized_path not in self._pending_override_changes:
+                self._pending_override_changes.append(normalized_path)
+        
+        # Reset debounce timer
+        self._watcher_debounce_timer.start()
 
-        now: datetime = datetime.now(tz=timezone.utc).astimezone()
-        if now - self.last_modified < timedelta(seconds=1):
+    @Slot(str)
+    def _on_watched_file_changed(self, path: str):
+        """Handle file change events from QFileSystemWatcher."""
+        if self.active is None:
             return
-        self.last_modified: datetime = now
+        
+        normalized_path = os.path.normpath(path)
+        module_path = os.path.normpath(str(self.active.module_path()))
+        override_path = os.path.normpath(str(self.active.override_path()))
+        
+        RobustLogger().debug(f"File watcher detected file change: {normalized_path}")
+        
+        # Determine which type of change this is
+        if module_path.lower() in normalized_path.lower():
+            if normalized_path not in self._pending_module_changes:
+                self._pending_module_changes.append(normalized_path)
+        elif override_path.lower() in normalized_path.lower():
+            if normalized_path not in self._pending_override_changes:
+                self._pending_override_changes.append(normalized_path)
+        
+        # Reset debounce timer
+        self._watcher_debounce_timer.start()
 
-        module_path: str = os.path.normpath(self.active.module_path())
-        override_path: str = os.path.normpath(self.active.override_path())
+    @Slot()
+    def _process_pending_file_changes(self):
+        """Process accumulated file changes after debounce period."""
+        if self.active is None:
+            return
+        
+        has_module_changes = bool(self._pending_module_changes)
+        has_override_changes = bool(self._pending_override_changes)
+        
+        if not has_module_changes and not has_override_changes:
+            return
+        
+        # Check if window is active/focused
+        is_focused = self.isActiveWindow()
+        
+        if is_focused:
+            # Window is focused - ask user if they want to refresh
+            self._show_refresh_dialog(has_module_changes, has_override_changes)
+        else:
+            # Window is not focused - auto-refresh
+            self._auto_refresh_changes(has_module_changes, has_override_changes)
 
-        if module_path.lower() in modified_path.lower():
-            self.sig_module_files_updated.emit(modified_path, "modified")
-        elif override_path.lower() in modified_path.lower():
-            self.sig_override_files_update.emit(modified_path, "modified")
+    def _show_refresh_dialog(self, has_module_changes: bool, has_override_changes: bool):
+        """Show a dialog asking the user if they want to refresh after file changes."""
+        from toolset.gui.common.localization import translate as local_tr
+        
+        # Build list of changed files for details
+        changed_files: list[str] = []
+        
+        if has_module_changes:
+            changed_files.append("=== Modules Directory ===")
+            for path in self._pending_module_changes:
+                changed_files.append(f"  {Path(path).name}")
+        
+        if has_override_changes:
+            changed_files.append("=== Override Directory ===")
+            for path in self._pending_override_changes:
+                changed_files.append(f"  {Path(path).name}")
+        
+        # Build message
+        changes_desc: list[str] = []
+        if has_module_changes:
+            changes_desc.append(local_tr("Modules"))
+        if has_override_changes:
+            changes_desc.append(local_tr("Override"))
+        
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle(local_tr("File Changes Detected"))
+        msg_box.setText(
+            local_tr("Changes were detected in the following directories:") + "\n" +
+            ", ".join(changes_desc) + "\n\n" +
+            local_tr("Would you like to refresh the file lists?")
+        )
+        msg_box.setDetailedText("\n".join(changed_files))
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msg_box.setDefaultButton(QMessageBox.StandardButton.Yes)
+        msg_box.setIcon(QMessageBox.Icon.Question)
+        
+        result = msg_box.exec()
+        
+        if result == QMessageBox.StandardButton.Yes:
+            self._auto_refresh_changes(has_module_changes, has_override_changes)
+        else:
+            # User declined, clear pending changes
+            self._pending_module_changes.clear()
+            self._pending_override_changes.clear()
+
+    def _auto_refresh_changes(self, has_module_changes: bool, has_override_changes: bool):
+        """Auto-refresh the appropriate lists based on detected changes."""
+        if has_module_changes:
+            RobustLogger().info(f"Auto-refreshing module list due to {len(self._pending_module_changes)} file changes")
+            self.refresh_module_list(reload=True)
+            self._pending_module_changes.clear()
+        
+        if has_override_changes:
+            RobustLogger().info(f"Auto-refreshing override list due to {len(self._pending_override_changes)} file changes")
+            self.refresh_override_list(reload=True)
+            self._pending_override_changes.clear()
 
     def _initUi(self):
         """Initialize Holocron Toolset main window UI."""
@@ -310,6 +465,10 @@ class ToolWindow(QMainWindow):
 
         self.sig_module_files_updated.connect(self.on_module_file_updated)
         self.sig_override_files_update.connect(self.on_override_file_updated)
+        
+        # File system watcher signals for auto-detecting installation folder changes
+        self._file_watcher.directoryChanged.connect(self._on_watched_directory_changed)
+        self._file_watcher.fileChanged.connect(self._on_watched_file_changed)
 
         self.ui.coreWidget.sig_request_extract_resource.connect(self.on_extract_resources)
         self.ui.coreWidget.sig_request_refresh.connect(self.on_core_refresh)
@@ -1064,6 +1223,8 @@ class ToolWindow(QMainWindow):
 
         if self.active:
             self.sig_installation_changed.emit(self.active)
+            # Set up file system watcher for auto-detecting module/override changes
+            self._setup_file_watcher()
 
     # FileSearcher/FileResults
     @Slot(list, HTInstallation)
@@ -1452,6 +1613,9 @@ class ToolWindow(QMainWindow):
     @Slot()
     def unset_installation(self):
         """Unset the current installation."""
+        # Clear file system watcher before clearing the installation
+        self._clear_file_watcher()
+        
         self.ui.gameCombo.setCurrentIndex(0)
 
         self.ui.coreWidget.set_resources([])

@@ -5,12 +5,18 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "hologenerator"
 version = "1.0.0"
-description = "KOTOR Configuration Generator for HoloPatcher - GUI Only"
+description = "KOTOR Configuration Generator for HoloPatcher - GUI and CLI tool"
 readme = "README.md"
 authors = [
-    {name = "th3w1zard1", email = "2219836+th3w1zard1@users.noreply.github.com"}
+    {name = "th3w1zard1", email = "halomastar@gmail.com"}
 ]
+maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
 license = {text = "MIT"}
+keywords = [
+    "kotor", "kotor1", "kotor2", "tsl",
+    "config", "generator", "holopatcher",
+    "tslpatcher", "modding", "pykotor",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -23,25 +29,62 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Games/Entertainment",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Desktop Environment :: Gnome",
-    "Topic :: Desktop Environment :: K Desktop Environment (KDE)",
-    "Topic :: Desktop Environment :: XFCE",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Utilities",
+    "Environment :: Console",
+    "Environment :: Web Environment",
 ]
 requires-python = ">=3.8"
 dependencies = [
-    # Will use the PyKotor library from the parent project
+    "pykotor>=1.8.0",
 ]
 
+[project.scripts]
+hologenerator = "hologenerator.__main__:main"
+
 [project.optional-dependencies]
-gui = ["tkinter"]  # Usually built-in with Python
-web = ["flask", "flask-cors"]  # For the web server backend
+gui = []  # tkinter is usually built-in
+web = ["flask", "flask-cors"]
+dev = [
+    "pytest>=7.0.0",
+    "ruff>=0.1.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/th3w1zard1/PyKotor"
-Repository = "https://github.com/th3w1zard1/PyKotor"
-Documentation = "https://github.com/th3w1zard1/PyKotor/tree/main/Tools/HoloGenerator"
-"Bug Tracker" = "https://github.com/th3w1zard1/PyKotor/issues"
+Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
+
+# Poetry configuration
+[tool.poetry]
+name = "hologenerator"
+version = "1.0.0"
+description = "KOTOR Configuration Generator for HoloPatcher - GUI and CLI tool"
+authors = ["Benjamin Auquite <halomastar@gmail.com>"]
+maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+readme = "README.md"
+license = "MIT"
+packages = [{ include = "hologenerator", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pykotor = "^1.8.0"
+
+[tool.poetry.extras]
+web = ["flask", "flask-cors"]
+
+[tool.poetry.scripts]
+hologenerator = "hologenerator.__main__:main"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

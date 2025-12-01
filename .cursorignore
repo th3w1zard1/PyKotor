@@ -83,6 +83,10 @@ tslpatchdata/
 !tslpatchdata/test_step2_install_patch_profile.prof
 typings/*
 venv*/
+.venv*/
+!.venv_3.13/
+!.venv_3.13/Lib/
+!.venv_3.13/Lib/site-packages/
 !.venv_3.13/Lib/site-packages/loggerplus*/
 
 .history

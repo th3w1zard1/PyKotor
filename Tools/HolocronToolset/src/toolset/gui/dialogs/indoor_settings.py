@@ -42,8 +42,8 @@ class IndoorMapSettings(QDialog):
         """
         super().__init__(parent)
         self.setWindowFlags(
-            Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
-            | Qt.WindowType.WindowCloseButtonHint
+            (Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
+             | Qt.WindowType.WindowCloseButtonHint)
             & ~Qt.WindowType.WindowContextHelpButtonHint
         )
 
@@ -69,7 +69,20 @@ class IndoorMapSettings(QDialog):
         for kit in kits:
             for skybox in kit.skyboxes:
                 self.ui.skyboxSelect.addItem(skybox, skybox)
-        self.ui.skyboxSelect.setCurrentText(indoor_map.skybox)
+        
+        # Set current skybox by finding matching data or text
+        if indoor_map.skybox:
+            # Try to find by text first
+            index = self.ui.skyboxSelect.findText(indoor_map.skybox)
+            if index == -1:
+                # Try to find by data
+                index = self.ui.skyboxSelect.findData(indoor_map.skybox)
+            if index != -1:
+                self.ui.skyboxSelect.setCurrentIndex(index)
+            else:
+                self.ui.skyboxSelect.setCurrentIndex(0)  # Default to [None]
+        else:
+            self.ui.skyboxSelect.setCurrentIndex(0)  # Default to [None]
 
     def _setup_signals(self): ...
 

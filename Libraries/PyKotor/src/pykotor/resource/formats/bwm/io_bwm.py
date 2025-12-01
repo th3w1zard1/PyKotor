@@ -276,7 +276,34 @@ class BWMBinaryWriter(ResourceWriter):
                     indexes.append(idx * 3 + adjacency.edge)
             adjacency_data += struct.pack("iii", *indexes)
 
-        edges: list[BWMEdge] = self._wok.edges()
+        # Get perimeter edges from the walkmesh
+        # Note: edges() returns perimeter edges based on walkable face indices
+        # We need to map these to the reordered face list (walkable + unwalkable)
+        # Reference: vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:275-307
+        perimeter_edges: list[BWMEdge] = self._wok.edges()
+        
+        # Convert perimeter edges to use reordered face indices
+        # IMPORTANT: We must use identity-based lookup (the `is` operator), NOT value-based
+        # equality. BWMFace has custom __eq__/__hash__ that uses vertex coordinates and
+        # transitions for equality. If two faces have the same coordinates and transitions
+        # (e.g., a walkable and unwalkable face sharing geometry), using a dict would cause
+        # key collisions and return the wrong face index. This would cause transitions to
+        # be assigned to the wrong faces (e.g., unwalkable instead of walkable), breaking
+        # pathfinding in the game.
+        # Reference: wiki/BWM-File-Format.md - Edges section
+        edges: list[BWMEdge] = []
+        for edge in perimeter_edges:
+            # Find the face index in the reordered list BY IDENTITY (not value equality)
+            # This is critical: we need the exact object reference, not just an equal face
+            face_idx: int | None = next((i for i, f in enumerate(faces) if f is edge.face), None)
+            if face_idx is None:
+                # Face not found in reordered list (shouldn't happen, but handle gracefully)
+                continue
+            # Create new BWMEdge with correct face reference and transition
+            # The edge.index is the local edge index (0, 1, or 2) within the face
+            from pykotor.resource.formats.bwm.bwm_data import BWMEdge
+            edges.append(BWMEdge(faces[face_idx], edge.index, edge.transition))
+        
         edge_data = bytearray()
         edge_offset = adjacency_offset + len(adjacency_data)
         for edge in edges:
