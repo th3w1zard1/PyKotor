@@ -72,6 +72,34 @@ def fix_sys_and_cwd_path():
         os.chdir(toolset_path)
 
 
+def fix_frozen_paths():
+    """Fixes sys.path for frozen builds.
+
+    When frozen with PyInstaller, modules are bundled but paths may need adjustment.
+    This ensures utility and other local modules are accessible.
+    """
+    if not is_frozen():
+        return
+
+    def update_sys_path(path: pathlib.Path):
+        working_dir = str(path)
+        if working_dir not in sys.path:
+            sys.path.insert(0, working_dir)  # Insert at beginning for priority
+
+    # For frozen builds, try to find utility relative to the executable
+    # PyInstaller sets sys._MEIPASS to the temp directory where bundled files are extracted
+    if hasattr(sys, "_MEIPASS"):
+        meipass = pathlib.Path(sys._MEIPASS)
+        # Utility should be bundled by PyInstaller, check if it exists
+        utility_path = meipass / "utility"
+        if utility_path.exists():
+            update_sys_path(utility_path.parent)
+        # Also check for utility in the same directory structure
+        utility_src_path = meipass / "Libraries" / "Utility" / "src"
+        if utility_src_path.exists():
+            update_sys_path(utility_src_path)
+
+
 def fix_qt_env_var():
     """Fix the QT_API environment variable.
 
