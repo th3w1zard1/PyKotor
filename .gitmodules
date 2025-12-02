@@ -291,10 +291,6 @@
 # PyKotor Tools (Standalone Repos)
 # ===============================
 
-[submodule "Tools/HoloGenerator"]
-	path = Tools/HoloGenerator
-	url = https://github.com/th3w1zard1/HoloGenerator.git
-
 [submodule "Tools/HoloPatcher"]
 	path = Tools/HoloPatcher
 	url = https://github.com/th3w1zard1/HoloPatcher.git
