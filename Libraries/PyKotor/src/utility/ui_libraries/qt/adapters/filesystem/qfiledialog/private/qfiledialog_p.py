@@ -52,7 +52,6 @@ if TYPE_CHECKING:
         QWidget,
     )
 
-    # QFileDialogPrivate is defined in this module, so no import needed
     from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.private.qsidebar_p import QSidebar
     from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.qfiledialog import QFileDialog, QFileDialog as PublicQFileDialog, QFileDialogOptions  # noqa: TC004
     from utility.ui_libraries.qt.adapters.filesystem.qfiledialog.ui_qfiledialog import Ui_QFileDialog
