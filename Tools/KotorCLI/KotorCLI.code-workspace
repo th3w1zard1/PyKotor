@@ -8,21 +8,15 @@
 			"name": "PyKotor",
 			"path": "../../Libraries/PyKotor"
 		},
-		{
-			"name": "Utility",
-			"path": "../../Libraries/Utility"
-		}
 	],
 	"settings": {
 		"python.analysis.extraPaths": [
 			"./src",
-			"../../Libraries/PyKotor/src",
-			"../../Libraries/Utility/src"
+			"../../Libraries/PyKotor/src"
 		],
 		"python.autoComplete.extraPaths": [
 			"./src",
-			"../../Libraries/PyKotor/src",
-			"../../Libraries/Utility/src"
+			"../../Libraries/PyKotor/src"
 		],
 		"files.exclude": {
 			"**/__pycache__": true,

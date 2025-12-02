@@ -42,7 +42,7 @@ jobs:
       - name: Test pip installation
         run: |
           uv pip install --upgrade pip setuptools wheel
-          uv pip install -e Libraries/PyKotor
+          uv pip install -e "Libraries/PyKotor[all]"
           python -c "import pykotor; print('✓ pip installation works')"
 
       - name: Test poetry installation

@@ -146,6 +146,11 @@ class ModuleDesignerControls3d:
     ):
         self.editor: ModuleDesigner = editor
         self.renderer: ModuleRenderer = renderer
+        # Ensure renderer is in non-free-cam mode when using standard 3D controls
+        # so that input deltas and loop behaviour are correct.
+        # Related implementation: `ModuleRenderer.free_cam` (see
+        # `Tools/HolocronToolset/src/toolset/gui/widgets/renderer/module.py`).
+        self.renderer.free_cam = False
         self.renderer.setCursor(QtCore.Qt.CursorShape.ArrowCursor)
         if self.renderer._scene is not None:  # noqa: SLF001
             self.renderer._scene.show_cursor = True  # noqa: SLF001
@@ -535,7 +540,17 @@ class ModuleDesignerControlsFreeCam:
     def __init__(self, editor: ModuleDesigner, renderer: ModuleRenderer):
         self.editor: ModuleDesigner = editor
         self.renderer: ModuleRenderer = renderer
-        self.renderer.keys_down().clear()
+        # Clear any stale input state carried over from the regular 3D controls.
+        # NOTE: `keys_down()` returns a copy, so we must use the explicit reset
+        # helpers on the renderer.
+        # Implementation reference:
+        # - `reset_all_down` in `ModuleRenderer`
+        #   (Tools/HolocronToolset/src/toolset/gui/widgets/renderer/module.py)
+        self.renderer.reset_all_down()
+        # Enable free-cam mode on the renderer so that:
+        # - The render loop emits continuous keyboard events while keys are held
+        # - Mouse movement uses the correct free-cam deltas
+        self.renderer.free_cam = True
         self.controls3d_distance = self.renderer.scene.camera.distance
         self.renderer.scene.camera.distance = 0
         self.renderer.setCursor(QtCore.Qt.CursorShape.BlankCursor)

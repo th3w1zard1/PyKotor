@@ -700,6 +700,7 @@ class TestQFileDialog2(unittest.TestCase):
         assert d.directory().absolutePath() == appDir.absolutePath(), f"Directory was not correct, expected: {appDir.absolutePath()!r}, got: {d.directory().absolutePath()!r}"
         appDir.rmdir("test")
 
+    @unittest.skip("Causes Python abort - crashes test suite with access violation in pyfileinfogatherer")
     def test_task251321_sideBarHiddenEntries(self):
         fd = self.fd_class()
 

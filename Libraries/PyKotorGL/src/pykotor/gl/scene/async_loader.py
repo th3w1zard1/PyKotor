@@ -460,48 +460,48 @@ class AsyncResourceLoader:
         -------
             Future that resolves to (name, intermediate_texture, error)
         """
-        self.logger.debug(f"load_texture_async called for: {name}")
-        
         if self.texture_location_resolver is None:
             # No resolver provided, return immediate failure
-            self.logger.warning(f"No texture location resolver provided for: {name}")
             result: Future = Future()
             result.set_result((name, None, "No texture location resolver provided"))
             return result
         
         if self.process_pool is None:
-            self.logger.debug("Process pool is None, starting...")
             self.start()
         
         # Resolve file location in main process
         result_future: Future = Future()
         
         try:
-            self.logger.debug(f"Resolving texture location in main process: {name}")
             location = self.texture_location_resolver(name)
             
             if location is None:
-                self.logger.warning(f"Texture '{name}' not found")
+                # Don't log warnings for every missing texture - too spammy
                 result_future.set_result((name, None, f"Texture '{name}' not found"))
             else:
                 filepath, offset, size = location
                 # Submit IO + parsing to child process
-                self.logger.debug(f"Submitting IO+parse for texture: {name} at {filepath}:{offset}:{size}")
                 assert self.process_pool is not None
                 io_parse_future = self.process_pool.submit(_load_and_parse_texture, name, filepath, offset, size)
                     
                 def on_complete(pf: Future):
+                    # Check if result_future was cancelled before trying to set result
+                    if result_future.cancelled():
+                        return
                     try:
-                        self.logger.debug(f"IO+parse complete for texture: {name}")
                         result_future.set_result(pf.result())
                     except Exception as e:  # noqa: BLE001
-                        self.logger.error(f"IO+parse exception for texture '{name}': {e!s}")
-                        result_future.set_result((name, None, f"IO+parse error: {e!s}"))
+                        if not result_future.cancelled():
+                            try:
+                                result_future.set_result((name, None, f"IO+parse error: {e!s}"))
+                            except Exception:  # noqa: BLE001, S110
+                                pass  # Future was already cancelled or set
                     
                 io_parse_future.add_done_callback(on_complete)
         except Exception as e:  # noqa: BLE001
             self.logger.error(f"Resolution exception for texture '{name}': {e!s}")
-            result_future.set_result((name, None, f"Resolution error: {e!s}"))
+            if not result_future.cancelled():
+                result_future.set_result((name, None, f"Resolution error: {e!s}"))
         
         self.pending_textures[name] = result_future
         return result_future
@@ -532,17 +532,15 @@ class AsyncResourceLoader:
         result_future: Future = Future()
         
         try:
-            self.logger.debug(f"Resolving model locations in main process: {name}")
             mdl_loc, mdx_loc = self.model_location_resolver(name)
             
             if mdl_loc is None or mdx_loc is None:
-                self.logger.warning(f"Model '{name}' MDL or MDX not found")
+                # Don't log warnings for every missing model - too spammy
                 result_future.set_result((name, None, f"Model '{name}' MDL or MDX not found"))
             else:
                 mdl_filepath, mdl_offset, mdl_size = mdl_loc
                 mdx_filepath, mdx_offset, mdx_size = mdx_loc
                 # Submit IO + parsing to child process
-                self.logger.debug(f"Submitting IO+parse for model: {name}")
                 assert self.process_pool is not None
                 io_parse_future = self.process_pool.submit(
                     _load_and_parse_model,
@@ -552,15 +550,25 @@ class AsyncResourceLoader:
                 )
                     
                 def on_complete(pf: Future):
-                        try:
-                            result_future.set_result(pf.result())
-                        except Exception as e:  # noqa: BLE001
-                            self.logger.error(f"IO+parse exception for model '{name}': {e!s}")
-                            result_future.set_result((name, None, f"IO+parse error: {e!s}"))                    
+                    # Check if result_future was cancelled before trying to set result
+                    if result_future.cancelled():
+                        return
+                    try:
+                        result_future.set_result(pf.result())
+                    except Exception as e:  # noqa: BLE001
+                        if not result_future.cancelled():
+                            try:
+                                result_future.set_result((name, None, f"IO+parse error: {e!s}"))
+                            except Exception:  # noqa: BLE001, S110
+                                pass  # Future was already cancelled or set
                 io_parse_future.add_done_callback(on_complete)
         except Exception as e:  # noqa: BLE001
             self.logger.error(f"Resolution exception for model '{name}': {e!s}")
-            result_future.set_result((name, None, f"Resolution error: {e!s}"))
+            if not result_future.cancelled():
+                try:
+                    result_future.set_result((name, None, f"Resolution error: {e!s}"))
+                except Exception:  # noqa: BLE001, S110
+                    pass  # Future was already cancelled or set
         
         self.pending_models[name] = result_future
         return result_future

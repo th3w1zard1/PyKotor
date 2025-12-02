@@ -8,8 +8,8 @@ description = "A translator/font creator tool useful for patching/working with m
 version = "2.2.0"
 requires-python = ">= 3.8"
 dependencies = [
-  "pykotor>=1.8.0",
-  "pykotorfont>=1.8.0",
+  "pykotor>=2.0.0",
+  "pykotorfont>=2.0.0",
   "setuptools>=67.8.0,<70",
   "deep_translator==1.9.2",
   "deepl-cli==0.3.0",
@@ -77,8 +77,8 @@ packages = [{ include = "batchpatcher", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
-pykotorfont = "^1.8.0"
+pykotor = "^2.0.0"
+pykotorfont = "^2.0.0"
 
 [tool.poetry.scripts]
 batchpatcher = "batchpatcher.__main__:main"

@@ -151,7 +151,8 @@ class Texture:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        rgba = bytes(pixels.tobytes())
+        # Convert RGB to RGBA for ModernGL compatibility
+        rgba = _rgb_to_rgba_bytes(pixels.tobytes(), 64, 64)
         return Texture(gl_id, 64, 64, rgba)
 
     def use(self):
@@ -165,6 +166,27 @@ class Texture:
             return self._modern_texture
         if self._rgba_cache is None or self._width is None or self._height is None:
             raise RuntimeError("RGBA texture data not available for moderngl upload")
+        
+        # Validate data size matches expected dimensions
+        expected_size = self._width * self._height * 4  # RGBA = 4 bytes per pixel
+        actual_size = len(self._rgba_cache)
+        if actual_size != expected_size:
+            # Try to fix by padding or truncating if close, otherwise raise error
+            if actual_size < expected_size:
+                # Pad with opaque alpha if data is too small
+                padding = bytes([255] * (expected_size - actual_size))
+                self._rgba_cache = self._rgba_cache + padding
+            elif actual_size > expected_size:
+                # Truncate if data is too large (shouldn't happen, but handle gracefully)
+                self._rgba_cache = self._rgba_cache[:expected_size]
+            # Re-validate after fix
+            if len(self._rgba_cache) != expected_size:
+                raise RuntimeError(
+                    f"Texture data size mismatch: expected {expected_size} bytes "
+                    f"(width={self._width}, height={self._height}, RGBA=4), "
+                    f"got {actual_size} bytes (after fix: {len(self._rgba_cache)} bytes)"
+                )
+        
         texture = ctx.texture((self._width, self._height), 4, data=self._rgba_cache)
         texture.repeat_x = True
         texture.repeat_y = True

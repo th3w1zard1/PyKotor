@@ -313,11 +313,24 @@ class CodeEditor(QPlainTextEdit):
         font_height: int = self.fontMetrics().height()
 
         # Use a dimmer color for line numbers (VS Code style)
+        # But ensure they're always visible - use higher contrast
         text_color: QColor = self.palette().color(QPalette.ColorRole.Text)
-        # Make line numbers slightly dimmer
+        # Make line numbers slightly dimmer but still clearly visible
+        # Increase alpha from 0.6 to 0.75 for better visibility
         dim_color = QColor(text_color)
-        dim_color.setAlphaF(0.6)
+        dim_color.setAlphaF(0.75)
         painter.setPen(dim_color)
+        
+        # Ensure line numbers are always visible by using a contrasting color
+        # If the text color is too similar to background, use a more contrasting color
+        bg_color = self.palette().color(QPalette.ColorRole.AlternateBase)
+        if text_color.value() == bg_color.value() or abs(text_color.value() - bg_color.value()) < 30:
+            # Colors are too similar, use a more contrasting color
+            # Use WindowText which should always contrast with AlternateBase
+            text_color = self.palette().color(QPalette.ColorRole.WindowText)
+            dim_color = QColor(text_color)
+            dim_color.setAlphaF(0.75)
+            painter.setPen(dim_color)
 
         while block.isValid() and top <= e.rect().bottom():
             if block.isVisible() and bottom >= e.rect().top():
@@ -574,6 +587,9 @@ class CodeEditor(QPlainTextEdit):
             extra_selections.append(selection)
 
         self.setExtraSelections(extra_selections)
+        # Ensure line number area is updated when cursor position changes
+        # This helps ensure line numbers remain visible
+        self._line_number_area.update()
     
     def paintEvent(self, event: QPaintEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Override paintEvent to draw VS Code-like indent guides."""

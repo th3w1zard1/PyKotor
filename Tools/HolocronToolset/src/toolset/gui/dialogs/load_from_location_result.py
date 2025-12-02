@@ -391,7 +391,10 @@ class FileItems(CustomItem):
 
         def run_subprocess(command: list[str], *, check: bool = True):
             try:
-                subprocess.run(command, check=check)  # noqa: S603, S607
+                kwargs: dict = {}
+                if sys.platform == "win32":
+                    kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+                subprocess.run(command, check=check, **kwargs)  # noqa: S603, S607
             except subprocess.CalledProcessError as e:
                 if "returned non-zero exit status 1." in str(e) and platform.system() == "Windows":
                     return

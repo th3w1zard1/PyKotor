@@ -204,6 +204,8 @@ class BlenderIPCClient:
 
         try:
             # Send request
+            if self._socket is None:
+                return IPCResponse(success=False, error="Socket not connected")
             data = json.dumps(request) + "\n"
             self._socket.sendall(data.encode("utf-8"))
 
@@ -242,7 +244,7 @@ class BlenderIPCClient:
             return False
 
         # Build JSON-RPC 2.0 notification (no id)
-        notification = {
+        notification: dict[str, Any] = {
             "jsonrpc": "2.0",
             "method": method,
         }
@@ -250,6 +252,8 @@ class BlenderIPCClient:
             notification["params"] = params
 
         try:
+            if self._socket is None:
+                return False
             data = json.dumps(notification) + "\n"
             self._socket.sendall(data.encode("utf-8"))
             return True
@@ -594,6 +598,189 @@ class BlenderCommands:
             True if redo was successful
         """
         response = self._client.send_command("redo")
+        return response.success
+
+    def set_visibility(self, instance_type: str, visible: bool) -> bool:
+        """Set visibility of an instance type.
+
+        Args:
+            instance_type: Type name (creature, placeable, door, etc.)
+            visible: Whether instances should be visible
+
+        Returns:
+            True if updated successfully
+        """
+        response = self._client.send_command(
+            "set_visibility",
+            {"instance_type": instance_type, "visible": visible},
+        )
+        return response.success
+
+    def set_render_settings(
+        self,
+        backface_culling: bool | None = None,
+        use_lightmap: bool | None = None,
+        show_cursor: bool | None = None,
+    ) -> bool:
+        """Update render settings.
+
+        Args:
+            backface_culling: Enable/disable backface culling
+            use_lightmap: Enable/disable lightmap usage
+            show_cursor: Show/hide cursor
+
+        Returns:
+            True if updated successfully
+        """
+        params: dict[str, Any] = {}
+        if backface_culling is not None:
+            params["backface_culling"] = backface_culling
+        if use_lightmap is not None:
+            params["use_lightmap"] = use_lightmap
+        if show_cursor is not None:
+            params["show_cursor"] = show_cursor
+
+        if not params:
+            return True
+
+        response = self._client.send_command("set_render_settings", params)
+        return response.success
+
+    def set_camera_view(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        yaw: float | None = None,
+        pitch: float | None = None,
+        distance: float | None = None,
+    ) -> bool:
+        """Set viewport camera position and orientation.
+
+        Args:
+            x, y, z: Camera position
+            yaw: Camera yaw angle (radians)
+            pitch: Camera pitch angle (radians)
+            distance: Camera distance (for orbit mode)
+
+        Returns:
+            True if updated successfully
+        """
+        params: dict[str, Any] = {"position": {"x": x, "y": y, "z": z}}
+        if yaw is not None:
+            params["yaw"] = yaw
+        if pitch is not None:
+            params["pitch"] = pitch
+        if distance is not None:
+            params["distance"] = distance
+
+        response = self._client.send_command("set_camera_view", params)
+        return response.success
+
+    def add_door_hook(self, door_hook_data: dict) -> str | None:
+        """Add a door hook to the layout.
+
+        Args:
+            door_hook_data: Serialized LYTDoorHook data
+
+        Returns:
+            Blender object name if successful
+        """
+        response = self._client.send_command("add_door_hook", {"door_hook": door_hook_data})
+        if response.success:
+            return response.result
+        return None
+
+    def add_track(self, track_data: dict) -> str | None:
+        """Add a track to the layout.
+
+        Args:
+            track_data: Serialized LYTTrack data
+
+        Returns:
+            Blender object name if successful
+        """
+        response = self._client.send_command("add_track", {"track": track_data})
+        if response.success:
+            return response.result
+        return None
+
+    def add_obstacle(self, obstacle_data: dict) -> str | None:
+        """Add an obstacle to the layout.
+
+        Args:
+            obstacle_data: Serialized LYTObstacle data
+
+        Returns:
+            Blender object name if successful
+        """
+        response = self._client.send_command("add_obstacle", {"obstacle": obstacle_data})
+        if response.success:
+            return response.result
+        return None
+
+    def update_door_hook(self, object_name: str, properties: dict) -> bool:
+        """Update door hook properties.
+
+        Args:
+            object_name: Blender object name
+            properties: Properties to update
+
+        Returns:
+            True if updated successfully
+        """
+        response = self._client.send_command(
+            "update_door_hook",
+            {"name": object_name, "properties": properties},
+        )
+        return response.success
+
+    def update_track(self, object_name: str, properties: dict) -> bool:
+        """Update track properties.
+
+        Args:
+            object_name: Blender object name
+            properties: Properties to update
+
+        Returns:
+            True if updated successfully
+        """
+        response = self._client.send_command(
+            "update_track",
+            {"name": object_name, "properties": properties},
+        )
+        return response.success
+
+    def update_obstacle(self, object_name: str, properties: dict) -> bool:
+        """Update obstacle properties.
+
+        Args:
+            object_name: Blender object name
+            properties: Properties to update
+
+        Returns:
+            True if updated successfully
+        """
+        response = self._client.send_command(
+            "update_obstacle",
+            {"name": object_name, "properties": properties},
+        )
+        return response.success
+
+    def remove_lyt_element(self, object_name: str, element_type: str) -> bool:
+        """Remove a LYT element from the scene.
+
+        Args:
+            object_name: Blender object name
+            element_type: Type of element (room, door_hook, track, obstacle)
+
+        Returns:
+            True if removed successfully
+        """
+        response = self._client.send_command(
+            "remove_lyt_element",
+            {"name": object_name, "element_type": element_type},
+        )
         return response.success
 
 

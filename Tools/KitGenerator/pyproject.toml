@@ -90,8 +90,7 @@ where = ["src"]
 [tool.pyright]
 include = ["src"]
 extraPaths = [
-    "../../Libraries/PyKotor/src",
-    "../../Libraries/Utility/src"
+    "../../Libraries/PyKotor/src"
 ]
 pythonVersion = "3.8"
 typeCheckingMode = "basic"

@@ -174,7 +174,7 @@ jobs:
           TOOL="${{ github.event.inputs.tool }}"
           
           # Install base dependencies
-          pip install -e Libraries/PyKotor --quiet
+          pip install -e "Libraries/PyKotor[all]" --quiet
           
           case "$TOOL" in
             toolset)

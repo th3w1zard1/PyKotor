@@ -83,6 +83,37 @@ def __getattr__(name: str):
     if name in ("diff_files", "grep_in_file", "get_file_stats", "validate_file"):
         from pykotor.tools import utilities
         return getattr(utilities, name)
+    # Validation functions
+    if name in (
+        "check_txi_files",
+        "check_2da_file",
+        "get_module_referenced_resources",
+        "check_missing_resources_referenced",
+        "investigate_module_structure",
+        "validate_installation",
+    ):
+        from pykotor.tools import validation
+        return getattr(validation, name)
+    # Patching functions
+    if name in (
+        "PatchingConfig",
+        "patch_nested_gff",
+        "recurse_through_list",
+        "translate_locstring",
+        "convert_gff_game",
+        "process_translations",
+        "patch_resource",
+        "patch_and_save_noncapsule",
+        "patch_capsule_file",
+        "patch_erf_or_rim",
+        "patch_file",
+        "patch_folder",
+        "patch_install",
+        "is_kotor_install_dir",
+        "determine_input_path",
+    ):
+        from pykotor.tools import patching
+        return getattr(patching, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 if TYPE_CHECKING:
@@ -230,5 +261,28 @@ __all__ = [
     "grep_in_file",
     "get_file_stats",
     "validate_file",
+    # Validation functions (imported from validation module)
+    "check_txi_files",
+    "check_2da_file",
+    "get_module_referenced_resources",
+    "check_missing_resources_referenced",
+    "investigate_module_structure",
+    "validate_installation",
+    # Patching functions (imported from patching module)
+    "PatchingConfig",
+    "patch_nested_gff",
+    "recurse_through_list",
+    "translate_locstring",
+    "convert_gff_game",
+    "process_translations",
+    "patch_resource",
+    "patch_and_save_noncapsule",
+    "patch_capsule_file",
+    "patch_erf_or_rim",
+    "patch_file",
+    "patch_folder",
+    "patch_install",
+    "is_kotor_install_dir",
+    "determine_input_path",
 ]
 

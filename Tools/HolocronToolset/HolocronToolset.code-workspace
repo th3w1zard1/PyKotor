@@ -9,9 +9,6 @@
 		{
 			"path": "../../Libraries/PyKotorGL"
 		},
-		{
-			"path": "../../Libraries/Utility"
-		},
 	],
 	"launch": {
 	  "justMyCode": true,

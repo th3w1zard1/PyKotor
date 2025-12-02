@@ -8,6 +8,7 @@ import zipfile
 from copy import copy
 from dataclasses import dataclass
 from pathlib import Path
+import os
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any
 
@@ -433,7 +434,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.kitSelect.clear()
         self._kits, missing_files = load_kits("./kits")
 
-        if missing_files:
+        # In test/headless environments the missing-files dialog can interfere
+        # with automated runs (pytest-qt, CI).  Headless mode is indicated by
+        # Qt using the offscreen platform plugin; in that case we suppress the
+        # dialog entirely and rely on logging instead.
+        if missing_files and os.environ.get("QT_QPA_PLATFORM", "").lower() not in {"offscreen", "minimal"}:
             self._show_missing_files_dialog(missing_files)
 
         # Kits are deprecated and optional - modules provide the same functionality
@@ -587,7 +592,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         status_bar.showMessage(" | ".join(parts))
 
     def show_help_window(self):
-        window = HelpWindow(self, "./help/tools/2-mapBuilder.md")
+        window = HelpWindow(self, "./wiki/LYT-File-Format.md")
         window.setWindowIcon(self.windowIcon())
         window.show()
         window.activateWindow()
@@ -673,16 +678,29 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         """Show a dialog with information about missing kit files."""
         from toolset.gui.common.localization import translate as tr, trf
         
+        # Don't show dialog in frozen code (PyInstaller _MEIPASS)
+        if is_frozen():
+            return
+        
         if not missing_files:
             return
         
+        # Check if all missing files are PNGs (component images)
+        # If so, don't show the dialog
+        non_png_files = [f for f in missing_files if f[2] != "component image"]
+        if not non_png_files:
+            return
+        
+        # If there are non-PNG files missing, show all missing files (including PNGs)
+        filtered_files = missing_files
+        
         files_by_kit: dict[str, list[tuple[Path, str]]] = {}
-        for kit_name, file_path, file_type in missing_files:
+        for kit_name, file_path, file_type in filtered_files:
             if kit_name not in files_by_kit:
                 files_by_kit[kit_name] = []
             files_by_kit[kit_name].append((file_path, file_type))
         
-        file_count = len(missing_files)
+        file_count = len(filtered_files)
         kit_count = len(files_by_kit)
         kit_names = sorted(files_by_kit.keys())
         
@@ -958,8 +976,32 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     # =========================================================================
 
     def selected_component(self) -> KitComponent | None:
-        currentItem: QListWidgetItem | None = self.ui.componentList.currentItem()
-        return None if currentItem is None else currentItem.data(Qt.ItemDataRole.UserRole)
+        """Return the currently selected component from either kits or modules.
+
+        The renderer tracks the active cursor component; prefer that when
+        available so that module-derived components behave exactly like kit
+        components during placement.
+        """
+        renderer = self.ui.mapRenderer
+        if renderer.cursor_component is not None:
+            return renderer.cursor_component
+
+        # Fallback to the kits list selection for legacy behaviour.
+        kit_item: QListWidgetItem | None = self.ui.componentList.currentItem()
+        if kit_item is not None:
+            component = kit_item.data(Qt.ItemDataRole.UserRole)
+            if isinstance(component, KitComponent):
+                return component
+
+        # Finally, consider the modules list selection if present.
+        if hasattr(self.ui, "moduleComponentList"):
+            module_item: QListWidgetItem | None = self.ui.moduleComponentList.currentItem()
+            if module_item is not None:
+                component = module_item.data(Qt.ItemDataRole.UserRole)
+                if isinstance(component, KitComponent):
+                    return component
+
+        return None
 
     def set_warp_point(self, x: float, y: float, z: float):
         self._map.warp_point = Vector3(x, y, z)
@@ -1029,8 +1071,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 self._place_new_room(component)
                 if Qt.Key.Key_Shift not in keys:
                     renderer.set_cursor_component(None)
+                    # Clear selection from both kits and modules lists so the
+                    # cursor cleanly exits placement mode regardless of source.
                     self.ui.componentList.clearSelection()
                     self.ui.componentList.setCurrentItem(None)
+                    if hasattr(self.ui, "moduleComponentList"):
+                        self.ui.moduleComponentList.clearSelection()
+                        self.ui.moduleComponentList.setCurrentItem(None)
                 return  # Exit after placing room
         
         # Not in placement mode - handle room selection and dragging
@@ -1212,16 +1259,16 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def keyPressEvent(self, e: QKeyEvent):  # type: ignore[reportIncompatibleMethodOverride]
         # Handle toggle keys
-        if e.key() == Qt.Key.Key_G and not e.modifiers():
+        if e.key() == Qt.Key.Key_G and not bool(e.modifiers()):
             self.ui.snapToGridCheck.setChecked(not self.ui.snapToGridCheck.isChecked())
-        elif e.key() == Qt.Key.Key_H and not e.modifiers():
+        elif e.key() == Qt.Key.Key_H and not bool(e.modifiers()):
             self.ui.snapToHooksCheck.setChecked(not self.ui.snapToHooksCheck.isChecked())
-        elif e.key() == Qt.Key.Key_R and not e.modifiers():
+        elif e.key() == Qt.Key.Key_R and not bool(e.modifiers()):
             # Quick rotate selected by rotation snap amount
             rooms = self.ui.mapRenderer.selected_rooms()
             if rooms:
                 self._rotate_selected(self.ui.rotSnapSpin.value())
-        elif e.key() == Qt.Key.Key_F and not e.modifiers():
+        elif e.key() == Qt.Key.Key_F and not bool(e.modifiers()):
             # Quick flip
             rooms = self.ui.mapRenderer.selected_rooms()
             if rooms:
@@ -1330,14 +1377,14 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 # =============================================================================
 
 class IndoorMapRenderer(QWidget):
-    sig_mouse_moved = QtCore.Signal(object, object, object, object)
-    sig_mouse_scrolled = QtCore.Signal(object, object, object)
-    sig_mouse_released = QtCore.Signal(object, object, object)
-    sig_mouse_pressed = QtCore.Signal(object, object, object)
-    sig_mouse_double_clicked = QtCore.Signal(object, object, object)
-    sig_rooms_moved = QtCore.Signal(object, object, object)  # rooms, old_positions, new_positions
-    sig_warp_moved = QtCore.Signal(object, object)  # old_position, new_position
-    sig_marquee_select = QtCore.Signal(object, object)  # rooms selected, additive
+    sig_mouse_moved = QtCore.Signal(object, object, object, object)  # pyright: ignore[reportPrivateImportUsage]
+    sig_mouse_scrolled = QtCore.Signal(object, object, object)  # pyright: ignore[reportPrivateImportUsage]
+    sig_mouse_released = QtCore.Signal(object, object, object)  # pyright: ignore[reportPrivateImportUsage]
+    sig_mouse_pressed = QtCore.Signal(object, object, object)  # pyright: ignore[reportPrivateImportUsage]
+    sig_mouse_double_clicked = QtCore.Signal(object, object, object)  # pyright: ignore[reportPrivateImportUsage]
+    sig_rooms_moved = QtCore.Signal(object, object, object)  # rooms, old_positions, new_positions  # pyright: ignore[reportPrivateImportUsage]
+    sig_warp_moved = QtCore.Signal(object, object)  # old_position, new_position  # pyright: ignore[reportPrivateImportUsage]
+    sig_marquee_select = QtCore.Signal(object, object)  # rooms selected, additive  # pyright: ignore[reportPrivateImportUsage]
 
     def __init__(self, parent: QWidget):
         super().__init__(parent)

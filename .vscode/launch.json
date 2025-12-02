@@ -52,7 +52,7 @@
             "module": "toolset",
             "cwd": "${workspaceFolder}/Tools/HolocronToolset/src/",
             "env": {
-                "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder};${workspaceFolder}/Libraries/PyKotor/src;${workspaceFolder}/Libraries/PyKotorGL/src;${workspaceFolder}/Libraries/Utility/src;${workspaceFolder}/Tools/HoloPazaak/src;${workspaceFolder}/Tools/MDLDecompile/src;${workspaceFolder}/Tools/HolocronToolset/src",
+                "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder};${workspaceFolder}/Libraries/PyKotor/src;${workspaceFolder}/Libraries/PyKotorGL/src;${workspaceFolder}/Tools/HoloPazaak/src;${workspaceFolder}/Tools/MDLDecompile/src;${workspaceFolder}/Tools/HolocronToolset/src",
                 "K1_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor",
                 "K2_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II"
             },
@@ -73,7 +73,7 @@
             "module": "holopazaak",
             "cwd": "${workspaceFolder}/Tools/HoloPazaak/src/",
             "env": {
-                "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder};${workspaceFolder}/Libraries/PyKotor/src;${workspaceFolder}/Libraries/PyKotorGL/src;${workspaceFolder}/Libraries/Utility/src;${workspaceFolder}/Tools/HoloPazaak/src;${workspaceFolder}/Tools/MDLDecompile/src;${workspaceFolder}/Tools/HolocronToolset/src",
+                "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder};${workspaceFolder}/Libraries/PyKotor/src;${workspaceFolder}/Libraries/PyKotorGL/src;${workspaceFolder}/Tools/HoloPazaak/src;${workspaceFolder}/Tools/MDLDecompile/src;${workspaceFolder}/Tools/HolocronToolset/src",
                 "K1_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor",
                 "K2_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II"
             },
@@ -114,7 +114,7 @@
             "module": "holopatcher",
             "console": "integratedTerminal",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/Libraries/PyKotor/src;${workspaceFolder}/Libraries/Utility/src;${env:PYTHONPATH}",
+                "PYTHONPATH": "${workspaceFolder}/Libraries/PyKotor/src;${env:PYTHONPATH}",
                 "K1_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor",
                 "K2_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II"
             },
@@ -131,7 +131,7 @@
             "cwd": "${workspaceFolder}/Tools/BatchPatcher/src/",
             "console": "integratedTerminal",
             "env": {
-                "PYTHONPATH": "${workspaceFolder}/Libraries/PyKotor/src;${workspaceFolder}/Libraries/Utility/src;${env:PYTHONPATH}",
+                "PYTHONPATH": "${workspaceFolder}/Libraries/PyKotor/src;${env:PYTHONPATH}",
                 "K1_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor",
                 "K2_PATH": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II"
             },

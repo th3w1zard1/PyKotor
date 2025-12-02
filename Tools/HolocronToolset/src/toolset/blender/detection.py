@@ -663,6 +663,7 @@ def launch_blender_with_ipc(
     module_path: Path | str | None = None,
     blend_file: Path | str | None = None,
     background: bool = False,
+    capture_output: bool = False,
 ) -> subprocess.Popen | None:
     """Launch Blender with IPC server enabled.
 
@@ -701,6 +702,12 @@ def launch_blender_with_ipc(
         kwargs: dict = {}
         if sys.platform == "win32":
             kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        if capture_output:
+            kwargs["stdout"] = subprocess.PIPE
+            kwargs["stderr"] = subprocess.STDOUT
+            kwargs["text"] = True
+            kwargs["encoding"] = "utf-8"
+            kwargs["errors"] = "replace"
 
         process = subprocess.Popen(cmd, **kwargs)
         RobustLogger().info(f"Launched Blender (PID: {process.pid}) with IPC on port {ipc_port}")
@@ -730,11 +737,31 @@ def _generate_ipc_startup_script(
 import sys
 import traceback
 
+def _holocron_enable_kotor_addon():
+    try:
+        import addon_utils
+        addon_utils.enable("io_scene_kotor", default_set=True, persistent=True)
+        print("[HolocronToolset] io_scene_kotor add-on enabled")
+        return True
+    except Exception as exc:
+        print(f"[HolocronToolset] Failed to enable io_scene_kotor add-on: {{exc}}")
+        traceback.print_exc()
+        return False
+
 # Try to import and start IPC server
 try:
-    from io_scene_kotor.ipc import start_ipc_server
-    start_ipc_server(port={port}, installation_path={escape_path(installation_path)})
-    print(f"[HolocronToolset] IPC server started on port {port}")
+    if _holocron_enable_kotor_addon():
+        from io_scene_kotor.ipc import start_ipc_server
+        server = start_ipc_server(port={port}, installation_path={escape_path(installation_path)})
+        try:
+            from io_scene_kotor.ipc.sync import start_scene_monitor
+            start_scene_monitor(server)
+        except Exception as monitor_exc:
+            print(f"[HolocronToolset] Failed to start Blender scene monitor: {{monitor_exc}}")
+            traceback.print_exc()
+        print(f"[HolocronToolset] IPC server started on port {port}")
+    else:
+        print("[HolocronToolset] IPC server was not started because the add-on could not be enabled.")
 except ImportError as e:
     print(f"[HolocronToolset] Warning: Could not start IPC server: {{e}}")
     print("[HolocronToolset] kotorblender IPC module not found. Make sure kotorblender is properly installed.")

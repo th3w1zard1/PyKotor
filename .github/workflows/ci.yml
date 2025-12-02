@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install --upgrade pip setuptools wheel build
-          uv pip install -e Libraries/PyKotor
+          uv pip install -e "Libraries/PyKotor[all]"
           uv pip install -e "Libraries/PyKotorGL[moderngl]"
           uv pip install -e Libraries/PyKotorFont
           uv pip install -e .[dev]

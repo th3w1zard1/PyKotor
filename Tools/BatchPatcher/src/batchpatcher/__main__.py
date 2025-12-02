@@ -4,13 +4,11 @@ from __future__ import annotations
 import concurrent.futures
 import os
 import pathlib
-import platform
 import sys
 import tempfile
 import tkinter as tk
 import traceback
 
-from contextlib import suppress
 from copy import deepcopy
 from threading import Thread
 from tkinter import (
@@ -36,12 +34,9 @@ if getattr(sys, "frozen", False) is False:
     pykotor_font_path = absolute_file_path.parents[4] / "Libraries" / "PyKotorFont" / "src" / "pykotor"
     if pykotor_font_path.is_dir():
         add_sys_path(pykotor_font_path.parent)
-    pykotor_path = absolute_file_path.parents[4] / "Libraries" / "PyKotor" / "src" / "pykotor"
+    pykotor_path = absolute_file_path.parents[4] / "Libraries" / "PyKotor" / "src"
     if pykotor_path.is_dir():
-        add_sys_path(pykotor_path.parent)
-    utility_path = absolute_file_path.parents[4] / "Libraries" / "Utility" / "src" / "utility"
-    if utility_path.is_dir():
-        add_sys_path(utility_path.parent)
+        add_sys_path(pykotor_path)  # This adds both pykotor and utility namespaces
 
 
 from pathlib import Path, PurePath
@@ -94,6 +89,7 @@ from pykotor.tools.misc import is_any_erf_type_file, is_capsule_file
 from pykotor.tools.path import CaseAwarePath, find_kotor_paths_from_default
 from pykotor.tslpatcher.logger import LogType, PatchLog, PatchLogger
 from utility.error_handling import universal_simplify_exception
+from utility.fonts import get_font_paths  # Font path utilities (general-purpose, not KOTOR-specific)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -165,49 +161,6 @@ class Globals:
 
 
 SCRIPT_GLOBALS = Globals()
-
-
-def get_font_paths_linux() -> list[Path]:
-    font_dirs: list[Path] = [Path("/usr/share/fonts/"), Path("/usr/local/share/fonts/"), Path.home() / ".fonts"]
-    return [font for font_dir in font_dirs for font in font_dir.glob("**/*.ttf")]
-
-
-def get_font_paths_macos() -> list[Path]:
-    font_dirs: list[Path] = [Path("/Library/Fonts/"), Path("/System/Library/Fonts/"), Path.home() / "Library/Fonts"]
-    return [font for font_dir in font_dirs for font in font_dir.glob("**/*.ttf")]
-
-
-def get_font_paths_windows() -> list[Path]:
-    import winreg
-
-    font_registry_path = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
-    fonts_dir = Path("C:/Windows/Fonts")
-    font_paths = set()
-
-    with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, font_registry_path) as key:
-        for i in range(winreg.QueryInfoKey(key)[1]):  # Number of values in the key
-            value: tuple[str, Any, int] = winreg.EnumValue(key, i)
-            font_path: Path = fonts_dir / value[1]
-            if font_path.suffix.lower() == ".ttf":  # Filtering for .ttf files
-                font_paths.add(font_path)
-    for file in fonts_dir.rglob("*"):
-        if file.suffix.lower() == ".ttf" and file.is_file():
-            font_paths.add(file)
-
-    return list(font_paths)
-
-
-def get_font_paths() -> list[Path]:
-    with suppress(Exception):
-        os_str = platform.system()
-        if os_str == "Linux":
-            return get_font_paths_linux()
-        if os_str == "Darwin":
-            return get_font_paths_macos()
-        if os_str == "Windows":
-            return get_font_paths_windows()
-    msg = "Unsupported operating system"
-    raise NotImplementedError(msg)
 
 
 def relative_path_from_to(

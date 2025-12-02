@@ -4,6 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
+py-modules = ["resources_rc"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -13,11 +14,11 @@ exclude = ["plugin*", "*.plugin*", "*plugin*", "plugin"]
 [project]
 name = "holocrontoolset"
 description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
-version = "4.0.0a1"
+version = "4.0.0a5"
 requires-python = ">= 3.8"
 dependencies = [
-  "pykotor>=1.8.0",
-  "pykotorgl[moderngl]>=1.8.0",
+  "pykotor>=2.0.0",
+  "pykotorgl[moderngl]>=2.0.0",
   "certifi>=2021.10.8",
   "idna>=3.11",
   "jsmin>=3.0.1",
@@ -37,6 +38,7 @@ dependencies = [
   "jsonpickle>=4.1.1",
   "send2trash>=1.8.3",
   "comtypes>=1.4.0; sys_platform == \"win32\"",
+  "PyYAML>=6.0",
 ]
 authors = [{ name = "NickHugi" }]
 maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
@@ -98,7 +100,7 @@ Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 # Optional Poetry configuration for those who prefer it
 [tool.poetry]
 name = "holocrontoolset"
-version = "4.0.0a1"
+version = "4.0.0a5"
 description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
@@ -106,8 +108,8 @@ packages = [{ include = "toolset", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
-pykotorgl = { version = "^1.8.0", extras = ["moderngl"] }
+pykotor = "^2.0.0"
+pykotorgl = { version = "^2.0.0", extras = ["moderngl"] }
 idna = "*"
 urllib3 = "~1.26"
 Markdown = ">=3.3,<3.6"

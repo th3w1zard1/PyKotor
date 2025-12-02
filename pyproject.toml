@@ -217,7 +217,6 @@ extraPaths = [
     "Libraries/PyKotor/src",
     "Libraries/PyKotorGL/src",
     "Libraries/PyKotorFont/src",
-    "Libraries/Utility/src",
     "Tools/HolocronToolset/src",
     "Tools/BatchPatcher/src",
     "Tools/HoloPatcher/src",
@@ -268,7 +267,6 @@ src = [
     "Libraries/PyKotor/src",
     "Libraries/PyKotorGL/src",
     "Libraries/PyKotorFont/src",
-    "Libraries/Utility/src",
     "Tools/HolocronToolset/src",
     "Tools/BatchPatcher/src",
     "Tools/HoloPatcher/src",
@@ -477,7 +475,6 @@ mypy_path = [
     "Libraries/PyKotor/src",
     "Libraries/PyKotorGL/src",
     "Libraries/PyKotorFont/src",
-    "Libraries/Utility/src",
     "Tools/HolocronToolset/src",
     "Tools/BatchPatcher/src",
     "Tools/HoloPatcher/src",
@@ -502,6 +499,8 @@ markers = [
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
 ]
 addopts = "-ra -q"
+# NOTE: xvfb settings are commented out - GL/OpenGL tests require a real display
+# and cannot run in headless/offscreen mode. Do not enable xvfb for GL tests.
 #xvfb_width = 1920
 #xvfb_height = 1080
 #xvfb_colordepth = 24

@@ -65,6 +65,15 @@ class KitDoor:
         self.width: float = width
         self.height: float = height
 
+        # Primary door blueprint alias.
+        # Some existing tooling assumes a single ``utd`` attribute; expose
+        # ``utd`` as the K1-side blueprint for compatibility.
+        # This class is specific to Holocron Toolset and does not mirror any
+        # external engine implementation directly, but the shape is similar to
+        # the door handling used in ``vendor/reone/src/door.*`` where a
+        # dominant blueprint is treated as the canonical one.
+        self.utd: UTD = utd_k1
+
 
 class MDLMDXTuple:
     def __init__(

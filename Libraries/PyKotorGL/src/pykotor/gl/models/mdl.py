@@ -255,6 +255,10 @@ class Mesh:
         self.vertex_data: bytearray = vertex_data
         self.mdx_size: int = block_size
         self.mdx_vertex: int = vertex_offset
+        self.mdx_texture: int = texture_offset
+        self.mdx_lightmap: int = lightmap_offset
+        self._index_data: bytes = bytes(element_data)
+        self._vertex_blob_cache: bytes | None = None
 
         self._vao: int = glGenVertexArrays(1)
         self._vbo: int = glGenBuffers(1)
@@ -306,6 +310,59 @@ class Mesh:
 
         glBindVertexArray(self._vao)
         glDrawElements(GL_TRIANGLES, self._face_count, GL_UNSIGNED_SHORT, None)
+
+    def vertex_blob(self) -> bytes:
+        """Generate vertex blob for ModernGL rendering.
+        
+        Returns a bytes object containing interleaved vertex data:
+        - 3 floats for position (x, y, z)
+        - 2 floats for diffuse UV (u, v)
+        - 2 floats for lightmap UV (u, v)
+        """
+        if self._vertex_blob_cache is not None:
+            return self._vertex_blob_cache
+
+        import numpy as np
+
+        vertex_count = len(self.vertex_data) // self.mdx_size
+        if vertex_count == 0:
+            self._vertex_blob_cache = b""
+            return self._vertex_blob_cache
+
+        blob = np.zeros((vertex_count, 7), dtype=np.float32)
+        positions = np.frombuffer(
+            self.vertex_data,
+            dtype="<f4",
+            count=vertex_count * 3,
+            offset=self.mdx_vertex,
+        ).reshape(vertex_count, 3)
+        blob[:, 0:3] = positions
+
+        if self.mdx_texture >= 0:
+            diffuse = np.frombuffer(
+                self.vertex_data,
+                dtype="<f4",
+                count=vertex_count * 2,
+                offset=self.mdx_texture,
+            ).reshape(vertex_count, 2)
+            blob[:, 3:5] = diffuse
+
+        if self.mdx_lightmap >= 0:
+            lightmap = np.frombuffer(
+                self.vertex_data,
+                dtype="<f4",
+                count=vertex_count * 2,
+                offset=self.mdx_lightmap,
+            ).reshape(vertex_count, 2)
+            blob[:, 5:7] = lightmap
+
+        self._vertex_blob_cache = blob.tobytes()
+        return self._vertex_blob_cache
+
+    @property
+    def index_data(self) -> bytes:
+        """Return the index data for the mesh."""
+        return self._index_data
 
 
 class Cube:

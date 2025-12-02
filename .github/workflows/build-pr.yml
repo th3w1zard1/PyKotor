@@ -15,7 +15,6 @@ on:
       - 'Libraries/PyKotor/**'
       - 'Libraries/PyKotorGL/**'
       - 'Libraries/PyKotorFont/**'
-      - 'Libraries/Utility/**'
       # Trigger on compile script changes
       - 'compile/**'
   workflow_dispatch:

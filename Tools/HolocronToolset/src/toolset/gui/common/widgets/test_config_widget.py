@@ -18,6 +18,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from toolset.gui.common.localization import translate as tr
+
 
 class TestConfigWidget(QWidget):
     """Widget for configuring test parameters before running a script test."""
@@ -75,7 +77,6 @@ class TestConfigWidget(QWidget):
         
         # GetLastAttacker() mock
         self.last_attacker_edit = QLineEdit(self)
-        from toolset.gui.common.localization import translate as tr
         self.last_attacker_edit.setPlaceholderText(tr("OBJECT_INVALID (default: 0)"))
         self.last_attacker_edit.setText("0")
         mock_layout.addRow(tr("GetLastAttacker():"), self.last_attacker_edit)
@@ -125,7 +126,6 @@ class TestConfigWidget(QWidget):
         """
         self._entry_point = entry_point
         if entry_point == "StartingConditional":
-            from toolset.gui.common.localization import translate as tr
             self.entry_point_label.setText(tr("Entry Point: StartingConditional()"))
             # Hide event configuration for StartingConditional
             self.event_combo.setEnabled(False)
@@ -189,7 +189,6 @@ class TestConfigDialog(QDialog):
     
     def __init__(self, entry_point: str = "main", parent: QWidget | None = None):
         super().__init__(parent)
-        from toolset.gui.common.localization import translate as tr
         self.setWindowTitle(tr("Configure Test Run"))
         self.setMinimumWidth(400)
         

@@ -89,6 +89,7 @@ class ModernGLMesh:
     mesh_id: int
     vbo: moderngl.Buffer
     ibo: moderngl.Buffer
+    position_vbo: moderngl.Buffer | None  # Position-only VBO for plain shader
     vao_cache: dict[int, moderngl.VertexArray]
 
     @classmethod
@@ -98,18 +99,36 @@ class ModernGLMesh:
             vertex_blob = np.zeros((1, 7), dtype=np.float32).tobytes()
         vbo = ctx.buffer(vertex_blob)
         ibo = ctx.buffer(mesh.index_data)
-        return cls(ctx=ctx, mesh_id=id(mesh), vbo=vbo, ibo=ibo, vao_cache={})
+        
+        # Extract position-only data for plain shader (first 3 floats of each vertex)
+        vertex_array = np.frombuffer(vertex_blob, dtype=np.float32).reshape(-1, 7)
+        position_data = vertex_array[:, :3].astype(np.float32).tobytes()
+        position_vbo = ctx.buffer(position_data)
+        
+        return cls(ctx=ctx, mesh_id=id(mesh), vbo=vbo, ibo=ibo, position_vbo=position_vbo, vao_cache={})
 
     def vao(self, program: moderngl.Program) -> moderngl.VertexArray:
         key = id(program)
         vao = self.vao_cache.get(key)
         if vao is None:
-            vao = self.ctx.vertex_array(
-                program,
-                [(self.vbo, "3f 2f 2f", "in_position", "in_diffuse_uv", "in_lightmap_uv")],
-                index_buffer=self.ibo,
-                index_element_size=2,
-            )
+            # Try full format first (position + UVs) for main shader
+            try:
+                vao = self.ctx.vertex_array(
+                    program,
+                    [(self.vbo, "3f 2f 2f", "in_position", "in_diffuse_uv", "in_lightmap_uv")],
+                    index_buffer=self.ibo,
+                    index_element_size=2,
+                )
+            except (KeyError, ValueError):
+                # Plain shader only has position, use position-only VBO
+                if self.position_vbo is None:
+                    raise RuntimeError("Position VBO not available for plain shader")
+                vao = self.ctx.vertex_array(
+                    program,
+                    [(self.position_vbo, "3f", "in_position")],
+                    index_buffer=self.ibo,
+                    index_element_size=2,
+                )
             self.vao_cache[key] = vao
         return vao
 
@@ -166,6 +185,9 @@ class ModernGLRenderer:
     def render(self, scene: Scene) -> None:
         from pykotor.gl.scene.scene_cache import SceneCache  # local import to avoid cycle
 
+        # Poll for completed async resources (non-blocking) - CRITICAL for texture loading
+        scene.poll_async_resources()
+        
         SceneCache.build_cache(scene)
         if scene._objects_dirty or scene._cached_regular_objects is None:
             scene._rebuild_object_caches()

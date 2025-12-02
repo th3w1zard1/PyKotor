@@ -5,6 +5,8 @@ import logging
 import sys
 from typing import TYPE_CHECKING, ClassVar
 
+from loggerplus import RobustLogger  # type: ignore[import-untyped]
+
 if TYPE_CHECKING:
     from logging import Logger
 
@@ -49,7 +51,7 @@ class ColoredFormatter(logging.Formatter):
         return f"[{levelname}] {record.getMessage()}"
 
 
-def setup_logger(level: str = "INFO", use_color: bool = True) -> Logger:
+def setup_logger(level: str = "INFO", use_color: bool = True) -> RobustLogger:
     """Setup and configure the logger.
 
     Args:
@@ -59,9 +61,9 @@ def setup_logger(level: str = "INFO", use_color: bool = True) -> Logger:
 
     Returns:
     -------
-        Configured logger instance
+        Configured logger instance (RobustLogger)
     """
-    logger = logging.getLogger("kotorcli")
+    logger: RobustLogger = logging.getLogger("kotorcli")  # type: ignore[assignment]
     logger.setLevel(getattr(logging, level.upper(), logging.INFO))
 
     # Remove existing handlers

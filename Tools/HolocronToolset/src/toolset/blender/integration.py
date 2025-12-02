@@ -8,6 +8,7 @@ and Indoor Map Builder.
 from __future__ import annotations
 
 import subprocess
+import threading
 
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -20,6 +21,15 @@ from toolset.blender import BlenderInfo, launch_blender_with_ipc
 from toolset.blender.commands import BlenderEditorController, BlenderEditorMode, get_blender_controller
 from toolset.blender.detection import get_blender_settings
 from toolset.blender.ipc_client import ConnectionState
+
+from pykotor.resource.generics.git import (
+    GITCamera,
+    GITCreature,
+    GITDoor,
+    GITPlaceable,
+    GITStore,
+    GITWaypoint,
+)
 
 if TYPE_CHECKING:
     from pykotor.resource.formats.bwm import BWM
@@ -49,6 +59,7 @@ class BlenderEditorMixin:
     _blender_process: subprocess.Popen | None = None
     _blender_enabled: bool = False
     _blender_connection_timer: QTimer | None = None
+    _blender_output_thread: threading.Thread | None = None
 
     def _init_blender_integration(self, mode: BlenderEditorMode):
         """Initialize Blender integration.
@@ -60,6 +71,7 @@ class BlenderEditorMixin:
         self._blender_controller = None
         self._blender_process = None
         self._blender_enabled = False
+        self._blender_output_thread = None
 
         # Setup connection monitoring timer
         self._blender_connection_timer = QTimer()
@@ -116,6 +128,7 @@ class BlenderEditorMixin:
             blender_info,
             ipc_port=settings.ipc_port,
             installation_path=str(installation_path) if installation_path else None,
+            capture_output=True,
         )
 
         if self._blender_process is None:
@@ -128,6 +141,8 @@ class BlenderEditorMixin:
 
         # Wait for Blender to start and connect
         self._blender_enabled = True
+        if self._blender_process.stdout is not None:
+            self._start_blender_output_listener()
         self._connect_to_blender(lyt, git, walkmeshes, module_root, installation_path)
 
         return True
@@ -154,6 +169,13 @@ class BlenderEditorMixin:
         self._blender_controller.on_state_change(self._on_blender_state_change)
         self._blender_controller.on_selection_changed(self._on_blender_selection_changed)
         self._blender_controller.on_transform_changed(self._on_blender_transform_changed)
+        self._blender_controller.on_context_menu_requested(self._on_blender_context_menu_requested)
+        self._blender_controller.on_instance_changed(self._on_blender_instance_changed)
+        self._blender_controller.on_instance_updated(self._on_blender_instance_updated)
+        
+        # Register material/texture change handler
+        if hasattr(self._blender_controller, 'on_material_changed'):
+            self._blender_controller.on_material_changed(self._on_blender_material_changed)
 
         # Start connection attempts
         self._connection_attempts = 0
@@ -185,6 +207,7 @@ class BlenderEditorMixin:
                 "Please make sure Blender started correctly and kotorblender is installed.",
             )
             self.stop_blender_mode()
+            self._on_blender_connection_failed()
             return
 
         # Attempt connection
@@ -198,13 +221,17 @@ class BlenderEditorMixin:
         if self._blender_controller is None:
             return
 
-        if self._pending_git is None and self._pending_lyt is None:
+        if self._pending_git is None or self._pending_lyt is None:
+            RobustLogger().warning("Cannot load Blender session without both LYT and GIT data")
             return
+
+        pending_git = self._pending_git
+        pending_lyt = self._pending_lyt
 
         success = self._blender_controller.load_module(
             mode=self._blender_mode,
-            lyt=self._pending_lyt,
-            git=self._pending_git,
+            lyt=pending_lyt,
+            git=pending_git,
             walkmeshes=self._pending_walkmeshes,
             module_root=self._pending_module_root,
             installation_path=self._pending_installation_path,
@@ -237,6 +264,7 @@ class BlenderEditorMixin:
             except subprocess.TimeoutExpired:
                 self._blender_process.kill()
             self._blender_process = None
+        self._blender_output_thread = None
 
         self._blender_enabled = False
         self._on_blender_mode_stopped()
@@ -269,12 +297,12 @@ class BlenderEditorMixin:
         )
 
         # Update rotation if applicable
-        if hasattr(instance, "bearing"):
+        if isinstance(instance, (GITCreature, GITDoor, GITPlaceable, GITStore, GITWaypoint)):
             self._blender_controller.update_instance_rotation(
                 instance,
                 bearing=instance.bearing,
             )
-        elif hasattr(instance, "orientation"):
+        elif isinstance(instance, GITCamera):
             ori = instance.orientation
             self._blender_controller.update_instance_rotation(
                 instance,
@@ -377,6 +405,60 @@ class BlenderEditorMixin:
         Override this to perform cleanup.
         """
         pass
+
+    def _on_blender_context_menu_requested(self, instance_ids: list[int]):
+        """Handle context menu requests from Blender selections."""
+        RobustLogger().debug(f"Blender context menu requested for {len(instance_ids)} instances")
+
+    def _on_blender_instance_changed(self, action: str, payload: dict):
+        """Handle instance add/remove notifications from Blender."""
+        RobustLogger().debug(f"Blender instance change action={action} payload_keys={list(payload.keys())}")
+
+    def _on_blender_instance_updated(self, instance_id: int, properties: dict):
+        """Handle granular property updates streamed from Blender."""
+        RobustLogger().debug(f"Blender updated instance={instance_id} props={list(properties.keys())}")
+
+    def _on_blender_connection_failed(self):
+        """Hook invoked when IPC connection retries are exhausted."""
+        pass
+
+    def _on_blender_material_changed(self, payload: dict):
+        """Handle material/texture changes from Blender.
+        
+        Override this to update textures/models in the toolset.
+        
+        Args:
+            payload: Event payload containing:
+                - object_name: Blender object name
+                - material_slot: Material slot index
+                - material: Material data (name, textures, etc.)
+                - model_name: KotOR model name (if applicable)
+        """
+        RobustLogger().debug(f"Blender material changed: {payload.get('object_name')} slot={payload.get('material_slot')}")
+
+    def _start_blender_output_listener(self):
+        """Start background thread that relays Blender stdout/stderr."""
+
+        process = self._blender_process
+        if process is None or process.stdout is None:
+            return
+        stdout_pipe = process.stdout
+
+        def _pump():
+            try:
+                for line in stdout_pipe:
+                    if not line:
+                        break
+                    self._on_blender_output(line.rstrip("\n"))
+            except Exception as exc:  # noqa: BLE001
+                RobustLogger().debug(f"Blender output reader stopped: {exc}")
+
+        self._blender_output_thread = threading.Thread(target=_pump, name="BlenderIPCOutput", daemon=True)
+        self._blender_output_thread.start()
+
+    def _on_blender_output(self, line: str):
+        """Handle stdout lines emitted by the Blender process."""
+        RobustLogger().debug(f"[Blender] {line}")
 
 
 def check_blender_and_ask(

@@ -4,9 +4,9 @@
 
 When creating ANY new `.md` files, always follow these guidelines:
 
+- Always place within `docs`
 - Never report on progression (changes and what still remains to be done).
 - Exclusively provide public-facing documentation, something an end user will need to read if they want to either develop for PyKotor or work with it.
-- All documentation must go into the root-level `./docs` folder.
 
 Please do not create .md documentation unless it delivers public-facing information or authoritative gameplay/platform references that an end user or developer genuinely needs for PyKotor or the games themselves.
 
@@ -32,6 +32,7 @@ Please do not create .md documentation unless it delivers public-facing informat
 **IMPORTANT**: Always run tests with a timeout to prevent indefinite hangs. Use `.venv_3.13` virtual environment.
 
 **PowerShell pattern for tests with timeout (2 minutes default):**
+
 ```powershell
 . .\.venv_3.13\Scripts\Activate.ps1
 $proc = Start-Process -FilePath "python" -ArgumentList "-m", "pytest", "<test_path>", "-v", "--tb=short" -PassThru -NoNewWindow
@@ -39,6 +40,7 @@ if (-not $proc.WaitForExit(120000)) { $proc.Kill(); Write-Host "TEST TIMED OUT" 
 ```
 
 **For multiple tests or full test suites:**
+
 ```powershell
 . .\.venv_3.13\Scripts\Activate.ps1
 $proc = Start-Process -FilePath "python" -ArgumentList "-m", "pytest", "tests/test_utility/", "-v", "--tb=line" -PassThru -NoNewWindow
@@ -46,6 +48,7 @@ if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TEST TIMED OUT a
 ```
 
 **Key rules:**
+
 - Never run tests without a timeout - Qt/GUI tests can hang indefinitely
 - Use `Start-Process` with `-PassThru` and `WaitForExit(milliseconds)` for timeout control
 - Kill the process if it times out: `$proc.Kill()`
@@ -73,7 +76,10 @@ Relevance to pykotor means a few different things. All relevant submodules shoul
 
 ### Codebase Structure
 
-- Libraries contains shared code, structured `Libraries/<project_name>/src/pykotor/<short_pythonic_module_name>/__init__.py`. `pykotor` should exclusively be the only namespace module (meaning does NOT contain a `__init__.py`).
+- Libraries contains shared code:
+  - `Libraries/PyKotor/src/pykotor/` should contain **ONLY KOTOR-specific code**. This includes game format parsers, resource manipulation, installation handling, and any functionality directly related to the Knights of the Old Republic games.
+  - `Libraries/PyKotor/src/utility/` should contain **general-purpose utility functions** that are not specific to KOTOR. Examples include font path discovery, cross-platform file operations, UI helpers, and other reusable utilities that could be used in any project.
+  - Structure: `Libraries/<project_name>/src/<namespace>/<short_pythonic_module_name>/__init__.py`. For PyKotor, the namespace is `pykotor` (which does NOT contain a `__init__.py`) for KOTOR-specific code, and `utility` for general-purpose utilities.
 - Tools contains public-facing projects and apps, structured `Tools/<project_name>/src/<short_pythonic_module_name>/__init__.py`. Everything in here must have implementations in ./compile and .github/workflows for their releases. A config.py will define all of the versioning information, see existing examples for e.g. holopatcher and holocron toolset.
 - `./compile` contains powershell scripts designed to pyinstaller a specific Tool to executable binary. Everything and anything in `./Tools` should be provided in `./compile`.
 - `./dist` is the intended output directory for compiled binaries

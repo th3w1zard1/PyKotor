@@ -28,10 +28,14 @@ if not getattr(sys, "frozen", False):
     if kotorcli_path.exists():
         update_sys_path(kotorcli_path.parent)
 
-from kotorcli.commands import (
+from kotorcli.commands import (  # type: ignore[import-not-found, module-not-found]
     cmd_2da2csv,
     cmd_assemble,
+    cmd_batch_patch,
     cmd_cat,
+    cmd_check_2da,
+    cmd_check_missing_resources,
+    cmd_check_txi,
     cmd_compile,
     cmd_config,
     cmd_convert,
@@ -46,6 +50,7 @@ from kotorcli.commands import (
     cmd_grep,
     cmd_init,
     cmd_install,
+    cmd_investigate_module,
     cmd_json2gff,
     cmd_key_pack,
     cmd_launch,
@@ -53,7 +58,11 @@ from kotorcli.commands import (
     cmd_list_archive,
     cmd_merge,
     cmd_model_convert,
+    cmd_module_resources,
     cmd_pack,
+    cmd_patch_file,
+    cmd_patch_folder,
+    cmd_patch_installation,
     cmd_search_archive,
     cmd_sound_convert,
     cmd_ssf2xml,
@@ -63,14 +72,16 @@ from kotorcli.commands import (
     cmd_tlk2xml,
     cmd_unpack,
     cmd_validate,
+    cmd_validate_installation,
     cmd_xml2gff,
     cmd_xml2ssf,
     cmd_xml2tlk,
 )
-from kotorcli.config import VERSION
-from kotorcli.logger import setup_logger
+from kotorcli.config import VERSION  # type: ignore[import-not-found, module-not-found]
+from kotorcli.logger import setup_logger  # type: ignore[import-not-found, module-not-found]
 
 if TYPE_CHECKING:
+    from argparse import ArgumentParser
     from collections.abc import Sequence
 
 
@@ -405,10 +416,116 @@ def create_parser() -> ArgumentParser:
     key_pack_parser.add_argument("--output", "-o", dest="output", required=True, help="Output KEY file")
     key_pack_parser.add_argument("--filter", help="Filter BIF files by pattern (supports wildcards)")
 
+    # Validation and investigation commands
+    check_txi_parser = subparsers.add_parser(
+        "check-txi",
+        help="Check if TXI files exist for specific textures",
+    )
+    check_txi_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
+    check_txi_parser.add_argument("--textures", "-t", nargs="+", required=True, help="Texture names to check (without extension)")
+
+    check_2da_parser = subparsers.add_parser(
+        "check-2da",
+        help="Check if a 2DA file exists in installation",
+    )
+    check_2da_parser.add_argument("--2da", dest="two_da_name", required=True, help="2DA file name (without extension)")
+    check_2da_parser.add_argument("--installation", "-i", dest="two_da_installation", required=True, help="Path to KOTOR installation")
+
+    validate_installation_parser = subparsers.add_parser(
+        "validate-installation",
+        help="Validate a KOTOR installation",
+    )
+    validate_installation_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
+    validate_installation_parser.add_argument("--check-essential", action="store_true", default=True, help="Check for essential game files")
+
+    investigate_module_parser = subparsers.add_parser(
+        "investigate-module",
+        help="Investigate a module's structure",
+    )
+    investigate_module_parser.add_argument("--module", "-m", required=True, help="Module name to investigate")
+    investigate_module_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
+    investigate_module_parser.add_argument("--json", help="Output results as JSON to file")
+    investigate_module_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed information")
+
+    check_missing_resources_parser = subparsers.add_parser(
+        "check-missing-resources",
+        help="Check if missing resources are referenced by module models",
+    )
+    check_missing_resources_parser.add_argument("--module", "-m", required=True, help="Module name to check")
+    check_missing_resources_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
+    check_missing_resources_parser.add_argument("--textures", "-t", nargs="+", help="Texture names to check")
+    check_missing_resources_parser.add_argument("--lightmaps", "-l", nargs="+", help="Lightmap names to check")
+
+    module_resources_parser = subparsers.add_parser(
+        "module-resources",
+        help="Get all resources referenced by a module's models",
+    )
+    module_resources_parser.add_argument("--module", "-m", required=True, help="Module name")
+    module_resources_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
+    module_resources_parser.add_argument("--output", "-o", help="Output JSON file")
+    module_resources_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed information")
+
+    # Batch patching commands
+    batch_patch_parser = subparsers.add_parser(
+        "batch-patch",
+        help="Batch patch files, folders, or installations",
+    )
+    batch_patch_parser.add_argument("--path", "-p", required=True, help="Path to file, folder, or installation")
+    batch_patch_parser.add_argument("--translate", action="store_true", help="Enable translation")
+    batch_patch_parser.add_argument("--to-lang", help="Target language for translation (e.g., French, German)")
+    batch_patch_parser.add_argument("--translation-option", help="Translation service to use")
+    batch_patch_parser.add_argument("--set-unskippable", action="store_true", help="Set dialogs as unskippable")
+    batch_patch_parser.add_argument("--convert-tga", choices=["TGA to TPC", "TPC to TGA"], help="Convert textures")
+    batch_patch_parser.add_argument("--convert-gffs-to-k1", action="store_true", help="Convert GFFs to K1 format")
+    batch_patch_parser.add_argument("--convert-gffs-to-tsl", action="store_true", help="Convert GFFs to TSL format")
+    batch_patch_parser.add_argument("--always-backup", action="store_true", default=True, help="Always create backups")
+    batch_patch_parser.add_argument("--max-threads", type=int, default=2, help="Maximum translation threads")
+
+    patch_file_parser = subparsers.add_parser(
+        "patch-file",
+        help="Patch a single file",
+    )
+    patch_file_parser.add_argument("--file", "-f", required=True, help="File to patch")
+    patch_file_parser.add_argument("--translate", action="store_true", help="Enable translation")
+    patch_file_parser.add_argument("--to-lang", help="Target language for translation")
+    patch_file_parser.add_argument("--set-unskippable", action="store_true", help="Set dialogs as unskippable")
+    patch_file_parser.add_argument("--convert-tga", choices=["TGA to TPC", "TPC to TGA"], help="Convert textures")
+    patch_file_parser.add_argument("--convert-gffs-to-k1", action="store_true", help="Convert GFFs to K1 format")
+    patch_file_parser.add_argument("--convert-gffs-to-tsl", action="store_true", help="Convert GFFs to TSL format")
+    patch_file_parser.add_argument("--always-backup", action="store_true", default=True, help="Always create backups")
+
+    patch_folder_parser = subparsers.add_parser(
+        "patch-folder",
+        help="Patch all files in a folder recursively",
+    )
+    patch_folder_parser.add_argument("--folder", "-f", required=True, help="Folder to patch")
+    patch_folder_parser.add_argument("--translate", action="store_true", help="Enable translation")
+    patch_folder_parser.add_argument("--to-lang", help="Target language for translation")
+    patch_folder_parser.add_argument("--set-unskippable", action="store_true", help="Set dialogs as unskippable")
+    patch_folder_parser.add_argument("--convert-tga", choices=["TGA to TPC", "TPC to TGA"], help="Convert textures")
+    patch_folder_parser.add_argument("--convert-gffs-to-k1", action="store_true", help="Convert GFFs to K1 format")
+    patch_folder_parser.add_argument("--convert-gffs-to-tsl", action="store_true", help="Convert GFFs to TSL format")
+    patch_folder_parser.add_argument("--always-backup", action="store_true", default=True, help="Always create backups")
+    patch_folder_parser.add_argument("--max-threads", type=int, default=2, help="Maximum translation threads")
+
+    patch_installation_parser = subparsers.add_parser(
+        "patch-installation",
+        help="Patch a KOTOR installation",
+    )
+    patch_installation_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
+    patch_installation_parser.add_argument("--translate", action="store_true", help="Enable translation")
+    patch_installation_parser.add_argument("--to-lang", help="Target language for translation")
+    patch_installation_parser.add_argument("--set-unskippable", action="store_true", help="Set dialogs as unskippable")
+    patch_installation_parser.add_argument("--convert-tga", choices=["TGA to TPC", "TPC to TGA"], help="Convert textures")
+    patch_installation_parser.add_argument("--convert-gffs-to-k1", action="store_true", help="Convert GFFs to K1 format")
+    patch_installation_parser.add_argument("--convert-gffs-to-tsl", action="store_true", help="Convert GFFs to TSL format")
+    patch_installation_parser.add_argument("--always-backup", action="store_true", default=True, help="Always create backups")
+    patch_installation_parser.add_argument("--max-threads", type=int, default=2, help="Maximum translation threads")
+
     return parser
 
 
-def main(argv: Sequence[str] | None = None):
+def main(argv: Sequence[str] | None = None) -> int:
     """Main entry point for KotorCLI."""
     parser = create_parser()
     args = parser.parse_args(argv)
@@ -504,14 +621,37 @@ def main(argv: Sequence[str] | None = None):
             return cmd_cat(args, logger)
         if args.command in ("key-pack", "create-key"):
             return cmd_key_pack(args, logger)
-        logger.error(f"Unknown command: {args.command}")
-        parser.print_help()
-        return 1
+        # Validation commands
+        if args.command == "check-txi":
+            return cmd_check_txi(args, logger)
+        if args.command == "check-2da":
+            return cmd_check_2da(args, logger)
+        if args.command == "validate-installation":
+            return cmd_validate_installation(args, logger)
+        if args.command == "investigate-module":
+            return cmd_investigate_module(args, logger)
+        if args.command == "check-missing-resources":
+            return cmd_check_missing_resources(args, logger)
+        if args.command == "module-resources":
+            return cmd_module_resources(args, logger)
+        # Patching commands
+        if args.command == "batch-patch":
+            return cmd_batch_patch(args, logger)
+        if args.command == "patch-file":
+            return cmd_patch_file(args, logger)
+        if args.command == "patch-folder":
+            return cmd_patch_folder(args, logger)
+        if args.command == "patch-installation":
+            return cmd_patch_installation(args, logger)
     except KeyboardInterrupt:
         logger.info("Operation cancelled by user")
         return 130  # Standard exit code for SIGINT
-    except Exception as e:
-        logger.exception(f"Unhandled error: {e}")
+    except Exception:
+        logger.exception("Unhandled error")
+        return 1
+    else:
+        logger.error(f"Unknown command: {args.command}")  # noqa: G004
+        parser.print_help()
         return 1
 
 

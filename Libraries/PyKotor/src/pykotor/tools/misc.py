@@ -19,6 +19,7 @@ def normalize_ext(
             return f"stem.{str_repr}"
     return str_repr
 
+
 def normalize_stem(
     str_repr: os.PathLike | str,
 ) -> os.PathLike | str:

@@ -80,6 +80,7 @@ def serialize_git_instance(instance: GITInstance) -> dict[str, Any]:
     data: dict[str, Any] = {
         "type": instance.__class__.__name__,
         "position": serialize_vector3(instance.position),
+        "runtime_id": id(instance),
     }
 
     if isinstance(instance, GITCamera):

@@ -1,14 +1,14 @@
-__pycache__
 
-.history
-.history/
-.history/**/*.py
+__pycache__
 .*
+!.cursor
+!.cursorignore
 !.cursorrules
+!.editorconfig
 !.env
+!.github
 !.gitignore
 !.gitmodules
-!.github
 !.vscode
 *.cpuprofile
 *.egg-info*
@@ -48,6 +48,7 @@ dist
 dist-lin
 dist-mac
 dist-win
+docs/ASYNC_LOADING_COMPLETE.md
 errorlog.txt
 EXE-*.toc
 ignore
@@ -56,6 +57,8 @@ Libraries/Utility/.aider.model.settings.json
 Libraries/Utility/src/utility/updater/update.py
 logs/
 logs/*
+notes/plot_2da.txt
+notes/plot_investigation.txt
 nuitka_dist
 nwnnsscomp_full.py
 nwnnsscomp_README.md
@@ -83,11 +86,19 @@ test_manual.nss
 test_manual.pcode
 test_nwnnsscomp.py
 test_output/
+test_qfiledialog_results.txt
+test/out.txt
+test/out2.txt
 tests/results/
+tests/test_toolset/test_files/generated_kit
 tests/tmp/*
 tests/tslpatcher/tmp/*
 this file has no permissions.txt
 Tools/HolocronToolset/src/toolset/32d802b_extract
+Tools/HolocronToolset/src/toolset/toolset_profile_20251129_215942.txt
+Tools/HolocronToolset/src/toolset/toolset_profile_20251129_223427.txt
+Tools/HolocronToolset/src/toolset/toolset_profile_20251130_053447.txt
+Tools/HolocronToolset/src/toolset/toolset_profile_20251130_064247.txt
 Tools/HolocronToolset/src/toolset/uic
 Tools/HoloPatcher/src/holopatcher/node_modules
 Tools/HoloPatcher/src/holopatcher/package-lock.json
@@ -100,25 +111,7 @@ typings/*
 vendor/CHORD
 vendor/KOTOR2-TOMB
 vendor/kotormods
-venv/
-notes/plot_2da.txt
-notes/plot_investigation.txt
-/Libraries/Utility/src/utility/ui_libraries/qt/adapters/filesystem/relevant_qt_src
-docs/ASYNC_LOADING_COMPLETE.md
-/Libraries/Utility/src/utility/ui_libraries/qt/adapters/filesystem/relevant_qt_src
-vendor/vendor_submodule_analysis.md
-vendor/REVIEW_STATUS.md
 vendor/PYKOTOR_VENDOR_REFERENCE_ANALYSIS.md
-
-
-.history
-.history/
-.history/**/*.py */
-tests/test_toolset/test_files/generated_kit
-Tools/HolocronToolset/src/toolset/toolset_profile_20251129_215942.txt
-Tools/HolocronToolset/src/toolset/toolset_profile_20251129_223427.txt
-Tools/HolocronToolset/src/toolset/toolset_profile_20251130_053447.txt
-Tools/HolocronToolset/src/toolset/toolset_profile_20251130_064247.txt
-test_qfiledialog_results.txt
-test/out.txt
-test/out2.txt
+vendor/REVIEW_STATUS.md
+vendor/vendor_submodule_analysis.md
+venv/

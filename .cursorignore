@@ -4,11 +4,15 @@ __pycache__/
 .history/
 .history/**/*.py
 .*
+!.cursor
+!.cursorignore
 !.cursorrules
+!.editorconfig
 !.env
+!.github
 !.gitignore
 !.gitmodules
-!.github
+!.history
 !.vscode
 *.cpuprofile
 *.egg-info*
@@ -88,7 +92,3 @@ venv*/
 !.venv_3.13/Lib/
 !.venv_3.13/Lib/site-packages/
 !.venv_3.13/Lib/site-packages/loggerplus*/
-
-.history
-.history/
-.history/**/*.py

@@ -20,23 +20,55 @@ from kotorcli.commands.format_convert import (
     cmd_xml2ssf,
     cmd_xml2tlk,
 )
-from kotorcli.commands.init import cmd_init
-from kotorcli.commands.install import cmd_install
-from kotorcli.commands.key_pack import cmd_key_pack
-from kotorcli.commands.launch import cmd_launch
-from kotorcli.commands.list import cmd_list
-from kotorcli.commands.list_archive import cmd_list_archive
-from kotorcli.commands.pack import cmd_pack
-from kotorcli.commands.resource_tools import cmd_model_convert, cmd_sound_convert, cmd_texture_convert
-from kotorcli.commands.script_tools import cmd_assemble, cmd_decompile, cmd_disassemble
-from kotorcli.commands.search_archive import cmd_search_archive
-from kotorcli.commands.unpack import cmd_unpack
-from kotorcli.commands.utility_commands import cmd_diff, cmd_grep, cmd_merge, cmd_stats, cmd_validate
+from kotorcli.commands.init import cmd_init  # type: ignore[module-not-found]
+from kotorcli.commands.install import cmd_install  # type: ignore[module-not-found]
+from kotorcli.commands.key_pack import cmd_key_pack  # type: ignore[module-not-found]
+from kotorcli.commands.launch import cmd_launch  # type: ignore[module-not-found]
+from kotorcli.commands.list import cmd_list  # type: ignore[module-not-found]
+from kotorcli.commands.list_archive import cmd_list_archive  # type: ignore[module-not-found]
+from kotorcli.commands.pack import cmd_pack  # type: ignore[module-not-found]
+from kotorcli.commands.patching import (  # type: ignore[module-not-found]
+    cmd_batch_patch,
+    cmd_patch_file,
+    cmd_patch_folder,
+    cmd_patch_installation,
+)
+from kotorcli.commands.resource_tools import (  # type: ignore[module-not-found]
+    cmd_model_convert,
+    cmd_sound_convert,
+    cmd_texture_convert,
+)
+from kotorcli.commands.script_tools import (  # type: ignore[module-not-found]
+    cmd_assemble,
+    cmd_decompile,
+    cmd_disassemble,
+)
+from kotorcli.commands.search_archive import cmd_search_archive  # type: ignore[module-not-found]
+from kotorcli.commands.unpack import cmd_unpack  # type: ignore[module-not-found]
+from kotorcli.commands.utility_commands import (  # type: ignore[module-not-found]
+    cmd_diff,
+    cmd_grep,
+    cmd_merge,
+    cmd_stats,
+    cmd_validate,
+)
+from kotorcli.commands.validation import (  # type: ignore[module-not-found]
+    cmd_check_2da,
+    cmd_check_missing_resources,
+    cmd_check_txi,
+    cmd_investigate_module,
+    cmd_module_resources,
+    cmd_validate_installation,
+)
 
 __all__ = [
     "cmd_2da2csv",
     "cmd_assemble",
+    "cmd_batch_patch",
     "cmd_cat",
+    "cmd_check_2da",
+    "cmd_check_missing_resources",
+    "cmd_check_txi",
     "cmd_compile",
     "cmd_config",
     "cmd_convert",
@@ -51,6 +83,7 @@ __all__ = [
     "cmd_grep",
     "cmd_init",
     "cmd_install",
+    "cmd_investigate_module",
     "cmd_json2gff",
     "cmd_key_pack",
     "cmd_launch",
@@ -58,7 +91,11 @@ __all__ = [
     "cmd_list_archive",
     "cmd_merge",
     "cmd_model_convert",
+    "cmd_module_resources",
     "cmd_pack",
+    "cmd_patch_file",
+    "cmd_patch_folder",
+    "cmd_patch_installation",
     "cmd_search_archive",
     "cmd_sound_convert",
     "cmd_ssf2xml",
@@ -68,6 +105,7 @@ __all__ = [
     "cmd_tlk2xml",
     "cmd_unpack",
     "cmd_validate",
+    "cmd_validate_installation",
     "cmd_xml2gff",
     "cmd_xml2ssf",
     "cmd_xml2tlk",

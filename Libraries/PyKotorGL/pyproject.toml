@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pykotorgl"
-version = "1.8.0"
+version = "2.0.0"
 description = "OpenGL rendering module for PyKotor - renders KotOR modules and scenes."
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
@@ -33,7 +33,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "pykotor>=1.8.0",
+    "pykotor>=2.0.0",
     "numpy>=1.22",
     "PyOpenGL~=3.1",
     "PyGLM>=2.0,<2.8; python_implementation == 'CPython'",
@@ -64,7 +64,7 @@ namespaces = false
 # Poetry configuration
 [tool.poetry]
 name = "pykotorgl"
-version = "1.8.0"
+version = "2.0.0"
 description = "OpenGL rendering extension for PyKotor"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
@@ -74,7 +74,7 @@ packages = [{ include = "pykotor", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
+pykotor = "^2.0.0"
 numpy = ">=1.22"
 PyOpenGL = "~3.1"
 PyGLM = {version = ">=2.0,<2.8", python = "^3.8", markers = "python_implementation == 'CPython'"}

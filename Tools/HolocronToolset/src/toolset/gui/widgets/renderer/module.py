@@ -139,6 +139,7 @@ class ModuleRenderer(QOpenGLWidget):
         # Default to ModernGL if available, fallback to PyOpenGL
         default_moderngl = bool(int(os.environ.get("PYKOTOR_USE_MODERNGL", "1")))
         self._use_moderngl = default_moderngl
+        self._initializing = False  # Flag to prevent resize events during initialization
         self._gl_initialized = False  # Track if initializeGL has been called
 
     @property
@@ -168,7 +169,12 @@ class ModuleRenderer(QOpenGLWidget):
     ):
         RobustLogger().debug("Initialize ModuleRenderer")
         self.shutdown_renderer()
-        self.show()
+        self._initializing = True  # Set flag to prevent resize events during initialization
+        try:
+            self.show()
+        finally:
+            # Flag will be cleared after initializeGL is called
+            pass
         QApplication.processEvents()  # Force the application to process all pending events
         self.sig_renderer_initialized.emit()  # Tell QMainWindow to show itself, required for a gl context to be created.
 
@@ -236,12 +242,21 @@ class ModuleRenderer(QOpenGLWidget):
 
         super().initializeGL()
         self._gl_initialized = True  # Mark as initialized
+        self._initializing = False  # Clear initialization flag - resize events are now safe
         RobustLogger().debug("ModuleRenderer.initializeGL - opengl context setup.")
         if self._use_moderngl:
             try:
                 import moderngl  # pyright: ignore[reportMissingImports]  # noqa: WPS433
                 from pykotor.gl.modern_renderer import ModernGLRenderer  # noqa: WPS433
 
+                # Ensure context is current before creating ModernGL context
+                # ModernGL will wrap the existing Qt OpenGL context
+                if not self.context() or not self.context().isValid():
+                    raise RuntimeError("Qt OpenGL context is not valid")
+                
+                # Create ModernGL context from existing Qt context
+                # moderngl.create_context() automatically detects the current OpenGL context
+                # when called with an active OpenGL context (which we have from Qt)
                 self._modern_context = moderngl.create_context()
                 self._modern_renderer: ModernGLRenderer = ModernGLRenderer(self._modern_context)
                 RobustLogger().info("ModernGL renderer initialised successfully")
@@ -253,6 +268,29 @@ class ModuleRenderer(QOpenGLWidget):
 
     def resizeEvent(self, e: QResizeEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         RobustLogger().debug("ModuleRenderer resizeEvent called.")
+        # Skip resize events during initialization to avoid access violations
+        if self._initializing:
+            RobustLogger().debug("Skipping resizeEvent during initialization")
+            return
+        
+        # Ensure OpenGL context is valid and current before Qt tries to resize
+        # This is critical for ModernGL to avoid access violations
+        ctx = self.context()
+        if ctx is None or not ctx.isValid():
+            RobustLogger().warning("OpenGL context not valid in resizeEvent, skipping resize")
+            return
+        
+        try:
+            self.makeCurrent()
+            # If ModernGL is active, ensure it's initialized before resizing
+            if self._use_moderngl and self._modern_context is None:
+                RobustLogger().debug("ModernGL not initialized yet, deferring resize")
+                # ModernGL will be initialized in initializeGL, resize will happen later
+                return
+        except Exception as exc:
+            RobustLogger().warning("Failed to make context current in resizeEvent: %s", exc)
+            return
+        
         super().resizeEvent(e)
 
     def resizeGL(  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -261,6 +299,12 @@ class ModuleRenderer(QOpenGLWidget):
         height: int,
     ):
         RobustLogger().debug("ModuleRenderer resizeGL called.")
+        # Ensure context is current before Qt tries to resize
+        # This is critical for ModernGL to avoid access violations
+        try:
+            self.makeCurrent()
+        except Exception:
+            RobustLogger().warning("Failed to make context current in resizeGL, continuing anyway")
         super().resizeGL(width, height)
         if not self._scene:
             RobustLogger().debug("ignoring scene camera width/height updates in ModuleRenderer resizeGL - the scene is not initialized yet.")
@@ -444,7 +488,7 @@ class ModuleRenderer(QOpenGLWidget):
         if self._modern_renderer is not None and self._use_moderngl:
             self._modern_renderer.render(self.scene)
         else:
-        self.scene.render()
+            self.scene.render()
         self._frame_stats.frame_rendered()
 
     def loop(self):
@@ -456,11 +500,11 @@ class ModuleRenderer(QOpenGLWidget):
             - Checks if mouse is over object and keyboard keys are pressed
             - Emits keyboardPressed signal with mouse/key info
         """
-        # Always repaint - trying to conditionally skip frames causes:
-        # 1. Input lag (camera changes happen externally before loop() runs)
-        # 2. Stale rendering (async resources load but don't get displayed)
-        # 3. Teleporting effect when camera finally updates
-        self.repaint()
+        # Use update() instead of repaint() - this schedules a repaint rather than
+        # forcing an immediate synchronous paint. Qt will batch multiple update()
+        # calls into a single paint, which is more efficient.
+        # repaint() bypasses the event queue and can cause stuttering.
+        self.update()
         
         if self.underMouse() and self.free_cam and len(self._keys_down) > 0:
             self.sig_keyboard_pressed.emit(self._mouse_down, self._keys_down)
@@ -492,6 +536,13 @@ class ModuleRenderer(QOpenGLWidget):
                 import moderngl  # noqa: WPS433
                 from pykotor.gl.modern_renderer import ModernGLRenderer  # noqa: WPS433
 
+                # Ensure context is valid before creating ModernGL context
+                ctx = self.context()
+                if ctx is None or not ctx.isValid():
+                    raise RuntimeError("Qt OpenGL context is not valid")
+                
+                # Create ModernGL context from existing Qt context
+                # moderngl.create_context() automatically detects the current OpenGL context
                 self._modern_context = moderngl.create_context()
                 self._modern_renderer = ModernGLRenderer(self._modern_context)
                 RobustLogger().info("ModernGL renderer initialized on demand")

@@ -33,6 +33,19 @@ if "QT_API" not in os.environ:
 # Software rendering doesn't support modern OpenGL features (shaders, etc.)
 # Only CI systems without GPU should set QT_OPENGL=software explicitly
 
+# CRITICAL: Ensure tests run with a display (NOT headless)
+# OpenGL/GL tests require a real display and cannot run in headless/offscreen mode
+# Remove any QT_QPA_PLATFORM=offscreen that might have been set elsewhere
+if "QT_QPA_PLATFORM" in os.environ and os.environ["QT_QPA_PLATFORM"] == "offscreen":
+    # Unset it to allow Qt to use the default platform (with display)
+    del os.environ["QT_QPA_PLATFORM"]
+    import warnings
+    warnings.warn(
+        "QT_QPA_PLATFORM=offscreen was set but removed for GL tests. "
+        "GL tests require a real display and cannot run headless.",
+        UserWarning
+    )
+
 # Disable PyOpenGL error checking for tests
 # Some OpenGL configurations may produce errors that don't affect actual rendering
 os.environ["PYOPENGL_ERROR_CHECKING"] = "0"

@@ -39,4 +39,5 @@ if ((Get-OS) -eq "Windows") {
 }
 & $pythonExePath -m pip install -r ($rootPath + $pathSep + "Tools" + $pathSep + "KitGenerator" + $pathSep + "requirements.txt") --prefer-binary --compile --progress-bar on -U
 & $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotor" + $pathSep + "requirements.txt") --prefer-binary --compile --progress-bar on -U
+& $pythonExePath -m pip install -r ($rootPath + $pathSep + "Libraries" + $pathSep + "PyKotor" + $pathSep + "recommended.txt") --prefer-binary --compile --progress-bar on -U
 

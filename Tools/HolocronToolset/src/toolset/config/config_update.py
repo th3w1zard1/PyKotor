@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 import requests
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
+from loggerplus import RobustLogger  # type: ignore[import-untyped]  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtWidgets import QMessageBox
 
 # LOCAL_PROGRAM_INFO is imported inside functions to avoid circular import

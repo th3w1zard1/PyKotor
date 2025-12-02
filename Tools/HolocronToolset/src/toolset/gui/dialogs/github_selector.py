@@ -528,7 +528,10 @@ class GitHubFileSelector(QDialog):
             import shlex
 
             command: list[str] = shlex.split(f"git clone {url}")
-            subprocess.run(command, check=True)  # noqa: S603
+            kwargs: dict = {}
+            if sys.platform == "win32":
+                kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+            subprocess.run(command, check=True, **kwargs)  # noqa: S603
             QMessageBox.information(self, tr("Clone Successful"), trf("Repository {fork} cloned successfully.", fork=selected_fork))
         except subprocess.CalledProcessError as e:
             QMessageBox.critical(self, tr("Clone Failed"), trf("Failed to clone repository: {error}", error=str(e)))

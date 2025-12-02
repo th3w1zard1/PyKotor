@@ -261,8 +261,9 @@ class TestQFileDialog(unittest.TestCase):
         assert fs_model is fd._private.model, "List view model is not the main filesystem model"  # noqa: SLF001
 
         root: QModelIndex = list_view.rootIndex()
-        assert fs_model.rowCount() > 0, "List view model is empty."
-        assert fs_model.rowCount(root) > 0, "List view model is empty under root."
+        # Wait for the model to populate the directory contents
+        assert self.wait_for(lambda: fs_model.rowCount() > 0, timeout=5000), "List view model is empty."
+        assert self.wait_for(lambda: fs_model.rowCount(root) > 0, timeout=5000), "List view model is empty under root."
         file: QModelIndex | None = None
         for i in range(fs_model.rowCount(root)):
             file = fs_model.index(i, 0, root)

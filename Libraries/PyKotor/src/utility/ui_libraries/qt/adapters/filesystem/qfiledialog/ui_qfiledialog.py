@@ -209,7 +209,7 @@ class Ui_QFileDialog:  # noqa: N801
         QFileDialog.setTabOrder(self.buttonBox, self.fileTypeCombo)
 
     def retranslateUi(self, QFileDialog: QFileDialog):  # noqa: N803
-        _translate: Callable[[str, str], str] = QApplication.instance().translate
+        _translate: Callable[[str, str], str] = QApplication.instance().translate  # pyright: ignore[reportOptionalMemberAccess]
         self.lookInLabel.setText(_translate("QFileDialog", "Look in:"))
 
         self.backButton.setToolTip(_translate("QFileDialog", "Back"))

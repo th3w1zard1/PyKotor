@@ -82,8 +82,6 @@ class SceneBase:
         installation: Installation | None = None,
         module: Module | None = None,
     ):
-        module_id_part: str = "" if module is None else f" from module '{module.root()}'"
-        RobustLogger().info(f"Start initialize Scene{module_id_part}")
 
         glEnable(GL_DEPTH_TEST)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -116,6 +114,12 @@ class SceneBase:
         # Main thread: Use Installation to RESOLVE file locations ONLY (no Installation in child!)
         # Child process: Do raw file IO + parsing (one process per file)
         
+        # Pre-compute search location lists to avoid creating new lists on every call
+        texture_search_locs = [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.CHITIN]
+        model_search_locs = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
+        # Cache capsules list for model loading (computed once per scene, not per model)
+        _cached_capsules: list[Capsule] | None = None
+        
         def _resolve_texture_location(name: str) -> tuple[str, int, int] | None:
             """Resolve texture file location in main thread using Installation ONLY.
             
@@ -125,12 +129,7 @@ class SceneBase:
                 return None
             
             # Installation.location() returns LocationResult which has offset/size as fields
-            # Signature: location(resname: str, restype: ResourceType, order: list[SearchLocation] | None = None, ...)
-            locations = self.installation.location(
-                name,
-                ResourceType.TPC,
-                [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.CHITIN],
-            )
+            locations = self.installation.location(name, ResourceType.TPC, texture_search_locs)
             if locations:
                 loc = locations[0]
                 # LocationResult has: filepath (Path field), offset (int field), size (int field)
@@ -142,18 +141,20 @@ class SceneBase:
             
             Returns ((mdl_path, offset, size), (mdx_path, offset, size)) or (None, None).
             """
+            nonlocal _cached_capsules
             if self.installation is None:
                 return (None, None)
             
-            search_locs = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
-            # ModulePieceResource extends Capsule, but list types are invariant - pass None if empty
-            module_capsules = self._module.capsules() if self._module is not None else []
-            capsules: list[Capsule] = list(module_capsules) if module_capsules else []
+            # Cache capsules list for this scene (avoids repeated calls to capsules())
+            if _cached_capsules is None and self._module is not None:
+                module_capsules = self._module.capsules()
+                _cached_capsules = list(module_capsules) if module_capsules else []
+            
+            capsules = _cached_capsules or []
             
             # Installation.location() returns list[LocationResult] with offset/size fields
-            # Signature: location(resname: str, restype: ResourceType, order: list[SearchLocation] | None = None, ...)
-            mdl_locs = self.installation.location(name, ResourceType.MDL, search_locs, capsules=capsules)
-            mdx_locs = self.installation.location(name, ResourceType.MDX, search_locs, capsules=capsules)
+            mdl_locs = self.installation.location(name, ResourceType.MDL, model_search_locs, capsules=capsules)
+            mdx_locs = self.installation.location(name, ResourceType.MDX, model_search_locs, capsules=capsules)
             
             mdl_loc = None
             mdx_loc = None
@@ -191,8 +192,6 @@ class SceneBase:
         self.backface_culling: bool = True
         self.use_lightmap: bool = True
         self.show_cursor: bool = True
-        module_id_part = "" if module is None else f" from module '{module.root()}'"
-        RobustLogger().debug(f"Completed pre-initialize Scene{module_id_part}")
     
     def __del__(self):
         """Cleanup async resources when scene is destroyed."""
@@ -408,47 +407,64 @@ class SceneBase:
         
         RobustLogger().debug("Invalidated resource cache")
     
-    def poll_async_resources(self):
+    def poll_async_resources(self, *, max_textures_per_frame: int = 8, max_models_per_frame: int = 4):
         """Poll for completed async resource loading and create OpenGL objects.
         
         MUST be called from main thread with active OpenGL context.
         This is non-blocking and processes only completed futures.
-        """
-        # Debug: Log polling status
-        if self._pending_texture_futures or self._pending_model_futures:
-            RobustLogger().debug(f"Polling async resources: {len(self._pending_texture_futures)} textures, {len(self._pending_model_futures)} models pending")
         
-        # Check completed texture futures
+        Args:
+            max_textures_per_frame: Max textures to upload to GPU per frame (prevents frame spikes)
+            max_models_per_frame: Max models to upload to GPU per frame (prevents frame spikes)
+        """
+        # Fast path: nothing to poll
+        if not self._pending_texture_futures and not self._pending_model_futures:
+            return
+        
+        # Check completed texture futures (limited per frame to prevent stuttering)
         completed_textures: list[str] = []
+        textures_processed = 0
         for name, future in self._pending_texture_futures.items():
+            if textures_processed >= max_textures_per_frame:
+                break  # Process more next frame
             if future.done():
                 try:
                     resource_name, intermediate, error = future.result()
                     if error:
-                        RobustLogger().warning(f"Async texture load failed for '{resource_name}': {error}")
+                        # Only log at debug level for missing textures (very common)
+                        if "not found" in error:
+                            RobustLogger().debug(f"Texture not found: '{resource_name}'")
+                        else:
+                            RobustLogger().warning(f"Async texture load failed for '{resource_name}': {error}")
                         self.textures[resource_name] = self._missing_texture  # Magenta placeholder
                     elif intermediate:
                         self.textures[resource_name] = create_texture_from_intermediate(intermediate)
-                        RobustLogger().info(f"✓ Async loaded texture: {resource_name}")
-                    else:
-                        RobustLogger().warning(f"Async texture load returned no data and no error for '{resource_name}'")
                     completed_textures.append(name)
+                    textures_processed += 1
                 except Exception:  # noqa: BLE001
                     RobustLogger().exception(f"Error processing completed texture future for '{name}'")
                     self.textures[name] = self._missing_texture
                     completed_textures.append(name)
+                    textures_processed += 1
         
         for name in completed_textures:
             del self._pending_texture_futures[name]
         
-        # Check completed model futures
+        # Check completed model futures (limited per frame)
         completed_models: list[str] = []
+        models_processed = 0
         for name, future in self._pending_model_futures.items():
+            if models_processed >= max_models_per_frame:
+                break  # Process more next frame
             if future.done():
                 try:
                     resource_name, intermediate, error = future.result()
                     if error:
-                        RobustLogger().warning(f"Async model load failed for '{resource_name}': {error}")
+                        # Only log at debug level for missing models
+                        if "not found" in error:
+                            RobustLogger().debug(f"Model not found: '{resource_name}'")
+                        else:
+                            RobustLogger().warning(f"Async model load failed for '{resource_name}': {error}")
                         # Load empty model as fallback
                         self.models[resource_name] = gl_load_stitched_model(
                             self,  # pyright: ignore[reportArgumentType]
@@ -457,10 +473,8 @@ class SceneBase:
                         )
                     elif intermediate:
                         self.models[resource_name] = create_model_from_intermediate(self, intermediate)
-                        RobustLogger().info(f"✓ Async loaded model: {resource_name}")
-                    else:
-                        RobustLogger().warning(f"Async model load returned no data and no error for '{resource_name}'")
                     completed_models.append(name)
+                    models_processed += 1
                 except Exception:  # noqa: BLE001
                     RobustLogger().exception(f"Error processing completed model future for '{name}'")
                     self.models[name] = gl_load_stitched_model(
@@ -469,6 +483,7 @@ class SceneBase:
                         BinaryReader.from_bytes(EMPTY_MDX_DATA),
                     )
                     completed_models.append(name)
+                    models_processed += 1
         
         for name in completed_models:
             del self._pending_model_futures[name]
@@ -493,10 +508,8 @@ class SceneBase:
         
         # Start async loading if location resolver available
         if self.async_loader.texture_location_resolver is not None:
-            RobustLogger().info(f"→ Starting async load for texture: {name}")
             future = self.async_loader.load_texture_async(name)
             self._pending_texture_futures[name] = future
-            RobustLogger().debug(f"Started async loading for texture: {name}, future: {future}")
             # Return gray placeholder immediately
             return self._loading_texture
         
@@ -654,10 +667,8 @@ class SceneBase:
         
         # Start async loading if location resolver available
         if self.async_loader.model_location_resolver is not None:
-            RobustLogger().info(f"→ Starting async load for model: {name}")
             future = self.async_loader.load_model_async(name)
             self._pending_model_futures[name] = future
-            RobustLogger().debug(f"Started async loading for model: {name}, future: {future}")
             # Return empty model immediately as placeholder
             if "empty" not in self.models:
                 empty_model = gl_load_stitched_model(

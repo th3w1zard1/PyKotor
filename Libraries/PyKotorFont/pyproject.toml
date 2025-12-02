@@ -4,11 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pykotorfont"
-version = "1.8.0"
+version = "2.0.0"
 description = "Font rendering module for PyKotor - handles TXI/TGA font generation."
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
-readme = {file = "../../README.md", content-type = "text/markdown"}
 license = {text = "LGPL-3.0-or-later"}
 keywords = [
     "kotor", "kotor1", "kotor2", "tsl",
@@ -32,7 +31,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "pykotor>=1.8.0",
+    "pykotor>=2.0.0",
     "pillow>=9.5; python_implementation == 'CPython'",
     "pillow>10,<11.1.0; python_implementation == 'PyPy'",
 ]
@@ -60,7 +59,7 @@ namespaces = false
 # Poetry configuration
 [tool.poetry]
 name = "pykotorfont"
-version = "1.8.0"
+version = "2.0.0"
 description = "Font rendering extension for PyKotor"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
@@ -70,7 +69,7 @@ packages = [{ include = "pykotor", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
+pykotor = "^2.0.0"
 pillow = ">=9.5"
 
 [tool.poetry.urls]

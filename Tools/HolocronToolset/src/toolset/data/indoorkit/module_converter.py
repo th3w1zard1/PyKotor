@@ -131,8 +131,10 @@ class ModuleKit(Kit):
         
         # Try to get the walkmesh (WOK) for this room
         bwm = self._get_room_walkmesh(model_name)
-        if bwm is None:
-            # Create a placeholder BWM with a single triangle
+        # Ensure we always have a usable walkmesh with at least one face for
+        # collision / snapping logic. Some modules ship with empty or missing
+        # WOK data; in that case we fall back to a simple placeholder quad.
+        if bwm is None or not bwm.faces:
             bwm = self._create_placeholder_bwm(lyt_room.position)
         
         # Try to get the model data
@@ -158,7 +160,14 @@ class ModuleKit(Kit):
         return component
 
     def _get_room_walkmesh(self, model_name: str) -> BWM | None:
-        """Get the walkmesh for a room from the module."""
+        """Get the walkmesh for a room from the module.
+        
+        Returns the BWM exactly as stored in the game files, without modification.
+        Game WOKs are in local room coordinates - the same format that kit.py
+        extracts and that the Kit loader expects.
+        
+        Reference: indoorkit.py loads BWM with read_bwm() without any centering.
+        """
         if self._module is None:
             return None
         
@@ -173,7 +182,10 @@ class ModuleKit(Kit):
         
         try:
             from pykotor.resource.formats.bwm import read_bwm
-            return read_bwm(data)
+            bwm = read_bwm(data)
+            # Return BWM as-is - no re-centering needed
+            # Game WOKs are already in local coordinates, same as kit.py extracts
+            return bwm
         except Exception:
             RobustLogger().warning(f"Failed to read WOK for '{model_name}'")
             return None
@@ -225,58 +237,93 @@ class ModuleKit(Kit):
         """Create a preview image from a walkmesh.
         
         Creates a top-down view of the walkmesh for use as a component preview.
+        This method generates an image IDENTICAL to what kit.py generates, then
+        mirrors it to match what the Kit loader does when loading from disk.
+        
+        CRITICAL: Must match kit.py/_generate_component_minimap EXACTLY:
+        - 10 pixels per unit scale
+        - Format_RGB888 (not RGB32)
+        - Minimum 256x256 pixels
+        - Y-flip during drawing, then .mirrored() after
+        
+        Reference: Libraries/PyKotor/src/pykotor/tools/kit.py:_generate_component_minimap
+        Reference: indoorkit.py line 161: image = QImage(...).mirrored()
         """
-        size = 128
-        image = QImage(size, size, QImage.Format.Format_RGB32)
-        image.fill(QColor(40, 40, 45))
+        from qtpy.QtGui import QPainterPath
         
-        if not bwm.faces:
-            return image
+        # Collect all vertices to calculate bounding box
+        vertices: list[Vector3] = list(bwm.vertices())
+        if not vertices:
+            # Empty walkmesh - return blank image matching kit.py minimum size
+            image = QImage(256, 256, QImage.Format.Format_RGB888)
+            image.fill(QColor(0, 0, 0))
+            return image.mirrored()  # Mirror to match Kit loader
         
-        # Calculate bounding box
-        min_x = min_y = float('inf')
-        max_x = max_y = float('-inf')
+        # Calculate bounding box (same as kit.py)
+        min_x = min(v.x for v in vertices)
+        min_y = min(v.y for v in vertices)
+        max_x = max(v.x for v in vertices)
+        max_y = max(v.y for v in vertices)
         
-        for face in bwm.faces:
-            for v in [face.v1, face.v2, face.v3]:
-                min_x = min(min_x, v.x)
-                min_y = min(min_y, v.y)
-                max_x = max(max_x, v.x)
-                max_y = max(max_y, v.y)
+        # Add padding (same as kit.py: 5.0 units)
+        padding = 5.0
+        min_x -= padding
+        min_y -= padding
+        max_x += padding
+        max_y += padding
         
-        # Add padding
-        padding = 0.1
-        width = max_x - min_x or 1
-        height = max_y - min_y or 1
-        min_x -= width * padding
-        max_x += width * padding
-        min_y -= height * padding
-        max_y += height * padding
+        # Calculate image dimensions at 10 pixels per unit (matching kit.py)
+        PIXELS_PER_UNIT = 10
+        width = int((max_x - min_x) * PIXELS_PER_UNIT)
+        height = int((max_y - min_y) * PIXELS_PER_UNIT)
         
-        width = max_x - min_x
-        height = max_y - min_y
-        scale = min(size / width, size / height) if width > 0 and height > 0 else 1
+        # Ensure minimum size (kit.py uses 256, not 100)
+        width = max(width, 256)
+        height = max(height, 256)
         
-        def world_to_screen(v: Vector3) -> tuple[int, int]:
-            sx = int((v.x - min_x) * scale)
-            sy = int((v.y - min_y) * scale)
-            return sx, size - sy  # Flip Y
+        # Create image with Format_RGB888 (same as kit.py, NOT RGB32)
+        image = QImage(width, height, QImage.Format.Format_RGB888)
+        image.fill(QColor(0, 0, 0))
         
-        # Draw faces
+        # Transform from world coordinates to image coordinates
+        # Y is flipped because image Y=0 is top, world Y increases upward
+        # This matches kit.py exactly
+        def world_to_image(v: Vector3) -> tuple[float, float]:
+            x = (v.x - min_x) * PIXELS_PER_UNIT
+            y = height - (v.y - min_y) * PIXELS_PER_UNIT  # Flip Y
+            return x, y
+        
+        # Draw walkmesh faces (same logic as kit.py)
         painter = QPainter(image)
-        painter.setPen(QColor(100, 80, 60))
-        painter.setBrush(QColor(139, 90, 43, 180))  # Brown for floor
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
         
         for face in bwm.faces:
-            points = [world_to_screen(v) for v in [face.v1, face.v2, face.v3]]
-            from qtpy.QtCore import QPoint
-            from qtpy.QtGui import QPolygon
-            polygon = QPolygon([QPoint(p[0], p[1]) for p in points])
-            painter.drawPolygon(polygon)
+            # Determine if face is walkable based on material (same logic as kit.py)
+            is_walkable = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
+            color = QColor(255, 255, 255) if is_walkable else QColor(128, 128, 128)
+            
+            painter.setBrush(color)
+            painter.setPen(color)
+            
+            # Build path from face vertices
+            path = QPainterPath()
+            x1, y1 = world_to_image(face.v1)
+            x2, y2 = world_to_image(face.v2)
+            x3, y3 = world_to_image(face.v3)
+            
+            path.moveTo(x1, y1)
+            path.lineTo(x2, y2)
+            path.lineTo(x3, y3)
+            path.closeSubpath()
+            
+            painter.drawPath(path)
         
         painter.end()
         
-        return image
+        # CRITICAL: Mirror the image to match what Kit loader does!
+        # Kit loader: image = QImage(path).mirrored()
+        # Without this, the image would be upside down relative to the BWM.
+        return image.mirrored()
 
     def _process_lyt_doorhooks(self, lyt_data: LYT):
         """Process LYT doorhooks to create component hooks.
