@@ -58,10 +58,6 @@ all = [
 
 # Development dependencies
 dev = [
-    "charset-normalizer>=2.0.0,<3.3.0; python_version<\"3.9\"",
-    "charset-normalizer>=2.0.0; python_version>=\"3.9\"",
-    "defusedxml>=0.7.1",
-    "pycryptodome>=3.23.0",
     "astroid>=3.2.0,<3.5.0; python_version>=\"3.8\"",
     "autoflake>=2.3.1; python_version>=\"3.8\"",
     "iniconfig>=2.1.0; python_version>=\"3.8\"",
