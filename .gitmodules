@@ -291,10 +291,6 @@
 # PyKotor Tools (Standalone Repos)
 # ===============================
 
-[submodule "Tools/BatchPatcher"]
-	path = Tools/BatchPatcher
-	url = https://github.com/th3w1zard1/BatchPatcher.git
-
 [submodule "Tools/GuiConverter"]
 	path = Tools/GuiConverter
 	url = https://github.com/th3w1zard1/GuiConverter.git

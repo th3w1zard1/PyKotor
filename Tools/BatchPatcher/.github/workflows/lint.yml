@@ -1,0 +1,34 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  ruff:
+    name: Ruff Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install ruff
+        run: |
+          pip install ruff
+
+      - name: Run ruff check
+        run: |
+          ruff check . --output-format=github
+
+      - name: Check formatting
+        run: |
+          ruff format --check .
