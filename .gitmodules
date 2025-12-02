@@ -291,10 +291,6 @@
 # PyKotor Tools (Standalone Repos)
 # ===============================
 
-[submodule "Tools/KotorDiff"]
-	path = Tools/KotorDiff
-	url = https://github.com/th3w1zard1/KotorDiff.git
-
 [submodule "Tools/KotorMCP"]
 	path = Tools/KotorMCP
 	url = https://github.com/th3w1zard1/KotorMCP.git
