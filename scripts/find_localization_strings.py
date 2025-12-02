@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import sys
 
 from pathlib import Path
 
@@ -52,25 +53,52 @@ def find_strings_in_file(file_path: Path) -> list[tuple[int, str]]:
     return strings
 
 def main():
-    """Scan toolset directory for hardcoded strings."""
-    toolset_path = Path(__file__).parent.parent / "Tools" / "HolocronToolset" / "src" / "toolset"
+    """Scan directory for hardcoded strings."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(
+        description="Find hardcoded English strings that need localization",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__
+    )
+    parser.add_argument(
+        "--directory", "-d",
+        type=str,
+        help="Directory to scan (default: Tools/HolocronToolset/src/toolset)"
+    )
+    
+    args = parser.parse_args()
+    
+    if args.directory:
+        toolset_path = Path(args.directory)
+    else:
+        toolset_path = Path(__file__).parent.parent / "Tools" / "HolocronToolset" / "src" / "toolset"
+    
+    if not toolset_path.exists():
+        print(f"Error: Directory not found: {toolset_path}", file=sys.stderr)
+        sys.exit(1)
     
     all_strings = {}
     
+    print(f"Scanning directory: {toolset_path}\n")
     for py_file in toolset_path.rglob("*.py"):
         if '__pycache__' in str(py_file):
             continue
         
         strings = find_strings_in_file(py_file)
         if strings:
-            rel_path = py_file.relative_to(toolset_path.parent.parent)
+            rel_path = py_file.relative_to(toolset_path)
             all_strings[str(rel_path)] = strings
     
     # Print results
-    for file_path, strings in sorted(all_strings.items()):
-        print(f"\n{file_path}:")
-        for line_num, text in strings:
-            print(f"  Line {line_num}: {text}")
+    if all_strings:
+        print(f"Found {sum(len(s) for s in all_strings.values())} hardcoded strings in {len(all_strings)} files:\n")
+        for file_path, strings in sorted(all_strings.items()):
+            print(f"\n{file_path}:")
+            for line_num, text in strings:
+                print(f"  Line {line_num}: {text}")
+    else:
+        print("No hardcoded strings found.")
 
 if __name__ == "__main__":
     main()
