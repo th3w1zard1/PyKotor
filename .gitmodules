@@ -291,10 +291,6 @@
 # PyKotor Tools (Standalone Repos)
 # ===============================
 
-[submodule "Tools/KitGenerator"]
-	path = Tools/KitGenerator
-	url = https://github.com/th3w1zard1/KitGenerator.git
-
 [submodule "Tools/KotorCLI"]
 	path = Tools/KotorCLI
 	url = https://github.com/th3w1zard1/KotorCLI.git
