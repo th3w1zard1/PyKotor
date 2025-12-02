@@ -291,18 +291,6 @@
 # PyKotor Tools (Standalone Repos)
 # ===============================
 
-[submodule "Tools/GuiConverter"]
-	path = Tools/GuiConverter
-	url = https://github.com/th3w1zard1/GuiConverter.git
-
-[submodule "Tools/HolocronAI"]
-	path = Tools/HolocronAI
-	url = https://github.com/th3w1zard1/HolocronAI.git
-
-[submodule "Tools/HolocronToolset"]
-	path = Tools/HolocronToolset
-	url = https://github.com/th3w1zard1/HolocronToolset.git
-
 [submodule "Tools/HoloGenerator"]
 	path = Tools/HoloGenerator
 	url = https://github.com/th3w1zard1/HoloGenerator.git
