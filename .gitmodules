@@ -274,10 +274,6 @@
 # PyKotor Libraries (Standalone Repos)
 # ===============================
 
-[submodule "Libraries/PyKotor"]
-	path = Libraries/PyKotor
-	url = https://github.com/th3w1zard1/pykotor-lib.git
-
 [submodule "Tools/HolocronToolset/src/toolset/kits"]
 	path = Tools/HolocronToolset/src/toolset/kits
 	url = https://github.com/th3w1zard1/ToolsetData.git
