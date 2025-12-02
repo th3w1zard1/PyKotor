@@ -278,10 +278,6 @@
 	path = Libraries/PyKotor
 	url = https://github.com/th3w1zard1/pykotor-lib.git
 
-[submodule "Libraries/PyKotorGL"]
-	path = Libraries/PyKotorGL
-	url = https://github.com/th3w1zard1/PyKotorGL.git
-
 [submodule "Libraries/PyKotorFont"]
 	path = Libraries/PyKotorFont
 	url = https://github.com/th3w1zard1/PyKotorFont.git
