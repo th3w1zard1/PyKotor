@@ -42,7 +42,7 @@ param(
     [string]$GitHubUser = "th3w1zard1",
 
     [Parameter(Mandatory = $false)]
-    [string[]]$Exclude = @(),
+    [string[]]$Exclude = @("logs", "*.egg-info", "__pycache__"),
 
     [Parameter(Mandatory = $false)]
     [switch]$DryRun,
@@ -78,12 +78,20 @@ if ($Type -eq 'Tools' -or $Type -eq 'All') {
     $toolsDir = Join-Path $repoRoot "Tools"
     if (Test-Path $toolsDir) {
         Get-ChildItem $toolsDir -Directory | ForEach-Object {
-            if ($_.Name -notin $Exclude) {
+            $skip = $false
+            foreach ($pattern in $Exclude) {
+                if ($_.Name -like $pattern) { $skip = $true; break }
+            }
+            # Must have pyproject.toml to be considered a valid project
+            $hasPyProject = Test-Path (Join-Path $_.FullName "pyproject.toml")
+            if (-not $skip -and $hasPyProject) {
                 $toProcess += @{
                     Category = "Tool"
                     Name = $_.Name
                     Path = $_.FullName
                 }
+            } elseif (-not $skip -and -not $hasPyProject) {
+                Write-Host "  Skipping $($_.Name) - no pyproject.toml found" -ForegroundColor DarkGray
             }
         }
     }
@@ -93,13 +101,20 @@ if ($Type -eq 'Libraries' -or $Type -eq 'All') {
     $libsDir = Join-Path $repoRoot "Libraries"
     if (Test-Path $libsDir) {
         Get-ChildItem $libsDir -Directory | ForEach-Object {
-            if ($_.Name -notin $Exclude -and $_.Name -ne "Utility") {
-                # Skip Utility as it's part of PyKotor
+            $skip = $_.Name -eq "Utility"  # Skip Utility as it's part of PyKotor
+            foreach ($pattern in $Exclude) {
+                if ($_.Name -like $pattern) { $skip = $true; break }
+            }
+            # Must have pyproject.toml to be considered a valid project
+            $hasPyProject = Test-Path (Join-Path $_.FullName "pyproject.toml")
+            if (-not $skip -and $hasPyProject) {
                 $toProcess += @{
                     Category = "Library"
                     Name = $_.Name
                     Path = $_.FullName
                 }
+            } elseif (-not $skip -and -not $hasPyProject) {
+                Write-Host "  Skipping $($_.Name) - no pyproject.toml found" -ForegroundColor DarkGray
             }
         }
     }

@@ -126,6 +126,16 @@ if (-not (Test-Path $localPath)) {
     exit 1
 }
 
+# Validate pyproject.toml exists (required for a valid project)
+$pyprojectPath = Join-Path $localPath "pyproject.toml"
+if (-not (Test-Path $pyprojectPath)) {
+    Write-Error "pyproject.toml not found in: $localPath"
+    Write-Host ""
+    Write-Host "This directory does not appear to be a valid Python project."
+    Write-Host "All Tools and Libraries must have a pyproject.toml file."
+    exit 1
+}
+
 # Determine repo name
 if (-not $RepoName) {
     $RepoName = $name

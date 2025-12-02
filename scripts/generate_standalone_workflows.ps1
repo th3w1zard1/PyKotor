@@ -320,6 +320,14 @@ function Process-Project {
     )
     
     $projectName = Split-Path -Leaf $ProjectPath
+    
+    # Verify pyproject.toml exists
+    $pyprojectPath = Join-Path $ProjectPath "pyproject.toml"
+    if (-not (Test-Path $pyprojectPath)) {
+        Write-Host "Skipping: $projectName (no pyproject.toml)" -ForegroundColor DarkGray
+        return
+    }
+    
     Write-Host "Processing: $projectName" -ForegroundColor Cyan
     
     $isNamespaceLib = Get-IsNamespaceLibrary $ProjectPath
@@ -375,19 +383,23 @@ function Process-Project {
 if ($All) {
     $paths = @()
     
-    # Collect all Tools
+    # Collect all Tools (must have pyproject.toml)
     $toolsDir = Join-Path $repoRoot "Tools"
     if (Test-Path $toolsDir) {
         Get-ChildItem $toolsDir -Directory | ForEach-Object {
-            $paths += $_.FullName
+            if (Test-Path (Join-Path $_.FullName "pyproject.toml")) {
+                $paths += $_.FullName
+            }
         }
     }
     
-    # Collect all Libraries (except Utility)
+    # Collect all Libraries (except Utility, must have pyproject.toml)
     $libsDir = Join-Path $repoRoot "Libraries"
     if (Test-Path $libsDir) {
         Get-ChildItem $libsDir -Directory | Where-Object { $_.Name -ne "Utility" } | ForEach-Object {
-            $paths += $_.FullName
+            if (Test-Path (Join-Path $_.FullName "pyproject.toml")) {
+                $paths += $_.FullName
+            }
         }
     }
     
