@@ -291,14 +291,6 @@
 # PyKotor Tools (Standalone Repos)
 # ===============================
 
-[submodule "Tools/KotorMCP"]
-	path = Tools/KotorMCP
-	url = https://github.com/th3w1zard1/KotorMCP.git
-
-
-# ===============================
-# Toolset Data
-# ===============================
 [submodule "Tools/HolocronToolset/src/toolset/kits"]
 	path = Tools/HolocronToolset/src/toolset/kits
 	url = https://github.com/th3w1zard1/ToolsetData.git
