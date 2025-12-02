@@ -291,10 +291,6 @@
 # PyKotor Tools (Standalone Repos)
 # ===============================
 
-[submodule "Tools/HoloPatcher"]
-	path = Tools/HoloPatcher
-	url = https://github.com/th3w1zard1/HoloPatcher.git
-
 [submodule "Tools/HoloPazaak"]
 	path = Tools/HoloPazaak
 	url = https://github.com/th3w1zard1/HoloPazaak.git
