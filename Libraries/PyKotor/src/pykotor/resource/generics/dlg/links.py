@@ -254,11 +254,15 @@ class DLGLink(Generic[T_co]):
                 setattr(link, key, None)
             else:
                 raise ValueError(f"Unsupported type: {py_type} for key: {key}")
-        node_map[link_key] = link
 
+        # Set the node BEFORE adding to node_map to ensure the link is fully constructed
         if link_dict["node"]:
-            from pykotor.resource.generics.dlg.nodes import DLGNode
+            from pykotor.resource.generics.dlg.nodes import DLGNode  # pyright: ignore[reportMissingImports]  # noqa: PLC0415
 
             link.node = DLGNode.from_dict(link_dict["node"], node_map)  # pyright: ignore[reportAttributeAccessIssue]
+        else:
+            link.node = None
+
+        node_map[link_key] = link
 
         return link
