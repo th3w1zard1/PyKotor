@@ -80,9 +80,11 @@ def test_nss_editor_new_file_creation(qtbot, installation: HTInstallation):
     # Create new file
     editor.new()
     
-    # Code editor should be empty
-    assert editor.ui.codeEdit.toPlainText() == ""
-    assert editor._resname == ""
+    # Code editor should contain the default template
+    expected_template = "\n\nvoid main()\n{\n    \n}\n"
+    assert editor.ui.codeEdit.toPlainText() == expected_template
+    # _resname is auto-generated as "untitled_<hex>" when creating a new editor
+    assert editor._resname.startswith("untitled_")
     
     # Set script content
     script = "void main() { }"
