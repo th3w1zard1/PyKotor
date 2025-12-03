@@ -48,12 +48,25 @@ PyKotor uses an industry-standard CI/CD pipeline for releases. The workflow is d
 
 ## Supported Tools
 
+The unified `release_tools.yml` workflow **dynamically discovers tools** from the `./Tools` directory. Any tool with a `pyproject.toml` and a version-containing config file will be automatically detected.
+
 | Tool | Tag Pattern | Config File | Version Key |
 |------|-------------|-------------|-------------|
-| **HolocronToolset** | `v3.1.3-toolset` | `Tools/HolocronToolset/src/toolset/config/config_info.py` | `currentVersion` |
-| **HoloPatcher** | `v1.8.0-patcher` | `Tools/HoloPatcher/src/holopatcher/config.py` | `currentVersion` |
-| **KotorDiff** | `v1.0.1-kotordiff` | `Tools/KotorDiff/src/kotordiff/__main__.py` | `CURRENT_VERSION` |
-| **GuiConverter** | `v1.0.0-guiconverter` | `Tools/GuiConverter/src/gui_converter/__init__.py` | `__version__` |
+| **HolocronToolset** | `v*-toolset` | `Tools/HolocronToolset/src/toolset/config/config_info.py` | `currentVersion` |
+| **HoloPatcher** | `v*-patcher` | `Tools/HoloPatcher/src/holopatcher/config.py` | `currentVersion` |
+| **KotorDiff** | `v*-kotordiff` | `Tools/KotorDiff/src/kotordiff/__main__.py` | `CURRENT_VERSION` |
+| **GuiConverter** | `v*-guiconverter` | `Tools/GuiConverter/src/guiconverter/__main__.py` | `CURRENT_VERSION` |
+| **KitGenerator** | `v*-kitgenerator` | `Tools/KitGenerator/src/kitgenerator/__init__.py` | `__version__` |
+| **Translator** | `v*-translator` | `Tools/Translator/src/translator/__main__.py` | `CURRENT_VERSION` |
+
+### Config File Discovery
+
+The workflow searches for version information in this order:
+
+1. `src/<toolname>/config.py` - JSON-style `"currentVersion": "X.X.X"`
+2. `src/<toolname>/config/config_info.py` - JSON-style `"currentVersion": "X.X.X"`
+3. `src/<toolname>/__main__.py` - Python variable `CURRENT_VERSION = "X.X.X"`
+4. `src/<toolname>/__init__.py` - Python variable `__version__ = "X.X.X"`
 
 ## Quick Start: Release a New Version
 
@@ -158,11 +171,11 @@ Run this workflow before releasing to validate everything is ready:
 └── workflows/
     ├── build-pr.yml          # PR validation (automatic)
     ├── release-ready.yml     # Pre-release checks (manual)
-    ├── release_toolset.yml   # Production release
-    ├── release_holopatcher.yml
-    ├── release_kotordiff.yml
+    ├── release_tools.yml     # UNIFIED production release (all tools)
     └── TEST_release_toolset.yml  # Test workflow
 ```
+
+> **Note:** All individual release workflows (`release_toolset.yml`, `release_holopatcher.yml`, etc.) have been unified into a single `release_tools.yml` workflow that dynamically handles all tools.
 
 ### Build Action
 
@@ -269,10 +282,19 @@ The release workflow uses a **two-stage update**:
 |----------|---------|---------|
 | `build-pr.yml` | PR changes | Validates builds before merge |
 | `release-ready.yml` | Manual | Pre-release validation |
-| `release_toolset.yml` | Pre-release with `*toolset*` tag | Production toolset release |
-| `release_holopatcher.yml` | Pre-release with `*patcher*` tag | Production HoloPatcher release |
-| `release_kotordiff.yml` | Pre-release with `*kotordiff*` tag | Production KotorDiff release |
+| `release_tools.yml` | Pre-release with tool tag, push tag, or manual | **Unified production release for all tools** |
 | `TEST_release_toolset.yml` | Pre-release with `test-*toolset*` tag | Safe testing |
+
+### Unified Release Workflow Features
+
+The `release_tools.yml` workflow:
+
+- **Dynamically discovers tools** from `./Tools` directory
+- **Compares versions** against existing GitHub release tags
+- **Skips version check** when triggered by release events (always builds)
+- **Creates draft releases** for manual review before publishing
+- **Supports tool-specific features** (Qt versions for HolocronToolset, etc.)
+- **Updates version files** in config after successful upload
 
 ## Example Timeline
 

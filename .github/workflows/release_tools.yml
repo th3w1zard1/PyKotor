@@ -1,0 +1,1300 @@
+name: Tools Release
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  OS_RUNNERS_JSON: '["windows-latest", "ubuntu-20.04", "macos-12"]'
+  PYTHON_VERSIONS_JSON: '["3.8"]'
+  ARCHITECTURES_JSON: '["x86", "x64"]'
+  INTERPRETERS_JSON: '["python"]'
+  UPX_VERSION: '4.2.2'
+
+on:
+  release:
+    types: [prereleased, released, created]
+  push:
+    tags:
+      - 'v*'  # Any version tag - tool matching is done dynamically in discover job
+  workflow_dispatch:
+    inputs:
+      tool_filter:
+        description: 'Filter to specific tool folder name under ./Tools (leave empty for all with new versions)'
+        required: false
+        default: ''
+        type: string
+      skip_version_check:
+        description: 'Skip version comparison (build all matching tools)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  # ============================================================================
+  # DISCOVER: Dynamically enumerate tools from ./Tools and determine releases
+  # ============================================================================
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      tools_matrix: ${{ steps.discover_tools.outputs.tools_matrix }}
+      has_tools: ${{ steps.discover_tools.outputs.has_tools }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch all tags
+        run: git fetch --tags --force
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install packaging library
+        run: pip install packaging
+
+      - name: Dynamically discover tools and check versions
+        id: discover_tools
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TOOL_FILTER: ${{ inputs.tool_filter }}
+          INPUT_SKIP_VERSION_CHECK: ${{ inputs.skip_version_check }}
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import json
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+
+          def find_config_file(tool_dir: Path, tool_name_lower: str) -> Path | None:
+              """
+              Find the config file for a tool.
+              Looks for (in order):
+                1. src/<toolnamelower>/config.py (e.g. Tools/HoloPatcher/src/holopatcher/config.py)
+                2. src/<toolnamelower>/config/config_info.py (e.g. Tools/HolocronToolset/src/toolset/config/config_info.py)
+                3. src/<toolnamelower>/__main__.py (e.g. Tools/KotorDiff/src/kotordiff/__main__.py, Tools/GuiConverter/src/gui_converter/__main__.py, Tools/Translator/src/translator/__main__.py - contains CURRENT_VERSION)
+                4. src/<toolnamelower>/__init__.py (e.g. Tools/KitGenerator/src/kitgenerator/__init__.py - contains __version__)
+              """
+              src_dir = tool_dir / "src" / tool_name_lower
+              
+              # Check for config.py directly in src/<tool>/
+              config_py = src_dir / "config.py"
+              if config_py.exists():
+                  return config_py
+              
+              # Check for config/config_info.py
+              config_info_py = src_dir / "config" / "config_info.py"
+              if config_info_py.exists():
+                  return config_info_py
+              
+              # Check for __main__.py with CURRENT_VERSION (e.g. KotorDiff, GuiConverter, Translator)
+              main_py = src_dir / "__main__.py"
+              if main_py.exists():
+                  content = main_py.read_text()
+                  if 'CURRENT_VERSION' in content:
+                      return main_py
+              
+              # Check for __init__.py with __version__ (e.g. Tools/KitGenerator/src/kitgenerator/__init__.py)
+              init_py = src_dir / "__init__.py"
+              if init_py.exists():
+                  content = init_py.read_text()
+                  if '__version__' in content:
+                      return init_py
+              
+              return None
+
+          def extract_version_from_config(config_path: Path) -> tuple[str | None, str]:
+              """
+              Extract version from a config file.
+              Returns: (version, version_key) where version_key indicates which pattern was matched.
+              """
+              try:
+                  content = config_path.read_text()
+                  
+                  # Look for "currentVersion": "X.X.X" (JSON-style in Python dict)
+                  match = re.search(r'"currentVersion":\s*"([^"]+)"', content)
+                  if match:
+                      return match.group(1), "currentVersion"
+                  
+                  # Look for CURRENT_VERSION = "X.X.X"
+                  match = re.search(r'CURRENT_VERSION\s*=\s*["\']([^"\']+)["\']', content)
+                  if match:
+                      return match.group(1), "CURRENT_VERSION"
+                  
+                  # Look for __version__ = "X.X.X" (KitGenerator and others)
+                  match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
+                  if match:
+                      return match.group(1), "__version__"
+                  
+                  return None, ""
+              except Exception as e:
+                  print(f"Error reading {config_path}: {e}")
+                  return None, ""
+
+          def extract_latest_version_key(config_path: Path, tool_name_lower: str) -> str | None:
+              """Find the <tool>LatestVersion key name if it exists."""
+              try:
+                  content = config_path.read_text()
+                  # Look for patterns like "toolsetLatestVersion", "holopatcherLatestVersion"
+                  pattern = rf'"({tool_name_lower}LatestVersion)":\s*"[^"]+"'
+                  match = re.search(pattern, content, re.IGNORECASE)
+                  if match:
+                      return match.group(1)
+                  return None
+              except:
+                  return None
+
+          def derive_tag_suffix(tool_name: str) -> str:
+              """
+              Derive the tag suffix from tool name.
+              HolocronToolset -> toolset
+              HoloPatcher -> patcher (or holopatcher)
+              BatchPatcher -> translator (legacy) or batchpatcher
+              KotorDiff -> kotordiff
+              etc.
+              """
+              name_lower = tool_name.lower()
+              
+              # Handle known special cases for backward compatibility
+              special_mappings = {
+                  "holocrontoolset": "toolset",
+                  "holopatcher": "patcher",
+                  "batchpatcher": "translator",  # Legacy name
+              }
+              
+              if name_lower in special_mappings:
+                  return special_mappings[name_lower]
+              
+              # Default: use the tool name in lowercase
+              return name_lower
+
+          def get_tag_patterns(tool_name: str) -> list[str]:
+              """Get all possible tag patterns for a tool (for matching existing tags)."""
+              suffix = derive_tag_suffix(tool_name)
+              patterns = [suffix]
+              
+              # Add aliases for backward compatibility
+              if tool_name.lower() == "holopatcher":
+                  patterns.append("holopatcher")
+              elif tool_name.lower() == "batchpatcher":
+                  patterns.append("batchpatcher")
+              
+              return patterns
+
+          def get_latest_release_version(tool_name: str) -> tuple[str | None, str | None]:
+              """Get the latest release tag and version for a tool from git tags."""
+              patterns = get_tag_patterns(tool_name)
+              all_tags = []
+              
+              for pattern in patterns:
+                  try:
+                      result = subprocess.run(
+                          ["git", "tag", "--list", f"*{pattern}*"],
+                          capture_output=True, text=True, check=True
+                      )
+                      tags = [t.strip() for t in result.stdout.strip().split('\n') if t.strip()]
+                      all_tags.extend(tags)
+                  except Exception as e:
+                      print(f"Error getting tags for {tool_name} pattern {pattern}: {e}")
+              
+              if not all_tags:
+                  return None, None
+              
+              # Remove duplicates
+              all_tags = list(set(all_tags))
+              
+              # Parse versions from tags (format: v{version}-{suffix})
+              versions = []
+              for tag in all_tags:
+                  # Match patterns like v1.0.0-toolset, v3.1.1-patcher, v1.80-holopatcher
+                  match = re.match(r'v([\d.]+(?:a\d+|b\d+|rc\d+)?)-\w+', tag)
+                  if match:
+                      versions.append((tag, match.group(1)))
+              
+              if not versions:
+                  return None, None
+              
+              # Sort by version using packaging library
+              try:
+                  from packaging import version as pkg_version
+                  versions.sort(key=lambda x: pkg_version.parse(x[1]), reverse=True)
+              except:
+                  versions.sort(key=lambda x: x[1], reverse=True)
+              
+              return versions[0]  # (tag, version)
+
+          def version_is_newer(file_version: str, released_version: str | None) -> bool:
+              """Check if file version is newer than released version."""
+              if not released_version:
+                  return True  # No release exists
+              if not file_version:
+                  return False
+              
+              try:
+                  from packaging import version as pkg_version
+                  return pkg_version.parse(file_version) > pkg_version.parse(released_version)
+              except:
+                  return file_version != released_version
+
+          def tag_matches_tool(tag: str, tool_name: str) -> bool:
+              """Check if a tag matches a specific tool."""
+              if not tag:
+                  return False
+              patterns = get_tag_patterns(tool_name)
+              tag_lower = tag.lower()
+              return any(p in tag_lower for p in patterns)
+
+          def detect_tool_features(tool_dir: Path, tool_name_lower: str) -> dict:
+              """
+              Detect tool-specific features by examining requirements.txt and other files.
+              """
+              features = {
+                  "has_qt": False,
+                  "qt_versions": [],
+                  "install_vc_redist_2015": False,
+                  "install_vc_redist_2019": False,
+              }
+              
+              # Check requirements.txt for Qt dependencies
+              req_file = tool_dir / "requirements.txt"
+              if req_file.exists():
+                  content = req_file.read_text().lower()
+                  if "pyqt5" in content or "pyqt6" in content or "pyside" in content or "qtpy" in content:
+                      features["has_qt"] = True
+                      features["qt_versions"] = ["PyQt5"]  # Default to PyQt5
+                      if "pyqt6" in content:
+                          features["qt_versions"].append("PyQt6")
+              
+              # Check if there's a deps script (indicates more complex dependencies)
+              deps_script = Path(f"compile/deps_{tool_name_lower}.ps1")
+              if deps_script.exists():
+                  features["install_vc_redist_2015"] = True
+                  features["install_vc_redist_2019"] = True
+              
+              return features
+
+          def find_compile_script(tool_name: str, tool_name_lower: str) -> str | None:
+              """Find the compile script for a tool."""
+              compile_dir = Path("compile")
+              
+              # Try various naming patterns
+              patterns = [
+                  f"compile_{tool_name_lower}.ps1",
+                  f"compile_{tool_name}.ps1",
+                  f"compile_{tool_name_lower.replace('_', '')}.ps1",
+              ]
+              
+              # Special cases for naming mismatches between folder and script names
+              special_mappings = {
+                  "batchpatcher": ["compile_batchpatcher.ps1"],
+                  "translator": ["compile_batchpatcher.ps1"],  # Translator folder uses batchpatcher script
+                  "kitgenerator": ["compile_kit_generator.ps1"],
+              }
+              
+              if tool_name_lower in special_mappings:
+                  for script_name in special_mappings[tool_name_lower]:
+                      patterns.insert(0, script_name)
+              
+              for pattern in patterns:
+                  script_path = compile_dir / pattern
+                  if script_path.exists():
+                      return str(script_path)
+              
+              return None
+
+          def find_deps_script(tool_name_lower: str) -> str | None:
+              """Find the deps script for a tool if it exists."""
+              compile_dir = Path("compile")
+              
+              patterns = [
+                  f"deps_{tool_name_lower}.ps1",
+                  f"deps_{tool_name_lower.replace('_', '')}.ps1",
+              ]
+              
+              # Special cases for naming mismatches between folder and script names
+              special_mappings = {
+                  "kitgenerator": ["deps_kit_generator.ps1"],
+                  "translator": ["deps_batchpatcher.ps1"],  # Translator folder uses batchpatcher deps
+                  "holocrontoolset": ["deps_toolset.ps1"],  # Toolset uses deps_toolset.ps1
+              }
+              
+              if tool_name_lower in special_mappings:
+                  for script_name in special_mappings[tool_name_lower]:
+                      patterns.insert(0, script_name)
+              
+              for pattern in patterns:
+                  script_path = compile_dir / pattern
+                  if script_path.exists():
+                      return str(script_path)
+              
+              return None
+
+          # ===================
+          # MAIN DISCOVERY LOGIC
+          # ===================
+          
+          event_name = os.environ.get("EVENT_NAME", "")
+          release_tag = os.environ.get("RELEASE_TAG", "") or os.environ.get("REF_NAME", "")
+          tool_filter = os.environ.get("INPUT_TOOL_FILTER", "").strip()
+          skip_version_check = os.environ.get("INPUT_SKIP_VERSION_CHECK", "false").lower() == "true"
+          
+          # Determine if this is a release trigger (should skip version check and force build)
+          is_release_trigger = event_name in ["release", "push"] and release_tag and release_tag.startswith("v")
+          
+          print(f"Event: {event_name}")
+          print(f"Release tag: {release_tag}")
+          print(f"Tool filter: {tool_filter or '(none)'}")
+          print(f"Skip version check: {skip_version_check}")
+          print(f"Is release trigger: {is_release_trigger}")
+          print()
+          
+          tools_to_build = []
+          tools_dir = Path("Tools")
+          
+          # Iterate through all first-level directories under ./Tools
+          for tool_dir in sorted(tools_dir.iterdir()):
+              if not tool_dir.is_dir():
+                  continue
+              
+              tool_name = tool_dir.name
+              tool_name_lower = tool_name.lower()
+              
+              # Apply tool filter if specified
+              if tool_filter and tool_name.lower() != tool_filter.lower():
+                  continue
+              
+              print(f"=== Checking {tool_name} ===")
+              
+              # Check 1: pyproject.toml must exist
+              pyproject = tool_dir / "pyproject.toml"
+              if not pyproject.exists():
+                  print(f"  SKIP: No pyproject.toml")
+                  continue
+              
+              # Check 2: Find config file (src/<tool>/config.py or src/<tool>/config/config_info.py)
+              config_file = find_config_file(tool_dir, tool_name_lower)
+              if not config_file:
+                  print(f"  SKIP: No config file found at src/{tool_name_lower}/config.py or src/{tool_name_lower}/config/config_info.py")
+                  continue
+              
+              print(f"  Config file: {config_file}")
+              
+              # Check 3: Find compile script
+              compile_script = find_compile_script(tool_name, tool_name_lower)
+              if not compile_script:
+                  print(f"  SKIP: No compile script found in ./compile/")
+                  continue
+              
+              print(f"  Compile script: {compile_script}")
+              
+              # Extract version from config
+              file_version, version_key = extract_version_from_config(config_file)
+              print(f"  Config version: {file_version or '(not found)'} (key: {version_key})")
+              
+              # Get latest release
+              latest_tag, released_version = get_latest_release_version(tool_name)
+              print(f"  Latest release: {latest_tag or '(none)'} (version: {released_version or 'N/A'})")
+              
+              # Determine if we should build this tool
+              should_build = False
+              target_tag = None
+              target_version = None
+              
+              if is_release_trigger:
+                  # Release trigger: build ONLY if tag matches this tool
+                  if tag_matches_tool(release_tag, tool_name):
+                      should_build = True
+                      target_tag = release_tag
+                      # Extract version from tag
+                      match = re.match(r'v([\d.]+(?:a\d+|b\d+|rc\d+)?)-\w+', release_tag)
+                      target_version = match.group(1) if match else file_version
+                      print(f"  -> WILL BUILD (release trigger matched tag '{release_tag}')")
+                  else:
+                      print(f"  -> SKIP (release trigger but tag '{release_tag}' doesn't match this tool)")
+              elif skip_version_check:
+                  # Manual trigger with skip version check: build if we have a version
+                  if file_version:
+                      should_build = True
+                      target_version = file_version
+                      target_tag = f"v{file_version}-{derive_tag_suffix(tool_name)}"
+                      print(f"  -> WILL BUILD (version check skipped)")
+                  else:
+                      print(f"  -> SKIP (no version found in config)")
+              else:
+                  # Normal trigger: compare versions
+                  if version_is_newer(file_version, released_version):
+                      should_build = True
+                      target_version = file_version
+                      target_tag = f"v{file_version}-{derive_tag_suffix(tool_name)}"
+                      print(f"  -> WILL BUILD (version {file_version} > {released_version or 'none'})")
+                  else:
+                      print(f"  -> SKIP (version {file_version} not newer than {released_version})")
+              
+              if should_build and target_version:
+                  # Detect tool features
+                  features = detect_tool_features(tool_dir, tool_name_lower)
+                  deps_script = find_deps_script(tool_name_lower)
+                  latest_version_key = extract_latest_version_key(config_file, tool_name_lower)
+                  
+                  tool_info = {
+                      "name": tool_name,
+                      "name_lower": tool_name_lower,
+                      "version": target_version,
+                      "tag": target_tag,
+                      "tag_suffix": derive_tag_suffix(tool_name),
+                      "artifact_name": tool_name,
+                      "compile_script": compile_script,
+                      "deps_script": deps_script or "",
+                      "config_file": str(config_file),
+                      "version_key": version_key,  # "currentVersion", "CURRENT_VERSION", or "__version__"
+                      "has_qt": features["has_qt"],
+                      "qt_versions": json.dumps(features["qt_versions"]),
+                      "install_vc_redist_2015": features["install_vc_redist_2015"],
+                      "install_vc_redist_2019": features["install_vc_redist_2019"],
+                      "latest_version_key": latest_version_key or "",
+                      "is_release_trigger": is_release_trigger,
+                  }
+                  tools_to_build.append(tool_info)
+              
+              print()
+          
+          # Output results
+          has_tools = len(tools_to_build) > 0
+          matrix_json = json.dumps(tools_to_build)
+          
+          print("=" * 50)
+          print(f"TOOLS TO BUILD: {len(tools_to_build)}")
+          for t in tools_to_build:
+              qt_info = f" (Qt: {t['qt_versions']})" if t['has_qt'] else ""
+              print(f"  - {t['name']} v{t['version']} -> tag: {t['tag']}{qt_info}")
+          print("=" * 50)
+          
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"tools_matrix={matrix_json}\n")
+              f.write(f"has_tools={str(has_tools).lower()}\n")
+          PYTHON_SCRIPT
+        shell: bash
+
+  # ============================================================================
+  # SETUP: Prepare environment variables for build matrix
+  # ============================================================================
+  setup:
+    needs: discover
+    if: needs.discover.outputs.has_tools == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.set_env.outputs.os }}
+      python-version: ${{ steps.set_env.outputs.python-version }}
+      architecture: ${{ steps.set_env.outputs.architecture }}
+      python-pypy: ${{ steps.set_env.outputs.python-pypy }}
+    steps:
+      - name: Set environment variables
+        id: set_env
+        run: |
+          $singleLineJson = '${{ env.OS_RUNNERS_JSON }}' -replace "`r", "" -replace "`n", ""
+          echo "os<<EOF" >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
+          $singleLineJson = '${{ env.PYTHON_VERSIONS_JSON }}' -replace "`r", "" -replace "`n", ""
+          echo "python-version<<EOF" >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
+          $singleLineJson = '${{ env.ARCHITECTURES_JSON }}' -replace "`r", "" -replace "`n", ""
+          echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+
+          $singleLineJson = '${{ env.INTERPRETERS_JSON }}' -replace "`r", "" -replace "`n", ""
+          echo "python-pypy<<EOF" >> $env:GITHUB_OUTPUT
+          echo $singleLineJson >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+  # ============================================================================
+  # UPDATE VERSION PRE-BUILD: Update version in source files before building
+  # ============================================================================
+  update_version_pre_build:
+    needs: [discover, setup]
+    if: needs.discover.outputs.has_tools == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJson(needs.discover.outputs.tools_matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+
+      - name: Update version in config file
+        run: |
+          VERSION="${{ matrix.tool.version }}"
+          CONFIG_FILE="${{ matrix.tool.config_file }}"
+          TOOL_NAME="${{ matrix.tool.name }}"
+          VERSION_KEY="${{ matrix.tool.version_key }}"
+          
+          if [ -f "$CONFIG_FILE" ]; then
+            echo "Updating $CONFIG_FILE with $VERSION_KEY to $VERSION (pre-build)"
+            
+            # Update based on version key pattern
+            case "$VERSION_KEY" in
+              "currentVersion")
+                # JSON-style in Python dict: "currentVersion": "X.X.X"
+                sed -i "s/\"currentVersion\": \"[^\"]*\"/\"currentVersion\": \"$VERSION\"/" "$CONFIG_FILE"
+                echo "Updated currentVersion:"
+                grep "currentVersion" "$CONFIG_FILE" || true
+                ;;
+              "CURRENT_VERSION")
+                # Python variable: CURRENT_VERSION = "X.X.X"
+                sed -i "s/CURRENT_VERSION = \"[^\"]*\"/CURRENT_VERSION = \"$VERSION\"/" "$CONFIG_FILE"
+                echo "Updated CURRENT_VERSION:"
+                grep "CURRENT_VERSION" "$CONFIG_FILE" || true
+                ;;
+              "__version__")
+                # Python __version__: __version__ = "X.X.X"
+                sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" "$CONFIG_FILE"
+                echo "Updated __version__:"
+                grep "__version__" "$CONFIG_FILE" || true
+                ;;
+              *)
+                echo "Unknown version key: $VERSION_KEY, trying all patterns"
+                sed -i "s/\"currentVersion\": \"[^\"]*\"/\"currentVersion\": \"$VERSION\"/" "$CONFIG_FILE"
+                sed -i "s/CURRENT_VERSION = \"[^\"]*\"/CURRENT_VERSION = \"$VERSION\"/" "$CONFIG_FILE"
+                sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" "$CONFIG_FILE"
+                ;;
+            esac
+            
+            echo "Config file after update:"
+            head -30 "$CONFIG_FILE" || true
+          else
+            echo "Config file not found: $CONFIG_FILE"
+          fi
+        shell: bash
+
+      - name: Commit and push version update
+        run: |
+          CONFIG_FILE="${{ matrix.tool.config_file }}"
+          TOOL_NAME="${{ matrix.tool.name }}"
+          VERSION="${{ matrix.tool.version }}"
+          
+          if [ -f "$CONFIG_FILE" ]; then
+            git add "$CONFIG_FILE"
+            if git diff --staged --quiet; then
+              echo "No changes to commit"
+            else
+              git commit -m "chore($TOOL_NAME): Bump currentVersion to $VERSION (pre-build)"
+              git push origin master
+            fi
+          fi
+        shell: bash
+
+      - name: Update release tag to point to current commit
+        run: |
+          TAG="${{ matrix.tool.tag }}"
+          if [ -n "$TAG" ]; then
+            git tag -f "$TAG"
+            git push origin "refs/tags/$TAG" --force
+            echo "Updated tag $TAG to point to current commit"
+          fi
+        shell: bash
+
+  # ============================================================================
+  # BUILD: Compile tools using PyInstaller across all platforms
+  # ============================================================================
+  build:
+    needs: [discover, setup, update_version_pre_build]
+    if: needs.discover.outputs.has_tools == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJson(needs.setup.outputs.os) }}
+        python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
+        architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
+        python_pypy: ${{ fromJson(needs.setup.outputs.python-pypy) }}
+        tool: ${{ fromJson(needs.discover.outputs.tools_matrix) }}
+        include:
+          - arch: x86
+            vc_redist2015: "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe"
+            vc_redist-latest: "https://aka.ms/vs/17/release/vc_redist.x86.exe"
+            vc_redist2019: "https://aka.ms/vs/17/release/vc_redist.x86.exe"
+          - arch: x64
+            vc_redist2015: "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x64.exe"
+            vc_redist-latest: "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+            vc_redist2019: "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+        exclude:
+          # Unix x86 is not supported
+          - os: ubuntu-20.04
+            architecture: x86
+          - os: macos-12
+            architecture: x86
+          # PyPy exclusions
+          - python_pypy: 'pypy'
+            python-version: '3.11'
+          - python_pypy: 'pypy'
+            python-version: '3.12'
+
+    steps:
+      - name: Determine Python version string
+        id: set-python-version
+        run: |
+          if ( "${{ matrix.python_pypy }}" -eq "pypy" ) {
+            Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=pypy-${{ matrix.python-version }}"
+          } else {
+            Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
+          }
+        shell: pwsh
+
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Install PowerShell on non-Windows
+        if: runner.os != 'Windows'
+        run: bash ./install_powershell.sh
+        shell: bash
+
+      - name: Set up Python (PyPy)
+        if: matrix.python_pypy == 'pypy'
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          architecture: ${{ matrix.architecture }}
+
+      - name: Reset APT sources (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "Resetting APT sources to default Ubuntu repositories"
+          sudo rm -f /etc/apt/sources.list
+          echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs) main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb http://security.ubuntu.com/ubuntu $(lsb_release -cs)-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          sudo apt-get update -y
+        shell: bash
+
+      - name: Set UPX download URL
+        if: runner.os != 'macOS'
+        id: upx_setup
+        run: |
+          $archiveName = ""
+          if ("${{ runner.os }}" -eq "Windows") {
+            if ("${{ matrix.architecture }}" -eq "x86") {
+              $archiveName = "upx-${{ env.UPX_VERSION }}-win32.zip"
+            } else {
+              $archiveName = "upx-${{ env.UPX_VERSION }}-win64.zip"
+            }
+          } elseif ("${{ runner.os }}" -eq "Linux") {
+            $archiveName = "upx-${{ env.UPX_VERSION }}-amd64_linux.tar.xz"
+          }
+          $url = "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/$archiveName"
+          
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "url=$url"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "archiveName=$archiveName"
+        shell: pwsh
+
+      - name: Download and prepare UPX
+        if: runner.os != 'macOS'
+        run: |
+          $ext = "${{ runner.os }}" -eq "Windows" ? "zip" : "tar.xz"
+          $url = "${{ steps.upx_setup.outputs.url }}"
+          $archiveName = "${{ steps.upx_setup.outputs.archiveName }}"
+          
+          if ("${{ runner.os }}" -eq "Windows") {
+            Invoke-WebRequest -Uri $url -OutFile $archiveName
+          } else {
+            curl -L $url -o $archiveName
+          }
+          
+          New-Item -ItemType Directory -Force -Path "upx-dir" -ErrorAction SilentlyContinue
+          if ($ext -eq "zip") {
+            $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($archiveName)
+            Expand-Archive -Path $archiveName -DestinationPath "temp_folder_upx"
+            if (-not (Test-Path -Path "upx-dir")) {
+              New-Item -ItemType Directory -Path "upx-dir"
+            }
+            Get-ChildItem -LiteralPath "temp_folder_upx/$fileNameWithoutExtension" -Recurse | Move-Item -Destination "upx-dir"
+            Remove-Item "temp_folder_upx" -Recurse -Force -ErrorAction SilentlyContinue
+          } else {
+            tar -xvf $archiveName --strip-components=1 -C "upx-dir"
+          }
+          Remove-Item $archiveName -ErrorAction SilentlyContinue
+        shell: pwsh
+
+      - name: Set UPX directory path
+        if: runner.os != 'macOS'
+        run: |
+          $upx_dir = $([System.IO.Path]::GetFullPath('./upx-dir'))
+          echo "UPX_DIR=$upx_dir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Output "UPX_DIR set to '$upx_dir'"
+        shell: pwsh
+
+      - name: Install Visual Studio 2015 C++ Redistributable
+        if: runner.os == 'Windows' && matrix.tool.install_vc_redist_2015
+        run: |
+          $url = "${{ matrix.vc_redist2015 }}"
+          $output = "vc_redist.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process $output -ArgumentList '/install', '/quiet', '/norestart' -Wait
+          Remove-Item -Path $output
+        shell: pwsh
+
+      - name: Install Visual Studio 2019 C++ Redistributable
+        if: runner.os == 'Windows' && matrix.tool.install_vc_redist_2019
+        run: |
+          $url = "${{ matrix.vc_redist2019 }}"
+          $output = "vc_redist.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process $output -ArgumentList '/install', '/quiet', '/norestart' -Wait
+          Remove-Item -Path $output
+        shell: pwsh
+
+      - name: Install Visual Studio latest C++ Redistributable
+        if: runner.os == 'Windows'
+        run: |
+          $url = "${{ matrix.vc_redist-latest }}"
+          $output = "vc_redist.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process $output -ArgumentList '/install', '/quiet', '/norestart' -Wait
+          Remove-Item -Path $output
+        shell: pwsh
+
+      - name: Set QT_API for Qt-based tools
+        if: matrix.tool.has_qt
+        run: |
+          # Parse the first Qt version from the JSON array
+          $qtVersions = '${{ matrix.tool.qt_versions }}' | ConvertFrom-Json
+          if ($qtVersions.Count -gt 0) {
+            $qtApi = $qtVersions[0]
+            echo "QT_API=$qtApi" >> $env:GITHUB_ENV
+            Write-Host "Set QT_API to $qtApi"
+          }
+        shell: pwsh
+
+      - name: Install tool dependencies
+        id: install_deps
+        env:
+          MATRIX_ARCH: ${{ matrix.architecture }}
+        run: |
+          try {
+            $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
+            $toolName = "${{ matrix.tool.name }}"
+            $venvName = ".venv_${toolName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+            
+            . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
+            Write-Host "Python executable path: $pythonExePath"
+            
+            & $pythonExePath -m pip install --upgrade pip
+            
+            # Install pyinstaller with appropriate version for the Python version
+            if ("${{ runner.os }}" -eq "Windows") {
+              if ("${{ matrix.python-version }}" -eq "3.12") {
+                pip install pyinstaller --prefer-binary -U
+              } elseif ("${{ matrix.python-version }}" -eq "3.11") {
+                pip install "pyinstaller==5.13.2" --prefer-binary
+              } else {
+                pip install "pyinstaller==5.4" --prefer-binary
+              }
+              pip install comtypes pywin32 -U
+            } else {
+              pip install pyinstaller -U --prefer-binary
+            }
+            
+            # Run tool-specific deps script if it exists
+            $depsScript = "${{ matrix.tool.deps_script }}"
+            if ($depsScript -and (Test-Path -LiteralPath $depsScript -ErrorAction SilentlyContinue)) {
+              Write-Host "Running deps script: $depsScript"
+              $errorLines = @()
+              . ./$depsScript -noprompt -venv_name $venvName 2>&1 | ForEach-Object {
+                Write-Output $_.ToString()
+                if ($_ -match 'ERROR:') {
+                  $errorLines += $_.ToString()
+                }
+              }
+              if ($errorLines.Count -gt 0) {
+                $errorLines | ForEach-Object { Write-Error $_ }
+                Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
+                exit 1
+              }
+            }
+            
+            # Additional Qt tool setup
+            if ("${{ matrix.tool.has_qt }}" -eq "true") {
+              pip install "setuptools==69.5.1"  # 70.0.0+ breaks pyinstaller
+              pip install qdarkstyle -U
+            }
+            
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
+          } catch {
+            Write-Host -ForegroundColor Red "Error: $($_.Exception.Message)"
+            if ($_.ScriptStackTrace) {
+              Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
+            }
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Compile tool with PyInstaller
+        if: steps.install_deps.outputs.success == 'true'
+        id: compile
+        run: |
+          $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
+          $upxDir = $env:UPX_DIR
+          Write-Host "Using UPX directory at '$upxDir'"
+          
+          $env:PYTHONOPTIMIZE = "1"
+          $toolName = "${{ matrix.tool.name }}"
+          $venvName = ".venv_${toolName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $compileScript = "${{ matrix.tool.compile_script }}"
+          
+          $errorLines = @()
+          $output = ""
+          
+          Write-Host "Running compile script: $compileScript"
+          . ./$compileScript -noprompt -venv_name $venvName -upx_dir $upxDir 2>&1 | ForEach-Object {
+            Write-Output $_.ToString()
+            $output += $_.ToString() + "`n"
+            if ($_ -match 'ERROR:') {
+              $errorLines += $_.ToString()
+            }
+          }
+          
+          $warningCount = 0
+          $output -split "`n" | ForEach-Object {
+            if ($_ -match 'WARNING: Library not found: could not resolve' -or
+                $_ -match 'WARNING: Cannot find ' -or
+                $_ -match 'WARNING: lib not found:' -or
+                $_ -match 'WARNING: Tcl modules directory' -or
+                $_ -match 'WARNING: Failed to upx strip') {
+              $warningCount++
+            }
+          }
+          
+          if ($errorLines.Count -gt 0) {
+            $errorLines | ForEach-Object { Write-Error $_ }
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
+            exit 1
+          } elseif ($warningCount -ge 3) {
+            Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
+            exit 1
+          } else {
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
+          }
+        shell: pwsh
+
+      # ===========================================================================================
+      # DISABLED: Linux RPATH adjustment using patchelf
+      # These steps were present in individual workflows but disabled for now.
+      # Kept for future reference and potential re-enablement.
+      # ===========================================================================================
+      - name: Adjust RPATH for shared libraries (Linux - DISABLED)
+        if: ${{ (success() || failure()) && runner.os == 'Disabled_Linux' && steps.compile.outputs.success == 'true' }}
+        run: |
+          $toolName = "${{ matrix.tool.name }}"
+          $venvName = ".venv_${toolName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          
+          . ./install_python_venv.ps1 -noprompt -venv_name $venvName
+          
+          # Ensure patchelf is installed
+          sudo apt-get update && sudo apt-get install -y patchelf
+
+          # Find the virtual environment's site-packages directory
+          $venvPath = $env:VIRTUAL_ENV
+          Write-Host "Virtual environment path: $venvPath"
+          
+          # Dynamically find the Python version directory inside the venv
+          $pythonLibPath = Get-ChildItem -LiteralPath "$venvPath/lib" | Where-Object { $_.PSIsContainer } | Select-Object -First 1
+          $sitePackagesPath = Join-Path -Path $pythonLibPath.FullName -ChildPath "site-packages"
+          
+          Write-Host "Site-packages path: $sitePackagesPath"
+
+          # Use patchelf to adjust RPATH for all shared libraries in the virtual environment
+          Get-ChildItem -LiteralPath $sitePackagesPath -Filter *.so -Recurse | ForEach-Object {
+            $libPath = $_.FullName
+            Write-Host "Patching $libPath"
+            sudo patchelf --set-rpath '$ORIGIN' $libPath
+          }
+        shell: pwsh
+
+      # ===========================================================================================
+      # DISABLED: Create static binary using staticx (Linux only)
+      # These steps were present in individual workflows but disabled for now.
+      # Kept for future reference and potential re-enablement.
+      # ===========================================================================================
+      - name: Create Static Binary (Linux - DISABLED)
+        if: ${{ (success() || failure()) && runner.os == 'Disabled_Linux' && steps.compile.outputs.success == 'true' }}
+        run: |
+          $toolName = "${{ matrix.tool.name }}"
+          $artifactName = "${{ matrix.tool.artifact_name }}"
+          $venvName = ".venv_${toolName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          
+          . ./install_python_venv.ps1 -noprompt -venv_name $venvName
+          & $pythonExePath -m pip install staticx
+          
+          $distPath = "./dist/$artifactName"
+          if (Test-Path -LiteralPath $distPath -ErrorAction SilentlyContinue) {
+            staticx $distPath "${distPath}-static"
+            # Rename the static binary for clarity and consistency
+            Write-Output "${distPath}-static  --> $distPath"
+            Move-Item -LiteralPath "${distPath}-static" -Destination $distPath -Force
+          } else {
+            Write-Host "Binary not found at $distPath, skipping staticx"
+          }
+        shell: pwsh
+
+      - name: Generate artifact name
+        id: artifact_name
+        run: |
+          $toolName = "${{ matrix.tool.artifact_name }}"
+          $artifactName = "${toolName}_${{ runner.os }}_${{ matrix.architecture }}"
+          
+          # Add Qt version suffix for Qt-based tools
+          if ("${{ matrix.tool.has_qt }}" -eq "true") {
+            $qtApi = $env:QT_API
+            if ($qtApi) {
+              $artifactName = "${toolName}_${{ runner.os }}_${qtApi}_${{ matrix.architecture }}"
+            }
+          }
+          
+          echo "name=$artifactName" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
+      - name: Upload binaries (attempt 1)
+        if: success() || failure()
+        id: upload_attempt_1
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact_name.outputs.name }}
+          path: ./dist/**
+          retention-days: 90
+        continue-on-error: true
+
+      - name: Upload binaries (attempt 2)
+        if: steps.upload_attempt_1.outcome == 'failure'
+        id: upload_attempt_2
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact_name.outputs.name }}
+          path: ./dist/**
+          retention-days: 90
+        continue-on-error: true
+
+      - name: Upload binaries (attempt 3)
+        if: steps.upload_attempt_2.outcome == 'failure'
+        id: upload_attempt_3
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact_name.outputs.name }}
+          path: ./dist/**
+          retention-days: 90
+        continue-on-error: true
+
+      - name: Upload binaries (attempt 4)
+        if: steps.upload_attempt_3.outcome == 'failure'
+        id: upload_attempt_4
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact_name.outputs.name }}
+          path: ./dist/**
+          retention-days: 90
+        continue-on-error: true
+
+      - name: Upload binaries (attempt 5)
+        if: steps.upload_attempt_4.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact_name.outputs.name }}
+          path: ./dist/**
+          retention-days: 90
+
+  # ============================================================================
+  # PACKAGE: Download artifacts, compress, and create draft release
+  # ============================================================================
+  package:
+    needs: [discover, build]
+    if: needs.discover.outputs.has_tools == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJson(needs.discover.outputs.tools_matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download tool artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: published_workflow_builds/
+          pattern: ${{ matrix.tool.artifact_name }}_*
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find published_workflow_builds -type f -name "*.zip" -o -type f -name "*.exe" -o -type f -name "*.app" 2>/dev/null || true
+          ls -la published_workflow_builds/ || true
+        shell: bash
+
+      - name: Compress into archives
+        run: |
+          $originalDir = Get-Location
+          $sourceFolder = Join-Path -Path $originalDir -ChildPath "published_workflow_builds"
+          
+          if (-not (Test-Path -LiteralPath $sourceFolder -ErrorAction SilentlyContinue)) {
+            Write-Host "No artifacts directory found for ${{ matrix.tool.name }}"
+            exit 0
+          }
+          
+          $dirs = Get-ChildItem -LiteralPath $sourceFolder -Directory
+          if ($dirs.Count -eq 0) {
+            Write-Host "No artifact subdirectories found for ${{ matrix.tool.name }}"
+            exit 0
+          }
+          
+          Set-Location $sourceFolder
+          foreach ($dir in $dirs) {
+            $folderName = $dir.Name
+            $archiveName = "$folderName.zip"
+            Write-Host "Creating archive: $archiveName from $folderName"
+            zip -r -9 $archiveName $folderName
+          }
+          Set-Location $originalDir
+        shell: pwsh
+
+      - name: Create or update draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ matrix.tool.tag }}
+          name: "${{ matrix.tool.name }} v${{ matrix.tool.version }}"
+          draft: true
+          prerelease: false
+          files: "published_workflow_builds/*.zip"
+          fail_on_unmatched_files: false
+          generate_release_notes: true
+
+      - name: Determine Release ID for fallback upload
+        if: failure()
+        id: get_release_id
+        run: |
+          $uri = "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ matrix.tool.tag }}"
+          $headers = @{Authorization = "token ${{ secrets.GITHUB_TOKEN }}"}
+          try {
+            $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
+            $releaseId = $response.id
+            echo "RELEASE_ID=$releaseId" | Out-File -FilePath $env:GITHUB_ENV -Append
+            Write-Host "Found existing release ID: $releaseId"
+          } catch {
+            Write-Host "Release not found, will create one..."
+            $body = @{
+              tag_name = "${{ matrix.tool.tag }}"
+              name = "${{ matrix.tool.name }} v${{ matrix.tool.version }}"
+              draft = $true
+            } | ConvertTo-Json
+            
+            $createUri = "https://api.github.com/repos/${{ github.repository }}/releases"
+            $response = Invoke-RestMethod -Uri $createUri -Method Post -Headers $headers -Body $body -ContentType "application/json"
+            $releaseId = $response.id
+            echo "RELEASE_ID=$releaseId" | Out-File -FilePath $env:GITHUB_ENV -Append
+            Write-Host "Created new release ID: $releaseId"
+          }
+        shell: pwsh
+
+      - name: Fallback upload using .NET HttpClient
+        if: failure()
+        run: |
+          try {
+            Add-Type -TypeDefinition @"
+          using System;
+          using System.Net.Http;
+          using System.Net.Http.Headers;
+          using System.Threading.Tasks;
+    
+          public class GitHubUploader {
+              public static async Task UploadFileAsync(string filePath, string uploadUrl, string token) {
+                  using (var client = new HttpClient()) {
+                      client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                      using (var content = new MultipartFormDataContent()) {
+                          var fileContent = new ByteArrayContent(System.IO.File.ReadAllBytes(filePath));
+                          fileContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+                          content.Add(fileContent, "file", System.IO.Path.GetFileName(filePath));
+                          var response = await client.PostAsync(uploadUrl, content);
+                          if (!response.IsSuccessStatusCode) {
+                              throw new ApplicationException(await response.Content.ReadAsStringAsync());
+                          }
+                      }
+                  }
+              }
+            }
+          "@
+            $archivePath = "published_workflow_builds/*.zip"
+            $releaseId = $env:RELEASE_ID
+            $token = "${{ secrets.GITHUB_TOKEN }}"
+            Get-ChildItem -Path $archivePath -ErrorAction SilentlyContinue | ForEach-Object {
+              $filePath = $_.FullName
+              $fileName = $_.Name
+              $uploadUrl = "https://uploads.github.com/repos/${{ github.repository }}/releases/$releaseId/assets?name=$fileName&label=$fileName"
+              try {
+                Write-Host "Attempting to upload $fileName"
+                [GitHubUploader]::UploadFileAsync($filePath, $uploadUrl, $token).GetAwaiter().GetResult()
+                Write-Host "Upload successful: $fileName"
+              } catch {
+                Write-Host "Failed to upload $fileName : $($_.Exception.Message)"
+                Write-Host -ForegroundColor Red "Detailed Error Report:"
+                Write-Host -ForegroundColor Red "Message: $($_.Exception.Message)"
+                
+                # Attempt to provide a more detailed location of the error
+                if ($_.InvocationInfo -and $_.InvocationInfo.MyCommand) {
+                    Write-Host -ForegroundColor Red "Command Name: $($_.InvocationInfo.MyCommand.Name)"
+                    Write-Host -ForegroundColor Red "Script Name: $($_.InvocationInfo.ScriptName)"
+                    Write-Host -ForegroundColor Red "Line Number: $($_.InvocationInfo.ScriptLineNumber)"
+                    Write-Host -ForegroundColor Red "Line: $($_.InvocationInfo.Line)"
+                } else {
+                    Write-Host -ForegroundColor Red "No invocation information available."
+                }
+            
+                # Extract and display the script stack trace if available
+                if ($_.ScriptStackTrace) {
+                    Write-Host -ForegroundColor Red "Script Stack Trace:"
+                    Write-Host -ForegroundColor Red $_.ScriptStackTrace
+                } else {
+                    Write-Host -ForegroundColor Red "No script stack trace available."
+                }
+              }
+            }
+          } catch {
+            Write-Host -ForegroundColor Red "Detailed Error Report:"
+            Write-Host -ForegroundColor Red "Message: $($_.Exception.Message)"
+            
+            # Attempt to provide a more detailed location of the error
+            if ($_.InvocationInfo -and $_.InvocationInfo.MyCommand) {
+                Write-Host -ForegroundColor Red "Command Name: $($_.InvocationInfo.MyCommand.Name)"
+                Write-Host -ForegroundColor Red "Script Name: $($_.InvocationInfo.ScriptName)"
+                Write-Host -ForegroundColor Red "Line Number: $($_.InvocationInfo.ScriptLineNumber)"
+                Write-Host -ForegroundColor Red "Line: $($_.InvocationInfo.Line)"
+            } else {
+                Write-Host -ForegroundColor Red "No invocation information available."
+            }
+        
+            # Extract and display the script stack trace if available
+            if ($_.ScriptStackTrace) {
+                Write-Host -ForegroundColor Red "Script Stack Trace:"
+                Write-Host -ForegroundColor Red $_.ScriptStackTrace
+            } else {
+                Write-Host -ForegroundColor Red "No script stack trace available."
+            }
+
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
+            exit 1
+          }
+        shell: pwsh
+
+  # ============================================================================
+  # FINALIZE: Update version files and keep as draft for manual review
+  # ============================================================================
+  finalize:
+    needs: [discover, package]
+    if: needs.discover.outputs.has_tools == 'true' && success()
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJson(needs.discover.outputs.tools_matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+
+      - name: Update latest version keys in config (if applicable)
+        run: |
+          VERSION="${{ matrix.tool.version }}"
+          CONFIG_FILE="${{ matrix.tool.config_file }}"
+          LATEST_KEY="${{ matrix.tool.latest_version_key }}"
+          TOOL_NAME="${{ matrix.tool.name }}"
+          
+          if [ -n "$LATEST_KEY" ] && [ -f "$CONFIG_FILE" ]; then
+            echo "Updating $LATEST_KEY to $VERSION in $CONFIG_FILE"
+            
+            # Update the latest version key
+            sed -i "s/\"$LATEST_KEY\": \"[^\"]*\"/\"$LATEST_KEY\": \"$VERSION\"/" "$CONFIG_FILE"
+            
+            # Also update beta version key if it exists (replace "Latest" with "LatestBeta")
+            BETA_KEY=$(echo "$LATEST_KEY" | sed 's/Latest/LatestBeta/')
+            if grep -q "\"$BETA_KEY\"" "$CONFIG_FILE"; then
+              sed -i "s/\"$BETA_KEY\": \"[^\"]*\"/\"$BETA_KEY\": \"$VERSION\"/" "$CONFIG_FILE"
+            fi
+            
+            # Update notes if release has body
+            NOTES="${{ github.event.release.body }}"
+            if [ -n "$NOTES" ]; then
+              NOTES_KEY=$(echo "$LATEST_KEY" | sed 's/Version/Notes/')
+              BETA_NOTES_KEY=$(echo "$NOTES_KEY" | sed 's/Latest/LatestBeta/')
+              ESCAPED_NOTES=$(echo "$NOTES" | head -n 1 | sed 's/[&/\]/\\&/g' | sed 's/"/\\"/g')
+              
+              if grep -q "\"$NOTES_KEY\"" "$CONFIG_FILE"; then
+                sed -i "s/\"$NOTES_KEY\": \"[^\"]*\"/\"$NOTES_KEY\": \"$ESCAPED_NOTES\"/" "$CONFIG_FILE"
+              fi
+              if grep -q "\"$BETA_NOTES_KEY\"" "$CONFIG_FILE"; then
+                sed -i "s/\"$BETA_NOTES_KEY\": \"[^\"]*\"/\"$BETA_NOTES_KEY\": \"$ESCAPED_NOTES\"/" "$CONFIG_FILE"
+              fi
+            fi
+            
+            echo "Updated config:"
+            grep -E "(LatestVersion|LatestBetaVersion)" "$CONFIG_FILE" || true
+            
+            git add "$CONFIG_FILE"
+            if ! git diff --staged --quiet; then
+              git commit -m "chore($TOOL_NAME): Update latest version to $VERSION (post-release)"
+              git push origin master
+            fi
+          else
+            echo "No latest_version_key defined or config file not found, skipping post-release update"
+          fi
+        shell: bash
+
+      - name: Update release tag to point to final master commit
+        run: |
+          TAG="${{ matrix.tool.tag }}"
+          git tag -f "$TAG"
+          git push origin "refs/tags/$TAG" --force
+          echo "Updated tag $TAG to point to current master commit"
+        shell: bash
+
+      - name: Output release URL for manual publishing
+        run: |
+          TAG="${{ matrix.tool.tag }}"
+          TOOL_NAME="${{ matrix.tool.name }}"
+          VERSION="${{ matrix.tool.version }}"
+          
+          echo "=============================================="
+          echo "Draft release created for $TOOL_NAME v$VERSION"
+          echo "Tag: $TAG"
+          echo ""
+          echo "To publish, visit:"
+          echo "https://github.com/${{ github.repository }}/releases/tag/$TAG"
+          echo "=============================================="
+        shell: bash

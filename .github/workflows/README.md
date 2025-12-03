@@ -19,6 +19,11 @@ Automated release and validation workflows for all PyKotor tools.
    - Comparison with production
    - Advanced testing scenarios
 
+4. **[PYPI_AUTO_PUBLISH.md](PYPI_AUTO_PUBLISH.md)** - PyPI auto-publish workflow
+   - Automatic version comparison and publishing
+   - How version detection works
+   - Troubleshooting guide
+
 ## 🚀 The Release Flow
 
 ```
@@ -70,10 +75,14 @@ Automated release and validation workflows for all PyKotor tools.
 
 | Workflow | Tag Pattern | Tool |
 |----------|-------------|------|
-| `release_toolset.yml` | `v*-toolset` | HolocronToolset |
-| `release_holopatcher.yml` | `v*-patcher` | HoloPatcher |
-| `release_kotordiff.yml` | `v*-kotordiff` | KotorDiff |
-| `release_guiconverter.yml` | `v*-guiconverter` | GuiConverter |
+| `release_tools.yml` | `v*-toolset` | HolocronToolset |
+| `release_tools.yml` | `v*-patcher` | HoloPatcher |
+| `release_tools.yml` | `v*-kotordiff` | KotorDiff |
+| `release_tools.yml` | `v*-guiconverter` | GuiConverter |
+| `release_tools.yml` | `v*-kitgenerator` | KitGenerator |
+| `release_tools.yml` | `v*-translator` | Translator (BatchPatcher) |
+
+> **Note:** All tool releases are now handled by a single unified workflow (`release_tools.yml`) that dynamically discovers tools from the `./Tools` directory and builds releases based on version comparison.
 
 ### Test Workflows
 
@@ -191,9 +200,10 @@ Each release includes platform-specific builds:
 
 ### Release Workflow Doesn't Trigger
 
-- Ensure tag contains tool name (e.g., `toolset`)
+- Ensure tag contains tool name (e.g., `toolset`, `patcher`, `kotordiff`)
 - Check it's marked as pre-release
 - Verify workflows are enabled
+- The unified `release_tools.yml` workflow requires a config file in `src/<toolname>/config.py` or `src/<toolname>/config/config_info.py` or a version variable in `__main__.py`/`__init__.py`
 
 ### Build Fails
 
@@ -215,8 +225,11 @@ Each release includes platform-specific builds:
 - `build-pr.yml` - PR build validation
 - `release-ready.yml` - Release readiness check
 - `create-release.yml` - One-click release creation
-- `release_*.yml` - Production release workflows
-- `TEST_release_*.yml` - Test release workflows
+- `release_tools.yml` - **Unified production release workflow** (dynamically handles all tools)
+- `TEST_release_toolset.yml` - Test release workflow for toolset
+- `publish-pypi-auto.yml` - Automatic PyPI publishing (compares versions and publishes if newer)
+- `verify-pypi-regression.yml` - Regression tests for published PyPI packages
+- `test-pypi-packages.yml` - Tests PyPI package installation and functionality
 
 ### Reusable Components
 
@@ -228,6 +241,7 @@ Each release includes platform-specific builds:
 - `RELEASE_WORKFLOW.md` - Production workflow guide
 - `QUICK_TEST_GUIDE.md` - Quick testing guide
 - `TESTING_RELEASES.md` - Detailed testing docs
+- `PYPI_AUTO_PUBLISH.md` - PyPI auto-publish workflow documentation
 
 ### Helper Scripts
 

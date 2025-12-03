@@ -37,6 +37,7 @@ This document provides a comprehensive summary of all repository improvements ma
 2. **Lint** - Ruff linting and MyPy type checking
 3. **Test** - Test suite with coverage reporting
 4. **Release** - Automated PyPI releases
+5. **release_tools.yml** - Unified tool release workflow (dynamically discovers and builds all tools)
 
 ### Security & Quality
 5. **CodeQL** - Security analysis
