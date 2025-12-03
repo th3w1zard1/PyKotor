@@ -449,11 +449,6 @@ class HolocronToolset(SpyderPluginV2):
 
     # --- Preferences API
     # ------------------------------------------------------------------------
-    def apply_conf(self):
-        self.load_installations()
-        container = self.get_container()
-        container.holocron_toolbar.update_installations(self.tool_window.get_installations())
-
     def reset_conf(self):
         for name in self.tool_window.get_installations():
             self.tool_window.remove_installation(name)
