@@ -39,6 +39,75 @@ Please do not create .md documentation unless it delivers public-facing informat
 - Should be idempotent and flexible enough to be used for a plethora of scenarios, not just whatever the task you're working on involves.
 - Do not delete helper .py/.ps1/.sh scripts when you are finished with them; keep them in scripts folder
 
+### Script Design Principles
+
+**When creating helper scripts, make them flexible and reusable:**
+
+1. **Command-line arguments**: Use `argparse` (Python) or `param()` blocks (PowerShell) to accept parameters
+   - Provide sensible defaults for common use cases
+   - Support multiple output formats (text, json, compact) when applicable
+   - Allow filtering, searching, and customization options
+
+2. **Industry-standard patterns**:
+   - Follow POSIX/CLI conventions for flags (`-v` for version, `-h` for help, `-f` for format, etc.)
+   - Support both short (`-v`) and long (`--version`) flags
+   - Use `--help` to show comprehensive usage information
+   - Exit codes: 0 for success, non-zero for errors
+
+3. **Flexibility features to consider**:
+   - Version/package/input selection (not hardcoded)
+   - Search/filter capabilities
+   - Multiple output formats (text, json, compact)
+   - Comparison/diff modes
+   - List/enumerate modes
+   - Configurable limits, timeouts, and thresholds
+   - Optional extras/verbose modes
+
+4. **Documentation**:
+   - Include docstrings with usage examples
+   - Add `--help` text with clear descriptions
+   - Show examples in help output or docstrings
+
+5. **Error handling**:
+   - Graceful error messages with actionable information
+   - Proper exit codes
+   - Handle missing dependencies gracefully
+
+**Example pattern for Python scripts:**
+```python
+#!/usr/bin/env python3
+"""Script description with usage examples.
+
+Examples:
+    python script.py input --option value
+    python script.py input --format json
+"""
+import argparse
+
+def main():
+    parser = argparse.ArgumentParser(description="...")
+    parser.add_argument("input", help="...")
+    parser.add_argument("-o", "--option", default="default", help="...")
+    parser.add_argument("-f", "--format", choices=["text", "json"], default="text")
+    # ... more options
+    args = parser.parse_args()
+    # ... implementation
+```
+
+**Example pattern for PowerShell scripts:**
+```powershell
+param(
+    [Parameter(Mandatory=$true)]
+    [string]$Input,
+    
+    [string]$Option = "default",
+    
+    [ValidateSet("text", "json")]
+    [string]$Format = "text"
+)
+# ... implementation
+```
+
 ## Terminal usage
 
 - Always check the operating system you're functioning in. Do NOT try to execute e.g. bash commands on powershell or vice versa. Most of the time you'lle xclusively be writing powershell given the windows-dominant nature of this repo's intended recipients.
