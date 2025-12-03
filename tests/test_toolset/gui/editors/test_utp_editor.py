@@ -695,12 +695,12 @@ def test_utp_editor_manipulate_on_heartbeat_script(qtbot, installation: HTInstal
     editor.load(utp_file, "ebcont001", ResourceType.UTP, original_data)
     
     # Modify script
-    editor.ui.onHeartbeatSelect.set_combo_box_text("test_on_heartbeat")
+    editor.ui.onHeartbeatSelect.set_combo_box_text("test_heartbeat")  # 16 chars max for ResRef
     
     # Save and verify
     data, _ = editor.build()
     modified_utp = read_utp(data)
-    assert str(modified_utp.on_heartbeat) == "test_on_heartbeat"
+    assert str(modified_utp.on_heartbeat) == "test_heartbeat"
 
 def test_utp_editor_manipulate_on_open_script(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating on open script field."""
