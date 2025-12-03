@@ -17,12 +17,33 @@ def test_extract_options_dialog(qtbot):
     
     assert dialog.isVisible()
     
-    # Test checkbox toggles
-    dialog.ui.convertTpcCheck.setChecked(True)
-    assert dialog.options().texture_format is not None # Logic likely sets a format
+    # Test checkbox toggles - use the correct attribute names
+    dialog.ui.tpcDecompileCheckbox.setChecked(True)
+    qtbot.wait(10)  # Ensure Qt processes the checkbox state change in headless mode
+    assert dialog.tpc_decompile is True
     
-    dialog.ui.convertTpcCheck.setChecked(False)
-    # Check logic
+    dialog.ui.tpcDecompileCheckbox.setChecked(False)
+    qtbot.wait(10)  # Ensure Qt processes the checkbox state change in headless mode
+    assert dialog.tpc_decompile is False
+    
+    # Test TPC TXI extraction checkbox
+    dialog.ui.tpcTxiCheckbox.setChecked(True)
+    qtbot.wait(10)  # Ensure Qt processes the checkbox state change in headless mode
+    assert dialog.tpc_extract_txi is True
+    
+    dialog.ui.tpcTxiCheckbox.setChecked(False)
+    qtbot.wait(10)  # Ensure Qt processes the checkbox state change in headless mode
+    assert dialog.tpc_extract_txi is False
+    
+    # Test MDL decompile checkbox
+    dialog.ui.mdlDecompileCheckbox.setChecked(True)
+    qtbot.wait(10)  # Ensure Qt processes the checkbox state change in headless mode
+    assert dialog.mdl_decompile is True
+    
+    # Test MDL texture extraction checkbox
+    dialog.ui.mdlTexturesCheckbox.setChecked(True)
+    qtbot.wait(10)  # Ensure Qt processes the checkbox state change in headless mode
+    assert dialog.mdl_extract_textures is True
 
 def test_select_module_dialog(qtbot, installation: HTInstallation):
     """Test SelectModuleDialog."""
