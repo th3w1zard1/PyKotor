@@ -5,7 +5,7 @@
 # Runs on:
 # - Manual dispatch
 # - Weekly schedule
-# - After successful PyPI publish
+# - After successful "Auto-Publish to PyPI" workflow
 
 name: Verify PyPI Regression
 
