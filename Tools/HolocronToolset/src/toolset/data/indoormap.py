@@ -215,7 +215,7 @@ class IndoorMap:
             mdl, mdx = self.process_model(room, installation)
 
             # Process lightmaps
-            self.process_lightmaps(room, mdl)
+            self.process_lightmaps(room, mdl, installation)
 
             # Add model resources
             self.add_model_resources(modelname, mdl, mdx)
@@ -279,6 +279,7 @@ class IndoorMap:
         self,
         room: IndoorMapRoom,
         mdl_data: bytes,
+        installation: HTInstallation,
     ):
         """Processes lightmaps for a room.
 
@@ -286,20 +287,75 @@ class IndoorMap:
         ----
             room (IndoorMapRoom): The room to process lightmaps for
             mdl_data (bytes): The model to process lightmaps on
+            installation (HTInstallation): Installation to load missing lightmaps from
 
         Processing Logic:
         ----------------
             - Renames each lightmap to a unique name prefixed with the module ID
             - Sets the renamed lightmap and txi textures in the mod
+            - If lightmap not in kit, tries to load from installation (like reone/xoreos/kotorjs)
+            - If still not found, logs warning and skips (graceful degradation)
             - Returns the model with all lightmaps renamed according to the mapping.
         """
+        from pykotor.extract.installation import SearchLocation  # type: ignore[import-not-found]
+        
         lm_renames: dict[str, str] = {}
         for lightmap in model.iterate_lightmaps(mdl_data):
             renamed: str = f"{self.module_id}_lm{self.total_lm}"
             self.total_lm += 1
             lm_renames[lightmap.lower()] = renamed
-            self.mod.set_data(renamed, ResourceType.TGA, room.component.kit.lightmaps[lightmap])
-            self.mod.set_data(renamed, ResourceType.TXI, room.component.kit.txis[lightmap])
+            
+            # Try to get lightmap from kit first
+            lightmap_data: bytes | None = None
+            txi_data: bytes | None = None
+            
+            # Check if lightmap exists in kit (case-insensitive)
+            lightmap_lower = lightmap.lower()
+            if lightmap_lower in room.component.kit.lightmaps:
+                lightmap_data = room.component.kit.lightmaps[lightmap_lower]
+            elif lightmap in room.component.kit.lightmaps:
+                lightmap_data = room.component.kit.lightmaps[lightmap]
+            
+            if lightmap_lower in room.component.kit.txis:
+                txi_data = room.component.kit.txis[lightmap_lower]
+            elif lightmap in room.component.kit.txis:
+                txi_data = room.component.kit.txis[lightmap]
+            
+            # If not in kit, try to load from installation (like reone/xoreos/kotorjs do)
+            if lightmap_data is None:
+                tpc = installation.texture(
+                    lightmap,
+                    [
+                        SearchLocation.CHITIN,
+                        SearchLocation.OVERRIDE,
+                        SearchLocation.TEXTURES_GUI,
+                        SearchLocation.TEXTURES_TPA,
+                    ],
+                )
+                if tpc is None:
+                    RobustLogger().warning(
+                        f"Lightmap '{lightmap}' not found in kit '{room.component.kit.name}' "
+                        f"and not available in installation. Skipping lightmap."
+                    )
+                    # Remove from renames since we're skipping it
+                    del lm_renames[lightmap.lower()]
+                    self.total_lm -= 1
+                    continue
+                # Convert TPC to bytes
+                tpc = tpc.copy()
+                if tpc.format() in (TPCTextureFormat.BGR, TPCTextureFormat.DXT1, TPCTextureFormat.Greyscale):
+                    tpc.convert(TPCTextureFormat.RGB)
+                elif tpc.format() in (TPCTextureFormat.BGRA, TPCTextureFormat.DXT3, TPCTextureFormat.DXT5):
+                    tpc.convert(TPCTextureFormat.RGBA)
+                lightmap_data = bytes_tpc(tpc)
+                # TXI might not exist, that's okay
+                if txi_data is None:
+                    txi_data = b""
+            
+            # Set the lightmap and TXI data
+            self.mod.set_data(renamed, ResourceType.TGA, lightmap_data)
+            self.mod.set_data(renamed, ResourceType.TXI, txi_data if txi_data is not None else b"")
+        
         mdl_data = model.change_lightmaps(mdl_data, lm_renames)  # FIXME(th3w1zard1): Should this be returned and used throughout?
 
     def add_model_resources(
