@@ -47,26 +47,59 @@ def test_extract_options_dialog(qtbot):
 
 def test_select_module_dialog(qtbot, installation: HTInstallation):
     """Test SelectModuleDialog."""
+    from unittest.mock import patch
+    from pykotor.common.module import Module
+    
     parent = QWidget()
     
-    # Mock modules list
-    installation.module_names = lambda use_hardcoded=True: {"test_mod": "Test Module", "other_mod": "Other Module"}
+    # Create mock module paths that will work with the dialog's logic
+    # The dialog uses the module path as a key to lookup in module_names
+    test_module_path_1 = str(installation.path() / "modules" / "test_mod.mod")
+    test_module_path_2 = str(installation.path() / "modules" / "other_mod.mod")
+    test_module_paths = [test_module_path_1, test_module_path_2]
     
-    dialog = SelectModuleDialog(parent, installation)
-    qtbot.addWidget(dialog)
-    dialog.show()
+    # Mock module_names to return names for the module paths
+    # The dialog uses the full module path (as returned by modules_list) as the key
+    def mock_module_names(use_hardcoded=True):
+        return {
+            test_module_path_1: "Test Module",
+            test_module_path_2: "Other Module",
+        }
     
-    assert dialog.isVisible()
-    assert dialog.ui.moduleList.count() >= 2
+    # Mock filepath_to_root to return just the root name (e.g., "test_mod")
+    def mock_filepath_to_root(filepath):
+        from pathlib import PurePath
+        name = PurePath(filepath).stem
+        # Remove common suffixes like _s, _dlg
+        if name.endswith("_s"):
+            name = name[:-2]
+        elif name.endswith("_dlg"):
+            name = name[:-4]
+        return name
     
-    # Filter functionality
-    dialog.ui.filterEdit.setText("Other")
-    # Check if list filtered (if implemented)
-    # Assuming QListWidget or similar
+    # Mock modules_list to return our test paths
+    installation.modules_list = lambda: test_module_paths
+    installation.module_names = mock_module_names
     
-    # Select item
-    # dialog.ui.moduleList.setCurrentRow(0)
-    # assert dialog.selected_module() == ...
+    # Patch Module.filepath_to_root to return just the root name
+    with patch.object(Module, 'filepath_to_root', side_effect=mock_filepath_to_root):
+        dialog = SelectModuleDialog(parent, installation)
+        qtbot.addWidget(dialog)
+        dialog.show()
+        
+        assert dialog.isVisible()
+        # With mocked data, we should have exactly 2 modules
+        assert dialog.ui.moduleList.count() == 2
+        
+        # Filter functionality
+        dialog.ui.filterEdit.setText("Other")
+        qtbot.wait(10)  # Ensure Qt processes the filter text change
+        # Check if list filtered (if implemented)
+        # Assuming QListWidget or similar
+        
+        # Select item
+        # dialog.ui.moduleList.setCurrentRow(0)
+        # assert dialog.selected_module() == ...
 
 def test_indoor_settings_dialog(qtbot, installation: HTInstallation):
     """Test IndoorMapSettings."""
