@@ -459,14 +459,24 @@ def test_utc_editor_manipulate_race_select(qtbot, installation: HTInstallation, 
     editor.load(utc_file, "p_hk47", ResourceType.UTC, original_data)
     
     # Test available race options (Droid=5, Creature=6 typically)
+    # raceSelect is a ComboBox2DA which uses itemData for row indices
     if editor.ui.raceSelect.count() > 0:
         for i in range(editor.ui.raceSelect.count()):
-            editor.ui.raceSelect.setCurrentIndex(i)
-            
+            # Get the row index from itemData (5 or 6) - ComboBox2DA stores it in UserRole
+            from qtpy.QtCore import Qt
+            row_index = editor.ui.raceSelect.itemData(i, Qt.ItemDataRole.UserRole)
+            if row_index is None:
+                # Fallback: use the combo box index if itemData is None
+                row_index = i
+            # setCurrentIndex expects the row index, not the combo box index
+            editor.ui.raceSelect.setCurrentIndex(row_index)
+        
             # Save and verify
             data, _ = editor.build()
             modified_utc = read_utc(data)
-            assert modified_utc.race_id == editor.ui.raceSelect.itemData(i) if editor.ui.raceSelect.itemData(i) is not None else i
+            # currentIndex() returns the row index (5 or 6)
+            expected_race_id = editor.ui.raceSelect.currentIndex()
+            assert modified_utc.race_id == expected_race_id
 
 def test_utc_editor_manipulate_subrace_select(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating subrace combo box."""

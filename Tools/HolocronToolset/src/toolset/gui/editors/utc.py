@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Sequence
 from loggerplus import RobustLogger
 from qtpy.QtCore import QSettings, Qt
 from qtpy.QtGui import QImage, QPixmap, QTransform
-from qtpy.QtWidgets import QApplication, QListWidgetItem, QMenu, QMessageBox
+from qtpy.QtWidgets import QApplication, QComboBox, QListWidgetItem, QMenu, QMessageBox
 
 from pykotor.common.language import Gender, Language
 from pykotor.common.misc import Game, ResRef
@@ -25,6 +25,7 @@ from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.inventory import InventoryEditor
 from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow, ResourceItems
 from toolset.gui.editor import Editor
+from toolset.gui.widgets.edit.combobox_2da import _ROW_INDEX_DATA_ROLE
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.utils.window import add_window, open_resource_editor
 
@@ -81,7 +82,7 @@ class UTCEditor(Editor):
         self._utc: UTC = UTC()
         self.setMinimumSize(0, 0)
 
-        from toolset.uic.qtpy.editors.utc import Ui_MainWindow
+        from toolset.uic.qtpy.editors.utc import Ui_MainWindow  # pyright: ignore[reportImportType]
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -407,7 +408,18 @@ class UTCEditor(Editor):
         self.ui.noReorientateCheckbox.setChecked(utc.not_reorienting)
         self.ui.noBlockCheckbox.setChecked(utc.ignore_cre_path)
         self.ui.hologramCheckbox.setChecked(utc.hologram)
-        self.ui.raceSelect.setCurrentIndex(utc.race_id)
+        # raceSelect uses itemData (5 for Droid, 6 for Creature), not index
+        # Find the index that has the matching itemData
+        race_index = -1
+        for i in range(self.ui.raceSelect.count()):
+            if self.ui.raceSelect.itemData(i) == utc.race_id:
+                race_index = i
+                break
+        if race_index >= 0:
+            self.ui.raceSelect.setCurrentIndex(race_index)
+        else:
+            # Fallback: use race_id as index if no match found
+            self.ui.raceSelect.setCurrentIndex(utc.race_id)
         self.ui.subraceSelect.setCurrentIndex(utc.subrace_id)
         self.ui.speedSelect.setCurrentIndex(utc.walkrate_id)
         self.ui.factionSelect.setCurrentIndex(utc.faction_id)
@@ -532,7 +544,7 @@ class UTCEditor(Editor):
         else:
             self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.commentsTab), "Comments")  # pyright: ignore[reportArgumentType]
 
-    def build(self) -> tuple[bytes, bytes]:
+    def build(self) -> tuple[bytes | bytearray, bytes]:
         """Builds a UTC from UI data.
 
         Returns:
@@ -564,7 +576,10 @@ class UTCEditor(Editor):
         utc.not_reorienting = self.ui.noReorientateCheckbox.isChecked()
         utc.ignore_cre_path = self.ui.noBlockCheckbox.isChecked()
         utc.hologram = self.ui.hologramCheckbox.isChecked()
-        utc.race_id = self.ui.raceSelect.currentIndex()
+        # raceSelect is a ComboBox2DA which overrides currentIndex() to return the row index (5 or 6)
+        # So we can use currentIndex() directly to get the race_id
+        race_id = self.ui.raceSelect.currentIndex()
+        utc.race_id = max(race_id, 0)
         utc.subrace_id = self.ui.subraceSelect.currentIndex()
         utc.walkrate_id = self.ui.speedSelect.currentIndex()
         utc.faction_id = self.ui.factionSelect.currentIndex()
@@ -719,7 +734,7 @@ class UTCEditor(Editor):
         assert portraits is not None, f"portraits = self._installation.ht_get_cache_2da(HTInstallation.TwoDA_PORTRAITS) {portraits.__class__.__name__}: {portraits}"
         portrait: str = portraits.get_cell(index, "baseresref")
 
-        if 40 >= alignment > 30 and portraits.get_cell(index, "baseresrefe"):  # TODO(th3w1zard1): document these magic numbers  # noqa: PLR2004
+        if 40 >= alignment > 30 and portraits.get_cell(index, "baseresrefe"):  # TODO(th3w1zard1): document these magic numbers  # noqa: FIX002, PLR2004, TD003
             portrait = portraits.get_cell(index, "baseresrefe")
         elif 30 >= alignment > 20 and portraits.get_cell(index, "baseresrefve"):  # noqa: PLR2004
             portrait = portraits.get_cell(index, "baseresrefve")

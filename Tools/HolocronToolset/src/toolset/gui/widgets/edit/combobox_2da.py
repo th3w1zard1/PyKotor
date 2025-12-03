@@ -106,7 +106,8 @@ class ComboBox2DA(QComboBox):
         assert isinstance(text, str), f"text '{text}' ({text.__class__.__name__}) is not a str"
         assert isinstance(row, int), f"row '{row}' ({row.__class__.__name__}) is not an int"
         display_text = text if text.startswith("[Modded Entry #") else f"{text} [{row}]"
-        super().addItem(display_text)
+        # Store row in default role (Qt.UserRole) for compatibility with itemData() without role parameter
+        super().addItem(display_text, row)
 
         self.setItemData(self.count() - 1, row, _ROW_INDEX_DATA_ROLE)
         self.setItemData(self.count() - 1, text, _REAL_2DA_TEXT_ROLE)
