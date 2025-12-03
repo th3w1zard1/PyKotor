@@ -1171,8 +1171,11 @@ def test_utc_editor_manipulate_all_advanced_fields_combination(qtbot, installati
     if editor.ui.perceptionSelect.count() > 0:
         editor.ui.perceptionSelect.setCurrentIndex(1)
     editor.ui.challengeRatingSpin.setValue(5.0)
-    editor.ui.blindSpotSpin.setValue(90.0)
-    editor.ui.multiplierSetSpin.setValue(2)
+    
+    # K2-only fields - only set and verify if installation is K2
+    if installation.tsl:
+        editor.ui.blindSpotSpin.setValue(90.0)
+        editor.ui.multiplierSetSpin.setValue(2)
     
     # Save and verify all
     data, _ = editor.build()
@@ -1185,8 +1188,11 @@ def test_utc_editor_manipulate_all_advanced_fields_combination(qtbot, installati
     assert modified_utc.is_pc
     assert modified_utc.not_reorienting
     assert abs(modified_utc.challenge_rating - 5.0) < 0.001
-    assert abs(modified_utc.blindspot - 90.0) < 0.001
-    assert modified_utc.multiplier_set == 2
+    
+    # K2-only fields - only verify if installation is K2
+    if installation.tsl:
+        assert abs(modified_utc.blindspot - 90.0) < 0.001
+        assert modified_utc.multiplier_set == 2
 
 def test_utc_editor_manipulate_all_stats_fields_combination(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all stats fields simultaneously."""
