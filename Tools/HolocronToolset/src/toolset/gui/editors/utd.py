@@ -413,10 +413,22 @@ class UTDEditor(Editor):
         self.resize(max(674, self.sizeHint().width()), max(457, self.sizeHint().height()))
 
         data, _ = self.build()
+        utd = read_utd(data)
+
+        # Validate appearance_id before calling door.get_model() to prevent IndexError
+        if self._genericdoors_2da is None:
+            self.ui.previewRenderer.clear_model()
+            return
+
+        # Check if appearance_id is within valid range
+        if utd.appearance_id < 0 or utd.appearance_id >= self._genericdoors_2da.get_height():
+            self.ui.previewRenderer.clear_model()
+            return
+
         try:
-            modelname: str = door.get_model(read_utd(data), self._installation, genericdoors=self._genericdoors_2da)
+            modelname: str = door.get_model(utd, self._installation, genericdoors=self._genericdoors_2da)
         except (IndexError, ValueError):
-            # Invalid appearance_id or missing genericdoors.2da - clear the model
+            # Fallback: Invalid appearance_id or missing genericdoors.2da - clear the model
             self.ui.previewRenderer.clear_model()
             return
 
