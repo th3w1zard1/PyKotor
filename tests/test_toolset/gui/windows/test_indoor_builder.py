@@ -189,6 +189,12 @@ def builder_with_real_kit(qtbot: QtBot, installation: HTInstallation, temp_work_
         qtbot.wait(100)
         QApplication.processEvents()
         
+        # Add the real kit to builder's kits list so tests can use it
+        if real_kit and real_kit not in builder._kits:
+            builder._kits.append(real_kit)
+            # Also add to UI dropdown
+            builder.ui.kitSelect.addItem(real_kit.name, real_kit)
+        
         if builder.ui.kitSelect.count() > 0:
             builder.ui.kitSelect.setCurrentIndex(0)
         
@@ -6871,8 +6877,8 @@ class TestIndoorMapIOValidation:
         
         builder = builder_with_real_kit
         
-        if not builder._kits or not builder._kits[0].components:
-            pytest.skip("No kits/components available")
+        assert builder._kits, "Builder should have kits"
+        assert builder._kits[0].components, "First kit should have components"
         
         comp = builder._kits[0].components[0]
         room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
@@ -6907,8 +6913,8 @@ class TestIndoorMapIOValidation:
         
         builder = builder_with_real_kit
         
-        if not builder._kits or not builder._kits[0].components:
-            pytest.skip("No kits/components available")
+        assert builder._kits, "Builder should have kits"
+        assert builder._kits[0].components, "First kit should have components"
         
         comp = builder._kits[0].components[0]
         original_bwm = comp.bwm
@@ -6949,8 +6955,8 @@ class TestIndoorMapIOValidation:
         
         builder = builder_with_real_kit
         
-        if not builder._kits or not builder._kits[0].components:
-            pytest.skip("No kits/components available")
+        assert builder._kits, "Builder should have kits"
+        assert builder._kits[0].components, "First kit should have components"
         
         comp = builder._kits[0].components[0]
         room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
@@ -6990,8 +6996,8 @@ class TestIndoorMapIOValidation:
         
         builder = builder_with_real_kit
         
-        if not builder._kits or not builder._kits[0].components:
-            pytest.skip("No kits/components available")
+        assert builder._kits, "Builder should have kits"
+        assert builder._kits[0].components, "First kit should have components"
         
         comp = builder._kits[0].components[0]
         room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
@@ -7020,8 +7026,8 @@ class TestIndoorMapIOValidation:
         
         builder = builder_with_real_kit
         
-        if not builder._kits or not builder._kits[0].components:
-            pytest.skip("No kits/components available")
+        assert builder._kits, "Builder should have kits"
+        assert builder._kits[0].components, "First kit should have components"
         
         comp = builder._kits[0].components[0]
         room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
@@ -7050,8 +7056,8 @@ class TestIndoorMapIOValidation:
         
         builder = builder_with_real_kit
         
-        if not builder._kits or not builder._kits[0].components:
-            pytest.skip("No kits/components available")
+        assert builder._kits, "Builder should have kits"
+        assert builder._kits[0].components, "First kit should have components"
         
         comp = builder._kits[0].components[0]
         room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
@@ -7079,8 +7085,8 @@ class TestIndoorMapIOValidation:
         
         builder = builder_with_real_kit
         
-        if not builder._kits or not builder._kits[0].components:
-            pytest.skip("No kits/components available")
+        assert builder._kits, "Builder should have kits"
+        assert builder._kits[0].components, "First kit should have components"
         
         comp = builder._kits[0].components[0]
         room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
@@ -7113,8 +7119,8 @@ class TestIndoorMapIOValidation:
         
         builder = builder_with_real_kit
         
-        if not builder._kits or not builder._kits[0].components:
-            pytest.skip("No kits/components available")
+        assert builder._kits, "Builder should have kits"
+        assert builder._kits[0].components, "First kit should have components"
         
         comp = builder._kits[0].components[0]
         original_bwm = comp.bwm
@@ -7164,8 +7170,8 @@ class TestIndoorMapIOValidation:
         
         builder = builder_with_real_kit
         
-        if not builder._kits or not builder._kits[0].components:
-            pytest.skip("No kits/components available")
+        assert builder._kits, "Builder should have kits"
+        assert builder._kits[0].components, "First kit should have components"
         
         comp = builder._kits[0].components[0]
         room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
