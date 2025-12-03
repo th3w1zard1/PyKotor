@@ -15,11 +15,11 @@ from pathlib import Path
 from qtpy.QtCore import Qt
 from toolset.gui.editors.ifo import IFOEditor
 from toolset.data.installation import HTInstallation
-from pykotor.resource.generics.ifo import IFO, read_ifo
-from pykotor.resource.formats.gff.gff_auto import read_gff
-from pykotor.resource.type import ResourceType
-from pykotor.common.language import LocalizedString, Language, Gender
-from pykotor.common.misc import ResRef
+from pykotor.resource.generics.ifo import IFO, read_ifo  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.gff.gff_auto import read_gff  # pyright: ignore[reportMissingImports]
+from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
+from pykotor.common.language import LocalizedString, Language, Gender  # pyright: ignore[reportMissingImports]
+from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
 from utility.common.geometry import Vector3
 
 
@@ -33,23 +33,23 @@ def test_ifo_editor_load_from_installation(qtbot, installation: HTInstallation):
     qtbot.addWidget(editor)
     
     # Try to find an IFO file in the installation
-    ifo_resources = list(installation.resources(ResourceType.IFO))
+    ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO]
     if not ifo_resources:
         pytest.skip("No IFO files found in installation")
     
     # Use the first IFO file found
     ifo_resource = ifo_resources[0]
-    ifo_data = installation.resource(ifo_resource.identifier)
+    ifo_result = installation.resource(ifo_resource.resname(), ResourceType.IFO)
     
-    if not ifo_data:
-        pytest.skip(f"Could not load IFO data for {ifo_resource.identifier}")
+    if not ifo_result or not ifo_result.data:
+        pytest.skip(f"Could not load IFO data for {ifo_resource.resname()}")
     
     # Load the file
     editor.load(
-        ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-        ifo_resource.resname,
+        ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') and callable(getattr(ifo_resource, 'filepath', None)) else (ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo")),
+        ifo_resource.resname(),
         ResourceType.IFO,
-        ifo_data
+        ifo_result.data
     )
     
     # Verify editor loaded the data
@@ -111,20 +111,20 @@ def test_ifo_editor_load_build_save_roundtrip(qtbot, installation: HTInstallatio
     
     if not ifo_files:
         # Try to get one from installation
-        ifo_resources = list(installation.resources(ResourceType.IFO))
+        ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO]
         if not ifo_resources:
             pytest.skip("No IFO files available for testing")
         
         ifo_resource = ifo_resources[0]
-        ifo_data = installation.resource(ifo_resource.identifier)
-        if not ifo_data:
-            pytest.skip(f"Could not load IFO data for {ifo_resource.identifier}")
+        ifo_result = installation.resource(ifo_resource.resname(), ResourceType.IFO)
+        if not ifo_result or not ifo_result.data:
+            pytest.skip(f"Could not load IFO data for {ifo_resource.resname()}")
         
         editor.load(
-            ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-            ifo_resource.resname,
+            ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') and callable(getattr(ifo_resource, 'filepath', None)) else (ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo")),
+            ifo_resource.resname(),
             ResourceType.IFO,
-            ifo_data
+            ifo_result.data
         )
     else:
         ifo_file = ifo_files[0]
@@ -166,18 +166,18 @@ def test_ifo_editor_manipulate_tag_with_real_file(qtbot, installation: HTInstall
     # Get a real IFO file
     ifo_files = list(test_files_dir.glob("*.ifo")) + list(test_files_dir.rglob("*.ifo"))
     if not ifo_files:
-        ifo_resources = list(installation.resources(ResourceType.IFO))
+        ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO]
         if not ifo_resources:
             pytest.skip("No IFO files available")
         ifo_resource = ifo_resources[0]
-        ifo_data = installation.resource(ifo_resource.identifier)
-        if not ifo_data:
+        ifo_result = installation.resource(ifo_resource.resname(), ResourceType.IFO)
+        if not ifo_result or not ifo_result.data:
             pytest.skip(f"Could not load IFO data")
         editor.load(
-            ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-            ifo_resource.resname,
+            ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') and callable(getattr(ifo_resource, 'filepath', None)) else (ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo")),
+            ifo_resource.resname(),
             ResourceType.IFO,
-            ifo_data
+            ifo_result.data
         )
     else:
         ifo_file = ifo_files[0]
@@ -200,7 +200,7 @@ def test_ifo_editor_manipulate_tag_with_real_file(qtbot, installation: HTInstall
     # Load back and verify
     editor.load(Path("test.ifo"), "test", ResourceType.IFO, data)
     assert editor.tag_edit.text() == "modified_tag_real"
-    assert editor.ifo.tag == "modified_tag_real"
+    assert editor.ifo.tag == "modified_tag_real"  # pyright: ignore[reportOptionalMemberAccess]
 
 
 def test_ifo_editor_manipulate_entry_point_with_real_file(qtbot, installation: HTInstallation, test_files_dir: Path):
@@ -211,18 +211,18 @@ def test_ifo_editor_manipulate_entry_point_with_real_file(qtbot, installation: H
     # Get a real IFO file
     ifo_files = list(test_files_dir.glob("*.ifo")) + list(test_files_dir.rglob("*.ifo"))
     if not ifo_files:
-        ifo_resources = list(installation.resources(ResourceType.IFO))
+        ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO]
         if not ifo_resources:
             pytest.skip("No IFO files available")
         ifo_resource = ifo_resources[0]
-        ifo_data = installation.resource(ifo_resource.identifier)
-        if not ifo_data:
+        ifo_result = installation.resource(ifo_resource.resname(), ResourceType.IFO)
+        if not ifo_result or not ifo_result.data:
             pytest.skip(f"Could not load IFO data")
         editor.load(
-            ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-            ifo_resource.resname,
+            ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') and callable(getattr(ifo_resource, 'filepath', None)) else (ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo")),
+            ifo_resource.resname(),
             ResourceType.IFO,
-            ifo_data
+            ifo_result.data
         )
     else:
         ifo_file = ifo_files[0]
@@ -255,18 +255,18 @@ def test_ifo_editor_manipulate_time_settings_with_real_file(qtbot, installation:
     # Get a real IFO file
     ifo_files = list(test_files_dir.glob("*.ifo")) + list(test_files_dir.rglob("*.ifo"))
     if not ifo_files:
-        ifo_resources = list(installation.resources(ResourceType.IFO))
+        ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO]
         if not ifo_resources:
             pytest.skip("No IFO files available")
         ifo_resource = ifo_resources[0]
-        ifo_data = installation.resource(ifo_resource.identifier)
-        if not ifo_data:
+        ifo_result = installation.resource(ifo_resource.resname(), ResourceType.IFO)
+        if not ifo_result or not ifo_result.data:
             pytest.skip(f"Could not load IFO data")
         editor.load(
-            ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-            ifo_resource.resname,
+            ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') and callable(getattr(ifo_resource, 'filepath', None)) else (ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo")),
+            ifo_resource.resname(),
             ResourceType.IFO,
-            ifo_data
+            ifo_result.data
         )
     else:
         ifo_file = ifo_files[0]
@@ -305,36 +305,36 @@ def test_ifo_editor_manipulate_scripts_with_real_file(qtbot, installation: HTIns
     # Get a real IFO file
     ifo_files = list(test_files_dir.glob("*.ifo")) + list(test_files_dir.rglob("*.ifo"))
     if not ifo_files:
-        ifo_resources = list(installation.resources(ResourceType.IFO))
+        ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO]
         if not ifo_resources:
             pytest.skip("No IFO files available")
         ifo_resource = ifo_resources[0]
-        ifo_data = installation.resource(ifo_resource.identifier)
-        if not ifo_data:
+        ifo_result = installation.resource(ifo_resource.resname(), ResourceType.IFO)
+        if not ifo_result or not ifo_result.data:
             pytest.skip(f"Could not load IFO data")
         editor.load(
-            ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-            ifo_resource.resname,
+            ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') and callable(getattr(ifo_resource, 'filepath', None)) else (ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo")),
+            ifo_resource.resname(),
             ResourceType.IFO,
-            ifo_data
+            ifo_result.data
         )
     else:
         ifo_file = ifo_files[0]
         original_data = ifo_file.read_bytes()
         editor.load(ifo_file, ifo_file.stem, ResourceType.IFO, original_data)
     
-    # Modify scripts
-    editor.script_fields["on_heartbeat"].setText("test_on_heartbeat")
-    editor.script_fields["on_load"].setText("test_on_load")
-    editor.script_fields["on_start"].setText("test_on_start")
+    # Modify scripts (use shorter names to comply with 16-character ResRef limit)
+    editor.script_fields["on_heartbeat"].setText("test_heartbeat")
+    editor.script_fields["on_load"].setText("test_onload")
+    editor.script_fields["on_start"].setText("test_onstart")
     editor.on_value_changed()
     
     # Build and verify
     data, _ = editor.build()
     modified_ifo = read_ifo(data)
-    assert str(modified_ifo.on_heartbeat) == "test_on_heartbeat"
-    assert str(modified_ifo.on_load) == "test_on_load"
-    assert str(modified_ifo.on_start) == "test_on_start"
+    assert str(modified_ifo.on_heartbeat) == "test_heartbeat"
+    assert str(modified_ifo.on_load) == "test_onload"
+    assert str(modified_ifo.on_start) == "test_onstart"
 
 
 # ============================================================================
@@ -349,20 +349,20 @@ def test_ifo_editor_gff_roundtrip_with_real_file(qtbot, installation: HTInstalla
     # Get a real IFO file
     ifo_files = list(test_files_dir.glob("*.ifo")) + list(test_files_dir.rglob("*.ifo"))
     if not ifo_files:
-        ifo_resources = list(installation.resources(ResourceType.IFO))
+        ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO]
         if not ifo_resources:
             pytest.skip("No IFO files available")
         ifo_resource = ifo_resources[0]
-        ifo_data = installation.resource(ifo_resource.identifier)
-        if not ifo_data:
+        ifo_result = installation.resource(ifo_resource.resname(), ResourceType.IFO)
+        if not ifo_result or not ifo_result.data:
             pytest.skip(f"Could not load IFO data")
         editor.load(
-            ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-            ifo_resource.resname,
+            ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') and callable(getattr(ifo_resource, 'filepath', None)) else (ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo")),
+            ifo_resource.resname(),
             ResourceType.IFO,
-            ifo_data
+            ifo_result.data
         )
-        original_data = ifo_data
+        original_data = ifo_result.data
     else:
         ifo_file = ifo_files[0]
         original_data = ifo_file.read_bytes()
@@ -397,18 +397,18 @@ def test_ifo_editor_multiple_load_build_cycles(qtbot, installation: HTInstallati
     # Get a real IFO file
     ifo_files = list(test_files_dir.glob("*.ifo")) + list(test_files_dir.rglob("*.ifo"))
     if not ifo_files:
-        ifo_resources = list(installation.resources(ResourceType.IFO))
+        ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO]
         if not ifo_resources:
             pytest.skip("No IFO files available")
         ifo_resource = ifo_resources[0]
-        ifo_data = installation.resource(ifo_resource.identifier)
-        if not ifo_data:
+        ifo_result = installation.resource(ifo_resource.resname(), ResourceType.IFO)
+        if not ifo_result or not ifo_result.data:
             pytest.skip(f"Could not load IFO data")
         editor.load(
-            ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-            ifo_resource.resname,
+            ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') and callable(getattr(ifo_resource, 'filepath', None)) else (ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo")),
+            ifo_resource.resname(),
             ResourceType.IFO,
-            ifo_data
+            ifo_result.data
         )
     else:
         ifo_file = ifo_files[0]
@@ -453,18 +453,18 @@ def test_ifo_editor_all_fields_with_real_file(qtbot, installation: HTInstallatio
     # Get a real IFO file
     ifo_files = list(test_files_dir.glob("*.ifo")) + list(test_files_dir.rglob("*.ifo"))
     if not ifo_files:
-        ifo_resources = list(installation.resources(ResourceType.IFO))
+        ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO]
         if not ifo_resources:
             pytest.skip("No IFO files available")
         ifo_resource = ifo_resources[0]
-        ifo_data = installation.resource(ifo_resource.identifier)
-        if not ifo_data:
+        ifo_result = installation.resource(ifo_resource.resname(), ResourceType.IFO)
+        if not ifo_result or not ifo_result.data:
             pytest.skip(f"Could not load IFO data")
         editor.load(
-            ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-            ifo_resource.resname,
+            ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') and callable(getattr(ifo_resource, 'filepath', None)) else (ifo_resource.filepath if hasattr(ifo_resource, 'filepath') else Path("module.ifo")),
+            ifo_resource.resname(),
             ResourceType.IFO,
-            ifo_data
+            ifo_result.data
         )
     else:
         ifo_file = ifo_files[0]
@@ -489,9 +489,20 @@ def test_ifo_editor_all_fields_with_real_file(qtbot, installation: HTInstallatio
     editor.start_year.setValue(3956)
     editor.xp_scale.setValue(100)
     
-    # Set all scripts
+    # Set all scripts (use shorter names to comply with 16-character ResRef limit)
+    script_test_values = {
+        "on_heartbeat": "test_heartbeat",
+        "on_load": "test_onload",
+        "on_start": "test_onstart",
+        "on_enter": "test_onenter",
+        "on_leave": "test_onleave",
+    }
     for script_name in editor.script_fields.keys():
-        editor.script_fields[script_name].setText(f"test_{script_name}")
+        test_value = script_test_values.get(script_name, f"test_{script_name}")
+        # Ensure test value doesn't exceed 16 characters
+        if len(test_value) > 16:
+            test_value = test_value[:16]
+        editor.script_fields[script_name].setText(test_value)
     
     editor.on_value_changed()
     
@@ -518,5 +529,8 @@ def test_ifo_editor_all_fields_with_real_file(qtbot, installation: HTInstallatio
     
     # Verify all scripts
     for script_name in editor.script_fields.keys():
-        assert str(getattr(modified_ifo, script_name)) == f"test_{script_name}"
+        expected_value = script_test_values.get(script_name, f"test_{script_name}")
+        if len(expected_value) > 16:
+            expected_value = expected_value[:16]
+        assert str(getattr(modified_ifo, script_name)) == expected_value
 
