@@ -503,7 +503,7 @@ jobs:
 
   finalize:
     needs: [validate, package]
-    if: needs.validate.outputs.should_run == 'true' && success()
+    if: needs.validate.outputs.should_run == 'true' && needs.package.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

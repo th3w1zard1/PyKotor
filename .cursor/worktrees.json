@@ -1,13 +1,6 @@
 {
   "setup-worktree-unix": [
-    "python3 -m venv venv",
-    "set -e",
-    "source venv/bin/activate",
-    "pip install --upgrade pip",
-    "if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install -r Libraries/PyKotor/requirements.txt; fi",
-    "pip install -r Tools/HolocronToolset/requirements.txt || true",
-    "if [ -n \"$ROOT_WORKTREE_PATH\" ] && [ -f \"$ROOT_WORKTREE_PATH/.env\" ]; then cp \"$ROOT_WORKTREE_PATH/.env\" .env; fi",
-    "echo 'Worktree setup complete!'"
+    "set -e && python3 -m venv venv && source venv/bin/activate && pip install --upgrade pip && if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install -r Libraries/PyKotor/requirements.txt; fi && pip install -r Tools/HolocronToolset/requirements.txt || true && if [ -n \"$ROOT_WORKTREE_PATH\" ] && [ -f \"$ROOT_WORKTREE_PATH/.env\" ]; then cp \"$ROOT_WORKTREE_PATH/.env\" .env; fi && echo 'Worktree setup complete!'"
   ],
   "setup-worktree-windows": [
     "python -m venv .venv",
