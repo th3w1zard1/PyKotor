@@ -616,6 +616,10 @@ def test_utc_editor_manipulate_challenge_rating_spin(qtbot, installation: HTInst
 
 def test_utc_editor_manipulate_blindspot_spin(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating blindspot spin box."""
+    # blindspot is a KotOR 2 only field, so skip if installation is K1
+    if not installation.tsl:
+        pytest.skip("blindspot is a KotOR 2 only field")
+    
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
     
@@ -638,6 +642,10 @@ def test_utc_editor_manipulate_blindspot_spin(qtbot, installation: HTInstallatio
 
 def test_utc_editor_manipulate_multiplier_set_spin(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating multiplier set spin box."""
+    # multiplier_set is a KotOR 2 only field, so skip if installation is K1
+    if not installation.tsl:
+        pytest.skip("multiplier_set is a KotOR 2 only field")
+    
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
     
