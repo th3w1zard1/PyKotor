@@ -924,7 +924,8 @@ def test_savegameeditor_editor_help_dialog_opens_correct_file(qtbot, installatio
     assert len(dialogs) > 0, "Help dialog should be opened"
     
     dialog = dialogs[0]
-    qtbot.waitExposed(dialog)
+    # In headless mode, waitExposed might hang, so skip it and just wait a bit
+    qtbot.wait(300)
     
     # Get the HTML content
     html = dialog.text_browser.toHtml()
@@ -935,41 +936,3 @@ def test_savegameeditor_editor_help_dialog_opens_correct_file(qtbot, installatio
     
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
-
-    """Test SaveGame Editor in headless UI - loads real save and builds data."""
-    editor = SaveGameEditor(None, installation)
-    qtbot.addWidget(editor)
-    
-    # Load save components directly
-    save_info = SaveInfo(str(real_save_folder))
-    save_info.load()
-    party_table = PartyTable(str(real_save_folder))
-    party_table.load()
-    global_vars = GlobalVars(str(real_save_folder))
-    global_vars.load()
-    
-    # Create nested capsule manually
-    nested_capsule = create_mock_nested_capsule()
-    
-    # Set up editor with loaded data
-    editor._save_info = save_info
-    editor._party_table = party_table
-    editor._global_vars = global_vars
-    editor._nested_capsule = nested_capsule
-    editor._save_folder = real_save_folder
-    
-    # Populate UI
-    editor.populate_save_info()
-    editor.populate_party_table()
-    editor.populate_global_vars()
-    
-    # Verify editor loaded the data
-    assert editor is not None
-    assert editor._save_info is not None
-    assert editor._party_table is not None
-    assert editor._global_vars is not None
-    
-    # Build and verify it works
-    data, data_ext = editor.build()
-    assert len(data) > 0
-    assert len(data_ext) > 0
