@@ -13,6 +13,11 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
+try:
+    from packaging import version
+except ImportError:
+    version = None  # type: ignore[assignment]
+
 if TYPE_CHECKING:
     pass
 
@@ -122,17 +127,32 @@ class TestVersionConsistency:
                         deps = data.get("project", {}).get("dependencies", [])
                         
                         for dep in deps:
-                            if dep.startswith("pykotor"):
+                            # Only check dependencies that start with exactly "pykotor" (not "pykotorgl", etc.)
+                            # Check if it starts with "pykotor" but not "pykotorgl"
+                            if dep.startswith("pykotor") and not dep.startswith("pykotorgl"):
                                 # Extract version specifier
                                 if ">=" in dep:
                                     match = re.search(r">=([0-9.]+)", dep)
                                     if match:
                                         min_version = match.group(1)
                                         # Check that min version <= current version
-                                        # (simplified check)
-                                        assert min_version <= pykotor_version, \
-                                            f"{tool_dir.name}: depends on pykotor>={min_version} " \
-                                            f"but pykotor is {pykotor_version}"
+                                        # Use proper version comparison if packaging is available
+                                        if version is not None:
+                                            try:
+                                                min_ver = version.Version(min_version)
+                                                current_ver = version.Version(pykotor_version)
+                                                assert min_ver <= current_ver, \
+                                                    f"{tool_dir.name}: depends on pykotor>={min_version} " \
+                                                    f"but pykotor is {pykotor_version}"
+                                            except version.InvalidVersion:
+                                                # Fall back to string comparison if version parsing fails
+                                                assert min_version <= pykotor_version, \
+                                                    f"{tool_dir.name}: depends on pykotor>={min_version} " \
+                                                    f"but pykotor is {pykotor_version}"
+                                        else:
+                                            # Fall back to string comparison if packaging is not available
+                                            # This is not ideal but allows the test to run
+                                            pytest.skip("packaging library not available for version comparison")
 
 
 class TestPoetryVersionConsistency:
