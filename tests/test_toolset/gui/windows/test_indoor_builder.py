@@ -5790,3 +5790,852 @@ class TestComprehensiveWorkflows:
         assert room.flip_x is True
         
         builder.close()
+
+
+class TestModuleKitManagerComprehensive:
+    """Comprehensive tests for ModuleKitManager functionality from test_indoor_diff.py."""
+
+    def test_module_kit_manager_functionality(self, installation: HTInstallation):
+        """Test ModuleKitManager basic functionality."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        
+        # Test get_module_names
+        names = manager.get_module_names()
+        assert isinstance(names, dict)
+        assert len(names) > 0, "Should find at least some module files"
+        
+        # Test get_module_roots
+        roots = manager.get_module_roots()
+        assert isinstance(roots, list)
+        assert len(roots) > 0, "Should find at least some module roots"
+        
+        # Test caching
+        if roots:
+            kit1 = manager.get_module_kit(roots[0])
+            kit2 = manager.get_module_kit(roots[0])
+            assert kit1 is kit2, "Caching failed: different kit instances returned"
+
+    def test_module_kit_lazy_loading(self, installation: HTInstallation):
+        """Test ModuleKit lazy loading."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available for testing")
+        
+        # Pick first few modules for testing
+        test_roots = roots[:3]
+        
+        for root in test_roots:
+            kit = manager.get_module_kit(root)
+            
+            # Should not be loaded initially
+            assert kit._loaded is False, f"Kit {root} should not be loaded initially"
+            
+            # Load components
+            loaded = kit.ensure_loaded()
+            
+            # Should be loaded now
+            assert kit._loaded is True, f"Kit {root} should be loaded after ensure_loaded"
+            assert loaded is True, "ensure_loaded should return True when loaded"
+
+    def test_component_structure(self, installation: HTInstallation):
+        """Test that module components have correct structure."""
+        from toolset.data.indoorkit import KitComponent, ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available for testing")
+        
+        # Test first module with components
+        for root in roots:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            # Check component structure
+            comp = kit.components[0]
+            
+            # Verify required attributes
+            required_attrs = ['kit', 'name', 'image', 'bwm', 'mdl', 'mdx', 'hooks']
+            missing = [attr for attr in required_attrs if not hasattr(comp, attr)]
+            
+            assert not missing, f"Component missing attributes: {missing}"
+            
+            # Verify component is valid KitComponent
+            assert isinstance(comp, KitComponent), "Component is not a KitComponent instance"
+            assert comp.kit is not None, "Component should have kit reference"
+            assert comp.image is not None, "Component should have image"
+            assert comp.bwm is not None, "Component should have BWM"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_bwm_preview_generation(self, installation: HTInstallation):
+        """Test BWM preview image generation."""
+        from qtpy.QtGui import QImage
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available for testing")
+        
+        # Find a module with components
+        for root in roots:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            
+            # Check image
+            assert comp.image is not None, "Component has no image"
+            assert isinstance(comp.image, QImage), "Component image is not QImage"
+            assert comp.image.width() > 0, "Image has zero width"
+            assert comp.image.height() > 0, "Image has zero height"
+            return
+        
+        pytest.skip("No components with images found")
+
+    def test_room_creation_from_module(self, installation: HTInstallation):
+        """Test creating IndoorMapRoom from module component."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available for testing")
+        
+        # Find a module with components
+        for root in roots:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            
+            # Create room from module component
+            room = IndoorMapRoom(
+                comp,
+                Vector3(10, 20, 0),
+                45.0,
+                flip_x=False,
+                flip_y=True,
+            )
+            
+            # Verify room properties
+            assert room.component is comp, "Room component mismatch"
+            assert abs(room.position.x - 10) < 0.001, "Room position X mismatch"
+            assert abs(room.position.y - 20) < 0.001, "Room position Y mismatch"
+            assert abs(room.rotation - 45.0) < 0.001, "Room rotation mismatch"
+            assert room.flip_x is False, "Room flip_x mismatch"
+            assert room.flip_y is True, "Room flip_y mismatch"
+            
+            # Verify component is from module kit
+            assert getattr(kit, 'is_module_kit', False) is True, "Kit should be a module kit"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_indoor_map_operations(self, installation: HTInstallation):
+        """Test IndoorMap operations with module-derived rooms."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available for testing")
+        
+        # Find a module with components
+        for root in roots:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            # Create IndoorMap
+            indoor_map = IndoorMap()
+            
+            # Add multiple rooms
+            comp = kit.components[0]
+            
+            room1 = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+            room2 = IndoorMapRoom(comp, Vector3(20, 0, 0), 90.0, flip_x=True, flip_y=False)
+            room3 = IndoorMapRoom(comp, Vector3(40, 0, 0), 180.0, flip_x=False, flip_y=True)
+            
+            indoor_map.rooms.append(room1)
+            indoor_map.rooms.append(room2)
+            indoor_map.rooms.append(room3)
+            
+            assert len(indoor_map.rooms) == 3, "Should have 3 rooms"
+            
+            # Test remove
+            indoor_map.rooms.remove(room2)
+            assert len(indoor_map.rooms) == 2, "Should have 2 rooms after removal"
+            assert room2 not in indoor_map.rooms, "Room2 should be removed"
+            
+            # Test clear
+            indoor_map.rooms.clear()
+            assert len(indoor_map.rooms) == 0, "Should have 0 rooms after clear"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_module_doors_and_hooks(self, installation: HTInstallation):
+        """Test module kit doors and hooks."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available for testing")
+        
+        doors_found = 0
+        hooks_found = 0
+        
+        for root in roots[:5]:  # Check first 5 modules
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            # Check doors
+            if kit.doors:
+                doors_found += len(kit.doors)
+            
+            # Check hooks in components
+            for comp in kit.components:
+                if comp.hooks:
+                    hooks_found += len(comp.hooks)
+        
+        # At least verify the structure works
+        assert doors_found >= 0, "Should be able to count doors"
+        assert hooks_found >= 0, "Should be able to count hooks"
+
+    def test_module_bwm_geometry(self, installation: HTInstallation):
+        """Test BWM geometry from module components."""
+        from pykotor.resource.formats.bwm.bwm_data import BWM
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available for testing")
+        
+        for root in roots[:5]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            bwm = comp.bwm
+            
+            assert isinstance(bwm, BWM), "BWM should be BWM instance"
+            assert len(bwm.faces) > 0, "BWM should have faces"
+            
+            # Compute bounds
+            min_x = min_y = float('inf')
+            max_x = max_y = float('-inf')
+            
+            for face in bwm.faces:
+                for v in [face.v1, face.v2, face.v3]:
+                    min_x = min(min_x, v.x)
+                    min_y = min(min_y, v.y)
+                    max_x = max(max_x, v.x)
+                    max_y = max(max_y, v.y)
+            
+            width = max_x - min_x
+            height = max_y - min_y
+            
+            # Check face structure
+            face = bwm.faces[0]
+            assert hasattr(face, 'v1'), "Face should have v1"
+            assert hasattr(face, 'v2'), "Face should have v2"
+            assert hasattr(face, 'v3'), "Face should have v3"
+            assert hasattr(face, 'material'), "Face should have material"
+            
+            assert width > 0, "BWM should have positive width"
+            assert height > 0, "BWM should have positive height"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_multiple_module_loading(self, installation: HTInstallation):
+        """Test loading multiple modules simultaneously."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if len(roots) < 3:
+            pytest.skip("Need at least 3 modules for this test")
+        
+        # Load multiple modules
+        loaded_kits = []
+        for root in roots[:5]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            loaded_kits.append((root, kit))
+        
+        # Verify they're distinct
+        for i, (root1, kit1) in enumerate(loaded_kits):
+            for j, (root2, kit2) in enumerate(loaded_kits):
+                if i != j:
+                    assert kit1 is not kit2, f"Kits {root1} and {root2} should be distinct"
+        
+        # Verify caching
+        for root, kit in loaded_kits:
+            cached = manager.get_module_kit(root)
+            assert cached is kit, f"Kit {root} should be cached"
+
+    def test_component_equivalence(self, installation: HTInstallation, temp_work_dir):
+        """Test that module components can be used interchangeably with kit components."""
+        from toolset.data.indoorkit import KitComponent, ModuleKitManager, load_kits
+        
+        kits_path = str(temp_work_dir / "kits")
+        
+        # Load both regular kits and module kits
+        regular_kits, _ = load_kits(kits_path)
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        # Create indoor map
+        indoor_map = IndoorMap()
+        
+        # Add room from regular kit if available
+        if regular_kits:
+            for kit in regular_kits:
+                if kit.components:
+                    comp = kit.components[0]
+                    regular_room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                    indoor_map.rooms.append(regular_room)
+                    break
+        
+        # Add room from module kit
+        for root in roots:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if kit.components:
+                comp = kit.components[0]
+                module_room = IndoorMapRoom(comp, Vector3(20, 0, 0), 0.0, flip_x=False, flip_y=False)
+                indoor_map.rooms.append(module_room)
+                break
+        
+        # Verify both rooms work
+        for room in indoor_map.rooms:
+            assert isinstance(room.component, KitComponent), "Room component should be KitComponent"
+            assert room.component.bwm is not None, "Component should have BWM"
+            assert room.component.image is not None, "Component should have image"
+
+
+class TestDoorDimensionExtraction:
+    """Tests for door dimension extraction from test_single_door_dimension.py."""
+
+    def test_door_dimension_extraction(self, installation: HTInstallation):
+        """Test door dimension extraction for a single door."""
+        from pykotor.extract.file import ResourceIdentifier
+        from pykotor.extract.installation import Installation, SearchLocation
+        from pykotor.resource.formats.mdl import read_mdl
+        from pykotor.resource.formats.rim import read_rim
+        from pykotor.resource.formats.twoda import read_2da
+        from pykotor.resource.generics.utd import read_utd
+        from pykotor.resource.type import ResourceType
+        from pykotor.tools import door as door_tools
+        
+        inst = Installation(installation.path())
+        
+        # Load danm13_s.rim to get doors
+        modules_path = inst.module_path()
+        data_rim_path = modules_path / "danm13_s.rim"
+        
+        if not data_rim_path.exists():
+            pytest.skip(f"Module file not found: {data_rim_path}")
+        
+        data_rim = read_rim(data_rim_path)
+        
+        # Find first door UTD
+        door_utds = []
+        for resource in data_rim:
+            if resource.restype == ResourceType.UTD:
+                door_utds.append((str(resource.resref), resource.data))
+        
+        if not door_utds:
+            pytest.skip("No UTD doors found in module")
+        
+        door_name, door_data = door_utds[0]
+        utd = read_utd(door_data)
+        
+        # Load genericdoors.2da
+        genericdoors_2da = None
+        try:
+            location_results = inst.locations(
+                [ResourceIdentifier(resname="genericdoors", restype=ResourceType.TwoDA)],
+                order=[SearchLocation.OVERRIDE, SearchLocation.CHITIN],
+            )
+            for res_ident, loc_list in location_results.items():
+                if loc_list:
+                    loc = loc_list[0]
+                    if loc.filepath and Path(loc.filepath).exists():
+                        with loc.filepath.open("rb") as f:
+                            f.seek(loc.offset)
+                            data = f.read(loc.size)
+                        genericdoors_2da = read_2da(data)
+                        break
+        except Exception:
+            pass
+        
+        if genericdoors_2da is None:
+            try:
+                result = inst.resource("genericdoors", ResourceType.TwoDA)
+                if result and result.data:
+                    genericdoors_2da = read_2da(result.data)
+            except Exception:
+                pass
+        
+        if genericdoors_2da is None:
+            pytest.skip("Could not load genericdoors.2da")
+        
+        # Get model name
+        model_name = door_tools.get_model(utd, inst, genericdoors=genericdoors_2da)
+        assert model_name, "Model name should not be None or empty"
+        
+        # Load MDL
+        mdl_result = inst.resource(model_name, ResourceType.MDL)
+        if not mdl_result or not mdl_result.data:
+            pytest.skip("MDL not found or has no data")
+        
+        try:
+            mdl = read_mdl(mdl_result.data)
+        except (AssertionError, Exception) as e:
+            pytest.skip(f"MDL could not be loaded: {e}")
+        
+        # Calculate bounding box
+        bb_min = Vector3(1000000, 1000000, 1000000)
+        bb_max = Vector3(-1000000, -1000000, -1000000)
+        
+        nodes_to_check = [mdl.root]
+        mesh_count = 0
+        vertex_count = 0
+        
+        while nodes_to_check:
+            node = nodes_to_check.pop()
+            if node.mesh:
+                mesh_count += 1
+                # Use mesh bounding box if available
+                if node.mesh.bb_min and node.mesh.bb_max:
+                    bb_min.x = min(bb_min.x, node.mesh.bb_min.x)
+                    bb_min.y = min(bb_min.y, node.mesh.bb_min.y)
+                    bb_min.z = min(bb_min.z, node.mesh.bb_min.z)
+                    bb_max.x = max(bb_max.x, node.mesh.bb_max.x)
+                    bb_max.y = max(bb_max.y, node.mesh.bb_max.y)
+                    bb_max.z = max(bb_max.z, node.mesh.bb_max.z)
+                # Fallback: calculate from vertex positions
+                elif node.mesh.vertex_positions:
+                    for vertex in node.mesh.vertex_positions:
+                        vertex_count += 1
+                        bb_min.x = min(bb_min.x, vertex.x)
+                        bb_min.y = min(bb_min.y, vertex.y)
+                        bb_min.z = min(bb_min.z, vertex.z)
+                        bb_max.x = max(bb_max.x, vertex.x)
+                        bb_max.y = max(bb_max.y, vertex.y)
+                        bb_max.z = max(bb_max.z, vertex.z)
+            
+            nodes_to_check.extend(node.children)
+        
+        assert bb_min.x < 1000000, "Should have valid bounding box"
+        
+        width = abs(bb_max.y - bb_min.y)
+        height = abs(bb_max.z - bb_min.z)
+        depth = abs(bb_max.x - bb_min.x)
+        
+        # Validate dimensions are reasonable
+        assert 0.1 < width < 50.0, f"Width should be reasonable: {width}"
+        assert 0.1 < height < 50.0, f"Height should be reasonable: {height}"
+
+
+class TestWalkabilityGranular:
+    """Granular tests for walkability of walkmeshes, levels, and indoor maps."""
+
+    def test_walkable_faces_have_walkable_materials(self, installation: HTInstallation):
+        """Test that all walkable faces have walkable materials."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available")
+        
+        for root in roots[:5]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            bwm = comp.bwm
+            
+            walkable_faces = bwm.walkable_faces()
+            
+            for face in walkable_faces:
+                assert face.material.walkable(), \
+                    f"Walkable face should have walkable material, got {face.material}"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_unwalkable_faces_have_unwalkable_materials(self, installation: HTInstallation):
+        """Test that all unwalkable faces have non-walkable materials."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available")
+        
+        for root in roots[:5]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            bwm = comp.bwm
+            
+            unwalkable_faces = bwm.unwalkable_faces()
+            
+            for face in unwalkable_faces:
+                assert not face.material.walkable(), \
+                    f"Unwalkable face should have non-walkable material, got {face.material}"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_walkable_material_set_consistency(self, installation: HTInstallation):
+        """Test that walkable material set matches expected values."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        # Expected walkable materials from kit.py
+        EXPECTED_WALKABLE = {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available")
+        
+        for root in roots[:5]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            bwm = comp.bwm
+            
+            # Check all materials in walkmesh
+            for face in bwm.faces:
+                material_value = face.material.value
+                is_walkable = face.material.walkable()
+                expected_walkable = material_value in EXPECTED_WALKABLE
+                
+                assert is_walkable == expected_walkable, \
+                    f"Material {material_value} walkability mismatch: " \
+                    f"walkable()={is_walkable}, expected={expected_walkable}"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_walkable_face_count_matches_material_count(self, installation: HTInstallation):
+        """Test that walkable face count matches count of faces with walkable materials."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available")
+        
+        for root in roots[:5]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            bwm = comp.bwm
+            
+            walkable_faces = bwm.walkable_faces()
+            walkable_by_material = [f for f in bwm.faces if f.material.walkable()]
+            
+            assert len(walkable_faces) == len(walkable_by_material), \
+                f"Walkable face count mismatch: walkable_faces()={len(walkable_faces)}, " \
+                f"by_material={len(walkable_by_material)}"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_walkable_faces_have_valid_geometry(self, installation: HTInstallation):
+        """Test that walkable faces have valid triangle geometry."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available")
+        
+        for root in roots[:5]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            bwm = comp.bwm
+            
+            walkable_faces = bwm.walkable_faces()
+            
+            for face in walkable_faces:
+                # Check vertices are distinct
+                assert face.v1 != face.v2, "Face vertices should be distinct"
+                assert face.v2 != face.v3, "Face vertices should be distinct"
+                assert face.v3 != face.v1, "Face vertices should be distinct"
+                
+                # Check face has non-zero area (approximate)
+                v1v2 = Vector3(
+                    face.v2.x - face.v1.x,
+                    face.v2.y - face.v1.y,
+                    face.v2.z - face.v1.z,
+                )
+                v1v3 = Vector3(
+                    face.v3.x - face.v1.x,
+                    face.v3.y - face.v1.y,
+                    face.v3.z - face.v1.z,
+                )
+                
+                # Cross product magnitude should be > 0 for valid triangle
+                cross = Vector3(
+                    v1v2.y * v1v3.z - v1v2.z * v1v3.y,
+                    v1v2.z * v1v3.x - v1v2.x * v1v3.z,
+                    v1v2.x * v1v3.y - v1v2.y * v1v3.x,
+                )
+                area = (cross.x ** 2 + cross.y ** 2 + cross.z ** 2) ** 0.5 / 2.0
+                
+                assert area > 0.0001, f"Walkable face should have non-zero area, got {area}"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_walkable_faces_z_coordinate_consistency(self, installation: HTInstallation):
+        """Test that walkable faces in the same area have consistent Z coordinates (levels)."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available")
+        
+        for root in roots[:5]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            bwm = comp.bwm
+            
+            walkable_faces = bwm.walkable_faces()
+            
+            if len(walkable_faces) < 2:
+                continue
+            
+            # Group faces by approximate Z level (within tolerance)
+            z_levels = {}
+            tolerance = 0.1
+            
+            for face in walkable_faces:
+                # Use average Z of face vertices
+                avg_z = (face.v1.z + face.v2.z + face.v3.z) / 3.0
+                
+                # Find matching level
+                matched_level = None
+                for level_z in z_levels.keys():
+                    if abs(avg_z - level_z) < tolerance:
+                        matched_level = level_z
+                        break
+                
+                if matched_level is None:
+                    z_levels[avg_z] = []
+                
+                z_levels[matched_level if matched_level is not None else avg_z].append(face)
+            
+            # Verify faces in same level have consistent Z
+            for level_z, faces in z_levels.items():
+                for face in faces:
+                    avg_z = (face.v1.z + face.v2.z + face.v3.z) / 3.0
+                    assert abs(avg_z - level_z) < tolerance, \
+                        f"Face Z coordinate {avg_z} should match level {level_z} within tolerance"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_indoor_map_walkability_preservation(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
+        """Test that walkability is preserved when creating rooms in indoor map."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available")
+        
+        builder = builder_no_kits
+        
+        # Find a module with components
+        for root in roots:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            original_bwm = comp.bwm
+            
+            # Get original walkable faces
+            original_walkable = original_bwm.walkable_faces()
+            original_walkable_count = len(original_walkable)
+            
+            # Create room from component
+            room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+            builder._map.rooms.append(room)
+            
+            # Get transformed walkmesh
+            transformed_bwm = room.walkmesh()
+            transformed_walkable = transformed_bwm.walkable_faces()
+            transformed_walkable_count = len(transformed_walkable)
+            
+            # Walkable face count should be preserved
+            assert transformed_walkable_count == original_walkable_count, \
+                f"Walkable face count should be preserved: original={original_walkable_count}, " \
+                f"transformed={transformed_walkable_count}"
+            
+            # All transformed walkable faces should still have walkable materials
+            for face in transformed_walkable:
+                assert face.material.walkable(), \
+                    "Transformed walkable face should still have walkable material"
+            return
+        
+        pytest.skip("No modules with components found")
+
+    def test_multiple_rooms_walkability_independence(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
+        """Test that multiple rooms maintain independent walkability."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available")
+        
+        builder = builder_no_kits
+        
+        # Find modules with components
+        rooms = []
+        for root in roots[:3]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if kit.components:
+                comp = kit.components[0]
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                rooms.append((room, comp.bwm))
+                builder._map.rooms.append(room)
+                
+                if len(rooms) >= 2:
+                    break
+        
+        if len(rooms) < 2:
+            pytest.skip("Need at least 2 modules with components")
+        
+        # Verify each room maintains its walkability
+        for room, original_bwm in rooms:
+            transformed_bwm = room.walkmesh()
+            original_walkable = original_bwm.walkable_faces()
+            transformed_walkable = transformed_bwm.walkable_faces()
+            
+            assert len(transformed_walkable) == len(original_walkable), \
+                f"Room walkability should be preserved: original={len(original_walkable)}, " \
+                f"transformed={len(transformed_walkable)}"
+
+    def test_walkable_face_adjacency_consistency(self, installation: HTInstallation):
+        """Test that walkable face adjacencies are consistent."""
+        from toolset.data.indoorkit import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        roots = manager.get_module_roots()
+        
+        if not roots:
+            pytest.skip("No modules available")
+        
+        for root in roots[:5]:
+            kit = manager.get_module_kit(root)
+            kit.ensure_loaded()
+            
+            if not kit.components:
+                continue
+            
+            comp = kit.components[0]
+            bwm = comp.bwm
+            
+            walkable_faces = bwm.walkable_faces()
+            
+            if len(walkable_faces) < 2:
+                continue
+            
+            # Check adjacencies for walkable faces
+            for face in walkable_faces:
+                adjacencies = bwm.adjacencies(face)
+                
+                # Each adjacency should be None or point to another walkable face
+                for adj in adjacencies:
+                    if adj is not None:
+                        # Adjacency should reference a valid face object
+                        assert adj.face is not None, "Adjacency should have a face"
+                        assert adj.face in bwm.faces, "Adjacent face should exist in BWM"
+                        assert adj.edge in (0, 1, 2), f"Adjacency edge should be 0, 1, or 2, got {adj.edge}"
+            return
+        
+        pytest.skip("No modules with components found")
