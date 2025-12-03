@@ -533,7 +533,12 @@ class CopyRow2DA(Modify2DA):
                 target_row = row
 
         if target_row is not None:
-            # If the row already exists (based on exclusive_column) then we update the cells
+            # If the row already exists (based on exclusive_column) then we copy all columns from source first
+            # Copy all column values from source row to target row
+            for header in twoda.get_headers():
+                source_value = source_row.get_string(header)
+                target_row.set_string(header, source_value)
+            # Then update with the cells dictionary (which will override the copied values)
             cells = self._unpack(self.cells, memory, twoda, target_row)
             target_row.update_values(cells)
             self._row = target_row
