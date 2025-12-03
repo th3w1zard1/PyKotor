@@ -2422,7 +2422,8 @@ def test_utc_editor_load_real_file(qtbot, installation: HTInstallation, test_fil
     editor.load(utc_file, "p_hk47", ResourceType.UTC, utc_file.read_bytes())
     
     # Verify widgets populated
-    assert editor.ui.tagEdit.text() == "p_hk47"
+    # The actual tag in p_hk47.utc is "HK47", not "p_hk47"
+    assert editor.ui.tagEdit.text() == "HK47"
     assert editor.ui.resrefEdit.text() == "p_hk47"
     
     # Verify all widgets have values (not empty/default)
