@@ -253,8 +253,9 @@ class NCSDecompiler:
             # Use BytesIO for automatic buffer resizing
             ncs_stream = io.BytesIO()
             writer = NCSBinaryWriter(self.ncs, ncs_stream)
-            writer.write()
+            writer.write(auto_close=False)  # Don't auto-close so we can read the value
             ncs_bytes = ncs_stream.getvalue()
+            ncs_stream.close()
 
             # Create ActionsData from functions
             # ActionsData expects format with "// 0" marker, then function definitions
