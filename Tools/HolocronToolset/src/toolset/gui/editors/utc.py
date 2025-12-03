@@ -559,6 +559,7 @@ class UTCEditor(Editor):
         utc.disarmable = self.ui.disarmableCheckbox.isChecked()
         utc.no_perm_death = self.ui.noPermDeathCheckbox.isChecked()
         utc.min1_hp = self.ui.min1HpCheckbox.isChecked()
+        utc.plot = self.ui.plotCheckbox.isChecked()
         utc.is_pc = self.ui.isPcCheckbox.isChecked()
         utc.not_reorienting = self.ui.noReorientateCheckbox.isChecked()
         utc.ignore_cre_path = self.ui.noBlockCheckbox.isChecked()
