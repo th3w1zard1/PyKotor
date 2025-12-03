@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.8"
 resolution-markers = [
     "python_full_version >= '3.12' and os_name != 'nt' and platform_python_implementation == 'PyPy' and sys_platform == 'darwin'",
@@ -1549,7 +1549,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "holocrontoolset"
-version = "4.0.0a5"
+version = "4.0.0b3"
 source = { editable = "Tools/HolocronToolset" }
 dependencies = [
     { name = "certifi" },
@@ -1670,7 +1670,7 @@ provides-extras = ["gui", "web", "dev"]
 
 [[package]]
 name = "holopatcher"
-version = "1.5.3"
+version = "2.0.0a2"
 source = { editable = "Tools/HoloPatcher" }
 dependencies = [
     { name = "charset-normalizer" },
@@ -3357,7 +3357,7 @@ provides-extras = ["font", "gl", "secure-xml", "encodings", "all", "dev"]
 
 [[package]]
 name = "pykotor-workspace"
-version = "1.8.0"
+version = "2.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "pykotor" },
@@ -3528,7 +3528,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "pykotorgl"
-version = "2.0.0"
+version = "2.0.2"
 source = { editable = "Libraries/PyKotorGL" }
 dependencies = [
     { name = "numpy", version = "1.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -3536,6 +3536,8 @@ dependencies = [
     { name = "pyglm", marker = "platform_python_implementation == 'CPython'" },
     { name = "pykotor" },
     { name = "pyopengl" },
+    { name = "typing-extensions", version = "4.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "typing-extensions", version = "4.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
 ]
 
 [package.optional-dependencies]
@@ -3560,6 +3562,7 @@ requires-dist = [
     { name = "pyopengl-accelerate", marker = "extra == 'gl-accel'", specifier = ">=3.1.10" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
+    { name = "typing-extensions", specifier = ">=4.0" },
 ]
 provides-extras = ["gl-accel", "moderngl", "dev"]
 

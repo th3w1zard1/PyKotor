@@ -5,10 +5,10 @@ import json
 import re
 
 from contextlib import suppress
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 try:
-    import requests
+    import requests  # type: ignore[import-untyped]
 except ImportError:
     requests = None  # type: ignore[assignment, unused-ignore]
 
@@ -109,8 +109,8 @@ def get_remote_toolset_update_info(
             return e
         remote_info = LOCAL_PROGRAM_INFO
     except Exception as e:  # noqa: BLE001
-        err_msg: str = str(universal_simplify_exception(e))
-        result: int | QMessageBox.StandardButton = silent or QMessageBox.question(
+        err_msg = str(universal_simplify_exception(e))
+        result = silent or QMessageBox.question(
             None,
             "Error occurred fetching update information.",
             ("An error occurred while fetching the latest toolset information.<br><br>" + err_msg.replace("\n", "<br>") + "<br><br>" + "Would you like to check against the local database instead?"),  # noqa: E501
