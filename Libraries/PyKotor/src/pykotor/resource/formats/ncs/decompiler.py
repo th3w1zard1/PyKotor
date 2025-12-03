@@ -250,9 +250,11 @@ class NCSDecompiler:
 
             # Convert NCS to bytes for Decoder
             from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
-            ncs_bytes = bytearray()
-            writer = NCSBinaryWriter(self.ncs, ncs_bytes)
+            # Use BytesIO for automatic buffer resizing
+            ncs_stream = io.BytesIO()
+            writer = NCSBinaryWriter(self.ncs, ncs_stream)
             writer.write()
+            ncs_bytes = ncs_stream.getvalue()
 
             # Create ActionsData from functions
             # ActionsData expects format with "// 0" marker, then function definitions
