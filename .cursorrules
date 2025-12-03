@@ -98,6 +98,18 @@ if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TEST TIMED OUT a
 - Default timeout: 120 seconds (2 minutes) for individual tests, 300 seconds (5 minutes) for test suites
 - Always use `.venv_3.13` - never use global Python installations
 
+**Automatic Performance Optimization:**
+
+When tests consistently hit timeouts or take excessive time, AI agents MUST automatically:
+1. **Profile the slow test**: Check `tests/cProfile/` for existing `.prof` files, or run tests with profiling enabled
+2. **Analyze bottlenecks**: Run `.\scripts\analyze_cprofile.ps1 <profile_file>` to identify hot functions
+3. **Optimize automatically**: 
+   - Make fixtures session-scoped to avoid repeated expensive setup (e.g., file copying, installation loading)
+   - Cache expensive operations (module loading, resource parsing) at session/module scope
+   - Move common setup to `conftest.py` with appropriate scoping
+   - Reduce redundant file I/O, database queries, or network calls
+4. **Verify improvements**: Re-run tests to confirm performance gains before committing
+
 ## Conventions
 
 - When developing code, please ensure you ALWAYS check the .gitmodules and the ./vendor folder to find semantically similar code. For any hits, please always comment in the python code what relpath/line number it can be found at and any differences if any. This should be as full and complete as possible.
