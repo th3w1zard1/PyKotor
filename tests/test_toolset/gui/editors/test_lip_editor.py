@@ -384,9 +384,12 @@ def test_lip_editor_duration_from_loaded_lip(qtbot, installation: HTInstallation
     editor.duration = 10.0
     editor.lip = LIP()
     editor.lip.length = 10.0
+    # Add at least one frame to make the LIP valid
+    editor.lip.add(0.0, LIPShape.NEUTRAL)
     
     # Build and load
     data, _ = editor.build()
+    assert len(data) > 0, "LIP data should not be empty"
     editor.load(Path("test.lip"), "test", ResourceType.LIP, data)
     
     # Verify duration was loaded
