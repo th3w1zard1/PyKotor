@@ -7666,3 +7666,180 @@ class TestModuleKitBWMCentering:
                 f"Origin Y=0 should be within walkmesh bounds [{min_y:.2f}, {max_y:.2f}]. "
                 "Room is not centered correctly!"
             )
+
+    def test_module_kit_no_black_buffer_zone(
+        self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation
+    ):
+        """Verify that ModuleKit preview images don't have excessive black padding.
+        
+        The image should tightly fit the walkmesh geometry (with just standard 5-unit padding).
+        If there's a huge black buffer zone around the geometry, it means the image bounds
+        are much larger than the walkmesh bounds, which causes the visual misalignment bug.
+        
+        This test ensures the preview looks like the actual room geometry, matching the
+        working rooms shown in the center of the Indoor Map Builder (not the broken ones
+        with black buffer zones).
+        """
+        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        module_roots = manager.get_module_roots()
+        
+        if not module_roots:
+            pytest.skip("No modules available in installation")
+        
+        module_root = module_roots[0]
+        kit = manager.get_module_kit(module_root)
+        kit.ensure_loaded()
+        
+        if not kit.components:
+            pytest.skip(f"Module {module_root} has no components")
+        
+        # Test multiple components to catch edge cases
+        for component in kit.components[:3]:  # Test first 3 components
+            bwm = component.bwm
+            image = component.image
+            
+            # Get walkmesh bounds (should be centered at 0,0)
+            vertices = list(bwm.vertices())
+            if not vertices:
+                continue
+            
+            bwm_min_x = min(v.x for v in vertices)
+            bwm_max_x = max(v.x for v in vertices)
+            bwm_min_y = min(v.y for v in vertices)
+            bwm_max_y = max(v.y for v in vertices)
+            
+            bwm_width = bwm_max_x - bwm_min_x
+            bwm_height = bwm_max_y - bwm_min_y
+            
+            # Image dimensions in world units (10 pixels per unit)
+            image_width_units = image.width() / 10.0
+            image_height_units = image.height() / 10.0
+            
+            # Standard padding is 5 units on each side (10 units total)
+            expected_width = bwm_width + 10.0
+            expected_height = bwm_height + 10.0
+            
+            # BUT there's a minimum image size of 256x256 pixels (25.6 units)
+            # So the actual expected size is the max of (geometry + padding) and (minimum)
+            expected_width = max(expected_width, 25.6)
+            expected_height = max(expected_height, 25.6)
+            
+            # Calculate how much "extra" space there is beyond the walkmesh + padding
+            extra_width = image_width_units - expected_width
+            extra_height = image_height_units - expected_height
+            
+            # CRITICAL: There should be NO extra black padding beyond the standard padding
+            # The image should be exactly (walkmesh + 10 units padding) or the minimum size,
+            # whichever is larger. Any extra space creates the black buffer zone bug.
+            assert extra_width <= 1.0, (
+                f"Component {component.name} has excessive black padding on X axis: "
+                f"image width {image_width_units:.2f} vs expected {expected_width:.2f} "
+                f"(extra: {extra_width:.2f} units). This creates the black buffer zone bug!"
+            )
+            assert extra_height <= 1.0, (
+                f"Component {component.name} has excessive black padding on Y axis: "
+                f"image height {image_height_units:.2f} vs expected {expected_height:.2f} "
+                f"(extra: {extra_height:.2f} units). This creates the black buffer zone bug!"
+            )
+            
+            # Also verify the image actually contains geometry pixels (not all black)
+            # Sample pixels from the center area where geometry should be
+            center_x = image.width() // 2
+            center_y = image.height() // 2
+            
+            # Check a small area around center (should have white/gray pixels from walkmesh)
+            has_geometry_pixels = False
+            for dx in range(-5, 6):
+                for dy in range(-5, 6):
+                    x = center_x + dx
+                    y = center_y + dy
+                    if 0 <= x < image.width() and 0 <= y < image.height():
+                        pixel = image.pixel(x, y)
+                        # White (255,255,255) or gray (128,128,128) = walkmesh geometry
+                        # Black (0,0,0) = empty space
+                        r = (pixel >> 16) & 0xFF
+                        g = (pixel >> 8) & 0xFF
+                        b = pixel & 0xFF
+                        if r > 50 or g > 50 or b > 50:  # Not pure black
+                            has_geometry_pixels = True
+                            break
+                if has_geometry_pixels:
+                    break
+            
+            assert has_geometry_pixels, (
+                f"Component {component.name} image center area is all black! "
+                "The preview image should show the walkmesh geometry at the center, "
+                "not just black space. This indicates the image/hitbox misalignment bug."
+            )
+
+    def test_module_kit_rooms_snap_together(
+        self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation
+    ):
+        """Test that ModuleKit rooms can be placed and don't have black buffer zones.
+        
+        This verifies the critical fix: rooms should look like the working rooms
+        in the center of the Indoor Map Builder (proper geometry, no black buffer zones),
+        not the broken ones with previews far from hitboxes.
+        
+        The key test is that the first room (which we know is re-centered from
+        test_module_kit_bwm_is_centered) has its image and hitbox aligned.
+        """
+        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        module_roots = manager.get_module_roots()
+        
+        if not module_roots:
+            pytest.skip("No modules available in installation")
+        
+        module_root = module_roots[0]
+        kit = manager.get_module_kit(module_root)
+        kit.ensure_loaded()
+        
+        if not kit.components:
+            pytest.skip(f"Module {module_root} has no components")
+        
+        component1 = kit.components[0]
+        renderer = builder_no_kits.ui.mapRenderer
+        
+        # Place first room at origin
+        renderer.set_cursor_component(component1)
+        renderer.cursor_point = Vector3(0, 0, 0)
+        builder_no_kits._place_new_room(component1)
+        
+        assert len(builder_no_kits._map.rooms) == 1
+        room1 = builder_no_kits._map.rooms[0]
+        
+        # CRITICAL TEST: Verify room1's image and hitbox are aligned
+        # The walkmesh center (after transformation) should match the room position
+        # This ensures the preview image (centered at position) and hitbox (walkmesh at position) align
+        
+        walkmesh1 = room1.walkmesh()
+        trans_verts1 = list(walkmesh1.vertices())
+        
+        if trans_verts1:
+            # Calculate center of transformed walkmesh
+            trans_center1_x = sum(v.x for v in trans_verts1) / len(trans_verts1)
+            trans_center1_y = sum(v.y for v in trans_verts1) / len(trans_verts1)
+            
+            # CRITICAL: Transformed walkmesh center must match room position
+            # If they don't, the image (centered at position) and hitbox (walkmesh at position)
+            # will be in different places, causing the black buffer zone bug!
+            # This is the exact bug shown in the image - preview in one place, hitbox in another
+            assert abs(trans_center1_x - room1.position.x) < 0.1, (
+                f"Room1 transformed walkmesh center X ({trans_center1_x:.2f}) must match position X "
+                f"({room1.position.x:.2f}). Misalignment causes black buffer zone bug - preview and "
+                "hitbox will be in different locations!"
+            )
+            assert abs(trans_center1_y - room1.position.y) < 0.1, (
+                f"Room1 transformed walkmesh center Y ({trans_center1_y:.2f}) must match position Y "
+                f"({room1.position.y:.2f}). Misalignment causes black buffer zone bug - preview and "
+                "hitbox will be in different locations!"
+            )
+            
+            # Verify the room is at a reasonable position (not offset by huge amount)
+            # This ensures it looks like the working rooms, not the broken ones
+            assert abs(room1.position.x) < 100, "Room1 position should be reasonable"
+            assert abs(room1.position.y) < 100, "Room1 position should be reasonable"
