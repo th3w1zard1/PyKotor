@@ -806,8 +806,8 @@ def test_uts_editor_manipulate_all_positioning_fields_combination(qtbot, install
     modified_uts = read_uts(data)
     
     assert modified_uts.looping
-    assert modified_uts.max_distance == 50.0
-    assert modified_uts.min_distance == 25.0
+    assert modified_uts.min_distance == 50.0  # cutoffSpin maps to min_distance
+    assert modified_uts.max_distance == 25.0  # maxVolumeDistanceSpin maps to max_distance
     assert modified_uts.elevation == 10.0
 
 # ============================================================================
