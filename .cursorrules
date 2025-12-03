@@ -1,5 +1,28 @@
 # PyKotor Rules and Conventions for AI LLM agents
 
+## ⚠️ CRITICAL: Git Commit Requirement ⚠️
+
+**MANDATORY FOR ALL AI AGENTS**: After making ANY changes to files in this repository, you MUST:
+
+1. **Stage all modified files**: `git add <file1> <file2> ...` (or `git add .` for all changes)
+2. **Commit with a descriptive message**: `git commit -m "type: descriptive message"`
+3. **Verify the commit succeeded**: Check that `git commit` returns successfully with no errors
+
+**This is NOT optional.** Do NOT summarize changes without committing them. Do NOT skip this step. Every code change, file modification, or configuration update MUST be committed before you consider the task complete.
+
+**Commit message format**: Use conventional commits format:
+
+- `fix:` for bug fixes
+- `feat:` for new features
+- `refactor:` for code refactoring
+- `docs:` for documentation changes
+- `chore:` for maintenance tasks
+- `test:` for test changes
+
+Example: `git commit -m "fix: correct finalize job condition in workflow"`
+
+---
+
 ## Documentation
 
 When creating ANY new `.md` files, always follow these guidelines:
@@ -128,5 +151,3 @@ See `./CONVENTIONS.md` for more information!
   4. When scripts need inspection, decompile/disassemble with `kotorcli decompile` or `kotorcli disassemble`, then reuse the resulting `.nss` with `grep/stats`.
 - Targeted module deep dives should mirror the logic in `scripts/investigate_module_structure.py` and `scripts/investigate_module_structure.py` (room+resource introspection), `scripts/check_missing_resources.py` (override integrity), and related helpers under `scripts/`. Those scripts demonstrate how to chain `pykotor.extract.installation.Installation`, module RIM readers, and the CLI commands above—use them as references before crafting new flows.
 - Prefer bulk automation through the CLI instead of ad-hoc Python: most tasks (diffing, conversions, packing) already live under `Tools/KotorCLI/src/kotorcli/commands`. Only fall back to ad-hoc scripts if you need custom logic that the CLI reasonably should not express due to it being outside of the scope of the project.
-
-Please always remember to run `git add` and `git commit` for any and all changes you've made following standard git conventions. Ensure this runs properly and DO NOT forget.

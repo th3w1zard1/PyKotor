@@ -28,8 +28,6 @@ __pycache__/
 /__main__.build/
 /__main__.dist/
 /__main__.onefile-build/
-/Libraries/Utility/src/utility/ui_libraries/qt/filesystem/common/deprecated
-/Libraries/Utility/src/utility/ui_libraries/qt/filesystem/common/untested
 *.toc
 base_library.zip
 build
