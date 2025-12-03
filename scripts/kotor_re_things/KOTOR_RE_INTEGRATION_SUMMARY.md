@@ -42,7 +42,7 @@ The GOG version (source of KOTOR RE Things) and Steam version have **identical m
    - Creates functions at prologue patterns
 
 ### For Programmatic Use
-3. **`scripts/kotor_re_full.json`** (large)
+3. **`scripts/kotor_re_things/kotor_re_full.json`** (large)
    - Complete JSON export of all parsed data
    - Includes full function signatures, parameters, local variables
    - Includes all struct definitions with field layouts

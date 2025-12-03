@@ -19,7 +19,7 @@ This document summarizes the integration of reverse engineering data from the GO
 - ✅ Parsed all data from XML export
 - ✅ Applied sample comments (15+ comments successfully added)
 - ✅ Created helper scripts for batch processing
-- ✅ Generated JSON file with all parsed data (`scripts/kotor_re_parsed.json`)
+- ✅ Generated JSON file with all parsed data (`scripts/kotor_re_things/kotor_re_parsed.json`)
 
 ### In Progress
 - 🔄 Applying function names (addresses may need adjustment)
@@ -29,11 +29,11 @@ This document summarizes the integration of reverse engineering data from the GO
 
 ## Files Created
 
-1. **`scripts/integrate_kotor_re_things.py`** - Main parser for XML data
-2. **`scripts/apply_ghidra_integration.py`** - Script to parse and save JSON
-3. **`scripts/batch_apply_ghidra.py`** - Batch processing helper
-4. **`scripts/kotor_re_parsed.json`** - All parsed data in JSON format
-5. **`scripts/ghidra_batches.txt`** - Batch reference file
+1. **`scripts/kotor_re_things/integrate_kotor_re_things.py`** - Main parser for XML data
+2. **`scripts/kotor_re_things/apply_ghidra_integration.py`** - Script to parse and save JSON
+3. **`scripts/kotor_re_things/batch_apply_ghidra.py`** - Batch processing helper
+4. **`scripts/kotor_re_things/kotor_re_parsed.json`** - All parsed data in JSON format
+5. **`scripts/kotor_re_things/ghidra_batches.txt`** - Batch reference file
 
 ## Data Structure
 
@@ -149,5 +149,5 @@ For large-scale integration, consider:
 
 - Source: `vendor/Kotor RE Things/swkotor.exe.xml` (Ghidra XML export)
 - Header: `vendor/Kotor RE Things/swkotor.exe.h` (C header with types)
-- Parsed Data: `scripts/kotor_re_parsed.json`
+- Parsed Data: `scripts/kotor_re_things/kotor_re_parsed.json`
 

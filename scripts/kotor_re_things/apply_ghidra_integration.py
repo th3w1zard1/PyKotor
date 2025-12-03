@@ -49,7 +49,7 @@ def load_parsed_data(input_path: Path) -> Dict:
 def main():
     """Main function to parse and save data."""
     xml_path = Path(__file__).parent.parent / "vendor" / "Kotor RE Things" / "swkotor.exe.xml"
-    output_path = Path(__file__).parent.parent / "scripts" / "kotor_re_parsed.json"
+    output_path = Path(__file__).parent / "kotor_re_parsed.json"
     
     if not xml_path.exists():
         print(f"Error: XML file not found at {xml_path}")

@@ -591,7 +591,7 @@ def main():
     )
     arg_parser.add_argument(
         '--output-json', '-j',
-        default='scripts/kotor_re_full.json',
+        default='kotor_re_full.json',
         help='Output path for JSON export'
     )
     arg_parser.add_argument(

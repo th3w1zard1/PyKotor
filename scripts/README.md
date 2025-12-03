@@ -8,6 +8,7 @@ Scripts are organized into subfolders:
 
 - **`workflow/`** - Scripts related to CI/CD, version management, releases, GitHub workflows, and development setup
 - **`kotor/`** - Scripts related to the KOTOR game (resource checks, investigations, debugging, testing)
+- **`kotor_re_things/`** - Scripts for integrating KOTOR RE Things reverse engineering data and Ghidra integration
 - **Root `scripts/`** - General utility scripts, documentation updates, code generation, and fixes
 
 ### `workflow/` - Workflow and Development Scripts
@@ -78,6 +79,31 @@ Scripts related to the KOTOR game: resource checks, investigations, debugging, a
   - `compare_kit_json_files.py` - Compare kit JSON files
   - `compare_kit_json.py` - Compare kit JSON
   - `analyze_generated_json.py` - Analyze generated JSON
+
+### `kotor_re_things/` - KOTOR RE Things and Ghidra Integration
+
+Scripts for integrating KOTOR RE Things reverse engineering data and Ghidra integration:
+
+- **Ghidra Integration:**
+  - `apply_ghidra_integration.py` - Apply Ghidra integration
+  - `apply_to_ghidra.py` - Apply changes to Ghidra
+  - `batch_apply_ghidra.py` - Batch apply Ghidra changes
+  - `ghidra_batch_apply.py` - Batch apply Ghidra integration
+  - `ghidra_force_analyze.py` - Force Ghidra analysis
+  - `ghidra_kotor_apply.py` - Apply KOTOR-specific Ghidra changes
+  - `ghidra_kotor_import.py` - Import KOTOR data into Ghidra
+  - `ghidra_batches.txt` - Batch configuration file
+  - `GHIDRA_INTEGRATION_SUMMARY.md` - Ghidra integration documentation
+
+- **KOTOR RE Things:**
+  - `integrate_kotor_re_things.py` - Integrate KOTOR RE Things reverse engineering data
+  - `kotor_re_full.json` - Full KOTOR RE Things data
+  - `kotor_re_parsed.json` - Parsed KOTOR RE Things data
+  - `KOTOR_RE_INTEGRATION_SUMMARY.md` - KOTOR RE Things integration documentation
+
+- **DRM/Unpacking:**
+  - `kotor_drm_unpacker.py` - KOTOR DRM unpacker
+  - `KOTOR_DRM_README.md` - DRM unpacking documentation
 
 ### Root `scripts/` - General Utility Scripts
 
