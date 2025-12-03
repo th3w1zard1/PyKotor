@@ -522,12 +522,12 @@ def test_ute_editor_manipulate_on_exhausted_script(qtbot, installation: HTInstal
     editor.load(ute_file, "newtransition", ResourceType.UTE, original_data)
     
     # Modify script
-    editor.ui.onExhaustedEdit.set_combo_box_text("test_on_exhausted")
+    editor.ui.onExhaustedEdit.set_combo_box_text("test_onexhausted")  # 16 chars (ResRef max)
     
     # Save and verify
     data, _ = editor.build()
     modified_ute = read_ute(data)
-    assert str(modified_ute.on_exhausted) == "test_on_exhausted"
+    assert str(modified_ute.on_exhausted) == "test_onexhausted"
 
 def test_ute_editor_manipulate_on_heartbeat_script(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating on heartbeat script field."""
