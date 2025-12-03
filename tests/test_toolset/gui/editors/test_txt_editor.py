@@ -277,8 +277,13 @@ def test_txt_editor_save_load_roundtrip_identity(qtbot, installation: HTInstalla
     editor.load(Path("test.txt"), "test", ResourceType.TXT, data1)
     
     # Verify content matches
+    # Note: build() normalizes line endings to os.linesep, so we need to normalize for comparison
     loaded_text = editor.ui.textEdit.toPlainText()
-    assert loaded_text == decode_bytes_with_fallbacks(data1)
+    decoded_data = decode_bytes_with_fallbacks(data1)
+    # Normalize line endings for comparison (build() converts \n to os.linesep)
+    normalized_loaded = loaded_text.replace("\r\n", "\n").replace("\r", "\n")
+    normalized_decoded = decoded_data.replace("\r\n", "\n").replace("\r", "\n")
+    assert normalized_loaded == normalized_decoded
     
     # Save again
     data2, _ = editor.build()
