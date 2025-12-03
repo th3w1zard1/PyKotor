@@ -1579,7 +1579,9 @@ def test_utc_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     editor.ui.strengthSpin.setValue(50)  # Max ability
     editor.ui.baseHpSpin.setValue(9999)
     editor.ui.challengeRatingSpin.setValue(50.0)
-    editor.ui.blindSpotSpin.setValue(360.0)
+    # blindspot is a KotOR 2 only field
+    if installation.tsl:
+        editor.ui.blindSpotSpin.setValue(360.0)
     
     # Save and verify
     data, _ = editor.build()
@@ -1588,7 +1590,9 @@ def test_utc_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     assert modified_utc.strength == 50
     assert modified_utc.hp == 9999
     assert modified_utc.challenge_rating == 50.0
-    assert modified_utc.blindspot == 360.0
+    # blindspot is a KotOR 2 only field
+    if installation.tsl:
+        assert modified_utc.blindspot == 360.0
 
 def test_utc_editor_feats_powers_combinations(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test various combinations of feats and powers."""
