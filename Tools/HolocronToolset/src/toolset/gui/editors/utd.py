@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtWidgets import QMessageBox
 
-from pykotor.common.misc import ResRef
+from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
 from pykotor.resource.formats.gff import write_gff
 from pykotor.resource.generics.dlg import DLG, dismantle_dlg
 from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd
@@ -60,7 +60,7 @@ class UTDEditor(Editor):
         self._genericdoors_2da: TwoDA | None = installation.ht_get_cache_2da("genericdoors")
         self._utd: UTD = UTD()
 
-        from toolset.uic.qtpy.editors.utd import Ui_MainWindow
+        from toolset.uic.qtpy.editors.utd import Ui_MainWindow  # noqa: PLC0415
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -155,7 +155,7 @@ class UTDEditor(Editor):
     ):
         widget.setEnabled(installation.tsl)
         if not installation.tsl:
-            from toolset.gui.common.localization import translate as tr
+            from toolset.gui.common.localization import translate as tr  # noqa: PLC0415
             widget.setToolTip(tr("This widget is only available in KOTOR II."))
 
     def load(
@@ -163,14 +163,14 @@ class UTDEditor(Editor):
         filepath: os.PathLike | str,
         resref: str,
         restype: ResourceType,
-        data: bytes,
-    ):
+        data: bytes | bytearray,
+    ) -> None:
         super().load(filepath, resref, restype, data)
 
         utd = read_utd(data)
         self._loadUTD(utd)
 
-    def _loadUTD(
+    def _loadUTD(  # noqa: PLR0915
         self,
         utd: UTD,
     ):
@@ -244,7 +244,7 @@ class UTDEditor(Editor):
         self.ui.onSpellEdit.populate_combo_box(self.relevant_script_resnames)
         self.ui.onUnlockEdit.populate_combo_box(self.relevant_script_resnames)
         self.ui.onUserDefinedSelect.populate_combo_box(self.relevant_script_resnames)
-        self.ui.conversationEdit.populate_combo_box(sorted(iter({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.DLG, self._filepath)})))
+        self.ui.conversationEdit.populate_combo_box(sorted(iter({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.DLG, self._filepath)})))  # noqa: E501
 
         # Comments
         self.ui.commentsEdit.setPlainText(utd.comment)
@@ -408,7 +408,13 @@ class UTDEditor(Editor):
         self.resize(max(674, self.sizeHint().width()), max(457, self.sizeHint().height()))
 
         data, _ = self.build()
-        modelname: str = door.get_model(read_utd(data), self._installation, genericdoors=self._genericdoors_2da)
+        try:
+            modelname: str = door.get_model(read_utd(data), self._installation, genericdoors=self._genericdoors_2da)
+        except (IndexError, ValueError):
+            # Invalid appearance_id or missing genericdoors.2da - clear the model
+            self.ui.previewRenderer.clear_model()
+            return
+
         mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL)
         mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX)
         if mdl is not None and mdx is not None:
