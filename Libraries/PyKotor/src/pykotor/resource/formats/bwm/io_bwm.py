@@ -1,5 +1,4 @@
-"""
-Binary reader/writer for KotOR walkmeshes (BWM/WOK).
+"""Binary reader/writer for KotOR walkmeshes (BWM/WOK).
 
 This module translates between on-disk WOK/BWM files and the in-memory BWM model
 defined in `bwm_data.py`. The binary layout mirrors the game's expectations:
@@ -16,7 +15,7 @@ defined in `bwm_data.py`. The binary layout mirrors the game's expectations:
 - Edges (pairs of (edge_index, transition) where edge_index = face*3 + edge)
 - Perimeters (1-based indices into the edge array for edges with final=True)
 
-Important
+Important:
 ---------
 Where faces or vertices must be converted to indices, we find indices by object
 identity (the `is` operator), not value equality, to avoid collisions when value
@@ -281,7 +280,7 @@ class BWMBinaryWriter(ResourceWriter):
         # We need to map these to the reordered face list (walkable + unwalkable)
         # Reference: vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:275-307
         perimeter_edges: list[BWMEdge] = self._wok.edges()
-        
+
         # Convert perimeter edges to use reordered face indices
         # IMPORTANT: We must use identity-based lookup (the `is` operator), NOT value-based
         # equality. BWMFace has custom __eq__/__hash__ that uses vertex coordinates and
@@ -303,7 +302,7 @@ class BWMBinaryWriter(ResourceWriter):
             # The edge.index is the local edge index (0, 1, or 2) within the face
             from pykotor.resource.formats.bwm.bwm_data import BWMEdge
             edges.append(BWMEdge(faces[face_idx], edge.index, edge.transition))
-        
+
         edge_data = bytearray()
         edge_offset = adjacency_offset + len(adjacency_data)
         for edge in edges:

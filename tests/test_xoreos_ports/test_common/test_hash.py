@@ -163,7 +163,7 @@ class TestXoreosHashFunctions(unittest.TestCase):
         """FNV64 hash algorithm for byte data.
         
         Matches xoreos implementation: hashFNV64(hash, c) = (hash * 1099511628211) ^ c
-        This is FNV-1 (multiply then XOR), not FNV-1a (XOR then multiply).
+        This is FNV-1 (multiply then XOR).
         """
         # FNV-1 64-bit constants (matches xoreos hash.h:107-108)
         FNV_OFFSET_BASIS_64 = 0xCBF29CE484222325

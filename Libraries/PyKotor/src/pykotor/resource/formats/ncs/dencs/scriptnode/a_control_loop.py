@@ -21,12 +21,12 @@ class AControlLoop(ScriptRootNode):
 
     @condition.setter
     def condition(self, condition: AExpression):
-        condition.parent(self)  # type: ignore
+        condition.parent(self)  # type: ignore[attr-defined]
         self._condition = condition
 
     def close(self):
         super().close()
         if self._condition is not None:
-            self._condition.close()  # type: ignore
+            self._condition.close()  # type: ignore[attr-defined]
             self._condition = None
 

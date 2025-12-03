@@ -35,7 +35,8 @@ class TestLocalizedString:
         """Test creating an empty LocalizedString."""
         from pykotor.common.language import LocalizedString
         
-        ls = LocalizedString()
+        # Use stringref=-1 for empty LocalizedString (uses stored substrings)
+        ls = LocalizedString(stringref=-1)
         assert ls is not None
     
     def test_create_from_english(self):
@@ -49,7 +50,8 @@ class TestLocalizedString:
         """Test setting and getting text in LocalizedString."""
         from pykotor.common.language import LocalizedString, Language, Gender
         
-        ls = LocalizedString()
+        # Use stringref=-1 to use stored substrings
+        ls = LocalizedString(stringref=-1)
         ls.set_data(Language.ENGLISH, Gender.MALE, "Test String")
         result = ls.get(Language.ENGLISH, Gender.MALE)
         
@@ -59,7 +61,8 @@ class TestLocalizedString:
         """Test LocalizedString with multiple languages."""
         from pykotor.common.language import LocalizedString, Language, Gender
         
-        ls = LocalizedString()
+        # Use stringref=-1 to use stored substrings
+        ls = LocalizedString(stringref=-1)
         ls.set_data(Language.ENGLISH, Gender.MALE, "English")
         ls.set_data(Language.FRENCH, Gender.MALE, "Français")
         ls.set_data(Language.GERMAN, Gender.MALE, "Deutsch")

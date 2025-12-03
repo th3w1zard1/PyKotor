@@ -158,14 +158,14 @@ class SubScriptState:
             block.add_children(children)
 
     def transform_end_do_loop(self):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_do_loop import ADoLoop  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_do_loop import ADoLoop  # pyright: ignore[reportMissingImports]  # noqa: PLC0415
         if isinstance(self.current, ADoLoop):
             exp = self.remove_last_exp(False)
             if exp is not None:
                 self.current.condition = exp
 
     def transform_origin_found(self, destination, origin):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]  # noqa: PLC0415
         loop: AControlLoop = self.get_loop(destination, origin)
         self.current.add_child(loop)
         self.current = loop

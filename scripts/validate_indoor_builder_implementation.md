@@ -31,6 +31,7 @@ M12aa_01d door_01 0 66.65 48.7066 1.8898 1.0 0.0 0.0 0.0
 ### 1.2 PyKotor Implementation References
 
 #### Reader Implementation
+
 **File**: `Libraries/PyKotor/src/pykotor/resource/formats/lyt/io_lyt.py`
 
 ```97:113:Libraries/PyKotor/src/pykotor/resource/formats/lyt/io_lyt.py
@@ -53,12 +54,14 @@ M12aa_01d door_01 0 66.65 48.7066 1.8898 1.0 0.0 0.0 0.0
             self._lyt.doorhooks.append(LYTDoorHook(room, door, position, orientation))
 ```
 
-**Analysis**: 
+**Analysis**:
+
 - ✅ Reads position from `tokens[3-5]` (skips `tokens[2]` which is "0")
 - ✅ Reads quaternion from `tokens[6-9]`
 - ✅ Matches actual game file format
 
 #### Writer Implementation
+
 **File**: `Libraries/PyKotor/src/pykotor/resource/formats/lyt/io_lyt.py`
 
 ```159:163:Libraries/PyKotor/src/pykotor/resource/formats/lyt/io_lyt.py
@@ -70,12 +73,14 @@ M12aa_01d door_01 0 66.65 48.7066 1.8898 1.0 0.0 0.0 0.0
 ```
 
 **Analysis**:
+
 - ✅ Writes hardcoded "0" as 3rd token
 - ✅ Writes position as tokens 4-6
 - ✅ Writes quaternion as tokens 7-10
 - ✅ Matches actual game file format
 
 #### Data Model
+
 **File**: `Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py`
 
 ```378:451:Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py
@@ -156,6 +161,7 @@ class LYTDoorHook(ComparableMixin):
 ```
 
 #### Usage in Indoor Map Builder
+
 **File**: `Tools/HolocronToolset/src/toolset/data/indoormap.py`
 
 ```484:485:Tools/HolocronToolset/src/toolset/data/indoormap.py
@@ -174,6 +180,7 @@ class LYTDoorHook(ComparableMixin):
 **File**: `vendor/KotOR_IO/KotOR_IO/File Formats/LYT.cs`
 
 **Reader** (lines 136-151):
+
 ```csharp
 case ParsingCategory.DoorHook:
     if (split.Count() != 10)
@@ -194,11 +201,13 @@ case ParsingCategory.DoorHook:
 ```
 
 **Writer** (line 421):
+
 ```csharp
 return $"{Room} {Name} {Unk1} {X} {Y} {Z} {Unk2} {Unk3} {Unk4} {Unk5}";
 ```
 
 **Analysis**:
+
 - ✅ Treats token[2] as `Unk1` (the "0" field)
 - ✅ Position starts at token[3]
 - ✅ **MATCHES OUR IMPLEMENTATION**
@@ -209,6 +218,7 @@ return $"{Room} {Name} {Unk1} {X} {Y} {Z} {Unk2} {Unk3} {Unk4} {Unk5}";
 **File**: `vendor/xoreos/src/aurora/lytfile.cpp`
 
 **Reader** (lines 174-186):
+
 ```cpp
 assertTokenCount(strings, 10, "doorHook");
 
@@ -226,18 +236,21 @@ Common::parseString(strings[9], _doorHooks[i].unk5);
 ```
 
 **Test Data** (lines 42-43):
+
 ```cpp
 "   doorhookcount 4\n"
 "      Room01 Door01 10.0 11.0 12.0 13.0 14.0 15.0 16.0 17.0\n"
 ```
 
 **Analysis**:
+
 - ❌ **BUG**: Reads position from `strings[2-4]` (would read "0" as x coordinate from real game files!)
 - ❌ Test data has 9 tokens (no "0"), but real game files have 10 tokens
 - ❌ Would incorrectly parse: `x=0, y=66.65, z=48.7066` instead of `x=66.65, y=48.7066, z=1.8898`
 - ⚠️ xoreos test is synthetic and doesn't match actual game format
 
 **Struct Definition** (`vendor/xoreos/src/aurora/lytfile.h:71-76`):
+
 ```cpp
 struct DoorHook {
     Common::UString room;
@@ -252,6 +265,7 @@ struct DoorHook {
 **File**: `vendor/kotor.js/src/resource/LYTObject.ts`
 
 **Reader** (lines 85-91):
+
 ```typescript
 case MODES.DOORS:
   this.doorhooks.push({
@@ -264,6 +278,7 @@ break;
 ```
 
 **Analysis**:
+
 - ❌ **BUG**: Uses `params[1]` (door name string) as x coordinate!
 - ❌ Would fail to parse real game files correctly
 - ❌ Position parsing is completely broken
@@ -273,6 +288,7 @@ break;
 **File**: `vendor/reone/src/libs/resource/format/lytreader.cpp`
 
 **Analysis**:
+
 - ⚠️ Does not parse doorhooks at all (only parses rooms)
 - ⚠️ Minimal implementation focused on room parsing only
 - Not relevant for doorhook format validation
@@ -320,6 +336,7 @@ break;
 ## 3. Additional References
 
 ### PyKotor References (10+)
+
 1. `Libraries/PyKotor/src/pykotor/resource/formats/lyt/io_lyt.py:97-113` - Reader implementation
 2. `Libraries/PyKotor/src/pykotor/resource/formats/lyt/io_lyt.py:159-163` - Writer implementation
 3. `Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py:378-451` - Data model
@@ -330,6 +347,7 @@ break;
 8. `Libraries/PyKotor/src/pykotor/tools/kit.py:1615-1681` - Doorhook extraction from BWM
 
 ### Vendor References (10+)
+
 1. `vendor/KotOR_IO/KotOR_IO/File Formats/LYT.cs:136-151` - KotOR_IO reader (CORRECT)
 2. `vendor/KotOR_IO/KotOR_IO/File Formats/LYT.cs:419-422` - KotOR_IO writer (CORRECT)
 3. `vendor/xoreos/src/aurora/lytfile.cpp:174-186` - xoreos reader (BUGGY)

@@ -1887,8 +1887,8 @@ def test_utc_editor_item_count_updates(qtbot, installation: HTInstallation, test
 
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QListWidgetItem, QApplication
-from pykotor.common.language import LocalizedString
-from pykotor.common.misc import ResRef
+from pykotor.common.language import LocalizedString  # pyright: ignore[reportMissingImports]
+from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
 
 def test_utc_editor_all_widgets_exist(qtbot, installation: HTInstallation):
     """Verify ALL widgets exist in UTC editor."""
@@ -2540,6 +2540,6 @@ def test_utceditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Verify it saves
     data, _ = editor.build()
-    from pykotor.resource.generics.utc import read_utc
+    from pykotor.resource.generics.utc import read_utc  # pyright: ignore[reportMissingImports]
     utc = read_utc(data)
     assert utc.comment == "Test comment\nLine 2"

@@ -146,7 +146,7 @@ def test_file_selection_window_resize_to_content_no_qdesktopwidget_import(qtbot,
     when using Qt6. The method should use QApplication.primaryScreen() instead, which works for both Qt5 and Qt6.
     """
     from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow
-    from pykotor.extract.file import FileResource
+    from pykotor.extract.file import FileResource  # pyright: ignore[reportMissingImports]
     from unittest.mock import MagicMock, patch
     import qtpy
     

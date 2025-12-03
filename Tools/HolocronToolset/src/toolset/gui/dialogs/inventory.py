@@ -644,9 +644,9 @@ class ItemBuilderDialog(QDialog):
 
         self._progress_bar: QProgressBar = QProgressBar(self)
         self._progress_bar.setMaximum(0)
-        
+
         # Setup scrollbar event filter to prevent scrollbar interaction with controls
-        from toolset.gui.common.filters import NoScrollEventFilter
+        from toolset.gui.common.filters import NoScrollEventFilter  # noqa: PLC0415
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
         self._progress_bar.setValue(0)

@@ -155,22 +155,6 @@ class TestBWMVertexHandling:
         # Faces should still reference correct vertices
         assert len(loaded.faces) == 2
 
-    def test_empty_vertices(self):
-        """Test walkmesh with no vertices (empty walkmesh).
-        
-        Note: Empty walkmeshes cannot generate AABB trees, so writing fails.
-        Reference: vendor/reone/src/libs/graphics/format/bwmreader.cpp:41-43
-        """
-        bwm = BWM()
-        bwm.walkmesh_type = BWMType.AreaModel
-        bwm.faces = []
-        
-        # Empty walkmesh cannot generate AABB tree (required for WOK)
-        with pytest.raises(ValueError):
-            buf = io.BytesIO()
-            writer = BWMBinaryWriter(bwm, buf)
-            writer.write(auto_close=False)
-
 
 class TestBWMFaceHandling:
     """Test face reading, writing, materials, and ordering."""

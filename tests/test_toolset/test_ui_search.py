@@ -202,7 +202,6 @@ def test_search_dialog_query_construction_exhaustive(qtbot, installation: HTInst
     assert query.search_core
     assert query.search_modules
     assert query.search_override
-    # There are 19 resource type checkboxes, not 20
     assert len(query.check_types) == 19  # All types checked
     assert ResourceType.UTC in query.check_types
     assert ResourceType.DLG in query.check_types

@@ -129,12 +129,14 @@ if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TEST TIMED OUT a
 4. **Commit wiki changes to the wiki repository**:
    - The `wiki/` directory is a separate git repository (`pykotor.wiki.git`)
    - After updating wiki files, you MUST commit them to the wiki repository:
+
      ```powershell
      cd wiki
      git add .
      git commit -m "docs: <descriptive message about what was updated>"
      cd ..
      ```
+
    - Use conventional commit format: `docs:` prefix for documentation changes
    - Include specific details about what was added/updated (e.g., "docs: expand BWM hooks documentation and clarify distinction from LYT doorhooks")
    - This is in addition to committing any `.cursorrules` changes to the main repository
@@ -142,6 +144,7 @@ if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TEST TIMED OUT a
 **This is NOT optional.** When you search the codebase to answer questions, you're discovering information that should be preserved in the wiki for future reference. The wiki serves as the authoritative knowledge base for the codebase - keep it up to date.
 
 **Examples of when to update wiki:**
+
 - Explaining file formats, data structures, or binary layouts
 - Documenting relationships between different systems (e.g., how BWM hooks relate to LYT doorhooks)
 - Clarifying terminology or concepts (e.g., what "tracks" and "obstacles" mean in LYT files)

@@ -16,8 +16,7 @@ class AIf(AControlLoop):
     def __str__(self) -> str:
         buff = []
         buff.append(self.tabs + "if (" + str(self.condition) + ") {" + self.newline)
-        for child in self.children:
-            buff.append(str(child))
+        buff.extend(str(child) for child in self.children)
         buff.append(self.tabs + "}" + self.newline)
         return "".join(buff)
 

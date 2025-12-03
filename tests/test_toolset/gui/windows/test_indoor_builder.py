@@ -6772,9 +6772,14 @@ class TestIndoorMapBuildAndSave:
         if not builder._kits:
             pytest.skip("No kits available for building")
         
-        # Add a room
-        if builder._kits[0].components:
-            comp = builder._kits[0].components[0]
+        # Use only complete kits
+        complete_kits = _get_complete_kits(builder._kits)
+        if not complete_kits:
+            pytest.skip("No complete kits available for building")
+        
+        # Add a room from first complete kit
+        if complete_kits[0].components:
+            comp = complete_kits[0].components[0]
             room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
             builder._map.rooms.append(room)
             builder._map.module_id = "testmod"

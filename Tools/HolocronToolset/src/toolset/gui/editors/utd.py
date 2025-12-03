@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from qtpy.QtWidgets import QMessageBox
 
 from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
+from pykotor.common.stream import BinaryWriter
 from pykotor.resource.formats.gff import write_gff
 from pykotor.resource.generics.dlg import DLG, dismantle_dlg
 from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd
@@ -29,8 +30,8 @@ if TYPE_CHECKING:
 class UTDEditor(Editor):
     def __init__(
         self,
-        parent: QWidget | None,
-        installation: HTInstallation = None,
+        parent: QWidget | None = None,
+        installation: HTInstallation | None = None,
     ):
         """Initialize the Door Editor.
 
@@ -249,7 +250,7 @@ class UTDEditor(Editor):
         # Comments
         self.ui.commentsEdit.setPlainText(utd.comment)
 
-    def build(self) -> tuple[bytes, bytes]:
+    def build(self) -> tuple[bytes | bytearray, bytes]:
         """Builds a UTD object from UI data.
 
         Returns:
@@ -349,7 +350,7 @@ class UTDEditor(Editor):
         """
         assert self._installation is not None
         resname: str = self.ui.conversationEdit.currentText()
-        data: bytes | None = None
+        data: bytes | bytearray | None = None
         filepath: os.PathLike | None = None
 
         if not resname or not resname.strip():
@@ -360,12 +361,14 @@ class UTDEditor(Editor):
 
         if search is None:
             msgbox = QMessageBox(QMessageBox.Icon.Information, "DLG file not found", "Do you wish to create a file in the override?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No).exec()
-            if QMessageBox.StandardButton.Yes == msgbox:
+            if msgbox == QMessageBox.StandardButton.Yes:
                 data = bytearray()
 
                 write_gff(dismantle_dlg(DLG()), data)
                 filepath = self._installation.override_path() / f"{resname}.dlg"
-                filepath.write_bytes(data)
+                writer = BinaryWriter.to_file(filepath)
+                writer.write_bytes(data)
+                writer.close()
         else:
             resname, filepath, data = search.resname, search.filepath, search.data
 
@@ -393,7 +396,7 @@ class UTDEditor(Editor):
                 self._update_model()
             else:
                 self.resize(max(374, self.sizeHint().width()), max(457, self.sizeHint().height()))
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001, S110
             # Silently handle any errors in preview update to prevent pytest-qt from reporting them
             # Errors are already handled in _update_model, but we catch here for signal handlers
             pass

@@ -140,7 +140,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QListWidgetItem, QTreeWidgetItem, QApplication
 from toolset.gui.editors.uti import UTIEditor
 from toolset.data.installation import HTInstallation
-from pykotor.resource.generics.uti import UTI, UTIProperty
+from pykotor.resource.generics.uti import UTI, UTIProperty  # pyright: ignore[reportMissingImports]
 from pykotor.resource.type import ResourceType
 from pykotor.common.language import LocalizedString
 

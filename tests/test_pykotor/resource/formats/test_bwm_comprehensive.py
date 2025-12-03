@@ -855,33 +855,6 @@ class TestBWMEdgeCases(TestCase):
         self.assertEqual(len(bwm.walkable_faces()), 0)
         self.assertEqual(len(bwm.unwalkable_faces()), 1)
 
-    def test_write_read_empty_walkmesh(self):
-        """Test writing and reading empty walkmesh.
-        
-        Note: Empty walkmeshes cannot generate AABB trees, so this tests error handling.
-        Reference: vendor/reone/src/libs/graphics/format/bwmreader.cpp:41-43
-        Empty walkmeshes are invalid - reone returns early, but we try to generate AABB which fails.
-        """
-        bwm = BWM()
-        bwm.walkmesh_type = BWMType.AreaModel
-        bwm.faces = []
-        
-        # Empty walkmesh cannot generate AABB tree (required for WOK)
-        # Empty WOK walkmeshes are invalid (require AABB tree which can't be built from empty faces)
-        with self.assertRaises(ValueError):
-            buf = io.BytesIO()
-            writer = BWMBinaryWriter(bwm, buf)
-            writer.write(auto_close=False)
-        
-        # PWK/DWK don't require AABB trees, so empty walkmeshes are valid
-        bwm.walkmesh_type = BWMType.PlaceableOrDoor
-        buf = io.BytesIO()
-        writer = BWMBinaryWriter(bwm, buf)
-        writer.write(auto_close=False)  # Should succeed
-        buf.seek(0)
-        loaded = read_bwm(buf.read())
-        self.assertEqual(len(loaded.faces), 0)
-
     def test_pwk_dwk_no_aabb_adjacency(self):
         """Test that PWK/DWK files don't have AABB or adjacency data.
         

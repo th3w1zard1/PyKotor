@@ -1185,3 +1185,34 @@ def test_uteeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
+
+def test_uteeditor_continuous_respawn(qtbot, installation: HTInstallation, test_files_dir: Path):
+    """Test that continuous spawn enables respawn fields."""
+    editor = UTEEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    ute_file = test_files_dir / "newtransition.ute"
+    if not ute_file.exists():
+        pytest.skip("newtransition.ute not found")
+    
+    editor.load(ute_file, "newtransition", ResourceType.UTE, ute_file.read_bytes())
+    
+    # Set to continuous spawn
+    editor.ui.spawnSelect.setCurrentIndex(1)  # Continuous
+    qtbot.wait(10)
+    
+    # Verify respawn fields are enabled
+    assert editor.ui.respawnsCheckbox.isEnabled()
+    assert editor.ui.infiniteRespawnCheckbox.isEnabled()
+    assert editor.ui.respawnCountSpin.isEnabled()
+    assert editor.ui.respawnTimeSpin.isEnabled()
+    
+    # Set back to single shot
+    editor.ui.spawnSelect.setCurrentIndex(0)  # Single shot
+    qtbot.wait(10)
+    
+    # Verify respawn fields are disabled
+    assert not editor.ui.respawnsCheckbox.isEnabled()
+    assert not editor.ui.infiniteRespawnCheckbox.isEnabled()
+    assert not editor.ui.respawnCountSpin.isEnabled()
+    assert not editor.ui.respawnTimeSpin.isEnabled()

@@ -149,7 +149,7 @@ class WAVBinaryReader(ResourceReader):
         bits_per_sample = 16
         audio_data = b""
         found_data_chunk = False
-        
+
         # Parse chunks until we find 'data'
         # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:49-77
         while reader.remaining() >= 8:
@@ -166,7 +166,7 @@ class WAVBinaryReader(ResourceReader):
                 except ValueError:
                     # Store as raw int value for unsupported encodings
                     encoding = encoding_value  # type: ignore[assignment]
-                    
+
                 channels = reader.read_uint16()
                 sample_rate = reader.read_uint32()
                 bytes_per_sec = reader.read_uint32()

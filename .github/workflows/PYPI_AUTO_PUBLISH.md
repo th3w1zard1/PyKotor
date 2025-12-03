@@ -112,7 +112,7 @@ The workflow supports **two authentication methods** for PyPI:
 #### Method 1: API Token (Recommended for Quick Setup)
 
 1. **Create a PyPI API Token:**
-   - Go to https://pypi.org/manage/account/token/
+   - Go to <https://pypi.org/manage/account/token/>
    - Click "Add API token"
    - Give it a name (e.g., "GitHub Actions PyPI")
    - Set scope to "Entire account" or specific project
@@ -133,7 +133,7 @@ The workflow will automatically use this token if it's available.
 If you prefer OIDC (no long-lived secrets), configure trusted publishing:
 
 1. **On PyPI:**
-   - Go to https://pypi.org/manage/account/publishing/
+   - Go to <https://pypi.org/manage/account/publishing/>
    - Click "Add a new pending publisher"
    - Select "GitHub"
    - Repository: `th3w1zard1/PyKotor`

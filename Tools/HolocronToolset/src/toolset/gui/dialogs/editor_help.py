@@ -78,9 +78,9 @@ class EditorHelpDialog(QDialog):
         
         # Setup scrollbar event filter to prevent scrollbar interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
-            self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
-    
+
     def _wrap_html_with_styles(self, html_body: str) -> str:
         """Wrap HTML body with modern CSS styling for better readability."""
         return f"""<!DOCTYPE html>
@@ -97,7 +97,7 @@ class EditorHelpDialog(QDialog):
             padding: 24px;
             background-color: #ffffff;
         }}
-        
+
         h1 {{
             font-size: 2em;
             font-weight: 600;
@@ -107,7 +107,7 @@ class EditorHelpDialog(QDialog):
             border-bottom: 2px solid #e1e4e8;
             color: #24292e;
         }}
-        
+
         h2 {{
             font-size: 1.5em;
             font-weight: 600;
@@ -117,7 +117,7 @@ class EditorHelpDialog(QDialog):
             border-bottom: 1px solid #e1e4e8;
             color: #24292e;
         }}
-        
+
         h3 {{
             font-size: 1.25em;
             font-weight: 600;
@@ -125,7 +125,7 @@ class EditorHelpDialog(QDialog):
             margin-bottom: 12px;
             color: #24292e;
         }}
-        
+
         h4, h5, h6 {{
             font-size: 1.1em;
             font-weight: 600;
@@ -133,26 +133,26 @@ class EditorHelpDialog(QDialog):
             margin-bottom: 10px;
             color: #24292e;
         }}
-        
+
         p {{
             margin-top: 0;
             margin-bottom: 16px;
         }}
-        
+
         ul, ol {{
             margin-top: 0;
             margin-bottom: 16px;
             padding-left: 32px;
         }}
-        
+
         li {{
             margin-bottom: 8px;
         }}
-        
+
         li > p {{
             margin-bottom: 8px;
         }}
-        
+
         table {{
             border-collapse: collapse;
             width: 100%;
@@ -161,11 +161,11 @@ class EditorHelpDialog(QDialog):
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }}
-        
+
         table thead {{
             background-color: #f6f8fa;
         }}
-        
+
         table th {{
             font-weight: 600;
             text-align: left;
@@ -174,21 +174,21 @@ class EditorHelpDialog(QDialog):
             background-color: #f6f8fa;
             color: #24292e;
         }}
-        
+
         table td {{
             padding: 12px 16px;
             border: 1px solid #d1d5da;
             vertical-align: top;
         }}
-        
+
         table tbody tr:nth-child(even) {{
             background-color: #f9fafb;
         }}
-        
+
         table tbody tr:hover {{
             background-color: #f1f3f5;
         }}
-        
+
         code {{
             font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
             font-size: 0.9em;
@@ -197,7 +197,7 @@ class EditorHelpDialog(QDialog):
             border-radius: 3px;
             color: #e83e8c;
         }}
-        
+
         pre {{
             font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
             font-size: 0.9em;
@@ -208,23 +208,23 @@ class EditorHelpDialog(QDialog):
             margin: 16px 0;
             border: 1px solid #e1e4e8;
         }}
-        
+
         pre code {{
             padding: 0;
             background-color: transparent;
             color: #24292e;
             border-radius: 0;
         }}
-        
+
         a {{
             color: #0366d6;
             text-decoration: none;
         }}
-        
+
         a:hover {{
             text-decoration: underline;
         }}
-        
+
         hr {{
             height: 0;
             margin: 24px 0;
@@ -232,14 +232,14 @@ class EditorHelpDialog(QDialog):
             border: 0;
             border-top: 1px solid #e1e4e8;
         }}
-        
+
         blockquote {{
             margin: 16px 0;
             padding: 0 16px;
             color: #6a737d;
             border-left: 4px solid #dfe2e5;
         }}
-        
+
         strong {{
             font-weight: 600;
             color: #24292e;
@@ -250,10 +250,10 @@ class EditorHelpDialog(QDialog):
 {html_body}
 </body>
 </html>"""
-    
+
     def load_wiki_file(self, wiki_filename: str) -> None:
         """Load and render a markdown file from the wiki directory.
-        
+
         Args:
             wiki_filename: Name of the markdown file (e.g., "GFF-File-Format.md")
         """
@@ -274,7 +274,7 @@ class EditorHelpDialog(QDialog):
             """
             self.text_browser.setHtml(error_html)
             return
-        
+
         try:
             text: str = decode_bytes_with_fallbacks(file_path.read_bytes())
             html_body: str = markdown.markdown(

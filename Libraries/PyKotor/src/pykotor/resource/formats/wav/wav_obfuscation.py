@@ -65,7 +65,7 @@ VO_HEADER_SIZE = 20
 
 def detect_audio_format(data: bytes) -> tuple[DeobfuscationResult, int]:
     """Detect the audio format and return the header size to skip.
-    
+
     Args:
         data: Raw audio file bytes
         
@@ -86,17 +86,17 @@ def detect_audio_format(data: bytes) -> tuple[DeobfuscationResult, int]:
     # Reference: vendor/reone/src/libs/audio/format/wavreader.cpp:34
     if first_four == SFX_MAGIC_BYTES:
         return DeobfuscationResult.SFX_HEADER, SFX_HEADER_SIZE
-    
+
     # Check for RIFF header
     if first_four == RIFF_MAGIC:
         # Check for VO header: if "RIFF" appears again at offset 20, it's a 20-byte VO header
         # Reference: test comment mentions "to satisfy deobfuscation check at offset 16"
         if len(data) >= VO_HEADER_SIZE + 4 and data[VO_HEADER_SIZE:VO_HEADER_SIZE + 4] == RIFF_MAGIC:
             return DeobfuscationResult.STANDARD, VO_HEADER_SIZE
-        
+
         # Read the riffSize (bytes 4-8)
         riff_size = struct.unpack("<I", data[4:8])[0]
-        
+
         # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:134
         # if(riffSize == 50) → MP3 wrapped in WAV
         if riff_size == MP3_IN_WAV_RIFF_SIZE:
@@ -173,7 +173,7 @@ def obfuscate_audio(
     Processing Logic:
         - For SFX files, prepend 470-byte header with SFX magic number
         - For VO files, prepend 20-byte header with "RIFF" magic (to satisfy deobfuscation check at offset 16)
-        
+
     Note:
         VO files use a 20-byte header that starts with "RIFF" (magic number 1179011410 = 0x46464952).
         The original data follows at offset 20.

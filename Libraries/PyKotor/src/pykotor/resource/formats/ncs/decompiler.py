@@ -17,8 +17,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from pykotor.common.misc import Game
-from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType
+from pykotor.common.misc import Game  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.ncs.ncs_data import NCSInstructionType  # pyright: ignore[reportMissingImports]
 
 try:
     from utility.error_handling import format_exception_with_variables  # pyright: ignore[reportMissingImports]
@@ -29,9 +29,9 @@ except ImportError:
         return "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
 
 if TYPE_CHECKING:
-    from pykotor.common.misc import Game
-    from pykotor.common.script import ScriptConstant, ScriptFunction
-    from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstruction
+    from pykotor.common.misc import Game  # pyright: ignore[reportMissingImports]
+    from pykotor.common.script import ScriptConstant, ScriptFunction  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstruction  # pyright: ignore[reportMissingImports]
     KOTOR_CONSTANTS: list[ScriptConstant] = []
     KOTOR_FUNCTIONS: list[ScriptFunction] = []
     TSL_CONSTANTS: list[ScriptConstant] = []
@@ -243,10 +243,10 @@ class NCSDecompiler:
             DecompileError: If decompilation fails
         """
         try:
-            import io
+            import io  # noqa: PLC0415
 
-            from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData
-            from pykotor.resource.formats.ncs.dencs.decompile_ncs import decompile_ncs
+            from pykotor.resource.formats.ncs.dencs.actions_data import ActionsData  # noqa: PLC0415
+            from pykotor.resource.formats.ncs.dencs.decompile_ncs import decompile_ncs  # noqa: PLC0415
 
             # Convert NCS to bytes for Decoder
             from pykotor.resource.formats.ncs.io_ncs import NCSBinaryWriter
@@ -264,7 +264,7 @@ class NCSDecompiler:
             # Write the marker that ActionsData.read_actions() looks for
             actions_reader.write("// 0\n")
             # Write function definitions in DeNCS format
-            for i, func in enumerate(self.functions):
+            for _, func in enumerate(self.functions):
                 params_str = ", ".join(f"{param.datatype.name.lower()} {param.name}" for param in func.params)
                 actions_reader.write(f"{func.returntype.name.lower()} {func.name}({params_str});\n")
             actions_reader.seek(0)
@@ -274,12 +274,12 @@ class NCSDecompiler:
             stream = io.BytesIO(bytes(ncs_bytes))
             result = decompile_ncs(stream, actions)
             if result is None:
-                raise DecompileError("DeNCS decompilation returned None")
-            return result.get_code() if hasattr(result, 'get_code') else str(result)
+                raise DecompileError("DeNCS decompilation returned None")  # noqa: TRY301
+            return result.get_code() if hasattr(result, "get_code") else str(result)
         except Exception as e:
-            import traceback
+            import traceback  # noqa: PLC0415
             tb_str = "".join(traceback.format_exception(type(e), e, e.__traceback__))
-            logger.error("DeNCS decompilation failed:\n%s", tb_str)
+            logger.exception("DeNCS decompilation failed:\n%s", tb_str)
             msg = f"DeNCS decompilation failed: {e}"
             raise DecompileError(msg) from e
 
