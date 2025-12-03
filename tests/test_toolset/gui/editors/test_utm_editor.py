@@ -457,7 +457,9 @@ def test_utm_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     
     # Set all to maximums
     editor.ui.tagEdit.setText("x" * 32)  # Max tag length
-    editor.ui.idSpin.setValue(editor.ui.idSpin.maximum())
+    # ID field is uint8 (max 255), not int32 like QSpinBox.maximum()
+    max_uint8 = 255
+    editor.ui.idSpin.setValue(max_uint8)
     editor.ui.markUpSpin.setValue(editor.ui.markUpSpin.maximum())
     editor.ui.markDownSpin.setValue(editor.ui.markDownSpin.maximum())
     
@@ -465,7 +467,7 @@ def test_utm_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     data, _ = editor.build()
     modified_utm = read_utm(data)
     
-    assert modified_utm.id == editor.ui.idSpin.maximum()
+    assert modified_utm.id == max_uint8
     assert modified_utm.mark_up == editor.ui.markUpSpin.maximum()
     assert modified_utm.mark_down == editor.ui.markDownSpin.maximum()
 
