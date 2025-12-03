@@ -245,7 +245,8 @@ def test_utt_editor_manipulate_highlight_height(qtbot, installation: HTInstallat
         # Save and verify
         data, _ = editor.build()
         modified_utt = read_utt(data)
-        assert modified_utt.highlight_height == val
+        # Use approximate comparison for float due to GFF single-precision serialization
+        assert modified_utt.highlight_height == pytest.approx(val, abs=0.01)
         
         # Load back and verify
         editor.load(utt_file, "newtransition9", ResourceType.UTT, data)
@@ -809,7 +810,8 @@ def test_utt_editor_multiple_save_load_cycles(qtbot, installation: HTInstallatio
         
         # Verify
         assert saved_utt.tag == f"cycle_{cycle}"
-        assert saved_utt.highlight_height == 1.0 + cycle
+        # Use approximate comparison for float due to GFF single-precision serialization
+        assert saved_utt.highlight_height == pytest.approx(1.0 + cycle, abs=0.01)
         
         # Load back
         editor.load(utt_file, "newtransition9", ResourceType.UTT, data)
@@ -873,7 +875,8 @@ def test_utt_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     data, _ = editor.build()
     modified_utt = read_utt(data)
     
-    assert modified_utt.highlight_height == editor.ui.highlightHeightSpin.maximum()
+    # Use approximate comparison for float due to GFF single-precision serialization
+    assert modified_utt.highlight_height == pytest.approx(editor.ui.highlightHeightSpin.maximum(), abs=0.01)
     assert modified_utt.trap_detect_dc == editor.ui.detectDcSpin.maximum()
     assert modified_utt.trap_disarm_dc == editor.ui.disarmDcSpin.maximum()
 
@@ -995,7 +998,8 @@ def test_utt_editor_gff_roundtrip_with_modifications(qtbot, installation: HTInst
     # Verify it's valid UTT
     modified_utt = read_utt(data)
     assert modified_utt.tag == "modified_gff_test"
-    assert modified_utt.highlight_height == 5.0
+    # Use approximate comparison for float due to GFF single-precision serialization
+    assert modified_utt.highlight_height == pytest.approx(5.0, abs=0.01)
     assert modified_utt.is_trap
 
 # ============================================================================
@@ -1025,7 +1029,8 @@ def test_utt_editor_new_file_creation(qtbot, installation: HTInstallation):
     
     assert new_utt.name.get(Language.ENGLISH, Gender.MALE) == "New Trigger"
     assert new_utt.tag == "new_trigger"
-    assert new_utt.highlight_height == 2.0
+    # Use approximate comparison for float due to GFF single-precision serialization
+    assert new_utt.highlight_height == pytest.approx(2.0, abs=0.01)
     assert new_utt.is_trap
     assert new_utt.trap_detect_dc == 15
     assert new_utt.comment == "New trigger comment"
