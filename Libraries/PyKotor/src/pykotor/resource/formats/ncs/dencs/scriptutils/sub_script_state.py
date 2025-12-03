@@ -880,10 +880,16 @@ class SubScriptState:
                 paramtype = paramtypes[i]
                 if paramtype.equals(-16):
                     exp = self.get_last_exp()
-                    if exp.stackentry().type().equals(-16) or exp.stackentry().type().equals(-15):
+                    if exp is not None and exp.stackentry() is not None and (exp.stackentry().type().equals(-16) or exp.stackentry().type().equals(-15)):
                         exp = self.remove_last_exp(False)
-                else:
-                    exp = AVectorConstExp(self.remove_last_exp(False), self.remove_last_exp(False), self.remove_last_exp(False))
+                    else:
+                        vec_x = self.remove_last_exp(False)
+                        vec_y = self.remove_last_exp(False)
+                        vec_z = self.remove_last_exp(False)
+                        if vec_x is not None and vec_y is not None and vec_z is not None:
+                            exp = AVectorConstExp(vec_x, vec_y, vec_z)
+                        else:
+                            exp = None
                 else:
                     exp = self.remove_last_exp(False)
                 if exp is not None:
