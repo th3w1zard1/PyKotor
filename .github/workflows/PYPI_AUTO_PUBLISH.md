@@ -105,21 +105,67 @@ The workflow uses Python's `packaging.version` module for semantic version compa
 
 ## Configuration
 
+### Authentication Methods
+
+The workflow supports **two authentication methods** for PyPI:
+
+#### Method 1: API Token (Recommended for Quick Setup)
+
+1. **Create a PyPI API Token:**
+   - Go to https://pypi.org/manage/account/token/
+   - Click "Add API token"
+   - Give it a name (e.g., "GitHub Actions PyPI")
+   - Set scope to "Entire account" or specific project
+   - Copy the token (starts with `pypi-`)
+
+2. **Add as GitHub Secret:**
+   - Go to your repository on GitHub
+   - Navigate to **Settings** → **Secrets and variables** → **Actions**
+   - Click **New repository secret**
+   - Name: `PYPI_API_TOKEN`
+   - Value: Paste your PyPI API token (the `pypi-...` token)
+   - Click **Add secret**
+
+The workflow will automatically use this token if it's available.
+
+#### Method 2: Trusted Publishing (OIDC) - More Secure
+
+If you prefer OIDC (no long-lived secrets), configure trusted publishing:
+
+1. **On PyPI:**
+   - Go to https://pypi.org/manage/account/publishing/
+   - Click "Add a new pending publisher"
+   - Select "GitHub"
+   - Repository: `th3w1zard1/PyKotor`
+   - Workflow filename: `.github/workflows/publish-pypi-auto.yml`
+   - Environment name: `pypi` (optional, but recommended)
+   - Click "Add"
+
+2. **On GitHub:**
+   - Go to repository **Settings** → **Environments**
+   - Create or edit the `pypi` environment
+   - Ensure "Required reviewers" is disabled (or add yourself)
+   - No secrets needed for OIDC
+
+**Note:** The workflow will use the API token if `PYPI_API_TOKEN` secret exists, otherwise it falls back to OIDC.
+
 ### Required Permissions
 
 ```yaml
 permissions:
   contents: read      # Read repository contents
-  id-token: write     # PyPI trusted publishing (OIDC)
+  id-token: write     # PyPI trusted publishing (OIDC) - required even if using API token
 ```
 
 ### Environment
 
-The workflow uses the `pypi` environment for trusted publishing. Ensure:
+The workflow uses the `pypi` environment. If using OIDC, ensure:
 
 - PyPI trusted publishing is configured in repository settings
 - OIDC is enabled for GitHub Actions
 - Environment secrets are not required (uses OIDC instead)
+
+If using API tokens, the environment is optional but recommended for organization.
 
 ## Manual Execution
 
@@ -198,9 +244,21 @@ Detailed logs show:
 
 **Check:**
 
-- Is PyPI trusted publishing configured correctly?
-- Check `publish-packages` job logs for authentication errors
-- Ensure OIDC is enabled in repository settings
+- **If using API token:**
+  - Is `PYPI_API_TOKEN` secret set in repository settings?
+  - Is the token valid and not expired?
+  - Does the token have permissions for the package you're publishing?
+  
+- **If using OIDC (trusted publishing):**
+  - Is PyPI trusted publishing configured correctly?
+  - Check that the workflow path matches: `.github/workflows/publish-pypi-auto.yml`
+  - Check that the repository name matches: `th3w1zard1/PyKotor`
+  - Ensure OIDC is enabled in repository settings
+  
+- **General:**
+  - Check `publish-packages` job logs for authentication errors
+  - Verify the `pypi` environment exists (if using OIDC)
+  - Try manually triggering the workflow to see detailed error messages
 
 ## Best Practices
 
