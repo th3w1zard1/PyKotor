@@ -138,15 +138,18 @@ class TestXoreosHashFunctions(unittest.TestCase):
         return self._fnv32_hash_bytes(string.encode('utf-8'))
 
     def _fnv32_hash_bytes(self, data: bytes) -> int:
-        """FNV32 hash algorithm for byte data."""
-        # FNV-1a 32-bit constants
+        """FNV32 hash algorithm for byte data.
+        
+        Matches xoreos implementation: hashFNV32(hash, c) = (hash * 16777619) ^ c
+        This is FNV-1 (multiply then XOR), not FNV-1a (XOR then multiply).
+        """
+        # FNV-1 32-bit constants (matches xoreos hash.h:78-79)
         FNV_OFFSET_BASIS_32 = 0x811C9DC5
-        FNV_PRIME_32 = 0x01000193
+        FNV_PRIME_32 = 16777619  # 0x01000193
         
         hash_value = FNV_OFFSET_BASIS_32
         for byte in data:
-            hash_value ^= byte
-            hash_value = (hash_value * FNV_PRIME_32) & 0xFFFFFFFF
+            hash_value = ((hash_value * FNV_PRIME_32) ^ byte) & 0xFFFFFFFF
         return hash_value
 
     def _fnv64_hash(self, string: str) -> int:
@@ -157,15 +160,18 @@ class TestXoreosHashFunctions(unittest.TestCase):
         return self._fnv64_hash_bytes(string.encode('utf-8'))
 
     def _fnv64_hash_bytes(self, data: bytes) -> int:
-        """FNV64 hash algorithm for byte data."""
-        # FNV-1a 64-bit constants
+        """FNV64 hash algorithm for byte data.
+        
+        Matches xoreos implementation: hashFNV64(hash, c) = (hash * 1099511628211) ^ c
+        This is FNV-1 (multiply then XOR), not FNV-1a (XOR then multiply).
+        """
+        # FNV-1 64-bit constants (matches xoreos hash.h:107-108)
         FNV_OFFSET_BASIS_64 = 0xCBF29CE484222325
-        FNV_PRIME_64 = 0x100000001B3
+        FNV_PRIME_64 = 1099511628211  # 0x100000001B3
         
         hash_value = FNV_OFFSET_BASIS_64
         for byte in data:
-            hash_value ^= byte
-            hash_value = (hash_value * FNV_PRIME_64) & 0xFFFFFFFFFFFFFFFF
+            hash_value = ((hash_value * FNV_PRIME_64) ^ byte) & 0xFFFFFFFFFFFFFFFF
         return hash_value
 
     def _crc32_hash(self, string: str) -> int:
