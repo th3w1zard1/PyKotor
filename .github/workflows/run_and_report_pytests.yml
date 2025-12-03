@@ -266,7 +266,7 @@ jobs:
             foreach ($INTERPRETER in $INTERPRETERS) {
               foreach ($PYTHON_VERSION in $PYTHON_VERSIONS) {
                 foreach ($ARCH in $ARCHITECTURES) {
-                  if ($OS -ne "windows-latest" -and $OS -ne "windows-2022" -and $OS -ne "windows-latest" -and $ARCH -eq "x86") {
+                  if ($OS -ne "windows-latest" -and $OS -ne "windows-2022" -and $OS -ne "windows-2019" -and $ARCH -eq "x86") {
                     continue  # no x86 support for unix.
                   }
                   $key = "$OS-$INTERPRETER-$PYTHON_VERSION-$ARCH"
