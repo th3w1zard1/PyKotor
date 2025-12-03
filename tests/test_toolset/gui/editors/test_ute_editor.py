@@ -542,12 +542,12 @@ def test_ute_editor_manipulate_on_heartbeat_script(qtbot, installation: HTInstal
     editor.load(ute_file, "newtransition", ResourceType.UTE, original_data)
     
     # Modify script
-    editor.ui.onHeartbeatSelect.set_combo_box_text("test_on_heartbeat")
+    editor.ui.onHeartbeatSelect.set_combo_box_text("test_heartbeat")  # 14 chars (ResRef max 16)
     
     # Save and verify
     data, _ = editor.build()
     modified_ute = read_ute(data)
-    assert str(modified_ute.on_heartbeat) == "test_on_heartbeat"
+    assert str(modified_ute.on_heartbeat) == "test_heartbeat"
 
 def test_ute_editor_manipulate_on_user_defined_script(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating on user defined script field."""
