@@ -150,14 +150,21 @@ class PyFileInfoGatherer(QThread):
         path: str,
         files: list[str],
     ):
-        loc: int = len(self._paths) - 1
-        while loc >= 0:
-            if self._paths[loc] == path and self._files[loc] == files:
-                return
-            loc -= 1
+        self.mutex.lock()
+        try:
+            loc: int = len(self._paths) - 1
+            while loc >= 0:
+                # Check bounds to avoid race condition where another thread may have popped items
+                if loc < len(self._paths) and loc < len(self._files):
+                    if self._paths[loc] == path and self._files[loc] == files:
+                        return
+                loc -= 1
 
-        self._paths.append(path)
-        self._files.append(files)
+            self._paths.append(path)
+            self._files.append(files)
+        finally:
+            self.mutex.unlock()
+        
         self.condition.wakeAll()
 
         if (
