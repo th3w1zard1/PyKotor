@@ -7843,3 +7843,321 @@ class TestModuleKitBWMCentering:
             # This ensures it looks like the working rooms, not the broken ones
             assert abs(room1.position.x) < 100, "Room1 position should be reasonable"
             assert abs(room1.position.y) < 100, "Room1 position should be reasonable"
+
+
+class TestKitModuleEquivalence:
+    """Tests to verify that kit rooms from ./kits folder match ModuleKit dimensions and coordinates.
+    
+    This ensures that kits generated from modules (via kit.py) are equivalent to
+    ModuleKits generated on-the-fly. Both should have:
+    - BWMs centered at (0, 0)
+    - Same walkmesh dimensions
+    - Same image dimensions
+    - Same geometry (vertex counts, face counts)
+    - No black buffer zones
+    """
+
+    # Map kit IDs to their corresponding module roots
+    KIT_TO_MODULE_MAP: dict[str, str] = {
+        "enclavesurface": "danm14aa",  # Dantooine Enclave Surface
+        "dantooineestate": "danm13",   # Dantooine Estate
+        # Add more mappings as needed
+    }
+
+    def test_kit_bwm_centered_like_modulekit(self, installation: HTInstallation):
+        """Verify that kit BWMs are centered at (0, 0) just like ModuleKits.
+        
+        Both kits (from JSON files) and ModuleKits should have BWMs centered
+        at origin to ensure image/hitbox alignment in the Indoor Map Builder.
+        """
+        from pathlib import Path
+        from toolset.data.indoorkit.indoorkit_loader import load_kits
+        
+        kits_path = Path("Tools/HolocronToolset/src/toolset/kits")
+        kits, missing = load_kits(kits_path)
+        
+        if not kits:
+            pytest.skip("No kits found in kits folder")
+        
+        for kit in kits:
+            for component in kit.components:
+                bwm = component.bwm
+                vertices = list(bwm.vertices())
+                
+                if not vertices:
+                    continue
+                
+                # Calculate BWM center
+                min_x = min(v.x for v in vertices)
+                max_x = max(v.x for v in vertices)
+                min_y = min(v.y for v in vertices)
+                max_y = max(v.y for v in vertices)
+                
+                center_x = (min_x + max_x) / 2.0
+                center_y = (min_y + max_y) / 2.0
+                
+                # Kit BWMs should be centered at (0, 0) - same as ModuleKits
+                # Tolerance of 0.1 units accounts for floating point precision
+                # but still catches real misalignment issues
+                assert abs(center_x) < 0.1, (
+                    f"Kit '{kit.name}' component '{component.name}' BWM center X should be ~0.0, "
+                    f"got {center_x:.4f}. This will cause image/hitbox misalignment! "
+                    f"Kit may need to be regenerated using the updated kit.py with _recenter_bwm() fix."
+                )
+                assert abs(center_y) < 0.1, (
+                    f"Kit '{kit.name}' component '{component.name}' BWM center Y should be ~0.0, "
+                    f"got {center_y:.4f}. This will cause image/hitbox misalignment! "
+                    f"Kit may need to be regenerated using the updated kit.py with _recenter_bwm() fix."
+                )
+
+    def test_kit_matches_modulekit_dimensions(self, installation: HTInstallation):
+        """Verify that kit components match ModuleKit components in dimensions.
+        
+        For kits that have corresponding modules, compare:
+        - BWM dimensions (width, height)
+        - Image dimensions
+        - Walkmesh vertex/face counts
+        - BWM center (both should be at 0,0)
+        """
+        from pathlib import Path
+        from toolset.data.indoorkit.indoorkit_loader import load_kits
+        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        
+        kits_path = Path("Tools/HolocronToolset/src/toolset/kits")
+        kits, missing = load_kits(kits_path)
+        
+        if not kits:
+            pytest.skip("No kits found in kits folder")
+        
+        manager = ModuleKitManager(installation)
+        
+        # Test each kit that has a corresponding module
+        for kit in kits:
+            kit_id = kit.name.lower().replace(" ", "")
+            module_root = self.KIT_TO_MODULE_MAP.get(kit_id)
+            
+            if not module_root:
+                continue  # Skip kits without known module mapping
+            
+            try:
+                module_kit = manager.get_module_kit(module_root)
+                module_kit.ensure_loaded()
+            except Exception:  # noqa: BLE001
+                pytest.skip(f"Could not load ModuleKit for {module_root}")
+            
+            if not module_kit.components:
+                pytest.skip(f"ModuleKit {module_root} has no components")
+            
+            # Create a mapping from component names to components
+            # Kit components use IDs like "council_1", ModuleKit uses "M14AA_01G_0"
+            # We need to match by model name or try to find corresponding components
+            
+            # For now, compare the first few components
+            # In a full implementation, we'd match by model name from LYT
+            kit_components_to_test = kit.components[:min(5, len(kit.components))]
+            module_components_to_test = module_kit.components[:min(5, len(module_kit.components))]
+            
+            # Compare dimensions for components we can match
+            for kit_comp in kit_components_to_test:
+                kit_bwm = kit_comp.bwm
+                kit_vertices = list(kit_bwm.vertices())
+                
+                if not kit_vertices:
+                    continue
+                
+                # Get kit BWM dimensions
+                kit_min_x = min(v.x for v in kit_vertices)
+                kit_max_x = max(v.x for v in kit_vertices)
+                kit_min_y = min(v.y for v in kit_vertices)
+                kit_max_y = max(v.y for v in kit_vertices)
+                
+                kit_width = kit_max_x - kit_min_x
+                kit_height = kit_max_y - kit_min_y
+                kit_center_x = (kit_min_x + kit_max_x) / 2.0
+                kit_center_y = (kit_min_y + kit_max_y) / 2.0
+                
+                # Get kit image dimensions
+                kit_image = kit_comp.image
+                kit_image_width = kit_image.width() / 10.0  # Convert to world units
+                kit_image_height = kit_image.height() / 10.0
+                
+                # CRITICAL: Kit BWM should be centered at (0, 0)
+                # Tolerance of 0.1 units accounts for floating point precision
+                assert abs(kit_center_x) < 0.1, (
+                    f"Kit '{kit.name}' component '{kit_comp.name}' BWM center X ({kit_center_x:.4f}) "
+                    "should be ~0.0. Kit BWMs must be centered like ModuleKits! "
+                    "Kit may need to be regenerated using the updated kit.py with _recenter_bwm() fix."
+                )
+                assert abs(kit_center_y) < 0.1, (
+                    f"Kit '{kit.name}' component '{kit_comp.name}' BWM center Y ({kit_center_y:.4f}) "
+                    "should be ~0.0. Kit BWMs must be centered like ModuleKits! "
+                    "Kit may need to be regenerated using the updated kit.py with _recenter_bwm() fix."
+                )
+                
+                # Find a matching ModuleKit component (by similar dimensions)
+                # This is approximate - in a full implementation we'd match by model name
+                best_match = None
+                best_match_diff = float('inf')
+                
+                for module_comp in module_components_to_test:
+                    module_bwm = module_comp.bwm
+                    module_vertices = list(module_bwm.vertices())
+                    
+                    if not module_vertices:
+                        continue
+                    
+                    module_min_x = min(v.x for v in module_vertices)
+                    module_max_x = max(v.x for v in module_vertices)
+                    module_min_y = min(v.y for v in module_vertices)
+                    module_max_y = max(v.y for v in module_vertices)
+                    
+                    module_width = module_max_x - module_min_x
+                    module_height = module_max_y - module_min_y
+                    
+                    # Calculate difference in dimensions
+                    width_diff = abs(kit_width - module_width)
+                    height_diff = abs(kit_height - module_height)
+                    total_diff = width_diff + height_diff
+                    
+                    if total_diff < best_match_diff:
+                        best_match_diff = total_diff
+                        best_match = module_comp
+                
+                # If we found a reasonable match, compare them
+                if best_match and best_match_diff < 5.0:  # Within 5 units
+                    module_bwm = best_match.bwm
+                    module_vertices = list(module_bwm.vertices())
+                    
+                    module_min_x = min(v.x for v in module_vertices)
+                    module_max_x = max(v.x for v in module_vertices)
+                    module_min_y = min(v.y for v in module_vertices)
+                    module_max_y = max(v.y for v in module_vertices)
+                    
+                    module_width = module_max_x - module_min_x
+                    module_height = module_max_y - module_min_y
+                    module_center_x = (module_min_x + module_max_x) / 2.0
+                    module_center_y = (module_min_y + module_max_y) / 2.0
+                    
+                    module_image = best_match.image
+                    module_image_width = module_image.width() / 10.0
+                    module_image_height = module_image.height() / 10.0
+                    
+                    # Both should be centered at (0, 0)
+                    assert abs(kit_center_x - module_center_x) < 0.1, (
+                        f"Kit '{kit_comp.name}' and ModuleKit '{best_match.name}' BWM centers X "
+                        f"should match (both ~0.0). Kit: {kit_center_x:.4f}, ModuleKit: {module_center_x:.4f}"
+                    )
+                    assert abs(kit_center_y - module_center_y) < 0.1, (
+                        f"Kit '{kit_comp.name}' and ModuleKit '{best_match.name}' BWM centers Y "
+                        f"should match (both ~0.0). Kit: {kit_center_y:.4f}, ModuleKit: {module_center_y:.4f}"
+                    )
+                    
+                    # Dimensions should be very close (within 0.5 units for rounding)
+                    assert abs(kit_width - module_width) < 0.5, (
+                        f"Kit '{kit_comp.name}' width ({kit_width:.2f}) should match ModuleKit "
+                        f"'{best_match.name}' width ({module_width:.2f})"
+                    )
+                    assert abs(kit_height - module_height) < 0.5, (
+                        f"Kit '{kit_comp.name}' height ({kit_height:.2f}) should match ModuleKit "
+                        f"'{best_match.name}' height ({module_height:.2f})"
+                    )
+                    
+                    # Image dimensions should be close (accounting for minimum size)
+                    # Both should have same padding (5 units) and same minimum (25.6 units)
+                    expected_kit_width = max(kit_width + 10.0, 25.6)
+                    expected_module_width = max(module_width + 10.0, 25.6)
+                    expected_kit_height = max(kit_height + 10.0, 25.6)
+                    expected_module_height = max(module_height + 10.0, 25.6)
+                    
+                    assert abs(kit_image_width - expected_kit_width) < 1.0, (
+                        f"Kit '{kit_comp.name}' image width ({kit_image_width:.2f}) should match expected "
+                        f"({expected_kit_width:.2f}) based on BWM + padding"
+                    )
+                    assert abs(module_image_width - expected_module_width) < 1.0, (
+                        f"ModuleKit '{best_match.name}' image width ({module_image_width:.2f}) should match "
+                        f"expected ({expected_module_width:.2f}) based on BWM + padding"
+                    )
+                    
+                    # Both should have same number of faces (same geometry)
+                    assert len(kit_bwm.faces) == len(module_bwm.faces), (
+                        f"Kit '{kit_comp.name}' face count ({len(kit_bwm.faces)}) should match "
+                        f"ModuleKit '{best_match.name}' face count ({len(module_bwm.faces)})"
+                    )
+                    
+                    # Both should have same number of vertices (same geometry)
+                    assert len(kit_vertices) == len(module_vertices), (
+                        f"Kit '{kit_comp.name}' vertex count ({len(kit_vertices)}) should match "
+                        f"ModuleKit '{best_match.name}' vertex count ({len(module_vertices)})"
+                    )
+
+    def test_kit_image_hitbox_alignment(self, installation: HTInstallation):
+        """Verify that kit components have aligned images and hitboxes (no black buffer zones).
+        
+        This is the same test as for ModuleKits - kits should also have:
+        - Images centered at room position
+        - Walkmeshes centered at room position after translation
+        - No excessive black padding
+        """
+        from pathlib import Path
+        from toolset.data.indoorkit.indoorkit_loader import load_kits
+        
+        kits_path = Path("Tools/HolocronToolset/src/toolset/kits")
+        kits, missing = load_kits(kits_path)
+        
+        if not kits:
+            pytest.skip("No kits found in kits folder")
+        
+        for kit in kits:
+            for component in kit.components:
+                bwm = component.bwm
+                image = component.image
+                
+                # Get BWM bounds
+                vertices = list(bwm.vertices())
+                if not vertices:
+                    continue
+                
+                bwm_min_x = min(v.x for v in vertices)
+                bwm_max_x = max(v.x for v in vertices)
+                bwm_min_y = min(v.y for v in vertices)
+                bwm_max_y = max(v.y for v in vertices)
+                
+                bwm_width = bwm_max_x - bwm_min_x
+                bwm_height = bwm_max_y - bwm_min_y
+                
+                # Image dimensions in world units
+                image_width_units = image.width() / 10.0
+                image_height_units = image.height() / 10.0
+                
+                # Expected image size: BWM + 10 units padding (5 each side), or minimum 25.6 units
+                expected_width = max(bwm_width + 10.0, 25.6)
+                expected_height = max(bwm_height + 10.0, 25.6)
+                
+                # No excessive black padding
+                extra_width = image_width_units - expected_width
+                extra_height = image_height_units - expected_height
+                
+                assert extra_width <= 1.0, (
+                    f"Kit '{kit.name}' component '{component.name}' has excessive black padding on X: "
+                    f"{extra_width:.2f} units. Image width {image_width_units:.2f} vs expected {expected_width:.2f}"
+                )
+                assert extra_height <= 1.0, (
+                    f"Kit '{kit.name}' component '{component.name}' has excessive black padding on Y: "
+                    f"{extra_height:.2f} units. Image height {image_height_units:.2f} vs expected {expected_height:.2f}"
+                )
+                
+                # BWM center should be at (0, 0)
+                bwm_center_x = (bwm_min_x + bwm_max_x) / 2
+                bwm_center_y = (bwm_min_y + bwm_max_y) / 2
+                
+                # Tolerance of 0.1 units accounts for floating point precision
+                assert abs(bwm_center_x) < 0.1, (
+                    f"Kit '{kit.name}' component '{component.name}' BWM center X ({bwm_center_x:.4f}) "
+                    "should be ~0.0 for image/hitbox alignment. "
+                    "Kit may need to be regenerated using the updated kit.py with _recenter_bwm() fix."
+                )
+                assert abs(bwm_center_y) < 0.1, (
+                    f"Kit '{kit.name}' component '{component.name}' BWM center Y ({bwm_center_y:.4f}) "
+                    "should be ~0.0 for image/hitbox alignment. "
+                    "Kit may need to be regenerated using the updated kit.py with _recenter_bwm() fix."
+                )
