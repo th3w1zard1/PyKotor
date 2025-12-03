@@ -1480,6 +1480,7 @@ def test_utc_editor_gff_roundtrip_with_modifications(qtbot, installation: HTInst
     editor.ui.tagEdit.setText("modified_gff_test")
     editor.ui.strengthSpin.setValue(20)
     editor.ui.plotCheckbox.setChecked(True)
+    qtbot.wait(10)  # Ensure Qt processes the checkbox state change in headless mode
     
     # Save
     data, _ = editor.build()
