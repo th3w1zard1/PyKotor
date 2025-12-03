@@ -408,9 +408,18 @@ class UTCEditor(Editor):
         self.ui.noReorientateCheckbox.setChecked(utc.not_reorienting)
         self.ui.noBlockCheckbox.setChecked(utc.ignore_cre_path)
         self.ui.hologramCheckbox.setChecked(utc.hologram)
-        # raceSelect is a ComboBox2DA which expects row indices (5 for Droid, 6 for Creature), not combo box indices
-        # Pass the race_id directly as it is the row index
-        self.ui.raceSelect.setCurrentIndex(utc.race_id)
+        # raceSelect uses itemData (5 for Droid, 6 for Creature), not index
+        # Find the index that has the matching itemData
+        race_index = -1
+        for i in range(self.ui.raceSelect.count()):
+            if self.ui.raceSelect.itemData(i) == utc.race_id:
+                race_index = i
+                break
+        if race_index >= 0:
+            self.ui.raceSelect.setCurrentIndex(race_index)
+        else:
+            # Fallback: use race_id as index if no match found
+            self.ui.raceSelect.setCurrentIndex(utc.race_id)
         self.ui.subraceSelect.setCurrentIndex(utc.subrace_id)
         self.ui.speedSelect.setCurrentIndex(utc.walkrate_id)
         self.ui.factionSelect.setCurrentIndex(utc.faction_id)
@@ -570,7 +579,7 @@ class UTCEditor(Editor):
         # raceSelect is a ComboBox2DA which overrides currentIndex() to return the row index (5 or 6)
         # So we can use currentIndex() directly to get the race_id
         race_id = self.ui.raceSelect.currentIndex()
-        utc.race_id = max(race_id, 0)
+        utc.race_id = race_id if race_id >= 0 else 0
         utc.subrace_id = self.ui.subraceSelect.currentIndex()
         utc.walkrate_id = self.ui.speedSelect.currentIndex()
         utc.faction_id = self.ui.factionSelect.currentIndex()
@@ -624,7 +633,8 @@ class UTCEditor(Editor):
             class_level: int = self.ui.class1LevelSpin.value()
             utc.classes.append(UTCClass(class_id, class_level))
         if self.ui.class2Select.currentIndex() != 0:
-            class_id = self.ui.class2Select.currentIndex()
+            # class2Select index 0 is "[Unset]", index 1 = class_id 0, index 2 = class_id 1, etc.
+            class_id = self.ui.class2Select.currentIndex() - 1
             class_level = self.ui.class2LevelSpin.value()
             utc.classes.append(UTCClass(class_id, class_level))
 
