@@ -17,6 +17,7 @@ Uses pytest-qt and qtbot for actual UI testing including:
 from __future__ import annotations
 
 import json
+import math
 import os
 from copy import copy
 from pathlib import Path
@@ -43,6 +44,7 @@ from toolset.gui.windows.indoor_builder import (
     RotateRoomsCommand,
     SnapResult,
 )
+from pykotor.common.misc import Color
 from utility.common.geometry import Vector2, Vector3
 
 if TYPE_CHECKING:
@@ -2270,7 +2272,7 @@ class TestModuleComponentExtraction:
 
     def test_module_component_bwm_is_valid(self, installation: HTInstallation):
         """Test module-derived component BWM is valid for walkmesh operations."""
-        from pykotor.resource.formats.bwm.bwm_data import BWM
+        from pykotor.resource.formats.bwm.bwm_data import BWM  # pyright: ignore[reportMissingImports]
         from toolset.data.indoorkit import ModuleKitManager
         
         manager = ModuleKitManager(installation)
@@ -6639,3 +6641,551 @@ class TestWalkabilityGranular:
             return
         
         pytest.skip("No modules with components found")
+
+
+class TestIndoorMapBuildAndSave:
+    """Tests for building rooms using headless UI and saving to indoor/.mod formats."""
+
+    def test_build_room_via_ui_click(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, real_kit_component: KitComponent):
+        """Test building a room programmatically (UI click simulation is complex, so we test the underlying method)."""
+        builder = builder_no_kits
+        renderer = builder.ui.mapRenderer
+        
+        # Ensure kit is available
+        if not builder._kits:
+            builder._kits.append(real_kit_component.kit)
+        
+        # Set cursor component and point
+        renderer.set_cursor_component(real_kit_component)
+        renderer.cursor_point = Vector3(0, 0, 0)
+        
+        # Directly call the placement method (simulating what UI click would do)
+        builder._place_new_room(real_kit_component)
+        
+        # Verify room was added
+        assert len(builder._map.rooms) == 1, "Should have 1 room after placement"
+        room = builder._map.rooms[0]
+        assert room.component is real_kit_component, "Room should have correct component"
+
+    def test_build_multiple_rooms_via_ui_clicks(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, real_kit_component: KitComponent):
+        """Test building multiple rooms programmatically."""
+        builder = builder_no_kits
+        renderer = builder.ui.mapRenderer
+        
+        # Ensure kit is available
+        if not builder._kits:
+            builder._kits.append(real_kit_component.kit)
+        
+        # Place 3 rooms at different positions
+        for i in range(3):
+            renderer.set_cursor_component(real_kit_component)
+            renderer.cursor_point = Vector3(i * 10, i * 10, 0)
+            builder._place_new_room(real_kit_component)
+        
+        # Verify all rooms were added
+        assert len(builder._map.rooms) == 3, "Should have 3 rooms after placement"
+        
+        # Verify rooms are at different positions
+        positions_set = {(r.position.x, r.position.y) for r in builder._map.rooms}
+        assert len(positions_set) == 3, "Rooms should be at different positions"
+
+    def test_drag_room_via_ui(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, real_kit_component: KitComponent):
+        """Test dragging a room programmatically (simulating what UI drag would do)."""
+        builder = builder_no_kits
+        renderer = builder.ui.mapRenderer
+        
+        # Add room at known position
+        room = IndoorMapRoom(real_kit_component, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        renderer.select_room(room, clear_existing=True)
+        
+        # Simulate drag by directly calling move command
+        old_pos = copy(room.position)
+        new_pos = Vector3(10, 20, 0)
+        
+        cmd = MoveRoomsCommand(builder._map, [room], [old_pos], [new_pos])
+        builder._undo_stack.push(cmd)
+        
+        # Verify position changed
+        assert abs(room.position.x - 10) < 0.001, "Room X should be moved"
+        assert abs(room.position.y - 20) < 0.001, "Room Y should be moved"
+        assert len(builder._map.rooms) == 1, "Should still have 1 room"
+
+    def test_save_and_load_indoor_format(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, real_kit_component: KitComponent, tmp_path: Path):
+        """Test saving to .indoor format and loading it back."""
+        builder = builder_no_kits
+        
+        # Ensure kit is in builder's kits list
+        if not builder._kits:
+            builder._kits.append(real_kit_component.kit)
+        
+        # Add a room
+        room = IndoorMapRoom(real_kit_component, Vector3(10, 20, 0), 45.0, flip_x=True, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "test01"
+        builder._map.name.set_data(0, 0, "Test Module")
+        
+        # Save to file
+        indoor_path = tmp_path / "test.indoor"
+        indoor_data = builder._map.write()
+        indoor_path.write_bytes(indoor_data)
+        
+        # Load it back
+        loaded_map = IndoorMap()
+        loaded_data = indoor_path.read_bytes()
+        missing = loaded_map.load(loaded_data, builder._kits)
+        
+        # Verify load succeeded
+        assert len(missing) == 0, f"Should have no missing rooms, got {missing}"
+        assert len(loaded_map.rooms) == 1, "Should have 1 room after load"
+        assert loaded_map.module_id == "test01", "Module ID should match"
+        
+        # Verify room data
+        loaded_room = loaded_map.rooms[0]
+        assert abs(loaded_room.position.x - 10) < 0.001, "Room X position should match"
+        assert abs(loaded_room.position.y - 20) < 0.001, "Room Y position should match"
+        assert abs(loaded_room.rotation - 45.0) < 0.001, "Room rotation should match"
+        assert loaded_room.flip_x is True, "Room flip_x should match"
+        assert loaded_room.flip_y is False, "Room flip_y should match"
+        assert loaded_room.component.name == real_kit_component.name, "Component name should match"
+
+    def test_build_to_mod_format(self, qtbot: QtBot, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test building to .mod format."""
+        builder = builder_with_real_kit
+        
+        if not builder._kits:
+            pytest.skip("No kits available for building")
+        
+        # Add a room
+        if builder._kits[0].components:
+            comp = builder._kits[0].components[0]
+            room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+            builder._map.rooms.append(room)
+            builder._map.module_id = "testmod"
+            builder._map.name.set_data(0, 0, "Test Module")
+            
+            # Build to .mod
+            mod_path = tmp_path / "testmod.mod"
+            builder._map.build(installation, builder._kits, mod_path)
+            
+            # Verify file was created
+            assert mod_path.exists(), "MOD file should be created"
+            assert mod_path.stat().st_size > 0, "MOD file should not be empty"
+
+    def test_load_mod_with_read_erf(self, qtbot: QtBot, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that built .mod file can be loaded with read_erf."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits:
+            pytest.skip("No kits available for building")
+        
+        # Add a room
+        if builder._kits[0].components:
+            comp = builder._kits[0].components[0]
+            room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+            builder._map.rooms.append(room)
+            builder._map.module_id = "testmod"
+            builder._map.name.set_data(0, 0, "Test Module")
+            
+            # Build to .mod
+            mod_path = tmp_path / "testmod.mod"
+            builder._map.build(installation, builder._kits, mod_path)
+            
+            # Load with read_erf
+            erf = read_erf(mod_path)
+            
+            # Verify ERF structure
+            assert erf is not None, "ERF should load successfully"
+            assert len(erf) > 0, "ERF should contain resources"
+            
+            # Check for expected resources
+            resource_types = {res.restype for res in erf}
+            assert ResourceType.LYT in resource_types, "ERF should contain LYT"
+            assert ResourceType.ARE in resource_types, "ERF should contain ARE"
+            assert ResourceType.IFO in resource_types, "ERF should contain IFO"
+            assert ResourceType.GIT in resource_types, "ERF should contain GIT"
+
+
+class TestIndoorMapIOValidation:
+    """Granular validation tests for indoor map IO and structure."""
+
+    def test_indoor_format_serialization_roundtrip(self, builder_no_kits: IndoorMapBuilder, real_kit_component: KitComponent):
+        """Test that indoor format serialization is lossless."""
+        builder = builder_no_kits
+        
+        # Ensure kit is in builder's kits list
+        if not builder._kits:
+            builder._kits.append(real_kit_component.kit)
+        
+        # Create map with various settings
+        builder._map.module_id = "test01"
+        builder._map.name.set_data(0, 0, "Test Module")
+        builder._map.name.set_data(1, 0, "Test Module French")
+        builder._map.lighting = Color(0.7, 0.8, 0.9)
+        builder._map.skybox = "skybox_tatooine"
+        builder._map.warp_point = Vector3(5, 10, 0)
+        
+        # Add multiple rooms with different properties
+        room1 = IndoorMapRoom(real_kit_component, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        room2 = IndoorMapRoom(real_kit_component, Vector3(20, 30, 0), 90.0, flip_x=True, flip_y=False)
+        room3 = IndoorMapRoom(real_kit_component, Vector3(40, 50, 0), 180.0, flip_x=False, flip_y=True)
+        
+        builder._map.rooms.extend([room1, room2, room3])
+        
+        # Serialize and deserialize
+        data = builder._map.write()
+        loaded_map = IndoorMap()
+        missing = loaded_map.load(data, builder._kits)
+        
+        assert len(missing) == 0, f"Should have no missing rooms, got {missing}"
+        
+        # Verify all properties
+        assert loaded_map.module_id == "test01", "Module ID should match"
+        assert loaded_map.name.get(0, 0) == "Test Module", "Name should match"
+        assert loaded_map.name.get(1, 0) == "Test Module French", "French name should match"
+        assert abs(loaded_map.lighting.r - 0.7) < 0.001, "Lighting R should match"
+        assert abs(loaded_map.lighting.g - 0.8) < 0.001, "Lighting G should match"
+        assert abs(loaded_map.lighting.b - 0.9) < 0.001, "Lighting B should match"
+        assert loaded_map.skybox == "skybox_tatooine", "Skybox should match"
+        # Note: warp_point is not saved in indoor format, only used during .mod build
+        
+        # Verify rooms
+        assert len(loaded_map.rooms) == 3, "Should have 3 rooms"
+        assert abs(loaded_map.rooms[0].position.x - 0) < 0.001, "Room 1 X should match"
+        assert abs(loaded_map.rooms[1].rotation - 90.0) < 0.001, "Room 2 rotation should match"
+        assert loaded_map.rooms[1].flip_x is True, "Room 2 flip_x should match"
+        assert loaded_map.rooms[2].flip_y is True, "Room 3 flip_y should match"
+
+    def test_mod_format_lyt_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that built .mod has valid LYT structure."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.formats.lyt import read_lyt
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits or not builder._kits[0].components:
+            pytest.skip("No kits/components available")
+        
+        comp = builder._kits[0].components[0]
+        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "testmod"
+        
+        mod_path = tmp_path / "testmod.mod"
+        builder._map.build(installation, builder._kits, mod_path)
+        
+        # Load ERF and extract LYT
+        erf = read_erf(mod_path)
+        lyt_resource = next((res for res in erf if res.restype == ResourceType.LYT), None)
+        
+        if lyt_resource:
+            lyt = read_lyt(lyt_resource.data)
+            
+            # Validate LYT structure
+            assert lyt is not None, "LYT should load successfully"
+            assert len(lyt.rooms) > 0, "LYT should have rooms"
+            
+            # Check room properties
+            lyt_room = lyt.rooms[0]
+            assert hasattr(lyt_room, 'model'), "LYT room should have model"
+            assert hasattr(lyt_room, 'position'), "LYT room should have position"
+            assert hasattr(lyt_room, 'rotation'), "LYT room should have rotation"
+
+    def test_mod_format_wok_walkability_preserved(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that walkability is preserved in built .mod WOK files."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.formats.bwm import read_bwm
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits or not builder._kits[0].components:
+            pytest.skip("No kits/components available")
+        
+        comp = builder._kits[0].components[0]
+        original_bwm = comp.bwm
+        original_walkable = original_bwm.walkable_faces()
+        original_walkable_count = len(original_walkable)
+        
+        if original_walkable_count == 0:
+            pytest.skip("Component has no walkable faces")
+        
+        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "testmod"
+        
+        mod_path = tmp_path / "testmod.mod"
+        builder._map.build(installation, builder._kits, mod_path)
+        
+        # Load ERF and find WOK
+        erf = read_erf(mod_path)
+        wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
+        
+        if wok_resources:
+            wok = read_bwm(wok_resources[0].data)
+            built_walkable = wok.walkable_faces()
+            built_walkable_count = len(built_walkable)
+            
+            # Walkable face count should be similar (may differ due to transformations)
+            assert built_walkable_count > 0, "Built WOK should have walkable faces"
+            
+            # Verify walkable faces have walkable materials
+            for face in built_walkable:
+                assert face.material.walkable(), "Built walkable face should have walkable material"
+
+    def test_mod_format_bwm_face_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that built .mod BWM has valid face structure."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.formats.bwm import read_bwm
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits or not builder._kits[0].components:
+            pytest.skip("No kits/components available")
+        
+        comp = builder._kits[0].components[0]
+        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "testmod"
+        
+        mod_path = tmp_path / "testmod.mod"
+        builder._map.build(installation, builder._kits, mod_path)
+        
+        # Load ERF and find WOK
+        erf = read_erf(mod_path)
+        wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
+        
+        if wok_resources:
+            wok = read_bwm(wok_resources[0].data)
+            
+            # Validate BWM structure
+            assert len(wok.faces) > 0, "BWM should have faces"
+            
+            for face in wok.faces:
+                # Check face has required attributes
+                assert hasattr(face, 'v1'), "Face should have v1"
+                assert hasattr(face, 'v2'), "Face should have v2"
+                assert hasattr(face, 'v3'), "Face should have v3"
+                assert hasattr(face, 'material'), "Face should have material"
+                
+                # Check vertices are distinct
+                assert face.v1 != face.v2, "Face vertices should be distinct"
+                assert face.v2 != face.v3, "Face vertices should be distinct"
+                assert face.v3 != face.v1, "Face vertices should be distinct"
+
+    def test_mod_format_are_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that built .mod has valid ARE structure."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.formats.gff import read_gff
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits or not builder._kits[0].components:
+            pytest.skip("No kits/components available")
+        
+        comp = builder._kits[0].components[0]
+        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "testmod"
+        
+        mod_path = tmp_path / "testmod.mod"
+        builder._map.build(installation, builder._kits, mod_path)
+        
+        # Load ERF and extract ARE
+        erf = read_erf(mod_path)
+        are_resource = next((res for res in erf if res.restype == ResourceType.ARE), None)
+        
+        if are_resource:
+            are = read_gff(are_resource.data)
+            
+            # Validate ARE structure
+            assert are is not None, "ARE should load successfully"
+            assert are.root is not None, "ARE should have root"
+
+    def test_mod_format_ifo_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that built .mod has valid IFO structure."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.formats.gff import read_gff
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits or not builder._kits[0].components:
+            pytest.skip("No kits/components available")
+        
+        comp = builder._kits[0].components[0]
+        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "testmod"
+        
+        mod_path = tmp_path / "testmod.mod"
+        builder._map.build(installation, builder._kits, mod_path)
+        
+        # Load ERF and extract IFO
+        erf = read_erf(mod_path)
+        ifo_resource = next((res for res in erf if res.restype == ResourceType.IFO), None)
+        
+        if ifo_resource:
+            ifo = read_gff(ifo_resource.data)
+            
+            # Validate IFO structure
+            assert ifo is not None, "IFO should load successfully"
+            assert ifo.root is not None, "IFO should have root"
+
+    def test_mod_format_git_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that built .mod has valid GIT structure."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.formats.gff import read_gff
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits or not builder._kits[0].components:
+            pytest.skip("No kits/components available")
+        
+        comp = builder._kits[0].components[0]
+        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "testmod"
+        
+        mod_path = tmp_path / "testmod.mod"
+        builder._map.build(installation, builder._kits, mod_path)
+        
+        # Load ERF and extract GIT
+        erf = read_erf(mod_path)
+        git_resource = next((res for res in erf if res.restype == ResourceType.GIT), None)
+        
+        if git_resource:
+            git = read_gff(git_resource.data)
+            
+            # Validate GIT structure
+            assert git is not None, "GIT should load successfully"
+            assert git.root is not None, "GIT should have root"
+
+    def test_mod_format_contains_required_resources(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that built .mod contains all required resource types."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits or not builder._kits[0].components:
+            pytest.skip("No kits/components available")
+        
+        comp = builder._kits[0].components[0]
+        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "testmod"
+        
+        mod_path = tmp_path / "testmod.mod"
+        builder._map.build(installation, builder._kits, mod_path)
+        
+        # Load ERF
+        erf = read_erf(mod_path)
+        resource_types = {res.restype for res in erf}
+        
+        # Check for required resources
+        required_types = {
+            ResourceType.LYT,  # Layout
+            ResourceType.ARE,  # Area
+            ResourceType.IFO,  # Module info
+            ResourceType.GIT,  # Game instance template
+        }
+        
+        for req_type in required_types:
+            assert req_type in resource_types, f"MOD should contain {req_type}"
+
+    def test_mod_format_wok_material_consistency(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that built .mod WOK materials are consistent with source."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.formats.bwm import read_bwm
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits or not builder._kits[0].components:
+            pytest.skip("No kits/components available")
+        
+        comp = builder._kits[0].components[0]
+        original_bwm = comp.bwm
+        
+        # Get material distribution from original
+        original_materials = {}
+        for face in original_bwm.faces:
+            mat_val = face.material.value
+            original_materials[mat_val] = original_materials.get(mat_val, 0) + 1
+        
+        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "testmod"
+        
+        mod_path = tmp_path / "testmod.mod"
+        builder._map.build(installation, builder._kits, mod_path)
+        
+        # Load ERF and find WOK
+        erf = read_erf(mod_path)
+        wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
+        
+        if wok_resources:
+            wok = read_bwm(wok_resources[0].data)
+            
+            # Get material distribution from built WOK
+            built_materials = {}
+            for face in wok.faces:
+                mat_val = face.material.value
+                built_materials[mat_val] = built_materials.get(mat_val, 0) + 1
+            
+            # Verify materials exist (exact counts may differ due to transformations)
+            assert len(built_materials) > 0, "Built WOK should have materials"
+            
+            # Verify walkable materials are preserved
+            original_walkable_materials = {mat for mat, count in original_materials.items() if mat in {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}}
+            built_walkable_materials = {mat for mat, count in built_materials.items() if mat in {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}}
+            
+            # At least some walkable materials should be present
+            assert len(built_walkable_materials) > 0 or len(original_walkable_materials) == 0, \
+                "Walkable materials should be preserved if they existed in source"
+
+    def test_mod_format_wok_vertex_consistency(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
+        """Test that built .mod WOK vertices are valid."""
+        from pykotor.resource.formats.erf import read_erf
+        from pykotor.resource.formats.bwm import read_bwm
+        from pykotor.resource.type import ResourceType
+        
+        builder = builder_with_real_kit
+        
+        if not builder._kits or not builder._kits[0].components:
+            pytest.skip("No kits/components available")
+        
+        comp = builder._kits[0].components[0]
+        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder._map.rooms.append(room)
+        builder._map.module_id = "testmod"
+        
+        mod_path = tmp_path / "testmod.mod"
+        builder._map.build(installation, builder._kits, mod_path)
+        
+        # Load ERF and find WOK
+        erf = read_erf(mod_path)
+        wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
+        
+        if wok_resources:
+            wok = read_bwm(wok_resources[0].data)
+            
+            # Validate vertices
+            for face in wok.faces:
+                # Check vertices are finite
+                assert all(math.isfinite(v.x) and math.isfinite(v.y) and math.isfinite(v.z) 
+                          for v in [face.v1, face.v2, face.v3]), \
+                    "All vertices should have finite coordinates"
+                
+                # Check vertices are not NaN
+                assert not any(math.isnan(v.x) or math.isnan(v.y) or math.isnan(v.z) 
+                              for v in [face.v1, face.v2, face.v3]), \
+                    "No vertex should have NaN coordinates"

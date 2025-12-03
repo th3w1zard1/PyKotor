@@ -826,9 +826,9 @@ class IndoorMap:
             language, gender = LocalizedString.substring_pair(int(substring_id))
             self.name.set_data(language, gender, data["name"][substring_id])
 
-        self.lighting.b = data["lighting"][0]
+        self.lighting.r = data["lighting"][0]
         self.lighting.g = data["lighting"][1]
-        self.lighting.r = data["lighting"][2]
+        self.lighting.b = data["lighting"][2]
 
         self.module_id = data["warp"]
         self.skybox = data.get("skybox", "")
