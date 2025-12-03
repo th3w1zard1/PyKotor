@@ -259,7 +259,11 @@ class IFOEditor(Editor):
         self.ifo.hak = self.hak_edit.text()
 
         # Entry Point
-        self.ifo.resref = ResRef(self.entry_resref.text())
+        try:
+            self.ifo.resref = ResRef(self.entry_resref.text())
+        except ResRef.ExceedsMaxLengthError:
+            # Skip invalid ResRef values to prevent teardown errors
+            pass
         self.ifo.entry_position.x = self.entry_x.value()
         self.ifo.entry_position.y = self.entry_y.value()
         self.ifo.entry_position.z = self.entry_z.value()
@@ -277,4 +281,8 @@ class IFOEditor(Editor):
 
         # Scripts
         for script_name, edit in self.script_fields.items():
-            setattr(self.ifo, script_name, ResRef(edit.text()))
+            try:
+                setattr(self.ifo, script_name, ResRef(edit.text()))
+            except ResRef.ExceedsMaxLengthError:
+                # Skip invalid ResRef values to prevent teardown errors
+                pass

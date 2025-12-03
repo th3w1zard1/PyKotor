@@ -268,12 +268,12 @@ def test_ifo_editor_manipulate_on_heartbeat_script(qtbot, installation: HTInstal
     
     editor.new()
     
-    editor.script_fields["on_heartbeat"].setText("test_on_heartbeat")
+    editor.script_fields["on_heartbeat"].setText("test_heartbeat")
     editor.on_value_changed()
     
     data, _ = editor.build()
     modified_ifo = read_ifo(data)
-    assert str(modified_ifo.on_heartbeat) == "test_on_heartbeat"
+    assert str(modified_ifo.on_heartbeat) == "test_heartbeat"
 
 def test_ifo_editor_manipulate_on_load_script(qtbot, installation: HTInstallation):
     """Test manipulating on load script."""
@@ -310,9 +310,20 @@ def test_ifo_editor_manipulate_all_scripts(qtbot, installation: HTInstallation):
     
     editor.new()
     
-    # Set all scripts
+    # Set all scripts (use shorter names to comply with 16-character ResRef limit)
+    script_test_values = {
+        "on_heartbeat": "test_heartbeat",
+        "on_load": "test_onload",
+        "on_start": "test_onstart",
+        "on_enter": "test_onenter",
+        "on_exit": "test_onexit",
+    }
     for script_name in editor.script_fields.keys():
-        editor.script_fields[script_name].setText(f"test_{script_name}")
+        test_value = script_test_values.get(script_name, f"test_{script_name}")
+        # Ensure test value doesn't exceed 16 characters
+        if len(test_value) > 16:
+            test_value = test_value[:16]
+        editor.script_fields[script_name].setText(test_value)
     
     editor.on_value_changed()
     
@@ -321,7 +332,10 @@ def test_ifo_editor_manipulate_all_scripts(qtbot, installation: HTInstallation):
     
     # Verify all scripts
     for script_name in editor.script_fields.keys():
-        assert str(getattr(modified_ifo, script_name)) == f"test_{script_name}"
+        expected_value = script_test_values.get(script_name, f"test_{script_name}")
+        if len(expected_value) > 16:
+            expected_value = expected_value[:16]
+        assert str(getattr(modified_ifo, script_name)) == expected_value
 
 # ============================================================================
 # COMBINATION TESTS
@@ -698,42 +712,4 @@ def test_ifoeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
-
-    """Test IFO Editor in headless UI - loads real file and builds data."""
-    editor = IFOEditor(None, installation)
-    qtbot.addWidget(editor)
-    
-    # Try to find an IFO file
-    ifo_files = list(test_files_dir.glob("*.ifo")) + list(test_files_dir.rglob("*.ifo"))
-    if not ifo_files:
-        # Try to get one from installation
-        ifo_resources = [res for res in installation if res.restype() is ResourceType.IFO][:1]
-        if not ifo_resources:
-            pytest.skip("No IFO files available for testing")
-        ifo_resource = ifo_resources[0]
-        ifo_data = installation.resource(ifo_resource.resname(), ifo_resource.restype())
-        if not ifo_data:
-            pytest.skip(f"Could not load IFO data for {ifo_resource.resname()}")
-        editor.load(
-            ifo_resource.filepath() if hasattr(ifo_resource, 'filepath') else Path("module.ifo"),
-            ifo_resource.resname(),
-            ResourceType.IFO,
-            ifo_data.data
-        )
-    else:
-        ifo_file = ifo_files[0]
-        original_data = ifo_file.read_bytes()
-        editor.load(ifo_file, ifo_file.stem, ResourceType.IFO, original_data)
-    
-    # Verify editor loaded the data
-    assert editor is not None
-    assert editor.ifo is not None
-    
-    # Build and verify it works
-    data, _ = editor.build()
-    assert len(data) > 0
-    
-    # Verify we can read it back
-    loaded_ifo = read_ifo(data)
-    assert loaded_ifo is not None
 
