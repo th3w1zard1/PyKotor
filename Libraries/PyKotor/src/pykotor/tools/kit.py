@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 from pykotor.common.module import Module
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.extract.installation import SearchLocation
-from pykotor.resource.formats.bwm import read_bwm
+from pykotor.resource.formats.bwm import bytes_bwm, read_bwm
 from pykotor.resource.formats.erf import read_erf
 from pykotor.resource.formats.mdl import read_mdl
 from pykotor.resource.formats.rim import read_rim
@@ -877,16 +877,24 @@ def extract_kit(
         (kit_dir / f"{component_id}.mdl").write_bytes(component_data["mdl"])
         if component_data["mdx"]:
             (kit_dir / f"{component_id}.mdx").write_bytes(component_data["mdx"])
-        (kit_dir / f"{component_id}.wok").write_bytes(component_data["wok"])
 
-        # Generate minimap PNG from BWM
+        # CRITICAL: Re-center BWM around (0, 0) before saving!
+        # Game WOKs are in world coordinates, but Indoor Map Builder expects
+        # centered BWMs so that the preview image aligns with the walkmesh hitbox.
+        # Without this, images render in one place but hitboxes are elsewhere.
         bwm: BWM = read_bwm(component_data["wok"])
+        bwm = _recenter_bwm(bwm)
+        
+        # Write the re-centered WOK file
+        (kit_dir / f"{component_id}.wok").write_bytes(bytes_bwm(bwm))
+
+        # Generate minimap PNG from re-centered BWM
         minimap_image = _generate_component_minimap(bwm)
         minimap_path: Path = kit_dir / f"{component_id}.png"
         # Save image - both QImage and PIL Image support save() with same signature
         minimap_image.save(str(minimap_path), "PNG")
 
-        # Extract doorhooks from BWM edges with transitions
+        # Extract doorhooks from re-centered BWM edges with transitions
         doorhooks: list[dict] = _extract_doorhooks_from_bwm(bwm, len(doors))
 
         # Create component entry with extracted doorhooks
@@ -1679,4 +1687,57 @@ def _extract_doorhooks_from_bwm(bwm: BWM, num_doors: int) -> list[dict[str, floa
         })
     
     return doorhooks
+
+
+def _recenter_bwm(bwm: BWM) -> BWM:
+    """Re-center a BWM around (0, 0) so image and hitbox align in Indoor Map Builder.
+    
+    The Indoor Map Builder draws the preview image CENTERED at room.position,
+    but translates the walkmesh BY room.position from its original coordinates.
+    
+    For these to align, the BWM must be centered around (0, 0):
+    - If BWM center is at (100, 200) and room.position = (0, 0):
+      - Image would be centered at (0, 0)
+      - Walkmesh would be centered at (100, 200) after translate
+      - MISMATCH! Image and hitbox are in different places.
+    
+    - After re-centering BWM to (0, 0):
+      - Image is centered at room.position
+      - Walkmesh is centered at room.position after translate
+      - MATCH! Image and hitbox overlap perfectly.
+    
+    Args:
+    ----
+        bwm: BWM walkmesh object
+        
+    Returns:
+    -------
+        BWM: The same BWM object, modified in place and returned
+    
+    Reference:
+    ---------
+        Tools/HolocronToolset/src/toolset/gui/windows/indoor_builder.py - _draw_image()
+        Tools/HolocronToolset/src/toolset/data/indoormap.py - IndoorMapRoom.walkmesh()
+    """
+    vertices: list[Vector3] = list(bwm.vertices())
+    if not vertices:
+        return bwm
+    
+    # Calculate current center
+    min_x = min(v.x for v in vertices)
+    max_x = max(v.x for v in vertices)
+    min_y = min(v.y for v in vertices)
+    max_y = max(v.y for v in vertices)
+    min_z = min(v.z for v in vertices)
+    max_z = max(v.z for v in vertices)
+    
+    center_x = (min_x + max_x) / 2.0
+    center_y = (min_y + max_y) / 2.0
+    center_z = (min_z + max_z) / 2.0
+    
+    # Translate all vertices to center around origin
+    # Use BWM.translate() which handles all vertices in faces
+    bwm.translate(-center_x, -center_y, -center_z)
+    
+    return bwm
 

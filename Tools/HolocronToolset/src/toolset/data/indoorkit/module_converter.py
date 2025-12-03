@@ -142,6 +142,16 @@ class ModuleKit(Kit):
             # This prevents issues if multiple rooms share the same model name
             bwm = deepcopy(bwm)
 
+        # CRITICAL FIX: Re-center the BWM around (0, 0)
+        # Game WOKs are stored in world coordinates, but the Indoor Map Builder
+        # expects BWMs centered at origin because:
+        # - The preview image is drawn CENTERED at room.position
+        # - The walkmesh is TRANSLATED by room.position from its original coords
+        # Without re-centering, the image and walkmesh end up at different locations!
+        # Reference: indoor_builder.py _draw_image() centers image at coords
+        # Reference: indoormap.py IndoorMapRoom.walkmesh() translates by position
+        bwm = self._recenter_bwm(bwm)
+
         # Try to get the model data
         mdl_data = self._get_room_model(model_name)
         mdx_data = self._get_room_model_ext(model_name)
@@ -151,7 +161,7 @@ class ModuleKit(Kit):
         if mdx_data is None:
             mdx_data = b""
 
-        # Create a preview image from the walkmesh
+        # Create a preview image from the walkmesh (now re-centered)
         # Each component gets its own image generated from its own BWM copy
         image = self._create_preview_image_from_bwm(bwm)
 
@@ -169,14 +179,53 @@ class ModuleKit(Kit):
 
         return component
 
+    def _recenter_bwm(self, bwm: BWM) -> BWM:
+        """Re-center a BWM around (0, 0) so image and hitbox align.
+        
+        The Indoor Map Builder draws the preview image CENTERED at room.position,
+        but translates the walkmesh BY room.position from its original coordinates.
+        
+        For these to align, the BWM must be centered around (0, 0):
+        - If BWM center is at (100, 200) and room.position = (0, 0):
+          - Image would be centered at (0, 0)
+          - Walkmesh would be centered at (100, 200) after translate
+          - MISMATCH! Image and hitbox are in different places.
+        
+        - After re-centering BWM to (0, 0):
+          - Image is centered at room.position
+          - Walkmesh is centered at room.position after translate
+          - MATCH! Image and hitbox overlap perfectly.
+        
+        Reference: vendor/KotOR.js/src/module/ModuleRoom.ts - rooms use local coords
+        Reference: vendor/reone/src/libs/game/object/area.cpp - room positioning
+        """
+        vertices = list(bwm.vertices())
+        if not vertices:
+            return bwm
+        
+        # Calculate current center
+        min_x = min(v.x for v in vertices)
+        max_x = max(v.x for v in vertices)
+        min_y = min(v.y for v in vertices)
+        max_y = max(v.y for v in vertices)
+        min_z = min(v.z for v in vertices)
+        max_z = max(v.z for v in vertices)
+        
+        center_x = (min_x + max_x) / 2.0
+        center_y = (min_y + max_y) / 2.0
+        center_z = (min_z + max_z) / 2.0
+        
+        # Translate all vertices to center around origin
+        # Use BWM.translate() which handles all vertices in faces
+        bwm.translate(-center_x, -center_y, -center_z)
+        
+        return bwm
+
     def _get_room_walkmesh(self, model_name: str) -> BWM | None:
         """Get the walkmesh for a room from the module.
         
-        Returns the BWM exactly as stored in the game files, without modification.
-        Game WOKs are in local room coordinates - the same format that kit.py
-        extracts and that the Kit loader expects.
-        
-        Reference: indoorkit.py loads BWM with read_bwm() without any centering.
+        Returns the BWM exactly as stored in the game files.
+        Note: The BWM will be re-centered by _recenter_bwm() before use.
         """
         if self._module is None:
             return None
@@ -197,8 +246,6 @@ class ModuleKit(Kit):
             RobustLogger().warning(f"Failed to read WOK for '{model_name}'")
             return None
         else:
-            # Return BWM as-is - no re-centering needed
-            # Game WOKs are already in local coordinates, same as kit.py extracts
             return bwm
 
     def _get_room_model(self, model_name: str) -> bytes | None:

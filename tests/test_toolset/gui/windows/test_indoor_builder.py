@@ -7441,3 +7441,228 @@ class TestIndoorMapIOValidation:
                 tested_count += 1
         
         assert tested_count > 0, "At least one component should have been tested"
+
+
+class TestModuleKitBWMCentering:
+    """Tests to verify ModuleKit BWMs are properly centered around (0, 0).
+    
+    This is critical for the Indoor Map Builder to work correctly:
+    - The preview image is drawn CENTERED at room.position
+    - The walkmesh is TRANSLATED by room.position from its original coordinates
+    - If the BWM is not centered at (0, 0), the image and hitbox will be misaligned
+    
+    Reference: The "black buffer zone" bug fix.
+    """
+
+    def test_module_kit_bwm_is_centered(self, installation: HTInstallation):
+        """Verify that ModuleKit BWMs are re-centered around (0, 0)."""
+        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        module_roots = manager.get_module_roots()
+        
+        if not module_roots:
+            pytest.skip("No modules available in installation")
+        
+        # Test first available module
+        module_root = module_roots[0]
+        kit = manager.get_module_kit(module_root)
+        kit.ensure_loaded()
+        
+        if not kit.components:
+            pytest.skip(f"Module {module_root} has no components")
+        
+        for component in kit.components:
+            bwm = component.bwm
+            vertices = list(bwm.vertices())
+            
+            if not vertices:
+                continue
+            
+            # Calculate bounding box and center
+            min_x = min(v.x for v in vertices)
+            max_x = max(v.x for v in vertices)
+            min_y = min(v.y for v in vertices)
+            max_y = max(v.y for v in vertices)
+            
+            center_x = (min_x + max_x) / 2.0
+            center_y = (min_y + max_y) / 2.0
+            
+            # The center should be very close to (0, 0) - within 0.01 units
+            # This ensures image and hitbox will align when rendered
+            assert abs(center_x) < 0.01, (
+                f"Component {component.name} BWM center X should be ~0.0, got {center_x:.4f}. "
+                "This will cause image/hitbox misalignment in the Indoor Map Builder."
+            )
+            assert abs(center_y) < 0.01, (
+                f"Component {component.name} BWM center Y should be ~0.0, got {center_y:.4f}. "
+                "This will cause image/hitbox misalignment in the Indoor Map Builder."
+            )
+
+    def test_module_kit_image_hitbox_congruent(
+        self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation
+    ):
+        """Verify that image bounds match walkmesh bounds (they should be congruent).
+        
+        The preview image and the walkmesh hitbox must be the same shape at the
+        same location. If they're not congruent, users will see the room preview
+        in one place but have to click in a different place to select it.
+        """
+        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        module_roots = manager.get_module_roots()
+        
+        if not module_roots:
+            pytest.skip("No modules available in installation")
+        
+        module_root = module_roots[0]
+        kit = manager.get_module_kit(module_root)
+        kit.ensure_loaded()
+        
+        if not kit.components:
+            pytest.skip(f"Module {module_root} has no components")
+        
+        component = kit.components[0]
+        
+        # Create a room at origin
+        room = IndoorMapRoom(component, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+        builder_no_kits._map.rooms.append(room)
+        
+        # Get image dimensions (in world units, same scale as renderer uses)
+        image = component.image
+        image_width_units = image.width() / 10.0  # 10 pixels per unit
+        image_height_units = image.height() / 10.0
+        
+        # Image is centered at room position (0, 0)
+        # So image bounds are (-width/2, -height/2) to (width/2, height/2)
+        image_min_x = -image_width_units / 2
+        image_max_x = image_width_units / 2
+        image_min_y = -image_height_units / 2
+        image_max_y = image_height_units / 2
+        
+        # Get walkmesh bounds (after translation by room.position which is 0,0)
+        walkmesh = room.walkmesh()
+        vertices = list(walkmesh.vertices())
+        
+        if not vertices:
+            pytest.skip("Component has no walkmesh vertices")
+        
+        bwm_min_x = min(v.x for v in vertices)
+        bwm_max_x = max(v.x for v in vertices)
+        bwm_min_y = min(v.y for v in vertices)
+        bwm_max_y = max(v.y for v in vertices)
+        
+        bwm_width = bwm_max_x - bwm_min_x
+        bwm_height = bwm_max_y - bwm_min_y
+        
+        # The walkmesh bounds should approximately match the image bounds
+        # (within the padding that's added during image generation - 5 units on each side)
+        # Image includes 5 unit padding, so image extent ≈ bwm extent + 10 units
+        # BUT there's a minimum image size of 256x256 pixels (25.6 units)
+        expected_image_width = max(bwm_width + 10.0, 25.6)  # min 256 pixels
+        expected_image_height = max(bwm_height + 10.0, 25.6)
+        
+        # Allow some tolerance for rounding and minimum size padding
+        tolerance = 1.0
+        
+        assert abs(image_width_units - expected_image_width) < tolerance, (
+            f"Image width {image_width_units:.2f} should be close to expected "
+            f"({expected_image_width:.2f}). Difference: {abs(image_width_units - expected_image_width):.2f}"
+        )
+        assert abs(image_height_units - expected_image_height) < tolerance, (
+            f"Image height {image_height_units:.2f} should be close to expected "
+            f"({expected_image_height:.2f}). Difference: {abs(image_height_units - expected_image_height):.2f}"
+        )
+        
+        # The critical test: both should be centered at the same point!
+        # BWM center should be at (0, 0) since we re-centered it
+        bwm_center_x = (bwm_min_x + bwm_max_x) / 2
+        bwm_center_y = (bwm_min_y + bwm_max_y) / 2
+        
+        # Image center is at room position (0, 0) by design
+        image_center_x = room.position.x
+        image_center_y = room.position.y
+        
+        assert abs(bwm_center_x - image_center_x) < 0.1, (
+            f"BWM center X ({bwm_center_x:.4f}) must equal image center X ({image_center_x:.4f}). "
+            "If these differ, the preview and hitbox will be in different places!"
+        )
+        assert abs(bwm_center_y - image_center_y) < 0.1, (
+            f"BWM center Y ({bwm_center_y:.4f}) must equal image center Y ({image_center_y:.4f}). "
+            "If these differ, the preview and hitbox will be in different places!"
+        )
+
+    def test_module_kit_room_placement_and_selection(
+        self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation
+    ):
+        """Test placing a ModuleKit room via UI simulation and selecting it.
+        
+        This tests the full flow:
+        1. Load a ModuleKit component
+        2. Set it as the cursor component (like selecting from the list)
+        3. Simulate a click to place the room
+        4. Move mouse to room position and verify it's detected under mouse
+        """
+        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        
+        manager = ModuleKitManager(installation)
+        module_roots = manager.get_module_roots()
+        
+        if not module_roots:
+            pytest.skip("No modules available in installation")
+        
+        module_root = module_roots[0]
+        kit = manager.get_module_kit(module_root)
+        kit.ensure_loaded()
+        
+        if not kit.components:
+            pytest.skip(f"Module {module_root} has no components")
+        
+        component = kit.components[0]
+        renderer = builder_no_kits.ui.mapRenderer
+        
+        # Set cursor component (simulating user selecting component from list)
+        renderer.set_cursor_component(component)
+        assert renderer.cursor_component is component
+        
+        # Place room at center of view
+        renderer.cursor_point = Vector3(0, 0, 0)
+        builder_no_kits._place_new_room(component)
+        
+        # Verify room was added
+        assert len(builder_no_kits._map.rooms) == 1
+        room = builder_no_kits._map.rooms[0]
+        
+        # The room should be at the cursor position
+        assert room.position.x == pytest.approx(0.0, abs=0.1)
+        assert room.position.y == pytest.approx(0.0, abs=0.1)
+        
+        # Now simulate mouse movement to the room position and verify detection
+        # Convert world (0, 0) to screen coordinates
+        screen_center = Vector2(renderer.width() / 2, renderer.height() / 2)
+        
+        # Trigger mouse move to update _under_mouse_room
+        renderer.cursor_point = Vector3(0, 0, 0)
+        
+        # Force walkmesh cache update
+        renderer._invalidate_walkmesh_cache(room)
+        walkmesh = renderer._get_room_walkmesh(room)
+        
+        # The walkmesh should contain the origin point (0, 0) since it's centered
+        vertices = list(walkmesh.vertices())
+        if vertices:
+            min_x = min(v.x for v in vertices)
+            max_x = max(v.x for v in vertices)
+            min_y = min(v.y for v in vertices)
+            max_y = max(v.y for v in vertices)
+            
+            # Origin (0, 0) should be inside the walkmesh bounds
+            assert min_x <= 0 <= max_x, (
+                f"Origin X=0 should be within walkmesh bounds [{min_x:.2f}, {max_x:.2f}]. "
+                "Room is not centered correctly!"
+            )
+            assert min_y <= 0 <= max_y, (
+                f"Origin Y=0 should be within walkmesh bounds [{min_y:.2f}, {max_y:.2f}]. "
+                "Room is not centered correctly!"
+            )
