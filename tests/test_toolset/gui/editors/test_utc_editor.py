@@ -1036,25 +1036,25 @@ def test_utc_editor_manipulate_all_script_fields(qtbot, installation: HTInstalla
     editor.load(utc_file, "p_hk47", ResourceType.UTC, original_data)
     
     # Test all script fields
+    # Map attribute names to shorter ResRef values (max 16 chars)
     script_fields = [
-        ('onBlockedEdit', 'on_blocked'),
-        ('onAttackedEdit', 'on_attacked'),
-        ('onNoticeEdit', 'on_notice'),
-        ('onConversationEdit', 'on_dialog'),
-        ('onDamagedEdit', 'on_damaged'),
-        ('onDeathEdit', 'on_death'),
-        ('onEndRoundEdit', 'on_end_round'),
-        ('onEndConversationEdit', 'on_end_dialog'),
-        ('onDisturbedEdit', 'on_disturbed'),
-        ('onHeartbeatSelect', 'on_heartbeat'),
-        ('onSpawnEdit', 'on_spawn'),
-        ('onSpellCastEdit', 'on_spell'),
-        ('onUserDefinedSelect', 'on_user_defined'),
+        ('onBlockedEdit', 'on_blocked', 'test_blocked'),
+        ('onAttackedEdit', 'on_attacked', 'test_attacked'),
+        ('onNoticeEdit', 'on_notice', 'test_notice'),
+        ('onConversationEdit', 'on_dialog', 'test_dialog'),
+        ('onDamagedEdit', 'on_damaged', 'test_damaged'),
+        ('onDeathEdit', 'on_death', 'test_death'),
+        ('onEndRoundEdit', 'on_end_round', 'test_endround'),
+        ('onEndConversationEdit', 'on_end_dialog', 'test_enddialog'),
+        ('onDisturbedEdit', 'on_disturbed', 'test_disturbed'),
+        ('onHeartbeatSelect', 'on_heartbeat', 'test_heartbeat'),
+        ('onSpawnEdit', 'on_spawn', 'test_spawn'),
+        ('onSpellCastEdit', 'on_spell', 'test_spell'),
+        ('onUserDefinedSelect', 'on_user_defined', 'test_userdef'),
     ]
     
-    for edit_name, attr_name in script_fields:
+    for edit_name, attr_name, test_script in script_fields:
         edit = getattr(editor.ui, edit_name)
-        test_script = f"test_{attr_name}"
         edit.set_combo_box_text(test_script)
         
         # Save and verify
