@@ -1165,6 +1165,9 @@ class ToolWindow(QMainWindow):
                 self.ui.gameCombo.setCurrentIndex(prev_index)
                 return
             self.active = installation_loader.value
+            self.installations[name] = self.active
+        else:
+            self.active = active
         assert self.active is not None
 
         def prepare_task() -> tuple[list[QStandardItem] | None, ...]:
