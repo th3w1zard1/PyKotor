@@ -1,8 +1,26 @@
+# Root workspace requirements
+# This file matches pyproject.toml and includes all libraries and tools
+
+# Core dependency from pyproject.toml
+pykotor>=2.0.0
+
+# Include library requirements
+-r Libraries/PyKotor/requirements.txt
+-r Libraries/PyKotorGL/requirements.txt
+-r Libraries/PyKotorFont/requirements.txt
+
+# Include tool requirements
+-r Tools/HolocronToolset/requirements.txt
+-r Tools/HoloPatcher/requirements.txt
+-r Tools/BatchPatcher/requirements.txt
+-r Tools/GuiConverter/requirements.txt
+-r Tools/KotorCLI/requirements.txt
+-r Tools/KotorDiff/requirements.txt
+-r Tools/HoloPazaak/requirements.txt
+-r Tools/KitGenerator/requirements.txt
+-r Tools/HolocronAI/requirements.txt
+
+# Additional dependencies that may be needed across the workspace
+# (from original requirements.txt that aren't in sub-requirements)
 --find-links ./pyglm-pypy/dist
-ply>=3.11,<4     # required for the nss compiler lexer
-numpy>=1.22      # probably required by PyKotorGL
-PyOpenGL~=3.1    # PyKotorGL
-charset-normalizer>=2.0,<3.4  # used for localized string decodings
-PyGLM>=2.0,<2.8  # PyKotorGL
-Pillow>=9.5      # required for TXI/TGA fonts; 11.x provides PyPy wheels
-defusedxml~=0.7  # secure XML parsing
+defusedxml~=0.7  # secure XML parsing (used by PyKotor but not in requirements.txt)
