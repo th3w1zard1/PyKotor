@@ -603,8 +603,12 @@ class SubScriptState:
                 if isinstance(last, AVarDecl) and anode.var() is last.var_var() and last.exp() is not None:
                     return self.remove_last_exp(False)
             return anode
-        if not force_one_only and isinstance(anode, AVarDecl) and anode.exp() is not None:
-            return anode.remove_exp()
+        if isinstance(anode, AVarDecl):
+            if not force_one_only and anode.exp() is not None:
+                return anode.remove_exp()
+            # If AVarDecl has no expression, return None to indicate no expression available
+            # This can happen when a variable is declared without initialization
+            return None
         print(anode)
         raise RuntimeError(f"Last child not an expression: {type(anode)}")
 
