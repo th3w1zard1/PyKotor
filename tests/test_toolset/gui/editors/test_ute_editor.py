@@ -379,11 +379,15 @@ def test_ute_editor_remove_creature(qtbot, installation: HTInstallation, test_fi
     
     initial_rows = editor.ui.creatureTable.rowCount()
     
-    # Select last row
-    editor.ui.creatureTable.selectRow(initial_rows - 1)
+    # Set current row (since cells contain widgets, currentRow is more reliable than selectedRows)
+    last_row = initial_rows - 1
+    editor.ui.creatureTable.setCurrentCell(last_row, 0)
     qtbot.wait(10)
     
-    # Remove selected creature
+    # Verify current row is set
+    assert editor.ui.creatureTable.currentRow() == last_row, "Current row should be set"
+    
+    # Remove selected creature (will use currentRow as fallback)
     editor.remove_selected_creature()
     qtbot.wait(10)
     

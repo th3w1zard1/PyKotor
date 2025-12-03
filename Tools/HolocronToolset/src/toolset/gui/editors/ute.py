@@ -373,6 +373,17 @@ class UTEEditor(Editor):
         self.ui.creatureTable.setCellWidget(row_id, 3, resref_combo)
 
     def remove_selected_creature(self):
-        if self.ui.creatureTable.selectedItems():
-            item: QTableWidgetItem = self.ui.creatureTable.selectedItems()[0]
-            self.ui.creatureTable.removeRow(item.row())
+        # Try selection model first (works when cells have items)
+        sel_model = self.ui.creatureTable.selectionModel()
+        if sel_model is not None:
+            indices = sel_model.selectedRows()
+            if indices:
+                # Remove rows in reverse order to maintain correct indices
+                for index in sorted(indices, reverse=True):
+                    self.ui.creatureTable.removeRow(index.row())
+                return
+        
+        # Fallback to currentRow (works when cells have widgets)
+        current_row = self.ui.creatureTable.currentRow()
+        if current_row >= 0:
+            self.ui.creatureTable.removeRow(current_row)
