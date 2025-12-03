@@ -125,16 +125,15 @@ def test_inventory_editor(qtbot, installation: HTInstallation):
     parent = QWidget()
     capsules = [] # No capsules for now
     inventory = []
-    equipment = []
+    equipment = {}  # equipment must be a dict[EquipmentSlot, InventoryItem], not a list
     
     dialog = InventoryEditor(parent, installation, capsules, [], inventory, equipment, droid=False)
     qtbot.addWidget(dialog)
     dialog.show()
     
     assert dialog.isVisible()
-    # Check for inventory lists
-    assert hasattr(dialog.ui, "inventoryList")
-    assert hasattr(dialog.ui, "equipmentList")
+    # Check for inventory table (the UI uses contentsTable, not inventoryList/equipmentList)
+    assert hasattr(dialog.ui, "contentsTable")
     
     # Test add/remove logic if possible without heavy data
     # Usually requires drag/drop or button clicks

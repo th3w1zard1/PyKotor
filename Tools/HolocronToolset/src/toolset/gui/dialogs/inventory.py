@@ -636,8 +636,8 @@ class ItemBuilderDialog(QDialog):
     ):
         super().__init__(parent)
         self.setWindowFlags(
-            Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
-            | Qt.WindowType.WindowCloseButtonHint
+            (Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
+            | Qt.WindowType.WindowCloseButtonHint)
             & ~Qt.WindowType.WindowContextHelpButtonHint
             & ~Qt.WindowType.WindowMinMaxButtonsHint
         )
