@@ -131,7 +131,7 @@ class LYTEditor(Editor):
         self.update_scene()
 
     def add_track(self):
-        if len(self._lyt.rooms) < 2:
+        if len(self._lyt.rooms) < 2:  # noqa: PLR2004
             return
 
         track = LYTTrack(model="default_track", position=Vector3(0, 0, 0))
@@ -155,7 +155,7 @@ class LYTEditor(Editor):
         end: LYTRoom,
     ) -> list[LYTRoom] | None:
         """Find a path between rooms using A* pathfinding."""
-        from heapq import heappop, heappush
+        from heapq import heappop, heappush  # noqa: PLC0415
 
         def heuristic(room: LYTRoom) -> float:
             return (room.position - end.position).magnitude()
