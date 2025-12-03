@@ -10,6 +10,7 @@ References:
 """
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
@@ -136,6 +137,10 @@ class ModuleKit(Kit):
         # WOK data; in that case we fall back to a simple placeholder quad.
         if bwm is None or not bwm.faces:
             bwm = self._create_placeholder_bwm(lyt_room.position)
+        else:
+            # Make a deep copy of the BWM so each component has its own instance
+            # This prevents issues if multiple rooms share the same model name
+            bwm = deepcopy(bwm)
         
         # Try to get the model data
         mdl_data = self._get_room_model(model_name)
@@ -147,10 +152,15 @@ class ModuleKit(Kit):
             mdx_data = b""
         
         # Create a preview image from the walkmesh
+        # Each component gets its own image generated from its own BWM copy
         image = self._create_preview_image_from_bwm(bwm)
         
-        # Create display name
-        display_name = f"{model_name.upper()}"
+        # Create display name - include room index to ensure uniqueness
+        # This helps distinguish rooms that share the same model name
+        if lyt_room.model:
+            display_name = f"{model_name.upper()}_{room_idx}"
+        else:
+            display_name = f"ROOM{room_idx}"
         
         component = KitComponent(self, display_name, image, bwm, mdl_data, mdx_data)
         
