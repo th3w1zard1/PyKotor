@@ -1173,6 +1173,10 @@ class TestClipboardOperations:
     def test_paste_rooms(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, real_kit_component: KitComponent):
         """Test pasting rooms."""
         builder = builder_no_kits
+        
+        # Ensure kit is available for paste to work
+        if not builder._kits:
+            builder._kits.append(real_kit_component.kit)
     
         room = IndoorMapRoom(real_kit_component, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
         builder._map.rooms.append(room)
