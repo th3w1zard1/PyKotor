@@ -146,16 +146,17 @@ class TestInstallation:
         
         # Should be able to create Installation with non-existent path
         # (it won't load anything, but shouldn't crash)
-        inst = Installation(Path("/nonexistent/path"), "K1")
+        inst = Installation(Path("/nonexistent/path"))
         assert inst is not None
     
     def test_installation_game_enum(self):
         """Test Installation game type."""
         from pykotor.extract.installation import Installation
         
-        # Test creating with different game types
-        inst_k1 = Installation(Path("/nonexistent"), "K1")
-        inst_k2 = Installation(Path("/nonexistent"), "K2")
+        # Test creating with non-existent paths
+        # Game type is auto-detected from the installation path
+        inst_k1 = Installation(Path("/nonexistent"))
+        inst_k2 = Installation(Path("/nonexistent2"))
         
         assert inst_k1 is not None
         assert inst_k2 is not None
