@@ -111,7 +111,7 @@ class MDLEditor(Editor):
         data = bytearray()
         data_ext = bytearray()
         write_mdl(self._mdl, data, ResourceType.MDL, data_ext)
-        return data, data_ext
+        return bytes(data), bytes(data_ext)
 
     def new(self):
         super().new()

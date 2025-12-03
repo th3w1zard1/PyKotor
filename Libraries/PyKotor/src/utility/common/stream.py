@@ -1743,6 +1743,7 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         self._ba: bytearray = ba
         self._offset: int = offset
         self._position: int = 0
+        self._initial_size: int = len(ba)  # Track initial size to distinguish fixed-size from growable buffers
 
     def __enter__(
         self,
@@ -1831,8 +1832,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        if self._position >= len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} >= size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position >= self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} >= initial size {self._initial_size}")
         self._ba[self._position : self._position + 1] = struct.pack(
             f"{_endian_char(big)}B",
             value,
@@ -1852,8 +1855,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        if self._position >= len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} >= size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position >= self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} >= initial size {self._initial_size}")
         self._ba[self._position : self._position + 1] = struct.pack(
             f"{_endian_char(big)}b",
             value,
@@ -1873,8 +1878,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        if self._position + 2 > len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 2 > size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position + 2 > self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 2 > initial size {self._initial_size}")
         self._ba[self._position : self._position + 2] = struct.pack(
             f"{_endian_char(big)}H",
             value,
@@ -1894,8 +1901,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        if self._position + 2 > len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 2 > size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position + 2 > self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 2 > initial size {self._initial_size}")
         self._ba[self._position : self._position + 2] = struct.pack(
             f"{_endian_char(big)}h",
             value,
@@ -1922,8 +1931,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         """
         if max_neg1 and value == -1:
             value = 0xFFFFFFFF
-        if self._position + 4 > len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 4 > size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position + 4 > self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 4 > initial size {self._initial_size}")
         self._ba[self._position : self._position + 4] = struct.pack(
             f"{_endian_char(big)}I",
             value,
@@ -1943,8 +1954,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        if self._position + 4 > len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 4 > size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position + 4 > self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 4 > initial size {self._initial_size}")
         self._ba[self._position : self._position + 4] = struct.pack(
             f"{_endian_char(big)}i",
             value,
@@ -1964,8 +1977,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        if self._position + 8 > len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 8 > size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position + 8 > self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 8 > initial size {self._initial_size}")
         self._ba[self._position : self._position + 8] = struct.pack(
             f"{_endian_char(big)}Q",
             value,
@@ -1985,8 +2000,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        if self._position + 8 > len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 8 > size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position + 8 > self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 8 > initial size {self._initial_size}")
         self._ba[self._position : self._position + 8] = struct.pack(
             f"{_endian_char(big)}q",
             value,
@@ -2006,8 +2023,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
             value: The value to be written.
             big: Write int bytes as big endian.
         """
-        if self._position + 4 > len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 4 > size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position + 4 > self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 4 > initial size {self._initial_size}")
         self._ba[self._position : self._position + 4] = struct.pack(
             f"{_endian_char(big)}f",
             value,
@@ -2027,8 +2046,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
             value: The value to be written.
             big: Write bytes as big endian.
         """
-        if self._position + 8 > len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 8 > size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position + 8 > self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + 8 > initial size {self._initial_size}")
         self._ba[self._position : self._position + 8] = struct.pack(
             f"{_endian_char(big)}d",
             value,
@@ -2126,8 +2147,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         ----
             value: The bytes to be written.
         """
-        if self._position + len(value) > len(self._ba):
-            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + {len(value)} > size {len(self._ba)}")
+        # Only enforce bounds checking for fixed-size buffers (non-empty initial size)
+        # Empty buffers are allowed to grow automatically
+        if self._initial_size > 0 and self._position + len(value) > self._initial_size:
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + {len(value)} > initial size {self._initial_size}")
         self._ba[self._position : self._position + len(value)] = value
         self._position += len(value)
 
