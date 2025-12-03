@@ -654,3 +654,33 @@ def test_utweditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
 
+def test_utw_editor_map_note_checkbox_interaction(qtbot, installation: HTInstallation, test_files_dir: Path):
+    """Test interaction between map note checkboxes."""
+    editor = UTWEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    utw_file = test_files_dir / "tar05_sw05aa10.utw"
+    if not utw_file.exists():
+        pytest.skip("tar05_sw05aa10.utw not found")
+    
+    original_data = utw_file.read_bytes()
+    editor.load(utw_file, "tar05_sw05aa10", ResourceType.UTW, original_data)
+    
+    # Test all combinations
+    combinations = [
+        (False, False),
+        (False, True),
+        (True, False),
+        (True, True),
+    ]
+    
+    for has_note, enabled in combinations:
+        editor.ui.isNoteCheckbox.setChecked(has_note)
+        editor.ui.noteEnabledCheckbox.setChecked(enabled)
+        
+        # Save and verify
+        data, _ = editor.build()
+        modified_utw = read_utw(data)
+        assert modified_utw.has_map_note == has_note
+        assert modified_utw.map_note_enabled == enabled
+
