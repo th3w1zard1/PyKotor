@@ -1334,7 +1334,7 @@ class TestModuleKitManager:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         kit1 = manager.get_module_kit(roots[0])
         kit2 = manager.get_module_kit(roots[0])
@@ -1349,7 +1349,7 @@ class TestModuleKitManager:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         manager.get_module_kit(roots[0])
         assert len(manager._cache) > 0
@@ -1417,7 +1417,7 @@ class TestModuleUI:
         builder = builder_no_kits
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.ui.moduleSelect.setCurrentIndex(0)
         qtbot.wait(200)  # Wait for lazy loading
@@ -2078,7 +2078,7 @@ class TestRendererCoordinates:
         
         # Skip test if widget isn't properly sized (headless environment issue)
         if width == 0 or height == 0:
-            pytest.skip("Widget not properly sized in test environment")
+            pytest.fail("Widget not properly sized in test environment")
         
         # At view (center at 0,0, zoom 1.0, rotation 0), center of widget should be world origin
         screen_center = QPoint(width // 2, height // 2)
@@ -2271,7 +2271,7 @@ class TestModuleComponentExtraction:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available in installation")
+            pytest.fail("No modules available in installation")
         
         # Try to load first available module
         module_root = roots[0]
@@ -2296,7 +2296,7 @@ class TestModuleComponentExtraction:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         # Find a module with components
         for root in roots[:5]:  # Check first 5 modules
@@ -2323,7 +2323,7 @@ class TestModuleComponentExtraction:
                 print(f"Component '{component.name}' has all required attributes")
                 return
         
-        pytest.skip("No modules with extractable components found")
+        pytest.fail("No modules with extractable components found")
 
     def test_module_component_bwm_is_valid(self, installation: HTInstallation):
         """Test module-derived component BWM is valid for walkmesh operations."""
@@ -2334,7 +2334,7 @@ class TestModuleComponentExtraction:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2354,7 +2354,7 @@ class TestModuleComponentExtraction:
                 print(f"Component '{component.name}' BWM has {len(component.bwm.faces)} faces")
                 return
         
-        pytest.skip("No modules with valid BWM found")
+        pytest.fail("No modules with valid BWM found")
 
     def test_module_component_image_is_valid(self, installation: HTInstallation):
         """Test module-derived component preview image is valid."""
@@ -2365,7 +2365,7 @@ class TestModuleComponentExtraction:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2380,7 +2380,7 @@ class TestModuleComponentExtraction:
                 print(f"Component '{component.name}' image: {component.image.width()}x{component.image.height()}")
                 return
         
-        pytest.skip("No modules with valid images found")
+        pytest.fail("No modules with valid images found")
 
     def test_multiple_modules_load_independently(self, installation: HTInstallation):
         """Test multiple modules can be loaded independently."""
@@ -2390,7 +2390,7 @@ class TestModuleComponentExtraction:
         roots = manager.get_module_roots()
         
         if len(roots) < 2:
-            pytest.skip("Need at least 2 modules")
+            pytest.fail("Need at least 2 modules")
         
         # Load two different modules
         kit1 = manager.get_module_kit(roots[0])
@@ -2437,7 +2437,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2469,7 +2469,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Component '{component.name}' BWM extent: {extent_x:.2f}x{extent_y:.2f}")
                 return
         
-        pytest.skip("No modules with valid BWM found")
+        pytest.fail("No modules with valid BWM found")
 
     def test_module_image_scale_matches_walkmesh(self, installation: HTInstallation):
         """Test module image dimensions match walkmesh at 10 pixels per unit.
@@ -2489,7 +2489,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2528,7 +2528,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Component '{component.name}': image={image.width()}x{image.height()}, expected={expected_width}x{expected_height}")
                 return
         
-        pytest.skip("No modules with valid BWM/image found")
+        pytest.fail("No modules with valid BWM/image found")
 
     def test_module_room_walkmesh_transformation(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test module room walkmesh is transformed correctly.
@@ -2546,11 +2546,11 @@ class TestModuleImageWalkmeshAlignment:
         builder = builder_no_kits
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager available")
+            pytest.fail("No module kit manager available")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = builder._module_kit_manager.get_module_kit(root)
@@ -2632,7 +2632,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Room walkmesh transformation verified for component '{component.name}' ({hits_found}/{len(test_points)} points hit)")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_component_matches_kit_component_scale(self, installation: HTInstallation, real_kit_component):
         """Test module components use same scale as kit components.
@@ -2652,7 +2652,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2690,7 +2690,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Scale consistency verified between kit and module components")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_image_format_is_rgb888(self, installation: HTInstallation):
         """Test module component images use Format_RGB888 (not RGB32).
@@ -2707,7 +2707,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2722,7 +2722,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Component '{component.name}' image format: {image.format()} (correct: RGB888)")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_image_is_mirrored(self, installation: HTInstallation):
         """Test module component images are mirrored to match Kit loader.
@@ -2747,7 +2747,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2779,7 +2779,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Component '{component.name}' image is valid and properly formatted (mirroring applied)")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_image_has_minimum_size_256(self, installation: HTInstallation):
         """Test module component images respect minimum 256x256 pixel size.
@@ -2797,7 +2797,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2814,7 +2814,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Component '{component.name}' image size: {image.width()}x{image.height()} (min: {MIN_SIZE}x{MIN_SIZE})")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_bwm_not_recentered(self, installation: HTInstallation):
         """Test module BWM is NOT re-centered (used as-is from game files).
@@ -2832,7 +2832,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2874,7 +2874,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Component '{component.name}' BWM center: ({center_x:.2f}, {center_y:.2f}), extent: {extent_x:.2f}x{extent_y:.2f}")
                 return
         
-        pytest.skip("No modules with valid BWM found")
+        pytest.fail("No modules with valid BWM found")
 
     def test_module_image_matches_kit_image_generation(self, installation: HTInstallation, real_kit_component):
         """Test module image generation matches kit.py algorithm exactly.
@@ -2896,7 +2896,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -2931,7 +2931,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Module image generation matches kit.py algorithm")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_room_visual_hitbox_alignment(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test module room visual rendering aligns with hit-testing area.
@@ -2951,11 +2951,11 @@ class TestModuleImageWalkmeshAlignment:
         builder = builder_no_kits
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager available")
+            pytest.fail("No module kit manager available")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = builder._module_kit_manager.get_module_kit(root)
@@ -3028,7 +3028,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Visual/hitbox alignment verified for component '{component.name}'")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_image_pixels_per_unit_scale(self, installation: HTInstallation):
         """Test module images use exactly 10 pixels per unit scale.
@@ -3047,7 +3047,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -3095,7 +3095,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Component '{component.name}': 10px/unit scale verified")
                 return
         
-        pytest.skip("No modules with valid BWM/image found")
+        pytest.fail("No modules with valid BWM/image found")
 
     def test_module_image_walkmesh_coordinate_alignment(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test module image and walkmesh coordinates align when room is placed.
@@ -3116,11 +3116,11 @@ class TestModuleImageWalkmeshAlignment:
         renderer = builder.ui.mapRenderer
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager available")
+            pytest.fail("No module kit manager available")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = builder._module_kit_manager.get_module_kit(root)
@@ -3193,7 +3193,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"Image/walkmesh coordinate alignment verified for component '{component.name}'")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_room_end_to_end_visual_hitbox_alignment(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """End-to-end test: module room visual rendering matches hit-testing.
@@ -3212,11 +3212,11 @@ class TestModuleImageWalkmeshAlignment:
         renderer = builder.ui.mapRenderer
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager available")
+            pytest.fail("No module kit manager available")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = builder._module_kit_manager.get_module_kit(root)
@@ -3322,7 +3322,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"End-to-end visual/hitbox alignment verified for component '{component.name}'")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_kit_image_generation_identical_to_kit_py(self, installation: HTInstallation):
         """CRITICAL: Verify ModuleKit image generation is EXACTLY 1:1 with kit.py.
@@ -3354,7 +3354,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -3422,7 +3422,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"  Sampled pixels matched: {pixel_matches}/{len(test_pixels)}")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_kit_bwm_handling_identical_to_kit_py(self, installation: HTInstallation):
         """CRITICAL: Verify ModuleKit BWM handling is EXACTLY 1:1 with kit.py.
@@ -3445,7 +3445,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -3500,7 +3500,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"  Faces: {len(module_bwm.faces)}")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_kit_walkable_materials_match_kit_py(self, installation: HTInstallation):
         """Verify ModuleKit uses EXACTLY the same walkable material set as kit.py.
@@ -3519,7 +3519,7 @@ class TestModuleImageWalkmeshAlignment:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -3552,7 +3552,7 @@ class TestModuleImageWalkmeshAlignment:
                 print(f"  Non-walkable faces: {non_walkable_count}")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
 
 class TestModuleComponentRoomCreation:
@@ -3565,11 +3565,11 @@ class TestModuleComponentRoomCreation:
         builder = builder_no_kits
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager available")
+            pytest.fail("No module kit manager available")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         # Find a module with components
         for root in roots[:5]:
@@ -3597,7 +3597,7 @@ class TestModuleComponentRoomCreation:
                 print(f"Created room from module component: {component.name}")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_room_undo_redo(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test undo/redo works with module-derived rooms."""
@@ -3607,11 +3607,11 @@ class TestModuleComponentRoomCreation:
         undo_stack = builder._undo_stack
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager available")
+            pytest.fail("No module kit manager available")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = builder._module_kit_manager.get_module_kit(root)
@@ -3637,7 +3637,7 @@ class TestModuleComponentRoomCreation:
                 print(f"Undo/redo works for module room: {component.name}")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_room_move_operation(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test move operation works with module-derived rooms."""
@@ -3647,11 +3647,11 @@ class TestModuleComponentRoomCreation:
         undo_stack = builder._undo_stack
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager available")
+            pytest.fail("No module kit manager available")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = builder._module_kit_manager.get_module_kit(root)
@@ -3676,7 +3676,7 @@ class TestModuleComponentRoomCreation:
                 print(f"Move operation works for module room: {component.name}")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_room_rotate_flip(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test rotate and flip operations work with module-derived rooms."""
@@ -3686,11 +3686,11 @@ class TestModuleComponentRoomCreation:
         undo_stack = builder._undo_stack
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager available")
+            pytest.fail("No module kit manager available")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = builder._module_kit_manager.get_module_kit(root)
@@ -3713,7 +3713,7 @@ class TestModuleComponentRoomCreation:
                 print(f"Rotate/flip works for module room: {component.name}")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_room_duplicate(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test duplicate operation works with module-derived rooms."""
@@ -3723,11 +3723,11 @@ class TestModuleComponentRoomCreation:
         undo_stack = builder._undo_stack
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager available")
+            pytest.fail("No module kit manager available")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = builder._module_kit_manager.get_module_kit(root)
@@ -3754,7 +3754,7 @@ class TestModuleComponentRoomCreation:
                 print(f"Duplicate works for module room: {component.name}")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
 
 class TestModuleUIInteractions:
@@ -3767,7 +3767,7 @@ class TestModuleUIInteractions:
         module_count = builder.ui.moduleSelect.count()
         
         if module_count == 0:
-            pytest.skip("No modules in installation")
+            pytest.fail("No modules in installation")
         
         assert module_count > 0
         print(f"Module combobox has {module_count} items")
@@ -3785,7 +3785,7 @@ class TestModuleUIInteractions:
         builder = builder_no_kits
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -3806,7 +3806,7 @@ class TestModuleUIInteractions:
         builder = builder_no_kits
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -3825,7 +3825,7 @@ class TestModuleUIInteractions:
                 return
         
         builder.close()
-        pytest.skip("No modules with extractable components found")
+        pytest.fail("No modules with extractable components found")
 
     def test_module_component_selection_via_qtbot(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test selecting component from module list via qtbot."""
@@ -3833,7 +3833,7 @@ class TestModuleUIInteractions:
         renderer = builder.ui.mapRenderer
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -3859,14 +3859,14 @@ class TestModuleUIInteractions:
                 return
         
         builder.close()
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_component_preview_updates(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test selecting component updates preview image."""
         builder = builder_no_kits
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -3897,14 +3897,14 @@ class TestModuleUIInteractions:
                 return
         
         builder.close()
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_switch_between_modules(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test switching between different modules updates component list."""
         builder = builder_no_kits
         
         if builder.ui.moduleSelect.count() < 2:
-            pytest.skip("Need at least 2 modules")
+            pytest.fail("Need at least 2 modules")
         
         builder.show()
         qtbot.wait(50)
@@ -3937,7 +3937,7 @@ class TestModuleRoomPlacementWorkflow:
         renderer = builder.ui.mapRenderer
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -3983,7 +3983,7 @@ class TestModuleRoomPlacementWorkflow:
                 return
         
         builder.close()
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_place_multiple_module_rooms(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test placing multiple rooms from module components."""
@@ -3991,7 +3991,7 @@ class TestModuleRoomPlacementWorkflow:
         renderer = builder.ui.mapRenderer
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -4034,7 +4034,7 @@ class TestModuleRoomPlacementWorkflow:
                 return
         
         builder.close()
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_room_selection_in_renderer(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test module-derived rooms can be selected in renderer."""
@@ -4042,7 +4042,7 @@ class TestModuleRoomPlacementWorkflow:
         renderer = builder.ui.mapRenderer
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -4082,7 +4082,7 @@ class TestModuleRoomPlacementWorkflow:
                 return
         
         builder.close()
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
 
 class TestModuleKitEquivalence:
@@ -4096,7 +4096,7 @@ class TestModuleKitEquivalence:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -4119,18 +4119,18 @@ class TestModuleKitEquivalence:
                 print("Module and kit components have equivalent interfaces")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_rooms_from_both_sources_coexist(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, real_kit_component, installation: HTInstallation):
         """Test rooms from kits and modules can coexist in same map."""
         builder = builder_no_kits
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager")
+            pytest.fail("No module kit manager")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         # Add room from kit component
         kit_room = IndoorMapRoom(real_kit_component, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
@@ -4159,7 +4159,7 @@ class TestModuleKitEquivalence:
                 print("Kit and module rooms coexist successfully")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_operations_work_on_mixed_rooms(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, real_kit_component, installation: HTInstallation):
         """Test operations work on mixed kit/module room selections."""
@@ -4168,11 +4168,11 @@ class TestModuleKitEquivalence:
         undo_stack = builder._undo_stack
         
         if not builder._module_kit_manager:
-            pytest.skip("No module kit manager")
+            pytest.fail("No module kit manager")
         
         roots = builder._module_kit_manager.get_module_roots()
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         kit_room = IndoorMapRoom(real_kit_component, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
         builder._map.rooms.append(kit_room)
@@ -4207,7 +4207,7 @@ class TestModuleKitEquivalence:
                 print("Operations work on mixed kit/module rooms")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
 
 class TestModulePerformance:
@@ -4221,7 +4221,7 @@ class TestModulePerformance:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         # Get kit but don't load it
         kit = manager.get_module_kit(roots[0])
@@ -4240,7 +4240,7 @@ class TestModulePerformance:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         # Get same kit multiple times
         kit1 = manager.get_module_kit(roots[0])
@@ -4259,7 +4259,7 @@ class TestModulePerformance:
         builder = builder_no_kits
         
         if builder.ui.moduleSelect.count() < 2:
-            pytest.skip("Need at least 2 modules")
+            pytest.fail("Need at least 2 modules")
         
         builder.show()
         qtbot.wait(50)
@@ -4303,7 +4303,7 @@ class TestModuleHooksAndDoors:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -4321,7 +4321,7 @@ class TestModuleHooksAndDoors:
                 print(f"Module kit '{kit.name}' has {len(kit.doors)} doors")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_component_hooks_list(self, installation: HTInstallation):
         """Test module component has hooks list."""
@@ -4331,7 +4331,7 @@ class TestModuleHooksAndDoors:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -4344,7 +4344,7 @@ class TestModuleHooksAndDoors:
                 print(f"Component '{component.name}' has {len(component.hooks)} hooks")
                 return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
 
 class TestCollapsibleGroupBoxUI:
@@ -4357,7 +4357,7 @@ class TestCollapsibleGroupBoxUI:
         if hasattr(builder.ui, 'kitsGroupBox'):
             assert builder.ui.kitsGroupBox.isChecked() is True
         else:
-            pytest.skip("kitsGroupBox not available")
+            pytest.fail("kitsGroupBox not available")
 
     def test_modules_group_starts_collapsed(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder):
         """Test modules group box starts collapsed by default."""
@@ -4366,14 +4366,14 @@ class TestCollapsibleGroupBoxUI:
         if hasattr(builder.ui, 'modulesGroupBox'):
             assert builder.ui.modulesGroupBox.isChecked() is False
         else:
-            pytest.skip("modulesGroupBox not available")
+            pytest.fail("modulesGroupBox not available")
 
     def test_toggle_kits_group(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder):
         """Test toggling kits group box."""
         builder = builder_no_kits
         
         if not hasattr(builder.ui, 'kitsGroupBox'):
-            pytest.skip("kitsGroupBox not available")
+            pytest.fail("kitsGroupBox not available")
         
         builder.show()
         qtbot.wait(50)
@@ -4402,7 +4402,7 @@ class TestCollapsibleGroupBoxUI:
         builder = builder_no_kits
         
         if not hasattr(builder.ui, 'modulesGroupBox'):
-            pytest.skip("modulesGroupBox not available")
+            pytest.fail("modulesGroupBox not available")
         
         builder.show()
         qtbot.wait(50)
@@ -4424,10 +4424,10 @@ class TestCollapsibleGroupBoxUI:
         builder = builder_no_kits
         
         if not hasattr(builder.ui, 'modulesGroupBox'):
-            pytest.skip("modulesGroupBox not available")
+            pytest.fail("modulesGroupBox not available")
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -4458,7 +4458,7 @@ class TestModuleRendererIntegration:
         renderer = builder.ui.mapRenderer
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -4497,7 +4497,7 @@ class TestModuleRendererIntegration:
                 return
         
         builder.close()
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_select_module_room_with_mouse(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test selecting module room with mouse click."""
@@ -4505,7 +4505,7 @@ class TestModuleRendererIntegration:
         renderer = builder.ui.mapRenderer
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -4554,7 +4554,7 @@ class TestModuleRendererIntegration:
                 return
         
         builder.close()
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
 
 class TestModuleWorkflowEndToEnd:
@@ -4566,7 +4566,7 @@ class TestModuleWorkflowEndToEnd:
         renderer = builder.ui.mapRenderer
         
         if builder.ui.moduleSelect.count() == 0:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder.show()
         qtbot.wait(50)
@@ -4649,7 +4649,7 @@ class TestModuleWorkflowEndToEnd:
             return
         
         builder.close()
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_workflow_with_different_modules(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test placing rooms from different modules in same map."""
@@ -4657,7 +4657,7 @@ class TestModuleWorkflowEndToEnd:
         renderer = builder.ui.mapRenderer
         
         if builder.ui.moduleSelect.count() < 2:
-            pytest.skip("Need at least 2 modules")
+            pytest.fail("Need at least 2 modules")
         
         builder.show()
         qtbot.wait(50)
@@ -4697,7 +4697,7 @@ class TestModuleWorkflowEndToEnd:
         
         if placed_rooms < 2:
             builder.close()
-            pytest.skip("Could not find enough modules with components")
+            pytest.fail("Could not find enough modules with components")
         
         # Verify rooms from different modules coexist
         assert len(builder._map.rooms) == placed_rooms
@@ -5882,7 +5882,7 @@ class TestModuleKitManagerComprehensive:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available for testing")
+            pytest.fail("No modules available for testing")
         
         # Pick first few modules for testing
         test_roots = roots[:3]
@@ -5908,7 +5908,7 @@ class TestModuleKitManagerComprehensive:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available for testing")
+            pytest.fail("No modules available for testing")
         
         # Test first module with components
         for root in roots:
@@ -5934,7 +5934,7 @@ class TestModuleKitManagerComprehensive:
             assert comp.bwm is not None, "Component should have BWM"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_bwm_preview_generation(self, installation: HTInstallation):
         """Test BWM preview image generation."""
@@ -5945,7 +5945,7 @@ class TestModuleKitManagerComprehensive:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available for testing")
+            pytest.fail("No modules available for testing")
         
         # Find a module with components
         for root in roots:
@@ -5964,7 +5964,7 @@ class TestModuleKitManagerComprehensive:
             assert comp.image.height() > 0, "Image has zero height"
             return
         
-        pytest.skip("No components with images found")
+        pytest.fail("No components with images found")
 
     def test_room_creation_from_module(self, installation: HTInstallation):
         """Test creating IndoorMapRoom from module component."""
@@ -5974,7 +5974,7 @@ class TestModuleKitManagerComprehensive:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available for testing")
+            pytest.fail("No modules available for testing")
         
         # Find a module with components
         for root in roots:
@@ -6007,7 +6007,7 @@ class TestModuleKitManagerComprehensive:
             assert getattr(kit, 'is_module_kit', False) is True, "Kit should be a module kit"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_indoor_map_operations(self, installation: HTInstallation):
         """Test IndoorMap operations with module-derived rooms."""
@@ -6017,7 +6017,7 @@ class TestModuleKitManagerComprehensive:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available for testing")
+            pytest.fail("No modules available for testing")
         
         # Find a module with components
         for root in roots:
@@ -6053,7 +6053,7 @@ class TestModuleKitManagerComprehensive:
             assert len(indoor_map.rooms) == 0, "Should have 0 rooms after clear"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_module_doors_and_hooks(self, installation: HTInstallation):
         """Test module kit doors and hooks."""
@@ -6063,7 +6063,7 @@ class TestModuleKitManagerComprehensive:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available for testing")
+            pytest.fail("No modules available for testing")
         
         doors_found = 0
         hooks_found = 0
@@ -6097,7 +6097,7 @@ class TestModuleKitManagerComprehensive:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available for testing")
+            pytest.fail("No modules available for testing")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -6137,7 +6137,7 @@ class TestModuleKitManagerComprehensive:
             assert height > 0, "BWM should have positive height"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_multiple_module_loading(self, installation: HTInstallation):
         """Test loading multiple modules simultaneously."""
@@ -6147,7 +6147,7 @@ class TestModuleKitManagerComprehensive:
         roots = manager.get_module_roots()
         
         if len(roots) < 3:
-            pytest.skip("Need at least 3 modules for this test")
+            pytest.fail("Need at least 3 modules for this test")
         
         # Load multiple modules
         loaded_kits = []
@@ -6229,7 +6229,7 @@ class TestDoorDimensionExtraction:
         data_rim_path = modules_path / "danm13_s.rim"
         
         if not data_rim_path.exists():
-            pytest.skip(f"Module file not found: {data_rim_path}")
+            pytest.fail(f"Module file not found: {data_rim_path}")
         
         data_rim = read_rim(data_rim_path)
         
@@ -6240,7 +6240,7 @@ class TestDoorDimensionExtraction:
                 door_utds.append((str(resource.resref), resource.data))
         
         if not door_utds:
-            pytest.skip("No UTD doors found in module")
+            pytest.fail("No UTD doors found in module")
         
         door_name, door_data = door_utds[0]
         utd = read_utd(door_data)
@@ -6273,7 +6273,7 @@ class TestDoorDimensionExtraction:
                 pass
         
         if genericdoors_2da is None:
-            pytest.skip("Could not load genericdoors.2da")
+            pytest.fail("Could not load genericdoors.2da")
         
         # Get model name
         model_name = door_tools.get_model(utd, inst, genericdoors=genericdoors_2da)
@@ -6282,12 +6282,12 @@ class TestDoorDimensionExtraction:
         # Load MDL
         mdl_result = inst.resource(model_name, ResourceType.MDL)
         if not mdl_result or not mdl_result.data:
-            pytest.skip("MDL not found or has no data")
+            pytest.fail("MDL not found or has no data")
         
         try:
             mdl = read_mdl(mdl_result.data)
         except (AssertionError, Exception) as e:
-            pytest.skip(f"MDL could not be loaded: {e}")
+            pytest.fail(f"MDL could not be loaded: {e}")
         
         # Calculate bounding box
         bb_min = Vector3(1000000, 1000000, 1000000)
@@ -6344,7 +6344,7 @@ class TestWalkabilityGranular:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -6363,7 +6363,7 @@ class TestWalkabilityGranular:
                     f"Walkable face should have walkable material, got {face.material}"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_unwalkable_faces_have_unwalkable_materials(self, installation: HTInstallation):
         """Test that all unwalkable faces have non-walkable materials."""
@@ -6373,7 +6373,7 @@ class TestWalkabilityGranular:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -6392,7 +6392,7 @@ class TestWalkabilityGranular:
                     f"Unwalkable face should have non-walkable material, got {face.material}"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_walkable_material_set_consistency(self, installation: HTInstallation):
         """Test that walkable material set matches expected values."""
@@ -6405,7 +6405,7 @@ class TestWalkabilityGranular:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -6428,7 +6428,7 @@ class TestWalkabilityGranular:
                     f"walkable()={is_walkable}, expected={expected_walkable}"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_walkable_face_count_matches_material_count(self, installation: HTInstallation):
         """Test that walkable face count matches count of faces with walkable materials."""
@@ -6438,7 +6438,7 @@ class TestWalkabilityGranular:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -6458,7 +6458,7 @@ class TestWalkabilityGranular:
                 f"by_material={len(walkable_by_material)}"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_walkable_faces_have_valid_geometry(self, installation: HTInstallation):
         """Test that walkable faces have valid triangle geometry."""
@@ -6468,7 +6468,7 @@ class TestWalkabilityGranular:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -6511,7 +6511,7 @@ class TestWalkabilityGranular:
                 assert area > 0.0001, f"Walkable face should have non-zero area, got {area}"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_walkable_faces_z_coordinate_consistency(self, installation: HTInstallation):
         """Test that walkable faces in the same area have consistent Z coordinates (levels)."""
@@ -6521,7 +6521,7 @@ class TestWalkabilityGranular:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -6566,7 +6566,7 @@ class TestWalkabilityGranular:
                         f"Face Z coordinate {avg_z} should match level {level_z} within tolerance"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_indoor_map_walkability_preservation(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test that walkability is preserved when creating rooms in indoor map."""
@@ -6576,7 +6576,7 @@ class TestWalkabilityGranular:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder = builder_no_kits
         
@@ -6615,7 +6615,7 @@ class TestWalkabilityGranular:
                     "Transformed walkable face should still have walkable material"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
     def test_multiple_rooms_walkability_independence(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test that multiple rooms maintain independent walkability."""
@@ -6625,7 +6625,7 @@ class TestWalkabilityGranular:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         builder = builder_no_kits
         
@@ -6645,7 +6645,7 @@ class TestWalkabilityGranular:
                     break
         
         if len(rooms) < 2:
-            pytest.skip("Need at least 2 modules with components")
+            pytest.fail("Need at least 2 modules with components")
         
         # Verify each room maintains its walkability
         for room, original_bwm in rooms:
@@ -6665,7 +6665,7 @@ class TestWalkabilityGranular:
         roots = manager.get_module_roots()
         
         if not roots:
-            pytest.skip("No modules available")
+            pytest.fail("No modules available")
         
         for root in roots[:5]:
             kit = manager.get_module_kit(root)
@@ -6695,7 +6695,7 @@ class TestWalkabilityGranular:
                         assert adj.edge in (0, 1, 2), f"Adjacency edge should be 0, 1, or 2, got {adj.edge}"
             return
         
-        pytest.skip("No modules with components found")
+        pytest.fail("No modules with components found")
 
 
 class TestIndoorMapBuildAndSave:
@@ -6809,12 +6809,12 @@ class TestIndoorMapBuildAndSave:
         builder = builder_with_real_kit
         
         if not builder._kits:
-            pytest.skip("No kits available for building")
+            pytest.fail("No kits available for building")
         
         # Use only complete kits
         complete_kits = _get_complete_kits(builder._kits)
         if not complete_kits:
-            pytest.skip("No complete kits available for building")
+            pytest.fail("No complete kits available for building")
         
         # Add a room from first complete kit
         if complete_kits[0].components:
@@ -6840,7 +6840,7 @@ class TestIndoorMapBuildAndSave:
         builder = builder_with_real_kit
         
         if not builder._kits:
-            pytest.skip("No kits available for building")
+            pytest.fail("No kits available for building")
         
         # Add a room
         if builder._kits[0].components:
@@ -6977,7 +6977,7 @@ class TestIndoorMapIOValidation:
         complete_kits = _get_complete_kits(builder._kits)
         
         if not complete_kits:
-            pytest.skip("No complete kits available for build testing")
+            pytest.fail("No complete kits available for build testing")
         
         tested_count = 0
         
@@ -7035,7 +7035,7 @@ class TestIndoorMapIOValidation:
         complete_kits = _get_complete_kits(builder._kits)
         
         if not complete_kits:
-            pytest.skip("No complete kits available for build testing")
+            pytest.fail("No complete kits available for build testing")
         
         tested_count = 0
         
@@ -7099,7 +7099,7 @@ class TestIndoorMapIOValidation:
         complete_kits = _get_complete_kits(builder._kits)
         
         if not complete_kits:
-            pytest.skip("No complete kits available for build testing")
+            pytest.fail("No complete kits available for build testing")
         
         tested_count = 0
         
@@ -7161,7 +7161,7 @@ class TestIndoorMapIOValidation:
         complete_kits = _get_complete_kits(builder._kits)
         
         if not complete_kits:
-            pytest.skip("No complete kits available for build testing")
+            pytest.fail("No complete kits available for build testing")
         
         tested_count = 0
         
@@ -7212,7 +7212,7 @@ class TestIndoorMapIOValidation:
         complete_kits = _get_complete_kits(builder._kits)
         
         if not complete_kits:
-            pytest.skip("No complete kits available for build testing")
+            pytest.fail("No complete kits available for build testing")
         
         tested_count = 0
         
@@ -7263,7 +7263,7 @@ class TestIndoorMapIOValidation:
         complete_kits = _get_complete_kits(builder._kits)
         
         if not complete_kits:
-            pytest.skip("No complete kits available for build testing")
+            pytest.fail("No complete kits available for build testing")
         
         tested_count = 0
         
@@ -7313,7 +7313,7 @@ class TestIndoorMapIOValidation:
         complete_kits = _get_complete_kits(builder._kits)
         
         if not complete_kits:
-            pytest.skip("No complete kits available for build testing")
+            pytest.fail("No complete kits available for build testing")
         
         tested_count = 0
         
@@ -7367,7 +7367,7 @@ class TestIndoorMapIOValidation:
         complete_kits = _get_complete_kits(builder._kits)
         
         if not complete_kits:
-            pytest.skip("No complete kits available for build testing")
+            pytest.fail("No complete kits available for build testing")
         
         tested_count = 0
         
@@ -7439,7 +7439,7 @@ class TestIndoorMapIOValidation:
         complete_kits = _get_complete_kits(builder._kits)
         
         if not complete_kits:
-            pytest.skip("No complete kits available for build testing")
+            pytest.fail("No complete kits available for build testing")
         
         tested_count = 0
         
@@ -7501,7 +7501,7 @@ class TestModuleKitBWMCentering:
         module_roots = manager.get_module_roots()
         
         if not module_roots:
-            pytest.skip("No modules available in installation")
+            pytest.fail("No modules available in installation")
         
         # Test first available module
         module_root = module_roots[0]
@@ -7509,7 +7509,7 @@ class TestModuleKitBWMCentering:
         kit.ensure_loaded()
         
         if not kit.components:
-            pytest.skip(f"Module {module_root} has no components")
+            pytest.fail(f"Module {module_root} has no components")
         
         for component in kit.components:
             bwm = component.bwm
@@ -7553,14 +7553,14 @@ class TestModuleKitBWMCentering:
         module_roots = manager.get_module_roots()
         
         if not module_roots:
-            pytest.skip("No modules available in installation")
+            pytest.fail("No modules available in installation")
         
         module_root = module_roots[0]
         kit = manager.get_module_kit(module_root)
         kit.ensure_loaded()
         
         if not kit.components:
-            pytest.skip(f"Module {module_root} has no components")
+            pytest.fail(f"Module {module_root} has no components")
         
         component = kit.components[0]
         
@@ -7585,7 +7585,7 @@ class TestModuleKitBWMCentering:
         vertices = list(walkmesh.vertices())
         
         if not vertices:
-            pytest.skip("Component has no walkmesh vertices")
+            pytest.fail("Component has no walkmesh vertices")
         
         bwm_min_x = min(v.x for v in vertices)
         bwm_max_x = max(v.x for v in vertices)
@@ -7649,14 +7649,14 @@ class TestModuleKitBWMCentering:
         module_roots = manager.get_module_roots()
         
         if not module_roots:
-            pytest.skip("No modules available in installation")
+            pytest.fail("No modules available in installation")
         
         module_root = module_roots[0]
         kit = manager.get_module_kit(module_root)
         kit.ensure_loaded()
         
         if not kit.components:
-            pytest.skip(f"Module {module_root} has no components")
+            pytest.fail(f"Module {module_root} has no components")
         
         component = kit.components[0]
         renderer = builder_no_kits.ui.mapRenderer
@@ -7725,14 +7725,14 @@ class TestModuleKitBWMCentering:
         module_roots = manager.get_module_roots()
         
         if not module_roots:
-            pytest.skip("No modules available in installation")
+            pytest.fail("No modules available in installation")
         
         module_root = module_roots[0]
         kit = manager.get_module_kit(module_root)
         kit.ensure_loaded()
         
         if not kit.components:
-            pytest.skip(f"Module {module_root} has no components")
+            pytest.fail(f"Module {module_root} has no components")
         
         # Test multiple components to catch edge cases
         for component in kit.components[:3]:  # Test first 3 components
@@ -7831,14 +7831,14 @@ class TestModuleKitBWMCentering:
         module_roots = manager.get_module_roots()
         
         if not module_roots:
-            pytest.skip("No modules available in installation")
+            pytest.fail("No modules available in installation")
         
         module_root = module_roots[0]
         kit = manager.get_module_kit(module_root)
         kit.ensure_loaded()
         
         if not kit.components:
-            pytest.skip(f"Module {module_root} has no components")
+            pytest.fail(f"Module {module_root} has no components")
         
         component1 = kit.components[0]
         renderer = builder_no_kits.ui.mapRenderer
@@ -7916,7 +7916,7 @@ class TestKitModuleEquivalence:
         kits, missing = load_kits(kits_path)
         
         if not kits:
-            pytest.skip("No kits found in kits folder")
+            pytest.fail("No kits found in kits folder")
         
         for kit in kits:
             for component in kit.components:
@@ -7966,7 +7966,7 @@ class TestKitModuleEquivalence:
         kits, missing = load_kits(kits_path)
         
         if not kits:
-            pytest.skip("No kits found in kits folder")
+            pytest.fail("No kits found in kits folder")
         
         manager = ModuleKitManager(installation)
         
@@ -7982,10 +7982,10 @@ class TestKitModuleEquivalence:
                 module_kit = manager.get_module_kit(module_root)
                 module_kit.ensure_loaded()
             except Exception:  # noqa: BLE001
-                pytest.skip(f"Could not load ModuleKit for {module_root}")
+                pytest.fail(f"Could not load ModuleKit for {module_root}")
             
             if not module_kit.components:
-                pytest.skip(f"ModuleKit {module_root} has no components")
+                pytest.fail(f"ModuleKit {module_root} has no components")
             
             # Create a mapping from component names to components
             # Kit components use IDs like "council_1", ModuleKit uses "M14AA_01G_0"
@@ -8144,7 +8144,7 @@ class TestKitModuleEquivalence:
         kits, missing = load_kits(kits_path)
         
         if not kits:
-            pytest.skip("No kits found in kits folder")
+            pytest.fail("No kits found in kits folder")
         
         for kit in kits:
             for component in kit.components:
