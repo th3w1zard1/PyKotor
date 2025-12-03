@@ -89,16 +89,16 @@ class SetDestinations(PrunedDepthFirstAdapter):
                     node_pos = self.outer.get_pos(node)
                     if node_pos == self.pos and self.outer.destination is None and (not self.needcommand or NodeUtils.is_command_node(node)):
                         self.outer.destination = node
-                except RuntimeError:
+                except RuntimeError:  # noqa: S110
                     # Node doesn't have position set, skip it
                     pass
 
-            def case_a_program(self, node: AProgram):  # noqa: C901
+            def case_a_program(self, node: AProgram):  # noqa: C901, PLR0912
                 self.in_a_program(node)
                 if node.get_return() is not None:
                     node.get_return().apply(self)
                 temp = list(node.get_subroutine())
-                
+
                 # Try binary search first
                 cur = len(temp) // 2
                 min_idx = 0
@@ -146,10 +146,10 @@ class SetDestinations(PrunedDepthFirstAdapter):
                                 break
                 self.out_a_program(node)
 
-            def case_a_command_block(self, node: ACommandBlock):  # noqa: C901
+            def case_a_command_block(self, node: ACommandBlock):  # noqa: C901, PLR0912
                 self.in_a_command_block(node)
                 temp = list(node.get_cmd())
-                
+
                 # Try binary search first
                 cur = len(temp) // 2
                 min_idx = 0
@@ -198,8 +198,9 @@ class SetDestinations(PrunedDepthFirstAdapter):
 
         adapter = LookForPosAdapter(self, pos, needcommand)
         self.ast.apply(adapter)
-        
+
         # Final fallback: if still not found, do a full exhaustive search
+        # This searches ALL nodes, not just command blocks, to find the target position
         if self.destination is None:
             class ExhaustiveSearchAdapter(PrunedDepthFirstAdapter):
                 def __init__(self, outer: SetDestinations, pos: int, needcommand: bool):  # noqa: FBT001
@@ -210,14 +211,31 @@ class SetDestinations(PrunedDepthFirstAdapter):
 
                 def default_in(self, node: Node):
                     from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]  # noqa: PLC0415
+                    if self.outer.destination is not None:
+                        return
                     try:
                         node_pos = self.outer.get_pos(node)
-                        if node_pos == self.pos and self.outer.destination is None and (not self.needcommand or NodeUtils.is_command_node(node)):
-                            self.outer.destination = node
-                    except RuntimeError:
-                        # Node doesn't have position set, skip it
+                        if node_pos == self.pos:
+                            # Found exact position match
+                            if not self.needcommand:
+                                # Any node is acceptable
+                                self.outer.destination = node
+                            elif NodeUtils.is_command_node(node):
+                                # Need command node and this is one
+                                self.outer.destination = node
+                            else:
+                                # Need command node but this isn't one - try to find command child
+                                try:
+                                    cmd_child = NodeUtils.get_command_child(node)
+                                    if NodeUtils.is_command_node(cmd_child):
+                                        self.outer.destination = cmd_child
+                                except RuntimeError:
+                                    # No command child found, continue searching
+                                    pass
+                    except RuntimeError:  # noqa: S110
+                        # Node doesn't have position set, continue searching children
                         pass
-            
+
             exhaustive_adapter = ExhaustiveSearchAdapter(self, pos, needcommand)
             self.ast.apply(exhaustive_adapter)
 
