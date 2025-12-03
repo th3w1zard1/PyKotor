@@ -9,7 +9,7 @@ References:
     Libraries/PyKotor/src/utility/system/win32/test_better_statresult.py - Existing test style
 """
 
-from __init__ import annotations
+from __future__ import annotations
 
 __all__ = []
 
