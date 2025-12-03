@@ -408,18 +408,9 @@ class UTCEditor(Editor):
         self.ui.noReorientateCheckbox.setChecked(utc.not_reorienting)
         self.ui.noBlockCheckbox.setChecked(utc.ignore_cre_path)
         self.ui.hologramCheckbox.setChecked(utc.hologram)
-        # raceSelect uses itemData (5 for Droid, 6 for Creature), not index
-        # Find the index that has the matching itemData
-        race_index = -1
-        for i in range(self.ui.raceSelect.count()):
-            if self.ui.raceSelect.itemData(i) == utc.race_id:
-                race_index = i
-                break
-        if race_index >= 0:
-            self.ui.raceSelect.setCurrentIndex(race_index)
-        else:
-            # Fallback: use race_id as index if no match found
-            self.ui.raceSelect.setCurrentIndex(utc.race_id)
+        # raceSelect is a ComboBox2DA which overrides setCurrentIndex() to expect the row index (5 or 6)
+        # So we can use setCurrentIndex() directly with the race_id
+        self.ui.raceSelect.setCurrentIndex(utc.race_id)
         self.ui.subraceSelect.setCurrentIndex(utc.subrace_id)
         self.ui.speedSelect.setCurrentIndex(utc.walkrate_id)
         self.ui.factionSelect.setCurrentIndex(utc.faction_id)
@@ -449,7 +440,7 @@ class UTCEditor(Editor):
         self.ui.wisdomSpin.setValue(utc.wisdom)
         self.ui.charismaSpin.setValue(utc.charisma)
 
-        # TODO(th3w1zard1): Fix the maximum. Use max() due to uncertainty, but it's probably always 150.
+        # TODO(th3w1zard1): Fix the maximum. Use max() due to uncertainty
         self.ui.baseHpSpin.setMaximum(max(self.ui.baseHpSpin.maximum(), utc.hp))
         self.ui.currentHpSpin.setMaximum(max(self.ui.currentHpSpin.maximum(), utc.current_hp))
         self.ui.maxHpSpin.setMaximum(max(self.ui.maxHpSpin.maximum(), utc.max_hp))
@@ -579,7 +570,7 @@ class UTCEditor(Editor):
         # raceSelect is a ComboBox2DA which overrides currentIndex() to return the row index (5 or 6)
         # So we can use currentIndex() directly to get the race_id
         race_id = self.ui.raceSelect.currentIndex()
-        utc.race_id = race_id if race_id >= 0 else 0
+        utc.race_id = max(race_id, 0)
         utc.subrace_id = self.ui.subraceSelect.currentIndex()
         utc.walkrate_id = self.ui.speedSelect.currentIndex()
         utc.faction_id = self.ui.factionSelect.currentIndex()
