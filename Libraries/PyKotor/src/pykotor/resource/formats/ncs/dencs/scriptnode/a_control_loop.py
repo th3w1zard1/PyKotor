@@ -10,21 +10,23 @@ if TYPE_CHECKING:
 class AControlLoop(ScriptRootNode):
     def __init__(self, start: int = 0, end: int = 0):
         super().__init__(start, end)
-        self.condition: AExpression | None = None
+        self._condition: AExpression | None = None
 
     def end(self, end: int):
         self.end = end
 
+    @property
+    def condition(self) -> AExpression | None:
+        return self._condition
+
+    @condition.setter
     def condition(self, condition: AExpression):
         condition.parent(self)  # type: ignore
-        self.condition = condition
-
-    def condition(self) -> AExpression | None:
-        return self.condition
+        self._condition = condition
 
     def close(self):
         super().close()
-        if self.condition is not None:
-            self.condition.close()  # type: ignore
-            self.condition = None
+        if self._condition is not None:
+            self._condition.close()  # type: ignore
+            self._condition = None
 

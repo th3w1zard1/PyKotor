@@ -11,7 +11,7 @@ class AIf(AControlLoop):
     def __init__(self, start: int = 0, end: int = 0, condition: AExpression | None = None):
         super().__init__(start, end)
         if condition is not None:
-            self.condition(condition)
+            self.condition = condition
 
     def __str__(self) -> str:
         buff = []

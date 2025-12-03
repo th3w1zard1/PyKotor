@@ -160,7 +160,7 @@ class SubScriptState:
     def transform_end_do_loop(self):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_do_loop import ADoLoop  # pyright: ignore[reportMissingImports]
         if isinstance(self.current, ADoLoop):
-            self.current.condition(self.remove_last_exp(False))
+            self.current.condition = self.remove_last_exp(False)
 
     def transform_origin_found(self, destination, origin):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
@@ -373,23 +373,23 @@ class SubScriptState:
         if not self.current.has_children() and isinstance(self.current, AIf) and isinstance(self.current.parent(), AIf):
             right = self.current
             left = self.current.parent()
-            conexp = AConditionalExp(left.condition(), right.condition(), NodeUtils.get_op(node))
+            conexp = AConditionalExp(left.condition, right.condition, NodeUtils.get_op(node))
             conexp.set_stackentry(self.stack.get(1))
             self.current = self.current.parent()
-            self.current.condition(conexp)
+            self.current.condition = conexp
             self.current.remove_last_child()
         else:
             right2 = self.remove_last_exp(False)
             if not self.current.has_children() and isinstance(self.current, AIf):
-                left2 = self.current.condition()
+                left2 = self.current.condition
                 conexp = AConditionalExp(left2, right2, NodeUtils.get_op(node))
                 conexp.set_stackentry(self.stack.get(1))
-                self.current.condition(conexp)
+                self.current.condition = conexp
             elif not self.current.has_children() and isinstance(self.current, AWhileLoop):
-                left2 = self.current.condition()
+                left2 = self.current.condition
                 conexp = AConditionalExp(left2, right2, NodeUtils.get_op(node))
                 conexp.set_stackentry(self.stack.get(1))
-                self.current.condition(conexp)
+                self.current.condition = conexp
             else:
                 left2 = self.remove_last_exp(False)
                 conexp = AConditionalExp(left2, right2, NodeUtils.get_op(node))
@@ -500,7 +500,7 @@ class SubScriptState:
         self.check_start(node)
         if self.state == 3:
             if isinstance(self.current, AWhileLoop):
-                self.current.condition(self.remove_last_exp(False))
+                self.current.condition = self.remove_last_exp(False)
                 self.state = 0
         elif not NodeUtils.is_jz(node):
             if self.state != 4:
@@ -563,7 +563,7 @@ class SubScriptState:
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.script_root_node import ScriptRootNode  # pyright: ignore[reportMissingImports]
         if isinstance(self.current, AIf):
-            exp = self.current.condition()
+            exp = self.current.condition
             parent = self.current.parent()
             if isinstance(parent, ScriptRootNode):
                 self.current = parent
