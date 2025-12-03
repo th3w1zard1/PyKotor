@@ -277,8 +277,14 @@ class TestXoreosFilePath(unittest.TestCase):
         return str(path.with_suffix(new_extension))
 
     def _get_file(self, path: str) -> str:
-        """Get filename from path."""
-        return Path(path).name
+        """Get filename from path.
+        
+        For paths ending with '/', returns empty string (matching test expectation).
+        Otherwise returns the filename component.
+        """
+        if path.endswith('/'):
+            return ""
+        return PurePosixPath(path).name
 
     def _get_directory(self, path: str) -> str:
         """Get directory from path."""
