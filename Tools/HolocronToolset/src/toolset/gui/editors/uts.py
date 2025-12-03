@@ -217,8 +217,6 @@ class UTSEditor(Editor):
         uts.active = self.ui.activeCheckbox.isChecked()
 
         # Advanced
-        uts.random_range_x = self.ui.northRandomSpin.value()
-        uts.random_range_y = self.ui.eastRandomSpin.value()
         uts.positional = self.ui.playSpecificRadio.isChecked()
         uts.random_pick = self.ui.orderRandomRadio.isChecked()
         uts.interval = self.ui.intervalSpin.value()
@@ -241,8 +239,8 @@ class UTSEditor(Editor):
         uts.max_distance = self.ui.maxVolumeDistanceSpin.value()
         uts.min_distance = self.ui.cutoffSpin.value()
         uts.elevation = self.ui.heightSpin.value()
-        uts.random_range_x = self.ui.northRandomSpin.value()
-        uts.random_range_y = self.ui.eastRandomSpin.value()
+        uts.random_range_y = self.ui.northRandomSpin.value()
+        uts.random_range_x = self.ui.eastRandomSpin.value()
 
         # Comments
         uts.comment = self.ui.commentsEdit.toPlainText()
