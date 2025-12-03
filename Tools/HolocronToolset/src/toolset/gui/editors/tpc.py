@@ -5,7 +5,11 @@ import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from PIL import Image
+try:
+    from PIL import Image
+except ImportError:
+    Image = None  # type: ignore[assignment, unused-ignore]
+
 from qtpy.QtCore import QBuffer, QEasingCurve, QIODevice, QPropertyAnimation, Qt  # type: ignore[attr-defined]
 from qtpy.QtGui import (
     QDrag,
@@ -642,6 +646,19 @@ class TPCEditor(Editor):
             mipmap_index = max(0, min(self._current_mipmap, len(self._tpc.layers[layer_index].mipmaps) - 1))
             mipmap: TPCMipmap = self._tpc.layers[layer_index].mipmaps[mipmap_index].copy()
             export_format = mipmap.tpc_format
+
+            # Check if PIL is available
+            if Image is None:
+                from toolset.gui.common.localization import translate as tr
+                QMessageBox.critical(
+                    self,
+                    tr("Export Failed"),
+                    tr(
+                        "The 'Pillow' module is not installed, so texture export is not available.\n\n"
+                        "Please install it to enable texture export functionality:\npip install Pillow"
+                    ),
+                )
+                return
 
             # Convert to displayable format
             if export_format == TPCTextureFormat.DXT1:
