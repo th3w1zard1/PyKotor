@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "pip>=21.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "holocron-ai"
+version = "0.1.0"
+description = "A Star Wars character AI chat interface using PyQt and LLMs"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "PyKotor Team" }
+]
+maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
+keywords = [
+    "kotor", "star-wars",
+    "ai", "llm", "chat",
+    "character", "roleplay",
+    "pyqt5", "pykotor",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Environment :: X11 Applications :: Qt",
+]
+dependencies = [
+    "pykotor>=2.0.0",
+]
+
+[project.scripts]
+holocron-ai = "holocron_ai.__main__:main"
+
+[project.gui-scripts]
+holocron-ai-gui = "holocron_ai.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+
+# Poetry configuration
+[tool.poetry]
+name = "holocron-ai"
+version = "0.1.0"
+description = "A Star Wars character AI chat interface using PyQt and LLMs"
+authors = ["PyKotor Team", "Benjamin Auquite <halomastar@gmail.com>"]
+maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+readme = "README.md"
+license = "MIT"
+packages = [{ include = "holocron_ai", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pykotor = "^2.0.0"
+
+[tool.poetry.scripts]
+holocron-ai = "holocron_ai.__main__:main"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pylint.messages_control]
+disable = ["C0111", "C0103"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']

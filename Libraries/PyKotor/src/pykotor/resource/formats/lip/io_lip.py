@@ -10,6 +10,16 @@ if TYPE_CHECKING:
 
 
 class LIPBinaryReader(ResourceReader):
+    """Reads LIP (Lip Sync) files.
+    
+    LIP files store lip-sync animation data for character speech, mapping time points
+    to mouth shapes for synchronized lip movement during voice-over playback.
+    
+    References:
+    ----------
+        vendor/reone/src/libs/graphics/format/lipreader.cpp:26-50 (LIP reading)
+        vendor/reone/src/libs/graphics/format/lipwriter.cpp (LIP writing)
+    """
     def __init__(
         self,
         source: SOURCE_TYPES,
@@ -20,10 +30,7 @@ class LIPBinaryReader(ResourceReader):
         self._lip: LIP | None = None
 
     @autoclose
-    def load(
-        self,
-        auto_close: bool = True,
-    ) -> LIP:
+    def load(self, *, auto_close: bool = True) -> LIP:  # noqa: FBT001, FBT002, ARG002
         self._lip = LIP()
 
         file_type = self._reader.read_string(4)
@@ -40,6 +47,7 @@ class LIPBinaryReader(ResourceReader):
         self._lip.length = self._reader.read_single()
         entry_count = self._reader.read_uint32()
 
+        # vendor/reone/src/libs/graphics/format/lipreader.cpp:35-45
         for _ in range(entry_count):
             time = self._reader.read_single()
             shape = LIPShape(self._reader.read_uint8())
@@ -61,10 +69,7 @@ class LIPBinaryWriter(ResourceWriter):
         self._lip: LIP = lip
 
     @autoclose
-    def write(
-        self,
-        auto_close: bool = True,
-    ):
+    def write(self, *, auto_close: bool = True):  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
         self._writer.write_string("LIP ")
         self._writer.write_string("V1.0")
         self._writer.write_single(self._lip.length)

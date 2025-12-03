@@ -1,0 +1,31 @@
+name: Check File Permissions
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  check-permissions:
+    name: Check File Permissions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for executable Python files
+        run: |
+          # Check for Python files that should not be executable
+          find Libraries Tools -name "*.py" -perm +111 | while read file; do
+            echo "⚠️ Executable Python file found: $file"
+          done || echo "No unexpected executable files found"
+
+      - name: Check for shell scripts
+        run: |
+          # Ensure shell scripts are executable
+          find scripts -name "*.sh" -not -perm +111 | while read file; do
+            echo "⚠️ Shell script not executable: $file"
+          done || echo "All shell scripts are executable"
+

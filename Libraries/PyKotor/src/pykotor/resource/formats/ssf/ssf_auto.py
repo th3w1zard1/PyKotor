@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 from typing import TYPE_CHECKING
 
 from pykotor.common.stream import BinaryReader
@@ -51,16 +49,8 @@ def detect_ssf(
 
     file_format: ResourceType
     try:
-        if isinstance(source, (os.PathLike, str)):
-            with BinaryReader.from_file(source, offset) as reader:
-                file_format = check(reader.read_string(4))
-        elif isinstance(source, (memoryview, bytes, bytearray)):
-            file_format = check(bytes(source[:4]).decode("ascii", "ignore"))
-        elif isinstance(source, BinaryReader):
-            file_format = check(source.read_string(4))
-            source.skip(-4)
-        else:
-            file_format = ResourceType.INVALID
+        with BinaryReader.from_auto(source, offset) as reader:
+            file_format = check(reader.read_string(4))
     except (FileNotFoundError, PermissionError, IsADirectoryError):
         raise
     except OSError:
@@ -73,6 +63,7 @@ def read_ssf(
     source: SOURCE_TYPES,
     offset: int = 0,
     size: int | None = None,
+    file_format: ResourceType | None = None,
 ) -> SSF:
     """Returns an SSF instance from the source.
 
@@ -83,6 +74,7 @@ def read_ssf(
         source: The source of the data.
         offset: The byte offset of the file inside the data.
         size: Number of bytes to allowed to read from the stream. If not specified, uses the whole stream.
+        file_format: The file format to use (ResourceType.SSF, ResourceType.SSF_XML). If not specified, it will be detected automatically.
 
     Raises:
     ------
@@ -95,7 +87,8 @@ def read_ssf(
     -------
         An SSF instance.
     """
-    file_format: ResourceType = detect_ssf(source, offset)
+    if file_format is None:
+        file_format = detect_ssf(source, offset)
 
     if file_format is ResourceType.INVALID:
         msg = "Failed to determine the format of the GFF file."
@@ -160,4 +153,4 @@ def bytes_ssf(
     """
     data = bytearray()
     write_ssf(ssf, data, file_format)
-    return data
+    return bytes(data)

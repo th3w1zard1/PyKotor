@@ -23,7 +23,32 @@ if ($this_noprompt) {
 Write-Host "----------------------------------------"
 
 $iconExtension = if ((Get-OS) -eq 'Mac') {'icns'} else {'ico'}
+# Add wiki files to be bundled
+$wikiPath = (Resolve-Path -LiteralPath "$repoRootPath/wiki").Path
+$addDataArgs = @()
+# PyInstaller uses semicolon on Windows, colon on Unix
+$dataSeparator = if (Get-OS -eq "Windows") { ";" } else { ":" }
+if (Test-Path -LiteralPath $wikiPath -ErrorAction SilentlyContinue) {
+    $addDataArgs += "--add-data=$wikiPath$dataSeparator`wiki"
+    Write-Host "Including wiki directory: $wikiPath"
+}
+
+# Add kotorblender addon for Blender integration
+$kotorblenderPath = "$repoRootPath/vendor/kotorblender/io_scene_kotor"
+if (Test-Path -LiteralPath $kotorblenderPath -ErrorAction SilentlyContinue) {
+    $addDataArgs += "--add-data=$kotorblenderPath$dataSeparator`kotorblender/io_scene_kotor"
+    Write-Host "Including kotorblender addon: $kotorblenderPath"
+}
+
 $pyInstallerArgs = @{
+    'hidden-import' = @(
+        'utility',
+        'utility.error_handling',
+        'utility.common',
+        'utility.system',
+        'utility.ui_libraries',
+        'utility.updater'
+    )
     'exclude-module' = @(
         'dl_translate',
         'torch'
@@ -80,12 +105,28 @@ $pyInstallerArgs = @{
     'distpath'=($repoRootPath + $pathSep + "dist")
     'upx-dir' = $upx_dir
     'icon'="resources/icons/sith.$iconExtension"
-    'path'=''
+    'path'=@()
 }
 
 $toolSrcDir = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Tools$($pathSep)$($pyInstallerArgs.name)$($pathSep)src").Path
 $pyInstallerArgs.workpath = "$toolSrcDir$($pathSep)build"
 $pyInstallerArgs.path += $toolSrcDir
+# Add paths for local libraries that PyInstaller needs to find
+$utilityPath = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Libraries$($pathSep)Utility$($pathSep)src").Path
+$pykotorPath = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Libraries$($pathSep)PyKotor$($pathSep)src").Path
+$pykotorGLPath = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Libraries$($pathSep)PyKotorGL$($pathSep)src").Path
+if (Test-Path -LiteralPath $utilityPath -ErrorAction SilentlyContinue) {
+    $pyInstallerArgs.path += $utilityPath
+    Write-Host "Including Utility library path: $utilityPath"
+}
+if (Test-Path -LiteralPath $pykotorPath -ErrorAction SilentlyContinue) {
+    $pyInstallerArgs.path += $pykotorPath
+    Write-Host "Including PyKotor library path: $pykotorPath"
+}
+if (Test-Path -LiteralPath $pykotorGLPath -ErrorAction SilentlyContinue) {
+    $pyInstallerArgs.path += $pykotorGLPath
+    Write-Host "Including PyKotorGL library path: $pykotorGLPath"
+}
 Write-Host "toolSrcDir: '$toolSrcDir'"
 
 
@@ -101,6 +142,9 @@ $argumentsArray = $pyInstallerArgs.GetEnumerator() | ForEach-Object {
         else { "--$($_.Key)=$($_.Value)" }
     }
 }
+
+# Add wiki data files
+$argumentsArray += $addDataArgs
 
 
 # Remove old compile/build files/folders if clean is set.

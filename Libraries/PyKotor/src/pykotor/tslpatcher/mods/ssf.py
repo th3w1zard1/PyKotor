@@ -1,3 +1,15 @@
+"""SSF modification algorithms for TSLPatcher/HoloPatcher.
+
+This module implements SSF modification logic for applying patches from changes.ini files.
+Handles sound set entry modifications and memory token resolution.
+
+References:
+----------
+    vendor/TSLPatcher/TSLPatcher.pl - Original Perl SSF modification logic
+    vendor/HoloPatcher.NET/src/TSLPatcher.Core/Mods/SSF/ - C# SSF modification implementation
+    vendor/Kotor.NET/Kotor.NET.Patcher/ - Incomplete C# patcher
+"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -7,7 +19,6 @@ from pykotor.resource.formats.ssf.io_ssf import SSFBinaryReader
 from pykotor.tslpatcher.mods.template import PatcherModifications
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
 
     from pykotor.common.misc import Game
     from pykotor.resource.formats.ssf import SSF, SSFSound
@@ -29,31 +40,31 @@ class ModificationsSSF(PatcherModifications):
     def __init__(
         self,
         filename: str,
-        replace_file: bool,  # noqa: FBT001
+        replace: bool,  # noqa: FBT001
         modifiers: list[ModifySSF] | None = None,
     ):
         super().__init__(filename)
-        self.replace_file: bool = replace_file
+        self.replace_file: bool = replace
         self.no_replacefile_check = True
         self.modifiers: list[ModifySSF] = [] if modifiers is None else modifiers
 
     def patch_resource(
         self,
-        source_ssf: SOURCE_TYPES,
+        source: SOURCE_TYPES,
         memory: PatcherMemory,
         logger: PatchLogger,
         game: Game,
-    ) -> bytes | Literal[True]:
-        ssf: SSF = SSFBinaryReader(source_ssf).load()
+    ) -> bytes:
+        ssf: SSF = SSFBinaryReader(source).load()
         self.apply(ssf, memory, logger, game)
         return bytes_ssf(ssf)
 
     def apply(
         self,
-        ssf: SSF,
+        mutable_data: SSF,
         memory: PatcherMemory,
         logger: PatchLogger,
         game: Game,
     ):
         for modifier in self.modifiers:
-            modifier.apply(ssf, memory)
+            modifier.apply(mutable_data, memory)

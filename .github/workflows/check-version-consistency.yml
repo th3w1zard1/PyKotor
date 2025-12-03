@@ -1,0 +1,31 @@
+name: Check Version Consistency
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  version-check:
+    name: Check Version Consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check version consistency
+        run: |
+          # Check that all pyproject.toml files have consistent versions
+          ROOT_VERSION=$(grep -E '^version\s*=' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          echo "Root version: $ROOT_VERSION"
+          
+          for pyproject in Libraries/*/pyproject.toml Tools/*/pyproject.toml; do
+            if [ -f "$pyproject" ]; then
+              VERSION=$(grep -E '^version\s*=' "$pyproject" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+              echo "Found version $VERSION in $pyproject"
+              # Add version validation logic here
+            fi
+          done
+

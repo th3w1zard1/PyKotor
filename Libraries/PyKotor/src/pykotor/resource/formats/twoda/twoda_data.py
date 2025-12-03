@@ -1,11 +1,72 @@
-"""This module handles classes related to reading, modifying and writing 2DA files."""
+"""This module handles classes related to reading, modifying and writing 2DA files.
+
+2DA (Two-Dimensional Array) files store tabular game data in a spreadsheet-like format.
+They contain configuration data for nearly all game systems: items, spells, creatures,
+skills, feats, and many other game mechanics. The format uses column headers, row labels,
+and string-based cells that are parsed as integers, floats, or other types as needed.
+
+References:
+----------
+    vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:1-945 - Complete 2DA implementation
+    vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs:10-139 - Binary format
+    vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:20-288 - C# 2DA reader/writer
+    vendor/KotOR-Bioware-Libs/TwoDA.pm - Perl 2DA library
+    vendor/reone/include/reone/resource/2da.h:28-107 - C++ 2DA class
+    vendor/xoreos/src/aurora/2dafile.cpp:38-376 - 2DA file handling
+    vendor/KotOR.js/src/resource/TwoDAObject.ts:9-276 - TypeScript implementation
+    vendor/sotor/core/src/formats/twoda/read.rs:13-127 - Rust 2DA reader
+
+Binary Format (Version 2.b):
+----------------------------
+    Header (9 bytes):
+        - 4 bytes: File Type ("2DA ")
+        - 4 bytes: File Version ("V2.0" or "v2.b" for binary)
+        - 1 byte: Line break ('\n')
+    
+    Column Headers (variable length):
+        - Tab-separated column names
+        - Terminated by null byte ('\0')
+    
+    Row Count:
+        - 4 bytes: Number of rows (int32)
+    
+    Row Labels (variable length):
+        - Tab-separated row labels/indices
+        - One per row
+    
+    Cell Data Offsets:
+        - 2 bytes per cell (uint16): offset into cell data string table
+        - One offset for each cell (row_count * column_count)
+    
+    Cell Data Size:
+        - 2 bytes (uint16): total size of cell data string table
+    
+    Cell Data String Table:
+        - Null-terminated strings
+        - Deduplicated (same string value shares offset)
+        - Blank cells typically stored as empty string or "****"
+        
+    Reference: Kotor.NET:19-63, KotOR_IO:60-135, TSLPatcher/TwoDA.pm:200-350
+
+ASCII Format (Version V2.0):
+----------------------------
+    Line 1: "2DA V2.0"
+    Line 2: Blank line or DEFAULT: value
+    Line 3: Tab-separated column headers
+    Lines 4+: Row_label <tab> cell1 <tab> cell2...
+    
+    Blank cells represented as "****"
+"""
 
 from __future__ import annotations
 
-from contextlib import suppress
+import copy as copy_module
+
+from contextlib import contextmanager, suppress
 from copy import copy
 from typing import TYPE_CHECKING, Any, TypeVar
 
+from pykotor.resource.formats._base import ComparableMixin
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
@@ -15,18 +76,94 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 
 
-class TwoDA:
-    """Represents a 2DA file."""
+class TwoDA(ComparableMixin):
+    """Two-Dimensional Array table for game configuration data.
+    
+    2DA files store tabular data used throughout the game engine. Each file contains
+    a set of named columns (headers), numbered rows (labels), and string-valued cells.
+    The game reads these files at startup and queries them during gameplay for various
+    configuration values like item properties, spell effects, creature stats, etc.
+    
+    References:
+    ----------
+        vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:48-71 - get_cell() implementation
+        vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs:12-112 - FileRoot class
+        vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:20-152 - TwoDA class structure
+        vendor/reone/include/reone/resource/2da.h:28-107 - TwoDA C++ class
+        vendor/xoreos/src/aurora/2dafile.h:40-108 - 2DAFile class
+        
+    Attributes:
+    ----------
+        _rows: Internal list of row dictionaries mapping column headers to cell values
+            Reference: TSLPatcher/TwoDA.pm:70 (table hash structure)
+            Reference: KotOR_IO/TwoDA.cs:152 (Data dictionary)
+            Reference: reone/2da.h:103 (_rows vector)
+            Each row is a dict[str, str] where keys are column headers
+            All cell values stored as strings regardless of actual type
+            Empty/blank cells represented as "" (empty string)
+            
+        _headers: List of column header names
+            Reference: TSLPatcher/TwoDA.pm:130 (columns array)
+            Reference: Kotor.NET/TwoDABinaryStructure.cs:15 (ColumnHeaders list)
+            Reference: KotOR_IO/TwoDA.cs:142 (Columns list)
+            Reference: reone/2da.h:102 (_columns vector)
+            Headers are case-sensitive strings (typically lowercase)
+            Order matters for binary format cell offset calculation
+            Common headers: "label", "name", "description", "icon", etc.
+            
+        _labels: List of row labels (typically numeric indices as strings)
+            Reference: TSLPatcher/TwoDA.pm:133 (rows_array)
+            Reference: Kotor.NET/TwoDABinaryStructure.cs:16 (RowHeaders list)
+            Reference: KotOR_IO/TwoDA.cs:100 (generated index_list)
+            Row labels are usually numeric ("0", "1", "2"...) but can be arbitrary strings
+            Used for row identification and lookup
+            Game typically accesses rows by integer index, labels are metadata
+    """
 
     BINARY_TYPE = ResourceType.TwoDA
+    COMPARABLE_SEQUENCE_FIELDS = ("_rows", "_headers", "_labels")
 
     def __init__(
         self,
         headers: list[str] | None = None,
     ):
+        # vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs:17
+        # vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:152
+        # vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:70
+        # Internal storage: list of dicts, each dict is a row mapping column headers to cell values
         self._rows: list[dict[str, str]] = []
+        
+        # vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs:15
+        # vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:142
+        # vendor/reone/include/reone/resource/2da.h:102
+        # Column headers (case-sensitive, typically lowercase)
         self._headers: list[str] = [] if headers is None else headers  # for columns
+        
+        # vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs:16
+        # vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:98-100
+        # vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:133
+        # Row labels (usually "0", "1", "2"... but can be arbitrary strings)
         self._labels: list[str] = []  # for rows
+        
+        # Performance optimization: O(1) lookup for row labels
+        # Maps label string to row index for fast find_row() operations
+        self._label_to_index: dict[str, int] = {}
+
+    def __eq__(self, other):
+        if not isinstance(other, TwoDA):
+            return NotImplemented
+        return (
+            self._rows == other._rows
+            and self._headers == other._headers
+            and self._labels == other._labels
+        )
+
+    def __hash__(self):
+        return hash((
+            tuple(tuple(sorted(row.items())) for row in self._rows),
+            tuple(self._headers),
+            tuple(self._labels)
+        ))
 
     def __repr__(
         self,
@@ -39,6 +176,101 @@ class TwoDA:
         """Iterates through each row yielding a new linked TwoDARow instance."""
         for i, row in enumerate(self._rows):
             yield TwoDARow(self.get_label(i), row)
+
+    def __len__(
+        self,
+    ) -> int:
+        """Returns the number of rows in the 2DA.
+
+        Returns:
+        -------
+            The number of rows.
+        """
+        return self.get_height()
+
+    def __contains__(
+        self,
+        label: str,
+    ) -> bool:
+        """Checks if a row label exists in the 2DA.
+
+        Args:
+        ----
+            label: The row label to check.
+
+        Returns:
+        -------
+            True if the label exists, False otherwise.
+        """
+        return label in self._label_to_index
+
+    def __getitem__(
+        self,
+        key: int | str | slice,
+    ) -> TwoDARow | list[TwoDARow]:
+        """Pythonic access to rows by index, label, or slice.
+
+        Args:
+        ----
+            key: Row index (int), label (str), or slice.
+
+        Returns:
+        -------
+            TwoDARow for single access, list[TwoDARow] for slice.
+
+        Raises:
+        ------
+            KeyError: If label not found.
+            IndexError: If index out of range.
+        """
+        if isinstance(key, int):
+            return self.get_row(key)
+        if isinstance(key, str):
+            result = self.find_row(key)
+            if result is None:
+                raise KeyError(f"Row label '{key}' not found")
+            return result
+        if isinstance(key, slice):
+            indices = range(len(self._rows))[key]
+            return [self.get_row(i) for i in indices]
+        msg = f"Invalid key type: {type(key).__name__}. Expected int, str, or slice."
+        raise TypeError(msg)
+
+    @property
+    def shape(
+        self,
+    ) -> tuple[int, int]:
+        """Returns the dimensions of the 2DA as (rows, columns).
+
+        Returns:
+        -------
+            Tuple of (row_count, column_count).
+        """
+        return (self.get_height(), self.get_width())
+
+    @property
+    def columns(
+        self,
+    ) -> list[str]:
+        """Returns a copy of the column headers.
+
+        Returns:
+        -------
+            List of column header names.
+        """
+        return copy(self._headers)
+
+    @property
+    def index(
+        self,
+    ) -> list[str]:
+        """Returns a copy of the row labels.
+
+        Returns:
+        -------
+            List of row labels.
+        """
+        return copy(self._labels)
 
     def get_headers(
         self,
@@ -74,6 +306,17 @@ class TwoDA:
             raise KeyError(msg)
 
         return [self._rows[i][header] for i in range(self.get_height())]
+
+    def get_columns(
+        self,
+    ) -> dict[str, list[str]]:
+        """Returns all columns as a dictionary mapping header names to their column values.
+
+        Returns:
+        -------
+            A dictionary where keys are column headers and values are lists of cells.
+        """
+        return {header: self.get_column(header) for header in self._headers}
 
     def add_column(
         self,
@@ -142,6 +385,22 @@ class TwoDA:
         """
         return self._labels[row_index]
 
+    def get_row_label(
+        self,
+        row_index: int,
+    ) -> str:
+        """Returns the row label for the given row.
+
+        Args:
+        ----
+            row_index: The index of the row.
+
+        Returns:
+        -------
+            Returns the row label.
+        """
+        return self.get_label(row_index)
+
     def set_label(
         self,
         row_index: int,
@@ -149,12 +408,42 @@ class TwoDA:
     ):
         """Sets the row label at the given index.
 
+        Updates the label lookup dictionary for O(1) find_row performance.
+
         Args:
         ----
             row_index: The index of the row to change.
             value: The new row label.
         """
+        old_label = self._labels[row_index]
         self._labels[row_index] = value
+        # Update lookup dictionary
+        if old_label in self._label_to_index:
+            del self._label_to_index[old_label]
+        self._label_to_index[value] = row_index
+
+    def _rebuild_label_lookup(self):
+        """Rebuilds the label-to-index lookup dictionary.
+
+        Should be called after bulk operations that modify labels.
+        """
+        self._label_to_index = {label: idx for idx, label in enumerate(self._labels)}
+
+    def has_row(
+        self,
+        row_index: int,
+    ) -> bool:
+        """Checks if a row exists at the given index.
+
+        Args:
+        ----
+            row_index: The row index to check.
+
+        Returns:
+        -------
+            True if the row exists, False otherwise.
+        """
+        return 0 <= row_index < len(self._rows)
 
     def get_row(
         self,
@@ -188,6 +477,8 @@ class TwoDA:
     ) -> TwoDARow | None:
         """Find a row in a 2D array by its label.
 
+        Uses O(1) lookup via label_to_index dictionary for performance.
+
         Args:
         ----
             row_label: The label of the row to find
@@ -198,11 +489,14 @@ class TwoDA:
 
         Processing Logic:
         ----------------
-            - Iterate through each row in the 2D array
-            - Check if the row's label matches the given label
-            - If a match is found, return the row
-            - If no match is found after iterating all rows, return None.
+            - Use O(1) lookup dictionary if available
+            - Fallback to O(n) search for compatibility
         """
+        # Use O(1) lookup if available, fallback to O(n) search for compatibility
+        if row_label in self._label_to_index:
+            row_index = self._label_to_index[row_label]
+            return self.get_row(row_index)
+        # Fallback for cases where lookup dict might be out of sync
         return next((row for row in self if row.label() == row_label), None)
 
     def row_index(
@@ -249,7 +543,12 @@ class TwoDA:
             The id of the new row.
         """
         self._rows.append({})
-        self._labels.append(str(len(self._rows)) if row_label is None else row_label)
+        label = str(len(self._rows)) if row_label is None else row_label
+        self._labels.append(label)
+        
+        # Update lookup dictionary for O(1) find_row performance
+        row_index = len(self._rows) - 1
+        self._label_to_index[label] = row_index
 
         if cells is None:
             cells = {}
@@ -260,7 +559,7 @@ class TwoDA:
         for header in self._headers:
             self._rows[-1][header] = cells.get(header, "")
 
-        return len(self._rows) - 1
+        return row_index
 
     def copy_row(
         self,
@@ -282,7 +581,12 @@ class TwoDA:
         source_index = self.row_index(source_row)
 
         self._rows.append({})
-        self._labels.append(str(len(self._rows)) if row_label is None else row_label)
+        label = str(len(self._rows)) if row_label is None else row_label
+        self._labels.append(label)
+        
+        # Update lookup dictionary for O(1) find_row performance
+        row_index = len(self._rows) - 1
+        self._label_to_index[label] = row_index
 
         if override_cells is None:
             override_cells = {}
@@ -293,12 +597,13 @@ class TwoDA:
         for header in self._headers:
             self._rows[-1][header] = override_cells[header] if header in override_cells else self.get_cell(source_index, header)  # FIXME: source_index cannot be None
 
-        return len(self._rows) - 1
+        return row_index
 
     def get_cell(
         self,
         row_index: int,
         column: str,
+        context: str | None = None,
     ) -> str:
         """Returns the value of the cell at the specified row under the specified column.
 
@@ -306,6 +611,7 @@ class TwoDA:
         ----
             row_index: The row index.
             column: The column header.
+            context: Optional context string for better error messages.
 
         Raises:
         ------
@@ -316,7 +622,44 @@ class TwoDA:
         -------
             The cell value.
         """
-        return self._rows[row_index][column]
+        try:
+            return self._rows[row_index][column]
+        except KeyError as e:
+            available = [h for h in self._headers if h in self._rows[row_index]]
+            msg = f"Column '{column}' not found in row {row_index}."
+            if available:
+                msg += f" Available columns: {available}"
+            if context:
+                msg += f" | Context: {context}"
+            raise KeyError(msg) from e
+        except IndexError as e:
+            msg = f"Row index {row_index} out of range [0, {len(self._rows)})"
+            if context:
+                msg += f" | Context: {context}"
+            raise IndexError(msg) from e
+
+    def get_cell_safe(
+        self,
+        row_index: int,
+        column: str,
+        default: str = "",
+    ) -> str:
+        """Safe cell access with default value - perfect for model loading and similar use cases.
+
+        Args:
+        ----
+            row_index: The row index.
+            column: The column header.
+            default: Default value to return if row/column doesn't exist.
+
+        Returns:
+        -------
+            The cell value, or default if row/column doesn't exist.
+        """
+        try:
+            return self.get_cell(row_index, column)
+        except (KeyError, IndexError):
+            return default
 
     def set_cell(
         self,
@@ -386,6 +729,9 @@ class TwoDA:
         if row_count < current_height:
             # trim the _rows list
             self._rows = self._rows[:row_count]
+            self._labels = self._labels[:row_count]
+            # Rebuild lookup dictionary after trimming
+            self._rebuild_label_lookup()
         else:
             # insert the new rows with each cell filled in blank
             for _ in range(row_count - current_height):
@@ -434,6 +780,76 @@ class TwoDA:
                 max_found = max(int(label), max_found)
 
         return max_found + 1
+
+    def update_cells(
+        self,
+        updates: dict[tuple[int, str], Any],
+    ):
+        """Batch update multiple cells efficiently.
+
+        Args:
+        ----
+            updates: Dictionary mapping (row_index, column) tuples to new values.
+
+        Example:
+        -------
+            twoda.update_cells({
+                (0, "name"): "New Name",
+                (1, "value"): 42,
+                (2, "description"): "Updated"
+            })
+        """
+        for (row_idx, col), value in updates.items():
+            self.set_cell(row_idx, col, value)
+
+    def filter_rows(
+        self,
+        predicate: Callable[[TwoDARow], bool],
+    ) -> TwoDA:
+        """Return new TwoDA with filtered rows.
+
+        Args:
+        ----
+            predicate: Function that takes a TwoDARow and returns True to keep it.
+
+        Returns:
+        -------
+            New TwoDA instance with filtered rows.
+
+        Example:
+        -------
+            filtered = twoda.filter_rows(lambda row: row.get_string("type") == "weapon")
+        """
+        result = TwoDA(self._headers)
+        for row in self:
+            if predicate(row):
+                result.add_row(row.label(), row._data)
+        return result
+
+    @contextmanager
+    def batch_update(self):
+        """Context manager for batch updates with validation and rollback on error.
+
+        If an exception occurs during the batch update, all changes are rolled back.
+
+        Example:
+        -------
+            with twoda.batch_update():
+                twoda.set_cell(0, "name", "new_value")
+                twoda.add_row("new_label")
+                # If any error occurs, all changes are rolled back
+        """
+        original_rows = copy_module.deepcopy(self._rows)
+        original_labels = copy(self._labels)
+        original_label_to_index = copy(self._label_to_index)
+        try:
+            yield self
+        except Exception:
+            # Rollback on error
+            self._rows = original_rows
+            self._labels = original_labels
+            self._label_to_index = original_label_to_index
+            raise
 
     def compare(
         self,
@@ -506,13 +922,48 @@ class TwoDA:
         return ret
 
 
-class TwoDARow:
+class TwoDARow(ComparableMixin):
+    """A single row in a 2DA table with accessor methods for typed cell values.
+    
+    TwoDARow provides a convenient interface for accessing and modifying cell values
+    in a specific row, with automatic type conversion for integers, floats, and enums.
+    This class is typically returned by TwoDA.get_row() and provides a pythonic interface
+    to the underlying string-based storage.
+    
+    References:
+    ----------
+        vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:48-71 - Cell access by row/column
+        vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:162-200 - Indexer for cell access
+        vendor/reone/src/libs/resource/2da.cpp:36-84 - Type conversion methods
+        
+    Attributes:
+    ----------
+        _row_label: The label/identifier for this row
+            Reference: TSLPatcher/TwoDA.pm:133 (rows_array)
+            Reference: Kotor.NET/TwoDABinaryStructure.cs:35-36 (row label reading)
+            Usually numeric ("0", "1"...) but can be arbitrary string
+            
+        _data: Dictionary mapping column headers to cell string values
+            Reference: TSLPatcher/TwoDA.pm:70 (table->{row}{column} structure)
+            Reference: KotOR_IO/TwoDA.cs:152 (Data[columnLabel][rowIndex])
+            All values stored as strings, converted on access
+            Empty cells are "" (empty string), not null/None
+    """
+    
+    COMPARABLE_FIELDS = ("_row_label", "_data")
     def __init__(
         self,
         row_label: str,
         row_data: dict[str, str],
     ):
+        # vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs:35-36
+        # vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:133
+        # Row label (typically numeric index as string)
         self._row_label: str = row_label
+        
+        # vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:152
+        # vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:70
+        # Cell data: column_header -> cell_value (all strings)
         self._data: dict[str, str] = row_data
 
     def __repr__(
@@ -527,6 +978,9 @@ class TwoDARow:
             return self._row_label == other._row_label and self._data == other._data
         return NotImplemented
 
+    def __hash__(self):
+        return hash((self._row_label, tuple(sorted(self._data.items()))))
+
     def label(
         self,
     ) -> str:
@@ -537,6 +991,22 @@ class TwoDARow:
             The label for the row.
         """
         return self._row_label
+
+    def has_string(
+        self,
+        header: str,
+    ) -> bool:
+        """Checks if a header exists in this row.
+
+        Args:
+        ----
+            header: The column header to check.
+
+        Returns:
+        -------
+            True if the header exists, False otherwise.
+        """
+        return header in self._data
 
     def update_values(
         self,

@@ -1,191 +1,157 @@
-"""This module handles classes relating to editing RIM files."""
+"""This module handles classes relating to editing RIM files.
+
+RIM (Resource Information Module) files store template resources used as module blueprints.
+RIM files are similar to ERF files but are read-only from the game's perspective. The game
+loads RIM files as templates for modules and exports them to ERF format for runtime mutation.
+RIM files store all resources inline with metadata, making them self-contained archives.
+
+References:
+----------
+    vendor/reone/include/reone/resource/format/rimreader.h:29-57 - RimReader class
+    vendor/reone/src/libs/resource/format/rimreader.cpp:24-100 - RIM loading implementation
+    vendor/Kotor.NET/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:11-121 - Binary structure
+    vendor/KotOR_IO/KotOR_IO/File Formats/RIM.cs:20-260 - C# RIM implementation
+    vendor/xoreos/src/aurora/rimfile.cpp:40-160 - RIM file handling
+    vendor/KotOR-Bioware-Libs/RIM.pm:1-280 - Perl RIM library
+
+Binary Format:
+-------------
+    Header (20 bytes):
+        Offset | Size | Type   | Description
+        -------|------|--------|-------------
+        0x00   | 4    | char[] | File Type ("RIM ")
+        0x04   | 4    | char[] | File Version ("V1.0")
+        0x08   | 4    | uint32 | Unknown (typically 0x00000000)
+        0x0C   | 4    | uint32 | Resource Count
+        0x10   | 4    | uint32 | Offset to Resource Table
+    
+    Resource Entry (32 bytes each):
+        Offset | Size | Type   | Description
+        -------|------|--------|-------------
+        0x00   | 16   | char[] | ResRef (filename, null-padded, max 16 chars)
+        0x10   | 4    | uint32 | Resource Type ID
+        0x14   | 4    | uint32 | Resource ID (index, usually sequential)
+        0x18   | 4    | uint32 | Offset to Resource Data
+        0x1C   | 4    | uint32 | Resource Size
+    
+    Resource Data:
+        Raw binary data for each resource at specified offsets
+        
+    Extended Header (104 bytes total after standard 20-byte header):
+        Contains IsExtension flag (byte 0x14) and 99 reserved bytes
+        Extension RIMs have filenames ending in 'x' (e.g., module001x.rim)
+        
+    Reference: reone/rimreader.cpp:24-100, Kotor.NET:23-38, KotOR_IO:42-85
+"""
 
 from __future__ import annotations
 
-from copy import copy
-from typing import Any, Generator
+from typing import TYPE_CHECKING
 
-from pykotor.common.misc import ResRef
 from pykotor.extract.file import ResourceIdentifier
-from pykotor.resource.formats.erf.erf_data import ERF
+from pykotor.resource.bioware_archive import ArchiveResource, BiowareArchive
 from pykotor.resource.type import ResourceType
-from utility.common.more_collections import OrderedSet
+
+if TYPE_CHECKING:
+    from pykotor.common.misc import ResRef
 
 
-class RIM:
-    """Represents the data of a RIM file."""
+class RIMResource(ArchiveResource):
+    """A resource stored inside a RIM archive.
+    
+    RIM resources are similar to ERF resources - they include the ResRef (filename) and
+    resource type within the archive metadata. RIM resources are typically read-only from
+    the game's perspective, as RIM files serve as module templates.
+    
+    References:
+    ----------
+        vendor/reone/include/reone/resource/format/rimreader.h:31-35 - ResourceEntry struct
+        vendor/Kotor.NET/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:88-119 - ResourceEntry
+        vendor/KotOR_IO/KotOR_IO/File Formats/RIM.cs:147-185 - rFile class
+        
+    Attributes:
+    ----------
+        All inherited from ArchiveResource (resref, restype, data, size)
+        RIM resources have no additional attributes beyond ArchiveResource
+    """
+
+    def __init__(self, resref: ResRef, restype: ResourceType, data: bytes):
+        # vendor/Kotor.NET/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:104-108
+        # vendor/KotOR_IO/KotOR_IO/File Formats/RIM.cs:63-64
+        # ResRef stored in Resource Entry (16 bytes, null-padded)
+        # ResourceType stored in Resource Entry (4 bytes, uint32)
+        # Resource data referenced via offset and size fields
+        super().__init__(resref=resref, restype=restype, data=data)
+
+
+class RIM(BiowareArchive):
+    """Represents a RIM (Resource Information Module) file.
+    
+    RIM files are template archives used to initialize game modules. They are similar to ERF
+    files but serve a different purpose - providing immutable resource templates that the game
+    engine reads and exports to ERF format for runtime use. RIM files can also be extensions
+    to other RIM files (marked with 'x' in filename).
+    
+    References:
+    ----------
+        vendor/reone/include/reone/resource/format/rimreader.h:29-57 - RimReader class
+        vendor/Kotor.NET/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:13-53 - FileRoot
+        vendor/KotOR_IO/KotOR_IO/File Formats/RIM.cs:20-260 - Complete RIM implementation
+        vendor/xoreos/src/aurora/rimfile.h:40-100 - RIMFile class
+        
+    Attributes:
+    ----------
+        Inherits from BiowareArchive: _resources, _resource_dict, etc.
+        RIM-specific attributes managed by underlying BiowareArchive
+    """
 
     BINARY_TYPE = ResourceType.RIM
+    ARCHIVE_TYPE: type[ArchiveResource] = RIMResource
+    COMPARABLE_SET_FIELDS = ("_resources",)
 
-    def __init__(
-        self,
-    ):
-        self._resources: OrderedSet[RIMResource] = OrderedSet()
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(resources={len(self._resources)})"
 
-    def __iter__(
-        self,
-    ) -> Generator[RIMResource, Any, None]:
-        """Iterates through the stored resources yielding a copied resource each iteration."""
-        for resource in self._resources:
-            yield copy(resource)
-
-    def __len__(
-        self,
-    ):
-        """Returns the number of stored resources."""
-        return len(self._resources)
-
-    def __getitem__(
-        self,
-        item,
-    ):
-        """Returns a resource at the specified index or with the specified resref."""
-        if isinstance(item, int):
-            return self._resources[item]
-        if isinstance(item, str):
-            try:
-                return next(resource for resource in self._resources if resource.resref == item)
-            except StopIteration as e:
-                msg = f"{item} not found."
-                raise KeyError(msg) from e
-        return NotImplemented
-
-    def __add__(self, other: RIM) -> RIM:
-        """Combines the resources of two RIM instances into a new RIM instance.
-
-        Args:
-        ----
-            other: Another RIM instance.
-
-        Returns:
-        -------
-            A new RIM instance containing the combined resources.
-        """
-        if not isinstance(other, RIM):
-            return NotImplemented
-
-        combined_rim = RIM()
-        for resource in self:
-            combined_rim.set_data(str(resource.resref), resource.restype, resource.data)
-        for resource in other:
-            combined_rim.set_data(str(resource.resref), resource.restype, resource.data)
-
-        return combined_rim
-
-    def set_data(
-        self,
-        resname: str,
-        restype: ResourceType,
-        data: bytes,
-    ):
-        """Sets the data of the resource with the specified resref/restype pair.
-
-        If it does not exists, a resource is appended to the resource list.
-
-        Args:
-        ----
-            resname: The resource reference filename.
-            restype: The resource type.
-            data: The new resource data.
-        """
-        resource: RIMResource | None = next(
-            (resource for resource in self._resources if resource.resref == resname and resource.restype == restype),
-            None,
-        )
-        if resource is None:
-            self._resources.append(RIMResource(ResRef(resname), restype, data))
-        else:
-            resource.resref = ResRef(resname)
-            resource.restype = restype
-            resource.data = data
-
-    def get(
-        self,
-        resname: str,
-        restype: ResourceType,
-    ) -> bytes | None:
-        """Returns the data of the resource with the specified resref/restype pair if it exists, otherwise returns None.
-
-        Args:
-        ----
-            resname: The resource reference filename.
-            restype: The resource type.
-
-        Returns:
-        -------
-            The bytes data of the resource or None.
-        """
-        resource: RIMResource | None = next(
-            (resource for resource in self._resources if resource.resref == resname and resource.restype == restype),
-            None,
-        )
+    def get(self, resname: str, restype: ResourceType) -> bytes | None:
+        """Return the raw bytes for a resource, or None when not present."""
+        resource = self._resource_dict.get(ResourceIdentifier(resname, restype))
         return None if resource is None else resource.data
 
-    def remove(
-        self,
-        resname: str,
-        restype: ResourceType,
-    ):
-        """Removes the resource with the given resref/restype pair if it exists.
+    def remove(self, resname: str, restype: ResourceType) -> None:
+        """Remove a resource from the archive if it exists."""
+        key = ResourceIdentifier(resname, restype)
+        resource = self._resource_dict.pop(key, None)
+        if resource is not None:
+            self._resources.remove(resource)
 
-        Args:
-        ----
-            resname: The resource reference filename.
-            restype: The resource type.
-        """
-        self._resources = [res for res in self._resources if res.resref != resname and res.restype != restype]
-
-    def to_erf(
-        self,
-    ):
-        """Returns a ERF with the same resources. Defaults to an ERF with ERFType.ERF set.
-
-        Returns:
-        -------
-            A new ERF object.
-        """
-        from pykotor.resource.formats.erf import ERF  # Prevent circular imports
+    def to_erf(self):
+        """Return an ERF archive with the same resource payload."""
+        from pykotor.resource.formats.erf.erf_data import ERF  # Prevent circular imports  # noqa: PLC0415
 
         erf = ERF()
         for resource in self._resources:
             erf.set_data(str(resource.resref), resource.restype, resource.data)
         return erf
 
-    def __eq__(self, other):
-        from pykotor.resource.formats.rim import RIM
-        if not isinstance(other, (ERF, RIM)):
+    def get_resource_offset(self, resource: ArchiveResource) -> int:
+        """Compute the binary offset for a given resource when serialised."""
+        if not isinstance(resource, RIMResource):
+            raise TypeError("Resource is not a RIMResource")
+        from pykotor.resource.formats.rim.io_rim import RIMBinaryWriter  # noqa: PLC0415
+
+        entry_count = len(self._resources)
+        offset_to_keys = RIMBinaryWriter.FILE_HEADER_SIZE
+        data_start = offset_to_keys + RIMBinaryWriter.KEY_ELEMENT_SIZE * entry_count
+
+        resource_index = self._resources.index(resource)
+        return data_start + sum(len(res.data) for res in self._resources[:resource_index])
+
+    def __eq__(self, other: object):
+        from pykotor.resource.formats.erf.erf_data import ERF  # Prevent circular imports  # noqa: PLC0415
+
+        if not isinstance(other, (RIM, ERF)):
             return NotImplemented
         return set(self._resources) == set(other._resources)
 
-
-class RIMResource:
-    def __init__(
-        self,
-        resref: ResRef,
-        restype: ResourceType,
-        data: bytes,
-    ):
-        self.resref: ResRef = resref
-        self.restype: ResourceType = restype
-        if isinstance(data, bytearray):  # FIXME: Something is passing bytearray here
-            data = bytes(data)
-        self.data: bytes = data
-
-    def __eq__(
-        self,
-        other,
-    ):
-        from pykotor.resource.formats.erf import ERFResource
-        if not isinstance(other, (ERFResource, RIMResource)):
-            return NotImplemented
-        return (
-            self.resref == other.resref
-            and self.restype == other.restype
-            and self.data == other.data
-        )
-
-    def __hash__(self):
-        return hash((self.resref, self.restype, self.data))
-
-    def identifier(self) -> ResourceIdentifier:
-        return ResourceIdentifier(str(self.resref), self.restype)
+    def __hash__(self) -> int:
+        return hash(tuple(self._resources))

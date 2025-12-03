@@ -1,0 +1,37 @@
+name: Check Documentation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for broken links
+        uses: peter-evans/link-checker@v1
+        with:
+          args: -r -v docs/ README.md CONTRIBUTING.md
+        continue-on-error: true
+
+      - name: Check markdown formatting
+        uses: DavidAnson/markdownlint-cli2-action@v15
+        with:
+          globs: |
+            **/*.md
+            !vendor/**/*.md
+        continue-on-error: true
+
+      - name: Validate docstrings
+        run: |
+          pip install pydocstyle
+          pydocstyle Libraries/PyKotor/src/pykotor --config=pyproject.toml || true
+        continue-on-error: true
+

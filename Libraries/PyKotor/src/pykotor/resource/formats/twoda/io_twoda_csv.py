@@ -14,6 +14,16 @@ if TYPE_CHECKING:
 
 
 class TwoDACSVReader(ResourceReader):
+    """Reads 2DA files from CSV format.
+    
+    CSV is a PyKotor-specific convenience format for easier editing in spreadsheet applications.
+    Format: First column is row label, remaining columns are headers.
+    
+    References:
+    ----------
+        vendor/xoreos-tools/src/xml/2dadumper.cpp (2DA to text formats)
+        Note: CSV format is PyKotor-specific, not a standard game format
+    """
     def __init__(
         self,
         source: SOURCE_TYPES,
@@ -24,10 +34,7 @@ class TwoDACSVReader(ResourceReader):
         self._twoda: TwoDA | None = None
 
     @autoclose
-    def load(
-        self,
-        auto_close: bool = True,
-    ) -> TwoDA:
+    def load(self, *, auto_close: bool = True) -> TwoDA:  # noqa: FBT001, FBT002, ARG002
         self._twoda = TwoDA()
         data: str = decode_bytes_with_fallbacks(self._reader.read_bytes(self._reader.size()))
         _csv = csv.reader(io.StringIO(data))
@@ -75,10 +82,7 @@ class TwoDACSVWriter(ResourceWriter):
         self._csv_writer = csv.writer(self._csv_string)
 
     @autoclose
-    def write(
-        self,
-        auto_close: bool = True,
-    ):
+    def write(self, *, auto_close: bool = True):  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
         headers: list[str] = self._twoda.get_headers()
 
         insert: list[str] = [""]

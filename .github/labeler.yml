@@ -1,0 +1,28 @@
+# Auto-label PRs based on changed files
+libraries:
+  - 'Libraries/**/*'
+  
+tools:
+  - 'Tools/**/*'
+  
+tests:
+  - 'tests/**/*'
+  
+docs:
+  - 'docs/**/*'
+  - README.md
+  - CONTRIBUTING.md
+  - '*.md'
+
+ci:
+  - '.github/**/*'
+  - '.github/workflows/**/*'
+
+dependencies:
+  - pyproject.toml
+  - 'requirements*.txt'
+  - '**/requirements.txt'
+  - '**/pyproject.toml'
+
+python:
+  - '**/*.py'

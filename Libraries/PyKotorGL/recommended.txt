@@ -1,1 +1,2 @@
 PyOpenGL_accelerate  # This set of C (Cython) extensions provides acceleration of common operations for slow points in PyOpenGL 3.x
+moderngl>=5.8.0  # Modern OpenGL wrapper with C extensions for improved rendering performance (recommended for Module Designer)

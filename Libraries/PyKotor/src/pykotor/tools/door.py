@@ -6,6 +6,7 @@ from pykotor.resource.formats.twoda import TwoDA, read_2da
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
+    from pykotor.extract.file import ResourceResult
     from pykotor.extract.installation import Installation
     from pykotor.resource.generics.utd import UTD
     from pykotor.resource.type import SOURCE_TYPES
@@ -18,6 +19,13 @@ def get_model(
     genericdoors: TwoDA | SOURCE_TYPES | None = None,
 ) -> str:
     """Returns the model name for the given door.
+    
+    References:
+    ----------
+        vendor/reone/src/libs/game/object/door.cpp (Door model lookup)
+        vendor/KotOR.js/src/module/ModuleDoor.ts (Door appearance handling)
+        Note: Door model lookup uses genericdoors.2da
+    
 
     If no value is specified for the genericdoor parameters then it will be loaded from the given installation.
 
@@ -36,7 +44,7 @@ def get_model(
         ValueError: genericdoors.2da not found in passed arguments OR the installation.
     """
     if genericdoors is None:
-        result = installation.resource("genericdoors", ResourceType.TwoDA)
+        result: ResourceResult | None = installation.resource("genericdoors", ResourceType.TwoDA)
         if not result:
             raise ValueError("Resource 'genericdoors.2da' not found in the installation, cannot get UTD model.")
         genericdoors = read_2da(result.data)

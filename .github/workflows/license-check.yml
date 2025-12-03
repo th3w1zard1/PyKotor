@@ -1,0 +1,40 @@
+name: License Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  license-check:
+    name: Check License Headers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install licensecheck
+        run: |
+          pip install licensecheck
+
+      - name: Check licenses
+        run: |
+          licensecheck --format json --output license-report.json Libraries/ Tools/ || true
+          licensecheck Libraries/ Tools/ || true
+        continue-on-error: true
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: license-report
+          path: license-report.json
+          retention-days: 30
+

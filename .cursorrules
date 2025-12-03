@@ -1,0 +1,173 @@
+# PyKotor Rules and Conventions for AI LLM agents
+
+## ⚠️ CRITICAL: Git Commit Requirement ⚠️
+
+**MANDATORY FOR ALL AI AGENTS**: After making ANY changes to files in this repository, you MUST:
+
+1. **Stage all modified files**: `git add <file1> <file2> ...` (or `git add .` for all changes)
+2. **Commit with a descriptive message**: `git commit -m "type: descriptive message"`
+3. **Verify the commit succeeded**: Check that `git commit` returns successfully with no errors
+
+**This is NOT optional.** Do NOT summarize changes without committing them. Do NOT skip this step. Every code change, file modification, or configuration update MUST be committed before you consider the task complete.
+
+**Commit message format**: Use conventional commits format:
+
+- `fix:` for bug fixes
+- `feat:` for new features
+- `refactor:` for code refactoring
+- `docs:` for documentation changes
+- `chore:` for maintenance tasks
+- `test:` for test changes
+
+Example: `git commit -m "fix: correct finalize job condition in workflow"`
+
+---
+
+## Documentation
+
+When creating ANY new `.md` files, always follow these guidelines:
+
+- Always place within `docs`
+- Never report on progression (changes and what still remains to be done).
+- Exclusively provide public-facing documentation, something an end user will need to read if they want to either develop for PyKotor or work with it.
+
+Please do not create .md documentation unless it delivers public-facing information or authoritative gameplay/platform references that an end user or developer genuinely needs for PyKotor or the games themselves.
+
+## Helper Scripts
+
+- Always place within `scripts`
+- Should be idempotent and flexible enough to be used for a plethora of scenarios, not just whatever the task you're working on involves.
+- Do not delete helper .py/.ps1/.sh scripts when you are finished with them; keep them in scripts folder
+
+## Terminal usage
+
+- Always check the operating system you're functioning in. Do NOT try to execute e.g. bash commands on powershell or vice versa. Most of the time you'lle xclusively be writing powershell given the windows-dominant nature of this repo's intended recipients.
+
+### Git commands and pagers
+
+**CRITICAL**: Git commands that produce multi-line output (e.g., `git log`, `git diff`, `git show`) invoke a pager (`less`) by default, which requires interactive input (scrolling, pressing `q` to exit). AI agents MUST run all Git commands non-interactively.
+
+**Always use one of these methods to disable pagers:**
+
+- **Preferred (inline flag)**: `git --no-pager <command>` (e.g., `git --no-pager log --oneline -10`)
+- **Session-wide**: Set `$env:GIT_PAGER = ''` in PowerShell before running Git commands
+- **Pipe output**: Pipe Git output to `Out-File` or `Select-String` to capture/filter without paging
+
+**Examples:**
+
+- `git --no-pager diff -- scripts/update_submodules.ps1` (non-interactive plain output)
+- `git --no-pager log --oneline --graph -10` (non-interactive log output)
+- `git --no-pager show <commit>` (non-interactive commit view)
+- `git --no-pager diff --name-only --diff-filter=U` (checking for unmerged files during conflicts - even `--name-only` can invoke pager)
+
+**Common pitfall**: Even commands that seem like they should produce simple output (e.g., `git diff --name-only`) can still invoke the pager. Always use `--no-pager` or disable the pager session-wide.
+
+Never run Git commands that may produce paged output without disabling the pager first.
+
+### Python usage in terminal
+
+- Use `uv` when possible
+- Setup venvs with `./install_python_venv.ps1` following its parameters closely `param( [switch]$noprompt, [string]$venv_name = ".venv", [string]$force_python_version )`. NEVER use `python -m venv`
+- If python isn't installed, ask the user if they want to install it (if yes, run install_python_venv with python 3.9 as the target). Ensure you explain to them what you will be doing if you require a yes or no answer.
+
+### Running Tests
+
+**IMPORTANT**: Always run tests with a timeout to prevent indefinite hangs. Use `.venv_3.13` virtual environment.
+
+**PowerShell pattern for tests with timeout (2 minutes default):**
+
+```powershell
+. .\.venv_3.13\Scripts\Activate.ps1
+$proc = Start-Process -FilePath "python" -ArgumentList "-m", "pytest", "<test_path>", "-v", "--tb=short" -PassThru -NoNewWindow
+if (-not $proc.WaitForExit(120000)) { $proc.Kill(); Write-Host "TEST TIMED OUT" } else { Write-Host "Exit code: $($proc.ExitCode)" }
+```
+
+**For multiple tests or full test suites:**
+
+```powershell
+. .\.venv_3.13\Scripts\Activate.ps1
+$proc = Start-Process -FilePath "python" -ArgumentList "-m", "pytest", "tests/test_utility/", "-v", "--tb=line" -PassThru -NoNewWindow
+if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TEST TIMED OUT after 5 minutes" }
+```
+
+**Key rules:**
+
+- Never run tests without a timeout - Qt/GUI tests can hang indefinitely
+- Use `Start-Process` with `-PassThru` and `WaitForExit(milliseconds)` for timeout control
+- Kill the process if it times out: `$proc.Kill()`
+- Default timeout: 120 seconds (2 minutes) for individual tests, 300 seconds (5 minutes) for test suites
+- Always use `.venv_3.13` - never use global Python installations
+
+## Conventions
+
+- When developing code, please ensure you ALWAYS check the .gitmodules and the ./vendor folder to find semantically similar code. For any hits, please always comment in the python code what relpath/line number it can be found at and any differences if any. This should be as full and complete as possible.
+- Do NOT use `hasattr` or `getattr` in most cases; prefer static type conditionals with e.g. `isinstance` or `issubclass`. tldr: prefer solutions that can be statically type checked with e.g. mypy/pyright.
+
+## Reference Material
+
+- Use ./vendor for code examples working with the KOTOR game. Note that some projects may be inaccurate or incomplete. Assume reone, xoreos, kotor.js, mdlops, and tga2tpc or anything by ndix UR are the most accurate, with everything else being significantly questionable.
+- Use ./wiki if you require information about the codebase.
+- Always assume ./docs has highly inaccurate and questionable material; try not to reference it unless absolutely necessary. Always second-guess its contents, but remember that vetted gameplay rules, system behavior, or platform notes can still be essential information that could be written here.
+
+### Submodules in this PyKotor project
+
+Relevance to pykotor means a few different things. All relevant submodules should:
+
+- contain implementation code, automation, reverse-engineering research, platform-specific documentation, or test‑critical assets/specifications directly relevant to the Knights of the Old Republic games (e.g., format parsers, engine/reimplementation work, installers/patchers, scripting/editor tooling, or authoritative data/route documentation used to drive automated tests e.g. speedrunning routes/pathways). Explicitly excluded are documentation that cannot inform development, testing, or cross-platform support. Also explicitly excluded are pre-built game payloads (install-ready mods, bundled override assets, binary patch drops without source, or other content redistributions).
+- actually have accurate content and be sufficiently comprehensive — typically around ≥500 lines of meaningful code or equivalent complexity. Smaller utilities are acceptable when they provide essential platform integration or developer workflows (e.g., registry path helpers, system installers), or when they expose non‑trivial logic operating on KotOR formats or subsystems such as Pazaak or other mini-games.
+- be appropriate to associate with: no piracy, malware, or illicit content. Legitimate developer/test tools (including cheat, debug, speedrun, or automation tools) are acceptable when used to support development, testing, or research of PyKotor or the games; piracy remains strictly disallowed.
+
+### Codebase Structure
+
+- Libraries contains shared code:
+  - `Libraries/PyKotor/src/pykotor/` should contain **ONLY KOTOR-specific code**. This includes game format parsers, resource manipulation, installation handling, and any functionality directly related to the Knights of the Old Republic games.
+  - `Libraries/PyKotor/src/utility/` should contain **general-purpose utility functions** that are not specific to KOTOR. Examples include font path discovery, cross-platform file operations, UI helpers, and other reusable utilities that could be used in any project.
+  - Structure: `Libraries/<project_name>/src/<namespace>/<short_pythonic_module_name>/__init__.py`. For PyKotor, the namespace is `pykotor` (which does NOT contain a `__init__.py`) for KOTOR-specific code, and `utility` for general-purpose utilities.
+- Tools contains public-facing projects and apps, structured `Tools/<project_name>/src/<short_pythonic_module_name>/__init__.py`. Everything in here must have implementations in ./compile and .github/workflows for their releases. A config.py will define all of the versioning information, see existing examples for e.g. holopatcher and holocron toolset.
+- `./compile` contains powershell scripts designed to pyinstaller a specific Tool to executable binary. Everything and anything in `./Tools` should be provided in `./compile`.
+- `./dist` is the intended output directory for compiled binaries
+- `./tests` contains any and all tests for the PyKotor repository.
+- `./Engines` a WIP engine for the game using Panda3d, based heavily on reone/kotor.js/xoreos.
+- `./scripts`: Helper scripts for various tasks. By design this will always be cluttered.
+- `logs`: One or more of the tools will be outputting logs here (probably holopatcher/toolset), should always be in `.gitignore`.
+- .env: contains PYTHONPATH, K1_PATH, K2_PATH, etc used for tests and python environment configs. Should match the exact paths used in `.vscode/settings.json` and root-level `./pyproject.toml`'s paths.
+
+## Linting
+
+- Always use `ruff`. Don't use anything else!
+
+## Generated Files
+
+- **NEVER modify auto-generated files directly**. These include:
+  - Files in `Tools/*/src/*/uic/` directories (generated from `.ui` files via `pyuic5`/`pyside6-uic`)
+  - Files in `Tools/*/src/*/rcc/` directories (generated from `.qrc` files)
+  - Any file with a comment indicating it was generated (e.g., "Form implementation generated from reading ui file")
+  
+- **To fix issues in generated files:**
+  1. Modify the source file (e.g., `.ui` file for UI definitions)
+  2. Regenerate using the appropriate script (e.g., `Tools/HolocronToolset/src/ui/convertui.py`)
+  3. If a custom widget class needs different initialization, make the class handle both the generated call pattern and manual usage
+
+- **Custom widgets used in UI files** should have flexible `__init__` methods that handle:
+  - Being called with just `parent` (as pyuic5 may generate)
+  - Being called with `title, parent` (as manual usage may require)
+  - Example: `def __init__(self, title: str | QWidget = "", parent: QWidget | None = None)`
+
+See `./CONVENTIONS.md` for more information!
+
+## KotorCLI Usage (Agents)
+
+- Always run the CLI from the repo root so that `Libraries/` is on `sys.path`. Prefer `uv run python -m kotorcli <command>`; for example `pwsh -c "uv run python -m kotorcli list"` or `bash -lc 'uv run python -m kotorcli search-archive --file $Env:K1_PATH/chitin.key --pattern global'`.
+- Installation roots: when a user explicitly says *K1*, resolve `$Env:K1_PATH` first, then fall back to `find_kotor_paths_from_default()[Game.K1]`. When they say *K2*/*TSL*, try `$Env:K2_PATH`, `$Env:TSL_PATH`, `$Env:KOTOR2_PATH`, and finally `$Env:K1_PATH` before checking `find_kotor_paths_from_default()[Game.K2]`. If no game is specified, probe both trees and choose whichever contains the referenced asset.
+- General pipeline for investigative prompts:
+  1. Scope the corpus with `kotorcli list` (targets) or `kotorcli list-archive --file <capsule>` to understand which assets are relevant.
+  2. Pull concrete resources with `kotorcli extract --file ... --filter <resref>` followed by the necessary converters (`gff2json`, `gff2xml`, `2da2csv`, `tlk2xml`, etc.) so that downstream tools/scripts can diff or inspect.
+  3. Run semantic search using `kotorcli search-archive --file <capsule> --pattern <needle> [--content]` whenever you need "find everything that references X" behaviour; combine with format converters to inspect matches.
+  4. For deltas or regressions, rely on `kotorcli diff`, `kotorcli validate`, and `kotorcli stats` to baseline assets before/after mutations.
+- Plot/quest analysis workflow (e.g., "list everything that modifies a plot point"):
+  1. `kotorcli search-archive --file $Env:K1_PATH/chitin.key --pattern global` to locate `global.jrl` plus overrides.
+  2. `kotorcli extract --file <capsule> --filter global.jrl && kotorcli gff2json global.jrl` to materialize the quest table.
+  3. Cross-reference journal updates by grepping scripts/dialogs: `kotorcli search-archive --file <module rim> --pattern "SetJournalEntry" --content`.
+  4. When scripts need inspection, decompile/disassemble with `kotorcli decompile` or `kotorcli disassemble`, then reuse the resulting `.nss` with `grep/stats`.
+- Targeted module deep dives should mirror the logic in `scripts/investigate_module_structure.py` and `scripts/investigate_module_structure.py` (room+resource introspection), `scripts/check_missing_resources.py` (override integrity), and related helpers under `scripts/`. Those scripts demonstrate how to chain `pykotor.extract.installation.Installation`, module RIM readers, and the CLI commands above—use them as references before crafting new flows.
+- Prefer bulk automation through the CLI instead of ad-hoc Python: most tasks (diffing, conversions, packing) already live under `Tools/KotorCLI/src/kotorcli/commands`. Only fall back to ad-hoc scripts if you need custom logic that the CLI reasonably should not express due to it being outside of the scope of the project.

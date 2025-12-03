@@ -1,0 +1,222 @@
+# Verify PyPI Package Regression Tests
+# This workflow runs regression tests against published PyPI packages
+# to ensure they remain functional over time.
+#
+# Runs on:
+# - Manual dispatch
+# - Weekly schedule
+# - After successful "Auto-Publish to PyPI" workflow
+
+name: Verify PyPI Regression
+
+on:
+  workflow_dispatch:
+    inputs:
+      pypi_source:
+        description: 'PyPI source to test'
+        required: true
+        default: 'pypi'
+        type: choice
+        options:
+          - pypi
+          - testpypi
+  schedule:
+    # Run weekly on Sundays at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_run:
+    workflows: ["Auto-Publish to PyPI"]
+    types: [completed]
+
+concurrency:
+  group: verify-pypi-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYPI_SOURCE: ${{ inputs.pypi_source || 'pypi' }}
+
+jobs:
+  test-pykotor-core:
+    name: PyKotor Core - Python ${{ matrix.python-version }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ['3.8', '3.10', '3.12']
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install pykotor
+        run: |
+          python -m pip install --upgrade pip
+          if [ "${{ env.PYPI_SOURCE }}" = "testpypi" ]; then
+            pip install "pykotor[all]" --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/
+          else
+            pip install "pykotor[all]"
+          fi
+        shell: bash
+      
+      - name: Test pykotor imports
+        run: |
+          python -c "
+          # Test core module imports
+          import pykotor
+          print('✓ pykotor imported')
+          
+          from pykotor.common.language import LocalizedString, Language, Gender
+          print('✓ LocalizedString imported')
+          
+          from pykotor.resource.type import ResourceType
+          print('✓ ResourceType imported')
+          
+          from pykotor.extract.installation import Installation
+          print('✓ Installation imported')
+          
+          from pykotor.tslpatcher import patcher
+          print('✓ TSLPatcher imported')
+          
+          # Test basic functionality
+          ls = LocalizedString.from_english('Test')
+          assert ls.get(Language.ENGLISH, Gender.MALE) == 'Test'
+          print('✓ LocalizedString works')
+          
+          assert ResourceType.UTC.extension == 'utc'
+          print('✓ ResourceType works')
+          
+          print()
+          print('All pykotor core tests passed!')
+          "
+      
+      - name: Test resource format imports
+        run: |
+          python -c "
+          from pykotor.resource.formats import gff, tlk, twoda, erf, rim, bif
+          print('✓ All format modules imported')
+          
+          from pykotor.resource.generics import are, git, ifo, utc, uti, utd, dlg
+          print('✓ All generic modules imported')
+          
+          print('All resource format tests passed!')
+          "
+
+  test-pykotor-extensions:
+    name: PyKotor Extensions - Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    needs: test-pykotor-core
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11']
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libgl1-mesa-glx xvfb
+      
+      - name: Install extensions
+        run: |
+          python -m pip install --upgrade pip
+          INDEX_ARGS=""
+          if [ "${{ env.PYPI_SOURCE }}" = "testpypi" ]; then
+            INDEX_ARGS="--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
+          fi
+          pip install "pykotor[all]" "pykotorgl[moderngl]" pykotorfont $INDEX_ARGS || echo "Some packages may not be available yet"
+        shell: bash
+      
+      - name: Test pykotorgl
+        run: |
+          python -c "
+          try:
+              from pykotor.gl import scene
+              from pykotor.gl.models import mdl
+              print('✓ PyKotorGL imported')
+          except ImportError as e:
+              print(f'○ PyKotorGL not available: {e}')
+          " || true
+      
+      - name: Test pykotorfont
+        run: |
+          python -c "
+          try:
+              from pykotor.font import draw
+              print('✓ PyKotorFont imported')
+          except ImportError as e:
+              print(f'○ PyKotorFont not available: {e}')
+          " || true
+
+  test-cli-tools:
+    name: CLI Tools - Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    needs: test-pykotor-core
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11']
+    steps:
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install tools
+        run: |
+          python -m pip install --upgrade pip
+          INDEX_ARGS=""
+          if [ "${{ env.PYPI_SOURCE }}" = "testpypi" ]; then
+            INDEX_ARGS="--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
+          fi
+          
+          # Install available tools
+          pip install holopatcher $INDEX_ARGS || echo "holopatcher not available"
+          pip install kotor-diff $INDEX_ARGS || echo "kotor-diff not available"
+          pip install kotorcli $INDEX_ARGS || echo "kotorcli not available"
+        shell: bash
+      
+      - name: Test holopatcher CLI
+        run: |
+          python -m holopatcher --help 2>&1 || echo "holopatcher help not available"
+        continue-on-error: true
+      
+      - name: Test kotor-diff CLI
+        run: |
+          python -m kotordiff --help 2>&1 || echo "kotordiff help not available"
+        continue-on-error: true
+      
+      - name: Test kotorcli CLI
+        run: |
+          kotorcli --help 2>&1 || python -m kotorcli --help 2>&1 || echo "kotorcli help not available"
+        continue-on-error: true
+
+  report:
+    name: Generate Report
+    runs-on: ubuntu-latest
+    needs: [test-pykotor-core, test-pykotor-extensions, test-cli-tools]
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## PyPI Regression Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Source:** ${{ env.PYPI_SOURCE }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| PyKotor Core | ${{ needs.test-pykotor-core.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PyKotor Extensions | ${{ needs.test-pykotor-extensions.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CLI Tools | ${{ needs.test-cli-tools.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.test-pykotor-core.result }}" == "success" ]]; then
+            echo "✅ Core functionality verified!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Some tests failed. Review logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+

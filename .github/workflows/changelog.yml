@@ -1,0 +1,43 @@
+name: Generate Changelog
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  changelog:
+    name: Generate Changelog
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate changelog
+        uses: metcalfc/changelog-generator@v4
+        with:
+          myToken: ${{ secrets.GITHUB_TOKEN }}
+          ignoreLabels: |
+            ignore-for-release
+            duplicate
+            question
+            invalid
+          sections: |
+            {"Breaking Changes":["breaking","breaking-change"],"Enhancements":["enhancement","feature"],"Fixes":["bug","fix"],"Documentation":["documentation","docs"],"Maintenance":["maintenance","dependencies","ci"]}
+          output: CHANGELOG.md
+
+      - name: Commit changelog
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+

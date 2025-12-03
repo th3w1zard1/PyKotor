@@ -1,47 +1,93 @@
+[build-system]
+requires = ["setuptools>=67.8.0,<70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pykotor-workspace"
+version = "2.0.0"
+description = "PyKotor workspace - meta-package for PyKotor ecosystem"
+authors = [{name = "NickHugi"}]
+maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "LGPL-3.0-or-later License"}
+keywords = ["kotor", "library", "holocron", "toolset", "pykotor", "editor", "holopatcher", "tslpatcher"]
+requires-python = ">=3.8"
+dependencies = [
+    "pykotor>=2.0.0",
+]
+
+[project.optional-dependencies]
+# Extension libraries
+font = ["pykotorfont>=2.0.0"]
+gl = ["pykotorgl[moderngl]>=2.0.2"]
+all-extensions = ["pykotorfont>=2.0.0", "pykotorgl[moderngl]>=2.0.2"]
+
+# Tools (lowercase PyPI names)
+holocrontoolset = ["holocrontoolset>=4.0.0a7"]
+holopatcher = ["holopatcher>=1.5.3"]
+kotor-diff = ["kotor-diff>=1.0.0"]
+batchpatcher = ["batchpatcher>=2.2.0"]
+gui-converter = ["gui-converter>=1.0.0"]
+kotorcli = ["kotorcli>=1.0.0"]
+holopazaak = ["holopazaak>=1.0.0"]
+kit-generator = ["kit-generator>=1.0.0"]
+all-tools = [
+    "holocrontoolset>=4.0.0a7",
+    "holopatcher>=1.5.3",
+    "kotor-diff>=1.0.0",
+    "batchpatcher>=2.2.0",
+    "gui-converter>=1.0.0",
+    "kotorcli>=1.0.0",
+    "holopazaak>=1.0.0",
+    "kit-generator>=1.0.0",
+]
+
+# Everything
+all = [
+    "pykotorfont>=2.0.0",
+    "pykotorgl[moderngl]>=2.0.2",
+    "holocrontoolset>=4.0.0a7",
+    "holopatcher>=1.5.3",
+    "kotor-diff>=1.0.0",
+    "batchpatcher>=2.2.0",
+    "gui-converter>=1.0.0",
+    "kotorcli>=1.0.0",
+    "holopazaak>=1.0.0",
+    "kit-generator>=1.0.0",
+]
+
+# Development dependencies
+dev = [
+    "astroid>=3.2.0,<3.5.0; python_version>=\"3.8\"",
+    "autoflake>=2.3.1; python_version>=\"3.8\"",
+    "iniconfig>=2.1.0; python_version>=\"3.8\"",
+    "mypy>=1.0.0,<1.10.0; python_version>=\"3.8\"",
+    "mypy-extensions>=1.1.0; python_version>=\"3.8\"",
+    "pyflakes>=2.0.0,<3.4.0; python_version>=\"3.8\"",
+    "pylint>=2.0.0,<3.3.9; python_version>=\"3.8\"",
+    "pytest>=7.0.0,<8.0.0; python_version>=\"3.8\"",
+    "pytest-html>=3.0.0,<4.0.0; python_version>=\"3.8\"",
+    "pytest-metadata>=2.0.0,<3.0.0; python_version>=\"3.8\"",
+    "pytest-xdist>=2.0.0,<3.8.0; python_version>=\"3.8\"",
+    "ruff>=0.1.0,<0.4.0; python_version>=\"3.8\"",
+    "snakeviz>=2.0.0,<2.2.2; python_version>=\"3.8\"",
+    "types-pillow>=10.2.0.20240822; python_version>=\"3.8\"",
+    "types-send2trash>=1.8.2.7; python_version>=\"3.8\"",
+    "typing-extensions>=4.5.0,<4.9.0; python_version<\"3.9\"",
+    "typing-extensions>=4.5.0; python_version>=\"3.9\"",
+]
+
 [tool.poetry]
 name = "pykotor-workspace"
-version = "1.0.0"
-description = "PyKotor Workspace"
+version = "2.0.0"
+description = "PyKotor workspace - meta-package for PyKotor ecosystem"
 authors = ["Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
-packages = [
-    { include = "pykotor", from = "Libraries/PyKotor/src" },
-    { include = "pykotorfont", from = "Libraries/PyKotorFont/src" },
-    { include = "pykotorgl", from = "Libraries/PyKotorGL/src" },
-    { include = "utility", from = "Libraries/Utility/src" },
-    { include = "toolset", from = "Tools/HolocronToolset/src" },
-    { include = "holopatcher", from = "Tools/HoloPatcher/src" },
-    { include = "kotordiff", from = "Tools/KotorDiff/src" },
-    { include = "batchpatcher", from = "Tools/BatchPatcher/src" },
-]
+packages = []
 
 [tool.poetry.dependencies]
 python = "^3.8"
-loggerplus = "^0.1.3"
 pykotor = { path = "Libraries/PyKotor", develop = true }
-pykotorfont = { path = "Libraries/PyKotorFont", develop = true }
-pykotorgl = { path = "Libraries/PyKotorGL", develop = true }
-utility = { path = "Libraries/Utility", develop = true }
-
-[tool.poetry.group.qt_tools]
-optional = true
-
-[tool.poetry.group.qt_tools.dependencies]
-qasync = "^0.23.0"
-pyqt5 = "^5.15.2"
-pyside2 = "^5.15.2"
-pyqt6 = "^6.0.0"
-pyside6 = "^6.0.0"
-
-[tool.poetry.group.tools]
-optional = true
-
-[tool.poetry.group.tools.dependencies]
-utility = { path = "Libraries/Utility", develop = true }
-holocron-toolset = { path = "Tools/HolocronToolset", develop = true }
-holo-patcher = { path = "Tools/HoloPatcher", develop = true }
-kotor-diff = { path = "Tools/KotorDiff", develop = true }
-batch-patcher = { path = "Tools/BatchPatcher", develop = true }
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"
@@ -52,17 +98,31 @@ autoflake = "*"
 pytest = "*"
 pytest-xdist = "*"
 pytest-html = "*"
-types-Pillow = "*"
-types-Send2Trash = "*"
-send2trash = "*"
+pytest-cov = "*"
 black = "*"
 flake8 = "*"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.poetry.extras]
+# Extension libraries
+font = ["pykotorfont"]
+gl = ["pykotorgl[moderngl]"]
+all-extensions = ["pykotorfont", "pykotorgl[moderngl]"]
 
-[tool.poetry.urls]
+# Tools
+holocrontoolset = ["holocrontoolset"]
+holopatcher = ["holopatcher"]
+kotor-diff = ["kotor-diff"]
+batchpatcher = ["batchpatcher"]
+gui-converter = ["gui-converter"]
+kotorcli = ["kotorcli"]
+holopazaak = ["holopazaak"]
+kit-generator = ["kit-generator"]
+all-tools = ["holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
+
+# Everything
+all = ["pykotorfont", "pykotorgl[moderngl]", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
+
+[project.urls]
 homepage = "https://github.com/th3w1zard1/PyKotor"
 documentation = "https://github.com/th3w1zard1/PyKotor/blob/master/README.md"
 repository = "https://github.com/th3w1zard1/PyKotor.git"
@@ -70,8 +130,55 @@ issues = "https://github.com/th3w1zard1/PyKotor/issues"
 #Changelog = "https://github.com/th3w1zard1/PyKotor/blob/master/CHANGELOG.md"
 
 ########################################################
+## UV workspace configuration                         ##
+########################################################
+
+[tool.uv]
+# Use local workspace packages only - PyPI has outdated pykotor 1.6.2
+dev-dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "Libraries/PyKotor",
+    "Libraries/PyKotorFont",
+    "Libraries/PyKotorGL",
+    "Tools/BatchPatcher",
+    "Tools/GuiConverter",
+    "Tools/HolocronAI",
+    "Tools/HolocronToolset",
+    "Tools/HoloGenerator",
+    "Tools/HoloPatcher",
+    "Tools/HoloPazaak",
+    "Tools/KitGenerator",
+    "Tools/KotorCLI",
+    "Tools/KotorDiff",
+]
+
+[tool.uv.sources]
+# Use workspace members instead of PyPI
+pykotor = { workspace = true }
+pykotorfont = { workspace = true }
+pykotorgl = { workspace = true }
+batchpatcher = { workspace = true }
+gui-converter = { workspace = true }
+holocron-ai = { workspace = true }
+holocrontoolset = { workspace = true }
+hologenerator = { workspace = true }
+holopatcher = { workspace = true }
+holopazaak = { workspace = true }
+kit-generator = { workspace = true }
+kotorcli = { workspace = true }
+kotor-diff = { workspace = true }
+
+########################################################
 ## define only linter configurations below this point ##
 ########################################################
+
+[tool.pyright.defineConstant]
+PYQT5 = true
+PYSIDE2 = false
+PYQT6 = false
+PYSIDE6 = false
 
 [tool.black]
 line-length = 175
@@ -104,9 +211,23 @@ exclude = '''
 '''
 
 [tool.pyright]
+include = ["*.py"]
+exclude = ["**/node_modules/**", "**/__pycache__/**", "**/build/**", "**/dist/**", "**/venv/**", "**/__pycache__/**"]
+extraPaths = [
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotorGL/src",
+    "Libraries/PyKotorFont/src",
+    "Tools/HolocronToolset/src",
+    "Tools/BatchPatcher/src",
+    "Tools/HoloPatcher/src",
+    "Tools/KotorDiff/src",
+    "Tools/GuiConverter/src"
+]
 reportMissingImports = true
-reportMissingTypeStubs = true
+reportMissingTypeStubs = false
 pythonVersion = "3.8"
+analyzeUnannotatedFunctions = true
+deprecateTypingAliases = false
 
 [tool.isort]
 atomic = true
@@ -114,12 +235,6 @@ profile = "black"
 line_length = 175
 skip_gitignore = true
 multi_line_output = 3
-
-[tool.pyright.defineConstant]
-PYQT5 = true
-PYSIDE2 = false
-PYQT6 = true
-PYSIDE6 = false
 
 [tool.yapf]
 column_limit = 175
@@ -133,8 +248,8 @@ split_before_dict_set_generator = true
 split_before_expression_after_opening_paren = false
 split_complex_comprehension = true
 split_penalty_after_opening_bracket = 50
-split_penalty_excess_character = 75  # Lower penalty for going over the column limit
-split_penalty_for_added_line_split = 100  # Discourage adding new line splits
+split_penalty_excess_character = 75                 # Lower penalty for going over the column limit
+split_penalty_for_added_line_split = 100            # Discourage adding new line splits
 
 [tool.ruff]
 line-length = 175
@@ -145,33 +260,30 @@ preview = false
 fix = true
 force-exclude = true
 show-fixes = true
-output-format = "grouped"  # Group violations by containing file.
+output-format = "grouped" # Group violations by containing file.
 respect-gitignore = false
 
 src = [
     "Libraries/PyKotor/src",
     "Libraries/PyKotorGL/src",
     "Libraries/PyKotorFont/src",
-    "Libraries/Utility/src",
     "Tools/HolocronToolset/src",
     "Tools/BatchPatcher/src",
     "Tools/HoloPatcher/src",
     "Tools/KotorDiff/src",
     "Tools/GuiConverter/src",
-    "Tools/MDLDecompile/src",
-    "tests"
+    "tests",
 ]
 
 [tool.ruff.lint]
 external = ["V"]
 task-tags = ["TODO", "FIXME", "HACK"]
-select = ["ALL"]
 exclude = [".venv", ".venv*"]
 unfixable = [
     "F841",
     "ERA001",
     "N815",
-    "RUF100",   # Unused `noqa` directive
+    "RUF100", # Unused `noqa` directive
     #"UP035",  # replaces deprecated/outdated imports (we want to support older versions of python in the future)
     #"UP038",  # non-pep604-isinstance (python 3.10 syntax)
 ]
@@ -181,13 +293,12 @@ ignore = [
     "ANN003",   # Checks that function **kwargs arguments have type annotations.
     "ANN101",   # Checks that instance method self arguments have type annotations.
     "ANN102",   # Checks that class method cls arguments have type annotations.
-    "ANN401",   # Dynamically typed expressions (typing.Any) are disallowed in {name}
     "ANN204",   # Missing return type annotation for special method
+    "ANN401",   # Dynamically typed expressions (typing.Any) are disallowed in {name}
     "ARG002",   # Unused method argument: `method`
+    "BLE001",   # Do not catch blind exception: `Exception`
+    "C901",     # Function is too complex
     "COM812",   # missing-trailing-comma
-    "ERA001",   # Found commented out code.
-#    "FBT001",   # Boolean positional arg in function definition
-#    "FBT002",   # Boolean default value in function definition
     "D100",     # Missing docstring in public module
     "D101",     # Missing docstring in public class
     "D102",     # Missing docstring in public method
@@ -196,36 +307,44 @@ ignore = [
     "D105",     # Missing docstring in magic method
     "D107",     # Missing docstring in __init__
     "D205",     # 1 blank line required between summary line and description
-#    "D213",     # Multi-line docstring summary should start at the second line
-#    "D400",     # First line should end with a period
     "D401",     # First line of docstring should be in imperative mood
     "D413",     # Missing blank line after last section 'xyz'
-#    "D403",     # First word of the first line should be capitalized: {} -> {}
-#    "D404",     # First word of the docstring should not be "This"
     "D417",     # Missing argument description in the docstring for {definition}: {name}
+    "EM101",    # Exception must not use a string literal, assign to variable first
+    "EM102",    # Exception must not use an f-string literal, assign to variable first
+    "ERA001",   # Found commented out code.
     "G004",     # Logging statement uses f'' string.
     "N802",     # Function name `screenToWorld` should be lowercase
     "N806",     # Variable `jumpToOffset` in function should be lowercase
     "N815",     # Variable `var` in class scope should not be mixedCase
+    "PERF203",  # `try`-`except` within a loop incurs performance overhead
+    "PLC0415",  # `import` should be at the top-level of a file
     "PLR0904",  # Too many public methods
+    "PLR0911",  # Too many return statements
+    "PLR0912",  # Too many branches
+    "PLR0913",  # Too many arguments to function call (N > 5)
+    "PLR0915",  # Too many statements
+    "PLR2004",  # Magic value used in comparison, consider replacing X with a constant variable
     "RET504",   # Unnecessary assignment to `varname` before `return` statement
     "RUF100",   # Unused `noqa` directive (non-enabled: `PLC0415`)
+    "S101",     # Use of `assert` detected.
+    "SIM108",   # Use ternary operator instead of 'if' 'else' block
+    "SIM114",   # Combine `if` branches using logical `or` operator
     "T201",     # 'print' detected
     "TD001",    # Invalid TODO tag: `FIXME`
     "TRY003",   # Avoid specifying long messages outside the exception class
-    "EM101",    # Exception must not use a string literal, assign to variable first
-    "EM102",    # Exception must not use an f-string literal, assign to variable first
-    "SIM108",   # Use ternary operator instead of 'if' 'else' block
-    "SIM114",   # Combine `if` branches using logical `or` operator
-    "S101",     # Use of `assert` detected.
+#    "D213",     # Multi-line docstring summary should start at the second line
+#    "D400",     # First line should end with a period
+#    "D403",     # First word of the first line should be capitalized: {} -> {}
+#    "D404",     # First word of the docstring should not be "This"
+#    "FBT001",   # Boolean positional arg in function definition
+#    "FBT002",   # Boolean default value in function definition
 
 # The following are currently violated by the codebase.
 #    "D205",     # 1 blank line required between summary line and description
 #    "E402",     # Module level import not at top of file
 #    "FIX004",   # Line contains HACK, consider resolving the issue
 #    "PD901",    # df is a bad variable name. Be kinder to your future self.
-#    "PERF203",  # `try`-`except` within a loop incurs performance overhead
-#    "PLR0913",  # Too many arguments to function call (N > 5)
 #    "PLR2004",  # Magic value used in comparison, consider replacing X with a constant variable
 #    "S101",     # Use of assert detected
 #    "S314",     # Using `xml` to parse untrusted data is known to be vulnerable to XML attacks; use `defusedxml` equivalents
@@ -251,13 +370,19 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "*.pyi" = [
-  "I002", # from __future__ import annotations
+    "I002", # from __future__ import annotations
 ]
 "tests/*.py" = ["ALL"]
 ".github/*py" = ["INP001"]
-"__init__.py" = ["I001", "F401"]
+"__init__.py" = ["I001", "I002", "TID252", "F401"]
 "globalsettings.py" = ["I001", "F401"]
-"Tools/HolocronToolset/src/toolset/*.py" = ["FBT003", "N802", "N803", "N806", "A001"]
+"Tools/HolocronToolset/src/toolset/*.py" = [
+    "FBT003",
+    "N802",
+    "N803",
+    "N806",
+    "A001",
+]
 "Tools/HolocronToolset/src/toolset/uic/*.py" = ["ALL"]
 "resources_rc.py" = ["ALL"]
 ".mdx" = ["ALL"]
@@ -270,7 +395,7 @@ fixture-parentheses = false
 mark-parentheses = false
 parametrize-names-type = "list"
 parametrize-values-row-type = "list"
-parametrize-values-type = "list"  # default
+parametrize-values-type = "list"                         # default
 raises-require-match-for = ["requests.RequestException"]
 
 [tool.ruff.lint.flake8-annotations]
@@ -287,11 +412,11 @@ inline-quotes = "double"
 multiline-quotes = "double"
 
 [tool.ruff.lint.flake8-tidy-imports]
-ban-relative-imports = "all"  # Disallow all relative imports.
+ban-relative-imports = "all" # Disallow all relative imports.
 
 [tool.ruff.lint.flake8-type-checking]
 # Add quotes around type annotations, if doing so would allow an import to be moved into a type-checking block.
-quote-annotations = true  # Does nothing when from __future__ import annotations is used
+quote-annotations = true                         # Does nothing when from __future__ import annotations is used
 exempt-modules = ["typing", "typing_extensions"]
 strict = true
 
@@ -337,7 +462,49 @@ split_arguments_when_comma_terminated = true
 [tool.pylintrc]
 max-line-length = 200
 
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+explicit_package_bases = true
+namespace_packages = true
+mypy_path = [
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotorGL/src",
+    "Libraries/PyKotorFont/src",
+    "Tools/HolocronToolset/src",
+    "Tools/BatchPatcher/src",
+    "Tools/HoloPatcher/src",
+    "Tools/KotorDiff/src",
+    "Tools/GuiConverter/src",
+]
+exclude = [
+    "\\.venv",
+    "venv",
+    "\\.mypy_cache",
+    "build",
+    "dist",
+    "__pycache__",
+    "tests/results",
+]
+
 [tool.pytest.ini_options]
+testpaths = ["tests"]
+qt_api = "pyqt5"  # Default, can be overridden by PYTEST_QT_API environment variable
+markers = [
+    "gui: marks tests that require a GUI (deselect with '-m \"not gui\"')",
+    "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
+]
+addopts = "-ra -q"
+# NOTE: xvfb settings are commented out - GL/OpenGL tests require a real display
+# and cannot run in headless/offscreen mode. Do not enable xvfb for GL tests.
+#xvfb_width = 1920
+#xvfb_height = 1080
+#xvfb_colordepth = 24
+
 log_cli = true
 log_cli_level = "CRITICAL"
 log_cli_format = "%(message)s"

@@ -1,39 +1,95 @@
 [build-system]
-requires = [
-    "setuptools>=42,<70",
-    "wheel",
-]
+requires = ["setuptools>=42,<70", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="BatchPatcher"
-description="A translator/font creator tool useful for patching/working with many files at once."
-version="2.2.0"
-requires-python = ">= 3.8"  # 64-bit, 3.7 might be compatible
+name = "batchpatcher"
+description = "A translator/font creator tool useful for patching/working with many files at once."
+version = "2.2.0"
+requires-python = ">= 3.8"
 dependencies = [
-    "setuptools>=67.8.0,<70",
-    "deep_translator==1.9.2",
-    "deepl-cli==0.3.0",
-    "requests==2.28.2",
-    "opencv-contrib-python==4.7.0.68",
-    "notify-py==0.3.42",
-    "playwright>=1.30.0,<1.40",
-    "pyquery==1.4.3",
-    "arabic-reshaper==3.0.0",
+  "pykotor>=2.0.0",
+  "pykotorfont>=2.0.0",
+  "setuptools>=67.8.0,<70",
+  "deep_translator==1.9.2",
+  "deepl-cli==0.3.0",
+  "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
+  "requests>=2.25.0; python_version>=\"3.9\"",
+  "opencv-contrib-python==4.7.0.68",
+  "notify-py==0.3.42",
+  "playwright>=1.30.0,<1.40",
+  "pyquery==1.4.3",
+  "arabic-reshaper==3.0.0",
 ]
-authors = [
-  {name = "NickHugi"},
+authors = [{ name = "NickHugi" }]
+maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { text = "LGPL-3.0-or-later" }
+keywords = [
+  "kotor", "kotor1", "kotor2", "tsl",
+  "star-wars", "knights-of-the-old-republic",
+  "batch", "translator", "font",
+  "localization", "i18n", "pykotor",
 ]
-maintainers = [
-  {name = "th3w1zard1", email = "halomastar@gmail.com"},
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Games/Entertainment",
+  "Topic :: Text Processing :: Linguistic",
+  "Environment :: Console",
 ]
-readme = {file = "README.md", content-type = "text/markdown"}
-license = {text = "LGPL-3.0-or-later License"}
-keywords = ["kotor", "pyqt5", "holocron", "toolset", "pykotor"]
+
+[project.scripts]
+batchpatcher = "batchpatcher.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0.0",
+  "ruff>=0.1.0",
+]
 
 [project.urls]
-Homepage = "https://github.com/NickHugi/PyKotor"
-Documentation = "https://github.com/NickHugi/PyKotor/blob/master/README.md"
-Repository = "https://github.com/NickHugi/PyKotor.git"
-Issues = "https://github.com/NickHugi/PyKotor/issues"
-#Changelog = "https://github.com/NickHugi/PyKotor/blob/master/CHANGELOG.md"
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
+
+# Poetry configuration
+[tool.poetry]
+name = "batchpatcher"
+version = "2.2.0"
+description = "A translator/font creator tool useful for patching/working with many files at once."
+authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
+maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+readme = "README.md"
+license = "LGPL-3.0-or-later"
+packages = [{ include = "batchpatcher", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pykotor = "^2.0.0"
+pykotorfont = "^2.0.0"
+
+[tool.poetry.scripts]
+batchpatcher = "batchpatcher.__main__:main"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,1214 @@
+================================================================================
+Kotor RE Things - Ghidra Integration Batches
+================================================================================
+
+Total items to apply:
+  Comments: 200
+  Functions: 500
+
+# Comment Batch 1
+
+# 1. 0x00402127: normalize the pointer to be relative to zero, rather than re...
+# 2. 0x0040a140: CSWGuiManager::PlayGuiSound(char)...
+# 3. 0x00422d60: some safe pointer bullshit...
+# 4. 0x0043e1c0: Returns `(Model *)this` if the MaxTree is a Model, otherwise...
+# 5. 0x0045c3a3: Non Virtual Thunk from the GOB component of the Camera to th...
+# 6. 0x0047ecd0: std::vector<MyFace>...
+# 7. 0x004ae770: CServerExoApp::GetPlayerCreature()...
+# 8. 0x004ae7b0: CServerExoAppInternal::GetStoreByGameObjectID(unsigned long)...
+# 9. 0x004aec90: CServerExoApp::GetServerInfo()...
+# 10. 0x004aee70: CServerExoApp::GetPartyTable()...
+# 11. 0x004c4f50: Allocate for 64-bit items...
+# 12. 0x004d1b58: Check effect is temporary...
+# 13. 0x004d824c: Clamp index to postive int between 0 and 8192, and access ob...
+# 14. 0x004edd90: CSWSCreature::SetGold(int)...
+# 15. 0x004ef770: CSWSCreature::GetItemRepository(int)...
+# 16. 0x00511147: CSWSCreature::GetDead...
+# 17. 0x005334a9: See {@symbol 00503a70} for conversion to script effect type...
+# 18. 0x005334c0: Zero out bit 5, and activate bit 4...
+# 19. 0x00552f23: Really is a CSWBaseItemArray...
+# 20. 0x00555fd0: CItemRepository::RemoveItem(CSWSItem*)...
+
+# Comment Batch 2
+
+# 1. 0x005560b0: CItemRepository::ItemListGetItem(int)...
+# 2. 0x0055f280: CSWSCreature::SplitItem(CSWSItem*, int)...
+# 3. 0x0058981b: IF x-coords valid and not same as prev...
+# 4. 0x005c6f70: CSWSStore::SellItem(CSWSItem*, CSWSCreature*)...
+# 5. 0x005ccc9a: GetPlayerSpeed...
+# 6. 0x005ccca2: GetPlayerMinSpeed...
+# 7. 0x005cccae: GetPlayerAccelerationPerSecond...
+# 8. 0x005cccba: GetPlayerMaxSpeed...
+# 9. 0x005d5847: Call HandleMessage on either the Client: {@address 0x005ed79...
+# 10. 0x005d5930: CExoSoundSource::Play()...
+# 11. 0x005fc013: Set-up Pazaak Data...
+# 12. 0x005fc48f: 6 * size_of(CSWParty)...
+# 13. 0x00624a00: if param_1 = 0, then bit 8 will be 0 if param_1 = 1, then bi...
+# 14. 0x0063c070: CSWCObject::GetAnimationBase...
+# 15. 0x0063e7f0: This function is used frequntly as aliased to other unimplem...
+# 16. 0x0066a729: Sets Camera Behavior Message (Unclear what this does) Set Ca...
+# 17. 0x0066a741: Does Nothing...
+# 18. 0x0066a87d: Does Nothing...
+# 19. 0x0066a89e: Does Nothing...
+# 20. 0x0066a8bf: Does Nothing...
+
+# Comment Batch 3
+
+# 1. 0x0066a8d4: Handles Client Feedback/Messages GUI, mostly by manipulating...
+# 2. 0x0066a8ec: Does Nothing...
+# 3. 0x0066a8ff: Deals with 'UTS' Sound Objects...
+# 4. 0x0066a920: Does Nothing...
+# 5. 0x0066a962: Updates Item properties, I.E. Shield uses remaining...
+# 6. 0x0066a983: Enable Debug Mode, Activate DoNasty (which I haven't gotten ...
+# 7. 0x0066a9a4: Plays 'SSF' Sound-Set Audio tracks...
+# 8. 0x0066a9c5: // Opens Placeable Inventories...
+# 9. 0x0066a9e6: Does Nothing...
+# 10. 0x0066aa07: Handles Journal Manipulations...
+# 11. 0x0066aa28: Sets the in-game "level_up_mode = 0". Seems to prevent level...
+# 12. 0x0066aa49: Looks like this does nothing...
+# 13. 0x0066ab75: Does Nothing...
+# 14. 0x0066bf59: As follower...
+# 15. 0x0066bf61: As Obstacle...
+# 16. 0x00670a9d: Dimensional analysis gives this units of 1/second, so perhap...
+# 17. 0x006c0790: CSWGuiStore::GetItemBuyValue(CSWSItem*)...
+# 18. 0x006c07f0: CSWGuiStore::GetItemSellValue(CSWSItem*) [clone .eh]...
+# 19. 0x006c0be0: CSWGuiStore::BuyItemCallback(CSWGuiControl*)...
+# 20. 0x006c0d3a: Check that the the right most flag is true (clicked 'OK')...
+
+# Comment Batch 4
+
+# 1. 0x006c1023: If item cost is greater than the expensive item cut-off for ...
+# 2. 0x006c1840: CSWGuiInGameInventory::PopulateItemListBox()...
+# 3. 0x006f1fda: The following power(s) have been recommended....
+# 4. 0x006f206c: Only the main character can select this feat....
+# 5. 0x006f2092: You have selected all your available powers for this level....
+# 6. 0x006f20ae: You cannot deselect a power you already have....
+# 7. 0x006f20b5: You do not yet have the necessary prerequisites to select th...
+# 8. 0x006f3c68: You have selected all your available feats for this level....
+# 9. 0x006f3c84: You gain this feat automatically at this level. You cannot d...
+# 10. 0x006f3c8b: You cannot deselect a feat you already have....
+# 11. 0x006f3c92: You do not yet have the necessary prerequisites to select th...
+# 12. 0x006f451b: You have gained new feats. You must use "Add Feat" to select...
+# 13. 0x006f69ac: You have not spent all of your skill points.  These will be ...
+# 14. 0x006f69d8: See CSWGuiSkillsCharGen::CompletePanel...
+# 15. 0x006f84ee: String: "Attribute scores cannot be reduced below 8."...
+# 16. 0x006f86d4: String: "Attribute scores cannot be raised above 18 during c...
+# 17. 0x006fa395: Library Function - Single Match  void __stdcall _JumpToConti...
+# 18. 0x006fa3c5: Library Function - Multiple Matches With Different Base Name...
+# 19. 0x006fa3cc: Library Function - Single Match  void __stdcall _UnwindNeste...
+# 20. 0x006fa41e: Library Function - Single Match  ___CxxFrameHandler  Library...
+
+# Comment Batch 5
+
+# 1. 0x006fa4e9: Library Function - Single Match  struct _s_TryBlockMapEntry ...
+# 2. 0x006fa5ac: Library Function - Single Match  void __cdecl _FindAndUnlink...
+# 3. 0x006fa6f8: Library Function - Single Match  __global_unwind2  Library: ...
+# 4. 0x006fa73a: Library Function - Single Match  __local_unwind2  Libraries:...
+# 5. 0x006fa7a2: Library Function - Single Match  __abnormal_termination  Lib...
+# 6. 0x006fa7c5: Library Function - Single Match  __NLG_Notify1  Libraries: V...
+# 7. 0x006fa7e6: Library Function - Single Match  void * __cdecl operator new...
+# 8. 0x006fa7f4: Library Function - Single Match  void __stdcall __ArrayUnwin...
+# 9. 0x006fa852: Library Function - Single Match  void __stdcall `eh vector d...
+# 10. 0x006fa8b2: Library Function - Multiple Matches With Different Base Name...
+# 11. 0x006fa8eb: Library Function - Single Match  __fread_lk  Library: Visual...
+# 12. 0x006fa9d4: Library Function - Single Match  _fread  Library: Visual Stu...
+# 13. 0x006faa20: Library Function - Single Match  __fwrite_lk  Library: Visua...
+# 14. 0x006fab27: Library Function - Single Match  _fwrite  Library: Visual St...
+# 15. 0x006fab80: Library Function - Single Match  _strncpy  Library: Visual S...
+# 16. 0x006facf0: Library Function - Single Match  _fclose  Library: Visual St...
+# 17. 0x006fad41: Library Function - Single Match  __fsopen  Library: Visual S...
+# 18. 0x006fae08: Library Function - Single Match  _sscanf  Library: Visual St...
+# 19. 0x006fae8c: Library Function - Single Match  __ftol2  Library: Visual St...
+# 20. 0x006faf01: Library Function - Multiple Matches With Different Base Name...
+
+# Comment Batch 6
+
+# 1. 0x006faf5f: Library Function - Single Match  _atol  Library: Visual Stud...
+# 2. 0x006faff0: Library Function - Single Match  _strncmp  Libraries: Visual...
+# 3. 0x006fb030: Library Function - Single Match  __aulldiv  Libraries: Visua...
+# 4. 0x006fb098: Library Function - Single Match  ___crtExitProcess  Library:...
+# 5. 0x006fb223: Library Function - Single Match  __exit  Library: Visual Stu...
+# 6. 0x006fb252: Library Function - Single Match  __onexit_lk  Library: Visua...
+# 7. 0x006fb2fa: Library Function - Single Match  __onexit  Library: Visual S...
+# 8. 0x006fb332: Library Function - Single Match  _atexit  Library: Visual St...
+# 9. 0x006fb344: Library Function - Single Match  __amsg_exit  Library: Visua...
+# 10. 0x006fb369: Library Function - Single Match  _fast_error_exit  Library: ...
+# 11. 0x006fb55f: Library Function - Single Match  void __stdcall `eh vector c...
+# 12. 0x006fb5e0: Library Function - Single Match  _strchr  Library: Visual St...
+# 13. 0x006fb766: Library Function - Single Match  _tolower  Library: Visual S...
+# 14. 0x006fb7b2: Library Function - Single Match  _free  Library: Visual Stud...
+# 15. 0x006fb823: Library Function - Single Match  _calloc  Library: Visual St...
+# 16. 0x006fb8e7: Library Function - Single Match  __ftell_lk  Library: Visual...
+# 17. 0x006fba49: Library Function - Single Match  _ftell  Library: Visual Stu...
+# 18. 0x006fba8a: Library Function - Single Match  __fseek_lk  Library: Visual...
+# 19. 0x006fbb19: Library Function - Single Match  _fseek  Library: Visual Stu...
+# 20. 0x006fbb62: Library Function - Single Match  _localtime  Library: Visual...
+
+# Comment Batch 7
+
+# 1. 0x006fbce2: Library Function - Multiple Matches With Different Base Name...
+# 2. 0x006fbd00: Library Function - Single Match  _strstr  Libraries: Visual ...
+# 3. 0x006fbd90: Library Function - Single Match  _shortsort  Library: Visual...
+# 4. 0x006fc090: Library Function - Single Match  __chkstk  Libraries: Visual...
+# 5. 0x006fc412: Library Function - Single Match  _test_whether_TOS_is_int  L...
+# 6. 0x006fc447: Library Function - Single Match  _rand  Libraries: Visual St...
+# 7. 0x006fc546: Library Function - Single Match  _clock  Library: Visual Stu...
+# 8. 0x006fc589: Library Function - Single Match  ___inittime  Libraries: Vis...
+# 9. 0x006fc5c0: Library Function - Single Match  _atof  Library: Visual Stud...
+# 10. 0x006fc636: Library Function - Single Match  __itoa  Library: Visual Stu...
+# 11. 0x006fc660: Library Function - Single Match  __alldiv  Library: Visual S...
+# 12. 0x006fc710: Library Function - Single Match  __allmul  Libraries: Visual...
+# 13. 0x006fc99d: Library Function - Single Match  _isalpha  Library: Visual S...
+# 14. 0x006fc9dc: Library Function - Single Match  _isdigit  Library: Visual S...
+# 15. 0x006fca16: Library Function - Single Match  _isxdigit  Library: Visual ...
+# 16. 0x006fca55: Library Function - Single Match  _isspace  Library: Visual S...
+# 17. 0x006fca8f: Library Function - Single Match  _isgraph  Library: Visual S...
+# 18. 0x006fcace: Library Function - Multiple Matches With Different Base Name...
+# 19. 0x006fcb40: Library Function - Single Match  _strcspn  Library: Visual S...
+# 20. 0x006fcbcb: Library Function - Single Match  __CxxThrowException@8  Libr...
+
+# Comment Batch 8
+
+# 1. 0x006fcc10: Library Function - Single Match  _memmove  Libraries: Visual...
+# 2. 0x006fcf5e: Library Function - Single Match  public: __thiscall exceptio...
+# 3. 0x006fcff0: Library Function - Multiple Matches With Different Base Name...
+# 4. 0x006fd00d: Library Function - Single Match  start  Library: Visual Stud...
+# 5. 0x006fd0c0: Library Function - Single Match  __aulldvrm  Library: Visual...
+# 6. 0x006fd28a: Library Function - Single Match  __set_osfhnd  Library: Visu...
+# 7. 0x006fd306: Library Function - Single Match  __free_osfhnd  Library: Vis...
+# 8. 0x006fd385: Library Function - Single Match  __get_osfhandle  Library: V...
+# 9. 0x006fd439: Library Function - Single Match  __unlock_fhandle  Library: ...
+# 10. 0x006fd5fe: Library Function - Single Match  __flush  Library: Visual St...
+# 11. 0x006fd65b: Library Function - Single Match  __fflush_lk  Library: Visua...
+# 12. 0x006fd689: Library Function - Single Match  _flsall  Library: Visual St...
+# 13. 0x006fd75e: Library Function - Single Match  _fflush  Library: Visual St...
+# 14. 0x006fd7b7: Library Function - Single Match  ___wctomb_mt  Library: Visu...
+# 15. 0x006fd817: Library Function - Single Match  _wctomb  Library: Visual St...
+# 16. 0x006fd854: Library Function - Single Match  __heap_alloc  Library: Visu...
+# 17. 0x006fd8cf: Library Function - Single Match  __nh_malloc  Library: Visua...
+# 18. 0x006fd8fb: Library Function - Single Match  _malloc  Library: Visual St...
+# 19. 0x006fd930: Library Function - Single Match  _strrchr  Library: Visual S...
+# 20. 0x006fdbe6: Library Function - Single Match  __strcats  Library: Visual ...
+
+# Comment Batch 9
+
+# 1. 0x006fdcdc: Library Function - Single Match  ___lc_lctostr  Library: Vis...
+# 2. 0x006fdd2a: Library Function - Single Match  ___updatetlocinfo  Library:...
+# 3. 0x006fe5f4: Library Function - Single Match  int __cdecl TypeMatch(struc...
+# 4. 0x006fe661: Library Function - Single Match  ___FrameUnwindToState  Libr...
+# 5. 0x006fe72f: Library Function - Single Match  ___DestructExceptionObject ...
+# 6. 0x006fe938: Library Function - Single Match  void __cdecl BuildCatchObje...
+# 7. 0x006feab4: Library Function - Single Match  void __cdecl CatchIt(struct...
+# 8. 0x006fedbd: Library Function - Single Match  ___InternalCxxFrameHandler ...
+# 9. 0x006fee94: Library Function - Single Match  void __cdecl _inconsistency...
+# 10. 0x006feedf: Library Function - Single Match  __getptd  Library: Visual S...
+# 11. 0x006fefc0: Library Function - Single Match  __CallSettingFrame@12  Libr...
+# 12. 0x006ff00c: Library Function - Single Match  __SEH_prolog  Library: Visu...
+# 13. 0x006ff047: Library Function - Single Match  __SEH_epilog  Library: Visu...
+# 14. 0x006ff058: Library Function - Single Match  __filbuf  Library: Visual S...
+# 15. 0x006ff306: Library Function - Single Match  __read  Library: Visual Stu...
+# 16. 0x006ff3c0: Library Function - Multiple Matches With Different Base Name...
+# 17. 0x006ff7ba: Library Function - Single Match  __lock_file  Library: Visua...
+# 18. 0x006ff7e9: Library Function - Single Match  __lock_file2  Library: Visu...
+# 19. 0x006ff80c: Library Function - Single Match  __unlock_file  Libraries: V...
+# 20. 0x006ff83b: Library Function - Single Match  __unlock_file2  Library: Vi...
+
+# Comment Batch 10
+
+# 1. 0x006ff85e: Library Function - Single Match  __flsbuf  Library: Visual S...
+# 2. 0x006ffb1c: Library Function - Single Match  __write  Library: Visual St...
+# 3. 0x006ffc4a: Library Function - Single Match  __close  Library: Visual St...
+# 4. 0x006ffd10: Library Function - Single Match  __openfile  Library: Visual...
+# 5. 0x006ffe8a: Library Function - Single Match  __dosmaperr  Library: Visua...
+# 6. 0x0070001f: Library Function - Single Match  _write_char  Library: Visua...
+# 7. 0x00700052: Library Function - Single Match  _write_multi_char  Librarie...
+# 8. 0x00700076: Library Function - Single Match  _write_string  Library: Vis...
+# 9. 0x00700842: Library Function - Single Match  __inc  Library: Visual Stud...
+# 10. 0x00701300: Library Function - Single Match  _strlen  Library: Visual St...
+# 11. 0x0070138b: Library Function - Single Match  __forcdecpt  Library: Visua...
+# 12. 0x0070142c: Library Function - Single Match  __fassign  Library: Visual ...
+# 13. 0x0070146a: Library Function - Single Match  __shift  Library: Visual St...
+# 14. 0x00701487: Library Function - Single Match  __cftoe2  Library: Visual S...
+# 15. 0x0070174d: Library Function - Single Match  __cfltcvt  Library: Visual ...
+# 16. 0x007017b0: Library Function - Single Match  __ms_p5_test_fdiv  Library:...
+# 17. 0x007017f0: Library Function - Single Match  __ms_p5_mp_test_fdiv  Libra...
+# 18. 0x00701819: Library Function - Single Match  __stbuf  Library: Visual St...
+# 19. 0x007018a1: Library Function - Single Match  __ftbuf  Library: Visual St...
+# 20. 0x00701942: Library Function - Single Match  __mtinitlocks  Library: Vis...
+
+# Function Batch 1
+
+# 1. 0x00401000: CSWReentrantServerStats::~CSWReentrantServerStats
+# 2. 0x00401060: CAppManager::GetObjectTableManager
+#    Return: undefined4
+# 3. 0x00401080: CAppManager::DoSaveGameScreenShot
+#    Return: void
+# 4. 0x004010a0: CAppManager::AllocLargeTempBuffer
+# 5. 0x004010c0: CSWReentrantServerStats::CSWReentrantServerStats
+#    Return: CSWReentrantServerStats *
+# 6. 0x00401160: CAppManager::CAppManager
+#    Return: void * *
+# 7. 0x00401280: CAppManager::DestroyServer
+#    Return: void
+# 8. 0x004012c0: CAppManager::~CAppManager
+#    Return: void
+# 9. 0x00401380: CAppManager::CreateServer
+#    Return: void
+# 10. 0x00404ae0: Vector::Vector
+#    Return: Vector *
+# 11. 0x00404b00: CSWGuiPanel::SetPanelAlpha
+#    Return: void
+# 12. 0x00404bb0: CExoMoviePlayerInternal::ShutDown
+#    Return: void
+# 13. 0x00404c20: CExoMoviePlayerInternal::PrepareMovieForCancellation?
+# 14. 0x00404c40: CExoMoviePlayerInternal::CancelMovie
+# 15. 0x00404c80: CExoMoviePlayerInternal::PlayMovieLoop
+#    Return: int
+# 16. 0x00404de0: CExoMoviePlayerInternal::StopMovie
+#    Return: void
+# 17. 0x00404e00: CExoMoviePlayerInternal::ShowFadePanel
+#    Return: void
+# 18. 0x00404f40: CExoMoviePlayerInternal::UpdateWindowPosition
+#    Return: void
+# 19. 0x00404f80: CExoMoviePlayerInternal::RefreshWindowLayout
+#    Return: void
+# 20. 0x00405050: CExoMoviePlayerInternal::RestartMoviesAsync
+#    Return: void
+# 21. 0x00405080: CExoArrayList<CExoString>::Allocate
+#    Return: void
+# 22. 0x00405150: CExoArrayList<uint>::SetSize
+#    Return: void
+# 23. 0x004053e0: CExoMoviePlayerInternal::InitializeMovie
+#    Return: int
+# 24. 0x004058f0: CExoArrayList<CExoString>::CExoArrayList<CExoString>
+#    Return: CExoArrayList<CExoString> *
+# 25. 0x00405920: CExoArrayList<CExoString>::~CExoArrayList
+#    Return: void
+# 26. 0x00405950: CExoArrayList<CExoString>::SetSize
+# 27. 0x004059a0: CExoArrayList<CExoString>::Add
+#    Return: void
+# 28. 0x00405a20: CExoArrayList<int>::CExoArrayList
+#    Return: CExoArrayList<int> *
+# 29. 0x00405a50: CExoMoviePlayerInternal::~CExoMoviePlayerInternal
+#    Return: void
+# 30. 0x00405d10: CExoArrayList<CExoString>::CExoArrayList
+#    Return: CExoArrayList<CExoString> *
+# 31. 0x00405d50: CExoArrayList<int>::clear
+# 32. 0x00405d70: CExoMoviePlayerInternal::CExoMoviePlayerInternal
+#    Return: undefined4 *
+# 33. 0x00405e50: CExoMoviePlayerInternal::PlayMoviesAsync
+# 34. 0x00405ed0: CResRef::CResRef
+# 35. 0x00405ef0: CResRef::CResRef
+#    Return: CResRef *
+# 36. 0x00405f70: CResRef::CopyToString
+#    Return: void
+# 37. 0x00405fb0: CResRef::CopyToString
+#    Return: void
+# 38. 0x00405fe0: CResRef::GetResRefStr
+# 39. 0x00406030: CResRef::IsValid
+#    Return: bool
+# 40. 0x00406040: CResRef::GetLength
+#    Return: byte
+# 41. 0x00406060: CResRef::operator!=
+#    Return: int
+# 42. 0x004060b0: CResRef::operator==
+#    Return: bool
+# 43. 0x004060d0: CResRef::operator==
+#    Return: undefined4
+# 44. 0x00406120: CResRef::operator=
+#    Return: CResRef *
+# 45. 0x00406170: CResRef::operator=
+#    Return: void
+# 46. 0x004061f0: CResRef::operator=
+#    Return: void
+# 47. 0x00406290: CResRef::operator=
+#    Return: CResRef *
+# 48. 0x00406300: CResRef::operator+=
+#    Return: undefined4 *
+# 49. 0x00406460: CRes::CRes
+#    Return: CRes *
+# 50. 0x004064b0: CRes::GetDemands
+#    Return: undefined2
+
+# Function Batch 2
+
+# 1. 0x004064c0: CRes::GetResRef
+#    Return: void
+# 2. 0x004064f0: CExoResMan::AddResourceImageFilesAsync
+#    Return: void
+# 3. 0x00406540: CExoResMan::FreeResourceData
+#    Return: void
+# 4. 0x004065a0: CExoResMan::GetResRefFromFile
+#    Return: void
+# 5. 0x00406650: CExoResMan::GetResTypeFromFile
+#    Return: ulong
+# 6. 0x00406720: CExoResMan::GetIsStaticType
+#    Return: undefined4
+# 7. 0x004067b0: CExoResMan::GetFreeDiskSpace
+#    Return: bool
+# 8. 0x004068c0: CExoResMan::CreateDirectory2
+#    Return: BOOL
+# 9. 0x00406990: CExoResMan::FileCopy
+#    Return: undefined4
+# 10. 0x00406b20: CExoResMan::RemoveFile
+#    Return: bool
+# 11. 0x00406c60: CExoResMan::CreateSignatureFile
+#    Return: undefined4
+# 12. 0x00406c70: CExoString::StringCopy
+#    Return: CExoString *
+# 13. 0x00406cf0: CExoLinkedList<CExoKeyTable>::CExoLinkedList
+#    Return: CExoLinkedList<CExoKeyTable> *
+# 14. 0x00406d60: CResRef::CResRef
+#    Return: CResRef *
+# 15. 0x00406d80: CResRef::CResRef
+#    Return: undefined4 *
+# 16. 0x00406da0: CResRef::CResRef
+#    Return: CResRef *
+# 17. 0x00406dc0: CResRef::operator!=
+#    Return: bool
+# 18. 0x00406de0: CResRef::operator!=
+#    Return: bool
+# 19. 0x00406e20: CExoResMan::AddKeyTable
+#    Return: int
+# 20. 0x00407020: CExoResMan::Free
+#    Return: undefined4
+# 21. 0x004070a0: CExoResMan::FreeChunk
+#    Return: bool
+# 22. 0x004071a0: CExoResMan::GetKeyEntryFromTable
+#    Return: undefined4
+# 23. 0x00407230: CExoResMan::GetKeyEntry
+#    Return: undefined4
+# 24. 0x004072e0: CExoResMan::GetResOfTypeFromTable
+#    Return: void * *
+# 25. 0x00407390: CExoResMan::GetResOfType
+#    Return: CExoStringList *
+# 26. 0x004074d0: CExoResMan::GetResObject
+#    Return: undefined4
+# 27. 0x00407680: CExoResMan::SetResObject
+#    Return: void
+# 28. 0x004076e0: CExoResMan::GetTable
+#    Return: CExoKeyTable *
+# 29. 0x00407780: CExoResMan::GetTableCount
+#    Return: int
+# 30. 0x004077b0: CExoResMan::Malloc
+#    Return: undefined4
+# 31. 0x00407830: CExoResMan::RemoveKeyTable
+#    Return: undefined4
+# 32. 0x004078f0: CExoResMan::ServiceFromDirectory
+#    Return: undefined4
+# 33. 0x00407bd0: CExoResMan::ServiceFromEncapsulated
+#    Return: int
+# 34. 0x00407d50: CExoResMan::ServiceFromImage
+#    Return: undefined4
+# 35. 0x00407e00: CExoResMan::ServiceFromResFile
+#    Return: int
+# 36. 0x00407fe0: CExoResMan::UpdateKeyTable
+#    Return: undefined4
+# 37. 0x00408080: CExoResMan::ServiceFromDirectoryRaw
+#    Return: undefined4
+# 38. 0x004082d0: CExoResMan::ServiceFromEncapsulatedRaw
+#    Return: undefined4
+# 39. 0x00408390: CExoResMan::ServiceFromImageRaw
+#    Return: bool
+# 40. 0x00408450: CExoResMan::ServiceFromResFileRaw
+#    Return: undefined4
+# 41. 0x00408530: CExoResMan::ServiceCurrentAsyncRes
+#    Return: undefined4
+# 42. 0x004085f0: CExoResMan::CacheResource
+#    Return: CExoResMan *
+# 43. 0x00408620: CRes::Request
+#    Return: undefined4
+# 44. 0x00408670: CExoResMan::~CExoResMan
+# 45. 0x004087a0: CExoResMan::AddEncapsulatedResourceFile
+#    Return: void
+# 46. 0x004087c0: CExoResMan::AddResourceImageFile
+#    Return: void
+# 47. 0x004087e0: CExoResMan::AddFixedKeyTableFile
+#    Return: void
+# 48. 0x00408800: CExoResMan::AddResourceDirectory
+#    Return: void
+# 49. 0x00408820: CExoResMan::RemoveEncapsulatedResourceFile
+#    Return: void
+# 50. 0x00408830: CExoResMan::RemoveResourceImageFile
+#    Return: undefined4
+
+# Function Batch 3
+
+# 1. 0x004088c0: CExoResMan::RemoveFixedKeyTableFile
+# 2. 0x004088d0: CExoResMan::RemoveResourceDirectory
+# 3. 0x004088f0: CExoResMan::CancelRequest
+#    Return: undefined2
+# 4. 0x004089f0: CExoResMan::Demand
+#    Return: int
+# 5. 0x00408b90: CExoResMan::FUN_00408b90
+# 6. 0x00408bc0: CExoResMan::Exists
+#    Return: int
+# 7. 0x00408c00: CExoResMan::Exists
+#    Return: undefined4
+# 8. 0x00408c60: CExoResMan::GetResOfType
+#    Return: void * *
+# 9. 0x00408c90: CExoResMan::Release
+#    Return: ulong
+# 10. 0x00408d40: CExoResMan::Update
+#    Return: void
+# 11. 0x00408e30: CExoResMan::ReadRaw
+#    Return: void *
+# 12. 0x00408e90: CExoResMan::WipeDirectory
+#    Return: BOOL
+# 13. 0x00409460: CExoResMan::CleanDirectory
+# 14. 0x00409480: CExoResMan::NukeDirectory
+#    Return: void
+# 15. 0x004094a0: CExoResMan::AsyncLoad
+#    Return: void
+# 16. 0x00409b00: CRes::CancelRequest
+#    Return: void
+# 17. 0x00409b10: CRes::Demand
+#    Return: void
+# 18. 0x00409b20: CRes::ReadRaw
+#    Return: void
+# 19. 0x00409b40: CExoResMan::Dump
+#    Return: void
+# 20. 0x00409b80: CRes::Release
+#    Return: void
+# 21. 0x00409bf0: CExoResMan::CExoResMan
+#    Return: CExoResMan *
+# 22. 0x00409cf0: CExoResMan::ReleaseResObject
+#    Return: int
+# 23. 0x00409d40: CRes::~CRes
+# 24. 0x00409d70: CRes::~CRes
+#    Return: int * *
+# 25. 0x00409dc0: CSWGuiExtent::Load
+#    Return: void
+# 26. 0x00409e60: CSWGuiPanel::HandleInputEvent
+#    Return: void
+# 27. 0x00409e70: Vector::vectorZero
+#    Return: void
+# 28. 0x00409e90: CSWGuiObject::SetExtent
+# 29. 0x00409ec0: CSWGuiObject::~CSWGuiObject
+#    Return: undefined4 *
+# 30. 0x00409ee0: CSWGuiManager::GetSafeMargin
+# 31. 0x00409f00: CSWGuiManager::LoadGuiSounds
+#    Return: undefined4
+# 32. 0x0040a0d0: CSWGuiManager::UnloadGuiSounds
+#    Return: void
+# 33. 0x0040a140: CSWGuiManager::PlayGuiSound
+#    Return: void
+# 34. 0x0040a170: CSWGuiManager::HandleLMouseUp
+#    Return: undefined4
+# 35. 0x0040a1a0: CSWGuiManager::HandleRMouseUp
+#    Return: undefined4
+# 36. 0x0040a1c0: CSWGuiManager::CaptureMouse
+#    Return: void
+# 37. 0x0040a200: CSWGuiManager::ReleaseMouse
+# 38. 0x0040a230: CSWGuiManager::HideSoftwareMouse
+#    Return: void
+# 39. 0x0040a260: CSWGuiManager::HideSoftwareMouse
+#    Return: void
+# 40. 0x0040a270: CSWGuiManager::SetSoftwareMouseCursor
+#    Return: void
+# 41. 0x0040a340: CSWGuiManager::ChangeToolTipText
+# 42. 0x0040a350: CSWGuiManager::ReloadToolTipPanel
+#    Return: void
+# 43. 0x0040a3d0: CSWGuiManager::StoreCurrentMousePosition
+#    Return: void
+# 44. 0x0040a3e0: CSWGuiManager::GetScreenResolutionString
+#    Return: CExoString *
+# 45. 0x0040a4a0: CSWGuiExtent::Intersection
+#    Return: int *
+# 46. 0x0040a520: CSWGuiExtent::Union
+#    Return: int *
+# 47. 0x0040a5a0: CSWGuiPanel::SetExtent
+#    Return: void
+# 48. 0x0040a600: CSWGuiPanel::CenterPanel
+#    Return: void
+# 49. 0x0040a630: CSWGuiPanel::SetActiveControl
+#    Return: void
+# 50. 0x0040a680: CSWGuiPanel::StartLoadFromLayout
+#    Return: void
+
+# Function Batch 4
+
+# 1. 0x0040a870: CSWGuiPanel::SetBackground
+#    Return: void
+# 2. 0x0040a900: CSWGuiPanel::GetFullScreenBG
+#    Return: CExoString *
+# 3. 0x0040a9c0: CSWGuiPanel::ResetFont
+#    Return: void
+# 4. 0x0040aa00: CSWGuiPanel::GetExtentAccountingForPanelOffset
+#    Return: void
+# 5. 0x0040aaa0: CSWGuiManager::~CSWGuiManager
+# 6. 0x0040ab70: CSWGuiManager::GetPosInModalStack
+#    Return: int
+# 7. 0x0040aba0: CSWGuiManager::GetPosInPanelList
+#    Return: int
+# 8. 0x0040abe0: CSWGuiManager::HitCheckMouse
+#    Return: int
+# 9. 0x0040acc0: CSWGuiManager::DetermineNeedToDraw
+#    Return: void
+# 10. 0x0040adf0: CSWGuiManager::IsOnTop
+#    Return: bool
+# 11. 0x0040ae80: CSWGuiManager::DrawPCBG
+#    Return: void
+# 12. 0x0040b060: CSWGuiManager::ActivateSoftwareMouse
+#    Return: undefined4
+# 13. 0x0040b290: CSWGuiManager::ShowSoftwareMouse
+#    Return: void
+# 14. 0x0040b2a0: CSWGuiManager::HandleKeyPress
+#    Return: undefined4
+# 15. 0x0040b300: CSWGuiManager::UpdateMouseOverControl
+#    Return: void
+# 16. 0x0040b360: CSWGuiManager::GetUpdatedFontName
+# 17. 0x0040b420: CSWGuiManager::UpdateAllFonts
+#    Return: void
+# 18. 0x0040b490: CSWGuiManager::DisplayToolTip
+#    Return: void
+# 19. 0x0040b4d0: CSWGuiManager::ResetToolTipTimer
+#    Return: void
+# 20. 0x0040b500: CSWGuiManager::SetTemporarilyDisableToolTip
+#    Return: void
+# 21. 0x0040b570: CSWGuiPanel::CSWGuiPanel
+#    Return: void *
+# 22. 0x0040b630: CSWGuiPanel::GetActiveControl
+#    Return: undefined4
+# 23. 0x0040b640: CSWGuiPanel::OnAButtonPressed
+#    Return: void
+# 24. 0x0040b650: CSWGuiPanel::OnBButtonPressed
+#    Return: void
+# 25. 0x0040b660: CSWGuiPanel::OnXButtonPressed
+#    Return: void
+# 26. 0x0040b670: CSWGuiPanel::OnYButtonPressed
+#    Return: void
+# 27. 0x0040b680: CSWGuiPanel::OnBlackButtonPressed
+#    Return: void
+# 28. 0x0040b690: CSWGuiPanel::HitCheckMouse
+#    Return: int
+# 29. 0x0040b760: CSWGuiPanel::Draw
+#    Return: void
+# 30. 0x0040b870: CSWGuiPanel::OnPanelAdded
+#    Return: void
+# 31. 0x0040b8f0: CSWGuiPanel::StopLoadFromLayout
+#    Return: void
+# 32. 0x0040b930: CSWGuiPanel::InitControl
+#    Return: void
+# 33. 0x0040b9a0: CSWGuiPanel::AddControl
+#    Return: void
+# 34. 0x0040b9d0: CSWGuiPanel::SetVisible
+#    Return: void
+# 35. 0x0040ba00: CSWGuiPanel::GetControl
+#    Return: CSWGuiControl *
+# 36. 0x0040ba20: CSWGuiPanel::GetLocalMouseCoords
+#    Return: void
+# 37. 0x0040bad0: CSWGuiManager::CSWGuiManager
+#    Return: CSWGuiManager *
+# 38. 0x0040bc70: CSWGuiManager::AddPanel
+#    Return: void
+# 39. 0x0040bd20: CSWGuiManager::SendPanelToBack
+#    Return: void
+# 40. 0x0040bd70: CSWGuiManager::PanelExists
+#    Return: int
+# 41. 0x0040bd90: CSWGuiManager::PushModalPanel
+#    Return: undefined4
+# 42. 0x0040be00: CSWGuiManager::PopModalPanel
+#    Return: int
+# 43. 0x0040be70: CSWGuiManager::SetSize
+#    Return: void
+# 44. 0x0040bec0: CSWGuiManager::DrawSafeRegion
+#    Return: void
+# 45. 0x0040c120: CSWGuiManager::HideAllPanels
+#    Return: void
+# 46. 0x0040c150: CSWGuiManager::RemoveToolTip
+#    Return: void
+# 47. 0x0040c170: CSWGuiPanel::OnPanelRemoved
+#    Return: void
+# 48. 0x0040c1e0: CSWGuiManager::HandleMouseMove
+#    Return: void
+# 49. 0x0040c570: CSWGuiManager::HandleLMouseDown
+#    Return: undefined4
+# 50. 0x0040c610: CSWGuiManager::HandleRMouseDown
+#    Return: undefined4
+
+# Function Batch 5
+
+# 1. 0x0040c650: CSWGuiManager::HandleZMouse
+#    Return: undefined4
+# 2. 0x0040c790: CSWGuiManager::MoveMouseToPosition
+#    Return: void
+# 3. 0x0040c7d0: CSWGuiManager::RestoreOldMousePosition
+#    Return: void
+# 4. 0x0040c830: CSWGuiManager::RemovePanel
+#    Return: undefined4
+# 5. 0x0040c8e0: CSWGuiManager::HandleInputEvent
+#    Return: void
+# 6. 0x0040cc50: CSWGuiManager::Draw
+#    Return: void
+# 7. 0x0040ce70: CSWGuiManager::Update
+#    Return: void
+# 8. 0x0040cf70: CSWGuiPanel::~CSWGuiPanel
+#    Return: void
+# 9. 0x0040d010: CSWGuiPanel::~CSWGuiPanel
+#    Return: int *
+# 10. 0x0040d030: CExoKeyTable::CExoKeyTable
+#    Return: CExoKeyTable *
+# 11. 0x0040d0d0: CExoKeyTable::~CExoKeyTable
+#    Return: void
+# 12. 0x0040d1a0: CExoKeyTable::GetEntryCount
+#    Return: int
+# 13. 0x0040d200: CExoKeyTable::LocateBifFile
+#    Return: undefined4
+# 14. 0x0040d2e0: CExoKeyTable::DestroyTable
+#    Return: void
+# 15. 0x0040d490: CExoKeyTable::GetTableIndex
+#    Return: undefined4
+# 16. 0x0040d500: CExoKeyTable::Hash
+#    Return: ulong
+# 17. 0x0040d560: CExoPackedFile::~CExoPackedFile
+#    Return: void
+# 18. 0x0040d570: CExoPackedFile::GetFile
+#    Return: undefined4
+# 19. 0x0040d580: CExoResFile::AddRefCount
+#    Return: void
+# 20. 0x0040d5a0: CExoResFile::AddAsyncRefCount
+#    Return: void
+# 21. 0x0040d5c0: CExoResFile::CloseFile
+#    Return: undefined4
+# 22. 0x0040d600: CExoResFile::UnloadHeader
+#    Return: undefined4
+# 23. 0x0040d650: CExoResFile::DeleteRefCount
+#    Return: void
+# 24. 0x0040d670: CExoResFile::DeleteAsyncRefCount
+#    Return: void
+# 25. 0x0040d690: CExoResFile::GetResourceSize
+#    Return: undefined4
+# 26. 0x0040d6b0: CExoResFile::Initialize
+#    Return: undefined4
+# 27. 0x0040d6f0: CExoResFile::OpenFile
+#    Return: undefined4
+# 28. 0x0040d800: CExoResFile::OpenAsyncFile
+#    Return: undefined4
+# 29. 0x0040d910: CExoResFile::LoadHeader
+#    Return: undefined4
+# 30. 0x0040da20: CExoResFile::ReadResource
+#    Return: int
+# 31. 0x0040daa0: CExoResFile::ReadResourceAsync
+#    Return: void
+# 32. 0x0040db10: CExoEncapsulatedFile::CloseFile
+#    Return: undefined4
+# 33. 0x0040db50: CExoResFile::CloseAsyncFile
+#    Return: undefined4
+# 34. 0x0040db90: CExoEncapsulatedFile::UnloadHeader
+#    Return: undefined4
+# 35. 0x0040dbe0: CExoEncapsulatedFile::GetResourceSize
+#    Return: undefined4
+# 36. 0x0040dc00: CExoEncapsulatedFile::Initialize
+#    Return: undefined4
+# 37. 0x0040dc30: CExoEncapsulatedFile::OpenFile
+#    Return: undefined4
+# 38. 0x0040df10: CExoEncapsulatedFile::OpenAsyncFile
+#    Return: undefined4
+# 39. 0x0040e1f0: CExoEncapsulatedFile::LoadHeader
+#    Return: undefined4
+# 40. 0x0040e640: CExoEncapsulatedFile::ReadResource
+#    Return: int
+# 41. 0x0040e6b0: CExoEncapsulatedFile::ReadResourceAsync
+#    Return: void
+# 42. 0x0040e720: CExoResourceImageFile::CloseFile
+#    Return: undefined4
+# 43. 0x0040e750: CExoResourceImageFile::DeleteRefCount
+#    Return: void
+# 44. 0x0040e770: CExoResourceImageFile::Initialize
+#    Return: undefined4
+# 45. 0x0040e790: CExoResourceImageFile::OpenFile
+#    Return: undefined4
+# 46. 0x0040e980: CExoResourceImageFile::ReadResourceAsync
+#    Return: void
+# 47. 0x0040e990: CExoKeyTable::AddKey
+#    Return: int
+# 48. 0x0040eb80: CExoKeyTable::AllocateTable
+#    Return: void *
+# 49. 0x0040ec50: CExoKeyTable::FindKey
+#    Return: int
+# 50. 0x0040ed20: CExoKeyTable::GetKeysOfType
+#    Return: void * *
+
+# Function Batch 6
+
+# 1. 0x0040ee60: CExoPackedFile::~CExoPackedFile
+#    Return: undefined4 *
+# 2. 0x0040ee80: CExoResFile::CExoResFile
+#    Return: undefined4 *
+# 3. 0x0040ef00: CExoResFile::~CExoResFile
+#    Return: void
+# 4. 0x0040ef90: CExoEncapsulatedFile::CExoEncapsulatedFile
+#    Return: undefined4 *
+# 5. 0x0040f010: CExoEncapsulatedFile::~CExoEncapsulatedFile
+# 6. 0x0040f0a0: CExoResourceImageFile::~CExoResourceImageFile
+# 7. 0x0040f120: CExoResourceImageFile::GetResourceSize
+#    Return: undefined4
+# 8. 0x0040f160: CExoResourceImageFile::GetResource
+#    Return: int
+# 9. 0x0040f1a0: CExoResourceImageFile::ReadResource
+#    Return: ulong
+# 10. 0x0040f200: CExoKeyTable::AddDirectoryContents
+#    Return: undefined4
+# 11. 0x0040f3c0: CExoKeyTable::AddEncapsulatedContents
+#    Return: undefined4
+# 12. 0x0040f990: CExoKeyTable::AddResourceImageContents
+#    Return: undefined4
+# 13. 0x0040fb80: CExoKeyTable::AddKeyTableContents
+#    Return: undefined4
+# 14. 0x00410190: CExoKeyTable::BuildNewTable
+#    Return: undefined4
+# 15. 0x00410260: CExoKeyTable::RebuildTable
+#    Return: void
+# 16. 0x004104c0: CExoResFile::~CExoResFile
+#    Return: undefined4 *
+# 17. 0x004104e0: CExoEncapsulatedFile::~CExoEncapsulatedFile
+#    Return: undefined4 *
+# 18. 0x00410500: CExoResourceImageFile::~CExoResourceImageFile
+#    Return: undefined4 *
+# 19. 0x00410520: CResGFFFieldIDHash::Initialize
+# 20. 0x00410560: CResGFFFieldIDHash::Hash
+# 21. 0x004105a0: CResGFF::CResGFF
+# 22. 0x00410630: CResGFF::CResGFF
+#    Return: CResGFF *
+# 23. 0x00410740: CResGFF::OnResourceServiced
+#    Return: undefined4
+# 24. 0x00410880: CResGFF::OnResourceFreed
+#    Return: undefined4
+# 25. 0x004108c0: CResGFF::ReleaseResource
+#    Return: void
+# 26. 0x00410930: CResGFF::GetField?
+#    Return: int
+# 27. 0x00410990: CResGFF::GetField
+#    Return: CResGFFField *
+# 28. 0x00410a20: CResGFF::GetDataField
+#    Return: int
+# 29. 0x00410a60: CResGFF::GetDataLayoutList
+#    Return: int
+# 30. 0x00410aa0: CResGFF::InitializeForWriting
+#    Return: void
+# 31. 0x00410d60: CResGFF::AddStruct
+#    Return: ulong
+# 32. 0x00410e20: CResGFF::AddLabel
+#    Return: ulong
+# 33. 0x00410f50: CResGFF::AddDataField
+#    Return: int
+# 34. 0x00411020: CResGFF::AddDataLayoutField
+#    Return: int
+# 35. 0x004110f0: CResGFF::AddDataLayoutList
+#    Return: int
+# 36. 0x004111c0: CResGFF::GetElementType
+#    Return: undefined4
+# 37. 0x00411200: CResGFF::GetFieldCount
+#    Return: ulong
+# 38. 0x00411240: CResGFF::GetTopLevelStruct
+#    Return: CResStruct *
+# 39. 0x00411260: CResGFF::CreateGFFFile
+#    Return: undefined4
+# 40. 0x004113d0: CResGFF::WriteGFFData
+#    Return: bool
+# 41. 0x00411540: CResGFF::GetTotalSize
+#    Return: int
+# 42. 0x00411570: CResGFF::~CResGFF
+#    Return: void
+# 43. 0x00411630: CResGFF::GetFieldByLabel
+#    Return: ulong
+# 44. 0x00411730: CResGFF::AddField
+#    Return: CResGFFField *
+# 45. 0x00411880: CResGFF::GetFieldType
+#    Return: undefined4
+# 46. 0x004118c0: CResGFF::GetList
+#    Return: undefined4
+# 47. 0x00411940: CResGFF::GetListCount
+#    Return: undefined4
+# 48. 0x00411990: CResGFF::GetListElement
+#    Return: undefined4
+# 49. 0x00411a10: CResGFF::GetStructFromStruct
+#    Return: undefined4
+# 50. 0x00411a60: CResGFF::ReadFieldBYTE
+#    Return: byte
+
+# Function Batch 7
+
+# 1. 0x00411ad0: CResGFF::ReadFieldCHAR
+#    Return: char
+# 2. 0x00411b40: CResGFF::ReadFieldWORD
+#    Return: ushort
+# 3. 0x00411bb0: CResGFF::ReadFieldSHORT
+#    Return: short
+# 4. 0x00411c20: CResGFF::ReadFieldDWORD
+#    Return: int
+# 5. 0x00411c90: CResGFF::ReadFieldINT
+#    Return: int
+# 6. 0x00411d00: CResGFF::ReadFieldFLOAT
+#    Return: float10
+# 7. 0x00411d70: CResGFF::ReadFieldDWORD64
+#    Return: ulonglong
+# 8. 0x00411e10: CResGFF::ReadFieldCResRef
+#    Return: CResRef *
+# 9. 0x00411ec0: CResGFF::ReadFieldCExoString
+#    Return: CExoString *
+# 10. 0x00411fd0: CResGFF::ReadFieldCExoLocString
+#    Return: undefined4 *
+# 11. 0x004121b0: CResGFF::ReadFieldQuaternion
+#    Return: Quaternion *
+# 12. 0x004122a0: CResGFF::ReadFieldVector
+#    Return: Vector *
+# 13. 0x00412380: CResGFF::ReadFieldVOID
+#    Return: ulong *
+# 14. 0x00412450: CResGFF::AddList
+#    Return: undefined4
+# 15. 0x004124e0: CResGFF::AddListElement
+#    Return: undefined4
+# 16. 0x004125b0: CResGFF::AddStructToStruct
+#    Return: undefined4
+# 17. 0x00412620: CResGFF::WriteFieldBYTE
+#    Return: undefined4
+# 18. 0x00412670: CResGFF::WriteFieldCHAR
+#    Return: undefined4
+# 19. 0x004126c0: CResGFF::WriteFieldWORD
+#    Return: undefined4
+# 20. 0x00412710: CResGFF::WriteFieldSHORT
+#    Return: undefined4
+# 21. 0x00412760: CResGFF::WriteFieldDWORD
+#    Return: undefined4
+# 22. 0x004127b0: CResGFF::WriteFieldINT
+#    Return: undefined4
+# 23. 0x00412800: CResGFF::WriteFieldDWORD64
+#    Return: undefined4
+# 24. 0x00412870: CResGFF::WriteFieldFLOAT
+#    Return: undefined4
+# 25. 0x004128c0: CResGFF::WriteFieldCResRef
+#    Return: undefined4
+# 26. 0x00412970: CResGFF::WriteFieldCExoString
+#    Return: undefined4
+# 27. 0x00412a10: CResGFF::WriteFieldCExoLocString
+#    Return: undefined4
+# 28. 0x00412c10: CResGFF::WriteFieldVOID
+#    Return: undefined4
+# 29. 0x00412ca0: CResGFF::WriteFieldQuaternion
+#    Return: undefined4
+# 30. 0x00412d30: CResGFF::WriteFieldVector
+#    Return: undefined4
+# 31. 0x00412db0: CResGFF::Pack
+#    Return: void
+# 32. 0x00413010: CResGFF::~CResGFF
+#    Return: int * *
+# 33. 0x00413030: CResGFF::WriteGFFFile
+#    Return: bool
+# 34. 0x00413100: C2DA::GetColumnIndex
+#    Return: int
+# 35. 0x00413190: C2DA::GetCExoStringEntry
+#    Return: bool
+# 36. 0x00413270: C2DA::GetCExoStringEntry
+#    Return: bool
+# 37. 0x00413350: C2DA::GetFLOATEntry
+#    Return: bool
+# 38. 0x00413430: C2DA::GetFLOATEntry
+#    Return: bool
+# 39. 0x00413510: C2DA::GetINTEntry
+#    Return: bool
+# 40. 0x00413660: C2DA::GetINTEntry
+#    Return: int
+# 41. 0x004137e0: C2DA::GetNextToken
+#    Return: bool
+# 42. 0x004138b0: C2DA::GetRowIndex
+#    Return: int
+# 43. 0x00413940: C2DA::SkipNewLines
+#    Return: bool
+# 44. 0x004139e0: C2DA::Unload2DArray
+#    Return: void
+# 45. 0x00413ae0: CResHelper<CRes2DA,2017>::CResHelper
+# 46. 0x00413b40: CResHelper<CRes2DA,2017>::SetResRef
+#    Return: void
+# 47. 0x00413ca0: CResHelper<CRes2DA,2017>::~CResHelper<CRes2DA,2017>
+#    Return: undefined4 *
+# 48. 0x00413cc0: C2DA::C2DA
+#    Return: undefined4 *
+# 49. 0x00413d80: C2DA::~C2DA
+#    Return: void
+# 50. 0x00413de0: C2DA::GetCExoStringEntry
+#    Return: bool
+
+# Function Batch 8
+
+# 1. 0x00413ec0: C2DA::GetCExoStringEntry
+#    Return: bool
+# 2. 0x00413fa0: C2DA::GetFLOATEntry
+#    Return: bool
+# 3. 0x00414080: C2DA::GetFLOATEntry
+#    Return: undefined4
+# 4. 0x00414110: C2DA::GetINTEntry
+#    Return: bool
+# 5. 0x00414260: C2DA::GetINTEntry
+#    Return: bool
+# 6. 0x004143b0: C2DA::Load2DArray
+#    Return: undefined4
+# 7. 0x00414a30: C2DA::~C2DA
+#    Return: undefined4 *
+# 8. 0x00414a50: CSWGuiDrawable::UpdatePulsing
+# 9. 0x00414ae0: CSWGuiBorderParams::SetCornerImage
+#    Return: void
+# 10. 0x00414b70: CSWGuiBorderParams::SetEdgeImage
+#    Return: void
+# 11. 0x00414c00: CSWGuiBorderParams::SetFillImage
+#    Return: void
+# 12. 0x00414c90: CSWGuiBorderParams::SetBorder
+#    Return: void
+# 13. 0x00414cd0: CSWGuiBorderParams::GetBorderDim
+#    Return: int
+# 14. 0x00414d00: CSWGuiBorderParams::SetPulsingAlpha
+#    Return: void
+# 15. 0x00414d30: CSWGuiImageParams::CSWGuiImageParams
+#    Return: undefined4 *
+# 16. 0x00414dc0: STR_RES::STR_RES
+#    Return: undefined4 *
+# 17. 0x00414e10: CSWGuiTextParams::SetColor
+#    Return: void
+# 18. 0x00414e50: CSWGuiTextParams::SetDefaultColor
+#    Return: void
+# 19. 0x00414e80: CSWGuiTextParams::RestoreDefaultColor
+#    Return: void
+# 20. 0x00414e90: CSWGuiText::wrapText
+# 21. 0x00414eb0: CSWGuiText::GetIdealHeight
+#    Return: int
+# 22. 0x00414ee0: CSWGuiText::GetFontHeight
+#    Return: int
+# 23. 0x00414f10: CSWGuiText::GetIdealWidthAndHeight
+#    Return: void
+# 24. 0x00414f80: CSWGuiDrawable::~CSWGuiDrawable
+# 25. 0x00414f90: CSWGuiDrawable::~CSWGuiDrawable
+#    Return: undefined4 *
+# 26. 0x00414fb0: CSWGuiScene::Draw
+#    Return: void
+# 27. 0x00415000: CSWGuiBorderParams::CSWGuiBorderParams
+#    Return: undefined4 *
+# 28. 0x004150c0: CSWGuiBorderParams::operator=
+#    Return: CSWGuiBorderParams *
+# 29. 0x00415190: CSWGuiBorder::Initialize
+#    Return: void
+# 30. 0x004151c0: CSWGuiBorder::~CSWGuiBorder
+#    Return: void
+# 31. 0x00415240: CSWGuiBorder::GetInnerExtent
+#    Return: void
+# 32. 0x004153e0: CSWGuiBorder::Load
+#    Return: void
+# 33. 0x004155b0: CSWGuiBorder::FillTile
+#    Return: void
+# 34. 0x004157f0: CSWGuiBorder::FillCenter
+#    Return: void
+# 35. 0x00415900: CSWGuiImageParams::SetImage
+#    Return: void
+# 36. 0x00415990: CSWGuiImageParams::SetAlignment
+#    Return: void
+# 37. 0x004159c0: CSWGuiImageParams::SetDrawStyle
+#    Return: void
+# 38. 0x004159f0: CSWGuiImageParams::SetImageObject
+#    Return: void
+# 39. 0x00415a30: CSWGuiImage::CSWGuiImage
+#    Return: CSWGuiImage *
+# 40. 0x00415ad0: CSWGuiImage::~CSWGuiImage
+#    Return: void
+# 41. 0x00415b30: CSWGuiImage::GetImageExtent
+#    Return: CSWGuiExtent *
+# 42. 0x00415b70: CSWGuiImage::SetExtent
+#    Return: void
+# 43. 0x00415c90: CSWGuiImage::Draw
+#    Return: void
+# 44. 0x00415d00: CSWGuiTextParams::SetFont
+#    Return: void
+# 45. 0x00415d60: CSWGuiTextParams::SetFontRename
+# 46. 0x00415dd0: CSWGuiTextParams::SetBaseFont
+#    Return: void
+# 47. 0x00415df0: CSWGuiTextParams::SetFontRename
+# 48. 0x00415e00: CSWGuiTextParams::SetText
+#    Return: void
+# 49. 0x00415e50: CSWGuiTextParams::SetStrRef
+#    Return: void
+# 50. 0x00415f20: CSWGuiTextParams::SetAlignment
+#    Return: void
+
+# Function Batch 9
+
+# 1. 0x00415f70: CSWGuiTextParams::SetTextObject
+#    Return: void
+# 2. 0x00415ff0: CSWGuiText::~CSWGuiText
+#    Return: void
+# 3. 0x00416050: CSWGuiText::Load
+# 4. 0x00416240: CSWGuiText::Draw
+#    Return: void
+# 5. 0x00416280: CSWGuiText::SetExtent
+# 6. 0x004162e0: CSWGuiEditText::RemoveLastChar
+#    Return: void
+# 7. 0x004163a0: CSWGuiEditText::AddNewChar
+#    Return: void
+# 8. 0x00416490: CSWGuiEditText::SetText
+#    Return: void
+# 9. 0x00416530: CSWGuiEditText::SetCaretVisible
+#    Return: void
+# 10. 0x004165e0: CSWGuiScene::~CSWGuiScene
+#    Return: void
+# 11. 0x00416710: CSWGuiScene::RemoveModel
+#    Return: undefined4
+# 12. 0x00416750: CSWGuiScene::GetModel
+#    Return: undefined4
+# 13. 0x00416770: CExoArrayList::CExoArrayList
+#    Return: void * *
+# 14. 0x004167a0: CExoArrayList::insert
+#    Return: void
+# 15. 0x004167f0: CSWGuiBorder::CSWGuiBorder
+#    Return: CSWGuiBorder *
+# 16. 0x004168a0: CSWGuiBorder::~CSWGuiBorder
+#    Return: undefined4 *
+# 17. 0x004168c0: CSWGuiBorder::Draw
+#    Return: void
+# 18. 0x00416de0: CSWGuiImageParams::operator=
+#    Return: int *
+# 19. 0x00416e70: CSWGuiImage::~CSWGuiImage
+#    Return: undefined4 *
+# 20. 0x00416e90: CSWGuiImage::Initialize
+#    Return: void
+# 21. 0x00416ec0: CSWGuiImage::Load
+#    Return: void
+# 22. 0x00417050: CSWGuiTextParams::CSWGuiTextParams
+#    Return: undefined4 *
+# 23. 0x00417120: CSWGuiTextParams::CSWGuiTextParams
+#    Return: CSWGuiTextParams *
+# 24. 0x004171e0: CSWGuiTextParams::operator=
+#    Return: CSWGuiTextParams *
+# 25. 0x00417280: CSWGuiText::CSWGuiText
+#    Return: CSWGuiText *
+# 26. 0x004172f0: CSWGuiText::~CSWGuiText
+#    Return: undefined4 *
+# 27. 0x00417310: CSWGuiText::Initialize
+#    Return: void
+# 28. 0x004173d0: CSWGuiEditText::CSWGuiEditText
+#    Return: undefined4 *
+# 29. 0x00417440: CSWGuiEditText::~CSWGuiEditText
+#    Return: undefined4 *
+# 30. 0x00417460: CSWGuiEditText::~CSWGuiEditText
+# 31. 0x004174b0: CSWGuiScene::CSWGuiScene
+#    Return: undefined4 *
+# 32. 0x004175a0: CSWGuiScene::~CSWGuiScene
+#    Return: undefined4 *
+# 33. 0x004175c0: CSWGuiScene::AddModel
+#    Return: undefined4
+# 34. 0x00417620: CSWGuiScene::AddModel
+#    Return: CAurObject *
+# 35. 0x00417660: CSWGuiNavigable::SetMoveToControl
+#    Return: void
+# 36. 0x00417680: CSWGuiNavigable::GetMoveToControl
+#    Return: undefined4
+# 37. 0x004176a0: CSWGuiControl::SetEnabled
+#    Return: void
+# 38. 0x004176c0: CSWGuiManager::RemoveToolTip
+# 39. 0x004176e0: CSWGuiLabel::Initialize
+#    Return: void
+# 40. 0x00417750: CSWGuiLabel::Draw
+#    Return: void
+# 41. 0x00417780: CSWGuiLabel::SetExtent
+# 42. 0x004177e0: CSWGuiLabelHilight::Initialize
+# 43. 0x00417880: CSWGuiLabelHilight::Draw
+#    Return: void
+# 44. 0x004178e0: CSWGuiLabelHilight::SetExtent
+#    Return: void
+# 45. 0x00417970: CSWGuiButton::Initialize
+#    Return: void
+# 46. 0x00417a20: CSWGuiButton::SetExtent
+#    Return: void
+# 47. 0x00417ab0: CSWGuiButton::Draw
+# 48. 0x00417b10: CSWGuiButtonToggle::Draw
+#    Return: void
+# 49. 0x00417ba0: CSWGuiButtonToggle::SetExtent
+#    Return: void
+# 50. 0x00417ca0: CSWGuiButtonToggle::Initialize
+#    Return: void
+
+# Function Batch 10
+
+# 1. 0x00417dc0: CSWGuiSlider::Initialize
+# 2. 0x00417e60: CSWGuiSlider::Draw
+#    Return: void
+# 3. 0x00417ec0: CSWGuiSlider::SetMaxValue
+#    Return: void
+# 4. 0x00417ee0: CSWGuiSlider::SetCurValue
+#    Return: void
+# 5. 0x00417f10: CSWGuiProgressBar::Initialize
+# 6. 0x00417f60: CSWGuiProgressBar::Draw
+#    Return: void
+# 7. 0x00417f90: CSWGuiProgressBar::SetMaxValue
+#    Return: void
+# 8. 0x00417fb0: CSWGuiProgressBar::SetCurValue
+#    Return: void
+# 9. 0x00417fe0: CSWGuiProgressBar::SetStartFromLeft
+#    Return: void
+# 10. 0x00418010: CSWGuiScrollBar::CanScrollUp
+#    Return: undefined4
+# 11. 0x00418030: CSWGuiScrollBar::CanScrollDown
+#    Return: undefined4
+# 12. 0x00418070: CSWGuiScrollBar::setMaxValue
+#    Return: void
+# 13. 0x004180a0: CSWGuiScrollBar::setCurValue
+#    Return: void
+# 14. 0x004180d0: CSWGuiScrollBar::setVisibleValue
+#    Return: void
+# 15. 0x00418100: CSWGuiScrollBar::Initialize
+# 16. 0x004181d0: CSWGuiControl::SetActive
+# 17. 0x004181f0: CSWGuiListBox::SetScrollBarExtent
+#    Return: void
+# 18. 0x00418270: CSWGuiListBox::SetScrollBarOnLeft
+#    Return: void
+# 19. 0x004182b0: CSWGuiListBox::getPagesToScroll
+#    Return: int
+# 20. 0x00418300: CSWGuiListBox::UpdateArrowPulsing
+# 21. 0x00418380: CSWGui3DSceneView::SetExtent
+# 22. 0x004183b0: CSWGuiEditbox::Initialize
+#    Return: void
+# 23. 0x00418420: CSWGuiEditbox::Draw
+#    Return: void
+# 24. 0x00418450: CSWGuiEditbox::SetExtent
+# 25. 0x004184b0: CSWGuiEditbox::SetEnabled
+# 26. 0x004184f0: CSWGuiEditbox::HandleKeyPress
+# 27. 0x00418660: CSWGuiEditbox::SetFocus
+#    Return: void
+# 28. 0x00418670: CSWGuiEditbox::GetIsSelectable
+#    Return: byte
+# 29. 0x00418680: CSWGuiRadioButton::HandleLMouseDown
+#    Return: void
+# 30. 0x004186b0: CSWGuiEditbox::HandleLMouseUp
+# 31. 0x004186d0: CSWGuiEditbox::ReSetFont
+#    Return: void
+# 32. 0x004186e0: CExoArrayList<>::Allocate
+#    Return: void
+# 33. 0x00418750: CSWGuiControl::HandleInputEvent
+#    Return: void
+# 34. 0x004187c0: CSWGuiControl::HitCheckMouse
+#    Return: int
+# 35. 0x00418800: CSWGuiControl::Load
+#    Return: void
+# 36. 0x00418840: CSWGuiControl::Load
+#    Return: void
+# 37. 0x00418960: CSWGuiControl::HandleFocusChange
+#    Return: void
+# 38. 0x004189a0: CSWGuiControl::HandleMouseOver
+#    Return: void
+# 39. 0x004189d0: CSWGuiControl::GetIsSelectable
+#    Return: bool
+# 40. 0x00418a20: CSWGuiControl::GetIsChild
+#    Return: undefined4
+# 41. 0x00418a50: CSWGuiControl::GetSelectableParent
+#    Return: CSWGuiControl *
+# 42. 0x00418a90: CSWGuiControl::DisplayToolTip
+#    Return: undefined4
+# 43. 0x00418cd0: CSWGuiLabel::Initialize
+#    Return: void
+# 44. 0x00418d00: CSWGuiLabel::SetEnabled
+# 45. 0x00418d40: CSWGuiLabel::ReSetFont
+# 46. 0x00418d50: CSWGuiLabelHilight::Initialize
+# 47. 0x00418d80: CSWGuiButton::Initialize
+#    Return: void
+# 48. 0x00418db0: CSWGuiButton::SetEnabled
+#    Return: void
+# 49. 0x00418df0: CSWGuiButton::ReSetFont
+#    Return: void
+# 50. 0x00418e00: CSWGuiButton::SetActive

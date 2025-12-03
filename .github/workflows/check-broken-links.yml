@@ -1,0 +1,31 @@
+name: Check Broken Links
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:
+
+jobs:
+  link-check:
+    name: Check for Broken Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check links in markdown files
+        uses: peter-evans/link-checker@v1
+        with:
+          args: -r -v -x "https://github.com/th3w1zard1/PyKotor" --timeout 30
+        continue-on-error: true
+
+      - name: Check links in documentation
+        run: |
+          pip install linkchecker
+          linkchecker --check-extern --no-warnings docs/ || true
+        continue-on-error: true
+

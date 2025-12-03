@@ -1,12 +1,38 @@
+"""
+Binary reader/writer for KotOR walkmeshes (BWM/WOK).
+
+This module translates between on-disk WOK/BWM files and the in-memory BWM model
+defined in `bwm_data.py`. The binary layout mirrors the game's expectations:
+
+- Header:  "BWM " + "V1.0"
+- Walkmesh properties (type, hooks, position)
+- Vertex array (float32 triplets)
+- Face indices (uint32 triplets into the vertex array)
+- Materials per face (uint32 SurfaceMaterial id)
+- Face normals (float32 triplets)
+- Planar distances (float32 per face)
+- AABB nodes (bounds, face index or 0xFFFFFFFF, split plane, children)
+- Walkable adjacencies (3 ints per walkable face; -1 for no neighbor)
+- Edges (pairs of (edge_index, transition) where edge_index = face*3 + edge)
+- Perimeters (1-based indices into the edge array for edges with final=True)
+
+Important
+---------
+Where faces or vertices must be converted to indices, we find indices by object
+identity (the `is` operator), not value equality, to avoid collisions when value
+equality is true for different objects. This complements the value-based
+`__eq__`/`__hash__` used for comparisons on faces/vertices.
+"""
+
 from __future__ import annotations
 
 import struct
 
 from typing import TYPE_CHECKING
 
-from pykotor.common.geometry import SurfaceMaterial, Vector3
-from pykotor.resource.formats.bwm.bwm_data import BWM, BWMFace, BWMType
-from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose
+from pykotor.resource.formats.bwm.bwm_data import BWM, BWMFace, BWMType  # noqa: E402
+from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose  # noqa: E402
+from utility.common.geometry import SurfaceMaterial, Vector3  # noqa: E402
 
 if TYPE_CHECKING:
     from pykotor.resource.formats.bwm.bwm_data import BWMAdjacency, BWMEdge, BWMNodeAABB
@@ -14,13 +40,22 @@ if TYPE_CHECKING:
 
 
 class BWMBinaryReader(ResourceReader):
+    """Reads BWM/WOK (Walkmesh) files.
+    
+    Walkmesh files define collision geometry for areas, including walkable surfaces,
+    adjacencies, AABB trees for spatial queries, and edge transitions.
+    
+    References:
+    ----------
+        vendor/reone/src/libs/graphics/format/bwmreader.cpp (BWM reading)
+    """
     def __init__(
         self,
         source: SOURCE_TYPES,
         offset: int = 0,
         size: int = 0,
     ):
-        """Initializes a Wok object.
+        """Initializes a walkmesh reader (WOK/BWM).
 
         Args:
         ----
@@ -48,11 +83,8 @@ class BWMBinaryReader(ResourceReader):
         self.absolute_hook2: Vector3 = Vector3.from_null()
 
     @autoclose
-    def load(
-        self,
-        auto_close: bool = True,
-    ) -> BWM:
-        """Loads a binary BWM file and returns a BWM object.
+    def load(self, *, auto_close: bool = True) -> BWM:  # noqa: FBT001, FBT002, ARG002
+        """Loads a WOK/BWM binary file into a BWM instance.
 
         Args:
         ----
@@ -65,13 +97,10 @@ class BWMBinaryReader(ResourceReader):
 
         Processing Logic:
         ----------------
-            - Reads header info like file type, version
-            - Reads BWM properties like type, positions etc
-            - Reads vertex data
-            - Loops through faces and reads index data
-            - Loops through faces and reads material data
-            - Loops through edges and reads transition data
-            - Sets loaded data to BWM object.
+            - Validates header and version
+            - Reads properties, vertices, face indices, materials
+            - Applies per-edge transitions to faces
+            - Populates BWM.faces
         """
         self._wok = BWM()
 
@@ -79,11 +108,11 @@ class BWMBinaryReader(ResourceReader):
         file_version = self._reader.read_string(4)
 
         if file_type != "BWM ":
-            msg = "Not a valid binary BWM file."
+            msg = f"Not a valid binary BWM file. Expected 'BWM ', got '{file_type}' (hex: {file_type.encode('latin1').hex()})"
             raise ValueError(msg)
 
         if file_version != "V1.0":
-            msg = "The BWM version of the file is unsupported."
+            msg = f"Unsupported BWM version: got '{file_version}', expected 'V1.0'"
             raise ValueError(msg)
 
         self._wok.walkmesh_type = BWMType(self._reader.read_uint32())
@@ -166,11 +195,8 @@ class BWMBinaryWriter(ResourceWriter):
         self._wok: BWM = wok
 
     @autoclose
-    def write(
-        self,
-        auto_close: bool = True,
-    ):
-        """Writes the walkmesh data to a binary file.
+    def write(self, *, auto_close: bool = True):  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
+        """Writes a BWM instance to WOK/BWM binary format.
 
         Args:
         ----
@@ -179,10 +205,9 @@ class BWMBinaryWriter(ResourceWriter):
 
         Processing Logic:
         ----------------
-            1. Extracts vertex, face, edge and other data from the walkmesh object
-            2. Packs the data into byte arrays with the correct offsets
-            3. Writes the header, offsets and packed data to the binary file
-            4. Closes the file if auto_close is True.
+            1. Extracts vertex, face, edge and metadata from the walkmesh
+            2. Packs sections and computes offsets
+            3. Writes header, counts and offsets, followed by section data
         """
         vertices: list[Vector3] = self._wok.vertices()
 
@@ -199,11 +224,10 @@ class BWMBinaryWriter(ResourceWriter):
         indices_offset = vertex_offset + len(vertex_data)
         indices_data = bytearray()
         for face in faces:
-            i1, i2, i3 = (
-                vertices.index(face.v1),
-                vertices.index(face.v2),
-                vertices.index(face.v3),
-            )
+            # Find vertex indices by object identity
+            i1 = next(i for i, v in enumerate(vertices) if v is face.v1)
+            i2 = next(i for i, v in enumerate(vertices) if v is face.v2)
+            i3 = next(i for i, v in enumerate(vertices) if v is face.v3)
             indices_data += struct.pack("III", i1, i2, i3)
 
         material_offset = indices_offset + len(indices_data)
@@ -227,40 +251,69 @@ class BWMBinaryWriter(ResourceWriter):
         for aabb in aabbs:
             aabb_data += struct.pack("fff", aabb.bb_min.x, aabb.bb_min.y, aabb.bb_min.z)
             aabb_data += struct.pack("fff", aabb.bb_max.x, aabb.bb_max.y, aabb.bb_max.z)
-            aabb_data += struct.pack(
-                "I",
-                0xFFFFFFFF if aabb.face is None else faces.index(aabb.face),
-            )
+            # Find face index by object identity
+            face_idx = 0xFFFFFFFF if aabb.face is None else next(i for i, f in enumerate(faces) if f is aabb.face)
+            aabb_data += struct.pack("I", face_idx)
             aabb_data += struct.pack("I", 4)
             aabb_data += struct.pack("I", aabb.sigplane.value)
-            aabb_data += struct.pack(
-                "I",
-                0xFFFFFFFF if aabb.left is None else aabbs.index(aabb.left) + 1,
-            )
-            aabb_data += struct.pack(
-                "I",
-                0xFFFFFFFF if aabb.right is None else aabbs.index(aabb.right) + 1,
-            )
+            # Find AABB indices by object identity
+            left_idx = 0xFFFFFFFF if aabb.left is None else next(i for i, a in enumerate(aabbs) if a is aabb.left) + 1
+            right_idx = 0xFFFFFFFF if aabb.right is None else next(i for i, a in enumerate(aabbs) if a is aabb.right) + 1
+            aabb_data += struct.pack("I", left_idx)
+            aabb_data += struct.pack("I", right_idx)
 
         adjacency_offset = aabb_offset + len(aabb_data)
         adjacency_data = bytearray()
         for face in walkable:
             adjancencies: tuple[BWMAdjacency | None, BWMAdjacency | None, BWMAdjacency | None] = self._wok.adjacencies(face)
-            indexes: list[int] = [
-                -1 if adjacency is None
-                else faces.index(adjacency.face) * 3 + adjacency.edge
-                for adjacency in adjancencies
-            ]
+            indexes: list[int] = []
+            for adjacency in adjancencies:
+                if adjacency is None:
+                    indexes.append(-1)
+                else:
+                    # Find face index by object identity
+                    idx = next(i for i, f in enumerate(faces) if f is adjacency.face)
+                    indexes.append(idx * 3 + adjacency.edge)
             adjacency_data += struct.pack("iii", *indexes)
 
-        edges: list[BWMEdge] = self._wok.edges()
+        # Get perimeter edges from the walkmesh
+        # Note: edges() returns perimeter edges based on walkable face indices
+        # We need to map these to the reordered face list (walkable + unwalkable)
+        # Reference: vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:275-307
+        perimeter_edges: list[BWMEdge] = self._wok.edges()
+        
+        # Convert perimeter edges to use reordered face indices
+        # IMPORTANT: We must use identity-based lookup (the `is` operator), NOT value-based
+        # equality. BWMFace has custom __eq__/__hash__ that uses vertex coordinates and
+        # transitions for equality. If two faces have the same coordinates and transitions
+        # (e.g., a walkable and unwalkable face sharing geometry), using a dict would cause
+        # key collisions and return the wrong face index. This would cause transitions to
+        # be assigned to the wrong faces (e.g., unwalkable instead of walkable), breaking
+        # pathfinding in the game.
+        # Reference: wiki/BWM-File-Format.md - Edges section
+        edges: list[BWMEdge] = []
+        for edge in perimeter_edges:
+            # Find the face index in the reordered list BY IDENTITY (not value equality)
+            # This is critical: we need the exact object reference, not just an equal face
+            face_idx: int | None = next((i for i, f in enumerate(faces) if f is edge.face), None)
+            if face_idx is None:
+                # Face not found in reordered list (shouldn't happen, but handle gracefully)
+                continue
+            # Create new BWMEdge with correct face reference and transition
+            # The edge.index is the local edge index (0, 1, or 2) within the face
+            from pykotor.resource.formats.bwm.bwm_data import BWMEdge
+            edges.append(BWMEdge(faces[face_idx], edge.index, edge.transition))
+        
         edge_data = bytearray()
         edge_offset = adjacency_offset + len(adjacency_data)
         for edge in edges:
-            edge_index = faces.index(edge.face) * 3 + edge.index
+            # Find face index by object identity
+            face_idx = next(i for i, f in enumerate(faces) if f is edge.face)
+            edge_index = face_idx * 3 + edge.index
             edge_data += struct.pack("ii", edge_index, edge.transition)
 
-        perimeters: list[int] = [edges.index(edge) + 1 for edge in edges if edge.final]
+        # Find edge indices by object identity for perimeters
+        perimeters: list[int] = [next(i for i, e in enumerate(edges) if e is edge) + 1 for edge in edges if edge.final]
         perimeter_data = bytearray()
         perimeter_offset = edge_offset + len(edge_data)
         for perimeter in perimeters:

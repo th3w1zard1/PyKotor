@@ -1,0 +1,300 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tool:
+        description: 'Tool to release'
+        required: true
+        type: choice
+        options:
+          - toolset
+          - holopatcher
+          - kotordiff
+          - guiconverter
+      version:
+        description: 'Version to release (e.g., 3.1.3)'
+        required: true
+      release_notes:
+        description: 'Release notes (optional, will use default if empty)'
+        required: false
+        default: ''
+      skip_version_bump:
+        description: 'Skip version bump (version already updated in config)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: create-release-${{ github.event.inputs.tool }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    name: Validate Release Parameters
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.config.outputs.tag_name }}
+      config_file: ${{ steps.config.outputs.config_file }}
+      display_name: ${{ steps.config.outputs.display_name }}
+      current_version: ${{ steps.check_version.outputs.current_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine configuration
+        id: config
+        run: |
+          TOOL="${{ github.event.inputs.tool }}"
+          VERSION="${{ github.event.inputs.version }}"
+          
+          case "$TOOL" in
+            toolset)
+              CONFIG_FILE="Tools/HolocronToolset/src/toolset/config/config_info.py"
+              TAG_NAME="v$VERSION-toolset"
+              DISPLAY_NAME="HolocronToolset"
+              ;;
+            holopatcher)
+              CONFIG_FILE="Tools/HoloPatcher/src/holopatcher/config.py"
+              TAG_NAME="v$VERSION-patcher"
+              DISPLAY_NAME="HoloPatcher"
+              ;;
+            kotordiff)
+              CONFIG_FILE="Tools/KotorDiff/src/kotordiff/__main__.py"
+              TAG_NAME="v$VERSION-kotordiff"
+              DISPLAY_NAME="KotorDiff"
+              ;;
+            guiconverter)
+              CONFIG_FILE="Tools/GuiConverter/src/gui_converter/__init__.py"
+              TAG_NAME="v$VERSION-guiconverter"
+              DISPLAY_NAME="GuiConverter"
+              ;;
+            *)
+              echo "❌ Unknown tool: $TOOL"
+              exit 1
+              ;;
+          esac
+          
+          echo "config_file=$CONFIG_FILE" >> $GITHUB_OUTPUT
+          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "display_name=$DISPLAY_NAME" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9.]+)?$'; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "   Expected: MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-suffix"
+            exit 1
+          fi
+          echo "✓ Version format is valid: $VERSION"
+        shell: bash
+
+      - name: Check current version
+        id: check_version
+        run: |
+          TOOL="${{ github.event.inputs.tool }}"
+          CONFIG_FILE="${{ steps.config.outputs.config_file }}"
+          
+          if [ "$TOOL" = "kotordiff" ]; then
+            CURRENT=$(grep -oP 'CURRENT_VERSION\s*=\s*"\K[^"]+' "$CONFIG_FILE" || echo "unknown")
+          else
+            CURRENT=$(grep -oP '"currentVersion":\s*"\K[^"]+' "$CONFIG_FILE" || echo "unknown")
+          fi
+          
+          echo "current_version=$CURRENT" >> $GITHUB_OUTPUT
+          echo "Current version in config: $CURRENT"
+          echo "Target version: ${{ github.event.inputs.version }}"
+        shell: bash
+
+      - name: Check tag availability
+        run: |
+          TAG="${{ steps.config.outputs.tag_name }}"
+          
+          git fetch --tags --quiet
+          
+          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "⚠️  Warning: Tag $TAG already exists and will be overwritten"
+          else
+            echo "✓ Tag $TAG is available"
+          fi
+        shell: bash
+
+  bump-version:
+    name: Bump Version
+    needs: validate
+    if: github.event.inputs.skip_version_bump != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+
+      - name: Update version in config
+        run: |
+          TOOL="${{ github.event.inputs.tool }}"
+          VERSION="${{ github.event.inputs.version }}"
+          CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
+          
+          echo "Updating $CONFIG_FILE to version $VERSION"
+          
+          if [ "$TOOL" = "kotordiff" ]; then
+            sed -i "s/CURRENT_VERSION = \"[^\"]*\"/CURRENT_VERSION = \"$VERSION\"/" "$CONFIG_FILE"
+          elif [ "$TOOL" = "guiconverter" ]; then
+            sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" "$CONFIG_FILE"
+          else
+            sed -i "s/\"currentVersion\": \"[^\"]*\"/\"currentVersion\": \"$VERSION\"/" "$CONFIG_FILE"
+          fi
+          
+          echo "Updated config:"
+          grep -E "(currentVersion|CURRENT_VERSION|__version__)" "$CONFIG_FILE" | head -3
+        shell: bash
+
+      - name: Commit version bump
+        run: |
+          TOOL="${{ github.event.inputs.tool }}"
+          VERSION="${{ github.event.inputs.version }}"
+          CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
+          
+          git add "$CONFIG_FILE"
+          git commit -m "chore($TOOL): bump version to $VERSION"
+          git push origin master
+        shell: bash
+
+  create-release:
+    name: Create Pre-Release
+    needs: [validate, bump-version]
+    if: always() && needs.validate.result == 'success' && (needs.bump-version.result == 'success' || needs.bump-version.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Create tag
+        run: |
+          TAG="${{ needs.validate.outputs.tag_name }}"
+          
+          # Pull latest changes (in case version was bumped)
+          git pull origin master
+          
+          # Create/update tag
+          git tag -f "$TAG"
+          git push origin "refs/tags/$TAG" --force
+          
+          echo "✓ Tag $TAG created"
+        shell: bash
+
+      - name: Prepare release notes
+        id: notes
+        run: |
+          TOOL="${{ github.event.inputs.tool }}"
+          VERSION="${{ github.event.inputs.version }}"
+          DISPLAY_NAME="${{ needs.validate.outputs.display_name }}"
+          USER_NOTES="${{ github.event.inputs.release_notes }}"
+          
+          if [ -n "$USER_NOTES" ]; then
+            NOTES="$USER_NOTES"
+          else
+            NOTES="## $DISPLAY_NAME v$VERSION
+
+### Changes
+
+- See commit history for details
+
+### Installation
+
+Download the appropriate archive for your platform:
+- **Windows x64**: \`${DISPLAY_NAME}_Windows_x64.zip\`
+- **Windows x86**: \`${DISPLAY_NAME}_Windows_x86.zip\`
+- **Linux x64**: \`${DISPLAY_NAME}_Linux_x64.zip\`
+- **macOS x64**: \`${DISPLAY_NAME}_Mac_x64.zip\`"
+          fi
+          
+          # Save to file to preserve newlines
+          echo "$NOTES" > release_notes.md
+        shell: bash
+
+      - name: Create pre-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.validate.outputs.tag_name }}"
+          DISPLAY_NAME="${{ needs.validate.outputs.display_name }}"
+          VERSION="${{ github.event.inputs.version }}"
+          
+          gh release create "$TAG" \
+            --prerelease \
+            --title "$DISPLAY_NAME v$VERSION" \
+            --notes-file release_notes.md
+          
+          echo "✓ Pre-release created: $TAG"
+          echo ""
+          echo "🚀 The release workflow will now run automatically!"
+          echo "   Monitor progress in the Actions tab."
+        shell: bash
+
+  summary:
+    name: Summary
+    needs: [validate, bump-version, create-release]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# 🚀 Release Creation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tool:** ${{ github.event.inputs.tool }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tag:** ${{ needs.validate.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.validate.result }}" = "success" ]; then
+            echo "- ✅ Validation passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Validation failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ github.event.inputs.skip_version_bump }}" = "true" ]; then
+            echo "- ⏭️ Version bump skipped (already updated)" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.bump-version.result }}" = "success" ]; then
+            echo "- ✅ Version bumped to ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Version bump failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.create-release.result }}" = "success" ]; then
+            echo "- ✅ Pre-release created" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Pre-release creation failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.create-release.result }}" = "success" ]; then
+            echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The release workflow has been triggered automatically!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "1. 🔍 [Monitor the release workflow](../actions)" >> $GITHUB_STEP_SUMMARY
+            echo "2. ⏳ Wait for builds to complete (~15-20 minutes)" >> $GITHUB_STEP_SUMMARY
+            echo "3. 🎉 Release will be finalized automatically" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Troubleshooting" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Check the failed job logs above for details." >> $GITHUB_STEP_SUMMARY
+          fi
+        shell: bash
+

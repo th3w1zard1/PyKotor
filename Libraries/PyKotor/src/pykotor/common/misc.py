@@ -1,47 +1,102 @@
-"""This module holds various unrelated classes and methods."""
-
 from __future__ import annotations
 
-from enum import Enum, IntEnum
-from typing import TYPE_CHECKING, ClassVar, Generic, Iterable, TypeVar
+import warnings
 
-from pykotor.common.geometry import Vector3
+from collections.abc import Iterable
+from enum import Enum, IntEnum
+from typing import TYPE_CHECKING, Any, ClassVar, Generic, Iterable, TypeVar
+
+from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
     import os
 
     from collections.abc import Iterable
 
+    from typing_extensions import Self  # pyright: ignore[reportMissingModuleSource]
+
 T = TypeVar("T")
 VT = TypeVar("VT")
 _unique_sentinel = object()
 
 
-class ResRef:
+class ResRef(str):
     """A string reference to a game resource.
 
     ResRefs are the names of resources without the extension (the file stem).
+    They serve as identifiers for game resources stored in archives (BIF, ERF, RIM)
+    or as standalone files in the Override folder.
 
     Used in:
     -------
         - Encapsulated Resource Files (ERF/MOD/SAV)
         - RIM/BIF archives
         - Filenames in the Override folder
+        - GFF field values (ResRef field type)
+        - Resource lookups and references throughout the engine
+    
+    References:
+    ----------
+        vendor/reone/include/reone/resource/resref.h:26-66 (ResRef class definition)
+        vendor/reone/include/reone/resource/resref.h:26 (kMaxResRefLength constant = 16)
+        vendor/reone/include/reone/resource/resref.h:32-38 (ResRef constructor with truncation and lowercasing)
+        vendor/Kotor.NET/Kotor.NET/Common/Data/ResRef.cs:9-72 (ResRef class, max length 16)
+        vendor/HoloPatcher.NET/src/TSLPatcher.Core/Common/ResRef.cs:12-132 (ResRef class with validation)
+        vendor/HoloPatcher.NET/src/TSLPatcher.Core/Common/ResRef.cs:15 (MaxLength constant = 16)
+        vendor/HoloPatcher.NET/src/TSLPatcher.Core/Common/ResRef.cs:15 (InvalidCharacters constant)
+        vendor/KotOR_IO/KotOR_IO/File Formats/GFF FieldTypes/B_ResRef.cs (ResRef GFF field type)
+        vendor/xoreos-tools/src/common/util.cpp (ResRef handling utilities)
+        vendor/KotOR.js/src/resource/ResourceTypes.ts (Resource type definitions)
+        vendor/KotOR-dotNET/AuroraFile.cs (ResRef in C#)
+        vendor/kotor/kotor/resref.py (ResRef handling in Python)
+        Original BioWare Odyssey Engine (ResRef format specification)
+        Note: ResRef case-insensitivity is critical for cross-platform compatibility
 
     Restrictions:
     ------------
-        - ResRefs must be in ASCII format
-        - ResRefs cannot exceed 16 characters in length.
-        - Usable in case-insensitive applications. This is because KOTOR was created for Windows, which uses a case-insensitive filesystem.
-        - (recommended) Stored as case-sensitive text.
+        - ResRefs must be in ASCII format (non-ASCII characters are invalid)
+        - ResRefs cannot exceed 16 characters in length (MAX_LENGTH = 16)
+        - ResRefs cannot contain Windows filename invalid characters: '<>:"/\\|?*'
+        - Usable in case-insensitive applications (KOTOR was created for Windows case-insensitive filesystem)
+        - (recommended) Stored as case-sensitive text for cross-platform compatibility
+        - ResRefs are trimmed of whitespace (leading/trailing spaces removed)
+    
+    Discrepancies:
+    -------------
+        - reone lowercases ResRefs automatically (resref.h:37: boost::to_lower(_value))
+        - PyKotor preserves case but uses casefold() for comparisons (case-insensitive equality)
+        - HoloPatcher.NET preserves case but uses case-insensitive comparison (StringComparison.OrdinalIgnoreCase)
+        - Kotor.NET preserves case without automatic lowercasing
+        - Original engine: Windows case-insensitive filesystem, ResRefs stored as-is but matched case-insensitively
     """
 
+    __slots__: ClassVar[tuple[str, ...]] = ("_value",)
+
     MAX_LENGTH: ClassVar[int] = 16
+    """Maximum length of a ResRef in characters.
+    
+    Reference: reone/resref.h:26 (kMaxResRefLength = 16)
+    Reference: HoloPatcher.NET/ResRef.cs:14 (MaxLength = 16)
+    Reference: Kotor.NET/ResRef.cs:30 (Length check > 16)
+    This is a hard limit enforced by the BioWare Odyssey Engine.
+    """
 
     INVALID_CHARACTERS: ClassVar[str] = '<>:"/\\|?*'
+    """Characters that are invalid in ResRefs (Windows filename restrictions).
+    
+    Reference: HoloPatcher.NET/ResRef.cs:15 (InvalidCharacters constant)
+    These characters cannot appear in Windows filenames and are therefore
+    invalid for ResRefs which are used as filenames.
+    """
 
     class InvalidFormatError(ValueError):
         """ResRefs must conform to Windows filename requirements."""
+
+        def __init__(self, bad_text: str):
+            invalid_chars: list[tuple[str, int]] = [(char, pos) for pos, char in enumerate(bad_text) if char in ResRef.INVALID_CHARACTERS]
+            details: str = ", ".join(f"'{char}' at position {pos}" for char, pos in invalid_chars)
+            message: str = f"String '{bad_text}' contains invalid characters: {details}. " f"Full list of invalid characters: '{ResRef.INVALID_CHARACTERS}'"
+            super().__init__(message)
 
     class InvalidEncodingError(ValueError):
         """ResRefs must only contain ASCII characters."""
@@ -63,20 +118,19 @@ class ResRef:
         def __init__(self, resref: ResRef, func_name: str, *args, **kwargs):
             super().__init__(f"ResRef's must be case-insensitive, attempted {resref!r}.{func_name}({args, kwargs})")
 
-    def __init__(
-        self,
-        text: str,
-    ):
-        self._value = ""
-        self.set_data(text)
+    def __new__(cls, text: str) -> Self:
+        # Create the instance
+        instance: Self = super().__new__(cls, text)
+        instance.set_data(text)
+        return instance
 
     def __len__(
         self,
     ):
-        return len(self._value)
+        return len(self._value.strip())  # should already be stripped, leave here for clarity (it is a fast operation)
 
     def __bool__(self):
-        return bool(self._value)
+        return bool(self._value.strip())  # should already be stripped, leave here for clarity (it is a fast operation)
 
     def __eq__(
         self,
@@ -85,16 +139,13 @@ class ResRef:
         """A ResRef can be compared to another ResRef or a str."""
         if self is other:
             return True
-        if isinstance(other, ResRef):
-            other_value = str(other).lower()
-        elif isinstance(other, str):
-            other_value = other.lower().strip()
-        else:
+        if not isinstance(other, str):
             return NotImplemented
-        return other_value == self._value.lower()
+        other_value: str = other.casefold().strip()
+        return other_value == self._value.casefold()
 
     def __hash__(self):
-        return hash(self._value.lower())
+        return hash(self._value.casefold())
 
     def __repr__(
         self,
@@ -104,50 +155,32 @@ class ResRef:
     def __str__(
         self,
     ):
-        return self._value
+        return str(self._value)
 
     @classmethod
-    def from_blank(cls) -> ResRef:
-        """Returns a blank ResRef.
-
-        Returns:
-        -------
-            A new ResRef instance.
-        """
+    def from_blank(cls) -> Self:
         return cls("")
 
     @classmethod
     def from_path(
         cls,
         file_path: os.PathLike | str,
-    ) -> ResRef:
-        """Returns a ResRef from the filename in the specified path.
-
-        Args:
-        ----
-            file_path (os.PathLike | str): The path to the file.
-
-        Returns:
-        -------
-            A new ResRef instance.
-        """
+    ) -> Self:
         from pykotor.extract.file import ResourceIdentifier  # Prevent circular imports
 
-        resname = ResourceIdentifier.from_path(file_path).resname
+        resname: str = ResourceIdentifier.from_path(file_path).resname
         return cls(resname)
 
     @classmethod
-    def is_valid(cls, text: str) -> bool:
+    def is_valid(
+        cls,
+        text: str,
+    ) -> bool:
         if not isinstance(text, str):
             return False
         return next(
             (False for char in cls.INVALID_CHARACTERS if char in text),
-            (
-                text != ""
-                and text.isascii()
-                and len(text) <= cls.MAX_LENGTH
-                and text == text.strip()
-            ),
+            (text != "" and text.isascii() and len(text) <= cls.MAX_LENGTH and text == text.strip()),
         )
 
     def set_data(
@@ -170,29 +203,42 @@ class ResRef:
             InvalidFormatError - text starts/ends with a space or contains windows invalid filename characters.
             All of the above exceptions inherit ValueError.
         """
-        parsed_text: str = str(text)
+        parsed_text: str = str(text).strip()
+        # Check for leading or trailing whitespace. Ensure text doesn't start/end with whitespace.
+        raw_text = str(text)
+        text = raw_text.strip()
+        if raw_text != text:
+            msg = f"String '{raw_text}' starts or ends with whitespace. It will be stripped to '{text}'"
+            warnings.warn(msg, stacklevel=2)
 
-        # Ensure text only contains ASCII characters.
-        if not text.isascii():
+        # Check for maximum length
+        if len(text) > self.MAX_LENGTH:
+            if not truncate:
+                raise self.ExceedsMaxLengthError(text)
+            warnings.warn(f"String '{raw_text}' exceeds the maximum allowed length ({self.MAX_LENGTH}) and will be truncated to '{text}'", stacklevel=2)
+            text = text[: self.MAX_LENGTH]
+
+        if any(
+            (char, pos)  # Check for invalid characters and their positions
+            for pos, char in enumerate(text)
+            if char in self.INVALID_CHARACTERS
+        ):
+            raise self.InvalidFormatError(text)
+
+        if not text.isascii():  # Ensure text only contains ASCII characters.
             raise self.InvalidEncodingError(text)
 
         # Validate text length.
         if len(parsed_text) > self.MAX_LENGTH:
             if not truncate:
-                ...
-                # raise self.ExceedsMaxLengthError(parsed_text)  # FIXME: pykotor isn't stable enough to enforce this yet.
+                raise self.ExceedsMaxLengthError(parsed_text)
             parsed_text = parsed_text[: self.MAX_LENGTH]
-
-        # Ensure text doesn't start/end with whitespace.
-        if parsed_text != parsed_text.strip():
-            msg = f"ResRef '{text}' cannot start or end with a space."
-            # raise self.InvalidFormatError(msg)  # FIXME: pykotor isn't stable enough to enforce this yet.
 
         # Ensure text doesn't contain any invalid ASCII characters.
         for i in range(len(parsed_text)):
             if parsed_text[i] in self.INVALID_CHARACTERS:
                 msg = f"ResRef '{text}' cannot contain any invalid characters in [{self.INVALID_CHARACTERS}]"
-                # raise self.InvalidFormatError(msg)  # FIXME: pykotor isn't stable enough to enforce this yet.
+                raise self.InvalidFormatError(msg)
 
         self._value = parsed_text.strip()
 
@@ -240,11 +286,11 @@ class Game(IntEnum):
 
 class Color:
     # Listed here for hinting purposes
-    RED: Color
-    GREEN: Color
-    BLUE: Color
-    BLACK: Color
-    WHITE: Color
+    RED: ClassVar[Color]
+    GREEN: ClassVar[Color]
+    BLUE: ClassVar[Color]
+    BLACK: ClassVar[Color]
+    WHITE: ClassVar[Color]
 
     def __init__(
         self,
@@ -258,14 +304,10 @@ class Color:
         self.b: float = b
         self.a: float = a
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"Color({self})"
 
-    def __str__(
-        self,
-    ) -> str:
+    def __str__(self) -> str:
         """Returns a string of each color component separated by whitespace."""
         return f"{self.r} {self.g} {self.b} {self.a}"
 
@@ -281,16 +323,14 @@ class Color:
 
         return hash(self) == hash(other)
 
-    def __hash__(
-        self,
-    ):
-        return hash((self.r, self.g, self.b, self.a))
+    def __hash__(self):
+        return hash((self.r, self.g, self.b, self.a or 1.0))
 
     @classmethod
     def from_rgb_integer(
         cls,
         integer: int,
-    ) -> Color:
+    ) -> Self:
         """Returns a Color by decoding the specified integer.
 
         Args:
@@ -301,16 +341,16 @@ class Color:
         -------
             A new Color instance.
         """
-        red = (0x000000FF & integer) / 255
-        green = ((0x0000FF00 & integer) >> 8) / 255
-        blue = ((0x00FF0000 & integer) >> 16) / 255
-        return Color(red, green, blue)
+        red: float = (0x000000FF & integer) / 255
+        green: float = ((0x0000FF00 & integer) >> 8) / 255
+        blue: float = ((0x00FF0000 & integer) >> 16) / 255
+        return cls(red, green, blue)
 
     @classmethod
     def from_rgba_integer(
         cls,
         integer: int,
-    ) -> Color:
+    ) -> Self:
         """Returns a Color by decoding the specified integer.
 
         Args:
@@ -321,17 +361,17 @@ class Color:
         -------
             A new Color instance.
         """
-        red = (0x000000FF & integer) / 255
-        green = ((0x0000FF00 & integer) >> 8) / 255
-        blue = ((0x00FF0000 & integer) >> 16) / 255
-        alpha = ((0xFF000000 & integer) >> 24) / 255
-        return Color(red, green, blue, alpha)
+        red: float = (0x000000FF & integer) / 255
+        green: float = ((0x0000FF00 & integer) >> 8) / 255
+        blue: float = ((0x00FF0000 & integer) >> 16) / 255
+        alpha: float = ((0xFF000000 & integer) >> 24) / 255
+        return cls(red, green, blue, alpha)
 
     @classmethod
     def from_bgr_integer(
         cls,
         integer: int,
-    ) -> Color:
+    ) -> Self:
         """Returns a Color by decoding the specified integer.
 
         Args:
@@ -342,10 +382,10 @@ class Color:
         -------
             A new Color instance.
         """
-        red = ((0x00FF0000 & integer) >> 16) / 255
-        green = ((0x0000FF00 & integer) >> 8) / 255
-        blue = (0x000000FF & integer) / 255
-        return Color(red, green, blue)
+        red: float = ((0x00FF0000 & integer) >> 16) / 255
+        green: float = ((0x0000FF00 & integer) >> 8) / 255
+        blue: float = (0x000000FF & integer) / 255
+        return cls(red, green, blue)
 
     @classmethod
     def from_rgb_vector3(
@@ -362,16 +402,16 @@ class Color:
         -------
             A new Color instance.
         """
-        red = vector3.x
-        green = vector3.y
-        blue = vector3.z
+        red: float = vector3.x
+        green: float = vector3.y
+        blue: float = vector3.z
         return Color(red, green, blue)
 
     @classmethod
     def from_bgr_vector3(
         cls,
         vector3: Vector3,
-    ) -> Color:
+    ) -> Self:
         """Returns a Color from the specified vector components.
 
         Args:
@@ -382,57 +422,84 @@ class Color:
         -------
             A new Color instance.
         """
-        red = vector3.z
-        green = vector3.y
-        blue = vector3.x
-        return Color(red, green, blue)
+        red: float = vector3.z
+        green: float = vector3.y
+        blue: float = vector3.x
+        return cls(red, green, blue)
 
-    def rgb_integer(
-        self,
-    ) -> int:
+    @classmethod
+    def from_hex_string(
+        cls,
+        hex_string: str,
+    ) -> Self:
+        # Remove '#' if present and convert to lowercase
+        color_str: str = hex_string.lstrip("#").lower()
+        instance: Self = cls(0, 0, 0)
+
+        # Handle different hex color formats
+        # All values are normalized to 0.0-1.0 range by dividing by 255.0
+        if len(color_str) == 3:  # Short hex format (RGB)  # noqa: PLR2004
+            instance.r = int(color_str[0] * 2, 16) / 255.0
+            instance.g = int(color_str[1] * 2, 16) / 255.0
+            instance.b = int(color_str[2] * 2, 16) / 255.0
+            instance.a = 1.0
+        elif len(color_str) == 4:  # Short hex format with alpha (RGBA)  # noqa: PLR2004
+            instance.r = int(color_str[0] * 2, 16) / 255.0
+            instance.g = int(color_str[1] * 2, 16) / 255.0
+            instance.b = int(color_str[2] * 2, 16) / 255.0
+            instance.a = int(color_str[3] * 2, 16) / 255.0
+        elif len(color_str) == 6:  # Full hex format (RGB)  # noqa: PLR2004
+            instance.r = int(color_str[0:2], 16) / 255.0
+            instance.g = int(color_str[2:4], 16) / 255.0
+            instance.b = int(color_str[4:6], 16) / 255.0
+            instance.a = 1.0
+        elif len(color_str) == 8:  # Full hex format with alpha (RGBA)  # noqa: PLR2004
+            instance.r = int(color_str[0:2], 16) / 255.0
+            instance.g = int(color_str[2:4], 16) / 255.0
+            instance.b = int(color_str[4:6], 16) / 255.0
+            instance.a = int(color_str[6:8], 16) / 255.0
+        else:
+            raise ValueError(f"Invalid hex color format: {color_str}")
+        return instance
+
+    def rgb_integer(self) -> int:
         """Returns a RGB integer encoded from the color components.
 
         Returns:
         -------
             A integer representing a color.
         """
-        red = int(self.r * 0xFF) << 0
-        green = int(self.g * 0xFF) << 8
-        blue = int(self.b * 0xFF) << 16
+        red: int = int(self.r * 0xFF) << 0
+        green: int = int(self.g * 0xFF) << 8
+        blue: int = int(self.b * 0xFF) << 16
         return red + green + blue
 
-    def rgba_integer(
-        self,
-    ) -> int:
+    def rgba_integer(self) -> int:
         """Returns a RGB integer encoded from the color components.
 
         Returns:
         -------
             A integer representing a color.
         """
-        red = int(self.r * 0xFF) << 0
-        green = int(self.g * 0xFF) << 8
-        blue = int(self.b * 0xFF) << 16
-        alpha = int(self.a * 0xFF) << 24
+        red: int = int(self.r * 0xFF) << 0
+        green: int = int(self.g * 0xFF) << 8
+        blue: int = int(self.b * 0xFF) << 16
+        alpha: int = int((self.a or 1.0) * 0xFF) << 24
         return red + green + blue + alpha
 
-    def bgr_integer(
-        self,
-    ) -> int:
+    def bgr_integer(self) -> int:
         """Returns a BGR integer encoded from the color components.
 
         Returns:
         -------
             A integer representing a color.
         """
-        red = int(self.r * 255) << 16
-        green = int(self.g * 255) << 8
-        blue = int(self.b * 255)
+        red: int = int(self.r * 255) << 16
+        green: int = int(self.g * 255) << 8
+        blue: int = int(self.b * 255)
         return red + green + blue
 
-    def rgb_vector3(
-        self,
-    ) -> Vector3:
+    def rgb_vector3(self) -> Vector3:
         """Returns a Vector3 representing a color with its components.
 
         Returns:
@@ -441,9 +508,7 @@ class Color:
         """
         return Vector3(self.r, self.g, self.b)
 
-    def bgr_vector3(
-        self,
-    ) -> Vector3:
+    def bgr_vector3(self) -> Vector3:
         """Returns a Vector3 representing a color with its components.
 
         Returns:
@@ -559,51 +624,89 @@ class EquipmentSlot(Enum):
 
 
 class CaseInsensitiveHashSet(set, Generic[T]):
-    def __init__(self, iterable: Iterable[T] | None = None):
+    def __init__(
+        self,
+        iterable: Iterable[T] | None = None,
+    ):
         super().__init__()
         if iterable is not None:
             for item in iterable:
                 self.add(item)
 
-    def _normalize_key(self, item: T):
+    def _normalize_key(self, item: T) -> str | object:
         return item.casefold() if isinstance(item, str) else item
 
-    def add(self, item: T):
+    def add(
+        self,
+        item: T,
+    ):
         """Add an element to a set.
 
         This has no effect if the element is already present.
         """
         key: str | object = self._normalize_key(item)
-        if key not in self:
-            super().add(item)
+        if key in self:
+            return
+        super().add(item)
 
-    def remove(self, item: T):
+    def remove(
+        self,
+        item: T,
+    ):
         """Remove an element from a set; it must be a member.
 
         If the element is not a member, raise a KeyError.
         """
         super().remove(self._normalize_key(item))
 
-    def discard(self, item: T):
+    def discard(
+        self,
+        item: T,
+    ):
         """Remove an element from a set if it is a member.
 
         Unlike set.remove(), the discard() method does not raise an exception when an element is missing from the set.
         """
         super().discard(self._normalize_key(item))
 
-    def update(self, *others):
+    def update(
+        self,
+        *others,
+    ):
         """Update a set with the union of itself and others."""
         for other in others:
             for item in other:
                 self.add(item)
 
-    def __contains__(self, item):
+    def __contains__(
+        self,
+        item,
+    ):
         return super().__contains__(self._normalize_key(item))
 
-    def __eq__(self, other):
+    def __eq__(
+        self,
+        other,
+    ):
         if self is other:
             return True
         return super().__eq__({self._normalize_key(item) for item in other})
+
+    def __hash__(self) -> int:  # type: ignore[override]
+        # Use a normalized, immutable representation for the hash
+        def _sort_key(x: Any) -> str:
+            return x if isinstance(x, str) else str(x)
+
+        normalized_items = tuple(
+            sorted(
+                (
+                    self._normalize_key(item)
+                    for item in self
+                ),
+                key=_sort_key
+            )
+        )
+        return hash(normalized_items)
 
     def __ne__(self, other):
         return super().__ne__({self._normalize_key(item) for item in other})

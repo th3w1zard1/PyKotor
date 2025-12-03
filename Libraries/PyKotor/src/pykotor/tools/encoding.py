@@ -19,12 +19,12 @@ except ImportError:
     charset_normalizer = None
 
 
-def decode_bytes_with_fallbacks(
+def decode_bytes_with_fallbacks(  # noqa: C901
     byte_content: bytes | bytearray,
     errors: str = "strict",
     encoding: str | None = None,
     lang: Language | None = None,
-    only_8bit_encodings: bool | None = False,
+    only_8bit_encodings: bool | None = False,  # noqa: FBT002
 ) -> str:
     """A well rounded decoding function used to decode byte content with provided language/encoding information.
 
@@ -43,6 +43,11 @@ def decode_bytes_with_fallbacks(
     -------
         str - Decoded string
 
+    References:
+    ----------
+        vendor/KotOR.js (Character encoding handling in JavaScript)
+        Note: KotOR uses multiple character encodings including ASCII, UTF-8, and language-specific encodings
+
     Processing Logic:
     ----------------
         - If charset_normalizer not installed, use built-in decoding logic.
@@ -54,7 +59,11 @@ def decode_bytes_with_fallbacks(
     """
     provided_encoding: str | None = encoding or (lang.get_encoding() if lang else None)
     if provided_encoding is not None:
-        return byte_content.decode(encoding=provided_encoding, errors=errors)
+        # Try decoding with provided encoding, but fall back to auto-detection if it fails
+        with suppress(UnicodeDecodeError):
+            return byte_content.decode(encoding=provided_encoding, errors=errors)
+        # If provided encoding fails, fall through to auto-detection
+        provided_encoding = None
     if charset_normalizer is None:
         if provided_encoding is None:
             provided_encoding = "windows-1252" if only_8bit_encodings else "utf-8"
@@ -73,6 +82,13 @@ def decode_bytes_with_fallbacks(
 
         # Detect encoding using charset_normalizer
         detected_encodings = detected_encodings or charset_normalizer.from_bytes(byte_content)  # pyright: ignore[reportOptionalMemberAccess]
+
+        if detected_encodings is None:
+            # Semi-Final fallback (utf-8) if no encoding is detected
+            with suppress(UnicodeDecodeError):
+                return byte_content.decode(encoding="utf-8", errors=attempt_errors)
+            # Final fallback (latin1) if no encoding is detected
+            return byte_content.decode(encoding="latin1", errors=attempt_errors)
 
         # Filter the charset-normalizer results to encodings with a maximum of 256 characters
         if only_8bit_encodings:
@@ -96,8 +112,8 @@ def decode_bytes_with_fallbacks(
 
         # Special handling for BOM
         aliases: set[str] = {alias.lower() for alias in result_detect.encoding_aliases}
+        aliases.add(best_encoding.lower())
         if result_detect.bom:
-            aliases.add(best_encoding.lower())
             for alias in aliases:
                 normalized_alias: str = alias.replace("_", "-")
                 if normalized_alias.startswith("utf-8"):
@@ -106,6 +122,19 @@ def decode_bytes_with_fallbacks(
                 if normalized_alias.startswith("utf-16"):
                     best_encoding = "UTF-16LE"
                     break
+
+        # Check all detected encodings and prioritize UTF-8 if it's detected
+        for match in detected_encodings:
+            match_aliases: set[str] = {alias.lower() for alias in match.encoding_aliases}
+            match_aliases.add(match.encoding.lower())
+            if "utf-8" in match_aliases or match.encoding.lower() in {"utf-8", "utf8"}:
+                with suppress(UnicodeDecodeError):
+                    return byte_content.decode(encoding="utf-8", errors=attempt_errors)
+
+        # Try UTF-8 first if it's a valid detection, as it's more common and reliable
+        if "utf-8" in aliases or best_encoding.lower() in {"utf-8", "utf8"}:
+            with suppress(UnicodeDecodeError):
+                return byte_content.decode(encoding="utf-8", errors=attempt_errors)
 
         return byte_content.decode(encoding=best_encoding, errors=attempt_errors)
 
@@ -161,28 +190,28 @@ def get_charset_from_doublebyte_encoding(
     return get_generalized_doublebyte_charset(encoding)
 
 
-def get_cp950_charset() -> list[str]:
+def get_cp950_charset() -> list[str]:  # noqa: C901, PLR0912
     charset: list[str] = []
     # Include single-byte graphical characters (standard ASCII + additional characters)
     for i in range(256):
-        if i <= 0x7F or i == 0xA1:  # ASCII range and single-byte euro sign
+        if i <= 0x7F or i == 0xA1:  # ASCII range and single-byte euro sign  # noqa: PLR2004
             try:
                 charset.append(chr(i))  # Direct ASCII mapping
             except ValueError:
                 charset.append("")  # Append a blank for invalid values
-        elif 0x81 <= i <= 0xFE:  # Double-byte character lead byte
+        elif 0x81 <= i <= 0xFE:  # Double-byte character lead byte  # noqa: PLR2004
             for j in range(256):
-                if (0x40 <= j <= 0x7E) or (0xA1 <= j <= 0xFE):
+                if (0x40 <= j <= 0x7E) or (0xA1 <= j <= 0xFE):  # noqa: PLR2004
                     # Apply formula based on Big5 to Unicode PUA mapping
                     unicode_val: int = -1  # Placeholder for ranges not covered
-                    if 0x81 <= i <= 0x8D:
-                        unicode_val = 0xEEB8 + (157 * (i - 0x81)) + (j - 0x40 if j < 0x80 else j - 0x62)
-                    elif 0x8E <= i <= 0xA0:
-                        unicode_val = 0xE311 + (157 * (i - 0x8E)) + (j - 0x40 if j < 0x80 else j - 0x62)
-                    elif 0xC6 <= i <= 0xC8:
-                        unicode_val = 0xF672 + (157 * (i - 0xC6)) + (j - 0x40 if j < 0x80 else j - 0x62)
-                    elif 0xFA <= i <= 0xFE:
-                        unicode_val = 0xE000 + (157 * (i - 0xFA)) + (j - 0x40 if j < 0x80 else j - 0x62)
+                    if 0x81 <= i <= 0x8D:  # noqa: PLR2004
+                        unicode_val = 0xEEB8 + (157 * (i - 0x81)) + (j - 0x40 if j < 0x80 else j - 0x62)  # noqa: PLR2004
+                    elif 0x8E <= i <= 0xA0:  # noqa: PLR2004
+                        unicode_val = 0xE311 + (157 * (i - 0x8E)) + (j - 0x40 if j < 0x80 else j - 0x62)  # noqa: PLR2004
+                    elif 0xC6 <= i <= 0xC8:  # noqa: PLR2004
+                        unicode_val = 0xF672 + (157 * (i - 0xC6)) + (j - 0x40 if j < 0x80 else j - 0x62)  # noqa: PLR2004
+                    elif 0xFA <= i <= 0xFE:  # noqa: PLR2004
+                        unicode_val = 0xE000 + (157 * (i - 0xFA)) + (j - 0x40 if j < 0x80 else j - 0x62)  # noqa: PLR2004
 
                     if unicode_val != -1:
                         try:
@@ -200,16 +229,16 @@ def get_cp949_charset() -> list[str]:
     charset: list[str] = []
     for i in range(256):
         # Adjusted ranges based on IBM-949 encoding structure
-        if 0x00 <= i <= 0x7F or 0xA1 <= i <= 0xDF or 0x9A <= i <= 0xA0:
+        if 0x00 <= i <= 0x7F or 0xA1 <= i <= 0xDF or 0x9A <= i <= 0xA0:  # noqa: PLR2004
             # Single-byte code
             try:
                 charset.append(codecs.decode(bytes([i]), "cp949"))
             except UnicodeDecodeError:
                 charset.append("")  # Append a blank for non-existent characters
-        elif 0x81 <= i <= 0x9F or i == 0xC9 or i == 0xFE:
+        elif 0x81 <= i <= 0x9F or i in (0xC9, 0xFE):  # noqa: PLR2004
             # User-defined ranges or double-byte introducer
             charset.append("")  # Placeholder for user-defined ranges
-        elif 0xE0 <= i <= 0xFC or 0x8F <= i <= 0x99:
+        elif 0xE0 <= i <= 0xFC or 0x8F <= i <= 0x99:  # noqa: PLR2004
             # Double-byte introducer, the second byte can be any of the 256 possible values
             for j in range(256):
                 try:
@@ -225,23 +254,23 @@ def get_cp936_charset() -> list[str]:
     # sourcery skip: merge-duplicate-blocks, remove-redundant-if
     charset: list[str] = []
     for i in range(256):
-        if 0x00 <= i <= 0x7F:
+        if 0x00 <= i <= 0x7F:  # noqa: PLR2004
             # Single-byte code
             try:
                 charset.append(codecs.decode(bytes([i]), "cp936"))
             except UnicodeDecodeError:
                 charset.append("")  # Append a blank for non-existent characters
-        elif 0x81 <= i <= 0x9F:
+        elif 0x81 <= i <= 0x9F:  # noqa: PLR2004
             # Double-byte introducer, skip this byte
             # continue
             charset.append("")  # Undefined code point, append a blank
-        elif 0xA1 <= i <= 0xDF:
+        elif 0xA1 <= i <= 0xDF:  # noqa: PLR2004
             # Single-byte code
             try:
                 charset.append(codecs.decode(bytes([i]), "cp936"))
             except UnicodeDecodeError:
                 charset.append("")  # Append a blank for non-existent characters
-        elif 0xE0 <= i <= 0xFC:
+        elif 0xE0 <= i <= 0xFC:  # noqa: PLR2004
             # Double-byte introducer, the second byte can be any of the 256 possible values
             for j in range(256):
                 try:
@@ -253,15 +282,17 @@ def get_cp936_charset() -> list[str]:
     return charset
 
 
-def get_generalized_doublebyte_charset(encoding: str) -> list[str]:
+def get_generalized_doublebyte_charset(
+    encoding: str,
+) -> list[str]:
     charset: list[str] = []
 
-    single_byte_end = 0x7F  # End of single-byte range
-    potential_lead_byte_start = 0x81  # Start of potential lead byte range for double-byte characters
-    potential_lead_byte_end = 0xFC  # End of potential lead byte range
+    single_byte_end: int = 0x7F  # End of single-byte range
+    potential_lead_byte_start: int = 0x81  # Start of potential lead byte range for double-byte characters
+    potential_lead_byte_end: int = 0xFC  # End of potential lead byte range
 
     for i in range(256):
-        if i <= single_byte_end or (0xA1 <= i <= 0xDF):  # Single-byte characters
+        if i <= single_byte_end or (0xA1 <= i <= 0xDF):  # Single-byte characters  # noqa: PLR2004
             try:
                 charset.append(bytes([i]).decode(encoding))
             except UnicodeDecodeError:

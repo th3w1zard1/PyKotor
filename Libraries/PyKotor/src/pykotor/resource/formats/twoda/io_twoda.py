@@ -10,6 +10,21 @@ if TYPE_CHECKING:
 
 
 class TwoDABinaryReader(ResourceReader):
+    """Reads 2DA (Two-Dimensional Array) files.
+    
+    2DA files store tabular data used throughout KotOR for game configuration, item stats,
+    spell data, and other structured information.
+    
+    References:
+    ----------
+        vendor/reone/src/libs/resource/format/2dareader.cpp:26-80 (2DA reading)
+        vendor/reone/src/libs/resource/format/2dawriter.cpp (2DA writing)
+    
+    Algorithm Differences:
+    ---------------------
+        - Cell reading: PyKotor uses read_terminated_string, reone uses readCStringAt with limit
+        - Token reading approaches differ between implementations
+    """
     def __init__(
         self,
         source: SOURCE_TYPES,
@@ -20,10 +35,7 @@ class TwoDABinaryReader(ResourceReader):
         self._twoda: TwoDA | None = None
 
     @autoclose
-    def load(
-        self,
-        auto_close: bool = True,
-    ) -> TwoDA:
+    def load(self, *, auto_close: bool = True) -> TwoDA:  # noqa: FBT001, FBT002, ARG002
         """Loads a 2DA file from the provided reader.
 
         Args:
@@ -44,8 +56,8 @@ class TwoDABinaryReader(ResourceReader):
         """
         self._twoda = TwoDA()
 
-        file_type = self._reader.read_string(4)
-        file_version = self._reader.read_string(4)
+        file_type: str = self._reader.read_string(4)
+        file_version: str = self._reader.read_string(4)
 
         if file_type != "2DA ":
             msg = "The file type that was loaded is invalid."
@@ -57,20 +69,20 @@ class TwoDABinaryReader(ResourceReader):
 
         self._reader.read_uint8()  # \n
 
-        columns = []
+        columns: list[str] = []
         while self._reader.peek() != b"\0":
-            column_header = self._reader.read_terminated_string("\t")
+            column_header: str = self._reader.read_terminated_string("\t")
             self._twoda.add_column(column_header)
             columns.append(column_header)
 
         self._reader.read_uint8()  # \0
 
-        row_count = self._reader.read_uint32()
-        column_count = self._twoda.get_width()
-        cell_count = row_count * column_count
+        row_count: int = self._reader.read_uint32()
+        column_count: int = self._twoda.get_width()
+        cell_count: int = row_count * column_count
         for _ in range(row_count):
-            row_header = self._reader.read_terminated_string("\t")
-            row_label = row_header
+            row_header: str = self._reader.read_terminated_string("\t")
+            row_label: str = row_header
             self._twoda.add_row(row_label)
 
         cell_offsets: list[int] = [0] * cell_count
@@ -78,14 +90,17 @@ class TwoDABinaryReader(ResourceReader):
             cell_offsets[i] = self._reader.read_uint16()
 
         self._reader.read_uint16()
-        cell_data_offset = self._reader.position()
+        cell_data_offset: int = self._reader.position()
 
         for i in range(cell_count):
-            column_id = i % column_count
-            row_id = i // column_count
-            column_header = columns[column_id]
+            column_id: int = i % column_count
+            row_id: int = i // column_count
+            column_header: str = columns[column_id]
             self._reader.seek(cell_data_offset + cell_offsets[i])
-            cell_value = self._reader.read_terminated_string("\0")
+            # vendor/reone/src/libs/resource/format/2dareader.cpp:65-70
+            # NOTE: reone uses readCStringAt with limit, PyKotor uses read_terminated_string
+            # Should verify buffer limits match vendor behavior
+            cell_value: str = self._reader.read_terminated_string("\0")
             self._twoda.set_cell(row_id, column_header, cell_value)
 
         return self._twoda
@@ -101,10 +116,7 @@ class TwoDABinaryWriter(ResourceWriter):
         self._twoda: TwoDA = twoda
 
     @autoclose
-    def write(
-        self,
-        auto_close: bool = True,
-    ):
+    def write(self, *, auto_close: bool = True) -> None:  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
         """Writes the 2DA data to a binary file.
 
         Args:
@@ -123,7 +135,7 @@ class TwoDABinaryWriter(ResourceWriter):
             - Loop through each cell and writes the value offsets and data
             - Close the writer if auto_close is True
         """
-        headers = self._twoda.get_headers()
+        headers: list[str] = self._twoda.get_headers()
 
         self._writer.write_string("2DA ")
         self._writer.write_string("V2.b")
@@ -140,7 +152,7 @@ class TwoDABinaryWriter(ResourceWriter):
         values: list[str] = []
         value_offsets: list[int] = []
         cell_offsets: list[int] = []
-        data_size = 0
+        data_size: int = 0
 
         for row in self._twoda:
             for header in self._twoda.get_headers():

@@ -1,0 +1,24 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from pykotor.resource.formats.ncs.dencs.node.token import Token  # pyright: ignore[reportMissingImports]
+
+if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs.dencs.analysis.analysis_adapter import Analysis  # pyright: ignore[reportMissingImports]
+
+class TJsr(Token):
+    def __init__(self, line: int = 0, pos: int = 0):
+        super().__init__("JSR")
+        self.line = line
+        self.pos = pos
+
+    def clone(self) -> Token:
+        return TJsr(self.get_line(), self.get_pos())
+
+    def apply(self, sw: Analysis):
+        sw.case_t_jsr(self)
+
+    def set_text(self, text: str):
+        raise RuntimeError("Cannot change TJsr text.")
+

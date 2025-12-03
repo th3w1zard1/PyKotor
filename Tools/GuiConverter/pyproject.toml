@@ -4,3 +4,81 @@ requires = [
     "wheel",
 ]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "gui-converter"
+version = "1.0.0"
+description = "GUI Converter Tool for KotOR - converts GUI files between games"
+authors = [{name = "NickHugi"}]
+maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "LGPL-3.0-or-later"}
+keywords = [
+    "kotor", "kotor1", "kotor2", "tsl",
+    "gui", "converter", "interface",
+    "pykotor", "modding",
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment",
+    "Topic :: Utilities",
+    "Environment :: Console",
+]
+dependencies = [
+    "pykotor>=2.0.0",
+]
+
+[project.scripts]
+gui-converter = "gui_converter.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
+
+# Poetry configuration
+[tool.poetry]
+name = "gui-converter"
+version = "1.0.0"
+description = "GUI Converter Tool for KotOR - converts GUI files between games"
+authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
+maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+readme = "README.md"
+license = "LGPL-3.0-or-later"
+packages = [{ include = "gui_converter", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pykotor = "^2.0.0"
+
+[tool.poetry.scripts]
+gui-converter = "gui_converter.__main__:main"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

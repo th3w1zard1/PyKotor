@@ -1,28 +1,82 @@
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
-from contextlib import suppress
 from dataclasses import dataclass, field
 from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Iterator
 
-from loggerplus import RobustLogger
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs, reportMissingModuleSource]
 
-from pykotor.common.stream import BinaryReader
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_bif_file, is_capsule_file
-from utility.misc import generate_hash
 
 if TYPE_CHECKING:
     import os
 
-    from typing_extensions import Literal, Self
+    from typing_extensions import Literal, Self  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.common.misc import ResRef
 
 
+# Global file data cache with modification time tracking
+# Key: (filepath, offset, size) -> Value: (data, mtime)
+_FILE_DATA_CACHE: dict[tuple[Path, int, int], tuple[bytes, float]] = {}
+
+# Cache valid ResourceTypes sorted by extension length (longest first) for efficient matching
+# This avoids iterating through all ResourceTypes for every file (massive performance improvement)
+_RESOURCE_TYPE_CACHE: list[tuple[ResourceType, str]] | None = None
+
+
+def _get_cached_resource_types() -> list[tuple[ResourceType, str]]:
+    """Get cached list of valid ResourceTypes with extensions, sorted by extension length (longest first).
+    
+    This cache is computed once and reused for all file parsing operations.
+    """
+    global _RESOURCE_TYPE_CACHE  # noqa: PLW0603
+    if _RESOURCE_TYPE_CACHE is None:
+        _RESOURCE_TYPE_CACHE = sorted(
+            [
+                (rt, f".{rt.extension}")
+                for rt in ResourceType.__members__.values()
+                if not rt.is_invalid and rt.extension
+            ],
+            key=lambda x: len(x[1]),
+            reverse=True,  # Longest extensions first (handles multi-part extensions like "res.xml")
+        )
+    return _RESOURCE_TYPE_CACHE
+
+
+def clear_file_data_cache() -> None:
+    """Clear the global file data cache to free memory."""
+    _FILE_DATA_CACHE.clear()
+
+
+def get_file_data_cache_stats() -> dict[str, int]:
+    """Get statistics about the file data cache.
+
+    Returns:
+        Dictionary with cache statistics (entries, total_size_bytes)
+    """
+    total_size = sum(len(data) for data, _ in _FILE_DATA_CACHE.values())
+    return {
+        "entries": len(_FILE_DATA_CACHE),
+        "total_size_bytes": total_size,
+    }
+
+
 class FileResource:
-    """Stores information for a resource regarding its name, type and where the data can be loaded from."""
+    """Stores information for a resource regarding its name, type and where the data can be loaded from.
+    
+    Represents a resource entry with metadata (name, type, size, offset) and file location.
+    Used throughout PyKotor for resource abstraction and lazy loading.
+    
+    References:
+    ----------
+        vendor/KotOR_IO/KotOR_IO/File Formats/KFile.cs (Resource file abstraction)
+        vendor/KotOR-dotNET/AuroraFile.cs (Aurora file format abstraction)
+        vendor/reone/src/libs/resource/resource.h (Resource abstraction)
+        vendor/xoreos-tools/src/common/types.h (Resource type definitions)
+    """
+
     def __init__(
         self,
         resname: str,
@@ -46,29 +100,11 @@ class FileResource:
         self.inside_capsule: bool = is_capsule_file(self._filepath)
         self.inside_bif: bool = is_bif_file(self._filepath)
 
-        self._file_hash: str = ""
-
         self._path_ident_obj: Path = (
             self._filepath / str(self._identifier)
             if self.inside_capsule or self.inside_bif
             else self._filepath
         )
-
-        self._sha256_hash: str = ""
-        self._internal: bool = False
-        self._hash_task_running: bool = False
-
-    def __setattr__(self, name, value):
-        if (
-            hasattr(self, name)
-            and name not in {"_internal", "_hash_task_running"}
-            and not getattr(self, "_internal", True)
-            and not getattr(self, "_hash_task_running", True)
-        ):
-            msg = f"Cannot modify immutable FileResource instance, attempted `setattr({self!r}, {name!r}, {value!r})`"
-            raise RuntimeError(msg)
-
-        return super().__setattr__(name, value)
 
     def __repr__(self):
         return (
@@ -178,6 +214,7 @@ class FileResource:
                 return
             if res is None:
                 import errno
+
                 msg = f"Resource '{self._identifier}' not found in Capsule"
                 raise FileNotFoundError(errno.ENOENT, msg, str(self._filepath))
 
@@ -195,14 +232,11 @@ class FileResource:
         This method is completely safe to call.
         """
         try:
-            if (
-                self.inside_capsule
-                and self._path_ident_obj.name.lower() == self._path_ident_obj.parent.name.lower()
-                and self.filepath().name != self.filepath().parent.name
-            ):
+            if self.inside_capsule and self._path_ident_obj.name.lower() == self._path_ident_obj.parent.name.lower() and self.filepath().name != self.filepath().parent.name:
                 return self.filepath().is_file()
             if self.inside_capsule:
                 from pykotor.extract.capsule import LazyCapsule  # Prevent circular imports
+
                 return bool(LazyCapsule(self._filepath).info(self._resname, self._restype))
             return self.inside_bif or bool(self._filepath.is_file())
         except Exception:  # noqa: BLE001
@@ -228,89 +262,16 @@ class FileResource:
         ------
             FileNotFoundError: File not found on disk.
         """
-        self._internal = True
-        try:
-            if reload:
-                self._index_resource()
-            with BinaryReader.from_file(self._filepath) as file:
-                file.seek(self._offset)
-                data: bytes = file.read_bytes(self._size)
-
-                if not self._hash_task_running:
-
-                    def background_task(res: FileResource, sentdata: bytes):
-                        res._hash_task_running = True  # noqa: SLF001
-                        res._file_hash = generate_hash(sentdata)  # noqa: SLF001
-                        res._hash_task_running = False  # noqa: SLF001
-
-                    with ThreadPoolExecutor(thread_name_prefix="FileResource_SHA1calc") as executor:
-                        executor.submit(background_task, self, data)
-            return data
-        finally:
-            self._internal = False
-
-    def get_sha1_hash(
-        self,
-        *,
-        reload: bool = False,
-    ) -> str:
-        """Returns a lowercase hex string sha1 hash. If FileResource doesn't exist this returns an empty str."""
-        if reload or not self._file_hash:
-            if not self._filepath.is_file():
-                return ""  # FileResource or the capsule doesn't exist on disk.
-            self._file_hash = generate_hash(self.data())
-        return self._file_hash
+        if reload:
+            self._index_resource()
+        with self._filepath.open("rb") as file:
+            file.seek(self._offset)
+            data: bytes = file.read(self._size)
+        return data
 
     def as_file_resource(self) -> Self:
         """For unifying use with LocationResult and ResourceResult."""
         return self
-
-
-@dataclass
-class ResourceStatResult:
-    st_size: int | None = None
-    st_mode: int | None = None
-    st_atime: float | None = None
-    st_mtime: float | None = None
-    st_ctime: float | None = None
-    st_nlink: int | None = None
-    st_atime_ns: int | None = None
-    st_mtime_ns: int | None = None
-    st_ctime_ns: int | None = None
-    st_ino: int | None = None
-    st_dev: int | None = None
-    st_uid: int | None = None
-    st_gid: int | None = None
-    st_file_attributes: int | None = None
-    st_reparse_tag: int | None = None
-    st_blocks: int | None = None
-    st_blksize: int | None = None
-    st_rdev: int | None = None
-    st_flags: int | None = None
-
-    @classmethod
-    def from_stat_result(cls, stat_result: os.stat_result) -> ResourceStatResult:
-        return cls(
-            st_size=stat_result.st_size,
-            st_mode=stat_result.st_mode,
-            st_atime=stat_result.st_atime,
-            st_mtime=stat_result.st_mtime,
-            st_ctime=stat_result.st_ctime,
-            st_nlink=stat_result.st_nlink,
-            st_atime_ns=stat_result.st_atime_ns,
-            st_mtime_ns=stat_result.st_mtime_ns,
-            st_ctime_ns=stat_result.st_ctime_ns,
-            st_ino=stat_result.st_ino,
-            st_dev=stat_result.st_dev,
-            st_uid=stat_result.st_uid,
-            st_gid=stat_result.st_gid,
-            st_file_attributes=getattr(stat_result, "st_file_attributes", None),
-            st_reparse_tag=getattr(stat_result, "st_reparse_tag", None),
-            st_blocks=getattr(stat_result, "st_blocks", None),
-            st_blksize=getattr(stat_result, "st_blksize", None),
-            st_rdev=getattr(stat_result, "st_rdev", None),
-            st_flags=getattr(stat_result, "st_flags", None),
-        )
 
 
 @dataclass(frozen=True)
@@ -352,9 +313,9 @@ class ResourceResult:
             return self.resname
         if key == 1:
             return self.restype
-        if key == 2:
+        if key == 2:  # noqa: PLR2004
             return self.filepath
-        if key == 3:
+        if key == 3:  # noqa: PLR2004
             return self.data
         msg = f"Index out of range for ResourceResult. key: {key}"
         raise IndexError(msg)
@@ -412,7 +373,7 @@ class LocationResult:
             return self.filepath
         if key == 1:
             return self.offset
-        if key == 2:
+        if key == 2:  # noqa: PLR2004
             return self.size
         msg = f"Index out of range for LocationResult. key: {key}"
         raise IndexError(msg)
@@ -439,27 +400,27 @@ class LocationResult:
 class ResourceIdentifier:
     """Class for storing resource name and type, facilitating case-insensitive object comparisons and hashing equal to their string representations."""
 
-    resname: str
-    restype: ResourceType
-    _cached_filename_str: str = field(default=None, init=False, repr=False)  # pyright: ignore[reportArgumentType]
-    _lower_resname_str: str = field(default=None, init=False, repr=False)  # pyright: ignore[reportArgumentType]
+    resname: str = field(default_factory=str)
+    restype: ResourceType = field(default=ResourceType.INVALID)
+    _cached_filename_str: str = field(default=None, init=False, repr=False)  # pyright: ignore[reportArgumentType]  # type: ignore[assignment]
+    _lower_resname_str: str = field(default=None, init=False, repr=False)  # pyright: ignore[reportArgumentType]  # type: ignore[assignment]
+    _cached_hash: int = field(default=None, init=False, repr=False)  # pyright: ignore[reportArgumentType]  # type: ignore[assignment]
 
     def __post_init__(self):
         # Workaround to initialize a field in a frozen dataclass
         ext: str = self.restype.extension
         suffix: str = f".{ext}" if ext else ""
-        lower_filename_str = f"{self.resname}{suffix}".lower()
+        lower_filename_str: str = f"{self.resname}{suffix}".lower()
+        object.__setattr__(self, "resname", str(self.resname))
         object.__setattr__(self, "_cached_filename_str", lower_filename_str)
         object.__setattr__(self, "_lower_resname_str", self.resname.lower())
+        # Pre-compute and cache hash for performance
+        object.__setattr__(self, "_cached_hash", hash(lower_filename_str))
 
-    def __hash__(
-        self,
-    ):
-        return hash(str(self))
+    def __hash__(self):
+        return self._cached_hash
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"{self.__class__.__name__}(resname='{self.resname}', restype={self.restype!r})"
 
     def __str__(self) -> str:
@@ -475,12 +436,14 @@ class ResourceIdentifier:
 
     def __eq__(self, other: object):
         # sourcery skip: assign-if-exp, reintroduce-else
+        # Use identity check first (fastest path)
         if self is other:
             return True
+        # Use cached string comparison (faster than str() call)
         if isinstance(other, ResourceIdentifier):
-            return str(self) == str(other)
+            return self._cached_filename_str == other._cached_filename_str
         if isinstance(other, str):
-            return str(self) == other.lower()
+            return self._cached_filename_str == other.lower()
         return NotImplemented
 
     @property
@@ -514,24 +477,47 @@ class ResourceIdentifier:
 
         Processing Logic:
         ----------------
-            - Splits the file path into resource name and type by filename dots, starting from maximum dots
-            - Validates the extracted resource type
-            - If splitting fails, uses stem as name and extension (from the last dot) as type
-            - Handles exceptions during processing
+            - Splits the file path into resource name and type
+            - Attempts to validate the extracted resource type, starting from the full extension
+            - If validation fails, progressively shortens the extension and tries again
+            - If all attempts fail, uses stem as name and sets type to INVALID
         """
-        try:
-            path_obj = PurePath(file_path)
-        except Exception:
-            return cls("", ResourceType.from_extension(""))
+        path_obj = PurePath(file_path)
 
-        max_dots: int = path_obj.name.count(".")
-        for dots in range(max_dots + 1, 1, -1):
-            with suppress(Exception):
-                resname, restype_ext = path_obj.split_filename(dots)
-                return cls(
-                    resname,
-                    ResourceType.from_extension(restype_ext).validate(),
-                )
+        def _split_resource_filename(p: PurePath) -> tuple[str, ResourceType]:
+            filename = p.name
+            lower_filename = filename.lower()
 
-        # ResourceType is invalid at this point.
-        return cls(path_obj.stem, ResourceType.from_extension(path_obj.suffix))
+            # Use cached ResourceTypes sorted by extension length (longest first)
+            # This is much faster than iterating through all ResourceType.__members__.values() every time
+            chosen_restype: ResourceType | None = None
+            chosen_suffix_length = 0
+            for candidate, suffix in _get_cached_resource_types():
+                # Early exit optimization: if suffix is longer than filename, skip
+                if len(suffix) > len(lower_filename):
+                    continue
+                # Early exit: if we already found a match longer than remaining candidates, we're done
+                # (since we're sorted longest-first, any remaining matches would be shorter)
+                if chosen_suffix_length > 0 and len(suffix) <= chosen_suffix_length:
+                    break
+                if lower_filename.endswith(suffix):
+                    chosen_restype = candidate
+                    chosen_suffix_length = len(suffix)
+                    # Perfect match - filename ends with this extension, can't get better
+                    if len(suffix) == len(lower_filename):
+                        break
+
+            if chosen_restype is not None and chosen_suffix_length > 0:
+                resname_candidate = filename[:-chosen_suffix_length]
+                return resname_candidate, chosen_restype
+
+            if filename.endswith("."):
+                return filename, ResourceType.from_extension("")
+
+            if filename.startswith(".") and filename.count(".") == 1:
+                return filename, ResourceType.from_extension("")
+
+            return p.stem, ResourceType.from_extension(p.suffix)
+
+        resname, restype = _split_resource_filename(path_obj)
+        return cls(resname, restype)

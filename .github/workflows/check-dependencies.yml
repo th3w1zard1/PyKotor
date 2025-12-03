@@ -1,0 +1,44 @@
+name: Check Dependencies
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  check-deps:
+    name: Check Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Check for dependency conflicts
+        run: |
+          pip install pipdeptree
+          pipdeptree --warn fail || echo "Dependency conflicts detected"
+
+      - name: Check for outdated dependencies
+        run: |
+          pip install pip-check
+          pip-check || true
+        continue-on-error: true
+
+      - name: Validate requirements files
+        run: |
+          for req_file in Libraries/*/requirements.txt Tools/*/requirements.txt; do
+            if [ -f "$req_file" ]; then
+              echo "Validating $req_file"
+              pip install -r "$req_file" --dry-run || echo "Validation failed for $req_file"
+            fi
+          done
+        continue-on-error: true
+

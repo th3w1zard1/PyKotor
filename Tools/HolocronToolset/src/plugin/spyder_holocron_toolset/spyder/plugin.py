@@ -19,6 +19,8 @@ from spyder.config.base import get_conf_path
 from toolset.data.installation import HTInstallation
 from toolset.gui.windows.main import ToolWindow
 
+from .container import HolocronToolsetContainer
+
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QCheckBox, QComboBox, QFrame, QGroupBox, QHBoxLayout, QMenu, QMenuBar, QPushButton, QStatusBar, QTabWidget, QWidget
     from typing_extensions import Self
@@ -56,7 +58,7 @@ class HolocronToolset(SpyderPluginV2):
         self.integrate_menubar(container)
         self.reposition_widgets(container)
         # Initialize the tool window for plugin mode
-        self.tool_window = ToolWindow(plugin_mode=True)
+        self.tool_window = ToolWindow()
         container.add_widget(self.tool_window)
         # Setup additional UI components specific to Spyder integration
         self.setup_spyder_ui(container)
@@ -339,7 +341,7 @@ class HolocronToolset(SpyderPluginV2):
 
         # Reposition widgets if necessary
         self.reposition_widgets(container)
-        self.tool_window = ToolWindow(plugin_mode=True)
+        self.tool_window = ToolWindow()
         container.add_widget(self.tool_window)
 
         # Connect signals
@@ -395,8 +397,20 @@ class HolocronToolset(SpyderPluginV2):
                         installation["path"],
                         installation["tsl"]
                     )
-        except FileNotFoundError:
-            pass
+
+    def load_installations(self):
+        """Load installations from configuration file."""
+        conf_file = get_conf_path(self.CONF_FILE)
+        with suppress(FileNotFoundError):
+            with open(conf_file) as f:
+                data = json.load(f)
+                installations = data.get("installations", [])
+                for installation in installations:
+                    self.tool_window.add_installation(
+                        installation["name"],
+                        installation["path"],
+                        installation["tsl"]
+                    )
 
     def save_installations(self):
         conf_file = get_conf_path(self.CONF_FILE)
@@ -452,23 +466,6 @@ class HolocronToolset(SpyderPluginV2):
     def apply_conf(self):
         self.load_installations()
         container = self.get_container()
-        container.holocron_toolbar.update_installations(self.tool_window.get_installations())
-
-    def reset_conf(self):
-        for name in self.tool_window.get_installations():
-            self.tool_window.remove_installation(name)
-        self.save_installations()
-        container = self.get_container()
-        container.holocron_toolbar.update_installations([])
-
-    def get_config_page(self):
-        return HolocronToolsetConfigPage(self, self.name)
-
-    # --- Preferences API
-    # ------------------------------------------------------------------------
-    def apply_conf(self):
-        self.load_installations()
-        container = self.get_container()
         container.holocron_toolbar.update_installations(self.installations)
 
     def reset_conf(self):
@@ -478,4 +475,5 @@ class HolocronToolset(SpyderPluginV2):
         container.holocron_toolbar.update_installations(self.installations)
 
     def get_config_page(self):
-        return HolocronToolsetConfigPage(self, self.name)
+        # TODO: Implement HolocronToolsetConfigPage
+        return None

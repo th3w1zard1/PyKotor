@@ -3,19 +3,33 @@ from __future__ import annotations
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
-from pykotor.common.geometry import Vector2
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Color, Game, ResRef
 from pykotor.resource.formats.gff import GFF, GFFContent, GFFList, GFFStruct, read_gff, write_gff
 from pykotor.resource.formats.gff.gff_auto import bytes_gff
 from pykotor.resource.type import ResourceType
+from utility.common.geometry import Vector2
 
 if TYPE_CHECKING:
     from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES
 
+from pykotor.resource.generics.base import GenericBase
 
-class ARE:
+
+class ARE(GenericBase):
     """Stores static area data.
+    
+    ARE files are GFF-based format files that store static area information including
+    lighting, fog, grass, weather, script hooks, and map data. ARE files use the GFF
+    binary format with a specific structure defined by the ARE content type.
+    
+    References:
+    ----------
+        vendor/reone/src/libs/resource/parser/gff/are.cpp (ARE parsing from GFF)
+        vendor/reone/include/reone/resource/parser/gff/are.h (ARE structure definitions)
+        vendor/xoreos-tools/src/xml/aredumper.cpp (ARE to XML conversion)
+        vendor/xoreos-tools/src/xml/arecreator.cpp (XML to ARE conversion)
+        Note: ARE files are GFF format files with specific structure definitions
 
     Attributes:
     ----------
@@ -99,45 +113,95 @@ class ARE:
     def __init__(
         self,
     ):
+        super().__init__()
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:302
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:13
+        # vendor/KotOR.js/src/module/ModuleArea.ts:140
+        # Alpha test threshold for transparency rendering (default 0.2)
         self.alpha_test: float = 0.0
+        
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:303
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:14
+        # vendor/KotOR.js/src/module/ModuleArea.ts:145
+        # Index into camerastyle.2da for camera behavior
         self.camera_style: int = 0
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:304-306
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:15-17
+        # Weather effect probabilities (KotOR 2 only, 0-100)
         self.chance_lightning: int = 0
         self.chance_snow: int = 0
         self.chance_rain: int = 0
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:307
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:18
+        # vendor/KotOR.js/src/module/ModuleArea.ts:150
+        # Module designer comments (toolset only, not used by engine)
         self.comment: str = ""
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:310
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:21
+        # vendor/KotOR.js/src/module/ModuleArea.ts:166
+        # ResRef of default environment map texture (cube map)
         self.default_envmap: ResRef = ResRef.from_blank()
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:323
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:34
+        # Disable area transitions flag
         self.disable_transit: bool = False
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:324,373-375
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:35,73-75
+        # vendor/KotOR.js/src/module/ModuleArea.ts:171,244-246
+        # Lighting colors (RGB integers)
         self.dynamic_light: Color = Color.BLACK
         self.sun_ambient: Color = Color.BLACK
         self.sun_diffuse: Color = Color.BLACK
+        
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:369,379
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:69,79
+        # vendor/KotOR.js/src/module/ModuleArea.ts:251,281
+        # Shadow rendering properties
         self.shadow_opacity: int = 0
         self.shadows: bool = False
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:375-378
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:75-78
+        # vendor/KotOR.js/src/module/ModuleArea.ts:246-250
+        # Fog rendering properties
         self.fog_color: Color = Color.BLACK
         self.fog_near: float = 0
         self.fog_far: float = 0
         self.fog_enabled: bool = False
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:311,314,317,320
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:22,25,28,31
+        # First dirty/weather effect parameters (KotOR 2 only)
         self.dirty_argb_1: Color = Color.BLACK
         self.dirty_func_1: int = 0
         self.dirty_size_1: int = 0
         self.dirty_formula_1: int = 0
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:313,316,319,322
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:24,27,30,32
+        # Second dirty/weather effect parameters (KotOR 2 only)
         self.dirty_argb_2: Color = Color.BLACK
         self.dirty_func_2: int = 0
         self.dirty_size_2: int = 0
         self.dirty_formula_2: int = 0
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:312,315,318,321
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:23,26,29,33
+        # Third dirty/weather effect parameters (KotOR 2 only)
         self.dirty_argb_3: Color = Color.BLACK
         self.dirty_func_3: int = 0
         self.dirty_size_3: int = 0
         self.dirty_formula_3: int = 0
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:326-334
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:37-46
+        # vendor/KotOR.js/src/module/ModuleArea.ts:188-200
+        # Grass rendering properties
         self.grass_ambient: Color = Color.BLACK
         self.grass_diffuse: Color = Color.BLACK
         self.grass_emissive: Color = Color.BLACK
@@ -149,21 +213,43 @@ class ARE:
         self.grass_prob_ur: float = 0.0
         self.grass_texture: ResRef = ResRef.from_blank()
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:383
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:83
+        # Wind strength for area (Still=0, Weak=1, Strong=2)
         self.wind_power: AREWindPower = AREWindPower.Still
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:360-363
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:63-66
+        # vendor/KotOR.js/src/module/ModuleArea.ts:122
+        # Area script hooks (ResRefs)
         self.on_enter: ResRef = ResRef.from_blank()
         self.on_exit: ResRef = ResRef.from_blank()
         self.on_heartbeat: ResRef = ResRef.from_blank()
         self.on_user_defined: ResRef = ResRef.from_blank()
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:370-372
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:70-72
+        # vendor/KotOR.js/src/module/ModuleArea.ts:286-297
+        # Stealth XP mechanics
         self.stealth_xp: bool = False
         self.stealth_xp_loss: int = 0
         self.stealth_xp_max: int = 0
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:357,380
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:60,80
+        # vendor/KotOR.js/src/module/ModuleArea.ts:258
+        # Area identification
         self.name: LocalizedString = LocalizedString.from_invalid()
         self.tag: str = ""
+        
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:381
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:81
+        # Area cannot be escaped from (no transitions)
         self.unescapable: bool = False
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:284-297
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:84-94
+        # Area map data (coordinate mapping)
         self.map_original_struct_id: int = 0
         self.map_point_1: Vector2 = Vector2.from_null()
         self.map_point_2: Vector2 = Vector2.from_null()
@@ -173,11 +259,22 @@ class ARE:
         self.map_zoom: int = 0
         self.north_axis: ARENorthAxis = ARENorthAxis.PositiveX
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:366-368
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:244-251
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:96
+        # vendor/KotOR.js/src/module/ModuleArea.ts:120
+        # List of room definitions (audio, weather, force rating)
         self.rooms: list[ARERoom] = []
 
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:382
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:82
+        # ARE file format version
         self.version: int = 0
 
-        # Deprecated:
+        # Deprecated fields (not used by KotOR engine, from NWN):
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:308,325,336,338-339,348-365
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:19-20,36,47-68
+        # vendor/KotOR.js/src/module/ModuleArea.ts:155-276 (various deprecated flags)
         self.unused_id: int = 0
         self.creator_id: int = 0
         self.flags: int = 0
@@ -201,6 +298,51 @@ class ARE:
 
 
 class ARERoom:
+    """Represents a room definition within an area.
+    
+    Rooms define audio properties, weather behavior, and force rating for specific
+    regions within an area. Rooms are referenced by VIS (visibility) files and
+    used for audio occlusion and weather control.
+    
+    References:
+    ----------
+        vendor/reone/include/reone/resource/parser/gff/are.h:185-191 - ARE_Rooms struct
+        vendor/reone/src/libs/resource/parser/gff/are.cpp:244-251 - parseARE_Rooms function
+        vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:99-106 - ARERoom class
+        vendor/KotOR.js/src/module/ModuleRoom.ts - ModuleRoom class (runtime room handling)
+        
+    Attributes:
+    ----------
+        name: Room name identifier
+            Reference: reone/are.cpp:250 (strct.RoomName = gff.getString("RoomName"))
+            Reference: Kotor.NET/ARE.cs:105 (RoomName String property)
+            Reference: KotOR.js/ModuleRoom.ts (room name)
+            Unique identifier for this room (referenced by VIS files)
+            
+        weather: Disable weather flag for this room
+            Reference: reone/are.cpp:247 (strct.DisableWeather = gff.getUint("DisableWeather"))
+            Reference: Kotor.NET/ARE.cs:102 (DisableWeather Byte property)
+            Reference: KotOR.js/ModuleArea.ts:463 (room_struct.set_uint8("DisableWeather", room.weather))
+            If True, weather effects are disabled in this room (KotOR 2 only)
+            
+        env_audio: Environment audio index
+            Reference: reone/are.cpp:248 (strct.EnvAudio = gff.getInt("EnvAudio"))
+            Reference: Kotor.NET/ARE.cs:103 (EnvAudio Int32 property)
+            Reference: KotOR.js/ModuleArea.ts:138 (audio.environmentAudio = 0)
+            Index into environment audio system for room acoustics
+            
+        force_rating: Force rating modifier for this room
+            Reference: reone/are.cpp:249 (strct.ForceRating = gff.getInt("ForceRating"))
+            Reference: Kotor.NET/ARE.cs:104 (ForceRating Int32 property)
+            Reference: KotOR.js/ModuleArea.ts:464 (room_struct.set_int32("ForceRating", room.force_rating))
+            Force rating modifier applied in this room (KotOR 2 only)
+            
+        ambient_scale: Ambient audio scaling factor
+            Reference: reone/are.cpp:246 (strct.AmbientScale = gff.getFloat("AmbientScale"))
+            Reference: Kotor.NET/ARE.cs:101 (AmbientScale Single property)
+            Reference: KotOR.js/ModuleArea.ts:459 (room_struct.set_single("AmbientScale", room.ambient_scale))
+            Scaling factor for ambient audio volume in this room
+    """
     def __init__(
         self,
         name: str,
@@ -209,10 +351,30 @@ class ARERoom:
         force_rating: int,
         ambient_scale: float,
     ):
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:250
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:105
+        # Room name identifier (referenced by VIS files)
         self.name: str = name
+        
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:247
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:102
+        # Disable weather flag (KotOR 2 only)
         self.weather: bool = weather
+        
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:248
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:103
+        # vendor/KotOR.js/src/module/ModuleArea.ts:138
+        # Environment audio index
         self.env_audio: int = env_audio
+        
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:249
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:104
+        # Force rating modifier (KotOR 2 only)
         self.force_rating: int = force_rating
+        
+        # vendor/reone/src/libs/resource/parser/gff/are.cpp:246
+        # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:101
+        # Ambient audio scaling factor
         self.ambient_scale: float = ambient_scale
 
 
@@ -358,6 +520,18 @@ def construct_are(
         force_rating = room_struct.acquire("ForceRating", 0)
         are.rooms.append(ARERoom(room_name, disable_weather, env_audio, force_rating, ambient_scale))
 
+    # Preserve original values for fields not in UI
+    are.preserve_original()
+    # Store all field values as original
+    are._store_original('version', are.version)
+    are._store_original('player_vs_player', are.player_vs_player)
+    are._store_original('moon_fog', are.moon_fog)
+    are._store_original('moon_fog_near', are.moon_fog_near)
+    are._store_original('moon_fog_far', are.moon_fog_far)
+    are._store_original('moon_fog_color', are.moon_fog_color)
+    are._store_original('map_point_1', are.map_point_1)
+    are._store_original('map_point_2', are.map_point_2)
+
     return are
 
 
@@ -395,16 +569,22 @@ def dismantle_are(
     map_struct.set_int32("MapZoom", are.map_zoom)
     map_struct.set_int32("MapResX", are.map_res_x)
     map_struct.set_int32("NorthAxis", are.north_axis.value)
-    map_struct.set_single("MapPt1X", are.map_point_1.x)
-    map_struct.set_single("MapPt1Y", are.map_point_1.y)
-    map_struct.set_single("MapPt2X", are.map_point_2.x)
-    map_struct.set_single("MapPt2Y", are.map_point_2.y)
+    # Use original values for map points if current values are at default
+    default_map_point = Vector2.from_null()
+    map_pt1 = are.get_original_or_current('map_point_1', are.map_point_1, default_map_point)
+    map_pt2 = are.get_original_or_current('map_point_2', are.map_point_2, default_map_point)
+    map_struct.set_single("MapPt1X", map_pt1.x)
+    map_struct.set_single("MapPt1Y", map_pt1.y)
+    map_struct.set_single("MapPt2X", map_pt2.x)
+    map_struct.set_single("MapPt2Y", map_pt2.y)
     map_struct.set_single("WorldPt1X", are.world_point_1.x)
     map_struct.set_single("WorldPt1Y", are.world_point_1.y)
     map_struct.set_single("WorldPt2X", are.world_point_2.x)
     map_struct.set_single("WorldPt2Y", are.world_point_2.y)
 
-    root.set_uint32("Version", are.version)
+    # Use original value for version if current is at default (0)
+    version = are.get_original_or_current('version', are.version, 0)
+    root.set_uint32("Version", version)
 
     root.set_uint32("SunAmbientColor", are.sun_ambient.rgb_integer())
     root.set_uint32("SunDiffuseColor", are.sun_diffuse.rgb_integer())
@@ -480,8 +660,11 @@ def dismantle_are(
         root.set_uint32("MoonAmbientColor", are.moon_ambient)
         root.set_uint32("MoonDiffuseColor", are.moon_diffuse)
         root.set_uint8("MoonFogOn", are.moon_fog)
-        root.set_single("MoonFogNear", are.moon_fog_near)
-        root.set_single("MoonFogFar", are.moon_fog_far)
+        # Use original values for moon fog if current values are at default (0.0)
+        moon_fog_near = are.get_original_or_current('moon_fog_near', are.moon_fog_near, 0.0)
+        moon_fog_far = are.get_original_or_current('moon_fog_far', are.moon_fog_far, 0.0)
+        root.set_single("MoonFogNear", moon_fog_near)
+        root.set_single("MoonFogFar", moon_fog_far)
         root.set_uint32("MoonFogColor", are.moon_fog_color)
         root.set_uint8("MoonShadows", are.moon_shadows)
         root.set_uint8("IsNight", are.is_night)
@@ -491,7 +674,9 @@ def dismantle_are(
         root.set_uint8("NoRest", are.no_rest)
         root.set_uint8("NoHangBack", are.no_hang_back)
         root.set_uint8("PlayerOnly", are.player_only)
-        root.set_uint8("PlayerVsPlayer", are.player_vs_player)
+        # Use original value for PlayerVsPlayer if current is at default (0)
+        player_vs_player = are.get_original_or_current('player_vs_player', are.player_vs_player, 0)
+        root.set_uint8("PlayerVsPlayer", player_vs_player)
         root.set_list("Expansion_List", GFFList())
 
     return gff

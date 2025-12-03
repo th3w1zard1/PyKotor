@@ -1,0 +1,282 @@
+from __future__ import annotations
+
+import os
+import pathlib
+import sys
+import unittest
+from unittest import TestCase
+
+try:
+    from qtpy.QtTest import QTest
+    from qtpy.QtWidgets import QApplication
+except (ImportError, ModuleNotFoundError):
+    QTest, QApplication = None, None  # type: ignore[misc, assignment]
+
+absolute_file_path = pathlib.Path(__file__).resolve()
+TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "test_toolset/test_files"
+
+if (
+    __name__ == "__main__"
+    and getattr(sys, "frozen", False) is False
+):
+    def add_sys_path(p):
+        working_dir = str(p)
+        if working_dir in sys.path:
+            sys.path.remove(working_dir)
+        sys.path.append(working_dir)
+
+    pykotor_path = absolute_file_path.parents[4] / "Libraries" / "PyKotor" / "src" / "pykotor"
+    if pykotor_path.exists():
+        add_sys_path(pykotor_path.parent)
+    gl_path = absolute_file_path.parents[4] / "Libraries" / "PyKotorGL" / "src" / "pykotor"
+    if gl_path.exists():
+        add_sys_path(gl_path.parent)
+    utility_path = absolute_file_path.parents[4] / "Libraries" / "Utility" / "src" / "utility"
+    if utility_path.exists():
+        add_sys_path(utility_path.parent)
+    toolset_path = absolute_file_path.parents[4] / "Tools" / "HolocronToolset" / "src" / "toolset"
+    if toolset_path.exists():
+        add_sys_path(toolset_path.parent)
+
+K1_PATH = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
+K2_PATH = os.environ.get("K2_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II")
+
+from pykotor.common.stream import BinaryReader
+from pykotor.extract.installation import Installation
+from pykotor.resource.formats.gff.gff_auto import read_gff
+from pykotor.resource.type import ResourceType
+
+
+@unittest.skipIf(
+    not K2_PATH or not pathlib.Path(K2_PATH).joinpath("chitin.key").exists(),
+    "K2_PATH environment variable is not set or not found on disk.",
+)
+@unittest.skipIf(
+    QTest is None or not QApplication,
+    "qtpy is required, please run pip install -r requirements.txt before running this test.",
+)
+class JRLEditorTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Make sure to configure this environment path before testing!
+        from toolset.gui.editors.jrl import JRLEditor
+
+        cls.JRLEditor = JRLEditor
+        from toolset.data.installation import HTInstallation
+
+        # cls.K1_INSTALLATION = HTInstallation(K1_PATH, "", tsl=False)
+        cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
+
+    def setUp(self):
+        self.app = QApplication([])
+        self.editor = self.JRLEditor(None, self.K2_INSTALLATION)
+        self.log_messages: list[str] = [os.linesep]
+
+    def tearDown(self):
+        self.app.deleteLater()
+
+    def log_func(self, *args):
+        self.log_messages.append("\t".join(args))
+
+    def test_save_and_load(self):
+        filepath = TESTS_FILES_PATH / "../test_toolset/files/global.jrl"
+
+        data = filepath.read_bytes()
+        old = read_gff(data)
+        self.editor.load(filepath, "global", ResourceType.JRL, data)
+
+        data, _ = self.editor.build()
+        new = read_gff(data)
+
+        diff = old.compare(new, self.log_func)
+        assert diff, os.linesep.join(self.log_messages)
+
+    @unittest.skipIf(
+        not K1_PATH or not pathlib.Path(K1_PATH).joinpath("chitin.key").exists(),
+        "K1_PATH environment variable is not set or not found on disk.",
+    )
+    def test_gff_reconstruct_from_k1_installation(self):
+        self.installation = Installation(K1_PATH)  # type: ignore[arg-type]
+        for jrl_resource in (resource for resource in self.installation if resource.restype() is ResourceType.JRL):
+            old = read_gff(jrl_resource.data())
+            self.editor.load(jrl_resource.filepath(), jrl_resource.resname(), jrl_resource.restype(), jrl_resource.data())
+
+            data, _ = self.editor.build()
+            new = read_gff(data)
+
+            diff = old.compare(new, self.log_func, ignore_default_changes=True)
+            assert diff, os.linesep.join(self.log_messages)
+
+    @unittest.skipIf(
+        not K2_PATH or not pathlib.Path(K2_PATH).joinpath("chitin.key").exists(),
+        "K2_PATH environment variable is not set or not found on disk.",
+    )
+    def test_gff_reconstruct_from_k2_installation(self):
+        self.installation = Installation(K2_PATH)  # type: ignore[arg-type]
+        for jrl_resource in (resource for resource in self.installation if resource.restype() is ResourceType.JRL):
+            old = read_gff(jrl_resource.data())
+            self.editor.load(jrl_resource.filepath(), jrl_resource.resname(), jrl_resource.restype(), jrl_resource.data())
+
+            data, _ = self.editor.build()
+            new = read_gff(data)
+
+            diff = old.compare(new, self.log_func, ignore_default_changes=True)
+            assert diff, os.linesep.join(self.log_messages)
+
+    def test_editor_init(self):
+        self.JRLEditor(None, self.K2_INSTALLATION)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+# ============================================================================
+# Pytest-based UI tests (merged from test_ui_jrl.py)
+# ============================================================================
+
+import pytest
+from toolset.gui.editors.jrl import JRLEditor
+from toolset.data.installation import HTInstallation
+from pykotor.resource.generics.jrl import JRLQuest, JRLEntry
+from pykotor.resource.type import ResourceType
+
+def test_jrl_editor_init(qtbot, installation: HTInstallation):
+    """Test JRL Editor initialization."""
+    from qtpy.QtWidgets import QWidget
+    parent = QWidget()
+    
+    editor = JRLEditor(parent, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    
+    assert editor.isVisible()
+    assert "Journal Editor" in editor.windowTitle()
+
+def test_jrl_add_quest_and_entry(qtbot, installation: HTInstallation):
+    """Test adding quests and entries."""
+    editor = JRLEditor(None, installation)
+    qtbot.addWidget(editor)
+    editor.show()
+    
+    # Add Quest
+    quest = JRLQuest()
+    quest.name.set_string(0, "Test Quest")
+    editor.add_quest(quest)
+    
+    assert editor._model.rowCount() == 1
+    quest_item = editor._model.item(0)
+    assert "Test Quest" in quest_item.text()
+    
+    # Select Quest
+    editor.ui.journalTree.setCurrentIndex(quest_item.index())
+    
+    # Check Quest fields
+    assert editor.ui.questPages.currentIndex() == 0
+    
+    # Modify Quest
+    editor.ui.categoryTag.setText("quest_tag")
+    editor.on_value_updated()
+    assert quest.tag == "quest_tag"
+    
+    # Add Entry
+    entry = JRLEntry()
+    entry.text.set_string(0, "Test Entry")
+    entry.entry_id = 10
+    editor.add_entry(quest_item, entry)
+    
+    assert quest_item.rowCount() == 1
+    entry_item = quest_item.child(0)
+    assert "10" in entry_item.text()
+    
+    # Select Entry
+    editor.ui.journalTree.setCurrentIndex(entry_item.index())
+    
+    # Check Entry fields
+    assert editor.ui.questPages.currentIndex() == 1
+    
+    # Modify Entry
+    editor.ui.entryXpSpin.setValue(50)
+    editor.on_value_updated()
+    assert entry.xp_percentage == 50
+
+def test_jrl_editor_headless_ui_load_build(qtbot, installation: HTInstallation, test_files_dir: pathlib.Path):
+    """Test JRL Editor in headless UI - loads real file and builds data."""
+    editor = JRLEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # Try to find a JRL file
+    jrl_file = test_files_dir / "global.jrl"
+    if not jrl_file.exists():
+        # Try to get one from installation
+        jrl_resources = list(installation.resources(ResourceType.JRL))[:1]
+        if not jrl_resources:
+            pytest.skip("No JRL files available for testing")
+        jrl_resource = jrl_resources[0]
+        jrl_data = installation.resource(jrl_resource.identifier)
+        if not jrl_data:
+            pytest.skip(f"Could not load JRL data for {jrl_resource.identifier}")
+        editor.load(
+            jrl_resource.filepath if hasattr(jrl_resource, 'filepath') else pathlib.Path("module.jrl"),
+            jrl_resource.resname,
+            ResourceType.JRL,
+            jrl_data
+        )
+    else:
+        original_data = jrl_file.read_bytes()
+        editor.load(jrl_file, "global", ResourceType.JRL, original_data)
+    
+    # Verify editor loaded the data
+    assert editor is not None
+    assert editor._model.rowCount() > 0
+    
+    # Build and verify it works
+    data, _ = editor.build()
+    assert len(data) > 0
+    
+    # Verify we can read it back
+    from pykotor.resource.formats.gff.gff_auto import read_gff
+    loaded_jrl = read_gff(data)
+    assert loaded_jrl is not None
+
+
+def test_jrleditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+    """Test that JRLEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
+    from toolset.gui.dialogs.editor_help import EditorHelpDialog
+    
+    editor = JRLEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    # Trigger help dialog with the correct file for JRLEditor
+    editor._show_help_dialog("GFF-JRL.md")
+    qtbot.wait(200)  # Wait for dialog to be created
+    
+    # Find the help dialog
+    dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
+    assert len(dialogs) > 0, "Help dialog should be opened"
+    
+    dialog = dialogs[0]
+    qtbot.waitExposed(dialog)
+    
+    # Get the HTML content
+    html = dialog.text_browser.toHtml()
+    
+    # Assert that "Help File Not Found" error is NOT shown
+    assert "Help File Not Found" not in html, \
+        f"Help file 'GFF-JRL.md' should be found, but error was shown. HTML: {html[:500]}"
+    
+    # Assert that some content is present (file was loaded successfully)
+    assert len(html) > 100, "Help dialog should contain content"
+
+    """Test loading a JRL file."""
+    editor = JRLEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    jrl_file = test_files_dir / "global.jrl"
+    if not jrl_file.exists():
+        pytest.skip("global.jrl not found")
+        
+    editor.load(jrl_file, "global", ResourceType.JRL, jrl_file.read_bytes())
+    
+    assert editor._model.rowCount() > 0
+    # Verify tree populated

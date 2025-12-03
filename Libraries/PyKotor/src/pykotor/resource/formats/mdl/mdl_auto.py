@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 from typing import TYPE_CHECKING
 
 from pykotor.common.stream import BinaryReader
@@ -50,17 +48,10 @@ def detect_mdl(
         #    return ResourceType.MDL_CSV
         # return ResourceType.INVALID
 
+    file_format: ResourceType
     try:
-        if isinstance(source, (os.PathLike, str)):
-            with BinaryReader.from_file(source, offset) as reader:
-                file_format = check(reader.read_bytes(4))
-        elif isinstance(source, (memoryview, bytes, bytearray)):
-            file_format = check(bytes(source[:4]))
-        elif isinstance(source, BinaryReader):
-            file_format = check(source.read_bytes(4))
-            source.skip(-4)
-        else:
-            file_format = ResourceType.INVALID
+        with BinaryReader.from_auto(source, offset) as reader:
+            file_format = check(reader.read_bytes(4))
     except (FileNotFoundError, PermissionError, IsADirectoryError):
         raise
     except OSError:
@@ -76,10 +67,67 @@ def read_mdl(
     source_ext: SOURCE_TYPES | None = None,
     offset_ext: int = 0,
     size_ext: int = 0,
+    file_format: ResourceType | None = None,
 ) -> MDL:
     """Returns an MDL instance from the source.
 
     The file format (MDL or MDL_ASCII) is automatically determined before parsing the data.
+
+    Args:
+    ----
+        source: The source of the data.
+        offset: The byte offset of the file inside the data.
+        size: The number of bytes to read from the source.
+        source_ext: Source of the MDX data, if available.
+        offset_ext: Offset into the source_ext data.
+        size_ext: The number of bytes to read from the MDX source.
+        file_format: The file format to use (ResourceType.MDL or ResourceType.MDL_ASCII). If not specified, it will be detected automatically.
+
+    Raises:
+    ------
+        FileNotFoundError: If the file could not be found.
+        IsADirectoryError: If the specified path is a directory (Unix-like systems only).
+        PermissionError: If the file could not be accessed.
+        ValueError: If the file was corrupted or the format could not be determined.
+
+    Returns:
+    -------
+        An MDL instance.
+    """
+    if file_format is None:
+        file_format = detect_mdl(source, offset)
+
+    if file_format is ResourceType.MDL:
+        return MDLBinaryReader(source, offset, size or 0, source_ext, offset_ext, size_ext).load()
+    if file_format is ResourceType.MDL_ASCII:
+        return MDLAsciiReader(source, offset, size or 0).load()
+
+    msg = "Failed to determine the format of the MDL file."
+    raise ValueError(msg)
+
+
+def read_mdl_fast(
+    source: SOURCE_TYPES,
+    offset: int = 0,
+    size: int | None = None,
+    source_ext: SOURCE_TYPES | None = None,
+    offset_ext: int = 0,
+    size_ext: int = 0,
+) -> MDL:
+    """Returns an MDL instance from the source with fast loading optimized for rendering.
+
+    This function performs minimal parsing and is optimized for rendering use cases.
+    Only essential data for rendering is loaded:
+    - Node hierarchy (names, positions, rotations)
+    - Mesh geometry (vertices, normals, UVs, faces)
+    - Texture names
+    - Render flags
+
+    Controllers, animations, and other metadata are skipped for performance.
+    Use read_mdl() for full MDL parsing including animations and controllers.
+
+    The file format (MDL or MDL_ASCII) is automatically determined before parsing the data.
+    Fast loading is only supported for binary MDL format.
 
     Args:
     ----
@@ -99,7 +147,7 @@ def read_mdl(
 
     Returns:
     -------
-        An MDL instance.
+        An MDL instance with minimal data loaded for rendering.
     """
     file_format = detect_mdl(source, offset)
 
@@ -111,8 +159,10 @@ def read_mdl(
             source_ext,
             offset_ext,
             size_ext,
+            fast_load=True,
         ).load()
     if file_format is ResourceType.MDL_ASCII:
+        # ASCII doesn't support fast loading, fall back to regular loading
         return MDLAsciiReader(source, offset, size or 0).load()
     msg = "Failed to determine the format of the MDL file."
     raise ValueError(msg)
@@ -171,4 +221,4 @@ def bytes_mdl(
     """
     data = bytearray()
     write_mdl(mdl, data, file_format)
-    return data
+    return bytes(data)

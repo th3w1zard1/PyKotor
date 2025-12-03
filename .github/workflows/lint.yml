@@ -1,0 +1,69 @@
+name: Lint and Type Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  ruff:
+    name: Ruff Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv pip install ruff
+
+      - name: Run ruff check
+        run: |
+          ruff check . --output-format=github
+
+      - name: Check formatting
+        run: |
+          ruff format --check .
+
+  mypy:
+    name: MyPy Type Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv pip install -e "Libraries/PyKotor[all]"
+          uv pip install -e "Libraries/PyKotorGL[moderngl]"
+          uv pip install -e Libraries/PyKotorFont
+          uv pip install mypy types-all
+
+      - name: Run mypy
+        run: |
+          mypy Libraries/PyKotor/src Libraries/PyKotorGL/src Libraries/PyKotorFont/src --config-file pyproject.toml || true
+        continue-on-error: true

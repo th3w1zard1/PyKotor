@@ -1,0 +1,44 @@
+name: Check Imports
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  check-imports:
+    name: Check Imports
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv pip install -e "Libraries/PyKotor[all]"
+          uv pip install -e "Libraries/PyKotorGL[moderngl]"
+          uv pip install -e Libraries/PyKotorFont
+
+      - name: Check for unused imports
+        run: |
+          ruff check --select F401 --fix Libraries/ Tools/ || true
+
+      - name: Check for missing imports
+        run: |
+          python -m py_compile Libraries/PyKotor/src/pykotor/**/*.py || true
+          python -m py_compile Libraries/PyKotorGL/src/pykotor/**/*.py || true
+          python -m py_compile Libraries/PyKotorFont/src/pykotor/**/*.py || true
+

@@ -1,0 +1,30 @@
+name: Check Python Syntax
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  syntax-check:
+    name: Check Python Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Check Python syntax
+        run: |
+          find Libraries Tools -name "*.py" -not -path "*/vendor/*" -not -path "*/.venv/*" -not -path "*/venv/*" | while read file; do
+            python -m py_compile "$file" || exit 1
+          done
+          echo "✓ All Python files have valid syntax"
+

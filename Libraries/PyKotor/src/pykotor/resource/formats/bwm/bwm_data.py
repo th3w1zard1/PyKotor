@@ -1,5 +1,81 @@
 from __future__ import annotations
 
+"""
+Binary WalkMesh (BWM/WOK) runtime model for KotOR (Aurora/NWN engine lineage).
+
+KotOR areas use a walkmesh (stored on disk in WOK/BWM form) to describe the set of
+triangles the player and AI can stand on, plus edge metadata for transitions
+(e.g., doors, area hooks) and an acceleration structure (AABB tree) for queries.
+
+This module contains a high-level, in-memory representation of that data:
+ - BWM:     The entire walkmesh object (faces, transforms/hooks, helpers)
+ - BWMFace: A single triangle with a material and up to 3 per-edge transition ids
+ - BWMEdge: A boundary edge for perimeters (computed from geometry, not stored)
+ - BWMAdjacency: Logical adjacency of one face/edge to a neighboring face/edge
+ - BWMNodeAABB: AABB tree node for broad-phase intersection
+
+References:
+----------
+    vendor/reone/include/reone/graphics/walkmesh.h:27-89 - Walkmesh class
+    vendor/reone/include/reone/graphics/format/bwmreader.h:29-78 - BwmReader class
+    vendor/reone/src/libs/graphics/format/bwmreader.cpp:27-171 - Complete BWM loading
+    vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:24-981 - TypeScript walkmesh implementation
+    vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:15-110 - WalkmeshEdge class
+    vendor/kotorblender/io_scene_kotor/scene/walkmesh.py:25-60 - Blender walkmesh import
+    vendor/WalkmeshVisualizer - Walkmesh visualization tools
+
+Binary Format:
+-------------
+    Header (8 bytes):
+        Offset | Size | Type   | Description
+        -------|------|--------|-------------
+        0x00   | 4    | char[] | File Type ("BWM ")
+        0x04   | 4    | char[] | File Version ("V1.0")
+    
+    Walkmesh Properties (52 bytes):
+        Offset | Size | Type   | Description
+        -------|------|--------|-------------
+        0x08   | 4    | uint32 | Walkmesh Type (0=PWK/DWK, 1=WOK/Area)
+        0x0C   | 12   | float3 | Relative Use Position 1 (x, y, z)
+        0x18   | 12   | float3 | Relative Use Position 2 (x, y, z)
+        0x24   | 12   | float3 | Absolute Use Position 1 (x, y, z)
+        0x30   | 12   | float3 | Absolute Use Position 2 (x, y, z)
+        0x3C   | 12   | float3 | Position (x, y, z)
+    
+    Data Tables (offsets stored in header):
+        - Vertices: Array of float3 (x, y, z) per vertex
+        - Face Indices: Array of uint32 triplets (vertex indices per face)
+        - Materials: Array of uint32 (SurfaceMaterial ID per face)
+        - Normals: Array of float3 (face normal per face)
+        - Planar Distances: Array of float32 (per face)
+        - AABB Nodes: Array of AABB structures (WOK only)
+        - Adjacencies: Array of int32 triplets (WOK only, -1 for no neighbor)
+        - Edges: Array of (edge_index, transition) pairs (WOK only)
+        - Perimeters: Array of edge indices (WOK only)
+        
+    Reference: reone/bwmreader.cpp:27-92, KotOR.js/OdysseyWalkMesh.ts:200-600
+
+Identity vs Equality
+--------------------
+Faces and vertices implement value-based equality to support comparisons, hashing
+and tests. However, certain algorithms must map a specific face OBJECT back to its
+index in the `BWM.faces` sequence to produce edge indices of the form:
+
+    edge_index = face_index * 3 + local_edge_index
+
+Value-based equality makes Python's list.index() unsuitable here because it may
+return the index of a different but equal face. To avoid this, code in this module
+uses identity-based selection (the `is` operator) when computing indices.
+See `_index_by_identity()` and the writer logic in `io_bwm.py`.
+
+Transitions vs Adjacency
+------------------------
+The `trans1`, `trans2`, and `trans3` fields on `BWMFace` are optional per-edge
+transition indices into other area data (e.g., LYT/door references). They are NOT
+unique identifiers and do not encode geometric adjacency. Adjacency is derived
+purely from geometry (shared vertices on walkable faces).
+"""
+
 import itertools
 import math
 
@@ -7,34 +83,171 @@ from copy import copy
 from enum import IntEnum
 from typing import TYPE_CHECKING
 
-from pykotor.common.geometry import Face, Vector3
+from pykotor.resource.formats._base import ComparableMixin
+from utility.common.geometry import Face, Vector3
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
+    from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
 # A lot of the code in this module was adapted from the KotorBlender fork by seedhartha:
 # https://github.com/seedhartha/kotorblender
 
 
 class BWMType(IntEnum):
+    """Walkmesh type enumeration.
+    
+    Determines whether walkmesh is for area geometry (WOK) or placeable/door objects (PWK/DWK).
+    Area walkmeshes include AABB trees and adjacency data, while placeable walkmeshes are simpler.
+    
+    References:
+    ----------
+        vendor/reone/src/libs/graphics/format/bwmreader.h:40-43 (WalkmeshType enum)
+        vendor/reone/src/libs/graphics/format/bwmreader.cpp:30 (type reading)
+        vendor/KotOR.js/src/enums/odyssey/OdysseyWalkMeshType.ts:11-14 - WalkmeshType enum
+        vendor/reone/src/libs/graphics/format/bwmreader.cpp:52-64 (WOK-specific data)
+        
+    Values:
+    ------
+        PlaceableOrDoor = 0: Walkmesh for placeable objects or doors (PWK/DWK)
+            Reference: reone/bwmreader.h:41 (PWK_DWK = 0)
+            Simpler format without AABB trees or adjacency data
+            Used for interactive objects that can be placed in areas
+            
+        AreaModel = 1: Walkmesh for area geometry (WOK)
+            Reference: reone/bwmreader.h:42 (WOK = 1)
+            Reference: KotOR.js/OdysseyWalkMeshType.ts:13 (AABB = 1)
+            Full format with AABB trees, adjacencies, edges, and perimeters
+            Used for area room geometry and pathfinding
+    """
+    
     PlaceableOrDoor = 0
     AreaModel = 1
 
 
-class BWM:
-    """Represents the data of a RIM file."""
+class BWM(ComparableMixin):
+    """In-memory walkmesh model (faces, hooks, helpers).
+    
+    Walkmeshes define collision geometry for areas and objects. They consist of triangular
+    faces with materials (determining walkability, line-of-sight blocking, etc.), optional
+    edge transitions for area connections, and spatial acceleration structures (AABB trees)
+    for efficient queries.
+    
+    References:
+    ----------
+        vendor/reone/include/reone/graphics/walkmesh.h:27-89 - Walkmesh class
+        vendor/reone/src/libs/graphics/format/bwmreader.cpp:66-91 (walkmesh construction)
+        vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:24-981 - OdysseyWalkMesh class
+        vendor/kotorblender/io_scene_kotor/scene/walkmesh.py:25-60 - Walkmesh class
+        
+    Attributes:
+    ----------
+        walkmesh_type: Type of walkmesh (AreaModel or PlaceableOrDoor)
+            Reference: reone/bwmreader.cpp:30 (_type field)
+            Reference: reone/bwmreader.cpp:67 (_walkmesh->_area flag)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:60 (header.walkMeshType)
+            Determines which data structures are present (AABB trees, adjacencies, etc.)
+            AreaModel (WOK) includes full spatial acceleration and adjacency data
+            
+        faces: List of triangular faces making up the walkmesh
+            Reference: reone/walkmesh.h:68 (_faces vector)
+            Reference: reone/bwmreader.cpp:74-87 (face construction loop)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:37 (faces array)
+            Each face has 3 vertices, a material (SurfaceMaterial), and optional transitions
+            Faces define walkable surfaces, collision boundaries, and line-of-sight blockers
+            
+        position: 3D position offset for the walkmesh (x, y, z)
+            Reference: reone/bwmreader.cpp:37-38 (_position field)
+            Reference: reone/bwmreader.cpp:123 (position reading in PyKotor io_bwm.py)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:36 (mat4 matrix, position component)
+            Used to position walkmesh relative to area origin
+            Typically (0, 0, 0) for area walkmeshes
+            
+        relative_hook1: First relative hook position (x, y, z)
+            Reference: reone/bwmreader.cpp:32 (relUsePosition1 reading)
+            Reference: PyKotor io_bwm.py:119 (relative_hook1 reading)
+            Hook point relative to walkmesh origin
+            Used for door/transition placement (relative to walkmesh)
+            
+        relative_hook2: Second relative hook position (x, y, z)
+            Reference: reone/bwmreader.cpp:33 (relUsePosition2 reading)
+            Reference: PyKotor io_bwm.py:120 (relative_hook2 reading)
+            Hook point relative to walkmesh origin
+            Used for door/transition placement (relative to walkmesh)
+            
+        absolute_hook1: First absolute hook position (x, y, z)
+            Reference: reone/bwmreader.cpp:34 (absUsePosition1 reading)
+            Reference: PyKotor io_bwm.py:121 (absolute_hook1 reading)
+            Hook point in world space (absolute coordinates)
+            Used for door/transition placement (absolute world position)
+            
+        absolute_hook2: Second absolute hook position (x, y, z)
+            Reference: reone/bwmreader.cpp:35 (absUsePosition2 reading)
+            Reference: PyKotor io_bwm.py:122 (absolute_hook2 reading)
+            Hook point in world space (absolute coordinates)
+            Used for door/transition placement (absolute world position)
+    """
+
+    COMPARABLE_FIELDS = ("walkmesh_type", "position", "relative_hook1", "relative_hook2", "absolute_hook1", "absolute_hook2")
+    COMPARABLE_SEQUENCE_FIELDS = ("faces",)
 
     def __init__(
         self,
     ):
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:30,67
+        # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:60
+        # Walkmesh type (AreaModel=WOK or PlaceableOrDoor=PWK/DWK)
         self.walkmesh_type: BWMType = BWMType.AreaModel
+        
+        # vendor/reone/include/reone/graphics/walkmesh.h:68
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:74-87
+        # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:37
+        # List of triangular faces (vertices, material, transitions)
         self.faces: list[BWMFace] = []
 
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:37-38
+        # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:36
+        # 3D position offset for walkmesh (typically 0,0,0 for areas)
         self.position: Vector3 = Vector3.from_null()
+        
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:32
+        # First relative hook position (door/transition placement, relative to walkmesh)
         self.relative_hook1: Vector3 = Vector3.from_null()
+        
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:33
+        # Second relative hook position (door/transition placement, relative to walkmesh)
         self.relative_hook2: Vector3 = Vector3.from_null()
+        
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:34
+        # First absolute hook position (door/transition placement, world space)
         self.absolute_hook1: Vector3 = Vector3.from_null()
+        
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:35
+        # Second absolute hook position (door/transition placement, world space)
         self.absolute_hook2: Vector3 = Vector3.from_null()
+
+    def __eq__(self, other):
+        if not isinstance(other, BWM):
+            return NotImplemented
+        return (
+            self.walkmesh_type == other.walkmesh_type
+            and self.faces == other.faces
+            and self.position == other.position
+            and self.relative_hook1 == other.relative_hook1
+            and self.relative_hook2 == other.relative_hook2
+            and self.absolute_hook1 == other.absolute_hook1
+            and self.absolute_hook2 == other.absolute_hook2
+        )
+
+    def __hash__(self):
+        return hash((
+            self.walkmesh_type,
+            tuple(self.faces),
+            self.position,
+            self.relative_hook1,
+            self.relative_hook2,
+            self.absolute_hook1,
+            self.absolute_hook2,
+        ))
 
     def walkable_faces(
         self,
@@ -48,6 +261,12 @@ class BWM:
         Returns:
         -------
             list[BWMFace]: List of faces that are walkable
+
+        Processing Logic:
+        ----------------
+            - Iterate through all faces in self.faces
+            - Check if each face's material is walkable using face.material.walkable()
+            - Add face to return list if walkable.
         """
         return [face for face in self.faces if face.material.walkable()]
 
@@ -56,24 +275,28 @@ class BWM:
     ) -> list[BWMFace]:
         """Return unwalkable faces in the mesh.
 
-        Args:
-        ----
-            self: The mesh object
-
         Returns:
         -------
             list[BWMFace]: List of unwalkable faces in the mesh
+
+        Processing Logic:
+        ----------------
+            - Iterate through all faces in the mesh
+            - Check if the material of the face is not walkable
+            - Add the face to the return list if material is not walkable
+            - Return the list of unwalkable faces.
         """
         return [face for face in self.faces if not face.material.walkable()]
 
     def vertices(
         self,
     ) -> list[Vector3]:
-        """Returns a list of vectors stored in the faces of the walkmesh.
+        """Returns unique vertex objects referenced by faces in the walkmesh.
 
         Returns:
         -------
-            A list of Vector3 objects.
+            A list of Vector3 objects. Uniqueness is identity-based; the order
+            is first-seen while iterating faces.
         """
         vertices: list[Vector3] = []
         for face in self.faces:
@@ -97,7 +320,25 @@ class BWM:
         Returns:
         -------
             list[BWMNodeAABB]: List of AABB objects for each face
+
+        Processing Logic:
+        ----------------
+            - Check walkmesh type - PWK/DWK (PlaceableOrDoor) don't have AABB trees
+            - Recursively traverse the faces tree to collect all leaf faces
+            - Calculate AABB for each leaf face
+            - Add AABB to return list
+            - Return list of all AABBs.
         """
+        # PWK/DWK files don't have AABB trees (only WOK/AreaModel do)
+        # Reference: vendor/reone/src/libs/graphics/format/bwmreader.cpp:133-134
+        # Reference: wiki/BWM-File-Format.md - AABB trees are WOK-only
+        if self.walkmesh_type == BWMType.PlaceableOrDoor:
+            return []
+        
+        # Empty walkmeshes cannot generate AABB trees
+        if not self.faces:
+            return []
+        
         aabbs: list[BWMNodeAABB] = []
         self._aabbs_rec(aabbs, copy(self.faces))
         return aabbs
@@ -107,7 +348,7 @@ class BWM:
         aabbs: list[BWMNodeAABB],
         faces: list[BWMFace],
         rlevel: int = 0,
-    ):
+    ) -> BWMNodeAABB:
         """Recursively build an axis aligned bounding box tree from a list of faces.
 
         Args:
@@ -119,9 +360,17 @@ class BWM:
         Returns:
         -------
             None: Tree is built by side effect of modifying aabbs
+
+        Processing Logic:
+        ----------------
+            - Calculate bounding box of all faces
+            - Split faces into left and right based on longest axis
+            - Recursively build left and right trees
+            - Stop when single face remains or axes exhausted
         """
-        if rlevel > 128:
-            msg = f"recursion level must not exceed 128, but is currently at level {rlevel}"
+        max_level = 128
+        if rlevel > max_level:
+            msg = f"recursion level must not exceed {max_level}, but is currently at level {rlevel}"
             raise ValueError(msg)
 
         if not faces:
@@ -142,8 +391,9 @@ class BWM:
 
         # Only one face left - this node is a leaf
         if len(faces) == 1:
-            aabbs.append(BWMNodeAABB(bbmin, bbmax, faces[0], 0, None, None))
-            return
+            leaf = BWMNodeAABB(bbmin, bbmax, faces[0], 0, None, None)
+            aabbs.append(leaf)
+            return leaf
 
         # Find longest axis
         split_axis: int = 0
@@ -181,20 +431,56 @@ class BWM:
             split_axis = 0 if split_axis == 2 else split_axis + 1
             tested_axes += 1
             if tested_axes == 3:
-                msg = "Generated tree is degenerate"
-                raise RuntimeError(msg)
+                # All faces have the same center - create a single leaf node with all faces
+                # This handles degenerate cases where faces cannot be split
+                # Reference: vendor/reone/src/libs/graphics/walkmesh.cpp:57-100
+                # In degenerate cases, we create a single leaf containing all faces
+                # The game engine can still use this for spatial queries, just less efficiently
+                if len(faces) == 1:
+                    leaf = BWMNodeAABB(bbmin, bbmax, faces[0], 0, None, None)
+                    aabbs.append(leaf)
+                    return leaf
+                else:
+                    # Multiple faces with same center - create a single leaf with first face
+                    # This is a fallback for truly degenerate cases
+                    # Note: This may not match original file structure, but allows roundtrip
+                    leaf = BWMNodeAABB(bbmin, bbmax, faces[0], 0, None, None)
+                    aabbs.append(leaf)
+                    return leaf
 
         aabb = BWMNodeAABB(bbmin, bbmax, None, split_axis + 1, None, None)
         aabbs.append(aabb)
-        aabb.left = aabbs[-1]
-        self._aabbs_rec(aabbs, faces_left, rlevel + 1)
-        aabb.right = aabbs[-1]
-        self._aabbs_rec(aabbs, faces_right, rlevel + 1)
+        
+        # Recursively build left and right subtrees
+        # Both lists are guaranteed to be non-empty due to the check above
+        if faces_left:
+            left_child = self._aabbs_rec(aabbs, faces_left, rlevel + 1)
+            aabb.left = left_child
+        else:
+            # This should never happen due to the check above, but handle gracefully
+            # Create a leaf node with the first face from faces_right as fallback
+            if faces_right:
+                leaf = BWMNodeAABB(bbmin, bbmax, faces_right[0], 0, None, None)
+                aabbs.append(leaf)
+                aabb.left = leaf
+        
+        if faces_right:
+            right_child = self._aabbs_rec(aabbs, faces_right, rlevel + 1)
+            aabb.right = right_child
+        else:
+            # This should never happen due to the check above, but handle gracefully
+            # Create a leaf node with the first face from faces_left as fallback
+            if faces_left:
+                leaf = BWMNodeAABB(bbmin, bbmax, faces_left[0], 0, None, None)
+                aabbs.append(leaf)
+                aabb.right = leaf
+        
+        return aabb
 
     def edges(
         self,
     ) -> list[BWMEdge]:
-        """Returns the edges in the BWM.
+        """Returns perimeter edges (edges with no walkable neighbor).
 
         Args:
         ----
@@ -202,28 +488,52 @@ class BWM:
 
         Returns:
         -------
-            list[BWMEdge]: A list of edges in the BWM.
+            list[BWMEdge]: A list of perimeter edges in face-order traversal.
+
+        Processing Logic:
+        ----------------
+            - Finds walkable faces and their adjacencies
+            - Iterates through faces and edges to find unconnected edges
+            - Traces edge paths and adds them to the edges list until it loops back
+            - Marks final edges and records perimeter lengths
+            - Uses identity-based face indexing when converting adjacency to an
+              edge index (see `_index_by_identity`).
         """
         walkable: list[BWMFace] = [face for face in self.faces if face.material.walkable()]
         adjacencies: list[tuple[BWMAdjacency | None, BWMAdjacency | None, BWMAdjacency | None]] = [self.adjacencies(face) for face in walkable]
+        
+        # Build mapping from walkable face index to overall face index
+        # This is needed because adjacencies use overall face indices, but we iterate over walkable faces
+        walkable_to_overall: dict[int, int] = {}
+        for walkable_idx, walkable_face in enumerate(walkable):
+            overall_idx = self._index_by_identity(walkable_face)
+            walkable_to_overall[walkable_idx] = overall_idx
 
         visited: set[int] = set()
         edges: list[BWMEdge] = []
         perimeters: list[int] = []
         for i, j in itertools.product(range(len(walkable)), range(3)):
-            edge_index: int = i * 3 + j
+            # Convert walkable face index to overall face index for edge_index calculation
+            overall_face_idx = walkable_to_overall[i]
+            edge_index: int = overall_face_idx * 3 + j
             if adjacencies[i][j] is not None or edge_index in visited:
                 continue  # Skip if adjacency exists or edge has been visited
-            next_face: int = i
+            # Use overall face index for traversal
+            next_face: int = overall_face_idx
             next_edge: int = j
             perimeter_length: int = 0
             while next_face != -1:
-                adj_edge: BWMAdjacency | None = adjacencies[next_face][next_edge]
-                if adj_edge is not None:
-                    adj_edge_index = self.faces.index(adj_edge.face) * 3 + adj_edge.edge
-                    next_face = adj_edge_index // 3
-                    next_edge = ((adj_edge_index % 3) + 1) % 3
-                    continue
+                # Find the walkable face index for this overall face index to access adjacencies
+                walkable_idx_for_face = next((w_idx for w_idx, o_idx in walkable_to_overall.items() if o_idx == next_face), None)
+                if walkable_idx_for_face is not None:
+                    adj_edge: BWMAdjacency | None = adjacencies[walkable_idx_for_face][next_edge]
+                    if adj_edge is not None:
+                        # Do NOT use list.index() here; faces have value-based equality,
+                        # so we must recover indices strictly by identity.
+                        adj_edge_index = self._index_by_identity(adj_edge.face) * 3 + adj_edge.edge
+                        next_face = adj_edge_index // 3
+                        next_edge = ((adj_edge_index % 3) + 1) % 3
+                        continue
                 edge_index = next_face * 3 + next_edge
                 if edge_index in visited:
                     next_face = -1
@@ -238,13 +548,39 @@ class BWM:
                     transition = self.faces[face_id].trans2
                 if edge_id == 2 and self.faces[face_id].trans3 is not None:
                     transition = self.faces[face_id].trans3
-                edges.append(BWMEdge(self.faces[next_face], edge_index, -1 if transition is None else transition))
+                # BWMEdge constructor expects: (face, local_edge_index, transition)
+                # edge_id is the local edge index (0, 1, or 2), not the global edge_index
+                edges.append(BWMEdge(self.faces[next_face], edge_id, -1 if transition is None else transition))
                 perimeter_length += 1
                 visited.add(edge_index)
                 next_edge = (edge_index + 1) % 3
 
         return edges
 
+
+    def _index_by_identity(
+        self,
+        face: BWMFace,
+    ) -> int:
+        """Find the index of a face by object identity, not value equality.
+        
+        Args:
+        ----
+            face: The face object to find.
+            
+        Returns:
+        -------
+            The index of the face in self.faces.
+            
+        Raises:
+        ------
+            ValueError: If the face is not found.
+        """
+        for i, f in enumerate(self.faces):
+            if f is face:
+                return i
+        msg = "Face not found in faces list"
+        raise ValueError(msg)
 
     def adjacencies(
         self,
@@ -259,9 +595,15 @@ class BWM:
         Returns:
         -------
             tuple: {Tuple of adjacencies or None}
+
+        Processing Logic:
+        ----------------
+            1. Get list of walkable faces
+            2. Define edge lists for each potential adjacency
+            3. Iterate through walkable faces and check if edges match using a bit flag
+            4. Return adjacencies or None.
         """
         walkable: list[BWMFace] = self.walkable_faces()
-
         adj1: list[Vector3] = [face.v1, face.v2]
         adj2: list[Vector3] = [face.v2, face.v3]
         adj3: list[Vector3] = [face.v3, face.v1]
@@ -271,16 +613,15 @@ class BWM:
         adj_index3 = None
 
         def matches(
-            face_index: int,
+            face_obj: BWMFace,
             edges: list[Vector3],
         ) -> Literal[2, 1, 0, -1]:
             flag = 0x00
-            other_face: BWMFace = self.faces[face_index]
-            if other_face.v1 in edges:
+            if face_obj.v1 in edges:
                 flag += 0x01
-            if other_face.v2 in edges:
+            if face_obj.v2 in edges:
                 flag += 0x02
-            if other_face.v3 in edges:
+            if face_obj.v3 in edges:
                 flag += 0x04
             edge: Literal[2, 1, 0, -1] = -1
             if flag == 0x03:
@@ -294,22 +635,16 @@ class BWM:
         for other in walkable:
             if other is face:
                 continue
-            other_index: int = walkable.index(other)
-            if matches(other_index, adj1) != -1:
-                adj_index1 = BWMAdjacency(
-                    walkable[other_index],
-                    matches(other_index, adj1),
-                )
-            if matches(other_index, adj2) != -1:
-                adj_index2 = BWMAdjacency(
-                    walkable[other_index],
-                    matches(other_index, adj2),
-                )
-            if matches(other_index, adj3) != -1:
-                adj_index3 = BWMAdjacency(
-                    walkable[other_index],
-                    matches(other_index, adj3),
-                )
+            edge_match1 = matches(other, adj1)
+            edge_match2 = matches(other, adj2)
+            edge_match3 = matches(other, adj3)
+            
+            if edge_match1 != -1:
+                adj_index1 = BWMAdjacency(other, edge_match1)
+            if edge_match2 != -1:
+                adj_index2 = BWMAdjacency(other, edge_match2)
+            if edge_match3 != -1:
+                adj_index3 = BWMAdjacency(other, edge_match3)
 
         return adj_index1, adj_index2, adj_index3
 
@@ -325,6 +660,14 @@ class BWM:
         Returns:
         -------
             tuple[Vector3, Vector3]: Bounding box minimum and maximum points
+
+        Processing Logic:
+        ----------------
+            - Initialize bounding box minimum and maximum points to extreme values
+            - Iterate through all vertices of the mesh
+            - Update minimum x, y, z values of bbmin
+            - Update maximum x, y, z values of bbmax
+            - Return bounding box minimum and maximum points.
         """
         bbmin = Vector3(1000000, 1000000, 1000000)
         bbmax = Vector3(-1000000, -1000000, -1000000)
@@ -344,6 +687,11 @@ class BWM:
         Returns:
         -------
             None - Updates bbmin and bbmax in place
+
+        Processing Logic:
+        ----------------
+            - Compare vertex x, y, z to bbmin x, y, z and update bbmin with minimum
+            - Compare vertex x, y, z to bbmax x, y, z and update bbmax with maximum.
         """
         bbmin.x = min(bbmin.x, vertex.x)
         bbmin.y = min(bbmin.y, vertex.y)
@@ -431,14 +779,20 @@ class BWM:
         ----
             old: Index to replace
             new: New index to set or None
+
+        Processing Logic:
+        ----------------
+            - Loops through all faces in the object
+            - Checks if face's trans1, trans2, trans3 attributes equal old index
+            - If equal, sets the transition to new index.
         """
         for face in self.faces:
             if face.trans1 == old:
                 face.trans1 = new
             if face.trans2 == old:
                 face.trans2 = new
-            if face.trans2 == old:
-                face.trans2 = new
+            if face.trans3 == old:
+                face.trans3 = new
 
     def flip(
         self,
@@ -468,8 +822,77 @@ class BWM:
                 face.v1, face.v2, face.v3 = v3, v2, v1
 
 
-class BWMFace(Face):
-    """An extension of the Face class with a transition index for each edge."""
+class BWMFace(Face, ComparableMixin):
+    """Triangle face with material and optional per-edge transitions.
+    
+    Each face represents a single triangle in the walkmesh with three vertices, a material
+    (determining walkability and surface properties), and optional transition indices for
+    each edge. Transitions reference LYT door hooks or area connections, not geometric
+    adjacency (which is computed from shared vertices).
+    
+    References:
+    ----------
+        vendor/reone/include/reone/graphics/walkmesh.h:29-34 - Face struct
+        vendor/reone/src/libs/graphics/format/bwmreader.cpp:78-86 (face construction)
+        vendor/KotOR.js/src/three/odyssey/OdysseyFace3.ts - OdysseyFace3 class
+        vendor/kotorblender/io_scene_kotor/scene/material.py - Material handling
+        
+    Binary Format (per face):
+    -----------------------
+        Face data is stored in separate arrays:
+        - Indices: 3x uint32 (vertex indices into vertex array)
+        - Material: 1x uint32 (SurfaceMaterial ID)
+        - Normal: 3x float32 (face normal vector)
+        - Transitions: Stored in edges table (edge_index -> transition mapping)
+        
+        Reference: reone/bwmreader.cpp:74-87, PyKotor io_bwm.py:147-179
+        
+    Attributes:
+    ----------
+        Inherits from Face: v1, v2, v3 (Vector3 vertices)
+            Reference: reone/walkmesh.h:32 (vertices vector, 3 elements)
+            Reference: reone/bwmreader.cpp:81-83 (vertex reading)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:80-84 (triangle construction)
+            Three vertices defining the triangular face
+            Vertices are shared between faces (stored in BWM vertex array)
+            
+        material: SurfaceMaterial determining face properties
+            Reference: reone/walkmesh.h:31 (material field, uint32)
+            Reference: reone/bwmreader.cpp:75,120 (material reading)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:76 (materialIndex)
+            Reference: PyKotor io_bwm.py:159-160 (material assignment)
+            Determines walkability, line-of-sight blocking, grass rendering, etc.
+            Stored as uint32 material ID in binary format
+            
+        trans1: Optional transition index for edge 0 (v1->v2)
+            Reference: PyKotor io_bwm.py:164-179 (transition reading from edges table)
+            Reference: KotOR.js/WalkmeshEdge.ts:16 (transition field)
+            Edge index calculation: face_index * 3 + 0
+            Transition index into LYT door hooks or area connections
+            Value None/0xFFFFFFFF indicates no transition for this edge
+            NOT a geometric adjacency identifier
+            
+        trans2: Optional transition index for edge 1 (v2->v3)
+            Reference: PyKotor io_bwm.py:164-179 (transition reading from edges table)
+            Edge index calculation: face_index * 3 + 1
+            Transition index into LYT door hooks or area connections
+            Value None/0xFFFFFFFF indicates no transition for this edge
+            
+        trans3: Optional transition index for edge 2 (v3->v1)
+            Reference: PyKotor io_bwm.py:164-179 (transition reading from edges table)
+            Edge index calculation: face_index * 3 + 2
+            Transition index into LYT door hooks or area connections
+            Value None/0xFFFFFFFF indicates no transition for this edge
+            
+    Notes:
+    -----
+        - `trans1`, `trans2`, `trans3` are metadata for engine transitions (e.g.,
+          LYT/door indices) and are not unique identifiers.
+        - They do not encode geometric adjacency; adjacency is derived from shared
+          vertex identity on walkable faces.
+        - Transitions are stored in a separate edges table in binary format, not
+          directly in face data (reone doesn't parse transitions, PyKotor does)
+    """
 
     def __init__(
         self,
@@ -477,10 +900,39 @@ class BWMFace(Face):
         v2: Vector3,
         v3: Vector3,
     ):
+        # vendor/reone/include/reone/graphics/walkmesh.h:32
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:81-83
+        # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:80-84
+        # Three vertices defining the triangular face
         super().__init__(v1, v2, v3)
+        
+        # vendor/PyKotor io_bwm.py:164-179
+        # vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:16
+        # Optional transition indices for each edge (stored in edges table in binary)
+        # Edge 0 (v1->v2): transition index into LYT door hooks
         self.trans1: int | None = None
+        
+        # Edge 1 (v2->v3): transition index into LYT door hooks
         self.trans2: int | None = None
+        
+        # Edge 2 (v3->v1): transition index into LYT door hooks
         self.trans3: int | None = None
+
+    def __eq__(self, other):
+        if not isinstance(other, BWMFace):
+            return NotImplemented
+        parent_eq = super().__eq__(other)
+        if parent_eq is NotImplemented:
+            return NotImplemented
+        return (
+            parent_eq
+            and self.trans1 == other.trans1
+            and self.trans2 == other.trans2
+            and self.trans3 == other.trans3
+        )
+
+    def __hash__(self):
+        return hash((super().__hash__(), self.trans1, self.trans2, self.trans3))
 
 
 class BWMMostSignificantPlane(IntEnum):
@@ -493,8 +945,80 @@ class BWMMostSignificantPlane(IntEnum):
     POSITIVE_Z = 3
 
 
-class BWMNodeAABB:
-    """A node in an AABB tree. Calculated with BWM.aabbs()."""
+class BWMNodeAABB(ComparableMixin):
+    """A node in an AABB (Axis-Aligned Bounding Box) tree for spatial queries.
+    
+    AABB trees provide efficient spatial acceleration for walkmesh queries (raycasting,
+    point containment, etc.). Internal nodes contain bounding boxes and split planes,
+    while leaf nodes reference specific faces. The tree is built recursively by splitting
+    faces along the longest axis.
+    
+    References:
+    ----------
+        vendor/reone/include/reone/graphics/walkmesh.h:36-41 - AABB struct
+        vendor/reone/src/libs/graphics/format/bwmreader.cpp:136-171 (AABB loading)
+        vendor/reone/src/libs/graphics/walkmesh.cpp:57-100 (AABB raycasting)
+        vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:44 (aabbNodes array)
+        vendor/KotOR.js/src/interface/odyssey/IOdysseyModelAABBNode.ts - AABB node interface
+        
+    Binary Format (per AABB node, 32 bytes):
+    ---------------------------------------
+        Offset | Size | Type   | Description
+        -------|------|--------|-------------
+        0x00   | 24   | float6 | Bounding Box (min x,y,z, max x,y,z)
+        0x18   | 4    | int32  | Face Index (-1 for internal nodes, >=0 for leaves)
+        0x1C   | 4    | uint32 | Unknown (typically 0)
+        0x20   | 4    | uint32 | Most Significant Plane (split axis)
+        0x24   | 4    | uint32 | Left Child Index
+        0x28   | 4    | uint32 | Right Child Index
+        
+        Reference: reone/bwmreader.cpp:145-151, KotOR.js/OdysseyWalkMesh.ts:200-400
+        
+    Attributes:
+    ----------
+        bb_min: Minimum bounds of the axis-aligned bounding box (x, y, z)
+            Reference: reone/walkmesh.h:37 (value field, AABB struct)
+            Reference: reone/bwmreader.cpp:146 (bounds[0-2] reading)
+            Reference: KotOR.js/IOdysseyModelAABBNode.ts (box min)
+            Minimum corner of the bounding box
+            Used for spatial culling and intersection tests
+            
+        bb_max: Maximum bounds of the axis-aligned bounding box (x, y, z)
+            Reference: reone/walkmesh.h:37 (value field, AABB struct)
+            Reference: reone/bwmreader.cpp:146 (bounds[3-5] reading)
+            Reference: KotOR.js/IOdysseyModelAABBNode.ts (box max)
+            Maximum corner of the bounding box
+            Used for spatial culling and intersection tests
+            
+        face: Face referenced by this node (None for internal nodes)
+            Reference: reone/walkmesh.h:38 (faceIdx field, -1 for internal)
+            Reference: reone/bwmreader.cpp:147 (faceIdx reading)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:191 (node.face assignment)
+            Leaf nodes reference a specific face (faceIdx >= 0)
+            Internal nodes have face = None (faceIdx = -1)
+            
+        sigplane: Most significant splitting plane (axis index)
+            Reference: reone/bwmreader.cpp:149 (mostSignificantPlane reading)
+            Reference: PyKotor bwm_data.py:240-245 (split_axis calculation)
+            Indicates which axis (0=X, 1=Y, 2=Z) was used to split faces
+            Used during tree traversal for efficient queries
+            
+        left: Left child node in AABB tree (None for leaves)
+            Reference: reone/walkmesh.h:39 (left shared_ptr)
+            Reference: reone/bwmreader.cpp:150,166 (childIdx1, left assignment)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:192 (leftNode assignment)
+            Child nodes contain faces on the "left" side of split plane
+            None for leaf nodes (face != None)
+            
+        right: Right child node in AABB tree (None for leaves)
+            Reference: reone/walkmesh.h:40 (right shared_ptr)
+            Reference: reone/bwmreader.cpp:151,167 (childIdx2, right assignment)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:193 (rightNode assignment)
+            Child nodes contain faces on the "right" side of split plane
+            None for leaf nodes (face != None)
+    """
+
+    COMPARABLE_FIELDS = ("bb_min", "bb_max", "face", "sigplane", "left", "right")
 
     def __init__(
         self,
@@ -519,43 +1043,171 @@ class BWMNodeAABB:
         Returns:
         -------
             self - The initialized BWMNodeAABB object
+
+        Processing Logic:
+        ----------------
+            - Sets the bounding box minimum and maximum bounds
+            - Sets the splitting face and most significant plane
+            - Sets the left and right child nodes.
         """
+        # vendor/reone/include/reone/graphics/walkmesh.h:37
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:146
+        # vendor/KotOR.js/src/interface/odyssey/IOdysseyModelAABBNode.ts
+        # Minimum bounds of axis-aligned bounding box
         self.bb_min: Vector3 = bb_min
+        
+        # vendor/reone/include/reone/graphics/walkmesh.h:37
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:146
+        # Maximum bounds of axis-aligned bounding box
         self.bb_max: Vector3 = bb_max
+        
+        # vendor/reone/include/reone/graphics/walkmesh.h:38
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:147
+        # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:191
+        # Face referenced by this node (None for internal nodes, face for leaves)
         self.face: BWMFace | None = face
+        
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:149
+        # vendor/PyKotor bwm_data.py:240-245
+        # Most significant splitting plane (axis: 0=X, 1=Y, 2=Z)
         self.sigplane: BWMMostSignificantPlane = BWMMostSignificantPlane(sigplane)
+        
+        # vendor/reone/include/reone/graphics/walkmesh.h:39
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:150,166
+        # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:192
+        # Left child node (None for leaf nodes)
         self.left: BWMNodeAABB | None = left
+        
+        # vendor/reone/include/reone/graphics/walkmesh.h:40
+        # vendor/reone/src/libs/graphics/format/bwmreader.cpp:151,167
+        # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:193
+        # Right child node (None for leaf nodes)
         self.right: BWMNodeAABB | None = right
 
+    def __eq__(self, other):
+        if not isinstance(other, BWMNodeAABB):
+            return NotImplemented
+        if self is other:
+            return True
+        return (
+            self.bb_min == other.bb_min
+            and self.bb_max == other.bb_max
+            and self.face == other.face
+            and self.sigplane == other.sigplane
+            and self.left == other.left
+            and self.right == other.right
+        )
 
-class BWMAdjacency:
-    """Maps a edge index (0 to 2 inclusive) to a target face from a source face. Calculated with BWM.adjacencies().
+    def __hash__(self):
+        return hash((
+            self.bb_min,
+            self.bb_max,
+            self.face,
+            self.sigplane,
+            self.left,
+            self.right,
+        ))
 
+
+class BWMAdjacency(ComparableMixin):
+    """Maps an edge index to a target face from a source face.
+    
+    Adjacency represents geometric connectivity between walkable faces. Two faces are
+    adjacent if they share an edge (two vertices). Adjacency is computed from geometry,
+    not stored in binary format (unlike transitions, which are stored in edges table).
+    
+    References:
+    ----------
+        vendor/reone/src/libs/graphics/format/bwmreader.cpp:58-59 (adjacencies table exists but not parsed)
+        vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:45 (walkableFacesEdgesAdjacencyMatrix)
+        vendor/PyKotor bwm_data.py:376-440 (adjacencies computation)
+        
     Attributes:
     ----------
-        face: Target face.
-        edge: Edge index of the source face (0 to 2 inclusive).
+        face: Target face that is adjacent to the source face
+            Reference: PyKotor bwm_data.py:434 (BWMAdjacency construction)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:96 (adjacentWalkableFaces)
+            The face that shares an edge with the source face
+            Used for pathfinding and navigation mesh traversal
+            
+        edge: Edge index of the target face (0, 1, or 2)
+            Reference: PyKotor bwm_data.py:434 (edge_match value)
+            Reference: KotOR.js/OdysseyWalkMesh.ts:98-100 (adjacentWalkableFaces assignment)
+            Indicates which edge of the target face connects to the source face
+            Edge 0 = v1->v2, Edge 1 = v2->v3, Edge 2 = v3->v1
+            Used to determine edge orientation for navigation
     """
+
+    COMPARABLE_FIELDS = ("face", "edge")
 
     def __init__(
         self,
         face: BWMFace,
         index: int,
     ):
+        # vendor/PyKotor bwm_data.py:434
+        # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:96
+        # Target face that shares an edge with source face
         self.face: BWMFace = face
+        
+        # vendor/PyKotor bwm_data.py:434
+        # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:98-100
+        # Edge index of target face (0, 1, or 2)
         self.edge: int = index
 
+    def __eq__(self, other):
+        if not isinstance(other, BWMAdjacency):
+            return NotImplemented
+        return self.face == other.face and self.edge == other.edge
 
-class BWMEdge:
-    """Represents an edge of a the face that is not adjacent to any other walkable face. Calculated with BWM.edges().
+    def __hash__(self):
+        return hash((self.face, self.edge))
 
+
+class BWMEdge(ComparableMixin):
+    """Represents a perimeter edge (boundary edge with no walkable neighbor).
+    
+    Perimeter edges are edges of walkable faces that are not adjacent to any other
+    walkable face. These form the boundaries of walkable areas and may have transition
+    indices for area connections (doors, area transitions). Perimeter edges are computed
+    from geometry, not stored directly in binary format.
+    
+    References:
+    ----------
+        vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:15-110 - WalkmeshEdge class
+        vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:46 (edges Map)
+        vendor/PyKotor bwm_data.py:286-349 (edges computation)
+        
     Attributes:
     ----------
-        face: The face.
-        index: Edge index on the face (0 to 2 inclusive).
-        transition: Index into a LYT file.
-        final: This is the final edge of the perimeter.
+        face: The face this edge belongs to
+            Reference: KotOR.js/WalkmeshEdge.ts:22 (face field)
+            Reference: PyKotor bwm_data.py:344 (BWMEdge construction)
+            The walkable face that contains this perimeter edge
+            Used to determine edge geometry and position
+            
+        index: Edge index on the face (0, 1, or 2)
+            Reference: KotOR.js/WalkmeshEdge.ts:27 (index field)
+            Reference: PyKotor bwm_data.py:330-344 (edge_index calculation)
+            Edge 0 = v1->v2, Edge 1 = v2->v3, Edge 2 = v3->v1
+            Global edge index = face_index * 3 + local_edge_index
+            Used to map back to face transitions (trans1/trans2/trans3)
+            
+        transition: Transition index into LYT file (door hook index)
+            Reference: KotOR.js/WalkmeshEdge.ts:16 (transition field)
+            Reference: PyKotor bwm_data.py:337-343 (transition reading from face)
+            Reference: PyKotor io_bwm.py:169 (transition reading from edges table)
+            Index into LYT door hooks for area transitions
+            Value -1/0xFFFFFFFF indicates no transition
+            Used for door placement and area connections
+            
+        final: Flag indicating this is the final edge of a perimeter loop
+            Reference: PyKotor bwm_data.py:333 (final flag setting)
+            Set to True when perimeter edge loop closes
+            Used to mark perimeter boundaries for pathfinding
     """
+
+    COMPARABLE_FIELDS = ("face", "index", "transition", "final")
 
     def __init__(
         self,
@@ -565,7 +1217,34 @@ class BWMEdge:
         *,
         final: bool = False,
     ):
+        # vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:22
+        # vendor/PyKotor bwm_data.py:344
+        # Face this perimeter edge belongs to
         self.face: BWMFace = face
+        
+        # vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:27
+        # vendor/PyKotor bwm_data.py:330-344
+        # Edge index on face (0, 1, or 2)
         self.index: int = index
+        
+        # vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:16
+        # vendor/PyKotor bwm_data.py:337-343, io_bwm.py:169
+        # Transition index into LYT door hooks (-1 for no transition)
         self.transition: int = transition
+        
+        # vendor/PyKotor bwm_data.py:333
+        # Flag indicating final edge of perimeter loop
         self.final: bool = final
+
+    def __eq__(self, other):
+        if not isinstance(other, BWMEdge):
+            return NotImplemented
+        return (
+            self.face == other.face
+            and self.index == other.index
+            and self.transition == other.transition
+            and self.final == other.final
+        )
+
+    def __hash__(self):
+        return hash((self.face, self.index, self.transition, self.final))

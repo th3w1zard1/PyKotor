@@ -15,43 +15,116 @@ if TYPE_CHECKING:
 
 class UTM:
     """Stores merchant data.
+    
+    UTM (User Template Merchant) files define merchant/store blueprints. Stored as GFF format
+    with inventory, pricing, and script references. Merchants use UTM templates to define
+    their inventory, buy/sell capabilities, and markup/down rates.
+
+    References:
+    ----------
+        vendor/reone/include/reone/resource/parser/gff/utm.h:35-46 (UTM struct definition)
+        vendor/reone/src/libs/resource/parser/gff/utm.cpp:37-52 (UTM parsing from GFF)
+        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTM/UTM.cs (UTM structure)
+        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTM/UTMDecompiler.cs (UTM parsing)
+        vendor/NorthernLights/Generated/AuroraUTM.cs (UTM structure)
+        vendor/KotOR-Bioware-Libs/GFF.pm (GFF format implementation)
+        Original BioWare Odyssey Engine (UTM GFF structure)
 
     Attributes:
     ----------
-        resref: "ResRef" field.
-        name: "LocName" field.
-        tag: "Tag" field.
-        mark_up: "MarkUp" field.
-        mark_down: "MarkDown" field.
-        on_open: "OnOpenStore" field.
-        comment: "Comment" field.
+        resref: "ResRef" field. Merchant template ResRef.
+            Reference: reone/utm.h:44 (ResRef field)
+            Reference: reone/utm.cpp:49 (ResRef parsing)
+            Unique identifier for this merchant template.
+        
+        name: "LocName" field. Localized merchant name.
+            Reference: reone/utm.h:40 (LocName field as pair<int, string>)
+            Reference: reone/utm.cpp:45 (LocName parsing)
+            Display name shown in merchant interface.
+        
+        tag: "Tag" field. Merchant tag identifier.
+            Reference: reone/utm.h:45 (Tag field)
+            Reference: reone/utm.cpp:50 (Tag parsing)
+            Used for script references and identification.
+        
+        mark_up: "MarkUp" field. Markup percentage for selling to player.
+            Reference: reone/utm.h:42 (MarkUp field)
+            Reference: reone/utm.cpp:47 (MarkUp parsing)
+            Percentage added to base item price when player buys.
+            Reference: merchants.2da for predefined markup values.
+        
+        mark_down: "MarkDown" field. Markdown percentage for buying from player.
+            Reference: reone/utm.h:41 (MarkDown field)
+            Reference: reone/utm.cpp:46 (MarkDown parsing)
+            Percentage subtracted from base item price when player sells.
+            Reference: merchants.2da for predefined markdown values.
+        
+        on_open: "OnOpenStore" field. Script executed when store opens.
+            Reference: reone/utm.h:43 (OnOpenStore field)
+            Reference: reone/utm.cpp:48 (OnOpenStore parsing)
+            Script ResRef called when merchant interface is opened.
+        
+        comment: "Comment" field. Developer comment string.
+            Reference: reone/utm.h:37 (Comment field)
+            Reference: reone/utm.cpp:40 (Comment parsing)
+            Not used by game engine.
+        
+        can_buy: Derived from "BuySellFlag" bit 0. Whether merchant can buy items.
+            Reference: reone/utm.h:36 (BuySellFlag field)
+            Reference: reone/utm.cpp:39 (BuySellFlag parsing)
+            Bit 0: 1 = can buy, 0 = cannot buy.
+        
+        can_sell: Derived from "BuySellFlag" bit 1. Whether merchant can sell items.
+            Reference: reone/utm.h:36 (BuySellFlag field)
+            Reference: reone/utm.cpp:39 (BuySellFlag parsing)
+            Bit 1: 1 = can sell, 0 = cannot sell.
+        
+        inventory: "ItemList" field. List of items in merchant inventory.
+            Reference: reone/utm.h:28-33 (UTM_ItemList struct)
+            Reference: reone/utm.cpp:28-35,42-44 (ItemList parsing)
+            Items available for purchase from this merchant.
+            Each item has InventoryRes (ResRef), Infinite flag, and position.
 
         id: "ID" field. Not used by the game engine.
+            Reference: reone/utm.h:38 (ID field, deprecated)
+            Reference: reone/utm.cpp:41 (ID parsing)
     """
 
     BINARY_TYPE = ResourceType.UTM
 
     def __init__(
         self,
+        *,
+        resref: ResRef = ResRef.from_blank(),
+        name: LocalizedString = LocalizedString.from_invalid(),
+        tag: str = "",
+        mark_up: int = 0,
+        mark_down: int = 0,
+        on_open: ResRef = ResRef.from_blank(),
+        comment: str = "",
+        id: int = 5,
+        can_buy: bool = False,
+        can_sell: bool = False,
+        inventory: list[InventoryItem] | None = None,
     ):
-        self.resref: ResRef = ResRef.from_blank()
-        self.comment: str = ""
-        self.tag: str = ""
+        self.resref: ResRef = resref
+        self.comment: str = comment
+        self.tag: str = tag
 
-        self.name: LocalizedString = LocalizedString.from_invalid()
+        self.name: LocalizedString = name
 
-        self.can_buy: bool = False
-        self.can_sell: bool = False
+        self.can_buy: bool = can_buy
+        self.can_sell: bool = can_sell
 
-        self.mark_up: int = 0
-        self.mark_down: int = 0
+        self.mark_up: int = mark_up
+        self.mark_down: int = mark_down
 
-        self.on_open: ResRef = ResRef.from_blank()
+        self.on_open: ResRef = on_open
 
-        self.inventory: list[InventoryItem] = []
+        self.inventory: list[InventoryItem] = list(inventory) if inventory is not None else []
 
         # Deprecated:
-        self.id: int = 5
+        self.id: int = id
 
 
 def construct_utm(
@@ -59,7 +132,7 @@ def construct_utm(
 ) -> UTM:
     utm = UTM()
 
-    root = gff.root
+    root: GFFStruct = gff.root
     utm.resref = root.acquire("ResRef", ResRef.from_blank())
     utm.name = root.acquire("LocName", LocalizedString.from_invalid())
     utm.tag = root.acquire("Tag", "")
@@ -84,7 +157,7 @@ def construct_utm(
 
 def dismantle_utm(
     utm: UTM,
-    game: Game = Game.K2,
+    game: Game = Game.K2,  # noqa: ARG001
     *,
     use_deprecated: bool = True,
 ) -> GFF:
@@ -102,7 +175,7 @@ def dismantle_utm(
 
     item_list: GFFList = root.set_list("ItemList", GFFList())
     for i, item in enumerate(utm.inventory):
-        item_struct = item_list.add(i)
+        item_struct: GFFStruct = item_list.add(i)
         item_struct.set_resref("InventoryRes", item.resref)
         item_struct.set_uint16("Repos_PosX", i)
         item_struct.set_uint16("Repos_PosY", 0)

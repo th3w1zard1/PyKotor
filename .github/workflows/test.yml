@@ -1,0 +1,80 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: |
+          uv pip install --upgrade pip setuptools wheel
+          uv pip install -e "Libraries/PyKotor[all]"
+          uv pip install -e "Libraries/PyKotorGL[moderngl]"
+          uv pip install -e Libraries/PyKotorFont
+          uv pip install pytest pytest-cov pytest-xdist pytest-html
+
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ \
+            --cov=Libraries/PyKotor/src/pykotor \
+            --cov=Libraries/PyKotorGL/src/pykotor \
+            --cov=Libraries/PyKotorFont/src/pykotor \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term \
+            --junit-xml=junit.xml \
+            -v
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-py${{ matrix.python-version }}
+          path: |
+            coverage.xml
+            htmlcov/
+            junit.xml
+          retention-days: 30
+
+      - name: Upload HTML coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-html-py${{ matrix.python-version }}
+          path: htmlcov/
+          retention-days: 7

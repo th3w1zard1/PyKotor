@@ -10,6 +10,23 @@ if TYPE_CHECKING:
 
 
 class RIMBinaryReader(ResourceReader):
+    """Reads RIM (Resource Information Manager) files.
+    
+    RIM files are container formats similar to ERF files, used for module resources.
+    They store multiple game resources with ResRef, type, and data.
+    
+    References:
+    ----------
+        vendor/reone/src/libs/resource/format/rimreader.cpp:26-58 (RIM reading)
+        vendor/reone/src/libs/resource/format/rimwriter.cpp (RIM writing)
+        vendor/xoreos-tools/src/unrim.cpp (RIM extraction tool)
+    
+    Missing Features:
+    ----------------
+        - ResRef lowercasing (reone lowercases resrefs at rimreader.cpp:47)
+        - Field order difference: PyKotor reads restype, resids, resoffsets, ressizes
+          vs reone which reads resRef, type (uint16), skips 6 bytes, offset, size
+    """
     def __init__(
         self,
         source: SOURCE_TYPES,
@@ -20,10 +37,7 @@ class RIMBinaryReader(ResourceReader):
         self._rim: RIM | None = None
 
     @autoclose
-    def load(
-        self,
-        auto_close: bool = True,
-    ) -> RIM:
+    def load(self, *, auto_close: bool = True) -> RIM:  # noqa: FBT001, FBT002, ARG002
         self._rim = RIM()
 
         file_type = self._reader.read_string(4)
@@ -48,7 +62,11 @@ class RIMBinaryReader(ResourceReader):
         ressizes: list[int] = []
         self._reader.seek(offset_to_keys)
         for _ in range(entry_count):
-            resrefs.append(self._reader.read_string(16))
+            # vendor/reone/src/libs/resource/format/rimreader.cpp:46-58
+            # reone lowercases resref at line 47
+            # NOTE: Field order differs - PyKotor reads restype before resids, reone reads differently
+            resref_str = self._reader.read_string(16).rstrip("\0")
+            resrefs.append(resref_str.lower())
             restypes.append(self._reader.read_uint32())
             resids.append(self._reader.read_uint32())
             resoffsets.append(self._reader.read_uint32())
@@ -75,10 +93,7 @@ class RIMBinaryWriter(ResourceWriter):
         self._rim: RIM = rim
 
     @autoclose
-    def write(
-        self,
-        auto_close: bool = True,
-    ):
+    def write(self, *, auto_close: bool = True):  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
         entry_count = len(self._rim)
         offset_to_keys = RIMBinaryWriter.FILE_HEADER_SIZE
 

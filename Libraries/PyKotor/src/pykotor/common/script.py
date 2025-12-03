@@ -1,3 +1,15 @@
+"""NWScript definitions and script-related classes.
+
+References:
+----------
+    vendor/xoreos-tools/src/nwscript/ (NWScript definitions)
+    vendor/xoreos-docs/specs/ (NWScript documentation)
+    vendor/KotOR.js/src/nwscript/NWScriptDefK1.ts (K1 script definitions)
+    vendor/KotOR.js/src/nwscript/NWScriptDefK2.ts (K2 script definitions)
+    vendor/HoloLSP/server/src/nwscript/ (Language server NWScript definitions)
+    Note: Script constants and parameters define function signatures for NWScript functions
+"""
+
 from __future__ import annotations
 
 from enum import Enum
@@ -112,5 +124,5 @@ class DataType(Enum):
         if self == DataType.VECTOR:
             return 12
         if self == DataType.STRUCT:
-            raise ValueError("Structs are variable size")  # TODO
+            raise ValueError("Structs are variable size")  # TODO(th3w1zard1): something needs to be done here
         return 4

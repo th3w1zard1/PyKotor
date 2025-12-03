@@ -1,0 +1,86 @@
+name: Validate Pull Request
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for merge conflicts
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git merge --no-commit --no-ff origin/${{ github.base_ref }} || exit 1
+          echo "✓ No merge conflicts"
+
+      - name: Check PR title format
+        id: check_title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ "$PR_TITLE" =~ ^Merge\ .+\ into\ .+$ ]]; then
+            echo "Skipping semantic PR check for merge PR: $PR_TITLE"
+            echo "skip_check=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip_check=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check PR title format (semantic)
+        if: steps.check_title.outputs.skip_check != 'true'
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+          subjectPattern: ^(?![A-Z]).+$
+          subjectPatternError: |
+            The subject "{subject}" found in the pull request title "{title}"
+            didn't match the configured pattern. Please ensure that the subject
+            doesn't start with an uppercase character.
+
+      - name: Check commit messages
+        uses: wagoid/commitlint-github-action@v5
+        continue-on-error: true
+
+      - name: Validate file paths
+        run: |
+          # Check for forbidden file patterns
+          if git diff --name-only origin/${{ github.base_ref }} | grep -E '\.(pyc|pyo|pyd|so|dylib|dll)$'; then
+            echo "❌ Binary Python files detected. These should not be committed."
+            exit 1
+          fi
+          echo "✓ File paths validated"
+
+      - name: Check for large files
+        run: |
+          large_files=$(git diff --name-only origin/${{ github.base_ref }} | xargs -I {} find {} -type f -size +5M 2>/dev/null || true)
+          if [ -n "$large_files" ]; then
+            echo "⚠️ Large files detected (>5MB):"
+            echo "$large_files"
+            echo "Consider using Git LFS for large files."
+          else
+            echo "✓ No large files detected"
+          fi
+

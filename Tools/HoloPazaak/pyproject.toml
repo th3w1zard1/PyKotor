@@ -1,0 +1,180 @@
+[build-system]
+requires = ["setuptools>=67.8.0,<70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "holopazaak"
+description = "A comprehensive PyQt6 Pazaak card game implementation for Knights of the Old Republic with multiplayer support"
+version = "2.0.0"
+requires-python = ">= 3.8"
+dependencies = [
+  "qtpy>=2.4.3",
+  "PyQt6>=6.6.1; python_implementation == 'CPython'",
+  "PySide6>=6.6.3.1; python_implementation == 'PyPy'",
+  "websockets>=12.0",
+]
+authors = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { text = "LGPL-3.0-or-later" }
+keywords = [
+  "kotor", "kotor1", "kotor2", "tsl",
+  "star-wars", "knights-of-the-old-republic",
+  "pazaak", "card-game", "minigame",
+  "pyqt6", "qt", "qtpy",
+  "game", "casino", "cards", "multiplayer",
+  "pykotor", "bioware", "lucasarts", "websocket",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Games/Entertainment",
+  "Topic :: Games/Entertainment :: Board Games",
+  "Environment :: X11 Applications :: Qt",
+  "Environment :: Win32 (MS Windows)",
+]
+
+[project.scripts]
+holopazaak = "holopazaak.__main__:main"
+holopazaak-server = "holopazaak.network.server:main"
+
+[project.gui-scripts]
+holopazaak-gui = "holopazaak.__main__:main"
+
+[project.optional-dependencies]
+qt5 = ["PyQt5>=5.15"]
+pyside6 = ["PySide6>=6.6.3.1"]
+dev = [
+  "pytest>=7.0.0",
+  "pytest-qt>=4.2.0",
+  "ruff>=0.1.0",
+  "pytest-asyncio>=0.23.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
+
+# Poetry configuration
+[tool.poetry]
+name = "holopazaak"
+version = "2.0.0"
+description = "A comprehensive PyQt6 Pazaak card game implementation for Knights of the Old Republic with multiplayer support"
+authors = ["Benjamin Auquite <halomastar@gmail.com>"]
+maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+readme = "README.md"
+license = "LGPL-3.0-or-later"
+packages = [{ include = "holopazaak", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+qtpy = ">=2.4.3"
+PyQt6 = {version = ">=6.6.1", optional = true}
+PyQt5 = {version = ">=5.15", optional = true}
+websockets = ">=12.0"
+
+[tool.poetry.extras]
+qt5 = ["PyQt5"]
+qt6 = ["PyQt6"]
+
+[tool.poetry.scripts]
+holopazaak = "holopazaak.__main__:main"
+holopazaak-server = "holopazaak.network.server:main"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/th3w1zard1/PyKotor"
+Repository = "https://github.com/th3w1zard1/PyKotor.git"
+Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+########################################################
+## define only linter configurations below this point ##
+########################################################
+
+[tool.pyright]
+reportIncompatibleMethodOverride = false
+reportOptionalMemberAccess = false
+[tool.basedpyright]
+reportIncompatibleMethodOverride = false
+reportOptionalMemberAccess = false
+
+[tool.pyright.defineConstant]
+PYQT5 = false
+PYSIDE2 = false
+PYQT6 = true
+PYSIDE6 = false
+[tool.basedpyright.defineConstant]
+PYQT5 = false
+PYSIDE2 = false
+PYQT6 = true
+PYSIDE6 = false
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+
+[tool.ruff.lint]
+ignore = [
+  "N",       # disable snake_case vs PascalCase/camelCase checks for pyqt
+  "SLF001",  # private member access
+  "PLR0913", # too many arguments in function definition
+  "FBT001",  # boolean-typed positional argument in function definition
+  "PLR0912", # too many branches
+  "PLR0915", # too many statements
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["I001", "F401"]
+"./src/holopazaak/*.py" = [
+  "FBT003",
+  "N802",
+  "N803",
+  "N806",
+  "A001",
+  "D100",
+  "D101",
+  "D102",
+]
+"./src/holopazaak/ui/*.py" = [
+  "D100",
+  "D101",
+  "D102",
+]
+"./src/holopazaak/ai/*.py" = [
+  "D100",
+  "D101",
+  "D102",
+  "PLR2004",  # magic value comparison
+]
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+[tool.mccabe]
+max-complexity = 25
+
+[tool.style]
+based_on_style = "pep8"
+split_before_named_assigns = true
+split_complex_comprehension = true
+split_arguments_when_comma_terminated = true
+
+[tool.pylintrc]
+max-line-length = 175

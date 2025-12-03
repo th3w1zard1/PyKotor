@@ -3,45 +3,37 @@ from __future__ import annotations
 from setuptools import find_packages, setup
 
 setup(
-    name="pykotor-workspace",
-    version="1.0.0",
-    packages=find_packages(where="Libraries/PyKotor/src") +
-             find_packages(where="Libraries/PyKotorFont/src") +
-             find_packages(where="Libraries/PyKotorGL/src") +
-             find_packages(where="Libraries/Utility/src") +
-             find_packages(where="Tools/HolocronToolset/src") +
-             find_packages(where="Tools/HoloPatcher/src") +
-             find_packages(where="Tools/KotorDiff/src") +
-             find_packages(where="Tools/BatchPatcher/src"),
+    name="pykotor",
+    version="0.1.0",
+    description="PyKotor suite of packages",
+    author="Your Name",
+    author_email="your.email@example.com",
+    packages=find_packages(where="Libraries", include=["PyKotor.*", "Utility.*"]),
     package_dir={
-        "pykotor": "Libraries/PyKotor/src/pykotor",
-        "pykotorfont": "Libraries/PyKotorFont/src/pykotor",
-        "pykotorgl": "Libraries/PyKotorGL/src/pykotor",
-        "utility": "Libraries/Utility/src/utility",
-        "toolset": "Tools/HolocronToolset/src/toolset",
-        "holopatcher": "Tools/HoloPatcher/src/holopatcher",
-        "kotordiff": "Tools/KotorDiff/src/kotordiff",
-        "batchpatcher": "Tools/BatchPatcher/src/batchpatcher",
+        "": "Libraries"
     },
     install_requires=[
-        "loggerplus>=0.1.3",
+        "Utility",  # Assuming 'Utility' is the name of the utility package
     ],
     extras_require={
-        "tools": ["qasync>=0.23.0"],
-        "dev": [
-            "mypy",
-            "ruff",
-            "pylint",
-            "snakeviz",
-            "autoflake",
-            "pytest",
-            "pytest-xdist",
-            "pytest-html",
-            "types-Pillow",
-            "types-Send2Trash",
-            "send2trash",
-            "black",
-            "flake8",
+        "toolset": [
+            "HolocronToolset",
+            "HoloPatcher",
+            "KotorDiff",
+            "BatchPatcher",
         ],
     },
+    entry_points={
+        "console_scripts": [
+            "holocron-toolset=Tools.HolocronToolset.src.main:main",
+            "holopatcher=Tools.HoloPatcher.src.main:main",
+            "kotordiff=Tools.KotorDiff.src.main:main",
+            "batchpatcher=Tools.BatchPatcher.src.main:main",
+        ],
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.8",
 )

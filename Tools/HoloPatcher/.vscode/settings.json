@@ -28,7 +28,6 @@
   ],
   "python.analysis.extraPaths": [
     "../../Libraries/PyKotor/src",
-    "../../Libraries/Utility/src",
     "./src"
   ]
 }

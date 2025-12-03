@@ -1,4 +1,15 @@
-"""This module contains the ResourceType class and initializes the static list of ResourceTypes that can be found in both games."""
+"""Resource type definitions for KotOR games.
+
+This module contains the ResourceType class and initializes the static list of ResourceTypes
+that can be found in both games. Resource types are identified by numeric IDs and file extensions.
+
+References:
+----------
+    vendor/reone/src/libs/resource/type.h (Resource type definitions)
+    vendor/xoreos-tools/src/common/types.h (Resource type constants)
+    vendor/KotOR.js/src/types/ResourceType.ts (TypeScript resource type definitions)
+    Original BioWare Odyssey Engine (resource type IDs from game binaries)
+"""
 
 from __future__ import annotations
 
@@ -10,7 +21,8 @@ import uuid
 
 from enum import Enum
 from functools import lru_cache
-from typing import TYPE_CHECKING, NamedTuple, TypeVar, Union
+from io import BytesIO
+from typing import TYPE_CHECKING, NamedTuple, TypeVar, Union, cast
 from xml.etree.ElementTree import ParseError
 
 from pykotor.common.stream import BinaryReader, BinaryWriter
@@ -19,12 +31,33 @@ from utility.common.misc_string.mutable_str import WrappedStr
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from typing_extensions import Self  # pyright: ignore[reportMissingModuleSource]
+
     from pykotor.common.stream import BinaryWriterBytearray, BinaryWriterFile
+
 
 STREAM_TYPES = Union[io.BufferedIOBase, io.RawIOBase, mmap.mmap]
 BASE_SOURCE_TYPES = Union[os.PathLike, str, bytes, bytearray, memoryview]
-SOURCE_TYPES = Union[BASE_SOURCE_TYPES, STREAM_TYPES]
-TARGET_TYPES = Union[os.PathLike, str, bytearray, BinaryWriter]
+SOURCE_TYPES = Union[BASE_SOURCE_TYPES, STREAM_TYPES, BytesIO, BinaryReader]
+TARGET_TYPES = Union[os.PathLike, str, bytearray, BytesIO, BinaryWriter]
+
+
+R = TypeVar("R")
+
+
+def autoclose(func: Callable[..., R]) -> Callable[..., R]:
+    def _autoclose(self: ResourceReader | ResourceWriter, auto_close: bool = True) -> R:  # noqa: FBT002, FBT001
+        try:
+            resource: R = func(self, auto_close=auto_close)
+        except (OSError, ParseError, ValueError, IndexError, StopIteration, struct.error) as e:
+            msg = "Tried to save or load an unsupported or corrupted file."
+            raise ValueError(msg) from e
+        finally:
+            if auto_close:
+                self.close()
+        return resource
+
+    return _autoclose
 
 
 class ResourceReader:
@@ -32,10 +65,35 @@ class ResourceReader:
         self,
         source: SOURCE_TYPES,
         offset: int = 0,
-        size: int = 0,
+        size: int | None = None,
+        *,
+        use_binary_reader: bool = True,
     ):
-        self._reader: BinaryReader = BinaryReader.from_auto(source, offset)
-        self._size: int = self._reader.remaining() if size == 0 else size
+        if use_binary_reader:
+            self._reader: BinaryReader = BinaryReader.from_auto(source, offset)
+            self._size: int = size or self._reader.remaining()
+        else:
+            if isinstance(source, memoryview):
+                loaded_src: bytearray = bytearray(source)
+            elif isinstance(source, (bytes, bytearray)):
+                loaded_src = source if isinstance(source, bytearray) else bytearray(source)
+            elif isinstance(source, (os.PathLike, str)):
+                with open(  # noqa: PTH123
+                    os.path.normpath(source) if isinstance(source, str) else os.fspath(source),
+                    "rb",
+                ) as f:
+                    loaded_src = bytearray(f.read())
+            elif isinstance(source, io.BufferedIOBase):
+                loaded_src = bytearray(source.read())
+            elif isinstance(source, mmap.mmap):
+                loaded_src = bytearray(source)
+            else:
+                assert isinstance(source, BinaryReader)
+                loaded_src = bytearray(source.read_all())
+
+            self._offset: int = offset
+            self._size = len(loaded_src)
+            self._source: bytearray = loaded_src[offset : self._size]
 
     def close(
         self,
@@ -48,7 +106,7 @@ class ResourceWriter:
         self,
         target: TARGET_TYPES,
     ):
-        self._writer: BinaryWriterFile | BinaryWriterBytearray = BinaryWriter.to_auto(target)
+        self._writer: BinaryWriterFile | BinaryWriterBytearray = cast("BinaryWriterFile | BinaryWriterBytearray", BinaryWriter.to_auto(target))
 
     def close(
         self,
@@ -69,6 +127,7 @@ class ResourceType(Enum):
     """Represents a resource type that is used within either games.
 
     Stored in the class is also several static attributes, each an actual resource type used by the games.
+    Resource type IDs match the internal format used by the BioWare Odyssey Engine.
 
     Attributes:
     ----------
@@ -77,6 +136,13 @@ class ResourceType(Enum):
         category: Short description on what kind of data the resource type stores.
         contents: How the resource type stores data, ie. plaintext, binary, or gff.
 
+    References:
+    ----------
+        vendor/reone/src/libs/resource/type.h (Resource type enum definitions)
+        vendor/xoreos-tools/src/common/types.h (Resource type constants)
+        Original BioWare Odyssey Engine (resource type IDs from game binaries)
+
+    Note: Resource type IDs are consistent across all vendor implementations and match the game engine.
     """
 
     INVALID = ResourceTuple(-1, "", "Undefined", "binary", is_invalid=True)  # pyright: ignore[reportCallIssue]
@@ -158,7 +224,7 @@ class ResourceType(Enum):
     TTF = ResourceTuple(2072, "ttf", "Fonts", "binary")  # pyright: ignore[reportCallIssue]
     TTC = ResourceTuple(2073, "ttc", "Unused", "binary")  # pyright: ignore[reportCallIssue]
     CUT = ResourceTuple(2074, "cut", "Cutscenes", "gff")  # pyright: ignore[reportCallIssue]
-    KA  = ResourceTuple(2075, "ka", "Unused", "xml")  # noqa: E221  # pyright: ignore[reportCallIssue]
+    KA = ResourceTuple(2075, "ka", "Unused", "xml")  # noqa: E221  # pyright: ignore[reportCallIssue]
     JPG = ResourceTuple(2076, "jpg", "Images", "binary")  # pyright: ignore[reportCallIssue]
     ICO = ResourceTuple(2077, "ico", "Images", "binary")  # pyright: ignore[reportCallIssue]
     OGG = ResourceTuple(2078, "ogg", "Audio", "binary")  # pyright: ignore[reportCallIssue]
@@ -200,45 +266,38 @@ class ResourceType(Enum):
 
     # For Toolset Use:
     MP3 = ResourceTuple(25014, "mp3", "Audio", "binary")  # pyright: ignore[reportCallIssue]
+    WAV_DEOB = ResourceTuple(25015, "wav", "Audio", "binary")  # Deobfuscated WAV (type_id 4 is obfuscated)  # pyright: ignore[reportCallIssue]
     TLK_XML = ResourceTuple(50001, "tlk.xml", "Talk Tables", "plaintext")  # pyright: ignore[reportCallIssue]
     MDL_ASCII = ResourceTuple(50002, "mdl.ascii", "Models", "plaintext")  # pyright: ignore[reportCallIssue]
     TwoDA_CSV = ResourceTuple(50003, "2da.csv", "2D Arrays", "plaintext")  # pyright: ignore[reportCallIssue]
     GFF_XML = ResourceTuple(50004, "gff.xml", "Other", "plaintext", target_member="GFF")  # pyright: ignore[reportCallIssue]
-    IFO_XML = ResourceTuple(50005, "ifo.xml", "Module Data", "plaintext", target_member="IFO")  # pyright: ignore[reportCallIssue]
-    GIT_XML = ResourceTuple(50006, "git.xml", "Module Data", "plaintext", target_member="GIT")  # pyright: ignore[reportCallIssue]
-    UTI_XML = ResourceTuple(50007, "uti.xml", "Items", "plaintext", target_member="UTI")  # pyright: ignore[reportCallIssue]
-    UTC_XML = ResourceTuple(50008, "utc.xml", "Creatures", "plaintext", target_member="UTC")  # pyright: ignore[reportCallIssue]
-    DLG_XML = ResourceTuple(50009, "dlg.xml", "Dialogs", "plaintext", target_member="DLG")  # pyright: ignore[reportCallIssue]
-    ITP_XML = ResourceTuple(50010, "itp.xml", "Palettes", "plaintext")  # pyright: ignore[reportCallIssue]
-    UTT_XML = ResourceTuple(50011, "utt.xml", "Triggers", "plaintext", target_member="UTT")  # pyright: ignore[reportCallIssue]
-    UTS_XML = ResourceTuple(50012, "uts.xml", "Sounds", "plaintext", target_member="UTS")  # pyright: ignore[reportCallIssue]
-    FAC_XML = ResourceTuple(50013, "fac.xml", "Factions", "plaintext", target_member="FAC")  # pyright: ignore[reportCallIssue]
-    UTE_XML = ResourceTuple(50014, "ute.xml", "Encounters", "plaintext", target_member="UTE")  # pyright: ignore[reportCallIssue]
-    UTD_XML = ResourceTuple(50015, "utd.xml", "Doors", "plaintext", target_member="UTD")  # pyright: ignore[reportCallIssue]
-    UTP_XML = ResourceTuple(50016, "utp.xml", "Placeables", "plaintext", target_member="UTP")  # pyright: ignore[reportCallIssue]
-    GUI_XML = ResourceTuple(50017, "gui.xml", "GUIs", "plaintext", target_member="GUI")  # pyright: ignore[reportCallIssue]
-    UTM_XML = ResourceTuple(50018, "utm.xml", "Merchants", "plaintext", target_member="UTM")  # pyright: ignore[reportCallIssue]
-    JRL_XML = ResourceTuple(50019, "jrl.xml", "Journals", "plaintext", target_member="JRL")  # pyright: ignore[reportCallIssue]
-    UTW_XML = ResourceTuple(50020, "utw.xml", "Waypoints", "plaintext", target_member="UTW")  # pyright: ignore[reportCallIssue]
-    PTH_XML = ResourceTuple(50021, "pth.xml", "Paths", "plaintext", target_member="PTH")  # pyright: ignore[reportCallIssue]
-    LIP_XML = ResourceTuple(50022, "lip.xml", "Lips", "plaintext", target_member="LIP")  # pyright: ignore[reportCallIssue]
-    SSF_XML = ResourceTuple(50023, "ssf.xml", "Soundsets", "plaintext", target_member="SSF")  # pyright: ignore[reportCallIssue]
-    ARE_XML = ResourceTuple(50023, "are.xml", "Module Data", "plaintext", target_member="ARE")  # pyright: ignore[reportCallIssue]
-    TwoDA_JSON = ResourceTuple(50024, "2da.json", "2D Arrays", "plaintext", target_member="TwoDA")  # pyright: ignore[reportCallIssue]
-    TLK_JSON = ResourceTuple(50025, "tlk.json", "Talk Tables", "plaintext", target_member="TLK")  # pyright: ignore[reportCallIssue]
-    LIP_JSON = ResourceTuple(50026, "lip.json", "Lips", "plaintext", target_member="LIP")  # pyright: ignore[reportCallIssue]
-    RES_XML = ResourceTuple(50027, "res.xml", "Save Data", "plaintext", target_member="RES")  # pyright: ignore[reportCallIssue]
+    GFF_JSON = ResourceTuple(50005, "gff.json", "Other", "plaintext", target_member="GFF")  # pyright: ignore[reportCallIssue]
+    IFO_XML = ResourceTuple(50006, "ifo.xml", "Module Data", "plaintext", target_member="IFO")  # pyright: ignore[reportCallIssue]
+    GIT_XML = ResourceTuple(50007, "git.xml", "Module Data", "plaintext", target_member="GIT")  # pyright: ignore[reportCallIssue]
+    UTI_XML = ResourceTuple(50008, "uti.xml", "Items", "plaintext", target_member="UTI")  # pyright: ignore[reportCallIssue]
+    UTC_XML = ResourceTuple(50009, "utc.xml", "Creatures", "plaintext", target_member="UTC")  # pyright: ignore[reportCallIssue]
+    DLG_XML = ResourceTuple(50010, "dlg.xml", "Dialogs", "plaintext", target_member="DLG")  # pyright: ignore[reportCallIssue]
+    ITP_XML = ResourceTuple(50011, "itp.xml", "Palettes", "plaintext")  # pyright: ignore[reportCallIssue]
+    UTT_XML = ResourceTuple(50012, "utt.xml", "Triggers", "plaintext", target_member="UTT")  # pyright: ignore[reportCallIssue]
+    UTS_XML = ResourceTuple(50013, "uts.xml", "Sounds", "plaintext", target_member="UTS")  # pyright: ignore[reportCallIssue]
+    FAC_XML = ResourceTuple(50014, "fac.xml", "Factions", "plaintext", target_member="FAC")  # pyright: ignore[reportCallIssue]
+    UTE_XML = ResourceTuple(50015, "ute.xml", "Encounters", "plaintext", target_member="UTE")  # pyright: ignore[reportCallIssue]
+    UTD_XML = ResourceTuple(50016, "utd.xml", "Doors", "plaintext", target_member="UTD")  # pyright: ignore[reportCallIssue]
+    UTP_XML = ResourceTuple(50017, "utp.xml", "Placeables", "plaintext", target_member="UTP")  # pyright: ignore[reportCallIssue]
+    GUI_XML = ResourceTuple(50018, "gui.xml", "GUIs", "plaintext", target_member="GUI")  # pyright: ignore[reportCallIssue]
+    UTM_XML = ResourceTuple(50019, "utm.xml", "Merchants", "plaintext", target_member="UTM")  # pyright: ignore[reportCallIssue]
+    JRL_XML = ResourceTuple(50020, "jrl.xml", "Journals", "plaintext", target_member="JRL")  # pyright: ignore[reportCallIssue]
+    UTW_XML = ResourceTuple(50021, "utw.xml", "Waypoints", "plaintext", target_member="UTW")  # pyright: ignore[reportCallIssue]
+    PTH_XML = ResourceTuple(50022, "pth.xml", "Paths", "plaintext", target_member="PTH")  # pyright: ignore[reportCallIssue]
+    LIP_XML = ResourceTuple(50023, "lip.xml", "Lips", "plaintext", target_member="LIP")  # pyright: ignore[reportCallIssue]
+    SSF_XML = ResourceTuple(50024, "ssf.xml", "Soundsets", "plaintext", target_member="SSF")  # pyright: ignore[reportCallIssue]
+    ARE_XML = ResourceTuple(50025, "are.xml", "Module Data", "plaintext", target_member="ARE")  # pyright: ignore[reportCallIssue]
+    TwoDA_JSON = ResourceTuple(50026, "2da.json", "2D Arrays", "plaintext", target_member="TwoDA")  # pyright: ignore[reportCallIssue]
+    TLK_JSON = ResourceTuple(50027, "tlk.json", "Talk Tables", "plaintext", target_member="TLK")  # pyright: ignore[reportCallIssue]
+    LIP_JSON = ResourceTuple(50028, "lip.json", "Lips", "plaintext", target_member="LIP")  # pyright: ignore[reportCallIssue]
+    RES_XML = ResourceTuple(50029, "res.xml", "Save Data", "plaintext", target_member="RES")  # pyright: ignore[reportCallIssue]
 
-    def __new__(cls, *args, **kwargs):
-        obj: ResourceType = object.__new__(cls)  # type: ignore[annotation-unchecked]
-        name = args[1].upper() or "INVALID"
-        while name in cls.__members__:
-            name = f"{name}_{uuid.uuid4().hex}"
-        obj._name_ = name
-        obj.__init__(*args, **kwargs)  # type: ignore[misc]
-        return super().__new__(cls, obj)
-
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         type_id: int,
         extension: str,
@@ -258,62 +317,8 @@ class ResourceType(Enum):
         """Returns True if this resourcetype is a gff, excluding the xml/json abstractions, False otherwise."""
         return self.contents == "gff"
 
-    def target_type(self):
+    def target_type(self) -> Self:
         return self if self.target_member is None else self.__class__.__members__[self.target_member]
-
-    def __bool__(self) -> bool:
-        return not self.is_invalid
-
-    def __repr__(
-        self,
-    ) -> str:  # sourcery skip: simplify-fstring-formatting
-        if self.name == "INVALID" or not self.is_invalid:
-            return f"{self.__class__.__name__}.{self.name}"
-
-        return (  # For dynamically constructed invalid members
-            f"{self.__class__.__name__}.from_invalid("
-            f"{f'type_id={self.type_id}, '}"
-            f"{f'extension={self.extension}, ' if self.extension else ''}"
-            f"{f'category={self.category}, ' if self.category else ''}"
-            f"contents={self.contents})"
-        )
-
-    def __str__(
-        self,
-    ) -> str:
-        """Returns the extension in all caps."""
-        return str(self.extension.upper())
-
-    def __int__(
-        self,
-    ):
-        """Returns the type_id."""
-        return self.type_id
-
-    def __eq__(
-        self,
-        other: ResourceType | str | int | object,
-    ):
-        """Two ResourceTypes are equal if they are the same.
-
-        A ResourceType and a str are equal if the extension is case-sensitively equal to the string.
-        A ResourceType and a int are equal if the type_id is equal to the integer.
-        """
-        # sourcery skip: assign-if-exp, merge-duplicate-blocks, reintroduce-else, remove-redundant-if, split-or-ifs
-        if self is other:
-            return True
-        if isinstance(other, ResourceType):
-            if self.is_invalid or other.is_invalid:
-                return self.is_invalid and other.is_invalid
-            return self.name == other.name
-        if isinstance(other, (str, WrappedStr)):
-            return self.extension == other.lower()
-        if isinstance(other, int):
-            return self.type_id == other
-        return NotImplemented
-
-    def __hash__(self):
-        return hash(self.extension)
 
     @classmethod
     @lru_cache(maxsize=0xFFFF)
@@ -400,20 +405,55 @@ class ResourceType(Enum):
             raise ValueError(msg)
         return self
 
+    def __bool__(self) -> bool:
+        return not self.is_invalid
 
-R = TypeVar("R")
+    def __repr__(
+        self,
+    ) -> str:  # sourcery skip: simplify-fstring-formatting
+        if self.name == "INVALID" or not self.is_invalid:
+            return f"{self.__class__.__name__}.{self.name}"
 
+        return (  # For dynamically constructed invalid members
+            f"{self.__class__.__name__}.from_invalid(" f"{f'type_id={self.type_id}, '}" f"{f'extension={self.extension}, ' if self.extension else ''}" f"{f'category={self.category}, ' if self.category else ''}" f"contents={self.contents})"
+        )
 
-def autoclose(func: Callable[..., R]) -> Callable[..., R]:
-    def _autoclose(self: ResourceReader | ResourceWriter, auto_close: bool = True) -> R:  # noqa: FBT002, FBT001
-        try:
-            resource: R = func(self, auto_close)
-        except (OSError, ParseError, ValueError, IndexError, StopIteration, struct.error) as e:
-            msg = "Tried to save or load an unsupported or corrupted file."
-            raise ValueError(msg) from e
-        finally:
-            if auto_close:
-                self.close()
-        return resource
+    def __str__(
+        self,
+    ) -> str:
+        """Returns the extension in all caps."""
+        return str(self.extension.upper())
 
-    return _autoclose
+    def __int__(
+        self,
+    ):
+        """Returns the type_id."""
+        return self.type_id
+
+    def __eq__(
+        self,
+        other: ResourceType | str | int | object,
+    ):
+        """Two ResourceTypes are equal if they are the same.
+
+        A ResourceType and a str are equal if the extension is case-sensitively equal to the string.
+        A ResourceType and a int are equal if the type_id is equal to the integer.
+        """
+        # sourcery skip: assign-if-exp, merge-duplicate-blocks, reintroduce-else, remove-redundant-if, split-or-ifs
+        if self is other:
+            return True
+        if isinstance(other, ResourceType):
+            if self.is_invalid or other.is_invalid:
+                return self.is_invalid and other.is_invalid
+            return self.name == other.name
+        if isinstance(other, (str, WrappedStr)):
+            return self.extension == other.lower()
+        if isinstance(other, int):
+            return self.type_id == other
+        return NotImplemented
+
+    def __hash__(self):
+        return hash(self.extension)
+
+    def is_valid(self) -> bool:
+        return not self.is_invalid

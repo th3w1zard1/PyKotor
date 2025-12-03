@@ -3,11 +3,11 @@ from __future__ import annotations
 from copy import copy
 from typing import TYPE_CHECKING
 
-from pykotor.common.geometry import Vector2
 from pykotor.common.misc import Game
 from pykotor.resource.formats.gff import GFF, GFFContent, GFFList, read_gff, write_gff
 from pykotor.resource.formats.gff.gff_auto import bytes_gff
 from pykotor.resource.type import ResourceType
+from utility.common.geometry import Vector2
 from utility.error_handling import format_exception_with_variables
 
 if TYPE_CHECKING:
@@ -15,7 +15,20 @@ if TYPE_CHECKING:
 
 
 class PTH:
-    """Stores the path data for a module."""
+    """Stores the path data for a module.
+    
+    PTH files are GFF-based format files that store pathfinding data including
+    waypoints and connections for NPC navigation.
+    
+    References:
+    ----------
+        vendor/reone/src/libs/resource/parser/gff/pth.cpp (PTH parsing from GFF)
+        vendor/reone/include/reone/resource/parser/gff/pth.h (PTH structure definitions)
+        vendor/reone/src/libs/game/pathfinder.cpp (Pathfinding algorithm using PTH data)
+        vendor/xoreos-tools/src/xml/pthdumper.cpp (PTH to XML conversion)
+        vendor/xoreos-tools/src/xml/pthcreator.cpp (XML to PTH conversion)
+        Note: PTH files are GFF format files with specific structure definitions
+    """
 
     BINARY_TYPE = ResourceType.PTH
 
@@ -140,6 +153,9 @@ class PTHEdge:
             return self.source == other.source and self.target == other.target
         return NotImplemented
 
+    def __hash__(self):
+        return hash((self.source, self.target))
+
 
 def construct_pth(
     gff: GFF,
@@ -157,7 +173,10 @@ def construct_pth(
         source: int = pth.add(x, y)
 
         for i in range(first_connection, first_connection + connections):
-            target: int = connections_list.at(i).acquire("Destination", 0)
+            connection_struct = connections_list.at(i)
+            if connection_struct is None:
+                continue
+            target: int = connection_struct.acquire("Destination", 0)
             pth.connect(source, target)
 
     return pth

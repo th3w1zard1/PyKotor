@@ -4,8 +4,6 @@ import os
 
 from typing import TYPE_CHECKING
 
-import qtpy
-
 from qtpy.QtWidgets import QPlainTextEdit
 
 from pykotor.resource.type import ResourceType
@@ -44,36 +42,24 @@ class TXTEditor(Editor):
         super().__init__(parent, "Text Editor", "none", supported, supported, installation)
         self.resize(400, 250)
 
-        self._wordWrap: bool = False
+        self._word_wrap: bool = False
 
-        if qtpy.API_NAME == "PySide2":
-            from toolset.uic.pyside2.editors.txt import (
-                Ui_MainWindow,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        elif qtpy.API_NAME == "PySide6":
-            from toolset.uic.pyside6.editors.txt import (
-                Ui_MainWindow,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        elif qtpy.API_NAME == "PyQt5":
-            from toolset.uic.pyqt5.editors.txt import (
-                Ui_MainWindow,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        elif qtpy.API_NAME == "PyQt6":
-            from toolset.uic.pyqt6.editors.txt import (
-                Ui_MainWindow,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        else:
-            raise ImportError(f"Unsupported Qt bindings: {qtpy.API_NAME}")
-
+        from toolset.uic.qtpy.editors.txt import Ui_MainWindow
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self._setupMenus()
-        self._setupSignals()
+        self._setup_menus()
+        self._add_help_action()
+        self._setup_signals()
+        
+        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        from toolset.gui.common.filters import NoScrollEventFilter
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
 
         self.new()
 
-    def _setupSignals(self):
-        self.ui.actionWord_Wrap.triggered.connect(self.toggleWordWrap)
+    def _setup_signals(self):
+        self.ui.actionWord_Wrap.triggered.connect(self.toggle_word_wrap)
 
     def load(
         self,
@@ -86,13 +72,25 @@ class TXTEditor(Editor):
         self.ui.textEdit.setPlainText(decode_bytes_with_fallbacks(data))
 
     def build(self) -> tuple[bytes, bytes]:
-        return self.ui.textEdit.toPlainText().replace("\r\n", os.linesep).replace("\n", os.linesep).encode(), b""
+        text = self.ui.textEdit.toPlainText().replace("\r\n", os.linesep).replace("\n", os.linesep)
+        # Encode with proper error handling
+        try:
+            return text.encode("utf-8"), b""
+        except UnicodeEncodeError:
+            try:
+                return text.encode("windows-1252", errors="replace"), b""
+            except UnicodeEncodeError:
+                return text.encode("latin-1", errors="replace"), b""
 
     def new(self):
         super().new()
         self.ui.textEdit.setPlainText("")
 
-    def toggleWordWrap(self):
-        self._wordWrap = not self._wordWrap
-        self.ui.actionWord_Wrap.setChecked(self._wordWrap)
-        self.ui.textEdit.setLineWrapMode(QPlainTextEdit.WidgetWidth if self._wordWrap else QPlainTextEdit.NoWrap)
+    def toggle_word_wrap(self):
+        self._word_wrap = not self._word_wrap
+        self.ui.actionWord_Wrap.setChecked(self._word_wrap)
+        self.ui.textEdit.setLineWrapMode(
+            QPlainTextEdit.LineWrapMode.WidgetWidth
+            if self._word_wrap
+            else QPlainTextEdit.LineWrapMode.NoWrap
+        )
