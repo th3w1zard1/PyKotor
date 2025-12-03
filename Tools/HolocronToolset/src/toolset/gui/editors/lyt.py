@@ -127,7 +127,7 @@ class LYTEditor(Editor):
     def add_room(self):
         room = LYTRoom(model="default_room", position=Vector3(0, 0, 0))
         room.size = Vector3(10, 10, 3)
-        self._lyt.rooms.add(room)
+        self._lyt.rooms.append(room)
         self.update_scene()
 
     def add_track(self):
@@ -137,8 +137,8 @@ class LYTEditor(Editor):
         track = LYTTrack(model="default_track", position=Vector3(0, 0, 0))
 
         # Find path through connected rooms
-        start_room: LYTRoom = next(iter(self._lyt.rooms))
-        end_room: LYTRoom = next(iter(self._lyt.rooms - {start_room}))
+        start_room: LYTRoom = self._lyt.rooms[0]
+        end_room: LYTRoom = self._lyt.rooms[1] if len(self._lyt.rooms) > 1 else start_room
         path: list[LYTRoom] | None = self.find_path(start_room, end_room)
 
         if path:
@@ -179,7 +179,7 @@ class LYTEditor(Editor):
         return None  # No path found
 
     def add_obstacle(self):
-        obstacle = LYTObstacle(model="default_obstacle", position=Vector3(0, 0, 0), radius=5.0)
+        obstacle = LYTObstacle(model="default_obstacle", position=Vector3(0, 0, 0))
         self._lyt.obstacles.append(obstacle)
         self.update_scene()
 
@@ -288,9 +288,10 @@ class RoomItem(QGraphicsRectItem):
 
 class TrackItem(QGraphicsLineItem):
     def __init__(self, track: LYTTrack, editor: LYTEditor):
-        # Calculate start and end points from connected rooms
-        start_pos = track.start_room.position if track.start_room else track.position
-        end_pos = track.end_room.position if track.end_room else track.position + Vector3(1, 1, 0)
+        # LYTTrack only has model and position, not start_room/end_room
+        # Use position as start, and create a simple line segment
+        start_pos = track.position
+        end_pos = track.position + Vector3(1, 1, 0)
 
         super().__init__(start_pos.x, start_pos.y, end_pos.x, end_pos.y)
         self.track: LYTTrack = track

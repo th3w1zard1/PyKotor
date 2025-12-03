@@ -160,8 +160,6 @@ def test_lyt_editor_add_obstacle(qtbot, installation: HTInstallation):
     obstacle = editor._lyt.obstacles[-1]
     assert obstacle.model == "default_obstacle"
     assert isinstance(obstacle.position, Vector3)
-    assert hasattr(obstacle, 'radius')
-    assert obstacle.radius == 5.0
 
 def test_lyt_editor_add_multiple_obstacles(qtbot, installation: HTInstallation):
     """Test adding multiple obstacles."""
