@@ -42,7 +42,24 @@ Please do not create .md documentation unless it delivers public-facing informat
 ## Terminal usage
 
 - Always check the operating system you're functioning in. Do NOT try to execute e.g. bash commands on powershell or vice versa. Most of the time you'lle xclusively be writing powershell given the windows-dominant nature of this repo's intended recipients.
-- If for any reason you're running `git diff` e.g. `git diff -- scripts/update_submodules.ps1`, ensure you pass whatever argument is necessary to ensure NON-INTERACTIVE PLAIN OUTPUT is given. IMPORTANT! `gif diff`'s output is **COLORED** and **INTERACTIVE (with paging)** by default and should NEVER be executed by agents utilizing the terminal for any reason, always use plain output.
+
+### Git commands and pagers
+
+**CRITICAL**: Git commands that produce multi-line output (e.g., `git log`, `git diff`, `git show`) invoke a pager (`less`) by default, which requires interactive input (scrolling, pressing `q` to exit). AI agents MUST run all Git commands non-interactively.
+
+**Always use one of these methods to disable pagers:**
+
+- **Preferred (inline flag)**: `git --no-pager <command>` (e.g., `git --no-pager log --oneline -10`)
+- **Session-wide**: Set `$env:GIT_PAGER = ''` in PowerShell before running Git commands
+- **Pipe output**: Pipe Git output to `Out-File` or `Select-String` to capture/filter without paging
+
+**Examples:**
+
+- `git --no-pager diff -- scripts/update_submodules.ps1` (non-interactive plain output)
+- `git --no-pager log --oneline --graph -10` (non-interactive log output)
+- `git --no-pager show <commit>` (non-interactive commit view)
+
+Never run Git commands that may produce paged output without disabling the pager first.
 
 ### Python usage in terminal
 
