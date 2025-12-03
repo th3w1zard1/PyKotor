@@ -183,16 +183,16 @@ def test_utp_editor_manipulate_conversation(qtbot, installation: HTInstallation,
     editor.load(utp_file, "ebcont001", ResourceType.UTP, original_data)
     
     # Modify conversation
-    editor.ui.conversationEdit.set_combo_box_text("test_conversation")
+    editor.ui.conversationEdit.set_combo_box_text("test_conversat")  # 16 chars max for ResRef
     
     # Save and verify
     data, _ = editor.build()
     modified_utp = read_utp(data)
-    assert str(modified_utp.conversation) == "test_conversation"
+    assert str(modified_utp.conversation) == "test_conversat"
     
     # Load back and verify
     editor.load(utp_file, "ebcont001", ResourceType.UTP, data)
-    assert editor.ui.conversationEdit.currentText() == "test_conversation"
+    assert editor.ui.conversationEdit.currentText() == "test_conversat"
 
 # ============================================================================
 # ADVANCED FIELDS MANIPULATIONS
