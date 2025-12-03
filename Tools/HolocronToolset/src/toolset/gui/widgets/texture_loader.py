@@ -194,7 +194,8 @@ class TextureLoaderProcess(multiprocessing.Process):
         data: bytes,
         icon_size: int,
     ) -> TPCMipmap:
-        """Load a TGA file using PIL and convert to TPCMipmap."""
+        """Load a TGA file using PIL (with QImage fallback)."""
+        # Try PIL first
         try:
             from PIL import Image
 
@@ -215,7 +216,41 @@ class TextureLoaderProcess(multiprocessing.Process):
                 data=bytearray(img.tobytes()),
             )
         except ImportError:
-            raise ImportError("PIL/Pillow is required to load TGA textures")
+            # Fallback to QImage
+            from qtpy.QtGui import QImage
+            from qtpy.QtCore import Qt
+
+            qimg = QImage()
+            if not qimg.loadFromData(data):
+                raise ValueError("Failed to load TGA image data")
+            
+            # Convert to RGBA8888 format
+            if qimg.format() != QImage.Format.Format_RGBA8888:
+                qimg = qimg.convertToFormat(QImage.Format.Format_RGBA8888, Qt.ImageConversionFlag.AutoColor)
+            
+            # Resize to icon size
+            qimg = qimg.scaled(
+                icon_size,
+                icon_size,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+
+            # Get pixel data from QImage
+            width = qimg.width()
+            height = qimg.height()
+            const_bits = qimg.constBits()
+            if const_bits is None:
+                raise ValueError("Failed to get pixel data from QImage")
+            
+            # Create TPCMipmap from QImage (RGBA = 4 bytes per pixel)
+            pixel_data = bytearray(const_bits.asarray(width * height * 4))
+            return TPCMipmap(
+                width=width,
+                height=height,
+                tpc_format=TPCTextureFormat.RGBA,
+                data=pixel_data,
+            )
 
     def _serialize_mipmap(self, mipmap: TPCMipmap) -> bytes:
         """Serialize a TPCMipmap for cross-process transfer.

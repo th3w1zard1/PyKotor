@@ -647,19 +647,6 @@ class TPCEditor(Editor):
             mipmap: TPCMipmap = self._tpc.layers[layer_index].mipmaps[mipmap_index].copy()
             export_format = mipmap.tpc_format
 
-            # Check if PIL is available
-            if Image is None:
-                from toolset.gui.common.localization import translate as tr
-                QMessageBox.critical(
-                    self,
-                    tr("Export Failed"),
-                    tr(
-                        "The 'Pillow' module is not installed, so texture export is not available.\n\n"
-                        "Please install it to enable texture export functionality:\npip install Pillow"
-                    ),
-                )
-                return
-
             # Convert to displayable format
             if export_format == TPCTextureFormat.DXT1:
                 mipmap.convert(TPCTextureFormat.RGB)
@@ -670,12 +657,36 @@ class TPCEditor(Editor):
             elif export_format == TPCTextureFormat.Greyscale:
                 mipmap.convert(TPCTextureFormat.RGBA)
 
-            image = Image.frombytes(
-                mipmap.tpc_format.to_pil_mode(),
-                (mipmap.width, mipmap.height),
-                bytes(mipmap.data),
-            )
-            image.save(file_path)
+            # Try PIL first, fallback to QImage
+            if Image is not None:
+                # Use PIL for export
+                image = Image.frombytes(
+                    mipmap.tpc_format.to_pil_mode(),
+                    (mipmap.width, mipmap.height),
+                    bytes(mipmap.data),
+                )
+                image.save(file_path)
+            else:
+                # Fallback to QImage
+                qimage = QImage(
+                    bytes(mipmap.data),
+                    mipmap.width,
+                    mipmap.height,
+                    mipmap.tpc_format.to_qimage_format(),
+                )
+                # Determine format from file extension
+                file_ext = Path(file_path).suffix.lower()
+                format_map = {
+                    ".png": "PNG",
+                    ".jpg": "JPEG",
+                    ".jpeg": "JPEG",
+                    ".bmp": "BMP",
+                    ".tga": "TGA",
+                }
+                save_format = format_map.get(file_ext, "PNG")
+                if not qimage.save(file_path, save_format):
+                    raise RuntimeError(f"Failed to save image as {save_format}")
+            
             QMessageBox.information(self, "Export Successful", f"Texture exported to:\n{file_path}")
         except Exception as e:  # noqa: BLE001
             QMessageBox.critical(self, "Export Failed", f"Failed to export texture:\n{str(e)}")

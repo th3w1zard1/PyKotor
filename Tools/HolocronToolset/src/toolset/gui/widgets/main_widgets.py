@@ -1058,17 +1058,21 @@ def get_image_from_tpc(resource: FileResource, icon_size: int) -> TPCMipmap:
 
 
 def get_image_from_pillow(resource: FileResource, icon_size: int = 64) -> TPCMipmap:
-    """Get an image using Pillow."""
-    from PIL import Image
+    """Get an image using Pillow (with QImage fallback)."""
+    try:
+        from PIL import Image
 
-    with Image.open(BytesIO(resource.data())) as img:
-        rgba_img: PILImage = img.convert("RGBA")
-    return TPCMipmap(
-        icon_size,
-        icon_size,
-        TPCTextureFormat.RGBA,
-        bytearray(rgba_img.resize((icon_size, icon_size), Image.Resampling.BICUBIC).tobytes()),
-    )
+        with Image.open(BytesIO(resource.data())) as img:
+            rgba_img: PILImage = img.convert("RGBA")
+        return TPCMipmap(
+            icon_size,
+            icon_size,
+            TPCTextureFormat.RGBA,
+            bytearray(rgba_img.resize((icon_size, icon_size), Image.Resampling.BICUBIC).tobytes()),
+        )
+    except ImportError:
+        # Fallback to QImage
+        return get_image_from_qt(resource, icon_size)
 
 
 def get_image_from_qt(
