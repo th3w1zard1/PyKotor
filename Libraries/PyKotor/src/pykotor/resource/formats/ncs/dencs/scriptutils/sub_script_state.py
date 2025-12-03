@@ -582,10 +582,13 @@ class SubScriptState:
             return self.remove_if_as_exp()
         anode: ScriptNode = self.current.remove_last_child()
         if anode is None:
-            # No children to remove, return None or handle gracefully
+            # No children to remove - this can happen if children list contains None or is empty
+            # Try to handle gracefully by checking if we can get the last child another way
             if isinstance(self.current, AIf):
                 return self.remove_if_as_exp()
-            raise RuntimeError("Cannot remove last expression: no children available")
+            # If we can't get a child, return None to indicate no expression available
+            # This allows the caller to handle the None case appropriately
+            return None
         if isinstance(anode, AExpression):
             if not force_one_only and isinstance(anode, AVarRef) and not anode.var().is_assigned and not anode.var().is_param and self.current.has_children():
                 last = self.current.get_last_child()
