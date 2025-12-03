@@ -201,6 +201,7 @@ class SetDestinations(PrunedDepthFirstAdapter):
 
         # Final fallback: if still not found, do a full exhaustive search
         # This searches ALL nodes, not just command blocks, to find the target position
+        # If exact position not found (e.g., NOP instruction), find the next available node
         if self.destination is None:
             class ExhaustiveSearchAdapter(PrunedDepthFirstAdapter):
                 def __init__(self, outer: SetDestinations, pos: int, needcommand: bool):  # noqa: FBT001
@@ -208,6 +209,8 @@ class SetDestinations(PrunedDepthFirstAdapter):
                     self.outer: SetDestinations = outer
                     self.pos: int = pos
                     self.needcommand: bool = needcommand
+                    self.best_match: Node | None = None
+                    self.best_pos: int = -1
 
                 def default_in(self, node: Node):
                     from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]  # noqa: PLC0415
@@ -232,10 +235,68 @@ class SetDestinations(PrunedDepthFirstAdapter):
                                 except RuntimeError:
                                     # No command child found, continue searching
                                     pass
+                        elif node_pos > self.pos and (self.best_pos == -1 or node_pos < self.best_pos):
+                            # Found a node after target position - track as potential match
+                            # This handles cases where target position is a NOP or missing instruction
+                            if not self.needcommand or NodeUtils.is_command_node(node):
+                                self.best_match = node
+                                self.best_pos = node_pos
+                            else:
+                                # Try to find command child
+                                try:
+                                    cmd_child = NodeUtils.get_command_child(node)
+                                    if NodeUtils.is_command_node(cmd_child):
+                                        self.best_match = cmd_child
+                                        self.best_pos = node_pos
+                                except RuntimeError:
+                                    pass
                     except RuntimeError:  # noqa: S110
                         # Node doesn't have position set, continue searching children
                         pass
 
             exhaustive_adapter = ExhaustiveSearchAdapter(self, pos, needcommand)
             self.ast.apply(exhaustive_adapter)
+            
+            # If exact match not found but we found a node after the target position, use it
+            # This handles cases where the target position is a NOP or missing instruction
+            if self.destination is None and exhaustive_adapter.best_match is not None:
+                self.destination = exhaustive_adapter.best_match
+            
+            # Final fallback: if still not found, search for any node with a position
+            # This is a last resort to handle edge cases where positions might be misaligned
+            if self.destination is None:
+                class LastResortAdapter(PrunedDepthFirstAdapter):
+                    def __init__(self, outer: SetDestinations, pos: int, needcommand: bool):  # noqa: FBT001
+                        super().__init__()
+                        self.outer: SetDestinations = outer
+                        self.pos: int = pos
+                        self.needcommand: bool = needcommand
+                        self.all_nodes: list[tuple[Node, int]] = []
+
+                    def default_in(self, node: Node):
+                        from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]  # noqa: PLC0415
+                        if self.outer.destination is not None:
+                            return
+                        try:
+                            node_pos = self.outer.get_pos(node)
+                            if not self.needcommand or NodeUtils.is_command_node(node):
+                                self.all_nodes.append((node, node_pos))
+                            else:
+                                try:
+                                    cmd_child = NodeUtils.get_command_child(node)
+                                    if NodeUtils.is_command_node(cmd_child):
+                                        self.all_nodes.append((cmd_child, node_pos))
+                                except RuntimeError:
+                                    pass
+                        except RuntimeError:  # noqa: S110
+                            pass
+
+                last_resort_adapter = LastResortAdapter(self, pos, needcommand)
+                self.ast.apply(last_resort_adapter)
+                
+                # Find the closest node to the target position
+                if last_resort_adapter.all_nodes:
+                    # Sort by distance from target position
+                    closest = min(last_resort_adapter.all_nodes, key=lambda x: abs(x[1] - pos))
+                    self.destination = closest[0]
 

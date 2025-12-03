@@ -68,7 +68,7 @@ def convert_ncs_to_ast(ncs: NCS) -> Start:
     if subroutine_starts:
         main_end = min(subroutine_starts)
 
-    main_sub = _convert_instruction_range_to_subroutine(instructions, 0, main_end, 0)
+    main_sub = _convert_instruction_range_to_subroutine(ncs, instructions, 0, main_end, 0)
     if main_sub:
         program.add_subroutine(main_sub)
 
@@ -84,7 +84,7 @@ def convert_ncs_to_ast(ncs: NCS) -> Start:
                 sub_end = i + 1
                 break
 
-        sub = _convert_instruction_range_to_subroutine(instructions, sub_start, sub_end, len(program.get_subroutine()))
+        sub = _convert_instruction_range_to_subroutine(ncs, instructions, sub_start, sub_end, len(program.get_subroutine()))
         if sub:
             program.add_subroutine(sub)
 
@@ -93,6 +93,7 @@ def convert_ncs_to_ast(ncs: NCS) -> Start:
     return Start(program, EOF())
 
 def _convert_instruction_range_to_subroutine(
+    ncs: NCS,
     instructions: list[NCSInstruction],
     start_idx: int,
     end_idx: int,
@@ -112,7 +113,7 @@ def _convert_instruction_range_to_subroutine(
 
     for i in range(start_idx, min(end_idx, len(instructions))):
         inst = instructions[i]
-        cmd = _convert_instruction_to_cmd(inst, i, instructions)
+        cmd = _convert_instruction_to_cmd(ncs, inst, i, instructions)
         if cmd:
             cmd_block.add_cmd(cmd)
 
@@ -128,7 +129,7 @@ def _convert_instruction_range_to_subroutine(
 
     return sub
 
-def _convert_instruction_to_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
+def _convert_instruction_to_cmd(ncs: NCS, inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
     """Convert a single NCSInstruction to an AST command node.
     
     Handles all NCS instruction types comprehensively:
@@ -158,11 +159,11 @@ def _convert_instruction_to_cmd(inst: NCSInstruction, pos: int, instructions: li
     
     # Control flow - unconditional jumps
     elif ins_type in {NCSInstructionType.JMP, NCSInstructionType.JSR}:
-        return _convert_jump_cmd(inst, pos, instructions)
+        return _convert_jump_cmd(ncs, inst, pos, instructions)
     
     # Control flow - conditional jumps
     elif ins_type in {NCSInstructionType.JZ, NCSInstructionType.JNZ}:
-        return _convert_conditional_jump_cmd(inst, pos, instructions)
+        return _convert_conditional_jump_cmd(ncs, inst, pos, instructions)
     
     # Control flow - return
     elif ins_type == NCSInstructionType.RETN:
@@ -310,7 +311,7 @@ def _convert_action_cmd(inst: NCSInstruction, pos: int):
 
     return action_cmd
 
-def _convert_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
+def _convert_jump_cmd(ncs: NCS, inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
     """Convert JMP/JSR/JZ/JNZ instruction to appropriate cmd."""
     from pykotor.resource.formats.ncs.dencs.node.a_jump_cmd import AJumpCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_jump_command import AJumpCommand  # pyright: ignore[reportMissingImports]
@@ -325,11 +326,12 @@ def _convert_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInst
     type_val = ins_type.value.qualifier if hasattr(ins_type, 'value') and hasattr(ins_type.value, 'qualifier') else 0
 
     offset = 0
-    if inst.jump is not None and instructions is not None:
+    if inst.jump is not None:
         try:
-            jump_idx = instructions.index(inst.jump)
-            offset = jump_idx - pos
-        except ValueError:
+            jump_idx = ncs.get_instruction_index(inst.jump)
+            if jump_idx >= 0:
+                offset = jump_idx - pos
+        except (ValueError, AttributeError):
             offset = 0
 
     if ins_type == NCSInstructionType.JSR:
@@ -357,7 +359,7 @@ def _convert_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInst
         jump_cmd.set_jump_command(jump_command)
         return jump_cmd
 
-def _convert_conditional_jump_cmd(inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
+def _convert_conditional_jump_cmd(ncs: NCS, inst: NCSInstruction, pos: int, instructions: list[NCSInstruction] | None = None):
     """Convert JZ/JNZ instruction to ACondJumpCmd."""
     from pykotor.resource.formats.ncs.dencs.node.a_cond_jump_cmd import ACondJumpCmd  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.a_conditional_jump_command import AConditionalJumpCommand  # pyright: ignore[reportMissingImports]
@@ -373,11 +375,12 @@ def _convert_conditional_jump_cmd(inst: NCSInstruction, pos: int, instructions: 
     type_val = ins_type.value.qualifier if hasattr(ins_type, 'value') and hasattr(ins_type.value, 'qualifier') else 0
 
     offset = 0
-    if inst.jump is not None and instructions is not None:
+    if inst.jump is not None:
         try:
-            jump_idx = instructions.index(inst.jump)
-            offset = jump_idx - pos
-        except ValueError:
+            jump_idx = ncs.get_instruction_index(inst.jump)
+            if jump_idx >= 0:
+                offset = jump_idx - pos
+        except (ValueError, AttributeError):
             offset = 0
 
     cond_jump_cmd = ACondJumpCmd()
