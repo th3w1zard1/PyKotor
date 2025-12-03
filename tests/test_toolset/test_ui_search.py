@@ -155,6 +155,7 @@ def test_search_dialog_query_construction_exhaustive(qtbot, installation: HTInst
     
     # Test 1: All checkboxes checked
     dialog.ui.selectAllCheck.setChecked(True)
+    qtbot.wait(10)  # Ensure Qt processes the signal in headless mode
     dialog.ui.searchTextEdit.setText("test_search")
     dialog.ui.caseSensitiveRadio.setChecked(True)
     dialog.ui.filenamesOnlyCheck.setChecked(True)
@@ -201,7 +202,8 @@ def test_search_dialog_query_construction_exhaustive(qtbot, installation: HTInst
     assert query.search_core
     assert query.search_modules
     assert query.search_override
-    assert len(query.check_types) == 20  # All types checked
+    # There are 19 resource type checkboxes, not 20
+    assert len(query.check_types) == 19  # All types checked
     assert ResourceType.UTC in query.check_types
     assert ResourceType.DLG in query.check_types
     assert ResourceType.ARE in query.check_types
