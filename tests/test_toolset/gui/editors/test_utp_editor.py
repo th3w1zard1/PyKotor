@@ -1110,8 +1110,10 @@ def test_utp_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     
     # Set all to maximums
     editor.ui.tagEdit.setText("x" * 32)  # Max tag length
-    editor.ui.currenHpSpin.setValue(editor.ui.currenHpSpin.maximum())
-    editor.ui.maxHpSpin.setValue(editor.ui.maxHpSpin.maximum())
+    # CurrentHP and HP are stored as int16 in GFF, so max is 32767 (not QSpinBox max of 2147483647)
+    max_int16 = 32767
+    editor.ui.currenHpSpin.setValue(max_int16)
+    editor.ui.maxHpSpin.setValue(max_int16)
     editor.ui.hardnessSpin.setValue(editor.ui.hardnessSpin.maximum())
     editor.ui.fortitudeSpin.setValue(editor.ui.fortitudeSpin.maximum())
     editor.ui.reflexSpin.setValue(editor.ui.reflexSpin.maximum())
@@ -1122,8 +1124,9 @@ def test_utp_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     data, _ = editor.build()
     modified_utp = read_utp(data)
     
-    assert modified_utp.current_hp == editor.ui.currenHpSpin.maximum()
-    assert modified_utp.maximum_hp == editor.ui.maxHpSpin.maximum()
+    # CurrentHP and HP are int16 fields, so they can't exceed 32767
+    assert modified_utp.current_hp == max_int16
+    assert modified_utp.maximum_hp == max_int16
 
 def test_utp_editor_empty_strings(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test handling of empty strings in text fields."""
