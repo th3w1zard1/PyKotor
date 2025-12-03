@@ -58,6 +58,9 @@ Please do not create .md documentation unless it delivers public-facing informat
 - `git --no-pager diff -- scripts/update_submodules.ps1` (non-interactive plain output)
 - `git --no-pager log --oneline --graph -10` (non-interactive log output)
 - `git --no-pager show <commit>` (non-interactive commit view)
+- `git --no-pager diff --name-only --diff-filter=U` (checking for unmerged files during conflicts - even `--name-only` can invoke pager)
+
+**Common pitfall**: Even commands that seem like they should produce simple output (e.g., `git diff --name-only`) can still invoke the pager. Always use `--no-pager` or disable the pager session-wide.
 
 Never run Git commands that may produce paged output without disabling the pager first.
 
