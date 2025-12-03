@@ -184,8 +184,8 @@ class UTSEditor(Editor):
         else:
             self.ui.styleOnceRadio.setChecked(True)
 
-        self.ui.cutoffSpin.setValue(uts.max_distance)
-        self.ui.maxVolumeDistanceSpin.setValue(uts.min_distance)
+        self.ui.cutoffSpin.setValue(uts.min_distance)
+        self.ui.maxVolumeDistanceSpin.setValue(uts.max_distance)
         self.ui.heightSpin.setValue(uts.elevation)
         self.ui.northRandomSpin.setValue(uts.random_range_y)
         self.ui.eastRandomSpin.setValue(uts.random_range_x)

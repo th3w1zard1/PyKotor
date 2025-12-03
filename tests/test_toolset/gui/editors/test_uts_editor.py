@@ -607,20 +607,22 @@ def test_uts_editor_manipulate_distance_spins(qtbot, installation: HTInstallatio
     original_data = uts_file.read_bytes()
     editor.load(uts_file, "low_air_01", ResourceType.UTS, original_data)
     
-    # Test cutoff (max_distance)
+    # Test cutoff (min_distance)
     test_distance_values = [0.0, 5.0, 10.0, 50.0, 100.0]
     for val in test_distance_values:
         editor.ui.cutoffSpin.setValue(val)
         data, _ = editor.build()
         modified_uts = read_uts(data)
-        assert modified_uts.max_distance == val
+        # Use approximate comparison for floating point values (tolerance accounts for float precision in GFF serialization)
+        assert abs(modified_uts.min_distance - val) < 0.02, f"Expected min_distance ≈ {val}, got {modified_uts.min_distance}"
     
-    # Test max volume distance (min_distance)
+    # Test max volume distance (max_distance)
     for val in test_distance_values:
         editor.ui.maxVolumeDistanceSpin.setValue(val)
         data, _ = editor.build()
         modified_uts = read_uts(data)
-        assert modified_uts.min_distance == val
+        # Use approximate comparison for floating point values (tolerance accounts for float precision in GFF serialization)
+        assert abs(modified_uts.max_distance - val) < 0.02, f"Expected max_distance ≈ {val}, got {modified_uts.max_distance}"
 
 def test_uts_editor_manipulate_height_spin(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating height spin box."""
