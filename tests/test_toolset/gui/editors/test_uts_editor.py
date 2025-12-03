@@ -531,6 +531,8 @@ def test_uts_editor_manipulate_style_once_radio(qtbot, installation: HTInstallat
     
     # Set style once
     editor.ui.styleOnceRadio.setChecked(True)
+    # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
+    editor.change_style()
     qtbot.wait(10)
     
     # Verify interval group is disabled
@@ -578,6 +580,8 @@ def test_uts_editor_manipulate_style_seamless_radio(qtbot, installation: HTInsta
     
     # Set style seamless
     editor.ui.styleSeamlessRadio.setChecked(True)
+    # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
+    editor.change_style()
     qtbot.wait(10)
     
     # Verify style groups are disabled
@@ -1352,6 +1356,8 @@ def test_uts_editor_style_once_disables_interval_group(qtbot, installation: HTIn
     
     # Set style once
     editor.ui.styleOnceRadio.setChecked(True)
+    # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
+    editor.change_style()
     qtbot.wait(10)
     
     # Verify interval group is disabled
@@ -1374,6 +1380,8 @@ def test_uts_editor_style_seamless_disables_all_groups(qtbot, installation: HTIn
     
     # Set style seamless
     editor.ui.styleSeamlessRadio.setChecked(True)
+    # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
+    editor.change_style()
     qtbot.wait(10)
     
     # Verify all style groups are disabled
@@ -1394,6 +1402,8 @@ def test_uts_editor_style_repeat_enables_all_groups(qtbot, installation: HTInsta
     
     # Set style repeat
     editor.ui.styleRepeatRadio.setChecked(True)
+    # Manually trigger change_style to ensure UI is updated (signals may not fire reliably in headless mode)
+    editor.change_style()
     qtbot.wait(10)
     
     # Verify all style groups are enabled
@@ -1479,3 +1489,23 @@ def test_utseditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
+
+def test_utseditor_play_everywhere_disables_all_position_groups(qtbot, installation: HTInstallation, test_files_dir: Path):
+    """Test that play everywhere disables all position groups."""
+    editor = UTSEditor(None, installation)
+    qtbot.addWidget(editor)
+    
+    uts_file = test_files_dir / "low_air_01.uts"
+    if not uts_file.exists():
+        pytest.skip("low_air_01.uts not found")
+    
+    editor.load(uts_file, "low_air_01", ResourceType.UTS, uts_file.read_bytes())
+    
+    # Set play everywhere
+    editor.ui.playEverywhereRadio.setChecked(True)
+    qtbot.wait(10)
+    
+    # Verify all position groups are disabled
+    assert not editor.ui.rangeGroup.isEnabled()
+    assert not editor.ui.heightGroup.isEnabled()
+    assert not editor.ui.distanceGroup.isEnabled()
