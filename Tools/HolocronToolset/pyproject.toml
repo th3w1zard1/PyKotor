@@ -39,6 +39,8 @@ dependencies = [
   "send2trash>=1.8.3",
   "comtypes>=1.4.0; sys_platform == \"win32\"",
   "PyYAML>=6.0",
+  "Pillow>=9.5; python_implementation == 'CPython'",
+  "Pillow>10,<11.1.0; python_implementation == 'PyPy'",
 ]
 authors = [{ name = "NickHugi" }]
 maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
