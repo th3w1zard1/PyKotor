@@ -1235,12 +1235,14 @@ def test_nss_editor_foldable_regions_detection(qtbot, installation: HTInstallati
     
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
     
-    # Wait for foldable regions to be detected
-    qtbot.wait(200)
+    # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
+    editor.ui.codeEdit._update_foldable_regions()
+    # Wait for Qt to process any updates
+    qtbot.wait(50)
     
     # Check that foldable regions exist
     assert hasattr(editor.ui.codeEdit, '_foldable_regions')
-    assert len(editor.ui.codeEdit._foldable_regions) > 0
+    assert len(editor.ui.codeEdit._foldable_regions) > 0, f"Expected foldable regions, got {editor.ui.codeEdit._foldable_regions}"
     
     # Verify main function block is foldable
     # Main function should start around line 3-4
