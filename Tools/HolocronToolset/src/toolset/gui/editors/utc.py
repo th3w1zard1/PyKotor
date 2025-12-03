@@ -584,6 +584,7 @@ class UTCEditor(Editor):
         utc.stealth = self.ui.stealthSpin.value()
         utc.awareness = self.ui.awarenessSpin.value()
         utc.persuade = self.ui.persuadeSpin.value()
+        utc.repair = self.ui.repairSpin.value()
         utc.security = self.ui.securitySpin.value()
         utc.treat_injury = self.ui.treatInjurySpin.value()
         utc.fortitude_bonus = self.ui.fortitudeSpin.value()
