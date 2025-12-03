@@ -439,6 +439,7 @@ class MDLLoader:
         # Add face indices
         for face in mesh.faces:
             # KotOR uses clockwise winding, Panda3D uses counter-clockwise
+            # Reference: https://github.com/xoreos/xoreos/blob/master/src/graphics/mesh.cpp#L300
             # Reverse winding order
             prim.addVertices(face.v1, face.v3, face.v2)
         
