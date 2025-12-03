@@ -42,7 +42,12 @@ def test_lip_editor_initialization(qtbot, installation: HTInstallation):
     assert editor.phoneme_map is not None
     assert len(editor.phoneme_map) > 0
     assert editor.player is not None
-    assert editor.audio_output is not None
+    # audio_output is only set in Qt6; in Qt5 it remains None
+    import qtpy
+    if qtpy.QT6:
+        assert editor.audio_output is not None
+    else:
+        assert editor.audio_output is None  # Qt5 doesn't require explicit audio output
     assert editor.preview_timer is not None
 
 # ============================================================================
