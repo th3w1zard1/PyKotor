@@ -852,6 +852,9 @@ class SubScriptState:
             i = 0
             while i < paramcount:
                 exp = self.remove_last_exp(False)
+                if exp is None:
+                    # Skip None expressions (e.g., from AVarDecl without expression)
+                    continue
                 i += self.get_exp_size(exp)
                 params.append(exp)
         return params
@@ -879,11 +882,12 @@ class SubScriptState:
                     exp = self.get_last_exp()
                     if exp.stackentry().type().equals(-16) or exp.stackentry().type().equals(-15):
                         exp = self.remove_last_exp(False)
-                    else:
-                        exp = AVectorConstExp(self.remove_last_exp(False), self.remove_last_exp(False), self.remove_last_exp(False))
+                else:
+                    exp = AVectorConstExp(self.remove_last_exp(False), self.remove_last_exp(False), self.remove_last_exp(False))
                 else:
                     exp = self.remove_last_exp(False)
-                params.append(exp)
+                if exp is not None:
+                    params.append(exp)
         return params
 
     def get_fcn_id(self, node):
