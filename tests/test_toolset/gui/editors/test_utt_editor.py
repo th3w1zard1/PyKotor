@@ -868,8 +868,10 @@ def test_utt_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     # Set all to maximums
     editor.ui.tagEdit.setText("x" * 32)  # Max tag length
     editor.ui.highlightHeightSpin.setValue(editor.ui.highlightHeightSpin.maximum())
-    editor.ui.detectDcSpin.setValue(editor.ui.detectDcSpin.maximum())
-    editor.ui.disarmDcSpin.setValue(editor.ui.disarmDcSpin.maximum())
+    # Trap DC fields are stored as Byte (0-255) in GFF format, not full int32
+    max_dc = 255
+    editor.ui.detectDcSpin.setValue(max_dc)
+    editor.ui.disarmDcSpin.setValue(max_dc)
     
     # Save and verify
     data, _ = editor.build()
@@ -877,8 +879,8 @@ def test_utt_editor_maximum_values(qtbot, installation: HTInstallation, test_fil
     
     # Use approximate comparison for float due to GFF single-precision serialization
     assert modified_utt.highlight_height == pytest.approx(editor.ui.highlightHeightSpin.maximum(), abs=0.01)
-    assert modified_utt.trap_detect_dc == editor.ui.detectDcSpin.maximum()
-    assert modified_utt.trap_disarm_dc == editor.ui.disarmDcSpin.maximum()
+    assert modified_utt.trap_detect_dc == max_dc
+    assert modified_utt.trap_disarm_dc == max_dc
 
 def test_utt_editor_empty_strings(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test handling of empty strings in text fields."""
