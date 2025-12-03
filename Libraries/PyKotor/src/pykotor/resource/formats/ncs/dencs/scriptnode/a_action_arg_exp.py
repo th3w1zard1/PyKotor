@@ -14,6 +14,9 @@ class AActionArgExp(ScriptRootNode, AExpression):
         self.start = start
         self.end = end
 
+    def __str__(self) -> str:
+        return f"action_arg({self.start}, {self.end})"
+
     def stackentry(self) -> StackEntry | None:
         return None
 
