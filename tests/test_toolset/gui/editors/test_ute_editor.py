@@ -323,13 +323,13 @@ def test_ute_editor_manipulate_respawn_counts(qtbot, installation: HTInstallatio
         modified_ute = read_ute(data)
         assert modified_ute.respawns == val
     
-    # Test respawn time
-    test_time_values = [0.0, 1.0, 5.0, 10.0, 60.0]
-    for val in test_time_values:
-        editor.ui.respawnTimeSpin.setValue(val)
-        data, _ = editor.build()
-        modified_ute = read_ute(data)
-        assert modified_ute.reset_time == val
+        # Test respawn time (reset_time is int, not float)
+        test_time_values = [0, 1, 5, 10, 60]
+        for val in test_time_values:
+            editor.ui.respawnTimeSpin.setValue(val)
+            data, _ = editor.build()
+            modified_ute = read_ute(data)
+            assert modified_ute.reset_time == val
 
 # ============================================================================
 # CREATURE TABLE MANIPULATIONS
