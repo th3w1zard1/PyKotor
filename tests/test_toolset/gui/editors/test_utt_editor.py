@@ -1109,6 +1109,8 @@ def test_utteditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
 
+
+def test_utt_editor_resref_generation_button(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test resref generation button functionality."""
     editor = UTTEditor(None, installation)
     qtbot.addWidget(editor)
