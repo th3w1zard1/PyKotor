@@ -159,7 +159,7 @@ class TestWAVData(unittest.TestCase):
         """Test creating WAV with custom parameters."""
         wav = WAV(
             wav_type=WAVType.SFX,
-            encoding=WaveEncoding.ADPCM,
+            encoding=WaveEncoding.IMA_ADPCM,
             channels=2,
             sample_rate=48000,
             bits_per_sample=16,
@@ -168,7 +168,7 @@ class TestWAVData(unittest.TestCase):
             data=b"\x00\x01\x02\x03"
         )
         self.assertEqual(wav.wav_type, WAVType.SFX)
-        self.assertEqual(wav.encoding, WaveEncoding.ADPCM)
+        self.assertEqual(wav.encoding, WaveEncoding.IMA_ADPCM)
         self.assertEqual(wav.channels, 2)
         self.assertEqual(wav.sample_rate, 48000)
         self.assertEqual(wav.bits_per_sample, 16)
@@ -218,8 +218,8 @@ class TestWAVData(unittest.TestCase):
     def test_wave_encoding_enum(self):
         """Test WaveEncoding enum values."""
         self.assertEqual(WaveEncoding.PCM.value, 0x01)
-        self.assertEqual(WaveEncoding.ADPCM.value, 0x11)
-        self.assertNotEqual(WaveEncoding.PCM, WaveEncoding.ADPCM)
+        self.assertEqual(WaveEncoding.IMA_ADPCM.value, 0x11)
+        self.assertNotEqual(WaveEncoding.PCM, WaveEncoding.IMA_ADPCM)
 
 
 class TestWAVIO(unittest.TestCase):
