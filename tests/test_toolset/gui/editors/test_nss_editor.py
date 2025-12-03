@@ -1359,12 +1359,18 @@ def test_nss_editor_unfold_all(qtbot, installation: HTInstallation, foldable_nss
     editor.new()
     
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
-    qtbot.wait(200)
+    # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
+    editor.ui.codeEdit._update_foldable_regions()
+    qtbot.wait(50)  # Wait for Qt to process updates
+    
+    # Verify foldable regions were detected
+    assert len(editor.ui.codeEdit._foldable_regions) > 0, "Foldable regions should be detected"
     
     # Fold all first
     editor.ui.codeEdit.fold_all()
+    qtbot.wait(50)  # Wait for Qt to process the fold operation
     folded_count = len(editor.ui.codeEdit._folded_block_numbers)
-    assert folded_count > 0
+    assert folded_count > 0, f"Expected folded blocks, got {editor.ui.codeEdit._folded_block_numbers}"
     
     # Unfold all
     editor.ui.codeEdit.unfold_all()
