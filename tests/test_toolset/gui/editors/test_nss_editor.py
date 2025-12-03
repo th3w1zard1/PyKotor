@@ -2159,6 +2159,7 @@ def test_nsseditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
 
+def test_nsseditor_breadcrumbs_update_performance(qtbot, installation: HTInstallation, complex_nss_script: str):
     """Test breadcrumbs update performance."""
     editor = NSSEditor(None, installation)
     qtbot.addWidget(editor)
