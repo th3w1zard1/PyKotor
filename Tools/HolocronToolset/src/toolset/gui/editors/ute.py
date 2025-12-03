@@ -258,6 +258,9 @@ class UTEEditor(Editor):
             appearanceSpin = cast("QSpinBox", self.ui.creatureTable.cellWidget(i, 2))
             resrefCombo = cast("FilterComboBox", self.ui.creatureTable.cellWidget(i, 3))
 
+            if resrefCombo is None:
+                continue  # Skip rows without a resref combo widget
+
             creature = UTECreature()
             creature.resref = ResRef(resrefCombo.currentText())
             creature.single_spawn = singleCheckbox.isChecked()
