@@ -53,5 +53,9 @@
     "python.testing.unittestEnabled": false,
     "pythonTestExplorer.outputs.showOutputsOnRun": true,
     "pythonTestExplorer.testFramework": "pytest",
-    "remote.WSL.fileWatcher.polling": true
+    "remote.WSL.fileWatcher.polling": true,
+    "terminal.integrated.automationProfile.windows": {
+        "path": "pwsh.exe",
+        "args": ["-NoProfile", "-NoLogo"]
+    }
 }
