@@ -503,9 +503,9 @@ class SubScriptState:
         if self.state == 3:
             if isinstance(self.current, AWhileLoop):
                 exp = self.remove_last_exp(False)
-            if exp is not None:
-                self.current.condition = exp
-                self.state = 0
+                if exp is not None:
+                    self.current.condition = exp
+                    self.state = 0
         elif not NodeUtils.is_jz(node):
             if self.state != 4:
                 cond = self.remove_last_exp(True)
