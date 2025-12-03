@@ -1420,11 +1420,13 @@ def test_nss_editor_folding_visual_indicators(qtbot, installation: HTInstallatio
     editor.new()
     
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
-    qtbot.wait(200)
+    # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
+    editor.ui.codeEdit._update_foldable_regions()
+    qtbot.wait(50)  # Wait for Qt to process updates
     
     # Check that foldable regions exist
     assert hasattr(editor.ui.codeEdit, '_foldable_regions')
-    assert len(editor.ui.codeEdit._foldable_regions) > 0
+    assert len(editor.ui.codeEdit._foldable_regions) > 0, f"Expected foldable regions, got {editor.ui.codeEdit._foldable_regions}"
     
     # Line number area should be updated
     assert hasattr(editor.ui.codeEdit, '_line_number_area')
