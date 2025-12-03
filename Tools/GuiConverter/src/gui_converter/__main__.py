@@ -250,7 +250,7 @@ def main():
             processed_files_count += 1
 
         elif input_path.is_dir():
-            files_to_process = list(input_path.safe_rglob("*.gui"))
+            files_to_process = list(input_path.rglob("*.gui"))
             if not files_to_process:
                 print(f"Error: no .gui files to process in input path '{input_path}'", file=sys.stderr)
             for gui_file in files_to_process:
