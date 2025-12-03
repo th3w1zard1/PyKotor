@@ -35,7 +35,7 @@ classifiers = [
     "Environment :: X11 Applications :: Qt",
 ]
 dependencies = [
-    "pykotor>=1.8.0",
+    "pykotor>=2.0.0",
 ]
 
 [project.scripts]
@@ -69,7 +69,7 @@ packages = [{ include = "holocron_ai", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
+pykotor = "^2.0.0"
 
 [tool.poetry.scripts]
 holocron-ai = "holocron_ai.__main__:main"

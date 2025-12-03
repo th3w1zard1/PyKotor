@@ -35,7 +35,7 @@ classifiers = [
     "Environment :: Console",
 ]
 dependencies = [
-    "pykotor>=1.8.0",
+    "pykotor>=2.0.0",
     "loggerplus>=0.1.3",
 ]
 
@@ -69,7 +69,7 @@ packages = [{ include = "kitgenerator", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
+pykotor = "^2.0.0"
 loggerplus = ">=0.1.3"
 
 [tool.poetry.scripts]

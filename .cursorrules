@@ -127,4 +127,6 @@ See `./CONVENTIONS.md` for more information!
   3. Cross-reference journal updates by grepping scripts/dialogs: `kotorcli search-archive --file <module rim> --pattern "SetJournalEntry" --content`.
   4. When scripts need inspection, decompile/disassemble with `kotorcli decompile` or `kotorcli disassemble`, then reuse the resulting `.nss` with `grep/stats`.
 - Targeted module deep dives should mirror the logic in `scripts/investigate_module_structure.py` and `scripts/investigate_module_structure.py` (room+resource introspection), `scripts/check_missing_resources.py` (override integrity), and related helpers under `scripts/`. Those scripts demonstrate how to chain `pykotor.extract.installation.Installation`, module RIM readers, and the CLI commands above—use them as references before crafting new flows.
-- Prefer bulk automation through the CLI instead of ad-hoc Python: most tasks (diffing, conversions, packing) already live under `Tools/KotorCLI/src/kotorcli/commands`. Only fall back to ad-hoc scripts if you need custom logic that the CLI cannot express yet.
+- Prefer bulk automation through the CLI instead of ad-hoc Python: most tasks (diffing, conversions, packing) already live under `Tools/KotorCLI/src/kotorcli/commands`. Only fall back to ad-hoc scripts if you need custom logic that the CLI reasonably should not express due to it being outside of the scope of the project.
+
+Please always remember to run `git add` and `git commit` for any and all changes you've made following standard git conventions. Ensure this runs properly and DO NOT forget.

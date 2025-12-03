@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "holopatcher"
 description = "A faster, cross-platform alternative to TSLPatcher written in Python."
-version = "1.5.3"
+version = "2.0.0a2"
 requires-python = ">= 3.8"
 dependencies = [
     "pykotor>=2.0.0",
@@ -71,7 +71,7 @@ Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 [tool.poetry]
 name = "holopatcher"
 description = "A faster, cross-platform alternative to TSLPatcher written in Python."
-version = "1.5.3"
+version = "2.0.0a2"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"

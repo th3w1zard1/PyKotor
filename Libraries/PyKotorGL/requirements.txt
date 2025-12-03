@@ -1,4 +1,4 @@
-pykotor>=1.8.0
+pykotor>=2.0.0
 numpy>=1.22
 PyOpenGL~=3.1
 PyGLM>=2.0,<2.8; python_implementation == 'CPython'

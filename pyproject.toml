@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pykotor-workspace"
-version = "1.8.0"
+version = "2.0.0"
 description = "PyKotor workspace - meta-package for PyKotor ecosystem"
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
@@ -13,17 +13,17 @@ license = {text = "LGPL-3.0-or-later License"}
 keywords = ["kotor", "library", "holocron", "toolset", "pykotor", "editor", "holopatcher", "tslpatcher"]
 requires-python = ">=3.8"
 dependencies = [
-    "pykotor>=1.8.0",
+    "pykotor>=2.0.0",
 ]
 
 [project.optional-dependencies]
 # Extension libraries
-font = ["pykotorfont>=1.8.0"]
-gl = ["pykotorgl[moderngl]>=1.8.0"]
-all-extensions = ["pykotorfont>=1.8.0", "pykotorgl[moderngl]>=1.8.0"]
+font = ["pykotorfont>=2.0.0"]
+gl = ["pykotorgl[moderngl]>=2.0.2"]
+all-extensions = ["pykotorfont>=2.0.0", "pykotorgl[moderngl]>=2.0.2"]
 
 # Tools (lowercase PyPI names)
-holocrontoolset = ["holocrontoolset>=3.1.1"]
+holocrontoolset = ["holocrontoolset>=4.0.0a7"]
 holopatcher = ["holopatcher>=1.5.3"]
 kotor-diff = ["kotor-diff>=1.0.0"]
 batchpatcher = ["batchpatcher>=2.2.0"]
@@ -32,7 +32,7 @@ kotorcli = ["kotorcli>=1.0.0"]
 holopazaak = ["holopazaak>=1.0.0"]
 kit-generator = ["kit-generator>=1.0.0"]
 all-tools = [
-    "holocrontoolset>=3.1.1",
+    "holocrontoolset>=4.0.0a7",
     "holopatcher>=1.5.3",
     "kotor-diff>=1.0.0",
     "batchpatcher>=2.2.0",
@@ -44,9 +44,9 @@ all-tools = [
 
 # Everything
 all = [
-    "pykotorfont>=1.8.0",
-    "pykotorgl[moderngl]>=1.8.0",
-    "holocrontoolset>=3.1.1",
+    "pykotorfont>=2.0.0",
+    "pykotorgl[moderngl]>=2.0.2",
+    "holocrontoolset>=4.0.0a7",
     "holopatcher>=1.5.3",
     "kotor-diff>=1.0.0",
     "batchpatcher>=2.2.0",
@@ -79,7 +79,7 @@ dev = [
 
 [tool.poetry]
 name = "pykotor-workspace"
-version = "1.8.0"
+version = "2.0.0"
 description = "PyKotor workspace - meta-package for PyKotor ecosystem"
 authors = ["Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"

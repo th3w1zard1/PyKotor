@@ -35,7 +35,7 @@ classifiers = [
     "Environment :: Console",
 ]
 dependencies = [
-    "pykotor>=1.8.0",
+    "pykotor>=2.0.0",
 ]
 
 [project.scripts]
@@ -67,7 +67,7 @@ packages = [{ include = "gui_converter", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^1.8.0"
+pykotor = "^2.0.0"
 
 [tool.poetry.scripts]
 gui-converter = "gui_converter.__main__:main"

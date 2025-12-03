@@ -3,7 +3,7 @@
 
 # Core dependencies
 mcp>=0.1.1
-pykotor>=1.8.0
+pykotor>=2.0.0
 
 # Development dependencies (optional)
 # pytest>=7.0.0

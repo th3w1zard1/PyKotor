@@ -7,6 +7,7 @@ import subprocess
 import sys
 import threading
 import time
+from contextlib import suppress
 
 from loggerplus import RobustLogger
 
@@ -197,9 +198,11 @@ def terminate_main_process(
 
             os.kill(actual_self_pid, signal.SIGKILL)
     except Exception:  # noqa: BLE001
-        RobustLogger().exception("Exception occurred while shutting down the main process")
+        with suppress(Exception):
+            RobustLogger().exception("Exception occurred while shutting down the main process")
     finally:
-        RobustLogger().debug("call os.exit NOW")
+        with suppress(Exception):
+            RobustLogger().debug("call os.exit NOW")
         os._exit(0 if result1 and result2 else 1)
 
 

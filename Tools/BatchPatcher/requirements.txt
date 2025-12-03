@@ -1,5 +1,5 @@
-pykotor>=1.8.0
-pykotorfont>=1.8.0
+pykotor>=2.0.0
+pykotorfont>=2.0.0
 setuptools>=67.8.0,<70
 deep_translator==1.9.2
 deepl-cli==0.3.0

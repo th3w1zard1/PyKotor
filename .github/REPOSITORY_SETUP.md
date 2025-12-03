@@ -77,7 +77,7 @@ All labels have been created via GitHub API:
 1. **ci.yml** - Main CI workflow with multi-platform testing
 2. **lint.yml** - Linting and type checking
 3. **test.yml** - Test suite with coverage
-4. **release.yml** - Automated releases to PyPI
+4. **publish-pypi-auto.yml** - Automated releases to PyPI (scans and publishes packages with newer versions)
 
 ### Security & Quality
 5. **codeql.yml** - CodeQL security analysis

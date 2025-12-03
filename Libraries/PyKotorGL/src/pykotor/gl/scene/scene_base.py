@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from OpenGL.raw.GL.VERSION.GL_1_0 import GL_BACK, GL_DEPTH_TEST, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, glBlendFunc, glCullFace, glEnable
 from loggerplus import RobustLogger
-from typing_extensions import Literal
 
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.stream import BinaryReader

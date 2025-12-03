@@ -99,8 +99,10 @@ sys.excepthook = onAppCrash
 def holopatcher_cleanup_func(app: App):
     """Prevents the patcher from running in the background after sys.exit is called."""
     print("Fully shutting down HoloPatcher...")
-    terminate_main_process()
-    app.root.destroy()
+    with suppress(Exception):
+        terminate_main_process()
+    with suppress(Exception):
+        app.root.destroy()
 
 
 def main():
