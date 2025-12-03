@@ -895,7 +895,7 @@ jobs:
               $shortOsName = "Linux"
             } elseif ($os -eq "macos-11" -or $os -eq "macos-12" -or $os -eq "macos-latest") {
               $shortOsName = "Mac"
-            } elseif ($os -eq "windows-latest" -or $os -eq "windows-2022" -or $os -eq "windows-latest") {
+            } elseif ($os -eq "windows-latest" -or $os -eq "windows-2022") {
               $shortOsName = "Win"
             }
 
