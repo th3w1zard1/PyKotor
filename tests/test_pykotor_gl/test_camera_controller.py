@@ -17,14 +17,19 @@ import unittest
 
 from glm import vec3
 
-from pykotor.gl.scene.camera import Camera
-from pykotor.gl.scene.camera_controller import (
-    CameraController,
-    CameraControllerSettings,
-    CameraMode,
-    CameraState,
-    InputState,
-)
+# Handle optional pykotor.gl dependency
+try:
+    from pykotor.gl.scene.camera import Camera
+    from pykotor.gl.scene.camera_controller import (
+        CameraController,
+        CameraControllerSettings,
+        CameraMode,
+        CameraState,
+        InputState,
+    )
+except ImportError:
+    import pytest
+    pytest.skip("pykotor.gl not available", allow_module_level=True)
 
 
 class TestInputState(unittest.TestCase):

@@ -1,6 +1,13 @@
 from __future__ import annotations
 
 import pytest
+
+# Handle optional pykotor.gl dependency (required by module_designer)
+try:
+    from pykotor.gl.scene import Camera  # noqa: F401
+except ImportError:
+    pytest.skip("pykotor.gl not available", allow_module_level=True)
+
 from qtpy.QtGui import QAction
 from qtpy.QtWidgets import QComboBox, QPushButton
 from toolset.gui.windows.main import ToolWindow

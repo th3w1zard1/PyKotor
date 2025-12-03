@@ -10,7 +10,13 @@ from PIL import Image
 from pathlib import Path
 
 from pykotor.common.language import Language
-from pykotor.font.draw import write_bitmap_font, write_bitmap_fonts
+
+# Handle optional pykotor.font dependency
+try:
+    from pykotor.font.draw import write_bitmap_font, write_bitmap_fonts
+except ImportError:
+    import pytest
+    pytest.skip("pykotor.font not available", allow_module_level=True)
 
 if __name__ == "__main__":
     os.chdir("./Libraries/PyKotorFont")

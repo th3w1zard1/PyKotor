@@ -21,8 +21,13 @@ import glm
 
 from glm import mat4, vec3
 
-from pykotor.gl.scene.camera import Camera
-from pykotor.gl.scene.frustum import CullingStats, Frustum, FrustumPlane
+# Handle optional pykotor.gl dependency
+try:
+    from pykotor.gl.scene.camera import Camera
+    from pykotor.gl.scene.frustum import CullingStats, Frustum, FrustumPlane
+except ImportError:
+    import pytest
+    pytest.skip("pykotor.gl not available", allow_module_level=True)
 
 
 class TestCameraMatrixCaching(unittest.TestCase):
