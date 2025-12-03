@@ -336,16 +336,51 @@ def test_nss_editor_bookmark_persistence(qtbot, installation: HTInstallation):
         cursor.setPosition(block.position())
         editor.ui.codeEdit.setTextCursor(cursor)
         editor.add_bookmark()
+        # Wait for Qt to process the bookmark addition and editItem
+        qtbot.wait(50)
     
-    # Save bookmarks
+    # Verify bookmarks were added
+    assert editor.ui.bookmarkTree.topLevelItemCount() >= 2, "Bookmarks should be added to tree"
+    
+    # Verify bookmark items have valid data before saving
+    for i in range(editor.ui.bookmarkTree.topLevelItemCount()):
+        item = editor.ui.bookmarkTree.topLevelItem(i)
+        assert item is not None, f"Item {i} should not be None"
+        from qtpy.QtCore import Qt
+        line_data = item.data(0, Qt.ItemDataRole.UserRole)
+        assert line_data is not None, f"Item {i} should have line data in UserRole, got {line_data}"
+    
+    # Store resname to verify it doesn't change
+    resname_before = editor._resname
+    
+    # Save bookmarks (add_bookmark already calls _save_bookmarks, but call it again to ensure) 
     editor._save_bookmarks()
+    # Wait for QSettings to persist
+    qtbot.wait(50)
+    
+    # Verify resname hasn't changed
+    assert editor._resname == resname_before, f"resname changed from {resname_before} to {editor._resname}"
+    
+    # Verify bookmarks were actually saved by checking QSettings directly
+    from qtpy.QtCore import QSettings
+    settings = QSettings("HolocronToolsetV3", "NSSEditor")
+    file_key = f"nss_editor/bookmarks/{resname_before}" if resname_before else "nss_editor/bookmarks/untitled"
+    saved_bookmarks_json = settings.value(file_key, "[]")
+    assert saved_bookmarks_json != "[]", f"Bookmarks should be saved to QSettings with key {file_key}, got {saved_bookmarks_json}"
     
     # Clear and reload
     editor.ui.bookmarkTree.clear()
+    assert editor.ui.bookmarkTree.topLevelItemCount() == 0, "Tree should be cleared"
+    
+    # Verify resname still matches before loading
+    assert editor._resname == resname_before, f"resname changed before load: {resname_before} -> {editor._resname}"
+    
     editor.load_bookmarks()
+    # Wait for Qt to process the bookmark loading
+    qtbot.wait(50)
     
     # Verify bookmarks were restored
-    assert editor.ui.bookmarkTree.topLevelItemCount() >= 2
+    assert editor.ui.bookmarkTree.topLevelItemCount() >= 2, "Bookmarks should be restored after load"
 
 
 # ============================================================================
