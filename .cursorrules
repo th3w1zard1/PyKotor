@@ -142,9 +142,9 @@ See `./CONVENTIONS.md` for more information!
 - General pipeline for investigative prompts:
   1. Scope the corpus with `kotorcli list` (targets) or `kotorcli list-archive --file <capsule>` to understand which assets are relevant.
   2. Pull concrete resources with `kotorcli extract --file ... --filter <resref>` followed by the necessary converters (`gff2json`, `gff2xml`, `2da2csv`, `tlk2xml`, etc.) so that downstream tools/scripts can diff or inspect.
-  3. Run semantic search using `kotorcli search-archive --file <capsule> --pattern <needle> [--content]` whenever you need “find everything that references X” behaviour; combine with format converters to inspect matches.
+  3. Run semantic search using `kotorcli search-archive --file <capsule> --pattern <needle> [--content]` whenever you need "find everything that references X" behaviour; combine with format converters to inspect matches.
   4. For deltas or regressions, rely on `kotorcli diff`, `kotorcli validate`, and `kotorcli stats` to baseline assets before/after mutations.
-- Plot/quest analysis workflow (e.g., “list everything that modifies a plot point”):
+- Plot/quest analysis workflow (e.g., "list everything that modifies a plot point"):
   1. `kotorcli search-archive --file $Env:K1_PATH/chitin.key --pattern global` to locate `global.jrl` plus overrides.
   2. `kotorcli extract --file <capsule> --filter global.jrl && kotorcli gff2json global.jrl` to materialize the quest table.
   3. Cross-reference journal updates by grepping scripts/dialogs: `kotorcli search-archive --file <module rim> --pattern "SetJournalEntry" --content`.
