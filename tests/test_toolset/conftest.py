@@ -28,27 +28,63 @@ if _pythonpath:
 if "QT_API" not in os.environ:
     os.environ["QT_API"] = "PyQt5"
 
-# Configure Qt for OpenGL testing
+# Configure Qt for headless testing by default
+# Most tests should run headless (offscreen) to avoid spawning GUI windows
+# Only module designer tests (which require OpenGL) should run with a real display
+# Set offscreen mode by default - module designer tests will override this
+if "QT_QPA_PLATFORM" not in os.environ:
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
+
+# Store original platform setting for module designer tests
+_original_qt_platform = os.environ.get("QT_QPA_PLATFORM")
+
+# Configure Qt for OpenGL testing (for module designer tests only)
 # Don't force software rendering - use hardware GPU when available
 # Software rendering doesn't support modern OpenGL features (shaders, etc.)
 # Only CI systems without GPU should set QT_OPENGL=software explicitly
 
-# CRITICAL: Ensure tests run with a display (NOT headless)
-# OpenGL/GL tests require a real display and cannot run in headless/offscreen mode
-# Remove any QT_QPA_PLATFORM=offscreen that might have been set elsewhere
-if "QT_QPA_PLATFORM" in os.environ and os.environ["QT_QPA_PLATFORM"] == "offscreen":
-    # Unset it to allow Qt to use the default platform (with display)
-    del os.environ["QT_QPA_PLATFORM"]
-    import warnings
-    warnings.warn(
-        "QT_QPA_PLATFORM=offscreen was set but removed for GL tests. "
-        "GL tests require a real display and cannot run headless.",
-        UserWarning
-    )
-
 # Disable PyOpenGL error checking for tests
 # Some OpenGL configurations may produce errors that don't affect actual rendering
 os.environ["PYOPENGL_ERROR_CHECKING"] = "0"
+
+def _is_module_designer_test(item: pytest.Item) -> bool:
+    """Check if a test is a module designer test that requires OpenGL/real display.
+    
+    Module designer tests require a real display because they use OpenGL rendering.
+    All other tests should run headless (offscreen) to avoid spawning GUI windows.
+    
+    Only tests that directly test ModuleDesigner (not just import ToolWindow) need real display.
+    """
+    test_path = str(item.fspath) if hasattr(item, 'fspath') else str(item.path)
+    test_name = item.name if hasattr(item, 'name') else ""
+    
+    # Only tests that directly test ModuleDesigner need real display
+    # test_module_designer_performance.py contains actual ModuleDesigner tests
+    # test_ui_windows.py has test_module_designer_init which directly tests ModuleDesigner
+    # Other tests that import ToolWindow but don't use ModuleDesigner should run headless
+    if "test_module_designer_performance" in test_path:
+        return True
+    if "test_ui_windows" in test_path and "module_designer" in test_name.lower():
+        return True
+    
+    return False
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_setup(item: pytest.Item):
+    """Setup hook that runs before each test.
+    
+    For module designer tests, unset QT_QPA_PLATFORM to allow real display.
+    For all other tests, ensure offscreen mode is set to prevent GUI windows from appearing.
+    """
+    if _is_module_designer_test(item):
+        # Module designer tests need real display for OpenGL rendering
+        # Remove offscreen setting to allow real display
+        if "QT_QPA_PLATFORM" in os.environ and os.environ["QT_QPA_PLATFORM"] == "offscreen":
+            del os.environ["QT_QPA_PLATFORM"]
+    else:
+        # All other tests should run headless to avoid spawning GUI windows
+        # This prevents tests from showing windows that require manual interaction
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 # Paths
 REPO_ROOT = Path(__file__).parents[2]

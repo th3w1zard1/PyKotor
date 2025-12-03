@@ -20,14 +20,9 @@ import pytest
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication, QMessageBox
 
-# Ensure we're not running in headless mode
-# GL tests require a real display and cannot work with QT_QPA_PLATFORM=offscreen
-if os.environ.get("QT_QPA_PLATFORM") == "offscreen":
-    pytest.skip(
-        "Cannot run GL tests in headless/offscreen mode. "
-        "These tests require a real display for OpenGL rendering.",
-        allow_module_level=True
-    )
+# Note: This file's tests will have QT_QPA_PLATFORM unset by conftest.py's pytest_runtest_setup hook
+# The hook detects module designer tests and allows real display for them
+# No need to check here - the conftest handles it
 
 from pykotor.resource.generics.git import (
     GITCamera,

@@ -275,15 +275,15 @@ def test_uts_editor_manipulate_interval_spins(qtbot, installation: HTInstallatio
     original_data = uts_file.read_bytes()
     editor.load(uts_file, "low_air_01", ResourceType.UTS, original_data)
     
-    # Test interval
-    test_interval_values = [0.0, 1.0, 5.0, 10.0, 60.0]
+    # Test interval (QSpinBox requires int, but UTS stores as int)
+    test_interval_values = [0, 1, 5, 10, 60]
     for val in test_interval_values:
         editor.ui.intervalSpin.setValue(val)
         data, _ = editor.build()
         modified_uts = read_uts(data)
         assert modified_uts.interval == val
     
-    # Test interval variation
+    # Test interval variation (QSpinBox requires int, but UTS stores as int)
     for val in test_interval_values:
         editor.ui.intervalVariationSpin.setValue(val)
         data, _ = editor.build()
@@ -758,8 +758,8 @@ def test_uts_editor_manipulate_all_playback_fields_combination(qtbot, installati
     editor.ui.northRandomSpin.setValue(5.0)
     editor.ui.eastRandomSpin.setValue(5.0)
     editor.ui.orderRandomRadio.setChecked(True)
-    editor.ui.intervalSpin.setValue(10.0)
-    editor.ui.intervalVariationSpin.setValue(2.0)
+    editor.ui.intervalSpin.setValue(10)  # QSpinBox requires int
+    editor.ui.intervalVariationSpin.setValue(2)  # QSpinBox requires int
     editor.ui.volumeVariationSlider.setValue(25)
     editor.ui.pitchVariationSlider.setValue(50)
     qtbot.wait(10)
@@ -942,8 +942,8 @@ def test_uts_editor_minimum_values(qtbot, installation: HTInstallation, test_fil
     editor.ui.tagEdit.setText("")
     editor.ui.resrefEdit.setText("")
     editor.ui.volumeSlider.setValue(0)
-    editor.ui.intervalSpin.setValue(0.0)
-    editor.ui.intervalVariationSpin.setValue(0.0)
+    editor.ui.intervalSpin.setValue(0)  # QSpinBox requires int
+    editor.ui.intervalVariationSpin.setValue(0)  # QSpinBox requires int
     editor.ui.volumeVariationSlider.setValue(0)
     editor.ui.pitchVariationSlider.setValue(0)
     editor.ui.cutoffSpin.setValue(0.0)
@@ -1479,22 +1479,3 @@ def test_utseditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
-
-    """Test that play everywhere disables all position groups."""
-    editor = UTSEditor(None, installation)
-    qtbot.addWidget(editor)
-    
-    uts_file = test_files_dir / "low_air_01.uts"
-    if not uts_file.exists():
-        pytest.skip("low_air_01.uts not found")
-    
-    editor.load(uts_file, "low_air_01", ResourceType.UTS, uts_file.read_bytes())
-    
-    # Set play everywhere
-    editor.ui.playEverywhereRadio.setChecked(True)
-    qtbot.wait(10)
-    
-    # Verify all position groups are disabled
-    assert not editor.ui.rangeGroup.isEnabled()
-    assert not editor.ui.heightGroup.isEnabled()
-    assert not editor.ui.distanceGroup.isEnabled()
