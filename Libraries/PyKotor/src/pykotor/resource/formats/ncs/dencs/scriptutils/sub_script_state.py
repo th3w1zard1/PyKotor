@@ -365,7 +365,7 @@ class SubScriptState:
         self.check_end(node)
 
     def transform_logii(self, node):
-        from pykotor.resource.formats.ncs.dencs.scriptnode.a_conditional_exp import AConditionalExp  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.formats.ncs.dencs.scriptnode.a_conditional_exp import AConditionalExp  # pyright: ignore[reportMissingImports]  # noqa: PLC0415
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_if import AIf  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
@@ -581,6 +581,11 @@ class SubScriptState:
         if not self.current.has_children() and isinstance(self.current, AIf):
             return self.remove_if_as_exp()
         anode: ScriptNode = self.current.remove_last_child()
+        if anode is None:
+            # No children to remove, return None or handle gracefully
+            if isinstance(self.current, AIf):
+                return self.remove_if_as_exp()
+            raise RuntimeError("Cannot remove last expression: no children available")
         if isinstance(anode, AExpression):
             if not force_one_only and isinstance(anode, AVarRef) and not anode.var().is_assigned and not anode.var().is_param and self.current.has_children():
                 last = self.current.get_last_child()
