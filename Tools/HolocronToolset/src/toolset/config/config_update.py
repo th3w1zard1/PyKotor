@@ -5,9 +5,12 @@ import json
 import re
 
 from contextlib import suppress
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-import requests
+try:
+    import requests
+except ImportError:
+    requests = None  # type: ignore[assignment, unused-ignore]
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped]  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtWidgets import QMessageBox
@@ -43,7 +46,13 @@ def fetch_update_info(
     update_link: str,
     timeout: int = 15,
 ) -> dict[str, Any]:
-    req: requests.Response = requests.get(
+    if requests is None:
+        raise ImportError(
+            "The 'requests' module is not installed. "
+            "Please install it to enable update checking functionality. "
+            "You can install it with: pip install requests"
+        )
+    req = requests.get(
         update_link,
         timeout=timeout,
     )
@@ -81,6 +90,24 @@ def get_remote_toolset_update_info(
         remote_info: dict[str, Any] = json.loads(cleaned_json_str)
         if not isinstance(remote_info, dict):
             raise TypeError(f"Expected remote_info to be a dict, instead got type {remote_info.__class__.__name__}")  # noqa: TRY301
+    except ImportError as e:
+        # Handle missing requests module specifically
+        err_msg: str = str(universal_simplify_exception(e))
+        result: int | QMessageBox.StandardButton = silent or QMessageBox.question(
+            None,
+            "Internet connection unavailable",
+            (
+                "The 'requests' module is not installed, so the toolset cannot check for updates online.<br><br>"
+                + err_msg.replace("\n", "<br>")
+                + "<br><br>"
+                + "Would you like to use the local configuration instead?"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        if result not in {QMessageBox.StandardButton.Yes, True}:
+            return e
+        remote_info = LOCAL_PROGRAM_INFO
     except Exception as e:  # noqa: BLE001
         err_msg: str = str(universal_simplify_exception(e))
         result: int | QMessageBox.StandardButton = silent or QMessageBox.question(
