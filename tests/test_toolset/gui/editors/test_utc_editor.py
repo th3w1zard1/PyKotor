@@ -2328,6 +2328,7 @@ def test_utc_editor_all_widgets_build_verification(qtbot, installation: HTInstal
     editor.ui.plotCheckbox.setChecked(True)
     editor.ui.isPcCheckbox.setChecked(True)
     editor.ui.noReorientateCheckbox.setChecked(True)
+    qtbot.wait(10)  # Ensure Qt processes checkbox state changes in headless mode
     if editor.ui.raceSelect.count() > 0:
         editor.ui.raceSelect.setCurrentIndex(0)
     if editor.ui.subraceSelect.count() > 0:
@@ -2341,8 +2342,10 @@ def test_utc_editor_all_widgets_build_verification(qtbot, installation: HTInstal
     if editor.ui.perceptionSelect.count() > 0:
         editor.ui.perceptionSelect.setCurrentIndex(1)
     editor.ui.challengeRatingSpin.setValue(5)
-    editor.ui.blindSpotSpin.setValue(3)
-    editor.ui.multiplierSetSpin.setValue(2)
+    # K2-only fields
+    if installation.tsl:
+        editor.ui.blindSpotSpin.setValue(3)
+        editor.ui.multiplierSetSpin.setValue(2)
     
     # Set ALL stats values
     editor.ui.computerUseSpin.setValue(10)
