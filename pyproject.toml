@@ -1,63 +1,34 @@
 [build-system]
-requires = ["setuptools>=67.8.0,<70", "wheel"]
+requires = [
+    "setuptools>=42,<70",
+    "wheel",
+]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = [
+    "Tools",
+    "Libraries",
+]
+
 [project]
-name = "pykotor-workspace"
-version = "2.0.0"
-description = "PyKotor workspace - meta-package for PyKotor ecosystem"
+name="PyKotor"
+version="1.7"
+description="Read, modify and write files used by KotOR's game engine."
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "LGPL-3.0-or-later License"}
 keywords = ["kotor", "library", "holocron", "toolset", "pykotor", "editor", "holopatcher", "tslpatcher"]
-requires-python = ">=3.8"
-dependencies = [
-    "pykotor>=2.0.0",
-]
+requires-python = ">= 3.8"
+dependencies = []
 
 [project.optional-dependencies]
-# Extension libraries
-font = ["pykotorfont>=2.0.0"]
-gl = ["pykotorgl[moderngl]>=2.0.2"]
-all-extensions = ["pykotorfont>=2.0.0", "pykotorgl[moderngl]>=2.0.2"]
-
-# Tools (lowercase PyPI names)
-holocrontoolset = ["holocrontoolset>=4.0.0a7"]
-holopatcher = ["holopatcher>=1.5.3"]
-kotor-diff = ["kotor-diff>=1.0.0"]
-batchpatcher = ["batchpatcher>=2.2.0"]
-gui-converter = ["gui-converter>=1.0.0"]
-kotorcli = ["kotorcli>=1.0.0"]
-holopazaak = ["holopazaak>=1.0.0"]
-kit-generator = ["kit-generator>=1.0.0"]
-all-tools = [
-    "holocrontoolset>=4.0.0a7",
-    "holopatcher>=1.5.3",
-    "kotor-diff>=1.0.0",
-    "batchpatcher>=2.2.0",
-    "gui-converter>=1.0.0",
-    "kotorcli>=1.0.0",
-    "holopazaak>=1.0.0",
-    "kit-generator>=1.0.0",
-]
-
-# Everything
-all = [
-    "pykotorfont>=2.0.0",
-    "pykotorgl[moderngl]>=2.0.2",
-    "holocrontoolset>=4.0.0a7",
-    "holopatcher>=1.5.3",
-    "kotor-diff>=1.0.0",
-    "batchpatcher>=2.2.0",
-    "gui-converter>=1.0.0",
-    "kotorcli>=1.0.0",
-    "holopazaak>=1.0.0",
-    "kit-generator>=1.0.0",
-]
-
-# Development dependencies
 dev = [
+    "charset-normalizer>=2.0.0,<3.3.0; python_version<\"3.9\"",
+    "charset-normalizer>=2.0.0; python_version>=\"3.9\"",
+    "defusedxml>=0.7.1",
+    "pycryptodome>=3.23.0",
     "astroid>=3.2.0,<3.5.0; python_version>=\"3.8\"",
     "autoflake>=2.3.1; python_version>=\"3.8\"",
     "iniconfig>=2.1.0; python_version>=\"3.8\"",
@@ -76,109 +47,30 @@ dev = [
     "typing-extensions>=4.5.0,<4.9.0; python_version<\"3.9\"",
     "typing-extensions>=4.5.0; python_version>=\"3.9\"",
 ]
-
-[tool.poetry]
-name = "pykotor-workspace"
-version = "2.0.0"
-description = "PyKotor workspace - meta-package for PyKotor ecosystem"
-authors = ["Benjamin Auquite <halomastar@gmail.com>"]
-readme = "README.md"
-packages = []
-
-[tool.poetry.dependencies]
-python = "^3.8"
-pykotor = { path = "Libraries/PyKotor", develop = true }
-
-[tool.poetry.group.dev.dependencies]
-mypy = "*"
-ruff = "*"
-pylint = "*"
-snakeviz = "*"
-autoflake = "*"
-pytest = "*"
-pytest-xdist = "*"
-pytest-html = "*"
-pytest-cov = "*"
-black = "*"
-flake8 = "*"
-
-[tool.poetry.extras]
-# Extension libraries
-font = ["pykotorfont"]
-gl = ["pykotorgl[moderngl]"]
-all-extensions = ["pykotorfont", "pykotorgl[moderngl]"]
-
-# Tools
-holocrontoolset = ["holocrontoolset"]
-holopatcher = ["holopatcher"]
-kotor-diff = ["kotor-diff"]
-batchpatcher = ["batchpatcher"]
-gui-converter = ["gui-converter"]
-kotorcli = ["kotorcli"]
-holopazaak = ["holopazaak"]
-kit-generator = ["kit-generator"]
-all-tools = ["holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
-
-# Everything
-all = ["pykotorfont", "pykotorgl[moderngl]", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
-
-[project.urls]
-homepage = "https://github.com/th3w1zard1/PyKotor"
-documentation = "https://github.com/th3w1zard1/PyKotor/blob/master/README.md"
-repository = "https://github.com/th3w1zard1/PyKotor.git"
-issues = "https://github.com/th3w1zard1/PyKotor/issues"
-#Changelog = "https://github.com/th3w1zard1/PyKotor/blob/master/CHANGELOG.md"
-
-########################################################
-## UV workspace configuration                         ##
-########################################################
-
-[tool.uv]
-# Use local workspace packages only - PyPI has outdated pykotor 1.6.2
-dev-dependencies = []
-
-[tool.uv.workspace]
-members = [
-    "Libraries/PyKotor",
-    "Libraries/PyKotorFont",
-    "Libraries/PyKotorGL",
-    "Tools/BatchPatcher",
-    "Tools/GuiConverter",
-    "Tools/HolocronAI",
-    "Tools/HolocronToolset",
-    "Tools/HoloGenerator",
-    "Tools/HoloPatcher",
-    "Tools/HoloPazaak",
-    "Tools/KitGenerator",
-    "Tools/KotorCLI",
-    "Tools/KotorDiff",
+font = [
+  "pillow>=9.5; python_implementation == 'CPython'",       # required for TXI/TGA fonts (CPython)
+  "pillow>10,<11.1.0; python_implementation == 'PyPy'",    # required for TXI/TGA fonts (PyPy)
+]
+secure_xml = ["defusedxml~=0.7"]    # secure XML parsing
+encodings = ["charset-normalizer>=2.0,<3.4"]  # used for localized string decodings
+gl = [
+  "django>2.1; os_name != 'nt'",
+  "django>2.0; os_name == 'nt'",
+  "numpy~=1.22",      # ( might need 1.22.2 )
+  "PyOpenGL~=3.1",    # ( might need 3.1.6 )
+  "PyGLM>=2.0,<2.8; python_implementation == 'CPython'",  # ( might need 2.5.7 )
 ]
 
-[tool.uv.sources]
-# Use workspace members instead of PyPI
-pykotor = { workspace = true }
-pykotorfont = { workspace = true }
-pykotorgl = { workspace = true }
-batchpatcher = { workspace = true }
-gui-converter = { workspace = true }
-holocron-ai = { workspace = true }
-holocrontoolset = { workspace = true }
-hologenerator = { workspace = true }
-holopatcher = { workspace = true }
-holopazaak = { workspace = true }
-kit-generator = { workspace = true }
-kotorcli = { workspace = true }
-kotor-diff = { workspace = true }
+[project.urls]
+Homepage = "https://github.com/NickHugi/PyKotor"
+Documentation = "https://github.com/NickHugi/PyKotor/blob/master/README.md"
+Repository = "https://github.com/NickHugi/PyKotor.git"
+Issues = "https://github.com/NickHugi/PyKotor/issues"
+#Changelog = "https://github.com/NickHugi/PyKotor/blob/master/CHANGELOG.md"
 
 ########################################################
 ## define only linter configurations below this point ##
 ########################################################
-
-[tool.pyright.defineConstant]
-PYQT5 = true
-PYSIDE2 = false
-PYQT6 = false
-PYSIDE6 = false
 
 [tool.black]
 line-length = 175
@@ -211,23 +103,13 @@ exclude = '''
 '''
 
 [tool.pyright]
-include = ["*.py"]
-exclude = ["**/node_modules/**", "**/__pycache__/**", "**/build/**", "**/dist/**", "**/venv/**", "**/__pycache__/**"]
 extraPaths = [
     "Libraries/PyKotor/src",
-    "Libraries/PyKotorGL/src",
-    "Libraries/PyKotorFont/src",
-    "Tools/HolocronToolset/src",
-    "Tools/BatchPatcher/src",
-    "Tools/HoloPatcher/src",
-    "Tools/KotorDiff/src",
-    "Tools/GuiConverter/src"
+    "Libraries/Utility/src"
 ]
 reportMissingImports = true
-reportMissingTypeStubs = false
+reportMissingTypeStubs = true
 pythonVersion = "3.8"
-analyzeUnannotatedFunctions = true
-deprecateTypingAliases = false
 
 [tool.isort]
 atomic = true
@@ -235,6 +117,12 @@ profile = "black"
 line_length = 175
 skip_gitignore = true
 multi_line_output = 3
+
+[tool.pyright.defineConstant]
+PYQT5 = false
+PYSIDE2 = false
+PYQT6 = false
+PYSIDE6 = true
 
 [tool.yapf]
 column_limit = 175
@@ -248,8 +136,8 @@ split_before_dict_set_generator = true
 split_before_expression_after_opening_paren = false
 split_complex_comprehension = true
 split_penalty_after_opening_bracket = 50
-split_penalty_excess_character = 75                 # Lower penalty for going over the column limit
-split_penalty_for_added_line_split = 100            # Discourage adding new line splits
+split_penalty_excess_character = 75  # Lower penalty for going over the column limit
+split_penalty_for_added_line_split = 100  # Discourage adding new line splits
 
 [tool.ruff]
 line-length = 175
@@ -260,30 +148,33 @@ preview = false
 fix = true
 force-exclude = true
 show-fixes = true
-output-format = "grouped" # Group violations by containing file.
+output-format = "grouped"  # Group violations by containing file.
 respect-gitignore = false
 
 src = [
     "Libraries/PyKotor/src",
     "Libraries/PyKotorGL/src",
     "Libraries/PyKotorFont/src",
+    "Libraries/Utility/src",
     "Tools/HolocronToolset/src",
     "Tools/BatchPatcher/src",
     "Tools/HoloPatcher/src",
     "Tools/KotorDiff/src",
     "Tools/GuiConverter/src",
-    "tests",
+    "Tools/MDLDecompile/src",
+    "tests"
 ]
 
 [tool.ruff.lint]
 external = ["V"]
 task-tags = ["TODO", "FIXME", "HACK"]
+select = ["ALL"]
 exclude = [".venv", ".venv*"]
 unfixable = [
     "F841",
     "ERA001",
     "N815",
-    "RUF100", # Unused `noqa` directive
+    "RUF100",   # Unused `noqa` directive
     #"UP035",  # replaces deprecated/outdated imports (we want to support older versions of python in the future)
     #"UP038",  # non-pep604-isinstance (python 3.10 syntax)
 ]
@@ -370,19 +261,13 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "*.pyi" = [
-    "I002", # from __future__ import annotations
+  "I002", # from __future__ import annotations
 ]
 "tests/*.py" = ["ALL"]
 ".github/*py" = ["INP001"]
-"__init__.py" = ["I001", "I002", "TID252", "F401"]
+"__init__.py" = ["I001", "F401"]
 "globalsettings.py" = ["I001", "F401"]
-"Tools/HolocronToolset/src/toolset/*.py" = [
-    "FBT003",
-    "N802",
-    "N803",
-    "N806",
-    "A001",
-]
+"Tools/HolocronToolset/src/toolset/*.py" = ["FBT003", "N802", "N803", "N806", "A001"]
 "Tools/HolocronToolset/src/toolset/uic/*.py" = ["ALL"]
 "resources_rc.py" = ["ALL"]
 ".mdx" = ["ALL"]
@@ -395,7 +280,7 @@ fixture-parentheses = false
 mark-parentheses = false
 parametrize-names-type = "list"
 parametrize-values-row-type = "list"
-parametrize-values-type = "list"                         # default
+parametrize-values-type = "list"  # default
 raises-require-match-for = ["requests.RequestException"]
 
 [tool.ruff.lint.flake8-annotations]
@@ -412,11 +297,11 @@ inline-quotes = "double"
 multiline-quotes = "double"
 
 [tool.ruff.lint.flake8-tidy-imports]
-ban-relative-imports = "all" # Disallow all relative imports.
+ban-relative-imports = "all"  # Disallow all relative imports.
 
 [tool.ruff.lint.flake8-type-checking]
 # Add quotes around type annotations, if doing so would allow an import to be moved into a type-checking block.
-quote-annotations = true                         # Does nothing when from __future__ import annotations is used
+quote-annotations = true  # Does nothing when from __future__ import annotations is used
 exempt-modules = ["typing", "typing_extensions"]
 strict = true
 
@@ -462,49 +347,7 @@ split_arguments_when_comma_terminated = true
 [tool.pylintrc]
 max-line-length = 200
 
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-check_untyped_defs = true
-no_implicit_optional = true
-explicit_package_bases = true
-namespace_packages = true
-mypy_path = [
-    "Libraries/PyKotor/src",
-    "Libraries/PyKotorGL/src",
-    "Libraries/PyKotorFont/src",
-    "Tools/HolocronToolset/src",
-    "Tools/BatchPatcher/src",
-    "Tools/HoloPatcher/src",
-    "Tools/KotorDiff/src",
-    "Tools/GuiConverter/src",
-]
-exclude = [
-    "\\.venv",
-    "venv",
-    "\\.mypy_cache",
-    "build",
-    "dist",
-    "__pycache__",
-    "tests/results",
-]
-
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-qt_api = "pyqt5"  # Default, can be overridden by PYTEST_QT_API environment variable
-markers = [
-    "gui: marks tests that require a GUI (deselect with '-m \"not gui\"')",
-    "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
-]
-addopts = "-ra -q"
-# NOTE: xvfb settings are commented out - GL/OpenGL tests require a real display
-# and cannot run in headless/offscreen mode. Do not enable xvfb for GL tests.
-#xvfb_width = 1920
-#xvfb_height = 1080
-#xvfb_colordepth = 24
-
 log_cli = true
 log_cli_level = "CRITICAL"
 log_cli_format = "%(message)s"

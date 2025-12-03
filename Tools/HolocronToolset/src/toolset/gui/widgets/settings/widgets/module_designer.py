@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import qtpy
+
 from qtpy import QtCore
-from qtpy.QtCore import Qt
 
 from pykotor.common.misc import Color
 from toolset.data.settings import Settings, SettingsProperty
-from toolset.gui.widgets.settings.widgets.base import SettingsWidget
+from toolset.gui.widgets.settings.base import SettingsWidget
+from toolset.utils.misc import QtKey, QtMouse
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
@@ -18,7 +20,8 @@ if TYPE_CHECKING:
 
 
 class ModuleDesignerWidget(SettingsWidget):
-    sig_settings_edited = QtCore.Signal()  # pyright: ignore[reportPrivateImportUsage]
+    editedSignal = QtCore.Signal()  # pyright: ignore[reportPrivateImportUsage]
+
     def __init__(self, parent: QWidget):
         """Initializes the Module Designer UI.
 
@@ -37,7 +40,17 @@ class ModuleDesignerWidget(SettingsWidget):
 
         self.settings: ModuleDesignerSettings = ModuleDesignerSettings()
 
-        from toolset.uic.qtpy.widgets.settings import module_designer
+        if qtpy.API_NAME == "PySide2":
+            from toolset.uic.pyside2.widgets.settings import module_designer  # noqa: PLC0415  # pylint: disable=C0415
+        elif qtpy.API_NAME == "PySide6":
+            from toolset.uic.pyside6.widgets.settings import module_designer  # noqa: PLC0415  # pylint: disable=C0415
+        elif qtpy.API_NAME == "PyQt5":
+            from toolset.uic.pyqt5.widgets.settings import module_designer  # noqa: PLC0415  # pylint: disable=C0415
+        elif qtpy.API_NAME == "PyQt6":
+            from toolset.uic.pyqt6.widgets.settings import module_designer  # noqa: PLC0415  # pylint: disable=C0415
+        else:
+            raise ImportError(f"Unsupported Qt bindings: {qtpy.API_NAME}")
+
         self.ui = module_designer.Ui_Form()
         self.ui.setupUi(self)
 
@@ -67,7 +80,7 @@ class ModuleDesignerWidget(SettingsWidget):
         self.ui.controls2dResetButton.clicked.connect(self.resetControls2d)
         self.ui.coloursResetButton.clicked.connect(self.resetColours)
 
-        self.setup_values()
+        self.setupValues()
 
         # Install the event filter on all child widgets
         self.installEventFilters(self, self.noScrollEventFilter)
@@ -106,7 +119,7 @@ class ModuleDesignerWidget(SettingsWidget):
             colorWidget: ColorEdit = getattr(self.ui, colorEdit)
             self._registerColour(colorWidget, colorEdit[:-4])
 
-    def setup_values(self):
+    def setupValues(self):
         self.ui.fovSpin.setValue(self.settings.fieldOfView)
         self._load3dBindValues()
         self._loadFcBindValues()
@@ -201,23 +214,23 @@ class ModuleDesignerSettings(Settings):
     )
     speedBoostCamera3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "speedBoostCamera3dBind",
-        ({Qt.Key.Key_Shift}, set()),
+        ({QtKey.Key_Shift}, set()),
     )
     moveCameraXY3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraXY3dBind",
-        ({Qt.Key.Key_Control}, {Qt.MouseButton.LeftButton}),
+        ({QtKey.Key_Control}, {QtMouse.LeftButton}),
     )
     moveCameraZ3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraZ3dBind",
-        ({Qt.Key.Key_Control}, set()),
+        ({QtKey.Key_Control}, set()),
     )
     moveCameraPlane3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraPlane3dBind",
-        (set(), {Qt.MouseButton.MiddleButton}),
+        (set(), {QtMouse.MiddleButton}),
     )
     rotateCamera3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCamera3dBind",
-        (set(), {Qt.MouseButton.LeftButton}),
+        (set(), {QtMouse.LeftButton}),
     )
     zoomCamera3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "zoomCamera3dBind",
@@ -225,103 +238,103 @@ class ModuleDesignerSettings(Settings):
     )
     zoomCameraMM3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "zoomCameraMM3dBind",
-        (set(), {Qt.MouseButton.RightButton}),
+        (set(), {QtMouse.RightButton}),
     )
     rotateSelected3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateSelected3dBind",
-        (set(), {Qt.MouseButton.MiddleButton}),
+        (set(), {QtMouse.MiddleButton}),
     )
     moveSelectedXY3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveSelectedXY3dBind",
-        (set(), {Qt.MouseButton.LeftButton}),
+        (set(), {QtMouse.LeftButton}),
     )
     moveSelectedZ3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveSelectedZ3dBind",
-        ({Qt.Key.Key_Shift}, {Qt.MouseButton.LeftButton}),
+        ({QtKey.Key_Shift}, {QtMouse.LeftButton}),
     )
     rotateObject3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateObject3dBind",
-        ({Qt.Key.Key_Alt}, {Qt.MouseButton.LeftButton}),
+        ({QtKey.Key_Alt}, {QtMouse.LeftButton}),
     )
     selectObject3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "selectObject3dBind",
-        (set(), {Qt.MouseButton.LeftButton}),
+        (set(), {QtMouse.LeftButton}),
     )
     toggleFreeCam3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "toggleFreeCam3dBind",
-        ({Qt.Key.Key_F}, set()),
+        ({QtKey.Key_F}, set()),
     )
     deleteObject3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "deleteObject3dBind",
-        ({Qt.Key.Key_Delete}, None),
+        ({QtKey.Key_Delete}, None),
     )
     moveCameraToSelected3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraToSelected3dBind",
-        ({Qt.Key.Key_Z}, None),
+        ({QtKey.Key_Z}, None),
     )
     moveCameraToCursor3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraToCursor3dBind",
-        ({Qt.Key.Key_X}, None),
+        ({QtKey.Key_X}, None),
     )
     moveCameraToEntryPoint3dBind = Settings.addSetting(
         "moveCameraToEntryPoint3dBind",
-        ({Qt.Key.Key_C}, None),
+        ({QtKey.Key_C}, None),
     )
     rotateCameraLeft3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCameraLeft3dBind",
-        ({Qt.Key.Key_7}, None),
+        ({QtKey.Key_7}, None),
     )
     rotateCameraRight3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCameraRight3dBind",
-        ({Qt.Key.Key_9}, None),
+        ({QtKey.Key_9}, None),
     )
     rotateCameraUp3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCameraUp3dBind",
-        ({Qt.Key.Key_1}, None),
+        ({QtKey.Key_1}, None),
     )
     rotateCameraDown3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCameraDown3dBind",
-        ({Qt.Key.Key_3}, None),
+        ({QtKey.Key_3}, None),
     )
     moveCameraBackward3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraBackward3dBind",
-        ({Qt.Key.Key_2}, None),
+        ({QtKey.Key_2}, None),
     )
     moveCameraForward3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraForward3dBind",
-        ({Qt.Key.Key_8}, None),
+        ({QtKey.Key_8}, None),
     )
     moveCameraLeft3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraLeft3dBind",
-        ({Qt.Key.Key_4}, None),
+        ({QtKey.Key_4}, None),
     )
     moveCameraRight3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraRight3dBind",
-        ({Qt.Key.Key_6}, None),
+        ({QtKey.Key_6}, None),
     )
     moveCameraUp3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraUp3dBind",
-        ({Qt.Key.Key_Q}, None),
+        ({QtKey.Key_Q}, None),
     )
     moveCameraDown3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraDown3dBind",
-        ({Qt.Key.Key_E}, None),
+        ({QtKey.Key_E}, None),
     )
     zoomCameraIn3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "zoomCameraIn3dBind",
-        ({Qt.Key.Key_Plus}, None),
+        ({QtKey.Key_Plus}, None),
     )
     zoomCameraOut3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "zoomCameraOut3dBind",
-        ({Qt.Key.Key_Minus}, None),
+        ({QtKey.Key_Minus}, None),
     )
     duplicateObject3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "duplicateObject3dBind",
-        ({Qt.Key.Key_Alt}, {Qt.MouseButton.LeftButton}),
+        ({QtKey.Key_Alt}, {QtMouse.LeftButton}),
     )
     resetCameraView3dBind: SettingsProperty[Bind] = Settings.addSetting(
         "resetCameraView3dBind",
-        ({Qt.Key.Key_Home}, set()),
+        ({QtKey.Key_Home}, set()),
     )
     # endregion
 
@@ -341,63 +354,63 @@ class ModuleDesignerSettings(Settings):
 
     speedBoostCameraFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "speedBoostCameraFcBind",
-        ({Qt.Key.Key_Shift}, set()),
+        ({QtKey.Key_Shift}, set()),
     )
     moveCameraForwardFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraForwardFcBind",
-        ({Qt.Key.Key_W}, set()),
+        ({QtKey.Key_W}, set()),
     )
     moveCameraBackwardFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraBackwardFcBind",
-        ({Qt.Key.Key_S}, set()),
+        ({QtKey.Key_S}, set()),
     )
     moveCameraLeftFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraLeftFcBind",
-        ({Qt.Key.Key_A}, set()),
+        ({QtKey.Key_A}, set()),
     )
     moveCameraRightFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraRightFcBind",
-        ({Qt.Key.Key_D}, set()),
+        ({QtKey.Key_D}, set()),
     )
     moveCameraUpFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraUpFcBind",
-        ({Qt.Key.Key_Q}, set()),
+        ({QtKey.Key_Q}, set()),
     )
     moveCameraDownFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraDownFcBind",
-        ({Qt.Key.Key_E}, set()),
+        ({QtKey.Key_E}, set()),
     )
     rotateCameraLeftFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCameraLeftFcBind",
-        ({Qt.Key.Key_7}, None),
+        ({QtKey.Key_7}, None),
     )
     rotateCameraRightFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCameraRightFcBind",
-        ({Qt.Key.Key_9}, None),
+        ({QtKey.Key_9}, None),
     )
     rotateCameraUpFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCameraUpFcBind",
-        ({Qt.Key.Key_1}, None),
+        ({QtKey.Key_1}, None),
     )
     rotateCameraDownFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCameraDownFcBind",
-        ({Qt.Key.Key_3}, None),
+        ({QtKey.Key_3}, None),
     )
     zoomCameraInFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "zoomCameraInFcBind",
-        ({Qt.Key.Key_Plus}, None),
+        ({QtKey.Key_Plus}, None),
     )
     zoomCameraOutFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "zoomCameraOutFcBind",
-        ({Qt.Key.Key_Minus}, None),
+        ({QtKey.Key_Minus}, None),
     )
     moveCameraToEntryPointFcBind = Settings.addSetting(
         "moveCameraToEntryPointFcBind",
-        ({Qt.Key.Key_C}, None),
+        ({QtKey.Key_C}, None),
     )
     moveCameraToCursorFcBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCameraToCursorFcBind",
-        ({Qt.Key.Key_X}, None),
+        ({QtKey.Key_X}, None),
     )
     # endregion
 
@@ -417,46 +430,46 @@ class ModuleDesignerSettings(Settings):
 
     moveCamera2dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveCamera2dBind",
-        ({Qt.Key.Key_Control}, {Qt.MouseButton.LeftButton}),
+        ({QtKey.Key_Control}, {QtMouse.LeftButton}),
     )
     zoomCamera2dBind: SettingsProperty[Bind] = Settings.addSetting(
         "zoomCamera2dBind",
-        ({Qt.Key.Key_Control}, set()),
+        ({QtKey.Key_Control}, set()),
     )
     rotateCamera2dBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateCamera2dBind",
-        ({Qt.Key.Key_Control}, {Qt.MouseButton.MiddleButton}),
+        ({QtKey.Key_Control}, {QtMouse.MiddleButton}),
     )
     selectObject2dBind: SettingsProperty[Bind] = Settings.addSetting(
         "selectObject2dBind",
-        (set(), {Qt.MouseButton.LeftButton}),
+        (set(), {QtMouse.LeftButton}),
     )
     moveObject2dBind: SettingsProperty[Bind] = Settings.addSetting(
         "moveObject2dBind",
-        (set(), {Qt.MouseButton.LeftButton}),
+        (set(), {QtMouse.LeftButton}),
     )
     rotateObject2dBind: SettingsProperty[Bind] = Settings.addSetting(
         "rotateObject2dBind",
-        (set(), {Qt.MouseButton.MiddleButton}),
+        (set(), {QtMouse.MiddleButton}),
     )
     deleteObject2dBind: SettingsProperty[Bind] = Settings.addSetting(
         "deleteObject2dBind",
-        ({Qt.Key.Key_Delete}, set()),
+        ({QtKey.Key_Delete}, set()),
     )
     moveCameraToSelected2dBind: SettingsProperty[Bind] = Settings.addSetting(
         "snapCameraToSelected2dBind",
-        ({Qt.Key.Key_Z}, set()),
+        ({QtKey.Key_Z}, set()),
     )
     duplicateObject2dBind: SettingsProperty[Bind] = Settings.addSetting(
         "duplicateObject2dBind",
-        ({Qt.Key.Key_Alt}, {Qt.MouseButton.LeftButton}),
+        ({QtKey.Key_Alt}, {QtMouse.LeftButton}),
     )
     # endregion
 
     # region Binds (Controls - Both)
     toggleLockInstancesBind: SettingsProperty[Bind] = Settings.addSetting(
         "toggleLockInstancesBind",
-        ({Qt.Key.Key_L}, set()),
+        ({QtKey.Key_L}, set()),
     )
     # endregion
 

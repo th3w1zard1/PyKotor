@@ -1,15 +1,3 @@
-"""2DA modification algorithms for TSLPatcher/HoloPatcher.
-
-This module implements 2DA modification logic for applying patches from changes.ini files.
-Handles row/column additions, cell modifications, and memory token resolution.
-
-References:
-----------
-    vendor/TSLPatcher/TSLPatcher.pl - Original Perl 2DA modification logic
-    vendor/HoloPatcher.NET/src/TSLPatcher.Core/Mods/2DA/ - C# 2DA modification implementation
-    vendor/Kotor.NET/Kotor.NET.Patcher/ - Incomplete C# patcher
-"""
-
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -24,7 +12,7 @@ from pykotor.tslpatcher.mods.template import PatcherModifications
 from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
+    from typing_extensions import Literal
 
     from pykotor.common.misc import Game
     from pykotor.resource.formats.twoda import TwoDA, TwoDARow
@@ -690,10 +678,10 @@ class Modifications2DA(PatcherModifications):
             return
 
         # Exceeding row count maximums will break the game.
-        twoda_row_limit = self.hardcapped_row_limits.get(self.saveas.lower())
+        twoda_row_limit = hardcapped_row_limits.get(self.saveas.lower())
         if twoda_row_limit is None:
             return
-        cur_row_count = len(mutable_data._rows)
+        cur_row_count = len(twoda._rows)
         rows_added = cur_row_count - twoda_row_limit
         if cur_row_count > twoda_row_limit:
             raise ValueError(f"{self.saveas} has a max row count of {twoda_row_limit}. Adding more will break the game. This mod attempted to add {rows_added} rows and have not been applied.")

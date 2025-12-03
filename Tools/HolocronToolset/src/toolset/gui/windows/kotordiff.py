@@ -30,8 +30,8 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from kotordiff.app import KotorDiffConfig, run_application  # type: ignore[import-not-found]
 from pykotor.extract.installation import Installation
-from pykotor.tslpatcher.diff import DiffConfig, run_application
 
 if TYPE_CHECKING:
     from toolset.data.installation import HTInstallation
@@ -43,7 +43,7 @@ class KotorDiffThread(QThread):
     output_signal = QtCore.Signal(str)  # pyright: ignore[reportPrivateImportUsage]
     finished_signal = QtCore.Signal(int)  # pyright: ignore[reportPrivateImportUsage]
 
-    def __init__(self, config: DiffConfig):
+    def __init__(self, config: KotorDiffConfig):
         super().__init__()
         self.config = config
 
@@ -100,11 +100,6 @@ class KotorDiffWindow(QMainWindow):
         self._settings = QSettings("HolocronToolset", "KotorDiff")
         self._setup_ui()
         self._load_settings()
-        
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
-        from toolset.gui.common.filters import NoScrollEventFilter
-        self._no_scroll_filter = NoScrollEventFilter(self)
-        self._no_scroll_filter.setup_filter(parent_widget=self)
 
     def _setup_ui(self):
         """Set up the user interface."""
@@ -149,8 +144,7 @@ class KotorDiffWindow(QMainWindow):
         self.tslpatchdata_check = QCheckBox("Generate TSLPatchData")
         tslpatch_layout.addWidget(self.tslpatchdata_check)
         self.tslpatchdata_edit = QLineEdit()
-        from toolset.gui.common.localization import translate as tr
-        self.tslpatchdata_edit.setPlaceholderText(tr("Path to tslpatchdata folder"))
+        self.tslpatchdata_edit.setPlaceholderText("Path to tslpatchdata folder")
         self.tslpatchdata_edit.setEnabled(False)
         tslpatch_layout.addWidget(self.tslpatchdata_edit)
         self.tslpatchdata_browse_btn = QPushButton("Browse...")
@@ -409,7 +403,7 @@ class KotorDiffWindow(QMainWindow):
                 paths.append(path_obj)
 
         # Build configuration
-        config = DiffConfig(
+        config = KotorDiffConfig(
             paths=paths,
             tslpatchdata_path=Path(self.tslpatchdata_edit.text().strip()) if self.tslpatchdata_check.isChecked() and self.tslpatchdata_edit.text().strip() else None,
             ini_filename=self.ini_name_edit.text().strip() or "changes.ini",
