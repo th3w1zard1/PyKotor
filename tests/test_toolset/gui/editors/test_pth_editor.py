@@ -55,14 +55,14 @@ def test_pth_editor_add_node(qtbot, installation: HTInstallation):
     editor.new()
     
     # Add node
-    initial_count = len(editor._pth.nodes)
+    initial_count = len(editor._pth)
     editor.addNode(10.0, 20.0)
     
     # Verify node was added
-    assert len(editor._pth.nodes) == initial_count + 1
+    assert len(editor._pth) == initial_count + 1
     
     # Verify node position
-    node = editor._pth.nodes[-1]
+    node = editor._pth[-1]
     assert abs(node.x - 10.0) < 0.001
     assert abs(node.y - 20.0) < 0.001
 
@@ -85,11 +85,11 @@ def test_pth_editor_add_multiple_nodes(qtbot, installation: HTInstallation):
         editor.addNode(x, y)
     
     # Verify all nodes were added
-    assert len(editor._pth.nodes) == len(test_positions)
+    assert len(editor._pth) == len(test_positions)
     
     # Verify node positions
     for i, (x, y) in enumerate(test_positions):
-        node = editor._pth.nodes[i]
+        node = editor._pth[i]
         assert abs(node.x - x) < 0.001
         assert abs(node.y - y) < 0.001
 
@@ -105,16 +105,16 @@ def test_pth_editor_remove_node(qtbot, installation: HTInstallation):
     editor.addNode(10.0, 10.0)
     editor.addNode(20.0, 20.0)
     
-    initial_count = len(editor._pth.nodes)
+    initial_count = len(editor._pth)
     
     # Remove node at index 1
     editor.remove_node(1)
     
     # Verify node was removed
-    assert len(editor._pth.nodes) == initial_count - 1
+    assert len(editor._pth) == initial_count - 1
     
     # Verify remaining nodes
-    assert len(editor._pth.nodes) == 2
+    assert len(editor._pth) == 2
 
 def test_pth_editor_remove_node_at_index_0(qtbot, installation: HTInstallation):
     """Test removing node at index 0."""
@@ -131,8 +131,8 @@ def test_pth_editor_remove_node_at_index_0(qtbot, installation: HTInstallation):
     editor.remove_node(0)
     
     # Verify first node was removed
-    assert len(editor._pth.nodes) == 1
-    assert abs(editor._pth.nodes[0].x - 10.0) < 0.001
+    assert len(editor._pth) == 1
+    assert abs(editor._pth[0].x - 10.0) < 0.001
 
 # ============================================================================
 # EDGE MANIPULATIONS
@@ -155,12 +155,12 @@ def test_pth_editor_add_edge(qtbot, installation: HTInstallation):
     # Verify edge was added (bidirectional)
     # PTH.connect creates bidirectional connections
     # Check that nodes are connected
-    node0 = editor._pth.nodes[0]
-    node1 = editor._pth.nodes[1]
+    node0 = editor._pth[0]
+    node1 = editor._pth[1]
     
     # Verify connection exists (PTH structure should have connections)
     # The exact structure depends on PTH implementation
-    assert len(editor._pth.nodes) == 2
+    assert len(editor._pth) == 2
 
 def test_pth_editor_remove_edge(qtbot, installation: HTInstallation):
     """Test removing an edge between nodes."""
@@ -179,7 +179,7 @@ def test_pth_editor_remove_edge(qtbot, installation: HTInstallation):
     
     # Verify edge was removed
     # The exact verification depends on PTH structure
-    assert len(editor._pth.nodes) == 2
+    assert len(editor._pth) == 2
 
 def test_pth_editor_add_multiple_edges(qtbot, installation: HTInstallation):
     """Test adding multiple edges."""
@@ -198,7 +198,7 @@ def test_pth_editor_add_multiple_edges(qtbot, installation: HTInstallation):
     editor.addEdge(2, 3)
     
     # Verify all nodes exist
-    assert len(editor._pth.nodes) == 4
+    assert len(editor._pth) == 4
 
 # ============================================================================
 # SAVE/LOAD ROUNDTRIP TESTS
@@ -227,7 +227,7 @@ def test_pth_editor_save_load_roundtrip(qtbot, installation: HTInstallation):
     # Just verify build works
     loaded_pth = read_pth(data)
     assert loaded_pth is not None
-    assert len(loaded_pth.nodes) == 3
+    assert len(loaded_pth) == 3
 
 def test_pth_editor_multiple_save_load_cycles(qtbot, installation: HTInstallation):
     """Test multiple save/load cycles."""
@@ -248,7 +248,7 @@ def test_pth_editor_multiple_save_load_cycles(qtbot, installation: HTInstallatio
         loaded_pth = read_pth(data)
         
         # Verify nodes were preserved
-        assert len(loaded_pth.nodes) == cycle + 1
+        assert len(loaded_pth) == cycle + 1
 
 # ============================================================================
 # NODE SELECTION TESTS
@@ -496,7 +496,7 @@ def test_pth_editor_empty_pth_file(qtbot, installation: HTInstallation):
     # Load it back (may require LYT file, so just verify build works)
     loaded_pth = read_pth(data)
     assert loaded_pth is not None
-    assert len(loaded_pth.nodes) == 0
+    assert len(loaded_pth) == 0
 
 def test_pth_editor_single_node(qtbot, installation: HTInstallation):
     """Test handling of PTH with single node."""
@@ -511,9 +511,9 @@ def test_pth_editor_single_node(qtbot, installation: HTInstallation):
     # Build and verify
     data, _ = editor.build()
     loaded_pth = read_pth(data)
-    assert len(loaded_pth.nodes) == 1
-    assert abs(loaded_pth.nodes[0].x - 0.0) < 0.001
-    assert abs(loaded_pth.nodes[0].y - 0.0) < 0.001
+    assert len(loaded_pth) == 1
+    assert abs(loaded_pth[0].x - 0.0) < 0.001
+    assert abs(loaded_pth[0].y - 0.0) < 0.001
 
 # ============================================================================
 # COMBINATION TESTS
@@ -546,12 +546,12 @@ def test_pth_editor_complex_path(qtbot, installation: HTInstallation):
         editor.addEdge(i, next_i)
     
     # Verify structure
-    assert len(editor._pth.nodes) == len(nodes)
+    assert len(editor._pth) == len(nodes)
     
     # Build and verify
     data, _ = editor.build()
     loaded_pth = read_pth(data)
-    assert len(loaded_pth.nodes) == len(nodes)
+    assert len(loaded_pth) == len(nodes)
 
 def test_pth_editor_all_operations(qtbot, installation: HTInstallation):
     """Test all operations together."""
@@ -577,7 +577,7 @@ def test_pth_editor_all_operations(qtbot, installation: HTInstallation):
     # Build and verify
     data, _ = editor.build()
     loaded_pth = read_pth(data)
-    assert len(loaded_pth.nodes) == 3
+    assert len(loaded_pth) == 3
 
 # ============================================================================
 # HEADLESS UI TESTS WITH REAL FILES
@@ -611,42 +611,4 @@ def test_ptheditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
-
-    """Test PTH Editor in headless UI - loads real file and builds data."""
-    editor = PTHEditor(None, installation)
-    qtbot.addWidget(editor)
-    
-    # Try to find a PTH file
-    pth_files = list(test_files_dir.glob("*.pth")) + list(test_files_dir.rglob("*.pth"))
-    if not pth_files:
-        # Try to get one from installation
-        pth_resources = list(installation.resources(ResourceType.PTH))[:1]
-        if not pth_resources:
-            pytest.skip("No PTH files available for testing")
-        pth_resource = pth_resources[0]
-        pth_data = installation.resource(pth_resource.identifier)
-        if not pth_data:
-            pytest.skip(f"Could not load PTH data for {pth_resource.identifier}")
-        editor.load(
-            pth_resource.filepath if hasattr(pth_resource, 'filepath') else Path("module.pth"),
-            pth_resource.resname,
-            ResourceType.PTH,
-            pth_data
-        )
-    else:
-        pth_file = pth_files[0]
-        original_data = pth_file.read_bytes()
-        editor.load(pth_file, pth_file.stem, ResourceType.PTH, original_data)
-    
-    # Verify editor loaded the data
-    assert editor is not None
-    assert editor._pth is not None
-    
-    # Build and verify it works
-    data, _ = editor.build()
-    assert len(data) > 0
-    
-    # Verify we can read it back
-    loaded_pth = read_pth(data)
-    assert loaded_pth is not None
 
