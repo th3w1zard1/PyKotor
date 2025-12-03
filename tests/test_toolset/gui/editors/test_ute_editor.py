@@ -692,7 +692,7 @@ def test_ute_editor_manipulate_all_advanced_fields_combination(qtbot, installati
     editor.ui.respawnsCheckbox.setChecked(True)
     editor.ui.infiniteRespawnCheckbox.setChecked(False)
     editor.ui.respawnCountSpin.setValue(10)
-    editor.ui.respawnTimeSpin.setValue(30.0)
+    editor.ui.respawnTimeSpin.setValue(30)  # QSpinBox requires int, not float
     
     # Save and verify all
     data, _ = editor.build()
@@ -841,7 +841,7 @@ def test_ute_editor_minimum_values(qtbot, installation: HTInstallation, test_fil
     editor.ui.resrefEdit.setText("")
     editor.ui.minCreatureSpin.setValue(0)
     editor.ui.maxCreatureSpin.setValue(0)
-    editor.ui.respawnTimeSpin.setValue(0.0)
+    editor.ui.respawnTimeSpin.setValue(0)  # QSpinBox requires int, not float
     
     # Disable infinite respawn to set count
     editor.ui.infiniteRespawnCheckbox.setChecked(False)
