@@ -160,7 +160,9 @@ class SubScriptState:
     def transform_end_do_loop(self):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_do_loop import ADoLoop  # pyright: ignore[reportMissingImports]
         if isinstance(self.current, ADoLoop):
-            self.current.condition = self.remove_last_exp(False)
+            exp = self.remove_last_exp(False)
+            if exp is not None:
+                self.current.condition = exp
 
     def transform_origin_found(self, destination, origin):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_while_loop import AWhileLoop  # pyright: ignore[reportMissingImports]
@@ -500,7 +502,9 @@ class SubScriptState:
         self.check_start(node)
         if self.state == 3:
             if isinstance(self.current, AWhileLoop):
-                self.current.condition = self.remove_last_exp(False)
+                exp = self.remove_last_exp(False)
+            if exp is not None:
+                self.current.condition = exp
                 self.state = 0
         elif not NodeUtils.is_jz(node):
             if self.state != 4:
@@ -543,7 +547,8 @@ class SubScriptState:
             if self.current.has_children():
                 self.current.remove_last_child()
         else:
-            aif = AIf(self.nodedata.get_pos(node), self.nodedata.get_pos(self.nodedata.get_destination(node)) - 6, self.remove_last_exp(False))
+            condition = self.remove_last_exp(False)
+            aif = AIf(self.nodedata.get_pos(node), self.nodedata.get_pos(self.nodedata.get_destination(node)) - 6, condition)
             self.current.add_child(aif)
             self.current = aif
         self.check_end(node)
