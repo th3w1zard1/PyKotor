@@ -522,12 +522,12 @@ def test_utt_editor_manipulate_on_heartbeat_script(qtbot, installation: HTInstal
     editor.load(utt_file, "newtransition9", ResourceType.UTT, original_data)
     
     # Modify script
-    editor.ui.onHeartbeatSelect.set_combo_box_text("test_on_heartbeat")
+    editor.ui.onHeartbeatSelect.set_combo_box_text("test_heartbeat")
     
     # Save and verify
     data, _ = editor.build()
     modified_utt = read_utt(data)
-    assert str(modified_utt.on_heartbeat) == "test_on_heartbeat"
+    assert str(modified_utt.on_heartbeat) == "test_heartbeat"
 
 def test_utt_editor_manipulate_on_trap_triggered_script(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating on trap triggered script field."""
@@ -542,12 +542,12 @@ def test_utt_editor_manipulate_on_trap_triggered_script(qtbot, installation: HTI
     editor.load(utt_file, "newtransition9", ResourceType.UTT, original_data)
     
     # Modify script
-    editor.ui.onTrapTriggeredEdit.set_combo_box_text("test_on_trap_triggered")
+    editor.ui.onTrapTriggeredEdit.set_combo_box_text("test_trap_trig")
     
     # Save and verify
     data, _ = editor.build()
     modified_utt = read_utt(data)
-    assert str(modified_utt.on_trap_triggered) == "test_on_trap_triggered"
+    assert str(modified_utt.on_trap_triggered) == "test_trap_trig"
 
 def test_utt_editor_manipulate_on_user_defined_script(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating on user defined script field."""
@@ -562,12 +562,12 @@ def test_utt_editor_manipulate_on_user_defined_script(qtbot, installation: HTIns
     editor.load(utt_file, "newtransition9", ResourceType.UTT, original_data)
     
     # Modify script
-    editor.ui.onUserDefinedSelect.set_combo_box_text("test_on_user_defined")
+    editor.ui.onUserDefinedSelect.set_combo_box_text("test_user_def")
     
     # Save and verify
     data, _ = editor.build()
     modified_utt = read_utt(data)
-    assert str(modified_utt.on_user_defined) == "test_on_user_defined"
+    assert str(modified_utt.on_user_defined) == "test_user_def"
 
 def test_utt_editor_manipulate_all_scripts(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all script fields."""
