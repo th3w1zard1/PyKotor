@@ -12,7 +12,7 @@ docs:
   - docs/**/*
   - README.md
   - CONTRIBUTING.md
-  - *.md
+  - '*.md'
 
 ci:
   - .github/**/*
