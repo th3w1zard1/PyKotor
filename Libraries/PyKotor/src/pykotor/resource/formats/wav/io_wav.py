@@ -148,6 +148,7 @@ class WAVBinaryReader(ResourceReader):
         block_align = 2
         bits_per_sample = 16
         audio_data = b""
+        found_data_chunk = False
         
         # Parse chunks until we find 'data'
         # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:49-77
@@ -178,10 +179,11 @@ class WAVBinaryReader(ResourceReader):
                     reader.skip(chunk_size - 16)
 
             elif chunk_id == b"data":
-                # Read audio data
+                # Read audio data (even if empty - empty data chunks are valid)
                 # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:79-80
                 actual_size = min(chunk_size, reader.remaining())
                 audio_data = reader.read_bytes(actual_size)
+                found_data_chunk = True
                 break  # Found data, stop parsing
 
             elif chunk_id == b"fact":
@@ -198,7 +200,7 @@ class WAVBinaryReader(ResourceReader):
                 if chunk_size % 2 == 1 and reader.remaining() > 0:
                     reader.skip(1)
 
-        if not audio_data:
+        if not found_data_chunk:
             msg = "No audio data chunk found in WAV file"
             raise ValueError(msg)
 

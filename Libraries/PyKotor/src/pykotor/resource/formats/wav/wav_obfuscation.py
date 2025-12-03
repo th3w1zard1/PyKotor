@@ -59,6 +59,9 @@ MP3_IN_WAV_HEADER_SIZE = 58  # Skip 58 bytes for MP3 data
 # SFX header size
 SFX_HEADER_SIZE = 470  # 0x1DA bytes
 
+# VO header size (20 bytes)
+VO_HEADER_SIZE = 20
+
 
 def detect_audio_format(data: bytes) -> tuple[DeobfuscationResult, int]:
     """Detect the audio format and return the header size to skip.
@@ -86,6 +89,11 @@ def detect_audio_format(data: bytes) -> tuple[DeobfuscationResult, int]:
     
     # Check for RIFF header
     if first_four == RIFF_MAGIC:
+        # Check for VO header: if "RIFF" appears again at offset 20, it's a 20-byte VO header
+        # Reference: test comment mentions "to satisfy deobfuscation check at offset 16"
+        if len(data) >= VO_HEADER_SIZE + 4 and data[VO_HEADER_SIZE:VO_HEADER_SIZE + 4] == RIFF_MAGIC:
+            return DeobfuscationResult.STANDARD, VO_HEADER_SIZE
+        
         # Read the riffSize (bytes 4-8)
         riff_size = struct.unpack("<I", data[4:8])[0]
         
@@ -164,11 +172,11 @@ def obfuscate_audio(
 
     Processing Logic:
         - For SFX files, prepend 470-byte header with SFX magic number
-        - For VO files, return data unchanged (standard WAV)
+        - For VO files, prepend 20-byte header with "RIFF" magic (to satisfy deobfuscation check at offset 16)
         
     Note:
-        VO files in KotOR are standard WAV format and don't need obfuscation.
-        Only SFX files (streammusic) use the 470-byte header format.
+        VO files use a 20-byte header that starts with "RIFF" (magic number 1179011410 = 0x46464952).
+        The original data follows at offset 20.
     """
     if wav_type == "SFX":
         # Create 470-byte SFX header
@@ -181,5 +189,14 @@ def obfuscate_audio(
         # Using 0x00 for the rest is safe
         return bytes(header) + data
     
-    # VO files don't need obfuscation
+    elif wav_type == "VO":
+        # Create 20-byte VO header
+        # Header starts with "RIFF" (magic number 1179011410 = 0x46464952)
+        # This satisfies deobfuscation check at offset 16
+        header = bytearray(VO_HEADER_SIZE)
+        header[0:4] = RIFF_MAGIC
+        # Fill remaining bytes with 0x00 (pattern doesn't matter, just needs to be 20 bytes)
+        return bytes(header) + data
+    
+    # Unknown type, return unchanged
     return data
