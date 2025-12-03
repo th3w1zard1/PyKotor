@@ -23,7 +23,7 @@ from __future__ import annotations
 import os
 import tempfile
 import unittest
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Optional
 
 
@@ -269,8 +269,11 @@ class TestXoreosFilePath(unittest.TestCase):
         return Path(filename).suffix
 
     def _change_extension(self, filename: str, new_extension: str) -> str:
-        """Change file extension."""
-        path = Path(filename)
+        """Change file extension.
+        
+        Uses PurePosixPath to preserve forward slashes on all platforms.
+        """
+        path = PurePosixPath(filename)
         return str(path.with_suffix(new_extension))
 
     def _get_file(self, path: str) -> str:
