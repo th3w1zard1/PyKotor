@@ -2126,6 +2126,8 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         ----
             value: The bytes to be written.
         """
+        if self._position + len(value) > len(self._ba):
+            raise IndexError(f"Cannot write beyond buffer bounds: position {self._position} + {len(value)} > size {len(self._ba)}")
         self._ba[self._position : self._position + len(value)] = value
         self._position += len(value)
 
