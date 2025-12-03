@@ -562,12 +562,12 @@ def test_ute_editor_manipulate_on_user_defined_script(qtbot, installation: HTIns
     editor.load(ute_file, "newtransition", ResourceType.UTE, original_data)
     
     # Modify script
-    editor.ui.onUserDefinedSelect.set_combo_box_text("test_on_user_defined")
+    editor.ui.onUserDefinedSelect.set_combo_box_text("test_userdefined")  # 16 chars (ResRef max)
     
     # Save and verify
     data, _ = editor.build()
     modified_ute = read_ute(data)
-    assert str(modified_ute.on_user_defined) == "test_on_user_defined"
+    assert str(modified_ute.on_user_defined) == "test_userdefined"
 
 def test_ute_editor_manipulate_all_scripts(qtbot, installation: HTInstallation, test_files_dir: Path):
     """Test manipulating all script fields."""
