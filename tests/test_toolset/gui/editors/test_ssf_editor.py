@@ -626,8 +626,9 @@ def test_ssf_editor_maximum_values(qtbot, installation: HTInstallation):
     
     editor.new()
     
-    # Set maximum value (2^32 - 1 for uint32)
-    max_value = 4294967295
+    # Set maximum value (2^31 - 1 for int32, which is what StrRef uses)
+    # QSpinBox also uses int32 internally, so this is the maximum it can handle
+    max_value = 2147483647
     editor.ui.battlecry1StrrefSpin.setValue(max_value)
     
     # Save and verify
@@ -757,33 +758,3 @@ def test_ssfeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
-
-    """Test all operations together."""
-    editor = SSFEditor(None, installation)
-    qtbot.addWidget(editor)
-    
-    # Create new
-    editor.new()
-    
-    # Set various values
-    editor.ui.battlecry1StrrefSpin.setValue(100)
-    editor.ui.select1StrrefSpin.setValue(200)
-    editor.ui.deadStrrefSpin.setValue(300)
-    
-    # Save
-    data1, _ = editor.build()
-    
-    # Load
-    ssf_file = test_files_dir / "n_ithorian.ssf"
-    if ssf_file.exists():
-        editor.load(ssf_file, "n_ithorian", ResourceType.SSF, ssf_file.read_bytes())
-    
-    # Modify
-    editor.ui.poisonedStrrefSpin.setValue(400)
-    
-    # Save again
-    data2, _ = editor.build()
-    
-    # Verify both saves worked
-    assert len(data1) > 0
-    assert len(data2) > 0
