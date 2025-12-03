@@ -109,6 +109,33 @@ if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TEST TIMED OUT a
 - Use ./wiki if you require information about the codebase.
 - Always assume ./docs has highly inaccurate and questionable material; try not to reference it unless absolutely necessary. Always second-guess its contents, but remember that vetted gameplay rules, system behavior, or platform notes can still be essential information that could be written here.
 
+### Wiki Maintenance (CRITICAL)
+
+**MANDATORY FOR ALL AI AGENTS**: When investigating code, searching the codebase, or discovering new information about file formats, implementations, or game mechanics, you MUST:
+
+1. **Check if wiki documentation exists** for the relevant topic (e.g., `wiki/BWM-File-Format.md`, `wiki/LYT-File-Format.md`)
+2. **Update the wiki** if you find:
+   - Missing information that should be documented
+   - Incomplete explanations that need expansion
+   - New details discovered during code investigation
+   - Clarifications needed for better comprehension
+   - Relationships between formats or systems that aren't documented
+3. **Maintain wiki quality**:
+   - Follow existing wiki documentation style and structure
+   - Include code references with file paths and line numbers
+   - Link to related wiki pages when relevant
+   - Add implementation details, usage examples, and references to vendor code
+   - Ensure technical accuracy matches what you found in the codebase
+
+**This is NOT optional.** When you search the codebase to answer questions, you're discovering information that should be preserved in the wiki for future reference. The wiki serves as the authoritative knowledge base for the codebase - keep it up to date.
+
+**Examples of when to update wiki:**
+- Explaining file formats, data structures, or binary layouts
+- Documenting relationships between different systems (e.g., how BWM hooks relate to LYT doorhooks)
+- Clarifying terminology or concepts (e.g., what "tracks" and "obstacles" mean in LYT files)
+- Adding missing implementation details or usage patterns
+- Expanding sections that are too brief or unclear
+
 ### Submodules in this PyKotor project
 
 Relevance to pykotor means a few different things. All relevant submodules should:

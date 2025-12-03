@@ -114,23 +114,29 @@ KotOR uses different walkmesh types for different purposes, each optimized for i
   - Hook vectors (USE1, USE2) define interaction points where the player can activate doors or placeables
   - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:152-233`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L152-L233), [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:181-233`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L181-L233)
 
-**Hook Vectors** are reference points used by the engine for positioning and interaction:
+**Hook Vectors** are reference points used by the engine for positioning and interaction. These are **NOT** related to walkmesh geometry itself (faces, edges, vertices), but rather define interaction points for doors and placeables.
+
+**Important Distinction**: BWM hooks are different from LYT doorhooks:
+- **BWM Hooks**: Interaction points stored in the walkmesh file itself (relative/absolute positions)
+- **LYT Doorhooks**: Door placement points defined in layout files (see [LYT File Format](LYT-File-Format.md#door-hooks))
 
 - **Relative Hook Positions** (Relative Use Position 1/2): Positions relative to the walkmesh origin, used when the walkmesh itself may be transformed or positioned
   - For doors: Define where the player must stand to interact with the door (relative to door model)
   - For placeables: Define interaction points relative to the object's local coordinate system
-  - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:63-66`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L63-L66), [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:309-310`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L309-L310)
+  - Stored as `relative_hook1` and `relative_hook2` in the BWM class
+  - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:63-66`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L63-L66), [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:309-310`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L309-L310), [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py:165-175`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py#L165-L175)
 
 - **Absolute Hook Positions** (Absolute Use Position 1/2): Positions in world space, used when the walkmesh position is known
   - For doors: Precomputed world-space interaction points (position + relative hook)
   - For placeables: World-space interaction points accounting for object placement
-  - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:313-318`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L313-L318)
+  - Stored as `absolute_hook1` and `absolute_hook2` in the BWM class
+  - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:313-318`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L313-L318), [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py:177-187`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py#L177-L187)
 
 - **Position**: The walkmesh's origin offset in world space
   - For area walkmeshes (WOK): Typically `(0, 0, 0)` as areas define their own coordinate system
   - For placeable/door walkmeshes: The position where the object is placed in the area
   - Used to transform vertices from local to world coordinates
-  - **Reference**: [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:37-38`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L37-L38), [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:67`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L67), [`vendor/xoreos/src/engines/kotorbase/path/walkmeshloader.cpp:103`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/path/walkmeshloader.cpp#L103)
+  - **Reference**: [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:37-38`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L37-L38), [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:67`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L67), [`vendor/xoreos/src/engines/kotorbase/path/walkmeshloader.cpp:103`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/path/walkmeshloader.cpp#L103), [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py:158-163`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py#L158-L163)
 
 Hook vectors enable the engine to:
 
