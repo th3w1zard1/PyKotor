@@ -25,6 +25,18 @@ jobs:
           echo "✓ No merge conflicts"
 
       - name: Check PR title format
+        id: check_title
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          if [[ "$PR_TITLE" =~ ^Merge\ .+\ into\ .+$ ]]; then
+            echo "Skipping semantic PR check for merge PR: $PR_TITLE"
+            echo "skip_check=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip_check=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check PR title format (semantic)
+        if: steps.check_title.outputs.skip_check != 'true'
         uses: amannn/action-semantic-pull-request@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
