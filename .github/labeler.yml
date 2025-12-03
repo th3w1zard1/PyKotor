@@ -20,9 +20,9 @@ ci:
 
 dependencies:
   - pyproject.toml
-  - requirements*.txt
-  - **/requirements.txt
-  - **/pyproject.toml
+  - 'requirements*.txt'
+  - '**/requirements.txt'
+  - '**/pyproject.toml'
 
 python:
   - '**/*.py'
