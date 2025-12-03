@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import shutil
 from copy import copy
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -152,30 +153,36 @@ def real_kit(real_kit_component):
 
 @pytest.fixture
 def temp_work_dir(tmp_path):
-    """Create a temporary working directory with kits folder."""
+    """Create a temporary working directory with actual kit files copied from toolset/kits."""
     kits_dir = tmp_path / "kits"
     kits_dir.mkdir(parents=True, exist_ok=True)
     
-    kit_json_file = kits_dir / "testkit.json"
-    kit_json = {
-        "name": "TestKit",
-        "id": "testkit",
-        "components": [],
-        "doors": []
-    }
-    kit_json_file.write_text(json.dumps(kit_json), encoding="utf-8")
+    # Copy actual kit files from Tools/HolocronToolset/src/toolset/kits/
+    repo_root = Path(__file__).parents[4]  # Go up to repo root
+    source_kits_dir = repo_root / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits"
     
-    kit_subdir = kits_dir / "testkit"
-    kit_subdir.mkdir(exist_ok=True)
+    if source_kits_dir.exists():
+        # Copy all kit JSON files and their directories
+        for item in source_kits_dir.iterdir():
+            if item.is_file() and item.suffix == ".json":
+                # Copy JSON file
+                shutil.copy2(item, kits_dir / item.name)
+                # Copy corresponding directory if it exists
+                kit_id = item.stem
+                kit_subdir = source_kits_dir / kit_id
+                if kit_subdir.exists() and kit_subdir.is_dir():
+                    dest_subdir = kits_dir / kit_id
+                    shutil.copytree(kit_subdir, dest_subdir, dirs_exist_ok=True)
     
     return tmp_path
 
 
 @pytest.fixture
-def builder_with_real_kit(qtbot: QtBot, installation: HTInstallation, temp_work_dir, real_kit):
-    """Create IndoorMapBuilder in a temp directory with real kit files.
+def builder_with_real_kit(qtbot: QtBot, installation: HTInstallation, temp_work_dir):
+    """Create IndoorMapBuilder in a temp directory with real kit files loaded from filesystem.
     
     Uses industry-standard Qt widget lifecycle management to prevent access violations.
+    The builder will automatically load all kits from the temp_work_dir/kits directory.
     """
     old_cwd = os.getcwd()
     builder = None
@@ -189,11 +196,10 @@ def builder_with_real_kit(qtbot: QtBot, installation: HTInstallation, temp_work_
         qtbot.wait(100)
         QApplication.processEvents()
         
-        # Add the real kit to builder's kits list so tests can use it
-        if real_kit and real_kit not in builder._kits:
-            builder._kits.append(real_kit)
-            # Also add to UI dropdown
-            builder.ui.kitSelect.addItem(real_kit.name, real_kit)
+        # Kits should be loaded automatically from ./kits directory
+        # Wait a bit more for async loading if needed
+        qtbot.wait(200)
+        QApplication.processEvents()
         
         if builder.ui.kitSelect.count() > 0:
             builder.ui.kitSelect.setCurrentIndex(0)
@@ -6820,7 +6826,10 @@ class TestIndoorMapBuildAndSave:
 
 
 class TestIndoorMapIOValidation:
-    """Granular validation tests for indoor map IO and structure."""
+    """Granular validation tests for indoor map IO and structure.
+    
+    All tests iterate over ALL kits and ALL components to ensure comprehensive coverage.
+    """
 
     def test_indoor_format_serialization_roundtrip(self, builder_no_kits: IndoorMapBuilder, real_kit_component: KitComponent):
         """Test that indoor format serialization is lossless."""
@@ -6870,7 +6879,7 @@ class TestIndoorMapIOValidation:
         assert loaded_map.rooms[2].flip_y is True, "Room 3 flip_y should match"
 
     def test_mod_format_lyt_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
-        """Test that built .mod has valid LYT structure."""
+        """Test that built .mod has valid LYT structure for ALL kits and ALL components."""
         from pykotor.resource.formats.erf import read_erf
         from pykotor.resource.formats.lyt import read_lyt
         from pykotor.resource.type import ResourceType
@@ -6878,35 +6887,43 @@ class TestIndoorMapIOValidation:
         builder = builder_with_real_kit
         
         assert builder._kits, "Builder should have kits"
-        assert builder._kits[0].components, "First kit should have components"
         
-        comp = builder._kits[0].components[0]
-        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
-        builder._map.rooms.append(room)
-        builder._map.module_id = "testmod"
-        
-        mod_path = tmp_path / "testmod.mod"
-        builder._map.build(installation, builder._kits, mod_path)
-        
-        # Load ERF and extract LYT
-        erf = read_erf(mod_path)
-        lyt_resource = next((res for res in erf if res.restype == ResourceType.LYT), None)
-        
-        if lyt_resource:
-            lyt = read_lyt(lyt_resource.data)
-            
-            # Validate LYT structure
-            assert lyt is not None, "LYT should load successfully"
-            assert len(lyt.rooms) > 0, "LYT should have rooms"
-            
-            # Check room properties
-            lyt_room = lyt.rooms[0]
-            assert hasattr(lyt_room, 'model'), "LYT room should have model"
-            assert hasattr(lyt_room, 'position'), "LYT room should have position"
-            assert hasattr(lyt_room, 'rotation'), "LYT room should have rotation"
+        # Test ALL kits and ALL components
+        for kit_idx, kit in enumerate(builder._kits):
+            if not kit.components:
+                continue
+                
+            for comp_idx, comp in enumerate(kit.components):
+                # Clear map for each test
+                builder._map.rooms.clear()
+                
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                builder._map.rooms.append(room)
+                builder._map.module_id = f"testmod_{kit_idx}_{comp_idx}"
+                
+                mod_path = tmp_path / f"testmod_{kit.name}_{comp.name}.mod"
+                builder._map.build(installation, builder._kits, mod_path)
+                
+                # Load ERF and extract LYT
+                erf = read_erf(mod_path)
+                lyt_resource = next((res for res in erf if res.restype == ResourceType.LYT), None)
+                
+                assert lyt_resource is not None, f"LYT resource should exist for kit {kit.name}, component {comp.name}"
+                
+                lyt = read_lyt(lyt_resource.data)
+                
+                # Validate LYT structure
+                assert lyt is not None, f"LYT should load successfully for kit {kit.name}, component {comp.name}"
+                assert len(lyt.rooms) > 0, f"LYT should have rooms for kit {kit.name}, component {comp.name}"
+                
+                # Check room properties
+                lyt_room = lyt.rooms[0]
+                assert hasattr(lyt_room, 'model'), f"LYT room should have model for kit {kit.name}, component {comp.name}"
+                assert hasattr(lyt_room, 'position'), f"LYT room should have position for kit {kit.name}, component {comp.name}"
+                assert hasattr(lyt_room, 'rotation'), f"LYT room should have rotation for kit {kit.name}, component {comp.name}"
 
     def test_mod_format_wok_walkability_preserved(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
-        """Test that walkability is preserved in built .mod WOK files."""
+        """Test that walkability is preserved in built .mod WOK files for ALL kits and ALL components."""
         from pykotor.resource.formats.erf import read_erf
         from pykotor.resource.formats.bwm import read_bwm
         from pykotor.resource.type import ResourceType
@@ -6914,41 +6931,50 @@ class TestIndoorMapIOValidation:
         builder = builder_with_real_kit
         
         assert builder._kits, "Builder should have kits"
-        assert builder._kits[0].components, "First kit should have components"
         
-        comp = builder._kits[0].components[0]
-        original_bwm = comp.bwm
-        original_walkable = original_bwm.walkable_faces()
-        original_walkable_count = len(original_walkable)
-        
-        if original_walkable_count == 0:
-            pytest.skip("Component has no walkable faces")
-        
-        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
-        builder._map.rooms.append(room)
-        builder._map.module_id = "testmod"
-        
-        mod_path = tmp_path / "testmod.mod"
-        builder._map.build(installation, builder._kits, mod_path)
-        
-        # Load ERF and find WOK
-        erf = read_erf(mod_path)
-        wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
-        
-        if wok_resources:
-            wok = read_bwm(wok_resources[0].data)
-            built_walkable = wok.walkable_faces()
-            built_walkable_count = len(built_walkable)
-            
-            # Walkable face count should be similar (may differ due to transformations)
-            assert built_walkable_count > 0, "Built WOK should have walkable faces"
-            
-            # Verify walkable faces have walkable materials
-            for face in built_walkable:
-                assert face.material.walkable(), "Built walkable face should have walkable material"
+        # Test ALL kits and ALL components
+        for kit_idx, kit in enumerate(builder._kits):
+            if not kit.components:
+                continue
+                
+            for comp_idx, comp in enumerate(kit.components):
+                original_bwm = comp.bwm
+                original_walkable = original_bwm.walkable_faces()
+                original_walkable_count = len(original_walkable)
+                
+                # Skip components with no walkable faces
+                if original_walkable_count == 0:
+                    continue
+                
+                # Clear map for each test
+                builder._map.rooms.clear()
+                
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                builder._map.rooms.append(room)
+                builder._map.module_id = f"testmod_{kit_idx}_{comp_idx}"
+                
+                mod_path = tmp_path / f"testmod_{kit.name}_{comp.name}.mod"
+                builder._map.build(installation, builder._kits, mod_path)
+                
+                # Load ERF and find WOK
+                erf = read_erf(mod_path)
+                wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
+                
+                assert wok_resources, f"WOK resource should exist for kit {kit.name}, component {comp.name}"
+                
+                wok = read_bwm(wok_resources[0].data)
+                built_walkable = wok.walkable_faces()
+                built_walkable_count = len(built_walkable)
+                
+                # Walkable face count should be similar (may differ due to transformations)
+                assert built_walkable_count > 0, f"Built WOK should have walkable faces for kit {kit.name}, component {comp.name}"
+                
+                # Verify walkable faces have walkable materials
+                for face in built_walkable:
+                    assert face.material.walkable(), f"Built walkable face should have walkable material for kit {kit.name}, component {comp.name}"
 
     def test_mod_format_bwm_face_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
-        """Test that built .mod BWM has valid face structure."""
+        """Test that built .mod BWM has valid face structure for ALL kits and ALL components."""
         from pykotor.resource.formats.erf import read_erf
         from pykotor.resource.formats.bwm import read_bwm
         from pykotor.resource.type import ResourceType
@@ -6956,40 +6982,48 @@ class TestIndoorMapIOValidation:
         builder = builder_with_real_kit
         
         assert builder._kits, "Builder should have kits"
-        assert builder._kits[0].components, "First kit should have components"
         
-        comp = builder._kits[0].components[0]
-        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
-        builder._map.rooms.append(room)
-        builder._map.module_id = "testmod"
-        
-        mod_path = tmp_path / "testmod.mod"
-        builder._map.build(installation, builder._kits, mod_path)
-        
-        # Load ERF and find WOK
-        erf = read_erf(mod_path)
-        wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
-        
-        if wok_resources:
-            wok = read_bwm(wok_resources[0].data)
-            
-            # Validate BWM structure
-            assert len(wok.faces) > 0, "BWM should have faces"
-            
-            for face in wok.faces:
-                # Check face has required attributes
-                assert hasattr(face, 'v1'), "Face should have v1"
-                assert hasattr(face, 'v2'), "Face should have v2"
-                assert hasattr(face, 'v3'), "Face should have v3"
-                assert hasattr(face, 'material'), "Face should have material"
+        # Test ALL kits and ALL components
+        for kit_idx, kit in enumerate(builder._kits):
+            if not kit.components:
+                continue
                 
-                # Check vertices are distinct
-                assert face.v1 != face.v2, "Face vertices should be distinct"
-                assert face.v2 != face.v3, "Face vertices should be distinct"
-                assert face.v3 != face.v1, "Face vertices should be distinct"
+            for comp_idx, comp in enumerate(kit.components):
+                # Clear map for each test
+                builder._map.rooms.clear()
+                
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                builder._map.rooms.append(room)
+                builder._map.module_id = f"testmod_{kit_idx}_{comp_idx}"
+                
+                mod_path = tmp_path / f"testmod_{kit.name}_{comp.name}.mod"
+                builder._map.build(installation, builder._kits, mod_path)
+                
+                # Load ERF and find WOK
+                erf = read_erf(mod_path)
+                wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
+                
+                assert wok_resources, f"WOK resource should exist for kit {kit.name}, component {comp.name}"
+                
+                wok = read_bwm(wok_resources[0].data)
+                
+                # Validate BWM structure
+                assert len(wok.faces) > 0, f"BWM should have faces for kit {kit.name}, component {comp.name}"
+                
+                for face in wok.faces:
+                    # Check face has required attributes
+                    assert hasattr(face, 'v1'), f"Face should have v1 for kit {kit.name}, component {comp.name}"
+                    assert hasattr(face, 'v2'), f"Face should have v2 for kit {kit.name}, component {comp.name}"
+                    assert hasattr(face, 'v3'), f"Face should have v3 for kit {kit.name}, component {comp.name}"
+                    assert hasattr(face, 'material'), f"Face should have material for kit {kit.name}, component {comp.name}"
+                    
+                    # Check vertices are distinct
+                    assert face.v1 != face.v2, f"Face vertices should be distinct for kit {kit.name}, component {comp.name}"
+                    assert face.v2 != face.v3, f"Face vertices should be distinct for kit {kit.name}, component {comp.name}"
+                    assert face.v3 != face.v1, f"Face vertices should be distinct for kit {kit.name}, component {comp.name}"
 
     def test_mod_format_are_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
-        """Test that built .mod has valid ARE structure."""
+        """Test that built .mod has valid ARE structure for ALL kits and ALL components."""
         from pykotor.resource.formats.erf import read_erf
         from pykotor.resource.formats.gff import read_gff
         from pykotor.resource.type import ResourceType
@@ -6997,29 +7031,37 @@ class TestIndoorMapIOValidation:
         builder = builder_with_real_kit
         
         assert builder._kits, "Builder should have kits"
-        assert builder._kits[0].components, "First kit should have components"
         
-        comp = builder._kits[0].components[0]
-        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
-        builder._map.rooms.append(room)
-        builder._map.module_id = "testmod"
-        
-        mod_path = tmp_path / "testmod.mod"
-        builder._map.build(installation, builder._kits, mod_path)
-        
-        # Load ERF and extract ARE
-        erf = read_erf(mod_path)
-        are_resource = next((res for res in erf if res.restype == ResourceType.ARE), None)
-        
-        if are_resource:
-            are = read_gff(are_resource.data)
-            
-            # Validate ARE structure
-            assert are is not None, "ARE should load successfully"
-            assert are.root is not None, "ARE should have root"
+        # Test ALL kits and ALL components
+        for kit_idx, kit in enumerate(builder._kits):
+            if not kit.components:
+                continue
+                
+            for comp_idx, comp in enumerate(kit.components):
+                # Clear map for each test
+                builder._map.rooms.clear()
+                
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                builder._map.rooms.append(room)
+                builder._map.module_id = f"testmod_{kit_idx}_{comp_idx}"
+                
+                mod_path = tmp_path / f"testmod_{kit.name}_{comp.name}.mod"
+                builder._map.build(installation, builder._kits, mod_path)
+                
+                # Load ERF and extract ARE
+                erf = read_erf(mod_path)
+                are_resource = next((res for res in erf if res.restype == ResourceType.ARE), None)
+                
+                assert are_resource is not None, f"ARE resource should exist for kit {kit.name}, component {comp.name}"
+                
+                are = read_gff(are_resource.data)
+                
+                # Validate ARE structure
+                assert are is not None, f"ARE should load successfully for kit {kit.name}, component {comp.name}"
+                assert are.root is not None, f"ARE should have root for kit {kit.name}, component {comp.name}"
 
     def test_mod_format_ifo_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
-        """Test that built .mod has valid IFO structure."""
+        """Test that built .mod has valid IFO structure for ALL kits and ALL components."""
         from pykotor.resource.formats.erf import read_erf
         from pykotor.resource.formats.gff import read_gff
         from pykotor.resource.type import ResourceType
@@ -7027,29 +7069,37 @@ class TestIndoorMapIOValidation:
         builder = builder_with_real_kit
         
         assert builder._kits, "Builder should have kits"
-        assert builder._kits[0].components, "First kit should have components"
         
-        comp = builder._kits[0].components[0]
-        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
-        builder._map.rooms.append(room)
-        builder._map.module_id = "testmod"
-        
-        mod_path = tmp_path / "testmod.mod"
-        builder._map.build(installation, builder._kits, mod_path)
-        
-        # Load ERF and extract IFO
-        erf = read_erf(mod_path)
-        ifo_resource = next((res for res in erf if res.restype == ResourceType.IFO), None)
-        
-        if ifo_resource:
-            ifo = read_gff(ifo_resource.data)
-            
-            # Validate IFO structure
-            assert ifo is not None, "IFO should load successfully"
-            assert ifo.root is not None, "IFO should have root"
+        # Test ALL kits and ALL components
+        for kit_idx, kit in enumerate(builder._kits):
+            if not kit.components:
+                continue
+                
+            for comp_idx, comp in enumerate(kit.components):
+                # Clear map for each test
+                builder._map.rooms.clear()
+                
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                builder._map.rooms.append(room)
+                builder._map.module_id = f"testmod_{kit_idx}_{comp_idx}"
+                
+                mod_path = tmp_path / f"testmod_{kit.name}_{comp.name}.mod"
+                builder._map.build(installation, builder._kits, mod_path)
+                
+                # Load ERF and extract IFO
+                erf = read_erf(mod_path)
+                ifo_resource = next((res for res in erf if res.restype == ResourceType.IFO), None)
+                
+                assert ifo_resource is not None, f"IFO resource should exist for kit {kit.name}, component {comp.name}"
+                
+                ifo = read_gff(ifo_resource.data)
+                
+                # Validate IFO structure
+                assert ifo is not None, f"IFO should load successfully for kit {kit.name}, component {comp.name}"
+                assert ifo.root is not None, f"IFO should have root for kit {kit.name}, component {comp.name}"
 
     def test_mod_format_git_structure(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
-        """Test that built .mod has valid GIT structure."""
+        """Test that built .mod has valid GIT structure for ALL kits and ALL components."""
         from pykotor.resource.formats.erf import read_erf
         from pykotor.resource.formats.gff import read_gff
         from pykotor.resource.type import ResourceType
@@ -7057,62 +7107,77 @@ class TestIndoorMapIOValidation:
         builder = builder_with_real_kit
         
         assert builder._kits, "Builder should have kits"
-        assert builder._kits[0].components, "First kit should have components"
         
-        comp = builder._kits[0].components[0]
-        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
-        builder._map.rooms.append(room)
-        builder._map.module_id = "testmod"
-        
-        mod_path = tmp_path / "testmod.mod"
-        builder._map.build(installation, builder._kits, mod_path)
-        
-        # Load ERF and extract GIT
-        erf = read_erf(mod_path)
-        git_resource = next((res for res in erf if res.restype == ResourceType.GIT), None)
-        
-        if git_resource:
-            git = read_gff(git_resource.data)
-            
-            # Validate GIT structure
-            assert git is not None, "GIT should load successfully"
-            assert git.root is not None, "GIT should have root"
+        # Test ALL kits and ALL components
+        for kit_idx, kit in enumerate(builder._kits):
+            if not kit.components:
+                continue
+                
+            for comp_idx, comp in enumerate(kit.components):
+                # Clear map for each test
+                builder._map.rooms.clear()
+                
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                builder._map.rooms.append(room)
+                builder._map.module_id = f"testmod_{kit_idx}_{comp_idx}"
+                
+                mod_path = tmp_path / f"testmod_{kit.name}_{comp.name}.mod"
+                builder._map.build(installation, builder._kits, mod_path)
+                
+                # Load ERF and extract GIT
+                erf = read_erf(mod_path)
+                git_resource = next((res for res in erf if res.restype == ResourceType.GIT), None)
+                
+                assert git_resource is not None, f"GIT resource should exist for kit {kit.name}, component {comp.name}"
+                
+                git = read_gff(git_resource.data)
+                
+                # Validate GIT structure
+                assert git is not None, f"GIT should load successfully for kit {kit.name}, component {comp.name}"
+                assert git.root is not None, f"GIT should have root for kit {kit.name}, component {comp.name}"
 
     def test_mod_format_contains_required_resources(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
-        """Test that built .mod contains all required resource types."""
+        """Test that built .mod contains all required resource types for ALL kits and ALL components."""
         from pykotor.resource.formats.erf import read_erf
         from pykotor.resource.type import ResourceType
         
         builder = builder_with_real_kit
         
         assert builder._kits, "Builder should have kits"
-        assert builder._kits[0].components, "First kit should have components"
         
-        comp = builder._kits[0].components[0]
-        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
-        builder._map.rooms.append(room)
-        builder._map.module_id = "testmod"
-        
-        mod_path = tmp_path / "testmod.mod"
-        builder._map.build(installation, builder._kits, mod_path)
-        
-        # Load ERF
-        erf = read_erf(mod_path)
-        resource_types = {res.restype for res in erf}
-        
-        # Check for required resources
-        required_types = {
-            ResourceType.LYT,  # Layout
-            ResourceType.ARE,  # Area
-            ResourceType.IFO,  # Module info
-            ResourceType.GIT,  # Game instance template
-        }
-        
-        for req_type in required_types:
-            assert req_type in resource_types, f"MOD should contain {req_type}"
+        # Test ALL kits and ALL components
+        for kit_idx, kit in enumerate(builder._kits):
+            if not kit.components:
+                continue
+                
+            for comp_idx, comp in enumerate(kit.components):
+                # Clear map for each test
+                builder._map.rooms.clear()
+                
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                builder._map.rooms.append(room)
+                builder._map.module_id = f"testmod_{kit_idx}_{comp_idx}"
+                
+                mod_path = tmp_path / f"testmod_{kit.name}_{comp.name}.mod"
+                builder._map.build(installation, builder._kits, mod_path)
+                
+                # Load ERF
+                erf = read_erf(mod_path)
+                resource_types = {res.restype for res in erf}
+                
+                # Check for required resources
+                required_types = {
+                    ResourceType.LYT,  # Layout
+                    ResourceType.ARE,  # Area
+                    ResourceType.IFO,  # Module info
+                    ResourceType.GIT,  # Game instance template
+                }
+                
+                for req_type in required_types:
+                    assert req_type in resource_types, f"MOD should contain {req_type} for kit {kit.name}, component {comp.name}"
 
     def test_mod_format_wok_material_consistency(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
-        """Test that built .mod WOK materials are consistent with source."""
+        """Test that built .mod WOK materials are consistent with source for ALL kits and ALL components."""
         from pykotor.resource.formats.erf import read_erf
         from pykotor.resource.formats.bwm import read_bwm
         from pykotor.resource.type import ResourceType
@@ -7120,50 +7185,58 @@ class TestIndoorMapIOValidation:
         builder = builder_with_real_kit
         
         assert builder._kits, "Builder should have kits"
-        assert builder._kits[0].components, "First kit should have components"
         
-        comp = builder._kits[0].components[0]
-        original_bwm = comp.bwm
-        
-        # Get material distribution from original
-        original_materials = {}
-        for face in original_bwm.faces:
-            mat_val = face.material.value
-            original_materials[mat_val] = original_materials.get(mat_val, 0) + 1
-        
-        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
-        builder._map.rooms.append(room)
-        builder._map.module_id = "testmod"
-        
-        mod_path = tmp_path / "testmod.mod"
-        builder._map.build(installation, builder._kits, mod_path)
-        
-        # Load ERF and find WOK
-        erf = read_erf(mod_path)
-        wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
-        
-        if wok_resources:
-            wok = read_bwm(wok_resources[0].data)
-            
-            # Get material distribution from built WOK
-            built_materials = {}
-            for face in wok.faces:
-                mat_val = face.material.value
-                built_materials[mat_val] = built_materials.get(mat_val, 0) + 1
-            
-            # Verify materials exist (exact counts may differ due to transformations)
-            assert len(built_materials) > 0, "Built WOK should have materials"
-            
-            # Verify walkable materials are preserved
-            original_walkable_materials = {mat for mat, count in original_materials.items() if mat in {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}}
-            built_walkable_materials = {mat for mat, count in built_materials.items() if mat in {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}}
-            
-            # At least some walkable materials should be present
-            assert len(built_walkable_materials) > 0 or len(original_walkable_materials) == 0, \
-                "Walkable materials should be preserved if they existed in source"
+        # Test ALL kits and ALL components
+        for kit_idx, kit in enumerate(builder._kits):
+            if not kit.components:
+                continue
+                
+            for comp_idx, comp in enumerate(kit.components):
+                original_bwm = comp.bwm
+                
+                # Get material distribution from original
+                original_materials = {}
+                for face in original_bwm.faces:
+                    mat_val = face.material.value
+                    original_materials[mat_val] = original_materials.get(mat_val, 0) + 1
+                
+                # Clear map for each test
+                builder._map.rooms.clear()
+                
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                builder._map.rooms.append(room)
+                builder._map.module_id = f"testmod_{kit_idx}_{comp_idx}"
+                
+                mod_path = tmp_path / f"testmod_{kit.name}_{comp.name}.mod"
+                builder._map.build(installation, builder._kits, mod_path)
+                
+                # Load ERF and find WOK
+                erf = read_erf(mod_path)
+                wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
+                
+                assert wok_resources, f"WOK resource should exist for kit {kit.name}, component {comp.name}"
+                
+                wok = read_bwm(wok_resources[0].data)
+                
+                # Get material distribution from built WOK
+                built_materials = {}
+                for face in wok.faces:
+                    mat_val = face.material.value
+                    built_materials[mat_val] = built_materials.get(mat_val, 0) + 1
+                
+                # Verify materials exist (exact counts may differ due to transformations)
+                assert len(built_materials) > 0, f"Built WOK should have materials for kit {kit.name}, component {comp.name}"
+                
+                # Verify walkable materials are preserved
+                original_walkable_materials = {mat for mat, count in original_materials.items() if mat in {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}}
+                built_walkable_materials = {mat for mat, count in built_materials.items() if mat in {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}}
+                
+                # At least some walkable materials should be present
+                assert len(built_walkable_materials) > 0 or len(original_walkable_materials) == 0, \
+                    f"Walkable materials should be preserved if they existed in source for kit {kit.name}, component {comp.name}"
 
     def test_mod_format_wok_vertex_consistency(self, builder_with_real_kit: IndoorMapBuilder, installation: HTInstallation, tmp_path: Path):
-        """Test that built .mod WOK vertices are valid."""
+        """Test that built .mod WOK vertices are valid for ALL kits and ALL components."""
         from pykotor.resource.formats.erf import read_erf
         from pykotor.resource.formats.bwm import read_bwm
         from pykotor.resource.type import ResourceType
@@ -7171,31 +7244,39 @@ class TestIndoorMapIOValidation:
         builder = builder_with_real_kit
         
         assert builder._kits, "Builder should have kits"
-        assert builder._kits[0].components, "First kit should have components"
         
-        comp = builder._kits[0].components[0]
-        room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
-        builder._map.rooms.append(room)
-        builder._map.module_id = "testmod"
-        
-        mod_path = tmp_path / "testmod.mod"
-        builder._map.build(installation, builder._kits, mod_path)
-        
-        # Load ERF and find WOK
-        erf = read_erf(mod_path)
-        wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
-        
-        if wok_resources:
-            wok = read_bwm(wok_resources[0].data)
-            
-            # Validate vertices
-            for face in wok.faces:
-                # Check vertices are finite
-                assert all(math.isfinite(v.x) and math.isfinite(v.y) and math.isfinite(v.z) 
-                          for v in [face.v1, face.v2, face.v3]), \
-                    "All vertices should have finite coordinates"
+        # Test ALL kits and ALL components
+        for kit_idx, kit in enumerate(builder._kits):
+            if not kit.components:
+                continue
                 
-                # Check vertices are not NaN
-                assert not any(math.isnan(v.x) or math.isnan(v.y) or math.isnan(v.z) 
+            for comp_idx, comp in enumerate(kit.components):
+                # Clear map for each test
+                builder._map.rooms.clear()
+                
+                room = IndoorMapRoom(comp, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
+                builder._map.rooms.append(room)
+                builder._map.module_id = f"testmod_{kit_idx}_{comp_idx}"
+                
+                mod_path = tmp_path / f"testmod_{kit.name}_{comp.name}.mod"
+                builder._map.build(installation, builder._kits, mod_path)
+                
+                # Load ERF and find WOK
+                erf = read_erf(mod_path)
+                wok_resources = [res for res in erf if res.restype == ResourceType.WOK]
+                
+                assert wok_resources, f"WOK resource should exist for kit {kit.name}, component {comp.name}"
+                
+                wok = read_bwm(wok_resources[0].data)
+                
+                # Validate vertices
+                for face in wok.faces:
+                    # Check vertices are finite
+                    assert all(math.isfinite(v.x) and math.isfinite(v.y) and math.isfinite(v.z) 
                               for v in [face.v1, face.v2, face.v3]), \
-                    "No vertex should have NaN coordinates"
+                        f"All vertices should have finite coordinates for kit {kit.name}, component {comp.name}"
+                    
+                    # Check vertices are not NaN
+                    assert not any(math.isnan(v.x) or math.isnan(v.y) or math.isnan(v.z) 
+                                  for v in [face.v1, face.v2, face.v3]), \
+                        f"No vertex should have NaN coordinates for kit {kit.name}, component {comp.name}"
