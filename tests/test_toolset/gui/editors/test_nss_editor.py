@@ -1261,26 +1261,33 @@ def test_nss_editor_fold_region(qtbot, installation: HTInstallation, foldable_ns
     editor.new()
     
     editor.ui.codeEdit.setPlainText(foldable_nss_script)
-    qtbot.wait(200)  # Wait for foldable regions
+    # Manually trigger foldable regions update (QTimer might not fire reliably in headless mode)
+    editor.ui.codeEdit._update_foldable_regions()
+    qtbot.wait(50)  # Wait for Qt to process updates
+    
+    # Verify foldable regions were detected
+    assert len(editor.ui.codeEdit._foldable_regions) > 0, "Foldable regions should be detected"
     
     # Move cursor to inside a function block
     lines = foldable_nss_script.split('\n')
     main_line = next((i for i, line in enumerate(lines) if 'void main() {' in line), -1)
-    if main_line >= 0:
-        cursor = editor.ui.codeEdit.textCursor()
-        doc = editor.ui.codeEdit.document()
-        assert doc is not None
-        block = doc.findBlockByLineNumber(main_line)
-        if block.isValid():
-            cursor.setPosition(block.position())
-            editor.ui.codeEdit.setTextCursor(cursor)
-            
-            # Fold the region
-            editor.ui.codeEdit.fold_region()
-            
-            # Check that blocks are folded
-            assert hasattr(editor.ui.codeEdit, '_folded_block_numbers')
-            assert len(editor.ui.codeEdit._folded_block_numbers) > 0
+    assert main_line >= 0, "Should find 'void main() {' line"
+    cursor = editor.ui.codeEdit.textCursor()
+    doc = editor.ui.codeEdit.document()
+    assert doc is not None
+    block = doc.findBlockByLineNumber(main_line)
+    assert block.isValid(), "Block should be valid"
+    cursor.setPosition(block.position())
+    editor.ui.codeEdit.setTextCursor(cursor)
+    qtbot.wait(10)  # Wait for cursor to be set
+
+    # Fold the region
+    editor.ui.codeEdit.fold_region()
+    qtbot.wait(50)  # Wait for Qt to process the fold operation
+
+    # Check that blocks are folded
+    assert hasattr(editor.ui.codeEdit, '_folded_block_numbers')
+    assert len(editor.ui.codeEdit._folded_block_numbers) > 0, f"Expected folded blocks, got {editor.ui.codeEdit._folded_block_numbers}"
 
 
 def test_nss_editor_unfold_region(qtbot, installation: HTInstallation, foldable_nss_script: str):
