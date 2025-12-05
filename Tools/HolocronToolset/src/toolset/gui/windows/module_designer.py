@@ -249,6 +249,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         self._instance_id_lookup: dict[int, GITInstance] = {}
         self._last_walkmeshes: list[BWM] = []
         self._fallback_session_path: Path | None = None
+        self._last_undo_index: int = 0
 
         self._installation: HTInstallation = installation
         self._module: Module | None = None
@@ -1800,6 +1801,11 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             git_resource.add(instance)
         if scene is not None:
             scene.invalidate_cache()
+        
+        # Sync to Blender if not already syncing from Blender
+        if self.is_blender_mode() and self._blender_controller is not None and not self._instance_sync_in_progress:
+            self.add_instance_to_blender(instance)
+        
         self.rebuild_instance_list()
 
     #    @with_variable_trace()
@@ -1841,6 +1847,11 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             git_resource = git_module.resource()
             assert git_resource is not None
             git_resource.add(instance)
+        
+        # Sync to Blender if not already syncing from Blender
+        if self.is_blender_mode() and self._blender_controller is not None and not self._instance_sync_in_progress:
+            self.add_instance_to_blender(instance)
+        
         self.rebuild_instance_list()
 
     #    @with_variable_trace()
@@ -2764,6 +2775,16 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         element.position.y = self.ui.posYSpin.value()
         element.position.z = self.ui.posZSpin.value()
 
+        # Sync to Blender
+        if self.is_blender_mode() and self._blender_controller is not None:
+            obj_name = f"Room_{element.model}"
+            self._blender_controller.update_room_position(
+                obj_name,
+                element.position.x,
+                element.position.y,
+                element.position.z,
+            )
+
     def on_room_rotation_changed(self):
         """Handle room rotation change from spinboxes."""
         element = self.get_selected_lyt_element()
@@ -2779,7 +2800,21 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         if not isinstance(element, LYTRoom):
             return
 
+        old_model = element.model
         element.model = self.ui.modelEdit.text()
+
+        # Sync to Blender - update room model
+        if self.is_blender_mode() and self._blender_controller is not None:
+            old_obj_name = f"Room_{old_model}"
+            # Update room properties (model change requires removing and re-adding, but for now just update position)
+            # The model itself would need to be reloaded, which is complex, so we'll just update position
+            self._blender_controller.update_room_position(
+                old_obj_name,
+                element.position.x,
+                element.position.y,
+                element.position.z,
+            )
+
         self.rebuild_layout_tree()
 
     def on_browse_model(self):
@@ -2800,8 +2835,13 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
 
         element.room = self.ui.roomNameCombo.currentText()
 
-        # Sync to Blender (would need object name mapping)
-        # For now, skip as this is less critical
+        # Sync to Blender
+        if self.is_blender_mode() and self._blender_controller is not None:
+            obj_name = f"DoorHook_{element.door}"
+            self._blender_controller.update_door_hook(
+                obj_name,
+                room=element.room,
+            )
 
     def on_doorhook_name_changed(self):
         """Handle door hook name change."""
@@ -2809,7 +2849,17 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         if not isinstance(element, LYTDoorHook):
             return
 
+        old_door = element.door
         element.door = self.ui.doorNameEdit.text()
+
+        # Sync to Blender - update door name
+        if self.is_blender_mode() and self._blender_controller is not None:
+            old_obj_name = f"DoorHook_{old_door}"
+            self._blender_controller.update_door_hook(
+                old_obj_name,
+                door=element.door,
+            )
+
         self.rebuild_layout_tree()
 
     def on_lyt_tree_context_menu(self, point: QPoint):
@@ -2883,15 +2933,49 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         if isinstance(element, LYTRoom):
             new_element = LYTRoom(f"{element.model}_copy", element.position + offset)
             lyt.rooms.append(new_element)
+            # Sync to Blender
+            if self.is_blender_mode() and self._blender_controller is not None:
+                self._blender_controller.add_room(
+                    new_element.model,
+                    new_element.position.x,
+                    new_element.position.y,
+                    new_element.position.z,
+                )
         elif isinstance(element, LYTDoorHook):
             new_element = LYTDoorHook(element.room, f"{element.door}_copy", element.position + offset, element.orientation)
             lyt.doorhooks.append(new_element)
+            # Sync to Blender
+            if self.is_blender_mode() and self._blender_controller is not None:
+                self._blender_controller.add_door_hook(
+                    new_element.room,
+                    new_element.door,
+                    new_element.position.x,
+                    new_element.position.y,
+                    new_element.position.z,
+                    orientation=(new_element.orientation.x, new_element.orientation.y, new_element.orientation.z, new_element.orientation.w),
+                )
         elif isinstance(element, LYTTrack):
             new_element = LYTTrack(f"{element.model}_copy", element.position + offset)
             lyt.tracks.append(new_element)
+            # Sync to Blender
+            if self.is_blender_mode() and self._blender_controller is not None:
+                self._blender_controller.add_track(
+                    new_element.model,
+                    new_element.position.x,
+                    new_element.position.y,
+                    new_element.position.z,
+                )
         elif isinstance(element, LYTObstacle):
             new_element = LYTObstacle(f"{element.model}_copy", element.position + offset)
             lyt.obstacles.append(new_element)
+            # Sync to Blender
+            if self.is_blender_mode() and self._blender_controller is not None:
+                self._blender_controller.add_obstacle(
+                    new_element.model,
+                    new_element.position.x,
+                    new_element.position.y,
+                    new_element.position.z,
+                )
 
         self.rebuild_layout_tree()
         self.log.info(f"Duplicated {type(element).__name__}")
@@ -3028,13 +3112,24 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             return
 
         # Don't sync if we're in the middle of applying a Blender change
-        if self._transform_sync_in_progress or self._property_sync_in_progress:
+        if self._transform_sync_in_progress or self._property_sync_in_progress or self._instance_sync_in_progress:
             return
 
-        # The undo/redo commands themselves don't need to sync to Blender
-        # because Blender will receive the actual transform/property updates
-        # when the commands execute. This is just for notification purposes.
-        pass
+        # Track previous index to determine if we're undoing or redoing
+        if not hasattr(self, "_last_undo_index"):
+            self._last_undo_index = index
+            return
+
+        # If index decreased, we undid something
+        if index < self._last_undo_index:
+            # Sync undo to Blender
+            self._blender_controller.undo()
+        # If index increased, we redid something
+        elif index > self._last_undo_index:
+            # Sync redo to Blender
+            self._blender_controller.redo()
+
+        self._last_undo_index = index
 
     def update_camera(self):
         if self._use_blender_mode and self.ui.mainRenderer.scene is None:
