@@ -153,21 +153,44 @@ dev-dependencies = []
 ########################################################
 
 [tool.pyright]
+include = ["*.py"]
+exclude = [
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/venv/**",
+    "**/__pycache__/**",
+]
+extraPaths = [
+    "Engines/PyKotorEngine/src",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotorFont/src",
+    "Libraries/PyKotorGL/src",
+    "Tools/BatchPatcher/src",
+    "Tools/GuiConverter/src",
+    "Tools/HolocronAI/src",
+    "Tools/HolocronToolset/src",
+    "Tools/HoloGenerator/src",
+    "Tools/HoloPatcher/src",
+    "Tools/HoloPazaak/src",
+    "Tools/KitGenerator/src",
+    "Tools/KotorCLI/src",
+    "Tools/KotorDiff/src",
+]
+pythonVersion = "3.8"
+analyzeUnannotatedFunctions = true
+deprecateTypingAliases = false
 reportIncompatibleMethodOverride = false
-reportOptionalMemberAccess = false
-[tool.basedpyright]
-reportIncompatibleMethodOverride = false
+reportMissingImports = true
+reportMissingTypeStubs = false
 reportOptionalMemberAccess = false
 
 [tool.pyright.defineConstant]
-PYQT5 = true
+PYQT5 = false
 PYSIDE2 = false
-PYQT6 = false
-PYSIDE6 = false
-[tool.basedpyright.defineConstant]
-PYQT5 = true
-PYSIDE2 = false
-PYQT6 = false
+PYQT6 = true
 PYSIDE6 = false
 
 

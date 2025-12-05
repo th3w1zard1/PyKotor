@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Tools/HolocronToolset/src/ui/windows/indoor_builder.ui'
+# Form implementation generated from reading ui file '..\ui\windows\indoor_builder.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #
@@ -19,8 +19,6 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        
-        # Left scroll area for panels
         self.leftScrollArea = QtWidgets.QScrollArea(self.centralwidget)
         self.leftScrollArea.setWidgetResizable(True)
         self.leftScrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -28,30 +26,24 @@ class Ui_MainWindow(object):
         self.leftScrollContents = QtWidgets.QWidget()
         self.leftScrollContents.setObjectName("leftScrollContents")
         self.leftScrollLayout = QtWidgets.QVBoxLayout(self.leftScrollContents)
-        self.leftScrollLayout.setSpacing(4)
         self.leftScrollLayout.setContentsMargins(0, 0, 0, 0)
+        self.leftScrollLayout.setSpacing(4)
         self.leftScrollLayout.setObjectName("leftScrollLayout")
-        
-        # Kits Collapsible Section
-        self.kitsGroupBox = CollapsibleGroupBox("", self.leftScrollContents)
-        self.kitsGroupBox.setTitle("Kits")
+        self.kitsGroupBox = CollapsibleGroupBox(self.leftScrollContents)
         self.kitsGroupBox.setCheckable(True)
         self.kitsGroupBox.setChecked(True)
         self.kitsGroupBox.setObjectName("kitsGroupBox")
         self.kitsLayout = QtWidgets.QVBoxLayout(self.kitsGroupBox)
-        self.kitsLayout.setSpacing(4)
         self.kitsLayout.setContentsMargins(4, 4, 4, 4)
+        self.kitsLayout.setSpacing(4)
         self.kitsLayout.setObjectName("kitsLayout")
-        
         self.kitSelect = QtWidgets.QComboBox(self.kitsGroupBox)
         self.kitSelect.setObjectName("kitSelect")
         self.kitsLayout.addWidget(self.kitSelect)
-        
         self.componentList = QtWidgets.QListWidget(self.kitsGroupBox)
         self.componentList.setMinimumHeight(150)
         self.componentList.setObjectName("componentList")
         self.kitsLayout.addWidget(self.componentList)
-        
         self.kitPreviewBox = QtWidgets.QGroupBox(self.kitsGroupBox)
         self.kitPreviewBox.setObjectName("kitPreviewBox")
         self.kitPreviewLayout = QtWidgets.QGridLayout(self.kitPreviewBox)
@@ -64,29 +56,22 @@ class Ui_MainWindow(object):
         self.componentImage.setObjectName("componentImage")
         self.kitPreviewLayout.addWidget(self.componentImage, 0, 0, 1, 1)
         self.kitsLayout.addWidget(self.kitPreviewBox)
-        
         self.leftScrollLayout.addWidget(self.kitsGroupBox)
-        
-        # Modules Collapsible Section
-        self.modulesGroupBox = CollapsibleGroupBox("", self.leftScrollContents)
-        self.modulesGroupBox.setTitle("Modules")
+        self.modulesGroupBox = CollapsibleGroupBox(self.leftScrollContents)
         self.modulesGroupBox.setCheckable(True)
         self.modulesGroupBox.setChecked(False)
         self.modulesGroupBox.setObjectName("modulesGroupBox")
         self.modulesLayout = QtWidgets.QVBoxLayout(self.modulesGroupBox)
-        self.modulesLayout.setSpacing(4)
         self.modulesLayout.setContentsMargins(4, 4, 4, 4)
+        self.modulesLayout.setSpacing(4)
         self.modulesLayout.setObjectName("modulesLayout")
-        
         self.moduleSelect = QtWidgets.QComboBox(self.modulesGroupBox)
         self.moduleSelect.setObjectName("moduleSelect")
         self.modulesLayout.addWidget(self.moduleSelect)
-        
         self.moduleComponentList = QtWidgets.QListWidget(self.modulesGroupBox)
         self.moduleComponentList.setMinimumHeight(150)
         self.moduleComponentList.setObjectName("moduleComponentList")
         self.modulesLayout.addWidget(self.moduleComponentList)
-        
         self.modulePreviewBox = QtWidgets.QGroupBox(self.modulesGroupBox)
         self.modulePreviewBox.setObjectName("modulePreviewBox")
         self.modulePreviewLayout = QtWidgets.QGridLayout(self.modulePreviewBox)
@@ -99,10 +84,7 @@ class Ui_MainWindow(object):
         self.moduleComponentImage.setObjectName("moduleComponentImage")
         self.modulePreviewLayout.addWidget(self.moduleComponentImage, 0, 0, 1, 1)
         self.modulesLayout.addWidget(self.modulePreviewBox)
-        
         self.leftScrollLayout.addWidget(self.modulesGroupBox)
-        
-        # Options Section
         self.optionsBox = QtWidgets.QGroupBox(self.leftScrollContents)
         self.optionsBox.setObjectName("optionsBox")
         self.optionsLayout = QtWidgets.QVBoxLayout(self.optionsBox)
@@ -146,17 +128,11 @@ class Ui_MainWindow(object):
         self.rotSnapSpin.setObjectName("rotSnapSpin")
         self.rotSnapLayout.addWidget(self.rotSnapSpin)
         self.optionsLayout.addLayout(self.rotSnapLayout)
-        
         self.leftScrollLayout.addWidget(self.optionsBox)
-        
-        # Spacer to push everything up
         spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.leftScrollLayout.addItem(spacerItem)
-        
         self.leftScrollArea.setWidget(self.leftScrollContents)
         self.horizontalLayout.addWidget(self.leftScrollArea)
-        
-        # Map Renderer
         self.mapRenderer = IndoorMapRenderer(self.centralwidget)
         self.mapRenderer.setMouseTracking(True)
         self.mapRenderer.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -166,8 +142,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setStretch(0, 1)
         self.horizontalLayout.setStretch(1, 4)
         MainWindow.setCentralWidget(self.centralwidget)
-        
-        # Menu bar
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1024, 22))
         self.menubar.setObjectName("menubar")
@@ -186,8 +160,6 @@ class Ui_MainWindow(object):
         self.toolBar = QtWidgets.QToolBar(MainWindow)
         self.toolBar.setObjectName("toolBar")
         MainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
-        
-        # Actions
         self.actionOpen = QtWidgets.QAction(MainWindow)
         self.actionOpen.setObjectName("actionOpen")
         self.actionSave = QtWidgets.QAction(MainWindow)
@@ -232,8 +204,6 @@ class Ui_MainWindow(object):
         self.actionResetView.setObjectName("actionResetView")
         self.actionCenterOnSelection = QtWidgets.QAction(MainWindow)
         self.actionCenterOnSelection.setObjectName("actionCenterOnSelection")
-        
-        # Menu setup
         self.menuFile.addAction(self.actionNew)
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionSave)
@@ -267,8 +237,6 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuEdit.menuAction())
         self.menubar.addAction(self.menuView.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
-        
-        # Toolbar setup
         self.toolBar.addAction(self.actionNew)
         self.toolBar.addAction(self.actionOpen)
         self.toolBar.addAction(self.actionSave)
@@ -347,7 +315,5 @@ class Ui_MainWindow(object):
         self.actionResetView.setShortcut(_translate("MainWindow", "Home"))
         self.actionCenterOnSelection.setText(_translate("MainWindow", "Center on Selection"))
         self.actionCenterOnSelection.setShortcut(_translate("MainWindow", "F"))
-
-
-from toolset.gui.windows.indoor_builder import IndoorMapRenderer
 from toolset.gui.common.widgets.collapsible import CollapsibleGroupBox
+from toolset.gui.windows.indoor_builder import IndoorMapRenderer

@@ -10,8 +10,6 @@
 
 from qtpy import QtCore, QtGui, QtWidgets
 
-from qtpy.QtCore import QSize, QMetaObject, QCoreApplication
-
 
 class Ui_Form(object):
     def setupUi(self, Form):
@@ -31,8 +29,8 @@ class Ui_Form(object):
         self.sectionCombo.setObjectName("sectionCombo")
         self.horizontalLayout_2.addWidget(self.sectionCombo)
         self.refreshButton = QtWidgets.QPushButton(Form)
-        self.refreshButton.setMinimumSize(QSize(70, 0))
-        self.refreshButton.setMaximumSize(QSize(16777215, 70))
+        self.refreshButton.setMinimumSize(QtCore.QSize(70, 0))
+        self.refreshButton.setMaximumSize(QtCore.QSize(16777215, 70))
         self.refreshButton.setObjectName("refreshButton")
         self.horizontalLayout_2.addWidget(self.refreshButton)
         self.horizontalLayout_2.setStretch(0, 4)
@@ -50,8 +48,8 @@ class Ui_Form(object):
         self.horizontalLayout_4.addWidget(self.searchEdit)
         self.reloadButton = QtWidgets.QPushButton(Form)
         self.reloadButton.setEnabled(True)
-        self.reloadButton.setMinimumSize(QSize(70, 0))
-        self.reloadButton.setMaximumSize(QSize(70, 16777215))
+        self.reloadButton.setMinimumSize(QtCore.QSize(70, 0))
+        self.reloadButton.setMaximumSize(QtCore.QSize(70, 16777215))
         self.reloadButton.setObjectName("reloadButton")
         self.horizontalLayout_4.addWidget(self.reloadButton)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
@@ -65,10 +63,10 @@ class Ui_Form(object):
         self.verticalLayout.addWidget(self.resourceTree)
 
         self.retranslateUi(Form)
-        QMetaObject.connectSlotsByName(Form)
+        QtCore.QMetaObject.connectSlotsByName(Form)
 
     def retranslateUi(self, Form):
-        _translate = QCoreApplication.translate
+        _translate = QtCore.QCoreApplication.translate
         Form.setWindowTitle(_translate("Form", "Form"))
         self.refreshButton.setToolTip(_translate("Form", "Refresh this list."))
         self.refreshButton.setText(_translate("Form", "Refresh"))

@@ -124,3 +124,4 @@ test_list.txt
 .gitignore
 tests/cProfile/profile_analysis.txt
 Tools/HolocronToolset/src/toolset/toolset_profile_*.txt
+Tools/tests/test_toolset/test_files/generated_kit/

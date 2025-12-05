@@ -217,12 +217,6 @@ kotor-diff = { workspace = true }
 ## define only linter configurations below this point ##
 ########################################################
 
-[tool.pyright.defineConstant]
-PYQT5 = true
-PYSIDE2 = false
-PYQT6 = false
-PYSIDE6 = false
-
 [tool.black]
 line-length = 175
 skip-magic-trailing-comma = false
@@ -285,6 +279,12 @@ reportMissingTypeStubs = false
 pythonVersion = "3.8"
 analyzeUnannotatedFunctions = true
 deprecateTypingAliases = false
+
+[tool.pyright.defineConstant]
+PYQT5 = false
+PYSIDE2 = false
+PYQT6 = true
+PYSIDE6 = false
 
 [tool.isort]
 atomic = true

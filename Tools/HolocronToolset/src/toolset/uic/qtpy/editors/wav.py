@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'G:\GitHub\PyKotor\Tools\HolocronToolset\src\ui\editors\wav.ui'
+# Form implementation generated from reading ui file '..\ui\editors\wav.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #

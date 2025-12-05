@@ -109,16 +109,8 @@ where = ["src"]
 [tool.pyright]
 reportIncompatibleMethodOverride = false
 reportOptionalMemberAccess = false
-[tool.basedpyright]
-reportIncompatibleMethodOverride = false
-reportOptionalMemberAccess = false
 
 [tool.pyright.defineConstant]
-PYQT5 = false
-PYSIDE2 = false
-PYQT6 = true
-PYSIDE6 = false
-[tool.basedpyright.defineConstant]
 PYQT5 = false
 PYSIDE2 = false
 PYQT6 = true
