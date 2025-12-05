@@ -500,7 +500,9 @@ class BWM(ComparableMixin):
               edge index (see `_index_by_identity`).
         """
         walkable: list[BWMFace] = [face for face in self.faces if face.material.walkable()]
-        adjacencies: list[tuple[BWMAdjacency | None, BWMAdjacency | None, BWMAdjacency | None]] = [self.adjacencies(face) for face in walkable]
+        # OPTIMIZATION: Compute all adjacencies in batch instead of calling adjacencies() N times
+        # This reduces complexity from O(N²) to O(N) by building an edge-to-faces mapping
+        adjacencies: list[tuple[BWMAdjacency | None, BWMAdjacency | None, BWMAdjacency | None]] = self._compute_all_adjacencies(walkable)
         
         # Build mapping from walkable face index to overall face index
         # This is needed because adjacencies use overall face indices, but we iterate over walkable faces
@@ -581,6 +583,85 @@ class BWM(ComparableMixin):
                 return i
         msg = "Face not found in faces list"
         raise ValueError(msg)
+
+    def _compute_all_adjacencies(
+        self,
+        walkable: list[BWMFace],
+    ) -> list[tuple[BWMAdjacency | None, BWMAdjacency | None, BWMAdjacency | None]]:
+        """Compute all adjacencies for walkable faces in a single batch operation.
+        
+        This optimized method builds an edge-to-faces mapping to reduce complexity
+        from O(N²) to O(N) compared to calling adjacencies() individually for each face.
+        
+        Args:
+        ----
+            walkable: List of walkable faces to compute adjacencies for.
+            
+        Returns:
+        -------
+            List of adjacency tuples, one per walkable face.
+            Each tuple contains (adj1, adj2, adj3) where each adj is BWMAdjacency | None.
+        """
+        # Build edge-to-faces mapping: edge (frozenset of 2 vertices) -> list of (face, edge_index) tuples
+        # This allows O(1) lookups instead of O(N) searches
+        edge_to_faces: dict[frozenset[Vector3], list[tuple[BWMFace, int]]] = {}
+        
+        # Define edge vertices for each face edge
+        # Edge 0: v1->v2, Edge 1: v2->v3, Edge 2: v3->v1
+        for face in walkable:
+            # Edge 0: v1->v2
+            edge0 = frozenset([face.v1, face.v2])
+            if edge0 not in edge_to_faces:
+                edge_to_faces[edge0] = []
+            edge_to_faces[edge0].append((face, 0))
+            
+            # Edge 1: v2->v3
+            edge1 = frozenset([face.v2, face.v3])
+            if edge1 not in edge_to_faces:
+                edge_to_faces[edge1] = []
+            edge_to_faces[edge1].append((face, 1))
+            
+            # Edge 2: v3->v1
+            edge2 = frozenset([face.v3, face.v1])
+            if edge2 not in edge_to_faces:
+                edge_to_faces[edge2] = []
+            edge_to_faces[edge2].append((face, 2))
+        
+        # Now compute adjacencies for each face by looking up edges
+        result: list[tuple[BWMAdjacency | None, BWMAdjacency | None, BWMAdjacency | None]] = []
+        
+        for face in walkable:
+            adj1: BWMAdjacency | None = None
+            adj2: BWMAdjacency | None = None
+            adj3: BWMAdjacency | None = None
+            
+            # Check edge 0 (v1->v2)
+            edge0 = frozenset([face.v1, face.v2])
+            if edge0 in edge_to_faces:
+                for other_face, other_edge in edge_to_faces[edge0]:
+                    if other_face is not face:
+                        adj1 = BWMAdjacency(other_face, other_edge)
+                        break  # Each edge should have at most one adjacent face
+            
+            # Check edge 1 (v2->v3)
+            edge1 = frozenset([face.v2, face.v3])
+            if edge1 in edge_to_faces:
+                for other_face, other_edge in edge_to_faces[edge1]:
+                    if other_face is not face:
+                        adj2 = BWMAdjacency(other_face, other_edge)
+                        break
+            
+            # Check edge 2 (v3->v1)
+            edge2 = frozenset([face.v3, face.v1])
+            if edge2 in edge_to_faces:
+                for other_face, other_edge in edge_to_faces[edge2]:
+                    if other_face is not face:
+                        adj3 = BWMAdjacency(other_face, other_edge)
+                        break
+            
+            result.append((adj1, adj2, adj3))
+        
+        return result
 
     def adjacencies(
         self,
