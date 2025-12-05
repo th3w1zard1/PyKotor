@@ -33,7 +33,7 @@ import sys
 
 # Setup paths
 THIS_FILE = pathlib.Path(__file__).resolve()
-REPO_ROOT = THIS_FILE.parents[2]
+REPO_ROOT = THIS_FILE.parents[5]
 PYKOTOR_SRC = REPO_ROOT / "Libraries" / "PyKotor" / "src"
 UTILITY_SRC = REPO_ROOT / "Libraries" / "Utility" / "src"
 
@@ -613,12 +613,12 @@ class TestBWMFromRealFiles:
     """Test reading and roundtrip of real BWM files from game installations."""
 
     @pytest.mark.skipif(
-        not Path(__file__).parent.parent / "test_toolset" / "test_files" / "zio006j.wok",
+        not Path(__file__).parents[5] / "Tools" / "HolocronToolset" / "tests" / "test_files" / "zio006j.wok",
         reason="Test file not available",
     )
     def test_read_real_wok_file(self):
         """Test reading a real WOK file from test files."""
-        test_file = Path(__file__).parent.parent / "test_toolset" / "test_files" / "zio006j.wok"
+        test_file = Path(__file__).parents[5] / "Tools" / "HolocronToolset" / "tests" / "test_files" / "zio006j.wok"
         if not test_file.exists():
             pytest.skip("Test file not available")
         
@@ -630,12 +630,12 @@ class TestBWMFromRealFiles:
         assert len(bwm.faces) > 0
 
     @pytest.mark.skipif(
-        not Path(__file__).parent.parent / "test_toolset" / "test_files" / "zio006j.wok",
+        not Path(__file__).parents[5] / "Tools" / "HolocronToolset" / "tests" / "test_files" / "zio006j.wok",
         reason="Test file not available",
     )
     def test_roundtrip_real_wok_file(self):
         """Test roundtrip of real WOK file."""
-        test_file = Path(__file__).parent.parent / "test_toolset" / "test_files" / "zio006j.wok"
+        test_file = Path(__file__).parents[5] / "Tools" / "HolocronToolset" / "tests" / "test_files" / "zio006j.wok"
         if not test_file.exists():
             pytest.skip("Test file not available")
         

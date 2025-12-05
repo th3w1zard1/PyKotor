@@ -7,7 +7,7 @@ import sys
 
 
 THIS_FILE = pathlib.Path(__file__).resolve()
-REPO_ROOT = THIS_FILE.parents[2]
+REPO_ROOT = THIS_FILE.parents[5]
 PYKOTOR_SRC = REPO_ROOT / "Libraries" / "PyKotor" / "src"
 UTILITY_SRC = REPO_ROOT / "Libraries" / "Utility" / "src"
 
@@ -17,7 +17,7 @@ for path in (PYKOTOR_SRC, UTILITY_SRC):
         sys.path.insert(0, as_posix)
 
 from utility.common.geometry import Vector3
-from pykotor.resource.formats.gff.gff_data import GFFList
+from pykotor.resource.formats.gff import GFFList  # pyright: ignore[reportMissingImports]
 
 
 def _silent_logger(message: object = "") -> None:
