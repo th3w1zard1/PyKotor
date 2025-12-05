@@ -9345,40 +9345,27 @@ class TestModuleKitMouseDragAndConnect:
             max_y = min(rendered_image.height() - 1, min_y + 20)
             min_y = max(0, max_y - 40)
         
-        # STEP 4: Check for black areas - verify geometry is visible
-        # Sample points around the room center and within the bounding box
-        # Use a grid of points to check for geometry
-        check_points = []
+        # STEP 4: CRITICAL - Check for ZERO black pixels within the room's walkmesh FACE areas
+        # The room should be completely filled with geometry (grey/white), like the first example image.
+        # There should be NO black padding within the walkmesh face areas - it should look like a solid filled shape.
+        # 
+        # We check ONLY the actual walkmesh face centers and a small area around them.
+        # We do NOT check bounding box edges (which may have legitimate padding around the image).
+        # The key is: geometry areas (face centers) should have ZERO black pixels.
         
-        # Add center point
-        check_points.append((center_x, center_y))
+        black_pixels_found = []
+        total_pixels_checked = 0
         
-        # Add points in a grid around the center (within the bounding box)
-        grid_size = 5
-        for i in range(grid_size):
-            for j in range(grid_size):
-                if i == grid_size // 2 and j == grid_size // 2:
-                    continue  # Skip center (already added)
-                px = min_x + (max_x - min_x) * i // (grid_size - 1) if max_x > min_x else center_x
-                py = min_y + (max_y - min_y) * j // (grid_size - 1) if max_y > min_y else center_y
-                px = max(0, min(px, rendered_image.width() - 1))
-                py = max(0, min(py, rendered_image.height() - 1))
-                check_points.append((px, py))
+        # Threshold for "black" - pure black or very dark pixels
+        BLACK_THRESHOLD = 20  # RGB values below this are considered black/dark padding
         
-        # Remove duplicates
-        check_points = list(set(check_points))
-
-        # Threshold for "dark" colors (not just pure black)
-        # Lower threshold to catch very dark pixels, but still distinguish from pure black (0,0,0)
-        DARK_THRESHOLD = 15  # RGB values below this are considered dark/black
-
-        geometry_found = False
-        dark_pixels_found = []
-
-        for px, py in check_points:
+        def check_pixel(px: int, py: int) -> None:
+            """Check a single pixel and record if it's black."""
+            nonlocal total_pixels_checked
             if 0 <= px < rendered_image.width() and 0 <= py < rendered_image.height():
+                total_pixels_checked += 1
                 pixel = rendered_image.pixel(px, py)
-
+                
                 # Extract RGB values
                 if rendered_image.format() == QImage.Format.Format_RGB32 or rendered_image.format() == QImage.Format.Format_ARGB32:
                     r = (pixel >> 16) & 0xFF
@@ -9390,43 +9377,61 @@ class TestModuleKitMouseDragAndConnect:
                     r = color.red()
                     g = color.green()
                     b = color.blue()
-
-                # Check if pixel is dark/black
-                is_dark = r < DARK_THRESHOLD and g < DARK_THRESHOLD and b < DARK_THRESHOLD
-
-                if is_dark:
-                    dark_pixels_found.append((px, py, r, g, b))
-                else:
-                    geometry_found = True
-
-        # CRITICAL ASSERTION: Room geometry should be visible (not all black)
-        assert geometry_found, (
-            f"All checked points were dark/black: {dark_pixels_found[:10]}. "
-            f"BWM bounds: X[{bwm_min_x:.2f}, {bwm_max_x:.2f}], Y[{bwm_min_y:.2f}, {bwm_max_y:.2f}], "
-            f"Room center screen: ({center_x}, {center_y}), "
+                
+                # Check if pixel is black/dark (this is the padding we want to avoid)
+                is_black = r < BLACK_THRESHOLD and g < BLACK_THRESHOLD and b < BLACK_THRESHOLD
+                
+                if is_black:
+                    black_pixels_found.append((px, py, r, g, b))
+        
+        # Check ONLY walkmesh face centers (where geometry MUST be visible)
+        # Sample a representative subset of faces to check
+        walkmesh = room.walkmesh()
+        # Check all faces, but limit to reasonable number for performance
+        faces_to_check = walkmesh.faces[:100] if len(walkmesh.faces) > 100 else walkmesh.faces
+        
+        for face in faces_to_check:
+            # Calculate face center in world coordinates
+            face_center_world = Vector3(
+                (face.v1.x + face.v2.x + face.v3.x) / 3.0,
+                (face.v1.y + face.v2.y + face.v3.y) / 3.0,
+                (face.v1.z + face.v2.z + face.v3.z) / 3.0
+            )
+            
+            # Transform to screen coordinates
+            face_center_screen = renderer.to_render_coords(face_center_world.x, face_center_world.y)
+            face_px = max(0, min(int(face_center_screen.x), rendered_image.width() - 1))
+            face_py = max(0, min(int(face_center_screen.y), rendered_image.height() - 1))
+            
+            # Check the face center (geometry MUST be here - ZERO tolerance for black)
+            check_pixel(face_px, face_py)
+            
+            # Check a small 3x3 area around face center (geometry should fill this area)
+            # This catches black padding that might be between faces or at edges
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    if dx == 0 and dy == 0:
+                        continue  # Already checked
+                    check_pixel(face_px + dx, face_py + dy)
+        
+        # Also check room center (should have geometry, not black)
+        check_pixel(center_x, center_y)
+        
+        # CRITICAL ASSERTION: ZERO black pixels within walkmesh face areas
+        # The room should be completely filled with geometry (grey/white), not have black padding
+        # This matches the first example image - a solid filled shape with no black areas
+        # Face centers MUST have geometry - if they're black, the image has padding issues
+        assert len(black_pixels_found) == 0, (
+            f"Room should have ZERO black pixels within its walkmesh face areas! "
+            f"Found {len(black_pixels_found)} black/dark pixels out of {total_pixels_checked} checked. "
+            f"This indicates black padding around/in the geometry (like the second example image). "
+            f"The room should be completely filled with geometry (grey/white), like the first example. "
+            f"Black pixels found (first 30): {black_pixels_found[:30]}. "
             f"Room center world: ({room_center_world.x:.2f}, {room_center_world.y:.2f}), "
-            f"Room geometry should be visible in rendered image! "
+            f"Room center screen: ({center_x}, {center_y}), "
+            f"BWM bounds: X[{bwm_min_x:.2f}, {bwm_max_x:.2f}], Y[{bwm_min_y:.2f}, {bwm_max_y:.2f}], "
             f"Screen bounds: X[{min_x}, {max_x}], Y[{min_y}, {max_y}], "
-            f"Total check points: {len(check_points)}"
-        )
-        
-        # Additional check: At least some points should NOT be dark (at least 20% should show geometry)
-        # Also check that we're not seeing pure black (0,0,0) everywhere - that would indicate no rendering
-        pure_black_count = sum(1 for _, _, r, g, b in dark_pixels_found if r == 0 and g == 0 and b == 0)
-        non_dark_count: int = len(check_points) - len(dark_pixels_found)
-        min_non_dark: int = max(1, int(len(check_points) * 0.2))  # At least 20% should show geometry
-        
-        # If we have some non-dark points, that's good (geometry is visible)
-        # But if ALL points are pure black (0,0,0), that's a problem
-        assert pure_black_count < len(check_points), (
-            f"Not all points should be pure black (0,0,0). Found {pure_black_count} pure black out of {len(check_points)}. "
-            f"This suggests the room may not be rendering. Non-dark points: {non_dark_count}"
-        )
-        
-        assert non_dark_count >= min_non_dark, (
-            f"At least {min_non_dark} of {len(check_points)} checked points should show geometry (not dark). "
-            f"Found {non_dark_count} non-dark points. "
-            f"Pure black pixels: {pure_black_count}, Dark pixels (first 10): {dark_pixels_found[:10]}"
+            f"Walkmesh faces checked: {len(faces_to_check)}/{len(walkmesh.faces)}"
         )
 
         # STEP 5: Verify connectors and snap functionality
