@@ -18,7 +18,6 @@ from direct.showbase.ShowBase import ShowBase
 
 from pykotor.engine.panda3d.materials import Panda3DMaterialManager
 from pykotor.engine.panda3d.module_loader import ModuleLoader
-from pykotor.engine.panda3d.resources.texture_loader import load_tpc
 from pykotor.engine.panda3d.scene_graph import Panda3DSceneGraph
 
 from panda3d.core import (
@@ -65,33 +64,24 @@ class KotorEngine(ShowBase):
             /panda3d/panda3d-docs/programming/configuration/accessing-config-vars - loadPrcFileData
         """
         # Configure Panda3D before ShowBase initialization
-        # References:
-        # - vendor/xoreos/src/graphics/windowman.cpp:56 - Window title
-        # - /panda3d/panda3d-docs - loadPrcFileData usage
         loadPrcFileData("", "window-title KotOR Engine - PyKotor")
         
         # Window size
-        # References:
-        # - vendor/xoreos/src/graphics/windowman.cpp:77-78 - Window dimensions
-        # - vendor/reone test files - Default 1024x768
         loadPrcFileData("", "win-size 1280 720")
         
         # Frame rate meter for debugging
         loadPrcFileData("", "show-frame-rate-meter true")
         
         # V-sync
-        # Reference: vendor/xoreos/src/graphics/windowman.cpp - No explicit v-sync config
         loadPrcFileData("", "sync-video false")
         
         # OpenGL version
-        # Reference: vendor/xoreos/src/graphics/windowman.cpp:108-112 - OpenGL 3.2/2.1
         loadPrcFileData("", "gl-version 3 3")
         
         # Notification level
         loadPrcFileData("", "notify-level warning")
         
         # Antialiasing
-        # Reference: vendor/xoreos/src/graphics/windowman.cpp:105-106 - MULTISAMPLE
         loadPrcFileData("", "default-antialias-enable true")
         
         # Initialize ShowBase
@@ -109,8 +99,8 @@ class KotorEngine(ShowBase):
         self.scene_root: NodePath = self.render.attachNewNode("kotor_scene")
         
         # Create scene graph manager
-        self.scene_graph = Panda3DSceneGraph("main_scene", self.scene_root)
-        self.material_manager = Panda3DMaterialManager(self.loader, Path.cwd())
+        self.scene_graph: Panda3DSceneGraph = Panda3DSceneGraph("main_scene", self.scene_root)
+        self.material_manager: Panda3DMaterialManager = Panda3DMaterialManager(self.loader, Path.cwd())
         
         # Module loader will be initialized when installation is set
         self.module_loader: ModuleLoader | None = None
