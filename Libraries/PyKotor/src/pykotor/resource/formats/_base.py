@@ -5,7 +5,7 @@ import sys
 
 from contextlib import suppress
 from itertools import zip_longest
-from typing import Any, Callable, ClassVar, Sequence
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Sequence
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve().parent
 PYKOTOR_LIB = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "PyKotor", "src")
@@ -16,6 +16,9 @@ for lib_path in (PYKOTOR_LIB, UTILITY_LIB):
         sys.path.append(lib_str)
 
 from utility.string_util import compare_and_format, format_text  # type: ignore[attr-defined]  # noqa: E402
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
 
 
 class ComparableMixin:
@@ -41,6 +44,13 @@ class ComparableMixin:
     # Float tolerance for approximate comparisons
     _FLOAT_REL_TOL: ClassVar[float] = 1e-4
     _FLOAT_ABS_TOL: ClassVar[float] = 1e-4
+    
+    def __new__(
+        cls: type[Self],
+        *args,
+        **kwargs,
+    ) -> Self:
+        return super().__new__(*args, **kwargs)
 
     def compare(
         self,

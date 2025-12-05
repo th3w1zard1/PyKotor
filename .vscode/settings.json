@@ -47,6 +47,7 @@
     ],
     "python.testing.pytestArgs": [
         "tests",
+        "Libraries/PyKotor/tests",
         "-v"
     ],
     "python.testing.pytestEnabled": true,

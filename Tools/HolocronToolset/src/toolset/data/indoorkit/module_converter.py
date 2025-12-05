@@ -20,7 +20,8 @@ from pykotor.common.module import Module
 from pykotor.resource.formats.bwm.bwm_data import BWM, BWMFace
 from pykotor.resource.generics.utd import UTD
 from pykotor.resource.type import ResourceType
-from toolset.data.indoorkit.indoorkit_base import Kit, KitComponent, KitDoor
+from pykotor.tools.kit import _extract_doorhooks_from_bwm
+from toolset.data.indoorkit.indoorkit_base import Kit, KitComponent, KitComponentHook, KitDoor
 from utility.common.geometry import SurfaceMaterial, Vector3
 
 if TYPE_CHECKING:
@@ -174,8 +175,28 @@ class ModuleKit(Kit):
 
         component = KitComponent(self, display_name, image, bwm, mdl_data, mdx_data)
 
-        # Add hook at room position (simplified - real hooks would need doorhook data)
-        # For now, we don't add hooks since modules have complex door systems
+        # Extract hooks from BWM edges with transitions (after recentering!)
+        # This matches how kit.py extracts hooks in extract_kit()
+        # Reference: Libraries/PyKotor/src/pykotor/tools/kit.py:_extract_doorhooks_from_bwm
+        # Reference: Libraries/PyKotor/src/pykotor/tools/kit.py:897-898 (extract_kit)
+        doorhooks = _extract_doorhooks_from_bwm(bwm, len(self.doors))
+        
+        # Create KitComponentHook objects from extracted doorhooks
+        # Hook positions are in the recentered coordinate space (centered at 0,0)
+        for doorhook in doorhooks:
+            position = Vector3(doorhook["x"], doorhook["y"], doorhook["z"])
+            rotation = float(doorhook["rotation"])
+            door_index = int(doorhook["door"])
+            edge = str(doorhook["edge"])  # Edge index as string to match KitComponentHook
+            
+            # Get the door for this hook (use default door if index is invalid)
+            if 0 <= door_index < len(self.doors):
+                door = self.doors[door_index]
+            else:
+                door = default_door
+            
+            hook = KitComponentHook(position, rotation, edge, door)
+            component.hooks.append(hook)
 
         return component
 

@@ -342,7 +342,7 @@ ignore = [
 
 # The following are currently violated by the codebase.
 #    "D205",     # 1 blank line required between summary line and description
-#    "E402",     # Module level import not at top of file
+    "E402",     # Module level import not at top of file
 #    "FIX004",   # Line contains HACK, consider resolving the issue
 #    "PD901",    # df is a bad variable name. Be kinder to your future self.
 #    "PLR2004",  # Magic value used in comparison, consider replacing X with a constant variable
@@ -492,15 +492,16 @@ exclude = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "Libraries/PyKotor/tests"]
 qt_api = "pyqt5"  # Default, can be overridden by PYTEST_QT_API environment variable
 markers = [
     "gui: marks tests that require a GUI (deselect with '-m \"not gui\"')",
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
 ]
 addopts = "-ra -q"
-# NOTE: xvfb settings are commented out - GL/OpenGL tests require a real display
-# and cannot run in headless/offscreen mode. Do not enable xvfb for GL tests.
+# NOTE: GL/OpenGL tests require a real display
+# and most likely cannot be run in headless/offscreen mode.
+# Commented out due to uncertainty of how to use these.
 #xvfb_width = 1920
 #xvfb_height = 1080
 #xvfb_colordepth = 24

@@ -135,6 +135,7 @@ ignore = [
   "FBT001",  # boolean-typed positional argument in function definition
   "PLR0912", # too many branches
   "PLR0915", # too many statements
+  "E402",    # Module level import not at top of file
 ]
 
 [tool.ruff.lint.per-file-ignores]

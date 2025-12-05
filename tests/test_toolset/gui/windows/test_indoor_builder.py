@@ -9148,8 +9148,8 @@ class TestModuleKitMouseDragAndConnect:
                 world_click_pos = Vector3(room.position.x, room.position.y, room.position.z)
             
             # Convert world position to screen coordinates
-            screen_click_pos = renderer.to_render_coords(world_click_pos.x, world_click_pos.y)
-            click_point = QPoint(int(screen_click_pos.x), int(screen_click_pos.y))
+            screen_click_pos: Vector2 = renderer.to_render_coords(world_click_pos.x, world_click_pos.y)
+            click_point: QPoint = QPoint(int(screen_click_pos.x), int(screen_click_pos.y))
             
             # Ensure click point is within widget bounds
             click_point.setX(max(10, min(click_point.x(), renderer.width() - 10)))
@@ -9162,7 +9162,7 @@ class TestModuleKitMouseDragAndConnect:
             
             # Manually trigger the room detection logic that happens in mouseMoveEvent
             # This ensures _under_mouse_room is set correctly
-            world: Vector2 = renderer.to_world_coords(click_point.x(), click_point.y())
+            world: Vector3 = renderer.to_world_coords(click_point.x(), click_point.y())
             renderer._under_mouse_room = None
             for test_room in reversed(builder._map.rooms):
                 test_walkmesh: BWM = renderer._get_room_walkmesh(test_room)

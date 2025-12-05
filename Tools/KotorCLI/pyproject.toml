@@ -125,6 +125,7 @@ ignore = [
     "TRY003",  # Avoid specifying long messages outside exception class
     "PLR0913", # Too many arguments
     "PLR2004", # Magic value used in comparison
+    "E402",    # Module level import not at top of file
 ]
 
 [tool.ruff.lint.per-file-ignores]
