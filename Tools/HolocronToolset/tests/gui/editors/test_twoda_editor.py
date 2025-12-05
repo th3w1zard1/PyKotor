@@ -78,7 +78,7 @@ class TwoDAEditorTest(TestCase):
         self.log_messages.append("\t".join(args))
 
     def test_save_and_load(self):
-        filepath = TESTS_FILES_PATH / "../test_toolset/files/appearance.2da"
+        filepath = TESTS_FILES_PATH / "appearance.2da"
 
         data = filepath.read_bytes()
         old = read_2da(data)

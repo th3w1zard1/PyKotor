@@ -68,7 +68,7 @@ This document tracks the implementation progress of PyKotorEngine, a Panda3D-bas
 - [ ] Saber mesh special rendering (saber material flags)
 - [ ] AABB/walkmesh collision geometry (invisible collision meshes)
 - [x] Light node conversion (point/directional lights)
-- [ ] Emitter node conversion (particle systems)
+- [x] Emitter node conversion (particle systems - property storage complete)
 - [x] Reference node loading (child model loading)
 
 ### 📋 Planned
