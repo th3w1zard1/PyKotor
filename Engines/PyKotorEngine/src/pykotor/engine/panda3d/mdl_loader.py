@@ -547,23 +547,60 @@ class MDLLoader:
         if not self._resource_loader or not reference.model_name:
             return
         
-        # Load the referenced model
+        # Load the referenced model using Installation resource resolution
         # Reference: vendor/reone/src/libs/scene/node/model.cpp:87-92
-        # The model name is stored in reference.model_name
-        # We need to load both MDL and MDX files
+        # The model name is stored in reference.model_name (without extension)
         model_name = reference.model_name
         
-        # Try to load the model using the resource loader
-        # In a full implementation, this would:
-        # 1. Resolve the model path from the resource loader
-        # 2. Load MDL/MDX files
-        # 3. Create a new MDLLoader instance
-        # 4. Convert and attach to parent_np
+        # Resolve MDL and MDX resources from installation
+        # Reference: Engines/PyKotorEngine/src/pykotor/engine/panda3d/module_loader.py:231-256
+        from pykotor.extract.installation import SearchLocation
+        from pykotor.resource.type import ResourceType
         
-        # For now, this is a placeholder that will be implemented
-        # when resource loading infrastructure is complete
-        # TODO: Implement reference model loading
-        pass
+        SEARCH_ORDER = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
+        
+        mdl_resource = self._resource_loader.resource(model_name, ResourceType.MDL, SEARCH_ORDER)
+        mdx_resource = self._resource_loader.resource(model_name, ResourceType.MDX, SEARCH_ORDER)
+        
+        if not mdl_resource or not mdx_resource:
+            return
+        
+        # Get file paths from resources
+        mdl_path = None
+        mdx_path = None
+        
+        # Try to get filepath from resource
+        if hasattr(mdl_resource, 'filepath') and mdl_resource.filepath():
+            mdl_path = str(mdl_resource.filepath())
+        elif hasattr(mdl_resource, 'path'):
+            mdl_path = str(mdl_resource.path)
+        else:
+            # Fallback: construct path from resource identifier
+            mdl_path = model_name + ".mdl"
+        
+        if hasattr(mdx_resource, 'filepath') and mdx_resource.filepath():
+            mdx_path = str(mdx_resource.filepath())
+        elif hasattr(mdx_resource, 'path'):
+            mdx_path = str(mdx_resource.path)
+        else:
+            mdx_path = model_name + ".mdx"
+        
+        # Create a new MDLLoader instance to load the referenced model
+        # Reference: vendor/reone/src/libs/scene/node/model.cpp:88-92
+        # Use the same material manager and resource loader
+        child_loader = MDLLoader(
+            material_manager=self._material_manager,
+            resource_loader=self._resource_loader,
+            texture_base_path=self._texture_base_path,
+        )
+        
+        # Load the child model
+        child_np = child_loader.load(mdl_path, mdx_path)
+        
+        # Attach to parent at the reference node's position
+        # Reference: vendor/reone/src/libs/scene/node/model.cpp:92-93
+        if child_np:
+            child_np.reparentTo(parent_np)
     
     def _create_vertex_format(self, mesh: MDLMesh) -> GeomVertexFormat:
         """Create vertex format for the mesh.

@@ -41,10 +41,10 @@ if (
 K1_PATH = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
 K2_PATH = os.environ.get("K2_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II")
 
-from pykotor.common.stream import BinaryReader
-from pykotor.extract.installation import Installation
-from pykotor.resource.formats.gff.gff_auto import read_gff
-from pykotor.resource.type import ResourceType
+from pykotor.common.stream import BinaryReader  # pyright: ignore[reportMissingImports]
+from pykotor.extract.installation import Installation  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.gff.gff_auto import read_gff  # pyright: ignore[reportMissingImports]
+from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
 
 
 @unittest.skipIf(
