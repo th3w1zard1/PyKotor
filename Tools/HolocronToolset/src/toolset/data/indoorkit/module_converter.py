@@ -351,7 +351,7 @@ class ModuleKit(Kit):
         max_x += padding
         max_y += padding
 
-        # Calculate image dimensions at 10 pixels per unit (matching kit.py)
+        # Calculate image dimensions at 10 pixels per unit (matching kit.py exactly)
         PIXELS_PER_UNIT = 10
         width = int((max_x - min_x) * PIXELS_PER_UNIT)
         height = int((max_y - min_y) * PIXELS_PER_UNIT)

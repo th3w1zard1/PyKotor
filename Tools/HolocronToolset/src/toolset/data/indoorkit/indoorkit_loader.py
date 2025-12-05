@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from qtpy.QtGui import QImage
+from qtpy.QtGui import QColor, QImage, QPainter, QPainterPath
 
 from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.generics.utd import read_utd
@@ -62,6 +62,97 @@ def _recenter_bwm(bwm: "BWM") -> "BWM":
     bwm.translate(-center_x, -center_y, -center_z)
     
     return bwm
+
+
+def _create_preview_image_from_bwm(bwm: "BWM") -> QImage:
+    """Create a preview image from a walkmesh.
+    
+    Creates a top-down view of the walkmesh for use as a component preview.
+    This method generates an image IDENTICAL to what kit.py generates, then
+    mirrors it to match what the Kit loader does when loading from disk.
+    
+    CRITICAL: Must match kit.py/_generate_component_minimap EXACTLY:
+    - 10 pixels per unit scale
+    - Format_RGB888 (not RGB32)
+    - Minimum 256x256 pixels
+    - Y-flip during drawing, then .mirrored() after
+    
+    Reference: Libraries/PyKotor/src/pykotor/tools/kit.py:_generate_component_minimap
+    Reference: module_converter.py _create_preview_image_from_bwm()
+    """
+    # Collect all vertices to calculate bounding box
+    vertices: list[Vector3] = list(bwm.vertices())
+    if not vertices:
+        # Empty walkmesh - return blank image matching kit.py minimum size
+        image = QImage(256, 256, QImage.Format.Format_RGB888)
+        image.fill(QColor(0, 0, 0))
+        return image.mirrored()  # Mirror to match Kit loader
+
+    # Calculate bounding box (same as kit.py)
+    min_x = min(v.x for v in vertices)
+    min_y = min(v.y for v in vertices)
+    max_x = max(v.x for v in vertices)
+    max_y = max(v.y for v in vertices)
+
+    # Add padding (same as kit.py: 5.0 units)
+    padding = 5.0
+    min_x -= padding
+    min_y -= padding
+    max_x += padding
+    max_y += padding
+
+    # Calculate image dimensions at 10 pixels per unit (matching kit.py exactly)
+    PIXELS_PER_UNIT = 10
+    width = int((max_x - min_x) * PIXELS_PER_UNIT)
+    height = int((max_y - min_y) * PIXELS_PER_UNIT)
+
+    # Ensure minimum size (kit.py uses 256, not 100)
+    width = max(width, 256)
+    height = max(height, 256)
+
+    # Create image with Format_RGB888 (same as kit.py, NOT RGB32)
+    image = QImage(width, height, QImage.Format.Format_RGB888)
+    image.fill(QColor(0, 0, 0))
+
+    # Transform from world coordinates to image coordinates
+    # Y is flipped because image Y=0 is top, world Y increases upward
+    # This matches kit.py exactly
+    def world_to_image(v: Vector3) -> tuple[float, float]:
+        x = (v.x - min_x) * PIXELS_PER_UNIT
+        y = height - (v.y - min_y) * PIXELS_PER_UNIT  # Flip Y
+        return x, y
+
+    # Draw walkmesh faces (same logic as kit.py)
+    painter = QPainter(image)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+
+    for face in bwm.faces:
+        # Determine if face is walkable based on material (same logic as kit.py)
+        is_walkable = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
+        color = QColor(255, 255, 255) if is_walkable else QColor(128, 128, 128)
+
+        painter.setBrush(color)
+        painter.setPen(color)
+
+        # Build path from face vertices
+        path = QPainterPath()
+        x1, y1 = world_to_image(face.v1)
+        x2, y2 = world_to_image(face.v2)
+        x3, y3 = world_to_image(face.v3)
+
+        path.moveTo(x1, y1)
+        path.lineTo(x2, y2)
+        path.lineTo(x3, y3)
+        path.closeSubpath()
+
+        painter.drawPath(path)
+
+    painter.end()
+
+    # CRITICAL: Mirror the image to match what Kit loader does!
+    # Kit loader: image = QImage(path).mirrored()
+    # Without this, the image would be upside down relative to the BWM.
+    return image.mirrored()
 
 
 def load_kits(  # noqa: C901, PLR0912, PLR0915
@@ -247,12 +338,6 @@ def load_kits(  # noqa: C901, PLR0912, PLR0915
                 continue
 
             try:
-                image: QImage = QImage(str(png_path)).mirrored()
-            except Exception:
-                missing_files.append((kit_json["name"], png_path, "component image - read error"))
-                continue
-
-            try:
                 bwm: BWM = read_bwm(wok_path)
                 # CRITICAL FIX: Re-center the BWM around (0, 0)
                 # Game WOKs are stored in world coordinates, but the Indoor Map Builder
@@ -262,6 +347,20 @@ def load_kits(  # noqa: C901, PLR0912, PLR0915
                 # Without re-centering, the image and walkmesh end up at different locations!
                 # Reference: module_converter.py _recenter_bwm() for implementation details
                 bwm = _recenter_bwm(bwm)
+                
+                # CRITICAL: Regenerate image from recentered BWM to ensure alignment
+                # The image on disk was generated from the original (non-recentered) BWM,
+                # but we've now recentered the BWM. The image must match the recentered BWM
+                # for proper hitbox alignment in the Indoor Map Builder.
+                # We regenerate instead of loading from disk to ensure the image bounds
+                # exactly match the recentered BWM bounds.
+                image = _create_preview_image_from_bwm(bwm)
+            except FileNotFoundError:
+                missing_files.append((kit_json["name"], wok_path, "walkmesh"))
+                continue
+            except Exception:
+                missing_files.append((kit_json["name"], wok_path, "walkmesh - read error"))
+                continue
             except FileNotFoundError:
                 missing_files.append((kit_json["name"], wok_path, "walkmesh"))
                 continue
