@@ -66,7 +66,7 @@ This document tracks the implementation progress of PyKotorEngine, a Panda3D-bas
 - [ ] Skeletal animation (bone transforms, skinning matrices)
 - [x] Dangly mesh physics constraints (displacement, tightness, period - property storage complete)
 - [x] Saber mesh special rendering (saber material flags - property storage complete)
-- [ ] AABB/walkmesh collision geometry (invisible collision meshes)
+- [x] AABB/walkmesh collision geometry (invisible collision meshes - data storage complete)
 - [x] Light node conversion (point/directional lights)
 - [x] Emitter node conversion (particle systems - property storage complete)
 - [x] Reference node loading (child model loading)
