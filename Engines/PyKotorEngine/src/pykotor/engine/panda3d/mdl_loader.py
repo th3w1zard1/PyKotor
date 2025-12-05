@@ -23,7 +23,7 @@ pykotor_path = Path(__file__).parents[5] / "Libraries" / "PyKotor" / "src"
 if str(pykotor_path) not in sys.path:
     sys.path.insert(0, str(pykotor_path))
 
-from panda3d.core import (
+from panda3d.core import (  # type: ignore[import-not-found, note]  # pyright: ignore[reportMissingImports]
     Geom,
     GeomNode,
     GeomTriangles,
@@ -303,6 +303,24 @@ class MDLLoader:
         geom_node.addGeom(geom)
         
         node = NodePath(geom_node)
+
+        # Store skin/bone data for skeletal animation
+        # Reference: vendor/reone/src/libs/scene/node/mesh.cpp:100-200
+        # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1228-1342
+        node.setPythonTag("skin_type", "skinned")
+        node.setPythonTag("skin_data", skin)
+        node.setPythonTag("bone_indices", skin.bone_indices)
+        node.setPythonTag("bonemap", skin.bonemap)
+        node.setPythonTag("bone_serial", skin.bone_serial)
+        node.setPythonTag("bone_node_number", skin.bone_node_number)
+        node.setPythonTag("qbones", skin.qbones)  # Bind pose quaternions
+        node.setPythonTag("tbones", skin.tbones)  # Bind pose translations
+        node.setPythonTag("vertex_bones", skin.vertex_bones)  # Per-vertex bone weights
+        
+        # Store reference to the full model for bone hierarchy access
+        # This will be used to find bone nodes for animation
+        if self._mdl:
+            node.setPythonTag("model_root", self._mdl.root)
 
         if self._material_manager:
             material = self._material_manager.create_material_from_mesh(mesh)

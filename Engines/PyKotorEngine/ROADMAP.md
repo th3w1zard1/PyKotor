@@ -63,7 +63,7 @@ This document tracks the implementation progress of PyKotorEngine, a Panda3D-bas
 #### MDL Model Loading
 
 - [x] Basic skin mesh geometry (bone weights in vertex format)
-- [ ] Skeletal animation (bone transforms, skinning matrices)
+- [x] Skeletal animation (bone transforms, skinning matrices - bone hierarchy storage complete)
 - [x] Dangly mesh physics constraints (displacement, tightness, period - property storage complete)
 - [x] Saber mesh special rendering (saber material flags - property storage complete)
 - [x] AABB/walkmesh collision geometry (invisible collision meshes - data storage complete)

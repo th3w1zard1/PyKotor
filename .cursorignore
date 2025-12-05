@@ -1,9 +1,9 @@
 __pycache__/
 
+.*
 .history
 .history/
 .history/**/*.py
-.*
 !.cursor
 !.cursorignore
 !.cursorrules
@@ -12,6 +12,7 @@ __pycache__/
 !.github
 !.gitignore
 !.gitmodules
+!.idea
 !.vscode
 *.cpuprofile
 *.egg-info*
