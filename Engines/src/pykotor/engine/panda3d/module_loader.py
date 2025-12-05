@@ -13,14 +13,12 @@ References:
 
 from __future__ import annotations
 
-import math
-
 from typing import TYPE_CHECKING, Any
 
 from panda3d.core import LQuaternion, NodePath  # pyright: ignore[reportMissingImports]
 
 from pykotor.common.module_loader import ModuleDataLoader
-from pykotor.resource.formats.generics.git import GIT
+from pykotor.resource.generics.git import GIT
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.type import ResourceType
 
@@ -205,7 +203,7 @@ class ModuleLoader:
             trigger_node = root.attachNewNode(trigger.resref + ".utt")
             trigger_node.setPos(trigger.position.x, trigger.position.y, trigger.position.z)
     
-    def _load_encounters(self, git, root: NodePath) -> None:
+    def _load_encounters(self, git: GIT, root: NodePath) -> None:
         """Load encounter nodes from GIT."""
         for encounter in git.encounters:
             encounter_node = root.attachNewNode(encounter.resref + ".ute")
@@ -278,5 +276,4 @@ class ModuleLoader:
                 for child in model.getChildren():
                     child.setTexture(tex, 1)
                 # Also apply to parent node
-                model.setTexture(tex, 1)
-
+                model.setTexture(tex, 1
