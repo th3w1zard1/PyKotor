@@ -34,6 +34,8 @@ from panda3d.core import (
     InternalName,
     NodePath,
 )
+from pykotor.common.geometry_utils import compute_per_vertex_tangent_space, determine_vertex_format_requirements
+from pykotor.gl.models.mdl_converter import get_node_converter_type, get_node_type_priority
 from pykotor.resource.formats.mdl import read_mdl
 from utility.common.geometry import Vector3
 
@@ -131,23 +133,21 @@ class MDLLoader:
         # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:987-1004
         node_np: NodePath | None = None
         
-        # Check for mesh types (mesh, skin, dangly, saber, aabb)
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:62
-        # Note: Skin, dangly, and saber nodes also have mesh data
-        # Priority: aabb > saber > dangly > skin > mesh
-        if mdl_node.aabb:
-            # AABB nodes are walkmesh/collision, typically not rendered
+        # Determine node type using abstract converter
+        # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
+        converter_type = get_node_converter_type(mdl_node)
+        
+        # Convert based on type
+        # Reference: vendor/reone/src/libs/scene/node/model.cpp:62-69
+        if converter_type == "aabb":
             node_np = self._convert_aabb_node(mdl_node)
-        elif mdl_node.saber:
-            # Saber meshes need special rendering
+        elif converter_type == "saber":
             node_np = self._convert_saber_node(mdl_node)
-        elif mdl_node.dangly:
-            # Dangly meshes need physics constraints
+        elif converter_type == "dangly":
             node_np = self._convert_dangly_node(mdl_node)
-        elif mdl_node.skin:
-            # Skin meshes use the same conversion but with bone weights
+        elif converter_type == "skin":
             node_np = self._convert_skin_node(mdl_node)
-        elif mdl_node.mesh:
+        elif converter_type == "mesh":
             node_np = self._convert_mesh_node(mdl_node)
         elif mdl_node.light:
             # Light nodes
@@ -527,8 +527,14 @@ class MDLLoader:
         References:
         ----------
             vendor/reone/src/libs/graphics/mesh.cpp:120-150 - Vertex layout
+            Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py - Format requirements
             /panda3d/panda3d-docs - GeomVertexArrayFormat.addColumn()
         """
+        # Determine format requirements using abstract utility
+        # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
+        from pykotor.gl.models.mdl_converter import VertexFormatRequirements
+        reqs = VertexFormatRequirements.from_mesh(mesh)
+        
         # Create array format
         # Reference: /panda3d/panda3d-docs - GeomVertexArrayFormat()
         array = GeomVertexArrayFormat()
@@ -541,17 +547,17 @@ class MDLLoader:
         
         # Tangent space for normal mapping
         # Reference: vendor/mdlops/MDLOpsM.pm:5470-5596 - Tangent space
-        if len(mesh.vertex_normals) > 0:
+        if reqs.has_tangent_space:
             array.addColumn(InternalName.getTangent(), 3, Geom.NTFloat32, Geom.CVector)
             array.addColumn(InternalName.getBinormal(), 3, Geom.NTFloat32, Geom.CVector)
         
         # Lightmap UV
-        if mesh.has_lightmap and len(mesh.vertex_uv2) > 0:
+        if reqs.has_lightmap:
             array.addColumn(InternalName.getTexcoord().getIndex(1), 2, Geom.NTFloat32, Geom.CTexcoord)
         
         # Bone weights for skinning
         # Reference: vendor/reone/src/libs/graphics/mesh.cpp:140-150
-        if mesh.skin:
+        if reqs.has_skinning:
             array.addColumn(InternalName.make("bone_indices"), 4, Geom.NTUint16, Geom.CIndex)
             array.addColumn(InternalName.make("bone_weights"), 4, Geom.NTFloat32, Geom.CVector)
         
@@ -598,9 +604,13 @@ class MDLLoader:
             bone_weights_writer = GeomVertexWriter(vdata, InternalName.make("bone_weights"))
         
         # Compute tangent space if needed
+        # Reference: Libraries/PyKotor/src/pykotor/common/geometry_utils.py
         tangent_data = None
-        if tangent_writer and len(mesh.faces) > 0 and len(mesh.vertex_uv) > 0:
-            tangent_data = self._compute_tangent_space(mesh)
+        if tangent_writer:
+            from pykotor.gl.models.mdl_converter import VertexFormatRequirements
+            reqs = VertexFormatRequirements.from_mesh(mesh)
+            if reqs.has_tangent_space:
+                tangent_data = compute_per_vertex_tangent_space(mesh)
         
         # Write vertex data
         # Reference: /panda3d/panda3d-docs - writer.addData3(x, y, z)
@@ -655,80 +665,6 @@ class MDLLoader:
                 bone_indices_writer.addData4i(0, 0, 0, 0)
                 bone_weights_writer.addData4(1.0, 0.0, 0.0, 0.0)
     
-    def _compute_tangent_space(self, mesh: MDLMesh) -> dict[int, tuple[Vector3, Vector3]]:
-        """Compute per-vertex tangent and binormal vectors.
-        
-        Args:
-        ----
-            mesh: MDL mesh to compute tangent space for
-        
-        Returns:
-        -------
-            Dictionary mapping vertex index to (tangent, binormal)
-        
-        References:
-        ----------
-            Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1449-1578
-            vendor/mdlops/MDLOpsM.pm:5470-5596 - Tangent space calculation
-        """
-        from pykotor.resource.formats.mdl.io_mdl import _calculate_face_normal, _calculate_tangent_space
-        
-        vertex_tangents: dict[int, list[Vector3]] = {}
-        vertex_binormals: dict[int, list[Vector3]] = {}
-        
-        # Compute per-face tangent space
-        for face in mesh.faces:
-            v1 = mesh.vertex_positions[face.v1]
-            v2 = mesh.vertex_positions[face.v2]
-            v3 = mesh.vertex_positions[face.v3]
-            
-            if face.v1 >= len(mesh.vertex_uv) or face.v2 >= len(mesh.vertex_uv) or face.v3 >= len(mesh.vertex_uv):
-                continue
-            
-            uv1 = mesh.vertex_uv[face.v1]
-            uv2 = mesh.vertex_uv[face.v2]
-            uv3 = mesh.vertex_uv[face.v3]
-            
-            face_normal, _ = _calculate_face_normal(v1, v2, v3)
-            tangent, binormal = _calculate_tangent_space(v1, v2, v3, uv1, uv2, uv3, face_normal)
-            
-            # Accumulate for each vertex
-            for v_idx in [face.v1, face.v2, face.v3]:
-                if v_idx not in vertex_tangents:
-                    vertex_tangents[v_idx] = []
-                    vertex_binormals[v_idx] = []
-                vertex_tangents[v_idx].append(tangent)
-                vertex_binormals[v_idx].append(binormal)
-        
-        # Average accumulated tangents/binormals
-        result = {}
-        for v_idx in vertex_tangents:
-            # Average tangents
-            avg_tangent = Vector3(0, 0, 0)
-            for t in vertex_tangents[v_idx]:
-                avg_tangent = Vector3(avg_tangent.x + t.x, avg_tangent.y + t.y, avg_tangent.z + t.z)
-            count = len(vertex_tangents[v_idx])
-            avg_tangent = Vector3(avg_tangent.x / count, avg_tangent.y / count, avg_tangent.z / count)
-            
-            # Normalize
-            length = (avg_tangent.x**2 + avg_tangent.y**2 + avg_tangent.z**2) ** 0.5
-            if length > 0:
-                avg_tangent = Vector3(avg_tangent.x / length, avg_tangent.y / length, avg_tangent.z / length)
-            
-            # Average binormals
-            avg_binormal = Vector3(0, 0, 0)
-            for b in vertex_binormals[v_idx]:
-                avg_binormal = Vector3(avg_binormal.x + b.x, avg_binormal.y + b.y, avg_binormal.z + b.z)
-            avg_binormal = Vector3(avg_binormal.x / count, avg_binormal.y / count, avg_binormal.z / count)
-            
-            # Normalize
-            length = (avg_binormal.x**2 + avg_binormal.y**2 + avg_binormal.z**2) ** 0.5
-            if length > 0:
-                avg_binormal = Vector3(avg_binormal.x / length, avg_binormal.y / length, avg_binormal.z / length)
-            
-            result[v_idx] = (avg_tangent, avg_binormal)
-        
-        return result
     
     def _create_geometry(self, vdata: GeomVertexData, mesh: MDLMesh) -> Geom:
         """Create Panda3D geometry from vertex data and face topology.
@@ -751,11 +687,18 @@ class MDLLoader:
         prim = GeomTriangles(Geom.UHStatic)
         
         # Add face indices
+        # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
+        from pykotor.gl.models.mdl_converter import should_reverse_winding_order
+        reverse_winding = should_reverse_winding_order()
+        
         for face in mesh.faces:
             # KotOR uses clockwise winding, Panda3D uses counter-clockwise
-            # Reference: https://github.com/xoreos/xoreos/blob/master/src/graphics/mesh.cpp#L300
-            # Reverse winding order
-            prim.addVertices(face.v1, face.v3, face.v2)
+            # Reference: vendor/xoreos/src/graphics/mesh.cpp:300
+            if reverse_winding:
+                # Reverse winding order: v1, v2, v3 -> v1, v3, v2
+                prim.addVertices(face.v1, face.v3, face.v2)
+            else:
+                prim.addVertices(face.v1, face.v2, face.v3)
         
         prim.closePrimitive()
         
