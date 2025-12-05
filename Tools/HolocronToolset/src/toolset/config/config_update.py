@@ -93,30 +93,36 @@ def get_remote_toolset_update_info(
     except ImportError as e:
         # Handle missing requests module specifically
         err_msg: str = str(universal_simplify_exception(e))
-        result: int | QMessageBox.StandardButton = silent or QMessageBox.question(
-            None,
-            "Internet connection unavailable",
-            (
-                "The 'requests' module is not installed, so the toolset cannot check for updates online.<br><br>"
-                + err_msg.replace("\n", "<br>")
-                + "<br><br>"
-                + "Would you like to use the local configuration instead?"
-            ),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes,
-        )
+        if silent:
+            result: int | QMessageBox.StandardButton = QMessageBox.StandardButton.Yes
+        else:
+            result = QMessageBox.question(
+                None,
+                "Internet connection unavailable",
+                (
+                    "The 'requests' module is not installed, so the toolset cannot check for updates online.<br><br>"
+                    + err_msg.replace("\n", "<br>")
+                    + "<br><br>"
+                    + "Would you like to use the local configuration instead?"
+                ),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes,
+            )
         if result not in {QMessageBox.StandardButton.Yes, True}:
             return e
         remote_info = LOCAL_PROGRAM_INFO
     except Exception as e:  # noqa: BLE001
         err_msg = str(universal_simplify_exception(e))
-        result = silent or QMessageBox.question(
-            None,
-            "Error occurred fetching update information.",
-            ("An error occurred while fetching the latest toolset information.<br><br>" + err_msg.replace("\n", "<br>") + "<br><br>" + "Would you like to check against the local database instead?"),  # noqa: E501
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes,
-        )
+        if silent:
+            result: int | QMessageBox.StandardButton = QMessageBox.StandardButton.Yes
+        else:
+            result = QMessageBox.question(
+                None,
+                "Error occurred fetching update information.",
+                ("An error occurred while fetching the latest toolset information.<br><br>" + err_msg.replace("\n", "<br>") + "<br><br>" + "Would you like to check against the local database instead?"),  # noqa: E501
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes,
+            )
         if result not in {QMessageBox.StandardButton.Yes, True}:
             return e
         remote_info = LOCAL_PROGRAM_INFO
