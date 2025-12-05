@@ -442,13 +442,24 @@ class MDLLoader:
         """
         # AABB nodes are typically not rendered, used for collision
         # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1212-1243
-        if not mdl_node.aabb:
+        if not mdl_node.walkmesh:
             return NodePath(mdl_node.name)
         
-        # For now, create invisible geometry
-        # In a full implementation, this would be used for collision detection
-        node_np = NodePath(mdl_node.name)
-        # AABB geometry could be created here if needed for debugging
+        walkmesh = mdl_node.walkmesh
+        
+        # Create NodePath for collision detection
+        # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1403-1445
+        aabb_np = NodePath(mdl_node.name)
+        
+        # Store walkmesh/AABB data for collision detection
+        # Reference: vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:489-509
+        aabb_np.setPythonTag("aabb_type", "collision")
+        aabb_np.setPythonTag("walkmesh_data", walkmesh)
+        aabb_np.setPythonTag("aabb_tree", walkmesh.aabbs)
+        
+        # AABB meshes are typically invisible (no rendering)
+        # They're used for collision detection and pathfinding
+        # Reference: vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:489-509
         return node_np
     
     def _convert_light_node(self, mdl_node: MDLNode) -> NodePath:
