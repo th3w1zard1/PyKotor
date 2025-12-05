@@ -1,10 +1,10 @@
 """Abstract MDL to geometry conversion utilities.
 
 This module provides backend-agnostic geometry conversion utilities that work
-with PyKotor's MDL data structures. These utilities can be used by both
-OpenGL (PyKotorGL) and Panda3D (PyKotorEngine) implementations.
+with PyKotor's MDL data structures. These utilities can be used by any
+rendering backend implementation.
 
-The actual rendering backend integration (OpenGL buffers, Panda3D GeomNodes)
+The actual rendering backend integration (buffers, geometry nodes, etc.)
 should be handled in the respective backend modules.
 
 References:
@@ -27,7 +27,7 @@ class VertexFormatRequirements:
     """Vertex format requirements for a mesh.
     
     This class encapsulates the vertex format requirements in a backend-agnostic way,
-    allowing both OpenGL and Panda3D implementations to determine what attributes
+    allowing any rendering backend implementation to determine what attributes
     are needed.
     
     Attributes:
@@ -159,7 +159,7 @@ def should_reverse_winding_order(backend: str = "opengl") -> bool:
     
     Args:
     ----
-        backend: Backend name ("opengl", "panda3d", "threejs")
+        backend: Backend name (e.g., "opengl", "threejs")
     
     Returns:
     -------
@@ -171,10 +171,10 @@ def should_reverse_winding_order(backend: str = "opengl") -> bool:
         vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1169 - No reversal (Three.js handles it)
     """
     # Backend-specific winding order requirements
-    # OpenGL and Panda3D typically expect CCW, so we reverse from KotOR's CW
-    # Three.js handles it internally, so no reversal needed
+    # Most backends expect CCW, so we reverse from KotOR's CW
+    # Some backends (like Three.js) handle it internally, so no reversal needed
     if backend == "threejs":
         return False
-    # Default: OpenGL and Panda3D need reversal
+    # Default: most backends need reversal
     return True
 
