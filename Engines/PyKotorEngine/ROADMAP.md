@@ -62,13 +62,14 @@ This document tracks the implementation progress of PyKotorEngine, a Panda3D-bas
 
 #### MDL Model Loading
 
-- [ ] Complete skin mesh support (bone weights, vertex blending)
-- [ ] Dangly mesh physics constraints
-- [ ] Saber mesh special rendering
-- [ ] AABB/walkmesh collision geometry
-- [ ] Light node conversion
+- [x] Basic skin mesh geometry (bone weights in vertex format)
+- [ ] Skeletal animation (bone transforms, skinning matrices)
+- [ ] Dangly mesh physics constraints (displacement, tightness, period)
+- [ ] Saber mesh special rendering (saber material flags)
+- [ ] AABB/walkmesh collision geometry (invisible collision meshes)
+- [x] Light node conversion (point/directional lights)
 - [ ] Emitter node conversion (particle systems)
-- [ ] Reference node loading (child models)
+- [ ] Reference node loading (child model loading)
 
 ### 📋 Planned
 
