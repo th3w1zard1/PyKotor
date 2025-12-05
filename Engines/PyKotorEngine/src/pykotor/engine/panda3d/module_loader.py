@@ -49,7 +49,7 @@ class ModuleLoader:
     def __init__(
         self,
         installation: Installation,
-        mdl_loader: MDLLoader,  # MDLLoader instance
+        mdl_loader: Any,  # MDLLoader instance from pykotor.engine.panda3d.mdl_loader
         texture_loader: Any,  # Function to load TPC textures
     ):
         """Initialize the module loader.
