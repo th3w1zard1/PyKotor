@@ -387,20 +387,35 @@ class MDLLoader:
         
         Returns:
         -------
-            NodePath containing the saber mesh
+            NodePath containing the saber mesh with saber properties stored
         
         References:
         ----------
-            vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:520-550 - Saber reading
+            vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:308-378 - Saber generation
             vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1476-1479 - Saber material
+            Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1447-1505 - MDLSaber structure
         """
         # Saber meshes have mesh data
         # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1447
         if not mdl_node.saber or not mdl_node.mesh:
             return NodePath(mdl_node.name)
         
+        saber = mdl_node.saber
+        
         # Convert as regular mesh but with saber material flags
         node_np = self._convert_mesh_node(mdl_node)
+        
+        # Store saber properties for special rendering
+        # Reference: vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:308-378
+        # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1447-1505
+        node_np.setPythonTag("saber_type", "blade")
+        node_np.setPythonTag("saber_data", saber)
+        node_np.setPythonTag("saber_type_id", saber.saber_type)
+        node_np.setPythonTag("saber_color", saber.saber_color)
+        node_np.setPythonTag("saber_length", saber.saber_length)
+        node_np.setPythonTag("saber_width", saber.saber_width)
+        node_np.setPythonTag("saber_flare_color", saber.saber_flare_color)
+        node_np.setPythonTag("saber_flare_radius", saber.saber_flare_radius)
         
         # Saber meshes need special material flags
         # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1476-1479
