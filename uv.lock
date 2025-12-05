@@ -1619,6 +1619,9 @@ requires-dist = [
 ]
 provides-extras = ["updater", "qt6", "pyside6", "dev"]
 
+[package.metadata.requires-dev]
+dev = []
+
 [[package]]
 name = "hologenerator"
 version = "1.0.0"

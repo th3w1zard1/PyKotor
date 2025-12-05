@@ -54,7 +54,7 @@ class TestNSSEditorDocument(unittest.TestCase):
         - Windows fatal exception: access violation during paint events
         """
         # Get installation from conftest if available
-        from tests.test_toolset.conftest import get_shared_k1_installation
+        from ..conftest import get_shared_k1_installation
 
         installation = get_shared_k1_installation()
         if installation is None:

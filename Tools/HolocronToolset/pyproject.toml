@@ -141,6 +141,12 @@ qt6 = ["PyQt6"]
 pyside2 = ["PySide2"]
 pyside6 = ["PySide6"]
 
+########################################################
+## UV workspace configuration                         ##
+########################################################
+
+[tool.uv]
+dev-dependencies = []
 
 ########################################################
 ## define only linter configurations below this point ##

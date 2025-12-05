@@ -232,7 +232,9 @@ class ToolWindow(QMainWindow):
         assert q_style is not None, "window style was somehow None"
         self.original_style: str = q_style.objectName()
         self.original_palette: QPalette = self.palette()
+        RobustLogger().debug(f"TRACE: ThemeManager({self.original_style})")
         self.theme_manager: ThemeManager = ThemeManager(self.original_style)
+        RobustLogger().debug("TRACE: ThemeManager created")
         # Apply both theme and style on initialization
         self.theme_manager._apply_theme_and_style(self.settings.selectedTheme, self.settings.selectedStyle)
 
@@ -245,11 +247,14 @@ class ToolWindow(QMainWindow):
         self._language_actions: dict[int, _QAction] = {}
         
         # File system watcher for auto-detecting module/override changes
+        RobustLogger().debug("TRACE: Creating file system watcher")
         self._file_watcher: QFileSystemWatcher = QFileSystemWatcher(self)
+        RobustLogger().debug("TRACE: File system watcher created")
         self._pending_module_changes: list[str] = []
         self._pending_override_changes: list[str] = []
         self._last_watcher_update: datetime = datetime.now(tz=timezone.utc).astimezone()
         # Debounce timer to batch multiple rapid file changes
+        RobustLogger().debug("TRACE: Creating watcher debounce timer")
         self._watcher_debounce_timer: QTimer = QTimer(self)
         self._watcher_debounce_timer.setSingleShot(True)
         self._watcher_debounce_timer.setInterval(500)  # 500ms debounce

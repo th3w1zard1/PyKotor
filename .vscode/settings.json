@@ -56,7 +56,6 @@
         "--wait-for-client"
     ],
     "python.testing.pytestArgs": [
-        "tests",
         "Libraries/PyKotor/tests",
         "Libraries/PyKotorFont/tests",
         "Libraries/PyKotorGL/tests",

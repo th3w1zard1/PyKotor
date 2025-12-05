@@ -9,6 +9,7 @@ import sys
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
 from qtpy.QtCore import QObject, QThread
@@ -23,6 +24,9 @@ from toolset.main_init import is_frozen, is_running_from_temp
 from toolset.main_settings import setup_post_init_settings, setup_pre_init_settings, setup_toolset_default_env
 from toolset.utils.window import TOOLSET_WINDOWS
 from utility.system.app_process.shutdown import terminate_child_processes
+
+if TYPE_CHECKING:
+    from qtpy.QtCore import QEvent
 
 
 def qt_cleanup():
@@ -172,31 +176,49 @@ def main():
     tool_window.update_manager.check_for_updates(silent=True)
     RobustLogger().debug("TRACE: check_for_updates returned")
     RobustLogger().debug("TRACE: About to setup qasync")
+    qasync_installed = False
     with suppress(ImportError):
         RobustLogger().debug("TRACE: Importing qasync")
-        from qasync import QEventLoop  # type: ignore[import-not-found] # pyright: ignore[reportMissingImports, reportMissingTypeStubs]
+        from qasync import QEventLoop  # type: ignore[import-not-found, import-untyped, note]  # pyright: ignore[reportMissingImports, reportMissingTypeStubs]
         RobustLogger().debug("TRACE: qasync imported, creating QEventLoop")
         asyncio.set_event_loop(QEventLoop(app))
         RobustLogger().debug("TRACE: QEventLoop created and set")
-    RobustLogger().debug("TRACE: qasync not installed, falling back to default event loop")
+        qasync_installed = True
+    if qasync_installed:
+        RobustLogger().debug("TRACE: qasync installed; asyncio event loop integrated with Qt")
+    else:
+        RobustLogger().debug("TRACE: qasync not installed, falling back to default event loop")
     
-    # Install event filter to catch the FIRST event processed after app.exec() starts
-    class FirstEventFilter(QObject):
-        def __init__(self):
-            super().__init__()
-            self.first_event = True
+    # Install event filter only when explicitly requested to avoid log spam/perf issues
+    trace_events_env = os.environ.get("TOOLSET_TRACE_EVENTS", "").lower().strip()
+    trace_events_enabled = trace_events_env in ("1", "true", "yes", "on")
+    if trace_events_enabled:
+        class FirstEventFilter(QObject):
+            """Lightweight event tracer used only when TOOLSET_TRACE_EVENTS is enabled."""
+            def __init__(self):
+                super().__init__()
+                self._first_event_logged = False
+                self._sample_budget = 50  # Prevents runaway logging on busy event loops
+                self._logger = RobustLogger()
+            
+            def eventFilter(self, obj: QObject, event: QEvent) -> bool:  # noqa: ARG002
+                if not self._first_event_logged:
+                    self._first_event_logged = True
+                    self._logger.debug(f"TRACE: FIRST EVENT PROCESSED AFTER app.exec(): type={event.type()}, obj={type(obj).__name__}")
+                    if hasattr(event, "spontaneous"):
+                        self._logger.debug(f"TRACE: Event is spontaneous: {event.spontaneous()}")
+                elif self._sample_budget > 0:
+                    self._sample_budget -= 1
+                    self._logger.debug(f"TRACE: Event filter called, obj: {type(obj).__name__}, event: {event.type()}")
+                return False
         
-        def eventFilter(self, obj, event):  # noqa: ARG002
-            if self.first_event:
-                self.first_event = False
-                RobustLogger().debug(f"TRACE: FIRST EVENT PROCESSED AFTER app.exec(): type={event.type()}, obj={type(obj).__name__}")
-                if hasattr(event, 'spontaneous'):
-                    RobustLogger().debug(f"TRACE: Event is spontaneous: {event.spontaneous()}")
-            return False
+        event_filter = FirstEventFilter()
+        app.installEventFilter(event_filter)
+        RobustLogger().debug("TRACE: Event filter installed (TOOLSET_TRACE_EVENTS=1)")
+    else:
+        RobustLogger().debug("TRACE: Event filter disabled (set TOOLSET_TRACE_EVENTS=1 to sample events)")
     
-    event_filter = FirstEventFilter()
-    app.installEventFilter(event_filter)
-    RobustLogger().debug("TRACE: Event filter installed, about to call app.exec()")
+    RobustLogger().debug("TRACE: About to call app.exec()")
     exit_code = app.exec()
     RobustLogger().debug(f"TRACE: app.exec() returned with exit code: {exit_code}")
     sys.exit(exit_code)

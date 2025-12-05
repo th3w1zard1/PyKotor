@@ -55,18 +55,6 @@ def setup_post_init_settings():
     assert app is not None, "QApplication instance not found."
     assert isinstance(app, QApplication), "QApplication instance not a QApplication type object."
 
-    # Configure font database to use system fonts
-    # This addresses Qt warnings about missing font directories by ensuring Qt uses
-    # the system font database instead of looking for fonts in non-existent directories
-    font_db = QFontDatabase()
-    # Initialize the font database by accessing system fonts
-    # On Windows, this uses the native Windows font system (GDI)
-    # On Linux/macOS, this uses fontconfig automatically
-    _ = font_db.families()  # Access families to initialize font database with system fonts
-    
-    # Set the global font for the application
-    app.setFont(toolset_qsettings.value("GlobalFont", QApplication.font(), QFont))
-
     # Apply Qt attributes that require a restart
     for attr_name, attr_value in settings_widget.__dict__.items():
         if attr_value is None:  # attr not available in this qt version.

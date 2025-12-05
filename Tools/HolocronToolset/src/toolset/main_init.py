@@ -169,8 +169,8 @@ def main_init():
         multiprocessing.set_start_method("spawn")  # 'spawn' is default on windows, linux/mac defaults to most likely 'fork' which breaks the built-in updater.
         
         # Fix for PyInstaller: Hide console windows for multiprocessing child processes on Windows
-        if sys.platform == "win32" and is_frozen():
-            _patch_multiprocessing_for_windows()
+        #if sys.platform == "win32" and is_frozen():
+        #    _patch_multiprocessing_for_windows()
         
         atexit.register(last_resort_cleanup)  # last_resort_cleanup already handles child processes.
 

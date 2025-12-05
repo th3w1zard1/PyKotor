@@ -1,5 +1,5 @@
-pykotor>=2.0.0
-pykotorgl>=2.0.2
+-r ../../Libraries/PyKotor/requirements.txt
+-r ../../Libraries/PyKotorGL/requirements.txt
 certifi>=2021.10.8
 idna>=3.11
 jsmin>=3.0.1

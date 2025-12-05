@@ -40,7 +40,7 @@ class TestDLGStandardItemModel(unittest.TestCase):
         # This ensures expensive operations happen before any tests run, not during them
         import importlib.util
         from pathlib import Path
-        conftest_path = Path(__file__).parent.parent.parent / "conftest.py"
+        conftest_path = Path(__file__).parents[2] / "conftest.py"
         conftest_module = None
         if conftest_path.exists():
             spec = importlib.util.spec_from_file_location("conftest", conftest_path)

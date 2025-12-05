@@ -284,7 +284,14 @@ def module_mod_path(tmp_path_factory, installation: HTInstallation, module_name:
 
 
 @pytest.fixture
-def module_designer(qtbot, installation: HTInstallation, module_mod_path: Path, module_name: str, renderer_type: str):
+def module_designer(
+    qtbot,
+    installation: HTInstallation,
+    module_mod_path: Path,
+    module_name: str,
+    renderer_type: str,
+    _suppress_modal_dialogs: pytest.Fixture,
+) -> Generator[ModuleDesigner, None, None]:
     """Launch the Module Designer pointed at the prepared module with the specified renderer."""
 
     # Qt configuration is handled in conftest.py

@@ -44,34 +44,76 @@ class UpdateManager:
         *,
         silent: bool = False,
     ):
+        RobustLogger().debug("TRACE: check_for_updates called")
+        print("Checking for updates")
+        RobustLogger().debug("TRACE: About to enter ProcessPoolExecutor context")
         with ProcessPoolExecutor() as executor:
+            RobustLogger().debug("TRACE: Inside ProcessPoolExecutor context")
             if self.settings.useBetaChannel:
+                print("Using beta channel")
+                RobustLogger().debug("TRACE: Beta channel enabled, submitting edge_future")
                 edge_future: Future[dict[str, Any] | Exception] = executor.submit(fetch_update_info, True, silent)
+                print("Edge future submitted")
+                RobustLogger().debug("TRACE: edge_future submitted")
+            else:
+                RobustLogger().debug("TRACE: Beta channel disabled, edge_future will be None")
+                edge_future = None
+            print("Using release channel")
+            RobustLogger().debug("TRACE: Submitting master_future")
             master_future: Future[dict[str, Any] | Exception] = executor.submit(fetch_update_info, False, silent)
+            print("Master future submitted")
+            RobustLogger().debug("TRACE: master_future submitted")
+            RobustLogger().debug("TRACE: About to exit ProcessPoolExecutor context (will wait for tasks)")
 
+        RobustLogger().debug("TRACE: Exited ProcessPoolExecutor context")
+        RobustLogger().debug("TRACE: Adding done callbacks to futures")
         master_future.add_done_callback(self.on_master_future_fetched)
-        edge_future.add_done_callback(self.on_edge_future_fetched)
+        RobustLogger().debug("TRACE: master_future callback added")
+        if edge_future is not None:
+            edge_future.add_done_callback(self.on_edge_future_fetched)
+            RobustLogger().debug("TRACE: edge_future callback added")
+        else:
+            RobustLogger().debug("TRACE: edge_future is None, skipping callback")
+        RobustLogger().debug("TRACE: check_for_updates returning")
 
     def on_master_future_fetched(
         self,
         master_future: Future[dict[str, Any] | Exception],
     ):
+        RobustLogger().debug("TRACE: on_master_future_fetched called")
+        print("Master future fetched")
+        RobustLogger().debug("TRACE: Getting master_future.result()")
         self.master_info = master_future.result()
+        RobustLogger().debug("TRACE: master_future.result() completed, master_info set")
         if self.edge_info:
+            RobustLogger().debug("TRACE: edge_info exists, calling _on_update_info_fetched")
             self._on_update_info_fetched()
+        else:
+            RobustLogger().debug("TRACE: edge_info not set yet, waiting for edge callback")
+        RobustLogger().debug("TRACE: on_master_future_fetched returning")
 
     def on_edge_future_fetched(
         self,
         edge_future: Future[dict[str, Any] | Exception],
     ):
+        RobustLogger().debug("TRACE: on_edge_future_fetched called")
+        print("Edge future fetched")
+        RobustLogger().debug("TRACE: Getting edge_future.result()")
         self.edge_info = edge_future.result()
+        RobustLogger().debug("TRACE: edge_future.result() completed, edge_info set")
         if self.master_info:
+            RobustLogger().debug("TRACE: master_info exists, calling _on_update_info_fetched")
             self._on_update_info_fetched()
+        else:
+            RobustLogger().debug("TRACE: master_info not set yet, waiting for master callback")
+        RobustLogger().debug("TRACE: on_edge_future_fetched returning")
 
     def _on_update_info_fetched(self):
+        print("Updating info fetched")
         if self.edge_info is None or self.master_info is None:
             RobustLogger().error("Edge and master info are None")
             return
+        print("Master info is not None")
         if isinstance(self.master_info, Exception):
             RobustLogger().exception("Failed to fetch master update info")
             if not self.silent:
@@ -83,7 +125,9 @@ class UpdateManager:
                     QMessageBox.StandardButton.Ok,
                 ).exec()
             return
+        print("Edge info is not None")
         if isinstance(self.edge_info, Exception):
+            print("Edge info is an exception")
             RobustLogger().exception("Failed to fetch edge update info")
             if not self.silent:
                 etype, msg = universal_simplify_exception(self.edge_info)
@@ -95,18 +139,18 @@ class UpdateManager:
                 ).exec()
             return
         remote_info, release_version_checked = self._determine_version_info(self.edge_info, self.master_info)
-
+        print("Remote info: ", remote_info)
         greatest_available_version = remote_info["toolsetLatestVersion"] if release_version_checked else remote_info["toolsetLatestBetaVersion"]
         toolset_latest_notes = remote_info.get("toolsetLatestNotes", "") if release_version_checked else remote_info.get("toolsetBetaLatestNotes", "")
         toolset_download_link = remote_info["toolsetDownloadLink"] if release_version_checked else remote_info["toolsetBetaDownloadLink"]
         version_check = is_remote_version_newer(CURRENT_VERSION, greatest_available_version)
-
+        print("Version check: ", version_check)
         cur_version_beta_release_str = ""
         if remote_info["toolsetLatestVersion"] == CURRENT_VERSION:
             cur_version_beta_release_str = "release "
         elif remote_info["toolsetLatestBetaVersion"] == CURRENT_VERSION:
             cur_version_beta_release_str = "beta "
-
+        print("Current version beta release string: ", cur_version_beta_release_str)
         self._display_version_message(
             cur_version_beta_release_str,
             greatest_available_version,
@@ -116,6 +160,8 @@ class UpdateManager:
             is_up_to_date=version_check is False,
             release_version_checked=release_version_checked,
         )
+        RobustLogger().debug("TRACE: Version message displayed - _on_update_info_fetched about to return")
+        RobustLogger().debug("TRACE: _on_update_info_fetched returning")
 
     def _determine_version_info(
         self,
@@ -123,7 +169,7 @@ class UpdateManager:
         master_remote_info: dict[str, Any],
     ) -> tuple[dict[str, Any], bool]:
         version_list: list[tuple[Literal["toolsetLatestVersion", "toolsetLatestBetaVersion"], Literal["master", "edge"], str]] = []
-
+        print("Version list: ", version_list)
         if self.settings.useBetaChannel:
             version_list.append(("toolsetLatestVersion", "master", master_remote_info.get("toolsetLatestVersion", "")))
             version_list.append(("toolsetLatestVersion", "edge", edge_remote_info.get("toolsetLatestVersion", "")))
