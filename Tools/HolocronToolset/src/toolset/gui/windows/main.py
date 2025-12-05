@@ -103,7 +103,7 @@ if TYPE_CHECKING:
         QModelIndex,  # pyright: ignore[reportPrivateImportUsage]
         QPoint,
     )
-    from qtpy.QtGui import QCloseEvent, QKeyEvent, QMouseEvent, QPalette, QStandardItemModel, _QAction
+    from qtpy.QtGui import QCloseEvent, QKeyEvent, QMouseEvent, QPalette, QShowEvent, QStandardItemModel, _QAction
     from qtpy.QtWidgets import QComboBox, QStyle, QWidget
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
@@ -211,13 +211,21 @@ class ToolWindow(QMainWindow):
             self: The object instance
             parent: The parent widget
         """
+        RobustLogger().debug("TRACE: ToolWindow.__init__ called")
+        RobustLogger().debug("TRACE: Calling super().__init__()")
         super().__init__()
+        RobustLogger().debug("TRACE: super().__init__() completed")
 
+        RobustLogger().debug("TRACE: Initializing instance variables")
         self.active: HTInstallation | None = None
         self.installations: dict[str, HTInstallation] = {}
 
+        RobustLogger().debug("TRACE: Creating GlobalSettings")
         self.settings: GlobalSettings = GlobalSettings()
+        RobustLogger().debug("TRACE: GlobalSettings created")
+        RobustLogger().debug("TRACE: Creating UpdateManager")
         self.update_manager: UpdateManager = UpdateManager(silent=True)
+        RobustLogger().debug("TRACE: UpdateManager created")
 
         # Theme setup
         q_style: QStyle | None = self.style()
@@ -247,11 +255,20 @@ class ToolWindow(QMainWindow):
         self._watcher_debounce_timer.setInterval(500)  # 500ms debounce
         self._watcher_debounce_timer.timeout.connect(self._process_pending_file_changes)
         
+        RobustLogger().debug("TRACE: About to call _initUi()")
         self._initUi()
+        RobustLogger().debug("TRACE: _initUi() completed")
+        RobustLogger().debug("TRACE: About to call _setup_signals()")
         self._setup_signals()
+        RobustLogger().debug("TRACE: _setup_signals() completed")
         # Language system will set the title in apply_translations()
+        RobustLogger().debug("TRACE: About to call reload_settings()")
         self.reload_settings()
+        RobustLogger().debug("TRACE: reload_settings() completed")
+        RobustLogger().debug("TRACE: About to call unset_installation()")
         self.unset_installation()
+        RobustLogger().debug("TRACE: unset_installation() completed")
+        RobustLogger().debug("TRACE: ToolWindow.__init__ returning")
 
     def _setup_file_watcher(self):
         """Set up file system watcher for the current installation's modules and override folders."""
@@ -1261,6 +1278,16 @@ class ToolWindow(QMainWindow):
     # endregion
 
     # region Events
+    def showEvent(self, event: QShowEvent | None):  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Called when the window is shown."""
+        RobustLogger().debug("TRACE: ToolWindow.showEvent() called")
+        super().showEvent(event) if event else None
+        RobustLogger().debug("TRACE: ToolWindow.showEvent() completed")
+        
+        # Schedule a trace message after the window is fully shown
+        QTimer.singleShot(0, lambda: RobustLogger().debug("TRACE: Window shown - QTimer callback after showEvent"))
+        QTimer.singleShot(10, lambda: RobustLogger().debug("TRACE: Window shown - QTimer callback 10ms after showEvent"))
+    
     def closeEvent(self, e: QCloseEvent | None):  # pylint: disable=unused-argument  # pyright: ignore[reportIncompatibleMethodOverride]
         instance: QCoreApplication | None = QCoreApplication.instance()
         if instance is None:
