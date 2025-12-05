@@ -31,10 +31,10 @@ from typing import TYPE_CHECKING
 
 # Set up import paths
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[2] / "Libraries" / "PyKotor" / "src"
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[2] / "Libraries" / "Utility" / "src"
-KOTORDIFF_PATH = THIS_SCRIPT_PATH.parents[2] / "Tools" / "KotorDiff" / "src"
-HOLOPATCHER_PATH = THIS_SCRIPT_PATH.parents[2] / "Tools" / "HoloPatcher" / "src"
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[5] / "Libraries" / "PyKotor" / "src"
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5] / "Libraries" / "Utility" / "src"
+KOTORDIFF_PATH = THIS_SCRIPT_PATH.parents[5] / "Tools" / "KotorDiff" / "src"
+HOLOPATCHER_PATH = THIS_SCRIPT_PATH.parents[5] / "Tools" / "HoloPatcher" / "src"
 
 if PYKOTOR_PATH.as_posix() not in sys.path:
     sys.path.insert(0, PYKOTOR_PATH.as_posix())
@@ -47,8 +47,8 @@ if HOLOPATCHER_PATH.as_posix() not in sys.path:
 
 from holopatcher.core import uninstall_mod, install_mod, load_mod, validate_game_directory, validate_install_paths, format_install_time  # pyright: ignore[reportMissingImports]
 from kotordiff.app import KotorDiffConfig, run_application  # pyright: ignore[reportMissingImports]
-from pykotor.extract.installation import Installation
-from pykotor.tslpatcher.logger import PatchLogger
+from pykotor.extract.installation import Installation  # pyright: ignore[reportMissingImports]
+from pykotor.tslpatcher.logger import PatchLogger  # pyright: ignore[reportMissingImports]
 from pathlib import Path
 
 

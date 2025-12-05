@@ -6,8 +6,8 @@ from pathlib import Path
 from unittest import TestCase
 
 THIS_SCRIPT_PATH = Path(__file__)
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: Path):
@@ -21,9 +21,9 @@ if PYKOTOR_PATH.joinpath("pykotor").exists():
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
-from pykotor.common.language import Gender, Language, LocalizedString
-from pykotor.tslpatcher.memory import PatcherMemory
-from pykotor.tslpatcher.mods.gff import FieldValue2DAMemory, FieldValueConstant, FieldValueTLKMemory, LocalizedStringDelta
+from pykotor.common.language import Gender, Language, LocalizedString  # pyright: ignore[reportMissingImports]
+from pykotor.tslpatcher.memory import PatcherMemory  # pyright: ignore[reportMissingImports]
+from pykotor.tslpatcher.mods.gff import FieldValue2DAMemory, FieldValueConstant, FieldValueTLKMemory, LocalizedStringDelta  # pyright: ignore[reportMissingImports]
 
 
 class TestLocalizedStringDelta(TestCase):
