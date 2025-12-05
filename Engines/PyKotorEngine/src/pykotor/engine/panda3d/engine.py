@@ -16,6 +16,8 @@ from typing import TYPE_CHECKING
 
 from direct.showbase.ShowBase import ShowBase
 from pykotor.engine.panda3d.materials import Panda3DMaterialManager
+from pykotor.engine.panda3d.module_loader import ModuleLoader
+from pykotor.engine.panda3d.resources.texture_loader import load_tpc
 from pykotor.engine.panda3d.scene_graph import Panda3DSceneGraph
 
 from panda3d.core import (
@@ -108,6 +110,9 @@ class KotorEngine(ShowBase):
         # Create scene graph manager
         self.scene_graph = Panda3DSceneGraph("main_scene", self.scene_root)
         self.material_manager = Panda3DMaterialManager(self.loader, Path.cwd())
+        
+        # Module loader will be initialized when installation is set
+        self.module_loader: ModuleLoader | None = None
         
         # Set up default lighting
         # Reference: vendor/reone/src/libs/scene/graph.cpp:150-180 - Lighting setup
