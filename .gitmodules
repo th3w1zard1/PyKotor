@@ -125,6 +125,9 @@
 [submodule "vendor/TSLPatcher"]
 	path = vendor/TSLPatcher
 	url = https://github.com/th3w1zard1/TSLPatcher.git
+[submodule "vendor/Kotor-Patch-Manager"]
+	path = vendor/Kotor-Patch-Manager
+	url = https://github.com/th3w1zard1/Kotor-Patch-Manager.git
 
 # Shaders & Graphics Fixes
 [submodule "vendor/3C-FD-Patcher"]
