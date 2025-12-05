@@ -632,37 +632,41 @@ class MDLLoader:
             vendor/reone/src/libs/graphics/mesh.cpp:200-280 - Vertex data writing
             /panda3d/panda3d-docs - GeomVertexWriter
         """
+        # Determine format requirements first to ensure writer creation matches column existence
+        # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
+        from pykotor.gl.models.mdl_converter import VertexFormatRequirements
+        reqs = VertexFormatRequirements.from_mesh(mesh)
+        
         # Create writers
         # Reference: /panda3d/panda3d-docs - GeomVertexWriter(vdata, 'column_name')
         vertex_writer = GeomVertexWriter(vdata, InternalName.getVertex())
         normal_writer = GeomVertexWriter(vdata, InternalName.getNormal())
         uv_writer = GeomVertexWriter(vdata, InternalName.getTexcoord())
         
-        # Optional writers
+        # Optional writers - must match conditions used in _create_vertex_format
+        # Tangent/binormal writers only if has_tangent_space (normals AND faces AND UVs)
+        # Reference: vendor/mdlops/MDLOpsM.pm:5470-5596 - Tangent space
         tangent_writer = None
         binormal_writer = None
-        if len(mesh.vertex_normals) > 0:
+        if reqs.has_tangent_space:
             tangent_writer = GeomVertexWriter(vdata, InternalName.getTangent())
             binormal_writer = GeomVertexWriter(vdata, InternalName.getBinormal())
         
         uv2_writer = None
-        if mesh.has_lightmap and len(mesh.vertex_uv2) > 0:
+        if reqs.has_lightmap:
             uv2_writer = GeomVertexWriter(vdata, InternalName.getTexcoord().getIndex(1))
         
         bone_indices_writer = None
         bone_weights_writer = None
-        if mesh.skin:
+        if reqs.has_skinning:
             bone_indices_writer = GeomVertexWriter(vdata, InternalName.make("bone_indices"))
             bone_weights_writer = GeomVertexWriter(vdata, InternalName.make("bone_weights"))
         
         # Compute tangent space if needed
         # Reference: Libraries/PyKotor/src/pykotor/common/geometry_utils.py
         tangent_data = None
-        if tangent_writer:
-            from pykotor.gl.models.mdl_converter import VertexFormatRequirements
-            reqs = VertexFormatRequirements.from_mesh(mesh)
-            if reqs.has_tangent_space:
-                tangent_data = compute_per_vertex_tangent_space(mesh)
+        if reqs.has_tangent_space:
+            tangent_data = compute_per_vertex_tangent_space(mesh)
         
         # Write vertex data
         # Reference: /panda3d/panda3d-docs - writer.addData3(x, y, z)

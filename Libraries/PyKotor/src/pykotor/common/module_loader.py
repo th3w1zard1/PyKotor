@@ -49,7 +49,7 @@ class ModuleDataLoader:
         ----
             installation: KotOR installation for resource access
         """
-        self.installation = installation
+        self.installation: Installation = installation
         self.table_doors: TwoDA = TwoDA()
         self.table_placeables: TwoDA = TwoDA()
         self.table_creatures: TwoDA = TwoDA()

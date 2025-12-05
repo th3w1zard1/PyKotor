@@ -276,4 +276,5 @@ class ModuleLoader:
                 for child in model.getChildren():
                     child.setTexture(tex, 1)
                 # Also apply to parent node
-                model.setTexture(tex, 1
+                model.setTexture(tex, 1)
+
