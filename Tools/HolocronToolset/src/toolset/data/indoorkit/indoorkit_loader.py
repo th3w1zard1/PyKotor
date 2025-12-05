@@ -20,6 +20,50 @@ if TYPE_CHECKING:
     from pykotor.resource.generics.utd import UTD
 
 
+def _recenter_bwm(bwm: "BWM") -> "BWM":
+    """Re-center a BWM around (0, 0) so image and hitbox align.
+    
+    The Indoor Map Builder draws the preview image CENTERED at room.position,
+    but translates the walkmesh BY room.position from its original coordinates.
+    
+    For these to align, the BWM must be centered around (0, 0):
+    - If BWM center is at (100, 200) and room.position = (0, 0):
+      - Image would be centered at (0, 0)
+      - Walkmesh would be centered at (100, 200) after translate
+      - MISMATCH! Image and hitbox are in different places.
+    
+    - After re-centering BWM to (0, 0):
+      - Image is centered at room.position
+      - Walkmesh is centered at room.position after translate
+      - MATCH! Image and hitbox overlap perfectly.
+    
+    Reference: module_converter.py _recenter_bwm() for implementation details
+    Reference: vendor/KotOR.js/src/module/ModuleRoom.ts - rooms use local coords
+    Reference: vendor/reone/src/libs/game/object/area.cpp - room positioning
+    """
+    vertices = list(bwm.vertices())
+    if not vertices:
+        return bwm
+    
+    # Calculate current center
+    min_x = min(v.x for v in vertices)
+    max_x = max(v.x for v in vertices)
+    min_y = min(v.y for v in vertices)
+    max_y = max(v.y for v in vertices)
+    min_z = min(v.z for v in vertices)
+    max_z = max(v.z for v in vertices)
+    
+    center_x = (min_x + max_x) / 2.0
+    center_y = (min_y + max_y) / 2.0
+    center_z = (min_z + max_z) / 2.0
+    
+    # Translate all vertices to center around origin
+    # Use BWM.translate() which handles all vertices in faces
+    bwm.translate(-center_x, -center_y, -center_z)
+    
+    return bwm
+
+
 def load_kits(  # noqa: C901, PLR0912, PLR0915
     path: os.PathLike | str,
 ) -> tuple[list[Kit], list[tuple[str, Path, str]]]:
@@ -172,7 +216,7 @@ def load_kits(  # noqa: C901, PLR0912, PLR0915
             
             width: int = door_json["width"]
             height: int = door_json["height"]
-            door: KitDoor = KitDoor(utd_k1, utd_k2, width, height)
+            door = KitDoor(utd_k1, utd_k2, width, height)
             kit.doors.append(door)
 
         for component_json in kit_json.get("components", []):
@@ -210,6 +254,14 @@ def load_kits(  # noqa: C901, PLR0912, PLR0915
 
             try:
                 bwm: BWM = read_bwm(wok_path)
+                # CRITICAL FIX: Re-center the BWM around (0, 0)
+                # Game WOKs are stored in world coordinates, but the Indoor Map Builder
+                # expects BWMs centered at origin because:
+                # - The preview image is drawn CENTERED at room.position
+                # - The walkmesh is TRANSLATED by room.position from its original coords
+                # Without re-centering, the image and walkmesh end up at different locations!
+                # Reference: module_converter.py _recenter_bwm() for implementation details
+                bwm = _recenter_bwm(bwm)
             except FileNotFoundError:
                 missing_files.append((kit_json["name"], wok_path, "walkmesh"))
                 continue
