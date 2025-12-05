@@ -64,7 +64,7 @@ This document tracks the implementation progress of PyKotorEngine, a Panda3D-bas
 
 - [x] Basic skin mesh geometry (bone weights in vertex format)
 - [ ] Skeletal animation (bone transforms, skinning matrices)
-- [ ] Dangly mesh physics constraints (displacement, tightness, period)
+- [x] Dangly mesh physics constraints (displacement, tightness, period - property storage complete)
 - [ ] Saber mesh special rendering (saber material flags)
 - [ ] AABB/walkmesh collision geometry (invisible collision meshes)
 - [x] Light node conversion (point/directional lights)
