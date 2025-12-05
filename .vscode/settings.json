@@ -16,7 +16,7 @@
     "launch": {
         "compounds": [],
         "debugStdLib": true,
-        "justMyCode": false
+        "justMyCode": true
     },
     "mypy-type-checker.args": [
         "--check-untyped-defs",
