@@ -5436,51 +5436,59 @@ class TestHelpWindow:
 
     def test_show_help_window(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder):
         """Test showing help window."""
-        builder = builder_no_kits
+        # Disable updates FIRST to prevent any blocking network calls or dialogs
+        from toolset.gui.windows.help import HelpWindow
 
-        builder.show()
-        qtbot.wait(50)
-        QApplication.processEvents()
-
-        # Ensure help files can be found by changing CWD
-        # The app expects ./help to be present in CWD
-        old_cwd = os.getcwd()
-
-        # Locate toolset directory where help/ folder resides
-        # Assuming running from repo root
-        target_dir = Path("Tools/HolocronToolset/src/toolset").absolute()
-
-        if not target_dir.exists() or not (target_dir / "help").exists():
-            # Try finding it relative to current file just in case
-            current_file_dir = Path(__file__).parent
-            # Tools/HolocronToolset/tests/gui/windows/ -> Tools/HolocronToolset/src/toolset/
-            # ../../../../Tools/HolocronToolset/src/toolset
-            target_dir = (current_file_dir.parent.parent.parent.parent / "Tools/HolocronToolset/src/toolset").resolve()
-
-        if target_dir.exists() and (target_dir / "help").exists():
-            os.chdir(target_dir)
+        original_enable_updates = HelpWindow.ENABLE_UPDATES
+        HelpWindow.ENABLE_UPDATES = False
 
         try:
-            # Show help
-            builder.show_help_window()
+            builder = builder_no_kits
 
-            # Wait for window to open and load content
-            qtbot.wait(200)
+            builder.show()
+            qtbot.wait(50)
             QApplication.processEvents()
 
-            # Verify HelpWindow is open
-            from toolset.gui.windows.help import HelpWindow
+            # Ensure help files can be found by changing CWD
+            # The app expects ./help to be present in CWD
+            old_cwd = os.getcwd()
 
-            help_windows = [w for w in QApplication.topLevelWidgets() if isinstance(w, HelpWindow) and w.isVisible()]
+            # Locate toolset directory where help/ folder resides
+            # Assuming running from repo root
+            target_dir = Path("Tools/HolocronToolset/src/toolset").absolute()
+
+            if not target_dir.exists() or not (target_dir / "help").exists():
+                # Try finding it relative to current file just in case
+                current_file_dir = Path(__file__).parent
+                # Tools/HolocronToolset/tests/gui/windows/ -> Tools/HolocronToolset/src/toolset/
+                # ../../../../Tools/HolocronToolset/src/toolset
+                target_dir = (current_file_dir.parent.parent.parent.parent / "Tools/HolocronToolset/src/toolset").resolve()
 
             if target_dir.exists() and (target_dir / "help").exists():
-                assert len(help_windows) > 0, "Help window failed to open"
-                help_windows[0].close()
+                os.chdir(target_dir)
 
+            try:
+                # Show help
+                builder.show_help_window()
+
+                # Wait for window to open and load content
+                qtbot.wait(200)
+                QApplication.processEvents()
+
+                # Verify HelpWindow is open
+                help_windows = [w for w in QApplication.topLevelWidgets() if isinstance(w, HelpWindow) and w.isVisible()]
+
+                if target_dir.exists() and (target_dir / "help").exists():
+                    assert len(help_windows) > 0, "Help window failed to open"
+                    help_windows[0].close()
+
+            finally:
+                os.chdir(old_cwd)
+
+            builder.close()
         finally:
-            os.chdir(old_cwd)
-
-        builder.close()
+            # Restore original setting
+            HelpWindow.ENABLE_UPDATES = original_enable_updates
 
 
 # ============================================================================
