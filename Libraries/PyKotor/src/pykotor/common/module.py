@@ -773,7 +773,12 @@ class Module:  # noqa: PLR0904
         for identifier, locations in texture_search.items():
             if not locations:
                 continue
-            print(f"Adding {len(locations)} texture locations to module '{display_name}'")
+            location_paths = [str(loc.filepath) for loc in locations]
+            if len(location_paths) <= 3:
+                paths_str = ', '.join(location_paths)
+            else:
+                paths_str = ', '.join(location_paths[:3]) + f', ... and {len(location_paths) - 3} more'
+            RobustLogger().debug(f"Adding {len(locations)} texture location(s) for '{identifier.resname}.{identifier.restype.extension}' to '{display_name}': {paths_str}")
             self.add_locations(identifier.resname, identifier.restype, (location.filepath for location in locations)).activate()
 
         # Finally iterate through all resources we may have missed.
