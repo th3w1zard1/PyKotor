@@ -17,7 +17,7 @@ except (ImportError, ModuleNotFoundError):
     QTest, qapp = None, None  # type: ignore[misc, assignment]
 
 absolute_file_path = pathlib.Path(__file__).resolve()
-TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "test_toolset/test_files"
+TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "test_files"
 
 if __name__ == "__main__" and getattr(sys, "frozen", False) is False:
 

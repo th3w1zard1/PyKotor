@@ -472,9 +472,11 @@ no_implicit_optional = true
 explicit_package_bases = true
 namespace_packages = true
 mypy_path = [
-    "Engines/src",
     "Engines/PyKotorEngine/src",
+    "Engines/PyKotorEngine/tests",
     "Libraries/PyKotor/src",
+    "Libraries/PyKotor/tests",
+    "Libraries/PyKotorGL/src",
     "Libraries/PyKotorGL/src",
     "Libraries/PyKotorFont/src",
     "Tools/HolocronToolset/src",
@@ -514,5 +516,4 @@ log_cli_format = "%(message)s"
 
 log_file = "pytest.log"
 log_file_level = "DEBUG"
-log_file_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
-log_file_date_format = "%Y-%m-%d %H:%M:%S"
+log_file_format = "%(asctime)s [
