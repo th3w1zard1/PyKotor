@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 from loggerplus import RobustLogger
-from qtpy.QtCore import QThread, QTimer
+from qtpy.QtCore import QThread
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
 
@@ -178,19 +178,7 @@ def main():
         RobustLogger().debug("TRACE: qasync imported, creating QEventLoop")
         asyncio.set_event_loop(QEventLoop(app))
         RobustLogger().debug("TRACE: QEventLoop created and set")
-    RobustLogger().debug("TRACE: qasync setup complete")
-    
-    # Schedule trace messages to fire after the event loop starts
-    def trace_after_event_loop_start():
-        RobustLogger().debug("TRACE: Event loop started - first QTimer callback")
-        
-        # Schedule another trace message with a small delay to see if event loop is processing
-        QTimer.singleShot(10, lambda: RobustLogger().debug("TRACE: Event loop processing - second QTimer callback (10ms delay)"))
-        QTimer.singleShot(50, lambda: RobustLogger().debug("TRACE: Event loop processing - third QTimer callback (50ms delay)"))
-        QTimer.singleShot(100, lambda: RobustLogger().debug("TRACE: Event loop processing - fourth QTimer callback (100ms delay)"))
-    
-    QTimer.singleShot(0, trace_after_event_loop_start)
-    RobustLogger().debug("TRACE: QTimer.singleShot(0) scheduled for after event loop starts")
+    RobustLogger().debug("TRACE: qasync not installed, falling back to default event loop")
     RobustLogger().debug("TRACE: About to call app.exec()")
     exit_code = app.exec()
     RobustLogger().debug(f"TRACE: app.exec() returned with exit code: {exit_code}")

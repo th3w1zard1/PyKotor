@@ -1127,15 +1127,22 @@ class ToolWindow(QMainWindow):
         self,
         index: int,  # noqa: PLR0915, C901, PLR0912
     ):
+        RobustLogger().debug(f"TRACE: change_active_installation({index}) called")
         if index < 0:  # self.ui.gameCombo.clear() will call this function with -1
+            RobustLogger().debug("TRACE: change_active_installation: index < 0, returning early")
             return
 
         prev_index: int = self.previous_game_combo_index
+        RobustLogger().debug(f"TRACE: change_active_installation: prev_index={prev_index}, about to call setCurrentIndex({index})")
         self.ui.gameCombo.setCurrentIndex(index)
+        RobustLogger().debug(f"TRACE: change_active_installation: setCurrentIndex({index}) completed")
 
         if index == 0:
+            RobustLogger().debug("TRACE: change_active_installation: index == 0, about to call unset_installation()")
             self.unset_installation()
+            RobustLogger().debug("TRACE: change_active_installation: unset_installation() returned")
             self.previous_game_combo_index = 0
+            RobustLogger().debug("TRACE: change_active_installation: returning (index == 0)")
             return
 
         name: str = self.ui.gameCombo.itemText(index)
@@ -1282,11 +1289,7 @@ class ToolWindow(QMainWindow):
         """Called when the window is shown."""
         RobustLogger().debug("TRACE: ToolWindow.showEvent() called")
         super().showEvent(event) if event else None
-        RobustLogger().debug("TRACE: ToolWindow.showEvent() completed")
-        
-        # Schedule a trace message after the window is fully shown
-        QTimer.singleShot(0, lambda: RobustLogger().debug("TRACE: Window shown - QTimer callback after showEvent"))
-        QTimer.singleShot(10, lambda: RobustLogger().debug("TRACE: Window shown - QTimer callback 10ms after showEvent"))
+        RobustLogger().debug("TRACE: ToolWindow.showEvent() completed - super().showEvent() returned")
     
     def closeEvent(self, e: QCloseEvent | None):  # pylint: disable=unused-argument  # pyright: ignore[reportIncompatibleMethodOverride]
         instance: QCoreApplication | None = QCoreApplication.instance()
@@ -1643,20 +1646,40 @@ class ToolWindow(QMainWindow):
     @Slot()
     def unset_installation(self):
         """Unset the current installation."""
+        RobustLogger().debug("TRACE: unset_installation() called")
         # Clear file system watcher before clearing the installation
+        RobustLogger().debug("TRACE: unset_installation: about to call _clear_file_watcher()")
         self._clear_file_watcher()
+        RobustLogger().debug("TRACE: unset_installation: _clear_file_watcher() returned")
         
+        RobustLogger().debug("TRACE: unset_installation: about to call setCurrentIndex(0)")
         self.ui.gameCombo.setCurrentIndex(0)
+        RobustLogger().debug("TRACE: unset_installation: setCurrentIndex(0) returned")
 
+        RobustLogger().debug("TRACE: unset_installation: about to call coreWidget.set_resources([])")
         self.ui.coreWidget.set_resources([])
+        RobustLogger().debug("TRACE: unset_installation: coreWidget.set_resources([]) returned")
+        RobustLogger().debug("TRACE: unset_installation: about to call modulesWidget.set_sections([])")
         self.ui.modulesWidget.set_sections([])
+        RobustLogger().debug("TRACE: unset_installation: modulesWidget.set_sections([]) returned")
+        RobustLogger().debug("TRACE: unset_installation: about to call modulesWidget.set_resources([])")
         self.ui.modulesWidget.set_resources([])
+        RobustLogger().debug("TRACE: unset_installation: modulesWidget.set_resources([]) returned")
+        RobustLogger().debug("TRACE: unset_installation: about to call overrideWidget.set_sections([])")
         self.ui.overrideWidget.set_sections([])
+        RobustLogger().debug("TRACE: unset_installation: overrideWidget.set_sections([]) returned")
+        RobustLogger().debug("TRACE: unset_installation: about to call overrideWidget.set_resources([])")
         self.ui.overrideWidget.set_resources([])
+        RobustLogger().debug("TRACE: unset_installation: overrideWidget.set_resources([]) returned")
 
+        RobustLogger().debug("TRACE: unset_installation: about to call resourceTabs.setEnabled(False)")
         self.ui.resourceTabs.setEnabled(False)
+        RobustLogger().debug("TRACE: unset_installation: resourceTabs.setEnabled(False) returned")
+        RobustLogger().debug("TRACE: unset_installation: about to call update_menus()")
         self.update_menus()
+        RobustLogger().debug("TRACE: unset_installation: update_menus() returned")
         self.active = None
+        RobustLogger().debug("TRACE: unset_installation: returning")
 
     # endregion
 
