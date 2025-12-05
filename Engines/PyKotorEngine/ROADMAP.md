@@ -202,6 +202,7 @@ Engines/
 ```
 
 **Note**: Source code is in `Engines/src/pykotor/engine/` to allow namespace expansion:
+
 - `from pykotor.engine.panda3d.mdl_loader import MDLLoader`
 - `from pykotor.engine.panda3d.engine import KotorEngine`
 
