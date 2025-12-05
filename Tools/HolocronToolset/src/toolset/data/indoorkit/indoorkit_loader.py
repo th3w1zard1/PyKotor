@@ -361,12 +361,6 @@ def load_kits(  # noqa: C901, PLR0912, PLR0915
             except Exception:
                 missing_files.append((kit_json["name"], wok_path, "walkmesh - read error"))
                 continue
-            except FileNotFoundError:
-                missing_files.append((kit_json["name"], wok_path, "walkmesh"))
-                continue
-            except Exception:
-                missing_files.append((kit_json["name"], wok_path, "walkmesh - read error"))
-                continue
 
             try:
                 mdl: bytes = mdl_path.read_bytes()

@@ -22,8 +22,6 @@ from typing import TYPE_CHECKING
 from utility.common.geometry import Vector3  # noqa: PLC2701
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from pykotor.common.misc import ResRef
 
 
@@ -326,4 +324,3 @@ class GameObject(ABC):
     def _on_visibility_changed(self) -> None:
         """Called when visibility changes (override in subclasses)."""
         pass
-

@@ -836,7 +836,12 @@ class TXICommand(Enum):
 
 
 class TXIBaseInformation(ComparableMixin):
-    COMPARABLE_FIELDS = ("mipmap", "filter", "downsamplemin", "downsamplemax")
+    COMPARABLE_FIELDS = (
+        "downsamplemax",
+        "downsamplemin",
+        "filter",
+        "mipmap",
+    )
     """Fields used within all txi files."""
 
     def __init__(self):
@@ -867,12 +872,12 @@ class TXIBaseInformation(ComparableMixin):
 class TXIMaterialInformation(TXIBaseInformation):
     COMPARABLE_FIELDS = (
         *TXIBaseInformation.COMPARABLE_FIELDS,
-        "bumpmaptexture",
-        "bumpyshinytexture",
-        "envmaptexture",
-        "bumpreplacementtexture",
         "blending",
+        "bumpmaptexture",
+        "bumpreplacementtexture",
+        "bumpyshinytexture",
         "decal",
+        "envmaptexture",
     )
     def __init__(self):
         super().__init__()
@@ -911,28 +916,28 @@ class TXIMaterialInformation(TXIBaseInformation):
 class TXITextureInformation(TXIBaseInformation):
     COMPARABLE_FIELDS = (
         *TXIBaseInformation.COMPARABLE_FIELDS,
-        "proceduretype",
-        "filerange",
-        "defaultwidth",
+        "alphamean",
+        "bumpintensity",
+        "bumpmapscaling",
+        "clamp",
+        "cube",
         "defaultheight",
+        "defaultwidth",
+        "filerange",
         "filter",
-        "maptexelstopixels",
         "gamma",
         "isbumpmap",
-        "clamp",
-        "alphamean",
         "isdiffusebumpmap",
+        "isenvironmentmapped",
         "isspecularbumpmap",
-        "bumpmapscaling",
-        "specularcolor",
+        "maptexelstopixels",
         "numx",
         "numy",
-        "cube",
-        "bumpintensity",
+        "pltreplacement",
+        "proceduretype",
+        "specularcolor",
         "temporary",
         "useglobalalpha",
-        "isenvironmentmapped",
-        "pltreplacement",
     )
     def __init__(self):
         super().__init__()
@@ -1089,13 +1094,13 @@ class TXIFontInformation(TXIBaseInformation):
 
     COMPARABLE_FIELDS = (
         *TXIBaseInformation.COMPARABLE_FIELDS,
-        "numchars",
-        "spacingR",
-        "spacingB",
         "caretindent",
+        "dbmapping",
         "fontwidth",
         "isdoublebyte",
-        "dbmapping",
+        "numchars",
+        "spacingB",
+        "spacingR",
     )
     COMPARABLE_SEQUENCE_FIELDS = ("upper_left_coords", "lower_right_coords")
 

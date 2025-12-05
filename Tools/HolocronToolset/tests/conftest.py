@@ -22,9 +22,12 @@ if _pythonpath:
         # Unix format on Windows - convert to semicolons
         paths = [p.strip().strip('"').strip("'") for p in _pythonpath.split(":") if p.strip()]
         os.environ["PYTHONPATH"] = correct_sep.join(paths)
+    else:
+        # Already correct format, just normalize paths
+        paths = [p.strip().strip('"').strip("'") for p in _pythonpath.split(correct_sep) if p.strip()]
+    
     # Add PYTHONPATH paths to sys.path to ensure imports work
-    normalized_paths = os.environ.get("PYTHONPATH", "").split(os.pathsep)
-    for path_str in normalized_paths:
+    for path_str in paths:
         if path_str:
             path_obj = Path(path_str).resolve()
             if path_obj.exists() and str(path_obj) not in sys.path:
@@ -94,7 +97,7 @@ def pytest_runtest_setup(item: pytest.Item):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 # Paths
-REPO_ROOT = Path(__file__).resolve().parents[4]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 TOOLS_PATH = REPO_ROOT / "Tools"
 LIBS_PATH = REPO_ROOT / "Libraries"
 
