@@ -69,7 +69,7 @@ This document tracks the implementation progress of PyKotorEngine, a Panda3D-bas
 - [ ] AABB/walkmesh collision geometry (invisible collision meshes)
 - [x] Light node conversion (point/directional lights)
 - [ ] Emitter node conversion (particle systems)
-- [ ] Reference node loading (child model loading)
+- [x] Reference node loading (child model loading)
 
 ### 📋 Planned
 
