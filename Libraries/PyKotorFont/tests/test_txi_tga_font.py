@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import unittest
 import tempfile
 import shutil
@@ -9,22 +8,23 @@ import warnings
 from PIL import Image
 from pathlib import Path
 
-from pykotor.common.language import Language
+from pykotor.common.language import Language  # pyright: ignore[reportMissingImports]
 
 # Handle optional pykotor.font dependency
 try:
-    from pykotor.font.draw import write_bitmap_font, write_bitmap_fonts
+    from pykotor.font.draw import write_bitmap_font, write_bitmap_fonts  # pyright: ignore[reportMissingImports]
 except ImportError:
     import pytest
     pytest.skip("pykotor.font not available", allow_module_level=True)
 
 if __name__ == "__main__":
-    os.chdir("./Libraries/PyKotorFont")
+    # No need to change directory - we're already in the right location
+    pass
 
 
-FONT_PATH_FILE = Path("tests/test_pykotor_font/test_files/roboto/Roboto-Black.ttf")
-CHINESE_FONT_PATH_FILE = Path("tests/test_pykotor_font/test_files/chinese_simplified_ttf/Unifontexmono-AL3RA.ttf")
-THAI_FONT_PATH_FILE = Path("tests/test_pykotor_font/test_files/TH Sarabun New Regular/TH Sarabun New Regular.ttf").resolve()
+FONT_PATH_FILE = Path(__file__).parent / "test_files" / "roboto" / "Roboto-Black.ttf"
+CHINESE_FONT_PATH_FILE = Path(__file__).parent / "test_files" / "chinese_simplified_ttf" / "Unifontexmono-AL3RA.ttf"
+THAI_FONT_PATH_FILE = (Path(__file__).parent / "test_files" / "TH Sarabun New Regular" / "TH Sarabun New Regular.ttf").resolve()
 
 
 class TestWriteBitmapFont(unittest.TestCase):

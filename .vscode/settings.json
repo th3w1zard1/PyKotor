@@ -48,6 +48,8 @@
     "python.testing.pytestArgs": [
         "tests",
         "Libraries/PyKotor/tests",
+        "Libraries/PyKotorFont/tests",
+        "Libraries/PyKotorGL/tests",
         "-v"
     ],
     "python.testing.pytestEnabled": true,
