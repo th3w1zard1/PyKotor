@@ -34,10 +34,9 @@ from panda3d.core import (
     InternalName,
     NodePath,
 )
-from pykotor.common.geometry_utils import compute_per_vertex_tangent_space, determine_vertex_format_requirements
-from pykotor.gl.models.mdl_converter import get_node_converter_type, get_node_type_priority
+from pykotor.common.geometry_utils import compute_per_vertex_tangent_space
+from pykotor.gl.models.mdl_converter import get_node_converter_type
 from pykotor.resource.formats.mdl import read_mdl
-from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
     from pykotor.engine.materials.base import IMaterialManager
@@ -554,8 +553,8 @@ class MDLLoader:
         
         # Resolve MDL and MDX resources from installation
         # Reference: Engines/PyKotorEngine/src/pykotor/engine/panda3d/module_loader.py:231-256
-        from pykotor.extract.installation import SearchLocation
-        from pykotor.resource.type import ResourceType
+        from pykotor.extract.installation import SearchLocation  # pyright: ignore[reportMissingImports]
+        from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
         
         SEARCH_ORDER = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
         
