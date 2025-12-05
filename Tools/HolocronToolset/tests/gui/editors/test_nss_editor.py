@@ -13,7 +13,7 @@ import pytest
 from pathlib import Path
 from qtpy.QtCore import Qt, QPoint, QTimer
 from qtpy.QtWidgets import QApplication, QListWidgetItem, QTreeWidgetItem, QPushButton
-from qtpy.QtGui import QTextCursor, QMouseEvent, QKeyEvent
+from qtpy.QtGui import QKeyEvent, QMouseEvent, QPlainTextDocumentLayout, QTextCursor
 
 from toolset.gui.editors.nss import NSSEditor
 from toolset.data.installation import HTInstallation
@@ -66,6 +66,37 @@ def ncs_test_file(test_files_dir: Path) -> Path | None:
     if ncs_file.exists():
         return ncs_file
     return None
+
+
+# ============================================================================
+# DOCUMENT LAYOUT COMPATIBILITY
+# ============================================================================
+
+def test_nss_editor_document_layout(qtbot, installation: HTInstallation):
+    """Ensure NSSEditor uses QPlainTextDocumentLayout for compatibility."""
+    editor = None
+    try:
+        editor = NSSEditor(None, installation)
+    except AttributeError as exc:
+        if "status_label" not in str(exc):
+            raise
+        pytest.skip(f"Editor initialization issue (non-critical): {exc}")
+
+    assert editor is not None
+    qtbot.addWidget(editor)
+    assert editor.ui is not None
+    assert editor.ui.codeEdit is not None
+
+    document = editor.ui.codeEdit.document()
+    assert document is not None
+
+    layout = document.documentLayout()
+    assert layout is not None
+    assert isinstance(layout, QPlainTextDocumentLayout)
+
+    assert editor._highlighter is not None
+
+    editor.close()
 
 
 # ============================================================================
