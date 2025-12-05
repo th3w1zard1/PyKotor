@@ -24,22 +24,22 @@ all-extensions = ["pykotorfont>=2.0.0", "pykotorgl[moderngl]>=2.0.2"]
 
 # Tools (lowercase PyPI names)
 holocrontoolset = ["holocrontoolset>=4.0.0a7"]
-holopatcher = ["holopatcher>=1.5.3"]
+holopatcher = ["holopatcher>=1.8.0"]
 kotor-diff = ["kotor-diff>=1.0.0"]
 batchpatcher = ["batchpatcher>=2.2.0"]
 gui-converter = ["gui-converter>=1.0.0"]
-kotorcli = ["kotorcli>=1.0.0"]
-holopazaak = ["holopazaak>=1.0.0"]
-kit-generator = ["kit-generator>=1.0.0"]
+kotorcli = ["kotorcli>=0.1.0"]
+holopazaak = ["holopazaak>=0.1.0"]
+kit-generator = ["kit-generator>=0.1.0"]
 all-tools = [
     "holocrontoolset>=4.0.0a7",
-    "holopatcher>=1.5.3",
+    "holopatcher>=1.8.0",
     "kotor-diff>=1.0.0",
     "batchpatcher>=2.2.0",
     "gui-converter>=1.0.0",
-    "kotorcli>=1.0.0",
-    "holopazaak>=1.0.0",
-    "kit-generator>=1.0.0",
+    "kotorcli>=0.1.0",
+    "holopazaak>=0.1.0",
+    "kit-generator>=0.1.0",
 ]
 
 # Everything
@@ -47,13 +47,13 @@ all = [
     "pykotorfont>=2.0.0",
     "pykotorgl[moderngl]>=2.0.2",
     "holocrontoolset>=4.0.0a7",
-    "holopatcher>=1.5.3",
+    "holopatcher>=1.8.0",
     "kotor-diff>=1.0.0",
     "batchpatcher>=2.2.0",
     "gui-converter>=1.0.0",
-    "kotorcli>=1.0.0",
-    "holopazaak>=1.0.0",
-    "kit-generator>=1.0.0",
+    "kotorcli>=0.1.0",
+    "holopazaak>=0.1.0",
+    "kit-generator>=0.1.0",
 ]
 
 # Development dependencies
@@ -106,7 +106,10 @@ flake8 = "*"
 # Extension libraries
 font = ["pykotorfont"]
 gl = ["pykotorgl[moderngl]"]
-all-extensions = ["pykotorfont", "pykotorgl[moderngl]"]
+all-extensions = [
+    "pykotorfont",
+    "pykotorgl[moderngl]",
+]
 
 # Tools
 holocrontoolset = ["holocrontoolset"]
@@ -117,10 +120,51 @@ gui-converter = ["gui-converter"]
 kotorcli = ["kotorcli"]
 holopazaak = ["holopazaak"]
 kit-generator = ["kit-generator"]
-all-tools = ["holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
+all-tools = [
+    "holocrontoolset",
+    "holopatcher",
+    "kotor-diff",
+    "batchpatcher",
+    "gui-converter",
+    "kotorcli",
+    "holopazaak",
+    "kit-generator",
+]
 
 # Everything
-all = ["pykotorfont", "pykotorgl[moderngl]", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator"]
+all = [
+    "pykotorfont",
+    "pykotorgl[moderngl]",
+    "holocrontoolset",
+    "holopatcher",
+    "kotor-diff",
+    "batchpatcher",
+    "gui-converter",
+    "kotorcli",
+    "holopazaak",
+    "kit-generator",
+]
+
+# Development dependencies
+dev = [
+    "astroid>=3.2.0,<3.5.0; python_version>=\"3.8\"",
+    "autoflake>=2.3.1; python_version>=\"3.8\"",
+    "iniconfig>=2.1.0; python_version>=\"3.8\"",
+    "mypy>=1.0.0,<1.10.0; python_version>=\"3.8\"",
+    "mypy-extensions>=1.1.0; python_version>=\"3.8\"",
+    "pyflakes>=2.0.0,<3.4.0; python_version>=\"3.8\"",
+    "pylint>=2.0.0,<3.3.9; python_version>=\"3.8\"",
+    "pytest>=7.0.0,<8.0.0; python_version>=\"3.8\"",
+    "pytest-html>=3.0.0,<4.0.0; python_version>=\"3.8\"",
+    "pytest-metadata>=2.0.0,<3.0.0; python_version>=\"3.8\"",
+    "pytest-xdist>=2.0.0,<3.8.0; python_version>=\"3.8\"",
+    "ruff>=0.1.0,<0.4.0; python_version>=\"3.8\"",
+    "snakeviz>=2.0.0,<2.2.2; python_version>=\"3.8\"",
+    "types-pillow>=10.2.0.20240822; python_version>=\"3.8\"",
+    "types-send2trash>=1.8.2.7; python_version>=\"3.8\"",
+    "typing-extensions>=4.5.0,<4.9.0; python_version<\"3.9\"",
+    "typing-extensions>=4.5.0; python_version>=\"3.9\"",
+]
 
 [project.urls]
 homepage = "https://github.com/th3w1zard1/PyKotor"
@@ -139,19 +183,37 @@ dev-dependencies = []
 
 [tool.uv.workspace]
 members = [
-    "Libraries/PyKotor",
-    "Libraries/PyKotorFont",
-    "Libraries/PyKotorGL",
-    "Tools/BatchPatcher",
-    "Tools/GuiConverter",
-    "Tools/HolocronAI",
-    "Tools/HolocronToolset",
-    "Tools/HoloGenerator",
-    "Tools/HoloPatcher",
-    "Tools/HoloPazaak",
-    "Tools/KitGenerator",
-    "Tools/KotorCLI",
-    "Tools/KotorDiff",
+    "Engines/PyKotorEngine/src",
+    "Engines/PyKotorEngine/tests",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotor/tests",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotor/tests",
+    "Libraries/PyKotorFont/src",
+    "Libraries/PyKotorFont/tests",
+    "Libraries/PyKotorGL/src",
+    "Libraries/PyKotorGL/tests",
+    "Tools/BatchPatcher/src",
+    "Tools/BatchPatcher/tests",
+    "Tools/BatchPatcher/tests",
+    "Tools/GuiConverter/src",
+    "Tools/GuiConverter/tests",
+    "Tools/HolocronAI/src",
+    "Tools/HolocronAI/tests",
+    "Tools/HolocronToolset/src",
+    "Tools/HolocronToolset/tests",
+    "Tools/HoloGenerator/src",
+    "Tools/HoloGenerator/tests",
+    "Tools/HoloPatcher/src",
+    "Tools/HoloPatcher/tests",
+    "Tools/HoloPazaak/src",
+    "Tools/HoloPazaak/tests",
+    "Tools/KitGenerator/src",
+    "Tools/KitGenerator/tests",
+    "Tools/KotorCLI/src",
+    "Tools/KotorCLI/tests",
+    "Tools/KotorDiff/src",
+    "Tools/KotorDiff/tests",
 ]
 
 [tool.uv.sources]
@@ -212,16 +274,46 @@ exclude = '''
 
 [tool.pyright]
 include = ["*.py"]
-exclude = ["**/node_modules/**", "**/__pycache__/**", "**/build/**", "**/dist/**", "**/venv/**", "**/__pycache__/**"]
+exclude = [
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/venv/**",
+    "**/__pycache__/**",
+]
 extraPaths = [
+    "Engines/PyKotorEngine/src",
+    "Engines/PyKotorEngine/tests",
     "Libraries/PyKotor/src",
-    "Libraries/PyKotorGL/src",
+    "Libraries/PyKotor/tests",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotor/tests",
     "Libraries/PyKotorFont/src",
-    "Tools/HolocronToolset/src",
+    "Libraries/PyKotorFont/tests",
+    "Libraries/PyKotorGL/src",
+    "Libraries/PyKotorGL/tests",
     "Tools/BatchPatcher/src",
+    "Tools/BatchPatcher/tests",
+    "Tools/BatchPatcher/tests",
+    "Tools/GuiConverter/src",
+    "Tools/GuiConverter/tests",
+    "Tools/HolocronAI/src",
+    "Tools/HolocronAI/tests",
+    "Tools/HolocronToolset/src",
+    "Tools/HolocronToolset/tests",
+    "Tools/HoloGenerator/src",
+    "Tools/HoloGenerator/tests",
     "Tools/HoloPatcher/src",
+    "Tools/HoloPatcher/tests",
+    "Tools/HoloPazaak/src",
+    "Tools/HoloPazaak/tests",
+    "Tools/KitGenerator/src",
+    "Tools/KitGenerator/tests",
+    "Tools/KotorCLI/src",
+    "Tools/KotorCLI/tests",
     "Tools/KotorDiff/src",
-    "Tools/GuiConverter/src"
+    "Tools/KotorDiff/tests",
 ]
 reportMissingImports = true
 reportMissingTypeStubs = false
@@ -264,14 +356,37 @@ output-format = "grouped" # Group violations by containing file.
 respect-gitignore = false
 
 src = [
+    "Engines/PyKotorEngine/src",
+    "Engines/PyKotorEngine/tests",
     "Libraries/PyKotor/src",
-    "Libraries/PyKotorGL/src",
+    "Libraries/PyKotor/tests",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotor/tests",
     "Libraries/PyKotorFont/src",
-    "Tools/HolocronToolset/src",
+    "Libraries/PyKotorFont/tests",
+    "Libraries/PyKotorGL/src",
+    "Libraries/PyKotorGL/tests",
     "Tools/BatchPatcher/src",
-    "Tools/HoloPatcher/src",
-    "Tools/KotorDiff/src",
+    "Tools/BatchPatcher/tests",
+    "Tools/BatchPatcher/tests",
     "Tools/GuiConverter/src",
+    "Tools/GuiConverter/tests",
+    "Tools/HolocronAI/src",
+    "Tools/HolocronAI/tests",
+    "Tools/HolocronToolset/src",
+    "Tools/HolocronToolset/tests",
+    "Tools/HoloGenerator/src",
+    "Tools/HoloGenerator/tests",
+    "Tools/HoloPatcher/src",
+    "Tools/HoloPatcher/tests",
+    "Tools/HoloPazaak/src",
+    "Tools/HoloPazaak/tests",
+    "Tools/KitGenerator/src",
+    "Tools/KitGenerator/tests",
+    "Tools/KotorCLI/src",
+    "Tools/KotorCLI/tests",
+    "Tools/KotorDiff/src",
+    "Tools/KotorDiff/tests",
     "tests",
 ]
 
@@ -476,20 +591,34 @@ mypy_path = [
     "Engines/PyKotorEngine/tests",
     "Libraries/PyKotor/src",
     "Libraries/PyKotor/tests",
-    "Libraries/PyKotorGL/src",
-    "Libraries/PyKotorGL/tests",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotor/tests",
     "Libraries/PyKotorFont/src",
     "Libraries/PyKotorFont/tests",
-    "Tools/HolocronToolset/src",
-    "Tools/HolocronToolset/tests",
+    "Libraries/PyKotorGL/src",
+    "Libraries/PyKotorGL/tests",
     "Tools/BatchPatcher/src",
     "Tools/BatchPatcher/tests",
-    "Tools/HoloPatcher/src",
-    "Tools/HoloPatcher/tests",
-    "Tools/KotorDiff/src",
-    "Tools/KotorDiff/tests",
+    "Tools/BatchPatcher/tests",
     "Tools/GuiConverter/src",
     "Tools/GuiConverter/tests",
+    "Tools/HolocronAI/src",
+    "Tools/HolocronAI/tests",
+    "Tools/HolocronToolset/src",
+    "Tools/HolocronToolset/tests",
+    "Tools/HoloGenerator/src",
+    "Tools/HoloGenerator/tests",
+    "Tools/HoloPatcher/src",
+    "Tools/HoloPatcher/tests",
+    "Tools/HoloPazaak/src",
+    "Tools/HoloPazaak/tests",
+    "Tools/KitGenerator/src",
+    "Tools/KitGenerator/tests",
+    "Tools/KotorCLI/src",
+    "Tools/KotorCLI/tests",
+    "Tools/KotorDiff/src",
+    "Tools/KotorDiff/tests",
+    "Tests",
 ]
 exclude = [
     "\\.venv",
@@ -502,7 +631,40 @@ exclude = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "Libraries/PyKotor/tests", "Libraries/PyKotorFont/tests", "Libraries/PyKotorGL/tests", "Tools/HolocronToolset/tests"]
+testpaths = [
+    "tests",
+    "Engines/PyKotorEngine/src",
+    "Engines/PyKotorEngine/tests",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotor/tests",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotor/tests",
+    "Libraries/PyKotorFont/src",
+    "Libraries/PyKotorFont/tests",
+    "Libraries/PyKotorGL/src",
+    "Libraries/PyKotorGL/tests",
+    "Tools/BatchPatcher/src",
+    "Tools/BatchPatcher/tests",
+    "Tools/BatchPatcher/tests",
+    "Tools/GuiConverter/src",
+    "Tools/GuiConverter/tests",
+    "Tools/HolocronAI/src",
+    "Tools/HolocronAI/tests",
+    "Tools/HolocronToolset/src",
+    "Tools/HolocronToolset/tests",
+    "Tools/HoloGenerator/src",
+    "Tools/HoloGenerator/tests",
+    "Tools/HoloPatcher/src",
+    "Tools/HoloPatcher/tests",
+    "Tools/HoloPazaak/src",
+    "Tools/HoloPazaak/tests",
+    "Tools/KitGenerator/src",
+    "Tools/KitGenerator/tests",
+    "Tools/KotorCLI/src",
+    "Tools/KotorCLI/tests",
+    "Tools/KotorDiff/src",
+    "Tools/KotorDiff/tests",
+]
 qt_api = "pyqt5"  # Default, can be overridden by PYTEST_QT_API environment variable
 markers = [
     "gui: marks tests that require a GUI (deselect with '-m \"not gui\"')",

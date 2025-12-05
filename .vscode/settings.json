@@ -37,6 +37,16 @@
     "python.envFile": "${workspaceFolder}/.env",
     "python.terminal.activateEnvironment": true,
     "python.missingPackage.severity": "Information",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/Libraries/PyKotor/src",
+        "${workspaceFolder}/Libraries/PyKotorGL/src",
+        "${workspaceFolder}/Libraries/PyKotorFont/src",
+        "${workspaceFolder}/Tools/HolocronToolset/src",
+        "${workspaceFolder}/Tools/BatchPatcher/src",
+        "${workspaceFolder}/Tools/HoloPatcher/src",
+        "${workspaceFolder}/Tools/KotorDiff/src",
+        "${workspaceFolder}/Tools/GuiConverter/src"
+    ],
     "python.terminal.launchArgs": [
         "-i",
         "-m",

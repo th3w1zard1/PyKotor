@@ -269,7 +269,7 @@ class BWMTransitionIntegrityTest(TestCase):
         
         # Load the working v2.0.4 module
         # TESTS_FILES_PATH is tests/test_files, we need Libraries/PyKotor/tests/test_files
-        v2_mod_path = Path(__file__).parents[6] / "Libraries" / "PyKotor" / "tests" / "test_files" / "indoormap_bug_inspect_workspace" / "v2.0.4-toolset" / "step01" / "step01.mod"
+        v2_mod_path = pathlib.Path(__file__).parents[6] / "Libraries" / "PyKotor" / "tests" / "test_files" / "indoormap_bug_inspect_workspace" / "v2.0.4-toolset" / "step01" / "step01.mod"
         if not v2_mod_path.exists():
             self.skipTest(f"Test file not found: {v2_mod_path}")
         
