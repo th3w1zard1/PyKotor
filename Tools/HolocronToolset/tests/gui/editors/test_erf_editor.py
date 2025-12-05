@@ -73,7 +73,7 @@ class ERFEditorTest(TestCase):
         cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
-        self.app = QApplication([])
+        self.app = QApplication([])  # pyright: ignore[reportOptionalCall]
         self.editor = self.ERFEditor(None, self.K2_INSTALLATION)
         self.log_messages: list[str] = [os.linesep]
 

@@ -79,7 +79,7 @@ class JRLEditorTest(TestCase):
         self.log_messages.append("\t".join(args))
 
     def test_save_and_load(self):
-        filepath = TESTS_FILES_PATH / "../test_toolset/files/global.jrl"
+        filepath = TESTS_FILES_PATH / "global.jrl"
 
         data = filepath.read_bytes()
         old = read_gff(data)

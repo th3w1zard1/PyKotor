@@ -34,13 +34,13 @@ from panda3d.core import (
     InternalName,
     NodePath,
 )
-from pykotor.common.geometry_utils import compute_per_vertex_tangent_space
-from pykotor.gl.models.mdl_converter import get_node_converter_type
-from pykotor.resource.formats.mdl import read_mdl
+from pykotor.common.geometry_utils import compute_per_vertex_tangent_space  # pyright: ignore[reportMissingImports]
+from pykotor.gl.models.mdl_converter import get_node_converter_type  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.mdl import read_mdl  # pyright: ignore[reportMissingImports]
 
 if TYPE_CHECKING:
-    from pykotor.engine.materials.base import IMaterialManager
-    from pykotor.resource.formats.mdl.mdl_data import (
+    from pykotor.engine.materials.base import IMaterialManager  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.mdl.mdl_data import (  # pyright: ignore[reportMissingImports]
         MDL,
         MDLMesh,
         MDLNode,
@@ -497,16 +497,52 @@ class MDLLoader:
         
         Returns:
         -------
-            NodePath containing the emitter
+            NodePath containing the emitter (properties stored in tags for particle system)
         
         References:
         ----------
             vendor/reone/src/libs/scene/node/emitter.cpp:50-150 - Emitter conversion
             vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:998-1004 - Emitter creation
+            Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:842-1051 - MDLEmitter structure
         """
-        # Emitter nodes are handled separately by particle system
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:998-1004
-        return NodePath(mdl_node.name)
+        if not mdl_node.emitter:
+            return NodePath(mdl_node.name)
+        
+        emitter = mdl_node.emitter
+        
+        # Create a placeholder node for the emitter
+        # The actual particle system will be implemented later
+        # Reference: vendor/reone/src/libs/scene/node/emitter.cpp:50-150
+        emitter_np = NodePath(mdl_node.name)
+        
+        # Store emitter properties in NodePath tags for particle system integration
+        # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:842-1051
+        emitter_np.setPythonTag("emitter_type", "particle")
+        emitter_np.setPythonTag("emitter_update", emitter.update)
+        emitter_np.setPythonTag("emitter_render", emitter.render)
+        emitter_np.setPythonTag("emitter_blend", emitter.blend)
+        emitter_np.setPythonTag("emitter_texture", emitter.texture)
+        emitter_np.setPythonTag("emitter_chunk_name", emitter.chunk_name)
+        emitter_np.setPythonTag("emitter_depth_texture", emitter.depth_texture)
+        emitter_np.setPythonTag("emitter_spawn_type", emitter.spawn_type)
+        emitter_np.setPythonTag("emitter_loop", emitter.loop)
+        emitter_np.setPythonTag("emitter_two_sided", emitter.two_sided_texture)
+        emitter_np.setPythonTag("emitter_frame_blender", emitter.frame_blender)
+        emitter_np.setPythonTag("emitter_render_order", emitter.render_order)
+        emitter_np.setPythonTag("emitter_dead_space", emitter.dead_space)
+        emitter_np.setPythonTag("emitter_blast_radius", emitter.blast_radius)
+        emitter_np.setPythonTag("emitter_blast_length", emitter.blast_length)
+        emitter_np.setPythonTag("emitter_branch_count", emitter.branch_count)
+        emitter_np.setPythonTag("emitter_control_point_smoothing", emitter.control_point_smoothing)
+        emitter_np.setPythonTag("emitter_x_grid", emitter.x_grid)
+        emitter_np.setPythonTag("emitter_y_grid", emitter.y_grid)
+        emitter_np.setPythonTag("emitter_flags", emitter.flags)
+        
+        # Store emitter data object for animation controllers
+        # Controllers will animate: birthrate, lifeExp, xSize, ySize, spread, velocity, etc.
+        emitter_np.setPythonTag("emitter_data", emitter)
+        
+        return emitter_np
     
     def _convert_reference_node(self, mdl_node: MDLNode) -> NodePath:
         """Convert a reference node (external model link) to Panda3D.

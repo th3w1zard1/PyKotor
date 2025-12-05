@@ -161,7 +161,7 @@ def temp_work_dir(tmp_path):
     kits_dir.mkdir(parents=True, exist_ok=True)
     
     # Copy actual kit files from Tools/HolocronToolset/src/toolset/kits/
-    repo_root = Path(__file__).parents[4]  # Go up to repo root
+    repo_root = Path(__file__).parents[6]  # Go up to repo root
     source_kits_dir = repo_root / "Tools" / "HolocronToolset" / "src" / "toolset" / "kits"
     
     if source_kits_dir.exists():
@@ -5495,7 +5495,7 @@ class TestHelpWindow:
         if not target_dir.exists() or not (target_dir / "help").exists():
              # Try finding it relative to current file just in case
              current_file_dir = Path(__file__).parent
-             # tests/test_toolset/gui/windows/ -> Tools/HolocronToolset/src/toolset/
+             # Tools/HolocronToolset/tests/gui/windows/ -> Tools/HolocronToolset/src/toolset/
              # ../../../../Tools/HolocronToolset/src/toolset
              target_dir = (current_file_dir.parent.parent.parent.parent / "Tools/HolocronToolset/src/toolset").resolve()
 

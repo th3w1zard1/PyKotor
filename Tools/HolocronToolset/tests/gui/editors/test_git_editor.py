@@ -15,7 +15,7 @@ except (ImportError, ModuleNotFoundError):
     QTest, QApplication = None, None  # type: ignore[misc, assignment]
 
 absolute_file_path = pathlib.Path(__file__).resolve()
-TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "test_toolset/test_files"
+TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "test_files"
 
 if (
     __name__ == "__main__"
@@ -39,7 +39,7 @@ if (
         if working_dir in sys.path:
             sys.path.remove(working_dir)
         sys.path.append(working_dir)
-    toolset_path = pathlib.Path(__file__).parents[3] / "toolset"
+    toolset_path = pathlib.Path(__file__).parents[6] / "Tools" / "HolocronToolset" / "src" / "toolset"
     if toolset_path.exists():
         working_dir = str(toolset_path.parent)
         if working_dir in sys.path:

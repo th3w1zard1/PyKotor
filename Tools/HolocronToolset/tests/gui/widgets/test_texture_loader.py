@@ -1,6 +1,6 @@
 """Tests for the texture loader process with Qt integration.
 
-Note: Core serialization tests are in tests/test_pykotor_gl/test_texture_loader_core.py
+Note: Core serialization tests are in Libraries/PyKotorGL/tests/test_texture_loader_core.py
 This file tests the Qt integration which requires Qt bindings to be available.
 """
 
