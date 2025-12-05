@@ -152,10 +152,14 @@ def get_node_converter_type(mdl_node: "MDLNode") -> str:
     return "dummy"
 
 
-def should_reverse_winding_order() -> bool:
+def should_reverse_winding_order(backend: str = "opengl") -> bool:
     """Determine if face winding order should be reversed.
     
     KotOR uses clockwise winding, but different backends may expect different orders.
+    
+    Args:
+    ----
+        backend: Backend name ("opengl", "panda3d", "threejs")
     
     Returns:
     -------
@@ -166,7 +170,11 @@ def should_reverse_winding_order() -> bool:
         vendor/xoreos/src/graphics/mesh.cpp:300 - Winding order reversal
         vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1169 - No reversal (Three.js handles it)
     """
-    # This is backend-specific, but we provide a default
-    # OpenGL typically expects CCW, so we reverse from KotOR's CW
+    # Backend-specific winding order requirements
+    # OpenGL and Panda3D typically expect CCW, so we reverse from KotOR's CW
+    # Three.js handles it internally, so no reversal needed
+    if backend == "threejs":
+        return False
+    # Default: OpenGL and Panda3D need reversal
     return True
 

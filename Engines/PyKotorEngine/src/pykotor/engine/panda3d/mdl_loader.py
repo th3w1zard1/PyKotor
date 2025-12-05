@@ -149,14 +149,11 @@ class MDLLoader:
             node_np = self._convert_skin_node(mdl_node)
         elif converter_type == "mesh":
             node_np = self._convert_mesh_node(mdl_node)
-        elif mdl_node.light:
-            # Light nodes
+        elif converter_type == "light":
             node_np = self._convert_light_node(mdl_node)
-        elif mdl_node.emitter:
-            # Emitter nodes (particle systems)
+        elif converter_type == "emitter":
             node_np = self._convert_emitter_node(mdl_node)
-        elif mdl_node.reference:
-            # Reference nodes (external model links)
+        elif converter_type == "reference":
             node_np = self._convert_reference_node(mdl_node)
         else:
             # Dummy node (empty hierarchy node)
@@ -689,7 +686,7 @@ class MDLLoader:
         # Add face indices
         # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
         from pykotor.gl.models.mdl_converter import should_reverse_winding_order
-        reverse_winding = should_reverse_winding_order()
+        reverse_winding = should_reverse_winding_order("panda3d")
         
         for face in mesh.faces:
             # KotOR uses clockwise winding, Panda3D uses counter-clockwise
