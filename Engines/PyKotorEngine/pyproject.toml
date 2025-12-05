@@ -3,9 +3,9 @@ requires = ["setuptools>=67.8.0,<70", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pykotor"
+name = "pykotor-engine"
 version = "2.0.0"
-description = "Read, modify and write files used by KotOR's game engine."
+description = "Panda3D-based game engine for KotOR."
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
 readme = "README.md"
@@ -82,7 +82,7 @@ Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 
 # Poetry configuration for those who prefer it
 [tool.poetry]
-name = "pykotor"
+name = "pykotor-engine"
 version = "2.0.0"
 description = "Read, modify and write files used by KotOR's game engine."
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]

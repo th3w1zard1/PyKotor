@@ -179,41 +179,25 @@ issues = "https://github.com/th3w1zard1/PyKotor/issues"
 
 [tool.uv]
 # Use local workspace packages only - PyPI has outdated pykotor 1.6.2
-dev-dependencies = []
 
 [tool.uv.workspace]
 members = [
-    "Engines/PyKotorEngine/src",
-    "Engines/PyKotorEngine/tests",
-    "Libraries/PyKotor/src",
-    "Libraries/PyKotor/tests",
-    "Libraries/PyKotor/src",
-    "Libraries/PyKotor/tests",
-    "Libraries/PyKotorFont/src",
-    "Libraries/PyKotorFont/tests",
-    "Libraries/PyKotorGL/src",
-    "Libraries/PyKotorGL/tests",
-    "Tools/BatchPatcher/src",
-    "Tools/BatchPatcher/tests",
-    "Tools/BatchPatcher/tests",
-    "Tools/GuiConverter/src",
-    "Tools/GuiConverter/tests",
-    "Tools/HolocronAI/src",
-    "Tools/HolocronAI/tests",
-    "Tools/HolocronToolset/src",
-    "Tools/HolocronToolset/tests",
-    "Tools/HoloGenerator/src",
-    "Tools/HoloGenerator/tests",
-    "Tools/HoloPatcher/src",
-    "Tools/HoloPatcher/tests",
-    "Tools/HoloPazaak/src",
-    "Tools/HoloPazaak/tests",
-    "Tools/KitGenerator/src",
-    "Tools/KitGenerator/tests",
-    "Tools/KotorCLI/src",
-    "Tools/KotorCLI/tests",
-    "Tools/KotorDiff/src",
-    "Tools/KotorDiff/tests",
+    "Engines/PyKotorEngine",
+    "Libraries/PyKotor",
+    "Libraries/PyKotorFont",
+    "Libraries/PyKotorGL",
+    "Tools/BatchPatcher",
+    "Tools/GuiConverter",
+    "Tools/HolocronToolset",
+    "Tools/HoloGenerator",
+    "Tools/HoloPatcher",
+    "Tools/HoloPazaak",
+    "Tools/KitGenerator",
+    "Tools/KitGenerator",
+    "Tools/KotorCLI",
+    "Tools/KotorCLI",
+    "Tools/KotorDiff",
+    "Tools/KotorDiff",
 ]
 
 [tool.uv.sources]
