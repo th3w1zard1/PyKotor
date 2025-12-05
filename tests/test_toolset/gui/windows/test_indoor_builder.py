@@ -9103,40 +9103,91 @@ class TestModuleKitMouseDragAndConnect:
             # Verify room is selected
             assert room in renderer.selected_rooms(), "Room should be selected"
             
-            # Move mouse to room position to ensure it's detected as under mouse
-            # This updates _under_mouse_room which is needed for drag to start
-            # The mouseMoveEvent updates _under_mouse_room by checking walkmesh.faceAt()
-            qtbot.mouseMove(renderer, pos=center_screen)
+            # Find a point on the walkmesh that actually has a face
+            # The room is at (0, 0, 0), but the walkmesh might not have a face exactly there
+            # We need to find a valid point on the walkmesh to click on
+            walkmesh = renderer._get_room_walkmesh(room)
+            vertices = list(walkmesh.vertices())
+            
+            # Find a point on the walkmesh that has a face
+            # Try the walkmesh center first, then try points within bounds
+            world_click_pos = None
+            # Initialize for error message - these will be updated if vertices exist
+            min_x: float = 0.0
+            min_y: float = 0.0
+            max_x: float = 0.0
+            max_y: float = 0.0
+            
+            if vertices:
+                min_x = min(v.x for v in vertices)
+                max_x = max(v.x for v in vertices)
+                min_y = min(v.y for v in vertices)
+                max_y = max(v.y for v in vertices)
+                center_x = (min_x + max_x) / 2.0
+                center_y = (min_y + max_y) / 2.0
+                
+                # Try center point first
+                if walkmesh.faceAt(center_x, center_y) is not None:
+                    world_click_pos = Vector3(center_x, center_y, 0.0)
+                else:
+                    # Try other points within bounds
+                    test_points = [
+                        (min_x + 1.0, min_y + 1.0),
+                        (max_x - 1.0, max_y - 1.0),
+                        ((min_x + center_x) / 2.0, (min_y + center_y) / 2.0),
+                        (room.position.x, room.position.y),  # Room position
+                    ]
+                    for test_x, test_y in test_points:
+                        if walkmesh.faceAt(test_x, test_y) is not None:
+                            world_click_pos = Vector3(test_x, test_y, 0.0)
+                            break
+            
+            # If we couldn't find a point with a face, use room position as fallback
+            if world_click_pos is None:
+                world_click_pos = Vector3(room.position.x, room.position.y, room.position.z)
+            
+            # Convert world position to screen coordinates
+            screen_click_pos = renderer.to_render_coords(world_click_pos.x, world_click_pos.y)
+            click_point = QPoint(int(screen_click_pos.x), int(screen_click_pos.y))
+            
+            # Ensure click point is within widget bounds
+            click_point.setX(max(10, min(click_point.x(), renderer.width() - 10)))
+            click_point.setY(max(10, min(click_point.y(), renderer.height() - 10)))
+            
+            # Move mouse to the valid walkmesh point
+            qtbot.mouseMove(renderer, pos=click_point)
             qtbot.wait(100)
             QApplication.processEvents()
             
             # Manually trigger the room detection logic that happens in mouseMoveEvent
             # This ensures _under_mouse_room is set correctly
-            world = renderer.to_world_coords(center_screen.x(), center_screen.y())
+            world: Vector2 = renderer.to_world_coords(click_point.x(), click_point.y())
             renderer._under_mouse_room = None
             for test_room in reversed(builder._map.rooms):
-                walkmesh = renderer._get_room_walkmesh(test_room)
-                if walkmesh.faceAt(world.x, world.y):
+                test_walkmesh: BWM = renderer._get_room_walkmesh(test_room)
+                if test_walkmesh.faceAt(world.x, world.y) is not None:
                     renderer._under_mouse_room = test_room
                     break
             
-            # Verify room is detected under mouse (or manually start drag if not)
-            room_under = renderer.room_under_mouse()
-            if room_under is not room:
-                # If room isn't detected under mouse, manually start drag
-                # This simulates what would happen if the room was detected
-                renderer.start_drag(room)
-                qtbot.wait(50)
-                QApplication.processEvents()
+            # CRITICAL: Verify room is detected under mouse
+            # If it's not detected, something is wrong with the detection logic
+            room_under: IndoorMapRoom | None = renderer.room_under_mouse()
+            assert room_under is not None and room_under is room, (
+                f"Room should be detected under mouse at world position ({world.x:.2f}, {world.y:.2f}) "
+                f"(screen: {click_point.x()}, {click_point.y()}). "
+                f"Walkmesh should have a face at this position. "
+                f"Room position: {room.position}, Walkmesh bounds: "
+                f"min=({min_x:.2f}, {min_y:.2f}), max=({max_x:.2f}, {max_y:.2f})"
+            )
             
             # Initialize mouse tracking by moving to start position first
             # This ensures _mouse_prev is set correctly for delta calculation
-            qtbot.mouseMove(renderer, pos=center_screen)
+            qtbot.mouseMove(renderer, pos=click_point)
             qtbot.wait(50)
             QApplication.processEvents()
             
-            # Now start drag by pressing mouse on the room
-            qtbot.mousePress(renderer, Qt.MouseButton.LeftButton, pos=center_screen)
+            # Now start drag by pressing mouse on the room at the valid walkmesh point
+            qtbot.mousePress(renderer, Qt.MouseButton.LeftButton, pos=click_point)
             qtbot.wait(100)
             QApplication.processEvents()
             
@@ -9151,17 +9202,21 @@ class TestModuleKitMouseDragAndConnect:
             assert len(renderer._drag_rooms) > 0, "Drag rooms should be set"
             assert room in renderer._drag_rooms, "Room should be in drag rooms"
             
-            # Drag to new position (50 pixels right, 50 pixels down)
+            # Drag to new position (50 pixels right, 50 pixels down from click point)
             # Need to move in steps to ensure the drag delta is calculated correctly
-            drag_end = QPoint(center_screen.x() + 50, center_screen.y() + 50)
+            drag_end = QPoint(click_point.x() + 50, click_point.y() + 50)
+            
+            # Ensure drag end is within bounds
+            drag_end.setX(max(10, min(drag_end.x(), renderer.width() - 10)))
+            drag_end.setY(max(10, min(drag_end.y(), renderer.height() - 10)))
             
             # Move mouse in smaller increments to ensure drag updates
             # Each move should trigger mouseMoveEvent which updates room position
             steps = 10
             for step in range(1, steps + 1):
                 intermediate = QPoint(
-                    center_screen.x() + (drag_end.x() - center_screen.x()) * step // steps,
-                    center_screen.y() + (drag_end.y() - center_screen.y()) * step // steps
+                    click_point.x() + (drag_end.x() - click_point.x()) * step // steps,
+                    click_point.y() + (drag_end.y() - click_point.y()) * step // steps
                 )
                 qtbot.mouseMove(renderer, pos=intermediate)
                 qtbot.wait(10)
@@ -9184,7 +9239,7 @@ class TestModuleKitMouseDragAndConnect:
             if drag_moved < 0.01:
                 # Manually simulate what mouseMoveEvent does during drag
                 # Calculate the delta from start to end
-                start_world = renderer.to_world_coords(center_screen.x(), center_screen.y())
+                start_world = renderer.to_world_coords(click_point.x(), click_point.y())
                 end_world = renderer.to_world_coords(drag_end.x(), drag_end.y())
                 world_delta = Vector2(end_world.x - start_world.x, end_world.y - start_world.y)
                 
