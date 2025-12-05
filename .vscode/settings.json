@@ -50,6 +50,7 @@
         "Libraries/PyKotor/tests",
         "Libraries/PyKotorFont/tests",
         "Libraries/PyKotorGL/tests",
+        "Tools/HolocronToolset/tests",
         "-v"
     ],
     "python.testing.pytestEnabled": true,

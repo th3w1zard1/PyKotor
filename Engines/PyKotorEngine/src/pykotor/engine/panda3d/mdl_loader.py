@@ -358,14 +358,23 @@ class MDLLoader:
         
         node = NodePath(geom_node)
         
-        # Store dangly properties for shader uniforms
+        # Store dangly properties for physics simulation and shader uniforms
+        # Reference: vendor/reone/src/libs/scene/render/pass/retro.cpp:159-193
         # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1491-1497
+        # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1356-1399
+        node.setPythonTag("dangly_type", "cloth")
+        node.setPythonTag("dangly_data", dangly)
+        node.setPythonTag("dangly_constraints", dangly.constraints)
+        node.setPythonTag("dangly_verts_original", dangly.verts_original)
+        
+        # Apply material
         if self._material_manager:
             material = self._material_manager.create_material_from_mesh(mesh)
             if self._resource_loader and self._active_texture_base:
                 material.load_resources(self._resource_loader, self._active_texture_base)
             self._material_manager.apply_material(node, material)
-            # Dangly properties (displacement, tightness, period) set in material
+            # Dangly properties (displacement, tightness, period) will be set in material
+            # when physics system is implemented
         
         return node
     

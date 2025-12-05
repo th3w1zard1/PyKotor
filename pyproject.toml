@@ -502,7 +502,7 @@ exclude = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "Libraries/PyKotor/tests", "Libraries/PyKotorFont/tests", "Libraries/PyKotorGL/tests"]
+testpaths = ["tests", "Libraries/PyKotor/tests", "Libraries/PyKotorFont/tests", "Libraries/PyKotorGL/tests", "Tools/HolocronToolset/tests"]
 qt_api = "pyqt5"  # Default, can be overridden by PYTEST_QT_API environment variable
 markers = [
     "gui: marks tests that require a GUI (deselect with '-m \"not gui\"')",
