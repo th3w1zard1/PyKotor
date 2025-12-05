@@ -87,7 +87,7 @@ def pytest_runtest_setup(item: pytest.Item):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 # Paths
-REPO_ROOT = Path(__file__).parents[2]
+REPO_ROOT = Path(__file__).parents[4]
 TOOLS_PATH = REPO_ROOT / "Tools"
 LIBS_PATH = REPO_ROOT / "Libraries"
 

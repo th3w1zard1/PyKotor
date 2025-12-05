@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any
 from panda3d.core import LQuaternion, NodePath  # pyright: ignore[reportMissingImports]
 
 from pykotor.common.module_loader import ModuleDataLoader
+from pykotor.resource.formats.generics.git import GIT
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.type import ResourceType
 
@@ -172,17 +173,25 @@ class ModuleLoader:
                                     self._load_texture(head_tex, head_node)
     
     def _load_cameras(self, git, root: NodePath) -> None:
-        """Load camera nodes from GIT."""
+        """Load camera nodes from GIT.
+        
+        References:
+        ----------
+            vendor/reone/src/libs/scene/di/module.cpp:300-350 - Camera loading
+            Libraries/PyKotor/src/pykotor/resource/generics/git.py:345-450 - GITCamera structure
+        """
         for i, camera in enumerate(git.cameras):
             camera_node = root.attachNewNode(f"camera_{i}")
             camera_node.setPos(camera.position.x, camera.position.y, camera.position.z + camera.height)
+            
+            # Convert KotOR quaternion (w, x, y, z) to Panda3D LQuaternion
+            # GITCamera.orientation is Vector4 with (x, y, z, w) components
             quat = LQuaternion(camera.orientation.w, camera.orientation.x, camera.orientation.y, camera.orientation.z)
+            
+            # getHpr() returns (Heading, Pitch, Roll) as (euler[0], euler[1], euler[2])
+            # setHpr() expects (Heading, Pitch, Roll) in the same order
             euler = quat.getHpr()
-            camera_node.setHpr(
-                euler[1],  # Pitch
-                euler[2] - 90 + math.degrees(camera.pitch),  # Yaw
-                -euler[0] + 90,  # Roll
-            )
+            camera_node.setHpr(euler[0], euler[1], euler[2])
     
     def _load_sounds(self, git, root: NodePath) -> None:
         """Load sound nodes from GIT."""
@@ -202,13 +211,13 @@ class ModuleLoader:
             encounter_node = root.attachNewNode(encounter.resref + ".ute")
             encounter_node.setPos(encounter.position.x, encounter.position.y, encounter.position.z)
     
-    def _load_waypoints(self, git, root: NodePath) -> None:
+    def _load_waypoints(self, git: GIT, root: NodePath) -> None:
         """Load waypoint nodes from GIT."""
         for waypoint in git.waypoints:
             waypoint_node = root.attachNewNode(waypoint.resref + ".utw")
             waypoint_node.setPos(waypoint.position.x, waypoint.position.y, waypoint.position.z)
     
-    def _load_stores(self, git, root: NodePath) -> None:
+    def _load_stores(self, git: GIT, root: NodePath) -> None:
         """Load store nodes from GIT."""
         for store in git.stores:
             store_node = root.attachNewNode(store.resref + ".utm")
