@@ -7,8 +7,8 @@ import unittest
 from unittest import TestCase
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -25,9 +25,9 @@ if UTILITY_PATH.joinpath("utility").exists():
 from pykotor.resource.formats.vis import VIS, VISAsciiReader, read_vis, write_vis
 from pykotor.resource.type import ResourceType
 
-ASCII_TEST_FILE = "tests/test_pykotor/test_files/test.vis"
+ASCII_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.vis"
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_ASCII_TEST_FILE = "tests/test_pykotor/test_files/test_corrupted.vis"
+CORRUPT_ASCII_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.vis"
 
 
 class TestVIS(TestCase):

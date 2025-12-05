@@ -17,7 +17,7 @@ from pykotor.resource.formats.bif import (
 )
 from pykotor.resource.type import ResourceType
 
-K1_BIF_TEST_FILE = "tests/test_pykotor/test_files/k1_player.bif"
+K1_BIF_TEST_FILE = "Libraries/PyKotor/tests/test_files/k1_player.bif"
 
 class TestBIFFormats(unittest.TestCase):
 

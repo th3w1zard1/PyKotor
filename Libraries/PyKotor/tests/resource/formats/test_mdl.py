@@ -9,7 +9,7 @@ This test module covers:
 - Controller and animation data
 - Platform compatibility (K1/K2/Xbox)
 
-Test files are located in tests/test_pykotor/test_files/mdl/
+Test files are located in Libraries/PyKotor/tests/test_files/mdl/
 """
 
 from __future__ import annotations
@@ -42,7 +42,7 @@ class TestMDLBinaryIO(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.test_dir = Path("tests/test_pykotor/test_files/mdl")
+        self.test_dir = Path("Libraries/PyKotor/tests/test_files/mdl")
         self.assertTrue(self.test_dir.exists(), f"Test directory {self.test_dir} does not exist")
 
         # Test files
@@ -373,7 +373,7 @@ class TestMDLPerformance(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.test_dir = Path("tests/test_pykotor/test_files/mdl")
+        self.test_dir = Path("Libraries/PyKotor/tests/test_files/mdl")
         self.mdl_path = self.test_dir / "c_dewback.mdl"
         self.mdx_path = self.test_dir / "c_dewback.mdx"
 

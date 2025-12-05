@@ -9,8 +9,8 @@ from unittest import TestCase
 from pykotor.common.language import Gender, Language, LocalizedString
 
 THIS_SCRIPT_PATH: pathlib.Path = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH: pathlib.Path = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH: pathlib.Path = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH: pathlib.Path = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH: pathlib.Path = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -45,8 +45,8 @@ if TYPE_CHECKING:
 
     from pykotor.resource.formats.gff import GFF
 
-TEST_FILE = "tests/test_pykotor/test_files/test.dlg"
-TEST_K1_FILE = "tests/test_pykotor/test_files/test_k1.dlg"
+TEST_FILE = "Libraries/PyKotor/tests/test_files/test.dlg"
+TEST_K1_FILE = "Libraries/PyKotor/tests/test_files/test_k1.dlg"
 
 TEST_DLG_XML = """<gff3>
   <struct id="-1">

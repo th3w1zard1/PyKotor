@@ -5,8 +5,8 @@ import sys
 import unittest
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -25,7 +25,7 @@ if __name__ == "__main__" and not __package__:
     sys.path.insert(0, str(this_script_file_path.parents[1]))
     __init__ = __import__(str(this_script_file_path.parent.name)).__init__  # type: ignore[misc]
 
-from pykotor.tools.path import CaseAwarePath
+from pykotor.tools.path import CaseAwarePath  # noqa: E402  # pyright: ignore[reportMissingImports]
 
 
 class TestCaseAwarePath(unittest.TestCase):

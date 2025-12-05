@@ -8,8 +8,8 @@ import unittest
 from pykotor.resource.formats.erf.erf_data import ERFType
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -31,9 +31,9 @@ from pykotor.resource.formats.erf import ERF, ERFBinaryReader, read_erf, write_e
 from pykotor.resource.type import ResourceType
 from pathlib import Path
 
-BINARY_TEST_FILE = Path("tests/test_pykotor/test_files/test.erf").resolve()
+BINARY_TEST_FILE = Path("Libraries/PyKotor/tests/test_files/test.erf").resolve()
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_BINARY_TEST_FILE = Path("tests/test_pykotor/test_files/test_corrupted.gff")
+CORRUPT_BINARY_TEST_FILE = Path("Libraries/PyKotor/tests/test_files/test_corrupted.gff")
 
 
 class TestERF(TestCase):

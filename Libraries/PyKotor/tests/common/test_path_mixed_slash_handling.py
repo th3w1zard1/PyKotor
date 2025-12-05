@@ -8,13 +8,14 @@ import pathlib
 import platform
 import sys
 import unittest
+
 from ctypes.wintypes import DWORD
 from pathlib import Path, PosixPath, PurePath, PurePosixPath, PureWindowsPath, WindowsPath
 from unittest import mock
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -28,8 +29,8 @@ if PYKOTOR_PATH.joinpath("pykotor").exists():
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
-from pathlib import Path, PosixPath, PurePath, PurePosixPath, PureWindowsPath, WindowsPath
 
+from pykotor.tools.path import CaseAwarePath
 from utility.system.path import (
     Path as CustomPath,
     PosixPath as CustomPosixPath,
@@ -38,8 +39,6 @@ from utility.system.path import (
     PureWindowsPath as CustomPureWindowsPath,
     WindowsPath as CustomWindowsPath,
 )
-
-from pykotor.tools.path import CaseAwarePath
 
 
 def check_path_win_api(path) -> tuple[bool, bool, bool]:

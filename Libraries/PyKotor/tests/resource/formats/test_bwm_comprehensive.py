@@ -20,8 +20,8 @@ from typing import TYPE_CHECKING
 from unittest import TestCase
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -53,11 +53,11 @@ if TYPE_CHECKING:
     pass
 
 # Test file paths
-# THIS_SCRIPT_PATH is tests/test_pykotor/resource/formats/test_bwm_comprehensive.py
-# Parents: [3]=tests, [2]=test_pykotor, [1]=resource, [0]=formats
+# THIS_SCRIPT_PATH is Libraries/PyKotor/tests/resource/formats/test_bwm_comprehensive.py
+# Parents: [4]=PyKotor, [3]=tests, [2]=resource, [1]=formats, [0]=test file
 TESTS_DIR = THIS_SCRIPT_PATH.parents[3]  # Goes up to 'tests' directory
-TEST_WOK_FILE = TESTS_DIR / "test_pykotor" / "test_files" / "test.wok"
-TEST_TOOLSET_WOK_FILE = TESTS_DIR / "test_toolset" / "test_files" / "zio006j.wok"
+TEST_WOK_FILE = TESTS_DIR / "test_files" / "test.wok"
+TEST_TOOLSET_WOK_FILE = THIS_SCRIPT_PATH.parents[6] / "tests" / "test_toolset" / "test_files" / "zio006j.wok"
 
 
 class TestBWMHeaderFormat(TestCase):

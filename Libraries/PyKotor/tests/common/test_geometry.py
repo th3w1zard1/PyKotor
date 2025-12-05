@@ -7,8 +7,8 @@ import unittest
 from unittest import TestCase
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -22,7 +22,7 @@ if PYKOTOR_PATH.joinpath("pykotor").exists():
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
-from utility.common.geometry import Face, Polygon2, Vector2, Vector3, Vector4
+from utility.common.geometry import Face, Polygon2, Vector2, Vector3, Vector4  # noqa: E402
 
 
 class TestVector2(TestCase):

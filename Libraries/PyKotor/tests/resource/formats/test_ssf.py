@@ -6,8 +6,8 @@ import sys
 import unittest
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -32,11 +32,11 @@ from pykotor.resource.formats.ssf import (
 from pykotor.resource.formats.ssf.ssf_auto import detect_ssf
 from pykotor.resource.type import ResourceType
 
-BINARY_TEST_FILE = "tests/test_pykotor/test_files/test.ssf"
-XML_TEST_FILE = "tests/test_pykotor/test_files/test.ssf.xml"
+BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.ssf"
+XML_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.ssf.xml"
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_BINARY_TEST_FILE = "tests/test_pykotor/test_files/test_corrupted.ssf"
-CORRUPT_XML_TEST_FILE = "tests/test_pykotor/test_files/test_corrupted.ssf.xml"
+CORRUPT_BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.ssf"
+CORRUPT_XML_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.ssf.xml"
 
 
 class TestSSF(unittest.TestCase):

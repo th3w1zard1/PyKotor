@@ -8,8 +8,8 @@ import unittest
 from unittest import TestCase
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -26,8 +26,8 @@ if UTILITY_PATH.joinpath("utility").exists():
 from pykotor.extract.capsule import Capsule
 from pykotor.resource.type import ResourceType
 
-TEST_ERF_FILE = "tests/test_pykotor/test_files/capsule.mod"
-TEST_RIM_FILE = "tests/test_pykotor/test_files/capsule.rim"
+TEST_ERF_FILE = "Libraries/PyKotor/tests/test_files/capsule.mod"
+TEST_RIM_FILE = "Libraries/PyKotor/tests/test_files/capsule.rim"
 
 
 class TestCapsule(TestCase):

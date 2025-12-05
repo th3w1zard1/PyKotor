@@ -749,12 +749,18 @@ class Module:  # noqa: PLR0904
                 if not model_data:
                     RobustLogger().warning(f"model '{model.identifier()}' was unexpectedly empty, but is needed by module '{display_name}'")
                     continue
+            model_textures: set[str] = set()
+            model_lightmaps: set[str] = set()
             with suppress(Exception):
-                lookup_texture_queries.update(iterate_textures(model_data))
-            RobustLogger().info(f"Found {len(lookup_texture_queries)} textures in '{model.identifier()}' for module '{display_name}'")
+                model_textures.update(iterate_textures(model_data))
+                lookup_texture_queries.update(model_textures)
             with suppress(Exception):
-                lookup_lightmap_queries.update(iterate_lightmaps(model_data))
-            RobustLogger().info(f"Found {len(lookup_lightmap_queries)} lightmaps in '{model.identifier()}' for module '{display_name}'")
+                model_lightmaps.update(iterate_lightmaps(model_data))
+                lookup_lightmap_queries.update(model_lightmaps)
+            if model_textures:
+                print(f"    Textures: {', '.join(sorted(model_textures))}")
+            if model_lightmaps:
+                print(f"    Lightmaps: {', '.join(sorted(model_lightmaps))}")
 
         texlm_queries: set[str] = lookup_texture_queries | lookup_lightmap_queries
         texture_queries: list[ResourceIdentifier] = [

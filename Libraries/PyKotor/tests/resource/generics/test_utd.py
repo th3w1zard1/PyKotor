@@ -7,8 +7,8 @@ import unittest
 from unittest import TestCase
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -31,11 +31,10 @@ from pykotor.resource.generics.utd import construct_utd, dismantle_utd
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.gff.gff_data import GFF
     from pykotor.resource.generics.utd import UTD
 
-TEST_FILE = "tests/test_pykotor/test_files/test.utd"
-K1_SAME_TEST_FILE = "tests/test_pykotor/test_files/k1_utd_same_test.utd"
+TEST_FILE = "Libraries/PyKotor/tests/test_files/test.utd"
+K1_SAME_TEST_FILE = "Libraries/PyKotor/tests/test_files/k1_utd_same_test.utd"
 K1_PATH = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
 K2_PATH = os.environ.get("K2_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II")
 

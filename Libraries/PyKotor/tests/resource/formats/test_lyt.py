@@ -7,8 +7,8 @@ import unittest
 from unittest import TestCase
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -36,9 +36,9 @@ from pykotor.common.misc import ResRef
 from pykotor.resource.formats.lyt.lyt_auto import read_lyt, write_lyt
 from pykotor.resource.type import ResourceType
 
-ASCII_TEST_FILE = "tests/test_pykotor/test_files/test.lyt"
+ASCII_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.lyt"
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_BINARY_TEST_FILE = "tests/test_pykotor/test_files/test_corrupted.lyt"
+CORRUPT_BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.lyt"
 
 
 class TestLYT(TestCase):

@@ -6,8 +6,8 @@ import sys
 import unittest
 
 THIS_SCRIPT_PATH: pathlib.Path = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH: pathlib.Path = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH: pathlib.Path = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH: pathlib.Path = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH: pathlib.Path = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -24,9 +24,9 @@ if UTILITY_PATH.joinpath("utility").exists():
 from pykotor.resource.formats.rim import RIM, RIMBinaryReader, read_rim, write_rim
 from pykotor.resource.type import ResourceType
 
-BINARY_TEST_FILE = "tests/test_pykotor/test_files/test.rim"
+BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.rim"
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_BINARY_TEST_FILE = "tests/test_pykotor/test_files/test_corrupted.rim"
+CORRUPT_BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.rim"
 
 
 class TestRIM(unittest.TestCase):

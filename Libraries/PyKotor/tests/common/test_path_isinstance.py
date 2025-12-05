@@ -7,8 +7,8 @@ import unittest
 from unittest import mock
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "PyKotor", "src")
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("Libraries", "Utility", "src")
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -22,7 +22,7 @@ if PYKOTOR_PATH.joinpath("pykotor").exists():
 if UTILITY_PATH.joinpath("utility").exists():
     add_sys_path(UTILITY_PATH)
 
-from pathlib import (
+from pathlib import (  # noqa: E402
     Path,
     PosixPath,
     PurePath,
@@ -31,7 +31,7 @@ from pathlib import (
     WindowsPath,
 )
 
-from pykotor.tools.path import CaseAwarePath
+from pykotor.tools.path import CaseAwarePath  # pyright: ignore[reportMissingImports, reportUnusedImport]  # noqa: E402, F401
 
 
 class TestPathInheritance(unittest.TestCase):

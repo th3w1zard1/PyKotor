@@ -21,8 +21,8 @@ import unittest
 from io import BytesIO
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -41,7 +41,7 @@ from pykotor.resource.formats.wav.wav_data import WAV, WAVType, WaveEncoding
 from pykotor.resource.formats.wav.wav_obfuscation import deobfuscate_audio, obfuscate_audio
 from pykotor.resource.type import ResourceType
 
-TEST_FILES_DIR = THIS_SCRIPT_PATH.parents[1] / "test_files"
+TEST_FILES_DIR = THIS_SCRIPT_PATH.parents[3] / "test_files"
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
 
 

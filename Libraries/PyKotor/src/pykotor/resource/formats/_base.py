@@ -50,7 +50,7 @@ class ComparableMixin:
         *args,
         **kwargs,
     ) -> Self:
-        return super().__new__(*args, **kwargs)
+        return super().__new__(cls)
 
     def compare(
         self,

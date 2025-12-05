@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest import TestCase
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[5]
 PYKOTOR_SRC = REPO_ROOT / "Libraries" / "PyKotor" / "src"
 UTILITY_SRC = REPO_ROOT / "Libraries" / "Utility" / "src"
 for candidate in (PYKOTOR_SRC, UTILITY_SRC):
@@ -18,7 +18,7 @@ from pykotor.common.language import Language
 from pykotor.extract.talktable import TalkTable
 
 
-TEST_FILES = REPO_ROOT / "tests" / "test_pykotor" / "test_files"
+TEST_FILES = REPO_ROOT / "Libraries" / "PyKotor" / "tests" / "test_files"
 
 
 class TestTalkTableVendorPort(TestCase):

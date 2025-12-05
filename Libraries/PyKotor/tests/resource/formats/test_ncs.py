@@ -14,8 +14,8 @@ from typing import TYPE_CHECKING, Sequence
 import pytest
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path) -> None:
@@ -3556,7 +3556,7 @@ class TestNCSCompiler(CompilerTestBase):
 
     def test_include_lookup(self):
         """Test #include directive with file lookup."""
-        includetest_script_path: Path = Path("./tests/test_pykotor/test_files").resolve()
+        includetest_script_path: Path = Path("./Libraries/PyKotor/tests/test_files").resolve()
         if not includetest_script_path.is_dir():
             msg = "Could not find includetest.nss in the include folder!"
             raise FileNotFoundError(errno.ENOENT, msg, str(includetest_script_path))
@@ -4864,7 +4864,7 @@ class TestNssNcsRoundtripGranular(unittest.TestCase):
 # Convert to pytest function since unittest.TestCase doesn't support pytest.mark.parametrize
 SAMPLE_FILES = [
     ("tests/files/test.ncs", Game.K1),
-    ("tests/test_pykotor/test_files/test.ncs", Game.K1),
+    ("Libraries/PyKotor/tests/test_files/test.ncs", Game.K1),
     ("tests/test_toolset/test_files/90sk99.ncs", Game.K2),
 ]
 
@@ -4889,7 +4889,7 @@ def test_binary_roundtrip_samples(relative_path: str, game: Game):
 # K1_NCS_Un-decompilable Roundtrip Tests (NCS -> NSS -> NCS)
 # ============================================================================
 
-K1_UNDECOMPILABLE_DIR = Path(__file__).resolve().parents[3] / "test_pykotor" / "test_files" / "K1_NCS_Un-decompilable"
+K1_UNDECOMPILABLE_DIR = Path(__file__).resolve().parents[3] / "test_files" / "K1_NCS_Un-decompilable"
 
 
 def _collect_k1_undecompilable_files() -> list[tuple[Path, str]]:
@@ -4946,7 +4946,7 @@ def test_k1_undecompilable_roundtrip(ncs_path: Path, test_id: str):
 
 def test_compile_a_galaxy_map_tsl(k2_path: str):
     """Test compilation of a_galaxy_map.nss for TSL."""
-    script_path = Path(__file__).resolve().parents[3] / "test_pykotor" / "test_files" / "a_galaxy_map.nss"
+    script_path = Path(__file__).resolve().parents[3] / "test_files" / "a_galaxy_map.nss"
     if not script_path.exists():
         pytest.skip(f"Test script not found: {script_path}")
 
@@ -4958,7 +4958,7 @@ def test_compile_a_galaxy_map_tsl(k2_path: str):
 
 def test_compile_k_sup_galaxymap_tsl(k2_path: str):
     """Test compilation of k_sup_galaxymap.nss for TSL with include handling."""
-    script_path = Path(__file__).resolve().parents[3] / "test_pykotor" / "test_files" / "k_sup_galaxymap.nss"
+    script_path = Path(__file__).resolve().parents[3] / "test_files" / "k_sup_galaxymap.nss"
     if not script_path.exists():
         pytest.skip(f"Test script not found: {script_path}")
 
@@ -4974,7 +4974,7 @@ def test_compile_k_sup_galaxymap_tsl(k2_path: str):
 
 def test_compile_a_galaxymap_tsl(k2_path: str):
     """Test compilation of a_galaxymap.nss for TSL with many global variables."""
-    script_path = Path(__file__).resolve().parents[3] / "test_pykotor" / "test_files" / "a_galaxymap.nss"
+    script_path = Path(__file__).resolve().parents[3] / "test_files" / "a_galaxymap.nss"
     if not script_path.exists():
         pytest.skip(f"Test script not found: {script_path}")
 
@@ -4990,7 +4990,7 @@ def test_compile_a_galaxymap_tsl(k2_path: str):
 
 def test_compile_tr_leave_ehawk_tsl(k2_path: str):
     """Test compilation of tr_leave_ehawk.nss for TSL."""
-    script_path = Path(__file__).resolve().parents[3] / "test_pykotor" / "test_files" / "tr_leave_ehawk.nss"
+    script_path = Path(__file__).resolve().parents[3] / "test_files" / "tr_leave_ehawk.nss"
     if not script_path.exists():
         pytest.skip(f"Test script not found: {script_path}")
 
@@ -5002,7 +5002,7 @@ def test_compile_tr_leave_ehawk_tsl(k2_path: str):
 
 def test_compile_all_tsl_scripts_batch(k2_path: str):
     """Test batch compilation of all TSL test scripts."""
-    test_files_dir = Path(__file__).resolve().parents[3] / "test_pykotor" / "test_files"
+    test_files_dir = Path(__file__).resolve().parents[3] / "test_files"
     if not test_files_dir.exists():
         pytest.skip(f"Test files directory not found: {test_files_dir}")
 

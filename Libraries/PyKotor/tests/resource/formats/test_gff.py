@@ -8,8 +8,8 @@ import unittest
 from unittest import TestCase
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[3].resolve()
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Utility", "src").resolve()
+PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[4].joinpath("src")
+UTILITY_PATH = THIS_SCRIPT_PATH.parents[6].joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):
@@ -35,12 +35,12 @@ from pykotor.resource.formats.gff import (
 )
 from pykotor.resource.type import ResourceType
 
-BINARY_TEST_FILE = "tests/test_pykotor/test_files/test.gff"
-XML_TEST_FILE = "tests/test_pykotor/test_files/test.gff.xml"
+BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.gff"
+XML_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.gff.xml"
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_BINARY_TEST_FILE = "tests/test_pykotor/test_files/test_corrupted.gff"
-CORRUPT_XML_TEST_FILE = "tests/test_pykotor/test_files/test_corrupted.gff.xml"
-GIT_TEST_FILE = "tests/test_pykotor/test_files/test.git"
+CORRUPT_BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.gff"
+CORRUPT_XML_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.gff.xml"
+GIT_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.git"
 
 
 class TestGFF(TestCase):

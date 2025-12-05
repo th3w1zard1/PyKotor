@@ -119,5 +119,5 @@ def print_summary(
 
 
 if __name__ == "__main__":
-    texture_dir = Path("tests/test_pykotor/test_files/textures")
+    texture_dir = Path("Libraries/PyKotor/tests/test_files/textures")
     analyze_textures(texture_dir)
