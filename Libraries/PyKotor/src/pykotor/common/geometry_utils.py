@@ -1,8 +1,8 @@
 """Geometry utilities for KotOR model processing.
 
 This module provides reusable geometry operations that are not specific to any
-particular rendering backend. These utilities can be used by both PyKotorGL
-(OpenGL) and PyKotorEngine (Panda3D) implementations.
+particular rendering backend. These utilities can be used by any rendering
+backend implementation.
 
 References:
 ----------
@@ -110,7 +110,7 @@ def determine_vertex_format_requirements(mesh: MDLMesh) -> dict[str, bool]:
     """Determine what vertex format attributes are needed for a mesh.
     
     This is a backend-agnostic way to determine vertex format requirements
-    that can be used by both OpenGL and Panda3D implementations.
+    that can be used by any rendering backend implementation.
     
     Args:
     ----
