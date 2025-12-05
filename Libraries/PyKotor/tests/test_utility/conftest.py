@@ -8,8 +8,6 @@ import os
 import sys
 from pathlib import Path
 
-import pytest
-
 # Normalize PYTHONPATH for cross-platform compatibility
 _pythonpath = os.environ.get("PYTHONPATH")
 if _pythonpath:
@@ -31,7 +29,7 @@ if "QT_API" not in os.environ:
 os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 # Paths
-REPO_ROOT = Path(__file__).parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[4]
 LIBS_PATH = REPO_ROOT / "Libraries"
 TOOLS_PATH = REPO_ROOT / "Tools"
 
@@ -44,8 +42,3 @@ TOOLSET_SRC = TOOLS_PATH / "HolocronToolset" / "src"
 for path in [PYKOTOR_PATH, UTILITY_PATH, PYKOTORGL_PATH, TOOLSET_SRC]:
     if str(path) not in sys.path:
         sys.path.append(str(path))
-
-
-# pytest-qt provides qtbot fixture automatically
-# No need to define custom fixtures here
-
