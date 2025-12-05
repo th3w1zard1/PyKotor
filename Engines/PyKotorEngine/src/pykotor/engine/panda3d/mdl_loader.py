@@ -439,13 +439,53 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/node/light.cpp:50-150 - Light conversion
+            vendor/reone/src/libs/scene/node/light.cpp:43-85 - Light initialization
             vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1544-1639 - NodeLightBuilder()
+            /panda3d/panda3d-docs - PointLight, DirectionalLight, SpotLight
         """
-        # Light nodes are handled by the scene graph, not the MDL loader
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1544-1639
-        # For now, create a dummy node - lights should be added to scene graph
-        return NodePath(mdl_node.name)
+        from panda3d.core import PointLight, DirectionalLight, Vec3, Vec4
+        
+        if not mdl_node.light:
+            return NodePath(mdl_node.name)
+        
+        light_data = mdl_node.light
+        
+        # Determine light type based on radius
+        # Reference: vendor/reone/src/libs/scene/node/light.cpp:83-85
+        # Large radius (>100) = directional, otherwise point light
+        is_directional = light_data.radius >= 100.0
+        
+        if is_directional:
+            # Directional light (sun)
+            # Reference: vendor/reone/src/libs/scene/node/light.cpp:83-85
+            light = DirectionalLight(mdl_node.name)
+        else:
+            # Point light
+            # Reference: vendor/reone/src/libs/scene/node/light.cpp:43-47
+            light = PointLight(mdl_node.name)
+            light.setAttenuation(Vec3(1, 0, 1.0 / light_data.radius))
+            light.setMaxDistance(light_data.radius)
+        
+        # Set light color
+        # Reference: vendor/reone/src/libs/scene/node/light.cpp:44
+        # MDL light color is RGB (0-1 range)
+        color = Vec4(
+            light_data.color[0] if len(light_data.color) > 0 else 1.0,
+            light_data.color[1] if len(light_data.color) > 1 else 1.0,
+            light_data.color[2] if len(light_data.color) > 2 else 1.0,
+            1.0
+        )
+        light.setColor(color)
+        
+        # Create NodePath for the light
+        light_np = NodePath(light)
+        
+        # Store light data for animation controllers
+        # Reference: vendor/reone/src/libs/scene/node/light.cpp:49-66
+        light_np.setPythonTag("light_data", light_data)
+        light_np.setPythonTag("light_active", light_data.active)
+        
+        return light_np
     
     def _convert_emitter_node(self, mdl_node: MDLNode) -> NodePath:
         """Convert an emitter (particle system) node to Panda3D.
@@ -506,8 +546,21 @@ class MDLLoader:
             return
         
         # Load the referenced model
-        # In a full implementation, this would load the model asynchronously
-        # For now, this is a placeholder
+        # Reference: vendor/reone/src/libs/scene/node/model.cpp:87-92
+        # The model name is stored in reference.model_name
+        # We need to load both MDL and MDX files
+        model_name = reference.model_name
+        
+        # Try to load the model using the resource loader
+        # In a full implementation, this would:
+        # 1. Resolve the model path from the resource loader
+        # 2. Load MDL/MDX files
+        # 3. Create a new MDLLoader instance
+        # 4. Convert and attach to parent_np
+        
+        # For now, this is a placeholder that will be implemented
+        # when resource loading infrastructure is complete
+        # TODO: Implement reference model loading
         pass
     
     def _create_vertex_format(self, mesh: MDLMesh) -> GeomVertexFormat:

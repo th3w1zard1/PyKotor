@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.mdl.mdl_data import MDLMesh, MDLNode
+    from pykotor.resource.formats.mdl.mdl_data import MDLMesh, MDLNode  # pyright: ignore[reportMissingImports]
     from utility.common.geometry import Vector2, Vector3
 
 

@@ -5,7 +5,7 @@ This document tracks the implementation progress of PyKotorEngine, a Panda3D-bas
 ## Architecture Principles
 
 1. **Use Libraries as much as possible**: Keep engine code focused on Panda3D-specific integration
-2. **Follow vendor patterns**: Match reone/xoreos/kotor.js/northernlights implementations 1:1
+2. **Follow vendor patterns**: Match reone/xoreos/kotor.js/northernlights implementations as closely as possible
 3. **Comprehensive testing**: Write industry-standard pytest tests (no mocks)
 4. **Separation of concerns**: Engine = Panda3D integration, Libraries = reusable logic
 
