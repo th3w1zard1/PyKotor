@@ -221,3 +221,113 @@ Engines/
 - All abstract MDL conversion logic should be in `Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py`
 - Engine code should only contain Panda3D-specific integration (NodePath, GeomNode, etc.)
 - Follow vendor code patterns closely, but adapt to Python/Panda3D idioms
+
+---
+
+## Reone Roadmap Reference
+
+This section tracks features from the [reone roadmap](https://github.com/seedhartha/reone/wiki/Roadmap) for reference. Status indicators:
+- 🟩 — implemented
+- 🟨 — partially implemented
+- 🟥 — not implemented
+- ❔ — to be confirmed
+
+### Reone Milestones
+
+#### Release 0.20
+Goal is to make the Endar Spire modules completable in a stable manner.
+
+#### Release 1.0
+Goal is to make KotOR and TSL completable with identical or better experience compared to the vanilla engine.
+
+### Reone Functionality
+
+#### Game Logic
+
+- Basic module loading/rendering 🟩
+- Basic character movement 🟩
+- Object targeting 🟩
+- Pathfinding 🟩
+- Cursors 🟩
+- Items 🟨
+- Triggers 🟨
+- Conversations 🟨
+- Script routines 🟨
+- Actions 🟨
+- Stunt animations 🟩
+- Area sounds 🟨
+- Containers 🟨
+- Party management 🟨
+- Saving games 🟨
+- Perception 🟨
+- Skills 🟨
+- Feats 🟨
+- Force powers 🟥
+- Combat 🟨
+- Effects 🟥
+- Grenades 🟥
+- Traps (mines) 🟥
+- Encounters 🟥
+- Stores 🟥
+- Stealth 🟥
+- Map exploration 🟥
+- Listening patterns 🟥
+- GUI screens
+  - Main menu 🟨
+  - Equipment 🟨
+  - Inventory 🟨
+  - Character sheet 🟨
+  - Abilities 🟨
+  - Character creation 🟨
+  - Level up 🟨
+  - Messages/feedback 🟥
+  - Journal 🟥
+  - Map 🟨
+  - Options 🟥
+  - Workbench 🟥
+  - Lab station 🟥
+  - Loading screen 🟥
+- Mini-games
+  - Swoop racing 🟥
+  - Man the turrets 🟥
+  - Pazaak 🟥
+- Multiplayer ❔
+- Real-time combat ❔
+
+#### Graphics / Scene Management
+
+- Textures (TPC, TGA, TXI) 🟩
+- Models, animations (MDL, MDX) 🟩
+- Walkmeshes (WOK, DWK, PWK) 🟩
+- Lip animations 🟩
+- Collision detection 🟩
+- 3D picking 🟩
+- Grass 🟩
+- Fog 🟩
+- Emitters 🟨
+- Danglymeshes 🟩
+- Lightsabers 🟩
+- Advanced
+  - Physically-based rendering 🟩
+    - Image-based lighting 🟩
+  - Cascaded shadow maps 🟩
+  - Reflection probes 🟥
+  - Screen-space ambient occlusion 🟩
+  - Screen-space reflections 🟩
+  - Order-independent transparency 🟩
+  - Anti-aliasing (FXAA) 🟩
+
+#### Supporting Subsystems
+
+- Resource management (KEY, BIF, ERF, RIM, MOD, 2DA, GFF) 🟩
+- Audio playback (WAV, MP3) 🟩
+- Script execution (NCS) 🟩
+- Movie playback (BIK) 🟩
+- GUI controls 🟨
+
+### Reone Roadmap Sub-pages
+
+For detailed breakdowns, see:
+- [Roadmap — Actions](https://github.com/seedhartha/reone/wiki/Roadmap-%E2%80%94-Actions)
+- [Roadmap — Effects](https://github.com/seedhartha/reone/wiki/Roadmap-%E2%80%94-Effects)
+- [Roadmap — Script Routines](https://github.com/seedhartha/reone/wiki/Roadmap-%E2%80%94-Script-Routines)
