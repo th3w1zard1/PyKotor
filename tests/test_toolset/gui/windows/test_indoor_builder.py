@@ -31,6 +31,7 @@ from qtpy.QtCore import QPoint, QPointF, Qt, QTimer
 from qtpy.QtGui import QMouseEvent
 from qtpy.QtWidgets import QApplication, QDialog, QMessageBox, QUndoStack
 
+from pykotor.resource.formats.bwm.bwm_data import BWM
 from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
 from toolset.data.indoormap import IndoorMap, IndoorMapRoom
 from toolset.data.installation import HTInstallation
