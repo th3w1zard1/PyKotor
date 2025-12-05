@@ -22,6 +22,13 @@ if _pythonpath:
         # Unix format on Windows - convert to semicolons
         paths = [p.strip().strip('"').strip("'") for p in _pythonpath.split(":") if p.strip()]
         os.environ["PYTHONPATH"] = correct_sep.join(paths)
+    # Add PYTHONPATH paths to sys.path to ensure imports work
+    normalized_paths = os.environ.get("PYTHONPATH", "").split(os.pathsep)
+    for path_str in normalized_paths:
+        if path_str:
+            path_obj = Path(path_str).resolve()
+            if path_obj.exists() and str(path_obj) not in sys.path:
+                sys.path.insert(0, str(path_obj))
 
 # Set Qt API to PyQt5 (default) before any Qt imports
 # qtpy will use this to select the appropriate bindings
@@ -87,31 +94,31 @@ def pytest_runtest_setup(item: pytest.Item):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
 
 # Paths
-REPO_ROOT = Path(__file__).parents[4]
+REPO_ROOT = Path(__file__).resolve().parents[4]
 TOOLS_PATH = REPO_ROOT / "Tools"
 LIBS_PATH = REPO_ROOT / "Libraries"
 
 # Add Toolset src
-TOOLSET_SRC = TOOLS_PATH / "HolocronToolset" / "src"
+TOOLSET_SRC = (TOOLS_PATH / "HolocronToolset" / "src").resolve()
 if str(TOOLSET_SRC) not in sys.path:
-    sys.path.append(str(TOOLSET_SRC))
+    sys.path.insert(0, str(TOOLSET_SRC))
 
 # Add KotorDiff src (needed for KotorDiffWindow)
-KOTORDIFF_SRC = TOOLS_PATH / "KotorDiff" / "src"
+KOTORDIFF_SRC = (TOOLS_PATH / "KotorDiff" / "src").resolve()
 if str(KOTORDIFF_SRC) not in sys.path:
-    sys.path.append(str(KOTORDIFF_SRC))
+    sys.path.insert(0, str(KOTORDIFF_SRC))
 
 # Add Libraries
-PYKOTOR_PATH = LIBS_PATH / "PyKotor" / "src"
-UTILITY_PATH = LIBS_PATH / "Utility" / "src"
-PYKOTORGL_PATH = LIBS_PATH / "PyKotorGL" / "src"
+PYKOTOR_PATH = (LIBS_PATH / "PyKotor" / "src").resolve()
+UTILITY_PATH = (LIBS_PATH / "Utility" / "src").resolve()
+PYKOTORGL_PATH = (LIBS_PATH / "PyKotorGL" / "src").resolve()
 
 if str(PYKOTOR_PATH) not in sys.path:
-    sys.path.append(str(PYKOTOR_PATH))
+    sys.path.insert(0, str(PYKOTOR_PATH))
 if str(UTILITY_PATH) not in sys.path:
-    sys.path.append(str(UTILITY_PATH))
+    sys.path.insert(0, str(UTILITY_PATH))
 if str(PYKOTORGL_PATH) not in sys.path:
-    sys.path.append(str(PYKOTORGL_PATH))
+    sys.path.insert(0, str(PYKOTORGL_PATH))
 
 from toolset.data.installation import HTInstallation
 from toolset.main_settings import setup_pre_init_settings
