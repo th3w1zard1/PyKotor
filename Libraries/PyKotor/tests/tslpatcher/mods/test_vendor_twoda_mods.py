@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest import TestCase
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[6]
 PYKOTOR_SRC = REPO_ROOT / "Libraries" / "PyKotor" / "src"
 UTILITY_SRC = REPO_ROOT / "Libraries" / "Utility" / "src"
 for candidate in (PYKOTOR_SRC, UTILITY_SRC):
