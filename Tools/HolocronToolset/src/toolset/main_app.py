@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 from loggerplus import RobustLogger
-from qtpy.QtCore import QThread
+from qtpy.QtCore import QObject, QThread
 from qtpy.QtGui import QIcon
 from qtpy.QtWidgets import QApplication, QMessageBox
 
@@ -179,7 +179,24 @@ def main():
         asyncio.set_event_loop(QEventLoop(app))
         RobustLogger().debug("TRACE: QEventLoop created and set")
     RobustLogger().debug("TRACE: qasync not installed, falling back to default event loop")
-    RobustLogger().debug("TRACE: About to call app.exec()")
+    
+    # Install event filter to catch the FIRST event processed after app.exec() starts
+    class FirstEventFilter(QObject):
+        def __init__(self):
+            super().__init__()
+            self.first_event = True
+        
+        def eventFilter(self, obj, event):  # noqa: ARG002
+            if self.first_event:
+                self.first_event = False
+                RobustLogger().debug(f"TRACE: FIRST EVENT PROCESSED AFTER app.exec(): type={event.type()}, obj={type(obj).__name__}")
+                if hasattr(event, 'spontaneous'):
+                    RobustLogger().debug(f"TRACE: Event is spontaneous: {event.spontaneous()}")
+            return False
+    
+    event_filter = FirstEventFilter()
+    app.installEventFilter(event_filter)
+    RobustLogger().debug("TRACE: Event filter installed, about to call app.exec()")
     exit_code = app.exec()
     RobustLogger().debug(f"TRACE: app.exec() returned with exit code: {exit_code}")
     sys.exit(exit_code)

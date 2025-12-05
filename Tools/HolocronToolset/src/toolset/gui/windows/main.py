@@ -1133,9 +1133,14 @@ class ToolWindow(QMainWindow):
             return
 
         prev_index: int = self.previous_game_combo_index
-        RobustLogger().debug(f"TRACE: change_active_installation: prev_index={prev_index}, about to call setCurrentIndex({index})")
-        self.ui.gameCombo.setCurrentIndex(index)
-        RobustLogger().debug(f"TRACE: change_active_installation: setCurrentIndex({index}) completed")
+        # Only set index if it's different to avoid unnecessary signal emission
+        current_index = self.ui.gameCombo.currentIndex()
+        if current_index != index:
+            RobustLogger().debug(f"TRACE: change_active_installation: prev_index={prev_index}, current_index={current_index}, about to call setCurrentIndex({index})")
+            self.ui.gameCombo.setCurrentIndex(index)
+            RobustLogger().debug(f"TRACE: change_active_installation: setCurrentIndex({index}) completed")
+        else:
+            RobustLogger().debug(f"TRACE: change_active_installation: index already {index}, skipping setCurrentIndex")
 
         if index == 0:
             RobustLogger().debug("TRACE: change_active_installation: index == 0, about to call unset_installation()")
@@ -1652,9 +1657,17 @@ class ToolWindow(QMainWindow):
         self._clear_file_watcher()
         RobustLogger().debug("TRACE: unset_installation: _clear_file_watcher() returned")
         
+        # Disconnect signal to prevent recursive call when setting index to 0
+        RobustLogger().debug("TRACE: unset_installation: about to disconnect currentIndexChanged signal")
+        self.ui.gameCombo.currentIndexChanged.disconnect(self.change_active_installation)
+        RobustLogger().debug("TRACE: unset_installation: signal disconnected")
         RobustLogger().debug("TRACE: unset_installation: about to call setCurrentIndex(0)")
         self.ui.gameCombo.setCurrentIndex(0)
         RobustLogger().debug("TRACE: unset_installation: setCurrentIndex(0) returned")
+        # Reconnect signal after setting index
+        RobustLogger().debug("TRACE: unset_installation: about to reconnect currentIndexChanged signal")
+        self.ui.gameCombo.currentIndexChanged.connect(self.change_active_installation)
+        RobustLogger().debug("TRACE: unset_installation: signal reconnected")
 
         RobustLogger().debug("TRACE: unset_installation: about to call coreWidget.set_resources([])")
         self.ui.coreWidget.set_resources([])
@@ -2158,3 +2171,9 @@ class ToolWindow(QMainWindow):
                 QMessageBox(QMessageBox.Icon.Critical, f"Failed to open file ({etype})", msg).exec()
 
     # endregion
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = ToolWindow()
+    window.show()
+    sys.exit(app.exec())
