@@ -182,11 +182,13 @@ class MDLLoader:
         
         # Handle skin mesh reparenting (reone:72-76)
         # Skin meshes need special transform handling to prevent double animation
-        if mdl_node.skin:
-            # Reference: vendor/reone/src/libs/scene/node/model.cpp:72-76
-            # Reparent skin meshes to prevent animation being applied twice
-            # For now, we'll attach normally - animation system will handle this
-            pass
+        # Reference: vendor/reone/src/libs/scene/node/model.cpp:72-76
+        # Skin meshes are reparented directly to model root to prevent animation
+        # being applied twice (once to bone, once to mesh)
+        if converter_type == "skin" and mdl_node.skin:
+            # Store skin data for skeletal animation
+            node_np.setPythonTag("skin_data", mdl_node.skin)
+            node_np.setPythonTag("is_skin_mesh", True)
         
         # Attach to parent
         # Reference: vendor/reone/src/libs/scene/node/model.cpp:79
