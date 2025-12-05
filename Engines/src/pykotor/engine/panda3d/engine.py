@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from direct.showbase.ShowBase import ShowBase
+
 from pykotor.engine.panda3d.materials import Panda3DMaterialManager
 from pykotor.engine.panda3d.module_loader import ModuleLoader
 from pykotor.engine.panda3d.resources.texture_loader import load_tpc

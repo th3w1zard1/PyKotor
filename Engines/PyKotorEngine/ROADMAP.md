@@ -183,22 +183,27 @@ This document tracks the implementation progress of PyKotorEngine, a Panda3D-bas
 ## File Structure
 
 ```
-Engines/PyKotorEngine/
+Engines/
 ├── src/pykotor/engine/panda3d/
 │   ├── engine.py              ✅ Basic engine
 │   ├── mdl_loader.py          🚧 Model loading (in progress)
 │   ├── animation.py            ✅ Animation controllers
 │   ├── scene_graph.py         ✅ Scene management
+│   ├── module_loader.py       ✅ Module loading (LYT/GIT)
 │   ├── materials/
 │   │   ├── manager.py         ✅ Material manager
 │   │   └── *.frag, *.vert     ✅ Shaders
-│   ├── rendering/             📋 Planned
-│   ├── resources/             📋 Planned
-│   ├── module/                📋 Planned
-│   └── particles/              📋 Planned
-├── tests/                     📋 Planned
-└── ROADMAP.md                 ✅ This file
+│   ├── resources/
+│   │   └── texture_loader.py  ✅ TPC texture loading
+│   └── legacy/                📋 Old code (to be removed)
+├── PyKotorEngine/
+│   ├── tests/                 📋 Planned
+│   └── ROADMAP.md             ✅ This file
 ```
+
+**Note**: Source code is in `Engines/src/pykotor/engine/` to allow namespace expansion:
+- `from pykotor.engine.panda3d.mdl_loader import MDLLoader`
+- `from pykotor.engine.panda3d.engine import KotorEngine`
 
 ## Next Steps (Priority Order)
 
