@@ -525,6 +525,9 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.sig_rooms_rotated.connect(self.on_rooms_rotated)
         self.ui.mapRenderer.sig_warp_moved.connect(self.on_warp_moved)
         self.ui.mapRenderer.sig_marquee_select.connect(self.on_marquee_select)
+        
+        # Ensure renderer can receive keyboard focus for accessibility
+        self.ui.mapRenderer.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # Options checkboxes - use proper setters that trigger mark_dirty
         self.ui.snapToGridCheck.toggled.connect(self.ui.mapRenderer.set_snap_to_grid)
@@ -1547,20 +1550,25 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
 
         # Check if we're in placement mode (component selected for placing)
-        if renderer.cursor_component is not None:
+        # Check both cursor_component and selected_component to handle cases where
+        # cursor was cleared but component is still selected in UI
+        component: KitComponent | None = self.selected_component()
+        if renderer.cursor_component is not None or component is not None:
+            # If cursor component is None but component is selected, restore cursor
+            if renderer.cursor_component is None and component is not None:
+                renderer.set_cursor_component(component)
             # Place new room
-            component: KitComponent | None = self.selected_component()
             if component is not None:
                 self._place_new_room(component)
                 if Qt.Key.Key_Shift not in keys:
+                    # Clear cursor component but keep UI selection so user can place multiple rooms
+                    # by clicking again without having to reselect the component
                     renderer.set_cursor_component(None)
-                    # Clear selection from both kits and modules lists so the
-                    # cursor cleanly exits placement mode regardless of source.
-                    self.ui.componentList.clearSelection()
-                    self.ui.componentList.setCurrentItem(None)
-                    self.ui.moduleComponentList.clearSelection()
-                    self.ui.moduleComponentList.setCurrentItem(None)
                     renderer.clear_selected_hook()
+                    # Don't clear UI selection - allow placing multiple rooms
+                else:
+                    # Shift held - keep cursor active for multiple placements
+                    pass
                 return  # Exit after placing room
 
         # Not in placement mode - handle room selection and dragging
@@ -1585,10 +1593,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 # Start drag tracking
                 renderer.start_drag(room)
         else:
-            # No room clicked - start marquee selection OR clear selection
+            # No room clicked - clear selection or start marquee selection
             if Qt.Key.Key_Shift not in keys:
                 renderer.clear_selected_rooms()
-            # Start marquee selection
+            # Start marquee selection (will be cleaned up on mouse release if no drag occurred)
             renderer.start_marquee(screen)
 
     def on_mouse_released(
@@ -1873,7 +1881,54 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.update()
         self._refresh_window_title()
 
+    def _cancel_all_operations(self):
+        """Cancel all active operations and reset to safe state.
+        
+        This is the "panic button" - cancels everything to get out of stuck states:
+        - Cancels marquee selection
+        - Cancels room/hook/warp dragging
+        - Cancels placement mode
+        - Cancels walkmesh painting
+        - Clears selections (optional, can be toggled)
+        """
+        renderer = self.ui.mapRenderer
+        
+        # Cancel marquee selection
+        if renderer._marquee_active:
+            renderer._marquee_active = False
+            renderer._drag_mode = ""
+            renderer.mark_dirty()
+        
+        # Cancel all drag operations
+        if renderer._dragging or renderer._dragging_hook or renderer._dragging_warp:
+            renderer.end_drag()
+            renderer._dragging_hook = False
+            renderer._dragging_warp = False
+        
+        # Cancel walkmesh painting
+        if self._paint_stroke_active:
+            self._paint_stroke_active = False
+            self._paint_stroke_originals.clear()
+            self._paint_stroke_new.clear()
+        
+        # Cancel placement mode (clear cursor component)
+        if renderer.cursor_component is not None:
+            renderer.set_cursor_component(None)
+            renderer.clear_selected_hook()
+        
+        # Force repaint to clear any stuck visuals
+        renderer.update()
+        self._refresh_status_bar()
+
     def keyPressEvent(self, e: QKeyEvent):  # type: ignore[reportIncompatibleMethodOverride]
+        # ESC key - Universal cancel/escape (standard Windows behavior)
+        if e.key() == Qt.Key.Key_Escape:
+            self._cancel_all_operations()
+            # Also clear selection on ESC (standard behavior)
+            self.ui.mapRenderer.clear_selected_rooms()
+            self.ui.mapRenderer.clear_selected_hook()
+            return
+        
         # Handle toggle keys
         if e.key() == Qt.Key.Key_G and not bool(e.modifiers()):
             self.ui.snapToGridCheck.setChecked(not self.ui.snapToGridCheck.isChecked())
@@ -1889,6 +1944,31 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             rooms = self.ui.mapRenderer.selected_rooms()
             if rooms:
                 self._flip_selected(True, False)
+        # Ctrl+A - Select all (standard Windows behavior)
+        elif e.key() == Qt.Key.Key_A and (e.modifiers() & Qt.KeyboardModifier.ControlModifier):
+            self.select_all()
+        # Delete/Backspace - Delete selected (standard Windows behavior)
+        elif e.key() in (Qt.Key.Key_Delete, Qt.Key.Key_Backspace) and not bool(e.modifiers()):
+            self.delete_selected()
+        # Space - Cancel placement mode (intuitive)
+        elif e.key() == Qt.Key.Key_Space and not bool(e.modifiers()):
+            if self.ui.mapRenderer.cursor_component is not None:
+                self.ui.mapRenderer.set_cursor_component(None)
+                self.ui.componentList.clearSelection()
+                self.ui.componentList.setCurrentItem(None)
+                self.ui.moduleComponentList.clearSelection()
+                self.ui.moduleComponentList.setCurrentItem(None)
+                self.ui.mapRenderer.clear_selected_hook()
+        # Ctrl+0 or Home - Reset camera view (standard behavior)
+        elif (e.key() == Qt.Key.Key_0 and (e.modifiers() & Qt.KeyboardModifier.ControlModifier)) or (e.key() == Qt.Key.Key_Home and not bool(e.modifiers())):
+            self.ui.mapRenderer.set_camera_position(0.0, 0.0)
+            self.ui.mapRenderer.set_camera_rotation(0.0)
+            self.ui.mapRenderer.set_camera_zoom(1.0)
+        # F5 - Refresh/Reset view (standard Windows behavior)
+        elif e.key() == Qt.Key.Key_F5 and not bool(e.modifiers()):
+            # Cancel all operations and refresh
+            self._cancel_all_operations()
+            self.ui.mapRenderer.update()
         else:
             self.ui.mapRenderer.keyPressEvent(e)
 
@@ -2572,10 +2652,14 @@ class IndoorMapRenderer(QWidget):
 
         elif self._drag_mode == "marquee" and self._marquee_active:
             self._marquee_active = False
-            # Select rooms within marquee
-            rooms_in_marquee = self._get_rooms_in_marquee()
-            additive = Qt.Key.Key_Shift in self._keys_down
-            self.sig_marquee_select.emit(rooms_in_marquee, additive)
+            # Only select rooms if marquee actually moved (not just a click)
+            marquee_moved = self._marquee_start.distance(self._marquee_end) > 5.0  # 5 pixel threshold
+            if marquee_moved:
+                # Select rooms within marquee
+                rooms_in_marquee = self._get_rooms_in_marquee()
+                additive = Qt.Key.Key_Shift in self._keys_down
+                self.sig_marquee_select.emit(rooms_in_marquee, additive)
+            # Always clean up marquee state even if it didn't move
 
         self._drag_mode = ""
         self.mark_dirty()
@@ -3329,11 +3413,51 @@ class IndoorMapRenderer(QWidget):
         self.sig_mouse_double_clicked.emit(coords, mouse_down, self._keys_down)
 
     def keyPressEvent(self, e: QKeyEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+        # ESC key handling at renderer level for immediate cancellation
+        if e.key() == Qt.Key.Key_Escape:
+            # Cancel all active operations immediately
+            if self._marquee_active:
+                self._marquee_active = False
+                self._drag_mode = ""
+            if self._dragging:
+                self.end_drag()
+            if self._dragging_hook:
+                self._dragging_hook = False
+            if self._dragging_warp:
+                self._dragging_warp = False
+            # Clear selections
+            self.clear_selected_rooms()
+            self.clear_selected_hook()
+            # Cancel placement mode
+            if self.cursor_component is not None:
+                self.set_cursor_component(None)
+            self.mark_dirty()
+            return
+        
         self._keys_down.add(e.key())
         self.mark_dirty()
 
     def keyReleaseEvent(self, e: QKeyEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         self._keys_down.discard(e.key())
+        self.mark_dirty()
+    
+    def focusInEvent(self, e):  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Handle focus in - ensure we can receive keyboard input."""
+        super().focusInEvent(e)
+        self.mark_dirty()
+    
+    def focusOutEvent(self, e):  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Handle focus out - cancel operations that require focus (standard Windows behavior)."""
+        super().focusOutEvent(e)
+        # Cancel drag operations when focus is lost (prevents stuck states)
+        if self._dragging or self._dragging_hook or self._dragging_warp or self._marquee_active:
+            self.end_drag()
+            self._dragging_hook = False
+            self._dragging_warp = False
+            self._marquee_active = False
+            self._drag_mode = ""
+        # Clear key states to prevent stuck modifier keys
+        self._keys_down.clear()
         self.mark_dirty()
 
     def closeEvent(self, e: QCloseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
