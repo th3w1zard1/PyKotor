@@ -463,6 +463,7 @@ class UTPEditor(Editor):
             - Get the MDL and MDX resources from the installation based on the model name
             - If both resources exist, set them on the preview renderer
             - If not, clear out any existing model from the preview
+            - Update the model info label with resource location details
         """
         if self._installation is None:
             self.blink_window()
@@ -470,14 +471,106 @@ class UTPEditor(Editor):
 
         self.setMinimumSize(674, 457)
         data, _ = self.build()
-        modelname: str = placeable.get_model(read_utp(data), self._installation, placeables=self._placeables2DA)
+        utp = read_utp(data)
+        modelname: str = placeable.get_model(utp, self._installation, placeables=self._placeables2DA)
+        
+        # Build model information text
+        info_lines: list[str] = []
+        
         if not modelname or not modelname.strip():
             RobustLogger().warning("Placeable '%s.%s' has no model to render!", self._resname, self._restype)
             self.ui.previewRenderer.clear_model()
+            info_lines.append("❌ No model found")
+            info_lines.append(f"Appearance ID: {utp.appearance_id}")
+            if self._placeables2DA is not None:
+                try:
+                    row = self._placeables2DA.get_row(utp.appearance_id)
+                    label = row.get_string("label", default="[No label]")
+                    info_lines.append(f"Placeable: {label}")
+                except (IndexError, KeyError):
+                    info_lines.append("⚠️ Invalid appearance ID")
+            self.ui.modelInfoLabel.setText("\n".join(info_lines))
             return
+            
+        info_lines.append(f"📦 Model: {modelname}")
+        info_lines.append(f"🎨 Appearance ID: {utp.appearance_id}")
+        
+        # Add placeables.2da information
+        if self._placeables2DA is not None:
+            try:
+                row = self._placeables2DA.get_row(utp.appearance_id)
+                label = row.get_string("label", default="[No label]")
+                info_lines.append(f"📋 Placeable Type: {label}")
+            except (IndexError, KeyError):
+                info_lines.append("⚠️ Invalid appearance ID in placeables.2da")
+        
         mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL)
         mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX)
+        
         if mdl is not None and mdx is not None:
             self.ui.previewRenderer.set_model(mdl.data, mdx.data)
+            
+            # Add resource location information
+            try:
+                mdl_rel_path = mdl.filepath.relative_to(self._installation.path())
+                info_lines.append(f"✅ MDL: {mdl_rel_path}")
+            except ValueError:
+                info_lines.append(f"✅ MDL: {mdl.filepath}")
+            
+            try:
+                mdx_rel_path = mdx.filepath.relative_to(self._installation.path())
+                info_lines.append(f"✅ MDX: {mdx_rel_path}")
+            except ValueError:
+                info_lines.append(f"✅ MDX: {mdx.filepath}")
+            
+            # Determine source location type
+            mdl_source = self._get_source_location_type(mdl.filepath)
+            mdx_source = self._get_source_location_type(mdx.filepath)
+            if mdl_source:
+                info_lines.append(f"📍 MDL Source: {mdl_source}")
+            if mdx_source:
+                info_lines.append(f"📍 MDX Source: {mdx_source}")
         else:
             self.ui.previewRenderer.clear_model()
+            info_lines.append("❌ Model resources not found:")
+            if mdl is None:
+                info_lines.append(f"  • MDL '{modelname}.mdl' missing")
+            if mdx is None:
+                info_lines.append(f"  • MDX '{modelname}.mdx' missing")
+        
+        self.ui.modelInfoLabel.setText("\n".join(info_lines))
+    
+    def _get_source_location_type(self, filepath: os.PathLike | str) -> str | None:
+        """Determines the source location type for a given filepath.
+        
+        Args:
+        ----
+            filepath: The filepath to analyze
+            
+        Returns:
+        -------
+            A string describing the source location type, or None if unknown
+        """
+        if self._installation is None:
+            return None
+            
+        try:
+            path = self._installation.path()
+            rel_path = os.path.relpath(filepath, path)
+            if rel_path:
+                path_str = str(rel_path).lower().replace("\\", "/")
+                if "override" in path_str:
+                    return "Override folder"
+                if path_str.startswith("modules/"):
+                    if path_str.endswith(".mod"):
+                        return "Module (.mod)"
+                    if path_str.endswith(".rim"):
+                        return "Module (.rim)"
+                    return "Module"
+                if "chitin.key" in path_str or "data" in path_str:
+                    return "Chitin BIFs"
+                if "textures" in path_str:
+                    return "Texture pack"
+        except (ValueError, AttributeError):
+            pass
+        return None
