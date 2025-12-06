@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import cProfile
+import logging
 import os
 import pstats
 import sys
@@ -9,12 +10,11 @@ import sys
 from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
-from qtpy.QtCore import QObject, QThread
+from qtpy.QtCore import QEvent, QObject, QThread
 from qtpy.QtGui import QIcon
-from qtpy.QtWidgets import QApplication, QMessageBox
+from qtpy.QtWidgets import QApplication, QMessageBox, QWidget
 
 import resources_rc  # noqa: PLC0415, F401  # pylint: disable=ungrouped-imports,unused-import
 
@@ -25,8 +25,100 @@ from toolset.main_settings import setup_post_init_settings, setup_pre_init_setti
 from toolset.utils.window import TOOLSET_WINDOWS
 from utility.system.app_process.shutdown import terminate_child_processes
 
-if TYPE_CHECKING:
-    from qtpy.QtCore import QEvent
+
+class VerboseEventTracer(QObject):
+    """Ultimate debug event tracer – logs detailed Qt event diagnostics."""
+
+    def __init__(self, logger: logging.Logger | None = None, budget: int = 10_000):
+        super().__init__()
+        self.logger = logger or logging.getLogger("EventTracer")
+        self.logger.setLevel(logging.DEBUG)
+        self.budget = budget  # Safety valve – set to -1 for unlimited
+
+    @staticmethod
+    def event_type_name(event_type: QEvent.Type) -> str:
+        """Resolve a QEvent.Type to its enum name."""
+        for name in dir(QEvent):
+            value = getattr(QEvent, name)
+            if isinstance(value, QEvent.Type) and value == event_type:
+                return name
+        return f"Unknown({int(event_type)})"
+
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:  # noqa: ARG002  # pyright: ignore[reportIncompatibleMethodOverride]
+        if self.budget == 0:
+            return False
+        if self.budget > 0:
+            self.budget -= 1
+
+        obj_name = obj.objectName() or "(no name)"
+        meta_object = obj.metaObject()
+        qt_class = meta_object.className() if meta_object else "Unknown"
+        py_class = type(obj).__name__
+        ptr = f"0x{id(obj):x}"
+
+        event_type = event.type()
+        event_type_name = self.event_type_name(event_type)
+        try:
+            spontaneous = event.spontaneous()
+        except AttributeError:
+            spontaneous = "N/A"
+        accepted = event.isAccepted()
+        details = repr(event)
+
+        self.logger.debug(
+            "EVENT >>> obj='%s' qt_class=%s py_class=%s ptr=%s",
+            obj_name,
+            qt_class,
+            py_class,
+            ptr,
+        )
+        self.logger.debug(
+            "          type=%-4s (%-20s) class=%-20s spontaneous=%s accepted=%s",
+            int(event_type),
+            event_type_name,
+            type(event).__name__,
+            spontaneous,
+            accepted,
+        )
+        self.logger.debug("          details → %s", details)
+
+        if isinstance(obj, QWidget):
+            window_handle = obj.windowHandle()
+            self.logger.debug(
+                "          widget visible=%s hidden=%s enabled=%s geometry=%s pos=%s size=%s windowState=%s",
+                obj.isVisible(),
+                obj.isHidden(),
+                obj.isEnabled(),
+                obj.geometry(),
+                obj.pos(),
+                obj.size(),
+                obj.windowState(),
+            )
+            if window_handle is not None:
+                screen = window_handle.screen()
+                screen_name = screen.name() if screen is not None else None
+                self.logger.debug(
+                    "          window exposed=%s screen=%s",
+                    window_handle.isExposed(),
+                    screen_name,
+                )
+
+        important_types = {
+            QEvent.Type.Show,
+            QEvent.Type.Hide,
+            QEvent.Type.ShowToParent,
+            QEvent.Type.Expose,
+            QEvent.Type.Paint,
+            QEvent.Type.Resize,
+            QEvent.Type.Move,
+            QEvent.Type.WindowStateChange,
+            QEvent.Type.ActivationChange,
+            QEvent.Type.Polish,
+            QEvent.Type.PolishRequest,
+        }
+        if event_type in important_types:
+            self.logger.warning("!!! IMPORTANT VISIBILITY EVENT: %s on %s", event_type_name, obj_name)
+        return False
 
 
 def qt_cleanup():
@@ -193,28 +285,24 @@ def main():
     trace_events_env = os.environ.get("TOOLSET_TRACE_EVENTS", "").lower().strip()
     trace_events_enabled = trace_events_env in ("1", "true", "yes", "on")
     if trace_events_enabled:
-        class FirstEventFilter(QObject):
-            """Lightweight event tracer used only when TOOLSET_TRACE_EVENTS is enabled."""
-            def __init__(self):
-                super().__init__()
-                self._first_event_logged = False
-                self._sample_budget = 50  # Prevents runaway logging on busy event loops
-                self._logger = RobustLogger()
-            
-            def eventFilter(self, obj: QObject, event: QEvent) -> bool:  # noqa: ARG002
-                if not self._first_event_logged:
-                    self._first_event_logged = True
-                    self._logger.debug(f"TRACE: FIRST EVENT PROCESSED AFTER app.exec(): type={event.type()}, obj={type(obj).__name__}")
-                    if hasattr(event, "spontaneous"):
-                        self._logger.debug(f"TRACE: Event is spontaneous: {event.spontaneous()}")
-                elif self._sample_budget > 0:
-                    self._sample_budget -= 1
-                    self._logger.debug(f"TRACE: Event filter called, obj: {type(obj).__name__}, event: {event.type()}")
-                return False
-        
-        event_filter = FirstEventFilter()
+        trace_events_budget_env = os.environ.get("TOOLSET_TRACE_EVENTS_BUDGET", "").strip()
+        trace_events_budget = 10_000
+        if trace_events_budget_env:
+            try:
+                trace_events_budget = int(trace_events_budget_env)
+            except ValueError:
+                RobustLogger().warning(
+                    "Invalid TOOLSET_TRACE_EVENTS_BUDGET=%s; using default budget %s",
+                    trace_events_budget_env,
+                    trace_events_budget,
+                )
+
+        event_filter = VerboseEventTracer(logger=RobustLogger(), budget=trace_events_budget)
         app.installEventFilter(event_filter)
-        RobustLogger().debug("TRACE: Event filter installed (TOOLSET_TRACE_EVENTS=1)")
+        RobustLogger().debug(
+            "TRACE: Verbose event filter installed (TOOLSET_TRACE_EVENTS=1, budget=%s)",
+            trace_events_budget,
+        )
     else:
         RobustLogger().debug("TRACE: Event filter disabled (set TOOLSET_TRACE_EVENTS=1 to sample events)")
     
