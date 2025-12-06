@@ -273,6 +273,7 @@ extraPaths = [
     "Tools/KotorCLI/src",
     "Tools/KotorDiff/src",
 ]
+typeCheckingMode = "basic"
 reportMissingImports = true
 reportMissingTypeStubs = false
 pythonVersion = "3.8"
