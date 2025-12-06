@@ -810,20 +810,42 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         """Render a component preview into the unified preview pane."""
         if image is None:
             self.ui.previewImage.clear()
+            self._preview_source_image = None
             return
 
         # Store the original image for resizing
         self._preview_source_image = image
-        # Set the pixmap - scaledContents will handle resizing automatically
-        pixmap = QPixmap.fromImage(image)
-        self.ui.previewImage.setPixmap(pixmap)
+        # Scale to fit the label's current size
+        self._update_preview_image_size()
+    
+    def _update_preview_image_size(self):
+        """Update preview image to match current label size."""
+        if self._preview_source_image is None:
+            return
+        
+        # Get the label's available size
+        label_size = self.ui.previewImage.size()
+        if label_size.width() <= 0 or label_size.height() <= 0:
+            # Label not yet sized, use a default
+            label_size = self.ui.previewImage.sizeHint()
+            if label_size.width() <= 0 or label_size.height() <= 0:
+                label_size = QSize(128, 128)  # Fallback default
+        
+        # Scale the image to fit while maintaining aspect ratio
+        pixmap = QPixmap.fromImage(self._preview_source_image)
+        scaled = pixmap.scaled(
+            label_size,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        self.ui.previewImage.setPixmap(scaled)
     
     def _on_splitter_moved(self, pos: int, index: int):
         """Handle splitter movement - update preview image if it exists."""
         # Refresh preview image to match new size if one is set
-        if hasattr(self, "_preview_source_image") and self._preview_source_image is not None:
-            # Re-apply the preview image which will scale to new size
-            self._set_preview_image(self._preview_source_image)
+        if self._preview_source_image is not None:
+            # Use QTimer to update after layout has adjusted
+            QTimer.singleShot(10, self._update_preview_image_size)
 
     # ------------------------------------------------------------------
     # Status bar
