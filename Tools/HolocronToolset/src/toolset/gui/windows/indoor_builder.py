@@ -1660,8 +1660,8 @@ class IndoorMapRenderer(QWidget):
         self.cursor_flip_y: bool = False
 
         # Input state
-        self._keys_down: set[int] = set()
-        self._mouse_down: set[int] = set()
+        self._keys_down: set[int | Qt.Key] = set()
+        self._mouse_down: set[int | Qt.MouseButton] = set()
         self._mouse_prev: Vector2 = Vector2.from_null()
 
         # Drag state
@@ -2437,7 +2437,7 @@ class IndoorMapRenderer(QWidget):
     # Events
     # =========================================================================
 
-    def wheelEvent(self, e: QWheelEvent):
+    def wheelEvent(self, e: QWheelEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         self.sig_mouse_scrolled.emit(
             Vector2(e.angleDelta().x(), e.angleDelta().y()),
             e.buttons(),
@@ -2445,7 +2445,7 @@ class IndoorMapRenderer(QWidget):
         )
         self.mark_dirty()
 
-    def mouseMoveEvent(self, e: QMouseEvent):
+    def mouseMoveEvent(self, e: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         event_pos = e.pos()
         coords = Vector2(event_pos.x(), event_pos.y())
         coords_delta = Vector2(coords.x - self._mouse_prev.x, coords.y - self._mouse_prev.y)
@@ -2553,7 +2553,7 @@ class IndoorMapRenderer(QWidget):
         self._under_mouse_room, _ = self.pick_face(world)
         self.mark_dirty()
 
-    def mousePressEvent(self, e: QMouseEvent):
+    def mousePressEvent(self, e: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         event_mouse_button = e.button()
         if event_mouse_button is None:
             return
@@ -2562,7 +2562,7 @@ class IndoorMapRenderer(QWidget):
         coords = Vector2(event_pos.x(), event_pos.y())
         self.sig_mouse_pressed.emit(coords, self._mouse_down, self._keys_down)
 
-    def mouseReleaseEvent(self, e: QMouseEvent):
+    def mouseReleaseEvent(self, e: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         event_mouse_button = e.button()
         if event_mouse_button is None:
             return
@@ -2577,9 +2577,14 @@ class IndoorMapRenderer(QWidget):
             return
         mouse_down = copy(self._mouse_down)
         mouse_down.add(event_mouse_button)
-        self.sig_mouse_double_clicked.emit(Vector2(e.x(), e.y()), mouse_down, self._keys_down)
+        coords = (
+            Vector2(e.x(), e.y())  # pyright: ignore[reportAttributeAccessIssue]
+            if qtpy.QT5
+            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())
+        )
+        self.sig_mouse_double_clicked.emit(coords, mouse_down, self._keys_down)
 
-    def keyPressEvent(self, e: QKeyEvent):
+    def keyPressEvent(self, e: QKeyEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         self._keys_down.add(e.key())
         self.mark_dirty()
 
