@@ -16,29 +16,26 @@ if TYPE_CHECKING:
     from pykotor.resource.formats.lyt import LYT, LYTDoorHook, LYTObstacle, LYTRoom, LYTTrack  # pyright: ignore[reportMissingImports]
     from pykotor.resource.generics.git import (  # pyright: ignore[reportMissingImports]
         GIT,
-        GITCamera,
-        GITCreature,
-        GITDoor,
-        GITEncounter,
         GITInstance,
-        GITPlaceable,
-        GITSound,
-        GITStore,
-        GITTrigger,
-        GITWaypoint,
     )
     from utility.common.geometry import Vector3, Vector4
     from toolset.data.indoormap import IndoorMapRoom, IndoorMap
 
 
 def serialize_vector3(v: Vector3) -> dict[str, float]:
-    """Serialize a Vector3 to JSON-compatible dict."""
-    return {"x": float(v.x), "y": float(v.y), "z": float(v.z)}
+    """Serialize a Vector3 to JSON-compatible dict.
+    
+    Deprecated: Use v.serialize() instead.
+    """
+    return v.serialize()
 
 
 def serialize_vector4(v: Vector4) -> dict[str, float]:
-    """Serialize a Vector4 (quaternion) to JSON-compatible dict."""
-    return {"x": float(v.x), "y": float(v.y), "z": float(v.z), "w": float(v.w)}
+    """Serialize a Vector4 (quaternion) to JSON-compatible dict.
+    
+    Deprecated: Use v.serialize() instead.
+    """
+    return v.serialize()
 
 
 def deserialize_vector3(data: dict[str, float]) -> tuple[float, float, float]:
@@ -64,157 +61,10 @@ def serialize_git_instance(instance: GITInstance) -> dict[str, Any]:
 
     Returns:
         Dictionary representation suitable for JSON serialization
+    
+    Deprecated: Use instance.serialize() instead.
     """
-    from pykotor.resource.generics.git import (
-        GITCamera,
-        GITCreature,
-        GITDoor,
-        GITEncounter,
-        GITPlaceable,
-        GITSound,
-        GITStore,
-        GITTrigger,
-        GITWaypoint,
-    )
-
-    # Base data common to all instances
-    data: dict[str, Any] = {
-        "type": instance.__class__.__name__,
-        "position": serialize_vector3(instance.position),
-        "runtime_id": id(instance),
-    }
-
-    if isinstance(instance, GITCamera):
-        data.update(_serialize_camera(instance))
-    elif isinstance(instance, GITCreature):
-        data.update(_serialize_creature(instance))
-    elif isinstance(instance, GITDoor):
-        data.update(_serialize_door(instance))
-    elif isinstance(instance, GITEncounter):
-        data.update(_serialize_encounter(instance))
-    elif isinstance(instance, GITPlaceable):
-        data.update(_serialize_placeable(instance))
-    elif isinstance(instance, GITSound):
-        data.update(_serialize_sound(instance))
-    elif isinstance(instance, GITStore):
-        data.update(_serialize_store(instance))
-    elif isinstance(instance, GITTrigger):
-        data.update(_serialize_trigger(instance))
-    elif isinstance(instance, GITWaypoint):
-        data.update(_serialize_waypoint(instance))
-
-    return data
-
-
-def _serialize_camera(camera: GITCamera) -> dict[str, Any]:
-    """Serialize GITCamera-specific data."""
-    return {
-        "camera_id": camera.camera_id,
-        "orientation": serialize_vector4(camera.orientation),
-        "fov": camera.fov,
-        "height": camera.height,
-        "mic_range": camera.mic_range,
-        "pitch": camera.pitch,
-    }
-
-
-def _serialize_creature(creature: GITCreature) -> dict[str, Any]:
-    """Serialize GITCreature-specific data."""
-    return {
-        "resref": str(creature.resref),
-        "bearing": creature.bearing,
-    }
-
-
-def _serialize_door(door: GITDoor) -> dict[str, Any]:
-    """Serialize GITDoor-specific data."""
-    # transition_destination is a LocalizedString, not Vector3
-    transition_locstring = door.transition_destination
-    transition_stringref = transition_locstring.stringref if hasattr(transition_locstring, 'stringref') else -1
-
-    return {
-        "resref": str(door.resref),
-        "bearing": door.bearing,
-        "tag": door.tag,
-        "linked_to_module": str(door.linked_to_module),
-        "linked_to": door.linked_to,
-        "linked_to_flags": door.linked_to_flags.value if hasattr(door.linked_to_flags, 'value') else int(door.linked_to_flags),
-        "transition_destination_stringref": transition_stringref,
-    }
-
-
-def _serialize_encounter(encounter: GITEncounter) -> dict[str, Any]:
-    """Serialize GITEncounter-specific data."""
-
-    geometry = [serialize_vector3(v) for v in encounter.geometry]
-    spawn_points = [
-        {
-            "position": {"x": sp.x, "y": sp.y, "z": sp.z},
-            "orientation": sp.orientation,
-        }
-        for sp in encounter.spawn_points
-    ]
-
-    return {
-        "resref": str(encounter.resref),
-        "geometry": geometry,
-        "spawn_points": spawn_points,
-    }
-
-
-def _serialize_placeable(placeable: GITPlaceable) -> dict[str, Any]:
-    """Serialize GITPlaceable-specific data."""
-    return {
-        "resref": str(placeable.resref),
-        "bearing": placeable.bearing,
-        "tweak_color": placeable.tweak_color.bgr_integer() if placeable.tweak_color else None,
-    }
-
-
-def _serialize_sound(sound: GITSound) -> dict[str, Any]:
-    """Serialize GITSound-specific data."""
-    return {
-        "resref": str(sound.resref),
-    }
-
-
-def _serialize_store(store: GITStore) -> dict[str, Any]:
-    """Serialize GITStore-specific data."""
-    return {
-        "resref": str(store.resref),
-        "bearing": store.bearing,
-    }
-
-
-def _serialize_trigger(trigger: GITTrigger) -> dict[str, Any]:
-    """Serialize GITTrigger-specific data."""
-    geometry = [serialize_vector3(v) for v in trigger.geometry]
-
-    # transition_destination is a LocalizedString
-    transition_locstring = trigger.transition_destination
-    transition_stringref = transition_locstring.stringref if hasattr(transition_locstring, 'stringref') else -1
-
-    return {
-        "resref": str(trigger.resref),
-        "tag": trigger.tag,
-        "geometry": geometry,
-        "linked_to_module": str(trigger.linked_to_module),
-        "linked_to": trigger.linked_to,
-        "linked_to_flags": trigger.linked_to_flags.value if hasattr(trigger.linked_to_flags, 'value') else int(trigger.linked_to_flags),
-        "transition_destination_stringref": transition_stringref,
-    }
-
-
-def _serialize_waypoint(waypoint: GITWaypoint) -> dict[str, Any]:
-    """Serialize GITWaypoint-specific data."""
-    return {
-        "resref": str(waypoint.resref),
-        "bearing": waypoint.bearing,
-        "tag": waypoint.tag,
-        "name_stringref": waypoint.name.stringref,
-        "map_note_enabled": waypoint.map_note_enabled,
-        "has_map_note": waypoint.has_map_note,
-    }
+    return instance.serialize()
 
 
 def deserialize_git_instance(data: dict[str, Any]) -> dict[str, Any]:
@@ -305,18 +155,10 @@ def serialize_git(git: GIT) -> dict[str, Any]:
 
     Returns:
         Dictionary representation
+    
+    Deprecated: Use git.serialize() instead.
     """
-    return {
-        "creatures": [serialize_git_instance(c) for c in git.creatures],
-        "doors": [serialize_git_instance(d) for d in git.doors],
-        "placeables": [serialize_git_instance(p) for p in git.placeables],
-        "waypoints": [serialize_git_instance(w) for w in git.waypoints],
-        "triggers": [serialize_git_instance(t) for t in git.triggers],
-        "encounters": [serialize_git_instance(e) for e in git.encounters],
-        "sounds": [serialize_git_instance(s) for s in git.sounds],
-        "stores": [serialize_git_instance(s) for s in git.stores],
-        "cameras": [serialize_git_instance(c) for c in git.cameras],
-    }
+    return git.serialize()
 
 
 # =============================================================================
@@ -325,37 +167,35 @@ def serialize_git(git: GIT) -> dict[str, Any]:
 
 
 def serialize_lyt_room(room: LYTRoom) -> dict[str, Any]:
-    """Serialize an LYTRoom to JSON-compatible dict."""
-    return {
-        "model": room.model,
-        "position": serialize_vector3(room.position),
-    }
+    """Serialize an LYTRoom to JSON-compatible dict.
+    
+    Deprecated: Use room.serialize() instead.
+    """
+    return room.serialize()
 
 
 def serialize_lyt_doorhook(doorhook: LYTDoorHook) -> dict[str, Any]:
-    """Serialize an LYTDoorHook to JSON-compatible dict."""
-    return {
-        "room": doorhook.room,
-        "door": doorhook.door,
-        "position": serialize_vector3(doorhook.position),
-        "orientation": serialize_vector4(doorhook.orientation),
-    }
+    """Serialize an LYTDoorHook to JSON-compatible dict.
+    
+    Deprecated: Use doorhook.serialize() instead.
+    """
+    return doorhook.serialize()
 
 
 def serialize_lyt_track(track: LYTTrack) -> dict[str, Any]:
-    """Serialize an LYTTrack to JSON-compatible dict."""
-    return {
-        "model": track.model,
-        "position": serialize_vector3(track.position),
-    }
+    """Serialize an LYTTrack to JSON-compatible dict.
+    
+    Deprecated: Use track.serialize() instead.
+    """
+    return track.serialize()
 
 
 def serialize_lyt_obstacle(obstacle: LYTObstacle) -> dict[str, Any]:
-    """Serialize an LYTObstacle to JSON-compatible dict."""
-    return {
-        "model": obstacle.model,
-        "position": serialize_vector3(obstacle.position),
-    }
+    """Serialize an LYTObstacle to JSON-compatible dict.
+    
+    Deprecated: Use obstacle.serialize() instead.
+    """
+    return obstacle.serialize()
 
 
 def serialize_lyt(lyt: LYT) -> dict[str, Any]:
@@ -366,13 +206,10 @@ def serialize_lyt(lyt: LYT) -> dict[str, Any]:
 
     Returns:
         Dictionary representation
+    
+    Deprecated: Use lyt.serialize() instead.
     """
-    return {
-        "rooms": [serialize_lyt_room(r) for r in lyt.rooms],
-        "doorhooks": [serialize_lyt_doorhook(d) for d in lyt.doorhooks],
-        "tracks": [serialize_lyt_track(t) for t in lyt.tracks],
-        "obstacles": [serialize_lyt_obstacle(o) for o in lyt.obstacles],
-    }
+    return lyt.serialize()
 
 
 def deserialize_lyt_room(data: dict[str, Any]) -> dict[str, Any]:
@@ -398,8 +235,24 @@ def deserialize_lyt(data: dict[str, Any]) -> dict[str, Any]:
     return {
         "rooms": [deserialize_lyt_room(r) for r in data.get("rooms", [])],
         "doorhooks": [deserialize_lyt_doorhook(d) for d in data.get("doorhooks", [])],
-        "tracks": [{"model": t.get("model", ""), "position": deserialize_vector3(t.get("position", {}))} for t in data.get("tracks", [])],
-        "obstacles": [{"model": o.get("model", ""), "position": deserialize_vector3(o.get("position", {}))} for o in data.get("obstacles", [])],
+        "tracks": [deserialize_track(t) for t in data.get("tracks", [])],
+        "obstacles": [deserialize_obstacle(o) for o in data.get("obstacles", [])],
+    }
+
+
+def deserialize_track(data: dict[str, Any]) -> dict[str, Any]:
+    """Deserialize LYTTrack data."""
+    return {
+        "model": data.get("model", ""),
+        "position": deserialize_vector3(data.get("position", {})),
+    }
+
+
+def deserialize_obstacle(data: dict[str, Any]) -> dict[str, Any]:
+    """Deserialize LYTObstacle data."""
+    return {
+        "model": data.get("model", ""),
+        "position": deserialize_vector3(data.get("position", {})),
     }
 
 
@@ -416,26 +269,10 @@ def serialize_bwm(bwm: BWM) -> dict[str, Any]:
 
     Returns:
         Dictionary representation
+    
+    Deprecated: Use bwm.serialize() instead.
     """
-    vertices = [serialize_vector3(v) for v in bwm.vertices()]
-
-    faces = []
-    for face in bwm.faces:
-        faces.append({
-            "v1": {"x": face.v1.x, "y": face.v1.y, "z": face.v1.z},
-            "v2": {"x": face.v2.x, "y": face.v2.y, "z": face.v2.z},
-            "v3": {"x": face.v3.x, "y": face.v3.y, "z": face.v3.z},
-            "material": face.material.value if hasattr(face.material, "value") else int(face.material),
-            "trans1": face.trans1,
-            "trans2": face.trans2,
-            "trans3": face.trans3,
-        })
-
-    return {
-        "walkmesh_type": bwm.walkmesh_type.value if hasattr(bwm.walkmesh_type, "value") else int(bwm.walkmesh_type),
-        "vertices": vertices,
-        "faces": faces,
-    }
+    return bwm.serialize()
 
 
 # =============================================================================
@@ -465,9 +302,9 @@ def serialize_module_data(
     return {
         "module_root": module_root,
         "installation_path": installation_path,
-        "lyt": serialize_lyt(lyt),
-        "git": serialize_git(git),
-        "walkmeshes": [serialize_bwm(w) for w in walkmeshes],
+        "lyt": lyt.serialize(),
+        "git": git.serialize(),
+        "walkmeshes": [w.serialize() for w in walkmeshes],
     }
 
 
@@ -484,17 +321,10 @@ def serialize_indoor_map_room(room: IndoorMapRoom) -> dict[str, Any]:
         
     Returns:
         Dictionary representation
-    """
     
-    return {
-        "component_id": id(room.component),  # Reference to component
-        "component_name": room.component.name if hasattr(room.component, "name") else "",
-        "position": serialize_vector3(room.position),
-        "rotation": float(room.rotation),
-        "flip_x": bool(room.flip_x),
-        "flip_y": bool(room.flip_y),
-        "runtime_id": id(room),
-    }
+    Deprecated: Use room.serialize() instead.
+    """
+    return room.serialize()
 
 
 def serialize_indoor_map(indoor_map: IndoorMap) -> dict[str, Any]:
@@ -505,66 +335,7 @@ def serialize_indoor_map(indoor_map: IndoorMap) -> dict[str, Any]:
         
     Returns:
         Dictionary representation
-    """    
-    return {
-        "module_id": indoor_map.module_id,
-        "name": str(indoor_map.name) if hasattr(indoor_map.name, "__str__") else "",
-        "lighting": {
-            "r": float(indoor_map.lighting.r),
-            "g": float(indoor_map.lighting.g),
-            "b": float(indoor_map.lighting.b),
-        },
-        "skybox": indoor_map.skybox,
-        "warp_point": serialize_vector3(indoor_map.warp_point),
-        "rooms": [serialize_indoor_map_room(r) for r in indoor_map.rooms],
-    }
-
-
-def deserialize_indoor_map_room(data: dict[str, Any]) -> dict[str, Any]:
-    """Deserialize IndoorMapRoom data from JSON.
     
-    Returns a dictionary that can be used to update/create a room.
-    The actual room creation is handled by the caller.
-    
-    Note: The component cannot be fully reconstructed from serialized data
-    (only component_id and component_name are stored). The caller must
-    match the component_id to an existing KitComponent.
+    Deprecated: Use indoor_map.serialize() instead.
     """
-    from utility.common.geometry import Vector3
-    
-    return {
-        "component_id": data.get("component_id"),
-        "component_name": data.get("component_name", ""),
-        "position": Vector3(*deserialize_vector3(data.get("position", {}))),
-        "rotation": float(data.get("rotation", 0.0)),
-        "flip_x": bool(data.get("flip_x", False)),
-        "flip_y": bool(data.get("flip_y", False)),
-        "runtime_id": data.get("runtime_id"),
-    }
-
-
-def deserialize_indoor_map(data: dict[str, Any]) -> dict[str, Any]:
-    """Deserialize IndoorMap data from JSON.
-    
-    Returns a dictionary that can be used to update/create a map.
-    The actual map creation is handled by the caller.
-    
-    Note: Rooms cannot be fully deserialized without access to the original
-    KitComponent objects, so this returns a dict with room data that must
-    be matched to existing components by the caller.
-    """
-    from pykotor.common.misc import Color, LocalizedString  # pyright: ignore[reportMissingImports]
-    from utility.common.geometry import Vector3
-    
-    return {
-        "module_id": data.get("module_id", ""),
-        "name": LocalizedString.from_english(data.get("name", "")),
-        "lighting": Color(
-            data.get("lighting", {}).get("r", 0.5),
-            data.get("lighting", {}).get("g", 0.5),
-            data.get("lighting", {}).get("b", 0.5),
-        ),
-        "skybox": data.get("skybox", ""),
-        "warp_point": Vector3(*deserialize_vector3(data.get("warp_point", {}))),
-        "rooms": [deserialize_indoor_map_room(r) for r in data.get("rooms", [])],
-    }
+    return indoor_map.serialize()

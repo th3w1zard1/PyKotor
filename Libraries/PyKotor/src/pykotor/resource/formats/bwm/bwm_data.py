@@ -80,7 +80,7 @@ import math
 
 from copy import copy
 from enum import IntEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pykotor.resource.formats._base import ComparableMixin
 from utility.common.geometry import Face, Vector3
@@ -902,6 +902,33 @@ class BWM(ComparableMixin):
             for face in self.faces:
                 v1, v2, v3 = face.v1, face.v2, face.v3
                 face.v1, face.v2, face.v3 = v3, v2, v1
+
+    def serialize(self) -> dict[str, Any]:
+        """Serialize a BWM walkmesh to JSON-compatible dict.
+
+        Returns:
+        -------
+            Dictionary representation
+        """
+        vertices = [v.serialize() for v in self.vertices()]
+
+        faces = []
+        for face in self.faces:
+            faces.append({
+                "v1": face.v1.serialize(),
+                "v2": face.v2.serialize(),
+                "v3": face.v3.serialize(),
+                "material": face.material.value if hasattr(face.material, "value") else int(face.material),
+                "trans1": face.trans1,
+                "trans2": face.trans2,
+                "trans3": face.trans3,
+            })
+
+        return {
+            "walkmesh_type": self.walkmesh_type.value if hasattr(self.walkmesh_type, "value") else int(self.walkmesh_type),
+            "vertices": vertices,
+            "faces": faces,
+        }
 
 
 class BWMFace(Face, ComparableMixin):

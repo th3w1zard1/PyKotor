@@ -655,6 +655,15 @@ class Vector3:
         """
         return any(item is self for item in container)
 
+    def serialize(self) -> dict[str, float]:
+        """Serialize a Vector3 to JSON-compatible dict.
+
+        Returns:
+        -------
+            Dictionary with x, y, z components as floats.
+        """
+        return {"x": float(self.x), "y": float(self.y), "z": float(self.z)}
+
 
 class Vector4:
     """Represents a 4 dimensional vector.
@@ -1032,6 +1041,15 @@ class Vector4:
         self.y = y
         self.z = z
         self.w = w
+
+    def serialize(self) -> dict[str, float]:
+        """Serialize a Vector4 (quaternion) to JSON-compatible dict.
+
+        Returns:
+        -------
+            Dictionary with x, y, z, w components as floats.
+        """
+        return {"x": float(self.x), "y": float(self.y), "z": float(self.z), "w": float(self.w)}
 
 
 class AxisAngle:

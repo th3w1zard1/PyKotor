@@ -64,13 +64,21 @@ class MissingRoomInfo(NamedTuple):
 
 
 class IndoorMap:
-    def __init__(self):
-        self.rooms: list[IndoorMapRoom] = []
-        self.module_id: str = "test01"
-        self.name: LocalizedString = LocalizedString.from_english("New Module")
-        self.lighting: Color = Color(0.5, 0.5, 0.5)
-        self.skybox: str = ""
-        self.warp_point: Vector3 = Vector3.from_null()
+    def __init__(
+        self,
+        rooms: list[IndoorMapRoom] | None = None,
+        module_id: str | None = "test01",
+        name: LocalizedString | None = LocalizedString.from_english("New Module"),
+        lighting: Color | None = Color(0.5, 0.5, 0.5),
+        skybox: str | None = "",
+        warp_point: Vector3 | None = Vector3.from_null(),
+    ):
+        self.rooms: list[IndoorMapRoom] = rooms or []
+        self.module_id: str = module_id or "test01"
+        self.name: LocalizedString = name or LocalizedString.from_english("New Module")
+        self.lighting: Color = lighting or Color(0.5, 0.5, 0.5)
+        self.skybox: str = skybox or ""
+        self.warp_point: Vector3 = warp_point or Vector3.from_null()
 
     def rebuild_room_connections(self):
         for room in self.rooms:
@@ -1024,6 +1032,26 @@ class IndoorMap:
 
         return MinimapData(image, image_point_min, image_point_max, world_point_min, world_point_max)
 
+    def serialize(self) -> dict[str, Any]:
+        """Serialize an IndoorMap to JSON-compatible dict.
+        
+        Returns:
+        -------
+            Dictionary representation
+        """
+        return {
+            "module_id": self.module_id,
+            "name": str(self.name) if hasattr(self.name, "__str__") else "",
+            "lighting": {
+                "r": float(self.lighting.r),
+                "g": float(self.lighting.g),
+                "b": float(self.lighting.b),
+            },
+            "skybox": self.skybox,
+            "warp_point": self.warp_point.serialize(),
+            "rooms": [r.serialize() for r in self.rooms],
+        }
+
     def _normalize_bwm_vertices(
         self,
         bbmin: Vector3,
@@ -1169,3 +1197,20 @@ class IndoorMapRoom:
     def clear_walkmesh_override(self):
         """Remove any custom walkmesh edits, reverting to the component default."""
         self.walkmesh_override = None
+
+    def serialize(self) -> dict[str, Any]:
+        """Serialize an IndoorMapRoom to JSON-compatible dict.
+        
+        Returns:
+        -------
+            Dictionary representation
+        """
+        return {
+            "component_id": id(self.component),  # Reference to component
+            "component_name": self.component.name if hasattr(self.component, "name") else "",
+            "position": self.position.serialize(),
+            "rotation": float(self.rotation),
+            "flip_x": bool(self.flip_x),
+            "flip_y": bool(self.flip_y),
+            "runtime_id": id(self),
+        }

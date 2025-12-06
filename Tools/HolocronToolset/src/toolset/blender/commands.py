@@ -18,7 +18,6 @@ from loggerplus import RobustLogger
 
 from toolset.blender.ipc_client import BlenderCommands, BlenderIPCClient, get_ipc_client
 from toolset.blender.serializers import (
-    serialize_git_instance,
     serialize_module_data,
 )
 
@@ -246,7 +245,7 @@ class BlenderEditorController:
         if not self.is_connected or self._session is None:
             return None
 
-        instance_data = serialize_git_instance(instance)
+        instance_data = instance.serialize()
         runtime_id = instance_data.get("runtime_id")
         self._register_runtime_instance(instance)
         object_name = self._commands.add_instance(instance_data)

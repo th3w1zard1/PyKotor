@@ -275,6 +275,25 @@ class GIT:
         msg = "Tried to add invalid instance."
         raise ValueError(msg)
 
+    def serialize(self) -> dict[str, Any]:
+        """Serialize a complete GIT to JSON-compatible dict.
+
+        Returns:
+        -------
+            Dictionary representation
+        """
+        return {
+            "creatures": [c.serialize() for c in self.creatures],
+            "doors": [d.serialize() for d in self.doors],
+            "placeables": [p.serialize() for p in self.placeables],
+            "waypoints": [w.serialize() for w in self.waypoints],
+            "triggers": [t.serialize() for t in self.triggers],
+            "encounters": [e.serialize() for e in self.encounters],
+            "sounds": [s.serialize() for s in self.sounds],
+            "stores": [s.serialize() for s in self.stores],
+            "cameras": [c.serialize() for c in self.cameras],
+        }
+
 
 class GITInstance(ABC):
     def __init__(self, x: float, y: float, z: float):
@@ -340,6 +359,30 @@ class GITInstance(ABC):
         self,
     ) -> float | None:
         """Returns the yaw rotation (in radians) of the instance if the instance supports it, otherwise returns None."""
+
+    def serialize(self) -> dict[str, Any]:
+        """Serialize a GITInstance to JSON-compatible dict.
+
+        Returns:
+        -------
+            Dictionary representation suitable for JSON serialization
+        """
+        # Base data common to all instances
+        data: dict[str, Any] = {
+            "type": self.__class__.__name__,
+            "position": self.position.serialize(),
+            "runtime_id": id(self),
+        }
+
+        # Add type-specific data
+        data.update(self._serialize_instance_data())
+
+        return data
+
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize instance-specific data. Override in subclasses."""
+        return {}
+
 
 
 class GITCamera(GITInstance):
@@ -449,6 +492,17 @@ class GITCamera(GITInstance):
     def roll(self) -> float:
         raise NotImplementedError("GITCamera's do not have roll.")
 
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize GITCamera-specific data."""
+        return {
+            "camera_id": self.camera_id,
+            "orientation": self.orientation.serialize(),
+            "fov": self.fov,
+            "height": self.height,
+            "mic_range": self.mic_range,
+            "pitch": self.pitch,
+        }
+
 
 class GITCreature(GITInstance):
     """Represents a creature instance in a GIT file.
@@ -525,6 +579,13 @@ class GITCreature(GITInstance):
         self,
     ) -> float:
         return self.bearing
+
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize GITCreature-specific data."""
+        return {
+            "resref": str(self.resref),
+            "bearing": self.bearing,
+        }
 
 
 class GITModuleLink(IntEnum):
@@ -649,6 +710,22 @@ class GITDoor(GITInstance):
     ) -> float:
         return self.bearing
 
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize GITDoor-specific data."""
+        # transition_destination is a LocalizedString, not Vector3
+        transition_locstring = self.transition_destination
+        transition_stringref = transition_locstring.stringref if hasattr(transition_locstring, 'stringref') else -1
+
+        return {
+            "resref": str(self.resref),
+            "bearing": self.bearing,
+            "tag": self.tag,
+            "linked_to_module": str(self.linked_to_module),
+            "linked_to": self.linked_to,
+            "linked_to_flags": self.linked_to_flags.value if hasattr(self.linked_to_flags, 'value') else int(self.linked_to_flags),
+            "transition_destination_stringref": transition_stringref,
+        }
+
 
 class GITEncounterSpawnPoint:
     def __init__(
@@ -733,6 +810,23 @@ class GITEncounter(GITInstance):
     ) -> None:
         return None
 
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize GITEncounter-specific data."""
+        geometry = [v.serialize() for v in self.geometry]
+        spawn_points = [
+            {
+                "position": {"x": sp.x, "y": sp.y, "z": sp.z},
+                "orientation": sp.orientation,
+            }
+            for sp in self.spawn_points
+        ]
+
+        return {
+            "resref": str(self.resref),
+            "geometry": geometry,
+            "spawn_points": spawn_points,
+        }
+
 
 class GITPlaceable(GITInstance):
     GFF_STRUCT_ID = 9
@@ -802,6 +896,14 @@ class GITPlaceable(GITInstance):
     ) -> float:
         return self.bearing
 
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize GITPlaceable-specific data."""
+        return {
+            "resref": str(self.resref),
+            "bearing": self.bearing,
+            "tweak_color": self.tweak_color.bgr_integer() if self.tweak_color else None,
+        }
+
 
 class GITSound(GITInstance):
     GFF_STRUCT_ID = 6
@@ -855,6 +957,12 @@ class GITSound(GITInstance):
     ) -> None:
         return None
 
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize GITSound-specific data."""
+        return {
+            "resref": str(self.resref),
+        }
+
 
 class GITStore(GITInstance):
     GFF_STRUCT_ID = 11
@@ -906,6 +1014,13 @@ class GITStore(GITInstance):
         self,
     ) -> float:
         return self.bearing
+
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize GITStore-specific data."""
+        return {
+            "resref": str(self.resref),
+            "bearing": self.bearing,
+        }
 
 
 class GITTrigger(GITInstance):
@@ -966,6 +1081,24 @@ class GITTrigger(GITInstance):
     ) -> float:
         """Triggers do not have a bearing/yaw property. Returns 0.0 by default."""
         return 0.0
+
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize GITTrigger-specific data."""
+        geometry = [v.serialize() for v in self.geometry]
+
+        # transition_destination is a LocalizedString
+        transition_locstring = self.transition_destination
+        transition_stringref = transition_locstring.stringref if hasattr(transition_locstring, 'stringref') else -1
+
+        return {
+            "resref": str(self.resref),
+            "tag": self.tag,
+            "geometry": geometry,
+            "linked_to_module": str(self.linked_to_module),
+            "linked_to": self.linked_to,
+            "linked_to_flags": self.linked_to_flags.value if hasattr(self.linked_to_flags, 'value') else int(self.linked_to_flags),
+            "transition_destination_stringref": transition_stringref,
+        }
 
 
 class GITTransitionTrigger(GITTrigger):
@@ -1035,6 +1168,17 @@ class GITWaypoint(GITInstance):
         self,
     ) -> float:
         return self.bearing
+
+    def _serialize_instance_data(self) -> dict[str, Any]:
+        """Serialize GITWaypoint-specific data."""
+        return {
+            "resref": str(self.resref),
+            "bearing": self.bearing,
+            "tag": self.tag,
+            "name_stringref": self.name.stringref,
+            "map_note_enabled": self.map_note_enabled,
+            "has_map_note": self.has_map_note,
+        }
 
 
 def construct_git(

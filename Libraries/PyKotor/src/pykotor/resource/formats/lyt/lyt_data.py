@@ -192,6 +192,20 @@ class LYT(ComparableMixin):
                 room.connections.remove(room2)
                 room.connections.add(new_room)
 
+    def serialize(self) -> dict[str, Any]:
+        """Serialize a complete LYT to JSON-compatible dict.
+
+        Returns:
+        -------
+            Dictionary representation
+        """
+        return {
+            "rooms": [r.serialize() for r in self.rooms],
+            "doorhooks": [d.serialize() for d in self.doorhooks],
+            "tracks": [t.serialize() for t in self.tracks],
+            "obstacles": [o.serialize() for o in self.obstacles],
+        }
+
 
 class LYTRoom(ComparableMixin):
     """Represents a single room (area model) in a LYT layout.
@@ -282,6 +296,13 @@ class LYTRoom(ComparableMixin):
         if room in self.connections:
             self.connections.discard(room)
 
+    def serialize(self) -> dict[str, Any]:
+        """Serialize an LYTRoom to JSON-compatible dict."""
+        return {
+            "model": self.model,
+            "position": self.position.serialize(),
+        }
+
 
 class LYTTrack(ComparableMixin):
     """Represents a swoop track booster element in a LYT layout.
@@ -328,6 +349,13 @@ class LYTTrack(ComparableMixin):
     def __hash__(self) -> int:
         return hash((self.model.lower(), self.position))
 
+    def serialize(self) -> dict[str, Any]:
+        """Serialize an LYTTrack to JSON-compatible dict."""
+        return {
+            "model": self.model,
+            "position": self.position.serialize(),
+        }
+
 
 class LYTObstacle(ComparableMixin):
     """Represents a swoop track obstacle element in a LYT layout.
@@ -373,6 +401,13 @@ class LYTObstacle(ComparableMixin):
 
     def __hash__(self) -> int:
         return hash((self.model.lower(), self.position))
+
+    def serialize(self) -> dict[str, Any]:
+        """Serialize an LYTObstacle to JSON-compatible dict."""
+        return {
+            "model": self.model,
+            "position": self.position.serialize(),
+        }
 
 
 class LYTDoorHook(ComparableMixin):
@@ -464,3 +499,12 @@ class LYTDoorHook(ComparableMixin):
 
     def __hash__(self) -> int:
         return hash((self.room, self.door, self.position, self.orientation))
+
+    def serialize(self) -> dict[str, Any]:
+        """Serialize an LYTDoorHook to JSON-compatible dict."""
+        return {
+            "room": self.room,
+            "door": self.door,
+            "position": self.position.serialize(),
+            "orientation": self.orientation.serialize(),
+        }
