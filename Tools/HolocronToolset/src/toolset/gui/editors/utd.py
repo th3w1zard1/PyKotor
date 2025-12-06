@@ -419,14 +419,13 @@ class UTDEditor(Editor):
         data, _ = self.build()
         utd = read_utd(data)
 
-        # Build model information text
+        # Build model information text - focus on low-level technical details
         info_lines: list[str] = []
 
         # Validate appearance_id before calling door.get_model() to prevent IndexError
         if self._genericdoors_2da is None:
             self.ui.previewRenderer.clear_model()
             info_lines.append("❌ genericdoors.2da not loaded")
-            info_lines.append(f"🎨 Appearance ID: {utd.appearance_id}")
             self.ui.modelInfoLabel.setText("\n".join(info_lines))
             return
 
@@ -434,8 +433,7 @@ class UTDEditor(Editor):
         if utd.appearance_id < 0 or utd.appearance_id >= self._genericdoors_2da.get_height():
             self.ui.previewRenderer.clear_model()
             info_lines.append("❌ Invalid appearance ID")
-            info_lines.append(f"🎨 Appearance ID: {utd.appearance_id}")
-            info_lines.append(f"⚠️ Valid range: 0-{self._genericdoors_2da.get_height() - 1}")
+            info_lines.append(f"Range: 0-{self._genericdoors_2da.get_height() - 1}")
             self.ui.modelInfoLabel.setText("\n".join(info_lines))
             return
 
@@ -444,54 +442,63 @@ class UTDEditor(Editor):
         except (IndexError, ValueError) as e:
             # Fallback: Invalid appearance_id or missing genericdoors.2da - clear the model
             self.ui.previewRenderer.clear_model()
-            info_lines.append(f"❌ Error getting model: {e}")
-            info_lines.append(f"🎨 Appearance ID: {utd.appearance_id}")
+            info_lines.append(f"❌ Lookup error: {e}")
+            try:
+                row = self._genericdoors_2da.get_row(utd.appearance_id)
+                modelname_col = row.get_string("modelname", default="[empty]")
+                info_lines.append(f"genericdoors.2da row {utd.appearance_id}: 'modelname' = '{modelname_col}'")
+            except (IndexError, KeyError):
+                pass
             self.ui.modelInfoLabel.setText("\n".join(info_lines))
             return
 
-        info_lines.append(f"📦 Model: {modelname}")
-        info_lines.append(f"🎨 Appearance ID: {utd.appearance_id}")
-
-        # Add genericdoors.2da information
+        # Show the lookup process
+        info_lines.append(f"Model resolved: '{modelname}'")
         try:
             row = self._genericdoors_2da.get_row(utd.appearance_id)
-            label = row.get_string("label", default="[No label]")
-            info_lines.append(f"🚪 Door Type: {label}")
+            info_lines.append(f"Lookup: genericdoors.2da[row {utd.appearance_id}]['modelname']")
         except (IndexError, KeyError):
-            info_lines.append("⚠️ Invalid appearance ID in genericdoors.2da")
+            pass
 
         mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL)
         mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX)
         if mdl is not None and mdx is not None:
             self.ui.previewRenderer.set_model(mdl.data, mdx.data)
 
-            # Add resource location information
+            # Show full file paths and source locations
             try:
                 mdl_rel_path = mdl.filepath.relative_to(self._installation.path())
-                info_lines.append(f"✅ MDL: {mdl_rel_path}")
+                info_lines.append(f"MDL: {mdl_rel_path}")
             except ValueError:
-                info_lines.append(f"✅ MDL: {mdl.filepath}")
+                info_lines.append(f"MDL: {mdl.filepath}")
+
+            mdl_source = self._get_source_location_type(mdl.filepath)
+            if mdl_source:
+                info_lines.append(f"  └─ Source: {mdl_source}")
 
             try:
                 mdx_rel_path = mdx.filepath.relative_to(self._installation.path())
-                info_lines.append(f"✅ MDX: {mdx_rel_path}")
+                info_lines.append(f"MDX: {mdx_rel_path}")
             except ValueError:
-                info_lines.append(f"✅ MDX: {mdx.filepath}")
+                info_lines.append(f"MDX: {mdx.filepath}")
 
-            # Determine source location type
-            mdl_source = self._get_source_location_type(mdl.filepath)
             mdx_source = self._get_source_location_type(mdx.filepath)
-            if mdl_source:
-                info_lines.append(f"📍 MDL Source: {mdl_source}")
             if mdx_source:
-                info_lines.append(f"📍 MDX Source: {mdx_source}")
+                info_lines.append(f"  └─ Source: {mdx_source}")
+
+            # Note about textures
+            info_lines.append("")
+            info_lines.append("Note: Textures are referenced within the MDL file.")
+            info_lines.append("Use the texture browser to locate specific .tga/.tpc files.")
         else:
             self.ui.previewRenderer.clear_model()
-            info_lines.append("❌ Model resources not found:")
+            info_lines.append("❌ Resources not found in installation:")
             if mdl is None:
-                info_lines.append(f"  • MDL '{modelname}.mdl' missing")
+                info_lines.append(f"  Missing: {modelname}.mdl")
+                info_lines.append("  (Searched: Override → Modules → Chitin BIFs)")
             if mdx is None:
-                info_lines.append(f"  • MDX '{modelname}.mdx' missing")
+                info_lines.append(f"  Missing: {modelname}.mdx")
+                info_lines.append("  (Searched: Override → Modules → Chitin BIFs)")
 
         self.ui.modelInfoLabel.setText("\n".join(info_lines))
 
