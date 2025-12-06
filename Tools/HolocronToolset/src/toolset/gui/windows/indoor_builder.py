@@ -468,6 +468,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.sig_mouse_scrolled.connect(self.on_mouse_scrolled)
         self.ui.mapRenderer.sig_mouse_double_clicked.connect(self.onMouseDoubleClicked)
         self.ui.mapRenderer.sig_rooms_moved.connect(self.on_rooms_moved)
+        self.ui.mapRenderer.sig_rooms_rotated.connect(self.on_rooms_rotated)
         self.ui.mapRenderer.sig_warp_moved.connect(self.on_warp_moved)
         self.ui.mapRenderer.sig_marquee_select.connect(self.on_marquee_select)
 
@@ -1343,6 +1344,20 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self._undo_stack.push(cmd)
             self._refresh_window_title()
 
+    def on_rooms_rotated(
+        self,
+        rooms: list[IndoorMapRoom],
+        old_rotations: list[float],
+        new_rotations: list[float],
+    ):
+        """Called when rooms have been rotated during drag."""
+        if not rooms:
+            return
+        if any(abs(o - n) > 0.001 for o, n in zip(old_rotations, new_rotations)):
+            cmd = RotateRoomsCommand(self._map, rooms, old_rotations, new_rotations)
+            self._undo_stack.push(cmd)
+            self._refresh_window_title()
+
     def on_warp_moved(
         self,
         old_position: Vector3,
@@ -1447,7 +1462,15 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     ):
         if Qt.Key.Key_Control in keys:
             self.ui.mapRenderer.zoom_in_camera(delta.y / 50)
-        else:
+            return
+
+        # When dragging existing rooms, allow scroll-wheel rotation just like placement mode.
+        if self.ui.mapRenderer.is_dragging_rooms():
+            self.ui.mapRenderer.rotate_drag_selection(delta.y)
+            return
+
+        # Placement preview rotation
+        if self.ui.mapRenderer.cursor_component is not None:
             snap = self.ui.mapRenderer.rotation_snap
             self.ui.mapRenderer.cursor_rotation += math.copysign(snap, delta.y)
 
@@ -1677,6 +1700,7 @@ class IndoorMapRenderer(QWidget):
     sig_mouse_pressed = QtCore.Signal(object, object, object)  # pyright: ignore[reportPrivateImportUsage]
     sig_mouse_double_clicked = QtCore.Signal(object, object, object)  # pyright: ignore[reportPrivateImportUsage]
     sig_rooms_moved = QtCore.Signal(object, object, object)  # rooms, old_positions, new_positions  # pyright: ignore[reportPrivateImportUsage]
+    sig_rooms_rotated = QtCore.Signal(object, object, object)  # rooms, old_rotations, new_rotations  # pyright: ignore[reportPrivateImportUsage]
     sig_warp_moved = QtCore.Signal(object, object)  # old_position, new_position  # pyright: ignore[reportPrivateImportUsage]
     sig_marquee_select = QtCore.Signal(object, object)  # rooms selected, additive  # pyright: ignore[reportPrivateImportUsage]
 
@@ -1708,6 +1732,7 @@ class IndoorMapRenderer(QWidget):
         # Drag state
         self._dragging: bool = False
         self._drag_start_positions: list[Vector3] = []
+        self._drag_start_rotations: list[float] = []
         self._drag_rooms: list[IndoorMapRoom] = []
         self._drag_mode: str = ""  # "rooms", "warp", "marquee"
         
@@ -1891,6 +1916,9 @@ class IndoorMapRenderer(QWidget):
     def room_under_mouse(self) -> IndoorMapRoom | None:
         return self._under_mouse_room
 
+    def is_dragging_rooms(self) -> bool:
+        return self._dragging and self._drag_mode == "rooms"
+
     def selected_hook(self) -> tuple[IndoorMapRoom, int] | None:
         return self._selected_hook
 
@@ -1913,6 +1941,16 @@ class IndoorMapRenderer(QWidget):
 
     def clear_selected_rooms(self):
         self._selected_rooms.clear()
+        self.mark_dirty()
+
+    def rotate_drag_selection(self, delta_y: float):
+        """Rotate currently dragged rooms using mouse wheel delta."""
+        if not self.is_dragging_rooms() or not self._drag_rooms:
+            return
+        step = math.copysign(self.rotation_snap, delta_y)
+        for room in self._drag_rooms:
+            room.rotation = (room.rotation + step) % 360
+        self._map.rebuild_room_connections()
         self.mark_dirty()
 
     def clear_selected_hook(self):
@@ -2112,6 +2150,7 @@ class IndoorMapRenderer(QWidget):
         self._drag_mode = "rooms"
         self._drag_rooms = self._selected_rooms.copy()
         self._drag_start_positions = [copy(r.position) for r in self._drag_rooms]
+        self._drag_start_rotations = [r.rotation for r in self._drag_rooms]
         
         # Check if room is currently snapped and record snap anchor for soft snapping
         if self.snap_to_hooks and room:
@@ -2153,8 +2192,12 @@ class IndoorMapRenderer(QWidget):
             if self._drag_rooms:
                 new_positions = [copy(r.position) for r in self._drag_rooms]
                 self.sig_rooms_moved.emit(self._drag_rooms, self._drag_start_positions, new_positions)
+                new_rotations = [r.rotation for r in self._drag_rooms]
+                if self._drag_start_rotations:
+                    self.sig_rooms_rotated.emit(self._drag_rooms, self._drag_start_rotations, new_rotations)
             self._drag_rooms = []
             self._drag_start_positions = []
+            self._drag_start_rotations = []
             self._snap_indicator = None
             self._snap_anchor_position = None  # Clear snap anchor when drag ends
 
