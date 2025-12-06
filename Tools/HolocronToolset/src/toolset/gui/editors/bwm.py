@@ -213,7 +213,7 @@ class BWMEditor(Editor):
         screen = self.ui.renderArea.to_render_coords(world.x, world.y)
         xy = f" || x: {screen.x:.2f}, " + f"y: {screen.y:.2f}, "
 
-        self.statusBar().showMessage(coords_text + face_text + xy)
+        self.statusBar().showMessage(coords_text + face_text + xy)  # pyright: ignore[reportCallIssue]
 
     def on_mouse_scrolled(self, delta: Vector2, buttons: set[int], keys: set[int]):
         if not delta.y:
@@ -238,14 +238,19 @@ class BWMEditor(Editor):
             - Check if the current face material is different than the selected material
             - Assign the selected material to the provided face.
         """
-        new_material = self.ui.materialList.currentItem().data(Qt.ItemDataRole.UserRole)  # type: ignore[attr-defined]
+        current = self.ui.materialList.currentItem()
+        if current is None:
+            return
+        new_material = current.data(Qt.ItemDataRole.UserRole)  # type: ignore[union-attr]  # pyright: ignore[reportOptionalMemberAccess]
         if face.material == new_material:
             return
         face.material = new_material
 
     def onTransitionSelect(self):
         if self.ui.transList.currentItem():
-            item: QListWidgetItem | None = self.ui.transList.currentItem()
-            self.ui.renderArea.setHighlightedTrans(item.data(_TRANS_FACE_ROLE))  # FIXME: no function 'setHighlightedTrans'
+            item: QListWidgetItem | None = self.ui.transList.currentItem()  # type: ignore[union-attr]  # pyright: ignore[reportOptionalMemberAccess]
+            face: BWMFace | None = item.data(_TRANS_FACE_ROLE)
+            edge: int | None = item.data(_TRANS_EDGE_ROLE)
+            self.ui.renderArea.setHighlightedTrans(face, edge)
         else:
-            self.ui.renderArea.setHighlightedTrans(None)
+            self.ui.renderArea.setHighlightedTrans(None, None)

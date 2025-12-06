@@ -176,6 +176,8 @@ class WalkmeshRenderer(QWidget):
 
         self.material_colors: dict[SurfaceMaterial, QColor] = {}
         self.default_material_color: QColor = QColor(255, 0, 255)
+        self._highlighted_face: BWMFace | None = None
+        self._highlighted_edge: int | None = None
 
         self._keys_down: set[int | Qt.Key] = set()
         self._mouse_down: set[int | Qt.MouseButton] = set()
@@ -229,6 +231,18 @@ class WalkmeshRenderer(QWidget):
             walkmeshes: The list of walkmeshes.
         """
         self._walkmeshes = walkmeshes
+        self._highlighted_face = None
+        self._highlighted_edge = None
+
+    def setHighlightedTrans(self, face: BWMFace | None, edge: int | None):
+        """Highlight a transition edge for the given face.
+
+        This is used by the BWM editor when selecting a transition entry.
+        If both face and edge are None, highlighting is cleared.
+        """
+        self._highlighted_face = face
+        self._highlighted_edge = edge
+        self.update()
 
     def generate_walkmeshes(self, layout: LYT):
         """Generate walkmesh based on the current room layout."""
@@ -654,6 +668,26 @@ class WalkmeshRenderer(QWidget):
         for face, path in self._walkmesh_face_cache.items():
             painter.setBrush(self.material_color(face.material))
             painter.drawPath(path)
+
+        # Highlight a specific face/edge if requested
+        if self._highlighted_face is not None:
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setPen(QPen(QColor(255, 200, 0), 2 / self.camera.zoom()))
+            path = self._walkmesh_face_cache.get(self._highlighted_face)
+            if path is not None:
+                painter.drawPath(path)
+
+            # Edge-specific highlight
+            if self._highlighted_edge is not None and self._highlighted_edge in (1, 2, 3):
+                v1, v2, v3 = self._highlighted_face.v1, self._highlighted_face.v2, self._highlighted_face.v3
+                edge_points = {
+                    1: (v1, v2),
+                    2: (v2, v3),
+                    3: (v1, v3),
+                }
+                p1, p2 = edge_points[self._highlighted_edge]
+                painter.setPen(QPen(QColor(255, 255, 0), 3 / self.camera.zoom()))
+                painter.drawLine(QPointF(p1.x, p1.y), QPointF(p2.x, p2.y))
 
         if self.highlight_boundaries:
             for walkmesh in self._walkmeshes:
