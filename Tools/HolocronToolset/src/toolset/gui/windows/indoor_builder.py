@@ -1781,6 +1781,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         new_rotations = [(r.rotation + angle) % 360 for r in rooms]
         cmd = RotateRoomsCommand(self._map, rooms, old_rotations, new_rotations, self._invalidate_rooms)
         self._undo_stack.push(cmd)
+        # Force immediate update to prevent desync
+        self.ui.mapRenderer.update()
         self._refresh_window_title()
 
     def _flip_selected(self, flip_x: bool, flip_y: bool):
@@ -1789,6 +1791,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
         cmd = FlipRoomsCommand(self._map, rooms, flip_x, flip_y, self._invalidate_rooms)
         self._undo_stack.push(cmd)
+        # Force immediate update to prevent desync
+        self.ui.mapRenderer.update()
         self._refresh_window_title()
 
     def keyPressEvent(self, e: QKeyEvent):  # type: ignore[reportIncompatibleMethodOverride]
