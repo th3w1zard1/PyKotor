@@ -5,12 +5,12 @@ import math
 import shutil
 import zipfile
 
-from copy import copy
+from copy import copy, deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 import os
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import qtpy
 
@@ -527,7 +527,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 self.ui.moduleComponentList.addItem(item)
                 
         except Exception:  # noqa: BLE001
-            from loggerplus import RobustLogger
+            from loggerplus import RobustLogger  # type: ignore[import-not-found, note]
             RobustLogger().exception(f"Failed to load module '{module_root}'")
     
     def on_module_component_selected(self, item: QListWidgetItem | None = None):
@@ -692,7 +692,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
         
         # If there are non-PNG files missing, show all missing files (including PNGs)
-        filtered_files = missing_files
+        filtered_files: list[tuple[str, Path, str]] = missing_files
         
         files_by_kit: dict[str, list[tuple[Path, str]]] = {}
         for kit_name, file_path, file_type in filtered_files:
@@ -1849,6 +1849,53 @@ class IndoorMapRenderer(QWidget):
         painter.drawImage(rect, image, source)
         painter.setTransform(original)
 
+    def _draw_room_walkmesh(self, painter: QPainter, room: IndoorMapRoom):
+        """Draw a room using its walkmesh geometry.
+        
+        This renders the actual walkmesh faces as solid grey polygons.
+        This is the correct rendering approach - the walkmesh defines the
+        actual room geometry. QImage is ONLY for sidebar preview, never
+        for grid rendering.
+        """
+        bwm = self._get_room_walkmesh(room)
+        
+        # Draw each face with appropriate color based on material
+        for face in bwm.faces:
+            # Walkable surfaces are lighter grey, non-walkable are darker
+            is_walkable = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
+            color = QColor(180, 180, 180) if is_walkable else QColor(120, 120, 120)
+            
+            painter.setBrush(color)
+            painter.setPen(Qt.PenStyle.NoPen)
+            path = self._build_face(face)
+            painter.drawPath(path)
+
+    def _draw_cursor_walkmesh(self, painter: QPainter):
+        """Draw the cursor preview using walkmesh geometry.
+        
+        Draws the cursor component's walkmesh transformed by cursor position,
+        rotation, and flip settings. Uses semi-transparent grey to indicate
+        it's a preview.
+        """
+        if not self.cursor_component:
+            return
+        
+        # Get a transformed copy of the component's BWM
+        bwm: BWM = deepcopy(self.cursor_component.bwm)
+        bwm.flip(self.cursor_flip_x, self.cursor_flip_y)
+        bwm.rotate(self.cursor_rotation)
+        bwm.translate(self.cursor_point.x, self.cursor_point.y, self.cursor_point.z)
+        
+        # Draw each face with semi-transparent color
+        for face in bwm.faces:
+            is_walkable = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
+            color = QColor(180, 180, 180, 150) if is_walkable else QColor(120, 120, 120, 150)
+            
+            painter.setBrush(color)
+            painter.setPen(Qt.PenStyle.NoPen)
+            path = self._build_face(face)
+            painter.drawPath(path)
+
     def _draw_room_highlight(self, painter: QPainter, room: IndoorMapRoom, alpha: int, color: QColor | None = None):
         bwm = self._get_room_walkmesh(room)
         if color is None:
@@ -1990,16 +2037,9 @@ class IndoorMapRenderer(QWidget):
         # Draw grid
         self._draw_grid(painter)
 
-        # Draw rooms
+        # Draw rooms using walkmesh geometry (NOT QImage - QImage is only for sidebar preview)
         for room in self._map.rooms:
-            self._draw_image(
-                painter,
-                room.component.image,
-                Vector2.from_vector3(room.position),
-                room.rotation,
-                room.flip_x,
-                room.flip_y,
-            )
+            self._draw_room_walkmesh(painter, room)
 
             # Draw hooks (magnets)
             if not self.hide_magnets:
@@ -2026,18 +2066,8 @@ class IndoorMapRenderer(QWidget):
                     QPointF(hook_pos.x + xd, hook_pos.y + yd),
                 )
 
-        # Draw cursor preview
-        if self.cursor_component:
-            painter.setOpacity(0.6)
-            self._draw_image(
-                painter,
-                self.cursor_component.image,
-                Vector2.from_vector3(self.cursor_point),
-                self.cursor_rotation,
-                self.cursor_flip_x,
-                self.cursor_flip_y,
-            )
-            painter.setOpacity(1.0)
+        # Draw cursor preview using walkmesh (NOT QImage)
+        self._draw_cursor_walkmesh(painter)
 
         # Draw snap indicator
         self._draw_snap_indicator(painter)
@@ -2320,7 +2350,7 @@ class KitDownloader(QDialog):
                     lambda _=None, kit_dict=kit_dict, button=button: self._download_button_pressed(button, kit_dict)
                 )
 
-                layout: QFormLayout | None = self.ui.groupBox.layout()
+                layout: QFormLayout | None = self.ui.groupBox.layout()  # pyright: ignore[reportAssignmentType]
                 if layout is None:
                     msg = "Kit downloader group box layout is None"
                     raise RuntimeError(msg)  # noqa: TRY301
@@ -2379,8 +2409,8 @@ class KitDownloader(QDialog):
             return False
         
         kits_config = update_info_data.get("kits", {})
-        repository = kits_config.get("repository", "th3w1zard1/ToolsetData")
-        release_tag = kits_config.get("release_tag", "latest")
+        repository: str = kits_config.get("repository", "th3w1zard1/ToolsetData")
+        release_tag: str = kits_config.get("release_tag", "latest")
         
         try:
             owner, repo = repository.split("/")
@@ -2454,14 +2484,14 @@ class KitDownloader(QDialog):
                 self.ui.downloadAllButton.setEnabled(True)
     
     def _refresh_kit_buttons(self):
-        layout: QFormLayout | None = self.ui.groupBox.layout()
+        layout: QFormLayout | None = self.ui.groupBox.layout()  # pyright: ignore[reportAssignmentType]
         if layout is None:
             return
         
         for i in range(layout.rowCount()):
             item = layout.itemAt(i, QFormLayout.ItemRole.FieldRole)
             if item and isinstance(item.widget(), QPushButton):
-                button: QPushButton = item.widget()
+                button: QPushButton = cast(QPushButton, item.widget())
                 button.setText("Already Downloaded")
                 button.setEnabled(False)
 
@@ -2478,9 +2508,9 @@ class KitDownloader(QDialog):
             print(f"Failed to get update info: {update_info_data}")
             return False
         
-        kits_config = update_info_data.get("kits", {})
-        repository = kits_config.get("repository", "th3w1zard1/ToolsetData")
-        release_tag = kits_config.get("release_tag", "latest")
+        kits_config: dict[str, Any] = update_info_data.get("kits", {})
+        repository: str = kits_config.get("repository", "th3w1zard1/ToolsetData")
+        release_tag: str = kits_config.get("release_tag", "latest")
         
         try:
             owner, repo = repository.split("/")
