@@ -40,6 +40,38 @@
         <property name="bottomMargin">
          <number>0</number>
         </property>
+        <!-- Unified Preview -->
+        <item>
+         <widget class="QGroupBox" name="previewBox">
+          <property name="title">
+           <string>Preview</string>
+          </property>
+          <layout class="QGridLayout" name="previewLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="previewImage">
+             <property name="minimumSize">
+              <size>
+               <width>128</width>
+               <height>128</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>128</width>
+               <height>128</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="scaledContents">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
         <!-- Kits Collapsible Section -->
         <item>
          <widget class="CollapsibleGroupBox" name="kitsGroupBox">
@@ -76,37 +108,6 @@
              <property name="minimumHeight">
               <number>150</number>
              </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QGroupBox" name="kitPreviewBox">
-             <property name="title">
-              <string>Preview</string>
-             </property>
-             <layout class="QGridLayout" name="kitPreviewLayout">
-              <item row="0" column="0">
-               <widget class="QLabel" name="componentImage">
-                <property name="minimumSize">
-                 <size>
-                  <width>128</width>
-                  <height>128</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>128</width>
-                  <height>128</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="scaledContents">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
             </widget>
            </item>
           </layout>
@@ -150,43 +151,18 @@
              </property>
             </widget>
            </item>
-           <item>
-            <widget class="QGroupBox" name="modulePreviewBox">
-             <property name="title">
-              <string>Preview</string>
-             </property>
-             <layout class="QGridLayout" name="modulePreviewLayout">
-              <item row="0" column="0">
-               <widget class="QLabel" name="moduleComponentImage">
-                <property name="minimumSize">
-                 <size>
-                  <width>128</width>
-                  <height>128</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>128</width>
-                  <height>128</height>
-                 </size>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="scaledContents">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
           </layout>
          </widget>
         </item>
         <!-- Options Section -->
         <item>
-         <widget class="QGroupBox" name="optionsBox">
+         <widget class="CollapsibleGroupBox" name="optionsBox">
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
           <property name="title">
            <string>Options</string>
           </property>
@@ -284,7 +260,13 @@
         </item>
         <!-- Walkmesh Painter Section -->
         <item>
-         <widget class="QGroupBox" name="walkmeshBox">
+         <widget class="CollapsibleGroupBox" name="walkmeshBox">
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
           <property name="title">
            <string>Walkmesh Painter</string>
           </property>

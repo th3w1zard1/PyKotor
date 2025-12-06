@@ -558,7 +558,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def _current_material(self) -> SurfaceMaterial | None:
         if self.ui.materialList.currentItem():
-            material = self.ui.materialList.currentItem().data(Qt.ItemDataRole.UserRole)  # pyright: ignore[reportOptionalMemberAccess]
+            material = self.ui.materialList.currentItem().data(Qt.ItemDataRole.UserRole)  # type: ignore[union-attr]  # pyright: ignore[reportOptionalMemberAccess]
             if isinstance(material, SurfaceMaterial):
                 return material
         return next(iter(self._material_colors.keys()), None)
@@ -653,6 +653,20 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             display_name = self._module_kit_manager.get_module_display_name(module_root)
             self.ui.moduleSelect.addItem(display_name, module_root)
     
+    def _set_preview_image(self, image: QImage | None):
+        """Render a component preview into the unified preview pane."""
+        if image is None:
+            self.ui.previewImage.clear()
+            return
+
+        pixmap = QPixmap.fromImage(image)
+        scaled = pixmap.scaled(
+            self.ui.previewImage.size(),
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        self.ui.previewImage.setPixmap(scaled)
+    
     def on_module_selected(self, index: int = -1):
         """Handle module selection from the combobox.
         
@@ -660,7 +674,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         Uses ModuleKitManager to convert module resources into kit components.
         """
         self.ui.moduleComponentList.clear()
-        self.ui.moduleComponentImage.clear()
+        self._set_preview_image(None)
         
         module_root: str | None = self.ui.moduleSelect.currentData()
         if not module_root or not self._installation:
@@ -683,13 +697,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 self.ui.moduleComponentList.addItem(item)  # pyright: ignore[reportArgumentType, reportCallIssue]
                 
         except Exception:  # noqa: BLE001
-            from loggerplus import RobustLogger  # type: ignore[import-not-found, note]
+            from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
             RobustLogger().exception(f"Failed to load module '{module_root}'")
     
     def on_module_component_selected(self, item: QListWidgetItem | None = None):
         """Handle module component selection from the list."""
         if item is None:
-            self.ui.moduleComponentImage.clear()
+            self._set_preview_image(None)
             self.ui.mapRenderer.set_cursor_component(None)
             return
         
@@ -698,14 +712,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
         
         # Display component image in the preview
-        if component.image is not None:
-            pixmap = QPixmap.fromImage(component.image)
-            scaled = pixmap.scaled(
-                self.ui.moduleComponentImage.size(),
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-            self.ui.moduleComponentImage.setPixmap(scaled)
+        self._set_preview_image(component.image)
         
         # Set as current cursor component for placement
         self.ui.mapRenderer.set_cursor_component(component)
@@ -1120,6 +1127,9 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.set_cursor_component(None)
         self.ui.componentList.clearSelection()
         self.ui.componentList.setCurrentItem(None)
+        self.ui.moduleComponentList.clearSelection()
+        self.ui.moduleComponentList.setCurrentItem(None)
+        self._set_preview_image(None)
 
     # =========================================================================
     # View operations
@@ -1178,16 +1188,17 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if not isinstance(kit, Kit):
             return
         self.ui.componentList.clear()
+        self._set_preview_image(None)
         for component in kit.components:
             item = QListWidgetItem(component.name)
             item.setData(Qt.ItemDataRole.UserRole, component)
-            self.ui.componentList.addItem(item)
+            self.ui.componentList.addItem(item)  # pyright: ignore[reportCallIssue, reportArgumentType]
 
     def onComponentSelected(self, item: QListWidgetItem):
         if item is None:
             return
         component: KitComponent = item.data(Qt.ItemDataRole.UserRole)
-        self.ui.componentImage.setPixmap(QPixmap.fromImage(component.image))
+        self._set_preview_image(component.image)
         self.ui.mapRenderer.set_cursor_component(component)
 
     # =========================================================================
@@ -2200,26 +2211,61 @@ class IndoorMapRenderer(QWidget):
             color.setAlpha(alpha)   
         return color
 
+    def _draw_hooks_for_component(
+        self,
+        painter: QPainter,
+        component: KitComponent,
+        position: Vector3,
+        rotation: float,
+        flip_x: bool,
+        flip_y: bool,
+        connections: list[IndoorMapRoom | None] | None = None,
+        *,
+        alpha: int = 255,
+    ):
+        """Draw hook markers for a component at a transformed position."""
+        # Use a temporary room to reuse hook_position logic
+        temp_room = IndoorMapRoom(component, copy(position), rotation, flip_x=flip_x, flip_y=flip_y)
+
+        for hook_index, hook in enumerate(component.hooks):
+            hook_pos = temp_room.hook_position(hook)
+            is_connected = bool(connections and hook_index < len(connections) and connections[hook_index] is not None)
+            if is_connected:
+                brush_color = QColor(80, 200, 80, alpha)    # green
+                pen_color = QColor(180, 255, 180, alpha)
+            else:
+                brush_color = QColor(255, 80, 80, alpha)    # red
+                pen_color = QColor(255, 200, 200, alpha)
+
+            painter.setBrush(brush_color)
+            painter.setPen(QPen(pen_color, 0.1))
+            painter.drawEllipse(QPointF(hook_pos.x, hook_pos.y), 0.4, 0.4)
+
     def _draw_room_walkmesh(
         self,
         painter: QPainter,
         room: IndoorMapRoom,
     ):
-        """Draw a room using its walkmesh geometry.
-        
-        This renders the actual walkmesh faces as solid grey polygons.
-        This is the correct rendering approach - the walkmesh defines the
-        actual room geometry. QImage is ONLY for sidebar preview, never
-        for grid rendering.
-        """
+        """Draw a room using its walkmesh geometry (no QImage)."""
         bwm = self._get_room_walkmesh(room)
-        
+
         # Draw each face with appropriate color based on material
         for face in bwm.faces:
             painter.setBrush(self._face_color(face.material))
             painter.setPen(Qt.PenStyle.NoPen)
             path = self._build_face(face)
             painter.drawPath(path)
+
+        # Draw hooks (snap points) for this room
+        self._draw_hooks_for_component(
+            painter,
+            room.component,
+            room.position,
+            room.rotation,
+            room.flip_x,
+            room.flip_y,
+            connections=room.hooks,
+        )
 
     def _draw_cursor_walkmesh(self, painter: QPainter):
         """Draw the cursor preview using walkmesh geometry.
@@ -2243,6 +2289,18 @@ class IndoorMapRenderer(QWidget):
             painter.setPen(Qt.PenStyle.NoPen)
             path = self._build_face(face)
             painter.drawPath(path)
+
+        # Draw hooks for the cursor preview (semi-transparent)
+        self._draw_hooks_for_component(
+            painter,
+            self.cursor_component,
+            self.cursor_point,
+            self.cursor_rotation,
+            self.cursor_flip_x,
+            self.cursor_flip_y,
+            connections=None,
+            alpha=180,
+        )
 
     def _draw_room_highlight(
         self,
@@ -2313,10 +2371,15 @@ class IndoorMapRenderer(QWidget):
         if self._snap_indicator is None or not self._snap_indicator.snapped:
             return
 
-        pos = self._snap_indicator.position
+        # Prefer the exact hook-to position for visual cue; fall back to snap position.
+        if self._snap_indicator.hook_to is not None and self._snap_indicator.target_room is not None:
+            pos_vec = self._snap_indicator.target_room.hook_position(self._snap_indicator.hook_to)
+        else:
+            pos_vec = self._snap_indicator.position
+
         painter.setPen(QPen(QColor(0, 255, 255), 0.3))
         painter.setBrush(QColor(0, 255, 255, 100))
-        painter.drawEllipse(QPointF(pos.x, pos.y), 0.8, 0.8)
+        painter.drawEllipse(QPointF(pos_vec.x, pos_vec.y), 0.8, 0.8)
 
     def _draw_spawn_point(self, painter: QPainter, coords: Vector3):
         # Highlight when hovering or dragging
@@ -2398,12 +2461,14 @@ class IndoorMapRenderer(QWidget):
             # Draw hooks (magnets)
             if not self.hide_magnets:
                 for hook_index, hook in enumerate(room.component.hooks):
-                    if room.hooks[hook_index] is None:
-                        continue  # Connected hook
-
                     hook_pos = room.hook_position(hook)
-                    painter.setBrush(QColor(255, 80, 80))  # Brighter red
-                    painter.setPen(QPen(QColor(255, 200, 200), 0.1))
+                    # Color: unconnected = red, connected = green
+                    if room.hooks[hook_index] is None:
+                        painter.setBrush(QColor(255, 80, 80))  # red
+                        painter.setPen(QPen(QColor(255, 200, 200), 0.1))
+                    else:
+                        painter.setBrush(QColor(80, 200, 80))  # green
+                        painter.setPen(QPen(QColor(180, 255, 180), 0.1))
                     painter.drawEllipse(QPointF(hook_pos.x, hook_pos.y), 0.4, 0.4)
 
         # Draw connections (green lines for connected hooks)
