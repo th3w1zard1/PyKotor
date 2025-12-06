@@ -48,7 +48,7 @@ elif qtpy.QT6:
         from qtpy.QtGui import QCloseEvent
     except ImportError:
         # Fallback for Qt6 where QCloseEvent may be in QtCore
-        from qtpy.QtCore import QCloseEvent  # type: ignore[assignment]
+        from qtpy.QtCore import QCloseEvent  # type: ignore[assignment, attr-defined, no-redef]
 else:
     raise ValueError(f"Invalid QT_API: '{qtpy.API_NAME}'")
 
@@ -427,11 +427,16 @@ class ResetWalkmeshCommand(QUndoCommand):
         super().__init__(f"Reset Walkmesh ({len(rooms)} Room(s))")
         self.rooms: list[IndoorMapRoom] = rooms
         self._invalidate_cb: Callable[[list[IndoorMapRoom]], None] = invalidate_cb
-        self._previous_overrides: list[bytes | None] = [deepcopy(room.walkmesh_override) for room in rooms]
+        self._previous_overrides: list[bytes | None] = [
+            None
+            if room is None
+            else deepcopy(room.walkmesh_override)
+            for room in rooms
+        ]
 
     def undo(self):
         for room, previous in zip(self.rooms, self._previous_overrides):
-            room.walkmesh_override = deepcopy(previous) if previous is not None else None
+            room.walkmesh_override = None if previous is None else deepcopy(previous)
         self._invalidate_cb(self.rooms)
 
     def redo(self):
