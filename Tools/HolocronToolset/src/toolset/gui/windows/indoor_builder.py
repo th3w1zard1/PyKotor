@@ -927,7 +927,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         keys_sorted = sort_with_modifiers(keys, get_qt_key_string_local, "QtKey")
         buttons_sorted = sort_with_modifiers(buttons, get_qt_button_string_local, "QtMouse")
 
-        def fmt(seq, formatter, color: str):
+        def fmt(seq, formatter: Callable[[int | Qt.Key | Qt.MouseButton], str], color: str):
             return (
                 "<span style='color:" + color + "'>" + "</span>&nbsp;+&nbsp;<span style='color:" + color + "'>".join([formatter(item) for item in seq]) + "</span>"
                 if seq
@@ -937,9 +937,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         keys_text = fmt(keys_sorted, get_qt_key_string_local, "#a13ac8")
         buttons_text = fmt(buttons_sorted, get_qt_button_string_local, "#228800")
         sep = " + " if keys_text and buttons_text else ""
-        self._keys_label.setText(
-            f"<b><span style='{self._emoji_style}'>⌨</span>&nbsp;Keys/<span style='{self._emoji_style}'>🖱</span>&nbsp;Buttons:</b> {keys_text}{sep}{buttons_text}"
-        )
+        self._keys_label.setText(f"<b><span style='{self._emoji_style}'>⌨</span>&nbsp;Keys/<span style='{self._emoji_style}'>🖱</span>&nbsp;Buttons:</b> {keys_text}{sep}{buttons_text}")
 
         # Mode/status line
         mode_parts: list[str] = []
@@ -2148,6 +2146,8 @@ class IndoorMapRenderer(QWidget):
         step = math.copysign(self.rotation_snap, delta_y)
         for room in self._drag_rooms:
             room.rotation = (room.rotation + step) % 360
+            # Invalidate cached walkmesh since rotation affects the geometry
+            self._invalidate_walkmesh_cache(room)
         self._map.rebuild_room_connections()
         self.mark_dirty()
 
