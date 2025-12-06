@@ -2038,25 +2038,27 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         buttons: set[int | Qt.MouseButton],
         keys: set[int | Qt.Key],
     ):
-        # Only handle left button release for paint stroke and drag operations
-        # Other buttons (middle, right) are handled by camera controls
-        if Qt.MouseButton.LeftButton not in buttons:
-            self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
-            return
-
+        # NOTE: 'buttons' contains buttons STILL held after release (left button was just removed)
+        # So if left button was just released, it will NOT be in buttons
+        
+        # ALWAYS end drag operations when ANY button is released
+        # This is critical - marquee, room drag, hook drag, warp drag must all stop
+        renderer = self.ui.mapRenderer
+        
         # Finish paint stroke if active (including Shift+Left paint mode)
-        if (self._painting_walkmesh or Qt.Key.Key_Shift in keys) and self._paint_stroke_active:
+        if self._paint_stroke_active:
             self._finish_paint_stroke()
-            self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
-            return
-
-        self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
+        
         # Stop hook drag if active - rebuild connections after hook position changes
-        if self.ui.mapRenderer._dragging_hook:
-            self.ui.mapRenderer._dragging_hook = False
+        if renderer._dragging_hook:
+            renderer._dragging_hook = False
             self._map.rebuild_room_connections()
-        # End any active drag operations
-        self.ui.mapRenderer.end_drag()
+        
+        # CRITICAL: Always end any active drag operations on mouse release
+        # This includes marquee selection, room dragging, warp dragging
+        renderer.end_drag()
+        
+        self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
 
     def on_rooms_moved(
         self,
@@ -3056,8 +3058,12 @@ class IndoorMapRenderer(QWidget):
         self._marquee_end = screen_pos
 
     def end_drag(self):
-        """End dragging and emit appropriate signal."""
-        if self._drag_mode == DragMode.ROOMS and self._dragging:
+        """End dragging and emit appropriate signal.
+        
+        CRITICAL: This MUST be called on mouse release to stop ALL drag operations.
+        """
+        # Handle room dragging
+        if self._dragging:
             self._dragging = False
             if self._drag_rooms:
                 new_positions = [Vector3(*r.position) for r in self._drag_rooms]
@@ -3069,15 +3075,17 @@ class IndoorMapRenderer(QWidget):
             self._drag_start_positions = []
             self._drag_start_rotations = []
             self._snap_indicator = None
-            self._snap_anchor_position = None  # Clear snap anchor when drag ends
+            self._snap_anchor_position = None
 
-        elif self._drag_mode == DragMode.WARP and self._dragging_warp:
+        # Handle warp point dragging
+        if self._dragging_warp:
             self._dragging_warp = False
             new_pos = Vector3(*self._map.warp_point)
             if self._warp_drag_start.distance(new_pos) > POSITION_CHANGE_EPSILON:
                 self.sig_warp_moved.emit(self._warp_drag_start, new_pos)
 
-        elif self._drag_mode == DragMode.MARQUEE and self._marquee_active:
+        # Handle marquee selection - ALWAYS clear if active
+        if self._marquee_active:
             self._marquee_active = False
             # Only select rooms if marquee actually moved (not just a click)
             marquee_moved = self._marquee_start.distance(self._marquee_end) > MARQUEE_MOVE_THRESHOLD_PIXELS
@@ -3086,8 +3094,8 @@ class IndoorMapRenderer(QWidget):
                 rooms_in_marquee = self._get_rooms_in_marquee()
                 additive = Qt.Key.Key_Shift in self._keys_down
                 self.sig_marquee_select.emit(rooms_in_marquee, additive)
-            # Always clean up marquee state even if it didn't move
 
+        # CRITICAL: Always reset drag mode to NONE
         self._drag_mode = DragMode.NONE
         self.mark_dirty()
 
@@ -3657,14 +3665,21 @@ class IndoorMapRenderer(QWidget):
         # Update warp point hover state
         self._hovering_warp = self.is_over_warp_point(world)
 
-        # Handle marquee selection
+        # Handle marquee selection - ONLY if left button is still held
         if self._marquee_active:
+            if Qt.MouseButton.LeftButton not in self._mouse_down:
+                # Left button released but marquee still active - force end it
+                self.end_drag()
+                return
             self._marquee_end = coords
             self.mark_dirty()
             return
 
-        # Handle warp point dragging
+        # Handle warp point dragging - ONLY if left button still held
         if self._dragging_warp:
+            if Qt.MouseButton.LeftButton not in self._mouse_down:
+                self.end_drag()
+                return
             world_delta = self.to_world_delta(coords_delta.x, coords_delta.y)
             self._map.warp_point.x += world_delta.x
             self._map.warp_point.y += world_delta.y
@@ -3674,8 +3689,13 @@ class IndoorMapRenderer(QWidget):
             self.mark_dirty()
             return
 
-        # Handle hook dragging (selected hook)
+        # Handle hook dragging (selected hook) - ONLY if left button still held
         if self._dragging_hook and self._selected_hook is not None:
+            if Qt.MouseButton.LeftButton not in self._mouse_down:
+                self._dragging_hook = False
+                self._map.rebuild_room_connections()
+                self.mark_dirty()
+                return
             room, hook_index = self._selected_hook
             if hook_index < len(room.component.hooks):
                 world_delta = self.to_world_delta(coords_delta.x, coords_delta.y)
@@ -3688,8 +3708,11 @@ class IndoorMapRenderer(QWidget):
                 self.mark_dirty()
             return
 
-        # Handle room dragging
+        # Handle room dragging - ONLY if left button still held
         if self._dragging and self._drag_rooms:
+            if Qt.MouseButton.LeftButton not in self._mouse_down:
+                self.end_drag()
+                return
             world_delta = self.to_world_delta(coords_delta.x, coords_delta.y)
 
             # Move all selected rooms by delta first
