@@ -253,14 +253,18 @@ class DuplicateRoomsCommand(QUndoCommand):
         # Create duplicates
         self.duplicates: list[IndoorMapRoom] = []
         for room in rooms:
+            # Deep copy component so hooks can be edited independently
+            component_copy = deepcopy(room.component)
             new_room = IndoorMapRoom(
-                room.component,
+                component_copy,
                 Vector3(room.position.x + offset.x, room.position.y + offset.y, room.position.z + offset.z),
                 room.rotation,
                 flip_x=room.flip_x,
                 flip_y=room.flip_y,
             )
             new_room.walkmesh_override = deepcopy(room.walkmesh_override) if room.walkmesh_override is not None else None
+            # Initialize hooks connections list to match hooks length
+            new_room.hooks = [None] * len(component_copy.hooks)
             self.duplicates.append(new_room)
 
     def undo(self):
