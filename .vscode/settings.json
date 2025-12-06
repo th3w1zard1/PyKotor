@@ -47,7 +47,6 @@
         "${workspaceFolder}/Tools/KotorDiff/src",
         "${workspaceFolder}/Tools/GuiConverter/src"
     ],
-    "python.analysis.useLibraryCodeForTypes": true,
     "python.terminal.launchArgs": [
         "-i",
         "-m",
