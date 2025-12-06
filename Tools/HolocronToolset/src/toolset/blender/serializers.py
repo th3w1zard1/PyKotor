@@ -527,11 +527,49 @@ def deserialize_indoor_map_room(data: dict[str, Any]) -> IndoorMapRoom:
     The actual room creation is handled by the caller.
     """
     from toolset.data.indoormap import IndoorMapRoom
+    from toolset.data.indoorkit import KitComponent, Kit
+    from pykotor.common.misc import LocalizedString  # pyright: ignore[reportMissingImports]
+    from qtpy.QtGui import QImage
+    
     
     return IndoorMapRoom(
-        component=data.get("component", None),
-        position=deserialize_vector3(data.get("position", {})),
+        component=KitComponent(
+            name=LocalizedString.from_english(data.get("component_name", "")),
+            kit=Kit(name=data.get("kit_name", "")),
+            image=QImage(str(data.get("image", ""))).mirrored(),
+            bwm=None,
+            mdl=None,
+            mdx=None,
+        ),
+        position=Vector3(*data.get("position", [0.0, 0.0, 0.0])),
         rotation=float(data.get("rotation", 0.0)),
         flip_x=bool(data.get("flip_x", False)),
         flip_y=bool(data.get("flip_y", False)),
     )
+
+
+def deserialize_indoor_map(data: dict[str, Any]) -> dict[str, Any]:
+    """Deserialize IndoorMap data from JSON.
+    
+    Returns a dictionary that can be used to update/create a map.
+    The actual map creation is handled by the caller.
+    
+    Note: Rooms cannot be fully deserialized without access to the original
+    KitComponent objects, so this returns a dict with room data that must
+    be matched to existing components by the caller.
+    """
+    from pykotor.common.misc import Color, LocalizedString  # pyright: ignore[reportMissingImports]
+    from utility.common.geometry import Vector3
+    
+    return {
+        "module_id": data.get("module_id", ""),
+        "name": LocalizedString.from_english(data.get("name", "")),
+        "lighting": Color(
+            data.get("lighting", {}).get("r", 0.5),
+            data.get("lighting", {}).get("g", 0.5),
+            data.get("lighting", {}).get("b", 0.5),
+        ),
+        "skybox": data.get("skybox", ""),
+        "warp_point": Vector3(*deserialize_vector3(data.get("warp_point", {}))),
+        "rooms": [deserialize_indoor_map_room(r) for r in data.get("rooms", [])],
+    }
