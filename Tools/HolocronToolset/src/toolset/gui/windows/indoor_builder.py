@@ -5,12 +5,13 @@ import math
 import os
 import shutil
 import zipfile
+from collections import deque
 
 from copy import copy, deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, TextIO, cast
 
 import qtpy
 
@@ -28,7 +29,10 @@ from qtpy.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
+    QPlainTextEdit,
+    QProgressDialog,
     QPushButton,
+    QStackedWidget,
     QStatusBar,
     QVBoxLayout,
     QWidget,
@@ -51,7 +55,7 @@ else:
 from pykotor.common.misc import Color  # type: ignore[reportPrivateImportUsage]
 from pykotor.common.stream import BinaryWriter  # type: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.bwm import bytes_bwm, read_bwm  # type: ignore[reportPrivateImportUsage]
-from toolset.blender import BlenderEditorMode
+from toolset.blender import BlenderEditorMode, check_blender_and_ask, get_blender_settings
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
 from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, ModuleKit, ModuleKitManager, load_kits
@@ -422,6 +426,18 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # Initialize Blender integration
         self._init_blender_integration(BlenderEditorMode.INDOOR_BUILDER)
         self._use_blender_mode: bool = use_blender
+        self._blender_choice_made: bool = False
+        self._view_stack: QStackedWidget | None = None
+        self._blender_placeholder: QWidget | None = None
+        self._blender_log_buffer: deque[str] = deque(maxlen=500)
+        self._blender_log_path: Path | None = None
+        self._blender_log_handle: TextIO | None = None
+        self._blender_progress_dialog: QProgressDialog | None = None
+        self._blender_log_view: QPlainTextEdit | None = None
+        self._blender_connected_once: bool = False
+        self._room_id_lookup: dict[int, IndoorMapRoom] = {}
+        self._transform_sync_in_progress: bool = False
+        self._property_sync_in_progress: bool = False
 
         self._installation: HTInstallation | None = installation
         self._kits: list[Kit] = []
@@ -469,6 +485,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Initialize Options UI to match renderer state
         self._initialize_options_ui()
+        
+        # Setup Blender integration UI (deferred to avoid layout issues)
+        QTimer.singleShot(0, self._install_view_stack)
+        
+        # Check for Blender on first map load
+        if not self._blender_choice_made and self._installation:
+            QTimer.singleShot(100, self._check_blender_on_load)
 
     def _setup_signals(self):
         """Connect signals to slots."""
@@ -837,6 +860,251 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             title = "* " + title
         self.setWindowTitle(title)
 
+    # =============================================================================
+    # Blender Integration
+    # =============================================================================
+    
+    def _install_view_stack(self):
+        """Wrap the map renderer with a stacked widget so we can swap in Blender instructions."""
+        if self._view_stack is not None:
+            return
+        
+        # Find the parent layout that contains the map renderer
+        # This will depend on the UI structure - adjust as needed
+        parent_layout = self.ui.mapRenderer.parent().layout() if self.ui.mapRenderer.parent() else None
+        if parent_layout is None:
+            return  # Can't install view stack without a parent layout
+        
+        self._view_stack = QStackedWidget(self)
+        parent_layout.removeWidget(self.ui.mapRenderer)
+        self._view_stack.addWidget(self.ui.mapRenderer)
+        self._blender_placeholder = self._create_blender_placeholder()
+        self._view_stack.addWidget(self._blender_placeholder)
+        parent_layout.addWidget(self._view_stack)
+    
+    def _create_blender_placeholder(self) -> QWidget:
+        """Create placeholder pane shown while Blender drives the rendering."""
+        container = QWidget(self)
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+        
+        headline = QLabel(
+            "<b>Blender mode is active.</b><br>"
+            "The Holocron Toolset will defer all 3D rendering and editing to Blender. "
+            "Use the Blender window to move rooms, edit textures/models, and "
+            "manipulate the indoor map. This panel streams Blender's console output for diagnostics."
+        )
+        headline.setWordWrap(True)
+        layout.addWidget(headline)
+        
+        self._blender_log_view = QPlainTextEdit(container)
+        self._blender_log_view.setReadOnly(True)
+        self._blender_log_view.setPlaceholderText("Blender log output will appear here once the IPC bridge starts…")
+        layout.addWidget(self._blender_log_view, 1)
+        
+        return container
+    
+    def _show_blender_workspace(self):
+        """Switch to Blender placeholder view."""
+        if self._view_stack is not None and self._blender_placeholder is not None:
+            self._view_stack.setCurrentWidget(self._blender_placeholder)
+    
+    def _show_internal_workspace(self):
+        """Switch to internal renderer view."""
+        if self._view_stack is not None:
+            self._view_stack.setCurrentWidget(self.ui.mapRenderer)
+    
+    def _check_blender_on_load(self):
+        """Check for Blender when a map is loaded."""
+        if self._blender_choice_made or not self._installation:
+            return
+        
+        self._blender_choice_made = True
+        blender_settings = get_blender_settings()
+        
+        if blender_settings.remember_choice:
+            self._use_blender_mode = blender_settings.prefer_blender
+        else:
+            blender_info = blender_settings.get_blender_info()
+            if blender_info.is_valid:
+                use_blender, _ = check_blender_and_ask(self, "Indoor Map Builder")
+                if _ is not None:
+                    self._use_blender_mode = use_blender
+    
+    def _refresh_room_id_lookup(self):
+        """Cache Python object ids for fast lookup when Blender sends events."""
+        self._room_id_lookup.clear()
+        for room in self._map.rooms:
+            self._room_id_lookup[id(room)] = room
+    
+    def _on_blender_material_changed(self, payload: dict):
+        """Handle material/texture changes from Blender for real-time updates."""
+        def _apply():
+            object_name = payload.get("object_name", "")
+            material_data = payload.get("material", {})
+            model_name = payload.get("model_name")
+            
+            if not model_name:
+                return
+            
+            self.log.info(f"Material changed for {object_name} (model: {model_name})")
+            
+            # Find the room that uses this model
+            room = None
+            for r in self._map.rooms:
+                if r.component.mdl == model_name or (hasattr(r.component, "name") and r.component.name == model_name):
+                    room = r
+                    break
+            
+            if room is None:
+                return
+            
+            # If textures were changed, we need to reload the model
+            if "diffuse_texture" in material_data or "lightmap_texture" in material_data:
+                # Request MDL export from Blender
+                if self.is_blender_mode() and self._blender_controller is not None:
+                    import tempfile
+                    temp_mdl = tempfile.NamedTemporaryFile(suffix=".mdl", delete=False)
+                    temp_mdl.close()
+                    
+                    from toolset.blender.ipc_client import get_ipc_client
+                    client = get_ipc_client()
+                    if client and client.is_connected:
+                        result = client.send_command("export_mdl", {
+                            "path": temp_mdl.name,
+                            "object": object_name,
+                        })
+                        if result.success:
+                            self.log.info(f"Exported updated MDL to {temp_mdl.name}")
+                            # Reload the model in the renderer
+                            self.ui.mapRenderer.invalidate_rooms([room])
+                            self.ui.mapRenderer.update()
+        
+        QTimer.singleShot(0, _apply)
+    
+    def _on_blender_transform_changed(
+        self,
+        instance_id: int,
+        position: dict | None,
+        rotation: dict | None,
+    ):
+        """Handle room transform changes from Blender."""
+        def _apply():
+            prev = self._transform_sync_in_progress
+            self._transform_sync_in_progress = True
+            try:
+                room = self._room_id_lookup.get(instance_id)
+                if room is None:
+                    return
+                
+                if position:
+                    new_position = Vector3(
+                        position.get("x", room.position.x),
+                        position.get("y", room.position.y),
+                        position.get("z", room.position.z),
+                    )
+                    if room.position != new_position:
+                        old_positions = [copy(room.position)]
+                        new_positions = [new_position]
+                        cmd = MoveRoomsCommand(
+                            self._map,
+                            [room],
+                            old_positions,
+                            new_positions,
+                            self._invalidate_rooms,
+                        )
+                        self._undo_stack.push(cmd)
+                
+                if rotation and "euler" in rotation:
+                    new_rotation = rotation["euler"].get("z", room.rotation)
+                    if not math.isclose(room.rotation, new_rotation, abs_tol=1e-4):
+                        old_rotations = [room.rotation]
+                        new_rotations = [new_rotation]
+                        cmd = RotateRoomsCommand(
+                            self._map,
+                            [room],
+                            old_rotations,
+                            new_rotations,
+                            self._invalidate_rooms,
+                        )
+                        self._undo_stack.push(cmd)
+            finally:
+                self._transform_sync_in_progress = prev
+        
+        QTimer.singleShot(0, _apply)
+    
+    def _on_blender_selection_changed(self, instance_ids: list[int]):
+        """Handle selection changes from Blender."""
+        def _apply():
+            rooms = [
+                room
+                for room_id in instance_ids
+                if (room := self._room_id_lookup.get(room_id)) is not None
+            ]
+            if rooms:
+                self.ui.mapRenderer.select_rooms(rooms)
+        
+        QTimer.singleShot(0, _apply)
+    
+    def _on_blender_state_change(self, state):
+        """Handle Blender connection state changes."""
+        super()._on_blender_state_change(state)
+        QTimer.singleShot(0, lambda: self._handle_blender_state_change(state))
+    
+    def _handle_blender_state_change(self, state):
+        """Handle Blender state change on UI thread."""
+        if state.value == "connected":  # ConnectionState.CONNECTED
+            self._blender_connected_once = True
+            if self._blender_progress_dialog:
+                self._blender_progress_dialog.hide()
+        elif state.value == "error":
+            if self._blender_progress_dialog:
+                self._blender_progress_dialog.hide()
+            QMessageBox.warning(
+                self,
+                "Blender Connection Error",
+                "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.",
+            )
+    
+    def _on_blender_module_loaded(self):
+        """Called when indoor map is loaded in Blender."""
+        super()._on_blender_module_loaded()
+        QTimer.singleShot(0, lambda: self._blender_progress_dialog.hide() if self._blender_progress_dialog else None)
+        self._refresh_room_id_lookup()
+    
+    def _on_blender_mode_stopped(self):
+        """Called when Blender mode is stopped."""
+        super()._on_blender_mode_stopped()
+        QTimer.singleShot(0, self._show_internal_workspace)
+    
+    def _on_blender_output(self, line: str):
+        """Handle Blender stdout/stderr output."""
+        super()._on_blender_output(line)
+        if self._blender_log_view:
+            self._blender_log_view.appendPlainText(line)
+    
+    def sync_room_to_blender(self, room: IndoorMapRoom):
+        """Sync a room's position/rotation to Blender."""
+        if not self.is_blender_mode() or self._blender_controller is None:
+            return
+        
+        # For indoor maps, we need to send room data differently
+        # Since Blender expects LYT rooms, we'll need to convert
+        # This is a simplified version - full implementation would need
+        # to handle the conversion properly
+        room_id = id(room)
+        if self._blender_controller.session:
+            # Map room to Blender object name
+            object_name = f"Room_{room_id}"
+            # Update position
+            self._blender_controller.update_room_position(
+                object_name,
+                room.position.x,
+                room.position.y,
+                room.position.z,
+            )
+    
     def _initialize_options_ui(self):
         """Initialize Options UI to match renderer's initial state."""
         renderer = self.ui.mapRenderer
@@ -1639,6 +1907,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             cmd = MoveRoomsCommand(self._map, rooms, old_positions, new_positions, self._invalidate_rooms)
             self._undo_stack.push(cmd)
             self._refresh_window_title()
+            
+            # Sync to Blender if not already syncing from Blender
+            if self.is_blender_mode() and self._blender_controller is not None and not self._transform_sync_in_progress:
+                for room in rooms:
+                    self.sync_room_to_blender(room)
 
     def on_rooms_rotated(
         self,
@@ -1653,6 +1926,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             cmd = RotateRoomsCommand(self._map, rooms, old_rotations, new_rotations, self._invalidate_rooms)
             self._undo_stack.push(cmd)
             self._refresh_window_title()
+            
+            # Sync to Blender if not already syncing from Blender
+            if self.is_blender_mode() and self._blender_controller is not None and not self._transform_sync_in_progress:
+                for room in rooms:
+                    self.sync_room_to_blender(room)
 
     def on_warp_moved(
         self,
@@ -3584,7 +3862,7 @@ class KitDownloader(QDialog):
             err_msg_box.setWindowIcon(self.windowIcon())
             err_msg_box.exec()
 
-    def _download_button_pressed(self, button: QPushButton, info_dict: dict):
+    def _download_button_pressed(self, button: QPushButton, info_dict: dict[str, Any]):
         button.setText("Downloading")
         button.setEnabled(False)
 

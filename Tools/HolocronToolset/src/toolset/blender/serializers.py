@@ -28,6 +28,7 @@ if TYPE_CHECKING:
         GITWaypoint,
     )
     from utility.common.geometry import Vector3, Vector4
+    from toolset.data.indoormap import IndoorMapRoom, IndoorMap
 
 
 def serialize_vector3(v: Vector3) -> dict[str, float]:
@@ -469,3 +470,67 @@ def serialize_module_data(
         "walkmeshes": [serialize_bwm(w) for w in walkmeshes],
     }
 
+
+# =============================================================================
+# Indoor Map Serialization
+# =============================================================================
+
+
+def serialize_indoor_map_room(room: IndoorMapRoom) -> dict[str, Any]:
+    """Serialize an IndoorMapRoom to JSON-compatible dict.
+    
+    Args:
+        room: IndoorMapRoom instance
+        
+    Returns:
+        Dictionary representation
+    """
+    
+    return {
+        "component_id": id(room.component),  # Reference to component
+        "component_name": room.component.name if hasattr(room.component, "name") else "",
+        "position": serialize_vector3(room.position),
+        "rotation": float(room.rotation),
+        "flip_x": bool(room.flip_x),
+        "flip_y": bool(room.flip_y),
+        "runtime_id": id(room),
+    }
+
+
+def serialize_indoor_map(indoor_map: IndoorMap) -> dict[str, Any]:
+    """Serialize an IndoorMap to JSON-compatible dict.
+    
+    Args:
+        indoor_map: IndoorMap instance
+        
+    Returns:
+        Dictionary representation
+    """    
+    return {
+        "module_id": indoor_map.module_id,
+        "name": str(indoor_map.name) if hasattr(indoor_map.name, "__str__") else "",
+        "lighting": {
+            "r": float(indoor_map.lighting.r),
+            "g": float(indoor_map.lighting.g),
+            "b": float(indoor_map.lighting.b),
+        },
+        "skybox": indoor_map.skybox,
+        "warp_point": serialize_vector3(indoor_map.warp_point),
+        "rooms": [serialize_indoor_map_room(r) for r in indoor_map.rooms],
+    }
+
+
+def deserialize_indoor_map_room(data: dict[str, Any]) -> IndoorMap:
+    """Deserialize IndoorMapRoom data from JSON.
+    
+    Returns a dictionary that can be used to update/create a room.
+    The actual room creation is handled by the caller.
+    """
+    from toolset.data.indoormap import IndoorMap
+    
+    return IndoorMap(
+        position=deserialize_vector3(data.get("position", {})),
+        rotation=float(data.get("rotation", 0.0)),
+        flip_x=bool(data.get("flip_x", False)),
+        flip_y=bool(data.get("flip_y", False)),
+    )
