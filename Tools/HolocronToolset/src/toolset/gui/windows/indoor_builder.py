@@ -1285,14 +1285,14 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Mouse/hover
         hover_text = (
-            f"<b><span style='{self._emoji_style}'>🧩</span>&nbsp;Hover:</b> <span style='color:#0055B0'>{hover_room.component.name}</span>"
+            f"<b><span style=\"{self._emoji_style}\">🧩</span>&nbsp;Hover:</b> <span style='color:#0055B0'>{hover_room.component.name}</span>"
             if hover_room
-            else "<b><span style='{self._emoji_style}'>🧩</span>&nbsp;Hover:</b> <span style='color:#a6a6a6'><i>None</i></span>"
+            else f"<b><span style=\"{self._emoji_style}\">🧩</span>&nbsp;Hover:</b> <span style='color:#a6a6a6'><i>None</i></span>"
         )
         self._hover_label.setText(hover_text)
 
         self._mouse_label.setText(
-            f"<b><span style='{self._emoji_style}'>🖱</span>&nbsp;Coords:</b> "
+            f"<b><span style=\"{self._emoji_style}\">🖱</span>&nbsp;Coords:</b> "
             f"<span style='color:#0055B0'>{world.x:.2f}</span>, "
             f"<span style='color:#228800'>{world.y:.2f}</span>"
         )
@@ -1300,11 +1300,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # Selection
         if sel_hook is not None:
             hook_room, hook_idx = sel_hook
-            sel_text = f"<b><span style='{self._emoji_style}'>🎯</span>&nbsp;Selected Hook:</b> <span style='color:#0055B0'>{hook_room.component.name}</span> (#{hook_idx})"
+            sel_text = f"<b><span style=\"{self._emoji_style}\">🎯</span>&nbsp;Selected Hook:</b> <span style='color:#0055B0'>{hook_room.component.name}</span> (#{hook_idx})"
         elif sel_rooms:
-            sel_text = f"<b><span style='{self._emoji_style}'>🟦</span>&nbsp;Selected Rooms:</b> <span style='color:#0055B0'>{len(sel_rooms)}</span>"
+            sel_text = f"<b><span style=\"{self._emoji_style}\">🟦</span>&nbsp;Selected Rooms:</b> <span style='color:#0055B0'>{len(sel_rooms)}</span>"
         else:
-            sel_text = f"<b><span style='{self._emoji_style}'>🟦</span>&nbsp;Selected:</b> <span style='color:#a6a6a6'><i>None</i></span>"
+            sel_text = f"<b><span style=\"{self._emoji_style}\">🟦</span>&nbsp;Selected:</b> <span style='color:#a6a6a6'><i>None</i></span>"
         self._selection_label.setText(sel_text)
 
         # Keys/buttons (sorted with modifiers first)
@@ -1383,7 +1383,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         keys_text = fmt(keys_sorted, get_qt_key_string_local, "#a13ac8")
         buttons_text = fmt(buttons_sorted, get_qt_button_string_local, "#228800")
         sep = " + " if keys_text and buttons_text else ""
-        self._keys_label.setText(f"<b><span style='{self._emoji_style}'>⌨</span>&nbsp;Keys/<span style='{self._emoji_style}'>🖱</span>&nbsp;Buttons:</b> {keys_text}{sep}{buttons_text}")
+        self._keys_label.setText(f"<b><span style=\"{self._emoji_style}\">⌨</span>&nbsp;Keys/<span style=\"{self._emoji_style}\">🖱</span>&nbsp;Buttons:</b> {keys_text}{sep}{buttons_text}")
 
         # Mode/status line
         mode_parts: list[str] = []
@@ -1398,7 +1398,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if renderer.snap_to_hooks:
             mode_parts.append("Hook Snap")
         self._mode_label.setText(
-            "<b><span style='{style}'>ℹ</span>&nbsp;Status:</b> {body}".format(
+            "<b><span style=\"{style}\">ℹ</span>&nbsp;Status:</b> {body}".format(
                 style=self._emoji_style,
                 body=" | ".join(mode_parts) if mode_parts else "<span style='color:#a6a6a6'><i>Idle</i></span>",
             )
@@ -3175,7 +3175,7 @@ class IndoorMapRenderer(QWidget):
     ):
         """Draw hook markers for a component at a transformed position."""
         # Use a temporary room to reuse hook_position logic
-        temp_room = IndoorMapRoom(component, copy(position), rotation, flip_x=flip_x, flip_y=flip_y)
+        temp_room = IndoorMapRoom(component, Vector3(*position), rotation, flip_x=flip_x, flip_y=flip_y)
 
         for hook_index, hook in enumerate(component.hooks):
             hook_pos = temp_room.hook_position(hook)
@@ -3309,7 +3309,11 @@ class IndoorMapRenderer(QWidget):
         room.hooks = [None] * len(component_copy.hooks)  # type: ignore[assignment]
         self._invalidate_walkmesh_cache(room)
 
-    def _world_to_local_hook(self, room: IndoorMapRoom, world_pos: Vector3) -> Vector3:
+    def _world_to_local_hook(
+        self,
+        room: IndoorMapRoom,
+        world_pos: Vector3,
+    ) -> Vector3:
         """Convert world coordinates to local hook coordinates for the room."""
         pos: Vector3 = Vector3(*world_pos)
         # translate to room local
@@ -3328,7 +3332,10 @@ class IndoorMapRenderer(QWidget):
             pos.y = -pos.y
         return pos
 
-    def add_hook_at(self, world_pos: Vector3):
+    def add_hook_at(
+        self,
+        world_pos: Vector3,
+    ):
         """Add a hook to the room under the mouse at world_pos."""
         room = self._under_mouse_room
         if room is None:
@@ -3349,7 +3356,11 @@ class IndoorMapRenderer(QWidget):
         self._invalidate_walkmesh_cache(room)
         self.mark_dirty()
 
-    def delete_hook(self, room: IndoorMapRoom, hook_index: int):
+    def delete_hook(
+        self,
+        room: IndoorMapRoom,
+        hook_index: int,
+    ):
         """Delete a hook from a room."""
         if hook_index < 0 or hook_index >= len(room.component.hooks):
             return
@@ -3371,7 +3382,11 @@ class IndoorMapRenderer(QWidget):
         self._invalidate_walkmesh_cache(room)
         self.mark_dirty()
 
-    def duplicate_hook(self, room: IndoorMapRoom, hook_index: int):
+    def duplicate_hook(
+        self,
+        room: IndoorMapRoom,
+        hook_index: int,
+    ):
         """Duplicate a hook in place."""
         if hook_index < 0 or hook_index >= len(room.component.hooks):
             return
@@ -3919,12 +3934,10 @@ class KitDownloader(QDialog):
         self._setup_downloads()
 
     def _setup_downloads(self):
-        update_info_data: Exception | dict[str, Any] = get_remote_toolset_update_info(
-            use_beta_channel=GlobalSettings().useBetaChannel,
-        )
+        update_info_data: Exception | dict[str, Any] = get_remote_toolset_update_info(use_beta_channel=GlobalSettings().useBetaChannel)
         try:
             if not isinstance(update_info_data, dict):
-                raise update_info_data  # noqa: TRY301
+                raise update_info_data  # type: ignore[reportUnnecessaryIsInstance]
 
             for kit_name, kit_dict in update_info_data["kits"].items():
                 kit_id = kit_dict["id"]
