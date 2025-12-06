@@ -335,7 +335,12 @@ class CodeEditor(QPlainTextEdit):
         while block.isValid() and top <= e.rect().bottom():
             if block.isVisible() and bottom >= e.rect().top():
                 number: str = str(block_number + 1)
-                painter.drawText(0, int(top), line_number_area_width, font_height, Qt.AlignmentFlag.AlignRight, number)
+                # Calculate proper vertical alignment - center text within the block
+                block_height = self.blockBoundingRect(block).height()
+                # Draw text with right alignment and proper vertical centering
+                # Use 4px right padding to prevent clipping at the edge
+                text_rect = QRect(4, int(top), line_number_area_width - 8, int(block_height))
+                painter.drawText(text_rect, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter, number)
 
                 # Draw error/warning indicators first (left edge, most important)
                 line_num_1_indexed = block_number + 1

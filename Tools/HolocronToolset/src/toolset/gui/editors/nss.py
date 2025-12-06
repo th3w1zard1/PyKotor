@@ -1830,34 +1830,70 @@ class NSSEditor(Editor):
                         rect = self.ui.codeEdit.cursorRect(cursor)
                         mouse_pos = rect.topLeft()
 
-                    # Calculate tooltip position: try above first, then below
+                    # Calculate tooltip position: position to the RIGHT of cursor to avoid covering text
                     global_mouse_pos = self.ui.codeEdit.mapToGlobal(mouse_pos)
-                    tooltip_rect = QRect(global_mouse_pos, QSize(1, 1))
-
+                    
                     # Get screen geometry to check available space
                     screen = QApplication.primaryScreen()
                     if screen is not None:
                         screen_geometry = screen.availableGeometry()
-                        # Estimate tooltip height (rough estimate, tooltip will adjust)
+                        
+                        # Estimate tooltip size (rough estimates)
+                        estimated_tooltip_width = 400
                         estimated_tooltip_height = 200
-
-                        # Check if there's space above the cursor
-                        space_above = global_mouse_pos.y() - screen_geometry.top()
-                        space_below = screen_geometry.bottom() - global_mouse_pos.y()
-
-                        # Position tooltip above if there's more space above, otherwise below
-                        if space_above > estimated_tooltip_height or space_above > space_below:
-                            # Position above cursor
-                            tooltip_y = global_mouse_pos.y() - estimated_tooltip_height
-                            tooltip_pos = QPoint(global_mouse_pos.x(), max(screen_geometry.top(), tooltip_y))
+                        
+                        # Calculate character width for horizontal offset
+                        font_metrics = self.ui.codeEdit.fontMetrics()
+                        char_width = font_metrics.horizontalAdvance('M')
+                        # Offset tooltip to the right of the cursor by ~20 characters
+                        horizontal_offset = char_width * 20
+                        
+                        # Check available space to the right
+                        space_right = screen_geometry.right() - global_mouse_pos.x()
+                        space_left = global_mouse_pos.x() - screen_geometry.left()
+                        
+                        # Position tooltip to the right if there's space, otherwise to the left
+                        if space_right >= estimated_tooltip_width:
+                            # Position to the right of cursor
+                            tooltip_x = global_mouse_pos.x() + horizontal_offset
+                        elif space_left >= estimated_tooltip_width:
+                            # Position to the left of cursor
+                            tooltip_x = global_mouse_pos.x() - horizontal_offset - estimated_tooltip_width
                         else:
-                            # Position below cursor (default behavior)
-                            tooltip_pos = global_mouse_pos
-
-                        QToolTip.showText(tooltip_pos, doc, self.ui.codeEdit, tooltip_rect, 5000)
+                            # Not enough space on either side, position below cursor with offset
+                            tooltip_x = global_mouse_pos.x() + horizontal_offset
+                            # Clamp to screen bounds
+                            tooltip_x = max(screen_geometry.left() + 10, min(tooltip_x, screen_geometry.right() - estimated_tooltip_width - 10))
+                        
+                        # Vertical position: slightly above cursor to avoid covering text
+                        # Offset upward by ~2 lines to clear the text being documented
+                        line_height = font_metrics.height()
+                        vertical_offset = line_height * 2
+                        tooltip_y = global_mouse_pos.y() - vertical_offset
+                        
+                        # Ensure tooltip stays within screen bounds vertically
+                        if tooltip_y < screen_geometry.top():
+                            # Not enough space above, position below cursor
+                            tooltip_y = global_mouse_pos.y() + line_height * 3
+                        if tooltip_y + estimated_tooltip_height > screen_geometry.bottom():
+                            # Not enough space below, position at top of screen
+                            tooltip_y = screen_geometry.top() + 10
+                        
+                        tooltip_pos = QPoint(tooltip_x, tooltip_y)
+                        tooltip_rect = QRect(tooltip_pos, QSize(estimated_tooltip_width, estimated_tooltip_height))
+                        
+                        # Show tooltip with longer timeout (10 seconds) and ensure it stays visible
+                        QToolTip.showText(tooltip_pos, doc, self.ui.codeEdit, tooltip_rect, 10000)
                     else:
-                        # Fallback if screen info not available
-                        QToolTip.showText(global_mouse_pos, doc, self.ui.codeEdit, tooltip_rect, 5000)
+                        # Fallback if screen info not available - position to right with offset
+                        font_metrics = self.ui.codeEdit.fontMetrics()
+                        char_width = font_metrics.horizontalAdvance('M')
+                        horizontal_offset = char_width * 20
+                        line_height = font_metrics.height()
+                        vertical_offset = line_height * 2
+                        fallback_pos = QPoint(global_mouse_pos.x() + horizontal_offset, global_mouse_pos.y() - vertical_offset)
+                        fallback_rect = QRect(fallback_pos, QSize(400, 200))
+                        QToolTip.showText(fallback_pos, doc, self.ui.codeEdit, fallback_rect, 10000)
                     return
 
         # Fall back to language server for project-defined symbols
@@ -1888,34 +1924,70 @@ class NSSEditor(Editor):
                 rect = self.ui.codeEdit.cursorRect(cursor)
                 mouse_pos = rect.topLeft()
 
-            # Calculate tooltip position: try above first, then below
+            # Calculate tooltip position: position to the RIGHT of cursor to avoid covering text
             global_mouse_pos = self.ui.codeEdit.mapToGlobal(mouse_pos)
-            tooltip_rect = QRect(global_mouse_pos, QSize(1, 1))
-
+            
             # Get screen geometry to check available space
             screen = QApplication.primaryScreen()
             if screen is not None:
                 screen_geometry = screen.availableGeometry()
-                # Estimate tooltip height (rough estimate, tooltip will adjust)
+                
+                # Estimate tooltip size (rough estimates)
+                estimated_tooltip_width = 400
                 estimated_tooltip_height = 200
-
-                # Check if there's space above the cursor
-                space_above = global_mouse_pos.y() - screen_geometry.top()
-                space_below = screen_geometry.bottom() - global_mouse_pos.y()
-
-                # Position tooltip above if there's more space above, otherwise below
-                if space_above > estimated_tooltip_height or space_above > space_below:
-                    # Position above cursor
-                    tooltip_y = global_mouse_pos.y() - estimated_tooltip_height
-                    tooltip_pos = QPoint(global_mouse_pos.x(), max(screen_geometry.top(), tooltip_y))
+                
+                # Calculate character width for horizontal offset
+                font_metrics = self.ui.codeEdit.fontMetrics()
+                char_width = font_metrics.horizontalAdvance('M')
+                # Offset tooltip to the right of the cursor by ~20 characters
+                horizontal_offset = char_width * 20
+                
+                # Check available space to the right
+                space_right = screen_geometry.right() - global_mouse_pos.x()
+                space_left = global_mouse_pos.x() - screen_geometry.left()
+                
+                # Position tooltip to the right if there's space, otherwise to the left
+                if space_right >= estimated_tooltip_width:
+                    # Position to the right of cursor
+                    tooltip_x = global_mouse_pos.x() + horizontal_offset
+                elif space_left >= estimated_tooltip_width:
+                    # Position to the left of cursor
+                    tooltip_x = global_mouse_pos.x() - horizontal_offset - estimated_tooltip_width
                 else:
-                    # Position below cursor (default behavior)
-                    tooltip_pos = global_mouse_pos
-
-                QToolTip.showText(tooltip_pos, contents, self.ui.codeEdit, tooltip_rect, 5000)
+                    # Not enough space on either side, position below cursor with offset
+                    tooltip_x = global_mouse_pos.x() + horizontal_offset
+                    # Clamp to screen bounds
+                    tooltip_x = max(screen_geometry.left() + 10, min(tooltip_x, screen_geometry.right() - estimated_tooltip_width - 10))
+                
+                # Vertical position: slightly above cursor to avoid covering text
+                # Offset upward by ~2 lines to clear the text being documented
+                line_height = font_metrics.height()
+                vertical_offset = line_height * 2
+                tooltip_y = global_mouse_pos.y() - vertical_offset
+                
+                # Ensure tooltip stays within screen bounds vertically
+                if tooltip_y < screen_geometry.top():
+                    # Not enough space above, position below cursor
+                    tooltip_y = global_mouse_pos.y() + line_height * 3
+                if tooltip_y + estimated_tooltip_height > screen_geometry.bottom():
+                    # Not enough space below, position at top of screen
+                    tooltip_y = screen_geometry.top() + 10
+                
+                tooltip_pos = QPoint(tooltip_x, tooltip_y)
+                tooltip_rect = QRect(tooltip_pos, QSize(estimated_tooltip_width, estimated_tooltip_height))
+                
+                # Show tooltip with longer timeout (10 seconds) and ensure it stays visible
+                QToolTip.showText(tooltip_pos, contents, self.ui.codeEdit, tooltip_rect, 10000)
             else:
-                # Fallback if screen info not available
-                QToolTip.showText(global_mouse_pos, contents, self.ui.codeEdit, tooltip_rect, 5000)
+                # Fallback if screen info not available - position to right with offset
+                font_metrics = self.ui.codeEdit.fontMetrics()
+                char_width = font_metrics.horizontalAdvance('M')
+                horizontal_offset = char_width * 20
+                line_height = font_metrics.height()
+                vertical_offset = line_height * 2
+                fallback_pos = QPoint(global_mouse_pos.x() + horizontal_offset, global_mouse_pos.y() - vertical_offset)
+                fallback_rect = QRect(fallback_pos, QSize(400, 200))
+                QToolTip.showText(fallback_pos, contents, self.ui.codeEdit, fallback_rect, 10000)
 
     def _get_documentation(self, word: str) -> str | None:
         """Get the documentation for a word with VS Code-like formatting.
