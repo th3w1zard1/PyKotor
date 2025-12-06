@@ -87,20 +87,26 @@ class AddRoomCommand(QUndoCommand):
         self,
         indoor_map: IndoorMap,
         room: IndoorMapRoom,
+        invalidate_cb: Callable[[list[IndoorMapRoom]], None] | None = None,
     ):
         super().__init__("Add Room")
         self.indoor_map = indoor_map
         self.room = room
+        self._invalidate_cb = invalidate_cb
 
     def undo(self):
         if self.room in self.indoor_map.rooms:
             self.indoor_map.rooms.remove(self.room)
             self.indoor_map.rebuild_room_connections()
+            if self._invalidate_cb:
+                self._invalidate_cb([self.room])
 
     def redo(self):
         if self.room not in self.indoor_map.rooms:
             self.indoor_map.rooms.append(self.room)
             self.indoor_map.rebuild_room_connections()
+            if self._invalidate_cb:
+                self._invalidate_cb([self.room])
 
 
 class DeleteRoomsCommand(QUndoCommand):
@@ -110,10 +116,12 @@ class DeleteRoomsCommand(QUndoCommand):
         self,
         indoor_map: IndoorMap,
         rooms: list[IndoorMapRoom],
+        invalidate_cb: Callable[[list[IndoorMapRoom]], None] | None = None,
     ):
         super().__init__(f"Delete {len(rooms)} Room(s)")
         self.indoor_map = indoor_map
         self.rooms = rooms.copy()
+        self._invalidate_cb = invalidate_cb
         # Store indices for proper re-insertion order
         self.indices = [indoor_map.rooms.index(r) for r in rooms if r in indoor_map.rooms]
 
@@ -123,12 +131,16 @@ class DeleteRoomsCommand(QUndoCommand):
             if room not in self.indoor_map.rooms:
                 self.indoor_map.rooms.insert(idx, room)
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.rooms)
 
     def redo(self):
         for room in self.rooms:
             if room in self.indoor_map.rooms:
                 self.indoor_map.rooms.remove(room)
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.rooms)
 
 
 class MoveRoomsCommand(QUndoCommand):
@@ -245,11 +257,13 @@ class DuplicateRoomsCommand(QUndoCommand):
         indoor_map: IndoorMap,
         rooms: list[IndoorMapRoom],
         offset: Vector3,
+        invalidate_cb: Callable[[list[IndoorMapRoom]], None] | None = None,
     ):
         super().__init__(f"Duplicate {len(rooms)} Room(s)")
         self.indoor_map = indoor_map
         self.original_rooms = rooms.copy()
         self.offset = offset
+        self._invalidate_cb = invalidate_cb
         # Create duplicates
         self.duplicates: list[IndoorMapRoom] = []
         for room in rooms:
@@ -272,12 +286,16 @@ class DuplicateRoomsCommand(QUndoCommand):
             if room in self.indoor_map.rooms:
                 self.indoor_map.rooms.remove(room)
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.duplicates)
 
     def redo(self):
         for room in self.duplicates:
             if room not in self.indoor_map.rooms:
                 self.indoor_map.rooms.append(room)
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.duplicates)
 
 
 class MoveWarpCommand(QUndoCommand):
@@ -448,6 +466,9 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.set_undo_stack(self._undo_stack)
         self.ui.mapRenderer.set_status_callback(self._refresh_status_bar)
 
+        # Initialize Options UI to match renderer state
+        self._initialize_options_ui()
+
     def _setup_signals(self):
         """Connect signals to slots."""
         # Kit/component selection
@@ -504,13 +525,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.sig_warp_moved.connect(self.on_warp_moved)
         self.ui.mapRenderer.sig_marquee_select.connect(self.on_marquee_select)
 
-        # Options checkboxes
-        self.ui.snapToGridCheck.toggled.connect(lambda v: setattr(self.ui.mapRenderer, "snap_to_grid", v))
-        self.ui.snapToHooksCheck.toggled.connect(lambda v: setattr(self.ui.mapRenderer, "snap_to_hooks", v))
-        self.ui.showGridCheck.toggled.connect(lambda v: setattr(self.ui.mapRenderer, "show_grid", v))
-        self.ui.showHooksCheck.toggled.connect(lambda v: setattr(self.ui.mapRenderer, "hide_magnets", not v))
-        self.ui.gridSizeSpin.valueChanged.connect(lambda v: setattr(self.ui.mapRenderer, "grid_size", v))
-        self.ui.rotSnapSpin.valueChanged.connect(lambda v: setattr(self.ui.mapRenderer, "rotation_snap", v))
+        # Options checkboxes - use proper setters that trigger mark_dirty
+        self.ui.snapToGridCheck.toggled.connect(self.ui.mapRenderer.set_snap_to_grid)
+        self.ui.snapToHooksCheck.toggled.connect(self.ui.mapRenderer.set_snap_to_hooks)
+        self.ui.showGridCheck.toggled.connect(self.ui.mapRenderer.set_show_grid)
+        self.ui.showHooksCheck.toggled.connect(lambda v: self.ui.mapRenderer.set_hide_magnets(not v))
+        self.ui.gridSizeSpin.valueChanged.connect(self.ui.mapRenderer.set_grid_size)
+        self.ui.rotSnapSpin.valueChanged.connect(self.ui.mapRenderer.set_rotation_snap)
 
     def _setup_walkmesh_painter(self):
         """Initialize walkmesh painting UI and palette."""
@@ -811,6 +832,33 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if self._undo_stack.canUndo():
             title = "* " + title
         self.setWindowTitle(title)
+
+    def _initialize_options_ui(self):
+        """Initialize Options UI to match renderer's initial state."""
+        renderer = self.ui.mapRenderer
+        # Block signals temporarily to avoid triggering updates during initialization
+        self.ui.snapToGridCheck.blockSignals(True)
+        self.ui.snapToHooksCheck.blockSignals(True)
+        self.ui.showGridCheck.blockSignals(True)
+        self.ui.showHooksCheck.blockSignals(True)
+        self.ui.gridSizeSpin.blockSignals(True)
+        self.ui.rotSnapSpin.blockSignals(True)
+
+        # Set UI to match renderer state
+        self.ui.snapToGridCheck.setChecked(renderer.snap_to_grid)
+        self.ui.snapToHooksCheck.setChecked(renderer.snap_to_hooks)
+        self.ui.showGridCheck.setChecked(renderer.show_grid)
+        self.ui.showHooksCheck.setChecked(not renderer.hide_magnets)
+        self.ui.gridSizeSpin.setValue(renderer.grid_size)
+        self.ui.rotSnapSpin.setValue(int(renderer.rotation_snap))
+
+        # Unblock signals
+        self.ui.snapToGridCheck.blockSignals(False)
+        self.ui.snapToHooksCheck.blockSignals(False)
+        self.ui.showGridCheck.blockSignals(False)
+        self.ui.showHooksCheck.blockSignals(False)
+        self.ui.gridSizeSpin.blockSignals(False)
+        self.ui.rotSnapSpin.blockSignals(False)
 
     def _refresh_status_bar(
         self,
@@ -1256,7 +1304,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         rooms = self.ui.mapRenderer.selected_rooms()
         if not rooms:
             return
-        cmd = DeleteRoomsCommand(self._map, rooms)
+        cmd = DeleteRoomsCommand(self._map, rooms, self._invalidate_rooms)
         self._undo_stack.push(cmd)
         self.ui.mapRenderer.clear_selected_rooms()
         self._refresh_window_title()
@@ -1272,7 +1320,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         rooms = self.ui.mapRenderer.selected_rooms()
         if not rooms:
             return
-        cmd = DuplicateRoomsCommand(self._map, rooms, Vector3(2.0, 2.0, 0.0))
+        cmd = DuplicateRoomsCommand(self._map, rooms, Vector3(2.0, 2.0, 0.0), self._invalidate_rooms)
         self._undo_stack.push(cmd)
         # Select the duplicates
         self.ui.mapRenderer.clear_selected_rooms()
@@ -1341,7 +1389,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if new_rooms:
             # Create a compound command for all pasted rooms
             for room in new_rooms:
-                cmd = AddRoomCommand(self._map, room)
+                cmd = AddRoomCommand(self._map, room, self._invalidate_rooms)
                 self._undo_stack.push(cmd)
 
             self.ui.mapRenderer.clear_selected_rooms()
@@ -1535,13 +1583,23 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         buttons: set[int | Qt.MouseButton],
         keys: set[int | Qt.Key],
     ):
+        # Only handle left button release for paint stroke and drag operations
+        # Other buttons (middle, right) are handled by camera controls
+        if Qt.MouseButton.LeftButton not in buttons:
+            self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
+            return
+
+        # Finish paint stroke if active
         if self._painting_walkmesh and self._paint_stroke_active:
             self._finish_paint_stroke()
+            self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
             return
 
         self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
         # Stop hook drag if active
-        self.ui.mapRenderer._dragging_hook = False
+        if self.ui.mapRenderer._dragging_hook:
+            self.ui.mapRenderer._dragging_hook = False
+        # End any active drag operations
         self.ui.mapRenderer.end_drag()
 
     def on_rooms_moved(
@@ -1604,7 +1662,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             flip_x=self.ui.mapRenderer.cursor_flip_x,
             flip_y=self.ui.mapRenderer.cursor_flip_y,
         )
-        cmd = AddRoomCommand(self._map, room)
+        cmd = AddRoomCommand(self._map, room, self._invalidate_rooms)
         self._undo_stack.push(cmd)
         self.ui.mapRenderer.cursor_rotation = 0.0
         self.ui.mapRenderer.cursor_flip_x = False
@@ -2195,6 +2253,30 @@ class IndoorMapRenderer(QWidget):
 
     def set_colorize_materials(self, enabled: bool):
         self._colorize_materials = enabled
+        self.mark_dirty()
+
+    def set_snap_to_grid(self, enabled: bool):
+        self.snap_to_grid = enabled
+        self.mark_dirty()
+
+    def set_snap_to_hooks(self, enabled: bool):
+        self.snap_to_hooks = enabled
+        self.mark_dirty()
+
+    def set_show_grid(self, enabled: bool):
+        self.show_grid = enabled
+        self.mark_dirty()
+
+    def set_hide_magnets(self, enabled: bool):
+        self.hide_magnets = enabled
+        self.mark_dirty()
+
+    def set_grid_size(self, size: float):
+        self.grid_size = size
+        self.mark_dirty()
+
+    def set_rotation_snap(self, snap: float):
+        self.rotation_snap = snap
         self.mark_dirty()
 
     def invalidate_rooms(self, rooms: list[IndoorMapRoom]):
