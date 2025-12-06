@@ -942,18 +942,18 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
 
         # Keys/Buttons format: use color and separation for modifiers vs interaction
         def fmt_keys_str(keys_seq):
-            return (
-                "<span style='color:#a13ac8'>" + "</span>&nbsp;+&nbsp;<span style='color:#a13ac8'>".join([get_qt_key_string(key) for key in keys_seq]) + "</span>"
-                if keys_seq
-                else ""
-            )
+            if not keys_seq:
+                return ""
+            formatted_items = [get_qt_key_string(key) for key in keys_seq]
+            colored_items = [f"<span style='color: #a13ac8'>{item}</span>" for item in formatted_items]
+            return "&nbsp;+&nbsp;".join(colored_items)
 
         def fmt_buttons_str(btn_seq):
-            return (
-                "<span style='color:#228800'>" + "</span>&nbsp;+&nbsp;<span style='color:#228800'>".join([get_qt_button_string(button) for button in btn_seq]) + "</span>"
-                if btn_seq
-                else ""
-            )
+            if not btn_seq:
+                return ""
+            formatted_items = [get_qt_button_string(button) for button in btn_seq]
+            colored_items = [f"<span style='color: #228800'>{item}</span>" for item in formatted_items]
+            return "&nbsp;+&nbsp;".join(colored_items)
 
         keys_str = fmt_keys_str(sorted_keys)
         buttons_str = fmt_buttons_str(sorted_buttons)

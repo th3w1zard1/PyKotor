@@ -1382,11 +1382,12 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             formatter: Callable[[int | Qt.Key | Qt.MouseButton], str],
             color: str,
         ) -> str:
-            return (
-                "<span style='color:" + color + "'>" + "</span>&nbsp;+&nbsp;<span style='color:" + color + "'>".join([formatter(item) for item in seq]) + "</span>"
-                if seq
-                else ""
-            )
+            if not seq:
+                return ""
+            formatted_items = [formatter(item) for item in seq]
+            # Properly escape and wrap each item in a colored span
+            colored_items = [f"<span style='color: {color}'>{item}</span>" for item in formatted_items]
+            return "&nbsp;+&nbsp;".join(colored_items)
 
         keys_text = fmt(keys_sorted, get_qt_key_string_local, "#a13ac8")
         buttons_text = fmt(buttons_sorted, get_qt_button_string_local, "#228800")
