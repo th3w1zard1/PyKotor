@@ -145,7 +145,7 @@ _CONTROLLER_NAME_TO_TYPE: dict[str, MDLControllerType] = {
     "alphaStart": MDLControllerType.ALPHASTART,
     "birthrate": MDLControllerType.BIRTHRATE,
     "bounce_co": MDLControllerType.BOUNCE_CO,
-    "combinetime": MDLControllerType.COMBINEETIME,
+    "combinetime": MDLControllerType.COMBINETIME,
     "drag": MDLControllerType.DRAG,
     "fps": MDLControllerType.FPS,
     "frameEnd": MDLControllerType.FRAMEEND,
