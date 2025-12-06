@@ -520,15 +520,16 @@ def serialize_indoor_map(indoor_map: IndoorMap) -> dict[str, Any]:
     }
 
 
-def deserialize_indoor_map_room(data: dict[str, Any]) -> IndoorMap:
+def deserialize_indoor_map_room(data: dict[str, Any]) -> IndoorMapRoom:
     """Deserialize IndoorMapRoom data from JSON.
     
     Returns a dictionary that can be used to update/create a room.
     The actual room creation is handled by the caller.
     """
-    from toolset.data.indoormap import IndoorMap
+    from toolset.data.indoormap import IndoorMapRoom
     
-    return IndoorMap(
+    return IndoorMapRoom(
+        component=data.get("component", None),
         position=deserialize_vector3(data.get("position", {})),
         rotation=float(data.get("rotation", 0.0)),
         flip_x=bool(data.get("flip_x", False)),
