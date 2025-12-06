@@ -141,6 +141,7 @@ class DeleteRoomsCommand(QUndoCommand):
         self.indoor_map.rebuild_room_connections()
         if self._invalidate_cb:
             self._invalidate_cb(self.rooms)
+        # Note: Selected hook validation should be handled by the renderer
 
 
 class MoveRoomsCommand(QUndoCommand):
@@ -1306,6 +1307,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
         cmd = DeleteRoomsCommand(self._map, rooms, self._invalidate_rooms)
         self._undo_stack.push(cmd)
+        # Clear selected hook if any of the deleted rooms had the selected hook
+        if self.ui.mapRenderer._selected_hook is not None:
+            hook_room, _ = self.ui.mapRenderer._selected_hook
+            if hook_room in rooms:
+                self.ui.mapRenderer.clear_selected_hook()
         self.ui.mapRenderer.clear_selected_rooms()
         self._refresh_window_title()
 
@@ -1326,6 +1332,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.clear_selected_rooms()
         for room in cmd.duplicates:
             self.ui.mapRenderer.select_room(room, clear_existing=False)
+        # Force immediate update after duplicate
+        self.ui.mapRenderer.update()
         self._refresh_window_title()
 
     def cut_selected(self):
@@ -1372,8 +1380,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             if not component:
                 continue
 
+            # Deep copy component so hooks can be edited independently
+            component_copy = deepcopy(component)
             room = IndoorMapRoom(
-                component,
+                component_copy,
                 Vector3(world_center.x + data.position.x, world_center.y + data.position.y, data.position.z),
                 data.rotation,
                 flip_x=data.flip_x,
@@ -1384,6 +1394,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                     room.walkmesh_override = read_bwm(data.walkmesh_override)
                 except Exception:
                     pass
+            # Initialize hooks connections list to match hooks length
+            room.hooks = [None] * len(component_copy.hooks)
             new_rooms.append(room)
 
         if new_rooms:
@@ -1395,6 +1407,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self.ui.mapRenderer.clear_selected_rooms()
             for room in new_rooms:
                 self.ui.mapRenderer.select_room(room, clear_existing=False)
+            # Force immediate update after paste
+            self.ui.mapRenderer.update()
             self._refresh_window_title()
 
     def select_all(self):
@@ -1589,16 +1603,17 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
             return
 
-        # Finish paint stroke if active
-        if self._painting_walkmesh and self._paint_stroke_active:
+        # Finish paint stroke if active (including Shift+Left paint mode)
+        if (self._painting_walkmesh or Qt.Key.Key_Shift in keys) and self._paint_stroke_active:
             self._finish_paint_stroke()
             self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
             return
 
         self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
-        # Stop hook drag if active
+        # Stop hook drag if active - rebuild connections after hook position changes
         if self.ui.mapRenderer._dragging_hook:
             self.ui.mapRenderer._dragging_hook = False
+            self._map.rebuild_room_connections()
         # End any active drag operations
         self.ui.mapRenderer.end_drag()
 
@@ -2241,7 +2256,31 @@ class IndoorMapRenderer(QWidget):
         self._selected_hook = None
         self.mark_dirty()
 
-    def select_hook(self, room: IndoorMapRoom, hook_index: int, *, clear_existing: bool):
+    def _validate_selected_hook(self):
+        """Validate that the selected hook is still valid (room exists and hook index is valid)."""
+        if self._selected_hook is None:
+            return
+        room, hook_index = self._selected_hook
+        # Check if room still exists in map
+        if room not in self._map.rooms:
+            self._selected_hook = None
+            self.mark_dirty()
+            return
+        # Check if hook index is still valid
+        if hook_index < 0 or hook_index >= len(room.component.hooks):
+            self._selected_hook = None
+            self.mark_dirty()
+
+    def select_hook(
+        self,
+        room: IndoorMapRoom,
+        hook_index: int,
+        *,
+        clear_existing: bool,
+    ):
+        # Validate hook index
+        if hook_index < 0 or hook_index >= len(room.component.hooks):
+            return
         if clear_existing:
             self._selected_rooms.clear()
         self._selected_hook = (room, hook_index)
@@ -2282,21 +2321,32 @@ class IndoorMapRenderer(QWidget):
     def invalidate_rooms(self, rooms: list[IndoorMapRoom]):
         for room in rooms:
             self._invalidate_walkmesh_cache(room)
+        # Validate selected hook in case the room was deleted or modified
+        self._validate_selected_hook()
         self.mark_dirty()
 
     def pick_face(self, world: Vector3) -> tuple[IndoorMapRoom | None, int | None]:
         """Return the room and face index under the given world position."""
         for room in reversed(self._map.rooms):
+            # Use transformed walkmesh for picking (to account for position/rotation/flip)
             walkmesh = self._get_room_walkmesh(room)
             face = walkmesh.faceAt(world.x, world.y)
             if face is None:
                 continue
+            # Find the index in the base walkmesh (not transformed) since that's what we modify
+            base_bwm = room.base_walkmesh()
             face_index: int | None = None
+            # The transformed walkmesh is a deepcopy, so we need to match by geometry
+            # Since deepcopy preserves order, we can use the index from transformed walkmesh
+            # But we need to ensure it's valid for the base walkmesh
             for idx, candidate in enumerate(walkmesh.faces):
                 if candidate is face:
-                    face_index = idx
+                    # Index should match base walkmesh since deepcopy preserves order
+                    if idx < len(base_bwm.faces):
+                        face_index = idx
                     break
-            return room, face_index
+            if face_index is not None:
+                return room, face_index
         return None, None
 
     # =========================================================================
@@ -2831,6 +2881,7 @@ class IndoorMapRenderer(QWidget):
         room.component.hooks.append(hook)
         room.hooks.append(None)
         self._selected_hook = (room, len(room.component.hooks) - 1)
+        self._map.rebuild_room_connections()
         self._invalidate_walkmesh_cache(room)
         self.mark_dirty()
 
@@ -2839,10 +2890,20 @@ class IndoorMapRenderer(QWidget):
         if hook_index < 0 or hook_index >= len(room.component.hooks):
             return
         self._ensure_room_component_unique(room)
+        # Clear selected hook if it's the one being deleted or if it becomes invalid
+        if self._selected_hook is not None:
+            sel_room, sel_index = self._selected_hook
+            if sel_room is room and (sel_index == hook_index or sel_index >= len(room.component.hooks) - 1):
+                self._selected_hook = None
         room.component.hooks.pop(hook_index)
         if hook_index < len(room.hooks):
             room.hooks.pop(hook_index)
-        self._selected_hook = None
+        # Validate selected hook index is still valid after deletion
+        if self._selected_hook is not None:
+            sel_room, sel_index = self._selected_hook
+            if sel_room is room and sel_index >= len(room.component.hooks):
+                self._selected_hook = None
+        self._map.rebuild_room_connections()
         self._invalidate_walkmesh_cache(room)
         self.mark_dirty()
 
@@ -2856,6 +2917,7 @@ class IndoorMapRenderer(QWidget):
         room.component.hooks.append(new_hook)
         room.hooks.append(None)
         self._selected_hook = (room, len(room.component.hooks) - 1)
+        self._map.rebuild_room_connections()
         self._invalidate_walkmesh_cache(room)
         self.mark_dirty()
 
