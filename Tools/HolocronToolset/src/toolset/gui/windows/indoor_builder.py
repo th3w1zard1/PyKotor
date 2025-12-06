@@ -697,7 +697,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 self.ui.moduleComponentList.addItem(item)  # pyright: ignore[reportArgumentType, reportCallIssue]
                 
         except Exception:  # noqa: BLE001
-            from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
+            from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
             RobustLogger().exception(f"Failed to load module '{module_root}'")
     
     def on_module_component_selected(self, item: QListWidgetItem | None = None):
@@ -1268,10 +1268,19 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                     self.ui.componentList.setCurrentItem(None)
                     self.ui.moduleComponentList.clearSelection()
                     self.ui.moduleComponentList.setCurrentItem(None)
+                    renderer.clear_selected_hook()
                 return  # Exit after placing room
         
         # Not in placement mode - handle room selection and dragging
         room: IndoorMapRoom | None = renderer.room_under_mouse()
+        hook_hit = renderer.hook_under_mouse(world)
+        if hook_hit is not None and Qt.Key.Key_Shift not in keys:
+            hook_room, hook_index = hook_hit
+            renderer.select_hook(hook_room, hook_index, clear_existing=True)
+            renderer._dragging_hook = True
+            renderer._drag_hook_start = copy(renderer.cursor_point)
+            return
+
         if room is not None:
             # Clicking on a room
             if room in renderer.selected_rooms():
@@ -1300,6 +1309,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self._finish_paint_stroke()
             return
 
+        # Stop hook drag if active
+        self.ui.mapRenderer._dragging_hook = False
         self.ui.mapRenderer.end_drag()
 
     def on_rooms_moved(
@@ -1440,6 +1451,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def on_context_menu(self, point: QPoint):
         world: Vector3 = self.ui.mapRenderer.to_world_coords(point.x(), point.y())
         room: IndoorMapRoom | None = self.ui.mapRenderer.room_under_mouse()
+        hook_hit = self.ui.mapRenderer.hook_under_mouse(world)
         menu = QMenu(self)
 
         # Room-specific actions
@@ -1479,6 +1491,27 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             flip_y_action.triggered.connect(lambda: self._flip_selected(False, True))
 
             menu.addSeparator()
+
+        # Hook actions (context under hook or room)
+        if hook_hit is not None:
+            hook_room, hook_index = hook_hit
+            hook_select_action = menu.addAction("Select Hook")
+            assert hook_select_action is not None
+            hook_select_action.triggered.connect(lambda: self.ui.mapRenderer.select_hook(hook_room, hook_index, clear_existing=True))
+
+            hook_delete_action = menu.addAction("Delete Hook")
+            assert hook_delete_action is not None
+            hook_delete_action.triggered.connect(lambda: self.ui.mapRenderer.delete_hook(hook_room, hook_index))
+
+            hook_duplicate_action = menu.addAction("Duplicate Hook")
+            assert hook_duplicate_action is not None
+            hook_duplicate_action.triggered.connect(lambda: self.ui.mapRenderer.duplicate_hook(hook_room, hook_index))
+
+            menu.addSeparator()
+
+        add_hook_action = menu.addAction("Add Hook Here")
+        assert add_hook_action is not None
+        add_hook_action.triggered.connect(lambda: self.ui.mapRenderer.add_hook_at(world))
 
         # General actions
         warp_set_action = menu.addAction("Set Warp Point Here")
@@ -1668,6 +1701,11 @@ class IndoorMapRenderer(QWidget):
         # Keep snaps easy to separate: small disconnect threshold, scaled later
         self._snap_disconnect_threshold: float = 1.0  # base units before scaling
 
+        # Hook editing state
+        self._selected_hook: tuple[IndoorMapRoom, int] | None = None
+        self._dragging_hook: bool = False
+        self._drag_hook_start: Vector3 = Vector3.from_null()
+
         # Marquee selection state
         self._marquee_active: bool = False
         self._marquee_start: Vector2 = Vector2.from_null()
@@ -1838,11 +1876,35 @@ class IndoorMapRenderer(QWidget):
     def room_under_mouse(self) -> IndoorMapRoom | None:
         return self._under_mouse_room
 
+    def hook_under_mouse(
+        self,
+        world: Vector3,
+        *,
+        radius: float = 0.6,
+    ) -> tuple[IndoorMapRoom, int] | None:
+        """Return (room, hook_index) if a hook is under the given world position."""
+        for room in reversed(self._map.rooms):
+            for idx, hook in enumerate(room.component.hooks):
+                hook_pos = room.hook_position(hook)
+                if Vector2.from_vector3(hook_pos).distance(Vector2.from_vector3(world)) <= radius:
+                    return room, idx
+        return None
+
     def selected_rooms(self) -> list[IndoorMapRoom]:
         return self._selected_rooms
 
     def clear_selected_rooms(self):
         self._selected_rooms.clear()
+        self.mark_dirty()
+
+    def clear_selected_hook(self):
+        self._selected_hook = None
+        self.mark_dirty()
+
+    def select_hook(self, room: IndoorMapRoom, hook_index: int, *, clear_existing: bool):
+        if clear_existing:
+            self._selected_rooms.clear()
+        self._selected_hook = (room, hook_index)
         self.mark_dirty()
 
     def set_material_colors(self, material_colors: dict[SurfaceMaterial, QColor]):
@@ -2223,6 +2285,8 @@ class IndoorMapRenderer(QWidget):
         connections: list[IndoorMapRoom | None] | None = None,
         *,
         alpha: int = 255,
+        selected: tuple[IndoorMapRoom, int] | None = None,
+        room_for_selection: IndoorMapRoom | None = None,
     ):
         """Draw hook markers for a component at a transformed position."""
         # Use a temporary room to reuse hook_position logic
@@ -2231,7 +2295,12 @@ class IndoorMapRenderer(QWidget):
         for hook_index, hook in enumerate(component.hooks):
             hook_pos = temp_room.hook_position(hook)
             is_connected = bool(connections and hook_index < len(connections) and connections[hook_index] is not None)
-            if is_connected:
+            is_selected = selected is not None and room_for_selection is not None and selected == (room_for_selection, hook_index)
+
+            if is_selected:
+                brush_color = QColor(80, 160, 255, alpha)   # blue highlight
+                pen_color = QColor(180, 220, 255, alpha)
+            elif is_connected:
                 brush_color = QColor(80, 200, 80, alpha)    # green
                 pen_color = QColor(180, 255, 180, alpha)
             else:
@@ -2266,6 +2335,8 @@ class IndoorMapRenderer(QWidget):
             room.flip_x,
             room.flip_y,
             connections=room.hooks,
+            selected=self._selected_hook,
+            room_for_selection=room,
         )
 
     def _draw_cursor_walkmesh(self, painter: QPainter):
@@ -2301,6 +2372,8 @@ class IndoorMapRenderer(QWidget):
             self.cursor_flip_y,
             connections=None,
             alpha=180,
+            selected=self._selected_hook,
+            room_for_selection=None,
         )
 
     def _draw_room_highlight(
@@ -2333,6 +2406,84 @@ class IndoorMapRenderer(QWidget):
         room_id = id(room)
         self._cached_walkmeshes.pop(room_id, None)
 
+    # ------------------------------------------------------------------
+    # Hook editing helpers
+    # ------------------------------------------------------------------
+    def _ensure_room_component_unique(self, room: IndoorMapRoom):
+        """Clone the component so hooks can be edited per-room."""
+        # If any other room shares this component instance, clone
+        shared = any(r is not room and r.component is room.component for r in self._map.rooms)
+        if not shared:
+            return
+        component_copy = deepcopy(room.component)
+        room.component = component_copy
+        # Rebuild connections list to match hooks length
+        room.hooks = [None] * len(component_copy.hooks)
+        self._invalidate_walkmesh_cache(room)
+
+    def _world_to_local_hook(self, room: IndoorMapRoom, world_pos: Vector3) -> Vector3:
+        """Convert world coordinates to local hook coordinates for the room."""
+        pos = copy(world_pos)
+        # translate to room local
+        pos.x -= room.position.x
+        pos.y -= room.position.y
+        # inverse rotation
+        cos_r = math.cos(math.radians(-room.rotation))
+        sin_r = math.sin(math.radians(-room.rotation))
+        x = pos.x * cos_r - pos.y * sin_r
+        y = pos.x * sin_r + pos.y * cos_r
+        pos.x, pos.y = x, y
+        # inverse flip
+        if room.flip_x:
+            pos.x = -pos.x
+        if room.flip_y:
+            pos.y = -pos.y
+        return pos
+
+    def add_hook_at(self, world_pos: Vector3):
+        """Add a hook to the room under the mouse at world_pos."""
+        room = self._under_mouse_room
+        if room is None:
+            return
+        self._ensure_room_component_unique(room)
+        local_pos = self._world_to_local_hook(room, world_pos)
+
+        # Choose a door reference: prefer existing hook door, else first kit door
+        door = room.component.hooks[0].door if room.component.hooks else (room.component.kit.doors[0] if room.component.kit.doors else None)
+        if door is None:
+            return  # cannot add without a door reference
+
+        hook = KitComponentHook(position=local_pos, rotation=0.0, edge=str(len(room.component.hooks)), door=door)
+        room.component.hooks.append(hook)
+        room.hooks.append(None)
+        self._selected_hook = (room, len(room.component.hooks) - 1)
+        self._invalidate_walkmesh_cache(room)
+        self.mark_dirty()
+
+    def delete_hook(self, room: IndoorMapRoom, hook_index: int):
+        """Delete a hook from a room."""
+        if hook_index < 0 or hook_index >= len(room.component.hooks):
+            return
+        self._ensure_room_component_unique(room)
+        room.component.hooks.pop(hook_index)
+        if hook_index < len(room.hooks):
+            room.hooks.pop(hook_index)
+        self._selected_hook = None
+        self._invalidate_walkmesh_cache(room)
+        self.mark_dirty()
+
+    def duplicate_hook(self, room: IndoorMapRoom, hook_index: int):
+        """Duplicate a hook in place."""
+        if hook_index < 0 or hook_index >= len(room.component.hooks):
+            return
+        self._ensure_room_component_unique(room)
+        src = room.component.hooks[hook_index]
+        new_hook = KitComponentHook(position=copy(src.position), rotation=src.rotation, edge=str(len(room.component.hooks)), door=src.door)
+        room.component.hooks.append(new_hook)
+        room.hooks.append(None)
+        self._selected_hook = (room, len(room.component.hooks) - 1)
+        self._invalidate_walkmesh_cache(room)
+        self.mark_dirty()
     def _draw_grid(self, painter: QPainter):
         """Draw grid overlay."""
         if not self.show_grid:
@@ -2549,6 +2700,20 @@ class IndoorMapRenderer(QWidget):
             if self.snap_to_grid:
                 self._map.warp_point = self._snap_to_grid(self._map.warp_point)
             self.mark_dirty()
+            return
+
+        # Handle hook dragging (selected hook)
+        if self._dragging_hook and self._selected_hook is not None:
+            room, hook_index = self._selected_hook
+            if hook_index < len(room.component.hooks):
+                world_delta = self.to_world_delta(coords_delta.x, coords_delta.y)
+                hook = room.component.hooks[hook_index]
+                # Move in world space then convert to local
+                new_world = room.hook_position(hook) + Vector3(world_delta.x, world_delta.y, 0)
+                local = self._world_to_local_hook(room, new_world)
+                hook.position = local
+                self._invalidate_walkmesh_cache(room)
+                self.mark_dirty()
             return
 
         # Handle room dragging
@@ -2834,10 +2999,12 @@ class KitDownloader(QDialog):
                 else:
                     button = QPushButton("Download")
                 button.clicked.connect(
-                    lambda _=None, kit_dict=kit_dict, button=button: self._download_button_pressed(button, kit_dict)
+                    lambda _=None,
+                    kit_dict=kit_dict,
+                    button=button: self._download_button_pressed(button, kit_dict),
                 )
 
-                layout: QFormLayout | None = self.ui.groupBox.layout()  # pyright: ignore[reportAssignmentType]
+                layout: QFormLayout | None = self.ui.groupBox.layout()  # type: ignore[union-attr]  # pyright: ignore[reportAssignmentType]
                 if layout is None:
                     msg = "Kit downloader group box layout is None"
                     raise RuntimeError(msg)  # noqa: TRY301
