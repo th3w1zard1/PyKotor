@@ -1665,7 +1665,8 @@ class IndoorMapRenderer(QWidget):
         
         # Snap state during drag (for soft snapping)
         self._snap_anchor_position: Vector3 | None = None  # Position where snap was first applied
-        self._snap_disconnect_threshold: float = 2.0  # Distance beyond which snap disconnects (in game units)
+        # Keep snaps easy to separate: small disconnect threshold, scaled later
+        self._snap_disconnect_threshold: float = 1.0  # base units before scaling
 
         # Marquee selection state
         self._marquee_active: bool = False
@@ -1950,8 +1951,8 @@ class IndoorMapRenderer(QWidget):
         
         best_distance = float('inf')
         best_snap: SnapResult = SnapResult(position=position, snapped=False)
-        # Snap threshold scales with zoom - larger when zoomed out for easier snapping
-        snap_threshold = max(3.0, 5.0 / self._cam_scale)
+        # Snap threshold scales with zoom - reduced to keep snaps helpful but separable
+        snap_threshold = max(1.0, 2.0 / self._cam_scale)
 
         for existing_room in self._map.rooms:
             if room is not None and existing_room is room:
@@ -2573,8 +2574,10 @@ class IndoorMapRenderer(QWidget):
                         Vector2.from_vector3(self._snap_anchor_position)
                     )
                     
+                    # Dynamic disconnect threshold tied to zoom (smaller to make separation easy)
+                    dynamic_disconnect = max(self._snap_disconnect_threshold, 0.8 * max(1.0, 2.0 / self._cam_scale))
                     # If moved beyond disconnect threshold, clear snap and allow free movement
-                    if distance_from_anchor > self._snap_disconnect_threshold:
+                    if distance_from_anchor > dynamic_disconnect:
                         self._snap_anchor_position = None
                         self._snap_indicator = None
                     else:
@@ -2585,7 +2588,7 @@ class IndoorMapRenderer(QWidget):
                             distance_to_snap = Vector2.from_vector3(active_room.position).distance(
                                 Vector2.from_vector3(snap_result.position)
                             )
-                            snap_threshold = max(3.0, 5.0 / self._cam_scale)
+                            snap_threshold = max(1.0, 2.0 / self._cam_scale)
                             
                             # Only apply snap if within threshold
                             if distance_to_snap <= snap_threshold:
@@ -2616,7 +2619,7 @@ class IndoorMapRenderer(QWidget):
                         distance_to_snap = Vector2.from_vector3(active_room.position).distance(
                             Vector2.from_vector3(snap_result.position)
                         )
-                        snap_threshold = max(3.0, 5.0 / self._cam_scale)
+                        snap_threshold = max(1.0, 2.0 / self._cam_scale)
                         
                         # Only apply snap if within threshold
                         if distance_to_snap <= snap_threshold:
@@ -2661,9 +2664,9 @@ class IndoorMapRenderer(QWidget):
             if self.snap_to_hooks:
                 snap_result = self._find_hook_snap(
                     None,
-                self.cursor_point,
+                    self.cursor_point,
                     self.cursor_component,
-                self.cursor_rotation,
+                    self.cursor_rotation,
                     self.cursor_flip_x,
                     self.cursor_flip_y,
                 )
