@@ -17,7 +17,7 @@ import qtpy
 
 from qtpy import QtCore
 from qtpy.QtCore import QPoint, QPointF, QRectF, QSize, QTimer, Qt
-from qtpy.QtGui import QColor, QIcon, QImage, QKeyEvent, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QTransform, QWheelEvent
+from qtpy.QtGui import QColor, QIcon, QImage, QKeyEvent, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTransform, QWheelEvent
 from qtpy.QtWidgets import (
     QApplication,
     QDialog,
@@ -61,6 +61,7 @@ from toolset.config import get_remote_toolset_update_info, is_remote_version_new
 from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, ModuleKit, ModuleKitManager, load_kits
 from toolset.data.indoormap import IndoorMap, IndoorMapRoom
 from toolset.data.installation import HTInstallation
+from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.dialogs.asyncloader import AsyncLoader
 from toolset.gui.dialogs.indoor_settings import IndoorMapSettings
 from toolset.gui.widgets.settings.installations import GlobalSettings
@@ -541,6 +542,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         self._setup_status_bar()
         # Walkmesh painter state
+        self._painting_walkmesh: bool = False
         self._colorize_materials: bool = True
         self._material_colors: dict[SurfaceMaterial, QColor] = {}
         self._paint_stroke_active: bool = False
@@ -561,17 +563,16 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # Initialize Options UI to match renderer state
         self._initialize_options_ui()
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
-        from toolset.gui.common.filters import NoScrollEventFilter
-        self._no_scroll_filter = NoScrollEventFilter(self)
-        self._no_scroll_filter.setup_filter(parent_widget=self)
-        
         # Setup Blender integration UI (deferred to avoid layout issues)
         QTimer.singleShot(0, self._install_view_stack)
         
         # Check for Blender on first map load
         if not self._blender_choice_made and self._installation:
             QTimer.singleShot(100, self._check_blender_on_load)
+        
+        # Setup NoScrollEventFilter
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
 
     def _setup_signals(self):
         """Connect signals to slots."""
@@ -675,13 +676,18 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._populate_material_list()
         self._colorize_materials = True
         self.ui.colorizeMaterialsCheck.setChecked(True)
+        self.ui.enablePaintCheck.setChecked(False)
 
         self.ui.mapRenderer.set_material_colors(self._material_colors)
         self.ui.mapRenderer.set_colorize_materials(self._colorize_materials)
 
         self.ui.materialList.currentItemChanged.connect(lambda _old, _new=None: self._refresh_status_bar())
+        self.ui.enablePaintCheck.toggled.connect(self._toggle_paint_mode)
         self.ui.colorizeMaterialsCheck.toggled.connect(self._toggle_colorize_materials)
         self.ui.resetPaintButton.clicked.connect(self._reset_selected_walkmesh)
+
+        # Shortcut to quickly toggle paint mode
+        QShortcut(Qt.Key.Key_P, self).activated.connect(lambda: self.ui.enablePaintCheck.toggle())
 
     def _setup_undo_redo(self):
         """Setup undo/redo actions."""
@@ -719,6 +725,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 return material
         return next(iter(self._material_colors.keys()), None)
 
+    def _toggle_paint_mode(self, enabled: bool):
+        self._painting_walkmesh = enabled
+        self._paint_stroke_active = False
+        self._paint_stroke_originals.clear()
+        self._paint_stroke_new.clear()
+        self._refresh_status_bar()
+
     def _toggle_colorize_materials(self, enabled: bool):
         self._colorize_materials = enabled
         self.ui.mapRenderer.set_colorize_materials(enabled)
@@ -739,7 +752,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def _setup_kits(self):
         self.ui.kitSelect.clear()
-        self._kits, _missing_files = load_kits("./kits")
+        self._kits, missing_files = load_kits("./kits")
 
         # Kits are deprecated and optional - modules provide the same functionality
         # No need to show a dialog when kits are missing since modules can be used instead
@@ -748,6 +761,29 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         for kit in self._kits:
             self.ui.kitSelect.addItem(kit.name, kit)
+
+    def _show_no_kits_dialog(self):
+        """Show dialog asking if user wants to open kit downloader.
+
+        This is called asynchronously via QTimer.singleShot to avoid blocking initialization.
+        Headless mode is already checked before this method is scheduled, so it will only
+        be called in GUI mode where exec() is safe.
+        """
+        from toolset.gui.common.localization import translate as tr
+
+        # Show dialog in GUI mode using exec()
+        # Headless check happens before this method is scheduled, so this is safe
+        no_kit_prompt = QMessageBox(self)
+        no_kit_prompt.setIcon(QMessageBox.Icon.Warning)
+        no_kit_prompt.setWindowTitle(tr("No Kits Available"))
+        no_kit_prompt.setText(tr("No kits were detected, would you like to open the Kit downloader?"))
+        no_kit_prompt.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        no_kit_prompt.setDefaultButton(QMessageBox.StandardButton.No)
+
+        # Use exec() for proper modal behavior in GUI mode
+        result = no_kit_prompt.exec()
+        if result == QMessageBox.StandardButton.Yes or no_kit_prompt.clickedButton() == QMessageBox.StandardButton.Yes:
+            self.open_kit_downloader()
 
     def _setup_modules(self):
         """Set up the module selection combobox with available modules from the installation.
@@ -1363,7 +1399,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Mode/status line
         mode_parts: list[str] = []
-        if Qt.Key.Key_Shift in keys:
+        if self._painting_walkmesh:
             material = self._current_material()
             mat_text = material.name.title().replace("_", " ") if material else "Material"
             mode_parts.append(f"<span style='color:#c46811'>Paint: {mat_text}</span>")
@@ -1805,7 +1841,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         world_delta: Vector2 = self.ui.mapRenderer.to_world_delta(delta.x, delta.y)
 
         # Walkmesh painting drag - Shift+Left drag should paint
-        if Qt.Key.Key_Shift in keys and Qt.MouseButton.LeftButton in buttons and Qt.Key.Key_Control not in keys:
+        if (self._painting_walkmesh or Qt.Key.Key_Shift in keys) and Qt.MouseButton.LeftButton in buttons and Qt.Key.Key_Control not in keys:
             self._apply_paint_at_screen(screen)
             return
 
@@ -1828,7 +1864,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return  # Control is for camera pan
 
         # Check for walkmesh painting mode - Shift+Left click should paint
-        if Qt.Key.Key_Shift in keys:
+        if self._painting_walkmesh or Qt.Key.Key_Shift in keys:
             self._begin_paint_stroke(screen)
             return
 
