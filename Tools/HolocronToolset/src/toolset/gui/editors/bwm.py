@@ -6,11 +6,11 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor, QIcon, QImage, QPixmap
-from qtpy.QtWidgets import QListWidgetItem, QShortcut
+from qtpy.QtWidgets import QListWidgetItem, QShortcut  # pyright: ignore[reportPrivateImportUsage]
 
-from pykotor.common.misc import Color
-from pykotor.resource.formats.bwm import read_bwm, write_bwm
-from pykotor.resource.type import ResourceType
+from pykotor.common.misc import Color  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.bwm import read_bwm, write_bwm  # pyright: ignore[reportMissingImports]
+from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
 from utility.common.geometry import SurfaceMaterial
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
     from qtpy.QtWidgets import QWidget
 
-    from pykotor.resource.formats.bwm import BWM, BWMFace
+    from pykotor.resource.formats.bwm import BWM, BWMFace  # pyright: ignore[reportMissingImports]
     from toolset.data.installation import HTInstallation
     from utility.common.geometry import Vector2, Vector3
 
@@ -203,7 +203,8 @@ class BWMEditor(Editor):
         elif Qt.MouseButton.MiddleButton in buttons and Qt.Key.Key_Control in keys:  # type: ignore[attr-defined]
             self.ui.renderArea.do_cursor_lock(screen)
             self.ui.renderArea.camera.nudge_rotation(delta.x / 50)
-        elif Qt.MouseButton.LeftButton in buttons and face is not None:  # face will be None if user is clicking on nothing/background.
+        # Painting: require Shift + LeftButton to avoid conflicts with normal selection/drag
+        elif Qt.MouseButton.LeftButton in buttons and Qt.Key.Key_Shift in keys and face is not None:  # type: ignore[attr-defined]
             self.change_face_material(face)
 
         coords_text = f"x: {world.x:.2f}, {world.y:.2f}"
