@@ -1448,8 +1448,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
         world_delta: Vector2 = self.ui.mapRenderer.to_world_delta(delta.x, delta.y)
 
-        # Walkmesh painting drag
-        if self._painting_walkmesh and Qt.MouseButton.LeftButton in buttons and Qt.Key.Key_Control not in keys:
+        # Walkmesh painting drag - Shift+Left drag should paint
+        if (self._painting_walkmesh or Qt.Key.Key_Shift in keys) and Qt.MouseButton.LeftButton in buttons and Qt.Key.Key_Control not in keys:
             self._apply_paint_at_screen(screen)
             return
 
@@ -1471,7 +1471,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if Qt.Key.Key_Control in keys:
             return  # Control is for camera pan
 
-        if self._painting_walkmesh:
+        # Check for walkmesh painting mode - Shift+Left click should paint
+        if self._painting_walkmesh or Qt.Key.Key_Shift in keys:
             self._begin_paint_stroke(screen)
             return
 
