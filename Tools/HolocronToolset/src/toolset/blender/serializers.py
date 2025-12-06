@@ -12,9 +12,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.bwm import BWM
-    from pykotor.resource.formats.lyt import LYT, LYTDoorHook, LYTObstacle, LYTRoom, LYTTrack
-    from pykotor.resource.generics.git import (
+    from pykotor.resource.formats.bwm import BWM  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.lyt import LYT, LYTDoorHook, LYTObstacle, LYTRoom, LYTTrack  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.generics.git import (  # pyright: ignore[reportMissingImports]
         GIT,
         GITCamera,
         GITCreature,
@@ -520,32 +520,27 @@ def serialize_indoor_map(indoor_map: IndoorMap) -> dict[str, Any]:
     }
 
 
-def deserialize_indoor_map_room(data: dict[str, Any]) -> IndoorMapRoom:
+def deserialize_indoor_map_room(data: dict[str, Any]) -> dict[str, Any]:
     """Deserialize IndoorMapRoom data from JSON.
     
     Returns a dictionary that can be used to update/create a room.
     The actual room creation is handled by the caller.
+    
+    Note: The component cannot be fully reconstructed from serialized data
+    (only component_id and component_name are stored). The caller must
+    match the component_id to an existing KitComponent.
     """
-    from toolset.data.indoormap import IndoorMapRoom
-    from toolset.data.indoorkit import KitComponent, Kit
-    from pykotor.common.misc import LocalizedString  # pyright: ignore[reportMissingImports]
-    from qtpy.QtGui import QImage
+    from utility.common.geometry import Vector3
     
-    
-    return IndoorMapRoom(
-        component=KitComponent(
-            name=LocalizedString.from_english(data.get("component_name", "")),
-            kit=Kit(name=data.get("kit_name", "")),
-            image=QImage(str(data.get("image", ""))).mirrored(),
-            bwm=None,
-            mdl=b"",
-            mdx=b"",
-        ),
-        position=Vector3(*deserialize_vector3(data.get("position", {}))),
-        rotation=float(data.get("rotation", 0.0)),
-        flip_x=bool(data.get("flip_x", False)),
-        flip_y=bool(data.get("flip_y", False)),
-    )
+    return {
+        "component_id": data.get("component_id"),
+        "component_name": data.get("component_name", ""),
+        "position": Vector3(*deserialize_vector3(data.get("position", {}))),
+        "rotation": float(data.get("rotation", 0.0)),
+        "flip_x": bool(data.get("flip_x", False)),
+        "flip_y": bool(data.get("flip_y", False)),
+        "runtime_id": data.get("runtime_id"),
+    }
 
 
 def deserialize_indoor_map(data: dict[str, Any]) -> dict[str, Any]:
