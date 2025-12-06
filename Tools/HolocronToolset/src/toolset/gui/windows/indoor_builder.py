@@ -22,12 +22,15 @@ from qtpy.QtWidgets import (
     QDialog,
     QFileDialog,
     QFormLayout,
+    QHBoxLayout,
+    QLabel,
     QListWidgetItem,
     QMainWindow,
     QMenu,
     QMessageBox,
     QPushButton,
     QStatusBar,
+    QVBoxLayout,
     QWidget,
 )
 
