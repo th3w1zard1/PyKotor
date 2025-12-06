@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, Callable, TextIO, cast
 import qtpy
 
 from qtpy import QtCore
-from qtpy.QtCore import QPoint, QPointF, QRectF, QTimer, Qt
+from qtpy.QtCore import QPoint, QPointF, QRectF, QSize, QTimer, Qt
 from qtpy.QtGui import QColor, QIcon, QImage, QKeyEvent, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTransform, QWheelEvent
 from qtpy.QtWidgets import (
     QApplication,
