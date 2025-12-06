@@ -1138,7 +1138,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def _on_blender_selection_changed(self, instance_ids: list[int]):
         """Handle selection changes from Blender."""
         def _apply():
-            rooms = [
+            rooms: list[IndoorMapRoom] = [
                 room
                 for room_id in instance_ids
                 if (room := self._room_id_lookup.get(room_id)) is not None
@@ -1935,9 +1935,38 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             renderer.start_warp_drag()
             return
 
-        # Check if we're in placement mode (component selected for placing)
-        # Check both cursor_component and selected_component to handle cases where
-        # cursor was cleared but component is still selected in UI
+        # CRITICAL: Check for existing room/hook FIRST before placement mode
+        # This prevents placing new rooms when trying to drag existing ones
+        room: IndoorMapRoom | None = renderer.room_under_mouse()
+        hook_hit = renderer.hook_under_mouse(world)
+        
+        # If clicking on an existing room or hook, handle selection/dragging
+        # This takes priority over placement mode
+        if room is not None or hook_hit is not None:
+            # Handle hook selection/dragging first
+            if hook_hit is not None and Qt.Key.Key_Shift not in keys:
+                hook_room, hook_index = hook_hit
+                renderer.select_hook(hook_room, hook_index, clear_existing=True)
+                renderer._dragging_hook = True
+                renderer._drag_hook_start = copy(renderer.cursor_point)
+                return
+
+            # Handle room selection and dragging
+            if room is not None:
+                # Clicking on a room
+                if room in renderer.selected_rooms():
+                    # Room already selected - start drag without changing selection
+                    renderer.start_drag(room)
+                else:
+                    # Select room (shift to add to selection, otherwise clear existing)
+                    clear_existing: bool = Qt.Key.Key_Shift not in keys
+                    renderer.select_room(room, clear_existing=clear_existing)
+                    # Start drag tracking
+                    renderer.start_drag(room)
+                return  # Exit after handling room drag
+
+        # No room/hook clicked - check if we're in placement mode
+        # Only place new rooms when clicking on empty space
         component: KitComponent | None = self.selected_component()
         if renderer.cursor_component is not None or component is not None:
             # If cursor component is None but component is selected, restore cursor
@@ -1957,33 +1986,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                     pass
                 return  # Exit after placing room
 
-        # Not in placement mode - handle room selection and dragging
-        room: IndoorMapRoom | None = renderer.room_under_mouse()
-        hook_hit = renderer.hook_under_mouse(world)
-        if hook_hit is not None and Qt.Key.Key_Shift not in keys:
-            hook_room, hook_index = hook_hit
-            renderer.select_hook(hook_room, hook_index, clear_existing=True)
-            renderer._dragging_hook = True
-            renderer._drag_hook_start = copy(renderer.cursor_point)
-            return
-
-        if room is not None:
-            # Clicking on a room
-            if room in renderer.selected_rooms():
-                # Room already selected - start drag without changing selection
-                renderer.start_drag(room)
-            else:
-                # Select room (shift to add to selection, otherwise clear existing)
-                clear_existing: bool = Qt.Key.Key_Shift not in keys
-                renderer.select_room(room, clear_existing=clear_existing)
-                # Start drag tracking
-                renderer.start_drag(room)
-        else:
-            # No room clicked - clear selection or start marquee selection
-            if Qt.Key.Key_Shift not in keys:
-                renderer.clear_selected_rooms()
-            # Start marquee selection (will be cleaned up on mouse release if no drag occurred)
-            renderer.start_marquee(screen)
+        # No room clicked and not in placement mode - clear selection or start marquee selection
+        if Qt.Key.Key_Shift not in keys:
+            renderer.clear_selected_rooms()
+        # Start marquee selection (will be cleaned up on mouse release if no drag occurred)
+        renderer.start_marquee(screen)
 
     def on_mouse_released(
         self,
