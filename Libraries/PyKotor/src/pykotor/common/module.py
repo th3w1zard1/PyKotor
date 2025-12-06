@@ -881,7 +881,7 @@ class Module:  # noqa: PLR0904
             RobustLogger().warning("No locations found for '%s.%s' which are intended to add to module '%s'", resname, restype, self._root)
         module_resource: ModuleResource | None = self.resource(resname, restype)
         if module_resource is None:
-            module_resource = ModuleResource(resname, restype, self._installation)
+            module_resource = ModuleResource(resname, restype, self._installation, self._root)
             self.resources[module_resource.identifier()] = module_resource
         module_resource.add_locations(locations)
         return module_resource
@@ -1758,6 +1758,7 @@ class ModuleResource(Generic[T]):
         resname: str,
         restype: ResourceType,
         installation: Installation,
+        module_root: str | None = None,
     ):
         self._resname: str = resname
         self._installation: Installation = installation
@@ -1766,6 +1767,7 @@ class ModuleResource(Generic[T]):
         self._resource_obj: Any = None
         self._locations: list[Path] = []
         self._identifier = ResourceIdentifier(resname, restype)
+        self._module_root: str | None = module_root
 
     def __repr__(self):
         return f"{self.__class__.__name__}(resname={self._resname} restype={self._restype!r} installation={self._installation!r})"
@@ -1998,7 +2000,13 @@ class ModuleResource(Generic[T]):
                 self._locations.append(r_filepath)
             self._active = r_filepath
         if self._active is None:
-            RobustLogger().warning(f"Cannot activate module resource '{self.identifier()}': No locations found.")
+            module_info = f" in module '{self._module_root}'" if self._module_root else ""
+            installation_path = str(self._installation.path())
+            locations_info = f"Searched locations: {[str(loc) for loc in self._locations]}." if self._locations else "No locations were added to this resource."
+            RobustLogger().warning(
+                f"Cannot activate module resource '{self.identifier()}'{module_info}: No locations found. "
+                f"Installation: {installation_path}. {locations_info}"
+            )
         #else:
         #    other_locations_available = len(self._locations) - 1
         #    other_locations_available_display = f" ({other_locations_available} other locations available)" if other_locations_available else ""
