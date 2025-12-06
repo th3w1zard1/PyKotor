@@ -10,7 +10,7 @@ from copy import copy, deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 import qtpy
 
@@ -398,6 +398,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self._setup_status_bar()
         # Walkmesh painter state
         self._painting_walkmesh: bool = False
         self._colorize_materials: bool = True
@@ -415,6 +416,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         self.ui.mapRenderer.set_map(self._map)
         self.ui.mapRenderer.set_undo_stack(self._undo_stack)
+        self.ui.mapRenderer.set_status_callback(self._refresh_status_bar)
 
     def _setup_signals(self):
         """Connect signals to slots."""
@@ -667,6 +669,51 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             Qt.TransformationMode.SmoothTransformation,
         )
         self.ui.previewImage.setPixmap(scaled)
+
+    # ------------------------------------------------------------------
+    # Status bar
+    # ------------------------------------------------------------------
+    def _setup_status_bar(self):
+        """Create a richer status bar mirroring the module designer style."""
+        self._emoji_style = (
+            "font-size:12pt; font-family:'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',"
+            "'EmojiOne','Twemoji Mozilla','Segoe UI Symbol',sans-serif; vertical-align:middle;"
+        )
+
+        bar = QStatusBar(self)
+        bar.setContentsMargins(4, 0, 4, 0)
+        self.setStatusBar(bar)
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+
+        first_row = QHBoxLayout()
+        first_row.setContentsMargins(0, 0, 0, 0)
+        first_row.setSpacing(8)
+
+        self._mouse_label = QLabel("Coords:")
+        self._hover_label = QLabel("Hover:")
+        self._selection_label = QLabel("Selection:")
+        self._keys_label = QLabel("Keys/Buttons:")
+        for lbl in (self._mouse_label, self._hover_label, self._selection_label, self._keys_label):
+            lbl.setTextFormat(Qt.TextFormat.RichText)
+            lbl.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        first_row.addWidget(self._mouse_label, 1)
+        first_row.addWidget(self._hover_label, 1)
+        first_row.addWidget(self._selection_label, 1)
+        first_row.addWidget(self._keys_label, 1)
+
+        self._mode_label = QLabel()
+        self._mode_label.setTextFormat(Qt.TextFormat.RichText)
+        self._mode_label.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+
+        layout.addLayout(first_row)
+        layout.addWidget(self._mode_label)
+
+        bar.addWidget(container, 1)
     
     def on_module_selected(self, index: int = -1):
         """Handle module selection from the combobox.
@@ -732,34 +779,138 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             title = "* " + title
         self.setWindowTitle(title)
 
-    def _refresh_status_bar(self):
-        screen: QPoint = self.ui.mapRenderer.mapFromGlobal(self.cursor().pos())
-        world: Vector3 = self.ui.mapRenderer.to_world_coords(screen.x(), screen.y())
-        obj: IndoorMapRoom | None = self.ui.mapRenderer.room_under_mouse()
-        selected_count = len(self.ui.mapRenderer.selected_rooms())
+    def _refresh_status_bar(
+        self,
+        screen: QPoint | Vector2 | None = None,
+        buttons: set[int | Qt.MouseButton] | None = None,
+        keys: set[int | Qt.Key] | None = None,
+    ):
+        self._update_status_bar(screen, buttons, keys)
 
-        parts = [f"X: {world.x:.2f}, Y: {world.y:.2f}"]
-        if obj:
-            parts.append(f"Hover: {obj.component.name}")
-        if selected_count > 0:
-            parts.append(f"Selected: {selected_count}")
+    def _update_status_bar(
+        self,
+        screen: QPoint | Vector2 | None = None,
+        buttons: set[int | Qt.MouseButton] | None = None,
+        keys: set[int | Qt.Key] | None = None,
+    ):
+        """Rich status bar mirroring Module Designer style."""
+        renderer = self.ui.mapRenderer
+
+        # Resolve screen coords
+        if screen is None:
+            cursor_pos = self.cursor().pos()
+            screen_qp = renderer.mapFromGlobal(cursor_pos)
+            screen_vec = Vector2(screen_qp.x(), screen_qp.y())
+        elif isinstance(screen, QPoint):
+            screen_vec = Vector2(screen.x(), screen.y())
+        else:
+            screen_vec = screen
+
+        # Resolve buttons/keys
+        if buttons is None:
+            buttons = set(renderer.mouse_down())  # pyright: ignore[reportAttributeAccessIssue]
+        if keys is None:
+            keys = set(renderer.keys_down())
+
+        world: Vector3 = renderer.to_world_coords(screen_vec.x, screen_vec.y)
+        hover_room: IndoorMapRoom | None = renderer.room_under_mouse()
+        sel_rooms = renderer.selected_rooms()
+        sel_hook = renderer.selected_hook()
+
+        # Mouse/hover
+        hover_text = (
+            f"<b><span style='{self._emoji_style}'>🧩</span>&nbsp;Hover:</b> "
+            f"<span style='color:#0055B0'>{hover_room.component.name}</span>"
+            if hover_room
+            else "<b><span style='{self._emoji_style}'>🧩</span>&nbsp;Hover:</b> <span style='color:#a6a6a6'><i>None</i></span>"
+        )
+        self._hover_label.setText(hover_text)
+
+        self._mouse_label.setText(
+            f"<b><span style='{self._emoji_style}'>🖱</span>&nbsp;Coords:</b> "
+            f"<span style='color:#0055B0'>{world.x:.2f}</span>, "
+            f"<span style='color:#228800'>{world.y:.2f}</span>"
+        )
+
+        # Selection
+        if sel_hook is not None:
+            hook_room, hook_idx = sel_hook
+            sel_text = (
+                f"<b><span style='{self._emoji_style}'>🎯</span>&nbsp;Selected Hook:</b> "
+                f"<span style='color:#0055B0'>{hook_room.component.name}</span> "
+                f"(#{hook_idx})"
+            )
+        elif sel_rooms:
+            sel_text = (
+                f"<b><span style='{self._emoji_style}'>🟦</span>&nbsp;Selected Rooms:</b> "
+                f"<span style='color:#0055B0'>{len(sel_rooms)}</span>"
+            )
+        else:
+            sel_text = (
+                f"<b><span style='{self._emoji_style}'>🟦</span>&nbsp;Selected:</b> "
+                "<span style='color:#a6a6a6'><i>None</i></span>"
+            )
+        self._selection_label.setText(sel_text)
+
+        # Keys/buttons (sorted with modifiers first)
+        def sort_with_modifiers(
+            items: set[int | Qt.Key | Qt.MouseButton],
+            get_string_func,
+            qt_enum_type: str,
+        ):
+            modifiers: list = []
+            normal: list = []
+            if qt_enum_type == "QtKey":
+                modifiers = [item for item in items if item in {Qt.Key.Key_Control, Qt.Key.Key_Shift, Qt.Key.Key_Alt, Qt.Key.Key_Meta}]
+                normal = [item for item in items if item not in modifiers]
+            else:
+                normal = list(items)
+            return sorted(modifiers, key=get_string_func) + sorted(normal, key=get_string_func)
+
+        def get_qt_key_string(key: Qt.Key | int) -> str:
+            return Qt.Key(key).name.replace("Key_", "")
+
+        def get_qt_button_string(btn: Qt.MouseButton | int) -> str:
+            return Qt.MouseButton(btn).name.replace("Button", "")
+
+        keys_sorted = sort_with_modifiers(keys, get_qt_key_string, "QtKey")
+        buttons_sorted = sort_with_modifiers(buttons, get_qt_button_string, "QtMouse")
+
+        def fmt(seq, formatter, color: str):
+            return (
+                "<span style='color:" + color + "'>"
+                + "</span>&nbsp;+&nbsp;<span style='color:" + color + "'>".join([formatter(item) for item in seq])
+                + "</span>"
+                if seq
+                else ""
+            )
+
+        keys_text = fmt(keys_sorted, get_qt_key_string, "#a13ac8")
+        buttons_text = fmt(buttons_sorted, get_qt_button_string, "#228800")
+        sep = " + " if keys_text and buttons_text else ""
+        self._keys_label.setText(
+            f"<b><span style='{self._emoji_style}'>⌨</span>&nbsp;Keys/<span style='{self._emoji_style}'>🖱</span>&nbsp;Buttons:</b> "
+            f"{keys_text}{sep}{buttons_text}"
+        )
+
+        # Mode/status line
+        mode_parts: list[str] = []
         if self._painting_walkmesh:
             material = self._current_material()
-            parts.append("[Paint Mode]")
-            if material:
-                parts.append(f"Material: {material.name.title().replace('_', ' ')}")
+            mat_text = material.name.title().replace("_", " ") if material else "Material"
+            mode_parts.append(f"<span style='color:#c46811'>Paint: {mat_text}</span>")
         if self._colorize_materials:
-            parts.append("[Colorized]")
-        
-        # Add snap indicators
-        if self.ui.mapRenderer.snap_to_grid:
-            parts.append("[Grid Snap]")
-        if self.ui.mapRenderer.snap_to_hooks:
-            parts.append("[Hook Snap]")
-
-        status_bar: QStatusBar | None = self.statusBar()
-        assert isinstance(status_bar, QStatusBar)
-        status_bar.showMessage(" | ".join(parts))
+            mode_parts.append("Colorized")
+        if renderer.snap_to_grid:
+            mode_parts.append("Grid Snap")
+        if renderer.snap_to_hooks:
+            mode_parts.append("Hook Snap")
+        self._mode_label.setText(
+            "<b><span style='{style}'>ℹ</span>&nbsp;Status:</b> {body}".format(
+                style=self._emoji_style,
+                body=" | ".join(mode_parts) if mode_parts else "<span style='color:#a6a6a6'><i>Idle</i></span>",
+            )
+        )
 
     def show_help_window(self):
         window = HelpWindow(self, "./wiki/Indoor-Map-Builder-User-Guide.md")
@@ -1146,6 +1297,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.moduleComponentList.clearSelection()
         self.ui.moduleComponentList.setCurrentItem(None)
         self._set_preview_image(None)
+        self._refresh_status_bar()
 
     # =========================================================================
     # View operations
@@ -1228,7 +1380,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         buttons: set[int],
         keys: set[int],
     ):
-        self._refresh_status_bar()
+        self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
         world_delta: Vector2 = self.ui.mapRenderer.to_world_delta(delta.x, delta.y)
 
         # Walkmesh painting drag
@@ -1325,6 +1477,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self._finish_paint_stroke()
             return
 
+        self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
         # Stop hook drag if active
         self.ui.mapRenderer._dragging_hook = False
         self.ui.mapRenderer.end_drag()
@@ -1473,6 +1626,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if self.ui.mapRenderer.cursor_component is not None:
             snap = self.ui.mapRenderer.rotation_snap
             self.ui.mapRenderer.cursor_rotation += math.copysign(snap, delta.y)
+        self._refresh_status_bar(screen=None, buttons=buttons, keys=keys)  # type: ignore[reportArgumentType]
 
     def onMouseDoubleClicked(
         self,
@@ -1777,6 +1931,9 @@ class IndoorMapRenderer(QWidget):
         self._hovering_warp: bool = False
         self.warp_point_radius: float = 1.0
 
+        # Status callback (set by parent window)
+        self._status_callback = None
+
         # Walkmesh visualization
         self._material_colors: dict[SurfaceMaterial, QColor] = {}
         self._colorize_materials: bool = False
@@ -1904,6 +2061,9 @@ class IndoorMapRenderer(QWidget):
     def set_cursor_component(self, component: KitComponent | None):
         self.cursor_component = component
         self.mark_dirty()
+
+    def set_status_callback(self, callback: Callable[[QPoint | Vector2 | None, set[int | Qt.MouseButton], set[int | Qt.Key]], None] | None) -> None:
+        self._status_callback = callback
 
     def select_room(self, room: IndoorMapRoom, *, clear_existing: bool):
         if clear_existing:
@@ -2137,6 +2297,12 @@ class IndoorMapRenderer(QWidget):
             self.cursor_flip_x = True
             self.cursor_flip_y = False
         self.mark_dirty()
+
+    def keys_down(self) -> set[int | Qt.Key]:
+        return set(self._keys_down)
+
+    def mouse_down(self) -> set[int | Qt.MouseButton]:
+        return set(self._mouse_down)
 
     # =========================================================================
     # Drag operations
@@ -2743,6 +2909,10 @@ class IndoorMapRenderer(QWidget):
         world = self.to_world_coords(coords.x, coords.y)
         self.cursor_point = world
 
+        # Keep status bar updated with live mouse state
+        if self._status_callback is not None:
+            self._status_callback(coords, self._mouse_down, self._keys_down)
+
         # Update warp point hover state
         self._hovering_warp = self.is_over_warp_point(world)
 
@@ -2924,6 +3094,8 @@ class IndoorMapRenderer(QWidget):
             else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # pyright: ignore[reportAttributeAccessIssue]
         )
         self.sig_mouse_pressed.emit(coords, self._mouse_down, self._keys_down)
+        if self._status_callback is not None:
+            self._status_callback(coords, self._mouse_down, self._keys_down)
 
     def mouseReleaseEvent(self, e: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         event_mouse_button = e.button()
@@ -2936,6 +3108,8 @@ class IndoorMapRenderer(QWidget):
             else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # pyright: ignore[reportAttributeAccessIssue]
         )
         self.sig_mouse_released.emit(coords, self._mouse_down, self._keys_down)
+        if self._status_callback is not None:
+            self._status_callback(coords, self._mouse_down, self._keys_down)
 
     def mouseDoubleClickEvent(self, e: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         event_mouse_button = e.button()
