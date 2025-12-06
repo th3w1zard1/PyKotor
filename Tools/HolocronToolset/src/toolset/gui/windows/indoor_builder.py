@@ -761,7 +761,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         status_bar.showMessage(" | ".join(parts))
 
     def show_help_window(self):
-        window = HelpWindow(self, "./wiki/LYT-File-Format.md")
+        window = HelpWindow(self, "./wiki/Indoor-Map-Builder-User-Guide.md")
         window.setWindowIcon(self.windowIcon())
         window.show()
         window.activateWindow()
