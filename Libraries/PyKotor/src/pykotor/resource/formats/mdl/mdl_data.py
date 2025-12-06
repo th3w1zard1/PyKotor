@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from pykotor.common.misc import Color
 from pykotor.resource.formats._base import ComparableMixin
+from pykotor.resource.formats.mdl.mdl_types import MDLClassification
 from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector3, Vector4
 
@@ -37,7 +38,19 @@ class MDL(ComparableMixin):
     """
 
     BINARY_TYPE = ResourceType.MDL
-    COMPARABLE_FIELDS = ("name", "fog", "supermodel")
+    COMPARABLE_FIELDS = (
+        "name",
+        "fog",
+        "supermodel",
+        "classification",
+        "classification_unk1",
+        "animation_scale",
+        "bmin",
+        "bmax",
+        "radius",
+        "headlink",
+        "compress_quaternions",
+    )
     COMPARABLE_SEQUENCE_FIELDS = ("anims",)
 
     def __init__(
@@ -48,6 +61,15 @@ class MDL(ComparableMixin):
         self.name: str = ""
         self.fog: bool = False
         self.supermodel: str = ""
+        # ASCII/mdlops specific header fields
+        self.classification: MDLClassification = MDLClassification.OTHER
+        self.classification_unk1: int = 0
+        self.animation_scale: float = 0.971
+        self.bmin: Vector3 = Vector3(-5, -5, -1)
+        self.bmax: Vector3 = Vector3(5, 5, 10)
+        self.radius: float = 7.0
+        self.headlink: str = ""
+        self.compress_quaternions: int = 0
 
     def __eq__(self, other):
         if not isinstance(other, MDL):
@@ -58,6 +80,14 @@ class MDL(ComparableMixin):
             and self.name == other.name
             and self.fog == other.fog
             and self.supermodel == other.supermodel
+            and self.classification == other.classification
+            and self.classification_unk1 == other.classification_unk1
+            and self.animation_scale == other.animation_scale
+            and self.bmin == other.bmin
+            and self.bmax == other.bmax
+            and self.radius == other.radius
+            and self.headlink == other.headlink
+            and self.compress_quaternions == other.compress_quaternions
         )
 
     def __hash__(self):
@@ -66,7 +96,15 @@ class MDL(ComparableMixin):
             tuple(self.anims),
             self.name,
             self.fog,
-            self.supermodel
+            self.supermodel,
+            self.classification,
+            self.classification_unk1,
+            self.animation_scale,
+            self.bmin,
+            self.bmax,
+            self.radius,
+            self.headlink,
+            self.compress_quaternions,
         ))
 
     def get(
