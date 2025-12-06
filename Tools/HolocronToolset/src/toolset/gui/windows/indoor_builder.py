@@ -7,7 +7,7 @@ import shutil
 import zipfile
 from collections import deque
 
-from copy import copy, deepcopy
+from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -222,20 +222,20 @@ class MoveRoomsCommand(QUndoCommand):
         super().__init__(f"Move {len(rooms)} Room(s)")
         self.indoor_map = indoor_map
         self.rooms = rooms.copy()
-        self.old_positions = [copy(p) for p in old_positions]
-        self.new_positions = [copy(p) for p in new_positions]
+        self.old_positions = [Vector3(*p) for p in old_positions]
+        self.new_positions = [Vector3(*p) for p in new_positions]
         self._invalidate_cb = invalidate_cb
 
     def undo(self):
         for room, pos in zip(self.rooms, self.old_positions):
-            room.position = copy(pos)
+            room.position = Vector3(*pos)
         self.indoor_map.rebuild_room_connections()
         if self._invalidate_cb:
             self._invalidate_cb(self.rooms)
 
     def redo(self):
         for room, pos in zip(self.rooms, self.new_positions):
-            room.position = copy(pos)
+            room.position = Vector3(*pos)
         self.indoor_map.rebuild_room_connections()
         if self._invalidate_cb:
             self._invalidate_cb(self.rooms)
@@ -374,14 +374,14 @@ class MoveWarpCommand(QUndoCommand):
     ):
         super().__init__("Move Warp Point")
         self.indoor_map = indoor_map
-        self.old_position = copy(old_position)
-        self.new_position = copy(new_position)
+        self.old_position = Vector3(*old_position)
+        self.new_position = Vector3(*new_position)
 
     def undo(self):
-        self.indoor_map.warp_point = copy(self.old_position)
+        self.indoor_map.warp_point = Vector3(*self.old_position)
 
     def redo(self):
-        self.indoor_map.warp_point = copy(self.new_position)
+        self.indoor_map.warp_point = Vector3(*self.new_position)
 
 
 class PaintWalkmeshCommand(QUndoCommand):
@@ -396,11 +396,11 @@ class PaintWalkmeshCommand(QUndoCommand):
         invalidate_cb,
     ):
         super().__init__(f"Paint {len(face_indices)} Face(s)")
-        self.rooms = rooms
-        self.face_indices = face_indices
-        self.old_materials = old_materials
-        self.new_materials = new_materials
-        self._invalidate_cb = invalidate_cb
+        self.rooms: list[IndoorMapRoom] = rooms
+        self.face_indices: list[int] = face_indices
+        self.old_materials: list[SurfaceMaterial] = old_materials
+        self.new_materials: list[SurfaceMaterial] = new_materials
+        self._invalidate_cb: Callable[[list[IndoorMapRoom]], None] = invalidate_cb
 
     def _apply(self, materials: list[SurfaceMaterial]):
         for room, face_index, material in zip(self.rooms, self.face_indices, materials):
@@ -425,9 +425,9 @@ class ResetWalkmeshCommand(QUndoCommand):
         invalidate_cb,
     ):
         super().__init__(f"Reset Walkmesh ({len(rooms)} Room(s))")
-        self.rooms = rooms
-        self._invalidate_cb = invalidate_cb
-        self._previous_overrides = [deepcopy(room.walkmesh_override) for room in rooms]
+        self.rooms: list[IndoorMapRoom] = rooms
+        self._invalidate_cb: Callable[[list[IndoorMapRoom]], None] = invalidate_cb
+        self._previous_overrides: list[bytes | None] = [deepcopy(room.walkmesh_override) for room in rooms]
 
     def undo(self):
         for room, previous in zip(self.rooms, self._previous_overrides):
@@ -525,15 +525,14 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.setupUi(self)
 
         # Set initial splitter sizes (left panel ~250px, rest to map renderer)
-        if hasattr(self.ui, "mainSplitter"):
-            # Set initial sizes: left panel gets ~250 pixels (a few inches), rest goes to map renderer
-            total_width = self.width() if self.width() > 0 else 1024
-            left_panel_size = min(300, max(200, total_width // 4))  # 200-300px or 1/4 of width, whichever is smaller
-            self.ui.mainSplitter.setSizes([left_panel_size, total_width - left_panel_size])
-            # Make splitter handle resizable
-            self.ui.mainSplitter.setChildrenCollapsible(False)
-            # Connect splitter resize to update preview image if needed
-            self.ui.mainSplitter.splitterMoved.connect(self._on_splitter_moved)
+        # Set initial sizes: left panel gets ~250 pixels (a few inches), rest goes to map renderer
+        total_width = self.width() if self.width() > 0 else 1024
+        left_panel_size = min(300, max(200, total_width // 4))  # 200-300px or 1/4 of width, whichever is smaller
+        self.ui.mainSplitter.setSizes([left_panel_size, total_width - left_panel_size])
+        # Make splitter handle resizable
+        self.ui.mainSplitter.setChildrenCollapsible(False)
+        # Connect splitter resize to update preview image if needed
+        self.ui.mainSplitter.splitterMoved.connect(self._on_splitter_moved)
 
         self._setup_status_bar()
         # Walkmesh painter state
@@ -938,6 +937,15 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if component is None:
             return
 
+        # Toggle: if same component is already selected, deselect it
+        if self.ui.mapRenderer.cursor_component is component:
+            # Clicking the same component again = "pick it up" (deselect)
+            self.ui.moduleComponentList.clearSelection()
+            self.ui.moduleComponentList.setCurrentItem(None)
+            self._set_preview_image(None)
+            self.ui.mapRenderer.set_cursor_component(None)
+            return
+
         # Display component image in the preview
         self._set_preview_image(component.image)
 
@@ -970,8 +978,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         
         # Find the parent layout that contains the map renderer
         # This will depend on the UI structure - adjust as needed
-        parent_layout = self.ui.mapRenderer.parent().layout() if self.ui.mapRenderer.parent() else None  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
-        if parent_layout is None:
+        parent_layout: QVBoxLayout | None = self.ui.mapRenderer.parent().layout() if self.ui.mapRenderer.parent() else None  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
+        if not isinstance(parent_layout, QVBoxLayout):
             return  # Can't install view stack without a parent layout
         
         self._view_stack = QStackedWidget(self)
@@ -1106,7 +1114,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                         position.get("z", room.position.z),
                     )
                     if room.position != new_position:
-                        old_positions = [Vect(room.position)]
+                        old_positions = [Vector3(*room.position)]
                         new_positions = [new_position]
                         move_cmd = MoveRoomsCommand(
                             self._map,
@@ -1626,15 +1634,15 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Store original values to detect changes
         old_module_id: str = self._map.module_id
-        old_name: str | None = self._map.name.stringref if hasattr(self._map.name, "stringref") else None
-        old_skybox: str = self._map.skybox
+        old_name: str | int | None = self._map.name.stringref if hasattr(self._map.name, "stringref") else None  # type: ignore[assignment, attr-defined]
+        old_skybox: str | None = self._map.skybox if hasattr(self._map, "skybox") else None  # type: ignore[assignment, attr-defined]
 
         dialog = IndoorMapSettings(self, self._installation, self._map, self._kits)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             # Settings were accepted - check if anything actually changed
             module_id_changed: bool = old_module_id != self._map.module_id
-            name_changed: bool = old_name != (self._map.name.stringref if hasattr(self._map.name, "stringref") else None)
-            skybox_changed: bool = old_skybox != self._map.skybox
+            name_changed: bool = old_name != (self._map.name.stringref if hasattr(self._map.name, "stringref") else None)  # type: ignore[assignment, attr-defined]
+            skybox_changed: bool = old_skybox != (self._map.skybox if hasattr(self._map, "skybox") else None)  # type: ignore[assignment, attr-defined]
 
             if module_id_changed or name_changed or skybox_changed:
                 # Mark as having unsaved changes by pushing a no-op command
@@ -1880,8 +1888,21 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def onComponentSelected(self, item: QListWidgetItem):
         if item is None:
+            self._set_preview_image(None)
+            self.ui.mapRenderer.set_cursor_component(None)
             return
+        
         component: KitComponent = item.data(Qt.ItemDataRole.UserRole)
+        
+        # Toggle: if same component is already selected, deselect it
+        if self.ui.mapRenderer.cursor_component is component:
+            # Clicking the same component again = "pick it up" (deselect)
+            self.ui.componentList.clearSelection()
+            self.ui.componentList.setCurrentItem(None)
+            self._set_preview_image(None)
+            self.ui.mapRenderer.set_cursor_component(None)
+            return
+        
         self._set_preview_image(component.image)
         self.ui.mapRenderer.set_cursor_component(component)
 
@@ -1937,23 +1958,36 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # CRITICAL: Check for existing room/hook FIRST before placement mode
         # This prevents placing new rooms when trying to drag existing ones
-        room: IndoorMapRoom | None = renderer.room_under_mouse()
+        # Use pick_face to get the room at click position (more reliable than room_under_mouse which may be stale)
+        room: IndoorMapRoom | None = None
+        face_room, _ = renderer.pick_face(world)
+        if face_room is not None:
+            room = face_room
         hook_hit = renderer.hook_under_mouse(world)
         
         # If clicking on an existing room or hook, handle selection/dragging
-        # This takes priority over placement mode
+        # This takes priority over placement mode - ALWAYS select/drag, never place
         if room is not None or hook_hit is not None:
+            # Clear any component selection when clicking on existing room/hook
+            if renderer.cursor_component is not None:
+                renderer.set_cursor_component(None)
+                self.ui.componentList.clearSelection()
+                self.ui.componentList.setCurrentItem(None)
+                self.ui.moduleComponentList.clearSelection()
+                self.ui.moduleComponentList.setCurrentItem(None)
+                self._set_preview_image(None)
+            
             # Handle hook selection/dragging first
             if hook_hit is not None and Qt.Key.Key_Shift not in keys:
                 hook_room, hook_index = hook_hit
                 renderer.select_hook(hook_room, hook_index, clear_existing=True)
                 renderer._dragging_hook = True
-                renderer._drag_hook_start = copy(renderer.cursor_point)
+                renderer._drag_hook_start = Vector3(*renderer.cursor_point)
                 return
 
             # Handle room selection and dragging
             if room is not None:
-                # Clicking on a room
+                # Clicking on a room - ALWAYS select/drag, never place
                 if room in renderer.selected_rooms():
                     # Room already selected - start drag without changing selection
                     renderer.start_drag(room)
@@ -1972,15 +2006,20 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             # If cursor component is None but component is selected, restore cursor
             if renderer.cursor_component is None and component is not None:
                 renderer.set_cursor_component(component)
-            # Place new room
+            # Place new room - ONLY on empty space
             if component is not None:
                 self._place_new_room(component)
                 if Qt.Key.Key_Shift not in keys:
-                    # Clear cursor component but keep UI selection so user can place multiple rooms
-                    # by clicking again without having to reselect the component
+                    # Clear BOTH cursor and UI selection after placing (pick it up)
+                    # This allows clicking again to require reselection
                     renderer.set_cursor_component(None)
                     renderer.clear_selected_hook()
-                    # Don't clear UI selection - allow placing multiple rooms
+                    # Clear UI selections to fully "pick up" the component
+                    self.ui.componentList.clearSelection()
+                    self.ui.componentList.setCurrentItem(None)
+                    self.ui.moduleComponentList.clearSelection()
+                    self.ui.moduleComponentList.setCurrentItem(None)
+                    self._set_preview_image(None)
                 else:
                     # Shift held - keep cursor active for multiple placements
                     pass
@@ -2083,7 +2122,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         """Place a new room at cursor position with undo support."""
         room = IndoorMapRoom(
             component,
-            copy(self.ui.mapRenderer.cursor_point),
+            Vector3(*self.ui.mapRenderer.cursor_point),
             self.ui.mapRenderer.cursor_rotation,
             flip_x=self.ui.mapRenderer.cursor_flip_x,
             flip_y=self.ui.mapRenderer.cursor_flip_y,
@@ -2980,7 +3019,7 @@ class IndoorMapRenderer(QWidget):
         self._dragging = True
         self._drag_mode = DragMode.ROOMS
         self._drag_rooms = self._selected_rooms.copy()
-        self._drag_start_positions = [copy(r.position) for r in self._drag_rooms]
+        self._drag_start_positions = [Vector3(*r.position) for r in self._drag_rooms]
         self._drag_start_rotations = [r.rotation for r in self._drag_rooms]
 
         # Check if room is currently snapped and record snap anchor for soft snapping
@@ -2993,7 +3032,7 @@ class IndoorMapRenderer(QWidget):
                 snap_threshold = max(HOOK_SNAP_BASE_THRESHOLD, HOOK_SNAP_SCALE_FACTOR / self._cam_scale)
                 if distance_to_snap <= snap_threshold:
                     # Room is snapped - record the snap anchor
-                    self._snap_anchor_position = copy(snap_result.position)
+                    self._snap_anchor_position = Vector3(*snap_result.position)
                 else:
                     # Not actually snapped
                     self._snap_anchor_position = None
@@ -3006,7 +3045,7 @@ class IndoorMapRenderer(QWidget):
         """Start dragging the warp point."""
         self._dragging_warp = True
         self._drag_mode = DragMode.WARP
-        self._warp_drag_start = copy(self._map.warp_point)
+        self._warp_drag_start = Vector3(*self._map.warp_point)
 
     def start_marquee(self, screen_pos: Vector2):
         """Start marquee selection."""
@@ -3020,7 +3059,7 @@ class IndoorMapRenderer(QWidget):
         if self._drag_mode == DragMode.ROOMS and self._dragging:
             self._dragging = False
             if self._drag_rooms:
-                new_positions = [copy(r.position) for r in self._drag_rooms]
+                new_positions = [Vector3(*r.position) for r in self._drag_rooms]
                 self.sig_rooms_moved.emit(self._drag_rooms, self._drag_start_positions, new_positions)
                 new_rotations = [r.rotation for r in self._drag_rooms]
                 if self._drag_start_rotations:
@@ -3033,7 +3072,7 @@ class IndoorMapRenderer(QWidget):
 
         elif self._drag_mode == DragMode.WARP and self._dragging_warp:
             self._dragging_warp = False
-            new_pos = copy(self._map.warp_point)
+            new_pos = Vector3(*self._map.warp_point)
             if self._warp_drag_start.distance(new_pos) > POSITION_CHANGE_EPSILON:
                 self.sig_warp_moved.emit(self._warp_drag_start, new_pos)
 
@@ -3097,7 +3136,7 @@ class IndoorMapRenderer(QWidget):
         self.set_camera_zoom(self._cam_scale + zoom)
 
     def camera_position(self) -> Vector2:
-        return copy(self._cam_position)
+        return Vector2(*self._cam_position)
 
     def set_camera_position(self, x: float, y: float):
         self._cam_position.x = x
