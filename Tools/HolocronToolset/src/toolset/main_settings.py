@@ -80,6 +80,12 @@ def setup_toolset_default_env():
     from toolset.main_init import is_frozen
     from utility.misc import is_debug_mode
 
+    # Force a real platform plugin. Upstream test harnesses default QT_QPA_PLATFORM
+    # to "offscreen" (see Libraries/PyKotor/tests/conftest.py), which prevents the
+    # ToolWindow from ever becoming exposed when run interactively. An empty string
+    # lets Qt auto-select the native Windows plugin instead of the headless one.
+    os.environ["QT_QPA_PLATFORM"] = ""
+
     if os.name == "nt":
         os.environ["QT_MULTIMEDIA_PREFERRED_PLUGINS"] = os.environ.get("QT_MULTIMEDIA_PREFERRED_PLUGINS", "windowsmediafoundation")
         os.environ["QT_MEDIA_BACKEND"] = os.environ.get("QT_MEDIA_BACKEND", "windows")
