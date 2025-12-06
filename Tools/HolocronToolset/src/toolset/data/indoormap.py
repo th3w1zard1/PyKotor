@@ -67,18 +67,18 @@ class IndoorMap:
     def __init__(
         self,
         rooms: list[IndoorMapRoom] | None = None,
-        module_id: str | None = "test01",
-        name: LocalizedString | None = LocalizedString.from_english("New Module"),
-        lighting: Color | None = Color(0.5, 0.5, 0.5),
-        skybox: str | None = "",
-        warp_point: Vector3 | None = Vector3.from_null(),
+        module_id: str | None = None,
+        name: LocalizedString | None = None,
+        lighting: Color | None = None,
+        skybox: str | None = None,
+        warp_point: Vector3 | None = None,
     ):
-        self.rooms: list[IndoorMapRoom] = rooms or []
-        self.module_id: str = module_id or "test01"
-        self.name: LocalizedString = name or LocalizedString.from_english("New Module")
-        self.lighting: Color = lighting or Color(0.5, 0.5, 0.5)
-        self.skybox: str = skybox or ""
-        self.warp_point: Vector3 = warp_point or Vector3.from_null()
+        self.rooms: list[IndoorMapRoom] = rooms if rooms is not None else []
+        self.module_id: str = module_id if module_id is not None else "test01"
+        self.name: LocalizedString = name if name is not None else LocalizedString.from_english("New Module")
+        self.lighting: Color = lighting if lighting is not None else Color(0.5, 0.5, 0.5)
+        self.skybox: str = skybox if skybox is not None else ""
+        self.warp_point: Vector3 = warp_point if warp_point is not None else Vector3.from_null()
 
     def rebuild_room_connections(self):
         for room in self.rooms:
