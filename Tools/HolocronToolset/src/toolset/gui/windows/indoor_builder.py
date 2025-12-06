@@ -523,6 +523,17 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # Set initial splitter sizes (left panel ~250px, rest to map renderer)
+        if hasattr(self.ui, "mainSplitter"):
+            # Set initial sizes: left panel gets ~250 pixels (a few inches), rest goes to map renderer
+            total_width = self.width() if self.width() > 0 else 1024
+            left_panel_size = min(300, max(200, total_width // 4))  # 200-300px or 1/4 of width, whichever is smaller
+            self.ui.mainSplitter.setSizes([left_panel_size, total_width - left_panel_size])
+            # Make splitter handle resizable
+            self.ui.mainSplitter.setChildrenCollapsible(False)
+            # Connect splitter resize to update preview image if needed
+            self.ui.mainSplitter.splitterMoved.connect(self._on_splitter_moved)
+
         self._setup_status_bar()
         # Walkmesh painter state
         self._painting_walkmesh: bool = False
@@ -800,13 +811,18 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self.ui.previewImage.clear()
             return
 
+        # Store the original image for resizing
+        self._preview_source_image = image
+        # Set the pixmap - scaledContents will handle resizing automatically
         pixmap = QPixmap.fromImage(image)
-        scaled = pixmap.scaled(
-            self.ui.previewImage.size(),
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        )
-        self.ui.previewImage.setPixmap(scaled)
+        self.ui.previewImage.setPixmap(pixmap)
+    
+    def _on_splitter_moved(self, pos: int, index: int):
+        """Handle splitter movement - update preview image if it exists."""
+        # Refresh preview image to match new size if one is set
+        if hasattr(self, "_preview_source_image") and self._preview_source_image is not None:
+            # Re-apply the preview image which will scale to new size
+            self._set_preview_image(self._preview_source_image)
 
     # ------------------------------------------------------------------
     # Status bar
