@@ -1852,31 +1852,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     # =========================================================================
 
     def selected_component(self) -> KitComponent | None:
-        """Return the currently selected component from either kits or modules.
+        """Return the currently selected component for placement.
 
-        The renderer tracks the active cursor component; prefer that when
-        available so that module-derived components behave exactly like kit
-        components during placement.
+        ONLY returns cursor_component to prevent state desync between
+        the renderer and UI lists. The cursor_component is the single
+        source of truth for what component will be placed on click.
         """
-        renderer = self.ui.mapRenderer
-        if renderer.cursor_component is not None:
-            return renderer.cursor_component
-
-        # Fallback to the kits list selection for legacy behaviour.
-        kit_item: QListWidgetItem | None = self.ui.componentList.currentItem()
-        if kit_item is not None:
-            component = kit_item.data(Qt.ItemDataRole.UserRole)
-            if isinstance(component, KitComponent):
-                return component
-
-        # Finally, consider the modules list selection if present.
-        module_item: QListWidgetItem | None = self.ui.moduleComponentList.currentItem()
-        if module_item is not None:
-            component = module_item.data(Qt.ItemDataRole.UserRole)
-            if isinstance(component, KitComponent):
-                return component
-
-        return None
+        return self.ui.mapRenderer.cursor_component
 
     def set_warp_point(self, x: float, y: float, z: float):
         self._map.warp_point = Vector3(x, y, z)
@@ -1962,28 +1944,21 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             renderer.start_warp_drag()
             return
 
-        # CRITICAL: Check for existing room/hook FIRST before placement mode
-        # This prevents placing new rooms when trying to drag existing ones
-        # Use pick_face to get the room at click position (more reliable than room_under_mouse which may be stale)
-        room: IndoorMapRoom | None = None
+        # STEP 1: Check for existing room/hook at click position
+        # Use pick_face which checks the actual walkmesh geometry
+        clicked_room: IndoorMapRoom | None = None
         face_room, _ = renderer.pick_face(world)
         if face_room is not None:
-            room = face_room
+            clicked_room = face_room
         hook_hit = renderer.hook_under_mouse(world)
         
-        # If clicking on an existing room or hook, handle selection/dragging
-        # This takes priority over placement mode - ALWAYS select/drag, never place
-        if room is not None or hook_hit is not None:
-            # Clear any component selection when clicking on existing room/hook
-            if renderer.cursor_component is not None:
-                renderer.set_cursor_component(None)
-                self.ui.componentList.clearSelection()
-                self.ui.componentList.setCurrentItem(None)
-                self.ui.moduleComponentList.clearSelection()
-                self.ui.moduleComponentList.setCurrentItem(None)
-                self._set_preview_image(None)
+        # STEP 2: If clicking on an existing room or hook, ALWAYS select/drag
+        # This takes ABSOLUTE priority over placement mode
+        if clicked_room is not None or hook_hit is not None:
+            # Force clear placement mode when interacting with existing objects
+            self._clear_placement_mode()
             
-            # Handle hook selection/dragging first
+            # Handle hook selection/dragging first (hooks have priority over room body)
             if hook_hit is not None and Qt.Key.Key_Shift not in keys:
                 hook_room, hook_index = hook_hit
                 renderer.select_hook(hook_room, hook_index, clear_existing=True)
@@ -1992,50 +1967,48 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 return
 
             # Handle room selection and dragging
-            if room is not None:
-                # Clicking on a room - ALWAYS select/drag, never place
-                if room in renderer.selected_rooms():
-                    # Room already selected - start drag without changing selection
-                    renderer.start_drag(room)
+            if clicked_room is not None:
+                if clicked_room in renderer.selected_rooms():
+                    # Room already selected - just start drag
+                    renderer.start_drag(clicked_room)
                 else:
-                    # Select room (shift to add to selection, otherwise clear existing)
-                    clear_existing: bool = Qt.Key.Key_Shift not in keys
-                    renderer.select_room(room, clear_existing=clear_existing)
-                    # Start drag tracking
-                    renderer.start_drag(room)
-                return  # Exit after handling room drag
+                    # Select the room first, then start drag
+                    clear_existing = Qt.Key.Key_Shift not in keys
+                    renderer.select_room(clicked_room, clear_existing=clear_existing)
+                    renderer.start_drag(clicked_room)
+                return
 
-        # No room/hook clicked - check if we're in placement mode
-        # Only place new rooms when clicking on empty space
-        component: KitComponent | None = self.selected_component()
-        if renderer.cursor_component is not None or component is not None:
-            # If cursor component is None but component is selected, restore cursor
-            if renderer.cursor_component is None and component is not None:
-                renderer.set_cursor_component(component)
-            # Place new room - ONLY on empty space
-            if component is not None:
-                self._place_new_room(component)
-                if Qt.Key.Key_Shift not in keys:
-                    # Clear BOTH cursor and UI selection after placing (pick it up)
-                    # This allows clicking again to require reselection
-                    renderer.set_cursor_component(None)
-                    renderer.clear_selected_hook()
-                    # Clear UI selections to fully "pick up" the component
-                    self.ui.componentList.clearSelection()
-                    self.ui.componentList.setCurrentItem(None)
-                    self.ui.moduleComponentList.clearSelection()
-                    self.ui.moduleComponentList.setCurrentItem(None)
-                    self._set_preview_image(None)
-                else:
-                    # Shift held - keep cursor active for multiple placements
-                    pass
-                return  # Exit after placing room
+        # STEP 3: Clicked on empty space - check placement mode
+        # ONLY use cursor_component, ignore UI list fallback to prevent desync
+        if renderer.cursor_component is not None:
+            self._place_new_room(renderer.cursor_component)
+            if Qt.Key.Key_Shift not in keys:
+                # Clear placement mode after placing
+                self._clear_placement_mode()
+            return
 
-        # No room clicked and not in placement mode - clear selection or start marquee selection
+        # STEP 4: Empty space, no placement mode - start marquee or clear selection
         if Qt.Key.Key_Shift not in keys:
             renderer.clear_selected_rooms()
-        # Start marquee selection (will be cleaned up on mouse release if no drag occurred)
         renderer.start_marquee(screen)
+    
+    def _clear_placement_mode(self):
+        """Clear all placement mode state - cursor component and UI selections."""
+        renderer = self.ui.mapRenderer
+        renderer.set_cursor_component(None)
+        renderer.clear_selected_hook()
+        # Block signals to prevent recursive calls during clear
+        self.ui.componentList.blockSignals(True)
+        self.ui.moduleComponentList.blockSignals(True)
+        try:
+            self.ui.componentList.clearSelection()
+            self.ui.componentList.setCurrentItem(None)
+            self.ui.moduleComponentList.clearSelection()
+            self.ui.moduleComponentList.setCurrentItem(None)
+        finally:
+            self.ui.componentList.blockSignals(False)
+            self.ui.moduleComponentList.blockSignals(False)
+        self._set_preview_image(None)
 
     def on_mouse_released(
         self,
@@ -3021,9 +2994,16 @@ class IndoorMapRenderer(QWidget):
     # =========================================================================
 
     def start_drag(self, room: IndoorMapRoom):
-        """Start dragging selected rooms."""
+        """Start dragging selected rooms.
+        
+        If the room is not in the selection, it will be added first.
+        This ensures clicking on any room can start a drag.
+        """
+        # Ensure the room is in the selection (add it if not)
         if room not in self._selected_rooms:
-            return
+            self._selected_rooms.append(room)
+        
+        # Now start the drag
         self._dragging = True
         self._drag_mode = DragMode.ROOMS
         self._drag_rooms = self._selected_rooms.copy()
@@ -3048,6 +3028,8 @@ class IndoorMapRenderer(QWidget):
                 self._snap_anchor_position = None
         else:
             self._snap_anchor_position = None
+        
+        self.mark_dirty()
 
     def start_warp_drag(self):
         """Start dragging the warp point."""
