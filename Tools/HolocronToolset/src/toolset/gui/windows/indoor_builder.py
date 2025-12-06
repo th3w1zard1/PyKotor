@@ -513,22 +513,16 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         self._populate_material_list()
         self._colorize_materials = True
-        if hasattr(self.ui, "colorizeMaterialsCheck"):
-            self.ui.colorizeMaterialsCheck.setChecked(True)
-        if hasattr(self.ui, "enablePaintCheck"):
-            self.ui.enablePaintCheck.setChecked(False)
+        self.ui.colorizeMaterialsCheck.setChecked(True)
+        self.ui.enablePaintCheck.setChecked(False)
 
         self.ui.mapRenderer.set_material_colors(self._material_colors)
         self.ui.mapRenderer.set_colorize_materials(self._colorize_materials)
 
-        if hasattr(self.ui, "materialList"):
-            self.ui.materialList.currentItemChanged.connect(lambda _old, _new=None: self._refresh_status_bar())
-        if hasattr(self.ui, "enablePaintCheck"):
-            self.ui.enablePaintCheck.toggled.connect(self._toggle_paint_mode)
-        if hasattr(self.ui, "colorizeMaterialsCheck"):
-            self.ui.colorizeMaterialsCheck.toggled.connect(self._toggle_colorize_materials)
-        if hasattr(self.ui, "resetPaintButton"):
-            self.ui.resetPaintButton.clicked.connect(self._reset_selected_walkmesh)
+        self.ui.materialList.currentItemChanged.connect(lambda _old, _new=None: self._refresh_status_bar())
+        self.ui.enablePaintCheck.toggled.connect(self._toggle_paint_mode)
+        self.ui.colorizeMaterialsCheck.toggled.connect(self._toggle_colorize_materials)
+        self.ui.resetPaintButton.clicked.connect(self._reset_selected_walkmesh)
 
         # Shortcut to quickly toggle paint mode
         QShortcut(Qt.Key.Key_P, self).activated.connect(lambda: self.ui.enablePaintCheck.toggle())
@@ -543,12 +537,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._undo_stack.canRedoChanged.connect(self.ui.actionRedo.setEnabled)
 
         # Update action text with command names
-        self._undo_stack.undoTextChanged.connect(
-            lambda text: self.ui.actionUndo.setText(f"Undo {text}" if text else "Undo")
-        )
-        self._undo_stack.redoTextChanged.connect(
-            lambda text: self.ui.actionRedo.setText(f"Redo {text}" if text else "Redo")
-        )
+        self._undo_stack.undoTextChanged.connect(lambda text: self.ui.actionUndo.setText(f"Undo {text}" if text else "Undo"))
+        self._undo_stack.redoTextChanged.connect(lambda text: self.ui.actionRedo.setText(f"Redo {text}" if text else "Redo"))
 
         # Initial state
         self.ui.actionUndo.setEnabled(False)
@@ -562,13 +552,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             pix.fill(color)
             item = QListWidgetItem(QIcon(pix), material.name.replace("_", " ").title())
             item.setData(Qt.ItemDataRole.UserRole, material)
-            self.ui.materialList.addItem(item)
+            self.ui.materialList.addItem(item)  # pyright: ignore[reportArgumentType, reportCallIssue]
         if self.ui.materialList.count() > 0:
             self.ui.materialList.setCurrentRow(0)
 
     def _current_material(self) -> SurfaceMaterial | None:
         if self.ui.materialList.currentItem():
-            material = self.ui.materialList.currentItem().data(Qt.ItemDataRole.UserRole)
+            material = self.ui.materialList.currentItem().data(Qt.ItemDataRole.UserRole)  # pyright: ignore[reportOptionalMemberAccess]
             if isinstance(material, SurfaceMaterial):
                 return material
         return next(iter(self._material_colors.keys()), None)
@@ -651,8 +641,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         
         if not self._installation:
             # Disable modules UI if no installation is available
-            if hasattr(self.ui, 'modulesGroupBox'):
-                self.ui.modulesGroupBox.setEnabled(False)
+            self.ui.modulesGroupBox.setEnabled(False)
             return
         
         # Get module roots from the kit manager
@@ -691,7 +680,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             for component in module_kit.components:
                 item = QListWidgetItem(component.name)
                 item.setData(Qt.ItemDataRole.UserRole, component)
-                self.ui.moduleComponentList.addItem(item)
+                self.ui.moduleComponentList.addItem(item)  # pyright: ignore[reportArgumentType, reportCallIssue]
                 
         except Exception:  # noqa: BLE001
             from loggerplus import RobustLogger  # type: ignore[import-not-found, note]
@@ -1266,9 +1255,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                     # cursor cleanly exits placement mode regardless of source.
                     self.ui.componentList.clearSelection()
                     self.ui.componentList.setCurrentItem(None)
-                    if hasattr(self.ui, "moduleComponentList"):
-                        self.ui.moduleComponentList.clearSelection()
-                        self.ui.moduleComponentList.setCurrentItem(None)
+                    self.ui.moduleComponentList.clearSelection()
+                    self.ui.moduleComponentList.setCurrentItem(None)
                 return  # Exit after placing room
         
         # Not in placement mode - handle room selection and dragging
@@ -1543,44 +1531,38 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def closeEvent(self, e: QCloseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Handle window close event - ensure proper cleanup of all resources."""
         # Stop renderer loop first
-        if hasattr(self.ui, 'mapRenderer'):
-            try:
-                self.ui.mapRenderer._loop_active = False
-                # Process events to allow renderer to stop gracefully
-                QApplication.processEvents()
-            except Exception:
-                pass
+        try:
+            self.ui.mapRenderer._loop_active = False
+            # Process events to allow renderer to stop gracefully
+            QApplication.processEvents()
+        except Exception:
+            pass
         
         # Disconnect all signals to prevent callbacks after destruction
         try:
             # Disconnect UI signals
-            if hasattr(self.ui, 'kitSelect'):
-                self.ui.kitSelect.currentIndexChanged.disconnect()
-            if hasattr(self.ui, 'componentList'):
-                self.ui.componentList.currentItemChanged.disconnect()
-            if hasattr(self.ui, 'moduleSelect'):
-                self.ui.moduleSelect.currentIndexChanged.disconnect()
-            if hasattr(self.ui, 'moduleComponentList'):
-                self.ui.moduleComponentList.currentItemChanged.disconnect()
+            self.ui.kitSelect.currentIndexChanged.disconnect()
+            self.ui.componentList.currentItemChanged.disconnect()
+            self.ui.moduleSelect.currentIndexChanged.disconnect()
+            self.ui.moduleComponentList.currentItemChanged.disconnect()
             
             # Disconnect renderer signals
-            if hasattr(self.ui, 'mapRenderer'):
-                renderer = self.ui.mapRenderer
-                try:
-                    renderer.customContextMenuRequested.disconnect()
-                    renderer.sig_mouse_moved.disconnect()
-                    renderer.sig_mouse_pressed.disconnect()
-                    renderer.sig_mouse_released.disconnect()
-                    renderer.sig_mouse_scrolled.disconnect()
-                    renderer.sig_mouse_double_clicked.disconnect()
-                    renderer.sig_rooms_moved.disconnect()
-                    renderer.sig_warp_moved.disconnect()
-                    renderer.sig_marquee_select.disconnect()
-                except Exception:
-                    pass
+            renderer = self.ui.mapRenderer
+            try:
+                renderer.customContextMenuRequested.disconnect()
+                renderer.sig_mouse_moved.disconnect()
+                renderer.sig_mouse_pressed.disconnect()
+                renderer.sig_mouse_released.disconnect()
+                renderer.sig_mouse_scrolled.disconnect()
+                renderer.sig_mouse_double_clicked.disconnect()
+                renderer.sig_rooms_moved.disconnect()
+                renderer.sig_warp_moved.disconnect()
+                renderer.sig_marquee_select.disconnect()
+            except Exception:
+                pass
             
             # Disconnect undo stack signals
-            if hasattr(self, '_undo_stack') and self._undo_stack is not None:
+            if self._undo_stack is not None:
                 try:
                     self._undo_stack.canUndoChanged.disconnect()
                     self._undo_stack.canRedoChanged.disconnect()
@@ -1596,7 +1578,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._kits.clear()
         self._clipboard.clear()
         self._current_module_kit = None
-        if hasattr(self, '_module_kit_manager') and self._module_kit_manager is not None:
+        if self._module_kit_manager is not None:
             try:
                 self._module_kit_manager.clear_cache()
             except Exception:
@@ -1669,6 +1651,10 @@ class IndoorMapRenderer(QWidget):
         self._drag_start_positions: list[Vector3] = []
         self._drag_rooms: list[IndoorMapRoom] = []
         self._drag_mode: str = ""  # "rooms", "warp", "marquee"
+        
+        # Snap state during drag (for soft snapping)
+        self._snap_anchor_position: Vector3 | None = None  # Position where snap was first applied
+        self._snap_disconnect_threshold: float = 2.0  # Distance beyond which snap disconnects (in game units)
 
         # Marquee selection state
         self._marquee_active: bool = False
@@ -2034,6 +2020,26 @@ class IndoorMapRenderer(QWidget):
         self._drag_mode = "rooms"
         self._drag_rooms = self._selected_rooms.copy()
         self._drag_start_positions = [copy(r.position) for r in self._drag_rooms]
+        
+        # Check if room is currently snapped and record snap anchor for soft snapping
+        if self.snap_to_hooks and room:
+            snap_result = self._find_hook_snap(room, room.position)
+            if snap_result.snapped:
+                # Check if room is actually at the snap position (within small threshold)
+                distance_to_snap = Vector2.from_vector3(room.position).distance(
+                    Vector2.from_vector3(snap_result.position)
+                )
+                snap_threshold = max(3.0, 5.0 / self._cam_scale)
+                if distance_to_snap <= snap_threshold:
+                    # Room is snapped - record the snap anchor
+                    self._snap_anchor_position = copy(snap_result.position)
+                else:
+                    # Not actually snapped
+                    self._snap_anchor_position = None
+            else:
+                self._snap_anchor_position = None
+        else:
+            self._snap_anchor_position = None
 
     def start_warp_drag(self):
         """Start dragging the warp point."""
@@ -2058,6 +2064,7 @@ class IndoorMapRenderer(QWidget):
             self._drag_rooms = []
             self._drag_start_positions = []
             self._snap_indicator = None
+            self._snap_anchor_position = None  # Clear snap anchor when drag ends
 
         elif self._drag_mode == "warp" and self._dragging_warp:
             self._dragging_warp = False
@@ -2446,8 +2453,11 @@ class IndoorMapRenderer(QWidget):
         self.mark_dirty()
 
     def mouseMoveEvent(self, e: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
-        event_pos = e.pos()
-        coords = Vector2(event_pos.x(), event_pos.y())
+        coords: Vector2 = (
+            Vector2(e.x(), e.y())  # pyright: ignore[reportAttributeAccessIssue]
+            if qtpy.QT5
+            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+        )
         coords_delta = Vector2(coords.x - self._mouse_prev.x, coords.y - self._mouse_prev.y)
         self._mouse_prev = coords
         self.sig_mouse_moved.emit(coords, coords_delta, self._mouse_down, self._keys_down)
@@ -2489,21 +2499,77 @@ class IndoorMapRenderer(QWidget):
             active_room = self._drag_rooms[-1] if self._drag_rooms else None
             snapped = False
 
-            # Try hook snapping first (takes priority if enabled)
+            # Soft hook snapping: only apply if within threshold, allow disconnection when dragged away
             if active_room and self.snap_to_hooks:
-                snap_result = self._find_hook_snap(active_room, active_room.position)
-                if snap_result.snapped:
-                    # Calculate offset and apply to all rooms
-                    offset_x = snap_result.position.x - active_room.position.x
-                    offset_y = snap_result.position.y - active_room.position.y
-                    for room in self._drag_rooms:
-                        room.position.x += offset_x
-                        room.position.y += offset_y
-                        self._invalidate_walkmesh_cache(room)
-                    self._snap_indicator = snap_result
-                    snapped = True
+                # Check if we have a snap anchor from previous snap
+                if self._snap_anchor_position is not None:
+                    # Calculate distance from current position to snap anchor
+                    distance_from_anchor = Vector2.from_vector3(active_room.position).distance(
+                        Vector2.from_vector3(self._snap_anchor_position)
+                    )
+                    
+                    # If moved beyond disconnect threshold, clear snap and allow free movement
+                    if distance_from_anchor > self._snap_disconnect_threshold:
+                        self._snap_anchor_position = None
+                        self._snap_indicator = None
+                    else:
+                        # Still within threshold - check if we can still snap
+                        snap_result = self._find_hook_snap(active_room, active_room.position)
+                        if snap_result.snapped:
+                            # Check distance from current position to snap point
+                            distance_to_snap = Vector2.from_vector3(active_room.position).distance(
+                                Vector2.from_vector3(snap_result.position)
+                            )
+                            snap_threshold = max(3.0, 5.0 / self._cam_scale)
+                            
+                            # Only apply snap if within threshold
+                            if distance_to_snap <= snap_threshold:
+                                # Calculate offset and apply to all rooms
+                                offset_x = snap_result.position.x - active_room.position.x
+                                offset_y = snap_result.position.y - active_room.position.y
+                                for room in self._drag_rooms:
+                                    room.position.x += offset_x
+                                    room.position.y += offset_y
+                                    self._invalidate_walkmesh_cache(room)
+                                self._snap_indicator = snap_result
+                                # Update snap anchor to new snap position
+                                self._snap_anchor_position = copy(snap_result.position)
+                                snapped = True
+                            else:
+                                # Too far from snap point - disconnect
+                                self._snap_anchor_position = None
+                                self._snap_indicator = None
+                        else:
+                            # No snap available - disconnect
+                            self._snap_anchor_position = None
+                            self._snap_indicator = None
                 else:
-                    self._snap_indicator = None
+                    # No existing snap anchor - try to find a new snap
+                    snap_result = self._find_hook_snap(active_room, active_room.position)
+                    if snap_result.snapped:
+                        # Check distance from current position to snap point
+                        distance_to_snap = Vector2.from_vector3(active_room.position).distance(
+                            Vector2.from_vector3(snap_result.position)
+                        )
+                        snap_threshold = max(3.0, 5.0 / self._cam_scale)
+                        
+                        # Only apply snap if within threshold
+                        if distance_to_snap <= snap_threshold:
+                            # Calculate offset and apply to all rooms
+                            offset_x = snap_result.position.x - active_room.position.x
+                            offset_y = snap_result.position.y - active_room.position.y
+                            for room in self._drag_rooms:
+                                room.position.x += offset_x
+                                room.position.y += offset_y
+                                self._invalidate_walkmesh_cache(room)
+                            self._snap_indicator = snap_result
+                            # Record snap anchor position
+                            self._snap_anchor_position = copy(snap_result.position)
+                            snapped = True
+                        else:
+                            self._snap_indicator = None
+                    else:
+                        self._snap_indicator = None
 
             # Apply grid snapping if enabled (and not already snapped to hook)
             if self.snap_to_grid and not snapped and active_room:
@@ -2558,8 +2624,11 @@ class IndoorMapRenderer(QWidget):
         if event_mouse_button is None:
             return
         self._mouse_down.add(event_mouse_button)
-        event_pos = e.pos()
-        coords = Vector2(event_pos.x(), event_pos.y())
+        coords: Vector2 = (
+            Vector2(e.x(), e.y())  # pyright: ignore[reportAttributeAccessIssue]
+            if qtpy.QT5
+            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # pyright: ignore[reportAttributeAccessIssue]
+        )
         self.sig_mouse_pressed.emit(coords, self._mouse_down, self._keys_down)
 
     def mouseReleaseEvent(self, e: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -2567,20 +2636,23 @@ class IndoorMapRenderer(QWidget):
         if event_mouse_button is None:
             return
         self._mouse_down.discard(event_mouse_button)
-        event_pos = e.pos()
-        coords = Vector2(event_pos.x(), event_pos.y())
+        coords: Vector2 = (
+            Vector2(e.x(), e.y())  # pyright: ignore[reportAttributeAccessIssue]
+            if qtpy.QT5
+            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # pyright: ignore[reportAttributeAccessIssue]
+        )
         self.sig_mouse_released.emit(coords, self._mouse_down, self._keys_down)
 
     def mouseDoubleClickEvent(self, e: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         event_mouse_button = e.button()
         if event_mouse_button is None:
             return
-        mouse_down = copy(self._mouse_down)
+        mouse_down: set[int | Qt.MouseButton] = copy(self._mouse_down)
         mouse_down.add(event_mouse_button)
-        coords = (
+        coords: Vector2 = (
             Vector2(e.x(), e.y())  # pyright: ignore[reportAttributeAccessIssue]
             if qtpy.QT5
-            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())
+            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # pyright: ignore[reportAttributeAccessIssue]
         )
         self.sig_mouse_double_clicked.emit(coords, mouse_down, self._keys_down)
 
@@ -2831,7 +2903,7 @@ class KitDownloader(QDialog):
                 self.ui.downloadAllButton.setEnabled(True)
     
     def _refresh_kit_buttons(self):
-        layout: QFormLayout | None = self.ui.groupBox.layout()  # pyright: ignore[reportAssignmentType]
+        layout: QFormLayout | None = self.ui.groupBox.layout()  # type: ignore[assignment]  # pyright: ignore[reportAssignmentType]
         if layout is None:
             return
         
