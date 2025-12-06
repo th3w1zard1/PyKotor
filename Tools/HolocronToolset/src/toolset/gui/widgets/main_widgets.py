@@ -161,11 +161,19 @@ class ResourceList(MainWindowList):
         all_resources: list[ResourceStandardItem] = self.modules_model.all_resources_items()
         resource_set: set[FileResource] = set(resources)
         resource_item_map: dict[FileResource, ResourceStandardItem] = {item.resource: item for item in all_resources}
+        
+        # Batch new resources for efficient addition
+        new_resources: list[FileResource] = []
         for resource in resource_set:
             if resource in resource_item_map:
                 resource_item_map[resource].resource = resource
             else:
-                self.modules_model.add_resource(resource, custom_category)
+                new_resources.append(resource)
+        
+        # Use batch addition for better performance
+        if new_resources:
+            self.modules_model.add_resources_batch(new_resources, custom_category)
+        
         if clear_existing:
             for item in all_resources:
                 if not isinstance(item, ResourceStandardItem):
@@ -519,6 +527,38 @@ class ResourceModel(QStandardItemModel):
                 QStandardItem(resource.restype().extension.upper()),
             ]
         )
+
+    def add_resources_batch(
+        self,
+        resources: list[FileResource],
+        custom_category: str | None = None,
+    ):
+        """Add multiple resources efficiently by batching operations per category.
+        
+        This is much faster than calling add_resource() individually for each resource
+        because it groups resources by category and adds them in batches.
+        """
+        # Group resources by category
+        resources_by_category: dict[str, list[FileResource]] = {}
+        for resource in resources:
+            chosen_category: str = resource.restype().category if custom_category is None else custom_category
+            if chosen_category not in resources_by_category:
+                resources_by_category[chosen_category] = []
+            resources_by_category[chosen_category].append(resource)
+        
+        # Add resources in batches per category
+        for category, category_resources in resources_by_category.items():
+            category_item = self._add_resource_into_category(category_resources[0].restype(), custom_category)
+            # Prepare all rows for this category
+            rows: list[list[QStandardItem]] = []
+            for resource in category_resources:
+                rows.append([
+                    ResourceStandardItem(resource.resname(), resource=resource),
+                    QStandardItem(resource.restype().extension.upper()),
+                ])
+            # Batch append all rows at once (more efficient)
+            for row in rows:
+                category_item.appendRow(row)
 
     def resource_from_indexes(
         self,

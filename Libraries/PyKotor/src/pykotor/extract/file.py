@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Iterator
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs, reportMissingModuleSource]
 
 from pykotor.resource.type import ResourceType
-from pykotor.tools.misc import is_bif_file, is_capsule_file
+# Removed unused imports: is_bif_file, is_capsule_file (now using direct string operations)
 
 if TYPE_CHECKING:
     import os
@@ -97,8 +97,11 @@ class FileResource:
         self._offset: int = offset
         self._filepath: Path = Path(filepath)
 
-        self.inside_capsule: bool = is_capsule_file(self._filepath)
-        self.inside_bif: bool = is_bif_file(self._filepath)
+        # Optimize: check file type using string operations on the path string
+        # This avoids creating additional Path objects and is much faster
+        filepath_str = str(self._filepath).lower()
+        self.inside_capsule: bool = filepath_str.endswith((".erf", ".mod", ".rim", ".sav"))
+        self.inside_bif: bool = filepath_str.endswith(".bif")
 
         self._path_ident_obj: Path = (
             self._filepath / str(self._identifier)
@@ -482,11 +485,18 @@ class ResourceIdentifier:
             - If validation fails, progressively shortens the extension and tries again
             - If all attempts fail, uses stem as name and sets type to INVALID
         """
-        path_obj = PurePath(file_path)
+        # Optimize: extract filename directly from string to avoid PurePath creation when possible
+        if isinstance(file_path, str):
+            # Fast path: use string operations directly
+            # Extract filename (last component after path separator)
+            filename = file_path.rsplit("\\", 1)[-1].rsplit("/", 1)[-1]
+        else:
+            # For Path objects, use PurePath but only when necessary
+            path_obj = PurePath(file_path)
+            filename = path_obj.name
 
-        def _split_resource_filename(p: PurePath) -> tuple[str, ResourceType]:
-            filename = p.name
-            lower_filename = filename.lower()
+        def _split_resource_filename(fname: str) -> tuple[str, ResourceType]:
+            lower_filename = fname.lower()
 
             # Use cached ResourceTypes sorted by extension length (longest first)
             # This is much faster than iterating through all ResourceType.__members__.values() every time
@@ -508,16 +518,24 @@ class ResourceIdentifier:
                         break
 
             if chosen_restype is not None and chosen_suffix_length > 0:
-                resname_candidate = filename[:-chosen_suffix_length]
+                resname_candidate = fname[:-chosen_suffix_length]
                 return resname_candidate, chosen_restype
 
-            if filename.endswith("."):
-                return filename, ResourceType.from_extension("")
+            if fname.endswith("."):
+                return fname, ResourceType.from_extension("")
 
-            if filename.startswith(".") and filename.count(".") == 1:
-                return filename, ResourceType.from_extension("")
+            if fname.startswith(".") and fname.count(".") == 1:
+                return fname, ResourceType.from_extension("")
 
-            return p.stem, ResourceType.from_extension(p.suffix)
+            # Fallback: extract stem and suffix using string operations
+            if "." in fname:
+                last_dot = fname.rfind(".")
+                stem = fname[:last_dot]
+                suffix = fname[last_dot + 1:]
+            else:
+                stem = fname
+                suffix = ""
+            return stem, ResourceType.from_extension(suffix)
 
-        resname, restype = _split_resource_filename(path_obj)
+        resname, restype = _split_resource_filename(filename)
         return cls(resname, restype)
