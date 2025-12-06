@@ -14,7 +14,7 @@ exclude = ["plugin*", "*.plugin*", "*plugin*", "plugin"]
 [project]
 name = "holocrontoolset"
 description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
-version = "4.0.0b4"
+version = "4.0.0b5"
 requires-python = ">= 3.8"
 dependencies = [
   "pykotor>=2.0.0",
@@ -102,7 +102,7 @@ Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 # Optional Poetry configuration for those who prefer it
 [tool.poetry]
 name = "holocrontoolset"
-version = "4.0.0b4"
+version = "4.0.0b5"
 description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
