@@ -1153,6 +1153,10 @@ class SurfaceMaterial(IntEnum):
             SurfaceMaterial.TRIGGER,
         }
 
+    def is_walkable(self) -> bool:
+        """Alias for walkable() to satisfy toolset expectations."""
+        return self.walkable()
+
 
 class Face:
     """Represents a triangle in 3D space.

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import itertools
 import json
 import math
@@ -15,7 +16,7 @@ from qtpy.QtGui import QColor, QImage, QPainter, QPixmap, QTransform
 from pykotor.common.language import LocalizedString  # type: ignore[import-not-found]
 from pykotor.common.misc import Color, ResRef  # type: ignore[import-not-found]
 from pykotor.extract.file import ResourceIdentifier  # type: ignore[import-not-found]
-from pykotor.resource.formats.bwm import bytes_bwm  # type: ignore[import-not-found]
+from pykotor.resource.formats.bwm import bytes_bwm, read_bwm  # type: ignore[import-not-found]
 from pykotor.resource.formats.erf import ERF, ERFType, write_erf  # type: ignore[import-not-found]
 from pykotor.resource.formats.lyt import LYT, LYTDoorHook, LYTRoom, bytes_lyt  # type: ignore[import-not-found]
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, bytes_tpc  # type: ignore[import-not-found]
@@ -31,8 +32,8 @@ from utility.common.geometry import Vector2, Vector3, Vector4  # type: ignore[im
 if TYPE_CHECKING:
     import os
 
-    from pykotor.resource.formats.bwm import BWM
-    from pykotor.resource.generics.utd import UTD
+    from pykotor.resource.formats.bwm import BWM  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.generics.utd import UTD  # pyright: ignore[reportMissingImports]
     from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor  # type: ignore[import-not-found]
     from toolset.data.installation import HTInstallation  # type: ignore[import-not-found]
 
@@ -402,7 +403,7 @@ class IndoorMap:
             - Remap transition indices to reference connected rooms
             - Return the processed BWM.
         """
-        bwm: BWM = deepcopy(room.component.bwm)
+        bwm: BWM = deepcopy(room.base_walkmesh())
         bwm.flip(room.flip_x, room.flip_y)
         bwm.rotate(room.rotation)
         bwm.translate(room.position.x, room.position.y, room.position.z)
@@ -814,6 +815,8 @@ class IndoorMap:
                 "kit": room.component.kit.name,
                 "component": room.component.name,
             }
+            if room.walkmesh_override is not None:
+                room_data["walkmesh_override"] = base64.b64encode(bytes_bwm(room.walkmesh_override)).decode("ascii")
             data["rooms"].append(room_data)  # type: ignore[union-attr]
 
         return json.dumps(data).encode()
@@ -920,6 +923,12 @@ class IndoorMap:
                 flip_x=bool(room_data.get("flip_x", False)),
                 flip_y=bool(room_data.get("flip_y", False)),
             )
+            if "walkmesh_override" in room_data:
+                try:
+                    raw_bwm = base64.b64decode(room_data["walkmesh_override"])
+                    room.walkmesh_override = read_bwm(raw_bwm)
+                except Exception as exc:  # noqa: BLE001
+                    RobustLogger().warning(f"Failed to read walkmesh override for room '{room.component.name}': {exc}")
             self.rooms.append(room)
         
         return missing_rooms
@@ -952,7 +961,7 @@ class IndoorMap:
         # unscaled pixmap for our minimap
         walkmeshes: list[BWM] = []
         for room in self.rooms:
-            bwm: BWM = deepcopy(room.component.bwm)
+            bwm: BWM = deepcopy(room.base_walkmesh())
             bwm.flip(room.flip_x, room.flip_y)
             bwm.rotate(room.rotation)
             bwm.translate(room.position.x, room.position.y, room.position.z)
@@ -1045,6 +1054,7 @@ class IndoorMapRoom:
         self.hooks: list[IndoorMapRoom | None] = [None] * len(component.hooks)
         self.flip_x: bool = flip_x
         self.flip_y: bool = flip_y
+        self.walkmesh_override: BWM | None = None
 
     def hook_position(
         self,
@@ -1140,8 +1150,22 @@ class IndoorMapRoom:
             - The copy is flipped, rotated, and translated to match the room's transformation.
             - The transformed copy is returned.
         """
-        bwm: BWM = deepcopy(self.component.bwm)
+        bwm: BWM = deepcopy(self.base_walkmesh())
         bwm.flip(self.flip_x, self.flip_y)
         bwm.rotate(self.rotation)
         bwm.translate(self.position.x, self.position.y, self.position.z)
         return bwm
+
+    def base_walkmesh(self) -> BWM:
+        """Return the untransformed walkmesh for this room, honoring overrides."""
+        return self.walkmesh_override if self.walkmesh_override is not None else self.component.bwm
+
+    def ensure_walkmesh_override(self) -> BWM:
+        """Ensure a writable walkmesh override exists for this room and return it."""
+        if self.walkmesh_override is None:
+            self.walkmesh_override = deepcopy(self.component.bwm)
+        return self.walkmesh_override
+
+    def clear_walkmesh_override(self):
+        """Remove any custom walkmesh edits, reverting to the component default."""
+        self.walkmesh_override = None

@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import shutil
 import zipfile
 
 from copy import copy, deepcopy
 from dataclasses import dataclass
 from pathlib import Path
-import os
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, cast
 
@@ -16,7 +16,7 @@ import qtpy
 
 from qtpy import QtCore
 from qtpy.QtCore import QPointF, QRectF, QTimer, Qt
-from qtpy.QtGui import QColor, QPainter, QPainterPath, QPen, QPixmap, QTransform
+from qtpy.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTransform
 from qtpy.QtWidgets import (
     QApplication,
     QDialog,
@@ -34,11 +34,13 @@ from qtpy.QtWidgets import (
 if qtpy.QT5:
     from qtpy.QtWidgets import QUndoCommand, QUndoStack
 elif qtpy.QT6:
-    from qtpy.QtGui import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]
+    from qtpy.QtGui import QUndoCommand, QUndoStack  # type: ignore[assignment]  # pyright: ignore[reportPrivateImportUsage]
 else:
     raise ValueError(f"Invalid QT_API: '{qtpy.API_NAME}'")
 
+from pykotor.common.misc import Color
 from pykotor.common.stream import BinaryWriter
+from pykotor.resource.formats.bwm import bytes_bwm, read_bwm
 from toolset.blender import BlenderEditorMode
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
@@ -48,8 +50,9 @@ from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.asyncloader import AsyncLoader
 from toolset.gui.dialogs.indoor_settings import IndoorMapSettings
 from toolset.gui.widgets.settings.installations import GlobalSettings
+from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
 from toolset.gui.windows.help import HelpWindow
-from utility.common.geometry import Vector2, Vector3
+from utility.common.geometry import SurfaceMaterial, Vector2, Vector3
 from utility.error_handling import format_exception_with_variables, universal_simplify_exception
 from utility.misc import is_debug_mode
 from utility.system.os_helper import is_frozen
@@ -236,6 +239,7 @@ class DuplicateRoomsCommand(QUndoCommand):
                 flip_x=room.flip_x,
                 flip_y=room.flip_y,
             )
+            new_room.walkmesh_override = deepcopy(room.walkmesh_override) if room.walkmesh_override is not None else None
             self.duplicates.append(new_room)
 
     def undo(self):
@@ -272,6 +276,62 @@ class MoveWarpCommand(QUndoCommand):
         self.indoor_map.warp_point = copy(self.new_position)
 
 
+class PaintWalkmeshCommand(QUndoCommand):
+    """Command to apply material changes to walkmesh faces."""
+
+    def __init__(
+        self,
+        rooms: list[IndoorMapRoom],
+        face_indices: list[int],
+        old_materials: list[SurfaceMaterial],
+        new_materials: list[SurfaceMaterial],
+        invalidate_cb,
+    ):
+        super().__init__(f"Paint {len(face_indices)} Face(s)")
+        self.rooms = rooms
+        self.face_indices = face_indices
+        self.old_materials = old_materials
+        self.new_materials = new_materials
+        self._invalidate_cb = invalidate_cb
+
+    def _apply(self, materials: list[SurfaceMaterial]):
+        for room, face_index, material in zip(self.rooms, self.face_indices, materials):
+            base_bwm = room.ensure_walkmesh_override()
+            if 0 <= face_index < len(base_bwm.faces):
+                base_bwm.faces[face_index].material = material
+        self._invalidate_cb(self.rooms)
+
+    def undo(self):
+        self._apply(self.old_materials)
+
+    def redo(self):
+        self._apply(self.new_materials)
+
+
+class ResetWalkmeshCommand(QUndoCommand):
+    """Command to reset walkmesh overrides for rooms."""
+
+    def __init__(
+        self,
+        rooms: list[IndoorMapRoom],
+        invalidate_cb,
+    ):
+        super().__init__(f"Reset Walkmesh ({len(rooms)} Room(s))")
+        self.rooms = rooms
+        self._invalidate_cb = invalidate_cb
+        self._previous_overrides = [deepcopy(room.walkmesh_override) for room in rooms]
+
+    def undo(self):
+        for room, previous in zip(self.rooms, self._previous_overrides):
+            room.walkmesh_override = deepcopy(previous) if previous is not None else None
+        self._invalidate_cb(self.rooms)
+
+    def redo(self):
+        for room in self.rooms:
+            room.clear_walkmesh_override()
+        self._invalidate_cb(self.rooms)
+
+
 # =============================================================================
 # Data structures for clipboard
 # =============================================================================
@@ -285,6 +345,7 @@ class RoomClipboardData:
     rotation: float
     flip_x: bool
     flip_y: bool
+    walkmesh_override: bytes | None = None
 
 
 @dataclass
@@ -337,7 +398,16 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # Walkmesh painter state
+        self._painting_walkmesh: bool = False
+        self._colorize_materials: bool = True
+        self._material_colors: dict[SurfaceMaterial, QColor] = {}
+        self._paint_stroke_active: bool = False
+        self._paint_stroke_originals: dict[tuple[IndoorMapRoom, int], SurfaceMaterial] = {}
+        self._paint_stroke_new: dict[tuple[IndoorMapRoom, int], SurfaceMaterial] = {}
+
         self._setup_signals()
+        self._setup_walkmesh_painter()
         self._setup_undo_redo()
         self._setup_kits()
         self._setup_modules()
@@ -409,6 +479,60 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.gridSizeSpin.valueChanged.connect(lambda v: setattr(self.ui.mapRenderer, 'grid_size', v))
         self.ui.rotSnapSpin.valueChanged.connect(lambda v: setattr(self.ui.mapRenderer, 'rotation_snap', v))
 
+    def _setup_walkmesh_painter(self):
+        """Initialize walkmesh painting UI and palette."""
+        settings = ModuleDesignerSettings()
+
+        def int_to_qcolor(intvalue: int) -> QColor:
+            color = Color.from_rgba_integer(intvalue)
+            return QColor(int(color.r * 255), int(color.g * 255), int(color.b * 255), int(color.a * 255))
+
+        self._material_colors = {
+            SurfaceMaterial.UNDEFINED: int_to_qcolor(settings.undefinedMaterialColour),
+            SurfaceMaterial.OBSCURING: int_to_qcolor(settings.obscuringMaterialColour),
+            SurfaceMaterial.DIRT: int_to_qcolor(settings.dirtMaterialColour),
+            SurfaceMaterial.GRASS: int_to_qcolor(settings.grassMaterialColour),
+            SurfaceMaterial.STONE: int_to_qcolor(settings.stoneMaterialColour),
+            SurfaceMaterial.WOOD: int_to_qcolor(settings.woodMaterialColour),
+            SurfaceMaterial.WATER: int_to_qcolor(settings.waterMaterialColour),
+            SurfaceMaterial.NON_WALK: int_to_qcolor(settings.nonWalkMaterialColour),
+            SurfaceMaterial.TRANSPARENT: int_to_qcolor(settings.transparentMaterialColour),
+            SurfaceMaterial.CARPET: int_to_qcolor(settings.carpetMaterialColour),
+            SurfaceMaterial.METAL: int_to_qcolor(settings.metalMaterialColour),
+            SurfaceMaterial.PUDDLES: int_to_qcolor(settings.puddlesMaterialColour),
+            SurfaceMaterial.SWAMP: int_to_qcolor(settings.swampMaterialColour),
+            SurfaceMaterial.MUD: int_to_qcolor(settings.mudMaterialColour),
+            SurfaceMaterial.LEAVES: int_to_qcolor(settings.leavesMaterialColour),
+            SurfaceMaterial.LAVA: int_to_qcolor(settings.lavaMaterialColour),
+            SurfaceMaterial.BOTTOMLESS_PIT: int_to_qcolor(settings.bottomlessPitMaterialColour),
+            SurfaceMaterial.DEEP_WATER: int_to_qcolor(settings.deepWaterMaterialColour),
+            SurfaceMaterial.DOOR: int_to_qcolor(settings.doorMaterialColour),
+            SurfaceMaterial.NON_WALK_GRASS: int_to_qcolor(settings.nonWalkGrassMaterialColour),
+            SurfaceMaterial.TRIGGER: int_to_qcolor(settings.nonWalkGrassMaterialColour),
+        }
+
+        self._populate_material_list()
+        self._colorize_materials = True
+        if hasattr(self.ui, "colorizeMaterialsCheck"):
+            self.ui.colorizeMaterialsCheck.setChecked(True)
+        if hasattr(self.ui, "enablePaintCheck"):
+            self.ui.enablePaintCheck.setChecked(False)
+
+        self.ui.mapRenderer.set_material_colors(self._material_colors)
+        self.ui.mapRenderer.set_colorize_materials(self._colorize_materials)
+
+        if hasattr(self.ui, "materialList"):
+            self.ui.materialList.currentItemChanged.connect(lambda _old, _new=None: self._refresh_status_bar())
+        if hasattr(self.ui, "enablePaintCheck"):
+            self.ui.enablePaintCheck.toggled.connect(self._toggle_paint_mode)
+        if hasattr(self.ui, "colorizeMaterialsCheck"):
+            self.ui.colorizeMaterialsCheck.toggled.connect(self._toggle_colorize_materials)
+        if hasattr(self.ui, "resetPaintButton"):
+            self.ui.resetPaintButton.clicked.connect(self._reset_selected_walkmesh)
+
+        # Shortcut to quickly toggle paint mode
+        QShortcut(Qt.Key.Key_P, self).activated.connect(lambda: self.ui.enablePaintCheck.toggle())
+
     def _setup_undo_redo(self):
         """Setup undo/redo actions."""
         self.ui.actionUndo.triggered.connect(self._undo_stack.undo)
@@ -429,6 +553,50 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # Initial state
         self.ui.actionUndo.setEnabled(False)
         self.ui.actionRedo.setEnabled(False)
+
+    def _populate_material_list(self):
+        """Populate the material list with colored swatches."""
+        self.ui.materialList.clear()
+        for material, color in self._material_colors.items():
+            pix = QPixmap(16, 16)
+            pix.fill(color)
+            item = QListWidgetItem(QIcon(pix), material.name.replace("_", " ").title())
+            item.setData(Qt.ItemDataRole.UserRole, material)
+            self.ui.materialList.addItem(item)
+        if self.ui.materialList.count() > 0:
+            self.ui.materialList.setCurrentRow(0)
+
+    def _current_material(self) -> SurfaceMaterial | None:
+        if self.ui.materialList.currentItem():
+            material = self.ui.materialList.currentItem().data(Qt.ItemDataRole.UserRole)
+            if isinstance(material, SurfaceMaterial):
+                return material
+        return next(iter(self._material_colors.keys()), None)
+
+    def _toggle_paint_mode(self, enabled: bool):
+        self._painting_walkmesh = enabled
+        self._paint_stroke_active = False
+        self._paint_stroke_originals.clear()
+        self._paint_stroke_new.clear()
+        self._refresh_status_bar()
+
+    def _toggle_colorize_materials(self, enabled: bool):
+        self._colorize_materials = enabled
+        self.ui.mapRenderer.set_colorize_materials(enabled)
+        self.ui.mapRenderer.mark_dirty()
+        self._refresh_status_bar()
+
+    def _reset_selected_walkmesh(self):
+        rooms = [room for room in self.ui.mapRenderer.selected_rooms() if room.walkmesh_override is not None]
+        if not rooms:
+            return
+        cmd = ResetWalkmeshCommand(rooms, self._invalidate_rooms)
+        self._undo_stack.push(cmd)
+        self._refresh_window_title()
+
+    def _invalidate_rooms(self, rooms: list[IndoorMapRoom]):
+        self.ui.mapRenderer.invalidate_rooms(rooms)
+        self._refresh_status_bar()
 
     def _setup_kits(self):
         self.ui.kitSelect.clear()
@@ -488,10 +656,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
         
         # Get module roots from the kit manager
-        module_roots = self._module_kit_manager.get_module_roots()
+        module_roots: list[str] = self._module_kit_manager.get_module_roots()
         
         # Populate the combobox with module names
         for module_root in module_roots:
+            assert isinstance(module_root, str)
             display_name = self._module_kit_manager.get_module_display_name(module_root)
             self.ui.moduleSelect.addItem(display_name, module_root)
     
@@ -502,9 +671,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         Uses ModuleKitManager to convert module resources into kit components.
         """
         self.ui.moduleComponentList.clear()
-        
-        if hasattr(self.ui, 'moduleComponentImage'):
-            self.ui.moduleComponentImage.clear()
+        self.ui.moduleComponentImage.clear()
         
         module_root: str | None = self.ui.moduleSelect.currentData()
         if not module_root or not self._installation:
@@ -533,8 +700,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def on_module_component_selected(self, item: QListWidgetItem | None = None):
         """Handle module component selection from the list."""
         if item is None:
-            if hasattr(self.ui, 'moduleComponentImage'):
-                self.ui.moduleComponentImage.clear()
+            self.ui.moduleComponentImage.clear()
             self.ui.mapRenderer.set_cursor_component(None)
             return
         
@@ -543,7 +709,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
         
         # Display component image in the preview
-        if hasattr(self.ui, 'moduleComponentImage') and component.image is not None:
+        if component.image is not None:
             pixmap = QPixmap.fromImage(component.image)
             scaled = pixmap.scaled(
                 self.ui.moduleComponentImage.size(),
@@ -580,6 +746,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             parts.append(f"Hover: {obj.component.name}")
         if selected_count > 0:
             parts.append(f"Selected: {selected_count}")
+        if self._painting_walkmesh:
+            material = self._current_material()
+            parts.append("[Paint Mode]")
+            if material:
+                parts.append(f"Material: {material.name.title().replace('_', ' ')}")
+        if self._colorize_materials:
+            parts.append("[Colorized]")
         
         # Add snap indicators
         if self.ui.mapRenderer.snap_to_grid:
@@ -822,7 +995,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             if module_id_changed or name_changed or skybox_changed:
                 # Mark as having unsaved changes by pushing a no-op command
                 # This ensures the asterisk appears in the window title
-                from qtpy.QtWidgets import QUndoCommand
+                from qtpy.QtWidgets import QUndoCommand  # pyright: ignore[reportPrivateImportUsage]
                 
                 class SettingsChangedCommand(QUndoCommand):
                     def __init__(self):
@@ -901,6 +1074,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 rotation=room.rotation,
                 flip_x=room.flip_x,
                 flip_y=room.flip_y,
+                walkmesh_override=bytes_bwm(room.walkmesh_override) if room.walkmesh_override is not None else None,
             )
             self._clipboard.append(data)
 
@@ -929,6 +1103,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 flip_x=data.flip_x,
                 flip_y=data.flip_y,
             )
+            if data.walkmesh_override is not None:
+                try:
+                    room.walkmesh_override = read_bwm(data.walkmesh_override)
+                except Exception:
+                    pass
             new_rooms.append(room)
 
         if new_rooms:
@@ -994,12 +1173,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 return component
 
         # Finally, consider the modules list selection if present.
-        if hasattr(self.ui, "moduleComponentList"):
-            module_item: QListWidgetItem | None = self.ui.moduleComponentList.currentItem()
-            if module_item is not None:
-                component = module_item.data(Qt.ItemDataRole.UserRole)
-                if isinstance(component, KitComponent):
-                    return component
+        module_item: QListWidgetItem | None = self.ui.moduleComponentList.currentItem()
+        if module_item is not None:
+            component = module_item.data(Qt.ItemDataRole.UserRole)
+            if isinstance(component, KitComponent):
+                return component
 
         return None
 
@@ -1037,6 +1215,15 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._refresh_status_bar()
         world_delta: Vector2 = self.ui.mapRenderer.to_world_delta(delta.x, delta.y)
 
+        # Walkmesh painting drag
+        if (
+            self._painting_walkmesh
+            and Qt.MouseButton.LeftButton in buttons
+            and Qt.Key.Key_Control not in keys
+        ):
+            self._apply_paint_at_screen(screen)
+            return
+
         # Pan camera with middle mouse or LMB + Ctrl
         if Qt.MouseButton.MiddleButton in buttons or (Qt.MouseButton.LeftButton in buttons and Qt.Key.Key_Control in keys):
             self.ui.mapRenderer.pan_camera(-world_delta.x, -world_delta.y)
@@ -1054,6 +1241,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
         if Qt.Key.Key_Control in keys:
             return  # Control is for camera pan
+
+        if self._painting_walkmesh:
+            self._begin_paint_stroke(screen)
+            return
 
         renderer = self.ui.mapRenderer
         world = renderer.to_world_coords(screen.x, screen.y)
@@ -1106,6 +1297,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         buttons: set[int],
         keys: set[int],
     ):
+        if self._painting_walkmesh and self._paint_stroke_active:
+            self._finish_paint_stroke()
+            return
+
         self.ui.mapRenderer.end_drag()
 
     def on_rooms_moved(
@@ -1159,6 +1354,64 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.cursor_rotation = 0.0
         self.ui.mapRenderer.cursor_flip_x = False
         self.ui.mapRenderer.cursor_flip_y = False
+        self._refresh_window_title()
+
+    # =========================================================================
+    # Walkmesh painting helpers
+    # =========================================================================
+
+    def _begin_paint_stroke(self, screen: Vector2):
+        self._paint_stroke_active = True
+        self._paint_stroke_originals.clear()
+        self._paint_stroke_new.clear()
+        self._apply_paint_at_screen(screen)
+
+    def _apply_paint_at_screen(self, screen: Vector2):
+        world = self.ui.mapRenderer.to_world_coords(screen.x, screen.y)
+        self._apply_paint_at_world(world)
+
+    def _apply_paint_at_world(self, world: Vector3):
+        material = self._current_material()
+        if material is None:
+            return
+        room, face_index = self.ui.mapRenderer.pick_face(world)
+        if room is None or face_index is None:
+            return
+        base_bwm = room.ensure_walkmesh_override()
+        if not (0 <= face_index < len(base_bwm.faces)):
+            return
+
+        key = (room, face_index)
+        if key not in self._paint_stroke_originals:
+            self._paint_stroke_originals[key] = base_bwm.faces[face_index].material
+
+        if base_bwm.faces[face_index].material == material:
+            return
+
+        base_bwm.faces[face_index].material = material
+        self._paint_stroke_new[key] = material
+        self._invalidate_rooms([room])
+
+    def _finish_paint_stroke(self):
+        if not self._paint_stroke_active:
+            return
+        self._paint_stroke_active = False
+        if not self._paint_stroke_new:
+            return
+
+        rooms: list[IndoorMapRoom] = []
+        face_indices: list[int] = []
+        old_materials: list[SurfaceMaterial] = []
+        new_materials: list[SurfaceMaterial] = []
+
+        for (room, face_index), new_material in self._paint_stroke_new.items():
+            rooms.append(room)
+            face_indices.append(face_index)
+            old_materials.append(self._paint_stroke_originals.get((room, face_index), new_material))
+            new_materials.append(new_material)
+
+        cmd = PaintWalkmeshCommand(rooms, face_indices, old_materials, new_materials, self._invalidate_rooms)
+        self._undo_stack.push(cmd)
         self._refresh_window_title()
 
     def on_mouse_scrolled(
@@ -1448,6 +1701,49 @@ class IndoorMapRenderer(QWidget):
         self._hovering_warp: bool = False
         self.warp_point_radius: float = 1.0
 
+        # Walkmesh visualization
+        self._material_colors: dict[SurfaceMaterial, QColor] = {}
+        self._colorize_materials: bool = False
+        # Walkable materials:
+        #    UNDEFINED (0): walkable=False
+        #    DIRT (1): walkable=True
+        #    OBSCURING (2): walkable=False
+        #    GRASS (3): walkable=True
+        #    STONE (4): walkable=True
+        #    WOOD (5): walkable=True
+        #    WATER (6): walkable=True
+        #    NON_WALK (7): walkable=False
+        #    TRANSPARENT (8): walkable=False
+        #    CARPET (9): walkable=True
+        #    METAL (10): walkable=True
+        #    PUDDLES (11): walkable=True
+        #    SWAMP (12): walkable=True
+        #    MUD (13): walkable=True
+        #    LEAVES (14): walkable=True
+        #    LAVA (15): walkable=False
+        #    BOTTOMLESS_PIT (16): walkable=False
+        #    DEEP_WATER (17): walkable=False
+        #    DOOR (18): walkable=True
+        #    NON_WALK_GRASS (19): walkable=False
+        self._walkable_values: set[int] = {
+            1,  # DIRT
+            3,  # GRASS
+            4,  # STONE
+            5,  # WOOD
+            6,  # WATER
+            9,  # CARPET
+            10,  # METAL
+            11,  # PUDDLES
+            12,  # SWAMP
+            13,  # MUD
+            14,  # LEAVES
+            16,  # BOTTOMLESS_PIT
+            18,  # DOOR
+            20,  # SURFACE_MATERIAL_20
+            21,  # SURFACE_MATERIAL_21
+            22,  # SURFACE_MATERIAL_22
+        }
+
         # Render loop control
         self._loop_active: bool = True
         
@@ -1550,6 +1846,34 @@ class IndoorMapRenderer(QWidget):
     def clear_selected_rooms(self):
         self._selected_rooms.clear()
         self.mark_dirty()
+
+    def set_material_colors(self, material_colors: dict[SurfaceMaterial, QColor]):
+        self._material_colors = material_colors
+        self.mark_dirty()
+
+    def set_colorize_materials(self, enabled: bool):
+        self._colorize_materials = enabled
+        self.mark_dirty()
+
+    def invalidate_rooms(self, rooms: list[IndoorMapRoom]):
+        for room in rooms:
+            self._invalidate_walkmesh_cache(room)
+        self.mark_dirty()
+
+    def pick_face(self, world: Vector3) -> tuple[IndoorMapRoom | None, int | None]:
+        """Return the room and face index under the given world position."""
+        for room in reversed(self._map.rooms):
+            walkmesh = self._get_room_walkmesh(room)
+            face = walkmesh.faceAt(world.x, world.y)
+            if face is None:
+                continue
+            face_index: int | None = None
+            for idx, candidate in enumerate(walkmesh.faces):
+                if candidate is face:
+                    face_index = idx
+                    break
+            return room, face_index
+        return None, None
 
     # =========================================================================
     # Coordinate conversions
@@ -1849,7 +2173,31 @@ class IndoorMapRenderer(QWidget):
         painter.drawImage(rect, image, source)
         painter.setTransform(original)
 
-    def _draw_room_walkmesh(self, painter: QPainter, room: IndoorMapRoom):
+    def _face_color(
+        self,
+        material: SurfaceMaterial,
+        *,
+        alpha: int | None = None,
+    ) -> QColor:
+        """Resolve the display color for a face."""
+        if self._colorize_materials and material in self._material_colors:
+            color = QColor(self._material_colors[material])
+        else:
+            if isinstance(material, SurfaceMaterial):
+                is_walkable = material.is_walkable()
+            else:
+                material_value = int(material)
+                is_walkable = material_value in self._walkable_values
+            color = QColor(180, 180, 180) if is_walkable else QColor(120, 120, 120)
+        if alpha is not None:
+            color.setAlpha(alpha)   
+        return color
+
+    def _draw_room_walkmesh(
+        self,
+        painter: QPainter,
+        room: IndoorMapRoom,
+    ):
         """Draw a room using its walkmesh geometry.
         
         This renders the actual walkmesh faces as solid grey polygons.
@@ -1861,11 +2209,7 @@ class IndoorMapRenderer(QWidget):
         
         # Draw each face with appropriate color based on material
         for face in bwm.faces:
-            # Walkable surfaces are lighter grey, non-walkable are darker
-            is_walkable = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
-            color = QColor(180, 180, 180) if is_walkable else QColor(120, 120, 120)
-            
-            painter.setBrush(color)
+            painter.setBrush(self._face_color(face.material))
             painter.setPen(Qt.PenStyle.NoPen)
             path = self._build_face(face)
             painter.drawPath(path)
@@ -1888,15 +2232,18 @@ class IndoorMapRenderer(QWidget):
         
         # Draw each face with semi-transparent color
         for face in bwm.faces:
-            is_walkable = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
-            color = QColor(180, 180, 180, 150) if is_walkable else QColor(120, 120, 120, 150)
-            
-            painter.setBrush(color)
+            painter.setBrush(self._face_color(face.material, alpha=150))
             painter.setPen(Qt.PenStyle.NoPen)
             path = self._build_face(face)
             painter.drawPath(path)
 
-    def _draw_room_highlight(self, painter: QPainter, room: IndoorMapRoom, alpha: int, color: QColor | None = None):
+    def _draw_room_highlight(
+        self,
+        painter: QPainter,
+        room: IndoorMapRoom,
+        alpha: int,
+        color: QColor | None = None,
+    ):
         bwm = self._get_room_walkmesh(room)
         if color is None:
             color = QColor(255, 255, 255, alpha)
@@ -2203,12 +2550,7 @@ class IndoorMapRenderer(QWidget):
             self.mark_dirty()
 
         # Find room under mouse
-        self._under_mouse_room = None
-        for room in reversed(self._map.rooms):  # Check topmost first
-            walkmesh = self._get_room_walkmesh(room)
-            if walkmesh.faceAt(world.x, world.y):
-                self._under_mouse_room = room
-                break
+        self._under_mouse_room, _ = self.pick_face(world)
         self.mark_dirty()
 
     def mousePressEvent(self, e: QMouseEvent):
