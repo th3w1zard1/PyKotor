@@ -1028,6 +1028,14 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     # =========================================================================
 
     def delete_selected(self):
+        # If a hook is selected, delete the hook instead of rooms
+        hook_sel = self.ui.mapRenderer.selected_hook()
+        if hook_sel is not None:
+            room, hook_index = hook_sel
+            self.ui.mapRenderer.delete_hook(room, hook_index)
+            self._refresh_window_title()
+            return
+
         rooms = self.ui.mapRenderer.selected_rooms()
         if not rooms:
             return
@@ -1037,6 +1045,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._refresh_window_title()
 
     def duplicate_selected(self):
+        hook_sel = self.ui.mapRenderer.selected_hook()
+        if hook_sel is not None:
+            room, hook_index = hook_sel
+            self.ui.mapRenderer.duplicate_hook(room, hook_index)
+            self._refresh_window_title()
+            return
+
         rooms = self.ui.mapRenderer.selected_rooms()
         if not rooms:
             return
@@ -1875,6 +1890,9 @@ class IndoorMapRenderer(QWidget):
 
     def room_under_mouse(self) -> IndoorMapRoom | None:
         return self._under_mouse_room
+
+    def selected_hook(self) -> tuple[IndoorMapRoom, int] | None:
+        return self._selected_hook
 
     def hook_under_mouse(
         self,
