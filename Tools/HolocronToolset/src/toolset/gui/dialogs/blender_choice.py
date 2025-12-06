@@ -385,7 +385,9 @@ class BlenderChoiceDialog(QDialog):
             self._install_button.setText("Installing...")
 
         try:
-            success, message = install_kotorblender(self._blender_info, source_path)
+            # Try to verify IPC connection if Blender might be running
+            # This ensures the addon is actually working, not just copied
+            success, message = install_kotorblender(self._blender_info, source_path, verify_ipc=True)
 
             if success:
                 # Update UI
@@ -690,7 +692,8 @@ class BlenderSettingsWidget(QFrame):
         self._install_kotorblender_btn.setText("Installing...")
 
         try:
-            success, message = install_kotorblender(self._blender_info)
+            # Try to verify IPC connection if Blender might be running
+            success, message = install_kotorblender(self._blender_info, verify_ipc=True)
 
             if success:
                 QMessageBox.information(self, "Installation Successful", message)
