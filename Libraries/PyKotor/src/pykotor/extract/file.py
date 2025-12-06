@@ -488,8 +488,10 @@ class ResourceIdentifier:
         # Optimize: extract filename directly from string to avoid PurePath creation when possible
         if isinstance(file_path, str):
             # Fast path: use string operations directly
+            # Strip trailing slashes first to handle paths like "path/to/file/"
+            normalized_path = file_path.rstrip("\\/")
             # Extract filename (last component after path separator)
-            filename = file_path.rsplit("\\", 1)[-1].rsplit("/", 1)[-1]
+            filename = normalized_path.rsplit("\\", 1)[-1].rsplit("/", 1)[-1]
         else:
             # For Path objects, use PurePath but only when necessary
             path_obj = PurePath(file_path)
@@ -518,6 +520,11 @@ class ResourceIdentifier:
                         break
 
             if chosen_restype is not None and chosen_suffix_length > 0:
+                # Special case: if filename is entirely an extension (e.g., ".mdl"),
+                # the extracted resname would be empty. Handle this case.
+                if chosen_suffix_length == len(fname):
+                    # Filename is entirely an extension - preserve the full filename as resname
+                    return fname, chosen_restype
                 resname_candidate = fname[:-chosen_suffix_length]
                 return resname_candidate, chosen_restype
 
