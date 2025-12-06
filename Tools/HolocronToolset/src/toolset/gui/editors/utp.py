@@ -72,6 +72,10 @@ class UTPEditor(Editor):
         if installation is not None:  # will only be none in the unittests
             self._setup_installation(installation)
 
+        # Initialize model info widget state (collapsed by default)
+        self.ui.modelInfoLabel.setVisible(False)
+        self.ui.modelInfoSummaryLabel.setVisible(True)
+        
         self.update3dPreview()
         self.new()
         self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)

@@ -19,6 +19,7 @@ from pykotor.resource.formats.twoda.twoda_data import TwoDA
 from pykotor.resource.generics.dlg import DLG, bytes_dlg
 from pykotor.resource.generics.utc import UTC, UTCClass, read_utc, write_utc
 from pykotor.resource.type import ResourceType
+from pykotor.tools import creature
 from pykotor.tools.misc import is_capsule_file, is_sav_file
 from toolset.data.installation import HTInstallation
 from toolset.gui.common.localization import translate as tr
@@ -208,6 +209,7 @@ class UTCEditor(Editor):
         self.ui.actionSaveUnusedFields.triggered.connect(lambda: setattr(self.settings, "saveUnusedFields", self.ui.actionSaveUnusedFields.isChecked()))
         self.ui.actionAlwaysSaveK2Fields.triggered.connect(lambda: setattr(self.settings, "alwaysSaveK2Fields", self.ui.actionAlwaysSaveK2Fields.isChecked()))
         self.ui.actionShowPreview.triggered.connect(self.toggle_preview)
+        self.ui.modelInfoGroupBox.toggled.connect(self._on_model_info_toggled)
 
     def _setup_installation(  # noqa: C901, PLR0912, PLR0915
         self,
@@ -895,9 +897,167 @@ class UTCEditor(Editor):
                 data, _ = self.build()
                 utc: UTC = read_utc(data)
                 self.ui.previewRenderer.set_creature(utc)
+                self._update_model_info(utc)
         else:
             self.ui.previewRenderer.setVisible(False)
             self.resize(max(798 - 350, self.sizeHint().width()), max(553, self.sizeHint().height()))
+    
+    def _update_model_info(self, utc: UTC):
+        """Updates the model information label with creature model details.
+        
+        Args:
+        ----
+            utc: The UTC object to analyze
+        """
+        if self._installation is None:
+            return
+        
+        info_lines: list[str] = []
+        
+        try:
+            # Get body model and texture
+            body_model, body_texture = creature.get_body_model(utc, self._installation)
+            if body_model:
+                info_lines.append(f"Body Model: '{body_model}'")
+                body_mdl: ResourceResult | None = self._installation.resource(body_model, ResourceType.MDL)
+                if body_mdl:
+                    try:
+                        mdl_path = body_mdl.filepath.relative_to(self._installation.path())
+                        info_lines.append(f"  MDL: {mdl_path}")
+                        source = self._get_source_location_type(body_mdl.filepath)
+                        if source:
+                            info_lines.append(f"    └─ Source: {source}")
+                    except ValueError:
+                        info_lines.append(f"  MDL: {body_mdl.filepath}")
+                
+                if body_texture:
+                    info_lines.append(f"  Body Texture: '{body_texture}'")
+                    tex_res: ResourceResult | None = self._installation.texture(body_texture, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_TPB, SearchLocation.TEXTURES_TPC, SearchLocation.CHITIN])
+                    if tex_res:
+                        try:
+                            tex_path = tex_res.filepath.relative_to(self._installation.path())
+                            info_lines.append(f"    TPC/TGA: {tex_path}")
+                            source = self._get_source_location_type(tex_res.filepath)
+                            if source:
+                                info_lines.append(f"      └─ Source: {source}")
+                        except ValueError:
+                            info_lines.append(f"    TPC/TGA: {tex_res.filepath}")
+                    else:
+                        info_lines.append(f"    TPC/TGA: Not found")
+            
+            # Get head model and texture
+            head_model, head_texture = creature.get_head_model(utc, self._installation)
+            if head_model:
+                info_lines.append(f"Head Model: '{head_model}'")
+                head_mdl: ResourceResult | None = self._installation.resource(head_model, ResourceType.MDL)
+                if head_mdl:
+                    try:
+                        mdl_path = head_mdl.filepath.relative_to(self._installation.path())
+                        info_lines.append(f"  MDL: {mdl_path}")
+                    except ValueError:
+                        info_lines.append(f"  MDL: {head_mdl.filepath}")
+                
+                if head_texture:
+                    info_lines.append(f"  Head Texture: '{head_texture}'")
+                    tex_res = self._installation.texture(head_texture, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_TPB, SearchLocation.TEXTURES_TPC, SearchLocation.CHITIN])
+                    if tex_res:
+                        try:
+                            tex_path = tex_res.filepath.relative_to(self._installation.path())
+                            info_lines.append(f"    TPC/TGA: {tex_path}")
+                        except ValueError:
+                            info_lines.append(f"    TPC/TGA: {tex_res.filepath}")
+            
+            # Get weapon models
+            right_weapon, left_weapon = creature.get_weapon_models(utc, self._installation)
+            if right_weapon:
+                info_lines.append(f"Right Weapon: '{right_weapon}'")
+                weapon_mdl = self._installation.resource(right_weapon, ResourceType.MDL)
+                if weapon_mdl:
+                    try:
+                        mdl_path = weapon_mdl.filepath.relative_to(self._installation.path())
+                        info_lines.append(f"  MDL: {mdl_path}")
+                    except ValueError:
+                        info_lines.append(f"  MDL: {weapon_mdl.filepath}")
+            if left_weapon:
+                info_lines.append(f"Left Weapon: '{left_weapon}'")
+                weapon_mdl = self._installation.resource(left_weapon, ResourceType.MDL)
+                if weapon_mdl:
+                    try:
+                        mdl_path = weapon_mdl.filepath.relative_to(self._installation.path())
+                        info_lines.append(f"  MDL: {mdl_path}")
+                    except ValueError:
+                        info_lines.append(f"  MDL: {weapon_mdl.filepath}")
+            
+            # Get mask model if equipped
+            mask_model = creature.get_mask_model(utc, self._installation)
+            if mask_model:
+                info_lines.append(f"Mask Model: '{mask_model}'")
+                mask_mdl = self._installation.resource(mask_model, ResourceType.MDL)
+                if mask_mdl:
+                    try:
+                        mdl_path = mask_mdl.filepath.relative_to(self._installation.path())
+                        info_lines.append(f"  MDL: {mdl_path}")
+                    except ValueError:
+                        info_lines.append(f"  MDL: {mask_mdl.filepath}")
+            
+            if not info_lines:
+                info_lines.append("No model information available")
+        except Exception as e:  # noqa: BLE001
+            info_lines.append(f"Error gathering model info: {e}")
+        
+        full_text = "\n".join(info_lines)
+        self.ui.modelInfoLabel.setText(full_text)
+        
+        # Update summary (first line or key info)
+        summary = info_lines[0] if info_lines else "No model information"
+        if body_model:
+            summary = f"Body: {body_model}"
+            if body_texture:
+                summary += f" | Texture: {body_texture}"
+        self.ui.modelInfoSummaryLabel.setText(summary)
+    
+    def _on_model_info_toggled(self, checked: bool):
+        """Handle model info groupbox toggle."""
+        self.ui.modelInfoLabel.setVisible(checked)
+        if not checked:
+            # When collapsed, ensure summary is visible
+            self.ui.modelInfoSummaryLabel.setVisible(True)
+    
+    def _get_source_location_type(self, filepath: os.PathLike | str) -> str | None:
+        """Determines the source location type for a given filepath.
+        
+        Args:
+        ----
+            filepath: The filepath to analyze
+            
+        Returns:
+        -------
+            A string describing the source location type, or None if unknown
+        """
+        if self._installation is None:
+            return None
+            
+        try:
+            from pathlib import Path
+            path = self._installation.path()
+            filepath_obj = Path(filepath) if not isinstance(filepath, Path) else filepath
+            rel_path = filepath_obj.relative_to(path)
+            path_str = str(rel_path).lower().replace("\\", "/")
+            if "override" in path_str:
+                return "Override folder"
+            if path_str.startswith("modules/"):
+                if path_str.endswith(".mod"):
+                    return "Module (.mod)"
+                if path_str.endswith(".rim"):
+                    return "Module (.rim)"
+                return "Module"
+            if "chitin.key" in path_str or "data" in path_str:
+                return "Chitin BIFs"
+            if "textures" in path_str:
+                return "Texture pack"
+        except (ValueError, AttributeError):
+            pass
+        return None
 
 
 class UTCSettings:

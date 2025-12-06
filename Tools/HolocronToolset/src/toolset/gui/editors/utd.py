@@ -71,6 +71,10 @@ class UTDEditor(Editor):
         if installation is not None:  # will only be none in the unittests
             self._setup_installation(installation)
 
+        # Initialize model info widget state (collapsed by default)
+        self.ui.modelInfoLabel.setVisible(False)
+        self.ui.modelInfoSummaryLabel.setVisible(True)
+        
         self.update3dPreview()
         self.new()
         self.resize(654, 495)
@@ -96,6 +100,7 @@ class UTDEditor(Editor):
 
         self.ui.appearanceSelect.currentIndexChanged.connect(self.update3dPreview)
         self.ui.actionShowPreview.triggered.connect(self.toggle_preview)
+        self.ui.modelInfoGroupBox.toggled.connect(self._on_model_info_toggled)
 
     def _setup_installation(self, installation: HTInstallation):
         """Sets up the installation for editing.
@@ -445,7 +450,12 @@ class UTDEditor(Editor):
             info_lines.append(f"❌ Lookup error: {e}")
             try:
                 row = self._genericdoors_2da.get_row(utd.appearance_id)
-                modelname_col = row.get_string("modelname", default="[empty]")
+                if row.has_string("modelname"):
+                    modelname_col = row.get_string("modelname")
+                    if not modelname_col or modelname_col.strip() == "****":
+                        modelname_col = "[empty]"
+                else:
+                    modelname_col = "[column missing]"
                 info_lines.append(f"genericdoors.2da row {utd.appearance_id}: 'modelname' = '{modelname_col}'")
             except (IndexError, KeyError):
                 pass
@@ -500,7 +510,26 @@ class UTDEditor(Editor):
                 info_lines.append(f"  Missing: {modelname}.mdx")
                 info_lines.append("  (Searched: Override → Modules → Chitin BIFs)")
 
-        self.ui.modelInfoLabel.setText("\n".join(info_lines))
+        full_text = "\n".join(info_lines)
+        self.ui.modelInfoLabel.setText(full_text)
+        
+        # Update summary (first line or key info)
+        summary = info_lines[0] if info_lines else "No model information"
+        if len(info_lines) > 1 and mdl is not None and mdx is not None:
+            # Show model name and source in summary
+            try:
+                mdl_rel = mdl.filepath.relative_to(self._installation.path()) if self._installation else str(mdl.filepath)
+                summary = f"{modelname} → {mdl_rel}"
+            except (ValueError, AttributeError):
+                summary = f"{modelname} → {mdl.filepath}"
+        self.ui.modelInfoSummaryLabel.setText(summary)
+    
+    def _on_model_info_toggled(self, checked: bool):
+        """Handle model info groupbox toggle."""
+        self.ui.modelInfoLabel.setVisible(checked)
+        if not checked:
+            # When collapsed, ensure summary is visible
+            self.ui.modelInfoSummaryLabel.setVisible(True)
 
     def _get_source_location_type(self, filepath: os.PathLike | str) -> str | None:
         """Determines the source location type for a given filepath.
