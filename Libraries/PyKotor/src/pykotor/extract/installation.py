@@ -193,6 +193,9 @@ class Installation:
         self._streamwaves_data: list[FileResource] = []
         self._game: Game | None = None
 
+        # Derived/cached lookups
+        self._module_names_cache: dict[str, str | None] | None = None
+
         # Lazy-loading flags
         self._modules_loaded: bool = False
         self._lips_loaded: bool = False
@@ -427,7 +430,6 @@ class Installation:
             return []
 
         self._log.info("Loading '%s' from installation...", r_path.relative_to(self._path))
-        files_iter = r_path.rglob("*") if recurse else r_path.iterdir()
 
         resources_list: list[FileResource] = []
         str_path = str(r_path)
@@ -449,11 +451,6 @@ class Installation:
         except Exception as e:  # noqa: BLE001
             RobustLogger().exception(f"Error scanning directory '{str_path}'", exc_info=e)
 
-        for file in files_iter:
-            resource = self._build_single_resource(file)
-            if resource is None:
-                continue
-            resources_list.append(resource)
         if not resources_list:
             RobustLogger().warning(f"No resources found at '{str_path}' when loading the installation, skipping...")
         return resources_list
@@ -488,6 +485,8 @@ class Installation:
         if self._modules_loaded:
             return
         self._modules_data = self.load_resources_dict(self.module_path(), capsule_check=is_capsule_file)
+        # Clear derived caches that depend on module contents
+        self._module_names_cache = None
         self._modules_loaded = True
 
     def reload_module(self, module: str):
@@ -500,6 +499,7 @@ class Installation:
         if not self._modules_loaded or module not in self._modules_data:
             self.load_modules()
         self._modules_data[module] = list(Capsule(self.module_path() / module))
+        self._module_names_cache = None
 
     def load_textures(
         self,
@@ -1978,6 +1978,9 @@ class Installation:
         -------
             A dictionary mapping module filename to in-game module area name.
         """
+        if use_hardcoded and self._module_names_cache is not None:
+            return self._module_names_cache
+
         area_names: dict[str, str | None] = {}
         root_to_extensions: dict[str, dict[str, str | None]] = {}
 
@@ -2011,6 +2014,10 @@ class Installation:
 
             if rim_link != mod_filename and mod_filename is not None:
                 area_names[mod_filename] = self.module_name(mod_filename)
+
+        if use_hardcoded:
+            # Cache the most common request (hardcoded enabled) to avoid re-reading capsules.
+            self._module_names_cache = area_names
 
         return area_names
 
