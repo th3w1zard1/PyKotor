@@ -141,22 +141,28 @@ class MoveRoomsCommand(QUndoCommand):
         rooms: list[IndoorMapRoom],
         old_positions: list[Vector3],
         new_positions: list[Vector3],
+        invalidate_cb: Callable[[list[IndoorMapRoom]], None] | None = None,
     ):
         super().__init__(f"Move {len(rooms)} Room(s)")
         self.indoor_map = indoor_map
         self.rooms = rooms.copy()
         self.old_positions = [copy(p) for p in old_positions]
         self.new_positions = [copy(p) for p in new_positions]
+        self._invalidate_cb = invalidate_cb
 
     def undo(self):
         for room, pos in zip(self.rooms, self.old_positions):
             room.position = copy(pos)
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.rooms)
 
     def redo(self):
         for room, pos in zip(self.rooms, self.new_positions):
             room.position = copy(pos)
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.rooms)
 
 
 class RotateRoomsCommand(QUndoCommand):
@@ -168,22 +174,28 @@ class RotateRoomsCommand(QUndoCommand):
         rooms: list[IndoorMapRoom],
         old_rotations: list[float],
         new_rotations: list[float],
+        invalidate_cb: Callable[[list[IndoorMapRoom]], None] | None = None,
     ):
         super().__init__(f"Rotate {len(rooms)} Room(s)")
         self.indoor_map = indoor_map
         self.rooms = rooms.copy()
         self.old_rotations = old_rotations.copy()
         self.new_rotations = new_rotations.copy()
+        self._invalidate_cb = invalidate_cb
 
     def undo(self):
         for room, rot in zip(self.rooms, self.old_rotations):
             room.rotation = rot
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.rooms)
 
     def redo(self):
         for room, rot in zip(self.rooms, self.new_rotations):
             room.rotation = rot
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.rooms)
 
 
 class FlipRoomsCommand(QUndoCommand):
@@ -195,12 +207,14 @@ class FlipRoomsCommand(QUndoCommand):
         rooms: list[IndoorMapRoom],
         flip_x: bool,
         flip_y: bool,
+        invalidate_cb: Callable[[list[IndoorMapRoom]], None] | None = None,
     ):
         super().__init__(f"Flip {len(rooms)} Room(s)")
         self.indoor_map = indoor_map
         self.rooms = rooms.copy()
         self.flip_x = flip_x
         self.flip_y = flip_y
+        self._invalidate_cb = invalidate_cb
         # Store original states
         self.old_flip_x = [r.flip_x for r in rooms]
         self.old_flip_y = [r.flip_y for r in rooms]
@@ -210,6 +224,8 @@ class FlipRoomsCommand(QUndoCommand):
             room.flip_x = fx
             room.flip_y = fy
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.rooms)
 
     def redo(self):
         for room in self.rooms:
@@ -218,6 +234,8 @@ class FlipRoomsCommand(QUndoCommand):
             if self.flip_y:
                 room.flip_y = not room.flip_y
         self.indoor_map.rebuild_room_connections()
+        if self._invalidate_cb:
+            self._invalidate_cb(self.rooms)
 
 
 class DuplicateRoomsCommand(QUndoCommand):
@@ -1006,6 +1024,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         self._filepath = ""
         self._map.reset()
+        self.ui.mapRenderer._cached_walkmeshes.clear()
         self._undo_stack.clear()
         self._refresh_window_title()
 
@@ -1027,6 +1046,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             try:
                 missing_rooms = self._map.load(Path(filepath).read_bytes(), self._kits)
                 self._map.rebuild_room_connections()
+                self.ui.mapRenderer._cached_walkmeshes.clear()
                 self._filepath = filepath
                 self._undo_stack.clear()
                 self._refresh_window_title()
@@ -1531,7 +1551,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
         # Only create command if positions actually changed
         if any(old.distance(new) > 0.001 for old, new in zip(old_positions, new_positions)):
-            cmd = MoveRoomsCommand(self._map, rooms, old_positions, new_positions)
+            cmd = MoveRoomsCommand(self._map, rooms, old_positions, new_positions, self._invalidate_rooms)
             self._undo_stack.push(cmd)
             self._refresh_window_title()
 
@@ -1545,7 +1565,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if not rooms:
             return
         if any(abs(o - n) > 0.001 for o, n in zip(old_rotations, new_rotations)):
-            cmd = RotateRoomsCommand(self._map, rooms, old_rotations, new_rotations)
+            cmd = RotateRoomsCommand(self._map, rooms, old_rotations, new_rotations, self._invalidate_rooms)
             self._undo_stack.push(cmd)
             self._refresh_window_title()
 
@@ -1760,7 +1780,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
         old_rotations = [r.rotation for r in rooms]
         new_rotations = [(r.rotation + angle) % 360 for r in rooms]
-        cmd = RotateRoomsCommand(self._map, rooms, old_rotations, new_rotations)
+        cmd = RotateRoomsCommand(self._map, rooms, old_rotations, new_rotations, self._invalidate_rooms)
         self._undo_stack.push(cmd)
         self._refresh_window_title()
 
@@ -1768,7 +1788,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         rooms = self.ui.mapRenderer.selected_rooms()
         if not rooms:
             return
-        cmd = FlipRoomsCommand(self._map, rooms, flip_x, flip_y)
+        cmd = FlipRoomsCommand(self._map, rooms, flip_x, flip_y, self._invalidate_rooms)
         self._undo_stack.push(cmd)
         self._refresh_window_title()
 
