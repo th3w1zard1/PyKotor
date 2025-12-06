@@ -97,6 +97,10 @@ class UTCEditor(Editor):
         self.ui.actionSaveUnusedFields.setChecked(self.settings.saveUnusedFields)
         self.ui.actionAlwaysSaveK2Fields.setChecked(self.settings.alwaysSaveK2Fields)
 
+        # Initialize model info widget state (collapsed by default)
+        self.ui.modelInfoLabel.setVisible(False)
+        self.ui.modelInfoSummaryLabel.setVisible(True)
+
         self.update3dPreview()
 
         self.new()
