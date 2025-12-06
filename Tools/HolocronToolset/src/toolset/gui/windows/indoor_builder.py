@@ -1958,6 +1958,8 @@ class IndoorMapRenderer(QWidget):
         #    DEEP_WATER (17): walkable=False
         #    DOOR (18): walkable=True
         #    NON_WALK_GRASS (19): walkable=False
+        #    TRIGGER (30): walkable=True
+        # This set must match SurfaceMaterial.walkable() exactly (see geometry.py)
         self._walkable_values: set[int] = {
             1,  # DIRT
             3,  # GRASS
@@ -1970,11 +1972,8 @@ class IndoorMapRenderer(QWidget):
             12,  # SWAMP
             13,  # MUD
             14,  # LEAVES
-            16,  # BOTTOMLESS_PIT
             18,  # DOOR
-            20,  # SURFACE_MATERIAL_20
-            21,  # SURFACE_MATERIAL_21
-            22,  # SURFACE_MATERIAL_22
+            30,  # TRIGGER
         }
 
         # Render loop control
@@ -2063,7 +2062,7 @@ class IndoorMapRenderer(QWidget):
         self.mark_dirty()
 
     def set_status_callback(self, callback: Callable[[QPoint | Vector2 | None, set[int | Qt.MouseButton], set[int | Qt.Key]], None] | None) -> None:
-        self._status_callback = callback
+        self._status_callback = callback  # type: ignore[reportArgumentType]
 
     def select_room(self, room: IndoorMapRoom, *, clear_existing: bool):
         if clear_existing:
@@ -2326,7 +2325,8 @@ class IndoorMapRenderer(QWidget):
                 distance_to_snap = Vector2.from_vector3(room.position).distance(
                     Vector2.from_vector3(snap_result.position)
                 )
-                snap_threshold = max(3.0, 5.0 / self._cam_scale)
+                # Use same threshold as _find_hook_snap for consistency
+                snap_threshold = max(1.0, 2.0 / self._cam_scale)
                 if distance_to_snap <= snap_threshold:
                     # Room is snapped - record the snap anchor
                     self._snap_anchor_position = copy(snap_result.position)
@@ -3091,7 +3091,7 @@ class IndoorMapRenderer(QWidget):
         coords: Vector2 = (
             Vector2(e.x(), e.y())  # pyright: ignore[reportAttributeAccessIssue]
             if qtpy.QT5
-            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # pyright: ignore[reportAttributeAccessIssue]
+            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
         )
         self.sig_mouse_pressed.emit(coords, self._mouse_down, self._keys_down)
         if self._status_callback is not None:
@@ -3105,7 +3105,7 @@ class IndoorMapRenderer(QWidget):
         coords: Vector2 = (
             Vector2(e.x(), e.y())  # pyright: ignore[reportAttributeAccessIssue]
             if qtpy.QT5
-            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # pyright: ignore[reportAttributeAccessIssue]
+            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
         )
         self.sig_mouse_released.emit(coords, self._mouse_down, self._keys_down)
         if self._status_callback is not None:
@@ -3239,7 +3239,7 @@ class KitDownloader(QDialog):
                     button=button: self._download_button_pressed(button, kit_dict),
                 )
 
-                layout: QFormLayout | None = self.ui.groupBox.layout()  # type: ignore[union-attr]  # pyright: ignore[reportAssignmentType]
+                layout: QFormLayout | None = self.ui.groupBox.layout()  # type: ignore[union-attr, assignment]  # pyright: ignore[reportAssignmentType]
                 if layout is None:
                     msg = "Kit downloader group box layout is None"
                     raise RuntimeError(msg)  # noqa: TRY301
