@@ -15,8 +15,8 @@ from typing import TYPE_CHECKING, Any, Callable, cast
 import qtpy
 
 from qtpy import QtCore
-from qtpy.QtCore import QPointF, QRectF, QTimer, Qt
-from qtpy.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTransform
+from qtpy.QtCore import QPoint, QPointF, QRectF, QTimer, Qt
+from qtpy.QtGui import QColor, QIcon, QImage, QKeyEvent, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTransform, QWheelEvent
 from qtpy.QtWidgets import (
     QApplication,
     QDialog,
@@ -36,8 +36,15 @@ from qtpy.QtWidgets import (
 
 if qtpy.QT5:
     from qtpy.QtWidgets import QUndoCommand, QUndoStack
+    from qtpy.QtGui import QCloseEvent, QPaintEvent
 elif qtpy.QT6:
     from qtpy.QtGui import QUndoCommand, QUndoStack  # type: ignore[assignment]  # pyright: ignore[reportPrivateImportUsage]
+    from qtpy.QtGui import QPaintEvent
+    try:
+        from qtpy.QtGui import QCloseEvent
+    except ImportError:
+        # Fallback for Qt6 where QCloseEvent may be in QtCore
+        from qtpy.QtCore import QCloseEvent  # type: ignore[assignment]
 else:
     raise ValueError(f"Invalid QT_API: '{qtpy.API_NAME}'")
 
@@ -62,18 +69,10 @@ from utility.system.os_helper import is_frozen
 from utility.updater.github import download_github_release_asset
 
 if TYPE_CHECKING:
-    from qtpy.QtCore import QPoint
-    from qtpy.QtGui import QCloseEvent, QImage, QKeyEvent, QMouseEvent, QPaintEvent, QWheelEvent
-
     from pykotor.resource.formats.bwm import BWMFace
     from pykotor.resource.formats.bwm.bwm_data import BWM
     from toolset.data.indoorkit import KitComponent, KitComponentHook
     from toolset.data.indoormap import MissingRoomInfo
-    try:
-        from qtpy.QtGui import QCloseEvent  # type: ignore[assignment]
-    except ImportError:
-        # Fallback for Qt6 where QCloseEvent may be in QtCore
-        from qtpy.QtCore import QCloseEvent  # type: ignore[assignment]
 
 
 # =============================================================================
