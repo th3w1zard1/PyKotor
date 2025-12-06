@@ -17,7 +17,7 @@ import qtpy
 
 from qtpy import QtCore
 from qtpy.QtCore import QPoint, QPointF, QRectF, QSize, QTimer, Qt
-from qtpy.QtGui import QColor, QIcon, QImage, QKeyEvent, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTransform, QWheelEvent
+from qtpy.QtGui import QColor, QIcon, QImage, QKeyEvent, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QTransform, QWheelEvent
 from qtpy.QtWidgets import (
     QApplication,
     QDialog,
@@ -541,7 +541,6 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         self._setup_status_bar()
         # Walkmesh painter state
-        self._painting_walkmesh: bool = False
         self._colorize_materials: bool = True
         self._material_colors: dict[SurfaceMaterial, QColor] = {}
         self._paint_stroke_active: bool = False
@@ -561,6 +560,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Initialize Options UI to match renderer state
         self._initialize_options_ui()
+        
+        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        from toolset.gui.common.filters import NoScrollEventFilter
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
         
         # Setup Blender integration UI (deferred to avoid layout issues)
         QTimer.singleShot(0, self._install_view_stack)
@@ -671,18 +675,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._populate_material_list()
         self._colorize_materials = True
         self.ui.colorizeMaterialsCheck.setChecked(True)
-        self.ui.enablePaintCheck.setChecked(False)
 
         self.ui.mapRenderer.set_material_colors(self._material_colors)
         self.ui.mapRenderer.set_colorize_materials(self._colorize_materials)
 
         self.ui.materialList.currentItemChanged.connect(lambda _old, _new=None: self._refresh_status_bar())
-        self.ui.enablePaintCheck.toggled.connect(self._toggle_paint_mode)
         self.ui.colorizeMaterialsCheck.toggled.connect(self._toggle_colorize_materials)
         self.ui.resetPaintButton.clicked.connect(self._reset_selected_walkmesh)
-
-        # Shortcut to quickly toggle paint mode
-        QShortcut(Qt.Key.Key_P, self).activated.connect(lambda: self.ui.enablePaintCheck.toggle())
 
     def _setup_undo_redo(self):
         """Setup undo/redo actions."""
@@ -720,13 +719,6 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 return material
         return next(iter(self._material_colors.keys()), None)
 
-    def _toggle_paint_mode(self, enabled: bool):
-        self._painting_walkmesh = enabled
-        self._paint_stroke_active = False
-        self._paint_stroke_originals.clear()
-        self._paint_stroke_new.clear()
-        self._refresh_status_bar()
-
     def _toggle_colorize_materials(self, enabled: bool):
         self._colorize_materials = enabled
         self.ui.mapRenderer.set_colorize_materials(enabled)
@@ -747,14 +739,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def _setup_kits(self):
         self.ui.kitSelect.clear()
-        self._kits, missing_files = load_kits("./kits")
-
-        # In test/headless environments the missing-files dialog can interfere
-        # with automated runs (pytest-qt, CI).  Headless mode is indicated by
-        # Qt using the offscreen platform plugin; in that case we suppress the
-        # dialog entirely and rely on logging instead.
-        if missing_files and os.environ.get("QT_QPA_PLATFORM", "").lower() not in {"offscreen", "minimal"}:
-            self._show_missing_files_dialog(missing_files)
+        self._kits, _missing_files = load_kits("./kits")
 
         # Kits are deprecated and optional - modules provide the same functionality
         # No need to show a dialog when kits are missing since modules can be used instead
@@ -763,29 +748,6 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         for kit in self._kits:
             self.ui.kitSelect.addItem(kit.name, kit)
-
-    def _show_no_kits_dialog(self):
-        """Show dialog asking if user wants to open kit downloader.
-
-        This is called asynchronously via QTimer.singleShot to avoid blocking initialization.
-        Headless mode is already checked before this method is scheduled, so it will only
-        be called in GUI mode where exec() is safe.
-        """
-        from toolset.gui.common.localization import translate as tr
-
-        # Show dialog in GUI mode using exec()
-        # Headless check happens before this method is scheduled, so this is safe
-        no_kit_prompt = QMessageBox(self)
-        no_kit_prompt.setIcon(QMessageBox.Icon.Warning)
-        no_kit_prompt.setWindowTitle(tr("No Kits Available"))
-        no_kit_prompt.setText(tr("No kits were detected, would you like to open the Kit downloader?"))
-        no_kit_prompt.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        no_kit_prompt.setDefaultButton(QMessageBox.StandardButton.No)
-
-        # Use exec() for proper modal behavior in GUI mode
-        result = no_kit_prompt.exec()
-        if result == QMessageBox.StandardButton.Yes or no_kit_prompt.clickedButton() == QMessageBox.StandardButton.Yes:
-            self.open_kit_downloader()
 
     def _setup_modules(self):
         """Set up the module selection combobox with available modules from the installation.
@@ -1401,7 +1363,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Mode/status line
         mode_parts: list[str] = []
-        if self._painting_walkmesh:
+        if Qt.Key.Key_Shift in keys:
             material = self._current_material()
             mat_text = material.name.title().replace("_", " ") if material else "Material"
             mode_parts.append(f"<span style='color:#c46811'>Paint: {mat_text}</span>")
@@ -1503,72 +1465,6 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                     tr("Failed to load file"),
                     trf("{error}", error=str(universal_simplify_exception(e))),
                 ).exec()
-
-    def _show_missing_files_dialog(
-        self,
-        missing_files: list[tuple[str, Path, str]],
-    ):
-        """Show a dialog with information about missing kit files."""
-        from toolset.gui.common.localization import translate as tr, trf
-
-        # Don't show dialog in frozen code (PyInstaller _MEIPASS)
-        if is_frozen():
-            return
-
-        if not missing_files:
-            return
-
-        # Check if all missing files are PNGs (component images)
-        # If so, don't show the dialog
-        non_png_files = [f for f in missing_files if f[2] != "component image"]
-        if not non_png_files:
-            return
-
-        # If there are non-PNG files missing, show all missing files (including PNGs)
-        filtered_files: list[tuple[str, Path, str]] = missing_files
-
-        files_by_kit: dict[str, list[tuple[Path, str]]] = {}
-        for kit_name, file_path, file_type in filtered_files:
-            if kit_name not in files_by_kit:
-                files_by_kit[kit_name] = []
-            files_by_kit[kit_name].append((file_path, file_type))
-
-        file_count: int = len(filtered_files)
-        kit_count: int = len(files_by_kit)
-        kit_names: list[str] = sorted(files_by_kit.keys())
-
-        main_text = trf(
-            "{count} file{plural} missing from {kit_count} kit{kit_plural}.\n\nKit{kit_plural}: {kits}",
-            count=file_count,
-            plural="s" if file_count != 1 else "",
-            kit_count=kit_count,
-            kit_plural="s" if kit_count != 1 else "",
-            kits=", ".join(f"'{name}'" for name in kit_names),
-        )
-
-        detailed_lines: list[str] = []
-        for kit_name in sorted(files_by_kit.keys()):
-            detailed_lines.append(f"\n=== Kit: '{kit_name}' ===")
-            files = files_by_kit[kit_name]
-            files_by_type: dict[str, list[Path]] = {}
-            for file_path, file_type in files:
-                if file_type not in files_by_type:
-                    files_by_type[file_type] = []
-                files_by_type[file_type].append(file_path)
-
-            for file_type in sorted(files_by_type.keys()):
-                detailed_lines.append(f"\n  {file_type}:")
-                for file_path in sorted(files_by_type[file_type]):
-                    detailed_lines.append(f"    - {file_path}")
-
-        msg_box = QMessageBox(
-            QMessageBox.Icon.Warning,
-            tr("Missing Kit Files"),
-            main_text,
-            flags=Qt.WindowType.Dialog | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint,
-        )
-        msg_box.setDetailedText("\n".join(detailed_lines))
-        msg_box.exec()
 
     def _show_missing_rooms_dialog(
         self,
@@ -1909,7 +1805,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         world_delta: Vector2 = self.ui.mapRenderer.to_world_delta(delta.x, delta.y)
 
         # Walkmesh painting drag - Shift+Left drag should paint
-        if (self._painting_walkmesh or Qt.Key.Key_Shift in keys) and Qt.MouseButton.LeftButton in buttons and Qt.Key.Key_Control not in keys:
+        if Qt.Key.Key_Shift in keys and Qt.MouseButton.LeftButton in buttons and Qt.Key.Key_Control not in keys:
             self._apply_paint_at_screen(screen)
             return
 
@@ -1932,7 +1828,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return  # Control is for camera pan
 
         # Check for walkmesh painting mode - Shift+Left click should paint
-        if self._painting_walkmesh or Qt.Key.Key_Shift in keys:
+        if Qt.Key.Key_Shift in keys:
             self._begin_paint_stroke(screen)
             return
 
