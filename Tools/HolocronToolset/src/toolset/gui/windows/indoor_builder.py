@@ -1106,7 +1106,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                         position.get("z", room.position.z),
                     )
                     if room.position != new_position:
-                        old_positions = [copy(room.position)]
+                        old_positions = [Vect(room.position)]
                         new_positions = [new_position]
                         move_cmd = MoveRoomsCommand(
                             self._map,
@@ -2667,6 +2667,16 @@ class IndoorMapRenderer(QWidget):
         self._selected_rooms.append(room)
         self.mark_dirty()
 
+    def select_rooms(self, rooms: list[IndoorMapRoom], *, clear_existing: bool = True):
+        """Select multiple rooms at once."""
+        if clear_existing:
+            self._selected_rooms.clear()
+        for room in rooms:
+            if room in self._selected_rooms:
+                self._selected_rooms.remove(room)
+            self._selected_rooms.append(room)
+        self.mark_dirty()
+
     def room_under_mouse(self) -> IndoorMapRoom | None:
         return self._under_mouse_room
 
@@ -3961,7 +3971,9 @@ class KitDownloader(QDialog):
                 else:
                     button = QPushButton("Download")
                 button.clicked.connect(
-                    lambda _=None, kit_dict=kit_dict, button=button: self._download_button_pressed(button, kit_dict),
+                    lambda _=None,
+                    kit_dict=kit_dict,
+                    button=button: self._download_button_pressed(button, kit_dict),
                 )
 
                 layout: QFormLayout | None = self.ui.groupBox.layout()  # type: ignore[union-attr, assignment]  # pyright: ignore[reportAssignmentType]
