@@ -503,6 +503,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._kits: list[Kit] = []
         self._map: IndoorMap = IndoorMap()
         self._filepath: os.PathLike | str = ""
+        self._preview_source_image: QImage | None = None
 
         # Module kit management (lazy loading)
         # ModuleKitManager handles converting game modules to kit-like components
