@@ -96,6 +96,7 @@ class UTPEditor(Editor):
 
         self.ui.appearanceSelect.currentIndexChanged.connect(self.update3dPreview)
         self.ui.actionShowPreview.triggered.connect(self.toggle_preview)
+        self.ui.modelInfoGroupBox.toggled.connect(self._on_model_info_toggled)
 
     def _setup_installation(
         self,
@@ -472,10 +473,18 @@ class UTPEditor(Editor):
         self.setMinimumSize(674, 457)
         data, _ = self.build()
         utp = read_utp(data)
-        modelname: str = placeable.get_model(utp, self._installation, placeables=self._placeables2DA)
-        
+
         # Build model information text - focus on low-level technical details
         info_lines: list[str] = []
+
+        # Validate placeables.2da before calling placeable.get_model() to prevent crashes
+        if self._placeables2DA is None:
+            self.ui.previewRenderer.clear_model()
+            info_lines.append("❌ placeables.2da not loaded")
+            self.ui.modelInfoLabel.setText("\n".join(info_lines))
+            return
+
+        modelname: str = placeable.get_model(utp, self._installation, placeables=self._placeables2DA)
         
         if not modelname or not modelname.strip():
             RobustLogger().warning("Placeable '%s.%s' has no model to render!", self._resname, self._restype)
@@ -484,7 +493,12 @@ class UTPEditor(Editor):
             if self._placeables2DA is not None:
                 try:
                     row = self._placeables2DA.get_row(utp.appearance_id)
-                    modelname_col = row.get_string("modelname", default="[empty]")
+                    if row.has_string("modelname"):
+                        modelname_col = row.get_string("modelname")
+                        if not modelname_col or modelname_col.strip() == "****":
+                            modelname_col = "[empty]"
+                    else:
+                        modelname_col = "[column missing]"
                     info_lines.append(f"placeables.2da row {utp.appearance_id}: 'modelname' = '{modelname_col}'")
                 except (IndexError, KeyError):
                     info_lines.append(f"⚠️ placeables.2da row {utp.appearance_id} not found")
@@ -542,7 +556,26 @@ class UTPEditor(Editor):
                 info_lines.append(f"  Missing: {modelname}.mdx")
                 info_lines.append("  (Searched: Override → Modules → Chitin BIFs)")
         
-        self.ui.modelInfoLabel.setText("\n".join(info_lines))
+        full_text = "\n".join(info_lines)
+        self.ui.modelInfoLabel.setText(full_text)
+        
+        # Update summary (first line or key info)
+        summary = info_lines[0] if info_lines else "No model information"
+        if len(info_lines) > 1 and mdl is not None and mdx is not None:
+            # Show model name and source in summary
+            try:
+                mdl_rel = mdl.filepath.relative_to(self._installation.path()) if self._installation else str(mdl.filepath)
+                summary = f"{modelname} → {mdl_rel}"
+            except (ValueError, AttributeError):
+                summary = f"{modelname} → {mdl.filepath}"
+        self.ui.modelInfoSummaryLabel.setText(summary)
+    
+    def _on_model_info_toggled(self, checked: bool):
+        """Handle model info groupbox toggle."""
+        self.ui.modelInfoLabel.setVisible(checked)
+        if not checked:
+            # When collapsed, ensure summary is visible
+            self.ui.modelInfoSummaryLabel.setVisible(True)
     
     def _get_source_location_type(self, filepath: os.PathLike | str) -> str | None:
         """Determines the source location type for a given filepath.
