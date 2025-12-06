@@ -54,7 +54,7 @@ from pykotor.resource.formats.bwm import bytes_bwm, read_bwm  # type: ignore[rep
 from toolset.blender import BlenderEditorMode
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
-from toolset.data.indoorkit import Kit, ModuleKit, ModuleKitManager, load_kits
+from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, ModuleKit, ModuleKitManager, load_kits
 from toolset.data.indoormap import IndoorMap, IndoorMapRoom
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.asyncloader import AsyncLoader
@@ -72,7 +72,6 @@ from utility.updater.github import download_github_release_asset
 if TYPE_CHECKING:
     from pykotor.resource.formats.bwm import BWMFace  # pyright: ignore[reportPrivateImportUsage]
     from pykotor.resource.formats.bwm.bwm_data import BWM  # pyright: ignore[reportPrivateImportUsage]
-    from toolset.data.indoorkit import KitComponent, KitComponentHook
     from toolset.data.indoormap import MissingRoomInfo
 
 
