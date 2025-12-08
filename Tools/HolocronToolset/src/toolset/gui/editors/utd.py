@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import os
+
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped, note]
 from qtpy.QtWidgets import QMessageBox
@@ -21,8 +23,6 @@ from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.utils.window import open_resource_editor
 
 if TYPE_CHECKING:
-    import os
-
     from qtpy.QtWidgets import QWidget
 
     from pykotor.extract.file import ResourceResult
@@ -103,7 +103,8 @@ class UTDEditor(Editor):
         self.ui.appearanceSelect.currentIndexChanged.connect(self.update3dPreview)
         self.ui.actionShowPreview.triggered.connect(self.toggle_preview)
         self.ui.modelInfoGroupBox.toggled.connect(self._on_model_info_toggled)
-        self.ui.previewRenderer.resourcesLoaded.connect(self._refresh_model_info)
+        # Connect to renderer's signal to update texture info when textures finish loading
+        self.ui.previewRenderer.resourcesLoaded.connect(self._on_textures_loaded)
 
     def _setup_installation(self, installation: HTInstallation):
         """Sets up the installation for editing.
@@ -402,13 +403,15 @@ class UTDEditor(Editor):
         ----------------
             - Checks if the global setting for showing preview is True
             - If True, calls _update_model() to update the 3D model preview
-            - If False, sets the fixed size of the window without leaving space for preview.
+            - If False, hides BOTH the preview renderer AND the model info groupbox.
         """
-        self.ui.previewRenderer.setVisible(self.global_settings.showPreviewUTP)
-        self.ui.actionShowPreview.setChecked(self.global_settings.showPreviewUTP)
+        show_preview = self.global_settings.showPreviewUTP
+        self.ui.previewRenderer.setVisible(show_preview)
+        self.ui.modelInfoGroupBox.setVisible(show_preview)
+        self.ui.actionShowPreview.setChecked(show_preview)
 
         try:
-            if self.global_settings.showPreviewUTP:
+            if show_preview:
                 self._update_model()
             else:
                 self.resize(max(374, self.sizeHint().width()), max(457, self.sizeHint().height()))
@@ -428,6 +431,7 @@ class UTDEditor(Editor):
             - If resources are loaded, set them on the preview renderer
             - If not loaded, clear the existing model from the preview renderer
             - Update the model info label with resource location details
+            - Do DIRECT texture lookups using Installation (not async scene tracking)
         """
         assert self._installation is not None
         self.resize(max(674, self.sizeHint().width()), max(457, self.sizeHint().height()))
@@ -485,8 +489,7 @@ class UTDEditor(Editor):
         model_search_order: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.MODULES, SearchLocation.CHITIN]
         mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL, model_search_order)
         mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX, model_search_order)
-        # Store search order for display
-        self._model_search_order = model_search_order
+
         if mdl is not None and mdx is not None:
             self.ui.previewRenderer.set_model(mdl.data, mdx.data)
 
@@ -511,23 +514,19 @@ class UTDEditor(Editor):
             if mdx_source:
                 info_lines.append(f"  └─ Source: {mdx_source}")
 
-            # Display texture lookup results from the renderer (no additional lookups)
-            # Read what the renderer already found when it loaded textures
-            self._populate_texture_info(info_lines, mdl.data)
+            # Show placeholder for textures - actual info will be populated when textures finish loading
+            info_lines.append("")
+            info_lines.append("Textures: Loading...")
         else:
             self.ui.previewRenderer.clear_model()
             info_lines.append("❌ Resources not found in installation:")
-            search_order_str = self._format_search_order(getattr(self, "_model_search_order", [SearchLocation.OVERRIDE, SearchLocation.MODULES, SearchLocation.CHITIN]))
+            search_order_str = self._format_search_order(model_search_order)
             if mdl is None:
                 info_lines.append(f"  Missing: {modelname}.mdl")
                 info_lines.append(f"  (Searched: {search_order_str})")
             if mdx is None:
                 info_lines.append(f"  Missing: {modelname}.mdx")
                 info_lines.append(f"  (Searched: {search_order_str})")
-
-        # Store for later refresh when textures load
-        self._last_info_lines_base = info_lines.copy()
-        self._last_mdl_data = mdl.data if mdl is not None else None
 
         full_text = "\n".join(info_lines)
         self.ui.modelInfoLabel.setText(full_text)
@@ -543,21 +542,6 @@ class UTDEditor(Editor):
                 summary = f"{modelname} → {mdl.filepath}"
         self.ui.modelInfoSummaryLabel.setText(summary)
 
-    def _refresh_model_info(self):
-        """Refresh model info text when resources finish loading."""
-        from loggerplus import RobustLogger
-
-        RobustLogger().debug("_refresh_model_info called - textures finished loading")
-        # Rebuild the entire model info display
-        if hasattr(self, "_last_mdl_data") and self._last_mdl_data is not None:
-            info_lines = self._last_info_lines_base.copy() if hasattr(self, "_last_info_lines_base") else []
-            self._populate_texture_info(info_lines, self._last_mdl_data)
-            full_text = "\n".join(info_lines)
-            self.ui.modelInfoLabel.setText(full_text)
-            RobustLogger().debug(f"Model info refreshed with {len(info_lines)} lines")
-        else:
-            RobustLogger().debug("_refresh_model_info: No _last_mdl_data available")
-
     def _format_search_order(self, search_order: list[SearchLocation]) -> str:
         """Format search order list into human-readable string."""
         location_names = {
@@ -572,114 +556,74 @@ class UTDEditor(Editor):
         }
         return " → ".join(location_names.get(loc, str(loc)) for loc in search_order)
 
-    def _populate_texture_info(self, info_lines: list[str], mdl_data: bytes | bytearray | None = None):
-        """Populate texture info from renderer's stored lookups (no additional lookups).
-
-        Shows all expected textures from the MDL file, including:
-        - Found textures (with filepath and source)
-        - Not found textures (with search order)
-        - Pending textures (not yet looked up)
+    def _on_textures_loaded(self):
+        """Called when renderer signals that textures have finished loading.
+        
+        Reads the EXACT lookup info from scene.texture_lookup_info - this is the
+        SAME info that the renderer used when loading textures. No additional lookups.
         """
         scene = self.ui.previewRenderer._scene
         if scene is None:
             return
-
+        
+        # Get the EXACT lookup info stored by the renderer when it loaded textures
         texture_lookup_info = getattr(scene, "texture_lookup_info", {})
-        pending_textures = getattr(scene, "_pending_texture_futures", {})
         
-        # Get texture names that were requested during rendering (tracked by scene.texture() calls)
-        # This is the EXACT list of textures the renderer actually requested - no additional traversal
-        requested_texture_names: set[str] = getattr(scene, "requested_texture_names", set())
-        RobustLogger().debug(f"_populate_texture_info: Found {len(requested_texture_names)} texture names requested during rendering: {sorted(requested_texture_names)}")
+        if not texture_lookup_info:
+            RobustLogger().debug("_on_textures_loaded: No texture_lookup_info available yet")
+            return
         
-        # If no textures have been requested yet (model hasn't rendered), get them from the already-loaded model structure
-        # This uses the ALREADY-PARSED model data - no additional traversal, just reading what was already parsed
-        if not requested_texture_names:
-            model = scene.models.get("model")
-            if model is not None:
-                RobustLogger().debug("Model hasn't rendered yet, getting texture names from already-loaded model structure")
-                # Get texture names from already-parsed mesh data (no additional parsing)
-                nodes = [model.root]
-                while nodes:
-                    node = nodes.pop()
-                    nodes.extend(node.children)
-                    if node.mesh is not None:
-                        if node.mesh.texture and node.mesh.texture != "NULL":
-                            requested_texture_names.add(node.mesh.texture)
-                        if node.mesh.lightmap and node.mesh.lightmap != "NULL":
-                            requested_texture_names.add(node.mesh.lightmap)
-                RobustLogger().debug(f"Found {len(requested_texture_names)} texture names from already-loaded model: {sorted(requested_texture_names)}")
-
-        # If we have requested texture names (from actual rendering), show all of them
-        # Otherwise, fall back to showing only what's in lookup_info
-        if requested_texture_names:
-            info_lines.append("")
-            info_lines.append("Textures (from renderer):")
-
-            # Show all textures that were requested during rendering
-            RobustLogger().debug(f"Displaying {len(requested_texture_names)} textures requested during rendering")
-            for tex_name in sorted(requested_texture_names):
-                # Check if texture is actually loaded in scene (might be cached but no lookup info)
-                texture_loaded = scene.textures.get(tex_name) is not None if scene else False
-                texture_is_missing = scene.textures.get(tex_name) == getattr(scene, "_missing_texture", None) if scene else False
+        RobustLogger().debug(f"_on_textures_loaded: Found {len(texture_lookup_info)} textures with lookup info")
+        
+        # Get current model info text and update the texture section
+        current_text = self.ui.modelInfoLabel.text()
+        
+        # Find and replace the "Textures: Loading..." line
+        lines = current_text.split("\n")
+        new_lines: list[str] = []
+        skip_old_texture_section = False
+        
+        for line in lines:
+            if "Textures:" in line:
+                skip_old_texture_section = True
+                # Add new texture section
+                new_lines.append("")
+                new_lines.append(f"Textures ({len(texture_lookup_info)} loaded by renderer):")
                 
-                # Check if texture has been looked up
-                if tex_name in texture_lookup_info:
-                    tex_info = texture_lookup_info[tex_name]
-                    if tex_info.get("found"):
-                        filepath = tex_info.get("filepath")
-                        restype = tex_info.get("restype")
-                        ext = ".tpc" if restype == ResourceType.TPC else ".tga" if restype == ResourceType.TGA else ""
+                for tex_name, lookup_info in sorted(texture_lookup_info.items()):
+                    if lookup_info.get("found"):
+                        filepath = lookup_info.get("filepath")
                         if filepath:
                             try:
-                                rel_path = os.path.relpath(filepath, self._installation.path()) if self._installation else filepath
-                                info_lines.append(f"  {tex_name}{ext}: {rel_path}")
+                                if self._installation:
+                                    rel_path = os.path.relpath(filepath, self._installation.path())
+                                else:
+                                    rel_path = str(filepath)
+                                new_lines.append(f"  {tex_name}: {rel_path}")
                             except (ValueError, AttributeError):
-                                info_lines.append(f"  {tex_name}{ext}: {filepath}")
+                                new_lines.append(f"  {tex_name}: {filepath}")
+                            
                             source = self._get_source_location_type(filepath)
                             if source:
-                                info_lines.append(f"    └─ Source: {source}")
+                                new_lines.append(f"    └─ Source: {source}")
                         else:
-                            info_lines.append(f"  {tex_name}{ext}: ✓ Loaded (Source unknown/cached)")
+                            new_lines.append(f"  {tex_name}: ✓ Loaded")
                     else:
-                        search_order = tex_info.get("search_order")
-                        search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
-                        info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
-                elif texture_loaded and not texture_is_missing:
-                    # Texture is loaded but lookup info missing - this is a BUG
-                    # Lookup info should have been stored when texture was loaded through one of our paths
-                    # We CANNOT do another lookup (user requirement - no duplicate lookups)
-                    # Just show that it's loaded but we don't have lookup info (this shouldn't happen)
-                    RobustLogger().warning(f"Texture '{tex_name}' is loaded in scene.textures but has no lookup info! This is a bug - lookup info should have been stored when texture was loaded. Available keys: {list(texture_lookup_info.keys())[:10]}")
-                    info_lines.append(f"  {tex_name}: ✓ Loaded (lookup info missing - bug)")
-                elif tex_name in pending_textures:
-                    # Texture is pending/loading
-                    info_lines.append(f"  {tex_name}: ⏳ Loading...")
-                else:
-                    # Texture hasn't been requested yet (shouldn't happen, but show it)
-                    info_lines.append(f"  {tex_name}: ⏳ Pending lookup...")
-        elif texture_lookup_info:
-            # Fallback: show only textures that have been looked up
-            info_lines.append("")
-            info_lines.append("Textures (from renderer):")
-            lookup_info: dict[str, Any]
-            for tex_name, lookup_info in sorted(texture_lookup_info.items()):
-                if lookup_info.get("found"):
-                    filepath = lookup_info.get("filepath")
-                    restype = lookup_info.get("restype")
-                    ext = ".tpc" if restype == ResourceType.TPC else ".tga" if restype == ResourceType.TGA else ""
-                    try:
-                        rel_path = os.path.relpath(filepath, self._installation.path()) if self._installation and filepath else filepath
-                        info_lines.append(f"  {tex_name}{ext}: {rel_path}")
-                    except (ValueError, AttributeError):
-                        info_lines.append(f"  {tex_name}{ext}: {filepath}")
-                    source = self._get_source_location_type(filepath) if filepath else None
-                    if source:
-                        info_lines.append(f"    └─ Source: {source}")
-                else:
-                    search_order = lookup_info.get("search_order")
-                    search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
-                    info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
+                        search_order = lookup_info.get("search_order", [])
+                        search_str = self._format_search_order(search_order) if search_order else "Unknown"
+                        new_lines.append(f"  {tex_name}: ❌ Not found")
+                        new_lines.append(f"    └─ Searched: {search_str}")
+            elif skip_old_texture_section and line.startswith("  "):
+                # Skip old texture lines (indented)
+                continue
+            elif skip_old_texture_section and not line.startswith("  ") and line.strip():
+                # End of old texture section
+                skip_old_texture_section = False
+                new_lines.append(line)
+            elif not skip_old_texture_section:
+                new_lines.append(line)
+        
+        self.ui.modelInfoLabel.setText("\n".join(new_lines))
 
     def _on_model_info_toggled(self, checked: bool):
         """Handle model info groupbox toggle."""

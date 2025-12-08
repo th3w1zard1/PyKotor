@@ -202,8 +202,8 @@ class SceneBase:
             model_location_resolver=_resolve_model_location,
         )
         self.async_loader.start()
-        self._pending_texture_futures: dict[str, Any] = {}  # name -> Future
-        self._pending_model_futures: dict[str, Any] = {}  # name -> Future
+        self._pending_texture_futures: dict[str, Future[Any]] = {}  # name -> Future
+        self._pending_model_futures: dict[str, Future[Any]] = {}  # name -> Future
 
         self.hide_creatures: bool = False
         self.hide_placeables: bool = False

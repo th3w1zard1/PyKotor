@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
     from pykotor.extract.file import ResourceResult
+    from pykotor.extract.installation import SearchLocation
     from pykotor.resource.formats.twoda.twoda_data import TwoDA
 
 
@@ -36,7 +37,7 @@ class UTPEditor(Editor):
     def __init__(
         self,
         parent: QWidget | None,
-        installation: HTInstallation = None,
+        installation: HTInstallation | None = None,
     ):
         """Initialize Placeable Editor.
 
@@ -101,6 +102,8 @@ class UTPEditor(Editor):
         self.ui.appearanceSelect.currentIndexChanged.connect(self.update3dPreview)
         self.ui.actionShowPreview.triggered.connect(self.toggle_preview)
         self.ui.modelInfoGroupBox.toggled.connect(self._on_model_info_toggled)
+        # Connect to renderer's signal to update texture info when textures finish loading
+        self.ui.previewRenderer.resourcesLoaded.connect(self._on_textures_loaded)
 
     def _setup_installation(
         self,
@@ -450,11 +453,14 @@ class UTPEditor(Editor):
             - Get the MDL and MDX resources from the installation based on the model name
             - If both resources exist, set them on the preview renderer
             - If not, clear out any existing model from the preview.
+            - Hides BOTH the preview renderer AND the model info groupbox when preview is hidden.
         """
-        self.ui.previewRenderer.setVisible(self.globalSettings.showPreviewUTP)
-        self.ui.actionShowPreview.setChecked(self.globalSettings.showPreviewUTP)
+        show_preview = self.globalSettings.showPreviewUTP
+        self.ui.previewRenderer.setVisible(show_preview)
+        self.ui.modelInfoGroupBox.setVisible(show_preview)
+        self.ui.actionShowPreview.setChecked(show_preview)
 
-        if self.globalSettings.showPreviewUTP:
+        if show_preview:
             self._update_model()
         else:
             self.setMinimumSize(374, 457)
@@ -545,10 +551,9 @@ class UTPEditor(Editor):
             if mdx_source:
                 info_lines.append(f"  └─ Source: {mdx_source}")
             
-            # Note about textures
+            # Show placeholder for textures - actual info will be populated when textures finish loading
             info_lines.append("")
-            info_lines.append("Note: Textures are referenced within the MDL file.")
-            info_lines.append("Use the texture browser to locate specific .tga/.tpc files.")
+            info_lines.append("Textures: Loading...")
         else:
             self.ui.previewRenderer.clear_model()
             info_lines.append("❌ Resources not found in installation:")
@@ -580,6 +585,90 @@ class UTPEditor(Editor):
         if not checked:
             # When collapsed, ensure summary is visible
             self.ui.modelInfoSummaryLabel.setVisible(True)
+
+    def _format_search_order(self, search_order: list[SearchLocation]) -> str:
+        """Format search order list into human-readable string."""
+        from pykotor.extract.installation import SearchLocation
+        location_names = {
+            SearchLocation.OVERRIDE: "Override",
+            SearchLocation.CUSTOM_MODULES: "Custom Modules",
+            SearchLocation.MODULES: "Modules",
+            SearchLocation.CHITIN: "Chitin BIFs",
+            SearchLocation.TEXTURES_TPA: "Texture Pack A",
+            SearchLocation.TEXTURES_TPB: "Texture Pack B",
+            SearchLocation.TEXTURES_TPC: "Texture Pack C",
+            SearchLocation.TEXTURES_GUI: "GUI Textures",
+        }
+        return " → ".join(location_names.get(loc, str(loc)) for loc in search_order)
+
+    def _on_textures_loaded(self):
+        """Called when renderer signals that textures have finished loading.
+        
+        Reads the EXACT lookup info from scene.texture_lookup_info - this is the
+        SAME info that the renderer used when loading textures. No additional lookups.
+        """
+        scene = self.ui.previewRenderer._scene
+        if scene is None:
+            return
+        
+        # Get the EXACT lookup info stored by the renderer when it loaded textures
+        texture_lookup_info = getattr(scene, "texture_lookup_info", {})
+        
+        if not texture_lookup_info:
+            RobustLogger().debug("_on_textures_loaded: No texture_lookup_info available yet")
+            return
+        
+        RobustLogger().debug(f"_on_textures_loaded: Found {len(texture_lookup_info)} textures with lookup info")
+        
+        # Get current model info text and update the texture section
+        current_text = self.ui.modelInfoLabel.text()
+        
+        # Find and replace the "Textures: Loading..." line
+        lines = current_text.split("\n")
+        new_lines: list[str] = []
+        skip_old_texture_section = False
+        
+        for line in lines:
+            if "Textures:" in line:
+                skip_old_texture_section = True
+                # Add new texture section
+                new_lines.append("")
+                new_lines.append(f"Textures ({len(texture_lookup_info)} loaded by renderer):")
+                
+                for tex_name, lookup_info in sorted(texture_lookup_info.items()):
+                    if lookup_info.get("found"):
+                        filepath = lookup_info.get("filepath")
+                        if filepath:
+                            try:
+                                if self._installation:
+                                    rel_path = os.path.relpath(filepath, self._installation.path())
+                                else:
+                                    rel_path = str(filepath)
+                                new_lines.append(f"  {tex_name}: {rel_path}")
+                            except (ValueError, AttributeError):
+                                new_lines.append(f"  {tex_name}: {filepath}")
+                            
+                            source = self._get_source_location_type(filepath)
+                            if source:
+                                new_lines.append(f"    └─ Source: {source}")
+                        else:
+                            new_lines.append(f"  {tex_name}: ✓ Loaded")
+                    else:
+                        search_order = lookup_info.get("search_order", [])
+                        search_str = self._format_search_order(search_order) if search_order else "Unknown"
+                        new_lines.append(f"  {tex_name}: ❌ Not found")
+                        new_lines.append(f"    └─ Searched: {search_str}")
+            elif skip_old_texture_section and line.startswith("  "):
+                # Skip old texture lines (indented)
+                continue
+            elif skip_old_texture_section and not line.startswith("  ") and line.strip():
+                # End of old texture section
+                skip_old_texture_section = False
+                new_lines.append(line)
+            elif not skip_old_texture_section:
+                new_lines.append(line)
+        
+        self.ui.modelInfoLabel.setText("\n".join(new_lines))
     
     def _get_source_location_type(self, filepath: os.PathLike | str) -> str | None:
         """Determines the source location type for a given filepath.

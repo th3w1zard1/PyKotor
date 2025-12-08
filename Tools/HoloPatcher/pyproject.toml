@@ -11,7 +11,8 @@ dependencies = [
     "pykotor>=2.0.0",
     "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
     "requests>=2.25.0; python_version>=\"3.9\"",
-    "charset-normalizer>=2.0,<3.4",
+    "charset-normalizer>=2.0,<3.4",  # auto-detect encoding of INI/RTF files
+    "pycryptodome",  # for autoupdate feature.
 ]
 authors = [{ name = "NickHugi" }]
 maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
@@ -90,8 +91,6 @@ charset-normalizer = ">=2.0,<3.4"
 
 [tool.poetry.extras]
 updates = ["requests", "pycryptodome"]
-rtf = ["pypandoc", "PyWebView"]
-gui = ["PyQt5"]
 
 [tool.poetry.scripts]
 holopatcher = "holopatcher.__main__:main"

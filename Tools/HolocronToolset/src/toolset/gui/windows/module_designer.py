@@ -1469,9 +1469,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         *,
         refresh_lists: bool = False,
     ):
-        scene = self.ui.mainRenderer.scene
-        if scene is not None:
-            scene.invalidate_cache()
+        self.ui.mainRenderer.scene.invalidate_cache()
         self.ui.mainRenderer.update()
         self.ui.flatRenderer.update()
 
@@ -1751,12 +1749,11 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             instance: {The instance to add}
             walkmesh_snap (optional): {Whether to snap the instance to the walkmesh}.
         """
-        scene = self.ui.mainRenderer.scene
-        if walkmesh_snap and scene is not None:
+        if walkmesh_snap:
             instance.position.z = self.ui.mainRenderer.walkmesh_point(
                 instance.position.x,
                 instance.position.y,
-                scene.camera.z,
+                self.ui.mainRenderer.scene.camera.z,
             ).z
 
         if not isinstance(instance, GITCamera):
@@ -1799,8 +1796,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             git_resource = git_module.resource()
             assert git_resource is not None
             git_resource.add(instance)
-        if scene is not None:
-            scene.invalidate_cache()
+        self.ui.mainRenderer.scene.invalidate_cache()
         
         # Sync to Blender if not already syncing from Blender
         if self.is_blender_mode() and self._blender_controller is not None and not self._instance_sync_in_progress:
@@ -2049,10 +2045,8 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
                 if self.is_blender_mode() and self._blender_controller is not None:
                     self._blender_controller.remove_instance(instance)
         self.selected_instances.clear()
-        scene = self.ui.mainRenderer.scene
-        if scene is not None:
-            scene.selection.clear()
-            scene.invalidate_cache()
+        self.ui.mainRenderer.scene.selection.clear()
+        self.ui.mainRenderer.scene.invalidate_cache()
         self.ui.flatRenderer.instance_selection.clear()
         self.rebuild_instance_list()
 

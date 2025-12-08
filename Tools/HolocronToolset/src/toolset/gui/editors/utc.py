@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Sequence
 from loggerplus import RobustLogger
 from qtpy.QtCore import QSettings, Qt
 from qtpy.QtGui import QImage, QPixmap, QTransform
-from qtpy.QtWidgets import QApplication, QComboBox, QListWidgetItem, QMenu, QMessageBox
+from qtpy.QtWidgets import QApplication, QListWidgetItem, QMenu, QMessageBox
 
 from pykotor.common.language import Gender, Language
 from pykotor.common.misc import Game, ResRef
@@ -26,7 +26,6 @@ from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.inventory import InventoryEditor
 from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow, ResourceItems
 from toolset.gui.editor import Editor
-from toolset.gui.widgets.edit.combobox_2da import _ROW_INDEX_DATA_ROLE
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.utils.window import add_window, open_resource_editor
 
@@ -214,6 +213,8 @@ class UTCEditor(Editor):
         self.ui.actionAlwaysSaveK2Fields.triggered.connect(lambda: setattr(self.settings, "alwaysSaveK2Fields", self.ui.actionAlwaysSaveK2Fields.isChecked()))
         self.ui.actionShowPreview.triggered.connect(self.toggle_preview)
         self.ui.modelInfoGroupBox.toggled.connect(self._on_model_info_toggled)
+        # Connect to renderer's signal to update texture info when textures finish loading
+        self.ui.previewRenderer.resourcesLoaded.connect(self._on_textures_loaded)
 
     def _setup_installation(  # noqa: C901, PLR0912, PLR0915
         self,
@@ -891,10 +892,16 @@ class UTCEditor(Editor):
         self.ui.powerSummaryEdit.setPlainText(summary)
 
     def update3dPreview(self):
-        self.ui.actionShowPreview.setChecked(self.global_settings.showPreviewUTC)
+        """Updates the 3D preview and model info.
+        
+        Hides BOTH the preview renderer AND the model info groupbox when preview is hidden.
+        """
+        show_preview = self.global_settings.showPreviewUTC
+        self.ui.actionShowPreview.setChecked(show_preview)
+        self.ui.previewRenderer.setVisible(show_preview)
+        self.ui.modelInfoGroupBox.setVisible(show_preview)
 
-        if self.global_settings.showPreviewUTC:
-            self.ui.previewRenderer.setVisible(True)
+        if show_preview:
             self.resize(max(798, self.sizeHint().width()), max(553, self.sizeHint().height()))
 
             if self._installation is not None:
@@ -903,7 +910,6 @@ class UTCEditor(Editor):
                 self.ui.previewRenderer.set_creature(utc)
                 self._update_model_info(utc)
         else:
-            self.ui.previewRenderer.setVisible(False)
             self.resize(max(798 - 350, self.sizeHint().width()), max(553, self.sizeHint().height()))
     
     def _update_model_info(self, utc: UTC):
@@ -1006,6 +1012,11 @@ class UTCEditor(Editor):
             
             if not info_lines:
                 info_lines.append("No model information available")
+            
+            # Add placeholder for textures - actual renderer textures will be populated when they finish loading
+            info_lines.append("")
+            info_lines.append("Renderer Textures: Loading...")
+            
         except Exception as e:  # noqa: BLE001
             info_lines.append(f"Error gathering model info: {e}")
         
@@ -1026,6 +1037,91 @@ class UTCEditor(Editor):
         if not checked:
             # When collapsed, ensure summary is visible
             self.ui.modelInfoSummaryLabel.setVisible(True)
+
+    def _format_search_order(self, search_order: list[SearchLocation]) -> str:
+        """Format search order list into human-readable string."""
+        location_names = {
+            SearchLocation.OVERRIDE: "Override",
+            SearchLocation.CUSTOM_MODULES: "Custom Modules",
+            SearchLocation.MODULES: "Modules",
+            SearchLocation.CHITIN: "Chitin BIFs",
+            SearchLocation.TEXTURES_TPA: "Texture Pack A",
+            SearchLocation.TEXTURES_TPB: "Texture Pack B",
+            SearchLocation.TEXTURES_TPC: "Texture Pack C",
+            SearchLocation.TEXTURES_GUI: "GUI Textures",
+        }
+        return " → ".join(location_names.get(loc, str(loc)) for loc in search_order)
+
+    def _on_textures_loaded(self):
+        """Called when renderer signals that textures have finished loading.
+        
+        Reads the EXACT lookup info from scene.texture_lookup_info - this is the
+        SAME info that the renderer used when loading textures. No additional lookups.
+        """
+        import os
+        
+        scene = self.ui.previewRenderer._scene
+        if scene is None:
+            return
+        
+        # Get the EXACT lookup info stored by the renderer when it loaded textures
+        texture_lookup_info = getattr(scene, "texture_lookup_info", {})
+        
+        if not texture_lookup_info:
+            RobustLogger().debug("_on_textures_loaded: No texture_lookup_info available yet")
+            return
+        
+        RobustLogger().debug(f"_on_textures_loaded: Found {len(texture_lookup_info)} textures with lookup info")
+        
+        # Get current model info text and update the texture section
+        current_text = self.ui.modelInfoLabel.text()
+        
+        # Find and replace the "Renderer Textures: Loading..." line
+        lines = current_text.split("\n")
+        new_lines: list[str] = []
+        skip_old_texture_section = False
+        
+        for line in lines:
+            if "Renderer Textures:" in line:
+                skip_old_texture_section = True
+                # Add new texture section
+                new_lines.append("")
+                new_lines.append(f"Renderer Textures ({len(texture_lookup_info)} loaded):")
+                
+                for tex_name, lookup_info in sorted(texture_lookup_info.items()):
+                    if lookup_info.get("found"):
+                        filepath = lookup_info.get("filepath")
+                        if filepath:
+                            try:
+                                if self._installation:
+                                    rel_path = os.path.relpath(filepath, self._installation.path())
+                                else:
+                                    rel_path = str(filepath)
+                                new_lines.append(f"  {tex_name}: {rel_path}")
+                            except (ValueError, AttributeError):
+                                new_lines.append(f"  {tex_name}: {filepath}")
+                            
+                            source = self._get_source_location_type(filepath)
+                            if source:
+                                new_lines.append(f"    └─ Source: {source}")
+                        else:
+                            new_lines.append(f"  {tex_name}: ✓ Loaded")
+                    else:
+                        search_order = lookup_info.get("search_order", [])
+                        search_str = self._format_search_order(search_order) if search_order else "Unknown"
+                        new_lines.append(f"  {tex_name}: ❌ Not found")
+                        new_lines.append(f"    └─ Searched: {search_str}")
+            elif skip_old_texture_section and line.startswith("  "):
+                # Skip old texture lines (indented)
+                continue
+            elif skip_old_texture_section and not line.startswith("  ") and line.strip():
+                # End of old texture section
+                skip_old_texture_section = False
+                new_lines.append(line)
+            elif not skip_old_texture_section:
+                new_lines.append(line)
+        
+        self.ui.modelInfoLabel.setText("\n".join(new_lines))
     
     def _get_source_location_type(self, filepath: os.PathLike | str) -> str | None:
         """Determines the source location type for a given filepath.

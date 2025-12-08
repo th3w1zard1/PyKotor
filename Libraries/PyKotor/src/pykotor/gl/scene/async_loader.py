@@ -7,7 +7,7 @@ import traceback
 from concurrent.futures import Future, ProcessPoolExecutor
 from typing import TYPE_CHECKING, Any, Callable, NamedTuple, Protocol
 
-from loggerplus import RobustLogger
+from loggerplus import RobustLogger  # type: ignore[import-untyped, note]
 
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.formats.tpc.tpc_auto import read_tpc
@@ -498,7 +498,7 @@ class AsyncResourceLoader:
                 # Note: The resolver already stored lookup_info in scene.texture_lookup_info[name]
                 # We create a matching context here - poll_async_resources will use the stored lookup_info
                 # if context is incomplete
-                not_found_context = {
+                not_found_context: dict[str, Any] = {
                     "filepath": None,
                     "found": False,
                     "restype": None,  # Will be TPC, but we don't have access to scene here

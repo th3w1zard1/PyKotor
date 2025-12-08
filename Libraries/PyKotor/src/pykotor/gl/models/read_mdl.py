@@ -11,7 +11,7 @@ from pykotor.gl.models.mdl import Mesh, Model, Node
 if TYPE_CHECKING:
     from glm import mat4x4
 
-    from pykotor.gl.scene import Scene, SceneBase
+    from pykotor.gl.scene import SceneBase
     from utility.common.stream import SOURCE_TYPES
 
 

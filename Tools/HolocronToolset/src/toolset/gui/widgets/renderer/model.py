@@ -44,7 +44,7 @@ class ModelRenderer(QOpenGLWidget):
         self._last_requested_texture_count: int = 0
 
         self._scene: Scene | None = None
-        self.installation: Installation | None = None
+        self._installation: Installation | None = None  # Use private attribute with property
         self._model_to_load: tuple[bytes, bytes] | None = None
         self._creature_to_load: UTC | None = None
         self._pending_camera_reset: bool = False
@@ -70,14 +70,24 @@ class ModelRenderer(QOpenGLWidget):
             raise ValueError("Scene must be constructed before this operation.")
         return self._scene
 
-    def set_installation(self, installation: Installation):
-        self.installation = installation
+    @property
+    def installation(self) -> Installation | None:
+        return self._installation
+    
+    @installation.setter
+    def installation(self, value: Installation | None):
+        self._installation = value
+        # If scene already exists, update its installation too
+        # This is critical because initializeGL() may have created the scene before installation was set
+        if self._scene is not None and value is not None and self._scene.installation is None:
+            self._scene.installation = value
+            RobustLogger().debug("ModelRenderer.installation setter: Updated existing scene with installation")
 
     def initializeGL(self):
         # Ensure OpenGL context is current
         self.makeCurrent()
 
-        self._scene = Scene(installation=self.installation)
+        self._scene = Scene(installation=self._installation)
         self.scene.camera.fov = self._controls.fieldOfView
         self.scene.camera.distance = 0  # Set distance to 0
 
@@ -119,30 +129,39 @@ class ModelRenderer(QOpenGLWidget):
         # THIS IS WHERE scene.texture() GETS CALLED DURING MESH RENDERING
         self.scene.render()
 
-        # Check if new textures/models were loaded this frame and emit signal
+        # Check if textures/models FINISHED LOADING this frame (not just requested)
+        # Only emit signal when textures are ACTUALLY LOADED - not when they're first requested
         texture_lookup_info = getattr(self.scene, "texture_lookup_info", {})
         requested_texture_names = getattr(self.scene, "requested_texture_names", set())
         current_texture_count = len(texture_lookup_info)
-        # Also check if any pending textures finished loading (count might not change if lookup was already stored)
         pending_textures = getattr(self.scene, "_pending_texture_futures", {})
         previous_pending_count = getattr(self, "_last_pending_texture_count", len(pending_textures))
         current_pending_count = len(pending_textures)
-
-        # Emit signal if: lookup info count increased OR pending textures decreased (textures finished loading) OR requested textures changed
         current_requested_count = len(requested_texture_names)
 
-        if current_texture_count > self._last_texture_count or current_pending_count < previous_pending_count or current_requested_count > self._last_requested_texture_count:
+        # ONLY emit signal when textures FINISH loading:
+        # 1. texture_lookup_info count increased (new textures have lookup info stored)
+        # 2. OR pending count decreased (async loads completed)
+        # DO NOT emit just because requested count increased - that means textures are still loading!
+        textures_finished_loading = (
+            current_texture_count > self._last_texture_count or 
+            (current_pending_count < previous_pending_count and previous_pending_count > 0)
+        )
+        
+        if textures_finished_loading:
             self._last_texture_count = current_texture_count
             self._last_pending_texture_count = current_pending_count
             self._last_requested_texture_count = current_requested_count
             RobustLogger().debug(
-                f"Texture resources updated: lookup_info={current_texture_count}, pending={current_pending_count}, requested={current_requested_count} (names: {sorted(requested_texture_names)})"
+                f"Textures FINISHED loading: lookup_info={current_texture_count}, pending={current_pending_count}, requested={current_requested_count} (names: {sorted(requested_texture_names)})"
             )
             self.resourcesLoaded.emit()
-        elif current_pending_count != previous_pending_count:
-            self._last_pending_texture_count = current_pending_count
-        elif current_requested_count != self._last_requested_texture_count:
-            self._last_requested_texture_count = current_requested_count
+        else:
+            # Track changes without emitting signal
+            if current_pending_count != previous_pending_count:
+                self._last_pending_texture_count = current_pending_count
+            if current_requested_count != self._last_requested_texture_count:
+                self._last_requested_texture_count = current_requested_count
 
         # After rendering, check if we need to reset camera and if model is ready
         pending_reset = getattr(self, "_pending_camera_reset", False)
