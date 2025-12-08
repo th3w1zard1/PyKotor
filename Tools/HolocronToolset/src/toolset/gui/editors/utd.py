@@ -563,93 +563,145 @@ class UTDEditor(Editor):
         return " → ".join(location_names.get(loc, str(loc)) for loc in search_order)
     
     def _extract_texture_names_from_mdl(self, mdl_data: bytes | bytearray) -> set[str]:
-        """Extract all texture and lightmap names from MDL data without doing lookups."""
-        from pykotor.common.stream import BinaryReader
+        """Extract all texture and lightmap names from MDL file data.
         
-        texture_names: set[str] = set()
+        This traverses the MDL structure to find all texture references without
+        loading the full model. Returns a set of unique texture names.
+        """
+        if not mdl_data:
+            return set()
+        
         try:
+            from pykotor.common.stream import BinaryReader
+            textures: set[str] = set()
             mdl_reader = BinaryReader.from_auto(mdl_data)
+            
+            # Read root node offset
             mdl_reader.seek(40)
             root_offset = mdl_reader.read_uint32()
             
-            # Recursively extract texture names from all nodes
-            def extract_from_node(offset: int) -> None:
+            # Recursive function to traverse nodes
+            def extract_from_node(offset: int):
                 if offset == 0:
                     return
-                mdl_reader.seek(offset)
-                node_type = mdl_reader.read_uint32()
-                mdl_reader.read_uint32()  # name_index
-                mdl_reader.read_uint32()  # parent_index
-                offset_to_children = mdl_reader.read_uint32()
-                mdl_reader.read_uint32()  # offset_to_controller (unused)
                 
-                # Check if this node has a mesh (bit 5 = 0b100000)
+                mdl_reader.seek(offset)
+                node_type = mdl_reader.read_uint16()
+                mdl_reader.read_uint16()  # supernode id
+                mdl_reader.read_uint16()  # name_id
+                
+                # Check if this node has a mesh (bit 5 of node_type)
                 if node_type & 0b100000:
                     mdl_reader.seek(offset + 80 + 88)
-                    texture = mdl_reader.read_terminated_string("\0", 32).strip("\0")
-                    lightmap = mdl_reader.read_terminated_string("\0", 32).strip("\0")
+                    texture = mdl_reader.read_terminated_string("\0", 32)
+                    lightmap = mdl_reader.read_terminated_string("\0", 32)
+                    
+                    # Add non-NULL textures and lightmaps
                     if texture and texture != "NULL":
-                        texture_names.add(texture)
+                        textures.add(texture)
                     if lightmap and lightmap != "NULL":
-                        texture_names.add(lightmap)
+                        textures.add(lightmap)
                 
-                # Recursively process children
-                if offset_to_children != 0:
-                    mdl_reader.seek(offset_to_children)
-                    child_count = mdl_reader.read_uint32()
+                # Process children
+                mdl_reader.seek(offset + 16)
+                mdl_reader.read_single()  # position x
+                mdl_reader.read_single()  # position y
+                mdl_reader.read_single()  # position z
+                mdl_reader.read_single()  # rotation w
+                mdl_reader.read_single()  # rotation x
+                mdl_reader.read_single()  # rotation y
+                mdl_reader.read_single()  # rotation z
+                child_offsets = mdl_reader.read_uint32()
+                child_count = mdl_reader.read_uint32()
+                
+                # Read child offsets and recurse
+                if child_offsets != 0 and child_count > 0:
+                    mdl_reader.seek(child_offsets)
                     for _ in range(child_count):
                         child_offset = mdl_reader.read_uint32()
                         extract_from_node(child_offset)
             
+            # Start extraction from root
             extract_from_node(root_offset)
+            return textures
         except Exception:  # noqa: BLE001
-            pass  # If parsing fails, return empty set
-        
-        return texture_names
+            # If parsing fails, return empty set
+            return set()
     
     def _populate_texture_info(self, info_lines: list[str], mdl_data: bytes | bytearray | None = None):
-        """Populate texture info from renderer's stored lookups (no additional lookups)."""
+        """Populate texture info from renderer's stored lookups (no additional lookups).
+        
+        Shows all expected textures from the MDL file, including:
+        - Found textures (with filepath and source)
+        - Not found textures (with search order)
+        - Pending textures (not yet looked up)
+        """
         scene = self.ui.previewRenderer._scene
         if scene is None:
             return
         
         texture_lookup_info = getattr(scene, "texture_lookup_info", {})
+        pending_textures = getattr(scene, "_pending_texture_futures", {})
         
-        # Extract texture names from MDL if lookup info is empty (textures not loaded yet)
+        # Extract expected texture names from MDL file
         expected_textures: set[str] = set()
-        if not texture_lookup_info and mdl_data is not None:
+        if mdl_data:
             expected_textures = self._extract_texture_names_from_mdl(mdl_data)
         
-        if not texture_lookup_info and not expected_textures:
-            return
-        
-        info_lines.append("")
-        info_lines.append("Textures (from renderer):")
-        
-        # Show textures that have been looked up
-        for tex_name, tex_info in sorted(texture_lookup_info.items()):
-            if tex_info.get("found"):
-                filepath = tex_info.get("filepath")
-                restype = tex_info.get("restype")
-                ext = ".tpc" if restype == ResourceType.TPC else ".tga" if restype == ResourceType.TGA else ""
-                try:
-                    rel_path = os.path.relpath(filepath, self._installation.path()) if self._installation and filepath else filepath
-                    info_lines.append(f"  {tex_name}{ext}: {rel_path}")
-                except (ValueError, AttributeError):
-                    info_lines.append(f"  {tex_name}{ext}: {filepath}")
-                source = self._get_source_location_type(filepath) if filepath else None
-                if source:
-                    info_lines.append(f"    └─ Source: {source}")
-            else:
-                search_order = tex_info.get("search_order")
-                search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
-                info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
-        
-        # Show textures that haven't been looked up yet (pending)
+        # If we have expected textures, show all of them
+        # Otherwise, fall back to showing only what's in lookup_info
         if expected_textures:
-            pending = expected_textures - set(texture_lookup_info.keys())
-            for tex_name in sorted(pending):
-                info_lines.append(f"  {tex_name}: ⏳ Pending (will load during rendering)")
+            info_lines.append("")
+            info_lines.append("Textures (from renderer):")
+            
+            # Show all expected textures
+            for tex_name in sorted(expected_textures):
+                # Check if texture has been looked up
+                if tex_name in texture_lookup_info:
+                    tex_info = texture_lookup_info[tex_name]
+                    if tex_info.get("found"):
+                        filepath = tex_info.get("filepath")
+                        restype = tex_info.get("restype")
+                        ext = ".tpc" if restype == ResourceType.TPC else ".tga" if restype == ResourceType.TGA else ""
+                        try:
+                            rel_path = os.path.relpath(filepath, self._installation.path()) if self._installation and filepath else filepath
+                            info_lines.append(f"  {tex_name}{ext}: {rel_path}")
+                        except (ValueError, AttributeError):
+                            info_lines.append(f"  {tex_name}{ext}: {filepath}")
+                        source = self._get_source_location_type(filepath) if filepath else None
+                        if source:
+                            info_lines.append(f"    └─ Source: {source}")
+                    else:
+                        search_order = tex_info.get("search_order")
+                        search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
+                        info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
+                elif tex_name in pending_textures:
+                    # Texture is pending/loading
+                    info_lines.append(f"  {tex_name}: ⏳ Loading...")
+                else:
+                    # Texture hasn't been requested yet (shouldn't happen, but show it)
+                    info_lines.append(f"  {tex_name}: ⏳ Pending lookup...")
+        elif texture_lookup_info:
+            # Fallback: show only textures that have been looked up
+            info_lines.append("")
+            info_lines.append("Textures (from renderer):")
+            for tex_name, tex_info in sorted(texture_lookup_info.items()):
+                if tex_info.get("found"):
+                    filepath = tex_info.get("filepath")
+                    restype = tex_info.get("restype")
+                    ext = ".tpc" if restype == ResourceType.TPC else ".tga" if restype == ResourceType.TGA else ""
+                    try:
+                        rel_path = os.path.relpath(filepath, self._installation.path()) if self._installation and filepath else filepath
+                        info_lines.append(f"  {tex_name}{ext}: {rel_path}")
+                    except (ValueError, AttributeError):
+                        info_lines.append(f"  {tex_name}{ext}: {filepath}")
+                    source = self._get_source_location_type(filepath) if filepath else None
+                    if source:
+                        info_lines.append(f"    └─ Source: {source}")
+                else:
+                    search_order = tex_info.get("search_order")
+                    search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
+                    info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
     
     def _on_model_info_toggled(self, checked: bool):
         """Handle model info groupbox toggle."""
