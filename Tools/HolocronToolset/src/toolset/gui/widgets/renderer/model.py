@@ -124,10 +124,9 @@ class ModelRenderer(QOpenGLWidget):
         current_pending_count = len(pending_textures)
         
         # Emit signal if: lookup info count increased OR pending textures decreased (textures finished loading) OR requested textures changed
-        previous_requested_count = getattr(self, "_last_requested_texture_count", 0)
         current_requested_count = len(requested_texture_names)
         
-        if current_texture_count > self._last_texture_count or current_pending_count < previous_pending_count or current_requested_count > previous_requested_count:
+        if current_texture_count > self._last_texture_count or current_pending_count < previous_pending_count or current_requested_count > self._last_requested_texture_count:
             self._last_texture_count = current_texture_count
             self._last_pending_texture_count = current_pending_count
             self._last_requested_texture_count = current_requested_count
@@ -135,7 +134,7 @@ class ModelRenderer(QOpenGLWidget):
             self.resourcesLoaded.emit()
         elif current_pending_count != previous_pending_count:
             self._last_pending_texture_count = current_pending_count
-        elif current_requested_count != previous_requested_count:
+        elif current_requested_count != self._last_requested_texture_count:
             self._last_requested_texture_count = current_requested_count
 
         # After rendering, check if we need to reset camera and if model is ready
