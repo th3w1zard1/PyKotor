@@ -177,8 +177,9 @@ def get_charset_from_unicode_encoding(
 def get_charset_from_doublebyte_encoding(
     encoding: str,
 ) -> list[str]:
-    # I believe these need to be mapped to the TXI with the 'dbmapping' field.
-    # Experimentation would be required for the syntax, perhaps could pull from other aurora games.
+    # NOTE: The KOTOR engine does not support double-byte character encoding.
+    # The 'isdoublebyte' and 'dbmapping' fields are not parsed by CAurFontInfo::ParseField.
+    # Multi-byte character support would require engine modifications or an overlay system.
     if encoding == "cp936":
         return get_cp936_charset()
     if encoding == "cp949":

@@ -177,9 +177,6 @@ class TXI:
                 elif command == TXICommand.CUBE:
                     self.features.cube = bool(int(args)) if args else True
                     self._empty = False
-                elif command == TXICommand.DBMAPPING:
-                    self.features.dbmapping = bool(int(args))
-                    self._empty = False
                 elif command == TXICommand.DECAL:
                     self.features.decal = bool(int(args))
                     self._empty = False
@@ -236,9 +233,6 @@ class TXI:
                     self._empty = False
                 elif command == TXICommand.ISSPECULARBUMPMAP:
                     self.features.isspecularbumpmap = bool(int(args))
-                    self._empty = False
-                elif command == TXICommand.ISDOUBLEBYTE:
-                    self.features.isdoublebyte = bool(int(args))
                     self._empty = False
                 elif command == TXICommand.ISLIGHTMAP:
                     self.features.islightmap = bool(int(args))
@@ -527,17 +521,6 @@ class TXIFeatures:
             Reference: KotOR.js/TXI.ts:115-117 (islightmap parsing, sets textureType to LIGHTMAP)
             Marks texture as pre-baked lighting data
             
-        isdoublebyte: Flag for double-byte character encoding support
-            Reference: PyKotor txi_data.py:382 (comment about DBCS)
-            Potentially for DBCS multi-byte encodings (Korean, Japanese, Chinese, Vietnamese)
-            Might not even be a bool - unimplemented in KotOR
-            Figuring this out could enable proper CJK language support
-            
-        dbmapping: Double-byte character mapping (unknown format)
-            Reference: PyKotor txi_data.py:353 (comment about DBCS)
-            Potentially for DBCS multi-byte encodings
-            Unknown format - unimplemented in KotOR
-            
         downsamplemin: Minimum downsample level
             Reference: KotOR.js/TXI.ts:28,127-129 (downSampleMin field and parsing)
             Probably unsupported or broken related to mipmap issues
@@ -571,13 +554,12 @@ class TXIFeatures:
             NOTE: Broken implementation in engine
             
         Other fields (arturoheight, arturowidth, channelscale, channeltranslate, codepage,
-        cols, controllerscript, dbmapping, defaultbpp, distort, distortangle,
+        cols, controllerscript, defaultbpp, distort, distortangle,
         distortionamplitude, downsamplefactor, filerange, isdiffusebumpmap,
         isspecularbumpmap, maxSizeHQ, maxSizeLQ, minSizeHQ, minSizeLQ, numcharspersheet,
         ondemand, priority, rows, speed, temporary, unique, waterheight, waterwidth,
         xbox_downsample): Additional TXI commands with varying support levels
             Some are NWN-specific, some are KotOR-specific, some are unimplemented
-            Reference: PyKotor txi_data.py:334-419 (all fields)
     """
 
     def __init__(self):  # noqa: PLR0915
@@ -722,7 +704,6 @@ class TXIFeatures:
         self.cols: int | None = None
         self.compresstexture: bool | None = None
         self.controllerscript: str | None = None
-        self.dbmapping: bool | None = None  # Potentially for DBCS multi-byte encodings
         self.defaultbpp: int | None = None
         self.defaultheight: int | None = None
         self.defaultwidth: int | None = None
@@ -736,7 +717,6 @@ class TXIFeatures:
         self.isbumpmap: bool | None = None
         self.isdiffusebumpmap: bool | None = None
         self.isspecularbumpmap: bool | None = None
-        self.isdoublebyte: bool | None = None  # Potentially for DBCS multi-byte encodings
         self.islightmap: bool | None = None
         self.maxSizeHQ: int | None = None
         self.maxSizeLQ: int | None = None
@@ -786,7 +766,6 @@ class TXICommand(Enum):
     COMPRESSTEXTURE = "compresstexture"
     CONTROLLERSCRIPT = "controllerscript"
     CUBE = "cube"
-    DBMAPPING = "dbmapping"
     DECAL = "decal"
     DEFAULTBPP = "defaultbpp"
     DEFAULTHEIGHT = "defaultheight"
@@ -805,7 +784,6 @@ class TXICommand(Enum):
     FPS = "fps"
     ISBUMPMAP = "isbumpmap"
     ISDIFFUSEBUMPMAP = "isdiffusebumpmap"
-    ISDOUBLEBYTE = "isdoublebyte"
     ISLIGHTMAP = "islightmap"
     ISSPECULARBUMPMAP = "isspecularbumpmap"
     LOWERRIGHTCOORDS = "lowerrightcoords"
@@ -1078,13 +1056,6 @@ class TXIFontInformation(TXIBaseInformation):
         # Tested. Float between 0 and 1. Was told this actually stretches text down somehow. But in k1 tests, changing this does not yield any noticeable ingame result.  # noqa: E501
         self.fontwidth: float = 1.000000
 
-        # This could easily be used for DBCS (double byte encodings).
-        # It may be unimplemented in KOTOR. Or hopefully, nobody's figured out how to use it.
-        # Figuring this out would likely be the solution for supporting languages like Korean, Japanese, Chinese, and Vietnamese.
-        # Otherwise a new engine, or implementing an overlay (like discord/steam/rivatuner's) into kotor to bypass kotor's bitmap fonts for displayed text.
-        self.isdoublebyte: bool = False  # (???) Potentially for dbcs multi-byte encodings? Might not even be a bool.
-        self.dbmapping: object = None  # (???) Potentially for dbcs multi-byte encodings?
-
         self.fontheight: float  # Tested. Float between 0 and 1.
         self.baselineheight: float  # Untested. Float between 0 and 1.
         self.texturewidth: float  # Tested. Float between 0 and 1. Actual displayed width of the texture, allows stretching/compressing along the X axis.
@@ -1095,9 +1066,7 @@ class TXIFontInformation(TXIBaseInformation):
     COMPARABLE_FIELDS = (
         *TXIBaseInformation.COMPARABLE_FIELDS,
         "caretindent",
-        "dbmapping",
         "fontwidth",
-        "isdoublebyte",
         "numchars",
         "spacingB",
         "spacingR",
@@ -1112,8 +1081,6 @@ class TXIFontInformation(TXIBaseInformation):
             self.spacingB,
             self.caretindent,
             self.fontwidth,
-            self.isdoublebyte,
-            id(self.dbmapping),  # Use id for object comparison
             getattr(self, "fontheight", None),
             getattr(self, "baselineheight", None),
             getattr(self, "texturewidth", None),
@@ -1152,7 +1119,6 @@ fontwidth {self.fontwidth:.6f}
 spacingR {self.spacingR:.6f}
 spacingB {self.spacingB:.6f}
 caretindent {self.caretindent:.6f}
-isdoublebyte {int(self.isdoublebyte)}
 upperleftcoords {self.ul_coords_count}
 {ul_coords_str}
 lowerrightcoords {self.lr_coords_count}

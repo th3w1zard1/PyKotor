@@ -173,9 +173,6 @@ class TXIBinaryReader(ResourceReader):
                 elif command == TXICommand.CUBE:
                     self._txi.features.cube = bool(int(args))
                     self._empty = False
-                elif command == TXICommand.DBMAPPING:
-                    self._txi.features.dbmapping = bool(int(args))
-                    self._empty = False
                 elif command == TXICommand.DECAL:
                     self._txi.features.decal = bool(int(args))
                     self._empty = False
@@ -226,9 +223,6 @@ class TXIBinaryReader(ResourceReader):
                     self._empty = False
                 elif command == TXICommand.ISBUMPMAP:
                     self._txi.features.isbumpmap = bool(int(args))
-                    self._empty = False
-                elif command == TXICommand.ISDOUBLEBYTE:
-                    self._txi.features.isdoublebyte = bool(int(args))
                     self._empty = False
                 elif command == TXICommand.ISLIGHTMAP:
                     self._txi.features.islightmap = bool(int(args))
