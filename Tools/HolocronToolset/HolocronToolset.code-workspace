@@ -20,14 +20,14 @@
 			"--max-line-length=275"
 		],
 		"cursorpyright.analysis.extraPaths": [
-			"${workspaceFolder}/../../Engines/PyKotorEngine/src",
 			"${workspaceFolder}/../../Libraries/PyKotor/src",
-			"${workspaceFolder}/../../Libraries/PyKotorFont/src",
 			"${workspaceFolder}/../../Libraries/PyKotorGL/src",
+			"${workspaceFolder}/../../Libraries/PyKotorFont/src",
+			"${workspaceFolder}/../../Engines/PyKotorEngine/src",
+			"${workspaceFolder}/src",
 			"${workspaceFolder}/../../Tools/BatchPatcher/src",
 			"${workspaceFolder}/../../Tools/GuiConverter/src",
 			"${workspaceFolder}/../../Tools/HolocronAI/src",
-			"${workspaceFolder}/src",
 			"${workspaceFolder}/../../Tools/HoloGenerator/src",
 			"${workspaceFolder}/../../Tools/HoloPatcher/src",
 			"${workspaceFolder}/../../Tools/HoloPazaak/src",

@@ -1,0 +1,19 @@
+{
+  "include": ["*.py"],
+  "exclude": [
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/venv/**",
+    "**/.venv/**"
+  ],
+  "extraPaths": [
+    "src"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "pythonVersion": "3.8"
+}
+
