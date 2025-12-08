@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '..\..\..\..\ui\editors\utd.ui'
+# Form implementation generated from reading ui file '..\ui\editors\utd.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.11
 #
@@ -44,22 +44,19 @@ class Ui_MainWindow(object):
         self.verticalLayout_modelInfo = QtWidgets.QVBoxLayout(self.modelInfoGroupBox)
         self.verticalLayout_modelInfo.setObjectName("verticalLayout_modelInfo")
         self.modelInfoSummaryLabel = QtWidgets.QLabel(self.modelInfoGroupBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.modelInfoSummaryLabel.sizePolicy().hasHeightForWidth())
         self.modelInfoSummaryLabel.setSizePolicy(sizePolicy)
-        self.modelInfoSummaryLabel.setMaximumSize(QtCore.QSize(16777215, 20))
         self.modelInfoSummaryLabel.setObjectName("modelInfoSummaryLabel")
         self.verticalLayout_modelInfo.addWidget(self.modelInfoSummaryLabel)
         self.modelInfoLabel = QtWidgets.QLabel(self.modelInfoGroupBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.modelInfoLabel.sizePolicy().hasHeightForWidth())
         self.modelInfoLabel.setSizePolicy(sizePolicy)
-        self.modelInfoLabel.setMinimumSize(QtCore.QSize(0, 100))
-        self.modelInfoLabel.setMaximumSize(QtCore.QSize(16777215, 200))
         self.modelInfoLabel.setWordWrap(True)
         self.modelInfoLabel.setTextFormat(QtCore.Qt.PlainText)
         self.modelInfoLabel.setObjectName("modelInfoLabel")
