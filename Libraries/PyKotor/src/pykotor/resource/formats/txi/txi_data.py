@@ -554,8 +554,8 @@ class TXIFeatures:
             NOTE: Broken implementation in engine
             
         Other fields (arturoheight, arturowidth, channelscale, channeltranslate, codepage,
-        cols, controllerscript, defaultbpp, distort, distortangle,
-        distortionamplitude, downsamplefactor, filerange, isdiffusebumpmap,
+        cols, controllerscript, dbmapping, defaultbpp, distort, distortangle,
+        distortionamplitude, downsamplefactor, filerange, isdiffusebumpmap, isdoublebyte,
         isspecularbumpmap, maxSizeHQ, maxSizeLQ, minSizeHQ, minSizeLQ, numcharspersheet,
         ondemand, priority, rows, speed, temporary, unique, waterheight, waterwidth,
         xbox_downsample): Additional TXI commands with varying support levels
