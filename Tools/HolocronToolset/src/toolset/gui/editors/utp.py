@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import os
+
 from contextlib import suppress
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from loggerplus import RobustLogger
 from qtpy.QtWidgets import QMessageBox, QSizePolicy
 
+from loggerplus import RobustLogger
 from pykotor.common.misc import ResRef
 from pykotor.common.module import Module
 from pykotor.common.stream import BinaryWriter
@@ -76,7 +78,7 @@ class UTPEditor(Editor):
         # Initialize model info widget state (collapsed by default)
         self.ui.modelInfoLabel.setVisible(False)
         self.ui.modelInfoSummaryLabel.setVisible(True)
-        
+
         self.update3dPreview()
         self.new()
         self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding)
@@ -226,16 +228,7 @@ class UTPEditor(Editor):
         self.ui.difficultyModSpin.setValue(utp.unlock_diff_mod)
 
         assert self._installation is not None
-        self.relevant_script_resnames = sorted(
-            iter(
-                {
-                    res.resname().lower()
-                    for res in self._installation.get_relevant_resources(
-                        ResourceType.NCS, self._filepath
-                    )
-                }
-            )
-        )
+        self.relevant_script_resnames = sorted(iter({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.NCS, self._filepath)}))
 
         self.ui.onClosedEdit.populate_combo_box(self.relevant_script_resnames)
         self.ui.onDamagedEdit.populate_combo_box(self.relevant_script_resnames)
@@ -358,6 +351,7 @@ class UTPEditor(Editor):
 
     def update_item_count(self):
         from toolset.gui.common.localization import trf
+
         self.ui.inventoryCountLabel.setText(trf("Total Items: {count}", count=len(self._utp.inventory)))
 
     def change_name(self):
@@ -391,7 +385,12 @@ class UTPEditor(Editor):
         assert self._installation is not None
         search: ResourceResult | None = self._installation.resource(resname, ResourceType.DLG)
         if search is None:
-            msgbox: int = QMessageBox(QMessageBox.Icon.Information, "DLG file not found", "Do you wish to create a file in the override?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No).exec()
+            msgbox: int = QMessageBox(
+                QMessageBox.Icon.Information,
+                "DLG file not found",
+                "Do you wish to create a file in the override?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            ).exec()
             if QMessageBox.StandardButton.Yes == msgbox:
                 data = bytearray()
 
@@ -495,7 +494,7 @@ class UTPEditor(Editor):
             return
 
         modelname: str = placeable.get_model(utp, self._installation, placeables=self._placeables2DA)
-        
+
         if not modelname or not modelname.strip():
             RobustLogger().warning("Placeable '%s.%s' has no model to render!", self._resname, self._restype)
             self.ui.previewRenderer.clear_model()
@@ -514,7 +513,7 @@ class UTPEditor(Editor):
                     info_lines.append(f"⚠️ placeables.2da row {utp.appearance_id} not found")
             self.ui.modelInfoLabel.setText("\n".join(info_lines))
             return
-        
+
         # Show the lookup process
         info_lines.append(f"Model resolved: '{modelname}'")
         if self._placeables2DA is not None:
@@ -523,34 +522,34 @@ class UTPEditor(Editor):
                 info_lines.append(f"Lookup: placeables.2da[row {utp.appearance_id}]['modelname']")
             except (IndexError, KeyError):
                 pass
-        
+
         mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL)
         mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX)
-        
+
         if mdl is not None and mdx is not None:
             self.ui.previewRenderer.set_model(mdl.data, mdx.data)
-            
+
             # Show full file paths and source locations
             try:
                 mdl_rel_path = mdl.filepath.relative_to(self._installation.path())
                 info_lines.append(f"MDL: {mdl_rel_path}")
             except ValueError:
                 info_lines.append(f"MDL: {mdl.filepath}")
-            
+
             mdl_source = self._get_source_location_type(mdl.filepath)
             if mdl_source:
                 info_lines.append(f"  └─ Source: {mdl_source}")
-            
+
             try:
                 mdx_rel_path = mdx.filepath.relative_to(self._installation.path())
                 info_lines.append(f"MDX: {mdx_rel_path}")
             except ValueError:
                 info_lines.append(f"MDX: {mdx.filepath}")
-            
+
             mdx_source = self._get_source_location_type(mdx.filepath)
             if mdx_source:
                 info_lines.append(f"  └─ Source: {mdx_source}")
-            
+
             # Show placeholder for textures - actual info will be populated when textures finish loading
             info_lines.append("")
             info_lines.append("Textures: Loading...")
@@ -564,10 +563,10 @@ class UTPEditor(Editor):
             if mdx is None:
                 info_lines.append(f"  Missing: {modelname}.mdx")
                 info_lines.append("  (Searched: Override → Modules → Chitin BIFs)")
-        
+
         full_text = "\n".join(info_lines)
         self.ui.modelInfoLabel.setText(full_text)
-        
+
         # Update summary (first line or key info)
         summary = info_lines[0] if info_lines else "No model information"
         if len(info_lines) > 1 and mdl is not None and mdx is not None:
@@ -578,7 +577,7 @@ class UTPEditor(Editor):
             except (ValueError, AttributeError):
                 summary = f"{modelname} → {mdl.filepath}"
         self.ui.modelInfoSummaryLabel.setText(summary)
-    
+
     def _on_model_info_toggled(self, checked: bool):
         """Handle model info groupbox toggle."""
         self.ui.modelInfoLabel.setVisible(checked)
@@ -589,6 +588,7 @@ class UTPEditor(Editor):
     def _format_search_order(self, search_order: list[SearchLocation]) -> str:
         """Format search order list into human-readable string."""
         from pykotor.extract.installation import SearchLocation
+
         location_names = {
             SearchLocation.OVERRIDE: "Override",
             SearchLocation.CUSTOM_MODULES: "Custom Modules",
@@ -603,38 +603,38 @@ class UTPEditor(Editor):
 
     def _on_textures_loaded(self):
         """Called when renderer signals that textures have finished loading.
-        
+
         Reads the EXACT lookup info from scene.texture_lookup_info - this is the
         SAME info that the renderer used when loading textures. No additional lookups.
         """
         scene = self.ui.previewRenderer._scene
         if scene is None:
             return
-        
+
         # Get the EXACT lookup info stored by the renderer when it loaded textures
         texture_lookup_info = getattr(scene, "texture_lookup_info", {})
-        
+
         if not texture_lookup_info:
             RobustLogger().debug("_on_textures_loaded: No texture_lookup_info available yet")
             return
-        
+
         RobustLogger().debug(f"_on_textures_loaded: Found {len(texture_lookup_info)} textures with lookup info")
-        
+
         # Get current model info text and update the texture section
         current_text = self.ui.modelInfoLabel.text()
-        
+
         # Find and replace the "Textures: Loading..." line
         lines = current_text.split("\n")
         new_lines: list[str] = []
         skip_old_texture_section = False
-        
+
         for line in lines:
             if "Textures:" in line:
                 skip_old_texture_section = True
                 # Add new texture section
                 new_lines.append("")
                 new_lines.append(f"Textures ({len(texture_lookup_info)} loaded by renderer):")
-                
+
                 for tex_name, lookup_info in sorted(texture_lookup_info.items()):
                     if lookup_info.get("found"):
                         filepath = lookup_info.get("filepath")
@@ -647,7 +647,7 @@ class UTPEditor(Editor):
                                 new_lines.append(f"  {tex_name}: {rel_path}")
                             except (ValueError, AttributeError):
                                 new_lines.append(f"  {tex_name}: {filepath}")
-                            
+
                             source = self._get_source_location_type(filepath)
                             if source:
                                 new_lines.append(f"    └─ Source: {source}")
@@ -667,23 +667,23 @@ class UTPEditor(Editor):
                 new_lines.append(line)
             elif not skip_old_texture_section:
                 new_lines.append(line)
-        
+
         self.ui.modelInfoLabel.setText("\n".join(new_lines))
-    
+
     def _get_source_location_type(self, filepath: os.PathLike | str) -> str | None:
         """Determines the source location type for a given filepath.
-        
+
         Args:
         ----
             filepath: The filepath to analyze
-            
+
         Returns:
         -------
             A string describing the source location type, or None if unknown
         """
         if self._installation is None:
             return None
-            
+
         try:
             path = self._installation.path()
             rel_path = os.path.relpath(filepath, path)

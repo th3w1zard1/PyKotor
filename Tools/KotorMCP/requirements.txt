@@ -3,7 +3,8 @@
 
 # Core dependencies
 mcp>=0.1.1
-pykotor>=2.0.0
+# NOTE: pykotor is provided via PYTHONPATH (../../Libraries/PyKotor/src) for development.
+# For standalone installation, pykotor is specified in pyproject.toml dependencies.
 
 # Development dependencies (optional)
 # pytest>=7.0.0

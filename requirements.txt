@@ -1,8 +1,10 @@
 # Root workspace requirements
 # This file matches pyproject.toml and includes all libraries and tools
 
-# Core dependency from pyproject.toml
-pykotor>=2.0.0
+# NOTE: pykotor is provided via PYTHONPATH (Libraries/PyKotor/src) for development.
+# Do NOT install pykotor from PyPI - it will override the local source code.
+# For production/standalone installs, pykotor is specified in pyproject.toml dependencies.
+-e Libraries/PyKotor
 
 # Include library requirements
 -r Libraries/PyKotor/requirements.txt

@@ -1,5 +1,6 @@
 # Core dependencies
-pykotor>=2.0.0
+# NOTE: pykotor is provided via PYTHONPATH (../../Libraries/PyKotor/src) for development.
+# For standalone installation, pykotor is specified in pyproject.toml dependencies.
 tomli>=2.0.0; python_version<"3.11"
 tomli-w>=1.0.0
 

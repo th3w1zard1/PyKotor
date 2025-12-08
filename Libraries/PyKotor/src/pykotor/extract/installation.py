@@ -1133,6 +1133,12 @@ class Installation:
         """
         return self._female_talktable
 
+    @overload
+    def resource(self, resname: str, restype: ResourceType, order: Sequence[SearchLocation] | None = None, *, capsules: Sequence[Capsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None):
+        ...
+    @overload
+    def resource(self, resname: str, restype: Sequence[ResourceType], order: Sequence[SearchLocation] | None = None, *, capsules: Sequence[Capsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None):
+        ...
     def resource(  # noqa: PLR0913
         self,
         resname: str,
@@ -1286,30 +1292,9 @@ class Installation:
     @overload
     def location(self, resname: str, restype: ResourceType | None = None, order: Sequence[SearchLocation] | None = None, /, *, capsules: list[Capsule] | None = None, folders: list[Path] | None = None) -> list[LocationResult]: ...
     @overload
-    def location(
-        self,
-        query: ResourceIdentifier,
-        order: Sequence[SearchLocation] | None = None,
-        /,
-        *,
-        capsules: list[Capsule] | None = None,
-        folders: list[Path] | None = None,
-        module_root: str | None = None,
-        logger: Callable[[str], None] | None = None,
-    ) -> list[LocationResult]: ...
+    def location(self, query: ResourceIdentifier, order: Sequence[SearchLocation] | None = None, /, *, capsules: list[Capsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None) -> list[LocationResult]: ...
     @overload
-    def location(
-        self,
-        resname: str,
-        restype: ResourceType,
-        order: Sequence[SearchLocation] | None = None,
-        /,
-        *,
-        capsules: list[Capsule] | None = None,
-        folders: list[Path] | None = None,
-        module_root: str | None = None,
-        logger: Callable[[str], None] | None = None,
-    ) -> list[LocationResult]: ...
+    def location(self, resname: str, restype: ResourceType, order: Sequence[SearchLocation] | None = None, /, *, capsules: list[Capsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None) -> list[LocationResult]: ...
     def location(
         self,
         resname: str | os.PathLike | ResourceIdentifier,
@@ -1376,27 +1361,9 @@ class Installation:
         )[query]
 
     @overload
-    def locations(
-        self,
-        queries: list[ResourceIdentifier],
-        order: list[SearchLocation] | None = None,
-        *,
-        capsules: Sequence[LazyCapsule] | None = None,
-        folders: list[Path] | None = None,
-        module_root: str | None = None,
-        logger: Callable[[str], None] | None = None,
-    ) -> dict[ResourceIdentifier, list[LocationResult]]: ...
+    def locations(self, queries: list[ResourceIdentifier], order: list[SearchLocation] | None = None, *, capsules: Sequence[LazyCapsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None) -> dict[ResourceIdentifier, list[LocationResult]]: ...
     @overload
-    def locations(
-        self,
-        queries: tuple[Sequence[str], Sequence[ResourceIdentifier] | Sequence[ResourceType]],
-        order: list[SearchLocation] | None = None,
-        *,
-        capsules: Sequence[LazyCapsule] | None = None,
-        folders: list[Path] | None = None,
-        module_root: str | None = None,
-        logger: Callable[[str], None] | None = None,
-    ) -> dict[ResourceIdentifier, list[LocationResult]]: ...
+    def locations(self, queries: tuple[Sequence[str], Sequence[ResourceIdentifier] | Sequence[ResourceType]], order: list[SearchLocation] | None = None, *, capsules: Sequence[LazyCapsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None) -> dict[ResourceIdentifier, list[LocationResult]]: ...
     def locations(
         self,
         queries: list[ResourceIdentifier] | tuple[Sequence[str], Sequence[ResourceType] | Sequence[ResourceIdentifier]],

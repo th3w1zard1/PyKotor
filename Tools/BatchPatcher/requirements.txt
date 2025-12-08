@@ -1,5 +1,5 @@
-pykotor>=2.0.0
-pykotorfont>=2.0.0
+# NOTE: pykotor and pykotorfont are provided via PYTHONPATH for development.
+# For standalone installation, these are specified in pyproject.toml dependencies.
 setuptools>=67.8.0,<70
 deep_translator==1.9.2
 deepl-cli==0.3.0

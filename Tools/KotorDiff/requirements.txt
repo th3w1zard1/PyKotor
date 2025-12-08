@@ -1,1 +1,2 @@
-pykotor>=2.0.0
+# NOTE: pykotor is provided via PYTHONPATH (../../Libraries/PyKotor/src) for development.
+# For standalone installation, pykotor is specified in pyproject.toml dependencies.
