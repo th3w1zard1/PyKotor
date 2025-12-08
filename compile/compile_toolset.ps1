@@ -7,203 +7,94 @@ param(
     [string]$force_python_version,
     [string]$upx_dir
 )
-$this_noprompt = $noprompt
-
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $repoRootPath = (Resolve-Path -LiteralPath "$scriptPath/..").Path
-Write-Host "The path to the script directory is: $scriptPath"
-Write-Host "The path to the root directory is: $repoRootPath"
 
-Write-Host "Initializing python virtual environment..."
-if ($this_noprompt) {
-    . $repoRootPath/install_python_venv.ps1 -noprompt -venv_name $venv_name
-} else {
-    . $repoRootPath/install_python_venv.ps1 -venv_name $venv_name
-}
-Write-Host "----------------------------------------"
-
-$iconExtension = if ((Get-OS) -eq 'Mac') {'icns'} else {'ico'}
-# Add wiki files to be bundled
-$wikiPath = (Resolve-Path -LiteralPath "$repoRootPath/wiki").Path
-$addDataArgs = @()
-# PyInstaller uses semicolon on Windows, colon on Unix
-$dataSeparator = if (Get-OS -eq "Windows") { ";" } else { ":" }
-if (Test-Path -LiteralPath $wikiPath -ErrorAction SilentlyContinue) {
-    $addDataArgs += "--add-data=$wikiPath$dataSeparator`wiki"
-    Write-Host "Including wiki directory: $wikiPath"
+function Get-LocalOS {
+    if ($IsWindows) { return "Windows" }
+    if ($IsMacOS) { return "Mac" }
+    if ($IsLinux) { return "Linux" }
+    return "Unknown"
 }
 
-# Add kotorblender addon for Blender integration
-$kotorblenderPath = "$repoRootPath/vendor/kotorblender/io_scene_kotor"
-if (Test-Path -LiteralPath $kotorblenderPath -ErrorAction SilentlyContinue) {
-    $addDataArgs += "--add-data=$kotorblenderPath$dataSeparator`kotorblender/io_scene_kotor"
-    Write-Host "Including kotorblender addon: $kotorblenderPath"
-}
+$toolPath = (Resolve-Path -LiteralPath "$repoRootPath/Tools/HolocronToolset").Path
+$toolSrcDir = (Resolve-Path -LiteralPath "$toolPath/src").Path
+$iconExtension = if ((Get-LocalOS) -eq 'Mac') { 'icns' } else { 'ico' }
+$iconPath = "$toolSrcDir/resources/icons/sith.$iconExtension"
+$dataSeparator = if ((Get-LocalOS) -eq "Windows") { ";" } else { ":" }
+$argsList = @(
+    "--tool-path", $toolPath
+    "--entrypoint", "toolset/__main__.py"
+    "--name", "HolocronToolset"
+    "--distpath", "$repoRootPath/dist"
+    "--workpath", "$toolSrcDir/build"
+    "--icon", $iconPath
+    "--windowed"
+    "--onefile"
+    "--noconfirm"
+    "--clean"
+    "--hidden-import", "utility"
+    "--hidden-import", "utility.error_handling"
+    "--hidden-import", "utility.common"
+    "--hidden-import", "utility.system"
+    "--hidden-import", "utility.ui_libraries"
+    "--hidden-import", "utility.updater"
+    "--exclude-module", "dl_translate"
+    "--exclude-module", "torch"
+    "--include-wiki-if-present"
+    "--add-data-if-exists", "$repoRootPath/vendor/kotorblender/io_scene_kotor${dataSeparator}kotorblender/io_scene_kotor"
+    "--venv-name", $venv_name
+)
 
-$pyInstallerArgs = @{
-    'hidden-import' = @(
-        'utility',
-        'utility.error_handling',
-        'utility.common',
-        'utility.system',
-        'utility.ui_libraries',
-        'utility.updater'
-    )
-    'exclude-module' = @(
-        'dl_translate',
-        'torch'
-    )
-    'upx-exclude' = @(
-        '_uuid.pyd',
-        'api-ms-win-crt-environment-l1-1-0.dll',
-        'api-ms-win-crt-string-l1-1-0.dll',
-        'api-ms-win-crt-convert-l1-1-0.dll',
-        'api-ms-win-crt-heap-l1-1-0.dll',
-        'api-ms-win-crt-conio-l1-1-0.dll',
-        'api-ms-win-crt-filesystem-l1-1-0.dll',
-        'api-ms-win-crt-stdio-l1-1-0.dll',
-        'api-ms-win-crt-process-l1-1-0.dll',
-        'api-ms-win-crt-locale-l1-1-0.dll',
-        'api-ms-win-crt-time-l1-1-0.dll',
-        'api-ms-win-crt-math-l1-1-0.dll',
-        'api-ms-win-crt-runtime-l1-1-0.dll',
-        'api-ms-win-crt-utility-l1-1-0.dll',
-        'python3.dll',
-        'api-ms-win-crt-private-l1-1-0.dll',
-        'api-ms-win-core-timezone-l1-1-0.dll',
-        'api-ms-win-core-file-l1-1-0.dll',
-        'api-ms-win-core-processthreads-l1-1-1.dll',
-        'api-ms-win-core-processenvironment-l1-1-0.dll',
-        'api-ms-win-core-debug-l1-1-0.dll',
-        'api-ms-win-core-localization-l1-2-0.dll',
-        'api-ms-win-core-processthreads-l1-1-0.dll',
-        'api-ms-win-core-errorhandling-l1-1-0.dll',
-        'api-ms-win-core-handle-l1-1-0.dll',
-        'api-ms-win-core-util-l1-1-0.dll',
-        'api-ms-win-core-profile-l1-1-0.dll',
-        'api-ms-win-core-rtlsupport-l1-1-0.dll',
-        'api-ms-win-core-namedpipe-l1-1-0.dll',
-        'api-ms-win-core-libraryloader-l1-1-0.dll',
-        'api-ms-win-core-file-l1-2-0.dll',
-        'api-ms-win-core-synch-l1-2-0.dll',
-        'api-ms-win-core-sysinfo-l1-1-0.dll',
-        'api-ms-win-core-console-l1-1-0.dll',
-        'api-ms-win-core-string-l1-1-0.dll',
-        'api-ms-win-core-memory-l1-1-0.dll',
-        'api-ms-win-core-synch-l1-1-0.dll',
-        'api-ms-win-core-interlocked-l1-1-0.dll',
-        'api-ms-win-core-datetime-l1-1-0.dll',
-        'api-ms-win-core-file-l2-1-0.dll',
-        'api-ms-win-core-heap-l1-1-0.dll'
-    )
-    'clean' = $true
-    'noconsole' = $true  # https://github.com/pyinstaller/pyinstaller/wiki/FAQ#mac-os-x  https://pyinstaller.org/en/stable/usage.html#cmdoption-w
-    'onefile' = $true
-    'noconfirm' = $true
-    #'debug' = 'all'
-    'name' = "HolocronToolset"
-    'distpath'=($repoRootPath + $pathSep + "dist")
-    'upx-dir' = $upx_dir
-    'icon'="resources/icons/sith.$iconExtension"
-    'path'=@()
-}
+$qtApi = if ($env:QT_API) { $env:QT_API } else { "PyQt5" }
+$argsList += @("--qt-api", $qtApi, "--exclude-other-qt")
 
-$toolSrcDir = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Tools$($pathSep)$($pyInstallerArgs.name)$($pathSep)src").Path
-$pyInstallerArgs.workpath = "$toolSrcDir$($pathSep)build"
-$pyInstallerArgs.path += $toolSrcDir
-# Add paths for local libraries that PyInstaller needs to find
-$utilityPath = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Libraries$($pathSep)Utility$($pathSep)src").Path
-$pykotorPath = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Libraries$($pathSep)PyKotor$($pathSep)src").Path
-$pykotorGLPath = (Resolve-Path -LiteralPath "$($repoRootPath)$($pathSep)Libraries$($pathSep)PyKotorGL$($pathSep)src").Path
-if (Test-Path -LiteralPath $utilityPath -ErrorAction SilentlyContinue) {
-    $pyInstallerArgs.path += $utilityPath
-    Write-Host "Including Utility library path: $utilityPath"
-}
-if (Test-Path -LiteralPath $pykotorPath -ErrorAction SilentlyContinue) {
-    $pyInstallerArgs.path += $pykotorPath
-    Write-Host "Including PyKotor library path: $pykotorPath"
-}
-if (Test-Path -LiteralPath $pykotorGLPath -ErrorAction SilentlyContinue) {
-    $pyInstallerArgs.path += $pykotorGLPath
-    Write-Host "Including PyKotorGL library path: $pykotorGLPath"
-}
-Write-Host "toolSrcDir: '$toolSrcDir'"
+$upxExcludes = @(
+    "_uuid.pyd",
+    "api-ms-win-crt-environment-l1-1-0.dll",
+    "api-ms-win-crt-string-l1-1-0.dll",
+    "api-ms-win-crt-convert-l1-1-0.dll",
+    "api-ms-win-crt-heap-l1-1-0.dll",
+    "api-ms-win-crt-conio-l1-1-0.dll",
+    "api-ms-win-crt-filesystem-l1-1-0.dll",
+    "api-ms-win-crt-stdio-l1-1-0.dll",
+    "api-ms-win-crt-process-l1-1-0.dll",
+    "api-ms-win-crt-locale-l1-1-0.dll",
+    "api-ms-win-crt-time-l1-1-0.dll",
+    "api-ms-win-crt-math-l1-1-0.dll",
+    "api-ms-win-crt-runtime-l1-1-0.dll",
+    "api-ms-win-crt-utility-l1-1-0.dll",
+    "python3.dll",
+    "api-ms-win-crt-private-l1-1-0.dll",
+    "api-ms-win-core-timezone-l1-1-0.dll",
+    "api-ms-win-core-file-l1-1-0.dll",
+    "api-ms-win-core-processthreads-l1-1-1.dll",
+    "api-ms-win-core-processenvironment-l1-1-0.dll",
+    "api-ms-win-core-debug-l1-1-0.dll",
+    "api-ms-win-core-localization-l1-2-0.dll",
+    "api-ms-win-core-processthreads-l1-1-0.dll",
+    "api-ms-win-core-errorhandling-l1-1-0.dll",
+    "api-ms-win-core-handle-l1-1-0.dll",
+    "api-ms-win-core-util-l1-1-0.dll",
+    "api-ms-win-core-profile-l1-1-0.dll",
+    "api-ms-win-core-rtlsupport-l1-1-0.dll",
+    "api-ms-win-core-namedpipe-l1-1-0.dll",
+    "api-ms-win-core-libraryloader-l1-1-0.dll",
+    "api-ms-win-core-file-l1-2-0.dll",
+    "api-ms-win-core-synch-l1-2-0.dll",
+    "api-ms-win-core-sysinfo-l1-1-0.dll",
+    "api-ms-win-core-console-l1-1-0.dll",
+    "api-ms-win-core-string-l1-1-0.dll",
+    "api-ms-win-core-memory-l1-1-0.dll",
+    "api-ms-win-core-synch-l1-1-0.dll",
+    "api-ms-win-core-interlocked-l1-1-0.dll",
+    "api-ms-win-core-datetime-l1-1-0.dll",
+    "api-ms-win-core-file-l2-1-0.dll",
+    "api-ms-win-core-heap-l1-1-0.dll"
+)
+foreach ($item in $upxExcludes) { $argsList += @("--upx-exclude", $item) }
+if ($upx_dir) { $argsList += @("--upx-dir", $upx_dir) }
+if ($noprompt) { $argsList += "--noprompt" }
 
-
-# Build flat arguments array.
-$argumentsArray = $pyInstallerArgs.GetEnumerator() | ForEach-Object {
-    if ($_.Value -is [System.Array]) {
-        $arr = @()
-        foreach ($elem in $($_.Value)) { $arr += "--$($_.Key)=$elem" }
-        $arr
-    } else {
-        if ($_.Value -eq $true) { "--$($_.Key)" }
-        elseif ($_.Value -eq $false) {}
-        else { "--$($_.Key)=$($_.Value)" }
-    }
-}
-
-# Add wiki data files
-$argumentsArray += $addDataArgs
-
-
-# Remove old compile/build files/folders if clean is set.
-if (Get-OS -eq "Windows") { $extension = "exe" } elseif (Get-OS -eq "Linux") { $extension = "" } elseif (Get-OS -eq "Mac") { $extension = "app" }
-$finalExecutablePath = $pyInstallerArgs.distpath + $pathSep + "$($pyInstallerArgs.name).$extension"
-if (Test-Path -LiteralPath $finalExecutablePath -ErrorAction SilentlyContinue) {
-    Write-Host "Removing old exe at '$finalExecutablePath'"
-    Remove-Item -LiteralPath $finalExecutablePath -Force
-} else {
-    $finalExecutableDir = "$($pyInstallerArgs.distpath)$pathSep$($pyInstallerArgs.name)"
-    if (Test-Path $finalExecutableDir -ErrorAction SilentlyContinue) {
-        $finalExecutablePath = "$($pyInstallerArgs.distpath)$($pathSep)$($pyInstallerArgs.name)$($pathSep)$($pyInstallerArgs.name).$extension"
-        Write-Host "Final executable dir: $finalExecutableDir"
-        if (Test-Path -LiteralPath $finalExecutableDir -ErrorAction SilentlyContinue) {
-            Write-Host "Removing old dist dir at '$finalExecutableDir'"
-            Remove-Item -LiteralPath $finalExecutableDir -Recurse -Force
-        }
-    }
-}
-Write-Host "Final executable path: $finalExecutablePath"
-if ($pyInstallerArgs.clean -and (Test-Path $pyInstallerArgs.workpath -ErrorAction SilentlyContinue)) { Remove-Item -LiteralPath $pyInstallerArgs.workpath -Recurse -Force }
-
-# Ensure pyinstaller is actually excluding the other Qt bindings.
-if (-not $env:QT_API) { $env:QT_API = "PyQt5" }
-$apiMapping = @{
-    "pyqt5" = "PyQt5"
-    "pyqt6" = "PyQt6"
-    "pyside2" = "PySide2"
-    "pyside6" = "PySide6"
-}
-$normalizedAPI = $apiMapping[$env:QT_API.ToLower()]
-if ($normalizedAPI) {
-    $env:QT_API = $normalizedAPI
-    Write-Host "Converted QT_API to '$env:QT_API'"
-} elseif ($env:QT_API -notin "PyQt5", "PyQt6", "PySide2", "PySide6") {
-    Write-Error "Invalid QT_API: '$env:QT_API', hopefully pyinstaller figures it out..."
-}
-$modulesToExclude = @("PyQt5", "PyQt6", "PySide2", "PySide6") | Where-Object { $_ -ne $env:QT_API }
-$pyInstallerArgs['exclude-module'] += $modulesToExclude
-Write-Host "`nQT_API: $env:QT_API - Excluding: $($pyInstallerArgs['exclude-module'] -join ', ')"
-Write-Host "----------------------------------------`n"
-
-$pyinstaller_output = ""
-Push-Location -LiteralPath $toolSrcDir
-try {
-    Write-Host "Compiling $($pyInstallerArgs.name)..."
-    $argumentsArray = @('-m', 'PyInstaller') + $argumentsArray + "toolset$pathSep`__main__.py"
-    Write-Host "Executing command: $pythonExePath $argumentsArray"
-    $pyinstaller_output = & $pythonExePath $argumentsArray
-} catch {
-    Write-Host $pyinstaller_output
-    Handle-Error -ErrorRecord $_
-} finally {
-    Pop-Location
-}
-
-Write-Host "Checking '$finalExecutablePath' to see if it was built and the file exists."
-if (-not (Test-Path -LiteralPath $finalExecutablePath -ErrorAction SilentlyContinue)) {
-    Write-Error "$($pyInstallerArgs.name) could not be compiled, scroll up to find out why"
-} else {
-    Write-Host "$($pyInstallerArgs.name) was compiled to '$finalExecutablePath'"
-}
+& "$scriptPath/compile_tool.ps1" @argsList
+exit $LASTEXITCODE
