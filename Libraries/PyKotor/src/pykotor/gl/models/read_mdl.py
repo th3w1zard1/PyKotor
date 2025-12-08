@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def _load_node(
-    scene: Scene,
+    scene: SceneBase,
     node: Node | None,
     mdl: SOURCE_TYPES,
     mdx: SOURCE_TYPES,
@@ -125,7 +125,7 @@ def _load_node(
 
 
 def gl_load_mdl(
-    scene: Scene,
+    scene: SceneBase,
     mdl: SOURCE_TYPES,
     mdx: SOURCE_TYPES,
 ) -> Model:
