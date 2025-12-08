@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from pykotor.common.stream import BinaryReader
 from pykotor.gl import glm, mat4, vec3, vec4
 from pykotor.gl.models.mdl import Mesh, Model, Node
+from loggerplus import RobustLogger
 
 if TYPE_CHECKING:
     from glm import mat4x4
@@ -65,8 +66,10 @@ def _load_node(
 
         # Request textures immediately to ensure they are tracked and loaded
         if texture and texture != "NULL":
+            RobustLogger().debug(f"_load_node: requesting texture '{texture}' for node '{names[name_id]}'")
             scene.texture(texture)
         if lightmap and lightmap != "NULL":
+            RobustLogger().debug(f"_load_node: requesting lightmap '{lightmap}' for node '{names[name_id]}'")
             scene.texture(lightmap, lightmap=True)
 
         mdl_reader.seek(offset + 80 + 313)
@@ -235,8 +238,10 @@ def gl_load_stitched_model(
 
         # Request textures immediately to ensure they are tracked and loaded
         if texture and texture != "NULL":
+            RobustLogger().debug(f"gl_load_stitched_model: requesting texture '{texture}' for merged mesh")
             scene.texture(texture)
         if lightmap and lightmap != "NULL":
+            RobustLogger().debug(f"gl_load_stitched_model: requesting lightmap '{lightmap}' for merged mesh")
             scene.texture(lightmap, lightmap=True)
 
         last_element = 0
