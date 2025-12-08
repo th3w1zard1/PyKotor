@@ -521,9 +521,17 @@ class SceneBase:
                                     f"Recovered from resolver cache: filepath={filepath}"
                                 )
                             else:
+                                # Create fallback entry so we don't spam warnings later
+                                self.texture_lookup_info[resource_name] = {
+                                    "filepath": None,
+                                    "restype": ResourceType.TPC,
+                                    "found": True,
+                                    "search_order": [],
+                                    "note": "Lookup info missing after load",
+                                }
                                 RobustLogger().warning(
                                     f"Texture '{resource_name}' (key '{name}') finished loading but lookup info missing "
-                                    f"AND no resolver cache entry. Available keys: {list(self.texture_lookup_info.keys())[:10]}"
+                                    f"AND no resolver cache entry. Created fallback entry."
                                 )
                     completed_textures.append(name)
                     textures_processed += 1
@@ -615,7 +623,27 @@ class SceneBase:
             # If missing, this is a BUG - lookup info should have been stored when texture was loaded
             # We can't do another lookup (user requirement), so we log the error
             if name not in self.texture_lookup_info:
-                RobustLogger().warning(f"Texture '{name}' is cached but has NO lookup info! This is a bug - lookup info should have been stored when texture was loaded. Available keys: {list(self.texture_lookup_info.keys())[:10]}")
+                # Try to recover lookup info
+                cached_loc = self._resolved_texture_locations.get(name)
+                if cached_loc:
+                    filepath, search_order = cached_loc
+                    self.texture_lookup_info[name] = {
+                        "filepath": filepath,
+                        "restype": ResourceType.TPC,
+                        "found": filepath is not None,
+                        "search_order": search_order.copy(),
+                    }
+                    RobustLogger().debug(f"Texture '{name}' is cached but had no lookup info - recovered from resolver cache.")
+                else:
+                    # Fallback entry
+                    self.texture_lookup_info[name] = {
+                        "filepath": None,
+                        "restype": ResourceType.TPC,
+                        "found": True,  # It is cached/loaded
+                        "search_order": [],
+                        "note": "Lookup info lost",
+                    }
+                    RobustLogger().debug(f"Texture '{name}' is cached but has NO lookup info! Created fallback entry.")
             else:
                 lookup_info = self.texture_lookup_info[name]
                 RobustLogger().debug(f"Texture '{name}' returned from cache (already loaded), lookup_info: found={lookup_info.get('found')}, filepath={lookup_info.get('filepath')}")
