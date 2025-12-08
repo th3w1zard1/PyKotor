@@ -668,17 +668,14 @@ class UTDEditor(Editor):
                     filepath = lookup_info.get("filepath")
                     restype = lookup_info.get("restype")
                     ext = ".tpc" if restype == ResourceType.TPC else ".tga" if restype == ResourceType.TGA else ""
-                    if filepath:
-                        try:
-                            rel_path = os.path.relpath(filepath, self._installation.path()) if self._installation else filepath
-                            info_lines.append(f"  {tex_name}{ext}: {rel_path}")
-                        except (ValueError, AttributeError):
-                            info_lines.append(f"  {tex_name}{ext}: {filepath}")
-                        source = self._get_source_location_type(filepath)
-                        if source:
-                            info_lines.append(f"    └─ Source: {source}")
-                    else:
-                        info_lines.append(f"  {tex_name}{ext}: ✓ Loaded (Source unknown/cached)")
+                    try:
+                        rel_path = os.path.relpath(filepath, self._installation.path()) if self._installation and filepath else filepath
+                        info_lines.append(f"  {tex_name}{ext}: {rel_path}")
+                    except (ValueError, AttributeError):
+                        info_lines.append(f"  {tex_name}{ext}: {filepath}")
+                    source = self._get_source_location_type(filepath) if filepath else None
+                    if source:
+                        info_lines.append(f"    └─ Source: {source}")
                 else:
                     search_order = lookup_info.get("search_order")
                     search_order_str = self._format_search_order(search_order) if search_order else "Unknown"

@@ -398,7 +398,7 @@ class AsyncResourceLoader:
     
     def __init__(
         self,
-        texture_location_resolver: Callable[[str], tuple[str, int, int] | None] | None = None,
+        texture_location_resolver: Callable[[str], tuple[str, int, int, Any] | None] | None = None,
         model_location_resolver: Callable[[str], tuple[tuple[str, int, int] | None, tuple[str, int, int] | None]] | None = None,
         max_workers: int | None = None,
     ):
@@ -406,7 +406,7 @@ class AsyncResourceLoader:
         
         Args:
         ----
-            texture_location_resolver: Function that resolves texture name to (filepath, offset, size) in MAIN process
+            texture_location_resolver: Function that resolves texture name to (filepath, offset, size, context) in MAIN process
             model_location_resolver: Function that resolves model name to ((mdl_path, offset, size), (mdx_path, offset, size)) in MAIN process
             max_workers: Max workers for process pool (default: CPU count)
         """
@@ -461,7 +461,7 @@ class AsyncResourceLoader:
     def load_texture_async(
         self,
         name: str,
-    ) -> Future[tuple[str, IntermediateTexture | None, str | None]]:
+    ) -> Future[tuple[str, IntermediateTexture | None, str | None, Any]]:
         """Load and parse texture asynchronously.
         
         Main process: Resolve file location
@@ -469,12 +469,12 @@ class AsyncResourceLoader:
         
         Returns:
         -------
-            Future that resolves to (name, intermediate_texture, error)
+            Future that resolves to (name, intermediate_texture, error, context)
         """
         if self.texture_location_resolver is None:
             # No resolver provided, return immediate failure
             result: Future = Future()
-            result.set_result((name, None, "No texture location resolver provided"))
+            result.set_result((name, None, "No texture location resolver provided", None))
             return result
         
         if self.process_pool is None:
@@ -488,11 +488,28 @@ class AsyncResourceLoader:
             location = self.texture_location_resolver(name)
             
             if location is None:
-                # Don't log warnings for every missing texture - too spammy
+                # Resolver returned None - this means texture not found
+                # The resolver should have already stored lookup info in texture_lookup_info
+                # We need to get it from the scene's texture_lookup_info
+                # But async_loader doesn't have direct access to scene
+                # SOLUTION: The resolver stores lookup_info immediately, and poll_async_resources will use it
+                # For now, we create a context that matches what resolver stored
                 self.logger.debug(f"load_texture_async: Texture '{name}' not found by resolver")
-                result_future.set_result((name, None, f"Texture '{name}' not found"))
+                # Note: The resolver already stored lookup_info in scene.texture_lookup_info[name]
+                # We create a matching context here - poll_async_resources will use the stored lookup_info
+                # if context is incomplete
+                not_found_context = {
+                    "filepath": None,
+                    "found": False,
+                    "restype": None,  # Will be TPC, but we don't have access to scene here
+                    "search_order": [],  # Resolver stored this, but we don't have access here
+                }
+                result_future.set_result((name, None, f"Texture '{name}' not found", not_found_context))
             else:
-                filepath, offset, size = location
+                filepath, offset, size, context = location
+                # ASSERT: Context MUST exist and contain lookup information
+                assert context is not None, f"Texture location resolver returned location for '{name}' but context is None! This is a bug."
+                assert isinstance(context, dict), f"Texture location resolver returned invalid context type for '{name}': {type(context)}. Expected dict."
                 self.logger.debug(f"load_texture_async: Texture '{name}' resolved to {filepath}, submitting to child process")
                 # Submit IO + parsing to child process
                 assert self.process_pool is not None
@@ -503,11 +520,14 @@ class AsyncResourceLoader:
                     if result_future.cancelled():
                         return
                     try:
-                        result_future.set_result(pf.result())
+                        # Append context to result tuple from child process
+                        child_result = pf.result()
+                        result_future.set_result((*child_result, context))
                     except Exception as e:  # noqa: BLE001
                         if not result_future.cancelled():
                             try:
-                                result_future.set_result((name, None, f"IO+parse error: {e!s}"))
+                                # Even on error, we must provide context
+                                result_future.set_result((name, None, f"IO+parse error: {e!s}", context))
                             except Exception:  # noqa: BLE001, S110
                                 pass  # Future was already cancelled or set
                     
@@ -515,7 +535,14 @@ class AsyncResourceLoader:
         except Exception as e:  # noqa: BLE001
             self.logger.error(f"Resolution exception for texture '{name}': {e!s}")
             if not result_future.cancelled():
-                result_future.set_result((name, None, f"Resolution error: {e!s}"))
+                # On exception, we can't provide proper context - this should never happen
+                error_context = {
+                    "filepath": None,
+                    "found": False,
+                    "restype": None,
+                    "search_order": [],
+                }
+                result_future.set_result((name, None, f"Resolution error: {e!s}", error_context))
         
         self.pending_textures[name] = result_future
         return result_future
@@ -649,4 +676,3 @@ def create_model_from_intermediate(
     
     root_node = build_node(None, intermediate.root)
     return Model(scene, root_node)
-
