@@ -12,7 +12,6 @@ from pykotor.resource.generics.dlg import DLG, dismantle_dlg  # pyright: ignore[
 from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd  # pyright: ignore[reportMissingImports]
 from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
 from pykotor.tools import door  # pyright: ignore[reportMissingImports]
-from pykotor.tools.model import iterate_lightmaps, iterate_textures  # pyright: ignore[reportMissingImports]
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.editor import Editor
@@ -497,66 +496,10 @@ class UTDEditor(Editor):
             if mdx_source:
                 info_lines.append(f"  └─ Source: {mdx_source}")
 
-            # Extract and display texture information from MDL
+            # Note about textures
             info_lines.append("")
-            info_lines.append("Textures:")
-            texture_names = sorted(set(iterate_textures(mdl.data)))
-            lightmap_names = sorted(set(iterate_lightmaps(mdl.data)))
-            
-            if texture_names or lightmap_names:
-                for tex_name in texture_names:
-                    # Look up texture in installation
-                    tex_tpc: ResourceResult | None = self._installation.resource(tex_name, ResourceType.TPC)
-                    tex_tga: ResourceResult | None = self._installation.resource(tex_name, ResourceType.TGA)
-                    
-                    if tex_tpc is not None:
-                        try:
-                            tex_rel = tex_tpc.filepath.relative_to(self._installation.path())
-                            info_lines.append(f"  {tex_name}.tpc: {tex_rel}")
-                        except ValueError:
-                            info_lines.append(f"  {tex_name}.tpc: {tex_tpc.filepath}")
-                        tex_source = self._get_source_location_type(tex_tpc.filepath)
-                        if tex_source:
-                            info_lines.append(f"    └─ Source: {tex_source}")
-                    elif tex_tga is not None:
-                        try:
-                            tex_rel = tex_tga.filepath.relative_to(self._installation.path())
-                            info_lines.append(f"  {tex_name}.tga: {tex_rel}")
-                        except ValueError:
-                            info_lines.append(f"  {tex_name}.tga: {tex_tga.filepath}")
-                        tex_source = self._get_source_location_type(tex_tga.filepath)
-                        if tex_source:
-                            info_lines.append(f"    └─ Source: {tex_source}")
-                    else:
-                        info_lines.append(f"  {tex_name}: ❌ Not found (searched: Override → Modules → Chitin BIFs)")
-                
-                for lm_name in lightmap_names:
-                    # Look up lightmap in installation
-                    lm_tpc: ResourceResult | None = self._installation.resource(lm_name, ResourceType.TPC)
-                    lm_tga: ResourceResult | None = self._installation.resource(lm_name, ResourceType.TGA)
-                    
-                    if lm_tpc is not None:
-                        try:
-                            lm_rel = lm_tpc.filepath.relative_to(self._installation.path())
-                            info_lines.append(f"  {lm_name}.tpc (lightmap): {lm_rel}")
-                        except ValueError:
-                            info_lines.append(f"  {lm_name}.tpc (lightmap): {lm_tpc.filepath}")
-                        lm_source = self._get_source_location_type(lm_tpc.filepath)
-                        if lm_source:
-                            info_lines.append(f"    └─ Source: {lm_source}")
-                    elif lm_tga is not None:
-                        try:
-                            lm_rel = lm_tga.filepath.relative_to(self._installation.path())
-                            info_lines.append(f"  {lm_name}.tga (lightmap): {lm_rel}")
-                        except ValueError:
-                            info_lines.append(f"  {lm_name}.tga (lightmap): {lm_tga.filepath}")
-                        lm_source = self._get_source_location_type(lm_tga.filepath)
-                        if lm_source:
-                            info_lines.append(f"    └─ Source: {lm_source}")
-                    else:
-                        info_lines.append(f"  {lm_name} (lightmap): ❌ Not found (searched: Override → Modules → Chitin BIFs)")
-            else:
-                info_lines.append("  (No textures or lightmaps found in MDL)")
+            info_lines.append("Note: Textures are referenced within the MDL file.")
+            info_lines.append("Use the texture browser to locate specific .tga/.tpc files.")
         else:
             self.ui.previewRenderer.clear_model()
             info_lines.append("❌ Resources not found in installation:")
@@ -579,9 +522,6 @@ class UTDEditor(Editor):
                 summary = f"{modelname} → {mdl_rel}"
             except (ValueError, AttributeError):
                 summary = f"{modelname} → {mdl.filepath}"
-        elif len(info_lines) > 0:
-            # For error cases, show the first line (error message)
-            summary = info_lines[0]
         self.ui.modelInfoSummaryLabel.setText(summary)
     
     def _on_model_info_toggled(self, checked: bool):
