@@ -5,6 +5,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from pykotor.resource.formats.ncs.dencs.node.node import Node
     from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.scriptutils.sub_script_state import SubScriptState  # pyright: ignore[reportMissingImports]
@@ -104,6 +105,52 @@ class SubroutineAnalysisData:
     def get_state(self, sub: object) -> SubroutineState | None:
         state = self.substates.get(sub)
         return state
+
+    def get_subroutine_node_from_destination(self, destination_node: Node) -> object | None:
+        """Get the ASubroutine node that contains the destination node.
+        
+        The destination node might be:
+        - The ASubroutine node itself
+        - A Start node or other node inside the subroutine's command block
+        
+        This method handles both cases by checking if the node is an ASubroutine,
+        or by finding the parent ASubroutine, or by looking up by position.
+        """
+        from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
+        # First check if destination is an ASubroutine itself
+        if isinstance(destination_node, ASubroutine):
+            return destination_node
+        # Try to find by position
+        try:
+            dest_pos = self.nodedata.get_pos(destination_node)
+            # Find the subroutine whose position is <= dest_pos
+            # Subroutines are stored by their starting position
+            best_sub = None
+            best_pos = -1
+            for pos, sub in self.subroutines.items():
+                if pos <= dest_pos and pos > best_pos:
+                    best_pos = pos
+                    best_sub = sub
+            # Also check main subroutine
+            if self.mainsub is not None:
+                try:
+                    main_pos = self.nodedata.get_pos(self.mainsub)
+                    if main_pos <= dest_pos and main_pos > best_pos:
+                        best_pos = main_pos
+                        best_sub = self.mainsub
+                except RuntimeError:
+                    pass
+            if best_sub is not None:
+                return best_sub
+        except RuntimeError:
+            pass
+        # Try traversing up the tree to find parent ASubroutine
+        current = destination_node.parent()
+        while current is not None:
+            if isinstance(current, ASubroutine):
+                return current
+            current = current.parent()
+        return None
 
     def is_prototyped(self, pos: int, nullok: bool) -> bool:
         sub = self.subroutines.get(pos)

@@ -152,12 +152,30 @@ class DoTypes(PrunedDepthFirstAdapter):
     def out_a_jump_to_subroutine(self, node):
         from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
         if not self.protoskipping and not self.skipdeadcode:
-            substate = self.subdata.get_state(self.nodedata.get_destination(node))
+            destination = self.nodedata.get_destination(node)
+            # get_destination returns a Node (despite type hint saying int)
+            # Find the actual ASubroutine node from the destination node
+            # (destination might be a Start node inside the subroutine)
+            from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
+            if not isinstance(destination, Node):
+                # This shouldn't happen, but handle it gracefully
+                raise RuntimeError(f"Jump to subroutine: destination is not a Node (got {type(destination)})")
+            subroutine_node = self.subdata.get_subroutine_node_from_destination(destination)
+            if subroutine_node is None:
+                try:
+                    dest_pos = self.nodedata.get_pos(destination)
+                    raise RuntimeError(f"Jump to subroutine at position {dest_pos}: could not find containing subroutine node. The jump destination may be invalid.")
+                except RuntimeError:
+                    raise RuntimeError("Jump to subroutine: could not find containing subroutine node. The jump destination may be invalid.")
+            substate = self.subdata.get_state(subroutine_node)
+            if substate is None:
+                dest_pos = self.nodedata.get_pos(destination)
+                raise RuntimeError(f"Jump to subroutine at position {dest_pos}: subroutine state not found. The subroutine may not have been registered.")
             if not substate.is_prototyped():
                 print("Uh-oh...")
                 if hasattr(substate, 'print_state'):
                     substate.print_state()
-                raise RuntimeError(f"Hit JSR on unprototyped subroutine {self.nodedata.get_pos(self.nodedata.get_destination(node))}")
+                raise RuntimeError(f"Hit JSR on unprototyped subroutine {self.nodedata.get_pos(subroutine_node)}")
             paramsize = substate.get_param_count()
             if substate.is_totally_prototyped():
                 self.stack.remove(paramsize)
