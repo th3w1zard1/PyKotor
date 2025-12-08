@@ -528,12 +528,18 @@ class SceneBase:
         lightmap: bool = False,
     ) -> Texture:
         type_name: Literal["lightmap", "texture"] = "lightmap" if lightmap else "texture"
+        RobustLogger().debug(f"scene.texture() called for {type_name} '{name}'")
         # Already cached?
         if name in self.textures:
             tex = self.textures[name]
             if tex is self._missing_texture and lightmap:
                 return self._missing_lightmap
-            RobustLogger().debug(f"Texture '{name}' returned from cache (already loaded)")
+            # Check if lookup info exists for cached texture
+            if name not in self.texture_lookup_info:
+                RobustLogger().warning(f"Texture '{name}' is cached but has NO lookup info! This shouldn't happen.")
+            else:
+                lookup_info = self.texture_lookup_info[name]
+                RobustLogger().debug(f"Texture '{name}' returned from cache (already loaded), lookup_info: found={lookup_info.get('found')}, filepath={lookup_info.get('filepath')}")
             return tex
         
         # Already loading?
