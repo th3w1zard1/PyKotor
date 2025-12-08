@@ -44,10 +44,14 @@ class Ui_MainWindow(object):
         self.actionSave_As.setObjectName("actionSave_As")
         self.actionRevert = QtWidgets.QAction(MainWindow)
         self.actionRevert.setObjectName("actionRevert")
+        self.actionExit = QtWidgets.QAction(MainWindow)
+        self.actionExit.setObjectName("actionExit")
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionSave)
         self.menuFile.addAction(self.actionSave_As)
         self.menuFile.addAction(self.actionRevert)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionExit)
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -62,4 +66,5 @@ class Ui_MainWindow(object):
         self.actionSave.setText(_translate("MainWindow", "Save"))
         self.actionSave_As.setText(_translate("MainWindow", "Save As"))
         self.actionRevert.setText(_translate("MainWindow", "Revert"))
+        self.actionExit.setText(_translate("MainWindow", "Exit"))
 from toolset.gui.widgets.renderer.model import ModelRenderer
