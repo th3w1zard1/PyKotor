@@ -562,18 +562,71 @@ class UTDEditor(Editor):
         }
         return " → ".join(location_names.get(loc, str(loc)) for loc in search_order)
     
+    def _extract_texture_names_from_mdl(self, mdl_data: bytes | bytearray) -> set[str]:
+        """Extract all texture and lightmap names from MDL data without doing lookups."""
+        from pykotor.common.stream import BinaryReader
+        
+        texture_names: set[str] = set()
+        try:
+            mdl_reader = BinaryReader.from_auto(mdl_data)
+            mdl_reader.seek(40)
+            root_offset = mdl_reader.read_uint32()
+            
+            # Recursively extract texture names from all nodes
+            def extract_from_node(offset: int) -> None:
+                if offset == 0:
+                    return
+                mdl_reader.seek(offset)
+                node_type = mdl_reader.read_uint32()
+                mdl_reader.read_uint32()  # name_index
+                mdl_reader.read_uint32()  # parent_index
+                offset_to_children = mdl_reader.read_uint32()
+                mdl_reader.read_uint32()  # offset_to_controller (unused)
+                
+                # Check if this node has a mesh (bit 5 = 0b100000)
+                if node_type & 0b100000:
+                    mdl_reader.seek(offset + 80 + 88)
+                    texture = mdl_reader.read_terminated_string("\0", 32).strip("\0")
+                    lightmap = mdl_reader.read_terminated_string("\0", 32).strip("\0")
+                    if texture and texture != "NULL":
+                        texture_names.add(texture)
+                    if lightmap and lightmap != "NULL":
+                        texture_names.add(lightmap)
+                
+                # Recursively process children
+                if offset_to_children != 0:
+                    mdl_reader.seek(offset_to_children)
+                    child_count = mdl_reader.read_uint32()
+                    for _ in range(child_count):
+                        child_offset = mdl_reader.read_uint32()
+                        extract_from_node(child_offset)
+            
+            extract_from_node(root_offset)
+        except Exception:  # noqa: BLE001
+            pass  # If parsing fails, return empty set
+        
+        return texture_names
+    
     def _populate_texture_info(self, info_lines: list[str], mdl_data: bytes | bytearray | None = None):
         """Populate texture info from renderer's stored lookups (no additional lookups)."""
         scene = self.ui.previewRenderer._scene
         if scene is None:
             return
+        
         texture_lookup_info = getattr(scene, "texture_lookup_info", {})
-        if not texture_lookup_info:
+        
+        # Extract texture names from MDL if lookup info is empty (textures not loaded yet)
+        expected_textures: set[str] = set()
+        if not texture_lookup_info and mdl_data is not None:
+            expected_textures = self._extract_texture_names_from_mdl(mdl_data)
+        
+        if not texture_lookup_info and not expected_textures:
             return
         
         info_lines.append("")
         info_lines.append("Textures (from renderer):")
-        tex_info: dict[str, Any] = {}
+        
+        # Show textures that have been looked up
         for tex_name, tex_info in sorted(texture_lookup_info.items()):
             if tex_info.get("found"):
                 filepath = tex_info.get("filepath")
@@ -591,6 +644,12 @@ class UTDEditor(Editor):
                 search_order = tex_info.get("search_order")
                 search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
                 info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
+        
+        # Show textures that haven't been looked up yet (pending)
+        if expected_textures:
+            pending = expected_textures - set(texture_lookup_info.keys())
+            for tex_name in sorted(pending):
+                info_lines.append(f"  {tex_name}: ⏳ Pending (will load during rendering)")
     
     def _on_model_info_toggled(self, checked: bool):
         """Handle model info groupbox toggle."""
