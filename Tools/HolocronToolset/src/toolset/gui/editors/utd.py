@@ -562,71 +562,37 @@ class UTDEditor(Editor):
         }
         return " → ".join(location_names.get(loc, str(loc)) for loc in search_order)
     
-    def _extract_texture_names_from_mdl(self, mdl_data: bytes | bytearray) -> set[str]:
-        """Extract all texture and lightmap names from MDL file data.
+    def _get_expected_textures_from_loaded_model(self, scene) -> set[str]:
+        """Get all texture names from the already-loaded model in the scene.
         
-        This traverses the MDL structure to find all texture references without
-        loading the full model. Returns a set of unique texture names.
+        Uses the EXISTING loaded model structure - no additional parsing or traversal.
+        Returns a set of unique texture names.
         """
-        if not mdl_data:
-            return set()
-        
-        try:
-            from pykotor.common.stream import BinaryReader
-            textures: set[str] = set()
-            mdl_reader = BinaryReader.from_auto(mdl_data)
-            
-            # Read root node offset
-            mdl_reader.seek(40)
-            root_offset = mdl_reader.read_uint32()
-            
-            # Recursive function to traverse nodes
-            def extract_from_node(offset: int):
-                if offset == 0:
-                    return
-                
-                mdl_reader.seek(offset)
-                node_type = mdl_reader.read_uint16()
-                mdl_reader.read_uint16()  # supernode id
-                mdl_reader.read_uint16()  # name_id
-                
-                # Check if this node has a mesh (bit 5 of node_type)
-                if node_type & 0b100000:
-                    mdl_reader.seek(offset + 80 + 88)
-                    texture = mdl_reader.read_terminated_string("\0", 32)
-                    lightmap = mdl_reader.read_terminated_string("\0", 32)
-                    
-                    # Add non-NULL textures and lightmaps
-                    if texture and texture != "NULL":
-                        textures.add(texture)
-                    if lightmap and lightmap != "NULL":
-                        textures.add(lightmap)
-                
-                # Process children
-                mdl_reader.seek(offset + 16)
-                mdl_reader.read_single()  # position x
-                mdl_reader.read_single()  # position y
-                mdl_reader.read_single()  # position z
-                mdl_reader.read_single()  # rotation w
-                mdl_reader.read_single()  # rotation x
-                mdl_reader.read_single()  # rotation y
-                mdl_reader.read_single()  # rotation z
-                child_offsets = mdl_reader.read_uint32()
-                child_count = mdl_reader.read_uint32()
-                
-                # Read child offsets and recurse
-                if child_offsets != 0 and child_count > 0:
-                    mdl_reader.seek(child_offsets)
-                    for _ in range(child_count):
-                        child_offset = mdl_reader.read_uint32()
-                        extract_from_node(child_offset)
-            
-            # Start extraction from root
-            extract_from_node(root_offset)
+        textures: set[str] = set()
+        if scene is None:
             return textures
-        except Exception:  # noqa: BLE001
-            # If parsing fails, return empty set
-            return set()
+        
+        # Get the loaded model from the scene (already loaded by renderer)
+        model = scene.models.get("model")
+        if model is None:
+            return textures
+        
+        # Traverse the already-loaded model's node tree
+        # This uses the EXISTING model structure - no additional parsing
+        nodes = [model.root]
+        while nodes:
+            node = nodes.pop()
+            # Add children to process
+            nodes.extend(node.children)
+            
+            # Get texture names from this node's mesh (if it has one)
+            if node.mesh is not None:
+                if node.mesh.texture and node.mesh.texture != "NULL":
+                    textures.add(node.mesh.texture)
+                if node.mesh.lightmap and node.mesh.lightmap != "NULL":
+                    textures.add(node.mesh.lightmap)
+        
+        return textures
     
     def _populate_texture_info(self, info_lines: list[str], mdl_data: bytes | bytearray | None = None):
         """Populate texture info from renderer's stored lookups (no additional lookups).
@@ -643,10 +609,9 @@ class UTDEditor(Editor):
         texture_lookup_info = getattr(scene, "texture_lookup_info", {})
         pending_textures = getattr(scene, "_pending_texture_futures", {})
         
-        # Extract expected texture names from MDL file
-        expected_textures: set[str] = set()
-        if mdl_data:
-            expected_textures = self._extract_texture_names_from_mdl(mdl_data)
+        # Get expected texture names from the already-loaded model in the scene
+        # Uses EXISTING loaded model structure - no additional parsing
+        expected_textures = self._get_expected_textures_from_loaded_model(scene)
         
         # If we have expected textures, show all of them
         # Otherwise, fall back to showing only what's in lookup_info
