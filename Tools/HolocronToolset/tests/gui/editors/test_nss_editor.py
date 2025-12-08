@@ -12,8 +12,8 @@ from typing import cast
 import pytest
 from pathlib import Path
 from qtpy.QtCore import Qt, QPoint, QTimer
-from qtpy.QtWidgets import QApplication, QListWidgetItem, QTreeWidgetItem, QPushButton
-from qtpy.QtGui import QKeyEvent, QMouseEvent, QPlainTextDocumentLayout, QTextCursor
+from qtpy.QtWidgets import QApplication, QListWidgetItem, QTreeWidgetItem, QPushButton, QPlainTextDocumentLayout
+from qtpy.QtGui import QKeyEvent, QMouseEvent, QTextCursor
 
 from toolset.gui.editors.nss import NSSEditor
 from toolset.data.installation import HTInstallation

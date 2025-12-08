@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
+from loggerplus import RobustLogger
 from qtpy.QtWidgets import QMessageBox
 
 from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
 from pykotor.common.stream import BinaryWriter  # pyright: ignore[reportMissingImports]
+from pykotor.extract.installation import SearchLocation  # pyright: ignore[reportMissingImports]
 from pykotor.resource.formats.gff import write_gff  # pyright: ignore[reportMissingImports]
 from pykotor.resource.generics.dlg import DLG, dismantle_dlg  # pyright: ignore[reportMissingImports]
 from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd  # pyright: ignore[reportMissingImports]
-from pykotor.extract.installation import SearchLocation  # pyright: ignore[reportMissingImports]
 from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
 from pykotor.tools import door  # pyright: ignore[reportMissingImports]
 from toolset.data.installation import HTInstallation
@@ -75,7 +76,7 @@ class UTDEditor(Editor):
         # Initialize model info widget state (collapsed by default)
         self.ui.modelInfoLabel.setVisible(False)
         self.ui.modelInfoSummaryLabel.setVisible(True)
-        
+
         self.update3dPreview()
         self.new()
         self.resize(654, 495)
@@ -164,6 +165,7 @@ class UTDEditor(Editor):
         widget.setEnabled(installation.tsl)
         if not installation.tsl:
             from toolset.gui.common.localization import translate as tr  # noqa: PLC0415
+
             widget.setToolTip(tr("This widget is only available in KOTOR II."))
 
     def load(
@@ -252,7 +254,9 @@ class UTDEditor(Editor):
         self.ui.onSpellEdit.populate_combo_box(self.relevant_script_resnames)
         self.ui.onUnlockEdit.populate_combo_box(self.relevant_script_resnames)
         self.ui.onUserDefinedSelect.populate_combo_box(self.relevant_script_resnames)
-        self.ui.conversationEdit.populate_combo_box(sorted(iter({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.DLG, self._filepath)})))  # noqa: E501
+        self.ui.conversationEdit.populate_combo_box(
+            sorted(iter({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.DLG, self._filepath)}))
+        )  # noqa: E501
 
         # Comments
         self.ui.commentsEdit.setPlainText(utd.comment)
@@ -367,7 +371,12 @@ class UTDEditor(Editor):
         search: ResourceResult | None = self._installation.resource(resname, ResourceType.DLG)
 
         if search is None:
-            msgbox = QMessageBox(QMessageBox.Icon.Information, "DLG file not found", "Do you wish to create a file in the override?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No).exec()
+            msgbox = QMessageBox(
+                QMessageBox.Icon.Information,
+                "DLG file not found",
+                "Do you wish to create a file in the override?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            ).exec()
             if msgbox == QMessageBox.StandardButton.Yes:
                 data = bytearray()
 
@@ -519,10 +528,10 @@ class UTDEditor(Editor):
         # Store for later refresh when textures load
         self._last_info_lines_base = info_lines.copy()
         self._last_mdl_data = mdl.data if mdl is not None else None
-        
+
         full_text = "\n".join(info_lines)
         self.ui.modelInfoLabel.setText(full_text)
-        
+
         # Update summary (first line or key info)
         summary = info_lines[0] if info_lines else "No model information"
         if len(info_lines) > 1 and mdl is not None and mdx is not None:
@@ -533,10 +542,11 @@ class UTDEditor(Editor):
             except (ValueError, AttributeError):
                 summary = f"{modelname} → {mdl.filepath}"
         self.ui.modelInfoSummaryLabel.setText(summary)
-    
+
     def _refresh_model_info(self):
         """Refresh model info text when resources finish loading."""
         from loggerplus import RobustLogger
+
         RobustLogger().debug("_refresh_model_info called - textures finished loading")
         # Rebuild the entire model info display
         if hasattr(self, "_last_mdl_data") and self._last_mdl_data is not None:
@@ -547,7 +557,7 @@ class UTDEditor(Editor):
             RobustLogger().debug(f"Model info refreshed with {len(info_lines)} lines")
         else:
             RobustLogger().debug("_refresh_model_info: No _last_mdl_data available")
-    
+
     def _format_search_order(self, search_order: list[SearchLocation]) -> str:
         """Format search order list into human-readable string."""
         location_names = {
@@ -561,10 +571,10 @@ class UTDEditor(Editor):
             SearchLocation.TEXTURES_GUI: "GUI Textures",
         }
         return " → ".join(location_names.get(loc, str(loc)) for loc in search_order)
-    
+
     def _populate_texture_info(self, info_lines: list[str], mdl_data: bytes | bytearray | None = None):
         """Populate texture info from renderer's stored lookups (no additional lookups).
-        
+
         Shows all expected textures from the MDL file, including:
         - Found textures (with filepath and source)
         - Not found textures (with search order)
@@ -573,7 +583,7 @@ class UTDEditor(Editor):
         scene = self.ui.previewRenderer._scene
         if scene is None:
             return
-        
+
         texture_lookup_info = getattr(scene, "texture_lookup_info", {})
         pending_textures = getattr(scene, "_pending_texture_futures", {})
         
@@ -582,12 +592,30 @@ class UTDEditor(Editor):
         requested_texture_names = getattr(scene, "requested_texture_names", set())
         RobustLogger().debug(f"_populate_texture_info: Found {len(requested_texture_names)} texture names requested during rendering: {sorted(requested_texture_names)}")
         
+        # If no textures have been requested yet (model hasn't rendered), get them from the already-loaded model structure
+        # This uses the ALREADY-PARSED model data - no additional traversal, just reading what was already parsed
+        if not requested_texture_names:
+            model = scene.models.get("model")
+            if model is not None:
+                RobustLogger().debug("Model hasn't rendered yet, getting texture names from already-loaded model structure")
+                # Get texture names from already-parsed mesh data (no additional parsing)
+                nodes = [model.root]
+                while nodes:
+                    node = nodes.pop()
+                    nodes.extend(node.children)
+                    if node.mesh is not None:
+                        if node.mesh.texture and node.mesh.texture != "NULL":
+                            requested_texture_names.add(node.mesh.texture)
+                        if node.mesh.lightmap and node.mesh.lightmap != "NULL":
+                            requested_texture_names.add(node.mesh.lightmap)
+                RobustLogger().debug(f"Found {len(requested_texture_names)} texture names from already-loaded model: {sorted(requested_texture_names)}")
+
         # If we have requested texture names (from actual rendering), show all of them
         # Otherwise, fall back to showing only what's in lookup_info
         if requested_texture_names:
             info_lines.append("")
             info_lines.append("Textures (from renderer):")
-            
+
             # Show all textures that were requested during rendering
             RobustLogger().debug(f"Displaying {len(requested_texture_names)} textures requested during rendering")
             for tex_name in sorted(requested_texture_names):
@@ -637,7 +665,7 @@ class UTDEditor(Editor):
                     search_order = tex_info.get("search_order")
                     search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
                     info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
-    
+
     def _on_model_info_toggled(self, checked: bool):
         """Handle model info groupbox toggle."""
         self.ui.modelInfoLabel.setVisible(checked)
@@ -661,6 +689,7 @@ class UTDEditor(Editor):
 
         try:
             from pathlib import Path
+
             path = self._installation.path()
             filepath_obj = Path(filepath) if not isinstance(filepath, Path) else filepath
             rel_path = filepath_obj.relative_to(path)
@@ -680,4 +709,3 @@ class UTDEditor(Editor):
         except (ValueError, AttributeError):
             pass
         return None
-

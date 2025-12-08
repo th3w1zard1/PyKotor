@@ -284,6 +284,8 @@ class Scene(SceneBase):
             return
 
         model: Model = self.model(obj.model)
+        from loggerplus import RobustLogger
+        RobustLogger().debug(f"_render_object: Rendering model '{obj.model}' (obj.data={type(obj.data).__name__ if obj.data else None})")
         transform = transform * obj.transform()
         model.draw(shader, transform, override_texture=obj.override_texture)
 

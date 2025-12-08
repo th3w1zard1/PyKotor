@@ -26,7 +26,7 @@ from pykotor.gl import glm, mat4, quat, vec3, vec4
 from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
-    from pykotor.gl.scene import Scene
+    from pykotor.gl.scene import Scene, SceneBase
     from pykotor.gl.shader import Shader
 
 
@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 class Model:
-    def __init__(self, scene: Scene, root: Node):
-        self._scene: Scene = scene
+    def __init__(self, scene: SceneBase, root: Node):
+        self._scene: SceneBase = scene
         self.root: Node = root
 
     def draw(
@@ -132,11 +132,11 @@ class Model:
 class Node:
     def __init__(
         self,
-        scene: Scene,
+        scene: SceneBase,
         parent: Node | None,
         name: str,
     ):
-        self._scene: Scene = scene
+        self._scene: SceneBase = scene
         self._parent: Node | None = parent
         self.name: str = name
         self._transform: mat4 = mat4()
@@ -233,7 +233,7 @@ class Node:
 class Mesh:
     def __init__(
         self,
-        scene: Scene,
+        scene: SceneBase,
         node: Node,
         texture: str,
         lightmap: str,
@@ -246,7 +246,7 @@ class Mesh:
         texture_offset: int,
         lightmap_offset: int,
     ):
-        self._scene: Scene = scene
+        self._scene: SceneBase = scene
         self._node: Node = node
 
         self.texture: str = "NULL"
@@ -302,8 +302,11 @@ class Mesh:
     ):
         shader.set_matrix4("model", transform)
 
+        tex_name = override_texture or self.texture
+        from loggerplus import RobustLogger
+        RobustLogger().debug(f"Mesh.draw() (mdl.py) called - requesting texture '{tex_name}' and lightmap '{self.lightmap}'")
         glActiveTexture(GL_TEXTURE0)
-        self._scene.texture(override_texture or self.texture).use()
+        self._scene.texture(tex_name).use()
 
         glActiveTexture(GL_TEXTURE1)
         self._scene.texture(self.lightmap, lightmap=True).use()
@@ -313,7 +316,7 @@ class Mesh:
 
     def vertex_blob(self) -> bytes:
         """Generate vertex blob for ModernGL rendering.
-        
+
         Returns a bytes object containing interleaved vertex data:
         - 3 floats for position (x, y, z)
         - 2 floats for diffuse UV (u, v)
@@ -415,16 +418,12 @@ class Cube:
         self.min_point: vec3 = min_point
         self.max_point: vec3 = max_point
 
-        self._vao = 0
-        self._vbo = 0
-        self._ebo = 0
         self._face_count: int = len(elements)
-        self._buffers_supported = False
 
         try:
-            self._vao = glGenVertexArrays(1)
-            self._vbo = glGenBuffers(1)
-            self._ebo = glGenBuffers(1)
+            self._vao: int = glGenVertexArrays(1)
+            self._vbo: int = glGenBuffers(1)
+            self._ebo: int = glGenBuffers(1)
             glBindVertexArray(self._vao)
 
             glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
@@ -438,16 +437,14 @@ class Cube:
 
             glBindBuffer(GL_ARRAY_BUFFER, 0)
             glBindVertexArray(0)
-            self._buffers_supported = True
+            self._buffers_supported: bool = True
         except gl_error.NullFunctionError:
-            logger.warning(
-                "OpenGL buffer objects are unavailable; falling back to CPU-only cube bounds."
-            )
+            logger.warning("OpenGL buffer objects are unavailable; falling back to CPU-only cube bounds.")
             self._face_count = 0
             self._vao = 0
             self._vbo = 0
             self._ebo = 0
-
+            self._buffers_supported = False
 
     def draw(self, shader: Shader, transform: mat4):
         if not self._buffers_supported:
@@ -466,40 +463,35 @@ class Boundary:
     ):
         self._scene: Scene = scene
 
-        vertices, elements = self._build_nd(vertices)
+        vertices_np, elements_np = self._build_nd(vertices)
 
-        self._vao = 0
-        self._vbo = 0
-        self._ebo = 0
-        self._face_count: int = len(elements)
-        self._buffers_supported = False
+        self._face_count: int = len(elements_np)
 
         try:
-            self._vao = glGenVertexArrays(1)
-            self._vbo = glGenBuffers(1)
-            self._ebo = glGenBuffers(1)
+            self._vao: int = glGenVertexArrays(1)
+            self._vbo: int = glGenBuffers(1)
+            self._ebo: int = glGenBuffers(1)
             glBindVertexArray(self._vao)
 
             glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
-            glBufferData(GL_ARRAY_BUFFER, len(vertices) * 4, vertices, GL_STATIC_DRAW)
+            glBufferData(GL_ARRAY_BUFFER, len(vertices_np) * 4, vertices_np, GL_STATIC_DRAW)
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(elements) * 4, elements, GL_STATIC_DRAW)
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(elements_np) * 4, elements_np, GL_STATIC_DRAW)
 
             glEnableVertexAttribArray(1)
             glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
 
             glBindBuffer(GL_ARRAY_BUFFER, 0)
             glBindVertexArray(0)
-            self._buffers_supported = True
+            self._buffers_supported: bool = True
         except gl_error.NullFunctionError:
-            logger.warning(
-                "OpenGL buffer objects are unavailable; boundary rendering disabled."
-            )
+            logger.warning("OpenGL buffer objects are unavailable; boundary rendering disabled.")
             self._face_count = 0
             self._vao = 0
             self._vbo = 0
             self._ebo = 0
+            self._buffers_supported = False
 
     @classmethod
     def from_circle(
@@ -536,24 +528,23 @@ class Boundary:
         glDrawElements(GL_TRIANGLES, self._face_count, GL_UNSIGNED_SHORT, None)
 
     def _build_nd(self, vertices: list[Vector3]) -> tuple[np.ndarray, np.ndarray]:
-        npvertices = []
+        vertices_np: list[float] = []
         for vertex in vertices:
-            npvertices.extend([*vertex, *Vector3(vertex.x, vertex.y, vertex.z + 2)])
+            vertices_np.extend([*vertex, *Vector3(vertex.x, vertex.y, vertex.z + 2)])
 
-        npfaces: list[int] = []
+        faces_np: list[int] = []
         count = len(vertices) * 2
         for i, _vertex in enumerate(vertices):
             index1 = i * 2
             index2 = i * 2 + 2 if i * 2 + 2 < count else 0
             index3 = i * 2 + 1
             index4 = (i * 2 + 2) + 1 if (i * 2 + 2) + 1 < count else 1
-            npfaces.extend([index1, index2, index3, index2, index4, index3])
-        return np.array(npvertices, dtype="float32"), np.array(npfaces, dtype="int16")
+            faces_np.extend([index1, index2, index3, index2, index4, index3])
+        return np.array(vertices_np, dtype="float32"), np.array(faces_np, dtype="int16")
 
 
 class Empty:
     def __init__(self, scene: Scene):
         self._scene: Scene = scene
 
-    def draw(self, shader: Shader, transform: mat4):
-        ...
+    def draw(self, shader: Shader, transform: mat4): ...

@@ -138,6 +138,8 @@ class Mesh:
 
         # Get textures from scene (scene.texture() has O(1) dict lookup + caching)
         tex_name = override_texture if override_texture else self.texture
+        from loggerplus import RobustLogger
+        RobustLogger().debug(f"Mesh.draw() called - requesting texture '{tex_name}' and lightmap '{self.lightmap}'")
         texture = self._scene.texture(tex_name)
         lightmap = self._scene.texture(self.lightmap, lightmap=True)
         
