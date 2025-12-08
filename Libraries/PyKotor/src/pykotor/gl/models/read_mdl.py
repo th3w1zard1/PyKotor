@@ -63,6 +63,12 @@ def _load_node(
         texture = mdl_reader.read_terminated_string("\0", 32)
         lightmap = mdl_reader.read_terminated_string("\0", 32)
 
+        # Request textures immediately to ensure they are tracked and loaded
+        if texture and texture != "NULL":
+            scene.texture(texture)
+        if lightmap and lightmap != "NULL":
+            scene.texture(lightmap, lightmap=True)
+
         mdl_reader.seek(offset + 80 + 313)
         node.render = bool(mdl_reader.read_uint8())
 
@@ -224,6 +230,14 @@ def gl_load_stitched_model(
         elements: list[int] = []
         child = Node(scene, root, "child")
         root.children.append(child)
+
+        texture, lightmap = key.split("\n")
+
+        # Request textures immediately to ensure they are tracked and loaded
+        if texture and texture != "NULL":
+            scene.texture(texture)
+        if lightmap and lightmap != "NULL":
+            scene.texture(lightmap, lightmap=True)
 
         last_element = 0
         for offset, transform in value:
