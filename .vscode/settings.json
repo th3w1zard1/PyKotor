@@ -47,6 +47,22 @@
         "${workspaceFolder}/Tools/KotorDiff/src",
         "${workspaceFolder}/Tools/GuiConverter/src"
     ],
+    "cursorpyright.analysis.extraPaths": [
+        "${workspaceFolder}/Engines/PyKotorEngine/src",
+        "${workspaceFolder}/Libraries/PyKotor/src",
+        "${workspaceFolder}/Libraries/PyKotorFont/src",
+        "${workspaceFolder}/Libraries/PyKotorGL/src",
+        "${workspaceFolder}/Tools/BatchPatcher/src",
+        "${workspaceFolder}/Tools/GuiConverter/src",
+        "${workspaceFolder}/Tools/HolocronAI/src",
+        "${workspaceFolder}/Tools/HolocronToolset/src",
+        "${workspaceFolder}/Tools/HoloGenerator/src",
+        "${workspaceFolder}/Tools/HoloPatcher/src",
+        "${workspaceFolder}/Tools/HoloPazaak/src",
+        "${workspaceFolder}/Tools/KitGenerator/src",
+        "${workspaceFolder}/Tools/KotorCLI/src",
+        "${workspaceFolder}/Tools/KotorDiff/src"
+    ],
     "python.terminal.launchArgs": [
         "-i",
         "-m",
@@ -70,5 +86,6 @@
     "terminal.integrated.automationProfile.windows": {
         "path": "pwsh.exe",
         "args": ["-NoProfile", "-NoLogo"]
-    }
+    },
+    "python-envs.pythonProjects": []
 }

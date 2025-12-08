@@ -1,0 +1,40 @@
+{
+  "include": ["*.py"],
+  "exclude": [
+    "**/node_modules/**",
+    "**/__pycache__/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/venv/**",
+    "**/.venv/**"
+  ],
+  "extraPaths": [
+    "Engines/PyKotorEngine/src",
+    "Libraries/PyKotor/src",
+    "Libraries/PyKotorFont/src",
+    "Libraries/PyKotorGL/src",
+    "Tools/BatchPatcher/src",
+    "Tools/GuiConverter/src",
+    "Tools/HolocronAI/src",
+    "Tools/HolocronToolset/src",
+    "Tools/HoloGenerator/src",
+    "Tools/HoloPatcher/src",
+    "Tools/HoloPazaak/src",
+    "Tools/KitGenerator/src",
+    "Tools/KotorCLI/src",
+    "Tools/KotorDiff/src"
+  ],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "pythonVersion": "3.8",
+  "analyzeUnannotatedFunctions": true,
+  "deprecateTypingAliases": false,
+  "defineConstant": {
+    "PYQT5": false,
+    "PYSIDE2": false,
+    "PYQT6": true,
+    "PYSIDE6": false
+  }
+}
+
