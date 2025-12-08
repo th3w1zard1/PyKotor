@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import qtpy
 
 from loggerplus import RobustLogger
-from qtpy.QtCore import QPoint, QTimer
+from qtpy.QtCore import QPoint, QTimer, Signal
 from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import QOpenGLWidget  # pyright: ignore[reportPrivateImportUsage]
 
@@ -29,8 +29,13 @@ if TYPE_CHECKING:
 
 
 class ModelRenderer(QOpenGLWidget):
+    # Signal emitted when textures/models finish loading
+    resourcesLoaded = Signal()
+    
     def __init__(self, parent: QWidget):
         super().__init__(parent)
+        self._last_texture_count: int = 0
+        self._last_pending_texture_count: int = 0
 
         self._scene: Scene | None = None
         self.installation: Installation | None = None
@@ -106,6 +111,23 @@ class ModelRenderer(QOpenGLWidget):
 
         # Render first to poll async resources
         self.scene.render()
+        
+        # Check if new textures/models were loaded this frame and emit signal
+        texture_lookup_info = getattr(self.scene, "texture_lookup_info", {})
+        current_texture_count = len(texture_lookup_info)
+        # Also check if any pending textures finished loading (count might not change if lookup was already stored)
+        pending_textures = getattr(self.scene, "_pending_texture_futures", {})
+        previous_pending_count = getattr(self, "_last_pending_texture_count", len(pending_textures))
+        current_pending_count = len(pending_textures)
+        
+        # Emit signal if: lookup info count increased OR pending textures decreased (textures finished loading)
+        if current_texture_count > self._last_texture_count or current_pending_count < previous_pending_count:
+            self._last_texture_count = current_texture_count
+            self._last_pending_texture_count = current_pending_count
+            RobustLogger().debug(f"Texture resources updated: lookup_info={current_texture_count}, pending={current_pending_count}")
+            self.resourcesLoaded.emit()
+        elif current_pending_count != previous_pending_count:
+            self._last_pending_texture_count = current_pending_count
 
         # After rendering, check if we need to reset camera and if model is ready
         pending_reset = getattr(self, "_pending_camera_reset", False)

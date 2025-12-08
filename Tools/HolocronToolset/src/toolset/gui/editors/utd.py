@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from qtpy.QtWidgets import QMessageBox
 
@@ -10,6 +10,7 @@ from pykotor.common.stream import BinaryWriter  # pyright: ignore[reportMissingI
 from pykotor.resource.formats.gff import write_gff  # pyright: ignore[reportMissingImports]
 from pykotor.resource.generics.dlg import DLG, dismantle_dlg  # pyright: ignore[reportMissingImports]
 from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd  # pyright: ignore[reportMissingImports]
+from pykotor.extract.installation import SearchLocation  # pyright: ignore[reportMissingImports]
 from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
 from pykotor.tools import door  # pyright: ignore[reportMissingImports]
 from toolset.data.installation import HTInstallation
@@ -58,7 +59,7 @@ class UTDEditor(Editor):
         super().__init__(parent, "Door Editor", "door", supported, supported, installation)
 
         self.global_settings: GlobalSettings = GlobalSettings()
-        self._genericdoors_2da: TwoDA | None = installation.ht_get_cache_2da("genericdoors")  # pyright: ignore[reportOptionalMemberAccess]
+        self._genericdoors_2da: TwoDA | None = installation.ht_get_cache_2da("genericdoors") if installation is not None else None
         self._utd: UTD = UTD()
 
         from toolset.uic.qtpy.editors.utd import Ui_MainWindow  # noqa: PLC0415
@@ -101,6 +102,7 @@ class UTDEditor(Editor):
         self.ui.appearanceSelect.currentIndexChanged.connect(self.update3dPreview)
         self.ui.actionShowPreview.triggered.connect(self.toggle_preview)
         self.ui.modelInfoGroupBox.toggled.connect(self._on_model_info_toggled)
+        self.ui.previewRenderer.resourcesLoaded.connect(self._refresh_model_info)
 
     def _setup_installation(self, installation: HTInstallation):
         """Sets up the installation for editing.
@@ -470,8 +472,12 @@ class UTDEditor(Editor):
         except (IndexError, KeyError):
             pass
 
-        mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL)
-        mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX)
+        # Use same search order as renderer for consistency
+        model_search_order: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.MODULES, SearchLocation.CHITIN]
+        mdl: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDL, model_search_order)
+        mdx: ResourceResult | None = self._installation.resource(modelname, ResourceType.MDX, model_search_order)
+        # Store search order for display
+        self._model_search_order = model_search_order
         if mdl is not None and mdx is not None:
             self.ui.previewRenderer.set_model(mdl.data, mdx.data)
 
@@ -496,20 +502,24 @@ class UTDEditor(Editor):
             if mdx_source:
                 info_lines.append(f"  └─ Source: {mdx_source}")
 
-            # Note about textures
-            info_lines.append("")
-            info_lines.append("Note: Textures are referenced within the MDL file.")
-            info_lines.append("Use the texture browser to locate specific .tga/.tpc files.")
+            # Display texture lookup results from the renderer (no additional lookups)
+            # Read what the renderer already found when it loaded textures
+            self._populate_texture_info(info_lines, mdl.data)
         else:
             self.ui.previewRenderer.clear_model()
             info_lines.append("❌ Resources not found in installation:")
+            search_order_str = self._format_search_order(getattr(self, "_model_search_order", [SearchLocation.OVERRIDE, SearchLocation.MODULES, SearchLocation.CHITIN]))
             if mdl is None:
                 info_lines.append(f"  Missing: {modelname}.mdl")
-                info_lines.append("  (Searched: Override → Modules → Chitin BIFs)")
+                info_lines.append(f"  (Searched: {search_order_str})")
             if mdx is None:
                 info_lines.append(f"  Missing: {modelname}.mdx")
-                info_lines.append("  (Searched: Override → Modules → Chitin BIFs)")
+                info_lines.append(f"  (Searched: {search_order_str})")
 
+        # Store for later refresh when textures load
+        self._last_info_lines_base = info_lines.copy()
+        self._last_mdl_data = mdl.data if mdl is not None else None
+        
         full_text = "\n".join(info_lines)
         self.ui.modelInfoLabel.setText(full_text)
         
@@ -523,6 +533,64 @@ class UTDEditor(Editor):
             except (ValueError, AttributeError):
                 summary = f"{modelname} → {mdl.filepath}"
         self.ui.modelInfoSummaryLabel.setText(summary)
+    
+    def _refresh_model_info(self):
+        """Refresh model info text when resources finish loading."""
+        from loggerplus import RobustLogger
+        RobustLogger().debug("_refresh_model_info called - textures finished loading")
+        # Rebuild the entire model info display
+        if hasattr(self, "_last_mdl_data") and self._last_mdl_data is not None:
+            info_lines = self._last_info_lines_base.copy() if hasattr(self, "_last_info_lines_base") else []
+            self._populate_texture_info(info_lines, self._last_mdl_data)
+            full_text = "\n".join(info_lines)
+            self.ui.modelInfoLabel.setText(full_text)
+            RobustLogger().debug(f"Model info refreshed with {len(info_lines)} lines")
+        else:
+            RobustLogger().debug("_refresh_model_info: No _last_mdl_data available")
+    
+    def _format_search_order(self, search_order: list[SearchLocation]) -> str:
+        """Format search order list into human-readable string."""
+        location_names = {
+            SearchLocation.OVERRIDE: "Override",
+            SearchLocation.CUSTOM_MODULES: "Custom Modules",
+            SearchLocation.MODULES: "Modules",
+            SearchLocation.CHITIN: "Chitin BIFs",
+            SearchLocation.TEXTURES_TPA: "Texture Pack A",
+            SearchLocation.TEXTURES_TPB: "Texture Pack B",
+            SearchLocation.TEXTURES_TPC: "Texture Pack C",
+            SearchLocation.TEXTURES_GUI: "GUI Textures",
+        }
+        return " → ".join(location_names.get(loc, str(loc)) for loc in search_order)
+    
+    def _populate_texture_info(self, info_lines: list[str], mdl_data: bytes | bytearray | None = None):
+        """Populate texture info from renderer's stored lookups (no additional lookups)."""
+        scene = self.ui.previewRenderer._scene
+        if scene is None:
+            return
+        texture_lookup_info = getattr(scene, "texture_lookup_info", {})
+        if not texture_lookup_info:
+            return
+        
+        info_lines.append("")
+        info_lines.append("Textures (from renderer):")
+        tex_info: dict[str, Any] = {}
+        for tex_name, tex_info in sorted(texture_lookup_info.items()):
+            if tex_info.get("found"):
+                filepath = tex_info.get("filepath")
+                restype = tex_info.get("restype")
+                ext = ".tpc" if restype == ResourceType.TPC else ".tga" if restype == ResourceType.TGA else ""
+                try:
+                    rel_path = os.path.relpath(filepath, self._installation.path()) if self._installation and filepath else filepath
+                    info_lines.append(f"  {tex_name}{ext}: {rel_path}")
+                except (ValueError, AttributeError):
+                    info_lines.append(f"  {tex_name}{ext}: {filepath}")
+                source = self._get_source_location_type(filepath) if filepath else None
+                if source:
+                    info_lines.append(f"    └─ Source: {source}")
+            else:
+                search_order = tex_info.get("search_order")
+                search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
+                info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
     
     def _on_model_info_toggled(self, checked: bool):
         """Handle model info groupbox toggle."""

@@ -94,18 +94,29 @@ def _load_and_parse_texture(
     try:
         from pathlib import Path
         
+        # Log in child process (will appear in main process logs)
+        print(f"DEBUG(child): _load_and_parse_texture: Loading texture '{name}' from {filepath} (offset={offset}, size={size})", flush=True)
+        
         # IO: Read raw bytes from file
         path = Path(filepath)
         if not path.exists():
+            print(f"DEBUG(child): _load_and_parse_texture: File not found: {filepath}", flush=True)
             return (name, None, f"File not found: {filepath}")
         
         with path.open("rb") as f:
             f.seek(offset)
             tpc_bytes = f.read(size)
         
+        print(f"DEBUG(child): _load_and_parse_texture: Read {len(tpc_bytes)} bytes for '{name}', parsing...", flush=True)
         # Parsing: Convert bytes to intermediate texture
-        return _parse_texture_data(name, tpc_bytes)
+        result = _parse_texture_data(name, tpc_bytes)
+        if result[1] is not None:
+            print(f"DEBUG(child): _load_and_parse_texture: Successfully parsed texture '{name}'", flush=True)
+        else:
+            print(f"DEBUG(child): _load_and_parse_texture: Failed to parse texture '{name}': {result[2]}", flush=True)
+        return result
     except Exception as e:  # noqa: BLE001
+        print(f"DEBUG(child): _load_and_parse_texture: Exception for '{name}': {e!s}", flush=True)
         return (name, None, f"IO+parse error for texture '{name}': {e!s}\n{traceback.format_exc()}")
 
 
@@ -473,13 +484,16 @@ class AsyncResourceLoader:
         result_future: Future = Future()
         
         try:
+            self.logger.debug(f"load_texture_async: Calling texture_location_resolver for '{name}'")
             location = self.texture_location_resolver(name)
             
             if location is None:
                 # Don't log warnings for every missing texture - too spammy
+                self.logger.debug(f"load_texture_async: Texture '{name}' not found by resolver")
                 result_future.set_result((name, None, f"Texture '{name}' not found"))
             else:
                 filepath, offset, size = location
+                self.logger.debug(f"load_texture_async: Texture '{name}' resolved to {filepath}, submitting to child process")
                 # Submit IO + parsing to child process
                 assert self.process_pool is not None
                 io_parse_future = self.process_pool.submit(_load_and_parse_texture, name, filepath, offset, size)
