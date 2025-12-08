@@ -36,6 +36,7 @@ class ModelRenderer(QOpenGLWidget):
         super().__init__(parent)
         self._last_texture_count: int = 0
         self._last_pending_texture_count: int = 0
+        self._last_requested_texture_count: int = 0
 
         self._scene: Scene | None = None
         self.installation: Installation | None = None
