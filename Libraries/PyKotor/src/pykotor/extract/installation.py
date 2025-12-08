@@ -1136,7 +1136,7 @@ class Installation:
     def resource(  # noqa: PLR0913
         self,
         resname: str,
-        restype: ResourceType,
+        restype: ResourceType | Sequence[ResourceType],
         order: Sequence[SearchLocation] | None = None,
         *,
         capsules: Sequence[Capsule] | None = None,
@@ -1144,7 +1144,7 @@ class Installation:
         module_root: str | None = None,
         logger: Callable[[str], None] | None = None,
     ) -> ResourceResult | None:
-        """Returns a resource matching the specified resref and restype.
+        """Returns a resource matching the specified resref and restype (or one of multiple restypes).
 
         This is a wrapper of the resources() method provided to make fetching for a single resource more convenient.
         If no resource is found then None is returned instead.
@@ -1155,7 +1155,7 @@ class Installation:
         Args:
         ----
             resname: The name of the resource to look for.
-            restype: The type of resource to look for.
+            restype: The type of resource to look for, or a sequence of types to try (in provided order when ordered).
             capsules: An extra list of capsules to search in.
             folders: An extra list of folders to search in.
             order: The ordered list of locations to check.
@@ -1168,24 +1168,38 @@ class Installation:
         """
         if not resname:
             return None
-        query = ResourceIdentifier(resname, restype)
+
+        # Normalize restype(s) to a list to preserve caller intent where possible.
+        restypes: list[ResourceType] = []
+        if isinstance(restype, ResourceType):
+            restypes = [restype]
+        else:
+            # Sequence[ResourceType]; for unordered containers (set), ordering is arbitrary.
+            restypes = list(restype)
+
+        queries = [ResourceIdentifier(resname, rt) for rt in restypes]
         batch: dict[ResourceIdentifier, ResourceResult | None] = self.resources(
-            [query],
+            queries,
             order,
             capsules=capsules,
             folders=folders,
             module_root=module_root,
             logger=logger,
         )
-        search: ResourceResult | None = batch[query]
-        if search is None:
-            from utility.error_handling import format_exception_with_variables
-            try:
-                raise Exception("test")
-            except Exception as e:
-                RobustLogger().warning(f"Could not find '{query}' during resource lookup! {format_exception_with_variables(e)}")
-            return None
-        return search
+
+        # Return the first found in the order of restypes provided
+        for rt in restypes:
+            query = ResourceIdentifier(resname, rt)
+            search = batch.get(query)
+            if search is not None:
+                return search
+
+        from utility.error_handling import format_exception_with_variables
+        try:
+            raise Exception("test")
+        except Exception as e:
+            RobustLogger().warning(f"Could not find '{resname}' with restypes {restypes} during resource lookup! {format_exception_with_variables(e)}")
+        return None
 
     def resources(
         self,

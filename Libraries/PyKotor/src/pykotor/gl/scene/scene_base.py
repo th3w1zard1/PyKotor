@@ -484,6 +484,12 @@ class SceneBase:
                     resource_name, intermediate, error, context = future.result()
                     # ASSERT: Context MUST exist - it contains the exact lookup information
                     assert context is not None, f"Texture '{resource_name}' (key '{name}') finished loading but context is None! This is a bug - context must be provided by _resolve_texture_location."
+                    RobustLogger().debug(
+                        f"poll_async_resources(texture_done): name={name}, resource_name={resource_name}, "
+                        f"error={error}, context_found={context.get('found') if context else None}, "
+                        f"filepath={context.get('filepath') if context else None}, "
+                        f"search_order={context.get('search_order') if context else None}"
+                    )
                     
                     # If context is incomplete (empty search_order), use stored lookup_info from resolver
                     # This happens when resolver returned None (not found) - it stored lookup_info but async_loader created minimal context
@@ -652,7 +658,9 @@ class SceneBase:
                     SearchLocation.TEXTURES_TPA,
                     SearchLocation.CHITIN,
                 ]
-                result = self.installation.resource(name, ResourceType.TPC, search_order)
+                RobustLogger().debug(f"Looking for texture '{name}' with search order: {repr(search_order)}")
+                result = self.installation.resource(name, {ResourceType.TPC, ResourceType.TGA}, order=search_order)
+                RobustLogger().debug(f"Sync texture load: result={result}")
                 if result is not None:
                     from pykotor.resource.formats.tpc import read_tpc
                     tpc = read_tpc(result.data)
@@ -663,7 +671,7 @@ class SceneBase:
                         "found": True,
                         "search_order": search_order.copy(),  # Store search order used
                     }
-                    RobustLogger().debug(f"Sync texture load: Found '{name}' at {result.filepath}, stored in texture_lookup_info")
+                    RobustLogger().debug(f"Sync texture load: Found '{name}' at {result.filepath}, stored in texture_lookup_info (search_order={search_order})")
                 else:
                     # Store EXACT lookup info for "not found" case
                     self.texture_lookup_info[name] = {
@@ -672,7 +680,7 @@ class SceneBase:
                         "restype": ResourceType.TPC,
                         "search_order": search_order.copy(),  # Store search order used even when not found
                     }
-                    RobustLogger().debug(f"Sync texture load: '{name}' not found, stored in texture_lookup_info")
+                    RobustLogger().debug(f"Sync texture load: '{name}' not found, stored in texture_lookup_info (search_order={search_order})")
             if tpc is None:
                 RobustLogger().warning(f"MISSING {type_name.upper()}: '{name}'")
         except Exception:  # noqa: BLE001

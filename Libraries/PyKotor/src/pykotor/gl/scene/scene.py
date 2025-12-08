@@ -10,6 +10,7 @@ from OpenGL.raw.GL.VERSION.GL_1_0 import GL_BLEND, GL_COLOR_BUFFER_BIT, GL_CULL_
 from OpenGL.raw.GL.VERSION.GL_1_2 import GL_BGRA, GL_UNSIGNED_INT_8_8_8_8
 from glm import mat4, vec3, vec4
 
+from loggerplus import RobustLogger
 from pykotor.extract.installation import SearchLocation
 from pykotor.gl.models.mdl import Model
 from pykotor.gl.scene.frustum import CullingStats, Frustum
