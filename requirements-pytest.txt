@@ -1,7 +1,5 @@
 -r Tools/HoloPatcher/requirements.txt
--r Tools/HoloPatcher/recommended.txt
 -r Libraries/PyKotor/requirements.txt
--r Libraries/PyKotor/recommended.txt
 mypy
 ruff
 pylint

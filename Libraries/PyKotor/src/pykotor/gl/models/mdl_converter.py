@@ -20,16 +20,15 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pykotor.resource.formats.mdl.mdl_data import MDLMesh, MDLNode  # pyright: ignore[reportMissingImports]
-    from utility.common.geometry import Vector2, Vector3
 
 
 class VertexFormatRequirements:
     """Vertex format requirements for a mesh.
-    
+
     This class encapsulates the vertex format requirements in a backend-agnostic way,
     allowing any rendering backend implementation to determine what attributes
     are needed.
-    
+
     Attributes:
     ----------
         has_normals: True if mesh has vertex normals
@@ -38,7 +37,7 @@ class VertexFormatRequirements:
         has_skinning: True if mesh has bone weights
         has_uv2: True if mesh has second UV set
     """
-    
+
     def __init__(
         self,
         has_normals: bool,
@@ -47,25 +46,26 @@ class VertexFormatRequirements:
         has_skinning: bool,
         has_uv2: bool,
     ):
-        self.has_normals = has_normals
-        self.has_tangent_space = has_tangent_space
-        self.has_lightmap = has_lightmap
-        self.has_skinning = has_skinning
-        self.has_uv2 = has_uv2
-    
+        self.has_normals: bool = has_normals
+        self.has_tangent_space: bool = has_tangent_space
+        self.has_lightmap: bool = has_lightmap
+        self.has_skinning: bool = has_skinning
+        self.has_uv2: bool = has_uv2
+
     @classmethod
     def from_mesh(cls, mesh: MDLMesh) -> VertexFormatRequirements:
         """Create requirements from an MDL mesh.
-        
+
         Args:
         ----
             mesh: MDL mesh to analyze
-        
+
         Returns:
         -------
             VertexFormatRequirements object
         """
         from pykotor.common.geometry_utils import determine_vertex_format_requirements
+
         reqs = determine_vertex_format_requirements(mesh)
         return cls(
             has_normals=reqs["has_normals"],
@@ -76,20 +76,20 @@ class VertexFormatRequirements:
         )
 
 
-def get_node_type_priority(mdl_node: "MDLNode") -> int:
+def get_node_type_priority(mdl_node: MDLNode) -> int:
     """Get node type priority for conversion order.
-    
+
     Some node types (like skin, dangly, saber) also have mesh data, so we need
     to prioritize which converter to use. Higher priority = converted first.
-    
+
     Args:
     ----
         mdl_node: MDL node to check
-    
+
     Returns:
     -------
         Priority value (higher = more important)
-    
+
     References:
     ----------
         vendor/reone/src/libs/scene/node/model.cpp:62-69 - Node type checking
@@ -116,18 +116,18 @@ def get_node_type_priority(mdl_node: "MDLNode") -> int:
     return 0  # Dummy node
 
 
-def get_node_converter_type(mdl_node: "MDLNode") -> str:
+def get_node_converter_type(mdl_node: MDLNode) -> str:
     """Get the converter type string for an MDL node.
-    
+
     Args:
     ----
         mdl_node: MDL node to check
-    
+
     Returns:
     -------
-        Converter type string: "aabb", "saber", "dangly", "skin", "mesh", 
+        Converter type string: "aabb", "saber", "dangly", "skin", "mesh",
         "light", "emitter", "reference", or "dummy"
-    
+
     References:
     ----------
         vendor/reone/src/libs/scene/node/model.cpp:62-69 - Node type checking
@@ -154,17 +154,17 @@ def get_node_converter_type(mdl_node: "MDLNode") -> str:
 
 def should_reverse_winding_order(backend: str = "opengl") -> bool:
     """Determine if face winding order should be reversed.
-    
+
     KotOR uses clockwise winding, but different backends may expect different orders.
-    
+
     Args:
     ----
         backend: Backend name (e.g., "opengl", "threejs")
-    
+
     Returns:
     -------
         True if winding order should be reversed (KotOR CW -> backend CCW)
-    
+
     References:
     ----------
         vendor/xoreos/src/graphics/mesh.cpp:300 - Winding order reversal
@@ -177,4 +177,3 @@ def should_reverse_winding_order(backend: str = "opengl") -> bool:
         return False
     # Default: most backends need reversal
     return True
-

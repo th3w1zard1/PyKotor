@@ -75,7 +75,7 @@ PyKotor supports multiple package managers. Choose the one that works best for y
    uv pip install -e Libraries/PyKotor
    
    # Install with optional extensions
-   uv pip install -e Libraries/PyKotor -e Libraries/PyKotorGL -e Libraries/PyKotorFont
+   uv pip install -e Libraries/PyKotor
    
    # Install specific tools
    uv pip install -e Tools/HolocronToolset

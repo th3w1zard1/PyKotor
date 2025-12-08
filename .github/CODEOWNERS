@@ -3,8 +3,6 @@
 
 # Core libraries
 /Libraries/PyKotor/ @th3w1zard1
-/Libraries/PyKotorGL/ @th3w1zard1
-/Libraries/PyKotorFont/ @th3w1zard1
 
 # Tools
 /Tools/HolocronToolset/ @th3w1zard1

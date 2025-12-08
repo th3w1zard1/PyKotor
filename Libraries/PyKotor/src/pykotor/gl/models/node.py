@@ -107,8 +107,6 @@ class Node:
         transform = transform * self._transform
 
         if self.mesh and self.render:
-            from loggerplus import RobustLogger
-            RobustLogger().debug(f"Node.draw() calling mesh.draw() for node '{self.name}' with texture '{self.mesh.texture if hasattr(self.mesh, 'texture') else 'N/A'}'")
             self.mesh.draw(shader, transform, override_texture)
 
         for child in self.children:

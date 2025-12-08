@@ -5,8 +5,8 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.ncs.dencs.node.node import Node
     from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node
     from pykotor.resource.formats.ncs.dencs.node.start import Start  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.scriptutils.sub_script_state import SubScriptState  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.stack.local_var_stack import LocalVarStack  # pyright: ignore[reportMissingImports]
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
+
 
 class SubroutineAnalysisData:
     def __init__(self, nodedata: NodeAnalysisData):
@@ -108,15 +109,16 @@ class SubroutineAnalysisData:
 
     def get_subroutine_node_from_destination(self, destination_node: Node) -> object | None:
         """Get the ASubroutine node that contains the destination node.
-        
+
         The destination node might be:
         - The ASubroutine node itself
         - A Start node or other node inside the subroutine's command block
-        
+
         This method handles both cases by checking if the node is an ASubroutine,
         or by finding the parent ASubroutine, or by looking up by position.
         """
         from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
+
         # First check if destination is an ASubroutine itself
         if isinstance(destination_node, ASubroutine):
             return destination_node
@@ -178,6 +180,7 @@ class SubroutineAnalysisData:
     def add_struct(self, struct: StructType | VarStruct):
         from pykotor.resource.formats.ncs.dencs.stack.var_struct import VarStruct  # pyright: ignore[reportMissingImports]
         from pykotor.resource.formats.ncs.dencs.utils.struct_type import StructType  # pyright: ignore[reportMissingImports]
+
         if isinstance(struct, VarStruct):
             structtype = struct.struct_type()
             if structtype not in self.globalstructs:
@@ -222,6 +225,7 @@ class SubroutineAnalysisData:
 
     def add_sub_state(self, sub: object, id: int, type: Type | None = None):
         from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
+
         state = SubroutineState(self.nodedata, sub, id)
         if type is not None:
             state.set_return_type(type, 1)
@@ -231,6 +235,7 @@ class SubroutineAnalysisData:
         self.mainsub = sub
         if conditional:
             from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
+
             self.add_sub_state(self.mainsub, 0, Type(3))
         else:
             self.add_sub_state(self.mainsub, 0)
@@ -240,6 +245,7 @@ class SubroutineAnalysisData:
 
     def get_subroutines(self):
         from pykotor.resource.formats.ncs.dencs.utils.subroutine_iterator import SubroutineIterator  # pyright: ignore[reportMissingImports]
+
         subs: list[object] = []
         keys = sorted(self.subroutines.keys(), reverse=True)
         for key in keys:
@@ -248,8 +254,10 @@ class SubroutineAnalysisData:
 
     def split_off_subroutines(self, ast: Start):
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
+
         conditional = NodeUtils.is_conditional_program(ast)
         from pykotor.resource.formats.ncs.dencs.node.a_program import AProgram  # pyright: ignore[reportMissingImports]
+
         p_program = ast.get_p_program()
         if not isinstance(p_program, AProgram):
             raise RuntimeError(f"Expected AProgram but got {type(p_program)}")
@@ -273,7 +281,7 @@ class SubroutineAnalysisData:
 
     def is_globals_sub(self, node: ASubroutine) -> bool:
         from pykotor.resource.formats.ncs.dencs.utils.check_is_globals import CheckIsGlobals  # pyright: ignore[reportMissingImports]
+
         cig = CheckIsGlobals()
         node.apply(cig)
         return cig.get_is_globals()
-

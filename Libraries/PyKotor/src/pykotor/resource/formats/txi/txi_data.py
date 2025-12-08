@@ -91,8 +91,8 @@ class TXI:
                     continue
 
                 if mode == TXIReaderMode.LOWER_RIGHT_COORDS:
-                    parts: list[str] = parsed_line.split()
-                    coords: tuple[float, float, int] = (
+                    parts = parsed_line.split()
+                    coords = (
                         float(parts[0].strip()),
                         float(parts[1].strip()),
                         int(parts[2].strip()),
@@ -231,11 +231,11 @@ class TXI:
                 elif command == TXICommand.ISDIFFUSEBUMPMAP:
                     self.features.isdiffusebumpmap = bool(int(args))
                     self._empty = False
-                elif command == TXICommand.ISSPECULARBUMPMAP:
-                    self.features.isspecularbumpmap = bool(int(args))
-                    self._empty = False
                 elif command == TXICommand.ISLIGHTMAP:
                     self.features.islightmap = bool(int(args))
+                    self._empty = False
+                elif command == TXICommand.ISSPECULARBUMPMAP:
+                    self.features.isspecularbumpmap = bool(int(args))
                     self._empty = False
                 elif command == TXICommand.LOWERRIGHTCOORDS:
                     if not args:
@@ -716,8 +716,8 @@ class TXIFeatures:
         self.filerange: list[int] | None = None
         self.isbumpmap: bool | None = None
         self.isdiffusebumpmap: bool | None = None
-        self.isspecularbumpmap: bool | None = None
         self.islightmap: bool | None = None
+        self.isspecularbumpmap: bool | None = None
         self.maxSizeHQ: int | None = None
         self.maxSizeLQ: int | None = None
         self.minSizeHQ: int | None = None
@@ -1055,10 +1055,10 @@ class TXIFontInformation(TXIBaseInformation):
         self.caretindent: float = -0.010000
         # Tested. Float between 0 and 1. Was told this actually stretches text down somehow. But in k1 tests, changing this does not yield any noticeable ingame result.  # noqa: E501
         self.fontwidth: float = 1.000000
-
-        self.fontheight: float  # Tested. Float between 0 and 1.
-        self.baselineheight: float  # Untested. Float between 0 and 1.
-        self.texturewidth: float  # Tested. Float between 0 and 1. Actual displayed width of the texture, allows stretching/compressing along the X axis.
+        # Initialize to safe defaults so __str__ and hashing work before metrics are set.
+        self.fontheight: float = 0.0  # Tested. Float between 0 and 1.
+        self.baselineheight: float = 0.0  # Untested. Float between 0 and 1.
+        self.texturewidth: float = 0.0  # Tested. Float between 0 and 1. Actual displayed width of the texture, allows stretching/compressing along the X axis.
 
         self.upper_left_coords: list[tuple[float, float, int]] = []  # Confirmed. The top left coordinates for the character box the game draws. each float is 0 to 1. 3rd tuple int is always 0  # noqa: E501
         self.lower_right_coords: list[tuple[float, float, int]] = []  # Confirmed. The bottom right coordinates for the character box the game draws. each float is 0 to 1. 3rd tuple int is always 0  # noqa: E501

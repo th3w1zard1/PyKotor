@@ -5,8 +5,8 @@ import math
 import os
 import shutil
 import zipfile
-from collections import deque
 
+from collections import deque
 from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
@@ -80,7 +80,6 @@ from toolset.gui.windows.indoor_builder_constants import (
     DEFAULT_CAMERA_ZOOM,
     DEFAULT_GRID_SIZE,
     DEFAULT_ROTATION_SNAP,
-    DragMode,
     DUPLICATE_OFFSET_X,
     DUPLICATE_OFFSET_Y,
     DUPLICATE_OFFSET_Z,
@@ -95,11 +94,11 @@ from toolset.gui.windows.indoor_builder_constants import (
     HOOK_PEN_COLOR_CONNECTED,
     HOOK_PEN_COLOR_SELECTED,
     HOOK_PEN_COLOR_UNCONNECTED,
+    HOOK_SELECTED_RADIUS,
     HOOK_SNAP_BASE_THRESHOLD,
     HOOK_SNAP_DISCONNECT_BASE_THRESHOLD,
     HOOK_SNAP_DISCONNECT_SCALE_FACTOR,
     HOOK_SNAP_SCALE_FACTOR,
-    HOOK_SELECTED_RADIUS,
     MARQUEE_BORDER_COLOR,
     MARQUEE_FILL_COLOR,
     MARQUEE_MOVE_THRESHOLD_PIXELS,
@@ -107,18 +106,18 @@ from toolset.gui.windows.indoor_builder_constants import (
     MIN_CAMERA_ZOOM,
     POSITION_CHANGE_EPSILON,
     RENDER_INTERVAL_MS,
-    ROTATION_CHANGE_EPSILON,
     ROOM_HOVER_ALPHA,
     ROOM_HOVER_COLOR,
     ROOM_SELECTED_ALPHA,
     ROOM_SELECTED_COLOR,
+    ROTATION_CHANGE_EPSILON,
     SNAP_INDICATOR_ALPHA,
     SNAP_INDICATOR_COLOR,
     SNAP_INDICATOR_PEN_WIDTH,
     SNAP_INDICATOR_RADIUS,
+    WARP_POINT_ACTIVE_SCALE,
     WARP_POINT_ALPHA_ACTIVE,
     WARP_POINT_ALPHA_NORMAL,
-    WARP_POINT_ACTIVE_SCALE,
     WARP_POINT_COLOR,
     WARP_POINT_CROSSHAIR_SCALE,
     WARP_POINT_PEN_WIDTH_ACTIVE,
@@ -126,6 +125,7 @@ from toolset.gui.windows.indoor_builder_constants import (
     WARP_POINT_RADIUS,
     ZOOM_STEP,
     ZOOM_WHEEL_SENSITIVITY,
+    DragMode,
 )
 from toolset.utils.misc import get_qt_button_string, get_qt_key_string
 from utility.common.geometry import SurfaceMaterial, Vector2, Vector3
@@ -135,9 +135,10 @@ from utility.system.os_helper import is_frozen
 from utility.updater.github import download_github_release_asset
 
 if TYPE_CHECKING:
+    from qtpy.QtGui import QFocusEvent
+
     from pykotor.resource.formats.bwm import BWMFace  # pyright: ignore[reportMissingImports]
     from toolset.data.indoormap import MissingRoomInfo
-    from qtpy.QtGui import QFocusEvent
 
 
 # =============================================================================
@@ -428,12 +429,7 @@ class ResetWalkmeshCommand(QUndoCommand):
         super().__init__(f"Reset Walkmesh ({len(rooms)} Room(s))")
         self.rooms: list[IndoorMapRoom] = rooms
         self._invalidate_cb: Callable[[list[IndoorMapRoom]], None] = invalidate_cb
-        self._previous_overrides: list[BWM | None] = [
-            None
-            if room.walkmesh_override is None
-            else deepcopy(room.walkmesh_override)
-            for room in rooms
-        ]
+        self._previous_overrides: list[BWM | None] = [None if room.walkmesh_override is None else deepcopy(room.walkmesh_override) for room in rooms]
 
     def undo(self):
         for room, previous in zip(self.rooms, self._previous_overrides):
@@ -562,14 +558,14 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Initialize Options UI to match renderer state
         self._initialize_options_ui()
-        
+
         # Setup Blender integration UI (deferred to avoid layout issues)
         QTimer.singleShot(0, self._install_view_stack)
-        
+
         # Check for Blender on first map load
         if not self._blender_choice_made and self._installation:
             QTimer.singleShot(100, self._check_blender_on_load)
-        
+
         # Setup NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
@@ -629,7 +625,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.sig_rooms_rotated.connect(self.on_rooms_rotated)
         self.ui.mapRenderer.sig_warp_moved.connect(self.on_warp_moved)
         self.ui.mapRenderer.sig_marquee_select.connect(self.on_marquee_select)
-        
+
         # Ensure renderer can receive keyboard focus for accessibility
         self.ui.mapRenderer.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
@@ -819,12 +815,12 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._preview_source_image = image
         # Scale to fit the label's current size
         self._update_preview_image_size()
-    
+
     def _update_preview_image_size(self):
         """Update preview image to match current label size."""
         if self._preview_source_image is None:
             return
-        
+
         # Get the label's available size
         label_size = self.ui.previewImage.size()
         if label_size.width() <= 0 or label_size.height() <= 0:
@@ -832,7 +828,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             label_size = self.ui.previewImage.sizeHint()
             if label_size.width() <= 0 or label_size.height() <= 0:
                 label_size = QSize(128, 128)  # Fallback default
-        
+
         # Scale the image to fit while maintaining aspect ratio
         pixmap = QPixmap.fromImage(self._preview_source_image)
         scaled = pixmap.scaled(
@@ -841,7 +837,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             Qt.TransformationMode.SmoothTransformation,
         )
         self.ui.previewImage.setPixmap(scaled)
-    
+
     def _on_splitter_moved(self, pos: int, index: int):
         """Handle splitter movement - update preview image if it exists."""
         # Refresh preview image to match new size if one is set
@@ -973,32 +969,32 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     # =============================================================================
     # Blender Integration
     # =============================================================================
-    
+
     def _install_view_stack(self):
         """Wrap the map renderer with a stacked widget so we can swap in Blender instructions."""
         if self._view_stack is not None:
             return
-        
+
         # Find the parent layout that contains the map renderer
         # This will depend on the UI structure - adjust as needed
         parent_layout: QVBoxLayout | None = self.ui.mapRenderer.parent().layout() if self.ui.mapRenderer.parent() else None  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
         if not isinstance(parent_layout, QVBoxLayout):
             return  # Can't install view stack without a parent layout
-        
+
         self._view_stack = QStackedWidget(self)
         parent_layout.removeWidget(self.ui.mapRenderer)
         self._view_stack.addWidget(self.ui.mapRenderer)
         self._blender_placeholder = self._create_blender_placeholder()
         self._view_stack.addWidget(self._blender_placeholder)
         parent_layout.addWidget(self._view_stack)
-    
+
     def _create_blender_placeholder(self) -> QWidget:
         """Create placeholder pane shown while Blender drives the rendering."""
         container = QWidget(self)
         layout = QVBoxLayout(container)
         layout.setContentsMargins(12, 12, 12, 12)
         layout.setSpacing(8)
-        
+
         headline = QLabel(
             "<b>Blender mode is active.</b><br>"
             "The Holocron Toolset will defer all 3D rendering and editing to Blender. "
@@ -1007,32 +1003,32 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         )
         headline.setWordWrap(True)
         layout.addWidget(headline)
-        
+
         self._blender_log_view = QPlainTextEdit(container)
         self._blender_log_view.setReadOnly(True)
         self._blender_log_view.setPlaceholderText("Blender log output will appear here once the IPC bridge starts…")
         layout.addWidget(self._blender_log_view, 1)
-        
+
         return container
-    
+
     def _show_blender_workspace(self):
         """Switch to Blender placeholder view."""
         if self._view_stack is not None and self._blender_placeholder is not None:
             self._view_stack.setCurrentWidget(self._blender_placeholder)
-    
+
     def _show_internal_workspace(self):
         """Switch to internal renderer view."""
         if self._view_stack is not None:
             self._view_stack.setCurrentWidget(self.ui.mapRenderer)
-    
+
     def _check_blender_on_load(self):
         """Check for Blender when a map is loaded."""
         if self._blender_choice_made or not self._installation:
             return
-        
+
         self._blender_choice_made = True
         blender_settings = get_blender_settings()
-        
+
         if blender_settings.remember_choice:
             self._use_blender_mode = blender_settings.prefer_blender
         else:
@@ -1041,60 +1037,68 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 use_blender, _ = check_blender_and_ask(self, "Indoor Map Builder")
                 if _ is not None:
                     self._use_blender_mode = use_blender
-    
+
     def _refresh_room_id_lookup(self):
         """Cache Python object ids for fast lookup when Blender sends events."""
         self._room_id_lookup.clear()
         for room in self._map.rooms:
             self._room_id_lookup[id(room)] = room
-    
+
     def _on_blender_material_changed(self, payload: dict):
         """Handle material/texture changes from Blender for real-time updates."""
+
         def _apply():
             object_name = payload.get("object_name", "")
             material_data = payload.get("material", {})
             model_name = payload.get("model_name")
-            
+
             if not model_name:
                 return
-            
+
             from loggerplus import RobustLogger
+
             RobustLogger().debug(f"[Blender][Indoor Map Builder] Material changed for {object_name} (model: {model_name})")
-            
+
             # Find the room that uses this model
             room: IndoorMapRoom | None = None
             for r in self._map.rooms:
                 if r.component.mdl == model_name or (hasattr(r.component, "name") and r.component.name == model_name):
                     room = r
                     break
-            
+
             if room is None:
                 return
-            
+
             # If textures were changed, we need to reload the model
             if "diffuse_texture" in material_data or "lightmap_texture" in material_data:
                 # Request MDL export from Blender
                 if self.is_blender_mode() and self._blender_controller is not None:
                     import tempfile
+
                     temp_mdl = tempfile.NamedTemporaryFile(suffix=".mdl", delete=False)
                     temp_mdl.close()
-                    
+
                     from toolset.blender.ipc_client import get_ipc_client
+
                     client = get_ipc_client()
                     if client and client.is_connected:
-                        result = client.send_command("export_mdl", {
-                            "path": temp_mdl.name,
-                            "object": object_name,
-                        })
+                        result = client.send_command(
+                            "export_mdl",
+                            {
+                                "path": temp_mdl.name,
+                                "object": object_name,
+                            },
+                        )
                         if result.success:
                             from loggerplus import RobustLogger
+
                             RobustLogger().info(f"[Blender][Indoor Map Builder] Exported updated MDL to {temp_mdl.name}")
                             # Reload the model in the renderer
                             self.ui.mapRenderer.invalidate_rooms([room])
                             self.ui.mapRenderer.update()
-        
+
         QTimer.singleShot(0, _apply)
-    
+
     def _on_blender_transform_changed(
         self,
         instance_id: int,
@@ -1102,6 +1106,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         rotation: dict | None,
     ):
         """Handle room transform changes from Blender."""
+
         def _apply():
             prev = self._transform_sync_in_progress
             self._transform_sync_in_progress = True
@@ -1109,7 +1114,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 room = self._room_id_lookup.get(instance_id)
                 if room is None:
                     return
-                
+
                 if position:
                     new_position = Vector3(
                         position.get("x", room.position.x),
@@ -1127,7 +1132,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                             self._invalidate_rooms,
                         )
                         self._undo_stack.push(move_cmd)
-                
+
                 if rotation and "euler" in rotation:
                     new_rotation = rotation["euler"].get("z", room.rotation)
                     if not math.isclose(room.rotation, new_rotation, abs_tol=1e-4):
@@ -1143,27 +1148,24 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                         self._undo_stack.push(rotate_cmd)
             finally:
                 self._transform_sync_in_progress = prev
-        
+
         QTimer.singleShot(0, _apply)
-    
+
     def _on_blender_selection_changed(self, instance_ids: list[int]):
         """Handle selection changes from Blender."""
+
         def _apply():
-            rooms: list[IndoorMapRoom] = [
-                room
-                for room_id in instance_ids
-                if (room := self._room_id_lookup.get(room_id)) is not None
-            ]
+            rooms: list[IndoorMapRoom] = [room for room_id in instance_ids if (room := self._room_id_lookup.get(room_id)) is not None]
             if rooms:
                 self.ui.mapRenderer.select_rooms(rooms)
-        
+
         QTimer.singleShot(0, _apply)
-    
+
     def _on_blender_state_change(self, state: ConnectionState):
         """Handle Blender connection state changes."""
         super()._on_blender_state_change(state)
         QTimer.singleShot(0, lambda: self._handle_blender_state_change(state))
-    
+
     def _handle_blender_state_change(self, state: ConnectionState):
         """Handle Blender state change on UI thread."""
         if state.value == "connected":  # ConnectionState.CONNECTED
@@ -1178,29 +1180,29 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 "Blender Connection Error",
                 "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.",
             )
-    
+
     def _on_blender_module_loaded(self):
         """Called when indoor map is loaded in Blender."""
         super()._on_blender_module_loaded()
         QTimer.singleShot(0, lambda: self._blender_progress_dialog.hide() if self._blender_progress_dialog else None)
         self._refresh_room_id_lookup()
-    
+
     def _on_blender_mode_stopped(self):
         """Called when Blender mode is stopped."""
         super()._on_blender_mode_stopped()
         QTimer.singleShot(0, self._show_internal_workspace)
-    
+
     def _on_blender_output(self, line: str):
         """Handle Blender stdout/stderr output."""
         super()._on_blender_output(line)
         if self._blender_log_view:
             self._blender_log_view.appendPlainText(line)
-    
+
     def sync_room_to_blender(self, room: IndoorMapRoom):
         """Sync a room's position/rotation to Blender."""
         if not self.is_blender_mode() or self._blender_controller is None:
             return
-        
+
         # For indoor maps, we need to send room data differently
         # Since Blender expects LYT rooms, we'll need to convert
         # This is a simplified version - full implementation would need
@@ -1216,7 +1218,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 room.position.y,
                 room.position.z,
             )
-    
+
     def _initialize_options_ui(self):
         """Initialize Options UI to match renderer's initial state."""
         renderer = self.ui.mapRenderer
@@ -1303,7 +1305,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._hover_label.setText(hover_text)
 
         self._mouse_label.setText(
-            f"<b><span style=\"{self._emoji_style}\">🖱</span>&nbsp;Coords:</b> "
+            f'<b><span style="{self._emoji_style}">🖱</span>&nbsp;Coords:</b> '
             f"<span style='color:#0055B0'>{world.x:.2f}</span>, "
             f"<span style='color:#228800'>{world.y:.2f}</span>"
         )
@@ -1326,11 +1328,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         ) -> list[int | Qt.Key | Qt.MouseButton]:
             # Ensure items is a set and iterable
             if not isinstance(items, set):
-                items = set(items) if hasattr(items, '__iter__') else set()
-            
+                items = set(items) if hasattr(items, "__iter__") else set()
+
             # Convert to union type set for processing
             items_union: set[int | Qt.Key | Qt.MouseButton] = set(items)  # type: ignore[assignment]
-            
+
             modifiers: list[int | Qt.Key | Qt.MouseButton] = []
             normal: list[int | Qt.Key | Qt.MouseButton] = []
             if qt_enum_type == "QtKey":
@@ -1354,7 +1356,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 # Fallback: try to get name attribute
                 try:
                     key_enum = Qt.Key(key) if isinstance(key, int) else key  # type: ignore[arg-type]
-                    name = getattr(key_enum, 'name', str(key_enum))
+                    name = getattr(key_enum, "name", str(key_enum))
                     return name.replace("Key_", "").replace("KEY_", "")
                 except (AttributeError, TypeError, ValueError):
                     return str(key)
@@ -1372,7 +1374,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 # Fallback: try to get name attribute
                 try:
                     btn_enum = Qt.MouseButton(btn) if isinstance(btn, int) else btn  # type: ignore[arg-type]
-                    name = getattr(btn_enum, 'name', str(btn_enum))
+                    name = getattr(btn_enum, "name", str(btn_enum))
                     return name.replace("Button", "").replace("BUTTON", "")
                 except (AttributeError, TypeError, ValueError):
                     return str(btn)
@@ -1395,7 +1397,9 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         keys_text = fmt(keys_sorted, get_qt_key_string_local, "#a13ac8")
         buttons_text = fmt(buttons_sorted, get_qt_button_string_local, "#228800")
         sep = " + " if keys_text and buttons_text else ""
-        self._keys_label.setText(f"<b><span style=\"{self._emoji_style}\">⌨</span>&nbsp;Keys/<span style=\"{self._emoji_style}\">🖱</span>&nbsp;Buttons:</b> {keys_text}{sep}{buttons_text}")
+        self._keys_label.setText(
+            f'<b><span style="{self._emoji_style}">⌨</span>&nbsp;Keys/<span style="{self._emoji_style}">🖱</span>&nbsp;Buttons:</b> {keys_text}{sep}{buttons_text}'
+        )
 
         # Mode/status line
         mode_parts: list[str] = []
@@ -1410,7 +1414,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if renderer.snap_to_hooks:
             mode_parts.append("Hook Snap")
         self._mode_label.setText(
-            "<b><span style=\"{style}\">ℹ</span>&nbsp;Status:</b> {body}".format(
+            '<b><span style="{style}">ℹ</span>&nbsp;Status:</b> {body}'.format(
                 style=self._emoji_style,
                 body=" | ".join(mode_parts) if mode_parts else "<span style='color:#a6a6a6'><i>Idle</i></span>",
             )
@@ -1591,10 +1595,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                     def __init__(self):
                         super().__init__("Settings Changed")
 
-                    def undo(self):
-                        ...
-                    def redo(self):
-                        ...
+                    def undo(self): ...
+                    def redo(self): ...
 
                 # Only push if stack is clean to avoid unnecessary undo entries
                 if not self._undo_stack.canUndo():
@@ -1811,9 +1813,9 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self._set_preview_image(None)
             self.ui.mapRenderer.set_cursor_component(None)
             return
-        
+
         component: KitComponent = item.data(Qt.ItemDataRole.UserRole)
-        
+
         # Toggle: if same component is already selected, deselect it
         if self.ui.mapRenderer.cursor_component is component:
             # Clicking the same component again = "pick it up" (deselect)
@@ -1822,7 +1824,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self._set_preview_image(None)
             self.ui.mapRenderer.set_cursor_component(None)
             return
-        
+
         self._set_preview_image(component.image)
         self.ui.mapRenderer.set_cursor_component(component)
 
@@ -1883,13 +1885,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if face_room is not None:
             clicked_room = face_room
         hook_hit = renderer.hook_under_mouse(world)
-        
+
         # STEP 2: If clicking on an existing room or hook, ALWAYS select/drag
         # This takes ABSOLUTE priority over placement mode
         if clicked_room is not None or hook_hit is not None:
             # Force clear placement mode when interacting with existing objects
             self._clear_placement_mode()
-            
+
             # Handle hook selection/dragging first (hooks have priority over room body)
             if hook_hit is not None and Qt.Key.Key_Shift not in keys:
                 hook_room, hook_index = hook_hit
@@ -1923,7 +1925,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if Qt.Key.Key_Shift not in keys:
             renderer.clear_selected_rooms()
         renderer.start_marquee(screen)
-    
+
     def _clear_placement_mode(self):
         """Clear all placement mode state - cursor component and UI selections."""
         renderer = self.ui.mapRenderer
@@ -1950,24 +1952,24 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     ):
         # NOTE: 'buttons' contains buttons STILL held after release (left button was just removed)
         # So if left button was just released, it will NOT be in buttons
-        
+
         # ALWAYS end drag operations when ANY button is released
         # This is critical - marquee, room drag, hook drag, warp drag must all stop
         renderer = self.ui.mapRenderer
-        
+
         # Finish paint stroke if active (including Shift+Left paint mode)
         if self._paint_stroke_active:
             self._finish_paint_stroke()
-        
+
         # Stop hook drag if active - rebuild connections after hook position changes
         if renderer._dragging_hook:
             renderer._dragging_hook = False
             self._map.rebuild_room_connections()
-        
+
         # CRITICAL: Always end any active drag operations on mouse release
         # This includes marquee selection, room dragging, warp dragging
         renderer.end_drag()
-        
+
         self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
 
     def on_rooms_moved(
@@ -1984,7 +1986,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             cmd = MoveRoomsCommand(self._map, rooms, old_positions, new_positions, self._invalidate_rooms)
             self._undo_stack.push(cmd)
             self._refresh_window_title()
-            
+
             # Sync to Blender if not already syncing from Blender
             if self.is_blender_mode() and self._blender_controller is not None and not self._transform_sync_in_progress:
                 for room in rooms:
@@ -2003,7 +2005,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             cmd = RotateRoomsCommand(self._map, rooms, old_rotations, new_rotations, self._invalidate_rooms)
             self._undo_stack.push(cmd)
             self._refresh_window_title()
-            
+
             # Sync to Blender if not already syncing from Blender
             if self.is_blender_mode() and self._blender_controller is not None and not self._transform_sync_in_progress:
                 for room in rooms:
@@ -2238,7 +2240,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def _cancel_all_operations(self):
         """Cancel all active operations and reset to safe state.
-        
+
         This is the "panic button" - cancels everything to get out of stuck states:
         - Cancels marquee selection
         - Cancels room/hook/warp dragging
@@ -2247,30 +2249,30 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         - Clears selections (optional, can be toggled)
         """
         renderer = self.ui.mapRenderer
-        
+
         # Cancel marquee selection
         if renderer._marquee_active:
             renderer._marquee_active = False
             renderer._drag_mode = DragMode.NONE
             renderer.mark_dirty()
-        
+
         # Cancel all drag operations
         if renderer._dragging or renderer._dragging_hook or renderer._dragging_warp:
             renderer.end_drag()
             renderer._dragging_hook = False
             renderer._dragging_warp = False
-        
+
         # Cancel walkmesh painting
         if self._paint_stroke_active:
             self._paint_stroke_active = False
             self._paint_stroke_originals.clear()
             self._paint_stroke_new.clear()
-        
+
         # Cancel placement mode (clear cursor component)
         if renderer.cursor_component is not None:
             renderer.set_cursor_component(None)
             renderer.clear_selected_hook()
-        
+
         # Force repaint to clear any stuck visuals
         renderer.update()
         self._refresh_status_bar()
@@ -2283,7 +2285,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self.ui.mapRenderer.clear_selected_rooms()
             self.ui.mapRenderer.clear_selected_hook()
             return
-        
+
         # Handle toggle keys
         if e.key() == Qt.Key.Key_G and not bool(e.modifiers()):
             self.ui.snapToGridCheck.setChecked(not self.ui.snapToGridCheck.isChecked())
@@ -2927,14 +2929,14 @@ class IndoorMapRenderer(QWidget):
 
     def start_drag(self, room: IndoorMapRoom):
         """Start dragging selected rooms.
-        
+
         If the room is not in the selection, it will be added first.
         This ensures clicking on any room can start a drag.
         """
         # Ensure the room is in the selection (add it if not)
         if room not in self._selected_rooms:
             self._selected_rooms.append(room)
-        
+
         # Now start the drag
         self._dragging = True
         self._drag_mode = DragMode.ROOMS
@@ -2960,7 +2962,7 @@ class IndoorMapRenderer(QWidget):
                 self._snap_anchor_position = None
         else:
             self._snap_anchor_position = None
-        
+
         self.mark_dirty()
 
     def start_warp_drag(self):
@@ -2978,7 +2980,7 @@ class IndoorMapRenderer(QWidget):
 
     def end_drag(self):
         """End dragging and emit appropriate signal.
-        
+
         CRITICAL: This MUST be called on mouse release to stop ALL drag operations.
         """
         # Handle room dragging
@@ -3512,10 +3514,17 @@ class IndoorMapRenderer(QWidget):
                     # Color: unconnected = red, connected = green
                     if room.hooks[hook_index] is None:
                         painter.setBrush(QColor(HOOK_COLOR_UNCONNECTED[0], HOOK_COLOR_UNCONNECTED[1], HOOK_COLOR_UNCONNECTED[2], HOOK_COLOR_UNCONNECTED[3]))
-                        painter.setPen(QPen(QColor(HOOK_PEN_COLOR_UNCONNECTED[0], HOOK_PEN_COLOR_UNCONNECTED[1], HOOK_PEN_COLOR_UNCONNECTED[2], HOOK_PEN_COLOR_UNCONNECTED[3]), GRID_PEN_WIDTH))
+                        painter.setPen(
+                            QPen(
+                                QColor(HOOK_PEN_COLOR_UNCONNECTED[0], HOOK_PEN_COLOR_UNCONNECTED[1], HOOK_PEN_COLOR_UNCONNECTED[2], HOOK_PEN_COLOR_UNCONNECTED[3]),
+                                GRID_PEN_WIDTH,
+                            )
+                        )
                     else:
                         painter.setBrush(QColor(HOOK_COLOR_CONNECTED[0], HOOK_COLOR_CONNECTED[1], HOOK_COLOR_CONNECTED[2], HOOK_COLOR_CONNECTED[3]))
-                        painter.setPen(QPen(QColor(HOOK_PEN_COLOR_CONNECTED[0], HOOK_PEN_COLOR_CONNECTED[1], HOOK_PEN_COLOR_CONNECTED[2], HOOK_PEN_COLOR_CONNECTED[3]), GRID_PEN_WIDTH))
+                        painter.setPen(
+                            QPen(QColor(HOOK_PEN_COLOR_CONNECTED[0], HOOK_PEN_COLOR_CONNECTED[1], HOOK_PEN_COLOR_CONNECTED[2], HOOK_PEN_COLOR_CONNECTED[3]), GRID_PEN_WIDTH)
+                        )
                     painter.drawEllipse(QPointF(hook_pos.x, hook_pos.y), HOOK_DISPLAY_RADIUS, HOOK_DISPLAY_RADIUS)
 
         # Draw connections (green lines for connected hooks)
@@ -3526,7 +3535,12 @@ class IndoorMapRenderer(QWidget):
                 hook_pos = room.hook_position(hook)
                 xd = math.cos(math.radians(hook.rotation + room.rotation)) * hook.door.width / 2
                 yd = math.sin(math.radians(hook.rotation + room.rotation)) * hook.door.width / 2
-                painter.setPen(QPen(QColor(CONNECTION_LINE_COLOR[0], CONNECTION_LINE_COLOR[1], CONNECTION_LINE_COLOR[2], CONNECTION_LINE_COLOR[3]), CONNECTION_LINE_WIDTH_SCALE / self._cam_scale))
+                painter.setPen(
+                    QPen(
+                        QColor(CONNECTION_LINE_COLOR[0], CONNECTION_LINE_COLOR[1], CONNECTION_LINE_COLOR[2], CONNECTION_LINE_COLOR[3]),
+                        CONNECTION_LINE_WIDTH_SCALE / self._cam_scale,
+                    )
+                )
                 painter.drawLine(
                     QPointF(hook_pos.x - xd, hook_pos.y - yd),
                     QPointF(hook_pos.x + xd, hook_pos.y + yd),
@@ -3540,11 +3554,15 @@ class IndoorMapRenderer(QWidget):
 
         # Draw hover highlight
         if self._under_mouse_room and self._under_mouse_room not in self._selected_rooms:
-            self._draw_room_highlight(painter, self._under_mouse_room, ROOM_HOVER_ALPHA, QColor(ROOM_HOVER_COLOR[0], ROOM_HOVER_COLOR[1], ROOM_HOVER_COLOR[2], ROOM_HOVER_COLOR[3]))
+            self._draw_room_highlight(
+                painter, self._under_mouse_room, ROOM_HOVER_ALPHA, QColor(ROOM_HOVER_COLOR[0], ROOM_HOVER_COLOR[1], ROOM_HOVER_COLOR[2], ROOM_HOVER_COLOR[3])
+            )
 
         # Draw selection highlights
         for room in self._selected_rooms:
-            self._draw_room_highlight(painter, room, ROOM_SELECTED_ALPHA, QColor(ROOM_SELECTED_COLOR[0], ROOM_SELECTED_COLOR[1], ROOM_SELECTED_COLOR[2], ROOM_SELECTED_COLOR[3]))
+            self._draw_room_highlight(
+                painter, room, ROOM_SELECTED_ALPHA, QColor(ROOM_SELECTED_COLOR[0], ROOM_SELECTED_COLOR[1], ROOM_SELECTED_COLOR[2], ROOM_SELECTED_COLOR[3])
+            )
 
         # Draw spawn point (warp point)
         self._draw_spawn_point(painter, self._map.warp_point)
@@ -3825,19 +3843,19 @@ class IndoorMapRenderer(QWidget):
                 self.set_cursor_component(None)
             self.mark_dirty()
             return
-        
+
         self._keys_down.add(e.key())
         self.mark_dirty()
 
     def keyReleaseEvent(self, e: QKeyEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         self._keys_down.discard(e.key())
         self.mark_dirty()
-    
+
     def focusInEvent(self, e: QFocusEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Handle focus in - ensure we can receive keyboard input."""
         super().focusInEvent(e)
         self.mark_dirty()
-    
+
     def focusOutEvent(self, e: QFocusEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Handle focus out - cancel operations that require focus (standard Windows behavior)."""
         super().focusOutEvent(e)
@@ -3953,9 +3971,7 @@ class KitDownloader(QDialog):
                 else:
                     button = QPushButton("Download")
                 button.clicked.connect(
-                    lambda _=None,
-                    kit_dict=kit_dict,
-                    button=button: self._download_button_pressed(button, kit_dict),
+                    lambda _=None, kit_dict=kit_dict, button=button: self._download_button_pressed(button, kit_dict),
                 )
 
                 layout: QFormLayout | None = self.ui.groupBox.layout()  # type: ignore[union-attr, assignment]  # pyright: ignore[reportAssignmentType]

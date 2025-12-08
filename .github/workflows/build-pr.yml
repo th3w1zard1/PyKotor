@@ -13,8 +13,6 @@ on:
       - 'Tools/KitGenerator/**'
       # Trigger on library changes (affects all tools)
       - 'Libraries/PyKotor/**'
-      - 'Libraries/PyKotorGL/**'
-      - 'Libraries/PyKotorFont/**'
       # Trigger on compile script changes
       - 'compile/**'
   workflow_dispatch:

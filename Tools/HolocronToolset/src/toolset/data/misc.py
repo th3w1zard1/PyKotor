@@ -4,6 +4,7 @@ from typing import Set, Tuple, Union
 
 from loggerplus import RobustLogger
 from qtpy.QtCore import Qt
+from qtpy.QtGui import QKeySequence
 
 from toolset.utils.misc import get_qt_button_string, get_qt_key_string
 
@@ -20,8 +21,8 @@ class ControlItem:
 
     def satisfied(
         self,
-        buttons: set[Qt.MouseButton],  # Do NOT send None here!
-        keys: set[Qt.Key],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],  # Do NOT send None here!
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
         *,
         exact_keys_and_buttons: bool = False,
         debug_log: bool = False,
@@ -53,7 +54,7 @@ class ControlItem:
             keys_satisfied: bool = any_keys or keys_equal
         else:
             keys_subset: bool = self.keys.issubset(keys)
-            keys_satisfied: bool = any_keys or keys_subset
+            keys_satisfied = any_keys or keys_subset
 
         if not debug_log:
             return bool(mouse_satisfied and keys_satisfied)

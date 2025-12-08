@@ -42,6 +42,8 @@ class Ui_MainWindow(object):
         self.modelInfoGroupBox.setSizePolicy(sizePolicy)
         self.modelInfoGroupBox.setObjectName("modelInfoGroupBox")
         self.verticalLayout_modelInfo = QtWidgets.QVBoxLayout(self.modelInfoGroupBox)
+        self.verticalLayout_modelInfo.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_modelInfo.setSpacing(0)
         self.verticalLayout_modelInfo.setObjectName("verticalLayout_modelInfo")
         self.modelInfoSummaryLabel = QtWidgets.QLabel(self.modelInfoGroupBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)

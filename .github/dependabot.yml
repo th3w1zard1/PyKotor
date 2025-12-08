@@ -38,26 +38,6 @@ updates:
       include: "scope"
 
   - package-ecosystem: "pip"
-    directory: "/Libraries/PyKotorGL"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "chore(pykotorgl)"
-      include: "scope"
-
-  - package-ecosystem: "pip"
-    directory: "/Libraries/PyKotorFont"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "chore(pykotorfont)"
-      include: "scope"
-
-  - package-ecosystem: "pip"
     directory: "/Tools/HolocronToolset"
     schedule:
       interval: "weekly"

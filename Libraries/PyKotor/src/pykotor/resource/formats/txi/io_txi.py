@@ -22,14 +22,15 @@ class TXIReaderMode(IntEnum):
 
 class TXIBinaryReader(ResourceReader):
     """Reads TXI (Texture Information) files.
-    
+
     TXI files contain texture metadata including blending modes, bump maps, animations,
     and other rendering properties for TPC textures.
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/format/txireader.cpp (TXI reading)
     """
+
     def __init__(self, source: SOURCE_TYPES, offset: int = 0, size: int = 0):
         super().__init__(source, offset, size)
         from pykotor.resource.formats.txi.txi_data import TXI
@@ -37,14 +38,14 @@ class TXIBinaryReader(ResourceReader):
         self._txi: TXI = TXI()
 
     @autoclose
-    def load(self, *, auto_close: bool = True) -> TXI:  # noqa: FBT001, FBT002, ARG002
+    def load(self, *func_args, auto_close: bool = True, **func_kwargs) -> TXI:  # noqa: FBT001, FBT002, ARG002
         from pykotor.resource.formats.txi.txi_data import TXI, TXICommand, TXIFeatures
 
         self._txi.features = TXIFeatures()
-        self._empty = True
-        mode = TXIReaderMode.NORMAL
+        self._empty: bool = True
+        mode: TXIReaderMode = TXIReaderMode.NORMAL
         cur_coords: int = 0
-        txi_bytes = self._reader.read_all()
+        txi_bytes: bytes = self._reader.read_all()
 
         for line in txi_bytes.decode("ascii", errors="ignore").splitlines():
             try:
@@ -63,7 +64,7 @@ class TXIBinaryReader(ResourceReader):
                     )
                 )
                 parsed_cmd_str: str = raw_cmd.strip().upper()
-                is_command = parsed_cmd_str in TXICommand.__members__
+                is_command: bool = parsed_cmd_str in TXICommand.__members__
 
                 if mode == TXIReaderMode.UPPER_LEFT_COORDS:
                     if is_command:
@@ -97,7 +98,7 @@ class TXIBinaryReader(ResourceReader):
                         # Try to parse as coordinates
                         try:
                             parts = parsed_line.split()
-                            coords: tuple[float, float, int] = (
+                            coords = (
                                 float(parts[0].strip()),
                                 float(parts[1].strip()),
                                 int(parts[2].strip()),
@@ -114,7 +115,7 @@ class TXIBinaryReader(ResourceReader):
                             # Fall through to process as command or skip
 
                 if not is_command:
-                    #RobustLogger().warning(f"Invalid TXI command: '{raw_cmd}'")
+                    RobustLogger().debug(f"Invalid TXI command: '{raw_cmd}'")
                     continue
                 command: TXICommand = TXICommand.__members__[parsed_cmd_str]
                 args: str = args.strip() if args else ""
@@ -227,8 +228,11 @@ class TXIBinaryReader(ResourceReader):
                 elif command == TXICommand.ISLIGHTMAP:
                     self._txi.features.islightmap = bool(int(args))
                     self._empty = False
+                elif command == TXICommand.ISSPECULARBUMPMAP:
+                    self._txi.features.isspecularbumpmap = bool(int(args))
+                    self._empty = False
                 elif command == TXICommand.LOWERRIGHTCOORDS:
-                    self._txi.features.lowerrightcoords = [[] for _ in range(int(args))]
+                    self._txi.features.lowerrightcoords = [(0.0, 0.0, 0) for _ in range(int(args))]
                     mode = TXIReaderMode.LOWER_RIGHT_COORDS
                     cur_coords = 0
                     self._empty = False
@@ -290,7 +294,7 @@ class TXIBinaryReader(ResourceReader):
                     self._txi.features.unique = bool(int(args))
                     self._empty = False
                 elif command == TXICommand.UPPERLEFTCOORDS:
-                    self._txi.features.upperleftcoords = [[] for _ in range(int(args))]
+                    self._txi.features.upperleftcoords = [(0.0, 0.0, 0) for _ in range(int(args))]
                     mode = TXIReaderMode.UPPER_LEFT_COORDS
                     cur_coords = 0
                     self._empty = False

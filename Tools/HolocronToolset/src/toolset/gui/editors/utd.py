@@ -1,19 +1,19 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from loggerplus import RobustLogger
+from loggerplus import RobustLogger  # type: ignore[import-untyped, note]
 from qtpy.QtWidgets import QMessageBox
 
-from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
-from pykotor.common.stream import BinaryWriter  # pyright: ignore[reportMissingImports]
-from pykotor.extract.installation import SearchLocation  # pyright: ignore[reportMissingImports]
-from pykotor.resource.formats.gff import write_gff  # pyright: ignore[reportMissingImports]
-from pykotor.resource.generics.dlg import DLG, dismantle_dlg  # pyright: ignore[reportMissingImports]
-from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd  # pyright: ignore[reportMissingImports]
-from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
-from pykotor.tools import door  # pyright: ignore[reportMissingImports]
+from pykotor.common.misc import ResRef
+from pykotor.common.stream import BinaryWriter
+from pykotor.extract.installation import SearchLocation
+from pykotor.resource.formats.gff import write_gff
+from pykotor.resource.generics.dlg import DLG, dismantle_dlg
+from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd
+from pykotor.resource.type import ResourceType
+from pykotor.tools import door
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.editor import Editor
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
 
     from qtpy.QtWidgets import QWidget
 
-    from pykotor.extract.file import ResourceResult  # pyright: ignore[reportMissingImports]
-    from pykotor.resource.formats.twoda.twoda_data import TwoDA  # pyright: ignore[reportMissingImports]
+    from pykotor.extract.file import ResourceResult
+    from pykotor.resource.formats.twoda.twoda_data import TwoDA
 
 
 class UTDEditor(Editor):
@@ -589,7 +589,7 @@ class UTDEditor(Editor):
         
         # Get texture names that were requested during rendering (tracked by scene.texture() calls)
         # This is the EXACT list of textures the renderer actually requested - no additional traversal
-        requested_texture_names = getattr(scene, "requested_texture_names", set())
+        requested_texture_names: set[str] = getattr(scene, "requested_texture_names", set())
         RobustLogger().debug(f"_populate_texture_info: Found {len(requested_texture_names)} texture names requested during rendering: {sorted(requested_texture_names)}")
         
         # If no textures have been requested yet (model hasn't rendered), get them from the already-loaded model structure
@@ -619,6 +619,10 @@ class UTDEditor(Editor):
             # Show all textures that were requested during rendering
             RobustLogger().debug(f"Displaying {len(requested_texture_names)} textures requested during rendering")
             for tex_name in sorted(requested_texture_names):
+                # Check if texture is actually loaded in scene (might be cached but no lookup info)
+                texture_loaded = scene.textures.get(tex_name) is not None if scene else False
+                texture_is_missing = scene.textures.get(tex_name) == getattr(scene, "_missing_texture", None) if scene else False
+                
                 # Check if texture has been looked up
                 if tex_name in texture_lookup_info:
                     tex_info = texture_lookup_info[tex_name]
@@ -638,6 +642,13 @@ class UTDEditor(Editor):
                         search_order = tex_info.get("search_order")
                         search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
                         info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
+                elif texture_loaded and not texture_is_missing:
+                    # Texture is loaded but lookup info missing - this is a BUG
+                    # Lookup info should have been stored when texture was loaded through one of our paths
+                    # We CANNOT do another lookup (user requirement - no duplicate lookups)
+                    # Just show that it's loaded but we don't have lookup info (this shouldn't happen)
+                    RobustLogger().warning(f"Texture '{tex_name}' is loaded in scene.textures but has no lookup info! This is a bug - lookup info should have been stored when texture was loaded. Available keys: {list(texture_lookup_info.keys())[:10]}")
+                    info_lines.append(f"  {tex_name}: ✓ Loaded (lookup info missing - bug)")
                 elif tex_name in pending_textures:
                     # Texture is pending/loading
                     info_lines.append(f"  {tex_name}: ⏳ Loading...")
@@ -648,10 +659,11 @@ class UTDEditor(Editor):
             # Fallback: show only textures that have been looked up
             info_lines.append("")
             info_lines.append("Textures (from renderer):")
-            for tex_name, tex_info in sorted(texture_lookup_info.items()):
-                if tex_info.get("found"):
-                    filepath = tex_info.get("filepath")
-                    restype = tex_info.get("restype")
+            lookup_info: dict[str, Any]
+            for tex_name, lookup_info in sorted(texture_lookup_info.items()):
+                if lookup_info.get("found"):
+                    filepath = lookup_info.get("filepath")
+                    restype = lookup_info.get("restype")
                     ext = ".tpc" if restype == ResourceType.TPC else ".tga" if restype == ResourceType.TGA else ""
                     try:
                         rel_path = os.path.relpath(filepath, self._installation.path()) if self._installation and filepath else filepath
@@ -662,7 +674,7 @@ class UTDEditor(Editor):
                     if source:
                         info_lines.append(f"    └─ Source: {source}")
                 else:
-                    search_order = tex_info.get("search_order")
+                    search_order = lookup_info.get("search_order")
                     search_order_str = self._format_search_order(search_order) if search_order else "Unknown"
                     info_lines.append(f"  {tex_name}: ❌ Not found (Searched: {search_order_str})")
 

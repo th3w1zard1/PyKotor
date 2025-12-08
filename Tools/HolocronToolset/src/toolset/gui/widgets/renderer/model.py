@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import math
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import qtpy
 
 from loggerplus import RobustLogger
-from qtpy.QtCore import QPoint, QTimer, Signal
+from qtpy.QtCore import (
+    QPoint,
+    QTimer,
+    Qt,
+    Signal,  # pyright: ignore[reportPrivateImportUsage]
+)
 from qtpy.QtGui import QCursor
 from qtpy.QtWidgets import QOpenGLWidget  # pyright: ignore[reportPrivateImportUsage]
 
@@ -21,7 +26,7 @@ from utility.common.geometry import Vector2
 from utility.error_handling import assert_with_variable_trace
 
 if TYPE_CHECKING:
-    from qtpy.QtGui import QCloseEvent, QFocusEvent, QKeyEvent, QMouseEvent, QResizeEvent, QWheelEvent
+    from qtpy.QtGui import QCloseEvent, QFocusEvent, QKeyEvent, QKeySequence, QMouseEvent, QResizeEvent, QWheelEvent
     from qtpy.QtWidgets import QWidget
 
     from pykotor.extract.installation import Installation
@@ -44,8 +49,8 @@ class ModelRenderer(QOpenGLWidget):
         self._creature_to_load: UTC | None = None
         self._pending_camera_reset: bool = False
 
-        self._keys_down: set[int] = set()
-        self._mouse_down: set[int] = set()
+        self._keys_down: set[int | QKeySequence | Qt.Key] = set()
+        self._mouse_down: set[int | Qt.MouseButton] = set()
         self._mouse_prev: Vector2 = Vector2(0, 0)
         self._controls = ModelRendererControls()
 
@@ -113,7 +118,7 @@ class ModelRenderer(QOpenGLWidget):
         # Render first to poll async resources
         # THIS IS WHERE scene.texture() GETS CALLED DURING MESH RENDERING
         self.scene.render()
-        
+
         # Check if new textures/models were loaded this frame and emit signal
         texture_lookup_info = getattr(self.scene, "texture_lookup_info", {})
         requested_texture_names = getattr(self.scene, "requested_texture_names", set())
@@ -122,15 +127,17 @@ class ModelRenderer(QOpenGLWidget):
         pending_textures = getattr(self.scene, "_pending_texture_futures", {})
         previous_pending_count = getattr(self, "_last_pending_texture_count", len(pending_textures))
         current_pending_count = len(pending_textures)
-        
+
         # Emit signal if: lookup info count increased OR pending textures decreased (textures finished loading) OR requested textures changed
         current_requested_count = len(requested_texture_names)
-        
+
         if current_texture_count > self._last_texture_count or current_pending_count < previous_pending_count or current_requested_count > self._last_requested_texture_count:
             self._last_texture_count = current_texture_count
             self._last_pending_texture_count = current_pending_count
             self._last_requested_texture_count = current_requested_count
-            RobustLogger().debug(f"Texture resources updated: lookup_info={current_texture_count}, pending={current_pending_count}, requested={current_requested_count} (names: {sorted(requested_texture_names)})")
+            RobustLogger().debug(
+                f"Texture resources updated: lookup_info={current_texture_count}, pending={current_pending_count}, requested={current_requested_count} (names: {sorted(requested_texture_names)})"
+            )
             self.resourcesLoaded.emit()
         elif current_pending_count != previous_pending_count:
             self._last_pending_texture_count = current_pending_count
@@ -225,7 +232,7 @@ class ModelRenderer(QOpenGLWidget):
             return
 
         if self._controls.zoomCameraControl.satisfied(self._mouse_down, self._keys_down):
-            strength: float = self._controls.zoomCameraSensitivity3d / 30000
+            strength = self._controls.zoomCameraSensitivity3d / 30000
             self.scene.camera.distance += -e.angleDelta().y() * strength
 
     def do_cursor_lock(self, mut_scr: Vector2):
@@ -240,7 +247,11 @@ class ModelRenderer(QOpenGLWidget):
         mut_scr.y = local_old_pos.y()
 
     def mouseMoveEvent(self, e: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
-        screen = Vector2(e.x(), e.y()) if qtpy.QT5 else Vector2(e.position().toPoint().x(), e.position().toPoint().y())
+        screen = (
+            Vector2(e.x(), e.y())  # type: ignore[attr-defined] # pyright: ignore[reportAttributeAccessIssue]
+            if qtpy.QT5
+            else Vector2(e.position().toPoint().x(), e.position().toPoint().y())  # type: ignore[attr-defined] # pyright: ignore[reportAttributeAccessIssue]
+        )
         screen_delta = Vector2(screen.x - self._mouse_prev.x, screen.y - self._mouse_prev.y)
 
         if self._controls.moveXYCameraControl.satisfied(self._mouse_down, self._keys_down):
@@ -356,19 +367,19 @@ class ModelRenderer(QOpenGLWidget):
 class ModelRendererControls:
     @property
     def moveCameraSensitivity3d(self) -> float:
-        return ModuleDesignerSettings().moveCameraSensitivity3d
+        return cast(float, ModuleDesignerSettings().moveCameraSensitivity3d)
 
     @moveCameraSensitivity3d.setter
     def moveCameraSensitivity3d(self, value: float): ...
     @property
     def zoomCameraSensitivity3d(self) -> float:
-        return ModuleDesignerSettings().zoomCameraSensitivity3d
+        return cast(float, ModuleDesignerSettings().zoomCameraSensitivity3d)
 
     @zoomCameraSensitivity3d.setter
     def zoomCameraSensitivity3d(self, value: float): ...
     @property
     def rotateCameraSensitivity3d(self) -> float:
-        return ModuleDesignerSettings().rotateCameraSensitivity3d
+        return cast(float, ModuleDesignerSettings().rotateCameraSensitivity3d)
 
     @rotateCameraSensitivity3d.setter
     def rotateCameraSensitivity3d(self, value: float): ...

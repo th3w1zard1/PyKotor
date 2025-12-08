@@ -73,18 +73,6 @@
             "problemMatcher": []
         },
         {
-            "label": "holopatcher_recommended",
-            "type": "shell",
-            "command": "${command:python.interpreterPath}",
-            "args": [
-                "-m",
-                "pip",
-                "install",
-                "-r",
-                "Tools${pathSeparator}HoloPatcher${pathSeparator}recommended.txt"
-            ]
-        },
-        {
             "label": "toolset_requirements",
             "type": "shell",
             "command": "${command:python.interpreterPath}",

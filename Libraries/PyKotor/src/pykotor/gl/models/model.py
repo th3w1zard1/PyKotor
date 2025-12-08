@@ -23,8 +23,6 @@ class Model:
         *,
         override_texture: str | None = None,
     ):
-        from loggerplus import RobustLogger
-        RobustLogger().debug(f"Model.draw() called - THIS IS WHERE MODEL RENDERING STARTS")
         self.root.draw(shader, transform, override_texture)
 
     def find(self, name: str) -> Node | None:

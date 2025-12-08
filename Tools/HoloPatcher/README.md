@@ -44,11 +44,6 @@ Once your venv is setup for pykotor, install `requirements.txt`
 pip install -r requirements.txt --prefer-binary
 ```
 
-Optionally (but recommended), install `recommended.txt`
-```bash
-pip install -r recommended.txt
-```
-
 ### Command-Line Interface
 
 ```bash

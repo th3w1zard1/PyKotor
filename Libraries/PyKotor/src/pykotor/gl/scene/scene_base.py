@@ -100,6 +100,9 @@ class SceneBase:
         self.models: CaseInsensitiveDict[Model] = CaseInsensitiveDict()
         # Store texture lookup results from existing lookups for reuse (no additional lookups)
         self.texture_lookup_info: CaseInsensitiveDict[dict[str, Any]] = CaseInsensitiveDict()
+        # Track resolved texture locations from the resolver so we can fill lookup info
+        # if it somehow goes missing by the time the texture finishes loading (no extra lookups)
+        self._resolved_texture_locations: dict[str, tuple[str | None, list[SearchLocation]]] = {}
         # Track texture names that are requested during rendering (populated by scene.texture() calls)
         self.requested_texture_names: set[str] = set()
 
@@ -140,6 +143,7 @@ class SceneBase:
             if locations:
                 loc = locations[0]
                 # Store lookup result for reuse (same lookup, just saving the result)
+                self._resolved_texture_locations[name] = (str(loc.filepath), texture_search_locs.copy())
                 self.texture_lookup_info[name] = {
                     "filepath": loc.filepath,
                     "restype": ResourceType.TPC,
@@ -150,6 +154,7 @@ class SceneBase:
                 # LocationResult has: filepath (Path field), offset (int field), size (int field)
                 return (str(loc.filepath), loc.offset, loc.size)
             # Store "not found" result
+            self._resolved_texture_locations[name] = (None, texture_search_locs.copy())
             self.texture_lookup_info[name] = {
                 "filepath": None,
                 "found": False,
@@ -413,6 +418,7 @@ class SceneBase:
     
     def invalidate_cache(self):
         """Invalidate resource caches and cancel pending async operations."""
+        RobustLogger().debug("invalidate_cache: Starting cache invalidation...")
         # Cancel pending operations
         for future in self._pending_texture_futures.values():
             future.cancel()
@@ -425,12 +431,18 @@ class SceneBase:
         # Clear caches (but keep predefined models/textures)
         predefined_models: set[str] = {"waypoint", "sound", "store", "entry", "encounter", "trigger", "camera", "empty", "cursor", "unknown"}
         self.models = CaseInsensitiveDict({k: v for k, v in self.models.items() if k in predefined_models})
+        
+        # Log textures before clearing
+        keys = list(self.textures.keys())
+        RobustLogger().debug(f"invalidate_cache: Clearing {len(keys)} textures: {keys[:10]}...")
+        
         self.textures = CaseInsensitiveDict({"NULL": self.textures.get("NULL", Texture.from_color())})
         
         # Clear texture tracking (will be repopulated as new model renders)
         self.requested_texture_names.clear()
         self.texture_lookup_info.clear()
-        RobustLogger().debug("Invalidated resource cache and cleared texture tracking")
+        self._resolved_texture_locations.clear()
+        RobustLogger().debug("invalidate_cache: Invalidated resource cache and cleared texture tracking")
     
     def poll_async_resources(
         self,
@@ -473,20 +485,68 @@ class SceneBase:
                         else:
                             RobustLogger().warning(f"Async texture load failed for '{resource_name}': {error}")
                         self.textures[resource_name] = self._missing_texture  # Magenta placeholder
+                        # Ensure "not found" lookup info is stored (should have been stored by _resolve_texture_location, but ensure it exists)
+                        if name not in self.texture_lookup_info and resource_name not in self.texture_lookup_info:
+                            # Fallback: store "not found" if lookup info wasn't stored (shouldn't happen, but ensure it exists)
+                            self.texture_lookup_info[resource_name] = {
+                                "filepath": None,
+                                "found": False,
+                                "search_order": [],  # Unknown - should have been stored by _resolve_texture_location
+                            }
+                            RobustLogger().warning(f"Texture '{resource_name}' error but lookup info missing - stored fallback 'not found' entry")
                     elif intermediate:
                         self.textures[resource_name] = create_texture_from_intermediate(intermediate)
-                        RobustLogger().debug(f"Async texture '{resource_name}' finished loading and uploaded to GPU")
-                        # Ensure lookup info exists (should have been stored by _resolve_texture_location)
-                        if resource_name not in self.texture_lookup_info:
-                            RobustLogger().warning(f"Texture '{resource_name}' finished loading but lookup info missing! This shouldn't happen.")
-                        else:
-                            lookup_info = self.texture_lookup_info[resource_name]
+                        RobustLogger().debug(f"Async texture '{resource_name}' finished loading and uploaded to GPU. textures keys now: {list(self.textures.keys())[:10]}...")
+                        # Ensure lookup info exists (should have been stored by _resolve_texture_location with 'name' key)
+                        # Check with both 'name' (original key) and 'resource_name' (from future result) since CaseInsensitiveDict handles case
+                        lookup_info = self.texture_lookup_info.get(name) or self.texture_lookup_info.get(resource_name)
+                        if lookup_info:
                             RobustLogger().debug(f"Texture '{resource_name}' lookup info: found={lookup_info.get('found')}, filepath={lookup_info.get('filepath')}")
+                            # Ensure lookup info is also stored with resource_name key for consistency
+                            if resource_name not in self.texture_lookup_info:
+                                self.texture_lookup_info[resource_name] = lookup_info
+                        else:
+                            # Try to recover lookup info from resolver cache (no additional lookups)
+                            cached_loc = self._resolved_texture_locations.get(name) or self._resolved_texture_locations.get(resource_name)
+                            if cached_loc:
+                                filepath, search_order = cached_loc
+                                self.texture_lookup_info[resource_name] = {
+                                    "filepath": filepath,
+                                    "restype": ResourceType.TPC,
+                                    "found": filepath is not None,
+                                    "search_order": search_order.copy(),
+                                }
+                                RobustLogger().warning(
+                                    f"Texture '{resource_name}' (key '{name}') finished loading but lookup info missing! "
+                                    f"Recovered from resolver cache: filepath={filepath}"
+                                )
+                            else:
+                                RobustLogger().warning(
+                                    f"Texture '{resource_name}' (key '{name}') finished loading but lookup info missing "
+                                    f"AND no resolver cache entry. Available keys: {list(self.texture_lookup_info.keys())[:10]}"
+                                )
                     completed_textures.append(name)
                     textures_processed += 1
                 except Exception:  # noqa: BLE001
                     RobustLogger().exception(f"Error processing completed texture future for '{name}'")
                     self.textures[name] = self._missing_texture
+                    # Store "not found" lookup info for error case (if not already stored)
+                    if name not in self.texture_lookup_info:
+                        cached_loc = self._resolved_texture_locations.get(name)
+                        if cached_loc:
+                            filepath, search_order = cached_loc
+                            self.texture_lookup_info[name] = {
+                                "filepath": filepath,
+                                "found": False,
+                                "restype": ResourceType.TPC if filepath is not None else None,
+                                "search_order": search_order.copy(),
+                            }
+                        else:
+                            self.texture_lookup_info[name] = {
+                                "filepath": None,
+                                "found": False,
+                                "search_order": [],  # Unknown search order for error case
+                            }
                     completed_textures.append(name)
                     textures_processed += 1
         
@@ -538,7 +598,7 @@ class SceneBase:
         lightmap: bool = False,
     ) -> Texture:
         type_name: Literal["lightmap", "texture"] = "lightmap" if lightmap else "texture"
-        RobustLogger().debug(f"scene.texture() called for {type_name} '{name}' - THIS IS WHERE TEXTURE IS REQUESTED FOR RENDERING")
+        RobustLogger().debug(f"scene.texture() called for {type_name} '{name}' - this is where texture is requested for rendering")
         
         # Track this texture name as requested (happens during rendering, no additional traversal)
         # Track BOTH regular textures and lightmaps (but not NULL)
@@ -552,8 +612,10 @@ class SceneBase:
             if tex is self._missing_texture and lightmap:
                 return self._missing_lightmap
             # Check if lookup info exists for cached texture
+            # If missing, this is a BUG - lookup info should have been stored when texture was loaded
+            # We can't do another lookup (user requirement), so we log the error
             if name not in self.texture_lookup_info:
-                RobustLogger().warning(f"Texture '{name}' is cached but has NO lookup info! This shouldn't happen.")
+                RobustLogger().warning(f"Texture '{name}' is cached but has NO lookup info! This is a bug - lookup info should have been stored when texture was loaded. Available keys: {list(self.texture_lookup_info.keys())[:10]}")
             else:
                 lookup_info = self.texture_lookup_info[name]
                 RobustLogger().debug(f"Texture '{name}' returned from cache (already loaded), lookup_info: found={lookup_info.get('found')}, filepath={lookup_info.get('filepath')}")
@@ -586,6 +648,7 @@ class SceneBase:
                     tpc = module_tex.resource()
                     # Store lookup info for module textures
                     module_filepath = module_tex.active()  # Returns Path | None
+                    self._resolved_texture_locations[name] = (str(module_filepath) if module_filepath else None, [SearchLocation.MODULES])
                     self.texture_lookup_info[name] = {
                         "filepath": module_filepath,
                         "restype": ResourceType.TPC,
@@ -610,6 +673,7 @@ class SceneBase:
                 if result is not None:
                     from pykotor.resource.formats.tpc import read_tpc
                     tpc = read_tpc(result.data)
+                    self._resolved_texture_locations[name] = (str(result.filepath), search_order.copy())
                     self.texture_lookup_info[name] = {
                         "filepath": result.filepath,
                         "restype": ResourceType.TPC,
@@ -618,6 +682,7 @@ class SceneBase:
                     }
                     RobustLogger().debug(f"Sync texture load: Found '{name}' at {result.filepath}, stored in texture_lookup_info")
                 else:
+                    self._resolved_texture_locations[name] = (None, search_order.copy())
                     self.texture_lookup_info[name] = {
                         "filepath": None,
                         "found": False,
@@ -628,6 +693,13 @@ class SceneBase:
                 RobustLogger().warning(f"MISSING {type_name.upper()}: '{name}'")
         except Exception:  # noqa: BLE001
             RobustLogger().warning(f"Could not load {type_name} '{name}'.")
+            # Ensure "not found" lookup info is stored for error case
+            if name not in self.texture_lookup_info:
+                self.texture_lookup_info[name] = {
+                    "filepath": None,
+                    "found": False,
+                    "search_order": [],  # Unknown search order for error case
+                }
 
         if tpc is None:
             self.textures[name] = self._missing_texture

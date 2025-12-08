@@ -6,8 +6,6 @@ pykotor>=2.0.0
 
 # Include library requirements
 -r Libraries/PyKotor/requirements.txt
--r Libraries/PyKotorGL/requirements.txt
--r Libraries/PyKotorFont/requirements.txt
 
 # Include tool requirements
 -r Tools/HolocronToolset/requirements.txt
@@ -23,4 +21,3 @@ pykotor>=2.0.0
 # Additional dependencies that may be needed across the workspace
 # (from original requirements.txt that aren't in sub-requirements)
 --find-links ./pyglm-pypy/dist
-defusedxml~=0.7  # secure XML parsing (used by PyKotor but not in requirements.txt)

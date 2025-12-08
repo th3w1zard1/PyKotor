@@ -5,8 +5,10 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
 
+
 class NodeData:
     """Port of NodeData inner class from NodeAnalysisData.java."""
+
     STATE_NORMAL = 0
     STATE_DEAD = 1
     STATE_LOGOR = 2
@@ -28,6 +30,7 @@ class NodeData:
         self.jump_destination = None
         self.stack = None
         self.origins = None
+
 
 class NodeAnalysisData:
     def __init__(self):
@@ -187,4 +190,3 @@ class NodeAnalysisData:
     def clear_proto_data(self):
         for data in self.nodedatahash.values():
             data.stack = None
-

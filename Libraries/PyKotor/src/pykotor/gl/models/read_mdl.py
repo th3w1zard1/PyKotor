@@ -11,7 +11,7 @@ from pykotor.gl.models.mdl import Mesh, Model, Node
 if TYPE_CHECKING:
     from glm import mat4x4
 
-    from pykotor.gl.scene import Scene
+    from pykotor.gl.scene import Scene, SceneBase
     from utility.common.stream import SOURCE_TYPES
 
 
@@ -33,8 +33,17 @@ def _load_node(
     node = Node(scene, node, names[name_id])
 
     mdl_reader.seek(offset + 16)
-    node._position = glm.vec3(mdl_reader.read_single(), mdl_reader.read_single(), mdl_reader.read_single())  # noqa: SLF001
-    node._rotation = glm.quat(mdl_reader.read_single(), mdl_reader.read_single(), mdl_reader.read_single(), mdl_reader.read_single())  # noqa: SLF001
+    node._position = glm.vec3(  # noqa: SLF001
+        mdl_reader.read_single(),
+        mdl_reader.read_single(),
+        mdl_reader.read_single(),
+    )
+    node._rotation = glm.quat(  # noqa: SLF001
+        mdl_reader.read_single(),
+        mdl_reader.read_single(),
+        mdl_reader.read_single(),
+        mdl_reader.read_single(),
+    )
     node._recalc_transform()  # noqa: SLF001
     child_offsets = mdl_reader.read_uint32()
     child_count = mdl_reader.read_uint32()
@@ -66,7 +75,7 @@ def _load_node(
         mdx_offset = mdl_reader.read_uint32()
         mdl_reader.read_uint32()  # offset_to_vertices
 
-        element_data: list | bytes = []
+        element_data: list[int] | bytes = []
         mdl_reader.seek(offset + 80 + 184)
         element_offsets_count = mdl_reader.read_uint32()
         offset_to_element_offsets = mdl_reader.read_int32()
@@ -77,20 +86,20 @@ def _load_node(
             element_data = mdl_reader.read_bytes(face_count * 2 * 3)
 
         mdl_reader.seek(offset + 80 + 252)
-        mdx_block_size = mdl_reader.read_uint32()
-        mdx_data_bitflags = mdl_reader.read_uint32()
-        mdx_vertex_offset = mdl_reader.read_int32()
-        mdx_normal_offset = mdl_reader.read_int32()
+        mdx_block_size: int = mdl_reader.read_uint32()
+        mdx_data_bitflags: int = mdl_reader.read_uint32()
+        mdx_vertex_offset: int = mdl_reader.read_int32()
+        mdx_normal_offset: int = mdl_reader.read_int32()
         mdl_reader.skip(4)
-        mdx_texture_offset = mdl_reader.read_int32()
-        mdx_lightmap_offset = mdl_reader.read_int32()
+        mdx_texture_offset: int = mdl_reader.read_int32()
+        mdx_lightmap_offset: int = mdl_reader.read_int32()
 
         mdl_reader.seek(offset + 80 + 313)
-        render = mdl_reader.read_uint8()
+        render: bool = bool(mdl_reader.read_uint8())
 
         if render and not walkmesh and element_offsets_count > 0:
             mdx_reader.seek(mdx_offset)
-            vertex_data = mdx_reader.read_bytes(mdx_block_size * vertex_count)
+            vertex_data: bytes = mdx_reader.read_bytes(mdx_block_size * vertex_count)
             node.mesh = Mesh(
                 scene,
                 node,
@@ -139,7 +148,7 @@ def gl_load_mdl(
 
 
 def gl_load_stitched_model(
-    scene: Scene,
+    scene: SceneBase,
     mdl: SOURCE_TYPES,
     mdx: SOURCE_TYPES,
 ) -> Model:  # noqa: C901, PLR0915, PLR0912
@@ -197,7 +206,7 @@ def gl_load_stitched_model(
         if names[name_list_index].lower() in {"headhook", "rhand", "lhand", "gogglehook", "maskhook"}:
             node = Node(scene, root, names[name_list_index])
             root.children.append(node)
-            glm.decompose(transform, vec3(), node._rotation, node._position, vec3(), vec4())  # noqa: SLF001  # type: ignore[call-overload, reportCallIssue, reportArgumentType]
+            glm.decompose(transform, vec3(), node._rotation, node._position, vec3(), vec4())
             node._recalc_transform()  # noqa: SLF001
 
     merged: dict[str, list[tuple[int, mat4x4]]] = {}

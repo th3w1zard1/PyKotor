@@ -307,29 +307,29 @@ class IndoorMap:
             - Returns the model with all lightmaps renamed according to the mapping.
         """
         from pykotor.extract.installation import SearchLocation
-        
+
         lm_renames: dict[str, str] = {}
         for lightmap in model.iterate_lightmaps(mdl_data):
             renamed: str = f"{self.module_id}_lm{self.total_lm}"
             self.total_lm += 1
             lm_renames[lightmap.lower()] = renamed
-            
+
             # Try to get lightmap from kit first
             lightmap_data: bytes | None = None
             txi_data: bytes | None = None
-            
+
             # Check if lightmap exists in kit (case-insensitive)
             lightmap_lower = lightmap.lower()
             if lightmap_lower in room.component.kit.lightmaps:
                 lightmap_data = room.component.kit.lightmaps[lightmap_lower]
             elif lightmap in room.component.kit.lightmaps:
                 lightmap_data = room.component.kit.lightmaps[lightmap]
-            
+
             if lightmap_lower in room.component.kit.txis:
                 txi_data = room.component.kit.txis[lightmap_lower]
             elif lightmap in room.component.kit.txis:
                 txi_data = room.component.kit.txis[lightmap]
-            
+
             # If not in kit, try to load from installation (like reone/xoreos/kotorjs do)
             if lightmap_data is None:
                 tpc = installation.texture(
@@ -342,10 +342,7 @@ class IndoorMap:
                     ],
                 )
                 if tpc is None:
-                    RobustLogger().warning(
-                        f"Lightmap '{lightmap}' not found in kit '{room.component.kit.name}' "
-                        f"and not available in installation. Skipping lightmap."
-                    )
+                    RobustLogger().warning(f"Lightmap '{lightmap}' not found in kit '{room.component.kit.name}' and not available in installation. Skipping lightmap.")
                     # Remove from renames since we're skipping it
                     del lm_renames[lightmap.lower()]
                     self.total_lm -= 1
@@ -360,11 +357,11 @@ class IndoorMap:
                 # TXI might not exist, that's okay
                 if txi_data is None:
                     txi_data = b""
-            
+
             # Set the lightmap and TXI data
             self.mod.set_data(renamed, ResourceType.TGA, lightmap_data)
             self.mod.set_data(renamed, ResourceType.TXI, txi_data if txi_data is not None else b"")
-        
+
         mdl_data = model.change_lightmaps(mdl_data, lm_renames)  # FIXME(th3w1zard1): Should this be returned and used throughout?
 
     def add_model_resources(
@@ -887,7 +884,7 @@ class IndoorMap:
                 - Create room with position, rotation, flips.
         """
         missing_rooms: list[MissingRoomInfo] = []
-        
+
         self.name = LocalizedString(data["name"]["stringref"])
         for substring_id in (key for key in data["name"] if key.isnumeric()):
             language, gender = LocalizedString.substring_pair(int(substring_id))
@@ -904,11 +901,7 @@ class IndoorMap:
             sKit: Kit | None = next((kit for kit in kits if kit.name == room_data["kit"]), None)
             if sKit is None:
                 RobustLogger().warning(f"Kit '{room_data['kit']}' is missing, skipping room.")
-                missing_rooms.append(MissingRoomInfo(
-                    kit_name=room_data["kit"],
-                    component_name=room_data.get("component"),
-                    reason="kit_missing"
-                ))
+                missing_rooms.append(MissingRoomInfo(kit_name=room_data["kit"], component_name=room_data.get("component"), reason="kit_missing"))
                 continue
 
             s_component: KitComponent | None = next(
@@ -917,11 +910,7 @@ class IndoorMap:
             )
             if s_component is None:
                 RobustLogger().warning(f"Component '{room_data['component']}' is missing in kit '{sKit.name}', skipping room.")
-                missing_rooms.append(MissingRoomInfo(
-                    kit_name=room_data["kit"],
-                    component_name=room_data["component"],
-                    reason="component_missing"
-                ))
+                missing_rooms.append(MissingRoomInfo(kit_name=room_data["kit"], component_name=room_data["component"], reason="component_missing"))
                 continue
 
             room: IndoorMapRoom = IndoorMapRoom(
@@ -938,7 +927,7 @@ class IndoorMap:
                 except Exception as exc:  # noqa: BLE001
                     RobustLogger().warning(f"Failed to read walkmesh override for room '{room.component.name}': {exc}")
             self.rooms.append(room)
-        
+
         return missing_rooms
 
     def reset(self):
@@ -1034,7 +1023,7 @@ class IndoorMap:
 
     def serialize(self) -> dict[str, Any]:
         """Serialize an IndoorMap to JSON-compatible dict.
-        
+
         Returns:
         -------
             Dictionary representation
@@ -1200,7 +1189,7 @@ class IndoorMapRoom:
 
     def serialize(self) -> dict[str, Any]:
         """Serialize an IndoorMapRoom to JSON-compatible dict.
-        
+
         Returns:
         -------
             Dictionary representation
