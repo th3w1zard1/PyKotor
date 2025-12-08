@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 class ModelRenderer(QOpenGLWidget):
     # Signal emitted when textures/models finish loading
     resourcesLoaded = Signal()
-    
+
     def __init__(self, parent: QWidget):
         super().__init__(parent)
         self._last_texture_count: int = 0
@@ -110,24 +110,32 @@ class ModelRenderer(QOpenGLWidget):
             self.reset_camera()
 
         # Render first to poll async resources
+        # THIS IS WHERE scene.texture() GETS CALLED DURING MESH RENDERING
         self.scene.render()
         
         # Check if new textures/models were loaded this frame and emit signal
         texture_lookup_info = getattr(self.scene, "texture_lookup_info", {})
+        requested_texture_names = getattr(self.scene, "requested_texture_names", set())
         current_texture_count = len(texture_lookup_info)
         # Also check if any pending textures finished loading (count might not change if lookup was already stored)
         pending_textures = getattr(self.scene, "_pending_texture_futures", {})
         previous_pending_count = getattr(self, "_last_pending_texture_count", len(pending_textures))
         current_pending_count = len(pending_textures)
         
-        # Emit signal if: lookup info count increased OR pending textures decreased (textures finished loading)
-        if current_texture_count > self._last_texture_count or current_pending_count < previous_pending_count:
+        # Emit signal if: lookup info count increased OR pending textures decreased (textures finished loading) OR requested textures changed
+        previous_requested_count = getattr(self, "_last_requested_texture_count", 0)
+        current_requested_count = len(requested_texture_names)
+        
+        if current_texture_count > self._last_texture_count or current_pending_count < previous_pending_count or current_requested_count > previous_requested_count:
             self._last_texture_count = current_texture_count
             self._last_pending_texture_count = current_pending_count
-            RobustLogger().debug(f"Texture resources updated: lookup_info={current_texture_count}, pending={current_pending_count}")
+            self._last_requested_texture_count = current_requested_count
+            RobustLogger().debug(f"Texture resources updated: lookup_info={current_texture_count}, pending={current_pending_count}, requested={current_requested_count} (names: {sorted(requested_texture_names)})")
             self.resourcesLoaded.emit()
         elif current_pending_count != previous_pending_count:
             self._last_pending_texture_count = current_pending_count
+        elif current_requested_count != previous_requested_count:
+            self._last_requested_texture_count = current_requested_count
 
         # After rendering, check if we need to reset camera and if model is ready
         pending_reset = getattr(self, "_pending_camera_reset", False)
@@ -490,11 +498,9 @@ class ModelRendererControls:
     @toggleInstanceLockControl.setter
     def toggleInstanceLockControl(self, value): ...
 
-
     @property
     def rotateCameraControl(self) -> ControlItem:
         return ControlItem(ModuleDesignerSettings().rotateCamera3dBind)
 
     @rotateCameraControl.setter
     def rotateCameraControl(self, value): ...
-

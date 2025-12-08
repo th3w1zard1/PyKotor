@@ -432,7 +432,12 @@ class SceneBase:
         self.texture_lookup_info.clear()
         RobustLogger().debug("Invalidated resource cache and cleared texture tracking")
     
-    def poll_async_resources(self, *, max_textures_per_frame: int = 8, max_models_per_frame: int = 4):
+    def poll_async_resources(
+        self,
+        *,
+        max_textures_per_frame: int = 8,
+        max_models_per_frame: int = 4,
+    ):
         """Poll for completed async resource loading and create OpenGL objects.
         
         MUST be called from main thread with active OpenGL context.
@@ -536,9 +541,10 @@ class SceneBase:
         RobustLogger().debug(f"scene.texture() called for {type_name} '{name}' - THIS IS WHERE TEXTURE IS REQUESTED FOR RENDERING")
         
         # Track this texture name as requested (happens during rendering, no additional traversal)
+        # Track BOTH regular textures and lightmaps (but not NULL)
         if name and name != "NULL":
             self.requested_texture_names.add(name)
-            RobustLogger().debug(f"Tracked texture name '{name}' as requested for rendering")
+            RobustLogger().debug(f"Tracked texture name '{name}' as requested for rendering (requested_texture_names now has {len(self.requested_texture_names)} textures)")
         
         # Already cached?
         if name in self.textures:
@@ -783,11 +789,11 @@ class SceneBase:
         try:
             mdl_reader = BinaryReader.from_bytes(fallback_mdl_data, 12)
             mdx_reader = BinaryReader.from_bytes(fallback_mdx_data)
-            model = gl_load_stitched_model(self, mdl_reader, mdx_reader)  # pyright: ignore[reportArgumentType]
+            model = gl_load_stitched_model(self, mdl_reader, mdx_reader)
         except Exception:  # noqa: BLE001
             RobustLogger().warning(f"Could not load model '{name}'.")
             model = gl_load_stitched_model(
-                self,  # pyright: ignore[reportArgumentType]
+                self,
                 BinaryReader.from_bytes(EMPTY_MDL_DATA, 12),
                 BinaryReader.from_bytes(EMPTY_MDX_DATA),
             )
