@@ -11,8 +11,6 @@
   "extraPaths": [
     "Engines/PyKotorEngine/src",
     "Libraries/PyKotor/src",
-    "Libraries/PyKotorFont/src",
-    "Libraries/PyKotorGL/src",
     "Tools/BatchPatcher/src",
     "Tools/GuiConverter/src",
     "Tools/HolocronAI/src",

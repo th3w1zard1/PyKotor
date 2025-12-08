@@ -17,9 +17,7 @@ from typing import TYPE_CHECKING, Any, Callable
 from loggerplus import RobustLogger
 
 from toolset.blender.ipc_client import BlenderCommands, BlenderIPCClient, get_ipc_client
-from toolset.blender.serializers import (
-    serialize_module_data,
-)
+from toolset.blender.serializers import serialize_module_data
 
 if TYPE_CHECKING:
     from pykotor.resource.formats.bwm import BWM

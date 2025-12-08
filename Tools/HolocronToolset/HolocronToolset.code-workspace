@@ -6,9 +6,6 @@
 		{
 			"path": "../../Libraries/PyKotor"
 		},
-		{
-			"path": "../../Libraries/PyKotorGL"
-		},
 	],
 	"launch": {
 	  "justMyCode": true,
@@ -21,8 +18,6 @@
 		],
 		"cursorpyright.analysis.extraPaths": [
 			"${workspaceFolder}/../../Libraries/PyKotor/src",
-			"${workspaceFolder}/../../Libraries/PyKotorGL/src",
-			"${workspaceFolder}/../../Libraries/PyKotorFont/src",
 			"${workspaceFolder}/../../Engines/PyKotorEngine/src",
 			"${workspaceFolder}/src",
 			"${workspaceFolder}/../../Tools/BatchPatcher/src",

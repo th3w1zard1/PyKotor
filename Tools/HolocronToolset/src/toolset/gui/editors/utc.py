@@ -947,7 +947,7 @@ class UTCEditor(Editor):
                         except ValueError:
                             info_lines.append(f"    TPC/TGA: {tex_res.filepath}")
                     else:
-                        info_lines.append(f"    TPC/TGA: Not found")
+                        info_lines.append("    TPC/TGA: Not found")
             
             # Get head model and texture
             head_model, head_texture = creature.get_head_model(utc, self._installation)

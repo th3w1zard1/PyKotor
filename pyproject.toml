@@ -17,10 +17,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Extension libraries
-font = ["pykotorfont>=2.0.0"]
-gl = ["pykotorgl[moderngl]>=2.0.2"]
-all-extensions = ["pykotorfont>=2.0.0", "pykotorgl[moderngl]>=2.0.2"]
+# Extension libraries (now part of pykotor package)
+font = ["pykotor[font]>=2.0.0"]
+gl = ["pykotor[gl]>=2.0.0"]
+all-extensions = ["pykotor[font,gl]>=2.0.0"]
 
 # Tools (lowercase PyPI names)
 holocrontoolset = ["holocrontoolset>=4.0.0a7"]
@@ -44,8 +44,7 @@ all-tools = [
 
 # Everything
 all = [
-    "pykotorfont>=2.0.0",
-    "pykotorgl[moderngl]>=2.0.2",
+    "pykotor[font,gl]>=2.0.0",
     "holocrontoolset>=4.0.0a7",
     "holopatcher>=1.8.0",
     "kotor-diff>=1.0.0",
@@ -103,12 +102,11 @@ black = "*"
 flake8 = "*"
 
 [tool.poetry.extras]
-# Extension libraries
-font = ["pykotorfont"]
-gl = ["pykotorgl[moderngl]"]
+# Extension libraries (now part of pykotor package)
+font = ["pykotor[font]"]
+gl = ["pykotor[gl]"]
 all-extensions = [
-    "pykotorfont",
-    "pykotorgl[moderngl]",
+    "pykotor[font,gl]",
 ]
 
 # Tools
@@ -133,8 +131,7 @@ all-tools = [
 
 # Everything
 all = [
-    "pykotorfont",
-    "pykotorgl[moderngl]",
+    "pykotor[font,gl]",
     "holocrontoolset",
     "holopatcher",
     "kotor-diff",
@@ -184,8 +181,6 @@ dev-dependencies = []
 members = [
     "Engines/PyKotorEngine",
     "Libraries/PyKotor",
-    "Libraries/PyKotorFont",
-    "Libraries/PyKotorGL",
     "Tools/BatchPatcher",
     "Tools/GuiConverter",
     "Tools/HolocronToolset",
@@ -200,8 +195,6 @@ members = [
 [tool.uv.sources]
 # Use workspace members instead of PyPI
 pykotor = { workspace = true }
-pykotorfont = { workspace = true }
-pykotorgl = { workspace = true }
 batchpatcher = { workspace = true }
 gui-converter = { workspace = true }
 holocron-ai = { workspace = true }
@@ -260,8 +253,6 @@ exclude = [
 extraPaths = [
     "Engines/PyKotorEngine/src",
     "Libraries/PyKotor/src",
-    "Libraries/PyKotorFont/src",
-    "Libraries/PyKotorGL/src",
     "Tools/BatchPatcher/src",
     "Tools/GuiConverter/src",
     "Tools/HolocronAI/src",
@@ -324,8 +315,6 @@ src = [
     "Engines/PyKotorEngine/src",
     "Libraries/PyKotor/src",
     "Libraries/PyKotor/src",
-    "Libraries/PyKotorFont/src",
-    "Libraries/PyKotorGL/src",
     "Tools/BatchPatcher/src",
     "Tools/GuiConverter/src",
     "Tools/HolocronAI/src",
@@ -538,8 +527,6 @@ mypy_path = [
     "Engines/PyKotorEngine/src",
     "Libraries/PyKotor/src",
     "Libraries/PyKotor/src",
-    "Libraries/PyKotorFont/src",
-    "Libraries/PyKotorGL/src",
     "tests",
     "Tools/BatchPatcher/src",
     "Tools/GuiConverter/src",
@@ -566,9 +553,6 @@ exclude = [
 testpaths = [
     "Engines/PyKotorEngine/tests",
     "Libraries/PyKotor/tests",
-    "Libraries/PyKotor/tests",
-    "Libraries/PyKotorFont/tests",
-    "Libraries/PyKotorGL/tests",
     "tests",
     "Tools/BatchPatcher/tests",
     "Tools/GuiConverter/tests",

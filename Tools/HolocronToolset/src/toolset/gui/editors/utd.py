@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 from qtpy.QtWidgets import QMessageBox
 
 from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
-from pykotor.common.stream import BinaryWriter
-from pykotor.resource.formats.gff import write_gff
-from pykotor.resource.generics.dlg import DLG, dismantle_dlg
-from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd
-from pykotor.resource.type import ResourceType
-from pykotor.tools import door
+from pykotor.common.stream import BinaryWriter  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.gff import write_gff  # pyright: ignore[reportMissingImports]
+from pykotor.resource.generics.dlg import DLG, dismantle_dlg  # pyright: ignore[reportMissingImports]
+from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd  # pyright: ignore[reportMissingImports]
+from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
+from pykotor.tools import door  # pyright: ignore[reportMissingImports]
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.editor import Editor
@@ -23,8 +23,8 @@ if TYPE_CHECKING:
 
     from qtpy.QtWidgets import QWidget
 
-    from pykotor.extract.file import ResourceResult
-    from pykotor.resource.formats.twoda.twoda_data import TwoDA
+    from pykotor.extract.file import ResourceResult  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.twoda.twoda_data import TwoDA  # pyright: ignore[reportMissingImports]
 
 
 class UTDEditor(Editor):
@@ -58,7 +58,7 @@ class UTDEditor(Editor):
         super().__init__(parent, "Door Editor", "door", supported, supported, installation)
 
         self.global_settings: GlobalSettings = GlobalSettings()
-        self._genericdoors_2da: TwoDA | None = installation.ht_get_cache_2da("genericdoors")
+        self._genericdoors_2da: TwoDA | None = installation.ht_get_cache_2da("genericdoors")  # pyright: ignore[reportOptionalMemberAccess]
         self._utd: UTD = UTD()
 
         from toolset.uic.qtpy.editors.utd import Ui_MainWindow  # noqa: PLC0415
@@ -518,7 +518,7 @@ class UTDEditor(Editor):
         if len(info_lines) > 1 and mdl is not None and mdx is not None:
             # Show model name and source in summary
             try:
-                mdl_rel = mdl.filepath.relative_to(self._installation.path()) if self._installation else str(mdl.filepath)
+                mdl_rel = os.path.relpath(mdl.filepath, self._installation.path()) if self._installation else str(mdl.filepath)
                 summary = f"{modelname} → {mdl_rel}"
             except (ValueError, AttributeError):
                 summary = f"{modelname} → {mdl.filepath}"

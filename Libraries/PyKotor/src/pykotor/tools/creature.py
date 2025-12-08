@@ -4,19 +4,19 @@ from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
 
-from pykotor.common.misc import EquipmentSlot
-from pykotor.resource.formats.twoda import read_2da
-from pykotor.resource.generics.uti import UTI, read_uti
-from pykotor.resource.type import ResourceType
+from pykotor.common.misc import EquipmentSlot  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.twoda import read_2da  # pyright: ignore[reportMissingImports]
+from pykotor.resource.generics.uti import UTI, read_uti  # pyright: ignore[reportMissingImports]
+from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
 
 if TYPE_CHECKING:
-    from pykotor.common.misc import InventoryItem, ResRef
-    from pykotor.extract.file import ResourceResult
-    from pykotor.extract.installation import Installation
-    from pykotor.extract.twoda import TwoDARow
-    from pykotor.resource.formats.twoda import TwoDA
-    from pykotor.resource.generics.utc import UTC
-    from pykotor.resource.generics.uti import UTI
+    from pykotor.common.misc import InventoryItem, ResRef  # pyright: ignore[reportMissingImports]
+    from pykotor.extract.file import ResourceResult  # pyright: ignore[reportMissingImports]
+    from pykotor.extract.installation import Installation  # pyright: ignore[reportMissingImports]
+    from pykotor.extract.twoda import TwoDARow  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.twoda import TwoDA  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.generics.utc import UTC  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.generics.uti import UTI  # pyright: ignore[reportMissingImports]
 
 
 def get_body_model(  # noqa: C901, PLR0912, PLR0915

@@ -1,5 +1,4 @@
 {
-    "debugpy.debugJustMyCode": true,
     "editor.inlineSuggest.enabled": true,
     "editor.quickSuggestions": {
         "comments": true,
@@ -35,13 +34,9 @@
     ],
     "mypy.runUsingActiveInterpreter": true,
     "python.envFile": "${workspaceFolder}/.env",
-    "python.terminal.activateEnvironment": true,
-    "python.missingPackage.severity": "Information",
     "python.analysis.extraPaths": [
         "${workspaceFolder}/Engines/PyKotorEngine/src",
         "${workspaceFolder}/Libraries/PyKotor/src",
-        "${workspaceFolder}/Libraries/PyKotorFont/src",
-        "${workspaceFolder}/Libraries/PyKotorGL/src",
         "${workspaceFolder}/Tools/BatchPatcher/src",
         "${workspaceFolder}/Tools/GuiConverter/src",
         "${workspaceFolder}/Tools/HolocronAI/src",
@@ -56,8 +51,6 @@
     "cursorpyright.analysis.extraPaths": [
         "${workspaceFolder}/Engines/PyKotorEngine/src",
         "${workspaceFolder}/Libraries/PyKotor/src",
-        "${workspaceFolder}/Libraries/PyKotorFont/src",
-        "${workspaceFolder}/Libraries/PyKotorGL/src",
         "${workspaceFolder}/Tools/BatchPatcher/src",
         "${workspaceFolder}/Tools/GuiConverter/src",
         "${workspaceFolder}/Tools/HolocronAI/src",
@@ -69,23 +62,12 @@
         "${workspaceFolder}/Tools/KotorCLI/src",
         "${workspaceFolder}/Tools/KotorDiff/src"
     ],
-    "python.terminal.launchArgs": [
-        "-i",
-        "-m",
-        "debugpy",
-        "--listen",
-        "5678",
-        "--wait-for-client"
-    ],
     "python.testing.pytestArgs": [
         "Libraries/PyKotor/tests",
-        "Libraries/PyKotorFont/tests",
-        "Libraries/PyKotorGL/tests",
         "Tools/HolocronToolset/tests",
         "-v"
     ],
     "python.testing.pytestEnabled": true,
-    "python.testing.unittestEnabled": false,
     "pythonTestExplorer.outputs.showOutputsOnRun": true,
     "pythonTestExplorer.testFramework": "pytest",
     "remote.WSL.fileWatcher.polling": true,
@@ -93,5 +75,19 @@
         "path": "pwsh.exe",
         "args": ["-NoProfile", "-NoLogo"]
     },
-    "python-envs.pythonProjects": []
+    "python-envs.pythonProjects": [],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/Engines/PyKotorEngine/src",
+        "${workspaceFolder}/Libraries/PyKotor/src",
+        "${workspaceFolder}/Tools/BatchPatcher/src",
+        "${workspaceFolder}/Tools/GuiConverter/src",
+        "${workspaceFolder}/Tools/HolocronAI/src",
+        "${workspaceFolder}/Tools/HolocronToolset/src",
+        "${workspaceFolder}/Tools/HoloGenerator/src",
+        "${workspaceFolder}/Tools/HoloPatcher/src",
+        "${workspaceFolder}/Tools/HoloPazaak/src",
+        "${workspaceFolder}/Tools/KitGenerator/src",
+        "${workspaceFolder}/Tools/KotorCLI/src",
+        "${workspaceFolder}/Tools/KotorDiff/src"
+    ]
 }

@@ -13,29 +13,29 @@ from loggerplus import RobustLogger  # type: ignore[import-untyped]
 from qtpy import QtCore
 from qtpy.QtGui import QColor, QImage, QPainter, QPixmap, QTransform
 
-from pykotor.common.language import LocalizedString  # type: ignore[import-not-found]
-from pykotor.common.misc import Color, ResRef  # type: ignore[import-not-found]
-from pykotor.extract.file import ResourceIdentifier  # type: ignore[import-not-found]
-from pykotor.resource.formats.bwm import bytes_bwm, read_bwm  # type: ignore[import-not-found]
-from pykotor.resource.formats.erf import ERF, ERFType, write_erf  # type: ignore[import-not-found]
-from pykotor.resource.formats.lyt import LYT, LYTDoorHook, LYTRoom, bytes_lyt  # type: ignore[import-not-found]
-from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, bytes_tpc  # type: ignore[import-not-found]
-from pykotor.resource.formats.vis import VIS, bytes_vis  # type: ignore[import-not-found]
-from pykotor.resource.generics.are import ARE, ARENorthAxis, bytes_are  # type: ignore[import-not-found]
-from pykotor.resource.generics.git import GIT, GITDoor, bytes_git  # type: ignore[import-not-found]
-from pykotor.resource.generics.ifo import IFO, bytes_ifo  # type: ignore[import-not-found]
-from pykotor.resource.generics.utd import bytes_utd  # type: ignore[import-not-found]
-from pykotor.resource.type import ResourceType  # type: ignore[import-not-found]
-from pykotor.tools import model  # type: ignore[import-not-found]
-from utility.common.geometry import Vector2, Vector3, Vector4  # type: ignore[import-not-found]
+from pykotor.common.language import LocalizedString
+from pykotor.common.misc import Color, ResRef
+from pykotor.extract.file import ResourceIdentifier
+from pykotor.resource.formats.bwm import bytes_bwm, read_bwm
+from pykotor.resource.formats.erf import ERF, ERFType, write_erf
+from pykotor.resource.formats.lyt import LYT, LYTDoorHook, LYTRoom, bytes_lyt
+from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, bytes_tpc
+from pykotor.resource.formats.vis import VIS, bytes_vis
+from pykotor.resource.generics.are import ARE, ARENorthAxis, bytes_are
+from pykotor.resource.generics.git import GIT, GITDoor, bytes_git
+from pykotor.resource.generics.ifo import IFO, bytes_ifo
+from pykotor.resource.generics.utd import bytes_utd
+from pykotor.resource.type import ResourceType
+from pykotor.tools import model
+from utility.common.geometry import Vector2, Vector3, Vector4
 
 if TYPE_CHECKING:
     import os
 
     from pykotor.resource.formats.bwm import BWM  # pyright: ignore[reportMissingImports]
     from pykotor.resource.generics.utd import UTD  # pyright: ignore[reportMissingImports]
-    from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor  # type: ignore[import-not-found]
-    from toolset.data.installation import HTInstallation  # type: ignore[import-not-found]
+    from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
+    from toolset.data.installation import HTInstallation
 
 
 class DoorInsertion(NamedTuple):
@@ -306,7 +306,7 @@ class IndoorMap:
             - If still not found, logs warning and skips (graceful degradation)
             - Returns the model with all lightmaps renamed according to the mapping.
         """
-        from pykotor.extract.installation import SearchLocation  # type: ignore[import-not-found]
+        from pykotor.extract.installation import SearchLocation
         
         lm_renames: dict[str, str] = {}
         for lightmap in model.iterate_lightmaps(mdl_data):
