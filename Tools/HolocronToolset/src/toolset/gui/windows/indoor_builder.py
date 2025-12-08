@@ -54,7 +54,7 @@ else:
 
 from pykotor.common.misc import Color  # type: ignore[reportPrivateImportUsage]
 from pykotor.common.stream import BinaryWriter  # type: ignore[reportPrivateImportUsage]
-from pykotor.resource.formats.bwm import bytes_bwm, read_bwm  # type: ignore[reportPrivateImportUsage]
+from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm  # type: ignore[reportPrivateImportUsage]
 from toolset.blender import BlenderEditorMode, ConnectionState, check_blender_and_ask, get_blender_settings
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
@@ -135,9 +135,9 @@ from utility.system.os_helper import is_frozen
 from utility.updater.github import download_github_release_asset
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.bwm import BWMFace  # pyright: ignore[reportPrivateImportUsage]
-    from pykotor.resource.formats.bwm.bwm_data import BWM  # pyright: ignore[reportPrivateImportUsage]
+    from pykotor.resource.formats.bwm import BWMFace  # pyright: ignore[reportMissingImports]
     from toolset.data.indoormap import MissingRoomInfo
+    from qtpy.QtGui import QFocusEvent
 
 
 # =============================================================================
@@ -428,9 +428,9 @@ class ResetWalkmeshCommand(QUndoCommand):
         super().__init__(f"Reset Walkmesh ({len(rooms)} Room(s))")
         self.rooms: list[IndoorMapRoom] = rooms
         self._invalidate_cb: Callable[[list[IndoorMapRoom]], None] = invalidate_cb
-        self._previous_overrides: list[bytes | None] = [
+        self._previous_overrides: list[BWM | None] = [
             None
-            if room is None
+            if room.walkmesh_override is None
             else deepcopy(room.walkmesh_override)
             for room in rooms
         ]
@@ -3833,12 +3833,12 @@ class IndoorMapRenderer(QWidget):
         self._keys_down.discard(e.key())
         self.mark_dirty()
     
-    def focusInEvent(self, e):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def focusInEvent(self, e: QFocusEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Handle focus in - ensure we can receive keyboard input."""
         super().focusInEvent(e)
         self.mark_dirty()
     
-    def focusOutEvent(self, e):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def focusOutEvent(self, e: QFocusEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Handle focus out - cancel operations that require focus (standard Windows behavior)."""
         super().focusOutEvent(e)
         # Cancel drag operations when focus is lost (prevents stuck states)
