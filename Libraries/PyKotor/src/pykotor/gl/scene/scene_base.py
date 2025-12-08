@@ -462,6 +462,9 @@ class SceneBase:
         # Fast path: nothing to poll
         if not self._pending_texture_futures and not self._pending_model_futures:
             return
+        RobustLogger().debug(
+            f"poll_async_resources(start): pending_textures={len(self._pending_texture_futures)}, pending_models={len(self._pending_model_futures)}"
+        )
         
         # Check completed texture futures (limited per frame to prevent stuttering)
         completed_textures: list[str] = []
@@ -526,6 +529,9 @@ class SceneBase:
         
         for name in completed_textures:
             del self._pending_texture_futures[name]
+        RobustLogger().debug(
+            f"poll_async_resources(textures_done): completed={len(completed_textures)}, remaining={len(self._pending_texture_futures)}"
+        )
         
         # Check completed model futures (limited per frame)
         completed_models: list[str] = []
@@ -564,6 +570,9 @@ class SceneBase:
         
         for name in completed_models:
             del self._pending_model_futures[name]
+        RobustLogger().debug(
+            f"poll_async_resources(models_done): completed={len(completed_models)}, remaining={len(self._pending_model_futures)}"
+        )
 
     def texture(
         self,
@@ -667,7 +676,7 @@ class SceneBase:
             if tpc is None:
                 RobustLogger().warning(f"MISSING {type_name.upper()}: '{name}'")
         except Exception:  # noqa: BLE001
-            RobustLogger().warning(f"Could not load {type_name} '{name}'.")
+            RobustLogger().error(f"Could not load {type_name} '{name}'.", exc_info=True)
             # Store "not found" lookup info for error case (if not already stored)
             if name not in self.texture_lookup_info:
                 self.texture_lookup_info[name] = {
@@ -793,7 +802,7 @@ class SceneBase:
                 self.models[name] = model
                 return model
             except Exception:  # noqa: BLE001
-                RobustLogger().exception(f"Could not load predefined model '{name}'.")
+                RobustLogger().exception(f"Could not load predefined model '{name}'.", exc_info=True)
                 # Fall through to empty model
         
         # Already loading?
@@ -839,7 +848,7 @@ class SceneBase:
             mdx_reader = BinaryReader.from_bytes(fallback_mdx_data)
             model = gl_load_stitched_model(self, mdl_reader, mdx_reader)
         except Exception:  # noqa: BLE001
-            RobustLogger().warning(f"Could not load model '{name}'.")
+            RobustLogger().exception(f"Could not load model '{name}'.", exc_info=True)
             model = gl_load_stitched_model(
                 self,
                 BinaryReader.from_bytes(EMPTY_MDL_DATA, 12),

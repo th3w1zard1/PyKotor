@@ -510,7 +510,7 @@ class AsyncResourceLoader:
                 # ASSERT: Context MUST exist and contain lookup information
                 assert context is not None, f"Texture location resolver returned location for '{name}' but context is None! This is a bug."
                 assert isinstance(context, dict), f"Texture location resolver returned invalid context type for '{name}': {type(context)}. Expected dict."
-                self.logger.debug(f"load_texture_async: Texture '{name}' resolved to {filepath}, submitting to child process")
+                self.logger.debug(f"load_texture_async: Texture '{name}' resolved to {filepath}, offset={offset}, size={size}, submitting to child process")
                 # Submit IO + parsing to child process
                 assert self.process_pool is not None
                 io_parse_future = self.process_pool.submit(_load_and_parse_texture, name, filepath, offset, size)
@@ -524,6 +524,7 @@ class AsyncResourceLoader:
                         child_result = pf.result()
                         result_future.set_result((*child_result, context))
                     except Exception as e:  # noqa: BLE001
+                        self.logger.exception(f"load_texture_async.on_complete: IO+parse error for '{name}'", exc_info=True)
                         if not result_future.cancelled():
                             try:
                                 # Even on error, we must provide context
@@ -533,7 +534,7 @@ class AsyncResourceLoader:
                     
                 io_parse_future.add_done_callback(on_complete)
         except Exception as e:  # noqa: BLE001
-            self.logger.error(f"Resolution exception for texture '{name}': {e!s}")
+            self.logger.exception(f"Resolution exception for texture '{name}': {e!s}", exc_info=True)
             if not result_future.cancelled():
                 # On exception, we can't provide proper context - this should never happen
                 error_context = {
@@ -597,6 +598,7 @@ class AsyncResourceLoader:
                     try:
                         result_future.set_result(pf.result())
                     except Exception as e:  # noqa: BLE001
+                        self.logger.exception(f"load_model_async.on_complete: IO+parse error for '{name}'", exc_info=True)
                         if not result_future.cancelled():
                             try:
                                 result_future.set_result((name, None, f"IO+parse error: {e!s}"))
@@ -604,7 +606,7 @@ class AsyncResourceLoader:
                                 pass  # Future was already cancelled or set
                 io_parse_future.add_done_callback(on_complete)
         except Exception as e:  # noqa: BLE001
-            self.logger.error(f"Resolution exception for model '{name}': {e!s}")
+            self.logger.exception(f"Resolution exception for model '{name}': {e!s}", exc_info=True)
             if not result_future.cancelled():
                 try:
                     result_future.set_result((name, None, f"Resolution error: {e!s}"))

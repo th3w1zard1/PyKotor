@@ -125,6 +125,10 @@ class Scene(SceneBase):
         self._cached_projection = self.camera.projection()
 
     def render(self):
+        RobustLogger().debug(
+            f"Scene.render(start): objects={len(self.objects)}, pending_textures={len(getattr(self, '_pending_texture_futures', {}))}, "
+            f"pending_models={len(getattr(self, '_pending_model_futures', {}))}, requested_textures={len(getattr(self, 'requested_texture_names', set()))}"
+        )
         # Poll for completed async resources (non-blocking) - MAIN PROCESS ONLY
         self.poll_async_resources()
         
@@ -217,6 +221,10 @@ class Scene(SceneBase):
         # End frame statistics
         if self.enable_frustum_culling:
             self.culling_stats.end_frame()
+        RobustLogger().debug(
+            f"Scene.render(end): objects_rendered={len(self.objects)}, texture_lookup_info={len(getattr(self, 'texture_lookup_info', {}))}, "
+            f"requested_textures={len(getattr(self, 'requested_texture_names', set()))}"
+        )
     
     def _prepare_gl_and_shader_optimized(self):
         """Optimized GL state preparation using cached matrices."""
