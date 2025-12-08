@@ -1,7 +1,5 @@
-charset-normalizer>=2.0,<3.4
 charset-normalizer>=2.0,<3.4  # auto-detect encoding of INI/RTF files
 pycryptodome  # for autoupdate feature.
 pykotor>=2.0.0
 pypandoc  # basic rtf -> html parser
-requests>=2.25.0,<2.32.0; python_version<"3.9"
-requests>=2.25.0; python_version>="3.9"
+requests>=2.25.0,<2.32.0  # unified pin for all supported Python versions
