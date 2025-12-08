@@ -1,31 +1,49 @@
 """
-Async-capable drop-in replacement for loggerplus.RobustLogger used in PyKotor.
-
-Design goals:
-- Non-blocking logging when an asyncio event loop is running (no threading).
-- Fallback to synchronous logging when no running loop is available.
-- Preserve the familiar RobustLogger() usage with debug/info/warning/error/exception.
+Async-capable drop-in for RobustLogger with non-blocking logging when an asyncio event loop is running.
+Merged essentials from the legacy loggerplus (utf8 stream handling, rotating file support, context helpers)
+but removed thread usage; uses asyncio queue and background task instead. Falls back to sync when no loop.
 """
 from __future__ import annotations
 
 import asyncio
 import logging
+import os
+import sys
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 from typing import Any, Tuple
 
-__all__ = ["RobustLogger", "configure_default_logging"]
+__all__ = ["RobustLogger", "configure_default_logging", "stdout_to_logger", "stderr_to_logger"]
 
 
-def configure_default_logging(level: int = logging.DEBUG) -> None:
+# --------------------------------------------------------------------------- #
+# Configuration helpers
+# --------------------------------------------------------------------------- #
+def configure_default_logging(level: int = logging.DEBUG, log_path: str | None = None) -> None:
     """
-    Configure a simple root logger if none is configured.
-
-    This keeps behavior predictable in tools/tests without requiring each caller
-    to set up handlers.
+    Configure root logging once. Supports optional rotating file handler.
     """
-    if not logging.getLogger().handlers:
-        logging.basicConfig(level=level, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    if logging.getLogger().handlers:
+        return
+
+    handlers: list[logging.Handler] = [logging.StreamHandler()]
+
+    if log_path:
+        path = Path(log_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = RotatingFileHandler(path, maxBytes=2_000_000, backupCount=2, encoding="utf-8")
+        handlers.append(file_handler)
+
+    logging.basicConfig(
+        level=level,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=handlers,
+    )
 
 
+# --------------------------------------------------------------------------- #
+# Async queue-based logging (no threads)
+# --------------------------------------------------------------------------- #
 _queue: asyncio.Queue[Tuple[int, str, tuple[Any, ...], dict[str, Any]]] = asyncio.Queue()
 _worker_task: asyncio.Task | None = None
 
@@ -46,7 +64,11 @@ def _ensure_worker(logger: logging.Logger) -> bool:
         async def _worker() -> None:
             while True:
                 level, msg, args, kwargs = await _queue.get()
-                logger.log(level, msg, *args, **kwargs)
+                try:
+                    logger.log(level, msg, *args, **kwargs)
+                except Exception:
+                    # Last-resort: print to stderr synchronously to avoid silent loss
+                    print(f"[loggerplus worker] failed to log: {msg}", file=sys.stderr)
 
         _worker_task = loop.create_task(_worker())
     return True
@@ -54,7 +76,7 @@ def _ensure_worker(logger: logging.Logger) -> bool:
 
 class RobustLogger(logging.Logger):
     """
-    Minimal async-friendly logger with the same interface used across the project.
+    Minimal async-friendly logger with familiar debug/info/warning/error/exception.
     """
 
     def __init__(self, name: str = "root") -> None:
@@ -67,7 +89,6 @@ class RobustLogger(logging.Logger):
                 _queue.put_nowait((level, msg, args, kwargs))
                 return
             except Exception:
-                # Fall back to sync if queue is unavailable for any reason
                 pass
         super().log(level, msg, *args, **kwargs)
 
@@ -91,7 +112,72 @@ class RobustLogger(logging.Logger):
         self._async_or_sync(logging.CRITICAL, msg, *args, **kwargs)
 
 
-# Register RobustLogger class so logging.getLogger returns this type if desired
 logging.setLoggerClass(RobustLogger)
+
+
+# --------------------------------------------------------------------------- #
+# Stream redirection helpers (stdout/stderr to logger) – kept minimal
+# --------------------------------------------------------------------------- #
+class _UTF8StreamWrapper:
+    def __init__(self, original_stream: Any):
+        self.original_stream = original_stream
+
+    def write(self, message: Any) -> None:
+        if self.original_stream is None:
+            return
+        if isinstance(message, str):
+            message = message.encode("utf-8", errors="replace")
+        self.original_stream.buffer.write(message)  # type: ignore[attr-defined]
+
+    def flush(self) -> None:
+        if self.original_stream is None:
+            return
+        self.original_stream.flush()
+
+    def __getattr__(self, attr: str) -> Any:
+        return getattr(self.original_stream, attr)
+
+
+def _redirect_stream(log: logging.Logger, stream: Any, level: int) -> Any:
+    wrapper = _UTF8StreamWrapper(stream)
+    for handler in log.handlers:
+        if isinstance(handler, logging.StreamHandler):
+            handler.setStream(wrapper)  # type: ignore[arg-type]
+    return wrapper
+
+
+def stdout_to_logger(logger_name: str = "stdout", level: int = logging.INFO) -> None:
+    logger = logging.getLogger(logger_name)
+    sys.stdout = _StdLogger(logger, sys.stdout, level)  # type: ignore[assignment]
+
+
+def stderr_to_logger(logger_name: str = "stderr", level: int = logging.ERROR) -> None:
+    logger = logging.getLogger(logger_name)
+    sys.stderr = _StdLogger(logger, sys.stderr, level)  # type: ignore[assignment]
+
+
+class _StdLogger:
+    def __init__(self, logger: logging.Logger, original: Any, level: int):
+        self.logger = logger
+        self.original = original
+        self.level = level
+        self.configure_stream()
+        self.buffer: str = ""
+
+    def configure_stream(self) -> None:
+        _redirect_stream(self.logger, self.original, self.level)
+
+    def write(self, message: str) -> None:
+        self.buffer += message
+        while os.linesep in self.buffer:
+            line, self.buffer = self.buffer.split(os.linesep, 1)
+            if line:
+                self.logger.log(self.level, line)
+
+    def flush(self) -> None:
+        if self.buffer:
+            self.logger.log(self.level, self.buffer.rstrip(os.linesep))
+            self.buffer = ""
+
 
 
