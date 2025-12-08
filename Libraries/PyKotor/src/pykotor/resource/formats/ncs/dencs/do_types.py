@@ -10,17 +10,29 @@ if TYPE_CHECKING:
     from pykotor.resource.formats.ncs.dencs.utils.node_analysis_data import NodeAnalysisData  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.subroutine_analysis_data import SubroutineAnalysisData  # pyright: ignore[reportMissingImports]
     from pykotor.resource.formats.ncs.dencs.utils.subroutine_state import SubroutineState  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copy_top_bp_command import ACopyTopBpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_copy_down_bp_command import ACopyDownBpCommand  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.a_subroutine import ASubroutine  # pyright: ignore[reportMissingImports]
+    from pykotor.resource.formats.ncs.dencs.node.node import Node  # pyright: ignore[reportMissingImports]
+
 
 class DoTypes(PrunedDepthFirstAdapter):
-    def __init__(self, state: SubroutineState, nodedata: NodeAnalysisData, subdata: SubroutineAnalysisData, actions: ActionsData, initialprototyping: bool):
+    def __init__(
+        self,
+        state: SubroutineState,
+        nodedata: NodeAnalysisData,
+        subdata: SubroutineAnalysisData,
+        actions: ActionsData | None,
+        initialprototyping: bool,
+    ) -> None:
         from pykotor.resource.formats.ncs.dencs.stack.local_type_stack import LocalTypeStack  # pyright: ignore[reportMissingImports]
         super().__init__()
         
-        self.stack = LocalTypeStack()
+        self.stack: LocalTypeStack = LocalTypeStack()
         self.nodedata: NodeAnalysisData = nodedata
         self.subdata: SubroutineAnalysisData = subdata
         self.state: SubroutineState = state
-        self.actions: ActionsData = actions
+        self.actions: ActionsData | None = actions
         if not initialprototyping:
             self.state.init_stack(self.stack)
         self.initialproto: bool = initialprototyping
@@ -30,12 +42,10 @@ class DoTypes(PrunedDepthFirstAdapter):
         self.backupstack: LocalTypeStack | None = None
 
     def done(self):
-        self.state = None
-        if self.stack is not None:
-            self.stack.close()
-            self.stack = None
-        self.nodedata = None
-        self.subdata = None
+        self.state.close()
+        self.stack.close()
+        self.nodedata.close()
+        self.subdata.close()
         if self.backupstack is not None:
             self.backupstack.close()
             self.backupstack = None
@@ -86,6 +96,8 @@ class DoTypes(PrunedDepthFirstAdapter):
     def out_a_action_command(self, node):
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.protoskipping and not self.skipdeadcode:
+            if self.actions is None:
+                raise RuntimeError("ActionsData is required for action commands but is None")
             remove = NodeUtils.action_remove_element_count(node, self.actions)
             type_val = NodeUtils.get_return_type(node, self.actions)
             add = NodeUtils.stack_size_to_pos(type_val.type_size())
@@ -200,23 +212,37 @@ class DoTypes(PrunedDepthFirstAdapter):
             self.stack.remove(removesize - (savesize + savestart))
             self.stack.remove(savesize + 1, savestart)
 
-    def out_a_copy_top_bp_command(self, node):
+    def out_a_copy_top_bp_command(self, node: ACopyTopBpCommand):
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.protoskipping and not self.skipdeadcode:
             copy = NodeUtils.stack_size_to_pos(node.get_size())
             loc = NodeUtils.stack_offset_to_pos(node.get_offset())
             for i in range(copy):
-                self.stack.push(self.subdata.get_global_stack().get_type(loc))
+                global_stack = self.subdata.get_global_stack()
+                if global_stack is not None:
+                    self.stack.push(global_stack.get_type(loc))
+                else:
+                    raise RuntimeError("Global stack is not set")
                 loc -= 1
 
-    def out_a_copy_down_bp_command(self, node):
-        pass
+    def out_a_copy_down_bp_command(self, node: ACopyDownBpCommand):
+        from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
+        if not self.protoskipping and not self.skipdeadcode:
+            copy = NodeUtils.stack_size_to_pos(node.get_size())
+            loc = NodeUtils.stack_offset_to_pos(node.get_offset())
+            for i in range(copy):
+                global_stack = self.subdata.get_global_stack()
+                if global_stack is not None:
+                    self.stack.push(global_stack.get_type(loc))
+                else:
+                    raise RuntimeError("Global stack is not set")
+                loc -= 1
 
-    def out_a_subroutine(self, node):
+    def out_a_subroutine(self, node: ASubroutine):
         if self.initialproto:
             self.state.stop_prototyping(True)
 
-    def default_in(self, node):
+    def default_in(self, node: Node):
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if not self.protoskipping:
             self.restore_stack_state(node)
@@ -225,24 +251,24 @@ class DoTypes(PrunedDepthFirstAdapter):
         if NodeUtils.is_command_node(node):
             self.skipdeadcode = self.nodedata.is_dead_code(node)
 
-    def check_protoskipping_done(self, node):
+    def check_protoskipping_done(self, node: Node):
         if self.state.get_skip_end(self.nodedata.get_pos(node)):
             self.protoskipping = False
 
-    def check_protoskipping_start(self, node):
+    def check_protoskipping_start(self, node: Node):
         if self.state.get_skip_start(self.nodedata.get_pos(node)):
             self.protoskipping = True
 
-    def store_stack_state(self, node):
+    def store_stack_state(self, node: Node):
         from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils  # pyright: ignore[reportMissingImports]
         if NodeUtils.is_store_stack_node(node):
             self.nodedata.set_stack(node, self.stack.clone(), True)
 
-    def restore_stack_state(self, node):
-        restore: LocalTypeStack = self.nodedata.get_stack(node)
+    def restore_stack_state(self, node: Node):
+        restore: LocalTypeStack | None = self.nodedata.get_stack(node)
         if restore is not None:
             self.stack = restore
 
-    def is_log_or(self, node):
+    def is_log_or(self, node: Node):
         return self.nodedata.log_or_code(node)
 

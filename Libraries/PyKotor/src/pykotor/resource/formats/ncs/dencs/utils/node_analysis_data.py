@@ -14,7 +14,7 @@ class NodeData:
 
     def __init__(self, pos: int | None = None):
         self.pos: int = pos if pos is not None else -1
-        self.jump_destination = None  # Node reference
+        self.jump_destination: Node | None = None  # Node reference
         self.stack = None  # LocalStack reference
         self.state: int = 0
         self.origins: list | None = None
@@ -61,7 +61,7 @@ class NodeAnalysisData:
             raise RuntimeError("Attempted to read position on a node not in the hashtable.")
         return data.pos
 
-    def set_destination(self, jump: Node, destination: int):
+    def set_destination(self, jump: Node, destination: Node):
         """Set jump destination for a node. Uses id(node) as hash key."""
         jump_id = id(jump)
         try:
@@ -76,12 +76,14 @@ class NodeAnalysisData:
             data = None
         data = None
 
-    def get_destination(self, node: Node) -> int:
+    def get_destination(self, node: Node) -> Node:
         """Get jump destination for a node. Uses id(node) as hash key."""
         node_id = id(node)
         data = self.nodedatahash.get(node_id)
         if data is None:
             raise RuntimeError("Attempted to read destination on a node not in the hashtable.")
+        if data.jump_destination is None:
+            raise RuntimeError("Jump destination is None for node.")
         return data.jump_destination
 
     def set_code_state(self, node: Node, state: int):
