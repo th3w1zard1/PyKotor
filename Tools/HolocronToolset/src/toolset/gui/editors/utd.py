@@ -562,38 +562,6 @@ class UTDEditor(Editor):
         }
         return " → ".join(location_names.get(loc, str(loc)) for loc in search_order)
     
-    def _get_expected_textures_from_loaded_model(self, scene) -> set[str]:
-        """Get all texture names from the already-loaded model in the scene.
-        
-        Uses the EXISTING loaded model structure - no additional parsing or traversal.
-        Returns a set of unique texture names.
-        """
-        textures: set[str] = set()
-        if scene is None:
-            return textures
-        
-        # Get the loaded model from the scene (already loaded by renderer)
-        model = scene.models.get("model")
-        if model is None:
-            return textures
-        
-        # Traverse the already-loaded model's node tree
-        # This uses the EXISTING model structure - no additional parsing
-        nodes = [model.root]
-        while nodes:
-            node = nodes.pop()
-            # Add children to process
-            nodes.extend(node.children)
-            
-            # Get texture names from this node's mesh (if it has one)
-            if node.mesh is not None:
-                if node.mesh.texture and node.mesh.texture != "NULL":
-                    textures.add(node.mesh.texture)
-                if node.mesh.lightmap and node.mesh.lightmap != "NULL":
-                    textures.add(node.mesh.lightmap)
-        
-        return textures
-    
     def _populate_texture_info(self, info_lines: list[str], mdl_data: bytes | bytearray | None = None):
         """Populate texture info from renderer's stored lookups (no additional lookups).
         
@@ -609,18 +577,20 @@ class UTDEditor(Editor):
         texture_lookup_info = getattr(scene, "texture_lookup_info", {})
         pending_textures = getattr(scene, "_pending_texture_futures", {})
         
-        # Get expected texture names from the already-loaded model in the scene
-        # Uses EXISTING loaded model structure - no additional parsing
-        expected_textures = self._get_expected_textures_from_loaded_model(scene)
+        # Get texture names that were requested during rendering (tracked by scene.texture() calls)
+        # This is the EXACT list of textures the renderer actually requested - no additional traversal
+        requested_texture_names = getattr(scene, "requested_texture_names", set())
+        RobustLogger().debug(f"_populate_texture_info: Found {len(requested_texture_names)} texture names requested during rendering: {sorted(requested_texture_names)}")
         
-        # If we have expected textures, show all of them
+        # If we have requested texture names (from actual rendering), show all of them
         # Otherwise, fall back to showing only what's in lookup_info
-        if expected_textures:
+        if requested_texture_names:
             info_lines.append("")
             info_lines.append("Textures (from renderer):")
             
-            # Show all expected textures
-            for tex_name in sorted(expected_textures):
+            # Show all textures that were requested during rendering
+            RobustLogger().debug(f"Displaying {len(requested_texture_names)} textures requested during rendering")
+            for tex_name in sorted(requested_texture_names):
                 # Check if texture has been looked up
                 if tex_name in texture_lookup_info:
                     tex_info = texture_lookup_info[tex_name]

@@ -100,6 +100,8 @@ class SceneBase:
         self.models: CaseInsensitiveDict[Model] = CaseInsensitiveDict()
         # Store texture lookup results from existing lookups for reuse (no additional lookups)
         self.texture_lookup_info: CaseInsensitiveDict[dict[str, Any]] = CaseInsensitiveDict()
+        # Track texture names that are requested during rendering (populated by scene.texture() calls)
+        self.requested_texture_names: set[str] = set()
 
         self.cursor: RenderObject = RenderObject("cursor")
         self.objects: dict[Any, RenderObject] = {}
@@ -425,7 +427,10 @@ class SceneBase:
         self.models = CaseInsensitiveDict({k: v for k, v in self.models.items() if k in predefined_models})
         self.textures = CaseInsensitiveDict({"NULL": self.textures.get("NULL", Texture.from_color())})
         
-        RobustLogger().debug("Invalidated resource cache")
+        # Clear texture tracking (will be repopulated as new model renders)
+        self.requested_texture_names.clear()
+        self.texture_lookup_info.clear()
+        RobustLogger().debug("Invalidated resource cache and cleared texture tracking")
     
     def poll_async_resources(self, *, max_textures_per_frame: int = 8, max_models_per_frame: int = 4):
         """Poll for completed async resource loading and create OpenGL objects.
@@ -528,7 +533,13 @@ class SceneBase:
         lightmap: bool = False,
     ) -> Texture:
         type_name: Literal["lightmap", "texture"] = "lightmap" if lightmap else "texture"
-        RobustLogger().debug(f"scene.texture() called for {type_name} '{name}'")
+        RobustLogger().debug(f"scene.texture() called for {type_name} '{name}' - THIS IS WHERE TEXTURE IS REQUESTED FOR RENDERING")
+        
+        # Track this texture name as requested (happens during rendering, no additional traversal)
+        if name and name != "NULL":
+            self.requested_texture_names.add(name)
+            RobustLogger().debug(f"Tracked texture name '{name}' as requested for rendering")
+        
         # Already cached?
         if name in self.textures:
             tex = self.textures[name]
@@ -557,7 +568,7 @@ class SceneBase:
             return self._loading_texture
         
         # Fallback to synchronous loading (e.g., if process pools unavailable)
-        type_name: Literal["lightmap", "texture"] = "lightmap" if lightmap else "texture"
+        type_name = "lightmap" if lightmap else "texture"
         tpc: TPC | None = None
         try:
             # Check the textures linked to the module first
