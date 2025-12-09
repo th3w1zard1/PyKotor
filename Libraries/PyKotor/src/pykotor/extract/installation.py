@@ -1688,6 +1688,112 @@ class Installation:
 
         return None, ""
 
+    def texture_resource_results(
+        self,
+        resnames: Iterable[str],
+        order: Sequence[SearchLocation] | None = None,
+        *,
+        capsules: Sequence[Capsule] | None = None,
+        folders: list[Path] | None = None,
+        logger: Callable[[str], None] | None = None,
+    ) -> CaseInsensitiveDict[tuple[ResourceResult | None, str]]:
+        """Batch variant of texture_resource_result, returning ResourceResult and TXI text per resname."""
+        results: CaseInsensitiveDict[tuple[ResourceResult | None, str]] = CaseInsensitiveDict()
+        for resname in set(resnames):
+            results[resname] = self.texture_resource_result(resname, order, capsules=capsules, folders=folders, logger=logger)
+        return results
+
+    def texture_resource_locations(
+        self,
+        resnames: Iterable[str],
+        order: Sequence[SearchLocation] | None = None,
+        *,
+        capsules: Sequence[Capsule] | None = None,
+        folders: list[Path] | None = None,
+    ) -> CaseInsensitiveDict[list[LocationResult]]:
+        """Locate texture resources and return their LocationResult lists for each resname."""
+        if order is None:
+            order = (
+                SearchLocation.CUSTOM_FOLDERS,
+                SearchLocation.OVERRIDE,
+                SearchLocation.CUSTOM_MODULES,
+                SearchLocation.TEXTURES_TPA,
+                SearchLocation.CHITIN,
+            )
+
+        resnames_set = set(resnames)
+        capsules = [] if capsules is None else capsules
+        folders = [] if folders is None else folders
+        texture_types: tuple[ResourceType, ...] = (ResourceType.TPC, ResourceType.TGA)
+
+        results: CaseInsensitiveDict[list[LocationResult]] = CaseInsensitiveDict({resname: [] for resname in resnames_set})
+
+        def add_location(target_resname: str, resource: FileResource):
+            location = LocationResult(resource.filepath(), resource.offset(), resource.size())
+            location.set_file_resource(resource)
+            results[target_resname].append(location)
+
+        def check_dict(values: dict[str, list[FileResource]] | CaseInsensitiveDict[list[FileResource]]):
+            for resources in values.values():
+                for resource in resources:
+                    if resource.restype() not in texture_types:
+                        continue
+                    lower_name = resource.identifier().lower_resname
+                    if lower_name in results:
+                        add_location(lower_name, resource)
+
+        def check_capsules(values: Sequence[LazyCapsule]):
+            for capsule in values:
+                for resname in resnames_set:
+                    for tformat in texture_types:
+                        info = capsule.info(resname, tformat)
+                        if info is None:
+                            continue
+                        add_location(resname, info)
+
+        def check_folders(resource_folders: list[Path]):
+            for folder in resource_folders:
+                for file in folder.rglob("*"):
+                    if not file.is_file():
+                        continue
+                    restype = ResourceType.from_extension(file.suffix)
+                    if restype not in texture_types:
+                        continue
+                    lower_name = file.stem.casefold()
+                    if lower_name not in results:
+                        continue
+                    file_res = FileResource(file.stem, restype, file.stat().st_size, 0, file)
+                    add_location(lower_name, file_res)
+
+        function_map: dict[SearchLocation, Callable[[], None]] = {
+            SearchLocation.OVERRIDE: lambda: check_dict(self._override),
+            SearchLocation.MODULES: lambda: check_dict(self._modules),
+            SearchLocation.TEXTURES_TPA: lambda: check_dict({TexturePackNames.TPA.value: self._texturepacks.get(TexturePackNames.TPA.value, [])}),
+            SearchLocation.TEXTURES_TPB: lambda: check_dict({TexturePackNames.TPB.value: self._texturepacks.get(TexturePackNames.TPB.value, [])}),
+            SearchLocation.TEXTURES_TPC: lambda: check_dict({TexturePackNames.TPC.value: self._texturepacks.get(TexturePackNames.TPC.value, [])}),
+            SearchLocation.TEXTURES_GUI: lambda: check_dict({TexturePackNames.GUI.value: self._texturepacks.get(TexturePackNames.GUI.value, [])}),
+            SearchLocation.CHITIN: lambda: check_dict({"chitin": self._chitin, "patch": self._patch_erf}),
+            SearchLocation.CUSTOM_MODULES: lambda: check_capsules(capsules),
+            SearchLocation.CUSTOM_FOLDERS: lambda: check_folders(folders),
+        }
+
+        for item in order:
+            assert isinstance(item, SearchLocation), f"{type(item).__name__}: {item}"
+            function_map.get(item, lambda: None)()
+
+        return results
+
+    def texture_resource_location(
+        self,
+        resname: str,
+        order: Sequence[SearchLocation] | None = None,
+        *,
+        capsules: Sequence[Capsule] | None = None,
+        folders: list[Path] | None = None,
+    ) -> list[LocationResult]:
+        """Wrapper returning locations for a single texture resname."""
+        return self.texture_resource_locations([resname], order, capsules=capsules, folders=folders).get(resname, [])
+
     def texture(
         self,
         resname: str,
@@ -1924,6 +2030,201 @@ class Installation:
             function_map.get(item, lambda: None)()
 
         return sounds
+
+    def sound_resource_result(
+        self,
+        resname: str,
+        order: Sequence[SearchLocation] | None = None,
+        *,
+        capsules: list[Capsule] | None = None,
+        folders: list[Path] | None = None,
+        logger: Callable[[str], None] | None = None,
+    ) -> ResourceResult | None:
+        """Locate a sound resource and return the ResourceResult (no WAV deobfuscation)."""
+        results = self.sound_resource_results([resname], order, capsules=capsules, folders=folders, logger=logger)
+        return results.get(resname)
+
+    def sound_resource_results(
+        self,
+        resnames: Iterable[str],
+        order: Sequence[SearchLocation] | None = None,
+        *,
+        capsules: list[Capsule] | None = None,
+        folders: list[Path] | None = None,
+        logger: Callable[[str], None] | None = None,
+    ) -> CaseInsensitiveDict[ResourceResult | None]:
+        """Batch locate sound resources, returning raw ResourceResults (WAV/MP3)."""
+        if order is None:
+            order = (
+                SearchLocation.CUSTOM_FOLDERS,
+                SearchLocation.OVERRIDE,
+                SearchLocation.CUSTOM_MODULES,
+                SearchLocation.SOUND,
+                SearchLocation.CHITIN,
+            )
+
+        resnames_set = set(resnames)
+        capsules = [] if capsules is None else capsules
+        folders = [] if folders is None else folders
+        sound_formats: tuple[ResourceType, ...] = (ResourceType.WAV, ResourceType.MP3)
+
+        results: CaseInsensitiveDict[ResourceResult | None] = CaseInsensitiveDict({resname: None for resname in resnames_set})
+        remaining: set[str] = {name.casefold() for name in resnames_set}
+
+        def build_result(resource: FileResource) -> ResourceResult:
+            result = ResourceResult(resource.resname(), resource.restype(), resource.filepath(), resource.data())
+            result.set_file_resource(resource)
+            return result
+
+        def check_dict(values: dict[str, list[FileResource]] | CaseInsensitiveDict[list[FileResource]]):
+            for resources in values.values():
+                for resource in resources:
+                    if resource.restype() not in sound_formats:
+                        continue
+                    lower = resource.identifier().lower_resname
+                    if lower in remaining:
+                        results[lower] = build_result(resource)
+                        remaining.discard(lower)
+
+        def check_capsules(values: Sequence[LazyCapsule]):
+            for capsule in values:
+                for target in list(remaining):
+                    for sformat in sound_formats:
+                        info = capsule.info(target, sformat)
+                        if info is None:
+                            continue
+                        data = capsule.resource(target, sformat)
+                        if data is None:
+                            data = info.data()
+                        result = ResourceResult(info.resname(), info.restype(), capsule.filepath(), data)
+                        result.set_file_resource(info)
+                        results[target] = result
+                        remaining.discard(target)
+                        break
+
+        def check_folders(resource_folders: list[Path]):
+            for folder in resource_folders:
+                for file in folder.rglob("*"):
+                    if not file.is_file():
+                        continue
+                    restype = ResourceType.from_extension(file.suffix)
+                    if restype not in sound_formats:
+                        continue
+                    lower = file.stem.casefold()
+                    if lower not in remaining:
+                        continue
+                    file_res = FileResource(file.stem, restype, file.stat().st_size, 0, file)
+                    results[lower] = build_result(file_res)
+                    remaining.discard(lower)
+
+        function_map: dict[SearchLocation, Callable[[], None]] = {
+            SearchLocation.OVERRIDE: lambda: check_dict(self._override),
+            SearchLocation.MODULES: lambda: check_dict(self._modules),
+            SearchLocation.CHITIN: lambda: check_dict({"chitin": self._chitin, "patch": self._patch_erf}),
+            SearchLocation.MUSIC: lambda: check_dict({"streammusic": self._streammusic}),
+            SearchLocation.SOUND: lambda: check_dict({"streamsounds": self._streamsounds}),
+            SearchLocation.VOICE: lambda: check_dict({"streamwaves": self._streamwaves}),
+            SearchLocation.CUSTOM_MODULES: lambda: check_capsules(capsules),
+            SearchLocation.CUSTOM_FOLDERS: lambda: check_folders(folders),
+        }
+
+        for item in order:
+            assert isinstance(item, SearchLocation), f"{type(item).__name__}: {item}"
+            if not remaining:
+                break
+            function_map.get(item, lambda: None)()
+
+        return results
+
+    def sound_resource_locations(
+        self,
+        resnames: Iterable[str],
+        order: Sequence[SearchLocation] | None = None,
+        *,
+        capsules: list[Capsule] | None = None,
+        folders: list[Path] | None = None,
+    ) -> CaseInsensitiveDict[list[LocationResult]]:
+        """Locate sound resources and return their LocationResult lists for each resname."""
+        if order is None:
+            order = (
+                SearchLocation.CUSTOM_FOLDERS,
+                SearchLocation.OVERRIDE,
+                SearchLocation.CUSTOM_MODULES,
+                SearchLocation.SOUND,
+                SearchLocation.CHITIN,
+            )
+
+        resnames_set = set(resnames)
+        capsules = [] if capsules is None else capsules
+        folders = [] if folders is None else folders
+        sound_formats: tuple[ResourceType, ...] = (ResourceType.WAV, ResourceType.MP3)
+
+        results: CaseInsensitiveDict[list[LocationResult]] = CaseInsensitiveDict({resname: [] for resname in resnames_set})
+
+        def add_location(target: str, resource: FileResource):
+            location = LocationResult(resource.filepath(), resource.offset(), resource.size())
+            location.set_file_resource(resource)
+            results[target].append(location)
+
+        def check_dict(values: dict[str, list[FileResource]] | CaseInsensitiveDict[list[FileResource]]):
+            for resources in values.values():
+                for resource in resources:
+                    if resource.restype() not in sound_formats:
+                        continue
+                    lower = resource.identifier().lower_resname
+                    if lower in results:
+                        add_location(lower, resource)
+
+        def check_capsules(values: Sequence[LazyCapsule]):
+            for capsule in values:
+                for resname in resnames_set:
+                    for sformat in sound_formats:
+                        info = capsule.info(resname, sformat)
+                        if info is None:
+                            continue
+                        add_location(resname, info)
+
+        def check_folders(resource_folders: list[Path]):
+            for folder in resource_folders:
+                for file in folder.rglob("*"):
+                    if not file.is_file():
+                        continue
+                    restype = ResourceType.from_extension(file.suffix)
+                    if restype not in sound_formats:
+                        continue
+                    lower = file.stem.casefold()
+                    if lower not in results:
+                        continue
+                    file_res = FileResource(file.stem, restype, file.stat().st_size, 0, file)
+                    add_location(lower, file_res)
+
+        function_map: dict[SearchLocation, Callable[[], None]] = {
+            SearchLocation.OVERRIDE: lambda: check_dict(self._override),
+            SearchLocation.MODULES: lambda: check_dict(self._modules),
+            SearchLocation.CHITIN: lambda: check_dict({"chitin": self._chitin, "patch": self._patch_erf}),
+            SearchLocation.MUSIC: lambda: check_dict({"streammusic": self._streammusic}),
+            SearchLocation.SOUND: lambda: check_dict({"streamsounds": self._streamsounds}),
+            SearchLocation.VOICE: lambda: check_dict({"streamwaves": self._streamwaves}),
+            SearchLocation.CUSTOM_MODULES: lambda: check_capsules(capsules),
+            SearchLocation.CUSTOM_FOLDERS: lambda: check_folders(folders),
+        }
+
+        for item in order:
+            assert isinstance(item, SearchLocation), f"{type(item).__name__}: {item}"
+            function_map.get(item, lambda: None)()
+
+        return results
+
+    def sound_resource_location(
+        self,
+        resname: str,
+        order: Sequence[SearchLocation] | None = None,
+        *,
+        capsules: list[Capsule] | None = None,
+        folders: list[Path] | None = None,
+    ) -> list[LocationResult]:
+        """Wrapper returning locations for a single sound resname."""
+        return self.sound_resource_locations([resname], order, capsules=capsules, folders=folders).get(resname, [])
 
     def string(
         self,
