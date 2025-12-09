@@ -7,6 +7,14 @@ from typing import TYPE_CHECKING
 import unittest
 from unittest import TestCase
 
+import pytest
+from qtpy.QtGui import QStandardItem
+from toolset.gui.editors.jrl import JRLEditor
+from toolset.data.installation import HTInstallation
+from pykotor.resource.generics.jrl import JRLQuest, JRLEntry, JRLQuestPriority
+from pykotor.common.language import LocalizedString, Language, Gender
+from pykotor.resource.type import ResourceType
+
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
 
@@ -131,20 +139,6 @@ class JRLEditorTest(TestCase):
     def test_editor_init(self):
         self.JRLEditor(None, self.K2_INSTALLATION)
 
-
-if __name__ == "__main__":
-    unittest.main()
-
-
-# ============================================================================
-# Pytest-based UI tests (merged from test_ui_jrl.py)
-# ============================================================================
-
-import pytest
-from toolset.gui.editors.jrl import JRLEditor
-from toolset.data.installation import HTInstallation
-from pykotor.resource.generics.jrl import JRLQuest, JRLEntry
-from pykotor.resource.type import ResourceType
 
 def test_jrl_editor_init(qtbot: QtBot, installation: HTInstallation):
     """Test JRL Editor initialization."""
@@ -277,3 +271,156 @@ def test_jrleditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
     
     assert editor._model.rowCount() > 0
     # Verify tree populated
+
+
+def test_jrl_editor_change_quest_name_via_locstring_dialog(qtbot: QtBot, installation: HTInstallation, monkeypatch: pytest.MonkeyPatch):
+    """Ensure quest name editing uses the locstring dialog and updates model/JRL."""
+    from toolset.gui.editors import jrl as jrl_module
+
+    editor = JRLEditor(None, installation)
+    qtbot.addWidget(editor)
+
+    quest = JRLQuest()
+    quest.name = LocalizedString.from_english("Old Name")
+    editor.add_quest(quest)
+
+    quest_item = editor._model.item(0)
+    assert quest_item is not None
+    editor.ui.journalTree.setCurrentIndex(quest_item.index())
+
+    new_loc = LocalizedString.from_english("Renamed Quest")
+
+    class DummyDialog:
+        def __init__(self, *_args, **_kwargs):
+            self.locstring = new_loc
+
+        def exec(self):
+            return True
+
+    monkeypatch.setattr(jrl_module, "LocalizedStringDialog", DummyDialog)
+
+    editor.change_quest_name()
+
+    assert quest.name.get(Language.ENGLISH, Gender.MALE) == "Renamed Quest"
+    assert "Renamed Quest" in quest_item.text()
+
+
+def test_jrl_editor_change_entry_text_via_locstring_dialog(qtbot: QtBot, installation: HTInstallation, monkeypatch: pytest.MonkeyPatch):
+    """Ensure entry text editing uses locstring dialog and refreshes display."""
+    from toolset.gui.editors import jrl as jrl_module
+
+    editor = JRLEditor(None, installation)
+    qtbot.addWidget(editor)
+
+    quest = JRLQuest()
+    quest.name = LocalizedString.from_english("Quest")
+    editor.add_quest(quest)
+
+    entry = JRLEntry()
+    entry.text = LocalizedString.from_english("Old Entry")
+    entry.entry_id = 5
+    quest_item = editor._model.item(0)
+    assert quest_item is not None
+    editor.add_entry(quest_item, entry)
+
+    entry_item = quest_item.child(0)
+    assert entry_item is not None
+    editor.ui.journalTree.setCurrentIndex(entry_item.index())
+
+    new_loc = LocalizedString.from_english("New Entry Text")
+
+    class DummyDialog:
+        def __init__(self, *_args, **_kwargs):
+            self.locstring = new_loc
+
+        def exec(self):
+            return True
+
+    monkeypatch.setattr(jrl_module, "LocalizedStringDialog", DummyDialog)
+
+    editor.change_entry_text()
+
+    assert entry.text.get(Language.ENGLISH, Gender.MALE) == "New Entry Text"
+    assert "New Entry Text" in entry_item.text()
+
+
+def test_jrl_editor_on_value_updated_for_quest_and_entry(qtbot: QtBot, installation: HTInstallation):
+    """Verify on_value_updated propagates UI edits into quest/entry data and refreshes labels."""
+    editor = JRLEditor(None, installation)
+    qtbot.addWidget(editor)
+
+    quest = JRLQuest()
+    quest.name = LocalizedString.from_english("Initial Quest")
+    quest.tag = "old_tag"
+    quest.plot_index = 0
+    quest.planet_id = -1
+    quest.priority = JRLQuestPriority.LOW
+    editor.add_quest(quest)
+
+    quest_item = editor._model.item(0)
+    assert quest_item is not None
+    editor.ui.journalTree.setCurrentIndex(quest_item.index())
+
+    editor.ui.categoryTag.setText("new_tag")
+    editor.ui.categoryPlotSelect.setCurrentIndex(1)
+    editor.ui.categoryPlanetSelect.setCurrentIndex(1)
+    editor.ui.categoryPrioritySelect.setCurrentIndex(JRLQuestPriority.HIGH.value)
+    editor.on_value_updated()
+
+    assert quest.tag == "new_tag"
+    assert quest.plot_index == 1
+    assert quest.planet_id == 0
+    assert quest.priority == JRLQuestPriority.HIGH
+
+    entry = JRLEntry()
+    entry.text = LocalizedString.from_english("Entry Text")
+    editor.add_entry(quest_item, entry)
+
+    entry_item = quest_item.child(0)
+    assert entry_item is not None
+    editor.ui.journalTree.setCurrentIndex(entry_item.index())
+
+    editor.ui.entryEndCheck.setChecked(True)
+    editor.ui.entryXpSpin.setValue(75)
+    editor.ui.entryIdSpin.setValue(42)
+    editor.on_value_updated()
+
+    assert entry.end is True
+    assert entry.xp_percentage == 75
+    assert entry.entry_id == 42
+    assert "[42]" in entry_item.text()
+
+
+def test_jrl_editor_add_remove_quest_and_entry(qtbot: QtBot, installation: HTInstallation):
+    """Exercise add/remove flows to keep model and JRL in sync."""
+    editor = JRLEditor(None, installation)
+    qtbot.addWidget(editor)
+
+    quest = JRLQuest()
+    quest.name = LocalizedString.from_english("Quest Sync")
+    editor.add_quest(quest)
+    assert editor._model.rowCount() == 1
+    assert len(editor._jrl.quests) == 1
+
+    quest_item = editor._model.item(0)
+    assert quest_item is not None
+
+    entry = JRLEntry()
+    entry.text = LocalizedString.from_english("Entry Sync")
+    editor.add_entry(quest_item, entry)
+    assert quest_item.rowCount() == 1
+    assert len(quest.entries) == 1
+
+    entry_item = quest_item.child(0)
+    assert entry_item is not None
+    editor.remove_entry(entry_item)
+    assert quest_item.rowCount() == 0
+    assert len(quest.entries) == 0
+
+    editor.remove_quest(quest_item)
+    assert editor._model.rowCount() == 0
+    assert len(editor._jrl.quests) == 0
+
+
+if __name__ == "__main__":
+    unittest.main()
