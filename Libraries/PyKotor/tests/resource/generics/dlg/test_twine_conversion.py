@@ -196,26 +196,24 @@ def test_json_format():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hello!")
     dlg.starters.append(DLGLink(entry))
 
-    # Write to JSON
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "test.json"
+    write_twine(dlg, json_path, format="json")
 
-        # Verify JSON structure
-        with open(f.name, encoding="utf-8") as f2:
-            data: dict[str, Any] = json.load(f2)
-            assert "name" in data
-            assert "passages" in data
-            assert len(data["passages"]) == 1
-            assert data["passages"][0]["name"] == "NPC"
-            assert data["passages"][0]["text"] == "Hello!"
+    with open(json_path, encoding="utf-8") as f2:
+        data: dict[str, Any] = json.load(f2)
+        assert "name" in data
+        assert "passages" in data
+        assert len(data["passages"]) == 1
+        assert data["passages"][0]["name"] == "NPC"
+        assert data["passages"][0]["text"] == "Hello!"
 
-        # Read back
-        new_dlg = read_twine(f.name)
-        assert len(new_dlg.starters) == 1
-        new_entry = new_dlg.starters[0].node
-        assert isinstance(new_entry, DLGEntry)
-        assert new_entry.speaker == "NPC"
-        assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello!"
+    new_dlg = read_twine(json_path)
+    assert len(new_dlg.starters) == 1
+    new_entry = new_dlg.starters[0].node
+    assert isinstance(new_entry, DLGEntry)
+    assert new_entry.speaker == "NPC"
+    assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello!"
 
 
 def test_html_format():
@@ -227,17 +225,16 @@ def test_html_format():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hello!")
     dlg.starters.append(DLGLink(entry))
 
-    # Write to HTML
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as f:
-        write_twine(dlg, f.name, format="html")
+    tmpdir = Path(tempfile.mkdtemp())
+    html_path = tmpdir / "test.html"
+    write_twine(dlg, html_path, format="html")
 
-        # Read back
-        new_dlg = read_twine(f.name)
-        assert len(new_dlg.starters) == 1
-        new_entry = new_dlg.starters[0].node
-        assert isinstance(new_entry, DLGEntry)
-        assert new_entry.speaker == "NPC"
-        assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello!"
+    new_dlg = read_twine(html_path)
+    assert len(new_dlg.starters) == 1
+    new_entry = new_dlg.starters[0].node
+    assert isinstance(new_entry, DLGEntry)
+    assert new_entry.speaker == "NPC"
+    assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello!"
 
 
 def test_invalid_formats():
@@ -249,18 +246,17 @@ def test_invalid_formats():
         write_twine(dlg, "test.txt", format="invalid")  # type: ignore
 
     # Invalid JSON
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        f.write("invalid json")
-        f.flush()
-        with pytest.raises(ValueError):
-            read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    bad_json = tmpdir / "invalid.json"
+    bad_json.write_text("invalid json", encoding="utf-8")
+    with pytest.raises(ValueError):
+        read_twine(bad_json)
 
     # Invalid HTML
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as f:
-        f.write("<not valid html>")
-        f.flush()
-        with pytest.raises(ValueError):
-            read_twine(f.name)
+    bad_html = tmpdir / "invalid.html"
+    bad_html.write_text("<not valid html>", encoding="utf-8")
+    with pytest.raises(ValueError):
+        read_twine(bad_html)
 
 
 def test_complex_dialog():
@@ -295,24 +291,25 @@ def test_complex_dialog():
     dlg.starters.append(DLGLink(entry1))
 
     # Convert to TwineStory and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "complex.json"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
 
-        # Verify structure preserved
-        assert len(new_dlg.starters) == 1
-        new_entry1 = new_dlg.starters[0].node
-        assert isinstance(new_entry1, DLGEntry)
-        assert len(new_entry1.links) == 2
+    # Verify structure preserved
+    assert len(new_dlg.starters) == 1
+    new_entry1 = new_dlg.starters[0].node
+    assert isinstance(new_entry1, DLGEntry)
+    assert len(new_entry1.links) == 2
 
-        # Verify both paths
-        for link in new_entry1.links:
-            reply = link.node
-            assert isinstance(reply, DLGReply)
-            assert len(reply.links) == 1
-            next_entry = reply.links[0].node
-            assert isinstance(next_entry, DLGEntry)
-            assert next_entry.text.get(Language.ENGLISH, Gender.MALE) in [
-                "Path 1 chosen",
-                "Path 2 chosen",
-            ]
+    # Verify both paths
+    for link in new_entry1.links:
+        reply = link.node
+        assert isinstance(reply, DLGReply)
+        assert len(reply.links) == 1
+        next_entry = reply.links[0].node
+        assert isinstance(next_entry, DLGEntry)
+        assert next_entry.text.get(Language.ENGLISH, Gender.MALE) in [
+            "Path 1 chosen",
+            "Path 2 chosen",
+        ]
