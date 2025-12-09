@@ -62,7 +62,6 @@ logs/
 logs/*
 notes/plot_2da.txt
 notes/plot_investigation.txt
-nuitka_dist
 nwnnsscomp_full.py
 nwnnsscomp_README.md
 nwnnsscomp.py
@@ -84,6 +83,7 @@ temp_test_compile.py
 temp_trace_init.py
 temp_trace_savebp.py
 test_compile.pcode
+test_list.txt
 test_manual.ncs
 test_manual.nss
 test_manual.pcode
@@ -92,34 +92,28 @@ test_output/
 test_qfiledialog_results.txt
 test/out.txt
 test/out2.txt
+tests/cProfile/profile_analysis.txt
 tests/results/
 tests/test_toolset/test_files/generated_kit
 tests/tmp/*
 tests/tslpatcher/tmp/*
 this file has no permissions.txt
 Tools/HolocronToolset/src/toolset/32d802b_extract
-Tools/HolocronToolset/src/toolset/toolset_profile_20251129_215942.txt
-Tools/HolocronToolset/src/toolset/toolset_profile_20251129_223427.txt
-Tools/HolocronToolset/src/toolset/toolset_profile_20251130_053447.txt
-Tools/HolocronToolset/src/toolset/toolset_profile_20251130_064247.txt
+Tools/HolocronToolset/src/toolset/toolset_profile_*.txt
 Tools/HoloPatcher/src/holopatcher/node_modules
 Tools/HoloPatcher/src/holopatcher/package-lock.json
 Tools/HoloPatcher/src/holopatcher/package.json
 Tools/KotorDiff/INI_GENERATOR_README.md
 Tools/KotorDiff/WINDOWS_PATH_GUIDE.md
+Tools/tests/test_toolset/test_files/generated_kit/
 Tree-*.toc
 tslpatchdata/
 typings/*
 vendor/CHORD
-vendor/KOTOR2-TOMB
 vendor/Kotor RE Things/
+vendor/KOTOR2-TOMB
 vendor/kotormods
 vendor/PYKOTOR_VENDOR_REFERENCE_ANALYSIS.md
 vendor/REVIEW_STATUS.md
 vendor/vendor_submodule_analysis.md
 venv/
-test_list.txt
-.gitignore
-tests/cProfile/profile_analysis.txt
-Tools/HolocronToolset/src/toolset/toolset_profile_*.txt
-Tools/tests/test_toolset/test_files/generated_kit/
