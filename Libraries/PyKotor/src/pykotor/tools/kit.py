@@ -938,82 +938,19 @@ def extract_kit(
     # Extract placeable walkmeshes (PWK files)
     # Reference: vendor/reone/src/libs/game/object/placeable.cpp:73
     # Format: <modelname>.pwk
-    from pykotor.resource.generics.utp import read_utp
     from pykotor.tools import placeable as placeable_tools
     
     for placeable_name, placeable_data in placeables.items():
-        try:
-            utp = read_utp(placeable_data)
-            # Get placeable model name from UTP using placeables.2da
-            # Reference: vendor/reone/src/libs/game/object/placeable.cpp:59-60
-            try:
-                placeables_2da = None
-                try:
-                    location_results = installation.locations(
-                        [ResourceIdentifier(resname="placeables", restype=ResourceType.TwoDA)],
-                        order=[SearchLocation.OVERRIDE, SearchLocation.CHITIN],
-                    )
-                    for res_ident, loc_list in location_results.items():
-                        if loc_list:
-                            loc = loc_list[0]
-                            if loc.filepath and Path(loc.filepath).exists():
-                                from pykotor.resource.formats.twoda import read_2da
-                                with loc.filepath.open("rb") as f:
-                                    f.seek(loc.offset)
-                                    data = f.read(loc.size)
-                                placeables_2da = read_2da(data)
-                                break
-                except Exception:  # noqa: BLE001
-                    pass
-                
-                if placeables_2da is None:
-                    try:
-                        placeables_result = installation.resource("placeables", ResourceType.TwoDA)
-                        if placeables_result and placeables_result.data is not None:
-                            from pykotor.resource.formats.twoda import read_2da
-                            placeables_2da = read_2da(placeables_result.data)
-                    except Exception:  # noqa: BLE001
-                        pass
-                
-                if placeables_2da:
-                    placeable_model_name = placeable_tools.get_model(utp, installation, placeables=placeables_2da)
-                    if placeable_model_name:
-                        # Try to extract PWK file: modelname.pwk
-                        # Reference: vendor/reone/src/libs/game/object/placeable.cpp:73
-                        try:
-                            # Try to find PWK in module resources first
-                            pwk_resource = module.resource(placeable_model_name, ResourceType.PWK)
-                            if pwk_resource is not None:
-                                pwk_data = pwk_resource.data()
-                                if pwk_data is not None:
-                                    placeable_walkmeshes[placeable_model_name] = pwk_data
-                                logger.debug(f"Found PWK '{placeable_model_name}' for placeable '{placeable_name}'")
-                            else:
-                                # Try installation locations
-                                pwk_locations = installation.locations(
-                                    [ResourceIdentifier(resname=placeable_model_name, restype=ResourceType.PWK)],
-                                    [
-                                        SearchLocation.OVERRIDE,
-                                        SearchLocation.MODULES,
-                                        SearchLocation.CHITIN,
-                                    ],
-                                )
-                                for pwk_ident, pwk_loc_list in pwk_locations.items():
-                                    if pwk_loc_list:
-                                        pwk_loc = pwk_loc_list[0]
-                                        with pwk_loc.filepath.open("rb") as f:
-                                            f.seek(pwk_loc.offset)
-                                            placeable_walkmeshes[placeable_model_name] = f.read(pwk_loc.size)
-                                        logger.debug(f"Found PWK '{placeable_model_name}' for placeable '{placeable_name}' from installation")
-                                        break
-                        except Exception:  # noqa: BLE001
-                            # PWK not found, skip it
-                            pass
-            except Exception as e:  # noqa: BLE001
-                logger.debug(f"Could not extract PWK walkmesh for placeable '{placeable_name}': {e}")
-        except Exception:  # noqa: BLE001
-            # Skip placeables that can't be read
-            pass
+        result = placeable_tools.extract_placeable_walkmesh(
+            placeable_data,
+            installation,
+            module=module,
+            logger=logger,
+        )
+        if result:
+            placeable_model_name, pwk_data = result
+            placeable_walkmeshes[placeable_model_name] = pwk_data
+            logger.debug(f"Found PWK '{placeable_model_name}' for placeable '{placeable_name}'")
 
     # Write door files
     # Use simple door identifiers (door0, door1, etc.) for file names and JSON
