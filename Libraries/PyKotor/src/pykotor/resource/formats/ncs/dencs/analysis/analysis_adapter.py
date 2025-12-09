@@ -247,3 +247,6 @@ class AnalysisAdapter:
     def case_a_logii_cmd(self, node):
         self.default_case(node)
 
+
+# Type alias for backward compatibility
+Analysis = AnalysisAdapter
