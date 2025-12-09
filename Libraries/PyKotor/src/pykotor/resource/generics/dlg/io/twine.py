@@ -100,8 +100,11 @@ def write_twine(
 
 
 def _read_json(content: str) -> TwineStory:
-    # Let JSONDecodeError propagate so callers can assert exact failure type.
-    data: dict[str, Any] = json.loads(content)
+    try:
+        data: dict[str, Any] = json.loads(content)
+    except json.JSONDecodeError as exc:
+        # Preserve legacy API: invalid JSON raises ValueError for callers/tests.
+        raise ValueError("Invalid JSON") from exc
 
     # Create metadata
     twine_metadata: TwineMetadata = TwineMetadata(
