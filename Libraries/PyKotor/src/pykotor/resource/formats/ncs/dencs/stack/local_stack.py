@@ -14,5 +14,5 @@ class LocalStack:
         return new_stack
 
     def close(self):
-        self.stack = None
+        self.stack = []
 
