@@ -21,7 +21,7 @@ class DLGStunt:
     def __init__(
         self,
     ):
-        self._hash_cache: int = hash(uuid.uuid4().hex)
+        self._hash_cache: int = uuid.uuid4().int
         self.participant: str = ""
         self.stunt_model: ResRef = ResRef.from_blank()
 

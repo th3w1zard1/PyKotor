@@ -96,7 +96,7 @@ class DLGLink(Generic[T_co]):
         node: T_co,
         list_index: int = -1,
     ):
-        self._hash_cache: int = hash(uuid.uuid4().hex)
+        self._hash_cache: int = uuid.uuid4().int
         self.active1: ResRef = ResRef.from_blank()
         self.node: T_co | DLGNode = node
         self.list_index: int = list_index

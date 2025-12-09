@@ -221,7 +221,8 @@ class DLGNode:
         if not isinstance(self, (DLGEntry, DLGReply)):
             raise RuntimeError("Cannot construct base class DLGNode: use DLGEntry or DLGReply instead.")  # noqa: TRY004
 
-        self._hash_cache: int = hash(uuid.uuid4().hex)
+        # Use UUID int to avoid hash collisions that would collapse shared nodes
+        self._hash_cache: int = uuid.uuid4().int
         self.comment: str = ""
         self.links: list[DLGLink] = []
         self.list_index: int = -1

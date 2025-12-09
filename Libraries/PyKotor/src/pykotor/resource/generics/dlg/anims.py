@@ -13,7 +13,7 @@ class DLGAnimation:
     def __init__(
         self,
     ):
-        self._hash_cache: int = hash(uuid.uuid4().hex)
+        self._hash_cache: int = uuid.uuid4().int
         self.animation_id: int = 6
         self.participant: str = ""
 
