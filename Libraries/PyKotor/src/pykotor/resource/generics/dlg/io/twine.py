@@ -7,7 +7,7 @@ import re
 import uuid
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 from xml.etree import ElementTree as ET
 
 try:
@@ -75,16 +75,18 @@ def write_twine(
     dlg: DLG,
     path: str | Path,
     fmt: Format | None = None,
+    *,
+    format: Format | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> None:
     """Write a dialog to Twine format.
 
-    If ``fmt`` is not provided, infer it from the file extension: ``.json`` writes
-    JSON, anything else writes HTML. This keeps writer behaviour intuitive for the
-    test suite (which passes ``*.json`` paths) and avoids surprising HTML output.
+    If no format is provided, infer from file extension: ``.json`` -> JSON, otherwise
+    HTML. ``format`` is accepted as an alias for backward compatibility.
     """
     path = Path(path)
-    inferred_fmt: Format = fmt or ("json" if path.suffix.lower() == ".json" else "html")
+    chosen_fmt: Format | None = format or fmt
+    inferred_fmt: Format = chosen_fmt or ("json" if path.suffix.lower() == ".json" else "html")
 
     story: TwineStory = _dlg_to_story(dlg, metadata)
 
@@ -97,10 +99,8 @@ def write_twine(
 
 
 def _read_json(content: str) -> TwineStory:
-    try:
-        data: dict[str, Any] = json.loads(content)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON: {e}") from e
+    # Let JSONDecodeError propagate so callers can assert exact failure type.
+    data: dict[str, Any] = json.loads(content)
 
     # Create metadata
     twine_metadata: TwineMetadata = TwineMetadata(
@@ -152,10 +152,17 @@ def _read_json(content: str) -> TwineStory:
 
         passages.append(passage)
 
-    return TwineStory(
+    story = TwineStory(
         metadata=twine_metadata,
         passages=passages,
+        start_pid=data.get("startnode", ""),
     )
+
+    # Fallback: if start_pid missing, prefer first entry passage
+    if not story.start_pid and story.get_entries():
+        story.start_pid = story.get_entries()[0].pid
+
+    return story
 
 
 def _read_html(content: str) -> TwineStory:
@@ -233,10 +240,16 @@ def _read_html(content: str) -> TwineStory:
 
         passages.append(passage)
 
-    return TwineStory(
+    story = TwineStory(
         metadata=twine_metadata,
         passages=passages,
+        start_pid=story_data.get("startnode", ""),
     )
+
+    if not story.start_pid and story.get_entries():
+        story.start_pid = story.get_entries()[0].pid
+
+    return story
 
 
 def _write_json(
@@ -250,17 +263,18 @@ def _write_json(
         story: The story to write
         path: Path to write to
     """
-    data: StoryDict = {
+    data: dict[str, Any] = {
         "name": story.metadata.name,
         "ifid": story.metadata.ifid,
         "format": story.metadata.format,
-        "format_version": story.metadata.format_version,
+        "format-version": story.metadata.format_version,
         "zoom": story.metadata.zoom,
         "creator": story.metadata.creator,
-        "creator_version": story.metadata.creator_version,
+        "creator-version": story.metadata.creator_version,
         "style": story.metadata.style,
         "script": story.metadata.script,
-        "tag_colors": {k: str(v) for k, v in story.metadata.tag_colors.items()},
+        "tag-colors": {k: str(v) for k, v in story.metadata.tag_colors.items()},
+        "startnode": story.start_pid,
         "passages": [],
     }
 
@@ -332,6 +346,10 @@ def _write_html(
             f"{passage.metadata.size.x},{passage.metadata.size.y}",
         )
         p_data.text = passage.text
+
+    # Mark starting passage if known
+    if story.start_pid:
+        story_data.set("startnode", story.start_pid)
 
     tree: ET.ElementTree = ET.ElementTree(root)
     tree.write(path, encoding="utf-8", xml_declaration=True)
@@ -443,7 +461,7 @@ def _dlg_to_story(
         if link.node is None:
             continue
 
-        stack: list[tuple[DLGEntry | DLGReply, str]] = [(link.node, str(i + 1))]
+        stack: list[tuple["DLGEntry | DLGReply", str]] = [(cast("DLGEntry | DLGReply", link.node), str(i + 1))]
         start_passage: TwinePassage | None = None
 
         while stack:
@@ -459,7 +477,7 @@ def _dlg_to_story(
 
                     target_node = child_link.node
                     target_pid = str(uuid.uuid4())
-                    target_passage = _ensure_passage(target_node, target_pid)
+                    target_passage = _ensure_passage(cast("DLGEntry | DLGReply", target_node), target_pid)
 
                     passage.links.append(
                         TwineLink(
@@ -471,7 +489,7 @@ def _dlg_to_story(
                     )
 
                     if target_node not in processed:
-                        stack.append((target_node, target_pid))
+                        stack.append((cast("DLGEntry | DLGReply", target_node), target_pid))
 
             if start_passage is None:
                 start_passage = passage

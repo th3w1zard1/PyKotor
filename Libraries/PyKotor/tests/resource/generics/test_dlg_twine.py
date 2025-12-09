@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
+import tempfile
 from typing import TYPE_CHECKING
 
 import pytest
 
-from pykotor.common.language import Gender, Language, LocalizedString
+from pykotor.common.language import Gender, Language
 from pykotor.resource.generics.dlg.base import DLG
 from pykotor.resource.generics.dlg.links import DLGLink
 from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
@@ -152,20 +152,18 @@ def test_link_preservation(sample_dlg: DLG, tmp_path: Path):
 
 def test_invalid_json():
     """Test handling of invalid JSON input."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        f.write("invalid json")
-        f.flush()
-        with pytest.raises(json.JSONDecodeError):
-            read_twine(f.name)
+    invalid_file = Path(tempfile.mkdtemp()) / "invalid.json"
+    invalid_file.write_text("invalid json", encoding="utf-8")
+    with pytest.raises(json.JSONDecodeError):
+        read_twine(invalid_file)
 
 
 def test_invalid_html():
     """Test handling of invalid HTML input."""
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as f:
-        f.write("<not valid html>")
-        f.flush()
-        with pytest.raises(ValueError):
-            read_twine(f.name)
+    invalid_file = Path(tempfile.mkdtemp()) / "invalid.html"
+    invalid_file.write_text("<not valid html>", encoding="utf-8")
+    with pytest.raises(ValueError):
+        read_twine(invalid_file)
 
 
 def test_complex_dialog_structure(tmp_path: Path):
