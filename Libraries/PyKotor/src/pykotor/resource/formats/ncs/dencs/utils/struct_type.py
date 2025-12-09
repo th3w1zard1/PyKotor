@@ -36,14 +36,14 @@ class StructType(Type):
     def add_type(self, type_val: Type):
         from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         self._types.append(type_val)
-        if type_val.equals(Type(-1)):
+        if type_val.equals(isinstance(type_val, Type) and type_val.equals(Type(-1))):
             self._all_typed = False
         self._total_size += type_val.size()
 
     def add_type_stack_order(self, type_val: Type):
         from pykotor.resource.formats.ncs.dencs.utils.type import Type  # pyright: ignore[reportMissingImports]
         self._types.insert(0, type_val)
-        if type_val.equals(Type(-1)):
+        if type_val.equals(isinstance(type_val, Type) and type_val.equals(Type(-1))):
             self._all_typed = False
         self._total_size += type_val.size()
 
@@ -99,7 +99,7 @@ class StructType(Type):
         if len(self._types) == 0:
             raise RuntimeError("Pos was greater than struct size")
         for entry in self._types:
-            oldpos = pos
+            _oldpos = pos
             pos -= entry.size()
             if pos <= 0:
                 return entry.get_element(curpos - pos + 1)

@@ -49,47 +49,51 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 QT_AVAILABLE = False
 try:
     from qtpy.QtGui import QColor, QImage, QPainter, QPainterPath
+
     QT_AVAILABLE = True
 except ImportError:
-    # Qt not available - will use Pillow fallback
-    QImage = None  # type: ignore[assignment, misc]
-    QColor = None  # type: ignore[assignment, misc]
-    QPainter = None  # type: ignore[assignment, misc]
-    QPainterPath = None  # type: ignore[assignment, misc]
+    if not TYPE_CHECKING:
+        # Qt not available - will use Pillow fallback
+        QImage = None  # type: ignore[assignment, misc]
+        QColor = None  # type: ignore[assignment, misc]
+        QPainter = None  # type: ignore[assignment, misc]
+        QPainterPath = None  # type: ignore[assignment, misc]
 
 # Pillow fallback for minimap generation
 PIL_AVAILABLE = False
 try:
     from PIL import Image, ImageDraw
+
     PIL_AVAILABLE = True
 except ImportError:
-    Image = None  # type: ignore[assignment, misc]
-    ImageDraw = None  # type: ignore[assignment, misc]
+    if not TYPE_CHECKING:
+        Image = None  # type: ignore[assignment, misc]
+        ImageDraw = None  # type: ignore[assignment, misc]
 
 
 def _get_resource_priority(location: LocationResult, installation: Installation) -> int:
     """Get resource priority based on KOTOR resolution order.
-    
+
     Resolution order (from highest to lowest priority):
     1. Override folder (priority 0 - highest)
     2. Modules (.mod files) (priority 1)
     3. Modules (.rim/_s.rim/_dlg.erf files) (priority 2)
     4. Chitin BIFs (priority 3 - lowest)
-    
+
     Reference: Libraries/PyKotor/src/pykotor/tslpatcher/writer.py _get_resource_priority
-    
+
     Args:
     ----
         location: LocationResult from installation.locations()
         installation: The installation instance
-        
+
     Returns:
     -------
         Priority value (lower = higher priority)
     """
     filepath = location.filepath
     parent_names_lower = [parent.name.lower() for parent in filepath.parents]
-    
+
     if "override" in parent_names_lower:
         return 0
     if "modules" in parent_names_lower:
@@ -113,30 +117,30 @@ def _resolve_resource_with_priority(
     logger: RobustLogger | None = None,
 ) -> bytes | None:
     """Resolve a resource using KOTOR resolution order priority and return its data.
-    
+
     Follows KOTOR's resource resolution order:
     1. Override folder (highest priority)
     2. Modules (.mod files)
     3. Modules (.rim/_s.rim/_dlg.erf files)
     4. Chitin BIFs (lowest priority)
-    
+
     Reference: Libraries/PyKotor/src/pykotor/tslpatcher/diff/resolution.py resolve_resource_in_installation
     Reference: Libraries/PyKotor/src/pykotor/tslpatcher/writer.py _get_resource_priority
-    
+
     Args:
     ----
         installation: The game installation instance
         resname: Resource name (e.g., "m28ab_01a")
         restype: Resource type (e.g., ResourceType.MDL)
         logger: Optional logger for debugging
-        
+
     Returns:
     -------
         Resource data bytes for the highest priority resource, or None if not found
     """
     if logger is None:
         logger = RobustLogger()
-    
+
     # Find all locations for this resource
     identifier = ResourceIdentifier(resname=resname, restype=restype)
     locations_result = installation.locations(
@@ -147,27 +151,27 @@ def _resolve_resource_with_priority(
             SearchLocation.CHITIN,
         ],
     )
-    
+
     location_list = locations_result.get(identifier, [])
     if not location_list:
         return None
-    
+
     # Sort by priority (lower priority number = higher priority)
     # If multiple resources exist, use the one with highest priority (lowest number)
     location_list_sorted = sorted(
         location_list,
         key=lambda loc: _get_resource_priority(loc, installation),
     )
-    
+
     # Get the highest priority location
     best_location = location_list_sorted[0]
-    
+
     # Get priority for logging
     priority = _get_resource_priority(best_location, installation)
     priority_names = ["Override", "Modules (.mod)", "Modules (.rim)", "Chitin"]
     if logger and len(location_list) > 1:
         logger.debug(f"Found {len(location_list)} locations for {resname}.{restype.extension}, using {priority_names[priority]} (highest priority)")
-    
+
     # Read the resource data
     try:
         with best_location.filepath.open("rb") as f:
@@ -181,21 +185,21 @@ def _resolve_resource_with_priority(
 
 def find_module_file(installation: Installation, module_name: str) -> Path | None:
     """Find the path to a module's main RIM file.
-    
+
     Searches in both the rims and modules directories of the installation.
-    
+
     Args:
     ----
         installation: The game installation instance
         module_name: The module name (e.g., "danm13")
-        
+
     Returns:
     -------
         Path to the module's main RIM file if found, None otherwise
     """
     rims_path = installation.rims_path()
     modules_path = installation.module_path()
-    
+
     # Check rims_path first, then modules_path
     if rims_path and rims_path.exists():
         main_rim = rims_path / f"{module_name}.rim"
@@ -239,7 +243,7 @@ def extract_kit(
         6. Extract DWK files from door models (UTD -> genericdoors.2da -> modelname0/1/2.dwk)
         7. Organize resources into kit structure
         8. Generate JSON file with component definitions
-        
+
     References:
     ----------
         vendor/reone/src/libs/game/object/door.cpp:80-94 - DWK extraction (modelname0/1/2.dwk)
@@ -255,7 +259,7 @@ def extract_kit(
     """
     if logger is None:
         logger = RobustLogger()
-    
+
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -266,10 +270,10 @@ def extract_kit(
 
     if kit_id is None:
         kit_id = module_name_clean
-    
+
     # Sanitize kit_id (remove invalid filename characters)
-    kit_id = re.sub(r'[<>:"/\\|?*]', '_', str(kit_id))
-    kit_id = kit_id.strip('. ')
+    kit_id = re.sub(r'[<>:"/\\|?*]', "_", str(kit_id))
+    kit_id = kit_id.strip(". ")
     if not kit_id:
         kit_id = module_name_clean
     kit_id = kit_id.lower()
@@ -284,7 +288,7 @@ def extract_kit(
 
     rims_path = installation.rims_path()
     modules_path = installation.module_path()
-    
+
     main_archive: RIM | ERF | None = None
     data_archive: RIM | ERF | None = None
     using_dot_mod: bool = False  # Track if we're using a .mod file (affects Module class initialization)
@@ -461,7 +465,7 @@ def extract_kit(
         logger.info(f"Using .mod format for Module class (module_name: {module_name_clean})")
     else:
         logger.info(f"Using .rim format for Module class (module_name: {module_name_clean})")
-    
+
     # Get LYT to find all room models (which have WOK files)
     # Reference: vendor/reone/src/libs/game/object/area.cpp (room loading)
     # Reference: vendor/KotOR.js/src/module/ModuleRoom.ts:331-342 (loadWalkmesh)
@@ -486,49 +490,49 @@ def extract_kit(
                     wok_key = (room_model.lower(), ResourceType.WOK)
                     if wok_key not in all_resources:
                         all_resources[wok_key] = wok_data
-    
+
     # Identify components (MDL files that have corresponding WOK files)
     # Components are room models from LYT that have WOK walkmeshes
     logger.info(f"Found {len(lyt_room_models)} room models in LYT: {sorted(list(lyt_room_models))[:10]}...")
-    
+
     # First, identify components directly from LYT room models
     # Use installation-wide resolution to respect priority order: Override > Modules (.mod) > Modules (.rim) > Chitin
     for room_model in lyt_room_model_names:
         room_model_lower = room_model.lower()
-        
+
         # Get MDL, MDX, and WOK using installation-wide resolution with proper priority
         # This ensures we get the highest priority version (e.g., from Override if it exists)
         mdl_data = _resolve_resource_with_priority(installation, room_model, ResourceType.MDL, logger)
         mdx_data_raw = _resolve_resource_with_priority(installation, room_model, ResourceType.MDX, logger)
         wok_data = _resolve_resource_with_priority(installation, room_model, ResourceType.WOK, logger)
-        
+
         if mdl_data and wok_data:
             # Ensure mdx_data is bytes (not None)
             mdx_data: bytes = mdx_data_raw if mdx_data_raw else b""
-            
+
             # Store in components
             components[room_model_lower] = {
                 "mdl": mdl_data,
                 "mdx": mdx_data,
                 "wok": wok_data,
             }
-            
+
             # Also store in all_models
             if room_model_lower not in all_models:
                 all_models[room_model_lower] = {
                     "mdl": mdl_data,
                     "mdx": mdx_data,
                 }
-            
+
             # Ensure WOK is in all_resources for consistency
             wok_key = (room_model_lower, ResourceType.WOK)
             if wok_key not in all_resources:
                 all_resources[wok_key] = wok_data
-            
+
             logger.debug(f"Identified component: {room_model_lower} (room model with WOK, resolved with priority)")
         else:
             logger.debug(f"Skipping room model {room_model_lower}: MDL or WOK resource not found")
-    
+
     # Also check resources from RIM/ERF archives for components (in case some are there)
     for (resname, restype), data in all_resources.items():
         if restype == ResourceType.MDL:
@@ -536,14 +540,14 @@ def extract_kit(
             resname_lower = resname.lower()  # resname is already lowercase from all_resources keys
             wok_key = (resname_lower, ResourceType.WOK)
             mdx_key = (resname_lower, ResourceType.MDX)
-            
+
             # Store all models (for comprehensive extraction)
             if resname_lower not in all_models:
                 all_models[resname_lower] = {
                     "mdl": data,
                     "mdx": all_resources.get(mdx_key, b""),
                 }
-            
+
             # Components are room models (from LYT) with WOK files
             # Only add if not already added from LYT room models above
             is_room_model = resname_lower in lyt_room_models
@@ -578,7 +582,7 @@ def extract_kit(
                 }
 
     logger.info(f"Identified {len(components)} components: {sorted(list(components.keys()))[:10]}...")
-    
+
     # Extract textures and lightmaps from MDL files using iterate_textures/iterate_lightmaps
     # This is the same approach used in main.py _extract_mdl_textures
     # Use Module class to get all models (including from chitin) that reference textures/lightmaps
@@ -613,7 +617,7 @@ def extract_kit(
                 all_lightmap_names.add(resname)
             else:
                 all_texture_names.add(resname)
-    
+
     # Also check module resources for textures that might not be in RIM files
     # This catches textures that are in the module but not directly in the RIM
     for res_ident, loc_list in module.resources.items():
@@ -634,7 +638,7 @@ def extract_kit(
     for name in all_lightmap_names:
         all_texture_identifiers.append(ResourceIdentifier(resname=name, restype=ResourceType.TPC))
         all_texture_identifiers.append(ResourceIdentifier(resname=name, restype=ResourceType.TGA))
-    
+
     # Single batch lookup for all textures/lightmaps
     # Include MODULES in search order to respect resolution priority: Override > Modules > Textures > Chitin
     logger.info(f"Batch looking up {len(all_texture_identifiers)} texture/lightmap resources...")
@@ -649,7 +653,7 @@ def extract_kit(
         ],
     )
     logger.info(f"Found locations for {len([r for r in batch_location_results.values() if r])} resources")
-    
+
     # Batch all TXI lookups upfront to avoid expensive individual calls
     # This is a major performance optimization - instead of calling installation.locations()
     # individually for each texture/lightmap (potentially 100+ times), we call it once
@@ -658,7 +662,7 @@ def extract_kit(
         all_txi_identifiers.append(ResourceIdentifier(resname=name, restype=ResourceType.TXI))
     for name in all_lightmap_names:
         all_txi_identifiers.append(ResourceIdentifier(resname=name, restype=ResourceType.TXI))
-    
+
     logger.info(f"Batch looking up {len(all_txi_identifiers)} TXI resources...")
     batch_txi_location_results: dict[ResourceIdentifier, list[LocationResult]] = installation.locations(
         all_txi_identifiers,
@@ -674,17 +678,17 @@ def extract_kit(
 
     def extract_texture_or_lightmap(name: str, is_lightmap: bool) -> None:
         """Extract a texture or lightmap from RIM files or installation.
-        
+
         This matches the implementation in Tools/HolocronToolset/src/toolset/gui/windows/main.py
         _locate_texture, _process_texture, and _save_texture methods.
         """
         name_lower: str = name.lower()
         target_dict: dict[str, bytes] = lightmaps if is_lightmap else textures
         target_txis: dict[str, bytes] = lightmap_txis if is_lightmap else texture_txis
-        
+
         if name_lower in target_dict:
             return  # Already extracted
-        
+
         # Use pre-fetched batch location results instead of calling installation.locations() again
         # This avoids checking all files multiple times (major performance improvement)
         try:
@@ -694,20 +698,20 @@ def extract_kit(
                 res_ident = ResourceIdentifier(resname=name, restype=rt)
                 if res_ident in batch_location_results:
                     location_results[res_ident] = batch_location_results[res_ident]
-            
+
             # Process like main.py _process_texture and _save_texture
             # Prioritize locations: select highest priority location (Override > Modules > Textures > Chitin)
             for res_ident, loc_list in location_results.items():
                 if not loc_list:
                     continue
-                
+
                 # Sort by priority and select highest priority location
                 loc_list_sorted = sorted(
                     loc_list,
                     key=lambda loc: _get_resource_priority(loc, installation),
                 )
                 location: LocationResult = loc_list_sorted[0]
-                
+
                 # Always convert to TGA format (like main.py with tpcDecompileCheckbox)
                 if res_ident.restype == ResourceType.TPC:
                     # Read TPC from location
@@ -761,17 +765,17 @@ def extract_kit(
     # Extract all lightmaps
     for lightmap_name in all_lightmap_names:
         extract_texture_or_lightmap(lightmap_name, is_lightmap=True)
-    
+
     # After extracting all textures/lightmaps, try to find TXI files for any that don't have them yet
     # Use pre-batched TXI results instead of individual installation.locations() calls
     # This is a major performance optimization
     texture_name_map: dict[str, str] = {}  # Map lowercase -> original case
     for orig_name in all_texture_names:
         texture_name_map[orig_name.lower()] = orig_name
-    
+
     missing_txi_count: int = 0
     found_txi_count: int = 0
-    
+
     for texture_name_lower in textures.keys():
         if texture_name_lower not in texture_txis:
             missing_txi_count += 1
@@ -782,7 +786,7 @@ def extract_kit(
                 orig_name = texture_name_map[texture_name_lower]
                 if orig_name != texture_name_lower:
                     names_to_try_tx.append(orig_name)
-            
+
             found: bool = False
             for name_to_try_tx in names_to_try_tx:
                 txi_res_ident = ResourceIdentifier(resname=name_to_try_tx, restype=ResourceType.TXI)
@@ -804,20 +808,20 @@ def extract_kit(
                             break
                         except Exception:  # noqa: BLE001
                             pass
-            
+
             if not found:
                 # Create empty TXI file as placeholder (many TXI files in the game are empty)
                 # This matches the expected kit structure where textures have corresponding TXI files
                 texture_txis[texture_name_lower] = b""
-    
+
     # Same for lightmaps - use pre-batched TXI results
     lightmap_name_map: dict[str, str] = {}  # Map lowercase -> original case
     for orig_name in all_lightmap_names:
         lightmap_name_map[orig_name.lower()] = orig_name
-    
+
     missing_lm_txi_count = 0
     found_lm_txi_count = 0
-    
+
     for lightmap_name_lower in lightmaps.keys():
         if lightmap_name_lower not in lightmap_txis:
             missing_lm_txi_count += 1
@@ -828,7 +832,7 @@ def extract_kit(
                 orig_name = lightmap_name_map[lightmap_name_lower]
                 if orig_name != lightmap_name_lower:
                     names_to_try_lm.append(orig_name)
-            
+
             found_lm = False
             for name_to_try_lm in names_to_try_lm:
                 txi_res_ident = ResourceIdentifier(resname=name_to_try_lm, restype=ResourceType.TXI)
@@ -852,7 +856,7 @@ def extract_kit(
                             pass
                 if found_lm:
                     break  # Found it, no need to try other names
-            
+
             if not found_lm:
                 # Create empty TXI file as placeholder (many TXI files in the game are empty)
                 lightmap_txis[lightmap_name_lower] = b""
@@ -882,7 +886,7 @@ def extract_kit(
         # Without this, images render in one place but hitboxes are elsewhere.
         bwm: BWM = read_bwm(component_data["wok"])
         bwm = _recenter_bwm(bwm)
-        
+
         # Write the re-centered WOK file
         (kit_dir / f"{component_id}.wok").write_bytes(bytes_bwm(bwm))
 
@@ -896,12 +900,14 @@ def extract_kit(
         doorhooks: list[dict] = _extract_doorhooks_from_bwm(bwm, len(doors))
 
         # Create component entry with extracted doorhooks
-        component_list.append({
-            "name": component_id.replace("_", " ").title(),
-            "id": component_id,
-            "native": 1,
-            "doorhooks": doorhooks,
-        })
+        component_list.append(
+            {
+                "name": component_id.replace("_", " ").title(),
+                "id": component_id,
+                "native": 1,
+                "doorhooks": doorhooks,
+            }
+        )
 
     # Write texture files
     for texture_name, texture_data in textures.items():
@@ -934,12 +940,12 @@ def extract_kit(
             module=module,
             logger=logger,
         )
-    
+
     # Extract placeable walkmeshes (PWK files)
     # Reference: vendor/reone/src/libs/game/object/placeable.cpp:73
     # Format: <modelname>.pwk
     from pykotor.tools import placeable as placeable_tools
-    
+
     for placeable_name, placeable_data in placeables.items():
         result = placeable_tools.extract_placeable_walkmesh(
             placeable_data,
@@ -959,12 +965,12 @@ def extract_kit(
     for door_idx, (door_name, door_data) in enumerate(doors.items()):
         # Use simple identifier: door0, door1, door2, etc.
         door_id = f"door{door_idx}"
-        
+
         # Write UTD files using the simple identifier
         (kit_dir / f"{door_id}_k1.utd").write_bytes(door_data)
         # For K1, we use the same UTD for K2 (in real kits, these might differ)
         (kit_dir / f"{door_id}_k2.utd").write_bytes(door_data)
-        
+
         # Write door walkmeshes (DWK files) if found
         if door_name in door_walkmeshes:
             for dwk_key, dwk_data in door_walkmeshes[door_name].items():
@@ -983,7 +989,7 @@ def extract_kit(
                 except Exception:  # noqa: BLE001
                     # Skip if we can't determine model name
                     pass
-        
+
         # Extract width and height from door model or texture
         door_width, door_height = door_tools.get_door_dimensions(
             door_data,
@@ -991,18 +997,20 @@ def extract_kit(
             door_name=door_name,
             logger=logger,
         )
-        door_list.append({
-            "utd_k1": f"{door_id}_k1",
-            "utd_k2": f"{door_id}_k2",
-            "width": door_width,
-            "height": door_height,
-        })
+        door_list.append(
+            {
+                "utd_k1": f"{door_id}_k1",
+                "utd_k2": f"{door_id}_k2",
+                "width": door_width,
+                "height": door_height,
+            }
+        )
 
     # Write placeable walkmeshes (PWK files)
     for placeable_model_name, pwk_data in placeable_walkmeshes.items():
         (kit_dir / f"{placeable_model_name}.pwk").write_bytes(pwk_data)
         logger.debug(f"Wrote placeable walkmesh '{placeable_model_name}.pwk'")
-    
+
     # Write all models (MDL/MDX) that aren't components or skyboxes
     # This ensures we extract all models referenced by the module, not just room components
     # Reference: Tools/HolocronToolset/src/toolset/gui/windows/main.py extractAllModuleModels
@@ -1042,20 +1050,20 @@ def extract_kit(
 
 def _generate_component_minimap(bwm: BWM):  # type: ignore[return-value]
     """Generate a minimap PNG image from a BWM walkmesh.
-    
+
     Uses Qt (QImage) if available, otherwise falls back to Pillow (PIL Image).
-    
+
     Args:
     ----
         bwm: BWM walkmesh object
-        
+
     Returns:
     -------
         QImage or PIL.Image: Minimap image (top-down view of walkmesh)
     """
     if not QT_AVAILABLE and not PIL_AVAILABLE:
         raise ImportError("Neither Qt bindings nor Pillow available - cannot generate minimap")
-    
+
     # Calculate bounding box
     vertices: list[Vector3] = list(bwm.vertices())
     if not vertices:
@@ -1066,94 +1074,94 @@ def _generate_component_minimap(bwm: BWM):  # type: ignore[return-value]
             return image
         else:
             return Image.new("RGB", (256, 256), (0, 0, 0))  # type: ignore[misc, call-overload]
-    
+
     bbmin: Vector3 = Vector3(min(v.x for v in vertices), min(v.y for v in vertices), min(v.z for v in vertices))
     bbmax: Vector3 = Vector3(max(v.x for v in vertices), max(v.y for v in vertices), max(v.z for v in vertices))
-    
+
     # Add padding
     padding: float = 5.0
     bbmin.x -= padding
     bbmin.y -= padding
     bbmax.x += padding
     bbmax.y += padding
-    
+
     # Calculate image dimensions (scale: 10 pixels per unit)
     width: int = int((bbmax.x - bbmin.x) * 10)
     height: int = int((bbmax.y - bbmin.y) * 10)
-    
+
     # Ensure minimum size
     width = max(width, 256)
     height = max(height, 256)
-    
+
     # Transform to image coordinates (flip Y, scale, translate)
     def to_image_coords(v: Vector2) -> tuple[float, float]:
         x = (v.x - bbmin.x) * 10
         y = height - (v.y - bbmin.y) * 10  # Flip Y
         return x, y
-    
+
     # Use Qt if available
     if importlib.util.find_spec("qtpy") is not None:
         # Create image
-        q_image: QImage | Image = QImage(width, height, QImage.Format.Format_RGB888)  # type: ignore[misc, call-overload]
-        q_image.fill(QColor(0, 0, 0))  # type: ignore[misc, call-overload]
-        
+        q_image = QImage(width, height, QImage.Format.Format_RGB888)  # type: ignore[misc, call-overload]
+        q_image.fill(QColor(0, 0, 0))
+
         # Draw walkmesh faces
         painter = QPainter(q_image)  # type: ignore[misc, call-overload]
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)  # type: ignore[misc, attr-defined]
-        
+
         # Draw walkable faces in white, non-walkable in gray
         for face in bwm.faces:
             # Determine if face is walkable based on material
             is_walkable = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
             color = QColor(255, 255, 255) if is_walkable else QColor(128, 128, 128)  # type: ignore[misc, call-overload]
-            
-            painter.setBrush(QColor(color))  # type: ignore[misc, call-overload]
-            painter.setPen(QColor(color))  # type: ignore[misc, call-overload]
-            
+
+            painter.setBrush(QColor(color))
+            painter.setPen(QColor(color))
+
             # Build path from face vertices
-            path = QPainterPath()  # type: ignore[misc, call-overload]
+            path = QPainterPath()
             v1 = Vector2(face.v1.x, face.v1.y)
             v2 = Vector2(face.v2.x, face.v2.y)
             v3 = Vector2(face.v3.x, face.v3.y)
-            
+
             x1, y1 = to_image_coords(v1)
             x2, y2 = to_image_coords(v2)
             x3, y3 = to_image_coords(v3)
-            
+
             path.moveTo(x1, y1)
             path.lineTo(x2, y2)
             path.lineTo(x3, y3)
             path.closeSubpath()
-            
+
             painter.drawPath(path)
-        
+
         painter.end()
         return q_image
-    
+
     # Fallback to Pillow
-    if importlib.util.find_spec("PIL") is not None:
+    elif importlib.util.find_spec("PIL") is not None:
         # Create image
-        pil_image: Image = Image.new("RGB", (width, height), (0, 0, 0))  # type: ignore[misc, call-overload]
-        draw: ImageDraw.Draw = ImageDraw.Draw(pil_image)  # type: ignore[misc, call-overload]
-        
+        pil_image = Image.new("RGB", (width, height), (0, 0, 0))
+        draw = ImageDraw.Draw(pil_image)
+
         # Draw walkable faces in white, non-walkable in gray
         for face in bwm.faces:
             # Determine if face is walkable based on material
             is_walkable = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
             color = (255, 255, 255) if is_walkable else (128, 128, 128)
-            
+
             # Get face vertices
             v1 = Vector2(face.v1.x, face.v1.y)
             v2 = Vector2(face.v2.x, face.v2.y)
             v3 = Vector2(face.v3.x, face.v3.y)
-            
+
             x1, y1 = to_image_coords(v1)
             x2, y2 = to_image_coords(v2)
             x3, y3 = to_image_coords(v3)
-            
+
             # Draw polygon (triangle)
             draw.polygon([(x1, y1), (x2, y2), (x3, y3)], fill=color, outline=color)
-        
+
         return pil_image
 
     raise ImportError("Neither Qt bindings nor Pillow available - cannot generate minimap")
@@ -1161,32 +1169,32 @@ def _generate_component_minimap(bwm: BWM):  # type: ignore[return-value]
 
 def _extract_doorhooks_from_bwm(bwm: BWM, num_doors: int) -> list[dict[str, float | int]]:
     """Extract doorhook positions from BWM edges with transitions.
-    
+
     Args:
     ----
         bwm: BWM walkmesh object
         num_doors: Number of doors in the kit (for door index)
-        
+
     Returns:
     -------
         list[dict[str, float | int]]: List of doorhook dictionaries with x, y, z, rotation, door, edge
     """
     doorhooks: list[dict[str, float | int]] = []
-    
+
     # Get all perimeter edges (these are the edges with transitions)
     edges: list[BWMEdge] = bwm.edges()
-    
+
     # Process edges with valid transitions
     for edge in edges:
         if edge.transition < 0:  # Skip edges without transitions
             continue
-        
+
         face: BWMFace = edge.face
         # Get edge vertices based on local edge index (0, 1, or 2)
         # edge.index is the global edge index (face_index * 3 + local_edge_index)
         _face_index: int = edge.index // 3
         local_edge_index: int = edge.index % 3
-        
+
         # Get vertices for this edge
         if local_edge_index == 0:
             v1 = face.v1
@@ -1197,12 +1205,12 @@ def _extract_doorhooks_from_bwm(bwm: BWM, num_doors: int) -> list[dict[str, floa
         else:  # local_edge_index == 2
             v1 = face.v3
             v2 = face.v1
-        
+
         # Calculate midpoint of edge
         mid_x: float = (v1.x + v2.x) / 2.0
         mid_y: float = (v1.y + v2.y) / 2.0
         mid_z: float = (v1.z + v2.z) / 2.0
-        
+
         # Calculate rotation (angle of edge in XY plane, in degrees)
         dx: float = v2.x - v1.x
         dy: float = v2.y - v1.y
@@ -1211,48 +1219,50 @@ def _extract_doorhooks_from_bwm(bwm: BWM, num_doors: int) -> list[dict[str, floa
         rotation = rotation % 360
         if rotation < 0:
             rotation += 360
-        
+
         # Map transition index to door index
         # Transition indices typically map directly to door indices, but clamp to valid range
         door_index: int = min(edge.transition, num_doors - 1) if num_doors > 0 else 0
-        
-        doorhooks.append({
-            "x": mid_x,
-            "y": mid_y,
-            "z": mid_z,
-            "rotation": rotation,
-            "door": door_index,
-            "edge": edge.index,  # Global edge index
-        })
-    
+
+        doorhooks.append(
+            {
+                "x": mid_x,
+                "y": mid_y,
+                "z": mid_z,
+                "rotation": rotation,
+                "door": door_index,
+                "edge": edge.index,  # Global edge index
+            }
+        )
+
     return doorhooks
 
 
 def _recenter_bwm(bwm: BWM) -> BWM:
     """Re-center a BWM around (0, 0) so image and hitbox align in Indoor Map Builder.
-    
+
     The Indoor Map Builder draws the preview image CENTERED at room.position,
     but translates the walkmesh BY room.position from its original coordinates.
-    
+
     For these to align, the BWM must be centered around (0, 0):
     - If BWM center is at (100, 200) and room.position = (0, 0):
       - Image would be centered at (0, 0)
       - Walkmesh would be centered at (100, 200) after translate
       - MISMATCH! Image and hitbox are in different places.
-    
+
     - After re-centering BWM to (0, 0):
       - Image is centered at room.position
       - Walkmesh is centered at room.position after translate
       - MATCH! Image and hitbox overlap perfectly.
-    
+
     Args:
     ----
         bwm: BWM walkmesh object
-        
+
     Returns:
     -------
         BWM: The same BWM object, modified in place and returned
-    
+
     Reference:
     ---------
         Tools/HolocronToolset/src/toolset/gui/windows/indoor_builder.py - _draw_image()
@@ -1261,7 +1271,7 @@ def _recenter_bwm(bwm: BWM) -> BWM:
     vertices: list[Vector3] = list(bwm.vertices())
     if not vertices:
         return bwm
-    
+
     # Calculate current center
     min_x = min(v.x for v in vertices)
     max_x = max(v.x for v in vertices)
@@ -1269,14 +1279,13 @@ def _recenter_bwm(bwm: BWM) -> BWM:
     max_y = max(v.y for v in vertices)
     min_z = min(v.z for v in vertices)
     max_z = max(v.z for v in vertices)
-    
+
     center_x = (min_x + max_x) / 2.0
     center_y = (min_y + max_y) / 2.0
     center_z = (min_z + max_z) / 2.0
-    
+
     # Translate all vertices to center around origin
     # Use BWM.translate() which handles all vertices in faces
     bwm.translate(-center_x, -center_y, -center_z)
-    
-    return bwm
 
+    return bwm

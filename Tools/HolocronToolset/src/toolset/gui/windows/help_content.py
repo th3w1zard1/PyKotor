@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 # Try to import defusedxml, fallback to ElementTree if not available
+from pathlib import Path
+
 from xml.etree import ElementTree as ET
 
 try:  # sourcery skip: remove-redundant-exception, simplify-single-exception-tuple
@@ -16,6 +18,8 @@ from loggerplus import RobustLogger
 from qtpy import QtCore
 from qtpy.QtWidgets import QTreeWidgetItem
 
+from toolset.gui.windows.help_paths import get_help_file_path
+
 if TYPE_CHECKING:
     from toolset.gui.windows.help_window import HelpWindow
 
@@ -29,7 +33,17 @@ class HelpContent:
         self.help_window.ui.contentsTree.clear()
 
         try:
-            tree = ET.parse("./help/contents.xml")  # noqa: S314 incorrect warning.
+            # Try to resolve contents.xml from help paths
+            contents_path = get_help_file_path("contents.xml")
+            if contents_path is None:
+                # Fallback to old location
+                contents_path = Path("./help/contents.xml")
+            
+            if not contents_path.exists():
+                RobustLogger().warning(f"Could not find contents.xml at {contents_path}")
+                return
+            
+            tree = ET.parse(contents_path)  # noqa: S314 incorrect warning.
             root = tree.getroot()
 
             self.version = str(root.get("version", "0.0"))

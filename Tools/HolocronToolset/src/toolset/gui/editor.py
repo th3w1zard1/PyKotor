@@ -5,11 +5,10 @@ import tempfile
 from abc import abstractmethod
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, cast
+from typing import TYPE_CHECKING, Any, Callable, Optional, Sequence, cast
 
 import qtpy
 
-from loggerplus import RobustLogger
 from qtpy import QtCore
 from qtpy.QtCore import QBuffer, QIODevice, QPoint, QTimer, QUrl, Qt
 from qtpy.QtGui import QIcon, QPixmap
@@ -25,12 +24,13 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
-    QShortcut,
+    QShortcut,  # pyright: ignore[reportPrivateImportUsage]
     QSlider,
     QStyle,
     QWidget,
 )
 
+from loggerplus import RobustLogger
 from pykotor.common.module import Module
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.capsule import Capsule
@@ -72,6 +72,7 @@ if TYPE_CHECKING:
     from PyQt6.QtMultimedia import QMediaPlayer as PyQt6MediaPlayer
     from PySide6.QtMultimedia import QMediaPlayer as PySide6MediaPlayer
     from qtpy.QtGui import QFocusEvent, QMouseEvent, QShowEvent
+    from qtpy.QtWidgets import QAction, QMenuBar  # pyright: ignore[reportPrivateImportUsage]
 
     from pykotor.common.language import LocalizedString
     from pykotor.resource.formats.rim.rim_data import RIM
@@ -130,6 +131,7 @@ class MediaPlayerWidget(QWidget):
                 self.dragPosition = ev.pos()  # Store click position
                 ev.accept()
             super(QSlider, slider).mousePressEvent(ev)
+
         def sliderMouseMoveEvent(ev: QMouseEvent, slider: QSlider = self.timeSlider):
             if ev.buttons() == Qt.LeftButton and not self.dragPosition.isNull():  # pyright: ignore[reportAttributeAccessIssue]
                 value = int((ev.pos().x() / slider.width()) * slider.maximum())
@@ -137,6 +139,7 @@ class MediaPlayerWidget(QWidget):
                 self.player.setPosition(value)
                 ev.accept()
             super(QSlider, slider).mouseMoveEvent(ev)
+
         def sliderMouseReleaseEvent(ev: QMouseEvent, slider: QSlider = self.timeSlider):
             if ev.button() == Qt.LeftButton and not self.dragPosition.isNull():  # pyright: ignore[reportAttributeAccessIssue]
                 # Set the final value and clear dragPosition
@@ -147,6 +150,7 @@ class MediaPlayerWidget(QWidget):
                 self.dragPosition = QPoint()  # Reset drag position
                 ev.accept()
             super(QSlider, slider).mouseReleaseEvent(ev)
+
         def sliderFocusOutEvent(ev: QFocusEvent, slider: QSlider = self.timeSlider):
             if not self.dragPosition.isNull():
                 value = int((self.dragPosition.x() / slider.width()) * slider.maximum())
@@ -155,6 +159,7 @@ class MediaPlayerWidget(QWidget):
                 self.player.play()
                 ev.accept()
             super(QSlider, slider).focusOutEvent(ev)
+
         self.timeSlider.mouseMoveEvent = sliderMouseMoveEvent  # type: ignore[method-override]
         self.timeSlider.mousePressEvent = sliderMousePressEvent  # type: ignore[method-override]
         self.timeSlider.mouseReleaseEvent = sliderMouseReleaseEvent  # type: ignore[method-override]
@@ -217,10 +222,12 @@ class MediaPlayerWidget(QWidget):
 
     def toggleMute(self):
         if qtpy.QT5:
-            self.player.setMuted(not self.player.isMuted())
-            muted = self.player.isMuted()
+            self.player.setMuted(not self.player.isMuted())  # pyright: ignore[reportAttributeAccessIssue]
+            muted = self.player.isMuted()  # pyright: ignore[reportAttributeAccessIssue]
         else:
             audio_output = self.player.audioOutput()  # pyright: ignore[reportAttributeAccessIssue]
+            if audio_output is None:
+                return
             current_volume = audio_output.volume()
             if current_volume > 0:
                 self.previous_volume = current_volume
@@ -331,7 +338,6 @@ class Editor(QMainWindow):
         self._restype: ResourceType | None = None
         self._revert: bytes | None = None
         self._is_save_game_resource: bool = False  # Flag to track if resource is from a save game
-        self._global_settings: GlobalSettings = GlobalSettings()
 
         # Create media player as a child widget (not added to any layout)
         # Note: Do NOT call setLayout() on a QMainWindow - it interferes with the
@@ -342,7 +348,6 @@ class Editor(QMainWindow):
         self._setupIcon(iconName)
 
         self.setupEditorFilters(readSupported, writeSupported)
-
 
     def showEvent(self, event: QShowEvent):
         # Set minimum size based on the current size
@@ -360,10 +365,16 @@ class Editor(QMainWindow):
             - Sets Revert action to disabled
             - Connects keyboard shortcuts for New, Open, Save, Save As, Revert and Exit.
         """
-        menubar = self.menuBar().actions()[0].menu()
-        if not isinstance(menubar, QMenu):
-            raise TypeError(f"self.menuBar().actions()[0].menu() returned a {type(menubar).__name__} object, expected QMenu.")
-        for action in menubar.actions():
+        menuBar: QMenuBar | None = self.menuBar()
+        if menuBar is None:
+            raise TypeError(f"self.menuBar().actions()[0].menu() returned a {type(menuBar).__name__} object, expected QMenu.")
+        menuActions: list[QAction] = menuBar.actions()
+        if len(menuActions) == 0:
+            raise ValueError("Menu bar has no actions")
+        menu: QMenu | None = cast("Optional[QMenu]", menuActions[0].menu())
+        if menu is None:
+            raise TypeError(f"self.menuBar().actions()[0].menu() returned a {type(menu).__name__} object, expected QMenu.")
+        for action in menu.actions():
             if action.text() == "New":  # sourcery skip: extract-method
                 action.triggered.connect(self.new)
             if action.text() == "Open":
@@ -384,20 +395,20 @@ class Editor(QMainWindow):
         QShortcut("Ctrl+Shift+S", self).activated.connect(self.save_as)
         QShortcut("Ctrl+R", self).activated.connect(self.revert)
         QShortcut("Ctrl+Q", self).activated.connect(self.exit)
-    
+
     def _setup_menus(self):
         """Alias for _setupMenus() to match snake_case naming convention."""
         self._setupMenus()
-    
+
     def _add_help_action(self, wiki_filename: str | None = None):
         """Add a help action to the menu bar with question mark icon.
-        
+
         Args:
             wiki_filename: Name of the markdown file in the wiki directory (e.g., "GFF-File-Format.md").
                           If None, will try to auto-detect from editor class name.
         """
         from toolset.gui.editors.editor_wiki_mapping import EDITOR_WIKI_MAP
-        
+
         # Auto-detect wiki file if not provided
         if wiki_filename is None:
             editor_class_name = self.__class__.__name__
@@ -405,28 +416,29 @@ class Editor(QMainWindow):
             if wiki_filename is None:
                 # No wiki file for this editor, skip adding help
                 return
-        
-        menubar = self.menuBar()
-        help_menu = None
-        
+
+        menubar: QMenuBar | None = self.menuBar()
+        help_menu: QMenu | None = None
+
         # Check if Help menu already exists
-        for action in menubar.actions():
-            if action.text() == "Help":
-                help_menu = action.menu()
-                break
-        
+        if menubar is not None:
+            for action in menubar.actions():
+                if action.text() == "Help":
+                    help_menu = cast("Optional[QMenu]", action.menu())
+                    break
+
         # Create Help menu if it doesn't exist
         if help_menu is None:
             help_menu = QMenu("Help", self)
             menubar.addMenu(help_menu)
-        
+
         # Check if Documentation action already exists (idempotent)
-        doc_action = None
+        doc_action: QAction | None = None
         for action in help_menu.actions():
             if action.text() == "Documentation":
                 doc_action = action
                 break
-        
+
         # Only add if it doesn't exist
         if doc_action is None:
             # Add help action with question mark icon
@@ -435,21 +447,21 @@ class Editor(QMainWindow):
                 help_icon = style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxQuestion)
             else:
                 help_icon = QIcon()
-            
+
             help_action = help_menu.addAction(help_icon, "Documentation")
             help_action.setShortcut("F1")
             help_action.triggered.connect(lambda: self._show_help_dialog(wiki_filename))
-            
+
             QShortcut("F1", self).activated.connect(lambda: self._show_help_dialog(wiki_filename))
-    
+
     def _show_help_dialog(self, wiki_filename: str):
         """Show the help dialog for this editor.
-        
+
         Args:
             wiki_filename: Name of the markdown file in the wiki directory
         """
         from toolset.gui.dialogs.editor_help import EditorHelpDialog
-        
+
         # Create non-blocking dialog
         dialog = EditorHelpDialog(self, wiki_filename)
         dialog.show()  # Non-blocking show
@@ -469,6 +481,7 @@ class Editor(QMainWindow):
         relpath = self._filepath.relative_to(self._filepath.parent.parent) if self._filepath.parent.parent.name else self._filepath.parent
         if is_bif_file(relpath) or is_capsule_file(self._filepath):
             from toolset.gui.editors.erf import ERFEditor
+
             if not isinstance(self, ERFEditor):
                 relpath /= f"{self._resname}.{self._restype.extension}"
         self.setWindowTitle(f"{relpath} - {self._editorTitle}({installationName})")
@@ -478,19 +491,17 @@ class Editor(QMainWindow):
         additional_formats = {"XML", "JSON", "CSV", "ASCII", "YAML"}
         for add_format in additional_formats:
             readSupported.extend(
-                ResourceType.__members__[f"{restype.name}_{add_format}"]
-                for restype in readSupported if f"{restype.name}_{add_format}" in ResourceType.__members__
+                ResourceType.__members__[f"{restype.name}_{add_format}"] for restype in readSupported if f"{restype.name}_{add_format}" in ResourceType.__members__
             )
             writeSupported.extend(
-                ResourceType.__members__[f"{restype.name}_{add_format}"]
-                for restype in writeSupported if f"{restype.name}_{add_format}" in ResourceType.__members__
+                ResourceType.__members__[f"{restype.name}_{add_format}"] for restype in writeSupported if f"{restype.name}_{add_format}" in ResourceType.__members__
             )
         self._readSupported: list[ResourceType] = readSupported
         self._writeSupported: list[ResourceType] = writeSupported
 
         self._saveFilter: str = "All valid files ("
         for resource in writeSupported:
-            self._saveFilter += f'*.{resource.extension}{"" if writeSupported[-1] == resource else " "}'
+            self._saveFilter += f"*.{resource.extension}{'' if writeSupported[-1] == resource else ' '}"
         self._saveFilter += f" {self.CAPSULE_FILTER});;"
         for resource in writeSupported:
             self._saveFilter += f"{resource.category} File (*.{resource.extension});;"
@@ -498,7 +509,7 @@ class Editor(QMainWindow):
 
         self._openFilter: str = "All valid files ("
         for resource in readSupported:
-            self._openFilter += f'*.{resource.extension}{"" if readSupported[-1] == resource else " "}'
+            self._openFilter += f"*.{resource.extension}{'' if readSupported[-1] == resource else ' '}"
         self._openFilter += f" {self.CAPSULE_FILTER});;"
         for resource in readSupported:
             self._openFilter += f"{resource.category} File (*.{resource.extension});;"
@@ -506,11 +517,7 @@ class Editor(QMainWindow):
 
     def getOpenedFileName(self) -> str:
         if self._filepath is not None and self._filepath.name and self._restype is not None:
-            return (
-                f"{self._resname or ''}.{self._restype.extension}"
-                if is_bif_file(self._filepath) or is_capsule_file(self._filepath)
-                else self._filepath.name
-            )
+            return f"{self._resname or ''}.{self._restype.extension}" if is_bif_file(self._filepath) or is_capsule_file(self._filepath) else self._filepath.name
         return ""
 
     def save_as(self):
@@ -548,7 +555,7 @@ class Editor(QMainWindow):
             )
             if error_msg:
                 msgBox.setDetailedText(format_exception_with_variables(e))
-            msgBox.exec_()
+            msgBox.exec()
             return
 
         if is_capsule_file(filepath_str) and f"Save into module ({self.CAPSULE_FILTER})" in self._saveFilter:
@@ -557,7 +564,7 @@ class Editor(QMainWindow):
                 self._restype = self._writeSupported[0]
 
             dialog2 = SaveToModuleDialog(self._resname, self._restype, self._writeSupported)
-            if dialog2.exec_():
+            if dialog2.exec():
                 self._resname = dialog2.resname()
                 self._restype = dialog2.restype()
                 self._filepath = Path(filepath_str)
@@ -567,7 +574,16 @@ class Editor(QMainWindow):
         self.save()
 
         self.refreshWindowTitle()
-        for action in self.menuBar().actions()[0].menu().actions():
+        menuBar: QMenuBar | None = self.menuBar()
+        if menuBar is None:
+            raise TypeError(f"self.menuBar().actions()[0].menu() returned a {type(menuBar).__name__} object, expected QMenu.")
+        menuActions: list[QAction] = menuBar.actions()
+        if len(menuActions) == 0:
+            raise ValueError("Menu bar has no actions")
+        menu: QMenu | None = cast("Optional[QMenu]", menuActions[0].menu())
+        if menu is None:
+            raise TypeError(f"self.menuBar().actions()[0].menu() returned a {type(menu).__name__} object, expected QMenu.")
+        for action in menu.actions():
             if action.text() == "Revert":
                 action.setEnabled(True)
 
@@ -593,16 +609,10 @@ class Editor(QMainWindow):
             # CRITICAL: For save game resources, ALWAYS preserve extra fields
             # Save game GFF files contain undocumented fields that must be preserved
             # to prevent save corruption. This is more important than the user setting.
-            should_preserve_fields = (
-                self._is_save_game_resource or self._global_settings.attemptKeepOldGFFFields
-            )
-            
+            should_preserve_fields = self._is_save_game_resource or self._global_settings.attemptKeepOldGFFFields
+
             if (  # HACK: we need a proper save editor, but this is better than nothing.
-                should_preserve_fields
-                and self._restype is not None
-                and self._restype.is_gff()
-                and not isinstance(self, GFFEditor)
-                and self._revert is not None
+                should_preserve_fields and self._restype is not None and self._restype.is_gff() and not isinstance(self, GFFEditor) and self._revert is not None
             ):
                 if self._is_save_game_resource:
                     print("Save game resource detected: Preserving all extra GFF fields to prevent save corruption.")
@@ -736,8 +746,7 @@ class Editor(QMainWindow):
 
         c_parent_filepath = c_filepath.parent
         while (  # Iterate all parents until we find a physical folder on disk.
-            ResourceType.from_extension(c_parent_filepath.suffix).name
-            in (ResourceType.ERF, ResourceType.MOD, ResourceType.SAV, ResourceType.RIM)
+            ResourceType.from_extension(c_parent_filepath.suffix).name in (ResourceType.ERF, ResourceType.MOD, ResourceType.SAV, ResourceType.RIM)
         ) and not c_parent_filepath.is_dir():
             nested_paths.append(c_parent_filepath)
             c_filepath = c_parent_filepath
@@ -891,11 +900,17 @@ class Editor(QMainWindow):
         # Set the new position
         self.move(new_x, new_y)
 
-    #@property
-    #def filepath(self):
+    # @property
+    # def filepath(self):
     #    return self._resource.filepath()
 
-    def load(self, filepath: os.PathLike | str, resref: str, restype: ResourceType, data: bytes):
+    def load(
+        self,
+        filepath: os.PathLike | str,
+        resref: str,
+        restype: ResourceType,
+        data: bytes,
+    ):
         """Load a resource from a file.
 
         Args:
@@ -918,28 +933,34 @@ class Editor(QMainWindow):
         self._resname = resref
         self._restype = restype
         self._revert = data
-        
+
         # Detect if this resource is from a save game
         # Check if any parent in the filepath is a .sav file
         self._is_save_game_resource = self._detect_save_game_resource(self._filepath)
-        
-        for action in self.menuBar().actions()[0].menu().actions():
-            if action.text() == "Revert":
-                action.setEnabled(True)
-                break
+
+        menu_bar: QMenuBar | None = cast("Optional[QMenuBar]", self.menuBar())
+        assert menu_bar is not None, "Menu bar is None somehow? This should be impossible."
+        menu_bar_actions: Sequence[QAction] = menu_bar.actions()  # pyright: ignore[reportAssignmentType]
+        if len(menu_bar_actions) > 0:
+            menu: QMenu | None = menu_bar_actions[0].menu()
+            assert menu is not None, "Menu is somehow None"
+            for action in menu_bar_actions:
+                if action.text() == "Revert":
+                    action.setEnabled(True)
+                    break
         self.refreshWindowTitle()
         self.loadedFile.emit(str(self._filepath), self._resname, self._restype, data)
-    
+
     def _detect_save_game_resource(self, filepath: Path) -> bool:
         """Detect if a resource is from a save game by checking the filepath.
-        
+
         Save game resources are nested inside SAVEGAME.sav or cached module .sav files.
         This method checks if any parent in the path is a .sav file.
-        
+
         Args:
         ----
             filepath: Path to check
-            
+
         Returns:
         -------
             bool: True if resource is from a save game, False otherwise
@@ -1029,6 +1050,7 @@ class Editor(QMainWindow):
     def play_byte_source_media(self, data: bytes | None) -> bool:
         if qtpy.API_NAME in ["PyQt5", "PySide2"]:
             from qtpy.QtMultimedia import QMediaContent
+
             if data:
                 self.mediaPlayer.buffer = buffer = QBuffer(self)
                 buffer.setData(data)
@@ -1051,6 +1073,7 @@ class Editor(QMainWindow):
 
     def _play_byte_data_qt6(self, data: bytes):
         from qtpy.QtMultimedia import QAudioOutput
+
         tempFile = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
         tempFile.write(data)
         tempFile.flush()
@@ -1075,7 +1098,9 @@ class Editor(QMainWindow):
 
         data: bytes | None = self._installation.sound(
             resname,
-            order if order is not None else [
+            order
+            if order is not None
+            else [
                 SearchLocation.MUSIC,
                 SearchLocation.VOICE,
                 SearchLocation.SOUND,

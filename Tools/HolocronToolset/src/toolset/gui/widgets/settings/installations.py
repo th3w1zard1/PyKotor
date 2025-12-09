@@ -205,6 +205,7 @@ class GlobalSettings(Settings):
         super().__init__("Global")
 
     def installations(self) -> dict[str, InstallationConfig]:
+        """Retrieve the current installations from settings as a dict of InstallationConfig."""
         installations: dict[str, dict[str, Any]] = self.settings.value("installations")
         if installations is None:
             installations = {}
@@ -218,6 +219,32 @@ class GlobalSettings(Settings):
             name: InstallationConfig(name)
             for name in installations
         }
+
+    def set_installations(
+        self,
+        installations: dict[str, InstallationConfig | dict[str, Any]],
+    ) -> None:
+        """
+        Sets the collection of installations in the settings.
+
+        Args:
+            installations: A mapping from installation name to InstallationConfig or dict with compatible fields.
+        """
+        # Convert InstallationConfig objects to dict if provided as such
+        installations_data: dict[str, dict[str, Any]] = {}
+        for name, config in installations.items():
+            if isinstance(config, InstallationConfig):
+                # Convert InstallationConfig to dict representation via settings persistence
+                installations_data[name] = {
+                    "name": config.name,
+                    "path": config.path,
+                    "tsl": config.tsl,
+                }
+            elif isinstance(config, dict):
+                installations_data[name] = dict(config)
+            else:
+                raise ValueError(f"Invalid type for installation config value: {type(config)}")
+        self.settings.setValue("installations", installations_data)
 
     def _handle_firsttime_user(
         self,

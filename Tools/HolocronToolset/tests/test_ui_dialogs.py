@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 import pytest
+from typing import TYPE_CHECKING
 from toolset.gui.dialogs.about import About
 from toolset.config import LOCAL_PROGRAM_INFO
 
-def test_about_dialog_init(qtbot):
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
+
+def test_about_dialog_init(qtbot: QtBot):
     """Test About dialog initialization."""
     # Need a parent widget
     from qtpy.QtWidgets import QWidget

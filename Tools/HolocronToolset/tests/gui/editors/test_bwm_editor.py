@@ -5,6 +5,10 @@ import pathlib
 import sys
 import unittest
 from unittest import TestCase
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
 
 try:
     from qtpy.QtTest import QTest
@@ -42,6 +46,7 @@ if (
 K1_PATH = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
 K2_PATH = os.environ.get("K2_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II")
 
+from pykotor.extract.file import ResourceIdentifier, ResourceResult
 from pykotor.extract.installation import Installation
 from pykotor.resource.formats.bwm.bwm_auto import read_bwm
 from pykotor.resource.type import ResourceType
@@ -380,7 +385,7 @@ import pytest
 from toolset.gui.editors.bwm import BWMEditor
 from toolset.data.installation import HTInstallation
 
-def test_bwm_editor_headless_ui_load_build(qtbot, installation: HTInstallation, test_files_dir: pathlib.Path):
+def test_bwm_editor_headless_ui_load_build(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
     """Test BWM Editor in headless UI - loads real file and builds data."""
     editor = BWMEditor(None, installation)
     qtbot.addWidget(editor)
@@ -389,19 +394,21 @@ def test_bwm_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     bwm_file = test_files_dir / "zio006j.wok"
     if not bwm_file.exists():
         # Try to get one from installation
-        bwm_resources = list(installation.resources(ResourceType.WOK))[:1]
+        bwm_resources: list[ResourceResult | None] = list(installation.resources([ResourceIdentifier("zio006j", ResourceType.WOK)]).values())[:1]
         if not bwm_resources:
-            bwm_resources = list(installation.resources(ResourceType.DWK))[:1]
+            bwm_resources = list(installation.resources([ResourceIdentifier("zio006j", ResourceType.DWK)]).values())[:1]
         if not bwm_resources:
             pytest.skip("No BWM files available for testing")
-        bwm_resource = bwm_resources[0]
-        bwm_data = installation.resource(bwm_resource.identifier)
+        first_bwm_resource: ResourceResult | None = bwm_resources[0]
+        if first_bwm_resource is None:
+            pytest.fail("BWM not found on second pass, after lookup with resources()...???")
+        bwm_data = installation.resource(ResourceIdentifier(first_bwm_resource.resname, first_bwm_resource.restype))
         if not bwm_data:
-            pytest.skip(f"Could not load BWM data for {bwm_resource.identifier}")
+            pytest.skip(f"Could not load BWM data for {first_bwm_resource.resname}")
         editor.load(
-            bwm_resource.filepath if hasattr(bwm_resource, 'filepath') else pathlib.Path("module.wok"),
-            bwm_resource.resname,
-            bwm_resource.restype,
+            first_bwm_resource.filepath if hasattr(first_bwm_resource, 'filepath') else pathlib.Path("module.wok"),
+            first_bwm_resource.resname,
+            first_bwm_resource.restype,
             bwm_data
         )
     else:
@@ -421,7 +428,7 @@ def test_bwm_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     assert loaded_bwm is not None
 
 
-def test_bwmeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+def test_bwmeditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation):
     """Test that BWMEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog
     

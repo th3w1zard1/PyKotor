@@ -85,7 +85,7 @@ class DropTarget:
             return cls(curIndex.parent(), max(curIndex.row(), 0), DropPosition.ABOVE, indicator_rect)
         if pos.y() >= lower_threshold:
             # Adjust for bottom edge of the index
-            indicator_rect: QRect = QRect(rect.bottomLeft(), rect.bottomRight())
+            indicator_rect = QRect(rect.bottomLeft(), rect.bottomRight())
             return cls(curIndex.parent(), curIndex.row() + 1, DropPosition.BELOW, indicator_rect)
 
         return cls(curIndex, curIndex.row(), DropPosition.ON_TOP_OF, rect)
@@ -109,7 +109,7 @@ class DropTarget:
                         root_item_index = above_test_index
                 else:
                     return False
-            parent_item: DLGStandardItem | None = view_model.itemFromIndex(root_item_index)
+            parent_item = view_model.itemFromIndex(root_item_index)
         dragged_node: DLGNode = dragged_link.node
         assert parent_item is not None
         assert parent_item.link is not None
@@ -521,7 +521,7 @@ class DLGTreeView(RobustTreeView):
             self.reset_drag_state()
             return
         self.set_invalid_drag_drop(event)
-        new_index: int = self.drop_target.row
+        new_index = self.drop_target.row
         if self.drop_target.position is DropPosition.ON_TOP_OF:
             new_index = 0
         model.move_item_to_index(self.dragged_item, new_index, drop_parent)

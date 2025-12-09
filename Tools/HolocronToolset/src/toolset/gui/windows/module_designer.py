@@ -78,7 +78,7 @@ from utility.error_handling import safe_repr
 
 if TYPE_CHECKING:
     from qtpy.QtGui import QCloseEvent, QFont, QKeyEvent, QShowEvent
-    from qtpy.QtWidgets import QCheckBox, _QMenu
+    from qtpy.QtWidgets import QCheckBox, QMenu
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.common.module import UTT, UTW
@@ -91,7 +91,7 @@ if TYPE_CHECKING:
     from toolset.gui.widgets.renderer.walkmesh import WalkmeshRenderer
 
 if qtpy.QT5:
-    from qtpy.QtWidgets import QUndoCommand, QUndoStack
+    from qtpy.QtWidgets import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]
 elif qtpy.QT6:
     from qtpy.QtGui import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]
 else:
@@ -371,6 +371,8 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
     def _setup_signals(self):
         self.ui.actionOpen.triggered.connect(self.open_module_with_dialog)
         self.ui.actionSave.triggered.connect(self.save_git)
+        self.ui.actionSettings.triggered.connect(self.open_settings_dialog)
+        self.ui.actionExit.triggered.connect(self.close)
         self.ui.actionInstructions.triggered.connect(self.show_help_window)
 
         self.ui.actionUndo.triggered.connect(self._on_undo)
@@ -1144,6 +1146,20 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
     def show_help_window(self):
         window = HelpWindow(self, "./help/tools/1-moduleEditor.md")
         window.show()
+
+    def open_settings_dialog(self):
+        """Open the settings dialog for the module designer."""
+        from toolset.gui.dialogs.settings import SettingsDialog
+
+        dialog = SettingsDialog(self)
+        # Navigate directly to the Module Designer settings page
+        for i in range(dialog.ui.settingsTree.topLevelItemCount()):
+            item = dialog.ui.settingsTree.topLevelItem(i)
+            if item and item.text(0) == "Module Designer":
+                dialog.ui.settingsTree.setCurrentItem(item)
+                dialog.on_page_change(item)
+                break
+        dialog.exec()
 
     def git(self) -> GIT:
         assert self._module is not None
@@ -2242,7 +2258,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
                 self.select_instance_item_on_list(instance)
                 return
 
-    def _active_instance_location_menu(self, data: ModuleResource, menu: _QMenu):
+    def _active_instance_location_menu(self, data: ModuleResource, menu: QMenu):
         """Builds an active override menu for a module resource.
 
         Args:
@@ -2253,29 +2269,29 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         copy_to_override_action = QAction("Copy To Override", self)
         copy_to_override_action.triggered.connect(lambda _=None, r=data: self.copy_resource_to_override(r))
 
-        menu.addAction("Edit Active File").triggered.connect(lambda _=None, r=data: self.open_module_resource(r))
-        menu.addAction("Reload Active File").triggered.connect(lambda _=None: data.reload())
+        menu.addAction("Edit Active File").triggered.connect(lambda _=None, r=data: self.open_module_resource(r))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Reload Active File").triggered.connect(lambda _=None: data.reload())  # pyright: ignore[reportOptionalMemberAccess]
         menu.addAction(copy_to_override_action)
         menu.addSeparator()
         for location in data.locations():
             location_action = QAction(str(location), self)
-            location_action.triggered.connect(lambda _=None, loc=location: self.activate_resource_file(data, loc))
+            location_action.triggered.connect(lambda _=None, loc=location: self.activate_resource_file(data, loc))  # pyright: ignore[reportOptionalMemberAccess]
             if location == data.active():
                 location_action.setEnabled(False)
             if os.path.commonpath([str(location.absolute()), str(self._installation.override_path())]) == str(self._installation.override_path()):
                 copy_to_override_action.setEnabled(False)
             menu.addAction(location_action)
 
-        def jump_to_instance_list_action(*args, data=data, **kwargs):
-            this_ident = data.identifier()
-            instances = self.git().instances()
+        def jump_to_instance_list_action(*args, data: ModuleResource = data, **kwargs):
+            this_ident: ResourceIdentifier = data.identifier()
+            instances: list[GITInstance] = self.git().instances()
             for instance in instances:
                 if instance.identifier() == this_ident:
                     # self.selectInstanceItemOnList(instance)
                     self.set_selection([instance])
                     return
 
-        menu.addAction("Find in Instance List").triggered.connect(jump_to_instance_list_action)
+        menu.addAction("Find in Instance List").triggered.connect(jump_to_instance_list_action)  # pyright: ignore[reportOptionalMemberAccess]
 
     def on_3d_mouse_moved(self, screen: Vector2, screen_delta: Vector2, world: Vector3, buttons: set[Qt.MouseButton], keys: set[Qt.Key]):
         self.update_status_bar(screen, buttons, keys, self.ui.mainRenderer)
@@ -2368,17 +2384,17 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             return menu
 
         rot = scene.camera
-        menu.addAction("Insert Camera").triggered.connect(lambda: self.add_instance(GITCamera(*world), walkmesh_snap=False))  # pyright: ignore[reportArgumentType]
-        menu.addAction("Insert Camera at View").triggered.connect(lambda: self.add_instance(GITCamera(rot.x, rot.y, rot.z, rot.yaw, rot.pitch, 0, 0), walkmesh_snap=False))
+        menu.addAction("Insert Camera").triggered.connect(lambda: self.add_instance(GITCamera(*world), walkmesh_snap=False))  # pyright: ignore[reportArgumentType, reportOptionalMemberAccess]
+        menu.addAction("Insert Camera at View").triggered.connect(lambda: self.add_instance(GITCamera(rot.x, rot.y, rot.z, rot.yaw, rot.pitch, 0, 0), walkmesh_snap=False))  # pyright: ignore[reportOptionalMemberAccess]
         menu.addSeparator()
-        menu.addAction("Insert Creature").triggered.connect(lambda: self.add_instance(GITCreature(*world), walkmesh_snap=True))
-        menu.addAction("Insert Door").triggered.connect(lambda: self.add_instance(GITDoor(*world), walkmesh_snap=False))
-        menu.addAction("Insert Placeable").triggered.connect(lambda: self.add_instance(GITPlaceable(*world), walkmesh_snap=False))
-        menu.addAction("Insert Store").triggered.connect(lambda: self.add_instance(GITStore(*world), walkmesh_snap=False))
-        menu.addAction("Insert Sound").triggered.connect(lambda: self.add_instance(GITSound(*world), walkmesh_snap=False))
-        menu.addAction("Insert Waypoint").triggered.connect(lambda: self.add_instance(GITWaypoint(*world), walkmesh_snap=False))
-        menu.addAction("Insert Encounter").triggered.connect(lambda: self.add_instance(GITEncounter(*world), walkmesh_snap=False))
-        menu.addAction("Insert Trigger").triggered.connect(lambda: self.add_instance(GITTrigger(*world), walkmesh_snap=False))
+        menu.addAction("Insert Creature").triggered.connect(lambda: self.add_instance(GITCreature(*world), walkmesh_snap=True))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Door").triggered.connect(lambda: self.add_instance(GITDoor(*world), walkmesh_snap=False))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Placeable").triggered.connect(lambda: self.add_instance(GITPlaceable(*world), walkmesh_snap=False))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Store").triggered.connect(lambda: self.add_instance(GITStore(*world), walkmesh_snap=False))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Sound").triggered.connect(lambda: self.add_instance(GITSound(*world), walkmesh_snap=False))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Waypoint").triggered.connect(lambda: self.add_instance(GITWaypoint(*world), walkmesh_snap=False))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Encounter").triggered.connect(lambda: self.add_instance(GITEncounter(*world), walkmesh_snap=False))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Trigger").triggered.connect(lambda: self.add_instance(GITTrigger(*world), walkmesh_snap=False))  # pyright: ignore[reportOptionalMemberAccess]
         return menu
 
     def on_instance_list_right_clicked(
@@ -2397,7 +2413,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         is_flat_renderer_call: bool | None = None,
         get_menu: bool | None = None,
         instances: Sequence[GITInstance] | None = None,
-    ) -> _QMenu | None:  # sourcery skip: extract-method
+    ) -> QMenu | None:  # sourcery skip: extract-method
         self.log.debug(f"onContextMenuSelectionExists(isFlatRendererCall={is_flat_renderer_call}, getMenu={get_menu})")
         menu = QMenu(self)
         instances = self.selected_instances if instances is None else instances
@@ -2405,14 +2421,14 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         if instances:
             instance = instances[0]
             if isinstance(instance, GITCamera):
-                menu.addAction("Snap Camera to 3D View").triggered.connect(lambda: self.snap_camera_to_view(instance))
-                menu.addAction("Snap 3D View to Camera").triggered.connect(lambda: self.snap_view_to_git_camera(instance))
+                menu.addAction("Snap Camera to 3D View").triggered.connect(lambda: self.snap_camera_to_view(instance))  # pyright: ignore[reportOptionalMemberAccess]
+                menu.addAction("Snap 3D View to Camera").triggered.connect(lambda: self.snap_view_to_git_camera(instance))  # pyright: ignore[reportOptionalMemberAccess]
             else:
-                menu.addAction("Snap 3D View to Instance Position").triggered.connect(lambda: self.snap_view_to_git_instance(instance))
+                menu.addAction("Snap 3D View to Instance Position").triggered.connect(lambda: self.snap_view_to_git_instance(instance))  # pyright: ignore[reportOptionalMemberAccess]
             menu.addSeparator()
-            menu.addAction("Copy position to clipboard").triggered.connect(lambda: QApplication.clipboard().setText(str(instance.position)))
-            menu.addAction("Edit Instance").triggered.connect(lambda: self.edit_instance(instance))
-            menu.addAction("Remove").triggered.connect(self.delete_selected)
+            menu.addAction("Copy position to clipboard").triggered.connect(lambda: QApplication.clipboard().setText(str(instance.position)))  # pyright: ignore[reportOptionalMemberAccess]
+            menu.addAction("Edit Instance").triggered.connect(lambda: self.edit_instance(instance))  # pyright: ignore[reportOptionalMemberAccess]
+            menu.addAction("Remove").triggered.connect(self.delete_selected)  # pyright: ignore[reportOptionalMemberAccess]
             menu.addSeparator()
             if world is not None and not isinstance(self._controls2d._mode, _SpawnMode):
                 self._controls2d._mode._get_render_context_menu(Vector2(world.x, world.y), menu)
@@ -2421,7 +2437,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             return None
         return menu
 
-    def show_final_context_menu(self, menu: _QMenu):
+    def show_final_context_menu(self, menu: QMenu):
         menu.popup(self.cursor().pos())
         menu.aboutToHide.connect(self.ui.mainRenderer.reset_all_down)
         menu.aboutToHide.connect(self.ui.flatRenderer.reset_all_down)

@@ -1,5 +1,11 @@
+from __future__ import annotations
+from pathlib import Path
+
 import pytest
-from qtpy.QtWidgets import QWidget, QDialog
+from typing import TYPE_CHECKING, cast
+from qtpy.QtCore import QCoreApplication
+from qtpy.QtWidgets import QWidget, QDialog, QHeaderView
+from pykotor.extract.file import ResourceIdentifier
 from toolset.data.installation import HTInstallation
 from unittest.mock import MagicMock, patch
 
@@ -8,7 +14,10 @@ from toolset.gui.dialogs.extract_options import ExtractOptionsDialog
 from toolset.gui.dialogs.select_module import SelectModuleDialog
 from toolset.gui.dialogs.indoor_settings import IndoorMapSettings
 
-def test_extract_options_dialog(qtbot):
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
+
+def test_extract_options_dialog(qtbot: QtBot):
     """Test ExtractOptionsDialog."""
     parent = QWidget()
     dialog = ExtractOptionsDialog(parent)
@@ -45,7 +54,7 @@ def test_extract_options_dialog(qtbot):
     qtbot.wait(10)  # Ensure Qt processes the checkbox state change in headless mode
     assert dialog.mdl_extract_textures is True
 
-def test_select_module_dialog(qtbot, installation: HTInstallation):
+def test_select_module_dialog(qtbot: QtBot, installation: HTInstallation):
     """Test SelectModuleDialog."""
     from unittest.mock import patch
     from pykotor.common.module import Module
@@ -101,7 +110,7 @@ def test_select_module_dialog(qtbot, installation: HTInstallation):
         # dialog.ui.moduleList.setCurrentRow(0)
         # assert dialog.selected_module() == ...
 
-def test_indoor_settings_dialog(qtbot, installation: HTInstallation):
+def test_indoor_settings_dialog(qtbot: QtBot, installation: HTInstallation):
     """Test IndoorMapSettings."""
     from toolset.data.indoormap import IndoorMap
     from toolset.data.indoorkit import Kit
@@ -116,7 +125,7 @@ def test_indoor_settings_dialog(qtbot, installation: HTInstallation):
     assert dialog.isVisible()
     # Test generic settings widgets
 
-def test_inventory_editor(qtbot, installation: HTInstallation):
+def test_inventory_editor(qtbot: QtBot, installation: HTInstallation):
     """Test InventoryEditor."""
     from toolset.gui.dialogs.inventory import InventoryEditor
     from pykotor.extract.capsule import LazyCapsule
@@ -139,7 +148,7 @@ def test_inventory_editor(qtbot, installation: HTInstallation):
     # Usually requires drag/drop or button clicks
 
 
-def test_file_selection_window_resize_to_content_no_qdesktopwidget_import(qtbot, installation: HTInstallation):
+def test_file_selection_window_resize_to_content_no_qdesktopwidget_import(qtbot: QtBot, installation: HTInstallation):
     """Test that FileSelectionWindow.resize_to_content() doesn't try to import QDesktopWidget.
     
     This test ensures the fix for the ImportError: cannot import name 'QDesktopWidget' from 'qtpy.QtGui'
@@ -151,15 +160,15 @@ def test_file_selection_window_resize_to_content_no_qdesktopwidget_import(qtbot,
     import qtpy
     
     # Create a mock FileResource for testing
-    mock_resource = MagicMock(spec=FileResource)
-    mock_resource.identifier.return_value = "test_resource"
-    mock_resource.filepath.return_value = installation.path() / "test.utc"
-    mock_resource.offset.return_value = 0
-    mock_resource.size.return_value = 100
-    mock_resource.filename.return_value = "test.utc"
+    mock_resource: FileResource = cast(FileResource, MagicMock(spec=FileResource))
+    mock_resource.identifier.return_value = ResourceIdentifier("test_resource")  # pyright: ignore[reportAttributeAccessIssue]
+    mock_resource.filepath.return_value = Path(installation.path()) / "test.utc"  # pyright: ignore[reportAttributeAccessIssue]
+    mock_resource.offset.return_value = 0  # pyright: ignore[reportAttributeAccessIssue]
+    mock_resource.size.return_value = 100  # pyright: ignore[reportAttributeAccessIssue]
+    mock_resource.filename.return_value = "test.utc"  # pyright: ignore[reportAttributeAccessIssue]
     
     # Create FileSelectionWindow with empty resources list
-    search_results = []
+    search_results: list[FileResource] = []
     window = FileSelectionWindow(search_results, installation)
     qtbot.addWidget(window)
     
@@ -172,14 +181,15 @@ def test_file_selection_window_resize_to_content_no_qdesktopwidget_import(qtbot,
     window.resource_table.columnCount = MagicMock(return_value=4)
     window.resource_table.columnWidth = MagicMock(return_value=100)
     window.resource_table.verticalHeader = MagicMock()
-    mock_vert_header = MagicMock()
-    mock_vert_header.width.return_value = 50
-    window.resource_table.verticalHeader.return_value = mock_vert_header
+    mock_vert_header: QHeaderView = cast(QHeaderView, MagicMock())
+    mock_vert_header.width.return_value = 50  # pyright: ignore[reportAttributeAccessIssue]
+    window.resource_table.verticalHeader.return_value = mock_vert_header  # pyright: ignore[reportAttributeAccessIssue]
     
     # Ensure QApplication.primaryScreen() is available
     from qtpy.QtWidgets import QApplication
-    app = QApplication.instance()
-    assert app is not None, "QApplication instance should exist"
+    app: QCoreApplication | None = QApplication.instance()
+    assert app is not None, "QCoreApplication instance should exist"
+    assert isinstance(app, QApplication), "QCoreApplication instance should be a QApplication"
     
     # The key test: resize_to_content should NOT try to import QDesktopWidget
     # It should use QApplication.primaryScreen() instead

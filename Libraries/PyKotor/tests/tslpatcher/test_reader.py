@@ -116,8 +116,8 @@ class TestConfigReader(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.mod_path = Path(self.temp_dir) / "tslpatchdata"
         self.mod_path.mkdir(exist_ok=True, parents=True)
-        shutil.copy(Path("tests/test_pykotor/test_files/complex.tlk").resolve(), self.mod_path / "complex.tlk")
-        shutil.copy(Path("tests/test_pykotor/test_files/append.tlk").resolve(), self.mod_path / "append.tlk")
+        shutil.copy(Path("Libraries/PyKotor/tests/test_files/complex.tlk").resolve(), self.mod_path / "complex.tlk")
+        shutil.copy(Path("Libraries/PyKotor/tests/test_files/append.tlk").resolve(), self.mod_path / "append.tlk")
 
         # write it to a real file
         write_tlk(

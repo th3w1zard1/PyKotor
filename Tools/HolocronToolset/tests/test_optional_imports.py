@@ -11,10 +11,13 @@ from __future__ import annotations
 import sys
 import importlib
 from unittest.mock import patch
-from typing import Any
+from typing import TYPE_CHECKING
 
 import pytest
 from qtpy.QtWidgets import QApplication
+
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
 
 # Ensure QApplication exists for GUI tests
 if not QApplication.instance():

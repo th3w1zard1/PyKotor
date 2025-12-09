@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
 
-from pykotor.extract.file import ResourceIdentifier
+from pykotor.extract.file import ResourceIdentifier, ResourceResult
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.twoda import TwoDA, read_2da
 from pykotor.resource.generics.utp import UTP, read_utp
@@ -38,14 +38,14 @@ def get_model(
         Returns the model name for the placeable.
     """
     if placeables is None:
-        result = installation.resource(ResourceIdentifier(resname="placeables", restype=ResourceType.TwoDA))
+        result: ResourceResult | None = installation.resource(resname="placeables", restype=ResourceType.TwoDA)
         if not result:
             raise ValueError("Resource 'placeables.2da' not found in the installation, cannot get UTP model.")
-        placeables = read_2da(result.data)
+        placeables_2da = read_2da(result.data)
     elif not isinstance(placeables, TwoDA):
-        placeables = read_2da(placeables)
+        placeables_2da = read_2da(placeables)
 
-    return placeables.get_row(utp.appearance_id).get_string("modelname")
+    return placeables_2da.get_row(utp.appearance_id).get_string("modelname")
 
 
 def load_placeables_2da(
@@ -93,7 +93,7 @@ def load_placeables_2da(
     # Fallback: try resource() if locations() didn't work
     if placeables_2da is None:
         try:
-            placeables_result = installation.resource("placeables", ResourceType.TwoDA)
+            placeables_result: ResourceResult | None = installation.resource(resname="placeables", restype=ResourceType.TwoDA)
             if placeables_result and placeables_result.data:
                 placeables_2da = read_2da(placeables_result.data)
         except Exception as e:  # noqa: BLE001
@@ -139,23 +139,23 @@ def extract_placeable_walkmesh(
         # Get placeable model name from UTP using placeables.2da
         placeables_2da = load_placeables_2da(installation, logger)
         if not placeables_2da:
-            logger.debug("Could not load placeables.2da, cannot extract placeable walkmesh")
+            logger.warning("Could not load placeables.2da, cannot extract placeable walkmesh")
             return None
         
         placeable_model_name = get_model(utp, installation, placeables=placeables_2da)
         if not placeable_model_name:
-            logger.debug(f"Could not get model name for placeable (appearance_id={utp.appearance_id})")
+            logger.warning(f"Could not get model name for placeable (appearance_id={utp.appearance_id})")
             return None
         
         # Try to extract PWK file: modelname.pwk
         try:
             # Try to find PWK in module resources first (if module provided)
             if module is not None:
-                pwk_resource = module.resource(placeable_model_name, ResourceType.PWK)
+                pwk_resource = module.resource(resname=placeable_model_name, restype=ResourceType.PWK)
                 if pwk_resource is not None:
                     pwk_data = pwk_resource.data()
                     if pwk_data is not None:
-                        logger.debug(f"Found PWK '{placeable_model_name}' from module")
+                        logger.info(f"Found PWK '{placeable_model_name}' from module")
                         return placeable_model_name, pwk_data
             
             # Try installation locations
@@ -177,10 +177,7 @@ def extract_placeable_walkmesh(
                     return placeable_model_name, pwk_data
         
         except Exception:  # noqa: BLE001
-            # PWK not found, skip it
-            pass
-        
-    except Exception as e:  # noqa: BLE001
-        logger.debug(f"Could not extract PWK walkmesh: {e}")
-    
+            logger.debug(f"PWK '{placeable_model_name}' not found, skip it", exc_info=True)
+    except Exception:  # noqa: BLE001
+        logger.debug(f"Could not extract PWK walkmesh for '{placeable_model_name}'", exc_info=True)
     return None

@@ -1,8 +1,14 @@
+from __future__ import annotations
+
 import pytest
+from typing import TYPE_CHECKING
 from toolset.gui.dialogs.settings import SettingsDialog
 from toolset.gui.widgets.settings.installations import GlobalSettings
 
-def test_settings_dialog_init(qtbot):
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
+
+def test_settings_dialog_init(qtbot: QtBot):
     """Test Settings dialog initialization."""
     from qtpy.QtWidgets import QWidget
     parent = QWidget()
@@ -14,7 +20,7 @@ def test_settings_dialog_init(qtbot):
     assert dialog.isVisible()
     assert "Settings" in dialog.windowTitle()
 
-def test_settings_dialog_navigation(qtbot):
+def test_settings_dialog_navigation(qtbot: QtBot):
     """Test navigation between all settings pages."""
     from qtpy.QtWidgets import QWidget
     parent = QWidget()
@@ -67,7 +73,7 @@ def test_settings_dialog_navigation(qtbot):
         # Verify page change
         assert dialog.ui.settingsStack.currentWidget() == page_widget
 
-def test_settings_reset(qtbot, monkeypatch):
+def test_settings_reset(qtbot: QtBot, monkeypatch: pytest.MonkeyPatch):
     """Test reset all settings functionality."""
     from qtpy.QtWidgets import QWidget, QMessageBox
     parent = QWidget()

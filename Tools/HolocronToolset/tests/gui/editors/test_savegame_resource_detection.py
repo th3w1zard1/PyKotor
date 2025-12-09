@@ -9,10 +9,15 @@ Tests that:
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch, Mock
 from qtpy.QtCore import Qt
+
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
 
 from toolset.gui.editor import Editor
 from toolset.gui.editors.are import AREEditor
@@ -69,7 +74,7 @@ def test_detect_save_game_resource_from_savegame_sav():
     assert is_save == True, "Should detect SAVEGAME.sav in path"
 
 
-def test_load_sets_save_game_flag(qtbot, installation, test_files_dir):
+def test_load_sets_save_game_flag(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that load() sets _is_save_game_resource flag correctly."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -87,7 +92,7 @@ def test_load_sets_save_game_flag(qtbot, installation, test_files_dir):
     assert editor._is_save_game_resource == True, "Should set flag for save game resource"
 
 
-def test_load_sets_normal_flag(qtbot, installation, test_files_dir):
+def test_load_sets_normal_flag(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that load() sets flag to False for normal resources."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -106,7 +111,7 @@ def test_load_sets_normal_flag(qtbot, installation, test_files_dir):
 # FIELD PRESERVATION TESTS
 # ============================================================================
 
-def test_save_preserves_extra_fields_for_save_game(qtbot, installation, test_files_dir):
+def test_save_preserves_extra_fields_for_save_game(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that save() preserves extra fields when resource is from save game."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -139,7 +144,7 @@ def test_save_preserves_extra_fields_for_save_game(qtbot, installation, test_fil
     assert saved_field_count >= original_field_count, "Extra fields should be preserved"
 
 
-def test_save_always_preserves_for_save_game_regardless_of_setting(qtbot, installation, test_files_dir):
+def test_save_always_preserves_for_save_game_regardless_of_setting(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that save game resources always preserve fields, even if setting is disabled."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -170,7 +175,7 @@ def test_save_always_preserves_for_save_game_regardless_of_setting(qtbot, instal
     assert len(saved_gff.root.fields()) >= len(original_gff.root.fields())
 
 
-def test_save_preserves_fields_using_add_missing(qtbot, installation, test_files_dir):
+def test_save_preserves_fields_using_add_missing(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that add_missing() is called to preserve fields."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -199,7 +204,7 @@ def test_save_preserves_fields_using_add_missing(qtbot, installation, test_files
 # EDITOR-SPECIFIC TESTS
 # ============================================================================
 
-def test_ifo_editor_preserves_save_game_fields(qtbot, installation, test_files_dir):
+def test_ifo_editor_preserves_save_game_fields(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that IFO editor preserves fields for save game resources."""
     # IFO files are commonly found in save games
     editor = IFOEditor(None, installation)
@@ -226,7 +231,7 @@ def test_ifo_editor_preserves_save_game_fields(qtbot, installation, test_files_d
     assert len(data) > 0
 
 
-def test_git_editor_preserves_save_game_fields(qtbot, installation, test_files_dir):
+def test_git_editor_preserves_save_game_fields(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that GIT editor preserves fields for save game resources."""
     editor = GITEditor(None, installation)
     qtbot.addWidget(editor)
@@ -248,7 +253,7 @@ def test_git_editor_preserves_save_game_fields(qtbot, installation, test_files_d
     assert len(data) > 0
 
 
-def test_lyt_editor_uses_standard_load_signature(qtbot, installation):
+def test_lyt_editor_uses_standard_load_signature(qtbot: QtBot, installation: HTInstallation):
     """Test that LYT editor uses standard load signature and calls super().load().
     
     Note: LYT is NOT a GFF file (it's plain-text ASCII), but the editor should still
@@ -274,7 +279,7 @@ def test_lyt_editor_uses_standard_load_signature(qtbot, installation):
     assert filepath_idx < data_idx, "filepath should come before data"
 
 
-def test_lyt_editor_detects_save_game_resources(qtbot, installation):
+def test_lyt_editor_detects_save_game_resources(qtbot: QtBot, installation: HTInstallation):
     """Test that LYT editor detects save game resources.
     
     Note: LYT files don't need field preservation (they're not GFF), but they should
@@ -296,7 +301,7 @@ def test_lyt_editor_detects_save_game_resources(qtbot, installation):
     assert editor._is_save_game_resource == True
 
 
-def test_utc_editor_preserves_save_game_fields(qtbot, installation, test_files_dir):
+def test_utc_editor_preserves_save_game_fields(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that UTC editor preserves fields for save game resources."""
     editor = UTCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -318,7 +323,7 @@ def test_utc_editor_preserves_save_game_fields(qtbot, installation, test_files_d
     assert len(data) > 0
 
 
-def test_uti_editor_preserves_save_game_fields(qtbot, installation, test_files_dir):
+def test_uti_editor_preserves_save_game_fields(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that UTI editor preserves fields for save game resources."""
     editor = UTIEditor(None, installation)
     qtbot.addWidget(editor)
@@ -344,7 +349,7 @@ def test_uti_editor_preserves_save_game_fields(qtbot, installation, test_files_d
 # INTEGRATION TESTS
 # ============================================================================
 
-def test_all_gff_editors_inherit_save_game_detection(qtbot, installation):
+def test_all_gff_editors_inherit_save_game_detection(qtbot: QtBot, installation: HTInstallation):
     """Test that all GFF-based editors inherit save game detection."""
     # GFF-based editors (LYT is NOT GFF - it's plain-text ASCII)
     gff_editors = [
@@ -370,7 +375,7 @@ def test_all_gff_editors_inherit_save_game_detection(qtbot, installation):
         assert callable(editor.save)
 
 
-def test_lyt_editor_inherits_detection_but_not_field_preservation(qtbot, installation):
+def test_lyt_editor_inherits_detection_but_not_field_preservation(qtbot: QtBot, installation: HTInstallation):
     """Test that LYT editor inherits detection but doesn't need field preservation.
     
     LYT is plain-text ASCII, not GFF, so it doesn't need field preservation.
@@ -387,7 +392,7 @@ def test_lyt_editor_inherits_detection_but_not_field_preservation(qtbot, install
     # But it should still detect save game context for consistency
 
 
-def test_save_game_resource_roundtrip(qtbot, installation, test_files_dir):
+def test_save_game_resource_roundtrip(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test complete roundtrip: load from save -> modify -> save -> load again."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -429,7 +434,7 @@ def test_save_game_resource_roundtrip(qtbot, installation, test_files_dir):
     assert len(final_gff.root.fields()) >= len(original_gff.root.fields())
 
 
-def test_new_resets_save_game_flag(qtbot, installation):
+def test_new_resets_save_game_flag(qtbot: QtBot, installation: HTInstallation):
     """Test that new() resets the save game flag."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)
@@ -476,7 +481,7 @@ def test_detect_save_game_deeply_nested():
     assert is_save == True, "Should detect .sav in deeply nested path"
 
 
-def test_save_game_resource_without_revert_data(qtbot, installation, test_files_dir):
+def test_save_game_resource_without_revert_data(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that save game resources still work even if _revert is None."""
     editor = AREEditor(None, installation)
     qtbot.addWidget(editor)

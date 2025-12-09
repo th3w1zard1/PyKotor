@@ -5,8 +5,8 @@ from pathlib import Path, PurePath
 from typing import TYPE_CHECKING, Iterator
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs, reportMissingModuleSource]
-
 from pykotor.resource.type import ResourceType
+
 # Removed unused imports: is_bif_file, is_capsule_file (now using direct string operations)
 
 if TYPE_CHECKING:
@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal, Self  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.common.misc import ResRef
+    from pykotor.common.stream import BinaryReader
 
 
 # Global file data cache with modification time tracking
@@ -181,7 +182,7 @@ def _extract_from_nested_capsules(
     return current_data
 
 
-def _read_erf_resources(reader, capsule_data: bytes) -> list[tuple[str, ResourceType, int, int]]:
+def _read_erf_resources(reader: BinaryReader, capsule_data: bytes) -> list[tuple[str, ResourceType, int, int]]:
     """Read resource entries from ERF capsule data.
 
     Args:
@@ -222,7 +223,7 @@ def _read_erf_resources(reader, capsule_data: bytes) -> list[tuple[str, Resource
     return resources
 
 
-def _read_rim_resources(reader, capsule_data: bytes) -> list[tuple[str, ResourceType, int, int]]:
+def _read_rim_resources(reader: BinaryReader, capsule_data: bytes) -> list[tuple[str, ResourceType, int, int]]:
     """Read resource entries from RIM capsule data.
 
     Args:

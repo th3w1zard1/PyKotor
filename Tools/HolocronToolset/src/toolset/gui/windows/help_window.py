@@ -10,6 +10,7 @@ from qtpy.QtWidgets import QMainWindow, QMessageBox
 
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from toolset.gui.windows.help_content import HelpContent
+from toolset.gui.windows.help_paths import get_help_base_paths, get_help_file_path
 from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
@@ -45,7 +46,12 @@ class HelpWindow(QMainWindow):
 
     def showEvent(self, event: QShowEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         super().showEvent(event)
-        self.ui.textDisplay.setSearchPaths(["./help"])
+        # Set search paths for all help file locations
+        base_paths = get_help_base_paths()
+        search_paths = [str(p) for p in base_paths]
+        if not search_paths:
+            search_paths = ["./help"]  # Fallback
+        self.ui.textDisplay.setSearchPaths(search_paths)
 
         if self.ENABLE_UPDATES:
             self.help_updater.check_for_updates()
@@ -58,7 +64,18 @@ class HelpWindow(QMainWindow):
         self.ui.contentsTree.clicked.connect(self.on_contents_clicked)
 
     def display_file(self, filepath: os.PathLike | str):
-        filepath = Path(filepath)
+        # If filepath is a relative path string, try to resolve it
+        filepath_str = str(filepath)
+        if not Path(filepath_str).is_absolute():
+            resolved_path = get_help_file_path(filepath_str)
+            if resolved_path is not None:
+                filepath = resolved_path
+            else:
+                # Try as-is if resolution failed
+                filepath = Path(filepath)
+        else:
+            filepath = Path(filepath)
+        
         try:
             text: str = decode_bytes_with_fallbacks(filepath.read_bytes())
             html: str = markdown.markdown(text, extensions=["tables", "fenced_code", "codehilite"]) if filepath.suffix.lower() == ".md" else text
@@ -77,7 +94,21 @@ class HelpWindow(QMainWindow):
         item: QTreeWidgetItem = self.ui.contentsTree.selectedItems()[0]  # type: ignore[arg-type]
         filename = item.data(0, QtCore.Qt.ItemDataRole.UserRole)
         if filename:
-            help_path = Path("./help").resolve()
-            file_path = Path(help_path, filename)
-            self.ui.textDisplay.setSearchPaths([str(help_path), str(file_path.parent)])
-            self.display_file(file_path)
+            # Try to resolve the file path
+            resolved_path = get_help_file_path(filename)
+            if resolved_path is not None:
+                # Update search paths to include the file's parent directory
+                base_paths = get_help_base_paths()
+                search_paths = [str(p) for p in base_paths]
+                search_paths.append(str(resolved_path.parent))
+                self.ui.textDisplay.setSearchPaths(search_paths)
+                self.display_file(resolved_path)
+            else:
+                # Fallback to old behavior
+                help_path = Path("./help").resolve()
+                file_path = Path(help_path, filename)
+                base_paths = get_help_base_paths()
+                search_paths = [str(p) for p in base_paths]
+                search_paths.extend([str(help_path), str(file_path.parent)])
+                self.ui.textDisplay.setSearchPaths(search_paths)
+                self.display_file(file_path)

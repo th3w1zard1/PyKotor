@@ -233,7 +233,42 @@ class ModuleDesignerControls3d:
     ):
         # Process input through smoothing and acceleration
         processed_dx, processed_dy = self._process_input(screen_delta)
-        processed_delta = Vector2(processed_dx, processed_dy)
+        _processed_delta = Vector2(processed_dx, processed_dy)
+        
+        # PRIORITY: Handle movement of selected instances FIRST when instances are selected
+        # This prevents camera rotation from interfering with instance movement
+        if not self.editor.ui.lockInstancesCheck.isChecked() and self.editor.selected_instances:
+            if self.move_xy_selected.satisfied(buttons, keys):
+                if not self.editor.is_drag_moving:
+                    self.editor.initial_positions = {instance: instance.position for instance in self.editor.selected_instances}
+                    self.editor.is_drag_moving = True
+                for instance in self.editor.selected_instances:
+                    scene: Scene = self.renderer.scene
+                    assert scene is not None
+
+                    x: float = scene.cursor.position().x
+                    y: float = scene.cursor.position().y
+                    z: float = instance.position.z if isinstance(instance, GITCamera) else scene.cursor.position().z
+                    instance.position = Vector3(x, y, z)
+                return  # Don't process camera controls when moving instances
+
+            if self.move_z_selected.satisfied(buttons, keys):
+                if not self.editor.is_drag_moving:
+                    self.editor.initial_positions = {instance: instance.position for instance in self.editor.selected_instances}
+                    self.editor.is_drag_moving = True
+                for instance in self.editor.selected_instances:
+                    instance.position.z -= processed_dy / 40
+                return  # Don't process camera controls when moving instances
+
+            if self.rotate_selected.satisfied(buttons, keys):
+                if not self.editor.is_drag_rotating:
+                    self.editor.is_drag_rotating = True
+                    for instance in self.editor.selected_instances:
+                        if not isinstance(instance, (GITCamera, GITCreature, GITDoor, GITPlaceable, GITStore, GITWaypoint)):
+                            continue  # doesn't support rotations.
+                        self.editor.initial_rotations[instance] = Vector4(*instance.orientation) if isinstance(instance, GITCamera) else instance.bearing
+                self.editor.rotate_selected(processed_dx, processed_dy)
+                return  # Don't process camera controls when rotating instances
         
         # Handle mouse-specific cursor lock and plane movement
         move_xy_camera_satisfied = self.move_xy_camera.satisfied(buttons, keys)
@@ -285,42 +320,6 @@ class ModuleDesignerControls3d:
                 self.renderer.scene.camera.distance -= processed_dy * zoom_strength * distance_factor
                 self.renderer.scene.camera.distance = max(0.5, min(500.0, self.renderer.scene.camera.distance))
 
-        # Handle movement of selected instances.
-        if self.editor.ui.lockInstancesCheck.isChecked():
-            return
-        if self.move_xy_selected.satisfied(buttons, keys):
-            if not self.editor.is_drag_moving:
-                self.editor.initial_positions = {instance: instance.position for instance in self.editor.selected_instances}
-                self.editor.is_drag_moving = True
-            for instance in self.editor.selected_instances:
-                scene: Scene = self.renderer.scene
-                assert scene is not None
-
-                x: float = scene.cursor.position().x
-                y: float = scene.cursor.position().y
-                z: float = instance.position.z if isinstance(instance, GITCamera) else scene.cursor.position().z
-                instance.position = Vector3(x, y, z)
-
-        if self.move_z_selected.satisfied(buttons, keys):
-            if self.editor.ui.lockInstancesCheck.isChecked():
-                return
-            if not self.editor.is_drag_moving:
-                self.editor.initial_positions = {instance: instance.position for instance in self.editor.selected_instances}
-                self.editor.is_drag_moving = True
-            for instance in self.editor.selected_instances:
-                instance.position.z -= processed_dy / 40
-
-        if self.rotate_selected.satisfied(buttons, keys):
-            if self.editor.ui.lockInstancesCheck.isChecked():
-                return
-            if not self.editor.is_drag_rotating:
-                self.editor.is_drag_rotating = True
-                for instance in self.editor.selected_instances:
-                    if not isinstance(instance, (GITCamera, GITCreature, GITDoor, GITPlaceable, GITStore, GITWaypoint)):
-                        continue  # doesn't support rotations.
-                    self.editor.initial_rotations[instance] = Vector4(*instance.orientation) if isinstance(instance, GITCamera) else instance.bearing
-            self.editor.rotate_selected(processed_dx, processed_dy)
-
     def on_mouse_pressed(
         self,
         screen: Vector2,
@@ -355,10 +354,11 @@ class ModuleDesignerControls3d:
     def _duplicate_selected_instance(self):
         # TODO(th3w1zard1): Seems the code throughout is designed for multi-selections, yet nothing uses it. Probably disabled due to a bug or planned for later.
         instance: GITInstance = deepcopy(self.editor.selected_instances[-1])
-        if isinstance(instance, GITCamera):
-            instance.camera_id = self.editor._module.git().resource().next_camera_id()  # noqa: SLF001
+        if isinstance(instance, GITCamera) and self.editor._module is not None:
+            instance.camera_id = self.editor._module.git().resource().next_camera_id()  # noqa: SLF001  # pyright: ignore[reportOptionalMemberAccess]
         RobustLogger().info(f"Duplicating {instance!r}")
-        self.editor.undo_stack.push(DuplicateCommand(self.editor._module.git().resource(), [instance], self.editor))  # noqa: SLF001
+        if self.editor._module is not None:
+            self.editor.undo_stack.push(DuplicateCommand(self.editor._module.git().resource(), [instance], self.editor))  # noqa: SLF001  # pyright: ignore[reportArgumentType, reportOptionalMemberAccess]
         vect3 = self.renderer.scene.cursor.position()
         instance.position = Vector3(vect3.x, vect3.y, vect3.z)
         #self.editor.git().add(instance)  # Handled by the undoStack above.
@@ -473,7 +473,7 @@ class ModuleDesignerControls3d:
 
     @property
     def open_context_menu(self):
-        return ControlItem((set(), {BUTTON_TO_INT[Qt.MouseButton.RightButton]}))
+        return ControlItem((set(), {BUTTON_TO_INT[Qt.MouseButton.RightButton]}))  # pyright: ignore[reportArgumentType]
 
     @property
     def rotate_camera_left(self):

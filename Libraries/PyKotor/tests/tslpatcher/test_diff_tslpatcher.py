@@ -272,9 +272,9 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             Table0=test.2da
 
             [test.2da]
-            ChangeRow0=change_row_0
+            ChangeRow0=test.2da_changerow_0
 
-            [change_row_0]
+            [test.2da_changerow_0]
             RowIndex=1
             Col1=X
             """
@@ -347,14 +347,14 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             Table0=test.2da
 
             [test.2da]
-            AddColumn0=add_column_0
-            AddColumn1=add_column_1
+            AddColumn0=test.2da_label_addcol_0
+            AddColumn1=test.2da_someint_addcol_1
 
-            [add_column_0]
+            [test.2da_label_addcol_0]
             ColumnLabel=label
             DefaultValue=****
 
-            [add_column_1]
+            [test.2da_someint_addcol_1]
             ColumnLabel=someint
             DefaultValue=0
             """
@@ -420,9 +420,9 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             Table0=test.2da
 
             [test.2da]
-            AddColumn0=add_column_0
+            AddColumn0=test.2da_NewColumn_addcol_0
 
-            [add_column_0]
+            [test.2da_NewColumn_addcol_0]
             ColumnLabel=NewColumn
             DefaultValue=****
             I0=abc
@@ -492,9 +492,9 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             Table0=test.2da
 
             [test.2da]
-            AddColumn0=add_column_0
+            AddColumn0=test.2da_NewColumn_addcol_0
 
-            [add_column_0]
+            [test.2da_NewColumn_addcol_0]
             ColumnLabel=NewColumn
             DefaultValue=****
             I0=abc
@@ -522,9 +522,9 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             Table0=test.2da
 
             [test.2da]
-            AddColumn0=add_column_0
+            AddColumn0=test.2da_NewColumn_addcol_0
 
-            [add_column_0]
+            [test.2da_NewColumn_addcol_0]
             ColumnLabel=NewColumn
             DefaultValue=****
             L0=abc
@@ -597,9 +597,9 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             Table0=test.2da
 
             [test.2da]
-            AddColumn0=add_column_0
+            AddColumn0=test.2da_NewColumn_addcol_0
 
-            [add_column_0]
+            [test.2da_NewColumn_addcol_0]
             ColumnLabel=NewColumn
             DefaultValue=****
             I0=abc
@@ -635,9 +635,9 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             Table0=test.2da
 
             [test.2da]
-            AddColumn0=add_column_0
+            AddColumn0=test.2da_Col3_addcol_0
 
-            [add_column_0]
+            [test.2da_Col3_addcol_0]
             ColumnLabel=Col3
             DefaultValue=X
             """

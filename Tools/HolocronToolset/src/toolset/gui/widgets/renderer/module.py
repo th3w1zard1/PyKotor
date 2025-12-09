@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from collections import deque
 import os
+
+from collections import deque
 from copy import copy, deepcopy
 from datetime import datetime, timedelta, timezone
 from time import perf_counter
@@ -9,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import qtpy
 
-from loggerplus import RobustLogger
 from qtpy import QtCore
 from qtpy.QtCore import QMetaObject, QThread, QTimer, Qt
 from qtpy.QtWidgets import (
@@ -18,6 +18,7 @@ from qtpy.QtWidgets import (
     QOpenGLWidget,  # pyright: ignore[reportPrivateImportUsage]
 )
 
+from loggerplus import RobustLogger
 from pykotor.gl.scene import Scene
 from pykotor.resource.formats.bwm.bwm_data import BWM
 from pykotor.resource.formats.lyt.lyt_data import LYT
@@ -27,6 +28,8 @@ from utility.common.geometry import Vector2, Vector3
 from utility.error_handling import assert_with_variable_trace
 
 if TYPE_CHECKING:
+    import moderngl  # pyright: ignore[reportMissingImports]
+
     from glm import vec3  # pyright: ignore[reportMissingImports]
     from qtpy.QtCore import QPoint  # pyright: ignore[reportAttributeAccessIssue]
     from qtpy.QtGui import QFocusEvent, QKeyEvent, QMouseEvent, QOpenGLContext, QResizeEvent, QWheelEvent
@@ -247,6 +250,7 @@ class ModuleRenderer(QOpenGLWidget):
         if self._use_moderngl:
             try:
                 import moderngl  # pyright: ignore[reportMissingImports]  # noqa: WPS433
+
                 from pykotor.gl.modern_renderer import ModernGLRenderer  # noqa: WPS433
 
                 # Ensure context is current before creating ModernGL context
@@ -467,22 +471,10 @@ class ModuleRenderer(QOpenGLWidget):
                 self.scene.selection.clear()
                 self.sig_object_selected.emit(None)
 
-        # Update cursor position only when mouse is within bounds
-        # This is an expensive operation so we throttle it
-        screen_cursor: QPoint = self.mapFromGlobal(self.cursor().pos())
-        cursor_in_bounds = (
-            0 <= screen_cursor.x() < self.width() and
-            0 <= screen_cursor.y() < self.height()
-        )
-        
-        if cursor_in_bounds:
-            # Only update world cursor if screen position has changed enough
-            # This avoids expensive screen_to_world calls every frame
-            cursor_delta = abs(screen_cursor.x() - self._mouse_prev.x) + abs(screen_cursor.y() - self._mouse_prev.y)
-            if cursor_delta > 2 or not hasattr(self, "_last_cursor_update"):  # Threshold of 2 pixels
-                world_cursor: Vector3 = self.scene.screen_to_world(screen_cursor.x(), screen_cursor.y())
-                self.scene.cursor.set_position(world_cursor.x, world_cursor.y, world_cursor.z)
-                self._last_cursor_update = True
+        # Update cursor position to camera's focal point (the point the camera orbits around)
+        # The focal point is at (camera.x, camera.y, camera.z) - this is where the camera is looking at
+        # The cursor should always be at this focal point, not following the mouse
+        self.scene.cursor.set_position(self.scene.camera.x, self.scene.camera.y, self.scene.camera.z)
 
         # Main render pass
         if self._modern_renderer is not None and self._use_moderngl:
@@ -534,6 +526,7 @@ class ModuleRenderer(QOpenGLWidget):
             self.makeCurrent()
             try:
                 import moderngl  # noqa: WPS433
+
                 from pykotor.gl.modern_renderer import ModernGLRenderer  # noqa: WPS433
 
                 # Ensure context is valid before creating ModernGL context

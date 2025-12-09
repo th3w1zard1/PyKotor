@@ -174,7 +174,7 @@ def _open_resource_editor_impl(  # noqa: C901, PLR0913, PLR0912, PLR0915
         try:
             data = resource.data()
         except Exception:  # noqa: BLE001
-            RobustLogger().exception("Exception occurred in open_selected_resource")
+            RobustLogger().exception("Exception occurred in _open_resource_editor_impl")
             QMessageBox(QMessageBox.Icon.Critical, tr("Failed to get the file data."), tr("An error occurred while attempting to read the data of the file.")).exec()
             return None, None
         restype = resource.restype()

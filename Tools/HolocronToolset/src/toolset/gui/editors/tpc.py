@@ -403,10 +403,10 @@ class TPCEditor(Editor):
         elif display_format == TPCTextureFormat.Greyscale:
             mipmap.convert(TPCTextureFormat.RGBA)
 
-        target_format = mipmap.tpc_format
+        target_format: TPCTextureFormat = mipmap.tpc_format
 
         # Validate data before creating QImage
-        expected_size = mipmap.width * mipmap.height * target_format.bytes_per_pixel()
+        expected_size: int = mipmap.width * mipmap.height * target_format.bytes_per_pixel()
         if len(mipmap.data) < expected_size:
             # Data is too small, return empty pixmap
             return QPixmap()
