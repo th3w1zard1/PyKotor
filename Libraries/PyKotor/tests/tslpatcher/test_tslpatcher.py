@@ -112,8 +112,9 @@ class TestTSLPatcher(unittest.TestCase):
                 10: {"text": "Modified 10", "voiceover": "vo_mod_10"},
             }
         )
-        shutil.copy(Path("tests/files/complex.tlk").resolve(), self.tslpatchdata_path / "complex.tlk")
-        shutil.copy(Path("tests/files/append.tlk").resolve(), self.tslpatchdata_path / "append.tlk")
+        assets_dir = Path(__file__).resolve().parents[1] / "files"
+        shutil.copy(assets_dir / "complex.tlk", self.tslpatchdata_path / "complex.tlk")
+        shutil.copy(assets_dir / "append.tlk", self.tslpatchdata_path / "append.tlk")
 
         # write it to a real file
         write_tlk(
