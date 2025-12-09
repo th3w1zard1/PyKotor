@@ -20,7 +20,7 @@ import resources_rc  # noqa: PLC0415, F401  # pylint: disable=ungrouped-imports,
 
 from toolset.config import CURRENT_VERSION
 from toolset.gui.windows.main import ToolWindow
-from toolset.main_init import is_frozen, is_running_from_temp
+from toolset.main_init import is_running_from_temp
 from toolset.main_settings import setup_post_init_settings, setup_pre_init_settings, setup_toolset_default_env
 from toolset.utils.window import TOOLSET_WINDOWS
 from utility.system.app_process.shutdown import terminate_child_processes
@@ -135,31 +135,25 @@ def qt_cleanup():
 def _should_enable_profiling() -> bool:
     """Check if profiling should be enabled.
     
-    Profiling is enabled by default when:
-    - Not frozen (running from source)
+    Profiling is controlled *exclusively* by an explicit toggle (env or CLI).
+    It is not tied to debug/frozen state.
     
-    Profiling can be disabled by:
-    - Setting environment variable TOOLSET_DISABLE_PROFILE to "1" or "true"
-    - OR using --no-profile command-line argument
+    Enable when:
+      - Environment variable TOOLSET_PROFILE is one of: 1, true, yes, on
+      - OR command-line argument --profile is present
+    
+    Disable when:
+      - Environment variable TOOLSET_DISABLE_PROFILE is one of: 1, true, yes, on
+      - OR command-line argument --no-profile is present
     
     Returns:
         bool: True if profiling should be enabled, False otherwise
     """
-    # Never enable profiling in frozen builds
-    if is_frozen():
-        return False
-    
-    # Check if profiling is explicitly disabled
-    env_disable = os.environ.get("TOOLSET_DISABLE_PROFILE", "").lower().strip()
-    if env_disable in ("1", "true", "yes", "on"):
-        return False
-    
-    # Check command-line argument to disable
-    if "--no-profile" in sys.argv:
-        return False
-    
-    # Enable by default when not frozen
-    return True
+    env_enable = os.environ.get("TOOLSET_PROFILE", "").lower().strip() in ("1", "true", "yes", "on")
+    cli_enable = "--profile" in sys.argv
+    env_disable = os.environ.get("TOOLSET_DISABLE_PROFILE", "").lower().strip() in ("1", "true", "yes", "on")
+    cli_disable = "--no-profile" in sys.argv
+    return (env_enable or cli_enable) and not (env_disable or cli_disable)
 
 
 def _save_profile_stats(profiler: cProfile.Profile, output_path: Path):
@@ -191,6 +185,26 @@ def _save_profile_stats(profiler: cProfile.Profile, output_path: Path):
         RobustLogger().error(f"Failed to save profile statistics: {e}")
 
 
+def _prune_old_profiles(profile_dir: Path, max_profiles: int = 10):
+    """Keep only the newest `max_profiles` profile files (prof+txt)."""
+    try:
+        profs = sorted(profile_dir.glob("toolset_profile_*.prof"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if len(profs) <= max_profiles:
+            return
+        for stale_prof in profs[max_profiles:]:
+            txt = stale_prof.with_suffix(".txt")
+            with suppress(Exception):
+                stale_prof.unlink()
+            with suppress(Exception):
+                if txt.exists():
+                    txt.unlink()
+        RobustLogger().info(
+            "Pruned old profile files, kept newest %s (dir=%s)", max_profiles, profile_dir
+        )
+    except Exception as e:  # noqa: BLE001
+        RobustLogger().warning(f"Failed to prune old profile files: {e}")
+
+
 def main():
     """Main entry point for the Holocron Toolset.
 
@@ -207,12 +221,13 @@ def main():
     profiler: cProfile.Profile | None = None
     profile_output_path: Path | None = None
     
+    profile_dir = Path(__file__).resolve().parent
     if enable_profiling:
         profiler = cProfile.Profile()
         profiler.enable()
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        profile_output_path = Path(f"toolset_profile_{timestamp}.prof")
-        RobustLogger().info(f"Profiling enabled (default for non-frozen builds). Statistics will be saved to: {profile_output_path}")
+        profile_output_path = profile_dir / f"toolset_profile_{timestamp}.prof"
+        RobustLogger().info(f"Profiling enabled. Statistics will be saved to: {profile_output_path}")
         RobustLogger().info("To disable profiling, set TOOLSET_DISABLE_PROFILE=1 or use --no-profile flag")
         RobustLogger().info("Profiling will capture all function calls and execution times")
 
@@ -244,6 +259,7 @@ def main():
         # Save profile stats after cleanup
         if profiler is not None and profile_output_path is not None:
             _save_profile_stats(profiler, profile_output_path)
+            _prune_old_profiles(profile_dir, max_profiles=10)
     
     app.aboutToQuit.connect(cleanup_with_profiling)
 
