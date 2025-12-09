@@ -80,8 +80,10 @@ class Scene(SceneBase):
         # ModernGL is the default; PyOpenGL is legacy fallback
         self._modern_context: moderngl.Context | None = moderngl_context
         self._modern_renderer: ModernGLRenderer | None = None
-        # If ModernGL is present, never attempt legacy PyOpenGL
-        self._legacy_gl_enabled: bool = use_legacy_gl and USE_PYOPENGL
+        # Enable legacy PyOpenGL if:
+        # 1. Explicitly requested with use_legacy_gl=True, OR
+        # 2. ModernGL is not available but PyOpenGL is (automatic fallback)
+        self._legacy_gl_enabled: bool = use_legacy_gl or (USE_PYOPENGL and not HAS_MODERNGL)
 
         # Initialize ModernGL renderer if available (default)
         if HAS_MODERNGL and not use_legacy_gl:
@@ -99,8 +101,11 @@ class Scene(SceneBase):
                 from pykotor.gl.modern_renderer import ModernGLRenderer
 
                 self._modern_renderer = ModernGLRenderer(self._modern_context)
+            elif USE_PYOPENGL:
+                # ModernGL context creation failed, but PyOpenGL is available - auto-fallback
+                self._legacy_gl_enabled = True
 
-        # Initialize legacy PyOpenGL shaders only if explicitly requested
+        # Initialize legacy PyOpenGL shaders if enabled (explicitly or automatically)
         if self._legacy_gl_enabled:
             self.picker_shader: Shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
             self.plain_shader: Shader = Shader(PLAIN_VSHADER, PLAIN_FSHADER)
@@ -190,7 +195,7 @@ class Scene(SceneBase):
             self._modern_renderer.render(self)
             return
 
-        # Fall back to legacy PyOpenGL if explicitly enabled
+        # Fall back to legacy PyOpenGL if enabled (either explicitly or automatically)
         if not self._legacy_gl_enabled:
             # Try to auto-create ModernGL context if we have an active OpenGL context
             if HAS_MODERNGL:
@@ -205,11 +210,29 @@ class Scene(SceneBase):
                     self._modern_renderer.render(self)
                     return
                 except Exception:  # noqa: BLE001
-                    pass
+                    # ModernGL context creation failed, check if PyOpenGL is available
+                    if USE_PYOPENGL:
+                        # Auto-enable legacy GL mode and initialize shaders
+                        self._legacy_gl_enabled = True
+                        self.picker_shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
+                        self.plain_shader = Shader(PLAIN_VSHADER, PLAIN_FSHADER)
+                        self.shader = Shader(KOTOR_VSHADER, KOTOR_FSHADER)
+                    else:
+                        from pykotor.gl.compat import MissingPyOpenGLError
 
-            from pykotor.gl.compat import MissingPyOpenGLError
+                        raise MissingPyOpenGLError("No rendering backend available. Install moderngl (default) or PyOpenGL (legacy).")
+            else:
+                # ModernGL is not installed, check if PyOpenGL is available
+                if USE_PYOPENGL:
+                    # Auto-enable legacy GL mode and initialize shaders
+                    self._legacy_gl_enabled = True
+                    self.picker_shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
+                    self.plain_shader = Shader(PLAIN_VSHADER, PLAIN_FSHADER)
+                    self.shader = Shader(KOTOR_VSHADER, KOTOR_FSHADER)
+                else:
+                    from pykotor.gl.compat import MissingPyOpenGLError
 
-            raise MissingPyOpenGLError("No rendering backend available. Install moderngl (default) or PyOpenGL (legacy).")
+                    raise MissingPyOpenGLError("No rendering backend available. Install moderngl (default) or PyOpenGL (legacy).")
 
         # Legacy PyOpenGL rendering path
         # Poll for completed async resources (non-blocking) - MAIN PROCESS ONLY
