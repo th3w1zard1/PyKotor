@@ -24,11 +24,10 @@ from typing import TYPE_CHECKING
 from loggerplus import RobustLogger
 
 if TYPE_CHECKING:
-    from pykotor.extract.file import LocationResult, ResourceResult
+    from pykotor.extract.file import LocationResult
     from pykotor.extract.installation import Installation
     from pykotor.resource.formats.bwm import BWM, BWMEdge, BWMFace
     from pykotor.resource.formats.erf import ERF
-    from pykotor.resource.formats.mdl import MDL, MDLNode
     from pykotor.resource.formats.rim import RIM
 
 from pykotor.common.module import Module
@@ -36,7 +35,6 @@ from pykotor.extract.file import ResourceIdentifier
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.bwm import bytes_bwm, read_bwm
 from pykotor.resource.formats.erf import read_erf
-from pykotor.resource.formats.mdl import read_mdl
 from pykotor.resource.formats.rim import read_rim
 from pykotor.resource.formats.tpc import read_tpc, write_tpc
 from pykotor.resource.generics.utd import read_utd
@@ -930,86 +928,12 @@ def extract_kit(
     # Doors have 3 walkmesh states: closed (0), open1 (1), open2 (2)
     # Format: <modelname>0.dwk, <modelname>1.dwk, <modelname>2.dwk
     for door_name, door_data in doors.items():
-        try:
-            utd = read_utd(door_data)
-            # Get door model name from UTD using genericdoors.2da
-            # Reference: vendor/reone/src/libs/game/object/door.cpp:66-67
-            try:
-                genericdoors_2da = None
-                try:
-                    location_results = installation.locations(
-                        [ResourceIdentifier(resname="genericdoors", restype=ResourceType.TwoDA)],
-                        order=[SearchLocation.OVERRIDE, SearchLocation.CHITIN],
-                    )
-                    for res_ident, loc_list in location_results.items():
-                        if loc_list:
-                            loc = loc_list[0]
-                            if loc.filepath and Path(loc.filepath).exists():
-                                from pykotor.resource.formats.twoda import read_2da
-                                with loc.filepath.open("rb") as f:
-                                    f.seek(loc.offset)
-                                    data = f.read(loc.size)
-                                genericdoors_2da = read_2da(data)
-                                break
-                except Exception:  # noqa: BLE001
-                    pass
-                
-                if genericdoors_2da is None:
-                    try:
-                        genericdoors_result = installation.resource("genericdoors", ResourceType.TwoDA)
-                        if genericdoors_result and genericdoors_result.data is not None:
-                            from pykotor.resource.formats.twoda import read_2da
-                            genericdoors_2da = read_2da(genericdoors_result.data)
-                    except Exception:  # noqa: BLE001
-                        pass
-                
-                if genericdoors_2da:
-                    door_model_name = door_tools.get_model(utd, installation, genericdoors=genericdoors_2da)
-                    if door_model_name:
-                        # Try to extract DWK files: modelname0.dwk, modelname1.dwk, modelname2.dwk
-                        # Reference: vendor/reone/src/libs/game/object/door.cpp:80-94
-                        dwk_variants = [
-                            (f"{door_model_name}0", "dwk0"),
-                            (f"{door_model_name}1", "dwk1"),
-                            (f"{door_model_name}2", "dwk2"),
-                        ]
-                        
-                        door_walkmeshes[door_name] = {}
-                        for dwk_resname, dwk_key in dwk_variants:
-                            try:
-                                # Try to find DWK in module resources first
-                                dwk_resource = module.resource(dwk_resname, ResourceType.DWK)
-                                if dwk_resource is not None:
-                                    dwk_data = dwk_resource.data()
-                                    if dwk_data:
-                                        door_walkmeshes[door_name][dwk_key] = dwk_data
-                                    logger.debug(f"Found DWK '{dwk_resname}' for door '{door_name}' (state: {dwk_key})")
-                                else:
-                                    # Try installation locations
-                                    dwk_locations = installation.locations(
-                                        [ResourceIdentifier(resname=dwk_resname, restype=ResourceType.DWK)],
-                                        [
-                                            SearchLocation.OVERRIDE,
-                                            SearchLocation.MODULES,
-                                            SearchLocation.CHITIN,
-                                        ],
-                                    )
-                                    for dwk_ident, dwk_loc_list in dwk_locations.items():
-                                        if dwk_loc_list:
-                                            dwk_loc = dwk_loc_list[0]
-                                            with dwk_loc.filepath.open("rb") as f:
-                                                f.seek(dwk_loc.offset)
-                                                door_walkmeshes[door_name][dwk_key] = f.read(dwk_loc.size)
-                                            logger.debug(f"Found DWK '{dwk_resname}' for door '{door_name}' (state: {dwk_key}) from installation")
-                                            break
-                            except Exception:  # noqa: BLE001
-                                # DWK variant not found, skip it
-                                pass
-            except Exception as e:  # noqa: BLE001
-                logger.debug(f"Could not extract DWK walkmeshes for door '{door_name}': {e}")
-        except Exception:  # noqa: BLE001
-            # Skip doors that can't be read
-            pass
+        door_walkmeshes[door_name] = door_tools.extract_door_walkmeshes(
+            door_data,
+            installation,
+            module=module,
+            logger=logger,
+        )
     
     # Extract placeable walkmeshes (PWK files)
     # Reference: vendor/reone/src/libs/game/object/placeable.cpp:73
@@ -1110,34 +1034,7 @@ def extract_kit(
                 # Extract door model name to determine DWK filename
                 try:
                     utd = read_utd(door_data)
-                    genericdoors_2da = None
-                    try:
-                        location_results = installation.locations(
-                            [ResourceIdentifier(resname="genericdoors", restype=ResourceType.TwoDA)],
-                            order=[SearchLocation.OVERRIDE, SearchLocation.CHITIN],
-                        )
-                        for res_ident, loc_list in location_results.items():
-                            if loc_list:
-                                loc = loc_list[0]
-                                if loc.filepath and Path(loc.filepath).exists():
-                                    from pykotor.resource.formats.twoda import read_2da
-                                    with loc.filepath.open("rb") as f:
-                                        f.seek(loc.offset)
-                                        data = f.read(loc.size)
-                                    genericdoors_2da = read_2da(data)
-                                    break
-                    except Exception:  # noqa: BLE001
-                        pass
-                    
-                    if genericdoors_2da is None:
-                        try:
-                            genericdoors_result = installation.resource("genericdoors", ResourceType.TwoDA)
-                            if genericdoors_result and genericdoors_result.data:
-                                from pykotor.resource.formats.twoda import read_2da
-                                genericdoors_2da = read_2da(genericdoors_result.data)
-                        except Exception:  # noqa: BLE001
-                            pass
-                    
+                    genericdoors_2da = door_tools.load_genericdoors_2da(installation, logger)
                     if genericdoors_2da:
                         door_model_name = door_tools.get_model(utd, installation, genericdoors=genericdoors_2da)
                         if door_model_name:
@@ -1150,308 +1047,13 @@ def extract_kit(
                     # Skip if we can't determine model name
                     pass
         
-        # Extract width and height from door model
-        utd = read_utd(door_data)
-        door_width = 2.0  # Default fallback
-        door_height = 3.0  # Default fallback
-        
-        logger.debug(f"[DOOR DEBUG] Processing door '{door_name}' (appearance_id={utd.appearance_id})")
-        
-        model_name: str | None = None
-        mdl: MDL | None = None
-        model_extracted = False
-        
-        # Try method 1: Get dimensions from model bounding box
-        try:
-            # Get door model name from UTD
-            # Try to get genericdoors.2da using locations() (more reliable than resource())
-            genericdoors_2da = None
-            
-            # Use locations() to find genericdoors.2da (more reliable)
-            try:
-                location_results = installation.locations(
-                    [ResourceIdentifier(resname="genericdoors", restype=ResourceType.TwoDA)],
-                    order=[SearchLocation.OVERRIDE, SearchLocation.CHITIN],
-                )
-                for res_ident, loc_list in location_results.items():
-                    if loc_list:
-                        loc = loc_list[0]  # Use first location (Override takes precedence)
-                        if loc.filepath and Path(loc.filepath).exists():
-                            from pykotor.resource.formats.twoda import read_2da
-                            # Read from file (handles both direct files and BIF files)
-                            with loc.filepath.open("rb") as f:
-                                f.seek(loc.offset)
-                                data = f.read(loc.size)
-                            genericdoors_2da = read_2da(data)
-                            break
-            except Exception as e:  # noqa: BLE001
-                RobustLogger().debug(f"locations() failed for genericdoors.2da: {e}")
-
-            # Fallback: try resource() if locations() didn't work
-            if genericdoors_2da is None:
-                try:
-                    genericdoors_result = installation.resource("genericdoors", ResourceType.TwoDA)
-                    if genericdoors_result and genericdoors_result.data:
-                        from pykotor.resource.formats.twoda import read_2da
-                        genericdoors_2da = read_2da(genericdoors_result.data)
-                except Exception as e:  # noqa: BLE001
-                    RobustLogger().debug(f"resource() also failed for genericdoors.2da: {e}")
-
-            if genericdoors_2da is None:
-                RobustLogger().warning(f"Could not load genericdoors.2da for door '{door_name}', using defaults")
-            else:
-                # Get model name using the loaded 2DA
-                try:
-                    model_name = door_tools.get_model(utd, installation, genericdoors=genericdoors_2da)
-                    if not model_name:
-                        RobustLogger().warning(f"Could not get model name for door '{door_name}' (appearance_id={utd.appearance_id}), using defaults")
-                    else:
-                        # Try multiple variations of the model name to find the resource
-                        # Some doors have models that don't exist, so we try various name formats
-                        model_variations = [
-                            model_name,  # Original case
-                            model_name.lower(),  # Lowercase
-                            model_name.upper(),  # Uppercase
-                            model_name.lower().replace(".mdl", "").replace(".mdx", ""),  # Normalized lowercase
-                        ]
-                        
-                        # Remove duplicates while preserving order
-                        seen = set()
-                        model_variations = [v for v in model_variations if v not in seen and not seen.add(v)]
-                        
-                        mdl_data: bytes | None = None
-                        mdl_result: ResourceResult | None = None
-                        
-                        # Try locations() first (more reliable, searches multiple locations)
-                        for model_var in model_variations:
-                            try:
-                                location_results = installation.locations(
-                                    [ResourceIdentifier(resname=model_var, restype=ResourceType.MDL)],
-                                    [
-                                        SearchLocation.OVERRIDE,
-                                        SearchLocation.MODULES,
-                                        SearchLocation.CHITIN,
-                                    ],
-                                )
-                                for res_ident, loc_list in location_results.items():
-                                    if loc_list:
-                                        loc = loc_list[0]
-                                        try:
-                                            with loc.filepath.open("rb") as f:
-                                                f.seek(loc.offset)
-                                                mdl_data = f.read(loc.size)
-                                            mdl = read_mdl(mdl_data)
-                                        except Exception:  # noqa: BLE001
-                                            continue
-                                        else:
-                                            model_extracted = True
-                                        if model_extracted:
-                                            break
-                                if model_extracted:
-                                    break
-                            except Exception:  # noqa: BLE001
-                                continue
-                        
-                        # Fallback to resource() if locations() didn't work
-                        if not model_extracted:
-                            for model_var in model_variations:
-                                try:
-                                    mdl_result = installation.resource(model_var, ResourceType.MDL)
-                                    if mdl_result and mdl_result.data:
-                                        mdl_data = mdl_result.data
-                                        mdl = read_mdl(mdl_data)
-                                        model_extracted = True
-                                        break
-                                except Exception:  # noqa: BLE001
-                                    continue
-                        
-                        if not model_extracted:
-                            logger.warning(
-                                f"Could not load MDL '{model_name}' (tried variations: {model_variations}) "
-                                f"for door '{door_name}' (appearance_id={utd.appearance_id}), using defaults"
-                            )
-                            logger.debug(f"[DOOR DEBUG] Door '{door_name}': Using default dimensions (2.0 x 3.0) - model not found")
-                        elif mdl and mdl.root:
-                            bb_min = Vector3(1000000, 1000000, 1000000)
-                            bb_max = Vector3(-1000000, -1000000, -1000000)
-                            
-                            # Iterate through all nodes and their meshes
-                            nodes_to_check: list[MDLNode] = [mdl.root]
-                            mesh_count = 0
-                            while nodes_to_check:
-                                node: MDLNode = nodes_to_check.pop()
-                                if node.mesh:
-                                    mesh_count += 1
-                                    # Use mesh bounding box if available
-                                    if node.mesh.bb_min and node.mesh.bb_max:
-                                        bb_min.x = min(bb_min.x, node.mesh.bb_min.x)
-                                        bb_min.y = min(bb_min.y, node.mesh.bb_min.y)
-                                        bb_min.z = min(bb_min.z, node.mesh.bb_min.z)
-                                        bb_max.x = max(bb_max.x, node.mesh.bb_max.x)
-                                        bb_max.y = max(bb_max.y, node.mesh.bb_max.y)
-                                        bb_max.z = max(bb_max.z, node.mesh.bb_max.z)
-                                    # Fallback: calculate from vertex positions if bounding box not set
-                                    elif node.mesh.vertex_positions:
-                                        for vertex in node.mesh.vertex_positions:
-                                            bb_min.x = min(bb_min.x, vertex.x)
-                                            bb_min.y = min(bb_min.y, vertex.y)
-                                            bb_min.z = min(bb_min.z, vertex.z)
-                                            bb_max.x = max(bb_max.x, vertex.x)
-                                            bb_max.y = max(bb_max.y, vertex.y)
-                                            bb_max.z = max(bb_max.z, vertex.z)
-                                
-                                # Check child nodes
-                                nodes_to_check.extend(node.children)
-                            
-                            # Calculate dimensions from bounding box
-                            # Doors are typically oriented along Y axis (width) and Z axis (height)
-                            # X is typically depth/thickness
-                            if bb_min.x < 1000000:  # Valid bounding box calculated
-                                # Width is typically the Y dimension (horizontal when door is closed)
-                                # Height is typically the Z dimension (vertical)
-                                width = abs(bb_max.y - bb_min.y)
-                                height = abs(bb_max.z - bb_min.z)
-                                
-                                # Only use calculated values if they're reasonable (not zero or extremely large)
-                                if 0.1 < width < 50.0 and 0.1 < height < 50.0:
-                                    door_width = width
-                                    door_height = height
-                                    logger.debug(f"[DOOR DEBUG] Extracted dimensions for door '{door_name}': {door_width:.2f} x {door_height:.2f} (from {mesh_count} meshes, model='{model_name}')")
-                                else:
-                                    logger.warning(f"Calculated dimensions for door '{door_name}' out of range: {width:.2f} x {height:.2f}, using defaults")
-                            else:
-                                logger.warning(f"Could not calculate bounding box for door '{door_name}' (processed {mesh_count} meshes), using defaults")
-                except Exception as e:  # noqa: BLE001
-                    RobustLogger().warning(f"Error getting model or calculating dimensions for door '{door_name}': {e}")
-        except Exception as e:  # noqa: BLE001
-            # If we can't get dimensions from model, try texture-based fallback
-            RobustLogger().warning(f"Failed to get dimensions from model for '{door_name}' using method 1: {e}")
-        
-        # Fallback: Get dimensions from door texture if model-based extraction failed
-        if door_width == 2.0 and door_height == 3.0 and not model_extracted:
-            try:
-                # Try to get model using the same variations as before
-                if model_name:
-                    model_variations = [
-                        model_name,
-                        model_name.lower(),
-                        model_name.upper(),
-                        model_name.lower().replace(".mdl", "").replace(".mdx", ""),
-                    ]
-                    seen = set()
-                    model_variations = [v for v in model_variations if v not in seen and not seen.add(v)]
-                    
-                    for model_var in model_variations:
-                        try:
-                            location_results = installation.locations(
-                                [ResourceIdentifier(resname=model_var, restype=ResourceType.MDL)],
-                                [
-                                    SearchLocation.OVERRIDE,
-                                    SearchLocation.MODULES,
-                                    SearchLocation.CHITIN,
-                                ],
-                            )
-                            for res_ident, loc_list in location_results.items():
-                                if loc_list:
-                                    loc = loc_list[0]
-                                    with loc.filepath.open("rb") as f:
-                                        f.seek(loc.offset)
-                                        mdl_data = f.read(loc.size)
-                                    mdl = read_mdl(mdl_data)
-                                    model_extracted = True
-                                    break
-                            if model_extracted:
-                                break
-                        except Exception:  # noqa: BLE001
-                            continue
-                    
-                    # Fallback to resource()
-                    if not model_extracted:
-                        for model_var in model_variations:
-                            try:
-                                mdl_result = installation.resource(model_var, ResourceType.MDL)
-                                if mdl_result and mdl_result.data:
-                                    mdl = read_mdl(mdl_result.data)
-                                    model_extracted = True
-                                    break
-                            except Exception:  # noqa: BLE001
-                                continue
-                
-                # Get textures from the model
-                texture_names: list[str] = []
-                if mdl and model_name:
-                    # Try to get model data as bytes for iterate_textures
-                    model_variations_fallback = [
-                        model_name,
-                        model_name.lower(),
-                        model_name.upper(),
-                        model_name.lower().replace(".mdl", "").replace(".mdx", ""),
-                    ]
-                    seen_fallback = set()
-                    model_variations_fallback = [v for v in model_variations_fallback if v not in seen_fallback and not seen_fallback.add(v)]
-                    
-                    for model_var in model_variations_fallback:
-                        try:
-                            mdl_result_fallback = installation.resource(model_var, ResourceType.MDL)
-                            if mdl_result_fallback and mdl_result_fallback.data:
-                                texture_names = list(iterate_textures(mdl_result_fallback.data))
-                                break
-                        except Exception:  # noqa: BLE001
-                            continue
-                
-                if texture_names:
-                    # Try to load the first texture
-                    texture_name = texture_names[0]
-                    texture_result = installation.resource(texture_name, ResourceType.TPC)
-                    if not texture_result:
-                        # Try TGA as fallback
-                        texture_result = installation.resource(texture_name, ResourceType.TGA)
-                    
-                    if texture_result and texture_result.data:
-                        # Read TPC to get dimensions
-                        if texture_result.restype == ResourceType.TPC:
-                            tpc = read_tpc(texture_result.data)
-                            tex_width, tex_height = tpc.dimensions()
-                        elif texture_result.restype == ResourceType.TGA:
-                            # TGA header: width at offset 12, height at offset 14 (little-endian)
-                            if len(texture_result.data) >= 18:
-                                tex_width = int.from_bytes(texture_result.data[12:14], "little")
-                                tex_height = int.from_bytes(texture_result.data[14:16], "little")
-                            else:
-                                tex_width = tex_height = 0
-                        else:
-                            tex_width = tex_height = 0
-                        
-                        if tex_width > 0 and tex_height > 0:
-                            # Convert texture pixels to world units
-                            # Typical door textures are 256x512 or 512x1024 pixels
-                            # Typical door dimensions are 2-6 units wide, 2.5-3.5 units tall
-                            # Assuming 1 pixel ≈ 0.01-0.02 world units for doors
-                            # Use aspect ratio to determine which dimension is width vs height
-                            # Doors are typically taller than wide, so height > width
-                            if tex_height > tex_width:
-                                # Portrait orientation - height is vertical, width is horizontal
-                                # Typical: 256x512 = 2.0x4.0, 512x1024 = 4.0x8.0
-                                # Scale factor: ~0.008-0.01 units per pixel
-                                scale_factor = 0.008  # Conservative estimate
-                                door_width = tex_width * scale_factor
-                                door_height = tex_height * scale_factor
-                            else:
-                                # Landscape or square - assume standard door proportions
-                                # Use height as the primary dimension
-                                scale_factor = 0.008
-                                door_height = tex_height * scale_factor
-                                # Width is typically 0.6-0.8x height for doors
-                                door_width = door_height * 0.7
-                            
-                            # Clamp to reasonable values
-                            door_width = max(1.0, min(door_width, 10.0))
-                            door_height = max(1.5, min(door_height, 10.0))
-            except Exception:  # noqa: BLE001
-                RobustLogger().exception(f"Texture fallback also failed, keep defaults for '{door_name}'")
-
-        
-        logger.debug(f"[DOOR DEBUG] Final dimensions for door '{door_id}' (resname: '{door_name}'): width={door_width:.2f}, height={door_height:.2f}")
+        # Extract width and height from door model or texture
+        door_width, door_height = door_tools.get_door_dimensions(
+            door_data,
+            installation,
+            door_name=door_name,
+            logger=logger,
+        )
         door_list.append({
             "utd_k1": f"{door_id}_k1",
             "utd_k2": f"{door_id}_k2",
