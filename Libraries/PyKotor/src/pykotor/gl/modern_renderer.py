@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import glm
 import moderngl  # type: ignore[import]
@@ -12,6 +13,8 @@ from pykotor.gl.scene import Scene
 from pykotor.gl.scene.render_object import RenderObject
 from pykotor.gl.shader.texture import Texture
 
+if TYPE_CHECKING:
+    from pykotor.gl.models.mdl import Boundary, Cube, Mesh, Node
 
 MODERN_VS = """
 #version 330 core
@@ -93,7 +96,7 @@ class ModernGLMesh:
     vao_cache: dict[int, moderngl.VertexArray]
 
     @classmethod
-    def from_mesh(cls, ctx: moderngl.Context, mesh) -> ModernGLMesh:
+    def from_mesh(cls, ctx: moderngl.Context, mesh: Mesh) -> ModernGLMesh:
         vertex_blob = mesh.vertex_blob()
         if not vertex_blob:
             vertex_blob = np.zeros((1, 7), dtype=np.float32).tobytes()
@@ -170,7 +173,7 @@ class ModernGLRenderer:
             self._texture_cache = ModernTextureCache(self.ctx, scene)
         return self._texture_cache
 
-    def _mesh(self, mesh) -> ModernGLMesh:
+    def _mesh(self, mesh: Mesh) -> ModernGLMesh:
         key = id(mesh)
         cached = self._mesh_cache.get(key)
         if cached is None:
@@ -178,7 +181,12 @@ class ModernGLRenderer:
             self._mesh_cache[key] = cached
         return cached
 
-    def _set_transforms(self, program: moderngl.Program, view: mat4, projection: mat4) -> None:
+    def _set_transforms(
+        self,
+        program: moderngl.Program,
+        view: mat4,
+        projection: mat4,
+    ) -> None:
         program["view"].write(_mat4_bytes(view))
         program["projection"].write(_mat4_bytes(projection))
 
@@ -275,7 +283,7 @@ class ModernGLRenderer:
 
     def _draw_node(
         self,
-        node,
+        node: Node,
         parent_transform: mat4,
         override_texture: str | None,
         texture_cache: ModernTextureCache,
@@ -310,7 +318,7 @@ class ModernGLRenderer:
 
     def _draw_node_plain(
         self,
-        node,
+        node: Node,
         parent_transform: mat4,
     ) -> None:
         """Draw a node using the plain shader."""
@@ -324,15 +332,25 @@ class ModernGLRenderer:
         for child in node.children:
             self._draw_node_plain(child, local_transform)
 
-    def _draw_cube(self, cube, transform: mat4) -> None:
+    def _draw_cube(
+        self,
+        cube: Cube,
+        transform: mat4,
+    ) -> None:
         """Draw a cube using the plain shader."""
-        # Cubes are typically simple geometry - for now, skip if not implemented
-        # This would require implementing cube rendering in ModernGL
-        pass
+        mesh = self._mesh(cube)
+        vao = mesh.vao(self.plain_program)
+        self.plain_program["model"].write(_mat4_bytes(transform))
+        vao.render()
 
-    def _draw_boundary(self, boundary, transform: mat4) -> None:
+    def _draw_boundary(
+        self,
+        boundary: Boundary,
+        transform: mat4,
+    ) -> None:
         """Draw a boundary using the plain shader."""
-        # Boundaries are typically simple geometry - for now, skip if not implemented
-        # This would require implementing boundary rendering in ModernGL
-        pass
+        mesh = self._mesh(boundary)
+        vao = mesh.vao(self.plain_program)
+        self.plain_program["model"].write(_mat4_bytes(transform))
+        vao.render()
 

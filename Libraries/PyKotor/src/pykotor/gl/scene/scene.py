@@ -4,10 +4,12 @@ from typing import TYPE_CHECKING, TypeVar
 
 import glm
 
-from OpenGL.GL import glReadPixels
-from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT
-from OpenGL.raw.GL.VERSION.GL_1_0 import GL_BLEND, GL_COLOR_BUFFER_BIT, GL_CULL_FACE, GL_DEPTH_BUFFER_BIT, GL_DEPTH_COMPONENT, glClear, glClearColor, glDisable, glEnable
-from OpenGL.raw.GL.VERSION.GL_1_2 import GL_BGRA, GL_UNSIGNED_INT_8_8_8_8
+from pykotor.gl.compat import (
+    MissingPyOpenGLError,
+    has_pyopengl,
+    missing_constant,
+    missing_gl_func,
+)
 from glm import mat4, vec3, vec4
 
 from loggerplus import RobustLogger
@@ -24,6 +26,38 @@ from utility.common.geometry import Vector3
 if TYPE_CHECKING:
     from pykotor.gl.models.mdl import Model
     from pykotor.gl.scene import RenderObject
+
+HAS_PYOPENGL = has_pyopengl()
+
+if HAS_PYOPENGL:
+    from OpenGL.GL import glReadPixels
+    from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT
+    from OpenGL.raw.GL.VERSION.GL_1_0 import (
+        GL_BLEND,
+        GL_COLOR_BUFFER_BIT,
+        GL_CULL_FACE,
+        GL_DEPTH_BUFFER_BIT,
+        GL_DEPTH_COMPONENT,
+        glClear,
+        glClearColor,
+        glDisable,
+        glEnable,
+    )
+    from OpenGL.raw.GL.VERSION.GL_1_2 import GL_BGRA, GL_UNSIGNED_INT_8_8_8_8
+else:  # pragma: no cover - exercised when PyOpenGL absent
+    glReadPixels = missing_gl_func("glReadPixels")
+    glClear = missing_gl_func("glClear")
+    glClearColor = missing_gl_func("glClearColor")
+    glDisable = missing_gl_func("glDisable")
+    glEnable = missing_gl_func("glEnable")
+    GL_BLEND = missing_constant("GL_BLEND")
+    GL_COLOR_BUFFER_BIT = missing_constant("GL_COLOR_BUFFER_BIT")
+    GL_CULL_FACE = missing_constant("GL_CULL_FACE")
+    GL_DEPTH_BUFFER_BIT = missing_constant("GL_DEPTH_BUFFER_BIT")
+    GL_DEPTH_COMPONENT = missing_constant("GL_DEPTH_COMPONENT")
+    GL_FLOAT = missing_constant("GL_FLOAT")
+    GL_BGRA = missing_constant("GL_BGRA")
+    GL_UNSIGNED_INT_8_8_8_8 = missing_constant("GL_UNSIGNED_INT_8_8_8_8")
 
 T = TypeVar("T")
 SEARCH_ORDER_2DA: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
@@ -47,9 +81,15 @@ class Scene(SceneBase):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.picker_shader: Shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
-        self.plain_shader: Shader = Shader(PLAIN_VSHADER, PLAIN_FSHADER)
-        self.shader: Shader = Shader(KOTOR_VSHADER, KOTOR_FSHADER)
+        self._legacy_gl_enabled: bool = HAS_PYOPENGL
+        if HAS_PYOPENGL:
+            self.picker_shader: Shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
+            self.plain_shader: Shader = Shader(PLAIN_VSHADER, PLAIN_FSHADER)
+            self.shader: Shader = Shader(KOTOR_VSHADER, KOTOR_FSHADER)
+        else:
+            self.picker_shader = None  # type: ignore[assignment]
+            self.plain_shader = None  # type: ignore[assignment]
+            self.shader = None  # type: ignore[assignment]
         
         # Frustum culling
         self.frustum: Frustum = Frustum()
@@ -126,6 +166,10 @@ class Scene(SceneBase):
         self._cached_projection = self.camera.projection()
 
     def render(self):
+        if not self._legacy_gl_enabled:
+            raise MissingPyOpenGLError(
+                "PyOpenGL is unavailable; use ModernGLRenderer.render(scene) with a moderngl.Context instead."
+            )
         RobustLogger().debug(
             f"Scene.render(start): objects={len(self.objects)}, pending_textures={len(getattr(self, '_pending_texture_futures', {}))}, "
             f"pending_models={len(getattr(self, '_pending_model_futures', {}))}, requested_textures={len(getattr(self, 'requested_texture_names', set()))}"
@@ -306,6 +350,10 @@ class Scene(SceneBase):
         
         Optimized to use cached matrices and enumerate for O(1) index access.
         """
+        if not self._legacy_gl_enabled:
+            raise MissingPyOpenGLError(
+                "PyOpenGL is unavailable; object picking requires the legacy OpenGL backend."
+            )
         glClearColor(1.0, 1.0, 1.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  # pyright: ignore[reportOperatorIssue]
 
@@ -388,6 +436,10 @@ class Scene(SceneBase):
         - Use cached view/projection matrices
         - Minimize GL state changes
         """
+        if not self._legacy_gl_enabled:
+            raise MissingPyOpenGLError(
+                "PyOpenGL is unavailable; screen_to_world requires the legacy OpenGL backend."
+            )
         # Prepare GL state efficiently
         glClearColor(0.5, 0.5, 1, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  # type: ignore[]

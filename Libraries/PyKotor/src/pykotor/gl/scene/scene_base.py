@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from OpenGL.raw.GL.VERSION.GL_1_0 import GL_BACK, GL_DEPTH_TEST, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, glBlendFunc, glCullFace, glEnable
 from loggerplus import RobustLogger
+
+from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func
 
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.stream import BinaryReader
@@ -47,6 +48,19 @@ from pykotor.tools import creature
 from utility.common.geometry import Vector3
 from utility.common.more_collections import CaseInsensitiveDict
 
+HAS_PYOPENGL = has_pyopengl()
+
+if HAS_PYOPENGL:
+    from OpenGL.raw.GL.VERSION.GL_1_0 import GL_BACK, GL_DEPTH_TEST, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, glBlendFunc, glCullFace, glEnable
+else:  # pragma: no cover - exercised when PyOpenGL absent
+    glBlendFunc = missing_gl_func("glBlendFunc")
+    glCullFace = missing_gl_func("glCullFace")
+    glEnable = missing_gl_func("glEnable")
+    GL_BACK = missing_constant("GL_BACK")
+    GL_DEPTH_TEST = missing_constant("GL_DEPTH_TEST")
+    GL_ONE_MINUS_SRC_ALPHA = missing_constant("GL_ONE_MINUS_SRC_ALPHA")
+    GL_SRC_ALPHA = missing_constant("GL_SRC_ALPHA")
+
 if TYPE_CHECKING:
 
     from collections.abc import Callable
@@ -82,10 +96,11 @@ class SceneBase:
         installation: Installation | None = None,
         module: Module | None = None,
     ):
-
-        glEnable(GL_DEPTH_TEST)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glCullFace(GL_BACK)
+        self._legacy_gl_enabled = HAS_PYOPENGL
+        if HAS_PYOPENGL:
+            glEnable(GL_DEPTH_TEST)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glCullFace(GL_BACK)
 
         self.installation: Installation | None = installation
         if installation is not None:
@@ -673,15 +688,17 @@ class SceneBase:
                     SearchLocation.CHITIN,
                 ]
                 RobustLogger().debug(f"Looking for texture '{name}' with search order: {repr(search_order)}")
-                result = self.installation.resource(name, {ResourceType.TPC, ResourceType.TGA}, order=search_order)
+                result, txi_text = self.installation.texture_resource_result(name, order=search_order)
                 RobustLogger().debug(f"Sync texture load: result={result}")
                 if result is not None:
                     from pykotor.resource.formats.tpc import read_tpc
                     tpc = read_tpc(result.data)
+                    if result.restype is ResourceType.TGA and txi_text:
+                        tpc.txi = txi_text
                     # Store EXACT lookup info
                     self.texture_lookup_info[name] = {
                         "filepath": result.filepath,
-                        "restype": ResourceType.TPC,
+                        "restype": result.restype,
                         "found": True,
                         "search_order": search_order.copy(),  # Store search order used
                     }

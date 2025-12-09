@@ -7,15 +7,12 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer
-from OpenGL.GL.shaders import GL_FALSE
-from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES
-from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT
-from OpenGL.raw.GL.VERSION.GL_1_0 import GL_UNSIGNED_SHORT
-from OpenGL.raw.GL.VERSION.GL_1_1 import glDrawElements
-from OpenGL.raw.GL.VERSION.GL_1_5 import GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, glBindBuffer, glBufferData
-from OpenGL.raw.GL.VERSION.GL_2_0 import glEnableVertexAttribArray
-from OpenGL.raw.GL.VERSION.GL_3_0 import glBindVertexArray
+from pykotor.gl.compat import (
+    has_pyopengl,
+    missing_constant,
+    missing_gl_func,
+    safe_gl_error_module,
+)
 
 from utility.common.geometry import Vector3
 
@@ -25,6 +22,45 @@ if TYPE_CHECKING:
     from pykotor.gl.scene import Scene
     from pykotor.gl.shader import Shader
 
+
+HAS_PYOPENGL = has_pyopengl()
+
+if HAS_PYOPENGL:
+    from OpenGL import error as gl_error
+    from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer
+    from OpenGL.GL.shaders import GL_FALSE
+    from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES
+    from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT
+    from OpenGL.raw.GL.VERSION.GL_1_0 import GL_UNSIGNED_SHORT
+    from OpenGL.raw.GL.VERSION.GL_1_1 import glDrawElements
+    from OpenGL.raw.GL.VERSION.GL_1_5 import (
+        GL_ARRAY_BUFFER,
+        GL_ELEMENT_ARRAY_BUFFER,
+        GL_STATIC_DRAW,
+        glBindBuffer,
+        glBufferData,
+    )
+    from OpenGL.raw.GL.VERSION.GL_2_0 import glEnableVertexAttribArray
+    from OpenGL.raw.GL.VERSION.GL_3_0 import glBindVertexArray
+else:  # pragma: no cover - exercised when PyOpenGL absent
+    gl_error = safe_gl_error_module()
+    glGenBuffers = missing_gl_func("glGenBuffers")
+    glGenVertexArrays = missing_gl_func("glGenVertexArrays")
+    glVertexAttribPointer = missing_gl_func("glVertexAttribPointer")
+    glDrawElements = missing_gl_func("glDrawElements")
+    glBindBuffer = missing_gl_func("glBindBuffer")
+    glBufferData = missing_gl_func("glBufferData")
+    glEnableVertexAttribArray = missing_gl_func("glEnableVertexAttribArray")
+    glBindVertexArray = missing_gl_func("glBindVertexArray")
+    GL_FALSE = missing_constant("GL_FALSE")
+    GL_TRIANGLES = missing_constant("GL_TRIANGLES")
+    GL_FLOAT = missing_constant("GL_FLOAT")
+    GL_UNSIGNED_SHORT = missing_constant("GL_UNSIGNED_SHORT")
+    GL_ARRAY_BUFFER = missing_constant("GL_ARRAY_BUFFER")
+    GL_ELEMENT_ARRAY_BUFFER = missing_constant("GL_ELEMENT_ARRAY_BUFFER")
+    GL_STATIC_DRAW = missing_constant("GL_STATIC_DRAW")
+
+
 class Boundary:
     def __init__(
         self,
@@ -33,7 +69,18 @@ class Boundary:
     ):
         self._scene: Scene = scene
 
-        vertices, elements = self._build_nd(vertices)
+        vertices_np, elements_np = self._build_nd(vertices)
+        self._vertex_data: np.ndarray = vertices_np
+        self._index_data: np.ndarray = elements_np
+        self._face_count: int = len(elements_np)
+
+        if not HAS_PYOPENGL:
+            # Still allow CPU-side geometry for ModernGL usage.
+            self._vao = 0
+            self._vbo = 0
+            self._ebo = 0
+            self._buffers_supported: bool = False
+            return
 
         self._vao = glGenVertexArrays(1)
         self._vbo = glGenBuffers(1)
@@ -41,17 +88,17 @@ class Boundary:
         glBindVertexArray(self._vao)
 
         glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
-        glBufferData(GL_ARRAY_BUFFER, len(vertices) * 4, vertices, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, len(vertices_np) * 4, vertices_np, GL_STATIC_DRAW)
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(elements) * 4, elements, GL_STATIC_DRAW)
-        self._face_count: int = len(elements)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(elements_np) * 4, elements_np, GL_STATIC_DRAW)
 
         glEnableVertexAttribArray(1)
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 12, ctypes.c_void_p(0))
 
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glBindVertexArray(0)
+        self._buffers_supported: bool = True
 
     @classmethod
     def from_circle(
@@ -80,6 +127,9 @@ class Boundary:
         return Boundary(scene, vertices)
 
     def draw(self, shader: Shader, transform: mat4):
+        if not getattr(self, "_buffers_supported", False):
+            raise gl_error.NullFunctionError("PyOpenGL is unavailable; use ModernGLRenderer for rendering.")
+
         shader.set_matrix4("model", transform)
         glBindVertexArray(self._vao)
         glDrawElements(GL_TRIANGLES, self._face_count, GL_UNSIGNED_SHORT, None)
@@ -98,3 +148,14 @@ class Boundary:
             index4 = (i * 2 + 2) + 1 if (i * 2 + 2) + 1 < count else 1
             npfaces.extend([index1, index2, index3, index2, index4, index3])
         return np.array(npvertices, dtype="float32"), np.array(npfaces, dtype="int16")
+
+    def vertex_blob(self) -> bytes:
+        """Interleaved vertex data (position only; UVs are zero-filled) for ModernGL."""
+        vertex_count = len(self._vertex_data) // 3
+        blob = np.zeros((vertex_count, 7), dtype=np.float32)
+        blob[:, 0:3] = self._vertex_data.reshape(vertex_count, 3)
+        return blob.tobytes()
+
+    @property
+    def index_data(self) -> bytes:
+        return self._index_data.tobytes()

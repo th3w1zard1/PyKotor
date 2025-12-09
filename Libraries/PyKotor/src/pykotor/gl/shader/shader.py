@@ -4,9 +4,30 @@ from typing import TYPE_CHECKING
 
 import glm
 
-from OpenGL.GL import glGetUniformLocation, glUniform3fv, glUniform4fv, glUniformMatrix4fv, shaders
-from OpenGL.GL.shaders import GL_FALSE
-from OpenGL.raw.GL.VERSION.GL_2_0 import GL_FRAGMENT_SHADER, GL_VERTEX_SHADER, glUniform1i, glUseProgram
+from pykotor.gl.compat import (
+    MissingPyOpenGLError,
+    has_pyopengl,
+    missing_constant,
+    missing_gl_func,
+)
+
+HAS_PYOPENGL = has_pyopengl()
+
+if HAS_PYOPENGL:
+    from OpenGL.GL import glGetUniformLocation, glUniform3fv, glUniform4fv, glUniformMatrix4fv, shaders  # pyright: ignore[reportMissingImports]
+    from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
+    from OpenGL.raw.GL.VERSION.GL_2_0 import GL_FRAGMENT_SHADER, GL_VERTEX_SHADER, glUniform1i, glUseProgram  # pyright: ignore[reportMissingImports]
+else:  # pragma: no cover - exercised when PyOpenGL absent
+    glGetUniformLocation = missing_gl_func("glGetUniformLocation")
+    glUniform3fv = missing_gl_func("glUniform3fv")
+    glUniform4fv = missing_gl_func("glUniform4fv")
+    glUniformMatrix4fv = missing_gl_func("glUniformMatrix4fv")
+    shaders = missing_gl_func("shaders")
+    glUniform1i = missing_gl_func("glUniform1i")
+    glUseProgram = missing_gl_func("glUseProgram")
+    GL_FALSE = missing_constant("GL_FALSE")
+    GL_FRAGMENT_SHADER = missing_constant("GL_FRAGMENT_SHADER")
+    GL_VERTEX_SHADER = missing_constant("GL_VERTEX_SHADER")
 
 if TYPE_CHECKING:
     from glm import mat4, vec3, vec4
@@ -140,6 +161,8 @@ class Shader:
         vshader: str,
         fshader: str,
     ):
+        if not HAS_PYOPENGL:
+            raise MissingPyOpenGLError("PyOpenGL is required to compile legacy Shader programs.")
         vertex_shader: int = shaders.compileShader(vshader, GL_VERTEX_SHADER)
         fragment_shader: int = shaders.compileShader(fshader, GL_FRAGMENT_SHADER)
         self._id: int = shaders.compileProgram(vertex_shader, fragment_shader)
