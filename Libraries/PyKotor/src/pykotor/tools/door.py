@@ -17,7 +17,7 @@ from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
     from pykotor.common.module import Module
-    from pykotor.extract.file import LocationResult, ResourceResult
+    from pykotor.extract.file import ResourceResult
     from pykotor.extract.installation import Installation
     from pykotor.resource.type import SOURCE_TYPES
 
@@ -517,11 +517,12 @@ def get_door_dimensions(
     
     door_width = default_width
     door_height = default_height
+    door_name_str = f"'{door_name}'" if door_name else ""
     
     try:
         utd = read_utd(utd_data)
         logger.debug(
-            f"[DOOR DEBUG] Processing door {f\"'{door_name}'\" if door_name else ''} "
+            f"[DOOR DEBUG] Processing door {door_name_str} "
             f"(appearance_id={utd.appearance_id})"
         )
         
@@ -529,16 +530,14 @@ def get_door_dimensions(
         genericdoors_2da = load_genericdoors_2da(installation, logger)
         if not genericdoors_2da:
             logger.warning(
-                f"Could not load genericdoors.2da for door "
-                f"{f\"'{door_name}'\" if door_name else ''}, using defaults"
+                f"Could not load genericdoors.2da for door {door_name_str}, using defaults"
             )
             return door_width, door_height
         
         model_name = get_model(utd, installation, genericdoors=genericdoors_2da)
         if not model_name:
             logger.warning(
-                f"Could not get model name for door "
-                f"{f\"'{door_name}'\" if door_name else ''} "
+                f"Could not get model name for door {door_name_str} "
                 f"(appearance_id={utd.appearance_id}), using defaults"
             )
             return door_width, door_height
@@ -553,13 +552,13 @@ def get_door_dimensions(
             else:
                 logger.warning(
                     f"Could not extract dimensions from model '{model_name}' "
-                    f"for door {f\"'{door_name}'\" if door_name else ''}, trying texture fallback"
+                    f"for door {door_name_str}, trying texture fallback"
                 )
         else:
             model_variations = _get_model_variations(model_name)
             logger.warning(
                 f"Could not load MDL '{model_name}' (tried variations: {model_variations}) "
-                f"for door {f\"'{door_name}'\" if door_name else ''} "
+                f"for door {door_name_str} "
                 f"(appearance_id={utd.appearance_id}), trying texture fallback"
             )
         
@@ -569,18 +568,18 @@ def get_door_dimensions(
             door_width, door_height = dimensions
         else:
             logger.debug(
-                f"[DOOR DEBUG] Door {f\"'{door_name}'\" if door_name else ''}: "
+                f"[DOOR DEBUG] Door {door_name_str}: "
                 f"Using default dimensions ({default_width} x {default_height}) - "
                 f"model and texture extraction failed"
             )
     
     except Exception as e:  # noqa: BLE001
         logger.warning(
-            f"Failed to get dimensions for door {f\"'{door_name}'\" if door_name else ''}: {e}"
+            f"Failed to get dimensions for door {door_name_str}: {e}"
         )
     
     logger.debug(
-        f"[DOOR DEBUG] Final dimensions for door {f\"'{door_name}'\" if door_name else ''}: "
+        f"[DOOR DEBUG] Final dimensions for door {door_name_str}: "
         f"width={door_width:.2f}, height={door_height:.2f}"
     )
     return door_width, door_height
