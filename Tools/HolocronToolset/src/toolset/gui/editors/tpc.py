@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 
     from qtpy.QtCore import QPoint
     from qtpy.QtGui import (
+        QClipboard,
         QWheelEvent,
     )
     from qtpy.QtWidgets import QWidget
@@ -276,8 +277,11 @@ class TPCEditor(Editor):
             if pixmap.isNull():
                 return
 
-            clipboard = QApplication.clipboard()
-            clipboard.setPixmap(pixmap)
+            clipboard: QClipboard | None = QApplication.clipboard()
+            if clipboard is not None:
+                clipboard.setPixmap(pixmap)
+            else:
+                return
 
             # Animate copy action
             self._animate_copy_action()
@@ -305,8 +309,12 @@ class TPCEditor(Editor):
 
     def _paste_from_clipboard(self) -> None:
         """Paste texture from clipboard with animation."""
-        clipboard = QApplication.clipboard()
-        image = clipboard.image()
+        clipboard: QClipboard | None = QApplication.clipboard()
+        if clipboard is None:
+            return
+        image: QImage | None = clipboard.image()
+        if image is None:
+            return
 
         if image.isNull():
             # Try getting pixmap
@@ -383,10 +391,12 @@ class TPCEditor(Editor):
         mipmap: TPCMipmap = self._tpc.layers[layer_index].mipmaps[mipmap_index].copy()
         display_format = mipmap.tpc_format
 
-        # Convert to displayable format
+        # Convert to displayable format (decompress DXT formats for display)
         if display_format == TPCTextureFormat.DXT1:
             mipmap.convert(TPCTextureFormat.RGB)
-        elif display_format in (TPCTextureFormat.DXT3, TPCTextureFormat.DXT5, TPCTextureFormat.BGRA):
+        elif display_format in (TPCTextureFormat.DXT3, TPCTextureFormat.DXT5):
+            mipmap.convert(TPCTextureFormat.RGBA)
+        elif display_format == TPCTextureFormat.BGRA:
             mipmap.convert(TPCTextureFormat.RGBA)
         elif display_format == TPCTextureFormat.BGR:
             mipmap.convert(TPCTextureFormat.RGB)
@@ -395,16 +405,26 @@ class TPCEditor(Editor):
 
         target_format = mipmap.tpc_format
 
-        # Create QImage from mipmap data
-        image = QImage(
-            bytes(mipmap.data),
-            mipmap.width,
-            mipmap.height,
-            target_format.to_qimage_format(),
-        )
-        image = image.mirrored(False, True)  # Flip vertically for correct display
+        # Validate data before creating QImage
+        expected_size = mipmap.width * mipmap.height * target_format.bytes_per_pixel()
+        if len(mipmap.data) < expected_size:
+            # Data is too small, return empty pixmap
+            return QPixmap()
 
-        return QPixmap.fromImage(image)
+        # Create QImage from mipmap data
+        try:
+            image = QImage(
+                bytes(mipmap.data),
+                mipmap.width,
+                mipmap.height,
+                target_format.to_qimage_format(),
+            )
+            if image.isNull():
+                return QPixmap()
+            image = image.mirrored(False, True)  # Flip vertically for correct display
+            return QPixmap.fromImage(image)
+        except Exception:  # noqa: BLE001
+            return QPixmap()
 
     def _show_context_menu(self, position) -> None:
         """Show context menu at the given position."""
@@ -454,21 +474,56 @@ class TPCEditor(Editor):
         if self._tpc.format() == target_format:
             return
 
+        if not self._tpc.layers or not self._tpc.layers[0].mipmaps:
+            QMessageBox.warning(self, "No Texture", "No texture loaded to convert.")
+            return
+
         try:
+            # Store original format for error recovery
+            original_format = self._tpc.format()
+            
+            # Perform the conversion
             self._tpc.convert(target_format)
+            
+            # Verify the conversion succeeded by checking the format
+            if self._tpc.format() != target_format:
+                raise ValueError(f"Conversion failed: format is {self._tpc.format().name} instead of {target_format.name}")
+            
+            # Verify we still have valid mipmap data
+            if not self._tpc.layers or not self._tpc.layers[0].mipmaps:
+                raise ValueError("Conversion resulted in empty texture data")
+            
+            # Check that the first mipmap has valid data
+            first_mipmap = self._tpc.layers[0].mipmaps[0]
+            if not first_mipmap.data or len(first_mipmap.data) == 0:
+                raise ValueError("Conversion resulted in empty mipmap data")
+            
+            # Update all displays and controls
+            self._current_mipmap = 0  # Reset to first mipmap after conversion
             self._update_texture_display()
+            self._update_frame_controls()
+            self._update_mipmap_controls()
             self._update_status_bar()
             self._update_properties_panel()
-            QMessageBox.information(
-                self,
-                "Format Converted",
-                f"Texture format converted to {target_format.name}.",
-            )
+            
+            from toolset.gui.common.localization import translate as tr, trf
+            self.ui.statusbar.showMessage(trf("Texture format converted to {format}", format=target_format.name), 3000)
         except Exception as e:  # noqa: BLE001
+            # Attempt to restore original format if conversion failed
+            try:
+                if original_format != self._tpc.format():
+                    self._tpc.convert(original_format)
+                    self._update_texture_display()
+                    self._update_status_bar()
+                    self._update_properties_panel()
+            except Exception:  # noqa: BLE001
+                pass  # If restore fails, at least show the error
+            
+            from toolset.gui.common.localization import translate as tr, trf
             QMessageBox.critical(
                 self,
-                "Conversion Failed",
-                f"Failed to convert texture format:\n{str(e)}",
+                tr("Conversion Failed"),
+                trf("Failed to convert texture format:\n{error}", error=str(e)),
             )
 
     def _update_status_bar(self) -> None:
@@ -706,10 +761,12 @@ class TPCEditor(Editor):
         mipmap: TPCMipmap = self._tpc.layers[layer_index].mipmaps[mipmap_index].copy()
         display_format = mipmap.tpc_format
 
-        # Convert to displayable format
+        # Convert to displayable format (decompress DXT formats for display)
         if display_format == TPCTextureFormat.DXT1:
             mipmap.convert(TPCTextureFormat.RGB)
-        elif display_format in (TPCTextureFormat.DXT3, TPCTextureFormat.DXT5, TPCTextureFormat.BGRA):
+        elif display_format in (TPCTextureFormat.DXT3, TPCTextureFormat.DXT5):
+            mipmap.convert(TPCTextureFormat.RGBA)
+        elif display_format == TPCTextureFormat.BGRA:
             mipmap.convert(TPCTextureFormat.RGBA)
         elif display_format == TPCTextureFormat.BGR:
             mipmap.convert(TPCTextureFormat.RGB)
@@ -718,53 +775,70 @@ class TPCEditor(Editor):
 
         target_format = mipmap.tpc_format
 
+        # Validate data before creating QImage
+        expected_size = mipmap.width * mipmap.height * target_format.bytes_per_pixel()
+        if len(mipmap.data) < expected_size:
+            # Data is corrupted or incomplete, clear display
+            self.ui.textureLabel.clear()
+            return
+
         # Create QImage from mipmap data
-        image = QImage(
-            bytes(mipmap.data),
-            mipmap.width,
-            mipmap.height,
-            target_format.to_qimage_format(),
-        )
-        image = image.mirrored(False, True)  # Flip vertically for correct display
-
-        # Calculate display size
-        if self._fit_to_window:
-            viewport = self.ui.textureScrollArea.viewport()
-            if viewport is None:
+        try:
+            image = QImage(
+                bytes(mipmap.data),
+                mipmap.width,
+                mipmap.height,
+                target_format.to_qimage_format(),
+            )
+            if image.isNull():
+                self.ui.textureLabel.clear()
                 return
-            scroll_area_size = viewport.size()
-            available_width = scroll_area_size.width() - 20
-            available_height = scroll_area_size.height() - 20
+            image = image.mirrored(False, True)  # Flip vertically for correct display
 
-            aspect_ratio = mipmap.width / mipmap.height if mipmap.height else 1.0
-            if available_width / available_height > aspect_ratio:
-                display_height = available_height
-                display_width = int(display_height * aspect_ratio)
+            # Calculate display size
+            if self._fit_to_window:
+                viewport = self.ui.textureScrollArea.viewport()
+                if viewport is None:
+                    return
+                scroll_area_size = viewport.size()
+                available_width = scroll_area_size.width() - 20
+                available_height = scroll_area_size.height() - 20
+
+                aspect_ratio = mipmap.width / mipmap.height if mipmap.height else 1.0
+                if available_width / available_height > aspect_ratio:
+                    display_height = available_height
+                    display_width = int(display_height * aspect_ratio)
+                else:
+                    display_width = available_width
+                    display_height = int(display_width / aspect_ratio)
+
+                image = image.scaled(
+                    display_width,
+                    display_height,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
             else:
-                display_width = available_width
-                display_height = int(display_width / aspect_ratio)
+                # Apply zoom factor
+                display_width = int(mipmap.width * self._zoom_factor)
+                display_height = int(mipmap.height * self._zoom_factor)
 
-            image = image.scaled(
-                display_width,
-                display_height,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-        else:
-            # Apply zoom factor
-            display_width = int(mipmap.width * self._zoom_factor)
-            display_height = int(mipmap.height * self._zoom_factor)
+                image = image.scaled(
+                    display_width,
+                    display_height,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation,
+                )
 
-            image = image.scaled(
-                display_width,
-                display_height,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-
-        pixmap = QPixmap.fromImage(image)
-        self.ui.textureLabel.setPixmap(pixmap)
-        self.ui.textureLabel.setMinimumSize(1, 1)
+            pixmap = QPixmap.fromImage(image)
+            if pixmap.isNull():
+                self.ui.textureLabel.clear()
+                return
+            self.ui.textureLabel.setPixmap(pixmap)
+            self.ui.textureLabel.setMinimumSize(1, 1)
+        except Exception:  # noqa: BLE001
+            self.ui.textureLabel.clear()
+            return
 
         # Update TXI editor
         self.ui.txiEdit.setPlainText(self._tpc.txi)
