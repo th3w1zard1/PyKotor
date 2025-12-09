@@ -610,13 +610,13 @@ class SceneBase:
         lightmap: bool = False,
     ) -> Texture:
         type_name: Literal["lightmap", "texture"] = "lightmap" if lightmap else "texture"
-        RobustLogger().debug(f"scene.texture() called for {type_name} '{name}' - this is where texture is requested for rendering")
+        # Debug logging removed - too verbose during rendering
         
         # Track this texture name as requested (happens during rendering, no additional traversal)
         # Track BOTH regular textures and lightmaps (but not NULL)
         if name and name != "NULL":
             self.requested_texture_names.add(name)
-            RobustLogger().debug(f"Tracked texture name '{name}' as requested for rendering (requested_texture_names now has {len(self.requested_texture_names)} textures)")
+            # Debug logging removed - too verbose during rendering
         
         # Already cached?
         if name in self.textures:
@@ -631,13 +631,7 @@ class SceneBase:
                 f"Available lookup keys: {list(self.texture_lookup_info.keys())[:10]}"
             )
             lookup_info = self.texture_lookup_info[name]
-            if lookup_info.get("is_sentinel"):
-                RobustLogger().debug("Texture 'NULL' returned from cache (sentinel value, not a real texture file)")
-            else:
-                RobustLogger().debug(
-                    f"Texture '{name}' returned from cache (already loaded), "
-                    f"lookup_info: found={lookup_info.get('found')}, filepath={lookup_info.get('filepath')}"
-                )
+            # Debug logging removed - too verbose during rendering
             return tex
         
         # Already loading?

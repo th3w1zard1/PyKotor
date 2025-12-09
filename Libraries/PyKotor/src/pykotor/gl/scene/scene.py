@@ -6,6 +6,7 @@ import glm
 
 from pykotor.gl.compat import (
     MissingPyOpenGLError,
+    has_moderngl,
     has_pyopengl,
     missing_constant,
     missing_gl_func,
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
     from pykotor.gl.scene import RenderObject
 
 HAS_PYOPENGL = has_pyopengl()
+HAS_MODERNGL = has_moderngl()
 
 if HAS_PYOPENGL:
     from OpenGL.GL import glReadPixels
@@ -79,10 +81,31 @@ class Scene(SceneBase):
     - kotor.js: src/engine/renderer.ts
     """
     
-    def __init__(self, **kwargs):
+    def __init__(self, *, moderngl_context=None, use_legacy_gl: bool = False, **kwargs):
         super().__init__(**kwargs)
-        self._legacy_gl_enabled: bool = HAS_PYOPENGL
-        if HAS_PYOPENGL:
+        
+        # ModernGL is the default; PyOpenGL is legacy fallback
+        self._modern_context = moderngl_context
+        self._modern_renderer = None
+        self._legacy_gl_enabled: bool = use_legacy_gl and HAS_PYOPENGL
+        
+        # Initialize ModernGL renderer if available (default)
+        if HAS_MODERNGL and not use_legacy_gl:
+            if self._modern_context is None:
+                # Try to create context from current OpenGL context
+                try:
+                    import moderngl  # type: ignore[import]
+                    self._modern_context = moderngl.create_context()
+                except Exception:  # noqa: BLE001
+                    # Context creation failed, will try legacy or raise later
+                    self._modern_context = None
+            
+            if self._modern_context is not None:
+                from pykotor.gl.modern_renderer import ModernGLRenderer
+                self._modern_renderer = ModernGLRenderer(self._modern_context)
+        
+        # Initialize legacy PyOpenGL shaders only if explicitly requested
+        if self._legacy_gl_enabled:
             self.picker_shader: Shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
             self.plain_shader: Shader = Shader(PLAIN_VSHADER, PLAIN_FSHADER)
             self.shader: Shader = Shader(KOTOR_VSHADER, KOTOR_FSHADER)
@@ -166,9 +189,28 @@ class Scene(SceneBase):
         self._cached_projection = self.camera.projection()
 
     def render(self):
+        # Use ModernGL by default if available
+        if self._modern_renderer is not None:
+            self._modern_renderer.render(self)
+            return
+        
+        # Fall back to legacy PyOpenGL if explicitly enabled
         if not self._legacy_gl_enabled:
+            # Try to auto-create ModernGL context if we have an active OpenGL context
+            if HAS_MODERNGL:
+                try:
+                    import moderngl  # type: ignore[import]
+                    ctx = moderngl.create_context()
+                    from pykotor.gl.modern_renderer import ModernGLRenderer
+                    self._modern_renderer = ModernGLRenderer(ctx)
+                    self._modern_context = ctx
+                    self._modern_renderer.render(self)
+                    return
+                except Exception:  # noqa: BLE001
+                    pass
+            
             raise MissingPyOpenGLError(
-                "PyOpenGL is unavailable; use ModernGLRenderer.render(scene) with a moderngl.Context instead."
+                "No rendering backend available. Install moderngl or PyOpenGL."
             )
         RobustLogger().debug(
             f"Scene.render(start): objects={len(self.objects)}, pending_textures={len(getattr(self, '_pending_texture_futures', {}))}, "

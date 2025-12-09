@@ -199,13 +199,23 @@ class ModernGLRenderer:
         SceneCache.build_cache(scene)
         if scene._objects_dirty or scene._cached_regular_objects is None:
             scene._rebuild_object_caches()
+        
+        # Update camera matrices and frustum for culling
+        scene._update_camera_matrices()
+        if scene.enable_frustum_culling:
+            scene.frustum.update_from_camera(scene.camera)
+            scene.culling_stats.reset()
 
         self.ctx.clear(0.5, 0.5, 1.0, 1.0)
         self.ctx.enable(moderngl.DEPTH_TEST | moderngl.CULL_FACE)
 
-        view = scene.camera.view()
-        projection = scene.camera.projection()
+        view = scene._cached_view if scene._cached_view is not None else scene.camera.view()
+        projection = scene._cached_projection if scene._cached_projection is not None else scene.camera.projection()
         texture_cache = self._textures(scene)
+        
+        # End frame statistics
+        if scene.enable_frustum_culling:
+            scene.culling_stats.end_frame()
 
         # Render regular objects (models)
         self.program["enableLightmap"].value = 1 if scene.use_lightmap else 0
@@ -338,8 +348,25 @@ class ModernGLRenderer:
         transform: mat4,
     ) -> None:
         """Draw a cube using the plain shader."""
-        mesh = self._mesh(cube)
-        vao = mesh.vao(self.plain_program)
+        # Create ModernGLMesh from cube (cube has vertex_blob() and index_data like Mesh)
+        vertex_blob = cube.vertex_blob()
+        if not vertex_blob:
+            return
+        vbo = self.ctx.buffer(vertex_blob)
+        ibo = self.ctx.buffer(cube.index_data)
+        
+        # Extract position-only data for plain shader
+        vertex_array = np.frombuffer(vertex_blob, dtype=np.float32).reshape(-1, 7)
+        position_data = vertex_array[:, :3].astype(np.float32).tobytes()
+        position_vbo = self.ctx.buffer(position_data)
+        
+        # Create VAO for plain shader (position only)
+        vao = self.ctx.vertex_array(
+            self.plain_program,
+            [(position_vbo, "3f", "in_position")],
+            index_buffer=ibo,
+            index_element_size=2,
+        )
         self.plain_program["model"].write(_mat4_bytes(transform))
         vao.render()
 
@@ -349,8 +376,25 @@ class ModernGLRenderer:
         transform: mat4,
     ) -> None:
         """Draw a boundary using the plain shader."""
-        mesh = self._mesh(boundary)
-        vao = mesh.vao(self.plain_program)
+        # Create ModernGLMesh from boundary (boundary has vertex_blob() and index_data like Mesh)
+        vertex_blob = boundary.vertex_blob()
+        if not vertex_blob:
+            return
+        vbo = self.ctx.buffer(vertex_blob)
+        ibo = self.ctx.buffer(boundary.index_data)
+        
+        # Extract position-only data for plain shader
+        vertex_array = np.frombuffer(vertex_blob, dtype=np.float32).reshape(-1, 7)
+        position_data = vertex_array[:, :3].astype(np.float32).tobytes()
+        position_vbo = self.ctx.buffer(position_data)
+        
+        # Create VAO for plain shader (position only)
+        vao = self.ctx.vertex_array(
+            self.plain_program,
+            [(position_vbo, "3f", "in_position")],
+            index_buffer=ibo,
+            index_element_size=2,
+        )
         self.plain_program["model"].write(_mat4_bytes(transform))
         vao.render()
 
