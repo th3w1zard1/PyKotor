@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Sequence
+from typing import Sequence
 
 try:
     import cffi
@@ -119,4 +119,3 @@ def transform_bounds(
         (out_min[0], out_min[1], out_min[2]),
         (out_max[0], out_max[1], out_max[2]),
     )
-

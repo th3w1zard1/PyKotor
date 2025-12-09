@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 from pykotor.common.stream import BinaryReader
 from pykotor.gl import glm, mat4, vec3, vec4
 from pykotor.gl.models.mdl import Mesh, Model, Node
-from loggerplus import RobustLogger
 
 if TYPE_CHECKING:
     from glm import mat4x4
@@ -209,7 +208,7 @@ def gl_load_stitched_model(
         if names[name_list_index].lower() in {"headhook", "rhand", "lhand", "gogglehook", "maskhook"}:
             node = Node(scene, root, names[name_list_index])
             root.children.append(node)
-            glm.decompose(transform, vec3(), node._rotation, node._position, vec3(), vec4())
+            glm.decompose(glm.mat3x3(transform), vec3(), node._rotation, node._position, vec3(), vec4())
             node._recalc_transform()  # noqa: SLF001
 
     merged: dict[str, list[tuple[int, mat4x4]]] = {}

@@ -217,9 +217,10 @@ class Camera:
         if not self._projection_dirty and self._cached_projection is not None:
             return self._cached_projection
         
+        aspect_ratio = self.width / self.height if self.height != 0 else 1.0
         self._cached_projection = glm.perspective(
             self.fov,
-            self.width / self.height,
+            aspect_ratio,
             0.1,
             5000,
         )
