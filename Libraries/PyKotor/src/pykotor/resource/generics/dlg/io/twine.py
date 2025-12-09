@@ -405,17 +405,26 @@ def _dlg_to_story(
 ) -> TwineStory:
     # Create metadata
     meta: dict[str, Any] = metadata or {}
+    raw_zoom = meta.get("zoom", 1.0)
+    try:
+        zoom_val = float(raw_zoom)
+    except (TypeError, ValueError):
+        zoom_val = 1.0
+
+    tag_colors_raw = meta.get("tag-colors", {})
+    tag_colors_val = tag_colors_raw if isinstance(tag_colors_raw, dict) else {}
+
     story_meta: TwineMetadata = TwineMetadata(
         name=meta.get("name", "Converted Dialog"),
         ifid=meta.get("ifid", str(uuid.uuid4())),
         format=meta.get("format", "Harlowe"),
         format_version=meta.get("format-version", "3.3.7"),
-        zoom=float(meta.get("zoom", 1.0)),
+        zoom=zoom_val,
         creator=meta.get("creator", "PyKotor"),
         creator_version=meta.get("creator-version", "1.0.0"),
         style=meta.get("style", ""),
         script=meta.get("script", ""),
-        tag_colors=meta.get("tag-colors", {}),
+        tag_colors=tag_colors_val,
     )
 
     story: TwineStory = TwineStory(metadata=story_meta, passages=[])

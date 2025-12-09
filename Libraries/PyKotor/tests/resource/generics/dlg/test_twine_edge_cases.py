@@ -4,18 +4,18 @@ from __future__ import annotations
 
 import json
 import tempfile
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
-from utility.common.geometry import Vector2
-from pykotor.common.language import Gender, Language, LocalizedString
+from pykotor.common.language import Gender, Language
+from pykotor.common.misc import ResRef
 from pykotor.resource.generics.dlg.base import DLG
+from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 from pykotor.resource.generics.dlg.links import DLGLink
 from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
-from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
-from pykotor.resource.generics.dlg.io.twine_data import FormatConverter, PassageMetadata, PassageType, TwineLink, TwineMetadata, TwinePassage, TwineStory
 
 if TYPE_CHECKING:
     from typing import Any
@@ -25,14 +25,14 @@ def test_empty_dialog():
     """Test handling of empty dialog."""
     dlg = DLG()
 
-    # Convert to Twine and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "empty.json"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
 
-        assert len(new_dlg.starters) == 0
-        assert len(new_dlg.all_entries()) == 0
-        assert len(new_dlg.all_replies()) == 0
+    assert len(new_dlg.starters) == 0
+    assert len(new_dlg.all_entries()) == 0
+    assert len(new_dlg.all_replies()) == 0
 
 
 def test_unicode_characters():
@@ -44,16 +44,16 @@ def test_unicode_characters():
     entry.text.set_data(Language.FRENCH, Gender.MALE, "Bonjour 🌍")  # French with emoji
     dlg.starters.append(DLGLink(entry))
 
-    # Convert to Twine and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "unicode.json"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
 
-        new_entry = new_dlg.starters[0].node
-        assert isinstance(new_entry, DLGEntry)
-        assert new_entry.speaker == "NPC 🚀"
-        assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello 世界"
-        assert new_entry.text.get(Language.FRENCH, Gender.MALE) == "Bonjour 🌍"
+    new_entry = new_dlg.starters[0].node
+    assert isinstance(new_entry, DLGEntry)
+    assert new_entry.speaker == "NPC 🚀"
+    assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello 世界"
+    assert new_entry.text.get(Language.FRENCH, Gender.MALE) == "Bonjour 🌍"
 
 
 def test_special_characters():
@@ -64,15 +64,15 @@ def test_special_characters():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Text with <tags> & special chars")
     dlg.starters.append(DLGLink(entry))
 
-    # Convert to Twine and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "special.json"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
 
-        new_entry = new_dlg.starters[0].node
-        assert isinstance(new_entry, DLGEntry)
-        assert new_entry.speaker == "NPC <with> special & chars"
-        assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "Text with <tags> & special chars"
+    new_entry = new_dlg.starters[0].node
+    assert isinstance(new_entry, DLGEntry)
+    assert new_entry.speaker == "NPC <with> special & chars"
+    assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "Text with <tags> & special chars"
 
 
 def test_multiple_languages():
@@ -85,16 +85,16 @@ def test_multiple_languages():
     entry.text.set_data(Language.GERMAN, Gender.MALE, "German text")
     dlg.starters.append(DLGLink(entry))
 
-    # Convert to Twine and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "multilang.json"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
 
-        new_entry = new_dlg.starters[0].node
-        assert isinstance(new_entry, DLGEntry)
-        assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "English text"
-        assert new_entry.text.get(Language.FRENCH, Gender.MALE) == "French text"
-        assert new_entry.text.get(Language.GERMAN, Gender.MALE) == "German text"
+    new_entry = new_dlg.starters[0].node
+    assert isinstance(new_entry, DLGEntry)
+    assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == "English text"
+    assert new_entry.text.get(Language.FRENCH, Gender.MALE) == "French text"
+    assert new_entry.text.get(Language.GERMAN, Gender.MALE) == "German text"
 
 
 def test_kotor_specific_features():
@@ -103,29 +103,29 @@ def test_kotor_specific_features():
     entry = DLGEntry()
     entry.speaker = "NPC"
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Test")
-    entry.animation_id = 123
+    setattr(entry, "animation_id", 123)
     entry.camera_angle = 45
     entry.camera_id = 1
     entry.fade_type = 2
     entry.quest = "MainQuest"
-    entry.sound = "voice.wav"
-    entry.vo_resref = "npc_line"
+    entry.sound = ResRef("voice.wav")
+    entry.vo_resref = ResRef("npc_line")
     dlg.starters.append(DLGLink(entry))
 
-    # Convert to Twine and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "kotor.json"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
 
-        new_entry = new_dlg.starters[0].node
-        assert isinstance(new_entry, DLGEntry)
-        assert new_entry.animation_id == 123
-        assert new_entry.camera_angle == 45
-        assert new_entry.camera_id == 1
-        assert new_entry.fade_type == 2
-        assert new_entry.quest == "MainQuest"
-        assert new_entry.sound == "voice.wav"
-        assert new_entry.vo_resref == "npc_line"
+    new_entry = new_dlg.starters[0].node
+    assert isinstance(new_entry, DLGEntry)
+    assert getattr(new_entry, "animation_id", 0) == 123
+    assert new_entry.camera_angle == 45
+    assert new_entry.camera_id == 1
+    assert new_entry.fade_type == 2
+    assert new_entry.quest == "MainQuest"
+    assert str(new_entry.sound) == "voice.wav"
+    assert str(new_entry.vo_resref) == "npc_line"
 
 
 def test_twine_specific_features():
@@ -146,20 +146,19 @@ def test_twine_specific_features():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Test")
     dlg.starters.append(DLGLink(entry))
 
-    # Convert to Twine and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json", metadata=metadata)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "twine_meta.json"
+    write_twine(dlg, json_path, format="json", metadata=metadata)
 
-        # Verify JSON structure
-        with open(f.name, encoding="utf-8") as f2:
-            data: dict[str, Any] = json.load(f2)
-            assert data["name"] == metadata["name"]
-            assert data["format"] == metadata["format"]
-            assert data["format-version"] == metadata["format-version"]
-            assert data["tag-colors"] == metadata["tag-colors"]
-            assert data["style"] == metadata["style"]
-            assert data["script"] == metadata["script"]
-            assert data["zoom"] == metadata["zoom"]
+    with open(json_path, encoding="utf-8") as f2:
+        data: dict[str, Any] = json.load(f2)
+        assert data["name"] == metadata["name"]
+        assert data["format"] == metadata["format"]
+        assert data["format-version"] == metadata["format-version"]
+        assert data["tag-colors"] == metadata["tag-colors"]
+        assert data["style"] == metadata["style"]
+        assert data["script"] == metadata["script"]
+        assert data["zoom"] == metadata["zoom"]
 
 
 def test_large_dialog():
@@ -183,13 +182,13 @@ def test_large_dialog():
 
         prev_entry = entry
 
-    # Convert to Twine and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "large.json"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
 
-        assert len(new_dlg.all_entries()) == 1000
-        assert len(new_dlg.all_replies()) == 999
+    assert len(new_dlg.all_entries()) == 1000
+    assert len(new_dlg.all_replies()) == 999
 
 
 def test_missing_fields():
@@ -204,11 +203,11 @@ def test_missing_fields():
         ]
     }
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        json.dump(minimal_json, f)
-        f.flush()
-        dlg = read_twine(f.name)
-        assert len(dlg.all_entries()) + len(dlg.all_replies()) > 0
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "missing.json"
+    json_path.write_text(json.dumps(minimal_json), encoding="utf-8")
+    dlg = read_twine(json_path)
+    assert len(dlg.all_entries()) + len(dlg.all_replies()) > 0
 
 
 def test_duplicate_passage_names():
@@ -232,13 +231,13 @@ def test_duplicate_passage_names():
     reply.links.append(DLGLink(entry2))
     dlg.starters.append(DLGLink(entry1))
 
-    # Convert to Twine and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "dup.json"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
 
-        assert len(new_dlg.all_entries()) == 2
-        assert len(new_dlg.all_replies()) == 1
+    assert len(new_dlg.all_entries()) == 2
+    assert len(new_dlg.all_replies()) == 1
 
 
 def test_empty_text():
@@ -249,14 +248,14 @@ def test_empty_text():
     # Don't set any text
     dlg.starters.append(DLGLink(entry))
 
-    # Convert to Twine and back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "empty_text.json"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
 
-        new_entry = new_dlg.starters[0].node
-        assert isinstance(new_entry, DLGEntry)
-        assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == ""
+    new_entry = new_dlg.starters[0].node
+    assert isinstance(new_entry, DLGEntry)
+    assert new_entry.text.get(Language.ENGLISH, Gender.MALE) == ""
 
 
 def test_invalid_metadata():
@@ -273,11 +272,11 @@ def test_invalid_metadata():
         "tag-colors": "not a dict",  # Should be dict
     }
 
-    # Should not raise exception
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json", metadata=invalid_metadata)
-        new_dlg = read_twine(f.name)
-        assert len(new_dlg.starters) == 1
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "invalid_meta.json"
+    write_twine(dlg, json_path, format="json", metadata=invalid_metadata)
+    new_dlg = read_twine(json_path)
+    assert len(new_dlg.starters) == 1
 
 
 def test_file_not_found():
