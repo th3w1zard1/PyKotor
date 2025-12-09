@@ -42,7 +42,6 @@ else:
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from concurrent.futures import Future
     from multiprocessing import Queue
     from multiprocessing.managers import DictProxy, SyncManager, ValueProxy
 
@@ -111,7 +110,7 @@ class FileActionsExecutor(QObject):
         self.thread_pool: ThreadPoolExecutor = ThreadPoolExecutor(max_workers=worker_count)
         self.manager: SyncManager = Manager()
         self.tasks: DictProxy[str, Task] = self.manager.dict()
-        self.futures: dict[str, Future] = {}
+        self.futures: dict[str, _ConcurrentFuture] = {}
         RobustLogger().debug("FileActionsExecutor initialized")
 
     @property
@@ -148,7 +147,7 @@ class FileActionsExecutor(QObject):
         for runtime_key in CONTROL_KEYWORDS:
             base_kwargs.pop(runtime_key, None)
 
-        progress_queue: Queue[Any] = self.manager.Queue()
+        progress_queue = cast("Queue[Any]", self.manager.Queue())
         pause_flag: ValueProxy[bool] = self.manager.Value("b", False)  # noqa: FBT003
         cancel_flag: ValueProxy[bool] = self.manager.Value("b", False)  # noqa: FBT003
 
@@ -178,7 +177,7 @@ class FileActionsExecutor(QObject):
             )
             submitter = self.thread_pool.submit
 
-        future: Future[Any] = submitter(
+        future: _ConcurrentFuture[Any] = submitter(
             self._execute_task,
             operation,
             custom_function,
@@ -206,8 +205,8 @@ class FileActionsExecutor(QObject):
         if custom_function:
             filtered_kwargs = FileActionsExecutor._filter_control_kwargs(custom_function, kwargs)
             return custom_function(*args, **filtered_kwargs)
-        func: FileOperations | None = getattr(FileOperations, operation, None)
-        if not func:
+        func_obj: object | None = getattr(FileOperations, operation, None)
+        if func_obj is None:
             RobustLogger().debug(f"No FileOperations handler found for '{operation}', completing without action")
             progress_queue = kwargs.get("progress_queue")
             if progress_queue:
@@ -216,12 +215,23 @@ class FileActionsExecutor(QObject):
                 except Exception:  # noqa: BLE001
                     pass
             return None
-        if hasattr(func, "handle_operation"):
-            return func(*args, **kwargs)
-        if hasattr(func, "handle_multiple"):
+
+        if callable(func_obj):
+            return func_obj(*args, **kwargs)
+
+        handle_op = getattr(func_obj, "handle_operation", None)
+        if callable(handle_op):
+            handle_callable = cast(Callable[..., Any], handle_op)
+            return handle_callable(*args, **kwargs)
+
+        handle_multi = getattr(func_obj, "handle_multiple", None)
+        if callable(handle_multi):
             paths: list[str] = args[0] if args else kwargs.get("paths", [])
-            return func(paths, **kwargs)
-        return func(*args, **kwargs)
+            handle_multi_callable = cast(Callable[..., Any], handle_multi)
+            return handle_multi_callable(paths, **kwargs)
+
+        RobustLogger().debug(f"FileOperations.{operation} is not callable and has no handler methods")
+        return None
 
     @staticmethod
     def _is_picklable(obj: Any) -> bool:
@@ -416,7 +426,7 @@ class FileActionsExecutor(QObject):
     def _task_completed(
         self,
         task_id: str,
-        future: Future,
+        future: _ConcurrentFuture,
     ) -> None:
         RobustLogger().debug(f"Task completed callback for: {task_id}")
         task: Task | None = self.get_task(task_id)
