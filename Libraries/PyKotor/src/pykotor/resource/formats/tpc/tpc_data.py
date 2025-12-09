@@ -70,16 +70,16 @@ class TPCTextureFormat(IntEnum):
 
     def bytes_per_pixel(self) -> Literal[1, 3, 4]:
         """Get the number of bytes per pixel for this format."""
-        bytes_per_pixel = 0
         if self is self.Greyscale:
-            bytes_per_pixel = 1
+            return 1
         elif self.is_dxt():
-            bytes_per_pixel = 1  # technically incorrect.
+            return 1  # technically incorrect, but used for size calculations
         elif self in (self.RGB, self.BGR):
-            bytes_per_pixel = 3
+            return 3
         elif self in (self.RGBA, self.BGRA):
-            bytes_per_pixel = 4
-        return bytes_per_pixel
+            return 4
+        else:
+            return 1  # Default fallback for Invalid or unknown formats
 
     def is_dxt(self) -> bool:
         """Check if this format is a DXT compression format."""
@@ -119,10 +119,18 @@ class TPCTextureFormat(IntEnum):
         return max(self.min_size(), size)
 
     def to_qimage_format(self) -> QImage.Format:
-        """Convert to Qt image format."""
+        """Convert to Qt image format.
+        
+        Note: BGRA format should be converted to RGBA before calling this method,
+        as Qt does not have a native BGRA format. Format_ARGB32 expects ARGB byte order
+        (A, R, G, B), which does not match BGRA byte order (B, G, R, A).
+        
+        Raises:
+            ValueError: If format is BGRA (must be converted to RGBA first) or Invalid/unsupported.
+        """
         from qtpy.QtGui import QImage
 
-        q_format = QImage.Format.Format_Invalid
+        q_format: QImage.Format = QImage.Format.Format_Invalid
         if self is self.Greyscale:
             q_format = QImage.Format.Format_Grayscale8
         elif self is self.RGB:
@@ -132,7 +140,16 @@ class TPCTextureFormat(IntEnum):
         elif self is self.RGBA:
             q_format = QImage.Format.Format_RGBA8888
         elif self is self.BGRA:
-            q_format = QImage.Format.Format_ARGB32
+            # BGRA cannot be directly mapped to a Qt format
+            # Format_ARGB32 expects ARGB byte order (A, R, G, B)
+            # but BGRA is (B, G, R, A) - completely different byte order
+            # Callers must convert BGRA to RGBA first using bgra_to_rgba()
+            raise ValueError(
+                "BGRA format cannot be directly converted to QImage format. "
+                "Convert to RGBA first using bgra_to_rgba() or mipmap.convert(TPCTextureFormat.RGBA)."
+            )
+        elif self is self.Invalid:
+            q_format = QImage.Format.Format_Invalid
         else:
             raise ValueError(f"Unsupported format: {self!r}")
         return q_format
@@ -201,9 +218,20 @@ class TPCMipmap:
         return QIcon(pixmap)
 
     def to_qimage(self) -> QImage:
-        """Convert to Qt image."""
+        """Convert to Qt image.
+        
+        Note: BGRA format is automatically converted to RGBA before creating QImage,
+        as Qt does not have a native BGRA format.
+        """
         from qtpy.QtGui import QImage
 
+        # BGRA must be converted to RGBA for Qt compatibility
+        if self.tpc_format == TPCTextureFormat.BGRA:
+            # Create a copy and convert to RGBA
+            mipmap_copy = self.copy()
+            mipmap_copy.convert(TPCTextureFormat.RGBA)
+            return QImage(bytes(mipmap_copy.data), mipmap_copy.width, mipmap_copy.height, mipmap_copy.tpc_format.to_qimage_format())
+        
         return QImage(bytes(self.data), self.width, self.height, self.tpc_format.to_qimage_format())
 
     def to_pil_image(self) -> Image.Image:
