@@ -516,7 +516,7 @@ def striprtf(text: str) -> str:  # noqa: C901, PLR0915, PLR0912
                 if c < 0:
                     c += 0x10000
                 out.append(chr(c))
-                curskip: int = ucskip
+                curskip = ucskip
         elif hexcode:  # \'xx
             if curskip > 0:
                 curskip -= 1
@@ -564,7 +564,7 @@ class WrappedStr(str):  # (metaclass=StrType):  # noqa: PLR0904
     @classmethod
     def _assert_str_type(
         cls: type[Self],
-        var: str,
+        var: object,
     ) -> str:  # sourcery skip: remove-unnecessary-cast
         if var is None:
             return None  # type: ignore[return-value]
@@ -592,7 +592,7 @@ class WrappedStr(str):  # (metaclass=StrType):  # noqa: PLR0904
         self._content: str = content
 
     @classmethod
-    def maketrans(
+    def maketrans(  # type: ignore[override]
         cls,
         __x: Self | str,
         __y: Self | str,
@@ -799,7 +799,7 @@ class WrappedStr(str):  # (metaclass=StrType):  # noqa: PLR0904
         parsed_suffix: tuple[str, ...] | str = tuple(self._assert_str_type(s) for s in __suffix) if isinstance(__suffix, tuple) else self._assert_str_type(__suffix)
         return self._content.endswith(parsed_suffix, __start, __end)
 
-    def expandtabs(
+    def expandtabs(  # type: ignore[override]
         self,
         tabsize: int = 8,
         /,
@@ -1243,7 +1243,7 @@ class CaseInsensitiveWrappedStr(WrappedStr):
             return str(item._content).casefold()  # noqa: SLF001
         if isinstance(item, str):
             return str(item).casefold()
-        return item
+        return str(item)
 
     def __init__(
         self,
