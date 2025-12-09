@@ -28,25 +28,21 @@ def test_html_structure():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hello!")
     dlg.starters.append(DLGLink(entry))
 
-    # Write to HTML
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as f:
-        write_twine(dlg, f.name, format="html")
+    tmpdir = Path(tempfile.mkdtemp())
+    html_path = tmpdir / "test.html"
+    write_twine(dlg, html_path, format="html")
 
-        # Parse HTML and verify structure
-        with open(f.name, encoding="utf-8") as f2:
-            content = f2.read()
-            root = ElementTree.fromstring(content)
+    content = html_path.read_text(encoding="utf-8")
+    root = ElementTree.fromstring(content)
 
-            # Check basic structure
-            assert root.tag == "html"
-            story_data = root.find(".//tw-storydata")
-            assert story_data is not None
+    assert root.tag == "html"
+    story_data = root.find(".//tw-storydata")
+    assert story_data is not None
 
-            # Check passage
-            passage = story_data.find(".//tw-passagedata")
-            assert passage is not None
-            assert passage.get("name") == "NPC"
-            assert passage.text == "Hello!"
+    passage = story_data.find(".//tw-passagedata")
+    assert passage is not None
+    assert passage.get("name") == "NPC"
+    assert passage.text == "Hello!"
 
 
 def test_html_style_script():
@@ -62,24 +58,20 @@ def test_html_style_script():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Test")
     dlg.starters.append(DLGLink(entry))
 
-    # Write to HTML
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as f:
-        write_twine(dlg, f.name, format="html", metadata=metadata)
+    tmpdir = Path(tempfile.mkdtemp())
+    html_path = tmpdir / "style.html"
+    write_twine(dlg, html_path, format="html", metadata=metadata)
 
-        # Parse HTML and verify style/script
-        with open(f.name, encoding="utf-8") as f2:
-            content = f2.read()
-            root = ElementTree.fromstring(content)
+    content = html_path.read_text(encoding="utf-8")
+    root = ElementTree.fromstring(content)
 
-            # Check style
-            style = root.find(".//style[@type='text/twine-css']")
-            assert style is not None
-            assert style.text == metadata["style"]
+    style = root.find(".//style[@type='text/twine-css']")
+    assert style is not None
+    assert style.text == metadata["style"]
 
-            # Check script
-            script = root.find(".//script[@type='text/twine-javascript']")
-            assert script is not None
-            assert script.text == metadata["script"]
+    script = root.find(".//script[@type='text/twine-javascript']")
+    assert script is not None
+    assert script.text == metadata["script"]
 
 
 def test_html_tag_colors():
@@ -97,19 +89,16 @@ def test_html_tag_colors():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Test")
     dlg.starters.append(DLGLink(entry))
 
-    # Write to HTML
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as f:
-        write_twine(dlg, f.name, format="html", metadata=metadata)
+    tmpdir = Path(tempfile.mkdtemp())
+    html_path = tmpdir / "tags.html"
+    write_twine(dlg, html_path, format="html", metadata=metadata)
 
-        # Parse HTML and verify tag colors
-        with open(f.name, encoding="utf-8") as f2:
-            content = f2.read()
-            root = ElementTree.fromstring(content)
+    content = html_path.read_text(encoding="utf-8")
+    root = ElementTree.fromstring(content)
 
-            # Check tag colors
-            tags = root.findall(".//tw-tag")
-            tag_colors = {tag.get("name"): tag.get("color") for tag in tags}
-            assert tag_colors == metadata["tag-colors"]
+    tags = root.findall(".//tw-tag")
+    tag_colors = {tag.get("name"): tag.get("color") for tag in tags}
+    assert tag_colors == metadata["tag-colors"]
 
 
 def test_json_structure():
@@ -120,25 +109,20 @@ def test_json_structure():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hello!")
     dlg.starters.append(DLGLink(entry))
 
-    # Write to JSON
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json")
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "test.json"
+    write_twine(dlg, json_path, format="json")
 
-        # Parse JSON and verify structure
-        with open(f.name, encoding="utf-8") as f2:
-            data: dict[str, Any] = json.load(f2)
+    data: dict[str, Any] = json.loads(json_path.read_text(encoding="utf-8"))
+    assert "name" in data
+    assert "passages" in data
+    assert isinstance(data["passages"], list)
 
-            # Check required fields
-            assert "name" in data
-            assert "passages" in data
-            assert isinstance(data["passages"], list)
-
-            # Check passage
-            passage = data["passages"][0]
-            assert passage["name"] == "NPC"
-            assert passage["text"] == "Hello!"
-            assert "tags" in passage
-            assert "metadata" in passage
+    passage = data["passages"][0]
+    assert passage["name"] == "NPC"
+    assert passage["text"] == "Hello!"
+    assert "tags" in passage
+    assert "metadata" in passage
 
 
 def test_json_metadata():
@@ -161,15 +145,13 @@ def test_json_metadata():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Test")
     dlg.starters.append(DLGLink(entry))
 
-    # Write to JSON
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name, format="json", metadata=metadata)
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "meta.json"
+    write_twine(dlg, json_path, format="json", metadata=metadata)
 
-        # Parse JSON and verify metadata
-        with open(f.name, encoding="utf-8") as f2:
-            data: dict[str, Any] = json.load(f2)
-            for key, value in metadata.items():
-                assert data[key.replace("_", "-")] == value
+    data: dict[str, Any] = json.loads(json_path.read_text(encoding="utf-8"))
+    for key, value in metadata.items():
+        assert data[key.replace("_", "-")] == value
 
 
 def test_format_detection():
@@ -180,51 +162,44 @@ def test_format_detection():
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Test")
     dlg.starters.append(DLGLink(entry))
 
-    # Test JSON detection
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt") as f:
-        write_twine(dlg, f.name, format="json")
-        new_dlg = read_twine(f.name)
-        assert len(new_dlg.starters) == 1
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "detect.txt"
+    write_twine(dlg, json_path, format="json")
+    new_dlg = read_twine(json_path)
+    assert len(new_dlg.starters) == 1
 
-    # Test HTML detection
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt") as f:
-        write_twine(dlg, f.name, format="html")
-        new_dlg = read_twine(f.name)
-        assert len(new_dlg.starters) == 1
+    html_path = tmpdir / "detect.html"
+    write_twine(dlg, html_path, format="html")
+    new_dlg = read_twine(html_path)
+    assert len(new_dlg.starters) == 1
 
 
 def test_invalid_html():
     """Test handling of invalid HTML."""
-    # Missing story data
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as f:
-        f.write("<html></html>")
-        f.flush()
-        with pytest.raises(ValueError, match="No story data found"):
-            read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    bad_html = tmpdir / "bad.html"
+    bad_html.write_text("<html></html>", encoding="utf-8")
+    with pytest.raises(ValueError, match="No story data found"):
+        read_twine(bad_html)
 
-    # Invalid XML
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as f:
-        f.write("<not valid xml>")
-        f.flush()
-        with pytest.raises(ValueError, match="Invalid HTML"):
-            read_twine(f.name)
+    bad_html2 = tmpdir / "bad2.html"
+    bad_html2.write_text("<not valid xml>", encoding="utf-8")
+    with pytest.raises(ValueError, match="Invalid HTML"):
+        read_twine(bad_html2)
 
 
 def test_invalid_json():
     """Test handling of invalid JSON."""
-    # Invalid JSON syntax
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        f.write("{not valid json")
-        f.flush()
-        with pytest.raises(ValueError, match="Invalid JSON"):
-            read_twine(f.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    bad_json = tmpdir / "bad.json"
+    bad_json.write_text("{not valid json", encoding="utf-8")
+    with pytest.raises(ValueError, match="Invalid JSON"):
+        read_twine(bad_json)
 
-    # Missing required fields
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        json.dump({}, f)  # Empty object
-        f.flush()
-        dlg = read_twine(f.name)  # Should not raise, but create empty dialog
-        assert len(dlg.starters) == 0
+    empty_json = tmpdir / "empty.json"
+    empty_json.write_text(json.dumps({}), encoding="utf-8")
+    dlg = read_twine(empty_json)
+    assert len(dlg.starters) == 0
 
 
 def test_format_conversion():
@@ -241,37 +216,34 @@ def test_format_conversion():
         "tag-colors": {"reply": "green"},
     }
 
-    # HTML -> JSON
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as html_file:
-        write_twine(dlg, html_file.name, format="html", metadata=metadata)
-        html_dlg = read_twine(html_file.name)
+    tmpdir = Path(tempfile.mkdtemp())
+    html_path = tmpdir / "format.html"
+    write_twine(dlg, html_path, format="html", metadata=metadata)
+    html_dlg = read_twine(html_path)
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as json_file:
-            write_twine(html_dlg, json_file.name, format="json")
-            json_dlg = read_twine(json_file.name)
+    json_path = tmpdir / "format.json"
+    write_twine(html_dlg, json_path, format="json")
+    json_dlg = read_twine(json_path)
 
-            # Verify structure preserved
-            assert len(json_dlg.starters) == 1
-            json_entry = json_dlg.starters[0].node
-            assert isinstance(json_entry, DLGEntry)
-            assert json_entry.speaker == "NPC"
-            assert json_entry.text.get(Language.ENGLISH, Gender.MALE) == "Test"
+    assert len(json_dlg.starters) == 1
+    json_entry = json_dlg.starters[0].node
+    assert isinstance(json_entry, DLGEntry)
+    assert json_entry.speaker == "NPC"
+    assert json_entry.text.get(Language.ENGLISH, Gender.MALE) == "Test"
 
-    # JSON -> HTML
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as json_file:
-        write_twine(dlg, json_file.name, format="json", metadata=metadata)
-        json_dlg = read_twine(json_file.name)
+    json_path2 = tmpdir / "format2.json"
+    write_twine(dlg, json_path2, format="json", metadata=metadata)
+    json_dlg2 = read_twine(json_path2)
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as html_file:
-            write_twine(json_dlg, html_file.name, format="html")
-            html_dlg = read_twine(html_file.name)
+    html_path2 = tmpdir / "format2.html"
+    write_twine(json_dlg2, html_path2, format="html")
+    html_dlg = read_twine(html_path2)
 
-            # Verify structure preserved
-            assert len(html_dlg.starters) == 1
-            html_entry = html_dlg.starters[0].node
-            assert isinstance(html_entry, DLGEntry)
-            assert html_entry.speaker == "NPC"
-            assert html_entry.text.get(Language.ENGLISH, Gender.MALE) == "Test"
+    assert len(html_dlg.starters) == 1
+    html_entry = html_dlg.starters[0].node
+    assert isinstance(html_entry, DLGEntry)
+    assert html_entry.speaker == "NPC"
+    assert html_entry.text.get(Language.ENGLISH, Gender.MALE) == "Test"
 
 
 def test_link_syntax():
@@ -295,22 +267,20 @@ def test_link_syntax():
     reply.links.append(DLGLink(entry2))
     dlg.starters.append(DLGLink(entry1))
 
-    # Write to both formats
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as json_file:
-        write_twine(dlg, json_file.name, format="json")
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "links.json"
+    write_twine(dlg, json_path, format="json")
 
-        # Verify JSON links
-        with open(json_file.name, encoding="utf-8") as f:
-            data: dict[str, Any] = json.load(f2)
-            passages = cast(list[dict[str, Any]], data["passages"])
-            
-            # Find entry1's passage
-            entry1_passage = next(p for p in passages if p["name"] == "NPC1")
-            assert "[[Continue->Reply_1]]" in entry1_passage["text"]
+    data: dict[str, Any] = json.loads(json_path.read_text(encoding="utf-8"))
+    passages = cast(list[dict[str, Any]], data["passages"])
 
-            # Find reply's passage
-            reply_passage = next(p for p in passages if p["name"] == "Reply_1")
-            assert "[[Continue->NPC2]]" in reply_passage["text"]
+    entry1_passage = next(p for p in passages if p["name"] == "NPC1")
+    entry1_text: str = str(entry1_passage.get("text") or "")
+    assert "[[Continue->Reply_1]]" in entry1_text
+
+    reply_passage = next(p for p in passages if p["name"] == "Reply_1")
+    reply_text: str = str(reply_passage.get("text") or "")
+    assert "[[Continue->NPC2]]" in reply_text
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as html_file:
         write_twine(dlg, html_file.name, format="html")
@@ -323,9 +293,9 @@ def test_link_syntax():
             # Find entry1's passage
             entry1_passage = root.find(".//tw-passagedata[@name='NPC1']")
             assert entry1_passage is not None
-            assert "[[Continue->Reply_1]]" in entry1_passage.text
+            assert "[[Continue->Reply_1]]" in str(entry1_passage.text or "")
 
             # Find reply's passage
             reply_passage = root.find(".//tw-passagedata[contains(@tags,'reply')]")
             assert reply_passage is not None
-            assert "[[Continue->NPC2]]" in reply_passage.text
+            assert "[[Continue->NPC2]]" in str(reply_passage.text or "")
