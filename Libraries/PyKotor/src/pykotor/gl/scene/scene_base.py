@@ -642,7 +642,7 @@ class SceneBase:
         
         # Start async loading if location resolver available
         if self.async_loader.texture_location_resolver is not None:
-            RobustLogger().debug(f"Starting async load for {type_name} '{name}'")
+            # Debug logging removed - too verbose during rendering
             future = self.async_loader.load_texture_async(name)
             self._pending_texture_futures[name] = future
             # Return gray placeholder immediately
