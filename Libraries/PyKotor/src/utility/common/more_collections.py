@@ -2,7 +2,19 @@ from __future__ import annotations
 
 import sys
 
-from typing import TYPE_CHECKING, Any, Callable, Generic, ItemsView, Iterable, Iterator, Mapping, MutableSet, SupportsIndex, TypeVar, overload  # noqa: E402
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    ItemsView,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableSet,
+    SupportsIndex,
+    TypeVar,
+    overload,  # noqa: E402
+)
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -10,7 +22,7 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 VT = TypeVar("VT")
 
-class OrderedSet(list, MutableSet[T]):
+class OrderedSet(MutableSet[T]):
     def __init__(
         self,
         iterable: Iterable[T] | None = None,
@@ -61,10 +73,16 @@ class OrderedSet(list, MutableSet[T]):
         self._set.remove(value)
         return value
 
-    def __getitem__(self, index: int) -> T:
+    @overload
+    def __getitem__(self, index: SupportsIndex) -> T: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> list[T]: ...
+
+    def __getitem__(self, index: SupportsIndex | slice) -> T | list[T]:
         return self._list[index]
 
-    def __setitem__(self, index: int, value: T) -> None:
+    def __setitem__(self, index: SupportsIndex, value: T) -> None:
         #if value in self._set:
         #    raise ValueError(f"Duplicate item found: {value}")
         old_value = self._list[index]
@@ -76,13 +94,26 @@ class OrderedSet(list, MutableSet[T]):
         self._list.clear()
         self._set.clear()
 
-    def copy(self) -> Self[T]:
+    def copy(self) -> Self:
         new_set = self.__class__()
         new_set._list = self._list.copy()  # noqa: SLF001
         new_set._set = self._set.copy()  # noqa: SLF001
         return new_set
 
-    def __delitem__(self, index: int) -> None:
+    @overload
+    def __delitem__(self, index: SupportsIndex) -> None: ...
+
+    @overload
+    def __delitem__(self, index: slice) -> None: ...
+
+    def __delitem__(self, index: SupportsIndex | slice) -> None:
+        if isinstance(index, slice):
+            removed_values = self._list[index]
+            for value in removed_values:
+                self._set.discard(value)
+            del self._list[index]
+            return
+
         try:
             value = self._list.pop(index)
             self._set.remove(value)
@@ -103,22 +134,22 @@ class OrderedSet(list, MutableSet[T]):
             return NotImplemented
         return self._list.__eq__(other) and self._set.__eq__(other)
 
-    def __lt__(self, other: list[T]) -> bool:
-        return self._list.__lt__(other)
+    def __lt__(self, other: Iterable[T]) -> bool:
+        return list(self).__lt__(list(other))
 
-    def __le__(self, other: list[T]) -> bool:
-        return self._list.__le__(other)
+    def __le__(self, other: Iterable[T]) -> bool:
+        return list(self).__le__(list(other))
 
-    def __gt__(self, other: list[T]) -> bool:
-        return self._list.__gt__(other)
+    def __gt__(self, other: Iterable[T]) -> bool:
+        return list(self).__gt__(list(other))
 
-    def __ge__(self, other: list[T]) -> bool:
-        return self._list.__ge__(other)
+    def __ge__(self, other: Iterable[T]) -> bool:
+        return list(self).__ge__(list(other))
 
     def sort(
         self,
         *,
-        key: Callable[[T], Any] | None = None,
+        key = None,
         reverse: bool = False,
     ) -> None:
         self._list.sort(key=key, reverse=reverse)
@@ -126,12 +157,14 @@ class OrderedSet(list, MutableSet[T]):
     def reverse(self) -> None:
         self._list.reverse()
 
-    def __add__(self, other: Iterable[T]) -> Self[T]:
-        return self._set + other
+    def __add__(self, other: Iterable[T]) -> OrderedSet[T]:
+        new_set = self.copy()
+        new_set.extend(other)
+        return new_set
 
-    def __iadd__(self, other: Iterable[T]) -> Self[T]:
-        self._set += other
-        self._list += other
+    def __iadd__(self, other: Iterable[T]) -> OrderedSet[T]:
+        self.extend(other)
+        return self
 
     def __reversed__(self) -> Iterator[T]:
         return reversed(self._list)
