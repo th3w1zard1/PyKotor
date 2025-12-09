@@ -421,6 +421,15 @@ class FileActionsExecutor(QObject):
         RobustLogger().debug(f"Task completed callback for: {task_id}")
         task: Task | None = self.get_task(task_id)
         if task:
+            # Drain any pending progress updates before finalizing status to avoid races
+            progress_queue_proxy = task.kwargs.get("progress_queue")
+            if progress_queue_proxy is not None:
+                try:
+                    while True:
+                        progress_value = progress_queue_proxy.get_nowait()
+                        self.update_task_progress(task_id, progress_value)
+                except queue.Empty:
+                    pass
             task.end_time = datetime.now().astimezone()
             if task.status == TaskStatus.CANCELLED:
                 if not future.cancelled():
