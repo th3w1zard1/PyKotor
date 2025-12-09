@@ -16,7 +16,7 @@ from qtpy.QtGui import QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QWidget
 
 from pykotor.common.misc import Game
-from pykotor.tools.path import find_kotor_paths_from_default
+from pykotor.tools.path import CaseAwarePath, find_kotor_paths_from_default
 from toolset.data.settings import Settings
 
 if TYPE_CHECKING:

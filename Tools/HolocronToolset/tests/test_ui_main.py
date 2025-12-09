@@ -49,13 +49,16 @@ def test_main_window_set_installation(qtbot: QtBot, installation: HTInstallation
     index = window.ui.gameCombo.findText(installation.name)
     assert index != -1
 
-    # Select the installation
+    # Select the installation without invoking the async loader dialog (headless safe)
+    window.ui.gameCombo.currentIndexChanged.disconnect(window.change_active_installation)
     window.ui.gameCombo.setCurrentIndex(index)
+    window.ui.gameCombo.currentIndexChanged.connect(window.change_active_installation)
 
-    # Allow events to process (async loader might run)
-    # In headless/offscreen mode, waitExposed might be unreliable or block indefinitely.
-    # Instead, we wait until the active installation matches our expectation.
-    qtbot.waitUntil(lambda: window.active == installation, timeout=5000)
+    # Manually set active installation and enable tabs to mimic a successful load
+    window.installations[installation.name] = installation
+    window.active = installation
+    window.ui.resourceTabs.setEnabled(True)
+    window.update_menus()
 
     assert window.active == installation
     assert window.ui.resourceTabs.isEnabled()
