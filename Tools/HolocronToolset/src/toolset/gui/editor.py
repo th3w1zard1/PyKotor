@@ -28,7 +28,6 @@ from qtpy.QtWidgets import (
     QShortcut,
     QSlider,
     QStyle,
-    QVBoxLayout,
     QWidget,
 )
 
@@ -334,9 +333,11 @@ class Editor(QMainWindow):
         self._is_save_game_resource: bool = False  # Flag to track if resource is from a save game
         self._global_settings: GlobalSettings = GlobalSettings()
 
+        # Create media player as a child widget (not added to any layout)
+        # Note: Do NOT call setLayout() on a QMainWindow - it interferes with the
+        # central widget mechanism and causes layout issues. The mediaPlayer is used
+        # for audio playback via playSound() and doesn't need to be in a layout.
         self.mediaPlayer: MediaPlayerWidget = MediaPlayerWidget(self)
-        self.setLayout(QVBoxLayout())
-        self.layout().addWidget(self.mediaPlayer)
         self.setWindowTitle(title)
         self._setupIcon(iconName)
 
