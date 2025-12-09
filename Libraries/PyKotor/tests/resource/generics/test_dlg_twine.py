@@ -3,20 +3,17 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 import tempfile
-from typing import TYPE_CHECKING
+
+from pathlib import Path
 
 import pytest
 
 from pykotor.common.language import Gender, Language
 from pykotor.resource.generics.dlg.base import DLG
+from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 from pykotor.resource.generics.dlg.links import DLGLink
 from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
-from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
-
-if TYPE_CHECKING:
-    from typing import Any
 
 
 @pytest.fixture

@@ -61,15 +61,15 @@ def test_circular_references(tmp_path: Path):
     write_twine(dlg, path, fmt="json")
     loaded_dlg: DLG = read_twine(path)
 
-        # Verify structure preserved
-        assert len(loaded_dlg.starters) == 1
-        loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
-        assert isinstance(loaded_entry, DLGEntry)
-        assert len(loaded_entry.links) == 1
-        loaded_reply: DLGReply = cast(DLGReply, loaded_entry.links[0].node)
-        assert isinstance(loaded_reply, DLGReply)
-        assert len(loaded_reply.links) == 1
-        assert isinstance(loaded_reply.links[0].node, DLGEntry)
+    # Verify structure preserved
+    assert len(loaded_dlg.starters) == 1
+    loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
+    assert isinstance(loaded_entry, DLGEntry)
+    assert len(loaded_entry.links) == 1
+    loaded_reply: DLGReply = cast(DLGReply, loaded_entry.links[0].node)
+    assert isinstance(loaded_reply, DLGReply)
+    assert len(loaded_reply.links) == 1
+    assert isinstance(loaded_reply.links[0].node, DLGEntry)
 
 
 def test_special_characters(tmp_path: Path):
@@ -86,13 +86,13 @@ def test_special_characters(tmp_path: Path):
     write_twine(dlg, path, fmt="json")
     loaded_dlg: DLG = read_twine(path)
 
-        # Verify special chars preserved
-        loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
-        assert isinstance(loaded_entry, DLGEntry)
-        assert loaded_entry.speaker == "NPC <with> special & chars"
-        assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == "Text with <tags> & special chars"
-        metadata: dict[str, Any] = json.loads(loaded_entry.comment)
-        assert metadata["custom"] == "Value with <tags> & special chars"
+    # Verify special chars preserved
+    loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
+    assert isinstance(loaded_entry, DLGEntry)
+    assert loaded_entry.speaker == "NPC <with> special & chars"
+    assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == "Text with <tags> & special chars"
+    metadata: dict[str, Any] = json.loads(loaded_entry.comment)
+    assert metadata["custom"] == "Value with <tags> & special chars"
 
 
 def test_multiple_languages(tmp_path: Path):
@@ -110,12 +110,12 @@ def test_multiple_languages(tmp_path: Path):
     write_twine(dlg, path, fmt="json")
     loaded_dlg: DLG = read_twine(path)
 
-        # Verify all languages preserved
-        loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
-        assert isinstance(loaded_entry, DLGEntry)
-        assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == "English text"
-        assert loaded_entry.text.get(Language.FRENCH, Gender.MALE) == "French text"
-        assert loaded_entry.text.get(Language.GERMAN, Gender.MALE) == "German text"
+    # Verify all languages preserved
+    loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
+    assert isinstance(loaded_entry, DLGEntry)
+    assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == "English text"
+    assert loaded_entry.text.get(Language.FRENCH, Gender.MALE) == "French text"
+    assert loaded_entry.text.get(Language.GERMAN, Gender.MALE) == "German text"
 
 
 def test_invalid_metadata(tmp_path: Path):
@@ -130,7 +130,7 @@ def test_invalid_metadata(tmp_path: Path):
     path = tmp_path / "invalid.json"
     write_twine(dlg, path, fmt="json")
     loaded_dlg: DLG = read_twine(path)
-        assert len(loaded_dlg.starters) == 1
+    assert len(loaded_dlg.starters) == 1
 
 
 def test_missing_required_fields(tmp_path: Path):
@@ -178,10 +178,10 @@ def test_duplicate_passage_names(tmp_path: Path):
     write_twine(dlg, path, fmt="json")
     loaded_dlg: DLG = read_twine(path)
 
-        # Verify structure preserved
-        assert len(loaded_dlg.starters) == 1
-        assert len(loaded_dlg.all_entries()) == 2
-        assert len(loaded_dlg.all_replies()) == 1
+    # Verify structure preserved
+    assert len(loaded_dlg.starters) == 1
+    assert len(loaded_dlg.all_entries()) == 2
+    assert len(loaded_dlg.all_replies()) == 1
 
 
 def test_empty_text(tmp_path: Path):
@@ -198,10 +198,10 @@ def test_empty_text(tmp_path: Path):
     write_twine(dlg, path, fmt="json")
     loaded_dlg: DLG = read_twine(path)
 
-        # Verify empty text handled
-        loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
-        assert isinstance(loaded_entry, DLGEntry)
-        assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == ""
+    # Verify empty text handled
+    loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
+    assert isinstance(loaded_entry, DLGEntry)
+    assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == ""
 
 
 def test_large_dialog(tmp_path: Path):
@@ -230,9 +230,9 @@ def test_large_dialog(tmp_path: Path):
     write_twine(dlg, path, fmt="json")
     loaded_dlg: DLG = read_twine(path)
 
-        # Verify structure preserved
-        assert len(loaded_dlg.all_entries()) == 1000
-        assert len(loaded_dlg.all_replies()) == 999  # One less reply than entries
+    # Verify structure preserved
+    assert len(loaded_dlg.all_entries()) == 1000
+    assert len(loaded_dlg.all_replies()) == 999  # One less reply than entries
 
 
 def test_unicode_characters(tmp_path: Path):

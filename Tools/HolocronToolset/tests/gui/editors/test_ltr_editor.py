@@ -4,6 +4,8 @@ Comprehensive tests for LTR Editor - testing EVERY possible manipulation.
 Each test focuses on a specific manipulation and validates save/load roundtrips.
 Following the ARE editor test pattern for comprehensive coverage.
 """
+from __future__ import annotations
+
 import pytest
 from pathlib import Path
 from qtpy.QtCore import Qt
@@ -12,12 +14,16 @@ from toolset.gui.editors.ltr import LTREditor  # type: ignore[import-not-found]
 from toolset.data.installation import HTInstallation  # type: ignore[import-not-found]
 from pykotor.resource.formats.ltr import LTR, read_ltr  # type: ignore[import-not-found]
 from pykotor.resource.type import ResourceType  # type: ignore[import-not-found]
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
 
 # ============================================================================
 # BASIC FIELD MANIPULATIONS
 # ============================================================================
 
-def test_ltr_editor_new_file_creation(qtbot, installation: HTInstallation):
+def test_ltr_editor_new_file_creation(qtbot: QtBot, installation: HTInstallation):
     """Test creating a new LTR file from scratch."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -35,7 +41,7 @@ def test_ltr_editor_new_file_creation(qtbot, installation: HTInstallation):
     new_ltr = read_ltr(data)
     assert new_ltr is not None
 
-def test_ltr_editor_load_empty_file(qtbot, installation: HTInstallation):
+def test_ltr_editor_load_empty_file(qtbot: QtBot, installation: HTInstallation):
     """Test loading an empty/new LTR file."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -55,7 +61,7 @@ def test_ltr_editor_load_empty_file(qtbot, installation: HTInstallation):
 # SINGLE CHARACTER MANIPULATIONS
 # ============================================================================
 
-def test_ltr_editor_manipulate_single_character(qtbot, installation: HTInstallation):
+def test_ltr_editor_manipulate_single_character(qtbot: QtBot, installation: HTInstallation):
     """Test manipulating single character values."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -84,7 +90,7 @@ def test_ltr_editor_manipulate_single_character(qtbot, installation: HTInstallat
         assert editor.ltr._singles.get_middle(test_char) == middle_val
         assert editor.ltr._singles.get_end(test_char) == end_val
 
-def test_ltr_editor_manipulate_multiple_single_characters(qtbot, installation: HTInstallation):
+def test_ltr_editor_manipulate_multiple_single_characters(qtbot: QtBot, installation: HTInstallation):
     """Test manipulating multiple single characters."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -116,7 +122,7 @@ def test_ltr_editor_manipulate_multiple_single_characters(qtbot, installation: H
 # DOUBLE CHARACTER MANIPULATIONS
 # ============================================================================
 
-def test_ltr_editor_manipulate_double_character(qtbot, installation: HTInstallation):
+def test_ltr_editor_manipulate_double_character(qtbot: QtBot, installation: HTInstallation):
     """Test manipulating double character values."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -149,7 +155,7 @@ def test_ltr_editor_manipulate_double_character(qtbot, installation: HTInstallat
         assert editor.ltr._doubles[0].get_middle(char) == middle_val
         assert editor.ltr._doubles[0].get_end(char) == end_val
 
-def test_ltr_editor_manipulate_multiple_double_characters(qtbot, installation: HTInstallation):
+def test_ltr_editor_manipulate_multiple_double_characters(qtbot: QtBot, installation: HTInstallation):
     """Test manipulating multiple double character combinations."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -184,7 +190,7 @@ def test_ltr_editor_manipulate_multiple_double_characters(qtbot, installation: H
 # TRIPLE CHARACTER MANIPULATIONS
 # ============================================================================
 
-def test_ltr_editor_manipulate_triple_character(qtbot, installation: HTInstallation):
+def test_ltr_editor_manipulate_triple_character(qtbot: QtBot, installation: HTInstallation):
     """Test manipulating triple character values."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -227,7 +233,7 @@ def test_ltr_editor_manipulate_triple_character(qtbot, installation: HTInstallat
 # NAME GENERATION TESTS
 # ============================================================================
 
-def test_ltr_editor_generate_name(qtbot, installation: HTInstallation):
+def test_ltr_editor_generate_name(qtbot: QtBot, installation: HTInstallation):
     """Test name generation functionality."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -245,7 +251,7 @@ def test_ltr_editor_generate_name(qtbot, installation: HTInstallation):
     expected_name = editor.ltr.generate()
     assert generated_name == expected_name
 
-def test_ltr_editor_generate_multiple_names(qtbot, installation: HTInstallation):
+def test_ltr_editor_generate_multiple_names(qtbot: QtBot, installation: HTInstallation):
     """Test generating multiple names."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -266,7 +272,7 @@ def test_ltr_editor_generate_multiple_names(qtbot, installation: HTInstallation)
 # TABLE MANIPULATIONS
 # ============================================================================
 
-def test_ltr_editor_table_row_add_remove_singles(qtbot, installation: HTInstallation):
+def test_ltr_editor_table_row_add_remove_singles(qtbot: QtBot, installation: HTInstallation):
     """Test adding and removing rows in singles table."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -284,7 +290,7 @@ def test_ltr_editor_table_row_add_remove_singles(qtbot, installation: HTInstalla
     editor.removeSingleRow()
     assert editor.ui.tableSingles.rowCount() == initial_count
 
-def test_ltr_editor_table_row_add_remove_doubles(qtbot, installation: HTInstallation):
+def test_ltr_editor_table_row_add_remove_doubles(qtbot: QtBot, installation: HTInstallation):
     """Test adding and removing rows in doubles table."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -302,7 +308,7 @@ def test_ltr_editor_table_row_add_remove_doubles(qtbot, installation: HTInstalla
     editor.removeDoubleRow()
     assert editor.ui.tableDoubles.rowCount() == initial_count
 
-def test_ltr_editor_table_row_add_remove_triples(qtbot, installation: HTInstallation):
+def test_ltr_editor_table_row_add_remove_triples(qtbot: QtBot, installation: HTInstallation):
     """Test adding and removing rows in triples table."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -324,7 +330,7 @@ def test_ltr_editor_table_row_add_remove_triples(qtbot, installation: HTInstalla
 # SAVE/LOAD ROUNDTRIP VALIDATION TESTS
 # ============================================================================
 
-def test_ltr_editor_save_load_roundtrip_identity(qtbot, installation: HTInstallation):
+def test_ltr_editor_save_load_roundtrip_identity(qtbot: QtBot, installation: HTInstallation):
     """Test that save/load roundtrip preserves all data exactly."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -364,7 +370,7 @@ def test_ltr_editor_save_load_roundtrip_identity(qtbot, installation: HTInstalla
         assert saved_ltr2._singles.get_middle(char) == saved_ltr1._singles.get_middle(char)
         assert saved_ltr2._singles.get_end(char) == saved_ltr1._singles.get_end(char)
 
-def test_ltr_editor_multiple_save_load_cycles(qtbot, installation: HTInstallation):
+def test_ltr_editor_multiple_save_load_cycles(qtbot: QtBot, installation: HTInstallation):
     """Test multiple save/load cycles preserve data correctly."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -406,7 +412,7 @@ def test_ltr_editor_multiple_save_load_cycles(qtbot, installation: HTInstallatio
 # UI FEATURE TESTS
 # ============================================================================
 
-def test_ltr_editor_table_sorting(qtbot, installation: HTInstallation):
+def test_ltr_editor_table_sorting(qtbot: QtBot, installation: HTInstallation):
     """Test that tables have sorting enabled."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -418,7 +424,7 @@ def test_ltr_editor_table_sorting(qtbot, installation: HTInstallation):
     assert editor.ui.tableDoubles.isSortingEnabled()
     assert editor.ui.tableTriples.isSortingEnabled()
 
-def test_ltr_editor_auto_fit_columns(qtbot, installation: HTInstallation):
+def test_ltr_editor_auto_fit_columns(qtbot: QtBot, installation: HTInstallation):
     """Test auto-fit columns functionality."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -433,7 +439,7 @@ def test_ltr_editor_auto_fit_columns(qtbot, installation: HTInstallation):
     editor.toggle_auto_fit_columns(False)
     assert not editor.auto_resize_enabled
 
-def test_ltr_editor_alternate_row_colors(qtbot, installation: HTInstallation):
+def test_ltr_editor_alternate_row_colors(qtbot: QtBot, installation: HTInstallation):
     """Test alternate row colors toggle."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -451,7 +457,7 @@ def test_ltr_editor_alternate_row_colors(qtbot, installation: HTInstallation):
     editor.toggle_alternate_row_colors()
     assert editor.ui.tableSingles.alternatingRowColors() == initial_state
 
-def test_ltr_editor_combo_box_population(qtbot, installation: HTInstallation):
+def test_ltr_editor_combo_box_population(qtbot: QtBot, installation: HTInstallation):
     """Test that combo boxes are properly populated."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -475,7 +481,7 @@ def test_ltr_editor_combo_box_population(qtbot, installation: HTInstallation):
 # EDGE CASES
 # ============================================================================
 
-def test_ltr_editor_extreme_values(qtbot, installation: HTInstallation):
+def test_ltr_editor_extreme_values(qtbot: QtBot, installation: HTInstallation):
     """Test handling of extreme values."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -497,7 +503,7 @@ def test_ltr_editor_extreme_values(qtbot, installation: HTInstallation):
         assert editor.ltr._singles.get_middle(char) == 100
         assert editor.ltr._singles.get_end(char) == 255
 
-def test_ltr_editor_empty_tables(qtbot, installation: HTInstallation):
+def test_ltr_editor_empty_tables(qtbot: QtBot, installation: HTInstallation):
     """Test handling of empty/new tables."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -516,7 +522,7 @@ def test_ltr_editor_empty_tables(qtbot, installation: HTInstallation):
 # COMBINATION TESTS
 # ============================================================================
 
-def test_ltr_editor_manipulate_all_character_types(qtbot, installation: HTInstallation):
+def test_ltr_editor_manipulate_all_character_types(qtbot: QtBot, installation: HTInstallation):
     """Test manipulating singles, doubles, and triples together."""
     editor = LTREditor(None, installation)
     qtbot.addWidget(editor)
@@ -578,7 +584,7 @@ def test_ltr_editor_manipulate_all_character_types(qtbot, installation: HTInstal
 # ============================================================================
 
 
-def test_ltreditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+def test_ltreditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation):
     """Test that LTREditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog
     

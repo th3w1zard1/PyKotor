@@ -3,14 +3,19 @@ from __future__ import annotations
 import os
 import pathlib
 import sys
+from typing import TYPE_CHECKING
 import unittest
 from unittest import TestCase
+
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
 
 try:
     from qtpy.QtTest import QTest
     from qtpy.QtWidgets import QApplication
 except (ImportError, ModuleNotFoundError):
-    QTest, QApplication = None, None  # type: ignore[misc, assignment]
+    if not TYPE_CHECKING:
+        QTest, QApplication = None, None  # type: ignore[misc, assignment]
 
 absolute_file_path = pathlib.Path(__file__).resolve()
 TESTS_FILES_PATH = next(f for f in absolute_file_path.parents if f.name == "tests") / "test_files"
@@ -68,7 +73,7 @@ class JRLEditorTest(TestCase):
         cls.K2_INSTALLATION = HTInstallation(K2_PATH, "", tsl=True)
 
     def setUp(self):
-        self.app = QApplication([])
+        self.app: QApplication = QApplication([])
         self.editor = self.JRLEditor(None, self.K2_INSTALLATION)
         self.log_messages: list[str] = [os.linesep]
 
@@ -141,19 +146,16 @@ from toolset.data.installation import HTInstallation
 from pykotor.resource.generics.jrl import JRLQuest, JRLEntry
 from pykotor.resource.type import ResourceType
 
-def test_jrl_editor_init(qtbot, installation: HTInstallation):
+def test_jrl_editor_init(qtbot: QtBot, installation: HTInstallation):
     """Test JRL Editor initialization."""
-    from qtpy.QtWidgets import QWidget
-    parent = QWidget()
-    
-    editor = JRLEditor(parent, installation)
+    editor = JRLEditor(None, installation)
     qtbot.addWidget(editor)
     editor.show()
     
     assert editor.isVisible()
     assert "Journal Editor" in editor.windowTitle()
 
-def test_jrl_add_quest_and_entry(qtbot, installation: HTInstallation):
+def test_jrl_add_quest_and_entry(qtbot: QtBot, installation: HTInstallation):
     """Test adding quests and entries."""
     editor = JRLEditor(None, installation)
     qtbot.addWidget(editor)
@@ -166,6 +168,7 @@ def test_jrl_add_quest_and_entry(qtbot, installation: HTInstallation):
     
     assert editor._model.rowCount() == 1
     quest_item = editor._model.item(0)
+    assert quest_item is not None
     assert "Test Quest" in quest_item.text()
     
     # Select Quest
@@ -187,6 +190,7 @@ def test_jrl_add_quest_and_entry(qtbot, installation: HTInstallation):
     
     assert quest_item.rowCount() == 1
     entry_item = quest_item.child(0)
+    assert entry_item is not None
     assert "10" in entry_item.text()
     
     # Select Entry
@@ -200,7 +204,7 @@ def test_jrl_add_quest_and_entry(qtbot, installation: HTInstallation):
     editor.on_value_updated()
     assert entry.xp_percentage == 50
 
-def test_jrl_editor_headless_ui_load_build(qtbot, installation: HTInstallation, test_files_dir: pathlib.Path):
+def test_jrl_editor_headless_ui_load_build(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
     """Test JRL Editor in headless UI - loads real file and builds data."""
     editor = JRLEditor(None, installation)
     qtbot.addWidget(editor)
@@ -208,20 +212,7 @@ def test_jrl_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     # Try to find a JRL file
     jrl_file = test_files_dir / "global.jrl"
     if not jrl_file.exists():
-        # Try to get one from installation
-        jrl_resources = list(installation.resources(ResourceType.JRL))[:1]
-        if not jrl_resources:
-            pytest.skip("No JRL files available for testing")
-        jrl_resource = jrl_resources[0]
-        jrl_data = installation.resource(jrl_resource.identifier)
-        if not jrl_data:
-            pytest.skip(f"Could not load JRL data for {jrl_resource.identifier}")
-        editor.load(
-            jrl_resource.filepath if hasattr(jrl_resource, 'filepath') else pathlib.Path("module.jrl"),
-            jrl_resource.resname,
-            ResourceType.JRL,
-            jrl_data
-        )
+        pytest.skip("No JRL files available for testing")
     else:
         original_data = jrl_file.read_bytes()
         editor.load(jrl_file, "global", ResourceType.JRL, original_data)
@@ -240,7 +231,7 @@ def test_jrl_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     assert loaded_jrl is not None
 
 
-def test_jrleditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+def test_jrleditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
     """Test that JRLEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog
     
@@ -249,14 +240,16 @@ def test_jrleditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Trigger help dialog with the correct file for JRLEditor
     editor._show_help_dialog("GFF-JRL.md")
-    qtbot.wait(200)  # Wait for dialog to be created
+    def has_dialog():
+        return len([child for child in editor.findChildren(EditorHelpDialog)]) > 0
+    qtbot.waitUntil(has_dialog, timeout=1000)
     
     # Find the help dialog
     dialogs = [child for child in editor.findChildren(EditorHelpDialog)]
     assert len(dialogs) > 0, "Help dialog should be opened"
     
     dialog = dialogs[0]
-    qtbot.waitExposed(dialog)
+    qtbot.waitUntil(lambda: dialog.isVisible(), timeout=1000)
     
     # Get the HTML content
     html = dialog.text_browser.toHtml()
@@ -267,6 +260,10 @@ def test_jrleditor_editor_help_dialog_opens_correct_file(qtbot, installation: HT
     
     # Assert that some content is present (file was loaded successfully)
     assert len(html) > 100, "Help dialog should contain content"
+    
+    # Close dialog to avoid dangling widgets during teardown
+    dialog.close()
+    qtbot.wait(50)
 
     """Test loading a JRL file."""
     editor = JRLEditor(None, installation)

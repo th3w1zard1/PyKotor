@@ -6,6 +6,13 @@ import sys
 import unittest
 from unittest import TestCase
 
+from typing import TYPE_CHECKING
+
+from pykotor.extract.file import ResourceIdentifier, ResourceResult
+
+if TYPE_CHECKING:
+    from qtpy.QtTest import QtBot
+
 try:
     from qtpy.QtTest import QTest
     from qtpy.QtWidgets import QApplication
@@ -220,7 +227,7 @@ from toolset.gui.editors.erf import ERFEditor
 from toolset.data.installation import HTInstallation
 from pykotor.resource.type import ResourceType
 
-def test_erf_editor_headless_ui_load_build(qtbot, installation: HTInstallation, test_files_dir: pathlib.Path):
+def test_erf_editor_headless_ui_load_build(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
     """Test ERF Editor in headless UI - loads real file and builds data."""
     editor = ERFEditor(None, installation)
     qtbot.addWidget(editor)
@@ -229,15 +236,16 @@ def test_erf_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     erf_file = test_files_dir / "001EBO_dlg.erf"
     if not erf_file.exists():
         # Try to get one from installation
-        erf_resources = list(installation.resources(ResourceType.ERF))[:1]
+        erf_resources = list(installation.resources([ResourceIdentifier(resname="001EBO_dlg", restype=ResourceType.ERF)]).values())[:1]
         if not erf_resources:
-            erf_resources = list(installation.resources(ResourceType.MOD))[:1]
+            erf_resources = list(installation.resources([ResourceIdentifier(resname="001EBO_dlg", restype=ResourceType.MOD)]).values())[:1]
         if not erf_resources:
             pytest.skip("No ERF files available for testing")
-        erf_resource = erf_resources[0]
-        erf_data = installation.resource(erf_resource.identifier)
+        erf_resource: ResourceResult | None = erf_resources[0]
+        assert erf_resource is not None, "ERF resource not found"
+        erf_data: bytes | None = installation.resource(resname=erf_resource.resname, restype=erf_resource.restype)
         if not erf_data:
-            pytest.skip(f"Could not load ERF data for {erf_resource.identifier}")
+            pytest.fail(f"Could not load ERF data for {erf_resource.identifier()}")
         editor.load(
             erf_resource.filepath if hasattr(erf_resource, 'filepath') else pathlib.Path("module.erf"),
             erf_resource.resname,
@@ -261,7 +269,7 @@ def test_erf_editor_headless_ui_load_build(qtbot, installation: HTInstallation, 
     assert loaded_erf is not None
 
 
-def test_erfeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+def test_erfeditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation):
     """Test that ERFEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog
     

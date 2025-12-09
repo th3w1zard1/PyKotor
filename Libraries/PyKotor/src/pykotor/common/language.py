@@ -648,32 +648,17 @@ class LocalizedString:
         substring_id: int = LocalizedString.substring_id(language_enum, gender_enum)
         self._substrings[substring_id] = string
 
-    @overload
-    def get(
-        self,
-        language: Language,
-        gender: Gender,
-        *,
-        use_fallback: bool = False,
-    ) -> str | None: ...
+    def set_string(self, substring_id: int | str, string: str) -> None:
+        """Backward-compatible alias that uses numeric substring ids (language*2 + gender)."""
+        language, gender = LocalizedString.substring_pair(int(substring_id))
+        self.set_data(language, gender, string)
 
     @overload
-    def get(
-        self,
-        language: int,
-        gender: int,
-        *,
-        use_fallback: bool = False,
-    ) -> str | None: ...
-
+    def get(self, language: Language, gender: Gender, *, use_fallback: bool = False) -> str | None: ...
     @overload
-    def get(
-        self,
-        language: int,
-        *,
-        use_fallback: bool = False,
-    ) -> str | None: ...
-
+    def get(self, language: int, gender: int, *, use_fallback: bool = False) -> str | None: ...
+    @overload
+    def get(self, language: int, *, use_fallback: bool = False) -> str | None: ...
     def get(
         self,
         language: Language | int,

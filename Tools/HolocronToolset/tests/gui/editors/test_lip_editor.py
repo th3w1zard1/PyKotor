@@ -5,6 +5,7 @@ Each test focuses on a specific manipulation and validates save/load roundtrips.
 Following the ARE editor test pattern for comprehensive coverage.
 """
 from __future__ import annotations
+import pathlib
 
 import pytest
 from pathlib import Path
@@ -13,12 +14,16 @@ from toolset.gui.editors.lip.lip_editor import LIPEditor  # type: ignore[import-
 from toolset.data.installation import HTInstallation  # type: ignore[import-not-found]
 from pykotor.resource.formats.lip import LIP, LIPKeyFrame, LIPShape, read_lip, bytes_lip  # type: ignore[import-not-found]
 from pykotor.resource.type import ResourceType  # type: ignore[import-not-found]
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
 
 # ============================================================================
 # BASIC TESTS
 # ============================================================================
 
-def test_lip_editor_new_file_creation(qtbot, installation: HTInstallation):
+def test_lip_editor_new_file_creation(qtbot: QtBot, installation: HTInstallation):
     """Test creating a new LIP file from scratch."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -31,7 +36,7 @@ def test_lip_editor_new_file_creation(qtbot, installation: HTInstallation):
     assert isinstance(editor.lip, LIP)
     assert len(editor.lip.frames) == 0
 
-def test_lip_editor_initialization(qtbot, installation: HTInstallation):
+def test_lip_editor_initialization(qtbot: QtBot, installation: HTInstallation):
     """Test editor initialization."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -54,7 +59,7 @@ def test_lip_editor_initialization(qtbot, installation: HTInstallation):
 # KEYFRAME MANIPULATIONS
 # ============================================================================
 
-def test_lip_editor_add_keyframe(qtbot, installation: HTInstallation):
+def test_lip_editor_add_keyframe(qtbot: QtBot, installation: HTInstallation):
     """Test adding a keyframe."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -79,7 +84,7 @@ def test_lip_editor_add_keyframe(qtbot, installation: HTInstallation):
     assert abs(editor.lip.frames[0].time - 1.0) < 0.001
     assert editor.lip.frames[0].shape == LIPShape.AH
 
-def test_lip_editor_add_multiple_keyframes(qtbot, installation: HTInstallation):
+def test_lip_editor_add_multiple_keyframes(qtbot: QtBot, installation: HTInstallation):
     """Test adding multiple keyframes."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -112,7 +117,7 @@ def test_lip_editor_add_multiple_keyframes(qtbot, installation: HTInstallation):
         assert abs(sorted_frames[i].time - time) < 0.001
         assert sorted_frames[i].shape == shape
 
-def test_lip_editor_update_keyframe(qtbot, installation: HTInstallation):
+def test_lip_editor_update_keyframe(qtbot: QtBot, installation: HTInstallation):
     """Test updating a keyframe."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -143,7 +148,7 @@ def test_lip_editor_update_keyframe(qtbot, installation: HTInstallation):
     assert abs(editor.lip.frames[0].time - 1.5) < 0.001
     assert editor.lip.frames[0].shape == LIPShape.EE
 
-def test_lip_editor_delete_keyframe(qtbot, installation: HTInstallation):
+def test_lip_editor_delete_keyframe(qtbot: QtBot, installation: HTInstallation):
     """Test deleting a keyframe."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -176,7 +181,7 @@ def test_lip_editor_delete_keyframe(qtbot, installation: HTInstallation):
 # SHAPE SELECTION TESTS
 # ============================================================================
 
-def test_lip_editor_all_lip_shapes_available(qtbot, installation: HTInstallation):
+def test_lip_editor_all_lip_shapes_available(qtbot: QtBot, installation: HTInstallation):
     """Test all LIP shapes are available in combo box."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -190,7 +195,7 @@ def test_lip_editor_all_lip_shapes_available(qtbot, installation: HTInstallation
         index = editor.shape_select.findText(shape.name)
         assert index >= 0
 
-def test_lip_editor_set_different_shapes(qtbot, installation: HTInstallation):
+def test_lip_editor_set_different_shapes(qtbot: QtBot, installation: HTInstallation):
     """Test setting different LIP shapes."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -228,7 +233,7 @@ def test_lip_editor_set_different_shapes(qtbot, installation: HTInstallation):
 # PREVIEW TESTS
 # ============================================================================
 
-def test_lip_editor_update_preview(qtbot, installation: HTInstallation):
+def test_lip_editor_update_preview(qtbot: QtBot, installation: HTInstallation):
     """Test preview list updates correctly."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -261,7 +266,7 @@ def test_lip_editor_update_preview(qtbot, installation: HTInstallation):
     assert item_1 is not None
     assert "2.000" in item_1.text()
 
-def test_lip_editor_keyframe_selection(qtbot, installation: HTInstallation):
+def test_lip_editor_keyframe_selection(qtbot: QtBot, installation: HTInstallation):
     """Test selecting a keyframe updates inputs."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -291,7 +296,7 @@ def test_lip_editor_keyframe_selection(qtbot, installation: HTInstallation):
 # SAVE/LOAD ROUNDTRIP TESTS
 # ============================================================================
 
-def test_lip_editor_save_load_roundtrip(qtbot, installation: HTInstallation):
+def test_lip_editor_save_load_roundtrip(qtbot: QtBot, installation: HTInstallation):
     """Test save/load roundtrip preserves data."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -323,7 +328,7 @@ def test_lip_editor_save_load_roundtrip(qtbot, installation: HTInstallation):
     assert abs(editor.lip.length - 10.0) < 0.001
     assert editor.duration == 10.0
 
-def test_lip_editor_multiple_save_load_cycles(qtbot, installation: HTInstallation):
+def test_lip_editor_multiple_save_load_cycles(qtbot: QtBot, installation: HTInstallation):
     """Test multiple save/load cycles preserve data correctly."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -359,7 +364,7 @@ def test_lip_editor_multiple_save_load_cycles(qtbot, installation: HTInstallatio
 # DURATION TESTS
 # ============================================================================
 
-def test_lip_editor_duration_setting(qtbot, installation: HTInstallation):
+def test_lip_editor_duration_setting(qtbot: QtBot, installation: HTInstallation):
     """Test setting duration."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -375,7 +380,7 @@ def test_lip_editor_duration_setting(qtbot, installation: HTInstallation):
     assert editor.duration == 5.5
     assert editor.time_input.maximum() == 5.5
 
-def test_lip_editor_duration_from_loaded_lip(qtbot, installation: HTInstallation):
+def test_lip_editor_duration_from_loaded_lip(qtbot: QtBot, installation: HTInstallation):
     """Test duration is loaded from LIP file."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -399,7 +404,7 @@ def test_lip_editor_duration_from_loaded_lip(qtbot, installation: HTInstallation
 # PHONEME MAPPING TESTS
 # ============================================================================
 
-def test_lip_editor_phoneme_map_initialization(qtbot, installation: HTInstallation):
+def test_lip_editor_phoneme_map_initialization(qtbot: QtBot, installation: HTInstallation):
     """Test phoneme map is properly initialized."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -422,7 +427,7 @@ def test_lip_editor_phoneme_map_initialization(qtbot, installation: HTInstallati
 # PLAYBACK TESTS (Limited - requires audio file)
 # ============================================================================
 
-def test_lip_editor_playback_methods_exist(qtbot, installation: HTInstallation):
+def test_lip_editor_playback_methods_exist(qtbot: QtBot, installation: HTInstallation):
     """Test playback methods exist."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -433,7 +438,7 @@ def test_lip_editor_playback_methods_exist(qtbot, installation: HTInstallation):
     assert callable(editor.play_preview)
     assert callable(editor.stop_preview)
 
-def test_lip_editor_stop_preview(qtbot, installation: HTInstallation):
+def test_lip_editor_stop_preview(qtbot: QtBot, installation: HTInstallation):
     """Test stopping preview."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -450,7 +455,7 @@ def test_lip_editor_stop_preview(qtbot, installation: HTInstallation):
 # KEYBOARD SHORTCUTS
 # ============================================================================
 
-def test_lip_editor_shortcuts_setup(qtbot, installation: HTInstallation):
+def test_lip_editor_shortcuts_setup(qtbot: QtBot, installation: HTInstallation):
     """Test keyboard shortcuts are set up."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -463,7 +468,7 @@ def test_lip_editor_shortcuts_setup(qtbot, installation: HTInstallation):
 # CONTEXT MENU TESTS
 # ============================================================================
 
-def test_lip_editor_context_menu(qtbot, installation: HTInstallation):
+def test_lip_editor_context_menu(qtbot: QtBot, installation: HTInstallation):
     """Test context menu functionality."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -479,7 +484,7 @@ def test_lip_editor_context_menu(qtbot, installation: HTInstallation):
 # UNDO/REDO TESTS
 # ============================================================================
 
-def test_lip_editor_undo_redo_methods_exist(qtbot, installation: HTInstallation):
+def test_lip_editor_undo_redo_methods_exist(qtbot: QtBot, installation: HTInstallation):
     """Test undo/redo methods exist (even if not implemented)."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -494,7 +499,7 @@ def test_lip_editor_undo_redo_methods_exist(qtbot, installation: HTInstallation)
 # UI ELEMENT TESTS
 # ============================================================================
 
-def test_lip_editor_ui_elements(qtbot, installation: HTInstallation):
+def test_lip_editor_ui_elements(qtbot: QtBot, installation: HTInstallation):
     """Test that UI elements exist."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -511,7 +516,7 @@ def test_lip_editor_ui_elements(qtbot, installation: HTInstallation):
 # EDGE CASES
 # ============================================================================
 
-def test_lip_editor_empty_lip_file(qtbot, installation: HTInstallation):
+def test_lip_editor_empty_lip_file(qtbot: QtBot, installation: HTInstallation):
     """Test handling of empty LIP file."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -530,7 +535,7 @@ def test_lip_editor_empty_lip_file(qtbot, installation: HTInstallation):
         editor.load(Path("test.lip"), "test", ResourceType.LIP, data)
     assert len(editor.lip.frames) == 0
 
-def test_lip_editor_keyframes_sorted_by_time(qtbot, installation: HTInstallation):
+def test_lip_editor_keyframes_sorted_by_time(qtbot: QtBot, installation: HTInstallation):
     """Test keyframes are sorted by time when displayed."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -572,7 +577,7 @@ def test_lip_editor_keyframes_sorted_by_time(qtbot, installation: HTInstallation
 # COMBINATION TESTS
 # ============================================================================
 
-def test_lip_editor_complex_lip_file(qtbot, installation: HTInstallation):
+def test_lip_editor_complex_lip_file(qtbot: QtBot, installation: HTInstallation):
     """Test creating a complex LIP file with many keyframes."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -603,7 +608,7 @@ def test_lip_editor_complex_lip_file(qtbot, installation: HTInstallation):
     assert len(editor.lip.frames) == 10
     assert abs(editor.lip.length - 10.0) < 0.001
 
-def test_lip_editor_all_shapes_used(qtbot, installation: HTInstallation):
+def test_lip_editor_all_shapes_used(qtbot: QtBot, installation: HTInstallation):
     """Test using all LIP shapes."""
     editor = LIPEditor(None, installation)
     qtbot.addWidget(editor)
@@ -633,7 +638,7 @@ def test_lip_editor_all_shapes_used(qtbot, installation: HTInstallation):
 # ============================================================================
 
 
-def test_lipeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+def test_lipeditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation, test_files_dir: pathlib.Path):
     """Test that LIPEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog
     
