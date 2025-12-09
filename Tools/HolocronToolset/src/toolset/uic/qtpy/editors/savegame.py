@@ -92,7 +92,7 @@ class Ui_MainWindow(object):
         self.labelScreenshotPreview.setObjectName("labelScreenshotPreview")
         self.verticalLayoutScreenshot.addWidget(self.labelScreenshotPreview)
         self.verticalLayoutSaveInfo.addWidget(self.groupScreenshot)
-        spacerItem = QtWidgets.QSpacerItem(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayoutSaveInfo.addItem(spacerItem)
         self.tabWidget.addTab(self.tabSaveInfo, "")
         self.tabPartyTable = QtWidgets.QWidget()
