@@ -255,11 +255,11 @@ def test_unicode_characters(tmp_path: Path):
     write_twine(dlg, path, fmt="json")
     loaded_dlg: DLG = read_twine(path)
 
-        # Verify Unicode preserved
-        loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
-        assert isinstance(loaded_entry, DLGEntry)
-        assert loaded_entry.speaker == "NPC 🚀"
-        assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello 世界"
-        assert loaded_entry.text.get(Language.FRENCH, Gender.MALE) == "Bonjour 🌍"
-        metadata: dict[str, Any] = json.loads(loaded_entry.comment)
-        assert metadata["custom"] == "Value with 漢字"
+    # Verify Unicode preserved
+    loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
+    assert isinstance(loaded_entry, DLGEntry)
+    assert loaded_entry.speaker == "NPC 🚀"
+    assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello 世界"
+    assert loaded_entry.text.get(Language.FRENCH, Gender.MALE) == "Bonjour 🌍"
+    metadata: dict[str, Any] = json.loads(loaded_entry.comment)
+    assert metadata["custom"] == "Value with 漢字"
