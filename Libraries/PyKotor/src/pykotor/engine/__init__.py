@@ -3,6 +3,8 @@
 This module provides abstract base classes and interfaces that can be implemented
 by different rendering backends (OpenGL, Qt5, Panda3D, etc.).
 
+This package contains backend-specific engine implementations.
+
 All backend-specific implementations should inherit from these base classes to ensure
 compatibility and code reuse across different rendering systems.
 
