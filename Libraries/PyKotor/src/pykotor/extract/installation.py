@@ -90,14 +90,13 @@ class SearchLocation(IntEnum):
     """Encapsulated resources in the installation's 'lips' directory."""
 
     RIMS = 11
-    """Encapsulated resources in the installation's 'rims' directory."""
+    """Encapsulated resources in the installation's 'rims' directory. note: these `rims` only exist in the first game and are not used by the vanilla game at all."""
 
     CUSTOM_MODULES = 12
     """Encapsulated resources stored in the capsules specified in method parameters."""
 
     CUSTOM_FOLDERS = 13
     """Resource files stored in the folders specified in the method parameters."""
-
 
 class TexturePackNames(Enum):
     """Full list of texturepack ERF filenames for both games."""
