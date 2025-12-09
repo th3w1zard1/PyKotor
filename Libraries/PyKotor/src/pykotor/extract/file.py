@@ -101,20 +101,21 @@ def _find_real_filesystem_path(filepath: Path) -> tuple[Path | None, list[str]]:
 def _extract_from_nested_capsules(
     real_path: Path,
     nested_parts: list[str],
-    final_offset: int,
-    final_size: int,
 ) -> bytes:
     """Extract data from potentially nested capsules.
 
     Given a real filesystem path to a capsule and a list of nested path components,
     recursively extracts data through each capsule level.
 
+    Note: This function always extracts the complete resource at each level using
+    offset/size information from the capsule headers. The FileResource's stored
+    offset/size are not used because they would be redundant (they represent the
+    same values we get from parsing the headers).
+
     Args:
     ----
         real_path: Path to the outermost capsule file on disk
         nested_parts: List of resource names inside nested capsules (e.g., ['inner.sav', 'resource.utc'])
-        final_offset: Offset within the final resource (usually 0 for nested extraction)
-        final_size: Size of the final resource data to read
 
     Returns:
     -------
@@ -173,18 +174,9 @@ def _extract_from_nested_capsules(
 
         res_offset, res_size = target_resource
 
-        # Extract the resource data
-        # If this is the final resource, apply final_offset and final_size
-        if i == len(nested_parts) - 1:
-            # This is the innermost resource - apply offset/size if specified
-            if final_size > 0:
-                # Extract just the requested portion
-                current_data = current_data[res_offset + final_offset:res_offset + final_offset + final_size]
-            else:
-                current_data = current_data[res_offset:res_offset + res_size]
-        else:
-            # Intermediate capsule - extract full resource data
-            current_data = current_data[res_offset:res_offset + res_size]
+        # Extract the resource data using offset/size from capsule header
+        # We always extract the full resource at each level
+        current_data = current_data[res_offset:res_offset + res_size]
 
     return current_data
 
@@ -494,7 +486,7 @@ class FileResource:
             # Verify the resource exists inside the nested capsule structure
             # We do this by attempting to extract - if it fails, the resource doesn't exist
             try:
-                _extract_from_nested_capsules(real_path, nested_parts, 0, 0)
+                _extract_from_nested_capsules(real_path, nested_parts)
                 return True
             except (FileNotFoundError, ValueError):
                 return False
@@ -557,12 +549,10 @@ class FileResource:
                 return file.read(self._size)
 
         # We have a nested capsule path - extract through the nesting levels
-        return _extract_from_nested_capsules(
-            real_path,
-            nested_parts,
-            final_offset=self._offset,
-            final_size=self._size,
-        )
+        # Note: We don't use self._offset/self._size here because the extraction
+        # function re-parses the capsule headers and gets fresh offset/size values.
+        # The stored offset/size would be redundant (same values from the same source).
+        return _extract_from_nested_capsules(real_path, nested_parts)
 
     def as_file_resource(self) -> Self:
         """For unifying use with LocationResult and ResourceResult."""

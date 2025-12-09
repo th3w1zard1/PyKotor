@@ -95,7 +95,7 @@ class TestNestedCapsuleExtraction:
 
         # Now test extraction through nested path
         nested_parts = ["inner.sav", "nested.utc"]
-        result = _extract_from_nested_capsules(outer_path, nested_parts, 0, 0)
+        result = _extract_from_nested_capsules(outer_path, nested_parts)
         assert result == test_data
 
     def test_file_resource_data_nested(self, tmp_path: Path):
@@ -197,7 +197,7 @@ class TestNestedCapsuleExtraction:
 
         # Extract through triple nesting
         nested_parts = ["level2.mod", "level3.erf", "deep.git"]
-        result = _extract_from_nested_capsules(outer_path, nested_parts, 0, 0)
+        result = _extract_from_nested_capsules(outer_path, nested_parts)
         assert result == test_data
 
     def test_rim_nested_in_erf(self, tmp_path: Path):
@@ -220,7 +220,7 @@ class TestNestedCapsuleExtraction:
 
         # Extract through nested path
         nested_parts = ["module.rim", "rimres.ncs"]
-        result = _extract_from_nested_capsules(erf_path, nested_parts, 0, 0)
+        result = _extract_from_nested_capsules(erf_path, nested_parts)
         assert result == test_data
 
 
