@@ -85,7 +85,8 @@ def write_twine(
     HTML. ``format`` is accepted as an alias for backward compatibility.
     """
     path = Path(path)
-    chosen_fmt: Format | None = format or fmt
+    # `format` is a legacy alias; prefer `fmt` when both are provided.
+    chosen_fmt: Format | None = fmt or format
     inferred_fmt: Format = chosen_fmt or ("json" if path.suffix.lower() == ".json" else "html")
 
     story: TwineStory = _dlg_to_story(dlg, metadata)
