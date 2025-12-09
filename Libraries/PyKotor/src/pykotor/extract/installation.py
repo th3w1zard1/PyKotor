@@ -1558,6 +1558,136 @@ class Installation:
 
         return locations
 
+    def texture_resource_result(
+        self,
+        resname: str,
+        order: Sequence[SearchLocation] | None = None,
+        *,
+        capsules: Sequence[Capsule] | None = None,
+        folders: list[Path] | None = None,
+        logger: Callable[[str], None] | None = None,
+    ) -> tuple[ResourceResult | None, str]:
+        """Locate a texture resource and return both the ResourceResult and any associated TXI text.
+
+        This mirrors the search behaviour of textures() but surfaces the raw ResourceResult (with filepath/offset
+        metadata) so callers that need file location information can use it directly.
+
+        Returns a tuple of (ResourceResult | None, txi_text). The TXI text is only populated when the located
+        texture is a TGA that has a sibling TXI in the same container/folder.
+        """
+        if order is None:
+            order = (
+                SearchLocation.CUSTOM_FOLDERS,
+                SearchLocation.OVERRIDE,
+                SearchLocation.CUSTOM_MODULES,
+                SearchLocation.TEXTURES_TPA,
+                SearchLocation.CHITIN,
+            )
+
+        resname_lower: str = resname.lower()
+        texture_types: tuple[ResourceType, ...] = (ResourceType.TPC, ResourceType.TGA)
+        capsules = [] if capsules is None else capsules
+        folders = [] if folders is None else folders
+
+        def decode_txi(txi_bytes: bytes) -> str:
+            return txi_bytes.decode("ascii", errors="ignore").strip()
+
+        def get_txi_from_list(case_resname: str, resource_list: list[FileResource]) -> str:
+            txi_resource: FileResource | None = next(
+                (resource for resource in resource_list if resource.restype() is ResourceType.TXI and resource.identifier().lower_resname == case_resname),
+                None,
+            )
+            if txi_resource is not None:
+                RobustLogger().debug("Found txi resource '%s' at %s", txi_resource.identifier(), txi_resource.filepath().relative_to(self._path.parent))
+                contents = decode_txi(txi_resource.data())
+                if contents and not contents.isascii():
+                    RobustLogger().warning("Texture TXI '%s' is not ascii! (found at %s)", txi_resource.identifier(), txi_resource.filepath())
+                return contents
+            RobustLogger().debug("'%s.txi' resource not found during texture lookup.", case_resname)
+            return ""
+
+        def build_result(resource: FileResource, resource_list: list[FileResource]) -> tuple[ResourceResult, str]:
+            txi_text = get_txi_from_list(resource.identifier().lower_resname, resource_list) if resource.restype() is ResourceType.TGA else ""
+            result = ResourceResult(resource.resname(), resource.restype(), resource.filepath(), resource.data())
+            result.set_file_resource(resource)
+            return result, txi_text
+
+        def check_dict(values: dict[str, list[FileResource]] | CaseInsensitiveDict[list[FileResource]]) -> tuple[ResourceResult | None, str]:
+            for resources in values.values():
+                result = check_list(resources)
+                if result[0] is not None:
+                    return result
+            return None, ""
+
+        def check_list(resource_list: list[FileResource]) -> tuple[ResourceResult | None, str]:
+            for resource in resource_list:
+                if resource.restype() not in texture_types:
+                    continue
+                if resource.identifier().lower_resname != resname_lower:
+                    continue
+                return build_result(resource, resource_list)
+            return None, ""
+
+        def check_capsules(values: Sequence[LazyCapsule]) -> tuple[ResourceResult | None, str]:
+            for capsule in values:
+                capsule_resources = capsule.resources()
+                for tformat in texture_types:
+                    info = capsule.info(resname, tformat)
+                    if info is None:
+                        continue
+                    data = capsule.resource(resname, tformat)
+                    if data is None:
+                        data = info.data()
+                    txi_text = get_txi_from_list(resname_lower, capsule_resources) if tformat is ResourceType.TGA else ""
+                    result = ResourceResult(info.resname(), info.restype(), capsule.filepath(), data)
+                    result.set_file_resource(info)
+                    return result, txi_text
+            return None, ""
+
+        def check_folders(resource_folders: list[Path]) -> tuple[ResourceResult | None, str]:
+            for folder in resource_folders:
+                for file in folder.rglob("*"):
+                    if not file.is_file():
+                        continue
+                    restype = ResourceType.from_extension(file.suffix)
+                    if restype not in texture_types:
+                        continue
+                    if file.stem.casefold() != resname_lower:
+                        continue
+                    data = file.read_bytes()
+                    txi_text = ""
+                    if restype is ResourceType.TGA:
+                        txi_path = file.with_suffix(".txi")
+                        if txi_path.is_file():
+                            txi_text = decode_txi(txi_path.read_bytes())
+                    file_res = FileResource(file.stem, restype, file.stat().st_size, 0, file)
+                    result = ResourceResult(file.stem, restype, file, data)
+                    result.set_file_resource(file_res)
+                    return result, txi_text
+            return None, ""
+
+        function_map: dict[SearchLocation, Callable[[], tuple[ResourceResult | None, str]]] = {
+            SearchLocation.OVERRIDE: lambda: check_dict(self._override),
+            SearchLocation.MODULES: lambda: check_dict(self._modules),
+            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks[TexturePackNames.TPA.value]),
+            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks[TexturePackNames.TPB.value]),
+            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks[TexturePackNames.TPC.value]),
+            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks[TexturePackNames.GUI.value]),
+            SearchLocation.CHITIN: lambda: check_list(self._chitin) or check_list(self._patch_erf),
+            SearchLocation.CUSTOM_MODULES: lambda: check_capsules(capsules),
+            SearchLocation.CUSTOM_FOLDERS: lambda: check_folders(folders),
+        }
+
+        for item in order:
+            assert isinstance(item, SearchLocation), f"{type(item).__name__}: {item}"
+            result, txi_text = function_map.get(item, lambda: (None, ""))()
+            if result is not None:
+                if logger:
+                    logger(f"Texture resource '{resname}' located at '{result.filepath}' via {item.name}")
+                return result, txi_text
+
+        return None, ""
+
     def texture(
         self,
         resname: str,
@@ -1593,8 +1723,8 @@ class Installation:
         -------
             TPC object or None.
         """
-        batch: CaseInsensitiveDict[TPC | None] = self.textures([resname], order, capsules=capsules, folders=folders, logger=logger)
-        return batch[resname] if batch else None
+        batch = self.textures([resname], order, capsules=capsules, folders=folders, logger=logger)
+        return batch.get(resname)
 
     def textures(
         self,
@@ -1629,101 +1759,16 @@ class Installation:
                 SearchLocation.TEXTURES_TPA,
                 SearchLocation.CHITIN,
             )
-        resnames = set(resnames)
-        case_resnames: set[str] = {resname.lower() for resname in resnames}
-        capsules = [] if capsules is None else capsules
-        folders = [] if folders is None else folders
-
         textures: CaseInsensitiveDict[TPC | None] = CaseInsensitiveDict()
-        texture_types: tuple[ResourceType, ...] = (ResourceType.TPC, ResourceType.TGA)
-
-        for resname in resnames:
-            textures[resname] = None
-
-        def decode_txi(txi_bytes: bytes) -> str:
-            return txi_bytes.decode("ascii", errors="ignore").strip()
-
-        def get_txi_from_list(case_resname: str, resource_list: list[FileResource]) -> str:
-            txi_resource: FileResource | None = next(
-                (resource for resource in resource_list if resource.restype() is ResourceType.TXI and resource.identifier().lower_resname == case_resname),
-                None,
-            )
-            if txi_resource is not None:
-                RobustLogger().debug("Found txi resource '%s' at %s", txi_resource.identifier(), txi_resource.filepath().relative_to(self._path.parent))
-                contents = decode_txi(txi_resource.data())
-                if contents and not contents.isascii():
-                    RobustLogger().warning("Texture TXI '%s' is not ascii! (found at %s)", txi_resource.identifier(), txi_resource.filepath())
-                return contents
-            RobustLogger().debug("'%s.txi' resource not found during texture lookup.", case_resname)
-            return ""
-
-        def check_dict(values: dict[str, list[FileResource]]):
-            for resources in values.values():
-                check_list(resources)
-
-        def check_list(resource_list: list[FileResource]):
-            for resource in resource_list:
-                if resource.restype() not in texture_types:
-                    continue
-                case_resname = resource.identifier().lower_resname
-                if case_resname not in case_resnames:
-                    continue
-                case_resnames.remove(case_resname)
-                tpc: TPC = read_tpc(resource.data())
-                if resource.restype() is ResourceType.TGA:
-                    tpc.txi = get_txi_from_list(case_resname, resource_list)
-                textures[case_resname] = tpc
-
-        def check_capsules(values: Sequence[LazyCapsule]):  # NOTE: This function does not support txi's in the Override folder.
-            for capsule in values:
-                for case_resname in copy(case_resnames):
-                    texture_data: bytes | None = None
-                    tformat: ResourceType | None = None
-                    for tformat in texture_types:
-                        texture_data = capsule.resource(case_resname, tformat)
-                        if texture_data is not None:
-                            break
-                    if texture_data is None:
-                        continue
-
-                    case_resnames.remove(case_resname)
-                    tpc: TPC = read_tpc(texture_data) if texture_data else TPC()
-                    if tformat is ResourceType.TGA:
-                        tpc.txi = get_txi_from_list(case_resname, capsule.resources())
-                    textures[case_resname] = tpc
-
-        def check_folders(resource_folders: list[Path]):
-            queried_texture_files: set[Path] = set()
-            for folder in resource_folders:
-                queried_texture_files.update(
-                    file
-                    for file in folder.rglob("*")
-                    if (file.stem.casefold() in case_resnames and ResourceType.from_extension(file.suffix) in texture_types and file.is_file())
-                )
-            for texture_file in queried_texture_files:
-                case_resnames.remove(texture_file.stem.casefold())
-                try:
-                    textures[texture_file.stem] = read_tpc(texture_file)
-                except (OSError, ValueError):
-                    RobustLogger().warning(f"Invalid/corrupted texture file: {texture_file}")
-                    continue
-
-        function_map: dict[SearchLocation, Callable] = {
-            SearchLocation.OVERRIDE: lambda: check_dict(self._override),
-            SearchLocation.MODULES: lambda: check_dict(self._modules),
-            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks[TexturePackNames.TPA.value]),
-            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks[TexturePackNames.TPB.value]),
-            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks[TexturePackNames.TPC.value]),
-            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks[TexturePackNames.GUI.value]),
-            SearchLocation.CHITIN: lambda: check_list(self._chitin) or check_list(self._patch_erf),
-            SearchLocation.CUSTOM_MODULES: lambda: check_capsules(capsules),
-            SearchLocation.CUSTOM_FOLDERS: lambda: check_folders(folders),
-        }
-
-        for item in order:
-            assert isinstance(item, SearchLocation), f"{type(item).__name__}: {item}"
-            function_map.get(item, lambda: None)()
-
+        for resname in set(resnames):
+            result, txi_text = self.texture_resource_result(resname, order, capsules=capsules, folders=folders, logger=logger)
+            if result is None:
+                textures[resname] = None
+                continue
+            tpc = read_tpc(result.data)
+            if result.restype is ResourceType.TGA and txi_text:
+                tpc.txi = txi_text
+            textures[resname] = tpc
         return textures
 
     def sound(
