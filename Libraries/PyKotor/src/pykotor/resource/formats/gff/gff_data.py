@@ -22,6 +22,7 @@ import difflib
 import math
 
 from contextlib import contextmanager
+from dataclasses import dataclass
 from copy import copy, deepcopy
 from enum import Enum, IntEnum
 from pathlib import PureWindowsPath
@@ -213,6 +214,19 @@ class GFFFieldType(IntEnum):
         raise ValueError(self)
 
 
+@dataclass(frozen=True)
+class GFFFieldView:
+    """Lightweight view over a GFF field (label, type, value).
+
+    Mirrors vendor/KotOR.js/src/resource/GFFStruct.ts:151-168 (getFields) but returns
+    immutable tuples instead of exposing internal storage directly.
+    """
+
+    label: str
+    type: GFFFieldType
+    value: Any
+
+
 class Difference:
     def __init__(
         self,
@@ -290,6 +304,15 @@ class GFF(ComparableMixin):
     ):
         self.content: GFFContent = content
         self.root: GFFStruct = GFFStruct(-1)
+
+    def fields(self) -> list[GFFFieldView]:
+        """Return the root struct fields in insertion order.
+
+        vendor/KotOR.js/src/resource/GFFStruct.ts:151-168 exposes getFields() on the
+        struct; we mirror that surface at the file level for convenience while returning
+        immutable views.
+        """
+        return self.root.fields()
 
     def print_tree(
         self,
@@ -537,6 +560,15 @@ class GFFStruct(ComparableMixin):
         """Iterates through the stored fields yielding each field's (label, type, value)."""
         for label, field in self._fields.items():
             yield label, field.field_type(), field.value()
+
+    def fields(self) -> list[GFFFieldView]:
+        """Return lightweight field views preserving insertion order.
+
+        vendor/KotOR.js/src/resource/GFFStruct.ts:151-168 exposes getFields() that
+        returns the underlying array; we instead project to immutable views so callers
+        cannot mutate `_fields` directly.
+        """
+        return [GFFFieldView(label or "", field.field_type(), field.value()) for label, field in self._fields.items()]
 
     def __getitem__(
         self,
