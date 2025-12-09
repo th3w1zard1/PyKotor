@@ -16,12 +16,16 @@ from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, read_tpc, write_
 from pykotor.resource.type import ResourceType  # type: ignore[import-not-found]
 from PIL import Image
 import io
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pytestqt.qtbot import QtBot
 
 # ============================================================================
 # BASIC TESTS
 # ============================================================================
 
-def test_tpc_editor_new_file_creation(qtbot, installation: HTInstallation):
+def test_tpc_editor_new_file_creation(qtbot: QtBot, installation: HTInstallation):
     """Test creating a new TPC file from scratch."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -37,7 +41,7 @@ def test_tpc_editor_new_file_creation(qtbot, installation: HTInstallation):
     assert editor._current_mipmap == 0
     assert editor._zoom_factor == 1.0
 
-def test_tpc_editor_initialization(qtbot, installation: HTInstallation):
+def test_tpc_editor_initialization(qtbot: QtBot, installation: HTInstallation):
     """Test editor initialization."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -54,7 +58,7 @@ def test_tpc_editor_initialization(qtbot, installation: HTInstallation):
 # ZOOM TESTS
 # ============================================================================
 
-def test_tpc_editor_zoom_slider(qtbot, installation: HTInstallation):
+def test_tpc_editor_zoom_slider(qtbot: QtBot, installation: HTInstallation):
     """Test zoom slider manipulation."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -73,7 +77,7 @@ def test_tpc_editor_zoom_slider(qtbot, installation: HTInstallation):
         # Verify zoom factor was updated
         assert abs(editor._zoom_factor - (zoom / 100.0)) < 0.01
 
-def test_tpc_editor_zoom_in(qtbot, installation: HTInstallation):
+def test_tpc_editor_zoom_in(qtbot: QtBot, installation: HTInstallation):
     """Test zoom in functionality."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -88,7 +92,7 @@ def test_tpc_editor_zoom_in(qtbot, installation: HTInstallation):
     assert editor._zoom_factor > initial_zoom
     assert editor.ui.zoomSlider.value() > 100
 
-def test_tpc_editor_zoom_out(qtbot, installation: HTInstallation):
+def test_tpc_editor_zoom_out(qtbot: QtBot, installation: HTInstallation):
     """Test zoom out functionality."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -105,7 +109,7 @@ def test_tpc_editor_zoom_out(qtbot, installation: HTInstallation):
     assert editor._zoom_factor < 2.0
     assert editor.ui.zoomSlider.value() < 200
 
-def test_tpc_editor_zoom_fit(qtbot, installation: HTInstallation):
+def test_tpc_editor_zoom_fit(qtbot: QtBot, installation: HTInstallation):
     """Test zoom fit functionality."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -121,7 +125,7 @@ def test_tpc_editor_zoom_fit(qtbot, installation: HTInstallation):
     # Verify fit to window is enabled
     assert editor._fit_to_window
 
-def test_tpc_editor_zoom_reset(qtbot, installation: HTInstallation):
+def test_tpc_editor_zoom_reset(qtbot: QtBot, installation: HTInstallation):
     """Test zoom reset to 100%."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -143,7 +147,7 @@ def test_tpc_editor_zoom_reset(qtbot, installation: HTInstallation):
 # FRAME NAVIGATION TESTS
 # ============================================================================
 
-def test_tpc_editor_frame_navigation(qtbot, installation: HTInstallation):
+def test_tpc_editor_frame_navigation(qtbot: QtBot, installation: HTInstallation):
     """Test frame navigation buttons."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -166,7 +170,7 @@ def test_tpc_editor_frame_navigation(qtbot, installation: HTInstallation):
 # MIPMAP NAVIGATION TESTS
 # ============================================================================
 
-def test_tpc_editor_mipmap_navigation(qtbot, installation: HTInstallation):
+def test_tpc_editor_mipmap_navigation(qtbot: QtBot, installation: HTInstallation):
     """Test mipmap navigation."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -186,7 +190,7 @@ def test_tpc_editor_mipmap_navigation(qtbot, installation: HTInstallation):
     qtbot.wait(10)
     assert editor._current_mipmap == 1
 
-def test_tpc_editor_mipmap_changed_signal(qtbot, installation: HTInstallation):
+def test_tpc_editor_mipmap_changed_signal(qtbot: QtBot, installation: HTInstallation):
     """Test mipmap changed signal connection."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -198,7 +202,7 @@ def test_tpc_editor_mipmap_changed_signal(qtbot, installation: HTInstallation):
 # ALPHA TEST TESTS
 # ============================================================================
 
-def test_tpc_editor_alpha_test_spinbox(qtbot, installation: HTInstallation):
+def test_tpc_editor_alpha_test_spinbox(qtbot: QtBot, installation: HTInstallation):
     """Test alpha test spinbox."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -215,7 +219,7 @@ def test_tpc_editor_alpha_test_spinbox(qtbot, installation: HTInstallation):
         # Verify value was set (alpha test is visual, but value should update)
         assert editor.ui.alphaTestSpinBox.value() == val
 
-def test_tpc_editor_alpha_test_signal(qtbot, installation: HTInstallation):
+def test_tpc_editor_alpha_test_signal(qtbot: QtBot, installation: HTInstallation):
     """Test alpha test changed signal connection."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -227,7 +231,7 @@ def test_tpc_editor_alpha_test_signal(qtbot, installation: HTInstallation):
 # UI ELEMENT TESTS
 # ============================================================================
 
-def test_tpc_editor_ui_elements_exist(qtbot, installation: HTInstallation):
+def test_tpc_editor_ui_elements_exist(qtbot: QtBot, installation: HTInstallation):
     """Test that all UI elements exist."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -243,7 +247,7 @@ def test_tpc_editor_ui_elements_exist(qtbot, installation: HTInstallation):
     assert hasattr(editor.ui, 'mipmapSpinBox')
     assert hasattr(editor.ui, 'alphaTestSpinBox')
 
-def test_tpc_editor_dock_widgets_exist(qtbot, installation: HTInstallation):
+def test_tpc_editor_dock_widgets_exist(qtbot: QtBot, installation: HTInstallation):
     """Test that dock widgets exist."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -256,7 +260,7 @@ def test_tpc_editor_dock_widgets_exist(qtbot, installation: HTInstallation):
 # MENU ACTION TESTS
 # ============================================================================
 
-def test_tpc_editor_menu_actions_exist(qtbot, installation: HTInstallation):
+def test_tpc_editor_menu_actions_exist(qtbot: QtBot, installation: HTInstallation):
     """Test that all menu actions exist."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -286,7 +290,7 @@ def test_tpc_editor_menu_actions_exist(qtbot, installation: HTInstallation):
 # TRANSFORMATION TESTS
 # ============================================================================
 
-def test_tpc_editor_rotate_left_method(qtbot, installation: HTInstallation):
+def test_tpc_editor_rotate_left_method(qtbot: QtBot, installation: HTInstallation):
     """Test rotate left method exists and is callable."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -298,7 +302,7 @@ def test_tpc_editor_rotate_left_method(qtbot, installation: HTInstallation):
     # Call it (won't crash even with no texture)
     editor._rotate_left()
 
-def test_tpc_editor_rotate_right_method(qtbot, installation: HTInstallation):
+def test_tpc_editor_rotate_right_method(qtbot: QtBot, installation: HTInstallation):
     """Test rotate right method exists and is callable."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -310,7 +314,7 @@ def test_tpc_editor_rotate_right_method(qtbot, installation: HTInstallation):
     # Call it
     editor._rotate_right()
 
-def test_tpc_editor_flip_horizontal_method(qtbot, installation: HTInstallation):
+def test_tpc_editor_flip_horizontal_method(qtbot: QtBot, installation: HTInstallation):
     """Test flip horizontal method exists and is callable."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -322,7 +326,7 @@ def test_tpc_editor_flip_horizontal_method(qtbot, installation: HTInstallation):
     # Call it
     editor._flip_horizontal()
 
-def test_tpc_editor_flip_vertical_method(qtbot, installation: HTInstallation):
+def test_tpc_editor_flip_vertical_method(qtbot: QtBot, installation: HTInstallation):
     """Test flip vertical method exists and is callable."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -338,7 +342,7 @@ def test_tpc_editor_flip_vertical_method(qtbot, installation: HTInstallation):
 # CLIPBOARD TESTS
 # ============================================================================
 
-def test_tpc_editor_copy_method(qtbot, installation: HTInstallation):
+def test_tpc_editor_copy_method(qtbot: QtBot, installation: HTInstallation):
     """Test copy to clipboard method exists."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -350,7 +354,7 @@ def test_tpc_editor_copy_method(qtbot, installation: HTInstallation):
     # Call it (will show warning if no texture, but won't crash)
     editor._copy_to_clipboard()
 
-def test_tpc_editor_paste_method(qtbot, installation: HTInstallation):
+def test_tpc_editor_paste_method(qtbot: QtBot, installation: HTInstallation):
     """Test paste from clipboard method exists."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -366,7 +370,7 @@ def test_tpc_editor_paste_method(qtbot, installation: HTInstallation):
 # DOCK WIDGET TESTS
 # ============================================================================
 
-def test_tpc_editor_toggle_txi_editor(qtbot, installation: HTInstallation):
+def test_tpc_editor_toggle_txi_editor(qtbot: QtBot, installation: HTInstallation):
     """Test toggle TXI editor dock widget."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -375,18 +379,18 @@ def test_tpc_editor_toggle_txi_editor(qtbot, installation: HTInstallation):
     initial_visible = editor.ui.txiDockWidget.isVisible()
     
     # Toggle
-    editor._toggle_txi_editor()
+    editor._toggle_txi_editor(not initial_visible)
     qtbot.wait(10)
     
     # Verify visibility changed
     assert editor.ui.txiDockWidget.isVisible() != initial_visible
     
     # Toggle back
-    editor._toggle_txi_editor()
+    editor._toggle_txi_editor(initial_visible)
     qtbot.wait(10)
     assert editor.ui.txiDockWidget.isVisible() == initial_visible
 
-def test_tpc_editor_toggle_properties(qtbot, installation: HTInstallation):
+def test_tpc_editor_toggle_properties(qtbot: QtBot, installation: HTInstallation):
     """Test toggle properties dock widget."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -395,14 +399,14 @@ def test_tpc_editor_toggle_properties(qtbot, installation: HTInstallation):
     initial_visible = editor.ui.propertiesDockWidget.isVisible()
     
     # Toggle
-    editor._toggle_properties()
+    editor._toggle_properties(not initial_visible)
     qtbot.wait(10)
     
     # Verify visibility changed
     assert editor.ui.propertiesDockWidget.isVisible() != initial_visible
     
     # Toggle back
-    editor._toggle_properties()
+    editor._toggle_properties(initial_visible)
     qtbot.wait(10)
     assert editor.ui.propertiesDockWidget.isVisible() == initial_visible
 
@@ -410,7 +414,7 @@ def test_tpc_editor_toggle_properties(qtbot, installation: HTInstallation):
 # CONTEXT MENU TESTS
 # ============================================================================
 
-def test_tpc_editor_context_menu_policy(qtbot, installation: HTInstallation):
+def test_tpc_editor_context_menu_policy(qtbot: QtBot, installation: HTInstallation):
     """Test context menu is enabled on texture label."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -425,7 +429,7 @@ def test_tpc_editor_context_menu_policy(qtbot, installation: HTInstallation):
 # BUILD/LOAD TESTS
 # ============================================================================
 
-def test_tpc_editor_build_method(qtbot, installation: HTInstallation):
+def test_tpc_editor_build_method(qtbot: QtBot, installation: HTInstallation):
     """Test build method returns data."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -439,7 +443,7 @@ def test_tpc_editor_build_method(qtbot, installation: HTInstallation):
     assert isinstance(data, bytes)
     assert isinstance(data_ext, bytes)
 
-def test_tpc_editor_new_file_defaults(qtbot, installation: HTInstallation):
+def test_tpc_editor_new_file_defaults(qtbot: QtBot, installation: HTInstallation):
     """Test new file has correct defaults."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -458,7 +462,7 @@ def test_tpc_editor_new_file_defaults(qtbot, installation: HTInstallation):
 # STATUS BAR TESTS
 # ============================================================================
 
-def test_tpc_editor_status_bar_update(qtbot, installation: HTInstallation):
+def test_tpc_editor_status_bar_update(qtbot: QtBot, installation: HTInstallation):
     """Test status bar update method exists."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -475,7 +479,7 @@ def test_tpc_editor_status_bar_update(qtbot, installation: HTInstallation):
 # PROPERTIES PANEL TESTS
 # ============================================================================
 
-def test_tpc_editor_properties_panel_update(qtbot, installation: HTInstallation):
+def test_tpc_editor_properties_panel_update(qtbot: QtBot, installation: HTInstallation):
     """Test properties panel update method exists."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -492,7 +496,7 @@ def test_tpc_editor_properties_panel_update(qtbot, installation: HTInstallation)
 # DRAG AND DROP TESTS
 # ============================================================================
 
-def test_tpc_editor_drag_support(qtbot, installation: HTInstallation):
+def test_tpc_editor_drag_support(qtbot: QtBot, installation: HTInstallation):
     """Test drag and drop is set up."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -508,7 +512,7 @@ def test_tpc_editor_drag_support(qtbot, installation: HTInstallation):
 # FORMAT CONVERSION TESTS
 # ============================================================================
 
-def test_tpc_editor_convert_format_method(qtbot, installation: HTInstallation):
+def test_tpc_editor_convert_format_method(qtbot: QtBot, installation: HTInstallation):
     """Test convert format method exists."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -524,7 +528,7 @@ def test_tpc_editor_convert_format_method(qtbot, installation: HTInstallation):
 # EXPORT TESTS
 # ============================================================================
 
-def test_tpc_editor_export_method(qtbot, installation: HTInstallation):
+def test_tpc_editor_export_method(qtbot: QtBot, installation: HTInstallation):
     """Test export method exists."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -540,7 +544,7 @@ def test_tpc_editor_export_method(qtbot, installation: HTInstallation):
 # SIGNAL SETUP TESTS
 # ============================================================================
 
-def test_tpc_editor_signals_connected(qtbot, installation: HTInstallation):
+def test_tpc_editor_signals_connected(qtbot: QtBot, installation: HTInstallation):
     """Test that signals are properly connected."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -560,7 +564,7 @@ def test_tpc_editor_signals_connected(qtbot, installation: HTInstallation):
 # EDGE CASES
 # ============================================================================
 
-def test_tpc_editor_empty_tpc_handling(qtbot, installation: HTInstallation):
+def test_tpc_editor_empty_tpc_handling(qtbot: QtBot, installation: HTInstallation):
     """Test handling of empty TPC."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -572,7 +576,7 @@ def test_tpc_editor_empty_tpc_handling(qtbot, installation: HTInstallation):
     assert isinstance(data, bytes)
     assert len(data) >= 0
 
-def test_tpc_editor_zoom_limits(qtbot, installation: HTInstallation):
+def test_tpc_editor_zoom_limits(qtbot: QtBot, installation: HTInstallation):
     """Test zoom limits are enforced."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -602,7 +606,7 @@ def test_tpc_editor_without_installation(qtbot):
 # MULTIPLE OPERATIONS TESTS
 # ============================================================================
 
-def test_tpc_editor_multiple_zoom_operations(qtbot, installation: HTInstallation):
+def test_tpc_editor_multiple_zoom_operations(qtbot: QtBot, installation: HTInstallation):
     """Test multiple zoom operations."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -623,7 +627,7 @@ def test_tpc_editor_multiple_zoom_operations(qtbot, installation: HTInstallation
     # Verify zoom decreased (may be at minimum)
     assert editor._zoom_factor >= editor.ui.zoomSlider.minimum() / 100.0
 
-def test_tpc_editor_multiple_transformations(qtbot, installation: HTInstallation):
+def test_tpc_editor_multiple_transformations(qtbot: QtBot, installation: HTInstallation):
     """Test multiple transformations."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -641,7 +645,7 @@ def test_tpc_editor_multiple_transformations(qtbot, installation: HTInstallation
 # UI STATE TESTS
 # ============================================================================
 
-def test_tpc_editor_ui_state_persistence(qtbot, installation: HTInstallation):
+def test_tpc_editor_ui_state_persistence(qtbot: QtBot, installation: HTInstallation):
     """Test UI state persists across operations."""
     editor = TPCEditor(None, installation)
     qtbot.addWidget(editor)
@@ -669,7 +673,7 @@ def test_tpc_editor_ui_state_persistence(qtbot, installation: HTInstallation):
 # ============================================================================
 
 
-def test_tpceditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
+def test_tpceditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation):
     """Test that TPCEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog
     
