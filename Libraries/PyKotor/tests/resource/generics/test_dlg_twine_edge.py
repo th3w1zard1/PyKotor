@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -39,7 +38,7 @@ def test_empty_dialog(
     assert len(loaded_dlg.all_replies()) == 0
 
 
-def test_circular_references():
+def test_circular_references(tmp_path: Path):
     """Test handling of circular references between nodes."""
     dlg = DLG()
 
@@ -58,9 +57,9 @@ def test_circular_references():
     dlg.starters.append(DLGLink(entry1))
 
     # Should not cause infinite recursion
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name)
-        loaded_dlg: DLG = read_twine(f.name)
+    path = tmp_path / "circular.json"
+    write_twine(dlg, path, fmt="json")
+    loaded_dlg: DLG = read_twine(path)
 
         # Verify structure preserved
         assert len(loaded_dlg.starters) == 1
@@ -73,7 +72,7 @@ def test_circular_references():
         assert isinstance(loaded_reply.links[0].node, DLGEntry)
 
 
-def test_special_characters():
+def test_special_characters(tmp_path: Path):
     """Test handling of special characters in text and metadata."""
     dlg = DLG()
     entry = DLGEntry()
@@ -83,9 +82,9 @@ def test_special_characters():
     dlg.starters.append(DLGLink(entry))
 
     # Write and read back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name)
-        loaded_dlg: DLG = read_twine(f.name)
+    path = tmp_path / "special.json"
+    write_twine(dlg, path, fmt="json")
+    loaded_dlg: DLG = read_twine(path)
 
         # Verify special chars preserved
         loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
@@ -96,7 +95,7 @@ def test_special_characters():
         assert metadata["custom"] == "Value with <tags> & special chars"
 
 
-def test_multiple_languages():
+def test_multiple_languages(tmp_path: Path):
     """Test handling of multiple languages in node text."""
     dlg = DLG()
     entry = DLGEntry()
@@ -107,9 +106,9 @@ def test_multiple_languages():
     dlg.starters.append(DLGLink(entry))
 
     # Write and read back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name)
-        loaded_dlg: DLG = read_twine(f.name)
+    path = tmp_path / "multi.json"
+    write_twine(dlg, path, fmt="json")
+    loaded_dlg: DLG = read_twine(path)
 
         # Verify all languages preserved
         loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
@@ -119,7 +118,7 @@ def test_multiple_languages():
         assert loaded_entry.text.get(Language.GERMAN, Gender.MALE) == "German text"
 
 
-def test_invalid_metadata():
+def test_invalid_metadata(tmp_path: Path):
     """Test handling of invalid metadata in comments."""
     dlg = DLG()
     entry = DLGEntry()
@@ -128,13 +127,13 @@ def test_invalid_metadata():
     dlg.starters.append(DLGLink(entry))
 
     # Should not raise exception
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name)
-        loaded_dlg: DLG = read_twine(f.name)
+    path = tmp_path / "invalid.json"
+    write_twine(dlg, path, fmt="json")
+    loaded_dlg: DLG = read_twine(path)
         assert len(loaded_dlg.starters) == 1
 
 
-def test_missing_required_fields():
+def test_missing_required_fields(tmp_path: Path):
     """Test handling of missing required fields in Twine format."""
     # Create minimal JSON without required fields
     minimal_json: dict[str, list[dict[str, str]]] = {
@@ -146,15 +145,14 @@ def test_missing_required_fields():
         ]
     }
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        json.dump(minimal_json, f)
-        f.flush()
-        # Should not raise exception
-        dlg: DLG = read_twine(f.name)
-        assert len(dlg.all_entries()) + len(dlg.all_replies()) > 0
+    path = tmp_path / "missing_fields.json"
+    path.write_text(json.dumps(minimal_json), encoding="utf-8")
+    # Should not raise exception
+    dlg: DLG = read_twine(path)
+    assert len(dlg.all_entries()) + len(dlg.all_replies()) > 0
 
 
-def test_duplicate_passage_names():
+def test_duplicate_passage_names(tmp_path: Path):
     """Test handling of duplicate passage names in Twine format."""
     dlg = DLG()
 
@@ -176,9 +174,9 @@ def test_duplicate_passage_names():
     dlg.starters.append(DLGLink(entry1))
 
     # Write and read back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name)
-        loaded_dlg: DLG = read_twine(f.name)
+    path = tmp_path / "dup.json"
+    write_twine(dlg, path, fmt="json")
+    loaded_dlg: DLG = read_twine(path)
 
         # Verify structure preserved
         assert len(loaded_dlg.starters) == 1
@@ -186,7 +184,7 @@ def test_duplicate_passage_names():
         assert len(loaded_dlg.all_replies()) == 1
 
 
-def test_empty_text():
+def test_empty_text(tmp_path: Path):
     """Test handling of empty or None text in nodes."""
     dlg = DLG()
 
@@ -196,9 +194,9 @@ def test_empty_text():
     dlg.starters.append(DLGLink(entry))
 
     # Write and read back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name)
-        loaded_dlg: DLG = read_twine(f.name)
+    path = tmp_path / "empty_text.json"
+    write_twine(dlg, path, fmt="json")
+    loaded_dlg: DLG = read_twine(path)
 
         # Verify empty text handled
         loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)
@@ -206,7 +204,7 @@ def test_empty_text():
         assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == ""
 
 
-def test_large_dialog():
+def test_large_dialog(tmp_path: Path):
     """Test handling of large dialog structures."""
     dlg = DLG()
     prev_entry: DLGEntry | None = None
@@ -228,16 +226,16 @@ def test_large_dialog():
         prev_entry = entry
 
     # Write and read back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name)
-        loaded_dlg: DLG = read_twine(f.name)
+    path = tmp_path / "large.json"
+    write_twine(dlg, path, fmt="json")
+    loaded_dlg: DLG = read_twine(path)
 
         # Verify structure preserved
         assert len(loaded_dlg.all_entries()) == 1000
         assert len(loaded_dlg.all_replies()) == 999  # One less reply than entries
 
 
-def test_unicode_characters():
+def test_unicode_characters(tmp_path: Path):
     """Test handling of Unicode characters in text and metadata."""
     dlg = DLG()
     entry = DLGEntry()
@@ -253,9 +251,9 @@ def test_unicode_characters():
     dlg.starters.append(DLGLink(entry))
 
     # Write and read back
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".json") as f:
-        write_twine(dlg, f.name)
-        loaded_dlg: DLG = read_twine(f.name)
+    path = tmp_path / "unicode.json"
+    write_twine(dlg, path, fmt="json")
+    loaded_dlg: DLG = read_twine(path)
 
         # Verify Unicode preserved
         loaded_entry: DLGEntry = cast(DLGEntry, loaded_dlg.starters[0].node)

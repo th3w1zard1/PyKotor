@@ -74,18 +74,26 @@ def read_twine(path: str | Path) -> DLG:
 def write_twine(
     dlg: DLG,
     path: str | Path,
-    fmt: Format = "html",
+    fmt: Format | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> None:
+    """Write a dialog to Twine format.
+
+    If ``fmt`` is not provided, infer it from the file extension: ``.json`` writes
+    JSON, anything else writes HTML. This keeps writer behaviour intuitive for the
+    test suite (which passes ``*.json`` paths) and avoids surprising HTML output.
+    """
     path = Path(path)
+    inferred_fmt: Format = fmt or ("json" if path.suffix.lower() == ".json" else "html")
+
     story: TwineStory = _dlg_to_story(dlg, metadata)
 
-    if fmt == "json":
+    if inferred_fmt == "json":
         _write_json(story, path)
-    elif fmt == "html":
+    elif inferred_fmt == "html":
         _write_html(story, path)
     else:
-        raise ValueError(f"Invalid format: {fmt}")
+        raise ValueError(f"Invalid format: {inferred_fmt}")
 
 
 def _read_json(content: str) -> TwineStory:
@@ -395,59 +403,81 @@ def _dlg_to_story(
     story: TwineStory = TwineStory(metadata=story_meta, passages=[])
     converter: FormatConverter = FormatConverter()
 
-    # Track processed nodes to handle cycles
+    # Track processed nodes to handle cycles without recursion depth issues
     processed: set[DLGEntry | DLGReply] = set()
     node_to_passage: dict[DLGEntry | DLGReply, TwinePassage] = {}
+    name_registry: dict[str, int] = {}
+    node_names: dict[DLGEntry | DLGReply, str] = {}
 
-    def process_node(
-        node: DLGEntry | DLGReply,
-        pid: str,
-    ) -> TwinePassage:
-        """Process a node and its links recursively."""
-        if node in processed:
+    def _assign_name(node: DLGEntry | DLGReply) -> str:
+        """Assign a unique, stable passage name for a node."""
+        if node in node_names:
+            return node_names[node]
+
+        base = node.speaker if isinstance(node, DLGEntry) and node.speaker else "Entry" if isinstance(node, DLGEntry) else "Reply"
+        count = name_registry.get(base, 0)
+        name_registry[base] = count + 1
+        name = base if count == 0 else f"{base}_{count}"
+        node_names[node] = name
+        return name
+
+    def _ensure_passage(node: DLGEntry | DLGReply, pid: str) -> TwinePassage:
+        """Create a passage for the node if it does not exist yet."""
+        if node in node_to_passage:
             return node_to_passage[node]
 
-        processed.add(node)
-
-        # Create passage
         passage: TwinePassage = TwinePassage(
-            name=node.speaker if isinstance(node, DLGEntry) else f"Reply_{len(processed)}",
+            name=_assign_name(node),
             text=node.text.get(Language.ENGLISH, Gender.MALE) or "",
             type=PassageType.ENTRY if isinstance(node, DLGEntry) else PassageType.REPLY,
             pid=pid,
             tags=["entry"] if isinstance(node, DLGEntry) else ["reply"],
         )
-
-        # Store metadata
         converter.store_kotor_metadata(passage, node)
-
-        # Process links
-        for link in node.links:
-            if link.node is None:
-                continue
-
-            target: TwinePassage = process_node(link.node, str(uuid.uuid4()))
-            passage.links.append(
-                TwineLink(
-                    text="Continue",
-                    target=target.name,
-                    is_child=link.is_child,
-                    active_script=str(link.active1),
-                ),
-            )
-
-        story.passages.append(passage)
         node_to_passage[node] = passage
+        story.passages.append(passage)
         return passage
 
-    # Process all nodes starting from starters
+    # Process all nodes starting from starters using an explicit stack to avoid recursion limits
     for i, link in enumerate(dlg.starters):
         if link.node is None:
             continue
 
-        passage: TwinePassage = process_node(link.node, str(i + 1))
-        if i == 0:  # Set first node as starting node
-            story.start_pid = passage.pid
+        stack: list[tuple[DLGEntry | DLGReply, str]] = [(link.node, str(i + 1))]
+        start_passage: TwinePassage | None = None
+
+        while stack:
+            current_node, pid = stack.pop()
+            passage = _ensure_passage(current_node, pid)
+
+            if current_node not in processed:
+                processed.add(current_node)
+
+                for child_link in current_node.links:
+                    if child_link.node is None:
+                        continue
+
+                    target_node = child_link.node
+                    target_pid = str(uuid.uuid4())
+                    target_passage = _ensure_passage(target_node, target_pid)
+
+                    passage.links.append(
+                        TwineLink(
+                            text="Continue",
+                            target=target_passage.name,
+                            is_child=child_link.is_child,
+                            active_script=str(child_link.active1),
+                        ),
+                    )
+
+                    if target_node not in processed:
+                        stack.append((target_node, target_pid))
+
+            if start_passage is None:
+                start_passage = passage
+
+        if i == 0 and start_passage is not None:
+            story.start_pid = start_passage.pid
 
     # Restore Twine metadata
     converter.restore_twine_metadata(dlg, story)
