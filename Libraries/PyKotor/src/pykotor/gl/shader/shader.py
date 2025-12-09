@@ -166,6 +166,9 @@ class Shader:
         self._uniform_cache: dict[str, int] = {}
 
     def use(self):
+        if not HAS_PYOPENGL:
+            from pykotor.gl.compat import MissingPyOpenGLError
+            raise MissingPyOpenGLError("PyOpenGL is required for legacy Shader class. Use ModernGLRenderer instead.")
         glUseProgram(self._id)
 
     def uniform(
