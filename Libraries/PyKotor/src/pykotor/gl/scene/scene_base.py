@@ -101,13 +101,13 @@ class SceneBase:
         # Store texture lookup results from existing lookups for reuse (no additional lookups)
         # CRITICAL: Every texture in self.textures MUST have an entry in texture_lookup_info
         self.texture_lookup_info: CaseInsensitiveDict[dict[str, Any]] = CaseInsensitiveDict()
-        # "NULL" is a sentinel value (not a real texture file), so store special lookup info
+        # "NULL" is a sentinel (not a real texture); store explicit lookup info to satisfy invariants
         self.texture_lookup_info["NULL"] = {
             "filepath": None,
             "found": False,
             "restype": None,
             "search_order": [],
-            "is_sentinel": True,  # Mark as sentinel value, not a real texture
+            "is_sentinel": True,
         }
         # Track texture names that are requested during rendering (populated by scene.texture() calls)
         self.requested_texture_names: set[str] = set()
@@ -619,7 +619,10 @@ class SceneBase:
             if lookup_info.get("is_sentinel"):
                 RobustLogger().debug("Texture 'NULL' returned from cache (sentinel value, not a real texture file)")
             else:
-                RobustLogger().debug(f"Texture '{name}' returned from cache (already loaded), lookup_info: found={lookup_info.get('found')}, filepath={lookup_info.get('filepath')}")
+                RobustLogger().debug(
+                    f"Texture '{name}' returned from cache (already loaded), "
+                    f"lookup_info: found={lookup_info.get('found')}, filepath={lookup_info.get('filepath')}"
+                )
             return tex
         
         # Already loading?
