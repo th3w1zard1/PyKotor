@@ -44,6 +44,8 @@ def get_model(
         placeables_2da = read_2da(result.data)
     elif not isinstance(placeables, TwoDA):
         placeables_2da = read_2da(placeables)
+    else:
+        placeables_2da = placeables
 
     return placeables_2da.get_row(utp.appearance_id).get_string("modelname")
 
@@ -132,6 +134,7 @@ def extract_placeable_walkmesh(
     """
     if logger is None:
         logger = RobustLogger()
+    placeable_model_name: str | None = None
     
     try:
         utp = read_utp(utp_data)
@@ -179,5 +182,6 @@ def extract_placeable_walkmesh(
         except Exception:  # noqa: BLE001
             logger.debug(f"PWK '{placeable_model_name}' not found, skip it", exc_info=True)
     except Exception:  # noqa: BLE001
-        logger.debug(f"Could not extract PWK walkmesh for '{placeable_model_name}'", exc_info=True)
+        safe_name = placeable_model_name or "<unknown>"
+        logger.debug(f"Could not extract PWK walkmesh for '{safe_name}'", exc_info=True)
     return None
