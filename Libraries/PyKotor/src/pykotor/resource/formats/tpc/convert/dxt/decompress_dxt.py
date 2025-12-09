@@ -205,7 +205,7 @@ def dxt5_to_rgba(
                     elif alpha_index == 1:
                         alpha = alpha1
                     elif alpha0 > alpha1:
-                        alpha: int = interpolate_alpha(alpha0, alpha1, alpha_index / 7)
+                        alpha = interpolate_alpha(alpha0, alpha1, alpha_index / 7)
                     elif alpha_index == 6:  # noqa: PLR2004
                         alpha = 0
                     elif alpha_index == 7:  # noqa: PLR2004

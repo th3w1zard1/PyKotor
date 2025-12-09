@@ -125,7 +125,7 @@ def _compress_alpha_block_dxt5(
             code = 7
         else:
             t: int = (alpha[i] - min_a) * 7 // (max_a - min_a)
-            code: int = min(7, t)
+            code = min(7, t)
 
         indices |= code << (3 * i)
 
@@ -155,7 +155,7 @@ def _compress_color_block(
             lastmask: int = mask
             if refine_block(src, max16, min16, mask):
                 if max16 != min16:
-                    color: list[int] = eval_colors(max16, min16)
+                    color = eval_colors(max16, min16)
                     mask = match_colors_block(src, color)
                 else:
                     mask = 0
@@ -237,9 +237,9 @@ def optimize_colors_block(block: list[int]) -> tuple[int, int]:
     vfb: int = max_color[2] - min_color[2]
 
     for _ in range(4):  # Power iteration
-        r: int = vfr * cov[0] + vfg * cov[1] + vfb * cov[2]
-        g: int = vfr * cov[1] + vfg * cov[3] + vfb * cov[4]
-        b: int = vfr * cov[2] + vfg * cov[4] + vfb * cov[5]
+        r = vfr * cov[0] + vfg * cov[1] + vfb * cov[2]
+        g = vfr * cov[1] + vfg * cov[3] + vfb * cov[4]
+        b = vfr * cov[2] + vfg * cov[4] + vfb * cov[5]
         vfr, vfg, vfb = r, g, b
 
     magn: int = max(abs(vfr), abs(vfg), abs(vfb))
@@ -356,9 +356,9 @@ def refine_block(
         at2_b += b
         mask >>= 2
 
-    at2_r: int = 3 * at2_r - at1_r
-    at2_g: int = 3 * at2_g - at1_g
-    at2_b: int = 3 * at2_b - at1_b
+    at2_r = 3 * at2_r - at1_r
+    at2_g = 3 * at2_g - at1_g
+    at2_b = 3 * at2_b - at1_b
 
     xx: int = akku >> 16
     yy: int = (akku >> 8) & 255
