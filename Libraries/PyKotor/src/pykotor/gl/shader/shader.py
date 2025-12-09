@@ -4,11 +4,13 @@ from typing import TYPE_CHECKING
 
 import glm
 
-from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func
+from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func
 
 HAS_PYOPENGL = has_pyopengl()
+HAS_MODERNGL = has_moderngl()
+USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 
-if HAS_PYOPENGL:
+if USE_PYOPENGL:
     from OpenGL.GL import glGetUniformLocation, glUniform3fv, glUniform4fv, glUniformMatrix4fv, shaders  # pyright: ignore[reportMissingImports]
     from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.VERSION.GL_2_0 import GL_FRAGMENT_SHADER, GL_VERTEX_SHADER, glUniform1i, glUseProgram  # pyright: ignore[reportMissingImports]
@@ -156,7 +158,7 @@ class Shader:
         vshader: str,
         fshader: str,
     ):
-        if not HAS_PYOPENGL or shaders is None:
+        if not USE_PYOPENGL or shaders is None:
             from pykotor.gl.compat import MissingPyOpenGLError
             raise MissingPyOpenGLError("PyOpenGL is required for legacy Shader class. Use ModernGLRenderer instead.")
         vertex_shader: int = shaders.compileShader(vshader, GL_VERTEX_SHADER)
@@ -166,7 +168,7 @@ class Shader:
         self._uniform_cache: dict[str, int] = {}
 
     def use(self):
-        if not HAS_PYOPENGL:
+        if not USE_PYOPENGL:
             from pykotor.gl.compat import MissingPyOpenGLError
             raise MissingPyOpenGLError("PyOpenGL is required for legacy Shader class. Use ModernGLRenderer instead.")
         glUseProgram(self._id)

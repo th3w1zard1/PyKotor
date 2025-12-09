@@ -10,12 +10,14 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
+from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
 
 HAS_PYOPENGL = has_pyopengl()
+HAS_MODERNGL = has_moderngl()
+USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 gl_error = safe_gl_error_module()
 
-if HAS_PYOPENGL:
+if USE_PYOPENGL:
     from OpenGL import error as gl_error  # pyright: ignore[reportMissingImports]
     from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer
     from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
@@ -285,7 +287,7 @@ class Mesh:
         self._index_data: bytes = bytes(element_data)
         self._vertex_blob_cache: bytes | None = None
 
-        if HAS_PYOPENGL:
+        if USE_PYOPENGL:
             self._vao: int = glGenVertexArrays(1)
             self._vbo: int = glGenBuffers(1)
             self._ebo: int = glGenBuffers(1)
@@ -449,7 +451,7 @@ class Cube:
         self._face_count: int = len(elements)
         self._buffers_supported = False
 
-        if HAS_PYOPENGL:
+        if USE_PYOPENGL:
             try:
                 self._vao: int = glGenVertexArrays(1)
                 self._vbo: int = glGenBuffers(1)
@@ -485,7 +487,7 @@ class Cube:
     def draw(self, shader: Shader, transform: mat4):
         if not self._buffers_supported:
             return
-        if not HAS_PYOPENGL:
+        if not USE_PYOPENGL:
             raise gl_error.NullFunctionError("PyOpenGL is unavailable; use ModernGLRenderer for rendering.")
 
         shader.set_matrix4("model", transform)
@@ -518,7 +520,7 @@ class Boundary:
         self._face_count: int = len(elements_np)
         self._buffers_supported = False
 
-        if HAS_PYOPENGL:
+        if USE_PYOPENGL:
             try:
                 self._vao = glGenVertexArrays(1)
                 self._vbo = glGenBuffers(1)
@@ -579,7 +581,7 @@ class Boundary:
     def draw(self, shader: Shader, transform: mat4):
         if not self._buffers_supported:
             return
-        if not HAS_PYOPENGL:
+        if not USE_PYOPENGL:
             raise gl_error.NullFunctionError("PyOpenGL is unavailable; use ModernGLRenderer for rendering.")
 
         shader.set_matrix4("model", transform)

@@ -7,13 +7,15 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
+from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
 from utility.common.geometry import Vector3
 
 HAS_PYOPENGL = has_pyopengl()
+HAS_MODERNGL = has_moderngl()
+USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 gl_error = safe_gl_error_module()
 
-if HAS_PYOPENGL:
+if USE_PYOPENGL:
     from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer  # pyright: ignore[reportMissingImports]
     from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES  # pyright: ignore[reportMissingImports]
@@ -59,7 +61,7 @@ class Boundary:
         self._index_data: np.ndarray = elements_np
         self._face_count: int = len(elements_np)
 
-        if HAS_PYOPENGL:
+        if USE_PYOPENGL:
             self._vao = glGenVertexArrays(1)
             self._vbo = glGenBuffers(1)
             self._ebo = glGenBuffers(1)
@@ -108,7 +110,7 @@ class Boundary:
         return Boundary(scene, vertices)
 
     def draw(self, shader: Shader, transform: mat4):
-        if not HAS_PYOPENGL:
+        if not USE_PYOPENGL:
             raise gl_error.NullFunctionError("PyOpenGL is unavailable; use ModernGLRenderer for rendering.")
         shader.set_matrix4("model", transform)
         glBindVertexArray(self._vao)

@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func
+from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func
 from loggerplus import RobustLogger
 
 HAS_PYOPENGL = has_pyopengl()
+HAS_MODERNGL = has_moderngl()
+USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 
-if HAS_PYOPENGL:
+if USE_PYOPENGL:
     from OpenGL.raw.GL.VERSION.GL_1_0 import (  # pyright: ignore[reportMissingImports]
         GL_BACK,
         GL_DEPTH_TEST,
@@ -102,8 +104,8 @@ class SceneBase:
         installation: Installation | None = None,
         module: Module | None = None,
     ):
-        # Only set up GL state if PyOpenGL is available (legacy mode)
-        if HAS_PYOPENGL:
+        # Only set up GL state if PyOpenGL is available (legacy mode) and ModernGL is absent
+        if USE_PYOPENGL:
             glEnable(GL_DEPTH_TEST)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             glCullFace(GL_BACK)

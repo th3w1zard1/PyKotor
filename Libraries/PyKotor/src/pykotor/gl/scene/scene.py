@@ -4,53 +4,47 @@ from typing import TYPE_CHECKING, TypeVar
 
 import glm
 
-from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func
 from glm import mat4, vec3, vec4
 
-HAS_PYOPENGL = has_pyopengl()
-HAS_MODERNGL = has_moderngl()
-
-if HAS_PYOPENGL:
-    from OpenGL.GL import glReadPixels  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT  # pyright: ignore[reportMissingImports]
-    from OpenGL.raw.GL.VERSION.GL_1_0 import (  # pyright: ignore[reportMissingImports]
-        GL_BLEND,
-        GL_COLOR_BUFFER_BIT,
-        GL_CULL_FACE,
-        GL_DEPTH_BUFFER_BIT,
-        GL_DEPTH_COMPONENT,
-        glClear,
-        glClearColor,
-        glDisable,
-        glEnable,
-    )
-    from OpenGL.raw.GL.VERSION.GL_1_2 import GL_BGRA, GL_UNSIGNED_INT_8_8_8_8  # pyright: ignore[reportMissingImports]
-else:
-    glReadPixels = missing_gl_func("glReadPixels")
-    glClear = missing_gl_func("glClear")
-    glClearColor = missing_gl_func("glClearColor")
-    glDisable = missing_gl_func("glDisable")
-    glEnable = missing_gl_func("glEnable")
-    GL_BLEND = missing_constant("GL_BLEND")
-    GL_COLOR_BUFFER_BIT = missing_constant("GL_COLOR_BUFFER_BIT")
-    GL_CULL_FACE = missing_constant("GL_CULL_FACE")
-    GL_DEPTH_BUFFER_BIT = missing_constant("GL_DEPTH_BUFFER_BIT")
-    GL_DEPTH_COMPONENT = missing_constant("GL_DEPTH_COMPONENT")
-    GL_FLOAT = missing_constant("GL_FLOAT")
-    GL_BGRA = missing_constant("GL_BGRA")
-    GL_UNSIGNED_INT_8_8_8_8 = missing_constant("GL_UNSIGNED_INT_8_8_8_8")
+from pykotor.gl.compat import (
+    GL_BGRA,
+    GL_BLEND,
+    GL_COLOR_BUFFER_BIT,
+    GL_CULL_FACE,
+    GL_DEPTH_BUFFER_BIT,
+    GL_DEPTH_COMPONENT,
+    GL_FLOAT,
+    GL_UNSIGNED_INT_8_8_8_8,
+    HAS_MODERNGL,
+    USE_PYOPENGL,
+    glClear,
+    glClearColor,
+    glDisable,
+    glEnable,
+    glReadPixels,
+)
 
 from pykotor.extract.installation import SearchLocation
 from pykotor.gl.models.mdl import Model
 from pykotor.gl.scene.frustum import CullingStats, Frustum
 from pykotor.gl.scene.scene_base import SceneBase
 from pykotor.gl.scene.scene_cache import SceneCache
-from pykotor.gl.shader import KOTOR_FSHADER, KOTOR_VSHADER, PICKER_FSHADER, PICKER_VSHADER, PLAIN_FSHADER, PLAIN_VSHADER, Shader
+from pykotor.gl.shader import (
+    KOTOR_FSHADER,
+    KOTOR_VSHADER,
+    PICKER_FSHADER,
+    PICKER_VSHADER,
+    PLAIN_FSHADER,
+    PLAIN_VSHADER,
+    Shader,
+)
 from pykotor.resource.formats.lyt.lyt_data import LYTRoom
 from pykotor.resource.generics.git import GITCamera, GITCreature, GITDoor, GITEncounter, GITInstance, GITPlaceable, GITSound, GITStore, GITTrigger, GITWaypoint
 from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
+    import moderngl
+
     from pykotor.gl.models.mdl import Model
     from pykotor.gl.scene import RenderObject
 
@@ -61,42 +55,51 @@ SEARCH_ORDER: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CH
 
 class Scene(SceneBase):
     """Optimized scene renderer with caching and batched operations.
-    
+
     Performance optimizations:
     - Cached object categorization (avoids list comprehensions every frame)
     - Cached view/projection matrices (set once per frame, not per object)
     - Cached bounding spheres for frustum culling
     - Incremental cache building (only rebuilds when dirty)
     - Lazy cursor position calculation
-    
+
     Reference implementations:
     - reone: src/graphics/renderpipeline.cpp
     - kotor.js: src/engine/renderer.ts
     """
-    
-    def __init__(self, *, moderngl_context=None, use_legacy_gl: bool = False, **kwargs):
+
+    def __init__(
+        self,
+        *,
+        moderngl_context: moderngl.Context | None = None,
+        use_legacy_gl: bool = False,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
-        
+
         # ModernGL is the default; PyOpenGL is legacy fallback
-        self._modern_context = moderngl_context
-        self._modern_renderer = None
-        self._legacy_gl_enabled: bool = use_legacy_gl and HAS_PYOPENGL
-        
+        self._modern_context: moderngl.Context | None = moderngl_context
+        self._modern_renderer: ModernGLRenderer | None = None
+        # If ModernGL is present, never attempt legacy PyOpenGL
+        self._legacy_gl_enabled: bool = use_legacy_gl and USE_PYOPENGL
+
         # Initialize ModernGL renderer if available (default)
         if HAS_MODERNGL and not use_legacy_gl:
             if self._modern_context is None:
                 # Try to create context from current OpenGL context
                 try:
                     import moderngl  # type: ignore[import]
+
                     self._modern_context = moderngl.create_context()
                 except Exception:  # noqa: BLE001
                     # Context creation failed, will try legacy or raise later
                     self._modern_context = None
-            
+
             if self._modern_context is not None:
                 from pykotor.gl.modern_renderer import ModernGLRenderer
+
                 self._modern_renderer = ModernGLRenderer(self._modern_context)
-        
+
         # Initialize legacy PyOpenGL shaders only if explicitly requested
         if self._legacy_gl_enabled:
             self.picker_shader: Shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
@@ -106,14 +109,14 @@ class Scene(SceneBase):
             self.picker_shader = None  # type: ignore[assignment]
             self.plain_shader = None  # type: ignore[assignment]
             self.shader = None  # type: ignore[assignment]
-        
+
         # Frustum culling
         self.frustum: Frustum = Frustum()
         self.culling_stats: CullingStats = CullingStats()
         self.enable_frustum_culling: bool = True
         # Default bounding sphere radius for objects without computed bounds
         self.default_cull_radius: float = 5.0
-        
+
         # Cached object lists for render batching (rebuilt when objects change)
         self._cached_regular_objects: list[RenderObject] | None = None
         self._cached_special_objects: list[RenderObject] | None = None
@@ -122,11 +125,11 @@ class Scene(SceneBase):
         self._cached_trigger_objects: list[RenderObject] | None = None
         self._objects_dirty: bool = True
         self._last_objects_count: int = 0
-        
+
         # Cached camera matrices (set once per frame, used by multiple shaders)
         self._cached_view: mat4 | None = None
         self._cached_projection: mat4 | None = None
-    
+
     def _invalidate_object_cache(self):
         """Mark object caches as dirty. Call when objects are added/removed."""
         self._objects_dirty = True
@@ -135,20 +138,20 @@ class Scene(SceneBase):
         self._cached_sound_objects = None
         self._cached_encounter_objects = None
         self._cached_trigger_objects = None
-    
+
     def _rebuild_object_caches(self):
         """Rebuild cached object lists for efficient iteration."""
         if not self._objects_dirty and len(self.objects) == self._last_objects_count:
             return
-        
+
         special_models = frozenset(self.SPECIAL_MODELS)
-        
+
         regular = []
         special = []
         sounds = []
         encounters = []
         triggers = []
-        
+
         for obj in self.objects.values():
             model = obj.model
             if model in special_models:
@@ -161,7 +164,7 @@ class Scene(SceneBase):
                     triggers.append(obj)
             else:
                 regular.append(obj)
-        
+
         self._cached_regular_objects = regular
         self._cached_special_objects = special
         self._cached_sound_objects = sounds
@@ -169,10 +172,10 @@ class Scene(SceneBase):
         self._cached_trigger_objects = triggers
         self._objects_dirty = False
         self._last_objects_count = len(self.objects)
-    
+
     def _update_camera_matrices(self):
         """Update cached camera matrices.
-        
+
         Camera.view() and Camera.projection() already have internal caching
         that only recomputes when dirty. We just store the results for use
         in multiple shaders per frame.
@@ -186,56 +189,57 @@ class Scene(SceneBase):
         if self._modern_renderer is not None:
             self._modern_renderer.render(self)
             return
-        
+
         # Fall back to legacy PyOpenGL if explicitly enabled
         if not self._legacy_gl_enabled:
             # Try to auto-create ModernGL context if we have an active OpenGL context
             if HAS_MODERNGL:
                 try:
                     import moderngl  # type: ignore[import]
+
                     ctx = moderngl.create_context()
                     from pykotor.gl.modern_renderer import ModernGLRenderer
+
                     self._modern_renderer = ModernGLRenderer(ctx)
                     self._modern_context = ctx
                     self._modern_renderer.render(self)
                     return
                 except Exception:  # noqa: BLE001
                     pass
-            
+
             from pykotor.gl.compat import MissingPyOpenGLError
-            raise MissingPyOpenGLError(
-                "No rendering backend available. Install moderngl (default) or PyOpenGL (legacy)."
-            )
-        
+
+            raise MissingPyOpenGLError("No rendering backend available. Install moderngl (default) or PyOpenGL (legacy).")
+
         # Legacy PyOpenGL rendering path
         # Poll for completed async resources (non-blocking) - MAIN PROCESS ONLY
         self.poll_async_resources()
-        
+
         # ALWAYS build cache - it updates object positions for existing objects!
-        # SceneCache.build_cache updates positions (set_position/set_rotation) 
+        # SceneCache.build_cache updates positions (set_position/set_rotation)
         # even for objects already in scene.objects. Skipping this causes:
         # 1. Objects not moving when dragged
         # 2. Camera snapping not working until rotation
         SceneCache.build_cache(self)
-        
+
         # Rebuild object lists if objects changed (cheap check)
         if self._objects_dirty or len(self.objects) != self._last_objects_count:
             self._rebuild_object_caches()
-        
+
         # Update camera matrices once per frame
         self._update_camera_matrices()
-        
+
         # Update frustum for culling
         if self.enable_frustum_culling:
             self.frustum.update_from_camera(self.camera)
-        
+
         if self.enable_frustum_culling:
             self.culling_stats.reset()
 
         # Prepare GL state and main shader
         self._prepare_gl_and_shader_optimized()
         self.shader.set_bool("enableLightmap", self.use_lightmap)
-        
+
         # Render regular objects (models)
         assert self._cached_regular_objects is not None
         identity = mat4()  # Create once, reuse
@@ -253,7 +257,7 @@ class Scene(SceneBase):
         self.plain_shader.set_matrix4("view", self._cached_view)
         self.plain_shader.set_matrix4("projection", self._cached_projection)
         self.plain_shader.set_vector4("color", vec4(0.0, 0.0, 1.0, 0.4))
-        
+
         # Render special objects (icons)
         assert self._cached_special_objects is not None
         for obj in self._cached_special_objects:
@@ -280,13 +284,13 @@ class Scene(SceneBase):
             for obj in self._cached_sound_objects:
                 if not self.enable_frustum_culling or self._is_object_visible(obj):
                     obj.boundary(self).draw(self.plain_shader, obj.transform())
-        
+
         if not self.hide_encounter_boundaries:
             assert self._cached_encounter_objects is not None
             for obj in self._cached_encounter_objects:
                 if not self.enable_frustum_culling or self._is_object_visible(obj):
                     obj.boundary(self).draw(self.plain_shader, obj.transform())
-        
+
         if not self.hide_trigger_boundaries:
             assert self._cached_trigger_objects is not None
             for obj in self._cached_trigger_objects:
@@ -296,11 +300,11 @@ class Scene(SceneBase):
         if self.show_cursor:
             self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
             self._render_object(self.plain_shader, self.cursor, identity)
-        
+
         # End frame statistics
         if self.enable_frustum_culling:
             self.culling_stats.end_frame()
-    
+
     def _prepare_gl_and_shader_optimized(self):
         """Optimized GL state preparation using cached matrices."""
         glClearColor(0.5, 0.5, 1, 1.0)
@@ -311,20 +315,20 @@ class Scene(SceneBase):
             glDisable(GL_CULL_FACE)
         glDisable(GL_BLEND)
         self.shader.use()
-        
+
         # Use cached matrices instead of recalculating
         assert self._cached_view is not None and self._cached_projection is not None
         self.shader.set_matrix4("view", self._cached_view)
         self.shader.set_matrix4("projection", self._cached_projection)
-    
+
     def _is_object_visible(self, obj: RenderObject) -> bool:
         """Check if an object is visible within the frustum.
-        
+
         Uses cached bounding sphere from RenderObject for efficiency.
-        
+
         Args:
             obj: The render object to test.
-            
+
         Returns:
             True if the object should be rendered.
         """
@@ -375,7 +379,7 @@ class Scene(SceneBase):
 
     def picker_render(self):
         """Render scene for object picking with unique colors per object.
-        
+
         Optimized to use cached matrices and enumerate for O(1) index access.
         """
         glClearColor(1.0, 1.0, 1.0, 1.0)
@@ -387,7 +391,7 @@ class Scene(SceneBase):
             glDisable(GL_CULL_FACE)
 
         self.picker_shader.use()
-        
+
         # Use cached matrices if available, otherwise compute
         if self._cached_view is not None and self._cached_projection is not None:
             self.picker_shader.set_matrix4("view", self._cached_view)
@@ -395,7 +399,7 @@ class Scene(SceneBase):
         else:
             self.picker_shader.set_matrix4("view", self.camera.view())
             self.picker_shader.set_matrix4("projection", self.camera.projection())
-        
+
         # Use enumerate instead of list.index() which is O(n) per call
         identity = mat4()
         instances: list[RenderObject] = list(self.objects.values())
@@ -454,7 +458,7 @@ class Scene(SceneBase):
         y: int,
     ) -> Vector3:
         """Convert screen coordinates to world coordinates.
-        
+
         Optimized to:
         - Use cached room objects list
         - Use cached view/projection matrices
@@ -469,7 +473,7 @@ class Scene(SceneBase):
             glDisable(GL_CULL_FACE)
         glDisable(GL_BLEND)
         self.shader.use()
-        
+
         # Use cached matrices if available
         if self._cached_view is not None and self._cached_projection is not None:
             view = self._cached_view
@@ -477,10 +481,10 @@ class Scene(SceneBase):
         else:
             view = self.camera.view()
             projection = self.camera.projection()
-        
+
         self.shader.set_matrix4("view", view)
         self.shader.set_matrix4("projection", projection)
-        
+
         # Only render room geometry for depth calculation
         identity = mat4()
         for obj in self.objects.values():
@@ -495,7 +499,7 @@ class Scene(SceneBase):
             GL_DEPTH_COMPONENT,
             GL_FLOAT,
         )[0][0]  # type: ignore[]
-        
+
         cursor: vec3 = glm.unProject(
             vec3(x, self.camera.height - y, zpos),
             view,
@@ -516,4 +520,3 @@ class Scene(SceneBase):
         self.shader.use()
         self.shader.set_matrix4("view", self.camera.view())
         self.shader.set_matrix4("projection", self.camera.projection())
-

@@ -67,3 +67,38 @@ def missing_constant(_name: str) -> int:
     """Return a neutral constant value for missing GL enums."""
     return 0
 
+
+# Scene-specific OpenGL imports (only when PyOpenGL is used, not ModernGL)
+HAS_PYOPENGL = has_pyopengl()
+HAS_MODERNGL = has_moderngl()
+USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
+
+if USE_PYOPENGL:
+    from OpenGL.GL import glReadPixels  # pyright: ignore[reportMissingImports]
+    from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT  # pyright: ignore[reportMissingImports]
+    from OpenGL.raw.GL.VERSION.GL_1_0 import (  # pyright: ignore[reportMissingImports]
+        GL_BLEND,
+        GL_COLOR_BUFFER_BIT,
+        GL_CULL_FACE,
+        GL_DEPTH_BUFFER_BIT,
+        GL_DEPTH_COMPONENT,
+        glClear,
+        glClearColor,
+        glDisable,
+        glEnable,
+    )
+    from OpenGL.raw.GL.VERSION.GL_1_2 import GL_BGRA, GL_UNSIGNED_INT_8_8_8_8  # pyright: ignore[reportMissingImports]
+else:
+    glReadPixels = missing_gl_func("glReadPixels")
+    glClear = missing_gl_func("glClear")
+    glClearColor = missing_gl_func("glClearColor")
+    glDisable = missing_gl_func("glDisable")
+    glEnable = missing_gl_func("glEnable")
+    GL_BLEND = missing_constant("GL_BLEND")
+    GL_COLOR_BUFFER_BIT = missing_constant("GL_COLOR_BUFFER_BIT")
+    GL_CULL_FACE = missing_constant("GL_CULL_FACE")
+    GL_DEPTH_BUFFER_BIT = missing_constant("GL_DEPTH_BUFFER_BIT")
+    GL_DEPTH_COMPONENT = missing_constant("GL_DEPTH_COMPONENT")
+    GL_FLOAT = missing_constant("GL_FLOAT")
+    GL_BGRA = missing_constant("GL_BGRA")
+    GL_UNSIGNED_INT_8_8_8_8 = missing_constant("GL_UNSIGNED_INT_8_8_8_8")

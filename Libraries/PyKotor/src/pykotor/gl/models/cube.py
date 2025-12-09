@@ -6,13 +6,15 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
+from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
 from glm import vec3
 
 HAS_PYOPENGL = has_pyopengl()
+HAS_MODERNGL = has_moderngl()
+USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 gl_error = safe_gl_error_module()
 
-if HAS_PYOPENGL:
+if USE_PYOPENGL:
     from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer  # pyright: ignore[reportMissingImports]
     from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES  # pyright: ignore[reportMissingImports]
@@ -98,7 +100,7 @@ class Cube:
         self._index_data = elements
         self._face_count: int = len(elements)
 
-        if HAS_PYOPENGL:
+        if USE_PYOPENGL:
             self._vao: int = glGenVertexArrays(1)
             self._vbo: int = glGenBuffers(1)
             self._ebo: int = glGenBuffers(1)
@@ -121,7 +123,7 @@ class Cube:
             self._ebo = 0
 
     def draw(self, shader: Shader, transform: mat4):
-        if not HAS_PYOPENGL:
+        if not USE_PYOPENGL:
             raise gl_error.NullFunctionError("PyOpenGL is unavailable; use ModernGLRenderer for rendering.")
         shader.set_matrix4("model", transform)
         glBindVertexArray(self._vao)

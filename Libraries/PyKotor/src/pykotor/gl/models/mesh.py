@@ -5,12 +5,20 @@ import ctypes
 from typing import TYPE_CHECKING
 
 import glm
-from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
+from pykotor.gl.compat import (
+    has_moderngl,
+    has_pyopengl,
+    missing_constant,
+    missing_gl_func,
+    safe_gl_error_module,
+)
 
 HAS_PYOPENGL = has_pyopengl()
+HAS_MODERNGL = has_moderngl()
+USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 gl_error = safe_gl_error_module()
 
-if HAS_PYOPENGL:
+if USE_PYOPENGL:
     from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer
     from OpenGL.GL.shaders import GL_FALSE
     from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES
@@ -112,7 +120,7 @@ class Mesh:
         self._index_data: bytes = bytes(element_data)
         self._vertex_blob_cache: bytes | None = None
 
-        if HAS_PYOPENGL:
+        if USE_PYOPENGL:
             self._vao: int = glGenVertexArrays(1)
             self._vbo: int = glGenBuffers(1)
             self._ebo: int = glGenBuffers(1)
@@ -122,7 +130,7 @@ class Mesh:
             self._vbo = 0
             self._ebo = 0
 
-        if HAS_PYOPENGL:
+        if USE_PYOPENGL:
             glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
             # Convert vertex_data bytearray to MemoryView
             vertex_data_mv = memoryview(vertex_data)
@@ -165,7 +173,7 @@ class Mesh:
             transform: The model transformation matrix.
             override_texture: Optional texture name to use instead of the mesh's texture.
         """
-        if not HAS_PYOPENGL:
+        if not USE_PYOPENGL:
             raise gl_error.NullFunctionError("PyOpenGL is unavailable; use ModernGLRenderer for rendering.")
         
         shader.set_matrix4("model", transform)
