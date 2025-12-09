@@ -1081,7 +1081,8 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         if not self._use_blender_mode:
             self.ui.flatRenderer.set_git(git)
             self.ui.mainRenderer.initialize_renderer(self._installation, new_module)
-            self.ui.mainRenderer.scene.show_cursor = self.ui.cursorCheck.isChecked()
+            if self.ui.mainRenderer._scene:
+                self.ui.mainRenderer._scene.show_cursor = self.ui.cursorCheck.isChecked()
             self.ui.flatRenderer.set_walkmeshes(walkmeshes)
             self.ui.flatRenderer.center_camera()
             self.setWindowTitle(f"Module Designer - {mod_root}")
@@ -1280,7 +1281,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         location.write_bytes(data)
         resource.add_locations([location])
         resource.activate(location)
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene is not None:
             scene.clear_cache_buffer.append(resource.identifier())
 
@@ -1290,7 +1291,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         location: os.PathLike | str,
     ):
         resource.activate(location)
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene is not None:
             scene.clear_cache_buffer.append(resource.identifier())
 
@@ -1469,7 +1470,8 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         *,
         refresh_lists: bool = False,
     ):
-        self.ui.mainRenderer.scene.invalidate_cache()
+        if self.ui.mainRenderer._scene:
+            self.ui.mainRenderer._scene.invalidate_cache()
         self.ui.mainRenderer.update()
         self.ui.flatRenderer.update()
 
@@ -1693,7 +1695,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
                 self.ui.instanceList.scrollToItem(item)
 
     def update_toggles(self):
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene is None:
             return
 
@@ -1750,10 +1752,11 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             walkmesh_snap (optional): {Whether to snap the instance to the walkmesh}.
         """
         if walkmesh_snap:
+            camera_z = self.ui.mainRenderer._scene.camera.z if self.ui.mainRenderer._scene else 0.0
             instance.position.z = self.ui.mainRenderer.walkmesh_point(
                 instance.position.x,
                 instance.position.y,
-                self.ui.mainRenderer.scene.camera.z,
+                camera_z,
             ).z
 
         if not isinstance(instance, GITCamera):
@@ -1796,7 +1799,8 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             git_resource = git_module.resource()
             assert git_resource is not None
             git_resource.add(instance)
-        self.ui.mainRenderer.scene.invalidate_cache()
+        if self.ui.mainRenderer._scene:
+            self.ui.mainRenderer._scene.invalidate_cache()
         
         # Sync to Blender if not already syncing from Blender
         if self.is_blender_mode() and self._blender_controller is not None and not self._instance_sync_in_progress:
@@ -1809,7 +1813,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         self,
         instance: GITInstance,
     ):
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene is None:
             self.log.warning("Cannot add instance at cursor while Blender mode controls rendering.")
             return
@@ -1863,7 +1867,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             if not isinstance(instance, GITCamera):
                 ident = instance.identifier()
                 if ident is not None:
-                    scene = self.ui.mainRenderer.scene
+                    scene = self.ui.mainRenderer._scene
                     if scene is not None:
                         scene.clear_cache_buffer.append(ident)
 
@@ -1961,14 +1965,14 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             )
 
     def _get_scene_camera(self) -> Camera:
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene is None:
             raise RuntimeError("Internal renderer is unavailable while Blender controls the viewport.")
         result: Camera = scene.camera
         return result
 
     def snap_camera_to_entry_location(self):
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene is None:
             if self.is_blender_mode() and self._blender_controller is not None:
                 entry_pos = self.ifo().entry_position
@@ -2006,7 +2010,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
     def set_selection(self, instances: list[GITInstance]):
         was_syncing = self._selection_sync_in_progress
         self._selection_sync_in_progress = True
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         try:
             if instances:
                 if scene is not None:
@@ -2045,8 +2049,9 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
                 if self.is_blender_mode() and self._blender_controller is not None:
                     self._blender_controller.remove_instance(instance)
         self.selected_instances.clear()
-        self.ui.mainRenderer.scene.selection.clear()
-        self.ui.mainRenderer.scene.invalidate_cache()
+        if self.ui.mainRenderer._scene:
+            self.ui.mainRenderer._scene.selection.clear()
+            self.ui.mainRenderer._scene.invalidate_cache()
         self.ui.flatRenderer.instance_selection.clear()
         self.rebuild_instance_list()
 
@@ -2062,7 +2067,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         if self.ui.lockInstancesCheck.isChecked():
             return
 
-        walkmesh_renderer: ModuleRenderer | None = self.ui.mainRenderer if self.ui.mainRenderer.scene is not None else None
+        walkmesh_renderer: ModuleRenderer | None = self.ui.mainRenderer if self.ui.mainRenderer._scene is not None else None
         for instance in self.selected_instances:
             self.log.debug("Moving %s", instance.resref)
             new_x = instance.position.x + x
@@ -2118,7 +2123,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         resource: ModuleResource,
     ):
         resource.reload()
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene is not None:
             scene.clear_cache_buffer.append(ResourceIdentifier(resource.resname(), resource.restype()))
 
@@ -2336,7 +2341,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         if self._module is None:
             self.log.warning("onContextMenu No module.")
             return
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene is None:
             QMessageBox.information(
                 self,
@@ -2358,7 +2363,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
     def build_insert_instance_menu(self, world: Vector3):
         menu = QMenu(self)
 
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene is None:
             return menu
 
@@ -3063,7 +3068,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
     def place_doorhook_in_view(self, doorhook: LYTDoorHook):
         """Place the door hook at the current 3D view position."""
         # Get the cursor position from the 3D view
-        scene = self.ui.mainRenderer.scene
+        scene = self.ui.mainRenderer._scene
         if scene:
             doorhook.position.x = scene.cursor.position().x
             doorhook.position.y = scene.cursor.position().y
@@ -3126,7 +3131,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         self._last_undo_index = index
 
     def update_camera(self):
-        if self._use_blender_mode and self.ui.mainRenderer.scene is None:
+        if self._use_blender_mode and not self.ui.mainRenderer._scene:
             return
         # For standard 3D orbit controls, require the mouse to be over the 3D view
         # before applying keyboard-driven camera updates. In free-cam mode we allow
@@ -3211,12 +3216,14 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         # Move camera based on key inputs
         if movement_keys["up"]:
             if isinstance(self._controls3d, ModuleDesignerControls3d):
-                self.ui.mainRenderer.scene.camera.z += move_units_delta
+                if self.ui.mainRenderer._scene:
+                    self.ui.mainRenderer._scene.camera.z += move_units_delta
             else:
                 self.ui.mainRenderer.move_camera(0, 0, move_units_delta)
         if movement_keys["down"]:
             if isinstance(self._controls3d, ModuleDesignerControls3d):
-                self.ui.mainRenderer.scene.camera.z -= move_units_delta
+                if self.ui.mainRenderer._scene:
+                    self.ui.mainRenderer._scene.camera.z -= move_units_delta
             else:
                 self.ui.mainRenderer.move_camera(0, 0, -move_units_delta)
 
