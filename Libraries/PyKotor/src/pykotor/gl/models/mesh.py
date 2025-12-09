@@ -5,16 +5,41 @@ import ctypes
 from typing import TYPE_CHECKING
 
 import glm
-from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer
-from OpenGL.GL.shaders import GL_FALSE
-from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES
-from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT
-from OpenGL.raw.GL.VERSION.GL_1_0 import GL_UNSIGNED_SHORT
-from OpenGL.raw.GL.VERSION.GL_1_1 import glDrawElements
-from OpenGL.raw.GL.VERSION.GL_1_3 import GL_TEXTURE0, GL_TEXTURE1, glActiveTexture
-from OpenGL.raw.GL.VERSION.GL_1_5 import GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, glBindBuffer, glBufferData
-from OpenGL.raw.GL.VERSION.GL_2_0 import glEnableVertexAttribArray
-from OpenGL.raw.GL.VERSION.GL_3_0 import glBindVertexArray
+from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
+
+HAS_PYOPENGL = has_pyopengl()
+gl_error = safe_gl_error_module()
+
+if HAS_PYOPENGL:
+    from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer
+    from OpenGL.GL.shaders import GL_FALSE
+    from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES
+    from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT
+    from OpenGL.raw.GL.VERSION.GL_1_0 import GL_UNSIGNED_SHORT
+    from OpenGL.raw.GL.VERSION.GL_1_1 import glDrawElements
+    from OpenGL.raw.GL.VERSION.GL_1_3 import GL_TEXTURE0, GL_TEXTURE1, glActiveTexture
+    from OpenGL.raw.GL.VERSION.GL_1_5 import GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, glBindBuffer, glBufferData
+    from OpenGL.raw.GL.VERSION.GL_2_0 import glEnableVertexAttribArray
+    from OpenGL.raw.GL.VERSION.GL_3_0 import glBindVertexArray
+else:
+    glGenBuffers = missing_gl_func("glGenBuffers")
+    glGenVertexArrays = missing_gl_func("glGenVertexArrays")
+    glVertexAttribPointer = missing_gl_func("glVertexAttribPointer")
+    glDrawElements = missing_gl_func("glDrawElements")
+    glActiveTexture = missing_gl_func("glActiveTexture")
+    glBindBuffer = missing_gl_func("glBindBuffer")
+    glBufferData = missing_gl_func("glBufferData")
+    glEnableVertexAttribArray = missing_gl_func("glEnableVertexAttribArray")
+    glBindVertexArray = missing_gl_func("glBindVertexArray")
+    GL_FALSE = missing_constant("GL_FALSE")
+    GL_TRIANGLES = missing_constant("GL_TRIANGLES")
+    GL_FLOAT = missing_constant("GL_FLOAT")
+    GL_UNSIGNED_SHORT = missing_constant("GL_UNSIGNED_SHORT")
+    GL_TEXTURE0 = missing_constant("GL_TEXTURE0")
+    GL_TEXTURE1 = missing_constant("GL_TEXTURE1")
+    GL_ARRAY_BUFFER = missing_constant("GL_ARRAY_BUFFER")
+    GL_ELEMENT_ARRAY_BUFFER = missing_constant("GL_ELEMENT_ARRAY_BUFFER")
+    GL_STATIC_DRAW = missing_constant("GL_STATIC_DRAW")
 
 from pykotor.gl.native import fastmath
 
@@ -87,39 +112,45 @@ class Mesh:
         self._index_data: bytes = bytes(element_data)
         self._vertex_blob_cache: bytes | None = None
 
-        self._vao: int = glGenVertexArrays(1)
-        self._vbo: int = glGenBuffers(1)
-        self._ebo: int = glGenBuffers(1)
-        glBindVertexArray(self._vao)
+        if HAS_PYOPENGL:
+            self._vao: int = glGenVertexArrays(1)
+            self._vbo: int = glGenBuffers(1)
+            self._ebo: int = glGenBuffers(1)
+            glBindVertexArray(self._vao)
+        else:
+            self._vao = 0
+            self._vbo = 0
+            self._ebo = 0
 
-        glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
-        # Convert vertex_data bytearray to MemoryView
-        vertex_data_mv = memoryview(vertex_data)
-        glBufferData(GL_ARRAY_BUFFER, len(vertex_data), vertex_data_mv, GL_STATIC_DRAW)
+        if HAS_PYOPENGL:
+            glBindBuffer(GL_ARRAY_BUFFER, self._vbo)
+            # Convert vertex_data bytearray to MemoryView
+            vertex_data_mv = memoryview(vertex_data)
+            glBufferData(GL_ARRAY_BUFFER, len(vertex_data), vertex_data_mv, GL_STATIC_DRAW)
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
-        # Convert element_data bytearray to MemoryView
-        element_data_mv = memoryview(element_data)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(element_data), element_data_mv, GL_STATIC_DRAW)
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self._ebo)
+            # Convert element_data bytearray to MemoryView
+            element_data_mv = memoryview(element_data)
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(element_data), element_data_mv, GL_STATIC_DRAW)
+
+            if data_bitflags & 0x0001:
+                glEnableVertexAttribArray(1)
+                glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, block_size, ctypes.c_void_p(vertex_offset))
+
+            if data_bitflags & 0x0020 and texture and texture != "NULL":
+                glEnableVertexAttribArray(3)
+                glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, block_size, ctypes.c_void_p(texture_offset))
+                self.texture = texture
+
+            if data_bitflags & 0x0004 and lightmap and lightmap != "NULL":
+                glEnableVertexAttribArray(4)
+                glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, block_size, ctypes.c_void_p(lightmap_offset))
+                self.lightmap = lightmap
+
+            glBindBuffer(GL_ARRAY_BUFFER, 0)
+            glBindVertexArray(0)
 
         self._face_count: int = len(element_data) // 2
-
-        if data_bitflags & 0x0001:
-            glEnableVertexAttribArray(1)
-            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, block_size, ctypes.c_void_p(vertex_offset))
-
-        if data_bitflags & 0x0020 and texture and texture != "NULL":
-            glEnableVertexAttribArray(3)
-            glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, block_size, ctypes.c_void_p(texture_offset))
-            self.texture = texture
-
-        if data_bitflags & 0x0004 and lightmap and lightmap != "NULL":
-            glEnableVertexAttribArray(4)
-            glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, block_size, ctypes.c_void_p(lightmap_offset))
-            self.lightmap = lightmap
-
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glBindVertexArray(0)
 
     def draw(
         self,
@@ -134,6 +165,9 @@ class Mesh:
             transform: The model transformation matrix.
             override_texture: Optional texture name to use instead of the mesh's texture.
         """
+        if not HAS_PYOPENGL:
+            raise gl_error.NullFunctionError("PyOpenGL is unavailable; use ModernGLRenderer for rendering.")
+        
         shader.set_matrix4("model", transform)
 
         # Get textures from scene (scene.texture() has O(1) dict lookup + caching)
@@ -202,7 +236,7 @@ class Mesh:
 
         vertex_count = len(self.vertex_data) // self.mdx_size
         if vertex_count == 0:
-            self._vertex_blob_cache = b""
+            self._vertex_blob_cache = np.zeros((1, 7), dtype=np.float32).tobytes()
             return self._vertex_blob_cache
 
         blob = np.zeros((vertex_count, 7), dtype=np.float32)

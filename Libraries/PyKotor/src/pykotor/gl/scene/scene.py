@@ -4,11 +4,41 @@ from typing import TYPE_CHECKING, TypeVar
 
 import glm
 
-from OpenGL.GL import glReadPixels
-from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT
-from OpenGL.raw.GL.VERSION.GL_1_0 import GL_BLEND, GL_COLOR_BUFFER_BIT, GL_CULL_FACE, GL_DEPTH_BUFFER_BIT, GL_DEPTH_COMPONENT, glClear, glClearColor, glDisable, glEnable
-from OpenGL.raw.GL.VERSION.GL_1_2 import GL_BGRA, GL_UNSIGNED_INT_8_8_8_8
+from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func
 from glm import mat4, vec3, vec4
+
+HAS_PYOPENGL = has_pyopengl()
+HAS_MODERNGL = has_moderngl()
+
+if HAS_PYOPENGL:
+    from OpenGL.GL import glReadPixels  # pyright: ignore[reportMissingImports]
+    from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT  # pyright: ignore[reportMissingImports]
+    from OpenGL.raw.GL.VERSION.GL_1_0 import (  # pyright: ignore[reportMissingImports]
+        GL_BLEND,
+        GL_COLOR_BUFFER_BIT,
+        GL_CULL_FACE,
+        GL_DEPTH_BUFFER_BIT,
+        GL_DEPTH_COMPONENT,
+        glClear,
+        glClearColor,
+        glDisable,
+        glEnable,
+    )
+    from OpenGL.raw.GL.VERSION.GL_1_2 import GL_BGRA, GL_UNSIGNED_INT_8_8_8_8  # pyright: ignore[reportMissingImports]
+else:
+    glReadPixels = missing_gl_func("glReadPixels")
+    glClear = missing_gl_func("glClear")
+    glClearColor = missing_gl_func("glClearColor")
+    glDisable = missing_gl_func("glDisable")
+    glEnable = missing_gl_func("glEnable")
+    GL_BLEND = missing_constant("GL_BLEND")
+    GL_COLOR_BUFFER_BIT = missing_constant("GL_COLOR_BUFFER_BIT")
+    GL_CULL_FACE = missing_constant("GL_CULL_FACE")
+    GL_DEPTH_BUFFER_BIT = missing_constant("GL_DEPTH_BUFFER_BIT")
+    GL_DEPTH_COMPONENT = missing_constant("GL_DEPTH_COMPONENT")
+    GL_FLOAT = missing_constant("GL_FLOAT")
+    GL_BGRA = missing_constant("GL_BGRA")
+    GL_UNSIGNED_INT_8_8_8_8 = missing_constant("GL_UNSIGNED_INT_8_8_8_8")
 
 from pykotor.extract.installation import SearchLocation
 from pykotor.gl.models.mdl import Model
@@ -44,11 +74,38 @@ class Scene(SceneBase):
     - kotor.js: src/engine/renderer.ts
     """
     
-    def __init__(self, **kwargs):
+    def __init__(self, *, moderngl_context=None, use_legacy_gl: bool = False, **kwargs):
         super().__init__(**kwargs)
-        self.picker_shader: Shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
-        self.plain_shader: Shader = Shader(PLAIN_VSHADER, PLAIN_FSHADER)
-        self.shader: Shader = Shader(KOTOR_VSHADER, KOTOR_FSHADER)
+        
+        # ModernGL is the default; PyOpenGL is legacy fallback
+        self._modern_context = moderngl_context
+        self._modern_renderer = None
+        self._legacy_gl_enabled: bool = use_legacy_gl and HAS_PYOPENGL
+        
+        # Initialize ModernGL renderer if available (default)
+        if HAS_MODERNGL and not use_legacy_gl:
+            if self._modern_context is None:
+                # Try to create context from current OpenGL context
+                try:
+                    import moderngl  # type: ignore[import]
+                    self._modern_context = moderngl.create_context()
+                except Exception:  # noqa: BLE001
+                    # Context creation failed, will try legacy or raise later
+                    self._modern_context = None
+            
+            if self._modern_context is not None:
+                from pykotor.gl.modern_renderer import ModernGLRenderer
+                self._modern_renderer = ModernGLRenderer(self._modern_context)
+        
+        # Initialize legacy PyOpenGL shaders only if explicitly requested
+        if self._legacy_gl_enabled:
+            self.picker_shader: Shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
+            self.plain_shader: Shader = Shader(PLAIN_VSHADER, PLAIN_FSHADER)
+            self.shader: Shader = Shader(KOTOR_VSHADER, KOTOR_FSHADER)
+        else:
+            self.picker_shader = None  # type: ignore[assignment]
+            self.plain_shader = None  # type: ignore[assignment]
+            self.shader = None  # type: ignore[assignment]
         
         # Frustum culling
         self.frustum: Frustum = Frustum()
@@ -125,6 +182,32 @@ class Scene(SceneBase):
         self._cached_projection = self.camera.projection()
 
     def render(self):
+        # Use ModernGL by default if available
+        if self._modern_renderer is not None:
+            self._modern_renderer.render(self)
+            return
+        
+        # Fall back to legacy PyOpenGL if explicitly enabled
+        if not self._legacy_gl_enabled:
+            # Try to auto-create ModernGL context if we have an active OpenGL context
+            if HAS_MODERNGL:
+                try:
+                    import moderngl  # type: ignore[import]
+                    ctx = moderngl.create_context()
+                    from pykotor.gl.modern_renderer import ModernGLRenderer
+                    self._modern_renderer = ModernGLRenderer(ctx)
+                    self._modern_context = ctx
+                    self._modern_renderer.render(self)
+                    return
+                except Exception:  # noqa: BLE001
+                    pass
+            
+            from pykotor.gl.compat import MissingPyOpenGLError
+            raise MissingPyOpenGLError(
+                "No rendering backend available. Install moderngl (default) or PyOpenGL (legacy)."
+            )
+        
+        # Legacy PyOpenGL rendering path
         # Poll for completed async resources (non-blocking) - MAIN PROCESS ONLY
         self.poll_async_resources()
         

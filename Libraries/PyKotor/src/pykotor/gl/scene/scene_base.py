@@ -2,8 +2,29 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from OpenGL.raw.GL.VERSION.GL_1_0 import GL_BACK, GL_DEPTH_TEST, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, glBlendFunc, glCullFace, glEnable
+from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func
 from loggerplus import RobustLogger
+
+HAS_PYOPENGL = has_pyopengl()
+
+if HAS_PYOPENGL:
+    from OpenGL.raw.GL.VERSION.GL_1_0 import (  # pyright: ignore[reportMissingImports]
+        GL_BACK,
+        GL_DEPTH_TEST,
+        GL_ONE_MINUS_SRC_ALPHA,
+        GL_SRC_ALPHA,
+        glBlendFunc,
+        glCullFace,
+        glEnable,
+    )
+else:
+    glEnable = missing_gl_func("glEnable")
+    glBlendFunc = missing_gl_func("glBlendFunc")
+    glCullFace = missing_gl_func("glCullFace")
+    GL_DEPTH_TEST = missing_constant("GL_DEPTH_TEST")
+    GL_SRC_ALPHA = missing_constant("GL_SRC_ALPHA")
+    GL_ONE_MINUS_SRC_ALPHA = missing_constant("GL_ONE_MINUS_SRC_ALPHA")
+    GL_BACK = missing_constant("GL_BACK")
 
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.stream import BinaryReader
@@ -81,10 +102,11 @@ class SceneBase:
         installation: Installation | None = None,
         module: Module | None = None,
     ):
-
-        glEnable(GL_DEPTH_TEST)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glCullFace(GL_BACK)
+        # Only set up GL state if PyOpenGL is available (legacy mode)
+        if HAS_PYOPENGL:
+            glEnable(GL_DEPTH_TEST)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            glCullFace(GL_BACK)
 
         self.installation: Installation | None = installation
         if installation is not None:
