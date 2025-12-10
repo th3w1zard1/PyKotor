@@ -219,13 +219,20 @@ def _get_component_name_mapping(kit_id: str | None, model_names: list[str]) -> d
                 mapping[model_lower] = sithbase_mapping[model_lower]
             else:
                 # For unmapped models, use a sanitized version of the model name
-                # Remove module prefix and convert to friendly format
+                # Remove module prefix if present (based on length only)
                 # e.g., "m09aa_01b" -> "01b" -> "component_01b"
                 clean_name = model_lower
                 if "_" in clean_name:
                     parts = clean_name.split("_", 1)
                     if len(parts) > 1:
-                        clean_name = f"component_{parts[1]}"
+                        first_part = parts[0]
+                        # Only check length: typical KOTOR module prefixes are 4-6 characters
+                        # (e.g., "m09aa" = 5, "m28ab" = 5, "m05aa" = 5)
+                        if 4 <= len(first_part) <= 6:
+                            # Remove module prefix
+                            clean_name = f"component_{parts[1]}"
+                        else:
+                            clean_name = f"component_{parts[1]}"
                 mapping[model_lower] = clean_name
     
     # Default: use model names as-is (sanitized)
