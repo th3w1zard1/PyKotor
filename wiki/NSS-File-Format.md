@@ -2,6 +2,27 @@
 
 NSS (NWScript Source) files contain human-readable NWScript source code that compiles to [NCS bytecode](NCS-File-Format). The `nwscript.nss` file defines all engine-exposed functions and constants available to scripts. KotOR 1 and KotOR 2 each have their own `nwscript.nss` with game-specific functions and constants.
 
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/)
+
+**Vendor Script Compilers:**
+- [`vendor/xoreos-tools/src/nwscript/`](https://github.com/th3w1zard1/xoreos-tools/tree/master/src/nwscript) - NWScript compiler and decompiler
+- [`vendor/KotOR-Scripting-Tool/`](https://github.com/th3w1zard1/KotOR-Scripting-Tool) - Visual NWScript IDE with integrated compiler
+- [`vendor/HoloLSP/`](https://github.com/th3w1zard1/HoloLSP) - Language Server Protocol implementation for NWScript
+- [`vendor/nwscript-mode.el/`](https://github.com/th3w1zard1/nwscript-mode.el) - Emacs major mode for NWScript editing
+
+**Vendor Script Implementations:**
+- [`vendor/xoreos/src/engines/nwscript/`](https://github.com/th3w1zard1/xoreos/tree/master/src/engines/nwscript) - Complete NWScript virtual machine implementation
+- [`vendor/reone/src/libs/script/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script) - Script execution engine
+- [`vendor/KotOR.js/src/nwscript/`](https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript) - TypeScript NWScript interpreter
+- [`vendor/Vanilla_KOTOR_Script_Source/`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source) - Decompiled vanilla KotOR scripts for reference
+
+**See Also:**
+- [NCS File Format](NCS-File-Format) - Compiled NWScript bytecode format
+- [NSS Shared Functions - Actions](NSS-Shared-Functions-Actions) - Action functions documentation
+- [NSS Shared Constants](NSS-Shared-Constants-Object-Type-Constants) - Script constants reference
+- [GFF-DLG](GFF-DLG) - Dialogue files that trigger NCS scripts
+- [2DA Files](2DA-File-Format) - Game data tables referenced by scripts
+
 ## Table of Contents
 
 <!-- TOC_START -->

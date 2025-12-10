@@ -183,7 +183,18 @@ This document provides a detailed description of the 2DA (Two-Dimensional Array)
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/twoda/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/twoda/)
 
-**Reference**: [`vendor/kotor/docs/2da.md`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md) - Basic format structure
+**Vendor References:**
+- [`vendor/kotor/docs/2da.md`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md) - Basic format structure and parsing overview
+- [`vendor/reone/src/libs/resource/format/2dareader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp) - Complete C++ 2DA parser implementation
+- [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine 2DA implementation (shared format)
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs) - C# Unity 2DA loader
+- [`vendor/KotOR.js/src/resource/TwoDAObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TwoDAObject.ts) - TypeScript 2DA parser with memory-efficient caching
+- [`vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/Kotor2DA.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/Kotor2DA/Kotor2DA.cs) - .NET 2DA reader/writer
+
+**See Also:**
+- [TSLPatcher 2DAList Syntax](TSLPatcher-2DAList-Syntax) - Modding 2DA files with TSLPatcher
+- [GFF File Format](GFF-File-Format) - Related format that often references 2DA data
+- [TLK File Format](TLK-File-Format) - Text strings referenced by 2DA entries
 
 ---
 

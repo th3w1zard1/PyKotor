@@ -85,6 +85,25 @@ KotOR models are defined using two files:
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/mdl/`](Libraries/PyKotor/src/pykotor/resource/formats/mdl/)
 
+**Vendor References:**
+- [`vendor/reone/src/libs/graphics/format/mdlreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlreader.cpp) - Complete C++ MDL/MDX parser with animation support
+- [`vendor/reone/include/reone/graphics/model.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/graphics/model.h) - Runtime model class definition
+- [`vendor/xoreos/src/graphics/aurora/model.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model.cpp) - Generic Aurora model implementation (shared format)
+- [`vendor/KotOR.js/src/odyssey/OdysseyModel.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyModel.ts) - TypeScript MDL parser with WebGL rendering
+- [`vendor/KotOR.js/src/odyssey/OdysseyModel3.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyModel3.ts) - Enhanced model loader with skinning support
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/AuroraModel.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/AuroraModel.cs) - C# Unity model loader
+- [`vendor/NorthernLights/src/Model/`](https://github.com/th3w1zard1/NorthernLights/tree/master/src/Model) - .NET model reader with animation controllers
+- [`vendor/kotorblender/io_scene_kotor/format/mdl/`](https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl) - Blender MDL import/export with full animation support
+- [`vendor/mdlops/mdlops/`](https://github.com/th3w1zard1/mdlops/tree/master/mdlops) - Legacy Python MDL toolkit for conversions
+- [`vendor/xoreos-tools/src/aurora/model.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/model.cpp) - Command-line model extraction tools
+
+**See Also:**
+- [TPC File Format](TPC-File-Format) - Texture format referenced by MDL materials
+- [TXI File Format](TXI-File-Format) - Texture metadata used with MDL textures
+- [BWM File Format](BWM-File-Format) - Walkmesh format (WOK files) paired with room models
+- [GFF File Format](GFF-File-Format) - Templates (UTC, UTP, etc.) that reference models
+- [LYT File Format](LYT-File-Format) - Layout files positioning models in areas
+
 The MDL file begins with a file header, followed by a model header, geometry header, and various node structures. Offsets within the MDL file are typically relative to the start of the file, excluding the first 12 bytes (the file header).
 
 Below is an overview of the typical layout:
