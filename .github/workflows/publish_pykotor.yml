@@ -332,11 +332,6 @@ jobs:
               }
             }
             
-            if (-not $pythonExePath) {
-              Write-Error "install_python_venv.ps1 did not set pythonExePath"
-              exit 1
-            }
-            
             Write-Host "Python executable path: $pythonExePath"
             
             # Verify Python exists and works
