@@ -14,9 +14,9 @@ exclude = ["plugin*", "*.plugin*", "*plugin*", "plugin"]
 
 [tool.setuptools.package-data]
 toolset = [
-    "help/**/*.xml",
-    "help/**/*.md",
-    "wiki/**/*.md",  # Wiki files copied during build by setup.py
+  "help/**/*.xml",
+  "help/**/*.md",
+  "wiki/**/*.md",  # Wiki files copied during build by setup.py
 ]
 
 [project]
@@ -55,12 +55,24 @@ maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 license = { text = "LGPL-3.0-or-later" }
 keywords = [
-  "kotor", "kotor1", "kotor2", "tsl",
-  "star-wars", "knights-of-the-old-republic",
-  "modding", "toolset", "editor",
-  "gff", "dlg", "module-designer",
-  "pyqt5", "opengl", "3d",
-  "holocron", "pykotor", "bioware",
+  "kotor",
+  "kotor1",
+  "kotor2",
+  "tsl",
+  "star-wars",
+  "knights-of-the-old-republic",
+  "modding",
+  "toolset",
+  "editor",
+  "gff",
+  "dlg",
+  "module-designer",
+  "pyqt5",
+  "opengl",
+  "3d",
+  "holocron",
+  "pykotor",
+  "bioware",
 ]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -163,27 +175,27 @@ dev-dependencies = []
 [tool.pyright]
 include = ["*.py"]
 exclude = [
-    "**/node_modules/**",
-    "**/__pycache__/**",
-    "**/build/**",
-    "**/dist/**",
-    "**/venv/**",
-    "**/__pycache__/**",
+  "**/node_modules/**",
+  "**/__pycache__/**",
+  "**/build/**",
+  "**/dist/**",
+  "**/venv/**",
+  "**/__pycache__/**",
 ]
 extraPaths = [
-    "Engines/PyKotorEngine/src",
-    "Libraries/PyKotor/src",
-    "Libraries/PyKotor/src",
-    "Libraries/PyKotorFont/src",
-    "Libraries/PyKotorGL/src",
-    "Tools/BatchPatcher/src",
-    "Tools/HolocronAI/src",
-    "Tools/HolocronToolset/src",
-    "Tools/HoloGenerator/src",
-    "Tools/HoloPatcher/src",
-    "Tools/HoloPazaak/src",
-    "Tools/KotorCLI/src",
-    "Tools/KotorDiff/src",
+  "Engines/PyKotorEngine/src",
+  "Libraries/PyKotor/src",
+  "Libraries/PyKotor/src",
+  "Libraries/PyKotorFont/src",
+  "Libraries/PyKotorGL/src",
+  "Tools/BatchPatcher/src",
+  "Tools/HolocronAI/src",
+  "Tools/HolocronToolset/src",
+  "Tools/HoloGenerator/src",
+  "Tools/HoloPatcher/src",
+  "Tools/HoloPazaak/src",
+  "Tools/KotorCLI/src",
+  "Tools/KotorDiff/src",
 ]
 pythonVersion = "3.8"
 analyzeUnannotatedFunctions = true

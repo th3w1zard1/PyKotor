@@ -304,7 +304,7 @@ The [Node Header](MDL-MDX-File-Format#node-header) is 80 bytes in size and is pr
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:135-150`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L135-L150) - [node](MDL-MDX-File-Format#node-structures) header reading  
 **Reference**: [`vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:189-250`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/mdl/reader.py#L189-L250) - [node](MDL-MDX-File-Format#node-structures) header reading and [node](MDL-MDX-File-Format#node-structures) type processing  
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:153-155`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L153-L155) - Unsupported [node](MDL-MDX-File-Format#node-structures) [flags](GFF-File-Format#gff-data-types) validation  
-**Reference**: [`vendor/kotor/docs/mdl.md:9-27`](vendor/kotor/docs/mdl.md#node-chunk) - [node](MDL-MDX-File-Format#node-structures) chunk structure analysis with [byte](GFF-File-Format#gff-data-types)-level layout
+**Reference**: [`vendor/kotor/docs/mdl.md:9-27`](https://github.com/th3w1zard1/kotor/blob/master/docs/mdl.md#node-chunk) - [node](MDL-MDX-File-Format#node-structures) chunk structure analysis with [byte](GFF-File-Format#gff-data-types)-level layout
 
 **Note:** The orientation [quaternion](MDL-MDX-File-Format#node-header) is stored in W, X, Y, Z order. The [node](MDL-MDX-File-Format#node-structures) index (offset 2) is a sequential identifier used for [node](MDL-MDX-File-Format#node-structures) lookup. [controllers](MDL-MDX-File-Format#controllers) [ARE](GFF-File-Format#are-area) stored separately from the [node](MDL-MDX-File-Format#node-structures) structure and referenced via offsets.
 
@@ -703,7 +703,7 @@ The `MDX Data Flags` field in the Trimesh header uses [bitmask](GFF-File-Format#
 **Reference**: [`vendor/mdlops/MDLOpsM.pm:2324-2404`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L2324-L2404) - [MDX](MDL-MDX-File-Format) data reading with interleaved [vertex](MDL-MDX-File-Format#vertex-structure) attributes  
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:255-262`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L255-L262) - [MDX](MDL-MDX-File-Format) [vertex](MDL-MDX-File-Format#vertex-structure) layout definition  
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:380-384`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L380-L384) - [MDX](MDL-MDX-File-Format) [vertex](MDL-MDX-File-Format#vertex-structure) data reading  
-**Reference**: [`vendor/KotOR.js/src/enums/odyssey/OdysseyModelMDXFlag.ts`](vendor/KotOR.js/src/enums/odyssey/OdysseyModelMDXFlag.ts) - [MDX](MDL-MDX-File-Format) [flag](GFF-File-Format#gff-data-types) enumeration definitions
+**Reference**: [`vendor/KotOR.js/src/enums/odyssey/OdysseyModelMDXFlag.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/enums/odyssey/OdysseyModelMDXFlag.ts) - [MDX](MDL-MDX-File-Format) [flag](GFF-File-Format#gff-data-types) enumeration definitions
 
 **Note:** [MDX](MDL-MDX-File-Format) [vertex](MDL-MDX-File-Format#vertex-structure) data is stored in an interleaved format based on the [MDX](MDL-MDX-File-Format) [vertex](MDL-MDX-File-Format#vertex-structure) size. Each [vertex](MDL-MDX-File-Format#vertex-structure) attribute is accessed via its relative offset within the [vertex](MDL-MDX-File-Format#vertex-structure) stride. The [vertex](MDL-MDX-File-Format#vertex-structure) data is read from the [MDX files](MDL-MDX-File-Format) starting at the [MDX](MDL-MDX-File-Format) data offset specified in the Trimesh header.
 
@@ -756,8 +756,8 @@ Each face (triangle) is defined by:
 **Reference**: [`vendor/mdlops/MDLOpsM.pm`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm) - [face](MDL-MDX-File-Format#face-structure) structure reading (see [face](MDL-MDX-File-Format#face-structure) array processing)  
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:390-409`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L390-L409) - [face](MDL-MDX-File-Format#face-structure) structure reading  
 **Reference**: [`vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:530-540`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/mdl/reader.py#L530-L540) - [face](MDL-MDX-File-Format#face-structure) structure reading  
-**Reference**: [`vendor/kotor/docs/mdl.md:36-42`](vendor/kotor/docs/mdl.md#face) - [face](MDL-MDX-File-Format#face-structure) structure analysis  
-**Reference**: [`vendor/kotor/docs/mdl.md:52-63`](vendor/kotor/docs/mdl.md#node-structure) - Typical [node](MDL-MDX-File-Format#node-structures) hierarchy structure for creatures, players, and areas
+**Reference**: [`vendor/kotor/docs/mdl.md:36-42`](https://github.com/th3w1zard1/kotor/blob/master/docs/mdl.md#face) - [face](MDL-MDX-File-Format#face-structure) structure analysis  
+**Reference**: [`vendor/kotor/docs/mdl.md:52-63`](https://github.com/th3w1zard1/kotor/blob/master/docs/mdl.md#node-structure) - Typical [node](MDL-MDX-File-Format#node-structures) hierarchy structure for creatures, players, and areas
 
 **Note:** [face](MDL-MDX-File-Format#face-structure) normals [ARE](GFF-File-Format#are-area) precomputed and stored with each [face](MDL-MDX-File-Format#face-structure). The plane coefficient (D) is the distance from the origin to the plane along the normal. [face](MDL-MDX-File-Format#face-structure) [adjacency](BWM-File-Format#walkable-adjacencies) indices [ARE](GFF-File-Format#are-area) used for smooth shading and culling optimization. The [material](MDL-MDX-File-Format#trimesh-header) index references entries in `surfacemat.2da` for surface properties.
 
@@ -772,7 +772,7 @@ The Trimesh header contains arrays for organizing [vertex](MDL-MDX-File-Format#v
 The [vertex](MDL-MDX-File-Format#vertex-structure) indices themselves [ARE](GFF-File-Format#are-area) stored as [uint16](GFF-File-Format#gff-data-types) values and reference positions in the [vertex](MDL-MDX-File-Format#vertex-structure) coordinate array (either in [MDL](MDL-MDX-File-Format) or [MDX](MDL-MDX-File-Format) depending on the [mesh](MDL-MDX-File-Format#trimesh-header) type).
 
 **Reference**: [`vendor/mdlops/MDLOpsM.pm:221-227`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L221-L227) - [vertex](MDL-MDX-File-Format#vertex-structure) index array structure definitions  
-**Reference**: [`vendor/kotor/docs/mdl.md:17-21`](vendor/kotor/docs/mdl.md#node-chunk) - [vertex](MDL-MDX-File-Format#vertex-structure) index array layout analysis  
+**Reference**: [`vendor/kotor/docs/mdl.md:17-21`](https://github.com/th3w1zard1/kotor/blob/master/docs/mdl.md#node-chunk) - [vertex](MDL-MDX-File-Format#vertex-structure) index array layout analysis  
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:201-214`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L201-L214) - [vertex](MDL-MDX-File-Format#vertex-structure) index array reading
 
 ---
@@ -1412,4 +1412,4 @@ mat4 computeBoneMatrix(int bone_idx, Animation anim, float time) {
 
 ---
 
-This documentation aims to provide a comprehensive and structured overview of the KotOR [MDL](MDL-MDX-File-Format)/[MDX files](MDL-MDX-File-Format) format, focusing on the detailed file structure and data formats used within the games.
+This documentation aims to provide a comprehensive and structured overview of the KotOR [MDL](MDL-MDX-File-Format)/[MDX files](MDL-MDX-File-Format) format, focusing on the detailed file structure and da

@@ -9,15 +9,15 @@ env:
   PYTHON_VERSIONS_JSON: '["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]'
   ARCHITECTURES_JSON: '["x86", "x64"]'
   INTERPRETERS_JSON: '["python"]'
-  UPX_VERSION: '4.2.2'
+  UPX_VERSION: "4.2.2"
   USE_UPX: true
-  BUILD_BOOTLOADERS: false  # Build pyinstaller bootloaders. Pretty much unusable due to AV heuristics.
-  
+  BUILD_BOOTLOADERS: false # Build pyinstaller bootloaders. Pretty much unusable due to AV heuristics.
+
 on:
-#  push:
+  #  push:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * 1'  # Runs every Monday at 06:00 UTC
+    - cron: "0 6 * * 1" # Runs every Monday at 06:00 UTC
 
 permissions:
   contents: write
@@ -114,14 +114,14 @@ jobs:
     needs: [setup, detect-tools]
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false  # Disable automatic cancellation of other jobs
+      fail-fast: false # Disable automatic cancellation of other jobs
       matrix:
         tool: ${{ fromJson(needs.detect-tools.outputs.tools_matrix) }}
         os: ${{ fromJson(needs.setup.outputs.os) }}
         python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
         architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
         python_pypy: ${{ fromJson(needs.setup.outputs.python-pypy) }}
-        qt_version: ['pyqt5']
+        qt_version: ["pyqt5"]
         include:
           - arch: x86
             vc_redist2015: "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe"
@@ -138,299 +138,299 @@ jobs:
           - os: macos-12
             architecture: x86
           # latest PyPy version as of 17/03/2024 is 3.10.
-          - python_pypy: 'pypy'
-            python-version: '3.11'
-          - python_pypy: 'pypy'
-            python-version: '3.12'
+          - python_pypy: "pypy"
+            python-version: "3.11"
+          - python_pypy: "pypy"
+            python-version: "3.12"
           # PyQt5 doesn't seem to be compatible with PyPy
           - python_pypy: "pypy"
-            qt_version: 'pyqt5'
+            qt_version: "pyqt5"
           - python_pypy: "pypy"
-            qt_version: 'pyside2'
+            qt_version: "pyside2"
           - python_pypy: "pypy"
-            qt_version: 'pyqt6'
+            qt_version: "pyqt6"
           - python_pypy: "pypy"
-            python-version: '3.10'
-            os: 'windows-latest'
+            python-version: "3.10"
+            os: "windows-latest"
 
     steps:
-    - name: Determine Python version string
-      id: set-python-version
-      run: |
-        if ( "${{ matrix.python_pypy }}" -eq "pypy" ) {
-          Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=pypy-${{ matrix.python-version }}"
-        } else {
-          Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
-        }
-      shell: pwsh
-      env:
-        MATRIX_ARCH: ${{ matrix.architecture }}
-
-    - uses: actions/checkout@v4
-    - name: Test Powershell installer
-      if: ${{ runner.os != 'Windows' }}
-      id: setup-powershell
-      run: |
-        bash ./install_powershell.sh
-      shell: bash
-
-    - name: Set up pypy ${{ matrix.python-version }}
-      if: ${{ matrix.python_pypy == 'pypy' }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        architecture: ${{ matrix.architecture }}
-    
-    - name: Reset APT sources to default
-      if: ${{ runner.os == 'Linux' }}
-      run: |
-        echo "Resetting APT sources to default Ubuntu repositories"
-        sudo rm /etc/apt/sources.list
-        echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs) main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-        echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-        echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-        echo "deb http://security.ubuntu.com/ubuntu $(lsb_release -cs)-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get update -y
-      shell: bash
-
-    - name: Add deadsnakes PPA for older Python versions (Linux)
-      if: ${{ runner.os == 'Linux' }}
-      run: |
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository -y ppa:deadsnakes/ppa
-        sudo apt-get update -y
-      shell: bash
-
-    - name: Set UPX download URL
-      # upx docs express that crashes are happening on ventura and above with upx, don't use on mac.
-      if: runner.os != 'macOS'
-      id: upx_setup
-      run: |
-        $build = "no"
-        $archiveName = ""
-        if ("${{ runner.os }}" -eq "Windows") {
-          if ("${{ matrix.architecture }}" -eq "x86") {
-            $archiveName = "upx-${{ env.UPX_VERSION }}-win32.zip"
+      - name: Determine Python version string
+        id: set-python-version
+        run: |
+          if ( "${{ matrix.python_pypy }}" -eq "pypy" ) {
+            Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=pypy-${{ matrix.python-version }}"
           } else {
-            $archiveName = "upx-${{ env.UPX_VERSION }}-win64.zip"
+            Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
           }
-        } elseif ("${{ runner.os }}" -eq "Linux") {
-          $archiveName = "upx-${{ env.UPX_VERSION }}-amd64_linux.tar.xz"
-        } elseif ("${{ runner.os }}" -eq "macOS") {
-          $build = "yes"
-          $archiveName = "upx-${{ env.UPX_VERSION }}-src.tar.xz"
-        }
-        $url = "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/$archiveName"
+        shell: pwsh
+        env:
+          MATRIX_ARCH: ${{ matrix.architecture }}
 
-        Add-Content -Path $env:GITHUB_OUTPUT -Value "build=$build"
-        Add-Content -Path $env:GITHUB_OUTPUT -Value "url=$url"
-        Add-Content -Path $env:GITHUB_OUTPUT -Value "archiveName=$archiveName"
-      shell: pwsh
+      - uses: actions/checkout@v4
+      - name: Test Powershell installer
+        if: ${{ runner.os != 'Windows' }}
+        id: setup-powershell
+        run: |
+          bash ./install_powershell.sh
+        shell: bash
 
-    - name: Download and prepare UPX
-      if: runner.os != 'macOS'
-      run: |        
-        $ext = "${{ runner.os }}" -eq "Windows" ? "zip" : "tar.xz"
-        $url = "${{ steps.upx_setup.outputs.url }}"
-        $archiveName = "${{ steps.upx_setup.outputs.archiveName }}"
-        $outputPath = "upx-dir"
+      - name: Set up pypy ${{ matrix.python-version }}
+        if: ${{ matrix.python_pypy == 'pypy' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          architecture: ${{ matrix.architecture }}
 
-        # Use Invoke-WebRequest or curl depending on the OS
-        if ("${{ runner.os }}" -eq "Windows") {
-          Invoke-WebRequest -Uri $url -OutFile $archiveName
-        } elseif ("${{ runner.os }}" -eq "Linux") {
-          curl -L $url -o $archiveName
-        }
-        
-        New-Item -ItemType Directory -Force -Path "upx-dir" -ErrorAction SilentlyContinue
-        if ("${{ runner.os }}" -ne "macOS") {
-          if ($ext -eq "zip") {
-            $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($archiveName)
-            Expand-Archive -Path $archiveName -DestinationPath "temp_folder_upx"
-            if (-not (Test-Path -Path "upx-dir")) {
-                New-Item -ItemType Directory -Path "upx-dir"
+      - name: Reset APT sources to default
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          echo "Resetting APT sources to default Ubuntu repositories"
+          sudo rm /etc/apt/sources.list
+          echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs) main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-updates main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb http://archive.ubuntu.com/ubuntu $(lsb_release -cs)-backports main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          echo "deb http://security.ubuntu.com/ubuntu $(lsb_release -cs)-security main restricted universe multiverse" | sudo tee -a /etc/apt/sources.list
+          sudo apt-get update -y
+        shell: bash
+
+      - name: Add deadsnakes PPA for older Python versions (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository -y ppa:deadsnakes/ppa
+          sudo apt-get update -y
+        shell: bash
+
+      - name: Set UPX download URL
+        # upx docs express that crashes are happening on ventura and above with upx, don't use on mac.
+        if: runner.os != 'macOS'
+        id: upx_setup
+        run: |
+          $build = "no"
+          $archiveName = ""
+          if ("${{ runner.os }}" -eq "Windows") {
+            if ("${{ matrix.architecture }}" -eq "x86") {
+              $archiveName = "upx-${{ env.UPX_VERSION }}-win32.zip"
+            } else {
+              $archiveName = "upx-${{ env.UPX_VERSION }}-win64.zip"
             }
-            Get-ChildItem -LiteralPath "temp_folder_upx/$fileNameWithoutExtension" -Recurse | Move-Item -Destination "upx-dir"
-            Remove-Item "temp_folder_upx" -Recurse -Force -ErrorAction SilentlyContinue
-          } else {
-            tar -xvf $archiveName --strip-components=1 -C "upx-dir"
+          } elseif ("${{ runner.os }}" -eq "Linux") {
+            $archiveName = "upx-${{ env.UPX_VERSION }}-amd64_linux.tar.xz"
+          } elseif ("${{ runner.os }}" -eq "macOS") {
+            $build = "yes"
+            $archiveName = "upx-${{ env.UPX_VERSION }}-src.tar.xz"
           }
-    
-          Remove-Item $archiveName # Clean up downloaded archive
-        }
-      shell: pwsh
+          $url = "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/$archiveName"
 
-    - name: Set UPX directory path
-      if: runner.os != 'macOS'
-      id: upx_dir
-      run: |
-        $upx_dir = "./upx-dir"
-        $upx_dir = $([System.IO.Path]::GetFullPath('./upx-dir'))
-        Dir -Recurse $upx_dir | Get-Childitem
-        echo "UPX_DIR=$upx_dir" | Out-File -FilePath $env:GITHUB_ENV -Append
-        Write-Output "UPX_DIR set to '$upx_dir'"
-      shell: pwsh
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "build=$build"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "url=$url"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "archiveName=$archiveName"
+        shell: pwsh
 
-    - name: Install Visual Studio 2015 C++ Redistributable
-      if: runner.os == 'Windows'
-      run: |
-        $url = "${{ matrix.vc_redist2015 }}"
-        $output = "vc_redist.exe"
-        Invoke-WebRequest -Uri $url -OutFile $output
-        Start-Process $output -ArgumentList '/install', '/quiet', '/norestart' -Wait
-        Remove-Item -Path $output
-        #choco install vcredist2015 -y
-      shell: pwsh
+      - name: Download and prepare UPX
+        if: runner.os != 'macOS'
+        run: |
+          $ext = "${{ runner.os }}" -eq "Windows" ? "zip" : "tar.xz"
+          $url = "${{ steps.upx_setup.outputs.url }}"
+          $archiveName = "${{ steps.upx_setup.outputs.archiveName }}"
+          $outputPath = "upx-dir"
 
-    - name: Install Visual Studio 2019 C++ Redistributable
-      if: runner.os == 'Windows'
-      run: |
-        $url = "${{ matrix.vc_redist2019 }}"
-        $output = "vc_redist.exe"
-        Invoke-WebRequest -Uri $url -OutFile $output
-        Start-Process $output -ArgumentList '/install', '/quiet', '/norestart' -Wait
-        Remove-Item -Path $output
-        #choco install vcredist2019 -y
-      shell: pwsh
-
-    - name: Install Visual Studio latest C++ Redistributable
-      if: runner.os == 'Windows'
-      run: |
-        $url = "${{ matrix.vc_redist-latest }}"
-        $output = "vc_redist.exe"
-        Invoke-WebRequest -Uri $url -OutFile $output
-        Start-Process $output -ArgumentList '/install', '/quiet', '/norestart' -Wait
-        Remove-Item -Path $output
-      shell: pwsh
-
-    - name: Locate compile and dependency scripts
-      id: locate-scripts
-      shell: pwsh
-      run: |
-        $buildName = "${{ matrix.tool.build_name }}"
-        $compileCandidates = @("compile/compile_${buildName}.ps1","compile/compile_${buildName}.sh","compile/compile_${buildName}.bat")
-        $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat")
-        $compileScript = ""
-        foreach ($c in $compileCandidates) { if (Test-Path $c) { $compileScript = $c; break } }
-        $depsScript = ""
-        foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
-        if (-not $compileScript) { Write-Error "Compile script not found for $buildName"; exit 1 }
-        echo "compile_script=$compileScript" >> $env:GITHUB_OUTPUT
-        echo "deps_script=$depsScript" >> $env:GITHUB_OUTPUT
-        echo "Using compile script $compileScript"
-        if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
-
-    - name: Install uv (Linux/macOS)
-      if: runner.os != 'Windows'
-      shell: bash
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-    - name: Create virtual environment
-      shell: pwsh
-      run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
-        Write-Host "Python executable path: $pythonExePath"
-        & $pythonExePath -m pip install --upgrade pip
-        if ("${{ runner.os }}" -eq "Windows") {
-          if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
-            pip install "pyinstaller==5.13.2" --prefer-binary
-          } else {
-            pip install "pyinstaller==5.4" --prefer-binary
+          # Use Invoke-WebRequest or curl depending on the OS
+          if ("${{ runner.os }}" -eq "Windows") {
+            Invoke-WebRequest -Uri $url -OutFile $archiveName
+          } elseif ("${{ runner.os }}" -eq "Linux") {
+            curl -L $url -o $archiveName
           }
-        } else {
-          pip install pyinstaller -U --prefer-binary
-        }
 
-    - name: Install tool dependencies
-      if: ${{ steps.locate-scripts.outputs.deps_script != '' }}
-      shell: pwsh
-      run: |
-        $script = "${{ steps.locate-scripts.outputs.deps_script }}"
-        $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-        Write-Host "Running deps script $script"
-        if ($script.EndsWith(".ps1")) {
-          . "./$script" -noprompt -venv_name $venvName
-        } elseif ($script.EndsWith(".sh")) {
-          bash "./$script" -noprompt -venv_name $venvName
-        } elseif ($script.EndsWith(".bat")) {
-          cmd /c ".\\$script -noprompt -venv_name $venvName"
-        } else {
-          Write-Error "Unknown deps script type: $script"
-          exit 1
-        }
+          New-Item -ItemType Directory -Force -Path "upx-dir" -ErrorAction SilentlyContinue
+          if ("${{ runner.os }}" -ne "macOS") {
+            if ($ext -eq "zip") {
+              $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($archiveName)
+              Expand-Archive -Path $archiveName -DestinationPath "temp_folder_upx"
+              if (-not (Test-Path -Path "upx-dir")) {
+                  New-Item -ItemType Directory -Path "upx-dir"
+              }
+              Get-ChildItem -LiteralPath "temp_folder_upx/$fileNameWithoutExtension" -Recurse | Move-Item -Destination "upx-dir"
+              Remove-Item "temp_folder_upx" -Recurse -Force -ErrorAction SilentlyContinue
+            } else {
+              tar -xvf $archiveName --strip-components=1 -C "upx-dir"
+            }
 
-    - name: Compile tool
-      shell: pwsh
-      run: |
-        $compile = "${{ steps.locate-scripts.outputs.compile_script }}"
-        $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-        $upxDir = $env:UPX_DIR
-        $env:PYTHONOPTIMIZE = "1"
-        Write-Host "Using compile script $compile"
-        if ($compile.EndsWith(".ps1")) {
-          . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
-        } elseif ($compile.EndsWith(".sh")) {
-          bash "./$compile" -noprompt -venv_name $venvName
-        } elseif ($compile.EndsWith(".bat")) {
-          cmd /c ".\\$compile -noprompt -venv_name $venvName"
-        } else {
-          Write-Error "Unknown compile script type: $compile"
-          exit 1
-        }
+            Remove-Item $archiveName # Clean up downloaded archive
+          }
+        shell: pwsh
 
-    - name: Upload compiled binaries attempt 1
-      if: ${{ success() || failure() }}
-      id: upload_attempt_1
-      uses: actions/upload-artifact@v4
-      with:
-        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        path: ./dist/**
-        retention-days: 90
-      continue-on-error: true
+      - name: Set UPX directory path
+        if: runner.os != 'macOS'
+        id: upx_dir
+        run: |
+          $upx_dir = "./upx-dir"
+          $upx_dir = $([System.IO.Path]::GetFullPath('./upx-dir'))
+          Dir -Recurse $upx_dir | Get-Childitem
+          echo "UPX_DIR=$upx_dir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Output "UPX_DIR set to '$upx_dir'"
+        shell: pwsh
 
-    - name: Upload compiled binaries attempt 2
-      id: upload_attempt_2
-      if: ${{ (success() || failure()) && steps.upload_attempt_1.outcome == 'failure' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        path: ./dist/**
-        retention-days: 90
-      continue-on-error: true
+      - name: Install Visual Studio 2015 C++ Redistributable
+        if: runner.os == 'Windows'
+        run: |
+          $url = "${{ matrix.vc_redist2015 }}"
+          $output = "vc_redist.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process $output -ArgumentList '/install', '/quiet', '/norestart' -Wait
+          Remove-Item -Path $output
+          #choco install vcredist2015 -y
+        shell: pwsh
 
-    - name: Upload compiled binaries attempt 3
-      id: upload_attempt_3
-      if: ${{ (success() || failure()) && steps.upload_attempt_2.outcome == 'failure' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        path: ./dist/**
-        retention-days: 90
-      continue-on-error: true
+      - name: Install Visual Studio 2019 C++ Redistributable
+        if: runner.os == 'Windows'
+        run: |
+          $url = "${{ matrix.vc_redist2019 }}"
+          $output = "vc_redist.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process $output -ArgumentList '/install', '/quiet', '/norestart' -Wait
+          Remove-Item -Path $output
+          #choco install vcredist2019 -y
+        shell: pwsh
 
-    - name: Upload compiled binaries attempt 4
-      id: upload_attempt_4
-      if: ${{ (success() || failure()) && steps.upload_attempt_3.outcome == 'failure' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        path: ./dist/**
-        retention-days: 90
-      continue-on-error: true
+      - name: Install Visual Studio latest C++ Redistributable
+        if: runner.os == 'Windows'
+        run: |
+          $url = "${{ matrix.vc_redist-latest }}"
+          $output = "vc_redist.exe"
+          Invoke-WebRequest -Uri $url -OutFile $output
+          Start-Process $output -ArgumentList '/install', '/quiet', '/norestart' -Wait
+          Remove-Item -Path $output
+        shell: pwsh
 
-    - name: Upload compiled binaries attempt 5
-      id: upload_attempt_5
-      if: ${{ (success() || failure()) && steps.upload_attempt_4.outcome == 'failure' }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        path: ./dist/**
-        retention-days: 90
+      - name: Locate compile and dependency scripts
+        id: locate-scripts
+        shell: pwsh
+        run: |
+          $buildName = "${{ matrix.tool.build_name }}"
+          $compileCandidates = @("compile/compile_${buildName}.ps1","compile/compile_${buildName}.sh","compile/compile_${buildName}.bat")
+          $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat")
+          $compileScript = ""
+          foreach ($c in $compileCandidates) { if (Test-Path $c) { $compileScript = $c; break } }
+          $depsScript = ""
+          foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
+          if (-not $compileScript) { Write-Error "Compile script not found for $buildName"; exit 1 }
+          echo "compile_script=$compileScript" >> $env:GITHUB_OUTPUT
+          echo "deps_script=$depsScript" >> $env:GITHUB_OUTPUT
+          echo "Using compile script $compileScript"
+          if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
 
-  package:  # The goal of this job is to repackage by toolname, rather than all tools by os_pyversion_arch
-    needs: build  # do not start this job until all 'build' jobs complete
+      - name: Install uv (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Create virtual environment
+        shell: pwsh
+        run: |
+          . ./install_python_venv.ps1 -noprompt -venv_name .venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
+          Write-Host "Python executable path: $pythonExePath"
+          & $pythonExePath -m pip install --upgrade pip
+          if ("${{ runner.os }}" -eq "Windows") {
+            if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
+              pip install "pyinstaller==5.13.2" --prefer-binary
+            } else {
+              pip install "pyinstaller==5.4" --prefer-binary
+            }
+          } else {
+            pip install pyinstaller -U --prefer-binary
+          }
+
+      - name: Install tool dependencies
+        if: ${{ steps.locate-scripts.outputs.deps_script != '' }}
+        shell: pwsh
+        run: |
+          $script = "${{ steps.locate-scripts.outputs.deps_script }}"
+          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          Write-Host "Running deps script $script"
+          if ($script.EndsWith(".ps1")) {
+            . "./$script" -noprompt -venv_name $venvName
+          } elseif ($script.EndsWith(".sh")) {
+            bash "./$script" -noprompt -venv_name $venvName
+          } elseif ($script.EndsWith(".bat")) {
+            cmd /c ".\\$script -noprompt -venv_name $venvName"
+          } else {
+            Write-Error "Unknown deps script type: $script"
+            exit 1
+          }
+
+      - name: Compile tool
+        shell: pwsh
+        run: |
+          $compile = "${{ steps.locate-scripts.outputs.compile_script }}"
+          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $upxDir = $env:UPX_DIR
+          $env:PYTHONOPTIMIZE = "1"
+          Write-Host "Using compile script $compile"
+          if ($compile.EndsWith(".ps1")) {
+            . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
+          } elseif ($compile.EndsWith(".sh")) {
+            bash "./$compile" -noprompt -venv_name $venvName
+          } elseif ($compile.EndsWith(".bat")) {
+            cmd /c ".\\$compile -noprompt -venv_name $venvName"
+          } else {
+            Write-Error "Unknown compile script type: $compile"
+            exit 1
+          }
+
+      - name: Upload compiled binaries attempt 1
+        if: ${{ success() || failure() }}
+        id: upload_attempt_1
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          path: ./dist/**
+          retention-days: 90
+        continue-on-error: true
+
+      - name: Upload compiled binaries attempt 2
+        id: upload_attempt_2
+        if: ${{ (success() || failure()) && steps.upload_attempt_1.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          path: ./dist/**
+          retention-days: 90
+        continue-on-error: true
+
+      - name: Upload compiled binaries attempt 3
+        id: upload_attempt_3
+        if: ${{ (success() || failure()) && steps.upload_attempt_2.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          path: ./dist/**
+          retention-days: 90
+        continue-on-error: true
+
+      - name: Upload compiled binaries attempt 4
+        id: upload_attempt_4
+        if: ${{ (success() || failure()) && steps.upload_attempt_3.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          path: ./dist/**
+          retention-days: 90
+        continue-on-error: true
+
+      - name: Upload compiled binaries attempt 5
+        id: upload_attempt_5
+        if: ${{ (success() || failure()) && steps.upload_attempt_4.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          path: ./dist/**
+          retention-days: 90
+
+  package: # The goal of this job is to repackage by toolname, rather than all tools by os_pyversion_arch
+    needs: build # do not start this job until all 'build' jobs complete
     if: ${{ success() || failure() }}
     runs-on: ubuntu-latest
     outputs:
@@ -540,10 +540,10 @@ jobs:
         shell: pwsh
         run: |
           $artifactNames = Get-Content 'artifact-names.txt' -ReadCount 0
-      
+
           # Initialize an array to hold the artifact names directly
           $matrixArray = @()
-      
+
           foreach ($name in $artifactNames) {
             if (-not [string]::IsNullOrEmpty($name)) {
               Write-Host "Processing artifact name: $name"
@@ -551,7 +551,7 @@ jobs:
               $matrixArray += $name.trim()
             }
           }
-      
+
           # Convert the array directly to JSON
           $jsonMatrix = $matrixArray | ConvertTo-Json -Depth 5 -Compress
 
@@ -560,7 +560,7 @@ jobs:
           $singleLineJsonMatrix = $singleLineJsonMatrix -replace "`n", ""
           Write-Host "Matrix JSON:"
           Write-Host $singleLineJsonMatrix
-      
+
           echo "matrixJson<<EOF" >> $env:GITHUB_OUTPUT
           echo $singleLineJsonMatrix >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
@@ -571,7 +571,7 @@ jobs:
         with:
           name: all_tool_dists_onearchive
           path: packaged_artifacts/**
-          retention-days: 1  # only used for the next job.
+          retention-days: 1 # only used for the next job.
           compression-level: 0
 
   upload:

@@ -9,23 +9,23 @@ env:
   PYTHON_VERSIONS_JSON: '["3.8"]'
   ARCHITECTURES_JSON: '["x86", "x64"]'
   INTERPRETERS_JSON: '["python"]'
-  UPX_VERSION: '4.2.2'
+  UPX_VERSION: "4.2.2"
 
 on:
   release:
     types: [prereleased, released, created]
   push:
     tags:
-      - 'v*'  # Any version tag - tool matching is done dynamically in discover job
+      - "v*" # Any version tag - tool matching is done dynamically in discover job
   workflow_dispatch:
     inputs:
       tool_filter:
-        description: 'Filter to specific tool folder name under ./Tools (leave empty for all with new versions)'
+        description: "Filter to specific tool folder name under ./Tools (leave empty for all with new versions)"
         required: false
-        default: ''
+        default: ""
         type: string
       skip_version_check:
-        description: 'Skip version comparison (build all matching tools)'
+        description: "Skip version comparison (build all matching tools)"
         required: false
         default: false
         type: boolean
@@ -53,7 +53,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install packaging library
         run: pip install packaging
@@ -339,25 +339,25 @@ jobs:
           # ===================
           # MAIN DISCOVERY LOGIC
           # ===================
-          
+
           event_name = os.environ.get("EVENT_NAME", "")
           release_tag = os.environ.get("RELEASE_TAG", "") or os.environ.get("REF_NAME", "")
           tool_filter = os.environ.get("INPUT_TOOL_FILTER", "").strip()
           skip_version_check = os.environ.get("INPUT_SKIP_VERSION_CHECK", "false").lower() == "true"
-          
+
           # Determine if this is a release trigger (should skip version check and force build)
           is_release_trigger = event_name in ["release", "push"] and release_tag and release_tag.startswith("v")
-          
+
           print(f"Event: {event_name}")
           print(f"Release tag: {release_tag}")
           print(f"Tool filter: {tool_filter or '(none)'}")
           print(f"Skip version check: {skip_version_check}")
           print(f"Is release trigger: {is_release_trigger}")
           print()
-          
+
           tools_to_build = []
           tools_dir = Path("Tools")
-          
+
           # Iterate through all first-level directories under ./Tools
           for tool_dir in sorted(tools_dir.iterdir()):
               if not tool_dir.is_dir():
@@ -464,18 +464,18 @@ jobs:
                   tools_to_build.append(tool_info)
               
               print()
-          
+
           # Output results
           has_tools = len(tools_to_build) > 0
           matrix_json = json.dumps(tools_to_build)
-          
+
           print("=" * 50)
           print(f"TOOLS TO BUILD: {len(tools_to_build)}")
           for t in tools_to_build:
               qt_info = f" (Qt: {t['qt_versions']})" if t['has_qt'] else ""
               print(f"  - {t['name']} v{t['version']} -> tag: {t['tag']}{qt_info}")
           print("=" * 50)
-          
+
           with open(os.environ["GITHUB_OUTPUT"], "a") as f:
               f.write(f"tools_matrix={matrix_json}\n")
               f.write(f"has_tools={str(has_tools).lower()}\n")
@@ -547,7 +547,7 @@ jobs:
           CONFIG_FILE="${{ matrix.tool.config_file }}"
           TOOL_NAME="${{ matrix.tool.name }}"
           VERSION_KEY="${{ matrix.tool.version_key }}"
-          
+
           if [ -f "$CONFIG_FILE" ]; then
             echo "Updating $CONFIG_FILE with $VERSION_KEY to $VERSION (pre-build)"
             
@@ -591,7 +591,7 @@ jobs:
           CONFIG_FILE="${{ matrix.tool.config_file }}"
           TOOL_NAME="${{ matrix.tool.name }}"
           VERSION="${{ matrix.tool.version }}"
-          
+
           if [ -f "$CONFIG_FILE" ]; then
             git add "$CONFIG_FILE"
             if git diff --staged --quiet; then
@@ -644,10 +644,10 @@ jobs:
           - os: macos-12
             architecture: x86
           # PyPy exclusions
-          - python_pypy: 'pypy'
-            python-version: '3.11'
-          - python_pypy: 'pypy'
-            python-version: '3.12'
+          - python_pypy: "pypy"
+            python-version: "3.11"
+          - python_pypy: "pypy"
+            python-version: "3.12"
 
     steps:
       - name: Determine Python version string
@@ -718,7 +718,7 @@ jobs:
             $archiveName = "upx-${{ env.UPX_VERSION }}-amd64_linux.tar.xz"
           }
           $url = "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/$archiveName"
-          
+
           Add-Content -Path $env:GITHUB_OUTPUT -Value "url=$url"
           Add-Content -Path $env:GITHUB_OUTPUT -Value "archiveName=$archiveName"
         shell: pwsh
@@ -729,13 +729,13 @@ jobs:
           $ext = "${{ runner.os }}" -eq "Windows" ? "zip" : "tar.xz"
           $url = "${{ steps.upx_setup.outputs.url }}"
           $archiveName = "${{ steps.upx_setup.outputs.archiveName }}"
-          
+
           if ("${{ runner.os }}" -eq "Windows") {
             Invoke-WebRequest -Uri $url -OutFile $archiveName
           } else {
             curl -L $url -o $archiveName
           }
-          
+
           New-Item -ItemType Directory -Force -Path "upx-dir" -ErrorAction SilentlyContinue
           if ($ext -eq "zip") {
             $fileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($archiveName)
@@ -872,15 +872,15 @@ jobs:
           $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
           $upxDir = $env:UPX_DIR
           Write-Host "Using UPX directory at '$upxDir'"
-          
+
           $env:PYTHONOPTIMIZE = "1"
           $toolName = "${{ matrix.tool.name }}"
           $venvName = ".venv_${toolName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $compileScript = "${{ matrix.tool.compile_script }}"
-          
+
           $errorLines = @()
           $output = ""
-          
+
           Write-Host "Running compile script: $compileScript"
           . ./$compileScript -noprompt -venv_name $venvName -upx_dir $upxDir 2>&1 | ForEach-Object {
             Write-Output $_.ToString()
@@ -889,7 +889,7 @@ jobs:
               $errorLines += $_.ToString()
             }
           }
-          
+
           $warningCount = 0
           $output -split "`n" | ForEach-Object {
             if ($_ -match 'WARNING: Library not found: could not resolve' -or
@@ -900,7 +900,7 @@ jobs:
               $warningCount++
             }
           }
-          
+
           if ($errorLines.Count -gt 0) {
             $errorLines | ForEach-Object { Write-Error $_ }
             Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
@@ -924,20 +924,20 @@ jobs:
         run: |
           $toolName = "${{ matrix.tool.name }}"
           $venvName = ".venv_${toolName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-          
+
           . ./install_python_venv.ps1 -noprompt -venv_name $venvName
-          
+
           # Ensure patchelf is installed
           sudo apt-get update && sudo apt-get install -y patchelf
 
           # Find the virtual environment's site-packages directory
           $venvPath = $env:VIRTUAL_ENV
           Write-Host "Virtual environment path: $venvPath"
-          
+
           # Dynamically find the Python version directory inside the venv
           $pythonLibPath = Get-ChildItem -LiteralPath "$venvPath/lib" | Where-Object { $_.PSIsContainer } | Select-Object -First 1
           $sitePackagesPath = Join-Path -Path $pythonLibPath.FullName -ChildPath "site-packages"
-          
+
           Write-Host "Site-packages path: $sitePackagesPath"
 
           # Use patchelf to adjust RPATH for all shared libraries in the virtual environment
@@ -959,10 +959,10 @@ jobs:
           $toolName = "${{ matrix.tool.name }}"
           $artifactName = "${{ matrix.tool.artifact_name }}"
           $venvName = ".venv_${toolName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-          
+
           . ./install_python_venv.ps1 -noprompt -venv_name $venvName
           & $pythonExePath -m pip install staticx
-          
+
           $distPath = "./dist/$artifactName"
           if (Test-Path -LiteralPath $distPath -ErrorAction SilentlyContinue) {
             staticx $distPath "${distPath}-static"
@@ -979,7 +979,7 @@ jobs:
         run: |
           $toolName = "${{ matrix.tool.artifact_name }}"
           $artifactName = "${toolName}_${{ runner.os }}_${{ matrix.architecture }}"
-          
+
           # Add Qt version suffix for Qt-based tools
           if ("${{ matrix.tool.has_qt }}" -eq "true") {
             $qtApi = $env:QT_API
@@ -987,7 +987,7 @@ jobs:
               $artifactName = "${toolName}_${{ runner.os }}_${qtApi}_${{ matrix.architecture }}"
             }
           }
-          
+
           echo "name=$artifactName" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
@@ -1070,18 +1070,18 @@ jobs:
         run: |
           $originalDir = Get-Location
           $sourceFolder = Join-Path -Path $originalDir -ChildPath "published_workflow_builds"
-          
+
           if (-not (Test-Path -LiteralPath $sourceFolder -ErrorAction SilentlyContinue)) {
             Write-Host "No artifacts directory found for ${{ matrix.tool.name }}"
             exit 0
           }
-          
+
           $dirs = Get-ChildItem -LiteralPath $sourceFolder -Directory
           if ($dirs.Count -eq 0) {
             Write-Host "No artifact subdirectories found for ${{ matrix.tool.name }}"
             exit 0
           }
-          
+
           Set-Location $sourceFolder
           foreach ($dir in $dirs) {
             $folderName = $dir.Name
@@ -1140,7 +1140,7 @@ jobs:
           using System.Net.Http;
           using System.Net.Http.Headers;
           using System.Threading.Tasks;
-    
+
           public class GitHubUploader {
               public static async Task UploadFileAsync(string filePath, string uploadUrl, string token) {
                   using (var client = new HttpClient()) {
@@ -1206,7 +1206,7 @@ jobs:
             } else {
                 Write-Host -ForegroundColor Red "No invocation information available."
             }
-        
+
             # Extract and display the script stack trace if available
             if ($_.ScriptStackTrace) {
                 Write-Host -ForegroundColor Red "Script Stack Trace:"
@@ -1248,7 +1248,7 @@ jobs:
           CONFIG_FILE="${{ matrix.tool.config_file }}"
           LATEST_KEY="${{ matrix.tool.latest_version_key }}"
           TOOL_NAME="${{ matrix.tool.name }}"
-          
+
           if [ -n "$LATEST_KEY" ] && [ -f "$CONFIG_FILE" ]; then
             echo "Updating $LATEST_KEY to $VERSION in $CONFIG_FILE"
             
@@ -1302,7 +1302,7 @@ jobs:
           TAG="${{ matrix.tool.tag }}"
           TOOL_NAME="${{ matrix.tool.name }}"
           VERSION="${{ matrix.tool.version }}"
-          
+
           echo "=============================================="
           echo "Draft release created for $TOOL_NAME v$VERSION"
           echo "Tag: $TAG"

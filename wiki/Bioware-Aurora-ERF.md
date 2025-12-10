@@ -2,6 +2,8 @@
 
 *Official Bioware Aurora Documentation*
 
+> **Note**: This official BioWare documentation was originally written for **Neverwinter Nights**, but the ERF format is **identical in KotOR**. All structures, fields, and behaviors described here apply to KotOR as well. The examples may reference NWN-specific features, but the core format is the same.
+
 **Source:** This documentation is extracted from the official BioWare Aurora Engine ERF Format PDF, archived in [`vendor/xoreos-docs/specs/bioware/ERF_Format.pdf`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/bioware/ERF_Format.pdf). The original documentation was published on the now-defunct nwn.bioware.com developer site.
 
 ---

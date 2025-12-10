@@ -387,31 +387,31 @@ The [GFF](GFF-File-Format) format is also known as "ITP" in [`vendor/xoreos-docs
 
 ### Direct Access types
 
-Simple types ([uint8](GFF-File-Format#gff-data-types), Int8, [uint16](GFF-File-Format#gff-data-types), [int16](GFF-File-Format#gff-data-types), [uint32](GFF-File-Format#gff-data-types), [int32](GFF-File-Format#gff-data-types), [float](GFF-File-Format#gff-data-types)) store their values directly in the field entry's data/offset field (offset 0x0008 in the element structure). These values [ARE](GFF-File-Format#are-area) stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
+Simple types (uint8, Int8, uint16, int16, uint32, int32, float) store their values directly in the field entry's data/offset field (offset 0x0008 in the element structure). These values [ARE](GFF-File-Format#are-area) stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
 
 ### Indirect Access types
 
 Complex types require accessing data from the field data section:
 
-- **UInt64, Int64, [double](GFF-File-Format#gff-data-types)**: The field's data/offset contains a [byte](GFF-File-Format#gff-data-types) offset into the field data section where the 8-[byte](GFF-File-Format#gff-data-types) value is stored.
-- **String ([CExoString](GFF-File-Format#gff-data-types))**: The offset points to a [uint32](GFF-File-Format#gff-data-types) length followed by the string bytes (not [null-terminated](https://en.cppreference.com/w/c/string/byte)).
-- **[ResRef](GFF-File-Format#gff-data-types)**: The offset points to a [uint8](GFF-File-Format#gff-data-types) length (max 16) followed by the resource name bytes (not [null-terminated](https://en.cppreference.com/w/c/string/byte)).
-- **LocalizedString ([CExoLocString](GFF-File-Format#gff-data-types))**: The offset points to a structure containing:
-  - [uint32](GFF-File-Format#gff-data-types): Total size (not including this count)
-  - [int32](GFF-File-Format#gff-data-types): [StrRef](TLK-File-Format#string-references-strref) ID ([dialog.tlk](TLK-File-Format) reference, -1 if none)
-  - [uint32](GFF-File-Format#gff-data-types): Number of language-specific strings
+- **UInt64, Int64, double**: The field's data/offset contains a byte offset into the field data section where the 8-byte value is stored.
+- **String (CExoString)**: The offset points to a uint32 length followed by the string bytes (not [null-terminated](https://en.cppreference.com/w/c/string/byte)).
+- **ResRef**: The offset points to a uint8 length (max 16) followed by the resource name bytes (not [null-terminated](https://en.cppreference.com/w/c/string/byte)).
+- **LocalizedString (CExoLocString)**: The offset points to a structure containing:
+  - uint32: Total size (not including this count)
+  - int32: [StrRef](TLK-File-Format#string-references-strref) ID ([dialog.tlk](TLK-File-Format) reference, -1 if none)
+  - uint32: Number of language-specific strings
   - For each language string (if count > 0):
-    - [uint32](GFF-File-Format#gff-data-types): Language ID
-    - [uint32](GFF-File-Format#gff-data-types): string length in bytes
-    - [char](GFF-File-Format#gff-data-types)[]: string data
-- **Void (Binary)**: The offset points to a [uint32](GFF-File-Format#gff-data-types) length followed by the binary data bytes.
-- **Vector3**: The offset points to 12 bytes (3×[float](GFF-File-Format#gff-data-types)) in the field data section.
-- **Vector4 / orientation**: The offset points to 16 bytes (4×[float](GFF-File-Format#gff-data-types)) in the field data section.
+    - uint32: Language ID
+    - uint32: string length in bytes
+    - char[]: string data
+- **Void (Binary)**: The offset points to a uint32 length followed by the binary data bytes.
+- **Vector3**: The offset points to 12 bytes (3×float) in the field data section.
+- **Vector4 / orientation**: The offset points to 16 bytes (4×float) in the field data section.
 
 ### Complex Access types
 
 - **Struct (CAPREF)**: The field's data/offset contains a struct index (not an offset). This references a struct in the struct array.
-- **List**: The field's data/offset contains a [byte](GFF-File-Format#gff-data-types) offset into the list indices array. At that offset, the first [uint32](GFF-File-Format#gff-data-types) is the entry count, followed by that many [uint32](GFF-File-Format#gff-data-types) struct indices.
+- **List**: The field's data/offset contains a byte offset into the list indices array. At that offset, the first uint32 is the entry count, followed by that many uint32 struct indices.
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - Detailed field data access patterns and code examples
 

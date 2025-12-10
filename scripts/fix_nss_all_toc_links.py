@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Fix all NSS-File-Format.md TOC links to point to correct files."""
+
 from __future__ import annotations
 
 import re
+
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
@@ -95,6 +97,7 @@ FUNCTION_FILE_MAP = {
     "Set": "NSS-Shared-Functions-Other-Functions",
 }
 
+
 def get_function_file(func_name: str) -> str | None:
     """Get the file name for a function."""
     for prefix, file_name in FUNCTION_FILE_MAP.items():
@@ -102,91 +105,85 @@ def get_function_file(func_name: str) -> str | None:
             return file_name
     return "NSS-Shared-Functions-Other-Functions"  # Default
 
+
 def normalize_function_name(text: str) -> str:
     """Extract function name from TOC link text."""
-    match = re.match(r'`([^(]+)\(', text)
+    match = re.match(r"`([^(]+)\(", text)
     if match:
         return match.group(1)
     return ""
 
+
 def fix_toc_links():
     """Fix TOC links in NSS-File-Format.md."""
-    content = NSS_FILE.read_text(encoding='utf-8')
+    content = NSS_FILE.read_text(encoding="utf-8")
     original_content = content
     fixes = 0
     lines = content.splitlines()
     new_lines = []
-    
+
     for line in lines:
         original_line = line
         # Match lines with function links: - [`Function(params)` - Routine N](#anchor or file)
         # Pattern: backtick, function name, backtick, optional routine, link
-        if '`' in line and ('Routine' in line or '](NSS-' in line):
+        if "`" in line and ("Routine" in line or "](NSS-" in line):
             # Extract function name
-            func_match = re.search(r'`([^(]+)\(', line)
+            func_match = re.search(r"`([^(]+)\(", line)
             if func_match:
                 func_name = func_match.group(1)
                 # Extract routine number if present
-                routine_match = re.search(r'Routine\s+(\d+)', line)
+                routine_match = re.search(r"Routine\s+(\d+)", line)
                 routine_num = routine_match.group(1) if routine_match else None
                 # Extract the full function text in backticks
-                func_text_match = re.search(r'`([^`]+)`', line)
+                func_text_match = re.search(r"`([^`]+)`", line)
                 func_text = func_text_match.group(1) if func_text_match else func_name
-                
+
                 # Get target file
                 file_name = get_function_file(func_name)
                 routine_str = f" - Routine {routine_num}" if routine_num else ""
-                
+
                 # Create anchor from function name (lowercase, preserve underscores to match HTML anchor format)
                 anchor = func_name.lower()
-                
+
                 # Check if link already points to a file with wrong anchor or wrong file
                 # Match pattern: [text](file#anchor)
-                link_pattern = rf'\[`[^`]+`[^\]]*\]\(([^#\)]+)(?:#([^\)]+))?\)'
+                link_pattern = r"\[`[^`]+`[^\]]*\]\(([^#\)]+)(?:#([^\)]+))?\)"
                 match = re.search(link_pattern, line)
                 if match:
                     current_file = match.group(1)
                     current_anchor = match.group(2) if match.lastindex >= 2 else None
-                    
+
                     # Fix if file is wrong or anchor is wrong
                     if current_file != file_name or (current_anchor and current_anchor != anchor):
-                        line = re.sub(
-                            link_pattern,
-                            f"[`{func_text}`{routine_str}]({file_name}#{anchor})",
-                            line
-                        )
+                        line = re.sub(link_pattern, f"[`{func_text}`{routine_str}]({file_name}#{anchor})", line)
                         fixes += 1
-                elif '](#' in line:
+                elif "](#" in line:
                     # Replace anchor link with file link + anchor
-                    line = re.sub(
-                        r'\[`[^`]+`[^\]]*\]\([^\)]+\)',
-                        f"[`{func_text}`{routine_str}]({file_name}#{anchor})",
-                        line
-                    )
+                    line = re.sub(r"\[`[^`]+`[^\]]*\]\([^\)]+\)", f"[`{func_text}`{routine_str}]({file_name}#{anchor})", line)
                     fixes += 1
-                elif f']({file_name})' in line:
+                elif f"]({file_name})" in line:
                     # Add anchor to existing file link
-                    line = line.replace(f']({file_name})', f']({file_name}#{anchor})')
+                    line = line.replace(f"]({file_name})", f"]({file_name}#{anchor})")
                     fixes += 1
-        
+
         new_lines.append(line)
-    
-    content = '\n'.join(new_lines)
-    
+
+    content = "\n".join(new_lines)
+
     # Fix the main document anchor
     content = re.sub(
-        r'\[KotOR NSS File Format Documentation\]\(#kotor-nss-file-format-documentation\)',
-        r'[KotOR NSS File Format Documentation](#kotor-nss-files-format-documentation)',
-        content
+        r"\[KotOR NSS File Format Documentation\]\(#kotor-nss-file-format-documentation\)",
+        r"[KotOR NSS File Format Documentation](#kotor-nss-files-format-documentation)",
+        content,
     )
-    
+
     if content != original_content:
-        NSS_FILE.write_text(content, encoding='utf-8')
-        print(f"Fixed TOC links in NSS-File-Format.md")
-    
+        NSS_FILE.write_text(content, encoding="utf-8")
+        print("Fixed TOC links in NSS-File-Format.md")
+
     return fixes
+
 
 if __name__ == "__main__":
     fixes = fix_toc_links()
     print(f"Total fixes: {fixes}")
-
