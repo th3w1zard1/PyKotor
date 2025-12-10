@@ -481,30 +481,121 @@ def extract_kit(
             # Normalize all room model names to lowercase for consistent comparison
             lyt_room_models = {model.lower() for model in lyt_room_model_names}
             # Extract WOK files for all LYT room models (even if not in RIM)
-            # Use installation-wide resolution to respect priority order
+            # Batch lookup to avoid repeated installation.locations() calls (performance optimization)
             # Reference: LYT.iter_resource_identifiers() yields WOK for each room
-            for room_model in lyt_room_model_names:
-                wok_data = _resolve_resource_with_priority(installation, room_model, ResourceType.WOK, logger)
-                if wok_data:
-                    # Add WOK to all_resources if not already present (use lowercase key)
-                    wok_key = (room_model.lower(), ResourceType.WOK)
-                    if wok_key not in all_resources:
-                        all_resources[wok_key] = wok_data
+            wok_identifiers = [ResourceIdentifier(resname=room_model, restype=ResourceType.WOK) for room_model in lyt_room_model_names]
+            if wok_identifiers:
+                wok_locations = installation.locations(
+                    wok_identifiers,
+                    [
+                        SearchLocation.OVERRIDE,
+                        SearchLocation.MODULES,
+                        SearchLocation.CHITIN,
+                    ],
+                )
+                for room_model in lyt_room_model_names:
+                    wok_ident = ResourceIdentifier(resname=room_model, restype=ResourceType.WOK)
+                    location_list = wok_locations.get(wok_ident, [])
+                    if location_list:
+                        # Sort by priority and get highest priority location
+                        location_list_sorted = sorted(
+                            location_list,
+                            key=lambda loc: _get_resource_priority(loc, installation),
+                        )
+                        location = location_list_sorted[0]
+                        try:
+                            with location.filepath.open("rb") as f:
+                                f.seek(location.offset)
+                                wok_data = f.read(location.size)
+                            # Add WOK to all_resources if not already present (use lowercase key)
+                            wok_key = (room_model.lower(), ResourceType.WOK)
+                            if wok_key not in all_resources:
+                                all_resources[wok_key] = wok_data
+                        except Exception:  # noqa: BLE001
+                            pass  # WOK not found or couldn't be read
 
     # Identify components (MDL files that have corresponding WOK files)
     # Components are room models from LYT that have WOK walkmeshes
     logger.info(f"Found {len(lyt_room_models)} room models in LYT: {sorted(list(lyt_room_models))[:10]}...")
 
     # First, identify components directly from LYT room models
+    # Batch lookup MDL/MDX/WOK for all room models to avoid repeated installation.locations() calls (performance optimization)
     # Use installation-wide resolution to respect priority order: Override > Modules (.mod) > Modules (.rim) > Chitin
+    component_resource_identifiers: list[ResourceIdentifier] = []
+    for room_model in lyt_room_model_names:
+        component_resource_identifiers.append(ResourceIdentifier(resname=room_model, restype=ResourceType.MDL))
+        component_resource_identifiers.append(ResourceIdentifier(resname=room_model, restype=ResourceType.MDX))
+        component_resource_identifiers.append(ResourceIdentifier(resname=room_model, restype=ResourceType.WOK))
+    
+    # Batch lookup all component resources
+    component_locations: dict[ResourceIdentifier, list[LocationResult]] = {}
+    if component_resource_identifiers:
+        component_locations = installation.locations(
+            component_resource_identifiers,
+            [
+                SearchLocation.OVERRIDE,
+                SearchLocation.MODULES,
+                SearchLocation.CHITIN,
+            ],
+        )
+    
     for room_model in lyt_room_model_names:
         room_model_lower = room_model.lower()
 
-        # Get MDL, MDX, and WOK using installation-wide resolution with proper priority
+        # Get MDL, MDX, and WOK from batched results
         # This ensures we get the highest priority version (e.g., from Override if it exists)
-        mdl_data = _resolve_resource_with_priority(installation, room_model, ResourceType.MDL, logger)
-        mdx_data_raw = _resolve_resource_with_priority(installation, room_model, ResourceType.MDX, logger)
-        wok_data = _resolve_resource_with_priority(installation, room_model, ResourceType.WOK, logger)
+        mdl_ident = ResourceIdentifier(resname=room_model, restype=ResourceType.MDL)
+        mdx_ident = ResourceIdentifier(resname=room_model, restype=ResourceType.MDX)
+        wok_ident = ResourceIdentifier(resname=room_model, restype=ResourceType.WOK)
+        
+        mdl_data = None
+        mdx_data_raw = None
+        wok_data = None
+        
+        # Resolve MDL
+        mdl_location_list = component_locations.get(mdl_ident, [])
+        if mdl_location_list:
+            mdl_location_list_sorted = sorted(
+                mdl_location_list,
+                key=lambda loc: _get_resource_priority(loc, installation),
+            )
+            mdl_location = mdl_location_list_sorted[0]
+            try:
+                with mdl_location.filepath.open("rb") as f:
+                    f.seek(mdl_location.offset)
+                    mdl_data = f.read(mdl_location.size)
+            except Exception:  # noqa: BLE001
+                pass
+        
+        # Resolve MDX
+        mdx_location_list = component_locations.get(mdx_ident, [])
+        if mdx_location_list:
+            mdx_location_list_sorted = sorted(
+                mdx_location_list,
+                key=lambda loc: _get_resource_priority(loc, installation),
+            )
+            mdx_location = mdx_location_list_sorted[0]
+            try:
+                with mdx_location.filepath.open("rb") as f:
+                    f.seek(mdx_location.offset)
+                    mdx_data_raw = f.read(mdx_location.size)
+            except Exception:  # noqa: BLE001
+                pass
+        
+        # Resolve WOK
+        wok_location_list = component_locations.get(wok_ident, [])
+        if wok_location_list:
+            wok_location_list_sorted = sorted(
+                wok_location_list,
+                key=lambda loc: _get_resource_priority(loc, installation),
+            )
+            wok_location = wok_location_list_sorted[0]
+            try:
+                with wok_location.filepath.open("rb") as f:
+                    f.seek(wok_location.offset)
+                    wok_data = f.read(wok_location.size)
+            except Exception:  # noqa: BLE001
+                pass
 
         if mdl_data and wok_data:
             # Ensure mdx_data is bytes (not None)
@@ -866,11 +957,11 @@ def extract_kit(
     kit_dir.mkdir(parents=True, exist_ok=True)
 
     textures_dir: Path = kit_dir / "textures"
-    textures_dir.mkdir(exist_ok=True)
+    textures_dir.mkdir(parents=True, exist_ok=True)
     lightmaps_dir: Path = kit_dir / "lightmaps"
-    lightmaps_dir.mkdir(exist_ok=True)
+    lightmaps_dir.mkdir(parents=True, exist_ok=True)
     skyboxes_dir: Path = kit_dir / "skyboxes"
-    skyboxes_dir.mkdir(exist_ok=True)
+    skyboxes_dir.mkdir(parents=True, exist_ok=True)
 
     # Write component files
     component_list: list[dict[str, str | int | list[dict]]] = []
