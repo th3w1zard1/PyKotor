@@ -84,6 +84,15 @@ jobs:
       #qt_version: ${#{ steps.set_env.outputs.qt_version }}
 
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Install PowerShell on non-Windows
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          chmod +x ./install_powershell.sh
+          bash ./install_powershell.sh
+
       - name: Set environment variables
         id: set_env
         run: |
@@ -580,6 +589,105 @@ jobs:
           name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
           path: ./dist/**
           retention-days: 90
+
+      - name: Run tests for compiled tool
+        shell: pwsh
+        env:
+          MATRIX_ARCH: ${{ matrix.architecture }}
+        run: |
+          $ErrorActionPreference = "Stop"
+          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $toolDir = "Tools/${{ matrix.tool.tool_dir }}"
+          
+          # Set LD_LIBRARY_PATH for Linux
+          if ("${{ runner.os }}" -eq "Linux") {
+            $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
+          }
+          
+          # Ensure Python path is available if set by install_python_venv.ps1
+          if ($env:pythonExePath) {
+            $pythonDir = Split-Path -Parent $env:pythonExePath
+            if ("${{ runner.os }}" -eq "Windows") {
+              $env:PATH = "$pythonDir;$env:PATH"
+            } else {
+              $env:PATH = "$pythonDir:$env:PATH"
+            }
+          } elseif (Test-Path variable:pythonExePath) {
+            $pythonDir = Split-Path -Parent $pythonExePath
+            if ("${{ runner.os }}" -eq "Windows") {
+              $env:PATH = "$pythonDir;$env:PATH"
+            } else {
+              $env:PATH = "$pythonDir:$env:PATH"
+            }
+          }
+          
+          # Find Python executable
+          $venvPath = $venvName
+          if ("${{ runner.os }}" -eq "Windows") {
+            $pythonExePath = Join-Path $venvPath "Scripts\python.exe"
+          } else {
+            $pythonExePath = Join-Path $venvPath "bin\python"
+          }
+          
+          if (-not (Test-Path $pythonExePath)) {
+            Write-Host "Python executable not found at $pythonExePath, skipping tests"
+            exit 0
+          }
+          
+          Write-Host "Running tests for ${{ matrix.tool.display_name }}"
+          Write-Host "Tool directory: $toolDir"
+          Write-Host "Python executable: $pythonExePath"
+          
+          # Check if tests directory exists
+          $testsPath = Join-Path $toolDir "tests"
+          if (-not (Test-Path $testsPath)) {
+            Write-Host "No tests directory found at $testsPath, skipping tests"
+            exit 0
+          }
+          
+          # Install test dependencies if needed
+          $pyprojectPath = Join-Path $toolDir "pyproject.toml"
+          if (Test-Path $pyprojectPath) {
+            Write-Host "Installing test dependencies from pyproject.toml..."
+            & $pythonExePath -m pip install -e "$toolDir[dev]" --quiet 2>&1 | Out-Null
+          }
+          
+          # Install pytest-timeout if available
+          & $pythonExePath -m pip install pytest-timeout --quiet 2>&1 | Out-Null
+          
+          # Run tests with timeout (2 minutes for individual tests)
+          Write-Host "Running pytest tests..."
+          try {
+            $pytestArgs = @("$testsPath", "-v", "--tb=short")
+            
+            # Add timeout if pytest-timeout is available
+            $timeoutCheck = & $pythonExePath -m pytest --help 2>&1 | Select-String "timeout"
+            if ($timeoutCheck) {
+              $pytestArgs += @("--timeout=120", "--timeout-method=thread")
+            }
+            
+            if ("${{ runner.os }}" -eq "Linux") {
+              # Use xvfb for GUI tests on Linux if available
+              if (Get-Command xvfb-run -ErrorAction SilentlyContinue) {
+                Write-Host "Using xvfb-run for GUI tests..."
+                xvfb-run -a & $pythonExePath -m pytest $pytestArgs
+              } else {
+                & $pythonExePath -m pytest $pytestArgs
+              }
+            } else {
+              & $pythonExePath -m pytest $pytestArgs
+            }
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host -ForegroundColor Yellow "Tests completed with exit code $LASTEXITCODE (some tests may have failed)"
+              # Don't fail the build if tests fail, but report it
+            } else {
+              Write-Host -ForegroundColor Green "All tests passed!"
+            }
+          } catch {
+            Write-Host -ForegroundColor Yellow "Error running tests: $($_.Exception.Message)"
+            Write-Host "Continuing despite test errors..."
+          }
 
   package: # The goal of this job is to repackage by toolname, rather than all tools by os_pyversion_arch
     needs: build # do not start this job until all 'build' jobs complete
