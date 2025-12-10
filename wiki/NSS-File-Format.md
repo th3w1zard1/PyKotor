@@ -3487,7 +3487,7 @@ See [Planet Constants](NSS-TSL-Only-Constants-Planet-Constants) for detailed doc
 
 ### Visual Effects (VFX)
 
-See [Visual Effects (VFX)](NSS-TSL-Only-Constants-Visual-Effects-(VFX).md) for detailed documentation.
+See [Visual Effects (VFX)](NSS-TSL-Only-Constants-Visual-Effects-%28VFX%29.md) for detailed documentation.
 
 ## KOTOR Library files
 
