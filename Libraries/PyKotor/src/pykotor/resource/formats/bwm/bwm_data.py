@@ -29,7 +29,7 @@ Binary Format:
         -------|------|--------|-------------
         0x00   | 4    | char[] | File Type ("BWM ")
         0x04   | 4    | char[] | File Version ("V1.0")
-    
+
     Walkmesh Properties (52 bytes):
         Offset | Size | Type   | Description
         -------|------|--------|-------------
@@ -39,7 +39,7 @@ Binary Format:
         0x24   | 12   | float3 | Absolute Use Position 1 (x, y, z)
         0x30   | 12   | float3 | Absolute Use Position 2 (x, y, z)
         0x3C   | 12   | float3 | Position (x, y, z)
-    
+
     Data Tables (offsets stored in header):
         - Vertices: Array of float3 (x, y, z) per vertex
         - Face Indices: Array of uint32 triplets (vertex indices per face)
@@ -50,7 +50,7 @@ Binary Format:
         - Adjacencies: Array of int32 triplets (WOK only, -1 for no neighbor)
         - Edges: Array of (edge_index, transition) pairs (WOK only)
         - Perimeters: Array of edge indices (WOK only)
-        
+
     Reference: reone/bwmreader.cpp:27-92, KotOR.js/OdysseyWalkMesh.ts:200-600
 
 Identity vs Equality
@@ -73,6 +73,7 @@ transition indices into other area data (e.g., LYT/door references). They are NO
 unique identifiers and do not encode geometric adjacency. Adjacency is derived
 purely from geometry (shared vertices on walkable faces).
 """
+
 from __future__ import annotations
 
 import itertools
@@ -83,8 +84,7 @@ from enum import IntEnum
 from typing import TYPE_CHECKING, Any
 
 from pykotor.resource.formats._base import ComparableMixin
-from utility.common.geometry import Face, Vector3
-
+from utility.common.geometry import Face, SurfaceMaterial, Vector3
 
 if TYPE_CHECKING:
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
@@ -342,7 +342,11 @@ class BWM(ComparableMixin):
             return []
 
         aabbs: list[BWMNodeAABB] = []
-        self._aabbs_rec(aabbs, copy(self.faces))
+        root = self._aabbs_rec(aabbs, copy(self.faces))
+        # Store root reference for efficient queries
+        if root is not None:
+            # Root is already in aabbs list, but we can use it directly
+            pass
         return aabbs
 
     def _aabbs_rec(
@@ -560,6 +564,496 @@ class BWM(ComparableMixin):
                 next_edge = (edge_index + 1) % 3
 
         return edges
+
+    def raycast(
+        self,
+        origin: Vector3,
+        direction: Vector3,
+        max_distance: float = float("inf"),
+        materials: set[SurfaceMaterial] | None = None,
+    ) -> tuple[BWMFace, float] | None:
+        """Raycast against the walkmesh using AABB tree acceleration.
+
+        Finds the closest intersection between a ray and walkable faces in the walkmesh.
+        For area walkmeshes (WOK), uses AABB tree for efficient traversal. For placeable
+        walkmeshes (PWK/DWK), tests all faces directly.
+
+        Args:
+        ----
+            origin: Starting point of the ray (Vector3)
+            direction: Direction vector of the ray (Vector3, should be normalized)
+            max_distance: Maximum distance to search along the ray (default: infinity)
+            materials: Set of materials to test against (None = all walkable materials)
+
+        Returns:
+        -------
+            tuple[BWMFace, float] | None: (face, distance) if intersection found, None otherwise
+            - face: The intersected face
+            - distance: Distance from origin to intersection point
+
+        References:
+        ----------
+            vendor/reone/src/libs/graphics/walkmesh.cpp:24-100 (raycast implementation)
+            vendor/reone/src/libs/graphics/walkmesh.cpp:102-127 (raycastFace implementation)
+            vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:603-614 (raycast using THREE.js)
+
+        Example:
+        -------
+            >>> bwm = read_bwm(data)
+            >>> result = bwm.raycast(Vector3(0, 0, 10), Vector3(0, 0, -1), max_distance=20.0)
+            >>> if result:
+            ...     face, distance = result
+            ...     print(f"Hit face at distance {distance}")
+        """
+        if not self.faces:
+            return None
+
+        # Default to walkable materials if not specified
+        if materials is None:
+            materials = {mat for mat in SurfaceMaterial if mat.walkable()}
+
+        # For placeable/door walkmeshes, test all faces directly
+        if self.walkmesh_type == BWMType.PlaceableOrDoor:
+            return self._raycast_brute_force(origin, direction, max_distance, materials)
+
+        # For area walkmeshes, use AABB tree
+        aabbs = self.aabbs()
+        if not aabbs:
+            return self._raycast_brute_force(origin, direction, max_distance, materials)
+
+        # Find root node (first node in list, or node with no parent)
+        # Build set of all nodes that are children
+        child_nodes = set()
+        for aabb in aabbs:
+            if aabb.left is not None:
+                child_nodes.add(id(aabb.left))
+            if aabb.right is not None:
+                child_nodes.add(id(aabb.right))
+
+        # Root is a node that is not a child of any other node
+        root_nodes = [aabb for aabb in aabbs if id(aabb) not in child_nodes]
+        if not root_nodes:
+            # Fallback: use first node (tree structure may be flat or unclear)
+            root = aabbs[0] if aabbs else None
+            if root is None:
+                return self._raycast_brute_force(origin, direction, max_distance, materials)
+        else:
+            root = root_nodes[0]  # Use first root node found
+
+        # Traverse AABB tree
+        return self._raycast_aabb(root, origin, direction, max_distance, materials)
+
+    def _raycast_aabb(
+        self,
+        node: BWMNodeAABB,
+        origin: Vector3,
+        direction: Vector3,
+        max_distance: float,
+        materials: set[SurfaceMaterial],
+    ) -> tuple[BWMFace, float] | None:
+        """Recursively raycast through AABB tree.
+
+        Reference: vendor/reone/src/libs/graphics/walkmesh.cpp:57-100
+        """
+        # Test ray against AABB bounds
+        if not self._ray_aabb_intersect(origin, direction, node.bb_min, node.bb_max, max_distance):
+            return None
+
+        # If leaf node, test ray against face
+        if node.face is not None:
+            if node.face.material not in materials:
+                return None
+            distance = self._ray_triangle_intersect(origin, direction, node.face, max_distance)
+            if distance is not None:
+                return (node.face, distance)
+            return None
+
+        # Internal node: test children
+        best_result: tuple[BWMFace, float] | None = None
+        best_distance = max_distance
+
+        if node.left is not None:
+            result = self._raycast_aabb(node.left, origin, direction, best_distance, materials)
+            if result is not None:
+                face, dist = result
+                if dist < best_distance:
+                    best_result = result
+                    best_distance = dist
+
+        if node.right is not None:
+            result = self._raycast_aabb(node.right, origin, direction, best_distance, materials)
+            if result is not None:
+                face, dist = result
+                if dist < best_distance:
+                    best_result = result
+                    best_distance = dist
+
+        return best_result
+
+    def _raycast_brute_force(
+        self,
+        origin: Vector3,
+        direction: Vector3,
+        max_distance: float,
+        materials: set[SurfaceMaterial],
+    ) -> tuple[BWMFace, float] | None:
+        """Brute force raycast testing all faces.
+
+        Reference: vendor/reone/src/libs/graphics/walkmesh.cpp:36-55
+        """
+        best_result: tuple[BWMFace, float] | None = None
+        best_distance = max_distance
+
+        for face in self.faces:
+            if face.material not in materials:
+                continue
+            distance = self._ray_triangle_intersect(origin, direction, face, best_distance)
+            if distance is not None and distance < best_distance:
+                best_result = (face, distance)
+                best_distance = distance
+
+        return best_result
+
+    def _ray_aabb_intersect(
+        self,
+        origin: Vector3,
+        direction: Vector3,
+        bb_min: Vector3,
+        bb_max: Vector3,
+        max_distance: float,
+    ) -> bool:
+        """Test if ray intersects AABB using slab method.
+
+        Reference: Fast Ray-Box Intersection (Williams et al., 2005)
+        """
+        # Avoid division by zero
+        inv_dir = Vector3(
+            1.0 / direction.x if direction.x != 0.0 else float("inf"),
+            1.0 / direction.y if direction.y != 0.0 else float("inf"),
+            1.0 / direction.z if direction.z != 0.0 else float("inf"),
+        )
+
+        tmin = (bb_min.x - origin.x) * inv_dir.x
+        tmax = (bb_max.x - origin.x) * inv_dir.x
+
+        if inv_dir.x < 0:
+            tmin, tmax = tmax, tmin
+
+        tymin = (bb_min.y - origin.y) * inv_dir.y
+        tymax = (bb_max.y - origin.y) * inv_dir.y
+
+        if inv_dir.y < 0:
+            tymin, tymax = tymax, tymin
+
+        if (tmin > tymax) or (tymin > tmax):
+            return False
+
+        if tymin > tmin:
+            tmin = tymin
+        if tymax < tmax:
+            tmax = tymax
+
+        tzmin = (bb_min.z - origin.z) * inv_dir.z
+        tzmax = (bb_max.z - origin.z) * inv_dir.z
+
+        if inv_dir.z < 0:
+            tzmin, tzmax = tzmax, tzmin
+
+        if (tmin > tzmax) or (tzmin > tmax):
+            return False
+
+        if tzmin > tmin:
+            tmin = tzmin
+        if tzmax < tmax:
+            tmax = tzmax
+
+        # Check if intersection is within max_distance
+        if tmin < 0:
+            tmin = tmax
+        if tmin < 0 or tmin > max_distance:
+            return False
+
+        return True
+
+    def _ray_triangle_intersect(
+        self,
+        origin: Vector3,
+        direction: Vector3,
+        face: BWMFace,
+        max_distance: float,
+    ) -> float | None:
+        """Test ray-triangle intersection using Möller-Trumbore algorithm.
+
+        Reference: vendor/reone/src/libs/graphics/walkmesh.cpp:102-127
+        Reference: "Fast, Minimum Storage Ray/Triangle Intersection" (Möller & Trumbore, 1997)
+        """
+
+        def cross(a: Vector3, b: Vector3) -> Vector3:
+            """Compute cross product of two Vector3."""
+            return Vector3(
+                a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x,
+            )
+
+        v0 = face.v1
+        v1 = face.v2
+        v2 = face.v3
+
+        edge1 = v1 - v0
+        edge2 = v2 - v0
+        h = cross(direction, edge2)
+        a = edge1.dot(h)
+
+        # Ray is parallel to triangle
+        if abs(a) < 1e-6:
+            return None
+
+        f = 1.0 / a
+        s = origin - v0
+        u = f * s.dot(h)
+
+        if u < 0.0 or u > 1.0:
+            return None
+
+        q = cross(s, edge1)
+        v = f * direction.dot(q)
+
+        if v < 0.0 or u + v > 1.0:
+            return None
+
+        # Intersection found, compute distance
+        t = f * edge2.dot(q)
+
+        if t > 1e-6 and t < max_distance:
+            return t
+
+        return None
+
+    def point_in_face_2d(
+        self,
+        point: Vector3,
+        face: BWMFace,
+    ) -> bool:
+        """Test if a 2D point (X, Y) is inside a face using barycentric coordinates.
+
+        This method projects the face and point to the XY plane and tests containment.
+        The Z coordinate is ignored for the containment test.
+
+        Args:
+        ----
+            point: Point to test (Vector3, Z coordinate ignored)
+            face: Face to test against (BWMFace)
+
+        Returns:
+        -------
+            bool: True if point is inside the face (in XY plane), False otherwise
+
+        References:
+        ----------
+            vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:478-495 (pointInFace2d)
+            vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:526-533 (isPointInsideTriangle2d)
+
+        Example:
+        -------
+            >>> bwm = read_bwm(data)
+            >>> point = Vector3(5.0, 3.0, 0.0)
+            >>> face = bwm.faces[0]
+            >>> if bwm.point_in_face_2d(point, face):
+            ...     print("Point is inside face")
+        """
+
+        # Use sign-based method (same-side test)
+        # Reference: KotOR.js/src/odyssey/OdysseyWalkMesh.ts:478-495
+        def sign(p1: Vector3, p2: Vector3, p3: Vector3) -> float:
+            """Compute signed area of triangle (p1, p2, p3) in XY plane."""
+            return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y)
+
+        v1 = face.v1
+        v2 = face.v2
+        v3 = face.v3
+
+        d1 = sign(point, v1, v2)
+        d2 = sign(point, v2, v3)
+        d3 = sign(point, v3, v1)
+
+        has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0)
+        has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0)
+
+        # Point is inside if all signs are same (not both positive and negative)
+        return not (has_neg and has_pos)
+
+    def get_height_at(
+        self,
+        x: float,
+        y: float,
+        materials: set[SurfaceMaterial] | None = None,
+    ) -> float | None:
+        """Get the Z-height (elevation) at a given (X, Y) point.
+        
+        Finds the walkable face containing the point and returns its Z coordinate at that location.
+        Uses AABB tree for efficient spatial queries on area walkmeshes.
+        
+        Args:
+        ----
+            x: X coordinate
+            y: Y coordinate
+            materials: Set of materials to consider (None = all walkable materials)
+            
+        Returns:
+        -------
+            float | None: Z coordinate if point is on a walkable face, None otherwise
+            
+        References:
+        ----------
+            vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:549-599 (getAABBCollisionFaces)
+            vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:497-504 (isPointWalkable)
+            Libraries/PyKotor/src/utility/common/geometry.py:1270-1292 (Face.determine_z)
+            
+        Example:
+        -------
+            >>> bwm = read_bwm(data)
+            >>> height = bwm.get_height_at(10.0, 5.0)
+            >>> if height is not None:
+            ...     print(f"Height at (10, 5) is {height}")
+        """
+        # Default to walkable materials if not specified
+        if materials is None:
+            materials = {mat for mat in SurfaceMaterial if mat.walkable()}
+        
+        # Find face containing the point
+        face = self.find_face_at(x, y, materials)
+        if face is None:
+            return None
+        
+        # Check if face is flat (all vertices have same Z)
+        if abs(face.v1.z - face.v2.z) < 1e-6 and abs(face.v2.z - face.v3.z) < 1e-6:
+            # Flat face: return Z coordinate directly
+            return face.v1.z
+        
+        # Use face's determine_z method to compute Z coordinate
+        try:
+            return face.determine_z(x, y)
+        except ZeroDivisionError:
+            # Fallback: if determine_z fails (degenerate case), return average Z
+            return (face.v1.z + face.v2.z + face.v3.z) / 3.0
+
+    def find_face_at(
+        self,
+        x: float,
+        y: float,
+        materials: set[SurfaceMaterial] | None = None,
+    ) -> BWMFace | None:
+        """Find the walkable face containing a given (X, Y) point.
+
+        Uses AABB tree for efficient spatial queries on area walkmeshes. For placeable
+        walkmeshes, tests all faces directly.
+
+        Args:
+        ----
+            x: X coordinate
+            y: Y coordinate
+            materials: Set of materials to consider (None = all walkable materials)
+
+        Returns:
+        -------
+            BWMFace | None: Face containing the point, or None if not found
+
+        References:
+        ----------
+            vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:601-640 (getAdjacentFaces)
+            vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:549-599 (getAABBCollisionFaces)
+            vendor/reone/src/libs/graphics/walkmesh.cpp:129-134 (contains method)
+
+        Example:
+        -------
+            >>> bwm = read_bwm(data)
+            >>> face = bwm.find_face_at(10.0, 5.0)
+            >>> if face:
+            ...     print(f"Found face with material {face.material}")
+        """
+        point = Vector3(x, y, 0.0)
+
+        # Default to walkable materials if not specified
+        if materials is None:
+            materials = {mat for mat in SurfaceMaterial if mat.walkable()}
+
+        # For placeable/door walkmeshes, test all faces directly
+        if self.walkmesh_type == BWMType.PlaceableOrDoor:
+            return self._find_face_brute_force(point, materials)
+
+        # For area walkmeshes, use AABB tree
+        aabbs = self.aabbs()
+        if not aabbs:
+            return self._find_face_brute_force(point, materials)
+
+        # Find root node (node with no parent)
+        child_nodes = set()
+        for aabb in aabbs:
+            if aabb.left is not None:
+                child_nodes.add(id(aabb.left))
+            if aabb.right is not None:
+                child_nodes.add(id(aabb.right))
+
+        root_nodes = [aabb for aabb in aabbs if id(aabb) not in child_nodes]
+        if not root_nodes:
+            # Fallback: use first node (tree structure may be flat or unclear)
+            root = aabbs[0] if aabbs else None
+            if root is None:
+                return self._find_face_brute_force(point, materials)
+        else:
+            root = root_nodes[0]
+
+        # Traverse AABB tree
+        return self._find_face_aabb(root, point, materials)
+
+    def _find_face_aabb(
+        self,
+        node: BWMNodeAABB,
+        point: Vector3,
+        materials: set[SurfaceMaterial],
+    ) -> BWMFace | None:
+        """Recursively search AABB tree for face containing point.
+
+        Reference: vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:549-599
+        """
+        # Test if point is in AABB bounds (only check X and Y for 2D point-in-face)
+        if not (node.bb_min.x <= point.x <= node.bb_max.x and node.bb_min.y <= point.y <= node.bb_max.y):
+            return None
+
+        # If leaf node, test point against face
+        if node.face is not None:
+            if node.face.material not in materials:
+                return None
+            if self.point_in_face_2d(point, node.face):
+                return node.face
+            return None
+
+        # Internal node: test children
+        if node.left is not None:
+            result = self._find_face_aabb(node.left, point, materials)
+            if result is not None:
+                return result
+
+        if node.right is not None:
+            result = self._find_face_aabb(node.right, point, materials)
+            if result is not None:
+                return result
+
+        return None
+
+    def _find_face_brute_force(
+        self,
+        point: Vector3,
+        materials: set[SurfaceMaterial],
+    ) -> BWMFace | None:
+        """Brute force search testing all faces."""
+        for face in self.faces:
+            if face.material not in materials:
+                continue
+            if self.point_in_face_2d(point, face):
+                return face
+        return None
 
     def _index_by_identity(
         self,
@@ -914,15 +1408,17 @@ class BWM(ComparableMixin):
 
         faces = []
         for face in self.faces:
-            faces.append({
-                "v1": face.v1.serialize(),
-                "v2": face.v2.serialize(),
-                "v3": face.v3.serialize(),
-                "material": face.material.value if hasattr(face.material, "value") else int(face.material),
-                "trans1": face.trans1,
-                "trans2": face.trans2,
-                "trans3": face.trans3,
-            })
+            faces.append(
+                {
+                    "v1": face.v1.serialize(),
+                    "v2": face.v2.serialize(),
+                    "v3": face.v3.serialize(),
+                    "material": face.material.value if hasattr(face.material, "value") else int(face.material),
+                    "trans1": face.trans1,
+                    "trans2": face.trans2,
+                    "trans3": face.trans3,
+                }
+            )
 
         return {
             "walkmesh_type": self.walkmesh_type.value if hasattr(self.walkmesh_type, "value") else int(self.walkmesh_type),
