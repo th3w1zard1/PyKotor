@@ -451,11 +451,19 @@ def migrate_issues(source_repo: str, target_repo: str) -> tuple[int, int]:
     issues = get_all_issues(source_repo)
     print(f"Found {len(issues)} issues in source repository")
 
-    # Get existing issues by title for idempotency
-    print("Checking for existing issues...")
+    # Get existing issues by title for idempotency (including closed ones)
+    print("Checking for existing issues (including closed)...")
     existing_issues = get_all_issues(target_repo)
-    existing_by_title = {issue["title"]: issue for issue in existing_issues}
-    print(f"Found {len(existing_by_title)} existing issues in target repository")
+    # Map by title, preferring open issues if duplicates exist
+    existing_by_title = {}
+    for issue in existing_issues:
+        title = issue["title"]
+        if title not in existing_by_title:
+            existing_by_title[title] = issue
+        elif issue["state"] == "open" and existing_by_title[title]["state"] == "closed":
+            # Prefer open issue if we have both open and closed
+            existing_by_title[title] = issue
+    print(f"Found {len(existing_by_title)} unique issue titles in target repository")
 
     migrated_issues = 0
     skipped_issues = 0
