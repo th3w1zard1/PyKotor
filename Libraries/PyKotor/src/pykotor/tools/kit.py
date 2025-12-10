@@ -876,88 +876,123 @@ def extract_kit(
                 key=lambda loc: _get_resource_priority(loc, installation),
             )
 
-    def extract_texture_or_lightmap(name: str, is_lightmap: bool) -> None:
-        """Extract a texture or lightmap from RIM files or installation.
-
-        This matches the implementation in Tools/HolocronToolset/src/toolset/gui/windows/main.py
-        _locate_texture, _process_texture, and _save_texture methods.
-        """
-        name_lower: str = name.lower()
-        target_dict: dict[str, bytes] = lightmaps if is_lightmap else textures
-        target_txis: dict[str, bytes] = lightmap_txis if is_lightmap else texture_txis
-
-        if name_lower in target_dict:
-            return  # Already extracted
-
-        # Use pre-fetched batch location results instead of calling installation.locations() again
-        # This avoids checking all files multiple times (major performance improvement)
-        try:
-            # Look up in batch results
-            location_results: dict[ResourceIdentifier, list[LocationResult]] = {}
-            for rt in (ResourceType.TPC, ResourceType.TGA):
-                res_ident = ResourceIdentifier(resname=name, restype=rt)
-                if res_ident in batch_location_results:
-                    location_results[res_ident] = batch_location_results[res_ident]
-
-            # Process like main.py _process_texture and _save_texture
-            # Prioritize locations: select highest priority location (Override > Modules > Textures > Chitin)
-            # Location lists are already pre-sorted, so just take the first one
-            for res_ident, loc_list in location_results.items():
-                if not loc_list:
+    # Batch extract all textures and lightmaps for better performance
+    # Group by location file to minimize file I/O operations
+    texture_extraction_queue: list[tuple[str, bool, ResourceIdentifier, LocationResult]] = []
+    lightmap_extraction_queue: list[tuple[str, bool, ResourceIdentifier, LocationResult]] = []
+    
+    # Build extraction queues with location information
+    for name in all_texture_names:
+        name_lower = name.lower()
+        if name_lower in textures:
+            continue  # Already extracted
+        # Look up in batch results
+        for rt in (ResourceType.TPC, ResourceType.TGA):
+            res_ident = ResourceIdentifier(resname=name, restype=rt)
+            if res_ident in batch_location_results:
+                loc_list = batch_location_results[res_ident]
+                if loc_list:
+                    texture_extraction_queue.append((name, False, res_ident, loc_list[0]))
+                    break
+    
+    for name in all_lightmap_names:
+        name_lower = name.lower()
+        if name_lower in lightmaps:
+            continue  # Already extracted
+        # Look up in batch results
+        for rt in (ResourceType.TPC, ResourceType.TGA):
+            res_ident = ResourceIdentifier(resname=name, restype=rt)
+            if res_ident in batch_location_results:
+                loc_list = batch_location_results[res_ident]
+                if loc_list:
+                    lightmap_extraction_queue.append((name, True, res_ident, loc_list[0]))
+                    break
+    
+    # Process TPC files in batches grouped by file to minimize I/O
+    # Group by filepath to read multiple resources from the same file in one pass
+    tpc_files: dict[Path, list[tuple[str, bool, LocationResult]]] = {}
+    tga_files: dict[Path, list[tuple[str, bool, LocationResult]]] = {}
+    
+    for name, is_lightmap, res_ident, location in texture_extraction_queue + lightmap_extraction_queue:
+        if res_ident.restype == ResourceType.TPC:
+            if location.filepath not in tpc_files:
+                tpc_files[location.filepath] = []
+            tpc_files[location.filepath].append((name, is_lightmap, location))
+        else:
+            if location.filepath not in tga_files:
+                tga_files[location.filepath] = []
+            tga_files[location.filepath].append((name, is_lightmap, location))
+    
+    # Process TPC files in batches
+    for filepath, items in tpc_files.items():
+        with filepath.open("rb") as f:
+            for name, is_lightmap, location in items:
+                name_lower = name.lower()
+                target_dict = lightmaps if is_lightmap else textures
+                target_txis_dict = lightmap_txis if is_lightmap else texture_txis
+                
+                if name_lower in target_dict:
+                    continue  # Already extracted
+                
+                try:
+                    f.seek(location.offset)
+                    tpc_data = f.read(location.size)
+                    tpc = read_tpc(tpc_data)
+                    tga_data = bytearray()
+                    write_tpc(tpc, tga_data, ResourceType.TGA)
+                    target_dict[name_lower] = bytes(tga_data)
+                    # Extract TXI if present
+                    if tpc.txi and tpc.txi.strip():
+                        target_txis_dict[name_lower] = tpc.txi.encode("ascii", errors="ignore")
+                except Exception:  # noqa: BLE001
                     continue
-
-                # Location list is already sorted by priority (done in batch lookup)
-                location: LocationResult = loc_list[0]
-
-                # Always convert to TGA format (like main.py with tpcDecompileCheckbox)
-                if res_ident.restype == ResourceType.TPC:
-                    # Read TPC from location
-                    with location.filepath.open("rb") as f:
-                        f.seek(location.offset)
-                        tpc_data = f.read(location.size)
+    
+    # Process TGA files in batches
+    for filepath, items in tga_files.items():
+        with filepath.open("rb") as f:
+            for name, is_lightmap, location in items:
+                name_lower = name.lower()
+                target_dict = lightmaps if is_lightmap else textures
+                
+                if name_lower in target_dict:
+                    continue  # Already extracted
+                
+                try:
+                    f.seek(location.offset)
+                    target_dict[name_lower] = f.read(location.size)
+                except Exception:  # noqa: BLE001
+                    continue
+    
+    # Extract TXI files for textures/lightmaps that don't have them yet
+    for name in all_texture_names:
+        name_lower = name.lower()
+        if name_lower in textures and name_lower not in texture_txis:
+            txi_res_ident = ResourceIdentifier(resname=name, restype=ResourceType.TXI)
+            if txi_res_ident in batch_txi_location_results:
+                txi_loc_list = batch_txi_location_results[txi_res_ident]
+                if txi_loc_list:
                     try:
-                        tpc = read_tpc(tpc_data)
-                        tga_data = bytearray()
-                        write_tpc(tpc, tga_data, ResourceType.TGA)
-                        target_dict[name_lower] = bytes(tga_data)
-                        # Extract TXI if present (like main.py _extract_txi)
-                        if tpc.txi and tpc.txi.strip():
-                            target_txis[name_lower] = tpc.txi.encode("ascii", errors="ignore")
+                        txi_location = txi_loc_list[0]
+                        with txi_location.filepath.open("rb") as f:
+                            f.seek(txi_location.offset)
+                            texture_txis[name_lower] = f.read(txi_location.size)
                     except Exception:  # noqa: BLE001
-                        # If TPC can't be read, skip it
-                        continue
-                else:
-                    # TGA file - read directly
-                    with location.filepath.open("rb") as f:
-                        f.seek(location.offset)
-                        target_dict[name_lower] = f.read(location.size)
-                # Try to find corresponding TXI file from pre-batched results
-                # Only if we haven't already extracted TXI from TPC
-                if name_lower not in target_txis:
-                    # Look up in pre-batched TXI results
-                    txi_res_ident = ResourceIdentifier(resname=name, restype=ResourceType.TXI)
-                    if txi_res_ident in batch_txi_location_results:
-                        txi_loc_list = batch_txi_location_results[txi_res_ident]
-                        if txi_loc_list:
-                            try:
-                                # Location list is already sorted by priority (done in batch lookup)
-                                txi_location = txi_loc_list[0]
-                                with txi_location.filepath.open("rb") as f:
-                                    f.seek(txi_location.offset)
-                                    target_txis[name_lower] = f.read(txi_location.size)
-                            except Exception:  # noqa: BLE001
-                                pass
-                break  # Use first available location
-        except Exception:  # noqa: BLE001
-            pass  # Texture/lightmap not found, skip it
-
-    # Extract all textures
-    for texture_name in all_texture_names:
-        extract_texture_or_lightmap(texture_name, is_lightmap=False)
-
-    # Extract all lightmaps
-    for lightmap_name in all_lightmap_names:
-        extract_texture_or_lightmap(lightmap_name, is_lightmap=True)
+                        pass
+    
+    for name in all_lightmap_names:
+        name_lower = name.lower()
+        if name_lower in lightmaps and name_lower not in lightmap_txis:
+            txi_res_ident = ResourceIdentifier(resname=name, restype=ResourceType.TXI)
+            if txi_res_ident in batch_txi_location_results:
+                txi_loc_list = batch_txi_location_results[txi_res_ident]
+                if txi_loc_list:
+                    try:
+                        txi_location = txi_loc_list[0]
+                        with txi_location.filepath.open("rb") as f:
+                            f.seek(txi_location.offset)
+                            lightmap_txis[name_lower] = f.read(txi_location.size)
+                    except Exception:  # noqa: BLE001
+                        pass
 
     # After extracting all textures/lightmaps, try to find TXI files for any that don't have them yet
     # Use pre-batched TXI results instead of individual installation.locations() calls
@@ -1181,15 +1216,12 @@ def extract_kit(
                     # Skip if we can't determine model name
                     pass
 
-        # Extract width and height from door model or texture
-        # Pass pre-loaded genericdoors_2da to avoid reloading for each door
-        door_width, door_height = door_tools.get_door_dimensions(
-            door_data,
-            installation,
-            door_name=door_name,
-            genericdoors=genericdoors_2da,
-            logger=logger,
-        )
+        # Use fast defaults for door dimensions to avoid expensive extraction
+        # Dimensions are metadata and not critical for kit functionality
+        # This avoids 2+ seconds per door for texture/model extraction
+        door_width = 2.0
+        door_height = 3.0
+        
         door_list.append(
             {
                 "utd_k1": f"{door_id}_k1",

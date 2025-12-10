@@ -1471,15 +1471,22 @@ class Installation:
 
                     location.set_file_resource(FileResource(identifier.resname, identifier.restype, location.size, location.offset, location.filepath))
                     locations[identifier].append(location)
-
+        
+        # Cache filtered modules to avoid repeated dictionary filtering (performance optimization)
+        _cached_filtered_modules: dict[str, list[FileResource] | dict[str, list[FileResource]]] | None = None
+        _cached_module_root: str | None = None
+        
         def check_modules():
+            nonlocal _cached_filtered_modules, _cached_module_root
             if module_root is None:
                 # No module filter, search all modules
                 check_dict(self._modules)
             else:
-                # Filter modules by root name
-                filtered_modules = {filename: resources for filename, resources in self._modules.items() if self.get_module_root(filename) == module_root.lower()}
-                check_dict(filtered_modules)
+                # Use cached filtered modules if available and module_root hasn't changed
+                if _cached_filtered_modules is None or _cached_module_root != module_root.lower():
+                    _cached_filtered_modules = {filename: resources for filename, resources in self._modules.items() if self.get_module_root(filename) == module_root.lower()}
+                    _cached_module_root = module_root.lower()
+                check_dict(CaseInsensitiveDict(_cached_filtered_modules if isinstance(_cached_filtered_modules, dict) else {index: resources for index, resources in enumerate(_cached_filtered_modules)}))
 
         function_map: dict[SearchLocation, Callable] = {
             SearchLocation.OVERRIDE: lambda: check_dict(self._override),
