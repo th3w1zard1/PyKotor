@@ -11,10 +11,10 @@
 - [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.)
 - [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme)
 - [TSLPatcher Thread Complete Archive](TSLPatcher_Thread_Complete)
-- [HoloPatcher Feature Coverage Overview](Explanations-on-HoloPatcher-Internal-Logic#feature-support-summary)
-- **[TSLPatcher InstallList Syntax Guide](TSLPatcher-InstallList-Syntax)** ← Complete reference for [file](GFF-File-Format) installation
+- [HoloPatcher Feature Coverage Overview](Explanations-on-HoloPatcher-Internal-Logic)
+- **[TSLPatcher InstallList Syntax Guide](TSLPatcher-InstallList-Syntax)** ← Complete reference for file installation
 - **[TSLPatcher TLKList Syntax Guide](TSLPatcher-TLKList-Syntax)** ← Complete reference for TLK ([TalkTable](TLK-File-Format)) modifications
-- **[TSLPatcher 2DAList Syntax Guide](TSLPatcher-2DAList-Syntax)** ← Complete reference for 2DA (Two-Dimensional [array](2DA-File-Format)) patches
+- **[TSLPatcher 2DAList Syntax Guide](TSLPatcher-2DAList-Syntax)** ← Complete reference for 2DA (Two-Dimensional array) patches
 - **[TSLPatcher GFFList Syntax Guide](TSLPatcher-GFFList-Syntax)** ← Complete reference for [GFF](GFF-File-Format) modifications
 - **[TSLPatcher SSFList Syntax Guide](TSLPatcher-SSFList-Syntax)** ← Complete reference for SSF ([sound set files](SSF-File-Format)) modifications
 - [Mod Creation Best Practices](Mod-Creation-Best-Practices)
@@ -22,40 +22,40 @@
 
 ### Official Bioware Aurora Documentation
 
-The following documents [ARE](GFF-File-Format#are-area) official Bioware Aurora Engine [file](GFF-File-Format) [format](GFF-File-Format) specifications. These [ARE](GFF-File-Format#are-area) authoritative references for the underlying [file](GFF-File-Format) [formats](GFF-File-Format) used by KotOR:
+The following documents [ARE](GFF-File-Format#are-area) official Bioware Aurora Engine file format specifications. These [ARE](GFF-File-Format#are-area) authoritative references for the underlying file formats used by KotOR:
 
-- **[2DA File Format](Bioware-Aurora-2DA)** - Official 2DA (Two-Dimensional [array](2DA-File-Format)) [format](GFF-File-Format) specification
-- **[GFF File Format](Bioware-Aurora-GFF)** - Official Generic [file](GFF-File-Format) [format](GFF-File-Format) specification
-- **[Common GFF Structs](Bioware-Aurora-CommonGFFStructs)** - Common [GFF](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) definitions
-- **[Area File Format](Bioware-Aurora-AreaFile)** - Official ARE (Area) [file](GFF-File-Format) [format](GFF-File-Format)
-- **[Creature Format](Bioware-Aurora-Creature)** - Official UTC (Creature) [format](GFF-File-Format)
-- **[Item Format](Bioware-Aurora-Item)** - Official UTI (Item) [format](GFF-File-Format)
-- **[Door/Placeable Format](Bioware-Aurora-DoorPlaceableGFF)** - Official [UTD](GFF-File-Format#utd-door)/[UTP](GFF-File-Format#utp-placeable) [formats](GFF-File-Format)
-- **[Encounter Format](Bioware-Aurora-Encounter)** - Official UTE (Encounter) [format](GFF-File-Format)
-- **[Trigger Format](Bioware-Aurora-Trigger)** - Official UTT (Trigger) [format](GFF-File-Format)
-- **[Waypoint Format](Bioware-Aurora-Waypoint)** - Official UTW (Waypoint) [format](GFF-File-Format)
-- **[Store Format](Bioware-Aurora-Store)** - Official UTM (Store) [format](GFF-File-Format)
-- **[Sound Object Format](Bioware-Aurora-SoundObject)** - Official UTS (Sound) [format](GFF-File-Format)
-- **[Journal Format](Bioware-Aurora-Journal)** - Official JRL (Journal) [format](GFF-File-Format)
-- **[Conversation Format](Bioware-Aurora-Conversation)** - Official DLG (Dialogue) [format](GFF-File-Format)
-- **[IFO Format](Bioware-Aurora-IFO)** - Official [module info](GFF-File-Format#ifo-module-info) [format](GFF-File-Format)
-- **[ERF Format](Bioware-Aurora-ERF)** - Official Encapsulated Resource [format](GFF-File-Format)
-- **[Key/BIF Format](Bioware-Aurora-KeyBIF)** - Official [KEY](KEY-File-Format) and [BIF file](BIF-File-Format) [formats](GFF-File-Format)
-- **[TalkTable Format](Bioware-Aurora-TalkTable)** - Official TLK ([Talk Table](TLK-File-Format)) [format](GFF-File-Format)
-- **[SSF Format](Bioware-Aurora-SSF)** - Official [sound set files](SSF-File-Format) [format](GFF-File-Format)
-- **[Localized Strings Format](Bioware-Aurora-LocalizedStrings)** - Official localized [strings](GFF-File-Format#gff-data-types) [format](GFF-File-Format)
-- **[Faction Format](Bioware-Aurora-Faction)** - Official faction [data](GFF-File-Format#file-structure-overview) [format](GFF-File-Format)
-- **[Palette/ITP Format](Bioware-Aurora-PaletteITP)** - Official palette and ITP [formats](GFF-File-Format)
+- **[2DA File Format](Bioware-Aurora-2DA)** - Official 2DA (Two-Dimensional array) format specification
+- **[GFF File Format](Bioware-Aurora-GFF)** - Official Generic file format specification
+- **[Common GFF Structs](Bioware-Aurora-CommonGFFStructs)** - Common [GFF](GFF-File-Format) structure definitions
+- **[Area File Format](Bioware-Aurora-AreaFile)** - Official ARE (Area) file format
+- **[Creature Format](Bioware-Aurora-Creature)** - Official UTC (Creature) format
+- **[Item Format](Bioware-Aurora-Item)** - Official UTI (Item) format
+- **[Door/Placeable Format](Bioware-Aurora-DoorPlaceableGFF)** - Official [UTD](GFF-File-Format#utd-door)/[UTP](GFF-File-Format#utp-placeable) formats
+- **[Encounter Format](Bioware-Aurora-Encounter)** - Official UTE (Encounter) format
+- **[Trigger Format](Bioware-Aurora-Trigger)** - Official UTT (Trigger) format
+- **[Waypoint Format](Bioware-Aurora-Waypoint)** - Official UTW (Waypoint) format
+- **[Store Format](Bioware-Aurora-Store)** - Official UTM (Store) format
+- **[Sound Object Format](Bioware-Aurora-SoundObject)** - Official UTS (Sound) format
+- **[Journal Format](Bioware-Aurora-Journal)** - Official JRL (Journal) format
+- **[Conversation Format](Bioware-Aurora-Conversation)** - Official DLG (Dialogue) format
+- **[IFO Format](Bioware-Aurora-IFO)** - Official [module info](GFF-File-Format#ifo-module-info) format
+- **[ERF Format](Bioware-Aurora-ERF)** - Official Encapsulated Resource format
+- **[Key/BIF Format](Bioware-Aurora-KeyBIF)** - Official [KEY](KEY-File-Format) and [BIF file](BIF-File-Format) formats
+- **[TalkTable Format](Bioware-Aurora-TalkTable)** - Official TLK ([Talk Table](TLK-File-Format)) format
+- **[SSF Format](Bioware-Aurora-SSF)** - Official [sound set files](SSF-File-Format) format
+- **[Localized Strings Format](Bioware-Aurora-LocalizedStrings)** - Official localized strings format
+- **[Faction Format](Bioware-Aurora-Faction)** - Official faction data format
+- **[Palette/ITP Format](Bioware-Aurora-PaletteITP)** - Official palette and ITP formats
 
 ### Aurora Engine Basics
 
 The BioWare Aurora Engine (used by KotOR, TSL, and Neverwinter Nights) uses a standardized resource system:
 
-**[KEY](KEY-File-Format) [files](GFF-File-Format):**
+**[KEY](KEY-File-Format) files:**
 
-- **[`chitin.key`](KEY-File-Format)**: Master [index](2DA-File-Format#row-labels) [file](GFF-File-Format) that maps resource names to [BIF archives](BIF-File-Format) locations. Given a resource name, [chitin.key](KEY-File-Format) can be used to locate the master [data](GFF-File-Format#file-structure) [file](GFF-File-Format) ([BIF](BIF-File-Format)) containing the resource.
-- **[`dialog.tlk`](TLK-File-Format)**: Text resource [file](GFF-File-Format) containing localized [strings](GFF-File-Format#gff-data-types) referenced by [StrRef](TLK-File-Format#string-references-strref) IDs. This centralizes [strings](GFF-File-Format#gff-data-types) for easy localization and allows changing text without modifying or recompiling scripts. Different language versions of [dialog.tlk](TLK-File-Format) can be installed for localization support.
-- **`kotor.ini` / `nwn.ini`**: Configuration [file](GFF-File-Format) with `[Alias]` section mapping logical directory names to physical paths. This allows the game to locate [data](GFF-File-Format#file-structure) [files](GFF-File-Format) regardless of installation directory [structure](GFF-File-Format#file-structure).
+- **[`chitin.key`](KEY-File-Format)**: Master index file that maps resource names to [BIF archives](BIF-File-Format) locations. Given a resource name, [chitin.key](KEY-File-Format) can be used to locate the master data file ([BIF](BIF-File-Format)) containing the resource.
+- **[`dialog.tlk`](TLK-File-Format)**: Text resource file containing localized strings referenced by [StrRef](TLK-File-Format#string-references-strref) IDs. This centralizes strings for easy localization and allows changing text without modifying or recompiling scripts. Different language versions of [dialog.tlk](TLK-File-Format) can be installed for localization support.
+- **`kotor.ini` / `nwn.ini`**: Configuration file with `[Alias]` section mapping logical directory names to physical paths. This allows the game to locate data files regardless of installation directory structure.
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Tim Smith (Torlack)'s Aurora engine basics documentation (NWN-focused but applicable to KotOR)
 
@@ -67,27 +67,27 @@ The BioWare Aurora Engine (used by KotOR, TSL, and Neverwinter Nights) uses a st
 4. [BIF files](BIF-File-Format) via [KEY](KEY-File-Format) lookup
 5. Hardcoded defaults
 
-**Resource [types](GFF-File-Format#gff-data-types):**
+**Resource types:**
 
-The Aurora engine uses hexadecimal resource [type](GFF-File-Format#gff-data-types) identifiers. The following table lists resource [types](GFF-File-Format#gff-data-types) used in KotOR and the Aurora engine (some [types](GFF-File-Format#gff-data-types) may be legacy from earlier BioWare games):
+The Aurora engine uses hexadecimal resource type identifiers. The following table lists resource types used in KotOR and the Aurora engine (some types may be legacy from earlier BioWare games):
 
-| Resource Name | [type](GFF-File-Format#gff-data-types) ID | Description                                    |
+| Resource Name | type ID | Description                                    |
 | ------------- | ------- | ---------------------------------------------- |
 | RES           | 0x0000  | Generic resource (legacy)                      |
 | BMP           | 0x0001  | Bitmap image (legacy)                          |
-| MVE           | 0x0002  | Movie/video [file](GFF-File-Format) (legacy)                          |
-| TGA           | 0x0003  | Targa image [format](GFF-File-Format) (legacy)                          |
-| [WAV](WAV-File-Format)           | 0x0004  | Wave audio [file](GFF-File-Format) (see [WAV File Format](WAV-File-Format))                          |
+| MVE           | 0x0002  | Movie/video file (legacy)                          |
+| TGA           | 0x0003  | Targa image format (legacy)                          |
+| [WAV](WAV-File-Format)           | 0x0004  | Wave audio file (see [WAV File Format](WAV-File-Format))                          |
 | [PLT](PLT-File-Format)           | 0x0006  | [texture](TPC-File-Format) palette (Neverwinter Nights, see [PLT File Format](PLT-File-Format)) |
-| INI           | 0x0007  | Configuration [file](GFF-File-Format) (e.g., `kotor.ini`)                          |
+| INI           | 0x0007  | Configuration file (e.g., `kotor.ini`)                          |
 | BMU           | 0x0008  | Unknown (legacy)                                |
 | MPG           | 0x0009  | MPEG video (legacy)                            |
-| TXT           | 0x000A  | Text [file](GFF-File-Format) (legacy)                                  |
+| TXT           | 0x000A  | Text file (legacy)                                  |
 | PLH           | 0x07D0  | Placeable header (legacy)                      |
 | TEX           | 0x07D1  | Texture (legacy, replaced by [TPC](TPC-File-Format))                      |
-| [MDL](MDL-MDX-File-Format)           | 0x07D2  | 3D [model](MDL-MDX-File-Format) [file](GFF-File-Format) (see [MDL/MDX File Format](MDL-MDX-File-Format))                                   |
+| [MDL](MDL-MDX-File-Format)           | 0x07D2  | 3D [model](MDL-MDX-File-Format) file (see [MDL/MDX File Format](MDL-MDX-File-Format))                                   |
 | THG           | 0x07D3  | Unknown (legacy)                                |
-| FNT           | 0x07D5  | Font [file](GFF-File-Format) (legacy)                                  |
+| FNT           | 0x07D5  | Font file (legacy)                                  |
 | LUA           | 0x07D7  | Lua script (legacy)                            |
 | SLT           | 0x07D8  | Unknown (legacy)                                |
 | [NSS](NSS-File-Format)           | 0x07D9  | NWScript source code (see [NSS File Format](NSS-File-Format))                            |
@@ -98,8 +98,8 @@ The Aurora engine uses hexadecimal resource [type](GFF-File-Format#gff-data-type
 | [IFO](GFF-File-Format#ifo-module-info)           | 0x07DE  | Module information (see [GFF-IFO](GFF-IFO))                              |
 | BIC           | 0x07DF  | Character template (legacy)                    |
 | [WOK](BWM-File-Format)           | 0x07E0  | Walkmesh (see [BWM File Format](BWM-File-Format))                                |
-| [2DA](2DA-File-Format)           | 0x07E1  | Two-dimensional [array](2DA-File-Format) [data](GFF-File-Format#file-structure-overview) (see [2DA File Format](2DA-File-Format))                      |
-| [TLK](TLK-File-Format)           | 0x07E2  | Talk table (localized [strings](GFF-File-Format#gff-data-types), see [TLK File Format](TLK-File-Format))                 |
+| [2DA](2DA-File-Format)           | 0x07E1  | Two-dimensional array data (see [2DA File Format](2DA-File-Format))                      |
+| [TLK](TLK-File-Format)           | 0x07E2  | Talk table (localized strings, see [TLK File Format](TLK-File-Format))                 |
 | [TXI](TXI-File-Format)           | 0x07E6  | [texture](TPC-File-Format) information (see [TXI File Format](TXI-File-Format))                             |
 | [GIT](GFF-File-Format#git-game-instance-template)           | 0x07E7  | [game instance template](GFF-File-Format#git-game-instance-template) (see [GFF-GIT](GFF-GIT))                          |
 | BTI           | 0x07E8  | Blueprint trigger (legacy)                     |
@@ -107,13 +107,13 @@ The Aurora engine uses hexadecimal resource [type](GFF-File-Format#gff-data-type
 | BTC           | 0x07EA  | Blueprint creature (legacy)                    |
 | [UTC](GFF-File-Format#utc-creature)           | 0x07EB  | [creature templates](GFF-File-Format#utc-creature) (see [GFF-UTC](GFF-UTC))                               |
 | [DLG](GFF-File-Format#dlg-dialogue)           | 0x07ED  | Dialogue/conversation (see [GFF-DLG](GFF-DLG))                           |
-| ITP           | 0x07EE  | ITP [format](GFF-File-Format) (legacy name for [GFF](GFF-File-Format), see [GFF File Format](GFF-File-Format))                          |
+| ITP           | 0x07EE  | ITP format (legacy name for [GFF](GFF-File-Format), see [GFF File Format](GFF-File-Format))                          |
 | BTT           | 0x07EF  | Blueprint trigger (legacy)                     |
 | [UTT](GFF-File-Format#utt-trigger)           | 0x07F0  | Trigger template (see [GFF-UTT](GFF-UTT))                                |
 | DDS           | 0x07F1  | DirectDraw Surface texture (see [DDS File Format](DDS-File-Format))                                |
 | [UTS](GFF-File-Format#uts-sound)           | 0x07F3  | Sound template (see [GFF-UTS](GFF-UTS))                                |
-| LTR           | 0x07F4  | Letter [format](GFF-File-Format) (see [LTR File Format](LTR-File-Format))                                |
-| [GFF](GFF-File-Format)           | 0x07F5  | Generic [file](GFF-File-Format) format (container, see [GFF File Format](GFF-File-Format))                 |
+| LTR           | 0x07F4  | Letter format (see [LTR File Format](LTR-File-Format))                                |
+| [GFF](GFF-File-Format)           | 0x07F5  | Generic file format (container, see [GFF File Format](GFF-File-Format))                 |
 | FAC           | 0x07F6  | Faction (legacy)                               |
 | BTE           | 0x07F7  | Blueprint encounter (legacy)                   |
 | [UTE](GFF-File-Format#ute-encounter)           | 0x07F8  | [encounter template](GFF-File-Format#ute-encounter) (see [GFF-UTE](GFF-UTE))                              |
@@ -139,16 +139,16 @@ The Aurora engine uses hexadecimal resource [type](GFF-File-Format#gff-data-type
 | [SSF](SSF-File-Format)           | 0x080C  | [sound set files](SSF-File-Format) (see [SSF File Format](SSF-File-Format))                                  |
 | HAK           | 0x080D  | Hak pak archive ([ERF](ERF-File-Format) variant)                                 |
 | NWM           | 0x080E  | Neverwinter Nights module ([ERF](ERF-File-Format) variant, not used in KotOR)                                 |
-| BIK           | 0x080F  | Bink video [format](GFF-File-Format)                                |
+| BIK           | 0x080F  | Bink video format                                |
 | PTM           | 0x0811  | Unknown (legacy)                                |
 | PTT           | 0x0812  | Unknown (legacy)                                |
-| [ERF](ERF-File-Format)           | 0x270D  | Encapsulated resource [file](GFF-File-Format) (see [ERF File Format](ERF-File-Format))                      |
-| [BIF](BIF-File-Format)           | 0x270E  | BioWare [index](2DA-File-Format#row-labels) file (archive, see [BIF File Format](BIF-File-Format))                    |
-| [KEY](KEY-File-Format)           | 0x270F  | [KEY](KEY-File-Format) table ([BIF](BIF-File-Format) [index](2DA-File-Format#row-labels), see [KEY File Format](KEY-File-Format))                          |
+| [ERF](ERF-File-Format)           | 0x270D  | Encapsulated resource file (see [ERF File Format](ERF-File-Format))                      |
+| [BIF](BIF-File-Format)           | 0x270E  | BioWare index file (archive, see [BIF File Format](BIF-File-Format))                    |
+| [KEY](KEY-File-Format)           | 0x270F  | [KEY](KEY-File-Format) table ([BIF](BIF-File-Format) index, see [KEY File Format](KEY-File-Format))                          |
 
 **Language IDs:**
 
-Localized [strings](GFF-File-Format#gff-data-types) use language identifiers:
+Localized strings use language identifiers:
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Language ID definitions (NWN-focused but applicable to KotOR)
 
@@ -164,12 +164,12 @@ Localized [strings](GFF-File-Format#gff-data-types) use language identifiers:
 | Spanish (Male)  | 8  |
 | Spanish (Female)| 9  |
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Tim Smith (Torlack)'s NWN [data](GFF-File-Format#file-structure-overview) [file](GFF-File-Format) Basics documentation (Aurora engine fundamentals)
+**Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Tim Smith (Torlack)'s NWN data file Basics documentation (Aurora engine fundamentals)
 
-### [file](GFF-File-Format) [formats](GFF-File-Format)
+### file formats
 
-- **[MDL/MDX File Format](MDL-MDX-File-Format)** ← Complete reference for 3D [model](MDL-MDX-File-Format) [files](GFF-File-Format)
-  - **[2DA File Format](2DA-File-Format)** ← Complete reference for Two-Dimensional [array](2DA-File-Format) format (see also [Official Bioware 2DA Documentation](Bioware-Aurora-2DA))
+- **[MDL/MDX File Format](MDL-MDX-File-Format)** ← Complete reference for 3D [model](MDL-MDX-File-Format) files
+  - **[2DA File Format](2DA-File-Format)** ← Complete reference for Two-Dimensional array format (see also [Official Bioware 2DA Documentation](Bioware-Aurora-2DA))
   - [acbonus.2da](2DA-acbonus)
   - [actions.2da](2DA-actions)
   - [ai_styles.2da](2DA-ai_styles)
@@ -304,13 +304,13 @@ Localized [strings](GFF-File-Format#gff-data-types) use language identifiers:
   - [visualeffects.2da](2DA-visualeffects)
   - [weaponsounds.2da](2DA-weaponsounds)
   - [xptable.2da](2DA-xptable)
-- **[TLK File Format](TLK-File-Format)** ← Complete reference for [Talk Table](TLK-File-Format) [format](GFF-File-Format)
-- [BIF File Format](BIF-File-Format) ← BioWare Infinity [format](GFF-File-Format)
-- **[BWM File Format](BWM-File-Format)** ← Complete reference for Binary [walkmesh](BWM-File-Format) [format](GFF-File-Format)
-- **[GUI File Format](GUI-File-Format)** ← Complete reference for Graphical User Interface [format](GFF-File-Format)
-- [ERF File Format](ERF-File-Format) ← Encapsulated Resource [format](GFF-File-Format)
-- **[Kit Structure Documentation](Kit-Structure-Documentation)** ← Complete reference for indoor kit [structure](GFF-File-Format#file-structure-overview) and generation
-- [GFF File Format](GFF-File-Format) ← Generic [file](GFF-File-Format) Format (see also [Official Bioware GFF Documentation](Bioware-Aurora-GFF))
+- **[TLK File Format](TLK-File-Format)** ← Complete reference for [Talk Table](TLK-File-Format) format
+- [BIF File Format](BIF-File-Format) ← BioWare Infinity format
+- **[BWM File Format](BWM-File-Format)** ← Complete reference for Binary [walkmesh](BWM-File-Format) format
+- **[GUI File Format](GFF-GUI)** ← Complete reference for Graphical User Interface format
+- [ERF File Format](ERF-File-Format) ← Encapsulated Resource format
+- **[Kit Structure Documentation](Kit-Structure-Documentation)** ← Complete reference for indoor kit structure and generation
+- [GFF File Format](GFF-File-Format) ← Generic file Format (see also [Official Bioware GFF Documentation](Bioware-Aurora-GFF))
   - [ARE (Area)](GFF-ARE)
   - [DLG (Dialogue)](GFF-DLG)
   - [GIT (Game Instance Template)](GFF-GIT)
@@ -327,23 +327,23 @@ Localized [strings](GFF-File-Format#gff-data-types) use language identifiers:
   - [UTS (Sound)](GFF-UTS)
   - [UTT (Trigger)](GFF-UTT)
   - [UTW (Waypoint)](GFF-UTW)
-- [KEY File Format](KEY-File-Format) ← [KEY](KEY-File-Format) [file](GFF-File-Format) [format](GFF-File-Format)
-- [LIP File Format](LIP-File-Format) ← [LIP](LIP-File-Format) sync [format](GFF-File-Format)
-- [LTR File Format](LTR-File-Format) ← Letter [format](GFF-File-Format)
-- [LYT File Format](LYT-File-Format) ← Layout [format](GFF-File-Format)
-- [NCS File Format](NCS-File-Format) ← NwScript Compiled Script [format](GFF-File-Format)
+- [KEY File Format](KEY-File-Format) ← [KEY](KEY-File-Format) file format
+- [LIP File Format](LIP-File-Format) ← [LIP](LIP-File-Format) sync format
+- [LTR File Format](LTR-File-Format) ← Letter format
+- [LYT File Format](LYT-File-Format) ← Layout format
+- [NCS File Format](NCS-File-Format) ← NwScript Compiled Script format
 - [NSS File Format](NSS-File-Format) ← NwScript Source format (nwscript.nss, function/constant definitions)
-- [RIM File Format](RIM-File-Format) ← Resource [index](2DA-File-Format#row-labels) Manifest [format](GFF-File-Format)
-- [SSF File Format](SSF-File-Format) ← [sound set files](SSF-File-Format) [format](GFF-File-Format)
-- [TLK File Format](TLK-File-Format) ← [Talk Table](TLK-File-Format) [format](GFF-File-Format)
-- [TPC File Format](TPC-File-Format) ← [texture](TPC-File-Format) Pack Container [format](GFF-File-Format)
-- [TXI File Format](TXI-File-Format) ← [texture](TPC-File-Format) Info [format](GFF-File-Format)
-- [VIS File Format](VIS-File-Format) ← Visibility [format](GFF-File-Format)
-- [WAV File Format](WAV-File-Format) ← Wave audio [format](GFF-File-Format)
+- [RIM File Format](ERF-File-Format) ← Resource index Manifest format
+- [SSF File Format](SSF-File-Format) ← [sound set files](SSF-File-Format) format
+- [TLK File Format](TLK-File-Format) ← [Talk Table](TLK-File-Format) format
+- [TPC File Format](TPC-File-Format) ← [texture](TPC-File-Format) Pack Container format
+- [TXI File Format](TXI-File-Format) ← [texture](TPC-File-Format) Info format
+- [VIS File Format](VIS-File-Format) ← Visibility format
+- [WAV File Format](WAV-File-Format) ← Wave audio format
 
 ### Internal Documentation
 
-- [HoloPatcher](HoloPatcher)
+- [HoloPatcher](HoloPatcher-README-for-mod-developers.)
 - [Explanations on HoloPatcher Internal Logic](Explanations-on-HoloPatcher-Internal-Logic)
 
 ## Vendor Implementations
@@ -360,12 +360,12 @@ Complete game engine rewrites that can load and play KotOR:
 - **[NorthernLights](https://github.com/lachjames/NorthernLights)** - .NET/C# engine implementation with Unity integration capabilities (based on KotOR-Unity project with further improvements) ([Mirror: th3w1zard1/NorthernLights](https://github.com/th3w1zard1/NorthernLights))
 - **[KotOR-Unity](https://github.com/reubenduncan/KotOR-Unity)** - Unity-based KotOR engine rewrite. Leverages Unity's rendering and physics. ([Mirror: th3w1zard1/KotOR-Unity](https://github.com/th3w1zard1/KotOR-Unity))
 
-### [file](GFF-File-Format) [format](GFF-File-Format) Libraries
+### file format Libraries
 
-Libraries focused on reading/writing KotOR [file](GFF-File-Format) [formats](GFF-File-Format):
+Libraries focused on reading/writing KotOR file formats:
 
-- **[xoreos-tools](https://github.com/xoreos/xoreos-tools)** - Command-line tools for extracting and converting Aurora [file](GFF-File-Format) formats ([Mirror: th3w1zard1/xoreos-tools](https://github.com/th3w1zard1/xoreos-tools))
-- **[Kotor.NET](https://github.com/NickHugi/Kotor.NET)** - .NET library for KotOR [file](GFF-File-Format) [formats](GFF-File-Format) with builder APIs
+- **[xoreos-tools](https://github.com/xoreos/xoreos-tools)** - Command-line tools for extracting and converting Aurora file formats ([Mirror: th3w1zard1/xoreos-tools](https://github.com/th3w1zard1/xoreos-tools))
+- **[Kotor.NET](https://github.com/NickHugi/Kotor.NET)** - .NET library for KotOR file formats with builder APIs
 
 ### 3D Modeling Tools
 
@@ -374,7 +374,7 @@ Tools for working with KotOR 3D [models](MDL-MDX-File-Format) and [textures](TPC
 - **[kotorblender](https://github.com/ndixUR/kotorblender)** - Blender add-on for importing/exporting KotOR [MDL files](MDL-MDX-File-Format) with full [animation](MDL-MDX-File-Format#animation-header) support ([Mirror: th3w1zard1/kotorblender](https://github.com/th3w1zard1/kotorblender))
 - **[mdlops](https://github.com/ndixUR/mdlops)** - Legacy Python [MDL](MDL-MDX-File-Format) toolkit for [model](MDL-MDX-File-Format) conversions ([Mirror: th3w1zard1/mdlops](https://github.com/th3w1zard1/mdlops))
 - **[tga2tpc](https://github.com/ndixUR/tga2tpc)** - Standalone TGA to [TPC](TPC-File-Format) [texture](TPC-File-Format) converter ([Mirror: th3w1zard1/tga2tpc](https://github.com/th3w1zard1/tga2tpc))
-- **[DLZ-Tool](https://github.com/LaneDibello/DLZ-Tool)** - DLZ [file](GFF-File-Format) decompression tool ([Mirror: th3w1zard1/DLZ-Tool](https://github.com/th3w1zard1/DLZ-Tool))
+- **[DLZ-Tool](https://github.com/LaneDibello/DLZ-Tool)** - DLZ file decompression tool ([Mirror: th3w1zard1/DLZ-Tool](https://github.com/th3w1zard1/DLZ-Tool))
 - **[WalkmeshVisualizer](https://github.com/glasnonck/WalkmeshVisualizer)** - [walkmesh](BWM-File-Format) viewing and debugging tool ([Mirror: th3w1zard1/WalkmeshVisualizer](https://github.com/th3w1zard1/WalkmeshVisualizer))
 
 ### Script Development
@@ -429,5 +429,11 @@ Guides, patches, and community-maintained resources:
 
 Reference documentation from related projects (external sources):
 
-- **[xoreos-docs](https://github.com/th3w1zard1/xoreos-docs)** - Aurora engine [format](GFF-File-Format) documentation repository containing file [format](GFF-File-Format) specifications for reverse-engineering BioWare's Aurora engine games. Includes official BioWare specifications and reverse-engineered documentation from Tim Smith (Torlack). Part of the [xoreos project](https://xoreos.org/). **Note:** Much of the KotOR-relevant content from xoreos-docs has been integrated into this wiki.
-- **[nwn-docs](https://github.com/kucik/nwn-docs)** - Neverwinter Nights documentation (shares Aurora [formats](GFF-File-Format))
+- **[xoreos-docs](https://github.com/th3w1zard1/xoreos-docs)** - Aurora engine format documentation repository containing file format specifications for reverse-engineering BioWare's Aurora engine games. Part of the [xoreos project](https://xoreos.org/). The repository includes:
+  - **Official BioWare specifications** (`specs/bioware/`): Official Aurora Engine file format PDFs from the now-defunct nwn.bioware.com developer site. These documents are authoritative references for formats used across Aurora engine games including KotOR.
+  - **Torlack's reverse-engineered specs** (`specs/torlack/`): Tim Smith (Torlack)'s reverse-engineered format documentation from his now-defunct website (torlock.com). These include detailed field-by-field breakdowns for formats like BIF, KEY, ERF (MOD), GFF (ITP), NCS, and binary MDL files.
+  - **KotOR-specific documentation** (`specs/kotor_mdl.html`): Partial KotOR model format specifications with detailed field descriptions.
+  - **Binary templates** (`templates/`): 010 Editor binary template files for analyzing binary file structures (NWN1, NWN2, Jade Empire formats).
+  
+  **Note:** Much of the KotOR-relevant content from xoreos-docs has been comprehensively integrated into this wiki. See individual format documentation pages for specific source references.
+- **[nwn-docs](https://github.com/kucik/nwn-docs)** - Neverwinter Nights documentation (shares Aurora formats)
