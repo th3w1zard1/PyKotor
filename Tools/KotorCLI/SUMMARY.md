@@ -6,9 +6,9 @@ KotorCLI is a complete implementation of a cli-compatible build tool for KOTOR, 
 
 ## What Was Accomplished
 
-### 1. Complete Command Implementation (9 Commands)
+### 1. Complete Command Implementation (10 Commands + KotorDiff)
 
-All cli commands implemented with identical syntax:
+All cli commands implemented with identical syntax, plus the merged KotorDiff workflow:
 
 1. **config** - Get/set user configuration
 2. **init** - Create new packages
@@ -19,6 +19,7 @@ All cli commands implemented with identical syntax:
 7. **pack** - Pack sources into modules/ERFs/haks
 8. **install** - Pack and install to KOTOR directory
 9. **launch** - Install and launch game
+10. **diff-installation / kotordiff** - Structured comparisons across files, modules, and installations with headless CLI + GUI fallback
 
 ### 2. PyKotor Integration
 
@@ -53,12 +54,14 @@ All cli commands implemented with identical syntax:
 **Comprehensive References** to PyKotor's vendor directory:
 
 **Primary References** (most accurate):
+
 - ✅ **xoreos-tools** (387 C++ files) - Format specifications
 - ✅ **KotOR.js** (983 TypeScript files) - Web implementations
 - ✅ **reone** (1069 C++ files) - Engine reimplementation
 - ✅ **Kotor.NET** (337 C# files) - .NET implementations
 
 **Secondary References**:
+
 - ✅ **xoreos-docs** - Technical specifications
 - ✅ **Vanilla_KOTOR_Script_Source** - NSS reference
 
@@ -103,7 +106,7 @@ All commands include inline references to vendor code with file paths and notes 
 
 ### 5. Project Structure
 
-```
+```shell
 Tools/KotorCLI/
 ├── src/KotorCLI/
 │   ├── __main__.py              # Entry point
@@ -189,6 +192,7 @@ write_gff(gff, "creature.utc", file_format=ResourceType.GFF)
 ```
 
 **Vendor References**:
+
 - `vendor/xoreos-tools/src/aurora/gff3file.cpp` - Binary format
 - `vendor/KotOR.js/src/formats/gff/GFFObject.ts` - JSON format
 
@@ -204,6 +208,7 @@ compiler.compile_script("script.nss", "script.ncs", Game.K2)
 ```
 
 **Vendor References**:
+
 - `vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts` - TypeScript compiler
 - `vendor/xoreos-tools/src/nwscript/compiler.cpp` - C++ compiler
 
@@ -221,30 +226,37 @@ write_erf(erf, "mymod.mod")
 ```
 
 **Vendor References**:
+
 - `vendor/xoreos-tools/src/aurora/erffile.cpp` - ERF format
 - `vendor/KotOR.js/src/resource/ERFObject.ts` - ERF operations
 
 ## Verification Status
 
 ### ✅ Syntax Compatibility: 100%
+
 All cli commands implemented with identical syntax.
 
 ### ✅ PyKotor Integration: 100%
+
 All file operations use PyKotor's native implementations.
 
 ### ✅ Vendor References: Complete
+
 All commands reference relevant vendor code.
 
 ### ✅ Documentation: Comprehensive
+
 6 documentation files covering all aspects.
 
 ### ✅ Code Quality: Excellent
+
 - No linter errors
 - Proper type hints
 - Comprehensive error handling
 - Clean, maintainable code
 
 ### ✅ Testing: Ready
+
 - Manual testing checklist provided
 - PyKotor integration tests included
 - Example workflows documented
@@ -352,6 +364,3 @@ Potential improvements:
 **Development Time**: Comprehensive implementation with full documentation
 **Quality**: Production-ready, fully documented, no linter errors
 **Status**: ✅ Complete and ready for use
-
-
-

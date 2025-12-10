@@ -110,6 +110,15 @@ write_erf(erf, "output.mod")
 - `vendor/KotOR.js/src/resource/ERFObject.ts` - ERF operations
 - `vendor/reone/src/libs/resource/format/erfreader.cpp` - Engine ERF reader
 
+### 5. KotorDiff (Structured Comparisons + TSLPatcher Output)
+
+- **Entrypoints**: `Tools/KotorCLI/src/kotorcli/diff_tool/cli.py` (headless), `diff_tool/__main__.py` (CLI vs GUI routing), `diff_tool/gui.py` (Tkinter fallback)
+- **Core orchestration**: `Tools/KotorCLI/src/kotorcli/diff_tool/app.py`
+  - Uses `pykotor.tslpatcher.diff.engine.run_differ_from_args_impl` for n-way comparisons
+  - Optional incremental TSLPatcher generation via `pykotor.tslpatcher.writer.IncrementalTSLPatchDataWriter`
+  - StrRef analysis with `pykotor.tslpatcher.diff.analyzers.analyze_tlk_strref_references`
+- **Capabilities**: multi-path comparisons (`--path1/--path2/--path`), filtering, hash toggles, `--tslpatchdata`/`--ini`/`--incremental`, `--output-mode`, and `--gui` for UI launch when arguments are omitted
+
 ## Complete PyKotor Module Usage
 
 ### GFF Module (`pykotor.resource.formats.gff`)

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kotorcli"
-version = "1.1.0"
+version = "1.2.0"
 description = "A build tool for KOTOR projects (cli-compatible syntax)"
 authors = [
     {name = "PyKotor Contributors"}
@@ -53,6 +53,9 @@ kitgenerator = "kotorcli.__main__:kitgenerator_entry"
 kit-generator = "kotorcli.__main__:kitgenerator_entry"
 gui-converter = "kotorcli.__main__:gui_converter_entry"
 guiconverter = "kotorcli.__main__:gui_converter_entry"
+kotordiff = "kotorcli.__main__:kotordiff_entry"
+kotor-diff = "kotorcli.__main__:kotordiff_entry"
+diff-installation = "kotorcli.__main__:kotordiff_entry"
 
 [project.urls]
 Homepage = "https://github.com/th3w1zard1/PyKotor"
@@ -64,7 +67,7 @@ Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 # Poetry configuration
 [tool.poetry]
 name = "kotorcli"
-version = "1.1.0"
+version = "1.2.0"
 description = "A build tool for KOTOR projects (cli-compatible syntax)"
 authors = ["PyKotor Contributors", "Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]

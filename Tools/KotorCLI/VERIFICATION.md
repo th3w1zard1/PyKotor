@@ -89,6 +89,15 @@ This document verifies that KotorCLI achieves 1:1 syntax compatibility with cli 
 **cli Reference**: `src/cli/launch.nim`
 **Implementation**: `src/KotorCLI/commands/launch.py`
 
+### diff-installation / kotordiff (KotorDiff)
+- ✅ `python -m kotorcli diff-installation --path1 <p1> --path2 <p2>` stays headless when paths are provided
+- ✅ `--gui` or omitting paths launches the Tkinter KotorDiff GUI
+- ✅ Supports multi-path (`--path1/--path2/--path3/--path`) comparisons, filters, and logging controls
+- ✅ TSLPatcher generation via `--tslpatchdata`/`--ini`, with optional `--incremental` writer
+- ✅ Hash toggles (`--compare-hashes/--no-compare-hashes`) and `--output-mode` (`full`, `diff_only`, `quiet`)
+- ✅ Script entrypoints registered (`kotordiff`, `kotor-diff`, `diff-installation`)
+- **Implementation**: `Tools/KotorCLI/src/kotorcli/diff_tool/cli.py`, `Tools/KotorCLI/src/kotorcli/diff_tool/app.py`, `Tools/KotorCLI/src/kotorcli/diff_tool/__main__.py`
+
 ## ✅ Configuration File Compatibility
 
 ### TOML Format

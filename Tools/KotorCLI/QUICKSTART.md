@@ -17,6 +17,7 @@ cd mymod
 ```
 
 This creates:
+
 - `KotorCLI.cfg` - Configuration file
 - `src/` - Source directory structure
 - `.gitignore` - Git ignore file
@@ -41,6 +42,7 @@ Shows all configured targets in your `KotorCLI.cfg`.
 ### 4. Make changes
 
 Edit files in the `src/` directory:
+
 - Scripts: `src/scripts/*.nss`
 - Dialogs: `src/dialogs/*.dlg.json`
 - Creatures: `src/blueprints/creatures/*.utc.json`
@@ -54,6 +56,7 @@ KotorCLI pack
 ```
 
 This will:
+
 1. Convert JSON files to GFF
 2. Compile NWScript files
 3. Pack everything into a module file
@@ -70,6 +73,24 @@ Or launch the game directly:
 
 ```bash
 KotorCLI play
+```
+
+### 7. Diff installs/files with KotorDiff (headless or GUI)
+
+Headless CLI (preferred for automation):
+
+```bash
+python -m kotorcli diff-installation --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --filter tat_m17ac --output-mode diff_only
+# Generate incremental TSLPatcher data while diffing
+python -m kotorcli diff-installation --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded" --tslpatchdata .\tslpatchdata --incremental
+```
+
+GUI (omit paths or pass `--gui`):
+
+```bash
+kotordiff
+# or
+python -m kotorcli diff-installation --gui
 ```
 
 ## Common Workflows
@@ -203,6 +224,3 @@ KotorCLI <command> --help
 ```
 
 For issues or questions, visit the [PyKotor repository](https://github.com/th3w1zard1/PyKotor).
-
-
-

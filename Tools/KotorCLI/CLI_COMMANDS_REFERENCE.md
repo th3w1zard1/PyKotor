@@ -972,9 +972,10 @@ Based on the comprehensive analysis above, KotorCLI should support:
 - `sound-convert` - Convert sounds (SSF↔WAV, etc.)
 - `model-convert` - Convert models (MDL↔ASCII)
 
-### Utility Commands (To Add)
+### Utility Commands (Implemented)
 
 - `diff` - Compare resources
+- `diff-installation` / `kotordiff` - Structured n-way comparisons with optional GUI and TSLPatcher output (see `Tools/KotorCLI/src/kotorcli/diff_tool/`)
 - `grep` - Search resources
 - `stats` - Show resource statistics
 - `validate` - Validate file formats
@@ -1003,6 +1004,34 @@ python -m kotorcli gui-convert --input <file_or_folder> --output <dir> --resolut
 - Multiple `--input` values are allowed
 - `--resolution` accepts comma-separated WIDTHxHEIGHT or `ALL` for every supported aspect ratio/resolution pair
 - Internally uses `pykotor.resource.formats.gff` to resize controls (`Libraries/PyKotor/src/pykotor/resource/formats/gff`)
+
+### diff-installation (KotorDiff)
+
+Structured comparisons across files, folders, modules, or entire installations. Stays headless when CLI paths are provided; launches the Tk KotorDiff GUI when arguments are omitted or `--gui` is passed.
+
+```bash
+# Installation vs installation with filtering
+python -m kotorcli diff-installation --path1 <install_or_path> --path2 <install_or_path> --filter tat_m17ac --output-mode diff_only
+
+# Generate TSLPatcher output incrementally during the diff
+python -m kotorcli diff-installation --path1 <install1> --path2 <install2> --tslpatchdata ./tslpatchdata --ini changes.ini --incremental
+```
+
+Key options:
+
+- `--path1/--path2/--path3/--path` for 2+ way comparisons (paths or installation roots)
+- `--filter` to constrain comparisons to module/resource names (e.g., `tat_m17ac`, `dialog.tlk`)
+- `--output-mode` (`full`, `diff_only`, `quiet`) and `--output-log` for log routing
+- `--tslpatchdata` + `--ini` + `--incremental` to emit TSLPatcher-ready output while diffing
+- `--compare-hashes/--no-compare-hashes` to toggle hashing for unsupported resource types
+- `--log-level`, `--no-color`, `--use-profiler` for diagnostics
+- `--gui` to force the GUI even when paths are provided
+
+Implementation references:
+
+- `Tools/KotorCLI/src/kotorcli/diff_tool/app.py` (orchestration, incremental TSLPatcher writer)
+- `Tools/KotorCLI/src/kotorcli/diff_tool/cli.py` (argument wiring/headless execution)
+- `Tools/KotorCLI/src/kotorcli/diff_tool/gui.py` (Tkinter UI fallback)
 
 ### Advanced Commands (To Add)
 
