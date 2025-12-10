@@ -46,7 +46,7 @@ A kit is a self-contained collection of resources that can be used to build indo
 
 ## Kit Directory Structure
 
-```
+```shell
 kits/
 ├── {kit_id}/
 │   ├── {kit_id}.json          # Kit definition file
@@ -80,7 +80,7 @@ kits/
 
 The kit JSON file (`{kit_id}.json`) defines the kit structure:
 
-```json
+```json5
 {
     "name": "Kit Display Name",
     "id": "kitid",
@@ -140,7 +140,7 @@ Components are reusable room models that can be placed and connected to build in
 
 **Component JSON Structure**:
 
-```json
+```json5
 {
     "name": "Hall 1",
     "id": "hall_1",
@@ -284,7 +284,7 @@ Doors are defined in the kit JSON and have corresponding UTD files:
 
 **Door JSON Structure**:
 
-```json
+```json5
 {
     "utd_k1": "door_name_k1",
     "utd_k2": "door_name_k2",

@@ -10,6 +10,8 @@
 
 **This is NOT optional.** Do NOT summarize changes without committing them. Do NOT skip this step. Every code change, file modification, or configuration update MUST be committed before you consider the task complete.
 
+**NEVER use `git add .` or `git add -A` to stage changes.** Always stage files individually. This is because we may have multiple agents working on multiple files simultaneously.
+
 **Commit message format**: Use conventional commits format:
 
 - `fix:` for bug fixes
@@ -74,6 +76,7 @@ Please do not create .md documentation unless it delivers public-facing informat
    - Handle missing dependencies gracefully
 
 **Example pattern for Python scripts:**
+
 ```python
 #!/usr/bin/env python3
 """Script description with usage examples.
@@ -95,6 +98,7 @@ def main():
 ```
 
 **Example pattern for PowerShell scripts:**
+
 ```powershell
 param(
     [Parameter(Mandatory=$true)]
@@ -170,9 +174,10 @@ if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TEST TIMED OUT a
 **Automatic Performance Optimization:**
 
 When tests consistently hit timeouts or take excessive time, AI agents MUST automatically:
+
 1. **Profile the slow test**: Check `tests/cProfile/` for existing `.prof` files, or run tests with profiling enabled
 2. **Analyze bottlenecks**: Run `.\scripts\analyze_cprofile.ps1 <profile_file>` to identify hot functions
-3. **Optimize automatically**: 
+3. **Optimize automatically**:
    - Make fixtures session-scoped to avoid repeated expensive setup (e.g., file copying, installation loading)
    - Cache expensive operations (module loading, resource parsing) at session/module scope
    - Move common setup to `conftest.py` with appropriate scoping

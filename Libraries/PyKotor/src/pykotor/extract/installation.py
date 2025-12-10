@@ -1473,7 +1473,7 @@ class Installation:
                     locations[identifier].append(location)
         
         # Cache filtered modules to avoid repeated dictionary filtering (performance optimization)
-        _cached_filtered_modules: dict[str, list[FileResource] | dict[str, list[FileResource]]] | None = None
+        _cached_filtered_modules: dict[str, list[FileResource]] | CaseInsensitiveDict[list[FileResource]] | None = None
         _cached_module_root: str | None = None
         
         def check_modules():
@@ -1486,7 +1486,7 @@ class Installation:
                 if _cached_filtered_modules is None or _cached_module_root != module_root.lower():
                     _cached_filtered_modules = {filename: resources for filename, resources in self._modules.items() if self.get_module_root(filename) == module_root.lower()}
                     _cached_module_root = module_root.lower()
-                check_dict(CaseInsensitiveDict(_cached_filtered_modules if isinstance(_cached_filtered_modules, dict) else {index: resources for index, resources in enumerate(_cached_filtered_modules)}))
+                check_dict(_cached_filtered_modules)
 
         function_map: dict[SearchLocation, Callable] = {
             SearchLocation.OVERRIDE: lambda: check_dict(self._override),

@@ -2,7 +2,6 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-
 **Engine Usage**: Defines area effect configurations. The engine uses this file to determine area effect scripts for enter, heartbeat, and exit events.
 
 **Row Index**: Area Effect ID (integer)
@@ -60,4 +59,3 @@ Each attack type typically has multiple related files for damage, properties, co
 2DA files are the primary configuration mechanism for KotOR's game rules and content. Nearly every game system references at least one 2DA file for its behavior.
 
 ---
-
