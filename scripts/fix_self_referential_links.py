@@ -86,22 +86,36 @@ def fix_self_referential_links(filepath: Path) -> int:
             anchor_part = None
         
         # Check if it points to the same file
-        if not file_part or file_part == filepath.stem or file_part == filepath.name:
+        # Normalize file_part for comparison (remove .md extension if present)
+        normalized_file_part = file_part
+        if normalized_file_part and normalized_file_part.endswith('.md'):
+            normalized_file_part = normalized_file_part[:-3]
+        
+        if not file_part or normalized_file_part == filepath.stem or file_part == filepath.name:
+            should_remove = False
+            
             if anchor_part:
+                # Link with anchor - check if it points to a heading in this file
                 normalized_anchor = normalize_anchor(anchor_part)
                 if normalized_anchor in headings:
                     target_line = headings[normalized_anchor]
                     # If link is within 10 lines of heading, it's self-referential
                     if abs(line_num - target_line) <= 10:
-                        # Replace the link with just the text
-                        line = lines[line_num - 1]
-                        # Find and replace the link
-                        pattern = re.escape(f'[{link_text}]({link_url})')
-                        # Use lambda to avoid regex backreference interpretation in link_text
-                        new_line = re.sub(pattern, lambda m: link_text, line)
-                        if new_line != line:
-                            lines[line_num - 1] = new_line
-                            changes += 1
+                        should_remove = True
+            else:
+                # Link without anchor pointing to same file - always self-referential
+                should_remove = True
+            
+            if should_remove:
+                # Replace the link with just the text
+                line = lines[line_num - 1]
+                # Find and replace the link
+                pattern = re.escape(f'[{link_text}]({link_url})')
+                # Use lambda to avoid regex backreference interpretation in link_text
+                new_line = re.sub(pattern, lambda m: link_text, line)
+                if new_line != line:
+                    lines[line_num - 1] = new_line
+                    changes += 1
     
     if changes > 0:
         # Reconstruct file with original line endings and trailing newline state
