@@ -4,14 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       tool:
-        description: 'Tool to release'
+        description: 'Tool name (matches tool directory or build name; e.g., toolset, holopatcher, kotordiff)'
         required: true
-        type: choice
-        options:
-          - toolset
-          - holopatcher
-          - kotordiff
-          - guiconverter
+        type: string
       version:
         description: 'Version to release (e.g., 3.1.3)'
         required: true
@@ -40,74 +35,152 @@ jobs:
       tag_name: ${{ steps.config.outputs.tag_name }}
       config_file: ${{ steps.config.outputs.config_file }}
       display_name: ${{ steps.config.outputs.display_name }}
-      current_version: ${{ steps.check_version.outputs.current_version }}
+      current_version: ${{ steps.config.outputs.current_version }}
+      version_key: ${{ steps.config.outputs.version_key }}
+      tool_dir: ${{ steps.config.outputs.tool_dir }}
+      build_name: ${{ steps.config.outputs.build_name }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Determine configuration
+      - name: Detect tool and validate version
         id: config
         run: |
-          TOOL="${{ github.event.inputs.tool }}"
-          VERSION="${{ github.event.inputs.version }}"
-          
-          case "$TOOL" in
-            toolset)
-              CONFIG_FILE="Tools/HolocronToolset/src/toolset/config/config_info.py"
-              TAG_NAME="v$VERSION-toolset"
-              DISPLAY_NAME="HolocronToolset"
-              ;;
-            holopatcher)
-              CONFIG_FILE="Tools/HoloPatcher/src/holopatcher/config.py"
-              TAG_NAME="v$VERSION-patcher"
-              DISPLAY_NAME="HoloPatcher"
-              ;;
-            kotordiff)
-              CONFIG_FILE="Tools/KotorDiff/src/kotordiff/__main__.py"
-              TAG_NAME="v$VERSION-kotordiff"
-              DISPLAY_NAME="KotorDiff"
-              ;;
-            guiconverter)
-              CONFIG_FILE="Tools/GuiConverter/src/gui_converter/__init__.py"
-              TAG_NAME="v$VERSION-guiconverter"
-              DISPLAY_NAME="GuiConverter"
-              ;;
-            *)
-              echo "❌ Unknown tool: $TOOL"
-              exit 1
-              ;;
-          esac
-          
-          echo "config_file=$CONFIG_FILE" >> $GITHUB_OUTPUT
-          echo "tag_name=$TAG_NAME" >> $GITHUB_OUTPUT
-          echo "display_name=$DISPLAY_NAME" >> $GITHUB_OUTPUT
-        shell: bash
+          python3 << 'PYTHON_SCRIPT'
+          import json
+          import os
+          import re
+          import sys
+          from pathlib import Path
 
-      - name: Validate version format
-        run: |
-          VERSION="${{ github.event.inputs.version }}"
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+(\.[0-9]+)?(-[a-zA-Z0-9.]+)?$'; then
-            echo "❌ Invalid version format: $VERSION"
-            echo "   Expected: MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-suffix"
-            exit 1
-          fi
-          echo "✓ Version format is valid: $VERSION"
-        shell: bash
+          version = os.environ["INPUT_VERSION"].strip()
+          tool_input = os.environ["INPUT_TOOL"].strip().lower()
 
-      - name: Check current version
-        id: check_version
-        run: |
-          TOOL="${{ github.event.inputs.tool }}"
-          CONFIG_FILE="${{ steps.config.outputs.config_file }}"
-          
-          if [ "$TOOL" = "kotordiff" ]; then
-            CURRENT=$(grep -oP 'CURRENT_VERSION\s*=\s*"\K[^"]+' "$CONFIG_FILE" || echo "unknown")
-          else
-            CURRENT=$(grep -oP '"currentVersion":\s*"\K[^"]+' "$CONFIG_FILE" || echo "unknown")
-          fi
-          
-          echo "current_version=$CURRENT" >> $GITHUB_OUTPUT
-          echo "Current version in config: $CURRENT"
-          echo "Target version: ${{ github.event.inputs.version }}"
+          print(f"=== Validating version {version} for {tool_input} ===")
+
+          if not re.fullmatch(r"[0-9]+\.[0-9]+(\.[0-9]+)?(-[A-Za-z0-9.]+)?", version):
+            print(f"❌ Invalid version format: {version}")
+            print("   Expected: MAJOR.MINOR[.PATCH][-suffix]")
+            sys.exit(1)
+          print("✓ Version format is valid")
+
+          tools_dir = Path("Tools")
+          if not tools_dir.exists():
+            print("❌ Tools directory not found")
+            sys.exit(1)
+
+          def derive_build_name(tool_dir_name: str) -> str:
+            name_lower = tool_dir_name.lower()
+            special_mappings = {
+              "holocrontoolset": "toolset",
+            }
+            return special_mappings.get(name_lower, name_lower)
+
+          def find_config_file(tool_dir: Path, tool_name_lower: str) -> Path | None:
+            src_dir = tool_dir / "src" / tool_name_lower
+            config_py = src_dir / "config.py"
+            if config_py.exists():
+              return config_py
+            config_info_py = src_dir / "config" / "config_info.py"
+            if config_info_py.exists():
+              return config_info_py
+            main_py = src_dir / "__main__.py"
+            if main_py.exists():
+              content = main_py.read_text()
+              if "CURRENT_VERSION" in content:
+                return main_py
+            init_py = src_dir / "__init__.py"
+            if init_py.exists():
+              content = init_py.read_text()
+              if "__version__" in content:
+                return init_py
+            return None
+
+          tools = []
+          for tool_path in sorted(tools_dir.iterdir()):
+            if tool_path.is_dir() and not tool_path.name.startswith("."):
+              t_lower = tool_path.name.lower()
+              build_name = derive_build_name(tool_path.name)
+              config_path = find_config_file(tool_path, t_lower)
+              tools.append(
+                {
+                  "tool_dir": tool_path.name,
+                  "tool_dir_lower": t_lower,
+                  "build_name": build_name,
+                  "config_file": str(config_path) if config_path else "",
+                  "display_name": tool_path.name,
+                }
+              )
+
+          matching = [
+            t for t in tools
+            if t["build_name"] == tool_input or t["tool_dir_lower"] == tool_input
+          ]
+
+          if not matching:
+            print("❌ Unknown tool selection.")
+            if tools:
+              print("Available tools (build_name -> dir):")
+              for t in tools:
+                print(f"  - {t['build_name']} -> Tools/{t['tool_dir']}")
+            sys.exit(1)
+
+          tool = matching[0]
+          config_path_str = tool["config_file"]
+
+          if not config_path_str:
+            print(f"❌ Could not find a config/version file for {tool['display_name']}")
+            sys.exit(1)
+
+          config_path = Path(config_path_str)
+          if not config_path.exists():
+            print(f"❌ Config file not found: {config_path}")
+            sys.exit(1)
+
+          content = config_path.read_text()
+          version_key = None
+          current = "unknown"
+
+          if '"currentVersion":' in content:
+            version_key = "currentVersion"
+            match = re.search(r'"currentVersion":\s*"([^"]+)"', content)
+            current = match.group(1) if match else current
+          elif "CURRENT_VERSION" in content:
+            version_key = "CURRENT_VERSION"
+            match = re.search(r'CURRENT_VERSION\s*=\s*["\']([^"\']+)["\']', content)
+            current = match.group(1) if match else current
+          elif "__version__" in content:
+            version_key = "__version__"
+            match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
+            current = match.group(1) if match else current
+          else:
+            version_key = "unknown"
+
+          tag_name = f"v{version}-{tool['build_name']}"
+
+          print(f"✓ Found tool: {tool['display_name']} (build_name: {tool['build_name']})")
+          print(f"✓ Config file: {config_path}")
+          print(f"  Version key: {version_key}")
+          print(f"  Current version: {current}")
+          print(f"  Target version: {version}")
+          print(f"  Tag: {tag_name}")
+
+          if current == version:
+            print(f"⚠️  Warning: Version already set to {version}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as gh_out:
+            gh_out.write(f"config_file={config_path}\n")
+            gh_out.write(f"tag_name={tag_name}\n")
+            gh_out.write(f"display_name={tool['display_name']}\n")
+            gh_out.write(f"current_version={current}\n")
+            gh_out.write(f"version_key={version_key}\n")
+            gh_out.write(f"tool_dir={tool['tool_dir']}\n")
+            gh_out.write(f"build_name={tool['build_name']}\n")
+
+          print("=== Validation complete ===")
+          PYTHON_SCRIPT
+        env:
+          INPUT_TOOL: ${{ github.event.inputs.tool }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         shell: bash
 
       - name: Check tag availability
@@ -140,27 +213,52 @@ jobs:
 
       - name: Update version in config
         run: |
-          TOOL="${{ github.event.inputs.tool }}"
           VERSION="${{ github.event.inputs.version }}"
           CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
+          VERSION_KEY="${{ needs.validate.outputs.version_key }}"
           
           echo "Updating $CONFIG_FILE to version $VERSION"
-          
-          if [ "$TOOL" = "kotordiff" ]; then
-            sed -i "s/CURRENT_VERSION = \"[^\"]*\"/CURRENT_VERSION = \"$VERSION\"/" "$CONFIG_FILE"
-          elif [ "$TOOL" = "guiconverter" ]; then
-            sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" "$CONFIG_FILE"
-          else
-            sed -i "s/\"currentVersion\": \"[^\"]*\"/\"currentVersion\": \"$VERSION\"/" "$CONFIG_FILE"
-          fi
-          
-          echo "Updated config:"
-          grep -E "(currentVersion|CURRENT_VERSION|__version__)" "$CONFIG_FILE" | head -3
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          config_path = Path(os.environ["CONFIG_FILE"])
+          version = os.environ["VERSION"]
+          version_key = os.environ["VERSION_KEY"]
+          text = config_path.read_text()
+          new_text = text
+
+          if version_key == "currentVersion":
+            new_text = re.sub(r'"currentVersion":\s*"[^"]*"', f'"currentVersion": "{version}"', text)
+          elif version_key == "CURRENT_VERSION":
+            new_text = re.sub(r'CURRENT_VERSION\s*=\s*["\'][^"\']*["\']', f'CURRENT_VERSION = "{version}"', text)
+          elif version_key == "__version__":
+            new_text = re.sub(r'__version__\s*=\s*["\'][^"\']*["\']', f'__version__ = "{version}"', text)
+          else:
+            print(f"❌ Unsupported version key: {version_key}")
+            sys.exit(1)
+
+          if new_text == text:
+            print("❌ Version value not replaced; check the pattern.")
+            sys.exit(1)
+
+          config_path.write_text(new_text)
+          print("Updated config:")
+          for line in new_text.splitlines():
+            if "currentVersion" in line or "CURRENT_VERSION" in line or "__version__" in line:
+              print(line)
+          PYTHON_SCRIPT
         shell: bash
+        env:
+          CONFIG_FILE: ${{ needs.validate.outputs.config_file }}
+          VERSION: ${{ github.event.inputs.version }}
+          VERSION_KEY: ${{ needs.validate.outputs.version_key }}
 
       - name: Commit version bump
         run: |
-          TOOL="${{ github.event.inputs.tool }}"
+          TOOL="${{ needs.validate.outputs.build_name }}"
           VERSION="${{ github.event.inputs.version }}"
           CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
           
@@ -197,7 +295,6 @@ jobs:
       - name: Prepare release notes
         id: notes
         run: |
-          TOOL="${{ github.event.inputs.tool }}"
           VERSION="${{ github.event.inputs.version }}"
           DISPLAY_NAME="${{ needs.validate.outputs.display_name }}"
           USER_NOTES="${{ github.event.inputs.release_notes }}"
@@ -253,7 +350,7 @@ Download the appropriate archive for your platform:
         run: |
           echo "# 🚀 Release Creation Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Tool:** ${{ github.event.inputs.tool }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tool:** ${{ needs.validate.outputs.display_name }} (build: ${{ needs.validate.outputs.build_name }})" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ needs.validate.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
