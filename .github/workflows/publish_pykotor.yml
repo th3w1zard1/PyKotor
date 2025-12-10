@@ -215,6 +215,7 @@ jobs:
 
       - name: Download and prepare UPX
         if: runner.os != 'macOS' && steps.cache-upx.outputs.cache-hit != 'true'
+        continue-on-error: false
         run: |
           $ext = "${{ runner.os }}" -eq "Windows" ? "zip" : "tar.xz"
           $url = "${{ steps.upx_setup.outputs.url }}"
@@ -331,14 +332,34 @@ jobs:
           # Verify Python is available
           python${PYTHON_MAJOR_MINOR} --version || (echo "Failed to install Python $PYTHON_VERSION" && exit 1)
 
-      - name: Cache pip packages
+      - name: Cache pip packages (Linux/macOS)
+        if: runner.os != 'Windows'
         uses: actions/cache@v4.3.0
-        id: cache-pip
+        id: cache-pip-unix
         with:
           path: |
             ~/.cache/pip
-            %LOCALAPPDATA%\pip\Cache
             ~/Library/Caches/pip
+          key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}-${{ hashFiles('**/requirements.txt', '**/pyproject.toml', '**/setup.py') }}
+          restore-keys: |
+            pip-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}-
+            pip-${{ runner.os }}-${{ matrix.python-version }}-
+            pip-${{ runner.os }}-
+
+      - name: Get Windows pip cache path
+        if: runner.os == 'Windows'
+        id: pip-cache-path
+        shell: pwsh
+        run: |
+          $pipCache = "$env:LOCALAPPDATA\pip\Cache"
+          echo "path=$pipCache" >> $env:GITHUB_OUTPUT
+
+      - name: Cache pip packages (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4.3.0
+        id: cache-pip-windows
+        with:
+          path: ${{ steps.pip-cache-path.outputs.path }}
           key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}-${{ hashFiles('**/requirements.txt', '**/pyproject.toml', '**/setup.py') }}
           restore-keys: |
             pip-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}-
