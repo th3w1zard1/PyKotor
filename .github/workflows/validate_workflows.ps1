@@ -7,19 +7,66 @@ Write-Host ""
 $errors = @()
 $warnings = @()
 
+# Helpers
+function Get-BuildName([string]$toolDirName) {
+    $lower = $toolDirName.ToLowerInvariant()
+    switch ($lower) {
+        "holocrontoolset" { return "toolset" }
+        default { return $lower }
+    }
+}
+
+function Find-ConfigFile([string]$toolDirPath, [string]$toolLower) {
+    $candidates = @(
+        "src/$toolLower/config.py",
+        "src/$toolLower/config/config_info.py",
+        "src/$toolLower/__main__.py",
+        "src/$toolLower/__init__.py"
+    )
+    foreach ($rel in $candidates) {
+        $candidate = Join-Path $toolDirPath $rel
+        if (Test-Path $candidate) { return (Resolve-Path $candidate) }
+    }
+    return $null
+}
+
+# Discover tools dynamically
+Write-Host "Detecting tools..." -ForegroundColor Yellow
+$tools = @()
+$toolsRoot = Resolve-Path "../../Tools" -ErrorAction SilentlyContinue
+if ($toolsRoot) {
+    Get-ChildItem -Path $toolsRoot -Directory | ForEach-Object {
+        if ($_.Name.StartsWith(".")) { return }
+        $build = Get-BuildName $_.Name
+        $config = Find-ConfigFile $_.FullName ($_.Name.ToLowerInvariant())
+        $tools += [PSCustomObject]@{
+            ToolDir    = $_.Name
+            BuildName  = $build
+            ConfigPath = $config
+        }
+    }
+    if ($tools.Count -eq 0) {
+        $errors += "No tools detected under $toolsRoot"
+    } else {
+        foreach ($t in $tools) {
+            $cfgMsg = if ($t.ConfigPath) { $t.ConfigPath } else { "no config file" }
+            Write-Host "  • $($t.ToolDir) (build: $($t.BuildName)) -> $cfgMsg" -ForegroundColor Green
+        }
+    }
+} else {
+    $errors += "Tools directory not found at ../../Tools"
+}
+
+# Build workflow lists dynamically
+$requiredWorkflows = @()
+$testWorkflows = @()
+foreach ($t in $tools) {
+    $requiredWorkflows += "release_$($t.BuildName).yml"
+    $testWorkflows += "TEST_release_$($t.BuildName).yml"
+}
+
 # Check workflow files exist
 Write-Host "Checking workflow files..." -ForegroundColor Yellow
-$requiredWorkflows = @(
-    "release_toolset.yml",
-    "release_kotordiff.yml",
-    "release_holopatcher.yml",
-    "release_guiconverter.yml",
-    "release_translator.yml"
-)
-
-$testWorkflows = @(
-    "TEST_release_toolset.yml"
-)
 
 foreach ($workflow in $requiredWorkflows) {
     if (Test-Path $workflow) {
@@ -96,32 +143,27 @@ Write-Host ""
 
 # Check version files exist
 Write-Host "Checking version files..." -ForegroundColor Yellow
-$versionFiles = @{
-    "Toolset" = "../../Tools/HolocronToolset/src/toolset/config/config_info.py"
-    "KotorDiff" = "../../Tools/KotorDiff/src/kotordiff/__main__.py"
-    "HoloPatcher" = "../../Tools/HoloPatcher/src/holopatcher/config.py"
-}
-
-foreach ($tool in $versionFiles.Keys) {
-    $file = $versionFiles[$tool]
+foreach ($t in $tools) {
+    $file = $t.ConfigPath
+    $toolLabel = $t.BuildName
+    if ($null -eq $file) {
+        $warnings += "$($t.ToolDir): version/config file not found"
+        Write-Host "  ⚠️  $toolLabel version file missing" -ForegroundColor Yellow
+        continue
+    }
     if (Test-Path $file) {
-        Write-Host "  ✅ $tool version file exists" -ForegroundColor Green
+        Write-Host "  ✅ $toolLabel version file exists: $file" -ForegroundColor Green
         
-        # Check for version fields
         $content = Get-Content $file -Raw
-        if ($tool -eq "Toolset" -and $content -match '"currentVersion"' -and $content -match '"toolsetLatestVersion"') {
-            Write-Host "     ✅ Contains currentVersion and toolsetLatestVersion" -ForegroundColor Green
-        } elseif ($tool -eq "HoloPatcher" -and $content -match '"currentVersion"' -and $content -match '"holopatcherLatestVersion"') {
-            Write-Host "     ✅ Contains currentVersion and holopatcherLatestVersion" -ForegroundColor Green
-        } elseif ($tool -eq "KotorDiff" -and $content -match 'CURRENT_VERSION') {
-            Write-Host "     ✅ Contains CURRENT_VERSION" -ForegroundColor Green
+        if ($content -match '"currentVersion"' -or $content -match 'CURRENT_VERSION' -or $content -match '__version__') {
+            Write-Host "     ✅ Found version field" -ForegroundColor Green
         } else {
-            $warnings += "$tool version file missing expected version fields"
+            $warnings += "$toolLabel version file missing expected version field"
             Write-Host "     ⚠️  Version fields might be missing" -ForegroundColor Yellow
         }
     } else {
         $errors += "Version file not found: $file"
-        Write-Host "  ❌ $tool version file missing: $file" -ForegroundColor Red
+        Write-Host "  ❌ $toolLabel version file missing: $file" -ForegroundColor Red
     }
 }
 
@@ -178,8 +220,8 @@ if ($errors.Count -eq 0 -and $warnings.Count -eq 0) {
 } else {
     if ($errors.Count -gt 0) {
         Write-Host "❌ ERRORS FOUND ($($errors.Count)):" -ForegroundColor Red
-        foreach ($error in $errors) {
-            Write-Host "  • $error" -ForegroundColor Red
+        foreach ($err in $errors) {
+            Write-Host "  • $err" -ForegroundColor Red
         }
         Write-Host ""
     }
