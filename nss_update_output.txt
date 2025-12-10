@@ -1,0 +1,589 @@
+Reading existing markdown...
+Parsing .gitmodules for vendor repository mappings...
+Found 53 vendor submodules
++ Using ripgrep for fast searches
+Extracting functions and constants from scriptdefs.py...
+K1: 772 functions, 1490 constants
+TSL: 876 functions, 1760 constants
+
+Categorizing items by game...
+Shared: 771 functions, 1475 constants
+K1-only: 1 functions, 15 constants
+TSL-only: 105 functions, 285 constants
+
+Building section content (this may take a while as we search vendor directories)...
+
+[1/6] Processing Shared Functions...
+  Processing function 1/771: GetAbilityModifier
+    → Searching for: GetAbilityModifier
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:2851
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:6839
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:7395
+    ✓ Found in reone/include\reone\game\d20\attributes.h:72
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:472
+    ✓ Found in xoreos/src\engines\nwn2\creature.h:103
+    ✓ Found in xoreos/src\engines\nwn2\creature.cpp:878
+    ✓ Found in xoreos/src\engines\nwn2\creature.cpp:882
+    ✓ Found in xoreos/src\engines\nwn2\creature.cpp:893
+    ✓ Found in xoreos/src\engines\nwn2\creature.cpp:900
+      -> Found 287 reference(s) for GetAbilityModifier
+    → Searching for: GetAbilityScore
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:6686
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:7242
+    ✓ Found in reone/src\libs\game\gui\chargen\abilities.cpp:235
+    ✓ Found in reone/src\libs\game\gui\chargen\abilities.cpp:242
+    ✓ Found in reone/src\libs\game\d20\attributes.cpp:39
+    ✓ Found in reone/include\reone\game\d20\attributes.h:71
+    ✓ Found in xoreos/src\engines\kotorbase\creatureinfo.h:82
+    ✓ Found in xoreos/src\engines\kotorbase\creature.h:125
+    ✓ Found in xoreos/src\engines\kotorbase\creature.cpp:200
+    ✓ Found in xoreos/src\engines\kotorbase\console.cpp:280
+      -> Found 89 reference(s) for GetAbilityScore
+    → Searching for: GetNPCSelectability
+    ✓ Found in K1_Community_Patch/Source\k_pdan_addbast.nss:24
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:5160
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:7073
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:7629
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:831
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:830
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\950COR_Coruscant_(cutscene)\a_play_mov.nss:110
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\711KOR_Korriban_Secret_Tomb\tr_evil_kreia.nss:26
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\403DXN_Dxun_Mandalorian_Ruins\k_403_enter.nss:292
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\403DXN_Dxun_Mandalorian_Ruins\k_403_enter.nss:307
+      -> Found 111 reference(s) for GetNPCSelectability
+    → Searching for: SetNPCSelectability
+    ✓ Found in K1_Community_Patch/Source\k_pdan_addbast.nss:28
+    ✓ Found in K1_Community_Patch/Source\k_pkas_chuunrew.nss:31
+    ✓ Found in K1_Community_Patch/Source\k_pkas_givesword.nss:45
+    ✓ Found in K1_Community_Patch/Source\k_pkas_meetking.nss:31
+    ✓ Found in K1_Community_Patch/Source\k_pkas_meetking.nss:37
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:5150
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:7072
+    ✓ Found in reone/src\libs\game\script\routine\impl\main.cpp:7628
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\950COR_Coruscant_(cutscene)\a_play_mov.nss:143
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\950COR_Coruscant_(cutscene)\a_play_mov.nss:144
+      -> Found 139 reference(s) for SetNPCSelectability
+    → Searching for: SWMG_StartInvulnerability
+    ✓ Found in reone/src\libs\game\script\routine\impl\minigame.cpp:811
+    ✓ Found in reone/src\libs\game\script\routine\impl\minigame.cpp:1060
+    ✓ Found in reone/src\libs\game\script\routine\impl\minigame.cpp:1160
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:788
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:787
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\510OND_Onderon_Swoop_Track\mine.nss:137
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\371NAR_Nar_Shaddaa_Swoop_Track\mine.nss:138
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\211TEL_Citadel_Station_Swoop_Track\enemyaccelpad.nss:9
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\TSLRCM\Modules\510OND_Onderon_Swoop_Track\mine.nss:137
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\211TEL_Citadel_Station_Swoop_Track\mine.nss:136
+      -> Found 16 reference(s) for SWMG_StartInvulnerability
+    → Searching for: ActionAttack
+    ✓ Found in K1_Community_Patch/Source\cp_dan_prot_atk.nss:29
+    ✓ Found in K1_Community_Patch/Source\k36_las_tukatasp.nss:55
+    ✓ Found in K1_Community_Patch/Source\k36_las_tukatasp.nss:56
+    ✓ Found in K1_Community_Patch/Source\k36_las_tukatasp.nss:62
+    ✓ Found in K1_Community_Patch/Source\k36_las_tukatasp.nss:66
+    ✓ Found in K1_Community_Patch/Source\k36_las_tukatasp.nss:71
+    ✓ Found in K1_Community_Patch/Source\k36_las_tukatasp.nss:85
+    ✓ Found in K1_Community_Patch/Source\k38b_jor_hostile.nss:67
+    ✓ Found in K1_Community_Patch/Source\k38b_jor_hostile.nss:84
+    ✓ Found in K1_Community_Patch/Source\k_inc_generic.nss:206
+      -> Found 1694 reference(s) for ActionAttack
+    → Searching for: ActionBarkString
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:780
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:827
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:822
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:821
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\103PER_Peragus_Fuel_Depot\k_hk50_ud.nss:488
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\411DXN_Dxun_Sith_Tomb\tr_leave_411.nss:30
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\101PER_Peragus_Administration_Level\k_kreia_ud.nss:183
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\101PER_Peragus_Administration_Level\k_hk50_user.nss:190
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\101PER_Peragus_Administration_Level\k_hk50_user.nss:192
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\101PER_Peragus_Administration_Level\k_hk50_user.nss:194
+      -> Found 70 reference(s) for ActionBarkString
+    → Searching for: ActionCastFakeSpellAtLocation
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:779
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:826
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:643
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:638
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:624
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:623
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M45AC_Star_Forge_Deck_3_sta_m45ac\k_sta_freezedoor.nss:44
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M45AC_Star_Forge_Deck_3_sta_m45ac\k_sta_freezedoor.nss:45
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M45AC_Star_Forge_Deck_3_sta_m45ac\k_sta_freezedoor.nss:46
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M45AC_Star_Forge_Deck_3_sta_m45ac\k_psta_stasis.nss:49
+      -> Found 12 reference(s) for ActionCastFakeSpellAtLocation
+    → Searching for: ActionCastFakeSpellAtObject
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:778
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:825
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:642
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:637
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:623
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:622
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\650DAN_Dantooine_Rebuilt_Enclave\a_pc_stun.nss:3
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\650DAN_Dantooine_Rebuilt_Enclave\a_pc_stun.nss:5
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\604DAN_Dantooine_Crystal_Cave\a_vroo_actions.nss:52
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\506OND_Onderon_Royal_Palace\tr_kavar_prevent.nss:58
+      -> Found 73 reference(s) for ActionCastFakeSpellAtObject
+  Processing function 10/771: ActionCastSpellAtLocation
+    → Searching for: ActionCastSpellAtLocation
+    ✓ Found in NorthernLights/Assets\Scripts\Systems\AuroraActions\AuroraAction.cs:529
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:375
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:370
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:356
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:355
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:761
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:808
+      -> Found 7 reference(s) for ActionCastSpellAtLocation
+    → Searching for: ActionCastSpellAtObject
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:751
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:798
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:189
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:184
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:170
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:169
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\504OND_Onderon_Sky_Ramp\a_coward_flee.nss:194
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\504OND_Onderon_Sky_Ramp\a_coward_flee.nss:195
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\TSLRCM\Modules\504OND_Onderon_Sky_Ramp\a_coward_flee.nss:194
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\TSLRCM\Modules\504OND_Onderon_Sky_Ramp\a_coward_flee.nss:195
+      -> Found 17 reference(s) for ActionCastSpellAtObject
+    → Searching for: ActionCloseDoor
+    ✓ Found in Kotor-Randomizer/kotor Randomizer 2\Resources\k1patch\k36_pkor_enter.ncs:225
+    ✓ Found in Kotor-Randomizer/kotor Randomizer 2\Resources\k1patch\k36_pkor_enter.ncs:241
+    ✓ Found in Kotor-Randomizer/kotor Randomizer 2\Resources\k1patch\k36_pkor_enter.ncs:269
+    ✓ Found in Kotor-Randomizer/kotor Randomizer 2\Resources\k1patch\k36_pkor_enter.ncs:285
+    ✓ Found in Kotor-Randomizer/kotor Randomizer 2\Resources\k1patch\k33b_openacademy.ncs:237
+    ✓ Found in K1_Community_Patch/Source\cp_end_bridgecs.nss:48
+    ✓ Found in K1_Community_Patch/Source\cp_lev_airlckcls.nss:48
+    ✓ Found in K1_Community_Patch/Source\cp_levaa_joldoor.nss:24
+    ✓ Found in K1_Community_Patch/Source\k33b_openacademy.nss:79
+    ✓ Found in K1_Community_Patch/Source\k_pdan_28a_area.nss:51
+      -> Found 468 reference(s) for ActionCloseDoor
+    → Searching for: ActionDoCommand
+    ✓ Found in K1_Community_Patch/Source\cp_dan_vandgrove.nss:92
+    ✓ Found in K1_Community_Patch/Source\cp_dan_vandgrove.nss:93
+    ✓ Found in K1_Community_Patch/Source\cp_dan_vandgrove.nss:94
+    ✓ Found in K1_Community_Patch/Source\cp_dan_rik_exit.nss:25
+    ✓ Found in K1_Community_Patch/Source\cp_dan_rik_exit.nss:26
+    ✓ Found in K1_Community_Patch/Source\cp_dan_prot_atk.nss:26
+    ✓ Found in K1_Community_Patch/Source\cp_dan_han_exit.nss:27
+    ✓ Found in K1_Community_Patch/Source\cp_dan_han_exit.nss:28
+    ✓ Found in K1_Community_Patch/Source\cp_dan16_rom28.nss:22
+    ✓ Found in K1_Community_Patch/Source\cp_dan16_rom28.nss:23
+      -> Found 9727 reference(s) for ActionDoCommand
+    → Searching for: ActionEquipItem
+    ✓ Found in K1_Community_Patch/Source\k_punk_finale21.nss:38
+    ✓ Found in K1_Community_Patch/Source\k_ptar_swoopnew.nss:39
+    ✓ Found in K1_Community_Patch/Source\k_ptar_swoopnew.nss:58
+    ✓ Found in K1_Community_Patch/Source\k_ptar_swoop0.nss:39
+    ✓ Found in K1_Community_Patch/Source\k_ptar_swoop0.nss:58
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:173
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:168
+    ✓ Found in KotOR/src\enums\actions\ActionType.ts:30
+    ✓ Found in K1_Community_Patch/Source\k_ptar_flash.nss:24
+    ✓ Found in K1_Community_Patch/Source\k_ptar_flash.nss:37
+      -> Found 220 reference(s) for ActionEquipItem
+    → Searching for: ActionEquipMostDamagingMelee
+    ✓ Found in K1_Community_Patch/Source\k_psta_saber.nss:33
+    ✓ Found in K1_Community_Patch/Source\k_psta_saber.nss:34
+    ✓ Found in K1_Community_Patch/Source\k_psta_saber.nss:35
+    ✓ Found in K1_Community_Patch/Source\k_pman_sur13.nss:25
+    ✓ Found in K1_Community_Patch/Source\k_pman_secur01.nss:34
+    ✓ Found in K1_Community_Patch/Source\k_pkor_belayhost.nss:17
+    ✓ Found in K1_Community_Patch/Source\k37_sha_hostile.nss:22
+    ✓ Found in K1_Community_Patch/Source\cp_tar_diaattack.nss:15
+    ✓ Found in K1_Community_Patch/Source\cp_act_atkmelend.nss:20
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:773
+      -> Found 295 reference(s) for ActionEquipMostDamagingMelee
+    → Searching for: ActionEquipMostDamagingRanged
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:774
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:821
+    ✓ Found in K1_Community_Patch/Source\k_ptar_sithatk.nss:35
+    ✓ Found in K1_Community_Patch/Source\k_pman_sur13.nss:26
+    ✓ Found in K1_Community_Patch/Source\k_pman_sith02.nss:56
+    ✓ Found in K1_Community_Patch/Source\k_plev_malakmov2.nss:53
+    ✓ Found in K1_Community_Patch/Source\cp_sp_rngwep.nss:18
+    ✓ Found in K1_Community_Patch/Source\cp_act_atkrngend.nss:20
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:541
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:536
+      -> Found 293 reference(s) for ActionEquipMostDamagingRanged
+    → Searching for: ActionFollowLeader
+    ✓ Found in K1_Community_Patch/Source\k_inc_generic.nss:321
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:781
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:828
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:598
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:603
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:610
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\711KOR_Korriban_Secret_Tomb\tr_pc_foil.nss:598
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\711KOR_Korriban_Secret_Tomb\tr_pc_foil.nss:603
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\711KOR_Korriban_Secret_Tomb\tr_pc_foil.nss:610
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\711KOR_Korriban_Secret_Tomb\k_mand_fade_ud.nss:800
+      -> Found 507 reference(s) for ActionFollowLeader
+    → Searching for: ActionForceFollowObject
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:308
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:303
+    ✓ Found in NorthernLights/Scripts\k_sac_scene.nss:29
+    ✓ Found in NorthernLights/Scripts\k_sac_scene.nss:30
+    ✓ Found in NorthernLights/Scripts\k_sac_scene.nss:31
+    ✓ Found in NorthernLights/Scripts\k_sac_scene.nss:32
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:289
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:288
+    ✓ Found in NorthernLights/Assets\Scripts\Cutscenes\ShotEffects.cs:48
+    ✓ Found in KotOR/src\enums\actions\ActionType.ts:122
+      -> Found 22 reference(s) for ActionForceFollowObject
+    → Searching for: ActionForceMoveToLocation
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:771
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:818
+    ✓ Found in K1_Community_Patch/Source\k_ptar_davslav01.nss:22
+    ✓ Found in K1_Community_Patch/Source\k_plev_droidram.nss:32
+    ✓ Found in K1_Community_Patch/Source\cp_man26_wlkdip.nss:17
+    ✓ Found in K1_Community_Patch/Source\cp_man26_wlkdip.nss:18
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:872
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:523
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:518
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\904MAL_Malachor_V_Trayus_Core\a_walk_pc.nss:5
+      -> Found 236 reference(s) for ActionForceMoveToLocation
+  Processing function 20/771: ActionForceMoveToObject
+    → Searching for: ActionForceMoveToObject
+    ✓ Found in K1_Community_Patch/Source\cp_ebo12_zalmove.nss:23
+    ✓ Found in K1_Community_Patch/Source\cp_dan_rik_exit.nss:24
+    ✓ Found in K1_Community_Patch/Source\cp_dan_han_exit.nss:26
+    ✓ Found in K1_Community_Patch/Source\cp_kor_dakleave.nss:19
+    ✓ Found in K1_Community_Patch/Source\cp_mes_malexit1.nss:55
+    ✓ Found in K1_Community_Patch/Source\k_pdan_elise_d.nss:25
+    ✓ Found in K1_Community_Patch/Source\k_pdan_elise_d.nss:31
+    ✓ Found in K1_Community_Patch/Source\k_pebo_sasha01.nss:79
+    ✓ Found in K1_Community_Patch/Source\k_pend_cut14.nss:33
+    ✓ Found in K1_Community_Patch/Source\k_pman_26a_aread.nss:95
+      -> Found 2045 reference(s) for ActionForceMoveToObject
+    → Searching for: ActionGiveItem
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:752
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:799
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:276
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:271
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:257
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:256
+    ✓ Found in xoreos/src\engines\jade\script\function_tables.h:262
+    ✓ Found in K1_Community_Patch/Source\k_pkas_hurtgive.nss:22
+    ✓ Found in KotOR/src\enums\actions\ActionType.ts:80
+    ✓ Found in KotOR/src\actions\index.ts:11
+      -> Found 53 reference(s) for ActionGiveItem
+    → Searching for: ActionInteractObject
+    ✓ Found in K1_Community_Patch/Source\k_punk_battle05.nss:44
+    ✓ Found in K1_Community_Patch/Source\k_punk_battle05.nss:47
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:470
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:465
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:768
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:815
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:451
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:450
+    ✓ Found in xoreos/src\engines\jade\script\function_tables.h:456
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M05AB_Taris_Upper_Sewers_tar_m05ab\k_ptar_raneat_en.nss:57
+      -> Found 12 reference(s) for ActionInteractObject
+    → Searching for: ActionJumpToLocation
+    ✓ Found in K1_Community_Patch/Source\yav50_trand205.nss:49
+    ✓ Found in K1_Community_Patch/Source\yav50_trand101.nss:58
+    ✓ Found in K1_Community_Patch/Source\cp_dan_warpbela1.nss:28
+    ✓ Found in K1_Community_Patch/Source\cp_dan_warpbela1.nss:30
+    ✓ Found in K1_Community_Patch/Source\cp_k39_pcjump.nss:25
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:183
+    ✓ Found in K1_Community_Patch/Source\k_punk_theone06.nss:46
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:760
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:807
+    ✓ Found in K1_Community_Patch/Source\k_punk_elder02.nss:40
+      -> Found 650 reference(s) for ActionJumpToLocation
+    → Searching for: ActionJumpToObject
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:199
+    ✓ Found in K1_Community_Patch/Source\kor35_enter.nss:121
+    ✓ Found in K1_Community_Patch/Source\kor35_enter.nss:281
+    ✓ Found in K1_Community_Patch/Source\k_pdan_zhar08.nss:36
+    ✓ Found in K1_Community_Patch/Source\k_pkas22aa_enter.nss:93
+    ✓ Found in K1_Community_Patch/Source\k_pkor_inv35uthr.nss:51
+    ✓ Found in K1_Community_Patch/Source\k_pkor_inv35uthr.nss:54
+    ✓ Found in K1_Community_Patch/Source\k_pkor_inv35uthr.nss:58
+    ✓ Found in K1_Community_Patch/Source\k_plev_transfrm1.nss:48
+    ✓ Found in K1_Community_Patch/Source\k_plev_hangarcs0.nss:28
+      -> Found 1172 reference(s) for ActionJumpToObject
+    → Searching for: ActionLockObject
+    ✓ Found in KotOR/src\actions\index.ts:15
+    ✓ Found in KotOR/src\actions\ActionLockObject.ts:13
+    ✓ Found in KotOR/src\actions\ActionLockObject.ts:17
+    ✓ Found in KotOR/src\actions\ActionLockObject.ts:21
+    ✓ Found in KotOR/src\actions\ActionLockObject.ts:25
+    ✓ Found in KotOR/src\actions\ActionFactory.ts:16
+    ✓ Found in KotOR/src\actions\ActionFactory.ts:133
+    ✓ Found in KotOR/src\enums\actions\ActionType.ts:90
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:777
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:824
+      -> Found 73 reference(s) for ActionLockObject
+    → Searching for: ActionMoveAwayFromLocation
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:501
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:496
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:482
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:481
+    ✓ Found in xoreos/src\engines\jade\script\function_tables.h:487
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:769
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:816
+      -> Found 7 reference(s) for ActionMoveAwayFromLocation
+    → Searching for: ActionMoveAwayFromObject
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:741
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:788
+    ✓ Found in K1_Community_Patch/Source\k_ptar_vulcow_ud.nss:26
+    ✓ Found in K1_Community_Patch/Source\k_ptar_vulcow_ud.nss:83
+    ✓ Found in K1_Community_Patch/Source\k_pebo_ud.nss:42
+    ✓ Found in K1_Community_Patch/Source\k_inc_generic.nss:2119
+    ✓ Found in K1_Community_Patch/Source\k_inc_generic.nss:2128
+    ✓ Found in K1_Community_Patch/Source\cp_tar04_rukiljp.nss:33
+    ✓ Found in K1_Community_Patch/Source\cp_tar04_gendjmp.nss:31
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:164
+      -> Found 537 reference(s) for ActionMoveAwayFromObject
+    → Searching for: ActionMoveToLocation
+    ✓ Found in K1_Community_Patch/Source\cp_dan_prot_atk.nss:27
+    ✓ Found in K1_Community_Patch/Source\cp_ebo41_misswlk.nss:30
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:190
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:216
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:223
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:779
+    ✓ Found in K1_Community_Patch/Source\cp_kas22_matatk3.nss:33
+    ✓ Found in K1_Community_Patch/Source\cp_kas22_matatk1.nss:35
+    ✓ Found in K1_Community_Patch/Source\cp_lev40_talkr_d.nss:34
+    ✓ Found in K1_Community_Patch/Source\cp_lev40_talkr_d.nss:35
+      -> Found 1084 reference(s) for ActionMoveToLocation
+    → Searching for: ActionMoveToObject
+    ✓ Found in K1_Community_Patch/Source\cp_dan16_nurik_d.nss:18
+    ✓ Found in K1_Community_Patch/Source\cp_dan14_shenext.nss:21
+    ✓ Found in K1_Community_Patch/Source\cp_dan14_shenext.nss:22
+    ✓ Found in K1_Community_Patch/Source\cp_dan14_shenext.nss:23
+    ✓ Found in K1_Community_Patch/Source\cp_dan14_shenext.nss:24
+    ✓ Found in K1_Community_Patch/Source\cp_k35_adr_exit.nss:35
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:189
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:222
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:233
+    ✓ Found in K1_Community_Patch/Source\cp_lev_airlckcls.nss:37
+      -> Found 3341 reference(s) for ActionMoveToObject
+  Processing function 30/771: ActionOpenDoor
+    → Searching for: ActionOpenDoor
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:749
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:796
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\950COR_Coruscant_(cutscene)\a_stabsaber.nss:26
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\903MAL_Malachor_V_Trayus_Academy\a_903kreia.nss:30
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\k_hanharr_ud.nss:246
+    ✓ Found in K1_Community_Patch/Source\cp_man26ae_am02.nss:41
+    ✓ Found in K1_Community_Patch/Source\cp_tar05_ffopen.nss:33
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902door2open.nss:5
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902door1open.nss:5
+    ✓ Found in K1_Community_Patch/Source\cp_tar08_davalrm.nss:34
+      -> Found 777 reference(s) for ActionOpenDoor
+    → Searching for: ActionPauseConversation
+    ✓ Found in K1_Community_Patch/Source\yav50_trand205.nss:31
+    ✓ Found in K1_Community_Patch/Source\yav50_trand101.nss:34
+    ✓ Found in K1_Community_Patch/Source\unk41_holo01.nss:34
+    ✓ Found in K1_Community_Patch/Source\k_punk_zaalrem.nss:34
+    ✓ Found in K1_Community_Patch/Source\k_punk_theone07.nss:30
+    ✓ Found in K1_Community_Patch/Source\k_punk_theone06.nss:34
+    ✓ Found in K1_Community_Patch/Source\k_punk_theone01.nss:29
+    ✓ Found in K1_Community_Patch/Source\k_punk_rakspk02.nss:38
+    ✓ Found in K1_Community_Patch/Source\k_punk_rakspk01.nss:24
+    ✓ Found in K1_Community_Patch/Source\k_punk_rakeld01.nss:31
+      -> Found 1400 reference(s) for ActionPauseConversation
+    → Searching for: ActionPickUpItem
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:744
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:791
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:175
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:170
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:156
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:155
+    ✓ Found in KotOR/src\enums\actions\ActionType.ts:28
+    ✓ Found in KotOR/src\actions\index.ts:19
+    ✓ Found in KotOR/src\actions\ActionPickUpItem.ts:7
+    ✓ Found in KotOR/src\actions\ActionPickUpItem.ts:11
+      -> Found 13 reference(s) for ActionPickUpItem
+    → Searching for: ActionPlayAnimation
+    ✓ Found in K1_Community_Patch/Source\cp_dan15_mapstrt.nss:28
+    ✓ Found in K1_Community_Patch/Source\cp_dan15_mapstrt.nss:31
+    ✓ Found in K1_Community_Patch/Source\cp_dan15_mapstrt.nss:34
+    ✓ Found in K1_Community_Patch/Source\cp_dan15_facemap.nss:33
+    ✓ Found in K1_Community_Patch/Source\cp_end01_pcjump.nss:38
+    ✓ Found in K1_Community_Patch/Source\cp_end01_pcjump.nss:43
+    ✓ Found in K1_Community_Patch/Source\cp_ebo41_pc3crth.nss:29
+    ✓ Found in K1_Community_Patch/Source\cp_ebo41_pc2crth.nss:25
+    ✓ Found in K1_Community_Patch/Source\cp_dan_han_h.nss:25
+    ✓ Found in K1_Community_Patch/Source\cp_dan_han_ed.nss:21
+      -> Found 13313 reference(s) for ActionPlayAnimation
+    → Searching for: ActionPutDownItem
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:176
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:171
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:157
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:156
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:745
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:792
+      -> Found 6 reference(s) for ActionPutDownItem
+    → Searching for: ActionRandomWalk
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:738
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:785
+    ✓ Found in KotOR/src\enums\actions\ActionType.ts:102
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:161
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:156
+    ✓ Found in KotOR/src\actions\ActionRandomWalk.ts:9
+    ✓ Found in KotOR/src\actions\ActionRandomWalk.ts:13
+    ✓ Found in KotOR/src\actions\ActionRandomWalk.ts:17
+    ✓ Found in KotOR/src\actions\ActionRandomWalk.ts:21
+    ✓ Found in KotOR/src\actions\ActionFactory.ts:29
+      -> Found 111 reference(s) for ActionRandomWalk
+    → Searching for: ActionResumeConversation
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:347
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:342
+    ✓ Found in K1_Community_Patch/Source\cp_dan15_facemap.nss:40
+    ✓ Found in K1_Community_Patch/Source\cp_dan14_shenext.nss:27
+    ✓ Found in K1_Community_Patch/Source\cp_ebo41_misswlk.nss:32
+    ✓ Found in K1_Community_Patch/Source\cp_ebo40ad_pause.nss:30
+    ✓ Found in K1_Community_Patch/Source\cp_dan_vandgrove.nss:70
+    ✓ Found in K1_Community_Patch/Source\cp_k38_slander.nss:52
+    ✓ Found in K1_Community_Patch/Source\cp_k38_jorakbow.nss:27
+    ✓ Found in K1_Community_Patch/Source\cp_k33_lurzpause.nss:24
+      -> Found 1378 reference(s) for ActionResumeConversation
+    → Searching for: ActionSpeakString
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:747
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:794
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:161
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:160
+      -> Found 4 reference(s) for ActionSpeakString
+    → Searching for: ActionSpeakStringByStrRef
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:362
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:361
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:762
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:809
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:381
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:376
+      -> Found 6 reference(s) for ActionSpeakStringByStrRef
+    → Searching for: ActionStartConversation
+    ✓ Found in K1_Community_Patch/Source\cp_e40a_carthtlk.nss:38
+    ✓ Found in K1_Community_Patch/Source\cp_kas22_matatk4.nss:24
+    ✓ Found in K1_Community_Patch/Source\cp_go_hawk.nss:66
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:472
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:684
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:691
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:698
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:705
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:712
+    ✓ Found in K1_Community_Patch/Source\cp_inc_k1.nss:719
+      -> Found 3237 reference(s) for ActionStartConversation
+  Processing function 40/771: ActionSurrenderToEnemies
+    → Searching for: ActionSurrenderToEnemies
+    ✓ Found in KotOR/src\enums\actions\ActionType.ts:140
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:501
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:500
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:770
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:817
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M45AD_Star_Forge_Deck_4_sta_m45ad\k_psta_ud_malak.nss:49
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M45AD_Star_Forge_Deck_4_sta_m45ad\k_psta_ud_malak.nss:58
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M45AD_Star_Forge_Deck_4_sta_m45ad\k_psta_ud_malak.nss:67
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M45AD_Star_Forge_Deck_4_sta_m45ad\k_psta_ud_malak.nss:76
+    ✓ Found in Vanilla_KOTOR_Script_Source/K1\Modules\M45AD_Star_Forge_Deck_4_sta_m45ad\k_psta_ud_malak.nss:85
+      -> Found 35 reference(s) for ActionSurrenderToEnemies
+    → Searching for: ActionTakeItem
+    ✓ Found in K1_Community_Patch/Source\cp_k35_adr_datpd.nss:28
+    ✓ Found in K1_Community_Patch/Source\cp_kas23_tkblade.nss:9
+    ✓ Found in K1_Community_Patch/Source\k_ptat_takevapor.nss:36
+    ✓ Found in K1_Community_Patch/Source\k_ptat_stickin_s.nss:8
+    ✓ Found in K1_Community_Patch/Source\k_pdan_murder79.nss:30
+    ✓ Found in K1_Community_Patch/Source\k_pdan_murder78.nss:30
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:753
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:800
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:277
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:272
+      -> Found 151 reference(s) for ActionTakeItem
+    → Searching for: ActionUnequipItem
+    ✓ Found in K1_Community_Patch/Source\cp_kas22_matatk3.nss:37
+    ✓ Found in K1_Community_Patch/Source\cp_inc_tat.nss:239
+    ✓ Found in K1_Community_Patch/Source\cp_sp_unequip_am.nss:17
+    ✓ Found in K1_Community_Patch/Source\cp_sp_unequip_am.nss:18
+    ✓ Found in K1_Community_Patch/Source\cp_sp_unequip.nss:16
+    ✓ Found in K1_Community_Patch/Source\cp_sp_unequip.nss:17
+    ✓ Found in K1_Community_Patch/Source\k_pdan_saber19.nss:67
+    ✓ Found in K1_Community_Patch/Source\k_pdan_saber19.nss:68
+    ✓ Found in K1_Community_Patch/Source\k_plev_freeparty.nss:55
+    ✓ Found in K1_Community_Patch/Source\k_plev_freeparty.nss:56
+      -> Found 152 reference(s) for ActionUnequipItem
+    → Searching for: ActionUnlockObject
+    ✓ Found in K1_Community_Patch/Source\k_ptar_baseopen.nss:43
+    ✓ Found in K1_Community_Patch/Source\k_ptar_misunlock.nss:31
+    ✓ Found in K1_Community_Patch/Source\k_ptar_unlockund.nss:9
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:624
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:619
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\702KOR_Korriban_Sith_Academy\a_open_training.nss:3
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\702KOR_Korriban_Sith_Academy\a_open_frontdoor.nss:12
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:605
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\702KOR_Korriban_Sith_Academy\a_open_door.nss:4
+    ✓ Found in KotOR/src\talents\TalentSkill.ts:2
+      -> Found 127 reference(s) for ActionUnlockObject
+    → Searching for: ActionUseFeat
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:428
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:423
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:409
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:408
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:763
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:810
+      -> Found 6 reference(s) for ActionUseFeat
+    → Searching for: ActionUseSkill
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\903MAL_Malachor_V_Trayus_Academy\a_903kreia.nss:59
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\903MAL_Malachor_V_Trayus_Academy\a_903kreia.nss:60
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\903MAL_Malachor_V_Trayus_Academy\a_903kreia.nss:61
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\903MAL_Malachor_V_Trayus_Academy\a_903kreia.nss:62
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\903MAL_Malachor_V_Trayus_Academy\a_903kreia.nss:63
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\903MAL_Malachor_V_Trayus_Academy\a_903kreia.nss:64
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:429
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:424
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:764
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:811
+      -> Found 30 reference(s) for ActionUseSkill
+    → Searching for: ActionUseTalentAtLocation
+    ✓ Found in xoreos/src\engines\nwn2\script\function_tables.h:451
+    ✓ Found in xoreos/src\engines\nwn\script\function_tables.h:446
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:432
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:431
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:767
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:814
+      -> Found 6 reference(s) for ActionUseTalentAtLocation
+    → Searching for: ActionUseTalentOnObject
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:766
+    ✓ Found in reone/src\libs\game\script\routine\impl\action.cpp:813
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:627
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:634
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:1050
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:1093
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:2887
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:3003
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:3041
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\902MAL_Malachor_V_Depths\a_902boss_cs.nss:3870
+      -> Found 3545 reference(s) for ActionUseTalentOnObject
+    → Searching for: ActionWait
+    ✓ Found in K1_Community_Patch/Source\cp_dan14_shenext.nss:26
+    ✓ Found in K1_Community_Patch/Source\cp_kas22_matatk3.nss:44
+    ✓ Found in K1_Community_Patch/Source\cp_man26_sunbad.nss:29
+    ✓ Found in K1_Community_Patch/Source\k39_uth_leave.nss:42
+    ✓ Found in K1_Community_Patch/Source\k_pdan_elise_d.nss:23
+    ✓ Found in K1_Community_Patch/Source\k_pdan_zhar07.nss:31
+    ✓ Found in K1_Community_Patch/Source\k_pdan_raha_04.nss:36
+    ✓ Found in K1_Community_Patch/Source\k_pdan_raha_03.nss:39
+    ✓ Found in K1_Community_Patch/Source\k_pkas_elileave.nss:35
+    ✓ Found in K1_Community_Patch/Source\k_pend_carth17.nss:26
+      -> Found 2441 reference(s) for ActionWait
+    → Searching for: AdjustAlignment
+    ✓ Found in KotOR-Save-Editor/site\lib\KSE\GUI\Alignment.pm:73
+    ✓ Found in KotOR-Save-Editor/site\lib\KSE\GUI\Alignment.pm:83
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\950COR_Coruscant_(cutscene)\a_jumppc.nss:8
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\950COR_Coruscant_(cutscene)\a_jumppc.nss:16
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\711KOR_Korriban_Secret_Tomb\k_inc_korriban.nss:84
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\711KOR_Korriban_Secret_Tomb\a_mala_act.nss:4885
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\610DAN_Dantooine_Enclave_Sublevel\a_jorr_samaritan.nss:82
+    ✓ Found in K1_Community_Patch/Source\k_pebo_sasha01.nss:63
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\604DAN_Dantooine_Crystal_Cave\k_merc_pat_ud.nss:228
+    ✓ Found in Vanilla_KOTOR_Script_Source/TSL\Vanilla\Modules\604DAN_Dantooine_Crystal_Cave\a_vroo_rescue.nss:82
+      -> Found 115 reference(s) for AdjustAlignment
+  Processing function 50/771: GetAlignmentGoodEvil
+    → Searching for: GetAlignmentGoodEvil
+    ✓ Found in xoreos/src\engines\nwn2\types.h:585
+    ✓ Found in xoreos/src\engines\nwn2\types.cpp:40
+    ✓ Found in xoreos/src\engines\nwn\types.h:282
+    ✓ Found in xoreos/src\engines\nwn\types.cpp:42
+    ✓ Found in xoreos/src\engines\kotor2\script\function_tables.h:249
+    ✓ Found in xoreos/src\engines\kotor\script\function_tables.h:248

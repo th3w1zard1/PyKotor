@@ -292,6 +292,24 @@ def fix_toc_links():
                                 file_name = k1_file
                                 anchor = match_anchor.group(1)
 
+                    # Check if the target file actually has the function (not just placeholder)
+                    file_path = WIKI_DIR / f"{file_name}.md"
+                    has_function = False
+                    if file_path.exists():
+                        content = file_path.read_text(encoding='utf-8')
+                        # Check if file has actual function content (not just "See X for detailed documentation")
+                        if f'<a id="{anchor}"></a>' in content or f'## `{func_name}(' in content:
+                            has_function = True
+                            # Verify anchor exists
+                            if f'<a id="{anchor}"></a>' not in content:
+                                # Try to find actual anchor
+                                anchor_pattern = rf'<a id="([^"]+)"></a>\s*\n\s*##\s+`{re.escape(func_name)}\('
+                                match_anchor = re.search(anchor_pattern, content)
+                                if match_anchor:
+                                    anchor = match_anchor.group(1)
+                                else:
+                                    has_function = False  # No anchor found, don't use anchor link
+
                     # Check if link already points to a file with wrong anchor or wrong file
                     # Match pattern: [text](file#anchor)
                     link_pattern: str = r"\[`[^`]+`[^\]]*\]\(([^#\)]+)(?:#([^\)]+))?\)"
@@ -300,16 +318,31 @@ def fix_toc_links():
                         current_file: str = match.group(1)
                         current_anchor: str | None = match.group(2) if match.lastindex and match.lastindex >= 2 else None
 
-                        # Fix if file is wrong or anchor is wrong
-                        if current_file != file_name or (current_anchor and current_anchor != anchor):
+                        # Fix if file is wrong or (anchor is wrong and function exists)
+                        if current_file != file_name:
+                            # File is wrong - fix it
+                            if has_function:
+                                parsed_line = re.sub(link_pattern, f"[`{func_text}`{routine_str}]({file_name}#{anchor})", parsed_line)
+                            else:
+                                parsed_line = re.sub(link_pattern, f"[`{func_text}`{routine_str}]({file_name})", parsed_line)
+                            fixes += 1
+                        elif current_anchor and has_function and current_anchor != anchor:
+                            # Anchor is wrong and function exists - fix it
                             parsed_line = re.sub(link_pattern, f"[`{func_text}`{routine_str}]({file_name}#{anchor})", parsed_line)
                             fixes += 1
+                        elif current_anchor and not has_function:
+                            # Anchor exists but function doesn't - remove anchor
+                            parsed_line = re.sub(link_pattern, f"[`{func_text}`{routine_str}]({file_name})", parsed_line)
+                            fixes += 1
                     elif "](#" in parsed_line:
-                        # Replace anchor link with file link + anchor
-                        parsed_line = re.sub(r"\[`[^`]+`[^\]]*\]\([^\)]+\)", f"[`{func_text}`{routine_str}]({file_name}#{anchor})", parsed_line)
+                        # Replace anchor link with file link (with or without anchor based on has_function)
+                        if has_function:
+                            parsed_line = re.sub(r"\[`[^`]+`[^\]]*\]\([^\)]+\)", f"[`{func_text}`{routine_str}]({file_name}#{anchor})", parsed_line)
+                        else:
+                            parsed_line = re.sub(r"\[`[^`]+`[^\]]*\]\([^\)]+\)", f"[`{func_text}`{routine_str}]({file_name})", parsed_line)
                         fixes += 1
-                    elif f"]({file_name})" in parsed_line:
-                        # Add anchor to existing file link
+                    elif f"]({file_name})" in parsed_line and has_function:
+                        # Add anchor to existing file link if function exists
                         parsed_line = parsed_line.replace(f"]({file_name})", f"]({file_name}#{anchor})")
                         fixes += 1
                 # If result is None, keep the original line unchanged (no continue)

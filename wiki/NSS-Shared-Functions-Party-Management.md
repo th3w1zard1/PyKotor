@@ -77,7 +77,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `126. GetPartyMemberCount`
 - GetPartyMemberCount
-- Returns a count of how many members [ARE](GFF-File-Format#are-area) in the party including the player character
+- Returns a count of how many members [ARE](GFF-File-Format) in the party including the player character
 
 <a id="isnpcpartymember"></a>
 
@@ -139,10 +139,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `712. ShowPartySelectionGUI`
 - ShowPartySelectionGUI
-- Brings up the party selection [GUI](GFF-File-Format#gui-graphical-user-interface) for the player to
+- Brings up the party selection [GUI](GFF-File-Format) for the player to
 - select the members of the party from
 - if exit script is specified, will be executed when
-- the [GUI](GFF-File-Format#gui-graphical-user-interface) is exited
+- the [GUI](GFF-File-Format) is exited
 
 - `sExitScript`: string (default: ``)
 - `nForceNPC1`: int

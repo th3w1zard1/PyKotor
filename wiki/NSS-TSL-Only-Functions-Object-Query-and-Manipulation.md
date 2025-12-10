@@ -5,5 +5,5 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 **Category:** TSL-Only Functions
 
 
-See Object Query and Manipulation for detailed documentation.
+See [Object Query and Manipulation](NSS-TSL-Only-Functions-Object-Query-and-Manipulation) for detailed documentation.
 
