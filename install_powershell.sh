@@ -24,7 +24,23 @@ if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         sudo apt-get install -y -qq wget apt-transport-https software-properties-common
         
         # Download Microsoft signing key
-        wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+        # Try to get Ubuntu version, fallback to 22.04 if lsb_release is not available
+        if command -v lsb_release &> /dev/null; then
+            UBUNTU_VERSION=$(lsb_release -rs)
+        else
+            # Fallback: try to detect from /etc/os-release
+            if [ -f /etc/os-release ]; then
+                UBUNTU_VERSION=$(grep VERSION_ID /etc/os-release | cut -d'"' -f2 | cut -d'.' -f1,2)
+            else
+                # Default to 22.04 if we can't detect
+                UBUNTU_VERSION="22.04"
+            fi
+        fi
+        
+        wget -q "https://packages.microsoft.com/config/ubuntu/${UBUNTU_VERSION}/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb || {
+            echo "Warning: Failed to download packages-microsoft-prod.deb for Ubuntu ${UBUNTU_VERSION}, trying 22.04..."
+            wget -q "https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb
+        }
         sudo dpkg -i packages-microsoft-prod.deb
         rm packages-microsoft-prod.deb
         
