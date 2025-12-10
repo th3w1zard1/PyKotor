@@ -2,7 +2,19 @@
 
 NCS files contain compiled NWScript [bytecode](https://en.wikipedia.org/wiki/Bytecode). Scripts run inside a [stack-based virtual machine](https://en.wikipedia.org/wiki/Stack_machine) shared by KotOR, NWN, and other Aurora-derived games. KotOR inherits the same format with minor [opcode](https://en.wikipedia.org/wiki/Opcode) additions for game-specific systems.
 
-**For mod developers:** To modify NCS files directly in your mods (advanced), see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.#hacklist-editing-ncs-directly) for HACKList syntax. For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/)
+
+**Vendor References:**
+- [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp) - Complete NCS VM implementation with decompilation
+- [`vendor/xoreos-tools/src/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/ncsfile.cpp) - NCS decompiler tool
+- [`vendor/reone/src/libs/script/format/ncsreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp) - C++ NCS parser and VM
+- [`vendor/KotOR.js/src/odyssey/NWScriptInstance.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/NWScriptInstance.ts) - TypeScript NWScript VM with bytecode execution
+- [`vendor/NorthernLights/Assets/Scripts/ncs/NCSReader.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/NCSReader.cs) - C# Unity NCS parser
+- [`Vanilla KOTOR Script Source`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source) - Decompiled vanilla scripts
+
+**See Also:**
+- [NSS File Format](NSS-File-Format) - NWScript source code that compiles to NCS
+- [GFF-DLG](GFF-DLG) - Dialogue files that trigger NCS scripts
 
 ## Table of Contents
 

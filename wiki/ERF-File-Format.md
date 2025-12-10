@@ -28,7 +28,20 @@ ERF files are self-contained [archives](https://en.wikipedia.org/wiki/Archive_fi
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/erf/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/erf/)
 
-**Reference**: [`vendor/reone/src/libs/resource/format/erfreader.cpp:24-106`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/erfreader.cpp#L24-L106)
+**Vendor References:**
+- [`vendor/reone/src/libs/resource/format/erfreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/erfreader.cpp) - Complete C++ ERF reader implementation with MOD/SAV/HAK support
+- [`vendor/reone/include/reone/resource/format/erfreader.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/format/erfreader.h) - ERF reader type definitions
+- [`vendor/xoreos/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/erffile.cpp) - Generic Aurora ERF implementation (shared format)
+- [`vendor/KotOR.js/src/resource/ERFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/ERFObject.ts) - TypeScript ERF parser with streaming support
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/ERFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/ERFObject.cs) - C# Unity ERF loader
+- [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorERF) - .NET ERF reader/writer with builder API
+- [`vendor/xoreos-tools/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/erffile.cpp) - Command-line ERF extraction tools
+
+**See Also:**
+- [BIF File Format](BIF-File-Format) - Alternative archive format used with KEY files
+- [KEY File Format](KEY-File-Format) - Index file for BIF archives
+- [GFF File Format](GFF-File-Format) - Common content type stored in ERF archives
+- [RIM File Format](RIM-File-Format) - Similar archive format for area resources
 
 ---
 

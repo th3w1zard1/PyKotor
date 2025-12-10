@@ -34,6 +34,20 @@ This layout is identical across PyKotor, Reone, Xoreos, KotOR.js, and the origin
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc)
 
+**Vendor References:**
+- [`vendor/reone/src/libs/graphics/format/tpcreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/tpcreader.cpp) - Complete C++ TPC decoder with DXT decompression
+- [`vendor/xoreos/src/graphics/images/tpc.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/images/tpc.cpp) - Generic Aurora TPC implementation (shared format)
+- [`vendor/KotOR.js/src/resource/TPCObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TPCObject.ts) - TypeScript TPC loader with WebGL texture upload
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/TextureResource.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/TextureResource.cs) - C# Unity TPC loader with cube map support
+- [`vendor/NorthernLights/src/Graphics/Textures/TPC.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/src/Graphics/Textures/TPC.cs) - .NET TPC reader with animation support
+- [`vendor/tga2tpc/`](https://github.com/th3w1zard1/tga2tpc) - Standalone TGA to TPC conversion tool
+- [`vendor/xoreos-tools/src/images/tpc.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/images/tpc.cpp) - Command-line TPC extraction and conversion
+
+**See Also:**
+- [TXI File Format](TXI-File-Format) - Metadata companion for TPC textures
+- [MDL/MDX File Format](MDL-MDX-File-Format) - Models that reference TPC textures
+- [GFF-GUI](GFF-GUI) - GUI files that reference TPC textures for UI elements
+
 ---
 
 ## Header Layout

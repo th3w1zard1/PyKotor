@@ -27,8 +27,18 @@ TXI (Texture Info) files are compact [ASCII](https://en.wikipedia.org/wiki/ASCII
 - Commands are case-insensitive but conventionally lowercase. Values can be integers, floats, booleans (`0`/`1`), ResRefs, or multi-line coordinate tables.  
 - A single TXI can be appended to the end of a `.tpc` file (as Bioware does) or shipped as a sibling `.txi` file; the parser treats both identically.  
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/txi)  
-**Reference:** [`vendor/reone/src/libs/graphics/format/txireader.cpp:28-139`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/txireader.cpp#L28-L139)  
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/txi)
+
+**Vendor References:**
+- [`vendor/reone/src/libs/graphics/format/txireader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/txireader.cpp) - Complete C++ TXI parser implementation
+- [`vendor/xoreos/src/graphics/images/txi.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/images/txi.cpp) - Generic Aurora TXI implementation (shared format)
+- [`vendor/KotOR.js/src/resource/TXIObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXIObject.ts) - TypeScript TXI parser with metadata extraction
+- [`vendor/KotOR.js/src/enums/graphics/txi/`](https://github.com/th3w1zard1/KotOR.js/tree/master/src/enums/graphics/txi) - TXI command enumerations
+- [`vendor/KotOR-Unity/Assets/Scripts/Resource/TXI.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/Resource/TXI.cs) - C# Unity TXI loader
+
+**See Also:**
+- [TPC File Format](TPC-File-Format) - Texture format that TXI metadata describes
+- [MDL/MDX File Format](MDL-MDX-File-Format) - Models that reference textures with TXI metadata  
 
 ---
 

@@ -25,6 +25,18 @@ LIP (Lip Synchronization) files drive mouth animation for voiced dialogue. Each 
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/lip/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/lip)
 
+**Vendor References:**
+- [`vendor/reone/src/libs/graphics/format/lipreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/lipreader.cpp) - Complete C++ LIP parser implementation
+- [`vendor/xoreos/src/graphics/aurora/lipfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/lipfile.cpp) - Generic Aurora LIP implementation (shared format)
+- [`vendor/KotOR.js/src/resource/LIPObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/LIPObject.ts) - TypeScript LIP parser with animation playback
+- [`vendor/Kotor.NET/Kotor.NET/Formats/KotorLIP/LIP.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorLIP/LIP.cs) - .NET LIP reader/writer
+- [`vendor/mdlops/mdlops/`](https://github.com/th3w1zard1/mdlops/tree/master/mdlops) - Legacy Python LIP generation tools
+
+**See Also:**
+- [TLK File Format](TLK-File-Format) - Talk table containing voice-over references
+- [WAV File Format](WAV-File-Format) - Audio format paired with LIP files
+- [GFF-DLG](GFF-DLG) - Dialogue files that trigger LIP animations
+
 ---
 
 ## Binary Format

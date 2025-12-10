@@ -2,6 +2,21 @@
 
 This guide explains how to install files using TSLPatcher syntax. For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
+**Implementation:** [`Libraries/PyKotor/src/pykotor/tslpatcher/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/tslpatcher/)
+
+**Vendor References:**
+- [`vendor/TSLPatcher/`](https://github.com/th3w1zard1/TSLPatcher) - Original Perl TSLPatcher by stoffe
+- [`Tools/HolocronToolset/src/toolset/gui/dialogs/install_mod.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/dialogs/install_mod.py) - HoloPatcher GUI implementation
+- [`vendor/KotOR.js/src/manager/`](https://github.com/th3w1zard1/KotOR.js/tree/master/src/manager) - TypeScript mod management (different approach)
+
+**See Also:**
+- [TSLPatcher 2DAList Syntax](TSLPatcher-2DAList-Syntax) - Patching 2DA files
+- [TSLPatcher GFFList Syntax](TSLPatcher-GFFList-Syntax) - Patching GFF files
+- [TSLPatcher TLKList Syntax](TSLPatcher-TLKList-Syntax) - Patching TLK files
+- [TSLPatcher SSFList Syntax](TSLPatcher-SSFList-Syntax) - Patching SSF files
+- [TSLPatcher HACKList Syntax](TSLPatcher-HACKList-Syntax) - Binary patching NCS files
+- [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.) - HoloPatcher extensions
+
 ## Overview
 
 The `[InstallList]` section in TSLPatcher's changes.ini file enables you to copy files from your mod's `tslpatchdata` folder to their proper location in the game installation. This includes installing files to folders (such as `Override`, `Modules`, `StreamVoice`, etc.) or directly into ERF/RIM/MOD archive files. Unlike other patch lists, InstallList is designed for copying files that haven't been modified by other sections.

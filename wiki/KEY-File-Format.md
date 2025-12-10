@@ -45,7 +45,17 @@ The KEY file only manages BIF resources (step 4). Higher-priority locations can 
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/key/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/key/)
 
-**Reference**: [`vendor/reone/src/libs/resource/format/keyreader.cpp:24-128`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/keyreader.cpp#L24-L128)
+**Vendor References:**
+- [`vendor/reone/src/libs/resource/format/keyreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/keyreader.cpp) - Complete C++ KEY reader implementation
+- [`vendor/xoreos/src/aurora/keyfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/keyfile.cpp) - Generic Aurora KEY implementation (shared format)
+- [`vendor/KotOR.js/src/resource/KEYObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/KEYObject.ts) - TypeScript KEY parser
+- [`vendor/Kotor.NET/Kotor.NET/Formats/KotorKEY/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorKEY) - .NET KEY reader/writer
+- [`vendor/xoreos-tools/src/aurora/keyfile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/keyfile.cpp) - Command-line KEY tools
+
+**See Also:**
+- [BIF File Format](BIF-File-Format) - Archive format indexed by KEY files
+- [ERF File Format](ERF-File-Format) - Self-contained alternative to KEY+BIF
+- [Bioware Aurora KeyBIF Format](Bioware-Aurora-KeyBIF) - Official BioWare specification
 
 ---
 

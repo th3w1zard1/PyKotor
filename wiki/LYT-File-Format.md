@@ -25,6 +25,20 @@ LYT (Layout) files define how area room models are positioned inside a module. T
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/lyt/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/lyt)
 
+**Vendor References:**
+- [`vendor/reone/src/libs/resource/format/lytreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/lytreader.cpp) - Complete C++ LYT parser with room positioning
+- [`vendor/xoreos/src/aurora/lytfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/lytfile.cpp) - Generic Aurora LYT implementation (shared format)
+- [`vendor/KotOR.js/src/resource/LYTObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/LYTObject.ts) - TypeScript LYT parser with scene graph integration
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/LYTObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/LYTObject.cs) - C# Unity LYT loader
+- [`vendor/Kotor.NET/Kotor.NET/Formats/KotorLYT/LYT.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorLYT/LYT.cs) - .NET LYT reader/writer
+
+**See Also:**
+- [MDL/MDX File Format](MDL-MDX-File-Format) - Room models referenced by LYT entries
+- [BWM File Format](BWM-File-Format) - Walkmeshes (WOK files) loaded alongside LYT rooms
+- [VIS File Format](VIS-File-Format) - Visibility graph for areas with LYT rooms
+- [GFF-ARE](GFF-ARE) - Area files that load LYT layouts
+- [Indoor Map Builder Implementation Guide](Indoor-Map-Builder-Implementation-Guide) - Uses LYT format for generated modules
+
 ---
 
 ## Syntax
