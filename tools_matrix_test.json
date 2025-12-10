@@ -1,0 +1,27 @@
+[
+  {
+    "tool_dir": "BatchPatcher",
+    "build_name": "batchpatcher",
+    "display_name": "BatchPatcher"
+  },
+  {
+    "tool_dir": "HolocronToolset",
+    "build_name": "toolset",
+    "display_name": "HolocronToolset"
+  },
+  {
+    "tool_dir": "HoloGenerator",
+    "build_name": "hologenerator",
+    "display_name": "HoloGenerator"
+  },
+  {
+    "tool_dir": "HoloPatcher",
+    "build_name": "holopatcher",
+    "display_name": "HoloPatcher"
+  },
+  {
+    "tool_dir": "KotorDiff",
+    "build_name": "kotordiff",
+    "display_name": "KotorDiff"
+  }
+]
