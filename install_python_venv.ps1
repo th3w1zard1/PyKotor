@@ -46,8 +46,8 @@ $script:LogLevels = @{
     "Error"  = 4
     "Silent" = 5
 }
-if (-not $LogLevels.ContainsKey($logLevel)) { $logLevel = "Info" }
-$script:CurrentLogLevel = $LogLevels[$logLevel]
+if (-not $script:LogLevels.ContainsKey($logLevel)) { $logLevel = "Info" }
+$script:CurrentLogLevel = $script:LogLevels[$logLevel]
 
 # Centralized version pins (override with -force_python_version if desired)
 $script:VersionPins = [pscustomobject]@{
@@ -110,7 +110,7 @@ function Write-Log {
         [string]$Level,
         [Parameter(Mandatory = $true)][string]$Message
     )
-    if ($LogLevels[$Level] -lt $CurrentLogLevel) { return }
+    if ($script:LogLevels[$Level] -lt $script:CurrentLogLevel) { return }
     $prefix = "[{0}] " -f $Level.ToUpper()
     $color = switch ($Level) {
         "Trace" { "DarkGray" }
@@ -119,7 +119,7 @@ function Write-Log {
         "Warn"  { "Yellow" }
         "Error" { "Red" }
     }
-    if ($UseColor) { Write-Host "$prefix$Message" -ForegroundColor $color }
+    if ($script:UseColor) { Write-Host "$prefix$Message" -ForegroundColor $color }
     else { Write-Host "$prefix$Message" }
 }
 
