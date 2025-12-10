@@ -26,12 +26,14 @@ def cmd_gui_convert(args: Namespace, logger: RobustLogger) -> int:
 
     When required args are missing, fall back to launching the Tk GUI.
     """
+    resolution_spec = args.resolution or "ALL"
+
     if args.log_level:
         logger.setLevel(LEVEL_MAP.get(args.log_level, logging.INFO))
 
-    if not args.input or not args.output or not args.resolution:
+    if not args.input or not args.output:
         launch_gui_converter()
         return 0
 
     inputs = [Path(item) for item in args.input]
-    return convert_gui_inputs(inputs, Path(args.output), args.resolution, logger)
+    return convert_gui_inputs(inputs, Path(args.output), resolution_spec, logger)

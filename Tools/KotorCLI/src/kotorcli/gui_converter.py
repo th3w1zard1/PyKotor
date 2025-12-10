@@ -1,10 +1,18 @@
-"""GUI converter logic shared between CLI and optional Tk GUI."""
+"""GUI converter logic shared between CLI and optional Tk GUI.
+
+The implementation mirrors the behaviors documented in ``wiki/GFF-GUI.md`` and
+the reference implementation in ``vendor/kotor-gui-editor``. GUIs are authored
+for a 640x480 base resolution and scaled to other resolutions by transforming
+every control that owns an ``EXTENT`` struct (including nested controls and
+embedded scrollbar/protoitem structs).
+"""
 
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
+from typing import Callable, Iterable, Sequence
 
 from loggerplus import RobustLogger
 from pykotor.resource.formats.gff import GFF, GFFContent, read_gff, write_gff
@@ -96,62 +104,155 @@ ASPECT_RATIO_TO_RESOLUTION: dict[str, list[tuple[int, int]]] = {
     ],
 }
 
+BASE_GUI_WIDTH = 640
+BASE_GUI_HEIGHT = 480
+
+
+@dataclass(frozen=True)
+class ResolutionTarget:
+    """Normalized resolution target."""
+
+    width: int
+    height: int
+
+    @property
+    def label(self) -> str:
+        return f"{self.width}x{self.height}"
+
+    def scale_factors(self, source_width: int, source_height: int) -> tuple[float, float]:
+        if source_width <= 0 or source_height <= 0:
+            msg = "Source GUI width and height must be positive for scaling."
+            raise ValueError(msg)
+        return self.width / source_width, self.height / source_height
+
 
 def _scale_extent(extent: GFFStruct, height_scale: float, width_scale: float) -> None:
+    """Scale an EXTENT struct in place."""
     extent.set_int32("TOP", int(extent.get_int32("TOP") * height_scale))
     extent.set_int32("HEIGHT", int(extent.get_int32("HEIGHT") * height_scale))
     extent.set_int32("LEFT", int(extent.get_int32("LEFT") * width_scale))
     extent.set_int32("WIDTH", int(extent.get_int32("WIDTH") * width_scale))
 
 
-def _adjust_controls(gui_data: GFF, target_width: int, target_height: int) -> GFF:
+def _iter_structs_with_extent(control_struct: GFFStruct) -> Iterable[GFFStruct]:
+    """Yield every struct that owns an EXTENT, mirroring editor tree traversal."""
+    if control_struct.exists("EXTENT"):
+        yield control_struct
+
+    for field_name in ("SCROLLBAR", "PROTOITEM"):
+        if control_struct.exists(field_name):
+            nested = control_struct.get_struct(field_name)
+            if nested is not None:
+                yield from _iter_structs_with_extent(nested)
+
+    controls_list: GFFList | None = control_struct.get_list("CONTROLS")
+    if controls_list:
+        for child_struct in controls_list:
+            yield from _iter_structs_with_extent(child_struct)
+
+
+def _scale_gui(gui_data: GFF, target: ResolutionTarget) -> GFF:
+    """Return a scaled copy of the GUI for the requested resolution."""
     new_gff = GFF(GFFContent.GUI)
     new_gff.root = deepcopy(gui_data.root)
 
     root_extent_struct = new_gff.root.get_struct("EXTENT")
-    width_scale_factor = target_width / root_extent_struct.get_int32("WIDTH")
-    height_scale_factor = target_height / root_extent_struct.get_int32("HEIGHT")
-    root_extent_struct.set_int32("WIDTH", target_width)
-    root_extent_struct.set_int32("HEIGHT", target_height)
+    if root_extent_struct is None:
+        msg = "GUI root missing EXTENT struct; cannot scale."
+        raise ValueError(msg)
+    source_width = root_extent_struct.get_int32("WIDTH") or BASE_GUI_WIDTH
+    source_height = root_extent_struct.get_int32("HEIGHT") or BASE_GUI_HEIGHT
+
+    width_scale_factor, height_scale_factor = target.scale_factors(source_width, source_height)
+    root_extent_struct.set_int32("WIDTH", target.width)
+    root_extent_struct.set_int32("HEIGHT", target.height)
 
     controls_list: GFFList | None = new_gff.root.get_list("CONTROLS")
-    for control_struct in controls_list:
-        if control_struct.exists("SCROLLBAR"):
-            scrollbar = control_struct.get_struct("SCROLLBAR")
-            scrollbar_extent = scrollbar.get_struct("EXTENT")
-            _scale_extent(scrollbar_extent, height_scale_factor, width_scale_factor)
+    if controls_list:
+        for control_struct in controls_list:
+            for struct in _iter_structs_with_extent(control_struct):
+                extent = struct.get_struct("EXTENT")
+                if extent is not None:
+                    _scale_extent(extent, height_scale_factor, width_scale_factor)
 
-        extent = control_struct.get_struct("EXTENT")
-        _scale_extent(extent, height_scale_factor, width_scale_factor)
     return new_gff
 
 
-def _flatten_resolution_spec(resolution: str) -> list[tuple[int, int]]:
+def _unique_targets(targets: Iterable[ResolutionTarget]) -> list[ResolutionTarget]:
+    seen: set[tuple[int, int]] = set()
+    ordered: list[ResolutionTarget] = []
+    for target in targets:
+        key = (target.width, target.height)
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(target)
+    return sorted(ordered, key=lambda item: (item.width, item.height))
+
+
+def _parse_resolution_spec(resolution: str) -> list[ResolutionTarget]:
+    """Parse a resolution spec string into unique targets."""
     spec = resolution.strip().lower()
     if not spec:
-        msg = "Resolution is required"
+        msg = "Resolution is required."
         raise ValueError(msg)
-    if spec == "all":
-        combined: list[tuple[int, int]] = []
-        for values in ASPECT_RATIO_TO_RESOLUTION.values():
-            combined.extend(values)
-        return combined
+
     parts = [spec_part.strip() for spec_part in spec.split(",") if spec_part.strip()]
-    parsed: list[tuple[int, int]] = []
-    for item in parts:
-        try:
-            width, height = map(int, item.split("x"))
-            if width <= 0 or height <= 0:
-                msg = f"Resolution must be positive: {item}"
-                raise ValueError(msg)
-            parsed.append((width, height))
-        except ValueError as exc:
-            msg = f"Invalid resolution format '{item}'. Use WIDTHxHEIGHT or 'ALL'."
-            raise ValueError(msg) from exc
-    if not parsed:
-        msg = "No valid resolutions provided"
+    if not parts:
+        msg = "No valid resolutions provided."
         raise ValueError(msg)
-    return parsed
+
+    parsed: list[ResolutionTarget] = []
+    for item in parts:
+        if item == "all":
+            for values in ASPECT_RATIO_TO_RESOLUTION.values():
+                parsed.extend(ResolutionTarget(width, height) for width, height in values)
+            continue
+
+        if item in ASPECT_RATIO_TO_RESOLUTION:
+            parsed.extend(ResolutionTarget(width, height) for width, height in ASPECT_RATIO_TO_RESOLUTION[item])
+            continue
+
+        try:
+            width_text, height_text = item.lower().split("x")
+            width = int(width_text)
+            height = int(height_text)
+        except Exception as exc:
+            msg = f"Invalid resolution format '{item}'. Use WIDTHxHEIGHT, ALL, or a known aspect ratio key."
+            raise ValueError(msg) from exc
+
+        if width <= 0 or height <= 0:
+            msg = f"Resolution must be positive: {item}"
+            raise ValueError(msg)
+        parsed.append(ResolutionTarget(width, height))
+
+    return _unique_targets(parsed)
+
+
+def _gather_gui_inputs(inputs: Sequence[Path], warn: Callable[[str], None]) -> list[tuple[CaseAwarePath, Path]]:
+    """Expand user inputs to concrete GUI files with their relative output roots."""
+    gathered: list[tuple[CaseAwarePath, Path]] = []
+    for raw in inputs:
+        case_path = CaseAwarePath(raw)
+        if case_path.is_file():
+            if case_path.suffix.lower() != ".gui":
+                warn(f"Skipping non-GUI file: {case_path}")
+                continue
+            gathered.append((case_path, Path()))
+            continue
+
+        if case_path.is_dir():
+            files = list(case_path.rglob("*.gui"))
+            if not files:
+                warn(f"No .gui files found under {case_path}")
+                continue
+            for gui_file in files:
+                relative_dir = gui_file.parent.relative_to(case_path)
+                gathered.append((CaseAwarePath(gui_file), relative_dir))
+            continue
+
+        warn(f"Invalid input path (skipped): {case_path}")
+    return gathered
 
 
 def convert_gui_inputs(
@@ -169,7 +270,7 @@ def convert_gui_inputs(
     err = logger.error if logger else print
 
     try:
-        resolution_targets = _flatten_resolution_spec(resolution)
+        resolution_targets = _parse_resolution_spec(resolution)
     except Exception as exc:
         err(f"{exc.__class__.__name__}: {exc}")
         return 1
@@ -177,41 +278,36 @@ def convert_gui_inputs(
     case_output = CaseAwarePath(output)
     case_output.mkdir(parents=True, exist_ok=True)
 
-    def process_file(gui_file: CaseAwarePath) -> None:
-        gui_data = read_gff(gui_file)
-        log(f"Processing GUI file: '{gui_file}'")
-        for width, height in resolution_targets:
-            adjusted = _adjust_controls(gui_data, width, height)
-            dest = case_output / f"{width}x{height}" / gui_file.name
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            write_gff(adjusted, dest)
-            log(f"Wrote GUI for {width}x{height} -> {dest}")
+    gathered = _gather_gui_inputs(inputs, warn)
+    if not gathered:
+        warn("No GUI files discovered from provided inputs.")
+        return 1
 
     total_processed = 0
-    for raw in inputs:
-        case_path = CaseAwarePath(raw)
-        if case_path.is_file():
-            if case_path.suffix.lower() != ".gui":
-                warn(f"Skipping non-GUI file: {case_path}")
-                continue
-            process_file(case_path)
-            total_processed += 1
+    for gui_file, relative_dir in gathered:
+        log(f"Processing GUI file: '{gui_file}'")
+        try:
+            gui_data = read_gff(gui_file)
+        except Exception as exc:
+            err(f"Failed to read '{gui_file}': {exc}")
             continue
 
-        if case_path.is_dir():
-            files = list(case_path.rglob("*.gui"))
-            if not files:
-                warn(f"No .gui files found under {case_path}")
+        for target in resolution_targets:
+            try:
+                adjusted = _scale_gui(gui_data, target)
+            except Exception as exc:
+                err(f"Failed to scale '{gui_file}' to {target.label}: {exc}")
                 continue
-            for gui_file in files:
-                relative_dir = gui_file.parent.relative_to(case_path)
-                dest_dir = case_output / relative_dir
-                dest_dir.mkdir(parents=True, exist_ok=True)
-                process_file(gui_file)
-                total_processed += 1
-            continue
 
-        warn(f"Invalid input path (skipped): {case_path}")
+            dest = case_output / target.label / relative_dir / gui_file.name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                write_gff(adjusted, dest)
+                log(f"Wrote GUI for {target.label} -> {dest}")
+            except Exception as exc:
+                err(f"Failed to write '{dest}': {exc}")
+                continue
+        total_processed += 1
 
     if total_processed == 0:
         warn("No GUI files processed.")
@@ -220,10 +316,10 @@ def convert_gui_inputs(
     return 0
 
 
-def launch_gui_converter() -> None:
+def launch_gui_converter() -> None:  # noqa: PLR0915
     """Open a minimal Tk GUI for interactive conversions."""
-    import tkinter as tk  # imported lazily to avoid headless dependency
-    from tkinter import filedialog, messagebox, scrolledtext
+    import tkinter as tk  # noqa: PLC0415  # imported lazily to avoid headless dependency
+    from tkinter import filedialog, messagebox, scrolledtext  # noqa: PLC0415
 
     root = tk.Tk()
     root.title("KotorCLI GUI Converter")
