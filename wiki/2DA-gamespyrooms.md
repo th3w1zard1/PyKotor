@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines GameSpy room configurations for multiplayer (if supported). The engine uses this [file](GFF-File-Format) to determine GameSpy room names and properties.
+**Engine Usage**: Defines GameSpy room configurations for multiplayer (if supported). The engine uses this file to determine GameSpy room names and properties.
 
-**Row [index](2DA-File-Format#row-labels)**: GameSpy Room ID (integer)
+**Row index**: GameSpy Room ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | GameSpy room label |
-| `str_ref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for GameSpy room name |
+| `label` | string | GameSpy room label |
+| `str_ref` | [StrRef](TLK-File-Format#string-references-strref) | string reference for GameSpy room name |
 | Additional columns | Various | GameSpy room properties |
 
 **References**:

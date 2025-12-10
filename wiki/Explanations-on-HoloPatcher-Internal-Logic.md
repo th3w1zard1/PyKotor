@@ -32,7 +32,7 @@ Note:
 
 source code @ [pykotor.tslpatcher.reader](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/reader.py)
 
-the [ConfigReader](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/reader.py#L129) is responsible for parsing a [changes.ini](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/config.py#L113) and accumulating the patches to execute. This happens immediately when the mod is loaded by the user or when swapping options in the namespaces comboboxes. As such, any errors/exceptions/crashes that happen in reader code will _always_ be before the patcher modifies game [files](GFF-File-Format).
+the [ConfigReader](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/reader.py#L129) is responsible for parsing a [changes.ini](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/config.py#L113) and accumulating the patches to execute. This happens immediately when the mod is loaded by the user or when swapping options in the namespaces comboboxes. As such, any errors/exceptions/crashes that happen in reader code will _always_ be before the patcher modifies game files.
 
 # Patcher
 
@@ -44,7 +44,7 @@ The patcher itself handles all the errors/output/modifications of the patches ac
 
 source code @ [pykotor.tslpatcher.mods](https://github.com/th3w1zard1/PyKotor/tree/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/mods)
 
-Each [file](GFF-File-Format) represents a different patch list such as [[GFFList]](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/mods/[GFF](GFF-File-Format).py) [[CompileList]](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/mods/[NSS](NSS-File-Format).py) [[SSFList]](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/mods/[SSF](SSF-File-Format).py) etc.
+Each file represents a different patch list such as [[GFFList]](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/mods/[GFF](GFF-File-Format).py) [[CompileList]](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/mods/[NSS](NSS-File-Format).py) [[SSFList]](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/mods/[SSF](SSF-File-Format).py) etc.
 
 As can be seen each class inherits [PatcherModifications](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/mods/template.py#L25). This causes the following behavior:
 
@@ -79,9 +79,9 @@ We doubt these priority order changes will affect the output of any mods. If you
 ### Final validations Before Modifications
 
 - Patcher will once again check if [changes.ini](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/config.py#L113) is found on disk
-- Patcher will determine if the kotor directory is valid. Uses various heuristics of what's known about the [files](GFF-File-Format) to safely determine if it's TSL or k1.
+- Patcher will determine if the kotor directory is valid. Uses various heuristics of what's known about the files to safely determine if it's TSL or k1.
 
-- **Prepare the [CompileList]:** Before the patch loop runs, the patcher will first copy all the [files](GFF-File-Format) in the namespace tslpatchdata folder matching '.nss' extension to a temporary directory. If there is a 'nwscript.nss', it will automatically append a patch to [InstallList] the nwscript.nss to the Override folder. This is done because some versions of nwnnsscomp.exe will rely on nwscript.nss being in Override rather than tslpatchdata. Specifically the KOTOR Tool version of nwnnsscomp.exe
+- **Prepare the [CompileList]:** Before the patch loop runs, the patcher will first copy all the files in the namespace tslpatchdata folder matching '.nss' extension to a temporary directory. If there is a 'nwscript.nss', it will automatically append a patch to [InstallList] the nwscript.nss to the Override folder. This is done because some versions of nwnnsscomp.exe will rely on nwscript.nss being in Override rather than tslpatchdata. Specifically the KOTOR Tool version of nwnnsscomp.exe
 
 ### The Patch Loop
 
@@ -89,10 +89,10 @@ source code @ [pykotor.tslpatcher.patcher](https://github.com/th3w1zard1/PyKotor
 
 HoloPatcher is _finally_ ready to start applying the patches and modifying the installation. A simple `for patch in all_patches` loop runs, wrapped in a `try-except`. The try-except behavior is directly what TSLPatcher itself will do. Anytime a specific patch fails, it'll log the error and continue the next one.
 
-**Step 1:** The patch routine first determines whether the mod is intending to be installed into a capsule, and if the [file](GFF-File-Format)/resource to be patched already exists in the KOTOR path.
+**Step 1:** The patch routine first determines whether the mod is intending to be installed into a capsule, and if the file/resource to be patched already exists in the KOTOR path.
 
 - If the resource exists, back it up to a timestamped directory in the `backup` folder.
-- If the resource does not exist, write the patch's intended filepath into the `remove these files.txt` [file](GFF-File-Format).
+- If the resource does not exist, write the patch's intended filepath into the `remove these files.txt` file.
 - If the patch intends to install into a capsule (.mod/.erf/.rim/.sav) and the capsule DOES NOT exist, throw a FileNotFoundError (matches tslpatcher behavior)
 
 **Step 2: [Log the operation](https://github.com/th3w1zard1/PyKotor/blob/92f5fb81a7b9642085c67b7b48ddd50f2df4378d/Libraries/PyKotor/src/pykotor/tslpatcher/patcher.py#L265)**, such as `patching existing file in the 'path' folder'.

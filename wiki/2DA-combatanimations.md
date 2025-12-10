@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines combat-specific [animation](MDL-MDX-File-Format#animation-header) properties and mappings. The engine uses this [file](GFF-File-Format) to determine which [animations](MDL-MDX-File-Format#animation-header) to play during combat actions.
+**Engine Usage**: Defines combat-specific [animation](MDL-MDX-File-Format#animation-header) properties and mappings. The engine uses this file to determine which [animations](MDL-MDX-File-Format#animation-header) to play during combat actions.
 
-**Row [index](2DA-File-Format#row-labels)**: Combat [animation](MDL-MDX-File-Format#animation-header) ID (integer)
+**Row index**: Combat [animation](MDL-MDX-File-Format#animation-header) ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Combat [animation](MDL-MDX-File-Format#animation-header) label |
+| `label` | string | Combat [animation](MDL-MDX-File-Format#animation-header) label |
 | Additional columns | Various | Combat [animation](MDL-MDX-File-Format#animation-header) properties |
 
 **References**:

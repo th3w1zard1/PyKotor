@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines planetary information for the galaxy map and travel system. The engine uses this [file](GFF-File-Format) to determine planet names, descriptions, and travel properties.
+**Engine Usage**: Defines planetary information for the galaxy map and travel system. The engine uses this file to determine planet names, descriptions, and travel properties.
 
-**Row [index](2DA-File-Format#row-labels)**: Planet ID (integer)
+**Row index**: Planet ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Planet label |
+| `label` | string | Planet label |
 | Additional columns | Various | Planet properties and travel information |
 
 **References**:

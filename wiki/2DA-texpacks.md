@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines [texture](TPC-File-Format) pack configurations for graphics settings (KotOR 2 only). The engine uses this [file](GFF-File-Format) to determine available [texture](TPC-File-Format) pack options in the graphics menu.
+**Engine Usage**: Defines [texture](TPC-File-Format) pack configurations for graphics settings (KotOR 2 only). The engine uses this file to determine available [texture](TPC-File-Format) pack options in the graphics menu.
 
-**Row [index](2DA-File-Format#row-labels)**: [texture](TPC-File-Format) Pack ID (integer)
+**Row index**: [texture](TPC-File-Format) Pack ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | [texture](TPC-File-Format) pack label |
-| `strrefname` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for [texture](TPC-File-Format) pack name |
+| `label` | string | [texture](TPC-File-Format) pack label |
+| `strrefname` | [StrRef](TLK-File-Format#string-references-strref) | string reference for [texture](TPC-File-Format) pack name |
 | Additional columns | Various | [texture](TPC-File-Format) pack properties and settings |
 
 **References**:

@@ -1,13 +1,13 @@
 # TSLPatcher HACKList Syntax Documentation
 
-This guide explains how to modify [NCS files](NCS-File-Format) directly using TSLPatcher syntax. For the complete [NCS file](NCS-File-Format) [format](GFF-File-Format) specification, see [NCS File Format](NCS-File-Format). For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.#hacklist-editing-ncs-directly).
+This guide explains how to modify [NCS files](NCS-File-Format) directly using TSLPatcher syntax. For the complete [NCS file](NCS-File-Format) format specification, see [NCS File Format](NCS-File-Format). For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.#hacklist-editing-ncs-directly).
 
 ## Overview
 
-The `[HACKList]` section in TSLPatcher's changes.ini [file](GFF-File-Format) enables you to modify compiled NCS (Neverwinter Compiled Script) [bytecode](https://en.wikipedia.org/wiki/Bytecode) [files](GFF-File-Format) directly at the binary level. This advanced feature allows precise [byte](GFF-File-Format#gff-data-types)-level modifications to script [files](GFF-File-Format) without recompiling from [NSS](NSS-File-Format) source code, making it ideal for:
+The `[HACKList]` section in TSLPatcher's changes.ini file enables you to modify compiled NCS (Neverwinter Compiled Script) [bytecode](https://en.wikipedia.org/wiki/Bytecode) files directly at the binary level. This advanced feature allows precise [byte](GFF-File-Format#gff-data-types)-level modifications to script files without recompiling from [NSS](NSS-File-Format) source code, making it ideal for:
 
-- Patching numerical [values](GFF-File-Format#gff-data-types) in existing compiled scripts
-- Injecting dynamically-generated [string](GFF-File-Format#gff-data-types) references (StrRefs) and [2DA](2DA-File-Format) memory [values](GFF-File-Format#gff-data-types)
+- Patching numerical values in existing compiled scripts
+- Injecting dynamically-generated string references (StrRefs) and [2DA](2DA-File-Format) memory values
 - Performing surgical modifications to hardcoded constants
 - Updating scripts to reference new [TLK entries](TSLPatcher-TLKList-Syntax) or [2DA row numbers](TSLPatcher-2DAList-Syntax)
 
@@ -25,7 +25,7 @@ The `[HACKList]` section in TSLPatcher's changes.ini [file](GFF-File-Format) ena
 - [Common Use Cases](#common-use-cases)
 - [Troubleshooting](#troubleshooting)
 
-## Basic [structure](GFF-File-Format#file-structure-overview)
+## Basic structure
 
 ```ini
 [HACKList]
@@ -50,28 +50,28 @@ ReplaceFile=0
 
 The `[HACKList]` section declares [NCS files](NCS-File-Format) to modify. Each entry references another section with the same name as the filename.
 
-## [file](GFF-File-Format)-Level Configuration
+## file-Level Configuration
 
 ### Top-Level Keys in [HACKList]
 
-| [KEY](KEY-File-Format) | [type](GFF-File-Format#data-types) | Default | Description |
+| [KEY](KEY-File-Format) | type | Default | Description |
 |-----|------|---------|-------------|
-| `!DefaultDestination` | [string](GFF-File-Format#gff-data-types) | `override` | Default destination for all [NCS files](NCS-File-Format) in this section |
-| `!DefaultSourceFolder` | [string](GFF-File-Format#gff-data-types) | `.` | Default source folder for [NCS files](NCS-File-Format). This is a relative path from `mod_path`, which is typically the `tslpatchdata` folder (the parent directory of the `changes.ini` [file](GFF-File-Format)). The default [value](GFF-File-Format#gff-data-types) `.` refers to the `tslpatchdata` folder itself. Path resolution: `mod_path / !DefaultSourceFolder / filename` |
+| `!DefaultDestination` | string | `override` | Default destination for all [NCS files](NCS-File-Format) in this section |
+| `!DefaultSourceFolder` | string | `.` | Default source folder for [NCS files](NCS-File-Format). This is a relative path from `mod_path`, which is typically the `tslpatchdata` folder (the parent directory of the `changes.ini` file). The default value `.` refers to the `tslpatchdata` folder itself. Path resolution: `mod_path / !DefaultSourceFolder / filename` |
 
-### [file](GFF-File-Format) Section Configuration
+### file Section Configuration
 
 Each [NCS file](NCS-File-Format) requires its own section (e.g., `[myscript.ncs]`).
 
-| Key | [type](GFF-File-Format#data-types) | Default | Description |
+| Key | type | Default | Description |
 |-----|------|---------|-------------|
-| `!Destination` | [string](GFF-File-Format#gff-data-types) | Inherited from `!DefaultDestination` | Where to save the modified file (`override` or `path\to\file.mod`) |
-| `!SourceFolder` | [string](GFF-File-Format#gff-data-types) | Inherited from `!DefaultSourceFolder` | Source folder for the [NCS file](NCS-File-Format). Relative path from `mod_path` (typically the tslpatchdata folder). When `.`, refers to the tslpatchdata folder itself. |
-| `!SourceFile` | [string](GFF-File-Format#gff-data-types) | Same as section name | Alternative source filename to load |
-| `!SaveAs` or `!Filename` | [string](GFF-File-Format#gff-data-types) | Same as section name | Final filename to save as |
+| `!Destination` | string | Inherited from `!DefaultDestination` | Where to save the modified file (`override` or `path\to\file.mod`) |
+| `!SourceFolder` | string | Inherited from `!DefaultSourceFolder` | Source folder for the [NCS file](NCS-File-Format). Relative path from `mod_path` (typically the tslpatchdata folder). When `.`, refers to the tslpatchdata folder itself. |
+| `!SourceFile` | string | Same as section name | Alternative source filename to load |
+| `!SaveAs` or `!Filename` | string | Same as section name | Final filename to save as |
 | `ReplaceFile` | 0/1 | 0 | **Note:** Unlike other patch lists, HACKList uses `ReplaceFile` (without exclamation point) |
 
-**Destination [values](GFF-File-Format#gff-data-types):**
+**Destination values:**
 
 - `override` or empty: Save to the Override folder
 - `Modules\module.mod`: Insert into an [ERF](ERF-File-Format)/MOD/RIM archive
@@ -79,9 +79,9 @@ Each [NCS file](NCS-File-Format) requires its own section (e.g., `[myscript.ncs]
 
 **Important:** The `ReplaceFile` [KEY](KEY-File-Format) in HACKList does NOT use an exclamation point prefix. This is unique to HACKList compared to other patch lists.
 
-## Token [types](GFF-File-Format#gff-data-types) and [data](GFF-File-Format#file-structure-overview) Sizes
+## Token types and data Sizes
 
-Each modification requires specifying an [offset](GFF-File-Format#file-structure-overview) and a [value](GFF-File-Format#gff-data-types). [values](GFF-File-Format#gff-data-types) can include [type](GFF-File-Format#data-types) specifiers to control [data](GFF-File-Format#file-structure-overview) [size](GFF-File-Format#file-structure-overview).
+Each modification requires specifying an offset and a value. values can include type specifiers to control data size.
 
 ### Syntax
 
@@ -90,45 +90,45 @@ offset=value
 offset=type:value
 ```
 
-- **[offset](GFF-File-Format#file-structure-overview)**: Decimal number (e.g., `32`) or hexadecimal (e.g., `0x20`)
-- **type** (optional): One of `u8`, `u16`, or `u32` to specify [data](GFF-File-Format#file-structure-overview) width
-- **[value](GFF-File-Format#gff-data-types)**: Numeric [value](GFF-File-Format#gff-data-types), token reference, or hex literal
+- **offset**: Decimal number (e.g., `32`) or hexadecimal (e.g., `0x20`)
+- **type** (optional): One of `u8`, `u16`, or `u32` to specify data width
+- **value**: Numeric value, token reference, or hex literal
 
-### Supported [value](GFF-File-Format#gff-data-types) [types](GFF-File-Format#gff-data-types)
+### Supported value types
 
-| [value](GFF-File-Format#gff-data-types) [format](GFF-File-Format) | [type](GFF-File-Format#data-types) | [size](GFF-File-Format#file-structure-overview) | Description |
+| value format | type | size | Description |
 |--------------|------|------|-------------|
-| Numeric (no prefix) | u16 | 2 bytes | 16-[bit](GFF-File-Format#gff-data-types) unsigned integer (default) |
-| `u8:123` | u8 | 1 [byte](GFF-File-Format#gff-data-types) | 8-[bit](GFF-File-Format#gff-data-types) unsigned integer (0-255) |
-| `u16:12345` | u16 | 2 bytes | 16-[bit](GFF-File-Format#gff-data-types) unsigned integer (0-65535) |
-| `u32:123456` | u32 | 4 bytes | 32-[bit](GFF-File-Format#gff-data-types) unsigned integer |
-| `StrRef0` | [StrRef](TLK-File-Format#string-references-strref) | Varies* | Reference to [TLK](TLK-File-Format) [string](GFF-File-Format#gff-data-types) from memory |
-| `StrRefN` | strref32 | 4 bytes | 32-[bit](GFF-File-Format#gff-data-types) signed [TLK](TLK-File-Format) reference (CONSTI) |
-| `2DAMEMORY1` | 2damemory | Varies* | Reference to [2DA](2DA-File-Format) memory [value](GFF-File-Format#gff-data-types) |
-| `2DAMEMORYN` | 2damemory32 | 4 bytes | 32-[bit](GFF-File-Format#gff-data-types) signed [2DA](2DA-File-Format) reference (CONSTI) |
+| Numeric (no prefix) | u16 | 2 bytes | 16-bit unsigned integer (default) |
+| `u8:123` | u8 | 1 [byte](GFF-File-Format#gff-data-types) | 8-bit unsigned integer (0-255) |
+| `u16:12345` | u16 | 2 bytes | 16-bit unsigned integer (0-65535) |
+| `u32:123456` | u32 | 4 bytes | 32-bit unsigned integer |
+| `StrRef0` | [StrRef](TLK-File-Format#string-references-strref) | Varies* | Reference to [TLK](TLK-File-Format) string from memory |
+| `StrRefN` | strref32 | 4 bytes | 32-bit signed [TLK](TLK-File-Format) reference (CONSTI) |
+| `2DAMEMORY1` | 2damemory | Varies* | Reference to [2DA](2DA-File-Format) memory value |
+| `2DAMEMORYN` | 2damemory32 | 4 bytes | 32-bit signed [2DA](2DA-File-Format) reference (CONSTI) |
 
 *`strref` and `2damemory` without explicit sizes default to `strref32` and `2damemory32` respectively in PyKotor's implementation.
 
 ### Endianness
 
-All multi-[byte](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) written in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** (network [byte](GFF-File-Format#gff-data-types) order), which is standard for KOTOR's binary [formats](GFF-File-Format).
+All multi-[byte](GFF-File-Format#gff-data-types) values [ARE](GFF-File-Format#are-area) written in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** (network [byte](GFF-File-Format#gff-data-types) order), which is standard for KOTOR's binary formats.
 
 ### type Compatibility Notes
 
 **Historical Background:** TSLPatcher originally distinguished between `strref` and `strref32` (and `2damemory` vs `2damemory32`), but PyKotor's implementation unifies these:
 
-- `[StrRef](TLK-File-Format#string-references-strref)#` tokens [ARE](GFF-File-Format#are-area) automatically handled as 32-[bit](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types)
-- `2DAMEMORY#` tokens [ARE](GFF-File-Format#are-area) automatically handled as 32-[bit](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types)
+- `[StrRef](TLK-File-Format#string-references-strref)#` tokens [ARE](GFF-File-Format#are-area) automatically handled as 32-bit values
+- `2DAMEMORY#` tokens [ARE](GFF-File-Format#are-area) automatically handled as 32-bit values
 
-If you need legacy 16-[bit](GFF-File-Format#gff-data-types) compatibility, use explicit [type](GFF-File-Format#data-types) specifiers like `u16:StrRef5`, though this is not typically necessary.
+If you need legacy 16-bit compatibility, use explicit type specifiers like `u16:StrRef5`, though this is not typically necessary.
 
 ## Memory Token Integration
 
-HACKList integrates seamlessly with TSLPatcher's memory token system, allowing dynamic [value](GFF-File-Format#gff-data-types) injection from other patch sections.
+HACKList integrates seamlessly with TSLPatcher's memory token system, allowing dynamic value injection from other patch sections.
 
 ### [StrRef](TLK-File-Format#string-references-strref) Tokens
 
-Reference [values](GFF-File-Format#gff-data-types) stored in TLKList memory:
+Reference values stored in TLKList memory:
 
 ```ini
 ; In TLKList section, this would define StrRef5
@@ -145,13 +145,13 @@ File0=myscript.ncs
 
 **Use Cases:**
 
-- Injecting dynamically-added [dialog.tlk](TLK-File-Format) [string](GFF-File-Format#gff-data-types) references
+- Injecting dynamically-added [dialog.tlk](TLK-File-Format) string references
 - Patching scripts to reference custom text entries
-- Updating hardcoded [string](GFF-File-Format#gff-data-types) IDs to mod-added entries
+- Updating hardcoded string IDs to mod-added entries
 
 ### [2DA](2DA-File-Format) Memory Tokens
 
-Reference [values](GFF-File-Format#gff-data-types) stored in 2DAList memory:
+Reference values stored in 2DAList memory:
 
 ```ini
 ; In 2DAList section, this would store a row number
@@ -174,13 +174,13 @@ File0=myscript.ncs
 - Patching appearance/spell IDs to reference new rows
 - Updating hardcoded IDs to mod-added entries
 
-**Important Limitation:** `!FieldPath` [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) NOT supported in HACKList. Only numeric memory [values](GFF-File-Format#gff-data-types) can be used.
+**Important Limitation:** `!FieldPath` values [ARE](GFF-File-Format#are-area) NOT supported in HACKList. Only numeric memory values can be used.
 
-## [offset](GFF-File-Format#file-structure-overview) Calculation
+## offset Calculation
 
-Determining the correct [byte](GFF-File-Format#gff-data-types) [offset](GFF-File-Format#file-structure-overview) is the most critical aspect of HACKList usage.
+Determining the correct [byte](GFF-File-Format#gff-data-types) offset is the most critical aspect of HACKList usage.
 
-### [NCS files](NCS-File-Format) [structure](GFF-File-Format#file-structure-overview)
+### [NCS files](NCS-File-Format) structure
 
 ```ncs
 Byte Offset  Description
@@ -192,20 +192,20 @@ Byte Offset  Description
 0x0D+        Compiled bytecode instructions
 ```
 
-The [header](GFF-File-Format#file-header) is 13 bytes (0x0D), so the first instruction [byte](GFF-File-Format#gff-data-types) is at [offset](GFF-File-Format#file-structure-overview) 0x0D.
+The header is 13 bytes (0x0D), so the first instruction [byte](GFF-File-Format#gff-data-types) is at offset 0x0D.
 
-### Finding [offsets](GFF-File-Format#file-structure-overview) with DeNCS
+### Finding offsets with DeNCS
 
-**DeNCS** (Decompiler for [NCS](NCS-File-Format)) is a Java-based disassembler that can help you locate exact [byte](GFF-File-Format#gff-data-types) [offsets](GFF-File-Format#file-structure-overview) in [NCS files](NCS-File-Format).
+**DeNCS** (Decompiler for [NCS](NCS-File-Format)) is a Java-based disassembler that can help you locate exact [byte](GFF-File-Format#gff-data-types) offsets in [NCS files](NCS-File-Format).
 
 #### Using DeNCS
 
 1. Load your [NCS file](NCS-File-Format) in DeNCS
 2. Disassemble to view instruction-level operations
-3. Identify the target instruction and note its [byte](GFF-File-Format#gff-data-types) [offset](GFF-File-Format#file-structure-overview)
-4. If modifying an instruction's operand, add to the instruction's [offset](GFF-File-Format#file-structure-overview):
-   - For CONSTI operands: [offset](GFF-File-Format#file-structure-overview) + 1 (skip the opcode [byte](GFF-File-Format#gff-data-types))
-   - For other operands: depends on instruction [type](GFF-File-Format#data-types)
+3. Identify the target instruction and note its [byte](GFF-File-Format#gff-data-types) offset
+4. If modifying an instruction's operand, add to the instruction's offset:
+   - For CONSTI operands: offset + 1 (skip the opcode [byte](GFF-File-Format#gff-data-types))
+   - For other operands: depends on instruction type
 
 #### Example Disassembly
 
@@ -220,23 +220,23 @@ Offset  Inst                Args
         (opcode at 0x15, string offset at 0x16-0x19)
 ```
 
-To modify the CONSTI [value](GFF-File-Format#gff-data-types) at 0x0E, you'd patch bytes 0x0F-0x12.
+To modify the CONSTI value at 0x0E, you'd patch bytes 0x0F-0x12.
 
 ### Common Instruction Layouts
 
-| Instruction | Opcode [size](GFF-File-Format#file-structure-overview) | Operand [size](GFF-File-Format#file-structure-overview) | Example [offset](GFF-File-Format#file-structure-overview) to Patch |
+| Instruction | Opcode size | Operand size | Example offset to Patch |
 |-------------|-------------|--------------|-------------------------|
-| `CONSTI` | 1 byte | 4 bytes | [offset](GFF-File-Format#file-structure-overview) + 1 |
-| `CONSTF` | 1 byte | 4 bytes | [offset](GFF-File-Format#file-structure-overview) + 1 |
-| `CONSTS` | 1 byte | 4 bytes | [offset](GFF-File-Format#file-structure-overview) + 1 |
-| `CPDOWNSP` | 1 byte | 4 bytes | [offset](GFF-File-Format#file-structure-overview) + 1 |
-| `ACTION` | 1 byte | 4 bytes | [offset](GFF-File-Format#file-structure-overview) + 1 |
-| `JMP` | 1 byte | 4 bytes | [offset](GFF-File-Format#file-structure-overview) + 1 |
-| `JZ` | 1 byte | 4 bytes | [offset](GFF-File-Format#file-structure-overview) + 1 |
+| `CONSTI` | 1 byte | 4 bytes | offset + 1 |
+| `CONSTF` | 1 byte | 4 bytes | offset + 1 |
+| `CONSTS` | 1 byte | 4 bytes | offset + 1 |
+| `CPDOWNSP` | 1 byte | 4 bytes | offset + 1 |
+| `ACTION` | 1 byte | 4 bytes | offset + 1 |
+| `JMP` | 1 byte | 4 bytes | offset + 1 |
+| `JZ` | 1 byte | 4 bytes | offset + 1 |
 
-### Hex vs Decimal [offsets](GFF-File-Format#file-structure-overview)
+### Hex vs Decimal offsets
 
-Both [formats](GFF-File-Format) [ARE](GFF-File-Format#are-area) supported:
+Both formats [ARE](GFF-File-Format#are-area) supported:
 
 - **Hexadecimal**: `0x20`, `0x100`, `0xFF`
 - **Decimal**: `32`, `256`, `255`
@@ -260,7 +260,7 @@ File0=combat_script.ncs
 
 ### Example 2: Injecting Dynamic [TLK](TLK-File-Format) Reference
 
-Inject a dynamically-added [string](GFF-File-Format#gff-data-types) reference:
+Inject a dynamically-added string reference:
 
 ```ini
 [TLKList]
@@ -274,9 +274,9 @@ File0=dialog_script.ncs
 0x100=StrRef1
 ```
 
-### Example 3: Patching Multiple [values](GFF-File-Format#gff-data-types)
+### Example 3: Patching Multiple values
 
-Modify several [offsets](GFF-File-Format#file-structure-overview) in the same [file](GFF-File-Format):
+Modify several offsets in the same file:
 
 ```ini
 [HACKList]
@@ -293,7 +293,7 @@ File0=spell_script.ncs
 0x70=u16:60
 ```
 
-### Example 4: Using [2DA](2DA-File-Format) Memory [values](GFF-File-Format#gff-data-types)
+### Example 4: Using [2DA](2DA-File-Format) Memory values
 
 Inject a dynamically-added [2DA](2DA-File-Format) row number:
 
@@ -312,9 +312,9 @@ File0=spell_handler.ncs
 0x88=2DAMEMORY5
 ```
 
-### Example 5: Advanced Multi-[type](GFF-File-Format#data-types) Patching
+### Example 5: Advanced Multi-type Patching
 
-Combine different [data](GFF-File-Format#file-structure-overview) sizes and token [types](GFF-File-Format#gff-data-types):
+Combine different data sizes and token types:
 
 ```ini
 [HACKList]
@@ -360,13 +360,13 @@ ReplaceFile=1
 
 ## DeNCS Reference
 
-DeNCS provides comprehensive [NCS](NCS-File-Format) disassembly capabilities for locating exact [byte](GFF-File-Format#gff-data-types) [offsets](GFF-File-Format#file-structure-overview). Understanding its output is essential for HACKList usage.
+DeNCS provides comprehensive [NCS](NCS-File-Format) disassembly capabilities for locating exact [byte](GFF-File-Format#gff-data-types) offsets. Understanding its output is essential for HACKList usage.
 
 ### [KEY](KEY-File-Format) DeNCS Features
 
 - **Instruction-level disassembly**: See each bytecode instruction
-- **[offset](GFF-File-Format#file-structure-overview) mapping**: Exact [byte](GFF-File-Format#gff-data-types) [positions](MDL-MDX-File-Format#node-header) for each instruction
-- **Operand extraction**: View [data](GFF-File-Format#file-structure-overview) embedded in instructions
+- **offset mapping**: Exact [byte](GFF-File-Format#gff-data-types) positions for each instruction
+- **Operand extraction**: View data embedded in instructions
 - **Jump resolution**: Understand control flow
 
 ### Reading DeNCS Output
@@ -395,14 +395,14 @@ To modify the CONSTI at 0x0E, you'd patch bytes 0x0F-0x12 (the 4-[byte](GFF-File
 
 Many scripts follow predictable patterns you can target:
 
-**Setting a constant [value](GFF-File-Format#gff-data-types):**
+**Setting a constant value:**
 
 ```ncs
 CONSTI <value>
 CPDOWNSP -4
 ```
 
-This pushes a 4-[byte](GFF-File-Format#gff-data-types) integer onto the stack. The [value](GFF-File-Format#gff-data-types) is at [offset](GFF-File-Format#file-structure-overview) +1.
+This pushes a 4-[byte](GFF-File-Format#gff-data-types) integer onto the stack. The value is at offset +1.
 
 **Calling a function:**
 
@@ -410,7 +410,7 @@ This pushes a 4-[byte](GFF-File-Format#gff-data-types) integer onto the stack. T
 ACTION <function_pointer>
 ```
 
-The function [pointer](GFF-File-Format#file-structure-overview) is a 4-[byte](GFF-File-Format#gff-data-types) address at [offset](GFF-File-Format#file-structure-overview) +1.
+The function pointer is a 4-[byte](GFF-File-Format#gff-data-types) address at offset +1.
 
 **Conditional jumps:**
 
@@ -418,13 +418,13 @@ The function [pointer](GFF-File-Format#file-structure-overview) is a 4-[byte](GF
 JZ <offset>
 ```
 
-The jump [offset](GFF-File-Format#file-structure-overview) is a 4-[byte](GFF-File-Format#gff-data-types) signed integer at [offset](GFF-File-Format#file-structure-overview) +1.
+The jump offset is a 4-[byte](GFF-File-Format#gff-data-types) signed integer at offset +1.
 
 ## Common Use Cases
 
-### 1. Updating Hardcoded [string](GFF-File-Format#gff-data-types) References
+### 1. Updating Hardcoded string References
 
-Many vanilla scripts have hardcoded [StrRef](TLK-File-Format#string-references-strref) [values](GFF-File-Format#gff-data-types). HACKList lets you redirect them to mod-added entries:
+Many vanilla scripts have hardcoded [StrRef](TLK-File-Format#string-references-strref) values. HACKList lets you redirect them to mod-added entries:
 
 ```ini
 [TLKList]
@@ -458,9 +458,9 @@ File0=spell_handler.ncs
 0x88=2DAMEMORY7
 ```
 
-### 3. Adjusting Combat [values](GFF-File-Format#gff-data-types)
+### 3. Adjusting Combat values
 
-Modify damage, duration, or other gameplay [values](GFF-File-Format#gff-data-types) without recompiling:
+Modify damage, duration, or other gameplay values without recompiling:
 
 ```ini
 [HACKList]
@@ -508,16 +508,16 @@ File0=buggy_script.ncs
 
 ## Troubleshooting
 
-### [offset](GFF-File-Format#file-structure-overview) Calculation Errors
+### offset Calculation Errors
 
-**Problem:** Patched [value](GFF-File-Format#gff-data-types) doesn't seem to take effect
+**Problem:** Patched value doesn't seem to take effect
 
 **Solutions:**
 
-1. Verify the [offset](GFF-File-Format#file-structure-overview) using DeNCS
+1. Verify the offset using DeNCS
 2. Check if you're modifying the correct bytes (instruction vs operand)
 3. Ensure you're not overwriting opcodes accidentally
-4. Verify big-endian [byte](GFF-File-Format#gff-data-types) order for multi-[byte](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types)
+4. Verify big-endian [byte](GFF-File-Format#gff-data-types) order for multi-[byte](GFF-File-Format#gff-data-types) values
 
 ### Memory Token Not Defined
 
@@ -531,18 +531,18 @@ File0=buggy_script.ncs
 
 **Important:** HACKList executes **after** CompileList and **after** TLKList and 2DAList in HoloPatcher, so memory tokens should be available.
 
-### Wrong [data](GFF-File-Format#file-structure-overview) [size](GFF-File-Format#file-structure-overview)
+### Wrong data size
 
 **Problem:** Script crashes or behaves unexpectedly after patching
 
 **Solutions:**
 
-1. Verify you're using the correct [data](GFF-File-Format#file-structure-overview) size (u8/u16/u32)
-2. Check DeNCS output to confirm operand [size](GFF-File-Format#file-structure-overview)
-3. Ensure you're not truncating large [values](GFF-File-Format#gff-data-types) with u8/u16
-4. Verify signed vs unsigned behavior for large [values](GFF-File-Format#gff-data-types)
+1. Verify you're using the correct data size (u8/u16/u32)
+2. Check DeNCS output to confirm operand size
+3. Ensure you're not truncating large values with u8/u16
+4. Verify signed vs unsigned behavior for large values
 
-### [file](GFF-File-Format) Not Found
+### file Not Found
 
 **Problem:** `File not found` error during patching
 
@@ -550,8 +550,8 @@ File0=buggy_script.ncs
 
 1. Verify `!SourceFile` points to correct filename
 2. Check `!DefaultSourceFolder` and `!SourceFolder` paths
-3. Ensure source [file](GFF-File-Format) exists in tslpatchdata folder
-4. Verify [file](GFF-File-Format) extension is `.ncs`
+3. Ensure source file exists in tslpatchdata folder
+4. Verify file extension is `.ncs`
 
 ### Archival Insertion Issues
 
@@ -561,7 +561,7 @@ File0=buggy_script.ncs
 
 1. Verify `!Destination` path uses backslashes
 2. Check archive exists before insertion
-3. Ensure destination folder [structure](GFF-File-Format#file-structure-overview) is correct
+3. Ensure destination folder structure is correct
 4. Verify `ReplaceFile` setting (0 = skip if exists, 1 = overwrite)
 
 ## Technical Details
@@ -570,13 +570,13 @@ File0=buggy_script.ncs
 
 **HoloPatcher** processes patch lists in this order:
 
-1. InstallList (install [files](GFF-File-Format))
+1. InstallList (install files)
 2. TLKList (add dialog entries)
 3. 2DAList (modify [2DA files](2DA-File-Format))
-4. GFFList (modify [GFF](GFF-File-Format) [files](GFF-File-Format))
+4. GFFList (modify [GFF](GFF-File-Format) files)
 5. **CompileList** (compile [NSS](NSS-File-Format) to [NCS](NCS-File-Format))
 6. **HACKList** (modify [NCS](NCS-File-Format) bytecode) ← **You [ARE](GFF-File-Format#are-area) here**
-7. SSFList (modify soundset [files](GFF-File-Format))
+7. SSFList (modify soundset files)
 
 **Important:** This differs from TSLPatcher's original order, where HACKList executes before CompileList. HoloPatcher runs CompileList first to allow scripts to be compiled and then potentially edited. This order change is intentional and should not affect mod compatibility in practice.
 
@@ -584,7 +584,7 @@ All memory tokens from TLKList and 2DAList [ARE](GFF-File-Format#are-area) avail
 
 ### Byte-Level Writing
 
-All multi-[byte](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) written in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** [format](GFF-File-Format):
+All multi-[byte](GFF-File-Format#gff-data-types) values [ARE](GFF-File-Format#are-area) written in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** format:
 
 - `u16:0x1234` writes `12 34`
 - `u32:0x12345678` writes `12 34 56 78`
@@ -602,7 +602,7 @@ ReplaceFile=1
 !ReplaceFile=1
 ```
 
-`ReplaceFile=0` means "skip if [file](GFF-File-Format) exists", while `ReplaceFile=1` means "overwrite existing [file](GFF-File-Format)".
+`ReplaceFile=0` means "skip if file exists", while `ReplaceFile=1` means "overwrite existing file".
 
 I have no idea why this is the exclusive instance of Stoffe's variables that doesn't use exclamation-point syntax but whatever.
 
@@ -610,9 +610,9 @@ I have no idea why this is the exclusive instance of Stoffe's variables that doe
 
 - PyKotor's HACKList implementation is compatible with TSLPatcher v1.2.10b+
 - All [NCS](NCS-File-Format) versions V1.0 are supported
-- Archive insertion works for [ERF](ERF-File-Format), MOD, and RIM [formats](GFF-File-Format)
+- Archive insertion works for [ERF](ERF-File-Format), MOD, and RIM formats
 - Memory tokens from TLKList and 2DAList [ARE](GFF-File-Format#are-area) fully supported
-- `!FieldPath` is **not** supported (only numeric [values](GFF-File-Format#gff-data-types))
+- `!FieldPath` is **not** supported (only numeric values)
 
 ## See Also
 
@@ -623,21 +623,21 @@ I have no idea why this is the exclusive instance of Stoffe's variables that doe
 
 ## Advanced Topics
 
-### [offset](GFF-File-Format#file-structure-overview) Alignment
+### offset Alignment
 
 When working with [NCS](NCS-File-Format) bytecode, be aware of alignment requirements:
 
 - Instructions start on any [byte](GFF-File-Format#gff-data-types) boundary (no alignment enforced)
 - Operands follow immediately after opcodes
-- Multi-[byte](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) written as-is without padding
+- Multi-[byte](GFF-File-Format#gff-data-types) values [ARE](GFF-File-Format#are-area) written as-is without padding
 
 ### Inserting vs Modifying
 
 **Important:** HACKList can only **modify existing bytes**. It cannot:
 
-- Insert new bytes ([files](GFF-File-Format) would shift [offsets](GFF-File-Format#file-structure-overview))
-- Delete bytes ([files](GFF-File-Format) would shrink)
-- Resize instruction [arrays](2DA-File-Format)
+- Insert new bytes (files would shift offsets)
+- Delete bytes (files would shrink)
+- Resize instruction arrays
 
 For structural changes, use CompileList to recompile from [NSS](NSS-File-Format) source.
 
@@ -662,7 +662,7 @@ HACKList myscript.ncs: writing unsigned WORD (16-bit) 12345 at offset 0x20
 
 HACKList modifications [ARE](GFF-File-Format#are-area) very fast since they're simple binary writes. However:
 
-- Large [files](GFF-File-Format) with many patches may take slightly longer
+- Large files with many patches may take slightly longer
 - Archive insertion requires archive rewriting
 - Always test thoroughly as [byte](GFF-File-Format#gff-data-types)-level modifications can break scripts
 
@@ -675,10 +675,10 @@ HACKList modifications [ARE](GFF-File-Format#are-area) very fast since they're s
 - Crash the game
 - Exploit vulnerabilities
 
-Always validate [offsets](GFF-File-Format#file-structure-overview) and [values](GFF-File-Format#gff-data-types) before distribution.
+Always validate offsets and values before distribution.
 
 ## Conclusion
 
-HACKList provides powerful [byte](GFF-File-Format#gff-data-types)-level control over compiled [NCS](NCS-File-Format) scripts, enabling surgical modifications without source code access. While it requires understanding [NCS](NCS-File-Format) bytecode [structure](GFF-File-Format#file-structure-overview) and careful [offset](GFF-File-Format#file-structure-overview) calculation, it's essential for advanced modding scenarios involving dynamic [value](GFF-File-Format#gff-data-types) injection and hardcoded constant patching.
+HACKList provides powerful [byte](GFF-File-Format#gff-data-types)-level control over compiled [NCS](NCS-File-Format) scripts, enabling surgical modifications without source code access. While it requires understanding [NCS](NCS-File-Format) bytecode structure and careful offset calculation, it's essential for advanced modding scenarios involving dynamic value injection and hardcoded constant patching.
 
 For most modding needs, CompileList ([NSS](NSS-File-Format) source compilation) is preferred. HACKList should be reserved for cases where source code is unavailable or where [byte](GFF-File-Format#gff-data-types)-level precision is required.

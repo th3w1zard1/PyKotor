@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines perception ranges for creatures, including sight and hearing ranges. The engine uses this [file](GFF-File-Format) to determine how far creatures can see and hear.
+**Engine Usage**: Defines perception ranges for creatures, including sight and hearing ranges. The engine uses this file to determine how far creatures can see and hear.
 
-**Row [index](2DA-File-Format#row-labels)**: Range ID (integer)
+**Row index**: Range ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Range label |
+| `label` | string | Range label |
 | `primaryrange` | Float | Primary perception range (sight range) |
 | `secondaryrange` | Float | Secondary perception range (hearing range) |
 

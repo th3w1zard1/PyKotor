@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines facial [animation](MDL-MDX-File-Format#animation-header) expressions for dialog conversations (KotOR 2 only). The engine uses this [file](GFF-File-Format) to determine which facial expression [animation](MDL-MDX-File-Format#animation-header) to play during dialog lines.
+**Engine Usage**: Defines facial [animation](MDL-MDX-File-Format#animation-header) expressions for dialog conversations (KotOR 2 only). The engine uses this file to determine which facial expression [animation](MDL-MDX-File-Format#animation-header) to play during dialog lines.
 
-**Row [index](2DA-File-Format#row-labels)**: Expression ID (integer)
+**Row index**: Expression ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Expression label |
+| `label` | string | Expression label |
 | Additional columns | Various | Facial [animation](MDL-MDX-File-Format#animation-header) properties |
 
 **References**:

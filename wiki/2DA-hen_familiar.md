@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines familiar configurations (HEN - Henchman system). The engine uses this [file](GFF-File-Format) to determine familiar base resource references (not used in game engine).
+**Engine Usage**: Defines familiar configurations (HEN - Henchman system). The engine uses this file to determine familiar base resource references (not used in game engine).
 
-**Row [index](2DA-File-Format#row-labels)**: Familiar ID (integer)
+**Row index**: Familiar ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Familiar label |
+| `label` | string | Familiar label |
 | `baseresref` | [ResRef](GFF-File-Format#gff-data-types) | Base [resource reference](GFF-File-Format#gff-data-types) for familiar (not used in game engine) |
 | Additional columns | Various | Familiar properties |
 

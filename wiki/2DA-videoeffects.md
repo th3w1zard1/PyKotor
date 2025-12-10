@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines video/camera effects for dialog conversations. The engine uses this [file](GFF-File-Format) to determine which visual effect to apply during dialog camera shots.
+**Engine Usage**: Defines video/camera effects for dialog conversations. The engine uses this file to determine which visual effect to apply during dialog camera shots.
 
-**Row [index](2DA-File-Format#row-labels)**: Video Effect ID (integer)
+**Row index**: Video Effect ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Video effect label |
+| `label` | string | Video effect label |
 | Additional columns | Various | Video effect properties |
 
 **References**:

@@ -2,18 +2,18 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines door [type](GFF-File-Format#gff-data-types) configurations and their properties. The engine uses this [file](GFF-File-Format) to determine door [type](GFF-File-Format#gff-data-types) names, [models](MDL-MDX-File-Format), and behaviors.
+**Engine Usage**: Defines door type configurations and their properties. The engine uses this file to determine door type names, [models](MDL-MDX-File-Format), and behaviors.
 
-**Row [index](2DA-File-Format#row-labels)**: Door [type](GFF-File-Format#gff-data-types) ID (integer)
+**Row index**: Door type ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Door [type](GFF-File-Format#gff-data-types) label |
-| `stringrefgame` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for door [type](GFF-File-Format#gff-data-types) name |
-| `model` | [ResRef](GFF-File-Format#gff-data-types) | [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) for the door [type](GFF-File-Format#gff-data-types) |
-| Additional columns | Various | Door [type](GFF-File-Format#gff-data-types) properties |
+| `label` | string | Door type label |
+| `stringrefgame` | [StrRef](TLK-File-Format#string-references-strref) | string reference for door type name |
+| `model` | [ResRef](GFF-File-Format#gff-data-types) | [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) for the door type |
+| Additional columns | Various | Door type properties |
 
 **References**:
 

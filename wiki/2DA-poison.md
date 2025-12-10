@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines poison effect [types](GFF-File-Format#gff-data-types) and their properties. The engine uses this [file](GFF-File-Format) to determine poison effects, durations, and damage calculations.
+**Engine Usage**: Defines poison effect types and their properties. The engine uses this file to determine poison effects, durations, and damage calculations.
 
-**Row [index](2DA-File-Format#row-labels)**: Poison [type](GFF-File-Format#gff-data-types) ID (integer)
+**Row index**: Poison type ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Poison [type](GFF-File-Format#gff-data-types) label |
+| `label` | string | Poison type label |
 | Additional columns | Various | Poison effect properties, damage, and duration |
 
 **References**:

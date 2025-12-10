@@ -261,6 +261,13 @@ OVERLY_BROAD_PATTERNS = [
         "Common word 'field' should not be linked to generic GFF file-structure anchor",
     ),
     (
+        r"^(field|fields)$",
+        [
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'field' should not be linked to generic GFF file-structure-overview anchor",
+    ),
+    (
         r"^(format|formats)$",
         [
             r"GFF-File-Format$",  # Just GFF-File-Format without anchor
@@ -283,12 +290,26 @@ OVERLY_BROAD_PATTERNS = [
         "Common word 'data' should not be linked to generic GFF file-structure anchor",
     ),
     (
+        r"^data$",
+        [
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'data' should not be linked to generic GFF file-structure-overview anchor",
+    ),
+    (
         r"^(structure|structures)$",
         [
             r"GFF-File-Format#file-structure",
             r"GFF-File-Format#file-structure-overview",
         ],
         "Common word 'structure' should not be linked to generic GFF file-structure anchor",
+    ),
+    (
+        r"^(structure|structures)$",
+        [
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'structure' should not be linked to generic GFF file-structure-overview anchor",
     ),
     (
         r"^(string|strings)$",

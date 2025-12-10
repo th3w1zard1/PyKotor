@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines sound effects for [GUI](GFF-File-Format#gui-graphical-user-interface) interactions (button clicks, mouse enter events, etc.). The engine uses this [file](GFF-File-Format) to play appropriate sounds when the player interacts with UI elements.
+**Engine Usage**: Defines sound effects for [GUI](GFF-File-Format#gui-graphical-user-interface) interactions (button clicks, mouse enter events, etc.). The engine uses this file to play appropriate sounds when the player interacts with UI elements.
 
-**Row [index](2DA-File-Format#row-labels)**: Sound ID (integer)
+**Row index**: Sound ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Sound label (e.g., "Clicked_Default", "Entered_Default") |
+| `label` | string | Sound label (e.g., "Clicked_Default", "Entered_Default") |
 | `soundresref` | [ResRef](GFF-File-Format#gff-data-types) | Sound effect [ResRef](GFF-File-Format#gff-data-types) |
 
 **References**:

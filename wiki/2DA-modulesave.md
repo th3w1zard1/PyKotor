@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines which modules should be included in save games. The engine uses this [file](GFF-File-Format) to determine whether a module's state should be persisted when saving the game.
+**Engine Usage**: Defines which modules should be included in save games. The engine uses this file to determine whether a module's state should be persisted when saving the game.
 
-**Row [index](2DA-File-Format#row-labels)**: Module Index (integer)
+**Row index**: Module Index (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Module label |
-| `modulename` | [string](GFF-File-Format#gff-data-types) | Module filename (e.g., "001ebo") |
+| `label` | string | Module label |
+| `modulename` | string | Module filename (e.g., "001ebo") |
 | `includeInSave` | Boolean | Whether module state should be saved (0 = false, 1 = true) |
 
 **References**:

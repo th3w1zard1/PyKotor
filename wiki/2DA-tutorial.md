@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines tutorial window tracking entries. The engine uses this [file](GFF-File-Format) to track which tutorial windows have been shown to the player.
+**Engine Usage**: Defines tutorial window tracking entries. The engine uses this file to track which tutorial windows have been shown to the player.
 
-**Row [index](2DA-File-Format#row-labels)**: Tutorial ID (integer)
+**Row index**: Tutorial ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Tutorial label |
+| `label` | string | Tutorial label |
 | Additional columns | Various | Tutorial window properties |
 
 **References**:

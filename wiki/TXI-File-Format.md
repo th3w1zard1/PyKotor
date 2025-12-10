@@ -1,46 +1,46 @@
-# KotOR [TXI](TXI-File-Format) [file](GFF-File-Format) [format](GFF-File-Format) Documentation
+# KotOR [TXI](TXI-File-Format) file format Documentation
 
-TXI ([texture](TPC-File-Format) Info) [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) compact ASCII descriptors that attach metadata to [TPC](TPC-File-Format) [textures](TPC-File-Format). They control mipmap usage, filtering, [flipbook animation](#animation-and-flipbooks), environment mapping, font atlases, and platform-specific downsampling. Every [TXI file](TXI-File-Format) is parsed at runtime to configure how a [TPC](TPC-File-Format) image is rendered.
+TXI ([texture](TPC-File-Format) Info) files [ARE](GFF-File-Format#are-area) compact ASCII descriptors that attach metadata to [TPC](TPC-File-Format) [textures](TPC-File-Format). They control mipmap usage, filtering, [flipbook animation](#animation-and-flipbooks), environment mapping, font atlases, and platform-specific downsampling. Every [TXI file](TXI-File-Format) is parsed at runtime to configure how a [TPC](TPC-File-Format) image is rendered.
 
 ## Table of Contents
 
-- [KotOR TXI File Format Documentation](#kotor-txi-file-format-documentation)
+- [KotOR TXI file format Documentation](#kotor-txi-file-format-documentation)
   - [Table of Contents](#table-of-contents)
-  - [Format Overview](#format-overview)
+  - [format Overview](#format-overview)
   - [Syntax](#syntax)
     - [Command Lines](#command-lines)
-    - [Coordinate Blocks](#coordinate-blocks)
+    - [coordinate Blocks](#coordinate-blocks)
   - [Command Reference](#command-reference)
     - [Rendering and Filtering](#rendering-and-filtering)
-    - [Material and Environment Controls](#material-and-environment-controls)
-    - [Animation and Flipbooks](#animation-and-flipbooks)
+    - [material and Environment Controls](#material-and-environment-controls)
+    - [animation and Flipbooks](#animation-and-flipbooks)
     - [Font Atlas Layout](#font-atlas-layout)
     - [Streaming and Platform Hints](#streaming-and-platform-hints)
-  - [Relationship to TPC Textures](#relationship-to-tpc-textures)
-    - [Empty TXI Files](#empty-txi-files)
+  - [Relationship to TPC textures](#relationship-to-tpc-textures)
+    - [Empty TXI files](#empty-txi-files)
   - [Implementation Details](#implementation-details)
 
 ---
 
-## [format](GFF-File-Format) Overview
+## format Overview
 
-- [TXI files](TXI-File-Format) [ARE](GFF-File-Format#are-area) plain-text [KEY](KEY-File-Format)/[value](GFF-File-Format#gff-data-types) lists; each command modifies a [field](GFF-File-Format#file-structure-overview) in the [TPC](TPC-File-Format) runtime metadata.  
-- Commands [ARE](GFF-File-Format#are-area) case-insensitive but conventionally lowercase. [values](GFF-File-Format#gff-data-types) can be integers, floats, booleans (`0`/`1`), [ResRefs](GFF-File-Format#gff-data-types), or multi-line [coordinate](GFF-File-Format#are-area) tables.  
-- A single [TXI](TXI-File-Format) can be appended to the end of a `.tpc` file (as Bioware does) or shipped as a sibling `.txi` [file](GFF-File-Format); the parser treats both identically.  
+- [TXI files](TXI-File-Format) [ARE](GFF-File-Format#are-area) plain-text [KEY](KEY-File-Format)/value lists; each command modifies a field in the [TPC](TPC-File-Format) runtime metadata.  
+- Commands [ARE](GFF-File-Format#are-area) case-insensitive but conventionally lowercase. values can be integers, floats, booleans (`0`/`1`), [ResRefs](GFF-File-Format#gff-data-types), or multi-line coordinate tables.  
+- A single [TXI](TXI-File-Format) can be appended to the end of a `.tpc` file (as Bioware does) or shipped as a sibling `.txi` file; the parser treats both identically.  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/txi)
 
 **Vendor References:**
 
 - [`vendor/reone/src/libs/graphics/format/txireader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/txireader.cpp) - Complete C++ [TXI](TXI-File-Format) parser implementation
-- [`vendor/xoreos/src/graphics/images/txi.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/images/txi.cpp) - Generic Aurora [TXI](TXI-File-Format) implementation (shared [format](GFF-File-Format))
+- [`vendor/xoreos/src/graphics/images/txi.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/images/txi.cpp) - Generic Aurora [TXI](TXI-File-Format) implementation (shared format)
 - [`vendor/KotOR.js/src/resource/TXIObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXIObject.ts) - TypeScript [TXI](TXI-File-Format) parser with metadata extraction
 - [`vendor/KotOR.js/src/enums/graphics/txi/`](https://github.com/th3w1zard1/KotOR.js/tree/master/src/enums/graphics/txi) - [TXI](TXI-File-Format) command enumerations
 - [`vendor/KotOR-Unity/Assets/Scripts/Resource/TXI.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/Resource/TXI.cs) - C# Unity [TXI](TXI-File-Format) loader
 
 **See Also:**
 
-- [TPC File Format](TPC-File-Format) - [texture](TPC-File-Format) [format](GFF-File-Format) that [TXI](TXI-File-Format) metadata describes
+- [TPC File Format](TPC-File-Format) - [texture](TPC-File-Format) format that [TXI](TXI-File-Format) metadata describes
 - [MDL/MDX File Format](MDL-MDX-File-Format) - [models](MDL-MDX-File-Format) that reference [textures](TPC-File-Format) with [TXI](TXI-File-Format) metadata  
 
 ---
@@ -53,14 +53,14 @@ TXI ([texture](TPC-File-Format) Info) [files](GFF-File-Format) [ARE](GFF-File-Fo
 <command> <value(s)>
 ```
 
-- Whitespace between command and [value](GFF-File-Format#gff-data-types) is ignored beyond the first separator.  
+- Whitespace between command and value is ignored beyond the first separator.  
 - Boolean toggles use `0` or `1`.  
 - Multiple values (e.g., `channelscale 1.0 0.5 0.5`) are space-separated.  
 - Comments [ARE](GFF-File-Format#are-area) not supported; unknown commands [ARE](GFF-File-Format#are-area) skipped.  
 
-### [coordinate](GFF-File-Format#are-area) Blocks
+### coordinate Blocks
 
-Commands such as `upperleftcoords` and `lowerrightcoords` declare the number of rows, followed by that many lines of [coordinates](GFF-File-Format#are-area):
+Commands such as `upperleftcoords` and `lowerrightcoords` declare the number of rows, followed by that many lines of coordinates:
 
 ```
 upperleftcoords 96
@@ -69,17 +69,17 @@ upperleftcoords 96
 ...
 ```
 
-Each line encodes a UV triplet; UV [coordinates](GFF-File-Format#are-area) follow standard UV mapping conventions (normalized 0–1, `z` column unused).  
+Each line encodes a UV triplet; UV coordinates follow standard UV mapping conventions (normalized 0–1, `z` column unused).  
 
 ---
 
 ## Command Reference
 
-> The tables below summarize the commands implemented by PyKotor’s `TXICommand` enum. [values](GFF-File-Format#gff-data-types) map directly to the [fields](GFF-File-Format#file-structure-overview) described in [`txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKyor/resource/formats/txi/txi_data.py#L700-L830).
+> The tables below summarize the commands implemented by PyKotor’s `TXICommand` enum. values map directly to the fields described in [`txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKyor/resource/formats/txi/txi_data.py#L700-L830).
 
 ### Rendering and Filtering
 
-| Command | Accepted [values](GFF-File-Format#gff-data-types) | Description |
+| Command | Accepted values | Description |
 | ------- | ---------------- | ----------- |
 | `mipmap` | `0`/`1` | Toggles engine mipmap usage (KotOR's sampler mishandles secondary mips; Bioware [textures](TPC-File-Format) usually set `0`). |
 | `filter` | `0`/`1` | Enables simple bilinear filtering of font atlases; `<1>` applies a blur. |
@@ -111,7 +111,7 @@ Each line encodes a UV triplet; UV [coordinates](GFF-File-Format#are-area) follo
 | `fps` | Frames per second for playback. |
 | `speed` | Legacy alias for `fps` (still parsed for compatibility). |
 
-When `proceduretype=cycle`, PyKotor splits the [TPC](#tpc-file-format-documentation) into `numx × numy` layers and advances them at `fps` (see [`io_tpc.py:169-190`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L169-L190)).
+When `proceduretype=cycle`, PyKotor splits the [TPC](TPC-File-Format) into `numx × numy` layers and advances them at `fps` (see [`io_tpc.py:169-190`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L169-L190)).
 
 ### Font Atlas Layout
 
@@ -121,10 +121,10 @@ KotOR’s bitmap fonts use [TXI](TXI-File-Format) commands to describe glyph box
 | ------- | ----------- |
 | `baselineheight`, `fontheight`, `fontwidth`, `caretindent`, `spacingB`, `spacingR` | Control glyph metrics for UI fonts. |
 | `rows`, `cols`, `numchars`, `numcharspersheet` | Describe how many glyphs [ARE](GFF-File-Format#are-area) stored per sheet. |
-| `upperleftcoords`, `lowerrightcoords` | [arrays](2DA-File-Format) of UV [coordinates](GFF-File-Format#are-area) for each glyph corner. |
+| `upperleftcoords`, `lowerrightcoords` | arrays of UV coordinates for each glyph corner. |
 | `codepage`, `isdoublebyte`, `dbmapping` | Support multi-[byte](GFF-File-Format#gff-data-types) font atlases (Asian locales). |
 
-KotOR.js exposes identical [structures](GFF-File-Format#file-structure-overview) in [`src/resource/TXI.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXI.ts#L16-L255), ensuring the [coordinates](GFF-File-Format#are-area) here match the engine’s expectations.
+KotOR.js exposes identical structures in [`src/resource/TXI.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXI.ts#L16-L255), ensuring the coordinates here match the engine’s expectations.
 
 ### Streaming and Platform Hints
 
@@ -139,11 +139,11 @@ KotOR.js exposes identical [structures](GFF-File-Format#file-structure-overview)
 
 ## Relationship to [TPC](TPC-File-Format) [textures](TPC-File-Format)
 
-- A [TXI](TXI-File-Format) modifies the rendering pipeline for its paired [TPC](#tpc-file-format-documentation): mipmap [flags](GFF-File-Format#gff-data-types) alter sampler state, [animation](MDL-MDX-File-Format#animation-header) directives convert a single [texture](TPC-File-Format) into multiple layers, and [material](MDL-MDX-File-Format#trimesh-header) directives attach bump/shine maps.  
-- When embedded inside a `.tpc` [file](GFF-File-Format), the [TXI](TXI-File-Format) text starts immediately after the binary payload; PyKotor reads it by seeking past the [texture](TPC-File-Format) [data](GFF-File-Format#file-structure-overview) and consuming the remaining bytes as ASCII (`io_tpc.py:158-188`).  
-- Exported `.txi` [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) plain UTF-8 text and can be edited with any text editor; tools like `tga2tpc` and KotORBlender reserialize them alongside [TPC](#tpc-file-format-documentation) assets.
+- A [TXI](TXI-File-Format) modifies the rendering pipeline for its paired [TPC](TPC-File-Format): mipmap [flags](GFF-File-Format#gff-data-types) alter sampler state, [animation](MDL-MDX-File-Format#animation-header) directives convert a single [texture](TPC-File-Format) into multiple layers, and [material](MDL-MDX-File-Format#trimesh-header) directives attach bump/shine maps.  
+- When embedded inside a `.tpc` file, the [TXI](TXI-File-Format) text starts immediately after the binary payload; PyKotor reads it by seeking past the [texture](TPC-File-Format) data and consuming the remaining bytes as ASCII (`io_tpc.py:158-188`).  
+- Exported `.txi` files [ARE](GFF-File-Format#are-area) plain UTF-8 text and can be edited with any text editor; tools like `tga2tpc` and KotORBlender reserialize them alongside [TPC](TPC-File-Format) assets.
 
-### Empty [TXI](TXI-File-Format) [files](GFF-File-Format)
+### Empty [TXI](TXI-File-Format) files
 
 Many [TXI files](TXI-File-Format) in the game installation [ARE](GFF-File-Format#are-area) **empty** (0 bytes). These empty [TXI files](TXI-File-Format) serve as placeholders and indicate that the [texture](TPC-File-Format) should use default rendering settings. When a [TXI file](TXI-File-Format) is empty or missing, the engine falls back to default [texture](TPC-File-Format) parameters.
 
@@ -168,14 +168,14 @@ Many [TXI files](TXI-File-Format) in the game installation [ARE](GFF-File-Format
 - `lda_ehawk01a.txi` - Contains `envmaptexture CM_jedcom`
 - `lda_flr07.txi` - Contains `bumpyshinytexture CM_dantii` and `bumpmaptexture LDA_flr01B`
 
-**Kit Generation Note:** When generating kits from module RIM [files](GFF-File-Format), empty [TXI files](TXI-File-Format) should still be created as placeholders even if they don't exist in the installation. This ensures kit completeness and matches the expected kit [structure](GFF-File-Format#file-structure-overview) where many [textures](TPC-File-Format) have corresponding (empty) [TXI files](TXI-File-Format).  
+**Kit Generation Note:** When generating kits from module RIM files, empty [TXI files](TXI-File-Format) should still be created as placeholders even if they don't exist in the installation. This ensures kit completeness and matches the expected kit structure where many [textures](TPC-File-Format) have corresponding (empty) [TXI files](TXI-File-Format).  
 
 ---
 
 ## Implementation Details
 
 - **Parser:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/io_txi.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/io_txi.py)  
-- **[data](GFF-File-Format#file-structure-overview) [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py)  
+- **data [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/graphics/format/txireader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/txireader.cpp)  
   - [`vendor/KotOR.js/src/resource/TXI.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXI.ts)  

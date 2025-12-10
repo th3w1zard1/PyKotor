@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines master feat configurations. The engine uses this [file](GFF-File-Format) to determine master feat names and properties.
+**Engine Usage**: Defines master feat configurations. The engine uses this file to determine master feat names and properties.
 
-**Row [index](2DA-File-Format#row-labels)**: Master Feat ID (integer)
+**Row index**: Master Feat ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Master feat label |
-| `strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for master feat name |
+| `label` | string | Master feat label |
+| `strref` | [StrRef](TLK-File-Format#string-references-strref) | string reference for master feat name |
 | Additional columns | Various | Master feat properties |
 
 **References**:

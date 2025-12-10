@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines character generation clothing configurations. The engine uses this [file](GFF-File-Format) to determine starting clothing items for character creation.
+**Engine Usage**: Defines character generation clothing configurations. The engine uses this file to determine starting clothing items for character creation.
 
-**Row [index](2DA-File-Format#row-labels)**: Character Generation Clothes ID (integer)
+**Row index**: Character Generation Clothes ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Character generation clothes label |
+| `label` | string | Character generation clothes label |
 | `itemresref` | [ResRef](GFF-File-Format#gff-data-types) | Item [resource reference](GFF-File-Format#gff-data-types) for clothing |
 | Additional columns | Various | Character generation clothes properties |
 

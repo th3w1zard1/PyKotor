@@ -1,10 +1,10 @@
 # TSLPatcher GFFList Syntax Documentation
 
-This guide explains how to modify [GFF files](GFF-File-Format) using TSLPatcher syntax. For the complete [GFF file](GFF-File-Format) [format](GFF-File-Format) specification, see [GFF File Format](GFF-File-Format). For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
+This guide explains how to modify [GFF files](GFF-File-Format) using TSLPatcher syntax. For the complete [GFF file](GFF-File-Format) format specification, see [GFF File Format](GFF-File-Format). For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
 ## Overview
 
-The `[GFFList]` section in TSLPatcher's `changes.ini` lets you edit or add [data](GFF-File-Format#file-structure-overview) inside GFF (Generic [file](GFF-File-Format) [format](GFF-File-Format)) [files](GFF-File-Format) used across KotOR. You will use this to change items (.UTI), creatures (.[UTC](GFF-File-Format#utc-creature)), dialogs (.DLG), placeables (.UTP), triggers (.UTT), waypoints (.UTW), modules (.MOD), areas (.[ARE](GFF-File-Format#are-area)), journal entries (.JRL), paths (.PTH), module info (.IFO), and scripts data (.[GIT](GFF-File-Format#git-game-instance-template)).
+The `[GFFList]` section in TSLPatcher's `changes.ini` lets you edit or add data inside GFF (Generic file format) files used across KotOR. You will use this to change items (.UTI), creatures (.[UTC](GFF-File-Format#utc-creature)), dialogs (.DLG), placeables (.UTP), triggers (.UTT), waypoints (.UTW), modules (.MOD), areas (.[ARE](GFF-File-Format#are-area)), journal entries (.JRL), paths (.PTH), module info (.IFO), and scripts data (.[GIT](GFF-File-Format#git-game-instance-template)).
 
 If you can fill out a form, you can use `[GFFList]`.
 
@@ -27,21 +27,21 @@ If you can fill out a form, you can use `[GFFList]`.
 ## Quick Start
 
 <!-- markdownlint-disable MD029 -->
-1. Add your [file](GFF-File-Format) under `[GFFList]`
+1. Add your file under `[GFFList]`
 
 ```ini
 [GFFList]
 File0=my_item.uti
 ```
 
-2. Create a section named exactly like that [file](GFF-File-Format) and set where to save it:
+2. Create a section named exactly like that file and set where to save it:
 
 ```ini
 [my_item.uti]
 !Destination=override
 ```
 
-3. Change an existing [field](GFF-File-Format#file-structure-overview) by writing its path on the left and the new [value](GFF-File-Format#gff-data-types) on the right:
+3. Change an existing field by writing its path on the left and the new value on the right:
 
 ```ini
 BaseItem=28
@@ -49,7 +49,7 @@ LocalizedName(strref)=12345
 Comment(lang0)=Hello there
 ```
 
-4. Add a brand-new [field](GFF-File-Format#file-structure-overview) using `AddField#` → create another section for its details:
+4. Add a brand-new field using `AddField#` → create another section for its details:
 
 ```ini
 AddField0=new_property
@@ -61,7 +61,7 @@ Label=
 TypeId=7
 ```
 
-5. Use tokens when a [value](GFF-File-Format#gff-data-types) comes from earlier steps ([TLK](TLK-File-Format)/[2DA](2DA-File-Format)):
+5. Use tokens when a value comes from earlier steps ([TLK](TLK-File-Format)/[2DA](2DA-File-Format)):
 
 ```ini
 ModelVariation=2DAMEMORY5
@@ -69,25 +69,25 @@ Description=StrRef10
 ```
 <!-- markdownlint-enable MD029 -->
 
-That's it. The rest of this page explains the knobs and dials you'll use as your [files](GFF-File-Format) get more complex.
+That's it. The rest of this page explains the knobs and dials you'll use as your files get more complex.
 
 ## Cheatsheet
 
 - Paths use backslashes: `Parent\Child\Field`
 - Lists use numbers: `RepliesList\0\Text`
-- Localized [strings](GFF-File-Format#gff-data-types) use parentheses on the [field](GFF-File-Format#file-structure-overview) name:
+- Localized strings use parentheses on the field name:
   - `(strref)` → set the [dialog.tlk](TLK-File-Format) reference
   - `(lang0)`..`(lang9)` → set per-language text
-- [vectors](GFF-File-Format#gff-data-types): `Position=1.5|2.0|3.0`, `Orientation=0.0|0.0|0.0|1.0`
-- Tokens as [values](GFF-File-Format#gff-data-types):
+- vectors: `Position=1.5|2.0|3.0`, `Orientation=0.0|0.0|0.0|1.0`
+- Tokens as values:
   - `[StrRef](TLK-File-Format#string-references-strref)#` → a [TLK](TLK-File-Format) token you set elsewhere
   - `2DAMEMORY#` → a [2DA](2DA-File-Format) token you set elsewhere
-- Tokens for dynamic [field](GFF-File-Format#file-structure-overview) targets and list [indices](2DA-File-Format#row-labels):
+- Tokens for dynamic field targets and list indices:
   - In AddField: `2DAMEMORY#=ListIndex` saves where a struct was inserted
-  - `2DAMEMORY#=!FieldPath` saves the full path to a [field](GFF-File-Format#file-structure-overview) you just added
-  - Later: use that `2DAMEMORY#` in place of a [field](GFF-File-Format#file-structure-overview) path to modify it
+  - `2DAMEMORY#=!FieldPath` saves the full path to a field you just added
+  - Later: use that `2DAMEMORY#` in place of a field path to modify it
 
-## Basic [structure](GFF-File-Format#file-structure-overview)
+## Basic structure
 
 ```ini
 [GFFList]
@@ -122,46 +122,46 @@ Value=42
 
 The `[GFFList]` section declares [GFF files](GFF-File-Format) to patch. Each entry references another section with the same name as the filename.
 
-## [file](GFF-File-Format)-Level Configuration
+## file-Level Configuration
 
 ### Top-Level Keys in [GFFList]
 
-| [KEY](KEY-File-Format) | [type](GFF-File-Format#data-types) | Default | Description |
+| [KEY](KEY-File-Format) | type | Default | Description |
 |-----|------|---------|-------------|
-| `!DefaultDestination` | [string](GFF-File-Format#gff-data-types) | `override` | Default destination for all [GFF files](GFF-File-Format) in this section |
-| `!DefaultSourceFolder` | [string](GFF-File-Format#gff-data-types) | `.` | Default source folder for [GFF files](GFF-File-Format). Relative path from `mod_path` (typically the `tslpatchdata` folder, which is the parent directory of `changes.ini` and `namespaces.ini`). When `.`, refers to the `tslpatchdata` folder itself. Path resolution: `mod_path / !DefaultSourceFolder / filename` |
+| `!DefaultDestination` | string | `override` | Default destination for all [GFF files](GFF-File-Format) in this section |
+| `!DefaultSourceFolder` | string | `.` | Default source folder for [GFF files](GFF-File-Format). Relative path from `mod_path` (typically the `tslpatchdata` folder, which is the parent directory of `changes.ini` and `namespaces.ini`). When `.`, refers to the `tslpatchdata` folder itself. Path resolution: `mod_path / !DefaultSourceFolder / filename` |
 
-### [file](GFF-File-Format) Section Configuration
+### file Section Configuration
 
 Each [GFF file](GFF-File-Format) requires its own section (e.g., `[example.dlg]`).
 
-| Key | [type](GFF-File-Format#data-types) | Default | Description |
+| Key | type | Default | Description |
 |-----|------|---------|-------------|
-| `!Destination` | [string](GFF-File-Format#gff-data-types) | Inherited from `!DefaultDestination` | Where to save the modified file (`override` or `path\to\file.mod`) |
-| `!SourceFolder` | [string](GFF-File-Format#gff-data-types) | Inherited from `!DefaultSourceFolder` | Source folder for the [GFF file](GFF-File-Format). Relative path from `mod_path` (typically the tslpatchdata folder). When `.`, refers to the tslpatchdata folder itself. |
-| `!SourceFile` | [string](GFF-File-Format#gff-data-types) | Same as section name | Alternative source filename (useful for multiple setup options using different source [files](GFF-File-Format)) |
-| `!ReplaceFile` | 0/1 | 0 | If `1`, overwrite existing [file](GFF-File-Format) before applying modifications. If `0` (default), modify the existing [file](GFF-File-Format) in place. |
-| `!SaveAs` | [string](GFF-File-Format#gff-data-types) | Same as section name | Alternative filename to save as (useful for renaming [files](GFF-File-Format) during installation) |
-| `!OverrideType` | [string](GFF-File-Format#gff-data-types) | `ignore` | How to handle existing [files](GFF-File-Format) in Override when destination is an [ERF](ERF-File-Format)/RIM archive. Valid [values](GFF-File-Format#gff-data-types): `ignore` (default), `warn` (log warning), `rename` (prefix with `old_`) |
+| `!Destination` | string | Inherited from `!DefaultDestination` | Where to save the modified file (`override` or `path\to\file.mod`) |
+| `!SourceFolder` | string | Inherited from `!DefaultSourceFolder` | Source folder for the [GFF file](GFF-File-Format). Relative path from `mod_path` (typically the tslpatchdata folder). When `.`, refers to the tslpatchdata folder itself. |
+| `!SourceFile` | string | Same as section name | Alternative source filename (useful for multiple setup options using different source files) |
+| `!ReplaceFile` | 0/1 | 0 | If `1`, overwrite existing file before applying modifications. If `0` (default), modify the existing file in place. |
+| `!SaveAs` | string | Same as section name | Alternative filename to save as (useful for renaming files during installation) |
+| `!OverrideType` | string | `ignore` | How to handle existing files in Override when destination is an [ERF](ERF-File-Format)/RIM archive. Valid values: `ignore` (default), `warn` (log warning), `rename` (prefix with `old_`) |
 
-**Destination [values](GFF-File-Format#gff-data-types):**
+**Destination values:**
 
 - `override` or empty: Save to the Override folder
 - `Modules\module.mod`: Insert into an [ERF](ERF-File-Format)/MOD/RIM archive (use backslashes for path separators)
 - Archive paths must be relative to the game folder root
 
-**Source [file](GFF-File-Format) Resolution:**
+**Source file Resolution:**
 
-The patcher resolves source [files](GFF-File-Format) in this order:
+The patcher resolves source files in this order:
 
-1. If `!ReplaceFile=1` or [file](GFF-File-Format) doesn't exist at destination: Load from `mod_path / !SourceFolder / !SourceFile` (or section name if `!SourceFile` not set)
-2. Otherwise: Load existing [file](GFF-File-Format) from destination location (override or archive)
+1. If `!ReplaceFile=1` or file doesn't exist at destination: Load from `mod_path / !SourceFolder / !SourceFile` (or section name if `!SourceFile` not set)
+2. Otherwise: Load existing file from destination location (override or archive)
 3. Apply all modifications from the section
 4. Save to `!Destination` with name `!SaveAs` (or section name if `!SaveAs` not set)
 
-## Modifying Existing [fields](GFF-File-Format#file-structure-overview)
+## Modifying Existing fields
 
-To change an existing [field](GFF-File-Format#file-structure-overview)'s [value](GFF-File-Format#gff-data-types), use the [field](GFF-File-Format#file-structure-overview) name as the [KEY](KEY-File-Format):
+To change an existing field's value, use the field name as the [KEY](KEY-File-Format):
 
 ```ini
 [example.uti]
@@ -183,23 +183,23 @@ Position=1.5|2.0|3.0
 Orientation=0.0|0.0|0.0|1.0
 ```
 
-### [field](GFF-File-Format#file-structure-overview) Path Syntax
+### field Path Syntax
 
 - Use backslash (`\`) to separate hierarchy levels
-- Use numeric [indices](2DA-File-Format#row-labels) for list elements: `ListName\0\Field`
+- Use numeric indices for list elements: `ListName\0\Field`
 - Case-sensitive labels
-- Parenthesis syntax for complex [types](GFF-File-Format#gff-data-types):
-  - `FieldName(strref)` for localized [string](GFF-File-Format#gff-data-types) [StrRef](TLK-File-Format#string-references-strref)
-  - `FieldName(lang0)` through `FieldName(lang9)` for language/gender [strings](GFF-File-Format#gff-data-types)
+- Parenthesis syntax for complex types:
+  - `FieldName(strref)` for localized string [StrRef](TLK-File-Format#string-references-strref)
+  - `FieldName(lang0)` through `FieldName(lang9)` for language/gender strings
 
-**Supported Memory Token [formats](GFF-File-Format):**
+**Supported Memory Token formats:**
 
 - `[StrRef](TLK-File-Format#string-references-strref)#` - References [TLK](TLK-File-Format) memory token
 - `2DAMEMORY#` - References [2DA](2DA-File-Format) memory token
 
-## Adding New [fields](GFF-File-Format#file-structure-overview)
+## Adding New fields
 
-Use `AddFieldN` keys to define new [fields](GFF-File-Format#file-structure-overview). Each requires its own section:
+Use `AddFieldN` keys to define new fields. Each requires its own section:
 
 ```ini
 [example.uti]
@@ -212,33 +212,33 @@ Label=NewProperty
 Value=123
 ```
 
-### AddField Section [structure](GFF-File-Format#file-structure-overview)
+### AddField Section structure
 
-| [KEY](KEY-File-Format) | [type](GFF-File-Format#data-types) | Required | Description |
+| [KEY](KEY-File-Format) | type | Required | Description |
 |-----|------|----------|-------------|
-| `FieldType` | [string](GFF-File-Format#gff-data-types) | Yes | One of: [byte](GFF-File-Format#gff-data-types), [char](GFF-File-Format#gff-data-types), Word, Short, DWORD, Int, Int64, [double](GFF-File-Format#gff-data-types), [float](GFF-File-Format#gff-data-types), ExoString, [ResRef](GFF-File-Format#gff-data-types), ExoLocString, Binary, Struct, List, [orientation](MDL-MDX-File-Format#node-header), [position](MDL-MDX-File-Format#node-header) |
-| `Label` | [string](GFF-File-Format#gff-data-types) | Yes* | [field](GFF-File-Format#file-structure-overview) name (max 16 alphanumeric characters, no spaces). Must be unique within the same STRUCT parent. |
-| `Path` | [string](GFF-File-Format#gff-data-types) | No | [field](GFF-File-Format#file-structure-overview) location in [GFF](GFF-File-Format) hierarchy. Empty string (`Path=`) means root level. For nested AddField sections, if `Path` is empty or not specified, it inherits the path from the parent AddField. Use backslashes to separate hierarchy levels. |
-| `Value` | varies | Conditional | [field](GFF-File-Format#file-structure-overview) value (see [field](GFF-File-Format#file-structure-overview) [types](GFF-File-Format#gff-data-types) below). Not used for Struct, List, or ExoLocString [types](GFF-File-Format#gff-data-types). |
-| `[StrRef](TLK-File-Format#string-references-strref)` | int/[string](GFF-File-Format#gff-data-types) | LocString only | [TLK](TLK-File-Format) stringref [value](GFF-File-Format#gff-data-types), `[StrRef](TLK-File-Format#string-references-strref)#` token, `2DAMEMORY#` token, or `-1` (no dialog.tlk reference) |
-| `TypeId` | int/[string](GFF-File-Format#gff-data-types) | Struct only | Struct [type](GFF-File-Format#data-types) ID (numeric), `ListIndex` (auto-set to list [index](2DA-File-Format#row-labels)), `[StrRef](TLK-File-Format#string-references-strref)#` token, or `2DAMEMORY#` token |
-| `lang#` | [string](GFF-File-Format#gff-data-types) | LocString only | Localized [string](GFF-File-Format#gff-data-types) entries where `#` is the language+gender ID (0-9). Use `<#LF#>` for linefeeds. |
-| `AddField#` | [string](GFF-File-Format#gff-data-types) | No | Reference to another section for nested [field](GFF-File-Format#file-structure-overview) addition |
-| `2DAMEMORY#` | [string](GFF-File-Format#gff-data-types) | No | Store [field](GFF-File-Format#file-structure-overview) path (`!FieldPath`), list index (`ListIndex`), or copy from another token (`2DAMEMORY#`) |
+| `FieldType` | string | Yes | One of: [byte](GFF-File-Format#gff-data-types), [char](GFF-File-Format#gff-data-types), Word, Short, DWORD, Int, Int64, [double](GFF-File-Format#gff-data-types), [float](GFF-File-Format#gff-data-types), ExoString, [ResRef](GFF-File-Format#gff-data-types), ExoLocString, Binary, Struct, List, orientation, position |
+| `Label` | string | Yes* | field name (max 16 alphanumeric characters, no spaces). Must be unique within the same STRUCT parent. |
+| `Path` | string | No | field location in [GFF](GFF-File-Format) hierarchy. Empty string (`Path=`) means root level. For nested AddField sections, if `Path` is empty or not specified, it inherits the path from the parent AddField. Use backslashes to separate hierarchy levels. |
+| `Value` | varies | Conditional | field value (see field types below). Not used for Struct, List, or ExoLocString types. |
+| `[StrRef](TLK-File-Format#string-references-strref)` | int/string | LocString only | [TLK](TLK-File-Format) stringref value, `[StrRef](TLK-File-Format#string-references-strref)#` token, `2DAMEMORY#` token, or `-1` (no dialog.tlk reference) |
+| `TypeId` | int/string | Struct only | Struct type ID (numeric), `ListIndex` (auto-set to list index), `[StrRef](TLK-File-Format#string-references-strref)#` token, or `2DAMEMORY#` token |
+| `lang#` | string | LocString only | Localized string entries where `#` is the language+gender ID (0-9). Use `<#LF#>` for linefeeds. |
+| `AddField#` | string | No | Reference to another section for nested field addition |
+| `2DAMEMORY#` | string | No | Store field path (`!FieldPath`), list index (`ListIndex`), or copy from another token (`2DAMEMORY#`) |
 
-*Label is optional (blank) **only** when adding a STRUCT to a LIST [field](GFF-File-Format#file-structure-overview). All other [field](GFF-File-Format#file-structure-overview) [types](GFF-File-Format#gff-data-types) require a label, including [fields](GFF-File-Format#file-structure-overview) added inside structs.
+*Label is optional (blank) **only** when adding a STRUCT to a LIST field. All other field types require a label, including fields added inside structs.
 
-### Understanding Struct vs [field](GFF-File-Format#file-structure-overview) Addition
+### Understanding Struct vs field Addition
 
 There [ARE](GFF-File-Format#are-area) two distinct scenarios when using AddField:
 
-1. **Adding a STRUCT to a LIST**: When you want to add a new element to an existing LIST [field](GFF-File-Format#file-structure-overview)
+1. **Adding a STRUCT to a LIST**: When you want to add a new element to an existing LIST field
    - `FieldType=Struct` is required
    - `Label=` must be **blank** (LIST elements don't have labels)
-   - `Path=` must point to the LIST [field](GFF-File-Format#file-structure-overview) name (e.g., `Path=RepliesList`)
+   - `Path=` must point to the LIST field name (e.g., `Path=RepliesList`)
    - The struct will be appended to the end of the list
 
-2. **Adding a [field](GFF-File-Format#file-structure-overview) to a STRUCT**: When you want to add any [field](GFF-File-Format#file-structure-overview) type (including structs) inside an existing or newly-created STRUCT
+2. **Adding a field to a STRUCT**: When you want to add any field type (including structs) inside an existing or newly-created STRUCT
    - Any `FieldType` is allowed
    - `Label=` is **required** (except when the struct itself is being added to a list)
    - `Path=` can be empty to inherit from parent, or explicit to target a specific location
@@ -261,9 +261,9 @@ Label=MyField            ; MUST have a label - fields have names
 Value=42
 ```
 
-### Path Inheritance for Nested [fields](GFF-File-Format#file-structure-overview)
+### Path Inheritance for Nested fields
 
-When adding nested [fields](GFF-File-Format#file-structure-overview) via `AddField#`, child sections automatically inherit the parent's resolved path if their `Path=` is empty. This allows you to build complex nested [structures](GFF-File-Format#file-structure-overview) without repeating full paths.
+When adding nested fields via `AddField#`, child sections automatically inherit the parent's resolved path if their `Path=` is empty. This allows you to build complex nested structures without repeating full paths.
 
 **Basic Path Inheritance (Struct within Struct):**
 
@@ -283,7 +283,7 @@ Value=42
 
 **Path Inheritance with Lists (Special Case):**
 
-When adding a STRUCT to a LIST, the patcher automatically resolves the list [index](2DA-File-Format#row-labels) at runtime. Child [fields](GFF-File-Format#file-structure-overview) added inside that struct inherit a path that includes the resolved [index](2DA-File-Format#row-labels):
+When adding a STRUCT to a LIST, the patcher automatically resolves the list index at runtime. Child fields added inside that struct inherit a path that includes the resolved index:
 
 ```ini
 [example.dlg]
@@ -316,14 +316,14 @@ Value=
 **How Path Resolution Works:**
 
 1. When you add a STRUCT to a LIST with `Path=MyList`, the patcher:
-   - Finds the LIST [field](GFF-File-Format#file-structure-overview) named "MyList"
+   - Finds the LIST field named "MyList"
    - Appends the new struct to the end of that list
-   - The struct's [position](MDL-MDX-File-Format#node-header) becomes its index (0-based: first element is 0, second is 1, etc.)
+   - The struct's position becomes its index (0-based: first element is 0, second is 1, etc.)
 
 2. When child AddField sections have `Path=` empty:
    - They inherit the parent's resolved path
-   - For structs in lists, this includes the dynamically-resolved [index](2DA-File-Format#row-labels)
-   - Example: If the struct was added as the 5th element ([index](2DA-File-Format#row-labels) 4), child [fields](GFF-File-Format#file-structure-overview) inherit `MyList\4\{field}`
+   - For structs in lists, this includes the dynamically-resolved index
+   - Example: If the struct was added as the 5th element (index 4), child fields inherit `MyList\4\{field}`
 
 3. You can override inheritance by explicitly setting `Path=` in the child section
 
@@ -383,7 +383,7 @@ Label=Data               ; Required - field inside struct
 Value=42
 ```
 
-**Example 3: Complex Dialog Entry (Struct in List with Multiple Nested [fields](GFF-File-Format#file-structure-overview))**
+**Example 3: Complex Dialog Entry (Struct in List with Multiple Nested fields)**
 
 ```ini
 [example.dlg]
@@ -459,38 +459,38 @@ Label=CustomPath
 Value=2
 ```
 
-## [field](GFF-File-Format#file-structure-overview) [types](GFF-File-Format#gff-data-types) and [value](GFF-File-Format#gff-data-types) Syntax
+## field types and value Syntax
 
-### Integer [types](GFF-File-Format#gff-data-types)
+### Integer types
 
-| [field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#data-types) | [size](GFF-File-Format#file-structure-overview) | Range | Example |
+| field type | size | Range | Example |
 |------------|------|-------|---------|
-| Byte ([uint8](GFF-File-Format#gff-data-types)) | 8-[bit](GFF-File-Format#gff-data-types) unsigned | 0 to 255 | `Value=128` |
-| Char (Int8) | 8-[bit](GFF-File-Format#gff-data-types) signed | -128 to 127 | `Value=-50` |
-| Word ([uint16](GFF-File-Format#gff-data-types)) | 16-[bit](GFF-File-Format#gff-data-types) unsigned | 0 to 65535 | `Value=1024` |
-| Short ([int16](GFF-File-Format#gff-data-types)) | 16-[bit](GFF-File-Format#gff-data-types) signed | -32768 to 32767 | `Value=-4096` |
-| DWORD ([uint32](GFF-File-Format#gff-data-types)) | 32-[bit](GFF-File-Format#gff-data-types) unsigned | 0 to 4294967295 | `Value=123456` |
-| Int ([int32](GFF-File-Format#gff-data-types)) | 32-[bit](GFF-File-Format#gff-data-types) signed | -2147483648 to 2147483647 | `Value=-1000000` |
-| Int64 | 64-[bit](GFF-File-Format#gff-data-types) signed | -9223372036854775808 to 9223372036854775807 | `Value=1234567890` |
+| Byte ([uint8](GFF-File-Format#gff-data-types)) | 8-bit unsigned | 0 to 255 | `Value=128` |
+| Char (Int8) | 8-bit signed | -128 to 127 | `Value=-50` |
+| Word ([uint16](GFF-File-Format#gff-data-types)) | 16-bit unsigned | 0 to 65535 | `Value=1024` |
+| Short ([int16](GFF-File-Format#gff-data-types)) | 16-bit signed | -32768 to 32767 | `Value=-4096` |
+| DWORD ([uint32](GFF-File-Format#gff-data-types)) | 32-bit unsigned | 0 to 4294967295 | `Value=123456` |
+| Int ([int32](GFF-File-Format#gff-data-types)) | 32-bit signed | -2147483648 to 2147483647 | `Value=-1000000` |
+| Int64 | 64-bit signed | -9223372036854775808 to 9223372036854775807 | `Value=1234567890` |
 
-### Float [types](GFF-File-Format#gff-data-types)
+### Float types
 
-| [field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#data-types) | [size](GFF-File-Format#file-structure-overview) | Precision | Example |
+| field type | size | Precision | Example |
 |------------|------|-----------|---------|
-| Float (Single) | 32-[bit](GFF-File-Format#gff-data-types) | ~7 digits | `Value=3.14159` |
-| Double | 64-[bit](GFF-File-Format#gff-data-types) | ~15 digits | `Value=2.718281828` |
+| Float (Single) | 32-bit | ~7 digits | `Value=3.14159` |
+| Double | 64-bit | ~15 digits | `Value=2.718281828` |
 
-### [string](GFF-File-Format#gff-data-types) and Resource [types](GFF-File-Format#gff-data-types)
+### string and Resource types
 
-| [field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#data-types) | Description | Example |
+| field type | Description | Example |
 |------------|-------------|---------|
 | ExoString | [null-terminated string](https://en.cppreference.com/w/c/string/byte) | `Value=Hello World` |
 | [ResRef](GFF-File-Format#gff-data-types) | Resource reference (max 16 chars) | `Value=myscript` |
 | Binary | Binary data (hex/base64) | `Value=0xFF00FF00` or `Value=base64data` (HoloPatcher only) |
 
-### Complex [types](GFF-File-Format#gff-data-types)
+### Complex types
 
-#### ExoLocString (Localized [string](GFF-File-Format#gff-data-types))
+#### ExoLocString (Localized string)
 
 ```ini
 [localized_field]
@@ -502,9 +502,9 @@ lang0=Hello World
 lang3=Bonjour le monde
 ```
 
-- `StrRef`: Numeric [value](GFF-File-Format#gff-data-types), `StrRef#`, `2DAMEMORY#`, or `-1`
+- `StrRef`: Numeric value, `StrRef#`, `2DAMEMORY#`, or `-1`
 - `lang#`: Language+gender substring (see table below)
-- Use `<#LF#>` for linefeeds/carriage returns in lang# [values](GFF-File-Format#gff-data-types)
+- Use `<#LF#>` for linefeeds/carriage returns in lang# values
 
 #### Position (Vector3)
 
@@ -542,7 +542,7 @@ AddField0=nested_field
 ```
 
 - `TypeId`: Numeric type ID, `ListIndex`, `StrRef#`, or `2DAMEMORY#`
-- `AddFieldN`: Child [fields](GFF-File-Format#file-structure-overview)
+- `AddFieldN`: Child fields
 
 #### List
 
@@ -570,11 +570,11 @@ Value=0xFF00FF00
 
 **Supported formats (auto-detected):**
 
-1. **Binary [string](GFF-File-Format#gff-data-types)**: `Value=10101010` (sequence of 0s and 1s, processed in 8-[bit](GFF-File-Format#gff-data-types) chunks)
-2. **Hex [string](GFF-File-Format#gff-data-types)**: `Value=0xFF00FF00` or `Value=FF00FF00` (hexadecimal, even length required; `0x` prefix optional)
+1. **Binary string**: `Value=10101010` (sequence of 0s and 1s, processed in 8-bit chunks)
+2. **Hex string**: `Value=0xFF00FF00` or `Value=FF00FF00` (hexadecimal, even length required; `0x` prefix optional)
 3. **Base64**: `Value=SGVsbG8gV29ybGQ=` (standard Base64 encoding)
 
-**Note:** The Binary [field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#data-types) is a HoloPatcher extension and is not supported by classic TSLPatcher. Classic TSLPatcher does not support adding Binary [fields](GFF-File-Format#file-structure-overview) via GFFList.
+**Note:** The Binary field type is a HoloPatcher extension and is not supported by classic TSLPatcher. Classic TSLPatcher does not support adding Binary fields via GFFList.
 
 ### Language/Gender IDs for LocString
 
@@ -595,7 +595,7 @@ Value=0xFF00FF00
 
 ### 2DAMEMORY Tokens
 
-Store and retrieve [2DA](2DA-File-Format) [data](GFF-File-Format#file-structure-overview):
+Store and retrieve [2DA](2DA-File-Format) data:
 
 ```ini
 [example.uti]
@@ -617,15 +617,15 @@ TypeId=5
 
 **2DAMEMORY# Usage:**
 
-1. At [file](GFF-File-Format) level:
-   - `2DAMEMORY#=!FieldPath` - Store absolute [field](GFF-File-Format#file-structure-overview) path
-   - `2DAMEMORY#=2DAMEMORY#` - Copy token [value](GFF-File-Format#gff-data-types)
+1. At file level:
+   - `2DAMEMORY#=!FieldPath` - Store absolute field path
+   - `2DAMEMORY#=2DAMEMORY#` - Copy token value
    - Numeric ranges and [2DA](2DA-File-Format) operations not supported
 
 2. In AddField sections:
-   - `2DAMEMORY#=ListIndex` - Store list [index](2DA-File-Format#row-labels)
-   - `2DAMEMORY#=!FieldPath` - Store [field](GFF-File-Format#file-structure-overview) path
-   - `2DAMEMORY#=2DAMEMORY#` - Copy token [value](GFF-File-Format#gff-data-types)
+   - `2DAMEMORY#=ListIndex` - Store list index
+   - `2DAMEMORY#=!FieldPath` - Store field path
+   - `2DAMEMORY#=2DAMEMORY#` - Copy token value
 
 ### [StrRef](TLK-File-Format#string-references-strref) Tokens
 
@@ -648,7 +648,7 @@ Label=Description
 StrRef=StrRef8
 ```
 
-### Using Memory Tokens as [values](GFF-File-Format#gff-data-types)
+### Using Memory Tokens as values
 
 ```ini
 ; Use 2DA token as field value
@@ -667,18 +667,18 @@ Label=PropertyValue
 Value=2DAMEMORY10
 ```
 
-## Nested [structures](GFF-File-Format#file-structure-overview)
+## Nested structures
 
 ### Adding Structs to Existing Lists
 
-When adding a STRUCT element to an existing LIST [field](GFF-File-Format#file-structure-overview), you must follow specific rules:
+When adding a STRUCT element to an existing LIST field, you must follow specific rules:
 
 **Required Configuration:**
 
 - `FieldType=Struct` - Only structs can be list elements
 - `Label=` must be **blank** - List elements don't have labels
-- `Path=` must point to the LIST [field](GFF-File-Format#file-structure-overview) name (e.g., `Path=RepliesList`)
-- `TypeId=` specifies the struct's [type](GFF-File-Format#data-types) ID (numeric, `ListIndex`, or token)
+- `Path=` must point to the LIST field name (e.g., `Path=RepliesList`)
+- `TypeId=` specifies the struct's type ID (numeric, `ListIndex`, or token)
 
 **Example - Basic Struct Addition to List:**
 
@@ -709,22 +709,22 @@ Label=Sound                  ; Required - fields inside structs have labels
 Value=
 ```
 
-**Understanding List [index](2DA-File-Format#row-labels) Resolution:**
+**Understanding List index Resolution:**
 
-When you add a struct to a list, the patcher automatically determines which position ([index](2DA-File-Format#row-labels)) it occupies:
+When you add a struct to a list, the patcher automatically determines which position (index) it occupies:
 
-- First struct added becomes [index](2DA-File-Format#row-labels) 0
-- Second struct added becomes [index](2DA-File-Format#row-labels) 1
+- First struct added becomes index 0
+- Second struct added becomes index 1
 - And so on...
 
-This [index](2DA-File-Format#row-labels) is used to construct the full path for any child [fields](GFF-File-Format#file-structure-overview). For example, if you're adding the 3rd struct to RepliesList:
+This index is used to construct the full path for any child fields. For example, if you're adding the 3rd struct to RepliesList:
 
 - The struct itself is added to `RepliesList[2]` (0-based indexing)
-- Child [fields](GFF-File-Format#file-structure-overview) with empty `Path=` inherit `RepliesList\2\{field_name}`
+- Child fields with empty `Path=` inherit `RepliesList\2\{field_name}`
 
-**Storing and Using the List [index](2DA-File-Format#row-labels):**
+**Storing and Using the List index:**
 
-You can store the [index](2DA-File-Format#row-labels) where a struct is added for later reference:
+You can store the index where a struct is added for later reference:
 
 ```ini
 [new_reply_entry]
@@ -737,7 +737,7 @@ TypeId=5
 
 **Using `ListIndex` for type ID:**
 
-Some [GFF](GFF-File-Format) [structures](GFF-File-Format#file-structure-overview) require the [type](GFF-File-Format#data-types) ID to match the list [index](2DA-File-Format#row-labels). Use `TypeId=ListIndex`:
+Some [GFF](GFF-File-Format) structures require the type ID to match the list index. Use `TypeId=ListIndex`:
 
 ```ini
 [example.jrl]
@@ -808,15 +808,15 @@ Value=2DAMEMORY5            ; Use stored entry index as value
 **[KEY](KEY-File-Format) Rules Summary:**
 
 1. **Adding STRUCT to LIST**: `Label=` must be blank, `Path=` points to list name
-2. **Adding [field](GFF-File-Format#file-structure-overview) to STRUCT**: `Label=` is required, `Path=` can be empty (inherits) or explicit
-3. **Path inheritance**: Child [fields](GFF-File-Format#file-structure-overview) with empty `Path=` automatically inherit parent's resolved path, including list [indices](2DA-File-Format#row-labels)
-4. **List [index](2DA-File-Format#row-labels) resolution**: Happens automatically at runtime based on insertion order
-5. **TypeId=ListIndex**: Auto-sets [type](GFF-File-Format#data-types) ID to match the list index (used in journal categories, etc.)
-6. **2DAMEMORY#=ListIndex**: Stores the [index](2DA-File-Format#row-labels) for later use in cross-references or calculations
+2. **Adding field to STRUCT**: `Label=` is required, `Path=` can be empty (inherits) or explicit
+3. **Path inheritance**: Child fields with empty `Path=` automatically inherit parent's resolved path, including list indices
+4. **List index resolution**: Happens automatically at runtime based on insertion order
+5. **TypeId=ListIndex**: Auto-sets type ID to match the list index (used in journal categories, etc.)
+6. **2DAMEMORY#=ListIndex**: Stores the index for later use in cross-references or calculations
 
-### Adding Complete Nested [structures](GFF-File-Format#file-structure-overview)
+### Adding Complete Nested structures
 
-This example demonstrates adding a LIST [field](GFF-File-Format#file-structure-overview) containing STRUCT elements, with [fields](GFF-File-Format#file-structure-overview) inside those structs:
+This example demonstrates adding a LIST field containing STRUCT elements, with fields inside those structs:
 
 ```ini
 [example.uti]
@@ -856,19 +856,19 @@ Value=123
 
 **Step-by-Step Breakdown:**
 
-1. `item_properties` creates a new LIST [field](GFF-File-Format#file-structure-overview) named "PropertyList" at root level
+1. `item_properties` creates a new LIST field named "PropertyList" at root level
 2. `property_struct` adds a STRUCT element to that list (hence blank `Label=`)
-3. `property_subtype` and `property_value` add [fields](GFF-File-Format#file-structure-overview) inside the struct (hence required `Label=`)
+3. `property_subtype` and `property_value` add fields inside the struct (hence required `Label=`)
 
-This pattern is common when adding new property lists, dialog entries, journal categories, and similar list-based [structures](GFF-File-Format#file-structure-overview).
+This pattern is common when adding new property lists, dialog entries, journal categories, and similar list-based structures.
 
 ## Special Features
 
-### Dynamic [field](GFF-File-Format#file-structure-overview) Paths (2DAMEMORY with !FieldPath)
+### Dynamic field Paths (2DAMEMORY with !FieldPath)
 
-Store and use [field](GFF-File-Format#file-structure-overview) paths dynamically. This feature (added in TSLPatcher v1.2.7b9) allows you to add [fields](GFF-File-Format#file-structure-overview) and then reference them later using memory tokens.
+Store and use field paths dynamically. This feature (added in TSLPatcher v1.2.7b9) allows you to add fields and then reference them later using memory tokens.
 
-**Storing a [field](GFF-File-Format#file-structure-overview) Path:**
+**Storing a field Path:**
 
 ```ini
 [example.dlg]
@@ -890,9 +890,9 @@ StrRef=-1
 lang0=Dynamic reply text
 ```
 
-**Using a Stored [field](GFF-File-Format#file-structure-overview) Path:**
+**Using a Stored field Path:**
 
-After storing a path with `2DAMEMORY#=!FieldPath`, you can use that token as a [field](GFF-File-Format#file-structure-overview) path to modify the [field](GFF-File-Format#file-structure-overview):
+After storing a path with `2DAMEMORY#=!FieldPath`, you can use that token as a field path to modify the field:
 
 ```ini
 ; Modify the field using the stored path
@@ -900,7 +900,7 @@ After storing a path with `2DAMEMORY#=!FieldPath`, you can use that token as a [
 2DAMEMORY0(lang0)=Updated text ; Sets the lang0 substring of that field
 ```
 
-**Copying [field](GFF-File-Format#file-structure-overview) Paths Between Tokens:**
+**Copying field Paths Between Tokens:**
 
 ```ini
 ; Copy a field path from one token to another
@@ -910,18 +910,18 @@ After storing a path with `2DAMEMORY#=!FieldPath`, you can use that token as a [
 **Use Cases:**
 
 - **Dynamic Dialog Branches**: Add new dialog entries/replies and cross-reference them using stored paths
-- **Self-Referencing [structures](GFF-File-Format#file-structure-overview)**: Create [fields](GFF-File-Format#file-structure-overview) that need to reference other dynamically-added [fields](GFF-File-Format#file-structure-overview)
-- **Conditional [field](GFF-File-Format#file-structure-overview) Updates**: Store multiple [field](GFF-File-Format#file-structure-overview) paths and update them based on runtime conditions
+- **Self-Referencing structures**: Create fields that need to reference other dynamically-added fields
+- **Conditional field Updates**: Store multiple field paths and update them based on runtime conditions
 
-**Important:** When using `2DAMEMORY#=!FieldPath` in an AddField section, the stored path includes the [field](GFF-File-Format#file-structure-overview)'s label. For nested [fields](GFF-File-Format#file-structure-overview), the path is the full absolute path from the [GFF](GFF-File-Format) root.
+**Important:** When using `2DAMEMORY#=!FieldPath` in an AddField section, the stored path includes the field's label. For nested fields, the path is the full absolute path from the [GFF](GFF-File-Format) root.
 
-### Using ListIndex for [type](GFF-File-Format#data-types) ID
+### Using ListIndex for type ID
 
-Some [GFF](GFF-File-Format) [structures](GFF-File-Format#file-structure-overview) require the STRUCT's [type](GFF-File-Format#data-types) ID to match its position ([index](2DA-File-Format#row-labels)) in the list. This is common in:
+Some [GFF](GFF-File-Format) structures require the STRUCT's type ID to match its position (index) in the list. This is common in:
 
-- Journal category lists (`.jrl` [files](GFF-File-Format))
-- Certain dialog [structures](GFF-File-Format#file-structure-overview)
-- Other list-based [structures](GFF-File-Format#file-structure-overview) where [type](GFF-File-Format#data-types) ID corresponds to list [position](MDL-MDX-File-Format#node-header)
+- Journal category lists (`.jrl` files)
+- Certain dialog structures
+- Other list-based structures where type ID corresponds to list position
 
 **Syntax:**
 
@@ -948,11 +948,11 @@ lang0=My Custom Quests
 
 **How It Works:**
 
-- When `TypeId=ListIndex` is specified, the patcher automatically determines the [index](2DA-File-Format#row-labels) where the struct is added
-- The [type](GFF-File-Format#data-types) ID is set to that numeric index (0, 1, 2, etc.)
-- For example, if the struct becomes the 5th element ([index](2DA-File-Format#row-labels) 4), the [type](GFF-File-Format#data-types) ID will be set to 4
+- When `TypeId=ListIndex` is specified, the patcher automatically determines the index where the struct is added
+- The type ID is set to that numeric index (0, 1, 2, etc.)
+- For example, if the struct becomes the 5th element (index 4), the type ID will be set to 4
 
-**Note:** `TypeId=ListIndex` is different from `2DAMEMORY#=ListIndex`. The former sets the struct's [type](GFF-File-Format#data-types) ID, while the latter stores the [index](2DA-File-Format#row-labels) in a memory token for later use.
+**Note:** `TypeId=ListIndex` is different from `2DAMEMORY#=ListIndex`. The former sets the struct's type ID, while the latter stores the index in a memory token for later use.
 
 ### ExclusiveColumn (in Nested [2DA](2DA-File-Format) Integration)
 
@@ -960,89 +960,89 @@ GFFList does not support [2DA](2DA-File-Format)-style ExclusiveColumn.
 
 ## Common Pitfalls and Troubleshooting
 
-### [field](GFF-File-Format#file-structure-overview) and Path Issues
+### field and Path Issues
 
-- **Case sensitivity**: [field](GFF-File-Format#file-structure-overview) names [ARE](GFF-File-Format#are-area) case-sensitive. `Comments` ≠ `comments`. Use a [GFF](GFF-File-Format) viewer to copy labels exactly.
-- **List [indices](2DA-File-Format#row-labels)**: Lists start at 0. The first element is `\0\`, second is `\1\`, etc.
-- **Blank labels**: `Label=` blank is **only** valid when `FieldType=Struct` and adding that struct **to a LIST**. All other [field](GFF-File-Format#file-structure-overview) [types](GFF-File-Format#gff-data-types) require a label, including [fields](GFF-File-Format#file-structure-overview) added **inside** structs that [ARE](GFF-File-Format#are-area) themselves in lists.
+- **Case sensitivity**: field names [ARE](GFF-File-Format#are-area) case-sensitive. `Comments` ≠ `comments`. Use a [GFF](GFF-File-Format) viewer to copy labels exactly.
+- **List indices**: Lists start at 0. The first element is `\0\`, second is `\1\`, etc.
+- **Blank labels**: `Label=` blank is **only** valid when `FieldType=Struct` and adding that struct **to a LIST**. All other field types require a label, including fields added **inside** structs that [ARE](GFF-File-Format#are-area) themselves in lists.
 - **Adding to list vs adding to struct**: Confusing these two operations is a common mistake:
   - Adding STRUCT to LIST: `Label=` blank, `Path=` points to list name
-  - Adding [field](GFF-File-Format#file-structure-overview) to STRUCT: `Label=` required, `Path=` can be empty (inherits)
-- **Path inheritance confusion**: Remember that when adding a struct to a list, child [fields](GFF-File-Format#file-structure-overview) with empty `Path=` inherit the resolved path including the list [index](2DA-File-Format#row-labels). You don't need to (and shouldn't) manually specify the [index](2DA-File-Format#row-labels).
-- **Container [fields](GFF-File-Format#file-structure-overview)**: Don't assign `Value=` to `Struct` or `List` [fields](GFF-File-Format#file-structure-overview)—they [ARE](GFF-File-Format#are-area) containers. Set [values](GFF-File-Format#gff-data-types) in their child [fields](GFF-File-Format#file-structure-overview) instead.
-- **List [index](2DA-File-Format#row-labels) resolution**: The [index](2DA-File-Format#row-labels) where a struct is added is automatically determined at runtime. You cannot manually set or predict the exact [index](2DA-File-Format#row-labels) ahead of time if other mods might add structs to the same list.
+  - Adding field to STRUCT: `Label=` required, `Path=` can be empty (inherits)
+- **Path inheritance confusion**: Remember that when adding a struct to a list, child fields with empty `Path=` inherit the resolved path including the list index. You don't need to (and shouldn't) manually specify the index.
+- **Container fields**: Don't assign `Value=` to `Struct` or `List` fields—they [ARE](GFF-File-Format#are-area) containers. Set values in their child fields instead.
+- **List index resolution**: The index where a struct is added is automatically determined at runtime. You cannot manually set or predict the exact index ahead of time if other mods might add structs to the same list.
 
-### Localized [string](GFF-File-Format#gff-data-types) Syntax
+### Localized string Syntax
 
-- **[StrRef](TLK-File-Format#string-references-strref) vs lang#**: Use `FieldName(strref)=...` for the [StrRef](TLK-File-Format#string-references-strref) [value](GFF-File-Format#gff-data-types), and `FieldName(lang#)=...` for text substrings. Don't mix them on the same [KEY](KEY-File-Format).
+- **[StrRef](TLK-File-Format#string-references-strref) vs lang#**: Use `FieldName(strref)=...` for the [StrRef](TLK-File-Format#string-references-strref) value, and `FieldName(lang#)=...` for text substrings. Don't mix them on the same [KEY](KEY-File-Format).
 - **Multiple substrings**: You can set multiple `lang#` entries for the same field (e.g., `lang0=English`, `lang2=French`).
-- **Line breaks**: Use `<#LF#>` for linefeeds in `lang#` [values](GFF-File-Format#gff-data-types), not literal newlines.
+- **Line breaks**: Use `<#LF#>` for linefeeds in `lang#` values, not literal newlines.
 
 ### Memory Tokens
 
 - **Token initialization**: Tokens must be set before use. Using `2DAMEMORY5` before assignment results in an error.
-- **Execution order**: Within GFFList, AddField sections run before [field](GFF-File-Format#file-structure-overview) modifications. Store `!FieldPath` when creating [fields](GFF-File-Format#file-structure-overview), then use the token to modify them.
-- **Token scope**: `[StrRef](TLK-File-Format#string-references-strref)#` tokens [ARE](GFF-File-Format#are-area) created in TLKList and available to GFFList. `2DAMEMORY#` tokens [ARE](GFF-File-Format#are-area) [file](GFF-File-Format)-scoped unless explicitly copied.
+- **Execution order**: Within GFFList, AddField sections run before field modifications. Store `!FieldPath` when creating fields, then use the token to modify them.
+- **Token scope**: `[StrRef](TLK-File-Format#string-references-strref)#` tokens [ARE](GFF-File-Format#are-area) created in TLKList and available to GFFList. `2DAMEMORY#` tokens [ARE](GFF-File-Format#are-area) file-scoped unless explicitly copied.
 
 ### Path and Source Configuration
 
 - **Source folder resolution**: `.` refers to the `tslpatchdata` folder (where `changes.ini` is located). Don't explicitly specify `tslpatchdata` in the path.
-- **Path separators**: Use backslashes (`\`) in [field](GFF-File-Format#file-structure-overview) paths: `Parent\Child\Field`. Forward slashes may not work consistently.
-- **Empty paths**: For root-level [fields](GFF-File-Format#file-structure-overview), use `Path=` (empty) or omit it entirely. Don't use `Path=\` or `Path=.`.
+- **Path separators**: Use backslashes (`\`) in field paths: `Parent\Child\Field`. Forward slashes may not work consistently.
+- **Empty paths**: For root-level fields, use `Path=` (empty) or omit it entirely. Don't use `Path=\` or `Path=.`.
 
-### [field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#data-types) Issues
+### field type Issues
 
-- **[type](GFF-File-Format#data-types) compatibility**: Ensure [values](GFF-File-Format#gff-data-types) match [field](GFF-File-Format#file-structure-overview) [types](GFF-File-Format#gff-data-types). Don't assign [strings](GFF-File-Format#gff-data-types) to integer [fields](GFF-File-Format#file-structure-overview) or vice versa.
-- **Missing [fields](GFF-File-Format#file-structure-overview)**: Attempting to modify a non-existent [field](GFF-File-Format#file-structure-overview) will log an error. Use AddField to create new [fields](GFF-File-Format#file-structure-overview) first.
-- **Binary type**: The `Binary` [field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#data-types) is HoloPatcher-only and not supported by classic TSLPatcher.
+- **type compatibility**: Ensure values match field types. Don't assign strings to integer fields or vice versa.
+- **Missing fields**: Attempting to modify a non-existent field will log an error. Use AddField to create new fields first.
+- **Binary type**: The `Binary` field type is HoloPatcher-only and not supported by classic TSLPatcher.
 
 ### Common Error Messages
 
-- **"Cannot parse '[KEY](KEY-File-Format)=[value](GFF-File-Format#gff-data-types)'"**: Invalid syntax for memory token assignment or [field](GFF-File-Format#file-structure-overview) path
-- **"[field](GFF-File-Format#file-structure-overview) did not exist at path"**: Tried to modify a [field](GFF-File-Format#file-structure-overview) that doesn't exist (use AddField instead)
+- **"Cannot parse '[KEY](KEY-File-Format)=value'"**: Invalid syntax for memory token assignment or field path
+- **"field did not exist at path"**: Tried to modify a field that doesn't exist (use AddField instead)
 - **"2DAMEMORY# was not defined before use"**: Token was referenced before being set
-- **"Label must be set for FieldType"**: Non-Struct [field](GFF-File-Format#file-structure-overview) requires a label, or Struct in LIST requires blank label
+- **"Label must be set for FieldType"**: Non-Struct field requires a label, or Struct in LIST requires blank label
 
 ### Debugging Tips
 
 - Enable verbose logging (`LogLevel=4`) to see detailed path resolution and token assignments
-- Verify [field](GFF-File-Format#file-structure-overview) paths using a [GFF](GFF-File-Format) editor before writing patches
+- Verify field paths using a [GFF](GFF-File-Format) editor before writing patches
 - Test AddField sections before adding modifications that depend on them
 - Check token assignments match between 2DAList/TLKList and GFFList sections
 
 ## Execution Order and Dependencies
 
-Understanding execution order is crucial when your edits depend on earlier tokens or dynamically created [fields](GFF-File-Format#file-structure-overview).
+Understanding execution order is crucial when your edits depend on earlier tokens or dynamically created fields.
 
 **Standard Execution Order:**
 
 1. **TLKList**: Appends entries to [dialog.tlk](TLK-File-Format), creates `[StrRef](TLK-File-Format#string-references-strref)#` tokens
-2. **InstallList**: Copies [files](GFF-File-Format) to destination ([ERF](ERF-File-Format)/RIM archives may be created here)
+2. **InstallList**: Copies files to destination ([ERF](ERF-File-Format)/RIM archives may be created here)
 3. **2DAList**: Modifies [2DA files](2DA-File-Format), creates `2DAMEMORY#` tokens
 4. **GFFList**: Modifies [GFF](GFF-File-Format) files (can use `[StrRef](TLK-File-Format#string-references-strref)#` and `2DAMEMORY#` tokens)
 5. **CompileList**: Preprocesses [NSS](NSS-File-Format) scripts (replaces `#[StrRef](TLK-File-Format#string-references-strref)#` and `#2DAMEMORY#` tokens), then compiles
 6. **HACKList**: Applies binary patches to [NCS files](NCS-File-Format)
-7. **SSFList**: Modifies soundset [files](GFF-File-Format)
+7. **SSFList**: Modifies soundset files
 
 **Within GFFList Section:**
 
 Modifications within a single [GFF file](GFF-File-Format) [ARE](GFF-File-Format#are-area) processed in order:
 
-1. **AddField sections** [ARE](GFF-File-Format#are-area) processed first ([fields](GFF-File-Format#file-structure-overview) [ARE](GFF-File-Format#are-area) created)
-2. **Memory assignments** (`2DAMEMORY#=!FieldPath`, `2DAMEMORY#=ListIndex`) [ARE](GFF-File-Format#are-area) evaluated as [fields](GFF-File-Format#file-structure-overview) [ARE](GFF-File-Format#are-area) added
-3. **[field](GFF-File-Format#file-structure-overview) modifications** [ARE](GFF-File-Format#are-area) processed last (can reference stored paths via `2DAMEMORY#` tokens)
+1. **AddField sections** [ARE](GFF-File-Format#are-area) processed first (fields [ARE](GFF-File-Format#are-area) created)
+2. **Memory assignments** (`2DAMEMORY#=!FieldPath`, `2DAMEMORY#=ListIndex`) [ARE](GFF-File-Format#are-area) evaluated as fields [ARE](GFF-File-Format#are-area) added
+3. **field modifications** [ARE](GFF-File-Format#are-area) processed last (can reference stored paths via `2DAMEMORY#` tokens)
 
 **Best Practices:**
 
-- **Add before modify**: Use AddField to create [structures](GFF-File-Format#file-structure-overview), store their paths with `2DAMEMORY#=!FieldPath`, then modify them using those tokens
+- **Add before modify**: Use AddField to create structures, store their paths with `2DAMEMORY#=!FieldPath`, then modify them using those tokens
 - **Token dependencies**: Ensure tokens [ARE](GFF-File-Format#are-area) set before use. `2DAMEMORY#` tokens from 2DAList [ARE](GFF-File-Format#are-area) available to GFFList
-- **Archive handling**: If patching [files](GFF-File-Format) into [ERF](ERF-File-Format)/RIM archives, the archive must exist (created by InstallList) or be built automatically by the patcher
+- **Archive handling**: If patching files into [ERF](ERF-File-Format)/RIM archives, the archive must exist (created by InstallList) or be built automatically by the patcher
 
 **Important Notes:**
 
 - Script token preprocessing (in CompileList) runs **before** GFFList to avoid interfering with `!FieldPath` assignments
-- If multiple [GFF files](GFF-File-Format) reference the same tokens, they can share `StrRef#` and `2DAMEMORY#` [values](GFF-File-Format#gff-data-types) across [files](GFF-File-Format)
-- The `!OverrideType` setting controls behavior when a [file](GFF-File-Format) exists in Override but you're patching into an archive
+- If multiple [GFF files](GFF-File-Format) reference the same tokens, they can share `StrRef#` and `2DAMEMORY#` values across files
+- The `!OverrideType` setting controls behavior when a file exists in Override but you're patching into an archive
 
 ## Complete Examples
 
@@ -1083,7 +1083,7 @@ Label=Value
 Value=500
 ```
 
-### Example 2: Dialog [file](GFF-File-Format) with New Branches
+### Example 2: Dialog file with New Branches
 
 ```ini
 [GFFList]
@@ -1139,7 +1139,7 @@ StrRef=-1
 lang0=Thank you!
 ```
 
-### Example 3: [creature template](GFF-File-Format#utc-creature) with Dynamic [data](GFF-File-Format#file-structure-overview)
+### Example 3: [creature template](GFF-File-Format#utc-creature) with Dynamic data
 
 ```ini
 [GFFList]
@@ -1195,7 +1195,7 @@ StrRef=StrRef100
 lang0=My Custom Quests
 ```
 
-### Example 5: Complex Nested [structure](GFF-File-Format#file-structure-overview)
+### Example 5: Complex Nested structure
 
 ```ini
 [GFFList]
@@ -1299,7 +1299,7 @@ Value=15
 
 ## Common Patterns
 
-### Pattern 1: Store and Reference List [index](2DA-File-Format#row-labels)
+### Pattern 1: Store and Reference List index
 
 ```ini
 [GFFList]
@@ -1320,7 +1320,7 @@ TypeId=7
 Index=2DAMEMORY0
 ```
 
-### Pattern 2: Dynamic Localized [strings](GFF-File-Format#gff-data-types)
+### Pattern 2: Dynamic Localized strings
 
 ```ini
 [GFFList]
@@ -1379,19 +1379,19 @@ Value=2DAMEMORY20
 ## Best Practices
 
 1. Unique labels across each [GFF](GFF-File-Format) hierarchy level
-2. Prefer memory tokens for dynamic [values](GFF-File-Format#gff-data-types)
-3. List [indices](2DA-File-Format#row-labels) start at 0
+2. Prefer memory tokens for dynamic values
+3. List indices start at 0
 4. Backslash path separators for nested paths
-5. Case-sensitive [field](GFF-File-Format#file-structure-overview) names
-6. Verify [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) with a [GFF](GFF-File-Format) editor
-7. Sort complex nested [structures](GFF-File-Format#file-structure-overview) for clarity
+5. Case-sensitive field names
+6. Verify file structure with a [GFF](GFF-File-Format) editor
+7. Sort complex nested structures for clarity
 8. Use meaningful identifiers for AddField sections
 
 ## Error Handling
 
 Common mistakes:
 
-- Modifying non-existent [fields](GFF-File-Format#file-structure-overview)
+- Modifying non-existent fields
 - Invalid FieldType
 - Missing required keys
 - Circular memory references
@@ -1408,10 +1408,10 @@ Tested on:
 - PyKotor’s TSLPatcher implementation
 - KotOR1/KotOR2 [GFF files](GFF-File-Format)
 
-[field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#data-types) compatibility:
+field type compatibility:
 
-- All standard [types](GFF-File-Format#gff-data-types) supported
-- Nested [structures](GFF-File-Format#file-structure-overview) supported
+- All standard types supported
+- Nested structures supported
 - Memory tokens supported
 - Dynamic paths supported
 
@@ -1424,22 +1424,22 @@ Tested on:
 
 ### Source Code References
 
-- `pykotor/resource/formats/gff/gff_data.py` - [GFF](GFF-File-Format) [data](GFF-File-Format#file-structure-overview) [structure](GFF-File-Format#file-structure-overview) definitions
+- `pykotor/resource/formats/gff/gff_data.py` - [GFF](GFF-File-Format) data structure definitions
 - `pykotor/resource/formats/gff/io_gff.py` - [GFF file](GFF-File-Format) I/O implementation
 - `pykotor/tslpatcher/reader.py` - INI configuration parsing (see `load_gff_list`, `add_field_gff`, `modify_field_gff`)
 - `pykotor/tslpatcher/mods/gff.py` - [GFF](GFF-File-Format) modification logic (see `ModificationsGFF`, `AddFieldGFF`, `ModifyFieldGFF`)
 - `pykotor/tslpatcher/patcher.py` - Main patcher execution flow
 
-### [GFF](GFF-File-Format) [file](GFF-File-Format) [types](GFF-File-Format#gff-data-types)
+### [GFF](GFF-File-Format) file types
 
-Common [GFF](GFF-File-Format)-based [file](GFF-File-Format) [types](GFF-File-Format#gff-data-types) you can modify:
+Common [GFF](GFF-File-Format)-based file types you can modify:
 
 - **.[ARE](GFF-File-Format#are-area)** - [area files](GFF-File-Format#are-area)
 - **.DLG** - Dialogs
-- **.GIT** - Module instance [files](GFF-File-Format)
+- **.GIT** - Module instance files
 - **.[IFO](GFF-File-Format#ifo-module-info)** - [module info](GFF-File-Format#ifo-module-info)
 - **.JRL** - [journal entries](GFF-File-Format#jrl-journal)
-- **.PTH** - AI Pathing [files](GFF-File-Format)
+- **.PTH** - AI Pathing files
 - **.[UTC](GFF-File-Format#utc-creature)** - [creature templates](GFF-File-Format#utc-creature)  
 - **.UTD** - Doors
 - **.UTE** - Encounters
@@ -1455,17 +1455,17 @@ Common [GFF](GFF-File-Format)-based [file](GFF-File-Format) [types](GFF-File-For
 ### TSLPatcher Versions
 
 - **[1.2.10b](TSLPatcher's-Official-Readme.md#change-log-for-version-1210b1-rel)** (2007-09-19): Fixed ExoLocString substring linefeed handling (use `<#LF#>` for newlines)
-- **[1.2.9b](TSLPatcher's-Official-Readme.md#change-log-for-version-129b-rel)** (2007-08-13): Changed behavior when adding duplicate [fields](GFF-File-Format#file-structure-overview)—now modifies existing [field](GFF-File-Format#file-structure-overview) instead of skipping
-- **[1.2.8b10](TSLPatcher's-Official-Readme.md#change-log-for-version-128b10-rel)** (2006-12-10): Bug fixes for required [file](GFF-File-Format) checks
+- **[1.2.9b](TSLPatcher's-Official-Readme.md#change-log-for-version-129b-rel)** (2007-08-13): Changed behavior when adding duplicate fields—now modifies existing field instead of skipping
+- **[1.2.8b10](TSLPatcher's-Official-Readme.md#change-log-for-version-128b10-rel)** (2006-12-10): Bug fixes for required file checks
 - **[1.2.8b6](TSLPatcher's-Official-Readme.md#change-log-for-version-128b6-rel)** (2006-10-03): Added `!OverrideType` support for [ERF](ERF-File-Format)/RIM destinations
-- **[1.2.7b9](TSLPatcher's-Official-Readme.md#change-log-for-version-127b9-rel)** (2006-07-23): **Dynamic [field](GFF-File-Format#file-structure-overview) paths** - Added `!FieldPath` support for storing and using [field](GFF-File-Format#file-structure-overview) paths via `2DAMEMORY#` tokens
+- **[1.2.7b9](TSLPatcher's-Official-Readme.md#change-log-for-version-127b9-rel)** (2006-07-23): **Dynamic field paths** - Added `!FieldPath` support for storing and using field paths via `2DAMEMORY#` tokens
 - **[1.2.7b4](TSLPatcher's-Official-Readme.md#change-log-for-version-127b4-rel)** (2006-05-11): Multiple setups support improvements
-- **[1.2.6b3](TSLPatcher's-Official-Readme.md#change-log-for-version-126b3-rel)** (2006-03-09): [SSF](SSF-File-Format) soundset [file](GFF-File-Format) modification support added
-- **[1.2a](TSLPatcher's-Official-Readme.md#change-log-for-version-12a-rel)** (2006-01-10): **AddField support** - Initial support for adding new [fields](GFF-File-Format#file-structure-overview) to [GFF files](GFF-File-Format)
+- **[1.2.6b3](TSLPatcher's-Official-Readme.md#change-log-for-version-126b3-rel)** (2006-03-09): [SSF](SSF-File-Format) soundset file modification support added
+- **[1.2a](TSLPatcher's-Official-Readme.md#change-log-for-version-12a-rel)** (2006-01-10): **AddField support** - Initial support for adding new fields to [GFF files](GFF-File-Format)
 
 ### HoloPatcher Extensions
 
-- **Binary [field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#data-types)**: Support for adding/modifying Binary fields (not in classic TSLPatcher)
+- **Binary field type**: Support for adding/modifying Binary fields (not in classic TSLPatcher)
 
 ---
 

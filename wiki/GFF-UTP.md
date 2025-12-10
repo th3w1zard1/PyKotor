@@ -4,13 +4,13 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 [UTP files](GFF-File-Format#utp-placeable) define [placeable object templates](GFF-File-Format#utp-placeable) including containers, furniture, switches, workbenches, and interactive environmental objects. [Placeables](GFF-File-Format#utp-placeable) can have inventories, be destroyed, locked, trapped, and trigger [scripts](NCS-File-Format).
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Door/Placeable [format](GFF-File-Format) specification, see [Bioware Aurora Door/Placeable GFF Format](Bioware-Aurora-DoorPlaceableGFF).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Door/Placeable format specification, see [Bioware Aurora Door/Placeable GFF Format](Bioware-Aurora-DoorPlaceableGFF).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utp.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utp.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure-overview)
+## Core Identity fields
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this placeable |
 | `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script references |
@@ -18,29 +18,29 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 | `Description` | [CExoLocString](GFF-File-Format#gff-data-types) | Placeable description |
 | `Comment` | [CExoString](GFF-File-Format#gff-data-types) | Developer comment/notes |
 
-## Appearance & [type](GFF-File-Format#gff-data-types)
+## Appearance & type
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
-| `Appearance` | DWord | [index](2DA-File-Format#row-labels) into [`placeables.2da`](2DA-placeables) |
-| `Type` | Byte | Placeable [type](GFF-File-Format#gff-data-types) category |
+| `Appearance` | DWord | index into [`placeables.2da`](2DA-placeables) |
+| `Type` | Byte | Placeable type category |
 | `AnimationState` | Byte | Current [animation](MDL-MDX-File-Format#animation-header) state |
 
 **Appearance System:**
 
 - [`placeables.2da`](2DA-placeables) defines [models](MDL-MDX-File-Format), lighting, and sounds
 - Appearance determines visual [model](MDL-MDX-File-Format) and interaction [animation](MDL-MDX-File-Format#animation-header)
-- [type](GFF-File-Format#gff-data-types) influences behavior (container, switch, generic)
+- type influences behavior (container, switch, generic)
 
 ## Inventory System
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `HasInventory` | Byte | Placeable contains items |
 | `ItemList` | List | Items in inventory |
 | `BodyBag` | Byte | Container for corpse loot |
 
-**ItemList Struct [fields](GFF-File-Format#file-structure-overview):**
+**ItemList Struct fields:**
 
 - `InventoryRes` ([ResRef](GFF-File-Format#gff-data-types)): [UTI](GFF-File-Format#uti-item) template [ResRef](GFF-File-Format#gff-data-types)
 - `Repos_PosX` (Word): Grid X position (optional)
@@ -56,7 +56,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Locking & Security
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Locked` | Byte | Placeable is currently locked |
 | `Lockable` | Byte | Can be locked/unlocked |
@@ -76,7 +76,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Hit Points & Durability
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `HP` | Short | Maximum hit points |
 | `CurrentHP` | Short | Current hit points |
@@ -94,12 +94,12 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Interaction & Behavior
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Plot` | Byte | Plot-critical (cannot be destroyed) |
 | `Static` | Byte | Static geometry (no interaction) |
 | `Useable` | Byte | Can be clicked/used |
-| `Conversation` | [ResRef](GFF-File-Format#gff-data-types) | [Dialog](GFF-DLG) [file](GFF-File-Format) when used |
+| `Conversation` | [ResRef](GFF-File-Format#gff-data-types) | [Dialog](GFF-DLG) file when used |
 | `Faction` | Word | Faction identifier |
 | `PartyInteract` | Byte | Requires party member selection |
 | `NotBlastable` (KotOR2) | [byte](GFF-File-Format#gff-data-types) | Immune to area damage |
@@ -113,7 +113,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Script Hooks
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `OnClosed` | [ResRef](GFF-File-Format#gff-data-types) | Fires when container closes |
 | `OnDamaged` | [ResRef](GFF-File-Format#gff-data-types) | Fires when placeable takes damage |
@@ -133,7 +133,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Trap System
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TrapDetectable` | Byte | Trap can be detected |
 | `TrapDetectDC` | Byte | Awareness DC to detect trap |
@@ -141,7 +141,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 | `DisarmDC` | Byte | Security DC to disarm trap |
 | `TrapFlag` | Byte | Trap is active |
 | `TrapOneShot` | Byte | Trap triggers only once |
-| `TrapType` | Byte | [index](2DA-File-Format#row-labels) into [`traps.2da`](2DA-traps) ([trap definitions](2DA-traps)) |
+| `TrapType` | Byte | index into [`traps.2da`](2DA-traps) ([trap definitions](2DA-traps)) |
 
 **Trap Behavior:**
 
@@ -151,14 +151,14 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Visual Customization
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `PortraitId` | Word | Portrait icon identifier |
 | `PaletteID` | Byte | Toolset palette category |
 
 **[model](MDL-MDX-File-Format) & Lighting:**
 
-- Appearance determines [model](MDL-MDX-File-Format) and light [color](GFF-File-Format#color)
+- Appearance determines [model](MDL-MDX-File-Format) and light color
 - Some placeables have animated components
 - Light properties defined in [`placeables.2da`](2DA-placeables)
 
@@ -182,9 +182,9 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 **Workbenches:**
 
-- Special placeable [type](GFF-File-Format#gff-data-types) for crafting
+- Special placeable type for crafting
 - Opens crafting interface on use
-- Defined by [type](GFF-File-Format#gff-data-types) or Appearance
+- Defined by type or Appearance
 
 **Furniture:**
 
@@ -217,11 +217,11 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 **Conversation Placeables:**
 
 - Terminals, control panels, puzzle interfaces
-- Conversation property set to [DLG](GFF-DLG) [file](GFF-File-Format)
+- Conversation property set to [DLG](GFF-DLG) file
 - Use triggers dialog instead of direct interaction
 - Dialog can have conditional responses
 
-**Common Placeable [types](GFF-File-Format#gff-data-types):**
+**Common Placeable types:**
 
 **Storage Containers:**
 
@@ -251,7 +251,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 - Crafting interface activation
 - Lab stations, upgrade benches
-- Special [type](GFF-File-Format#gff-data-types) [value](GFF-File-Format#gff-data-types)
+- Special type value
 
 **Decorative Objects:**
 

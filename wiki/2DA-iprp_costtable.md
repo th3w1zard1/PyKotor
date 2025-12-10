@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Master table listing all item property cost calculation tables. The engine uses this [file](GFF-File-Format) to look up which cost table to use for calculating item property costs.
+**Engine Usage**: Master table listing all item property cost calculation tables. The engine uses this file to look up which cost table to use for calculating item property costs.
 
-**Row [index](2DA-File-Format#row-labels)**: Cost Table ID (integer)
+**Row index**: Cost Table ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Cost table label |
+| `label` | string | Cost table label |
 | Additional columns | Various | Cost table ResRefs and properties |
 
 **References**:

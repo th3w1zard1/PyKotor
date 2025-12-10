@@ -2,17 +2,17 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines AI script templates and their properties. The engine uses this [file](GFF-File-Format) to determine AI script names and descriptions (KotOR 1 only; KotOR 2 uses `name_strref` only).
+**Engine Usage**: Defines AI script templates and their properties. The engine uses this file to determine AI script names and descriptions (KotOR 1 only; KotOR 2 uses `name_strref` only).
 
-**Row [index](2DA-File-Format#row-labels)**: AI Script ID (integer)
+**Row index**: AI Script ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | AI script label |
-| `name_strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for AI script name |
-| `description_strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for AI script description (KotOR 1 only) |
+| `label` | string | AI script label |
+| `name_strref` | [StrRef](TLK-File-Format#string-references-strref) | string reference for AI script name |
+| `description_strref` | [StrRef](TLK-File-Format#string-references-strref) | string reference for AI script description (KotOR 1 only) |
 | Additional columns | Various | AI script properties |
 
 **References**:

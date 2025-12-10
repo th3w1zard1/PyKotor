@@ -2,25 +2,25 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines character classes with their progression tables, skill point calculations, hit dice, saving throw progressions, and feat access. The engine uses this [file](GFF-File-Format) to determine class abilities, skill point allocation, and level progression mechanics.
+**Engine Usage**: Defines character classes with their progression tables, skill point calculations, hit dice, saving throw progressions, and feat access. The engine uses this file to determine class abilities, skill point allocation, and level progression mechanics.
 
-**Row [index](2DA-File-Format#row-labels)**: Class ID (integer)
+**Row index**: Class ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Class label |
-| `name` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for class name |
-| `description` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for class description |
+| `label` | string | Class label |
+| `name` | [StrRef](TLK-File-Format#string-references-strref) | string reference for class name |
+| `description` | [StrRef](TLK-File-Format#string-references-strref) | string reference for class description |
 | `hitdie` | Integer | Hit dice size (d6, d8, d10, etc.) |
 | `skillpointbase` | Integer | Base skill points per level |
 | `skillpointbonus` | Integer | Intelligence bonus skill points |
-| `attackbonus` | [string](GFF-File-Format#gff-data-types) | Attack bonus progression table reference |
-| `savingthrow` | [string](GFF-File-Format#gff-data-types) | Saving throw progression table reference |
-| `savingthrowtable` | [string](GFF-File-Format#gff-data-types) | Saving throw table filename |
-| `spellgaintable` | [string](GFF-File-Format#gff-data-types) | Spell/Force power gain table reference |
-| `spellknowntable` | [string](GFF-File-Format#gff-data-types) | Spell/Force power known table reference |
+| `attackbonus` | string | Attack bonus progression table reference |
+| `savingthrow` | string | Saving throw progression table reference |
+| `savingthrowtable` | string | Saving throw table filename |
+| `spellgaintable` | string | Spell/Force power gain table reference |
+| `spellknowntable` | string | Spell/Force power known table reference |
 | `primaryability` | Integer | Primary ability score for class |
 | `preferredalignment` | Integer | Preferred alignment |
 | `alignrestrict` | Integer | Alignment restrictions |
@@ -28,22 +28,22 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 | `classskill` | Integer | Class skill [flags](GFF-File-Format#gff-data-types) |
 | `skillpointmaxlevel` | Integer | Maximum level for skill point calculation |
 | `spellcaster` | Integer | Spellcasting level (0 = non-caster) |
-| `spellcastingtype` | Integer | Spellcasting [type](GFF-File-Format#gff-data-types) identifier |
+| `spellcastingtype` | Integer | Spellcasting type identifier |
 | `spelllevel` | Integer | Maximum spell level |
 | `spellbook` | ResRef (optional) | Spellbook [ResRef](GFF-File-Format#gff-data-types) |
 | `icon` | [ResRef](GFF-File-Format#gff-data-types) | Class icon [ResRef](GFF-File-Format#gff-data-types) |
 | `portrait` | ResRef (optional) | Class portrait [ResRef](GFF-File-Format#gff-data-types) |
 | `startingfeat0` through `startingfeat9` | Integer (optional) | Starting feat IDs |
 | `startingpack` | Integer (optional) | Starting equipment pack ID |
-| `description` | [StrRef](TLK-File-Format#string-references-strref) | Class description [string](GFF-File-Format#gff-data-types) reference |
+| `description` | [StrRef](TLK-File-Format#string-references-strref) | Class description string reference |
 
 **Column Details** (from reone implementation):
 
 The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
 
-- `name`: [string](GFF-File-Format#gff-data-types) reference for class name
-- `description`: [string](GFF-File-Format#gff-data-types) reference for class description
-- `hitdie`: Hit dice [size](GFF-File-Format#file-structure-overview)
+- `name`: string reference for class name
+- `description`: string reference for class description
+- `hitdie`: Hit dice size
 - `skillpointbase`: Base skill points per level
 - `str`, `dex`, `con`, `int`, `wis`, `cha`: Default ability scores
 - `skillstable`: Skills table reference (used to check class skills in `skills.2da`)
@@ -57,7 +57,7 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:75`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L75) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [classes.2da](2DA-classes) (K1: name, description)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:250`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L250) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [classes.2da](2DA-classes) (K2: name, description)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:463`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L463) - TwoDARegistry.CLASSES constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:531`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L531) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "Class" -> [classes.2da](2DA-classes)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:531`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L531) - [GFF](GFF-File-Format) field mapping: "Class" -> [classes.2da](2DA-classes)
 
 **HolocronToolset:**
 

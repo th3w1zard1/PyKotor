@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines area effect configurations. The engine uses this [file](GFF-File-Format) to determine area effect scripts for enter, heartbeat, and exit events.
+**Engine Usage**: Defines area effect configurations. The engine uses this file to determine area effect scripts for enter, heartbeat, and exit events.
 
-**Row [index](2DA-File-Format#row-labels)**: Area Effect ID (integer)
+**Row index**: Area Effect ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Area effect label |
+| `label` | string | Area effect label |
 | `onenter` | [ResRef](GFF-File-Format#gff-data-types) | Script [ResRef](GFF-File-Format#gff-data-types) for on-enter event |
 | `heartbeat` | [ResRef](GFF-File-Format#gff-data-types) | Script [ResRef](GFF-File-Format#gff-data-types) for heartbeat event |
 | `onexit` | [ResRef](GFF-File-Format#gff-data-types) | Script [ResRef](GFF-File-Format#gff-data-types) for on-exit event |
@@ -22,7 +22,7 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 ---
 
-## Additional Item Property [files](GFF-File-Format)
+## Additional Item Property files
 
 The following additional [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) used in KotOR games:
 
@@ -46,9 +46,9 @@ The game uses numerous item property cost calculation tables. Common patterns in
 - `iprp_onranged*.2da`: On-ranged item property definitions and cost tables
 - `iprp_onmonster*.2da`: On-monster-hit item property definitions and cost tables (for monster weapons)
 
-Each attack [type](GFF-File-Format#gff-data-types) typically has multiple related [files](GFF-File-Format) for damage, properties, costs, durations, saving throws, and [value](GFF-File-Format#gff-data-types) calculations. Many of these [files](GFF-File-Format) have numbered variants (e.g., `iprp_onhitpropsvalue2.2da` through `iprp_onhitpropsvalue50.2da`) for different property [value](GFF-File-Format#gff-data-types) ranges.
+Each attack type typically has multiple related files for damage, properties, costs, durations, saving throws, and value calculations. Many of these files have numbered variants (e.g., `iprp_onhitpropsvalue2.2da` through `iprp_onhitpropsvalue50.2da`) for different property value ranges.
 
-**Note**: Some [2DA files](2DA-File-Format) may have variations between KotOR and KotOR 2. Always verify [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) against the specific game version. The reone dataminer tool can extract all [2DA files](2DA-File-Format) from game archives to analyze their [structure](GFF-File-Format#file-structure-overview).
+**Note**: Some [2DA files](2DA-File-Format) may have variations between KotOR and KotOR 2. Always verify file structure against the specific game version. The reone dataminer tool can extract all [2DA files](2DA-File-Format) from game archives to analyze their structure.
 
 **References**:
 

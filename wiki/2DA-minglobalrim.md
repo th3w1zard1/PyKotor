@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines minimum global RIM configurations. The engine uses this [file](GFF-File-Format) to determine module [resource references](GFF-File-Format#gff-data-types).
+**Engine Usage**: Defines minimum global RIM configurations. The engine uses this file to determine module [resource references](GFF-File-Format#gff-data-types).
 
-**Row [index](2DA-File-Format#row-labels)**: Global RIM ID (integer)
+**Row index**: Global RIM ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Global RIM label |
+| `label` | string | Global RIM label |
 | `moduleresref` | [ResRef](GFF-File-Format#gff-data-types) | Module [resource reference](GFF-File-Format#gff-data-types) |
 | Additional columns | Various | Global RIM properties |
 

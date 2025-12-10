@@ -42,7 +42,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `710. ClearAllEffects`
 - Clear all the effects of the caller.
-- - No return [value](GFF-File-Format#gff-data-types), but if an error occurs, the log [file](GFF-File-Format) will contain
+- - No return value, but if an error occurs, the log file will contain
 - "ClearAllEffects failed.".
 
 <a id="disablevideoeffect"></a>
@@ -52,7 +52,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `508. DisableVideoEffect`
 - EnableVideoEffect
 - Enables the video frame buffer effect specified by nEffectType, which is
-- an [index](2DA-File-Format#row-labels) into VideoEffects.2da. This video effect will apply indefinitely,
+- an index into VideoEffects.2da. This video effect will apply indefinitely,
 - and so it should *always* be cleared by a call to DisableVideoEffect().
 
 <a id="effectabilitydecrease"></a>
@@ -87,7 +87,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - nValue
 - - nModifyType: AC_*
 - - nDamageType: DAMAGE_TYPE_*
-- - Default [value](GFF-File-Format#gff-data-types) for nDamageType should only ever be used in this function prototype.
+- - Default value for nDamageType should only ever be used in this function prototype.
 
 - `nValue`: int
 - `nModifyType`: int (default: `0`)
@@ -99,10 +99,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `115. EffectACIncrease`
 - Create an AC Increase effect
-- - nValue: [size](GFF-File-Format#file-structure-overview) of AC increase
+- - nValue: size of AC increase
 - - nModifyType: AC_*_BONUS
 - - nDamageType: DAMAGE_TYPE_*
-- - Default [value](GFF-File-Format#gff-data-types) for nDamageType should only ever be used in this function prototype.
+- - Default value for nDamageType should only ever be used in this function prototype.
 
 - `nValue`: int
 - `nModifyType`: int (default: `0`)
@@ -159,7 +159,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `118. EffectAttackIncrease`
 - Create an Attack Increase effect
-- - nBonus: [size](GFF-File-Format#file-structure-overview) of attack bonus
+- - nBonus: size of attack bonus
 - - nModifierType: ATTACK_BONUS_*
 
 - `nBonus`: int
@@ -174,7 +174,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - nBeamVisualEffect: VFX_BEAM_*
 - - oEffector: the beam is emitted from this creature
 - - nBodyPart: BODY_NODE_*
-- - bMissEffect: If this is TRUE, the beam will fire to a random [vector](GFF-File-Format#gff-data-types) near or
+- - bMissEffect: If this is TRUE, the beam will fire to a random vector near or
 
 - `nBeamVisualEffect`: int
 - `oEffector`: object
@@ -220,7 +220,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `458. EffectConcealment`
 - Create a Concealment effect.
 - - nPercentage: 1-100 inclusive
-- - Returns an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT if nPercentage < 1 or
+- - Returns an effect of type EFFECT_TYPE_INVALIDEFFECT if nPercentage < 1 or
 - nPercentage > 100.
 
 - `nPercentage`: int
@@ -349,7 +349,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `81. EffectDamageResistance`
 - Create a Damage Resistance effect that removes the first nAmount points of
-- damage of [type](GFF-File-Format#data-types) nDamageType, up to nLimit (or infinite if nLimit is 0)
+- damage of type nDamageType, up to nLimit (or infinite if nLimit is 0)
 - - nDamageType: DAMAGE_TYPE_*
 - - nAmount
 - - nLimit
@@ -364,8 +364,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `487. EffectDamageShield`
 - Create a Damage Shield effect which does (nDamageAmount + nRandomAmount)
-- damage to any melee attacker on a successful attack of damage [type](GFF-File-Format#data-types) nDamageType.
-- - nDamageAmount: an integer [value](GFF-File-Format#gff-data-types)
+- damage to any melee attacker on a successful attack of damage type nDamageType.
+- - nDamageAmount: an integer value
 - - nRandomAmount: DAMAGE_BONUS_*
 - - nDamageType: DAMAGE_TYPE_*
 
@@ -473,7 +473,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `269. EffectForcePushTargeted`
 - EffectForcePushTargeted
 - This effect is exactly the same as force push, except it takes a location parameter that specifies
-- where the location of the force push is to be done from.  All [orientations](MDL-MDX-File-Format#node-header) [ARE](GFF-File-Format#are-area) also based on this location.
+- where the location of the force push is to be done from.  All orientations [ARE](GFF-File-Format#are-area) also based on this location.
 - AMF:  The new ignore test direct line variable should be used with extreme caution
 - It overrides [geometry](MDL-MDX-File-Format#geometry-header) checks for force pushes, so that the object that the effect is applied to
 
@@ -495,7 +495,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `212. EffectForceResistanceIncrease`
 - Create a Force Resistance Increase effect.
-- - nValue: [size](GFF-File-Format#file-structure-overview) of Force Resistance increase
+- - nValue: size of Force Resistance increase
 
 - `nValue`: int
 
@@ -514,7 +514,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `EffectForceShield(nShield)` - Routine 459
 
 - `459. EffectForceShield`
-- Create a Force Shield that has parameters from the guven [index](2DA-File-Format#row-labels) into the forceshields.2da
+- Create a Force Shield that has parameters from the guven index into the forceshields.2da
 
 - `nShield`: int
 
@@ -538,7 +538,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `78. EffectHeal`
 - Create a Heal effect. This should be applied as an instantaneous effect.
-- - Returns an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT if nDamageToHeal < 0.
+- - Returns an effect of type EFFECT_TYPE_INVALIDEFFECT if nDamageToHeal < 0.
 
 - `nDamageToHeal`: int
 
@@ -558,7 +558,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `387. EffectHitPointChangeWhenDying`
 - Create a Hit Point Change When Dying effect.
 - - fHitPointChangePerRound: this can be positive or negative, but not zero.
-- - Returns an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT if fHitPointChangePerRound is 0.
+- - Returns an effect of type EFFECT_TYPE_INVALIDEFFECT if fHitPointChangePerRound is 0.
 
 - `fHitPointChangePerRound`: float
 
@@ -586,7 +586,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `457. EffectInvisibility`
 - Create an Invisibility effect.
 - - nInvisibilityType: INVISIBILITY_TYPE_*
-- - Returns an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT if nInvisibilityType
+- - Returns an effect of type EFFECT_TYPE_INVALIDEFFECT if nInvisibilityType
 - is invalid.
 
 - `nInvisibilityType`: int
@@ -637,7 +637,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `477. EffectMissChance`
 - Create a Miss Chance effect.
 - - nPercentage: 1-100 inclusive
-- - Returns an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT if nPercentage < 1 or
+- - Returns an effect of type EFFECT_TYPE_INVALIDEFFECT if nPercentage < 1 or
 - nPercentage > 100.
 
 - `nPercentage`: int
@@ -649,7 +649,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `485. EffectModifyAttacks`
 - Create a Modify Attacks effect to add attacks.
 - - nAttacks: maximum is 5, even with the effect stacked
-- - Returns an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT if nAttacks > 5.
+- - Returns an effect of type EFFECT_TYPE_INVALIDEFFECT if nAttacks > 5.
 
 - `nAttacks`: int
 
@@ -742,7 +742,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `117. EffectSavingThrowIncrease`
 - Create an AC Decrease effect
 - - nSave: SAVING_THROW_*(not SAVING_THROW_TYPE_*)
-- - nValue: [size](GFF-File-Format#file-structure-overview) of AC decrease
+- - nValue: size of AC decrease
 - - nSaveType: SAVING_THROW_TYPE_*
 
 - `nSave`: int
@@ -762,7 +762,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `453. EffectSkillDecrease`
 - Create a Skill Decrease effect.
-- - Returns an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT if nSkill is invalid.
+- - Returns an effect of type EFFECT_TYPE_INVALIDEFFECT if nSkill is invalid.
 
 - `nSkill`: int
 - `nValue`: int
@@ -775,7 +775,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Create a Skill Increase effect.
 - - nSkill: SKILL_*
 - - nValue
-- - Returns an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT if nSkill is invalid.
+- - Returns an effect of type EFFECT_TYPE_INVALIDEFFECT if nSkill is invalid.
 
 - `nSkill`: int
 - `nValue`: int
@@ -795,7 +795,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Create a Spell Immunity effect.
 - There is a known bug with this function. There *must* be a parameter specified
 - when this is called (even if the desired parameter is SPELL_ALL_SPELLS),
-- otherwise an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT will be returned.
+- otherwise an effect of type EFFECT_TYPE_INVALIDEFFECT will be returned.
 - - nImmunityToSpell: SPELL_*
 
 - `nImmunityToSpell`: int (default: `-1`)
@@ -838,7 +838,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `314. EffectTemporaryHitpoints`
 - Create a Temporary Hitpoints effect.
 - - nHitPoints: a positive integer
-- - Returns an effect of [type](GFF-File-Format#data-types) EFFECT_TYPE_INVALIDEFFECT if nHitPoints < 0.
+- - Returns an effect of type EFFECT_TYPE_INVALIDEFFECT if nHitPoints < 0.
 
 - `nHitPoints`: int
 
@@ -863,7 +863,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `180. EffectVisualEffect`
 - - Create a Visual Effect that can be applied to an object.
 - - nVisualEffectId
-- - nMissEffect: if this is TRUE, a random [vector](GFF-File-Format#gff-data-types) near or past the target will
+- - nMissEffect: if this is TRUE, a random vector near or past the target will
 - be generated, on which to play the effect
 
 - `nVisualEffectId`: int
@@ -883,7 +883,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `508. EnableVideoEffect`
 - EnableVideoEffect
 - Enables the video frame buffer effect specified by nEffectType, which is
-- an [index](2DA-File-Format#row-labels) into VideoEffects.2da. This video effect will apply indefinitely,
+- an index into VideoEffects.2da. This video effect will apply indefinitely,
 - and so it should *always* be cleared by a call to DisableVideoEffect().
 
 - `nEffectType`: int
@@ -924,7 +924,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `89. GetEffectDurationType`
 - Get the duration type (DURATION_TYPE_*) of eEffect.
-- - Return [value](GFF-File-Format#gff-data-types) if eEffect is not valid: -1
+- - Return value if eEffect is not valid: -1
 
 - `eEffect`: effect
 
@@ -944,7 +944,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `90. GetEffectSubType`
 - Get the subtype (SUBTYPE_*) of eEffect.
-- - Return [value](GFF-File-Format#gff-data-types) on error: 0
+- - Return value on error: 0
 
 - `eEffect`: effect
 
@@ -954,7 +954,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `170. GetEffectType`
 - Get the effect type (EFFECT_TYPE_*) of eEffect.
-- - Return [value](GFF-File-Format#gff-data-types) if eEffect is invalid: EFFECT_INVALIDEFFECT
+- - Return value if eEffect is invalid: EFFECT_INVALIDEFFECT
 
 - `eEffect`: effect
 
@@ -1045,7 +1045,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `87. RemoveEffect`
 - Remove eEffect from oCreature.
-- - No return [value](GFF-File-Format#gff-data-types)
+- - No return value
 
 - `oCreature`: object
 - `eEffect`: effect

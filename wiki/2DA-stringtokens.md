@@ -2,17 +2,17 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines [string](GFF-File-Format#gff-data-types) token configurations. The engine uses this [file](GFF-File-Format) to determine [string](GFF-File-Format#gff-data-types) token [values](GFF-File-Format#gff-data-types) for various game systems.
+**Engine Usage**: Defines string token configurations. The engine uses this file to determine string token values for various game systems.
 
-**Row [index](2DA-File-Format#row-labels)**: [string](GFF-File-Format#gff-data-types) Token ID (integer)
+**Row index**: string Token ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | [string](GFF-File-Format#gff-data-types) token label |
-| `strref1` through `strref4` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) references for token [values](GFF-File-Format#gff-data-types) |
-| Additional columns | Various | [string](GFF-File-Format#gff-data-types) token properties |
+| `label` | string | string token label |
+| `strref1` through `strref4` | [StrRef](TLK-File-Format#string-references-strref) | string references for token values |
+| Additional columns | Various | string token properties |
 
 **References**:
 

@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines subrace [types](GFF-File-Format#gff-data-types) for character creation and [creature templates](GFF-File-Format#utc-creature). The engine uses this [file](GFF-File-Format) to determine subrace properties and restrictions.
+**Engine Usage**: Defines subrace types for character creation and [creature templates](GFF-File-Format#utc-creature). The engine uses this file to determine subrace properties and restrictions.
 
-**Row [index](2DA-File-Format#row-labels)**: Subrace ID (integer)
+**Row index**: Subrace ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Subrace label |
+| `label` | string | Subrace label |
 | Additional columns | Various | Subrace properties |
 
 **References**:

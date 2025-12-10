@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Maps portrait IDs to portrait image ResRefs for character selection screens and character sheets. The engine uses this [file](GFF-File-Format) to display character portraits in the UI.
+**Engine Usage**: Maps portrait IDs to portrait image ResRefs for character selection screens and character sheets. The engine uses this file to display character portraits in the UI.
 
-**Row [index](2DA-File-Format#row-labels)**: Portrait ID (integer)
+**Row index**: Portrait ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Portrait label |
+| `label` | string | Portrait label |
 | `baseresref` | [ResRef](GFF-File-Format#gff-data-types) | Base portrait image [ResRef](GFF-File-Format#gff-data-types) |
 | `appearancenumber` | Integer | Associated appearance ID |
 | `appearance_s` | Integer | Small appearance ID |
@@ -23,10 +23,10 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 **PyKotor:**
 
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:455`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L455) - TwoDARegistry.PORTRAITS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:523`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L523) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "PortraitId" -> [portraits.2da](2DA-portraits)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:523`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L523) - [GFF](GFF-File-Format) field mapping: "PortraitId" -> [portraits.2da](2DA-portraits)
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:66`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L66) - Party portraits documentation comment
-- [`Libraries/PyKotor/src/pykotor/extract/savedata.py:226-228`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L226-L228) - Portrait [rotation](MDL-MDX-File-Format#node-header) logic documentation
-- [`Libraries/PyKotor/src/pykotor/extract/savedata.py:241`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L241) - Party portraits [field](GFF-File-Format#file-structure-overview) documentation
+- [`Libraries/PyKotor/src/pykotor/extract/savedata.py:226-228`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L226-L228) - Portrait rotation logic documentation
+- [`Libraries/PyKotor/src/pykotor/extract/savedata.py:241`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L241) - Party portraits field documentation
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:391`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L391) - Portraits parsing comment
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:456`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L456) - Portraits writing comment
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:2157`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L2157) - SAVENFO.res portraits documentation

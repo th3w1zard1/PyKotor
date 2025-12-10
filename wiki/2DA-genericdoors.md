@@ -2,18 +2,18 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines door [types](GFF-File-Format#gff-data-types) with their [models](MDL-MDX-File-Format), [animations](MDL-MDX-File-Format#animation-header), and properties. The engine uses this [file](GFF-File-Format) when loading doors in areas, determining which [model](MDL-MDX-File-Format) to display and how the door behaves.
+**Engine Usage**: Defines door types with their [models](MDL-MDX-File-Format), [animations](MDL-MDX-File-Format#animation-header), and properties. The engine uses this file when loading doors in areas, determining which [model](MDL-MDX-File-Format) to display and how the door behaves.
 
-**Row [index](2DA-File-Format#row-labels)**: Door [type](GFF-File-Format#gff-data-types) ID (integer)
+**Row index**: Door type ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Door [type](GFF-File-Format#gff-data-types) label |
+| `label` | string | Door type label |
 | `modelname` | [ResRef](GFF-File-Format#gff-data-types) | 3D [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) |
-| `name` | String (optional) | Door [type](GFF-File-Format#gff-data-types) name |
-| `strref` | Integer (optional) | [string](GFF-File-Format#gff-data-types) reference for door name |
+| `name` | String (optional) | Door type name |
+| `strref` | Integer (optional) | string reference for door name |
 | `blocksight` | Boolean | Whether door blocks line of sight |
 | `nobin` | Boolean | Whether door has no bin (container) |
 | `preciseuse` | Boolean | Whether precise use is enabled |
@@ -23,17 +23,17 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Column Details**:
 
-The complete column [structure](GFF-File-Format#file-structure-overview) is defined in reone's genericdoors parser:
+The complete column structure is defined in reone's genericdoors parser:
 
 - `label`: Door type label
 - `modelname`: 3D [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types)
-- `name`: Optional door [type](GFF-File-Format#gff-data-types) name [string](GFF-File-Format#gff-data-types)
-- `strref`: Optional integer - [string](GFF-File-Format#gff-data-types) reference for door name
+- `name`: Optional door type name string
+- `strref`: Optional integer - string reference for door name
 - `blocksight`: Boolean - whether door blocks line of sight
 - `nobin`: Boolean - whether door has no bin (container)
 - `preciseuse`: Boolean - whether precise use is enabled
 - `soundapptype`: Optional integer - sound appearance type
-- `staticanim`: Optional [string](GFF-File-Format#gff-data-types) - static [animation](MDL-MDX-File-Format#animation-header) [ResRef](GFF-File-Format#gff-data-types)
+- `staticanim`: Optional string - static [animation](MDL-MDX-File-Format#animation-header) [ResRef](GFF-File-Format#gff-data-types)
 - `visiblemodel`: Boolean - whether [model](MDL-MDX-File-Format) is visible
 
 **References**:
@@ -49,7 +49,7 @@ The complete column [structure](GFF-File-Format#file-structure-overview) is defi
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:356`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L356) - [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) column definition for [doortypes.2da](2DA-doortypes) (K2: [model](MDL-MDX-File-Format))
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:357`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L357) - [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) column definition for [genericdoors.2da](2DA-genericdoors) (K2: modelname)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:468`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L468) - TwoDARegistry.DOORS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:543`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L543) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "GenericType" -> [genericdoors.2da](2DA-genericdoors)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:543`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L543) - [GFF](GFF-File-Format) field mapping: "GenericType" -> [genericdoors.2da](2DA-genericdoors)
 
 **HolocronToolset:**
 

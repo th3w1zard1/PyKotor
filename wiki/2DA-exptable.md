@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines experience point requirements for each character level. The engine uses this [file](GFF-File-Format) to determine when a character levels up based on accumulated experience.
+**Engine Usage**: Defines experience point requirements for each character level. The engine uses this file to determine when a character levels up based on accumulated experience.
 
-**Row [index](2DA-File-Format#row-labels)**: Level (integer, typically 1-20)
+**Row index**: Level (integer, typically 1-20)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Level label |
+| `label` | string | Level label |
 | Additional columns | Integer | Experience point requirements for leveling up |
 
 **References**:

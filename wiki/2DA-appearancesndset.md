@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines sound appearance [types](GFF-File-Format#gff-data-types) for creature appearances. The engine uses this [file](GFF-File-Format) to determine which sound appearance [type](GFF-File-Format#gff-data-types) to use based on the creature's appearance.
+**Engine Usage**: Defines sound appearance types for creature appearances. The engine uses this file to determine which sound appearance type to use based on the creature's appearance.
 
-**Row [index](2DA-File-Format#row-labels)**: Sound Appearance [type](GFF-File-Format#gff-data-types) ID (integer)
+**Row index**: Sound Appearance type ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Sound appearance [type](GFF-File-Format#gff-data-types) label |
-| Additional columns | Various | Sound appearance [type](GFF-File-Format#gff-data-types) properties |
+| `label` | string | Sound appearance type label |
+| Additional columns | Various | Sound appearance type properties |
 
 **References**:
 

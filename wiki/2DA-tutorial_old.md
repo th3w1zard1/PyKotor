@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines old tutorial message configurations (legacy). The engine uses this [file](GFF-File-Format) to determine tutorial messages (replaced by `tutorial.2da` in newer versions).
+**Engine Usage**: Defines old tutorial message configurations (legacy). The engine uses this file to determine tutorial messages (replaced by `tutorial.2da` in newer versions).
 
-**Row [index](2DA-File-Format#row-labels)**: Tutorial Message ID (integer)
+**Row index**: Tutorial Message ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Tutorial message label |
-| `message0` through `message2` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) references for tutorial messages |
+| `label` | string | Tutorial message label |
+| `message0` through `message2` | [StrRef](TLK-File-Format#string-references-strref) | string references for tutorial messages |
 | Additional columns | Various | Tutorial message properties |
 
 **References**:

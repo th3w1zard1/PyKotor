@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines alien sound configurations. The engine uses this [file](GFF-File-Format) to determine alien sound effect filenames.
+**Engine Usage**: Defines alien sound configurations. The engine uses this file to determine alien sound effect filenames.
 
-**Row [index](2DA-File-Format#row-labels)**: Alien Sound ID (integer)
+**Row index**: Alien Sound ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Alien sound label |
+| `label` | string | Alien sound label |
 | `filename` | [ResRef](GFF-File-Format#gff-data-types) | Sound filename [ResRef](GFF-File-Format#gff-data-types) |
 | Additional columns | Various | Alien sound properties |
 

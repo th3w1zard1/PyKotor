@@ -1,12 +1,12 @@
-# KotOR [GFF](GFF-File-Format) [file](GFF-File-Format) [format](GFF-File-Format) Documentation
+# KotOR [GFF](GFF-File-Format) file format Documentation
 
-This document provides a detailed description of the GFF (Generic [file](GFF-File-Format) [format](GFF-File-Format)) used in Knights of the Old Republic (KotOR) games. GFF is a container [format](GFF-File-Format) used for many different game resource [types](GFF-File-Format#gff-data-types), including character templates, areas, dialogs, placeables, creatures, items, and more.
+This document provides a detailed description of the GFF (Generic file format) used in Knights of the Old Republic (KotOR) games. GFF is a container format used for many different game resource types, including character templates, areas, dialogs, placeables, creatures, items, and more.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [GFF](GFF-File-Format) [format](GFF-File-Format) specification, see [Bioware Aurora GFF Format](Bioware-Aurora-GFF) and [Bioware Aurora Common GFF Structs](Bioware-Aurora-CommonGFFStructs).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [GFF](GFF-File-Format) format specification, see [Bioware Aurora GFF Format](Bioware-Aurora-GFF) and [Bioware Aurora Common GFF Structs](Bioware-Aurora-CommonGFFStructs).
 
 **For mod developers:** To modify [GFF files](GFF-File-Format) in your mods, see the [TSLPatcher GFFList Syntax Guide](TSLPatcher-GFFList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Related [formats](GFF-File-Format):** [GFF files](GFF-File-Format) often reference other [formats](GFF-File-Format) such as [2DA files](2DA-File-Format) for configuration [data](GFF-File-Format#file-structure-overview), [TLK files](TLK-File-Format) for text [strings](GFF-File-Format#gff-data-types), [MDL/MDX files](MDL-MDX-File-Format) for 3D [models](MDL-MDX-File-Format), and [NCS files](NCS-File-Format) for scripts.
+**Related formats:** [GFF files](GFF-File-Format) often reference other formats such as [2DA files](2DA-File-Format) for configuration data, [TLK files](TLK-File-Format) for text strings, [MDL/MDX files](MDL-MDX-File-Format) for 3D [models](MDL-MDX-File-Format), and [NCS files](NCS-File-Format) for scripts.
 
 ## Table of Contents
 
@@ -53,21 +53,21 @@ This document provides a detailed description of the GFF (Generic [file](GFF-Fil
 
 ---
 
-## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) Overview
+## file structure Overview
 
-[GFF files](GFF-File-Format) use a hierarchical [structure](GFF-File-Format#file-structure-overview) with structs containing [fields](GFF-File-Format#file-structure-overview), which can be simple [values](GFF-File-Format#gff-data-types) or nested structs and lists. The [format](GFF-File-Format) supports version V3.2 (KotOR) and later versions (V3.3, V4.0, V4.1) used in other BioWare games.
+[GFF files](GFF-File-Format) use a hierarchical structure with structs containing fields, which can be simple values or nested structs and lists. The format supports version V3.2 (KotOR) and later versions (V3.3, V4.0, V4.1) used in other BioWare games.
 
 ### [GFF](GFF-File-Format) as a Universal Container
 
-[GFF](GFF-File-Format) is BioWare's universal container [format](GFF-File-Format) for structured game [data](GFF-File-Format#file-structure-overview). Think of it as a binary JSON or XML with strong typing:
+[GFF](GFF-File-Format) is BioWare's universal container format for structured game data. Think of it as a binary JSON or XML with strong typing:
 
 **Advantages:**
 
-- **[type](GFF-File-Format#gff-data-types) Safety**: Each [field](GFF-File-Format#file-structure-overview) has an explicit [data](GFF-File-Format#file-structure-overview) type (unlike text [formats](GFF-File-Format))
+- **type Safety**: Each field has an explicit data type (unlike text formats)
 - **Compact**: Binary encoding is much smaller than equivalent XML/JSON
 - **Fast**: Direct memory mapping without parsing overhead
-- **Hierarchical**: Natural representation of nested game [data](GFF-File-Format#file-structure-overview)
-- **Extensible**: New [fields](GFF-File-Format#file-structure-overview) can be added without breaking compatibility
+- **Hierarchical**: Natural representation of nested game data
+- **Extensible**: New fields can be added without breaking compatibility
 
 **Common Uses:**
 
@@ -76,18 +76,18 @@ This document provides a detailed description of the GFF (Generic [file](GFF-Fil
 - Dialogue trees ([DLG](GFF-File-Format#dlg-dialogue))
 - Quest journals ([JRL](GFF-File-Format#jrl-journal))
 - Module information ([IFO](GFF-File-Format#ifo-module-info))
-- Save game state (SAV [files](GFF-File-Format) contain [GFF](GFF-File-Format) resources)
+- Save game state (SAV files contain [GFF](GFF-File-Format) resources)
 - User interface layouts ([GUI](GFF-File-Format#gui-graphical-user-interface))
 
-Every `.utc` ([UTC](GFF-File-Format#utc-creature)), `.uti` ([UTI](GFF-File-Format#uti-item)), `.dlg` ([DLG](GFF-File-Format#dlg-dialogue)), `.are` ([ARE](GFF-File-Format#are-area)), and dozens of other KotOR [file](GFF-File-Format) [types](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) [GFF files](GFF-File-Format) with different [file](GFF-File-Format) [type](GFF-File-Format#gff-data-types) signatures and [field](GFF-File-Format#file-structure-overview) schemas.
+Every `.utc` ([UTC](GFF-File-Format#utc-creature)), `.uti` ([UTI](GFF-File-Format#uti-item)), `.dlg` ([DLG](GFF-File-Format#dlg-dialogue)), `.are` ([ARE](GFF-File-Format#are-area)), and dozens of other KotOR file types [ARE](GFF-File-Format#are-area) [GFF files](GFF-File-Format) with different file type signatures and field schemas.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/gff/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/)
 
 **Vendor References:**
 
 - [`vendor/reone/src/libs/resource/gff.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/gff.cpp) - Complete C++ [GFF](GFF-File-Format) reader/writer implementation
-- [`vendor/reone/include/reone/resource/gff.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/gff.h) - [GFF](GFF-File-Format) [type](GFF-File-Format#gff-data-types) definitions and API
-- [`vendor/xoreos/src/aurora/gff3file.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/gff3file.cpp) - Generic Aurora GFF3 implementation (shared [format](GFF-File-Format))
+- [`vendor/reone/include/reone/resource/gff.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/gff.h) - [GFF](GFF-File-Format) type definitions and API
+- [`vendor/xoreos/src/aurora/gff3file.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/gff3file.cpp) - Generic Aurora GFF3 implementation (shared format)
 - [`vendor/KotOR.js/src/resource/GFFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/GFFObject.ts) - TypeScript [GFF](GFF-File-Format) parser with schema validation
 - [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/GFFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/GFFObject.cs) - C# Unity [GFF](GFF-File-Format) loader
 - [`vendor/Kotor.NET/Kotor.NET/Formats/KotorGFF/GFF.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorGFF/GFF.cs) - .NET GFF reader/writer
@@ -96,172 +96,172 @@ Every `.utc` ([UTC](GFF-File-Format#utc-creature)), `.uti` ([UTI](GFF-File-Forma
 **See Also:**
 
 - [TSLPatcher GFFList Syntax](TSLPatcher-GFFList-Syntax) - Modding [GFF files](GFF-File-Format) with TSLPatcher
-- [2DA File Format](2DA-File-Format) - Configuration [data](GFF-File-Format#file-structure-overview) referenced by [GFF](GFF-File-Format) [files](GFF-File-Format)
-- [TLK File Format](TLK-File-Format) - Text [strings](GFF-File-Format#gff-data-types) used by [GFF](GFF-File-Format) LocalizedString [fields](GFF-File-Format#file-structure-overview)
+- [2DA File Format](2DA-File-Format) - Configuration data referenced by [GFF](GFF-File-Format) files
+- [TLK File Format](TLK-File-Format) - Text strings used by [GFF](GFF-File-Format) LocalizedString fields
 - [Bioware Aurora GFF Format](Bioware-Aurora-GFF) - Official BioWare specification
 
 ---
 
-## Binary [format](GFF-File-Format)
+## Binary format
 
-### [file](GFF-File-Format) [header](GFF-File-Format#file-header)
+### file header
 
-The [file](GFF-File-Format) [header](GFF-File-Format#file-header) is 56 bytes in [size](GFF-File-Format#file-structure-overview):
+The file header is 56 bytes in size:
 
-| Name                | [type](GFF-File-Format#gff-data-types)    | [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description                                    |
+| Name                | type    | offset | size | Description                                    |
 | ------------------- | ------- | ------ | ---- | ---------------------------------------------- |
-| [file](GFF-File-Format) [type](GFF-File-Format#gff-data-types)           | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](4) | 0 (0x00) | 4    | Content type (e.g., `"GFF "`, `"ARE "`, `"UTC "`) |
-| [file](GFF-File-Format) Version        | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](4) | 4 (0x04) | 4    | [format](GFF-File-Format) version (`"V3.2"` for KotOR)           |
-| Struct [array](2DA-File-Format) [offset](GFF-File-Format#file-structure-overview) | [uint32](GFF-File-Format#gff-data-types)  | 8 (0x08) | 4    | [offset](GFF-File-Format#file-structure-overview) to struct [array](2DA-File-Format)                        |
-| Struct [count](GFF-File-Format#file-structure-overview)        | [uint32](GFF-File-Format#gff-data-types)  | 12 (0x0C) | 4    | Number of structs                              |
-| [field](GFF-File-Format#file-structure-overview) [array](2DA-File-Format) [offset](GFF-File-Format#file-structure-overview)  | [uint32](GFF-File-Format#gff-data-types)  | 16 (0x10) | 4    | [offset](GFF-File-Format#file-structure-overview) to [field](GFF-File-Format#file-structure-overview) [array](2DA-File-Format)                         |
-| [field](GFF-File-Format#file-structure-overview) [count](GFF-File-Format#file-structure-overview)         | [uint32](GFF-File-Format#gff-data-types)  | 20 (0x14) | 4    | Number of [fields](GFF-File-Format#file-structure-overview)                               |
-| Label [array](2DA-File-Format) [offset](GFF-File-Format#file-structure-overview)   | [uint32](GFF-File-Format#gff-data-types)  | 24 (0x18) | 4    | [offset](GFF-File-Format#file-structure-overview) to label [array](2DA-File-Format)                         |
-| Label [count](GFF-File-Format#file-structure-overview)          | [uint32](GFF-File-Format#gff-data-types)  | 28 (0x1C) | 4    | Number of labels                               |
-| [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) [offset](GFF-File-Format#file-structure-overview)    | [uint32](GFF-File-Format#gff-data-types)  | 32 (0x20) | 4    | [offset](GFF-File-Format#file-structure-overview) to [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) section                  |
-| [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) [count](GFF-File-Format#file-structure-overview)     | [uint32](GFF-File-Format#gff-data-types)  | 36 (0x24) | 4    | [size](GFF-File-Format#file-structure-overview) of [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) section in bytes           |
-| [field](GFF-File-Format#file-structure-overview) [indices](2DA-File-Format#row-labels) [offset](GFF-File-Format#file-structure-overview) | [uint32](GFF-File-Format#gff-data-types)  | 40 (0x28) | 4    | [offset](GFF-File-Format#file-structure-overview) to [field](GFF-File-Format#file-structure-overview) [indices](2DA-File-Format#row-labels) [array](2DA-File-Format)                 |
-| [field](GFF-File-Format#file-structure-overview) [indices](2DA-File-Format#row-labels) [count](GFF-File-Format#file-structure-overview)  | [uint32](GFF-File-Format#gff-data-types)  | 44 (0x2C) | 4    | Number of [field](GFF-File-Format#file-structure-overview) [indices](2DA-File-Format#row-labels)                       |
-| List [indices](2DA-File-Format#row-labels) [offset](GFF-File-Format#file-structure-overview)  | [uint32](GFF-File-Format#gff-data-types)  | 48 (0x30) | 4    | [offset](GFF-File-Format#file-structure-overview) to list [indices](2DA-File-Format#row-labels) [array](2DA-File-Format)                  |
-| List [indices](2DA-File-Format#row-labels) [count](GFF-File-Format#file-structure-overview)   | [uint32](GFF-File-Format#gff-data-types)  | 52 (0x34) | 4    | Number of list [indices](2DA-File-Format#row-labels)                        |
+| file type           | [char](GFF-File-Format#gff-data-types) | 0 (0x00) | 4    | Content type (e.g., `"GFF "`, `"ARE "`, `"UTC "`) |
+| file Version        | [char](GFF-File-Format#gff-data-types) | 4 (0x04) | 4    | format version (`"V3.2"` for KotOR)           |
+| Struct array offset | [uint32](GFF-File-Format#gff-data-types)  | 8 (0x08) | 4    | offset to struct array                        |
+| Struct count        | [uint32](GFF-File-Format#gff-data-types)  | 12 (0x0C) | 4    | Number of structs                              |
+| field array offset  | [uint32](GFF-File-Format#gff-data-types)  | 16 (0x10) | 4    | offset to field array                         |
+| field count         | [uint32](GFF-File-Format#gff-data-types)  | 20 (0x14) | 4    | Number of fields                               |
+| Label array offset   | [uint32](GFF-File-Format#gff-data-types)  | 24 (0x18) | 4    | offset to label array                         |
+| Label count          | [uint32](GFF-File-Format#gff-data-types)  | 28 (0x1C) | 4    | Number of labels                               |
+| field data offset    | [uint32](GFF-File-Format#gff-data-types)  | 32 (0x20) | 4    | offset to field data section                  |
+| field data count     | [uint32](GFF-File-Format#gff-data-types)  | 36 (0x24) | 4    | size of field data section in bytes           |
+| field indices offset | [uint32](GFF-File-Format#gff-data-types)  | 40 (0x28) | 4    | offset to field indices array                 |
+| field indices count  | [uint32](GFF-File-Format#gff-data-types)  | 44 (0x2C) | 4    | Number of field indices                       |
+| List indices offset  | [uint32](GFF-File-Format#gff-data-types)  | 48 (0x30) | 4    | offset to list indices array                  |
+| List indices count   | [uint32](GFF-File-Format#gff-data-types)  | 52 (0x34) | 4    | Number of list indices                        |
 
 **Reference**: [`vendor/reone/src/libs/resource/format/gffreader.cpp:30-44`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/gffreader.cpp#L30-L44)
 
-### Label [array](2DA-File-Format)
+### Label array
 
-Labels [ARE](GFF-File-Format#are-area) 16-[byte](GFF-File-Format#gff-data-types) [null-terminated](https://en.cppreference.com/w/c/string/byte) [strings](GFF-File-Format#gff-data-types) used as [field](GFF-File-Format#file-structure-overview) names:
+Labels [ARE](GFF-File-Format#are-area) 16-[byte](GFF-File-Format#gff-data-types) [null-terminated](https://en.cppreference.com/w/c/string/byte) strings used as field names:
 
-| Name   | [type](GFF-File-Format#gff-data-types)     | [size](GFF-File-Format#file-structure-overview) | Description                                                      |
+| Name   | type     | size | Description                                                      |
 | ------ | -------- | ---- | ---------------------------------------------------------------- |
-| Labels | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](16) | 16×N | [array](2DA-File-Format) of [field](GFF-File-Format#file-structure-overview) name labels (null-padded to 16 bytes)            |
+| Labels | [char](GFF-File-Format#gff-data-types) | 16×N | array of field name labels (null-padded to 16 bytes)            |
 
 **Reference**: [`vendor/reone/src/libs/resource/format/gffreader.cpp:151-154`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/gffreader.cpp#L151-L154)
 
-### Struct [array](2DA-File-Format)
+### Struct array
 
 Each struct entry is 12 bytes:
 
-| Name       | [type](GFF-File-Format#gff-data-types)   | [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description                                                      |
+| Name       | type   | offset | size | Description                                                      |
 | ---------- | ------ | ------ | ---- | ---------------------------------------------------------------- |
-| Struct ID  | [int32](GFF-File-Format#gff-data-types)  | 0 (0x00) | 4    | [structure](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#gff-data-types) identifier                                        |
-| [data](GFF-File-Format#file-structure-overview)/[offset](GFF-File-Format#file-structure-overview)| [uint32](GFF-File-Format#gff-data-types) | 4 (0x04) | 4    | [field](GFF-File-Format#file-structure-overview) index (if 1 [field](GFF-File-Format#file-structure-overview)) or [offset](GFF-File-Format#file-structure-overview) to [field](GFF-File-Format#file-structure-overview) indices (if multiple) |
-| [field](GFF-File-Format#file-structure-overview) [count](GFF-File-Format#file-structure-overview)| [uint32](GFF-File-Format#gff-data-types) | 8 (0x08) | 4    | Number of [fields](GFF-File-Format#file-structure-overview) in this struct (0, 1, or >1)                   |
+| Struct ID  | [int32](GFF-File-Format#gff-data-types)  | 0 (0x00) | 4    | structure type identifier                                        |
+| data/offset| [uint32](GFF-File-Format#gff-data-types) | 4 (0x04) | 4    | field index (if 1 field) or offset to field indices (if multiple) |
+| field count| [uint32](GFF-File-Format#gff-data-types) | 8 (0x08) | 4    | Number of fields in this struct (0, 1, or >1)                   |
 
 **Reference**: [`vendor/reone/src/libs/resource/format/gffreader.cpp:40-62`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/gffreader.cpp#L40-L62)
 
-### [field](GFF-File-Format#file-structure-overview) [array](2DA-File-Format)
+### field array
 
-Each [field](GFF-File-Format#file-structure-overview) entry is 12 bytes:
+Each field entry is 12 bytes:
 
-| Name        | [type](GFF-File-Format#gff-data-types)   | [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description                                                      |
+| Name        | type   | offset | size | Description                                                      |
 | ----------- | ------ | ------ | ---- | ---------------------------------------------------------------- |
-| [field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#gff-data-types)  | [uint32](GFF-File-Format#gff-data-types) | 0 (0x00) | 4    | [data](GFF-File-Format#file-structure-overview) type (see [GFF Data Types](#gff-data-types))              |
-| Label [index](2DA-File-Format#row-labels) | [uint32](GFF-File-Format#gff-data-types) | 4 (0x04) | 4    | [index](2DA-File-Format#row-labels) into label [array](2DA-File-Format) for [field](GFF-File-Format#file-structure-overview) name                           |
-| [data](GFF-File-Format#file-structure-overview)/[offset](GFF-File-Format#file-structure-overview) | [uint32](GFF-File-Format#gff-data-types) | 8 (0x08) | 4    | Inline data (simple [types](GFF-File-Format#gff-data-types)) or [offset](GFF-File-Format#file-structure-overview) to [field](GFF-File-Format#file-structure-overview) data (complex [types](GFF-File-Format#gff-data-types)) |
+| field type  | [uint32](GFF-File-Format#gff-data-types) | 0 (0x00) | 4    | data type (see [GFF Data Types](#gff-data-types))              |
+| Label index | [uint32](GFF-File-Format#gff-data-types) | 4 (0x04) | 4    | index into label array for field name                           |
+| data/offset | [uint32](GFF-File-Format#gff-data-types) | 8 (0x08) | 4    | Inline data (simple types) or offset to field data (complex types) |
 
 **Reference**: [`vendor/reone/src/libs/resource/format/gffreader.cpp:67-76`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/gffreader.cpp#L67-L76)
 
-### [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview)
+### field data
 
-Complex [field](GFF-File-Format#file-structure-overview) [types](GFF-File-Format#gff-data-types) store their [data](GFF-File-Format#file-structure-overview) in the [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) section:
+Complex field types store their data in the field data section:
 
-| [field](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#gff-data-types)        | Storage [format](GFF-File-Format)                                                      |
+| field type        | Storage format                                                      |
 | ----------------- | ------------------------------------------------------------------- |
 | UInt64            | 8 bytes (uint64)                                                    |
 | Int64             | 8 bytes (int64)                                                     |
 | [double](GFF-File-Format#gff-data-types)            | 8 bytes ([double](GFF-File-Format#gff-data-types))                                                    |
-| [string](GFF-File-Format#gff-data-types)            | 4 bytes length + N bytes [string](GFF-File-Format#gff-data-types) [data](GFF-File-Format#file-structure-overview)                                |
+| string            | 4 bytes length + N bytes string data                                |
 | [ResRef](GFF-File-Format#gff-data-types)            | 1 [byte](GFF-File-Format#gff-data-types) length + N bytes [ResRef](GFF-File-Format#gff-data-types) data (max 16 chars)                  |
-| LocalizedString   | 4 bytes [count](GFF-File-Format#file-structure-overview) + N×8 bytes (Language ID + [StrRef](TLK-File-Format#string-references-strref) pairs)              |
-| Binary            | 4 bytes length + N bytes binary [data](GFF-File-Format#file-structure-overview)                                 |
+| LocalizedString   | 4 bytes count + N×8 bytes (Language ID + [StrRef](TLK-File-Format#string-references-strref) pairs)              |
+| Binary            | 4 bytes length + N bytes binary data                                 |
 | Vector3           | 12 bytes (3×[float](GFF-File-Format#gff-data-types))                                                   |
 | Vector4           | 16 bytes (4×[float](GFF-File-Format#gff-data-types))                                                   |
 
 **Reference**: [`vendor/reone/src/libs/resource/format/gffreader.cpp:78-146`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/gffreader.cpp#L78-L146)
 
-### [field](GFF-File-Format#file-structure-overview) Indices (Multiple Element Map / MultiMap)
+### field Indices (Multiple Element Map / MultiMap)
 
-When a struct has multiple [fields](GFF-File-Format#file-structure-overview), the struct's [data](GFF-File-Format#file-structure-overview) [field](GFF-File-Format#file-structure-overview) contains an [offset](GFF-File-Format#file-structure-overview) into the [field](GFF-File-Format#file-structure-overview) [indices](2DA-File-Format#row-labels) array (also called the "Multiple Element Map" or "MultiMap" in [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html)), which lists the [field](GFF-File-Format#file-structure-overview) [indices](2DA-File-Format#row-labels) for that struct.
+When a struct has multiple fields, the struct's data field contains an offset into the field indices array (also called the "Multiple Element Map" or "MultiMap" in [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html)), which lists the field indices for that struct.
 
-**Access Pattern**: When a struct has exactly one [field](GFF-File-Format#file-structure-overview), the struct's [data](GFF-File-Format#file-structure-overview) [field](GFF-File-Format#file-structure-overview) directly contains the [field](GFF-File-Format#file-structure-overview) [index](2DA-File-Format#row-labels). When a struct has more than one [field](GFF-File-Format#file-structure-overview), the [data](GFF-File-Format#file-structure-overview) [field](GFF-File-Format#file-structure-overview) contains a [byte](GFF-File-Format#gff-data-types) [offset](GFF-File-Format#file-structure-overview) into the [field](GFF-File-Format#file-structure-overview) [indices](2DA-File-Format#row-labels) [array](2DA-File-Format), which is an [array](2DA-File-Format) of [uint32](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types) listing the [field](GFF-File-Format#file-structure-overview) [indices](2DA-File-Format#row-labels).
+**Access Pattern**: When a struct has exactly one field, the struct's data field directly contains the field index. When a struct has more than one field, the data field contains a [byte](GFF-File-Format#gff-data-types) offset into the field indices array, which is an array of [uint32](GFF-File-Format#gff-data-types) values listing the field indices.
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - Entry/Entity table access patterns and MultiMap explanation
 
-### List [indices](2DA-File-Format#row-labels)
+### List indices
 
-Lists [ARE](GFF-File-Format#are-area) stored as [arrays](2DA-File-Format) of struct [indices](2DA-File-Format#row-labels). The list [field](GFF-File-Format#file-structure-overview) contains an [offset](GFF-File-Format#file-structure-overview) into the list [indices](2DA-File-Format#row-labels) [array](2DA-File-Format), which contains the struct [indices](2DA-File-Format#row-labels) that make up the list.
+Lists [ARE](GFF-File-Format#are-area) stored as arrays of struct indices. The list field contains an offset into the list indices array, which contains the struct indices that make up the list.
 
-**Access Pattern**: For a LIST [type](GFF-File-Format#gff-data-types) [field](GFF-File-Format#file-structure-overview), the [field](GFF-File-Format#file-structure-overview)'s [data](GFF-File-Format#file-structure-overview)/[offset](GFF-File-Format#file-structure-overview) [value](GFF-File-Format#gff-data-types) specifies a [byte](GFF-File-Format#gff-data-types) [offset](GFF-File-Format#file-structure-overview) into the list [indices](2DA-File-Format#row-labels) table. At that [offset](GFF-File-Format#file-structure-overview), the first [uint32](GFF-File-Format#gff-data-types) is the [count](GFF-File-Format#file-structure-overview) of entries, followed by that many [uint32](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types) representing the struct [indices](2DA-File-Format#row-labels).
+**Access Pattern**: For a LIST type field, the field's data/offset value specifies a [byte](GFF-File-Format#gff-data-types) offset into the list indices table. At that offset, the first [uint32](GFF-File-Format#gff-data-types) is the count of entries, followed by that many [uint32](GFF-File-Format#gff-data-types) values representing the struct indices.
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - LIST [type](GFF-File-Format#gff-data-types) access pattern
+**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - LIST type access pattern
 
 ---
 
-## [GFF](GFF-File-Format) [data](GFF-File-Format#file-structure-overview) [types](GFF-File-Format#gff-data-types)
+## [GFF](GFF-File-Format) data types
 
-[GFF](GFF-File-Format) supports the following [field](GFF-File-Format#file-structure-overview) [types](GFF-File-Format#gff-data-types):
+[GFF](GFF-File-Format) supports the following field types:
 
-| [type](GFF-File-Format#gff-data-types) ID | Name              | Size (inline) | Description                                                      |
+| type ID | Name              | Size (inline) | Description                                                      |
 | ------- | ----------------- | ------------- | ---------------------------------------------------------------- |
-| 0       | [byte](GFF-File-Format#gff-data-types)              | 1             | 8-[bit](GFF-File-Format#gff-data-types) unsigned integer                                           |
-| 1       | [char](GFF-File-Format#gff-data-types)              | 1             | 8-[bit](GFF-File-Format#gff-data-types) signed integer                                              |
-| 2       | Word              | 2             | 16-[bit](GFF-File-Format#gff-data-types) unsigned integer                                          |
-| 3       | Short             | 2             | 16-[bit](GFF-File-Format#gff-data-types) signed integer                                             |
-| 4       | DWord             | 4             | 32-[bit](GFF-File-Format#gff-data-types) unsigned integer                                          |
-| 5       | Int               | 4             | 32-[bit](GFF-File-Format#gff-data-types) signed integer                                             |
-| 6       | DWord64           | 8             | 64-[bit](GFF-File-Format#gff-data-types) unsigned integer (stored in [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview))                  |
-| 7       | Int64              | 8             | 64-[bit](GFF-File-Format#gff-data-types) signed integer (stored in [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview))                      |
-| 8       | [float](GFF-File-Format#gff-data-types)             | 4             | 32-[bit](GFF-File-Format#gff-data-types) floating point                                             |
-| 9       | [double](GFF-File-Format#gff-data-types)            | 8             | 64-[bit](GFF-File-Format#gff-data-types) floating point (stored in [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview))                     |
-| 10      | [CExoString](GFF-File-Format#gff-data-types)        | varies        | [null-terminated](https://en.cppreference.com/w/c/string/byte) string (stored in [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview))                    |
-| 11      | [ResRef](GFF-File-Format#gff-data-types)            | varies        | Resource reference (stored in [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview), max 16 chars)          |
-| 12      | [CExoLocString](GFF-File-Format#gff-data-types)     | varies        | Localized string (stored in [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview))                           |
-| 13      | Void              | varies        | Binary [data](GFF-File-Format#file-structure-overview) blob (stored in [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview))                          |
-| 14      | Struct            | 4             | Nested struct (struct [index](2DA-File-Format#row-labels) stored inline)                       |
-| 15      | List              | 4             | List of structs ([offset](GFF-File-Format#file-structure-overview) to list [indices](2DA-File-Format#row-labels) stored inline)            |
-| 16      | [orientation](MDL-MDX-File-Format#node-header)       | 16            | Quaternion (4×[float](GFF-File-Format#gff-data-types), stored in [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) as Vector4)            |
-| 17      | [vector](GFF-File-Format#gff-data-types)            | 12            | 3D vector (3×[float](GFF-File-Format#gff-data-types), stored in [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview))                       |
-| 18      | [StrRef](TLK-File-Format#string-references-strref)            | 4             | [string](GFF-File-Format#gff-data-types) reference ([TLK](TLK-File-Format) [StrRef](TLK-File-Format#string-references-strref), stored inline as [int32](GFF-File-Format#gff-data-types))             |
+| 0       | [byte](GFF-File-Format#gff-data-types)              | 1             | 8-bit unsigned integer                                           |
+| 1       | [char](GFF-File-Format#gff-data-types)              | 1             | 8-bit signed integer                                              |
+| 2       | Word              | 2             | 16-bit unsigned integer                                          |
+| 3       | Short             | 2             | 16-bit signed integer                                             |
+| 4       | DWord             | 4             | 32-bit unsigned integer                                          |
+| 5       | Int               | 4             | 32-bit signed integer                                             |
+| 6       | DWord64           | 8             | 64-bit unsigned integer (stored in field data)                  |
+| 7       | Int64              | 8             | 64-bit signed integer (stored in field data)                      |
+| 8       | [float](GFF-File-Format#gff-data-types)             | 4             | 32-bit floating point                                             |
+| 9       | [double](GFF-File-Format#gff-data-types)            | 8             | 64-bit floating point (stored in field data)                     |
+| 10      | [CExoString](GFF-File-Format#gff-data-types)        | varies        | [null-terminated](https://en.cppreference.com/w/c/string/byte) string (stored in field data)                    |
+| 11      | [ResRef](GFF-File-Format#gff-data-types)            | varies        | Resource reference (stored in field data, max 16 chars)          |
+| 12      | [CExoLocString](GFF-File-Format#gff-data-types)     | varies        | Localized string (stored in field data)                           |
+| 13      | Void              | varies        | Binary data blob (stored in field data)                          |
+| 14      | Struct            | 4             | Nested struct (struct index stored inline)                       |
+| 15      | List              | 4             | List of structs (offset to list indices stored inline)            |
+| 16      | orientation       | 16            | Quaternion (4×[float](GFF-File-Format#gff-data-types), stored in field data as Vector4)            |
+| 17      | vector            | 12            | 3D vector (3×[float](GFF-File-Format#gff-data-types), stored in field data)                       |
+| 18      | [StrRef](TLK-File-Format#string-references-strref)            | 4             | string reference ([TLK](TLK-File-Format) [StrRef](TLK-File-Format#string-references-strref), stored inline as [int32](GFF-File-Format#gff-data-types))             |
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py:73-108`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py#L73-L108)
 
-**[type](GFF-File-Format#gff-data-types) Selection Guidelines:**
+**type Selection Guidelines:**
 
 - Use **[byte](GFF-File-Format#gff-data-types)/[char](GFF-File-Format#gff-data-types)** for small integers (-128 to 255) and boolean [flags](GFF-File-Format#gff-data-types)
 - Use **Word/Short** for medium integers like IDs and counts
-- Use **DWord/Int** for large [values](GFF-File-Format#gff-data-types) and most numeric [fields](GFF-File-Format#file-structure-overview)
-- Use **[float](GFF-File-Format#gff-data-types)** for decimals that don't need high precision ([positions](MDL-MDX-File-Format#node-header), angles)
+- Use **DWord/Int** for large values and most numeric fields
+- Use **[float](GFF-File-Format#gff-data-types)** for decimals that don't need high precision (positions, angles)
 - Use **[double](GFF-File-Format#gff-data-types)** for high-precision calculations (rare in KotOR)
 - Use **[CExoString](GFF-File-Format#gff-data-types)** for text that doesn't need localization
 - Use **[CExoLocString](GFF-File-Format#gff-data-types)** for player-visible text that should be translated
 - Use **[ResRef](GFF-File-Format#gff-data-types)** for filenames without extensions ([models](MDL-MDX-File-Format), [textures](TPC-File-Format), scripts)
-- Use **Void** for binary blobs like encrypted [data](GFF-File-Format#file-structure-overview) or custom [structures](GFF-File-Format#file-structure-overview)
-- Use **Struct** for nested objects with multiple [fields](GFF-File-Format#file-structure-overview)
-- Use **List** for [arrays](2DA-File-Format) of structs (inventory items, dialogue replies)
-- Use **[vector](GFF-File-Format#gff-data-types)** for 3D [positions](MDL-MDX-File-Format#node-header) and directions
-- Use **[orientation](MDL-MDX-File-Format#node-header)** for [quaternion](MDL-MDX-File-Format#node-header) [rotations](MDL-MDX-File-Format#node-header)
+- Use **Void** for binary blobs like encrypted data or custom structures
+- Use **Struct** for nested objects with multiple fields
+- Use **List** for arrays of structs (inventory items, dialogue replies)
+- Use **vector** for 3D positions and directions
+- Use **orientation** for [quaternion](MDL-MDX-File-Format#node-header) rotations
 - Use **[StrRef](TLK-File-Format#string-references-strref)** for references to [dialog.tlk](TLK-File-Format) entries
 
 **Storage Optimization:**
 
-Inline types (0-5, 8, 14, 15, 18) store their [value](GFF-File-Format#gff-data-types) directly in the [field](GFF-File-Format#file-structure-overview) entry, saving space and improving access speed. Complex types (6-7, 9-13, 16-17) require an [offset](GFF-File-Format#file-structure-overview) to [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview), adding overhead. When designing custom [GFF](GFF-File-Format) schemas, prefer inline [types](GFF-File-Format#gff-data-types) where possible.
+Inline types (0-5, 8, 14, 15, 18) store their value directly in the field entry, saving space and improving access speed. Complex types (6-7, 9-13, 16-17) require an offset to field data, adding overhead. When designing custom [GFF](GFF-File-Format) schemas, prefer inline types where possible.
 
 ---
 
-## [GFF](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview)
+## [GFF](GFF-File-Format) structure
 
 ### GFFStruct
 
-A [GFF](GFF-File-Format) struct is a collection of named [fields](GFF-File-Format#file-structure-overview). Each struct has:
+A [GFF](GFF-File-Format) struct is a collection of named fields. Each struct has:
 
-- **Struct ID**: [type](GFF-File-Format#gff-data-types) identifier (often 0xFFFFFFFF for generic structs)
-- **[fields](GFF-File-Format#file-structure-overview)**: Dictionary mapping [field](GFF-File-Format#file-structure-overview) names (labels) to [field](GFF-File-Format#file-structure-overview) [values](GFF-File-Format#gff-data-types)
+- **Struct ID**: type identifier (often 0xFFFFFFFF for generic structs)
+- **fields**: Dictionary mapping field names (labels) to field values
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py:400-800`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py#L400-L800)
 
 ### GFFField
 
-[fields](GFF-File-Format#file-structure-overview) can be accessed using [type](GFF-File-Format#gff-data-types)-specific getter/setter methods:
+fields can be accessed using type-specific getter/setter methods:
 
 - `get_uint8(label)`, `set_uint8(label, value)`
 - `get_int32(label)`, `set_int32(label, value)`
@@ -278,29 +278,29 @@ A [GFF](GFF-File-Format) struct is a collection of named [fields](GFF-File-Forma
 A [GFF](GFF-File-Format) list is an ordered collection of structs. Lists [ARE](GFF-File-Format#are-area) accessed via:
 
 - `get_list(label)`: Returns a `GFFList` object
-- `GFFList.get(i)`: Gets struct at [index](2DA-File-Format#row-labels) `i`
+- `GFFList.get(i)`: Gets struct at index `i`
 - `GFFList.append(struct)`: Adds a struct to the list
 
 **Common List Usage:**
 
-Lists [ARE](GFF-File-Format#are-area) used extensively for variable-length [arrays](2DA-File-Format):
+Lists [ARE](GFF-File-Format#are-area) used extensively for variable-length arrays:
 
-- **ItemList** in [UTC](GFF-File-Format#utc-creature) [files](GFF-File-Format): Character inventory items
-- **Equip_ItemList** in [UTC](GFF-File-Format#utc-creature) [files](GFF-File-Format): Equipped items
-- **EntryList** in [DLG](GFF-File-Format#dlg-dialogue) [files](GFF-File-Format): Dialogue entry [nodes](MDL-MDX-File-Format#node-structures)
-- **ReplyList** in [DLG](GFF-File-Format#dlg-dialogue) [files](GFF-File-Format): Dialogue reply options
-- **SkillList** in [UTC](GFF-File-Format#utc-creature) [files](GFF-File-Format): Character skills
-- **FeatList** in [UTC](GFF-File-Format#utc-creature) [files](GFF-File-Format): Character feats
-- **EffectList** in various [files](GFF-File-Format): Applied effects
-- **Creature_List** in [GIT](GFF-File-Format#git-game-instance-template) [files](GFF-File-Format): Spawned creatures in area
+- **ItemList** in [UTC](GFF-File-Format#utc-creature) files: Character inventory items
+- **Equip_ItemList** in [UTC](GFF-File-Format#utc-creature) files: Equipped items
+- **EntryList** in [DLG](GFF-File-Format#dlg-dialogue) files: Dialogue entry [nodes](MDL-MDX-File-Format#node-structures)
+- **ReplyList** in [DLG](GFF-File-Format#dlg-dialogue) files: Dialogue reply options
+- **SkillList** in [UTC](GFF-File-Format#utc-creature) files: Character skills
+- **FeatList** in [UTC](GFF-File-Format#utc-creature) files: Character feats
+- **EffectList** in various files: Applied effects
+- **Creature_List** in [GIT](GFF-File-Format#git-game-instance-template) files: Spawned creatures in area
 
 When modifying lists, always maintain struct IDs and parent references to avoid breaking internal links.
 
 ---
 
-## [GFF](GFF-File-Format) Generic [types](GFF-File-Format#gff-data-types)
+## [GFF](GFF-File-Format) Generic types
 
-[GFF files](GFF-File-Format) [ARE](GFF-File-Format#are-area) used as containers for various game resource [types](GFF-File-Format#gff-data-types). Each generic [type](GFF-File-Format#gff-data-types) has its own [structure](GFF-File-Format#file-structure-overview) and [field](GFF-File-Format#file-structure-overview) definitions.
+[GFF files](GFF-File-Format) [ARE](GFF-File-Format#are-area) used as containers for various game resource types. Each generic type has its own structure and field definitions.
 
 ### ARE (Area)
 
@@ -368,52 +368,52 @@ See [UTW (Waypoint)](GFF-UTW) for detailed documentation.
 
 ## Alternative Terminology (Historical)
 
-The [GFF](GFF-File-Format) [format](GFF-File-Format) is also known as "ITP" in [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) (Tim Smith/Torlack's reverse-engineered documentation from the Neverwinter Nights era). The following terminology mapping may be helpful when reading older specifications:
+The [GFF](GFF-File-Format) format is also known as "ITP" in [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) (Tim Smith/Torlack's reverse-engineered documentation from the Neverwinter Nights era). The following terminology mapping may be helpful when reading older specifications:
 
 | Modern Term ([GFF](GFF-File-Format)) | Historical Term (ITP) | Description |
 | ----------------- | --------------------- | ----------- |
-| Struct [array](2DA-File-Format) | Entry Table / Entity Table | [array](2DA-File-Format) of struct entries |
-| [field](GFF-File-Format#file-structure-overview) [array](2DA-File-Format) | Element Table | [array](2DA-File-Format) of [field](GFF-File-Format#file-structure-overview)/element entries |
-| Label [array](2DA-File-Format) | Variable Names Table | [array](2DA-File-Format) of 16-[byte](GFF-File-Format#gff-data-types) [field](GFF-File-Format#file-structure-overview) name [strings](GFF-File-Format#gff-data-types) |
-| [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) | Variable [data](GFF-File-Format#file-structure-overview) Section | Storage for complex [field](GFF-File-Format#file-structure-overview) [types](GFF-File-Format#gff-data-types) |
-| [field](GFF-File-Format#file-structure-overview) [indices](2DA-File-Format#row-labels) | Multiple Element Map (MultiMap) | [array](2DA-File-Format) mapping structs to their [fields](GFF-File-Format#file-structure-overview) |
-| List [indices](2DA-File-Format#row-labels) | List Section | [array](2DA-File-Format) mapping list [fields](GFF-File-Format#file-structure-overview) to struct [indices](2DA-File-Format#row-labels) |
+| Struct array | Entry Table / Entity Table | array of struct entries |
+| field array | Element Table | array of field/element entries |
+| Label array | Variable Names Table | array of 16-[byte](GFF-File-Format#gff-data-types) field name strings |
+| field data | Variable data Section | Storage for complex field types |
+| field indices | Multiple Element Map (MultiMap) | array mapping structs to their fields |
+| List indices | List Section | array mapping list fields to struct indices |
 
-**Note**: The first entry in the struct [array](2DA-File-Format) is always the root of the entire hierarchy. All other structs and [fields](GFF-File-Format#file-structure-overview) can be accessed from this root entry.
+**Note**: The first entry in the struct array is always the root of the entire hierarchy. All other structs and fields can be accessed from this root entry.
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - Tim Smith (Torlack)'s reverse-engineered [GFF](GFF-File-Format)/ITP [format](GFF-File-Format) documentation
+**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - Tim Smith (Torlack)'s reverse-engineered [GFF](GFF-File-Format)/ITP format documentation
 
-## [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) Access Patterns
+## field data Access Patterns
 
-### Direct Access [types](GFF-File-Format#gff-data-types)
+### Direct Access types
 
-Simple types ([uint8](GFF-File-Format#gff-data-types), Int8, [uint16](GFF-File-Format#gff-data-types), [int16](GFF-File-Format#gff-data-types), [uint32](GFF-File-Format#gff-data-types), [int32](GFF-File-Format#gff-data-types), [float](GFF-File-Format#gff-data-types)) store their [values](GFF-File-Format#gff-data-types) directly in the [field](GFF-File-Format#file-structure-overview) entry's [data](GFF-File-Format#file-structure-overview)/[offset](GFF-File-Format#file-structure-overview) field ([offset](GFF-File-Format#file-structure-overview) 0x0008 in the element [structure](GFF-File-Format#file-structure-overview)). These [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) [format](GFF-File-Format).
+Simple types ([uint8](GFF-File-Format#gff-data-types), Int8, [uint16](GFF-File-Format#gff-data-types), [int16](GFF-File-Format#gff-data-types), [uint32](GFF-File-Format#gff-data-types), [int32](GFF-File-Format#gff-data-types), [float](GFF-File-Format#gff-data-types)) store their values directly in the field entry's data/offset field (offset 0x0008 in the element structure). These values [ARE](GFF-File-Format#are-area) stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
 
-### Indirect Access [types](GFF-File-Format#gff-data-types)
+### Indirect Access types
 
-Complex [types](GFF-File-Format#gff-data-types) require accessing [data](GFF-File-Format#file-structure-overview) from the [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) section:
+Complex types require accessing data from the field data section:
 
-- **UInt64, Int64, [double](GFF-File-Format#gff-data-types)**: The [field](GFF-File-Format#file-structure-overview)'s [data](GFF-File-Format#file-structure-overview)/[offset](GFF-File-Format#file-structure-overview) contains a [byte](GFF-File-Format#gff-data-types) [offset](GFF-File-Format#file-structure-overview) into the [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) section where the 8-[byte](GFF-File-Format#gff-data-types) [value](GFF-File-Format#gff-data-types) is stored.
-- **String ([CExoString](GFF-File-Format#gff-data-types))**: The [offset](GFF-File-Format#file-structure-overview) points to a [uint32](GFF-File-Format#gff-data-types) length followed by the [string](GFF-File-Format#gff-data-types) bytes (not [null-terminated](https://en.cppreference.com/w/c/string/byte)).
-- **[ResRef](GFF-File-Format#gff-data-types)**: The [offset](GFF-File-Format#file-structure-overview) points to a [uint8](GFF-File-Format#gff-data-types) length (max 16) followed by the resource name bytes (not [null-terminated](https://en.cppreference.com/w/c/string/byte)).
-- **LocalizedString ([CExoLocString](GFF-File-Format#gff-data-types))**: The [offset](GFF-File-Format#file-structure-overview) points to a [structure](GFF-File-Format#file-structure-overview) containing:
-  - [uint32](GFF-File-Format#gff-data-types): Total size (not including this [count](GFF-File-Format#file-structure-overview))
+- **UInt64, Int64, [double](GFF-File-Format#gff-data-types)**: The field's data/offset contains a [byte](GFF-File-Format#gff-data-types) offset into the field data section where the 8-[byte](GFF-File-Format#gff-data-types) value is stored.
+- **String ([CExoString](GFF-File-Format#gff-data-types))**: The offset points to a [uint32](GFF-File-Format#gff-data-types) length followed by the string bytes (not [null-terminated](https://en.cppreference.com/w/c/string/byte)).
+- **[ResRef](GFF-File-Format#gff-data-types)**: The offset points to a [uint8](GFF-File-Format#gff-data-types) length (max 16) followed by the resource name bytes (not [null-terminated](https://en.cppreference.com/w/c/string/byte)).
+- **LocalizedString ([CExoLocString](GFF-File-Format#gff-data-types))**: The offset points to a structure containing:
+  - [uint32](GFF-File-Format#gff-data-types): Total size (not including this count)
   - [int32](GFF-File-Format#gff-data-types): [StrRef](TLK-File-Format#string-references-strref) ID ([dialog.tlk](TLK-File-Format) reference, -1 if none)
-  - [uint32](GFF-File-Format#gff-data-types): Number of language-specific [strings](GFF-File-Format#gff-data-types)
-  - For each language string (if [count](GFF-File-Format#file-structure-overview) > 0):
+  - [uint32](GFF-File-Format#gff-data-types): Number of language-specific strings
+  - For each language string (if count > 0):
     - [uint32](GFF-File-Format#gff-data-types): Language ID
-    - [uint32](GFF-File-Format#gff-data-types): [string](GFF-File-Format#gff-data-types) length in bytes
-    - [char](GFF-File-Format#gff-data-types)[]: [string](GFF-File-Format#gff-data-types) [data](GFF-File-Format#file-structure-overview)
-- **Void (Binary)**: The [offset](GFF-File-Format#file-structure-overview) points to a [uint32](GFF-File-Format#gff-data-types) length followed by the binary [data](GFF-File-Format#file-structure-overview) bytes.
-- **Vector3**: The [offset](GFF-File-Format#file-structure-overview) points to 12 bytes (3×[float](GFF-File-Format#gff-data-types)) in the [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) section.
-- **Vector4 / [orientation](MDL-MDX-File-Format#node-header)**: The [offset](GFF-File-Format#file-structure-overview) points to 16 bytes (4×[float](GFF-File-Format#gff-data-types)) in the [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) section.
+    - [uint32](GFF-File-Format#gff-data-types): string length in bytes
+    - [char](GFF-File-Format#gff-data-types)[]: string data
+- **Void (Binary)**: The offset points to a [uint32](GFF-File-Format#gff-data-types) length followed by the binary data bytes.
+- **Vector3**: The offset points to 12 bytes (3×[float](GFF-File-Format#gff-data-types)) in the field data section.
+- **Vector4 / orientation**: The offset points to 16 bytes (4×[float](GFF-File-Format#gff-data-types)) in the field data section.
 
-### Complex Access [types](GFF-File-Format#gff-data-types)
+### Complex Access types
 
-- **Struct (CAPREF)**: The [field](GFF-File-Format#file-structure-overview)'s [data](GFF-File-Format#file-structure-overview)/[offset](GFF-File-Format#file-structure-overview) contains a struct index (not an [offset](GFF-File-Format#file-structure-overview)). This references a struct in the struct [array](2DA-File-Format).
-- **List**: The [field](GFF-File-Format#file-structure-overview)'s [data](GFF-File-Format#file-structure-overview)/[offset](GFF-File-Format#file-structure-overview) contains a [byte](GFF-File-Format#gff-data-types) [offset](GFF-File-Format#file-structure-overview) into the list [indices](2DA-File-Format#row-labels) [array](2DA-File-Format). At that [offset](GFF-File-Format#file-structure-overview), the first [uint32](GFF-File-Format#gff-data-types) is the entry [count](GFF-File-Format#file-structure-overview), followed by that many [uint32](GFF-File-Format#gff-data-types) struct [indices](2DA-File-Format#row-labels).
+- **Struct (CAPREF)**: The field's data/offset contains a struct index (not an offset). This references a struct in the struct array.
+- **List**: The field's data/offset contains a [byte](GFF-File-Format#gff-data-types) offset into the list indices array. At that offset, the first [uint32](GFF-File-Format#gff-data-types) is the entry count, followed by that many [uint32](GFF-File-Format#gff-data-types) struct indices.
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - Detailed [field](GFF-File-Format#file-structure-overview) [data](GFF-File-Format#file-structure-overview) access patterns and code examples
+**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - Detailed field data access patterns and code examples
 
 ## Implementation Details
 
@@ -427,4 +427,4 @@ Complex [types](GFF-File-Format#gff-data-types) require accessing [data](GFF-Fil
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [GFF file](GFF-File-Format) [format](GFF-File-Format), focusing on the detailed [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) and [data](GFF-File-Format#file-structure-overview) [formats](GFF-File-Format) used within the games.
+This documentation aims to provide a comprehensive overview of the KotOR [GFF file](GFF-File-Format) format, focusing on the detailed file structure and data formats used within the games.

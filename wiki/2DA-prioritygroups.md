@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines priority groups for sound effects, determining which sounds take precedence when multiple sounds [ARE](GFF-File-Format#are-area) playing. The engine uses this [file](GFF-File-Format) to calculate sound priority [values](GFF-File-Format#gff-data-types).
+**Engine Usage**: Defines priority groups for sound effects, determining which sounds take precedence when multiple sounds [ARE](GFF-File-Format#are-area) playing. The engine uses this file to calculate sound priority values.
 
-**Row [index](2DA-File-Format#row-labels)**: Priority Group ID (integer)
+**Row index**: Priority Group ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Priority group label |
+| `label` | string | Priority group label |
 | `priority` | Integer | Priority value (higher = more important) |
 
 **References**:

@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Maps item property [values](GFF-File-Format#gff-data-types) to alignment group restrictions. The engine uses this [file](GFF-File-Format) to determine alignment restrictions for item properties.
+**Engine Usage**: Maps item property values to alignment group restrictions. The engine uses this file to determine alignment restrictions for item properties.
 
-**Row [index](2DA-File-Format#row-labels)**: Item Property Value (integer)
+**Row index**: Item Property Value (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Property [value](GFF-File-Format#gff-data-types) label |
+| `label` | string | Property value label |
 | Additional columns | Various | Alignment group mappings |
 
 **References**:

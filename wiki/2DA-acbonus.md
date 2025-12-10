@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines armor class bonus calculations. The engine uses this [file](GFF-File-Format) to determine AC bonus [values](GFF-File-Format#gff-data-types) for different scenarios and calculations.
+**Engine Usage**: Defines armor class bonus calculations. The engine uses this file to determine AC bonus values for different scenarios and calculations.
 
-**Row [index](2DA-File-Format#row-labels)**: AC Bonus Entry ID (integer)
+**Row index**: AC Bonus Entry ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | AC bonus entry label |
+| `label` | string | AC bonus entry label |
 | Additional columns | Various | AC bonus calculation parameters |
 
 **References**:

@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines credits/acknowledgments configurations (KotOR 2 only). The engine uses this [file](GFF-File-Format) to determine credits entries.
+**Engine Usage**: Defines credits/acknowledgments configurations (KotOR 2 only). The engine uses this file to determine credits entries.
 
-**Row [index](2DA-File-Format#row-labels)**: Credit ID (integer)
+**Row index**: Credit ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Credit label |
-| `name` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for credit name |
+| `label` | string | Credit label |
+| `name` | [StrRef](TLK-File-Format#string-references-strref) | string reference for credit name |
 | Additional columns | Various | Credit properties |
 
 **References**:

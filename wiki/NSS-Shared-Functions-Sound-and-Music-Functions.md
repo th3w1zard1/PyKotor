@@ -75,8 +75,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `DisplayFeedBackText(oCreature, nTextConstant)` - Routine 366
 
 - `366. DisplayFeedBackText`
-- displays a feed back [string](GFF-File-Format#gff-data-types) for the object spicified and the constant
-- repersents the [string](GFF-File-Format#gff-data-types) to be displayed see:FeedBackText.2da
+- displays a feed back string for the object spicified and the constant
+- repersents the string to be displayed see:FeedBackText.2da
 
 - `oCreature`: object
 - `nTextConstant`: int
@@ -240,7 +240,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `733. PlayMovie`
 - Playes a Movie.
 
-- `sMovie`: [string](GFF-File-Format#gff-data-types)
+- `sMovie`: string
 
 <a id="playmoviequeue"></a>
 
@@ -261,13 +261,13 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `364. PlayPazaak`
 - Starts a game of pazaak.
-- - nOpponentPazaakDeck: [index](2DA-File-Format#row-labels) into PazaakDecks.2da; specifies which deck the opponent will use.
+- - nOpponentPazaakDeck: index into PazaakDecks.2da; specifies which deck the opponent will use.
 - - sEndScript: Script to be run when game finishes.
 - - nMaxWager: Max player wager.  If <= 0, the player's credits won't be modified by the result of the game and the wager screen will not show up.
 - - bShowTutorial: Plays in tutorial mode (nMaxWager should be 0).
 
 - `nOpponentPazaakDeck`: int
-- `sEndScript`: [string](GFF-File-Format#gff-data-types)
+- `sEndScript`: string
 - `nMaxWager`: int
 - `bShowTutorial`: int (default: `0`)
 - `oOpponent`: object
@@ -280,7 +280,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - PlayRoomAnimation
 - Plays a looping [animation](MDL-MDX-File-Format#animation-header) on a room
 
-- `sRoom`: [string](GFF-File-Format#gff-data-types)
+- `sRoom`: string
 - `nAnimation`: int
 
 <a id="playrumblepattern"></a>
@@ -301,7 +301,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Play sSoundName
 - - sSoundName: TBD - SS
 
-- `sSoundName`: [string](GFF-File-Format#gff-data-types)
+- `sSoundName`: string
 
 <a id="setmusicvolume"></a>
 
@@ -385,10 +385,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SoundObjectSetPosition(oSound, vPosition)` - Routine 416
 
 - `416. SoundObjectSetPosition`
-- Set the [position](MDL-MDX-File-Format#node-header) of oSound.
+- Set the position of oSound.
 
 - `oSound`: object
-- `vPosition`: [vector](GFF-File-Format#gff-data-types)
+- `vPosition`: vector
 
 <a id="soundobjectsetvolume"></a>
 
@@ -450,7 +450,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - SWMG_PlayAnimation
 
 - `oObject`: object
-- `sAnimName`: [string](GFF-File-Format#gff-data-types)
+- `sAnimName`: string
 - `bLooping`: int (default: `1`)
 - `bQueue`: int (default: `0`)
 - `bOverlay`: int (default: `0`)

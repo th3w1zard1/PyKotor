@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines environment configurations for areas. The engine uses this [file](GFF-File-Format) to determine environment names and properties.
+**Engine Usage**: Defines environment configurations for areas. The engine uses this file to determine environment names and properties.
 
-**Row [index](2DA-File-Format#row-labels)**: Environment ID (integer)
+**Row index**: Environment ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Environment label |
-| `strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for environment name |
+| `label` | string | Environment label |
+| `strref` | [StrRef](TLK-File-Format#string-references-strref) | string reference for environment name |
 | Additional columns | Various | Environment properties |
 
 **References**:

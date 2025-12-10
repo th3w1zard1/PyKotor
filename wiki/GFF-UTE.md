@@ -2,15 +2,15 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-encounter) which spawn creatures when triggered by the player. Encounters handle spawning logic, difficulty scaling, respawning, and faction settings for groups of enemies or neutral creatures.
+UTE files define [encounter templates](GFF-File-Format#ute-encounter) which spawn creatures when triggered by the player. Encounters handle spawning logic, difficulty scaling, respawning, and faction settings for groups of enemies or neutral creatures.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Encounter [format](GFF-File-Format) specification, see [Bioware Aurora Encounter Format](Bioware-Aurora-Encounter).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Encounter format specification, see [Bioware Aurora Encounter Format](Bioware-Aurora-Encounter).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/ute.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/ute.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure-overview)
+## Core Identity fields
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this encounter |
 | `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script references |
@@ -19,11 +19,11 @@ UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-en
 
 ## Spawn Configuration
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Active` | Byte | Encounter is currently active |
 | `Difficulty` | Int | Difficulty setting (unused) |
-| `DifficultyIndex` | Int | Difficulty scaling [index](2DA-File-Format#row-labels) |
+| `DifficultyIndex` | Int | Difficulty scaling index |
 | `Faction` | Word | Faction of spawned creatures |
 | `MaxCreatures` | Int | Maximum concurrent creatures |
 | `RecCreatures` | Int | Recommended number of creatures |
@@ -38,7 +38,7 @@ UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-en
 
 ## Respawn Logic
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Reset` | Byte | Encounter resets after being cleared |
 | `ResetTime` | Int | Time in seconds before reset |
@@ -52,11 +52,11 @@ UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-en
 
 ## Creature List
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `CreatureList` | List | List of creatures to spawn |
 
-**CreatureList Struct [fields](GFF-File-Format#file-structure-overview):**
+**CreatureList Struct fields:**
 
 - `[ResRef](GFF-File-Format#gff-data-types)` ([ResRef](GFF-File-Format#gff-data-types)): [UTC](GFF-File-Format#utc-creature) template to spawn
 - `Appearance` (Int): Appearance type (optional override)
@@ -70,7 +70,7 @@ UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-en
 
 ## Trigger Logic
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `PlayerOnly` | Byte | Only triggers for player (not NPCs) |
 | `OnEntered` | [ResRef](GFF-File-Format#gff-data-types) | Script fires when trigger entered |

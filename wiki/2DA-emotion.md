@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines emotion [animations](MDL-MDX-File-Format#animation-header) for dialog conversations (KotOR 2 only). The engine uses this [file](GFF-File-Format) to determine which emotion [animation](MDL-MDX-File-Format#animation-header) to play during dialog lines.
+**Engine Usage**: Defines emotion [animations](MDL-MDX-File-Format#animation-header) for dialog conversations (KotOR 2 only). The engine uses this file to determine which emotion [animation](MDL-MDX-File-Format#animation-header) to play during dialog lines.
 
-**Row [index](2DA-File-Format#row-labels)**: Emotion ID (integer)
+**Row index**: Emotion ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Emotion label |
+| `label` | string | Emotion label |
 | Additional columns | Various | Emotion [animation](MDL-MDX-File-Format#animation-header) properties |
 
 **References**:

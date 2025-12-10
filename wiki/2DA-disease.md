@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines disease effect configurations. The engine uses this [file](GFF-File-Format) to determine disease names, scripts, and properties.
+**Engine Usage**: Defines disease effect configurations. The engine uses this file to determine disease names, scripts, and properties.
 
-**Row [index](2DA-File-Format#row-labels)**: Disease ID (integer)
+**Row index**: Disease ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Disease label |
-| `name` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for disease name (KotOR 2) |
+| `label` | string | Disease label |
+| `name` | [StrRef](TLK-File-Format#string-references-strref) | string reference for disease name (KotOR 2) |
 | `end_incu_script` | [ResRef](GFF-File-Format#gff-data-types) | Script [ResRef](GFF-File-Format#gff-data-types) for end incubation period |
 | `24_hour_script` | [ResRef](GFF-File-Format#gff-data-types) | Script [ResRef](GFF-File-Format#gff-data-types) for 24-hour disease effect |
 | Additional columns | Various | Disease properties |

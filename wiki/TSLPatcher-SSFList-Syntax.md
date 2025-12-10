@@ -1,10 +1,10 @@
 # TSLPatcher SSFList Syntax Documentation
 
-This guide explains how to modify [SSF files](SSF-File-Format) using TSLPatcher syntax. For the complete [SSF file](SSF-File-Format) [format](GFF-File-Format) specification, see [SSF File Format](SSF-File-Format). For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
+This guide explains how to modify [SSF files](SSF-File-Format) using TSLPatcher syntax. For the complete [SSF file](SSF-File-Format) format specification, see [SSF File Format](SSF-File-Format). For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
 ## Overview
 
-The `[SSFList]` section in TSLPatcher's changes.ini [file](GFF-File-Format) enables you to modify SSF ([sound set files](SSF-File-Format)) [files](GFF-File-Format) that define sound [string](GFF-File-Format#gff-data-types) references for characters. [SSF files](SSF-File-Format) contain 28 predefined sound slots that map to specific character audio cues such as battle cries, select sounds, attack grunts, pain reactions, and various action-based sound effects.
+The `[SSFList]` section in TSLPatcher's changes.ini file enables you to modify SSF ([sound set files](SSF-File-Format)) files that define sound string references for characters. [SSF files](SSF-File-Format) contain 28 predefined sound slots that map to specific character audio cues such as battle cries, select sounds, attack grunts, pain reactions, and various action-based sound effects.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ The `[SSFList]` section in TSLPatcher's changes.ini [file](GFF-File-Format) enab
 - [Available Sound Entries](#available-sound-entries)
 - [Examples](#examples)
 
-## Basic [structure](GFF-File-Format#file-structure-overview)
+## Basic structure
 
 ```ini
 [SSFList]
@@ -39,41 +39,41 @@ Death=100
 
 The `[SSFList]` section declares [SSF files](SSF-File-Format) to patch. Each entry references another section with the same name as the filename.
 
-## [file](GFF-File-Format)-Level Configuration
+## file-Level Configuration
 
 ### Top-Level Keys in [SSFList]
 
-| [KEY](KEY-File-Format) | [type](GFF-File-Format#data-types) | Default | Description |
+| [KEY](KEY-File-Format) | type | Default | Description |
 |-----|------|---------|-------------|
-| `!DefaultDestination` | [string](GFF-File-Format#gff-data-types) | `Override` | Default destination for all [SSF files](SSF-File-Format) in this section |
-| `!DefaultSourceFolder` | [string](GFF-File-Format#gff-data-types) | `.` | Default source folder for [SSF files](SSF-File-Format). This is a relative path from `mod_path`, which is typically the `tslpatchdata` folder (the parent directory of the `changes.ini` [file](GFF-File-Format)). The default [value](GFF-File-Format#gff-data-types) `.` refers to the `tslpatchdata` folder itself. Path resolution: `mod_path / !DefaultSourceFolder / filename` |
+| `!DefaultDestination` | string | `Override` | Default destination for all [SSF files](SSF-File-Format) in this section |
+| `!DefaultSourceFolder` | string | `.` | Default source folder for [SSF files](SSF-File-Format). This is a relative path from `mod_path`, which is typically the `tslpatchdata` folder (the parent directory of the `changes.ini` file). The default value `.` refers to the `tslpatchdata` folder itself. Path resolution: `mod_path / !DefaultSourceFolder / filename` |
 
-### [file](GFF-File-Format) Section Configuration
+### file Section Configuration
 
 Each [SSF file](SSF-File-Format) requires its own section (e.g., `[example.ssf]`).
 
-| Key | [type](GFF-File-Format#data-types) | Default | Description |
+| Key | type | Default | Description |
 |-----|------|---------|-------------|
-| `!Destination` | [string](GFF-File-Format#gff-data-types) | Inherited from `!DefaultDestination` | Where to save the modified file (`Override` or `path\to\file.mod`) |
-| `!SourceFolder` | [string](GFF-File-Format#gff-data-types) | Inherited from `!DefaultSourceFolder` | Source folder for the [SSF file](SSF-File-Format). Relative path from `mod_path` (typically the tslpatchdata folder). When `.`, refers to the tslpatchdata folder itself. |
-| `!SourceFile` | [string](GFF-File-Format#gff-data-types) | Same as section name | Alternative source filename |
-| `!ReplaceFile` | 0/1 | 0 | Overwrite existing [file](GFF-File-Format) before modifications |
+| `!Destination` | string | Inherited from `!DefaultDestination` | Where to save the modified file (`Override` or `path\to\file.mod`) |
+| `!SourceFolder` | string | Inherited from `!DefaultSourceFolder` | Source folder for the [SSF file](SSF-File-Format). Relative path from `mod_path` (typically the tslpatchdata folder). When `.`, refers to the tslpatchdata folder itself. |
+| `!SourceFile` | string | Same as section name | Alternative source filename |
+| `!ReplaceFile` | 0/1 | 0 | Overwrite existing file before modifications |
 
-**Destination [values](GFF-File-Format#gff-data-types):**
+**Destination values:**
 
 - `Override` or empty: Save to the Override folder
 - `Modules\module.mod`: Insert into an [ERF](ERF-File-Format)/MOD/RIM archive
 - Use backslashes for path separators
 
-**Replace [file](GFF-File-Format) Behavior:**
+**Replace file Behavior:**
 
 - If `FileN=filename.ssf` is used: The [SSF file](SSF-File-Format) will be checked if it exists in the target destination. If it exists, it will be modified in place. If it doesn't exist, a copy from tslpatchdata will be made and modified.
-- If `ReplaceN=filename.ssf` is used: The [SSF file](SSF-File-Format) will be copied from tslpatchdata to the target destination (overwriting any existing [file](GFF-File-Format) with the same name) and then modified.
-- If `!ReplaceFile=1` is set in the [file](GFF-File-Format) section: Same behavior as `ReplaceN`, taking priority over the `FileN` vs `ReplaceN` syntax.
+- If `ReplaceN=filename.ssf` is used: The [SSF file](SSF-File-Format) will be copied from tslpatchdata to the target destination (overwriting any existing file with the same name) and then modified.
+- If `!ReplaceFile=1` is set in the file section: Same behavior as `ReplaceN`, taking priority over the `FileN` vs `ReplaceN` syntax.
 
 ## Sound Entry Modifiers
 
-Each line in the [SSF file](SSF-File-Format) section defines a sound entry to modify. The [format](GFF-File-Format) is:
+Each line in the [SSF file](SSF-File-Format) section defines a sound entry to modify. The format is:
 
 ```ini
 [SoundName]=Value
@@ -83,11 +83,11 @@ Where:
 
 - `SoundName` is one of the 28 predefined sound entry names (see [Available Sound Entries](#available-sound-entries))
 - `Value` can be:
-  - A numeric stringref [value](GFF-File-Format#gff-data-types)
+  - A numeric stringref value
   - A `[StrRef](TLK-File-Format#string-references-strref)#` token referencing [TLK](TLK-File-Format) memory
   - A `2DAMEMORY#` token referencing [2DA](2DA-File-Format) memory
 
-### [value](GFF-File-Format#gff-data-types) Syntax Examples
+### value Syntax Examples
 
 ```ini
 [example.ssf]
@@ -109,7 +109,7 @@ Pain 1=-1
 - Sound entry names [ARE](GFF-File-Format#are-area) **case-insensitive**
 - Sound entry names must match exactly (including spaces) from the allowed list
 - Negative values (including -1) [ARE](GFF-File-Format#are-area) valid and typically represent "no sound" or unused sound slots
-- Stringref [values](GFF-File-Format#gff-data-types) must be numeric [strings](GFF-File-Format#gff-data-types)
+- Stringref values must be numeric strings
 
 ## Memory Token System
 
@@ -117,7 +117,7 @@ SSFList supports both [TLK](TLK-File-Format) and [2DA](2DA-File-Format) memory t
 
 ### [StrRef](TLK-File-Format#string-references-strref) Tokens
 
-`[StrRef](TLK-File-Format#string-references-strref)#` tokens reference TLK (Talk) memory tokens that have been set elsewhere in changes.ini (typically from TLKList entries). When the [SSF file](SSF-File-Format) is patched, the stored [StrRef](TLK-File-Format#string-references-strref) [value](GFF-File-Format#gff-data-types) from memory will be used.
+`[StrRef](TLK-File-Format#string-references-strref)#` tokens reference TLK (Talk) memory tokens that have been set elsewhere in changes.ini (typically from TLKList entries). When the [SSF file](SSF-File-Format) is patched, the stored [StrRef](TLK-File-Format#string-references-strref) value from memory will be used.
 
 ```ini
 [example.ssf]
@@ -134,7 +134,7 @@ Attack 1=StrRef12
 
 ### 2DAMEMORY Tokens
 
-`2DAMEMORY#` tokens reference [2DA](2DA-File-Format) memory tokens that have been set elsewhere in changes.ini (typically from 2DAList entries). The stored [value](GFF-File-Format#gff-data-types) is converted to an integer stringref.
+`2DAMEMORY#` tokens reference [2DA](2DA-File-Format) memory tokens that have been set elsewhere in changes.ini (typically from 2DAList entries). The stored value is converted to an integer stringref.
 
 ```ini
 [example.ssf]
@@ -147,15 +147,15 @@ Pain 1=2DAMEMORY10
 
 **Syntax:** `2DAMEMORY` followed immediately by a numeric token ID
 
-**When to use:** When you want the sound entry to reference a [value](GFF-File-Format#gff-data-types) stored in [2DA](2DA-File-Format) memory (typically row [indices](2DA-File-Format#row-labels) or other numeric identifiers).
+**When to use:** When you want the sound entry to reference a value stored in [2DA](2DA-File-Format) memory (typically row indices or other numeric identifiers).
 
 ### Token Resolution
 
-Both token [types](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) resolved during patch application:
+Both token types [ARE](GFF-File-Format#are-area) resolved during patch application:
 
-1. TLK Memory (`[StrRef](TLK-File-Format#string-references-strref)#`): Returns the stored integer stringref [value](GFF-File-Format#gff-data-types)
-2. 2DA Memory (`2DAMEMORY#`): Returns the stored integer value (converted from [string](GFF-File-Format#gff-data-types))
-3. Constant [values](GFF-File-Format#gff-data-types): Used directly as integer stringref [values](GFF-File-Format#gff-data-types)
+1. TLK Memory (`[StrRef](TLK-File-Format#string-references-strref)#`): Returns the stored integer stringref value
+2. 2DA Memory (`2DAMEMORY#`): Returns the stored integer value (converted from string)
+3. Constant values: Used directly as integer stringref values
 
 If a token references an uninitialized memory slot, the behavior is undefined and may cause errors.
 
@@ -163,7 +163,7 @@ If a token references an uninitialized memory slot, the behavior is undefined an
 
 [SSF files](SSF-File-Format) contain exactly 28 sound slots. The following table lists all available sound entry names:
 
-| Sound Entry Name | ID | Enum [value](GFF-File-Format#gff-data-types) | Description |
+| Sound Entry Name | ID | Enum value | Description |
 |------------------|----|----|-------------|
 | `Battlecry 1` | 0 | BATTLE_CRY_1 | First battle cry sound |
 | `Battlecry 2` | 1 | BATTLE_CRY_2 | Second battle cry sound |
@@ -200,7 +200,7 @@ If a token references an uninitialized memory slot, the behavior is undefined an
 
 ### Example 1: Basic Sound Set Modification
 
-This example modifies an existing sound set by changing a few sound entries to constant [values](GFF-File-Format#gff-data-types):
+This example modifies an existing sound set by changing a few sound entries to constant values:
 
 ```ini
 [SSFList]
@@ -235,7 +235,7 @@ Pain 1=StrRef1002
 
 ### Example 3: Using [2DA](2DA-File-Format) Memory Tokens
 
-This example uses 2DAMEMORY tokens to reference row [indices](2DA-File-Format#row-labels) from a custom [appearance.2da](2DA-appearance) table:
+This example uses 2DAMEMORY tokens to reference row indices from a custom [appearance.2da](2DA-appearance) table:
 
 ```ini
 [2DAList]
@@ -264,9 +264,9 @@ Battlecry 1=2DAMEMORY102
 Selected 1=2DAMEMORY103
 ```
 
-**Note:** The 2DAMEMORY [values](GFF-File-Format#gff-data-types) in this example would need to extract the actual stringref [values](GFF-File-Format#gff-data-types) from the [2DA](2DA-File-Format) cells, which requires additional configuration in the [2DA](2DA-File-Format) section.
+**Note:** The 2DAMEMORY values in this example would need to extract the actual stringref values from the [2DA](2DA-File-Format) cells, which requires additional configuration in the [2DA](2DA-File-Format) section.
 
-### Example 4: Replace [file](GFF-File-Format) Behavior
+### Example 4: Replace file Behavior
 
 This example demonstrates the difference between FileN and ReplaceN syntax:
 
@@ -289,7 +289,7 @@ Battlecry 1=70001
 Selected 1=70002
 ```
 
-### Example 5: Complex Multi-[file](GFF-File-Format) Sound Set
+### Example 5: Complex Multi-file Sound Set
 
 This example patches multiple sound sets with different configurations:
 
@@ -370,9 +370,9 @@ Rejoin party=50111
 Poisoned=50120
 ```
 
-### Example 7: Modifying [SSF](SSF-File-Format) [files](GFF-File-Format) in Archives
+### Example 7: Modifying [SSF](SSF-File-Format) files in Archives
 
-This example shows how to patch [SSF files](SSF-File-Format) that [ARE](GFF-File-Format#are-area) stored in [ERF](ERF-File-Format)/MOD/RIM archive [files](GFF-File-Format):
+This example shows how to patch [SSF files](SSF-File-Format) that [ARE](GFF-File-Format#are-area) stored in [ERF](ERF-File-Format)/MOD/RIM archive files:
 
 ```ini
 [SSFList]
@@ -386,9 +386,9 @@ Attack 1=60003
 Death=60004
 ```
 
-**Important:** When patching [files](GFF-File-Format) in archives, ensure that:
+**Important:** When patching files in archives, ensure that:
 
-1. The archive [file](GFF-File-Format) exists in the game directory
+1. The archive file exists in the game directory
 2. The [SSF file](SSF-File-Format) already exists in that archive (or use ReplaceN to force overwrite)
 3. Use backslashes for path separators in `!Destination`
 
@@ -415,13 +415,13 @@ Selected 2=12346
 Selected 3=12347
 ```
 
-**Note:** The [value](GFF-File-Format#gff-data-types) -1 (or any negative [value](GFF-File-Format#gff-data-types)) typically represents "no sound" in the game engine. Setting all entries to -1 would create a silent character soundset.
+**Note:** The value -1 (or any negative value) typically represents "no sound" in the game engine. Setting all entries to -1 would create a silent character soundset.
 
 ## Advanced Usage
 
-### Combining Multiple Token [types](GFF-File-Format#gff-data-types)
+### Combining Multiple Token types
 
-You can mix different [value](GFF-File-Format#gff-data-types) [types](GFF-File-Format#gff-data-types) within the same [SSF file](SSF-File-Format) section:
+You can mix different value types within the same [SSF file](SSF-File-Format) section:
 
 ```ini
 [SSFList]
@@ -439,7 +439,7 @@ Pain 1=2DAMEMORY51
 
 ### Inheritance of Configuration
 
-Configuration options cascade from the `[SSFList]` section to individual [file](GFF-File-Format) sections:
+Configuration options cascade from the `[SSFList]` section to individual file sections:
 
 ```ini
 [SSFList]
@@ -462,10 +462,10 @@ Battlecry 1=20001
 
 ### Compatibility Notes
 
-- [SSF files](SSF-File-Format) [ARE](GFF-File-Format#are-area) binary [format](GFF-File-Format) [files](GFF-File-Format) with version "V1.1"
-- All stringref [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) stored as 32-[bit](GFF-File-Format#gff-data-types) unsigned integers
+- [SSF files](SSF-File-Format) [ARE](GFF-File-Format#are-area) binary format files with version "V1.1"
+- All stringref values [ARE](GFF-File-Format#are-area) stored as 32-bit unsigned integers
 - The game engine interprets negative values (-1) as "no sound"
-- [SSF files](SSF-File-Format) have a fixed [structure](GFF-File-Format#file-structure-overview) with exactly 28 sound slots
+- [SSF files](SSF-File-Format) have a fixed structure with exactly 28 sound slots
 - Empty or unset sound slots default to -1 when a new [SSF](SSF-File-Format) is created
 - PyKotor/TSLPatcher loads existing [SSF files](SSF-File-Format) from the override folder or specified archive if they exist
 
@@ -478,19 +478,19 @@ Battlecry 1=20001
 - **Solution:** Verify that the sound entry name matches exactly (including spaces) from the [Available Sound Entries](#available-sound-entries) table
 - **Solution:** Ensure the [SSF file](SSF-File-Format) exists in the specified source location (tslpatchdata folder)
 
-**Problem:** Token [values](GFF-File-Format#gff-data-types) not resolving
+**Problem:** Token values not resolving
 
 - **Solution:** Ensure [TLK](TLK-File-Format) memory tokens ([StrRef](TLK-File-Format#string-references-strref)#) [ARE](GFF-File-Format#are-area) set before SSFList section runs
 - **Solution:** Ensure [2DA](2DA-File-Format) memory tokens (2DAMEMORY#) [ARE](GFF-File-Format#are-area) set before SSFList section runs
 - **Solution:** Verify token IDs match between where they're set and where they're used
 
-**Problem:** [file](GFF-File-Format) not found in destination
+**Problem:** file not found in destination
 
-- **Solution:** When using FileN syntax, the [file](GFF-File-Format) must either exist in destination or in tslpatchdata
+- **Solution:** When using FileN syntax, the file must either exist in destination or in tslpatchdata
 - **Solution:** Use ReplaceN syntax to always copy from tslpatchdata
-- **Solution:** Set `!ReplaceFile=1` in the [file](GFF-File-Format) section to force replacement
+- **Solution:** Set `!ReplaceFile=1` in the file section to force replacement
 
-**Problem:** Incorrect [file](GFF-File-Format) being loaded
+**Problem:** Incorrect file being loaded
 
 - **Solution:** Check `!SourceFolder` path is correct relative to tslpatchdata root
 - **Solution:** Verify `!SourceFile` matches the actual filename if different from section name
@@ -498,7 +498,7 @@ Battlecry 1=20001
 
 **Problem:** Archive insertion failing
 
-- **Solution:** Verify the archive [file](GFF-File-Format) exists in the game directory
+- **Solution:** Verify the archive file exists in the game directory
 - **Solution:** Use backslashes (not forward slashes) in !Destination paths
 - **Solution:** Ensure the [SSF file](SSF-File-Format) already exists in the archive if not using ReplaceN syntax
 
@@ -512,25 +512,25 @@ TSLPatcher processes sections in a specific order. SSFList is processed after:
 4. GFF Changes (GFFList)
 5. Script compilation
 
-This means that memory tokens set in TLKList and 2DAList will be available when SSFList runs. SSFList runs before final [file](GFF-File-Format) installation operations.
+This means that memory tokens set in TLKList and 2DAList will be available when SSFList runs. SSFList runs before final file installation operations.
 
 ## Reference
 
 ### Implementation Details
 
-**Binary [format](GFF-File-Format):**
+**Binary format:**
 
-- [header](GFF-File-Format#file-header): "[SSF](SSF-File-Format) " (4 bytes)
+- header: "[SSF](SSF-File-Format) " (4 bytes)
 - Version: "V1.1" (4 bytes)
-- [offset](GFF-File-Format#file-structure-overview) to sound [data](GFF-File-Format#file-structure-overview): 4 bytes ([uint32](GFF-File-Format#gff-data-types))
+- offset to sound data: 4 bytes ([uint32](GFF-File-Format#gff-data-types))
 - Sound entries: 28 x 4 bytes ([uint32](GFF-File-Format#gff-data-types) each) = 112 bytes
 - Padding: 12 x 4 bytes (0xFFFFFFFF) = 48 bytes
-- Total [size](GFF-File-Format#file-structure-overview): ~160 bytes
+- Total size: ~160 bytes
 
-**Default [values](GFF-File-Format#gff-data-types):**
+**Default values:**
 
 - All sound entries default to -1 in a new [SSF file](SSF-File-Format)
-- Replacement behavior defaults to modifying existing [files](GFF-File-Format) when possible
+- Replacement behavior defaults to modifying existing files when possible
 - Destination defaults to Override folder
 - Source folder defaults to tslpatchdata root (`.`)
 
@@ -540,7 +540,7 @@ This means that memory tokens set in TLKList and 2DAList will be available when 
 - Write modified [SSF files](SSF-File-Format) to Override or archives
 - Modify any of the 28 sound entry stringrefs
 - Support for [TLK](TLK-File-Format) and [2DA](2DA-File-Format) memory token resolution
-- Replace [file](GFF-File-Format) or modify existing [file](GFF-File-Format) modes
+- Replace file or modify existing file modes
 
 ---
 

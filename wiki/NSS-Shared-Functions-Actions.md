@@ -116,7 +116,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `32. ActionEquipItem`
 - Equip oItem into nInventorySlot.
 - - nInventorySlot: INVENTORY_SLOT_*
-- - No return [value](GFF-File-Format#gff-data-types), but if an error occurs the log [file](GFF-File-Format) will contain
+- - No return value, but if an error occurs the log file will contain
 - "ActionEquipItem failed."
 
 - `oItem`: object
@@ -166,7 +166,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - The action subject will follow oFollow until a ClearAllActions() is called.
 - - oFollow: this is the object to be followed
 - - fFollowDistance: follow distance in metres
-- - No return [value](GFF-File-Format#gff-data-types)
+- - No return value
 
 - `oFollow`: object
 - `fFollowDistance`: float (default: `0.0`)
@@ -280,7 +280,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - lDestination: The object will move to this location.  If the location is
 - invalid or a path cannot be found to it, the command does nothing.
 - - bRun: If this is TRUE, the action subject will run rather than walk
-- - No return [value](GFF-File-Format#gff-data-types), but if an error occurs the log [file](GFF-File-Format) will contain
+- - No return value, but if an error occurs the log file will contain
 
 - `lDestination`: location
 - `bRun`: int (default: `0`)
@@ -322,7 +322,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `34. ActionPickUpItem`
 - Pick up oItem from the ground.
-- - No return [value](GFF-File-Format#gff-data-types), but if an error occurs the log [file](GFF-File-Format) will contain
+- - No return value, but if an error occurs the log file will contain
 - "ActionPickUpItem failed."
 
 - `oItem`: object
@@ -348,7 +348,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `35. ActionPutDownItem`
 - Put down oItem on the ground.
-- - No return [value](GFF-File-Format#gff-data-types), but if an error occurs the log [file](GFF-File-Format) will contain
+- - No return value, but if an error occurs the log file will contain
 - "ActionPutDownItem failed."
 
 - `oItem`: object
@@ -361,7 +361,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - The action subject will generate a random location near its current location
 - and pathfind to it.  All commands will remove a RandomWalk() from the action
 - queue if there is one in place.
-- - No return [value](GFF-File-Format#gff-data-types), but if an error occurs the log [file](GFF-File-Format) will contain
+- - No return value, but if an error occurs the log file will contain
 - "ActionRandomWalk failed."
 
 <a id="actionresumeconversation"></a>
@@ -377,10 +377,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `39. ActionSpeakString`
 - Add a speak action to the action subject.
-- - sStringToSpeak: [string](GFF-File-Format#gff-data-types) to be spoken
+- - sStringToSpeak: string to be spoken
 - - nTalkVolume: TALKVOLUME_*
 
-- `sStringToSpeak`: [string](GFF-File-Format#gff-data-types)
+- `sStringToSpeak`: string
 - `nTalkVolume`: int (default: `0`)
 
 <a id="actionspeakstringbystrref"></a>
@@ -388,8 +388,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `ActionSpeakStringByStrRef(nStrRef, nTalkVolume)` - Routine 240
 
 - `240. ActionSpeakStringByStrRef`
-- Causes the creature to speak a translated [string](GFF-File-Format#gff-data-types).
-- - nStrRef: Reference of the [string](GFF-File-Format#gff-data-types) in the [Talk Table](TLK-File-Format)
+- Causes the creature to speak a translated string.
+- - nStrRef: Reference of the string in the [Talk Table](TLK-File-Format)
 - - nTalkVolume: TALKVOLUME_*
 
 - `nStrRef`: int

@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines companion configurations (HEN - Henchman system). The engine uses this [file](GFF-File-Format) to determine companion names and base [resource references](GFF-File-Format#gff-data-types).
+**Engine Usage**: Defines companion configurations (HEN - Henchman system). The engine uses this file to determine companion names and base [resource references](GFF-File-Format#gff-data-types).
 
-**Row [index](2DA-File-Format#row-labels)**: Companion ID (integer)
+**Row index**: Companion ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Companion label |
-| `strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for companion name |
+| `label` | string | Companion label |
+| `strref` | [StrRef](TLK-File-Format#string-references-strref) | string reference for companion name |
 | `baseresref` | [ResRef](GFF-File-Format#gff-data-types) | Base [resource reference](GFF-File-Format#gff-data-types) for companion (not used in game engine) |
 | Additional columns | Various | Companion properties |
 

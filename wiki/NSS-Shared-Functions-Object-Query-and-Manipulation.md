@@ -9,14 +9,14 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `CreateObject(nObjectType, sTemplate, lLocation, bUseAppearAnimation)` - Routine 243
 
 - `243. CreateObject`
-- Create an object of the specified [type](GFF-File-Format#data-types) at lLocation.
+- Create an object of the specified type at lLocation.
 - - nObjectType: OBJECT_TYPE_ITEM, OBJECT_TYPE_CREATURE, OBJECT_TYPE_PLACEABLE,
 - OBJECT_TYPE_STORE
 - - sTemplate
 - - lLocation
 
 - `nObjectType`: int
-- `sTemplate`: [string](GFF-File-Format#gff-data-types)
+- `sTemplate`: string
 - `lLocation`: location
 - `bUseAppearAnimation`: int (default: `0`)
 
@@ -79,11 +79,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetNearestObject(nObjectType, oTarget, nNth)` - Routine 227
 
 - `227. GetNearestObject`
-- Get the Nth object nearest to oTarget that is of the specified [type](GFF-File-Format#data-types).
+- Get the Nth object nearest to oTarget that is of the specified type.
 - - nObjectType: OBJECT_TYPE_*
 - - oTarget
 - - nNth
-- - Return [value](GFF-File-Format#gff-data-types) on error: OBJECT_INVALID
+- - Return value on error: OBJECT_INVALID
 
 - `nObjectType`: int (default: `32767`)
 - `oTarget`: object
@@ -95,9 +95,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `229. GetNearestObjectByTag`
 - Get the nth Object nearest to oTarget that has sTag as its tag.
-- - Return [value](GFF-File-Format#gff-data-types) on error: OBJECT_INVALID
+- - Return value on error: OBJECT_INVALID
 
-- `sTag`: [string](GFF-File-Format#gff-data-types)
+- `sTag`: string
 - `oTarget`: object
 - `nNth`: int (default: `1`)
 
@@ -106,11 +106,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetNearestObjectToLocation(nObjectType, lLocation, nNth)` - Routine 228
 
 - `228. GetNearestObjectToLocation`
-- Get the nNth object nearest to lLocation that is of the specified [type](GFF-File-Format#data-types).
+- Get the nNth object nearest to lLocation that is of the specified type.
 - - nObjectType: OBJECT_TYPE_*
 - - lLocation
 - - nNth
-- - Return [value](GFF-File-Format#gff-data-types) on error: OBJECT_INVALID
+- - Return value on error: OBJECT_INVALID
 
 - `nObjectType`: int
 - `lLocation`: location
@@ -140,7 +140,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - nNth: the nth object with this tag may be requested
 - - Returns OBJECT_INVALID if the object cannot be found.
 
-- `sTag`: [string](GFF-File-Format#gff-data-types)
+- `sTag`: string
 - `nNth`: int (default: `0`)
 
 <a id="getobjectheard"></a>
@@ -169,7 +169,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `106. GetObjectType`
 - Get the object type (OBJECT_TYPE_*) of oTarget
-- - Return [value](GFF-File-Format#gff-data-types) if oTarget is not a valid object: -1
+- - Return value if oTarget is not a valid object: -1
 
 - `oTarget`: object
 
@@ -179,7 +179,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `47. GetSpellTargetObject`
 - Get the object at which the caller last cast a spell
-- - Return [value](GFF-File-Format#gff-data-types) on error: OBJECT_INVALID
+- - Return value on error: OBJECT_INVALID
 
 <a id="swmg_getobjectbyname"></a>
 
@@ -189,7 +189,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - gets an object by its name (duh!)
 - SWMG_GetObjectByName
 
-- `sName`: [string](GFF-File-Format#gff-data-types)
+- `sName`: string
 
 <a id="swmg_getobjectname"></a>
 
