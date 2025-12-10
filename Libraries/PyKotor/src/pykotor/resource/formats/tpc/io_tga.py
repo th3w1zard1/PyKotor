@@ -15,9 +15,12 @@ if TYPE_CHECKING:
 
 def _decode_mipmap_to_rgba(mipmap: TPCMipmap) -> bytes:
     """Return a copy of the mipmap's pixels in RGBA order."""
+    # Optimize: avoid copy if already RGBA format
+    if mipmap.tpc_format == TPCTextureFormat.RGBA:
+        return bytes(mipmap.data)
+    # Only copy and convert if needed
     working = mipmap.copy()
-    if working.tpc_format != TPCTextureFormat.RGBA:
-        working.convert(TPCTextureFormat.RGBA)
+    working.convert(TPCTextureFormat.RGBA)
     return bytes(working.data)
 
 

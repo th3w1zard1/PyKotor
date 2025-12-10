@@ -308,3 +308,45 @@ def test_link_syntax():
                 break
         assert reply_passage is not None
         assert "[[Continue->NPC2]]" in str(reply_passage.text or "")
+
+
+def test_format_inference_respects_fmt_override(tmp_path: Path):
+    """Ensure fmt takes precedence over legacy format argument and extension."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "NPC"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hi")
+    dlg.starters.append(DLGLink(entry))
+
+    html_path = tmp_path / "forced.json"
+    write_twine(dlg, html_path, fmt="html", format="json")
+    content = html_path.read_text(encoding="utf-8")
+    root = ElementTree.fromstring(content)
+    assert root.tag == "html"
+
+
+def test_format_inference_from_extension(tmp_path: Path):
+    """Infer HTML/JSON formats solely from the extension when fmt is omitted."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "NPC"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hello")
+    dlg.starters.append(DLGLink(entry))
+
+    json_path = tmp_path / "infer.json"
+    write_twine(dlg, json_path)
+    json_data = json.loads(json_path.read_text(encoding="utf-8"))
+    assert json_data["name"] == "Converted Dialog"
+    assert isinstance(json_data.get("passages"), list)
+
+    html_path = tmp_path / "infer.html"
+    write_twine(dlg, html_path)
+    html_root = ElementTree.fromstring(html_path.read_text(encoding="utf-8"))
+    assert html_root.tag == "html"
+
+
+def test_read_twine_missing_file_raises(tmp_path: Path):
+    """Verify missing files raise a clear FileNotFoundError."""
+    missing = tmp_path / "does_not_exist.json"
+    with pytest.raises(FileNotFoundError):
+        read_twine(missing)

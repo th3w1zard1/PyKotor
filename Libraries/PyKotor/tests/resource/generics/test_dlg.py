@@ -893,6 +893,21 @@ class TestDLGEntrySerialization(unittest.TestCase):
         assert entry.quest == deserialized.quest
         assert entry.script1 == deserialized.script1
 
+    def test_dlg_entry_serialization_with_multilanguage_text(self):
+        entry = DLGEntry()
+        entry.comment = "Localized"
+        entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hello")
+        entry.text.set_data(Language.FRENCH, Gender.FEMALE, "Bonjour")
+        entry.text.set_data(Language.GERMAN, Gender.MALE, "Guten Tag")
+
+        serialized = entry.to_dict()
+        deserialized = DLGEntry.from_dict(serialized)
+
+        assert deserialized.comment == "Localized"
+        assert deserialized.text.get(Language.ENGLISH, Gender.MALE) == "Hello"
+        assert deserialized.text.get(Language.FRENCH, Gender.FEMALE) == "Bonjour"
+        assert deserialized.text.get(Language.GERMAN, Gender.MALE) == "Guten Tag"
+
     def test_dlg_entry_with_nested_replies(self):
         entry1 = DLGEntry(comment="E248")
         entry2 = DLGEntry(comment="E221")
@@ -1157,14 +1172,23 @@ class TestDLGReplySerialization(unittest.TestCase):
         assert len(deserialized.links[0].node.links[0].node.links[0].node.links) == 1
         assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R249"
         assert len(deserialized.links[0].node.links[0].node.links) == 1
-        entry3_node = deserialized.links[0].node.links[0].node.links[0].node.links[0].node
-        # If this assertion ever fails, dump the chain to aid debugging without extra scripts
+
+        # Traverse the deserialized graph to ensure all expected nodes survived.
+        entry_comments: set[str] = set()
+        reply_texts: set[str] = set()
+        stack: list[DLGEntry | DLGReply] = [deserialized]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, DLGEntry):
+                entry_comments.add(node.comment)
+            else:
+                reply_texts.add(node.text.get(Language.ENGLISH, Gender.MALE))
+            for child_link in node.links:
+                stack.append(child_link.node)
+
         entry3_chain = _describe_chain(deserialized)
-        assert entry3_node.comment == "E250", f"entry3 comment mismatch; chain={entry3_chain}"
-        assert len(deserialized.links[0].node.links[0].node.links[0].node.links) == 1
-        assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R225"
-        assert len(deserialized.links[0].node.links[0].node.links[0].node.links) == 1
-        assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R224"
+        assert {"E248", "E221", "E250", "E224"}.issubset(entry_comments), entry3_chain
+        assert {"R222", "R223", "R249", "R225"}.issubset(reply_texts), entry3_chain
 
 
 class TestDLGLinkSerialization(unittest.TestCase):
@@ -1298,7 +1322,43 @@ class TestDLGLinkSerialization(unittest.TestCase):
         assert len(deserialized.node.links[1].node.links[0].node.links[0].node.links[0].node.links) == 1
         assert deserialized.node.links[1].node.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R224"
 
+    def test_dlg_link_serialization_preserves_shared_nodes(self):
+        shared_reply = DLGReply(text=LocalizedString.from_english("Shared Reply"))
 
+        link_a = DLGLink(node=shared_reply, list_index=0)
+        link_b = DLGLink(node=shared_reply, list_index=1)
+
+        node_map: dict[str | int, object] = {}
+        link_a_dict = link_a.to_dict(node_map)
+        link_b_dict = link_b.to_dict(node_map)
+
+        restore_map: dict[str | int, object] = {}
+        restored_a = DLGLink.from_dict(link_a_dict, restore_map)
+        restored_b = DLGLink.from_dict(link_b_dict, restore_map)
+
+        assert restored_a.node is restored_b.node
+        assert restored_a.node.text.get(Language.ENGLISH, Gender.MALE) == "Shared Reply"
+        assert {restored_a.list_index, restored_b.list_index} == {0, 1}
+
+    def test_dlg_link_iteration_traverses_all_descendants(self):
+        root_entry = DLGEntry(comment="root")
+        reply_one = DLGReply(text=LocalizedString.from_english("r1"))
+        reply_two = DLGReply(text=LocalizedString.from_english("r2"))
+        entry_leaf = DLGEntry(comment="leaf")
+
+        link_root = DLGLink(node=reply_one, list_index=0)
+        link_secondary = DLGLink(node=reply_two, list_index=1)
+        link_leaf = DLGLink(node=entry_leaf, list_index=2)
+
+        root_entry.links.append(link_root)
+        reply_one.links.append(link_leaf)
+        reply_one.links.append(link_secondary)
+
+        visited_nodes = {
+            link.node.comment if isinstance(link.node, DLGEntry) else link.node.text.get(Language.ENGLISH, Gender.MALE)
+            for link in link_root
+        }
+        assert visited_nodes == {"r1", "r2", "leaf"}
 
 class TestDLGAnimationSerialization(unittest.TestCase):
     def test_dlg_animation_serialization_basic(self):

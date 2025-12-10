@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pykotor.common.language import Gender, Language
-from pykotor.common.misc import Color
+from pykotor.common.misc import Color, ResRef
 from pykotor.resource.generics.dlg.base import DLG
 from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 from pykotor.resource.generics.dlg.io.twine_data import (
@@ -320,3 +320,66 @@ def test_complex_dialog():
             "Path 1 chosen",
             "Path 2 chosen",
         ]
+
+
+def test_language_variants_roundtrip():
+    """Ensure localized strings survive DLG -> Twine -> DLG conversions."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "NPC"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hello")
+    entry.text.set_data(Language.FRENCH, Gender.FEMALE, "Salut")
+    entry.text.set_data(Language.GERMAN, Gender.MALE, "Guten Tag")
+    dlg.starters.append(DLGLink(entry))
+
+    converter = FormatConverter()
+    story = converter._dlg_to_story(dlg)
+    passage = story.start_passage
+    assert passage is not None
+    assert passage.metadata.custom.get("text_french_1") == "Salut"
+    assert passage.metadata.custom.get("text_german_0") == "Guten Tag"
+
+    restored = converter._story_to_dlg(story)
+    restored_entry = restored.starters[0].node
+    assert isinstance(restored_entry, DLGEntry)
+    assert restored_entry.text.get(Language.FRENCH, Gender.FEMALE) == "Salut"
+    assert restored_entry.text.get(Language.GERMAN, Gender.MALE) == "Guten Tag"
+
+
+def test_kotor_metadata_roundtrip_with_optional_fields():
+    """Verify KotOR-specific metadata survives format conversion."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "NPC"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Metadata")
+    entry.camera_anim = 321
+    entry.camera_angle = 33
+    entry.camera_id = 7
+    entry.fade_type = 4
+    entry.quest = "SideQuest"
+    entry.sound = ResRef("snd")
+    entry.vo_resref = ResRef("vo_line")
+    dlg.starters.append(DLGLink(entry))
+
+    converter = FormatConverter()
+    story = converter._dlg_to_story(dlg)
+    passage = story.start_passage
+    assert passage is not None
+    assert passage.metadata.animation_id == 321
+    assert passage.metadata.camera_angle == 33
+    assert passage.metadata.camera_id == 7
+    assert passage.metadata.fade_type == 4
+    assert passage.metadata.quest == "SideQuest"
+    assert passage.metadata.sound == "snd"
+    assert passage.metadata.vo_resref == "vo_line"
+
+    restored = converter._story_to_dlg(story)
+    restored_entry = restored.starters[0].node
+    assert isinstance(restored_entry, DLGEntry)
+    assert restored_entry.camera_anim == 321
+    assert restored_entry.camera_angle == 33
+    assert restored_entry.camera_id == 7
+    assert restored_entry.fade_type == 4
+    assert restored_entry.quest == "SideQuest"
+    assert str(restored_entry.sound) == "snd"
+    assert str(restored_entry.vo_resref) == "vo_line"

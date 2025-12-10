@@ -22,10 +22,10 @@ reply4 = DLGReply(text=LocalizedString.from_english("R225"))
 reply5 = DLGReply(text=LocalizedString.from_english("R224"))
 
 entry1.links.append(DLGLink(node=reply1))
-reply1.links.extend([DLGLink(node=entry2), DLGLink(node=reply2)])
+reply1.links.extend([DLGLink(node=entry2), DLGLink(node=reply2)])  # type: ignore[arg-type]
 reply2.links.append(DLGLink(node=entry3))
 entry3.links.append(DLGLink(node=reply4))
-reply4.links.append(DLGLink(node=reply5))
+reply4.links.append(DLGLink(node=reply5))  # type: ignore[arg-type]
 entry2.links.append(DLGLink(node=reply3))
 
 # Check original structure
@@ -48,3 +48,21 @@ print(f"  deserialized_reply4.links count: {len(deserialized_reply4.links)}")
 if len(deserialized_reply4.links) > 0:
     print(f"  deserialized_reply4.links[0].node.text = {deserialized_reply4.links[0].node.text.get(Language.ENGLISH, Gender.MALE)}")
     print(f"  deserialized_reply4.links[0].node is deserialized_reply4: {deserialized_reply4.links[0].node is deserialized_reply4}")
+
+# Extra debugging: verify node_map preserves shared node identity
+shared_reply = DLGReply(text=LocalizedString.from_english("Shared Reply"))
+link_a = DLGLink(node=shared_reply, list_index=0)
+link_b = DLGLink(node=shared_reply, list_index=1)
+
+node_map: dict[str | int, object] = {}
+link_a_dict = link_a.to_dict(node_map)
+link_b_dict = link_b.to_dict(node_map)
+
+restore_map: dict[str | int, object] = {}
+restored_a = DLGLink.from_dict(link_a_dict, restore_map)
+restored_b = DLGLink.from_dict(link_b_dict, restore_map)
+
+print("\nShared node identity check:")
+print(f"  restored_a.node is restored_b.node -> {restored_a.node is restored_b.node}")
+print(f"  restored_a.node text: {restored_a.node.text.get(Language.ENGLISH, Gender.MALE)}")
+print(f"  link indices: {restored_a.list_index}, {restored_b.list_index}")

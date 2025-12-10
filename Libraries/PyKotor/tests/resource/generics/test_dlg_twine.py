@@ -10,8 +10,10 @@ from pathlib import Path
 import pytest
 
 from pykotor.common.language import Gender, Language
+from pykotor.common.misc import Color
 from pykotor.resource.generics.dlg.base import DLG
 from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
+from pykotor.resource.generics.dlg.io.twine_data import FormatConverter
 from pykotor.resource.generics.dlg.links import DLGLink
 from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
 
@@ -218,3 +220,58 @@ def test_complex_dialog_structure(tmp_path: Path):
         next_entry = reply.links[0].node
         assert isinstance(next_entry, DLGEntry)
         assert next_entry.text.get(Language.ENGLISH, Gender.MALE) in ["Path 1 chosen", "Path 2 chosen"]
+
+
+def test_comment_metadata_is_restored_into_twine_story():
+    """Ensure Twine metadata embedded in DLG.comment is surfaced in TwineStory."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "NPC"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hi")
+    dlg.starters.append(DLGLink(entry))
+    dlg.comment = json.dumps(
+        {
+            "style": "body { color: blue; }",
+            "script": "window.custom = true;",
+            "tag_colors": {"entry": "1 0 0 1"},
+            "format": "SugarCube",
+            "format_version": "2.0.0",
+            "creator": "Tester",
+            "creator_version": "0.1",
+            "zoom": 1.25,
+        }
+    )
+
+    story = FormatConverter()._dlg_to_story(dlg)
+    assert story.metadata.style == "body { color: blue; }"
+    assert story.metadata.script == "window.custom = true;"
+    assert story.metadata.format == "SugarCube"
+    assert story.metadata.format_version == "2.0.0"
+    assert story.metadata.creator == "Tester"
+    assert story.metadata.creator_version == "0.1"
+    assert story.metadata.zoom == 1.25
+    assert isinstance(story.metadata.tag_colors["entry"], Color)
+
+
+def test_first_starter_becomes_start_pid(tmp_path: Path):
+    """The first starter should be used as startnode when exporting to Twine JSON."""
+    dlg = DLG()
+    entry1 = DLGEntry()
+    entry1.speaker = "First"
+    entry1.text.set_data(Language.ENGLISH, Gender.MALE, "First line")
+
+    entry2 = DLGEntry()
+    entry2.speaker = "Second"
+    entry2.text.set_data(Language.ENGLISH, Gender.MALE, "Second line")
+
+    dlg.starters.append(DLGLink(entry1))
+    dlg.starters.append(DLGLink(entry2))
+
+    json_path = tmp_path / "multi_start.json"
+    write_twine(dlg, json_path, format="json")
+
+    data = json.loads(json_path.read_text(encoding="utf-8"))
+    assert data["startnode"]  # startnode should be recorded
+    assert len(data["passages"]) == 2
+    assert data["passages"][0]["name"] in {"First", "Entry"}
+    assert data["passages"][1]["name"] in {"Second", "Entry_1"}
