@@ -299,7 +299,12 @@ def test_link_syntax():
         # Reply may be named "Reply" or "Reply_1" depending on naming logic
         assert "[[Continue->Reply" in entry1_html_text
 
-        # Find reply's passage
-        reply_passage = root.find(".//tw-passagedata[contains(@tags,'reply')]")
+        # Find reply's passage - ElementTree doesn't support contains() in XPath, so iterate
+        reply_passage = None
+        for passage in root.findall(".//tw-passagedata"):
+            tags = passage.get("tags", "")
+            if "reply" in tags:
+                reply_passage = passage
+                break
         assert reply_passage is not None
         assert "[[Continue->NPC2]]" in str(reply_passage.text or "")
