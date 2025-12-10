@@ -29,9 +29,8 @@ def fix_section_links():
     ]
     
     for pattern, replacement in section_patterns:
-        if pattern in content:
-            content = re.sub(pattern, replacement, content)
-            fixes += content.count(replacement) - original_content.count(replacement)
+        content, count = re.subn(pattern, replacement, content)
+        fixes += count
     
     # Fix function links that are just anchor links without file references
     # Pattern: [`FunctionName(params)`](#functionnameparams) should be fixed by the main fix script
