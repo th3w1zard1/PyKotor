@@ -9,6 +9,7 @@ from pykotor.resource.formats.tpc.io_tpc import (
     TPCBinaryReader,
     TPCBinaryWriter,
 )
+from pykotor.resource.formats.tpc.io_dds import TPCDDSReader, TPCDDSWriter
 from pykotor.resource.formats.tpc.io_tga import TPCTGAWriter, TPCTGAReader
 from pykotor.resource.formats.tpc.io_bmp import TPCBMPWriter
 from pykotor.resource.formats.tpc.tpc_auto import (
@@ -22,6 +23,8 @@ __all__ = [
     "TPCBMPWriter",
     "TPCBinaryReader",
     "TPCBinaryWriter",
+    "TPCDDSReader",
+    "TPCDDSWriter",
     "TPCLayer",
     "TPCMipmap",
     "TPCTGAReader",

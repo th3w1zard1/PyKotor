@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import os
+import struct
 
 from typing import TYPE_CHECKING
 
 from pykotor.common.stream import BinaryReader
 from pykotor.resource.formats.tpc.io_bmp import TPCBMPWriter
+from pykotor.resource.formats.tpc.io_dds import TPCDDSReader, TPCDDSWriter
 from pykotor.resource.formats.tpc.io_tga import TPCTGAReader, TPCTGAWriter
 from pykotor.resource.formats.tpc.io_tpc import TPCBinaryReader, TPCBinaryWriter
 from pykotor.resource.formats.tpc.tpc_data import TPC
@@ -41,28 +43,41 @@ def detect_tpc(
         The format of the TPC data.
     """
 
-    def do_check(
-        first100: bytes,
-    ) -> ResourceType:
-        file_format = ResourceType.TPC
-        if len(first100) < 100:  # noqa: PLR2004
-            file_format = ResourceType.TGA
-        else:
-            for i in range(15, 100):
-                if first100[i] != 0:
-                    file_format = ResourceType.TGA
-        return file_format
+    def do_check(sample: bytes) -> ResourceType:
+        if sample.startswith(b"DDS "):
+            return ResourceType.DDS
+
+        if len(sample) >= 20:
+            # BioWare DDS header heuristic: width/height/bpp/datasize (uint32 LE)
+            width, height, bpp, data_size = struct.unpack_from("<IIII", sample, 0)
+            if 0 < width < 0x8000 and 0 < height < 0x8000 and bpp in (3, 4):
+                expected = (width * height) // 2 if bpp == 3 else width * height
+                if data_size == expected:
+                    return ResourceType.DDS
+
+        if len(sample) < 100:  # noqa: PLR2004
+            return ResourceType.TGA
+
+        for i in range(15, min(len(sample), 100)):
+            if sample[i] != 0:
+                return ResourceType.TGA
+        return ResourceType.TPC
+
+    if isinstance(source, (str, os.PathLike)):
+        suffix = CaseAwarePath(source).suffix.lower()
+        if suffix == ".dds":
+            return ResourceType.DDS
 
     file_format: ResourceType = ResourceType.INVALID
     try:
         if isinstance(source, (str, os.PathLike)):
             with BinaryReader.from_file(source, offset) as reader:
-                file_format = do_check(reader.read_bytes(100))
+                file_format = do_check(bytes(reader.read_bytes(128)))
         elif isinstance(source, (bytes, bytearray)):
-            file_format = do_check(source[:100])
+            file_format = do_check(bytes(source[:128]))
         elif isinstance(source, BinaryReader):
-            file_format = do_check(source.read_bytes(100))
-            source.skip(-100)
+            file_format = do_check(bytes(source.read_bytes(128)))
+            source.skip(-128)
     except (FileNotFoundError, PermissionError, IsADirectoryError):
         raise
     except OSError:
@@ -106,17 +121,21 @@ def read_tpc(
         loaded_tpc = TPCBinaryReader(source, offset, size or 0).load()
     elif file_format is ResourceType.TGA:
         loaded_tpc = TPCTGAReader(source, offset, size or 0).load()
+    elif file_format is ResourceType.DDS:
+        loaded_tpc = TPCDDSReader(source, offset, size or 0).load()
     else:
         msg = "Failed to determine the format of the TPC/TGA file."
         raise ValueError(msg)
     if txi_source is None and isinstance(source, (os.PathLike, str)):
-        txi_source = CaseAwarePath(source).with_suffix(".txi")
-        if not txi_source.is_file():
+        txi_path = CaseAwarePath(source).with_suffix(".txi")
+        if not txi_path.is_file():
             return loaded_tpc
+        txi_source = txi_path
     elif isinstance(txi_source, (os.PathLike, str)):
-        txi_source = CaseAwarePath(txi_source).with_suffix(".txi")
-        if not txi_source.is_file():
+        txi_path = CaseAwarePath(txi_source).with_suffix(".txi")
+        if not txi_path.is_file():
             return loaded_tpc
+        txi_source = txi_path
 
     if txi_source is None:
         return loaded_tpc
@@ -148,10 +167,12 @@ def write_tpc(
         TPCTGAWriter(tpc, target).write()
     elif file_format is ResourceType.BMP:
         TPCBMPWriter(tpc, target).write()
+    elif file_format is ResourceType.DDS:
+        TPCDDSWriter(tpc, target).write()
     elif file_format is ResourceType.TPC:
         TPCBinaryWriter(tpc, target).write()
     else:
-        msg = "Unsupported format specified; use TPC, TGA or BMP."
+        msg = "Unsupported format specified; use TPC, TGA, DDS or BMP."
         raise ValueError(msg)
 
 
@@ -159,7 +180,7 @@ def bytes_tpc(
     tpc: TPC,
     file_format: ResourceType = ResourceType.TPC,
 ) -> bytes:
-    """Returns the TPC data in the specified format (TPC, TGA or BMP) as a bytes object.
+    """Returns the TPC data in the specified format (TPC, TGA, DDS or BMP) as a bytes object.
 
     This is a convenience method that wraps the write_tpc() method.
 
