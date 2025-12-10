@@ -144,51 +144,38 @@ def main() -> None:
         args.exclude_module.extend(other_bindings)
 
     if not args.skip_venv:
+        # install_python_venv.ps1 handles venv creation, activation, and Python installation
+        # We trust it to set up the environment correctly
         install_venv(repo_root, args.venv_name, args.noprompt)
-        # Use venv Python executable if venv was installed
+        # Use venv Python executable directly - install_python_venv.ps1 ensures it exists and has pip
         venv_python = repo_root / args.venv_name / ("Scripts" if os_name == "Windows" else "bin") / ("python.exe" if os_name == "Windows" else "python")
         if venv_python.exists():
-            # Check if pip is available in this venv
-            result = subprocess.run(
-                [str(venv_python), "-c", "import pip"],
-                capture_output=True,
-                text=True
-            )
-            if result.returncode == 0:
-                args.python_exe = str(venv_python)
-            else:
-                # Try to find another venv with pip (e.g., .venv_3.13)
-                for alt_venv_name in [".venv_3.13", ".venv_3.12", ".venv_3.11", ".venv_3.10", ".venv_3.9"]:
-                    alt_venv_python = repo_root / alt_venv_name / ("Scripts" if os_name == "Windows" else "bin") / ("python.exe" if os_name == "Windows" else "python")
-                    if alt_venv_python.exists():
-                        result = subprocess.run(
-                            [str(alt_venv_python), "-c", "import pip"],
-                            capture_output=True,
-                            text=True
-                        )
-                        if result.returncode == 0:
-                            args.python_exe = str(alt_venv_python)
-                            print(f"Using venv with pip: {alt_venv_name}")
-                            break
+            args.python_exe = str(venv_python)
+        else:
+            # Fallback: try common venv names if the requested one doesn't exist
+            # This handles cases where install_python_venv.ps1 creates a versioned venv
+            for alt_venv_name in [".venv_3.13", ".venv_3.12", ".venv_3.11", ".venv_3.10", ".venv_3.9"]:
+                alt_venv_python = repo_root / alt_venv_name / ("Scripts" if os_name == "Windows" else "bin") / ("python.exe" if os_name == "Windows" else "python")
+                if alt_venv_python.exists():
+                    args.python_exe = str(alt_venv_python)
+                    break
 
     if args.pre_pip:
-        run([args.python_exe, "-m", "pip", "install", *args.pre_pip, "--prefer-binary", "--progress-bar", "on"])
+        run([args.python_exe, "-m", "pip", "install", *args.pre_pip, "--prefer-binary", "--progress-bar", "on"], env=env)
 
+    # Only install playwright when explicitly requested via --preinstall-playwright
     if args.preinstall_playwright:
-        # Install playwright if not already installed
-        try:
-            result = subprocess.run(
-                [args.python_exe, "-c", "import playwright"],
-                env=env,
-                capture_output=True,
-                text=True
-            )
-            if result.returncode != 0:
-                print("Installing playwright...")
-                run([args.python_exe, "-m", "pip", "install", "playwright", "--prefer-binary", "--progress-bar", "on"], env=env)
-        except Exception:
+        # Check if playwright is already installed to avoid unnecessary installation
+        result = subprocess.run(
+            [args.python_exe, "-c", "import playwright"],
+            env=env,
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
             print("Installing playwright...")
             run([args.python_exe, "-m", "pip", "install", "playwright", "--prefer-binary", "--progress-bar", "on"], env=env)
+        # Install playwright browsers
         env["PLAYWRIGHT_BROWSERS_PATH"] = env.get("PLAYWRIGHT_BROWSERS_PATH", "0")
         for browser in args.playwright_browser:
             run([args.python_exe, "-m", "playwright", "install", browser], env=env)
