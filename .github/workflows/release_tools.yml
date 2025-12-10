@@ -688,6 +688,21 @@ jobs:
           sudo apt-get update -y
         shell: bash
 
+      - name: Add deadsnakes PPA for older Python versions (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository -y ppa:deadsnakes/ppa
+          sudo apt-get update -y
+        shell: bash
+
+      - name: Install uv (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
       - name: Set UPX download URL
         if: runner.os != 'macOS'
         id: upx_setup

@@ -193,6 +193,14 @@ jobs:
         sudo apt-get update -y
       shell: bash
 
+    - name: Add deadsnakes PPA for older Python versions (Linux)
+      if: ${{ runner.os == 'Linux' }}
+      run: |
+        sudo apt-get install -y software-properties-common
+        sudo add-apt-repository -y ppa:deadsnakes/ppa
+        sudo apt-get update -y
+      shell: bash
+
     - name: Set UPX download URL
       # upx docs express that crashes are happening on ventura and above with upx, don't use on mac.
       if: runner.os != 'macOS'
@@ -311,6 +319,13 @@ jobs:
         echo "deps_script=$depsScript" >> $env:GITHUB_OUTPUT
         echo "Using compile script $compileScript"
         if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
+
+    - name: Install uv (Linux/macOS)
+      if: runner.os != 'Windows'
+      shell: bash
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
     - name: Create virtual environment
       shell: pwsh
