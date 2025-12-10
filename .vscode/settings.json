@@ -44,7 +44,6 @@
         "${workspaceFolder}/Tools/HoloGenerator/src",
         "${workspaceFolder}/Tools/HoloPatcher/src",
         "${workspaceFolder}/Tools/HoloPazaak/src",
-        "${workspaceFolder}/Tools/KitGenerator/src",
         "${workspaceFolder}/Tools/KotorCLI/src",
         "${workspaceFolder}/Tools/KotorDiff/src"
     ],
@@ -58,7 +57,6 @@
         "${workspaceFolder}/Tools/HoloGenerator/src",
         "${workspaceFolder}/Tools/HoloPatcher/src",
         "${workspaceFolder}/Tools/HoloPazaak/src",
-        "${workspaceFolder}/Tools/KitGenerator/src",
         "${workspaceFolder}/Tools/KotorCLI/src",
         "${workspaceFolder}/Tools/KotorDiff/src"
     ],
@@ -86,7 +84,6 @@
         "${workspaceFolder}/Tools/HoloGenerator/src",
         "${workspaceFolder}/Tools/HoloPatcher/src",
         "${workspaceFolder}/Tools/HoloPazaak/src",
-        "${workspaceFolder}/Tools/KitGenerator/src",
         "${workspaceFolder}/Tools/KotorCLI/src",
         "${workspaceFolder}/Tools/KotorDiff/src"
     ]

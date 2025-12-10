@@ -30,7 +30,6 @@ batchpatcher = ["batchpatcher>=2.2.0"]
 gui-converter = ["gui-converter>=1.0.0"]
 kotorcli = ["kotorcli>=0.1.0"]
 holopazaak = ["holopazaak>=0.1.0"]
-kit-generator = ["kit-generator>=0.1.0"]
 all-tools = [
     "holocrontoolset>=4.0.0a7",
     "holopatcher>=1.8.0",
@@ -39,7 +38,6 @@ all-tools = [
     "gui-converter>=1.0.0",
     "kotorcli>=0.1.0",
     "holopazaak>=0.1.0",
-    "kit-generator>=0.1.0",
 ]
 
 # Everything
@@ -52,7 +50,6 @@ all = [
     "gui-converter>=1.0.0",
     "kotorcli>=0.1.0",
     "holopazaak>=0.1.0",
-    "kit-generator>=0.1.0",
 ]
 
 # Development dependencies
@@ -117,7 +114,6 @@ batchpatcher = ["batchpatcher"]
 gui-converter = ["gui-converter"]
 kotorcli = ["kotorcli"]
 holopazaak = ["holopazaak"]
-kit-generator = ["kit-generator"]
 all-tools = [
     "holocrontoolset",
     "holopatcher",
@@ -126,7 +122,6 @@ all-tools = [
     "gui-converter",
     "kotorcli",
     "holopazaak",
-    "kit-generator",
 ]
 
 # Everything
@@ -139,7 +134,6 @@ all = [
     "gui-converter",
     "kotorcli",
     "holopazaak",
-    "kit-generator",
 ]
 
 # Development dependencies
@@ -319,7 +313,6 @@ src = [
     "Tools/HoloGenerator/src",
     "Tools/HoloPatcher/src",
     "Tools/HoloPazaak/src",
-    "Tools/KitGenerator/src",
     "Tools/KotorCLI/src",
     "Tools/KotorDiff/src"
 ]
@@ -532,7 +525,6 @@ mypy_path = [
     "Tools/HoloGenerator/src",
     "Tools/HoloPatcher/src",
     "Tools/HoloPazaak/src",
-    "Tools/KitGenerator/src",
     "Tools/KotorCLI/src",
     "Tools/KotorDiff/src",
 ]
@@ -558,7 +550,6 @@ testpaths = [
     "Tools/HoloGenerator/tests",
     "Tools/HoloPatcher/tests",
     "Tools/HoloPazaak/tests",
-    "Tools/KitGenerator/tests",
     "Tools/KotorCLI/tests",
     "Tools/KotorDiff/tests",
 ]

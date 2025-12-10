@@ -19,16 +19,7 @@
 		"cursorpyright.analysis.extraPaths": [
 			"${workspaceFolder}/../../Libraries/PyKotor/src",
 			"${workspaceFolder}/../../Engines/PyKotorEngine/src",
-			"${workspaceFolder}/src",
-			"${workspaceFolder}/../../Tools/BatchPatcher/src",
-			"${workspaceFolder}/../../Tools/GuiConverter/src",
-			"${workspaceFolder}/../../Tools/HolocronAI/src",
-			"${workspaceFolder}/../../Tools/HoloGenerator/src",
-			"${workspaceFolder}/../../Tools/HoloPatcher/src",
-			"${workspaceFolder}/../../Tools/HoloPazaak/src",
-			"${workspaceFolder}/../../Tools/KitGenerator/src",
-			"${workspaceFolder}/../../Tools/KotorCLI/src",
-			"${workspaceFolder}/../../Tools/KotorDiff/src"
+			"${workspaceFolder}/src"
 		]
     }
 }

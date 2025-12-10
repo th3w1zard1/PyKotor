@@ -79,7 +79,6 @@ Automated release and validation workflows for all PyKotor tools.
 | `release_tools.yml` | `v*-patcher` | HoloPatcher |
 | `release_tools.yml` | `v*-kotordiff` | KotorDiff |
 | `release_tools.yml` | `v*-guiconverter` | GuiConverter |
-| `release_tools.yml` | `v*-kitgenerator` | KitGenerator |
 | `release_tools.yml` | `v*-translator` | Translator (BatchPatcher) |
 
 > **Note:** All tool releases are now handled by a single unified workflow (`release_tools.yml`) that dynamically discovers tools from the `./Tools` directory and builds releases based on version comparison.

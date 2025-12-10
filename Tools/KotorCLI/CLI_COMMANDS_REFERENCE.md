@@ -980,6 +980,18 @@ Based on the comprehensive analysis above, KotorCLI should support:
 - `validate` - Validate file formats
 - `merge` - Merge resources
 
+### kit-generate
+
+Generate a Holocron-compatible kit from a module (headless or GUI).
+
+```bash
+python -m kotorcli kit-generate --installation <path> --module <module> --output <dir> [--kit-id <id>] [--log-level info|debug|warning|error|critical]
+```
+
+- Uses `pykotor.tools.kit.extract_kit` internally (see `Libraries/PyKotor/src/pykotor/tools/kit.py`)
+- Requires installation path, module name (stem is normalized), and output directory
+- Supplying required args keeps execution headless; running `python -m kotorcli` with no args opens the Tkinter GUI for interactive kit generation
+
 ### Advanced Commands (To Add)
 
 - `resman` - Resource manager interface

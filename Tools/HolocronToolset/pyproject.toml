@@ -175,7 +175,6 @@ extraPaths = [
     "Tools/HoloGenerator/src",
     "Tools/HoloPatcher/src",
     "Tools/HoloPazaak/src",
-    "Tools/KitGenerator/src",
     "Tools/KotorCLI/src",
     "Tools/KotorDiff/src",
 ]

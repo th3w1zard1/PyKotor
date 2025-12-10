@@ -17,6 +17,7 @@ KotorCLI is a command-line tool for converting KOTOR modules, ERFs, and haks bet
 - **Multiple targets** - Support for modules, ERFs, haks, and more
 - **Flexible source trees** - Organize your source files however you want
 - **Pure Python** - No external tool dependencies required (nwnnsscomp optional)
+- **Holocron kit generator** - Generate Holocron-compatible kits via `kit-generate` in headless mode or by launching the Tkinter GUI when no CLI args are provided
 
 ## Installation
 
@@ -56,6 +57,20 @@ Edit the files in the `src/` directory as needed.
 
 ```bash
 KotorCLI install
+```
+
+### 5. Generate a kit (GUI or headless)
+
+Headless CLI (recommended for automation):
+
+```bash
+python -m kotorcli kit-generate --installation "C:\Games\KOTOR" --module danm13 --output .\kits --kit-id danm13
+```
+
+GUI (no arguments provided):
+
+```bash
+python -m kotorcli
 ```
 
 ## PyKotor Integration
@@ -162,6 +177,14 @@ KotorCLI install [targets...]
 KotorCLI install
 KotorCLI install demo
 KotorCLI install --installDir /path/to/kotor
+```
+
+### kit-generate (Holocron kits)
+
+Generate a Holocron-compatible kit from a module. When no CLI args are supplied (`python -m kotorcli`), the Tkinter GUI launches; supplying required args keeps execution headless for CI.
+
+```bash
+python -m kotorcli kit-generate --installation "C:\Games\KOTOR" --module danm13 --output .\kits --kit-id danm13 --log-level info
 ```
 
 ### launch

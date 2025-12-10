@@ -84,11 +84,6 @@ $ToolConfig = @{
         VersionKey = "__version__"
         TagPattern = "v{0}-batchpatcher"
     }
-    "kitgenerator" = @{
-        ConfigFile = "Tools/KitGenerator/src/kitgenerator/__init__.py"
-        VersionKey = "__version__"
-        TagPattern = "v{0}-kitgenerator"
-    }
 }
 
 $Config = $ToolConfig[$Tool]

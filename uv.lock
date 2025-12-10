@@ -57,7 +57,6 @@ members = [
     "hologenerator",
     "holopatcher",
     "holopazaak",
-    "kit-generator",
     "kotor-diff",
     "kotorcli",
     "pykotor",
@@ -1861,30 +1860,6 @@ wheels = [
 ]
 
 [[package]]
-name = "kit-generator"
-version = "1.0.0"
-source = { editable = "Tools/KitGenerator" }
-dependencies = [
-    { name = "loggerplus" },
-    { name = "pykotor" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "loggerplus", specifier = ">=0.1.3" },
-    { name = "pykotor", editable = "Libraries/PyKotor" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
-]
-provides-extras = ["dev"]
-
-[[package]]
 name = "kotor-diff"
 version = "1.0.0"
 source = { editable = "Tools/KotorDiff" }
@@ -3527,7 +3502,6 @@ all = [
     { name = "holocrontoolset" },
     { name = "holopatcher" },
     { name = "holopazaak" },
-    { name = "kit-generator" },
     { name = "kotor-diff" },
     { name = "kotorcli" },
     { name = "pykotor", extra = ["font", "gl"] },
@@ -3541,7 +3515,6 @@ all-tools = [
     { name = "holocrontoolset" },
     { name = "holopatcher" },
     { name = "holopazaak" },
-    { name = "kit-generator" },
     { name = "kotor-diff" },
     { name = "kotorcli" },
 ]
@@ -3590,9 +3563,6 @@ holopatcher = [
 holopazaak = [
     { name = "holopazaak" },
 ]
-kit-generator = [
-    { name = "kit-generator" },
-]
 kotor-diff = [
     { name = "kotor-diff" },
 ]
@@ -3620,9 +3590,6 @@ requires-dist = [
     { name = "holopazaak", marker = "extra == 'all-tools'", editable = "Tools/HoloPazaak" },
     { name = "holopazaak", marker = "extra == 'holopazaak'", editable = "Tools/HoloPazaak" },
     { name = "iniconfig", marker = "python_full_version >= '3.8' and extra == 'dev'", specifier = ">=2.1.0" },
-    { name = "kit-generator", marker = "extra == 'all'", editable = "Tools/KitGenerator" },
-    { name = "kit-generator", marker = "extra == 'all-tools'", editable = "Tools/KitGenerator" },
-    { name = "kit-generator", marker = "extra == 'kit-generator'", editable = "Tools/KitGenerator" },
     { name = "kotor-diff", marker = "extra == 'all'", editable = "Tools/KotorDiff" },
     { name = "kotor-diff", marker = "extra == 'all-tools'", editable = "Tools/KotorDiff" },
     { name = "kotor-diff", marker = "extra == 'kotor-diff'", editable = "Tools/KotorDiff" },
@@ -3649,7 +3616,7 @@ requires-dist = [
     { name = "typing-extensions", marker = "python_full_version >= '3.9' and extra == 'dev'", specifier = ">=4.5.0" },
     { name = "typing-extensions", marker = "python_full_version < '3.9' and extra == 'dev'", specifier = ">=4.5.0,<4.9.0" },
 ]
-provides-extras = ["font", "gl", "all-extensions", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "kit-generator", "all-tools", "all", "dev"]
+provides-extras = ["font", "gl", "all-extensions", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "all-tools", "all", "dev"]
 
 [package.metadata.requires-dev]
 dev = []

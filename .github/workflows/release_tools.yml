@@ -82,7 +82,7 @@ jobs:
                 1. src/<toolnamelower>/config.py (e.g. Tools/HoloPatcher/src/holopatcher/config.py)
                 2. src/<toolnamelower>/config/config_info.py (e.g. Tools/HolocronToolset/src/toolset/config/config_info.py)
                 3. src/<toolnamelower>/__main__.py (e.g. Tools/KotorDiff/src/kotordiff/__main__.py, Tools/GuiConverter/src/gui_converter/__main__.py, Tools/Translator/src/translator/__main__.py - contains CURRENT_VERSION)
-                4. src/<toolnamelower>/__init__.py (e.g. Tools/KitGenerator/src/kitgenerator/__init__.py - contains __version__)
+                4. src/<toolnamelower>/__init__.py (contains __version__)
               """
               src_dir = tool_dir / "src" / tool_name_lower
               
@@ -103,7 +103,7 @@ jobs:
                   if 'CURRENT_VERSION' in content:
                       return main_py
               
-              # Check for __init__.py with __version__ (e.g. Tools/KitGenerator/src/kitgenerator/__init__.py)
+              # Check for __init__.py with __version__ (e.g. Tools/KotorDiff/src/kotordiff/__init__.py)
               init_py = src_dir / "__init__.py"
               if init_py.exists():
                   content = init_py.read_text()
@@ -297,7 +297,6 @@ jobs:
               special_mappings = {
                   "batchpatcher": ["compile_batchpatcher.ps1"],
                   "translator": ["compile_batchpatcher.ps1"],  # Translator folder uses batchpatcher script
-                  "kitgenerator": ["compile_kit_generator.ps1"],
               }
               
               if tool_name_lower in special_mappings:
@@ -322,7 +321,6 @@ jobs:
               
               # Special cases for naming mismatches between folder and script names
               special_mappings = {
-                  "kitgenerator": ["deps_kit_generator.ps1"],
                   "translator": ["deps_batchpatcher.ps1"],  # Translator folder uses batchpatcher deps
                   "holocrontoolset": ["deps_toolset.ps1"],  # Toolset uses deps_toolset.ps1
               }
