@@ -167,12 +167,6 @@ jobs:
           MATRIX_ARCH: ${{ matrix.architecture }}
 
       - uses: actions/checkout@v4
-      - name: Test Powershell installer
-        if: ${{ runner.os != 'Windows' }}
-        id: setup-powershell
-        run: |
-          bash ./install_powershell.sh
-        shell: bash
 
       - name: Set up pypy ${{ matrix.python-version }}
         if: ${{ matrix.python_pypy == 'pypy' }}
@@ -326,57 +320,165 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+        id: install_uv
+
+      - name: Install Python version with uv (Linux/macOS)
+        if: runner.os != 'Windows' && matrix.python_pypy != 'pypy'
+        shell: bash
+        run: |
+          # Ensure uv is in PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          # Install the required Python version
+          uv python install ${{ matrix.python-version }}
+          # Verify installation
+          uv python find ${{ matrix.python-version }} || (echo "Failed to install Python ${{ matrix.python-version }}" && exit 1)
 
       - name: Create virtual environment
         shell: pwsh
         run: |
-          . ./install_python_venv.ps1 -noprompt -venv_name .venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
-          Write-Host "Python executable path: $pythonExePath"
-          & $pythonExePath -m pip install --upgrade pip
-          if ("${{ runner.os }}" -eq "Windows") {
-            if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
-              pip install "pyinstaller==5.13.2" --prefer-binary
-            } else {
-              pip install "pyinstaller==5.4" --prefer-binary
+          $ErrorActionPreference = "Stop"
+          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          
+          # On Linux/macOS, ensure uv is in PATH
+          if ("${{ runner.os }}" -ne "Windows") {
+            $env:PATH = "$env:HOME/.local/bin:$env:PATH"
+            # Verify uv is available
+            $uvCheck = Get-Command uv -ErrorAction SilentlyContinue
+            if (-not $uvCheck) {
+              Write-Error "uv not found in PATH. PATH: $env:PATH"
+              exit 1
             }
-          } else {
-            pip install pyinstaller -U --prefer-binary
+            Write-Host "Using uv at: $($uvCheck.Source)"
+          }
+          
+          try {
+            . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
+            
+            if (-not $pythonExePath) {
+              Write-Error "install_python_venv.ps1 did not set pythonExePath"
+              exit 1
+            }
+            
+            Write-Host "Python executable path: $pythonExePath"
+            
+            # Verify Python exists and works
+            & $pythonExePath --version
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Python executable at $pythonExePath is not working"
+              exit 1
+            }
+            
+            & $pythonExePath -m pip install --upgrade pip
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Failed to upgrade pip"
+              exit 1
+            }
+            
+            if ("${{ runner.os }}" -eq "Windows") {
+              if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
+                & $pythonExePath -m pip install "pyinstaller==5.13.2" --prefer-binary
+              } else {
+                & $pythonExePath -m pip install "pyinstaller==5.4" --prefer-binary
+              }
+            } else {
+              & $pythonExePath -m pip install pyinstaller -U --prefer-binary
+            }
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Failed to install pyinstaller"
+              exit 1
+            }
+          } catch {
+            Write-Host -ForegroundColor Red "Error creating virtual environment: $($_.Exception.Message)"
+            Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
+            exit 1
           }
 
       - name: Install tool dependencies
         if: ${{ steps.locate-scripts.outputs.deps_script != '' }}
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           $script = "${{ steps.locate-scripts.outputs.deps_script }}"
           $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          
+          # Ensure Python path is available if set by install_python_venv.ps1
+          if ($env:pythonExePath) {
+            $env:PATH = "$(Split-Path -Parent $env:pythonExePath);$env:PATH"
+          }
+          
           Write-Host "Running deps script $script"
-          if ($script.EndsWith(".ps1")) {
-            . "./$script" -noprompt -venv_name $venvName
-          } elseif ($script.EndsWith(".sh")) {
-            bash "./$script" -noprompt -venv_name $venvName
-          } elseif ($script.EndsWith(".bat")) {
-            cmd /c ".\\$script -noprompt -venv_name $venvName"
-          } else {
-            Write-Error "Unknown deps script type: $script"
+          Write-Host "Venv name: $venvName"
+          
+          try {
+            if ($script.EndsWith(".ps1")) {
+              . "./$script" -noprompt -venv_name $venvName
+            } elseif ($script.EndsWith(".sh")) {
+              bash "./$script" -noprompt -venv_name $venvName
+            } elseif ($script.EndsWith(".bat")) {
+              cmd /c ".\\$script -noprompt -venv_name $venvName"
+            } else {
+              Write-Error "Unknown deps script type: $script"
+              exit 1
+            }
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Deps script failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
+            }
+          } catch {
+            Write-Host -ForegroundColor Red "Error running deps script: $($_.Exception.Message)"
+            Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
             exit 1
           }
 
       - name: Compile tool
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           $compile = "${{ steps.locate-scripts.outputs.compile_script }}"
           $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $upxDir = $env:UPX_DIR
           $env:PYTHONOPTIMIZE = "1"
+          
+          # Ensure Python path is available if set by install_python_venv.ps1
+          if ($env:pythonExePath) {
+            $env:PATH = "$(Split-Path -Parent $env:pythonExePath);$env:PATH"
+          }
+          
           Write-Host "Using compile script $compile"
-          if ($compile.EndsWith(".ps1")) {
-            . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
-          } elseif ($compile.EndsWith(".sh")) {
-            bash "./$compile" -noprompt -venv_name $venvName
-          } elseif ($compile.EndsWith(".bat")) {
-            cmd /c ".\\$compile -noprompt -venv_name $venvName"
-          } else {
-            Write-Error "Unknown compile script type: $compile"
+          Write-Host "Venv name: $venvName"
+          Write-Host "UPX directory: $upxDir"
+          
+          try {
+            if ($compile.EndsWith(".ps1")) {
+              if ($upxDir) {
+                . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
+              } else {
+                . "./$compile" -noprompt -venv_name $venvName
+              }
+            } elseif ($compile.EndsWith(".sh")) {
+              if ($upxDir) {
+                $env:UPX_DIR = $upxDir
+              }
+              bash "./$compile" -noprompt -venv_name $venvName
+            } elseif ($compile.EndsWith(".bat")) {
+              if ($upxDir) {
+                $env:UPX_DIR = $upxDir
+              }
+              cmd /c ".\\$compile -noprompt -venv_name $venvName"
+            } else {
+              Write-Error "Unknown compile script type: $compile"
+              exit 1
+            }
+            
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Compilation failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
+            }
+          } catch {
+            Write-Host -ForegroundColor Red "Error during compilation: $($_.Exception.Message)"
+            Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
             exit 1
           }
 
