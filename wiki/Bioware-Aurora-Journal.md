@@ -1,4 +1,5 @@
 # Journal
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Journal System
+
 1. Introduction
 A Journal is system of keeping track of where a player is in each plot that the player has started, and a
 way of describing the current step of each plot to the player.
@@ -43,10 +45,12 @@ CExoLocString
 Localized name of the Journal Category. Appears in the
 player's Journal in game.
 Picture
+
 ### WORD
 
 Unused. Always 0xFFFF.
 Priority
+
 ### DWORD
 
 Priority of this Journal Category.
@@ -62,6 +66,7 @@ Category via scripting.
 There should not be more than one Journal Category
 having the same Tag.
 XP
+
 ### DWORD
 
 Experience awarded for completing this Journal
@@ -71,21 +76,22 @@ reach a JournalEntry where End=1 (see Table 2.3).
 The Table below lists the Fields that are present in a JournalEntry Struct found in the EntryList of a
 JournalCategory Struct. Each JournalEntry Struct describes a single entry within its category.
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.3: Fields in JournalEntry Struct (StructID = list index)
 Label
 Type
 Description
 End
+
 ### WORD
 
 1 if this Entry serves as an endpoint for its Category.
 There can be more than one ending entry in a category.
 ID
+
 ### DWORD
 
 ID of the Journal Entry.
@@ -99,6 +105,3 @@ CExoLocString
 Localized text for the Journal Entry. Appears in the
 player's Journal in game, under the appropriate
 category.
-
-
-

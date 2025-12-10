@@ -2,28 +2,26 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines sound effects for [GUI](GFF-File-Format#gui-graphical-user-interface) interactions (button clicks, mouse enter events, etc.). The engine uses this [file](GFF-File-Format) to play appropriate sounds when the player interacts with UI elements.
 
-**Engine Usage**: Defines sound effects for GUI interactions (button clicks, mouse enter events, etc.). The engine uses this file to play appropriate sounds when the player interacts with UI elements.
+**Row [index](2DA-File-Format#row-labels)**: Sound ID (integer)
 
-**Row Index**: Sound ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Sound label (e.g., "Clicked_Default", "Entered_Default") |
-| `soundresref` | ResRef | Sound effect ResRef |
+| `label` | [string](GFF-File-Format#cexostring) | Sound label (e.g., "Clicked_Default", "Entered_Default") |
+| `soundresref` | [ResRef](GFF-File-Format#resref) | Sound effect [ResRef](GFF-File-Format#resref) |
 
 **References**:
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:200`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L200) - Sound ResRef column definition for guisounds.2da (K1: soundresref)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:392`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L392) - Sound ResRef column definition for guisounds.2da (K2: soundresref)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:200`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L200) - Sound [ResRef](GFF-File-Format#resref) column definition for guisounds.2da (K1: soundresref)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:392`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L392) - Sound [ResRef](GFF-File-Format#resref) column definition for guisounds.2da (K2: soundresref)
 
 **Vendor Implementations:**
 
-- [`vendor/reone/src/libs/game/gui/sounds.cpp:31-45`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/gui/sounds.cpp#L31-L45) - GUI sound loading from 2DA
+- [`vendor/reone/src/libs/game/gui/sounds.cpp:31-45`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/gui/sounds.cpp#L31-L45) - [GUI](GFF-File-Format#gui-graphical-user-interface) sound loading from [2DA](2DA-File-Format)
 
 ---
-

@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Functions
 
-
 <a id="displaydatapad"></a>
 
 ## `DisplayDatapad(oDatapad)`
@@ -22,9 +21,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 864
 - RWT-OEI 09/27/04
-- This function displays the generic Message Box with the strref
+- This function displays the generic Message Box with the [StrRef](TLK-File-Format#string-references-strref)
 - message in it
-- sIcon is the resref for an icon you would like to display.
+- sIcon is the [ResRef](GFF-File-Format#resref) for an icon you would like to display.
 
 - `nStrRef`: int
 - `sIcon`: string (default: ``)
@@ -36,11 +35,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - 854
 - DJS-OEI 8/29/2004
 - PlayOverlayAnimation
-- This function will play an overlay animation on a character
+- This function will play an overlay [animation](MDL-MDX-File-Format#animation-header) on a character
 - even if the character is moving. This does not cause an action
 
 - `oTarget`: object
 - `nAnimation`: int
 
 <!-- TSL_ONLY_FUNCTIONS_END -->
-

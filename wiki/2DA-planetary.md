@@ -2,16 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines planetary information for the galaxy map and travel system. The engine uses this [file](GFF-File-Format) to determine planet names, descriptions, and travel properties.
 
-**Engine Usage**: Defines planetary information for the galaxy map and travel system. The engine uses this file to determine planet names, descriptions, and travel properties.
+**Row [index](2DA-File-Format#row-labels)**: Planet ID (integer)
 
-**Row Index**: Planet ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Planet label |
+| `label` | [string](GFF-File-Format#cexostring) | Planet label |
 | Additional columns | Various | Planet properties and travel information |
 
 **References**:
@@ -20,4 +19,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`Tools/HolocronToolset/src/toolset/data/installation.py:94`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L94) - HTInstallation constant
 
 ---
-

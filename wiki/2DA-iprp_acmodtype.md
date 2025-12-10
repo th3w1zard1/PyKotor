@@ -2,17 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Maps item property [values](GFF-File-Format#data-types) to armor class modifier [types](GFF-File-Format#data-types). The engine uses this [file](GFF-File-Format) to determine AC modifier calculations for item properties.
 
-**Engine Usage**: Maps item property values to armor class modifier types. The engine uses this file to determine AC modifier calculations for item properties.
+**Row [index](2DA-File-Format#row-labels)**: Item Property Value (integer)
 
-**Row Index**: Item Property Value (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Property value label |
-| Additional columns | Various | AC modifier type mappings |
+| `label` | [string](GFF-File-Format#cexostring) | Property [value](GFF-File-Format#data-types) label |
+| Additional columns | Various | AC modifier [type](GFF-File-Format#data-types) mappings |
 
 **References**:
 
@@ -20,4 +19,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`Tools/HolocronToolset/src/toolset/data/installation.py:82`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L82) - HTInstallation constant
 
 ---
-

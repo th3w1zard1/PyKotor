@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Constants (K1 & TSL)
 
-
 <a id="alignment_all"></a>
 
 ## `ALIGNMENT_ALL`
@@ -58,4 +57,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `ITEM_PROPERTY_USE_LIMITATION_ALIGNMENT_GROUP`
 
 (43): Item Property Use Limitation Alignment Group
-

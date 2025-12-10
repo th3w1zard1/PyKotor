@@ -1,4 +1,5 @@
 # Conversation
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Conversation File Format
+
 1. Introduction
 A Conversation is a branching set of predefined text strings ("lines") that a player and one or more
 NPCs can say to each other, along with the conditions that govern which lines are said and which are
@@ -28,10 +30,12 @@ Label
 Type
 Description
 DelayEntry
+
 ### DWORD
 
 Number of seconds to wait before showing each entry.
 DelayReply
+
 ### DWORD
 
 Number of seconds to wait before showing each reply.
@@ -48,6 +52,7 @@ EntryList
 List
 List of NPC Dialog Structs. StructID = list index.
 NumWords
+
 ### DWORD
 
 Number of words counted in this conversation.
@@ -55,6 +60,7 @@ Dynamically updated as the user edits the conversation
 in the toolset's Conversation Editor. Informational only.
 Does not serve a purpose in game.
 PreventZoomIn
+
 ### BYTE
 
 1 if initiating the conversation will cause the game
@@ -77,11 +83,10 @@ for being the first thing that the NPC says when the
 conversation starts.
 These entries are sorted in the same order as they
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 appear in the Conversation Editor in the toolset, with
 the first entries in the list being the highest in the
 treeview.
@@ -98,6 +103,7 @@ Label
 Type
 Description
 Animation
+
 ### DWORD
 
 0 = default, talk normal
@@ -120,6 +126,7 @@ Animation
 71 = overlay read
 88 = play no animation
 AnimLoop
+
 ### BYTE
 
 Obsolete. No longer used.
@@ -135,6 +142,7 @@ original version of the line of dialog. When editing a
 link (shows up in grey by default), the link comment
 shows up instead (see Section 2.3).
 Delay
+
 ### DWORD
 
 0xFFFFFFFF
@@ -143,17 +151,17 @@ CExoString
 Tag of Journal Category to update when showing this
 line of conversation.
 QuestEntry
+
 ### DWORD
 
 ID of the Journal Entry to show when showing this line
 of conversation.
 This Field is present only if Quest Field is non-empty.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Script
 CResRef
 ResRef of script to run when showing this line.
@@ -208,11 +216,10 @@ Sync Structs found in the StartingList point to a NPC Dialogs in the Top-Level S
 StartingList is the list of all lines of dialog that appear at the root level of the conversation tree.
 The Table below lists the Fields that are present in a StartingList Sync Struct.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.3.1: Fields in StartingList Sync Struct (StructID = list index)
 Label
 Type
@@ -224,6 +231,7 @@ line of conversation appears to the player. If the script
 returns FALSE, then skip to the next Link Struct in the
 StartingList.
 Index
+
 ### DWORD
 
 Index into Top-Level Struct EntryList.
@@ -240,10 +248,12 @@ CResRef
 ResRef of conditional script to run to determine if this
 line of conversation appears to the player.
 Index
+
 ### DWORD
 
 Index into Top-Level Struct ReplyList.
 IsChild
+
 ### BYTE
 
 1 if this is a link, and there is a LinkComment.
@@ -271,10 +281,12 @@ ResRef of conditional script to run to determine if the
 NPC speaks this line. If the script returns FALSE, then
 check the next Link Struct in the current EntriesList.
 Index
+
 ### DWORD
 
 Index into Top-Level Struct EntryList.
 IsChild
+
 ### BYTE
 
 1 if this is a link, and there is a LinkComment.
@@ -288,6 +300,3 @@ the toolset Conversation Editor).
 If this is a link, then the Conversation Editor will show
 and edit the LinkComment instead of the Dialog
 Struct's own Comment.
-
-
-

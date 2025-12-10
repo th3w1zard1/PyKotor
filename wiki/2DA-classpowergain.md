@@ -2,14 +2,13 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines Force power progression by class and level. The engine uses this [file](GFF-File-Format) to determine which Force powers [ARE](GFF-File-Format#are-area) available to each class at each level.
 
-**Engine Usage**: Defines Force power progression by class and level. The engine uses this file to determine which Force powers are available to each class at each level.
+**Row [index](2DA-File-Format#row-labels)**: Level (integer, typically 1-20)
 
-**Row Index**: Level (integer, typically 1-20)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
 | `level` | Integer | Character level |
 | `jedi_guardian` | Integer | Jedi Guardian power gain |
@@ -23,4 +22,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 | `jedi_sentinel_prestige` | Integer (optional) | Jedi Sentinel prestige power gain |
 
 ---
-

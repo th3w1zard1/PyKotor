@@ -2,21 +2,19 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines loading screen hints displayed during area transitions. The engine uses this [file](GFF-File-Format) to show helpful tips and hints to players while loading.
 
-**Engine Usage**: Defines loading screen hints displayed during area transitions. The engine uses this file to show helpful tips and hints to players while loading.
+**Row [index](2DA-File-Format#row-labels)**: Loading Screen Hint ID (integer)
 
-**Row Index**: Loading Screen Hint ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Hint label |
-| `strref` | StrRef | String reference for hint text |
+| `label` | [string](GFF-File-Format#cexostring) | Hint label |
+| `strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for hint text |
 
 **References**:
 
 - [`vendor/xoreos/src/engines/kotor/gui/loadscreen/loadscreen.cpp:45`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotor/gui/loadscreen/loadscreen.cpp#L45) - Loading screen hints TODO comment (KotOR-specific)
 
 ---
-

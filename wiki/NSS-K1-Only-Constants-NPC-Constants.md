@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** K1-Only Constants
 
-
 <a id="npc_bastila"></a>
 
 ## `NPC_BASTILA`
@@ -40,4 +39,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `NPC_ZAALBAR`
 
 (8): Npc Zaalbar
-

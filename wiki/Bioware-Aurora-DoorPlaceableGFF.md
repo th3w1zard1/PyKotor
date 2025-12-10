@@ -1,4 +1,5 @@
 # DoorPlaceableGFF
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Situated Object (Door and Placeable Object) Format
+
 1. Introduction
 A Situated Object is a base object type from which the Door and Placeable Object types are derived.
 Situated objects contain all the shared properties of Doors and Placeable objects. This document will
@@ -38,16 +40,19 @@ Label
 Type
 Description
 AnimationState
+
 ### BYTE
 
 Specifies animation state of the object. Open, closed,
 destroyed, activated, etc.
 Appearance
+
 ### DWORD
 
 Appearance ID. Index into an appearance-related 2da.
 Either doortypes.2da or placeables.2da.
 AutoRemoveKey
+
 ### BYTE
 
 1 if the key should be destroyed from the inventory of
@@ -57,12 +62,12 @@ creature that opens this object.
 This property applies only if a key item is required to
 open this object. (ie., KeyRequired is 1)
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 CloseLockDC
+
 ### BYTE
 
 DC to lock the object. If 0, anyone can lock it.
@@ -71,6 +76,7 @@ CResRef
 ResRef of DLG file to use if a player converses with
 this object via ActionStartConversation().
 CurrentHP
+
 ### SHORT
 
 Current HP of the object. For instances and blueprints
@@ -83,19 +89,23 @@ game does not show the description for a Door when a
 player examines it. It does show the description for a
 Placeable, however.
 DisarmDC
+
 ### BYTE
 
 DC to disarm the trap, if any, attached to this object.
 Faction
+
 ### DWORD
 
 Faction ID of this object. Index into the list of faction
 IDs in the module's repute.fac.
 Fort
+
 ### BYTE
 
 Fortitude save
 Hardness
+
 ### BYTE
 
 Hardness of this object. Damage reduction against
@@ -103,20 +113,24 @@ physical attacks. All slashing, piercing, and
 bludgeoning damage is reduced by this amount to a
 minimum of 0.
 HP
+
 ### SHORT
 
 Max Hit Points of this object.
 Interruptable
+
 ### BYTE
 
 Conversation can be interrupted.
 Lockable
+
 ### BYTE
 
 1 if this object can be locked after it has been unlocked.
 0 if this object cannot be locked again by a Creature or
 player after it has been unlocked.
 Locked
+
 ### BYTE
 
 1 if this object is locked.
@@ -165,21 +179,25 @@ OnUserDefined
 CResRef
 OnUserDefined event
 OpenLockDC
+
 ### BYTE
 
 DC to unlock this object, if this object has been locked
 by setting Locked to 1.
 Plot
+
 ### BYTE
 
 Plot flag. Plot objects cannot be damaged or destroyed
 by Creatures or players.
 PortraitId
+
 ### WORD
 
 Index into portraits.2da. See Trigger format document,
 Section 3.2 Portraits.
 Ref
+
 ### BYTE
 
 Reflex save
@@ -193,36 +211,41 @@ the filename.
 For instances, this is the ResRef of the blueprint that
 the instance was created from.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 TrapDetectable
+
 ### BYTE
 
 1 if Trap can be detected
 0 if Trap cannot be detected
 TrapDetectDC
+
 ### BYTE
 
 DC to detect the Trap. Toolset enforces 1-250 range.
 TrapDisarmable
+
 ### BYTE
 
 1 if Trap can be disarmed.
 0 if Trap cannot be disarmed.
 TrapFlag
+
 ### BYTE
 
 1 if the object Trapped.
 0 if the object is not Trapped.
 TrapOneShot
+
 ### BYTE
 
 1 if the Trap disappears after firing.
 0 if the Trap never disappears.
 TrapType
+
 ### BYTE
 
 Index into traps.2da.
@@ -230,6 +253,7 @@ Specifies the trap type, if the object has a Trap.
 See Section 3.3 Traps, in the Trigger format
 document.
 Will
+
 ### BYTE
 
 Will save
@@ -244,6 +268,7 @@ Comment
 CExoString
 Module designer comment.
 PaletteID
+
 ### BYTE
 
 ID of the node that the object Blueprint appears under
@@ -263,6 +288,7 @@ Label
 Type
 Description
 Bearing
+
 ### FLOAT
 
 Orientation of the object, expressed as a bearing in
@@ -276,6 +302,7 @@ the instance was created from.
 X
 Y
 Z
+
 ### FLOAT
 
 (x,y,z) coordinates of the object within the Area that it
@@ -284,11 +311,10 @@ is located in.
 After a GIT file has been saved by the game, the Door Instance Struct not only contains the Fields in
 Table 2.1 and Table 2.3, it also contains the Fields in Table 2.4.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.4: Fields in Door/Placeable Instance Structs in SaveGames
 Label
 Type
@@ -299,12 +325,12 @@ List of Actions stored on this object
 StructID 0. See Section 6 of the Common GFF
 Structs document.
 AnimationDay
-### DWORD
 
+### DWORD
 
 AnimationTime
-### DWORD
 
+### DWORD
 
 EffectList
 List
@@ -312,6 +338,7 @@ List of Effects stored on this object
 StructID 2. See Section 4 of the Common GFF
 Structs document.
 ObjectId
+
 ### DWORD
 
 Object ID used by game for this object.
@@ -328,6 +355,7 @@ Label
 Type
 Description
 AnimationState
+
 ### BYTE
 
 Specifies animation state of the object.
@@ -337,6 +365,7 @@ orientation arrow in toolset area viewer)
 2 = opened2 (opened in opposite direction to wireframe
 orientation arrow in toolset area viewer)
 Appearance
+
 ### DWORD
 
 Appearance ID. Index into doortypes.2da.
@@ -345,6 +374,7 @@ looks.
 If 0, use GenericType instead to determine how the
 door looks.
 GenericType
+
 ### BYTE
 
 If Appearance is 0, then GenericType determines the
@@ -354,6 +384,7 @@ CExoString
 Tag of the Waypoint or Door that this Door links to in
 an area transition.
 LinkedToFlags
+
 ### BYTE
 
 0 if this Door does not link to anything
@@ -362,6 +393,7 @@ Door.
 2 if this Door is an Area Transition and links to a
 Waypoint.
 LoadScreenID
+
 ### WORD
 
 Index into loadscreens.2da.
@@ -380,11 +412,10 @@ OnFailToOpen
 CResRef
 OnFailToOpen event
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3.2. Door Blueprint Struct
 Door Blueprints contain the Fields listed in Tables 2.1, 2.2, and 3.1.
 3.3. Door Instance Struct
@@ -420,15 +451,15 @@ Label
 Type
 Description
 SecretDoorDC
+
 ### BYTE
 
 Obsolete. Always 0.
 
-
 ## Page 6
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3.5. The 2DA Files Referenced by Door Fields
 3.5.1. Door Tileset-Specific Appearances
 If a door has an Appearance Field value greater than 0, then its model is determined by using its
@@ -507,26 +538,28 @@ appearance in the toolset
 4.1. Placeable Struct
 Placeable Structs contain all the Fields in Table 2.1, plus those in Table 4.1 below.
 
-
 ## Page 7
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 4.1.1: Fields Unique to Placeable Structs
 Label
 Type
 Description
 AnimationState
+
 ### BYTE
 
 Specifies animation state of the object. See Table 4.1.2
 BodyBag
+
 ### BYTE
 
 Index into bodybag.2da.
 Specifies the body bag left behind when this object is
 destroyed while it still contains inventory.
 HasInventory
+
 ### BYTE
 
 1 if the Placeable has inventory
@@ -544,6 +577,7 @@ OnUsed
 CResRef
 OnUsed event
 Static
+
 ### BYTE
 
 1 if the Placeable is static.
@@ -561,10 +595,12 @@ Make objects Static to improve client and server
 performance, and if they are present only for
 decoration.
 Type
+
 ### BYTE
 
 Obsolete. Not used. Always 0.
 Useable
+
 ### BYTE
 
 1 if the Placeable can be used by a player.
@@ -602,19 +638,20 @@ Label
 Type
 Description
 Repos_PosX
+
 ### WORD
 
 x-position of item in inventory grid
 Repos_PosY
+
 ### WORD
 
 y-position of item in inventory grid
 
-
 ## Page 8
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 4.2. Placeable Blueprint Struct
 Placeable Object Blueprints contain the Fields listed in Tables 2.1.1, 2.2, and 4.1.
 Table 4.2.1: Fields Unique to Placeable Structs
@@ -670,28 +707,31 @@ Game animation state.
 75 = opened
 76 = closed
 AnimationState
+
 ### BYTE
 
 This Field is removed by a savegame and replaced by
 the Animation Field given above.
 DieWhenEmpty
+
 ### BYTE
 
 1 for body bag placeables that fade away after they
 have been fully looted.
 0 for all normal placeable objects and non-fading body
 
-
 ## Page 9
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 bags.
 GroundPile
+
 ### BYTE
 
 Obsolete Field. Always 0.
 LightState
+
 ### BYTE
 
 1 if the light attached to this object is on
@@ -701,10 +741,12 @@ Portal
 CExoString
 Portal Info. Used by the DM droppable portals.
 TrapCreator
+
 ### DWORD
 
 Object ID of player who placed trap on this object
 TrapFaction
+
 ### DWORD
 
 Faction ID of the trap placed on this object.
@@ -782,11 +824,10 @@ Closed
 String
 ResRef of WAV file to play
 
-
 ## Page 10
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Destroyed
 String
 ResRef of WAV file to play
@@ -801,6 +842,7 @@ Table 4.5.3: bodybag.2da columns
 Column
 Type
 Description
+
 ### LABEL
 
 String
@@ -811,8 +853,3 @@ StrRef of the name to show in the toolset
 Appearance
 Integer
 Index into placeables.2da
-
-
-
-
-

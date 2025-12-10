@@ -2,16 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines cursor [types](GFF-File-Format#data-types) for different object interactions. The engine uses this [file](GFF-File-Format) to determine which cursor to display when hovering over different object [types](GFF-File-Format#data-types).
 
-**Engine Usage**: Defines cursor types for different object interactions. The engine uses this file to determine which cursor to display when hovering over different object types.
+**Row [index](2DA-File-Format#row-labels)**: Cursor ID (integer)
 
-**Row Index**: Cursor ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Cursor label |
+| `label` | [string](GFF-File-Format#cexostring) | Cursor label |
 | Additional columns | Various | Cursor properties and ResRefs |
 
 **References**:
@@ -21,4 +20,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`Tools/HolocronToolset/src/toolset/gui/editors/utt.py:71-76`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utt.py#L71-L76) - Cursor selection in trigger editor
 
 ---
-

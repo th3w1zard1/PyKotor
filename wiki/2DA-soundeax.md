@@ -2,21 +2,19 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines EAX (Environmental Audio Extensions) sound presets for 3D audio processing. The engine uses this [file](GFF-File-Format) to determine EAX preset configurations for different environments.
 
-**Engine Usage**: Defines EAX (Environmental Audio Extensions) sound presets for 3D audio processing. The engine uses this file to determine EAX preset configurations for different environments.
+**Row [index](2DA-File-Format#row-labels)**: EAX Preset ID (integer)
 
-**Row Index**: EAX Preset ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | EAX preset label |
+| `label` | [string](GFF-File-Format#cexostring) | EAX preset label |
 | Additional columns | Various | EAX preset parameters and properties |
 
 **References**:
 
-- [`vendor/KotOR.js/src/apps/forge/states/MenuTopState.tsx:420`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/apps/forge/states/MenuTopState.tsx#L420) - EAX presets loading from 2DA
+- [`vendor/KotOR.js/src/apps/forge/states/MenuTopState.tsx:420`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/apps/forge/states/MenuTopState.tsx#L420) - EAX presets loading from [2DA](2DA-File-Format)
 
 ---
-

@@ -1,4 +1,5 @@
 # CommonGFFStructs
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Common Game GFF Structures
+
 1. Introduction
 This document describes Structs and Lists that are frequently seen in files saved in the BioWare
 Generic File Format. This document assumes that the reader is already familiar with the Generic File
@@ -28,12 +30,14 @@ Label
 Type
 Description
 Area
+
 ### DWORD
 
 ObjectId of the area containing the location
 OrientationX
 OrientationY
 OrientationZ
+
 ### FLOAT
 
 (x,y,z) components of the direction vector in
@@ -41,6 +45,7 @@ which the location faces
 PositionX
 PositionY
 PositionZ
+
 ### FLOAT
 
 (x,y,z) coordinates of the location
@@ -58,6 +63,7 @@ SetGlobalInt(), SetGlobalString(), etc.
 scripting functions, and retrieved by the
 corresponding GetGlobal*() functions.
 Type
+
 ### DWORD
 
 Variable's data type
@@ -67,11 +73,10 @@ The value of the Variable
 The actual data type of a Variable's 'Value' Field depends on the value of it's 'Type' Field. The table
 below lists the type IDs and their associated data types.
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.2: Variable Types
 TypeID
 GFF Type
@@ -80,6 +85,7 @@ NWScript Type
 INT
 int
 2
+
 ### FLOAT
 
 float
@@ -87,6 +93,7 @@ float
 CExoString
 string
 4
+
 ### DWORD
 
 object
@@ -100,18 +107,22 @@ Label
 Type
 Description
 CreatorId
+
 ### DWORD
 
 ObjectID of effect's creator
 Duration
+
 ### FLOAT
 
 Duration of the effect
 ExpireDay
+
 ### DWORD
 
 Day the effect expires
 ExpireTime
+
 ### DWORD
 
 Time the effect expires
@@ -119,6 +130,7 @@ FloatList
 List
 StructID 4. Struct given on next line:
 Value
+
 ### FLOAT
 
 List of float parameters for the effect
@@ -137,22 +149,27 @@ Bool – does it show the icon?
 NumIntegers
 INT
 -
+
 ObjectList
 List
 StructID 6. Struct given on next line:
 Value
+
 ### DWORD
 
 List of ObjectID parameters for the effect
 SkipOnLoad
+
 ### BYTE
 
 Bool – should this effect be added on load?
 Or skipped?
 SpellId
+
 ### DWORD
 
 -
+
 StringList
 List
 StructID 5. Struct given on next line:
@@ -160,10 +177,12 @@ Value
 CExoString
 String parameters for the effect
 SubType
+
 ### WORD
 
 The effect sub-type
 Type
+
 ### WORD
 
 The type of the effect.
@@ -175,10 +194,12 @@ Label
 Type
 Description
 CallerId
+
 ### DWORD
 
 Object Id of the actor object
 Day
+
 ### DWORD
 
 Game day the event should fire
@@ -186,14 +207,17 @@ EventData
 Depends on EventId
 Struct that depends on the EventId
 EventId
+
 ### DWORD
 
 ID of the Event type
 ObjectId
+
 ### DWORD
 
 Object ID the event is acting on
 Time
+
 ### DWORD
 
 Game time the event should fire
@@ -202,11 +226,10 @@ lists some EventId values and what Structs are associated with them. These Struc
 StructID specified in the table, rather than whatever StructIDs they may normally use. Some EventIds
 do not save an EventData Struct at all.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 5.2: EventId values
 EventId
 EventData
@@ -215,103 +238,123 @@ Event Description
 Struct
 1
 0x7777
+
 ### TIMED_EVENT
 
 ScriptSituation. See Section 7.
 2
 -
+
 ### ENTERED_TRIGGER
 
 none
 3
 -
+
 ### LEFT_TRIGGER
 
 none
 4
 0x9999
+
 ### REMOVE_FROM_AREA
 
 Struct consists of a single
 BYTE Field of Label "Value"
 5
 0x1111
+
 ### APPLY_EFFECT
 
 Effect Struct. See Section 4.
 6
 -
+
 ### CLOSE_OBJECT
 
 none
 7
 -
+
 ### OPEN_OBJECT
 
 none
 8
 0x6666
+
 ### SPELL_IMPACT
 
 SpellScriptData Struct
 9
 0x3333
+
 ### PLAY_ANIMATION
 
 Struct consists of a single INT
 Field of Label "Value"
 10
 0x4444
+
 ### SIGNAL_EVENT
 
 ScriptEvent. See Section 7.
 11
 -
+
 ### DESTROY_OBJECT
 
 none
 12
 -
+
 ### UNLOCK_OBJECT
 
 none
 13
 -
+
 ### LOCK_OBJECT
 
 none
 14
 0x1111
+
 ### REMOVE_EFFECT
 
 Effect Struct. See Section 4.
 15
 0x2222
+
 ### ON_MELEE_ATTACKED
 
 CombatAttackData Struct.
 16
 -
+
 ### DECREMENT_STACKSIZE
 
 none
 17
 0x5555
+
 ### SPAWN_BODY_BAG
 
 BodyBagInfo Struct
 18
 0x8888
+
 ### FORCED_ACTION
 
 ForcedAction Struct
 19
 0x6666
+
 ### ITEM_ON_HIT_SPELL_IMPACT
 
 SpellScriptData Struct
 20
 0xAAAA
+
 ### BROADCAST_AOO
 
 Struct consists of a single
@@ -319,26 +362,31 @@ DWORD Field of Label
 "Value"
 21
 0x2222
+
 ### BROADCAST_SAFE_PROJECTILE
 
 CombatAttackData Struct.
 22
 0xCCCC
+
 ### FEEDBACK_MESSAGE
 
 ClientMessageData Struct
 23
 -
+
 ### ABILITY_EFFECT_APPLIED
 
 none
 24
 0xDDDD
+
 ### SUMMON_CREATURE
 
 ScriptEvent. See Section 7.
 25
 -
+
 ### ACQUIRE_ITEM
 
 none
@@ -351,14 +399,19 @@ Label
 Type
 Description
 ActionId
+
 ### DWORD
 
 -
+
 GroupActionId
+
 ### WORD
 
 -
+
 NumParams
+
 ### WORD
 
 Number of elements in the Parameter List
@@ -371,16 +424,16 @@ way. By the time someone noticed that the spelling of "parameters" was incorrect
 existing data to justify fixing the spelling.
 The table below describes a Struct in the Parameter List.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 6.2: Fields in a Parameter Struct (StructID 1)
 Label
 Type
 Description
 Type
+
 ### DWORD
 
 The Parameter Value's data type
@@ -397,10 +450,12 @@ Description
 INT
 Integer
 2
+
 ### FLOAT
 
 Floating point value
 3
+
 ### DWORD
 
 Object ID
@@ -424,8 +479,8 @@ CodeSize
 INT
 
 Code
-### VOID
 
+### VOID
 
 InstructionPtr
 INT
@@ -467,6 +522,7 @@ Label
 Type
 Description
 Type
+
 ### CHAR
 
 Specifies the Field Type of the Value Field. See Table
@@ -482,12 +538,12 @@ Description
 INT
 Integer
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 4
+
 ### FLOAT
 
 Floating point value
@@ -495,6 +551,7 @@ Floating point value
 CExoString
 String
 6
+
 ### DWORD
 
 Object ID
@@ -524,8 +581,8 @@ Label
 Type
 Description
 EventType
-### WORD
 
+### WORD
 
 IntList
 List
@@ -552,18 +609,21 @@ Label
 Type
 Description
 Area
+
 ### DWORD
 
 ObjectID of area
 OrientationX,
 OrientationY,
 OrientationZ
+
 ### FLOAT
 
 orientation vector
 PositionX,
 PositionY,
 PositionZ
+
 ### FLOAT
 
 position vector
@@ -578,10 +638,11 @@ Type
 INT
 
 MultiClass
+
 ### BYTE
 
-
 Item
+
 ### DWORD
 
 Object ID
@@ -589,13 +650,9 @@ ItemPropertyIndex
 INT
 
 CasterLevel
-### BYTE
 
+### BYTE
 
 MetaType
+
 ### BYTE
-
-
-
-
-

@@ -2,29 +2,28 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
+UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-encounter) which spawn creatures when triggered by the player. Encounters handle spawning logic, difficulty scaling, respawning, and faction settings for groups of enemies or neutral creatures.
 
-UTE files define encounter templates which spawn creatures when triggered by the player. Encounters handle spawning logic, difficulty scaling, respawning, and faction settings for groups of enemies or neutral creatures.
-
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Encounter format specification, see [Bioware Aurora Encounter Format](Bioware-Aurora-Encounter).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Encounter [format](GFF-File-Format) specification, see [Bioware Aurora Encounter Format](Bioware-Aurora-Encounter).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/ute.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/ute.py)
 
-## Core Identity Fields
+## Core Identity [fields](GFF-File-Format#file-structure)
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | Template identifier for this encounter |
-| `Tag` | CExoString | Unique tag for script references |
-| `LocalizedName` | CExoLocString | Encounter name (unused in game) |
-| `Comment` | CExoString | Developer comment/notes |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | Template identifier for this encounter |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Unique tag for script references |
+| `LocalizedName` | [CExoLocString](GFF-File-Format#localizedstring) | Encounter name (unused in game) |
+| `Comment` | [CExoString](GFF-File-Format#cexostring) | Developer comment/notes |
 
 ## Spawn Configuration
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `Active` | Byte | Encounter is currently active |
 | `Difficulty` | Int | Difficulty setting (unused) |
-| `DifficultyIndex` | Int | Difficulty scaling index |
+| `DifficultyIndex` | Int | Difficulty scaling [index](2DA-File-Format#row-labels) |
 | `Faction` | Word | Faction of spawned creatures |
 | `MaxCreatures` | Int | Maximum concurrent creatures |
 | `RecCreatures` | Int | Recommended number of creatures |
@@ -39,7 +38,7 @@ UTE files define encounter templates which spawn creatures when triggered by the
 
 ## Respawn Logic
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `Reset` | Byte | Encounter resets after being cleared |
 | `ResetTime` | Int | Time in seconds before reset |
@@ -53,16 +52,16 @@ UTE files define encounter templates which spawn creatures when triggered by the
 
 ## Creature List
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `CreatureList` | List | List of creatures to spawn |
 
-**CreatureList Struct Fields:**
+**CreatureList Struct [fields](GFF-File-Format#file-structure):**
 
-- `ResRef` (ResRef): UTC template to spawn
+- `[ResRef](GFF-File-Format#resref)` ([ResRef](GFF-File-Format#resref)): [UTC](GFF-File-Format#utc-creature) template to spawn
 - `Appearance` (Int): Appearance type (optional override)
 - `CR` (Float): Challenge Rating
-- `SingleSpawn` (Byte): Unique spawn flag
+- `SingleSpawn` (Byte): Unique spawn [flag](GFF-File-Format#data-types)
 
 **Spawn Selection:**
 
@@ -71,18 +70,17 @@ UTE files define encounter templates which spawn creatures when triggered by the
 
 ## Trigger Logic
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `PlayerOnly` | Byte | Only triggers for player (not NPCs) |
-| `OnEntered` | ResRef | Script fires when trigger entered |
-| `OnExit` | ResRef | Script fires when trigger exited |
-| `OnExhausted` | ResRef | Script fires when spawns depleted |
-| `OnHeartbeat` | ResRef | Script fires periodically |
-| `OnUserDefined` | ResRef | Script fires on user events |
+| `OnEntered` | [ResRef](GFF-File-Format#resref) | Script fires when trigger entered |
+| `OnExit` | [ResRef](GFF-File-Format#resref) | Script fires when trigger exited |
+| `OnExhausted` | [ResRef](GFF-File-Format#resref) | Script fires when spawns depleted |
+| `OnHeartbeat` | [ResRef](GFF-File-Format#resref) | Script fires periodically |
+| `OnUserDefined` | [ResRef](GFF-File-Format#resref) | Script fires on user events |
 
 **Implementation Notes:**
 
-- Encounters are volumes (geometry defined in GIT)
+- Encounters [ARE](GFF-File-Format#are-area) volumes ([geometry](MDL-MDX-File-Format#geometry-header) defined in [GIT](GFF-File-Format#git-game-instance-template))
 - Spawning happens when volume is entered
-- Creatures spawn at specific spawn points (UTW) or random locations
-
+- Creatures spawn at specific spawn points ([UTW](GFF-File-Format#utw-waypoint)) or random locations

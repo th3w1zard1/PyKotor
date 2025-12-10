@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Constants
 
-
 <a id="planet_dxun"></a>
 
 ## `PLANET_DXUN`
@@ -58,4 +57,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `PLANET_TELOS`
 
 (9): Planet Telos
-

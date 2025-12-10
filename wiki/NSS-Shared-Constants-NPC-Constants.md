@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Constants (K1 & TSL)
 
-
 <a id="npc_aistyle_aid"></a>
 
 ## `NPC_AISTYLE_AID`
@@ -64,4 +63,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `NPC_T3_M4`
 
 (7): Npc T3 M4
-

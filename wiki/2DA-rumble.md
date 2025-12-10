@@ -2,24 +2,22 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines rumble/vibration patterns for [controller](MDL-MDX-File-Format#controllers) feedback. The engine uses this [file](GFF-File-Format) to determine rumble patterns for camera shake and [controller](MDL-MDX-File-Format#controllers) vibration effects.
 
-**Engine Usage**: Defines rumble/vibration patterns for controller feedback. The engine uses this file to determine rumble patterns for camera shake and controller vibration effects.
+**Row [index](2DA-File-Format#row-labels)**: Rumble Pattern ID (integer)
 
-**Row Index**: Rumble Pattern ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Rumble pattern label |
-| `lsamples` | Integer | Left channel sample count |
-| `rsamples` | Integer | Right channel sample count |
-| Additional columns | Various | Rumble pattern data |
+| `label` | [string](GFF-File-Format#cexostring) | Rumble pattern label |
+| `lsamples` | Integer | Left channel sample [count](GFF-File-Format#file-structure) |
+| `rsamples` | Integer | Right channel sample [count](GFF-File-Format#file-structure) |
+| Additional columns | Various | Rumble pattern [data](GFF-File-Format#file-structure) |
 
 **References**:
 
-- [`vendor/KotOR.js/src/managers/CameraShakeManager.ts:46`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/managers/CameraShakeManager.ts#L46) - Rumble pattern loading from 2DA
+- [`vendor/KotOR.js/src/managers/CameraShakeManager.ts:46`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/managers/CameraShakeManager.ts#L46) - Rumble pattern loading from [2DA](2DA-File-Format)
 - [`vendor/KotOR.js/src/nwscript/NWScriptDefK1.ts:4500-4515`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptDefK1.ts#L4500-L4515) - PlayRumblePattern and StopRumblePattern functions
 
 ---
-

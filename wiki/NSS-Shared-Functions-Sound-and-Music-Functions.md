@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="ambientsoundchangeday"></a>
 
 ## `AmbientSoundChangeDay(oArea, nTrack)` - Routine 435
@@ -76,8 +75,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `DisplayFeedBackText(oCreature, nTextConstant)` - Routine 366
 
 - `366. DisplayFeedBackText`
-- displays a feed back string for the object spicified and the constant
-- repersents the string to be displayed see:FeedBackText.2da
+- displays a feed back [string](GFF-File-Format#cexostring) for the object spicified and the constant
+- repersents the [string](GFF-File-Format#cexostring) to be displayed see:FeedBackText.2da
 
 - `oCreature`: object
 - `nTextConstant`: int
@@ -87,7 +86,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetIsPlayableRacialType(oCreature)` - Routine 312
 
 - `312. GetIsPlayableRacialType`
-- - Returns TRUE if oCreature is of a playable racial type.
+- - Returns TRUE if oCreature is of a playable racial [type](GFF-File-Format#data-types).
 
 - `oCreature`: object
 
@@ -228,7 +227,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - nAnimation: ANIMATION_*
 - - fSpeed
 - - fSeconds: Duration of the animation (this is not used for Fire and
-- Forget animations) If a time of -1.0f is specified for a looping animation
+- Forget [animations](MDL-MDX-File-Format#animation-header)) If a time of -1.0f is specified for a looping [animation](MDL-MDX-File-Format#animation-header)
 
 - `nAnimation`: int
 - `fSpeed`: float (default: `1.0`)
@@ -241,7 +240,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `733. PlayMovie`
 - Playes a Movie.
 
-- `sMovie`: string
+- `sMovie`: [string](GFF-File-Format#cexostring)
 
 <a id="playmoviequeue"></a>
 
@@ -262,13 +261,13 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `364. PlayPazaak`
 - Starts a game of pazaak.
-- - nOpponentPazaakDeck: Index into PazaakDecks.2da; specifies which deck the opponent will use.
+- - nOpponentPazaakDeck: [index](2DA-File-Format#row-labels) into PazaakDecks.2da; specifies which deck the opponent will use.
 - - sEndScript: Script to be run when game finishes.
 - - nMaxWager: Max player wager.  If <= 0, the player's credits won't be modified by the result of the game and the wager screen will not show up.
 - - bShowTutorial: Plays in tutorial mode (nMaxWager should be 0).
 
 - `nOpponentPazaakDeck`: int
-- `sEndScript`: string
+- `sEndScript`: [string](GFF-File-Format#cexostring)
 - `nMaxWager`: int
 - `bShowTutorial`: int (default: `0`)
 - `oOpponent`: object
@@ -279,9 +278,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `738. PlayRoomAnimation`
 - PlayRoomAnimation
-- Plays a looping animation on a room
+- Plays a looping [animation](MDL-MDX-File-Format#animation-header) on a room
 
-- `sRoom`: string
+- `sRoom`: [string](GFF-File-Format#cexostring)
 - `nAnimation`: int
 
 <a id="playrumblepattern"></a>
@@ -302,7 +301,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Play sSoundName
 - - sSoundName: TBD - SS
 
-- `sSoundName`: string
+- `sSoundName`: [string](GFF-File-Format#cexostring)
 
 <a id="setmusicvolume"></a>
 
@@ -386,10 +385,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SoundObjectSetPosition(oSound, vPosition)` - Routine 416
 
 - `416. SoundObjectSetPosition`
-- Set the position of oSound.
+- Set the [position](MDL-MDX-File-Format#node-header) of oSound.
 
 - `oSound`: object
-- `vPosition`: vector
+- `vPosition`: [vector](GFF-File-Format#vector)
 
 <a id="soundobjectsetvolume"></a>
 
@@ -427,7 +426,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SWMG_GetSoundFrequencyIsRandom(oFollower, nSound)` - Routine 685
 
 - `685. SWMG_GetSoundFrequencyIsRandom`
-- Gets whether the frequency of a trackfollower sound is using the random model
+- Gets whether the frequency of a trackfollower sound is using the random [model](MDL-MDX-File-Format)
 
 - `oFollower`: object
 - `nSound`: int
@@ -447,11 +446,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SWMG_PlayAnimation(oObject, sAnimName, bLooping, bQueue, bOverlay)` - Routine 586
 
 - `586. SWMG_PlayAnimation`
-- plays an animation on an object
+- plays an [animation](MDL-MDX-File-Format#animation-header) on an object
 - SWMG_PlayAnimation
 
 - `oObject`: object
-- `sAnimName`: string
+- `sAnimName`: [string](GFF-File-Format#cexostring)
 - `bLooping`: int (default: `1`)
 - `bQueue`: int (default: `0`)
 - `bOverlay`: int (default: `0`)
@@ -472,7 +471,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SWMG_SetSoundFrequencyIsRandom(oFollower, nSound, bIsRandom)` - Routine 686
 
 - `686. SWMG_SetSoundFrequencyIsRandom`
-- Sets whether the frequency of a trackfollower sound is using the random model
+- Sets whether the frequency of a trackfollower sound is using the random [model](MDL-MDX-File-Format)
 
 - `oFollower`: object
 - `nSound`: int
@@ -490,4 +489,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `nVolume`: int
 
 <!-- SHARED_FUNCTIONS_END -->
-

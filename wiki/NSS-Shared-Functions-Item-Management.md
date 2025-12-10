@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="changeitemcost"></a>
 
 ## `ChangeItemCost(sItem, fCostMultiplier)` - Routine 747
@@ -13,7 +12,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - ChangeItemCost
 - Change the cost of an item
 
-- `sItem`: string
+- `sItem`: [string](GFF-File-Format#cexostring)
 - `fCostMultiplier`: float
 
 <a id="createitemonfloor"></a>
@@ -24,7 +23,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Should only be used for items that have been created on the ground, and will
 - be destroyed without ever being picked up or equipped.  Returns true if successful
 
-- `sTemplate`: string
+- `sTemplate`: [string](GFF-File-Format#cexostring)
 - `lLocation`: location
 - `bUseAppearAnimation`: int (default: `0`)
 
@@ -34,11 +33,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `31. CreateItemOnObject`
 - Create an item with the template sItemTemplate in oTarget's inventory.
-- - nStackSize: This is the stack size of the item to be created
-- - Return value: The object that has been created.  On error, this returns
+- - nStackSize: This is the stack [size](GFF-File-Format#file-structure) of the item to be created
+- - Return [value](GFF-File-Format#data-types): The object that has been created.  On error, this returns
 - OBJECT_INVALID.
 
-- `sItemTemplate`: string
+- `sItemTemplate`: [string](GFF-File-Format#cexostring)
 - `oTarget`: object
 - `nStackSize`: int (default: `1`)
 
@@ -119,7 +118,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `401. GetItemACValue`
 - Get the Armour Class of oItem.
-- - Return 0 if the oItem is not a valid item, or if oItem has no armour value.
+- - Return 0 if the oItem is not a valid item, or if oItem has no armour [value](GFF-File-Format#data-types).
 
 - `oItem`: object
 
@@ -143,10 +142,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `30. GetItemPossessedBy`
 - Get the object possessed by oCreature with the tag sItemTag
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 - `oCreature`: object
-- `sItemTag`: string
+- `sItemTag`: [string](GFF-File-Format#cexostring)
 
 <a id="getitempossessor"></a>
 
@@ -154,7 +153,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `29. GetItemPossessor`
 - Get the possessor of oItem
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 - `oItem`: object
 
@@ -163,7 +162,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetItemStackSize(oItem)` - Routine 138
 
 - `138. GetItemStackSize`
-- Gets the stack size of an item.
+- Gets the stack [size](GFF-File-Format#file-structure) of an item.
 
 - `oItem`: object
 
@@ -252,11 +251,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SetItemNonEquippable(oItem, bNonEquippable)` - Routine 266
 
 - `266. SetItemNonEquippable`
-- Flag the specified item as being non-equippable or not.  Set bNonEquippable
+- [flag](GFF-File-Format#data-types) the specified item as being non-equippable or not.  Set bNonEquippable
 - to TRUE to prevent this item from being equipped, and FALSE to allow
 - the normal equipping checks to determine if the item can be equipped.
 - NOTE: This will do nothing if the object passed in is not an item.  Items that
-- are already equipped when this is called will not automatically be
+- [ARE](GFF-File-Format#are-area) already equipped when this is called will not automatically be
 
 - `oItem`: object
 - `bNonEquippable`: int
@@ -266,10 +265,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SetItemStackSize(oItem, nStackSize)` - Routine 150
 
 - `150. SetItemStackSize`
-- Set the stack size of an item.
-- NOTE: The stack size will be clamped to between 1 and the max stack size (as
+- Set the stack [size](GFF-File-Format#file-structure) of an item.
+- NOTE: The stack [size](GFF-File-Format#file-structure) will be clamped to between 1 and the max stack size (as
 - specified in the base item).
 
 - `oItem`: object
 - `nStackSize`: int
-

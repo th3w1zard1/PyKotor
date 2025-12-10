@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** K1-Only Functions
 
-
 <a id="yavinhackclosedoor"></a>
 
 ## `YavinHackCloseDoor(oidDoor)` - Routine 771
@@ -18,4 +17,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `oidDoor`: object
 
 <!-- K1_ONLY_FUNCTIONS_END -->
-

@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Constants
 
-
 <a id="vfx_dur_electrical_spark"></a>
 
 ## `VFX_DUR_ELECTRICAL_SPARK`
@@ -18,4 +17,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 (9010): Vfx Dur Holo Project
 
 <!-- TSL_ONLY_CONSTANTS_END -->
-

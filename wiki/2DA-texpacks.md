@@ -2,23 +2,21 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines [texture](TPC-File-Format) pack configurations for graphics settings (KotOR 2 only). The engine uses this [file](GFF-File-Format) to determine available [texture](TPC-File-Format) pack options in the graphics menu.
 
-**Engine Usage**: Defines texture pack configurations for graphics settings (KotOR 2 only). The engine uses this file to determine available texture pack options in the graphics menu.
+**Row [index](2DA-File-Format#row-labels)**: [texture](TPC-File-Format) Pack ID (integer)
 
-**Row Index**: Texture Pack ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Texture pack label |
-| `strrefname` | StrRef | String reference for texture pack name |
-| Additional columns | Various | Texture pack properties and settings |
+| `label` | [string](GFF-File-Format#cexostring) | [texture](TPC-File-Format) pack label |
+| `strrefname` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for [texture](TPC-File-Format) pack name |
+| Additional columns | Various | [texture](TPC-File-Format) pack properties and settings |
 
 **References**:
 
-- [`vendor/KotOR.js/src/game/tsl/menu/MenuGraphicsAdvanced.ts:51-122`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/game/tsl/menu/MenuGraphicsAdvanced.ts#L51-L122) - Texture pack loading from 2DA for graphics menu (KotOR 2 only)
-- [`vendor/KotOR.js/src/game/kotor/menu/MenuGraphicsAdvanced.ts:63-121`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/game/kotor/menu/MenuGraphicsAdvanced.ts#L63-L121) - Texture pack usage in KotOR 1 graphics menu
+- [`vendor/KotOR.js/src/game/tsl/menu/MenuGraphicsAdvanced.ts:51-122`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/game/tsl/menu/MenuGraphicsAdvanced.ts#L51-L122) - [texture](TPC-File-Format) pack loading from [2DA](2DA-File-Format) for graphics menu (KotOR 2 only)
+- [`vendor/KotOR.js/src/game/kotor/menu/MenuGraphicsAdvanced.ts:63-121`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/game/kotor/menu/MenuGraphicsAdvanced.ts#L63-L121) - [texture](TPC-File-Format) pack usage in KotOR 1 graphics menu
 
 ---
-

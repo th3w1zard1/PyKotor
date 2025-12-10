@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="getitemhasitemproperty"></a>
 
 ## `GetItemHasItemProperty(oItem, nProperty)` - Routine 398
@@ -18,4 +17,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `oItem`: object
 - `nProperty`: int
-

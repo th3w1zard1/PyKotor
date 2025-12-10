@@ -4,14 +4,13 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="abs"></a>
 
 ## `abs(nValue)` - Routine 77
 
 - `77. abs`
-- Maths operation: integer absolute value of nValue
-- - Return value on error: 0
+- Maths operation: integer absolute [value](GFF-File-Format#data-types) of nValue
+- - Return [value](GFF-File-Format#data-types) on error: 0
 
 - `nValue`: int
 
@@ -36,7 +35,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - bAllowOverrideHigher: If this is TRUE, you can set the state to a lower
 - number than the one it is currently on
 
-- `szPlotID`: string
+- `szPlotID`: [string](GFF-File-Format#cexostring)
 - `nState`: int
 - `bAllowOverrideHigher`: int (default: `0`)
 
@@ -49,7 +48,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Adds a user entered entry to the world notices
 
 - `nIndex`: int
-- `szEntry`: string
+- `szEntry`: [string](GFF-File-Format#cexostring)
 - `szTitle`: string (default: `World Entry`)
 
 <a id="addjournalworldentrystrref"></a>
@@ -72,7 +71,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - specified amount.
 - Note: This adjusts Faction Reputation, how the entire faction that
 - oSourceFactionMember is in, feels about oTarget.
-- - No return value
+- - No return [value](GFF-File-Format#data-types)
 
 - `oTarget`: object
 - `oSourceFactionMember`: object
@@ -83,7 +82,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `AngleToVector(fAngle)` - Routine 144
 
 - `144. AngleToVector`
-- Convert fAngle to a vector
+- Convert fAngle to a [vector](GFF-File-Format#vector)
 
 - `fAngle`: float
 
@@ -103,7 +102,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `6. AssignCommand`
 - Assign aActionToAssign to oActionSubject.
-- - No return value, but if an error occurs, the log file will contain
+- - No return [value](GFF-File-Format#data-types), but if an error occurs, the log [file](GFF-File-Format) will contain
 - "AssignCommand failed."
 - (If the object doesn't exist, nothing happens.)
 
@@ -124,9 +123,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `AurPostString(sString, nX, nY, fLife)` - Routine 582
 
 - `582. AurPostString`
-- post a string to the screen at column nX and row nY for fLife seconds
+- post a [string](GFF-File-Format#cexostring) to the screen at column nX and row nY for fLife seconds
 
-- `sString`: string
+- `sString`: [string](GFF-File-Format#cexostring)
 - `nX`: int
 - `nY`: int
 - `fLife`: float
@@ -156,7 +155,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `ChangeFactionByFaction(nFactionFrom, nFactionTo)` - Routine 737
 
 - `737. ChangeFactionByFaction`
-- This affects all creatures in the area that are in faction nFactionFrom.
+- This affects all creatures in the area that [ARE](GFF-File-Format#are-area) in faction nFactionFrom.
 - making them change to nFactionTo
 
 - `nFactionFrom`: int
@@ -180,7 +179,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `9. ClearAllActions`
 - Clear all the actions of the caller. (This will only work on Creatures)
-- - No return value, but if an error occurs, the log file will contain
+- - No return [value](GFF-File-Format#data-types), but if an error occurs, the log [file](GFF-File-Format) will contain
 - "ClearAllActions failed.".
 
 <a id="cos"></a>
@@ -201,7 +200,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Used by the cutscene system to allow designers to script combat
 
 - `oObject`: object
-- `vPosition`: vector
+- `vPosition`: [vector](GFF-File-Format#vector)
 - `nRun`: int
 
 <a id="d10"></a>
@@ -210,7 +209,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `100. d10`
 - Get the total from rolling (nNumDice x d10 dice).
-- - nNumDice: If this is less than 1, the value 1 will be used.
+- - nNumDice: If this is less than 1, the [value](GFF-File-Format#data-types) 1 will be used.
 
 - `nNumDice`: int (default: `1`)
 
@@ -220,7 +219,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `103. d100`
 - Get the total from rolling (nNumDice x d100 dice).
-- - nNumDice: If this is less than 1, the value 1 will be used.
+- - nNumDice: If this is less than 1, the [value](GFF-File-Format#data-types) 1 will be used.
 
 - `nNumDice`: int (default: `1`)
 
@@ -230,7 +229,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `101. d12`
 - Get the total from rolling (nNumDice x d12 dice).
-- - nNumDice: If this is less than 1, the value 1 will be used.
+- - nNumDice: If this is less than 1, the [value](GFF-File-Format#data-types) 1 will be used.
 
 - `nNumDice`: int (default: `1`)
 
@@ -240,7 +239,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `95. d2`
 - Get the total from rolling (nNumDice x d2 dice).
-- - nNumDice: If this is less than 1, the value 1 will be used.
+- - nNumDice: If this is less than 1, the [value](GFF-File-Format#data-types) 1 will be used.
 
 - `nNumDice`: int (default: `1`)
 
@@ -250,7 +249,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `102. d20`
 - Get the total from rolling (nNumDice x d20 dice).
-- - nNumDice: If this is less than 1, the value 1 will be used.
+- - nNumDice: If this is less than 1, the [value](GFF-File-Format#data-types) 1 will be used.
 
 - `nNumDice`: int (default: `1`)
 
@@ -260,7 +259,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `96. d3`
 - Get the total from rolling (nNumDice x d3 dice).
-- - nNumDice: If this is less than 1, the value 1 will be used.
+- - nNumDice: If this is less than 1, the [value](GFF-File-Format#data-types) 1 will be used.
 
 - `nNumDice`: int (default: `1`)
 
@@ -270,7 +269,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `97. d4`
 - Get the total from rolling (nNumDice x d4 dice).
-- - nNumDice: If this is less than 1, the value 1 will be used.
+- - nNumDice: If this is less than 1, the [value](GFF-File-Format#data-types) 1 will be used.
 
 - `nNumDice`: int (default: `1`)
 
@@ -280,7 +279,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `98. d6`
 - Get the total from rolling (nNumDice x d6 dice).
-- - nNumDice: If this is less than 1, the value 1 will be used.
+- - nNumDice: If this is less than 1, the [value](GFF-File-Format#data-types) 1 will be used.
 
 - `nNumDice`: int (default: `1`)
 
@@ -290,7 +289,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `99. d8`
 - Get the total from rolling (nNumDice x d8 dice).
-- - nNumDice: If this is less than 1, the value 1 will be used.
+- - nNumDice: If this is less than 1, the [value](GFF-File-Format#data-types) 1 will be used.
 
 - `nNumDice`: int (default: `1`)
 
@@ -300,7 +299,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `7. DelayCommand`
 - Delay aActionToDelay by fSeconds.
-- - No return value, but if an error occurs, the log file will contain
+- - No return [value](GFF-File-Format#data-types), but if an error occurs, the log [file](GFF-File-Format) will contain
 - "DelayCommand failed.".
 
 - `fSeconds`: float
@@ -330,7 +329,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `674. DeleteJournalWorldEntryStrref`
 - DeleteJournalWorldEntryStrref
-- Deletes the world notice pertaining to the string ref
+- Deletes the world notice pertaining to the [string](GFF-File-Format#cexostring) ref
 
 - `strref`: int
 
@@ -371,7 +370,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `564. EndGame`
 - Immediately ends the currently running game and returns to the start screen.
-- nShowEndGameGui: Set TRUE to display the death gui.
+- nShowEndGameGui: Set TRUE to display the death [GUI](GFF-File-Format#gui-graphical-user-interface).
 
 - `nShowEndGameGui`: int (default: `1`)
 
@@ -391,7 +390,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `EventUserDefined(nUserDefinedEventNumber)` - Routine 132
 
 - `132. EventUserDefined`
-- Create an event of the type nUserDefinedEventNumber
+- Create an event of the [type](GFF-File-Format#data-types) nUserDefinedEventNumber
 
 - `nUserDefinedEventNumber`: int
 
@@ -402,9 +401,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `8. ExecuteScript`
 - Make oTarget run sScript and then return execution to the calling script.
 - If sScript does not specify a compiled script, nothing happens.
-- - nScriptVar: This value will be returned by calls to GetRunScriptVar.
+- - nScriptVar: This [value](GFF-File-Format#data-types) will be returned by calls to GetRunScriptVar.
 
-- `sScript`: string
+- `sScript`: [string](GFF-File-Format#cexostring)
 - `oTarget`: object
 - `nScriptVar`: int
 
@@ -413,7 +412,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `ExportAllCharacters()` - Routine 557
 
 - `557. ExportAllCharacters`
-- Force all the characters of the players who are currently in the game to
+- Force all the characters of the players who [ARE](GFF-File-Format#are-area) currently in the game to
 - be exported to their respective directories i.e. LocalVault/ServerVault/ etc.
 
 <a id="fabs"></a>
@@ -421,7 +420,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `fabs(fValue)` - Routine 67
 
 - `67. fabs`
-- Maths operation: absolute value of fValue
+- Maths operation: absolute [value](GFF-File-Format#data-types) of fValue
 
 - `fValue`: float
 
@@ -431,7 +430,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `553. FaceObjectAwayFromObject`
 - FaceObjectAwayFromObject
-- This will cause the object oFacer to face away from oObjectToFaceAwayFrom.
+- This will cause the object oFacer to [face](MDL-MDX-File-Format#face-structure) away from oObjectToFaceAwayFrom.
 - The objects must be in the same area for this to work.
 
 - `oFacer`: object
@@ -451,11 +450,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `FindSubString(sString, sSubString)` - Routine 66
 
 - `66. FindSubString`
-- Find the position of sSubstring inside sString
-- - Return value on error: -1
+- Find the [position](MDL-MDX-File-Format#node-header) of sSubstring inside sString
+- - Return [value](GFF-File-Format#data-types) on error: -1
 
-- `sString`: string
-- `sSubString`: string
+- `sString`: [string](GFF-File-Format#cexostring)
+- `sSubString`: [string](GFF-File-Format#cexostring)
 
 <a id="floatingtextstringoncreature"></a>
 
@@ -465,10 +464,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Display floaty text above the specified creature.
 - The text will also appear in the chat buffer of each player that receives the
 - floaty text.
-- - sStringToDisplay: String
+- - sStringToDisplay: [string](GFF-File-Format#cexostring)
 - - oCreatureToFloatAbove
 
-- `sStringToDisplay`: string
+- `sStringToDisplay`: [string](GFF-File-Format#cexostring)
 - `oCreatureToFloatAbove`: object
 - `bBroadcastToFaction`: int (default: `1`)
 
@@ -480,7 +479,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Display floaty text above the specified creature.
 - The text will also appear in the chat buffer of each player that receives the
 - floaty text.
-- - nStrRefToDisplay: String ref (therefore text is translated)
+- - nStrRefToDisplay: [string](GFF-File-Format#cexostring) ref (therefore text is translated)
 - - oCreatureToFloatAbove
 
 - `nStrRefToDisplay`: int
@@ -501,9 +500,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `FloatToString(fFloat, nWidth, nDecimals)` - Routine 3
 
 - `3. FloatToString`
-- Convert fFloat into a string.
-- - nWidth should be a value from 0 to 18 inclusive.
-- - nDecimals should be a value from 0 to 9 inclusive.
+- Convert fFloat into a [string](GFF-File-Format#cexostring).
+- - nWidth should be a [value](GFF-File-Format#data-types) from 0 to 18 inclusive.
+- - nDecimals should be a [value](GFF-File-Format#data-types) from 0 to 9 inclusive.
 
 - `fFloat`: float
 - `nWidth`: int (default: `18`)
@@ -533,7 +532,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - If oObject is a creature, this will return that creature's armour class
 - If oObject is an item, door or placeable, this will return zero.
 - - nForFutureUse: this parameter is not currently used
-- - Return value if oObject is not a creature, item, door or placeable: -1
+- - Return [value](GFF-File-Format#data-types) if oObject is not a creature, item, door or placeable: -1
 
 - `oObject`: object
 - `nForFutureUse`: int (default: `0`)
@@ -543,7 +542,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetAppearanceType(oCreature)` - Routine 524
 
 - `524. GetAppearanceType`
-- Returns the appearance type of oCreature (0 if creature doesn't exist)
+- Returns the appearance [type](GFF-File-Format#data-types) of oCreature (0 if creature doesn't exist)
 - - oCreature
 
 - `oCreature`: object
@@ -561,7 +560,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `375. GetAttemptedSpellTarget`
 - Get the target at which the caller attempted to cast a spell.
-- This value is set every time a spell is cast and is reset at the end of
+- This [value](GFF-File-Format#data-types) is set every time a spell is cast and is reset at the end of
 - combat.
 - - Returns OBJECT_INVALID if the caller is not a valid creature.
 
@@ -596,7 +595,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `84. GetCasterLevel`
 - Get the Caster Level of oCreature.
-- - Return value on error: 0;
+- - Return [value](GFF-File-Format#data-types) on error: 0;
 
 - `oCreature`: object
 
@@ -661,7 +660,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetCreatureMovmentType(oidCreature)` - Routine 566
 
 - `566. GetCreatureMovmentType`
-- This function returns a value that matches one of the MOVEMENT_SPEED_... constants
+- This function returns a [value](GFF-File-Format#data-types) that matches one of the MOVEMENT_SPEED_... constants
 - if the OID passed in is not found or not a creature then it will return
 - MOVEMENT_SPEED_IMMOBILE.
 
@@ -702,7 +701,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Get a random talent of oCreature, within nCategory.
 - - nCategory: TALENT_CATEGORY_*
 - - oCreature
-- - nInclusion: types of talent to include
+- - nInclusion: [types](GFF-File-Format#data-types) of talent to include
 
 - `nCategory`: int
 - `oCreature`: object
@@ -732,7 +731,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `49. GetCurrentHitPoints`
 - Get the current hitpoints of oObject
-- - Return value on error: 0
+- - Return [value](GFF-File-Format#data-types) on error: 0
 
 - `oObject`: object
 
@@ -748,7 +747,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetDamageDealtByType(nDamageType)` - Routine 344
 
 - `344. GetDamageDealtByType`
-- Get the amount of damage of type nDamageType that has been dealt to the caller.
+- Get the amount of damage of [type](GFF-File-Format#data-types) nDamageType that has been dealt to the caller.
 - - nDamageType: DAMAGE_TYPE_*
 
 - `nDamageType`: int
@@ -765,7 +764,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `151. GetDistanceBetween`
 - Get the distance in metres between oObjectA and oObjectB.
-- - Return value if either object is invalid: 0.0f
+- - Return [value](GFF-File-Format#data-types) if either object is invalid: 0.0f
 
 - `oObjectA`: object
 - `oObjectB`: object
@@ -776,7 +775,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `319. GetDistanceBetween2D`
 - Get the distance in metres between oObjectA and oObjectB in 2D.
-- - Return value if either object is invalid: 0.0f
+- - Return [value](GFF-File-Format#data-types) if either object is invalid: 0.0f
 
 - `oObjectA`: object
 - `oObjectB`: object
@@ -807,7 +806,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `41. GetDistanceToObject`
 - Get the distance from the caller to oObject in metres.
-- - Return value on error: -1.0f
+- - Return [value](GFF-File-Format#data-types) on error: -1.0f
 
 - `oObject`: object
 
@@ -817,7 +816,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `335. GetDistanceToObject2D`
 - Get the distance from the caller to oObject in metres.
-- - Return value on error: -1.0f
+- - Return [value](GFF-File-Format#data-types) on error: -1.0f
 
 - `oObject`: object
 
@@ -862,10 +861,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetEnteringObject()` - Routine 25
 
 - `25. GetEnteringObject`
-- The value returned by this function depends on the object type of the caller:
+- The [value](GFF-File-Format#data-types) returned by this function depends on the object [type](GFF-File-Format#data-types) of the caller:
 - 1) If the caller is a door or placeable it returns the object that last
 - triggered it.
-- 2) If the caller is a trigger, area of effect, module, area or encounter it
+- 1) If the caller is a trigger, area of effect, module, area or encounter it
 - returns the object that last entered it.
 
 <a id="getexitingobject"></a>
@@ -875,16 +874,16 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `26. GetExitingObject`
 - Get the object that last left the caller.  This function works on triggers,
 - areas of effect, modules, areas and encounters.
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 <a id="getfacing"></a>
 
 ## `GetFacing(oTarget)` - Routine 28
 
 - `28. GetFacing`
-- Get the direction in which oTarget is facing, expressed as a float between
+- Get the direction in which oTarget is facing, expressed as a [float](GFF-File-Format#float) between
 - 0f and 360.0f
-- - Return value on error: -1.0f
+- - Return [value](GFF-File-Format#data-types) on error: -1.0f
 
 - `oTarget`: object
 
@@ -893,7 +892,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetFacingFromLocation(lLocation)` - Routine 225
 
 - `225. GetFacingFromLocation`
-- Get the orientation value from lLocation.
+- Get the [orientation](MDL-MDX-File-Format#node-header) [value](GFF-File-Format#data-types) from lLocation.
 
 - `lLocation`: location
 
@@ -903,7 +902,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `189. GetFactionAverageLevel`
 - Get the average level of the members of the faction.
-- - Return value on error: -1
+- - Return [value](GFF-File-Format#data-types) on error: -1
 
 - `oFactionMember`: object
 
@@ -914,7 +913,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `186. GetFactionAverageReputation`
 - Get an integer between 0 and 100 (inclusive) that represents how
 - oSourceFactionMember's faction feels about oTarget.
-- - Return value on error: -1
+- - Return [value](GFF-File-Format#data-types) on error: -1
 
 - `oSourceFactionMember`: object
 - `oTarget`: object
@@ -925,7 +924,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `190. GetFactionAverageXP`
 - Get the average XP of the members of the faction.
-- - Return value on error: -1
+- - Return [value](GFF-File-Format#data-types) on error: -1
 
 - `oFactionMember`: object
 
@@ -945,7 +944,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetFactionEqual(oFirstObject, oSecondObject)` - Routine 172
 
 - `172. GetFactionEqual`
-- - Returns TRUE if the Faction Ids of the two objects are the same
+- - Returns TRUE if the Faction Ids of the two objects [ARE](GFF-File-Format#are-area) the same
 
 - `oFirstObject`: object
 - `oSecondObject`: object
@@ -1043,7 +1042,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `GetFirstInPersistentObject(oPersistentObject, nResidentObjectType, nPersistentZone)`
 
-- These are for GetFirstInPersistentObject() and GetNextInPersistentObject()
+- These [ARE](GFF-File-Format#are-area) for GetFirstInPersistentObject() and GetNextInPersistentObject()
 
 - `oPersistentObject`: object
 - `nResidentObjectType`: int (default: `1`)
@@ -1065,7 +1064,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `lTarget`: location
 - `bLineOfSight`: int (default: `0`)
 - `nObjectFilter`: int (default: `1`)
-- `vOrigin`: vector
+- `vOrigin`: [vector](GFF-File-Format#vector)
 
 <a id="getfirstpc"></a>
 
@@ -1073,7 +1072,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `548. GetFirstPC`
 - Get the first PC in the player list.
-- This resets the position in the player list for GetNextPC().
+- This resets the [position](MDL-MDX-File-Format#node-header) in the player list for GetNextPC().
 
 <a id="getfortitudesavingthrow"></a>
 
@@ -1125,7 +1124,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetGoldPieceValue(oItem)` - Routine 311
 
 - `311. GetGoldPieceValue`
-- Get the gold piece value of oItem.
+- Get the gold piece [value](GFF-File-Format#data-types) of oItem.
 - - Returns 0 if oItem is not a valid item.
 
 - `oItem`: object
@@ -1138,7 +1137,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Get an integer between 0 and 100 (inclusive) to represent oCreature's
 - Good/Evil alignment
 - (100=good, 0=evil)
-- - Return value if oCreature is not a valid creature: -1
+- - Return [value](GFF-File-Format#data-types) if oCreature is not a valid creature: -1
 
 - `oCreature`: object
 
@@ -1149,7 +1148,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `570. GetHasInventory`
 - Determine whether oObject has an inventory.
 - - Returns TRUE for creatures and stores, and checks to see if an item or placeable object is a container.
-- - Returns FALSE for all other object types.
+- - Returns FALSE for all other object [types](GFF-File-Format#data-types).
 
 - `oObject`: object
 
@@ -1171,7 +1170,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `166. GetHitDice`
 - Get the number of hitdice for oCreature.
-- - Return value if oCreature is not a valid creature: 0
+- - Return [value](GFF-File-Format#data-types) if oCreature is not a valid creature: 0
 
 - `oCreature`: object
 
@@ -1198,7 +1197,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetInventoryDisturbType()` - Routine 352
 
 - `352. GetInventoryDisturbType`
-- Get the type of disturbance (INVENTORY_DISTURB_*) that caused the caller's
+- Get the [type](GFF-File-Format#data-types) of disturbance (INVENTORY_DISTURB_*) that caused the caller's
 - OnInventoryDisturbed script to fire.  This will only work for creatures and
 - placeables.
 
@@ -1291,7 +1290,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - nImmunityType: IMMUNITY_TYPE_*
 - - oVersus: if this is specified, then we also check for the race and
 - alignment of oVersus
-- - Returns TRUE if oCreature has immunity of type nImmunity versus oVersus.
+- - Returns TRUE if oCreature has immunity of [type](GFF-File-Format#data-types) nImmunity versus oVersus.
 
 - `oCreature`: object
 - `nImmunityType`: int
@@ -1409,10 +1408,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetJournalEntry(szPlotID)` - Routine 369
 
 - `369. GetJournalEntry`
-- Gets the State value of a journal quest.  Returns 0 if no quest entry has been added for this szPlotID.
+- Gets the State [value](GFF-File-Format#data-types) of a journal quest.  Returns 0 if no quest entry has been added for this szPlotID.
 - - szPlotID: the plot identifier used in the toolset's Journal Editor
 
-- `szPlotID`: string
+- `szPlotID`: [string](GFF-File-Format#cexostring)
 
 <a id="getjournalquestexperience"></a>
 
@@ -1421,7 +1420,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `384. GetJournalQuestExperience`
 - Get the experience assigned in the journal editor for szPlotID.
 
-- `szPlotID`: string
+- `szPlotID`: [string](GFF-File-Format#cexostring)
 
 <a id="getlastassociatecommand"></a>
 
@@ -1470,7 +1469,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetLastForcePowerUsed(oAttacker)` - Routine 723
 
 - `723. GetLastForcePowerUsed`
-- Returns the last force power used (as a spell number that indexes the Spells.2da) by the given object
+- Returns the last force power used (as a spell number that [indexes](2DA-File-Format#row-labels) the [spells.2da](2DA-spells)) by the given object
 
 - `oAttacker`: object
 
@@ -1482,7 +1481,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Get the last object that was sent as a GetLastAttacker(), GetLastDamager(),
 - GetLastSpellCaster() (for a hostile spell), or GetLastDisturbed() (when a
 - creature is pickpocketed).
-- Note: Return values may only ever be:
+- Note: Return [values](GFF-File-Format#data-types) may only ever be:
 - 1) A Creature
 
 - `oVictim`: object
@@ -1600,7 +1599,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `486. GetLastTrapDetected`
 - Get the last trap detected by oTarget.
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 - `oTarget`: object
 
@@ -1637,7 +1636,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `342. GetLevelByPosition`
 - A creature can have up to three classes.  This function determines the
-- creature's class level based on nClass Position.
+- creature's class level based on nClass [position](MDL-MDX-File-Format#node-header).
 - - nClassPosition: 1, 2 or 3
 - - oCreature
 - - Returns 0 if oCreature does not have a class in nClassPosition
@@ -1650,9 +1649,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetListenPatternNumber()` - Routine 195
 
 - `195. GetListenPatternNumber`
-- In an onConversation script this gets the number of the string pattern
+- In an onConversation script this gets the number of the [string](GFF-File-Format#cexostring) pattern
 - matched (the one that triggered the script).
-- - Returns -1 if no string matched
+- - Returns -1 if no [string](GFF-File-Format#cexostring) matched
 
 <a id="getloadfromsavegame"></a>
 
@@ -1685,7 +1684,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetLockKeyRequired(oObject)` - Routine 537
 
 - `537. GetLockKeyRequired`
-- - Returns TRUE if a specific key is required to open the lock on oObject.
+- - Returns TRUE if a specific [KEY](KEY-File-Format) is required to open the lock on oObject.
 
 - `oObject`: object
 
@@ -1694,7 +1693,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetLockKeyTag(oObject)` - Routine 538
 
 - `538. GetLockKeyTag`
-- Get the tag of the key that will open the lock on oObject.
+- Get the tag of the [KEY](KEY-File-Format) that will open the lock on oObject.
 
 - `oObject`: object
 
@@ -1732,7 +1731,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `178. GetMatchedSubstring`
 - Get the appropriate matched string (this should only be used in
 - OnConversation scripts).
-- - Returns the appropriate matched string, otherwise returns ""
+- - Returns the appropriate matched [string](GFF-File-Format#cexostring), otherwise returns ""
 
 - `nString`: int
 
@@ -1741,8 +1740,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetMatchedSubstringsCount()` - Routine 179
 
 - `179. GetMatchedSubstringsCount`
-- Get the number of string parameters available.
-- - Returns -1 if no string matched (this could be because of a dialogue event)
+- Get the number of [string](GFF-File-Format#cexostring) parameters available.
+- - Returns -1 if no [string](GFF-File-Format#cexostring) matched (this could be because of a dialogue event)
 
 <a id="getmaxforcepoints"></a>
 
@@ -1759,7 +1758,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `50. GetMaxHitPoints`
 - Get the maximum hitpoints of oObject
-- - Return value on error: 0
+- - Return [value](GFF-File-Format#data-types) on error: 0
 
 - `oObject`: object
 
@@ -1775,7 +1774,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetMinOneHP(oObject)` - Routine 715
 
 - `715. GetMinOneHP`
-- Checks to see if oObject has the MinOneHP Flag set on them.
+- Checks to see if oObject has the MinOneHP [flag](GFF-File-Format#data-types) set on them.
 
 - `oObject`: object
 
@@ -1814,7 +1813,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `GetNextInPersistentObject(oPersistentObject, nResidentObjectType, nPersistentZone)`
 
-- These are for GetFirstInPersistentObject() and GetNextInPersistentObject()
+- These [ARE](GFF-File-Format#are-area) for GetFirstInPersistentObject() and GetNextInPersistentObject()
 
 - `oPersistentObject`: object
 - `nResidentObjectType`: int (default: `1`)
@@ -1836,7 +1835,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `lTarget`: location
 - `bLineOfSight`: int (default: `0`)
 - `nObjectFilter`: int (default: `1`)
-- `vOrigin`: vector
+- `vOrigin`: [vector](GFF-File-Format#vector)
 
 <a id="getnextpc"></a>
 
@@ -1844,7 +1843,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `548. GetNextPC`
 - Get the first PC in the player list.
-- This resets the position in the player list for GetNextPC().
+- This resets the [position](MDL-MDX-File-Format#node-header) in the player list for GetNextPC().
 
 <a id="getnpcaistyle"></a>
 
@@ -1905,8 +1904,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetPosition(oTarget)` - Routine 27
 
 - `27. GetPosition`
-- Get the position of oTarget
-- - Return value on error: vector (0.0f, 0.0f, 0.0f)
+- Get the [position](MDL-MDX-File-Format#node-header) of oTarget
+- - Return [value](GFF-File-Format#data-types) on error: vector (0.0f, 0.0f, 0.0f)
 
 - `oTarget`: object
 
@@ -1915,7 +1914,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetPositionFromLocation(lLocation)` - Routine 223
 
 - `223. GetPositionFromLocation`
-- Get the position vector from lLocation.
+- Get the [position](MDL-MDX-File-Format#node-header) [vector](GFF-File-Format#vector) from lLocation.
 
 - `lLocation`: location
 
@@ -1925,7 +1924,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `107. GetRacialType`
 - Get the racial type (RACIAL_TYPE_*) of oCreature
-- - Return value if oCreature is not a valid creature: RACIAL_TYPE_INVALID
+- - Return [value](GFF-File-Format#data-types) if oCreature is not a valid creature: RACIAL_TYPE_INVALID
 
 - `oCreature`: object
 
@@ -1985,7 +1984,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `744. GetSelectedPlanet`
 - GetSelectedPlanet
 - Returns the ID of the currently selected planet.  Check Planetary.2da
-- for which planet the return value corresponds to. If the return is -1
+- for which planet the return [value](GFF-File-Format#data-types) corresponds to. If the return is -1
 - no planet is selected.
 
 <a id="getsolomode"></a>
@@ -2068,7 +2067,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetStringByStrRef(nStrRef)` - Routine 239
 
 - `239. GetStringByStrRef`
-- Get a string from the talk table using nStrRef.
+- Get a [string](GFF-File-Format#cexostring) from the [Talk Table](TLK-File-Format) using nStrRef.
 
 - `nStrRef`: int
 
@@ -2078,9 +2077,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `63. GetStringLeft`
 - Get nCounter characters from the left end of sString
-- - Return value on error: ""
+- - Return [value](GFF-File-Format#data-types) on error: ""
 
-- `sString`: string
+- `sString`: [string](GFF-File-Format#cexostring)
 - `nCount`: int
 
 <a id="getstringlength"></a>
@@ -2089,9 +2088,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `59. GetStringLength`
 - Get the length of sString
-- - Return value on error: -1
+- - Return [value](GFF-File-Format#data-types) on error: -1
 
-- `sString`: string
+- `sString`: [string](GFF-File-Format#cexostring)
 
 <a id="getstringlowercase"></a>
 
@@ -2099,9 +2098,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `61. GetStringLowerCase`
 - Convert sString into lower case
-- - Return value on error: ""
+- - Return [value](GFF-File-Format#data-types) on error: ""
 
-- `sString`: string
+- `sString`: [string](GFF-File-Format#cexostring)
 
 <a id="getstringright"></a>
 
@@ -2109,9 +2108,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `62. GetStringRight`
 - Get nCount characters from the right end of sString
-- - Return value on error: ""
+- - Return [value](GFF-File-Format#data-types) on error: ""
 
-- `sString`: string
+- `sString`: [string](GFF-File-Format#cexostring)
 - `nCount`: int
 
 <a id="getstringuppercase"></a>
@@ -2120,9 +2119,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `60. GetStringUpperCase`
 - Convert sString into upper case
-- - Return value on error: ""
+- - Return [value](GFF-File-Format#data-types) on error: ""
 
-- `sString`: string
+- `sString`: [string](GFF-File-Format#cexostring)
 
 <a id="getsubrace"></a>
 
@@ -2140,7 +2139,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `53. GetSubScreenID`
 - Returns the ID of the subscreen that is currently onscreen.  This will be one of the
-- SUBSCREEN_ID_* constant values.
+- SUBSCREEN_ID_* constant [values](GFF-File-Format#data-types).
 
 <a id="getsubstring"></a>
 
@@ -2148,9 +2147,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `65. GetSubString`
 - Get nCount characters from sString, starting at nStart
-- - Return value on error: ""
+- - Return [value](GFF-File-Format#data-types) on error: ""
 
-- `sString`: string
+- `sString`: [string](GFF-File-Format#cexostring)
 - `nStart`: int
 - `nCount`: int
 
@@ -2160,7 +2159,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `168. GetTag`
 - Get the Tag of oObject
-- - Return value if oObject is not a valid object: ""
+- - Return [value](GFF-File-Format#data-types) if oObject is not a valid object: ""
 
 - `oObject`: object
 
@@ -2297,7 +2296,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetTrapKeyTag(oTrapObject)` - Routine 534
 
 - `534. GetTrapKeyTag`
-- Get the tag of the key that will disarm oTrapObject.
+- Get the tag of the [KEY](KEY-File-Format) that will disarm oTrapObject.
 - - oTrapObject: a placeable, door or trigger
 
 - `oTrapObject`: object
@@ -2354,7 +2353,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Get the first waypoint with the specified tag.
 - - Returns OBJECT_INVALID if the waypoint cannot be found.
 
-- `sWaypointTag`: string
+- `sWaypointTag`: [string](GFF-File-Format#cexostring)
 
 <a id="getweaponranged"></a>
 
@@ -2406,7 +2405,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - sPlotName
 - - nPercentage
 
-- `sPlotName`: string
+- `sPlotName`: [string](GFF-File-Format#cexostring)
 - `nPercentage`: int
 
 <a id="givexptocreature"></a>
@@ -2425,7 +2424,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `122. HoursToSeconds`
 - Convert nHours into a number of seconds
-- The result will depend on how many minutes there are per hour (game-time)
+- The result will depend on how many minutes there [ARE](GFF-File-Format#are-area) per hour (game-time)
 
 - `nHours`: int
 
@@ -2435,10 +2434,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `64. InsertString`
 - Insert sString into sDestination at nPosition
-- - Return value on error: ""
+- - Return [value](GFF-File-Format#data-types) on error: ""
 
-- `sDestination`: string
-- `sString`: string
+- `sDestination`: [string](GFF-File-Format#cexostring)
+- `sString`: [string](GFF-File-Format#cexostring)
 - `nPosition`: int
 
 <a id="inttofloat"></a>
@@ -2455,8 +2454,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `IntToHexString(nInteger)` - Routine 396
 
 - `396. IntToHexString`
-- Convert nInteger to hex, returning the hex value as a string.
-- - Return value has the format "0x????????" where each ? will be a hex digit
+- Convert nInteger to hex, returning the hex [value](GFF-File-Format#data-types) as a [string](GFF-File-Format#cexostring).
+- - Return [value](GFF-File-Format#data-types) has the [format](GFF-File-Format) "0x????????" where each ? will be a hex digit
 - (8 digits in total).
 
 - `nInteger`: int
@@ -2466,8 +2465,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `IntToString(nInteger)` - Routine 92
 
 - `92. IntToString`
-- Convert nInteger into a string.
-- - Return value on error: ""
+- Convert nInteger into a [string](GFF-File-Format#cexostring).
+- - Return [value](GFF-File-Format#data-types) on error: ""
 
 - `nInteger`: int
 
@@ -2514,7 +2513,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `215. Location`
 - Create a location.
 
-- `vPosition`: vector
+- `vPosition`: [vector](GFF-File-Format#vector)
 - `fOrientation`: float
 
 <a id="log"></a>
@@ -2541,7 +2540,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `ObjectToString(oObject)` - Routine 272
 
 - `272. ObjectToString`
-- Convert oObject into a hexadecimal string.
+- Convert oObject into a hexadecimal [string](GFF-File-Format#cexostring).
 
 - `oObject`: object
 
@@ -2571,7 +2570,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `PopUpDeathGUIPanel(oPC, bRespawnButtonEnabled, bWaitForHelpButtonEnabled, nHelpStringReference, sHelpString)` - Routine 554
 
 - `554. PopUpDeathGUIPanel`
-- Spawn in the Death GUI.
+- Spawn in the Death [GUI](GFF-File-Format#gui-graphical-user-interface).
 - The default (as defined by BioWare) can be spawned in by PopUpGUIPanel, but
 - if you want to turn off the "Respawn" or "Wait for Help" buttons, this is the
 - function to use.
@@ -2588,10 +2587,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `PopUpGUIPanel(oPC, nGUIPanel)` - Routine 388
 
 - `388. PopUpGUIPanel`
-- Spawn a GUI panel for the client that controls oPC.
+- Spawn a [GUI](GFF-File-Format#gui-graphical-user-interface) panel for the client that controls oPC.
 - - oPC
 - - nGUIPanel: GUI_PANEL_*
-- - Nothing happens if oPC is not a player character or if an invalid value is
+- - Nothing happens if oPC is not a player character or if an invalid [value](GFF-File-Format#data-types) is
 - used for nGUIPanel.
 
 - `oPC`: object
@@ -2613,9 +2612,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `PrintFloat(fFloat, nWidth, nDecimals)` - Routine 2
 
 - `2. PrintFloat`
-- Output a formatted float to the log file.
-- - nWidth should be a value from 0 to 18 inclusive.
-- - nDecimals should be a value from 0 to 9 inclusive.
+- Output a formatted [float](GFF-File-Format#float) to the log [file](GFF-File-Format).
+- - nWidth should be a [value](GFF-File-Format#data-types) from 0 to 18 inclusive.
+- - nDecimals should be a [value](GFF-File-Format#data-types) from 0 to 9 inclusive.
 
 - `fFloat`: float
 - `nWidth`: int (default: `18`)
@@ -2626,7 +2625,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `PrintInteger(nInteger)` - Routine 4
 
 - `4. PrintInteger`
-- Output nInteger to the log file.
+- Output nInteger to the log [file](GFF-File-Format).
 
 - `nInteger`: int
 
@@ -2635,7 +2634,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `PrintObject(oObject)` - Routine 5
 
 - `5. PrintObject`
-- Output oObject's ID to the log file.
+- Output oObject's ID to the log [file](GFF-File-Format).
 
 - `oObject`: object
 
@@ -2644,9 +2643,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `PrintString(sString)` - Routine 1
 
 - `1. PrintString`
-- Output sString to the log file.
+- Output sString to the log [file](GFF-File-Format).
 
-- `sString`: string
+- `sString`: [string](GFF-File-Format#cexostring)
 
 <a id="printvector"></a>
 
@@ -2657,7 +2656,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - vVector
 - - bPrepend: if this is TRUE, the message will be prefixed with "PRINTVECTOR:"
 
-- `vVector`: vector
+- `vVector`: [vector](GFF-File-Format#vector)
 - `bPrepend`: int
 
 <a id="queuemovie"></a>
@@ -2670,7 +2669,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - If bSkippable is FALSE, the player cannot cancel the movie and must wait
 - for it to finish playing.
 
-- `sMovie`: string
+- `sMovie`: [string](GFF-File-Format#cexostring)
 - `bSkippable`: int
 
 <a id="random"></a>
@@ -2679,7 +2678,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `0. Random`
 - Get an integer between 0 and nMaxInteger-1.
-- Return value on error: 0
+- Return [value](GFF-File-Format#data-types) on error: 0
 
 - `nMaxInteger`: int
 
@@ -2724,7 +2723,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Remove a journal quest entry from the player.
 - - szPlotID: the plot identifier used in the toolset's Journal Editor
 
-- `szPlotID`: string
+- `szPlotID`: [string](GFF-File-Format#cexostring)
 
 <a id="resistforce"></a>
 
@@ -2733,7 +2732,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `169. ResistForce`
 - Do a Force Resistance check between oSource and oTarget, returning TRUE if
 - the force was resisted.
-- - Return value if oSource or oTarget is an invalid object: FALSE
+- - Return [value](GFF-File-Format#data-types) if oSource or oTarget is an invalid object: FALSE
 
 - `oSource`: object
 - `oTarget`: object
@@ -2749,7 +2748,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - (NOTE: if this function is called with a valid point but a default radius, ie. 'nRadius' of -1
 - then the entire map will be revealed)
 
-- `vPoint`: vector
+- `vPoint`: [vector](GFF-File-Format#vector)
 - `nRadius`: int
 
 <a id="roundstoseconds"></a>
@@ -2779,7 +2778,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Send a server message (szMessage) to the oPlayer.
 
 - `oPlayer`: object
-- `szMessage`: string
+- `szMessage`: [string](GFF-File-Format#cexostring)
 
 <a id="setassociatelistenpatterns"></a>
 
@@ -2858,10 +2857,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SetCustomToken(nCustomTokenNumber, sTokenValue)` - Routine 284
 
 - `284. SetCustomToken`
-- Set the value for a custom token.
+- Set the [value](GFF-File-Format#data-types) for a custom token.
 
 - `nCustomTokenNumber`: int
-- `sTokenValue`: string
+- `sTokenValue`: [string](GFF-File-Format#cexostring)
 
 <a id="setencounteractive"></a>
 
@@ -2912,9 +2911,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SetFacing(fDirection)` - Routine 10
 
 - `10. SetFacing`
-- Cause the caller to face fDirection.
+- Cause the caller to [face](MDL-MDX-File-Format#face-structure) fDirection.
 - - fDirection is expressed as anticlockwise degrees from Due East.
-- DIRECTION_EAST, DIRECTION_NORTH, DIRECTION_WEST and DIRECTION_SOUTH are
+- DIRECTION_EAST, DIRECTION_NORTH, DIRECTION_WEST and DIRECTION_SOUTH [ARE](GFF-File-Format#are-area)
 - predefined. (0.0f=East, 90.0f=North, 180.0f=West, 270.0f=South)
 
 - `fDirection`: float
@@ -2924,9 +2923,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SetFacingPoint(vTarget)` - Routine 143
 
 - `143. SetFacingPoint`
-- Cause the caller to face vTarget
+- Cause the caller to [face](MDL-MDX-File-Format#face-structure) vTarget
 
-- `vTarget`: vector
+- `vTarget`: [vector](GFF-File-Format#vector)
 
 <a id="setforcepowerunsuccessful"></a>
 
@@ -2943,11 +2942,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SetFormation(oAnchor, oCreature, nFormationPattern, nPosition)` - Routine 729
 
 - `729. SetFormation`
-- Put oCreature into the nFormationPattern about oAnchor at position nPosition
+- Put oCreature into the nFormationPattern about oAnchor at [position](MDL-MDX-File-Format#node-header) nPosition
 - - oAnchor: The formation is set relative to this object
 - - oCreature: This is the creature that you wish to join the formation
 - - nFormationPattern: FORMATION_*
-- - nPosition: Integer from 1 to 10 to specify which position in the formation
+- - nPosition: Integer from 1 to 10 to specify which [position](MDL-MDX-File-Format#node-header) in the formation
 
 - `oAnchor`: object
 - `oCreature`: object
@@ -2960,7 +2959,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `750. SetGoodEvilValue`
 - SetAlignmentGoodEvil
-- Set oCreature's alignment value
+- Set oCreature's alignment [value](GFF-File-Format#data-types)
 
 - `oCreature`: object
 - `nAlignment`: int
@@ -2998,7 +2997,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - SetJournalQuestEntryPicture
 - Sets the picture for the quest entry on this object (creature)
 
-- `szPlotID`: string
+- `szPlotID`: [string](GFF-File-Format#cexostring)
 - `oObject`: object
 - `nPictureIndex`: int
 - `bAllPartyMemebers`: int (default: `1`)
@@ -3033,11 +3032,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SetListenPattern(oObject, sPattern, nNumber)` - Routine 176
 
 - `176. SetListenPattern`
-- Set the string for oObject to listen for.
+- Set the [string](GFF-File-Format#cexostring) for oObject to listen for.
 - Note: this does not set oObject to be listening.
 
 - `oObject`: object
-- `sPattern`: string
+- `sPattern`: [string](GFF-File-Format#cexostring)
 - `nNumber`: int (default: `0`)
 
 <a id="setlocked"></a>
@@ -3088,7 +3087,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SetMinOneHP(oObject, nMinOneHP)` - Routine 716
 
 - `716. SetMinOneHP`
-- Sets/Removes the MinOneHP Flag on oObject.
+- Sets/Removes the MinOneHP [flag](GFF-File-Format#data-types) on oObject.
 
 - `oObject`: object
 - `nMinOneHP`: int
@@ -3123,7 +3122,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `742. SetPlanetAvailable`
 - SetPlanetAvailable
-- Sets 'nPlanet' available on the Galaxy Map Gui.
+- Sets 'nPlanet' available on the Galaxy Map [GUI](GFF-File-Format#gui-graphical-user-interface).
 
 - `nPlanet`: int
 - `bAvailable`: int
@@ -3134,7 +3133,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `740. SetPlanetSelectable`
 - SetPlanetSelectable
-- Sets 'nPlanet' selectable on the Galaxy Map Gui.
+- Sets 'nPlanet' selectable on the Galaxy Map [GUI](GFF-File-Format#gui-graphical-user-interface).
 
 - `nPlanet`: int
 - `bSelectable`: int
@@ -3156,8 +3155,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `152. SetReturnStrref`
 - SetReturnStrref
 - This function will turn on/off the display of the 'return to ebon hawk' option
-- on the map screen and allow the string to be changed to an arbitrary string ref
-- srReturnQueryStrRef is the string ref that will be displayed in the query pop
+- on the map screen and allow the [string](GFF-File-Format#cexostring) to be changed to an arbitrary [string](GFF-File-Format#cexostring) ref
+- srReturnQueryStrRef is the [string](GFF-File-Format#cexostring) ref that will be displayed in the query pop
 - up confirming that you wish to return to the specified location.
 
 - `bShow`: int
@@ -3235,7 +3234,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `516. SetTutorialWindowsEnabled`
 - SetTutorialWindowsEnabled
-- Sets whether or not the tutorial windows are enabled (ie. whether or not they will
+- Sets whether or not the tutorial windows [ARE](GFF-File-Format#are-area) enabled (ie. whether or not they will
 - appear when certain things happen for the first time).
 
 - `bEnabled`: int
@@ -3263,7 +3262,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `739. ShowGalaxyMap`
 - ShowGalaxyMap
-- Brings up the Galaxy Map Gui, with 'nPlanet' selected.  'nPlanet' can only be a planet
+- Brings up the Galaxy Map [GUI](GFF-File-Format#gui-graphical-user-interface), with 'nPlanet' selected.  'nPlanet' can only be a planet
 - that has already been set available and selectable.
 
 - `nPlanet`: int
@@ -3273,9 +3272,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `ShowLevelUpGUI()` - Routine 265
 
 - `265. ShowLevelUpGUI`
-- Brings up the level up GUI for the player.  The GUI will only show up
+- Brings up the level up [GUI](GFF-File-Format#gui-graphical-user-interface) for the player.  The [GUI](GFF-File-Format#gui-graphical-user-interface) will only show up
 - if the player has gained enough experience points to level up.
-- - Returns TRUE if the GUI was successfully brought up; FALSE if not.
+- - Returns TRUE if the [GUI](GFF-File-Format#gui-graphical-user-interface) was successfully brought up; FALSE if not.
 
 <a id="showtutorialwindow"></a>
 
@@ -3322,7 +3321,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `698. SpawnAvailableNPC`
 - This spawns a NPC from the list of available creatures
-- Returns a pointer to the creature object
+- Returns a [pointer](GFF-File-Format#file-structure) to the creature object
 
 - `nNPC`: int
 - `lPosition`: location
@@ -3366,7 +3365,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `233. StringToFloat`
 - Convert sNumber into a floating point number.
 
-- `sNumber`: string
+- `sNumber`: [string](GFF-File-Format#cexostring)
 
 <a id="stringtoint"></a>
 
@@ -3375,7 +3374,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `232. StringToInt`
 - Convert sNumber into an integer.
 
-- `sNumber`: string
+- `sNumber`: [string](GFF-File-Format#cexostring)
 
 <a id="suppressstatussummaryentry"></a>
 
@@ -3385,7 +3384,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - This will prevent the next n entries that should have shown up in the status summary
 - from being added
 - This will not add on to any existing summary suppressions, but rather replace it.  So
-- to clear the supression system pass 0 as the entry value
+- to clear the supression system pass 0 as the entry [value](GFF-File-Format#data-types)
 
 - `nNumEntries`: int (default: `1`)
 
@@ -3394,7 +3393,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SurrenderByFaction(nFactionFrom, nFactionTo)` - Routine 736
 
 - `736. SurrenderByFaction`
-- This affects all creatures in the area that are in faction nFactionFrom...
+- This affects all creatures in the area that [ARE](GFF-File-Format#are-area) in faction nFactionFrom...
 - - Makes them join nFactionTo
 - - Clears all actions
 - - Disables combat mode
@@ -3415,7 +3414,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `476. SurrenderToEnemies`
 - Use this on an NPC to cause all creatures within a 10-metre radius to stop
-- what they are doing and sets the NPC's enemies within this range to be
+- what they [ARE](GFF-File-Format#are-area) doing and sets the NPC's enemies within this range to be
 - neutral towards the NPC. If this command is run on a PC or an object that is
 - not a creature, nothing will happen.
 
@@ -3424,7 +3423,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SWMG_AdjustFollowerHitPoints(oFollower, nHP, nAbsolute)` - Routine 590
 
 - `590. SWMG_AdjustFollowerHitPoints`
-- adjusts a followers hit points, can specify the absolute value to set to
+- adjusts a followers hit points, can specify the absolute [value](GFF-File-Format#data-types) to set to
 - SWMG_AdjustFollowerHitPoints
 
 - `oFollower`: object
@@ -3650,7 +3649,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `583. SWMG_GetLastEvent`
 - OnAnimKey
-- get the event and the name of the model on which the event happened
+- get the event and the name of the [model](MDL-MDX-File-Format) on which the event happened
 - SWMG_GetLastEvent
 
 <a id="swmg_getlasteventmodelname"></a>
@@ -3687,7 +3686,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SWMG_GetLateralAccelerationPerSecond()` - Routine 521
 
 - `521. SWMG_GetLateralAccelerationPerSecond`
-- Returns the minigame lateral acceleration/sec value
+- Returns the minigame lateral acceleration/sec [value](GFF-File-Format#data-types)
 
 <a id="swmg_getmaxhitpoints"></a>
 
@@ -3827,7 +3826,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - SWMG_RemoveAnimation
 
 - `oObject`: object
-- `sAnimName`: string
+- `sAnimName`: [string](GFF-File-Format#cexostring)
 
 <a id="swmg_setcameraclip"></a>
 
@@ -3858,7 +3857,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `oFollower`: object
 - `nGunBank`: int
-- `sBulletModel`: string
+- `sBulletModel`: [string](GFF-File-Format#cexostring)
 
 <a id="swmg_setgunbankdamage"></a>
 
@@ -3880,7 +3879,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `oFollower`: object
 - `nGunBank`: int
-- `sGunModel`: string
+- `sGunModel`: [string](GFF-File-Format#cexostring)
 
 <a id="swmg_setgunbankhorizontalspread"></a>
 
@@ -3975,7 +3974,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SWMG_SetLateralAccelerationPerSecond(fLAPS)` - Routine 520
 
 - `520. SWMG_SetLateralAccelerationPerSecond`
-- Sets the minigame lateral acceleration/sec value
+- Sets the minigame lateral acceleration/sec [value](GFF-File-Format#data-types)
 
 - `fLAPS`: float
 
@@ -4050,8 +4049,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `177. TestStringAgainstPattern`
 - - Returns TRUE if sStringToTest matches sPattern.
 
-- `sPattern`: string
-- `sStringToTest`: string
+- `sPattern`: [string](GFF-File-Format#cexostring)
+- `sStringToTest`: [string](GFF-File-Format#cexostring)
 
 <a id="turnstoseconds"></a>
 
@@ -4063,12 +4062,12 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `nTurns`: int
 
-<a id="vector"></a>
+<a id="[vector](GFF-File-Format#vector)"></a>
 
 ## `Vector(x, y, z)` - Routine 142
 
 - `142. Vector`
-- Create a vector with the specified values for x, y and z
+- Create a [vector](GFF-File-Format#vector) with the specified [values](GFF-File-Format#data-types) for x, y and z
 
 - `x`: float (default: `0.0`)
 - `y`: float (default: `0.0`)
@@ -4081,9 +4080,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `104. VectorMagnitude`
 - Get the magnitude of vVector; this can be used to determine the
 - distance between two points.
-- - Return value on error: 0.0f
+- - Return [value](GFF-File-Format#data-types) on error: 0.0f
 
-- `vVector`: vector
+- `vVector`: [vector](GFF-File-Format#vector)
 
 <a id="vectornormalize"></a>
 
@@ -4092,7 +4091,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `137. VectorNormalize`
 - Normalize vVector
 
-- `vVector`: vector
+- `vVector`: [vector](GFF-File-Format#vector)
 
 <a id="vectortoangle"></a>
 
@@ -4101,7 +4100,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `145. VectorToAngle`
 - Convert vVector to an angle
 
-- `vVector`: vector
+- `vVector`: [vector](GFF-File-Format#vector)
 
 <a id="willsave"></a>
 
@@ -4124,9 +4123,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `WriteTimestampedLogEntry(sLogEntry)` - Routine 560
 
 - `560. WriteTimestampedLogEntry`
-- Write sLogEntry as a timestamped entry into the log file
+- Write sLogEntry as a timestamped entry into the log [file](GFF-File-Format)
 
-- `sLogEntry`: string
+- `sLogEntry`: [string](GFF-File-Format#cexostring)
 
 <a id="yardstometers"></a>
 
@@ -4136,4 +4135,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Convert fYards into a number of meters.
 
 - `fYards`: float
-

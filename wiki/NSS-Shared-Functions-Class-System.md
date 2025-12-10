@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="addmulticlass"></a>
 
 ## `AddMultiClass(nClassType, oSource)` - Routine 389
@@ -36,7 +35,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `191. GetFactionMostFrequentClass`
 - Get the most frequent class in the faction - this can be compared with the
 - constants CLASS_TYPE_*.
-- - Return value on error: -1
+- - Return [value](GFF-File-Format#data-types) on error: -1
 
 - `oFactionMember`: object
 
@@ -51,4 +50,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `nClassType`: int
 - `oCreature`: object
-

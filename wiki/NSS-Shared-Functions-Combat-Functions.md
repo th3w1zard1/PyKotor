@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="cancelcombat"></a>
 
 ## `CancelCombat(oidCreature)` - Routine 54
@@ -21,8 +20,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `503. CutsceneAttack`
 - CutsceneAttack
 - This function allows the designer to specify exactly what's going to happen in a combat round
-- There are no guarentees made that the animation specified here will be correct - only that it will be played,
-- so it is up to the designer to ensure that they have selected the right animation
+- There [ARE](GFF-File-Format#are-area) no guarentees made that the [animation](MDL-MDX-File-Format#animation-header) specified here will be correct - only that it will be played,
+- so it is up to the designer to ensure that they have selected the right [animation](MDL-MDX-File-Format#animation-header)
 - It relies upon constants specified above for the attack result
 
 - `oTarget`: object
@@ -46,7 +45,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `361. GetAttemptedAttackTarget`
 - Get the target that the caller attempted to attack - this should be used in
-- conjunction with GetAttackTarget(). This value is set every time an attack is
+- conjunction with GetAttackTarget(). This [value](GFF-File-Format#data-types) is set every time an attack is
 - made, and is reset at the end of combat.
 - - Returns OBJECT_INVALID if the caller is not a valid creature.
 
@@ -65,7 +64,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `211. GetGoingToBeAttackedBy`
 - Get the creature that is going to attack oTarget.
-- Note: This value is cleared out at the end of every combat round and should
+- Note: This [value](GFF-File-Format#data-types) is cleared out at the end of every combat round and should
 - not be used in any case except when getting a "going to be attacked" shout
 - from the master creature (and this creature is a henchman)
 - - Returns OBJECT_INVALID if oTarget is not a valid creature.
@@ -97,7 +96,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `36. GetLastAttacker`
 - Get the last attacker of oAttackee.  This should only be used ONLY in the
 - OnAttacked events for creatures, placeables and doors.
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 - `oAttackee`: object
 
@@ -169,4 +168,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `oTarget`: object
 - `bDisplayFeedback`: int (default: `1`)
-

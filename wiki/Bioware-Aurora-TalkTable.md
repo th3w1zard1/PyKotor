@@ -1,4 +1,5 @@
 # TalkTable
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Talk Table (dialog.tlk) File Format
+
 1. Introduction
 BioWare's games are released in multiple languages, so it is necessary for game text to be different
 depending on the language of the user.
@@ -47,11 +49,10 @@ To specify an invalid StrRef, the talk table system uses a StrRef in which all t
 signed 32-bit value). When presented with the invalid StrRef value, the text returned should be a
 blank string.
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Valid StrRefs can have values of up to 0x00FFFFFF, or 16777215. Any higher values will have
 the upper 2 bytes masked off and set to 0, so 0x01000001, or 16777217, for example, will be
 treated as StrRef 1.
@@ -86,11 +87,10 @@ table must be located in the same directory as the masculine/neutral one.
 Example: If a non-English module uses an alternate talk table called "customspells", then
 there should be a customspells.tlk and customspellsF.tlk file.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3. TLK File Format
 3.1. TLK File Structure
 Figure 3.1: TLK File Structure
@@ -110,21 +110,26 @@ Type
 Description
 FileType
 4 char
+
 ### "TLK "
 
 FileVersion
 4 char
+
 ### "V3.0"
 
 LanguageID
+
 ### DWORD
 
 Language ID. See Table 3.2.2
 StringCount
+
 ### DWORD
 
 Number of strings in file
 StringEntriesOffset
+
 ### DWORD
 
 Offset from start of file to the String Entry Table
@@ -158,11 +163,10 @@ Japanese
 The String Data Table is a list of String Data Elements, each one describing a single string in the
 dialog.tlk file.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 The number of elements in the String Data Table is equal to the StringCount specified in the
 Header of the file. Each element is packed one after another, immediately after the end of the file
 header.
@@ -174,6 +178,7 @@ Value
 Type
 Description
 Flags
+
 ### DWORD
 
 Flags about this StrRef.
@@ -182,25 +187,30 @@ SoundResRef
 ResRef of the wave file associated with this string.
 Unused characters are nulls.
 VolumeVariance
+
 ### DWORD
 
 not used
 PitchVariance
+
 ### DWORD
 
 not used
 OffsetToString
+
 ### DWORD
 
 Offset from StringEntriesOffset to the beginning of the
 StrRef's text.
 StringSize
+
 ### DWORD
 
 Number of bytes in the string. Null terminating
 characters are not stored, so this size does not include
 a null terminator.
 SoundLength
+
 ### FLOAT
 
 Duration in seconds of the associated wave file
@@ -212,6 +222,7 @@ Table 3.3.2: String Flags
 Name
 Value
 Description
+
 ### TEXT_PRESENT
 
 0x0001
@@ -240,5 +251,3 @@ If flag is unset, SoundLength is 0.0 seconds.
 The String Entry Table begins at the StringEntriesOffset specified in the Header of the file, and
 continues to the end of the file. All the localized text is contained in the String Entry Table as non-
 null-terminated strings. As soon as one string ends, the next one begins.
-
-

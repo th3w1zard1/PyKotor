@@ -2,17 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines feedback text [strings](GFF-File-Format#cexostring) displayed to the player for various game events and actions. The engine uses this [file](GFF-File-Format) to provide contextual feedback messages.
 
-**Engine Usage**: Defines feedback text strings displayed to the player for various game events and actions. The engine uses this file to provide contextual feedback messages.
+**Row [index](2DA-File-Format#row-labels)**: Feedback Text ID (integer)
 
-**Row Index**: Feedback Text ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Feedback text label |
-| Additional columns | Various | Feedback text strings and properties |
+| `label` | [string](GFF-File-Format#cexostring) | Feedback text label |
+| Additional columns | Various | Feedback text [strings](GFF-File-Format#cexostring) and properties |
 
 **References**:
 
@@ -20,4 +19,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`vendor/KotOR.js/src/nwscript/NWScriptDefK1.ts:4464-4465`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptDefK1.ts#L4464-L4465) - DisplayFeedBackText function
 
 ---
-

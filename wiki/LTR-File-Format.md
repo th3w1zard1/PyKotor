@@ -1,6 +1,6 @@
-# KotOR LTR File Format Documentation
+# KotOR [LTR files](LTR-File-Format) [format](GFF-File-Format) Documentation
 
-LTR (Letter) resources store third-order [Markov chain](https://en.wikipedia.org/wiki/Markov_chain) probability tables that the game uses to procedurally generate NPC names. The data encodes likelihoods for characters appearing at the start, middle, and end of names given zero, one, or two-character context.
+LTR (Letter) resources store third-order Markov chain probability tables that the game uses to procedurally generate NPC names. The [data](GFF-File-Format#file-structure) encodes likelihoods for characters appearing at the start, middle, and end of names given zero, one, or two-character context.
 
 ## Table of Contents
 
@@ -18,31 +18,31 @@ LTR (Letter) resources store third-order [Markov chain](https://en.wikipedia.org
 
 ---
 
-## File Structure Overview
+## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure) Overview
 
-- KotOR always uses the **28-character alphabet** (`a–z` plus `'` and `-`). NWN used 26 characters; the header explicitly stores the count.  
-- LTR files are [binary](https://en.wikipedia.org/wiki/Binary_file) and consist of a short header followed by three probability tables (singles, doubles, triples) stored as contiguous [float](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) arrays.  
-- Field offsets below trace directly to the reader implementations in [`vendor/reone/src/libs/resource/format/ltrreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ltrreader.cpp#L27-L74), [`vendor/xoreos/src/aurora/ltrfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ltrfile.cpp#L135-L168), and [`vendor/KotOR.js/src/resource/LTRObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/LTRObject.ts#L61-L117).  
+- KotOR always uses the **28-character alphabet** (`a–z` plus `'` and `-`). NWN used 26 characters; the [header](GFF-File-Format#file-header) explicitly stores the [count](GFF-File-Format#file-structure).  
+- [LTR files](LTR-File-Format) [ARE](GFF-File-Format#are-area) binary and consist of a short [header](GFF-File-Format#file-header) followed by three probability tables (singles, doubles, triples) stored as contiguous [float](GFF-File-Format#float) [arrays](2DA-File-Format).  
+- [field](GFF-File-Format#file-structure) [offsets](GFF-File-Format#file-structure) below trace directly to the reader implementations in [`vendor/reone/src/libs/resource/format/ltrreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ltrreader.cpp#L27-L74), [`vendor/xoreos/src/aurora/ltrfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ltrfile.cpp#L135-L168), and [`vendor/KotOR.js/src/resource/LTRObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/LTRObject.ts#L61-L117).  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr)
 
 ---
 
-## Binary Format
+## Binary [format](GFF-File-Format)
 
-### Header
+### [header](GFF-File-Format#file-header)
 
-| Name         | Type    | Offset | Size | Description |
+| Name         | [type](GFF-File-Format#data-types)    | [offset](GFF-File-Format#file-structure) | [size](GFF-File-Format#file-structure) | Description |
 | ------------ | ------- | ------ | ---- | ----------- |
-| File Type    | char[4] | 0x00   | 4    | Always `"LTR "` |
-| File Version | char[4] | 0x04   | 4    | Always `"V1.0"` |
-| Letter Count | uint8   | 0x08   | 1    | Must be 26 or 28 (KotOR uses 28) |
+| [file](GFF-File-Format) [type](GFF-File-Format#data-types)    | [char][GFF-File-Format#char](4) | 0 (0x00)   | 4    | Always `"LTR "` |
+| [file](GFF-File-Format) Version | [char][GFF-File-Format#char](4) | 4 (0x04)   | 4    | Always `"V1.0"` |
+| Letter [count](GFF-File-Format#file-structure) | [uint8](GFF-File-Format#byte)   | 8 (0x08)   | 1    | Must be 26 or 28 (KotOR uses 28) |
 
 **Reference:** [`vendor/reone/src/libs/resource/format/ltrreader.cpp:27-38`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ltrreader.cpp#L27-L38)
 
 ### Single-Letter Block
 
-Immediately after the header, the **single-letter** probabilities are stored as three arrays of `letter_count` floats (start, middle, end). For the KotOR alphabet that is `28 × 3 × 4 = 336` bytes.
+Immediately after the [header](GFF-File-Format#file-header), the **single-letter** probabilities [ARE](GFF-File-Format#are-area) stored as three [arrays](2DA-File-Format) of `letter_count` floats (start, middle, end). For the KotOR alphabet that is `28 × 3 × 4 = 336` bytes.
 
 | Section | Entries | Description |
 | ------- | ------- | ----------- |
@@ -50,15 +50,15 @@ Immediately after the header, the **single-letter** probabilities are stored as 
 | Middle  | 28 floats | Probability of each letter appearing mid-name |
 | End     | 28 floats | Probability of each letter ending a name |
 
-### Double-Letter Blocks
+### [double](GFF-File-Format#double)-Letter Blocks
 
-For each character in the alphabet there is a **double-letter** block (context length 1). Each block repeats the same start/middle/end layout (28 floats each).
+For each character in the alphabet there is a **[double](GFF-File-Format#double)-letter** block (context length 1). Each block repeats the same start/middle/end layout (28 floats each).
 
 Total size (KotOR): `28 (letters) × 3 (position arrays) × 28 (values) × 4 bytes = 9,408 bytes`.
 
 ### Triple-Letter Blocks
 
-The **triple-letter** section encodes 2-character context. There are `letter_count × letter_count` blocks (28 × 28 = 784 for KotOR), each with start/middle/end arrays of 28 floats.
+The **triple-letter** section encodes 2-character context. There [ARE](GFF-File-Format#are-area) `letter_count × letter_count` blocks (28 × 28 = 784 for KotOR), each with start/middle/end [arrays](2DA-File-Format) of 28 floats.
 
 Total size (KotOR): `28 × 28 × 3 × 28 × 4 = 73,472 bytes`.
 
@@ -68,11 +68,11 @@ Total size (KotOR): `28 × 28 × 3 × 28 × 4 = 73,472 bytes`.
 
 ## Probability Blocks
 
-Each block is represented by the `LTRBlock` class in PyKotor, mirroring the `LetterSet` structs in the reverse-engineered engines. Blocks store cumulative probabilities (monotonically increasing floats) that are compared against random roll values.
+Each block is represented by the `LTRBlock` class in PyKotor, mirroring the `LetterSet` structs in the reverse-engineered engines. Blocks store cumulative probabilities (monotonically increasing floats) that [ARE](GFF-File-Format#are-area) compared against random roll [values](GFF-File-Format#data-types).
 
 - **Singles (`_singles`)**: No context; used for the very first character.  
 - **Doubles (`_doubles`)**: Indexed by the previous character; used for the second character.  
-- **Triples (`_triples`)**: Two-dimensional array indexed by the previous two characters; used for every character after the second.  
+- **Triples (`_triples`)**: Two-dimensional [array](2DA-File-Format) indexed by the previous two characters; used for every character after the second.  
 
 **Reference:** [`vendor/reone/include/reone/resource/ltr.h:24-48`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/ltr.h#L24-L48)  
 **Reference:** [`vendor/xoreos/src/aurora/ltrfile.h:57-76`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ltrfile.h#L57-L76)
@@ -97,11 +97,11 @@ The runtime algorithm (implemented in PyKotor, Reone, Xoreos, KotOR.js, and Koto
 ## Implementation Details
 
 - **Binary Reader/Writer:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/io_ltr.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/io_ltr.py)  
-- **Data Model:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py)  
+- **[data](GFF-File-Format#file-structure) [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/resource/format/ltrreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ltrreader.cpp)  
   - [`vendor/xoreos/src/aurora/ltrfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ltrfile.cpp)  
   - [`vendor/KotOR.js/src/resource/LTRObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/LTRObject.ts)  
   - [`vendor/Kotor.NET/Kotor.NET/Formats/KotorLTR/LTR.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorLTR/LTR.cs)  
 
-Because PyKotor uses the structure described in the cited implementations, LTR resources can be exchanged with those toolchains without conversion steps.
+Because PyKotor uses the [structure](GFF-File-Format#file-structure) described in the cited implementations, LTR resources can be exchanged with those toolchains without conversion steps.

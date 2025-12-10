@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Constants (K1 & TSL)
 
-
 <a id="vfx_ard_heat_shimmer"></a>
 
 ## `VFX_ARD_HEAT_SHIMMER`
@@ -39,7 +38,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `VFX_BEAM_DEATH_FIELD_TENTACLE`
 
-(2026): Vfx Beam Death Field Tentacle
+(2026): Vfx Beam Death [field](GFF-File-Format#file-structure) Tentacle
 
 <a id="vfx_beam_drain_life"></a>
 
@@ -633,7 +632,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `VFX_PRO_DEATH_FIELD`
 
-(1006): Vfx Pro Death Field
+(1006): Vfx Pro Death [field](GFF-File-Format#file-structure)
 
 <a id="vfx_pro_drain"></a>
 
@@ -714,4 +713,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 (1027): Vfx Pro Resist Poison
 
 <!-- SHARED_CONSTANTS_END -->
-

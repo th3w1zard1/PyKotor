@@ -2,22 +2,20 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines master feat configurations. The engine uses this [file](GFF-File-Format) to determine master feat names and properties.
 
-**Engine Usage**: Defines master feat configurations. The engine uses this file to determine master feat names and properties.
+**Row [index](2DA-File-Format#row-labels)**: Master Feat ID (integer)
 
-**Row Index**: Master Feat ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Master feat label |
-| `strref` | StrRef | String reference for master feat name |
+| `label` | [string](GFF-File-Format#cexostring) | Master feat label |
+| `strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for master feat name |
 | Additional columns | Various | Master feat properties |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:138`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L138) - StrRef column definition for masterfeats.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:138`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L138) - [StrRef](TLK-File-Format#string-references-strref) column definition for masterfeats.2da
 
 ---
-

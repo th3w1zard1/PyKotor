@@ -2,23 +2,21 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines movie/cutscene configurations. The engine uses this [file](GFF-File-Format) to determine movie names and descriptions.
 
-**Engine Usage**: Defines movie/cutscene configurations. The engine uses this file to determine movie names and descriptions.
+**Row [index](2DA-File-Format#row-labels)**: Movie ID (integer)
 
-**Row Index**: Movie ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Movie label |
-| `strrefname` | StrRef | String reference for movie name |
-| `strrefdesc` | StrRef | String reference for movie description |
+| `label` | [string](GFF-File-Format#cexostring) | Movie label |
+| `strrefname` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for movie name |
+| `strrefdesc` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for movie description |
 | Additional columns | Various | Movie properties |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:140`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L140) - StrRef column definitions for movies.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:140`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L140) - [StrRef](TLK-File-Format#string-references-strref) column definitions for movies.2da
 
 ---
-

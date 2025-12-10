@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Functions
 
-
 <a id="effectblind"></a>
 
 ## `EffectBlind()` - Routine 778
@@ -109,7 +108,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - RWT-OEI 10/07/04
 - This script removes an effect by an identical match
 - based on:
-- Must have matching EffectID types.
+- Must have matching EffectID [types](GFF-File-Format#data-types).
 
 - `oCreature`: object
 - `eEffect`: effect
@@ -124,4 +123,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `oCreature`: object
 - `nEffectID`: int
-

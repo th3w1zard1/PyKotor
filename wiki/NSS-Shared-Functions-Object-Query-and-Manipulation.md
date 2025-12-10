@@ -4,20 +4,19 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="createobject"></a>
 
 ## `CreateObject(nObjectType, sTemplate, lLocation, bUseAppearAnimation)` - Routine 243
 
 - `243. CreateObject`
-- Create an object of the specified type at lLocation.
+- Create an object of the specified [type](GFF-File-Format#data-types) at lLocation.
 - - nObjectType: OBJECT_TYPE_ITEM, OBJECT_TYPE_CREATURE, OBJECT_TYPE_PLACEABLE,
 - OBJECT_TYPE_STORE
 - - sTemplate
 - - lLocation
 
 - `nObjectType`: int
-- `sTemplate`: string
+- `sTemplate`: [string](GFF-File-Format#cexostring)
 - `lLocation`: location
 - `bUseAppearAnimation`: int (default: `0`)
 
@@ -28,7 +27,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `241. DestroyObject`
 - Destroy oObject (irrevocably).
 - This will not work on modules and areas.
-- The bNoFade and fDelayUntilFade are for creatures and placeables only
+- The bNoFade and fDelayUntilFade [ARE](GFF-File-Format#are-area) for creatures and placeables only
 
 - `oDestroy`: object
 - `fDelay`: float (default: `0.0`)
@@ -80,11 +79,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetNearestObject(nObjectType, oTarget, nNth)` - Routine 227
 
 - `227. GetNearestObject`
-- Get the Nth object nearest to oTarget that is of the specified type.
+- Get the Nth object nearest to oTarget that is of the specified [type](GFF-File-Format#data-types).
 - - nObjectType: OBJECT_TYPE_*
 - - oTarget
 - - nNth
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 - `nObjectType`: int (default: `32767`)
 - `oTarget`: object
@@ -96,9 +95,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `229. GetNearestObjectByTag`
 - Get the nth Object nearest to oTarget that has sTag as its tag.
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
-- `sTag`: string
+- `sTag`: [string](GFF-File-Format#cexostring)
 - `oTarget`: object
 - `nNth`: int (default: `1`)
 
@@ -107,11 +106,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetNearestObjectToLocation(nObjectType, lLocation, nNth)` - Routine 228
 
 - `228. GetNearestObjectToLocation`
-- Get the nNth object nearest to lLocation that is of the specified type.
+- Get the nNth object nearest to lLocation that is of the specified [type](GFF-File-Format#data-types).
 - - nObjectType: OBJECT_TYPE_*
 - - lLocation
 - - nNth
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 - `nObjectType`: int
 - `lLocation`: location
@@ -123,7 +122,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `488. GetNearestTrapToObject`
 - Get the trap nearest to oTarget.
-- Note : "trap objects" are actually any trigger, placeable or door that is
+- Note : "trap objects" [ARE](GFF-File-Format#are-area) actually any trigger, placeable or door that is
 - trapped in oTarget's area.
 - - oTarget
 - - nTrapDetected: if this is TRUE, the trap returned has to have been detected
@@ -141,7 +140,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - nNth: the nth object with this tag may be requested
 - - Returns OBJECT_INVALID if the object cannot be found.
 
-- `sTag`: string
+- `sTag`: [string](GFF-File-Format#cexostring)
 - `nNth`: int (default: `0`)
 
 <a id="getobjectheard"></a>
@@ -170,7 +169,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `106. GetObjectType`
 - Get the object type (OBJECT_TYPE_*) of oTarget
-- - Return value if oTarget is not a valid object: -1
+- - Return [value](GFF-File-Format#data-types) if oTarget is not a valid object: -1
 
 - `oTarget`: object
 
@@ -180,7 +179,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `47. GetSpellTargetObject`
 - Get the object at which the caller last cast a spell
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 <a id="swmg_getobjectbyname"></a>
 
@@ -190,7 +189,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - gets an object by its name (duh!)
 - SWMG_GetObjectByName
 
-- `sName`: string
+- `sName`: [string](GFF-File-Format#cexostring)
 
 <a id="swmg_getobjectname"></a>
 
@@ -201,4 +200,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - SWMG_GetObjectName
 
 - `oid`: object
-

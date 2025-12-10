@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Functions
 
-
 <a id="addbonusforcepoints"></a>
 
 ## `AddBonusForcePoints(oCreature, nBonusFP)` - Routine 802
@@ -12,9 +11,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `802. AddBonusForcePoints`
 - RWT-OEI 02/06/04
 - AddBonusForcePoints - This adds nBonusFP to the current total
-- bonus that the player has. The Bonus Force Points are a pool
+- bonus that the player has. The Bonus Force Points [ARE](GFF-File-Format#are-area) a pool
 - of force points that will always be added after the player's
-- total force points are calculated (based on level, force dice,
+- total force points [ARE](GFF-File-Format#are-area) calculated (based on level, force dice,
 
 - `oCreature`: object
 - `nBonusFP`: int
@@ -27,7 +26,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - AWD-OEI 7/06/2004
 - This function adjusts a creatures stats.
 - oObject is the creature that will have it's attribute adjusted
-- The following constants are acceptable for the nAttribute parameter:
+- The following constants [ARE](GFF-File-Format#are-area) acceptable for the nAttribute parameter:
 
 - `oObject`: object
 - `nAttribute`: int
@@ -53,7 +52,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - 850
 - ChangeObjectAppearance
 - oObjectToChange = Object to change appearance of
-- nAppearance = appearance to change to (from appearance.2da)
+- nAppearance = appearance to change to (from [appearance.2da](2DA-appearance))
 
 - `oObjectToChange`: object
 - `nAppearance`: int
@@ -75,7 +74,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - 857
 - RWT-OEI 08/31/04
 - This function schedules a mine to play its DETONATION
-- animation once it is destroyed. Note that this detonates
+- [animation](MDL-MDX-File-Format#animation-header) once it is destroyed. Note that this detonates
 - the mine immediately but has nothing to do with causing
 
 - `oMine`: object
@@ -145,8 +144,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `803. GetBonusForcePoints`
 - RWT-OEI 02/06/04
 - GetBonusForcePoints - This returns the total number of bonus
-- force points a player has. Bonus Force Points are a pool of
-- points that are always added to a player's Max Force Points.
+- force points a player has. Bonus Force Points [ARE](GFF-File-Format#are-area) a pool of
+- points that [ARE](GFF-File-Format#are-area) always added to a player's Max Force Points.
 - ST: Please explain how a function returning VOID could return a
 
 - `oCreature`: object
@@ -239,7 +238,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `798. GetRacialSubType`
 - FAK - OEI 2/3/04
-- returns the racial sub-type of the oTarget object
+- returns the racial sub-[type](GFF-File-Format#data-types) of the oTarget object
 
 - `oTarget`: object
 
@@ -249,7 +248,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 815
 - RWT-OEI 03/23/04
-- Returns a vector containing a random destination that the
+- Returns a [vector](GFF-File-Format#vector) containing a random destination that the
 - given creature can walk to that's within the range of the
 - passed parameter.
 
@@ -262,8 +261,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `768. GetScriptParameter`
 - DJS-OEI
-- This function will take the index of a script parameter
-- and return the value associated with it. The index
+- This function will take the [index](2DA-File-Format#row-labels) of a script parameter
+- and return the [value](GFF-File-Format#data-types) associated with it. The [index](2DA-File-Format#row-labels)
 - of the first parameter is 1.
 
 - `nIndex`: int
@@ -274,7 +273,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - DJS-OEI 6/21/2004
 - 831
-- This function will return the one CExoString parameter
+- This function will return the one [CExoString](GFF-File-Format#cexostring) parameter
 - allowed for the currently running script.
 
 <a id="getspellacquired"></a>
@@ -311,7 +310,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Get the number of Force Points that were required to
 - cast this spell. This includes modifiers such as Room Force
 - Ratings and the Force Body power.
-- - Return value on error: 0
+- - Return [value](GFF-File-Format#data-types) on error: 0
 
 <a id="getspellformmask"></a>
 
@@ -319,7 +318,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 817
 - DJS-OEI 3/28/2004
-- Returns the Form Mask of the requested spell. This is used
+- Returns the Form [mask](GFF-File-Format#data-types) of the requested spell. This is used
 - to determine if a spell is affected by various Forms, usually
 - Consular forms that modify duration/range.
 
@@ -343,11 +342,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - 820
 - RWT-OEI 04/06/04
 - This returns TRUE or FALSE if there is a clear line of sight from
-- the source vector to the target vector. This is used in the AI to
+- the source [vector](GFF-File-Format#vector) to the target [vector](GFF-File-Format#vector). This is used in the AI to
 - help the creatures using ranged weapons find better places to shoot
 
-- `vSource`: vector
-- `vTarget`: vector
+- `vSource`: [vector](GFF-File-Format#vector)
+- `vTarget`: [vector](GFF-File-Format#vector)
 - `oSource`: object
 - `oTarget`: object
 
@@ -416,8 +415,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 829
 - AWD-OEI 6/21/2004
-- This function does not return a value.
-- This function modifies the BASE value of the FORTITUDE saving throw for aObject
+- This function does not return a [value](GFF-File-Format#data-types).
+- This function modifies the BASE [value](GFF-File-Format#data-types) of the FORTITUDE saving throw for aObject
 
 - `aObject`: object
 - `aModValue`: int
@@ -442,8 +441,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 828
 - AWD-OEI 6/21/2004
-- This function does not return a value.
-- This function modifies the BASE value of the REFLEX saving throw for aObject
+- This function does not return a [value](GFF-File-Format#data-types).
+- This function modifies the BASE [value](GFF-File-Format#data-types) of the REFLEX saving throw for aObject
 
 - `aObject`: object
 - `aModValue`: int
@@ -454,8 +453,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 830
 - AWD-OEI 6/21/2004
-- This function does not return a value.
-- This function modifies the BASE value of the WILL saving throw for aObject
+- This function does not return a [value](GFF-File-Format#data-types).
+- This function modifies the BASE [value](GFF-File-Format#data-types) of the WILL saving throw for aObject
 
 - `aObject`: object
 - `aModValue`: int
@@ -488,7 +487,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 873
 - RWT-OEI 10/26/04
-- This function saves the party member at that index with the object
+- This function saves the party member at that [index](2DA-File-Format#row-labels) with the object
 - that is passed in.
 
 - `nNPC`: int
@@ -500,7 +499,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 874
 - RWT-OEI 10/26/04
-- This function saves the party puppet at that index with the object
+- This function saves the party puppet at that [index](2DA-File-Format#row-labels) with the object
 - that is passed in. For the Remote, just use '0' for nPUP
 
 - `nPUP`: int
@@ -571,7 +570,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - RWT-OEI 09/15/04
 - This script allows an object to recieve updates even if it is outside
 - the normal range limit of 250.0f meters away from the player. This should
-- ONLY be used for cutscenes that involve objects that are more than 250
+- ONLY be used for cutscenes that involve objects that [ARE](GFF-File-Format#are-area) more than 250
 
 - `oObject`: object
 - `nFlag`: int
@@ -618,7 +617,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `794. SetOrientOnClick`
 - RWT-OEI 01/29/04
 - Disables or Enables the Orient On Click behavior in creatures. If
-- disabled, they will not orient to face the player when clicked on
+- disabled, they will not orient to [face](MDL-MDX-File-Format#face-structure) the player when clicked on
 - for dialogue. The default behavior is TRUE.
 
 - `oCreature`: object
@@ -630,7 +629,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `773. ShowChemicalUpgradeScreen`
 - FAK-OEI 12/15/2003
-- Start the GUI for Chemical Workshop
+- Start the [GUI](GFF-File-Format#gui-graphical-user-interface) for Chemical Workshop
 
 - `oCharacter`: object
 
@@ -640,9 +639,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 821
 - FAK - OEI 5/3/04
-- ShowDemoScreen, displays a texture, timeout, string and xy for string
+- ShowDemoScreen, displays a [texture](TPC-File-Format), timeout, [string](GFF-File-Format#cexostring) and xy for [string](GFF-File-Format#cexostring)
 
-- `sTexture`: string
+- `sTexture`: [string](GFF-File-Format#cexostring)
 - `nTimeout`: int
 - `nDisplayString`: int
 - `nDisplayX`: int
@@ -676,9 +675,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `788. SpawnMine`
 - DJS-OEI 1/13/2004
 - Places an active mine on the map.
-- nMineType - Mine Type from Traps.2DA
+- nMineType - Mine [type](GFF-File-Format#data-types) from [traps.2da](2DA-traps)
 - lPoint - The location in the world to place the mine.
-- nDetectDCBase - This value, plus the "DetectDCMod" column in Traps.2DA
+- nDetectDCBase - This [value](GFF-File-Format#data-types), plus the "DetectDCMod" column in [traps.2da](2DA-traps)
 
 - `nMineType`: int
 - `lPoint`: location
@@ -712,7 +711,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `789. SWMG_GetTrackPosition`
 - FAK - OEI 1/15/04
-- Yet another minigame function. Returns the object's track's position.
+- Yet another minigame function. Returns the object's track's [position](MDL-MDX-File-Format#node-header).
 
 - `oFollower`: object
 
@@ -722,9 +721,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `790. SWMG_SetFollowerPosition`
 - FAK - OEI 1/15/04
-- minigame function that lets you psuedo-set the position of a follower object
+- minigame function that lets you psuedo-set the [position](MDL-MDX-File-Format#node-header) of a follower object
 
-- `vPos`: vector
+- `vPos`: [vector](GFF-File-Format#vector)
 
 <a id="swmg_setjumpspeed"></a>
 
@@ -754,4 +753,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - 808
 
 - `oCreature`: object
-

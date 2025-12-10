@@ -2,14 +2,13 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Saving throw progression tables for each class. [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) named `cls_savthr_<classname>.2da` (e.g., `cls_savthr_jedi_guardian.2da`). The engine uses these [files](GFF-File-Format) to calculate saving throw bonuses for each class at each level.
 
-**Engine Usage**: Saving throw progression tables for each class. Files are named `cls_savthr_<classname>.2da` (e.g., `cls_savthr_jedi_guardian.2da`). The engine uses these files to calculate saving throw bonuses for each class at each level.
+**Row [index](2DA-File-Format#row-labels)**: Level (integer, typically 1-20)
 
-**Row Index**: Level (integer, typically 1-20)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
 | `level` | Integer | Character level |
 | `fortitude` | Integer | Fortitude save bonus |
@@ -17,4 +16,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 | `will` | Integer | Will save bonus |
 
 ---
-

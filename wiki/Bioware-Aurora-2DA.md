@@ -1,4 +1,5 @@
 # 2DA
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 2DA File Format
+
 1. Introduction
 A 2da file is a plain-text file that describes a 2-dimensional array of data.
 In BioWare's games, 2da files serve many purposes, and are often crucial to the proper functioning of
@@ -20,8 +22,8 @@ The main body of a 2da file is a table containing rows and columns of data. Each
 element at a given row/column coordinate is called an entry. The data may be text, integer, or floating
 point values.
 Consider the following example of the contents of a 2da file:
-### 2DA V2.0
 
+### 2DA V2.0
 
 LABEL         STRREF STRING          HasLegs  Pesonal_Space
 0   Chicken       2013   Chicken         1        0.13
@@ -44,11 +46,10 @@ Note that the numbering in the first column is for the convenience of the person
 incorrectly, the game and tools will still use the correct number for the row index. Nevertheless, it is a
 good habit to make sure that rows are numbered correctly to avoid confusion.
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Column names
 All columns after the first one must have a heading. The heading can be in upper or lower case letters
 and may contain underscores.
@@ -88,14 +89,13 @@ hundred different 2das for each language, it is only necessary to change a singl
 Line 1 - file format version
 The first line of a 2da file describes the version of the 2da format followed by the 2da file. The current
 version header at the time of this writing is:
+
 ### 2DA V2.0
-
-
 
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Line 2 - blank or optional default
 The second line of a 2da file is usually empty.
 Optionally, it can specify a default value for all entries in the file. The syntax is:
@@ -136,11 +136,10 @@ Columns
 Applications may reference a column by position (column 0, column 1, etc.) or by name. To avoid
 breaking code that depends on column position, the following rules apply:
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 •
 Always add new columns after the very last column.
 •
@@ -159,6 +158,3 @@ Always add rows to the very end of the file.
 Never insert a row inbetween two other existing rows.
 Never delete a row. If it is necessary to remove the data in a row, fill the row with **** entries instead.
 Try to ensure that no existing data, in a 2da or otherwise, references the starred-out row.
-
-
-

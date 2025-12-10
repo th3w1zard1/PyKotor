@@ -2,27 +2,25 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines ambient music tracks for areas. The engine uses this [file](GFF-File-Format) to determine which music to play in different areas based on [area properties](GFF-File-Format#are-area).
 
-**Engine Usage**: Defines ambient music tracks for areas. The engine uses this file to determine which music to play in different areas based on area properties.
+**Row [index](2DA-File-Format#row-labels)**: Music ID (integer)
 
-**Row Index**: Music ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Music label |
-| `music` | ResRef | Music file ResRef |
-| `resource` | ResRef | Music resource ResRef |
+| `label` | [string](GFF-File-Format#cexostring) | Music label |
+| `music` | [ResRef](GFF-File-Format#resref) | Music [file](GFF-File-Format) [ResRef](GFF-File-Format#resref) |
+| `resource` | [ResRef](GFF-File-Format#resref) | Music resource [ResRef](GFF-File-Format#resref) |
 | `stinger1`, `stinger2`, `stinger3` | ResRef (optional) | Stinger music ResRefs |
 
 **References**:
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:206`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L206) - Music ResRef column definitions for ambientmusic.2da (K1: resource, stinger1, stinger2, stinger3)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:398`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L398) - Music ResRef column definitions for ambientmusic.2da (K2: resource, stinger1, stinger2, stinger3)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:545-548`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L545-L548) - GFF field mapping: "MusicDay", "MusicNight", "MusicBattle", "MusicDelay" -> ambientmusic.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:206`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L206) - Music [ResRef](GFF-File-Format#resref) column definitions for ambientmusic.2da (K1: resource, stinger1, stinger2, stinger3)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:398`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L398) - Music [ResRef](GFF-File-Format#resref) column definitions for ambientmusic.2da (K2: resource, stinger1, stinger2, stinger3)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:545-548`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L545-L548) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure) mapping: "MusicDay", "MusicNight", "MusicBattle", "MusicDelay" -> ambientmusic.2da
 
 ---
-

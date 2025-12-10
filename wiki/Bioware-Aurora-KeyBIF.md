@@ -1,4 +1,5 @@
 # KeyBIF
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Key and BIF File Formats
+
 1. Introduction
 BioWare's games and tools make use of a very large number of files that are packed into a group of files
 having the .bif extension. The contents of the .bif files are described by one or more files having the
@@ -48,11 +50,10 @@ game resources. (Examples of encapsulated files: hak paks located in hak folder,
 located in texturepacks folder). See the ERF Format document for details on the encapsulated
 resouce file format.
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 There can be any number of resource sources of each type. If there is more than one resource with
 the same name and type located in more than one resource source, then the following rules
 determine which copy of that resource takes priority:
@@ -156,11 +157,10 @@ txi
 text
 Extra Texture Info
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 2023
 git
 gff
@@ -292,12 +292,10 @@ BioWare Generic File Format. See the Generic File Format document.
 mdl
 BioWare Aurora model file format. Can be plain text or binary.
 
-
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 2. Key File Format (KEY)
 A Key file is an index of all the resources contained within a set of BIF files. The key file contains
 information as to which BIFs it indexes for and what resources are contained in those BIFs.
@@ -318,33 +316,41 @@ Type
 Description
 FileType
 4 char
+
 ### "KEY "
 
 FileVersion
 4 char
+
 ### "V1  "
 
 BIFCount
+
 ### DWORD
 
 Number of BIF files that this KEY file controls
 KeyCount
+
 ### DWORD
 
 Number of Resources in all BIF files linked to this keyfile
 OffsetToFileTable
+
 ### DWORD
 
 Byte offset of File Table from beginning of this file
 OffsetToKeyTable
+
 ### DWORD
 
 Byte offset of Key Entry Table from beginning of this file
 Build Year
+
 ### DWORD
 
 Number of years since 1900
 Build Day
+
 ### DWORD
 
 Number of days since January 1
@@ -360,30 +366,33 @@ Value
 Type
 Description
 FileSize
+
 ### DWORD
 
 File size of the BIF.
 FilenameOffset
+
 ### DWORD
 
 Byte position of the BIF file's filename in this file. Points
 to a location in the FileName Table.
 FilenameSize
+
 ### WORD
 
 Number of characters in the BIF's filename.
 Drives
+
 ### WORD
 
 A number that represents which drives the BIF file is
 located in.  Currently each bit represents a drive letter.
 e.g., bit 0 = HD0, which is the directory where the
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 application was installed.
 2.4. Filename Table
 The Filename Table lists the filenames of all the BIF files associated with the key file.
@@ -417,10 +426,12 @@ The filename of the resource item without it’s extension.
 The game uses this name to access the resource.
 Each ResRef must be unique.
 ResourceType
+
 ### WORD
 
 Resource Type of the Resource.
 ResID
+
 ### DWORD
 
 A unique ID number.  It is generated as follows:
@@ -435,11 +446,10 @@ y = [Index into Variable or Fixed Resource Table in BIF]
 A BIF contains mutliple resources (files). It does not contain information about each resource's name,
 and therefore requires its KEY file.
 
-
 ## Page 6
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3.1. BIF Structure
 Figure 3.1: BIF File Structure
 Header
@@ -457,21 +467,26 @@ Type
 Description
 FileType
 4 char
+
 ### "BIFF"
 
 Version
 4 char
+
 ### "V1  "
 
 Variable Resource Count
+
 ### DWORD
 
 Number of variable resources in this file.
 Fixed Resource Count
+
 ### DWORD
 
 Number of fixed resources in this file.
 Variable Table Offset
+
 ### DWORD
 
 Byte position of the Variable Resource Table from the
@@ -480,16 +495,16 @@ beginning of this file. Currently, this value is 20.
 The Variable Resource Table has a number of entries equal to the Variable Resource Count
 specified in the Header.
 
-
 ## Page 7
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.3: Variable Resource Entry
 Value
 Type
 Description
 ID
+
 ### DWORD
 
 A unique ID number.  It is generated as follows:
@@ -507,18 +522,21 @@ This discrepancy in x values does not matter to the
 game or toolset because their resource manager
 system doesn't care about the value of x in a BIF.
 Offset
+
 ### DWORD
 
 The location of the variable resource data. This is a byte
 offset from the beginning of the BIF file into the
 Variable Resource Data block.
 File Size
+
 ### DWORD
 
 File size of this resource. Specifies the number of bytes
 in the Variable Resource Data block that belong to this
 resource.
 Resource Type
+
 ### DWORD
 
 Resource type of this resource
@@ -535,6 +553,7 @@ Value
 Type
 Description
 ID
+
 ### DWORD
 
 A unique ID number.  It is generated as follows:
@@ -545,20 +564,24 @@ x = [Index of this BIF in its Key file's File Table]
 y = [Index of this Resource Entry]
 (<< means bit shift left)
 Offset
+
 ### DWORD
 
 The location of the fixed resource data. This is a byte
 offset from the beginning of the BIF file into the Fixed
 Resource Data block.
 PartCount
+
 ### DWORD
 
 Number of parts
 File Size
+
 ### DWORD
 
 File size of this resource
 Resource Type
+
 ### DWORD
 
 Resource type of this resource
@@ -567,5 +590,3 @@ The Variable Resource Data block contains raw bytes of data pointed to by the Of
 Variable Resource Entries.
 3.6. Fixed Resource Data
 Fixed Resource Parts (as defined in the fixed resource table).
-
-

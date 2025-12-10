@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Constants
 
-
 <a id="npc_aistyle_healer"></a>
 
 ## `NPC_AISTYLE_HEALER`
@@ -118,4 +117,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `NPC_VISAS`
 
 (9): Npc Visas
-

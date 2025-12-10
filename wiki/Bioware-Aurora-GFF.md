@@ -1,4 +1,5 @@
 # GFF
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Generic File Format (GFF)
+
 1. Introduction
 The Generic File Format (GFF) is an all-purpose generic format used to store data in BioWare games. It
 is designed to make it easy to add or remove fields and data structures while still maintaining backward
@@ -56,11 +58,10 @@ class TWaypoint
 {
 TString m_sTag;
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 float m_fPositionX;
 float m_fPositionY;
 float m_fPositionZ;
@@ -102,15 +103,15 @@ GFF Fields were not found.
 2.2. Field Data Types
 Allowed GFF Field types are listed in the table below.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.2a: Field Type Descriptions
 Field Type
 Size (in bytes)
 Description
+
 ### BYTE
 
 1
@@ -123,6 +124,7 @@ language ID.
 CExoString
 variable
 Non-localized string
+
 ### CHAR
 
 1
@@ -131,18 +133,22 @@ CResRef
 16
 Filename of a game resource. Max length is 16
 characters. Unused characters are nulls.
+
 ### DOUBLE
 
 8
 Double-precision floating point value
+
 ### DWORD
 
 4
 Unsigned integer (0 to 4294967296)
+
 ### DWORD64
 
 8
 Unsigned integer (0 to roughly 18E18)
+
 ### FLOAT
 
 4
@@ -150,18 +156,22 @@ Floating point value
 INT
 4
 Signed integer (-2147483648 to 2147483647)
+
 ### INT64
 
 8
 Signed integer (roughly -9E18 to +9E18)
+
 ### SHORT
 
 2
 Signed integer (-32768 to 32767)
+
 ### VOID
 
 variable
 Variable-length arbitrary data
+
 ### WORD
 
 2
@@ -190,6 +200,7 @@ developer/designer-only text, such as Tags used in scripting.
 CExoLocString
 A CExoLocString is a string type used to store text that may appear to the user and has a number
 of features designed to allow users to see text in their own language.
+
 1) StringRef: A CExoLocString always contains at least a single integer called a StringRef (or
 StrRef). A StrRef is an index into the user's dialog.tlk file, which contains text that has been
 localized for the user's language.
@@ -198,11 +209,10 @@ instead, the localized text must be embedded within the CExoLocString. A CExoLoc
 contain zero or more normal strings, each paired with a language ID that identifies what
 language the string should be displayed for.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 In the presence of both embedded strings and a valid StringRef, the behaviour is up to the
 application. In the toolset, embedded strings take precedence, assuming that there is an
 embedded string for the user's language. As with CExoStrings, embedded strings in
@@ -259,11 +269,10 @@ associated with it.
 It is this labelling of data elements that makes GFF useful for storing data structures that are subject to
 change. When new  information is added to a data structure, old GFF files can still be read because the
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 old data is fetched by Label rather than by offset. That is, no assumptions are made as to where one
 variable is relative to another in the file.
 3. File Format Physical Layout
@@ -299,12 +308,10 @@ FieldDataOffset
 FieldIndicesOffset
 ListIndicesOffset
 
-
-
 ## Page 6
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3.2. Header
 The GFF header contains a number of values, all of them DWORDs (32-bit unsigned integers). The
 header contains offset information for all the other sections in the GFF file. Values in the header are as
@@ -359,11 +366,10 @@ Since the Top-Level Struct is always present, every GFF file contains at least o
 Array.
 The Struct Array looks like this:
 
-
 ## Page 7
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Figure 3.3: Struct Array
 Struct 0 (Top-Level Struct)
 . . .
@@ -403,11 +409,10 @@ N = Header.FieldCount
 
 Each Field contains the values listed in the table below. All of the values are DWORDs.
 
-
 ## Page 8
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.4a: Field Format
 Value
 Description
@@ -428,41 +433,44 @@ Type ID
 Type
 Complex?
 0
+
 ### BYTE
 
-
 1
+
 ### CHAR
 
-
 2
+
 ### WORD
 
-
 3
+
 ### SHORT
 
-
 4
-### DWORD
 
+### DWORD
 
 5
 INT
 
 6
+
 ### DWORD64
 
 yes
 7
+
 ### INT64
 
 yes
 8
+
 ### FLOAT
 
-
 9
+
 ### DOUBLE
 
 yes
@@ -476,6 +484,7 @@ yes
 CExoLocString
 yes
 13
+
 ### VOID
 
 yes
@@ -504,11 +513,10 @@ The Label Array is a list of all the Labels used in a GFF file.
 Note that a single Label may be referenced by more than one Field. When multiple Fields have Labels
 with the exact same text, they share the same Label element instead of each having their own copy. This
 
-
 ## Page 9
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 sharing occurs regardless of what Struct the Field belongs to. All Labels in the Label Array should be
 unique.
 Also, the Fields belonging to a Struct must all use different Labels. It is permissible, however, for Fields
@@ -538,11 +546,10 @@ The List Indices Array contains a sequence of List elements packed end-to-end.
 A List is an array of Structs, and being array, its length is variable. The format of a List is as shown
 below:
 
-
 ## Page 10
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Figure 3.8: List Format
 Size (DWORD)
 . . .
@@ -558,14 +565,17 @@ There are Size DWORDS after that, each one an index into the Struct Array.
 4.  Complex Field Data: Descriptions and Physical Format
 This section describes the byte-by-byte makeup of each of the complex Field types' data, as they are
 stored in the Field Data Block.
+
 ### 4.1. DWORD64
 
 A DWORD64 is a 64-bit (8-byte) unsigned integer. As with all integer values in GFF, the least
 significant byte comes first, and the most significant byte is last.
+
 ### 4.2. INT64
 
 An INT64 is a 64-bit (8-byte) signed integer. As with all integer values in GFF, the least significant
 byte comes first, and the most significant byte is last.
+
 ### 4.3. DOUBLE
 
 A DOUBLE is a double-precision floating point value, and takes up 8 bytes. It is stored in little-endian
@@ -574,11 +584,10 @@ byte order, with the least significant byte first.
 4.4. CExoString
 A CExoString is a simple character string datatype. The figure below shows the layout of a CExoString:
 
-
 ## Page 11
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Figure 4.4: CExoString Format
 Size
 (4 bytes long)
@@ -616,11 +625,10 @@ characters in string (1 byte each)
 The first byte is a Size, an unsigned value specifying the number of characters to follow. The Size is 16
 at most. The character string contains no null terminator.
 
-
 ## Page 12
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 4.6. CExoLocString
 A CExoLocString is a localized string. It can contain 0 or more CExoStrings, each one for a different
 language and possibly gender. For a list of language IDs, see Table 2.2b.
@@ -648,11 +656,10 @@ SubStrings the LocString contains. The remainder of the LocString is a list of S
 A LocString SubString has almost the same format as a CExoString, but includes an additional String
 ID at the beginning.
 
-
 ## Page 13
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Figure 4.6b: CExoLocString SubString Format
 . . .
 char 0 (1 byte)
@@ -674,14 +681,14 @@ characters that make up the string. There is no null terminator.
 Void data is an arbitrary sequence of bytes to be interpreted by the application in a programmer-defined
 fashion. The format is shown below:
 
-
 ## Page 14
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Figure 4.7: Void Format
 Size
 (4 byte
+
 ### DWORD)
 
 . . .
@@ -706,5 +713,3 @@ but in the Field Indices Array.
 The starting address of a List is specified in its Field's DataOrDataOffset value as a byte offset into the
 Field Indices Array, at which is located a List element. Section 3.8 describes the structure a List
 element.
-
-

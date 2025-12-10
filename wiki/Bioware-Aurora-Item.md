@@ -1,15 +1,16 @@
 # Item
+
 *Official Bioware Aurora Documentation*
 
 ---
 
 ## Page 1
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Item Format
+
 ### 1. INTRODUCTION
 
 3
@@ -17,6 +18,7 @@ Item Format
 3
 1.2. Terminology
 3
+
 ### 2. ITEM STRUCT
 
 3
@@ -34,6 +36,7 @@ Item Format
 6
 2.4. Item Game Instance Fields
 7
+
 ### 3. INVENTORYOBJECT STRUCT
 
 7
@@ -45,6 +48,7 @@ Item Format
 7
 3.4. InventoryObject Game Instance Fields
 8
+
 ### 4. CALCULATIONS AND PROCEDURES
 
 8
@@ -77,16 +81,15 @@ Item Format
 4.4.2. Multipliers
 12
 
-
 ## Page 2
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 4.4.3. Cast Spell Costs
 13
 4.5. Required Lore and Level
 14
+
 ### 5. ITEM-RELATED 2DA FILES
 
 14
@@ -109,13 +112,11 @@ ItemProperty Param tables
 5.7. Miscellaneous Item Tables
 23
 
-
-
 ## Page 3
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
+
 1. Introduction
 1.1. Overview
 An Item is an object that can be placed in an area, or carried in a container, whether the container be a
@@ -145,6 +146,7 @@ Label
 Type
 Description
 AddCost
+
 ### DWORD
 
 Additional cost
@@ -152,15 +154,18 @@ BaseItem
 INT
 Index into baseitems.2da.
 Charges
+
 ### BYTE
 
 Number of charges left on this item. Note that there is
 no property for the original number of charges.
 Cost
+
 ### DWORD
 
 Cost of the Item
 Cursed
+
 ### BYTE
 
 1 if the item cannot be removed from its container (ie.,
@@ -176,16 +181,15 @@ LocName
 CExoLocString
 Name of the Item as it appears on the toolset's Item
 
-
 ## Page 4
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 palette, in the Name field of the toolset's Item
 Properties dialog, and in the game if it has been
 Identified.
 Plot
+
 ### BYTE
 
 1 if this is a Plot Item. Plot Items cannot be sold.
@@ -195,12 +199,14 @@ List
 List of ItemProperty Structs. StructID 0. See Section
 2.1.3.
 StackSize
+
 ### WORD
 
 1 if item has an unstackable base item type.
 Otherwise, this is the stack size of the item, always
 greater than or equal to 1. (eg., 50 arrows)
 Stolen
+
 ### BYTE
 
 1 if stolen
@@ -225,31 +231,37 @@ Label
 Type
 Description
 Cloth1Color
+
 ### BYTE
 
 Index into a row of pixels in pal_cloth01.tga.
 Specifies the colors to use for cloth1 PLT layer.
 Cloth2Color
+
 ### BYTE
 
 Index into a row of pixels in pal_cloth01.tga.
 Specifies the colors to use for cloth2 PLT layer.
 Leather1Color
+
 ### BYTE
 
 Index into a row of pixels in pal_leath01.tga.
 Specifies the colors to use for leather1 PLT layer.
 Leather2Color
+
 ### BYTE
 
 Index into a row of pixels in pal_leath01.tga.
 Specifies the colors to use for leather2 PLT layer.
 Metal1Color
+
 ### BYTE
 
 index into a row of pixels in pal_armor01.tga.
 Specifies the colors to use for metal1 PLT layer.
 Metal2Color
+
 ### BYTE
 
 index into a row of pixels in pal_armor01.tga.
@@ -259,6 +271,7 @@ Label
 Type
 Description
 ModelPart1
+
 ### BYTE
 
 part number
@@ -267,14 +280,17 @@ Label
 Type
 Description
 ModelPart1
+
 ### BYTE
 
 part number
 ModelPart2
+
 ### BYTE
 
 part number
 ModelPart3
+
 ### BYTE
 
 part number
@@ -283,31 +299,34 @@ Label
 Type
 Description
 ArmorPart_Belt
+
 ### BYTE
 
 Index into parts_belt.2da
 
-
 ## Page 5
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 ArmorPart_LBicep BYTE
 Index into parts_bicep.2da
 ArmorPart_LFArm
+
 ### BYTE
 
 Index into parts_forearm.2da
 ArmorPart_LFoot
+
 ### BYTE
 
 Index into parts_foot.2da
 ArmorPart_LHand
+
 ### BYTE
 
 Index into parts_hand.2da
 ArmorPart_LShin
+
 ### BYTE
 
 Index into parts_shin.2da
@@ -316,6 +335,7 @@ Index into parts_shoulder.2da
 ArmorPart_LThigh BYTE
 Index into parts_legs.2da
 ArmorPart_Neck
+
 ### BYTE
 
 Index into parts_neck.2da
@@ -324,22 +344,27 @@ Index into parts_pelvis.2da
 ArmorPart_RBicep BYTE
 Index into parts_bicep.2da
 ArmorPart_RFArm
+
 ### BYTE
 
 Index into parts_forearm.2da
 ArmorPart_RFoot
+
 ### BYTE
 
 Index into parts_foot.2da
 ArmorPart_RHand
+
 ### BYTE
 
 Index into parts_hand.2da
 ArmorPart_Robe
+
 ### BYTE
 
 Index into parts_robe.2da
 ArmorPart_RShin
+
 ### BYTE
 
 Index into parts_shin.2da
@@ -348,6 +373,7 @@ Index into parts_shoulder.2da
 ArmorPart_RThigh BYTE
 Index into parts_legs.2da
 ArmorPart_Torso
+
 ### BYTE
 
 Index into parts_torso.2da
@@ -358,10 +384,12 @@ Label
 Type
 Description
 ChanceAppear
+
 ### BYTE
 
 Obsolete. Always 100.
 CostTable
+
 ### BYTE
 
 Index into iprp_costtable.2da.
@@ -372,6 +400,7 @@ PropertyName Field.
 
 Must always be specified.
 CostValue
+
 ### WORD
 
 Index into a cost table.
@@ -382,6 +411,7 @@ specified by the CostTable Field.
 
 Must always be specified.
 Param1
+
 ### BYTE
 
 Index into iprp_paramtable.2da. Specifies a params
@@ -398,19 +428,17 @@ table (see the Subtype Field description in this struct)
 or if there is a Param1ResRef column and the value is
 **** in the row indexed by the Subtype Field.
 
-
-
 ## Page 6
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 If there is no Subtype: there are no parameters if the
 itempropdef.2da has **** as the value under its
 Param1ResRef column at the row indexed by the
 PropertyName Field.
 
 Param1Value
+
 ### BYTE
 
 Index into a params 2da.
@@ -422,20 +450,24 @@ row specified by the Param1 Field.
 If an ItemProperty does not have a params table, this
 Field defaults to 0.
 Param2
+
 ### BYTE
 
 Obsolete. Would be the same as Param1 but using the
 Param1ResRef column instead.
 Param2Value
+
 ### BYTE
 
 Obsolete. Would be the same as Param1.
 PropertyName
+
 ### WORD
 
 Index into itempropdefs.2da.
 Must always be specified.
 Subtype
+
 ### WORD
 
 Index into a item property subtype 2da.
@@ -456,6 +488,7 @@ Comment
 CExoString
 Module designer comment.
 PaletteID
+
 ### BYTE
 
 ID of the node that the Item Blueprint appears under in
@@ -481,14 +514,13 @@ CResRef
 For instances, this is the ResRef of the blueprint that
 the instance was created from.
 
-
 ## Page 7
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 XOrientation
 YOrientation
+
 ### FLOAT
 
 x,y vector pointing in the direction of the item's
@@ -496,6 +528,7 @@ orientation
 XPosition
 YPosition
 ZPosition
+
 ### FLOAT
 
 (x,y,z) coordinates of the Item within the Area that it is
@@ -509,6 +542,7 @@ Label
 Type
 Description
 ObjectId
+
 ### DWORD
 
 Object ID used by game for this object.
@@ -532,10 +566,12 @@ Label
 Type
 Description
 Repos_PosX
+
 ### WORD
 
 x-position of item in inventory grid
 Repos_PosY
+
 ### WORD
 
 y-position of item in inventory grid
@@ -552,12 +588,10 @@ ResRef of UTI Item Blueprint file
 An Item Instance Struct in a GIT file contains all the Fields in Table 3.1, plus those in Item Instances,
 as given in Tables 2.1.1 and 2.3.
 
-
 ## Page 8
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3.4. InventoryObject Game Instance Fields
 An Item Instance Struct in a GIT file contains all the Fields in Table 3.1, plus those in Item Game
 Instances, as given in Tables 2.1.1, 2.3, and 2.4.
@@ -583,9 +617,9 @@ will be used instead.
 The icon for an item must have dimensions equal to 32 pixels multiplied by the InvSlotWidth and
 InvSlotHeight values from baseitems.2da.
 4.1.1. Simple
-Model = <ItemClass>_<number>.mdl
+Model = <ItemClass>*<number>.mdl
 (eg., it_torch_001.mdl)
-Icon = i<ItemClass>_<number>.tga
+Icon = i<ItemClass>*<number>.tga
 (eg., iit_torch_001.tga)
 Simple item types typically use one model for all variants, with only the icon being different.
 The available icons in the toolset consist of all existing TGA icons from the MinRange to the
@@ -593,21 +627,19 @@ MaxRange as specified in baseitems.2da, using the Icon ResRef naming convention 
 4.1.2. Layered
 Model = <ItemClass>_<number>.mdl
 
-
 ## Page 9
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 (eg., helm_001.mdl)
-Icon = i<ItemClass>_<number>.plt
+Icon = i<ItemClass>*<number>.plt
 (eg., ihelm_001.plt)
 The available parts are determined by scanning for all existing PLT icons from the MinRange to the
 MaxRange as specified in baseitems.2da, using the Icon ResRef naming convention given above. If an
 icon exists, assume that the MDL also exists and make that part number selectable in the toolset.
 (Exception: for helmets: check for the MDL instead of the PLT)
 4.1.3. Composite
-Model = <ItemClass>_<position>_<number>.mdl
+Model = <ItemClass>*<position>*<number>.mdl
 (eg., waxbt_b_011.mdl, waxbt_m_011.mdl, waxbt_t_011.mdl)
 Icon = i<Model ResRef>.tga
 (eg., iwaxbt_b_011.tga, iwaxbt_m_011.tga, iwaxbt_t_011.tga)
@@ -632,17 +664,15 @@ exists, for example, then assume that 083 and 084 also exist
 When drawing the Icon for a composite item, the 3 portions are painted one after the other in the order:
 bottom, middle, top. The order is important because the icons overlap.
 4.1.4. Armor
-Model = p<gender><race><phenotype>_<bodypart><number>.mdl
+Model = p<gender><race><phenotype>*<bodypart><number>.mdl
 
 (eg., pmh0_chest001.mdl)
 Icon = ip<gender>_<bodypart><number>.plt
 
-
 ## Page 10
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 
 (eg., ipm_chest001.plt)
 where
@@ -702,12 +732,10 @@ does not appear in the armor icon, and its 3D model is not rendered. The parts_r
 additional columns beyond those normally present in a parts 2da. There exists one column for every
 other part, each one titled HIDE<PART>, where <PART> is one of the values in the Body Part
 
-
 ## Page 11
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 column of Table 4.1.4. For example, HIDEFOREL, HIDELEGR and HIDECHEST. Each
 HIDE<PART> column contains a 1 if the specified part is hidden by the robe, or 0 if not.
 4.2. Property Availability
@@ -744,12 +772,10 @@ If there is a subtype table, load it and use the ItemProperty Struct's Subtype F
 In itempropdef.2da, look up the CostTableResRef number at the row indexed by the ItemProperty
 Struct's PropertyName Field. This should be the same as the ItemProperty Struct's CostTable Field.
 
-
 ## Page 12
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Use the CostTableResRef value as an index into iprp_costtable.2da and get the string under the Name
 column. This is the ResRef of the cost table 2da to use.
 Load the cost table 2da. Using the ItemProperty Struct's CostValue Field as an index into the cost table,
@@ -785,12 +811,10 @@ ACBONUS from parts_chest.2da, using the part number of the chest as the index in
 4.4.2. Multipliers
 Multiplier is the sum of the costs of all the Item Properties whose costs are positive. That is:
 
-
 ## Page 13
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 NegMultiplier is the sum of the costs of all Item Properties whose costs are negative.
 If an Item Property has a PropertyName of 15 (Cast Spell), then omit it from the
 Multiplier/NegMultiplier totals. It will be handled when calculating the SpellCosts instead.
@@ -829,12 +853,10 @@ Most expensive: multiply by 100%
 •
 Second most expensive: multiply by 75%
 
-
 ## Page 14
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 •
 All others: multiply by 50%
 After adjusting the CastSpellCosts, add them up to obtain the total SpellCosts value. Use the total
@@ -872,46 +894,59 @@ inventory grid squares.
 EquipableSlots
 Integer
 Set of bit flags specifying where the item can be equipped.
+
 ### HEAD
 
 0x1
+
 ### CHEST
 
 0x2
+
 ### BOOTS
 
 0x4
+
 ### ARMS
 
 0x8
+
 ### RIGHTHAND
 
 0x10
+
 ### LEFTHAND
 
 0x20
+
 ### CLOAK
 
 0x40
+
 ### LEFTRING
 
 0x80
+
 ### RIGHTRING
 
 0x100
+
 ### NECK
 
 0x200
+
 ### BELT
 
-
 0x400
+
 ### ARROWS
 
 0x800
+
 ### BULLETS
 
 0x1000
+
 ### BOLTS
 
 0x2000
@@ -925,7 +960,9 @@ See Section 4.1.
 Value
 Description
 Has Color Layers
+
 # of parts
+
 0
 simple
 no
@@ -937,17 +974,14 @@ layered
 yes
 1
 
-
 ## Page 15
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 2
 composite
 no
 3
-
 
 3
 armor
@@ -1039,12 +1073,10 @@ CritThread
 Integer
 Critical threat range. **** for non-weapons.
 
-
 ## Page 16
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 CritHitMult
 Integer
 Critical hit multiplier. **** for non-weapons.
@@ -1102,8 +1134,8 @@ inventory during the game.
 The resref is contructed in the following way:
 
 Non-Armor
-### XX_YYYYY
 
+### XX_YYYYY
 
 XX = PU or DR for pickup/equipping and
 drop/unequpping.
@@ -1122,12 +1154,10 @@ Column of itemprops.2da.that defines what item
 properties are available for this baseitem.
 There is a one-to-one correspondence between rows in
 
-
 ## Page 17
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 itemprops.2da and itempropdefs.2da.
 If a baseitem can have a certain property, its row in
 itemprops.2da is 1. If not, then the value is ****.
@@ -1215,12 +1245,10 @@ Left-Slash and Stab should add up to 100, and Right-Slash
 and Stab should add up to 100.
 The Left and Right slash percentages are the chances of
 
-
 ## Page 18
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 doing that move if the wielder is in the already proper
 stance. For example, a creature in the right-ready combat
 animation can only left-slash or stab, and after a left-slash,
@@ -1297,12 +1325,10 @@ The value is **** if the property is not available
 
 See Section 4.2.
 
-
 ## Page 19
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 StringRef
 Integer
 StrRef of the property name. Should be the same as the
@@ -1380,12 +1406,10 @@ Spell Level.
 Cantrips are 0.5. All other spells have InnateLvl equal to
 their Spell Level.
 
-
 ## Page 20
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 SpellIndex
 Integer
 Index into spells.2da
@@ -1473,12 +1497,10 @@ Value
 Integer
 Amount of bonus to ability score, etc. as appropriate.
 
-
 ## Page 21
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 5.5.4: iprp_chargecost.2da additional columns
 Additional Column
 Type
@@ -1580,12 +1602,10 @@ Amount
 Integer
 In damage reduction, the number of hit points by which to
 
-
 ## Page 22
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 reduce the damage taken from an attack that does not
 exceed the required attack bonus.
 Table 5.5.15: spellcost.2da additional columns
@@ -1658,33 +1678,35 @@ Value
 Float
 Additional weight in pounds.
 
-
 ## Page 23
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 5.7. Miscellaneous Item Tables
 5.7.1. Item Valuation
 Table 5.7.1.1: itemvalue.2da columns
 Column
 Type
 Description
+
 ### LABEL
 
 String
 Programmer label. A String referring to the character level
 that the row corresponds to. Row 0 is level 1, row 1 is
 level 2, and so on.
+
 ### DESIREDTREASURE
 
 Integer
 Always 0
+
 ### MAXSINGLEITEMVALUE
 
 Integer
 Cost of the most expensive item that a character of level
 (row+1) can use.
+
 ### TOTALVALUEFILTER
 
 Integer
@@ -1721,15 +1743,18 @@ Table 5.7.2.1: capart.2da columns
 Column
 Type
 Description
+
 ### NAME
 
 String
 Always 0.
+
 ### MDLNAME
 
 String
 <bodypart> portion of an armor part ResRef. See Section
 4.1.4.
+
 ### NODENAME
 
 String
@@ -1738,47 +1763,53 @@ Table 5.7.2.2: armor.2da columns
 Column
 Type
 Description
+
 ### ACBONUS
 
 Integer
 Base AC bonus of the item
+
 ### DEXBONUS
 
 Integer
 Max Dexterity bonus when wearing armor of this AC
+
 ### ACCHECK
 
 Integer
 Armor Skill Check penalty
+
 ### ARCANEFAILURE%
 
 Integer
 Percent chance of Arcane Spell Failure
+
 ### WEIGHT
 
 Integer
 Weight of armor having this AC
+
 ### COST
 
 Integer
 BaseCost for an armor item that has this AC
+
 ### DESCRIPTIONS
 
 Integer
 StrRef of a qualitative description of this armor type, that
 does not include statistics.
+
 ### BASEITEMSTATREF
 
 Integer
 StrRef of description that includes statistics on the armor
 type.
 
-
 ## Page 24
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 5.7.3. Weapon Combat Sounds
 The weaponsounds.2da file specifies what sounds play when weapons of specific types hit targets of
 various material types. Each row refers to a weapon type. In baseitems.2da, the WeaponMatType
@@ -1804,14 +1835,17 @@ Leather0
 Leather1
 String
 -
+
 Chain0
 Chain1
 String
 -
+
 Plate0
 Plate1
 String
 -
+
 Stone0
 Stone1
 String
@@ -1830,18 +1864,22 @@ Chitin0
 Chitin1
 String
 -
+
 Scale0
 Scale1
 String
 -
+
 Ethereal0
 Ethereal1
 String
 -
+
 Miss0
 Miss1
 String
 -
+
 Parry0
 String
 Played on a parry or on a miss that caused the parry
@@ -1863,12 +1901,10 @@ when creature is hit.
 
 **** means to use the ArmorType from armourtypes.2da
 
-
 ## Page 25
 
-
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 for the armor that the creature is wearing.
 WeapTypeL
 WeapTypeR
@@ -1905,6 +1941,3 @@ the creature is wearing.
 ArmorType
 String
 Armor type. Use as column name in weaponsounds.2da.
-
-
-

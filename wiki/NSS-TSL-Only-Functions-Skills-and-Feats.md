@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Functions
 
-
 <a id="adjustcreatureskills"></a>
 
 ## `AdjustCreatureSkills(oObject, nSkill, nAmount)`
@@ -13,7 +12,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - DJS-OEI 10/9/2004
 - This function adjusts a creature's skills.
 - oObject is the creature that will have its skill adjusted
-- The following constants are acceptable for the nSkill parameter:
+- The following constants [ARE](GFF-File-Format#are-area) acceptable for the nSkill parameter:
 
 - `oObject`: object
 - `nSkill`: int
@@ -53,7 +52,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - DJS-OEI 10/10/2004
 - This function returns the base Skill Rank for the requested
 - skill. It does not include modifiers from effects/items.
-- The following constants are acceptable for the nSkill parameter:
+- The following constants [ARE](GFF-File-Format#are-area) acceptable for the nSkill parameter:
 
 - `nSkill`: int
 - `oObject`: object
@@ -68,4 +67,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `nFeat`: int
 - `oCreature`: object
-

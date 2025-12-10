@@ -4,16 +4,15 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="getglobalboolean"></a>
 
 ## `GetGlobalBoolean(sIdentifier)` - Routine 578
 
 - `578. GetGlobalBoolean`
 - GetGlobalBoolean
-- This function returns the value of a global boolean (TRUE or FALSE) scripting variable.
+- This function returns the [value](GFF-File-Format#data-types) of a global boolean (TRUE or FALSE) scripting variable.
 
-- `sIdentifier`: string
+- `sIdentifier`: [string](GFF-File-Format#cexostring)
 
 <a id="getgloballocation"></a>
 
@@ -23,7 +22,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - GetGlobalLocation
 - This function returns the a global location scripting variable.
 
-- `sIdentifier`: string
+- `sIdentifier`: [string](GFF-File-Format#cexostring)
 
 <a id="getglobalnumber"></a>
 
@@ -31,21 +30,21 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `580. GetGlobalNumber`
 - GetGlobalNumber
-- This function returns the value of a global number (-128 to +127) scripting variable.
+- This function returns the [value](GFF-File-Format#data-types) of a global number (-128 to +127) scripting variable.
 
-- `sIdentifier`: string
+- `sIdentifier`: [string](GFF-File-Format#cexostring)
 
 <a id="getglobalstring"></a>
 
 ## `GetGlobalString(sIdentifier)` - Routine 194
 
 - `194. GetGlobalString`
-- Get a global string with the specified identifier
+- Get a global [string](GFF-File-Format#cexostring) with the specified identifier
 - This is an EXTREMELY restricted function.  Use only with explicit permission.
-- This means if you are not Preston.  Then go see him if you're even thinking
+- This means if you [ARE](GFF-File-Format#are-area) not Preston.  Then go see him if you're even thinking
 - about using this.
 
-- `sIdentifier`: string
+- `sIdentifier`: [string](GFF-File-Format#cexostring)
 
 <a id="setglobalboolean"></a>
 
@@ -53,9 +52,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `579. SetGlobalBoolean`
 - SetGlobalBoolean
-- This function sets the value of a global boolean (TRUE or FALSE) scripting variable.
+- This function sets the [value](GFF-File-Format#data-types) of a global boolean (TRUE or FALSE) scripting variable.
 
-- `sIdentifier`: string
+- `sIdentifier`: [string](GFF-File-Format#cexostring)
 - `nValue`: int
 
 <a id="setglobalfadein"></a>
@@ -64,9 +63,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `719. SetGlobalFadeIn`
 - Sets a Fade In that starts after fWait seconds and fades for fLength Seconds.
-- The Fade will be from a color specified by the RGB values fR, fG, and fB.
-- Note that fR, fG, and fB are normalized values.
-- The default values are an immediate cut in from black.
+- The Fade will be from a [color](GFF-File-Format#color) specified by the RGB [values](GFF-File-Format#data-types) fR, fG, and fB.
+- Note that fR, fG, and fB [ARE](GFF-File-Format#are-area) normalized [values](GFF-File-Format#data-types).
+- The default [values](GFF-File-Format#data-types) [ARE](GFF-File-Format#are-area) an immediate cut in from black.
 
 - `fWait`: float (default: `0.0`)
 - `fLength`: float (default: `0.0`)
@@ -80,9 +79,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `720. SetGlobalFadeOut`
 - Sets a Fade Out that starts after fWait seconds and fades for fLength Seconds.
-- The Fade will be to a color specified by the RGB values fR, fG, and fB.
-- Note that fR, fG, and fB are normalized values.
-- The default values are an immediate cut to from black.
+- The Fade will be to a [color](GFF-File-Format#color) specified by the RGB [values](GFF-File-Format#data-types) fR, fG, and fB.
+- Note that fR, fG, and fB [ARE](GFF-File-Format#are-area) normalized [values](GFF-File-Format#data-types).
+- The default [values](GFF-File-Format#data-types) [ARE](GFF-File-Format#are-area) an immediate cut to from black.
 
 - `fWait`: float (default: `0.0`)
 - `fLength`: float (default: `0.0`)
@@ -98,7 +97,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - SetGlobalLocation
 - This function sets the a global location scripting variable.
 
-- `sIdentifier`: string
+- `sIdentifier`: [string](GFF-File-Format#cexostring)
 - `lValue`: location
 
 <a id="setglobalnumber"></a>
@@ -107,9 +106,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `581. SetGlobalNumber`
 - SetGlobalNumber
-- This function sets the value of a global number (-128 to +127) scripting variable.
+- This function sets the [value](GFF-File-Format#data-types) of a global number (-128 to +127) scripting variable.
 
-- `sIdentifier`: string
+- `sIdentifier`: [string](GFF-File-Format#cexostring)
 - `nValue`: int
 
 <a id="setglobalstring"></a>
@@ -117,11 +116,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `SetGlobalString(sIdentifier, sValue)` - Routine 160
 
 - `160. SetGlobalString`
-- Sets a global string with the specified identifier.  This is an EXTREMELY
+- Sets a global [string](GFF-File-Format#cexostring) with the specified identifier.  This is an EXTREMELY
 - restricted function - do not use without expilicit permission.
-- This means if you are not Preston.  Then go see him if you're even thinking
+- This means if you [ARE](GFF-File-Format#are-area) not Preston.  Then go see him if you're even thinking
 - about using this.
 
-- `sIdentifier`: string
-- `sValue`: string
-
+- `sIdentifier`: [string](GFF-File-Format#cexostring)
+- `sValue`: [string](GFF-File-Format#cexostring)

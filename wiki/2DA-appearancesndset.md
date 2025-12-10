@@ -2,21 +2,19 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines sound appearance [types](GFF-File-Format#data-types) for creature appearances. The engine uses this [file](GFF-File-Format) to determine which sound appearance [type](GFF-File-Format#data-types) to use based on the creature's appearance.
 
-**Engine Usage**: Defines sound appearance types for creature appearances. The engine uses this file to determine which sound appearance type to use based on the creature's appearance.
+**Row [index](2DA-File-Format#row-labels)**: Sound Appearance [type](GFF-File-Format#data-types) ID (integer)
 
-**Row Index**: Sound Appearance Type ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Sound appearance type label |
-| Additional columns | Various | Sound appearance type properties |
+| `label` | [string](GFF-File-Format#cexostring) | Sound appearance [type](GFF-File-Format#data-types) label |
+| Additional columns | Various | Sound appearance [type](GFF-File-Format#data-types) properties |
 
 **References**:
 
 - [`vendor/Kotor.NET/Kotor.NET/Tables/Appearance.cs:58-60`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Tables/Appearance.cs#L58-L60) - Comment referencing appearancesndset.2da for SoundAppTypeID
 
 ---
-

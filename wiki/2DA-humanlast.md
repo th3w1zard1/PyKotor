@@ -2,16 +2,14 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Random name generation tables for human characters during character creation. The engine uses these [files](GFF-File-Format) to generate random first and last names for human characters.
 
-**Engine Usage**: Random name generation tables for human characters during character creation. The engine uses these files to generate random first and last names for human characters.
+**Row [index](2DA-File-Format#row-labels)**: Name index (integer)
 
-**Row Index**: Name index (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `name` | String | Name string |
+| `name` | [string](GFF-File-Format#cexostring) | Name [string](GFF-File-Format#cexostring) |
 
 ---
-

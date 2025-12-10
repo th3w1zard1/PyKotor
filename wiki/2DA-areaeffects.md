@@ -2,29 +2,29 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines area effect configurations. The engine uses this file to determine area effect scripts for enter, heartbeat, and exit events.
+**Engine Usage**: Defines area effect configurations. The engine uses this [file](GFF-File-Format) to determine area effect scripts for enter, heartbeat, and exit events.
 
-**Row Index**: Area Effect ID (integer)
+**Row [index](2DA-File-Format#row-labels)**: Area Effect ID (integer)
 
-**Column Structure**:
+**Column [structure](GFF-File-Format#file-structure)**:
 
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Area effect label |
-| `onenter` | ResRef | Script ResRef for on-enter event |
-| `heartbeat` | ResRef | Script ResRef for heartbeat event |
-| `onexit` | ResRef | Script ResRef for on-exit event |
+| `label` | [string](GFF-File-Format#cexostring) | Area effect label |
+| `onenter` | [ResRef](GFF-File-Format#resref) | Script [ResRef](GFF-File-Format#resref) for on-enter event |
+| `heartbeat` | [ResRef](GFF-File-Format#resref) | Script [ResRef](GFF-File-Format#resref) for heartbeat event |
+| `onexit` | [ResRef](GFF-File-Format#resref) | Script [ResRef](GFF-File-Format#resref) for on-exit event |
 | Additional columns | Various | Area effect properties |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:237`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L237) - Script ResRef column definitions for areaeffects.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:237`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L237) - Script [ResRef](GFF-File-Format#resref) column definitions for areaeffects.2da
 
 ---
 
-## Additional Item Property Files
+## Additional Item Property [files](GFF-File-Format)
 
-The following additional 2DA files are used in KotOR games:
+The following additional [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) used in KotOR games:
 
 ## Audio & Music
 
@@ -46,16 +46,16 @@ The game uses numerous item property cost calculation tables. Common patterns in
 - `iprp_onranged*.2da`: On-ranged item property definitions and cost tables
 - `iprp_onmonster*.2da`: On-monster-hit item property definitions and cost tables (for monster weapons)
 
-Each attack type typically has multiple related files for damage, properties, costs, durations, saving throws, and value calculations. Many of these files have numbered variants (e.g., `iprp_onhitpropsvalue2.2da` through `iprp_onhitpropsvalue50.2da`) for different property value ranges.
+Each attack [type](GFF-File-Format#data-types) typically has multiple related [files](GFF-File-Format) for damage, properties, costs, durations, saving throws, and [value](GFF-File-Format#data-types) calculations. Many of these [files](GFF-File-Format) have numbered variants (e.g., `iprp_onhitpropsvalue2.2da` through `iprp_onhitpropsvalue50.2da`) for different property [value](GFF-File-Format#data-types) ranges.
 
-**Note**: Some 2DA files may have variations between KotOR and KotOR 2. Always verify file structure against the specific game version. The reone dataminer tool can extract all 2DA files from game archives to analyze their structure.
+**Note**: Some [2DA files](2DA-File-Format) may have variations between KotOR and KotOR 2. Always verify [file](GFF-File-Format) [structure](GFF-File-Format#file-structure) against the specific game version. The reone dataminer tool can extract all [2DA files](2DA-File-Format) from game archives to analyze their [structure](GFF-File-Format#file-structure).
 
 **References**:
 
-- [`vendor/reone/src/apps/dataminer/2daparsers.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/apps/dataminer/2daparsers.cpp) - Tool for extracting and analyzing all 2DA files from game archives
+- [`vendor/reone/src/apps/dataminer/2daparsers.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/apps/dataminer/2daparsers.cpp) - Tool for extracting and analyzing all [2DA files](2DA-File-Format) from game archives
 
 ---
 
-2DA files are the primary configuration mechanism for KotOR's game rules and content. Nearly every game system references at least one 2DA file for its behavior.
+[2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) the primary configuration mechanism for KotOR's game rules and content. Nearly every game system references at least one [2DA file](2DA-File-Format) for its behavior.
 
 ---

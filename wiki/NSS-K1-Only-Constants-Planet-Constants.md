@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** K1-Only Constants
 
-
 <a id="planet_endar_spire"></a>
 
 ## `PLANET_ENDAR_SPIRE`
@@ -54,4 +53,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 (9): Planet Unknown World
 
 <!-- K1_ONLY_CONSTANTS_END -->
-

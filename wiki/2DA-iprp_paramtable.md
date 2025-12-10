@@ -2,16 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Master table listing all item property parameter tables. The engine uses this [file](GFF-File-Format) to look up which parameter table to use for a specific item property [type](GFF-File-Format#data-types).
 
-**Engine Usage**: Master table listing all item property parameter tables. The engine uses this file to look up which parameter table to use for a specific item property type.
+**Row [index](2DA-File-Format#row-labels)**: Parameter Table ID (integer)
 
-**Row Index**: Parameter Table ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Parameter table label |
+| `label` | [string](GFF-File-Format#cexostring) | Parameter table label |
 | Additional columns | Various | Parameter table ResRefs and properties |
 
 **References**:
@@ -21,4 +20,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`Tools/HolocronToolset/src/toolset/gui/editors/uti.py:517-558`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/uti.py#L517-L558) - Parameter table lookup in item editor
 
 ---
-

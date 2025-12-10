@@ -4,24 +4,23 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Constants (K1 & TSL)
 
-
 <a id="inventory_disturb_type_added"></a>
 
 ## `INVENTORY_DISTURB_TYPE_ADDED`
 
-(0): Inventory Disturb Type Added
+(0): Inventory Disturb [type](GFF-File-Format#data-types) Added
 
 <a id="inventory_disturb_type_removed"></a>
 
 ## `INVENTORY_DISTURB_TYPE_REMOVED`
 
-(1): Inventory Disturb Type Removed
+(1): Inventory Disturb [type](GFF-File-Format#data-types) Removed
 
 <a id="inventory_disturb_type_stolen"></a>
 
 ## `INVENTORY_DISTURB_TYPE_STOLEN`
 
-(2): Inventory Disturb Type Stolen
+(2): Inventory Disturb [type](GFF-File-Format#data-types) Stolen
 
 <a id="inventory_slot_belt"></a>
 
@@ -106,4 +105,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `NUM_INVENTORY_SLOTS`
 
 (18): Num Inventory Slots
-

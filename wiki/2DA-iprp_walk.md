@@ -2,16 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Maps item property [values](GFF-File-Format#data-types) to movement/walk speed modifiers. The engine uses this [file](GFF-File-Format) to determine movement speed calculations for item properties.
 
-**Engine Usage**: Maps item property values to movement/walk speed modifiers. The engine uses this file to determine movement speed calculations for item properties.
+**Row [index](2DA-File-Format#row-labels)**: Item Property Value (integer)
 
-**Row Index**: Item Property Value (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Property value label |
+| `label` | [string](GFF-File-Format#cexostring) | Property [value](GFF-File-Format#data-types) label |
 | Additional columns | Various | Movement speed mappings |
 
 **References**:
@@ -20,4 +19,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`Tools/HolocronToolset/src/toolset/data/installation.py:89`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L89) - HTInstallation constant
 
 ---
-

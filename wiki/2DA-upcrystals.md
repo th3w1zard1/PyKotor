@@ -2,24 +2,22 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines upgrade crystal configurations. The engine uses this [file](GFF-File-Format) to determine crystal [model](MDL-MDX-File-Format) variations for lightsaber upgrades.
 
-**Engine Usage**: Defines upgrade crystal configurations. The engine uses this file to determine crystal model variations for lightsaber upgrades.
+**Row [index](2DA-File-Format#row-labels)**: Upgrade Crystal ID (integer)
 
-**Row Index**: Upgrade Crystal ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Upgrade crystal label |
-| `shortmdlvar` | ResRef | Short model variation ResRef |
-| `longmdlvar` | ResRef | Long model variation ResRef |
-| `doublemdlvar` | ResRef | Double-bladed model variation ResRef |
+| `label` | [string](GFF-File-Format#cexostring) | Upgrade crystal label |
+| `shortmdlvar` | [ResRef](GFF-File-Format#resref) | Short [model](MDL-MDX-File-Format) variation [ResRef](GFF-File-Format#resref) |
+| `longmdlvar` | [ResRef](GFF-File-Format#resref) | Long [model](MDL-MDX-File-Format) variation [ResRef](GFF-File-Format#resref) |
+| `doublemdlvar` | [ResRef](GFF-File-Format#resref) | [double](GFF-File-Format#double)-bladed [model](MDL-MDX-File-Format) variation [ResRef](GFF-File-Format#resref) |
 | Additional columns | Various | Crystal properties |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:172`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L172) - Model ResRef column definitions for upcrystals.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:172`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L172) - [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#resref) column definitions for upcrystals.2da
 
 ---
-

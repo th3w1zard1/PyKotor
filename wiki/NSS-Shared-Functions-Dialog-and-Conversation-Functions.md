@@ -4,14 +4,13 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="barkstring"></a>
 
 ## `BarkString(oCreature, strRef)` - Routine 671
 
 - `671. BarkString`
 - BarkString
-- this will cause a creature to bark the strRef from the talk table
+- this will cause a creature to bark the [StrRef](TLK-File-Format#string-references-strref) from the [Talk Table](TLK-File-Format)
 - If creature is specefied as OBJECT_INVALID a general bark is made.
 
 - `oCreature`: object
@@ -23,7 +22,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `255. BeginConversation`
 - Use this in an OnDialog script to start up the dialog tree.
-- - sResRef: if this is not specified, the default dialog file will be used
+- - sResRef: if this is not specified, the default dialog [file](GFF-File-Format) will be used
 - - oObjectToDialog: if this is not specified the person that triggered the
 - event will be used
 
@@ -49,7 +48,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetIsConversationActive()` - Routine 701
 
 - `701. GetIsConversationActive`
-- Checks to see if any conversations are currently taking place
+- Checks to see if any conversations [ARE](GFF-File-Format#are-area) currently taking place
 
 <a id="getisinconversation"></a>
 
@@ -66,14 +65,14 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `711. GetLastConversation`
 - GetLastConversation
-- Gets the last conversation string.
+- Gets the last conversation [string](GFF-File-Format#cexostring).
 
 <a id="getlastspeaker"></a>
 
 ## `GetLastSpeaker()` - Routine 254
 
 - `254. GetLastSpeaker`
-- Use this in a conversation script to get the person with whom you are conversing.
+- Use this in a conversation script to get the person with whom you [ARE](GFF-File-Format#are-area) conversing.
 - - Returns OBJECT_INVALID if the caller is not a valid creature.
 
 <a id="holdworldfadeinfordialog"></a>
@@ -122,7 +121,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `505. SetLockOrientationInDialog`
 - SetLockOrientationInDialog
-- Allows the locking and unlocking of orientation changes for an object in dialog
+- Allows the locking and unlocking of [orientation](MDL-MDX-File-Format#node-header) changes for an object in dialog
 - - oObject - Object
 - - nValue - TRUE or FALSE
 
@@ -136,8 +135,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `417. SpeakOneLinerConversation`
 - Immediately speak a conversation one-liner.
 - - sDialogResRef
-- - oTokenTarget: This must be specified if there are creature-specific tokens
-- in the string.
+- - oTokenTarget: This must be specified if there [ARE](GFF-File-Format#are-area) creature-specific tokens
+- in the [string](GFF-File-Format#cexostring).
 
 - `sDialogResRef`: string (default: ``)
 - `oTokenTarget`: object (default: `32767`)
@@ -152,6 +151,5 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - sStringToSpeak
 - - nTalkVolume: TALKVOLUME_*
 
-- `sStringToSpeak`: string
+- `sStringToSpeak`: [string](GFF-File-Format#cexostring)
 - `nTalkVolume`: int (default: `0`)
-

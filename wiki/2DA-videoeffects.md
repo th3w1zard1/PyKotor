@@ -2,16 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines video/camera effects for dialog conversations. The engine uses this [file](GFF-File-Format) to determine which visual effect to apply during dialog camera shots.
 
-**Engine Usage**: Defines video/camera effects for dialog conversations. The engine uses this file to determine which visual effect to apply during dialog camera shots.
+**Row [index](2DA-File-Format#row-labels)**: Video Effect ID (integer)
 
-**Row Index**: Video Effect ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Video effect label |
+| `label` | [string](GFF-File-Format#cexostring) | Video effect label |
 | Additional columns | Various | Video effect properties |
 
 **References**:
@@ -21,4 +20,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`Tools/HolocronToolset/src/toolset/gui/editors/dlg/editor.py:1263-1298`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/dlg/editor.py#L1263-L1298) - Video effect loading in dialog editor
 
 ---
-

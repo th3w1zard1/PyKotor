@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Functions
 
-
 <a id="actionfollowowner"></a>
 
 ## `ActionFollowOwner(fRange)`
@@ -26,4 +25,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Forces the creature to switch between Config 1 and Config 2
 - of their equipment. Does not work in dialogs. Works with
 - AssignCommand()
-

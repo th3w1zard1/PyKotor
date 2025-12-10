@@ -1,21 +1,20 @@
-# GIT (Game Instance Template)
+# GIT ([game instance template](GFF-File-Format#git-game-instance-template))
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-
-GIT files store dynamic instance data for areas, defining where creatures, doors, placeables, triggers, waypoints, stores, encounters, sounds, and cameras are positioned in the game world. While ARE files define static environmental properties, GIT files contain all runtime object placement and instance-specific properties.
+[GIT files](GFF-File-Format#git-game-instance-template) store dynamic instance [data](GFF-File-Format#file-structure) for areas, defining where creatures, doors, placeables, triggers, waypoints, stores, encounters, sounds, and cameras [ARE](GFF-File-Format#are-area) positioned in the game world. While [ARE](GFF-File-Format#are-area) [files](GFF-File-Format) define static environmental properties, [GIT files](GFF-File-Format#git-game-instance-template) contain all runtime object placement and instance-specific properties.
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/git.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/git.py)
 
-## Area Properties
+## [area properties](GFF-File-Format#are-area)
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `AmbientSndDay` | Int | Day ambient sound ID |
 | `AmbientSndDayVol` | Int | Day ambient volume (0-127) |
 | `AmbientSndNight` | Int | Night ambient sound ID |
 | `AmbientSndNightVol` | Int | Night ambient volume |
-| `EnvAudio` | Int | Environment audio type |
+| `EnvAudio` | Int | Environment audio [type](GFF-File-Format#data-types) |
 | `MusicBattle` | Int | Battle music track ID |
 | `MusicDay` | Int | Standard/exploration music ID |
 | `MusicNight` | Int | Night music track ID |
@@ -25,7 +24,7 @@ GIT files store dynamic instance data for areas, defining where creatures, doors
 
 - **Ambient Sounds**: Looping background ambience
 - **Music Tracks**: From `ambientmusic.2da` and `musicbattle.2da`
-- **EnvAudio**: Reverb/echo type for area
+- **EnvAudio**: Reverb/echo [type](GFF-File-Format#data-types) for area
 - **MusicDelay**: Prevents instant music start
 
 **Music System:**
@@ -37,9 +36,9 @@ GIT files store dynamic instance data for areas, defining where creatures, doors
 
 ## Instance Lists
 
-GIT files contain multiple lists defining object instances:
+[GIT](GFF-File-Format#git-game-instance-template) [files](GFF-File-Format) contain multiple lists defining object instances:
 
-| List Field | Contains | Description |
+| List [field](GFF-File-Format#file-structure) | Contains | Description |
 | ---------- | -------- | ----------- |
 | `Creature List` | GITCreature | Spawned NPCs and enemies |
 | `Door List` | GITDoor | Placed doors |
@@ -51,120 +50,120 @@ GIT files contain multiple lists defining object instances:
 | `SoundList` | GITSound | Positional audio emitters |
 | `CameraList` | GITCamera | Camera definitions |
 
-**Instance Structure:**
+**Instance [structure](GFF-File-Format#file-structure):**
 
-Each instance type has common fields plus type-specific data:
+Each instance [type](GFF-File-Format#data-types) has common [fields](GFF-File-Format#file-structure) plus [type](GFF-File-Format#data-types)-specific [data](GFF-File-Format#file-structure):
 
-**Common Instance Fields:**
+**Common Instance [fields](GFF-File-Format#file-structure):**
 
-- Position (X, Y, Z coordinates)
-- Orientation (quaternion or Euler angles)
-- Template ResRef (UTC, UTD, UTP, etc.)
+- Position (X, Y, Z [coordinates](GFF-File-Format#are-area))
+- Orientation ([quaternion](MDL-MDX-File-Format#node-header) or Euler angles)
+- Template ResRef ([UTC](GFF-File-Format#utc-creature), [UTD](GFF-File-Format#utd-door), [UTP](GFF-File-Format#utp-placeable), etc.)
 - Tag override (optional)
 
 ## GITCreature Instances
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | UTC template to spawn |
-| `XPosition` | Float | World X coordinate |
-| `YPosition` | Float | World Y coordinate |
-| `ZPosition` | Float | World Z coordinate |
-| `XOrientation` | Float | Orientation X component |
-| `YOrientation` | Float | Orientation Y component |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | [UTC](GFF-File-Format#utc-creature) template to spawn |
+| `XPosition` | Float | World X [coordinate](GFF-File-Format#are-area) |
+| `YPosition` | Float | World Y [coordinate](GFF-File-Format#are-area) |
+| `ZPosition` | Float | World Z [coordinate](GFF-File-Format#are-area) |
+| `XOrientation` | Float | [orientation](MDL-MDX-File-Format#node-header) X component |
+| `YOrientation` | Float | [orientation](MDL-MDX-File-Format#node-header) Y component |
 
 **Creature Spawning:**
 
-- Engine loads UTC template
-- Applies position/orientation from GIT
+- Engine loads [UTC](GFF-File-Format#utc-creature) template
+- Applies [position](MDL-MDX-File-Format#node-header)/[orientation](MDL-MDX-File-Format#node-header) from [GIT](GFF-File-Format#git-game-instance-template)
 - Creature initialized with template stats
 - Scripts fire after spawn
 
 ## GITDoor Instances
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | UTD template |
-| `Tag` | CExoString | Instance tag override |
-| `LinkedToModule` | ResRef | Destination module |
-| `LinkedTo` | CExoString | Destination waypoint tag |
-| `LinkedToFlags` | Byte | Transition flags |
-| `TransitionDestin` | CExoLocString | Destination label (UI) |
-| `X`, `Y`, `Z` | Float | Position coordinates |
-| `Bearing` | Float | Door orientation |
-| `TweakColor` | DWord | Door color tint |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | [UTD](GFF-File-Format#utd-door) template |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Instance tag override |
+| `LinkedToModule` | [ResRef](GFF-File-Format#resref) | Destination module |
+| `LinkedTo` | [CExoString](GFF-File-Format#cexostring) | Destination waypoint tag |
+| `LinkedToFlags` | Byte | Transition [flags](GFF-File-Format#data-types) |
+| `TransitionDestin` | [CExoLocString](GFF-File-Format#localizedstring) | Destination label (UI) |
+| `X`, `Y`, `Z` | Float | [position](MDL-MDX-File-Format#node-header) [coordinates](GFF-File-Format#are-area) |
+| `Bearing` | Float | Door [orientation](MDL-MDX-File-Format#node-header) |
+| `TweakColor` | DWord | Door [color](GFF-File-Format#color) tint |
 | `Hitpoints` | Short | Current HP override |
 
 **Door Linking:**
 
-- **LinkedToModule**: Target module ResRef
+- **LinkedToModule**: Target module [ResRef](GFF-File-Format#resref)
 - **LinkedTo**: Waypoint tag in target module
 - **TransitionDestin**: Loading screen text
 - Doors can teleport between modules
 
 **Door Instances:**
 
-- Inherit properties from UTD template
-- GIT can override HP, tag, linked destination
-- Position/orientation instance-specific
+- Inherit properties from [UTD](GFF-File-Format#utd-door) template
+- [GIT](GFF-File-Format#git-game-instance-template) can override HP, tag, linked destination
+- [position](MDL-MDX-File-Format#node-header)/[orientation](MDL-MDX-File-Format#node-header) instance-specific
 
 ## GITPlaceable Instances
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | UTP template |
-| `Tag` | CExoString | Instance tag override |
-| `X`, `Y`, `Z` | Float | Position coordinates |
-| `Bearing` | Float | Rotation angle |
-| `TweakColor` | DWord | Color tint |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | [UTP](GFF-File-Format#utp-placeable) template |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Instance tag override |
+| `X`, `Y`, `Z` | Float | [position](MDL-MDX-File-Format#node-header) [coordinates](GFF-File-Format#are-area) |
+| `Bearing` | Float | [rotation](MDL-MDX-File-Format#node-header) angle |
+| `TweakColor` | DWord | [color](GFF-File-Format#color) tint |
 | `Hitpoints` | Short | Current HP override |
 | `Useable` | Byte | Can be used override |
 
 **Placeable Spawning:**
 
 - Template defines behavior, appearance
-- GIT defines placement and orientation
+- [GIT](GFF-File-Format#git-game-instance-template) defines placement and [orientation](MDL-MDX-File-Format#node-header)
 - Can override usability and HP at instance level
 
 ## GITTrigger Instances
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | UTT template |
-| `Tag` | CExoString | Instance tag |
-| `TransitionDestin` | CExoLocString | Transition label |
-| `LinkedToModule` | ResRef | Destination module |
-| `LinkedTo` | CExoString | Destination waypoint |
-| `LinkedToFlags` | Byte | Transition flags |
-| `X`, `Y`, `Z` | Float | Trigger position |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | [UTT](GFF-File-Format#utt-trigger) template |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Instance tag |
+| `TransitionDestin` | [CExoLocString](GFF-File-Format#localizedstring) | Transition label |
+| `LinkedToModule` | [ResRef](GFF-File-Format#resref) | Destination module |
+| `LinkedTo` | [CExoString](GFF-File-Format#cexostring) | Destination waypoint |
+| `LinkedToFlags` | Byte | Transition [flags](GFF-File-Format#data-types) |
+| `X`, `Y`, `Z` | Float | Trigger [position](MDL-MDX-File-Format#node-header) |
 | `XPosition`, `YPosition`, `ZPosition` | Float | Position (alternate) |
-| `XOrientation`, `YOrientation`, `ZOrientation` | Float | Orientation |
-| `Geometry` | List | Trigger volume vertices |
+| `XOrientation`, `YOrientation`, `ZOrientation` | Float | [orientation](MDL-MDX-File-Format#node-header) |
+| `Geometry` | List | Trigger volume [vertices](MDL-MDX-File-Format#vertex-structure) |
 
-**Geometry Struct:**
+**[geometry](MDL-MDX-File-Format#geometry-header) Struct:**
 
 - List of Vector3 points
 - Defines trigger boundary polygon
 - Planar geometry (Z-axis extrusion)
 
-**Trigger Types:**
+**Trigger [types](GFF-File-Format#data-types):**
 
 - **Area Transition**: LinkedToModule set
-- **Script Trigger**: Fires scripts from UTT
+- **Script Trigger**: Fires scripts from [UTT](GFF-File-Format#utt-trigger)
 - **Generic Trigger**: Custom behavior
 
 ## GITWaypoint Instances
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | UTW template |
-| `Tag` | CExoString | Waypoint identifier |
-| `Appearance` | DWord | Waypoint appearance type |
-| `LinkedTo` | CExoString | Linked waypoint tag |
-| `X`, `Y`, `Z` | Float | Position coordinates |
-| `XOrientation`, `YOrientation` | Float | Orientation |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | [UTW](GFF-File-Format#utw-waypoint) template |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Waypoint identifier |
+| `Appearance` | DWord | Waypoint appearance [type](GFF-File-Format#data-types) |
+| `LinkedTo` | [CExoString](GFF-File-Format#cexostring) | Linked waypoint tag |
+| `X`, `Y`, `Z` | Float | [position](MDL-MDX-File-Format#node-header) [coordinates](GFF-File-Format#are-area) |
+| `XOrientation`, `YOrientation` | Float | [orientation](MDL-MDX-File-Format#node-header) |
 | `HasMapNote` | Byte | Has map note |
-| `MapNote` | CExoLocString | Map note text |
+| `MapNote` | [CExoLocString](GFF-File-Format#localizedstring) | Map note text |
 | `MapNoteEnabled` | Byte | Map note visible |
 
 **Waypoint Usage:**
@@ -176,63 +175,63 @@ Each instance type has common fields plus type-specific data:
 
 ## GITEncounter Instances
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | UTE template |
-| `Tag` | CExoString | Encounter identifier |
-| `X`, `Y`, `Z` | Float | Spawn position |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | [UTE](GFF-File-Format#ute-encounter) template |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Encounter identifier |
+| `X`, `Y`, `Z` | Float | Spawn [position](MDL-MDX-File-Format#node-header) |
 | `Geometry` | List | Spawn zone boundary |
 
 **Encounter System:**
 
-- Geometry defines trigger zone
-- Engine spawns creatures from UTE when entered
-- Respawn behavior from UTE template
+- [geometry](MDL-MDX-File-Format#geometry-header) defines trigger zone
+- Engine spawns creatures from [UTE](GFF-File-Format#ute-encounter) when entered
+- Respawn behavior from [UTE](GFF-File-Format#ute-encounter) template
 
 ## GITStore Instances
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | UTM template |
-| `Tag` | CExoString | Store identifier |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | [UTM](GFF-File-Format#utm-merchant) template |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Store identifier |
 | `X`, `Y`, `Z` | Float | Position (for UI, not physical) |
-| `XOrientation`, `YOrientation` | Float | Orientation |
+| `XOrientation`, `YOrientation` | Float | [orientation](MDL-MDX-File-Format#node-header) |
 
 **Store System:**
 
 - Stores don't have physical presence
-- Position used for toolset only
+- [position](MDL-MDX-File-Format#node-header) used for toolset only
 - Accessed via conversations or scripts
 
 ## GITSound Instances
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | UTS template |
-| `Tag` | CExoString | Sound identifier |
-| `X`, `Y`, `Z` | Float | Emitter position |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | [UTS](GFF-File-Format#uts-sound) template |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Sound identifier |
+| `X`, `Y`, `Z` | Float | Emitter [position](MDL-MDX-File-Format#node-header) |
 | `MaxDistance` | Float | Audio falloff distance |
 | `MinDistance` | Float | Full volume radius |
-| `RandomRangeX`, `RandomRangeY` | Float | Position randomization |
+| `RandomRangeX`, `RandomRangeY` | Float | [position](MDL-MDX-File-Format#node-header) randomization |
 | `Volume` | Byte | Volume level (0-127) |
 
 **Positional Audio:**
 
-- 3D sound emitter at position
+- 3D sound emitter at [position](MDL-MDX-File-Format#node-header)
 - Volume falloff over distance
-- Random offset for variation
+- Random [offset](GFF-File-Format#file-structure) for variation
 
 ## GITCamera Instances
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `CameraID` | Int | Camera identifier |
-| `FOV` | Float | Field of view (degrees) |
+| `FOV` | Float | [field](GFF-File-Format#file-structure) of view (degrees) |
 | `Height` | Float | Camera height |
 | `MicRange` | Float | Audio capture range |
-| `Orientation` | Vector4 | Camera rotation (quaternion) |
+| `Orientation` | Vector4 | Camera rotation ([quaternion](MDL-MDX-File-Format#node-header)) |
 | `Pitch` | Float | Camera pitch angle |
-| `Position` | Vector3 | Camera position |
+| `Position` | Vector3 | Camera [position](MDL-MDX-File-Format#node-header) |
 
 **Camera System:**
 
@@ -242,45 +241,45 @@ Each instance type has common fields plus type-specific data:
 
 ## Implementation Notes
 
-**GIT Loading Process:**
+**[GIT](GFF-File-Format#git-game-instance-template) Loading Process:**
 
-1. **Parse GIT**: Read GFF structure
-2. **Load Templates**: Read UTC, UTD, UTP, etc. files
+1. **Parse [GIT](GFF-File-Format#git-game-instance-template)**: Read [GFF](GFF-File-Format) [structure](GFF-File-Format#file-structure)
+2. **Load Templates**: Read [UTC](GFF-File-Format#utc-creature), [UTD](GFF-File-Format#utd-door), [UTP](GFF-File-Format#utp-placeable), etc. [files](GFF-File-Format)
 3. **Instantiate Objects**: Create runtime objects from templates
-4. **Apply Overrides**: GIT position, HP, tag overrides applied
+4. **Apply Overrides**: [GIT](GFF-File-Format#git-game-instance-template) [position](MDL-MDX-File-Format#node-header), HP, tag overrides applied
 5. **Link Objects**: Resolve LinkedTo references
 6. **Execute Spawn Scripts**: Fire OnSpawn events
-7. **Activate Triggers**: Register trigger geometry
+7. **Activate Triggers**: Register trigger [geometry](MDL-MDX-File-Format#geometry-header)
 
 **Instance vs. Template:**
 
-- **Template (UTC/UTD/UTP/etc.)**: Defines what the object is
-- **Instance (GIT entry)**: Defines where the object is
-- GIT can override specific template properties
+- **Template ([UTC](GFF-File-Format#utc-creature)/[UTD](GFF-File-Format#utd-door)/[UTP](GFF-File-Format#utp-placeable)/etc.)**: Defines what the object is
+- **Instance ([GIT](GFF-File-Format#git-game-instance-template) entry)**: Defines where the object is
+- [GIT](GFF-File-Format#git-game-instance-template) can override specific template properties
 - Multiple instances can share one template
 
 **Performance Considerations:**
 
 - Large instance counts impact load time
-- Complex trigger geometry affects collision checks
+- Complex trigger [geometry](MDL-MDX-File-Format#geometry-header) affects collision checks
 - Many sounds can overwhelm audio system
-- Creature AI scales with creature count
+- Creature AI scales with creature [count](GFF-File-Format#file-structure)
 
 **Dynamic vs. Static:**
 
-- **GIT**: Dynamic, saved with game progress
-- **ARE**: Static, never changes
-- GIT instances can be destroyed, moved, modified
-- ARE properties remain constant
+- **[GIT](GFF-File-Format#git-game-instance-template)**: Dynamic, saved with game progress
+- **[ARE](GFF-File-Format#are-area)**: Static, never changes
+- [GIT](GFF-File-Format#git-game-instance-template) instances can be destroyed, moved, modified
+- [ARE](GFF-File-Format#are-area) properties remain constant
 
 **Save Game Integration:**
 
-- GIT state saved in save files
-- Instance positions, HP, inventory preserved
+- [GIT](GFF-File-Format#git-game-instance-template) state saved in save [files](GFF-File-Format)
+- Instance [positions](MDL-MDX-File-Format#node-header), HP, inventory preserved
 - Destroyed objects marked as deleted
 - New dynamic objects added to save
 
-**Common GIT Patterns:**
+**Common [GIT](GFF-File-Format#git-game-instance-template) Patterns:**
 
 **Ambush Spawns:**
 
@@ -311,5 +310,4 @@ Each instance type has common fields plus type-specific data:
 
 - Ambient sound emitters positioned strategically
 - Varied volumes and ranges
-- Random offsets for natural feel
-
+- Random [offsets](GFF-File-Format#file-structure) for natural feel

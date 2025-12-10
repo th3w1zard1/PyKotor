@@ -1,4 +1,5 @@
 # IFO
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 IFO File Format
+
 1. Introduction
 An IFO file is a module InFOrmation file. Every NWN module (.MOD or .NWM) or savegame (.SAV)
 is an Encapsulated Resource File (ERF) that contains an IFO file called "module.ifo".
@@ -29,6 +31,7 @@ Label
 Type
 Description
 Expansion_Pack
+
 ### WORD
 
 Bit flags specifying what expansion packs are required
@@ -62,16 +65,16 @@ application will then mask that bit off to 0 and use the
 resulting value as the StrRef index into the custom
 TLK file instead of the usual dialog.tlk. If the custom
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 string cannot be found, it will attempt to retrieve the
 normal dialog.tlk StrRef.
 Mod_CutsceneList List
 Deprecated; unused.
 Mod_DawnHour
+
 ### BYTE
 
 Game hour at which dawn begins (0-23). Area lighting
@@ -81,6 +84,7 @@ Mod_Description
 CExoLocString
 Description of module
 Mod_DuskHour
+
 ### BYTE
 
 Game hour at which dusk begins (0-23). Area lighting
@@ -91,6 +95,7 @@ CResRef
 Module's Starting Area
 Mod_Entry_Dir_X
 Mod_Entry_Dir_Y
+
 ### FLOAT
 
 x and y components of Start Location's direction
@@ -101,6 +106,7 @@ angle counterclockwise from the positive x-axis.
 Mod_Entry_X
 Mod_Entry_Y
 Mod_Entry_Z
+
 ### FLOAT
 
 (x,y,z) coordinates of Module Start Location within the
@@ -138,6 +144,7 @@ bytes instead of 16. Applications other than the toolset
 can set this to all null bytes when creating a new IFO
 file.
 Mod_IsSaveGame
+
 ### BYTE
 
 Boolean indicating if the module is a same game.
@@ -154,6 +161,7 @@ game. The value of this Field can only increase or stay
 the same. If this Field does not exist in the IFO, the
 default value is "1.22".
 Mod_MinPerHour
+
 ### BYTE
 
 Number of real-time minutes per game hour. (1-255)
@@ -166,11 +174,10 @@ Mod_OnActvtItem
 CResRef
 OnActivateItem event
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Mod_OnClientEntr CResRef
 OnClientEnter event
 Mod_OnClientLeav CResRef
@@ -210,14 +217,17 @@ OnUnAcquireItem event
 Mod_OnUsrDefined CResRef
 OnUserDefined event
 Mod_StartDay
+
 ### BYTE
 
 Starting day (1-31)
 Mod_StartHour
+
 ### BYTE
 
 Starting hour (0-23)
 Mod_StartMonth
+
 ### BYTE
 
 Starting month (1-24)
@@ -226,6 +236,7 @@ CResRef
 ResRef of movie in 'movies' folder to play when
 starting module
 Mod_StartYear
+
 ### DWORD
 
 Starting year
@@ -233,10 +244,12 @@ Mod_Tag
 CExoString
 Module's Tag
 Mod_Version
+
 ### DWORD
 
 Module version. Is always set to 3.
 Mod_XPScale
+
 ### BYTE
 
 Percentage by which to multiply all XP gained through
@@ -259,27 +272,34 @@ StructID 43981
 Mod_Effect_NxtId DWORD64
 ID to use for the next Effect
 Mod_IsNWMFile
+
 ### BYTE
 
 Boolean to indicate if the game was saved from a
 NWM file (1) or MOD file (0).
 Mod_NextCharId0
+
 ### DWORD
 
 Keeps track of which id to give the next character
 created
 Mod_NextCharId1
+
 ### DWORD
 
 -
+
 Mod_NextObjId0
+
 ### DWORD
 
 Keeps track of which id to give the next object created
 Mod_NextObjId1
+
 ### DWORD
 
 -
+
 Mod_NWMResName
 CExoString
 If this game was saved from a nwm module, then this is
@@ -298,11 +318,10 @@ List of Temporary User Resource Data objects in the
 module.
 StructID 13634816
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Mod_VarTable
 List
 List of Variables in the module and their values.
@@ -323,6 +342,7 @@ ResRef of area in module. There must be three files in
 the module that have this ResRef, with filetypes ARE,
 GIT, and GIC.
 ObjectId
+
 ### DWORD
 
 ObjectID of the area.
@@ -357,11 +377,10 @@ game. Each section is titled by the Label of the List.
 Most things ingame have an ObjectID by which the game references them, so ObjectIDs appear in
 many of the Structs in the savegame Lists.
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 4.1 EventQueue
 Event Queue
 List of Events in the module. See Section 5 of the Common GFF Structs document.
@@ -379,6 +398,7 @@ Label
 Type
 Description
 Mod_TokensNumber
+
 ### DWORD
 
 Custom Token number.
@@ -396,7 +416,8 @@ These objects are used to store player information for users who joined the game
 When a user joins a game, the user's login name and player character's name are checked against those
 in the current TURD List to determine if the user is a new player, or one who is returning to the game.
 Returning players have their gamestate information restored according to the information in the
-### TURD.
+
+### TURD
 
 Table 4.4a: Fields in a TURD Struct (StructID 13634816)
 Label
@@ -409,6 +430,7 @@ List of Effects. StructID 2. See See Section
 Mod_MapAreasData
 Binary
 -
+
 Mod_MapDataList
 List
 List of MapData. StructID 0, contains the
@@ -416,15 +438,19 @@ indented Fields immediately below:
 Mod_MapData
 Binary
 -
+
 ModMapNumAreas
 INT
 -
+
 TURD_AreaId
+
 ### DWORD
 
 ObjectID of area in which player logged
 out.
 TURD_CalendarDay
+
 ### DWORD
 
 Day the TURD was generated
@@ -432,11 +458,10 @@ TURD_CommntyName
 CExoString
 Player Name with which the player logged
 
-
 ## Page 6
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 into Multiplayer.
 TURD_FirstName
 CExoLocString
@@ -447,6 +472,7 @@ Last name of the player character
 TURD_OrientatX
 TURD_OrientatY
 TURD_OrientatZ
+
 ### FLOAT
 
 Orientation of the player at logout
@@ -456,12 +482,14 @@ List of Personal Reputations that other
 creatures hold toward the player.
 StructID 47787. See Table 4.4b below.
 TURD_PlayerID
+
 ### DWORD
 
 ObjectID of the player
 TURD_PositionX
 TURD_PositionY
 TURD_PositionZ
+
 ### FLOAT
 
 Position of the player at logout
@@ -477,6 +505,7 @@ Reputation with faction X, where X is the
 same as the index of the List element
 (allowed values are 0-100)
 TURD_TimeOfDay
+
 ### DWORD
 
 Time the TURD was generated
@@ -492,10 +521,13 @@ TURD_PR_Amount
 INT
 Reputation with the faction
 TURD_PR_Day
+
 ### DWORD
 
 -
+
 TURD_PR_Decays
+
 ### BYTE
 
 boolean
@@ -503,17 +535,17 @@ TURD_PR_Duration
 INT
 Measured in seconds
 TURD_PR_ObjId
+
 ### DWORD
 
 ObjectID of creature that is considering the
 owner of this Personal Reputation element
 TURD_PR_Time
+
 ### DWORD
 
 -
+
 4.5 VarTable
 Variable Table
 List of scripting variables and their values. See Section 3 of the Common GFF Structs document.
-
-
-

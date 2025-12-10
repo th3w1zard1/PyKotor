@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Constants (K1 & TSL)
 
-
 <a id="planet_dantooine"></a>
 
 ## `PLANET_DANTOOINE`
@@ -52,4 +51,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `PLANET_LIVE_05`
 
 (15): Planet Live 05
-

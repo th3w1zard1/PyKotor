@@ -1,4 +1,5 @@
 # Waypoint
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Waypoint Format
+
 1. Introduction
 A Waypoint is a simple object type used for scripting and showing map notes to the player.
 Waypoints are stored in the game and toolset using BioWare's Generic File Format (GFF), and it is
@@ -29,6 +31,7 @@ Label
 Type
 Description
 Appearance
+
 ### BYTE
 
 Index into waypoint.2da.
@@ -39,6 +42,7 @@ CExoLocString
 Localized description of waypoint. Only visible in
 toolset.
 HasMapNote
+
 ### BYTE
 
 1 if Waypoint has a map note, 0 otherwise.
@@ -60,6 +64,7 @@ CExoLocString
 Text that appears ingame when user mouses over the
 Waypoint in the Minimap.
 MapNoteEnabled
+
 ### BYTE
 
 1 if the Waypoint's Map Note is visible in the Minimap
@@ -69,24 +74,26 @@ CExoString
 Tag of the waypoint. Can be up to 32 characters long.
 The Appearance Field is an index into waypoint.2da, which is described by the table below:
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.1.1.2: waypoint.2da columns
 Column
 Type
 Description
+
 ### LABEL
 
 String
 Programmer label
+
 ### RESREF
 
 String
 ResRef of MDL file to use as the model for the waypoint
 in the toolset's area viewer.
+
 ### STRREF
 
 Integer
@@ -104,6 +111,7 @@ Comment
 CExoString
 Module designer comment.
 PaletteID
+
 ### BYTE
 
 ID of the node that the Waypoint Blueprint appears
@@ -129,6 +137,7 @@ The ResRef of the blueprint that the instance was
 created from.
 XOrientation
 YOrientation
+
 ### FLOAT
 
 x and y components of a unit vector that points in the
@@ -139,6 +148,7 @@ angle counterclockwise from the positive x-axis.
 XPosition
 YPosition
 ZPosition
+
 ### FLOAT
 
 (x,y,z) coordinates of the Waypoint within the Area
@@ -149,11 +159,10 @@ toolset. Editing the fields listed in this section can readily lead to corrupted
 After a GIT file has been saved by the game, the Waypoint Instance Struct contains not only the Fields
 in Table 2.1.1.1 and Table 2.1.3, it also contains the Fields in Table 2.2.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.2: Fields in Waypoint Instance Structs in SaveGames
 Label
 Type
@@ -164,6 +173,7 @@ List of Actions stored on this object
 StructID 0. See See Section 6 of the Common GFF
 Structs document.
 ObjectId
+
 ### DWORD
 
 Object ID used by game for this object.
@@ -172,6 +182,3 @@ List
 List of scripting variables stored on this object.
 StructID 0. See Section 3 of the Common GFF
 Structs document.
-
-
-

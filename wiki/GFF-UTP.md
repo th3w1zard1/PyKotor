@@ -2,48 +2,47 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
+[UTP files](GFF-File-Format#utp-placeable) define [placeable object templates](GFF-File-Format#utp-placeable) including containers, furniture, switches, workbenches, and interactive environmental objects. [Placeables](GFF-File-Format#utp-placeable) can have inventories, be destroyed, locked, trapped, and trigger [scripts](NCS-File-Format).
 
-UTP files define placeable object templates including containers, furniture, switches, workbenches, and interactive environmental objects. Placeables can have inventories, be destroyed, locked, trapped, and trigger scripts.
-
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Door/Placeable format specification, see [Bioware Aurora Door/Placeable GFF Format](Bioware-Aurora-DoorPlaceableGFF).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Door/Placeable [format](GFF-File-Format) specification, see [Bioware Aurora Door/Placeable GFF Format](Bioware-Aurora-DoorPlaceableGFF).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utp.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utp.py)
 
-## Core Identity Fields
+## Core Identity [fields](GFF-File-Format#file-structure)
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | Template identifier for this placeable |
-| `Tag` | CExoString | Unique tag for script references |
-| `LocName` | CExoLocString | Placeable name (localized) |
-| `Description` | CExoLocString | Placeable description |
-| `Comment` | CExoString | Developer comment/notes |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | Template identifier for this placeable |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Unique tag for script references |
+| `LocName` | [CExoLocString](GFF-File-Format#localizedstring) | Placeable name (localized) |
+| `Description` | [CExoLocString](GFF-File-Format#localizedstring) | Placeable description |
+| `Comment` | [CExoString](GFF-File-Format#cexostring) | Developer comment/notes |
 
-## Appearance & Type
+## Appearance & [type](GFF-File-Format#data-types)
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `Appearance` | DWord | Index into `placeables.2da` |
-| `Type` | Byte | Placeable type category |
-| `AnimationState` | Byte | Current animation state |
+| `Appearance` | DWord | [index](2DA-File-Format#row-labels) into [`placeables.2da`](2DA-placeables) |
+| `Type` | Byte | Placeable [type](GFF-File-Format#data-types) category |
+| `AnimationState` | Byte | Current [animation](MDL-MDX-File-Format#animation-header) state |
 
 **Appearance System:**
 
-- `placeables.2da` defines models, lighting, and sounds
-- Appearance determines visual model and interaction animation
-- Type influences behavior (container, switch, generic)
+- [`placeables.2da`](2DA-placeables) defines [models](MDL-MDX-File-Format), lighting, and sounds
+- Appearance determines visual [model](MDL-MDX-File-Format) and interaction [animation](MDL-MDX-File-Format#animation-header)
+- [type](GFF-File-Format#data-types) influences behavior (container, switch, generic)
 
 ## Inventory System
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `HasInventory` | Byte | Placeable contains items |
 | `ItemList` | List | Items in inventory |
 | `BodyBag` | Byte | Container for corpse loot |
 
-**ItemList Struct Fields:**
+**ItemList Struct [fields](GFF-File-Format#file-structure):**
 
-- `InventoryRes` (ResRef): UTI template ResRef
+- `InventoryRes` ([ResRef](GFF-File-Format#resref)): [UTI](GFF-File-Format#uti-item) template [ResRef](GFF-File-Format#resref)
 - `Repos_PosX` (Word): Grid X position (optional)
 - `Repos_Posy` (Word): Grid Y position (optional)
 - `Dropable` (Byte): Can drop item
@@ -57,32 +56,32 @@ UTP files define placeable object templates including containers, furniture, swi
 
 ## Locking & Security
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `Locked` | Byte | Placeable is currently locked |
 | `Lockable` | Byte | Can be locked/unlocked |
-| `KeyRequired` | Byte | Requires specific key item |
-| `KeyName` | CExoString | Tag of required key item |
-| `AutoRemoveKey` | Byte | Key consumed on use |
+| `KeyRequired` | Byte | Requires specific [KEY](KEY-File-Format) item |
+| `KeyName` | [CExoString](GFF-File-Format#cexostring) | Tag of required [KEY](KEY-File-Format) [item](GFF-File-Format#uti-item) |
+| `AutoRemoveKey` | Byte | [KEY](KEY-File-Format) consumed on use |
 | `OpenLockDC` | Byte | Security skill DC to pick lock |
-| `CloseLockDC` (KotOR2) | Byte | Security DC to lock |
+| `CloseLockDC` (KotOR2) | [byte](GFF-File-Format#byte) | Security DC to lock |
 | `OpenLockDiff` (KotOR2) | Int | Additional difficulty modifier |
 | `OpenLockDiffMod` (KotOR2) | Int | Modifier to difficulty |
 
 **Lock Mechanics:**
 
-- Identical to UTD door locking system
+- Identical to [UTD](GFF-File-Format#utd-door) door locking system
 - Prevents access to inventory
-- Can be picked or opened with key
+- Can be picked or opened with [KEY](KEY-File-Format)
 
 ## Hit Points & Durability
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `HP` | Short | Maximum hit points |
 | `CurrentHP` | Short | Current hit points |
 | `Hardness` | Byte | Damage reduction |
-| `Min1HP` (KotOR2) | Byte | Cannot drop below 1 HP |
+| `Min1HP` (KotOR2) | [byte](GFF-File-Format#byte) | Cannot drop below 1 HP |
 | `Fort` | Byte | Fortitude save (usually 0) |
 | `Ref` | Byte | Reflex save (usually 0) |
 | `Will` | Byte | Will save (usually 0) |
@@ -95,46 +94,46 @@ UTP files define placeable object templates including containers, furniture, swi
 
 ## Interaction & Behavior
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `Plot` | Byte | Plot-critical (cannot be destroyed) |
 | `Static` | Byte | Static geometry (no interaction) |
 | `Useable` | Byte | Can be clicked/used |
-| `Conversation` | ResRef | Dialog file when used |
+| `Conversation` | [ResRef](GFF-File-Format#resref) | [Dialog](GFF-DLG) [file](GFF-File-Format) when used |
 | `Faction` | Word | Faction identifier |
 | `PartyInteract` | Byte | Requires party member selection |
-| `NotBlastable` (KotOR2) | Byte | Immune to area damage |
+| `NotBlastable` (KotOR2) | [byte](GFF-File-Format#byte) | Immune to area damage |
 
 **Usage Patterns:**
 
 - **Useable=0**: Cannot be directly interacted with
 - **Conversation**: Triggers dialog on use (terminals, panels)
-- **PartyInteract**: Shows party selection GUI
+- **PartyInteract**: Shows party selection [GUI](GFF-File-Format#gui-graphical-user-interface)
 - **Static**: Pure visual element, no gameplay
 
 ## Script Hooks
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `OnClosed` | ResRef | Fires when container closes |
-| `OnDamaged` | ResRef | Fires when placeable takes damage |
-| `OnDeath` | ResRef | Fires when placeable is destroyed |
-| `OnDisarm` | ResRef | Fires when trap is disarmed |
-| `OnEndDialogue` | ResRef | Fires when conversation ends |
-| `OnHeartbeat` | ResRef | Fires periodically |
-| `OnInvDisturbed` | ResRef | Fires when inventory changed |
-| `OnLock` | ResRef | Fires when locked |
-| `OnMeleeAttacked` | ResRef | Fires when attacked in melee |
-| `OnOpen` | ResRef | Fires when opened |
-| `OnSpellCastAt` | ResRef | Fires when spell cast at placeable |
-| `OnUnlock` | ResRef | Fires when unlocked |
-| `OnUsed` | ResRef | Fires when used/clicked |
-| `OnUserDefined` | ResRef | Fires on user-defined events |
-| `OnFailToOpen` (KotOR2) | ResRef | Fires when opening fails |
+| `OnClosed` | [ResRef](GFF-File-Format#resref) | Fires when container closes |
+| `OnDamaged` | [ResRef](GFF-File-Format#resref) | Fires when placeable takes damage |
+| `OnDeath` | [ResRef](GFF-File-Format#resref) | Fires when placeable is destroyed |
+| `OnDisarm` | [ResRef](GFF-File-Format#resref) | Fires when trap is disarmed |
+| `OnEndDialogue` | [ResRef](GFF-File-Format#resref) | Fires when conversation ends |
+| `OnHeartbeat` | [ResRef](GFF-File-Format#resref) | Fires periodically |
+| `OnInvDisturbed` | [ResRef](GFF-File-Format#resref) | Fires when inventory changed |
+| `OnLock` | [ResRef](GFF-File-Format#resref) | Fires when locked |
+| `OnMeleeAttacked` | [ResRef](GFF-File-Format#resref) | Fires when attacked in melee |
+| `OnOpen` | [ResRef](GFF-File-Format#resref) | Fires when opened |
+| `OnSpellCastAt` | [ResRef](GFF-File-Format#resref) | Fires when spell cast at placeable |
+| `OnUnlock` | [ResRef](GFF-File-Format#resref) | Fires when unlocked |
+| `OnUsed` | [ResRef](GFF-File-Format#resref) | Fires when used/clicked |
+| `OnUserDefined` | [ResRef](GFF-File-Format#resref) | Fires on user-defined events |
+| `OnFailToOpen` (KotOR2) | [ResRef](GFF-File-Format#resref) | Fires when opening fails |
 
 ## Trap System
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `TrapDetectable` | Byte | Trap can be detected |
 | `TrapDetectDC` | Byte | Awareness DC to detect trap |
@@ -142,7 +141,7 @@ UTP files define placeable object templates including containers, furniture, swi
 | `DisarmDC` | Byte | Security DC to disarm trap |
 | `TrapFlag` | Byte | Trap is active |
 | `TrapOneShot` | Byte | Trap triggers only once |
-| `TrapType` | Byte | Index into `traps.2da` |
+| `TrapType` | Byte | [index](2DA-File-Format#row-labels) into [`traps.2da`](2DA-traps) ([trap definitions](2DA-traps)) |
 
 **Trap Behavior:**
 
@@ -152,16 +151,16 @@ UTP files define placeable object templates including containers, furniture, swi
 
 ## Visual Customization
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `PortraitId` | Word | Portrait icon identifier |
 | `PaletteID` | Byte | Toolset palette category |
 
-**Model & Lighting:**
+**[model](MDL-MDX-File-Format) & Lighting:**
 
-- Appearance determines model and light color
+- Appearance determines [model](MDL-MDX-File-Format) and light [color](GFF-File-Format#color)
 - Some placeables have animated components
-- Light properties defined in `placeables.2da`
+- Light properties defined in [`placeables.2da`](2DA-placeables)
 
 ## Implementation Notes
 
@@ -172,7 +171,7 @@ UTP files define placeable object templates including containers, furniture, swi
 - Footlockers, crates, corpses
 - Have inventory (ItemList populated)
 - Can be locked, trapped, destroyed
-- `HasInventory=1`, `BodyBag` flag for corpses
+- `HasInventory=1`, `BodyBag` [flag](GFF-File-Format#data-types) for corpses
 
 **Switches & Terminals:**
 
@@ -183,9 +182,9 @@ UTP files define placeable object templates including containers, furniture, swi
 
 **Workbenches:**
 
-- Special placeable type for crafting
+- Special placeable [type](GFF-File-Format#data-types) for crafting
 - Opens crafting interface on use
-- Defined by Type or Appearance
+- Defined by [type](GFF-File-Format#data-types) or Appearance
 
 **Furniture:**
 
@@ -201,8 +200,8 @@ UTP files define placeable object templates including containers, furniture, swi
 
 **Instantiation Flow:**
 
-1. **Template Load**: GFF parsed from UTP
-2. **Appearance Setup**: Model loaded from `placeables.2da`
+1. **Template Load**: [GFF](GFF-File-Format) parsed from [UTP](GFF-File-Format#utp-placeable)
+2. **Appearance Setup**: [model](MDL-MDX-File-Format) loaded from [`placeables.2da`](2DA-placeables)
 3. **Inventory Population**: ItemList instantiated
 4. **Lock State**: Locked status applied
 5. **Trap Activation**: Trap armed if configured
@@ -218,11 +217,11 @@ UTP files define placeable object templates including containers, furniture, swi
 **Conversation Placeables:**
 
 - Terminals, control panels, puzzle interfaces
-- Conversation property set to DLG file
+- Conversation property set to [DLG](GFF-DLG) [file](GFF-File-Format)
 - Use triggers dialog instead of direct interaction
 - Dialog can have conditional responses
 
-**Common Placeable Types:**
+**Common Placeable [types](GFF-File-Format#data-types):**
 
 **Storage Containers:**
 
@@ -232,7 +231,7 @@ UTP files define placeable object templates including containers, furniture, swi
 
 **Corpses:**
 
-- BodyBag flag set
+- BodyBag [flag](GFF-File-Format#data-types) set
 - Contain enemy loot
 - Disappear when looted (usually)
 
@@ -246,13 +245,13 @@ UTP files define placeable object templates including containers, furniture, swi
 
 - Activate doors, puzzles, machinery
 - Fire OnUsed script
-- Visual feedback animation
+- Visual feedback [animation](MDL-MDX-File-Format#animation-header)
 
 **Workbenches:**
 
 - Crafting interface activation
 - Lab stations, upgrade benches
-- Special Type value
+- Special [type](GFF-File-Format#data-types) [value](GFF-File-Format#data-types)
 
 **Decorative Objects:**
 
@@ -266,4 +265,3 @@ UTP files define placeable object templates including containers, furniture, swi
 - Trap properties define behavior
 - Can be detected and disarmed
 - Trigger on proximity or interaction
-

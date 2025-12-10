@@ -2,64 +2,63 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
+UTD [files](GFF-File-Format) define [door templates](GFF-File-Format#utd-door) for all interactive doors in the game world. Doors can be locked, require keys, have hit points, conversations, and various gameplay interactions.
 
-UTD files define door templates for all interactive doors in the game world. Doors can be locked, require keys, have hit points, conversations, and various gameplay interactions.
-
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Door/Placeable format specification, see [Bioware Aurora Door/Placeable GFF Format](Bioware-Aurora-DoorPlaceableGFF).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Door/Placeable [format](GFF-File-Format) specification, see [Bioware Aurora Door/Placeable GFF Format](Bioware-Aurora-DoorPlaceableGFF).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utd.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utd.py)
 
-## Core Identity Fields
+## Core Identity [fields](GFF-File-Format#file-structure)
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | ResRef | Template identifier for this door |
-| `Tag` | CExoString | Unique tag for script references |
-| `LocName` | CExoLocString | Door name (localized) |
-| `Description` | CExoLocString | Door description |
-| `Comment` | CExoString | Developer comment/notes |
+| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | Template identifier for this door |
+| `Tag` | [CExoString](GFF-File-Format#cexostring) | Unique tag for script references |
+| `LocName` | [CExoLocString](GFF-File-Format#localizedstring) | Door name (localized) |
+| `Description` | [CExoLocString](GFF-File-Format#localizedstring) | Door description |
+| `Comment` | [CExoString](GFF-File-Format#cexostring) | Developer comment/notes |
 
-## Door Appearance & Type
+## Door Appearance & [type](GFF-File-Format#data-types)
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `Appearance` | DWord | Index into `genericdoors.2da` |
-| `GenericType` | DWord | Generic door type category |
-| `AnimationState` | Byte | Current animation state (always 0 in templates) |
+| `Appearance` | DWord | [index](2DA-File-Format#row-labels) into `genericdoors.2da` |
+| `GenericType` | DWord | Generic door [type](GFF-File-Format#data-types) category |
+| `AnimationState` | Byte | Current [animation](MDL-MDX-File-Format#animation-header) state (always 0 in templates) |
 
 **Appearance System:**
 
-- `genericdoors.2da` defines door models and animations
-- Different appearance types support different behaviors
-- Opening animation determined by appearance entry
+- `genericdoors.2da` defines door [models](MDL-MDX-File-Format) and [animations](MDL-MDX-File-Format#animation-header)
+- Different appearance [types](GFF-File-Format#data-types) support different behaviors
+- Opening [animation](MDL-MDX-File-Format#animation-header) determined by appearance entry
 
 ## Locking & Security
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `Locked` | Byte | Door is currently locked |
 | `Lockable` | Byte | Door can be locked/unlocked |
-| `KeyRequired` | Byte | Requires specific key item |
-| `KeyName` | CExoString | Tag of required key item |
-| `AutoRemoveKey` | Byte | Key consumed on use |
+| `KeyRequired` | Byte | Requires specific [KEY](KEY-File-Format) item |
+| `KeyName` | [CExoString](GFF-File-Format#cexostring) | Tag of required [KEY](KEY-File-Format) item |
+| `AutoRemoveKey` | Byte | [KEY](KEY-File-Format) consumed on use |
 | `OpenLockDC` | Byte | Security skill DC to pick lock |
-| `CloseLockDC` (KotOR2) | Byte | Security skill DC to lock door |
+| `CloseLockDC` (KotOR2) | [byte](GFF-File-Format#byte) | Security skill DC to lock door |
 
 **Lock Mechanics:**
 
 - **Locked**: Door cannot be opened normally
-- **KeyRequired**: Must have key in inventory
+- **KeyRequired**: Must have [KEY](KEY-File-Format) in inventory
 - **OpenLockDC**: Player rolls Security skill vs. DC
-- **AutoRemoveKey**: Key destroyed after successful use
+- **AutoRemoveKey**: [KEY](KEY-File-Format) destroyed after successful use
 
 ## Hit Points & Durability
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `HP` | Short | Maximum hit points |
 | `CurrentHP` | Short | Current hit points |
 | `Hardness` | Byte | Damage reduction |
-| `Min1HP` (KotOR2) | Byte | Cannot drop below 1 HP |
+| `Min1HP` (KotOR2) | [byte](GFF-File-Format#byte) | Cannot drop below 1 HP |
 | `Fort` | Byte | Fortitude save (always 0) |
 | `Ref` | Byte | Reflex save (always 0) |
 | `Will` | Byte | Will save (always 0) |
@@ -69,18 +68,18 @@ UTD files define door templates for all interactive doors in the game world. Doo
 - Doors with HP can be attacked and destroyed
 - **Hardness** reduces each hit's damage
 - **Min1HP** prevents destruction (plot doors)
-- Save values unused in KotOR
+- Save [values](GFF-File-Format#data-types) unused in KotOR
 
 ## Interaction & Behavior
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `Plot` | Byte | Plot-critical (cannot be destroyed) |
 | `Static` | Byte | Door is static geometry (no interaction) |
 | `Interruptable` | Byte | Opening can be interrupted |
-| `Conversation` | ResRef | Dialog file when used |
+| `Conversation` | [ResRef](GFF-File-Format#resref) | Dialog [file](GFF-File-Format) when used |
 | `Faction` | Word | Faction identifier |
-| `AnimationState` | Byte | Starting animation (0=closed, other values unused) |
+| `AnimationState` | Byte | Starting animation (0=closed, other [values](GFF-File-Format#data-types) unused) |
 
 **Conversation Doors:**
 
@@ -90,26 +89,26 @@ UTD files define door templates for all interactive doors in the game world. Doo
 
 ## Script Hooks
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
-| `OnOpen` | ResRef | Fires when door opens |
-| `OnClose` | ResRef | Fires when door closes |
-| `OnClosed` | ResRef | Fires after door finishes closing |
-| `OnDamaged` | ResRef | Fires when door takes damage |
-| `OnDeath` | ResRef | Fires when door is destroyed |
-| `OnDisarm` | ResRef | Fires when trap is disarmed |
-| `OnHeartbeat` | ResRef | Fires periodically |
-| `OnLock` | ResRef | Fires when door is locked |
-| `OnMeleeAttacked` | ResRef | Fires when attacked in melee |
-| `OnSpellCastAt` | ResRef | Fires when spell cast at door |
-| `OnUnlock` | ResRef | Fires when door is unlocked |
-| `OnUserDefined` | ResRef | Fires on user-defined events |
-| `OnClick` | ResRef | Fires when clicked |
-| `OnFailToOpen` (KotOR2) | ResRef | Fires when opening fails |
+| `OnOpen` | [ResRef](GFF-File-Format#resref) | Fires when door opens |
+| `OnClose` | [ResRef](GFF-File-Format#resref) | Fires when door closes |
+| `OnClosed` | [ResRef](GFF-File-Format#resref) | Fires after door finishes closing |
+| `OnDamaged` | [ResRef](GFF-File-Format#resref) | Fires when door takes damage |
+| `OnDeath` | [ResRef](GFF-File-Format#resref) | Fires when door is destroyed |
+| `OnDisarm` | [ResRef](GFF-File-Format#resref) | Fires when trap is disarmed |
+| `OnHeartbeat` | [ResRef](GFF-File-Format#resref) | Fires periodically |
+| `OnLock` | [ResRef](GFF-File-Format#resref) | Fires when door is locked |
+| `OnMeleeAttacked` | [ResRef](GFF-File-Format#resref) | Fires when attacked in melee |
+| `OnSpellCastAt` | [ResRef](GFF-File-Format#resref) | Fires when spell cast at door |
+| `OnUnlock` | [ResRef](GFF-File-Format#resref) | Fires when door is unlocked |
+| `OnUserDefined` | [ResRef](GFF-File-Format#resref) | Fires on user-defined events |
+| `OnClick` | [ResRef](GFF-File-Format#resref) | Fires when clicked |
+| `OnFailToOpen` (KotOR2) | [ResRef](GFF-File-Format#resref) | Fires when opening fails |
 
 ## Trap System
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `TrapDetectable` | Byte | Trap can be detected |
 | `TrapDetectDC` | Byte | Awareness DC to detect trap |
@@ -117,7 +116,7 @@ UTD files define door templates for all interactive doors in the game world. Doo
 | `DisarmDC` | Byte | Security DC to disarm trap |
 | `TrapFlag` | Byte | Trap is active |
 | `TrapOneShot` | Byte | Trap triggers only once |
-| `TrapType` | Byte | Index into `traps.2da` |
+| `TrapType` | Byte | [index](2DA-File-Format#row-labels) into `traps.2da` |
 
 **Trap Mechanics:**
 
@@ -128,13 +127,13 @@ UTD files define door templates for all interactive doors in the game world. Doo
 
 ## Load-Bearing Doors (KotOR2)
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `LoadScreenID` (KotOR2) | Word | Loading screen to show |
-| `LinkedTo` (KotOR2) | CExoString | Destination module tag |
-| `LinkedToFlags` (KotOR2) | Byte | Transition behavior flags |
-| `LinkedToModule` (KotOR2) | ResRef | Destination module ResRef |
-| `TransitionDestin` (KotOR2) | CExoLocString | Destination label |
+| `LinkedTo` (KotOR2) | [CExoString](GFF-File-Format#cexostring) | Destination module tag |
+| `LinkedToFlags` (KotOR2) | [byte](GFF-File-Format#byte) | Transition behavior [flags](GFF-File-Format#data-types) |
+| `LinkedToModule` (KotOR2) | [ResRef](GFF-File-Format#resref) | Destination module [ResRef](GFF-File-Format#resref) |
+| `TransitionDestin` (KotOR2) | [CExoLocString](GFF-File-Format#localizedstring) | Destination label |
 
 **Transition System:**
 
@@ -144,15 +143,15 @@ UTD files define door templates for all interactive doors in the game world. Doo
 
 ## Appearance Customization
 
-| Field | Type | Description |
+| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
 | ----- | ---- | ----------- |
 | `PortraitId` | Word | Portrait icon identifier |
 | `PaletteID` | Byte | Toolset palette category |
 
 **Visual Representation:**
 
-- `Appearance` determines 3D model
-- Some doors have customizable textures
+- `Appearance` determines 3D [model](MDL-MDX-File-Format)
+- Some doors have customizable [textures](TPC-File-Format)
 - Portrait used in UI elements
 
 ## Implementation Notes
@@ -162,9 +161,9 @@ UTD files define door templates for all interactive doors in the game world. Doo
 Doors maintain runtime state:
 
 1. **Closed**: Default state, blocking
-2. **Opening**: Animation playing, becoming non-blocking
+2. **Opening**: [animation](MDL-MDX-File-Format#animation-header) playing, becoming non-blocking
 3. **Open**: Fully open, non-blocking
-4. **Closing**: Animation playing, becoming blocking
+4. **Closing**: [animation](MDL-MDX-File-Format#animation-header) playing, becoming blocking
 5. **Locked**: Closed and cannot open
 6. **Destroyed**: Hit points depleted, permanently open
 
@@ -172,20 +171,20 @@ Doors maintain runtime state:
 
 1. Player clicks door
 2. If conversation set, start dialog
-3. If locked, check for key or Security skill
+3. If locked, check for [KEY](KEY-File-Format) or Security skill
 4. If trapped, check for detection/disarm
 5. Fire `OnOpen` script
-6. Play opening animation
+6. Play opening [animation](MDL-MDX-File-Format#animation-header)
 7. Transition to "open" state
 
 **Locking System:**
 
 - **Lockable=0**: Door cannot be locked (always opens)
-- **Locked=1, KeyRequired=1**: Must have specific key
+- **Locked=1, KeyRequired=1**: Must have specific [KEY](KEY-File-Format)
 - **Locked=1, OpenLockDC>0**: Can pick lock with Security skill
 - **Locked=1, KeyRequired=0, OpenLockDC=0**: Locked via script only
 
-**Common Door Types:**
+**Common Door [types](GFF-File-Format#data-types):**
 
 **Standard Doors:**
 
@@ -195,7 +194,7 @@ Doors maintain runtime state:
 
 **Locked Doors:**
 
-- Requires key or Security skill
+- Requires [KEY](KEY-File-Format) or Security skill
 - Quest progression gates
 - May have conversation for passwords
 
@@ -222,4 +221,3 @@ Doors maintain runtime state:
 - Trigger dialog on click
 - May open after conversation
 - Used for password entry, riddles
-

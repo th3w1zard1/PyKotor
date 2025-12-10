@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="adjustalignment"></a>
 
 ## `AdjustAlignment(oSubject, nAlignment, nShift)` - Routine 201
@@ -26,7 +25,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `127. GetAlignmentGoodEvil`
 - Return an ALIGNMENT_* constant to represent oCreature's good/evil alignment
-- - Return value if oCreature is not a valid creature: -1
+- - Return [value](GFF-File-Format#data-types) if oCreature is not a valid creature: -1
 
 - `oCreature`: object
 
@@ -37,7 +36,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `187. GetFactionAverageGoodEvilAlignment`
 - Get an integer between 0 and 100 (inclusive) that represents the average
 - good/evil alignment of oFactionMember's faction.
-- - Return value on error: -1
+- - Return [value](GFF-File-Format#data-types) on error: -1
 
 - `oFactionMember`: object
 
@@ -54,4 +53,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `eEffect`: effect
 - `nLawChaos`: int (default: `0`)
 - `nGoodEvil`: int (default: `0`)
-

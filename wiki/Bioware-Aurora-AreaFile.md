@@ -1,4 +1,5 @@
 # AreaFile
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Area File (ARE, GIT, GIC) Formats
+
 1. Introduction
 In the BioWare Aurora engine, each Area in a module is described by three files. Each file has the same
 filename, but a different extension. The following are brief summaries of the area file types.
@@ -55,19 +57,20 @@ Creator_ID
 INT
 Deprecated; unused. Always -1.
 DayNightCycle
+
 ### BYTE
 
 1 if day/night transitions occur, 0 otherwise
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Expansion_List
 List
 Deprecated; unused
 Flags
+
 ### DWORD
 
 Set of bit flags specifying area terrain type:
@@ -87,15 +90,18 @@ ID
 INT
 Deprecated; unused. Always -1.
 IsNight
+
 ### BYTE
 
 1 if the area is always night, 0 if area is always day.
 Meaningful only if DayNightCycle is 0.
 LightingScheme
+
 ### BYTE
 
 Index into environment.2da
 LoadScreenID
+
 ### WORD
 
 Index into loadscreens.2da. Default loading screen to
@@ -113,14 +119,17 @@ Nighttime ambient light color (BGR format)
 MoodDiffuseColor DWORD
 Nighttime diffuse light color (BGR format)
 MoonFogAmount
+
 ### BYTE
 
 Nighttime fog amount (0-15)
 MoonFogColor
+
 ### DWORD
 
 Nighttime fog color (BGR format)
 MoonShadows
+
 ### BYTE
 
 1 if shadows appear at night, 0 otherwise
@@ -131,6 +140,7 @@ contents treeview in toolset. If there is a colon (:) in the
 name, then the game does not show any of the text up
 to and including the first colon.
 NoRest
+
 ### BYTE
 
 1 if resting is not allowed, 0 otherwise
@@ -147,6 +157,7 @@ OnUserDefined
 CResRef
 OnUserDefined event
 PlayerVsPlayer
+
 ### BYTE
 
 Index into pvpsettings.2da. Note that the settings are
@@ -157,30 +168,37 @@ ResRef
 CResRef
 Should be identical to the filename of the area
 SkyBox
+
 ### BYTE
 
 Index into skyboxes.2da (0-255). 0 means no skybox.
 ShadowOpacity
+
 ### BYTE
 
 Opacity of shadows (0-100)
 SunAmbientColor
+
 ### DWORD
 
 Daytime ambient light color (BGR format)
 SunDiffuseColor
+
 ### DWORD
 
 Daytime diffuse light color (BGR format)
 SunFogAmount
+
 ### BYTE
 
 Daytime fog amount (0-15)
 SunFogColor
+
 ### DWORD
 
 Daytime fog color (BGR format)
 SunShadows
+
 ### BYTE
 
 1 if shadows appear during the day, 0 otherwise
@@ -194,17 +212,17 @@ TileSet
 CResRef
 ResRef of the tileset (.SET) file used by the area
 Version
+
 ### DWORD
 
 Revision number of the area. Initially 1 when area is
 first saved to disk, and increments every time the ARE
 file is saved. Equals 2 on second save, and so on.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Width
 INT
 Area size in the x-direction (west-east direction)
@@ -229,20 +247,24 @@ Table 2.2a: environment.2da columns
 Column
 Type
 Description
+
 ### LABEL
 
 String
 Programmer label
+
 ### STRREF
 
 Integer
 StrRef of localized text description to show to user in the
 listview on the Visual page of the Area Properties dialog.
+
 ### DAYNIGHT
 
 String
 "cycle", "light", or "night". Assume night if none of the
 above.
+
 ### LIGHT_AMB_RED
 
 ### LIGHT_AMB_GREEN
@@ -251,6 +273,7 @@ above.
 
 Integer
 ambient day color (0-255)
+
 ### LIGHT_DIFF_RED
 
 ### LIGHT_DIFF_GREEN
@@ -259,10 +282,12 @@ ambient day color (0-255)
 
 Integer
 diffuse day color (0-255)
+
 ### LIGHT_SHADOWS
 
 Integer
 flag for shadows on/off during the day (1 or 0)
+
 ### DARK_AMB_RED
 
 ### DARK_AMB_GREEN
@@ -271,6 +296,7 @@ flag for shadows on/off during the day (1 or 0)
 
 Integer
 ambient night color (0-255)
+
 ### DARK_DIFF_RED
 
 ### DARK_DIFF_GREEN
@@ -279,10 +305,12 @@ ambient night color (0-255)
 
 Integer
 diffuse night color (0-255)
+
 ### DARK_SHADOWS
 
 Integer
 setting for shadows on/off during the day (1 or 0)
+
 ### LIGHT_FOG_RED
 
 ### LIGHT_FOG_GREEN
@@ -291,6 +319,7 @@ setting for shadows on/off during the day (1 or 0)
 
 Integer
 day fog color (0-255)
+
 ### DARK_FOG_RED
 
 ### DARK_FOG_GREEN
@@ -299,15 +328,18 @@ day fog color (0-255)
 
 Integer
 night fog color (0-255)
+
 ### LIGHT_FOG
 
 Integer
 day fog amount (0-15)
+
 ### DARK_FOG
 
 Integer
 night fog amount (0-15)
 MAIN1_COLOR1 to
+
 ### MAIN1_COLOR4
 
 Integer
@@ -317,41 +349,48 @@ colors are chosen randomly when painting a tile or
 randomly generating the initial tiles for an area.
 Values are indices into lightcolor.2da.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 MAIN2_COLOR1 to
+
 ### MAIN2_COLOR4
 
 Integer
 same as above, but for MainLight2
 SECONDARY_COLOR1 to
+
 ### SECONDARY_COLOR4
 
 Integer
 same as above, but for SourceLight1 and SourceLight2
+
 ### WIND
 
 Integer
 wind strength (0-2)
+
 ### SNOW
 
 Integer
 chance of snow (0-100)
+
 ### RAIN
 
 Integer
 chance of rain (0-100)
+
 ### LIGHTNING
 
 Integer
 chance of lightning (0-100)
+
 ### SHADOW_ALPHA
 
 Integer
 shadow opacity (0.0 to 1.0)
+
 ### SKYBOX
 
 Integer
@@ -363,16 +402,19 @@ Table 2.2b: skyboxes.2da columns
 Column
 Type
 Description
+
 ### LABEL
 
 String
 Programmer label
+
 ### STRING_REF
 
 Integer
 StrRef of localized text description to show for the skybox
 when selecting it in the toolset's Visual Area Properties
 dialog. If the StrRef is ****, then use the LABEL instead.
+
 ### CYCLICAL
 
 Integer
@@ -381,9 +423,11 @@ vice versa.
 0 if the sky never changes. If 0, then the DAWN, DAY,
 DUSK, and NIGHT columns should all have the same
 value.
+
 ### DAWN
 
 DAY
+
 ### DUSK
 
 ### NIGHT
@@ -426,11 +470,10 @@ StrRef
 Integer
 StrRef of text to display in toolset to describe the loading screen.
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 2.4. PvP Settings
 The PlayerVsPlayer Field is an index into pvpsettings.2da.
 Table 2.4: pvpsettings.2da columns
@@ -482,6 +525,7 @@ Index into the tileset file's list of tiles, to specify what
 tile to use
 Tile_MainLight1
 Tile_MainLight2
+
 ### BYTE
 
 Index into lightcolor.2da to specify mainlight color on
@@ -496,33 +540,36 @@ Orientation of tile model.
 3 = 270 degrees counterclockwise
 Tile_SrcLight1
 Tile_SrcLight2
+
 ### BYTE
 
 0 if SourceLight is off or does not exist.
 1-15 to specify color and animation of sourcelight.
 See "Source Lights" section below for more details.
 
-
 ## Page 6
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Some of the Fields in the AreaTile Struct are indices into lightcolor.2da, which is given below.
 Table 2.5b: lightcolor.2da columns
 Column
 Type
 Description
 RED
+
 ### GREEN
 
 ### BLUE
 
 Float
 RGB colors (0.00 to 2.00).
+
 ### LABEL
 
 String
 Programmer label
+
 ### TOOLSETRED
 
 ### TOOLSETBLUE
@@ -565,11 +612,10 @@ via scripting. When a game is saved, the game includes an updated version of the
 in the .SAV file.
 In the GFF header of a GIT file, the FileType value is "GIT ".
 
-
 ## Page 7
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.1: Fields in GIT Top Level Struct
 Label
 Type
@@ -683,11 +729,10 @@ DisplayName
 String
 Alternative to Description, if Description is ****.
 
-
 ## Page 8
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.5: soundeax.2da columns
 Column
 Type
@@ -713,6 +758,7 @@ List
 List of AreaEffects.
 StructID 13.
 CurrentWeather
+
 ### BYTE
 
 Weather conditions currently in area.
@@ -725,6 +771,7 @@ List of variables stored on area.
 StructID 0. See Section 3 of the Common GFF
 Structs document.
 WeatherStarted
+
 ### BYTE
 
 1 if weather specified by CurrentWeather is starting, 0
@@ -770,11 +817,10 @@ List
 List of Waypoint instances. StructID 5
 The GIC Lists all contain the same type of Struct. The format of that Struct is given in the table below.
 
-
 ## Page 9
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 4.2: Fields in Comment Struct
 Label
 Type
@@ -782,6 +828,3 @@ Description
 Comment
 CExoString
 Module designer's comment
-
-
-

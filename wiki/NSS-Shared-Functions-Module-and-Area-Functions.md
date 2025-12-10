@@ -4,14 +4,13 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="getarea"></a>
 
 ## `GetArea(oTarget)` - Routine 24
 
 - `24. GetArea`
 - Get the area that oTarget is currently in
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 - `oTarget`: object
 
@@ -33,7 +32,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - If no valid area is specified, it will use the caller's area.
 - - oArea
 - - nObjectFilter: OBJECT_TYPE_*
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 - `oArea`: object
 - `nObjectFilter`: int (default: `1`)
@@ -44,14 +43,14 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `242. GetModule`
 - Get the module.
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 <a id="getmodulefilename"></a>
 
 ## `GetModuleFileName()` - Routine 210
 
 - `210. GetModuleFileName`
-- Gets the actual file name of the current module
+- Gets the actual [file](GFF-File-Format) name of the current module
 
 <a id="getmodulename"></a>
 
@@ -60,7 +59,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `561. GetModuleName`
 - Get the module's name in the language of the server that's running it.
 - - If there is no entry for the language of the server, it will return an
-- empty string
+- empty [string](GFF-File-Format#cexostring)
 
 <a id="getnextobjectinarea"></a>
 
@@ -71,7 +70,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - If no valid area is specified, it will use the caller's area.
 - - oArea
 - - nObjectFilter: OBJECT_TYPE_*
-- - Return value on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
 
 - `oArea`: object
 - `nObjectFilter`: int (default: `1`)
@@ -82,7 +81,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `746. SetAreaFogColor`
 - SetAreaFogColor
-- Set the fog color for the area oArea.
+- Set the fog [color](GFF-File-Format#color) for the area oArea.
 
 - `oArea`: object
 - `fRed`: float
@@ -122,7 +121,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Shut down the currently loaded module and start a new one (moving all
 - currently-connected players to the starting point.
 
-- `sModuleName`: string
+- `sModuleName`: [string](GFF-File-Format#cexostring)
 - `sWayPoint`: string (default: ``)
 - `sMovie1`: string (default: ``)
 - `sMovie2`: string (default: ``)
@@ -130,4 +129,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `sMovie4`: string (default: ``)
 - `sMovie5`: string (default: ``)
 - `sMovie6`: string (default: ``)
-

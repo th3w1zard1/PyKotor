@@ -1,27 +1,30 @@
-# KotOR NSS File Format Documentation
+# KotOR [NSS files](NSS-File-Format) [format](GFF-File-Format) Documentation
 
-NSS (NWScript Source) files contain human-readable NWScript source code that compiles to [NCS bytecode](NCS-File-Format). The `nwscript.nss` file defines all engine-exposed functions and constants available to scripts. KotOR 1 and KotOR 2 each have their own `nwscript.nss` with game-specific functions and constants.
+NSS (NWScript Source) [files](GFF-File-Format) contain human-readable NWScript source code that compiles to [NCS bytecode](NCS-File-Format). The `nwscript.nss` [file](GFF-File-Format) defines all engine-exposed functions and constants available to scripts. KotOR 1 and KotOR 2 each have their own `nwscript.nss` with game-specific functions and constants.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/)
 
 **Vendor Script Compilers:**
+
 - [`vendor/xoreos-tools/src/nwscript/`](https://github.com/th3w1zard1/xoreos-tools/tree/master/src/nwscript) - NWScript compiler and decompiler
 - [`vendor/KotOR-Scripting-Tool/`](https://github.com/th3w1zard1/KotOR-Scripting-Tool) - Visual NWScript IDE with integrated compiler
 - [`vendor/HoloLSP/`](https://github.com/th3w1zard1/HoloLSP) - Language Server Protocol implementation for NWScript
 - [`vendor/nwscript-mode.el/`](https://github.com/th3w1zard1/nwscript-mode.el) - Emacs major mode for NWScript editing
 
 **Vendor Script Implementations:**
+
 - [`vendor/xoreos/src/engines/nwscript/`](https://github.com/th3w1zard1/xoreos/tree/master/src/engines/nwscript) - Complete NWScript virtual machine implementation
 - [`vendor/reone/src/libs/script/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script) - Script execution engine
 - [`vendor/KotOR.js/src/nwscript/`](https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript) - TypeScript NWScript interpreter
 - [`vendor/Vanilla_KOTOR_Script_Source/`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source) - Decompiled vanilla KotOR scripts for reference
 
 **See Also:**
-- [NCS File Format](NCS-File-Format) - Compiled NWScript bytecode format
+
+- [NCS File Format](NCS-File-Format) - Compiled NWScript bytecode [format](GFF-File-Format)
 - [NSS Shared Functions - Actions](NSS-Shared-Functions-Actions) - Action functions documentation
 - [NSS Shared Constants](NSS-Shared-Constants-Object-Type-Constants) - Script constants reference
-- [GFF-DLG](GFF-DLG) - Dialogue files that trigger NCS scripts
-- [2DA Files](2DA-File-Format) - Game data tables referenced by scripts
+- [GFF-DLG](GFF-DLG) - [dialogue files](GFF-File-Format#dlg-dialogue) that trigger [NCS](NCS-File-Format) scripts
+- [2DA Files](2DA-File-Format) - Game [data](GFF-File-Format#file-structure) tables referenced by scripts
 
 ## Table of Contents
 
@@ -3236,14 +3239,14 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
 
 PyKotor implements `nwscript.nss` definitions in three Python modules:
 
-### Data Structures
+### [data](GFF-File-Format#file-structure) [structures](GFF-File-Format#file-structure)
 
 **`Libraries/PyKotor/src/pykotor/common/script.py`:**
 
-- `ScriptFunction`: Represents a function signature with return type, name, parameters, description, and raw string
-- `ScriptParam`: Represents a function parameter with type, name, and optional default value
-- `ScriptConstant`: Represents a constant with type, name, and value
-- `DataType`: Enumeration of all NWScript data types (INT, FLOAT, STRING, OBJECT, VECTOR, etc.)
+- `ScriptFunction`: Represents a function signature with return [type](GFF-File-Format#data-types), name, parameters, description, and raw [string](GFF-File-Format#cexostring)
+- `ScriptParam`: Represents a function parameter with [type](GFF-File-Format#data-types), name, and optional default [value](GFF-File-Format#data-types)
+- `ScriptConstant`: Represents a constant with [type](GFF-File-Format#data-types), name, and [value](GFF-File-Format#data-types)
+- `DataType`: Enumeration of all NWScript [data](GFF-File-Format#file-structure) types (INT, [float](GFF-File-Format#float), [string](GFF-File-Format#cexostring), OBJECT, [vector](GFF-File-Format#vector), etc.)
 
 **`Libraries/PyKotor/src/pykotor/common/scriptdefs.py`:**
 
@@ -3254,12 +3257,12 @@ PyKotor implements `nwscript.nss` definitions in three Python modules:
 
 **`Libraries/PyKotor/src/pykotor/common/scriptlib.py`:**
 
-- `KOTOR_LIBRARY`: Dictionary mapping library file names to their source code content (e.g., `"k_inc_generic"`, `"k_inc_utility"`)
-- `TSL_LIBRARY`: Dictionary for KotOR 2 library files
+- `KOTOR_LIBRARY`: Dictionary mapping library [file](GFF-File-Format) names to their source code content (e.g., `"k_inc_generic"`, `"k_inc_utility"`)
+- `TSL_LIBRARY`: Dictionary for KotOR 2 library [files](GFF-File-Format)
 
 ### Compilation Integration
 
-During NSS compilation (see [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py:126-205`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py#L126-L205)):
+During [NSS](NSS-File-Format) compilation (see [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py:126-205`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py#L126-L205)):
 
 1. **Parser Initialization**: The `NssParser` is created with game-specific functions and constants:
 
@@ -3274,13 +3277,13 @@ During NSS compilation (see [`Libraries/PyKotor/src/pykotor/resource/formats/ncs
 
 2. **Function Resolution**: When the parser encounters a function call, it:
    - Looks up the function name in the functions list
-   - Validates parameter types and counts
-   - Resolves the routine number (index in the functions list)
+   - Validates parameter [types](GFF-File-Format#data-types) and counts
+   - Resolves the routine number ([index](2DA-File-Format#row-labels) in the functions list)
    - Generates an `ACTION` instruction with the routine number
 
 3. **Constant Resolution**: When the parser encounters a constant:
    - Looks up the constant name in the constants list
-   - Replaces the constant with its value
+   - Replaces the constant with its [value](GFF-File-Format#data-types)
    - Generates appropriate `CONSTx` instruction
 
 4. **Library Inclusion**: When the parser encounters `#include`:
@@ -3288,7 +3291,7 @@ During NSS compilation (see [`Libraries/PyKotor/src/pykotor/resource/formats/ncs
    - Parses the included source code
    - Merges functions and constants into the current scope
 
-**Reference:** [`Libraries/PyKotor/src/pykotor/common/script.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/script.py) (data structures), [`Libraries/PyKotor/src/pykotor/common/scriptdefs.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptdefs.py) (function/constant definitions), [`Libraries/PyKotor/src/pykotor/common/scriptlib.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptlib.py) (library files)
+**Reference:** [`Libraries/PyKotor/src/pykotor/common/script.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/script.py) ([data](GFF-File-Format#file-structure) [structures](GFF-File-Format#file-structure)), [`Libraries/PyKotor/src/pykotor/common/scriptdefs.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptdefs.py) (function/constant definitions), [`Libraries/PyKotor/src/pykotor/common/scriptlib.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptlib.py) (library [files](GFF-File-Format))
 
 ---
 
@@ -3378,7 +3381,7 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 - been added or the template specified is invalid
 
 - `nNPC`: int
-- `sTemplate`: string
+- `sTemplate`: [string](GFF-File-Format#cexostring)
 
 <a id="addpartymember"></a>
 
@@ -3416,7 +3419,7 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 #### `GetPartyMemberByIndex(nIndex)` - Routine 577
 
 - `577. GetPartyMemberByIndex`
-- Returns the party member at a given index in the party.
+- Returns the party member at a given [index](2DA-File-Format#row-labels) in the party.
 - The order of members in the party can vary based on
 - who the current leader is (member 0 is always the current
 - party leader).
@@ -3430,7 +3433,7 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 - `126. GetPartyMemberCount`
 - GetPartyMemberCount
-- Returns a count of how many members are in the party including the player character
+- Returns a [count](GFF-File-Format#file-structure) of how many members [ARE](GFF-File-Format#are-area) in the party including the player character
 
 <a id="isnpcpartymember"></a>
 
@@ -3497,10 +3500,10 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 - `712. ShowPartySelectionGUI`
 - ShowPartySelectionGUI
-- Brings up the party selection GUI for the player to
+- Brings up the party selection [GUI](GFF-File-Format#gui-graphical-user-interface) for the player to
 - select the members of the party from
 - if exit script is specified, will be executed when
-- the GUI is exited
+- the [GUI](GFF-File-Format#gui-graphical-user-interface) is exited
 
 - `sExitScript`: string (default: ``)
 - `nForceNPC1`: int
@@ -3602,7 +3605,7 @@ See [Other Functions](NSS-TSL-Only-Functions-Other-Functions) for detailed docum
 - Returns 1 if successful, 0 if there was an error
 
 - `nPUP`: int
-- `sTemplate`: string
+- `sTemplate`: [string](GFF-File-Format#cexostring)
 
 <a id="addpartypuppet"></a>
 
@@ -3647,7 +3650,7 @@ See [Other Functions](NSS-TSL-Only-Functions-Other-Functions) for detailed docum
 - JAB-OEI 07/22/04
 - Will remove the CNPC from the 3 person party, and remove
 - him/her from the area, effectively sending the CNPC back
-- to the base. The CNPC data is still stored in the
+- to the base. The CNPC [data](GFF-File-Format#file-structure) is still stored in the
 
 - `nNPC`: int
 
@@ -3675,7 +3678,7 @@ See [Ability Constants](NSS-Shared-Constants-Ability-Constants) for detailed doc
 
 See [Alignment Constants](NSS-Shared-Constants-Alignment-Constants) for detailed documentation.
 
-### Class Type Constants
+### Class [type](GFF-File-Format#data-types) Constants
 
 See [Class Type Constants](NSS-Shared-Constants-Class-Type-Constants) for detailed documentation.
 
@@ -3687,7 +3690,7 @@ See [Inventory Constants](NSS-Shared-Constants-Inventory-Constants) for detailed
 
 See [NPC Constants](NSS-Shared-Constants-NPC-Constants) for detailed documentation.
 
-### Object Type Constants
+### Object [type](GFF-File-Format#data-types) Constants
 
 See [Object Type Constants](NSS-Shared-Constants-Object-Type-Constants) for detailed documentation.
 
@@ -3723,7 +3726,7 @@ See [Planet Constants](NSS-K1-Only-Constants-Planet-Constants) for detailed docu
 
 <!-- TSL_ONLY_CONSTANTS_START -->
 
-### Class Type Constants
+### Class [type](GFF-File-Format#data-types) Constants
 
 See [Class Type Constants](NSS-TSL-Only-Constants-Class-Type-Constants) for detailed documentation.
 
@@ -3747,7 +3750,7 @@ See [Planet Constants](NSS-TSL-Only-Constants-Planet-Constants) for detailed doc
 
 See [Visual Effects (VFX)](NSS-TSL-Only-Constants-Visual-Effects-(VFX)) for detailed documentation.
 
-## KOTOR Library Files
+## KOTOR Library [files](GFF-File-Format)
 
 <!-- KOTOR_LIBRARY_START -->
 
@@ -5150,7 +5153,7 @@ void ZN_CatalogFollowers()
 
 <!-- KOTOR_LIBRARY_END -->
 
-## TSL Library Files
+## TSL Library [files](GFF-File-Format)
 
 <!-- TSL_LIBRARY_START -->
 
@@ -6639,13 +6642,13 @@ void DoSpecialSpawnIn(object pObject)
 
 ## Compilation Process
 
-When compiling NSS to NCS (see [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py:126-205`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py#L126-L205)):
+When compiling [NSS](NSS-File-Format) to NCS (see [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py:126-205`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py#L126-L205)):
 
 1. **Parser Creation**: `NssParser` initialized with game-specific functions/constants
-2. **Source Parsing**: NSS source code parsed into Abstract Syntax Tree (AST)
+2. **Source Parsing**: [NSS](NSS-File-Format) source code parsed into Abstract Syntax Tree (AST)
 3. **Function Resolution**: Function calls resolved to routine numbers via function list lookup
-4. **Constant Substitution**: Constants replaced with their literal values
-5. **Bytecode Generation**: AST compiled to NCS bytecode instructions
+4. **Constant Substitution**: Constants replaced with their literal [values](GFF-File-Format#data-types)
+5. **Bytecode Generation**: AST compiled to [NCS](NCS-File-Format) bytecode instructions
 6. **Optimization**: Post-compilation optimizers applied (NOP removal, etc.)
 
 **Function Call Resolution:**
@@ -6680,26 +6683,26 @@ if (nPlanet == PLANET_TARIS) { ... }
 
 ## Commented-Out Elements in nwscript.nss
 
-The `nwscript.nss` files in KOTOR 1 and 2 contain numerous constants and functions that are commented out (prefixed with `//`). These represent features from the original Neverwinter Nights (NWN) scripting system that were not implemented or supported in the Aurora engine variant used by KOTOR. BioWare deliberately disabled these elements to prevent crashes, errors, or undefined behavior if used.
+The `nwscript.nss` [files](GFF-File-Format) in KOTOR 1 and 2 contain numerous constants and functions that [ARE](GFF-File-Format#are-area) commented out (prefixed with `//`). These represent features from the original Neverwinter Nights (NWN) scripting system that were not implemented or supported in the Aurora engine variant used by KOTOR. BioWare deliberately disabled these elements to prevent crashes, errors, or undefined behavior if used.
 
 ### Reasons for Commented-Out Elements
 
 KOTOR's `nwscript.nss` retains many NWN-era declarations but prefixes unsupported ones with `//` to disable them during compilation. This deliberate choice by BioWare ensures:
 
-- **Engine Compatibility**: KOTOR's Aurora implementation lacks opcodes or assets for certain NWN features (e.g., advanced animations, UI behaviors), leading to crashes or no-ops if invoked.
+- **Engine Compatibility**: KOTOR's Aurora implementation lacks opcodes or assets for certain NWN features (e.g., advanced [animations](MDL-MDX-File-Format#animation-header), UI behaviors), leading to crashes or no-ops if invoked.
 
-- **Modder Safety**: Prevents accidental use in custom scripts, which would fail at runtime. File-internal comments often explicitly state `// disabled` (e.g., for creature orientation in dialogues).
+- **Modder Safety**: Prevents accidental use in custom scripts, which would fail at runtime. [file](GFF-File-Format)-internal comments often explicitly state `// disabled` (e.g., for creature [orientation](MDL-MDX-File-Format#node-header) in dialogues).
 
 - **Game-Specific Differences**: K1 and K2/TSL `nwscript.nss` vary slightly; K2 has a notorious syntax error in `SetOrientOnClick` (fixed by modders via override).
 
 No official BioWare documentation explains this (as KOTOR predates widespread modding support), but forum consensus attributes it to engine streamlining for single-player RPG vs. NWN's multiplayer focus.
 
-### Key Examples of Commented Elements
+### [KEY](KEY-File-Format) Examples of Commented Elements
 
 | Category | Examples | Notes from nwscript.nss |
 |----------|----------|-------------------------|
-| Animations | `//int ANIMATION_LOOPING_LOOK_FAR = 5;`<br>`//int ANIMATION_LOOPING_SIT_CHAIR = 6;`<br>`//int ANIMATION_LOOPING_SIT_CROSS = 7;` | Not usable in KOTOR; modders note them when scripting custom behaviors. |
-| Effects/Functions | `EffectMovementSpeedIncrease` (with detailed commented description) | Function exists but capped (~200%); higher values ignored, despite "turbo" cheat allowing more. |
+| [animations](MDL-MDX-File-Format#animation-header) | `//int ANIMATION_LOOPING_LOOK_FAR = 5;`<br>`//int ANIMATION_LOOPING_SIT_CHAIR = 6;`<br>`//int ANIMATION_LOOPING_SIT_CROSS = 7;` | Not usable in KOTOR; modders note them when scripting custom behaviors. |
+| Effects/Functions | `EffectMovementSpeedIncrease` (with detailed commented description) | Function exists but capped (~200%); higher [values](GFF-File-Format#data-types) ignored, despite "turbo" cheat allowing more. |
 | Behaviors | `SetOrientOnClick` | Syntax-broken in early K2; comments note `// disabled` for orient-to-player on click. |
 
 ### Common Modder Workarounds
@@ -6736,18 +6739,18 @@ void SetOrientOnClick( object oCreature = OBJECT_SELF, ... )
 
 Modding communities actively reference these commented sections, especially on **Deadly Stream** (primary KOTOR hub), **LucasForums archives**, **Holowan Laboratories** (via MixNMojo/Mixmojo forums), and Reddit.
 
-| Forum | Key Threads | Topics Covered |
+| Forum | [KEY](KEY-File-Format) Threads | Topics Covered |
 |-------|-------------|----------------|
-| Deadly Stream | [Script Shack](https://deadlystream.com/topic/4808-fair-strides-script-shack/page/7/), [nwscript.nss Request](https://deadlystream.com/topic/6892-nwscriptnss/) | Animations, overrides |
+| Deadly Stream | [Script Shack](https://deadlystream.com/topic/4808-fair-strides-script-shack/page/7/), [nwscript.nss Request](https://deadlystream.com/topic/6892-nwscriptnss/) | [animations](MDL-MDX-File-Format#animation-header), overrides |
 | LucasForums Archive | [Syntax Error](https://www.lucasforumsarchive.com/thread/142901-syntax-error-in-kotor2-nwscriptnss), [Don't Mess with It](https://www.lucasforumsarchive.com/thread/168643-im-trying-to-change-classes2da) | Fixes, warnings |
 | Reddit r/kotor | [Movement Speed](https://www.reddit.com/r/kotor/comments/9dr8iy/modding_question_movement_speed_increase_in_k2/) | Effect caps |
 | Czerka R&D Wiki | [nwscript.nss](https://czerka-rd.fandom.com/wiki/Nwscript.nss) | General documentation |
 
 **Notable Discussion Points:**
 
-- **Deadly Stream - Fair Strides' Script Shack** (2016 thread, 100+ pages): Users troubleshooting animations flag the exact commented lines (e.g., `ANIMATION_LOOPING_*`), confirming they can't be used natively. No successful uncommenting reported; focus on alternatives like `ActionPlayAnimation` workarounds.
+- **Deadly Stream - Fair Strides' Script Shack** (2016 thread, 100+ pages): Users troubleshooting [animations](MDL-MDX-File-Format#animation-header) [flag](GFF-File-Format#data-types) the exact commented lines (e.g., `ANIMATION_LOOPING_*`), confirming they can't be used natively. No successful uncommenting reported; focus on alternatives like `ActionPlayAnimation` workarounds.
 
-- **Reddit r/kotor** (2018): Thread on speed boosts quotes the commented description for `EffectMovementSpeedIncrease` (line ~165). Users test values >200% (no effect due to cap), note "turbo" cheat bypasses it partially.
+- **Reddit r/kotor** (2018): Thread on speed boosts quotes the commented description for `EffectMovementSpeedIncrease` (line ~165). Users test [values](GFF-File-Format#data-types) >200% (no effect due to cap), note "turbo" cheat bypasses it partially.
 
 - **LucasForums Archive** (2004-2007 threads): Multiple posts warn against editing `nwscript.nss` ("very bad idea... loads of trouble"). Syntax fix for K2 widely shared; `// disabled` snippets appear in context of `SetOrientOnClick`.
 
@@ -6761,7 +6764,7 @@ Modding communities actively reference these commented sections, especially on *
 
 In summary, while no one has publicly shared a "uncomment everything" patch (likely futile), the modding scene thrives on careful overrides, with thousands of posts across these sites confirming the practice since 2003.
 
-### Key Citations
+### [KEY](KEY-File-Format) Citations
 
 - [Deadly Stream: Fair Strides' Script Shack](https://deadlystream.com/topic/4808-fair-strides-script-shack/page/7/)
 - [Czerka Wiki: nwscript.nss](https://czerka-rd.fandom.com/wiki/Nwscript.nss)
@@ -6778,8 +6781,8 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 
 - [`vendor/reone/src/apps/dataminer/routines.cpp:149-184`](https://github.com/th3w1zard1/reone/blob/master/src/apps/dataminer/routines.cpp#L149-L184) - Parses nwscript.nss using regex patterns for constants and functions
 - [`vendor/reone/src/apps/dataminer/routines.cpp:382-427`](https://github.com/th3w1zard1/reone/blob/master/src/apps/dataminer/routines.cpp#L382-L427) - Extracts functions from nwscript.nss in chitin.key for K1 and K2
-- [`vendor/xoreos-tools/src/nwscript/actions.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/actions.cpp) - Actions data parsing for decompilation
-- [`vendor/xoreos-tools/src/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/ncsfile.cpp) - NCS file parsing with actions data integration
+- [`vendor/xoreos-tools/src/nwscript/actions.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/actions.cpp) - Actions [data](GFF-File-Format#file-structure) parsing for decompilation
+- [`vendor/xoreos-tools/src/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/ncsfile.cpp) - [NCS file](NCS-File-Format) parsing with actions [data](GFF-File-Format#file-structure) integration
 - [`vendor/NorthernLights/Assets/Scripts/ncs/nwscript_actions.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/nwscript_actions.cs) - Unity C# actions table
 - [`vendor/NorthernLights/Assets/Scripts/ncs/nwscript.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/nwscript.cs) - Unity C# NWScript class
 - [`vendor/KotOR-Scripting-Tool/NWN Script/NWScriptParser.cs`](https://github.com/th3w1zard1/KotOR-Scripting-Tool/blob/master/NWN%20Script/NWScriptParser.cs) - C# parser for nwscript.nss
@@ -6790,7 +6793,7 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 - [`vendor/KotOR.js/src/nwscript/NWScriptDefK1.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptDefK1.ts) - KotOR 1 definitions
 - [`vendor/KotOR.js/src/nwscript/NWScriptDefK2.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptDefK2.ts) - KotOR 2 definitions
 - [`vendor/KotOR.js/src/nwscript/NWScriptParser.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptParser.ts) - TypeScript parser for nwscript.nss
-- [`vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptCompiler.ts) - TypeScript NSS compiler
+- [`vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptCompiler.ts) - TypeScript [NSS](NSS-File-Format) compiler
 - [`vendor/KotOR.js/src/nwscript/NWScriptInstructionSet.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptInstructionSet.ts) - Instruction set definitions
 - [`vendor/KotOR.js/src/nwscript/NWScriptConstants.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptConstants.ts) - Constant definitions
 - [`vendor/HoloLSP/server/src/nwscript/`](https://github.com/th3w1zard1/HoloLSP/blob/master/server/src/nwscript/) - Language server definitions
@@ -6804,7 +6807,7 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 **Original Sources:**
 
 - [`vendor/Vanilla_KOTOR_Script_Source`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source) - Original KotOR script sources including nwscript.nss
-- [`vendor/Vanilla_KOTOR_Script_Source/K1/Data/scripts.bif/`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source/tree/master/K1/Data/scripts.bif) - KotOR 1 script sources from BIF
+- [`vendor/Vanilla_KOTOR_Script_Source/K1/Data/scripts.bif/`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source/tree/master/K1/Data/scripts.bif) - KotOR 1 script sources from [BIF](BIF-File-Format)
 - [`vendor/Vanilla_KOTOR_Script_Source/TSL/Vanilla/Data/Scripts/`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source/tree/master/TSL/Vanilla/Data/Scripts) - KotOR 2 script sources
 - [`vendor/KotOR-Scripting-Tool/NWN Script/k1/nwscript.nss`](https://github.com/th3w1zard1/KotOR-Scripting-Tool/blob/master/NWN%20Script/k1/nwscript.nss) - KotOR 1 nwscript.nss
 - [`vendor/KotOR-Scripting-Tool/NWN Script/k2/nwscript.nss`](https://github.com/th3w1zard1/KotOR-Scripting-Tool/blob/master/NWN%20Script/k2/nwscript.nss) - KotOR 2 nwscript.nss
@@ -6813,37 +6816,37 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 
 **PyKotor Implementation:**
 
-- [`Libraries/PyKotor/src/pykotor/common/script.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/script.py) - Data structures (ScriptFunction, ScriptConstant, DataType)
+- [`Libraries/PyKotor/src/pykotor/common/script.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/script.py) - [data](GFF-File-Format#file-structure) structures (ScriptFunction, ScriptConstant, DataType)
 - [`Libraries/PyKotor/src/pykotor/common/scriptdefs.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptdefs.py) - Function and constant definitions (772 K1 functions, 1489 K1 constants)
-- [`Libraries/PyKotor/src/pykotor/common/scriptlib.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptlib.py) - Library file definitions (k_inc_generic, k_inc_utility, etc.)
+- [`Libraries/PyKotor/src/pykotor/common/scriptlib.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptlib.py) - Library [file](GFF-File-Format) definitions (k_inc_generic, k_inc_utility, etc.)
 - [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py:126-205`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py#L126-L205) - Compilation integration
 
 **Other Implementations:**
 
-- [`vendor/Kotor.NET/Kotor.NET/Formats/KotorNCS/NCS.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorNCS/NCS.cs) - C# NCS format with actions data support
-- [`vendor/KotORModSync/KOTORModSync.Core/Data/NWScriptHeader.cs`](https://github.com/th3w1zard1/KotORModSync/blob/master/KOTORModSync.Core/Data/NWScriptHeader.cs) - C# NWScript header parser
-- [`vendor/KotORModSync/KOTORModSync.Core/Data/NWScriptFileReader.cs`](https://github.com/th3w1zard1/KotORModSync/blob/master/KOTORModSync.Core/Data/NWScriptFileReader.cs) - C# NWScript file reader
+- [`vendor/Kotor.NET/Kotor.NET/Formats/KotorNCS/NCS.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorNCS/NCS.cs) - C# [NCS](NCS-File-Format) [format](GFF-File-Format) with actions [data](GFF-File-Format#file-structure) support
+- [`vendor/KotORModSync/KOTORModSync.Core/Data/NWScriptHeader.cs`](https://github.com/th3w1zard1/KotORModSync/blob/master/KOTORModSync.Core/Data/NWScriptHeader.cs) - C# NWScript [header](GFF-File-Format#file-header) parser
+- [`vendor/KotORModSync/KOTORModSync.Core/Data/NWScriptFileReader.cs`](https://github.com/th3w1zard1/KotORModSync/blob/master/KOTORModSync.Core/Data/NWScriptFileReader.cs) - C# NWScript [file](GFF-File-Format) reader
 
 **NWScript VM and Execution:**
 
 - [`vendor/reone/src/libs/script/routine/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script/routine) - Routine implementations for engine functions
-- [`vendor/reone/src/libs/script/format/ncsreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp) - NCS bytecode reader
-- [`vendor/reone/src/libs/script/format/ncswriter.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncswriter.cpp) - NCS bytecode writer
+- [`vendor/reone/src/libs/script/format/ncsreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp) - [NCS](NCS-File-Format) bytecode reader
+- [`vendor/reone/src/libs/script/format/ncswriter.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncswriter.cpp) - [NCS](NCS-File-Format) bytecode writer
 - [`vendor/xoreos/src/aurora/nwscript/`](https://github.com/th3w1zard1/xoreos/tree/master/src/aurora/nwscript) - NWScript VM implementation
-- [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp) - NCS file parsing and execution
-- [`vendor/xoreos/src/aurora/nwscript/object.h`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/object.h) - NWScript object type definitions
+- [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp) - [NCS file](NCS-File-Format) parsing and execution
+- [`vendor/xoreos/src/aurora/nwscript/object.h`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/object.h) - NWScript object [type](GFF-File-Format#data-types) definitions
 - [`vendor/xoreos/src/engines/kotorbase/object.h`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/object.h) - KotOR object implementation
-- [`vendor/NorthernLights/Assets/Scripts/ncs/control.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/control.cs) - Unity C# NCS VM control
-- [`vendor/NorthernLights/Assets/Scripts/ncs/NCSReader.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/NCSReader.cs) - Unity C# NCS reader
-- [`vendor/KotOR.js/src/odyssey/controllers/NWScriptController.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/controllers/NWScriptController.ts) - TypeScript NWScript VM controller
+- [`vendor/NorthernLights/Assets/Scripts/ncs/control.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/control.cs) - Unity C# [NCS](NCS-File-Format) VM control
+- [`vendor/NorthernLights/Assets/Scripts/ncs/NCSReader.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/NCSReader.cs) - Unity C# [NCS](NCS-File-Format) reader
+- [`vendor/KotOR.js/src/odyssey/controllers/NWScriptController.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/controllers/NWScriptController.ts) - TypeScript NWScript VM [controller](MDL-MDX-File-Format#controllers)
 - [`vendor/KotOR.js/src/nwscript/NWScriptInstance.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptInstance.ts) - TypeScript NWScript instance
 - [`vendor/KotOR.js/src/nwscript/NWScriptStack.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptStack.ts) - TypeScript stack implementation
 - [`vendor/KotOR.js/src/nwscript/NWScriptSubroutine.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptSubroutine.ts) - TypeScript subroutine handling
 
 **Documentation and Specifications:**
 
-- [`vendor/xoreos-docs/`](https://github.com/th3w1zard1/xoreos-docs) - xoreos documentation including format specifications
-- [`vendor/xoreos-docs/specs/torlack/ncs.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/ncs.html) - NCS format specification (if available)
+- [`vendor/xoreos-docs/`](https://github.com/th3w1zard1/xoreos-docs) - xoreos documentation including [format](GFF-File-Format) specifications
+- [`vendor/xoreos-docs/specs/torlack/ncs.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/ncs.html) - [NCS](NCS-File-Format) [format](GFF-File-Format) specification (if available)
 
 **NWScript Language Support:**
 
@@ -6853,10 +6856,10 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 
 **NWScript Parsing and Compilation:**
 
-- [`vendor/reone/src/libs/script/parser/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script/parser) - NSS parser implementation
-- [`vendor/reone/src/libs/script/compiler/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script/compiler) - NSS to NCS compiler
-- [`vendor/xoreos-tools/src/nwscript/compiler.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/compiler.cpp) - NSS compiler implementation
-- [`vendor/xoreos-tools/src/nwscript/decompiler.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/decompiler.cpp) - NCS decompiler implementation
+- [`vendor/reone/src/libs/script/parser/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script/parser) - [NSS](NSS-File-Format) parser implementation
+- [`vendor/reone/src/libs/script/compiler/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script/compiler) - [NSS](NSS-File-Format) to [NCS](NCS-File-Format) compiler
+- [`vendor/xoreos-tools/src/nwscript/compiler.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/compiler.cpp) - [NSS](NSS-File-Format) compiler implementation
+- [`vendor/xoreos-tools/src/nwscript/decompiler.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/decompiler.cpp) - [NCS](NCS-File-Format) decompiler implementation
 
 **NWScript Execution:**
 
@@ -6865,8 +6868,8 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 - [`vendor/xoreos/src/aurora/nwscript/execution.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/execution.cpp) - NWScript execution engine
 - [`vendor/xoreos/src/aurora/nwscript/variable.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/variable.cpp) - Variable handling
 - [`vendor/xoreos/src/aurora/nwscript/function.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/function.cpp) - Function call handling
-- [`vendor/NorthernLights/Assets/Scripts/ncs/control.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/control.cs) - Unity C# NCS VM control and execution
-- [`vendor/KotOR.js/src/nwscript/NWScriptController.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptController.ts) - TypeScript NWScript controller and execution
+- [`vendor/NorthernLights/Assets/Scripts/ncs/control.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/control.cs) - Unity C# [NCS](NCS-File-Format) VM control and execution
+- [`vendor/KotOR.js/src/nwscript/NWScriptController.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptController.ts) - TypeScript NWScript [controller](MDL-MDX-File-Format#controllers) and execution
 
 **Routine Implementations:**
 
@@ -6876,18 +6879,18 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 - [`vendor/xoreos/src/aurora/nwscript/routines.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/routines.cpp) - Routine implementations
 - [`vendor/xoreos/src/engines/kotorbase/script/routines.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/script/routines.cpp) - KotOR-specific routine implementations
 
-**NWScript Type System:**
+**NWScript [type](GFF-File-Format#data-types) System:**
 
-- [`vendor/xoreos/src/aurora/nwscript/types.h`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/types.h) - NWScript type definitions
-- [`vendor/xoreos/src/aurora/nwscript/types.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/types.cpp) - Type system implementation
-- [`vendor/KotOR.js/src/enums/nwscript/NWScriptDataType.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/enums/nwscript/NWScriptDataType.ts) - TypeScript data type enumerations
-- [`vendor/KotOR.js/src/enums/nwscript/NWScriptTypes.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/enums/nwscript/NWScriptTypes.ts) - TypeScript type definitions
+- [`vendor/xoreos/src/aurora/nwscript/types.h`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/types.h) - NWScript [type](GFF-File-Format#data-types) definitions
+- [`vendor/xoreos/src/aurora/nwscript/types.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/types.cpp) - [type](GFF-File-Format#data-types) system implementation
+- [`vendor/KotOR.js/src/enums/nwscript/NWScriptDataType.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/enums/nwscript/NWScriptDataType.ts) - TypeScript [data](GFF-File-Format#file-structure) [type](GFF-File-Format#data-types) enumerations
+- [`vendor/KotOR.js/src/enums/nwscript/NWScriptTypes.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/enums/nwscript/NWScriptTypes.ts) - TypeScript [type](GFF-File-Format#data-types) definitions
 
 **NWScript Events:**
 
 - [`vendor/KotOR.js/src/nwscript/events/NWScriptEvent.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/events/NWScriptEvent.ts) - Event handling
 - [`vendor/KotOR.js/src/nwscript/events/NWScriptEventFactory.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/events/NWScriptEventFactory.ts) - Event factory
-- [`vendor/KotOR.js/src/enums/nwscript/NWScriptEventType.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/enums/nwscript/NWScriptEventType.ts) - Event type enumerations
+- [`vendor/KotOR.js/src/enums/nwscript/NWScriptEventType.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/enums/nwscript/NWScriptEventType.ts) - Event [type](GFF-File-Format#data-types) enumerations
 
 **NWScript Bytecode:**
 
@@ -6919,17 +6922,17 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 - [`vendor/NorthernLights/Assets/Scripts/ncs/constants.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/constants.cs) - NWScript constant definitions
 - [`vendor/reone/src/libs/script/routine.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/routine.cpp) - Routine base class implementation
 - [`vendor/reone/src/libs/game/script/routines.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/script/routines.cpp) - Game-specific routine implementations
-- [`vendor/reone/include/reone/script/routines.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/script/routines.h) - Routine header definitions
-- [`vendor/reone/include/reone/script/routine.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/script/routine.h) - Routine base class header
-- [`vendor/reone/include/reone/game/script/routines.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/game/script/routines.h) - Game routine header
+- [`vendor/reone/include/reone/script/routines.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/script/routines.h) - Routine [header](GFF-File-Format#file-header) definitions
+- [`vendor/reone/include/reone/script/routine.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/script/routine.h) - Routine base class [header](GFF-File-Format#file-header)
+- [`vendor/reone/include/reone/game/script/routines.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/game/script/routines.h) - Game routine [header](GFF-File-Format#file-header)
 - [`vendor/xoreos-tools/src/nwscript/subroutine.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/subroutine.cpp) - Subroutine handling
-- [`vendor/xoreos-tools/src/nwscript/subroutine.h`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/subroutine.h) - Subroutine header
-- [`vendor/xoreos/src/engines/kotorbase/types.h`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/types.h) - KotOR type definitions including base item types
+- [`vendor/xoreos-tools/src/nwscript/subroutine.h`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/subroutine.h) - Subroutine [header](GFF-File-Format#file-header)
+- [`vendor/xoreos/src/engines/kotorbase/types.h`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/types.h) - KotOR [type](GFF-File-Format#data-types) definitions including base item [types](GFF-File-Format#data-types)
 - [`vendor/KotOR.js/src/module/Module.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/module/Module.ts) - Module loading and management
 - [`vendor/KotOR.js/src/module/ModuleArea.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/module/ModuleArea.ts) - Area management and transitions
 - [`vendor/xoreos/src/engines/nwn/module.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/nwn/module.cpp) - NWN module implementation
 - [`vendor/xoreos/src/engines/nwn2/module.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/nwn2/module.cpp) - NWN2 module implementation
-- [`vendor/xoreos/src/engines/nwn2/module.h`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/nwn2/module.h) - NWN2 module header
+- [`vendor/xoreos/src/engines/nwn2/module.h`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/nwn2/module.h) - NWN2 module [header](GFF-File-Format#file-header)
 - [`vendor/xoreos/src/engines/dragonage2/script/functions_module.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/dragonage2/script/functions_module.cpp) - Dragon Age 2 module functions
 - [`vendor/xoreos/src/engines/nwn/script/functions_effect.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/nwn/script/functions_effect.cpp) - NWN effect function implementations
 - [`vendor/xoreos/src/engines/nwn/script/functions_object.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/nwn/script/functions_object.cpp) - NWN object function implementations
@@ -6950,6 +6953,6 @@ See [Other Constants](NSS-TSL-Only-Constants-Other-Constants) for detailed docum
 
 ## Cross-References
 
-- **[NCS File Format](NCS-File-Format.md)**: Compiled bytecode format that NSS compiles to
-- **[GFF File Format](GFF-File-Format.md)**: Scripts are stored in GFF files (UTC, UTD, etc.)
-- **[KEY File Format](KEY-File-Format.md)**: nwscript.nss is stored in chitin.key
+- **[NCS File Format](NCS-File-Format.md)**: Compiled bytecode [format](GFF-File-Format) that [NSS](NSS-File-Format) compiles to
+- **[GFF File Format](GFF-File-Format.md)**: Scripts [ARE](GFF-File-Format#are-area) stored in [GFF](GFF-File-Format) files ([UTC](GFF-File-Format#utc-creature), [UTD](GFF-File-Format#utd-door), etc.)
+- **[KEY File Format](KEY-File-Format.md)**: nwscript.nss is stored in [chitin.key](KEY-File-Format)

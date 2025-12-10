@@ -1,4 +1,5 @@
 # Creature
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Creature Format
+
 1. INTRODUCTION.............................................................................................. 3
 2. CREATURE STRUCT...................................................................................... 3
 2.1 Common Creature Fields ................................................................................................................. 3
@@ -43,11 +45,10 @@ Creature Format
 3.7.4. Add or Initialize Ability Scores ................................................................................................. 22
 3.7.5. Add Skills................................................................................................................................. 22
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3.7.6. Add Feats.................................................................................................................................. 23
 3.7.7. Add Spells................................................................................................................................ 25
 3.7.8. Add Package Equipment ........................................................................................................... 26
@@ -69,11 +70,11 @@ http://www.bioware.com
 5.8. Challenge Rating............................................................................................................................ 43
 5.9. Other.............................................................................................................................................. 43
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
+
 1. Introduction
 A Creature is an object that can move around in the game and interact with other objects such as doors,
 placeable objects, items, encounters, triggers, or other creatures. The behaviour of a creature is
@@ -104,10 +105,12 @@ Label
 Type
 Description
 Appearance_Type
+
 ### WORD
 
 Index into appearance.2da.
 BodyBag
+
 ### BYTE
 
 Index into bodybag.2da.
@@ -118,10 +121,12 @@ is 0.
 See Table 4.5.2 in the Doors and Placeable Objects
 document.
 Cha
+
 ### BYTE
 
 Charisma Ability Score, before any bonuses/penalties
 ChallengeRating
+
 ### FLOAT
 
 Calculated Challenge Rating. See Section 3.1.
@@ -132,13 +137,13 @@ List of Class Structs, having StructID 2.
 Must always contain at least one element, and can have
 up to 3 elements.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 See Section 2.1.2. Fields in Class Struct.
 Con
+
 ### BYTE
 
 Constitution Ability Score, before any
@@ -160,6 +165,7 @@ bonuses. This value may be higher or lower than the
 creature's maximum hit points. See Section 3.4. Hit
 Points for more details.
 DecayTime
+
 ### DWORD
 
 If the Lootable Field is 1, then this is the number of
@@ -181,10 +187,12 @@ CExoLocString
 Description of the object as seen when using the
 Examine action in the game.
 Dex
+
 ### BYTE
 
 Desterity Ability Score, before any bonuses/penalties
 Disarmable
+
 ### BYTE
 
 1 if the Creature can be disarmed, 0if not.
@@ -192,52 +200,66 @@ Equip_ItemList
 List
 List of EquippedItem Structs. StructID is equal to the
 item slot bit flag for the equipped item:
+
 ### HEAD
 
 0x1
+
 ### CHEST
 
 0x2
+
 ### BOOTS
 
 0x4
+
 ### ARMS
 
 0x8
+
 ### RIGHTHAND
 
 0x10
+
 ### LEFTHAND
 
 0x20
+
 ### CLOAK
 
 0x40
+
 ### LEFTRING
 
 0x80
+
 ### RIGHTRING
 
 0x100
+
 ### NECK
 
 0x200
+
 ### BELT
 
-
 0x400
+
 ### ARROWS
 
 0x800
+
 ### BULLETS
 
 0x1000
+
 ### BOLTS
 
 0x2000
 The Structs themselves differs between creature
 blueprints and instances.
 FactionID
+
 ### WORD
 
 Faction ID of the Creature. This is an index into the
@@ -249,48 +271,55 @@ FirstName
 CExoLocString
 First name.
 fortbonus
+
 ### SHORT
 
 Fortitude save bonus. Usually 0.
 Gender
+
 ### BYTE
 
 Index into gender.2da.
 0 is assumed to be male, and 1 female, by hardcoded
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 convention. The 2da serves mainly to specify the
 StrRef to display the name of the gender to the user.
 GoodEvil
+
 ### BYTE
 
 Alignment on the Good-Evil axis.
 0 is the most Evil value, and 100 is the most Good
 value.
 HitPoints
+
 ### SHORT
 
 Base Maximum Hit Points, not considering any
 bonuses. See Section 3.4 for more details.
 Int
+
 ### BYTE
 
 Intelligence Ability Score, before any bonuses/penalties
 Interruptable
+
 ### BYTE
 
 1 if a conversation with this creature can be interrupted,
 0 otherwise
 IsImmortal
+
 ### BYTE
 
 1 if the Creature can never die, and can never drop
 below 1 Hit Point.
 IsPC
+
 ### BYTE
 
 1 if the Creature is a Player Character; 0 otherwise.
@@ -303,27 +332,32 @@ LastName
 CExoLocString
 Last name.
 LawfulChaotic
+
 ### BYTE
 
 Alignment on the Law-Chaos axis.
 0 is the most Chaotic value, and 100 is the most Lawful
 value.
 Lootable
+
 ### BYTE
 
 1 if the Creature leaves behind a lootable corpse.
 0 if the Creature leaves behind a bodybag placeable
 object instead.
 MaxHitPoints
+
 ### SHORT
 
 Maximum Hit Points, after considering all bonuses and
 penalties.
 NaturalAC
+
 ### BYTE
 
 Natural AC bonus.
 NoPermDeath
+
 ### BYTE
 
 1 if the Creature cannot permanently die.
@@ -337,6 +371,7 @@ corpse from fading, call the SetIsDestroyable()
 scripting function on the Creature with an argument of
 FALSE, or set the Lootable Field to 1.
 PerceptionRange
+
 ### BYTE
 
 Index into ranges.2da. Must be 9 to 13.
@@ -348,18 +383,22 @@ appearance.2da where the MODELTYPE is "P".
 0 = normal
 1 = fat
 Plot
+
 ### BYTE
 
 1 if creature is Plot, 0 if not
 PortraitId
+
 ### WORD
 
 Index into portraits.2da
 Race
+
 ### BYTE
 
 Index into racialtypes.2da
 refbonus
+
 ### SHORT
 
 bonus to Reflex saving throw.
@@ -391,11 +430,10 @@ ScriptOnNotice
 CResRef
 OnPerception event
 
-
 ## Page 6
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 ScriptRested
 CResRef
 OnRested event
@@ -415,6 +453,7 @@ matches up on a one-to-one basis with the rows in
 skills.2da. There should be the same number of
 elements in SkillList as there are rows in skills.2da.
 SoundSetFile
+
 ### WORD
 
 Index into soundset.2da. See Section 7 of the Sound
@@ -423,12 +462,14 @@ SpecAbilityList
 List
 List of SpecialAbility Structs (StructID 4)
 StartingPackage
+
 ### BYTE
 
 Index into packages.2da. Specifies the package that
 this creature levels up in when using the
 LevelUpHenchman() scripting function.
 Str
+
 ### BYTE
 
 Strength Ability Score, before any bonuses/penalties
@@ -440,6 +481,7 @@ Tag
 CExoString
 Tag of this object
 Tail
+
 ### BYTE
 
 Index into tailmodel.2da.
@@ -447,10 +489,12 @@ WalkRate
 INT
 Index into creaturespeed.2da.
 willbonus
+
 ### SHORT
 
 Bonus to Will saving throw
 Wings
+
 ### BYTE
 
 Index into wingmodel.2da.
@@ -464,6 +508,7 @@ Class
 INT
 Index into classes.2da.
 ClassLevel
+
 ### SHORT
 
 Level in the Class specified by the Class Field.
@@ -495,11 +540,10 @@ KnownList1
 List
 List of known spells
 
-
 ## Page 7
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 KnownList9
 The MemorizedLists and KnownLists contain Spell Structs. The game and toolset differ in what Fields
 the Spell Structs contain. Refer to Table 2.1.5: Toolset Fields in all Spell Structs (known and
@@ -512,6 +556,7 @@ Label
 Type
 Description
 Feat
+
 ### WORD
 
 Index into feat.2da.
@@ -521,6 +566,7 @@ Label
 Type
 Description
 Rank
+
 ### BYTE
 
 Skill Rank. The index of the Skill Struct in the
@@ -535,12 +581,14 @@ Label
 Type
 Description
 Spell
+
 ### WORD
 
 Index into spells.2da.
 SpellCasterLevel BYTE
 Spell caster level to cast this spell as
 SpellFlags
+
 ### BYTE
 
 Bit flags. Can have one or more of the following flags:
@@ -558,6 +606,7 @@ Comment
 CExoString
 Module designer comment.
 PaletteID
+
 ### BYTE
 
 ID of the node that the Creature Blueprint appears
@@ -571,11 +620,10 @@ If you manually rename a UTC file outside of the
 toolset, then you must also update the TemplateResRef
 Field inside it.
 
-
 ## Page 8
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.2: Fields in Creature Blueprint EquippedItem Structs
 Label
 Type
@@ -596,6 +644,7 @@ For instances, this is the ResRef of the blueprint that
 the instance was created from.
 XOrientation
 YOrientation
+
 ### FLOAT
 
 x,y vector pointing in the direction of the creature's
@@ -603,6 +652,7 @@ orientation
 XPosition
 YPosition
 ZPosition
+
 ### FLOAT
 
 (x,y,z) coordinates of the Creature within the Area that
@@ -615,10 +665,12 @@ Label
 Type
 Description
 Spell
+
 ### WORD
 
 Index into spells.2da.
 SpellFlags
+
 ### BYTE
 
 General bit flags. Can have one or more of the
@@ -627,6 +679,7 @@ following flags:
 0x02: spontaneously cast
 0x04: unlimited use
 SpellMetaMagic
+
 ### BYTE
 
 Metamagic type. These values look like they can be bit
@@ -646,12 +699,14 @@ Label
 Type
 Description
 Spell
+
 ### WORD
 
 Index into spells.2da.
 SpellCasterLevel BYTE
 Spell caster level to cast this spell as
 SpellFlags
+
 ### BYTE
 
 Metamagic bit flags. Can have one or more of the
@@ -660,11 +715,10 @@ following flags:
 0x02: spontaneously cast
 0x04: unlimited use
 
-
 ## Page 9
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 2.5. Creature Game Instance Fields
 After a GIT file has been saved by the game, the Creature Instance Struct contains not just the Fields in
 Table 2.1.1 and Table 2.3, but also those Fields in Table 2.5.
@@ -685,32 +739,33 @@ character creation.
 AmbientAnimState BYTE
 
 AnimationDay
-### DWORD
 
+### DWORD
 
 AnimationTime
+
 ### DWORD
 
-
 Appearance_Head
+
 ### BYTE
 
-
 AreaId
+
 ### DWORD
 
 ObjectId of area containing creature
 ArmorPart_RFoot
-### BYTE
 
+### BYTE
 
 BaseAttackBonus
+
 ### BYTE
 
-
 BodyBagId
-### DWORD
 
+### DWORD
 
 CombatInfo
 Struct
@@ -723,12 +778,14 @@ INT
 Index into creaturesize.2da, and matches up to
 hardcoded constants in the game.
 DeadSelectable
+
 ### BYTE
 
 1 if the creature is dead and selectable. That is,
 mousing over it causes it to highlight.
 0 otherwise.
 DetectMode
+
 ### BYTE
 
 1 if creature is in detect mode, 0 otherwise
@@ -737,6 +794,7 @@ List
 list of Effects on this creature. See Common GFF
 Structs document, Section 4.
 Experience
+
 ### DWORD
 
 0 for non-player characters
@@ -752,46 +810,51 @@ FamiliarType
 INT
 
 FortSaveThrow
+
 ### CHAR
 
-
 Gold
+
 ### DWORD
 
 Amount of gold being carried by the creature
 IsCommandable
-### BYTE
 
+### BYTE
 
 IsDestroyable
+
 ### BYTE
 
-
 IsDM
+
 ### BYTE
 
 1 if the creature is a DM; 0 otherwise
 IsRaiseable
+
 ### BYTE
 
 1 if the creature can be raised; otherwise
 Listening
-### BYTE
 
+### BYTE
 
 MasterID
+
 ### DWORD
 
-
 MClassLevUpIn
+
 ### BYTE
 
-
 ObjectId
+
 ### DWORD
 
 Object ID used by game for this object.
 OverrideBAB
+
 ### BYTE
 
 0 to use normal BAB calculated based on levels in each
@@ -803,11 +866,10 @@ StructID 0
 ObjectId DWORD
 PerceptionData BYTE 3
 
-
 ## Page 10
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 PersonalRepList
 List
 List of PersonalReputation Structs (StructID 0xABED)
@@ -815,23 +877,27 @@ describing how other creatures feel about this one.
 PM_IsPolymorphed BYTE
 
 PregameCurrent
+
 ### SHORT
 
 62
 RefSaveThrow
+
 ### CHAR
 
-
 SitObject
+
 ### DWORD
 
 ObjectID of the Placeable Object that the creature is
 sitting on
 SkillPoints
+
 ### WORD
 
 0
 StealthMode
+
 ### BYTE
 
 1 if the creature is in stealth mode, 0 otherwise
@@ -841,8 +907,8 @@ List of scripting variables stored on this object.
 StructID 0. See Section 3 of the Common GFF
 Structs document.
 WillSaveThrow
-### CHAR
 
+### CHAR
 
 Table 2.5.2: Additional Fields in Class Struct (StructID 2)
 Label
@@ -850,10 +916,12 @@ Type
 Description
 Domain1
 Domain2
+
 ### BYTE
 
 Index into domains.2da.
 School
+
 ### BYTE
 
 Present only for Wizards. Index into spellschools.2da.
@@ -873,6 +941,7 @@ Label
 Type
 Description
 NumSpellsLeft
+
 ### BYTE
 
 Let the index of this element in the SpellsPerDayList
@@ -886,10 +955,12 @@ Ready
 INT
 1 if the spell is readied for casting
 Spell
+
 ### WORD
 
 Index into spells.2da.
 SpellMetaMagic
+
 ### SHORT
 
 Same meaning as in toolset. See Table
@@ -898,6 +969,7 @@ Label
 Type
 Description
 Spell
+
 ### WORD
 
 Index into spells.2da.
@@ -913,30 +985,33 @@ of another creature.
 For example, hitting another creature would typically
 set this Amount to -100.
 Day
+
 ### DWORD
 
 Specifies game time at which this PersonalReputation
 object was created.
 Decays
+
 ### BYTE
 
 1 if the reputation adjustment decays after a set time
 
-
 ## Page 11
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 0 if it does not decay
 Duration
 INT
 Duration in seconds of reputation adjustment
 ObjectId
+
 ### DWORD
 
 Object ID of the other creature for which the reputation
 adjustment Amount applies.
 Time
+
 ### DWORD
 
 Specifies game time at which this PersonalReputation
@@ -952,8 +1027,8 @@ Age
 INT
 
 Experience
-### DWORD
 
+### DWORD
 
 QBList
 List
@@ -1004,17 +1079,17 @@ in the module. There is one Struct per Faction, in the
 same order as given in the module Faction file
 repute.fac.
 
-
 ## Page 12
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 2.6.4. QuickBar
 Table 2.6.4.1: Fields in QuickBar Empty Structs (StructID 0)
 Label
 Type
 Description
 QBObjectType
+
 ### BYTE
 
 0 if qbar slot is empty. If slot is empty, none of the
@@ -1042,6 +1117,7 @@ Label
 Type
 Description
 QBCastPropIndex
+
 ### BYTE
 
 0xFF if no cast property
@@ -1049,19 +1125,23 @@ QBCastSubPropIdx BYTE
 0xFF if no subproperty
 QBContReposX
 QBContReposY
+
 ### BYTE
 
 0xFF if not inside a container
 QBItemInvSlot
+
 ### DWORD
 
 object ID
 QBItemReposX
 QBItemReposY
+
 ### BYTE
 
 location of item in inventory
 QBObjectType
+
 ### BYTE
 
 1 for items
@@ -1070,6 +1150,7 @@ Label
 Type
 Description
 QBDomainLevel
+
 ### BYTE
 
 0 for most spells. Domain level for cleric domain
@@ -1078,14 +1159,17 @@ QBINTParam1
 INT
 Index into spells.2da.
 QBMetaType
+
 ### BYTE
 
 MetaMagic flags on a spell, if applicable.
 QBMultiClass
+
 ### BYTE
 
 Index into creature's ClassList.
 QBObjectType
+
 ### BYTE
 
 2 for spells
@@ -1097,6 +1181,7 @@ QBINTParam1
 INT
 Index into skills.2da.
 QBObjectType
+
 ### BYTE
 
 3 for skills
@@ -1108,15 +1193,15 @@ QBINTParam1
 INT
 Index into feat.2da.
 QBObjectType
+
 ### BYTE
 
 4 for feats
 
-
 ## Page 13
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.6.3.5: Fields in QuickBar Mode Structs (StructID 0)
 Label
 Type
@@ -1126,6 +1211,7 @@ INT
 0 for detect mode
 1 for stealth mode
 QBObjectType
+
 ### BYTE
 
 10 for modes
@@ -1135,16 +1221,17 @@ QBObjectType
 The Challenge Rating of a Creature is calculated using many sources. Below is the step-by-step
 procedure for calculating Challenge Rating.
 Add up all the following:
+
 ### HD * 0.15
 
-(Natural AC bonus) * 0.1
-[ (Inventory Value) / (HD * 20000 + 100000) ] * 0.2 * HD
-[ (Total HP) / (Average HP) ] * 0.2 * HD * (Walk Rate) / (Standard Walk Rate)
-[ (Total of all Ability Scores) / (HD + 50) ] * 0.1 * HD
-[ (Total  Special Ability Levels) / { (HD * (HD + 1) ) + (HD * 5 ) } ] * 0.15 * HD
-[ (Total Spell Levels) / { (HD * (HD + 1) ) } ] * 0.15 * HD
-[ ((Bonus Saves) + (Base Saves)) / (Base Saves) ] * 0.15 * HD
-[ (Total Feat CR Values) / (HD * 0.5 + 7) ] * 0.1 * HD
+(Natural AC bonus) *0.1
+[ (Inventory Value) / (HD* 20000 + 100000) ] *0.2* HD
+[ (Total HP) / (Average HP) ] *0.2* HD *(Walk Rate) / (Standard Walk Rate)
+[ (Total of all Ability Scores) / (HD + 50) ]* 0.1 *HD
+[ (Total  Special Ability Levels) / { (HD* (HD + 1) ) + (HD *5 ) } ]* 0.15 *HD
+[ (Total Spell Levels) / { (HD* (HD + 1) ) } ] *0.15* HD
+[ ((Bonus Saves) + (Base Saves)) / (Base Saves) ] *0.15* HD
+[ (Total Feat CR Values) / (HD *0.5 + 7) ]* 0.1 * HD
 then multiply the total sum by the racial challenge rating modifer, the CRModifier value from
 racialtypes.2da, using the creature's race as an index into the 2da. The resulting value is the Additive
 CR.
@@ -1156,14 +1243,13 @@ creature weapon slots or the creature hide slot. See Section 4.4 of the Items do
 calculate item cost.
 Total HP = total hit points, not including bonuses from constitution or feats.
 
-
 ## Page 14
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Average HP = average hit points based on average hit point dice rolls for each class. For example, a
 creature having classes Outsider 7/Fighter 3 (d8 and d10 hit dice, respectively) would have Average HP
-= [7 * (8 + 1)/2] + [3 * (10+1)/2] = 7*4.5 + 3*5.5.
+= [7 *(8 + 1)/2] + [3* (10+1)/2] = 7*4.5 + 3*5.5.
 Walk Rate = creature's walk rate from the WALKRATE column of creaturespeed.2da, using the
 creature's WalkRate GFF Field as the 2da row index.
 Standard Walk Rate = The WALKRATE column value for row 0 in creaturespeed.2da, which
@@ -1196,11 +1282,10 @@ in the toolset (that is, the value of the creature's CRAdjust GFF Field).
 RoundedCR = AddtiveCR, rounded off to nearest integer
 AdditiveCR = AdditiveCR + CRAdjust
 
-
 ## Page 15
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 RoundedCR = RoundedCR + CRAdjust
 If AddtiveCR > 0.75, then
 FinalCR = RoundedCR
@@ -1239,11 +1324,10 @@ Feats, such as Iron Will.
 •
 Modifiers from Effects, such as from spells or items.
 
-
 ## Page 16
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 •
 Bonus saving throw values set in the Creature Properties dialog, and saved as the fortbonus,
 refbonus, and willbonus GFF Fields.
@@ -1279,13 +1363,13 @@ Note that a creature that has been reduced to 0 hit points in the game does not 
 CurrentHitPoints, because CurrentHitPoints does not consider hit point bonuses.
 Example: Suppose that the level 5 Barbarian in the examples above has been reduced to 0 hit
 points ingame. The barbarian has lost 53 hit points from maximum, so the CurrentHitPoints are 38
-- 53 = -15.
 
+- 53 = -15.
 
 ## Page 17
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3.5. INI List File Format
 The Creature Wizard, Creature Levelup Wizard, and Creature Template system all use a set of INI files
 having a common format. These INI files are called List Files.
@@ -1307,10 +1391,12 @@ The following example illustrates the types of Keys that may be present in an IN
 explanatory comments set off by green-colored text preceded by semi-colons. Note that a real INI List
 file does not include any comments. Any string values that correspond to ResRefs are not case-
 sensitive.
+
 ### [HALFLING_WIZARD_VAMPIRE_EXAMPLE]
 
 ; Bonus ability scores. Add these to the creature's current
 ; ability scores.
+
 ### STR=0
 
 ### INT=0
@@ -1341,12 +1427,12 @@ BASEARMORCLASS=0    ; bonus to natural AC
 ; Saving throw bonuses. These are in addition to the creature's
 ; base saves, and are added to the totals saved to the
 
-
 ## Page 18
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 ; fortbonus, refbonus, and willbonus GFF Fields
+
 ### SAVEFORT=0
 
 ### SAVEREF=0
@@ -1356,35 +1442,45 @@ http://www.bioware.com
 ; Additional Spells. Obsolete.
 ; No longer used as of game version 1.60, toolset 1.3.0.0, vts 025
 ; Use the packages system instead.
+
 ### SPELLCOUNT=4
 
 SPELLLABEL1=Daze
+
 ### SPELLLEVEL1=0
 
 SPELLLABEL2=Ray_of_Frost
+
 ### SPELLLEVEL2=0
 
 SPELLLABEL3=Ray_of_Frost
+
 ### SPELLLEVEL3=1
 
 SPELLLABEL4=Magic_Missile
+
 ### SPELLLEVEL4=1
 
 ; Additional Skills. Obsolete.
 ; No longer used as of game version 1.60, toolset 1.3.0.0, vts 025
 ; Use the packages system instead.
+
 ### SKILLCOUNT=3
 
 SKILLLABEL1=Concentration
+
 ### SKILLRANK1=4
 
 SKILLLABEL2=Lore
+
 ### SKILLRANK2=4
 
 SKILLLABEL3=Spellcraft
+
 ### SKILLRANK3=4
 
 ; Default Equipped Item ResRefs
+
 ### HEAD=
 
 ### CHEST=NW_CLOTH005
@@ -1414,6 +1510,7 @@ SKILLLABEL3=Spellcraft
 ### BOLTS=
 
 ; Unequipped items to add to creature inventory
+
 ### UNEQUIPPEDCOUNT=2
 
 ### UNEQUIPPED1=NW_IT_TORCH001
@@ -1433,16 +1530,16 @@ ONSPAWN=NW_C2_Default9
 ONRESTED=NW_C2_DefaultA
 ONDEATH=NW_C2_Default7
 
-
 ## Page 19
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 ONUSERDEFINED=NW_C2_DefaultD
 ONBLOCKED=NW_C2_DefaultE
 ; Additional special abilities.
 ; SPECIALABILITYCOUNT is the number of additional
 ; special abilities in this section of the INI file
+
 ### SPECIALABILITYCOUNT=2
 
 ; There should be as many SPECIALABILITYLABEL,
@@ -1452,6 +1549,7 @@ ONBLOCKED=NW_C2_DefaultE
 ; label of a spell in spells.2da.
 SPECIALABILITYLABEL1=Gaze_Dominate
 ; SPECIALABILITYCASTERLEVEL is the caster level for the ability
+
 ### SPECIALABILITYCASTERLEVEL1=1
 
 ; SPECIALABILITYUNLIMITEDUSE specifies if this ability can be
@@ -1459,9 +1557,11 @@ SPECIALABILITYLABEL1=Gaze_Dominate
 ; If its value is zero, then the entry counts as a single use
 ; of the ability per day. Additionay uses per day require
 ; duplicate entries.
+
 ### SPECIALABILITYUNLIMITEDUSE1=0
 
 SPECIALABILITYLABEL2=Aura_Fear
+
 ### SPECIALABILITYCASTERLEVEL2=10
 
 ### SPECIALABILITYUNLIMITEDUSE2=0
@@ -1474,6 +1574,7 @@ NEWHD=12             ; New HD to apply to all class levels
 ; Creature item blueprint resrefs
 CQUALITIES=NW_CREITEMVAM   ; creature hide item resref
 ; Creature weapon item resrefs for weapons slots 1, 2, 3
+
 ### CLAW1=
 
 ### CLAW2=
@@ -1488,7 +1589,6 @@ CWSLASHPIERCE=NW_CREWPVBT  ; slash+pierce weapon modifier
 CWBLUDGEON=                ; slam weapon modifier
 CWALL=                     ; all weapons modifier
 
-
 3.6. Creature Wizard Race Initialization
 The first step to creating a creature in the Creature Wizard is to pick its race from among those defined
 in racialtypes.2da. Several starting characteristics are defined in racialtypes.2da (Appearance, default
@@ -1498,15 +1598,15 @@ racialtypes.2da, truncated to 11 characters if it is longer than that, to ensure
 characters or less. The race INI file contains one section, having the same name as the ResRef itself,
 but in all-caps and without the "RACE_" prefix. (eg., [HUMANOID_MO])
 
-
 ## Page 20
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 A Race INI file is a list file (See Section 3.5. INI List File Format). It contains a single section,
 named after the <label> portion of its ResRef.
 The following example displays some of the keys that can be present in a race section. Not all of them
 need to be present.
+
 ### [HALFLING]
 
 ### STR=0
@@ -1558,11 +1658,10 @@ cls_pres_*.2da.
 3.7.2. Determine levelup package
 In the game, using LevelUpHenchman() specifies the Class and Package to use for levelup.
 
-
 ## Page 21
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 In the Creature Wizard and Creature Levelup Wizard, the procedure is different:
 Use the creature's StartingPackage GFF Field value as an index into packages.2da and check the
 ClassID for the package. If the package ClassID matches the class being leveled up in, then use the
@@ -1586,6 +1685,7 @@ appended to the section names.
 Examples of class INI file sections are:
 [WIZARD 1 Primary]
 [WIZARD 1 Secondary]
+
 ### [WIZARD 2]
 
 ### [WIZARD 3]
@@ -1596,6 +1696,7 @@ any class, or if the creature multiclassed. The Primary section applies for a cr
 The Secondary section applies when multiclassing.
 As of game version 1.60 and toolset version 1.3.0.0, vts025, the only keys used from a class list file
 are the default scripts from the primary section:
+
 ### ONHEARTBEAT=
 
 ### ONNOTICE=
@@ -1622,13 +1723,12 @@ are the default scripts from the primary section:
 
 ### ONBLOCKED=
 
-
-
 ## Page 22
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 For reference, however, older versions of the toolset also loaded the following keys
+
 ### STR=
 
 ### INT=
@@ -1677,11 +1777,10 @@ into skills.2da; and ClassSkill, which contains a 1 if the skill is a class skil
 cannot take a skill at all (eg., Clerics can't take Perform), then that skill does not appear at all in the
 Class Skills table.
 
-
 ## Page 23
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Package Skill Preferences
 Determine the Package Skills Preference Table (packsk*.2da) for the levelup package by getting the
 SkillPref2DA from packages.2da.
@@ -1719,11 +1818,10 @@ Feats Table (cls_bfeat_*.2da), which is specified in the BonusFeatsTable column 
 Bonus column in cls_bfeat_*.2da is 0 if there are no bonus feats at a particular level, or 1 if there is 1
 bonus feat.
 
-
 ## Page 24
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Feat prerequisites
 To take a feat, the creature must meet the prerequisites for it as defined by the following columns from
 feat.2da: PreReqEpic, MINATTACKBONUS, MINSTR, MINDEX, MININT, MINWIS,
@@ -1762,11 +1860,10 @@ If a feat in the Class Feats Table has a List column value of 0 (normal choosabl
 normal), then it can be taken as a normal feat. Use the same procedure as for bonus feats to add normal
 feats to a creature.
 
-
 ## Page 25
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3.7.7. Add Spells
 Class SpellGain Table
 To determine if a class is a spellcasting class, get the Class Spell Gain Table (cls_spgn_*.2da) from
@@ -1793,6 +1890,7 @@ If the levelup class is one that prepares spells in advance, then spells are add
 If the levelup class is one that does not prepare spells, then spells are added to its KnownLists.
 To add new spells, do the following steps for each spell level that has a column in the
 SpellGain/SpellKnown table:
+
 1. Determine how many spells the creature has at this spell level. If the creature has a SpellsKnown
 table, then use the value from the appropriate column of the cls_spkn 2da. Otherwise, use the
 appropriate column in the cls_spgn 2da. If the creature uses the SpellGain table, then the creature
@@ -1805,12 +1903,11 @@ creature has a SpellsKnown table) or MemorizedList (if the creature has no Spell
 this spell level. The resulting difference is the number of new spells that the creature gains. If the
 result is 0, skip to the next spell level.
 
-
 ## Page 26
 
 BioWare Corp.
-http://www.bioware.com
-3. If the levelup class is Cleric, then add domain spells, if any. Check the appropriate Level_ column
+<http://www.bioware.com>
+3. If the levelup class is Cleric, then add domain spells, if any. Check the appropriate Level_column
 in domains.2da for extra domain spells at the current spell level, and add those spells to the
 creature's MemorizedList. For each spell added, subtract from the number of new spells calculated
 in Step 2.
@@ -1847,11 +1944,10 @@ fractional hit point values until the Creature Wizard or Creature Levelup Wizard
 all class levels. After all levels have been added, the total hit point value is rounded to the nearest
 integer.
 
-
 ## Page 27
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 3.8. Applying Creature Templates
 A Template is a set of properties that modify an existing creature. Examples of Templates are Vampire,
 Half-Dragon, and Lich. Templates are applied using the List File system (see Section 3.5. INI List File
@@ -1890,16 +1986,16 @@ text.
 3.8.4. Creature Weapon Changes
 The creature item keys are resolved using a very specific order and method.
 
-
 ## Page 28
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Specific Damage-type Weapon Modifiers
 The CWSLASH, CWPIERCE, CWSLASHPIERCE, and CWBLUDGEON keys are Creature Weapon
 modifiers, and are applied first, and in the order listed in this sentence.
 Each of these keys refers to an Item Blueprint (UTI file).
 For each key, do the following for each of the creature's 3 Creature Weapon slots:
+
 1. Check if there is an item in the current slot. If not, skip to the next slot
 2. Check if the current slot's item has the same damage type as that for the current weapon modifier.
 If not, skip to the next slot
@@ -1923,7 +2019,7 @@ loaded and added to the creature's Hide slot.
 If the creature already has a hide item, then the CQUALITIES item's properties are added to those of
 the creature's existing hide item. If the creature is a Creature Blueprint, then the resulting item is saved
 as a new Item Blueprint with a user-specified ResRef.
-5. Creature-related 2DA Files
+4. Creature-related 2DA Files
 5.1. Appearance
 The appearance 2da defines all the Creature appearances that exist. Many characteristics of a Creature
 are determined by its Appearance. These characteristics are defined in appearance.2da.
@@ -1931,25 +2027,28 @@ Table 5.1.1: appearance.2da
 Column
 Type
 Description
+
 ### LABEL
 
 String
 programmer label
 
-
 ## Page 29
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
+
 ### STRING_REF
 
 Integer
 StrRef of the name of the appearance type, as it appears in
 the Appearance dropdown in the toolset
+
 ### NAME
 
 String
 programmer label
+
 ### RACE
 
 String
@@ -1959,6 +2058,7 @@ If MODELTYPE is "P", then this is the player model letter
 used in constructing the complete creature model. For
 example, if RACE is "D", then chest part 3 for a normal-
 phenotype male creature is pmd0_chest003.
+
 ### ENVMAP
 
 String
@@ -1970,6 +2070,7 @@ EnvMap property.
 
 Interpret any other value as the ResRef of the TGA file to
 use as the environment map for the creature.
+
 ### BLOODCOLOR
 
 String
@@ -1978,6 +2079,7 @@ G = green
 W = white
 Y = yellow
 N = none
+
 ### MODELTYPE
 
 String
@@ -1995,74 +2097,85 @@ F = same as simple, but weapon items do appear when
 equipped in right or left hand inventory slots.
 
 L = large: same as F, but only right-hand weapon appears.
+
 ### WEAPONSCALE
 
 Float
 Size scaling factor to apply to weapon models equipped by
 creatures having this appearance. Only meaningful if
 MODELTYPE is not S.
+
 ### WING_TAIL_SCALE
 
 Float
 Size scaling factor to apply to wings or tails attached to the
 creature model.
+
 ### HELMET_SCALE_M
 
 Float
 Size scaling to apply to helms equipped by male creatures.
 Only meaningful if MODELTYPE=P
+
 ### HELMET_SCALE_F
 
 Float
 Size scaling to apply to helms equipped by female
 creatures. Only meaningful if MODELTYPE=P
+
 ### MOVERATE
 
 String
 Default walking/running speed for creatures having this
 appearance. Specifies a row in creaturespeed.2da that has
 this value in its 2DAName column.
+
 ### WALKDIST
 
 Float
 Distance in metres travelled by creature from the
 beginning of its walk animation to the end of its walk
 animation
+
 ### RUNDIST
 
 Float
 Distance in metres travelled by creature from the
 beginning of its run animation to the end of its run
 animation
+
 ### PERSPACE
 
 Float
 Personal space used to determine if the creature will fit
 
-
 ## Page 30
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 through an opening
+
 ### CREPERSPACE
 
 Float
 Personal space used for combat. Usually larger than
-### PERSPACE.
+
+### PERSPACE
 
 ### HEIGHT
 
 Float
 Height of the creature. Used for pathfinding under
 obstacles and zoomin camera height.
+
 ### HITDIST
 
 Float
 When this creature is attacking another creature, subtract
 the HITDIST from the actual distance between attacker and
 target before comparing the distance to the
-### PREFATCKDIST.
+
+### PREFATCKDIST
 
 ### PREFATCKDIST
 
@@ -2071,6 +2184,7 @@ Preferred distance from which to attack a target. Creature
 will use short-range, normal-range, or long-range versions
 of its melee animations depending on distance of the
 target.
+
 ### TARGETHEIGHT
 
 String
@@ -2078,28 +2192,33 @@ Target height when hitting creatures having this
 appearance
 H = normal height, used by most appearances
 L = low, used by short appearances, such as badgers
+
 ### ABORTONPARRY
 
 Integer
 1 if attack animation aborts when the attacked creature
 plays the parry animation
+
 ### RACIALTYPE
 
 Integer
 Index into racialtypes.2da.
 Default racialtype of creatures having this appearance.
+
 ### HASLEGS
 
 Integer
 1 if the appearance has legs, 0 otherwise.
 The Feat "Called Shot: Leg" only works if the creature has
 legs.
+
 ### HASARMS
 
 Integer
 1 if the appearance has arms, 0 otherwise.
 The Feat "Called Shot: Arm" only works if the creature has
 arms.
+
 ### PORTRAIT
 
 String
@@ -2109,26 +2228,31 @@ Example: if PORTRAIT is po_badger, then use the
 portraits po_badger_h.tga, po_badger_l.tga,
 po_badger_m.tga, etc.
 This value should not exceed 14 characters in length.
+
 ### SIZECATEGORY
 
 Integer
 Index into creaturesize.2da, references hard-coded list of
 creature size definitions in game engine.
+
 ### PERCEPTIONDIST
 
 Integer
 Default perception range in metres for creatures having
 this appearance
+
 ### FOOTSTEPTYPE
 
 Integer
 -1 if makes no sound when walking or running
 Otherwise, index into footstepsounds.2da.
+
 ### SOUNDAPPTYPE
 
 Integer
 Index into appearancesndset.2da. See Table 5.7.3.2 in
 the Items GFF document.
+
 ### HEADTRACK
 
 Integer
@@ -2136,46 +2260,52 @@ Integer
 a conversation, or objects being moused over by the
 player.
 0 otherwise.
+
 ### HEAD_ARC_H
 
 Float
 Maximum angle in degrees that the creature's head will
 turn to the side when tracking something.
+
 ### HEAD_ARC_V
 
 Float
 Maximum angle in degrees that the creature's head will tilt
 up or down when tracking something.
+
 ### HEAD_NAME
 
 String
 Name of the head node to rotate in the creature's model in
 order to make its head track an object.
+
 ### BODY_BAG
 
 Integer
 Index into bodybag.2da, specifying the default bodybag to
 leave behind when the creature dies and its corpse fades.
+
 ### TARGETABLE
 
 Integer
 1 if the creature can be targetted, such as by mousing over
 it.
 
-
 ## Page 31
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 0 if the creature cannot be targetted
 Table 5.1.2: tailmodel.2da
 Column
 Type
 Description
+
 ### LABEL
 
 String
 programmer label
+
 ### MODEL
 
 String
@@ -2184,10 +2314,12 @@ Table 5.1.3: wingmodel.2da
 Column
 Type
 Description
+
 ### LABEL
 
 String
 programmer label
+
 ### MODEL
 
 String
@@ -2209,10 +2341,12 @@ String
 String value used in Appearance.2da under the
 MOVERATE column to specify the default creature speed
 for a given appearance.
+
 ### WALKRATE
 
 Float
 Walking speed of the creature in m/s
+
 ### RUNRATE
 
 Float
@@ -2231,16 +2365,19 @@ Table 5.1.6: creaturesize.2da
 Column
 Type
 Description
+
 ### LABEL
 
 String
 Programmer label describing the size category of the
 current row.
+
 ### ACATTACKMOD
 
 Integer
 Attack modifier when a creature of the specified size is
 attacking a medium-sized creature. Not used.
+
 ### STRREF
 
 Integer
@@ -2272,11 +2409,10 @@ ResRef of WAV to play when stepping on a suface of the
 specified type. There are 3 sound variations for each
 surface material, played at random at each footstep.
 
-
 ## Page 32
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Carpet0
 Carpet1
 Carpet2
@@ -2295,7 +2431,6 @@ Sand2
 Snow0
 Snow1
 Snow2
-
 
 5.2. Races
 Table 5.2: racialtypes.2da
@@ -2372,11 +2507,10 @@ CRModifier
 Float
 Modifier used in CR calculation for creatures of this race.
 
-
 ## Page 33
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 5.3. Classes
 Table 5.3.1: classes.2da
 Column
@@ -2486,11 +2620,10 @@ PreReqTable
 String
 ResRef of prestige class prerequisites table. (cls_pres_*)
 
-
 ## Page 34
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 **** if class can be taken at character level 1.
 MaxLevel
 Integer
@@ -2583,11 +2716,10 @@ in this class.
 1 - bonus feat awarded
 0 - no bonus feat
 
-
 ## Page 35
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 5.3.5: Class Skills Table: cls_skill_*.2da
 Column
 Type
@@ -2605,6 +2737,7 @@ Table 5.3.6: Prestige Class Prerequisites Table: cls_pres_*.2da
 Column
 Type
 Description
+
 ### LABEL
 
 String
@@ -2670,11 +2803,10 @@ column name.
 
 For classes that do not prepare their spells in advance, such
 
-
 ## Page 36
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 as sorcerers and bards, this is the base number of spells per
 day at the spell level named in the column name.
 
@@ -2715,18 +2847,22 @@ Table 5.3.9: hen_companion.2da and hen_familiar.2da
 Column
 Type
 Description
+
 ### NAME
 
 String
 programmer label
+
 ### BASERESREF
 
 String
 ResRef of UTC creature blueprint
+
 ### STRREF
 
 Integer
 StrRef of name of associate
+
 ### DESCRIPTION
 
 Integer
@@ -2736,27 +2872,33 @@ Table 5.4.1: feat.2da
 Column
 Type
 Description
+
 ### LABEL
 
 String
 programmer label
+
 ### FEAT
 
 Integer
 StrRef of the feat name
+
 ### DESCRIPTION
 
 Integer
 StrRef of the feat description
+
 ### ICON
 
 String
 ResRef of the TGA icon
+
 ### MINATTACKBONUS
 
 Integer
 Minimum base attack bonus required to take this feat
 **** if no min attack bonus requirement
+
 ### MINSTR
 
 ### MINDEX
@@ -2772,19 +2914,20 @@ Minimum base attack bonus required to take this feat
 Integer
 Minimum ability score to take this feat.
 **** if no minimum required ability score
+
 ### MINSPELLLVL
 
 Integer
 Minimum spell level that the creature must be able to cast
 in order to take this feat. For example, Empower Spell
 
-
 ## Page 37
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 requires that the creature can cast level 2 spells.
 **** if there is no spell level requirement
+
 ### PREREQFEAT1
 
 ### PREREQFEAT2
@@ -2792,35 +2935,41 @@ requires that the creature can cast level 2 spells.
 Integer
 Index into feat.2da specifying feats that the creature must
 have in order to take this one.
-### GAINMULTIPLE
 
+### GAINMULTIPLE
 
 0 if feat cannot be gained multiple times
 1 if feat can be gained more than once.
 Not supported at this time. Always 0.
+
 ### EFFECTSSTACK
 
 Integer
 1 if effects from the feat stack with other effects of the
 same type
 0 if effects do not stack
+
 ### ALLCLASSESCANUSE
 
 Integer
 1 if all classes can use this feat, 0 if not
+
 ### CATEGORY
 
 Integer
 Index into categories.2da. Not used.
+
 ### MAXCR
 
 Integer
 not used
+
 ### SPELLID
 
 Integer
 Index into spells.2da specifying a spell that implements
 this feat
+
 ### SUCCESSOR
 
 Integer
@@ -2833,6 +2982,7 @@ Float
 Challenge Rating weighting for this feat when calculating
 creature challenge rating. See Section 3.1. Challenge
 Rating.
+
 ### USESPERDAY
 
 Integer
@@ -2842,6 +2992,7 @@ such as number of levels in a class (Example, stunning
 fist).
 **** if feat can be used unlimited times per day or if feat
 is passive.
+
 ### MASTERFEAT
 
 Integer
@@ -2849,6 +3000,7 @@ Index into masterfeats.2da, specifying the "master feat"
 that this feat belongs to.
 Example: the "Improved Critical: Club" feat belongs the
 "Improved Critical" master feat.
+
 ### TARGETSELF
 
 Integer
@@ -2863,6 +3015,7 @@ Integer
 If any of the OrReqFeats are non-****, then the creature
 must have at least one of the OrReqFeats in order to take
 the current feat.
+
 ### REQSKILL
 
 Integer
@@ -2871,6 +3024,7 @@ Index into skills.2da specifying a required skill.
 ReqSkillMinRanks
 Integer
 Number of ranks required in the required skill
+
 ### REQSKILL2
 
 Integer
@@ -2884,6 +3038,7 @@ String
 Identifier of scripting constant used to refer to this feat.
 Feat index and Constant name must match constant
 definition in nwscript.nss
+
 ### TOOLSCATEGORIES
 
 Integer
@@ -2895,11 +3050,10 @@ lists by feat category
 3 = defensive feat
 4 = magical feat
 
-
 ## Page 38
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 5 = other feat
 HostileFeat
 Integer
@@ -2931,18 +3085,22 @@ Table 5.4.2: masterfeats.2da
 Column
 Type
 Description
+
 ### LABEL
 
 String
 programmer label
+
 ### STRREF
 
 Integer
 StrRef of the master feat name
+
 ### DESCRIPTION
 
 Integer
 StrRef of the master feat
+
 ### ICON
 
 String
@@ -2988,6 +3146,7 @@ Integer
 KeyAbility
 String
 Ability used to modify skill check. Possible values:
+
 ### STR, CON, DEX, INT, WIS, CHA
 
 ArmorCheckPenalty
@@ -3014,11 +3173,10 @@ HostileSkill
 Integer
 1 if using this skill on another creature is considered a
 
-
 ## Page 39
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 hostile act,
 0 if not.
 5.6. Spells
@@ -3097,11 +3255,10 @@ Innate
 Integer
 Spell level of this spell when used as a spell-like ability
 
-
 ## Page 40
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 ConjTime
 Integer
 Number of milliseconds to do the conjure animation
@@ -3194,11 +3351,10 @@ Death
 Disease
 Divine
 
-
 ## Page 41
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Electricity
 Fear
 Fire
@@ -3295,11 +3451,10 @@ Description
 Integer
 StrRef of spell school description
 
-
 ## Page 42
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 5.6.3: domains.2da
 Column
 Type
@@ -3404,11 +3559,10 @@ SoundSet
 Integer
 Index into soundset.2da for default soundset. Unused,
 
-
 ## Page 43
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 always 0.
 Table 5.7.2: Package Equipment: packeq*.2da
 Column
@@ -3492,12 +3646,10 @@ m = medium (64x128), appears in centre of radial menu, in
 conversation window, examine window, and as player
 portrait in upper right corner.
 
-
-
 ## Page 44
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 s = small (32x64), appears as party member portraits along
 right-hand side of game GUI.
 
@@ -3530,18 +3682,22 @@ Table 5.9.2: gender.2da
 Column
 Type
 Description
+
 ### NAME
 
 Integer
 StrRef of the gender.
+
 ### GENDER
 
 String
 single capital letter abbreviation
+
 ### GRAPHIC
 
 String
 Not used
+
 ### CONSTANT
 
 String
@@ -3568,6 +3724,3 @@ Integer
 StrRef of the range name if this is a creature perception
 range.
 **** for spell and weapon ranges.
-
-
-

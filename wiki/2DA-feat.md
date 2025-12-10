@@ -1,21 +1,20 @@
-# feat.2da
+# [feat.2da](2DA-feat)
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines all feats available in the game, including combat feats, skill feats, Force feats, and class-specific abilities. The engine uses this [file](GFF-File-Format) to determine feat prerequisites, effects, and availability during character creation and level-up.
 
-**Engine Usage**: Defines all feats available in the game, including combat feats, skill feats, Force feats, and class-specific abilities. The engine uses this file to determine feat prerequisites, effects, and availability during character creation and level-up.
+**Row [index](2DA-File-Format#row-labels)**: Feat ID (integer)
 
-**Row Index**: Feat ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Feat label |
-| `name` | StrRef | String reference for feat name |
-| `description` | StrRef | String reference for feat description |
-| `icon` | ResRef | Feat icon ResRef |
-| `takentext` | StrRef | String reference for "feat taken" message |
+| `label` | [string](GFF-File-Format#cexostring) | Feat label |
+| `name` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for feat name |
+| `description` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for feat description |
+| `icon` | [ResRef](GFF-File-Format#resref) | Feat icon [ResRef](GFF-File-Format#resref) |
+| `takentext` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for "feat taken" message |
 | `prerequisite` | Integer (optional) | Prerequisite feat ID |
 | `minattackbonus` | Integer (optional) | Minimum attack bonus requirement |
 | `minstr` | Integer (optional) | Minimum strength requirement |
@@ -36,10 +35,10 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 | `orreqfeat0` through `orreqfeat4` | Integer (optional) | Alternative prerequisite feat IDs |
 | `reqskill` | Integer (optional) | Required skill ID |
 | `reqskillrank` | Integer (optional) | Required skill rank |
-| `constant` | Integer (optional) | Constant value for feat calculations |
-| `toolscategories` | Integer (optional) | Tool categories flags |
-| `effecticon` | ResRef (optional) | Effect icon ResRef |
-| `effectdesc` | StrRef (optional) | Effect description string reference |
+| `constant` | Integer (optional) | Constant [value](GFF-File-Format#data-types) for feat calculations |
+| `toolscategories` | Integer (optional) | Tool categories [flags](GFF-File-Format#data-types) |
+| `effecticon` | ResRef (optional) | Effect icon [ResRef](GFF-File-Format#resref) |
+| `effectdesc` | StrRef (optional) | Effect description [string](GFF-File-Format#cexostring) reference |
 | `effectcategory` | Integer (optional) | Effect category identifier |
 | `allclassescanuse` | Boolean | Whether all classes can use this feat |
 | `category` | Integer | Feat category identifier |
@@ -50,11 +49,11 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Column Details** (from reone implementation):
 
-The following columns are accessed by the reone engine:
+The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
 
-- `name`: String reference for feat name
-- `description`: String reference for feat description
-- `icon`: Icon ResRef
+- `name`: [string](GFF-File-Format#cexostring) reference for feat name
+- `description`: [string](GFF-File-Format#cexostring) reference for feat description
+- `icon`: Icon [ResRef](GFF-File-Format#resref)
 - `mincharlevel`: Minimum character level (hex integer)
 - `prereqfeat1`: Prerequisite feat ID 1 (hex integer)
 - `prereqfeat2`: Prerequisite feat ID 2 (hex integer)
@@ -70,15 +69,15 @@ The following columns are accessed by the reone engine:
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:82`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L82) - StrRef column definitions for feat.2da (K1: name, description)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:260`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L260) - StrRef column definitions for feat.2da (K2: name, description)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:227`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L227) - ResRef column definition for feat.2da (icon)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:82`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L82) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [feat.2da](2DA-feat) (K1: name, description)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:260`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L260) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [feat.2da](2DA-feat) (K2: name, description)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:227`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L227) - [ResRef](GFF-File-Format#resref) column definition for [feat.2da](2DA-feat) (icon)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:464`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L464) - TwoDARegistry.FEATS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:561-562`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L561-L562) - GFF field mapping: "FeatID" and "Feat" -> feat.2da
-- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:321-323`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L321-L323) - UTC feat list field documentation
-- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:432`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L432) - UTC feats list initialization
-- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:762-768`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L762-L768) - Feat list parsing from UTC GFF
-- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:907-909`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L907-L909) - Feat list writing to UTC GFF
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:561-562`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L561-L562) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure) mapping: "FeatID" and "Feat" -> [feat.2da](2DA-feat)
+- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:321-323`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L321-L323) - [UTC](GFF-File-Format#utc-creature) feat list [field](GFF-File-Format#file-structure) documentation
+- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:432`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L432) - [UTC](GFF-File-Format#utc-creature) feats list initialization
+- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:762-768`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L762-L768) - Feat list parsing from [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format)
+- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:907-909`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L907-L909) - Feat list writing to [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format)
 
 **HolocronToolset:**
 
@@ -86,9 +85,8 @@ The following columns are accessed by the reone engine:
 
 **Vendor Implementations:**
 
-- [`vendor/reone/src/libs/game/d20/feats.cpp:32-58`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/d20/feats.cpp#L32-L58) - Feat loading from 2DA with column access
-- [`vendor/KotOR.js/src/talents/TalentFeat.ts:36-53`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/talents/TalentFeat.ts#L36-L53) - Feat structure with additional columns
-- [`vendor/KotOR.js/src/talents/TalentFeat.ts:122-132`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/talents/TalentFeat.ts#L122-L132) - Feat loading from 2DA
+- [`vendor/reone/src/libs/game/d20/feats.cpp:32-58`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/d20/feats.cpp#L32-L58) - Feat loading from [2DA](2DA-File-Format) with column access
+- [`vendor/KotOR.js/src/talents/TalentFeat.ts:36-53`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/talents/TalentFeat.ts#L36-L53) - Feat [structure](GFF-File-Format#file-structure) with additional columns
+- [`vendor/KotOR.js/src/talents/TalentFeat.ts:122-132`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/talents/TalentFeat.ts#L122-L132) - Feat loading from [2DA](2DA-File-Format)
 
 ---
-

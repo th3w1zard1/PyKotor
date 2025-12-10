@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Constants (K1 & TSL)
 
-
 <a id="ability_charisma"></a>
 
 ## `ABILITY_CHARISMA`
@@ -40,4 +39,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `ABILITY_WISDOM`
 
 (4): Ability Wisdom
-

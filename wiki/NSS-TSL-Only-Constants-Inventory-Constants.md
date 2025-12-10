@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Constants
 
-
 <a id="inventory_slot_leftweapon2"></a>
 
 ## `INVENTORY_SLOT_LEFTWEAPON2`
@@ -16,4 +15,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `INVENTORY_SLOT_RIGHTWEAPON2`
 
 (18): Inventory Slot Rightweapon2
-

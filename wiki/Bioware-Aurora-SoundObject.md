@@ -1,4 +1,5 @@
 # SoundObject
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Sound Object Format
+
 1. Introduction
 A Sound object is a source of sounds that play in an Area. They may be positional, playing from a
 specific location, or they may be area-wide, sounding the same regardless of where in the area the
@@ -30,6 +32,7 @@ Label
 Type
 Description
 Active
+
 ### BYTE
 
 1 if the Sound is active and plays.
@@ -37,6 +40,7 @@ Active
 any wave files. Inactive Sounds can be manually
 activated via scripting.
 Continuous
+
 ### BYTE
 
 1 if the Sound is continuous, or seamlessly looping. A
@@ -54,30 +58,33 @@ Interval, IntervalVrtn, PitchVariation, Random,
 RandomPositional, RandomRangeX, RandomRangeY,
 VolumeVrtn.
 Elevation
+
 ### FLOAT
 
 Elevation of the Sound above or below the XYZ
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 position at which it is placed in the toolset. When it
 plays, the audio emanates from the elevated position.
 Elevation can be negative.
 Hours
+
 ### DWORD
 
 Set of bit flags specifying which hours of the day the
 sound will play in. Bit 0 is hour 00h00, bit 6 is 06h00,
 bit 14 is 14h00, etc.
 Interval
+
 ### DWORD
 
 Interval in milliseconds between playing sounds in the
 Sound's list of waves.
 IntervalVrtn
+
 ### DWORD
 
 Interval Variation measured in milliseconds.
@@ -94,24 +101,28 @@ palette and in the Name field of the toolset's Sound
 Properties dialog.
 Does not appear in game.
 Looping
+
 ### BYTE
 
 1 if the Sound repeatedly plays its waves.
 0 if the Sound plays its waves at most once then
 becomes inactive.
 MaxDistance
+
 ### FLOAT
 
 Radius in meters outside which a listener cannot hear
 the Sound at all.
 Must be greater than or equal to the MinDistance.
 MinDistance
+
 ### FLOAT
 
 Radius in meters inside which a listener hears the
 Sound at maximum volume.
 Must be less than or equal to the MaxDistance.
 PitchVariation
+
 ### FLOAT
 
 Pitch variation when playing waves in the Sound's lis t
@@ -121,6 +132,7 @@ normal pitch. A variation of 1 means that each time the
 a wave plays, its pitch is randomly anywhere from 0 to
 1 octave higher or lower than normal.
 Positional
+
 ### BYTE
 
 1 if the Sound plays from a specific position. The
@@ -133,16 +145,19 @@ regardless of where the listener is in relation to the
 Sound. An area-wide Sound has no directional
 variation by speaker.
 Priority
+
 ### BYTE
 
 Index into prioritygroups.2da.
 Random
+
 ### BYTE
 
 1 if the waves in the Sound's wave list are chosen
 randomly each time one finishes playing.
 0 if the waves are played in sequential order.
 RandomPosition
+
 ### BYTE
 
 1 if the XYZ position of the Sound source varies
@@ -153,16 +168,16 @@ This Field is ignored for area-wide (Positional=0)
 sounds.
 RandomRangeX
 RandomRangeY
+
 ### FLOAT
 
 Random distance in meters from the Sound's XYZ
 position from which the Sound plays each time it plays
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 a wave.
 These Fields are ignored if Positional=0 or
 RandomPosition=0.
@@ -182,6 +197,7 @@ the filename.
 For instances, this is the ResRef of the blueprint that
 the instance was created from.
 Times
+
 ### BYTE
 
 Times of day in which to play the Sound.
@@ -195,11 +211,13 @@ and night are as defined by the Mod_DawnHour and
 Mod_DuskHour Fields in the module's module.ifo file.
 See Table 2.1 of the IFO document.
 Volume
+
 ### BYTE
 
 Volume to play each wave file at. Ranges from 0 (min)
 to 127 (full)
 VolumeVrtn
+
 ### BYTE
 
 Volume Variation from 0 to 127.
@@ -227,11 +245,10 @@ between them, and once all the sounds have played, the current sound object deac
 play again. This option is most useful if Active is false, and the Sound is manually triggered during the
 game by using a script.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 2.2. Sound Blueprint Fields
 The Top-Level Struct in a UTS file contains all the Fields in Table 2.1 above, plus those in Table 2.2
 below.
@@ -243,6 +260,7 @@ Comment
 CExoString
 Module designer comment.
 PaletteID
+
 ### BYTE
 
 ID of the node that the Sound Blueprint appears under
@@ -263,6 +281,7 @@ Label
 Type
 Description
 GeneratedType
+
 ### BYTE
 
 0 if manually placed by the module builder in the
@@ -282,6 +301,7 @@ the instance was created from.
 XPosition
 YPosition
 ZPosition
+
 ### FLOAT
 
 (x,y,z) coordinates of the Sound within the Area that it
@@ -300,6 +320,7 @@ List of Actions stored on this object
 StructID 0. See Section 6 of the Common GFF
 Structs document.
 ObjectId
+
 ### DWORD
 
 Object ID used by game for this object.
@@ -307,11 +328,10 @@ VarTable
 List
 List of scripting variables stored on this object.
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 StructID 0. See Section 3 of the Common GFF
 Structs document.
 3. The 2DA Files Referenced by Sound Fields
@@ -391,11 +411,10 @@ creates a new sound using the Sound Wizard in the toolset. The Sound Wizard is h
 certain rows in the sounddefaults 2da files depending on the options that the user selected within the
 Wizard's GUI.
 
-
 ## Page 6
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.2.1: sounddefaultspos.2da columns
 Column
 Type
@@ -446,7 +465,3 @@ default PitchVrtn
 VolumeVar
 Float
 default VolumeVrtn
-
-
-
-

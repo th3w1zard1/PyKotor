@@ -2,16 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines encounter difficulty levels for area encounters. The engine uses this [file](GFF-File-Format) to determine encounter scaling and difficulty modifiers.
 
-**Engine Usage**: Defines encounter difficulty levels for area encounters. The engine uses this file to determine encounter scaling and difficulty modifiers.
+**Row [index](2DA-File-Format#row-labels)**: Difficulty ID (integer)
 
-**Row Index**: Difficulty ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Difficulty label |
+| `label` | [string](GFF-File-Format#cexostring) | Difficulty label |
 | Additional columns | Various | Difficulty modifiers and properties |
 
 **References**:
@@ -21,4 +20,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`Tools/HolocronToolset/src/toolset/gui/editors/ute.py:101-104`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/ute.py#L101-L104) - Encounter difficulty selection
 
 ---
-

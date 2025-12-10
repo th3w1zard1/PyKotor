@@ -2,16 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines music tracks available in the main menu music selection. The engine uses this [file](GFF-File-Format) to populate the music list in the options menu.
 
-**Engine Usage**: Defines music tracks available in the main menu music selection. The engine uses this file to populate the music list in the options menu.
+**Row [index](2DA-File-Format#row-labels)**: Music Track ID (integer)
 
-**Row Index**: Music Track ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Music track label |
+| `label` | [string](GFF-File-Format#cexostring) | Music track label |
 | Additional columns | Various | Music track properties and ResRefs |
 
 **References**:
@@ -19,4 +18,3 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`vendor/KotOR.js/src/game/tsl/menu/MainMusic.ts:63-68`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/game/tsl/menu/MainMusic.ts#L63-L68) - Music table loading for main menu
 
 ---
-

@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Constants
 
-
 <a id="action_followowner"></a>
 
 ## `ACTION_FOLLOWOWNER`
@@ -45,103 +44,103 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `ANIMATION_FIREFORGET_DIVE_ROLL`
 
-(123): Animation Fireforget Dive Roll
+(123): [animation](MDL-MDX-File-Format#animation-header) Fireforget Dive Roll
 
 <a id="animation_fireforget_force_cast"></a>
 
 ## `ANIMATION_FIREFORGET_FORCE_CAST`
 
-(121): Animation Fireforget Force Cast
+(121): [animation](MDL-MDX-File-Format#animation-header) Fireforget Force Cast
 
 <a id="animation_fireforget_open"></a>
 
 ## `ANIMATION_FIREFORGET_OPEN`
 
-(122): Animation Fireforget Open
+(122): [animation](MDL-MDX-File-Format#animation-header) Fireforget Open
 
 <a id="animation_fireforget_scream"></a>
 
 ## `ANIMATION_FIREFORGET_SCREAM`
 
-(124): Animation Fireforget Scream
+(124): [animation](MDL-MDX-File-Format#animation-header) Fireforget Scream
 
 <a id="animation_looping_check_body"></a>
 
 ## `ANIMATION_LOOPING_CHECK_BODY`
 
-(33): Animation Looping Check Body
+(33): [animation](MDL-MDX-File-Format#animation-header) Looping Check Body
 
 <a id="animation_looping_choke_working"></a>
 
 ## `ANIMATION_LOOPING_CHOKE_WORKING`
 
-(45): Animation Looping Choke Working
+(45): [animation](MDL-MDX-File-Format#animation-header) Looping Choke Working
 
 <a id="animation_looping_closed"></a>
 
 ## `ANIMATION_LOOPING_CLOSED`
 
-(43): Animation Looping Closed
+(43): [animation](MDL-MDX-File-Format#animation-header) Looping Closed
 
 <a id="animation_looping_meditate_stand"></a>
 
 ## `ANIMATION_LOOPING_MEDITATE_STAND`
 
-(46): Animation Looping Meditate Stand
+(46): [animation](MDL-MDX-File-Format#animation-header) Looping Meditate Stand
 
 <a id="animation_looping_rage"></a>
 
 ## `ANIMATION_LOOPING_RAGE`
 
-(41): Animation Looping Rage
+(41): [animation](MDL-MDX-File-Format#animation-header) Looping Rage
 
 <a id="animation_looping_sit_and_meditate"></a>
 
 ## `ANIMATION_LOOPING_SIT_AND_MEDITATE`
 
-(35): Animation Looping Sit And Meditate
+(35): [animation](MDL-MDX-File-Format#animation-header) Looping Sit And Meditate
 
 <a id="animation_looping_sit_chair"></a>
 
 ## `ANIMATION_LOOPING_SIT_CHAIR`
 
-(36): Animation Looping Sit Chair
+(36): [animation](MDL-MDX-File-Format#animation-header) Looping Sit Chair
 
 <a id="animation_looping_sit_chair_comp1"></a>
 
 ## `ANIMATION_LOOPING_SIT_CHAIR_COMP1`
 
-(39): Animation Looping Sit Chair Comp1
+(39): [animation](MDL-MDX-File-Format#animation-header) Looping Sit Chair Comp1
 
 <a id="animation_looping_sit_chair_comp2"></a>
 
 ## `ANIMATION_LOOPING_SIT_CHAIR_COMP2`
 
-(40): Animation Looping Sit Chair Comp2
+(40): [animation](MDL-MDX-File-Format#animation-header) Looping Sit Chair Comp2
 
 <a id="animation_looping_sit_chair_drink"></a>
 
 ## `ANIMATION_LOOPING_SIT_CHAIR_DRINK`
 
-(37): Animation Looping Sit Chair Drink
+(37): [animation](MDL-MDX-File-Format#animation-header) Looping Sit Chair Drink
 
 <a id="animation_looping_sit_chair_pazak"></a>
 
 ## `ANIMATION_LOOPING_SIT_CHAIR_PAZAK`
 
-(38): Animation Looping Sit Chair Pazak
+(38): [animation](MDL-MDX-File-Format#animation-header) Looping Sit Chair Pazak
 
 <a id="animation_looping_stealth"></a>
 
 ## `ANIMATION_LOOPING_STEALTH`
 
-(44): Animation Looping Stealth
+(44): [animation](MDL-MDX-File-Format#animation-header) Looping Stealth
 
 <a id="animation_looping_unlock_door"></a>
 
 ## `ANIMATION_LOOPING_UNLOCK_DOOR`
 
-(34): Animation Looping Unlock Door
+(34): [animation](MDL-MDX-File-Format#animation-header) Looping Unlock Door
 
 <a id="base_item_force_pike"></a>
 
@@ -159,19 +158,19 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `EFFECT_TYPE_DROID_CONFUSED`
 
-(79): Effect Type Droid Confused
+(79): Effect [type](GFF-File-Format#data-types) Droid Confused
 
 <a id="effect_type_droidscramble"></a>
 
 ## `EFFECT_TYPE_DROIDSCRAMBLE`
 
-(81): Effect Type Droidscramble
+(81): Effect [type](GFF-File-Format#data-types) Droidscramble
 
 <a id="effect_type_mindtrick"></a>
 
 ## `EFFECT_TYPE_MINDTRICK`
 
-(80): Effect Type Mindtrick
+(80): Effect [type](GFF-File-Format#data-types) Mindtrick
 
 <a id="feat_class_skill_awareness"></a>
 
@@ -1095,7 +1094,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `IMMUNITY_TYPE_DROID_CONFUSED`
 
-(33): Immunity Type Droid Confused
+(33): Immunity [type](GFF-File-Format#data-types) Droid Confused
 
 <a id="implant_agi"></a>
 
@@ -1263,79 +1262,79 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `TRAP_BASE_TYPE_FLASH_STUN_DEVASTATING`
 
-(18): Trap Base Type Flash Stun Devastating
+(18): Trap Base [type](GFF-File-Format#data-types) Flash Stun Devastating
 
 <a id="trap_base_type_flash_stun_strong"></a>
 
 ## `TRAP_BASE_TYPE_FLASH_STUN_STRONG`
 
-(17): Trap Base Type Flash Stun Strong
+(17): Trap Base [type](GFF-File-Format#data-types) Flash Stun Strong
 
 <a id="trap_base_type_fragmentation_mine_devastating"></a>
 
 ## `TRAP_BASE_TYPE_FRAGMENTATION_MINE_DEVASTATING`
 
-(20): Trap Base Type Fragmentation Mine Devastating
+(20): Trap Base [type](GFF-File-Format#data-types) Fragmentation Mine Devastating
 
 <a id="trap_base_type_fragmentation_mine_strong"></a>
 
 ## `TRAP_BASE_TYPE_FRAGMENTATION_MINE_STRONG`
 
-(19): Trap Base Type Fragmentation Mine Strong
+(19): Trap Base [type](GFF-File-Format#data-types) Fragmentation Mine Strong
 
 <a id="trap_base_type_laser_slicing_devastating"></a>
 
 ## `TRAP_BASE_TYPE_LASER_SLICING_DEVASTATING`
 
-(22): Trap Base Type Laser Slicing Devastating
+(22): Trap Base [type](GFF-File-Format#data-types) Laser Slicing Devastating
 
 <a id="trap_base_type_laser_slicing_strong"></a>
 
 ## `TRAP_BASE_TYPE_LASER_SLICING_STRONG`
 
-(21): Trap Base Type Laser Slicing Strong
+(21): Trap Base [type](GFF-File-Format#data-types) Laser Slicing Strong
 
 <a id="trap_base_type_poison_gas_devastating"></a>
 
 ## `TRAP_BASE_TYPE_POISON_GAS_DEVASTATING`
 
-(24): Trap Base Type Poison Gas Devastating
+(24): Trap Base [type](GFF-File-Format#data-types) Poison Gas Devastating
 
 <a id="trap_base_type_poison_gas_strong"></a>
 
 ## `TRAP_BASE_TYPE_POISON_GAS_STRONG`
 
-(23): Trap Base Type Poison Gas Strong
+(23): Trap Base [type](GFF-File-Format#data-types) Poison Gas Strong
 
 <a id="trap_base_type_sonic_charge_average"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_AVERAGE`
 
-(15): Trap Base Type Sonic Charge Average
+(15): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Average
 
 <a id="trap_base_type_sonic_charge_deadly"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_DEADLY`
 
-(16): Trap Base Type Sonic Charge Deadly
+(16): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Deadly
 
 <a id="trap_base_type_sonic_charge_devastating"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_DEVASTATING`
 
-(26): Trap Base Type Sonic Charge Devastating
+(26): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Devastating
 
 <a id="trap_base_type_sonic_charge_minor"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_MINOR`
 
-(14): Trap Base Type Sonic Charge Minor
+(14): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Minor
 
 <a id="trap_base_type_sonic_charge_strong"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_STRONG`
 
-(25): Trap Base Type Sonic Charge Strong
+(25): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Strong
 
 <a id="tutorial_window_temp1"></a>
 
@@ -1474,4 +1473,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `VIDEO_FFECT_SECURITY_NO_LABEL`
 
 (10): Video Ffect Security No Label
-

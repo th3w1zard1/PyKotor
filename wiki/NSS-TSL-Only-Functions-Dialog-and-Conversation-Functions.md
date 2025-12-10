@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Functions
 
-
 <a id="setkeepstealthindialog"></a>
 
 ## `SetKeepStealthInDialog(nStealthState)`
@@ -16,4 +15,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - stealth is removed from anyone taking part in a cutscene.
 
 - `nStealthState`: int
-

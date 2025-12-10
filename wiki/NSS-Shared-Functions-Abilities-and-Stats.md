@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="getabilitymodifier"></a>
 
 ## `GetAbilityModifier(nAbility, oCreature)` - Routine 331
@@ -23,10 +22,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetAbilityScore(oCreature, nAbilityType)` - Routine 139
 
 - `139. GetAbilityScore`
-- Get the ability score of type nAbility for a creature (otherwise 0)
+- Get the ability score of [type](GFF-File-Format#data-types) nAbility for a creature (otherwise 0)
 - - oCreature: the creature whose ability score we wish to find out
 - - nAbilityType: ABILITY_*
-- Return value on error: 0
+- Return [value](GFF-File-Format#data-types) on error: 0
 
 - `oCreature`: object
 - `nAbilityType`: int
@@ -59,4 +58,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - This will begin a period of invulnerability (as defined by Invincibility)
 
 - `oFollower`: object
-

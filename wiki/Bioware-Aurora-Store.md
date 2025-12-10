@@ -1,4 +1,5 @@
 # Store
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Store Format
+
 1. Introduction
 1.1. Overview
 A Store is an object that exchanges items and gold with the player. Stores contain the list of items they
@@ -32,6 +34,7 @@ Label
 Type
 Description
 BlackMarket
+
 ### BYTE
 
 1 if blackmarket store. Blackmarket stores will
@@ -60,11 +63,10 @@ Sell markdown percentage. Items sold from the store
 are sold at their normal cost multiplied by this
 percentage.
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Usually 100 or greater.
 MarkUp
 INT
@@ -143,11 +145,10 @@ specifies a StoreContainer by StructID. When an Item is added to a store in the 
 ingame, an InventoryObject is created for that Item and added to the appropriate StoreContainer as
 determined by the StorePanel for that Item's BaseItem.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Each StoreContainer Struct contains a list of InventoryObjects that specify the ResRef of the Items
 available for sale. Table 2.1.3 describes a StoreContainer.
 Table 2.1.3: Fields in StoreContainer Structs (variable StructID)
@@ -168,6 +169,7 @@ Label
 Type
 Description
 Infinite
+
 ### BYTE
 
 1 if the item is available in infinite supply. The store
@@ -197,6 +199,7 @@ Comment
 CExoString
 Module designer comment.
 ID
+
 ### BYTE
 
 ID of the node that the Item Blueprint appears under in
@@ -213,11 +216,10 @@ inside it.
 A Store Instance Struct in a GIT file contains all the Fields in Table 2.1.1, plus those in Table 2.3
 below.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.3: Fields in Store Instance Structs
 Label
 Type
@@ -228,6 +230,7 @@ For instances, this is the ResRef of the blueprint that
 the instance was created from.
 XOrientation
 YOrientation
+
 ### FLOAT
 
 x,y vector pointing in the direction of the Store's
@@ -235,6 +238,7 @@ orientation
 XPosition
 YPosition
 ZPosition
+
 ### FLOAT
 
 (x,y,z) coordinates of the Store within the Area that it is
@@ -248,6 +252,7 @@ Label
 Type
 Description
 ObjectId
+
 ### DWORD
 
 Object ID used by game for this object.
@@ -256,6 +261,3 @@ List
 List of scripting variables stored on this object.
 StructID 0. See Section 3 of the Common GFF
 Structs document.
-
-
-

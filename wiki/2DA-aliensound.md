@@ -2,22 +2,20 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
+**Engine Usage**: Defines alien sound configurations. The engine uses this [file](GFF-File-Format) to determine alien sound effect filenames.
 
-**Engine Usage**: Defines alien sound configurations. The engine uses this file to determine alien sound effect filenames.
+**Row [index](2DA-File-Format#row-labels)**: Alien Sound ID (integer)
 
-**Row Index**: Alien Sound ID (integer)
+**Column [structure](GFF-File-Format#file-structure)**:
 
-**Column Structure**:
-
-| Column Name | Type | Description |
+| Column Name | [type](GFF-File-Format#data-types) | Description |
 |------------|------|-------------|
-| `label` | String | Alien sound label |
-| `filename` | ResRef | Sound filename ResRef |
+| `label` | [string](GFF-File-Format#cexostring) | Alien sound label |
+| `filename` | [ResRef](GFF-File-Format#resref) | Sound filename [ResRef](GFF-File-Format#resref) |
 | Additional columns | Various | Alien sound properties |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:183`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L183) - Sound ResRef column definition for aliensound.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:183`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L183) - Sound [ResRef](GFF-File-Format#resref) column definition for aliensound.2da
 
 ---
-

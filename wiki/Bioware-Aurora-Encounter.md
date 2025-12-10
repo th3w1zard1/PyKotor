@@ -1,4 +1,5 @@
 # Encounter
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Encounter Format
+
 1. Introduction
 An Encounter is a set of vertices defining a region that can spawn in a set of creatures when creatures of
 certain factions enter it.
@@ -29,6 +31,7 @@ Label
 Type
 Description
 Active
+
 ### BYTE
 
 1 if the Encounter is active and can spawn creatures,
@@ -48,6 +51,7 @@ DifficultyIndex
 INT
 Index into encdifficulty.2da.
 Faction
+
 ### DWORD
 
 ID of the Faction that the Encounter belongs to. An
@@ -70,11 +74,10 @@ OnEntered
 CResRef
 OnEnter event
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 OnExhausted
 CResRef
 OnExhausted event
@@ -88,6 +91,7 @@ OnUserDefined
 CResRef
 OnUserDefined event
 PlayerOnly
+
 ### BYTE
 
 0 if any creature can fire this Encounter so long as it is
@@ -106,6 +110,7 @@ encounter.
 Must be less than or equal to MaxCreatures.
 Toolset restricts this Field to the range 1 to 8.
 Reset
+
 ### BYTE
 
 0 if the Encounter does not respawn.
@@ -146,6 +151,7 @@ Appearance of the creature.
 Should be identical to the Appearance stored in the
 creature blueprint.
 CR
+
 ### FLOAT
 
 Challenge Rating of the creature.
@@ -156,6 +162,7 @@ CResRef
 ResRef of the creature blueprint (utc file) to spawn an
 instance of.
 SingleSpawn
+
 ### BYTE
 
 0 if there are no restrictions on how many copies of this
@@ -165,11 +172,10 @@ encounter.
 The Appearance and CR Fields are stored on the EncounterCreature for performance, so that the game
 does not have to access the disk to load the blueprint just to get the CR.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 2.2. Encounter Blueprint Fields
 The Top-Level Struct in a UTE file contains all the Fields in Table 2.1 above, plus those in Table 2.2
 below.
@@ -181,6 +187,7 @@ Comment
 CExoString
 Module designer comment.
 PaletteID
+
 ### BYTE
 
 ID of the node that the Encounter Blueprint appears
@@ -229,6 +236,7 @@ the instance was created from.
 XPosition
 YPosition
 ZPosition
+
 ### FLOAT
 
 (x,y,z) coordinates of the Encounter within the Area
@@ -243,16 +251,16 @@ Description
 X
 Y
 Z
+
 ### FLOAT
 
 (x,y,z) coordinates of the Point, assuming that the
 origin is at the owner Encounter's position.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 The points in the Encounter's Geometry List use a coordinate system where the origin is the
 Encounter's own position. For example, suppose that an Encounter has (XPosition, YPosition,
 ZPosition) = (10, 20, 30). If the Geometry contains a Point at (PointX, PointY, PointZ) = (0, 0, 0), then
@@ -265,6 +273,7 @@ Label
 Type
 Description
 Orientation
+
 ### FLOAT
 
 Orientation of the SpawnPoint, expressed as a bearing
@@ -272,6 +281,7 @@ in radians measured counterclockwise from north.
 X
 Y
 Z
+
 ### FLOAT
 
 (x,y,z) coordinates of the SpawnPoint within the Area
@@ -292,8 +302,8 @@ AreaListMaxSize
 INT
 
 AreaPoints
-### FLOAT
 
+### FLOAT
 
 CurrentSpawns
 INT
@@ -302,45 +312,47 @@ CustomScriptId
 INT
 
 Exhausted
+
 ### BYTE
 
-
 HeartbeatDay
-### DWORD
 
+### DWORD
 
 HeartbeatTime
-### DWORD
 
+### DWORD
 
 LastEntered
-### DWORD
 
+### DWORD
 
 LastLeft
-### DWORD
 
+### DWORD
 
 LastSpawnDay
-### DWORD
 
+### DWORD
 
 LastSpawnTime
-### DWORD
 
+### DWORD
 
 NumberSpawned
 INT
 
 ObjectId
+
 ### DWORD
 
 Object ID used by game for this object.
 SpawnPoolActive
+
 ### FLOAT
 
-
 Started
+
 ### BYTE
 
 1 if any creatures currently exist that belong to the
@@ -356,24 +368,26 @@ Structs document.
 3.1. EncDifficulty
 In an Encounter Struct, the DifficultyIndex Field is an index into encdifficulty.2da.
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.3.1: encdifficulty.2da columns
 Column
 Type
 Description
+
 ### LABEL
 
 String
 Programmer label
+
 ### STRREF
 
 Integer
 StrRef of text to display for this difficulty level in the
 toolset's Encounter Properties dialog.
+
 ### VALUE
 
 Integer
@@ -383,6 +397,3 @@ In an Encounter instance, the Geometry List contains the points that define the 
 Encounter.
 The toolset must enforce several rules for polygon geometry, as given in Section 4 of the Trigger
 Format document.
-
-
-

@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Functions
 
-
 <a id="getisplayermadecharacter"></a>
 
 ## `GetIsPlayerMadeCharacter(oidCharacter)`
@@ -24,5 +23,4 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - FAK - OEI 5/24/04
 - applies a velocity to the player object
 
-- `vForce`: vector
-
+- `vForce`: [vector](GFF-File-Format#vector)

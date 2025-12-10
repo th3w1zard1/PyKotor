@@ -4,7 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
-
 <a id="addavailablenpcbyobject"></a>
 
 ## `AddAvailableNPCByObject(nNPC, oCreature)` - Routine 694
@@ -29,7 +28,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - been added or the template specified is invalid
 
 - `nNPC`: int
-- `sTemplate`: string
+- `sTemplate`: [string](GFF-File-Format#cexostring)
 
 <a id="addpartymember"></a>
 
@@ -67,7 +66,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetPartyMemberByIndex(nIndex)` - Routine 577
 
 - `577. GetPartyMemberByIndex`
-- Returns the party member at a given index in the party.
+- Returns the party member at a given [index](2DA-File-Format#row-labels) in the party.
 - The order of members in the party can vary based on
 - who the current leader is (member 0 is always the current
 - party leader).
@@ -81,7 +80,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `126. GetPartyMemberCount`
 - GetPartyMemberCount
-- Returns a count of how many members are in the party including the player character
+- Returns a [count](GFF-File-Format#file-structure) of how many members [ARE](GFF-File-Format#are-area) in the party including the player character
 
 <a id="isnpcpartymember"></a>
 
@@ -148,10 +147,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `712. ShowPartySelectionGUI`
 - ShowPartySelectionGUI
-- Brings up the party selection GUI for the player to
+- Brings up the party selection [GUI](GFF-File-Format#gui-graphical-user-interface) for the player to
 - select the members of the party from
 - if exit script is specified, will be executed when
-- the GUI is exited
+- the [GUI](GFF-File-Format#gui-graphical-user-interface) is exited
 
 - `sExitScript`: string (default: ``)
 - `nForceNPC1`: int
@@ -166,4 +165,3 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - -1 specifies to switch back to the original PC
 
 - `nNPC`: int
-

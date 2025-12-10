@@ -1,4 +1,5 @@
 # SSF
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Sound Set File (SSF) Format
+
 1. Introduction
 The Sound Set File (SSF) format is used to store Neverwinter Nights soundset information.
 A soundset is a set of sound files to play and associated strings to display when a creature or player
@@ -51,12 +53,10 @@ Padding
 24 bytes
 NULL padding
 
-
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 4. Entry Table
 The Entry Table is an array of 32-bit unsigned integers. Each integer entry is a byte offset from the
 beginning of the file to an item of data in the Data Table.
@@ -73,7 +73,7 @@ Entry N - 1
 Entry 2
 N = EntryCount from the header
 
-5. Data Table
+1. Data Table
 The Data Table stores soundset string and sound file information. It is a sequence of SSF data objects
 packed end-to-end, with the starting offset of each one specified in the Entry Table. There is one data
 object per entry in the Entry Table.
@@ -102,11 +102,10 @@ resources (BIF files, Override folder, Hak Paks) and can have up to 16 character
 including the .wav file extension. The wave files should be in mono format, since soundset sounds are
 played as 3D sound sources in the game engine, and stereo waves do not make sense in that context.
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 The StringRef identifies a string in the user's dialog.tlk file that should be displayed when the current
 sound entry plays in the game. If the StringRef is -1 (ie., 0xFFFFFFFF), then no text appears.
 6. Entry Special Meanings
@@ -122,11 +121,10 @@ Some of the QuickChat entries have an asterisk (*) next to their names. The game
 entries to issue orders to any associates (henchmen, summonded creatures, etc) belonging to the player
 character.
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 6: Sound Set Entries
 Entry
 Type
@@ -207,24 +205,19 @@ Pained
 18
 Near death
 
-
 19
 Death
-
 
 20
 Poisoned
 
-
 21
 Spell failed
-
 
 22
 Combat
 Events
 Weapon ineffective
-
 
 23
 Follow me*
@@ -273,11 +266,9 @@ A
 33
 Encumbered
 
-
 34
 
 Selected
-
 
 35
 Hello
@@ -343,13 +334,12 @@ Feelings
 Threaten
 E
 
-7. SoundSet 2da files
-
+1. SoundSet 2da files
 
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Soundset references in the game and toolset are controlled by two 2da files.
 Soundset.2da is a centralized source of information about the SoundSet Files that exist in the game
 resources. It contains important information about the soundsets that is not stored within the SoundSet
@@ -358,22 +348,27 @@ Table 7.1: soundset.2da columns
 Column
 Type
 Description
+
 ### LABEL
 
 String
 Text label for convenience of person reading the 2da
+
 ### RESREF
 
 String
 ResRef (16-char filename) of SSF file
+
 ### STRREF
 
 Integer
 Index to string in dialog.tlk
+
 ### GENDER
 
 Integer
 0 = male, 1 = female
+
 ### TYPE
 
 Integer
@@ -389,10 +384,12 @@ Table 7.2: soundsettype.2da columns
 Column
 Type
 Description
+
 ### LABEL
 
 String
 Text label for convenience of person reading the 2da
+
 ### STRREF
 
 Integer
@@ -401,5 +398,3 @@ The soundset Type is used for filtering the list of selectable soundsets in the 
 displayed for each type is specified by its StrRef.
 As a special case, the game understands Type 0 to refer to player soundsets, and these are the ones that
 are displayed during player character creation.
-
-

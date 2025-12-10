@@ -1,4 +1,5 @@
 # Faction
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Faction System
+
 1. Introduction
 A Faction is a control system for determining how game objects interact with each other in terms of
 friendly, neutral, and hostile reactions.
@@ -38,6 +40,7 @@ Label
 Type
 Description
 FactionGlobal
+
 ### WORD
 
 Global Effect flag.
@@ -57,6 +60,7 @@ FactionName
 CExoString
 Name of the Faction.
 FactionParentID
+
 ### DWORD
 
 Index into the Top Level Struct's FactionList
@@ -66,11 +70,10 @@ The first four standard factions (PC, Hostile,
 Commoner, and Merchant) have no parents, and use
 0xFFFFFFFF as their FactionParentID. No other
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Factions can use this value.
 2.1.3. Reputation Struct
 The Table below lists the Fields that are present in a Reputation Struct found in the RepList. Each
@@ -82,16 +85,19 @@ Label
 Type
 Description
 FactionID1
+
 ### DWORD
 
 Index into the Top-Level Struct's FactionList.
 "Faction1"
 FactionID2
+
 ### DWORD
 
 Index into the Top-Level Struct's FactionList.
 "Faction2"
 FactionRep
+
 ### DWORD
 
 How Faction2 perceives Faction1.
@@ -131,11 +137,10 @@ matter if FactionID2 is 0.
 From all the above, it follows that a module that contains no user-defined factions will have exactly
 N*N - N Faction Structs, where N = 5. Modules containing user-defined factions will have more. The
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 maximum number of Faction Structs in the RepList is N*N - 1, because the Player Faction itself can
 never be a parent faction.
 3. Faction-related 2DA Files
@@ -144,6 +149,7 @@ Table 3.1: repute.2da
 Column
 Type
 Description
+
 ### LABEL
 
 String
@@ -152,18 +158,22 @@ faction named in each of the other columns. Row number
 is the faction ID. The rows are:
 Player, Hostile, Commoner, Merchant, Defender.
 Do not add new rows. They will be ignored.
+
 ### HOSTILE
 
 Integer
 How the Hostile faction feels about the other factions
+
 ### COMMONER
 
 Integer
 How the Commoner faction feels about the other factions
+
 ### MERCHANT
 
 Integer
 How the Merchant faction feels about the other factions
+
 ### DEFENDER
 
 Integer
@@ -180,6 +190,7 @@ Table 3.2: repadjust.2da
 Column
 Type
 Description
+
 ### LABEL
 
 String
@@ -188,11 +199,13 @@ The rows are: Attack, Theft, Kill, Help.
 These action types are hardcoded game constants. Do not
 change the order of rows in this 2da. Adding new rows
 will have no effect.
+
 ### PERSONALREP
 
 Integer
 Personal reputation adjustment of how the target feels
 about the perpetrator of the action named in the LABEL.
+
 ### FACTIONREP
 
 Integer
@@ -203,6 +216,7 @@ This reputation adjustment is modifed further by the effect
 of witnesses, as controlled by the columns described
 below. Note that a witnesses only affects faction standing
 if the witness belongs to a Global faction.
+
 ### WITFRIA
 
 Integer
@@ -211,20 +225,20 @@ Friendly witness target faction reputation adjustment.
 If there is a witness from a global faction that is friendly to
 the target of the action, then adjust the target's faction
 adjustment by this amount.
+
 ### WITFRIB
 
 Integer
 Friendly witness personal reputation adjustment.
 
-
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 If there is a witness from a faction that is friendly to the
 target of the action, then adjust the witness's personal
 reputation standing toward perpetrator by this amount.
+
 ### WITFRIC
 
 Integer
@@ -233,6 +247,7 @@ Friendly witness faction reputation adjustment.
 If there is a witness from a global faction that is friendly to
 the target of the action, then adjust the witness's faction
 standing toward the perpetrator by this amount.
+
 ### WITNEUA
 
 Integer
@@ -242,6 +257,7 @@ If there is a witness from a global faction that is neutral to
 the target of the action, then adjust the target's faction
 adjustment by this amount. Do not use this if a friendly
 global witness was found.
+
 ### WITNEUB
 
 Integer
@@ -250,6 +266,7 @@ Neutral witness personal reputation adjustment.
 If there is a witness from a faction that is neutral to the
 target of the action, then adjust the witness's personal
 reputation standing toward perpetrator by this amount.
+
 ### WITNEUC
 
 Integer
@@ -258,6 +275,7 @@ Neutral witness faction reputation adjustment.
 If there is a witness from a global faction that is neutral to
 the target of the action, then adjust the witness's faction
 standing toward the perpetrator by this amount.
+
 ### WITENEA
 
 Integer
@@ -267,6 +285,7 @@ If there is a witness from a global faction that is an enemy
 of the target of the action, then adjust the target's faction
 adjustment by this amount. Do not do this if there is
 already a friendly or neutral global witness.
+
 ### WITENEB
 
 Integer
@@ -275,6 +294,7 @@ Enemy witness personal reputation adjustment.
 If there is a witness from a faction that is hostile to the
 target of the action, then adjust the witness's personal
 reputation standing toward perpetrator by this amount.
+
 ### WITENEC
 
 Integer
@@ -283,6 +303,3 @@ Enemy witness faction reputation adjustment.
 If there is a witness from a global faction that is hostile to
 the target of the action, then adjust the witness's faction
 standing toward the perpetrator by this amount.
-
-
-

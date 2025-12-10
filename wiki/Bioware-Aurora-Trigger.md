@@ -1,4 +1,5 @@
 # Trigger
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 Trigger Format
+
 1. Introduction
 A Trigger is a set of vertices defining a region that players and creatures can interact with. Two
 common types of Trigger are Area Transitions and Traps.
@@ -31,6 +33,7 @@ Label
 Type
 Description
 AutoRemoveKey
+
 ### BYTE
 
 Not used.
@@ -41,6 +44,7 @@ Area Transition
 0 = leave key on player after passing through the Area
 Transition
 Cursor
+
 ### BYTE
 
 Index into cursors.2da.
@@ -56,19 +60,19 @@ set to 1 by the toolset. For Area Transitions, the game
 ignores the Cursor value anyway and always uses
 Cursor 1.
 
-
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 See section below on cursors.2da.
 DisarmDC
+
 ### BYTE
 
 If the Trigger is a Trap (Type == 2), then this is the DC
 to disarm the trap. Toolset enforces 1-250 range.
 Faction
+
 ### DWORD
 
 ID of the Faction that the Trigger belongs to. A Trap
@@ -77,6 +81,7 @@ its Faction.
 The Faction ID is the index of the Faction in the
 module's Faction.fac file.
 HighlightHeight
+
 ### FLOAT
 
 Some Triggers have a highlight color ingame (Area
@@ -97,6 +102,7 @@ LinkedTo
 CExoString
 Tag of the object that this Area Transition links to.
 LinkedToFlags
+
 ### BYTE
 
 0 if the Trigger does not link to anything
@@ -105,6 +111,7 @@ Door.
 2 if the Trigger is an Area Transition and links to a
 Waypoint.
 LoadScreenID
+
 ### WORD
 
 Index into loadscreens.2da.
@@ -131,6 +138,7 @@ OnTrapTriggered
 CResRef
 OnTrapTriggered event
 PortraitId
+
 ### WORD
 
 Index into portraits.2da.
@@ -156,32 +164,37 @@ the filename.
 For instances, this is the ResRef of the blueprint that
 the instance was created from.
 TrapDetectable
+
 ### BYTE
 
 1 if Trap can be detected, 0 if not
 TrapDetectDC
+
 ### BYTE
 
 DC to detect the Trap. Toolset enforces 1-250 range.
 TrapDisarmable
+
 ### BYTE
 
 1 if Trap can be disarmed, 0 if not
 
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 TrapFlag
+
 ### BYTE
 
 1 if the Trigger is a Trap, 0 if not
 TrapOneShot
+
 ### BYTE
 
 1 if the Trap disappears after firing, 0 otherwise
 TrapType
+
 ### BYTE
 
 Index into traps.2da.
@@ -207,6 +220,7 @@ Comment
 CExoString
 Module designer comment.
 PaletteID
+
 ### BYTE
 
 ID of the node that the Trigger Blueprint appears under
@@ -241,6 +255,7 @@ For instances, this is the ResRef of the blueprint that
 the instance was created from.
 XOrientation
 YOrientation
+
 ### FLOAT
 
 Orientation of the Trigger. The X and Y components
@@ -250,6 +265,7 @@ game ignores the orientation.
 XPosition
 YPosition
 ZPosition
+
 ### FLOAT
 
 (x,y,z) coordinates of the Trigger within the Area that it
@@ -257,11 +273,10 @@ is located in.
 The Points in the Trigger Geometry have their
 coordinates specified relative to the Trigger's own
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 location.
 Table 2.3.2: Fields in Point Struct (Struct ID 3)
 Label
@@ -270,6 +285,7 @@ Description
 PointX
 PointY
 PointZ
+
 ### FLOAT
 
 (x,y,z) coordinates of the Point, assuming that the
@@ -295,6 +311,7 @@ List of Actions stored on this object
 StructID 0. See Section 6 of the Common GFF
 Structs document.
 CreatorId
+
 ### DWORD
 
 Object ID of the Trigger's creator.
@@ -303,6 +320,7 @@ For Triggers painted in the toolset and loaded by the
 game, this is equal to the INVALID_OBJECT_ID
 constant.
 ObjectId
+
 ### DWORD
 
 Object ID used by game for this object.
@@ -329,16 +347,16 @@ ResRef of TGA texture to use as the icon for the mouse
 cursor when the user mouses over the Trigger. Used by
 toolset to show the selected icon, but not by game.
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 CursorID
 Integer
 Index to game's internal cursor list
 Below is a list of the cursor types defined by the game, and referenced by the CursorID column of
 cursors.2da.
+
 ### MOUSECURSOR_DEFAULT          1
 
 ### MOUSECURSOR_DEFAULT_DOWN     2
@@ -445,12 +463,11 @@ cursors.2da.
 
 ### MOUSECURSOR_NOKILL           53
 
-
-
 ## Page 6
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
+
 ### MOUSECURSOR_NOKILL_DOWN      54
 
 ### MOUSECURSOR_HEAL             55
@@ -547,12 +564,10 @@ BaseResRef, and append one of the following letters:
 h = huge (256x512 pixels), size used in character creation
 portrait selection
 
-
-
 ## Page 7
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 l = large (128x256), appears in Character Record sheet in
 game.
 
@@ -598,18 +613,22 @@ Table 3.2.2: gender.2da columns
 Column
 Type
 Description
+
 ### NAME
 
 Integer
 StrRef of the gender.
+
 ### GENDER
 
 String
 single capital letter abbreviation
+
 ### GRAPHIC
 
 String
 Not used
+
 ### CONSTANT
 
 String
@@ -623,11 +642,10 @@ racialtypes.2da, and check the corresponding PlayerRace column.
 The Portrait Selection dialog in the toolset allows filtering by Race, using a dropdown list that gets its
 entries from the Name StrRef in racialtypes.2da.
 
-
 ## Page 8
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.2.3: racialtypes.2da columns
 Column
 Type
@@ -723,11 +741,10 @@ StrRef of text to display to user
 3.3. TrapType
 In a Trigger Struct, the TrapType Field is an index into traps.2da.
 
-
 ## Page 9
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.3: traps.2da columns
 Column
 Type
@@ -786,11 +803,10 @@ portion or the lower portion, as shown in Figure 4.2b. The numbers in Figure 4.2
 which the user painted the vertices, while the numbers in Figure 4.2b indicate the order of the vertices
 after the toolset's geometry conversion.
 
-
 ## Page 10
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Figure 4.2a: user-drawn polygon with multiple inner surfaces
 0
 1
@@ -831,11 +847,10 @@ Figure 4.3b: final resolved pentagram with no crossing lines
 Although lines may not cross, it is permissible for two points to share the exact same location, such as
 points 0 and 3 in Figure 4.3c. None of the lines in Figure 4.3c are considered to cross, even though the
 
-
 ## Page 11
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 endpoints of four lines do touch. It is, however, next to impossible in the toolset for a user to actually
 paint a figure where two points are exactly coincident as in 4.3c, so this special case is more of a
 curiosity than anything else.
@@ -854,6 +869,3 @@ that was drawn by the user is the one that is used. Figure 4.3b shows the applic
 figure show in Figure 4.3a.
 This rule is not required, in that if the points were in a different order, the toolset and game would still
 load the polygon correctly and without errors.
-
-
-

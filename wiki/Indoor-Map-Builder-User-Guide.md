@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Indoor Map Builder is a visual editor for creating indoor modules (areas) for Knights of the Old Republic. It allows you to place room components, connect them with doors, and build complete playable modules without manually editing game files.
+The Indoor Map Builder is a visual editor for creating indoor modules (areas) for Knights of the Old Republic. It allows you to place room components, connect them with doors, and build complete playable modules without manually editing game [files](GFF-File-Format).
 
 ## Getting Started
 
@@ -14,18 +14,18 @@ The Indoor Map Builder is a visual editor for creating indoor modules (areas) fo
 
 ### Creating a New Map
 
-1. Click **File** → **New** (or press `Ctrl+N`)
+1. Click **[file](GFF-File-Format)** → **New** (or press `Ctrl+N`)
 2. Configure your module settings:
    - **Module ID**: The warp code used in-game (e.g., `test01`)
    - **Name**: Display name for the module
-   - **Lighting**: Ambient lighting color
-   - **Skybox**: Optional skybox model
+   - **Lighting**: Ambient lighting [color](GFF-File-Format#color)
+   - **Skybox**: Optional skybox [model](MDL-MDX-File-Format)
 3. Click **OK** to start building
 
 ### Opening an Existing Map
 
-1. Click **File** → **Open** (or press `Ctrl+O`)
-2. Select a `.indoor` file
+1. Click **[file](GFF-File-Format)** → **Open** (or press `Ctrl+O`)
+2. Select a `.indoor` [file](GFF-File-Format)
 3. The map will load with all rooms and connections
 
 ## Interface Overview
@@ -36,7 +36,7 @@ The Indoor Map Builder is a visual editor for creating indoor modules (areas) fo
 - **Kits**: Traditional kit-based components (deprecated, use Modules instead)
 - **Modules**: Components extracted from game modules (recommended)
 - **Options**: Grid and snap settings
-- **Walkmesh Painter**: Material painting tools
+- **[walkmesh](BWM-File-Format) Painter**: [material](MDL-MDX-File-Format#trimesh-header) painting tools
 
 ### Status Bar
 
@@ -44,9 +44,9 @@ The bottom status bar now mirrors the Module Designer style and updates live as 
 
 - **Coords**: World X/Y under the cursor
 - **Hover**: Room under the cursor (if any)
-- **Selected**: Hook details when a hook is selected, otherwise the count of selected rooms
+- **Selected**: Hook details when a hook is selected, otherwise the [count](GFF-File-Format#file-structure) of selected rooms
 - **Keys/Buttons**: Currently held keyboard modifiers and mouse buttons
-- **Status**: Paint mode/material, colorization, and active snap modes (grid/hook)
+- **Status**: Paint mode/[material](MDL-MDX-File-Format#trimesh-header), colorization, and active snap modes (grid/hook)
 
 ### Main Canvas
 
@@ -78,16 +78,16 @@ The central area where you place and arrange rooms. Use mouse and keyboard contr
 
 - **Scroll wheel** (without Ctrl) to rotate the selected component
 - **Right-click** → **Rotate** → Choose angle (90°, 180°, 270°)
-- **R key** to rotate selected rooms by the rotation snap amount
+- **R [KEY](KEY-File-Format)** to rotate selected rooms by the [rotation](MDL-MDX-File-Format#node-header) snap amount
 
 ### Flipping Rooms
 
 - **Right-click** → **Flip** → **Flip Horizontal** or **Flip Vertical**
-- **F key** to quickly flip selected rooms horizontally
+- **F [KEY](KEY-File-Format)** to quickly flip selected rooms horizontally
 
 ### Connecting Rooms
 
-Rooms automatically connect when their **hooks** (red/green circles) are close together:
+Rooms automatically connect when their **hooks** (red/green circles) [ARE](GFF-File-Format#are-area) close together:
 
 - **Red hooks**: Unconnected
 - **Green hooks**: Connected to another room
@@ -101,7 +101,7 @@ Hooks snap together when you move rooms near each other (if **Snap to Hooks** is
 - **Shift + Click** to add to selection
 - **Ctrl + A** to select all rooms
 - **Escape** to deselect all
-- **Double-click** a room to select all connected rooms
+- **[double](GFF-File-Format#double)-click** a room to select all connected rooms
 
 ### Deleting Rooms
 
@@ -127,8 +127,8 @@ Hooks snap together when you move rooms near each other (if **Snap to Hooks** is
 ### Grid Snap
 
 - **Toggle**: Press **G** or check **Snap to Grid (G)**
-- **Grid Size**: Adjust in Options panel
-- Snaps room positions to grid lines
+- **Grid [size](GFF-File-Format#file-structure)**: Adjust in Options panel
+- Snaps room [positions](MDL-MDX-File-Format#node-header) to grid lines
 
 ### Hook Snap
 
@@ -136,34 +136,34 @@ Hooks snap together when you move rooms near each other (if **Snap to Hooks** is
 - Automatically aligns room hooks when placing or moving
 - **Soft snapping**: Hooks disconnect if you drag far enough away
 
-### Rotation Snap
+### [rotation](MDL-MDX-File-Format#node-header) Snap
 
-- Set in **Options** → **Rotation Snap**
+- Set in **Options** → **[rotation](MDL-MDX-File-Format#node-header) Snap**
 - Default: 15°
-- Scroll wheel rotation uses this increment
+- Scroll wheel [rotation](MDL-MDX-File-Format#node-header) uses this increment
 
-## Walkmesh Painting
+## [walkmesh](BWM-File-Format) Painting
 
-The walkmesh painter allows you to change surface materials (walkable/non-walkable areas) on room walkmeshes.
+The [walkmesh](BWM-File-Format) painter allows you to change surface materials (walkable/non-walkable areas) on room [walkmeshes](BWM-File-Format).
 
 ### Enabling Paint Mode
 
-1. Expand **Walkmesh Painter** section
+1. Expand **[walkmesh](BWM-File-Format) Painter** section
 2. Check **Enable Painting (P)** (or press **P**)
-3. Select a material from the list
+3. Select a [material](MDL-MDX-File-Format#trimesh-header) from the list
 
-### Painting Materials
+### Painting [materials](MDL-MDX-File-Format#trimesh-header)
 
-- **Shift + Left-click and drag** on walkmesh faces to paint (prevents accidental dragging/selection)
-- Materials are colorized by default (toggle with **Colorize Materials**)
-- Each material has a distinct color for easy identification
+- **Shift + Left-click and drag** on [walkmesh](BWM-File-Format) [faces](MDL-MDX-File-Format#face-structure) to paint (prevents accidental dragging/selection)
+- [materials](MDL-MDX-File-Format#trimesh-header) [ARE](GFF-File-Format#are-area) colorized by default (toggle with **Colorize [materials](MDL-MDX-File-Format#trimesh-header)**)
+- Each [material](MDL-MDX-File-Format#trimesh-header) has a distinct [color](GFF-File-Format#color) for easy identification
 
-### Resetting Walkmesh
+### Resetting [walkmesh](BWM-File-Format)
 
-- Select room(s) with modified walkmeshes
-- Click **Reset Selected** to revert to original materials
+- Select room(s) with modified [walkmeshes](BWM-File-Format)
+- Click **Reset Selected** to revert to original [materials](MDL-MDX-File-Format#trimesh-header)
 
-### Material Types
+### [material](MDL-MDX-File-Format#trimesh-header) [types](GFF-File-Format#data-types)
 
 - **Walkable**: Dirt, Grass, Stone, Wood, Water, Carpet, Metal, etc.
 - **Non-walkable**: Obscuring, Non-walk, Transparent, Lava, Bottomless Pit, etc.
@@ -181,7 +181,7 @@ The green crosshair indicates where players spawn when entering the module.
 
 ### Hooks
 
-Hooks are connection points between rooms. You can edit them:
+Hooks [ARE](GFF-File-Format#are-area) connection points between rooms. You can edit them:
 
 - **Right-click on hook** → **Select Hook** to select it
 - **Right-click on hook** → **Delete Hook** to remove it
@@ -226,7 +226,7 @@ Hooks are connection points between rooms. You can edit them:
 
 Once your map is complete:
 
-1. Click **File** → **Build Module** (or press `Ctrl+B`)
+1. Click **[file](GFF-File-Format)** → **Build Module** (or press `Ctrl+B`)
 2. Wait for the build process to complete
 3. The module will be saved to your installation's modules folder
 4. You can warp to it in-game using: `warp <module_id>`
@@ -235,12 +235,12 @@ Once your map is complete:
 
 The build process creates:
 
-- **Module file** (`.mod`): Contains all resources (models, textures, walkmeshes, etc.)
-- **Layout file** (`.lyt`): Room positions and door connections
-- **Visibility file** (`.vis`): Room visibility relationships
-- **Area file** (`.are`): Area properties and settings
-- **Game Info file** (`.git`): Doors and placeables
-- **Module Info file** (`.ifo`): Module metadata
+- **Module [file](GFF-File-Format)** (`.mod`): Contains all resources ([models](MDL-MDX-File-Format), [textures](TPC-File-Format), [walkmeshes](BWM-File-Format), etc.)
+- **[layout files](LYT-File-Format)** (`.lyt`): Room [positions](MDL-MDX-File-Format#node-header) and door connections
+- **[visibility files](VIS-File-Format)** (`.vis`): Room visibility relationships
+- **[area files](GFF-File-Format#are-area)** (`.are`): [area properties](GFF-File-Format#are-area) and settings
+- **Game Info [file](GFF-File-Format)** (`.git`): Doors and placeables
+- **[module info](GFF-File-Format#ifo-module-info) [file](GFF-File-Format)** (`.ifo`): Module metadata
 
 ## Tips and Best Practices
 
@@ -250,11 +250,11 @@ The build process creates:
 
 3. **Check Connections**: Green hooks indicate successful connections. Red hooks need to be connected.
 
-4. **Test Walkability**: Use the walkmesh painter to mark non-walkable areas (lava, pits, etc.) before building.
+4. **Test Walkability**: Use the [walkmesh](BWM-File-Format) painter to mark non-walkable areas (lava, pits, etc.) before building.
 
 5. **Organize Your Layout**: Use the grid to keep rooms aligned and organized.
 
-6. **Save Frequently**: The editor supports undo/redo, but saving regularly prevents data loss.
+6. **Save Frequently**: The editor supports undo/redo, but saving regularly prevents [data](GFF-File-Format#file-structure) loss.
 
 7. **Test in Game**: Always test your module in-game after building to verify connections and walkability.
 
@@ -262,9 +262,9 @@ The build process creates:
 
 ### Rooms Not Connecting
 
-- Ensure hooks are close together (within ~1.5 units)
+- Ensure hooks [ARE](GFF-File-Format#are-area) close together (within ~1.5 units)
 - Check that **Snap to Hooks** is enabled
-- Verify both rooms have compatible door types
+- Verify both rooms have compatible door [types](GFF-File-Format#data-types)
 
 ### Missing Components
 
@@ -274,18 +274,18 @@ The build process creates:
 
 ### Build Failures
 
-- Ensure all rooms have valid walkmeshes
+- Ensure all rooms have valid [walkmeshes](BWM-File-Format)
 - Check that module ID is valid (alphanumeric, no spaces)
 - Verify installation path is correct
 
 ### Performance Issues
 
 - Large maps with many rooms may be slow
-- Disable material colorization for better performance
+- Disable [material](MDL-MDX-File-Format#trimesh-header) colorization for better performance
 - Close other applications to free up memory
 
 ## Related Documentation
 
 - [Indoor Map Builder - Implementation Guide](Indoor-Map-Builder-Implementation-Guide.md) - Technical details for developers
-- [LYT File Format](LYT-File-Format.md) - Layout file structure
-- [BWM File Format](BWM-File-Format.md) - Walkmesh file structure
+- [LYT File Format](LYT-File-Format.md) - [layout files](LYT-File-Format) structure
+- [BWM File Format](BWM-File-Format.md) - [walkmesh](BWM-File-Format) [file](GFF-File-Format) [structure](GFF-File-Format#file-structure)

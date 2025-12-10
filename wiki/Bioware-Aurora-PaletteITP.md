@@ -1,4 +1,5 @@
 # PaletteITP
+
 *Official Bioware Aurora Documentation*
 
 ---
@@ -6,9 +7,10 @@
 ## Page 1
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 BioWare Aurora Engine
 ITP (Palette) File Format
+
 1. Introduction
 An ITP file defines a palette used by the toolset or DM Client. A palette describes a tree structure of
 tiles or object blueprints that can be painted in the toolset, or object blueprints that can be spawned in
@@ -39,11 +41,10 @@ Category Nodes:
 A Category Node serves as a parent node for blueprint nodes and can only have blueprint nodes
 as children.
 
-
 ## Page 2
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 When assigning a palette category to a blueprint in the toolset's Select Category dialog, the user
 can only select Category nodes.
 Branch Nodes:
@@ -67,6 +68,7 @@ Blueprint wizards and in the Select Category dialog when choosing the palette ca
 an object blueprint.
 Figure 2.2 shows an example skeleton blueprint palette.
 Figure 2.2: Example Skeleton Blueprint Palette
+
 ### MAIN
 
 Armor (Branch)
@@ -79,12 +81,10 @@ Swords (Category)
 Miscellaneous (Category)
 Bows (Category)
 
-
-
 ## Page 3
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 The toolset does not edit skeleton palettes. They are edited by hand using the GFF Editor. Because they
 are hand-edited, they contain some GFF Fields that exist primarily to make editing easier, and which
 have no actual effect in the toolset.
@@ -93,11 +93,13 @@ Table 2.2.1: Top Level Struct, Skeleton Blueprint Palette
 Label
 Type
 Description
+
 ### MAIN
 
 List
 List of TreeNode Structs of  Struct ID 1.
 The Structs can be Branches or Categories.
+
 ### NEXT_USEABLE_ID
 
 ### BYTE
@@ -110,6 +112,7 @@ the value of this field as the next ID.
 
 After creating the new palette category,
 increment this value.
+
 ### RESTYPE
 
 ### WORD
@@ -125,18 +128,21 @@ Table 2.2.2a: TreeNode
 Label
 Type
 Description
+
 ### DELETE_ME
 
 CExoString
 User-readable string for the convenience of
 the person editing the palette. Should be
 identical to the text of the StrRef.
+
 ### STRREF
 
 ### DWORD
 
 StrRef indicating the text to display for this
 TreeNode.
+
 ### TYPE
 
 ### BYTE
@@ -152,6 +158,7 @@ Table 2.2.2b: TreeNode Branch (derived from TreeNode)
 Label
 Type
 Description
+
 ### LIST
 
 List
@@ -163,6 +170,7 @@ Label
 Type
 Description
 ID
+
 ### BYTE
 
 Palette Node ID
@@ -171,24 +179,27 @@ Type
 Name
 Description
 0
+
 ### DISPLAY_IF_NOT_EMPTY
 
 The node only appears in the toolset if it has
 
-
 ## Page 4
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 child nodes.
 1
+
 ### NWPALETTE_DISPLAY_NEVER
 
 The node never appears in the toolset.
 2
+
 ### NWPALETTE_DISPLAY_CUSTOM
 
 The node only appears:
+
 1) in a custom blueprint palette,
 2) in the skeleton palette that is displayed
 when creating a new blueprint or
@@ -209,6 +220,7 @@ triggerpalstd.itp
 waypointpalstd.itp
 The toolset does not edit the standard blueprint palettes.
 Each standard palettes is generated from a skeleton palette by the following procedure:
+
 1. Find all treenodes in the skeleton palette that have a TYPE of 1 or 2 (see Table 2.2.3) and remove
 them.
 2. Remove all DELETE_ME Fields from all treenodes in the skeleton palette. Exception: if the
@@ -233,14 +245,14 @@ node should include Challenge Rating and Faction information, as given in Table 
 11. Find all treenodes in the skeleton palette that have a TYPE of 0 (see Table 2.2.3) and remove them
 if they have no children. If the node stays, remove its TYPE Field.
 
-
 ## Page 5
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Figure 2.3 shows an example of a standard blueprint palette that might be generated from the skeleton
 palette in Figure 2.2.
 Figure 2.3: Example Standard Blueprint Palette
+
 ### MAIN
 
 Armor (Branch)
@@ -261,6 +273,7 @@ Table 2.3.1: Top Level Struct
 Label
 Type
 Description
+
 ### MAIN
 
 List
@@ -269,6 +282,7 @@ Table 2.3.2a: TreeNode
 Label
 Type
 Description
+
 ### NAME
 
 CExoString
@@ -276,6 +290,7 @@ Text to display for the treenode.
 Only NAME or STRREF are present but not
 both. See subsequent tables for further
 details.
+
 ### STRREF
 
 ### DWORD
@@ -286,15 +301,15 @@ Only NAME or STRREF are present but not
 both. See subsequent tables for further
 details.
 
-
 ## Page 6
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 2.3.2b: TreeNode Branch (derived from TreeNode)
 Label
 Type
 Description
+
 ### LIST
 
 List
@@ -305,6 +320,7 @@ Technically, there is no reason why there
 cannot be both Branches and Categories, but
 in practice and as a matter of convention,
 this is never done.
+
 ### STRREF
 
 ### DWORD
@@ -316,14 +332,17 @@ Table 2.3.2c: TreeNode Palette Category (derived from TreeNode)
 Label
 Type
 Description
+
 ### LIST
 
 List
 list of TreeNode Blueprints
 ID
+
 ### BYTE
 
 Palette Node ID
+
 ### STRREF
 
 ### DWORD
@@ -335,6 +354,7 @@ Table 2.3.3a: TreeNode Blueprint (derived from TreeNode)
 Label
 Type
 Description
+
 ### NAME
 
 CExoString
@@ -342,6 +362,7 @@ Text to display for the treenode.
 Only NAME or STRREF should be present
 but not both. STRREF overrides NAME if
 both are present.
+
 ### STRREF
 
 ### DWORD
@@ -351,6 +372,7 @@ treenode.
 Only NAME or STRREF should be present
 but not both. STRREF overrides NAME if
 both are present.
+
 ### RESREF
 
 CResRef
@@ -360,9 +382,11 @@ Label
 Type
 Description
 CR
+
 ### FLOAT
 
 Challenge Rating
+
 ### FACTION
 
 CExoString
@@ -412,11 +436,10 @@ UTW
 Waypoint
 LocalizedName
 
-
 ## Page 7
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 2.4. Custom Blueprint Palettes
 A custom blueprint palette is a palette that contains blueprint nodes for all the blueprints of a given
 resource type within a module.
@@ -443,6 +466,7 @@ never appear in the toolset or game.
 All skeleton tileset palettes are identical except for their TILESETRESREF Field in the Top Level GFF
 Struct. Figure 3.1.1 is a simplified representation of a skeleton tileset palette.
 Figure 3.1.1: Skeleton Tileset Palette
+
 ### MAIN
 
 Terrain (Category)
@@ -452,11 +476,10 @@ Features (Category)
 Figure 3.1.2 shows what a skeleton tileset palette should look like in the GFF Editor. In the last Field,
 the <resref> value is the only variable one.
 
-
 ## Page 8
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Figure 3.1.2: Skeleton Tileset Palette in GFF Editor
 
 Some internal BioWare tileset palette generation utilities expect the TILESETRESREF Field to have a
@@ -483,22 +506,26 @@ Table 3.1.1: Top Level Struct, Skeleton Blueprint Palette
 Label
 Type
 Description
+
 ### MAIN
 
 List
 List of TreeNode Category Structs of  Struct
-### ID 1.
+
+### ID 1
 
 ### NEXT_USEABLE_ID
 
 ### BYTE
 
 Always 3
+
 ### RESTYPE
 
 ### WORD
 
 Always 2013. Corresponds to .set files.
+
 ### TILESETRESREF
 
 CResRef
@@ -509,24 +536,26 @@ Table 3.1.2: TreeNode Category
 Label
 Type
 Description
+
 ### DELETE_ME
 
 CExoString
 User-readable string for the convenience of
 
-
 ## Page 9
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 the person editing the palette. Should be
 identical to the text of the StrRef.
 ID
+
 ### BYTE
 
 0 = features
 1 = groups
 2 = terrain
+
 ### STRREF
 
 ### DWORD
@@ -541,6 +570,7 @@ is the ResRef of the tileset's .set file. For example, tcn01.set would have a pa
 tcn01palstd.itp.
 Figure 3.2 shows a sample tileset palette tree structure. Note its similarity to Figure 3.1.1.
 Figure 3.2: Example Standard Tileset Palette
+
 ### MAIN
 
 Terrain (Category)
@@ -559,32 +589,35 @@ Table 3.2.1: Top Level Struct, Skeleton Blueprint Palette
 Label
 Type
 Description
+
 ### MAIN
 
 List
 List of TreeNode Category Structs of  Struct
-### ID 1.
 
-
+### ID 1
 
 ## Page 10
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 Table 3.2.2: TreeNode Category
 Label
 Type
 Description
 ID
+
 ### BYTE
 
 0 = features
 1 = groups
 2 = terrain
+
 ### LIST
 
 List
 List of TreeNode Leaves
+
 ### STRREF
 
 ### DWORD
@@ -597,6 +630,7 @@ Table 3.2.3: TreeNode Leaf
 Label
 Type
 Description
+
 ### NAME
 
 CExoString
@@ -604,6 +638,7 @@ Text to display for the treenode.
 Only NAME or STRREF should be present
 but not both. STRREF overrides NAME if
 both are present.
+
 ### RESREF
 
 CResRef
@@ -625,6 +660,7 @@ special terrain nodes, eraser and raise-lower,
 that are not directly tied to terrain or
 crossers, but which also appear until the
 Terrain category.
+
 ### STRREF
 
 ### DWORD
@@ -646,11 +682,10 @@ tilegroup in a tileset should use a different tile as its first tile. If two til
 tile 0, then the toolset will end up using the first tilegroup even when the user tries to paint the second
 tilegroup.
 
-
 ## Page 11
 
 BioWare Corp.
-http://www.bioware.com
+<http://www.bioware.com>
 The Terrain category contains both terrain and crossers from the tileset .set file. . The STRREF Field
 value is equal to the StrRef of the terrain or crosser (The StrRef entry from the corresponding
 [CROSSER*] or [TERRAIN*] section in the tileset .set file).The RESREF Field value is equal to the
@@ -671,6 +706,7 @@ If a tileset contains height transitions (as specified by the HasHeightTransitio
 treenode under the Terrain category.
 Table 3.2.4: Special Terrain Nodes
 Type
+
 ### RESREF
 
 ### STRREF
@@ -684,6 +720,3 @@ Raise/Lower
 raiselower
 63292
 Present only if the tileset has height transitions.
-
-
-
