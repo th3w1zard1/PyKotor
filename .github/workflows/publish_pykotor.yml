@@ -179,7 +179,7 @@ jobs:
         if: ${{ matrix.python_pypy == 'pypy' }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: pypy-${{ matrix.python-version }}
           architecture: ${{ matrix.architecture }}
 
       - name: Reset APT sources to default
