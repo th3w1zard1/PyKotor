@@ -134,6 +134,48 @@ FUNCTION_FILE_MAP = {
     "Set": "NSS-Shared-Functions-Other-Functions",
 }
 
+# Build comprehensive function mapping
+def build_function_map() -> dict[str, tuple[str, str]]:
+    """Build mapping from function name to (file_name, anchor)."""
+    function_map: dict[str, tuple[str, str]] = {}
+    FUNCTION_FILES: list[str] = [
+        "NSS-Shared-Functions-Abilities-and-Stats.md",
+        "NSS-Shared-Functions-Actions.md",
+        "NSS-Shared-Functions-Alignment-System.md",
+        "NSS-Shared-Functions-Class-System.md",
+        "NSS-Shared-Functions-Combat-Functions.md",
+        "NSS-Shared-Functions-Dialog-and-Conversation-Functions.md",
+        "NSS-Shared-Functions-Effects-System.md",
+        "NSS-Shared-Functions-Global-Variables.md",
+        "NSS-Shared-Functions-Item-Management.md",
+        "NSS-Shared-Functions-Item-Properties.md",
+        "NSS-Shared-Functions-Local-Variables.md",
+        "NSS-Shared-Functions-Module-and-Area-Functions.md",
+        "NSS-Shared-Functions-Object-Query-and-Manipulation.md",
+        "NSS-Shared-Functions-Other-Functions.md",
+        "NSS-Shared-Functions-Party-Management.md",
+        "NSS-Shared-Functions-Player-Character-Functions.md",
+        "NSS-Shared-Functions-Skills-and-Feats.md",
+        "NSS-Shared-Functions-Sound-and-Music-Functions.md",
+    ]
+    
+    for func_file in FUNCTION_FILES:
+        file_path = WIKI_DIR / func_file
+        if not file_path.exists():
+            continue
+        
+        content = file_path.read_text(encoding='utf-8')
+        file_name = func_file.replace('.md', '')
+        
+        # Find all HTML anchors and their following headings
+        for match in re.finditer(r'<a id="([^"]+)"></a>\s*\n\s*##\s+`([^(]+)\(', content):
+            anchor = match.group(1)
+            func_name = match.group(2)
+            function_map[func_name] = (file_name, anchor)
+    
+    return function_map
+
+FUNCTION_MAP = build_function_map()
 
 def get_function_file_and_anchor(func_name: str) -> tuple[str, str] | None:
     """Get the file name and anchor for a function.
@@ -141,8 +183,8 @@ def get_function_file_and_anchor(func_name: str) -> tuple[str, str] | None:
     Returns: (file_name, anchor) or None if not found
     """
     # First try exact match from comprehensive map
-    if func_name in FUNCTION_FILE_MAP:
-        return FUNCTION_FILE_MAP[func_name], func_name.lower()
+    if func_name in FUNCTION_MAP:
+        return FUNCTION_MAP[func_name]
     
     # Fallback to prefix-based mapping (for functions not yet indexed)
     for prefix, file_name in FUNCTION_FILE_MAP.items():
@@ -170,7 +212,6 @@ def fix_toc_links():
     new_lines = []
 
     for line in lines:
-        original_line = line
         # Match lines with function links: - [`Function(params)` - Routine N](#anchor or file)
         # Pattern: backtick, function name, backtick, optional routine, link
         if "`" in line and ("Routine" in line or "](NSS-" in line):
@@ -200,7 +241,7 @@ def fix_toc_links():
                 match = re.search(link_pattern, line)
                 if match:
                     current_file = match.group(1)
-                    current_anchor = match.group(2) if match.lastindex >= 2 else None
+                    current_anchor = match.group(2) if match.lastindex and match.lastindex >= 2 else None
 
                     # Fix if file is wrong or anchor is wrong
                     if current_file != file_name or (current_anchor and current_anchor != anchor):
