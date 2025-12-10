@@ -264,6 +264,12 @@ Relevance to pykotor means a few different things. All relevant submodules shoul
 
 - Always use `ruff`. Don't use anything else!
 
+### Markdown Documentation Linting
+
+- Use `markdownlint-cli2` to lint and fix markdown files, especially in `wiki/`.
+- After creating or modifying markdown files, run: `npx --yes markdownlint-cli2 "wiki/*.md" --fix --config .markdownlint-cli2.jsonc`
+- The `.markdownlint-cli2.jsonc` config file relaxes rules appropriate for technical documentation (e.g., longer line lengths, flexible formatting).
+
 ## Generated Files
 
 - **NEVER modify auto-generated files directly**. These include:
