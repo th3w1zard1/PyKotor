@@ -36,11 +36,7 @@ jobs:
     name: Detect Changed Tools
     runs-on: ubuntu-latest
     outputs:
-      toolset: ${{ steps.changes.outputs.toolset }}
-      holopatcher: ${{ steps.changes.outputs.holopatcher }}
-      kotordiff: ${{ steps.changes.outputs.kotordiff }}
-      guiconverter: ${{ steps.changes.outputs.guiconverter }}
-      batchpatcher: ${{ steps.changes.outputs.batchpatcher }}
+      tools_matrix: ${{ steps.changes.outputs.tools_matrix }}
       libraries: ${{ steps.changes.outputs.libraries }}
       compile: ${{ steps.changes.outputs.compile }}
       any_tool: ${{ steps.changes.outputs.any_tool }}
@@ -49,86 +45,171 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Detect file changes
         id: changes
         run: |
+          python3 << 'PYTHON_SCRIPT'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          def derive_build_name(tool_dir_name: str) -> str:
+              """Derive the build name from tool directory name."""
+              name_lower = tool_dir_name.lower()
+              
+              # Handle known special cases for backward compatibility
+              special_mappings = {
+                  "holocrontoolset": "toolset",
+                  "holopatcher": "holopatcher",
+                  "batchpatcher": "batchpatcher",
+              }
+              
+              if name_lower in special_mappings:
+                  return special_mappings[name_lower]
+              
+              # Default: use the tool name in lowercase
+              return name_lower
+
+          def find_config_file(tool_dir: Path, tool_name_lower: str) -> Path | None:
+              """Find the config file for a tool."""
+              src_dir = tool_dir / "src" / tool_name_lower
+              
+              # Check for config.py directly in src/<tool>/
+              config_py = src_dir / "config.py"
+              if config_py.exists():
+                  return config_py
+              
+              # Check for config/config_info.py
+              config_info_py = src_dir / "config" / "config_info.py"
+              if config_info_py.exists():
+                  return config_info_py
+              
+              # Check for __main__.py with CURRENT_VERSION
+              main_py = src_dir / "__main__.py"
+              if main_py.exists():
+                  content = main_py.read_text()
+                  if 'CURRENT_VERSION' in content:
+                      return main_py
+              
+              # Check for __init__.py with __version__
+              init_py = src_dir / "__init__.py"
+              if init_py.exists():
+                  content = init_py.read_text()
+                  if '__version__' in content:
+                      return init_py
+              
+              return None
+
           # Get changed files
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
-          else
-            CHANGED_FILES=$(git diff --name-only HEAD~1)
-          fi
+          event_name = os.environ.get('GITHUB_EVENT_NAME', '')
+          base_ref = os.environ.get('GITHUB_BASE_REF', 'master')
           
-          echo "Changed files:"
-          echo "$CHANGED_FILES"
+          if event_name == 'pull_request':
+              import subprocess
+              result = subprocess.run(
+                  ['git', 'diff', '--name-only', f'origin/{base_ref}...HEAD'],
+                  capture_output=True, text=True, check=True
+              )
+              changed_files = result.stdout.strip().split('\n')
+          else:
+              import subprocess
+              result = subprocess.run(
+                  ['git', 'diff', '--name-only', 'HEAD~1'],
+                  capture_output=True, text=True, check=True
+              )
+              changed_files = result.stdout.strip().split('\n')
           
-          # Check each tool
-          TOOLSET="false"
-          HOLOPATCHER="false"
-          KOTORDIFF="false"
-          GUICONVERTER="false"
-          BATCHPATCHER="false"
-          LIBRARIES="false"
-          COMPILE="false"
+          changed_files = [f for f in changed_files if f.strip()]
           
-          if echo "$CHANGED_FILES" | grep -q "^Tools/HolocronToolset/"; then
-            TOOLSET="true"
-          fi
-          if echo "$CHANGED_FILES" | grep -q "^Tools/HoloPatcher/"; then
-            HOLOPATCHER="true"
-          fi
-          if echo "$CHANGED_FILES" | grep -q "^Tools/KotorDiff/"; then
-            KOTORDIFF="true"
-          fi
-          if echo "$CHANGED_FILES" | grep -q "^Tools/GuiConverter/"; then
-            GUICONVERTER="true"
-          fi
-          if echo "$CHANGED_FILES" | grep -q "^Tools/BatchPatcher/"; then
-            BATCHPATCHER="true"
-          fi
-          if echo "$CHANGED_FILES" | grep -q "^Libraries/"; then
-            LIBRARIES="true"
-          fi
-          if echo "$CHANGED_FILES" | grep -q "^compile/"; then
-            COMPILE="true"
-          fi
+          print("Changed files:")
+          for f in changed_files:
+              print(f"  {f}")
+          
+          # Discover all tools in Tools/
+          tools_dir = Path('Tools')
+          all_tools = []
+          changed_tools = []
+          
+          if tools_dir.exists():
+              for tool_dir in sorted(tools_dir.iterdir()):
+                  if tool_dir.is_dir() and not tool_dir.name.startswith('.'):
+                      tool_name = tool_dir.name
+                      build_name = derive_build_name(tool_name)
+                      tool_name_lower = tool_name.lower()
+                      
+                      # Check if this tool has a compile script
+                      compile_script = Path(f'compile/compile_{build_name}.ps1')
+                      if not compile_script.exists():
+                          # Try .sh or .bat
+                          compile_script = Path(f'compile/compile_{build_name}.sh')
+                          if not compile_script.exists():
+                              compile_script = Path(f'compile/compile_{build_name}.bat')
+                      
+                      if not compile_script.exists():
+                          print(f"  Skipping {tool_name}: no compile script found")
+                          continue
+                      
+                      # Check if tool was changed
+                      tool_changed = any(f.startswith(f'Tools/{tool_name}/') for f in changed_files)
+                      
+                      tool_info = {
+                          'tool_dir': tool_name,
+                          'build_name': build_name,
+                          'display_name': tool_name,
+                          'changed': tool_changed,
+                          'has_config': find_config_file(tool_dir, tool_name_lower) is not None
+                      }
+                      
+                      all_tools.append(tool_info)
+                      if tool_changed:
+                          changed_tools.append(tool_info)
+          
+          # Check for Libraries/ changes
+          libraries_changed = any(f.startswith('Libraries/') for f in changed_files)
+          
+          # Check for compile/ changes
+          compile_changed = any(f.startswith('compile/') for f in changed_files)
           
           # If libraries or compile changed, mark all tools as affected
-          if [ "$LIBRARIES" = "true" ] || [ "$COMPILE" = "true" ]; then
-            TOOLSET="true"
-            HOLOPATCHER="true"
-            KOTORDIFF="true"
-            GUICONVERTER="true"
-            BATCHPATCHER="true"
-          fi
+          if libraries_changed or compile_changed:
+              for tool in all_tools:
+                  tool['changed'] = True
+              changed_tools = all_tools
           
-          # Check if any tool changed
-          ANY_TOOL="false"
-          if [ "$TOOLSET" = "true" ] || [ "$HOLOPATCHER" = "true" ] || [ "$KOTORDIFF" = "true" ] || \
-             [ "$GUICONVERTER" = "true" ] || [ "$BATCHPATCHER" = "true" ]; then
-            ANY_TOOL="true"
-          fi
+          # Build tools matrix for GitHub Actions
+          tools_matrix = []
+          for tool in changed_tools:
+              tools_matrix.append({
+                  'tool_dir': tool['tool_dir'],
+                  'build_name': tool['build_name'],
+                  'display_name': tool['display_name'],
+                  'has_config': tool['has_config']
+              })
           
-          echo "toolset=$TOOLSET" >> $GITHUB_OUTPUT
-          echo "holopatcher=$HOLOPATCHER" >> $GITHUB_OUTPUT
-          echo "kotordiff=$KOTORDIFF" >> $GITHUB_OUTPUT
-          echo "guiconverter=$GUICONVERTER" >> $GITHUB_OUTPUT
-          echo "batchpatcher=$BATCHPATCHER" >> $GITHUB_OUTPUT
-          echo "libraries=$LIBRARIES" >> $GITHUB_OUTPUT
-          echo "compile=$COMPILE" >> $GITHUB_OUTPUT
-          echo "any_tool=$ANY_TOOL" >> $GITHUB_OUTPUT
+          any_tool = len(changed_tools) > 0
           
-          echo ""
-          echo "Summary:"
-          echo "  Toolset: $TOOLSET"
-          echo "  HoloPatcher: $HOLOPATCHER"
-          echo "  KotorDiff: $KOTORDIFF"
-          echo "  GuiConverter: $GUICONVERTER"
-          echo "  BatchPatcher: $BATCHPATCHER"
-          echo "  Libraries: $LIBRARIES"
-          echo "  Compile scripts: $COMPILE"
-          echo "  Any tool affected: $ANY_TOOL"
-        shell: bash
+          # Output results
+          print("\nSummary:")
+          print(f"  Libraries changed: {libraries_changed}")
+          print(f"  Compile scripts changed: {compile_changed}")
+          print(f"  Tools affected: {len(changed_tools)}")
+          for tool in changed_tools:
+              print(f"    - {tool['display_name']} (build_name: {tool['build_name']})")
+          print(f"  Any tool affected: {any_tool}")
+          
+          # Set outputs
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"tools_matrix={json.dumps(tools_matrix)}\n")
+              f.write(f"libraries={'true' if libraries_changed else 'false'}\n")
+              f.write(f"compile={'true' if compile_changed else 'false'}\n")
+              f.write(f"any_tool={'true' if any_tool else 'false'}\n")
+          PYTHON_SCRIPT
 
   # Validate version consistency in config files
   version-check:
@@ -139,86 +220,144 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Check version files are valid
         run: |
-          errors=0
-          
-          # Check toolset config_info.py
-          if [ -f "Tools/HolocronToolset/src/toolset/config/config_info.py" ]; then
-            echo "Checking toolset config_info.py..."
-            CURRENT=$(grep -oP '"currentVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config/config_info.py || true)
-            LATEST=$(grep -oP '"toolsetLatestVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config/config_info.py || true)
-            BETA=$(grep -oP '"toolsetLatestBetaVersion":\s*"\K[^"]+' Tools/HolocronToolset/src/toolset/config/config_info.py || true)
-            
-            if [ -z "$CURRENT" ]; then
-              echo "❌ Toolset: currentVersion not found"
-              errors=$((errors + 1))
-            else
-              echo "✓ Toolset currentVersion: $CURRENT"
-            fi
-            
-            if [ -z "$LATEST" ]; then
-              echo "❌ Toolset: toolsetLatestVersion not found"
-              errors=$((errors + 1))
-            else
-              echo "✓ Toolset latestVersion: $LATEST"
-            fi
-            
-            if [ -z "$BETA" ]; then
-              echo "❌ Toolset: toolsetLatestBetaVersion not found"
-              errors=$((errors + 1))
-            else
-              echo "✓ Toolset betaVersion: $BETA"
-            fi
-          fi
-          
-          # Check HoloPatcher config.py
-          if [ -f "Tools/HoloPatcher/src/holopatcher/config.py" ]; then
-            echo ""
-            echo "Checking holopatcher config.py..."
-            CURRENT=$(grep -oP '"currentVersion":\s*"\K[^"]+' Tools/HoloPatcher/src/holopatcher/config.py || true)
-            
-            if [ -z "$CURRENT" ]; then
-              echo "❌ HoloPatcher: currentVersion not found"
-              errors=$((errors + 1))
-            else
-              echo "✓ HoloPatcher currentVersion: $CURRENT"
-            fi
-          fi
-          
-          # Check KotorDiff __main__.py
-          if [ -f "Tools/KotorDiff/src/kotordiff/__main__.py" ]; then
-            echo ""
-            echo "Checking kotordiff __main__.py..."
-            CURRENT=$(grep -oP 'CURRENT_VERSION\s*=\s*"\K[^"]+' Tools/KotorDiff/src/kotordiff/__main__.py || true)
-            
-            if [ -z "$CURRENT" ]; then
-              echo "❌ KotorDiff: CURRENT_VERSION not found"
-              errors=$((errors + 1))
-            else
-              echo "✓ KotorDiff currentVersion: $CURRENT"
-            fi
-          fi
-          
-          if [ $errors -gt 0 ]; then
-            echo ""
-            echo "❌ Found $errors version configuration errors"
-            exit 1
-          fi
-          
-          echo ""
-          echo "✓ All version files are valid"
-        shell: bash
+          python3 << 'PYTHON_SCRIPT'
+          import json
+          import os
+          import re
+          from pathlib import Path
 
-  # Build validation for Toolset (dry run by default)
-  build-toolset:
-    name: Build Toolset (${{ matrix.os }})
+          def find_config_file(tool_dir: Path, tool_name_lower: str) -> Path | None:
+              """Find the config file for a tool."""
+              src_dir = tool_dir / "src" / tool_name_lower
+              
+              # Check for config.py directly in src/<tool>/
+              config_py = src_dir / "config.py"
+              if config_py.exists():
+                  return config_py
+              
+              # Check for config/config_info.py
+              config_info_py = src_dir / "config" / "config_info.py"
+              if config_info_py.exists():
+                  return config_info_py
+              
+              # Check for __main__.py with CURRENT_VERSION
+              main_py = src_dir / "__main__.py"
+              if main_py.exists():
+                  content = main_py.read_text()
+                  if 'CURRENT_VERSION' in content:
+                      return main_py
+              
+              # Check for __init__.py with __version__
+              init_py = src_dir / "__init__.py"
+              if init_py.exists():
+                  content = init_py.read_text()
+                  if '__version__' in content:
+                      return init_py
+              
+              return None
+
+          def check_version_file(config_path: Path, tool_name: str) -> list[str]:
+              """Check version file and return list of errors."""
+              errors = []
+              try:
+                  content = config_path.read_text()
+                  
+                  # Check for currentVersion (JSON-style in Python dict)
+                  if '"currentVersion":' in content:
+                      match = re.search(r'"currentVersion":\s*"([^"]+)"', content)
+                      if not match:
+                          errors.append(f"{tool_name}: currentVersion not found")
+                      else:
+                          print(f"✓ {tool_name} currentVersion: {match.group(1)}")
+                      
+                      # Check for toolsetLatestVersion pattern (for toolset)
+                      if 'toolsetLatestVersion' in content:
+                          match = re.search(r'"toolsetLatestVersion":\s*"([^"]+)"', content)
+                          if not match:
+                              errors.append(f"{tool_name}: toolsetLatestVersion not found")
+                          else:
+                              print(f"✓ {tool_name} latestVersion: {match.group(1)}")
+                      
+                      if 'toolsetLatestBetaVersion' in content:
+                          match = re.search(r'"toolsetLatestBetaVersion":\s*"([^"]+)"', content)
+                          if not match:
+                              errors.append(f"{tool_name}: toolsetLatestBetaVersion not found")
+                          else:
+                              print(f"✓ {tool_name} betaVersion: {match.group(1)}")
+                  
+                  # Check for CURRENT_VERSION
+                  elif 'CURRENT_VERSION' in content:
+                      match = re.search(r'CURRENT_VERSION\s*=\s*["\']([^"\']+)["\']', content)
+                      if not match:
+                          errors.append(f"{tool_name}: CURRENT_VERSION not found")
+                      else:
+                          print(f"✓ {tool_name} CURRENT_VERSION: {match.group(1)}")
+                  
+                  # Check for __version__
+                  elif '__version__' in content:
+                      match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
+                      if not match:
+                          errors.append(f"{tool_name}: __version__ not found")
+                      else:
+                          print(f"✓ {tool_name} __version__: {match.group(1)}")
+                  
+              except Exception as e:
+                  errors.append(f"{tool_name}: Error reading config file: {e}")
+              
+              return errors
+
+          # Get tools matrix from environment variable (set by GitHub Actions)
+          # GitHub Actions will interpolate the JSON value
+          tools_matrix_json = os.environ.get('TOOLS_MATRIX', '[]')
+          try:
+              tools_matrix = json.loads(tools_matrix_json) if tools_matrix_json and tools_matrix_json != '[]' else []
+          except json.JSONDecodeError:
+              print(f"Warning: Could not parse TOOLS_MATRIX: {tools_matrix_json}")
+              tools_matrix = []
+
+          errors = []
+          
+          for tool in tools_matrix:
+              if not tool.get('has_config', False):
+                  continue
+              
+              tool_dir = Path('Tools') / tool['tool_dir']
+              tool_name_lower = tool['tool_dir'].lower()
+              config_path = find_config_file(tool_dir, tool_name_lower)
+              
+              if config_path:
+                  print(f"\nChecking {tool['display_name']} ({config_path})...")
+                  tool_errors = check_version_file(config_path, tool['display_name'])
+                  errors.extend(tool_errors)
+          
+          if errors:
+              print("\n❌ Found version configuration errors:")
+              for error in errors:
+                  print(f"  {error}")
+              exit(1)
+          
+          print("\n✓ All version files are valid")
+          PYTHON_SCRIPT
+        env:
+          TOOLS_MATRIX: ${{ needs.detect-changes.outputs.tools_matrix }}
+
+  # Build validation for all changed tools (matrix-based)
+  build-tools:
+    name: Build ${{ matrix.tool.display_name }} (${{ matrix.os }})
     needs: [detect-changes, version-check]
-    if: needs.detect-changes.outputs.toolset == 'true'
+    if: needs.detect-changes.outputs.any_tool == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        tool: ${{ fromJson(needs.detect-changes.outputs.tools_matrix) }}
         os: [windows-latest, ubuntu-20.04]
         include:
           - os: windows-latest
@@ -233,145 +372,13 @@ jobs:
         with:
           python-version: '3.8'
 
-      - name: Build Toolset (validation)
+      - name: Build ${{ matrix.tool.display_name }} (validation)
         uses: ./.github/actions/build-tool
         with:
-          tool_name: toolset
+          tool_name: ${{ matrix.tool.build_name }}
           python_version: '3.8'
           architecture: ${{ matrix.architecture }}
-          qt_version: 'PyQt5'
-          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
-          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
-          artifact_retention_days: '3'
-
-  # Build validation for HoloPatcher
-  build-holopatcher:
-    name: Build HoloPatcher (${{ matrix.os }})
-    needs: [detect-changes, version-check]
-    if: needs.detect-changes.outputs.holopatcher == 'true'
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-20.04]
-        include:
-          - os: windows-latest
-            architecture: x64
-          - os: ubuntu-20.04
-            architecture: x64
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-
-      - name: Build HoloPatcher (validation)
-        uses: ./.github/actions/build-tool
-        with:
-          tool_name: holopatcher
-          python_version: '3.8'
-          architecture: ${{ matrix.architecture }}
-          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
-          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
-          artifact_retention_days: '3'
-
-  # Build validation for KotorDiff
-  build-kotordiff:
-    name: Build KotorDiff (${{ matrix.os }})
-    needs: [detect-changes, version-check]
-    if: needs.detect-changes.outputs.kotordiff == 'true'
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-20.04]
-        include:
-          - os: windows-latest
-            architecture: x64
-          - os: ubuntu-20.04
-            architecture: x64
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-
-      - name: Build KotorDiff (validation)
-        uses: ./.github/actions/build-tool
-        with:
-          tool_name: kotordiff
-          python_version: '3.8'
-          architecture: ${{ matrix.architecture }}
-          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
-          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
-          artifact_retention_days: '3'
-
-  # Build validation for GuiConverter
-  build-guiconverter:
-    name: Build GuiConverter (${{ matrix.os }})
-    needs: [detect-changes, version-check]
-    if: needs.detect-changes.outputs.guiconverter == 'true'
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-20.04]
-        include:
-          - os: windows-latest
-            architecture: x64
-          - os: ubuntu-20.04
-            architecture: x64
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-
-      - name: Build GuiConverter (validation)
-        uses: ./.github/actions/build-tool
-        with:
-          tool_name: guiconverter
-          python_version: '3.8'
-          architecture: ${{ matrix.architecture }}
-          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
-          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
-          artifact_retention_days: '3'
-
-  # Build validation for BatchPatcher
-  build-batchpatcher:
-    name: Build BatchPatcher (${{ matrix.os }})
-    needs: [detect-changes, version-check]
-    if: needs.detect-changes.outputs.batchpatcher == 'true'
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-20.04]
-        include:
-          - os: windows-latest
-            architecture: x64
-          - os: ubuntu-20.04
-            architecture: x64
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-
-      - name: Build BatchPatcher (validation)
-        uses: ./.github/actions/build-tool
-        with:
-          tool_name: batchpatcher
-          python_version: '3.8'
-          architecture: ${{ matrix.architecture }}
+          qt_version: ${{ matrix.tool.build_name == 'toolset' && 'PyQt5' || '' }}
           dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
           upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
           artifact_retention_days: '3'
@@ -379,7 +386,7 @@ jobs:
   # Summary job that reports overall status
   build-summary:
     name: Build Summary
-    needs: [detect-changes, version-check, build-toolset, build-holopatcher, build-kotordiff, build-guiconverter, build-batchpatcher]
+    needs: [detect-changes, version-check, build-tools]
     if: always() && needs.detect-changes.outputs.any_tool == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -387,31 +394,19 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Safely get job results, handling skipped jobs gracefully
-            // When a job is conditionally skipped, needs.job.result is 'skipped' or empty
-            const jobs = {
-              'version-check': '${{ needs.version-check.result }}' || 'skipped',
-              'build-toolset': '${{ needs.build-toolset.result }}' || 'skipped',
-              'build-holopatcher': '${{ needs.build-holopatcher.result }}' || 'skipped',
-              'build-kotordiff': '${{ needs.build-kotordiff.result }}' || 'skipped',
-              'build-guiconverter': '${{ needs.build-guiconverter.result }}' || 'skipped',
-              'build-batchpatcher': '${{ needs.build-batchpatcher.result }}' || 'skipped'
-            };
+            // Get tools matrix from detect-changes
+            const toolsMatrixJson = '${{ needs.detect-changes.outputs.tools_matrix }}';
+            const toolsMatrix = JSON.parse(toolsMatrixJson || '[]');
             
-            const changes = {
-              toolset: '${{ needs.detect-changes.outputs.toolset }}' === 'true',
-              holopatcher: '${{ needs.detect-changes.outputs.holopatcher }}' === 'true',
-              kotordiff: '${{ needs.detect-changes.outputs.kotordiff }}' === 'true',
-              guiconverter: '${{ needs.detect-changes.outputs.guiconverter }}' === 'true',
-              batchpatcher: '${{ needs.detect-changes.outputs.batchpatcher }}' === 'true'
-            };
+            // Get build-tools job result (matrix jobs return a single result)
+            const buildToolsResult = '${{ needs.build-tools.result }}' || 'skipped';
             
             let summary = '## 🔨 Build Validation Summary\n\n';
             let hasFailures = false;
             let hasSkipped = false;
             
             // Version check
-            const versionStatus = jobs['version-check'];
+            const versionStatus = '${{ needs.version-check.result }}' || 'skipped';
             if (versionStatus === 'success') {
               summary += '✅ **Version Check**: Passed\n';
             } else if (versionStatus === 'failure') {
@@ -423,30 +418,21 @@ jobs:
             
             summary += '\n### Tool Builds\n\n';
             
-            const toolMap = {
-              toolset: { name: 'HolocronToolset', job: 'build-toolset' },
-              holopatcher: { name: 'HoloPatcher', job: 'build-holopatcher' },
-              kotordiff: { name: 'KotorDiff', job: 'build-kotordiff' },
-              guiconverter: { name: 'GuiConverter', job: 'build-guiconverter' },
-              batchpatcher: { name: 'BatchPatcher', job: 'build-batchpatcher' }
-            };
-            
-            for (const [key, info] of Object.entries(toolMap)) {
-              if (changes[key]) {
-                const status = jobs[info.job];
-                if (status === 'success') {
-                  summary += `✅ **${info.name}**: Build validated\n`;
-                } else if (status === 'failure') {
-                  summary += `❌ **${info.name}**: Build failed\n`;
-                  hasFailures = true;
-                } else if (status === 'skipped') {
-                  summary += `⏭️ **${info.name}**: Skipped\n`;
-                  hasSkipped = true;
-                } else {
-                  summary += `⚠️ **${info.name}**: ${status || 'Unknown'}\n`;
-                }
+            // Process each tool
+            // Note: For matrix jobs, we check the overall result
+            // Individual matrix job results aren't easily accessible in summary
+            // but the overall job will fail if any matrix job fails
+            for (const tool of toolsMatrix) {
+              if (buildToolsResult === 'success') {
+                summary += `✅ **${tool.display_name}**: Build validated\n`;
+              } else if (buildToolsResult === 'failure') {
+                summary += `❌ **${tool.display_name}**: Build failed\n`;
+                hasFailures = true;
+              } else if (buildToolsResult === 'skipped' || !buildToolsResult) {
+                summary += `⏭️ **${tool.display_name}**: Skipped\n`;
+                hasSkipped = true;
               } else {
-                summary += `➖ **${info.name}**: Not affected\n`;
+                summary += `⚠️ **${tool.display_name}**: ${buildToolsResult || 'Unknown'}\n`;
               }
             }
             
@@ -497,4 +483,3 @@ jobs:
             if (hasFailures) {
               core.setFailed('One or more builds failed');
             }
-
