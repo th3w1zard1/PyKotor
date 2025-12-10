@@ -228,8 +228,25 @@ def fix_toc_links():
     lines: list[str] = content.splitlines()
     new_lines: list[str] = []
 
+    # Track current section context to determine if we're in TSL-Only or K1-Only section
+    current_section = None
+    in_tsl_only = False
+    in_k1_only = False
+    
     for line_num, line in enumerate(lines, 1):
         parsed_line = line
+        
+        # Track section context
+        if "## TSL-Only Functions" in parsed_line:
+            in_tsl_only = True
+            in_k1_only = False
+        elif "## K1-Only Functions" in parsed_line:
+            in_tsl_only = False
+            in_k1_only = True
+        elif parsed_line.strip().startswith("## ") and not parsed_line.strip().startswith("## TSL-Only") and not parsed_line.strip().startswith("## K1-Only"):
+            in_tsl_only = False
+            in_k1_only = False
+        
         # Match lines with function links: - [`Function(params)` - Routine N](#anchor or file)
         # Pattern: backtick, function name, backtick, optional routine, link
         if "`" in parsed_line and ("Routine" in parsed_line or "](NSS-" in parsed_line):
@@ -250,6 +267,30 @@ def fix_toc_links():
                     file_name: str = result[0]
                     anchor: str = result[1]
                     routine_str: str = f" - Routine {routine_num}" if routine_num else ""
+
+                    # If we're in TSL-Only or K1-Only section, prefer those files
+                    if in_tsl_only and file_name.startswith("NSS-Shared-Functions"):
+                        # Try to find in TSL-Only file instead
+                        tsl_file = file_name.replace("NSS-Shared-Functions", "NSS-TSL-Only-Functions")
+                        tsl_path = WIKI_DIR / f"{tsl_file}.md"
+                        if tsl_path.exists():
+                            content = tsl_path.read_text(encoding='utf-8')
+                            anchor_pattern = rf'<a id="([^"]+)"></a>\s*\n\s*##\s+`{re.escape(func_name)}\('
+                            match_anchor = re.search(anchor_pattern, content)
+                            if match_anchor:
+                                file_name = tsl_file
+                                anchor = match_anchor.group(1)
+                    elif in_k1_only and file_name.startswith("NSS-Shared-Functions"):
+                        # Try to find in K1-Only file instead
+                        k1_file = file_name.replace("NSS-Shared-Functions", "NSS-K1-Only-Functions")
+                        k1_path = WIKI_DIR / f"{k1_file}.md"
+                        if k1_path.exists():
+                            content = k1_path.read_text(encoding='utf-8')
+                            anchor_pattern = rf'<a id="([^"]+)"></a>\s*\n\s*##\s+`{re.escape(func_name)}\('
+                            match_anchor = re.search(anchor_pattern, content)
+                            if match_anchor:
+                                file_name = k1_file
+                                anchor = match_anchor.group(1)
 
                     # Check if link already points to a file with wrong anchor or wrong file
                     # Match pattern: [text](file#anchor)

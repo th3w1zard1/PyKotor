@@ -593,10 +593,10 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
     - Other Functions
   - [TSL-Only Functions](#tsl-only-functions)
     - [Actions](#actions)
-      - [`ActionFollowOwner(fRange)` - Routine 398](NSS-Shared-Functions-Actions)
-      - [`ActionSwitchWeapons()` - Routine 401](NSS-Shared-Functions-Actions)
+      - [`ActionFollowOwner(fRange)` - Routine 398](NSS-TSL-Only-Functions-Actions#actionfollowowner)
+      - [`ActionSwitchWeapons()` - Routine 401](NSS-TSL-Only-Functions-Actions#actionswitchweapons)
     - [Class System](#class-system)
-      - [`SetInputClass(nClass)` - Routine 342](NSS-Shared-Functions-Other-Functions)
+      - [`SetInputClass(nClass)` - Routine 342](NSS-TSL-Only-Functions-Class-System#setinputclass)
     - [Combat Functions](#combat-functions)
       - [`GetCombatActionsPending(oCreature)` - Routine 315](NSS-Shared-Functions-Other-Functions)
       - [`SetFakeCombatState(oObject, nEnable)` - Routine 791](NSS-Shared-Functions-Other-Functions)
