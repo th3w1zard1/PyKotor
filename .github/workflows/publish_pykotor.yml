@@ -287,44 +287,14 @@ jobs:
           echo "Using compile script $compileScript"
           if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
 
-      - name: Install uv (Linux/macOS)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-        id: install_uv
-
-      - name: Install Python version with uv (Linux/macOS)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          # Ensure uv is in PATH
-          export PATH="$HOME/.local/bin:$PATH"
-          # Install the required Python version
-          uv python install ${{ matrix.python-version }}
-          # Verify installation
-          uv python find ${{ matrix.python-version }} || (echo "Failed to install Python ${{ matrix.python-version }}" && exit 1)
-
       - name: Create virtual environment
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
           $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
-          # On Linux/macOS, ensure uv is in PATH
-          if ("${{ runner.os }}" -ne "Windows") {
-            $env:PATH = "$env:HOME/.local/bin:$env:PATH"
-            # Verify uv is available
-            $uvCheck = Get-Command uv -ErrorAction SilentlyContinue
-            if (-not $uvCheck) {
-              Write-Error "uv not found in PATH. PATH: $env:PATH"
-              exit 1
-            }
-            Write-Host "Using uv at: $($uvCheck.Source)"
-          }
-          
           try {
+            Write-Host "Calling install_python_venv.ps1 with venv_name=$venvName and force_python_version=${{ matrix.python-version }}"
             . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
             
             if (-not $pythonExePath) {
