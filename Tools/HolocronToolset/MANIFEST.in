@@ -3,6 +3,13 @@ include README.md
 include requirements.txt
 recursive-include src/toolset *.py
 include src/resources_rc.py
+# Include help directory (contents.xml and other help files)
+recursive-include src/toolset/help *.xml
+recursive-include src/toolset/help *.md
+# Include wiki directory for help system (relative to repo root)
+# Note: MANIFEST.in paths are relative to the file location
+# Since wiki is at repo root, we use ../wiki from Tools/HolocronToolset/
+recursive-include ../wiki *.md
 recursive-exclude * __pycache__
 recursive-exclude * *.pyc
 recursive-exclude * *.pyo

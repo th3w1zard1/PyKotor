@@ -53,6 +53,7 @@
         <Document name="Mod Creation Best Practices" file="Mod-Creation-Best-Practices.md"/>
         <Document name="Ncs File Format" file="NCS-File-Format.md"/>
         <Document name="Nss File Format" file="NSS-File-Format.md"/>
+        <Document name="Plt File Format" file="PLT-File-Format.md"/>
         <Document name="Rendering Backends" file="Rendering-Backends.md"/>
         <Document name="Ssf File Format" file="SSF-File-Format.md"/>
         <Document name="Tlk File Format" file="TLK-File-Format.md"/>

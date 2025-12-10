@@ -1,6 +1,7 @@
 [build-system]
 requires = ["setuptools>=67.8.0,<70", "wheel"]
 build-backend = "setuptools.build_meta"
+# Note: setup.py provides custom build hook to copy wiki directory for PyPI distribution
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -10,6 +11,13 @@ py-modules = ["resources_rc"]
 where = ["src"]
 include = ["toolset*"]
 exclude = ["plugin*", "*.plugin*", "*plugin*", "plugin"]
+
+[tool.setuptools.package-data]
+toolset = [
+    "help/**/*.xml",
+    "help/**/*.md",
+    "wiki/**/*.md",  # Wiki files copied during build by setup.py
+]
 
 [project]
 name = "holocrontoolset"
