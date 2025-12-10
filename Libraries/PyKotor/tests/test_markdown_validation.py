@@ -55,6 +55,12 @@ def extract_headings(content: str) -> dict[str, int]:
     """
     headings = {}
     for line_num, line in enumerate(content.splitlines(), 1):
+        # Match HTML anchors: <a id="anchor"></a>
+        html_anchor_match = re.search(r'<a\s+id="([^"]+)"', line)
+        if html_anchor_match:
+            anchor = html_anchor_match.group(1)
+            headings[anchor] = line_num
+        
         # Match markdown headings: # Heading, ## Heading, etc.
         match = re.match(r'^(#{1,6})\s+(.+)$', line.strip())
         if match:
@@ -222,6 +228,288 @@ def test_all_links_clickable(wiki_files: dict[str, Path], wiki_headings: dict[st
         if len(all_errors) > 100:
             error_summary += f"\n... and {len(all_errors) - 100} more errors"
         pytest.fail(f"Found {len(all_errors)} invalid links:\n{error_summary}")
+
+
+# Overly common words that should NOT be hyperlinked to generic GFF anchors
+# These are common English words that were incorrectly linked
+OVERLY_BROAD_PATTERNS = [
+    # Pattern: (link_text_pattern, forbidden_url_patterns, description)
+    # link_text_pattern is a regex that matches the link text
+    # forbidden_url_patterns is a list of regex patterns for URLs that should not be used
+    (
+        r"^(type|types)$",
+        [
+            r"GFF-File-Format#data-types",
+            r"GFF-File-Format#gff-data-types",
+        ],
+        "Common word 'type' should not be linked to generic GFF data-types anchor",
+    ),
+    (
+        r"^(value|values)$",
+        [
+            r"GFF-File-Format#data-types",
+            r"GFF-File-Format#gff-data-types",
+        ],
+        "Common word 'value' should not be linked to generic GFF data-types anchor",
+    ),
+    (
+        r"^(field|fields)$",
+        [
+            r"GFF-File-Format#file-structure",
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'field' should not be linked to generic GFF file-structure anchor",
+    ),
+    (
+        r"^(format|formats)$",
+        [
+            r"GFF-File-Format$",  # Just GFF-File-Format without anchor
+        ],
+        "Common word 'format' should not be linked to generic GFF-File-Format",
+    ),
+    (
+        r"^(file|files)$",
+        [
+            r"GFF-File-Format$",  # Just GFF-File-Format without anchor
+        ],
+        "Common word 'file' should not be linked to generic GFF-File-Format",
+    ),
+    (
+        r"^data$",
+        [
+            r"GFF-File-Format#file-structure",
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'data' should not be linked to generic GFF file-structure anchor",
+    ),
+    (
+        r"^(structure|structures)$",
+        [
+            r"GFF-File-Format#file-structure",
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'structure' should not be linked to generic GFF file-structure anchor",
+    ),
+    (
+        r"^(string|strings)$",
+        [
+            r"GFF-File-Format#cexostring",
+            r"GFF-File-Format#gff-data-types",
+        ],
+        "Common word 'string' should not be linked to generic GFF cexostring anchor",
+    ),
+    (
+        r"^(array|arrays)$",
+        [
+            r"2DA-File-Format$",  # Just 2DA-File-Format without anchor
+        ],
+        "Common word 'array' should not be linked to generic 2DA-File-Format",
+    ),
+    (
+        r"^(index|indexes|indices)$",
+        [
+            r"2DA-File-Format#row-labels",
+        ],
+        "Common word 'index' should not be linked to generic 2DA row-labels anchor",
+    ),
+    (
+        r"^(vector|vectors)$",
+        [
+            r"GFF-File-Format#vector",
+            r"GFF-File-Format#gff-data-types",
+        ],
+        "Common word 'vector' should not be linked to generic GFF vector anchor",
+    ),
+    (
+        r"^(color|colors)$",
+        [
+            r"GFF-File-Format#color",
+            r"GFF-File-Format#gff-data-types",
+        ],
+        "Common word 'color' should not be linked to generic GFF color anchor",
+    ),
+    (
+        r"^count$",
+        [
+            r"GFF-File-Format#file-structure",
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'count' should not be linked to generic GFF file-structure anchor",
+    ),
+    (
+        r"^size$",
+        [
+            r"GFF-File-Format#file-structure",
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'size' should not be linked to generic GFF file-structure anchor",
+    ),
+    (
+        r"^(offset|offsets)$",
+        [
+            r"GFF-File-Format#file-structure",
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'offset' should not be linked to generic GFF file-structure anchor",
+    ),
+    (
+        r"^(pointer|pointers)$",
+        [
+            r"GFF-File-Format#file-structure",
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'pointer' should not be linked to generic GFF file-structure anchor",
+    ),
+    (
+        r"^(header|headers)$",
+        [
+            r"GFF-File-Format#file-header",
+        ],
+        "Common word 'header' should not be linked to generic GFF file-header anchor",
+    ),
+    (
+        r"^(flag|flags)$",
+        [
+            r"GFF-File-Format#data-types",
+        ],
+        "Common word 'flag' should not be linked to generic GFF data-types anchor",
+    ),
+    (
+        r"^(bit|bits)$",
+        [
+            r"GFF-File-Format#data-types",
+            r"GFF-File-Format#gff-data-types",
+        ],
+        "Common word 'bit' should not be linked to generic GFF data-types anchor (unless in technical context like '32-bit')",
+    ),
+    (
+        r"^(mask|masks|bitmask|bitmasks)$",
+        [
+            r"GFF-File-Format#data-types",
+        ],
+        "Common word 'mask' should not be linked to generic GFF data-types anchor",
+    ),
+    (
+        r"^(matrix|matrices)$",
+        [
+            r"BWM-File-Format#vertex-data-processing",
+        ],
+        "Common word 'matrix' should not be linked to generic BWM vertex-data-processing anchor",
+    ),
+    (
+        r"^(coordinate|coordinates)$",
+        [
+            r"GFF-File-Format#are-area",
+        ],
+        "Common word 'coordinate' should not be linked to generic GFF are-area anchor",
+    ),
+    (
+        r"^(position|positions)$",
+        [
+            r"MDL-MDX-File-Format#node-header",
+        ],
+        "Common word 'position' should not be linked to generic MDL-MDX node-header anchor",
+    ),
+    (
+        r"^(orientation|orientations)$",
+        [
+            r"MDL-MDX-File-Format#node-header",
+        ],
+        "Common word 'orientation' should not be linked to generic MDL-MDX node-header anchor",
+    ),
+    (
+        r"^(rotation|rotations)$",
+        [
+            r"MDL-MDX-File-Format#node-header",
+        ],
+        "Common word 'rotation' should not be linked to generic MDL-MDX node-header anchor",
+    ),
+    (
+        r"^(transformation|transformations)$",
+        [
+            r"BWM-File-Format#vertex-data-processing",
+        ],
+        "Common word 'transformation' should not be linked to generic BWM vertex-data-processing anchor",
+    ),
+    (
+        r"^scale$",
+        [
+            r"MDL-MDX-File-Format#node-header",
+        ],
+        "Common word 'scale' should not be linked to generic MDL-MDX node-header anchor",
+    ),
+]
+
+
+def is_legitimate_technical_use(link_text: str, link_url: str, line_content: str) -> bool:
+    """Check if a link is a legitimate technical use rather than an overly broad link.
+    
+    Returns True if the link should be allowed (e.g., "32-bit", "4-byte", compound terms).
+    """
+    # Allow compound terms with numbers (e.g., "32-bit", "16-bit", "8-bit", "4-byte")
+    if re.search(r'\d+[- ](bit|byte|word|dword)', link_text, re.IGNORECASE):
+        return True
+    
+    # Allow compound terms (e.g., "file format", "data type", "file structure")
+    compound_patterns = [
+        r'\b(file|data|format|structure|type|value|field|count|size|index|flag|bit|mask|array|string|vector|matrix|coordinate|position|orientation|rotation|transformation|scale|color|header|offset|pointer)\s+(format|file|data|structure|type|value|field|count|size|index|flag|bit|mask|array|string|vector|matrix|coordinate|position|orientation|rotation|transformation|scale|color|header|offset|pointer)\b',
+    ]
+    for pattern in compound_patterns:
+        if re.search(pattern, line_content, re.IGNORECASE):
+            return True
+    
+    # Allow links in code blocks or inline code (they're already protected by the script)
+    if '`' in line_content:
+        return True
+    
+    return False
+
+
+@pytest.mark.parametrize("md_file", [pytest.param(f, id=f.name) for f in (REPO_ROOT / "wiki").glob("*.md")])
+def test_no_overly_broad_hyperlinks(md_file: Path):
+    """Test that overly common words are not incorrectly hyperlinked.
+    
+    This test ensures that common English words like "type", "value", "field", etc.
+    are not hyperlinked to generic anchors like GFF-File-Format#data-types.
+    
+    Legitimate technical uses (e.g., "32-bit", "4-byte", compound terms) are allowed.
+    """
+    content = md_file.read_text(encoding='utf-8')
+    links = extract_links(content, md_file)
+    
+    errors = []
+    for link_text, link_url, line_num in links:
+        # Skip external URLs
+        parsed = urlparse(link_url)
+        if parsed.scheme in ('http', 'https', 'mailto'):
+            continue
+        
+        # Get the line content for context checking
+        lines = content.splitlines()
+        line_content = lines[line_num - 1] if line_num <= len(lines) else ""
+        
+        # Check each pattern
+        for text_pattern, forbidden_urls, description in OVERLY_BROAD_PATTERNS:
+            if re.match(text_pattern, link_text, re.IGNORECASE):
+                # Check if this matches any forbidden URL pattern
+                for forbidden_url in forbidden_urls:
+                    if re.search(forbidden_url, link_url):
+                        # Check if it's a legitimate technical use
+                        if not is_legitimate_technical_use(link_text, link_url, line_content):
+                            errors.append(
+                                f"Line {line_num}: [{link_text}]({link_url}) - {description}"
+                            )
+                        break
+    
+    if errors:
+        error_summary = "\n".join(errors[:50])  # Show first 50 errors per file
+        if len(errors) > 50:
+            error_summary += f"\n... and {len(errors) - 50} more errors"
+        pytest.fail(
+            f"Found {len(errors)} overly broad hyperlinks in {md_file.name}:\n{error_summary}\n\n"
+            f"These common words should not be linked to generic anchors. "
+            f"Run: python scripts/revert_overly_broad_links.py to fix."
+        )
 
 
 if __name__ == "__main__":
