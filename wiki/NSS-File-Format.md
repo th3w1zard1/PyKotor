@@ -3443,7 +3443,7 @@ See [Planet Constants](NSS-Shared-Constants-Planet-Constants) for detailed docum
 
 ### Visual Effects (VFX)
 
-See [Visual Effects (VFX)](NSS-Shared-Constants-Visual-Effects-(VFX)) for detailed documentation.
+See [Visual Effects (VFX)](NSS-Shared-Constants-Visual-Effects-(VFX).md) for detailed documentation.
 
 ## K1-Only Constants
 
@@ -3487,7 +3487,7 @@ See [Planet Constants](NSS-TSL-Only-Constants-Planet-Constants) for detailed doc
 
 ### Visual Effects (VFX)
 
-See [Visual Effects (VFX)](NSS-TSL-Only-Constants-Visual-Effects-(VFX)) for detailed documentation.
+See [Visual Effects (VFX)](NSS-TSL-Only-Constants-Visual-Effects-(VFX).md) for detailed documentation.
 
 ## KOTOR Library files
 
