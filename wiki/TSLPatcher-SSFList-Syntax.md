@@ -8,7 +8,7 @@ The `[SSFList]` section in TSLPatcher's changes.ini file enables you to modify S
 
 ## Table of Contents
 
-- [Basic Structure](#basic-structure)
+- Basic Structure
 - [File-Level Configuration](#file-level-configuration)
 - [Sound Entry Modifiers](#sound-entry-modifiers)
 - [Memory Token System](#memory-token-system)

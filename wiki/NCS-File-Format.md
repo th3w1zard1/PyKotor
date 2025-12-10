@@ -21,7 +21,7 @@
 ## Table of Contents
 
 - [KotOR NCS files format Documentation](#kotor-ncs-files-format-documentation)
-  - [Table of Contents](#table-of-contents)
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
     - [Stack-Based Virtual Machine](#stack-based-virtual-machine)
   - [header](#header)

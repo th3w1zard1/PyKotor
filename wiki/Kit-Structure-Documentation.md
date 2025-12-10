@@ -4,8 +4,8 @@ Kits [ARE](GFF-File-Format#are-area) collections of reusable indoor map componen
 
 ## Table of Contents
 
-- [Kit structure Documentation](#kit-structure-documentation)
-  - [Table of Contents](#table-of-contents)
+- Kit structure Documentation
+  - Table of Contents
   - [Kit Overview](#kit-overview)
   - [Kit Directory structure](#kit-directory-structure)
   - [Kit JSON file](#kit-json-file)
@@ -47,8 +47,8 @@ Kits [ARE](GFF-File-Format#are-area) collections of reusable indoor map componen
     - [room model and Component Identification](#room-model-and-component-identification)
     - [Door model Resolution](#door-model-resolution)
     - [Placeable model Resolution](#placeable-model-resolution)
-    - [texture and Lightmap Extraction](#texture-and-lightmap-extraction-1)
-    - [Resource Resolution Priority](#resource-resolution-priority-1)
+    - [Texture and Lightmap Extraction](#texture-and-lightmap-extraction)
+    - [Resource Resolution Priority](#resource-resolution-priority)
     - [BWM/WOK walkmesh Handling](#bwmwok-walkmesh-handling)
     - [module archives Loading](#module-archives-loading)
     - [KEY Discrepancies and Rationale](#key-discrepancies-and-rationale)

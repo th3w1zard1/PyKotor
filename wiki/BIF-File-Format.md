@@ -4,8 +4,8 @@ This document provides a detailed description of the BIF (BioWare index file) fi
 
 ## Table of Contents
 
-- [KotOR BIF file format Documentation](#kotor-bif-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+- KotOR BIF file format Documentation
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
     - [BIF Usage in KotOR](#bif-usage-in-kotor)
   - [Binary Format](#binary-format)
@@ -147,7 +147,7 @@ BZF files [ARE](GFF-File-Format#are-area) LZMA-compressed [BIF files](BIF-File-F
 
 ### BZF format Details
 
-The BZF format wraps a complete [BIF file](BIF-File-Format) in LZMA [compression](BIF-File-Format#bzf-compression):
+The BZF format wraps a complete [BIF file](BIF-File-Format) in LZMA compression:
 
 1. **BZF header** (8 bytes): `"BZF "` + `"V1.0"` signature
 2. **LZMA Stream**: Compressed [BIF file](BIF-File-Format) data using LZMA algorithm

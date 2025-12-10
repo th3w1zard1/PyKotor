@@ -4,9 +4,9 @@ TPC ([texture](TPC-File-Format) Pack Container) is KotOR's native [texture](TPC-
 
 ## Table of Contents
 
-- [KotOR TPC File Format Documentation](#kotor-tpc-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
-  - [File Structure Overview](#file-structure-overview)
+- KotOR TPC File Format Documentation
+  - Table of Contents
+  - File Structure Overview
   - [Header Layout](#header-layout)
   - [Pixel Formats](#pixel-formats)
   - [Mipmaps, Layers, and Animation](#mipmaps-layers-and-animation)

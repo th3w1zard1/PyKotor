@@ -4,9 +4,9 @@ VIS (Visibility) files describe which module rooms can be seen from other rooms.
 
 ## Table of Contents
 
-- [KotOR VIS files format Documentation](#kotor-vis-files-format-documentation)
-  - [Table of Contents](#table-of-contents)
-  - [format Overview](#format-overview)
+- KotOR VIS files format Documentation
+  - Table of Contents
+  - format Overview
   - [file Layout](#file-layout)
     - [Parent Lines](#parent-lines)
     - [Child Lines](#child-lines)

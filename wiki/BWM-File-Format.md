@@ -6,8 +6,8 @@ This document provides a detailed description of the [BWM (Binary WalkMesh)](BWM
 
 ## Table of Contents
 
-- [KotOR BWM file format Documentation](#kotor-bwm-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+- KotOR BWM file format Documentation
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
   - [Binary format](#binary-format)
     - [file header](#file-header)
@@ -229,7 +229,7 @@ The coordinate system used for [vertices](MDL-MDX-File-Format#vertex-structure) 
 Each [face](MDL-MDX-File-Format#face-structure) is a triangle defined by three [vertex](MDL-MDX-File-Format#vertex-structure) indices (0-based) into the [vertex](MDL-MDX-File-Format#vertex-structure) array. Each [face](MDL-MDX-File-Format#face-structure) entry is 12 bytes (three [uint32](GFF-File-Format#gff-data-types) values). The [vertex](MDL-MDX-File-Format#vertex-structure) indices define the triangle's [vertices](MDL-MDX-File-Format#vertex-structure) in counter-clockwise order when viewed from the front (the side the normal points toward).
 
 **[face](MDL-MDX-File-Format#face-structure) Ordering:**
-[faces](MDL-MDX-File-Format#face-structure) [ARE](GFF-File-Format#are-area) typically ordered with [walkable faces](BWM-File-Format#faces) first, followed by non-[walkable faces](BWM-File-Format#faces). This ordering is important because:
+[faces](MDL-MDX-File-Format#face-structure) [ARE](GFF-File-Format#are-area) typically ordered with walkable faces first, followed by non-walkable faces. This ordering is important because:
 
 - [adjacency](BWM-File-Format#walkable-adjacencies) data is stored only for [walkable faces](BWM-File-Format#faces), and the [adjacency](BWM-File-Format#walkable-adjacencies) array index corresponds to the [walkable face](BWM-File-Format#faces)'s position in the [walkable face](BWM-File-Format#faces) list (not the overall [face](MDL-MDX-File-Format#face-structure) list)
 - The engine can quickly iterate through [walkable faces](BWM-File-Format#faces) for pathfinding without checking [material](MDL-MDX-File-Format#trimesh-header) types
@@ -358,13 +358,13 @@ These derived values [ARE](GFF-File-Format#are-area) stored in the file to avoid
 
 **Reference**: [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:125-134`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L125-L134), [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:98-105`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L98-L105), [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:700-710`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts#L700-L710)
 
-### [AABB](BWM-File-Format#aabb-tree) Tree
+### AABB Tree
 
 | Name          | type    | size | Description                                                      |
 | ------------- | ------- | ---- | ---------------------------------------------------------------- |
-| [AABB](BWM-File-Format#aabb-tree) [nodes](MDL-MDX-File-Format#node-structures)    | varies  | varies | [bounding box](MDL-MDX-File-Format#model-header) tree [nodes](MDL-MDX-File-Format#node-structures) for spatial acceleration ([WOK](BWM-File-Format) only)      |
+| AABB [nodes](MDL-MDX-File-Format#node-structures)    | varies  | varies | [bounding box](MDL-MDX-File-Format#model-header) tree [nodes](MDL-MDX-File-Format#node-structures) for spatial acceleration ([WOK](BWM-File-Format) only)      |
 
-Each [AABB](BWM-File-Format#aabb-tree) [node](MDL-MDX-File-Format#node-structures) is **44 bytes** and contains:
+Each AABB [node](MDL-MDX-File-Format#node-structures) is **44 bytes** and contains:
 
 | Name                  | type    | offset | size | Description                                                      |
 | --------------------- | ------- | ------ | ---- | ---------------------------------------------------------------- |
@@ -438,17 +438,17 @@ The Axis-Aligned Bounding Box ([AABB](BWM-File-Format#aabb-tree)) tree is a spat
 
 **Reference**: [`vendor/kotorblender/io_scene_kotor/aabb.py:40-126`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/aabb.py#L40-L126)
 
-### Walkable [adjacencies](BWM-File-Format#walkable-adjacencies)
+### Walkable adjacencies
 
 | Name            | type    | size | Description                                                      |
 | --------------- | ------- | ---- | ---------------------------------------------------------------- |
-| [adjacencies](BWM-File-Format#walkable-adjacencies)     | [int32](GFF-File-Format#gff-data-types)| 12×N | Three [adjacency](BWM-File-Format#walkable-adjacencies) indices per walkable face (-1 = no neighbor)     |
+| adjacencies     | [int32](GFF-File-Format#gff-data-types)| 12×N | Three adjacency indices per walkable face (-1 = no neighbor)     |
 
-[adjacencies](BWM-File-Format#walkable-adjacencies) [ARE](GFF-File-Format#are-area) stored only for walkable faces ([faces](MDL-MDX-File-Format#face-structure) with walkable [materials](MDL-MDX-File-Format#trimesh-header)). Each [walkable face](BWM-File-Format#faces) has exactly three [adjacency](BWM-File-Format#walkable-adjacencies) entries, one for each edge ([edges](BWM-File-Format#edges) 0, 1, and 2). The [adjacency](BWM-File-Format#walkable-adjacencies) count in the header equals the number of [walkable faces](BWM-File-Format#faces), not the total [face](MDL-MDX-File-Format#face-structure) count.
+adjacencies [ARE](GFF-File-Format#are-area) stored only for walkable faces ([faces](MDL-MDX-File-Format#face-structure) with walkable [materials](MDL-MDX-File-Format#trimesh-header)). Each [walkable face](BWM-File-Format#faces) has exactly three adjacency entries, one for each edge ([edges](BWM-File-Format#edges) 0, 1, and 2). The adjacency count in the header equals the number of [walkable faces](BWM-File-Format#faces), not the total [face](MDL-MDX-File-Format#face-structure) count.
 
-**[adjacency](BWM-File-Format#walkable-adjacencies) Encoding:**
+**adjacency Encoding:**
 
-The [adjacency](BWM-File-Format#walkable-adjacencies) index is a clever encoding that stores both the adjacent [face](MDL-MDX-File-Format#face-structure) index and the specific [edge](BWM-File-Format#edges) within that [face](MDL-MDX-File-Format#face-structure) in a single integer:
+The adjacency index is a clever encoding that stores both the adjacent [face](MDL-MDX-File-Format#face-structure) index and the specific [edge](BWM-File-Format#edges) within that [face](MDL-MDX-File-Format#face-structure) in a single integer:
 
 - **Encoding Formula**: `adjacency_index = face_index * 3 + edge_index`
   - `face_index`: The index of the adjacent [walkable face](BWM-File-Format#faces) in the overall [face](MDL-MDX-File-Format#face-structure) array
@@ -512,17 +512,17 @@ This formula `(edge + (2 - edge % 3)) / 3` appears to map [adjacency](BWM-File-F
 
 **Reference**: [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:58-59`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L58-L59), [`vendor/xoreos/src/engines/kotorbase/path/walkmeshloader.cpp:155-169`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/path/walkmeshloader.cpp#L155-L169), [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:305-337`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts#L305-L337), [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:241-273`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L241-L273)
 
-### [edges](BWM-File-Format#edges)
+### edges
 
 | Name  | type     | size | Description                                                      |
 | ----- | -------- | ---- | ---------------------------------------------------------------- |
-| [edges](BWM-File-Format#edges) | varies   | varies | [perimeter](BWM-File-Format#perimeters) [edge](BWM-File-Format#edges) data (edge_index, transition pairs) ([WOK](BWM-File-Format) only)  |
+| edges | varies   | varies | [perimeter](BWM-File-Format#perimeters) edge data (edge_index, transition pairs) ([WOK](BWM-File-Format) only)  |
 
-The [edges](BWM-File-Format#edges) array contains [perimeter](BWM-File-Format#perimeters) edges (boundary [edges](BWM-File-Format#edges) with no walkable neighbor). Each [edge](BWM-File-Format#edges) entry is **8 bytes**:
+The edges array contains [perimeter](BWM-File-Format#perimeters) edges (boundary edges with no walkable neighbor). Each edge entry is **8 bytes**:
 
 | Name        | type   | size | Description                                                      |
 | ----------- | ------ | ---- | ---------------------------------------------------------------- |
-| [edge](BWM-File-Format#edges) index  | [uint32](GFF-File-Format#gff-data-types) | 4    | Encoded [edge](BWM-File-Format#edges) index: `face_index * 3 + local_edge_index`        |
+| edge index  | [uint32](GFF-File-Format#gff-data-types) | 4    | Encoded edge index: `face_index * 3 + local_edge_index`        |
 | Transition  | [int32](GFF-File-Format#gff-data-types)  | 4    | Transition ID for room/area connections, -1 if no transition     |
 
 **[edge](BWM-File-Format#edges) index Encoding:**
@@ -542,25 +542,25 @@ The [edge](BWM-File-Format#edges) index uses the same encoding as [adjacency](BW
 
 **Reference**: [`vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:67-79`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/WalkmeshEdge.ts#L67-L79)
 
-**[perimeter](BWM-File-Format#perimeters) [edges](BWM-File-Format#edges):**
+**perimeter [edges](BWM-File-Format#edges):**
 
-[perimeter](BWM-File-Format#perimeters) [edges](BWM-File-Format#edges) [ARE](GFF-File-Format#are-area) [edges](BWM-File-Format#edges) of [walkable faces](BWM-File-Format#faces) that have no adjacent walkable neighbor. These [edges](BWM-File-Format#edges) form the boundaries of walkable regions and [ARE](GFF-File-Format#are-area) critical for:
+perimeter [edges](BWM-File-Format#edges) [ARE](GFF-File-Format#are-area) [edges](BWM-File-Format#edges) of [walkable faces](BWM-File-Format#faces) that have no adjacent walkable neighbor. These [edges](BWM-File-Format#edges) form the boundaries of walkable regions and [ARE](GFF-File-Format#are-area) critical for:
 
 - **Area Transitions**: [edges](BWM-File-Format#edges) with non-negative transition IDs link to door connections or area boundaries
-- **Boundary Detection**: [perimeter](BWM-File-Format#perimeters) [edges](BWM-File-Format#edges) define the limits of walkable space
-- **Visual Debugging**: [perimeter](BWM-File-Format#perimeters) [edges](BWM-File-Format#edges) can be visualized to show [walkmesh](BWM-File-Format) boundaries in level editors
+- **Boundary Detection**: perimeter [edges](BWM-File-Format#edges) define the limits of walkable space
+- **Visual Debugging**: perimeter [edges](BWM-File-Format#edges) can be visualized to show [walkmesh](BWM-File-Format) boundaries in level editors
 
 **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:138-143`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L138-L143), [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:275-307`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L275-L307), [`vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:15-110`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/WalkmeshEdge.ts#L15-L110), [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:339-345`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts#L339-L345)
 
-### [perimeters](BWM-File-Format#perimeters)
+### perimeters
 
 | Name      | type   | size | Description                                                      |
 | --------- | ------ | ---- | ---------------------------------------------------------------- |
-| [perimeters](BWM-File-Format#perimeters) | [uint32](GFF-File-Format#gff-data-types) | 4×N  | indices into [edge](BWM-File-Format#edges) array marking end of [perimeter](BWM-File-Format#perimeters) loops ([WOK](BWM-File-Format) only) |
+| perimeters | [uint32](GFF-File-Format#gff-data-types) | 4×N  | indices into [edge](BWM-File-Format#edges) array marking end of perimeter loops ([WOK](BWM-File-Format) only) |
 
-[perimeters](BWM-File-Format#perimeters) mark the end of closed loops of [perimeter](BWM-File-Format#perimeters) [edges](BWM-File-Format#edges). Each [perimeter](BWM-File-Format#perimeters) value is an index into the [edge](BWM-File-Format#edges) array, indicating where a [perimeter](BWM-File-Format#perimeters) loop ends. This allows the engine to traverse complete boundary loops for pathfinding and area transitions.
+perimeters mark the end of closed loops of perimeter [edges](BWM-File-Format#edges). Each perimeter value is an index into the [edge](BWM-File-Format#edges) array, indicating where a perimeter loop ends. This allows the engine to traverse complete boundary loops for pathfinding and area transitions.
 
-**Vendor Discrepancy ([perimeter](BWM-File-Format#perimeters) index Base):**
+**Vendor Discrepancy (perimeter index Base):**
 
 | Implementation | index Base | Reference |
 |---------------|------------|-----------|

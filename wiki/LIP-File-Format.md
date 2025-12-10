@@ -4,9 +4,9 @@ LIP ([LIP](LIP-File-Format) Synchronization) files drive mouth [animation](MDL-M
 
 ## Table of Contents
 
-- [KotOR LIP File Format Documentation](#kotor-lip-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
-  - [File Structure Overview](#file-structure-overview)
+- KotOR LIP File Format Documentation
+  - Table of Contents
+  - File Structure Overview
   - [Binary Format](#binary-format)
     - [Header](#header)
     - [Keyframe Table](#keyframe-table)

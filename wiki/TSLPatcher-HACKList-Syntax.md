@@ -15,7 +15,7 @@ The `[HACKList]` section in TSLPatcher's changes.ini file enables you to modify 
 
 ## Table of Contents
 
-- [Basic Structure](#basic-structure)
+- Basic Structure
 - [File-Level Configuration](#file-level-configuration)
 - [Token Types and Data Sizes](#token-types-and-data-sizes)
 - [Memory Token Integration](#memory-token-integration)

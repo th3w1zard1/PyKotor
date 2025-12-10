@@ -1,4 +1,4 @@
-# [TSLPatcher Documentation](#tslpatcher-documentation)
+# TSLPatcher Documentation
 
   TSLPatcher v1.2.10b1
 
@@ -8,10 +8,10 @@
 
 <https://lucasforumsarchive.com/thread/149285-tslpatcher-v1210b1-mod-installer> <mirror>[TSLPatcher Thread Complete Archive](TSLPatcher_Thread_Complete)</mirror>
 
-## [Table of Contents](#table-of-contents)
+## Table of Contents
 
 - [TSLPatcher Documentation](#tslpatcher-documentation)
-  - [Table of Contents](#table-of-contents)
+  - Table of Contents
   - [1. About TSLPatcher](#1-about-tslpatcher)
     - [1.1 What can TSLPatcher help with?](#11-what-can-tslpatcher-help-with)
     - [1.2. What can TSLPatcher NOT help with?](#12-what-can-tslpatcher-not-help-with)
@@ -90,7 +90,7 @@
     - [Change Log for Version 1.1.2 (REL)](#change-log-for-version-112-rel)
   - [6. Special Thanks](#6-special-thanks)
 
-## [1. About TSLPatcher](#1-about-tslpatcher)
+## 1. About TSLPatcher
 
 TSLPatcher is a small utility designed to help in applying 3rd party Mods to the
 SWKotORII:The Sith Lords game (though it will work with SWKotOR1 as well). Its primary
@@ -183,7 +183,7 @@ directly in the override folder.
 - It is currently unable to modify files inside [BIF](BIF-File-Format) format files. Only files located in the
 override folder and [ERF](ERF-File-Format) or RIM format archive files can be modified.
 
-## [2. Setup Instructions](#2-setup-instructions)
+## 2. Setup Instructions
 
 To use the TSLPatcher as a mod installer, these steps should work for most situations:
 
@@ -262,7 +262,7 @@ parameter that will be used for installation. To allow users to pick between
 different install options within the TSLPatcher application it is recommended
 to use the Setup List/Namespaces.ini configuration instead.
 
-## [3. ChangeEdit](#3-changeedit)
+## 3. ChangeEdit
 
 ChangeEdit is a helper application made to make it a bit easier to configure what the TSLPatcher
 should do with your Mod files. While it will hardly win any awards for user friendliness, it
@@ -1125,7 +1125,7 @@ nwnnsscomp.exe and nwscript.nss in the tslpatchdata folder, not in the individua
 sub-folders. You must use the custom version of nwnnsscomp.exe, modified by
 tk102 for this purpose, or the compilation will not work.
 
-## [4. Troubleshooting](#4-troubleshooting)
+## 4. Troubleshooting
 
 Here [ARE](GFF-File-Format#are-area) some problems that I have gotten a bunch of questions about, that I can remember at
 the moment. If there [ARE](GFF-File-Format#are-area) other problems that might be worth addressing here, please let me
@@ -1173,13 +1173,13 @@ Me: This is "normal". Sorry, it's the best I can do in my spare time when having
 years old RADevelopment environment (purchasing newer versions of Delphi is just too
 expensive.) and it's too much work to switch to another environment/language at this point.  :)
 
-## [5. Partial Change History](#5-partial-change-history)
+## 5. Partial Change History
 
 This list is rather incomplete since I have a tendency of forgetting to write down what I'm
 doing. And since this has grown way beyond what I initially had planned for it, I didn't bother
 writing change notes when doing the earliest versions. :)
 
-### [Change Log for Version 1.2.10b1 (REL)](#change-log-for-version-1210b1-rel)
+### Change Log for Version 1.2.10b1 (REL)
 
 2007-09-19
 Fixed a bug/oversight with ExoLocString field substrings containing linefeeds
@@ -1196,7 +1196,7 @@ The quick brown fox
 
 jumps over the lazy dog
 
-### [Change Log for Version 1.2.9b (REL)](#change-log-for-version-129b-rel)
+### Change Log for Version 1.2.9b (REL)
 
 2007-08-13
 Changed behavior when adding new fields to a [GFF](GFF-File-Format) field if a field with that
@@ -1204,20 +1204,20 @@ label and data type already exist at that location in the [GFF file](GFF-File-Fo
 now modify the existing field to have the value the new field would have
 gotten, instead of just skipping the file like before. Requested by Kristy Kistic.
 
-### [Change Log for Version 1.2.8b10 (REL)](#change-log-for-version-128b10-rel)
+### Change Log for Version 1.2.8b10 (REL)
 
 2006-12-10
 Fixed a bug hopefully making the Require file checks work reliably all the time,
 this time. Thanks to Darkkender for pointing this out.
 
-### [Change Log for Version 1.2.8b9 (REL)](#change-log-for-version-128b9-rel)
+### Change Log for Version 1.2.8b9 (REL)
 
 2006-12-10
 Fixed a bug where the "required file" checks were not done when the patcher
 was running a config from a namespaces list and the install destination was set
 to be read from the Registry.
 
-### [Change Log for Version 1.2.8b8 (REL)](#change-log-for-version-128b8-rel)
+### Change Log for Version 1.2.8b8 (REL)
 
 2006-12-02
 Fixed two bugs that sneaked into the previous version that would cause the
@@ -1226,7 +1226,7 @@ protected, and where installation would abort with an error when copying a
 [2DA](2DA-File-Format) line and using a high() token to assign a new value to a column on the
 copied row.
 
-### [Change Log for Version 1.2.8b6 (REL)](#change-log-for-version-128b6-rel)
+### Change Log for Version 1.2.8b6 (REL)
 
 2006-10-03
 Fixed bug where the Backup folder might not yet have been created when
@@ -1279,7 +1279,7 @@ StringTable instead of having them in the code. While this makes the
 application marginally larger it makes it easier to translate  it to other
 languages, if so desired.
 
-### [Change Log for Version 1.2.8b3 (REL)](#change-log-for-version-128b3-rel)
+### Change Log for Version 1.2.8b3 (REL)
 
 2006-08-28
 Hopefully made workaround for bug that caused the main window panel to be
@@ -1290,7 +1290,7 @@ Fixed version of nwnnsscomp (0.03) that should not crash when compiling
 scripts with include files under some circumstances. Huge thanks to tk102 for
 taking time to do this fix.
 
-### [Change Log for Version 1.2.8b2 (REL)](#change-log-for-version-128b2-rel)
+### Change Log for Version 1.2.8b2 (REL)
 
 2006-08-23
 Fixed bug in the RIM handler which prevented saved RIMs from being loaded
@@ -1298,7 +1298,7 @@ Fixed bug in the RIM handler which prevented saved RIMs from being loaded
 properly by the game (though KotorTool and ERFEdit could load them fine).
 Apparently there was an error in the RIM spec...
 
-### [Change Log for Version 1.2.8b1 (REL)](#change-log-for-version-128b1-rel)
+### Change Log for Version 1.2.8b1 (REL)
 
 2006-08-09
 Changed the InstallList functionality to allow installing files into [ERF](ERF-File-Format)/RIM
@@ -1321,7 +1321,7 @@ installation.
 Various fixes to bugs I discovered that slipped through the testing with the
 rather substantial changed made in version 1.2.8b0.
 
-### [Change Log for Version 1.2.8b0 (REL)](#change-log-for-version-128b0-rel)
+### Change Log for Version 1.2.8b0 (REL)
 
 2006-08-06
 Changed how the [ERF](ERF-File-Format)/RIM insertion of [GFF](GFF-File-Format) and [NCS files](NCS-File-Format) work to make it a
@@ -1337,7 +1337,7 @@ different install phases now run in this order: [TLK](TLK-File-Format) Appending
 
 Extended the [ERF](ERF-File-Format) insertion functionality to support RIM format files as well.
 
-### [Change Log for Version 1.2.7b9 (REL)](#change-log-for-version-127b9-rel)
+### Change Log for Version 1.2.7b9 (REL)
 
 2006-07-23
 Added new value keyword to the "Add [GFF](GFF-File-Format) field" sections. If "!FieldPath" is
@@ -1357,7 +1357,7 @@ box, and modified the "Modify [GFF](GFF-File-Format) field" panel list to show b
 Modified fields and the ability to re-arrange them (since modifiers with tokens
 as keys must always come below the Add field section in which they [ARE](GFF-File-Format#are-area) set).
 
-### [Change Log for Version 1.2.7b8 (Unreleased)](#change-log-for-version-127b8-unreleased)
+### Change Log for Version 1.2.7b8 (Unreleased)
 
 2006-07-20
 The main TSLPatcher window now shows the installation path both when
@@ -1374,7 +1374,7 @@ Added Open dialog box buttons to allow selecting an INI and RTF file in the
 Setup List editor in ChangeEdit, instead of having to type the names in
 manually.
 
-### [Change Log for Version 1.2.7b7 (REL)](#change-log-for-version-127b7-rel)
+### Change Log for Version 1.2.7b7 (REL)
 
 2006-07-08
 Some improvements to the user interface of ChangeEdit. The
@@ -1387,7 +1387,7 @@ is not set. Modified TSLPatcher to allow the "ExclusiveColumn" [KEY](KEY-File-Fo
 anywhere in a [2DA](2DA-File-Format) modifier section, not just at the top, to eliminate a potential
 source for errors.
 
-### [Change Log for Version 1.2.7b5 (REL)](#change-log-for-version-127b5-rel)
+### Change Log for Version 1.2.7b5 (REL)
 
 2006-05-28
 Added option for the Patcher to look up the game folder locations in the
@@ -1396,21 +1396,21 @@ Registry instead of asking the user for the location. Two new keys under the
 game paths will be looked up in the registry. If the LookupGameNumber [KEY](KEY-File-Format) is set
 to 1 the path to KotOR1 will be looked up, if set to 2 KotOR2:TSL will be used.
 
-### [Change Log for Version 1.2.7b4 (REL)](#change-log-for-version-127b4-rel)
+### Change Log for Version 1.2.7b4 (REL)
 
 2006-05-11
 Fixed most problems related with multiple setups and processing and
 recompiling scripts. Made changes to make the TSLPatcher work better with
 the custom version of nwnnsscomp that tk102 kindly provided.
 
-### [Change Log for Version 1.2.7b1 (REL)](#change-log-for-version-127b1-rel)
+### Change Log for Version 1.2.7b1 (REL)
 
 2006-04-29
 Added support for multiple configuration files and a somewhat user-friendly
 interface to choose which set to use. This allows for creating mod installers
 with multiple installation options.
 
-### [Change Log for Version 1.2.6b3 (REL)](#change-log-for-version-126b3-rel)
+### Change Log for Version 1.2.6b3 (REL)
 
 2006-03-09
 Added a section for modifying [SSF](SSF-File-Format) soundset files to assign dynamic [StrRef](TLK-File-Format#string-references-strref)
@@ -1425,7 +1425,7 @@ Updated ChangeEdit with a [GFF](GFF-File-Format) Compare function and a button t
 existing [2DA](2DA-File-Format) modifiers. Lots of varying interface improvements (I hope)  have
 also been made in ChangeEdit to make it less annoying to use.
 
-### [Change Log for Version 1.2.5a (REL)](#change-log-for-version-125a-rel)
+### Change Log for Version 1.2.5a (REL)
 
  2006-02-03
 Added primitive support for adding modified [GFF files](GFF-File-Format) and recompiled [NCS](NCS-File-Format)
@@ -1438,7 +1438,7 @@ Fixed bug preventing compilation of scripts using include files.
 Modified CompileList functionality to allow TSLPatcher to modify include files
 and not just compilable scripts.
 
-### [Change Log for Version 1.2a (REL)](#change-log-for-version-12a-rel)
+### Change Log for Version 1.2a (REL)
 
 2006-01-09
  Updated Patcher to use the new [GFF](GFF-File-Format) Class for all [GFF](GFF-File-Format) operations.
@@ -1476,7 +1476,7 @@ exists in the override folder.
 Made Patcher show nwnnsscomp.exe output in the progress log if the
 LogLevel is set to 4 (Verbose) to help with debugging.
 
-### [Change Log for Version 1.1.7 (REL)](#change-log-for-version-117-rel)
+### Change Log for Version 1.1.7 (REL)
 
  2005-08-23
 Added support for high() token when assigning a RowLabel to
@@ -1492,7 +1492,7 @@ filename that file must exist in the override folder in order for
 
 message found in the "RequiredMsg" [KEY](KEY-File-Format).
 
-### [Change Log for Version 1.1.6 (REL)](#change-log-for-version-116-rel)
+### Change Log for Version 1.1.6 (REL)
 
  2005-07-31
 Added fallback plaintext logging since it seems calling RTF a
@@ -1501,7 +1501,7 @@ Added fallback plaintext logging since it seems calling RTF a
 
 Add a "PlaintextLog" [KEY](KEY-File-Format) under "Settings" in the INI to use it.
 
-### [Change Log for Version 1.1.2 (REL)](#change-log-for-version-112-rel)
+### Change Log for Version 1.1.2 (REL)
 
  2005-06-07
 Added "ExclusiveColumn" [KEY](KEY-File-Format) to Add2daLine() and Copy2daLine()
@@ -1551,7 +1551,7 @@ Put in a simple filter to not allow the file Installer to overwrite the
 
 game EXE files or the [dialog.tlk](TLK-File-Format) file directly.
 
-## [6. Special Thanks](#6-special-thanks)
+## 6. Special Thanks
 
 A very big thanks to tk102 (of the starwarsknights.com forums) for providing a modified
 version of the nwnnsscomp.exe script compiler (originally created by Edward T. Smith

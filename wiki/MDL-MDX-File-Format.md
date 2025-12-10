@@ -153,7 +153,7 @@ The [MDL file](MDL-MDX-File-Format) header is 12 bytes in size and contains the 
 | ------------ | ------- | ------ | ---------------------- |
 | Unused       | [uint32](GFF-File-Format#gff-data-types)  | 0 (0x0)     | Always set to `0`.     |
 | [MDL](MDL-MDX-File-Format) size     | [uint32](GFF-File-Format#gff-data-types)  | 4 (0x4)     | size of the [MDL file](MDL-MDX-File-Format).  |
-| [MDX](MDL-MDX-File-Format) size     | [uint32](GFF-File-Format#gff-data-types)  | 8 (0x8)     | size of the [MDX file](MDL-MDX-File-Format#mdx-file-header).  |
+| [MDX](MDL-MDX-File-Format) size     | [uint32](GFF-File-Format#gff-data-types)  | 8 (0x8)     | size of the [MDX file](MDL-MDX-File-Format).  |
 
 **Reference**: [`vendor/mdlops/MDLOpsM.pm:162`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L162) - file header structure definition  
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:56-59`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L56-L59) - file header reading  

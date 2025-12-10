@@ -13,7 +13,7 @@ This document provides a detailed description of the 2DA (Two-Dimensional array)
 ## Table of Contents
 
 - [KotOR 2DA file format Documentation](#kotor-2da-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
   - [Format](#format)
     - [File Header](#file-header)

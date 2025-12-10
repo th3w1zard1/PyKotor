@@ -30,7 +30,7 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
 
 <!-- TOC_START -->
 - [KotOR NSS File Format Documentation](#kotor-nss-files-format-documentation)
-  - [Table of Contents](#table-of-contents)
+  - Table of Contents
   - [PyKotor Implementation](#pykotor-implementation)
     - [Compilation Integration](#compilation-integration)
     - [Data Structures](#data-structures)

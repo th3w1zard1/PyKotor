@@ -8,8 +8,8 @@ This document provides a detailed description of the TLK ([Talk Table](TLK-File-
 
 ## Table of Contents
 
-- [KotOR TLK File Format Documentation](#kotor-tlk-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+- KotOR TLK File Format Documentation
+  - Table of Contents
   - [File Structure Overview](#file-structure-overview)
   - [Binary Format](#binary-format)
     - [File Header](#file-header)
@@ -134,15 +134,15 @@ Each [TLK](TLK-File-Format) entry contains:
 
 ---
 
-## string References ([StrRef](TLK-File-Format#string-references-strref))
+## string References (StrRef)
 
-string references ([StrRef](TLK-File-Format#string-references-strref)) [ARE](GFF-File-Format#are-area) integer indices into the [TLK file](TLK-File-Format)'s entry array:
+string references (StrRef) [ARE](GFF-File-Format#are-area) integer indices into the [TLK file](TLK-File-Format)'s entry array:
 
-- **[StrRef](TLK-File-Format#string-references-strref) 0**: First entry in the [TLK file](TLK-File-Format)
-- **[StrRef](TLK-File-Format#string-references-strref) -1**: No string reference (used to indicate missing/empty strings)
-- **[StrRef](TLK-File-Format#string-references-strref) N**: Nth entry (0-based indexing)
+- **StrRef 0**: First entry in the [TLK file](TLK-File-Format)
+- **StrRef -1**: No string reference (used to indicate missing/empty strings)
+- **StrRef N**: Nth entry (0-based indexing)
 
-The game uses [StrRef](TLK-File-Format#string-references-strref) values throughout [GFF files](GFF-File-Format), scripts, and other resources to reference localized text. When displaying text, the game looks up the [StrRef](TLK-File-Format#string-references-strref) in [`dialog.tlk`](TLK-File-Format) and displays the corresponding text.
+The game uses StrRef values throughout [GFF files](GFF-File-Format), scripts, and other resources to reference localized text. When displaying text, the game looks up the StrRef in [`dialog.tlk`](TLK-File-Format) and displays the corresponding text.
 
 ### Custom [TLK](TLK-File-Format) files
 

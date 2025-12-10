@@ -4,8 +4,8 @@ TXI ([texture](TPC-File-Format) Info) files [ARE](GFF-File-Format#are-area) comp
 
 ## Table of Contents
 
-- [KotOR TXI file format Documentation](#kotor-txi-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+- KotOR TXI file format Documentation
+  - Table of Contents
   - [format Overview](#format-overview)
   - [Syntax](#syntax)
     - [Command Lines](#command-lines)
@@ -102,7 +102,7 @@ Each line encodes a UV triplet; UV coordinates follow standard UV mapping conven
 
 ### [animation](MDL-MDX-File-Format#animation-header) and Flipbooks
 
-[texture](TPC-File-Format) [flipbook animation](#animation-and-flipbooks) relies on sprite sheets that tile frames across the atlas:
+[texture](TPC-File-Format) flipbook animation relies on sprite sheets that tile frames across the atlas:
 
 | Command | Description |
 | ------- | ----------- |

@@ -4,8 +4,8 @@ LYT (Layout) files define how area [room models](LYT-File-Format#room-definition
 
 ## Table of Contents
 
-- [KotOR LYT files format Documentation](#kotor-lyt-files-format-documentation)
-  - [Table of Contents](#table-of-contents)
+- KotOR LYT files format Documentation
+  - Table of Contents
   - [format Overview](#format-overview)
   - [Syntax](#syntax)
     - [Room Definitions](#room-definitions)

@@ -8,9 +8,9 @@ This document provides a detailed description of the SSF ([sound set files](SSF-
 
 ## Table of Contents
 
-- [KotOR SSF File Format Documentation](#kotor-ssf-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
-  - [File Structure Overview](#file-structure-overview)
+- KotOR SSF File Format Documentation
+  - Table of Contents
+  - File Structure Overview
   - [Binary Format](#binary-format)
     - [File Header](#file-header)
     - [Sound Table](#sound-table)

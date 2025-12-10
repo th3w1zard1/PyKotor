@@ -4,9 +4,9 @@ KotOR stores both standard [WAV](WAV-File-Format) voice-over lines and Bioware-o
 
 ## Table of Contents
 
-- [KotOR WAV File Format Documentation](#kotor-wav-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
-  - [File Types](#file-types)
+- KotOR WAV File Format Documentation
+  - Table of Contents
+  - File Types
   - [Standard RIFF/WAVE Structure](#standard-riffwave-structure)
     - [Format Chunk](#format-chunk)
     - [Data Chunk](#data-chunk)

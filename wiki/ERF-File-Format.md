@@ -4,8 +4,8 @@ This document provides a detailed description of the ERF (Encapsulated Resource 
 
 ## Table of Contents
 
-- [KotOR ERF file format Documentation](#kotor-erf-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+- KotOR ERF file format Documentation
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
   - [Binary Format](#binary-format)
     - [file header](#file-header)

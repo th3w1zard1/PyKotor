@@ -4,8 +4,8 @@ This document provides a detailed description of the KEY ([KEY](KEY-File-Format)
 
 ## Table of Contents
 
-- [KotOR KEY file format Documentation](#kotor-key-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+- KotOR KEY file format Documentation
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
     - [KEY file Purpose](#key-file-purpose)
   - [Binary Format](#binary-format)

@@ -6,8 +6,8 @@ PLT ([texture](TPC-File-Format) Palette file) is a variant [texture](TPC-File-Fo
 
 ## Table of Contents
 
-- [PLT files format Documentation](#plt-files-format-documentation)
-  - [Table of Contents](#table-of-contents)
+- PLT files format Documentation
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
   - [Palette System](#palette-system)
     - [Palette Groups](#palette-groups)
