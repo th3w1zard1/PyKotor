@@ -1195,6 +1195,7 @@ class TestDLGLinkSerialization(unittest.TestCase):
         entry1.links.append(link1)
         reply1.links.extend([link2, link3])
         entry2.links.append(link4)  # Reuse R249
+        reply2.links.append(DLGLink(node=entry1))  # Circular reference: reply2 -> entry1
 
         serialized = link1.to_dict()
         deserialized = DLGLink.from_dict(serialized)
