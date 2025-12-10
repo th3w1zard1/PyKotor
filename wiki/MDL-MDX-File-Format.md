@@ -289,15 +289,15 @@ The [Node Header](MDL-MDX-File-Format#node-header) is 80 bytes in size and is pr
 | Parent [node](MDL-MDX-File-Format#node-structures) offset       | [uint32](GFF-File-Format#gff-data-types)      | 12 (0xC)    | offset to this [node](MDL-MDX-File-Format#node-structures)'s parent node (0 if root). Field #6 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("location of parent node").                                     |
 | position                 | [float](GFF-File-Format#gff-data-types)    | 16 (0x10)    | [node](MDL-MDX-File-Format#node-structures) position in local space (X, Y, Z). Fields #7-9 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("position X/Y/Z, same value as position controller").                                            |
 | orientation              | [float](GFF-File-Format#gff-data-types)    | 28 (0x1C)    | [node](MDL-MDX-File-Format#node-structures) orientation as quaternion (W, X, Y, Z). Fields #10-13 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("rotation W/X/Y/Z, same value as rotation controller").                                       |
-| Child array offset       | [uint32](GFF-File-Format#gff-data-types)      | 44 (0x2C)    | offset to array of child [node](MDL-MDX-File-Format#node-structures) offsets.                                             |
-| Child count              | [uint32](GFF-File-Format#gff-data-types)      | 48 (0x30)    | Number of child [nodes](MDL-MDX-File-Format#node-structures).                                                             |
-| Child Count (dup)        | [uint32](GFF-File-Format#gff-data-types)      | 52 (0x34)    | Duplicate value of child count.                                                    |
-| [controller](MDL-MDX-File-Format#controllers) array offset  | [uint32](GFF-File-Format#gff-data-types)      | 56 (0x38)    | offset to array of [controller](MDL-MDX-File-Format#controllers) structures.                                          |
-| [controller](MDL-MDX-File-Format#controllers) count         | [uint32](GFF-File-Format#gff-data-types)      | 60 (0x3C)    | Number of [controllers](MDL-MDX-File-Format#controllers) attached to this [node](MDL-MDX-File-Format#node-structures).                                       |
-| [controller](MDL-MDX-File-Format#controllers) Count (dup)   | [uint32](GFF-File-Format#gff-data-types)      | 64 (0x40)    | Duplicate value of [controller](MDL-MDX-File-Format#controllers) count.                                               |
-| [controller](MDL-MDX-File-Format#controllers) data offset   | [uint32](GFF-File-Format#gff-data-types)      | 68 (0x44)    | offset to [controller](MDL-MDX-File-Format#controllers) [keyframe](MDL-MDX-File-Format#controller-structure)/data array.                                          |
-| [controller](MDL-MDX-File-Format#controllers) data count    | [uint32](GFF-File-Format#gff-data-types)      | 72 (0x48)    | Number of floats in [controller](MDL-MDX-File-Format#controllers) data array.                                         |
-| [controller](MDL-MDX-File-Format#controllers) data count    | [uint32](GFF-File-Format#gff-data-types)      | 76 (0x4C)    | Duplicate value of [controller](MDL-MDX-File-Format#controllers) data count.                                          |
+| Child array offset       | [uint32](GFF-File-Format#gff-data-types)      | 44 (0x2C)    | offset to array of child [node](MDL-MDX-File-Format#node-structures) offsets. Field #14 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("location of the array of child node locations").                                             |
+| Child count              | [uint32](GFF-File-Format#gff-data-types)      | 48 (0x30)    | Number of child [nodes](MDL-MDX-File-Format#node-structures). Field #15 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("number of items in array in item 8").                                                             |
+| Child Count (dup)        | [uint32](GFF-File-Format#gff-data-types)      | 52 (0x34)    | Duplicate value of child count. Field #16 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("duplicate of item 9").                                                    |
+| [controller](MDL-MDX-File-Format#controllers) array offset  | [uint32](GFF-File-Format#gff-data-types)      | 56 (0x38)    | offset to array of [controller](MDL-MDX-File-Format#controllers) structures. Field #17 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("location of the array of controllers").                                          |
+| [controller](MDL-MDX-File-Format#controllers) count         | [uint32](GFF-File-Format#gff-data-types)      | 60 (0x3C)    | Number of [controllers](MDL-MDX-File-Format#controllers) attached to this [node](MDL-MDX-File-Format#node-structures). Field #18 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("number of items in array in item 11").                                       |
+| [controller](MDL-MDX-File-Format#controllers) Count (dup)   | [uint32](GFF-File-Format#gff-data-types)      | 64 (0x40)    | Duplicate value of [controller](MDL-MDX-File-Format#controllers) count. Field #19 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("duplicate of item 12").                                               |
+| [controller](MDL-MDX-File-Format#controllers) data offset   | [uint32](GFF-File-Format#gff-data-types)      | 68 (0x44)    | offset to [controller](MDL-MDX-File-Format#controllers) [keyframe](MDL-MDX-File-Format#controller-structure)/data array. Field #20 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("location of the array of controller data").                                          |
+| [controller](MDL-MDX-File-Format#controllers) data count    | [uint32](GFF-File-Format#gff-data-types)      | 72 (0x48)    | Number of floats in [controller](MDL-MDX-File-Format#controllers) data array. Field #21 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("number of items in array in item 14").                                         |
+| [controller](MDL-MDX-File-Format#controllers) data count    | [uint32](GFF-File-Format#gff-data-types)      | 76 (0x4C)    | Duplicate value of [controller](MDL-MDX-File-Format#controllers) data count. Field #22 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("duplicate of item 15").                                          |
 
 **Reference**: [`vendor/mdlops/MDLOpsM.pm:172`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L172) - [node](MDL-MDX-File-Format#node-structures) header structure definition  
 **Reference**: [`vendor/mdlops/MDLOpsM.pm:1590-1622`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L1590-L1622) - [node](MDL-MDX-File-Format#node-structures) header reading  
@@ -1384,18 +1384,4 @@ mat4 computeBoneMatrix(int bone_idx, Animation anim, float time) {
 }
 ```
 
-**Note**: KotOR uses left-handed coordinate system, ensure proper [matrix](BWM-File-Format#walkable-adjacencies) conventions.
-
----
-
-## Additional References
-
-### Editors
-
-- [MDLEdit](https://deadlystream.com/files/file/1150-mdledit/)
-- [MDLOps](https://deadlystream.com/files/file/779-mdlops/)
-- [Toolbox Aurora](https://deadlystream.com/topic/3714-toolkaurora/)
-- [KotorBlender](https://deadlystream.com/files/file/889-kotorblender/)
-- [KOTORmax](https://deadlystream.com/files/file/1151-kotormax/)
-
-### See A
+**Note**: KotOR uses left-handed coordinate system, ensure proper [matrix](BWM-File-Format#wal

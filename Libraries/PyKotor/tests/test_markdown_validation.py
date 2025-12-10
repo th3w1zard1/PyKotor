@@ -382,6 +382,13 @@ OVERLY_BROAD_PATTERNS = [
         "Common word 'pointer' should not be linked to generic GFF file-structure anchor",
     ),
     (
+        r"^(pointer|pointers)$",
+        [
+            r"GFF-File-Format#file-structure-overview",
+        ],
+        "Common word 'pointer' should not be linked to generic GFF file-structure-overview anchor",
+    ),
+    (
         r"^(header|headers)$",
         [
             r"GFF-File-Format#file-header",
