@@ -929,7 +929,7 @@ function Install-Python-Linux {
 
         # Ensure pip
         try {
-            $pipCheck = & $global:pythonInstallPath -m pip --version 2>&1
+            $null = & $global:pythonInstallPath -m pip --version 2>&1
             if ($LASTEXITCODE -ne 0) {
                 Write-Log -Level "Info" -Message "Bootstrapping pip with ensurepip..."
                 & $global:pythonInstallPath -m ensurepip --upgrade --default-pip
