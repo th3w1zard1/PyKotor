@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 from typing import Sequence
 
@@ -105,7 +106,7 @@ def _scale_extent(extent: GFFStruct, height_scale: float, width_scale: float) ->
 
 def _adjust_controls(gui_data: GFF, target_width: int, target_height: int) -> GFF:
     new_gff = GFF(GFFContent.GUI)
-    new_gff.root = gui_data.root.copy()
+    new_gff.root = deepcopy(gui_data.root)
 
     root_extent_struct = new_gff.root.get_struct("EXTENT")
     width_scale_factor = target_width / root_extent_struct.get_int32("WIDTH")
@@ -113,7 +114,7 @@ def _adjust_controls(gui_data: GFF, target_width: int, target_height: int) -> GF
     root_extent_struct.set_int32("WIDTH", target_width)
     root_extent_struct.set_int32("HEIGHT", target_height)
 
-    controls_list: GFFList = new_gff.root.get_list("CONTROLS")
+    controls_list: GFFList | None = new_gff.root.get_list("CONTROLS")
     for control_struct in controls_list:
         if control_struct.exists("SCROLLBAR"):
             scrollbar = control_struct.get_struct("SCROLLBAR")
