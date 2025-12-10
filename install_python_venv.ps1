@@ -929,7 +929,7 @@ function Install-Python-Linux {
 
         # Ensure pip
         try {
-            $null = & $global:pythonInstallPath -m pip --version 2>&1
+            & $global:pythonInstallPath -m pip --version 2>&1
             if ($LASTEXITCODE -ne 0) {
                 Write-Log -Level "Info" -Message "Bootstrapping pip with ensurepip..."
                 & $global:pythonInstallPath -m ensurepip --upgrade --default-pip
@@ -940,9 +940,7 @@ function Install-Python-Linux {
         }
     }
     catch {
-        Handle-Error -ErrorRecord $_
-        $errMsg = $_.Exception.Message
-        
+        Handle-Error -ErrorRecord $_        
         if ($noprompt) {
             Write-Log -Level "Error" -Message "Non-interactive mode: cannot build from source"
             throw "Python installation failed in non-interactive mode"
