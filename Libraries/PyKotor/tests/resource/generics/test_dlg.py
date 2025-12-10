@@ -750,6 +750,7 @@ class TestDLG(TestCase):
     def test_k2_reconstruct(self):
         gff: GFF = read_gff(TEST_FILE)
         reconstructed_gff: GFF = dismantle_dlg(construct_dlg(gff), Game.K2)
+        print(reconstructed_gff.root.get_list("EntryList").at(0).get_int32("RecordNoOverri"))
         reconstructed_gff.root.get_list("EntryList").at(0).set_int32("RecordNoOverri", 1)
         assert gff.compare(reconstructed_gff, self.log_func, ignore_default_changes=True), os.linesep.join(self.log_messages)
 
@@ -1008,7 +1009,7 @@ class TestDLGReplySerialization(unittest.TestCase):
     def test_dlg_reply_serialization_with_links(self):
         reply = DLGReply()
         reply.text = LocalizedString.from_english("Reply with links")
-        link = DLGLink(reply, 2)
+        link = DLGLink(node=reply, list_index=2)
         reply.links.append(link)
 
         serialized = reply.to_dict()
@@ -1109,15 +1110,31 @@ class TestDLGReplySerialization(unittest.TestCase):
         assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R222"
 
     def test_dlg_reply_with_multiple_levels(self):
+        def _describe_chain(start_node: DLGReply | DLGEntry) -> str:
+            """Return a compact string description of the first few nodes along the primary link chain."""
+            parts: list[str] = []
+            node = start_node
+            steps = 0
+            # Walk a single-link chain (the test structure uses one link at each depth)
+            while node is not None and steps < 8:
+                if isinstance(node, DLGEntry):
+                    parts.append(f"Entry(comment={node.comment!r}, text={node.text.get(Language.ENGLISH, Gender.MALE)!r})")
+                    node = node.links[0].node if node.links else None
+                else:
+                    parts.append(f"Reply(text={node.text.get(Language.ENGLISH, Gender.MALE)!r})")
+                    node = node.links[0].node if node.links else None
+                steps += 1
+            return " -> ".join(parts)
+
         reply1 = DLGReply(text=LocalizedString.from_english("R222"))
         reply2 = DLGReply(text=LocalizedString.from_english("R223"))
         reply3 = DLGReply(text=LocalizedString.from_english("R249"))
         reply4 = DLGReply(text=LocalizedString.from_english("R225"))
-        reply5 = DLGReply(text=LocalizedString.from_english("R224"))
 
         entry1 = DLGEntry(comment="E248")
         entry2 = DLGEntry(comment="E221")
         entry3 = DLGEntry(comment="E250")
+        entry4 = DLGEntry(comment="E224")
 
         reply1.links.append(DLGLink(node=entry1))
         reply2.links.append(DLGLink(node=entry2))
@@ -1125,7 +1142,7 @@ class TestDLGReplySerialization(unittest.TestCase):
         entry2.links.append(DLGLink(node=reply3))  # Reuse R249
         reply3.links.append(DLGLink(node=entry3))
         entry3.links.append(DLGLink(node=reply4))
-        reply4.links.append(DLGLink(node=reply5))
+        reply4.links.append(DLGLink(node=entry4))
 
         serialized = reply1.to_dict()
         deserialized = DLGReply.from_dict(serialized)
@@ -1140,7 +1157,10 @@ class TestDLGReplySerialization(unittest.TestCase):
         assert len(deserialized.links[0].node.links[0].node.links[0].node.links) == 1
         assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R249"
         assert len(deserialized.links[0].node.links[0].node.links) == 1
-        assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.comment == "E250"
+        entry3_node = deserialized.links[0].node.links[0].node.links[0].node.links[0].node
+        # If this assertion ever fails, dump the chain to aid debugging without extra scripts
+        entry3_chain = _describe_chain(deserialized)
+        assert entry3_node.comment == "E250", f"entry3 comment mismatch; chain={entry3_chain}"
         assert len(deserialized.links[0].node.links[0].node.links[0].node.links) == 1
         assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R225"
         assert len(deserialized.links[0].node.links[0].node.links[0].node.links) == 1

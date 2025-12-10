@@ -221,14 +221,20 @@ class DLGLink(Generic[T_co]):
             node_map = {}
 
         if "ref" in link_dict:
-            return node_map[link_dict["ref"]]
+            ref_key: str = str(link_dict["ref"])
+            if not ref_key.startswith("link-"):
+                ref_key = f"link-{ref_key}"
+            return node_map[ref_key]
 
-        link_key: int = link_dict["key"]
+        link_key_raw: str | int = link_dict["key"]
+        link_key: str = str(link_key_raw)
+        if not link_key.startswith("link-"):
+            link_key = f"link-{link_key}"
         if link_key in node_map:
             return node_map[link_key]
 
         link: DLGLink[T_co] = object.__new__(cls)
-        link._hash_cache = int(link_key)  # noqa: SLF001
+        link._hash_cache = int(link_key.split("link-", maxsplit=1)[-1])  # noqa: SLF001
         link.list_index = link_dict.get("link_list_index", -1)
         for key, value in link_dict["data"].items():
             if value is None:

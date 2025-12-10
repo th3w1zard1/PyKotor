@@ -348,7 +348,8 @@ class DLGNode:
         if node_map is None:
             node_map = {}
 
-        node_key: int = hash(self)
+        # Prefix keys so they never collide with DLGLink keys when stored in shared node_map
+        node_key: str = f"node-{self._hash_cache}"
         if node_key in node_map:
             return {"type": self.__class__.__name__, "ref": node_key}
 
@@ -401,10 +402,19 @@ class DLGNode:
             node_map = {}
 
         if "ref" in data:
-            return node_map[data["ref"]]
+            # Return node from node_map - it should already be fully deserialized
+            # since nodes are added to node_map AFTER all non-link fields are set
+            ref_key: str = str(data["ref"])
+            if not ref_key.startswith("node-"):
+                ref_key = f"node-{ref_key}"
+            return node_map[ref_key]
 
         node_key: int | str | None = data.get("key")
         assert isinstance(node_key, (int, str))
+        # Normalize prefixed keys
+        node_key_str = str(node_key)
+        if not node_key_str.startswith("node-"):
+            node_key_str = f"node-{node_key_str}"
         node_type: str | None = data.get("type")
         node_data: dict[str, Any] = data.get("data", {})
 
@@ -417,7 +427,7 @@ class DLGNode:
         else:
             raise ValueError(f"Unknown node type: {node_type}")
 
-        node._hash_cache = int(node_key)  # noqa: SLF001
+        node._hash_cache = int(node_key_str.split("node-", maxsplit=1)[-1])  # noqa: SLF001
         # Process non-link fields first to ensure all attributes are set before adding to node_map
         # This prevents incomplete nodes from being returned when referenced through links
         for key, value in node_data.items():
@@ -452,7 +462,7 @@ class DLGNode:
                 raise ValueError(f"Unsupported type: {py_type} for key: {key}")
 
         # Add to node_map AFTER all non-link fields are set to prevent incomplete nodes from being returned
-        node_map[node_key] = node
+        node_map[node_key_str] = node
 
         # Process links after all other fields are set and node is in node_map
         for key, value in node_data.items():
