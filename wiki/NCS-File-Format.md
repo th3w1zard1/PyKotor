@@ -10,11 +10,11 @@ NCS files contain compiled NWScript [bytecode](https://en.wikipedia.org/wiki/Byt
 - [`vendor/reone/src/libs/script/format/ncsreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp) - C++ NCS parser and VM
 - [`vendor/KotOR.js/src/odyssey/NWScriptInstance.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/NWScriptInstance.ts) - TypeScript NWScript VM with bytecode execution
 - [`vendor/NorthernLights/Assets/Scripts/ncs/NCSReader.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/NCSReader.cs) - C# Unity NCS parser
+- [`Vanilla KOTOR Script Source`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source) - Decompiled vanilla scripts
 
 **See Also:**
 - [NSS File Format](NSS-File-Format) - NWScript source code that compiles to NCS
 - [GFF-DLG](GFF-DLG) - Dialogue files that trigger NCS scripts
-- [Vanilla KOTOR Script Source](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source) - Decompiled vanilla scripts
 
 ## Table of Contents
 
