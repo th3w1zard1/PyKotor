@@ -12,11 +12,15 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, Mock, patch
 from unittest.mock import PropertyMock
 
 import pytest
+
+from pykotor.resource.formats.lyt import LYT
+from pykotor.resource.generics.git import GIT
+from utility.common.geometry import Vector3
 
 # =============================================================================
 # BLENDER DETECTION TESTS
@@ -398,6 +402,10 @@ class TestIPCSerialization:
                 self.x = x
                 self.y = y
                 self.z = z
+            
+            def serialize(self) -> dict[str, float]:
+                """Serialize to JSON-compatible dict."""
+                return {"x": float(self.x), "y": float(self.y), "z": float(self.z)}
 
         test_cases = [
             (0.0, 0.0, 0.0),
@@ -441,6 +449,10 @@ class TestIPCSerialization:
                 self.y = y
                 self.z = z
                 self.w = w
+            
+            def serialize(self) -> dict[str, float]:
+                """Serialize to JSON-compatible dict."""
+                return {"x": float(self.x), "y": float(self.y), "z": float(self.z), "w": float(self.w)}
 
         test_cases = [
             (0.0, 0.0, 0.0, 1.0),
@@ -1832,6 +1844,10 @@ class TestSerializationRoundtrips:
                 self.x = x
                 self.y = y
                 self.z = z
+            
+            def serialize(self) -> dict[str, float]:
+                """Serialize to JSON-compatible dict."""
+                return {"x": float(self.x), "y": float(self.y), "z": float(self.z)}
 
         test_cases = [
             (0.0, 0.0, 0.0),
@@ -1840,7 +1856,7 @@ class TestSerializationRoundtrips:
         ]
 
         for x, y, z in test_cases:
-            original = MockVector3(x, y, z)
+            original = cast(Vector3, MockVector3(x, y, z))
             serialized = serialize_vector3(original)
             deserialized = deserialize_vector3(serialized)
 
@@ -1850,11 +1866,12 @@ class TestSerializationRoundtrips:
         """Test GITCreature serialization roundtrip."""
         from toolset.blender.serializers import deserialize_git_instance, serialize_git_instance
         from pykotor.resource.generics.git import GITCreature
+        from pykotor.common.misc import ResRef
         from utility.common.geometry import Vector3
 
         creature = GITCreature()
         creature.position = Vector3(10.0, 20.0, 0.5)
-        creature.resref = "test_creature"
+        creature.resref = ResRef("test_creature")
         creature.bearing = 1.57
 
         serialized = serialize_git_instance(creature)
@@ -1893,14 +1910,20 @@ class TestErrorHandling:
         from toolset.blender.serializers import serialize_vector3
 
         class MockVector3:
-            x = None
-            y = None
-            z = None
+            x: float | None = None
+            y: float | None = None
+            z: float | None = None
+            
+            def serialize(self) -> dict[str, float]:
+                """Serialize to JSON-compatible dict - will fail on None values."""
+                # This will raise TypeError when float() is called on None
+                # Don't handle None - let it raise TypeError as the test expects
+                return {"x": float(self.x), "y": float(self.y), "z": float(self.z)}
 
         # Should handle None by converting to 0.0 or raising TypeError
         # The actual implementation uses float() which will raise TypeError on None
         with pytest.raises((TypeError, ValueError)):
-            serialize_vector3(MockVector3())
+            serialize_vector3(cast(Vector3, MockVector3()))
 
     def test_deserialize_vector3_missing_keys(self):
         """Test Vector3 deserialization with missing keys."""
@@ -1985,8 +2008,8 @@ class TestComprehensiveIntegration:
         # Try to load module
         assert controller.load_module(
             mode=BlenderEditorMode.MODULE_DESIGNER,
-            lyt=None,
-            git=None,
+            lyt=LYT(),
+            git=GIT(),
             walkmeshes=[],
             module_root="test",
             installation_path="/path/to/kotor",

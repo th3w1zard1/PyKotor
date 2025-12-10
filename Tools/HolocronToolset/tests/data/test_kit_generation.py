@@ -83,10 +83,36 @@ class TestKitGeneration(unittest.TestCase):
     def setUp(self):
         """Set up test."""
         # Clean up any previous test output
+        # Use robust cleanup that handles locked files/directories
+        import shutil
+        import time
+        
         if self.test_output_path.exists():  # type: ignore[attr-defined]
-            import shutil
-
-            shutil.rmtree(self.test_output_path)  # type: ignore[attr-defined]
+            # Retry cleanup with exponential backoff to handle locked files
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    shutil.rmtree(self.test_output_path, ignore_errors=False)  # type: ignore[attr-defined]
+                    break  # Success
+                except (OSError, PermissionError) as e:
+                    if attempt < max_retries - 1:
+                        # Wait before retry (exponential backoff)
+                        time.sleep(0.1 * (2 ** attempt))
+                        # Try to remove individual files/dirs that might be locked
+                        try:
+                            for item in self.test_output_path.iterdir():  # type: ignore[attr-defined]
+                                try:
+                                    if item.is_dir():
+                                        shutil.rmtree(item, ignore_errors=True)
+                                    else:
+                                        item.unlink()
+                                except (OSError, PermissionError):
+                                    pass  # Ignore individual file errors
+                        except (OSError, PermissionError):
+                            pass
+                    else:
+                        # Last attempt failed - use ignore_errors as fallback
+                        shutil.rmtree(self.test_output_path, ignore_errors=True)  # type: ignore[attr-defined]
 
     def test_generate_jedienclave_kit(self):
         """Test generating jedienclave kit and comparing files."""
