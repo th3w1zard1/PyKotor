@@ -2,19 +2,19 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-UTW [files](GFF-File-Format) define [waypoint templates](GFF-File-Format#utw-waypoint). Waypoints [ARE](GFF-File-Format#are-area) invisible markers used for spawn points, navigation targets, map notes, and reference points for scripts.
+UTW files define [waypoint templates](GFF-File-Format#utw-waypoint). Waypoints [ARE](GFF-File-Format#are-area) invisible markers used for spawn points, navigation targets, map notes, and reference points for scripts.
 
 ## Documentation References
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Waypoint [format](GFF-File-Format) specification, see [Bioware Aurora Waypoint Format](Bioware-Aurora-Waypoint).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Waypoint format specification, see [Bioware Aurora Waypoint Format](Bioware-Aurora-Waypoint).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utw.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utw.py)
 
 ---
 
-## Core Identity [fields](GFF-File-Format#file-structure-overview)
+## Core Identity fields
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 |:------|:-----|:------------|
 | `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this waypoint |
 | `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script/linking references |
@@ -26,7 +26,7 @@ UTW [files](GFF-File-Format) define [waypoint templates](GFF-File-Format#utw-way
 
 ## Map Note Functionality
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 |:------|:-----|:------------|
 | `HasMapNote` | Byte | Waypoint has a map note |
 | `MapNoteEnabled` | Byte | Map note is initially visible |
@@ -42,7 +42,7 @@ UTW [files](GFF-File-Format) define [waypoint templates](GFF-File-Format#utw-way
 
 ## Linking & Appearance
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 |:------|:-----|:------------|
 | `LinkedTo` | [CExoString](GFF-File-Format#gff-data-types) | Tag of linked object (unused) |
 | `Appearance` | Byte | Appearance type (1=Waypoint) |

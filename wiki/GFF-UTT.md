@@ -2,15 +2,15 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trigger) for invisible volumes that fire scripts when entered, exited, or used. Triggers [ARE](GFF-File-Format#are-area) essential for area transitions, cutscenes, traps, and game logic.
+UTT files define [trigger templates](GFF-File-Format#utt-trigger) for invisible volumes that fire scripts when entered, exited, or used. Triggers [ARE](GFF-File-Format#are-area) essential for area transitions, cutscenes, traps, and game logic.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Trigger [format](GFF-File-Format) specification, see [Bioware Aurora Trigger Format](Bioware-Aurora-Trigger).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Trigger format specification, see [Bioware Aurora Trigger Format](Bioware-Aurora-Trigger).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utt.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utt.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure-overview)
+## Core Identity fields
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this trigger |
 | `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script references |
@@ -19,14 +19,14 @@ UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trig
 
 ## Trigger Configuration
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Type` | Int | Trigger type (0=Generic, 1=Transition, 2=Trap) |
 | `Faction` | Word | Faction identifier |
 | `Cursor` | Int | Cursor icon when hovered (0=None, 1=Door, etc) |
 | `HighlightHeight` | Float | Height of selection highlight |
 
-**Trigger [types](GFF-File-Format#gff-data-types):**
+**Trigger types:**
 
 - **Generic**: Script execution volume
 - **Transition**: Loads new module or moves to waypoint
@@ -34,7 +34,7 @@ UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trig
 
 ## Transition Settings
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `LinkedTo` | [CExoString](GFF-File-Format#gff-data-types) | Destination waypoint tag |
 | `LinkedToModule` | [ResRef](GFF-File-Format#gff-data-types) | Destination module [ResRef](GFF-File-Format#gff-data-types) |
@@ -50,10 +50,10 @@ UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trig
 
 ## Trap System
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TrapFlag` | Byte | Trigger is a trap |
-| `TrapType` | Byte | [index](2DA-File-Format#row-labels) into `traps.2da` |
+| `TrapType` | Byte | index into `traps.2da` |
 | `TrapDetectable` | Byte | Can be detected |
 | `TrapDetectDC` | Byte | Awareness DC to detect |
 | `TrapDisarmable` | Byte | Can be disarmed |
@@ -70,7 +70,7 @@ UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trig
 
 ## Script Hooks
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `OnClick` | [ResRef](GFF-File-Format#gff-data-types) | Fires when clicked |
 | `OnDisarm` | [ResRef](GFF-File-Format#gff-data-types) | Fires when disarmed |

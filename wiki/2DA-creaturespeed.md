@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines movement speed rates for creatures based on walk rate ID. The engine uses this [file](GFF-File-Format) to determine walking and running speeds.
+**Engine Usage**: Defines movement speed rates for creatures based on walk rate ID. The engine uses this file to determine walking and running speeds.
 
-**Row [index](2DA-File-Format#row-labels)**: Walk Rate ID (integer)
+**Row index**: Walk Rate ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Walk rate label |
+| `label` | string | Walk rate label |
 | `walkrate` | Float | Walking speed rate |
 | `runrate` | Float | Running speed rate |
 

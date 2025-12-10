@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines [creature templates](GFF-File-Format#utc-creature) configurations. The engine uses this [file](GFF-File-Format) to determine [creature templates](GFF-File-Format#utc-creature) names and properties.
+**Engine Usage**: Defines [creature templates](GFF-File-Format#utc-creature) configurations. The engine uses this file to determine [creature templates](GFF-File-Format#utc-creature) names and properties.
 
-**Row [index](2DA-File-Format#row-labels)**: [creature templates](GFF-File-Format#utc-creature) ID (integer)
+**Row index**: [creature templates](GFF-File-Format#utc-creature) ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | [creature templates](GFF-File-Format#utc-creature) label |
-| `strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for [creature templates](GFF-File-Format#utc-creature) name |
+| `label` | string | [creature templates](GFF-File-Format#utc-creature) label |
+| `strref` | [StrRef](TLK-File-Format#string-references-strref) | string reference for [creature templates](GFF-File-Format#utc-creature) name |
 | Additional columns | Various | [creature templates](GFF-File-Format#utc-creature) properties |
 
 **References**:

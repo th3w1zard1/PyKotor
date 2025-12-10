@@ -20,7 +20,7 @@ HoloPatcher is a rewrite of TSLPatcher written in Python, utilizing the PyKotor 
 **See Also:**
 
 - [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme) - Original documentation
-- [TSLPatcher InstallList Syntax](TSLPatcher-InstallList-Syntax) - [file](GFF-File-Format) installation
+- [TSLPatcher InstallList Syntax](TSLPatcher-InstallList-Syntax) - file installation
 - [TSLPatcher 2DAList Syntax](TSLPatcher-2DAList-Syntax) - [2DA](2DA-File-Format) patching
 - [TSLPatcher GFFList Syntax](TSLPatcher-GFFList-Syntax) - [GFF](GFF-File-Format) patching
 - [Mod Creation Best Practices](Mod-Creation-Best-Practices) - General modding guidelines
@@ -48,7 +48,7 @@ Don't use the 'ignore' syntax or the 'range' syntax, these won't be documented o
 
 ### HACKList (Editing [NCS](NCS-File-Format) directly)
 
-This is a TSLPatcher feature that was [not documented in the TSLPatcher readme.](https://github.com/th3w1zard1/PyKotor/wiki/TSLPatcher's-Official-Readme). We can only guess why this is. The only known uses we know about [ARE](GFF-File-Format#are-area) [Stoffe's HLFP mod](https://deadlystream.com/files/file/832-high-level-force-powers/) and some starwarsknights/lucasforums archives on waybackmachine pointing to [files](GFF-File-Format) that [ARE](GFF-File-Format#are-area) unavailable.
+This is a TSLPatcher feature that was [not documented in the TSLPatcher readme.](https://github.com/th3w1zard1/PyKotor/wiki/TSLPatcher's-Official-Readme). We can only guess why this is. The only known uses we know about [ARE](GFF-File-Format#are-area) [Stoffe's HLFP mod](https://deadlystream.com/files/file/832-high-level-force-powers/) and some starwarsknights/lucasforums archives on waybackmachine pointing to files that [ARE](GFF-File-Format#are-area) unavailable.
 
 Due to this feature being highly undocumented and only one known usage, our implementation might not match exactly. If you happen to find an old TSLPatcher mod that produces different HACKList results than HoloPatcher, [please report them here](https://github.com/th3w1zard1/PyKotor/issues/24)
 
@@ -66,10 +66,10 @@ File0=script_to_modify.NCS
 
 This will:
 
-- Modify [offset](GFF-File-Format#file-structure-overview) dec 20 (hex 0x14) of `script_to_modify.ncs` and overwrite that [offset](GFF-File-Format#file-structure-overview) with the [value](GFF-File-Format#gff-data-types) of StrRef5.
-- Modify [offset](GFF-File-Format#file-structure-overview) dec 40 (hex 0x28) of `script_to_modify.ncs` and overwrite that [offset](GFF-File-Format#file-structure-overview) with the [value](GFF-File-Format#gff-data-types) of 2DAMEMORY10.
-- Modify [offset](GFF-File-Format#file-structure-overview) dec 60 (hex 0x3C) of `script_to_modify.ncs` and overwrite that [offset](GFF-File-Format#file-structure-overview) with the [value](GFF-File-Format#gff-data-types) of dec 65535 (hex 0xFFFF) i.e. the maximum possible [value](GFF-File-Format#gff-data-types).
-In summary, HACKList writes unsigned WORDs (sized at two bytes) to [offsets](GFF-File-Format#file-structure-overview) in the [NCS](NCS-File-Format) specified by the ini.
+- Modify offset dec 20 (hex 0x14) of `script_to_modify.ncs` and overwrite that offset with the value of StrRef5.
+- Modify offset dec 40 (hex 0x28) of `script_to_modify.ncs` and overwrite that offset with the value of 2DAMEMORY10.
+- Modify offset dec 60 (hex 0x3C) of `script_to_modify.ncs` and overwrite that offset with the value of dec 65535 (hex 0xFFFF) i.e. the maximum possible value.
+In summary, HACKList writes unsigned WORDs (sized at two bytes) to offsets in the [NCS](NCS-File-Format) specified by the ini.
 
 ### For more information on HoloPatcher's implementation, please see the following links
 

@@ -154,11 +154,18 @@ def main() -> None:
         else:
             # Fallback: try common venv names if the requested one doesn't exist
             # This handles cases where install_python_venv.ps1 creates a versioned venv
+            venv_found = False
             for alt_venv_name in [".venv_3.13", ".venv_3.12", ".venv_3.11", ".venv_3.10", ".venv_3.9"]:
                 alt_venv_python = repo_root / alt_venv_name / ("Scripts" if os_name == "Windows" else "bin") / ("python.exe" if os_name == "Windows" else "python")
                 if alt_venv_python.exists():
                     args.python_exe = str(alt_venv_python)
+                    venv_found = True
                     break
+            if not venv_found:
+                raise SystemExit(
+                    f"Virtual environment creation failed: expected venv at {venv_python.parent.parent} but it does not exist. "
+                    f"Checked fallback venvs: .venv_3.13, .venv_3.12, .venv_3.11, .venv_3.10, .venv_3.9"
+                )
 
     if args.pre_pip:
         run([args.python_exe, "-m", "pip", "install", *args.pre_pip, "--prefer-binary", "--progress-bar", "on"], env=env)

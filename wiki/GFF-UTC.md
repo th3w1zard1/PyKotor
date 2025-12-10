@@ -2,15 +2,15 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-UTC [files](GFF-File-Format) define [creature templates](GFF-File-Format#utc-creature) including NPCs, party members, enemies, and the player character. They [ARE](GFF-File-Format#are-area) comprehensive [GFF files](GFF-File-Format) containing all [data](GFF-File-Format#file-structure-overview) needed to spawn and control a creature in the game world.
+UTC files define [creature templates](GFF-File-Format#utc-creature) including NPCs, party members, enemies, and the player character. They [ARE](GFF-File-Format#are-area) comprehensive [GFF files](GFF-File-Format) containing all data needed to spawn and control a creature in the game world.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Creature [format](GFF-File-Format) specification, see [Bioware Aurora Creature Format](Bioware-Aurora-Creature).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Creature format specification, see [Bioware Aurora Creature Format](Bioware-Aurora-Creature).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure-overview)
+## Core Identity fields
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this creature |
 | `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script/conversation references |
@@ -20,20 +20,20 @@ UTC [files](GFF-File-Format) define [creature templates](GFF-File-Format#utc-cre
 
 ## Appearance & Visuals
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
-| `Appearance_Type` | DWord | [index](2DA-File-Format#row-labels) into [`appearance.2da`](2DA-appearance) |
-| `PortraitId` | Word | [index](2DA-File-Format#row-labels) into [`portraits.2da`](2DA-portraits) |
+| `Appearance_Type` | DWord | index into [`appearance.2da`](2DA-appearance) |
+| `PortraitId` | Word | index into [`portraits.2da`](2DA-portraits) |
 | `Gender` | Byte | 0=Male, 1=Female, 2=Both, 3=Other, 4=None |
-| `Race` | Word | [index](2DA-File-Format#row-labels) into [`racialtypes.2da`](2DA-racialtypes) |
+| `Race` | Word | index into [`racialtypes.2da`](2DA-racialtypes) |
 | `SubraceIndex` | Byte | Subrace identifier |
 | `BodyVariation` | Byte | Body [model](MDL-MDX-File-Format) variation (0-9) |
 | `TextureVar` | Byte | [texture](TPC-File-Format) variation (1-9) |
-| `SoundSetFile` | Word | [index](2DA-File-Format#row-labels) into [sound set table](SSF-File-Format) |
+| `SoundSetFile` | Word | index into [sound set table](SSF-File-Format) |
 
 ## Core Stats & Attributes
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Str` | Byte | Strength score (3-255) |
 | `Dex` | Byte | Dexterity score (3-255) |
@@ -50,31 +50,31 @@ UTC [files](GFF-File-Format) define [creature templates](GFF-File-Format#utc-cre
 
 ## Character Progression
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `ClassList` | List | List of character classes with levels |
 | `Experience` | DWord | Total experience points |
 | `LevelUpStack` | List | Pending level-up choices |
-| `SkillList` | List | Skill ranks ([index](2DA-File-Format#row-labels) + rank) |
+| `SkillList` | List | Skill ranks (index + rank) |
 | `FeatList` | List | Acquired feats |
 | `SpecialAbilityList` | List | Special abilities/powers |
 
-**ClassList Struct [fields](GFF-File-Format#file-structure-overview):**
+**ClassList Struct fields:**
 
-- `Class` (Int): [index](2DA-File-Format#row-labels) into [`classes.2da`](2DA-classes) ([class definitions](2DA-classes))
+- `Class` (Int): index into [`classes.2da`](2DA-classes) ([class definitions](2DA-classes))
 - `ClassLevel` (Short): Levels in this class
 
-**SkillList Struct [fields](GFF-File-Format#file-structure-overview):**
+**SkillList Struct fields:**
 
-- `Rank` (Byte): Skill rank [value](GFF-File-Format#gff-data-types)
+- `Rank` (Byte): Skill rank value
 
-**FeatList Struct [fields](GFF-File-Format#file-structure-overview):**
+**FeatList Struct fields:**
 
-- `Feat` (Word): [index](2DA-File-Format#row-labels) into [`feat.2da`](2DA-feat) ([feat definitions](2DA-feat))
+- `Feat` (Word): index into [`feat.2da`](2DA-feat) ([feat definitions](2DA-feat))
 
 ## Combat & Behavior
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `FactionID` | Word | Faction identifier (determines hostility) |
 | `NaturalAC` | Byte | Natural armor class bonus |
@@ -91,27 +91,27 @@ UTC [files](GFF-File-Format) define [creature templates](GFF-File-Format#utc-cre
 
 ## Equipment & Inventory
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `ItemList` | List | Inventory items |
 | `Equip_ItemList` | List | Equipped items with slots |
-| `EquippedRes` | [ResRef](GFF-File-Format#gff-data-types) | Deprecated equipment [field](GFF-File-Format#file-structure-overview) |
+| `EquippedRes` | [ResRef](GFF-File-Format#gff-data-types) | Deprecated equipment field |
 
-**ItemList Struct [fields](GFF-File-Format#file-structure-overview):**
+**ItemList Struct fields:**
 
 - `InventoryRes` ([ResRef](GFF-File-Format#gff-data-types)): [UTI](GFF-File-Format#uti-item) template [ResRef](GFF-File-Format#gff-data-types)
-- `Repos_PosX` (Word): Inventory grid X [position](MDL-MDX-File-Format#node-header)
-- `Repos_Posy` (Word): Inventory grid Y [position](MDL-MDX-File-Format#node-header)
+- `Repos_PosX` (Word): Inventory grid X position
+- `Repos_Posy` (Word): Inventory grid Y position
 - `Dropable` (Byte): Can be dropped/removed
 
-**Equip_ItemList Struct [fields](GFF-File-Format#file-structure-overview):**
+**Equip_ItemList Struct fields:**
 
 - `EquippedRes` ([ResRef](GFF-File-Format#gff-data-types)): [UTI](GFF-File-Format#uti-item) template [ResRef](GFF-File-Format#gff-data-types)
 - Equipment slots reference `equipmentslots.2da`
 
 ## Script Hooks
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `ScriptAttacked` | [ResRef](GFF-File-Format#gff-data-types) | Fires when attacked |
 | `ScriptDamaged` | [ResRef](GFF-File-Format#gff-data-types) | Fires when damaged |
@@ -148,9 +148,9 @@ UTC [files](GFF-File-Format) define [creature templates](GFF-File-Format#utc-cre
 
 ## Implementation Notes
 
-[UTC](GFF-File-Format#utc-creature) [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) loaded during module initialization or creature spawning. The engine:
+[UTC](GFF-File-Format#utc-creature) files [ARE](GFF-File-Format#are-area) loaded during module initialization or creature spawning. The engine:
 
-1. **Reads template [data](GFF-File-Format#file-structure-overview)** from the [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview)
+1. **Reads template data** from the [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format) structure
 2. **Applies appearance** based on [`appearance.2da`](2DA-appearance) ([appearance definitions](2DA-appearance)) lookup
 3. **Calculates derived stats** (AC, saves, attack bonuses) from attributes and equipment
 4. **Loads inventory** by instantiating [UTI](GFF-File-Format#uti-item) ([item templates](GFF-File-Format#uti-item)) templates
@@ -161,12 +161,12 @@ UTC [files](GFF-File-Format) define [creature templates](GFF-File-Format#utc-cre
 
 - Complex creatures with many items/feats increase load time
 - Script hooks fire frequently - keep handlers optimized
-- Large SkillList/FeatList [structures](GFF-File-Format#file-structure-overview) add memory overhead
+- Large SkillList/FeatList structures add memory overhead
 
 **Common Use Cases:**
 
-- **Party Members**: Full [UTC](GFF-File-Format#utc-creature) with all progression [data](GFF-File-Format#file-structure-overview), complex equipment
+- **Party Members**: Full [UTC](GFF-File-Format#utc-creature) with all progression data, complex equipment
 - **Plot NPCs**: Basic stats, specific appearance, dialogue scripts
-- **Generic Enemies**: Minimal [data](GFF-File-Format#file-structure-overview), shared appearance, basic AI scripts
+- **Generic Enemies**: Minimal data, shared appearance, basic AI scripts
 - **Vendors**: Specialized with store inventory, merchant scripts
 - **Placeables As Creatures**: Invisible creatures for complex scripting

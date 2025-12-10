@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines effect icons displayed on character portraits and character sheets. The engine uses this [file](GFF-File-Format) to determine which icon to display for status effects, buffs, and debuffs.
+**Engine Usage**: Defines effect icons displayed on character portraits and character sheets. The engine uses this file to determine which icon to display for status effects, buffs, and debuffs.
 
-**Row [index](2DA-File-Format#row-labels)**: Effect Icon ID (integer)
+**Row index**: Effect Icon ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Effect icon label |
+| `label` | string | Effect icon label |
 | Additional columns | Various | Effect icon properties and ResRefs |
 
 **References**:

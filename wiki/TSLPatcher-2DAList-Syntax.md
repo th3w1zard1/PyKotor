@@ -1,10 +1,10 @@
 # TSLPatcher 2DAList Syntax - Complete Guide
 
-This guide explains how to modify [2DA files](2DA-File-Format) using TSLPatcher syntax. For the complete [2DA file](2DA-File-Format) [format](GFF-File-Format) specification, see [2DA File Format](2DA-File-Format). For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
+This guide explains how to modify [2DA files](2DA-File-Format) using TSLPatcher syntax. For the complete [2DA file](2DA-File-Format) format specification, see [2DA File Format](2DA-File-Format). For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
 ## Overview
 
-The `[2DAList]` section in TSLPatcher's `changes.ini` enables you to modify 2DA (Two-Dimensional [array](2DA-File-Format)) [files](GFF-File-Format) used throughout KotOR and TSL. [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) tabular [data](GFF-File-Format#file-structure-overview) [structures](GFF-File-Format#file-structure-overview) that store game information such as appearances, classes, feats, items, spells, and more. You can change existing rows, add new rows, copy rows, and add columns using various targeting methods and [value](GFF-File-Format#gff-data-types) [types](GFF-File-Format#gff-data-types).
+The `[2DAList]` section in TSLPatcher's `changes.ini` enables you to modify 2DA (Two-Dimensional array) files used throughout KotOR and TSL. [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) tabular data structures that store game information such as appearances, classes, feats, items, spells, and more. You can change existing rows, add new rows, copy rows, and add columns using various targeting methods and value types.
 
 The `[2DAList]` section is processed **after** `[TLKList]` but **before** `[GFFList]` in HoloPatcher, meaning you can use `StrRef#` tokens from [TLKList](TSLPatcher-TLKList-Syntax), and any `2DAMEMORY#` tokens you create will be available to [GFFList](TSLPatcher-GFFList-Syntax) and other sections.
 
@@ -38,7 +38,7 @@ The `[2DAList]` section is processed **after** `[TLKList]` but **before** `[GFFL
 Table0=appearance.2da
 ```
 
-2. Create a section named exactly like that [file](GFF-File-Format):
+2. Create a section named exactly like that file:
 
 ```ini
 [appearance.2da]
@@ -54,7 +54,7 @@ label=CUSTOM_APPEARANCE
 modeltype=1
 ```
 
-4. Store [values](GFF-File-Format#gff-data-types) for later use with `2DAMEMORY#` tokens:
+4. Store values for later use with `2DAMEMORY#` tokens:
 
 ```ini
 [modify_appearance]
@@ -76,31 +76,31 @@ appearance=2DAMEMORY10
 
 ## Cheatsheet
 
-- **Modification [types](GFF-File-Format#gff-data-types)**: `ChangeRow#`, `AddRow#`, `CopyRow#`, `AddColumn#`
+- **Modification types**: `ChangeRow#`, `AddRow#`, `CopyRow#`, `AddColumn#`
 - **Row targeting**:
   - `RowIndex=#` → Target by numeric row index (0-based)
-  - `RowLabel=label` → Target by row label (first column [value](GFF-File-Format#gff-data-types))
-  - `LabelIndex=value` → Find row where "label" column equals [value](GFF-File-Format#gff-data-types)
-- **Cell [values](GFF-File-Format#gff-data-types)**:
-  - `ColumnName=value` → Set cell to constant [string](GFF-File-Format#gff-data-types)
+  - `RowLabel=label` → Target by row label (first column value)
+  - `LabelIndex=value` → Find row where "label" column equals value
+- **Cell values**:
+  - `ColumnName=value` → Set cell to constant string
   - `ColumnName=[StrRef](TLK-File-Format#string-references-strref)#` → Use [TLK](TLK-File-Format) stringref token
   - `ColumnName=2DAMEMORY#` → Use [2DA](2DA-File-Format) memory token
-  - `ColumnName=high()` → Maximum [value](GFF-File-Format#gff-data-types) in that column
-  - `ColumnName=RowIndex` → Current row's [index](2DA-File-Format#row-labels)
+  - `ColumnName=high()` → Maximum value in that column
+  - `ColumnName=RowIndex` → Current row's index
   - `ColumnName=RowLabel` → Current row's label
-  - `ColumnName=RowCell('column')` → [value](GFF-File-Format#gff-data-types) from another cell
-  - `ColumnName=****` → Empty [string](GFF-File-Format#gff-data-types)
+  - `ColumnName=RowCell('column')` → value from another cell
+  - `ColumnName=****` → Empty string
 - **Memory storage**:
-  - `2DAMEMORY#=RowIndex` → Store row [index](2DA-File-Format#row-labels)
+  - `2DAMEMORY#=RowIndex` → Store row index
   - `2DAMEMORY#=RowLabel` → Store row label
-  - `2DAMEMORY#=ColumnName` → Store cell [value](GFF-File-Format#gff-data-types) from that column
+  - `2DAMEMORY#=ColumnName` → Store cell value from that column
   - `[StrRef](TLK-File-Format#string-references-strref)#=value` → Store stringref for later use
 - **Special row properties**:
   - `RowLabel=value` → Set row label (for AddRow/CopyRow)
   - `NewRowLabel=value` → Alternative name for RowLabel
   - `ExclusiveColumn=name` → Check for existing row by column value (AddRow/CopyRow)
 
-## Basic [structure](GFF-File-Format#file-structure-overview)
+## Basic structure
 
 ```ini
 [2DAList]
@@ -152,13 +152,13 @@ The `[2DAList]` section declares which [2DA files](2DA-File-Format) you want to 
 - Use `Replace#` to replace an existing [2DA file](2DA-File-Format) before applying modifications
 - The `#` is a sequential number starting from 0 (Table0, Table1, Table2, etc.)
 - Numbers can be sequential, but gaps [ARE](GFF-File-Format#are-area) allowed (Table0, Table2, Table5 is valid)
-- Each [file](GFF-File-Format) section contains modification entries (`ChangeRow#`, `AddRow#`, `CopyRow#`, `AddColumn#`)
+- Each file section contains modification entries (`ChangeRow#`, `AddRow#`, `CopyRow#`, `AddColumn#`)
 
 ## Processing Order
 
 In **HoloPatcher**, the 2DAList runs in the following execution order:
 
-1. **[InstallList]** - [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) installed first
+1. **[InstallList]** - files [ARE](GFF-File-Format#are-area) installed first
 2. **[TLKList]** - [TLK](TLK-File-Format) modifications (creates `StrRef#` tokens)
 3. **[2DAList]** ← **You [ARE](GFF-File-Format#are-area) here** - [2DA file](2DA-File-Format) modifications (creates `2DAMEMORY#` tokens)
 4. **[GFFList]** - [GFF file](GFF-File-Format) modifications (can use `StrRef#` and `2DAMEMORY#` tokens)
@@ -168,29 +168,29 @@ In **HoloPatcher**, the 2DAList runs in the following execution order:
 
 **Important:** Since 2DAList runs after TLKList, you can use `[StrRef](TLK-File-Format#string-references-strref)#` tokens in your [2DA](2DA-File-Format) modifications. Any `2DAMEMORY#` tokens you create will be available to all subsequent sections (GFFList, CompileList, HACKList, SSFList).
 
-## [file](GFF-File-Format)-Level Configuration
+## file-Level Configuration
 
 ### Top-Level Keys in [2DAList]
 
-| [KEY](KEY-File-Format) | [type](GFF-File-Format#data-types) | Default | Description |
+| [KEY](KEY-File-Format) | type | Default | Description |
 |-----|------|---------|-------------|
-| `!DefaultDestination` | [string](GFF-File-Format#gff-data-types) | `override` | Default destination for all [2DA files](2DA-File-Format) in this section |
-| `!DefaultSourceFolder` | [string](GFF-File-Format#gff-data-types) | `.` | Default source folder for [2DA files](2DA-File-Format). Relative path from `mod_path` (typically the `tslpatchdata` folder, which is the parent directory of `changes.ini` and `namespaces.ini`). When `.`, refers to the `tslpatchdata` folder itself. Path resolution: `mod_path / !DefaultSourceFolder / filename` |
+| `!DefaultDestination` | string | `override` | Default destination for all [2DA files](2DA-File-Format) in this section |
+| `!DefaultSourceFolder` | string | `.` | Default source folder for [2DA files](2DA-File-Format). Relative path from `mod_path` (typically the `tslpatchdata` folder, which is the parent directory of `changes.ini` and `namespaces.ini`). When `.`, refers to the `tslpatchdata` folder itself. Path resolution: `mod_path / !DefaultSourceFolder / filename` |
 
-### [file](GFF-File-Format) Section Configuration
+### file Section Configuration
 
 Each [2DA file](2DA-File-Format) requires its own section (e.g., `[appearance.2da]`).
 
-| Key | [type](GFF-File-Format#data-types) | Default | Description |
+| Key | type | Default | Description |
 |-----|------|---------|-------------|
-| `!Destination` | [string](GFF-File-Format#gff-data-types) | Inherited from `!DefaultDestination` | Where to save the modified file (`override` or `path\to\file.mod`) |
-| `!SourceFolder` | [string](GFF-File-Format#gff-data-types) | Inherited from `!DefaultSourceFolder` | Source folder for the [2DA file](2DA-File-Format). Relative path from `mod_path` (typically the tslpatchdata folder). When `.`, refers to the tslpatchdata folder itself. |
-| `!SourceFile` | [string](GFF-File-Format#gff-data-types) | Same as section name | Alternative source filename (useful for multiple setup options using different source [files](GFF-File-Format)) |
-| `!ReplaceFile` | 0/1 | 0 | If `1`, overwrite existing [file](GFF-File-Format) before applying modifications. If `0` (default), modify the existing [file](GFF-File-Format) in place. |
-| `!SaveAs` | [string](GFF-File-Format#gff-data-types) | Same as section name | Alternative filename to save as (useful for renaming [files](GFF-File-Format) during installation) |
-| `!OverrideType` | [string](GFF-File-Format#gff-data-types) | `warn` (HoloPatcher) / `ignore` (TSLPatcher) | How to handle existing [files](GFF-File-Format) in Override when destination is an [ERF](ERF-File-Format)/RIM archive. Valid [values](GFF-File-Format#gff-data-types): `ignore`, `warn`, `rename` |
+| `!Destination` | string | Inherited from `!DefaultDestination` | Where to save the modified file (`override` or `path\to\file.mod`) |
+| `!SourceFolder` | string | Inherited from `!DefaultSourceFolder` | Source folder for the [2DA file](2DA-File-Format). Relative path from `mod_path` (typically the tslpatchdata folder). When `.`, refers to the tslpatchdata folder itself. |
+| `!SourceFile` | string | Same as section name | Alternative source filename (useful for multiple setup options using different source files) |
+| `!ReplaceFile` | 0/1 | 0 | If `1`, overwrite existing file before applying modifications. If `0` (default), modify the existing file in place. |
+| `!SaveAs` | string | Same as section name | Alternative filename to save as (useful for renaming files during installation) |
+| `!OverrideType` | string | `warn` (HoloPatcher) / `ignore` (TSLPatcher) | How to handle existing files in Override when destination is an [ERF](ERF-File-Format)/RIM archive. Valid values: `ignore`, `warn`, `rename` |
 
-**Destination [values](GFF-File-Format#gff-data-types):**
+**Destination values:**
 
 - `override` or empty: Save to the Override folder
 - `Modules\module.mod`: Insert into an [ERF](ERF-File-Format)/MOD/RIM archive (use backslashes for path separators)
@@ -202,7 +202,7 @@ Each [2DA file](2DA-File-Format) requires its own section (e.g., `[appearance.2d
 - When specifying paths, use backslashes (`\`) as path separators (TSLPatcher style), though forward slashes (`/`) [ARE](GFF-File-Format#are-area) also accepted and normalized
 - Path resolution: `mod_path / !SourceFolder / !SourceFile` (or section name if `!SourceFile` is not set)
 
-## Modification [types](GFF-File-Format#gff-data-types)
+## Modification types
 
 ### ChangeRow - Modify Existing Row
 
@@ -216,9 +216,9 @@ Changes an existing row in the [2DA file](2DA-File-Format). You must specify whi
 
 **Optional Keys:**
 
-- Any column name (to modify cell [values](GFF-File-Format#gff-data-types))
-- `2DAMEMORY#=value` (to store [values](GFF-File-Format#gff-data-types) in memory)
-- `[StrRef](TLK-File-Format#string-references-strref)#=value` (to store stringref [values](GFF-File-Format#gff-data-types) in memory)
+- Any column name (to modify cell values)
+- `2DAMEMORY#=value` (to store values in memory)
+- `[StrRef](TLK-File-Format#string-references-strref)#=value` (to store stringref values in memory)
 
 **Example:**
 
@@ -251,7 +251,7 @@ StrRef20=name             ; Store name stringref in TLK memory token 20
 **Behavior:**
 
 - If the target row is not found, a warning is logged and the modification is skipped
-- Existing cell [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) overwritten with new [values](GFF-File-Format#gff-data-types)
+- Existing cell values [ARE](GFF-File-Format#are-area) overwritten with new values
 - Columns that [ARE](GFF-File-Format#are-area) not specified remain unchanged
 - Memory tokens [ARE](GFF-File-Format#are-area) evaluated and stored after cell modifications [ARE](GFF-File-Format#are-area) applied
 
@@ -259,19 +259,19 @@ StrRef20=name             ; Store name stringref in TLK memory token 20
 
 **Syntax:** `AddRow#=section_name`
 
-Adds a new row to the [2DA file](2DA-File-Format). If `ExclusiveColumn` is specified and a row with that [value](GFF-File-Format#gff-data-types) already exists, the existing row is modified instead of adding a new one.
+Adds a new row to the [2DA file](2DA-File-Format). If `ExclusiveColumn` is specified and a row with that value already exists, the existing row is modified instead of adding a new one.
 
 **Required Keys:**
 
-- None (empty section creates a row with default/empty [values](GFF-File-Format#gff-data-types))
+- None (empty section creates a row with default/empty values)
 
 **Optional Keys:**
 
-- `ExclusiveColumn=column_name` → Check if a row with the same [value](GFF-File-Format#gff-data-types) in this column already exists; if so, modify it instead of adding
-- `RowLabel=value` or `NewRowLabel=value` → Set the row label (defaults to current row [count](GFF-File-Format#file-structure-overview) if not specified)
-- Any column name (to set cell [values](GFF-File-Format#gff-data-types))
-- `2DAMEMORY#=value` (to store [values](GFF-File-Format#gff-data-types) in memory)
-- `[StrRef](TLK-File-Format#string-references-strref)#=value` (to store stringref [values](GFF-File-Format#gff-data-types) in memory)
+- `ExclusiveColumn=column_name` → Check if a row with the same value in this column already exists; if so, modify it instead of adding
+- `RowLabel=value` or `NewRowLabel=value` → Set the row label (defaults to current row count if not specified)
+- Any column name (to set cell values)
+- `2DAMEMORY#=value` (to store values in memory)
+- `[StrRef](TLK-File-Format#string-references-strref)#=value` (to store stringref values in memory)
 
 **Example:**
 
@@ -300,9 +300,9 @@ If a row with `label=MY_NEW_APPEARANCE` already exists, it will be modified. Oth
 
 **Behavior:**
 
-- New row is added with the specified cell [values](GFF-File-Format#gff-data-types)
+- New row is added with the specified cell values
 - If `ExclusiveColumn` is specified and a matching row exists, that row is updated instead
-- Row label defaults to the current row count (as a [string](GFF-File-Format#gff-data-types)) if `RowLabel`/`NewRowLabel` is not specified
+- Row label defaults to the current row count (as a string) if `RowLabel`/`NewRowLabel` is not specified
 - Memory tokens [ARE](GFF-File-Format#are-area) evaluated and stored after the row is added/modified
 
 ### CopyRow - Copy and Conditionally Add Row
@@ -317,11 +317,11 @@ Copies an existing row (identified by a target) and optionally adds it as a new 
 
 **Optional Keys:**
 
-- `ExclusiveColumn=column_name` → If a row with the same [value](GFF-File-Format#gff-data-types) in this column already exists, modify that row instead of adding a new one
-- `RowLabel=value` or `NewRowLabel=value` → Set the new row's label (defaults to current row [count](GFF-File-Format#file-structure-overview) if not specified)
-- Any column name (to override cell [values](GFF-File-Format#gff-data-types) from the copied row)
-- `2DAMEMORY#=value` (to store [values](GFF-File-Format#gff-data-types) in memory)
-- `[StrRef](TLK-File-Format#string-references-strref)#=value` (to store stringref [values](GFF-File-Format#gff-data-types) in memory)
+- `ExclusiveColumn=column_name` → If a row with the same value in this column already exists, modify that row instead of adding a new one
+- `RowLabel=value` or `NewRowLabel=value` → Set the new row's label (defaults to current row count if not specified)
+- Any column name (to override cell values from the copied row)
+- `2DAMEMORY#=value` (to store values in memory)
+- `[StrRef](TLK-File-Format#string-references-strref)#=value` (to store stringref values in memory)
 
 **Example:**
 
@@ -350,7 +350,7 @@ modeltype=3
 **Behavior:**
 
 - The source row (identified by target) is copied
-- All cell [values](GFF-File-Format#gff-data-types) from the source row [ARE](GFF-File-Format#are-area) preserved unless overridden
+- All cell values from the source row [ARE](GFF-File-Format#are-area) preserved unless overridden
 - If `ExclusiveColumn` is specified and a matching row exists, that existing row is updated
 - If `ExclusiveColumn` is not specified or no match is found, a new row is added
 - If the source row is not found, an error is raised
@@ -360,21 +360,21 @@ modeltype=3
 
 **Syntax:** `AddColumn#=section_name`
 
-Adds a new column to the [2DA file](2DA-File-Format) with a default [value](GFF-File-Format#gff-data-types) for all rows. Specific rows can be given custom [values](GFF-File-Format#gff-data-types) using [index](2DA-File-Format#row-labels) or label-based inserts.
+Adds a new column to the [2DA file](2DA-File-Format) with a default value for all rows. Specific rows can be given custom values using index or label-based inserts.
 
 **Required Keys:**
 
 - `ColumnLabel=column_name` → The name of the new column
-- `DefaultValue=value` → Default [value](GFF-File-Format#gff-data-types) for all rows (use `****` for empty [string](GFF-File-Format#gff-data-types))
+- `DefaultValue=value` → Default value for all rows (use `****` for empty string)
 
 **Optional Keys:**
 
-- `I#=value` → Set [value](GFF-File-Format#gff-data-types) for row at [index](2DA-File-Format#row-labels) `#` (e.g., `I5=CustomValue` sets row [index](2DA-File-Format#row-labels) 5)
-- `Llabel=value` → Set [value](GFF-File-Format#gff-data-types) for row with label `label` (e.g., `L1=CustomValue` sets row with label "1")
-- `2DAMEMORY#=I#` or `2DAMEMORY#=Llabel` → Store the cell [value](GFF-File-Format#gff-data-types) from the new column into memory token `#` after the column is created
-  - Use `I#` [format](GFF-File-Format) to reference by row index (e.g., `2DAMEMORY10=I5` stores the [value](GFF-File-Format#gff-data-types) from row [index](2DA-File-Format#row-labels) 5 in the new column)
-  - Use `Llabel` [format](GFF-File-Format) to reference by row label (e.g., `2DAMEMORY10=L1` stores the [value](GFF-File-Format#gff-data-types) from the row with label "1" in the new column)
-  - Memory storage happens **after** the column is created and all insert [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) applied
+- `I#=value` → Set value for row at index `#` (e.g., `I5=CustomValue` sets row index 5)
+- `Llabel=value` → Set value for row with label `label` (e.g., `L1=CustomValue` sets row with label "1")
+- `2DAMEMORY#=I#` or `2DAMEMORY#=Llabel` → Store the cell value from the new column into memory token `#` after the column is created
+  - Use `I#` format to reference by row index (e.g., `2DAMEMORY10=I5` stores the value from row index 5 in the new column)
+  - Use `Llabel` format to reference by row label (e.g., `2DAMEMORY10=L1` stores the value from the row with label "1" in the new column)
+  - Memory storage happens **after** the column is created and all insert values [ARE](GFF-File-Format#are-area) applied
 
 **Example:**
 
@@ -407,19 +407,19 @@ L5=ValueForLabel5
 
 - New column is added to all rows
 - All rows initially receive the `DefaultValue`
-- Rows specified in `I#` or `Llabel` entries get their custom [values](GFF-File-Format#gff-data-types)
+- Rows specified in `I#` or `Llabel` entries get their custom values
 - If a row specified in `I#` doesn't exist, an error is raised
 - If a row specified in `Llabel` doesn't exist, an error is raised
-- **Memory Storage:** Memory tokens specified with `2DAMEMORY#=I#` or `2DAMEMORY#=Llabel` store the cell [value](GFF-File-Format#gff-data-types) from the new column **after** it's created and all insert [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) applied
-  - `2DAMEMORY#=I5` retrieves the cell [value](GFF-File-Format#gff-data-types) from row [index](2DA-File-Format#row-labels) 5 in the newly created column
-  - `2DAMEMORY#=L1` retrieves the cell [value](GFF-File-Format#gff-data-types) from the row with label "1" in the newly created column
-  - This allows you to capture [values](GFF-File-Format#gff-data-types) from the new column for use in later modifications
+- **Memory Storage:** Memory tokens specified with `2DAMEMORY#=I#` or `2DAMEMORY#=Llabel` store the cell value from the new column **after** it's created and all insert values [ARE](GFF-File-Format#are-area) applied
+  - `2DAMEMORY#=I5` retrieves the cell value from row index 5 in the newly created column
+  - `2DAMEMORY#=L1` retrieves the cell value from the row with label "1" in the newly created column
+  - This allows you to capture values from the new column for use in later modifications
 
-**Special [value](GFF-File-Format#gff-data-types) Syntax in AddColumn:**
+**Special value Syntax in AddColumn:**
 
 For `I#` and `Llabel` values (the right side of the assignment), you can use:
 
-- Constant [strings](GFF-File-Format#gff-data-types): `I5=CustomValue`
+- Constant strings: `I5=CustomValue`
 - Token references: `I5=2DAMEMORY10`, `I5=StrRef20`
 - Special functions (`high()`, `RowIndex`, `RowLabel`) [ARE](GFF-File-Format#are-area) **not supported** in AddColumn (unlike ChangeRow/AddRow/CopyRow)
 
@@ -427,14 +427,14 @@ For `I#` and `Llabel` values (the right side of the assignment), you can use:
 
 For memory storage (`2DAMEMORY#=`), you must use:
 
-- `2DAMEMORY#=I#` - Store [value](GFF-File-Format#gff-data-types) from row at [index](2DA-File-Format#row-labels) `#` in the new column
-- `2DAMEMORY#=Llabel` - Store [value](GFF-File-Format#gff-data-types) from row with label `label` in the new column
+- `2DAMEMORY#=I#` - Store value from row at index `#` in the new column
+- `2DAMEMORY#=Llabel` - Store value from row with label `label` in the new column
 
-The `I#` and `Llabel` on the right side of `2DAMEMORY#=` refer to which row's [value](GFF-File-Format#gff-data-types) to store from the newly created column, not the [value](GFF-File-Format#gff-data-types) to insert.
+The `I#` and `Llabel` on the right side of `2DAMEMORY#=` refer to which row's value to store from the newly created column, not the value to insert.
 
-## Target [types](GFF-File-Format#gff-data-types)
+## Target types
 
-Target [types](GFF-File-Format#gff-data-types) identify which row to modify in ChangeRow and CopyRow operations. Only one target [type](GFF-File-Format#data-types) can be specified per modification.
+Target types identify which row to modify in ChangeRow and CopyRow operations. Only one target type can be specified per modification.
 
 ### RowIndex
 
@@ -452,16 +452,16 @@ label=MODIFIED
 
 **Behavior:**
 
-- Directly accesses the row at the specified [index](2DA-File-Format#row-labels)
-- If the [index](2DA-File-Format#row-labels) is out of bounds, the row is not found and a warning is logged
-- The [value](GFF-File-Format#gff-data-types) must be a valid integer
-- **Dynamic targeting**: Can use `2DAMEMORY#` tokens for dynamic row selection (e.g., `RowIndex=2DAMEMORY10` will use the [value](GFF-File-Format#gff-data-types) stored in token 10)
+- Directly accesses the row at the specified index
+- If the index is out of bounds, the row is not found and a warning is logged
+- The value must be a valid integer
+- **Dynamic targeting**: Can use `2DAMEMORY#` tokens for dynamic row selection (e.g., `RowIndex=2DAMEMORY10` will use the value stored in token 10)
 
 ### RowLabel
 
 **Syntax:** `RowLabel=label_string`
 
-Targets a row by its label (the [value](GFF-File-Format#gff-data-types) in the first column, typically named "label").
+Targets a row by its label (the value in the first column, typically named "label").
 
 **Example:**
 
@@ -473,19 +473,19 @@ label=MODIFIED
 
 **Behavior:**
 
-- Searches for a row where the row label matches the specified [value](GFF-File-Format#gff-data-types)
-- Uses [string](GFF-File-Format#gff-data-types) comparison (case-sensitive)
+- Searches for a row where the row label matches the specified value
+- Uses string comparison (case-sensitive)
 - If no matching row is found, a warning is logged
 - **Dynamic targeting**: RowLabel can accept token references for dynamic row selection:
-  - `RowLabel=2DAMEMORY10` - Uses the [value](GFF-File-Format#gff-data-types) stored in [2DA](2DA-File-Format) memory token 10
-  - `RowLabel=StrRef20` - Uses the stringref [value](GFF-File-Format#gff-data-types) from [TLK](TLK-File-Format) memory token 20 (converted to [string](GFF-File-Format#gff-data-types))
-- This allows you to dynamically determine which row to modify based on previously stored [values](GFF-File-Format#gff-data-types)
+  - `RowLabel=2DAMEMORY10` - Uses the value stored in [2DA](2DA-File-Format) memory token 10
+  - `RowLabel=StrRef20` - Uses the stringref value from [TLK](TLK-File-Format) memory token 20 (converted to string)
+- This allows you to dynamically determine which row to modify based on previously stored values
 
 ### LabelIndex
 
 **Syntax:** `LabelIndex=value`
 
-Targets a row by searching the "label" column for a matching [value](GFF-File-Format#gff-data-types). This is different from `RowLabel` because it searches within a specific column named "label" rather than using the row's label [value](GFF-File-Format#gff-data-types).
+Targets a row by searching the "label" column for a matching value. This is different from `RowLabel` because it searches within a specific column named "label" rather than using the row's label value.
 
 **Example:**
 
@@ -498,28 +498,28 @@ label=MODIFIED
 **Behavior:**
 
 - Requires the [2DA](2DA-File-Format) to have a column named "label"
-- Searches all rows for a cell in the "label" column that matches the specified [value](GFF-File-Format#gff-data-types)
+- Searches all rows for a cell in the "label" column that matches the specified value
 - If the "label" column doesn't exist, an error is raised
 - If no matching row is found, a warning is logged
 - **Dynamic targeting**: LabelIndex can accept token references for dynamic row selection:
-  - `LabelIndex=2DAMEMORY10` - Uses the [value](GFF-File-Format#gff-data-types) stored in [2DA](2DA-File-Format) memory token 10
-  - `LabelIndex=StrRef20` - Uses the stringref [value](GFF-File-Format#gff-data-types) from [TLK](TLK-File-Format) memory token 20 (converted to [string](GFF-File-Format#gff-data-types))
-- This allows you to dynamically search for rows based on previously stored [values](GFF-File-Format#gff-data-types)
+  - `LabelIndex=2DAMEMORY10` - Uses the value stored in [2DA](2DA-File-Format) memory token 10
+  - `LabelIndex=StrRef20` - Uses the stringref value from [TLK](TLK-File-Format) memory token 20 (converted to string)
+- This allows you to dynamically search for rows based on previously stored values
 
 **Note:** `RowLabel` and `LabelIndex` may seem similar, but they operate differently:
 
-- `RowLabel` uses the row's label value (first column's [value](GFF-File-Format#gff-data-types))
-- `LabelIndex` searches within a column named "label" for a matching [value](GFF-File-Format#gff-data-types)
+- `RowLabel` uses the row's label value (first column's value)
+- `LabelIndex` searches within a column named "label" for a matching value
 
-## Cell [values](GFF-File-Format#gff-data-types) and RowValue [types](GFF-File-Format#gff-data-types)
+## Cell values and RowValue types
 
-When setting cell [values](GFF-File-Format#gff-data-types) in ChangeRow, AddRow, and CopyRow, you can use various [value](GFF-File-Format#gff-data-types) [types](GFF-File-Format#gff-data-types). Each cell [value](GFF-File-Format#gff-data-types) is parsed as a `RowValue` type based on the syntax.
+When setting cell values in ChangeRow, AddRow, and CopyRow, you can use various value types. Each cell value is parsed as a `RowValue` type based on the syntax.
 
-### Constant [string](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types)
+### Constant string values
 
 **Syntax:** `ColumnName=any_string`
 
-The simplest [value](GFF-File-Format#gff-data-types) [type](GFF-File-Format#data-types) - a literal [string](GFF-File-Format#gff-data-types) that will be placed in the cell.
+The simplest value type - a literal string that will be placed in the cell.
 
 **Example:**
 
@@ -529,11 +529,11 @@ modeltype=1
 description=This is a custom appearance
 ```
 
-### Empty [string](GFF-File-Format#gff-data-types)
+### Empty string
 
 **Syntax:** `ColumnName=****`
 
-Use `****` to set a cell to an empty [string](GFF-File-Format#gff-data-types).
+Use `****` to set a cell to an empty string.
 
 **Example:**
 
@@ -548,7 +548,7 @@ notes=****
 
 **Syntax:** `ColumnName=[StrRef](TLK-File-Format#string-references-strref)#`
 
-References a stringref token created in the `[TLKList]` section. The token number is extracted and the [value](GFF-File-Format#gff-data-types) is looked up from [TLK](TLK-File-Format) memory.
+References a stringref token created in the `[TLKList]` section. The token number is extracted and the value is looked up from [TLK](TLK-File-Format) memory.
 
 **Example:**
 
@@ -560,14 +560,14 @@ description=StrRef100
 **Behavior:**
 
 - Token must be defined in `[TLKList]` before use
-- [value](GFF-File-Format#gff-data-types) stored in the token is used as the cell [value](GFF-File-Format#gff-data-types)
+- value stored in the token is used as the cell value
 - If token is not found, an error is raised
 
 #### 2DAMEMORY Token References(#2damemory-token-references)
 
 **Syntax:** `ColumnName=2DAMEMORY#`
 
-References a [2DA](2DA-File-Format) memory token created in a previous 2DAList modification. The token number is extracted and the [value](GFF-File-Format#gff-data-types) is looked up from [2DA](2DA-File-Format) memory.
+References a [2DA](2DA-File-Format) memory token created in a previous 2DAList modification. The token number is extracted and the value is looked up from [2DA](2DA-File-Format) memory.
 
 **Example:**
 
@@ -579,19 +579,19 @@ model=2DAMEMORY5
 **Behavior:**
 
 - Token must be defined earlier in the same or a previous [2DA file](2DA-File-Format) modification
-- [value](GFF-File-Format#gff-data-types) stored in the token (as a [string](GFF-File-Format#gff-data-types)) is used as the cell [value](GFF-File-Format#gff-data-types)
+- value stored in the token (as a string) is used as the cell value
 - If token is not found, an error is raised
-- **Important:** `!FieldPath` tokens (used in GFFList) cannot be used here - only [string](GFF-File-Format#gff-data-types) [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) supported
-- The token [value](GFF-File-Format#gff-data-types) is looked up from `memory.memory_2da[token_id]` at runtime
+- **Important:** `!FieldPath` tokens (used in GFFList) cannot be used here - only string values [ARE](GFF-File-Format#are-area) supported
+- The token value is looked up from `memory.memory_2da[token_id]` at runtime
 - If the token contains a `PureWindowsPath` (from GFFList `!FieldPath`), a `TypeError` will be raised
 
 ### Special Functions
 
-#### high() - Maximum [value](GFF-File-Format#gff-data-types)
+#### high() - Maximum value
 
 **Syntax:** `ColumnName=high()` or `ColumnName=high(column_name)`
 
-Returns the maximum [value](GFF-File-Format#gff-data-types) from a column or the maximum row label.
+Returns the maximum value from a column or the maximum row label.
 
 **Without Column Name:**
 
@@ -609,16 +609,16 @@ forcehostile=high(modeltype)  ; Maximum value from "modeltype" column
 **Behavior:**
 
 - `high()` without column name in `RowLabel` context returns the maximum row label
-- `high()` without column name in a cell context returns the maximum [value](GFF-File-Format#gff-data-types) from that cell's column
-- `high(column)` returns the maximum [value](GFF-File-Format#gff-data-types) from the specified column
-- [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) compared as integers if possible, otherwise as [strings](GFF-File-Format#gff-data-types)
+- `high()` without column name in a cell context returns the maximum value from that cell's column
+- `high(column)` returns the maximum value from the specified column
+- values [ARE](GFF-File-Format#are-area) compared as integers if possible, otherwise as strings
 - Only works in ChangeRow, AddRow, and CopyRow (not in AddColumn)
 
-#### RowIndex - Current Row [index](2DA-File-Format#row-labels)
+#### RowIndex - Current Row index
 
 **Syntax:** `ColumnName=RowIndex`
 
-Returns the numeric [index](2DA-File-Format#row-labels) of the current row as a [string](GFF-File-Format#gff-data-types).
+Returns the numeric index of the current row as a string.
 
 **Example:**
 
@@ -628,15 +628,15 @@ index_value=RowIndex
 
 **Behavior:**
 
-- Returns the row index (0-based) as a [string](GFF-File-Format#gff-data-types)
-- Only works in ChangeRow, AddRow, and CopyRow cell [values](GFF-File-Format#gff-data-types)
+- Returns the row index (0-based) as a string
+- Only works in ChangeRow, AddRow, and CopyRow cell values
 - Cannot be used as a target (use `RowIndex=#` for targeting)
 
 #### RowLabel - Current Row Label
 
 **Syntax:** `ColumnName=RowLabel`
 
-Returns the label of the current row ([value](GFF-File-Format#gff-data-types) in the first column).
+Returns the label of the current row (value in the first column).
 
 **Example:**
 
@@ -646,15 +646,15 @@ label_copy=RowLabel
 
 **Behavior:**
 
-- Returns the row's label [value](GFF-File-Format#gff-data-types) as a [string](GFF-File-Format#gff-data-types)
-- Only works in ChangeRow, AddRow, and CopyRow cell [values](GFF-File-Format#gff-data-types)
+- Returns the row's label value as a string
+- Only works in ChangeRow, AddRow, and CopyRow cell values
 - Cannot be used as a target (use `RowLabel=value` for targeting)
 
-#### RowCell - [value](GFF-File-Format#gff-data-types) from Another Cell
+#### RowCell - value from Another Cell
 
 **Syntax:** `ColumnName=RowCell('column_name')`
 
-**Note:** This syntax is not directly supported in the INI [format](GFF-File-Format). In practice, you would reference a column name directly to get its [value](GFF-File-Format#gff-data-types), or use `2DAMEMORY#` tokens. The `RowCell` type exists internally but is primarily used for memory storage operations.
+**Note:** This syntax is not directly supported in the INI format. In practice, you would reference a column name directly to get its value, or use `2DAMEMORY#` tokens. The `RowCell` type exists internally but is primarily used for memory storage operations.
 
 **For Memory Storage:**
 
@@ -664,27 +664,27 @@ label_copy=RowLabel
 
 ## Memory Token System
 
-The memory token system allows you to store [values](GFF-File-Format#gff-data-types) from [2DA](2DA-File-Format) modifications for use in other sections or later modifications.
+The memory token system allows you to store values from [2DA](2DA-File-Format) modifications for use in other sections or later modifications.
 
 ### 2DAMEMORY Tokens
 
 **Syntax:** `2DAMEMORY#=value_source`
 
-Stores a [value](GFF-File-Format#gff-data-types) in [2DA](2DA-File-Format) memory at token `#`. The token number can be any non-negative integer (typically starting from 0 or 1).
+Stores a value in [2DA](2DA-File-Format) memory at token `#`. The token number can be any non-negative integer (typically starting from 0 or 1).
 
-**Available [value](GFF-File-Format#gff-data-types) Sources:**
+**Available value Sources:**
 
-| [value](GFF-File-Format#gff-data-types) Source | Description | Example | Internal [type](GFF-File-Format#data-types) |
+| value Source | Description | Example | Internal type |
 |--------------|-------------|---------|---------------|
-| `RowIndex` | Store the row's numeric index (0-based) as [string](GFF-File-Format#gff-data-types) | `2DAMEMORY10=RowIndex` | `RowValueRowIndex()` |
+| `RowIndex` | Store the row's numeric index (0-based) as string | `2DAMEMORY10=RowIndex` | `RowValueRowIndex()` |
 | `RowLabel` | Store the row's label value (first column) | `2DAMEMORY11=RowLabel` | `RowValueRowLabel()` |
-| `ColumnName` | Store the [value](GFF-File-Format#gff-data-types) from a specific column in the current row | `2DAMEMORY12=modeltype` | `RowValueRowCell(column)` |
-| `StrRef#` | Store the stringref [value](GFF-File-Format#gff-data-types) from a [TLK](TLK-File-Format) token (converted to [string](GFF-File-Format#gff-data-types)) | `2DAMEMORY13=StrRef50` | `RowValueTLKMemory(token_id)` |
-| `2DAMEMORY#` | Copy [value](GFF-File-Format#gff-data-types) from another [2DA](2DA-File-Format) token | `2DAMEMORY14=2DAMEMORY10` | References existing token |
+| `ColumnName` | Store the value from a specific column in the current row | `2DAMEMORY12=modeltype` | `RowValueRowCell(column)` |
+| `StrRef#` | Store the stringref value from a [TLK](TLK-File-Format) token (converted to string) | `2DAMEMORY13=StrRef50` | `RowValueTLKMemory(token_id)` |
+| `2DAMEMORY#` | Copy value from another [2DA](2DA-File-Format) token | `2DAMEMORY14=2DAMEMORY10` | References existing token |
 
-**Note:** The internal [types](GFF-File-Format#gff-data-types) listed above [ARE](GFF-File-Format#are-area) runtime evaluation objects that compute [values](GFF-File-Format#gff-data-types) when the modification is applied. They [ARE](GFF-File-Format#are-area) **only used for storage operations** (left side of `2DAMEMORY#=`), not for cell [value](GFF-File-Format#gff-data-types) assignments (right side of `ColumnName=`).
+**Note:** The internal types listed above [ARE](GFF-File-Format#are-area) runtime evaluation objects that compute values when the modification is applied. They [ARE](GFF-File-Format#are-area) **only used for storage operations** (left side of `2DAMEMORY#=`), not for cell value assignments (right side of `ColumnName=`).
 
-**Example - Storing Multiple [values](GFF-File-Format#gff-data-types):**
+**Example - Storing Multiple values:**
 
 ```ini
 [modify_appearance]
@@ -696,7 +696,7 @@ modeltype=1
 2DAMEMORY12=modeltype     ; Stores "1"
 ```
 
-**Example - Using Stored [values](GFF-File-Format#gff-data-types):**
+**Example - Using Stored values:**
 
 ```ini
 [add_new_appearance]
@@ -707,27 +707,27 @@ appearance=2DAMEMORY10    ; Use stored row index
 
 **Behavior:**
 
-- Tokens [ARE](GFF-File-Format#are-area) stored as [strings](GFF-File-Format#gff-data-types) in [2DA](2DA-File-Format) memory (`memory.memory_2da[token_id]`)
+- Tokens [ARE](GFF-File-Format#are-area) stored as strings in [2DA](2DA-File-Format) memory (`memory.memory_2da[token_id]`)
 - **Evaluation Order:** Memory storage operations (`2DAMEMORY#=...`) are evaluated **after** all cell modifications [ARE](GFF-File-Format#are-area) applied within the same modification section
 - This means you cannot use a token in a cell value (`ColumnName=2DAMEMORY#`) and create it (`2DAMEMORY#=...`) in the same section - create tokens in earlier modifications
 - Tokens [ARE](GFF-File-Format#are-area) available to all subsequent sections (GFFList, CompileList, HACKList, SSFList)
 - Tokens persist across multiple [2DA file](2DA-File-Format) modifications within the same `[2DAList]` section
 - If a token is referenced before being set, a `KeyError` is raised: `"2DAMEMORY{id} was not defined before use"`
-- **Storage [type](GFF-File-Format#data-types):** [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) stored as `str` type (or `PureWindowsPath` for GFFList `!FieldPath`, but those cannot be used in 2DAList)
+- **Storage type:** values [ARE](GFF-File-Format#are-area) stored as `str` type (or `PureWindowsPath` for GFFList `!FieldPath`, but those cannot be used in 2DAList)
 
 ### [StrRef](TLK-File-Format#string-references-strref) Tokens ([TLK](TLK-File-Format) Memory)
 
 **Syntax:** `[StrRef](TLK-File-Format#string-references-strref)#=value_source`
 
-Stores a stringref [value](GFF-File-Format#gff-data-types) in [TLK](TLK-File-Format) memory at token `#`. These tokens [ARE](GFF-File-Format#are-area) primarily created in `[TLKList]`, but can also be set here.
+Stores a stringref value in [TLK](TLK-File-Format) memory at token `#`. These tokens [ARE](GFF-File-Format#are-area) primarily created in `[TLKList]`, but can also be set here.
 
-**Available [value](GFF-File-Format#gff-data-types) Sources:**
+**Available value Sources:**
 
-| [value](GFF-File-Format#gff-data-types) Source | Description | Example |
+| value Source | Description | Example |
 |--------------|-------------|---------|
-| `ColumnName` | Store the stringref from a specific column ([value](GFF-File-Format#gff-data-types) must be convertible to integer) | `StrRef20=name` |
-| `StrRef#` | Copy stringref [value](GFF-File-Format#gff-data-types) from another [TLK](TLK-File-Format) token | `StrRef21=StrRef20` |
-| `2DAMEMORY#` | Store stringref from a [2DA](2DA-File-Format) token ([value](GFF-File-Format#gff-data-types) must be convertible to integer) | `StrRef22=2DAMEMORY10` |
+| `ColumnName` | Store the stringref from a specific column (value must be convertible to integer) | `StrRef20=name` |
+| `StrRef#` | Copy stringref value from another [TLK](TLK-File-Format) token | `StrRef21=StrRef20` |
+| `2DAMEMORY#` | Store stringref from a [2DA](2DA-File-Format) token (value must be convertible to integer) | `StrRef22=2DAMEMORY10` |
 
 **Example:**
 
@@ -741,19 +741,19 @@ StrRef31=StrRef30      ; Copy token 30 to token 31
 
 **Behavior:**
 
-- [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) stored as integers in [TLK](TLK-File-Format) memory
-- The source [value](GFF-File-Format#gff-data-types) must be convertible to an integer (stringrefs [ARE](GFF-File-Format#are-area) integers)
+- values [ARE](GFF-File-Format#are-area) stored as integers in [TLK](TLK-File-Format) memory
+- The source value must be convertible to an integer (stringrefs [ARE](GFF-File-Format#are-area) integers)
 - Tokens [ARE](GFF-File-Format#are-area) available to all subsequent sections
-- [StrRef](TLK-File-Format#string-references-strref) tokens [ARE](GFF-File-Format#are-area) primarily used in GFFList for localized [string](GFF-File-Format#gff-data-types) [fields](GFF-File-Format#file-structure-overview)
+- [StrRef](TLK-File-Format#string-references-strref) tokens [ARE](GFF-File-Format#are-area) primarily used in GFFList for localized string fields
 
 ### Token Usage in Other Sections
 
 Once created, `2DAMEMORY#` and `StrRef#` tokens can be used in:
 
 1. **Later [2DA](2DA-File-Format) modifications** - Use in ChangeRow, AddRow, CopyRow, or AddColumn
-2. **GFFList** - Use in [field](GFF-File-Format#file-structure-overview) [values](GFF-File-Format#gff-data-types), [field](GFF-File-Format#file-structure-overview) paths, or TypeId [fields](GFF-File-Format#file-structure-overview)
+2. **GFFList** - Use in field values, field paths, or TypeId fields
 3. **CompileList** - Use as preprocessor tokens in [NSS](NSS-File-Format) scripts (`#2DAMEMORY#` and `#StrRef#`)
-4. **HACKList** - Use in binary patch [values](GFF-File-Format#gff-data-types)
+4. **HACKList** - Use in binary patch values
 5. **SSFList** - Use for sound stringref assignments
 
 **Example Cross-Section Usage:**
@@ -818,7 +818,7 @@ label=MODIFIED_APPEARANCE
 modeltype=2
 ```
 
-This demonstrates how you can store a row [index](2DA-File-Format#row-labels) in one modification and use it to target that row in a later modification.
+This demonstrates how you can store a row index in one modification and use it to target that row in a later modification.
 
 ### Example 2: Add New Appearance with Exclusive Check
 
@@ -854,7 +854,7 @@ modeltype=3
 2DAMEMORY20=RowIndex
 ```
 
-### Example 4: Add Column with Custom [values](GFF-File-Format#gff-data-types)
+### Example 4: Add Column with Custom values
 
 ```ini
 [2DAList]
@@ -933,7 +933,7 @@ label=MY_APPEARANCE
 name=StrRef1000    ; Use token from TLKList
 ```
 
-### Example 7: Cross-[file](GFF-File-Format) Token Usage
+### Example 7: Cross-file Token Usage
 
 ```ini
 [2DAList]
@@ -964,10 +964,10 @@ appearance=2DAMEMORY10  ; Use token from previous file modification
 
 **Solutions:**
 
-- Verify the target row exists (check RowIndex is within bounds, RowLabel matches exactly, or LabelIndex [value](GFF-File-Format#gff-data-types) exists in "label" column)
+- Verify the target row exists (check RowIndex is within bounds, RowLabel matches exactly, or LabelIndex value exists in "label" column)
 - Ensure case-sensitivity: `RowLabel=MyLabel` will not match `mylabel`
 - Check that the [2DA file](2DA-File-Format) has been loaded correctly
-- Verify `!SourceFile` is correct if using a custom source [file](GFF-File-Format)
+- Verify `!SourceFile` is correct if using a custom source file
 
 **Example Fix:**
 
@@ -990,7 +990,7 @@ label=MODIFIED
 **Solutions:**
 
 - Ensure the token is created **before** it's used
-- For 2DAMEMORY tokens: Create in an earlier modification in the same [file](GFF-File-Format) or previous [file](GFF-File-Format)
+- For 2DAMEMORY tokens: Create in an earlier modification in the same file or previous file
 - For [StrRef](TLK-File-Format#string-references-strref) tokens: Ensure they're created in `[TLKList]` or earlier in `[2DAList]`
 - Check token numbers match exactly (no typos)
 
@@ -1010,7 +1010,7 @@ label=NEW
 appearance=2DAMEMORY10   ; Use after creation
 ```
 
-**Note:** Within the same modification section, memory storage operations (`2DAMEMORY#=...`) are evaluated **after** cell modifications (`ColumnName=...`), so you cannot use a token in a cell [value](GFF-File-Format#gff-data-types) and create it in the same section.
+**Note:** Within the same modification section, memory storage operations (`2DAMEMORY#=...`) are evaluated **after** cell modifications (`ColumnName=...`), so you cannot use a token in a cell value and create it in the same section.
 
 **Example of the problem:**
 
@@ -1040,7 +1040,7 @@ appearance=2DAMEMORY10    ; Tries to use token 10 (not yet created)
 
 **Solutions:**
 
-- Understand that `ExclusiveColumn` checks if a row with the same [value](GFF-File-Format#gff-data-types) exists
+- Understand that `ExclusiveColumn` checks if a row with the same value exists
 - If match found: existing row is modified
 - If no match: new row is added
 - Ensure the column specified in `ExclusiveColumn` is included in the cell modifications
@@ -1057,15 +1057,15 @@ name=StrRef100
 
 ### AddColumn Memory Storage Syntax
 
-**Problem:** Incorrect syntax for storing [values](GFF-File-Format#gff-data-types) from new column
+**Problem:** Incorrect syntax for storing values from new column
 
 **Solutions:**
 
-- Use `I#` [format](GFF-File-Format) for row [index](2DA-File-Format#row-labels): `2DAMEMORY#=I5` (stores [value](GFF-File-Format#gff-data-types) from row [index](2DA-File-Format#row-labels) 5 in the new column)
-- Use `Llabel` [format](GFF-File-Format) for row label: `2DAMEMORY#=L1` (stores [value](GFF-File-Format#gff-data-types) from row with label "1" in the new column)
+- Use `I#` format for row index: `2DAMEMORY#=I5` (stores value from row index 5 in the new column)
+- Use `Llabel` format for row label: `2DAMEMORY#=L1` (stores value from row with label "1" in the new column)
 - Memory is stored **after** the column is created and all insert values (`I#=` and `Llabel=`) [ARE](GFF-File-Format#are-area) applied
-- Cannot use other RowValue types (like `RowIndex`, `RowLabel`, `ColumnName`, etc.) directly in AddColumn memory storage - only `I#` and `Llabel` [formats](GFF-File-Format) [ARE](GFF-File-Format#are-area) supported
-- The `I#` or `Llabel` syntax tells the patcher to retrieve the cell [value](GFF-File-Format#gff-data-types) from that specific row in the newly created column
+- Cannot use other RowValue types (like `RowIndex`, `RowLabel`, `ColumnName`, etc.) directly in AddColumn memory storage - only `I#` and `Llabel` formats [ARE](GFF-File-Format#are-area) supported
+- The `I#` or `Llabel` syntax tells the patcher to retrieve the cell value from that specific row in the newly created column
 
 **Example:**
 
@@ -1078,26 +1078,26 @@ I5=Value
 2DAMEMORY11=RowIndex  ; Wrong - RowIndex not supported in AddColumn memory storage
 ```
 
-### Target [type](GFF-File-Format#data-types) Confusion
+### Target type Confusion
 
 **Problem:** Confusion between `RowLabel` and `LabelIndex`
 
 **Solutions:**
 
-- `RowLabel=value` → Uses the row's label (first column [value](GFF-File-Format#gff-data-types)) to find the row
-- `LabelIndex=value` → Searches the "label" column for a matching [value](GFF-File-Format#gff-data-types)
-- Use `RowLabel` when you know the row label [value](GFF-File-Format#gff-data-types)
+- `RowLabel=value` → Uses the row's label (first column value) to find the row
+- `LabelIndex=value` → Searches the "label" column for a matching value
+- Use `RowLabel` when you know the row label value
 - Use `LabelIndex` when you need to search within a column named "label"
 
-### Empty [string](GFF-File-Format#gff-data-types) vs Missing [values](GFF-File-Format#gff-data-types)
+### Empty string vs Missing values
 
 **Problem:** Confusion about `****` vs omitted keys
 
 **Solutions:**
 
-- `****` explicitly sets a cell to an empty [string](GFF-File-Format#gff-data-types)
+- `****` explicitly sets a cell to an empty string
 - Omitting a column [KEY](KEY-File-Format) leaves the cell unchanged (in ChangeRow/CopyRow) or empty (in AddRow)
-- Use `****` when you want to explicitly clear a [value](GFF-File-Format#gff-data-types)
+- Use `****` when you want to explicitly clear a value
 
 ### Special Functions Not Working
 
@@ -1105,8 +1105,8 @@ I5=Value
 
 **Solutions:**
 
-- Special functions only work in ChangeRow, AddRow, and CopyRow cell [values](GFF-File-Format#gff-data-types)
-- They do **not** work in AddColumn inserts or default [values](GFF-File-Format#gff-data-types)
+- Special functions only work in ChangeRow, AddRow, and CopyRow cell values
+- They do **not** work in AddColumn inserts or default values
 - `high()` without column name uses the current column context
 - Check syntax: `high()` not `high`, `RowIndex` not `Rowindex`
 
@@ -1180,7 +1180,7 @@ File0=script.nss
 
 ### Using 2DAMEMORY Tokens in HACKList
 
-In `[HACKList]`, you can use `2DAMEMORY#` tokens for binary patch [values](GFF-File-Format#gff-data-types):
+In `[HACKList]`, you can use `2DAMEMORY#` tokens for binary patch values:
 
 ```ini
 [2DAList]
@@ -1224,9 +1224,9 @@ Battlecry 1=2DAMEMORY10  ; Use stored value as stringref
 
 ## Processing Order and Execution
 
-### Modification Order Within a [file](GFF-File-Format)
+### Modification Order Within a file
 
-Modifications within a single [2DA file](2DA-File-Format) [ARE](GFF-File-Format#are-area) processed in the order they appear in the [file](GFF-File-Format) section:
+Modifications within a single [2DA file](2DA-File-Format) [ARE](GFF-File-Format#are-area) processed in the order they appear in the file section:
 
 ```ini
 [appearance.2da]
@@ -1244,11 +1244,11 @@ Processing order:
 3. All `CopyRow#` modifications (in order)
 4. All `AddColumn#` modifications (in order)
 
-**Important:** Since AddColumn runs last, columns added by AddColumn cannot be used in earlier ChangeRow/AddRow/CopyRow modifications within the same [file](GFF-File-Format). However, tokens created in earlier modifications [ARE](GFF-File-Format#are-area) available for AddColumn.
+**Important:** Since AddColumn runs last, columns added by AddColumn cannot be used in earlier ChangeRow/AddRow/CopyRow modifications within the same file. However, tokens created in earlier modifications [ARE](GFF-File-Format#are-area) available for AddColumn.
 
-### Cross-[file](GFF-File-Format) Token Availability
+### Cross-file Token Availability
 
-Tokens created in earlier [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) available to later [files](GFF-File-Format):
+Tokens created in earlier files [ARE](GFF-File-Format#are-area) available to later files:
 
 ```ini
 [2DAList]
@@ -1283,7 +1283,7 @@ name=StrRef100
 
 This will modify existing row if `label=MY_APPEARANCE` exists, otherwise add a new row.
 
-### Pattern 2: Storing Multiple [values](GFF-File-Format#gff-data-types) from One Row
+### Pattern 2: Storing Multiple values from One Row
 
 ```ini
 [modify_appearance]
@@ -1294,7 +1294,7 @@ RowIndex=5
 2DAMEMORY13=name
 ```
 
-Store multiple [values](GFF-File-Format#gff-data-types) for use in other sections.
+Store multiple values for use in other sections.
 
 ### Pattern 3: Incremental Row Labels
 
@@ -1308,7 +1308,7 @@ label=NEW_APPEARANCE
 
 ### Pattern 4: Copy and Modify Pattern
 
-Copy an existing row, modify some [values](GFF-File-Format#gff-data-types), and store the new row [index](2DA-File-Format#row-labels):
+Copy an existing row, modify some values, and store the new row index:
 
 ```ini
 [copy_modify]
@@ -1323,20 +1323,20 @@ modeltype=3
 
 The `[2DAList]` section provides powerful tools for modifying [2DA files](2DA-File-Format):
 
-- **ChangeRow**: Modify existing rows by [index](2DA-File-Format#row-labels), label, or label column
+- **ChangeRow**: Modify existing rows by index, label, or label column
 - **AddRow**: Add new rows with optional duplicate checking
 - **CopyRow**: Copy existing rows with modifications
-- **AddColumn**: Add new columns with default and custom [values](GFF-File-Format#gff-data-types)
-- **Memory Tokens**: Store [values](GFF-File-Format#gff-data-types) for cross-[file](GFF-File-Format) and cross-section use
+- **AddColumn**: Add new columns with default and custom values
+- **Memory Tokens**: Store values for cross-file and cross-section use
 - **Token Integration**: Use [StrRef](TLK-File-Format#string-references-strref) tokens from TLKList and provide 2DAMEMORY tokens to other sections
 
 [KEY](KEY-File-Format) points to remember:
 
 1. Tokens [ARE](GFF-File-Format#are-area) evaluated after cell modifications within the same section
-2. Tokens persist across multiple [files](GFF-File-Format) in the same `[2DAList]` section
+2. Tokens persist across multiple files in the same `[2DAList]` section
 3. `ExclusiveColumn` provides smart duplicate prevention
 4. Special functions (`high()`, `RowIndex`, `RowLabel`) only work in ChangeRow/AddRow/CopyRow
-5. AddColumn runs last within a [file](GFF-File-Format), so new columns can't be used in earlier modifications
+5. AddColumn runs last within a file, so new columns can't be used in earlier modifications
 6. All memory tokens [ARE](GFF-File-Format#are-area) available to subsequent sections (GFFList, CompileList, HACKList, SSFList)
 
 For more information on related sections, see:

@@ -22,7 +22,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `255. BeginConversation`
 - Use this in an OnDialog script to start up the dialog tree.
-- - sResRef: if this is not specified, the default dialog [file](GFF-File-Format) will be used
+- - sResRef: if this is not specified, the default dialog file will be used
 - - oObjectToDialog: if this is not specified the person that triggered the
 - event will be used
 
@@ -65,7 +65,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `711. GetLastConversation`
 - GetLastConversation
-- Gets the last conversation [string](GFF-File-Format#gff-data-types).
+- Gets the last conversation string.
 
 <a id="getlastspeaker"></a>
 
@@ -121,7 +121,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `505. SetLockOrientationInDialog`
 - SetLockOrientationInDialog
-- Allows the locking and unlocking of [orientation](MDL-MDX-File-Format#node-header) changes for an object in dialog
+- Allows the locking and unlocking of orientation changes for an object in dialog
 - - oObject - Object
 - - nValue - TRUE or FALSE
 
@@ -136,7 +136,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Immediately speak a conversation one-liner.
 - - sDialogResRef
 - - oTokenTarget: This must be specified if there [ARE](GFF-File-Format#are-area) creature-specific tokens
-- in the [string](GFF-File-Format#gff-data-types).
+- in the string.
 
 - `sDialogResRef`: string (default: ``)
 - `oTokenTarget`: object (default: `32767`)
@@ -151,5 +151,5 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - sStringToSpeak
 - - nTalkVolume: TALKVOLUME_*
 
-- `sStringToSpeak`: [string](GFF-File-Format#gff-data-types)
+- `sStringToSpeak`: string
 - `nTalkVolume`: int (default: `0`)

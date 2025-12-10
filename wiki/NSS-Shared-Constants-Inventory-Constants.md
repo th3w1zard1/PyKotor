@@ -8,19 +8,19 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `INVENTORY_DISTURB_TYPE_ADDED`
 
-(0): Inventory Disturb [type](GFF-File-Format#data-types) Added
+(0): Inventory Disturb type Added
 
 <a id="inventory_disturb_type_removed"></a>
 
 ## `INVENTORY_DISTURB_TYPE_REMOVED`
 
-(1): Inventory Disturb [type](GFF-File-Format#data-types) Removed
+(1): Inventory Disturb type Removed
 
 <a id="inventory_disturb_type_stolen"></a>
 
 ## `INVENTORY_DISTURB_TYPE_STOLEN`
 
-(2): Inventory Disturb [type](GFF-File-Format#data-types) Stolen
+(2): Inventory Disturb type Stolen
 
 <a id="inventory_slot_belt"></a>
 

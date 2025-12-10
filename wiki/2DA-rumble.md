@@ -2,18 +2,18 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines rumble/vibration patterns for [controller](MDL-MDX-File-Format#controllers) feedback. The engine uses this [file](GFF-File-Format) to determine rumble patterns for camera shake and [controller](MDL-MDX-File-Format#controllers) vibration effects.
+**Engine Usage**: Defines rumble/vibration patterns for [controller](MDL-MDX-File-Format#controllers) feedback. The engine uses this file to determine rumble patterns for camera shake and [controller](MDL-MDX-File-Format#controllers) vibration effects.
 
-**Row [index](2DA-File-Format#row-labels)**: Rumble Pattern ID (integer)
+**Row index**: Rumble Pattern ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Rumble pattern label |
-| `lsamples` | Integer | Left channel sample [count](GFF-File-Format#file-structure-overview) |
-| `rsamples` | Integer | Right channel sample [count](GFF-File-Format#file-structure-overview) |
-| Additional columns | Various | Rumble pattern [data](GFF-File-Format#file-structure-overview) |
+| `label` | string | Rumble pattern label |
+| `lsamples` | Integer | Left channel sample count |
+| `rsamples` | Integer | Right channel sample count |
+| Additional columns | Various | Rumble pattern data |
 
 **References**:
 

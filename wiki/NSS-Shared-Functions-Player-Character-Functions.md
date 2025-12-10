@@ -114,8 +114,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `641. SWMG_GetPlayerOffset`
 - SWMG_GetPlayerOffset
-- returns a [vector](GFF-File-Format#gff-data-types) with the player [rotation](MDL-MDX-File-Format#node-header) for [rotation](MDL-MDX-File-Format#node-header) minigames
-- returns a [vector](GFF-File-Format#gff-data-types) with the player translation for translation minigames
+- returns a vector with the player rotation for rotation minigames
+- returns a vector with the player translation for translation minigames
 
 <a id="swmg_getplayerorigin"></a>
 
@@ -205,7 +205,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `647. SWMG_SetPlayerOffset`
 - SWMG_SetPlayerOffset
 
-- `vOffset`: [vector](GFF-File-Format#gff-data-types)
+- `vOffset`: vector
 
 <a id="swmg_setplayerorigin"></a>
 
@@ -214,7 +214,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `656. SWMG_SetPlayerOrigin`
 - SWMG_SetPlayerOrigin
 
-- `vOrigin`: [vector](GFF-File-Format#gff-data-types)
+- `vOrigin`: vector
 
 <a id="swmg_setplayerspeed"></a>
 
@@ -232,7 +232,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `718. SWMG_SetPlayerTunnelInfinite`
 - Sets whether each of the dimensions is infinite
 
-- `vInfinite`: [vector](GFF-File-Format#gff-data-types)
+- `vInfinite`: vector
 
 <a id="swmg_setplayertunnelneg"></a>
 
@@ -241,7 +241,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `654. SWMG_SetPlayerTunnelNeg`
 - SWMG_SetPlayerTunnelNeg
 
-- `vTunnel`: [vector](GFF-File-Format#gff-data-types)
+- `vTunnel`: vector
 
 <a id="swmg_setplayertunnelpos"></a>
 
@@ -250,4 +250,4 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `652. SWMG_SetPlayerTunnelPos`
 - SWMG_SetPlayerTunnelPos
 
-- `vTunnel`: [vector](GFF-File-Format#gff-data-types)
+- `vTunnel`: vector

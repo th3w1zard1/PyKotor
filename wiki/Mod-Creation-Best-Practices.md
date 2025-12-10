@@ -8,7 +8,7 @@ A common problem you may encounter when creating a mod, is the inability to remo
 
 ## Removing [GFF](GFF-File-Format) struct's?
 
-In this example, I needed to remove all (20+) box placeables, 2 of 4 droids in the module and move the remaining 2 droids to other [positions](MDL-MDX-File-Format#node-header). I tried several possible solutions, including `GetFirstObjectInShape / GetNextObjectInShape` and `GetNearestObjectToLocation` functions. I think these functions worked well with a small number of objects, but at times left a few of the 20+ boxes placed on the level. So I switched to `GetObjectByTag / DestroyObject` functions.
+In this example, I needed to remove all (20+) box placeables, 2 of 4 droids in the module and move the remaining 2 droids to other positions. I tried several possible solutions, including `GetFirstObjectInShape / GetNextObjectInShape` and `GetNearestObjectToLocation` functions. I think these functions worked well with a small number of objects, but at times left a few of the 20+ boxes placed on the level. So I switched to `GetObjectByTag / DestroyObject` functions.
 
 The summary:
 
@@ -18,7 +18,7 @@ The summary:
 
 3.Attach the script to an object, dialog, trigger or onEnter script of the module (not recommended, bad for compatibility with other mods).
 
-It was easy for me to remove 4 droids instead of 2, and then create 2 in new [positions](MDL-MDX-File-Format#node-header). But if one needs to, for example, remove 5 out of 30 instances of an object in a module, then one should probably use the `GetFirstObjectInShape/GetNextObjectInShape` functions.
+It was easy for me to remove 4 droids instead of 2, and then create 2 in new positions. But if one needs to, for example, remove 5 out of 30 instances of an object in a module, then one should probably use the `GetFirstObjectInShape/GetNextObjectInShape` functions.
 
 Example of code:
 
@@ -52,7 +52,7 @@ void DestroyPlaceablesAndCreaturesInArea(location oLoc1, int nShape, float areaS
 
 ## Storing 2DAMEMORY without duplicating/creating a row
 
-The ExclusiveColumn [field](GFF-File-Format#file-structure-overview) is perfect for this situation. Here's an example where we know the 'label' and we want to simply store the RowIndex.
+The ExclusiveColumn field is perfect for this situation. Here's an example where we know the 'label' and we want to simply store the RowIndex.
 
 ```ini
 [genericdoors.2da]

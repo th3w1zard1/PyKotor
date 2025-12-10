@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Maps dialog [animation](MDL-MDX-File-Format#animation-header) ordinals to [animation](MDL-MDX-File-Format#animation-header) names for use in conversations. The engine uses this [file](GFF-File-Format) to determine which [animation](MDL-MDX-File-Format#animation-header) to play when a dialog line specifies an [animation](MDL-MDX-File-Format#animation-header) ordinal.
+**Engine Usage**: Maps dialog [animation](MDL-MDX-File-Format#animation-header) ordinals to [animation](MDL-MDX-File-Format#animation-header) names for use in conversations. The engine uses this file to determine which [animation](MDL-MDX-File-Format#animation-header) to play when a dialog line specifies an [animation](MDL-MDX-File-Format#animation-header) ordinal.
 
-**Row [index](2DA-File-Format#row-labels)**: [animation](MDL-MDX-File-Format#animation-header) Index (integer, ordinal - 10000)
+**Row index**: [animation](MDL-MDX-File-Format#animation-header) Index (integer, ordinal - 10000)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | [animation](MDL-MDX-File-Format#animation-header) label |
-| `name` | [string](GFF-File-Format#gff-data-types) | [animation](MDL-MDX-File-Format#animation-header) name (used to look up [animation](MDL-MDX-File-Format#animation-header) in [model](MDL-MDX-File-Format)) |
+| `label` | string | [animation](MDL-MDX-File-Format#animation-header) label |
+| `name` | string | [animation](MDL-MDX-File-Format#animation-header) name (used to look up [animation](MDL-MDX-File-Format#animation-header) in [model](MDL-MDX-File-Format)) |
 
 **References**:
 

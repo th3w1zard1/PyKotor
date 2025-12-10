@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines droid discharge effect configurations. The engine uses this [file](GFF-File-Format) to determine droid discharge properties.
+**Engine Usage**: Defines droid discharge effect configurations. The engine uses this file to determine droid discharge properties.
 
-**Row [index](2DA-File-Format#row-labels)**: Droid Discharge ID (integer)
+**Row index**: Droid Discharge ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Droid discharge label |
-| `>>##HEADER##<<` | [ResRef](GFF-File-Format#gff-data-types) | [header](GFF-File-Format#file-header) [resource reference](GFF-File-Format#gff-data-types) |
+| `label` | string | Droid discharge label |
+| `>>##HEADER##<<` | [ResRef](GFF-File-Format#gff-data-types) | header [resource reference](GFF-File-Format#gff-data-types) |
 | Additional columns | Various | Droid discharge properties |
 
 **References**:

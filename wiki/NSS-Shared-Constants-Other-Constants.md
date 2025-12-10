@@ -38,7 +38,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `AC_VS_DAMAGE_TYPE_ALL`
 
-(8199): Ac Vs Damage [type](GFF-File-Format#data-types) All
+(8199): Ac Vs Damage type All
 
 <a id="action_animalempathy"></a>
 
@@ -1628,7 +1628,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `BASE_ITEM_DATA_PAD`
 
-(52): Base Item [data](GFF-File-Format#file-structure-overview) Pad
+(52): Base Item data Pad
 
 <a id="base_item_disrupter_pistol"></a>
 
@@ -2090,97 +2090,97 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `CONVERSATION_TYPE_CINEMATIC`
 
-(0): Conversation [type](GFF-File-Format#data-types) Cinematic
+(0): Conversation type Cinematic
 
 <a id="conversation_type_computer"></a>
 
 ## `CONVERSATION_TYPE_COMPUTER`
 
-(1): Conversation [type](GFF-File-Format#data-types) Computer
+(1): Conversation type Computer
 
 <a id="creature_size_huge"></a>
 
 ## `CREATURE_SIZE_HUGE`
 
-(5): Creature [size](GFF-File-Format#file-structure-overview) Huge
+(5): Creature size Huge
 
 <a id="creature_size_invalid"></a>
 
 ## `CREATURE_SIZE_INVALID`
 
-(0): Creature [size](GFF-File-Format#file-structure-overview) Invalid
+(0): Creature size Invalid
 
 <a id="creature_size_large"></a>
 
 ## `CREATURE_SIZE_LARGE`
 
-(4): Creature [size](GFF-File-Format#file-structure-overview) Large
+(4): Creature size Large
 
 <a id="creature_size_medium"></a>
 
 ## `CREATURE_SIZE_MEDIUM`
 
-(3): Creature [size](GFF-File-Format#file-structure-overview) Medium
+(3): Creature size Medium
 
 <a id="creature_size_small"></a>
 
 ## `CREATURE_SIZE_SMALL`
 
-(2): Creature [size](GFF-File-Format#file-structure-overview) Small
+(2): Creature size Small
 
 <a id="creature_size_tiny"></a>
 
 ## `CREATURE_SIZE_TINY`
 
-(1): Creature [size](GFF-File-Format#file-structure-overview) Tiny
+(1): Creature size Tiny
 
 <a id="creature_type_class"></a>
 
 ## `CREATURE_TYPE_CLASS`
 
-(2): Creature [type](GFF-File-Format#data-types) Class
+(2): Creature type Class
 
 <a id="creature_type_does_not_have_spell_effect"></a>
 
 ## `CREATURE_TYPE_DOES_NOT_HAVE_SPELL_EFFECT`
 
-(6): Creature [type](GFF-File-Format#data-types) Does Not Have Spell Effect
+(6): Creature type Does Not Have Spell Effect
 
 <a id="creature_type_has_spell_effect"></a>
 
 ## `CREATURE_TYPE_HAS_SPELL_EFFECT`
 
-(5): Creature [type](GFF-File-Format#data-types) Has Spell Effect
+(5): Creature type Has Spell Effect
 
 <a id="creature_type_is_alive"></a>
 
 ## `CREATURE_TYPE_IS_ALIVE`
 
-(4): Creature [type](GFF-File-Format#data-types) Is Alive
+(4): Creature type Is Alive
 
 <a id="creature_type_perception"></a>
 
 ## `CREATURE_TYPE_PERCEPTION`
 
-(7): Creature [type](GFF-File-Format#data-types) Perception
+(7): Creature type Perception
 
 <a id="creature_type_player_char"></a>
 
 ## `CREATURE_TYPE_PLAYER_CHAR`
 
-(1): Creature [type](GFF-File-Format#data-types) Player [char](GFF-File-Format#gff-data-types)
+(1): Creature type Player [char](GFF-File-Format#gff-data-types)
 
 <a id="creature_type_racial_type"></a>
 
 ## `CREATURE_TYPE_RACIAL_TYPE`
 
-(0): Creature [type](GFF-File-Format#data-types) Racial [type](GFF-File-Format#data-types)
+(0): Creature type Racial type
 
 <a id="creature_type_reputation"></a>
 
 ## `CREATURE_TYPE_REPUTATION`
 
-(3): Creature [type](GFF-File-Format#data-types) Reputation
+(3): Creature type Reputation
 
 <a id="damage_bonus_1"></a>
 
@@ -2288,79 +2288,79 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `DAMAGE_TYPE_ACID`
 
-(16): Damage [type](GFF-File-Format#data-types) Acid
+(16): Damage type Acid
 
 <a id="damage_type_blaster"></a>
 
 ## `DAMAGE_TYPE_BLASTER`
 
-(4096): Damage [type](GFF-File-Format#data-types) Blaster
+(4096): Damage type Blaster
 
 <a id="damage_type_bludgeoning"></a>
 
 ## `DAMAGE_TYPE_BLUDGEONING`
 
-(1): Damage [type](GFF-File-Format#data-types) Bludgeoning
+(1): Damage type Bludgeoning
 
 <a id="damage_type_cold"></a>
 
 ## `DAMAGE_TYPE_COLD`
 
-(32): Damage [type](GFF-File-Format#data-types) Cold
+(32): Damage type Cold
 
 <a id="damage_type_dark_side"></a>
 
 ## `DAMAGE_TYPE_DARK_SIDE`
 
-(512): Damage [type](GFF-File-Format#data-types) Dark Side
+(512): Damage type Dark Side
 
 <a id="damage_type_electrical"></a>
 
 ## `DAMAGE_TYPE_ELECTRICAL`
 
-(128): Damage [type](GFF-File-Format#data-types) Electrical
+(128): Damage type Electrical
 
 <a id="damage_type_fire"></a>
 
 ## `DAMAGE_TYPE_FIRE`
 
-(256): Damage [type](GFF-File-Format#data-types) Fire
+(256): Damage type Fire
 
 <a id="damage_type_ion"></a>
 
 ## `DAMAGE_TYPE_ION`
 
-(2048): Damage [type](GFF-File-Format#data-types) Ion
+(2048): Damage type Ion
 
 <a id="damage_type_light_side"></a>
 
 ## `DAMAGE_TYPE_LIGHT_SIDE`
 
-(64): Damage [type](GFF-File-Format#data-types) Light Side
+(64): Damage type Light Side
 
 <a id="damage_type_piercing"></a>
 
 ## `DAMAGE_TYPE_PIERCING`
 
-(2): Damage [type](GFF-File-Format#data-types) Piercing
+(2): Damage type Piercing
 
 <a id="damage_type_slashing"></a>
 
 ## `DAMAGE_TYPE_SLASHING`
 
-(4): Damage [type](GFF-File-Format#data-types) Slashing
+(4): Damage type Slashing
 
 <a id="damage_type_sonic"></a>
 
 ## `DAMAGE_TYPE_SONIC`
 
-(1024): Damage [type](GFF-File-Format#data-types) Sonic
+(1024): Damage type Sonic
 
 <a id="damage_type_universal"></a>
 
 ## `DAMAGE_TYPE_UNIVERSAL`
 
-(8): Damage [type](GFF-File-Format#data-types) Universal
+(8): Damage type Universal
 
 <a id="direction_east"></a>
 
@@ -2390,1831 +2390,1831 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `DISGUISE_TYPE_C_BANTHA`
 
-(53): Disguise [type](GFF-File-Format#data-types) C Bantha
+(53): Disguise type C Bantha
 
 <a id="disguise_type_c_brith"></a>
 
 ## `DISGUISE_TYPE_C_BRITH`
 
-(54): Disguise [type](GFF-File-Format#data-types) C Brith
+(54): Disguise type C Brith
 
 <a id="disguise_type_c_dewback"></a>
 
 ## `DISGUISE_TYPE_C_DEWBACK`
 
-(55): Disguise [type](GFF-File-Format#data-types) C Dewback
+(55): Disguise type C Dewback
 
 <a id="disguise_type_c_drdassassin"></a>
 
 ## `DISGUISE_TYPE_C_DRDASSASSIN`
 
-(56): Disguise [type](GFF-File-Format#data-types) C Drdassassin
+(56): Disguise type C Drdassassin
 
 <a id="disguise_type_c_drdastro"></a>
 
 ## `DISGUISE_TYPE_C_DRDASTRO`
 
-(57): Disguise [type](GFF-File-Format#data-types) C Drdastro
+(57): Disguise type C Drdastro
 
 <a id="disguise_type_c_drdg"></a>
 
 ## `DISGUISE_TYPE_C_DRDG`
 
-(58): Disguise [type](GFF-File-Format#data-types) C Drdg
+(58): Disguise type C Drdg
 
 <a id="disguise_type_c_drdmkfour"></a>
 
 ## `DISGUISE_TYPE_C_DRDMKFOUR`
 
-(59): Disguise [type](GFF-File-Format#data-types) C Drdmkfour
+(59): Disguise type C Drdmkfour
 
 <a id="disguise_type_c_drdmkone"></a>
 
 ## `DISGUISE_TYPE_C_DRDMKONE`
 
-(60): Disguise [type](GFF-File-Format#data-types) C Drdmkone
+(60): Disguise type C Drdmkone
 
 <a id="disguise_type_c_drdmktwo"></a>
 
 ## `DISGUISE_TYPE_C_DRDMKTWO`
 
-(61): Disguise [type](GFF-File-Format#data-types) C Drdmktwo
+(61): Disguise type C Drdmktwo
 
 <a id="disguise_type_c_drdprobe"></a>
 
 ## `DISGUISE_TYPE_C_DRDPROBE`
 
-(62): Disguise [type](GFF-File-Format#data-types) C Drdprobe
+(62): Disguise type C Drdprobe
 
 <a id="disguise_type_c_drdprot"></a>
 
 ## `DISGUISE_TYPE_C_DRDPROT`
 
-(63): Disguise [type](GFF-File-Format#data-types) C Drdprot
+(63): Disguise type C Drdprot
 
 <a id="disguise_type_c_drdsentry"></a>
 
 ## `DISGUISE_TYPE_C_DRDSENTRY`
 
-(64): Disguise [type](GFF-File-Format#data-types) C Drdsentry
+(64): Disguise type C Drdsentry
 
 <a id="disguise_type_c_drdspyder"></a>
 
 ## `DISGUISE_TYPE_C_DRDSPYDER`
 
-(65): Disguise [type](GFF-File-Format#data-types) C Drdspyder
+(65): Disguise type C Drdspyder
 
 <a id="disguise_type_c_drdwar"></a>
 
 ## `DISGUISE_TYPE_C_DRDWAR`
 
-(66): Disguise [type](GFF-File-Format#data-types) C Drdwar
+(66): Disguise type C Drdwar
 
 <a id="disguise_type_c_firixa"></a>
 
 ## `DISGUISE_TYPE_C_FIRIXA`
 
-(67): Disguise [type](GFF-File-Format#data-types) C Firixa
+(67): Disguise type C Firixa
 
 <a id="disguise_type_c_gammorean"></a>
 
 ## `DISGUISE_TYPE_C_GAMMOREAN`
 
-(68): Disguise [type](GFF-File-Format#data-types) C Gammorean
+(68): Disguise type C Gammorean
 
 <a id="disguise_type_c_gizka"></a>
 
 ## `DISGUISE_TYPE_C_GIZKA`
 
-(69): Disguise [type](GFF-File-Format#data-types) C Gizka
+(69): Disguise type C Gizka
 
 <a id="disguise_type_c_hutt"></a>
 
 ## `DISGUISE_TYPE_C_HUTT`
 
-(70): Disguise [type](GFF-File-Format#data-types) C Hutt
+(70): Disguise type C Hutt
 
 <a id="disguise_type_c_iriaz"></a>
 
 ## `DISGUISE_TYPE_C_IRIAZ`
 
-(71): Disguise [type](GFF-File-Format#data-types) C Iriaz
+(71): Disguise type C Iriaz
 
 <a id="disguise_type_c_ithorian"></a>
 
 ## `DISGUISE_TYPE_C_ITHORIAN`
 
-(72): Disguise [type](GFF-File-Format#data-types) C Ithorian
+(72): Disguise type C Ithorian
 
 <a id="disguise_type_c_jawa"></a>
 
 ## `DISGUISE_TYPE_C_JAWA`
 
-(73): Disguise [type](GFF-File-Format#data-types) C Jawa
+(73): Disguise type C Jawa
 
 <a id="disguise_type_c_kataarn"></a>
 
 ## `DISGUISE_TYPE_C_KATAARN`
 
-(74): Disguise [type](GFF-File-Format#data-types) C Kataarn
+(74): Disguise type C Kataarn
 
 <a id="disguise_type_c_khounda"></a>
 
 ## `DISGUISE_TYPE_C_KHOUNDA`
 
-(75): Disguise [type](GFF-File-Format#data-types) C Khounda
+(75): Disguise type C Khounda
 
 <a id="disguise_type_c_khoundb"></a>
 
 ## `DISGUISE_TYPE_C_KHOUNDB`
 
-(76): Disguise [type](GFF-File-Format#data-types) C Khoundb
+(76): Disguise type C Khoundb
 
 <a id="disguise_type_c_kinrath"></a>
 
 ## `DISGUISE_TYPE_C_KINRATH`
 
-(88): Disguise [type](GFF-File-Format#data-types) C Kinrath
+(88): Disguise type C Kinrath
 
 <a id="disguise_type_c_kraytdragon"></a>
 
 ## `DISGUISE_TYPE_C_KRAYTDRAGON`
 
-(77): Disguise [type](GFF-File-Format#data-types) C Kraytdragon
+(77): Disguise type C Kraytdragon
 
 <a id="disguise_type_c_mykal"></a>
 
 ## `DISGUISE_TYPE_C_MYKAL`
 
-(78): Disguise [type](GFF-File-Format#data-types) C Mykal
+(78): Disguise type C Mykal
 
 <a id="disguise_type_c_rakghoul"></a>
 
 ## `DISGUISE_TYPE_C_RAKGHOUL`
 
-(79): Disguise [type](GFF-File-Format#data-types) C Rakghoul
+(79): Disguise type C Rakghoul
 
 <a id="disguise_type_c_rancor"></a>
 
 ## `DISGUISE_TYPE_C_RANCOR`
 
-(80): Disguise [type](GFF-File-Format#data-types) C Rancor
+(80): Disguise type C Rancor
 
 <a id="disguise_type_c_ronto"></a>
 
 ## `DISGUISE_TYPE_C_RONTO`
 
-(87): Disguise [type](GFF-File-Format#data-types) C Ronto
+(87): Disguise type C Ronto
 
 <a id="disguise_type_c_seabeast"></a>
 
 ## `DISGUISE_TYPE_C_SEABEAST`
 
-(81): Disguise [type](GFF-File-Format#data-types) C Seabeast
+(81): Disguise type C Seabeast
 
 <a id="disguise_type_c_selkath"></a>
 
 ## `DISGUISE_TYPE_C_SELKATH`
 
-(40): Disguise [type](GFF-File-Format#data-types) C Selkath
+(40): Disguise type C Selkath
 
 <a id="disguise_type_c_tach"></a>
 
 ## `DISGUISE_TYPE_C_TACH`
 
-(83): Disguise [type](GFF-File-Format#data-types) C Tach
+(83): Disguise type C Tach
 
 <a id="disguise_type_c_tukata"></a>
 
 ## `DISGUISE_TYPE_C_TUKATA`
 
-(89): Disguise [type](GFF-File-Format#data-types) C Tukata
+(89): Disguise type C Tukata
 
 <a id="disguise_type_c_twohead"></a>
 
 ## `DISGUISE_TYPE_C_TWOHEAD`
 
-(84): Disguise [type](GFF-File-Format#data-types) C Twohead
+(84): Disguise type C Twohead
 
 <a id="disguise_type_c_verkaal"></a>
 
 ## `DISGUISE_TYPE_C_VERKAAL`
 
-(85): Disguise [type](GFF-File-Format#data-types) C Verkaal
+(85): Disguise type C Verkaal
 
 <a id="disguise_type_c_wraid"></a>
 
 ## `DISGUISE_TYPE_C_WRAID`
 
-(86): Disguise [type](GFF-File-Format#data-types) C Wraid
+(86): Disguise type C Wraid
 
 <a id="disguise_type_commoner_fem_black"></a>
 
 ## `DISGUISE_TYPE_COMMONER_FEM_BLACK`
 
-(186): Disguise [type](GFF-File-Format#data-types) Commoner Fem Black
+(186): Disguise type Commoner Fem Black
 
 <a id="disguise_type_commoner_fem_old_asian"></a>
 
 ## `DISGUISE_TYPE_COMMONER_FEM_OLD_ASIAN`
 
-(187): Disguise [type](GFF-File-Format#data-types) Commoner Fem Old Asian
+(187): Disguise type Commoner Fem Old Asian
 
 <a id="disguise_type_commoner_fem_old_black"></a>
 
 ## `DISGUISE_TYPE_COMMONER_FEM_OLD_BLACK`
 
-(189): Disguise [type](GFF-File-Format#data-types) Commoner Fem Old Black
+(189): Disguise type Commoner Fem Old Black
 
 <a id="disguise_type_commoner_fem_old_white"></a>
 
 ## `DISGUISE_TYPE_COMMONER_FEM_OLD_WHITE`
 
-(188): Disguise [type](GFF-File-Format#data-types) Commoner Fem Old White
+(188): Disguise type Commoner Fem Old White
 
 <a id="disguise_type_commoner_fem_white"></a>
 
 ## `DISGUISE_TYPE_COMMONER_FEM_WHITE`
 
-(185): Disguise [type](GFF-File-Format#data-types) Commoner Fem White
+(185): Disguise type Commoner Fem White
 
 <a id="disguise_type_commoner_mal_black"></a>
 
 ## `DISGUISE_TYPE_COMMONER_MAL_BLACK`
 
-(191): Disguise [type](GFF-File-Format#data-types) Commoner Mal Black
+(191): Disguise type Commoner Mal Black
 
 <a id="disguise_type_commoner_mal_old_asian"></a>
 
 ## `DISGUISE_TYPE_COMMONER_MAL_OLD_ASIAN`
 
-(192): Disguise [type](GFF-File-Format#data-types) Commoner Mal Old Asian
+(192): Disguise type Commoner Mal Old Asian
 
 <a id="disguise_type_commoner_mal_old_black"></a>
 
 ## `DISGUISE_TYPE_COMMONER_MAL_OLD_BLACK`
 
-(194): Disguise [type](GFF-File-Format#data-types) Commoner Mal Old Black
+(194): Disguise type Commoner Mal Old Black
 
 <a id="disguise_type_commoner_mal_old_white"></a>
 
 ## `DISGUISE_TYPE_COMMONER_MAL_OLD_WHITE`
 
-(193): Disguise [type](GFF-File-Format#data-types) Commoner Mal Old White
+(193): Disguise type Commoner Mal Old White
 
 <a id="disguise_type_commoner_mal_white"></a>
 
 ## `DISGUISE_TYPE_COMMONER_MAL_WHITE`
 
-(190): Disguise [type](GFF-File-Format#data-types) Commoner Mal White
+(190): Disguise type Commoner Mal White
 
 <a id="disguise_type_czerka_officer_black"></a>
 
 ## `DISGUISE_TYPE_CZERKA_OFFICER_BLACK`
 
-(196): Disguise [type](GFF-File-Format#data-types) Czerka Officer Black
+(196): Disguise type Czerka Officer Black
 
 <a id="disguise_type_czerka_officer_old_asian"></a>
 
 ## `DISGUISE_TYPE_CZERKA_OFFICER_OLD_ASIAN`
 
-(197): Disguise [type](GFF-File-Format#data-types) Czerka Officer Old Asian
+(197): Disguise type Czerka Officer Old Asian
 
 <a id="disguise_type_czerka_officer_old_black"></a>
 
 ## `DISGUISE_TYPE_CZERKA_OFFICER_OLD_BLACK`
 
-(199): Disguise [type](GFF-File-Format#data-types) Czerka Officer Old Black
+(199): Disguise type Czerka Officer Old Black
 
 <a id="disguise_type_czerka_officer_old_white"></a>
 
 ## `DISGUISE_TYPE_CZERKA_OFFICER_OLD_WHITE`
 
-(198): Disguise [type](GFF-File-Format#data-types) Czerka Officer Old White
+(198): Disguise type Czerka Officer Old White
 
 <a id="disguise_type_czerka_officer_white"></a>
 
 ## `DISGUISE_TYPE_CZERKA_OFFICER_WHITE`
 
-(195): Disguise [type](GFF-File-Format#data-types) Czerka Officer White
+(195): Disguise type Czerka Officer White
 
 <a id="disguise_type_droid_astro_02"></a>
 
 ## `DISGUISE_TYPE_DROID_ASTRO_02`
 
-(231): Disguise [type](GFF-File-Format#data-types) Droid Astro 02
+(231): Disguise type Droid Astro 02
 
 <a id="disguise_type_droid_astro_03"></a>
 
 ## `DISGUISE_TYPE_DROID_ASTRO_03`
 
-(232): Disguise [type](GFF-File-Format#data-types) Droid Astro 03
+(232): Disguise type Droid Astro 03
 
 <a id="disguise_type_droid_protocol_02"></a>
 
 ## `DISGUISE_TYPE_DROID_PROTOCOL_02`
 
-(233): Disguise [type](GFF-File-Format#data-types) Droid Protocol 02
+(233): Disguise type Droid Protocol 02
 
 <a id="disguise_type_droid_protocol_03"></a>
 
 ## `DISGUISE_TYPE_DROID_PROTOCOL_03`
 
-(234): Disguise [type](GFF-File-Format#data-types) Droid Protocol 03
+(234): Disguise type Droid Protocol 03
 
 <a id="disguise_type_droid_protocol_04"></a>
 
 ## `DISGUISE_TYPE_DROID_PROTOCOL_04`
 
-(235): Disguise [type](GFF-File-Format#data-types) Droid Protocol 04
+(235): Disguise type Droid Protocol 04
 
 <a id="disguise_type_droid_war_02"></a>
 
 ## `DISGUISE_TYPE_DROID_WAR_02`
 
-(236): Disguise [type](GFF-File-Format#data-types) Droid War 02
+(236): Disguise type Droid War 02
 
 <a id="disguise_type_droid_war_03"></a>
 
 ## `DISGUISE_TYPE_DROID_WAR_03`
 
-(237): Disguise [type](GFF-File-Format#data-types) Droid War 03
+(237): Disguise type Droid War 03
 
 <a id="disguise_type_droid_war_04"></a>
 
 ## `DISGUISE_TYPE_DROID_WAR_04`
 
-(238): Disguise [type](GFF-File-Format#data-types) Droid War 04
+(238): Disguise type Droid War 04
 
 <a id="disguise_type_droid_war_05"></a>
 
 ## `DISGUISE_TYPE_DROID_WAR_05`
 
-(239): Disguise [type](GFF-File-Format#data-types) Droid War 05
+(239): Disguise type Droid War 05
 
 <a id="disguise_type_environmentsuit"></a>
 
 ## `DISGUISE_TYPE_ENVIRONMENTSUIT`
 
-(181): Disguise [type](GFF-File-Format#data-types) Environmentsuit
+(181): Disguise type Environmentsuit
 
 <a id="disguise_type_environmentsuit_02"></a>
 
 ## `DISGUISE_TYPE_ENVIRONMENTSUIT_02`
 
-(279): Disguise [type](GFF-File-Format#data-types) Environmentsuit 02
+(279): Disguise type Environmentsuit 02
 
 <a id="disguise_type_gammorean_02"></a>
 
 ## `DISGUISE_TYPE_GAMMOREAN_02`
 
-(240): Disguise [type](GFF-File-Format#data-types) Gammorean 02
+(240): Disguise type Gammorean 02
 
 <a id="disguise_type_gammorean_03"></a>
 
 ## `DISGUISE_TYPE_GAMMOREAN_03`
 
-(241): Disguise [type](GFF-File-Format#data-types) Gammorean 03
+(241): Disguise type Gammorean 03
 
 <a id="disguise_type_gammorean_04"></a>
 
 ## `DISGUISE_TYPE_GAMMOREAN_04`
 
-(242): Disguise [type](GFF-File-Format#data-types) Gammorean 04
+(242): Disguise type Gammorean 04
 
 <a id="disguise_type_hutt_02"></a>
 
 ## `DISGUISE_TYPE_HUTT_02`
 
-(228): Disguise [type](GFF-File-Format#data-types) Hutt 02
+(228): Disguise type Hutt 02
 
 <a id="disguise_type_hutt_03"></a>
 
 ## `DISGUISE_TYPE_HUTT_03`
 
-(229): Disguise [type](GFF-File-Format#data-types) Hutt 03
+(229): Disguise type Hutt 03
 
 <a id="disguise_type_hutt_04"></a>
 
 ## `DISGUISE_TYPE_HUTT_04`
 
-(230): Disguise [type](GFF-File-Format#data-types) Hutt 04
+(230): Disguise type Hutt 04
 
 <a id="disguise_type_ithorian_02"></a>
 
 ## `DISGUISE_TYPE_ITHORIAN_02`
 
-(243): Disguise [type](GFF-File-Format#data-types) Ithorian 02
+(243): Disguise type Ithorian 02
 
 <a id="disguise_type_ithorian_03"></a>
 
 ## `DISGUISE_TYPE_ITHORIAN_03`
 
-(244): Disguise [type](GFF-File-Format#data-types) Ithorian 03
+(244): Disguise type Ithorian 03
 
 <a id="disguise_type_jedi_asian_female_01"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_01`
 
-(204): Disguise [type](GFF-File-Format#data-types) Jedi Asian Female 01
+(204): Disguise type Jedi Asian Female 01
 
 <a id="disguise_type_jedi_asian_female_02"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_02`
 
-(205): Disguise [type](GFF-File-Format#data-types) Jedi Asian Female 02
+(205): Disguise type Jedi Asian Female 02
 
 <a id="disguise_type_jedi_asian_female_03"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_03`
 
-(206): Disguise [type](GFF-File-Format#data-types) Jedi Asian Female 03
+(206): Disguise type Jedi Asian Female 03
 
 <a id="disguise_type_jedi_asian_female_04"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_04`
 
-(207): Disguise [type](GFF-File-Format#data-types) Jedi Asian Female 04
+(207): Disguise type Jedi Asian Female 04
 
 <a id="disguise_type_jedi_asian_female_05"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_05`
 
-(208): Disguise [type](GFF-File-Format#data-types) Jedi Asian Female 05
+(208): Disguise type Jedi Asian Female 05
 
 <a id="disguise_type_jedi_asian_male_01"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_MALE_01`
 
-(218): Disguise [type](GFF-File-Format#data-types) Jedi Asian Male 01
+(218): Disguise type Jedi Asian Male 01
 
 <a id="disguise_type_jedi_asian_male_02"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_MALE_02`
 
-(219): Disguise [type](GFF-File-Format#data-types) Jedi Asian Male 02
+(219): Disguise type Jedi Asian Male 02
 
 <a id="disguise_type_jedi_asian_male_03"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_MALE_03`
 
-(220): Disguise [type](GFF-File-Format#data-types) Jedi Asian Male 03
+(220): Disguise type Jedi Asian Male 03
 
 <a id="disguise_type_jedi_asian_male_04"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_MALE_04`
 
-(221): Disguise [type](GFF-File-Format#data-types) Jedi Asian Male 04
+(221): Disguise type Jedi Asian Male 04
 
 <a id="disguise_type_jedi_asian_male_05"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_MALE_05`
 
-(222): Disguise [type](GFF-File-Format#data-types) Jedi Asian Male 05
+(222): Disguise type Jedi Asian Male 05
 
 <a id="disguise_type_jedi_asian_old_fem"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_OLD_FEM`
 
-(307): Disguise [type](GFF-File-Format#data-types) Jedi Asian Old Fem
+(307): Disguise type Jedi Asian Old Fem
 
 <a id="disguise_type_jedi_asian_old_male"></a>
 
 ## `DISGUISE_TYPE_JEDI_ASIAN_OLD_MALE`
 
-(304): Disguise [type](GFF-File-Format#data-types) Jedi Asian Old Male
+(304): Disguise type Jedi Asian Old Male
 
 <a id="disguise_type_jedi_black_female_01"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_FEMALE_01`
 
-(209): Disguise [type](GFF-File-Format#data-types) Jedi Black Female 01
+(209): Disguise type Jedi Black Female 01
 
 <a id="disguise_type_jedi_black_female_02"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_FEMALE_02`
 
-(210): Disguise [type](GFF-File-Format#data-types) Jedi Black Female 02
+(210): Disguise type Jedi Black Female 02
 
 <a id="disguise_type_jedi_black_female_03"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_FEMALE_03`
 
-(211): Disguise [type](GFF-File-Format#data-types) Jedi Black Female 03
+(211): Disguise type Jedi Black Female 03
 
 <a id="disguise_type_jedi_black_female_04"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_FEMALE_04`
 
-(212): Disguise [type](GFF-File-Format#data-types) Jedi Black Female 04
+(212): Disguise type Jedi Black Female 04
 
 <a id="disguise_type_jedi_black_female_05"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_FEMALE_05`
 
-(213): Disguise [type](GFF-File-Format#data-types) Jedi Black Female 05
+(213): Disguise type Jedi Black Female 05
 
 <a id="disguise_type_jedi_black_male_01"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_MALE_01`
 
-(223): Disguise [type](GFF-File-Format#data-types) Jedi Black Male 01
+(223): Disguise type Jedi Black Male 01
 
 <a id="disguise_type_jedi_black_male_02"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_MALE_02`
 
-(224): Disguise [type](GFF-File-Format#data-types) Jedi Black Male 02
+(224): Disguise type Jedi Black Male 02
 
 <a id="disguise_type_jedi_black_male_03"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_MALE_03`
 
-(225): Disguise [type](GFF-File-Format#data-types) Jedi Black Male 03
+(225): Disguise type Jedi Black Male 03
 
 <a id="disguise_type_jedi_black_male_04"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_MALE_04`
 
-(226): Disguise [type](GFF-File-Format#data-types) Jedi Black Male 04
+(226): Disguise type Jedi Black Male 04
 
 <a id="disguise_type_jedi_black_male_05"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_MALE_05`
 
-(227): Disguise [type](GFF-File-Format#data-types) Jedi Black Male 05
+(227): Disguise type Jedi Black Male 05
 
 <a id="disguise_type_jedi_black_old_fem"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_OLD_FEM`
 
-(308): Disguise [type](GFF-File-Format#data-types) Jedi Black Old Fem
+(308): Disguise type Jedi Black Old Fem
 
 <a id="disguise_type_jedi_black_old_male"></a>
 
 ## `DISGUISE_TYPE_JEDI_BLACK_OLD_MALE`
 
-(305): Disguise [type](GFF-File-Format#data-types) Jedi Black Old Male
+(305): Disguise type Jedi Black Old Male
 
 <a id="disguise_type_jedi_white_female_02"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_FEMALE_02`
 
-(200): Disguise [type](GFF-File-Format#data-types) Jedi White Female 02
+(200): Disguise type Jedi White Female 02
 
 <a id="disguise_type_jedi_white_female_03"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_FEMALE_03`
 
-(201): Disguise [type](GFF-File-Format#data-types) Jedi White Female 03
+(201): Disguise type Jedi White Female 03
 
 <a id="disguise_type_jedi_white_female_04"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_FEMALE_04`
 
-(202): Disguise [type](GFF-File-Format#data-types) Jedi White Female 04
+(202): Disguise type Jedi White Female 04
 
 <a id="disguise_type_jedi_white_female_05"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_FEMALE_05`
 
-(203): Disguise [type](GFF-File-Format#data-types) Jedi White Female 05
+(203): Disguise type Jedi White Female 05
 
 <a id="disguise_type_jedi_white_male_02"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_MALE_02`
 
-(214): Disguise [type](GFF-File-Format#data-types) Jedi White Male 02
+(214): Disguise type Jedi White Male 02
 
 <a id="disguise_type_jedi_white_male_03"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_MALE_03`
 
-(215): Disguise [type](GFF-File-Format#data-types) Jedi White Male 03
+(215): Disguise type Jedi White Male 03
 
 <a id="disguise_type_jedi_white_male_04"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_MALE_04`
 
-(216): Disguise [type](GFF-File-Format#data-types) Jedi White Male 04
+(216): Disguise type Jedi White Male 04
 
 <a id="disguise_type_jedi_white_male_05"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_MALE_05`
 
-(217): Disguise [type](GFF-File-Format#data-types) Jedi White Male 05
+(217): Disguise type Jedi White Male 05
 
 <a id="disguise_type_jedi_white_old_fem"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_OLD_FEM`
 
-(306): Disguise [type](GFF-File-Format#data-types) Jedi White Old Fem
+(306): Disguise type Jedi White Old Fem
 
 <a id="disguise_type_jedi_white_old_male"></a>
 
 ## `DISGUISE_TYPE_JEDI_WHITE_OLD_MALE`
 
-(303): Disguise [type](GFF-File-Format#data-types) Jedi White Old Male
+(303): Disguise type Jedi White Old Male
 
 <a id="disguise_type_kath_hound_a02"></a>
 
 ## `DISGUISE_TYPE_KATH_HOUND_A02`
 
-(245): Disguise [type](GFF-File-Format#data-types) Kath Hound A02
+(245): Disguise type Kath Hound A02
 
 <a id="disguise_type_kath_hound_a03"></a>
 
 ## `DISGUISE_TYPE_KATH_HOUND_A03`
 
-(246): Disguise [type](GFF-File-Format#data-types) Kath Hound A03
+(246): Disguise type Kath Hound A03
 
 <a id="disguise_type_kath_hound_a04"></a>
 
 ## `DISGUISE_TYPE_KATH_HOUND_A04`
 
-(247): Disguise [type](GFF-File-Format#data-types) Kath Hound A04
+(247): Disguise type Kath Hound A04
 
 <a id="disguise_type_kath_hound_b02"></a>
 
 ## `DISGUISE_TYPE_KATH_HOUND_B02`
 
-(248): Disguise [type](GFF-File-Format#data-types) Kath Hound B02
+(248): Disguise type Kath Hound B02
 
 <a id="disguise_type_kath_hound_b03"></a>
 
 ## `DISGUISE_TYPE_KATH_HOUND_B03`
 
-(249): Disguise [type](GFF-File-Format#data-types) Kath Hound B03
+(249): Disguise type Kath Hound B03
 
 <a id="disguise_type_kath_hound_b04"></a>
 
 ## `DISGUISE_TYPE_KATH_HOUND_B04`
 
-(250): Disguise [type](GFF-File-Format#data-types) Kath Hound B04
+(250): Disguise type Kath Hound B04
 
 <a id="disguise_type_n_admrlsaulkar"></a>
 
 ## `DISGUISE_TYPE_N_ADMRLSAULKAR`
 
-(11): Disguise [type](GFF-File-Format#data-types) N Admrlsaulkar
+(11): Disguise type N Admrlsaulkar
 
 <a id="disguise_type_n_bith"></a>
 
 ## `DISGUISE_TYPE_N_BITH`
 
-(12): Disguise [type](GFF-File-Format#data-types) N Bith
+(12): Disguise type N Bith
 
 <a id="disguise_type_n_calonord"></a>
 
 ## `DISGUISE_TYPE_N_CALONORD`
 
-(13): Disguise [type](GFF-File-Format#data-types) N Calonord
+(13): Disguise type N Calonord
 
 <a id="disguise_type_n_commf"></a>
 
 ## `DISGUISE_TYPE_N_COMMF`
 
-(14): Disguise [type](GFF-File-Format#data-types) N Commf
+(14): Disguise type N Commf
 
 <a id="disguise_type_n_commkidf"></a>
 
 ## `DISGUISE_TYPE_N_COMMKIDF`
 
-(15): Disguise [type](GFF-File-Format#data-types) N Commkidf
+(15): Disguise type N Commkidf
 
 <a id="disguise_type_n_commkidm"></a>
 
 ## `DISGUISE_TYPE_N_COMMKIDM`
 
-(16): Disguise [type](GFF-File-Format#data-types) N Commkidm
+(16): Disguise type N Commkidm
 
 <a id="disguise_type_n_commm"></a>
 
 ## `DISGUISE_TYPE_N_COMMM`
 
-(17): Disguise [type](GFF-File-Format#data-types) N Commm
+(17): Disguise type N Commm
 
 <a id="disguise_type_n_czerlaoff"></a>
 
 ## `DISGUISE_TYPE_N_CZERLAOFF`
 
-(18): Disguise [type](GFF-File-Format#data-types) N Czerlaoff
+(18): Disguise type N Czerlaoff
 
 <a id="disguise_type_n_darkjedif"></a>
 
 ## `DISGUISE_TYPE_N_DARKJEDIF`
 
-(19): Disguise [type](GFF-File-Format#data-types) N Darkjedif
+(19): Disguise type N Darkjedif
 
 <a id="disguise_type_n_darkjedim"></a>
 
 ## `DISGUISE_TYPE_N_DARKJEDIM`
 
-(20): Disguise [type](GFF-File-Format#data-types) N Darkjedim
+(20): Disguise type N Darkjedim
 
 <a id="disguise_type_n_darthband"></a>
 
 ## `DISGUISE_TYPE_N_DARTHBAND`
 
-(184): Disguise [type](GFF-File-Format#data-types) N Darthband
+(184): Disguise type N Darthband
 
 <a id="disguise_type_n_darthmalak"></a>
 
 ## `DISGUISE_TYPE_N_DARTHMALAK`
 
-(21): Disguise [type](GFF-File-Format#data-types) N Darthmalak
+(21): Disguise type N Darthmalak
 
 <a id="disguise_type_n_darthrevan"></a>
 
 ## `DISGUISE_TYPE_N_DARTHREVAN`
 
-(22): Disguise [type](GFF-File-Format#data-types) N Darthrevan
+(22): Disguise type N Darthrevan
 
 <a id="disguise_type_n_dodonna"></a>
 
 ## `DISGUISE_TYPE_N_DODONNA`
 
-(23): Disguise [type](GFF-File-Format#data-types) N Dodonna
+(23): Disguise type N Dodonna
 
 <a id="disguise_type_n_duros"></a>
 
 ## `DISGUISE_TYPE_N_DUROS`
 
-(24): Disguise [type](GFF-File-Format#data-types) N Duros
+(24): Disguise type N Duros
 
 <a id="disguise_type_n_fatcomf"></a>
 
 ## `DISGUISE_TYPE_N_FATCOMF`
 
-(25): Disguise [type](GFF-File-Format#data-types) N Fatcomf
+(25): Disguise type N Fatcomf
 
 <a id="disguise_type_n_fatcomm"></a>
 
 ## `DISGUISE_TYPE_N_FATCOMM`
 
-(26): Disguise [type](GFF-File-Format#data-types) N Fatcomm
+(26): Disguise type N Fatcomm
 
 <a id="disguise_type_n_jedicountf"></a>
 
 ## `DISGUISE_TYPE_N_JEDICOUNTF`
 
-(30): Disguise [type](GFF-File-Format#data-types) N Jedicountf
+(30): Disguise type N Jedicountf
 
 <a id="disguise_type_n_jedicountm"></a>
 
 ## `DISGUISE_TYPE_N_JEDICOUNTM`
 
-(31): Disguise [type](GFF-File-Format#data-types) N Jedicountm
+(31): Disguise type N Jedicountm
 
 <a id="disguise_type_n_jedimalek"></a>
 
 ## `DISGUISE_TYPE_N_JEDIMALEK`
 
-(32): Disguise [type](GFF-File-Format#data-types) N Jedimalek
+(32): Disguise type N Jedimalek
 
 <a id="disguise_type_n_jedimemf"></a>
 
 ## `DISGUISE_TYPE_N_JEDIMEMF`
 
-(33): Disguise [type](GFF-File-Format#data-types) N Jedimemf
+(33): Disguise type N Jedimemf
 
 <a id="disguise_type_n_jedimemm"></a>
 
 ## `DISGUISE_TYPE_N_JEDIMEMM`
 
-(34): Disguise [type](GFF-File-Format#data-types) N Jedimemm
+(34): Disguise type N Jedimemm
 
 <a id="disguise_type_n_mandalorian"></a>
 
 ## `DISGUISE_TYPE_N_MANDALORIAN`
 
-(35): Disguise [type](GFF-File-Format#data-types) N Mandalorian
+(35): Disguise type N Mandalorian
 
 <a id="disguise_type_n_rakata"></a>
 
 ## `DISGUISE_TYPE_N_RAKATA`
 
-(36): Disguise [type](GFF-File-Format#data-types) N Rakata
+(36): Disguise type N Rakata
 
 <a id="disguise_type_n_repoff"></a>
 
 ## `DISGUISE_TYPE_N_REPOFF`
 
-(37): Disguise [type](GFF-File-Format#data-types) N Repoff
+(37): Disguise type N Repoff
 
 <a id="disguise_type_n_repsold"></a>
 
 ## `DISGUISE_TYPE_N_REPSOLD`
 
-(38): Disguise [type](GFF-File-Format#data-types) N Repsold
+(38): Disguise type N Repsold
 
 <a id="disguise_type_n_rodian"></a>
 
 ## `DISGUISE_TYPE_N_RODIAN`
 
-(39): Disguise [type](GFF-File-Format#data-types) N Rodian
+(39): Disguise type N Rodian
 
 <a id="disguise_type_n_sithappren"></a>
 
 ## `DISGUISE_TYPE_N_SITHAPPREN`
 
-(41): Disguise [type](GFF-File-Format#data-types) N Sithappren
+(41): Disguise type N Sithappren
 
 <a id="disguise_type_n_sithcomf"></a>
 
 ## `DISGUISE_TYPE_N_SITHCOMF`
 
-(42): Disguise [type](GFF-File-Format#data-types) N Sithcomf
+(42): Disguise type N Sithcomf
 
 <a id="disguise_type_n_sithcomm"></a>
 
 ## `DISGUISE_TYPE_N_SITHCOMM`
 
-(43): Disguise [type](GFF-File-Format#data-types) N Sithcomm
+(43): Disguise type N Sithcomm
 
 <a id="disguise_type_n_sithsoldier"></a>
 
 ## `DISGUISE_TYPE_N_SITHSOLDIER`
 
-(28): Disguise [type](GFF-File-Format#data-types) N Sithsoldier
+(28): Disguise type N Sithsoldier
 
 <a id="disguise_type_n_smuggler"></a>
 
 ## `DISGUISE_TYPE_N_SMUGGLER`
 
-(27): Disguise [type](GFF-File-Format#data-types) N Smuggler
+(27): Disguise type N Smuggler
 
 <a id="disguise_type_n_swoopgang"></a>
 
 ## `DISGUISE_TYPE_N_SWOOPGANG`
 
-(45): Disguise [type](GFF-File-Format#data-types) N Swoopgang
+(45): Disguise type N Swoopgang
 
 <a id="disguise_type_n_tusken"></a>
 
 ## `DISGUISE_TYPE_N_TUSKEN`
 
-(46): Disguise [type](GFF-File-Format#data-types) N Tusken
+(46): Disguise type N Tusken
 
 <a id="disguise_type_n_tuskenf"></a>
 
 ## `DISGUISE_TYPE_N_TUSKENF`
 
-(90): Disguise [type](GFF-File-Format#data-types) N Tuskenf
+(90): Disguise type N Tuskenf
 
 <a id="disguise_type_n_twilekf"></a>
 
 ## `DISGUISE_TYPE_N_TWILEKF`
 
-(47): Disguise [type](GFF-File-Format#data-types) N Twilekf
+(47): Disguise type N Twilekf
 
 <a id="disguise_type_n_twilekm"></a>
 
 ## `DISGUISE_TYPE_N_TWILEKM`
 
-(48): Disguise [type](GFF-File-Format#data-types) N Twilekm
+(48): Disguise type N Twilekm
 
 <a id="disguise_type_n_walrusman"></a>
 
 ## `DISGUISE_TYPE_N_WALRUSMAN`
 
-(49): Disguise [type](GFF-File-Format#data-types) N Walrusman
+(49): Disguise type N Walrusman
 
 <a id="disguise_type_n_wookief"></a>
 
 ## `DISGUISE_TYPE_N_WOOKIEF`
 
-(50): Disguise [type](GFF-File-Format#data-types) N Wookief
+(50): Disguise type N Wookief
 
 <a id="disguise_type_n_wookiem"></a>
 
 ## `DISGUISE_TYPE_N_WOOKIEM`
 
-(51): Disguise [type](GFF-File-Format#data-types) N Wookiem
+(51): Disguise type N Wookiem
 
 <a id="disguise_type_n_yoda"></a>
 
 ## `DISGUISE_TYPE_N_YODA`
 
-(52): Disguise [type](GFF-File-Format#data-types) N Yoda
+(52): Disguise type N Yoda
 
 <a id="disguise_type_p_bastilla"></a>
 
 ## `DISGUISE_TYPE_P_BASTILLA`
 
-(4): Disguise [type](GFF-File-Format#data-types) P Bastilla
+(4): Disguise type P Bastilla
 
 <a id="disguise_type_p_cand"></a>
 
 ## `DISGUISE_TYPE_P_CAND`
 
-(5): Disguise [type](GFF-File-Format#data-types) P Cand
+(5): Disguise type P Cand
 
 <a id="disguise_type_p_carth"></a>
 
 ## `DISGUISE_TYPE_P_CARTH`
 
-(6): Disguise [type](GFF-File-Format#data-types) P Carth
+(6): Disguise type P Carth
 
 <a id="disguise_type_p_fem_a_lrg_01"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_LRG_01`
 
-(93): Disguise [type](GFF-File-Format#data-types) P Fem A Lrg 01
+(93): Disguise type P Fem A Lrg 01
 
 <a id="disguise_type_p_fem_a_lrg_02"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_LRG_02`
 
-(96): Disguise [type](GFF-File-Format#data-types) P Fem A Lrg 02
+(96): Disguise type P Fem A Lrg 02
 
 <a id="disguise_type_p_fem_a_lrg_03"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_LRG_03`
 
-(99): Disguise [type](GFF-File-Format#data-types) P Fem A Lrg 03
+(99): Disguise type P Fem A Lrg 03
 
 <a id="disguise_type_p_fem_a_lrg_04"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_LRG_04`
 
-(102): Disguise [type](GFF-File-Format#data-types) P Fem A Lrg 04
+(102): Disguise type P Fem A Lrg 04
 
 <a id="disguise_type_p_fem_a_lrg_05"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_LRG_05`
 
-(105): Disguise [type](GFF-File-Format#data-types) P Fem A Lrg 05
+(105): Disguise type P Fem A Lrg 05
 
 <a id="disguise_type_p_fem_a_med_01"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_MED_01`
 
-(92): Disguise [type](GFF-File-Format#data-types) P Fem A Med 01
+(92): Disguise type P Fem A Med 01
 
 <a id="disguise_type_p_fem_a_med_02"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_MED_02`
 
-(95): Disguise [type](GFF-File-Format#data-types) P Fem A Med 02
+(95): Disguise type P Fem A Med 02
 
 <a id="disguise_type_p_fem_a_med_03"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_MED_03`
 
-(98): Disguise [type](GFF-File-Format#data-types) P Fem A Med 03
+(98): Disguise type P Fem A Med 03
 
 <a id="disguise_type_p_fem_a_med_04"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_MED_04`
 
-(101): Disguise [type](GFF-File-Format#data-types) P Fem A Med 04
+(101): Disguise type P Fem A Med 04
 
 <a id="disguise_type_p_fem_a_med_05"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_MED_05`
 
-(104): Disguise [type](GFF-File-Format#data-types) P Fem A Med 05
+(104): Disguise type P Fem A Med 05
 
 <a id="disguise_type_p_fem_a_sml_01"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_SML_01`
 
-(91): Disguise [type](GFF-File-Format#data-types) P Fem A Sml 01
+(91): Disguise type P Fem A Sml 01
 
 <a id="disguise_type_p_fem_a_sml_02"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_SML_02`
 
-(94): Disguise [type](GFF-File-Format#data-types) P Fem A Sml 02
+(94): Disguise type P Fem A Sml 02
 
 <a id="disguise_type_p_fem_a_sml_03"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_SML_03`
 
-(97): Disguise [type](GFF-File-Format#data-types) P Fem A Sml 03
+(97): Disguise type P Fem A Sml 03
 
 <a id="disguise_type_p_fem_a_sml_04"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_SML_04`
 
-(100): Disguise [type](GFF-File-Format#data-types) P Fem A Sml 04
+(100): Disguise type P Fem A Sml 04
 
 <a id="disguise_type_p_fem_a_sml_05"></a>
 
 ## `DISGUISE_TYPE_P_FEM_A_SML_05`
 
-(103): Disguise [type](GFF-File-Format#data-types) P Fem A Sml 05
+(103): Disguise type P Fem A Sml 05
 
 <a id="disguise_type_p_fem_b_lrg_01"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_LRG_01`
 
-(108): Disguise [type](GFF-File-Format#data-types) P Fem B Lrg 01
+(108): Disguise type P Fem B Lrg 01
 
 <a id="disguise_type_p_fem_b_lrg_02"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_LRG_02`
 
-(111): Disguise [type](GFF-File-Format#data-types) P Fem B Lrg 02
+(111): Disguise type P Fem B Lrg 02
 
 <a id="disguise_type_p_fem_b_lrg_03"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_LRG_03`
 
-(114): Disguise [type](GFF-File-Format#data-types) P Fem B Lrg 03
+(114): Disguise type P Fem B Lrg 03
 
 <a id="disguise_type_p_fem_b_lrg_04"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_LRG_04`
 
-(117): Disguise [type](GFF-File-Format#data-types) P Fem B Lrg 04
+(117): Disguise type P Fem B Lrg 04
 
 <a id="disguise_type_p_fem_b_lrg_05"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_LRG_05`
 
-(120): Disguise [type](GFF-File-Format#data-types) P Fem B Lrg 05
+(120): Disguise type P Fem B Lrg 05
 
 <a id="disguise_type_p_fem_b_med_01"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_MED_01`
 
-(107): Disguise [type](GFF-File-Format#data-types) P Fem B Med 01
+(107): Disguise type P Fem B Med 01
 
 <a id="disguise_type_p_fem_b_med_02"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_MED_02`
 
-(110): Disguise [type](GFF-File-Format#data-types) P Fem B Med 02
+(110): Disguise type P Fem B Med 02
 
 <a id="disguise_type_p_fem_b_med_03"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_MED_03`
 
-(113): Disguise [type](GFF-File-Format#data-types) P Fem B Med 03
+(113): Disguise type P Fem B Med 03
 
 <a id="disguise_type_p_fem_b_med_04"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_MED_04`
 
-(116): Disguise [type](GFF-File-Format#data-types) P Fem B Med 04
+(116): Disguise type P Fem B Med 04
 
 <a id="disguise_type_p_fem_b_med_05"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_MED_05`
 
-(119): Disguise [type](GFF-File-Format#data-types) P Fem B Med 05
+(119): Disguise type P Fem B Med 05
 
 <a id="disguise_type_p_fem_b_sml_01"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_SML_01`
 
-(106): Disguise [type](GFF-File-Format#data-types) P Fem B Sml 01
+(106): Disguise type P Fem B Sml 01
 
 <a id="disguise_type_p_fem_b_sml_02"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_SML_02`
 
-(109): Disguise [type](GFF-File-Format#data-types) P Fem B Sml 02
+(109): Disguise type P Fem B Sml 02
 
 <a id="disguise_type_p_fem_b_sml_03"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_SML_03`
 
-(112): Disguise [type](GFF-File-Format#data-types) P Fem B Sml 03
+(112): Disguise type P Fem B Sml 03
 
 <a id="disguise_type_p_fem_b_sml_04"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_SML_04`
 
-(115): Disguise [type](GFF-File-Format#data-types) P Fem B Sml 04
+(115): Disguise type P Fem B Sml 04
 
 <a id="disguise_type_p_fem_b_sml_05"></a>
 
 ## `DISGUISE_TYPE_P_FEM_B_SML_05`
 
-(118): Disguise [type](GFF-File-Format#data-types) P Fem B Sml 05
+(118): Disguise type P Fem B Sml 05
 
 <a id="disguise_type_p_fem_c_lrg_01"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_LRG_01`
 
-(123): Disguise [type](GFF-File-Format#data-types) P Fem C Lrg 01
+(123): Disguise type P Fem C Lrg 01
 
 <a id="disguise_type_p_fem_c_lrg_02"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_LRG_02`
 
-(126): Disguise [type](GFF-File-Format#data-types) P Fem C Lrg 02
+(126): Disguise type P Fem C Lrg 02
 
 <a id="disguise_type_p_fem_c_lrg_03"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_LRG_03`
 
-(129): Disguise [type](GFF-File-Format#data-types) P Fem C Lrg 03
+(129): Disguise type P Fem C Lrg 03
 
 <a id="disguise_type_p_fem_c_lrg_04"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_LRG_04`
 
-(132): Disguise [type](GFF-File-Format#data-types) P Fem C Lrg 04
+(132): Disguise type P Fem C Lrg 04
 
 <a id="disguise_type_p_fem_c_lrg_05"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_LRG_05`
 
-(135): Disguise [type](GFF-File-Format#data-types) P Fem C Lrg 05
+(135): Disguise type P Fem C Lrg 05
 
 <a id="disguise_type_p_fem_c_med_01"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_MED_01`
 
-(122): Disguise [type](GFF-File-Format#data-types) P Fem C Med 01
+(122): Disguise type P Fem C Med 01
 
 <a id="disguise_type_p_fem_c_med_02"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_MED_02`
 
-(125): Disguise [type](GFF-File-Format#data-types) P Fem C Med 02
+(125): Disguise type P Fem C Med 02
 
 <a id="disguise_type_p_fem_c_med_03"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_MED_03`
 
-(128): Disguise [type](GFF-File-Format#data-types) P Fem C Med 03
+(128): Disguise type P Fem C Med 03
 
 <a id="disguise_type_p_fem_c_med_04"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_MED_04`
 
-(131): Disguise [type](GFF-File-Format#data-types) P Fem C Med 04
+(131): Disguise type P Fem C Med 04
 
 <a id="disguise_type_p_fem_c_med_05"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_MED_05`
 
-(134): Disguise [type](GFF-File-Format#data-types) P Fem C Med 05
+(134): Disguise type P Fem C Med 05
 
 <a id="disguise_type_p_fem_c_sml_01"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_SML_01`
 
-(121): Disguise [type](GFF-File-Format#data-types) P Fem C Sml 01
+(121): Disguise type P Fem C Sml 01
 
 <a id="disguise_type_p_fem_c_sml_02"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_SML_02`
 
-(124): Disguise [type](GFF-File-Format#data-types) P Fem C Sml 02
+(124): Disguise type P Fem C Sml 02
 
 <a id="disguise_type_p_fem_c_sml_03"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_SML_03`
 
-(127): Disguise [type](GFF-File-Format#data-types) P Fem C Sml 03
+(127): Disguise type P Fem C Sml 03
 
 <a id="disguise_type_p_fem_c_sml_04"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_SML_04`
 
-(130): Disguise [type](GFF-File-Format#data-types) P Fem C Sml 04
+(130): Disguise type P Fem C Sml 04
 
 <a id="disguise_type_p_fem_c_sml_05"></a>
 
 ## `DISGUISE_TYPE_P_FEM_C_SML_05`
 
-(133): Disguise [type](GFF-File-Format#data-types) P Fem C Sml 05
+(133): Disguise type P Fem C Sml 05
 
 <a id="disguise_type_p_hk47"></a>
 
 ## `DISGUISE_TYPE_P_HK47`
 
-(3): Disguise [type](GFF-File-Format#data-types) P Hk47
+(3): Disguise type P Hk47
 
 <a id="disguise_type_p_jolee"></a>
 
 ## `DISGUISE_TYPE_P_JOLEE`
 
-(7): Disguise [type](GFF-File-Format#data-types) P Jolee
+(7): Disguise type P Jolee
 
 <a id="disguise_type_p_juhani"></a>
 
 ## `DISGUISE_TYPE_P_JUHANI`
 
-(8): Disguise [type](GFF-File-Format#data-types) P Juhani
+(8): Disguise type P Juhani
 
 <a id="disguise_type_p_mal_a_lrg_01"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_LRG_01`
 
-(138): Disguise [type](GFF-File-Format#data-types) P Mal A Lrg 01
+(138): Disguise type P Mal A Lrg 01
 
 <a id="disguise_type_p_mal_a_lrg_02"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_LRG_02`
 
-(141): Disguise [type](GFF-File-Format#data-types) P Mal A Lrg 02
+(141): Disguise type P Mal A Lrg 02
 
 <a id="disguise_type_p_mal_a_lrg_03"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_LRG_03`
 
-(144): Disguise [type](GFF-File-Format#data-types) P Mal A Lrg 03
+(144): Disguise type P Mal A Lrg 03
 
 <a id="disguise_type_p_mal_a_lrg_04"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_LRG_04`
 
-(147): Disguise [type](GFF-File-Format#data-types) P Mal A Lrg 04
+(147): Disguise type P Mal A Lrg 04
 
 <a id="disguise_type_p_mal_a_lrg_05"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_LRG_05`
 
-(150): Disguise [type](GFF-File-Format#data-types) P Mal A Lrg 05
+(150): Disguise type P Mal A Lrg 05
 
 <a id="disguise_type_p_mal_a_med_01"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_MED_01`
 
-(137): Disguise [type](GFF-File-Format#data-types) P Mal A Med 01
+(137): Disguise type P Mal A Med 01
 
 <a id="disguise_type_p_mal_a_med_02"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_MED_02`
 
-(140): Disguise [type](GFF-File-Format#data-types) P Mal A Med 02
+(140): Disguise type P Mal A Med 02
 
 <a id="disguise_type_p_mal_a_med_03"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_MED_03`
 
-(143): Disguise [type](GFF-File-Format#data-types) P Mal A Med 03
+(143): Disguise type P Mal A Med 03
 
 <a id="disguise_type_p_mal_a_med_04"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_MED_04`
 
-(146): Disguise [type](GFF-File-Format#data-types) P Mal A Med 04
+(146): Disguise type P Mal A Med 04
 
 <a id="disguise_type_p_mal_a_med_05"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_MED_05`
 
-(149): Disguise [type](GFF-File-Format#data-types) P Mal A Med 05
+(149): Disguise type P Mal A Med 05
 
 <a id="disguise_type_p_mal_a_sml_01"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_SML_01`
 
-(136): Disguise [type](GFF-File-Format#data-types) P Mal A Sml 01
+(136): Disguise type P Mal A Sml 01
 
 <a id="disguise_type_p_mal_a_sml_02"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_SML_02`
 
-(139): Disguise [type](GFF-File-Format#data-types) P Mal A Sml 02
+(139): Disguise type P Mal A Sml 02
 
 <a id="disguise_type_p_mal_a_sml_03"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_SML_03`
 
-(142): Disguise [type](GFF-File-Format#data-types) P Mal A Sml 03
+(142): Disguise type P Mal A Sml 03
 
 <a id="disguise_type_p_mal_a_sml_04"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_SML_04`
 
-(145): Disguise [type](GFF-File-Format#data-types) P Mal A Sml 04
+(145): Disguise type P Mal A Sml 04
 
 <a id="disguise_type_p_mal_a_sml_05"></a>
 
 ## `DISGUISE_TYPE_P_MAL_A_SML_05`
 
-(148): Disguise [type](GFF-File-Format#data-types) P Mal A Sml 05
+(148): Disguise type P Mal A Sml 05
 
 <a id="disguise_type_p_mal_b_lrg_01"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_LRG_01`
 
-(153): Disguise [type](GFF-File-Format#data-types) P Mal B Lrg 01
+(153): Disguise type P Mal B Lrg 01
 
 <a id="disguise_type_p_mal_b_lrg_02"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_LRG_02`
 
-(156): Disguise [type](GFF-File-Format#data-types) P Mal B Lrg 02
+(156): Disguise type P Mal B Lrg 02
 
 <a id="disguise_type_p_mal_b_lrg_03"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_LRG_03`
 
-(159): Disguise [type](GFF-File-Format#data-types) P Mal B Lrg 03
+(159): Disguise type P Mal B Lrg 03
 
 <a id="disguise_type_p_mal_b_lrg_04"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_LRG_04`
 
-(162): Disguise [type](GFF-File-Format#data-types) P Mal B Lrg 04
+(162): Disguise type P Mal B Lrg 04
 
 <a id="disguise_type_p_mal_b_lrg_05"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_LRG_05`
 
-(165): Disguise [type](GFF-File-Format#data-types) P Mal B Lrg 05
+(165): Disguise type P Mal B Lrg 05
 
 <a id="disguise_type_p_mal_b_med_01"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_MED_01`
 
-(152): Disguise [type](GFF-File-Format#data-types) P Mal B Med 01
+(152): Disguise type P Mal B Med 01
 
 <a id="disguise_type_p_mal_b_med_02"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_MED_02`
 
-(155): Disguise [type](GFF-File-Format#data-types) P Mal B Med 02
+(155): Disguise type P Mal B Med 02
 
 <a id="disguise_type_p_mal_b_med_03"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_MED_03`
 
-(158): Disguise [type](GFF-File-Format#data-types) P Mal B Med 03
+(158): Disguise type P Mal B Med 03
 
 <a id="disguise_type_p_mal_b_med_04"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_MED_04`
 
-(161): Disguise [type](GFF-File-Format#data-types) P Mal B Med 04
+(161): Disguise type P Mal B Med 04
 
 <a id="disguise_type_p_mal_b_med_05"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_MED_05`
 
-(164): Disguise [type](GFF-File-Format#data-types) P Mal B Med 05
+(164): Disguise type P Mal B Med 05
 
 <a id="disguise_type_p_mal_b_sml_01"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_SML_01`
 
-(151): Disguise [type](GFF-File-Format#data-types) P Mal B Sml 01
+(151): Disguise type P Mal B Sml 01
 
 <a id="disguise_type_p_mal_b_sml_02"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_SML_02`
 
-(154): Disguise [type](GFF-File-Format#data-types) P Mal B Sml 02
+(154): Disguise type P Mal B Sml 02
 
 <a id="disguise_type_p_mal_b_sml_03"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_SML_03`
 
-(157): Disguise [type](GFF-File-Format#data-types) P Mal B Sml 03
+(157): Disguise type P Mal B Sml 03
 
 <a id="disguise_type_p_mal_b_sml_04"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_SML_04`
 
-(160): Disguise [type](GFF-File-Format#data-types) P Mal B Sml 04
+(160): Disguise type P Mal B Sml 04
 
 <a id="disguise_type_p_mal_b_sml_05"></a>
 
 ## `DISGUISE_TYPE_P_MAL_B_SML_05`
 
-(163): Disguise [type](GFF-File-Format#data-types) P Mal B Sml 05
+(163): Disguise type P Mal B Sml 05
 
 <a id="disguise_type_p_mal_c_lrg_01"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_LRG_01`
 
-(168): Disguise [type](GFF-File-Format#data-types) P Mal C Lrg 01
+(168): Disguise type P Mal C Lrg 01
 
 <a id="disguise_type_p_mal_c_lrg_02"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_LRG_02`
 
-(171): Disguise [type](GFF-File-Format#data-types) P Mal C Lrg 02
+(171): Disguise type P Mal C Lrg 02
 
 <a id="disguise_type_p_mal_c_lrg_03"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_LRG_03`
 
-(174): Disguise [type](GFF-File-Format#data-types) P Mal C Lrg 03
+(174): Disguise type P Mal C Lrg 03
 
 <a id="disguise_type_p_mal_c_lrg_04"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_LRG_04`
 
-(177): Disguise [type](GFF-File-Format#data-types) P Mal C Lrg 04
+(177): Disguise type P Mal C Lrg 04
 
 <a id="disguise_type_p_mal_c_lrg_05"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_LRG_05`
 
-(180): Disguise [type](GFF-File-Format#data-types) P Mal C Lrg 05
+(180): Disguise type P Mal C Lrg 05
 
 <a id="disguise_type_p_mal_c_med_01"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_MED_01`
 
-(167): Disguise [type](GFF-File-Format#data-types) P Mal C Med 01
+(167): Disguise type P Mal C Med 01
 
 <a id="disguise_type_p_mal_c_med_02"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_MED_02`
 
-(170): Disguise [type](GFF-File-Format#data-types) P Mal C Med 02
+(170): Disguise type P Mal C Med 02
 
 <a id="disguise_type_p_mal_c_med_03"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_MED_03`
 
-(173): Disguise [type](GFF-File-Format#data-types) P Mal C Med 03
+(173): Disguise type P Mal C Med 03
 
 <a id="disguise_type_p_mal_c_med_04"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_MED_04`
 
-(176): Disguise [type](GFF-File-Format#data-types) P Mal C Med 04
+(176): Disguise type P Mal C Med 04
 
 <a id="disguise_type_p_mal_c_med_05"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_MED_05`
 
-(179): Disguise [type](GFF-File-Format#data-types) P Mal C Med 05
+(179): Disguise type P Mal C Med 05
 
 <a id="disguise_type_p_mal_c_sml_01"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_SML_01`
 
-(166): Disguise [type](GFF-File-Format#data-types) P Mal C Sml 01
+(166): Disguise type P Mal C Sml 01
 
 <a id="disguise_type_p_mal_c_sml_02"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_SML_02`
 
-(169): Disguise [type](GFF-File-Format#data-types) P Mal C Sml 02
+(169): Disguise type P Mal C Sml 02
 
 <a id="disguise_type_p_mal_c_sml_03"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_SML_03`
 
-(172): Disguise [type](GFF-File-Format#data-types) P Mal C Sml 03
+(172): Disguise type P Mal C Sml 03
 
 <a id="disguise_type_p_mal_c_sml_04"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_SML_04`
 
-(175): Disguise [type](GFF-File-Format#data-types) P Mal C Sml 04
+(175): Disguise type P Mal C Sml 04
 
 <a id="disguise_type_p_mal_c_sml_05"></a>
 
 ## `DISGUISE_TYPE_P_MAL_C_SML_05`
 
-(178): Disguise [type](GFF-File-Format#data-types) P Mal C Sml 05
+(178): Disguise type P Mal C Sml 05
 
 <a id="disguise_type_p_mission"></a>
 
 ## `DISGUISE_TYPE_P_MISSION`
 
-(10): Disguise [type](GFF-File-Format#data-types) P Mission
+(10): Disguise type P Mission
 
 <a id="disguise_type_p_t3m3"></a>
 
 ## `DISGUISE_TYPE_P_T3M3`
 
-(2): Disguise [type](GFF-File-Format#data-types) P T3M3
+(2): Disguise type P T3M3
 
 <a id="disguise_type_p_zaalbar"></a>
 
 ## `DISGUISE_TYPE_P_ZAALBAR`
 
-(9): Disguise [type](GFF-File-Format#data-types) P Zaalbar
+(9): Disguise type P Zaalbar
 
 <a id="disguise_type_rakata_02"></a>
 
 ## `DISGUISE_TYPE_RAKATA_02`
 
-(254): Disguise [type](GFF-File-Format#data-types) Rakata 02
+(254): Disguise type Rakata 02
 
 <a id="disguise_type_rakata_03"></a>
 
 ## `DISGUISE_TYPE_RAKATA_03`
 
-(255): Disguise [type](GFF-File-Format#data-types) Rakata 03
+(255): Disguise type Rakata 03
 
 <a id="disguise_type_republic_officer_mal_black"></a>
 
 ## `DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_BLACK`
 
-(287): Disguise [type](GFF-File-Format#data-types) Republic Officer Mal Black
+(287): Disguise type Republic Officer Mal Black
 
 <a id="disguise_type_republic_officer_mal_old_asian"></a>
 
 ## `DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_OLD_ASIAN`
 
-(288): Disguise [type](GFF-File-Format#data-types) Republic Officer Mal Old Asian
+(288): Disguise type Republic Officer Mal Old Asian
 
 <a id="disguise_type_republic_officer_mal_old_black"></a>
 
 ## `DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_OLD_BLACK`
 
-(290): Disguise [type](GFF-File-Format#data-types) Republic Officer Mal Old Black
+(290): Disguise type Republic Officer Mal Old Black
 
 <a id="disguise_type_republic_officer_mal_old_white"></a>
 
 ## `DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_OLD_WHITE`
 
-(289): Disguise [type](GFF-File-Format#data-types) Republic Officer Mal Old White
+(289): Disguise type Republic Officer Mal Old White
 
 <a id="disguise_type_republic_soldier_mal_black"></a>
 
 ## `DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_BLACK`
 
-(283): Disguise [type](GFF-File-Format#data-types) Republic Soldier Mal Black
+(283): Disguise type Republic Soldier Mal Black
 
 <a id="disguise_type_republic_soldier_mal_old_asian"></a>
 
 ## `DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_OLD_ASIAN`
 
-(284): Disguise [type](GFF-File-Format#data-types) Republic Soldier Mal Old Asian
+(284): Disguise type Republic Soldier Mal Old Asian
 
 <a id="disguise_type_republic_soldier_mal_old_black"></a>
 
 ## `DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_OLD_BLACK`
 
-(286): Disguise [type](GFF-File-Format#data-types) Republic Soldier Mal Old Black
+(286): Disguise type Republic Soldier Mal Old Black
 
 <a id="disguise_type_republic_soldier_mal_old_white"></a>
 
 ## `DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_OLD_WHITE`
 
-(285): Disguise [type](GFF-File-Format#data-types) Republic Soldier Mal Old White
+(285): Disguise type Republic Soldier Mal Old White
 
 <a id="disguise_type_rodian_02"></a>
 
 ## `DISGUISE_TYPE_RODIAN_02`
 
-(256): Disguise [type](GFF-File-Format#data-types) Rodian 02
+(256): Disguise type Rodian 02
 
 <a id="disguise_type_rodian_03"></a>
 
 ## `DISGUISE_TYPE_RODIAN_03`
 
-(257): Disguise [type](GFF-File-Format#data-types) Rodian 03
+(257): Disguise type Rodian 03
 
 <a id="disguise_type_rodian_04"></a>
 
 ## `DISGUISE_TYPE_RODIAN_04`
 
-(258): Disguise [type](GFF-File-Format#data-types) Rodian 04
+(258): Disguise type Rodian 04
 
 <a id="disguise_type_selkath_02"></a>
 
 ## `DISGUISE_TYPE_SELKATH_02`
 
-(259): Disguise [type](GFF-File-Format#data-types) Selkath 02
+(259): Disguise type Selkath 02
 
 <a id="disguise_type_selkath_03"></a>
 
 ## `DISGUISE_TYPE_SELKATH_03`
 
-(260): Disguise [type](GFF-File-Format#data-types) Selkath 03
+(260): Disguise type Selkath 03
 
 <a id="disguise_type_shyrack_01"></a>
 
 ## `DISGUISE_TYPE_SHYRACK_01`
 
-(281): Disguise [type](GFF-File-Format#data-types) Shyrack 01
+(281): Disguise type Shyrack 01
 
 <a id="disguise_type_shyrack_02"></a>
 
 ## `DISGUISE_TYPE_SHYRACK_02`
 
-(282): Disguise [type](GFF-File-Format#data-types) Shyrack 02
+(282): Disguise type Shyrack 02
 
 <a id="disguise_type_sith_fem_asian"></a>
 
 ## `DISGUISE_TYPE_SITH_FEM_ASIAN`
 
-(301): Disguise [type](GFF-File-Format#data-types) Sith Fem Asian
+(301): Disguise type Sith Fem Asian
 
 <a id="disguise_type_sith_fem_black"></a>
 
 ## `DISGUISE_TYPE_SITH_FEM_BLACK`
 
-(292): Disguise [type](GFF-File-Format#data-types) Sith Fem Black
+(292): Disguise type Sith Fem Black
 
 <a id="disguise_type_sith_fem_old_asian"></a>
 
 ## `DISGUISE_TYPE_SITH_FEM_OLD_ASIAN`
 
-(293): Disguise [type](GFF-File-Format#data-types) Sith Fem Old Asian
+(293): Disguise type Sith Fem Old Asian
 
 <a id="disguise_type_sith_fem_old_black"></a>
 
 ## `DISGUISE_TYPE_SITH_FEM_OLD_BLACK`
 
-(295): Disguise [type](GFF-File-Format#data-types) Sith Fem Old Black
+(295): Disguise type Sith Fem Old Black
 
 <a id="disguise_type_sith_fem_old_white"></a>
 
 ## `DISGUISE_TYPE_SITH_FEM_OLD_WHITE`
 
-(294): Disguise [type](GFF-File-Format#data-types) Sith Fem Old White
+(294): Disguise type Sith Fem Old White
 
 <a id="disguise_type_sith_fem_white"></a>
 
 ## `DISGUISE_TYPE_SITH_FEM_WHITE`
 
-(291): Disguise [type](GFF-File-Format#data-types) Sith Fem White
+(291): Disguise type Sith Fem White
 
 <a id="disguise_type_sith_mal_asian"></a>
 
 ## `DISGUISE_TYPE_SITH_MAL_ASIAN`
 
-(302): Disguise [type](GFF-File-Format#data-types) Sith Mal Asian
+(302): Disguise type Sith Mal Asian
 
 <a id="disguise_type_sith_mal_black"></a>
 
 ## `DISGUISE_TYPE_SITH_MAL_BLACK`
 
-(297): Disguise [type](GFF-File-Format#data-types) Sith Mal Black
+(297): Disguise type Sith Mal Black
 
 <a id="disguise_type_sith_mal_old_asian"></a>
 
 ## `DISGUISE_TYPE_SITH_MAL_OLD_ASIAN`
 
-(298): Disguise [type](GFF-File-Format#data-types) Sith Mal Old Asian
+(298): Disguise type Sith Mal Old Asian
 
 <a id="disguise_type_sith_mal_old_black"></a>
 
 ## `DISGUISE_TYPE_SITH_MAL_OLD_BLACK`
 
-(300): Disguise [type](GFF-File-Format#data-types) Sith Mal Old Black
+(300): Disguise type Sith Mal Old Black
 
 <a id="disguise_type_sith_mal_old_white"></a>
 
 ## `DISGUISE_TYPE_SITH_MAL_OLD_WHITE`
 
-(299): Disguise [type](GFF-File-Format#data-types) Sith Mal Old White
+(299): Disguise type Sith Mal Old White
 
 <a id="disguise_type_sith_mal_white"></a>
 
 ## `DISGUISE_TYPE_SITH_MAL_WHITE`
 
-(296): Disguise [type](GFF-File-Format#data-types) Sith Mal White
+(296): Disguise type Sith Mal White
 
 <a id="disguise_type_sith_soldier_03"></a>
 
 ## `DISGUISE_TYPE_SITH_SOLDIER_03`
 
-(261): Disguise [type](GFF-File-Format#data-types) Sith Soldier 03
+(261): Disguise type Sith Soldier 03
 
 <a id="disguise_type_swoop_gang_02"></a>
 
 ## `DISGUISE_TYPE_SWOOP_GANG_02`
 
-(262): Disguise [type](GFF-File-Format#data-types) Swoop Gang 02
+(262): Disguise type Swoop Gang 02
 
 <a id="disguise_type_swoop_gang_03"></a>
 
 ## `DISGUISE_TYPE_SWOOP_GANG_03`
 
-(263): Disguise [type](GFF-File-Format#data-types) Swoop Gang 03
+(263): Disguise type Swoop Gang 03
 
 <a id="disguise_type_swoop_gang_04"></a>
 
 ## `DISGUISE_TYPE_SWOOP_GANG_04`
 
-(264): Disguise [type](GFF-File-Format#data-types) Swoop Gang 04
+(264): Disguise type Swoop Gang 04
 
 <a id="disguise_type_swoop_gang_05"></a>
 
 ## `DISGUISE_TYPE_SWOOP_GANG_05`
 
-(265): Disguise [type](GFF-File-Format#data-types) Swoop Gang 05
+(265): Disguise type Swoop Gang 05
 
 <a id="disguise_type_test"></a>
 
 ## `DISGUISE_TYPE_TEST`
 
-(1): Disguise [type](GFF-File-Format#data-types) Test
+(1): Disguise type Test
 
 <a id="disguise_type_turret"></a>
 
 ## `DISGUISE_TYPE_TURRET`
 
-(182): Disguise [type](GFF-File-Format#data-types) Turret
+(182): Disguise type Turret
 
 <a id="disguise_type_turret2"></a>
 
 ## `DISGUISE_TYPE_TURRET2`
 
-(183): Disguise [type](GFF-File-Format#data-types) Turret2
+(183): Disguise type Turret2
 
 <a id="disguise_type_tuskan_raider_02"></a>
 
 ## `DISGUISE_TYPE_TUSKAN_RAIDER_02`
 
-(266): Disguise [type](GFF-File-Format#data-types) Tuskan Raider 02
+(266): Disguise type Tuskan Raider 02
 
 <a id="disguise_type_tuskan_raider_03"></a>
 
 ## `DISGUISE_TYPE_TUSKAN_RAIDER_03`
 
-(267): Disguise [type](GFF-File-Format#data-types) Tuskan Raider 03
+(267): Disguise type Tuskan Raider 03
 
 <a id="disguise_type_tuskan_raider_04"></a>
 
 ## `DISGUISE_TYPE_TUSKAN_RAIDER_04`
 
-(268): Disguise [type](GFF-File-Format#data-types) Tuskan Raider 04
+(268): Disguise type Tuskan Raider 04
 
 <a id="disguise_type_twilek_female_02"></a>
 
 ## `DISGUISE_TYPE_TWILEK_FEMALE_02`
 
-(270): Disguise [type](GFF-File-Format#data-types) Twilek Female 02
+(270): Disguise type Twilek Female 02
 
 <a id="disguise_type_twilek_male_02"></a>
 
 ## `DISGUISE_TYPE_TWILEK_MALE_02`
 
-(269): Disguise [type](GFF-File-Format#data-types) Twilek Male 02
+(269): Disguise type Twilek Male 02
 
 <a id="disguise_type_wookie_female_02"></a>
 
 ## `DISGUISE_TYPE_WOOKIE_FEMALE_02`
 
-(275): Disguise [type](GFF-File-Format#data-types) Wookie Female 02
+(275): Disguise type Wookie Female 02
 
 <a id="disguise_type_wookie_female_03"></a>
 
 ## `DISGUISE_TYPE_WOOKIE_FEMALE_03`
 
-(276): Disguise [type](GFF-File-Format#data-types) Wookie Female 03
+(276): Disguise type Wookie Female 03
 
 <a id="disguise_type_wookie_female_04"></a>
 
 ## `DISGUISE_TYPE_WOOKIE_FEMALE_04`
 
-(277): Disguise [type](GFF-File-Format#data-types) Wookie Female 04
+(277): Disguise type Wookie Female 04
 
 <a id="disguise_type_wookie_female_05"></a>
 
 ## `DISGUISE_TYPE_WOOKIE_FEMALE_05`
 
-(278): Disguise [type](GFF-File-Format#data-types) Wookie Female 05
+(278): Disguise type Wookie Female 05
 
 <a id="disguise_type_wookie_male_02"></a>
 
 ## `DISGUISE_TYPE_WOOKIE_MALE_02`
 
-(271): Disguise [type](GFF-File-Format#data-types) Wookie Male 02
+(271): Disguise type Wookie Male 02
 
 <a id="disguise_type_wookie_male_03"></a>
 
 ## `DISGUISE_TYPE_WOOKIE_MALE_03`
 
-(272): Disguise [type](GFF-File-Format#data-types) Wookie Male 03
+(272): Disguise type Wookie Male 03
 
 <a id="disguise_type_wookie_male_04"></a>
 
 ## `DISGUISE_TYPE_WOOKIE_MALE_04`
 
-(273): Disguise [type](GFF-File-Format#data-types) Wookie Male 04
+(273): Disguise type Wookie Male 04
 
 <a id="disguise_type_wookie_male_05"></a>
 
 ## `DISGUISE_TYPE_WOOKIE_MALE_05`
 
-(274): Disguise [type](GFF-File-Format#data-types) Wookie Male 05
+(274): Disguise type Wookie Male 05
 
 <a id="disguise_type_wraid_02"></a>
 
 ## `DISGUISE_TYPE_WRAID_02`
 
-(251): Disguise [type](GFF-File-Format#data-types) Wraid 02
+(251): Disguise type Wraid 02
 
 <a id="disguise_type_wraid_03"></a>
 
 ## `DISGUISE_TYPE_WRAID_03`
 
-(252): Disguise [type](GFF-File-Format#data-types) Wraid 03
+(252): Disguise type Wraid 03
 
 <a id="disguise_type_wraid_04"></a>
 
 ## `DISGUISE_TYPE_WRAID_04`
 
-(253): Disguise [type](GFF-File-Format#data-types) Wraid 04
+(253): Disguise type Wraid 04
 
 <a id="disguise_type_yuthura_ban"></a>
 
 ## `DISGUISE_TYPE_YUTHURA_BAN`
 
-(280): Disguise [type](GFF-File-Format#data-types) Yuthura Ban
+(280): Disguise type Yuthura Ban
 
 <a id="door_action_bash"></a>
 
@@ -4250,439 +4250,439 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `DURATION_TYPE_INSTANT`
 
-(0): Duration [type](GFF-File-Format#data-types) Instant
+(0): Duration type Instant
 
 <a id="duration_type_permanent"></a>
 
 ## `DURATION_TYPE_PERMANENT`
 
-(2): Duration [type](GFF-File-Format#data-types) Permanent
+(2): Duration type Permanent
 
 <a id="duration_type_temporary"></a>
 
 ## `DURATION_TYPE_TEMPORARY`
 
-(1): Duration [type](GFF-File-Format#data-types) Temporary
+(1): Duration type Temporary
 
 <a id="effect_type_ability_decrease"></a>
 
 ## `EFFECT_TYPE_ABILITY_DECREASE`
 
-(39): Effect [type](GFF-File-Format#data-types) Ability Decrease
+(39): Effect type Ability Decrease
 
 <a id="effect_type_ability_increase"></a>
 
 ## `EFFECT_TYPE_ABILITY_INCREASE`
 
-(38): Effect [type](GFF-File-Format#data-types) Ability Increase
+(38): Effect type Ability Increase
 
 <a id="effect_type_ac_decrease"></a>
 
 ## `EFFECT_TYPE_AC_DECREASE`
 
-(47): Effect [type](GFF-File-Format#data-types) Ac Decrease
+(47): Effect type Ac Decrease
 
 <a id="effect_type_ac_increase"></a>
 
 ## `EFFECT_TYPE_AC_INCREASE`
 
-(46): Effect [type](GFF-File-Format#data-types) Ac Increase
+(46): Effect type Ac Increase
 
 <a id="effect_type_arcane_spell_failure"></a>
 
 ## `EFFECT_TYPE_ARCANE_SPELL_FAILURE`
 
-(18): Effect [type](GFF-File-Format#data-types) Arcane Spell Failure
+(18): Effect type Arcane Spell Failure
 
 <a id="effect_type_area_of_effect"></a>
 
 ## `EFFECT_TYPE_AREA_OF_EFFECT`
 
-(20): Effect [type](GFF-File-Format#data-types) Area Of Effect
+(20): Effect type Area Of Effect
 
 <a id="effect_type_assureddeflection"></a>
 
 ## `EFFECT_TYPE_ASSUREDDEFLECTION`
 
-(78): Effect [type](GFF-File-Format#data-types) Assureddeflection
+(78): Effect type Assureddeflection
 
 <a id="effect_type_assuredhit"></a>
 
 ## `EFFECT_TYPE_ASSUREDHIT`
 
-(74): Effect [type](GFF-File-Format#data-types) Assuredhit
+(74): Effect type Assuredhit
 
 <a id="effect_type_attack_decrease"></a>
 
 ## `EFFECT_TYPE_ATTACK_DECREASE`
 
-(41): Effect [type](GFF-File-Format#data-types) Attack Decrease
+(41): Effect type Attack Decrease
 
 <a id="effect_type_attack_increase"></a>
 
 ## `EFFECT_TYPE_ATTACK_INCREASE`
 
-(40): Effect [type](GFF-File-Format#data-types) Attack Increase
+(40): Effect type Attack Increase
 
 <a id="effect_type_beam"></a>
 
 ## `EFFECT_TYPE_BEAM`
 
-(21): Effect [type](GFF-File-Format#data-types) Beam
+(21): Effect type Beam
 
 <a id="effect_type_blindness"></a>
 
 ## `EFFECT_TYPE_BLINDNESS`
 
-(67): Effect [type](GFF-File-Format#data-types) Blindness
+(67): Effect type Blindness
 
 <a id="effect_type_charmed"></a>
 
 ## `EFFECT_TYPE_CHARMED`
 
-(23): Effect [type](GFF-File-Format#data-types) Charmed
+(23): Effect type Charmed
 
 <a id="effect_type_concealment"></a>
 
 ## `EFFECT_TYPE_CONCEALMENT`
 
-(72): Effect [type](GFF-File-Format#data-types) Concealment
+(72): Effect type Concealment
 
 <a id="effect_type_confused"></a>
 
 ## `EFFECT_TYPE_CONFUSED`
 
-(24): Effect [type](GFF-File-Format#data-types) Confused
+(24): Effect type Confused
 
 <a id="effect_type_curse"></a>
 
 ## `EFFECT_TYPE_CURSE`
 
-(33): Effect [type](GFF-File-Format#data-types) Curse
+(33): Effect type Curse
 
 <a id="effect_type_damage_decrease"></a>
 
 ## `EFFECT_TYPE_DAMAGE_DECREASE`
 
-(43): Effect [type](GFF-File-Format#data-types) Damage Decrease
+(43): Effect type Damage Decrease
 
 <a id="effect_type_damage_immunity_decrease"></a>
 
 ## `EFFECT_TYPE_DAMAGE_IMMUNITY_DECREASE`
 
-(45): Effect [type](GFF-File-Format#data-types) Damage Immunity Decrease
+(45): Effect type Damage Immunity Decrease
 
 <a id="effect_type_damage_immunity_increase"></a>
 
 ## `EFFECT_TYPE_DAMAGE_IMMUNITY_INCREASE`
 
-(44): Effect [type](GFF-File-Format#data-types) Damage Immunity Increase
+(44): Effect type Damage Immunity Increase
 
 <a id="effect_type_damage_increase"></a>
 
 ## `EFFECT_TYPE_DAMAGE_INCREASE`
 
-(42): Effect [type](GFF-File-Format#data-types) Damage Increase
+(42): Effect type Damage Increase
 
 <a id="effect_type_damage_reduction"></a>
 
 ## `EFFECT_TYPE_DAMAGE_REDUCTION`
 
-(7): Effect [type](GFF-File-Format#data-types) Damage Reduction
+(7): Effect type Damage Reduction
 
 <a id="effect_type_damage_resistance"></a>
 
 ## `EFFECT_TYPE_DAMAGE_RESISTANCE`
 
-(1): Effect [type](GFF-File-Format#data-types) Damage Resistance
+(1): Effect type Damage Resistance
 
 <a id="effect_type_darkness"></a>
 
 ## `EFFECT_TYPE_DARKNESS`
 
-(58): Effect [type](GFF-File-Format#data-types) Darkness
+(58): Effect type Darkness
 
 <a id="effect_type_dazed"></a>
 
 ## `EFFECT_TYPE_DAZED`
 
-(28): Effect [type](GFF-File-Format#data-types) Dazed
+(28): Effect type Dazed
 
 <a id="effect_type_deaf"></a>
 
 ## `EFFECT_TYPE_DEAF`
 
-(13): Effect [type](GFF-File-Format#data-types) Deaf
+(13): Effect type Deaf
 
 <a id="effect_type_disease"></a>
 
 ## `EFFECT_TYPE_DISEASE`
 
-(32): Effect [type](GFF-File-Format#data-types) Disease
+(32): Effect type Disease
 
 <a id="effect_type_disguise"></a>
 
 ## `EFFECT_TYPE_DISGUISE`
 
-(62): Effect [type](GFF-File-Format#data-types) Disguise
+(62): Effect type Disguise
 
 <a id="effect_type_dispelmagicall"></a>
 
 ## `EFFECT_TYPE_DISPELMAGICALL`
 
-(59): Effect [type](GFF-File-Format#data-types) Dispelmagicall
+(59): Effect type Dispelmagicall
 
 <a id="effect_type_dispelmagicbest"></a>
 
 ## `EFFECT_TYPE_DISPELMAGICBEST`
 
-(69): Effect [type](GFF-File-Format#data-types) Dispelmagicbest
+(69): Effect type Dispelmagicbest
 
 <a id="effect_type_dominated"></a>
 
 ## `EFFECT_TYPE_DOMINATED`
 
-(26): Effect [type](GFF-File-Format#data-types) Dominated
+(26): Effect type Dominated
 
 <a id="effect_type_elementalshield"></a>
 
 ## `EFFECT_TYPE_ELEMENTALSHIELD`
 
-(60): Effect [type](GFF-File-Format#data-types) Elementalshield
+(60): Effect type Elementalshield
 
 <a id="effect_type_enemy_attack_bonus"></a>
 
 ## `EFFECT_TYPE_ENEMY_ATTACK_BONUS`
 
-(17): Effect [type](GFF-File-Format#data-types) Enemy Attack Bonus
+(17): Effect type Enemy Attack Bonus
 
 <a id="effect_type_entangle"></a>
 
 ## `EFFECT_TYPE_ENTANGLE`
 
-(11): Effect [type](GFF-File-Format#data-types) Entangle
+(11): Effect type Entangle
 
 <a id="effect_type_force_resistance_decrease"></a>
 
 ## `EFFECT_TYPE_FORCE_RESISTANCE_DECREASE`
 
-(53): Effect [type](GFF-File-Format#data-types) Force Resistance Decrease
+(53): Effect type Force Resistance Decrease
 
 <a id="effect_type_force_resistance_increase"></a>
 
 ## `EFFECT_TYPE_FORCE_RESISTANCE_INCREASE`
 
-(52): Effect [type](GFF-File-Format#data-types) Force Resistance Increase
+(52): Effect type Force Resistance Increase
 
 <a id="effect_type_forcejump"></a>
 
 ## `EFFECT_TYPE_FORCEJUMP`
 
-(77): Effect [type](GFF-File-Format#data-types) Forcejump
+(77): Effect type Forcejump
 
 <a id="effect_type_frightened"></a>
 
 ## `EFFECT_TYPE_FRIGHTENED`
 
-(25): Effect [type](GFF-File-Format#data-types) Frightened
+(25): Effect type Frightened
 
 <a id="effect_type_haste"></a>
 
 ## `EFFECT_TYPE_HASTE`
 
-(36): Effect [type](GFF-File-Format#data-types) Haste
+(36): Effect type Haste
 
 <a id="effect_type_immunity"></a>
 
 ## `EFFECT_TYPE_IMMUNITY`
 
-(15): Effect [type](GFF-File-Format#data-types) Immunity
+(15): Effect type Immunity
 
 <a id="effect_type_improvedinvisibility"></a>
 
 ## `EFFECT_TYPE_IMPROVEDINVISIBILITY`
 
-(57): Effect [type](GFF-File-Format#data-types) Improvedinvisibility
+(57): Effect type Improvedinvisibility
 
 <a id="effect_type_invalideffect"></a>
 
 ## `EFFECT_TYPE_INVALIDEFFECT`
 
-(0): Effect [type](GFF-File-Format#data-types) Invalideffect
+(0): Effect type Invalideffect
 
 <a id="effect_type_invisibility"></a>
 
 ## `EFFECT_TYPE_INVISIBILITY`
 
-(56): Effect [type](GFF-File-Format#data-types) Invisibility
+(56): Effect type Invisibility
 
 <a id="effect_type_invulnerable"></a>
 
 ## `EFFECT_TYPE_INVULNERABLE`
 
-(12): Effect [type](GFF-File-Format#data-types) Invulnerable
+(12): Effect type Invulnerable
 
 <a id="effect_type_lightsaberthrow"></a>
 
 ## `EFFECT_TYPE_LIGHTSABERTHROW`
 
-(76): Effect [type](GFF-File-Format#data-types) Lightsaberthrow
+(76): Effect type Lightsaberthrow
 
 <a id="effect_type_miss_chance"></a>
 
 ## `EFFECT_TYPE_MISS_CHANCE`
 
-(71): Effect [type](GFF-File-Format#data-types) Miss Chance
+(71): Effect type Miss Chance
 
 <a id="effect_type_movement_speed_decrease"></a>
 
 ## `EFFECT_TYPE_MOVEMENT_SPEED_DECREASE`
 
-(49): Effect [type](GFF-File-Format#data-types) Movement Speed Decrease
+(49): Effect type Movement Speed Decrease
 
 <a id="effect_type_movement_speed_increase"></a>
 
 ## `EFFECT_TYPE_MOVEMENT_SPEED_INCREASE`
 
-(48): Effect [type](GFF-File-Format#data-types) Movement Speed Increase
+(48): Effect type Movement Speed Increase
 
 <a id="effect_type_negativelevel"></a>
 
 ## `EFFECT_TYPE_NEGATIVELEVEL`
 
-(61): Effect [type](GFF-File-Format#data-types) Negativelevel
+(61): Effect type Negativelevel
 
 <a id="effect_type_paralyze"></a>
 
 ## `EFFECT_TYPE_PARALYZE`
 
-(27): Effect [type](GFF-File-Format#data-types) Paralyze
+(27): Effect type Paralyze
 
 <a id="effect_type_poison"></a>
 
 ## `EFFECT_TYPE_POISON`
 
-(31): Effect [type](GFF-File-Format#data-types) Poison
+(31): Effect type Poison
 
 <a id="effect_type_regenerate"></a>
 
 ## `EFFECT_TYPE_REGENERATE`
 
-(3): Effect [type](GFF-File-Format#data-types) Regenerate
+(3): Effect type Regenerate
 
 <a id="effect_type_resurrection"></a>
 
 ## `EFFECT_TYPE_RESURRECTION`
 
-(14): Effect [type](GFF-File-Format#data-types) Resurrection
+(14): Effect type Resurrection
 
 <a id="effect_type_sanctuary"></a>
 
 ## `EFFECT_TYPE_SANCTUARY`
 
-(63): Effect [type](GFF-File-Format#data-types) Sanctuary
+(63): Effect type Sanctuary
 
 <a id="effect_type_saving_throw_decrease"></a>
 
 ## `EFFECT_TYPE_SAVING_THROW_DECREASE`
 
-(51): Effect [type](GFF-File-Format#data-types) Saving Throw Decrease
+(51): Effect type Saving Throw Decrease
 
 <a id="effect_type_saving_throw_increase"></a>
 
 ## `EFFECT_TYPE_SAVING_THROW_INCREASE`
 
-(50): Effect [type](GFF-File-Format#data-types) Saving Throw Increase
+(50): Effect type Saving Throw Increase
 
 <a id="effect_type_seeinvisible"></a>
 
 ## `EFFECT_TYPE_SEEINVISIBLE`
 
-(65): Effect [type](GFF-File-Format#data-types) Seeinvisible
+(65): Effect type Seeinvisible
 
 <a id="effect_type_silence"></a>
 
 ## `EFFECT_TYPE_SILENCE`
 
-(34): Effect [type](GFF-File-Format#data-types) Silence
+(34): Effect type Silence
 
 <a id="effect_type_skill_decrease"></a>
 
 ## `EFFECT_TYPE_SKILL_DECREASE`
 
-(55): Effect [type](GFF-File-Format#data-types) Skill Decrease
+(55): Effect type Skill Decrease
 
 <a id="effect_type_skill_increase"></a>
 
 ## `EFFECT_TYPE_SKILL_INCREASE`
 
-(54): Effect [type](GFF-File-Format#data-types) Skill Increase
+(54): Effect type Skill Increase
 
 <a id="effect_type_sleep"></a>
 
 ## `EFFECT_TYPE_SLEEP`
 
-(30): Effect [type](GFF-File-Format#data-types) Sleep
+(30): Effect type Sleep
 
 <a id="effect_type_slow"></a>
 
 ## `EFFECT_TYPE_SLOW`
 
-(37): Effect [type](GFF-File-Format#data-types) Slow
+(37): Effect type Slow
 
 <a id="effect_type_spell_immunity"></a>
 
 ## `EFFECT_TYPE_SPELL_IMMUNITY`
 
-(73): Effect [type](GFF-File-Format#data-types) Spell Immunity
+(73): Effect type Spell Immunity
 
 <a id="effect_type_spelllevelabsorption"></a>
 
 ## `EFFECT_TYPE_SPELLLEVELABSORPTION`
 
-(68): Effect [type](GFF-File-Format#data-types) Spelllevelabsorption
+(68): Effect type Spelllevelabsorption
 
 <a id="effect_type_stunned"></a>
 
 ## `EFFECT_TYPE_STUNNED`
 
-(29): Effect [type](GFF-File-Format#data-types) Stunned
+(29): Effect type Stunned
 
 <a id="effect_type_temporary_hitpoints"></a>
 
 ## `EFFECT_TYPE_TEMPORARY_HITPOINTS`
 
-(9): Effect [type](GFF-File-Format#data-types) Temporary Hitpoints
+(9): Effect type Temporary Hitpoints
 
 <a id="effect_type_timestop"></a>
 
 ## `EFFECT_TYPE_TIMESTOP`
 
-(66): Effect [type](GFF-File-Format#data-types) Timestop
+(66): Effect type Timestop
 
 <a id="effect_type_trueseeing"></a>
 
 ## `EFFECT_TYPE_TRUESEEING`
 
-(64): Effect [type](GFF-File-Format#data-types) Trueseeing
+(64): Effect type Trueseeing
 
 <a id="effect_type_turned"></a>
 
 ## `EFFECT_TYPE_TURNED`
 
-(35): Effect [type](GFF-File-Format#data-types) Turned
+(35): Effect type Turned
 
 <a id="effect_type_ultravision"></a>
 
 ## `EFFECT_TYPE_ULTRAVISION`
 
-(70): Effect [type](GFF-File-Format#data-types) Ultravision
+(70): Effect type Ultravision
 
 <a id="effect_type_visual"></a>
 
 ## `EFFECT_TYPE_VISUAL`
 
-(75): Effect [type](GFF-File-Format#data-types) Visual
+(75): Effect type Visual
 
 <a id="encounter_difficulty_easy"></a>
 
@@ -5306,7 +5306,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `FORCE_POWER_DEATH_FIELD`
 
-(11): Force Power Death [field](GFF-File-Format#file-structure-overview)
+(11): Force Power Death field
 
 <a id="force_power_dominate"></a>
 
@@ -5666,199 +5666,199 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `IMMUNITY_TYPE_ABILITY_DECREASE`
 
-(19): Immunity [type](GFF-File-Format#data-types) Ability Decrease
+(19): Immunity type Ability Decrease
 
 <a id="immunity_type_ac_decrease"></a>
 
 ## `IMMUNITY_TYPE_AC_DECREASE`
 
-(23): Immunity [type](GFF-File-Format#data-types) Ac Decrease
+(23): Immunity type Ac Decrease
 
 <a id="immunity_type_attack_decrease"></a>
 
 ## `IMMUNITY_TYPE_ATTACK_DECREASE`
 
-(20): Immunity [type](GFF-File-Format#data-types) Attack Decrease
+(20): Immunity type Attack Decrease
 
 <a id="immunity_type_blindness"></a>
 
 ## `IMMUNITY_TYPE_BLINDNESS`
 
-(7): Immunity [type](GFF-File-Format#data-types) Blindness
+(7): Immunity type Blindness
 
 <a id="immunity_type_charm"></a>
 
 ## `IMMUNITY_TYPE_CHARM`
 
-(14): Immunity [type](GFF-File-Format#data-types) Charm
+(14): Immunity type Charm
 
 <a id="immunity_type_confused"></a>
 
 ## `IMMUNITY_TYPE_CONFUSED`
 
-(16): Immunity [type](GFF-File-Format#data-types) Confused
+(16): Immunity type Confused
 
 <a id="immunity_type_critical_hit"></a>
 
 ## `IMMUNITY_TYPE_CRITICAL_HIT`
 
-(31): Immunity [type](GFF-File-Format#data-types) Critical Hit
+(31): Immunity type Critical Hit
 
 <a id="immunity_type_cursed"></a>
 
 ## `IMMUNITY_TYPE_CURSED`
 
-(17): Immunity [type](GFF-File-Format#data-types) Cursed
+(17): Immunity type Cursed
 
 <a id="immunity_type_damage_decrease"></a>
 
 ## `IMMUNITY_TYPE_DAMAGE_DECREASE`
 
-(21): Immunity [type](GFF-File-Format#data-types) Damage Decrease
+(21): Immunity type Damage Decrease
 
 <a id="immunity_type_damage_immunity_decrease"></a>
 
 ## `IMMUNITY_TYPE_DAMAGE_IMMUNITY_DECREASE`
 
-(22): Immunity [type](GFF-File-Format#data-types) Damage Immunity Decrease
+(22): Immunity type Damage Immunity Decrease
 
 <a id="immunity_type_dazed"></a>
 
 ## `IMMUNITY_TYPE_DAZED`
 
-(18): Immunity [type](GFF-File-Format#data-types) Dazed
+(18): Immunity type Dazed
 
 <a id="immunity_type_deafness"></a>
 
 ## `IMMUNITY_TYPE_DEAFNESS`
 
-(8): Immunity [type](GFF-File-Format#data-types) Deafness
+(8): Immunity type Deafness
 
 <a id="immunity_type_death"></a>
 
 ## `IMMUNITY_TYPE_DEATH`
 
-(32): Immunity [type](GFF-File-Format#data-types) Death
+(32): Immunity type Death
 
 <a id="immunity_type_disease"></a>
 
 ## `IMMUNITY_TYPE_DISEASE`
 
-(3): Immunity [type](GFF-File-Format#data-types) Disease
+(3): Immunity type Disease
 
 <a id="immunity_type_dominate"></a>
 
 ## `IMMUNITY_TYPE_DOMINATE`
 
-(15): Immunity [type](GFF-File-Format#data-types) Dominate
+(15): Immunity type Dominate
 
 <a id="immunity_type_entangle"></a>
 
 ## `IMMUNITY_TYPE_ENTANGLE`
 
-(10): Immunity [type](GFF-File-Format#data-types) Entangle
+(10): Immunity type Entangle
 
 <a id="immunity_type_fear"></a>
 
 ## `IMMUNITY_TYPE_FEAR`
 
-(4): Immunity [type](GFF-File-Format#data-types) Fear
+(4): Immunity type Fear
 
 <a id="immunity_type_force_resistance_decrease"></a>
 
 ## `IMMUNITY_TYPE_FORCE_RESISTANCE_DECREASE`
 
-(26): Immunity [type](GFF-File-Format#data-types) Force Resistance Decrease
+(26): Immunity type Force Resistance Decrease
 
 <a id="immunity_type_knockdown"></a>
 
 ## `IMMUNITY_TYPE_KNOCKDOWN`
 
-(28): Immunity [type](GFF-File-Format#data-types) Knockdown
+(28): Immunity type Knockdown
 
 <a id="immunity_type_mind_spells"></a>
 
 ## `IMMUNITY_TYPE_MIND_SPELLS`
 
-(1): Immunity [type](GFF-File-Format#data-types) Mind Spells
+(1): Immunity type Mind Spells
 
 <a id="immunity_type_movement_speed_decrease"></a>
 
 ## `IMMUNITY_TYPE_MOVEMENT_SPEED_DECREASE`
 
-(24): Immunity [type](GFF-File-Format#data-types) Movement Speed Decrease
+(24): Immunity type Movement Speed Decrease
 
 <a id="immunity_type_negative_level"></a>
 
 ## `IMMUNITY_TYPE_NEGATIVE_LEVEL`
 
-(29): Immunity [type](GFF-File-Format#data-types) Negative Level
+(29): Immunity type Negative Level
 
 <a id="immunity_type_none"></a>
 
 ## `IMMUNITY_TYPE_NONE`
 
-(0): Immunity [type](GFF-File-Format#data-types) None
+(0): Immunity type None
 
 <a id="immunity_type_paralysis"></a>
 
 ## `IMMUNITY_TYPE_PARALYSIS`
 
-(6): Immunity [type](GFF-File-Format#data-types) Paralysis
+(6): Immunity type Paralysis
 
 <a id="immunity_type_poison"></a>
 
 ## `IMMUNITY_TYPE_POISON`
 
-(2): Immunity [type](GFF-File-Format#data-types) Poison
+(2): Immunity type Poison
 
 <a id="immunity_type_saving_throw_decrease"></a>
 
 ## `IMMUNITY_TYPE_SAVING_THROW_DECREASE`
 
-(25): Immunity [type](GFF-File-Format#data-types) Saving Throw Decrease
+(25): Immunity type Saving Throw Decrease
 
 <a id="immunity_type_silence"></a>
 
 ## `IMMUNITY_TYPE_SILENCE`
 
-(11): Immunity [type](GFF-File-Format#data-types) Silence
+(11): Immunity type Silence
 
 <a id="immunity_type_skill_decrease"></a>
 
 ## `IMMUNITY_TYPE_SKILL_DECREASE`
 
-(27): Immunity [type](GFF-File-Format#data-types) Skill Decrease
+(27): Immunity type Skill Decrease
 
 <a id="immunity_type_sleep"></a>
 
 ## `IMMUNITY_TYPE_SLEEP`
 
-(13): Immunity [type](GFF-File-Format#data-types) Sleep
+(13): Immunity type Sleep
 
 <a id="immunity_type_slow"></a>
 
 ## `IMMUNITY_TYPE_SLOW`
 
-(9): Immunity [type](GFF-File-Format#data-types) Slow
+(9): Immunity type Slow
 
 <a id="immunity_type_sneak_attack"></a>
 
 ## `IMMUNITY_TYPE_SNEAK_ATTACK`
 
-(30): Immunity [type](GFF-File-Format#data-types) Sneak Attack
+(30): Immunity type Sneak Attack
 
 <a id="immunity_type_stun"></a>
 
 ## `IMMUNITY_TYPE_STUN`
 
-(12): Immunity [type](GFF-File-Format#data-types) Stun
+(12): Immunity type Stun
 
 <a id="immunity_type_trap"></a>
 
 ## `IMMUNITY_TYPE_TRAP`
 
-(5): Immunity [type](GFF-File-Format#data-types) Trap
+(5): Immunity type Trap
 
 <a id="invalid_standard_faction"></a>
 
@@ -5870,19 +5870,19 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `INVISIBILITY_TYPE_DARKNESS`
 
-(2): Invisibility [type](GFF-File-Format#data-types) Darkness
+(2): Invisibility type Darkness
 
 <a id="invisibility_type_improved"></a>
 
 ## `INVISIBILITY_TYPE_IMPROVED`
 
-(4): Invisibility [type](GFF-File-Format#data-types) Improved
+(4): Invisibility type Improved
 
 <a id="invisibility_type_normal"></a>
 
 ## `INVISIBILITY_TYPE_NORMAL`
 
-(1): Invisibility [type](GFF-File-Format#data-types) Normal
+(1): Invisibility type Normal
 
 <a id="item_property_ability_bonus"></a>
 
@@ -5900,7 +5900,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `ITEM_PROPERTY_AC_BONUS_VS_DAMAGE_TYPE`
 
-(3): Item Property Ac Bonus Vs Damage [type](GFF-File-Format#data-types)
+(3): Item Property Ac Bonus Vs Damage type
 
 <a id="item_property_ac_bonus_vs_racial_group"></a>
 
@@ -6050,13 +6050,13 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `ITEM_PROPERTY_EXTRA_MELEE_DAMAGE_TYPE`
 
-(22): Item Property Extra Melee Damage [type](GFF-File-Format#data-types)
+(22): Item Property Extra Melee Damage type
 
 <a id="item_property_extra_ranged_damage_type"></a>
 
 ## `ITEM_PROPERTY_EXTRA_RANGED_DAMAGE_TYPE`
 
-(23): Item Property Extra Ranged Damage [type](GFF-File-Format#data-types)
+(23): Item Property Extra Ranged Damage type
 
 <a id="item_property_freedom_of_movement"></a>
 
@@ -6074,7 +6074,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `ITEM_PROPERTY_IMMUNITY_DAMAGE_TYPE`
 
-(14): Item Property Immunity Damage [type](GFF-File-Format#data-types)
+(14): Item Property Immunity Damage type
 
 <a id="item_property_improved_force_resistance"></a>
 
@@ -6206,7 +6206,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `ITEM_PROPERTY_USE_LIMITATION_RACIAL_TYPE`
 
-(45): Item Property Use Limitation Racial [type](GFF-File-Format#data-types)
+(45): Item Property Use Limitation Racial type
 
 <a id="live_content_pkg1"></a>
 
@@ -6476,367 +6476,367 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `POLYMORPH_TYPE_BADGER`
 
-(25): Polymorph [type](GFF-File-Format#data-types) Badger
+(25): Polymorph type Badger
 
 <a id="polymorph_type_balor"></a>
 
 ## `POLYMORPH_TYPE_BALOR`
 
-(10): Polymorph [type](GFF-File-Format#data-types) Balor
+(10): Polymorph type Balor
 
 <a id="polymorph_type_boar"></a>
 
 ## `POLYMORPH_TYPE_BOAR`
 
-(24): Polymorph [type](GFF-File-Format#data-types) Boar
+(24): Polymorph type Boar
 
 <a id="polymorph_type_brown_bear"></a>
 
 ## `POLYMORPH_TYPE_BROWN_BEAR`
 
-(21): Polymorph [type](GFF-File-Format#data-types) Brown Bear
+(21): Polymorph type Brown Bear
 
 <a id="polymorph_type_cow"></a>
 
 ## `POLYMORPH_TYPE_COW`
 
-(27): Polymorph [type](GFF-File-Format#data-types) Cow
+(27): Polymorph type Cow
 
 <a id="polymorph_type_death_slaad"></a>
 
 ## `POLYMORPH_TYPE_DEATH_SLAAD`
 
-(11): Polymorph [type](GFF-File-Format#data-types) Death Slaad
+(11): Polymorph type Death Slaad
 
 <a id="polymorph_type_dire_badger"></a>
 
 ## `POLYMORPH_TYPE_DIRE_BADGER`
 
-(37): Polymorph [type](GFF-File-Format#data-types) Dire Badger
+(37): Polymorph type Dire Badger
 
 <a id="polymorph_type_dire_boar"></a>
 
 ## `POLYMORPH_TYPE_DIRE_BOAR`
 
-(36): Polymorph [type](GFF-File-Format#data-types) Dire Boar
+(36): Polymorph type Dire Boar
 
 <a id="polymorph_type_dire_brown_bear"></a>
 
 ## `POLYMORPH_TYPE_DIRE_BROWN_BEAR`
 
-(33): Polymorph [type](GFF-File-Format#data-types) Dire Brown Bear
+(33): Polymorph type Dire Brown Bear
 
 <a id="polymorph_type_dire_panther"></a>
 
 ## `POLYMORPH_TYPE_DIRE_PANTHER`
 
-(34): Polymorph [type](GFF-File-Format#data-types) Dire Panther
+(34): Polymorph type Dire Panther
 
 <a id="polymorph_type_dire_wolf"></a>
 
 ## `POLYMORPH_TYPE_DIRE_WOLF`
 
-(35): Polymorph [type](GFF-File-Format#data-types) Dire Wolf
+(35): Polymorph type Dire Wolf
 
 <a id="polymorph_type_doom_knight"></a>
 
 ## `POLYMORPH_TYPE_DOOM_KNIGHT`
 
-(28): Polymorph [type](GFF-File-Format#data-types) Doom Knight
+(28): Polymorph type Doom Knight
 
 <a id="polymorph_type_elder_air_elemental"></a>
 
 ## `POLYMORPH_TYPE_ELDER_AIR_ELEMENTAL`
 
-(20): Polymorph [type](GFF-File-Format#data-types) Elder Air Elemental
+(20): Polymorph type Elder Air Elemental
 
 <a id="polymorph_type_elder_earth_elemental"></a>
 
 ## `POLYMORPH_TYPE_ELDER_EARTH_ELEMENTAL`
 
-(19): Polymorph [type](GFF-File-Format#data-types) Elder Earth Elemental
+(19): Polymorph type Elder Earth Elemental
 
 <a id="polymorph_type_elder_fire_elemental"></a>
 
 ## `POLYMORPH_TYPE_ELDER_FIRE_ELEMENTAL`
 
-(17): Polymorph [type](GFF-File-Format#data-types) Elder Fire Elemental
+(17): Polymorph type Elder Fire Elemental
 
 <a id="polymorph_type_elder_water_elemental"></a>
 
 ## `POLYMORPH_TYPE_ELDER_WATER_ELEMENTAL`
 
-(18): Polymorph [type](GFF-File-Format#data-types) Elder Water Elemental
+(18): Polymorph type Elder Water Elemental
 
 <a id="polymorph_type_fire_giant"></a>
 
 ## `POLYMORPH_TYPE_FIRE_GIANT`
 
-(9): Polymorph [type](GFF-File-Format#data-types) Fire Giant
+(9): Polymorph type Fire Giant
 
 <a id="polymorph_type_giant_spider"></a>
 
 ## `POLYMORPH_TYPE_GIANT_SPIDER`
 
-(3): Polymorph [type](GFF-File-Format#data-types) Giant Spider
+(3): Polymorph type Giant Spider
 
 <a id="polymorph_type_huge_air_elemental"></a>
 
 ## `POLYMORPH_TYPE_HUGE_AIR_ELEMENTAL`
 
-(16): Polymorph [type](GFF-File-Format#data-types) Huge Air Elemental
+(16): Polymorph type Huge Air Elemental
 
 <a id="polymorph_type_huge_earth_elemental"></a>
 
 ## `POLYMORPH_TYPE_HUGE_EARTH_ELEMENTAL`
 
-(15): Polymorph [type](GFF-File-Format#data-types) Huge Earth Elemental
+(15): Polymorph type Huge Earth Elemental
 
 <a id="polymorph_type_huge_fire_elemental"></a>
 
 ## `POLYMORPH_TYPE_HUGE_FIRE_ELEMENTAL`
 
-(13): Polymorph [type](GFF-File-Format#data-types) Huge Fire Elemental
+(13): Polymorph type Huge Fire Elemental
 
 <a id="polymorph_type_huge_water_elemental"></a>
 
 ## `POLYMORPH_TYPE_HUGE_WATER_ELEMENTAL`
 
-(14): Polymorph [type](GFF-File-Format#data-types) Huge Water Elemental
+(14): Polymorph type Huge Water Elemental
 
 <a id="polymorph_type_imp"></a>
 
 ## `POLYMORPH_TYPE_IMP`
 
-(30): Polymorph [type](GFF-File-Format#data-types) Imp
+(30): Polymorph type Imp
 
 <a id="polymorph_type_iron_golem"></a>
 
 ## `POLYMORPH_TYPE_IRON_GOLEM`
 
-(12): Polymorph [type](GFF-File-Format#data-types) Iron Golem
+(12): Polymorph type Iron Golem
 
 <a id="polymorph_type_panther"></a>
 
 ## `POLYMORPH_TYPE_PANTHER`
 
-(22): Polymorph [type](GFF-File-Format#data-types) Panther
+(22): Polymorph type Panther
 
 <a id="polymorph_type_penguin"></a>
 
 ## `POLYMORPH_TYPE_PENGUIN`
 
-(26): Polymorph [type](GFF-File-Format#data-types) Penguin
+(26): Polymorph type Penguin
 
 <a id="polymorph_type_pixie"></a>
 
 ## `POLYMORPH_TYPE_PIXIE`
 
-(6): Polymorph [type](GFF-File-Format#data-types) Pixie
+(6): Polymorph type Pixie
 
 <a id="polymorph_type_quasit"></a>
 
 ## `POLYMORPH_TYPE_QUASIT`
 
-(31): Polymorph [type](GFF-File-Format#data-types) Quasit
+(31): Polymorph type Quasit
 
 <a id="polymorph_type_red_dragon"></a>
 
 ## `POLYMORPH_TYPE_RED_DRAGON`
 
-(8): Polymorph [type](GFF-File-Format#data-types) Red Dragon
+(8): Polymorph type Red Dragon
 
 <a id="polymorph_type_succubus"></a>
 
 ## `POLYMORPH_TYPE_SUCCUBUS`
 
-(32): Polymorph [type](GFF-File-Format#data-types) Succubus
+(32): Polymorph type Succubus
 
 <a id="polymorph_type_troll"></a>
 
 ## `POLYMORPH_TYPE_TROLL`
 
-(4): Polymorph [type](GFF-File-Format#data-types) Troll
+(4): Polymorph type Troll
 
 <a id="polymorph_type_umber_hulk"></a>
 
 ## `POLYMORPH_TYPE_UMBER_HULK`
 
-(5): Polymorph [type](GFF-File-Format#data-types) Umber Hulk
+(5): Polymorph type Umber Hulk
 
 <a id="polymorph_type_werecat"></a>
 
 ## `POLYMORPH_TYPE_WERECAT`
 
-(2): Polymorph [type](GFF-File-Format#data-types) Werecat
+(2): Polymorph type Werecat
 
 <a id="polymorph_type_wererat"></a>
 
 ## `POLYMORPH_TYPE_WERERAT`
 
-(1): Polymorph [type](GFF-File-Format#data-types) Wererat
+(1): Polymorph type Wererat
 
 <a id="polymorph_type_werewolf"></a>
 
 ## `POLYMORPH_TYPE_WEREWOLF`
 
-(0): Polymorph [type](GFF-File-Format#data-types) Werewolf
+(0): Polymorph type Werewolf
 
 <a id="polymorph_type_wolf"></a>
 
 ## `POLYMORPH_TYPE_WOLF`
 
-(23): Polymorph [type](GFF-File-Format#data-types) Wolf
+(23): Polymorph type Wolf
 
 <a id="polymorph_type_yuanti"></a>
 
 ## `POLYMORPH_TYPE_YUANTI`
 
-(29): Polymorph [type](GFF-File-Format#data-types) Yuanti
+(29): Polymorph type Yuanti
 
 <a id="polymorph_type_zombie"></a>
 
 ## `POLYMORPH_TYPE_ZOMBIE`
 
-(7): Polymorph [type](GFF-File-Format#data-types) Zombie
+(7): Polymorph type Zombie
 
 <a id="projectile_path_type_accelerating"></a>
 
 ## `PROJECTILE_PATH_TYPE_ACCELERATING`
 
-(4): Projectile Path [type](GFF-File-Format#data-types) Accelerating
+(4): Projectile Path type Accelerating
 
 <a id="projectile_path_type_ballistic"></a>
 
 ## `PROJECTILE_PATH_TYPE_BALLISTIC`
 
-(2): Projectile Path [type](GFF-File-Format#data-types) Ballistic
+(2): Projectile Path type Ballistic
 
 <a id="projectile_path_type_default"></a>
 
 ## `PROJECTILE_PATH_TYPE_DEFAULT`
 
-(0): Projectile Path [type](GFF-File-Format#data-types) Default
+(0): Projectile Path type Default
 
 <a id="projectile_path_type_high_ballistic"></a>
 
 ## `PROJECTILE_PATH_TYPE_HIGH_BALLISTIC`
 
-(3): Projectile Path [type](GFF-File-Format#data-types) High Ballistic
+(3): Projectile Path type High Ballistic
 
 <a id="projectile_path_type_homing"></a>
 
 ## `PROJECTILE_PATH_TYPE_HOMING`
 
-(1): Projectile Path [type](GFF-File-Format#data-types) Homing
+(1): Projectile Path type Homing
 
 <a id="racial_type_all"></a>
 
 ## `RACIAL_TYPE_ALL`
 
-(7): Racial [type](GFF-File-Format#data-types) All
+(7): Racial type All
 
 <a id="racial_type_droid"></a>
 
 ## `RACIAL_TYPE_DROID`
 
-(5): Racial [type](GFF-File-Format#data-types) Droid
+(5): Racial type Droid
 
 <a id="racial_type_elf"></a>
 
 ## `RACIAL_TYPE_ELF`
 
-(1): Racial [type](GFF-File-Format#data-types) Elf
+(1): Racial type Elf
 
 <a id="racial_type_gnome"></a>
 
 ## `RACIAL_TYPE_GNOME`
 
-(2): Racial [type](GFF-File-Format#data-types) Gnome
+(2): Racial type Gnome
 
 <a id="racial_type_halfelf"></a>
 
 ## `RACIAL_TYPE_HALFELF`
 
-(4): Racial [type](GFF-File-Format#data-types) Halfelf
+(4): Racial type Halfelf
 
 <a id="racial_type_halfling"></a>
 
 ## `RACIAL_TYPE_HALFLING`
 
-(3): Racial [type](GFF-File-Format#data-types) Halfling
+(3): Racial type Halfling
 
 <a id="racial_type_human"></a>
 
 ## `RACIAL_TYPE_HUMAN`
 
-(6): Racial [type](GFF-File-Format#data-types) Human
+(6): Racial type Human
 
 <a id="racial_type_invalid"></a>
 
 ## `RACIAL_TYPE_INVALID`
 
-(8): Racial [type](GFF-File-Format#data-types) Invalid
+(8): Racial type Invalid
 
 <a id="racial_type_unknown"></a>
 
 ## `RACIAL_TYPE_UNKNOWN`
 
-(0): Racial [type](GFF-File-Format#data-types) Unknown
+(0): Racial type Unknown
 
 <a id="radius_size_colossal"></a>
 
 ## `RADIUS_SIZE_COLOSSAL`
 
-(10.0): Radius [size](GFF-File-Format#file-structure-overview) Colossal
+(10.0): Radius size Colossal
 
 <a id="radius_size_gargantuan"></a>
 
 ## `RADIUS_SIZE_GARGANTUAN`
 
-(8.33): Radius [size](GFF-File-Format#file-structure-overview) Gargantuan
+(8.33): Radius size Gargantuan
 
 <a id="radius_size_huge"></a>
 
 ## `RADIUS_SIZE_HUGE`
 
-(6.67): Radius [size](GFF-File-Format#file-structure-overview) Huge
+(6.67): Radius size Huge
 
 <a id="radius_size_large"></a>
 
 ## `RADIUS_SIZE_LARGE`
 
-(5.0): Radius [size](GFF-File-Format#file-structure-overview) Large
+(5.0): Radius size Large
 
 <a id="radius_size_medium"></a>
 
 ## `RADIUS_SIZE_MEDIUM`
 
-(3.33): Radius [size](GFF-File-Format#file-structure-overview) Medium
+(3.33): Radius size Medium
 
 <a id="radius_size_small"></a>
 
 ## `RADIUS_SIZE_SMALL`
 
-(1.67): Radius [size](GFF-File-Format#file-structure-overview) Small
+(1.67): Radius size Small
 
 <a id="reputation_type_enemy"></a>
 
 ## `REPUTATION_TYPE_ENEMY`
 
-(1): Reputation [type](GFF-File-Format#data-types) Enemy
+(1): Reputation type Enemy
 
 <a id="reputation_type_friend"></a>
 
 ## `REPUTATION_TYPE_FRIEND`
 
-(0): Reputation [type](GFF-File-Format#data-types) Friend
+(0): Reputation type Friend
 
 <a id="reputation_type_neutral"></a>
 
 ## `REPUTATION_TYPE_NEUTRAL`
 
-(2): Reputation [type](GFF-File-Format#data-types) Neutral
+(2): Reputation type Neutral
 
 <a id="saving_throw_all"></a>
 
@@ -6860,121 +6860,121 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `SAVING_THROW_TYPE_ACID`
 
-(1): Saving Throw [type](GFF-File-Format#data-types) Acid
+(1): Saving Throw type Acid
 
 <a id="saving_throw_type_all"></a>
 
 ## `SAVING_THROW_TYPE_ALL`
 
-(0): Saving Throw [type](GFF-File-Format#data-types) All
+(0): Saving Throw type All
 
 <a id="saving_throw_type_blaster"></a>
 
 ## `SAVING_THROW_TYPE_BLASTER`
 
-(17): Saving Throw [type](GFF-File-Format#data-types) Blaster
+(17): Saving Throw type Blaster
 
 <a id="saving_throw_type_cold"></a>
 
 ## `SAVING_THROW_TYPE_COLD`
 
-(3): Saving Throw [type](GFF-File-Format#data-types) Cold
+(3): Saving Throw type Cold
 
 <a id="saving_throw_type_dark_side"></a>
 
 ## `SAVING_THROW_TYPE_DARK_SIDE`
 
-(11): Saving Throw [type](GFF-File-Format#data-types) Dark Side
+(11): Saving Throw type Dark Side
 
 <a id="saving_throw_type_death"></a>
 
 ## `SAVING_THROW_TYPE_DEATH`
 
-(4): Saving Throw [type](GFF-File-Format#data-types) Death
+(4): Saving Throw type Death
 
 <a id="saving_throw_type_disease"></a>
 
 ## `SAVING_THROW_TYPE_DISEASE`
 
-(5): Saving Throw [type](GFF-File-Format#data-types) Disease
+(5): Saving Throw type Disease
 
 <a id="saving_throw_type_electrical"></a>
 
 ## `SAVING_THROW_TYPE_ELECTRICAL`
 
-(7): Saving Throw [type](GFF-File-Format#data-types) Electrical
+(7): Saving Throw type Electrical
 
 <a id="saving_throw_type_fear"></a>
 
 ## `SAVING_THROW_TYPE_FEAR`
 
-(8): Saving Throw [type](GFF-File-Format#data-types) Fear
+(8): Saving Throw type Fear
 
 <a id="saving_throw_type_fire"></a>
 
 ## `SAVING_THROW_TYPE_FIRE`
 
-(9): Saving Throw [type](GFF-File-Format#data-types) Fire
+(9): Saving Throw type Fire
 
 <a id="saving_throw_type_force_power"></a>
 
 ## `SAVING_THROW_TYPE_FORCE_POWER`
 
-(15): Saving Throw [type](GFF-File-Format#data-types) Force Power
+(15): Saving Throw type Force Power
 
 <a id="saving_throw_type_ion"></a>
 
 ## `SAVING_THROW_TYPE_ION`
 
-(16): Saving Throw [type](GFF-File-Format#data-types) Ion
+(16): Saving Throw type Ion
 
 <a id="saving_throw_type_light_side"></a>
 
 ## `SAVING_THROW_TYPE_LIGHT_SIDE`
 
-(6): Saving Throw [type](GFF-File-Format#data-types) Light Side
+(6): Saving Throw type Light Side
 
 <a id="saving_throw_type_mind_affecting"></a>
 
 ## `SAVING_THROW_TYPE_MIND_AFFECTING`
 
-(10): Saving Throw [type](GFF-File-Format#data-types) Mind Affecting
+(10): Saving Throw type Mind Affecting
 
 <a id="saving_throw_type_none"></a>
 
 ## `SAVING_THROW_TYPE_NONE`
 
-(0): Saving Throw [type](GFF-File-Format#data-types) None
+(0): Saving Throw type None
 
 <a id="saving_throw_type_paralysis"></a>
 
 ## `SAVING_THROW_TYPE_PARALYSIS`
 
-(18): Saving Throw [type](GFF-File-Format#data-types) Paralysis
+(18): Saving Throw type Paralysis
 
 <a id="saving_throw_type_poison"></a>
 
 ## `SAVING_THROW_TYPE_POISON`
 
-(12): Saving Throw [type](GFF-File-Format#data-types) Poison
+(12): Saving Throw type Poison
 
 <a id="saving_throw_type_sneak_attack"></a>
 
 ## `SAVING_THROW_TYPE_SNEAK_ATTACK`
 
-(2): Saving Throw [type](GFF-File-Format#data-types) Sneak Attack
+(2): Saving Throw type Sneak Attack
 
 <a id="saving_throw_type_sonic"></a>
 
 ## `SAVING_THROW_TYPE_SONIC`
 
-(13): Saving Throw [type](GFF-File-Format#data-types) Sonic
+(13): Saving Throw type Sonic
 
 <a id="saving_throw_type_trap"></a>
 
 ## `SAVING_THROW_TYPE_TRAP`
 
-(14): Saving Throw [type](GFF-File-Format#data-types) Trap
+(14): Saving Throw type Trap
 
 <a id="saving_throw_will"></a>
 
@@ -7544,31 +7544,31 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `TALENT_EXCLUDE_ALL_OF_TYPE`
 
-(-1): Talent Exclude All Of [type](GFF-File-Format#data-types)
+(-1): Talent Exclude All Of type
 
 <a id="talent_type_feat"></a>
 
 ## `TALENT_TYPE_FEAT`
 
-(1): Talent [type](GFF-File-Format#data-types) Feat
+(1): Talent type Feat
 
 <a id="talent_type_force"></a>
 
 ## `TALENT_TYPE_FORCE`
 
-(0): Talent [type](GFF-File-Format#data-types) Force
+(0): Talent type Force
 
 <a id="talent_type_skill"></a>
 
 ## `TALENT_TYPE_SKILL`
 
-(2): Talent [type](GFF-File-Format#data-types) Skill
+(2): Talent type Skill
 
 <a id="talent_type_spell"></a>
 
 ## `TALENT_TYPE_SPELL`
 
-(0): Talent [type](GFF-File-Format#data-types) Spell
+(0): Talent type Spell
 
 <a id="talkvolume_shout"></a>
 
@@ -7604,73 +7604,73 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `TRAP_BASE_TYPE_FLASH_STUN_AVERAGE`
 
-(1): Trap Base [type](GFF-File-Format#data-types) Flash Stun Average
+(1): Trap Base type Flash Stun Average
 
 <a id="trap_base_type_flash_stun_deadly"></a>
 
 ## `TRAP_BASE_TYPE_FLASH_STUN_DEADLY`
 
-(2): Trap Base [type](GFF-File-Format#data-types) Flash Stun Deadly
+(2): Trap Base type Flash Stun Deadly
 
 <a id="trap_base_type_flash_stun_minor"></a>
 
 ## `TRAP_BASE_TYPE_FLASH_STUN_MINOR`
 
-(0): Trap Base [type](GFF-File-Format#data-types) Flash Stun Minor
+(0): Trap Base type Flash Stun Minor
 
 <a id="trap_base_type_fragmentation_mine_average"></a>
 
 ## `TRAP_BASE_TYPE_FRAGMENTATION_MINE_AVERAGE`
 
-(4): Trap Base [type](GFF-File-Format#data-types) Fragmentation Mine Average
+(4): Trap Base type Fragmentation Mine Average
 
 <a id="trap_base_type_fragmentation_mine_deadly"></a>
 
 ## `TRAP_BASE_TYPE_FRAGMENTATION_MINE_DEADLY`
 
-(5): Trap Base [type](GFF-File-Format#data-types) Fragmentation Mine Deadly
+(5): Trap Base type Fragmentation Mine Deadly
 
 <a id="trap_base_type_fragmentation_mine_minor"></a>
 
 ## `TRAP_BASE_TYPE_FRAGMENTATION_MINE_MINOR`
 
-(3): Trap Base [type](GFF-File-Format#data-types) Fragmentation Mine Minor
+(3): Trap Base type Fragmentation Mine Minor
 
 <a id="trap_base_type_laser_slicing_average"></a>
 
 ## `TRAP_BASE_TYPE_LASER_SLICING_AVERAGE`
 
-(7): Trap Base [type](GFF-File-Format#data-types) Laser Slicing Average
+(7): Trap Base type Laser Slicing Average
 
 <a id="trap_base_type_laser_slicing_deadly"></a>
 
 ## `TRAP_BASE_TYPE_LASER_SLICING_DEADLY`
 
-(8): Trap Base [type](GFF-File-Format#data-types) Laser Slicing Deadly
+(8): Trap Base type Laser Slicing Deadly
 
 <a id="trap_base_type_laser_slicing_minor"></a>
 
 ## `TRAP_BASE_TYPE_LASER_SLICING_MINOR`
 
-(6): Trap Base [type](GFF-File-Format#data-types) Laser Slicing Minor
+(6): Trap Base type Laser Slicing Minor
 
 <a id="trap_base_type_poison_gas_average"></a>
 
 ## `TRAP_BASE_TYPE_POISON_GAS_AVERAGE`
 
-(10): Trap Base [type](GFF-File-Format#data-types) Poison Gas Average
+(10): Trap Base type Poison Gas Average
 
 <a id="trap_base_type_poison_gas_deadly"></a>
 
 ## `TRAP_BASE_TYPE_POISON_GAS_DEADLY`
 
-(11): Trap Base [type](GFF-File-Format#data-types) Poison Gas Deadly
+(11): Trap Base type Poison Gas Deadly
 
 <a id="trap_base_type_poison_gas_minor"></a>
 
 ## `TRAP_BASE_TYPE_POISON_GAS_MINOR`
 
-(9): Trap Base [type](GFF-File-Format#data-types) Poison Gas Minor
+(9): Trap Base type Poison Gas Minor
 
 <a id="true"></a>
 

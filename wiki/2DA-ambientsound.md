@@ -2,18 +2,18 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines ambient sound effects for areas. The engine uses this [file](GFF-File-Format) to play ambient sounds in areas.
+**Engine Usage**: Defines ambient sound effects for areas. The engine uses this file to play ambient sounds in areas.
 
-**Row [index](2DA-File-Format#row-labels)**: Sound ID (integer)
+**Row index**: Sound ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Sound label |
-| `sound` | [ResRef](GFF-File-Format#gff-data-types) | Sound [file](GFF-File-Format) [ResRef](GFF-File-Format#gff-data-types) |
+| `label` | string | Sound label |
+| `sound` | [ResRef](GFF-File-Format#gff-data-types) | Sound file [ResRef](GFF-File-Format#gff-data-types) |
 | `resource` | [ResRef](GFF-File-Format#gff-data-types) | Sound resource [ResRef](GFF-File-Format#gff-data-types) |
-| `description` | [StrRef](TLK-File-Format#string-references-strref) | Sound description [string](GFF-File-Format#gff-data-types) reference |
+| `description` | [StrRef](TLK-File-Format#string-references-strref) | Sound description string reference |
 
 **References**:
 

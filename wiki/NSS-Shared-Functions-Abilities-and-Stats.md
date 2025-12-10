@@ -22,10 +22,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetAbilityScore(oCreature, nAbilityType)` - Routine 139
 
 - `139. GetAbilityScore`
-- Get the ability score of [type](GFF-File-Format#data-types) nAbility for a creature (otherwise 0)
+- Get the ability score of type nAbility for a creature (otherwise 0)
 - - oCreature: the creature whose ability score we wish to find out
 - - nAbilityType: ABILITY_*
-- Return [value](GFF-File-Format#gff-data-types) on error: 0
+- Return value on error: 0
 
 - `oCreature`: object
 - `nAbilityType`: int

@@ -1,14 +1,14 @@
-# KotOR [2DA](2DA-File-Format) [file](GFF-File-Format) [format](GFF-File-Format) Documentation
+# KotOR [2DA](2DA-File-Format) file format Documentation
 
-This document provides a detailed description of the 2DA (Two-Dimensional [array](2DA-File-Format)) [file](GFF-File-Format) [format](GFF-File-Format) used in **Knights of the Old Republic (KotOR)** and **Knights of the Old Republic II: The Sith Lords (KotOR 2)**. [2DA files](2DA-File-Format) store tabular game [data](GFF-File-Format#file-structure-overview) in a spreadsheet-like [format](GFF-File-Format), containing configuration [data](GFF-File-Format#file-structure-overview) for nearly all game systems: items, Force powers, creatures, skills, feats, and many other game mechanics.
+This document provides a detailed description of the 2DA (Two-Dimensional array) file format used in **Knights of the Old Republic (KotOR)** and **Knights of the Old Republic II: The Sith Lords (KotOR 2)**. [2DA files](2DA-File-Format) store tabular game data in a spreadsheet-like format, containing configuration data for nearly all game systems: items, Force powers, creatures, skills, feats, and many other game mechanics.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [2DA](2DA-File-Format) [format](GFF-File-Format) specification, see [Bioware Aurora 2DA Format](Bioware-Aurora-2DA).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [2DA](2DA-File-Format) format specification, see [Bioware Aurora 2DA Format](Bioware-Aurora-2DA).
 
 **For mod developers:** To modify [2DA files](2DA-File-Format) in your mods, see the [TSLPatcher 2DAList Syntax Guide](TSLPatcher-2DAList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Related [formats](GFF-File-Format):** [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) often referenced by [GFF files](GFF-File-Format) (such as [UTC (Creature)](GFF-File-Format#utc-creature), [UTI (Item)](GFF-File-Format#uti-item), [UTP (Placeable)](GFF-File-Format#utp-placeable) templates) and may contain references to [TLK files](TLK-File-Format) for text [strings](GFF-File-Format#gff-data-types).
+**Related formats:** [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) often referenced by [GFF files](GFF-File-Format) (such as [UTC (Creature)](GFF-File-Format#utc-creature), [UTI (Item)](GFF-File-Format#uti-item), [UTP (Placeable)](GFF-File-Format#utp-placeable) templates) and may contain references to [TLK files](TLK-File-Format) for text strings.
 
-**Important**: While the [2DA file](2DA-File-Format) [format](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) is shared across BioWare's Aurora engine games (including Neverwinter Nights, Dragon Age, and Jade Empire), this documentation focuses exclusively on KotOR and KotOR 2. All [2DA file](2DA-File-Format) examples, column [structures](GFF-File-Format#file-structure-overview), and engine usage descriptions [ARE](GFF-File-Format#are-area) specific to these games. References to vendor implementations [ARE](GFF-File-Format#are-area) marked as either KotOR-specific or generic Aurora engine code (shared [format](GFF-File-Format)).
+**Important**: While the [2DA file](2DA-File-Format) format structure is shared across BioWare's Aurora engine games (including Neverwinter Nights, Dragon Age, and Jade Empire), this documentation focuses exclusively on KotOR and KotOR 2. All [2DA file](2DA-File-Format) examples, column structures, and engine usage descriptions [ARE](GFF-File-Format#are-area) specific to these games. References to vendor implementations [ARE](GFF-File-Format#are-area) marked as either KotOR-specific or generic Aurora engine code (shared format).
 
 ## Table of Contents
 
@@ -177,17 +177,17 @@ This document provides a detailed description of the 2DA (Two-Dimensional [array
 
 ---
 
-## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) Overview
+## file structure Overview
 
-[2DA files](2DA-File-Format) store tabular game [data](GFF-File-Format#file-structure-overview) in a compact [format](GFF-File-Format) used by the KotOR game engine. [files](GFF-File-Format) use version "V2.b" and have the `.2da` extension.
+[2DA files](2DA-File-Format) store tabular game data in a compact format used by the KotOR game engine. files use version "V2.b" and have the `.2da` extension.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/twoda/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/twoda/)
 
 **Vendor References:**
 
-- [`vendor/kotor/docs/2da.md`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md) - Basic [format](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) and parsing overview
+- [`vendor/kotor/docs/2da.md`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md) - Basic format structure and parsing overview
 - [`vendor/reone/src/libs/resource/format/2dareader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp) - Complete C++ [2DA](2DA-File-Format) parser implementation
-- [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine [2DA](2DA-File-Format) implementation (shared [format](GFF-File-Format))
+- [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine [2DA](2DA-File-Format) implementation (shared format)
 - [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs) - C# Unity [2DA](2DA-File-Format) loader
 - [`vendor/KotOR.js/src/resource/TwoDAObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TwoDAObject.ts) - TypeScript [2DA](2DA-File-Format) parser with memory-efficient caching
 - [`vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/Kotor2DA.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/Kotor2DA/Kotor2DA.cs) - .NET 2DA reader/writer
@@ -195,132 +195,132 @@ This document provides a detailed description of the 2DA (Two-Dimensional [array
 **See Also:**
 
 - [TSLPatcher 2DAList Syntax](TSLPatcher-2DAList-Syntax) - Modding [2DA files](2DA-File-Format) with TSLPatcher
-- [GFF File Format](GFF-File-Format) - Related [format](GFF-File-Format) that often references [2DA](2DA-File-Format) [data](GFF-File-Format#file-structure-overview)
-- [TLK File Format](TLK-File-Format) - Text [strings](GFF-File-Format#gff-data-types) referenced by [2DA](2DA-File-Format) entries
+- [GFF File Format](GFF-File-Format) - Related format that often references [2DA](2DA-File-Format) data
+- [TLK File Format](TLK-File-Format) - Text strings referenced by [2DA](2DA-File-Format) entries
 
 ---
 
-## [format](GFF-File-Format)
+## format
 
 The [2DA file format](2DA-File-Format) (version "V2.b") is the representation used by the game engine.
 
-### File [header](GFF-File-Format#file-header)
+### File header
 
-The [file](GFF-File-Format) [header](GFF-File-Format#file-header) is 9 bytes in [size](GFF-File-Format#file-structure-overview):
+The file header is 9 bytes in size:
 
-| Name         | [type](GFF-File-Format#gff-data-types)    | [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description                                    |
+| Name         | type    | offset | size | Description                                    |
 | ------------ | ------- | ------ | ---- | ---------------------------------------------- |
-| [file](GFF-File-Format) [type](GFF-File-Format#gff-data-types)    | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](4) | 0 (0x00) | 4    | Always `"2DA "` (space-padded) or `"2DA\t"` (tab-padded) |
-| [file](GFF-File-Format) Version | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](4) | 4 (0x04) | 4    | Always `"V2.b"`              |
-| Line Break   | [uint8](GFF-File-Format#gff-data-types)   | 8 (0x08) | 1    | Newline character (`\n`, [value](GFF-File-Format#gff-data-types) `0x0A`)        |
+| file type    | [char](GFF-File-Format#gff-data-types) | 0 (0x00) | 4    | Always `"2DA "` (space-padded) or `"2DA\t"` (tab-padded) |
+| file Version | [char](GFF-File-Format#gff-data-types) | 4 (0x04) | 4    | Always `"V2.b"`              |
+| Line Break   | [uint8](GFF-File-Format#gff-data-types)   | 8 (0x08) | 1    | Newline character (`\n`, value `0x0A`)        |
 
-The [file](GFF-File-Format) [type](GFF-File-Format#gff-data-types) can be either `"2DA "` (space-padded) or `"2DA\t"` (tab-padded). Both [ARE](GFF-File-Format#are-area) valid and accepted by the game engine.
+The file type can be either `"2DA "` (space-padded) or `"2DA\t"` (tab-padded). Both [ARE](GFF-File-Format#are-area) valid and accepted by the game engine.
 
 **References**:
 
-- [`vendor/reone/src/libs/resource/format/2dareader.cpp:29-32`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L29-L32) - KotOR-specific [header](GFF-File-Format#file-header) validation
-- [`vendor/xoreos/src/aurora/2dafile.cpp:48-51`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L48-L51) - Generic Aurora engine [header](GFF-File-Format#file-header) constants ([format](GFF-File-Format) shared across KotOR and other Aurora games)
-- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:25-32`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L25-L32) - KotOR-specific [header](GFF-File-Format#file-header) reading
+- [`vendor/reone/src/libs/resource/format/2dareader.cpp:29-32`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L29-L32) - KotOR-specific header validation
+- [`vendor/xoreos/src/aurora/2dafile.cpp:48-51`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L48-L51) - Generic Aurora engine header constants (format shared across KotOR and other Aurora games)
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:25-32`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L25-L32) - KotOR-specific header reading
 
-### Column [headers](GFF-File-Format#file-header)
+### Column headers
 
-Column [headers](GFF-File-Format#file-header) immediately follow the [header](GFF-File-Format#file-header), terminated by a [null byte](https://en.cppreference.com/w/c/string/byte):
+Column headers immediately follow the header, terminated by a [null byte](https://en.cppreference.com/w/c/string/byte):
 
-| Name            | [type](GFF-File-Format#gff-data-types)    | Description                                                      |
+| Name            | type    | Description                                                      |
 | --------------- | ------- | ---------------------------------------------------------------- |
-| Column [headers](GFF-File-Format#file-header)  | [char](GFF-File-Format#gff-data-types)[]  | [Tab-separated](https://en.wikipedia.org/wiki/Tab-separated_values) column names (e.g., `"label\tname\tdescription"`) |
-| [null terminator](https://en.cppreference.com/w/c/string/byte) | [uint8](GFF-File-Format#gff-data-types)   | Single [null byte](https://en.cppreference.com/w/c/string/byte) (`\0`) marking end of [headers](GFF-File-Format#file-header)                   |
+| Column headers  | [char](GFF-File-Format#gff-data-types)[]  | [Tab-separated](https://en.wikipedia.org/wiki/Tab-separated_values) column names (e.g., `"label\tname\tdescription"`) |
+| [null terminator](https://en.cppreference.com/w/c/string/byte) | [uint8](GFF-File-Format#gff-data-types)   | Single [null byte](https://en.cppreference.com/w/c/string/byte) (`\0`) marking end of headers                   |
 
-Each column name is terminated by a tab character (`0x09`). The entire [header](GFF-File-Format#file-header) list is terminated by a [null byte](https://en.cppreference.com/w/c/string/byte) (`0x00`). Column names [ARE](GFF-File-Format#are-area) case-sensitive and typically lowercase in KotOR [files](GFF-File-Format).
+Each column name is terminated by a tab character (`0x09`). The entire header list is terminated by a [null byte](https://en.cppreference.com/w/c/string/byte) (`0x00`). Column names [ARE](GFF-File-Format#are-area) case-sensitive and typically lowercase in KotOR files.
 
 **References**:
 
 - [`vendor/reone/src/libs/resource/format/2dareader.cpp:72-89`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L72-L89) - KotOR-specific token reading with tab separator
-- [`vendor/xoreos/src/aurora/2dafile.cpp:260-275`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L260-L275) - Generic Aurora engine [header](GFF-File-Format#file-header) reading ([format](GFF-File-Format) shared across KotOR and other Aurora games)
-- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:36-48`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L36-L48) - KotOR-specific column [header](GFF-File-Format#file-header) parsing
-- [`vendor/kotor/docs/2da.md:32-37`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L32-L37) - KotOR-specific column [structure](GFF-File-Format#file-structure-overview)
+- [`vendor/xoreos/src/aurora/2dafile.cpp:260-275`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L260-L275) - Generic Aurora engine header reading (format shared across KotOR and other Aurora games)
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:36-48`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L36-L48) - KotOR-specific column header parsing
+- [`vendor/kotor/docs/2da.md:32-37`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L32-L37) - KotOR-specific column structure
 
-### Row [count](GFF-File-Format#file-structure-overview)
+### Row count
 
-| Name      | [type](GFF-File-Format#gff-data-types)    | [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description                    |
+| Name      | type    | offset | size | Description                    |
 | --------- | ------- | ------ | ---- | ------------------------------ |
-| Row [count](GFF-File-Format#file-structure-overview) | [uint32](GFF-File-Format#gff-data-types)  | varies | 4    | Number of [data](GFF-File-Format#file-structure-overview) rows in the file ([little-endian](https://en.wikipedia.org/wiki/Endianness)) |
+| Row count | [uint32](GFF-File-Format#gff-data-types)  | varies | 4    | Number of data rows in the file ([little-endian](https://en.wikipedia.org/wiki/Endianness)) |
 
-The row [count](GFF-File-Format#file-structure-overview) is stored as a 32-[bit](GFF-File-Format#gff-data-types) unsigned integer in [little-endian](https://en.wikipedia.org/wiki/Endianness) [byte](GFF-File-Format#gff-data-types) order. This [value](GFF-File-Format#gff-data-types) determines how many row labels and [data](GFF-File-Format#file-structure-overview) rows follow.
+The row count is stored as a 32-bit unsigned integer in [little-endian](https://en.wikipedia.org/wiki/Endianness) [byte](GFF-File-Format#gff-data-types) order. This value determines how many row labels and data rows follow.
 
 **References**:
 
-- [`vendor/reone/src/libs/resource/format/2dareader.cpp:34`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L34) - KotOR-specific row [count](GFF-File-Format#file-structure-overview) reading
-- [`vendor/xoreos/src/aurora/2dafile.cpp:284`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L284) - Generic Aurora engine row [count](GFF-File-Format#file-structure-overview) reading ([format](GFF-File-Format) shared across KotOR and other Aurora games)
-- [`vendor/kotor/docs/2da.md:39-44`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L39-L44) - KotOR-specific row [indices](2DA-File-Format#row-labels) [structure](GFF-File-Format#file-structure-overview)
+- [`vendor/reone/src/libs/resource/format/2dareader.cpp:34`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L34) - KotOR-specific row count reading
+- [`vendor/xoreos/src/aurora/2dafile.cpp:284`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L284) - Generic Aurora engine row count reading (format shared across KotOR and other Aurora games)
+- [`vendor/kotor/docs/2da.md:39-44`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L39-L44) - KotOR-specific row indices structure
 
 ### Row Labels
 
-Row labels immediately follow the row [count](GFF-File-Format#file-structure-overview):
+Row labels immediately follow the row count:
 
-| Name       | [type](GFF-File-Format#gff-data-types)    | Description                                                      |
+| Name       | type    | Description                                                      |
 | ---------- | ------- | ---------------------------------------------------------------- |
 | Row Labels | [char](GFF-File-Format#gff-data-types)[]  | [Tab-separated](https://en.wikipedia.org/wiki/Tab-separated_values) row labels (one per row, typically numeric)       |
 
-Each row label is read as a [tab-terminated](2DA-File-Format#column-headers) string (tab character `0x09`). Row labels [ARE](GFF-File-Format#are-area) usually numeric ("0", "1", "2"...) but can be arbitrary [strings](GFF-File-Format#gff-data-types).
+Each row label is read as a [tab-terminated](2DA-File-Format#column-headers) string (tab character `0x09`). Row labels [ARE](GFF-File-Format#are-area) usually numeric ("0", "1", "2"...) but can be arbitrary strings.
 
-**Important**: The row label list is **not** terminated by a [null byte](https://en.cppreference.com/w/c/string/byte) (`0x00`). The reader must consume exactly `row_count` labels based on the [count](GFF-File-Format#file-structure-overview) [field](GFF-File-Format#file-structure-overview). This differs from the column [headers](GFF-File-Format#file-header) which do have a [null terminator](https://en.cppreference.com/w/c/string/byte). The row labels [ARE](GFF-File-Format#are-area) primarily for human readability and editing tools - the actual row indexing in the game engine is based on [position](MDL-MDX-File-Format#node-header), not label [value](GFF-File-Format#gff-data-types).
+**Important**: The row label list is **not** terminated by a [null byte](https://en.cppreference.com/w/c/string/byte) (`0x00`). The reader must consume exactly `row_count` labels based on the count field. This differs from the column headers which do have a [null terminator](https://en.cppreference.com/w/c/string/byte). The row labels [ARE](GFF-File-Format#are-area) primarily for human readability and editing tools - the actual row indexing in the game engine is based on position, not label value.
 
 **References**:
 
 - [`vendor/reone/src/libs/resource/format/2dareader.cpp:35`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L35) - KotOR-specific row label reading (skipped in reone)
-- [`vendor/xoreos/src/aurora/2dafile.cpp:277-294`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L277-L294) - Generic Aurora engine row label skipping implementation ([format](GFF-File-Format) shared across KotOR and other Aurora games)
+- [`vendor/xoreos/src/aurora/2dafile.cpp:277-294`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L277-L294) - Generic Aurora engine row label skipping implementation (format shared across KotOR and other Aurora games)
 - [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:56-70`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L56-L70) - KotOR-specific row label parsing
-- [`vendor/kotor/docs/2da.md:39-46`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L39-L46) - KotOR-specific row [indices](2DA-File-Format#row-labels) [structure](GFF-File-Format#file-structure-overview) and termination note
+- [`vendor/kotor/docs/2da.md:39-46`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L39-L46) - KotOR-specific row indices structure and termination note
 
-### Cell [data](GFF-File-Format#file-structure-overview) [offsets](GFF-File-Format#file-structure-overview)
+### Cell data offsets
 
-After row labels, cell [data](GFF-File-Format#file-structure-overview) [offsets](GFF-File-Format#file-structure-overview) [ARE](GFF-File-Format#are-area) stored:
+After row labels, cell data offsets [ARE](GFF-File-Format#are-area) stored:
 
-| Name            | [type](GFF-File-Format#gff-data-types)     | [size](GFF-File-Format#file-structure-overview) | Description                                                      |
+| Name            | type     | size | Description                                                      |
 | --------------- | -------- | ---- | ---------------------------------------------------------------- |
-| Cell [offsets](GFF-File-Format#file-structure-overview)    | [uint16](GFF-File-Format#gff-data-types)[] | 2×N  | [Array](https://en.wikipedia.org/wiki/Array_data_structure) of [offsets](GFF-File-Format#file-structure-overview) into cell [data](GFF-File-Format#file-structure-overview) [string](GFF-File-Format#gff-data-types) table (N = [row_count](2DA-File-Format#row-labels) × [column_count](2DA-File-Format#column-headers), [little-endian](https://en.wikipedia.org/wiki/Endianness)) |
-| Cell [data](GFF-File-Format#file-structure-overview) [size](GFF-File-Format#file-structure-overview)  | [uint16](GFF-File-Format#gff-data-types)   | 2    | Total [size](GFF-File-Format#file-structure-overview) of cell [data](GFF-File-Format#file-structure-overview) [string](GFF-File-Format#gff-data-types) table in bytes ([little-endian](https://en.wikipedia.org/wiki/Endianness))   |
+| Cell offsets    | [uint16](GFF-File-Format#gff-data-types)[] | 2×N  | [Array](https://en.wikipedia.org/wiki/Array_data_structure) of offsets into cell data string table (N = [row_count](2DA-File-Format#row-labels) × [column_count](2DA-File-Format#column-headers), [little-endian](https://en.wikipedia.org/wiki/Endianness)) |
+| Cell data size  | [uint16](GFF-File-Format#gff-data-types)   | 2    | Total size of cell data string table in bytes ([little-endian](https://en.wikipedia.org/wiki/Endianness))   |
 
-Each cell has a 16-[bit](GFF-File-Format#gff-data-types) unsigned integer offset ([little-endian](https://en.wikipedia.org/wiki/Endianness)) pointing to its [string](GFF-File-Format#gff-data-types) [value](GFF-File-Format#gff-data-types) in the cell [data](GFF-File-Format#file-structure-overview) [string](GFF-File-Format#gff-data-types) table. Offsets [ARE](GFF-File-Format#are-area) stored in [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order) (all cells of row 0, then all cells of row 1, etc.). The cell [data](GFF-File-Format#file-structure-overview) [size](GFF-File-Format#file-structure-overview) [field](GFF-File-Format#file-structure-overview) immediately follows the [offset](GFF-File-Format#file-structure-overview) [array](2DA-File-Format) and precedes the actual cell [data](GFF-File-Format#file-structure-overview).
+Each cell has a 16-bit unsigned integer offset ([little-endian](https://en.wikipedia.org/wiki/Endianness)) pointing to its string value in the cell data string table. Offsets [ARE](GFF-File-Format#are-area) stored in [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order) (all cells of row 0, then all cells of row 1, etc.). The cell data size field immediately follows the offset array and precedes the actual cell data.
 
-**Important**: The [offsets](GFF-File-Format#file-structure-overview) [ARE](GFF-File-Format#are-area) relative to the start of the cell [data](GFF-File-Format#file-structure-overview) [string](GFF-File-Format#gff-data-types) table (which begins immediately after the `cell_data_size` [field](GFF-File-Format#file-structure-overview)). Multiple cells can share the same [offset](GFF-File-Format#file-structure-overview) [value](GFF-File-Format#gff-data-types) if they contain identical [strings](GFF-File-Format#gff-data-types), enabling [data](GFF-File-Format#file-structure-overview) [deduplication](https://en.wikipedia.org/wiki/Data_deduplication).
+**Important**: The offsets [ARE](GFF-File-Format#are-area) relative to the start of the cell data string table (which begins immediately after the `cell_data_size` field). Multiple cells can share the same offset value if they contain identical strings, enabling data [deduplication](https://en.wikipedia.org/wiki/Data_deduplication).
 
 **References**:
 
-- [`vendor/reone/src/libs/resource/format/2dareader.cpp:47-52`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L47-L52) - KotOR-specific [offset](GFF-File-Format#file-structure-overview) [array](2DA-File-Format) reading
-- [`vendor/xoreos/src/aurora/2dafile.cpp:314-317`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L314-L317) - Generic Aurora engine [offset](GFF-File-Format#file-structure-overview) reading ([format](GFF-File-Format) shared across KotOR and other Aurora games)
-- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:72-83`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L72-L83) - KotOR-specific [offset](GFF-File-Format#file-structure-overview) [array](2DA-File-Format) parsing
-- [`vendor/reone/src/libs/resource/format/2dawriter.cpp:63-89`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dawriter.cpp#L63-L89) - KotOR-specific [offset](GFF-File-Format#file-structure-overview) [deduplication](https://en.wikipedia.org/wiki/Data_deduplication) during writing
-- [`vendor/kotor/docs/2da.md:48-54`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L48-L54) - KotOR-specific cell [offsets](GFF-File-Format#file-structure-overview) [structure](GFF-File-Format#file-structure-overview)
+- [`vendor/reone/src/libs/resource/format/2dareader.cpp:47-52`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L47-L52) - KotOR-specific offset array reading
+- [`vendor/xoreos/src/aurora/2dafile.cpp:314-317`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L314-L317) - Generic Aurora engine offset reading (format shared across KotOR and other Aurora games)
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:72-83`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L72-L83) - KotOR-specific offset array parsing
+- [`vendor/reone/src/libs/resource/format/2dawriter.cpp:63-89`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dawriter.cpp#L63-L89) - KotOR-specific offset [deduplication](https://en.wikipedia.org/wiki/Data_deduplication) during writing
+- [`vendor/kotor/docs/2da.md:48-54`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L48-L54) - KotOR-specific cell offsets structure
 
-### Cell [data](GFF-File-Format#file-structure-overview) [string](GFF-File-Format#gff-data-types) Table
+### Cell data string Table
 
-The cell [data](GFF-File-Format#file-structure-overview) [string](GFF-File-Format#gff-data-types) table contains all cell [values](GFF-File-Format#gff-data-types) as [null-terminated](https://en.cppreference.com/w/c/string/byte) [strings](GFF-File-Format#gff-data-types):
+The cell data string table contains all cell values as [null-terminated](https://en.cppreference.com/w/c/string/byte) strings:
 
-| Name         | [type](GFF-File-Format#gff-data-types)   | Description                                                      |
+| Name         | type   | Description                                                      |
 | ------------ | ------ | ---------------------------------------------------------------- |
-| Cell [strings](GFF-File-Format#gff-data-types) | [char](GFF-File-Format#gff-data-types)[] | [Null-terminated](https://en.cppreference.com/w/c/string/byte) [strings](GFF-File-Format#gff-data-types), [deduplicated](https://en.wikipedia.org/wiki/Data_deduplication) (same [value](GFF-File-Format#gff-data-types) shares [offset](GFF-File-Format#file-structure-overview)) |
+| Cell strings | [char](GFF-File-Format#gff-data-types)[] | [Null-terminated](https://en.cppreference.com/w/c/string/byte) strings, [deduplicated](https://en.wikipedia.org/wiki/Data_deduplication) (same value shares offset) |
 
-The cell [data](GFF-File-Format#file-structure-overview) [string](GFF-File-Format#gff-data-types) table begins immediately after the `cell_data_size` [field](GFF-File-Format#file-structure-overview). Each [string](GFF-File-Format#gff-data-types) is [null-terminated](https://en.cppreference.com/w/c/string/byte) (`0x00`). Blank or empty cells [ARE](GFF-File-Format#are-area) typically stored as empty strings (immediately [null-terminated](https://en.cppreference.com/w/c/string/byte)) or the [string](GFF-File-Format#gff-data-types) `"****"`. The [string](GFF-File-Format#gff-data-types) table is [deduplicated](https://en.wikipedia.org/wiki/Data_deduplication) - multiple cells with the same [value](GFF-File-Format#gff-data-types) share the same [offset](GFF-File-Format#file-structure-overview), reducing [file](GFF-File-Format) [size](GFF-File-Format#file-structure-overview).
+The cell data string table begins immediately after the `cell_data_size` field. Each string is [null-terminated](https://en.cppreference.com/w/c/string/byte) (`0x00`). Blank or empty cells [ARE](GFF-File-Format#are-area) typically stored as empty strings (immediately [null-terminated](https://en.cppreference.com/w/c/string/byte)) or the string `"****"`. The string table is [deduplicated](https://en.wikipedia.org/wiki/Data_deduplication) - multiple cells with the same value share the same offset, reducing file size.
 
 **Reading Process**: For each cell, the reader:
 
-1. Retrieves the 16-[bit](GFF-File-Format#gff-data-types) [offset](GFF-File-Format#file-structure-overview) from the [offset](GFF-File-Format#file-structure-overview) array (indexed by `row_index × column_count + column_index`)
+1. Retrieves the 16-bit offset from the offset array (indexed by `row_index × column_count + column_index`)
 2. Seeks to `cell_data_start_position + offset`
-3. Reads a [null-terminated](https://en.cppreference.com/w/c/string/byte) [string](GFF-File-Format#gff-data-types) from that [position](MDL-MDX-File-Format#node-header)
+3. Reads a [null-terminated](https://en.cppreference.com/w/c/string/byte) string from that position
 
 **References**:
 
-- [`vendor/reone/src/libs/resource/format/2dareader.cpp:54-65`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L54-L65) - KotOR-specific cell [data](GFF-File-Format#file-structure-overview) reading with [offset](GFF-File-Format#file-structure-overview) calculation
-- [`vendor/xoreos/src/aurora/2dafile.cpp:319-335`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L319-L335) - Generic Aurora engine cell [data](GFF-File-Format#file-structure-overview) reading ([format](GFF-File-Format) shared across KotOR and other Aurora games, with KotOR-specific comment at line 545)
-- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:85-100`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L85-L100) - KotOR-specific cell [data](GFF-File-Format#file-structure-overview) reading loop
+- [`vendor/reone/src/libs/resource/format/2dareader.cpp:54-65`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp#L54-L65) - KotOR-specific cell data reading with offset calculation
+- [`vendor/xoreos/src/aurora/2dafile.cpp:319-335`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L319-L335) - Generic Aurora engine cell data reading (format shared across KotOR and other Aurora games, with KotOR-specific comment at line 545)
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:85-100`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L85-L100) - KotOR-specific cell data reading loop
 - [`vendor/xoreos/src/aurora/2dafile.cpp:63-64`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp#L63-L64) - Generic Aurora engine empty cell representation (`"****"`, shared across KotOR and other Aurora games)
-- [`vendor/kotor/docs/2da.md:57-64`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L57-L64) - KotOR-specific cell [data](GFF-File-Format#file-structure-overview) [structure](GFF-File-Format#file-structure-overview)
+- [`vendor/kotor/docs/2da.md:57-64`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md#L57-L64) - KotOR-specific cell data structure
 
 ---
 
-## [data](GFF-File-Format#file-structure-overview) [structure](GFF-File-Format#file-structure-overview)
+## data structure
 
 ### TwoDA Class
 
@@ -330,43 +330,43 @@ The `TwoDA` class represents a complete [2DA file](2DA-File-Format) in memory:
 
 **Attributes:**
 
-- `_rows`: List of dictionaries, each mapping column [headers](GFF-File-Format#file-header) to cell [values](GFF-File-Format#gff-data-types)
-- `_headers`: List of column [header](GFF-File-Format#file-header) names (case-sensitive, typically lowercase)
-- `_labels`: List of row labels (usually numeric [strings](GFF-File-Format#gff-data-types) like "0", "1", "2"...)
+- `_rows`: List of dictionaries, each mapping column headers to cell values
+- `_headers`: List of column header names (case-sensitive, typically lowercase)
+- `_labels`: List of row labels (usually numeric strings like "0", "1", "2"...)
 
 **Methods:**
 
-- `get_cell(row_index, column_header)`: Get cell [value](GFF-File-Format#gff-data-types) by row [index](2DA-File-Format#row-labels) and column [header](GFF-File-Format#file-header)
-- `set_cell(row_index, column_header, value)`: Set cell [value](GFF-File-Format#gff-data-types)
-- `get_column(header)`: Get all [values](GFF-File-Format#gff-data-types) for a column
+- `get_cell(row_index, column_header)`: Get cell value by row index and column header
+- `set_cell(row_index, column_header, value)`: Set cell value
+- `get_column(header)`: Get all values for a column
 - `add_row(label)`: Add a new row
 - `add_column(header)`: Add a new column
 
 ### TwoDARow Class
 
-The `TwoDARow` class provides a convenient interface for accessing row [data](GFF-File-Format#file-structure-overview):
+The `TwoDARow` class provides a convenient interface for accessing row data:
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/formats/twoda/twoda_data.py:850-950`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/twoda/twoda_data.py#L850-L950)
 
 **Attributes:**
 
-- `label`: Row label [string](GFF-File-Format#gff-data-types)
-- `cells`: Dictionary mapping column [headers](GFF-File-Format#file-header) to cell [values](GFF-File-Format#gff-data-types)
+- `label`: Row label string
+- `cells`: Dictionary mapping column headers to cell values
 
 ---
 
-## Cell [value](GFF-File-Format#gff-data-types) [types](GFF-File-Format#gff-data-types)
+## Cell value types
 
-All cell [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) stored as [strings](GFF-File-Format#gff-data-types) in the [2DA file](2DA-File-Format), but [ARE](GFF-File-Format#are-area) interpreted as different [types](GFF-File-Format#gff-data-types) by the game engine:
+All cell values [ARE](GFF-File-Format#are-area) stored as strings in the [2DA file](2DA-File-Format), but [ARE](GFF-File-Format#are-area) interpreted as different types by the game engine:
 
-- **Integers**: Numeric [strings](GFF-File-Format#gff-data-types) parsed as [`int32`](https://en.wikipedia.org/wiki/Integer_(computer_science)) - used for numeric identifiers, counts, and enumerated [values](GFF-File-Format#gff-data-types)
-- **Floats**: Decimal [strings](GFF-File-Format#gff-data-types) parsed as [`float`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) - used for calculations like damage multipliers, timers, and percentages
+- **Integers**: Numeric strings parsed as [`int32`](https://en.wikipedia.org/wiki/Integer_(computer_science)) - used for numeric identifiers, counts, and enumerated values
+- **Floats**: Decimal strings parsed as [`float`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) - used for calculations like damage multipliers, timers, and percentages
 - **ResRefs**: [Resource references](GFF-File-Format#gff-data-types) (max 16 characters, no extension) - point to other game resources like [models](MDL-MDX-File-Format), [textures](TPC-File-Format), or scripts
-- **StrRefs**: [String references](TLK-File-Format#string-references-strref) into [`dialog.tlk`](TLK-File-Format) (typically negative [values](GFF-File-Format#gff-data-types) like `-1` indicate no reference) - used for localized text display
+- **StrRefs**: [String references](TLK-File-Format#string-references-strref) into [`dialog.tlk`](TLK-File-Format) (typically negative values like `-1` indicate no reference) - used for localized text display
 - **Boolean**: `"0"` or `"1"` (sometimes `"TRUE"`/`"FALSE"`) - control feature [flags](GFF-File-Format#gff-data-types) and settings
 - **Empty Cells**: Represented as `"****"` - treated as null/undefined by the engine
 
-The game engine parses cell [values](GFF-File-Format#gff-data-types) based on context and expected [data](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#gff-data-types) for each column. For example, the `appearance.2da` [file](GFF-File-Format) uses integers for [model](MDL-MDX-File-Format) [indices](2DA-File-Format#row-labels), [ResRefs](GFF-File-Format#gff-data-types) for [texture](TPC-File-Format) names, and [StrRefs](TLK-File-Format#string-references-strref) for race names.
+The game engine parses cell values based on context and expected data type for each column. For example, the `appearance.2da` file uses integers for [model](MDL-MDX-File-Format) indices, [ResRefs](GFF-File-Format#gff-data-types) for [texture](TPC-File-Format) names, and [StrRefs](TLK-File-Format#string-references-strref) for race names.
 
 ---
 
@@ -394,7 +394,7 @@ The following [2DA files](2DA-File-Format) have been confirmed to be actively lo
 
 **Items & Equipment:**
 
-- `baseitems.2da` - Base item [type](GFF-File-Format#gff-data-types) definitions
+- `baseitems.2da` - Base item type definitions
 
 **Objects & Areas:**
 
@@ -414,15 +414,15 @@ The following [2DA files](2DA-File-Format) have been confirmed to be actively lo
 
 - `repute.2da` - Faction/reputation definitions
 
-**Note:** Many other [2DA files](2DA-File-Format) documented below may be remnants from Neverwinter Nights (NWN) or may be used in ways not yet identified through reverse engineering. The [files](GFF-File-Format) listed above [ARE](GFF-File-Format#are-area) confirmed to be actively loaded and referenced by the game engine during normal gameplay.
+**Note:** Many other [2DA files](2DA-File-Format) documented below may be remnants from Neverwinter Nights (NWN) or may be used in ways not yet identified through reverse engineering. The files listed above [ARE](GFF-File-Format#are-area) confirmed to be actively loaded and referenced by the game engine during normal gameplay.
 
-## Known [2DA](2DA-File-Format) [files](GFF-File-Format)
+## Known [2DA](2DA-File-Format) files
 
-This section documents all known [2DA files](2DA-File-Format) used in KotOR and KotOR 2, organized by category. Each entry includes engine usage, column definitions, and [data](GFF-File-Format#file-structure-overview) [structure](GFF-File-Format#file-structure-overview) details.
+This section documents all known [2DA files](2DA-File-Format) used in KotOR and KotOR 2, organized by category. Each entry includes engine usage, column definitions, and data structure details.
 
 ---
 
-## Character & Combat [2DA](2DA-File-Format) [files](GFF-File-Format)
+## Character & Combat [2DA](2DA-File-Format) files
 
 ### [appearance.2da](2DA-appearance)
 
@@ -448,7 +448,7 @@ See [skills.2da](2DA-skills) for detailed documentation.
 
 See [spells.2da](2DA-spells) for detailed documentation.
 
-## Items & Properties [2DA](2DA-File-Format) [files](GFF-File-Format)
+## Items & Properties [2DA](2DA-File-Format) files
 
 ### itemprops.2da
 
@@ -470,7 +470,7 @@ See [iprp_ammocost.2da](2DA-iprp_ammocost) for detailed documentation.
 
 See [iprp_damagecost.2da](2DA-iprp_damagecost) for detailed documentation.
 
-## Objects & Area [2DA](2DA-File-Format) [files](GFF-File-Format)
+## Objects & Area [2DA](2DA-File-Format) files
 
 ### [placeables.2da](2DA-placeables)
 
@@ -488,7 +488,7 @@ See [doortypes.2da](2DA-doortypes) for detailed documentation.
 
 See [soundset.2da](2DA-soundset) for detailed documentation.
 
-## Visual Effects & [animations](MDL-MDX-File-Format#animation-header) [2DA](2DA-File-Format) [files](GFF-File-Format)
+## Visual Effects & [animations](MDL-MDX-File-Format#animation-header) [2DA](2DA-File-Format) files
 
 ### [visualeffects.2da](2DA-visualeffects)
 
@@ -502,7 +502,7 @@ See [portraits.2da](2DA-portraits) for detailed documentation.
 
 See [heads.2da](2DA-heads) for detailed documentation.
 
-## Progression Tables [2DA](2DA-File-Format) [files](GFF-File-Format)
+## Progression Tables [2DA](2DA-File-Format) files
 
 ### classpowergain.2da
 
@@ -510,13 +510,13 @@ See [classpowergain.2da](2DA-classpowergain) for detailed documentation.
 
 ### cls_atk_*.2da
 
-See [cls_atk_*.2da](cls_atk__pattern_pattern) for detailed documentation.
+See [cls_atk_*.2da](2DA-cls_atk__pattern) for detailed documentation.
 
 ### cls_savthr_*.2da
 
-See [cls_savthr_*.2da](cls_savthr__pattern_pattern) for detailed documentation.
+See [cls_savthr_*.2da](2DA-cls_savthr__pattern) for detailed documentation.
 
-## Name Generation [2DA](2DA-File-Format) [files](GFF-File-Format)
+## Name Generation [2DA](2DA-File-Format) files
 
 ### humanfirst.2da
 
@@ -526,9 +526,9 @@ See [humanfirst.2da](2DA-humanfirst) for detailed documentation.
 
 See [humanlast.2da](2DA-humanlast) for detailed documentation.
 
-### Other Name Generation [files](GFF-File-Format)
+### Other Name Generation files
 
-Similar name generation [files](GFF-File-Format) exist for other species:
+Similar name generation files exist for other species:
 
 - `twilekfirst.2da` / `twileklast.2da`: Twi'lek names
 - `zabrakfirst.2da` / `zabraklast.2da`: Zabrak names
@@ -541,7 +541,7 @@ Similar name generation [files](GFF-File-Format) exist for other species:
 
 ---
 
-## Additional [2DA](2DA-File-Format) [files](GFF-File-Format)
+## Additional [2DA](2DA-File-Format) files
 
 ### ambientmusic.2da
 
@@ -695,7 +695,7 @@ See [planetary.2da](2DA-planetary) for detailed documentation.
 
 See [cursors.2da](2DA-cursors) for detailed documentation.
 
-## Item Property Parameter & Cost Tables [2DA](2DA-File-Format) [files](GFF-File-Format)
+## Item Property Parameter & Cost Tables [2DA](2DA-File-Format) files
 
 The following [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) used for item property parameter and cost calculations:
 
@@ -1005,15 +1005,15 @@ See [areaeffects.2da](2DA-areaeffects) for detailed documentation.
 
 - Reading: [`vendor/reone/src/libs/resource/format/2dareader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp)
 - Writing: [`vendor/reone/src/libs/resource/format/2dawriter.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dawriter.cpp)
-- [data](GFF-File-Format#file-structure-overview) [structure](GFF-File-Format#file-structure-overview): [`vendor/reone/src/libs/resource/2da.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/2da.cpp)
+- data structure: [`vendor/reone/src/libs/resource/2da.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/2da.cpp)
 
 **xoreos** (C++):
 
-- Reading: [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine [2DA](2DA-File-Format) [format](GFF-File-Format) parser (shared across KotOR, Neverwinter Nights, and other Aurora engine games). The [format](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) is the same, but specific [2DA files](2DA-File-Format) and their columns [ARE](GFF-File-Format#are-area) KotOR-specific.
+- Reading: [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine [2DA](2DA-File-Format) format parser (shared across KotOR, Neverwinter Nights, and other Aurora engine games). The format structure is the same, but specific [2DA files](2DA-File-Format) and their columns [ARE](GFF-File-Format#are-area) KotOR-specific.
 
 **KotOR-Unity** (C#):
 
-- Reading: [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:23-105`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L23-L105) - Complete [2DA](2DA-File-Format) reading implementation with column parsing, row [indices](2DA-File-Format#row-labels), and cell [data](GFF-File-Format#file-structure-overview) reading
+- Reading: [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:23-105`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L23-L105) - Complete [2DA](2DA-File-Format) reading implementation with column parsing, row indices, and cell data reading
 
 **TSLPatcher** (Perl):
 
@@ -1027,8 +1027,8 @@ See [areaeffects.2da](2DA-areaeffects) for detailed documentation.
 
 **Kotor.NET** (C#):
 
-- [structure](GFF-File-Format#file-structure-overview): [`vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs)
+- structure: [`vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs)
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [2DA file](2DA-File-Format) [format](GFF-File-Format), focusing on the detailed [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) and [data](GFF-File-Format#file-structure-overview) [formats](GFF-File-Format) used within the games.
+This documentation aims to provide a comprehensive overview of the KotOR [2DA file](2DA-File-Format) format, focusing on the detailed file structure and data formats used within the games.

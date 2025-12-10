@@ -1,6 +1,6 @@
 # TSLPatcher InstallList Syntax Documentation
 
-This guide explains how to install [files](GFF-File-Format) using TSLPatcher syntax. For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
+This guide explains how to install files using TSLPatcher syntax. For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/tslpatcher/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/tslpatcher/)
 
@@ -21,9 +21,9 @@ This guide explains how to install [files](GFF-File-Format) using TSLPatcher syn
 
 ## Overview
 
-The `[InstallList]` section in TSLPatcher's changes.ini [file](GFF-File-Format) enables you to copy [files](GFF-File-Format) from your mod's `tslpatchdata` folder to their proper location in the game installation. This includes installing [files](GFF-File-Format) to folders (such as `Override`, `Modules`, `StreamVoice`, etc.) or directly into [ERF](ERF-File-Format)/RIM/MOD archive [files](GFF-File-Format). Unlike other patch lists, InstallList is designed for copying [files](GFF-File-Format) that haven't been modified by other sections.
+The `[InstallList]` section in TSLPatcher's changes.ini file enables you to copy files from your mod's `tslpatchdata` folder to their proper location in the game installation. This includes installing files to folders (such as `Override`, `Modules`, `StreamVoice`, etc.) or directly into [ERF](ERF-File-Format)/RIM/MOD archive files. Unlike other patch lists, InstallList is designed for copying files that haven't been modified by other sections.
 
-**Important:** Do **not** add any [files](GFF-File-Format) that have been modified by any of the other sections ([GFFList](TSLPatcher-GFFList-Syntax), CompileList, [2DAList](TSLPatcher-2DAList-Syntax), etc.) to the InstallList, or the modified [files](GFF-File-Format) might be overwritten! The other sections already handle saving [files](GFF-File-Format) to their proper locations. The only exception to this is [ERF files](ERF-File-Format) which have had [files](GFF-File-Format) added to them by those sections. They must still be added to the InstallList to be put in their proper places.
+**Important:** Do **not** add any files that have been modified by any of the other sections ([GFFList](TSLPatcher-GFFList-Syntax), CompileList, [2DAList](TSLPatcher-2DAList-Syntax), etc.) to the InstallList, or the modified files might be overwritten! The other sections already handle saving files to their proper locations. The only exception to this is [ERF files](ERF-File-Format) which have had files added to them by those sections. They must still be added to the InstallList to be put in their proper places.
 
 ## Table of Contents
 
@@ -41,9 +41,9 @@ The `[InstallList]` section in TSLPatcher's changes.ini [file](GFF-File-Format) 
 - [Special Cases and Edge Cases](#special-cases-and-edge-cases)
 - [Troubleshooting](#troubleshooting)
 
-## Basic [structure](GFF-File-Format#file-structure-overview)
+## Basic structure
 
-The InstallList uses a two-level hierarchical [structure](GFF-File-Format#file-structure-overview):
+The InstallList uses a two-level hierarchical structure:
 
 ```ini
 [InstallList]
@@ -65,19 +65,19 @@ File0=sound1.wav
 File1=sound2.wav
 ```
 
-### [structure](GFF-File-Format#file-structure-overview) Explanation
+### structure Explanation
 
 1. **`[InstallList]` section**: Contains keys that map to folder destination names. Each key (like `Folder0`, `Folder1`, etc.) should reference a section with the same name as the value (the destination folder).
 
-2. **Folder sections** (e.g., `[Override]`, `[Modules]`): Contain the list of [files](GFF-File-Format) to install to that folder, along with optional folder-level configuration.
+2. **Folder sections** (e.g., `[Override]`, `[Modules]`): Contain the list of files to install to that folder, along with optional folder-level configuration.
 
-3. **[file](GFF-File-Format) sections** (optional): Individual [files](GFF-File-Format) can have their own sections for per-[file](GFF-File-Format) configuration options.
+3. **file sections** (optional): Individual files can have their own sections for per-file configuration options.
 
 ## Processing Order
 
 In **HoloPatcher**, the InstallList runs **first** in the patch execution order:
 
-1. **[InstallList]** - [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) installed first
+1. **[InstallList]** - files [ARE](GFF-File-Format#are-area) installed first
 2. **[TLKList]** - [TLK](TLK-File-Format) modifications
 3. **[2DAList]** - [2DA file](2DA-File-Format) modifications
 4. **[GFFList]** - [GFF file](GFF-File-Format) modifications
@@ -85,30 +85,30 @@ In **HoloPatcher**, the InstallList runs **first** in the patch execution order:
 6. **[HACKList]** - Binary hacking
 7. **[SSFList]** - Sound set modifications
 
-**Note:** In original TSLPatcher, InstallList executes **after** TLKList, but HoloPatcher changed this order to allow installing a whole [dialog.tlk](TLK-File-Format) [file](GFF-File-Format) before [TLK](TLK-File-Format) modifications [ARE](GFF-File-Format#are-area) applied. This priority change should not affect the output of mods.
+**Note:** In original TSLPatcher, InstallList executes **after** TLKList, but HoloPatcher changed this order to allow installing a whole [dialog.tlk](TLK-File-Format) file before [TLK](TLK-File-Format) modifications [ARE](GFF-File-Format#are-area) applied. This priority change should not affect the output of mods.
 
 ## Folder-Level Configuration
 
 Each folder section (e.g., `[Override]`) supports the following configuration keys:
 
-| [KEY](KEY-File-Format) | [type](GFF-File-Format#data-types) | Default | Description |
+| [KEY](KEY-File-Format) | type | Default | Description |
 |-----|------|---------|-------------|
-| `!SourceFolder` | [string](GFF-File-Format#gff-data-types) | `.` (tslpatchdata folder) | Relative path from `mod_path` (typically the `tslpatchdata` folder, the parent directory of `changes.ini` or `namespaces.ini`) where [files](GFF-File-Format) should be sourced from. The default [value](GFF-File-Format#gff-data-types) `.` refers to the `tslpatchdata` folder itself, not its parent directory. Path resolution: `mod_path / !SourceFolder / filename`. **HoloPatcher extension** - allows subfolder organization within tslpatchdata. |
+| `!SourceFolder` | string | `.` (tslpatchdata folder) | Relative path from `mod_path` (typically the `tslpatchdata` folder, the parent directory of `changes.ini` or `namespaces.ini`) where files should be sourced from. The default value `.` refers to the `tslpatchdata` folder itself, not its parent directory. Path resolution: `mod_path / !SourceFolder / filename`. **HoloPatcher extension** - allows subfolder organization within tslpatchdata. |
 
-### Folder Section [file](GFF-File-Format) List Keys
+### Folder Section file List Keys
 
-The folder section contains the list of [files](GFF-File-Format) to install. Each [file](GFF-File-Format) entry uses one of two syntaxes:
+The folder section contains the list of files to install. Each file entry uses one of two syntaxes:
 
-| [KEY](KEY-File-Format) [format](GFF-File-Format) | Replace Behavior | Description |
+| [KEY](KEY-File-Format) format | Replace Behavior | Description |
 |------------|-----------------|-------------|
-| `File#=filename.ext` | No replacement | Install the [file](GFF-File-Format) only if it doesn't already exist at the destination. If the [file](GFF-File-Format) exists, it will be skipped (warning logged). |
-| `Replace#=filename.ext` | Replacement enabled | Install the [file](GFF-File-Format) and overwrite any existing [file](GFF-File-Format) at the destination. |
+| `File#=filename.ext` | No replacement | Install the file only if it doesn't already exist at the destination. If the file exists, it will be skipped (warning logged). |
+| `Replace#=filename.ext` | Replacement enabled | Install the file and overwrite any existing file at the destination. |
 
 **Syntax Notes:**
 
 - `#` is a sequential number starting from 0 (File0, File1, File2, ..., Replace0, Replace1, etc.)
 - Numbers can be sequential, but gaps [ARE](GFF-File-Format#are-area) allowed (File0, File2, File5 is valid)
-- Case-insensitive matching is used for the prefix ([file](GFF-File-Format), replace, [file](GFF-File-Format), Replace all work)
+- Case-insensitive matching is used for the prefix (file, replace, file, Replace all work)
 - The filename can include subdirectories if using `!SourceFolder`
 
 **Examples:**
@@ -122,21 +122,21 @@ Replace1=another_existing.tpc
 File2=subfolder\texture3.tpc
 ```
 
-## [file](GFF-File-Format)-Level Configuration
+## file-Level Configuration
 
-Each [file](GFF-File-Format) can optionally have its own section (e.g., `[my_texture.tpc]`) for per-[file](GFF-File-Format) configuration:
+Each file can optionally have its own section (e.g., `[my_texture.tpc]`) for per-file configuration:
 
-| [KEY](KEY-File-Format) | [type](GFF-File-Format#data-types) | Default | Description |
+| [KEY](KEY-File-Format) | type | Default | Description |
 |-----|------|---------|-------------|
-| `!SourceFile` | [string](GFF-File-Format#gff-data-types) | Same as filename in [file](GFF-File-Format)#/Replace# entry | Alternative source filename to load from tslpatchdata. The [file](GFF-File-Format) will be installed with the name specified in the [file](GFF-File-Format)#/Replace# entry (or `!SaveAs`/`!Filename` if specified). |
-| `!SaveAs` | [string](GFF-File-Format#gff-data-types) | Same as `!SourceFile` | The final filename to save the [file](GFF-File-Format) as at the destination. Allows renaming during installation. |
-| `!Filename` | [string](GFF-File-Format#gff-data-types) | Same as `!SaveAs` | Alias for `!SaveAs`. Both keys [ARE](GFF-File-Format#are-area) equivalent. |
-| `!Destination` | [string](GFF-File-Format#gff-data-types) | Inherited from folder section name | Override the destination folder for this specific [file](GFF-File-Format). Can specify a different folder or archive path. |
-| `!ReplaceFile` | 0/1 | Determined by [file](GFF-File-Format)#/Replace# prefix | Whether to replace existing [files](GFF-File-Format). Takes priority over the [file](GFF-File-Format)#/Replace# prefix syntax. `1` = replace, `0` = don't replace. |
-| `!SourceFolder` | [string](GFF-File-Format#gff-data-types) | Inherited from folder section `!SourceFolder` | Override the source folder for this specific [file](GFF-File-Format). Relative path within tslpatchdata. |
+| `!SourceFile` | string | Same as filename in file#/Replace# entry | Alternative source filename to load from tslpatchdata. The file will be installed with the name specified in the file#/Replace# entry (or `!SaveAs`/`!Filename` if specified). |
+| `!SaveAs` | string | Same as `!SourceFile` | The final filename to save the file as at the destination. Allows renaming during installation. |
+| `!Filename` | string | Same as `!SaveAs` | Alias for `!SaveAs`. Both keys [ARE](GFF-File-Format#are-area) equivalent. |
+| `!Destination` | string | Inherited from folder section name | Override the destination folder for this specific file. Can specify a different folder or archive path. |
+| `!ReplaceFile` | 0/1 | Determined by file#/Replace# prefix | Whether to replace existing files. Takes priority over the file#/Replace# prefix syntax. `1` = replace, `0` = don't replace. |
+| `!SourceFolder` | string | Inherited from folder section `!SourceFolder` | Override the source folder for this specific file. Relative path within tslpatchdata. |
 | `!OverrideType` | `ignore`/`warn`/`rename` | `warn` (HoloPatcher) / `ignore` (TSLPatcher) | How to handle conflicts when installing to archives. See [Override Type Handling](#override-type-handling) section. |
 
-### Example with [file](GFF-File-Format)-Level Configuration
+### Example with file-Level Configuration
 
 ```ini
 [InstallList]
@@ -156,25 +156,25 @@ File1=renamed_script.ncs
 !ReplaceFile=1
 ```
 
-## [file](GFF-File-Format) Replacement Behavior
+## file Replacement Behavior
 
-InstallList has special behavior regarding [file](GFF-File-Format) replacement that differs from other patch lists:
+InstallList has special behavior regarding file replacement that differs from other patch lists:
 
 ### Skip If Not Replace
 
 InstallList (and CompileList) use `skip_if_not_replace=True`, which means:
 
-- If `!ReplaceFile=0` (or using `File#=` syntax) **and** the [file](GFF-File-Format) already exists at the destination:
-  - The [file](GFF-File-Format) will be **skipped** (not installed)
+- If `!ReplaceFile=0` (or using `File#=` syntax) **and** the file already exists at the destination:
+  - The file will be **skipped** (not installed)
   - A note is logged: `'filename.ext' already exists in the 'destination' folder. Skipping file...`
   - No error is raised - this is expected behavior
 
-- If `!ReplaceFile=1` (or using `Replace#=` syntax) **and** the [file](GFF-File-Format) already exists:
-  - The [file](GFF-File-Format) will be **replaced** (overwritten)
+- If `!ReplaceFile=1` (or using `Replace#=` syntax) **and** the file already exists:
+  - The file will be **replaced** (overwritten)
   - A note is logged: `Copying 'filename.ext' and replacing existing file in the 'destination' folder`
 
-- If the [file](GFF-File-Format) does **not** exist:
-  - The [file](GFF-File-Format) will be installed normally
+- If the file does **not** exist:
+  - The file will be installed normally
   - A note is logged: `Copying 'filename.ext' and saving to the 'destination' folder`
 
 ### Replacement Priority
@@ -193,13 +193,13 @@ Replace0=example.tpc
 !ReplaceFile=0
 ```
 
-In this case, even though `Replace0=` was used, `!ReplaceFile=0` takes priority, so the [file](GFF-File-Format) will NOT replace existing [files](GFF-File-Format).
+In this case, even though `Replace0=` was used, `!ReplaceFile=0` takes priority, so the file will NOT replace existing files.
 
 ## Installing to Folders
 
 ### Standard Game Folders
 
-The most common use case is installing [files](GFF-File-Format) to standard game folders:
+The most common use case is installing files to standard game folders:
 
 ```ini
 [InstallList]
@@ -228,7 +228,7 @@ File0=sound_effect.wav
 
 ### Subdirectories
 
-You can install [files](GFF-File-Format) into subdirectories by specifying the relative path with backslashes:
+You can install files into subdirectories by specifying the relative path with backslashes:
 
 ```ini
 [InstallList]
@@ -248,7 +248,7 @@ File1=conversation2.wav
 
 ### Game Root Folder
 
-To install [files](GFF-File-Format) directly into the game root folder, use `.\` as the folder name:
+To install files directly into the game root folder, use `.\` as the folder name:
 
 ```ini
 [InstallList]
@@ -263,7 +263,7 @@ File1=config.ini
 
 ### Default Destination
 
-You can set a default destination for all [files](GFF-File-Format) in InstallList using `!DefaultDestination`:
+You can set a default destination for all files in InstallList using `!DefaultDestination`:
 
 ```ini
 [InstallList]
@@ -278,13 +278,13 @@ File0=file1.tpc
 File0=file2.mod
 ```
 
-**Note:** `!DefaultDestination` is highly undocumented in TSLPatcher. In PyKotor/HoloPatcher, it is believed to take priority over folder section destinations, except when `!Destination` is explicitly set in a [file](GFF-File-Format) section.
+**Note:** `!DefaultDestination` is highly undocumented in TSLPatcher. In PyKotor/HoloPatcher, it is believed to take priority over folder section destinations, except when `!Destination` is explicitly set in a file section.
 
 ## Installing to Archives
 
-InstallList supports installing [files](GFF-File-Format) directly into [ERF](ERF-File-Format)/MOD/RIM archive [files](GFF-File-Format). This is done by specifying the archive [file](GFF-File-Format) path (relative to the game folder) as the destination.
+InstallList supports installing files directly into [ERF](ERF-File-Format)/MOD/RIM archive files. This is done by specifying the archive file path (relative to the game folder) as the destination.
 
-### Archive [file](GFF-File-Format) Syntax
+### Archive file Syntax
 
 ```ini
 [InstallList]
@@ -307,16 +307,16 @@ File0=another_resource.2da
   - The patch is skipped (no error is raised, execution continues)
 
 - If the archive **exists**:
-  - The [file](GFF-File-Format) is added to the archive
+  - The file is added to the archive
   - If a resource with the same name already exists in the archive:
     - If `!ReplaceFile=1` or `Replace#=`: The existing resource is overwritten
-    - If `!ReplaceFile=0` or `File#=`: The [file](GFF-File-Format) is skipped (see [File Replacement Behavior](#file-replacement-behavior))
+    - If `!ReplaceFile=0` or `File#=`: The file is skipped (see [File Replacement Behavior](#file-replacement-behavior))
 
-- **Archive [types](GFF-File-Format#gff-data-types) Supported:**
-  - `.mod` (MOD/[ERF](ERF-File-Format) [format](GFF-File-Format))
-  - `.erf` ([ERF](ERF-File-Format) [format](GFF-File-Format))
-  - `.rim` (RIM [format](GFF-File-Format))
-  - `.sav` (Save game [ERF](ERF-File-Format) [format](GFF-File-Format))
+- **Archive types Supported:**
+  - `.mod` (MOD/[ERF](ERF-File-Format) format)
+  - `.erf` ([ERF](ERF-File-Format) format)
+  - `.rim` (RIM format)
+  - `.sav` (Save game [ERF](ERF-File-Format) format)
 
 ### Installing Modified Archives
 
@@ -336,9 +336,9 @@ Folder0=Modules
 Replace0=901myn.mod  ; Must include to save the modified archive
 ```
 
-## Renaming [files](GFF-File-Format)
+## Renaming files
 
-You can rename [files](GFF-File-Format) during installation using `!SaveAs` or `!Filename`:
+You can rename files during installation using `!SaveAs` or `!Filename`:
 
 ```ini
 [InstallList]
@@ -360,14 +360,14 @@ This will:
 **Notes:**
 
 - `!SaveAs` and `!Filename` [ARE](GFF-File-Format#are-area) equivalent - use either one
-- If `!SourceFile` is not specified, the filename from the [file](GFF-File-Format)#/Replace# entry is used as the source
-- The source [file](GFF-File-Format) must exist in the tslpatchdata folder (or `!SourceFolder` if specified)
+- If `!SourceFile` is not specified, the filename from the file#/Replace# entry is used as the source
+- The source file must exist in the tslpatchdata folder (or `!SourceFolder` if specified)
 
 ## Source Folder Configuration
 
 ### Folder-Level Source Folder
 
-You can specify a source folder for all [files](GFF-File-Format) in a folder section:
+You can specify a source folder for all files in a folder section:
 
 ```ini
 [InstallList]
@@ -379,11 +379,11 @@ File0=texture1.tpc
 File1=texture2.tpc
 ```
 
-This will look for [files](GFF-File-Format) in `tslpatchdata\textures\` instead of `tslpatchdata\`.
+This will look for files in `tslpatchdata\textures\` instead of `tslpatchdata\`.
 
-### [file](GFF-File-Format)-Level Source Folder
+### file-Level Source Folder
 
-You can override the source folder for individual [files](GFF-File-Format):
+You can override the source folder for individual files:
 
 ```ini
 [InstallList]
@@ -411,15 +411,15 @@ In this example:
 - Supports subdirectory paths: `!SourceFolder=subfolder\deeper\folder`
 - Backslashes and forward slashes [ARE](GFF-File-Format#are-area) both normalized
 
-## Override [type](GFF-File-Format#data-types) Handling
+## Override type Handling
 
-When installing [files](GFF-File-Format) to archives ([ERF](ERF-File-Format)/MOD/RIM), there's a potential conflict: a [file](GFF-File-Format) might already exist in the Override folder with the same name. The `!OverrideType` setting controls how this conflict is handled:
+When installing files to archives ([ERF](ERF-File-Format)/MOD/RIM), there's a potential conflict: a file might already exist in the Override folder with the same name. The `!OverrideType` setting controls how this conflict is handled:
 
-| [value](GFF-File-Format#gff-data-types) | Behavior | Description |
+| value | Behavior | Description |
 |-------|----------|-------------|
 | `ignore` | No action | Do nothing - don't even check for conflicts. This is the TSLPatcher default. |
 | `warn` | Log warning | Check for conflicts and log a warning if found, but continue with installation. This is the HoloPatcher default. |
-| `rename` | Rename override [file](GFF-File-Format) | If a conflicting [file](GFF-File-Format) exists in Override, rename it with an `old_` prefix (e.g., `old_filename.ext`) and log a warning. |
+| `rename` | Rename override file | If a conflicting file exists in Override, rename it with an `old_` prefix (e.g., `old_filename.ext`) and log a warning. |
 
 **Example:**
 
@@ -434,11 +434,11 @@ File0=resource.uti
 The game's resource loading system checks folders in this order:
 
 1. Override folder (highest priority)
-2. Module archives (.mod [files](GFF-File-Format))
-3. RIM [files](GFF-File-Format)
+2. Module archives (.mod files)
+3. RIM files
 4. Other archives
 
-If a [file](GFF-File-Format) exists in both Override and an archive, the Override version takes precedence. The `!OverrideType` setting helps manage this shadowing behavior.
+If a file exists in both Override and an archive, the Override version takes precedence. The `!OverrideType` setting helps manage this shadowing behavior.
 
 ## Examples
 
@@ -478,7 +478,7 @@ File1=conv2.wav
 File0=custom.mod
 ```
 
-### Example 3: Renaming [files](GFF-File-Format) During Installation
+### Example 3: Renaming files During Installation
 
 ```ini
 [InstallList]
@@ -567,7 +567,7 @@ An empty `[InstallList]` section is valid and will be skipped:
 [InstallList]
 ```
 
-No [files](GFF-File-Format) will be installed, and a note will be logged: `[InstallList] section missing from ini.` (if the section doesn't exist) or no error if the section exists but is empty.
+No files will be installed, and a note will be logged: `[InstallList] section missing from ini.` (if the section doesn't exist) or no error if the section exists but is empty.
 
 ### Missing Folder Sections
 
@@ -579,15 +579,15 @@ Folder0=NonExistentFolder
 ; Error: Section [NonExistentFolder] not found
 ```
 
-### Missing Source [files](GFF-File-Format)
+### Missing Source files
 
-If a source [file](GFF-File-Format) specified in a [file](GFF-File-Format)#/Replace# entry doesn't exist in tslpatchdata (or the specified `!SourceFolder`), an error is logged:
+If a source file specified in a file#/Replace# entry doesn't exist in tslpatchdata (or the specified `!SourceFolder`), an error is logged:
 
 ```
 Could not locate resource to copy: 'missing_file.tpc'
 ```
 
-The patcher will continue with the next [file](GFF-File-Format).
+The patcher will continue with the next file.
 
 ### Automatic Folder Creation
 
@@ -603,18 +603,18 @@ File0=file.tpc
 
 All parent folders (`NewFolder`, `SubFolder`, `DeepFolder`) will be created automatically.
 
-### Archive [file](GFF-File-Format) Handling
+### Archive file Handling
 
 - **Archive doesn't exist**: Error logged, patch skipped
 - **Archive exists but is read-only**: Permission error logged, patch skipped
-- **Archive exists, [file](GFF-File-Format) already in archive**: See [File Replacement Behavior](#file-replacement-behavior)
-- **Archive exists, [file](GFF-File-Format) doesn't exist in archive**: [file](GFF-File-Format) is added normally
+- **Archive exists, file already in archive**: See [File Replacement Behavior](#file-replacement-behavior)
+- **Archive exists, file doesn't exist in archive**: file is added normally
 
 ### Case Sensitivity
 
-- Folder and [file](GFF-File-Format) keys [ARE](GFF-File-Format#are-area) **case-insensitive**: `File0`, `file0`, `FILE0` all work
+- Folder and file keys [ARE](GFF-File-Format#are-area) **case-insensitive**: `File0`, `file0`, `FILE0` all work
 - `Replace#` prefix detection is **case-insensitive**: `Replace0`, `replace0`, `REPLACE0` all work
-- [file](GFF-File-Format) paths on Windows [ARE](GFF-File-Format#are-area) case-insensitive, but PyKotor uses `CaseAwarePath` to preserve case when possible
+- file paths on Windows [ARE](GFF-File-Format#are-area) case-insensitive, but PyKotor uses `CaseAwarePath` to preserve case when possible
 
 ### Path Separators
 
@@ -630,19 +630,19 @@ This happens during the `_prepare_compilelist` phase before the main patch loop 
 
 ## Troubleshooting
 
-### [file](GFF-File-Format) Not Installing
+### file Not Installing
 
-**Problem:** [file](GFF-File-Format) listed in InstallList but not being installed.
+**Problem:** file listed in InstallList but not being installed.
 
 **Possible Causes:**
 
-1. [file](GFF-File-Format) already exists and `Replace#=` or `!ReplaceFile=1` not set
-   - **Solution:** Check logs for "already exists... Skipping [file](GFF-File-Format)" message
+1. file already exists and `Replace#=` or `!ReplaceFile=1` not set
+   - **Solution:** Check logs for "already exists... Skipping file" message
    - **Fix:** Use `Replace#=` or set `!ReplaceFile=1`
 
-2. Source [file](GFF-File-Format) doesn't exist in tslpatchdata
+2. Source file doesn't exist in tslpatchdata
    - **Solution:** Check logs for "Could not locate resource" error
-   - **Fix:** Ensure [file](GFF-File-Format) exists in tslpatchdata (or specified `!SourceFolder`)
+   - **Fix:** Ensure file exists in tslpatchdata (or specified `!SourceFolder`)
 
 3. Archive doesn't exist
    - **Solution:** Check logs for "capsule did not exist" error
@@ -650,41 +650,41 @@ This happens during the `_prepare_compilelist` phase before the main patch loop 
 
 4. Permission errors
    - **Solution:** Check logs for permission/access denied errors
-   - **Fix:** Run with appropriate permissions, check [file](GFF-File-Format)/folder permissions
+   - **Fix:** Run with appropriate permissions, check file/folder permissions
 
 ### Wrong Destination
 
-**Problem:** [file](GFF-File-Format) installing to wrong location.
+**Problem:** file installing to wrong location.
 
 **Possible Causes:**
 
-1. `!Destination` override in [file](GFF-File-Format) section
+1. `!Destination` override in file section
 2. `!DefaultDestination` set incorrectly
 3. Folder section name typo
 
-**Solution:** Check [file](GFF-File-Format) section for `!Destination`, verify folder section names match destination paths.
+**Solution:** Check file section for `!Destination`, verify folder section names match destination paths.
 
 ### Archive Not Updating
 
-**Problem:** [file](GFF-File-Format) not appearing in archive after installation.
+**Problem:** file not appearing in archive after installation.
 
 **Possible Causes:**
 
 1. Archive doesn't exist (error logged)
-2. [file](GFF-File-Format) already exists and replacement not enabled
+2. file already exists and replacement not enabled
 3. Archive is read-only or locked
 
 **Solution:** Check logs for errors, ensure `Replace#=` or `!ReplaceFile=1` is set, verify archive permissions.
 
-### [files](GFF-File-Format) Being Skipped Unexpectedly
+### files Being Skipped Unexpectedly
 
-**Problem:** [files](GFF-File-Format) that should install [ARE](GFF-File-Format#are-area) being skipped.
+**Problem:** files that should install [ARE](GFF-File-Format#are-area) being skipped.
 
 **Possible Causes:**
 
 1. `File#=` syntax used with existing files (expected behavior - use `Replace#=`)
 2. `!ReplaceFile=0` explicitly set
-3. [file](GFF-File-Format) already exists in archive without replacement enabled
+3. file already exists in archive without replacement enabled
 
 **Solution:** Review [File Replacement Behavior](#file-replacement-behavior) section, use `Replace#=` or `!ReplaceFile=1` to enable replacement.
 
@@ -707,7 +707,7 @@ File#=<filename.ext>                ; Install file (skip if exists)
 Replace#=<filename.ext>             ; Install file (replace if exists)
 ```
 
-### [file](GFF-File-Format) Section (e.g., [filename.ext])
+### file Section (e.g., [filename.ext])
 
 ```ini
 [<filename.ext>]
@@ -724,9 +724,9 @@ Replace#=<filename.ext>             ; Install file (replace if exists)
 
 - All paths in TSLPatcher use backslashes (`\`) by convention, but HoloPatcher/PyKotor normalizes both slashes
 - Folder paths [ARE](GFF-File-Format#are-area) created automatically if they don't exist
-- Archive paths must exist before [files](GFF-File-Format) can be installed to them
+- Archive paths must exist before files can be installed to them
 - InstallList runs before other patch lists in HoloPatcher (but after TLKList in original TSLPatcher)
-- [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) backed up before installation (if they exist)
+- files [ARE](GFF-File-Format#are-area) backed up before installation (if they exist)
 - Uninstall scripts [ARE](GFF-File-Format#are-area) generated automatically in the backup folder
 
 ## See Also

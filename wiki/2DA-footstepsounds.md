@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines footstep sound effects for different surface [types](GFF-File-Format#gff-data-types) and footstep [types](GFF-File-Format#gff-data-types). The engine uses this [file](GFF-File-Format) to play appropriate footstep sounds based on the surface [material](MDL-MDX-File-Format#trimesh-header) and creature footstep [type](GFF-File-Format#gff-data-types).
+**Engine Usage**: Defines footstep sound effects for different surface types and footstep types. The engine uses this file to play appropriate footstep sounds based on the surface [material](MDL-MDX-File-Format#trimesh-header) and creature footstep type.
 
-**Row [index](2DA-File-Format#row-labels)**: Footstep [type](GFF-File-Format#gff-data-types) ID (integer)
+**Row index**: Footstep type ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Footstep [type](GFF-File-Format#gff-data-types) label |
+| `label` | string | Footstep type label |
 | `dirt0`, `dirt1`, `dirt2` | ResRef (optional) | Dirt surface footstep sounds |
 | `grass0`, `grass1`, `grass2` | ResRef (optional) | Grass surface footstep sounds |
 | `stone0`, `stone1`, `stone2` | ResRef (optional) | Stone surface footstep sounds |
@@ -30,6 +30,6 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 **Vendor Implementations:**
 
 - [`vendor/reone/src/libs/game/footstepsounds.cpp:31-57`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/footstepsounds.cpp#L31-L57) - Footstep sounds loading from [2DA](2DA-File-Format)
-- [`vendor/reone/src/libs/game/object/creature.cpp:106`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/object/creature.cpp#L106) - Footstep [type](GFF-File-Format#gff-data-types) usage from [appearance.2da](2DA-appearance)
+- [`vendor/reone/src/libs/game/object/creature.cpp:106`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/object/creature.cpp#L106) - Footstep type usage from [appearance.2da](2DA-appearance)
 
 ---

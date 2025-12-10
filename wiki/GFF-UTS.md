@@ -2,15 +2,15 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-UTS [files](GFF-File-Format) define [sound object templates](GFF-File-Format#uts-sound) for ambient and environmental audio. These can be positional 3D sounds or global stereo sounds, with looping, randomization, and volume control.
+UTS files define [sound object templates](GFF-File-Format#uts-sound) for ambient and environmental audio. These can be positional 3D sounds or global stereo sounds, with looping, randomization, and volume control.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Sound Object [format](GFF-File-Format) specification, see [Bioware Aurora Sound Object Format](Bioware-Aurora-SoundObject).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Sound Object format specification, see [Bioware Aurora Sound Object Format](Bioware-Aurora-SoundObject).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/uts.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uts.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure-overview)
+## Core Identity fields
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this sound |
 | `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script references |
@@ -19,7 +19,7 @@ UTS [files](GFF-File-Format) define [sound object templates](GFF-File-Format#uts
 
 ## Playback Control
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Active` | Byte | Sound is currently active |
 | `Continuous` | Byte | Sound plays continuously |
@@ -32,7 +32,7 @@ UTS [files](GFF-File-Format) define [sound object templates](GFF-File-Format#uts
 
 ## Timing & Interval
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Interval` | Int | Delay between plays (seconds) |
 | `IntervalVary` | Int | Random interval variation |
@@ -46,12 +46,12 @@ UTS [files](GFF-File-Format) define [sound object templates](GFF-File-Format#uts
 
 ## Positioning
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
-| `Elevation` | Float | Height [offset](GFF-File-Format#file-structure-overview) from ground |
+| `Elevation` | Float | Height offset from ground |
 | `MaxDistance` | Float | Distance where sound becomes inaudible |
 | `MinDistance` | Float | Distance where sound is at full volume |
-| `RandomPosition` | Byte | Randomize emitter [position](MDL-MDX-File-Format#node-header) |
+| `RandomPosition` | Byte | Randomize emitter position |
 | `RandomRangeX` | Float | X-axis random range |
 | `RandomRangeY` | Float | Y-axis random range |
 
@@ -63,13 +63,13 @@ UTS [files](GFF-File-Format) define [sound object templates](GFF-File-Format#uts
 
 ## Sound List
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
-| `Sounds` | List | List of [WAV](WAV-File-Format)/MP3 [files](GFF-File-Format) to play |
+| `Sounds` | List | List of [WAV](WAV-File-Format)/MP3 files to play |
 
-**Sounds Struct [fields](GFF-File-Format#file-structure-overview):**
+**Sounds Struct fields:**
 
-- `Sound` ([ResRef](GFF-File-Format#gff-data-types)): Audio [file](GFF-File-Format) resource
+- `Sound` ([ResRef](GFF-File-Format#gff-data-types)): Audio file resource
 
 **Randomization:**
 

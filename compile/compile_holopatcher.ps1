@@ -24,7 +24,7 @@ $iconPath = "$toolSrcDir/holopatcher/resources/icons/patcher_icon_v2.$iconExtens
 
 $argsList = @(
   "--tool-path", $toolPath
-  "--entrypoint", "HoloPatcher/__main__.py"
+  "--entrypoint", "holopatcher/__main__.py"
   "--name", "HoloPatcher"
   "--distpath", "$repoRootPath/dist"
   "--workpath", "$toolSrcDir/build"

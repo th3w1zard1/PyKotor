@@ -7,7 +7,7 @@
 
 ## [geometry](MDL-MDX-File-Format#geometry-header) availability without PyOpenGL
 
-- `Mesh`, `Cube`, and `Boundary` skip VAO/VBO/EBO creation when PyOpenGL is absent but still populate [vertex](MDL-MDX-File-Format#vertex-structure)/[index](2DA-File-Format#row-labels) blobs for ModernGL. Calling legacy `draw` without PyOpenGL raises `MissingPyOpenGLError`, but ModernGL consumers can read `vertex_blob()` / `index_data` (`Libraries/PyKotor/src/pykotor/gl/models/mesh.py`:L98-L203, `Libraries/PyKotor/src/pykotor/gl/models/cube.py`:L26-L116, `Libraries/PyKotor/src/pykotor/gl/models/boundary.py`:L28-L129).
+- `Mesh`, `Cube`, and `Boundary` skip VAO/VBO/EBO creation when PyOpenGL is absent but still populate [vertex](MDL-MDX-File-Format#vertex-structure)/index blobs for ModernGL. Calling legacy `draw` without PyOpenGL raises `MissingPyOpenGLError`, but ModernGL consumers can read `vertex_blob()` / `index_data` (`Libraries/PyKotor/src/pykotor/gl/models/mesh.py`:L98-L203, `Libraries/PyKotor/src/pykotor/gl/models/cube.py`:L26-L116, `Libraries/PyKotor/src/pykotor/gl/models/boundary.py`:L28-L129).
 - [MDL](MDL-MDX-File-Format) variants mirror the same behavior so [model](MDL-MDX-File-Format) parsing remains usable without legacy GL (`Libraries/PyKotor/src/pykotor/gl/models/mdl.py`:L233-L528).
 
 ## [texture](TPC-File-Format) pipeline for ModernGL

@@ -2,22 +2,22 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: The `appearance.2da` [file](GFF-File-Format) is one of the most critical [2DA files](2DA-File-Format) in KotOR. It maps appearance IDs (used in [creature templates](GFF-File-Format#utc-creature) and character creation) to 3D [model](MDL-MDX-File-Format) ResRefs, [texture](TPC-File-Format) assignments, race associations, and physical properties. The engine uses this [file](GFF-File-Format) when loading creatures, determining which [model](MDL-MDX-File-Format) and [textures](TPC-File-Format) to display, calculating hit detection, and managing character [animations](MDL-MDX-File-Format#animation-header).
+**Engine Usage**: The `appearance.2da` file is one of the most critical [2DA files](2DA-File-Format) in KotOR. It maps appearance IDs (used in [creature templates](GFF-File-Format#utc-creature) and character creation) to 3D [model](MDL-MDX-File-Format) ResRefs, [texture](TPC-File-Format) assignments, race associations, and physical properties. The engine uses this file when loading creatures, determining which [model](MDL-MDX-File-Format) and [textures](TPC-File-Format) to display, calculating hit detection, and managing character [animations](MDL-MDX-File-Format#animation-header).
 
-**Row [index](2DA-File-Format#row-labels)**: Appearance ID (integer, typically 0-based)
+**Row index**: Appearance ID (integer, typically 0-based)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
 | `label` | String (optional) | Human-readable label for the appearance |
-| `modeltype` | [string](GFF-File-Format#gff-data-types) | [model](MDL-MDX-File-Format) [type](GFF-File-Format#gff-data-types) identifier (e.g., "F", "B", "P") |
+| `modeltype` | string | [model](MDL-MDX-File-Format) type identifier (e.g., "F", "B", "P") |
 | `modela` through `modeln` | ResRef (optional) | [model](MDL-MDX-File-Format) ResRefs for different body parts or variations ([models](MDL-MDX-File-Format) a-n) |
 | `texa` through `texn` | ResRef (optional) | [texture](TPC-File-Format) ResRefs for different body parts ([textures](TPC-File-Format) a-n) |
 | `texaevil`, `texbevil`, `texievil`, `texlevil`, `texnevil` | ResRef (optional) | Dark side variant [textures](TPC-File-Format) |
 | `race` | ResRef (optional) | Race identifier [ResRef](GFF-File-Format#gff-data-types) |
 | `racetex` | ResRef (optional) | Race-specific [texture](TPC-File-Format) [ResRef](GFF-File-Format#gff-data-types) |
-| `racialtype` | Integer | Numeric racial [type](GFF-File-Format#gff-data-types) identifier |
+| `racialtype` | Integer | Numeric racial type identifier |
 | `normalhead` | Integer (optional) | Default head appearance ID |
 | `backuphead` | Integer (optional) | Fallback head appearance ID |
 | `portrait` | ResRef (optional) | Portrait image [ResRef](GFF-File-Format#gff-data-types) |
@@ -27,16 +27,16 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 | `height` | [Float](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) | Character height multiplier |
 | `hitdist` | [Float](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) | Hit detection distance |
 | `hitradius` | [Float](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) | Hit detection radius |
-| `sizecategory` | Integer | [size](GFF-File-Format#file-structure-overview) category (affects combat calculations) |
-| `moverate` | [string](GFF-File-Format#gff-data-types) | Movement rate identifier |
+| `sizecategory` | Integer | size category (affects combat calculations) |
+| `moverate` | string | Movement rate identifier |
 | `walkdist` | Float | Walking distance threshold |
 | `rundist` | Float | Running distance threshold |
 | `prefatckdist` | Float | Preferred attack distance |
 | `creperspace` | Float | Creature personal space radius |
 | `perspace` | Float | Personal space radius |
-| `cameraspace` | Float (optional) | Camera space [offset](GFF-File-Format#file-structure-overview) |
-| `cameraheightoffset` | String (optional) | Camera height [offset](GFF-File-Format#file-structure-overview) |
-| `targetheight` | [string](GFF-File-Format#gff-data-types) | Target height for combat |
+| `cameraspace` | Float (optional) | Camera space offset |
+| `cameraheightoffset` | String (optional) | Camera height offset |
+| `targetheight` | string | Target height for combat |
 | `perceptiondist` | Integer | Perception distance |
 | `headArcH` | Integer | Head horizontal arc angle |
 | `headArcV` | Integer | Head vertical arc angle |
@@ -50,7 +50,7 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 | `armorSound` | ResRef (optional) | Armor sound effect [ResRef](GFF-File-Format#gff-data-types) |
 | `combatSound` | ResRef (optional) | Combat sound effect [ResRef](GFF-File-Format#gff-data-types) |
 | `soundapptype` | Integer (optional) | Sound appearance type |
-| `bloodcolr` | [string](GFF-File-Format#gff-data-types) | Blood [color](GFF-File-Format#color) identifier |
+| `bloodcolr` | string | Blood color identifier |
 | `deathvfx` | Integer (optional) | Death visual effect ID |
 | `deathvfxnode` | String (optional) | Death VFX attachment [node](MDL-MDX-File-Format#node-structures) |
 | `fadedelayondeath` | Boolean (optional) | Whether to fade on death |
@@ -59,13 +59,13 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 | `abortonparry` | Boolean | Whether to abort on parry |
 | `freelookeffect` | Integer (optional) | Free look effect ID |
 | `equipslotslocked` | Integer (optional) | Locked equipment slot [flags](GFF-File-Format#gff-data-types) |
-| `weaponscale` | String (optional) | Weapon [scale](MDL-MDX-File-Format#node-header) multiplier |
+| `weaponscale` | String (optional) | Weapon scale multiplier |
 | `wingTailScale` | Boolean | Whether wing/tail scaling is enabled |
-| `helmetScaleF` | String (optional) | Female helmet [scale](MDL-MDX-File-Format#node-header) |
-| `helmetScaleM` | String (optional) | Male helmet [scale](MDL-MDX-File-Format#node-header) |
+| `helmetScaleF` | String (optional) | Female helmet scale |
+| `helmetScaleM` | String (optional) | Male helmet scale |
 | `envmap` | ResRef (optional) | Environment map [texture](TPC-File-Format) [ResRef](GFF-File-Format#gff-data-types) |
 | `bodyBag` | Integer (optional) | Body bag appearance ID |
-| `stringRef` | Integer (optional) | [string](GFF-File-Format#gff-data-types) reference for appearance name |
+| `stringRef` | Integer (optional) | string reference for appearance name |
 | `driveaccl` | Integer | Vehicle drive acceleration |
 | `drivemaxspeed` | Float | Vehicle maximum speed |
 | `driveanimwalk` | Float | Vehicle walk [animation](MDL-MDX-File-Format#animation-header) speed |
@@ -74,7 +74,7 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Column Details**:
 
-The `appearance.2da` [file](GFF-File-Format) contains a comprehensive set of columns for character appearance configuration. The complete column list is parsed by reone's appearance parser:
+The `appearance.2da` file contains a comprehensive set of columns for character appearance configuration. The complete column list is parsed by reone's appearance parser:
 
 - [model](MDL-MDX-File-Format) columns: `modela` through `modeln` (14 [model](MDL-MDX-File-Format) variations)
 - [texture](TPC-File-Format) columns: `texa` through `texn` (14 [texture](TPC-File-Format) variations)
@@ -105,7 +105,7 @@ The `appearance.2da` [file](GFF-File-Format) contains a comprehensive set of col
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:168`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L168) - [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) column definitions for [appearance.2da](2DA-appearance) (modela through modelj)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:213-214`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L213-L214) - [texture](TPC-File-Format) [ResRef](GFF-File-Format#gff-data-types) column definitions for [appearance.2da](2DA-appearance) (racetex, texa through texj, headtexve, headtexe, headtexvg, headtexg)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:456`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L456) - TwoDARegistry.APPEARANCES constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:524`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L524) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "Appearance_Type" -> [appearance.2da](2DA-appearance)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:524`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L524) - [GFF](GFF-File-Format) field mapping: "Appearance_Type" -> [appearance.2da](2DA-appearance)
 
 **HolocronToolset:**
 

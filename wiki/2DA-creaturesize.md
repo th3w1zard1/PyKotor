@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines creature [size](GFF-File-Format#file-structure-overview) categories and their properties. The engine uses this [file](GFF-File-Format) to determine [size](GFF-File-Format#file-structure-overview)-based combat modifiers, reach, and other [size](GFF-File-Format#file-structure-overview)-related calculations.
+**Engine Usage**: Defines creature size categories and their properties. The engine uses this file to determine size-based combat modifiers, reach, and other size-related calculations.
 
-**Row [index](2DA-File-Format#row-labels)**: [size](GFF-File-Format#file-structure-overview) Category ID (integer)
+**Row index**: size Category ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | [size](GFF-File-Format#file-structure-overview) category label |
-| Additional columns | Various | [size](GFF-File-Format#file-structure-overview) category properties and modifiers |
+| `label` | string | size category label |
+| Additional columns | Various | size category properties and modifiers |
 
 **References**:
 

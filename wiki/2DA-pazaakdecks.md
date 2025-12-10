@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines Pazaak card decks for the Pazaak mini-game. The engine uses this [file](GFF-File-Format) to determine which cards [ARE](GFF-File-Format#are-area) available in opponent decks and player decks.
+**Engine Usage**: Defines Pazaak card decks for the Pazaak mini-game. The engine uses this file to determine which cards [ARE](GFF-File-Format#are-area) available in opponent decks and player decks.
 
-**Row [index](2DA-File-Format#row-labels)**: Pazaak Deck ID (integer)
+**Row index**: Pazaak Deck ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Deck label |
+| `label` | string | Deck label |
 | Additional columns | Various | Deck card definitions and properties |
 
 **References**:

@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines item upgrade [types](GFF-File-Format#gff-data-types) and properties. The engine uses this [file](GFF-File-Format) to determine which upgrades can be applied to items and their effects.
+**Engine Usage**: Defines item upgrade types and properties. The engine uses this file to determine which upgrades can be applied to items and their effects.
 
-**Row [index](2DA-File-Format#row-labels)**: Upgrade [type](GFF-File-Format#gff-data-types) ID (integer)
+**Row index**: Upgrade type ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Upgrade [type](GFF-File-Format#gff-data-types) label |
+| `label` | string | Upgrade type label |
 | Additional columns | Various | Upgrade properties and effects |
 
 **References**:

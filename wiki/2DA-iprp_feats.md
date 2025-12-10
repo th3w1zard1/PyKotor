@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Maps item property [values](GFF-File-Format#gff-data-types) to feat bonuses. When an item grants a feat bonus, this table determines which feat is granted based on the property [value](GFF-File-Format#gff-data-types).
+**Engine Usage**: Maps item property values to feat bonuses. When an item grants a feat bonus, this table determines which feat is granted based on the property value.
 
-**Row [index](2DA-File-Format#row-labels)**: Item property value (integer)
+**Row index**: Item property value (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Property [value](GFF-File-Format#gff-data-types) label |
-| `feat` | Integer | Feat ID granted by this property [value](GFF-File-Format#gff-data-types) |
+| `label` | string | Property value label |
+| `feat` | Integer | Feat ID granted by this property value |
 
 **References**:
 

@@ -28,7 +28,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - been added or the template specified is invalid
 
 - `nNPC`: int
-- `sTemplate`: [string](GFF-File-Format#gff-data-types)
+- `sTemplate`: string
 
 <a id="addpartymember"></a>
 
@@ -66,7 +66,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetPartyMemberByIndex(nIndex)` - Routine 577
 
 - `577. GetPartyMemberByIndex`
-- Returns the party member at a given [index](2DA-File-Format#row-labels) in the party.
+- Returns the party member at a given index in the party.
 - The order of members in the party can vary based on
 - who the current leader is (member 0 is always the current
 - party leader).
@@ -80,7 +80,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `126. GetPartyMemberCount`
 - GetPartyMemberCount
-- Returns a [count](GFF-File-Format#file-structure-overview) of how many members [ARE](GFF-File-Format#are-area) in the party including the player character
+- Returns a count of how many members [ARE](GFF-File-Format#are-area) in the party including the player character
 
 <a id="isnpcpartymember"></a>
 

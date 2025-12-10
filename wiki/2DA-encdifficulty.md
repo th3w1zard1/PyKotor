@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines encounter difficulty levels for area encounters. The engine uses this [file](GFF-File-Format) to determine encounter scaling and difficulty modifiers.
+**Engine Usage**: Defines encounter difficulty levels for area encounters. The engine uses this file to determine encounter scaling and difficulty modifiers.
 
-**Row [index](2DA-File-Format#row-labels)**: Difficulty ID (integer)
+**Row index**: Difficulty ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Difficulty label |
+| `label` | string | Difficulty label |
 | Additional columns | Various | Difficulty modifiers and properties |
 
 **References**:

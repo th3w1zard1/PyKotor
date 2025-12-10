@@ -4,13 +4,13 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 [DLG files](GFF-File-Format#dlg-dialogue) store conversation trees, forming the core of KotOR's narrative interaction. A [dialogue](GFF-File-Format#dlg-dialogue) consists of a hierarchy of Entry nodes (NPC lines) and Reply nodes (Player options), connected by Links.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Conversation [format](GFF-File-Format) specification, see [Bioware Aurora Conversation Format](Bioware-Aurora-Conversation).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Conversation format specification, see [Bioware Aurora Conversation Format](Bioware-Aurora-Conversation).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/dlg/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/generics/dlg/)
 
 ## Conversation Properties
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `DelayEntry` | Int | Delay before conversation starts |
 | `DelayReply` | Int | Delay before player reply options appear |
@@ -24,30 +24,30 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 | `ConversationType` | Byte | 0=Human, 1=Computer, 2=Other |
 | `OldHitCheck` | Byte | Legacy hit check flag (unused) |
 
-**Conversation [types](GFF-File-Format#gff-data-types):**
+**Conversation types:**
 
 - **Human**: Cinematic camera, [voice-over](WAV-File-Format) support, standard UI
 - **Computer**: Full-screen terminal interface, no [voice-over](WAV-File-Format), green text
-- **Other**: Overhead text bubbles (bark [strings](GFF-File-Format#gff-data-types))
+- **Other**: Overhead text bubbles (bark strings)
 
 ## Script Hooks
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `EndConversation` | [ResRef](GFF-File-Format#gff-data-types) | Fires when conversation ends normally |
 | `EndConverAbort` | [ResRef](GFF-File-Format#gff-data-types) | Fires when conversation is aborted |
 
 ## [node](MDL-MDX-File-Format#node-structures) Lists
 
-[DLG](GFF-File-Format#dlg-dialogue) [files](GFF-File-Format) use two main lists for [nodes](MDL-MDX-File-Format#node-structures) and one for starting points:
+[DLG](GFF-File-Format#dlg-dialogue) files use two main lists for [nodes](MDL-MDX-File-Format#node-structures) and one for starting points:
 
-| List [field](GFF-File-Format#file-structure-overview) | Contains | Description |
+| List field | Contains | Description |
 | ---------- | -------- | ----------- |
 | `EntryList` | DLGEntry | NPC dialogue lines |
 | `ReplyList` | DLGReply | Player response options |
 | `StartingList` | DLGLink | Entry points into the [dialogue tree](GFF-File-Format#dlg-dialogue) |
 
-**Graph [structure](GFF-File-Format#file-structure-overview):**
+**Graph structure:**
 
 - **StartingList** links to **EntryList** nodes (NPC starts)
 - **EntryList** [nodes](MDL-MDX-File-Format#node-structures) link to **ReplyList** nodes (Player responds)
@@ -56,12 +56,12 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## DLGNode Structure (Entries & Replies)
 
-Both Entry and Reply [nodes](MDL-MDX-File-Format#node-structures) share common [fields](GFF-File-Format#file-structure-overview):
+Both Entry and Reply [nodes](MDL-MDX-File-Format#node-structures) share common fields:
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Text` | [CExoLocString](GFF-File-Format#gff-data-types) | Dialogue text |
-| `VO_ResRef` | [ResRef](GFF-File-Format#gff-data-types) | Voice-over audio [file](GFF-File-Format) |
+| `VO_ResRef` | [ResRef](GFF-File-Format#gff-data-types) | Voice-over audio file |
 | `Sound` | [ResRef](GFF-File-Format#gff-data-types) | Sound effect [ResRef](GFF-File-Format#gff-data-types) |
 | `Script` | [ResRef](GFF-File-Format#gff-data-types) | Script to execute (Action) |
 | `Delay` | Int | Delay before text appears |
@@ -73,7 +73,7 @@ Both Entry and Reply [nodes](MDL-MDX-File-Format#node-structures) share common [
 | `PlotIndex` | Int | Plot index (legacy) |
 | `PlotXPPercentage` | Float | XP reward percentage |
 
-**Cinematic [fields](GFF-File-Format#file-structure-overview):**
+**Cinematic fields:**
 
 - `CameraAngle`: Camera angle ID
 - `CameraID`: Specific camera ID
@@ -88,13 +88,13 @@ Both Entry and Reply [nodes](MDL-MDX-File-Format#node-structures) share common [
 - `Participant`: Tag of object to animate
 - `Animation`: [animation](MDL-MDX-File-Format#animation-header) ID
 
-## DLGLink [structure](GFF-File-Format#file-structure-overview)
+## DLGLink structure
 
 Links connect [nodes](MDL-MDX-File-Format#node-structures) and define flow control:
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
-| `Index` | Int | [index](2DA-File-Format#row-labels) of target [node](MDL-MDX-File-Format#node-structures) in Entry/Reply list |
+| `Index` | Int | index of target [node](MDL-MDX-File-Format#node-structures) in Entry/Reply list |
 | `Active` | [ResRef](GFF-File-Format#gff-data-types) | Conditional script (returns TRUE/FALSE) |
 | `Script` | [ResRef](GFF-File-Format#gff-data-types) | Action script (executed on transition) |
 | `IsChild` | Byte | 1 if linking to [node](MDL-MDX-File-Format#node-structures) in list, 0 if logic link |
@@ -135,7 +135,7 @@ Links connect [nodes](MDL-MDX-File-Format#node-structures) and define flow contr
 - No cinematic cameras
 - Used for terminals and datapads
 
-**Bark [strings](GFF-File-Format#gff-data-types):**
+**Bark strings:**
 
 - `ConversationType=2`
 - No cinematic mode, text floats over head
@@ -143,14 +143,14 @@ Links connect [nodes](MDL-MDX-File-Format#node-structures) and define flow contr
 
 **Journal Integration:**
 
-- `Quest` and `QuestEntry` [fields](GFF-File-Format#file-structure-overview) update [journal entries](GFF-File-Format#jrl-journal) directly
+- `Quest` and `QuestEntry` fields update [journal entries](GFF-File-Format#jrl-journal) directly
 - Eliminates need for scripts to update quests
 
 ## Twine Interoperability
 
 PyKotor exposes a Twine bridge for DLGs to support authoring and visualization in story tools:
 
-- Export uses `Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/twine.py::_dlg_to_story` to turn starters, entries, and replies into `TwinePassage` objects. It emits unique names for duplicate speakers, preserves `is_child` and `Active` script on links, and writes KotOR metadata into `PassageMetadata.custom` (camera anim/angle/id, fade [type](GFF-File-Format#gff-data-types), quest, sound, VO, plus `text_<language>_<gender>` variants).
+- Export uses `Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/twine.py::_dlg_to_story` to turn starters, entries, and replies into `TwinePassage` objects. It emits unique names for duplicate speakers, preserves `is_child` and `Active` script on links, and writes KotOR metadata into `PassageMetadata.custom` (camera anim/angle/id, fade type, quest, sound, VO, plus `text_<language>_<gender>` variants).
 - Import uses `Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/twine.py::_story_to_dlg` together with `FormatConverter.restore_kotor_metadata` to hydrate `DLGEntry`/`DLGReply` objects, restoring multilingual text from `custom` keys and mapping camera/sound/quest metadata back onto the [nodes](MDL-MDX-File-Format#node-structures).
-- Twine-only data (style, script, tag [colors](GFF-File-Format#color), [format](GFF-File-Format) info, zoom, creator metadata) is stored in `[DLG](GFF-File-Format#dlg-dialogue).comment` as JSON via `FormatConverter.store_twine_metadata` and restored on export; `tag_colors` [ARE](GFF-File-Format#are-area) kept as `Color` values (see `Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/twine_data.py`).
+- Twine-only data (style, script, tag colors, format info, zoom, creator metadata) is stored in `[DLG](GFF-File-Format#dlg-dialogue).comment` as JSON via `FormatConverter.store_twine_metadata` and restored on export; `tag_colors` [ARE](GFF-File-Format#are-area) kept as `Color` values (see `Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/twine_data.py`).
 - Start [node](MDL-MDX-File-Format#node-structures) selection mirrors engine behavior: first starter becomes `startnode` when exporting, and missing `startnode` on import falls back to the first entry passage.

@@ -33,7 +33,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetLastCombatFeatUsed(oAttacker)` - Routine 724
 
 - `724. GetLastCombatFeatUsed`
-- Returns the last feat used (as a feat number that [indexes](2DA-File-Format#row-labels) the Feats.2da) by the given object
+- Returns the last feat used (as a feat number that indexes the Feats.2da) by the given object
 
 - `oAttacker`: object
 
@@ -43,7 +43,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `105. GetMetaMagicFeat`
 - Get the metamagic type (METAMAGIC_*) of the last spell cast by the caller
-- - Return [value](GFF-File-Format#gff-data-types) if the caster is not a valid object: -1
+- - Return value if the caster is not a valid object: -1
 
 <a id="getskillrank"></a>
 

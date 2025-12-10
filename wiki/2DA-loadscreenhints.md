@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines loading screen hints displayed during area transitions. The engine uses this [file](GFF-File-Format) to show helpful tips and hints to players while loading.
+**Engine Usage**: Defines loading screen hints displayed during area transitions. The engine uses this file to show helpful tips and hints to players while loading.
 
-**Row [index](2DA-File-Format#row-labels)**: Loading Screen Hint ID (integer)
+**Row index**: Loading Screen Hint ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Hint label |
-| `strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for hint text |
+| `label` | string | Hint label |
+| `strref` | [StrRef](TLK-File-Format#string-references-strref) | string reference for hint text |
 
 **References**:
 

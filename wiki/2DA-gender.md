@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines gender [types](GFF-File-Format#gff-data-types) for character creation and [creature templates](GFF-File-Format#utc-creature). The engine uses this [file](GFF-File-Format) to determine gender-specific properties and restrictions.
+**Engine Usage**: Defines gender types for character creation and [creature templates](GFF-File-Format#utc-creature). The engine uses this file to determine gender-specific properties and restrictions.
 
-**Row [index](2DA-File-Format#row-labels)**: Gender ID (integer)
+**Row index**: Gender ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Gender label |
+| `label` | string | Gender label |
 | Additional columns | Various | Gender properties |
 
 **References**:

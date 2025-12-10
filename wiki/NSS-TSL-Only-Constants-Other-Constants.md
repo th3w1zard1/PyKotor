@@ -158,19 +158,19 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `EFFECT_TYPE_DROID_CONFUSED`
 
-(79): Effect [type](GFF-File-Format#data-types) Droid Confused
+(79): Effect type Droid Confused
 
 <a id="effect_type_droidscramble"></a>
 
 ## `EFFECT_TYPE_DROIDSCRAMBLE`
 
-(81): Effect [type](GFF-File-Format#data-types) Droidscramble
+(81): Effect type Droidscramble
 
 <a id="effect_type_mindtrick"></a>
 
 ## `EFFECT_TYPE_MINDTRICK`
 
-(80): Effect [type](GFF-File-Format#data-types) Mindtrick
+(80): Effect type Mindtrick
 
 <a id="feat_class_skill_awareness"></a>
 
@@ -1094,7 +1094,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `IMMUNITY_TYPE_DROID_CONFUSED`
 
-(33): Immunity [type](GFF-File-Format#data-types) Droid Confused
+(33): Immunity type Droid Confused
 
 <a id="implant_agi"></a>
 
@@ -1262,79 +1262,79 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `TRAP_BASE_TYPE_FLASH_STUN_DEVASTATING`
 
-(18): Trap Base [type](GFF-File-Format#data-types) Flash Stun Devastating
+(18): Trap Base type Flash Stun Devastating
 
 <a id="trap_base_type_flash_stun_strong"></a>
 
 ## `TRAP_BASE_TYPE_FLASH_STUN_STRONG`
 
-(17): Trap Base [type](GFF-File-Format#data-types) Flash Stun Strong
+(17): Trap Base type Flash Stun Strong
 
 <a id="trap_base_type_fragmentation_mine_devastating"></a>
 
 ## `TRAP_BASE_TYPE_FRAGMENTATION_MINE_DEVASTATING`
 
-(20): Trap Base [type](GFF-File-Format#data-types) Fragmentation Mine Devastating
+(20): Trap Base type Fragmentation Mine Devastating
 
 <a id="trap_base_type_fragmentation_mine_strong"></a>
 
 ## `TRAP_BASE_TYPE_FRAGMENTATION_MINE_STRONG`
 
-(19): Trap Base [type](GFF-File-Format#data-types) Fragmentation Mine Strong
+(19): Trap Base type Fragmentation Mine Strong
 
 <a id="trap_base_type_laser_slicing_devastating"></a>
 
 ## `TRAP_BASE_TYPE_LASER_SLICING_DEVASTATING`
 
-(22): Trap Base [type](GFF-File-Format#data-types) Laser Slicing Devastating
+(22): Trap Base type Laser Slicing Devastating
 
 <a id="trap_base_type_laser_slicing_strong"></a>
 
 ## `TRAP_BASE_TYPE_LASER_SLICING_STRONG`
 
-(21): Trap Base [type](GFF-File-Format#data-types) Laser Slicing Strong
+(21): Trap Base type Laser Slicing Strong
 
 <a id="trap_base_type_poison_gas_devastating"></a>
 
 ## `TRAP_BASE_TYPE_POISON_GAS_DEVASTATING`
 
-(24): Trap Base [type](GFF-File-Format#data-types) Poison Gas Devastating
+(24): Trap Base type Poison Gas Devastating
 
 <a id="trap_base_type_poison_gas_strong"></a>
 
 ## `TRAP_BASE_TYPE_POISON_GAS_STRONG`
 
-(23): Trap Base [type](GFF-File-Format#data-types) Poison Gas Strong
+(23): Trap Base type Poison Gas Strong
 
 <a id="trap_base_type_sonic_charge_average"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_AVERAGE`
 
-(15): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Average
+(15): Trap Base type Sonic Charge Average
 
 <a id="trap_base_type_sonic_charge_deadly"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_DEADLY`
 
-(16): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Deadly
+(16): Trap Base type Sonic Charge Deadly
 
 <a id="trap_base_type_sonic_charge_devastating"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_DEVASTATING`
 
-(26): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Devastating
+(26): Trap Base type Sonic Charge Devastating
 
 <a id="trap_base_type_sonic_charge_minor"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_MINOR`
 
-(14): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Minor
+(14): Trap Base type Sonic Charge Minor
 
 <a id="trap_base_type_sonic_charge_strong"></a>
 
 ## `TRAP_BASE_TYPE_SONIC_CHARGE_STRONG`
 
-(25): Trap Base [type](GFF-File-Format#data-types) Sonic Charge Strong
+(25): Trap Base type Sonic Charge Strong
 
 <a id="tutorial_window_temp1"></a>
 

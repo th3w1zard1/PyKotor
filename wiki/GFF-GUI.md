@@ -2,41 +2,41 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-GUI [files](GFF-File-Format) define the layout and behavior of the user interface. They [ARE](GFF-File-Format#are-area) [GFF files](GFF-File-Format) describing hierarchies of panels, buttons, labels, and other controls.
+GUI files define the layout and behavior of the user interface. They [ARE](GFF-File-Format#are-area) [GFF files](GFF-File-Format) describing hierarchies of panels, buttons, labels, and other controls.
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/gui.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/gui.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure-overview)
+## Core Identity fields
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique [GUI](GFF-File-Format#gui-graphical-user-interface) identifier |
 | `ObjName` | [CExoString](GFF-File-Format#gff-data-types) | Object name (unused) |
 | `Comment` | [CExoString](GFF-File-Format#gff-data-types) | Developer comment |
 
-## Control [structure](GFF-File-Format#file-structure-overview)
+## Control structure
 
-[GUI](GFF-File-Format#gui-graphical-user-interface) [files](GFF-File-Format) contain a `Controls` list, which holds the top-level UI elements. Each control can contain child controls, forming a tree [structure](GFF-File-Format#file-structure-overview).
+[GUI](GFF-File-Format#gui-graphical-user-interface) files contain a `Controls` list, which holds the top-level UI elements. Each control can contain child controls, forming a tree structure.
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `Controls` | List | List of child controls |
-| `Type` | Int | Control [type](GFF-File-Format#gff-data-types) identifier |
+| `Type` | Int | Control type identifier |
 | `ID` | Int | Unique Control ID |
 | `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Control tag |
 
-**Control [types](GFF-File-Format#gff-data-types):**
+**Control types:**
 
 | ID | Name | Description |
 | -- | ---- | ----------- |
-| -1 | Invalid | Invalid control [type](GFF-File-Format#gff-data-types) |
+| -1 | Invalid | Invalid control type |
 | 0 | Control | Base container (rarely used) |
 | 2 | Panel | Background panel/container |
 | 4 | ProtoItem | Prototype item template (for ListBox items) |
 | 5 | Label | Static text label |
 | 6 | Button | Clickable button |
 | 7 | CheckBox | Toggle checkbox |
-| 8 | Slider | Sliding [value](GFF-File-Format#gff-data-types) control |
+| 8 | Slider | Sliding value control |
 | 9 | ScrollBar | Scroll bar control |
 | 10 | Progress | Progress bar indicator |
 | 11 | ListBox | List of items with scrolling |
@@ -45,17 +45,17 @@ GUI [files](GFF-File-Format) define the layout and behavior of the user interfac
 
 All controls share these base properties:
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
-| `CONTROLTYPE` | Int | Control [type](GFF-File-Format#gff-data-types) identifier (see Control [types](GFF-File-Format#gff-data-types)) |
+| `CONTROLTYPE` | Int | Control type identifier (see Control types) |
 | `ID` | Int | Unique control ID for script references |
 | `TAG` | [CExoString](GFF-File-Format#gff-data-types) | Control tag identifier |
 | `Obj_Locked` | Byte | Lock state (0=unlocked, 1=locked) |
 | `Obj_Parent` | [CExoString](GFF-File-Format#gff-data-types) | Parent control tag (for hierarchy) |
 | `Obj_ParentID` | Int | Parent control ID (for hierarchy) |
 | `ALPHA` | Float | Opacity/transparency (0.0=transparent, 1.0=opaque) |
-| `COLOR` | [vector](GFF-File-Format#gff-data-types) | Control [color](GFF-File-Format#color) modulation (RGB, 0.0-1.0) |
-| `EXTENT` | Struct | [position](MDL-MDX-File-Format#node-header) and [size](GFF-File-Format#file-structure-overview) rectangle |
+| `COLOR` | vector | Control color modulation (RGB, 0.0-1.0) |
+| `EXTENT` | Struct | position and size rectangle |
 | `BORDER` | Struct | Border rendering properties |
 | `HILIGHT` | Struct | Highlight appearance (hover state) |
 | `TEXT` | Struct | Text display properties |
@@ -63,23 +63,23 @@ All controls share these base properties:
 
 **EXTENT Struct:**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
-| `LEFT` | Int | X [position](MDL-MDX-File-Format#node-header) relative to parent (pixels) |
-| `TOP` | Int | Y [position](MDL-MDX-File-Format#node-header) relative to parent (pixels) |
+| `LEFT` | Int | X position relative to parent (pixels) |
+| `TOP` | Int | Y position relative to parent (pixels) |
 | `WIDTH` | Int | Control width (pixels) |
 | `HEIGHT` | Int | Control height (pixels) |
 
 **Positioning System:**
 
-- [coordinates](GFF-File-Format#are-area) [ARE](GFF-File-Format#are-area) relative to parent control
+- coordinates [ARE](GFF-File-Format#are-area) relative to parent control
 - Base resolution is 640x480, scaled for higher resolutions
-- Negative [values](GFF-File-Format#gff-data-types) allowed for positioning outside parent bounds
-- Root control ([GUI](GFF-File-Format#gui-graphical-user-interface)) uses screen-relative [coordinates](GFF-File-Format#are-area)
+- Negative values allowed for positioning outside parent bounds
+- Root control ([GUI](GFF-File-Format#gui-graphical-user-interface)) uses screen-relative coordinates
 
 **BORDER Struct:**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `CORNER` | [ResRef](GFF-File-Format#gff-data-types) | Corner texture ([TPC](TPC-File-Format)/TGA) |
 | `EDGE` | [ResRef](GFF-File-Format#gff-data-types) | [edge](BWM-File-Format#edges) texture ([TPC](TPC-File-Format)/TGA) |
@@ -88,7 +88,7 @@ All controls share these base properties:
 | `DIMENSION` | Int | Border thickness in pixels |
 | `INNEROFFSET` | Int | Inner padding X-axis (pixels) |
 | `INNEROFFSETY` | Int | Inner padding Y-axis (pixels, optional) |
-| `COLOR` | [vector](GFF-File-Format#gff-data-types) | Border [color](GFF-File-Format#color) modulation (RGB, 0.0-1.0) |
+| `COLOR` | vector | Border color modulation (RGB, 0.0-1.0) |
 | `PULSING` | Byte | Pulsing [animation](MDL-MDX-File-Format#animation-header) flag (0=off, 1=on) |
 
 **Border Rendering:**
@@ -97,21 +97,21 @@ All controls share these base properties:
 - **[edge](BWM-File-Format#edges)**: 4 [edge](BWM-File-Format#edges) pieces (top, right, bottom, left)
 - **FILL**: Center fill area (scaled to fit)
 - **DIMENSION**: Thickness of border [edges](BWM-File-Format#edges)
-- **FILLSTYLE**: Controls how fill [texture](TPC-File-Format) is rendered (tiled, stretched, solid [color](GFF-File-Format#color))
+- **FILLSTYLE**: Controls how fill [texture](TPC-File-Format) is rendered (tiled, stretched, solid color)
 - Border pieces [ARE](GFF-File-Format#are-area) tiled/repeated along [edges](BWM-File-Format#edges)
 
 **TEXT Struct:**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TEXT` | [CExoString](GFF-File-Format#gff-data-types) | Direct text content (overrides [StrRef](TLK-File-Format#string-references-strref) if set) |
-| `STRREF` | DWord | [TLK](TLK-File-Format) [string](GFF-File-Format#gff-data-types) reference (0xFFFFFFFF = unused) |
+| `STRREF` | DWord | [TLK](TLK-File-Format) string reference (0xFFFFFFFF = unused) |
 | `FONT` | [ResRef](GFF-File-Format#gff-data-types) | Font [texture](TPC-File-Format) resource ([TPC](TPC-File-Format)/TGA) |
 | `ALIGNMENT` | Int | Text alignment flags (bitfield) |
-| `COLOR` | [vector](GFF-File-Format#gff-data-types) | Text color (RGB, 0.0-1.0) |
+| `COLOR` | vector | Text color (RGB, 0.0-1.0) |
 | `PULSING` | Byte | Pulsing [animation](MDL-MDX-File-Format#animation-header) flag (0=off, 1=on) |
 
-**Text Alignment [values](GFF-File-Format#gff-data-types):**
+**Text Alignment values:**
 
 - **1**: Top-Left
 - **2**: Top-Center
@@ -127,11 +127,11 @@ All controls share these base properties:
 
 - If both `TEXT` and `STRREF` [ARE](GFF-File-Format#are-area) set, `TEXT` takes precedence
 - Font [textures](TPC-File-Format) contain character glyphs in fixed grid
-- Text [color](GFF-File-Format#color) modulates font texture (white = full [color](GFF-File-Format#color), black = no [color](GFF-File-Format#color))
+- Text color modulates font texture (white = full color, black = no color)
 
 **MOVETO Struct:**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `UP` | Int | Control ID to navigate to when pressing Up |
 | `DOWN` | Int | Control ID to navigate to when pressing Down |
@@ -141,13 +141,13 @@ All controls share these base properties:
 **Navigation System:**
 
 - Used for keyboard/D-pad navigation
-- [value](GFF-File-Format#gff-data-types) of -1 or 0 indicates no navigation in that direction
+- value of -1 or 0 indicates no navigation in that direction
 - Engine automatically wraps navigation at list boundaries
 - Essential for [controller](MDL-MDX-File-Format#controllers)/keyboard-only gameplay
 
 **HILIGHT Struct:**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `CORNER` | [ResRef](GFF-File-Format#gff-data-types) | Corner [texture](TPC-File-Format) for highlight state |
 | `EDGE` | [ResRef](GFF-File-Format#gff-data-types) | [edge](BWM-File-Format#edges) [texture](TPC-File-Format) for highlight state |
@@ -156,7 +156,7 @@ All controls share these base properties:
 | `DIMENSION` | Int | Border thickness |
 | `INNEROFFSET` | Int | Inner padding X-axis |
 | `INNEROFFSETY` | Int | Inner padding Y-axis (optional) |
-| `COLOR` | [vector](GFF-File-Format#gff-data-types) | Highlight [color](GFF-File-Format#color) modulation |
+| `COLOR` | vector | Highlight color modulation |
 | `PULSING` | Byte | Pulsing [animation](MDL-MDX-File-Format#animation-header) [flag](GFF-File-Format#gff-data-types) |
 
 **Highlight Behavior:**
@@ -164,11 +164,11 @@ All controls share these base properties:
 - Shown when mouse hovers over control
 - Replaces or overlays BORDER when active
 - Used for interactive feedback
-- [color](GFF-File-Format#color) typically brighter/more saturated than border
+- color typically brighter/more saturated than border
 
 **SELECTED Struct:**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `CORNER` | [ResRef](GFF-File-Format#gff-data-types) | Corner [texture](TPC-File-Format) for selected state |
 | `EDGE` | [ResRef](GFF-File-Format#gff-data-types) | [edge](BWM-File-Format#edges) [texture](TPC-File-Format) for selected state |
@@ -177,12 +177,12 @@ All controls share these base properties:
 | `DIMENSION` | Int | Border thickness |
 | `INNEROFFSET` | Int | Inner padding X-axis |
 | `INNEROFFSETY` | Int | Inner padding Y-axis (optional) |
-| `COLOR` | [vector](GFF-File-Format#gff-data-types) | Selected state [color](GFF-File-Format#color) modulation |
+| `COLOR` | vector | Selected state color modulation |
 | `PULSING` | Byte | Pulsing [animation](MDL-MDX-File-Format#animation-header) [flag](GFF-File-Format#gff-data-types) |
 
 **HILIGHTSELECTED Struct:**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `CORNER` | [ResRef](GFF-File-Format#gff-data-types) | Corner [texture](TPC-File-Format) for highlight+selected state |
 | `EDGE` | [ResRef](GFF-File-Format#gff-data-types) | [edge](BWM-File-Format#edges) [texture](TPC-File-Format) for highlight+selected state |
@@ -191,7 +191,7 @@ All controls share these base properties:
 | `DIMENSION` | Int | Border thickness |
 | `INNEROFFSET` | Int | Inner padding X-axis |
 | `INNEROFFSETY` | Int | Inner padding Y-axis (optional) |
-| `COLOR` | [vector](GFF-File-Format#gff-data-types) | Combined state [color](GFF-File-Format#color) modulation |
+| `COLOR` | vector | Combined state color modulation |
 | `PULSING` | Byte | Pulsing [animation](MDL-MDX-File-Format#animation-header) [flag](GFF-File-Format#gff-data-types) |
 
 **State Priority:**
@@ -201,17 +201,17 @@ All controls share these base properties:
 3. **SELECTED**: When control is selected but not highlighted
 4. **BORDER**: Default appearance
 
-## Control-Specific [fields](GFF-File-Format#file-structure-overview)
+## Control-Specific fields
 
-**ListBox ([type](GFF-File-Format#gff-data-types) 11):**
+**ListBox (type 11):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `PROTOITEM` | Struct | Template for list item appearance |
 | `SCROLLBAR` | Struct | Embedded scrollbar control |
 | `PADDING` | Int | Spacing between items (pixels) |
 | `MAXVALUE` | Int | Maximum scroll value (total items - visible items) |
-| `CURVALUE` | Int | Current scroll [position](MDL-MDX-File-Format#node-header) |
+| `CURVALUE` | Int | Current scroll position |
 | `LOOPING` | Byte | Loop scrolling (0=no, 1=yes) |
 | `LEFTSCROLLBAR` | Byte | Scrollbar on left side (0=right, 1=left) |
 
@@ -222,14 +222,14 @@ All controls share these base properties:
 - **PADDING**: Vertical spacing between items
 - **MAXVALUE**: Maximum scroll offset (when all items visible, MAXVALUE=0)
 - **LOOPING**: When enabled, scrolling past end wraps to beginning
-- **LEFTSCROLLBAR**: [positions](MDL-MDX-File-Format#node-header) scrollbar on left instead of right
+- **LEFTSCROLLBAR**: positions scrollbar on left instead of right
 
 **PROTOITEM Struct (for ListBox):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `CONTROLTYPE` | Int | Always 4 (ProtoItem) |
-| `EXTENT` | Struct | Item [size](GFF-File-Format#file-structure-overview) and [position](MDL-MDX-File-Format#node-header) |
+| `EXTENT` | Struct | Item size and position |
 | `BORDER` | Struct | Item border appearance |
 | `HILIGHT` | Struct | Item highlight on hover |
 | `HILIGHTSELECTED` | Struct | Item highlight when selected |
@@ -237,47 +237,47 @@ All controls share these base properties:
 | `TEXT` | Struct | Item text properties |
 | `ISSELECTED` | Byte | Default selected state |
 
-**ScrollBar ([type](GFF-File-Format#gff-data-types) 9):**
+**ScrollBar (type 9):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `DIR` | Struct | Direction arrow buttons appearance |
 | `THUMB` | Struct | Draggable thumb appearance |
-| `MAXVALUE` | Int | Maximum scroll [value](GFF-File-Format#gff-data-types) |
+| `MAXVALUE` | Int | Maximum scroll value |
 | `VISIBLEVALUE` | Int | Number of visible items in viewport |
-| `CURVALUE` | Int | Current scroll [position](MDL-MDX-File-Format#node-header) |
-| `DRAWMODE` | Byte | Drawing mode (0=normal, other [values](GFF-File-Format#gff-data-types) unused) |
+| `CURVALUE` | Int | Current scroll position |
+| `DRAWMODE` | Byte | Drawing mode (0=normal, other values unused) |
 
 **ScrollBar Behavior:**
 
 - **MAXVALUE**: Total scrollable range
-- **VISIBLEVALUE**: [size](GFF-File-Format#file-structure-overview) of visible area (determines thumb [size](GFF-File-Format#file-structure-overview))
+- **VISIBLEVALUE**: size of visible area (determines thumb size)
 - **CURVALUE**: Current scroll offset (0 to MAXVALUE)
-- Thumb [size](GFF-File-Format#file-structure-overview) = (VISIBLEVALUE / MAXVALUE) × track length
+- Thumb size = (VISIBLEVALUE / MAXVALUE) × track length
 
 **DIR Struct (ScrollBar Direction Buttons):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `IMAGE` | [ResRef](GFF-File-Format#gff-data-types) | Arrow button [texture](TPC-File-Format) |
 | `ALIGNMENT` | Int | Image alignment (typically 18=center) |
 | `DRAWSTYLE` | Int | Drawing style (unused) |
-| `FLIPSTYLE` | Int | Flip/[rotation](MDL-MDX-File-Format#node-header) style (unused) |
-| `ROTATE` | Float | [rotation](MDL-MDX-File-Format#node-header) angle (unused) |
+| `FLIPSTYLE` | Int | Flip/rotation style (unused) |
+| `ROTATE` | Float | rotation angle (unused) |
 
 **THUMB Struct (ScrollBar Thumb):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `IMAGE` | [ResRef](GFF-File-Format#gff-data-types) | Thumb [texture](TPC-File-Format) |
 | `ALIGNMENT` | Int | Image alignment (typically 18=center) |
 | `DRAWSTYLE` | Int | Drawing style (unused) |
-| `FLIPSTYLE` | Int | Flip/[rotation](MDL-MDX-File-Format#node-header) style (unused) |
-| `ROTATE` | Float | [rotation](MDL-MDX-File-Format#node-header) angle (unused) |
+| `FLIPSTYLE` | Int | Flip/rotation style (unused) |
+| `ROTATE` | Float | rotation angle (unused) |
 
-**ProgressBar ([type](GFF-File-Format#gff-data-types) 10):**
+**ProgressBar (type 10):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `PROGRESS` | Struct | Progress fill appearance |
 | `CURVALUE` | Int | Current progress value (0-100) |
@@ -292,7 +292,7 @@ All controls share these base properties:
 
 **PROGRESS Struct:**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `CORNER` | [ResRef](GFF-File-Format#gff-data-types) | Corner [texture](TPC-File-Format) for progress fill |
 | `EDGE` | [ResRef](GFF-File-Format#gff-data-types) | [edge](BWM-File-Format#edges) [texture](TPC-File-Format) for progress fill |
@@ -301,12 +301,12 @@ All controls share these base properties:
 | `DIMENSION` | Int | Border thickness |
 | `INNEROFFSET` | Int | Inner padding X-axis |
 | `INNEROFFSETY` | Int | Inner padding Y-axis (optional) |
-| `COLOR` | [vector](GFF-File-Format#gff-data-types) | Progress fill [color](GFF-File-Format#color) modulation |
+| `COLOR` | vector | Progress fill color modulation |
 | `PULSING` | Byte | Pulsing [animation](MDL-MDX-File-Format#animation-header) [flag](GFF-File-Format#gff-data-types) |
 
-**CheckBox ([type](GFF-File-Format#gff-data-types) 7):**
+**CheckBox (type 7):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `SELECTED` | Struct | Appearance when checked |
 | `HILIGHTSELECTED` | Struct | Appearance when checked and hovered |
@@ -319,13 +319,13 @@ All controls share these base properties:
 - **SELECTED**: Visual appearance when checked
 - **HILIGHTSELECTED**: Visual appearance when checked and hovered
 
-**Slider ([type](GFF-File-Format#gff-data-types) 8):**
+**Slider (type 8):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `THUMB` | Struct | Slider thumb appearance |
-| `CURVALUE` | Int | Current slider [value](GFF-File-Format#gff-data-types) |
-| `MAXVALUE` | Int | Maximum slider [value](GFF-File-Format#gff-data-types) |
+| `CURVALUE` | Int | Current slider value |
+| `MAXVALUE` | Int | Maximum slider value |
 | `DIRECTION` | Int | Orientation (0=horizontal, 1=vertical) |
 
 **Slider Behavior:**
@@ -333,21 +333,21 @@ All controls share these base properties:
 - **CURVALUE**: Current position (0 to MAXVALUE)
 - **MAXVALUE**: Maximum value (typically 100)
 - **DIRECTION**: 0=horizontal (left-right), 1=vertical (top-bottom)
-- Thumb [position](MDL-MDX-File-Format#node-header) = (CURVALUE / MAXVALUE) × track length
+- Thumb position = (CURVALUE / MAXVALUE) × track length
 
 **Slider THUMB Struct:**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `IMAGE` | [ResRef](GFF-File-Format#gff-data-types) | Thumb [texture](TPC-File-Format) |
 | `ALIGNMENT` | Int | Image alignment |
 | `DRAWSTYLE` | Int | Drawing style (unused) |
-| `FLIPSTYLE` | Int | Flip/[rotation](MDL-MDX-File-Format#node-header) style (unused) |
-| `ROTATE` | Float | [rotation](MDL-MDX-File-Format#node-header) angle (unused) |
+| `FLIPSTYLE` | Int | Flip/rotation style (unused) |
+| `ROTATE` | Float | rotation angle (unused) |
 
-**Button ([type](GFF-File-Format#gff-data-types) 6):**
+**Button (type 6):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `HILIGHT` | Struct | Hover state appearance |
 | `MOVETO` | Struct | D-pad navigation targets |
@@ -360,37 +360,37 @@ All controls share these base properties:
 - **TEXT**: Button label (can use [StrRef](TLK-File-Format#string-references-strref) for localization)
 - **MOVETO**: Keyboard/D-pad navigation
 
-**Label ([type](GFF-File-Format#gff-data-types) 5):**
+**Label (type 5):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TEXT` | Struct | Text display properties |
 
 **Label Behavior:**
 
 - Static text display (non-interactive)
-- **TEXT**: Text content, font, alignment, [color](GFF-File-Format#color)
-- Used for UI labels, descriptions, [headers](GFF-File-Format#file-header)
+- **TEXT**: Text content, font, alignment, color
+- Used for UI labels, descriptions, headers
 
-**Panel ([type](GFF-File-Format#gff-data-types) 2):**
+**Panel (type 2):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `CONTROLS` | List | Child controls list |
 | `BORDER` | Struct | Panel border (optional background) |
-| `COLOR` | [vector](GFF-File-Format#gff-data-types) | Panel [color](GFF-File-Format#color) modulation |
+| `COLOR` | vector | Panel color modulation |
 | `ALPHA` | Float | Panel transparency |
 
 **Panel Behavior:**
 
 - Container for child controls
-- **CONTROLS**: List of child controls (any [type](GFF-File-Format#gff-data-types))
+- **CONTROLS**: List of child controls (any type)
 - **BORDER**: Optional background/border
 - Child controls positioned relative to panel
 
-**ProtoItem ([type](GFF-File-Format#gff-data-types) 4):**
+**ProtoItem (type 4):**
 
-| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
+| field | type | Description |
 | ----- | ---- | ----------- |
 | `TEXT` | Struct | Item label text |
 | `BORDER` | Struct | Item border appearance |
@@ -421,23 +421,23 @@ All controls share these base properties:
 **Positioning System:**
 
 - Base resolution: 640×480 pixels (engine default, scaled for higher resolutions)
-- [coordinates](GFF-File-Format#are-area) [ARE](GFF-File-Format#are-area) pixel-based, engine scales for higher resolutions
-- EXTENT.LEFT/TOP: [position](MDL-MDX-File-Format#node-header) relative to parent (or screen for root)
-- Negative [coordinates](GFF-File-Format#are-area) allowed (positioning outside parent bounds)
+- coordinates [ARE](GFF-File-Format#are-area) pixel-based, engine scales for higher resolutions
+- EXTENT.LEFT/TOP: position relative to parent (or screen for root)
+- Negative coordinates allowed (positioning outside parent bounds)
 - Root control EXTENT defines [GUI](GFF-File-Format#gui-graphical-user-interface) bounds
 
 **Reference**: [`vendor/reone/include/reone/gui/gui.h:38-39`](https://github.com/th3w1zard1/reone/blob/master/include/reone/gui/gui.h#L38-L39) defines `kDefaultResolutionX = 640` and `kDefaultResolutionY = 480`
 
-**[color](GFF-File-Format#color) System:**
+**color System:**
 
-- **[color](GFF-File-Format#color)** (Vector3): RGB [color](GFF-File-Format#color) modulation (0.0-1.0 range)
+- **color** (Vector3): RGB color modulation (0.0-1.0 range)
 - **ALPHA** ([float](GFF-File-Format#gff-data-types)): Transparency (0.0=transparent, 1.0=opaque)
-- [colors](GFF-File-Format#color) multiply with textures (white=full [color](GFF-File-Format#color), black=no [color](GFF-File-Format#color))
-- KotOR 1 default text [color](GFF-File-Format#color): RGB(0.0, 0.659, 0.980) - cyan
-- KotOR 2 default text [color](GFF-File-Format#color): RGB(0.102, 0.698, 0.549) - teal (exact [values](GFF-File-Format#gff-data-types) from engine)
-- Default highlight [color](GFF-File-Format#color): RGB(1.0, 1.0, 0.0) - yellow
+- colors multiply with textures (white=full color, black=no color)
+- KotOR 1 default text color: RGB(0.0, 0.659, 0.980) - cyan
+- KotOR 2 default text color: RGB(0.102, 0.698, 0.549) - teal (exact values from engine)
+- Default highlight color: RGB(1.0, 1.0, 0.0) - yellow
 
-**Reference**: [`vendor/KotOR.js/src/gui/GUIControl.ts:188-194`](https://github.com/KobaltBlu/KotOR.js/blob/master/src/gui/GUIControl.ts#L188-L194) defines default [colors](GFF-File-Format#color) for KotOR 1 and 2
+**Reference**: [`vendor/KotOR.js/src/gui/GUIControl.ts:188-194`](https://github.com/KobaltBlu/KotOR.js/blob/master/src/gui/GUIControl.ts#L188-L194) defines default colors for KotOR 1 and 2
 
 **Border Rendering:**
 
@@ -450,12 +450,12 @@ All controls share these base properties:
 
 **Text Rendering:**
 
-- Fonts [ARE](GFF-File-Format#are-area) [texture](TPC-File-Format)-based ([TPC](TPC-File-Format)/TGA [files](GFF-File-Format) with character grid)
+- Fonts [ARE](GFF-File-Format#are-area) [texture](TPC-File-Format)-based ([TPC](TPC-File-Format)/TGA files with character grid)
 - Each character has fixed width/height in font [texture](TPC-File-Format)
-- TEXT [field](GFF-File-Format#file-structure-overview) takes precedence over [StrRef](TLK-File-Format#string-references-strref) if both set
-- [StrRef](TLK-File-Format#string-references-strref) references [dialog.tlk](TLK-File-Format) for localized [strings](GFF-File-Format#gff-data-types)
+- TEXT field takes precedence over [StrRef](TLK-File-Format#string-references-strref) if both set
+- [StrRef](TLK-File-Format#string-references-strref) references [dialog.tlk](TLK-File-Format) for localized strings
 - ALIGNMENT uses bitfield: horizontal (1=left, 2=center, 3=right) + vertical (0=top, 16=center, 32=bottom)
-- Text [color](GFF-File-Format#color) modulates font [texture](TPC-File-Format)
+- Text color modulates font [texture](TPC-File-Format)
 
 **State Management:**
 
@@ -467,17 +467,17 @@ All controls share these base properties:
 
 **Control IDs:**
 
-- **ID** [field](GFF-File-Format#file-structure-overview): Unique identifier for script references
+- **ID** field: Unique identifier for script references
 - Control IDs [ARE](GFF-File-Format#are-area) used by scripts and engine systems to locate specific controls
 - Some engine behaviors may depend on specific Control IDs or Tags
 - IDs should remain stable across [GUI](GFF-File-Format#gui-graphical-user-interface) versions to maintain script compatibility
 
-**Note**: While control IDs [ARE](GFF-File-Format#are-area) used extensively for script references, explicit evidence of hardcoded ID dependencies in the engine is not found in vendor implementations. However, control tags (TAG [field](GFF-File-Format#file-structure-overview)) [ARE](GFF-File-Format#are-area) commonly used for engine lookups.
+**Note**: While control IDs [ARE](GFF-File-Format#are-area) used extensively for script references, explicit evidence of hardcoded ID dependencies in the engine is not found in vendor implementations. However, control tags (TAG field) [ARE](GFF-File-Format#are-area) commonly used for engine lookups.
 
 **Navigation:**
 
 - **MOVETO** struct defines D-pad/keyboard navigation
-- [value](GFF-File-Format#gff-data-types) is Control ID of target control
+- value is Control ID of target control
 - -1 or 0 indicates no navigation in that direction
 - Engine handles wrapping at list boundaries
 - Essential for [controller](MDL-MDX-File-Format#controllers)/keyboard-only gameplay
@@ -487,9 +487,9 @@ All controls share these base properties:
 - ListBox controls can embed SCROLLBAR
 - ScrollBar.MAXVALUE = total items - visible items
 - ScrollBar.VISIBLEVALUE = number of visible items
-- ScrollBar.CURVALUE = current scroll [offset](GFF-File-Format#file-structure-overview)
-- Thumb [size](GFF-File-Format#file-structure-overview) = (VISIBLEVALUE / MAXVALUE) × track length
-- LEFTSCROLLBAR: [positions](MDL-MDX-File-Format#node-header) scrollbar on left side
+- ScrollBar.CURVALUE = current scroll offset
+- Thumb size = (VISIBLEVALUE / MAXVALUE) × track length
+- LEFTSCROLLBAR: positions scrollbar on left side
 
 **Pulsing [animation](MDL-MDX-File-Format#animation-header):**
 
@@ -498,9 +498,9 @@ All controls share these base properties:
 - Used for attention-grabbing effects
 - [animation](MDL-MDX-File-Format#animation-header) speed controlled by engine
 
-**[texture](TPC-File-Format) [formats](GFF-File-Format):**
+**[texture](TPC-File-Format) formats:**
 
-- [GUI](GFF-File-Format#gui-graphical-user-interface) [textures](TPC-File-Format) use TPC (Targa Packed) or TGA [format](GFF-File-Format)
+- [GUI](GFF-File-Format#gui-graphical-user-interface) [textures](TPC-File-Format) use TPC (Targa Packed) or TGA format
 - [textures](TPC-File-Format) often have alpha channels for transparency
 - Border pieces designed to tile seamlessly
 - Font [textures](TPC-File-Format) contain character glyphs in fixed grid
@@ -522,7 +522,7 @@ All controls share these base properties:
 
 **KotOR-Specific Notes:**
 
-- GUIs [ARE](GFF-File-Format#are-area) loaded from `.gui` files ([GFF](GFF-File-Format) [format](GFF-File-Format))
+- GUIs [ARE](GFF-File-Format#are-area) loaded from `.gui` files ([GFF](GFF-File-Format) format)
 - Engine scales GUIs for different resolutions
 - Some controls have hardcoded behaviors (e.g., inventory slots)
 - Scripts can access controls by TAG or ID

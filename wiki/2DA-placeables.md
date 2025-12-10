@@ -2,53 +2,53 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines placeable objects (containers, usable objects, interactive elements) with their [models](MDL-MDX-File-Format), properties, and behaviors. The engine uses this [file](GFF-File-Format) when loading placeable objects in areas, determining their [models](MDL-MDX-File-Format), hit detection, and interaction properties.
+**Engine Usage**: Defines placeable objects (containers, usable objects, interactive elements) with their [models](MDL-MDX-File-Format), properties, and behaviors. The engine uses this file when loading placeable objects in areas, determining their [models](MDL-MDX-File-Format), hit detection, and interaction properties.
 
-**Row [index](2DA-File-Format#row-labels)**: Placeable [type](GFF-File-Format#gff-data-types) ID (integer)
+**Row index**: Placeable type ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | String (optional) | Placeable [type](GFF-File-Format#gff-data-types) label |
+| `label` | String (optional) | Placeable type label |
 | `modelname` | ResRef (optional) | 3D [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) |
-| `strref` | Integer | [string](GFF-File-Format#gff-data-types) reference for placeable name |
+| `strref` | Integer | string reference for placeable name |
 | `bodybag` | Boolean | Whether placeable can contain bodies |
 | `canseeheight` | Float | Can-see height for line of sight |
 | `hitcheck` | Boolean | Whether hit detection is enabled |
 | `hostile` | Boolean | Whether placeable is hostile |
 | `ignorestatichitcheck` | Boolean | Whether to ignore static hit checks |
-| `lightcolor` | String (optional) | Light [color](GFF-File-Format#color) RGB [values](GFF-File-Format#gff-data-types) |
-| `lightoffsetx` | String (optional) | Light X [offset](GFF-File-Format#file-structure-overview) |
-| `lightoffsety` | String (optional) | Light Y [offset](GFF-File-Format#file-structure-overview) |
-| `lightoffsetz` | String (optional) | Light Z [offset](GFF-File-Format#file-structure-overview) |
+| `lightcolor` | String (optional) | Light color RGB values |
+| `lightoffsetx` | String (optional) | Light X offset |
+| `lightoffsety` | String (optional) | Light Y offset |
+| `lightoffsetz` | String (optional) | Light Z offset |
 | `lowgore` | String (optional) | Low gore [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) |
 | `noncull` | Boolean | Whether to disable culling |
 | `preciseuse` | Boolean | Whether precise use is enabled |
-| `shadowsize` | Boolean | Whether shadow [size](GFF-File-Format#file-structure-overview) is enabled |
+| `shadowsize` | Boolean | Whether shadow size is enabled |
 | `soundapptype` | Integer (optional) | Sound appearance type |
 | `usesearch` | Boolean | Whether placeable can be searched |
 
 **Column Details**:
 
-The complete column [structure](GFF-File-Format#file-structure-overview) is defined in reone's placeables parser:
+The complete column structure is defined in reone's placeables parser:
 
-- `label`: Optional label [string](GFF-File-Format#gff-data-types)
+- `label`: Optional label string
 - `modelname`: 3D [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types)
-- `strref`: [string](GFF-File-Format#gff-data-types) reference for placeable name
+- `strref`: string reference for placeable name
 - `bodybag`: Boolean - whether placeable can contain bodies
 - `canseeheight`: Float - can-see height for line of sight
 - `hitcheck`: Boolean - whether hit detection is enabled
 - `hostile`: Boolean - whether placeable is hostile
 - `ignorestatichitcheck`: Boolean - whether to ignore static hit checks
-- `lightcolor`: Optional [string](GFF-File-Format#gff-data-types) - light [color](GFF-File-Format#color) RGB [values](GFF-File-Format#gff-data-types)
-- `lightoffsetx`: Optional [string](GFF-File-Format#gff-data-types) - light X [offset](GFF-File-Format#file-structure-overview)
-- `lightoffsety`: Optional [string](GFF-File-Format#gff-data-types) - light Y [offset](GFF-File-Format#file-structure-overview)
-- `lightoffsetz`: Optional [string](GFF-File-Format#gff-data-types) - light Z [offset](GFF-File-Format#file-structure-overview)
-- `lowgore`: Optional [string](GFF-File-Format#gff-data-types) - low gore [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types)
+- `lightcolor`: Optional string - light color RGB values
+- `lightoffsetx`: Optional string - light X offset
+- `lightoffsety`: Optional string - light Y offset
+- `lightoffsetz`: Optional string - light Z offset
+- `lowgore`: Optional string - low gore [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types)
 - `noncull`: Boolean - whether to disable culling
 - `preciseuse`: Boolean - whether precise use is enabled
-- `shadowsize`: Boolean - whether shadow [size](GFF-File-Format#file-structure-overview) is enabled
+- `shadowsize`: Boolean - whether shadow size is enabled
 - `soundapptype`: Optional integer - sound appearance type
 - `usesearch`: Boolean - whether placeable can be searched
 
@@ -61,7 +61,7 @@ The complete column [structure](GFF-File-Format#file-structure-overview) is defi
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:319`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L319) - [StrRef](TLK-File-Format#string-references-strref) column definition for [placeables.2da](2DA-placeables) (K2: [StrRef](TLK-File-Format#string-references-strref))
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:349`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L349) - [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) column definition for [placeables.2da](2DA-placeables) (K2: modelname)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:467`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L467) - TwoDARegistry.PLACEABLES constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:542`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L542) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "Appearance" -> [placeables.2da](2DA-placeables)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:542`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L542) - [GFF](GFF-File-Format) field mapping: "Appearance" -> [placeables.2da](2DA-placeables)
 
 **HolocronToolset:**
 

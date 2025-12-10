@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines action [types](GFF-File-Format#gff-data-types) and their properties. The engine uses this [file](GFF-File-Format) to determine action icons, descriptions, and behaviors for various in-game actions.
+**Engine Usage**: Defines action types and their properties. The engine uses this file to determine action icons, descriptions, and behaviors for various in-game actions.
 
-**Row [index](2DA-File-Format#row-labels)**: Action ID (integer)
+**Row index**: Action ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Action label |
-| `string_ref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for action description |
+| `label` | string | Action label |
+| `string_ref` | [StrRef](TLK-File-Format#string-references-strref) | string reference for action description |
 | `iconresref` | [ResRef](GFF-File-Format#gff-data-types) | Icon [ResRef](GFF-File-Format#gff-data-types) for the action |
 | Additional columns | Various | Action properties |
 

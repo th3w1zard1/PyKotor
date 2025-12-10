@@ -22,7 +22,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `791. SetFakeCombatState`
 - RWT-OEI 01/16/04
 - A function to put the character into a true combat state but the reason set to
-- not real combat. This should help us control [animations](MDL-MDX-File-Format#animation-header) in cutscenes with a [bit](GFF-File-Format#gff-data-types)
+- not real combat. This should help us control [animations](MDL-MDX-File-Format#animation-header) in cutscenes with a bit
 - more precision. -- Not totally sure this is doing anything just yet. Seems
 - the combat condition gets cleared shortly after anyway.
 

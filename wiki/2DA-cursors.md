@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines cursor [types](GFF-File-Format#gff-data-types) for different object interactions. The engine uses this [file](GFF-File-Format) to determine which cursor to display when hovering over different object [types](GFF-File-Format#gff-data-types).
+**Engine Usage**: Defines cursor types for different object interactions. The engine uses this file to determine which cursor to display when hovering over different object types.
 
-**Row [index](2DA-File-Format#row-labels)**: Cursor ID (integer)
+**Row index**: Cursor ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Cursor label |
+| `label` | string | Cursor label |
 | Additional columns | Various | Cursor properties and ResRefs |
 
 **References**:

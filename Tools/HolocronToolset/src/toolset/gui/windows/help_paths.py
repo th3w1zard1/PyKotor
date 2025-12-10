@@ -44,8 +44,19 @@ def get_help_file_path(relative_path: str) -> Path | None:
     # Go up to repo root: Tools/HolocronToolset/src/toolset/gui/windows -> repo root
     repo_root = current_file.parent.parent.parent.parent.parent.parent
     
+    # Check if running from installed package (PyPI)
+    try:
+        import toolset
+        toolset_package = Path(toolset.__file__).parent
+        wiki_in_package = toolset_package / "wiki"
+        if wiki_in_package.exists():
+            search_paths.append(wiki_in_package)
+    except (ImportError, AttributeError):
+        pass
+    
     search_paths.extend([
         repo_root / "Tools" / "HolocronToolset" / "src" / "toolset" / "help",
+        repo_root / "Tools" / "HolocronToolset" / "src" / "toolset" / "wiki",  # Wiki copied during PyPI build
         repo_root / "wiki",
         repo_root / "vendor" / "xoreos-docs",
         # Also check relative to current working directory
@@ -88,7 +99,7 @@ def get_help_base_paths() -> list[Path]:
         exe_path = Path(sys.executable).parent
         base_paths.extend([
             exe_path / "help",
-            exe_path / "wiki",
+            exe_path / "wiki",  # Wiki bundled by PyInstaller via --include-wiki-if-present
             exe_path / "vendor" / "xoreos-docs",
         ])
     
@@ -98,6 +109,7 @@ def get_help_base_paths() -> list[Path]:
     
     base_paths.extend([
         repo_root / "Tools" / "HolocronToolset" / "src" / "toolset" / "help",
+        repo_root / "Tools" / "HolocronToolset" / "src" / "toolset" / "wiki",  # Wiki copied during PyPI build
         repo_root / "wiki",
         repo_root / "vendor" / "xoreos-docs",
         Path("./help"),

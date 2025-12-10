@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines difficulty options and their properties. The engine uses this [file](GFF-File-Format) to determine difficulty settings, modifiers, and descriptions.
+**Engine Usage**: Defines difficulty options and their properties. The engine uses this file to determine difficulty settings, modifiers, and descriptions.
 
-**Row [index](2DA-File-Format#row-labels)**: Difficulty Option ID (integer)
+**Row index**: Difficulty Option ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Difficulty option label |
-| `desc` | [string](GFF-File-Format#gff-data-types) | Difficulty description (e.g., "Default") |
+| `label` | string | Difficulty option label |
+| `desc` | string | Difficulty description (e.g., "Default") |
 | Additional columns | Various | Difficulty modifiers and properties |
 
 **References**:

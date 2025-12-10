@@ -108,7 +108,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - RWT-OEI 10/07/04
 - This script removes an effect by an identical match
 - based on:
-- Must have matching EffectID [types](GFF-File-Format#gff-data-types).
+- Must have matching EffectID types.
 
 - `oCreature`: object
 - `eEffect`: effect

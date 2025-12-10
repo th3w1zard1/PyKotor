@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines feat gain progression by class and level. The engine uses this [file](GFF-File-Format) to determine which feats [ARE](GFF-File-Format#are-area) available to each class at each level.
+**Engine Usage**: Defines feat gain progression by class and level. The engine uses this file to determine which feats [ARE](GFF-File-Format#are-area) available to each class at each level.
 
-**Row [index](2DA-File-Format#row-labels)**: Feat Gain Entry ID (integer)
+**Row index**: Feat Gain Entry ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure-overview)**:
+**Column structure**:
 
-| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
+| Column Name | type | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#gff-data-types) | Feat gain entry label |
+| `label` | string | Feat gain entry label |
 | Additional columns | Various | Feat gain progression by class and level |
 
 **References**:

@@ -2,6 +2,8 @@
 
 *Official Bioware Aurora Documentation*
 
+**Source:** This documentation is extracted from the official BioWare Aurora Engine SoundObject Format PDF, archived in [`vendor/xoreos-docs/specs/bioware/SoundObject_Format.pdf`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/bioware/SoundObject_Format.pdf). The original documentation was published on the now-defunct nwn.bioware.com developer site.
+
 ---
 
 ## Page 1
