@@ -283,22 +283,23 @@ def test_link_syntax():
     reply_text: str = str(reply_passage.get("text") or "")
     assert "[[Continue->NPC2]]" in reply_text
 
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as html_file:
-        write_twine(dlg, html_file.name, format="html")
+    # Use a separate temp file for HTML to avoid permission issues
+    html_path = tmpdir / "links.html"
+    write_twine(dlg, html_path, format="html")
 
-        # Verify HTML links
-        with open(html_file.name, encoding="utf-8") as f:
-            content = f.read()
-            root = ElementTree.fromstring(content)
+    # Verify HTML links
+    with open(html_path, encoding="utf-8") as f:
+        content = f.read()
+        root = ElementTree.fromstring(content)
 
-            # Find entry1's passage
-            entry1_passage = root.find(".//tw-passagedata[@name='NPC1']")
-            assert entry1_passage is not None
-            entry1_html_text = str(entry1_passage.text or "")
-            # Reply may be named "Reply" or "Reply_1" depending on naming logic
-            assert "[[Continue->Reply" in entry1_html_text
+        # Find entry1's passage
+        entry1_passage = root.find(".//tw-passagedata[@name='NPC1']")
+        assert entry1_passage is not None
+        entry1_html_text = str(entry1_passage.text or "")
+        # Reply may be named "Reply" or "Reply_1" depending on naming logic
+        assert "[[Continue->Reply" in entry1_html_text
 
-            # Find reply's passage
-            reply_passage = root.find(".//tw-passagedata[contains(@tags,'reply')]")
-            assert reply_passage is not None
-            assert "[[Continue->NPC2]]" in str(reply_passage.text or "")
+        # Find reply's passage
+        reply_passage = root.find(".//tw-passagedata[contains(@tags,'reply')]")
+        assert reply_passage is not None
+        assert "[[Continue->NPC2]]" in str(reply_passage.text or "")
