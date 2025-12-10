@@ -18,6 +18,7 @@
 - **[TSLPatcher GFFList Syntax Guide](TSLPatcher-GFFList-Syntax)** ← Complete reference for GFF modifications
 - **[TSLPatcher SSFList Syntax Guide](TSLPatcher-SSFList-Syntax)** ← Complete reference for SSF (Sound Set File) modifications
 - [Mod Creation Best Practices](Mod-Creation-Best-Practices)
+- [KotorDiff Integration in KotorCLI](KotorDiff-Integration)
 
 ### Official Bioware Aurora Documentation
 
