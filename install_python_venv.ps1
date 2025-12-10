@@ -595,7 +595,7 @@ function Find-Python {
                     }
                 }
                 catch {
-                    Write-Log -Level "Debug" -Message "Error checking path $path: $_"
+                    Write-Log -Level "Debug" -Message "Error checking path ${path}: $_"
                 }
             }
         }
