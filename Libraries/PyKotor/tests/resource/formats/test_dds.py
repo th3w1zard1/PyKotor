@@ -13,7 +13,7 @@ from pykotor.resource.formats.tpc import (
 )
 from pykotor.resource.formats.tpc.tpc_auto import detect_tpc
 from pykotor.resource.formats.tpc.convert.dxt.compress_dxt import rgb_to_dxt1
-from pykotor.resource.formats.tpc.convert.dxt.decompress_dxt import dxt1_to_rgb, dxt5_to_rgba
+from pykotor.resource.formats.tpc.convert.dxt.decompress_dxt import dxt1_to_rgb, dxt3_to_rgba, dxt5_to_rgba
 from pykotor.resource.type import ResourceType
 
 
@@ -44,6 +44,7 @@ class TestDDSParsing(unittest.TestCase):
         bitcount: int,
         masks: tuple[int, int, int, int],
         ddpf_flags: int,
+        caps2: int = 0,
     ) -> bytearray:
         header_flags = (
             TestDDSParsing.DDSD_CAPS
@@ -84,7 +85,7 @@ class TestDDSParsing(unittest.TestCase):
         header += struct.pack("<I", masks[2])
         header += struct.pack("<I", masks[3])
         header += struct.pack("<I", caps1)
-        header += struct.pack("<I", 0)  # caps2
+        header += struct.pack("<I", caps2)  # caps2
         header += bytes(12)
         return header
 
@@ -184,6 +185,176 @@ class TestDDSParsing(unittest.TestCase):
         parsed = read_tpc(written)
         self.assertEqual(TPCTextureFormat.DXT1, parsed.format())
         self.assertEqual(dxt1, parsed.layers[0].mipmaps[0].data)
+
+    def test_standard_dds_dxt5_alpha_and_multiple_mips(self):
+        width = height = 4
+        rgba = bytearray([0, 0, 0, 0, 0, 0, 0, 255] * 8)  # alternating transparent/opaque
+        # DXT5 block from existing converter for consistency
+        dxt5_block = bytearray(
+            [
+                0xFF,
+                0x00,  # alpha endpoints (alpha0=255, alpha1=0)
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,  # alpha indices
+                0x00,
+                0x1F,
+                0x00,
+                0x1F,
+                0x00,
+                0x1F,
+                0x00,
+                0x1F,  # color endpoints = pure red
+            ]
+        )
+        mip1 = bytes([0xAA] * 16)  # second mip (2x2) placeholder
+
+        header = self._write_standard_dds_header(
+            width,
+            height,
+            mip_count=2,
+            fourcc=b"DXT5",
+            bitcount=0,
+            masks=(0, 0, 0, 0),
+            ddpf_flags=self.DDPF_FOURCC,
+        )
+        dds_bytes = bytes(header + dxt5_block + mip1)
+        tpc = read_tpc(dds_bytes)
+        self.assertEqual(TPCTextureFormat.DXT5, tpc.format())
+        self.assertEqual(2, len(tpc.layers[0].mipmaps))
+        rgba_decoded = dxt5_to_rgba(tpc.layers[0].mipmaps[0].data, width, height)
+        self.assertEqual(len(rgba_decoded), width * height * 4)
+        self.assertGreater(sum(rgba_decoded[3::4]), 0)  # alpha present
+
+    def test_standard_dds_uncompressed_bgr_24bit(self):
+        width = height = 2
+        # Pixel order: blue, green, red, white (BGR)
+        pixels = bytes(
+            [
+                0xFF,
+                0x00,
+                0x00,  # blue
+                0x00,
+                0xFF,
+                0x00,  # green
+                0x00,
+                0x00,
+                0xFF,  # red
+                0xFF,
+                0xFF,
+                0xFF,  # white
+            ]
+        )
+        header = self._write_standard_dds_header(
+            width,
+            height,
+            mip_count=1,
+            fourcc=None,
+            bitcount=24,
+            masks=(0x00FF0000, 0x0000FF00, 0x000000FF, 0),
+            ddpf_flags=self.DDPF_RGB,
+        )
+        tpc = read_tpc(bytes(header + pixels))
+        self.assertEqual(TPCTextureFormat.BGR, tpc.format())
+        self.assertEqual(bytes(tpc.layers[0].mipmaps[0].data[:3]), b"\xff\x00\x00")
+
+    def test_uncompressed_16bit_paths_4444_1555_565(self):
+        width = height = 2
+
+        # ARGB4444: alpha=15, red=15, g/b=0 => 0xFF00 in LE
+        raw_4444 = bytes([0x00, 0xFF] * (width * height))
+        header_4444 = self._write_standard_dds_header(
+            width,
+            height,
+            mip_count=1,
+            fourcc=None,
+            bitcount=16,
+            masks=(0x00000F00, 0x000000F0, 0x0000000F, 0x0000F000),
+            ddpf_flags=self.DDPF_RGB | self.DDPF_ALPHAPIXELS,
+        )
+        tpc_4444 = read_tpc(bytes(header_4444 + raw_4444))
+        rgba = tpc_4444.layers[0].mipmaps[0].data
+        self.assertEqual(tpc_4444.format(), TPCTextureFormat.RGBA)
+        self.assertEqual(rgba[:4], b"\xff\x00\x00\xff")
+
+        # A1R5G5B5: alpha set, red max => 0xFC00 LE
+        raw_1555 = bytes([0x00, 0xFC] * (width * height))
+        header_1555 = self._write_standard_dds_header(
+            width,
+            height,
+            mip_count=1,
+            fourcc=None,
+            bitcount=16,
+            masks=(0x00007C00, 0x000003E0, 0x0000001F, 0x00008000),
+            ddpf_flags=self.DDPF_RGB | self.DDPF_ALPHAPIXELS,
+        )
+        tpc_1555 = read_tpc(bytes(header_1555 + raw_1555))
+        rgba_1555 = tpc_1555.layers[0].mipmaps[0].data
+        self.assertEqual(rgba_1555[:4], b"\xff\x00\x00\xff")
+
+        # R5G6B5: all max => 0xFFFF LE
+        raw_565 = bytes([0xFF, 0xFF] * (width * height))
+        header_565 = self._write_standard_dds_header(
+            width,
+            height,
+            mip_count=1,
+            fourcc=None,
+            bitcount=16,
+            masks=(0x0000F800, 0x000007E0, 0x0000001F, 0),
+            ddpf_flags=self.DDPF_RGB,
+        )
+        tpc_565 = read_tpc(bytes(header_565 + raw_565))
+        rgb_565 = tpc_565.layers[0].mipmaps[0].data
+        self.assertEqual(rgb_565[:3], b"\xff\xff\xff")
+
+    def test_cubemap_faces_detection(self):
+        width = height = 4
+        face_count = 6
+        dxt1_face = bytes([0x11] * 8)  # 4x4 DXT1 block
+        caps2 = 0x00000200 | 0x0000FC00  # cubemap | all faces
+        header = self._write_standard_dds_header(
+            width,
+            height,
+            mip_count=1,
+            fourcc=b"DXT1",
+            bitcount=0,
+            masks=(0, 0, 0, 0),
+            ddpf_flags=self.DDPF_FOURCC,
+            caps2=caps2,
+        )
+        payload = dxt1_face * face_count
+        tpc = read_tpc(bytes(header + payload))
+        self.assertTrue(tpc.is_cube_map)
+        self.assertEqual(len(tpc.layers), face_count)
+        for layer in tpc.layers:
+            self.assertEqual(layer.mipmaps[0].width, width)
+            self.assertEqual(layer.mipmaps[0].height, height)
+
+    def test_detect_tpc_by_extension(self):
+        self.assertEqual(ResourceType.DDS, detect_tpc("texture.dds"))
+
+    def test_bioware_invalid_data_size_raises(self):
+        width = height = 4
+        # bpp=3 would expect (width*height)/2 = 8 bytes; provide mismatch to trigger failure
+        header = struct.pack("<IIIII", width, height, 3, 1234, 0)
+        with self.assertRaises(ValueError):
+            read_tpc(header + b"\x00" * 4)
+
+    def test_writer_converts_rgba_to_bgra_for_dds(self):
+        tpc = TPC()
+        rgba_pixel = bytearray([1, 2, 3, 4])
+        mip = TPCMipmap(1, 1, TPCTextureFormat.RGBA, rgba_pixel)
+        layer = TPCLayer([mip])
+        tpc.layers = [layer]
+        tpc._format = TPCTextureFormat.RGBA  # noqa: SLF001
+
+        dds_bytes = bytes_tpc(tpc, ResourceType.DDS)
+        parsed = read_tpc(dds_bytes)
+        self.assertEqual(TPCTextureFormat.BGRA, parsed.format())
+        self.assertEqual(parsed.layers[0].mipmaps[0].data, bytearray([3, 2, 1, 4]))
 
 
 if __name__ == "__main__":
