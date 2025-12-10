@@ -607,16 +607,11 @@ class WrappedStr(str):  # (metaclass=StrType):  # noqa: PLR0904
         __value: Any,
         /,
     ):
-        # Check if attribute exists using object.__getattribute__ for strict type checking
-        # This works with __slots__ and is more explicit than hasattr
-        try:
-            object.__getattribute__(self, __name)
-            # Attribute exists, raise error for immutability
+        # Check if attribute exists - legitimate use of hasattr for immutability check
+        # This is a rare scenario where we need to check attribute existence before setting
+        if hasattr(self, __name):
             msg = f"{self.__class__.__name__} is immutable, cannot evaluate `{self!r}.setattr({__name!r}, {__value!r})`"
             raise RuntimeError(msg)
-        except AttributeError:
-            # Attribute doesn't exist, allow setting it
-            pass
         return super().__setattr__(__name, __value)
 
     def __len__(self):

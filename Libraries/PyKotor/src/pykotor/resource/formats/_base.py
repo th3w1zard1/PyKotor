@@ -68,7 +68,11 @@ class ComparableMixin:
         is_same: bool = True
 
         # Compare scalar fields
-        for field_name in getattr(self, "COMPARABLE_FIELDS", ()):
+        # Access class variable COMPARABLE_FIELDS directly for strict type checking
+        comparable_fields = type(self).COMPARABLE_FIELDS
+        for field_name in comparable_fields:
+            # Dynamic attribute access based on field names - legitimate use of getattr
+            # (not object.__getattribute__ which is equivalent to getattr)
             try:
                 old_value = getattr(self, field_name)
                 new_value = getattr(other, field_name)
@@ -81,7 +85,8 @@ class ComparableMixin:
                 is_same = False
 
         # Compare set-like fields (unordered)
-        for set_name in getattr(self, "COMPARABLE_SET_FIELDS", ()):  # sourcery skip: for-append-to-extend
+        comparable_set_fields = type(self).COMPARABLE_SET_FIELDS
+        for set_name in comparable_set_fields:  # sourcery skip: for-append-to-extend
             try:
                 old_set_raw = getattr(self, set_name)
                 new_set_raw = getattr(other, set_name)
@@ -116,7 +121,8 @@ class ComparableMixin:
             is_same = False
 
         # Compare sequence fields (ordered)
-        for seq_name in getattr(self, "COMPARABLE_SEQUENCE_FIELDS", ()):
+        comparable_sequence_fields = type(self).COMPARABLE_SEQUENCE_FIELDS
+        for seq_name in comparable_sequence_fields:
             try:
                 old_seq: Sequence[Any] = getattr(self, seq_name)
                 new_seq: Sequence[Any] = getattr(other, seq_name)

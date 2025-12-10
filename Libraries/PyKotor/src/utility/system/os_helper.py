@@ -64,11 +64,8 @@ def get_app_dir() -> Path:
         return Path(sys.executable).resolve().parent
     main_module = sys.modules["__main__"]
     RobustLogger().debug("Try to get the __file__ attribute that contains the path of the entry-point script.")
-    # Check for optional __file__ attribute using try/except for strict type checking
-    try:
-        main_script_path = object.__getattribute__(main_module, "__file__")
-    except AttributeError:
-        main_script_path = None
+    # Check for optional __file__ attribute - legitimate use of getattr for optional module attribute
+    main_script_path = getattr(main_module, "__file__", None)
     if main_script_path is not None:
         return Path(main_script_path).resolve().parent
     RobustLogger().debug("Fall back to the current working directory if the __file__ attribute was not found.")
@@ -76,18 +73,10 @@ def get_app_dir() -> Path:
 
 
 def is_frozen() -> bool:
-    # Check for sys attributes using try/except for strict type checking
-    try:
-        frozen = object.__getattribute__(sys, "frozen")
-    except AttributeError:
-        frozen = False
-    try:
-        meipass = object.__getattribute__(sys, "_MEIPASS")
-    except AttributeError:
-        meipass = False
+    # Check for sys attributes - legitimate use of getattr for optional runtime attributes
     return (
-        bool(frozen)
-        or bool(meipass)
+        getattr(sys, "frozen", False)
+        or getattr(sys, "_MEIPASS", False)
         # or tempfile.gettempdir() in sys.executable  # Not sure any frozen implementations use this (PyInstaller/py2exe). Re-enable if we find one that does.
     )
 

@@ -94,10 +94,9 @@ def resolve_reg_key_to_path(
     try:
         if isinstance(registry, str):
             root_name, key_path = registry.split("\\", 1)
-            # Access winreg module attribute dynamically using try/except for strict type checking
-            try:
-                root_key = object.__getattribute__(winreg, root_name)
-            except AttributeError:
+            # Dynamic module attribute access based on registry root string - legitimate use of getattr
+            root_key = getattr(winreg, root_name, None)
+            if root_key is None:
                 return None
             value_to_lookup = subkey
         else:

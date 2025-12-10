@@ -43,6 +43,7 @@ def pathlib_to_override(cls: type) -> type:
 
     return class_map.get(cls, cls)
 
+
 def _handle_non_hashable(
     cache_func: Callable,
     direct_func: Callable,
@@ -54,51 +55,64 @@ def _handle_non_hashable(
     except TypeError:
         return direct_func(path_str)
 
+
 @lru_cache(maxsize=20000)
 def _cached_splitroot(path: str) -> tuple[str, str]:
     return ("/", path[1:]) if path.startswith("/") else ("", path)
 
+
 def _direct_splitroot(path: str) -> tuple[str, str]:
     return ("/", path[1:]) if path.startswith("/") else ("", path)
+
 
 @lru_cache(maxsize=20000)
 def _cached_normpath(path: str) -> str:
     return os.path.normpath(path)
 
+
 def _direct_normpath(path: str) -> str:
     return os.path.normpath(path)
+
 
 @lru_cache(maxsize=20000)
 def _cached_isabs(path: str) -> bool:
     return os.path.isabs(path)  # noqa: PTH117
 
+
 def _direct_isabs(path: str) -> bool:
     return os.path.isabs(path)  # noqa: PTH117
+
 
 @lru_cache(maxsize=20000)
 def _cached_splitdrive(path: str) -> tuple[str, str]:
     if os.name == "nt":
         return os.path.splitdrive(path)
     match = _WINDOWS_SPLITDRIVE_RE.match(path)
-    return (match.group(0), path[match.end():]) if match else ("", path)
+    return (match.group(0), path[match.end() :]) if match else ("", path)
+
 
 def _direct_splitdrive(path: str) -> tuple[str, str]:
     if os.name == "nt":
         return os.path.splitdrive(path)
     match = _WINDOWS_SPLITDRIVE_RE.match(path)
-    return (match.group(0), path[match.end():]) if match else ("", path)
+    return (match.group(0), path[match.end() :]) if match else ("", path)
+
 
 def cached_splitroot(path: os.PathLike | str) -> tuple[str, str]:
     return _handle_non_hashable(_cached_splitroot, _direct_splitroot, path)
 
+
 def cached_normpath(path: os.PathLike | str) -> str:
     return _handle_non_hashable(_cached_normpath, _direct_normpath, path)
+
 
 def cached_isabs(path: os.PathLike | str) -> bool:
     return _handle_non_hashable(_cached_isabs, _direct_isabs, path)
 
+
 def cached_splitdrive(path: os.PathLike | str) -> tuple[str, str]:
     return _handle_non_hashable(_cached_splitdrive, _direct_splitdrive, path)
+
 
 class PurePathType(type):
     def __instancecheck__(cls, instance: object) -> bool:  # sourcery skip: instance-method-first-arg-name
@@ -111,6 +125,7 @@ class PurePathType(type):
 class _PartialFlavourTypeHint:
     def __new__(cls, *args, **kwargs):
         raise RuntimeError("This class cannot be instantiated and is only used for type hinting.")
+
     sep: Literal["\\", "/"]
 
 
@@ -241,7 +256,6 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
             formatted_path = formatted_path.replace("\\", "/").replace("/./", "/")
             formatted_path = _UNIX_EXTRA_SLASHES_RE.sub("/", formatted_path)
 
-
         # Strip any trailing slashes, don't call rstrip if the formatted path == "/"
         if len(formatted_path) != 1:
             formatted_path = formatted_path.rstrip(slash)
@@ -328,9 +342,7 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
             self: Path object
             key (path-like object or str path):
         """
-        return self.str_norm(
-            str(self / key), slash=self._flavour.sep
-        )  # pyright: ignore[reportAttributeAccessIssue]
+        return self.str_norm(str(self / key), slash=self._flavour.sep)  # pyright: ignore[reportAttributeAccessIssue]
 
     def __radd__(self, key: PathElem) -> str:
         """Implicitly converts the path to a str when used with the addition operator '+'.
@@ -499,48 +511,41 @@ class PurePath(pathlib.PurePath, metaclass=PurePathType):  # type: ignore[misc]
 class PurePosixPath(PurePath, pathlib.PurePosixPath):  # type: ignore[misc]
     if sys.version_info >= (3, 12):
         import posixpath as _posixpath
+
         _flavour = _posixpath  # noqa: SLF001  # pyright: ignore[reportAttributeAccessIssue]
     if sys.version_info >= (3, 13):
+
         class _PosixFlavourProxy:
             def __init__(self, module):
                 self._module = module
                 self.sep = module.sep
-                # Check for optional altsep attribute using try/except for strict type checking
-                try:
-                    self.altsep = object.__getattribute__(module, "altsep")
-                except AttributeError:
-                    self.altsep = None
+                # Check for optional altsep attribute - legitimate use of getattr for optional module attribute
+                self.altsep = getattr(module, "altsep", None)
 
             def __getattr__(self, name):
-                # Forward attribute access to _module using try/except for strict type checking
-                try:
-                    return object.__getattribute__(self._module, name)
-                except AttributeError:
-                    raise AttributeError(f"'{type(self).__name__}' object and its '_module' attribute have no attribute '{name}'")
+                # Forward attribute access to _module - legitimate use of getattr for delegation
+                return getattr(self._module, name)
 
         _flavour = _PosixFlavourProxy(_posixpath)
+
 
 class PureWindowsPath(PurePath, pathlib.PureWindowsPath):  # type: ignore[misc]
     if sys.version_info >= (3, 12):
         import ntpath as _ntpath
+
         _flavour = _ntpath  # noqa: SLF001  # pyright: ignore[reportAttributeAccessIssue]
     if sys.version_info >= (3, 13):
+
         class _WindowsFlavourProxy:
             def __init__(self, module: ModuleType):
                 self._module = module
                 self.sep = module.sep
-                # Check for optional altsep attribute using try/except for strict type checking
-                try:
-                    self.altsep = object.__getattribute__(module, "altsep")
-                except AttributeError:
-                    self.altsep = None
+                # Check for optional altsep attribute - legitimate use of getattr for optional module attribute
+                self.altsep = getattr(module, "altsep", None)
 
             def __getattr__(self, name):
-                # Forward attribute access to _module using try/except for strict type checking
-                try:
-                    return object.__getattribute__(self._module, name)
-                except AttributeError:
-                    raise AttributeError(f"'{type(self).__name__}' object and its '_module' attribute have no attribute '{name}'")
+                # Forward attribute access to _module - legitimate use of getattr for delegation
+                return getattr(self._module, name)
 
         _flavour = _WindowsFlavourProxy(_ntpath)
 
@@ -601,7 +606,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
         try:
             check = self.is_dir()
         except (OSError, ValueError):
-            #RobustLogger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
+            # RobustLogger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
             return None
         else:
             return check
@@ -612,7 +617,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
         try:
             check = self.is_file()
         except (OSError, ValueError):
-            #RobustLogger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
+            # RobustLogger().debug("This exception has been suppressed and is only relevant for debug purposes.", exc_info=True)
             return None
         else:
             return check
@@ -832,6 +837,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
             # If the function fails, it returns INVALID_FILE_ATTRIBUTES
             if attrs == -1:
                 import errno
+
                 msg = "Cannot access attributes of the file"
                 raise FileNotFoundError(errno.ENOENT, msg, str(file_path))
 
@@ -879,8 +885,7 @@ class Path(PurePath, pathlib.Path):  # type: ignore[misc]
                 run_script_cmd = [
                     "Powershell",
                     "-Command",
-                    f"Start-Process cmd.exe -ArgumentList {shlex.quote(f'{cmd_switch} {script_path_str}')}"
-                    f" -Verb RunAs{hide_window_cmdpart} -Wait",
+                    f"Start-Process cmd.exe -ArgumentList {shlex.quote(f'{cmd_switch} {script_path_str}')} -Verb RunAs{hide_window_cmdpart} -Wait",
                 ]
 
                 # Execute the batch script
@@ -1029,7 +1034,6 @@ class WindowsPath(Path):  # type: ignore[misc]
         _flavour = pathlib.PureWindowsPath._flavour  # noqa: SLF001  # pyright: ignore[reportAttributeAccessIssue]
     if sys.version_info >= (3, 13):
         _flavour = PureWindowsPath._flavour  # noqa: SLF001
-
 
 
 class ChDir:

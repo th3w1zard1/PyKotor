@@ -205,10 +205,10 @@ class FileActionsExecutor(QObject):
         if custom_function:
             filtered_kwargs = FileActionsExecutor._filter_control_kwargs(custom_function, kwargs)
             return custom_function(*args, **filtered_kwargs)
-        # Access FileOperations attribute dynamically using try/except for strict type checking
-        try:
-            func_obj = object.__getattribute__(FileOperations, operation)
-        except AttributeError:
+        # Dynamic attribute access based on operation string - legitimate use of getattr
+        # (not object.__getattribute__ which is equivalent to getattr)
+        func_obj: object | None = getattr(FileOperations, operation, None)
+        if func_obj is None:
             RobustLogger().debug(f"No FileOperations handler found for '{operation}', completing without action")
             progress_queue = kwargs.get("progress_queue")
             if progress_queue:
@@ -221,24 +221,18 @@ class FileActionsExecutor(QObject):
         if callable(func_obj):
             return func_obj(*args, **kwargs)
 
-        # Check for handle_operation method using try/except
-        try:
-            handle_op = object.__getattribute__(func_obj, "handle_operation")
-            if callable(handle_op):
-                handle_callable = cast(Callable[..., Any], handle_op)
-                return handle_callable(*args, **kwargs)
-        except AttributeError:
-            pass
+        # Check for handle_operation method - legitimate dynamic lookup
+        handle_op = getattr(func_obj, "handle_operation", None)
+        if callable(handle_op):
+            handle_callable = cast(Callable[..., Any], handle_op)
+            return handle_callable(*args, **kwargs)
 
-        # Check for handle_multiple method using try/except
-        try:
-            handle_multi = object.__getattribute__(func_obj, "handle_multiple")
-            if callable(handle_multi):
-                paths: list[str] = args[0] if args else kwargs.get("paths", [])
-                handle_multi_callable = cast(Callable[..., Any], handle_multi)
-                return handle_multi_callable(paths, **kwargs)
-        except AttributeError:
-            pass
+        # Check for handle_multiple method - legitimate dynamic lookup
+        handle_multi = getattr(func_obj, "handle_multiple", None)
+        if callable(handle_multi):
+            paths: list[str] = args[0] if args else kwargs.get("paths", [])
+            handle_multi_callable = cast(Callable[..., Any], handle_multi)
+            return handle_multi_callable(paths, **kwargs)
 
         RobustLogger().debug(f"FileOperations.{operation} is not callable and has no handler methods")
         return None
