@@ -541,7 +541,7 @@ testpaths = [
     "Tools/KotorCLI/tests",
     "Tools/KotorDiff/tests",
 ]
-qt_api = "pyqt5"  # Default, can be overridden by PYTEST_QT_API environment variable
+# qt_api = "pyqt5"  # Default, can be overridden by PYTEST_QT_API environment variable (moved to conftest.py)
 markers = [
     "gui: marks tests that require a GUI (deselect with '-m \"not gui\"')",
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",

@@ -30,6 +30,7 @@ try:
 except ImportError:
     # Fallback for when running from different locations
     import importlib.util
+
     spec = importlib.util.spec_from_file_location("compile_tool", compile_dir / "compile_tool.py")
     if spec and spec.loader:
         compile_tool = importlib.util.module_from_spec(spec)
@@ -162,6 +163,15 @@ class TestNormalizeAddData:
 
 class TestCompileToolIntegration:
     """Integration tests for compile_tool.py with all Tools."""
+
+    @pytest.fixture(autouse=True)
+    def setup_env(self, monkeypatch: pytest.MonkeyPatch):
+        """Set up environment variables to avoid getpass issues."""
+        # Set USERNAME if not present (needed for tmp_path on Windows)
+        if "USERNAME" not in os.environ:
+            monkeypatch.setenv("USERNAME", "testuser")
+        if "USER" not in os.environ:
+            monkeypatch.setenv("USER", "testuser")
 
     @pytest.fixture
     def mock_repo_root(self, tmp_path: Path) -> Path:
