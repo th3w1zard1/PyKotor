@@ -373,8 +373,8 @@ jobs:
               exit 1
             }
             
-            # On Linux, ensure pip is available (bootstrap if needed)
-            if ("${{ runner.os }}" -eq "Linux") {
+            # On Linux and macOS, ensure pip is available (bootstrap if needed)
+            if ("${{ runner.os }}" -eq "Linux" -or "${{ runner.os }}" -eq "macOS") {
               # Try to bootstrap pip if it's not available
               $pipCheck = & $pythonExePath -m pip --version 2>&1
               if ($LASTEXITCODE -ne 0) {
@@ -423,7 +423,19 @@ jobs:
           
           # Ensure Python path is available if set by install_python_venv.ps1
           if ($env:pythonExePath) {
-            $env:PATH = "$(Split-Path -Parent $env:pythonExePath);$env:PATH"
+            $pythonDir = Split-Path -Parent $env:pythonExePath
+            if ("${{ runner.os }}" -eq "Windows") {
+              $env:PATH = "$pythonDir;$env:PATH"
+            } else {
+              $env:PATH = "$pythonDir:$env:PATH"
+            }
+          } elseif (Test-Path variable:pythonExePath) {
+            $pythonDir = Split-Path -Parent $pythonExePath
+            if ("${{ runner.os }}" -eq "Windows") {
+              $env:PATH = "$pythonDir;$env:PATH"
+            } else {
+              $env:PATH = "$pythonDir:$env:PATH"
+            }
           }
           
           Write-Host "Running deps script $script"
