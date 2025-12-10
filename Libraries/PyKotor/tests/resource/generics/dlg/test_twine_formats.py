@@ -213,7 +213,7 @@ def test_format_conversion():
     metadata = {
         "style": "body { color: red; }",
         "script": "window.setup = {};",
-        "tag-colors": {"reply": "green"},
+        "tag-colors": {"reply": "#00FF00"},  # Green in hex format
     }
 
     tmpdir = Path(tempfile.mkdtemp())
