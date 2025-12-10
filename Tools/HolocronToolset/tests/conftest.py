@@ -106,9 +106,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
     """Automatically parametrize all tests with qt_api parameter.
     
     This hook runs during test collection and adds the qt_api parameter
-    to all test functions, causing each test to run with each Qt API.
-    Tests that don't use Qt (no qtpy imports) will still be parametrized
-    but the fixture will just yield without doing anything.
+    to all tests (both pytest function tests and unittest.TestCase tests),
+    causing each test to run with each Qt API.
     """
     # Skip if test explicitly opts out
     if metafunc.definition.get_closest_marker("no_qt_api_parametrize"):
@@ -123,7 +122,9 @@ def pytest_generate_tests(metafunc: pytest.Metafunc):
         metafunc.fixturenames.append("qt_api")
     
     # Parametrize the test with qt_api
+    # This works for both pytest function tests and unittest.TestCase tests
     metafunc.parametrize("qt_api", qt_apis, indirect=True)
+
 
 @pytest.fixture(scope="function")
 def qt_api(request: pytest.FixtureRequest):
@@ -151,7 +152,10 @@ def qt_api(request: pytest.FixtureRequest):
     }
     
     # Get the API parameter from request.param (set by parametrize)
+    # Or from item attribute (set by pytest_collection_modifyitems for unittest tests)
     api_param = getattr(request, "param", None)
+    if api_param is None:
+        api_param = getattr(request.node, "_qt_api_param", None)
     if api_param is None:
         pytest.skip("qt_api parameter not set")
     
