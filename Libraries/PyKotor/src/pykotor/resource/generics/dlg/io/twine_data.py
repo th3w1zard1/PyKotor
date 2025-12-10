@@ -13,8 +13,9 @@ from utility.common.geometry import Vector2
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from pykotor.common.misc import Color
     from pykotor.resource.generics.dlg.base import DLG
+else:
+    from pykotor.common.misc import Color
 
 
 class PassageType(Enum):
@@ -263,7 +264,25 @@ class FormatConverter:
             twine_data: dict[str, Any] = json.loads(dlg.comment)
             story.metadata.style = twine_data.get("style", "")
             story.metadata.script = twine_data.get("script", "")
-            story.metadata.tag_colors = dict(twine_data.get("tag_colors", {}).items())
+            
+            # Restore tag_colors, converting string representations back to Color objects
+            tag_colors_raw = twine_data.get("tag_colors", {})
+            tag_colors_restored: dict[str, Color] = {}
+            for tag_name, color_value in tag_colors_raw.items():
+                if isinstance(color_value, str):
+                    # Parse string format "r g b a" back to Color object
+                    components = color_value.split()
+                    if len(components) == 4:
+                        r, g, b, a = float(components[0]), float(components[1]), float(components[2]), float(components[3])
+                        tag_colors_restored[tag_name] = Color(r, g, b, a)
+                    elif len(components) == 3:
+                        r, g, b = float(components[0]), float(components[1]), float(components[2])
+                        tag_colors_restored[tag_name] = Color(r, g, b, 1.0)
+                elif isinstance(color_value, Color):
+                    # Already a Color object (shouldn't happen, but handle gracefully)
+                    tag_colors_restored[tag_name] = color_value
+            
+            story.metadata.tag_colors = tag_colors_restored
             story.metadata.format = twine_data.get("format", "Harlowe")
             story.metadata.format_version = twine_data.get("format_version", "3.3.7")
             story.metadata.creator = twine_data.get("creator", "PyKotor")
