@@ -18,15 +18,16 @@ Test organization:
 6. Integration tests (cross-file references)
 7. Real-world scenario tests
 """
+
 from __future__ import annotations
 
 import pathlib
+import shutil
 import sys
 import tempfile
-import shutil
 import unittest
+
 from pathlib import Path
-from configparser import ConfigParser
 
 
 def add_sys_path(p: pathlib.Path):
@@ -42,18 +43,15 @@ add_sys_path(REPO_ROOT / "Libraries" / "Utility" / "src")
 add_sys_path(REPO_ROOT / "Tools" / "KotorDiff" / "src")
 
 
-from pykotor.common.misc import Game, ResRef
-from pykotor.common.language import LocalizedString, Language, Gender
-from utility.common.geometry import Vector3, Vector4
-from pykotor.resource.formats.gff import GFF, GFFFieldType, GFFStruct, GFFList, read_gff, write_gff
-from pykotor.resource.formats.twoda import TwoDA, read_2da, write_2da
-from pykotor.resource.formats.tlk import TLK, read_tlk, write_tlk
-from pykotor.resource.formats.ssf import SSF, SSFSound, read_ssf, write_ssf
-from pykotor.resource.type import ResourceType
-from pykotor.tslpatcher.config import PatcherConfig
-from pykotor.tslpatcher.reader import ConfigReader
 from kotordiff.app import KotorDiffConfig, run_application
-
+from pykotor.common.language import Gender, Language, LocalizedString
+from pykotor.common.misc import ResRef
+from pykotor.resource.formats.gff import GFF, GFFFieldType, GFFList, GFFStruct, write_gff
+from pykotor.resource.formats.ssf import SSF, SSFSound, write_ssf
+from pykotor.resource.formats.tlk import TLK, write_tlk
+from pykotor.resource.formats.twoda import TwoDA, write_2da
+from pykotor.resource.type import ResourceType
+from utility.common.geometry import Vector3, Vector4
 
 # ============================================================================
 # HELPER UTILITIES FOR TEST DATA CREATION
@@ -1164,18 +1162,14 @@ class TestRealWorldScenarios(unittest.TestCase):
         # Create appearance.2da with many columns (simplified)
         vanilla_appearance = TestDataHelper.create_basic_2da(
             ["label", "race", "modeltype", "modela"],
-            [
-                ("370", {"label": "Sith_Ghost", "race": "AjuntaGhost", "modeltype": "F", "modela": "n_ajunta"})
-            ],
+            [("370", {"label": "Sith_Ghost", "race": "AjuntaGhost", "modeltype": "F", "modela": "n_ajunta"})],
         )
         write_2da(vanilla_appearance, self.vanilla_dir / "appearance.2da", ResourceType.TwoDA)
 
         # Modded: Change to unique appearance
         modded_appearance = TestDataHelper.create_basic_2da(
             ["label", "race", "modeltype", "modela"],
-            [
-                ("370", {"label": "Unique_Sith_Ghost", "race": "DP_AjuntaGhost", "modeltype": "F", "modela": "DP_AjuntaGhost"})
-            ],
+            [("370", {"label": "Unique_Sith_Ghost", "race": "DP_AjuntaGhost", "modeltype": "F", "modela": "DP_AjuntaGhost"})],
         )
         write_2da(modded_appearance, self.modded_dir / "appearance.2da", ResourceType.TwoDA)
 
@@ -1321,14 +1315,10 @@ class TestEdgeCasesComprehensive(unittest.TestCase):
 
     def test_gff_with_special_characters_in_strings(self):
         """Test: GFF strings with special characters that need escaping."""
-        vanilla_gff = TestDataHelper.create_basic_gff(
-            {"Description": (GFFFieldType.String, "Normal text")}
-        )
+        vanilla_gff = TestDataHelper.create_basic_gff({"Description": (GFFFieldType.String, "Normal text")})
         write_gff(vanilla_gff, self.vanilla_dir / "test.utc", ResourceType.GFF)
 
-        modded_gff = TestDataHelper.create_basic_gff(
-            {"Description": (GFFFieldType.String, "Text with\nnewline\tand\ttabs")}
-        )
+        modded_gff = TestDataHelper.create_basic_gff({"Description": (GFFFieldType.String, "Text with\nnewline\tand\ttabs")})
         write_gff(modded_gff, self.modded_dir / "test.utc", ResourceType.GFF)
 
         # Run diff
@@ -1433,4 +1423,3 @@ class TestPerformanceComprehensive(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

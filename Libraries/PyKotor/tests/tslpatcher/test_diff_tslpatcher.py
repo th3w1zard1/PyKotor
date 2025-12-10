@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-import os
 import pathlib
 import shutil
 import sys
 import tempfile
+import textwrap
 import unittest
 
-import json
-import textwrap
 from configparser import ConfigParser
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, cast
-
+from typing import TYPE_CHECKING, cast
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
 REPO_ROOT = THIS_SCRIPT_PATH.parents[4]
@@ -35,49 +32,31 @@ if KOTORDIFF_PATH.joinpath("kotordiff").exists():
     add_sys_path(KOTORDIFF_PATH)
 
 
-from pykotor.resource.formats.tlk.tlk_data import TLKEntry
-from pykotor.common.language import LocalizedString, Gender, Language
-from pykotor.common.misc import Game, ResRef
-from pykotor.resource.formats.gff.gff_auto import bytes_gff, read_gff, write_gff
-from pykotor.resource.formats.gff.gff_data import GFF, GFFContent, GFFFieldType, GFFList, GFFStruct
+from kotordiff.app import KotorDiffConfig, run_application  # pyright: ignore[reportMissingImports]
+from pykotor.common.misc import Game
+from pykotor.resource.formats.gff.gff_auto import read_gff, write_gff
+from pykotor.resource.formats.gff.gff_data import GFFContent
 from pykotor.resource.formats.ssf import SSF, SSFSound, bytes_ssf
-from pykotor.resource.formats.ssf.ssf_auto import write_ssf, read_ssf
-from pykotor.resource.formats.tlk import TLK, write_tlk, read_tlk, bytes_tlk
+from pykotor.resource.formats.ssf.ssf_auto import read_ssf, write_ssf
+from pykotor.resource.formats.tlk import TLK, read_tlk, write_tlk
 from pykotor.resource.formats.twoda.twoda_auto import bytes_2da, read_2da, write_2da
 from pykotor.resource.formats.twoda.twoda_data import TwoDA
 from pykotor.resource.type import ResourceType
 from pykotor.tslpatcher.config import PatcherConfig
 from pykotor.tslpatcher.logger import PatchLogger
 from pykotor.tslpatcher.memory import PatcherMemory
-from pykotor.tslpatcher.mods.tlk import ModificationsTLK
-from pykotor.tslpatcher.mods.tlk import ModifyTLK
 from pykotor.tslpatcher.mods.twoda import (
     AddColumn2DA,
-    AddRow2DA,
     ChangeRow2DA,
-    CopyRow2DA,
     RowValue2DAMemory,
     RowValueConstant,
-    RowValueHigh,
-    RowValueRowCell,
-    RowValueRowIndex,
-    RowValueRowLabel,
     RowValueTLKMemory,
-    Target,
     TargetType,
 )
 from pykotor.tslpatcher.reader import ConfigReader
-from pykotor.tslpatcher.mods.gff import (
-    AddFieldGFF,
-    FieldValue2DAMemory,
-    FieldValueConstant,
-    LocalizedStringDelta,
-)
-from utility.common.geometry import Vector3, Vector4
-from kotordiff.app import KotorDiffConfig, run_application  # pyright: ignore[reportMissingImports]
 
 if TYPE_CHECKING:
-    from pykotor.tslpatcher.mods.twoda import CopyRow2DA
+    pass
 
 
 # TODO(th3w1zard1): Make a decorator for test cases that use the _setupIniAndConfig method.
@@ -88,11 +67,11 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
         modded_files: dict[str, tuple[str, ResourceType]],
     ) -> str:
         """Helper to generate INI from diff of two file sets.
-        
+
         Args:
             vanilla_files: Dict of filename -> (content_string, plaintext_format)
             modded_files: Dict of filename -> (content_string, plaintext_format)
-        
+
         Returns:
             Generated INI content as string
         """
@@ -100,7 +79,7 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
         modded_dir = Path(self.temp_dir) / "modded"
         vanilla_dir.mkdir(exist_ok=True)
         modded_dir.mkdir(exist_ok=True)
-        
+
         # Write vanilla files
         for filename, (content, plaintext_format) in vanilla_files.items():
             if filename.endswith(".2da"):
@@ -115,7 +94,7 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             elif filename.endswith(".ssf"):
                 obj = read_ssf(content.encode(), file_format=plaintext_format)
                 write_ssf(obj, vanilla_dir / filename, ResourceType.SSF)
-        
+
         # Write modded files
         for filename, (content, plaintext_format) in modded_files.items():
             if filename.endswith(".2da"):
@@ -130,7 +109,7 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             elif filename.endswith(".ssf"):
                 obj = read_ssf(content.encode(), file_format=plaintext_format)
                 write_ssf(obj, modded_dir / filename, ResourceType.SSF)
-        
+
         # Run diff
         config_diff = KotorDiffConfig(
             paths=[vanilla_dir, modded_dir],
@@ -140,9 +119,9 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             logging_enabled=False,
         )
         run_application(config_diff)
-        
+
         return (self.tslpatchdata_path / "changes.ini").read_text(encoding="utf-8")
-    
+
     def _canonicalize_ini(self, ini_text: str) -> str:
         parser = ConfigParser(
             delimiters=("="),
@@ -171,7 +150,7 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             self._canonicalize_ini(expected_ini),
             self._canonicalize_ini(generated_ini),
         )
-    
+
     def _setupIniAndConfig(self, ini_text: str, mod_path: Path | str = "") -> PatcherConfig:
         ini = ConfigParser(delimiters="=", allow_no_value=True, strict=False, interpolation=None, inline_comment_prefixes=(";", "#"))
         ini.optionxform = lambda optionstr: optionstr
@@ -609,7 +588,6 @@ class TestTSLPatcherFromDiff(unittest.TestCase):
             """
         ).strip()
         self._assert_generated_ini_equals(generated_ini, expected_diff_ini)
-
 
     def test_2da_addcolumn_default(self):
         """Test inserting column with explicit default value."""

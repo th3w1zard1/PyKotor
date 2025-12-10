@@ -5,12 +5,15 @@ and linking patches when detecting cross-file references between GFF files
 and 2DA files.
 """
 
+from __future__ import annotations
+
 import pathlib
-import sys
-import unittest
-from pathlib import Path
 import shutil
+import sys
 import tempfile
+import unittest
+
+from pathlib import Path
 
 
 def add_sys_path(p: pathlib.Path):
@@ -26,16 +29,14 @@ add_sys_path(REPO_ROOT / "Libraries" / "Utility" / "src")
 add_sys_path(REPO_ROOT / "Tools" / "KotorDiff" / "src")
 
 
-from pykotor.common.misc import Game
-from pykotor.resource.formats.gff import GFF, GFFFieldType, read_gff, write_gff
-from pykotor.resource.formats.twoda import TwoDA, read_2da, write_2da
+from configparser import ConfigParser
+
+from kotordiff.app import KotorDiffConfig, run_application  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.gff import GFF, write_gff
+from pykotor.resource.formats.twoda import TwoDA, write_2da
 from pykotor.resource.type import ResourceType
 from pykotor.tslpatcher.config import PatcherConfig
-from pykotor.tslpatcher.memory import PatcherMemory
-from pykotor.tslpatcher.logger import PatchLogger
 from pykotor.tslpatcher.reader import ConfigReader
-from kotordiff.app import KotorDiffConfig, run_application  # pyright: ignore[reportMissingImports]
-from configparser import ConfigParser
 
 
 class TestDiff2DAMemoryGeneration(unittest.TestCase):
@@ -297,7 +298,7 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         """Test: Storing 2DA row label in 2DAMEMORY token.
 
         Scenario:
-        - vanilla/appearance.2da has 2 rows with labels "0" and "1"  
+        - vanilla/appearance.2da has 2 rows with labels "0" and "1"
         - modded/appearance.2da has 3 rows with labels "0", "1", and "new_row_label"
         - The new row stores its label in a 2DAMEMORY token
         - Another column in the same 2DA references that label value
@@ -355,7 +356,7 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         # Should contain 2DAMEMORY token (RowIndex is always stored for AddRow2DA)
         token_count = generated_ini.count("2DAMEMORY")
         self.assertGreater(token_count, 0, "Should contain 2DAMEMORY token")
-        
+
         # Verify the token stores RowIndex (this is the default behavior)
         self.assertIn("2DAMEMORY0=RowIndex", generated_ini)
 
@@ -440,7 +441,7 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         self.assertIn("[baseitems.2da]", generated_ini)
         self.assertIn("AddColumn0=", generated_ini)
         self.assertIn("ColumnLabel=newstat", generated_ini)
-        
+
         # 2. Row 1 has the unique value 42
         self.assertIn("I1=42", generated_ini)
 
@@ -452,20 +453,16 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
         # Expected:
         # - AddColumn stores: 2DAMEMORY0=I1 (token stores value of row 1 in new column)
         # - GFF uses token: CustomStat=2DAMEMORY0 (instead of literal CustomStat=42)
-        
-        self.assertIn("2DAMEMORY0=I1", generated_ini,
-                     "AddColumn should store 2DAMEMORY token for I1")
-        self.assertIn("CustomStat=2DAMEMORY0", generated_ini,
-                     "GFF should use token reference instead of literal value")
+
+        self.assertIn("2DAMEMORY0=I1", generated_ini, "AddColumn should store 2DAMEMORY token for I1")
+        self.assertIn("CustomStat=2DAMEMORY0", generated_ini, "GFF should use token reference instead of literal value")
 
         # Verify no literal value in GFF (should be replaced by token)
-        self.assertNotIn("CustomStat=42", generated_ini,
-                        "GFF should NOT contain literal value when token is used")
+        self.assertNotIn("CustomStat=42", generated_ini, "GFF should NOT contain literal value when token is used")
 
         # Count tokens - should be exactly 1
         token_count = generated_ini.count("2DAMEMORY")
-        self.assertGreaterEqual(token_count, 2,
-                               "Should have at least 2 token references (1 storage + 1 usage)")
+        self.assertGreaterEqual(token_count, 2, "Should have at least 2 token references (1 storage + 1 usage)")
 
         print("\n=== Generated INI ===")
         print(generated_ini)
@@ -598,4 +595,3 @@ class TestDiff2DAMemoryGeneration(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

@@ -27,7 +27,6 @@ import traceback
 import unittest
 
 from threading import Event
-from typing import TYPE_CHECKING
 
 # Set up import paths
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
@@ -273,7 +272,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
                 stats.print_callers(30)
 
             print(f"[TEST] Profile summary saved to: {profiler_summary_file}")
-            print(f"[TEST] To view profile:")
+            print("[TEST] To view profile:")
             print(f"[TEST]   CLI (built-in): python -m pstats {profiler_output_file}")
             print(f"[TEST]   Visual (SnakeViz): uv pip install snakeviz && snakeviz {profiler_output_file}")
         except Exception as e:
@@ -291,7 +290,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
 
         try:
             profiler.enable()
-            print(f"[TEST] Step 1: Generate patch - Profiling enabled")
+            print("[TEST] Step 1: Generate patch - Profiling enabled")
 
             # Verify paths exist
             if not Path(self.path1_vanilla).exists():
@@ -303,7 +302,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
             if self.path1_vanilla is None or self.path2_modded is None:
                 self.fail("Test paths not initialized")
 
-            print(f"\n[TEST] Step 1: Running KotorDiff:")
+            print("\n[TEST] Step 1: Running KotorDiff:")
             print(f"  Path1 (vanilla): {self.path1_vanilla}")
             print(f"  Path2 (modded):  {self.path2_modded}")
 
@@ -323,7 +322,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
             )
 
             # Run the app
-            print(f"[TEST] Executing KotorDiff...")
+            print("[TEST] Executing KotorDiff...")
             result = run_application(config)
             print(f"[TEST] KotorDiff completed with exit code: {result}")
 
@@ -334,7 +333,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
             print(f"[TEST] ✓ Step 1 completed: changes.ini generated successfully at {self.generated_ini_path}")
 
         except KeyboardInterrupt:
-            print(f"\n[TEST] KeyboardInterrupt: Step 1 was cancelled by user")
+            print("\n[TEST] KeyboardInterrupt: Step 1 was cancelled by user")
             raise
         except BaseException as e:
             print(f"[TEST] Step 1 failed: {e.__class__.__name__}: {e}")
@@ -360,7 +359,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
 
         try:
             profiler.enable()
-            print(f"[TEST] Step 2: Install patch - Profiling enabled")
+            print("[TEST] Step 2: Install patch - Profiling enabled")
 
             # Check prerequisite: changes.ini must exist
             if not self.generated_ini_path or not self.generated_ini_path.exists():
@@ -391,7 +390,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
             # Install the mod
             patcher_logger = PatchLogger()
             should_cancel = Event()
-            print(f"[TEST] Installing mod...")
+            print("[TEST] Installing mod...")
             install_result = install_mod(
                 mod_info.mod_path,
                 game_path,
@@ -401,7 +400,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
                 should_cancel,
             )
 
-            print(f"[TEST] Install completed:")
+            print("[TEST] Install completed:")
             print(f"  Errors: {install_result.num_errors}")
             print(f"  Warnings: {install_result.num_warnings}")
             print(f"  Patches: {install_result.num_patches}")
@@ -412,10 +411,10 @@ class TestKotorDiffFullExecution(unittest.TestCase):
 
             # Store mod_info for potential uninstall
             self.mod_info_for_uninstall = mod_info
-            print(f"[TEST] ✓ Step 2 completed: Installation successful")
+            print("[TEST] ✓ Step 2 completed: Installation successful")
 
         except KeyboardInterrupt:
-            print(f"\n[TEST] KeyboardInterrupt: Step 2 was cancelled by user")
+            print("\n[TEST] KeyboardInterrupt: Step 2 was cancelled by user")
             raise
         except BaseException as e:
             print(f"[TEST] Step 2 failed: {e.__class__.__name__}: {e}")
@@ -440,7 +439,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
 
         try:
             profiler.enable()
-            print(f"[TEST] Step 3: Verify installation - Profiling enabled")
+            print("[TEST] Step 3: Verify installation - Profiling enabled")
 
             # Check prerequisites
             if self.path1_vanilla is None:
@@ -465,7 +464,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
             # Run KotorDiff for verification
             # Note: We're diffing test_install_path (which has mod installed) to path1_vanilla
             # If installation worked correctly, this diff should show the same changes as the original diff
-            print(f"[TEST] Running KotorDiff to diff installed test installation to path1 (vanilla)...")
+            print("[TEST] Running KotorDiff to diff installed test installation to path1 (vanilla)...")
             verify_result = run_application(
                 config=KotorDiffConfig(
                     paths=[Installation(self.test_install_path), Installation(self.path1_vanilla)],
@@ -480,10 +479,10 @@ class TestKotorDiffFullExecution(unittest.TestCase):
 
             # Mark step 3 as completed successfully
             self.step3_completed = True
-            print(f"[TEST] ✓ Step 3 completed: Verification successful")
+            print("[TEST] ✓ Step 3 completed: Verification successful")
 
         except KeyboardInterrupt:
-            print(f"\n[TEST] KeyboardInterrupt: Step 3 was cancelled by user")
+            print("\n[TEST] KeyboardInterrupt: Step 3 was cancelled by user")
             raise
         except BaseException as e:
             print(f"[TEST] Step 3 failed: {e.__class__.__name__}: {e}")
@@ -508,7 +507,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
 
         try:
             profiler.enable()
-            print(f"[TEST] Step 4: Uninstall patch - Profiling enabled")
+            print("[TEST] Step 4: Uninstall patch - Profiling enabled")
 
             # Check prerequisites
             if self.path1_vanilla is None:
@@ -524,7 +523,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
                 # Try to load mod info if not already loaded
                 try:
                     self.mod_info_for_uninstall = load_mod(str(self.tslpatchdata_path))
-                    print(f"[TEST] Loaded mod info for uninstall")
+                    print("[TEST] Loaded mod info for uninstall")
                 except Exception as e:
                     self.skipTest(f"Cannot proceed: Could not load mod info for uninstall: {e}. Run test_02_step2_install_patch first.")
 
@@ -533,12 +532,12 @@ class TestKotorDiffFullExecution(unittest.TestCase):
             fully_ran = uninstall_mod(self.mod_info_for_uninstall.mod_path, self.test_install_path.as_posix(), patcher_logger)
 
             if fully_ran:
-                print(f"[TEST] ✓ Step 4 completed: Uninstall successful")
+                print("[TEST] ✓ Step 4 completed: Uninstall successful")
             else:
-                print(f"[TEST] ⚠ Step 4 completed: Uninstall completed with warnings")
+                print("[TEST] ⚠ Step 4 completed: Uninstall completed with warnings")
 
         except KeyboardInterrupt:
-            print(f"\n[TEST] KeyboardInterrupt: Step 4 was cancelled by user")
+            print("\n[TEST] KeyboardInterrupt: Step 4 was cancelled by user")
             raise
         except BaseException as e:
             print(f"[TEST] Step 4 failed (non-fatal): {e.__class__.__name__}: {e}")

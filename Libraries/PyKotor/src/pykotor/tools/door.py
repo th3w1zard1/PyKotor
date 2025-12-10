@@ -487,6 +487,7 @@ def get_door_dimensions(
     door_name: str | None = None,
     default_width: float = 2.0,
     default_height: float = 3.0,
+    genericdoors: TwoDA | None = None,
     logger: RobustLogger | None = None,
 ) -> tuple[float, float]:
     """Get door dimensions (width, height) from model or texture.
@@ -527,7 +528,8 @@ def get_door_dimensions(
         )
         
         # Get door model name from UTD using genericdoors.2da
-        genericdoors_2da = load_genericdoors_2da(installation, logger)
+        # Use pre-loaded genericdoors_2da if provided, otherwise load it
+        genericdoors_2da = genericdoors if genericdoors is not None else load_genericdoors_2da(installation, logger)
         if not genericdoors_2da:
             logger.warning(
                 f"Could not load genericdoors.2da for door {door_name_str}, using defaults"
