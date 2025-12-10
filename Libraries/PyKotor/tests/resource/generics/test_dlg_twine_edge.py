@@ -134,7 +134,7 @@ def test_invalid_metadata(tmp_path: Path):
 def test_missing_required_fields(tmp_path: Path):
     """Test handling of missing required fields in Twine format."""
     # Create minimal JSON - add required fields so passage is recognized
-    minimal_json: dict[str, li  st[dict[str, str]]] = {
+    minimal_json: dict[str, Any] = {
         "passages": [
             {
                 "name": "Start",
