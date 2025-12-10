@@ -13,7 +13,7 @@ from pykotor.common.language import Gender, Language
 from pykotor.common.misc import Color
 from pykotor.resource.generics.dlg.base import DLG
 from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
-from pykotor.resource.generics.dlg.io.twine_data import FormatConverter
+from pykotor.resource.generics.dlg.io.twine_data import FormatConverter, PassageType
 from pykotor.resource.generics.dlg.links import DLGLink
 from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
 
@@ -275,3 +275,54 @@ def test_first_starter_becomes_start_pid(tmp_path: Path):
     assert len(data["passages"]) == 2
     assert data["passages"][0]["name"] in {"First", "Entry"}
     assert data["passages"][1]["name"] in {"Second", "Entry_1"}
+
+
+def test_get_links_to_reports_sources():
+    """TwineStory.get_links_to should report all linking passages."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "A"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hi")
+    reply = DLGReply()
+    reply.text.set_data(Language.ENGLISH, Gender.MALE, "R")
+    entry.links.append(DLGLink(reply))
+    reply.links.append(DLGLink(entry))
+    dlg.starters.append(DLGLink(entry))
+
+    story = FormatConverter()._dlg_to_story(dlg)
+    target = story.get_passage("A")
+    assert target is not None
+    linking = story.get_links_to(target)
+    assert linking
+    source, link = linking[0]
+    assert source.type == PassageType.REPLY
+    assert link.target == target.name
+
+
+def test_metadata_comment_roundtrip_for_tag_colors_and_zoom(tmp_path: Path):
+    """Metadata supplied to write_twine should be persisted in dlg.comment."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "Meta"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "meta")
+    dlg.starters.append(DLGLink(entry))
+
+    metadata = {
+        "name": "Meta Story",
+        "format": "Harlowe",
+        "format-version": "3.3.7",
+        "tag-colors": {"entry": "1 0 0 1", "reply": "0 1 0 1"},
+        "style": "body { color: green; }",
+        "script": "window.meta = true;",
+        "zoom": 2.5,
+    }
+    path = tmp_path / "meta.json"
+    write_twine(dlg, path, format="json", metadata=metadata)
+
+    restored_dlg = read_twine(path)
+    restored_meta = json.loads(restored_dlg.comment)
+    assert restored_meta["style"] == "body { color: green; }"
+    assert restored_meta["script"] == "window.meta = true;"
+    assert restored_meta["tag_colors"]["entry"] == "1 0 0 1"
+    assert restored_meta["tag_colors"]["reply"] == "0 1 0 1"
+    assert restored_meta["zoom"] == 2.5

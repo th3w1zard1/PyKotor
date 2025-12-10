@@ -1,4 +1,16 @@
 # These are supported funding model platforms
+#
+# Funding for OldRepublicDevs/PyKotor
+# Support the OldRepublicDevs organization and its core maintainers:
+#
+# - OldRepublicDevs: The organization maintaining PyKotor (unified funding)
+# - th3w1zard1 (Boden): Core maintainer and project lead
+# - NickHugi (Nicholas Hugi): Core maintainer and original developer
+#
+# Note: The organization (OldRepublicDevs) will appear once GitHub Sponsors
+# is enabled for the organization. See docs/SETUP_ORG_SPONSORS.md for setup.
+#
+# Individual maintainers will appear if they have GitHub Sponsors enabled.
 
-github: [th3w1zard1]
+github: [OldRepublicDevs, th3w1zard1, NickHugi]
 

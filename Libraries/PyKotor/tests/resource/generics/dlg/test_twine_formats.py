@@ -12,6 +12,7 @@ from xml.etree import ElementTree
 import pytest
 
 from pykotor.common.language import Gender, Language
+from pykotor.common.misc import ResRef
 from pykotor.resource.generics.dlg.base import DLG
 from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 from pykotor.resource.generics.dlg.links import DLGLink
@@ -350,3 +351,85 @@ def test_read_twine_missing_file_raises(tmp_path: Path):
     missing = tmp_path / "does_not_exist.json"
     with pytest.raises(FileNotFoundError):
         read_twine(missing)
+
+
+def test_json_metadata_includes_language_variants_and_kotor_fields(tmp_path: Path):
+    """Ensure custom language variants and KotOR-specific metadata are emitted."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "NPC"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Base")
+    entry.text.set_data(Language.FRENCH, Gender.FEMALE, "Francais")
+    entry.camera_anim = 12
+    entry.camera_angle = 45
+    entry.camera_id = 3
+    entry.fade_type = 2
+    entry.quest = "QuestA"
+    entry.sound = ResRef("snd")
+    entry.vo_resref = ResRef("vo_line")
+    dlg.starters.append(DLGLink(entry))
+
+    json_path = tmp_path / "custom.json"
+    write_twine(dlg, json_path, format="json")
+
+    data: dict[str, Any] = json.loads(json_path.read_text(encoding="utf-8"))
+    passage = data["passages"][0]
+    custom = passage["metadata"]["custom"]
+
+    assert custom["text_french_1"] == "Francais"
+    assert custom["animation_id"] == str(entry.camera_anim)
+    assert custom["camera_angle"] == str(entry.camera_angle)
+    assert custom["camera_id"] == str(entry.camera_id)
+    assert custom["fade_type"] == str(entry.fade_type)
+    assert custom["quest"] == "QuestA"
+    assert custom["sound"] == str(entry.sound)
+    assert custom["vo_resref"] == str(entry.vo_resref)
+
+
+def test_html_data_custom_roundtrip_preserves_metadata(tmp_path: Path):
+    """Verify HTML data-custom restores KotOR metadata and language variants."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "NPC"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hello")
+    entry.text.set_data(Language.GERMAN, Gender.MALE, "Hallo")
+    entry.camera_anim = 21
+    entry.fade_type = 7
+    entry.quest = "QuestB"
+    entry.sound = ResRef("snd2")
+    entry.vo_resref = ResRef("vo2")
+    dlg.starters.append(DLGLink(entry))
+
+    html_path = tmp_path / "custom.html"
+    write_twine(dlg, html_path, format="html")
+
+    restored = read_twine(html_path)
+    restored_entry = restored.starters[0].node
+    assert isinstance(restored_entry, DLGEntry)
+    assert restored_entry.camera_anim == 21
+    assert restored_entry.fade_type == 7
+    assert restored_entry.quest == "QuestB"
+    assert str(restored_entry.sound) == "snd2"
+    assert str(restored_entry.vo_resref) == "vo2"
+    assert restored_entry.text.get(Language.GERMAN, Gender.MALE) == "Hallo"
+
+
+def test_html_includes_startnode_attribute(tmp_path: Path):
+    """Ensure the HTML export sets startnode on tw-storydata for the first starter."""
+    dlg = DLG()
+    entry_a = DLGEntry()
+    entry_a.speaker = "A"
+    entry_a.text.set_data(Language.ENGLISH, Gender.MALE, "A line")
+    entry_b = DLGEntry()
+    entry_b.speaker = "B"
+    entry_b.text.set_data(Language.ENGLISH, Gender.MALE, "B line")
+    dlg.starters.append(DLGLink(entry_a))
+    dlg.starters.append(DLGLink(entry_b))
+
+    html_path = tmp_path / "startnode.html"
+    write_twine(dlg, html_path, format="html")
+    root = ElementTree.fromstring(html_path.read_text(encoding="utf-8"))
+    story_data = root.find(".//tw-storydata")
+    assert story_data is not None
+    startnode_attr = story_data.get("startnode")
+    assert startnode_attr

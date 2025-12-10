@@ -383,3 +383,87 @@ def test_kotor_metadata_roundtrip_with_optional_fields():
     assert restored_entry.quest == "SideQuest"
     assert str(restored_entry.sound) == "snd"
     assert str(restored_entry.vo_resref) == "vo_line"
+
+
+def test_format_converter_store_restore_metadata_roundtrip():
+    """Explicitly validate FormatConverter metadata helpers."""
+    converter = FormatConverter()
+    passage = TwinePassage(
+        name="Start",
+        text="Hi",
+        type=PassageType.ENTRY,
+        pid="1",
+        metadata=PassageMetadata(),
+    )
+    node = DLGEntry()
+    node.camera_anim = 9
+    node.camera_angle = 11
+    node.camera_id = 13
+    node.fade_type = 2
+    node.quest = "MetaQuest"
+    node.sound = ResRef("snd_meta")
+    node.vo_resref = ResRef("vo_meta")
+
+    converter.store_kotor_metadata(passage, node)
+    restored_node = DLGEntry()
+    converter.restore_kotor_metadata(restored_node, passage)
+
+    assert passage.metadata.animation_id == 9
+    assert passage.metadata.camera_angle == 11
+    assert passage.metadata.camera_id == 13
+    assert passage.metadata.fade_type == 2
+    assert passage.metadata.quest == "MetaQuest"
+    assert passage.metadata.sound == "snd_meta"
+    assert passage.metadata.vo_resref == "vo_meta"
+    assert restored_node.camera_anim == 9
+    assert restored_node.camera_angle == 11
+    assert restored_node.camera_id == 13
+    assert restored_node.fade_type == 2
+    assert restored_node.quest == "MetaQuest"
+    assert str(restored_node.sound) == "snd_meta"
+    assert str(restored_node.vo_resref) == "vo_meta"
+
+
+def test_dlg_to_story_assigns_unique_names_and_child_flags():
+    """Ensure unique passage names and link metadata are retained."""
+    dlg = DLG()
+    entry1 = DLGEntry()
+    entry1.speaker = "NPC"
+    entry1.text.set_data(Language.ENGLISH, Gender.MALE, "Line1")
+
+    entry2 = DLGEntry()
+    entry2.speaker = "NPC"
+    entry2.text.set_data(Language.ENGLISH, Gender.MALE, "Line2")
+
+    reply = DLGReply()
+    reply.text.set_data(Language.ENGLISH, Gender.MALE, "Reply")
+    link_child = DLGLink(node=entry2, list_index=0)
+    link_child.is_child = True
+    link_child.active1 = ResRef("cond_script")
+
+    entry1.links.append(DLGLink(node=reply, list_index=0))
+    reply.links.append(link_child)
+    dlg.starters.append(DLGLink(entry1))
+
+    story = FormatConverter()._dlg_to_story(dlg)
+    names = {p.name for p in story.passages}
+    assert "NPC" in names
+    assert "NPC_1" in names  # second entry should be suffixed
+
+    entry_passage = next(p for p in story.passages if p.type == PassageType.ENTRY and p.name == "NPC")
+    reply_passage = next(p for p in story.passages if p.type == PassageType.REPLY)
+    assert reply_passage.links
+    link = reply_passage.links[0]
+    assert link.is_child is True
+    assert link.active_script == "cond_script"
+    assert story.start_pid == entry_passage.pid
+
+
+def test_restore_twine_metadata_with_invalid_json_is_safe():
+    """Invalid dialog.comment should not crash metadata restoration."""
+    dlg = DLG()
+    dlg.comment = "{not valid json"
+    story = TwineStory(metadata=TwineMetadata(name="Test"), passages=[])
+    FormatConverter().restore_twine_metadata(dlg, story)
+    assert story.metadata.style == ""
+    assert story.metadata.script == ""

@@ -279,3 +279,46 @@ def test_invalid_fmt_argument_raises(tmp_path: Path):
 
     with pytest.raises(ValueError):
         write_twine(dlg, tmp_path / "invalid.bin", fmt="xml")  # type: ignore[arg-type]
+
+
+def test_missing_startnode_prefers_first_entry_over_reply(tmp_path: Path):
+    """When startnode is absent and first passage is a reply, choose the first entry."""
+    content = {
+        "passages": [
+            {"name": "ReplyOnly", "text": "Reply", "pid": "r1", "tags": ["reply"]},
+            {"name": "EntryPrimary", "text": "Entry text", "pid": "e1", "tags": ["entry"]},
+        ]
+    }
+    path = tmp_path / "nostart_with_reply_first.json"
+    path.write_text(json.dumps(content), encoding="utf-8")
+    dlg = read_twine(path)
+
+    assert len(dlg.starters) == 1
+    starter_node = dlg.starters[0].node
+    assert isinstance(starter_node, DLGEntry)
+    assert starter_node.speaker == "EntryPrimary"
+
+
+def test_html_invalid_custom_metadata_is_ignored(tmp_path: Path):
+    """Invalid JSON in data-custom should not prevent parsing."""
+    html_content = """
+    <html>
+      <tw-storydata name="Story" startnode="1">
+        <tw-passagedata name="Entry" pid="1" tags="entry" position="0,0" size="100,100" data-custom="{not-json">
+          Hello [[Reply]]
+        </tw-passagedata>
+        <tw-passagedata name="Reply" pid="2" tags="reply" position="0,0" size="100,100">
+          Reply text
+        </tw-passagedata>
+      </tw-storydata>
+    </html>
+    """
+    html_path = tmp_path / "bad_custom.html"
+    html_path.write_text(html_content.strip(), encoding="utf-8")
+
+    dlg = read_twine(html_path)
+    assert len(dlg.starters) == 1
+    assert isinstance(dlg.starters[0].node, DLGEntry)
+    starter_text = dlg.starters[0].node.text.get(Language.ENGLISH, Gender.MALE)
+    assert starter_text is not None, "Starter text is None"
+    assert starter_text.strip().startswith("Hello"), "Starter text does not start with 'Hello'"
