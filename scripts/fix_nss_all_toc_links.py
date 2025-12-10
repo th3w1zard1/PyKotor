@@ -139,6 +139,7 @@ def build_function_map() -> dict[str, tuple[str, str]]:
     """Build mapping from function name to (file_name, anchor)."""
     function_map: dict[str, tuple[str, str]] = {}
     FUNCTION_FILES: list[str] = [
+        # Shared Functions
         "NSS-Shared-Functions-Abilities-and-Stats.md",
         "NSS-Shared-Functions-Actions.md",
         "NSS-Shared-Functions-Alignment-System.md",
@@ -157,6 +158,22 @@ def build_function_map() -> dict[str, tuple[str, str]]:
         "NSS-Shared-Functions-Player-Character-Functions.md",
         "NSS-Shared-Functions-Skills-and-Feats.md",
         "NSS-Shared-Functions-Sound-and-Music-Functions.md",
+        # TSL-Only Functions
+        "NSS-TSL-Only-Functions-Actions.md",
+        "NSS-TSL-Only-Functions-Class-System.md",
+        "NSS-TSL-Only-Functions-Combat-Functions.md",
+        "NSS-TSL-Only-Functions-Dialog-and-Conversation-Functions.md",
+        "NSS-TSL-Only-Functions-Effects-System.md",
+        "NSS-TSL-Only-Functions-Global-Variables.md",
+        "NSS-TSL-Only-Functions-Item-Management.md",
+        "NSS-TSL-Only-Functions-Object-Query-and-Manipulation.md",
+        "NSS-TSL-Only-Functions-Other-Functions.md",
+        "NSS-TSL-Only-Functions-Party-Management.md",
+        "NSS-TSL-Only-Functions-Player-Character-Functions.md",
+        "NSS-TSL-Only-Functions-Skills-and-Feats.md",
+        "NSS-TSL-Only-Functions-Sound-and-Music-Functions.md",
+        # K1-Only Functions
+        "NSS-K1-Only-Functions-Other-Functions.md",
     ]
     
     for func_file in FUNCTION_FILES:
