@@ -177,6 +177,16 @@ jobs:
           sudo apt-get update -y
         shell: bash
 
+      - name: Cache UPX
+        if: runner.os != 'macOS'
+        uses: actions/cache@v4.3.0
+        id: cache-upx
+        with:
+          path: upx-dir
+          key: upx-${{ env.UPX_VERSION }}-${{ runner.os }}-${{ matrix.architecture }}
+          restore-keys: |
+            upx-${{ env.UPX_VERSION }}-${{ runner.os }}-
+
       - name: Set UPX download URL
         # upx docs express that crashes are happening on ventura and above with upx, don't use on mac.
         if: runner.os != 'macOS'
@@ -204,7 +214,7 @@ jobs:
         shell: pwsh
 
       - name: Download and prepare UPX
-        if: runner.os != 'macOS'
+        if: runner.os != 'macOS' && steps.cache-upx.outputs.cache-hit != 'true'
         run: |
           $ext = "${{ runner.os }}" -eq "Windows" ? "zip" : "tar.xz"
           $url = "${{ steps.upx_setup.outputs.url }}"
@@ -320,6 +330,20 @@ jobs:
           
           # Verify Python is available
           python${PYTHON_MAJOR_MINOR} --version || (echo "Failed to install Python $PYTHON_VERSION" && exit 1)
+
+      - name: Cache pip packages
+        uses: actions/cache@v4.3.0
+        id: cache-pip
+        with:
+          path: |
+            ~/.cache/pip
+            %LOCALAPPDATA%\pip\Cache
+            ~/Library/Caches/pip
+          key: pip-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}-${{ hashFiles('**/requirements.txt', '**/pyproject.toml', '**/setup.py') }}
+          restore-keys: |
+            pip-${{ runner.os }}-${{ matrix.python-version }}-${{ matrix.architecture }}-
+            pip-${{ runner.os }}-${{ matrix.python-version }}-
+            pip-${{ runner.os }}-
 
       - name: Create virtual environment
         shell: pwsh
