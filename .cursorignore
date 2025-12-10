@@ -46,8 +46,6 @@ Engines/*/tests/
 errorlog.txt
 EXE-*.toc
 ignore
-install_*.ps1
-install_*.sh
 installlog.txt
 Libraries/*/LICENSE
 Libraries/*/MANIFEST.in
