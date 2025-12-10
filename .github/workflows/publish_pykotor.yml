@@ -289,13 +289,48 @@ jobs:
 
       - name: Create virtual environment
         shell: pwsh
+        env:
+          MATRIX_ARCH: ${{ matrix.architecture }}
         run: |
           $ErrorActionPreference = "Stop"
           $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
+          # Set LD_LIBRARY_PATH for Linux (needed for some Python installations)
+          if ("${{ runner.os }}" -eq "Linux") {
+            $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
+          }
+          
           try {
             Write-Host "Calling install_python_venv.ps1 with venv_name=$venvName and force_python_version=${{ matrix.python-version }}"
+            Write-Host "OS: ${{ runner.os }}, Architecture: ${{ matrix.architecture }}, Python version: ${{ matrix.python-version }}"
+            
+            # Source the script to run it in current session (allows it to set variables)
             . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
+            
+            # Check if script set pythonExePath variable
+            if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
+              Write-Host "Warning: install_python_venv.ps1 did not set pythonExePath variable"
+              Write-Host "Checking for venv Python executable directly..."
+              
+              # Try to find Python in the venv
+              $venvPath = $venvName
+              if ("${{ runner.os }}" -eq "Windows") {
+                $pythonExePath = Join-Path $venvPath "Scripts\python.exe"
+              } else {
+                $pythonExePath = Join-Path $venvPath "bin\python"
+              }
+              
+              if (-not (Test-Path $pythonExePath)) {
+                Write-Error "Python executable not found at expected path: $pythonExePath"
+                Write-Host "Listing venv directory contents:"
+                if (Test-Path $venvPath) {
+                  Get-ChildItem -Path $venvPath -Recurse -Depth 2 | Select-Object FullName
+                } else {
+                  Write-Error "Venv directory does not exist: $venvPath"
+                }
+                exit 1
+              }
+            }
             
             if (-not $pythonExePath) {
               Write-Error "install_python_venv.ps1 did not set pythonExePath"
@@ -377,12 +412,26 @@ jobs:
 
       - name: Compile tool
         shell: pwsh
+        env:
+          MATRIX_ARCH: ${{ matrix.architecture }}
         run: |
           $ErrorActionPreference = "Stop"
           $compile = "${{ steps.locate-scripts.outputs.compile_script }}"
           $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $upxDir = $env:UPX_DIR
           $env:PYTHONOPTIMIZE = "1"
+          
+          # Set LD_LIBRARY_PATH for Linux
+          if ("${{ runner.os }}" -eq "Linux") {
+            $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
+          }
+          
+          # Ensure Python path is available
+          if ($env:pythonExePath) {
+            $env:PATH = "$(Split-Path -Parent $env:pythonExePath);$env:PATH"
+          } elseif (Test-Path variable:pythonExePath) {
+            $env:PATH = "$(Split-Path -Parent $pythonExePath);$env:PATH"
+          }
           
           # Ensure Python path is available if set by install_python_venv.ps1
           if ($env:pythonExePath) {
