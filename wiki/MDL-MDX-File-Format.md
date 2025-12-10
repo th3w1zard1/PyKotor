@@ -159,7 +159,7 @@ The [MDL file](MDL-MDX-File-Format) header is 12 bytes in size and contains the 
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:56-59`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L56-L59) - file header reading  
 **Reference**: [`vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:100-104`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/mdl/reader.py#L100-L104) - file header reading  
 **Reference**: [`vendor/kotor/docs/mdl.md`](https://github.com/th3w1zard1/kotor/blob/master/docs/mdl.md) - [node](MDL-MDX-File-Format#node-structures) chunk structure analysis  
-**Reference**: [`vendor/KotOR.js/src/loaders/MDLLoader.ts:96-124`](vendor/KotOR.js/src/loaders/MDLLoader.ts) - [MDL](MDL-MDX-File-Format)/[MDX files](MDL-MDX-File-Format) loading and caching implementation
+**Reference**: [`vendor/KotOR.js/src/loaders/MDLLoader.ts:96-124`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/loaders/MDLLoader.ts) - [MDL](MDL-MDX-File-Format)/[MDX files](MDL-MDX-File-Format) loading and caching implementation
 
 ### [model](MDL-MDX-File-Format) header
 
@@ -1404,7 +1404,7 @@ mat4 computeBoneMatrix(int bone_idx, Animation anim, float time) {
 - [MDL Info (Archived)](https://web.archive.org/web/20151002081059/https://home.comcast.net/~cchargin/kotor/mdl_info.html)
 - [xoreos Model Definitions](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model_kotor.h)
 - [xoreos Model Implementation](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model_kotor.cpp)
-- [KotOR.js MDL Loader](vendor/KotOR.js/src/loaders/MDLLoader.ts) - TypeScript implementation  
+- [KotOR.js MDL Loader](https://github.com/th3w1zard1/KotOR.js/blob/master/src/loaders/MDLLoader.ts) - TypeScript implementation  
 - [KotOR Model Documentation](https://github.com/th3w1zard1/kotor/blob/master/docs/mdl.md) - Binary structure analysis  
 - [MDLOps Perl Module](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm) - Complete Perl implementation with ASCII and binary format support  
 - [reone MDL/MDX Reader](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp) - C++ implementation for game engine  
@@ -1412,4 +1412,4 @@ mat4 computeBoneMatrix(int bone_idx, Animation anim, float time) {
 
 ---
 
-This documentation aims to provide a comprehensive and structured overview of the KotOR [MDL](MDL-MDX-File-Format)/[MDX files](MDL-MDX-File-Format) format, focusing on the detailed file structure and da
+This documentation aims to provide a comprehensive and structured overview of the KotOR [MDL](MDL-MDX-File-Format)/[MDX files](MDL-MDX-File-Format) format, focusing on the detailed file structure and data formats used within the games.

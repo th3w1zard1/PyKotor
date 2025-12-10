@@ -11,7 +11,7 @@ This document provides a detailed description of the GFF (Generic file format) u
 ## Table of Contents
 
 - [KotOR GFF file format Documentation](#kotor-gff-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
     - [GFF as a Universal Container](#gff-as-a-universal-container)
   - [Binary format](#binary-format)
@@ -300,7 +300,7 @@ When modifying lists, always maintain struct IDs and parent references to avoid 
 
 ## [GFF](GFF-File-Format) Generic types
 
-[GFF files](GFF-File-Format) [ARE](GFF-File-Format#are-area) used as containers for various game resource types. Each generic type has its own structure and field definitions.
+[GFF files](GFF-File-Format) are used as containers for various game resource types. Each generic type has its own structure and field definitions.
 
 ### ARE (Area)
 
@@ -310,7 +310,7 @@ See [ARE (Area)](GFF-ARE) for detailed documentation.
 
 See [DLG (Dialogue)](GFF-DLG) for detailed documentation.
 
-### GIT ([game instance template](GFF-File-Format#git-game-instance-template))
+### GIT (game instance template)
 
 See [GIT (Game Instance Template)](GFF-GIT) for detailed documentation.
 
@@ -318,7 +318,7 @@ See [GIT (Game Instance Template)](GFF-GIT) for detailed documentation.
 
 See [GUI (Graphical User Interface)](GFF-GUI) for detailed documentation.
 
-### IFO ([module info](GFF-File-Format#ifo-module-info))
+### IFO (module info)
 
 See [IFO (Module Info)](GFF-IFO) for detailed documentation.
 
