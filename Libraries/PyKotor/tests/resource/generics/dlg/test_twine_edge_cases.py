@@ -103,7 +103,7 @@ def test_kotor_specific_features():
     entry = DLGEntry()
     entry.speaker = "NPC"
     entry.text.set_data(Language.ENGLISH, Gender.MALE, "Test")
-    setattr(entry, "animation_id", 123)
+    entry.camera_anim = 123  # camera_anim is the correct attribute name for animation ID
     entry.camera_angle = 45
     entry.camera_id = 1
     entry.fade_type = 2

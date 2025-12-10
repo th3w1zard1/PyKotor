@@ -165,9 +165,9 @@ def _read_json(content: str) -> TwineStory:
             if "quest" in custom_data:
                 passage_metadata.quest = str(custom_data["quest"])
             if "sound" in custom_data:
-                passage_metadata.sound = str(custom_data["sound"])
+                passage_metadata.sound = str(custom_data["sound"]) if custom_data["sound"] else ""
             if "vo_resref" in custom_data:
-                passage_metadata.vo_resref = str(custom_data["vo_resref"])
+                passage_metadata.vo_resref = str(custom_data["vo_resref"]) if custom_data["vo_resref"] else ""
             if "speaker" in custom_data:
                 passage_metadata.speaker = str(custom_data["speaker"])
             
@@ -359,7 +359,8 @@ def _write_json(
             kotorf_metadata["animation_id"] = str(passage.metadata.animation_id)
         if passage.metadata.camera_angle != 0:
             kotorf_metadata["camera_angle"] = str(passage.metadata.camera_angle)
-        if passage.metadata.camera_id != 0:
+        # camera_id can be None, 0, or a positive value - only store if not None and not 0
+        if passage.metadata.camera_id is not None and passage.metadata.camera_id != 0:
             kotorf_metadata["camera_id"] = str(passage.metadata.camera_id)
         if passage.metadata.fade_type != 0:
             kotorf_metadata["fade_type"] = str(passage.metadata.fade_type)
@@ -509,8 +510,8 @@ def _story_to_dlg(story: TwineStory) -> DLG:
                         # Skip invalid language/gender combinations
                         continue
 
-        # Store metadata
-        converter.store_kotor_metadata(passage, node)
+        # Restore metadata from passage to node
+        converter.restore_kotor_metadata(node, passage)
 
         nodes[passage.name] = node
 

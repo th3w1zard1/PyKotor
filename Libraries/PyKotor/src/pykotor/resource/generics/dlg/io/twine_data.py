@@ -8,7 +8,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
-from pykotor.common.misc import Color
+from pykotor.common.misc import Color, ResRef
+from pykotor.resource.generics.dlg.nodes import DLGNode
 from utility.common.geometry import Vector2
 
 if TYPE_CHECKING:
@@ -168,7 +169,7 @@ class FormatConverter:
     def store_kotor_metadata(
         self,
         passage: TwinePassage,
-        dlg_node: Any,
+        dlg_node: DLGNode,
     ) -> None:
         """Store KotOR-specific metadata in a Twine passage.
 
@@ -182,18 +183,19 @@ class FormatConverter:
             dlg_node: The KotOR dialog node to get metadata from
         """
         meta = passage.metadata
-        # Check for animation_id (may be set via setattr in tests) or camera_anim (actual DLGNode attribute)
-        meta.animation_id = getattr(dlg_node, "animation_id", getattr(dlg_node, "camera_anim", None) or 0)
-        meta.camera_angle = getattr(dlg_node, "camera_angle", 0)
-        meta.camera_id = getattr(dlg_node, "camera_id", 0)
-        meta.fade_type = getattr(dlg_node, "fade_type", 0)
-        meta.quest = getattr(dlg_node, "quest", "")
-        meta.sound = getattr(dlg_node, "sound", "")
-        meta.vo_resref = getattr(dlg_node, "vo_resref", "")
+        # camera_anim in DLGNode maps to animation_id in PassageMetadata
+        meta.animation_id = dlg_node.camera_anim if dlg_node.camera_anim is not None else 0
+        meta.camera_angle = dlg_node.camera_angle
+        meta.camera_id = dlg_node.camera_id if dlg_node.camera_id is not None else 0
+        meta.fade_type = dlg_node.fade_type
+        meta.quest = dlg_node.quest
+        # ResRef objects are converted to strings for storage
+        meta.sound = str(dlg_node.sound) if dlg_node.sound else ""
+        meta.vo_resref = str(dlg_node.vo_resref) if dlg_node.vo_resref else ""
 
     def restore_kotor_metadata(
         self,
-        dlg_node: Any,
+        dlg_node: DLGNode,
         passage: TwinePassage,
     ) -> None:
         """Restore KotOR-specific metadata from a Twine passage.
@@ -207,17 +209,29 @@ class FormatConverter:
             passage: The Twine passage to get metadata from
         """
         meta: PassageMetadata = passage.metadata
-        # Map metadata field names to DLGNode attribute names
-        field_mapping: dict[str, str] = {
-            "animation_id": "camera_anim",  # animation_id in metadata maps to camera_anim in DLGNode
-        }
+        # animation_id in PassageMetadata maps to camera_anim in DLGNode
+        # Since we explicitly store this value, always set it (even if 0)
+        dlg_node.camera_anim = meta.animation_id
         
-        for feature in self.kotor_only_features:
-            if not hasattr(meta, feature):
-                continue
-            # Use mapped attribute name if mapping exists, otherwise use original name
-            attr_name = field_mapping.get(feature, feature)
-            setattr(dlg_node, attr_name, getattr(meta, feature))
+        # camera_angle is always an int (defaults to 0)
+        dlg_node.camera_angle = meta.camera_angle
+        
+        # camera_id can be None or int - always set it since we store it
+        dlg_node.camera_id = meta.camera_id
+        
+        # fade_type is always an int (defaults to 0)
+        dlg_node.fade_type = meta.fade_type
+        
+        # quest is a string (defaults to "")
+        dlg_node.quest = meta.quest
+        
+        # sound is a ResRef, stored as string in metadata
+        if meta.sound:
+            dlg_node.sound = ResRef(meta.sound)
+        
+        # vo_resref is a ResRef, stored as string in metadata
+        if meta.vo_resref:
+            dlg_node.vo_resref = ResRef(meta.vo_resref)
 
     def store_twine_metadata(
         self,
