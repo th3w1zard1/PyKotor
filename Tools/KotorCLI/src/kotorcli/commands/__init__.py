@@ -1,4 +1,5 @@
 """Command implementations for KotorCLI."""
+
 from __future__ import annotations
 
 from kotorcli.commands.cat import cmd_cat
@@ -6,6 +7,7 @@ from kotorcli.commands.compile import cmd_compile
 from kotorcli.commands.config import cmd_config
 from kotorcli.commands.convert import cmd_convert
 from kotorcli.commands.create_archive import cmd_create_archive
+from kotorcli.commands.diff_installation import cmd_diff_installation
 from kotorcli.commands.extract import cmd_extract
 from kotorcli.commands.format_convert import (
     cmd_2da2csv,
@@ -20,6 +22,7 @@ from kotorcli.commands.format_convert import (
     cmd_xml2ssf,
     cmd_xml2tlk,
 )
+from kotorcli.commands.gui_convert import cmd_gui_convert
 from kotorcli.commands.init import cmd_init  # type: ignore[module-not-found]
 from kotorcli.commands.install import cmd_install  # type: ignore[module-not-found]
 from kotorcli.commands.key_pack import cmd_key_pack  # type: ignore[module-not-found]
@@ -77,11 +80,13 @@ __all__ = [
     "cmd_csv22da",
     "cmd_decompile",
     "cmd_diff",
+    "cmd_diff_installation",
     "cmd_disassemble",
     "cmd_extract",
     "cmd_gff2json",
     "cmd_gff2xml",
     "cmd_grep",
+    "cmd_gui_convert",
     "cmd_init",
     "cmd_install",
     "cmd_investigate_module",
@@ -112,6 +117,3 @@ __all__ = [
     "cmd_xml2ssf",
     "cmd_xml2tlk",
 ]
-
-
-
