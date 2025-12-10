@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pykotor.common.language import Gender, Language
-from pykotor.common.misc import ResRef
+from pykotor.common.misc import Color, ResRef
 from pykotor.resource.generics.dlg.base import DLG
 from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 from pykotor.resource.generics.dlg.links import DLGLink
@@ -118,14 +118,14 @@ def test_kotor_specific_features():
     new_dlg = read_twine(json_path)
 
     new_entry = new_dlg.starters[0].node
-    assert isinstance(new_entry, DLGEntry)
-    assert getattr(new_entry, "animation_id", 0) == 123
-    assert new_entry.camera_angle == 45
-    assert new_entry.camera_id == 1
-    assert new_entry.fade_type == 2
-    assert new_entry.quest == "MainQuest"
-    assert str(new_entry.sound) == "voice.wav"
-    assert str(new_entry.vo_resref) == "npc_line"
+    assert isinstance(new_entry, DLGEntry), "New entry is not a DLGEntry"
+    assert new_entry.camera_anim == 123, "Camera animation ID is not 123"
+    assert new_entry.camera_angle == 45, "Camera angle is not 45"
+    assert new_entry.camera_id == 1, "Camera ID is not 1"
+    assert new_entry.fade_type == 2, "Fade type is not 2"
+    assert new_entry.quest == "MainQuest", "Quest is not MainQuest"
+    assert str(new_entry.sound) == "voice.wav", "Sound is not voice.wav"
+    assert str(new_entry.vo_resref) == "npc_line", "VO ResRef is not npc_line"
 
 
 def test_twine_specific_features():
@@ -134,7 +134,7 @@ def test_twine_specific_features():
         "name": "Test Story",
         "format": "Harlowe",
         "format-version": "3.3.7",
-        "tag-colors": {"reply": "green"},
+        "tag-colors": {"reply": Color.GREEN},
         "style": "body { color: red; }",
         "script": "window.setup = {};",
         "zoom": 1.5,

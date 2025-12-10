@@ -138,9 +138,44 @@ def _read_json(content: str) -> TwineStory:
             size=Vector2(float(size[0]), float(size[1])),
         )
         
-        # Restore custom metadata (e.g., language variants)
+        # Restore KotOR-specific metadata and custom metadata from custom dict
         if "custom" in p_meta and isinstance(p_meta["custom"], dict):
-            passage_metadata.custom.update(p_meta["custom"])
+            custom_data = p_meta["custom"]
+            # Restore KotOR-specific fields
+            if "animation_id" in custom_data:
+                try:
+                    passage_metadata.animation_id = int(custom_data["animation_id"])
+                except (ValueError, TypeError):
+                    pass
+            if "camera_angle" in custom_data:
+                try:
+                    passage_metadata.camera_angle = int(custom_data["camera_angle"])
+                except (ValueError, TypeError):
+                    pass
+            if "camera_id" in custom_data:
+                try:
+                    passage_metadata.camera_id = int(custom_data["camera_id"])
+                except (ValueError, TypeError):
+                    pass
+            if "fade_type" in custom_data:
+                try:
+                    passage_metadata.fade_type = int(custom_data["fade_type"])
+                except (ValueError, TypeError):
+                    pass
+            if "quest" in custom_data:
+                passage_metadata.quest = str(custom_data["quest"])
+            if "sound" in custom_data:
+                passage_metadata.sound = str(custom_data["sound"])
+            if "vo_resref" in custom_data:
+                passage_metadata.vo_resref = str(custom_data["vo_resref"])
+            if "speaker" in custom_data:
+                passage_metadata.speaker = str(custom_data["speaker"])
+            
+            # Store remaining custom metadata (e.g., language variants) that aren't KotOR-specific fields
+            kotorf_fields = {"animation_id", "camera_angle", "camera_id", "fade_type", "quest", "sound", "vo_resref", "speaker"}
+            for key, value in custom_data.items():
+                if key not in kotorf_fields:
+                    passage_metadata.custom[key] = str(value)
 
         # Create passage
         passage: TwinePassage = TwinePassage(
@@ -318,9 +353,31 @@ def _write_json(
             "size": f"{passage.metadata.size.x},{passage.metadata.size.y}",
         }
         
-        # Include custom metadata (e.g., language variants)
+        # Include KotOR-specific metadata fields in custom dict
+        kotorf_metadata: dict[str, str] = {}
+        if passage.metadata.animation_id != 0:
+            kotorf_metadata["animation_id"] = str(passage.metadata.animation_id)
+        if passage.metadata.camera_angle != 0:
+            kotorf_metadata["camera_angle"] = str(passage.metadata.camera_angle)
+        if passage.metadata.camera_id != 0:
+            kotorf_metadata["camera_id"] = str(passage.metadata.camera_id)
+        if passage.metadata.fade_type != 0:
+            kotorf_metadata["fade_type"] = str(passage.metadata.fade_type)
+        if passage.metadata.quest:
+            kotorf_metadata["quest"] = passage.metadata.quest
+        if passage.metadata.sound:
+            kotorf_metadata["sound"] = str(passage.metadata.sound)
+        if passage.metadata.vo_resref:
+            kotorf_metadata["vo_resref"] = str(passage.metadata.vo_resref)
+        if passage.metadata.speaker:
+            kotorf_metadata["speaker"] = passage.metadata.speaker
+        
+        # Merge with existing custom metadata (e.g., language variants)
         if passage.metadata.custom:
-            metadata_dict["custom"] = passage.metadata.custom
+            kotorf_metadata.update(passage.metadata.custom)
+        
+        if kotorf_metadata:
+            metadata_dict["custom"] = kotorf_metadata
         
         p_data: PassageDict = {
             "name": passage.name,

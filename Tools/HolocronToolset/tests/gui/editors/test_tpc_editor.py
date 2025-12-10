@@ -10,10 +10,11 @@ import pytest
 from pathlib import Path
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QPixmap, QImage
-from toolset.gui.editors.tpc import TPCEditor  # type: ignore[import-not-found]
-from toolset.data.installation import HTInstallation  # type: ignore[import-not-found]
-from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, read_tpc, write_tpc  # type: ignore[import-not-found]
-from pykotor.resource.type import ResourceType  # type: ignore[import-not-found]
+from toolset.gui.editors.tpc import TPCEditor
+from toolset.data.installation import HTInstallation
+from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, read_tpc, write_tpc
+from pykotor.resource.type import ResourceType
+from pykotor.extract.file import ResourceIdentifier, ResourceResult
 from PIL import Image
 import io
 from typing import TYPE_CHECKING
@@ -673,7 +674,7 @@ def test_tpc_editor_ui_state_persistence(qtbot: QtBot, installation: HTInstallat
 # ============================================================================
 
 
-def test_tpceditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation):
+def test_tpceditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installation: HTInstallation, test_files_dir: Path):
     """Test that TPCEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog
     
@@ -709,13 +710,14 @@ def test_tpceditor_editor_help_dialog_opens_correct_file(qtbot: QtBot, installat
     tpc_files = list(test_files_dir.glob("*.tpc")) + list(test_files_dir.rglob("*.tpc"))
     if not tpc_files:
         # Try to get one from installation
-        tpc_resources = list(installation.resources(ResourceType.TPC))[:1]
+        tpc_resources: list[ResourceResult | None] = list(installation.resources([ResourceIdentifier(resname="", restype=ResourceType.TPC), ResourceIdentifier(resname="", restype=ResourceType.TGA)]).values())[:1]
         if not tpc_resources:
             pytest.skip("No TPC files available for testing")
-        tpc_resource = tpc_resources[0]
-        tpc_data = installation.resource(tpc_resource.identifier)
+        tpc_resource: ResourceResult | None = tpc_resources[0]
+        assert tpc_resource is not None, "TPC resource not found"
+        tpc_data: bytes | None = installation.resource(resname=tpc_resource.resname, restype=tpc_resource.restype)
         if not tpc_data:
-            pytest.skip(f"Could not load TPC data for {tpc_resource.identifier}")
+            pytest.skip(f"Could not load TPC data for {repr(tpc_resource)}")
         editor.load(
             tpc_resource.filepath if hasattr(tpc_resource, 'filepath') else Path("module.tpc"),
             tpc_resource.resname,

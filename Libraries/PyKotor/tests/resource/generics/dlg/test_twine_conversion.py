@@ -4,16 +4,15 @@ from __future__ import annotations
 
 import json
 import tempfile
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
 
-from utility.common.geometry import Vector2
-from pykotor.common.language import Gender, Language, LocalizedString
+from pykotor.common.language import Gender, Language
+from pykotor.common.misc import Color
 from pykotor.resource.generics.dlg.base import DLG
-from pykotor.resource.generics.dlg.links import DLGLink
-from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
 from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 from pykotor.resource.generics.dlg.io.twine_data import (
     FormatConverter,
@@ -24,6 +23,9 @@ from pykotor.resource.generics.dlg.io.twine_data import (
     TwinePassage,
     TwineStory,
 )
+from pykotor.resource.generics.dlg.links import DLGLink
+from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
+from utility.common.geometry import Vector2
 
 if TYPE_CHECKING:
     from typing import Any
@@ -118,7 +120,12 @@ def test_metadata_preservation():
             name="Test Story",
             style="body { color: red; }",
             script="window.setup = {};",
-            tag_colors={"reply": "green"},
+            tag_colors={"reply": Color.GREEN},
+            format="Harlowe",
+            format_version="3.3.7",
+            creator="PyKotor",
+            creator_version="1.0.0",
+            zoom=1.0,
         ),
         passages=[
             TwinePassage(

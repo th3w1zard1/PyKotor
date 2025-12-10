@@ -8,14 +8,13 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Any
 
+from pykotor.common.misc import Color
 from utility.common.geometry import Vector2
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pykotor.resource.generics.dlg.base import DLG
-else:
-    from pykotor.common.misc import Color
 
 
 class PassageType(Enum):
@@ -183,7 +182,8 @@ class FormatConverter:
             dlg_node: The KotOR dialog node to get metadata from
         """
         meta = passage.metadata
-        meta.animation_id = getattr(dlg_node, "animation_id", 0)
+        # Check for animation_id (may be set via setattr in tests) or camera_anim (actual DLGNode attribute)
+        meta.animation_id = getattr(dlg_node, "animation_id", getattr(dlg_node, "camera_anim", None) or 0)
         meta.camera_angle = getattr(dlg_node, "camera_angle", 0)
         meta.camera_id = getattr(dlg_node, "camera_id", 0)
         meta.fade_type = getattr(dlg_node, "fade_type", 0)
@@ -207,10 +207,17 @@ class FormatConverter:
             passage: The Twine passage to get metadata from
         """
         meta: PassageMetadata = passage.metadata
+        # Map metadata field names to DLGNode attribute names
+        field_mapping: dict[str, str] = {
+            "animation_id": "camera_anim",  # animation_id in metadata maps to camera_anim in DLGNode
+        }
+        
         for feature in self.kotor_only_features:
             if not hasattr(meta, feature):
                 continue
-            setattr(dlg_node, feature, getattr(meta, feature))
+            # Use mapped attribute name if mapping exists, otherwise use original name
+            attr_name = field_mapping.get(feature, feature)
+            setattr(dlg_node, attr_name, getattr(meta, feature))
 
     def store_twine_metadata(
         self,
