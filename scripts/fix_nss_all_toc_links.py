@@ -9,30 +9,53 @@ REPO_ROOT = Path(__file__).parent.parent
 WIKI_DIR = REPO_ROOT / "wiki"
 NSS_FILE = WIKI_DIR / "NSS-File-Format.md"
 
-# Map function prefixes to their files
+# Map function prefixes to their files (order matters - more specific first)
 FUNCTION_FILE_MAP = {
+    # Abilities and Stats
     "GetAbility": "NSS-Shared-Functions-Abilities-and-Stats",
     "SetAbility": "NSS-Shared-Functions-Abilities-and-Stats",
     "GetNPC": "NSS-Shared-Functions-Abilities-and-Stats",
     "SetNPC": "NSS-Shared-Functions-Abilities-and-Stats",
     "SWMG_Start": "NSS-Shared-Functions-Abilities-and-Stats",
+    # Actions
     "Action": "NSS-Shared-Functions-Actions",
-    "Effect": "NSS-Shared-Functions-Effects-System",
-    "GetEffect": "NSS-Shared-Functions-Effects-System",
-    "SetEffect": "NSS-Shared-Functions-Effects-System",
-    "RemoveEffect": "NSS-Shared-Functions-Effects-System",
-    "GetGlobal": "NSS-Shared-Functions-Global-Variables",
-    "SetGlobal": "NSS-Shared-Functions-Global-Variables",
-    "GetItem": "NSS-Shared-Functions-Item-Management",
-    "SetItem": "NSS-Shared-Functions-Item-Management",
-    "CreateItem": "NSS-Shared-Functions-Item-Management",
-    "DestroyItem": "NSS-Shared-Functions-Item-Management",
+    # Alignment
+    "AdjustAlignment": "NSS-Shared-Functions-Alignment-System",
+    "GetAlignment": "NSS-Shared-Functions-Alignment-System",
+    "GetFactionAverageGoodEvil": "NSS-Shared-Functions-Alignment-System",
+    "VersusAlignment": "NSS-Shared-Functions-Alignment-System",
+    # Class System
+    "AddMultiClass": "NSS-Shared-Functions-Class-System",
+    "GetClass": "NSS-Shared-Functions-Class-System",
+    "GetFactionMostFrequentClass": "NSS-Shared-Functions-Class-System",
+    "GetLevelByClass": "NSS-Shared-Functions-Class-System",
+    # Combat
+    "CancelCombat": "NSS-Shared-Functions-Combat-Functions",
+    "CutsceneAttack": "NSS-Shared-Functions-Combat-Functions",
+    "GetAttack": "NSS-Shared-Functions-Combat-Functions",
+    "GetAttemptedAttack": "NSS-Shared-Functions-Combat-Functions",
+    "GetFirstAttacker": "NSS-Shared-Functions-Combat-Functions",
+    "GetGoingToBeAttackedBy": "NSS-Shared-Functions-Combat-Functions",
     "GetIsInCombat": "NSS-Shared-Functions-Combat-Functions",
     "GetLastAttack": "NSS-Shared-Functions-Combat-Functions",
     "GetLastAttacker": "NSS-Shared-Functions-Combat-Functions",
     "GetLastDamager": "NSS-Shared-Functions-Combat-Functions",
-    "Get": "NSS-Shared-Functions-Other-Functions",  # Catch-all for Get* functions (must be last)
-    "Set": "NSS-Shared-Functions-Other-Functions",  # Catch-all for Set* functions (must be last)
+    # Effects
+    "Effect": "NSS-Shared-Functions-Effects-System",
+    "GetEffect": "NSS-Shared-Functions-Effects-System",
+    "SetEffect": "NSS-Shared-Functions-Effects-System",
+    "RemoveEffect": "NSS-Shared-Functions-Effects-System",
+    # Global Variables
+    "GetGlobal": "NSS-Shared-Functions-Global-Variables",
+    "SetGlobal": "NSS-Shared-Functions-Global-Variables",
+    # Item Management
+    "GetItem": "NSS-Shared-Functions-Item-Management",
+    "SetItem": "NSS-Shared-Functions-Item-Management",
+    "CreateItem": "NSS-Shared-Functions-Item-Management",
+    "DestroyItem": "NSS-Shared-Functions-Item-Management",
+    # Other (catch-all - must be last)
+    "Get": "NSS-Shared-Functions-Other-Functions",
+    "Set": "NSS-Shared-Functions-Other-Functions",
 }
 
 def get_function_file(func_name: str) -> str | None:
@@ -77,8 +100,8 @@ def fix_toc_links():
                 file_name = get_function_file(func_name)
                 routine_str = f" - Routine {routine_num}" if routine_num else ""
                 
-                # Create anchor from function name (lowercase, no special chars, matches HTML anchor format)
-                anchor = func_name.lower().replace('_', '')
+                # Create anchor from function name (lowercase, preserve underscores to match HTML anchor format)
+                anchor = func_name.lower()
                 
                 # Check if link already points to a file without anchor
                 if f']({file_name})' in line and '#' not in line:

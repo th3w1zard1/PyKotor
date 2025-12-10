@@ -1384,4 +1384,32 @@ mat4 computeBoneMatrix(int bone_idx, Animation anim, float time) {
 }
 ```
 
-**Note**: KotOR uses left-handed coordinate system, ensure proper [matrix](BWM-File-Format#wal
+**Note**: KotOR uses left-handed coordinate system, ensure proper [matrix](BWM-File-Format#walkable-adjacencies) conventions.
+
+---
+
+## Additional References
+
+### Editors
+
+- [MDLEdit](https://deadlystream.com/files/file/1150-mdledit/)
+- [MDLOps](https://deadlystream.com/files/file/779-mdlops/)
+- [Toolbox Aurora](https://deadlystream.com/topic/3714-toolkaurora/)
+- [KotorBlender](https://deadlystream.com/files/file/889-kotorblender/)
+- [KOTORmax](https://deadlystream.com/files/file/1151-kotormax/)
+
+### See Also
+
+- [KotOR/TSL Model Format MDL/MDX Technical Details](https://deadlystream.com/topic/4501-kotortsl-model-format-mdlmdx-technical-details/)
+- [MDL Info (Archived)](https://web.archive.org/web/20151002081059/https://home.comcast.net/~cchargin/kotor/mdl_info.html)
+- [xoreos Model Definitions](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model_kotor.h)
+- [xoreos Model Implementation](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model_kotor.cpp)
+- [KotOR.js MDL Loader](vendor/KotOR.js/src/loaders/MDLLoader.ts) - TypeScript implementation  
+- [KotOR Model Documentation](vendor/kotor/docs/mdl.md) - Binary structure analysis  
+- [MDLOps Perl Module](vendor/mdlops/MDLOpsM.pm) - Complete Perl implementation with ASCII and binary format support  
+- [reone MDL/MDX Reader](vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp) - C++ implementation for game engine  
+- [KotorBlender MDL Reader](vendor/kotorblender/io_scene_kotor/format/mdl/reader.py) - Python implementation for Blender import
+
+---
+
+This documentation aims to provide a comprehensive and structured overview of the KotOR [MDL](MDL-MDX-File-Format)/[MDX files](MDL-MDX-File-Format) format, focusing on the detailed file structure and data formats used within the games.
