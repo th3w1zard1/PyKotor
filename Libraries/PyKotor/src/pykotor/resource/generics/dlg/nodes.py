@@ -419,13 +419,17 @@ class DLGNode:
         node_map[node_key] = node
 
         node._hash_cache = int(node_key)  # noqa: SLF001
+        # Process non-link fields first to ensure all attributes are set before links are deserialized
+        # This prevents incomplete nodes from being returned when referenced through links
         for key, value in node_data.items():
             if not isinstance(value, dict):
                 continue
             py_type: str | None = value.get("py_type")
             actual_value: Any = value.get("value")
 
-            if py_type == "str":
+            if py_type == "list" and key == "links":
+                continue  # Process links after all other fields
+            elif py_type == "str":
                 setattr(node, key, actual_value)
             elif py_type == "int":
                 setattr(node, key, int(actual_value))
@@ -439,8 +443,6 @@ class DLGNode:
                 setattr(node, key, Color.from_bgr_integer(actual_value))
             elif py_type == "LocalizedString":
                 node.text = LocalizedString.from_dict(actual_value)
-            elif py_type == "list" and key == "links":
-                node.links = [DLGLink.from_dict(link, node_map) for link in actual_value]
             elif py_type == "list" and key == "animations":
                 node.animations = [DLGAnimation.from_dict(anim) for anim in actual_value]
             elif py_type == "list":
@@ -449,6 +451,16 @@ class DLGNode:
                 setattr(node, key, None)
             else:
                 raise ValueError(f"Unsupported type: {py_type} for key: {key}")
+
+        # Process links after all other fields are set
+        for key, value in node_data.items():
+            if not isinstance(value, dict):
+                continue
+            py_type: str | None = value.get("py_type")
+            actual_value: Any = value.get("value")
+
+            if py_type == "list" and key == "links":
+                node.links = [DLGLink.from_dict(link, node_map) for link in actual_value]
 
         return node
 

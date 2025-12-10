@@ -989,8 +989,8 @@ class TestDLGEntrySerialization(unittest.TestCase):
         assert deserialized.links[0].node.links[1].node.links[0].node.comment == "E250"
         assert len(deserialized.links[0].node.links[1].node.links[0].node.links) == 1
         assert deserialized.links[0].node.links[1].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R225"
-        assert len(deserialized.links[0].node.links[1].node.links[0].node.links) == 1
-        assert deserialized.links[0].node.links[1].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R224"
+        assert len(deserialized.links[0].node.links[1].node.links[0].node.links[0].node.links) == 1
+        assert deserialized.links[0].node.links[1].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R224"
 
 
 class TestDLGReplySerialization(unittest.TestCase):
@@ -1047,6 +1047,7 @@ class TestDLGReplySerialization(unittest.TestCase):
         # Link entries and replies together
         reply1.links.append(DLGLink(node=entry1))
         entry1.links.append(DLGLink(node=reply2))
+        reply2.links.append(DLGLink(node=entry2))  # Missing link: reply2 -> entry2
         entry2.links.append(DLGLink(node=reply3))  # Reuse R249
 
         # Serialize and deserialize reply1
@@ -1273,8 +1274,8 @@ class TestDLGLinkSerialization(unittest.TestCase):
         assert deserialized.node.links[1].node.links[0].node.links[0].node.comment == "E250"
         assert len(deserialized.node.links[1].node.links[0].node.links[0].node.links) == 1
         assert deserialized.node.links[1].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R225"
-        assert len(deserialized.node.links[1].node.links[0].node.links[0].node.links) == 1
-        assert deserialized.node.links[1].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R224"
+        assert len(deserialized.node.links[1].node.links[0].node.links[0].node.links[0].node.links) == 1
+        assert deserialized.node.links[1].node.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R224"
 
 
 
