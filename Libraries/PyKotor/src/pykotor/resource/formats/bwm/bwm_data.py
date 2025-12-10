@@ -342,11 +342,7 @@ class BWM(ComparableMixin):
             return []
 
         aabbs: list[BWMNodeAABB] = []
-        root = self._aabbs_rec(aabbs, copy(self.faces))
-        # Store root reference for efficient queries
-        if root is not None:
-            # Root is already in aabbs list, but we can use it directly
-            pass
+        self._aabbs_rec(aabbs, copy(self.faces))
         return aabbs
 
     def _aabbs_rec(
