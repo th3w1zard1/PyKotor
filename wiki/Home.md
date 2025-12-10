@@ -270,7 +270,7 @@ Tools for writing and editing NWScript:
 
 Tools for creating and installing mods:
 
-- **KotorCLI (PyKotor)** - CLI-first toolset for packing, conversion, and Holocron kit generation. `python -m kotorcli kit-generate --installation <path> --module <module> --output <dir>` runs headless; launching with no arguments opens the Tkinter kit generator GUI for interactive use. (Implementation: `Tools/KotorCLI/src/kotorcli/kit_generator.py` wraps `Libraries/PyKotor/src/pykotor/tools/kit.py`.)
+- **KotorCLI (PyKotor)** - CLI-first toolset for packing, conversion, Holocron kit generation, and GUI layout scaling. `python -m kotorcli kit-generate --installation <path> --module <module> --output <dir>` runs headless; launching with no arguments opens the Tkinter kit generator GUI for interactive use. `python -m kotorcli gui-convert --input <gui_or_folder> --output <dir> --resolution ALL` runs headless for GUI resizing; omitting args opens the converter GUI. (Implementations: `Tools/KotorCLI/src/kotorcli/kit_generator.py` wraps `Libraries/PyKotor/src/pykotor/tools/kit.py`; `Tools/KotorCLI/src/kotorcli/gui_converter.py` delegates to `pykotor.resource.formats.gff`.)
 - **[TSLPatcher](https://github.com/Fair-Strides/TSLPatcher)** - Original Perl mod installer (reference implementation) ([Mirror: th3w1zard1/TSLPatcher](https://github.com/th3w1zard1/TSLPatcher))
 - **[HoloPatcher.NET](https://github.com/th3w1zard1/HoloPatcher.NET)** - .NET reimplementation of TSLPatcher
 - **[Kotor-Patch-Manager](https://github.com/LaneDibello/Kotor-Patch-Manager)** - Alternative mod manager ([Mirror: th3w1zard1/Kotor-Patch-Manager](https://github.com/th3w1zard1/Kotor-Patch-Manager))
