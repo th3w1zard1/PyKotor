@@ -3443,7 +3443,7 @@ See [Planet Constants](NSS-Shared-Constants-Planet-Constants) for detailed docum
 
 ### Visual Effects (VFX)
 
-See [Visual Effects (VFX)](NSS-Shared-Constants-Visual-Effects-(VFX).md) for detailed documentation.
+See Visual Effects (VFX) for detailed documentation.
 
 ## K1-Only Constants
 
