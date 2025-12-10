@@ -25,7 +25,19 @@ SSF files define a set of 28 sound effects that creatures can play during variou
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/)
 
-**Reference**: [`vendor/reone/src/libs/resource/format/ssfreader.cpp:26-32`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ssfreader.cpp#L26-L32)
+**Vendor References:**
+- [`vendor/reone/src/libs/resource/format/ssfreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ssfreader.cpp) - Complete C++ SSF reader implementation
+- [`vendor/xoreos/src/aurora/ssffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ssffile.cpp) - Generic Aurora SSF implementation (shared format)
+- [`vendor/KotOR.js/src/resource/SSFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/SSFObject.ts) - TypeScript SSF parser
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/SSFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/SSFObject.cs) - C# Unity SSF loader
+- [`vendor/Kotor.NET/Kotor.NET/Formats/KotorSSF/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorSSF) - .NET SSF reader/writer
+
+**See Also:**
+- [TSLPatcher SSFList Syntax](TSLPatcher-SSFList-Syntax) - Modding SSF files with TSLPatcher
+- [TLK File Format](TLK-File-Format) - Talk table containing actual sound references
+- [Bioware Aurora SSF Format](Bioware-Aurora-SSF) - Official BioWare specification
+- [GFF-UTC](GFF-UTC) - Creature templates that reference SSF files
+- [2DA-soundset](2DA-soundset) - Sound set definitions table
 
 ---
 

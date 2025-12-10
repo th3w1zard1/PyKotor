@@ -21,8 +21,20 @@ VIS (Visibility) files describe which module rooms can be seen from other rooms.
 - Child room lines are indented by two spaces. Empty lines are ignored and names are case-insensitive.  
 - Files usually ship as `moduleXXX.vis` pairs; the `moduleXXXs.vis` (or `.vis` appended inside ERF) uses the same syntax.  
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/vis/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/vis)  
-**Reference:** [`vendor/reone/src/libs/resource/format/visreader.cpp:27-51`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/visreader.cpp#L27-L51)  
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/vis/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/vis)
+
+**Vendor References:**
+- [`vendor/reone/src/libs/resource/format/visreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/visreader.cpp) - Complete C++ VIS parser implementation
+- [`vendor/xoreos/src/aurora/visfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/visfile.cpp) - Generic Aurora VIS implementation (shared format)
+- [`vendor/KotOR.js/src/resource/VISObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/VISObject.ts) - TypeScript VIS parser with rendering integration
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/VISObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/VISObject.cs) - C# Unity VIS loader with occlusion culling
+
+**See Also:**
+- [LYT File Format](LYT-File-Format) - Layout files defining room positions
+- [MDL/MDX File Format](MDL-MDX-File-Format) - Room models controlled by VIS
+- [BWM File Format](BWM-File-Format) - Walkmeshes for room collision/pathfinding
+- [GFF-ARE](GFF-ARE) - Area files that load VIS visibility graphs
+- [Indoor Map Builder Implementation Guide](Indoor-Map-Builder-Implementation-Guide) - Generates VIS files for created areas  
 
 ---
 
