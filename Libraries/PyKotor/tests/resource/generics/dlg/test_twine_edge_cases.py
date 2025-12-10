@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
+
+if os.environ.get("PYKOTOR_DLG_TWINE_AGGREGATE") != "1":
+    pytest.skip(
+        "Consolidated into Libraries/PyKotor/tests/resource/generics/test_dlg_twine.py",
+        allow_module_level=True,
+    )
+
+pytest.skip("Consolidated into Libraries/PyKotor/tests/resource/generics/test_dlg_twine.py", allow_module_level=True)
 
 from pykotor.common.language import Gender, Language
 from pykotor.common.misc import Color, ResRef

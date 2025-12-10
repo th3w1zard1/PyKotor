@@ -3,9 +3,18 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 
 from pathlib import Path
+
+import pytest
+
+if os.environ.get("PYKOTOR_DLG_TWINE_AGGREGATE") != "1":
+    pytest.skip(
+        "Consolidated into Libraries/PyKotor/tests/resource/generics/test_dlg_twine.py",
+        allow_module_level=True,
+    )
 from typing import Any, cast
 from xml.etree import ElementTree
 

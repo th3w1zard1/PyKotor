@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 
 from pathlib import Path
@@ -16,6 +17,14 @@ from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 from pykotor.resource.generics.dlg.io.twine_data import FormatConverter, PassageType
 from pykotor.resource.generics.dlg.links import DLGLink
 from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
+
+os.environ["PYKOTOR_DLG_TWINE_AGGREGATE"] = "1"
+
+# Consolidated imports of all Twine-specific test modules for re-export.
+from .dlg import test_twine_formats as _test_twine_formats
+from .dlg import test_twine_conversion as _test_twine_conversion
+from .dlg import test_twine_edge_cases as _test_twine_edge_cases
+from . import test_dlg_twine_edge as _test_dlg_twine_edge
 
 
 @pytest.fixture
@@ -326,3 +335,16 @@ def test_metadata_comment_roundtrip_for_tag_colors_and_zoom(tmp_path: Path):
     assert restored_meta["tag_colors"]["entry"] == "1 0 0 1"
     assert restored_meta["tag_colors"]["reply"] == "0 1 0 1"
     assert restored_meta["zoom"] == 2.5
+
+
+# Re-export all Twine-focused tests from consolidated modules so they are
+# collected from this single file.
+for _module in (
+    _test_twine_formats,
+    _test_twine_conversion,
+    _test_twine_edge_cases,
+    _test_dlg_twine_edge,
+):
+    for _name in dir(_module):
+        if _name.startswith("test_"):
+            globals()[_name] = getattr(_module, _name)

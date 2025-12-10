@@ -4,6 +4,13 @@ from __future__ import annotations
 
 import sys
 
+if "pytest" in sys.modules:
+    import pytest
+    pytest.skip(
+        "Consolidated into Libraries/PyKotor/tests/resource/generics/test_dlg.py",
+        allow_module_level=True,
+    )
+
 sys.path.insert(0, "Libraries/PyKotor/src")
 sys.path.insert(0, "Libraries/Utility/src")
 
