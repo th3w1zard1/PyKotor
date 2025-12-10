@@ -4,6 +4,24 @@ _This page explains how to create a mod with HoloPatcher. If you are an end user
 
 HoloPatcher is a rewrite of TSLPatcher written in Python, utilizing the PyKotor library. Everything is backwards compatible with TSLPatcher. For this reason I suggest you first read [TSLPatcher's readme, really.](https://github.com/th3w1zard1/PyKotor/wiki/TSLPatcher's-Official-Readme)
 
+**Implementation:** [`Libraries/PyKotor/src/pykotor/tslpatcher/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/tslpatcher/)
+
+**Vendor Mod Installers:**
+- [`vendor/TSLPatcher/`](https://github.com/th3w1zard1/TSLPatcher) - Original Perl TSLPatcher by stoffe (reference implementation)
+- [`vendor/Kotor-Patch-Manager/`](https://github.com/th3w1zard1/Kotor-Patch-Manager) - Alternative mod manager with different patching approach
+- [`vendor/KotORModSync/`](https://github.com/th3w1zard1/KotORModSync) - Mod synchronization and installation tool
+
+**Related PyKotor Tools:**
+- [`Tools/HolocronToolset/`](https://github.com/th3w1zard1/PyKotor/tree/master/Tools/HolocronToolset) - Integrated HoloPatcher GUI
+- [`Libraries/PyKotor/src/pykotor/tslpatcher/mods/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/tslpatcher/mods) - Individual patching modules
+
+**See Also:**
+- [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme) - Original documentation
+- [TSLPatcher InstallList Syntax](TSLPatcher-InstallList-Syntax) - File installation
+- [TSLPatcher 2DAList Syntax](TSLPatcher-2DAList-Syntax) - 2DA patching
+- [TSLPatcher GFFList Syntax](TSLPatcher-GFFList-Syntax) - GFF patching
+- [Mod Creation Best Practices](Mod-Creation-Best-Practices) - General modding guidelines
+
 ## HoloPatcher changes & New Features
 
 ### TLK replacements
