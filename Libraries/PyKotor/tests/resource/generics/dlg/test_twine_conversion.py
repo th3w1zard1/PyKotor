@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from pykotor.common.language import Gender, Language
-from pykotor.common.misc import Color
+from pykotor.common.misc import Color, ResRef
 from pykotor.resource.generics.dlg.base import DLG
 from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 from pykotor.resource.generics.dlg.io.twine_data import (

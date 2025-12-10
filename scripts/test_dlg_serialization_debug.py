@@ -22,10 +22,10 @@ reply4 = DLGReply(text=LocalizedString.from_english("R225"))
 reply5 = DLGReply(text=LocalizedString.from_english("R224"))
 
 entry1.links.append(DLGLink(node=reply1))
-reply1.links.extend([DLGLink(node=entry2), DLGLink(node=reply2)])
+reply1.links.extend([DLGLink(node=entry2), DLGLink(node=reply2)])  # type: ignore[arg-type]
 reply2.links.append(DLGLink(node=entry3))
 entry3.links.append(DLGLink(node=reply4))
-reply4.links.append(DLGLink(node=reply5))
+reply4.links.append(DLGLink(node=reply5))  # type: ignore[arg-type]
 entry2.links.append(DLGLink(node=reply3))
 
 # Check original structure

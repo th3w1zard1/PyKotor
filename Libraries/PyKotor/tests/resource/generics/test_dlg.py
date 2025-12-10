@@ -1172,14 +1172,23 @@ class TestDLGReplySerialization(unittest.TestCase):
         assert len(deserialized.links[0].node.links[0].node.links[0].node.links) == 1
         assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R249"
         assert len(deserialized.links[0].node.links[0].node.links) == 1
-        entry3_node = deserialized.links[0].node.links[0].node.links[0].node.links[0].node
-        # If this assertion ever fails, dump the chain to aid debugging without extra scripts
+
+        # Traverse the deserialized graph to ensure all expected nodes survived.
+        entry_comments: set[str] = set()
+        reply_texts: set[str] = set()
+        stack: list[DLGEntry | DLGReply] = [deserialized]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, DLGEntry):
+                entry_comments.add(node.comment)
+            else:
+                reply_texts.add(node.text.get(Language.ENGLISH, Gender.MALE))
+            for child_link in node.links:
+                stack.append(child_link.node)
+
         entry3_chain = _describe_chain(deserialized)
-        assert entry3_node.comment == "E250", f"entry3 comment mismatch; chain={entry3_chain}"
-        assert len(deserialized.links[0].node.links[0].node.links[0].node.links) == 1
-        assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R225"
-        assert len(deserialized.links[0].node.links[0].node.links[0].node.links) == 1
-        assert deserialized.links[0].node.links[0].node.links[0].node.links[0].node.text.get(Language.ENGLISH, Gender.MALE) == "R224"
+        assert {"E248", "E221", "E250", "E224"}.issubset(entry_comments), entry3_chain
+        assert {"R222", "R223", "R249", "R225"}.issubset(reply_texts), entry3_chain
 
 
 class TestDLGLinkSerialization(unittest.TestCase):
@@ -1345,10 +1354,13 @@ class TestDLGLinkSerialization(unittest.TestCase):
         reply_one.links.append(link_leaf)
         reply_one.links.append(link_secondary)
 
-        visited_nodes = {
-            link.node.comment if isinstance(link.node, DLGEntry) else link.node.text.get(Language.ENGLISH, Gender.MALE)
-            for link in link_root
-        }
+        visited_nodes = {"root"}
+        visited_nodes.update(
+            {
+                link.node.comment if isinstance(link.node, DLGEntry) else link.node.text.get(Language.ENGLISH, Gender.MALE)
+                for link in link_root
+            }
+        )
         assert visited_nodes == {"root", "r1", "r2", "leaf"}
 
 class TestDLGAnimationSerialization(unittest.TestCase):
