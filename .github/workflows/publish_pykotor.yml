@@ -8,7 +8,6 @@ env:
   OS_RUNNERS_JSON: '["windows-latest", "ubuntu-latest", "macos-latest"]'
   PYTHON_VERSIONS_JSON: '["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]'
   ARCHITECTURES_JSON: '["x86", "x64"]'
-  INTERPRETERS_JSON: '["python"]'
   UPX_VERSION: "4.2.2"
   USE_UPX: true
   BUILD_BOOTLOADERS: false # Build pyinstaller bootloaders. Pretty much unusable due to AV heuristics.
@@ -82,7 +81,6 @@ jobs:
       os: ${{ steps.set_env.outputs.os }}
       python-version: ${{ steps.set_env.outputs.python-version }}
       architecture: ${{ steps.set_env.outputs.architecture }}
-      python-pypy: ${{ steps.set_env.outputs.python-pypy }}
       #qt_version: ${#{ steps.set_env.outputs.qt_version }}
 
     steps:
@@ -103,11 +101,6 @@ jobs:
           echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
           echo $singleLineJson >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
-
-          $singleLineJson = '${{ env.INTERPRETERS_JSON }}' -replace "`r", "" -replace "`n", ""
-          echo "python-pypy<<EOF" >> $env:GITHUB_OUTPUT
-          echo $singleLineJson >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
   build:
@@ -120,7 +113,6 @@ jobs:
         os: ${{ fromJson(needs.setup.outputs.os) }}
         python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
         architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
-        python_pypy: ${{ fromJson(needs.setup.outputs.python-pypy) }}
         qt_version: ["pyqt5"]
         include:
           - arch: x86
@@ -137,31 +129,12 @@ jobs:
             architecture: x86
           - os: macos-12
             architecture: x86
-          # latest PyPy version as of 17/03/2024 is 3.10.
-          - python_pypy: "pypy"
-            python-version: "3.11"
-          - python_pypy: "pypy"
-            python-version: "3.12"
-          # PyQt5 doesn't seem to be compatible with PyPy
-          - python_pypy: "pypy"
-            qt_version: "pyqt5"
-          - python_pypy: "pypy"
-            qt_version: "pyside2"
-          - python_pypy: "pypy"
-            qt_version: "pyqt6"
-          - python_pypy: "pypy"
-            python-version: "3.10"
-            os: "windows-latest"
 
     steps:
       - name: Determine Python version string
         id: set-python-version
         run: |
-          if ( "${{ matrix.python_pypy }}" -eq "pypy" ) {
-            Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=pypy-${{ matrix.python-version }}"
-          } else {
-            Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
-          }
+          Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
         shell: pwsh
         env:
           MATRIX_ARCH: ${{ matrix.architecture }}
@@ -174,13 +147,6 @@ jobs:
         run: |
           chmod +x ./install_powershell.sh
           bash ./install_powershell.sh
-
-      - name: Set up pypy ${{ matrix.python-version }}
-        if: ${{ matrix.python_pypy == 'pypy' }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: pypy-${{ matrix.python-version }}
-          architecture: ${{ matrix.architecture }}
 
       - name: Reset APT sources to default
         if: ${{ runner.os == 'Linux' }}
@@ -330,7 +296,7 @@ jobs:
         id: install_uv
 
       - name: Install Python version with uv (Linux/macOS)
-        if: runner.os != 'Windows' && matrix.python_pypy != 'pypy'
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           # Ensure uv is in PATH
@@ -344,7 +310,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
           # On Linux/macOS, ensure uv is in PATH
           if ("${{ runner.os }}" -ne "Windows") {
@@ -407,7 +373,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $script = "${{ steps.locate-scripts.outputs.deps_script }}"
-          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
           # Ensure Python path is available if set by install_python_venv.ps1
           if ($env:pythonExePath) {
@@ -444,7 +410,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $compile = "${{ steps.locate-scripts.outputs.compile_script }}"
-          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $upxDir = $env:UPX_DIR
           $env:PYTHONOPTIMIZE = "1"
           
@@ -494,7 +460,7 @@ jobs:
         id: upload_attempt_1
         uses: actions/upload-artifact@v4
         with:
-          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
           path: ./dist/**
           retention-days: 90
         continue-on-error: true
@@ -504,7 +470,7 @@ jobs:
         if: ${{ (success() || failure()) && steps.upload_attempt_1.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
-          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
           path: ./dist/**
           retention-days: 90
         continue-on-error: true
@@ -514,7 +480,7 @@ jobs:
         if: ${{ (success() || failure()) && steps.upload_attempt_2.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
-          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
           path: ./dist/**
           retention-days: 90
         continue-on-error: true
@@ -524,7 +490,7 @@ jobs:
         if: ${{ (success() || failure()) && steps.upload_attempt_3.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
-          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
           path: ./dist/**
           retention-days: 90
         continue-on-error: true
@@ -534,7 +500,7 @@ jobs:
         if: ${{ (success() || failure()) && steps.upload_attempt_4.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
-          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+          name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
           path: ./dist/**
           retention-days: 90
 
@@ -567,7 +533,7 @@ jobs:
           Get-ChildItem -Filter "publish_*" | ForEach-Object {
             $matrixPackagePath = $_.FullName
             Write-Output "Found matrix package '$matrixPackagePath'"
-            $toolName, $os, $python_or_pypy, $pythonVersion, $architecture = $_.BaseName -replace '^publish_', '' -split '_',5
+            $toolName, $os, $pythonVersion, $architecture = $_.BaseName -replace '^publish_', '' -split '_',4
 
             $shortOsName = $os
             if ($os -eq "ubuntu-20.04" -or $os -eq "ubuntu-22.04" -or $os -eq "ubuntu-latest") {
