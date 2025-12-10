@@ -47,17 +47,17 @@ The following documents [ARE](GFF-File-Format#are-area) official Bioware Aurora 
 - **[Faction Format](Bioware-Aurora-Faction)** - Official faction data format
 - **[Palette/ITP Format](Bioware-Aurora-PaletteITP)** - Official palette and ITP formats
 
-### Aurora Engine Basics
+### Aurora Engine Basics (KotOR)
 
-The BioWare Aurora Engine (used by KotOR, TSL, and Neverwinter Nights) uses a standardized resource system:
+The following information describes the resource system used by **KotOR and TSL**. While KotOR shares the Aurora engine with Neverwinter Nights, this section focuses on **KotOR-specific** behavior and file locations. Some details (like `nwn.ini`) are NWN-specific and are noted as such.
 
 **[KEY](KEY-File-Format) files:**
 
 - **[`chitin.key`](KEY-File-Format)**: Master index file that maps resource names to [BIF archives](BIF-File-Format) locations. Given a resource name, [chitin.key](KEY-File-Format) can be used to locate the master data file ([BIF](BIF-File-Format)) containing the resource.
 - **[`dialog.tlk`](TLK-File-Format)**: Text resource file containing localized strings referenced by [StrRef](TLK-File-Format#string-references-strref) IDs. This centralizes strings for easy localization and allows changing text without modifying or recompiling scripts. Different language versions of [dialog.tlk](TLK-File-Format) can be installed for localization support.
-- **`kotor.ini` / `nwn.ini`**: Configuration file with `[Alias]` section mapping logical directory names to physical paths. This allows the game to locate data files regardless of installation directory structure.
+- **`kotor.ini`**: Configuration file with `[Alias]` section mapping logical directory names to physical paths. This allows the game to locate data files regardless of installation directory structure. **Note**: `nwn.ini` is the Neverwinter Nights equivalent and is not used in KotOR.
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Tim Smith (Torlack)'s Aurora engine basics documentation (NWN-focused but applicable to KotOR)
+**Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Tim Smith (Torlack)'s Aurora engine basics documentation (originally NWN-focused, but resource resolution order and key file concepts apply to KotOR)
 
 **Resource Resolution Order:**
 
@@ -69,7 +69,7 @@ The BioWare Aurora Engine (used by KotOR, TSL, and Neverwinter Nights) uses a st
 
 **Resource types:**
 
-The Aurora engine uses hexadecimal resource type identifiers. The following table lists resource types used in KotOR and the Aurora engine (some types may be legacy from earlier BioWare games):
+KotOR uses hexadecimal resource type identifiers inherited from the Aurora engine. The following table lists resource types **used in KotOR** (some types may be legacy from earlier BioWare games or shared with Neverwinter Nights):
 
 | Resource Name | type ID | Description                                    |
 | ------------- | ------- | ---------------------------------------------- |

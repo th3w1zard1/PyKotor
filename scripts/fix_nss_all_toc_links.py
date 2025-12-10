@@ -40,6 +40,43 @@ FUNCTION_FILE_MAP = {
     "GetLastAttack": "NSS-Shared-Functions-Combat-Functions",
     "GetLastAttacker": "NSS-Shared-Functions-Combat-Functions",
     "GetLastDamager": "NSS-Shared-Functions-Combat-Functions",
+    # Dialog and Conversation
+    "BarkString": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "BeginConversation": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "CancelPostDialog": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "EventConversation": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "GetIsConversation": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "GetIsInConversation": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "GetLastConversation": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "GetLastSpeaker": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "HoldWorldFadeInForDialog": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "ResetDialog": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "SetDialog": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "SetLockHeadFollowInDialog": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "SetLockOrientationInDialog": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "SpeakOneLinerConversation": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    "SpeakString": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
+    # Module and Area
+    "GetModule": "NSS-Shared-Functions-Module-and-Area-Functions",
+    "SetModule": "NSS-Shared-Functions-Module-and-Area-Functions",
+    "GetArea": "NSS-Shared-Functions-Module-and-Area-Functions",
+    # Object Query and Manipulation
+    "GetObject": "NSS-Shared-Functions-Object-Query-and-Manipulation",
+    "SetObject": "NSS-Shared-Functions-Object-Query-and-Manipulation",
+    # Party Management
+    "GetParty": "NSS-Shared-Functions-Party-Management",
+    "SetParty": "NSS-Shared-Functions-Party-Management",
+    # Player Character
+    "GetPC": "NSS-Shared-Functions-Player-Character-Functions",
+    "SetPC": "NSS-Shared-Functions-Player-Character-Functions",
+    # Skills and Feats
+    "GetSkill": "NSS-Shared-Functions-Skills-and-Feats",
+    "SetSkill": "NSS-Shared-Functions-Skills-and-Feats",
+    "GetFeat": "NSS-Shared-Functions-Skills-and-Feats",
+    # Sound and Music
+    "GetSound": "NSS-Shared-Functions-Sound-and-Music-Functions",
+    "SetSound": "NSS-Shared-Functions-Sound-and-Music-Functions",
+    "PlaySound": "NSS-Shared-Functions-Sound-and-Music-Functions",
     # Effects
     "Effect": "NSS-Shared-Functions-Effects-System",
     "GetEffect": "NSS-Shared-Functions-Effects-System",
@@ -103,11 +140,22 @@ def fix_toc_links():
                 # Create anchor from function name (lowercase, preserve underscores to match HTML anchor format)
                 anchor = func_name.lower()
                 
-                # Check if link already points to a file without anchor
-                if f']({file_name})' in line and '#' not in line:
-                    # Add anchor to existing file link
-                    line = line.replace(f']({file_name})', f']({file_name}#{anchor})')
-                    fixes += 1
+                # Check if link already points to a file with wrong anchor or wrong file
+                # Match pattern: [text](file#anchor)
+                link_pattern = rf'\[`[^`]+`[^\]]*\]\(([^#\)]+)(?:#([^\)]+))?\)'
+                match = re.search(link_pattern, line)
+                if match:
+                    current_file = match.group(1)
+                    current_anchor = match.group(2) if match.lastindex >= 2 else None
+                    
+                    # Fix if file is wrong or anchor is wrong
+                    if current_file != file_name or (current_anchor and current_anchor != anchor):
+                        line = re.sub(
+                            link_pattern,
+                            f"[`{func_text}`{routine_str}]({file_name}#{anchor})",
+                            line
+                        )
+                        fixes += 1
                 elif '](#' in line:
                     # Replace anchor link with file link + anchor
                     line = re.sub(
@@ -115,6 +163,10 @@ def fix_toc_links():
                         f"[`{func_text}`{routine_str}]({file_name}#{anchor})",
                         line
                     )
+                    fixes += 1
+                elif f']({file_name})' in line:
+                    # Add anchor to existing file link
+                    line = line.replace(f']({file_name})', f']({file_name}#{anchor})')
                     fixes += 1
         
         new_lines.append(line)

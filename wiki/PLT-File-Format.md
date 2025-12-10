@@ -1,8 +1,8 @@
-# [PLT files](PLT-File-Format) format Documentation (Neverwinter Nights)
+# [PLT files](PLT-File-Format) format Documentation
 
-PLT ([texture](TPC-File-Format) Palette file) is a variant [texture](TPC-File-Format) format that allows runtime color palette selection. Instead of fixed colors, [PLT files](PLT-File-Format) store palette group indices and color indices that reference external palette files, enabling dynamic color customization for character [models](MDL-MDX-File-Format).
+> **⚠️ NOT USED IN KOTOR**: This format is **Neverwinter Nights-specific** and is **NOT used in KotOR games**. While the [PLT](PLT-File-Format) resource type (0x0006) exists in KotOR's resource system due to shared Aurora engine heritage, **KotOR does not load, parse, or use [PLT files](PLT-File-Format)**. KotOR uses standard [TPC](TPC-File-Format)/TGA/DDS [textures](TPC-File-Format) for all [textures](TPC-File-Format), including character [models](MDL-MDX-File-Format). This documentation is provided for reference only, as NWN-derived tools may encounter [PLT](PLT-File-Format) resource type identifiers when working with KotOR's resource system.
 
-**Note**: [PLT files](PLT-File-Format) [ARE](GFF-File-Format#are-area) used in **Neverwinter Nights** for character customization (skin, hair, armor colors, etc.). While the [PLT](PLT-File-Format) resource type (0x0006) is defined in KotOR's resource system, **[PLT files](PLT-File-Format) [ARE](GFF-File-Format#are-area) not actually used in KotOR games**. KotOR uses standard [TPC](TPC-File-Format)/TGA/DDS [textures](TPC-File-Format) instead. This documentation is provided for completeness and compatibility with Neverwinter Nights tools that may work with KotOR's resource system.
+PLT ([texture](TPC-File-Format) Palette file) is a variant [texture](TPC-File-Format) format used in **Neverwinter Nights** that allows runtime color palette selection. Instead of fixed colors, [PLT files](PLT-File-Format) store palette group indices and color indices that reference external palette files, enabling dynamic color customization for character [models](MDL-MDX-File-Format) (skin, hair, armor colors, etc.).
 
 ## Table of Contents
 
