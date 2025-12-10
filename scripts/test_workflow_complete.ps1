@@ -188,8 +188,8 @@ if ($errors.Count -eq 0) {
     Write-Host "✓ All critical tests passed!" -ForegroundColor Green
 } else {
     Write-Host "✗ Errors found:" -ForegroundColor Red
-    foreach ($error in $errors) {
-        Write-Host "  - $error" -ForegroundColor Red
+    foreach ($errorItem in $errors) {
+        Write-Host "  - $errorItem" -ForegroundColor Red
     }
 }
 

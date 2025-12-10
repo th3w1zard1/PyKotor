@@ -215,7 +215,6 @@ jobs:
 
       - name: Download and prepare UPX
         if: runner.os != 'macOS' && steps.cache-upx.outputs.cache-hit != 'true'
-        continue-on-error: false
         run: |
           $ext = "${{ runner.os }}" -eq "Windows" ? "zip" : "tar.xz"
           $url = "${{ steps.upx_setup.outputs.url }}"
