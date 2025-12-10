@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 
+from enum import Enum
 from typing import TYPE_CHECKING, Any, Callable, Literal
 
 import qtpy
@@ -104,9 +105,16 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
         self._settings_cache: dict[str, QSettings] = {}
         self.original_stylesheet: str = self.styleSheet()
         self._initialized: bool = False
+        # Lazy-initialized attributes for stylesheet editor
+        self._stylesheet_editor: QDockWidget | None = None
+        self._preview_area: QWidget | None = None
+        self._stylesheet_text_edit: QTextEdit | None = None
+        self._highlighter: StyleSheetHighlighter | None = None
+        # Lazy-initialized drawer button
+        self._robust_drawer: QPushButton | None = None
 
     def _create_drawer_button(self):
-        self._robust_drawer: QPushButton = QPushButton(self)
+        self._robust_drawer = QPushButton(self)
         self._robust_drawer.setObjectName("_robust_drawer")
         self._robust_drawer.setToolTip("Show context menu")
         q_app_style: QStyle | None = QApplication.style()
@@ -585,11 +593,13 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
                 assert widget is not None
         elif meta_type == QMargins and isinstance(current_value, QMargins):
             widget = QLineEdit(f"{current_value.left()},{current_value.top()},{current_value.right()},{current_value.bottom()}")
-        elif hasattr(param_type, "__members__"):  # Enum type
+        elif isinstance(param_type, type) and issubclass(param_type, Enum):  # Enum type
             widget = QComboBox()
             assert widget is not None
             widget.addItems(param_type.__members__.keys())
-            widget.setCurrentText(current_value.name if hasattr(current_value, "name") else str(current_value))
+            # current_value should be an Enum member if param_type is an Enum
+            enum_name = current_value.name if isinstance(current_value, Enum) else str(current_value)
+            widget.setCurrentText(enum_name)
         else:
             widget = QLineEdit(str(current_value))
             assert widget is not None
@@ -642,7 +652,7 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
             action.setText(f"{title}: {value_str}")
 
     def show_stylesheet_editor(self,):
-        if not hasattr(self, "_stylesheet_editor"):
+        if self._stylesheet_editor is None:
             self._stylesheet_editor = QDockWidget("Stylesheet Editor", self)
             editor_widget = QWidget()
             editor_layout = QVBoxLayout(editor_widget)
@@ -687,7 +697,7 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
         set_func: Callable[[Any], Any],
         settings_key: str,
     ):
-        if not hasattr(self, "_stylesheet_editor"):
+        if self._stylesheet_editor is None:
             self._stylesheet_editor = QDockWidget("Stylesheet Editor", self)
             editor_widget = QWidget()
             editor_layout = QVBoxLayout(editor_widget)
@@ -712,7 +722,7 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
             text_doc: QTextDocument | None = self._stylesheet_text_edit.document()
             assert text_doc is not None
 
-            self._highlighter: StyleSheetHighlighter | None = StyleSheetHighlighter(text_doc)
+            self._highlighter = StyleSheetHighlighter(text_doc)
             assert self._highlighter is not None
 
             splitter.addWidget(preview_widget)
@@ -748,7 +758,7 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
         self._stylesheet_editor.show()
 
     def _update_stylesheet_preview(self,):
-        if hasattr(self, "_preview_area"):
+        if self._preview_area is not None and self._stylesheet_text_edit is not None:
             self._preview_area.setStyleSheet(self._stylesheet_text_edit.toPlainText())
 
     def _apply_stylesheet(
@@ -756,22 +766,24 @@ class RobustBaseWidget(QWidget if TYPE_CHECKING else object):
         set_func: Callable[[Any], Any],
         settings_key: str,
     ):
-        new_stylesheet: str = self._stylesheet_text_edit.toPlainText()
-        set_func(new_stylesheet)
-        if hasattr(self, "_preview_area"):
-            self._preview_area.setStyleSheet(new_stylesheet)
+        if self._stylesheet_text_edit is not None:
+            new_stylesheet: str = self._stylesheet_text_edit.toPlainText()
+            set_func(new_stylesheet)
+            if self._preview_area is not None:
+                self._preview_area.setStyleSheet(new_stylesheet)
 
     def _reset_stylesheet(
         self,
         get_func: Callable[[], Any],
     ):
-        self._stylesheet_text_edit.setPlainText(get_func())
-        if hasattr(self, "_preview_area"):
-            self._preview_area.setStyleSheet(get_func())
+        if self._stylesheet_text_edit is not None:
+            self._stylesheet_text_edit.setPlainText(get_func())
+            if self._preview_area is not None:
+                self._preview_area.setStyleSheet(get_func())
 
     def _show_color_picker(self):
         color: QColor = QColorDialog.getColor(parent=self)
-        if color.isValid():
+        if color.isValid() and self._stylesheet_text_edit is not None:
             cursor: QTextCursor = self._stylesheet_text_edit.textCursor()
             cursor.insertText(color.name())
 

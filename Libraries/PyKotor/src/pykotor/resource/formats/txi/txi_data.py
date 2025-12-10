@@ -1081,9 +1081,9 @@ class TXIFontInformation(TXIBaseInformation):
             self.spacingB,
             self.caretindent,
             self.fontwidth,
-            getattr(self, "fontheight", None),
-            getattr(self, "baselineheight", None),
-            getattr(self, "texturewidth", None),
+            self.fontheight,
+            self.baselineheight,
+            self.texturewidth,
             tuple(self.upper_left_coords),
             tuple(self.lower_right_coords)
         ))

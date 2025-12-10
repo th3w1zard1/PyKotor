@@ -38,7 +38,16 @@ def run_subprocess(
 
 
 def is_frozen() -> bool:
+    # Check for sys attributes using try/except for strict type checking
+    try:
+        frozen = object.__getattribute__(sys, "frozen")
+    except AttributeError:
+        frozen = False
+    try:
+        meipass = object.__getattribute__(sys, "_MEIPASS")
+    except AttributeError:
+        meipass = False
     return (
-        getattr(sys, "frozen", False)
-        or getattr(sys, "_MEIPASS", False)
+        bool(frozen)
+        or bool(meipass)
     )

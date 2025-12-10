@@ -195,10 +195,16 @@ class ActionsDispatcher:
 
     def toggle_item_checkboxes(self):
         view: QAbstractItemView = self.get_current_view()
-        if not isinstance(view.itemDelegate(), QStyledItemDelegate):
+        delegate = view.itemDelegate()
+        if not isinstance(delegate, QStyledItemDelegate):
             view.setItemDelegate(QStyledItemDelegate())
-        current_state = view.itemDelegate().hasCheckBoxes if hasattr(view.itemDelegate(), "hasCheckBoxes") else False  # type: ignore[attr-defined]
-        view.itemDelegate().setCheckBoxes(not current_state)  # type: ignore[attr-defined]
+            delegate = view.itemDelegate()
+        # Check if delegate has hasCheckBoxes attribute using try/except for strict type checking
+        try:
+            current_state = delegate.hasCheckBoxes  # type: ignore[attr-defined]
+        except AttributeError:
+            current_state = False
+        delegate.setCheckBoxes(not current_state)  # type: ignore[attr-defined]
         view.viewport().update()
 
     def get_current_directory(self) -> Path:
@@ -517,10 +523,15 @@ class ActionsDispatcher:
         self.queue_task("refresh_view")
 
     def prepare_show_file_extensions(self, show: bool):  # noqa: FBT001
-        if hasattr(self.fs_model, "setNameFilterDisables"):
-            self.fs_model.setNameFilterDisables(not show)
-        if hasattr(self.fs_model, "setNameFilters"):
-            self.fs_model.setNameFilters([] if show else ["*"])
+        # Check for Qt version-specific methods using try/except for strict type checking
+        try:
+            self.fs_model.setNameFilterDisables(not show)  # type: ignore[attr-defined]
+        except AttributeError:
+            pass  # Method not available in this Qt version
+        try:
+            self.fs_model.setNameFilters([] if show else ["*"])  # type: ignore[attr-defined]
+        except AttributeError:
+            pass  # Method not available in this Qt version
         self.queue_task("refresh_view")
 
     def on_open_file(self):

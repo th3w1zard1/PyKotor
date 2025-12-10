@@ -1409,7 +1409,7 @@ class BWM(ComparableMixin):
                     "v1": face.v1.serialize(),
                     "v2": face.v2.serialize(),
                     "v3": face.v3.serialize(),
-                    "material": face.material.value if hasattr(face.material, "value") else int(face.material),
+                    "material": face.material.value,
                     "trans1": face.trans1,
                     "trans2": face.trans2,
                     "trans3": face.trans3,
@@ -1417,7 +1417,7 @@ class BWM(ComparableMixin):
             )
 
         return {
-            "walkmesh_type": self.walkmesh_type.value if hasattr(self.walkmesh_type, "value") else int(self.walkmesh_type),
+            "walkmesh_type": self.walkmesh_type.value,
             "vertices": vertices,
             "faces": faces,
         }

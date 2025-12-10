@@ -219,11 +219,13 @@ class SceneBase:
     def __del__(self):
         """Cleanup async resources when scene is destroyed."""
         try:
-            if hasattr(self, "async_loader") and self.async_loader is not None:
+            if self.async_loader is not None:
                 self.async_loader.shutdown(wait=False)
                 RobustLogger().debug("Scene cleanup: shutdown async loader")
-        except Exception:  # noqa: BLE001, S110
-            pass  # Don't raise exceptions in __del__
+        except Exception as e:  # noqa: BLE001, S110
+            # Log but don't raise exceptions in __del__
+            # Note: With strict type checking, async_loader should always exist after __init__
+            RobustLogger().warning(f"Exception during scene cleanup: {e}", exc_info=True)
 
     def set_lyt(self, lyt: LYT):
         self.layout = lyt

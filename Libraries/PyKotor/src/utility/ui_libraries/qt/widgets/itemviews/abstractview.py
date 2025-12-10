@@ -58,7 +58,7 @@ class RobustAbstractItemView(RobustBaseWidget, QAbstractItemView if TYPE_CHECKIN
         super().setParent(parent) if f is None else super().setParent(parent, f)
 
     def _fix_drawer_button(self):
-        if not hasattr(self, "_robust_drawer"):
+        if self._robust_drawer is None:
             self._create_drawer_button()
             self._robust_drawer.show()
         vert_scroll_bar: QScrollBar | None = self.verticalScrollBar()

@@ -714,7 +714,7 @@ class GITDoor(GITInstance):
         """Serialize GITDoor-specific data."""
         # transition_destination is a LocalizedString, not Vector3
         transition_locstring = self.transition_destination
-        transition_stringref = transition_locstring.stringref if hasattr(transition_locstring, 'stringref') else -1
+        transition_stringref = transition_locstring.stringref
 
         return {
             "resref": str(self.resref),
@@ -722,7 +722,7 @@ class GITDoor(GITInstance):
             "tag": self.tag,
             "linked_to_module": str(self.linked_to_module),
             "linked_to": self.linked_to,
-            "linked_to_flags": self.linked_to_flags.value if hasattr(self.linked_to_flags, 'value') else int(self.linked_to_flags),
+            "linked_to_flags": self.linked_to_flags.value,
             "transition_destination_stringref": transition_stringref,
         }
 
@@ -1088,7 +1088,7 @@ class GITTrigger(GITInstance):
 
         # transition_destination is a LocalizedString
         transition_locstring = self.transition_destination
-        transition_stringref = transition_locstring.stringref if hasattr(transition_locstring, 'stringref') else -1
+        transition_stringref = transition_locstring.stringref
 
         return {
             "resref": str(self.resref),
@@ -1096,7 +1096,7 @@ class GITTrigger(GITInstance):
             "geometry": geometry,
             "linked_to_module": str(self.linked_to_module),
             "linked_to": self.linked_to,
-            "linked_to_flags": self.linked_to_flags.value if hasattr(self.linked_to_flags, 'value') else int(self.linked_to_flags),
+            "linked_to_flags": self.linked_to_flags.value,
             "transition_destination_stringref": transition_stringref,
         }
 

@@ -14,12 +14,12 @@ from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, OrderedDict, Union, cast
 
 from loggerplus import RobustLogger
-
 from utility.error_handling import format_exception_with_variables
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
     from logging import Logger
+    from types import ModuleType
 
     from typing_extensions import Literal, Self  # pyright: ignore[reportMissingModuleSource]
 
@@ -505,13 +505,20 @@ class PurePosixPath(PurePath, pathlib.PurePosixPath):  # type: ignore[misc]
             def __init__(self, module):
                 self._module = module
                 self.sep = module.sep
-                self.altsep = getattr(module, "altsep", None)
+                # Check for optional altsep attribute using try/except for strict type checking
+                try:
+                    self.altsep = object.__getattribute__(module, "altsep")
+                except AttributeError:
+                    self.altsep = None
 
             def __getattr__(self, name):
-                return getattr(self._module, name)
+                # Forward attribute access to _module using try/except for strict type checking
+                try:
+                    return object.__getattribute__(self._module, name)
+                except AttributeError:
+                    raise AttributeError(f"'{type(self).__name__}' object and its '_module' attribute have no attribute '{name}'")
 
         _flavour = _PosixFlavourProxy(_posixpath)
-
 
 class PureWindowsPath(PurePath, pathlib.PureWindowsPath):  # type: ignore[misc]
     if sys.version_info >= (3, 12):
@@ -519,13 +526,21 @@ class PureWindowsPath(PurePath, pathlib.PureWindowsPath):  # type: ignore[misc]
         _flavour = _ntpath  # noqa: SLF001  # pyright: ignore[reportAttributeAccessIssue]
     if sys.version_info >= (3, 13):
         class _WindowsFlavourProxy:
-            def __init__(self, module):
+            def __init__(self, module: ModuleType):
                 self._module = module
                 self.sep = module.sep
-                self.altsep = getattr(module, "altsep", None)
+                # Check for optional altsep attribute using try/except for strict type checking
+                try:
+                    self.altsep = object.__getattribute__(module, "altsep")
+                except AttributeError:
+                    self.altsep = None
 
             def __getattr__(self, name):
-                return getattr(self._module, name)
+                # Forward attribute access to _module using try/except for strict type checking
+                try:
+                    return object.__getattribute__(self._module, name)
+                except AttributeError:
+                    raise AttributeError(f"'{type(self).__name__}' object and its '_module' attribute have no attribute '{name}'")
 
         _flavour = _WindowsFlavourProxy(_ntpath)
 

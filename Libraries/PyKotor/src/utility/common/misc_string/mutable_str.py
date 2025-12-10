@@ -40,10 +40,21 @@ class WrappedStr(str):
             try:
                 return super().__getattribute__(name)
             except AttributeError:
-                return getattr(self._content, name)
+                # Forward attribute access to _content using try/except for strict type checking
+                try:
+                    return object.__getattribute__(self._content, name)
+                except AttributeError:
+                    raise AttributeError(f"'{type(self).__name__}' object and its '_content' attribute have no attribute '{name}'")
 
     # region Forwards Compatibility
-    if not hasattr(str, "__reduce_ex__"):
+    # Check if str has __reduce_ex__ using try/except for strict type checking
+    try:
+        object.__getattribute__(str, "__reduce_ex__")
+        _has_reduce_ex = True
+    except AttributeError:
+        _has_reduce_ex = False
+    
+    if not _has_reduce_ex:
         def __reduce_ex__(self, protocol: int):
             if protocol >= 2:  # Protocol version 2 or higher uses a more efficient pickling format  # noqa: PLR2004
                 return (self.__class__, (str(self),), None, None, None)
@@ -63,7 +74,14 @@ class WrappedStr(str):
             raise TypeError(msg)
         return str(var)
 
-    if not hasattr(str, "removeprefix"):
+    # Check if str has removeprefix using try/except for strict type checking
+    try:
+        object.__getattribute__(str, "removeprefix")
+        _has_removeprefix = True
+    except AttributeError:
+        _has_removeprefix = False
+    
+    if not _has_removeprefix:
         def removeprefix(
             self,
             __prefix: WrappedStr | str,
@@ -73,7 +91,14 @@ class WrappedStr(str):
                 return self.__class__(self._content[len(parsed_prefix) :])
             return self.__class__(self._content)
 
-    if not hasattr(str, "removesuffix"):
+    # Check if str has removesuffix using try/except for strict type checking
+    try:
+        object.__getattribute__(str, "removesuffix")
+        _has_removesuffix = True
+    except AttributeError:
+        _has_removesuffix = False
+    
+    if not _has_removesuffix:
         def removesuffix(
             self,
             __suffix: WrappedStr | str,

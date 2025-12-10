@@ -55,8 +55,7 @@ class DoTypes(PrunedDepthFirstAdapter):
     def assert_stack(self):
         if self.stack.size() > 0:
             print("Uh-oh... dumping main() state:")
-            if hasattr(self.state, "print_state"):
-                self.state.print_state()
+            self.state.print_state()
             raise RuntimeError(f"Error: Final stack size {self.stack.size()}")
 
     def out_a_rsadd_command(self, node):
@@ -196,8 +195,7 @@ class DoTypes(PrunedDepthFirstAdapter):
                 raise RuntimeError(f"Jump to subroutine at position {dest_pos}: subroutine state not found. The subroutine may not have been registered.")
             if not substate.is_prototyped():
                 print("Uh-oh...")
-                if hasattr(substate, "print_state"):
-                    substate.print_state()
+                substate.print_state()
                 raise RuntimeError(f"Hit JSR on unprototyped subroutine {self.nodedata.get_pos(subroutine_node)}")
             paramsize = substate.get_param_count()
             if substate.is_totally_prototyped():

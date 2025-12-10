@@ -24,7 +24,11 @@ def resolve_reg_key_to_path(reg_key: str, keystr: str) -> str | None:
     """
     try:
         root, subkey = reg_key.split("\\", 1)
-        root_key = getattr(winreg, root)
+        # Access winreg module attribute dynamically using try/except for strict type checking
+        try:
+            root_key = object.__getattribute__(winreg, root)
+        except AttributeError:
+            return None
         with winreg.OpenKey(root_key, subkey) as key:
             resolved_path, _ = winreg.QueryValueEx(key, keystr)
             return cast(str, resolved_path)

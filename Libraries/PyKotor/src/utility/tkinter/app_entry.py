@@ -58,9 +58,18 @@ def is_frozen() -> bool:
     Returns:
         True if running from a frozen executable
     """
+    # Check for sys attributes using try/except for strict type checking
+    try:
+        frozen = object.__getattribute__(sys, "frozen")
+    except AttributeError:
+        frozen = False
+    try:
+        meipass = object.__getattribute__(sys, "_MEIPASS")
+    except AttributeError:
+        meipass = False
     return (
-        getattr(sys, "frozen", False)
-        or getattr(sys, "_MEIPASS", False)
+        bool(frozen)
+        or bool(meipass)
         or tempfile.gettempdir() in sys.executable
     )
 

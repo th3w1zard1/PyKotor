@@ -33,10 +33,9 @@ if _pythonpath:
             if path_obj.exists() and str(path_obj) not in sys.path:
                 sys.path.insert(0, str(path_obj))
 
-# Set Qt API to PyQt5 (default) before any Qt imports
-# qtpy will use this to select the appropriate bindings
-if "QT_API" not in os.environ:
-    os.environ["QT_API"] = "PyQt5"
+# Qt API parameterization - will be set per-test via fixture
+# Store original QT_API if set
+_original_qt_api = os.environ.get("QT_API")
 
 # Configure Qt for headless testing by default
 # Most tests should run headless (offscreen) to avoid spawning GUI windows
@@ -78,6 +77,128 @@ def _is_module_designer_test(item: pytest.Item) -> bool:
         return True
     
     return False
+
+def _check_qt_api_available(api_name: str) -> bool:
+    """Check if a Qt API is available for import.
+    
+    Args:
+        api_name: Qt API name (e.g., "PyQt6", "PyQt5", "PySide6")
+    
+    Returns:
+        True if the API is available, False otherwise
+    """
+    import importlib.util
+    api_module_map = {
+        "PyQt6": "PyQt6.QtCore",
+        "PyQt5": "PyQt5.QtCore",
+        "PySide6": "PySide6.QtCore",
+    }
+    module_name = api_module_map.get(api_name)
+    if module_name is None:
+        return False
+    try:
+        importlib.import_module(module_name)
+        return True
+    except ImportError:
+        return False
+
+def pytest_generate_tests(metafunc: pytest.Metafunc):
+    """Automatically parametrize all tests with qt_api parameter.
+    
+    This hook runs during test collection and adds the qt_api parameter
+    to all test functions, causing each test to run with each Qt API.
+    Tests that don't use Qt (no qtpy imports) will still be parametrized
+    but the fixture will just yield without doing anything.
+    """
+    # Skip if test explicitly opts out
+    if metafunc.definition.get_closest_marker("no_qt_api_parametrize"):
+        return
+    
+    # Qt API options to test
+    qt_apis = ["pyqt6", "pyqt5", "pyside6"]
+    
+    # Always parametrize with qt_api (the fixture will handle skipping if not needed)
+    # Add qt_api to fixturenames if not already there
+    if "qt_api" not in metafunc.fixturenames:
+        metafunc.fixturenames.append("qt_api")
+    
+    # Parametrize the test with qt_api
+    metafunc.parametrize("qt_api", qt_apis, indirect=True)
+
+@pytest.fixture(scope="function")
+def qt_api(request: pytest.FixtureRequest):
+    """Fixture that sets the Qt API for each test.
+    
+    This fixture is automatically used by all tests via pytest_collection_modifyitems.
+    It sets the QT_API environment variable and clears qtpy modules to force
+    re-import with the selected API.
+    
+    Note: Since Qt imports often happen at module level, this fixture clears
+    qtpy modules to allow re-import. However, the underlying PyQt/PySide
+    modules may already be imported, which can cause issues. For best results,
+    test files should import qtpy inside test functions rather than at module level.
+    
+    Args:
+        request: pytest request object
+    
+    Yields:
+        str: The Qt API name (e.g., "PyQt6", "PyQt5", "PySide6")
+    """
+    api_name_map = {
+        "pyqt6": "PyQt6",
+        "pyqt5": "PyQt5",
+        "pyside6": "PySide6",
+    }
+    
+    # Get the API parameter from request.param (set by parametrize)
+    api_param = getattr(request, "param", None)
+    if api_param is None:
+        pytest.skip("qt_api parameter not set")
+    
+    api_name = api_name_map.get(api_param)
+    if api_name is None:
+        pytest.skip(f"Unknown Qt API: {request.param}")
+    
+    # Check if API is available
+    if not _check_qt_api_available(api_name):
+        pytest.skip(f"Qt API {api_name} is not installed")
+    
+    # Store original QT_API
+    original_qt_api = os.environ.get("QT_API")
+    
+    # Set QT_API - this will be used by qtpy when it's (re-)imported
+    os.environ["QT_API"] = api_name
+    
+    # Clear any cached qtpy imports to force re-import with new API
+    # This is important because qtpy caches the API selection at import time
+    # We need to clear qtpy modules so they can be re-imported with the new API
+    import importlib
+    modules_to_remove = [key for key in list(sys.modules.keys()) if key.startswith("qtpy")]
+    for module_name in modules_to_remove:
+        del sys.modules[module_name]
+    
+    # Try to reload qtpy if it was imported at module level
+    # This allows tests with module-level qtpy imports to use the new API
+    try:
+        import qtpy
+        importlib.reload(qtpy)
+    except (ImportError, KeyError):
+        # qtpy not imported yet, or reload failed - that's okay
+        pass
+    
+    try:
+        yield api_name
+    finally:
+        # Restore original QT_API
+        if original_qt_api is not None:
+            os.environ["QT_API"] = original_qt_api
+        elif "QT_API" in os.environ:
+            del os.environ["QT_API"]
+        
+        # Clear qtpy modules again to allow next test to use different API
+        modules_to_remove = [key for key in sys.modules.keys() if key.startswith("qtpy")]
+        for module_name in modules_to_remove:
+            del sys.modules[module_name]
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: pytest.Item):
