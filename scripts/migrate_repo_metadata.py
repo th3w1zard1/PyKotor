@@ -354,10 +354,29 @@ def migrate_releases(source_repo: str, target_repo: str, recreate_in_order: bool
         migrated_releases = 0
         skipped_releases = 0
         
+        # Wait a bit more and verify deletions
+        print("Verifying all releases are deleted...")
+        time.sleep(2)
+        remaining_releases = get_all_releases(target_repo)
+        if remaining_releases:
+            print(f"WARNING: {len(remaining_releases)} releases still exist. Attempting to delete again...")
+            for release in remaining_releases:
+                delete_release(target_repo, release["id"])
+                time.sleep(0.5)
+            time.sleep(3)
+        
         for i, release in enumerate(sorted_releases, 1):
             print(f"\n[{i}/{len(sorted_releases)}] Creating: {release['tag_name']}")
             print(f"  Name: {release.get('name', 'N/A')[:50]}")
             print(f"  Original date: {get_published_date(release)}")
+            
+            # Double-check it doesn't exist (idempotency)
+            existing = get_all_releases(target_repo)
+            existing_tags = {r["tag_name"] for r in existing}
+            if release["tag_name"] in existing_tags:
+                print(f"    SKIP: {release['tag_name']} already exists (idempotency check)")
+                skipped_releases += 1
+                continue
             
             if create_release(target_repo, release, source_repo):
                 print(f"    SUCCESS: Created {release['tag_name']}")
@@ -372,10 +391,11 @@ def migrate_releases(source_repo: str, target_repo: str, recreate_in_order: bool
             else:
                 time.sleep(1)
         
-        print(f"\nReleases: {migrated_releases} created, {skipped_releases} failed")
+        print(f"\nReleases: {migrated_releases} created, {skipped_releases} skipped/failed")
     else:
-        # Standard migration (skip existing)
-        existing_releases = {r["tag_name"] for r in get_all_releases(target_repo)}
+        # Standard migration (skip existing) - IDEMPOTENT
+        existing_releases_list = get_all_releases(target_repo)
+        existing_releases = {r["tag_name"] for r in existing_releases_list}
         print(f"Found {len(existing_releases)} existing releases in target repository")
 
         migrated_releases = 0
@@ -383,11 +403,19 @@ def migrate_releases(source_repo: str, target_repo: str, recreate_in_order: bool
 
         for release in sorted_releases:
             if release["tag_name"] in existing_releases:
-                print(f"  SKIP: {release['tag_name']} (already exists)")
+                print(f"  SKIP: {release['tag_name']} (already exists - idempotency)")
                 skipped_releases += 1
                 continue
 
             print(f"  Creating: {release['tag_name']} - {release.get('name', 'N/A')[:50]}")
+            
+            # Double-check before creating (idempotency)
+            current_existing = {r["tag_name"] for r in get_all_releases(target_repo)}
+            if release["tag_name"] in current_existing:
+                print(f"    SKIP: {release['tag_name']} was created by another process")
+                skipped_releases += 1
+                continue
+            
             if create_release(target_repo, release, source_repo):
                 print(f"    SUCCESS: Created {release['tag_name']}")
                 migrated_releases += 1
@@ -401,20 +429,68 @@ def migrate_releases(source_repo: str, target_repo: str, recreate_in_order: bool
     return migrated_releases, skipped_releases
 
 
+def get_existing_issue_by_title(target_repo: str, title: str) -> dict[str, Any] | None:
+    """Check if an issue with the same title already exists."""
+    issues = get_all_issues(target_repo)
+    for issue in issues:
+        if issue["title"] == title:
+            return issue
+    return None
+
+
+def get_existing_comments(target_repo: str, issue_number: int) -> list[dict[str, Any]]:
+    """Get all existing comments for an issue."""
+    return get_issue_comments(target_repo, issue_number)
+
+
 def migrate_issues(source_repo: str, target_repo: str) -> tuple[int, int]:
-    """Migrate all issues from source to target."""
+    """Migrate all issues from source to target. Idempotent - checks for existing issues."""
     print("\n" + "=" * 60)
     print("STEP 2: MIGRATING ISSUES")
     print("=" * 60)
     issues = get_all_issues(source_repo)
     print(f"Found {len(issues)} issues in source repository")
 
+    # Get existing issues by title for idempotency
+    print("Checking for existing issues...")
+    existing_issues = get_all_issues(target_repo)
+    existing_by_title = {issue["title"]: issue for issue in existing_issues}
+    print(f"Found {len(existing_by_title)} existing issues in target repository")
+
     migrated_issues = 0
+    skipped_issues = 0
     failed_issues = 0
 
     for idx, issue in enumerate(issues, 1):
         print(f"\n[{idx}/{len(issues)}] Issue #{issue['number']}: {issue['title'][:60]}")
 
+        # Check if issue already exists (idempotency)
+        if issue["title"] in existing_by_title:
+            existing_issue = existing_by_title[issue["title"]]
+            print(f"  SKIP: Issue already exists (#{existing_issue['number']})")
+            skipped_issues += 1
+            
+            # Check if metadata footer is missing and add it
+            body = existing_issue.get("body") or ""
+            if "Migrated from:" not in body:
+                print("  Adding missing metadata footer...")
+                footer = create_metadata_footer(issue, source_repo)
+                new_body = body + footer
+                update_issue_body(target_repo, existing_issue["number"], new_body)
+            
+            # Check if comments need to be migrated
+            source_comments = get_issue_comments(source_repo, issue["number"])
+            existing_comments = get_existing_comments(target_repo, existing_issue["number"])
+            
+            if source_comments and len(source_comments) > len(existing_comments):
+                print(f"  Migrating {len(source_comments) - len(existing_comments)} missing comments...")
+                for comment in source_comments[len(existing_comments):]:
+                    if create_issue_comment(target_repo, existing_issue["number"], comment):
+                        pass  # Success
+                    time.sleep(0.5)
+            continue
+
+        # Issue doesn't exist, create it
         # Try with milestone first, then without if it fails
         new_issue = create_issue(target_repo, issue, skip_milestone=False)
         if not new_issue:
@@ -447,7 +523,7 @@ def migrate_issues(source_repo: str, target_repo: str) -> tuple[int, int]:
 
         time.sleep(1)  # Rate limiting
 
-    print(f"\nIssues: {migrated_issues} migrated, {failed_issues} failed")
+    print(f"\nIssues: {migrated_issues} migrated, {skipped_issues} skipped, {failed_issues} failed")
     return migrated_issues, failed_issues
 
 
