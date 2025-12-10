@@ -480,3 +480,23 @@ class DLGEntry(DLGNode):
         self.speaker: str = ""
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    @property
+    def animation_id(self) -> int | None:
+        """Get the animation ID (maps to camera_anim).
+
+        Returns:
+        -------
+            The camera animation ID, or None if not set.
+        """
+        return self.camera_anim
+
+    @animation_id.setter
+    def animation_id(self, value: int | None) -> None:
+        """Set the animation ID (maps to camera_anim).
+
+        Args:
+        ----
+            value: The camera animation ID to set, or None to clear.
+        """
+        self.camera_anim = value
