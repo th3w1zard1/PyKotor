@@ -1,6 +1,6 @@
 # KotOR [LYT files](LYT-File-Format) [format](GFF-File-Format) Documentation
 
-LYT (Layout) [files](GFF-File-Format) define how area [room models](LYT-File-Format#room-definitions) [ARE](GFF-File-Format#are-area) positioned inside a module. They [ARE](GFF-File-Format#are-area) plain-text descriptors that list room placements, swoop-track props, obstacles, and door hook transforms. The engine combines this [data](GFF-File-Format#file-structure) with [MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format) [geometry](MDL-MDX-File-Format#geometry-header) to assemble the final area.
+LYT (Layout) [files](GFF-File-Format) define how area [room models](LYT-File-Format#room-definitions) [ARE](GFF-File-Format#are-area) positioned inside a module. They [ARE](GFF-File-Format#are-area) plain-text descriptors that list room placements, swoop-track props, obstacles, and door hook transforms. The engine combines this [data](GFF-File-Format#file-structure-overview) with [MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format) [geometry](MDL-MDX-File-Format#geometry-header) to assemble the final area.
 
 ## Table of Contents
 
@@ -20,8 +20,8 @@ LYT (Layout) [files](GFF-File-Format) define how area [room models](LYT-File-For
 ## [format](GFF-File-Format) Overview
 
 - [LYT files](LYT-File-Format) [ARE](GFF-File-Format#are-area) [ASCII](https://en.wikipedia.org/wiki/ASCII) text with a deterministic order: `beginlayout`, optional sections, then `donelayout`.  
-- Every section declares a [count](GFF-File-Format#file-structure) and then lists entries on subsequent lines.  
-- All implementations (`vendor/reone`, `vendor/xoreos`, `vendor/KotOR.js`, `vendor/Kotor.NET`) parse identical tokens; KotOR-Unity mirrors the same [structure](GFF-File-Format#file-structure).  
+- Every section declares a [count](GFF-File-Format#file-structure-overview) and then lists entries on subsequent lines.  
+- All implementations (`vendor/reone`, `vendor/xoreos`, `vendor/KotOR.js`, `vendor/Kotor.NET`) parse identical tokens; KotOR-Unity mirrors the same [structure](GFF-File-Format#file-structure-overview).  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/lyt/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/lyt)
 
@@ -63,7 +63,7 @@ donelayout
 | Token | Description |
 | ----- | ----------- |
 | `roomcount` | Declares how many rooms follow. |
-| `<room_model>` | [ResRef](GFF-File-Format#resref) of the [MDL/MDX](MDL-MDX-File-Format)/[WOK](BWM-File-Format) triple (max 16 chars, no spaces). |
+| `<room_model>` | [ResRef](GFF-File-Format#gff-data-types) of the [MDL/MDX](MDL-MDX-File-Format)/[WOK](BWM-File-Format) triple (max 16 chars, no spaces). |
 | `<x y z>` | World-space [position](MDL-MDX-File-Format#node-header) for the room’s origin. |
 
 Rooms [ARE](GFF-File-Format#are-area) case-insensitive; PyKotor lowercases entries for caching and resource lookup.
@@ -84,7 +84,7 @@ trackcount <N>
 | Token | Description |
 | ----- | ----------- |
 | `trackcount` | Declares how many track elements follow |
-| `<track_model>` | [ResRef](GFF-File-Format#resref) of the track booster model ([MDL](MDL-MDX-File-Format) [file](GFF-File-Format), max 16 chars) |
+| `<track_model>` | [ResRef](GFF-File-Format#gff-data-types) of the track booster model ([MDL](MDL-MDX-File-Format) [file](GFF-File-Format), max 16 chars) |
 | `<x y z>` | World-space [position](MDL-MDX-File-Format#node-header) for the track element |
 
 **Usage:**
@@ -112,7 +112,7 @@ obstaclecount <N>
 | Token | Description |
 | ----- | ----------- |
 | `obstaclecount` | Declares how many obstacle elements follow |
-| `<obstacle_model>` | [ResRef](GFF-File-Format#resref) of the obstacle model ([MDL](MDL-MDX-File-Format) [file](GFF-File-Format), max 16 chars) |
+| `<obstacle_model>` | [ResRef](GFF-File-Format#gff-data-types) of the obstacle model ([MDL](MDL-MDX-File-Format) [file](GFF-File-Format), max 16 chars) |
 | `<x y z>` | World-space [position](MDL-MDX-File-Format#node-header) for the obstacle element |
 
 **Usage:**
@@ -158,7 +158,7 @@ doorhookcount <N>
 
 - Door hooks in [LYT files](LYT-File-Format) define where doors [ARE](GFF-File-Format#are-area) placed in the layout
 - [BWM](BWM-File-Format) [walkmeshes](BWM-File-Format) may have [edge](BWM-File-Format#edges) transitions that reference these door hooks
-- The engine combines [LYT](LYT-File-Format) doorhook [positions](MDL-MDX-File-Format#node-header) with [BWM](BWM-File-Format) transition [data](GFF-File-Format#file-structure) to create functional doorways
+- The engine combines [LYT](LYT-File-Format) doorhook [positions](MDL-MDX-File-Format#node-header) with [BWM](BWM-File-Format) transition [data](GFF-File-Format#file-structure-overview) to create functional doorways
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py:378-456`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py#L378-L456)
 
@@ -179,7 +179,7 @@ doorhookcount <N>
 ## Implementation Details
 
 - **Parser:** [`Libraries/PyKotor/src/pykotor/resource/formats/lyt/io_lyt.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/lyt/io_lyt.py)  
-- **[data](GFF-File-Format#file-structure) [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py)  
+- **[data](GFF-File-Format#file-structure-overview) [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/resource/format/lytreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/lytreader.cpp)  
   - [`vendor/xoreos/src/aurora/lytfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/lytfile.cpp)  

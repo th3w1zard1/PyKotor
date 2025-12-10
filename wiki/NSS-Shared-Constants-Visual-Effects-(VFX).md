@@ -38,7 +38,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `VFX_BEAM_DEATH_FIELD_TENTACLE`
 
-(2026): Vfx Beam Death [field](GFF-File-Format#file-structure) Tentacle
+(2026): Vfx Beam Death [field](GFF-File-Format#file-structure-overview) Tentacle
 
 <a id="vfx_beam_drain_life"></a>
 
@@ -632,7 +632,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `VFX_PRO_DEATH_FIELD`
 
-(1006): Vfx Pro Death [field](GFF-File-Format#file-structure)
+(1006): Vfx Pro Death [field](GFF-File-Format#file-structure-overview)
 
 <a id="vfx_pro_drain"></a>
 

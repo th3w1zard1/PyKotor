@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines bindable [KEY](KEY-File-Format) actions and their [string](GFF-File-Format#cexostring) references. The engine uses this [file](GFF-File-Format) to determine [KEY](KEY-File-Format) action names for the [KEY](KEY-File-Format) binding interface.
+**Engine Usage**: Defines bindable [KEY](KEY-File-Format) actions and their [string](GFF-File-Format#gff-data-types) references. The engine uses this [file](GFF-File-Format) to determine [KEY](KEY-File-Format) action names for the [KEY](KEY-File-Format) binding interface.
 
 **Row [index](2DA-File-Format#row-labels)**: Bindable [KEY](KEY-File-Format) ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Bindable [KEY](KEY-File-Format) label |
-| `keynamestrref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for [KEY](KEY-File-Format) name |
+| `label` | [string](GFF-File-Format#gff-data-types) | Bindable [KEY](KEY-File-Format) label |
+| `keynamestrref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for [KEY](KEY-File-Format) name |
 | Additional columns | Various | [KEY](KEY-File-Format) binding properties |
 
 **References**:

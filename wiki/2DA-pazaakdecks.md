@@ -6,11 +6,11 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Pazaak Deck ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Deck label |
+| `label` | [string](GFF-File-Format#gff-data-types) | Deck label |
 | Additional columns | Various | Deck card definitions and properties |
 
 **References**:

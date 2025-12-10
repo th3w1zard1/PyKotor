@@ -6,11 +6,11 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Planet ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Planet label |
+| `label` | [string](GFF-File-Format#gff-data-types) | Planet label |
 | Additional columns | Various | Planet properties and travel information |
 
 **References**:

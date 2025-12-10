@@ -6,18 +6,18 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Loading Screen ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Loading screen label |
-| `bmpresref` | [ResRef](GFF-File-Format#resref) | Loading screen background image [ResRef](GFF-File-Format#resref) |
-| `musicresref` | [ResRef](GFF-File-Format#resref) | Music track [ResRef](GFF-File-Format#resref) to play during loading |
+| `label` | [string](GFF-File-Format#gff-data-types) | Loading screen label |
+| `bmpresref` | [ResRef](GFF-File-Format#gff-data-types) | Loading screen background image [ResRef](GFF-File-Format#gff-data-types) |
+| `musicresref` | [ResRef](GFF-File-Format#gff-data-types) | Music track [ResRef](GFF-File-Format#gff-data-types) to play during loading |
 | Additional columns | Various | Other loading screen properties |
 
 **References**:
 
 - [`vendor/KotOR.js/src/module/ModuleArea.ts:210`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/module/ModuleArea.ts#L210) - Comment referencing loadscreens.2da for area loading screen [index](2DA-File-Format#row-labels)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:549`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L549) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure) mapping: "LoadScreenID" -> loadscreens.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:549`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L549) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "LoadScreenID" -> loadscreens.2da
 
 ---

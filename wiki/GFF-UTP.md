@@ -8,41 +8,41 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utp.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utp.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure)
+## Core Identity [fields](GFF-File-Format#file-structure-overview)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | Template identifier for this placeable |
-| `Tag` | [CExoString](GFF-File-Format#cexostring) | Unique tag for script references |
-| `LocName` | [CExoLocString](GFF-File-Format#localizedstring) | Placeable name (localized) |
-| `Description` | [CExoLocString](GFF-File-Format#localizedstring) | Placeable description |
-| `Comment` | [CExoString](GFF-File-Format#cexostring) | Developer comment/notes |
+| `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this placeable |
+| `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script references |
+| `LocName` | [CExoLocString](GFF-File-Format#gff-data-types) | Placeable name (localized) |
+| `Description` | [CExoLocString](GFF-File-Format#gff-data-types) | Placeable description |
+| `Comment` | [CExoString](GFF-File-Format#gff-data-types) | Developer comment/notes |
 
-## Appearance & [type](GFF-File-Format#data-types)
+## Appearance & [type](GFF-File-Format#gff-data-types)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Appearance` | DWord | [index](2DA-File-Format#row-labels) into [`placeables.2da`](2DA-placeables) |
-| `Type` | Byte | Placeable [type](GFF-File-Format#data-types) category |
+| `Type` | Byte | Placeable [type](GFF-File-Format#gff-data-types) category |
 | `AnimationState` | Byte | Current [animation](MDL-MDX-File-Format#animation-header) state |
 
 **Appearance System:**
 
 - [`placeables.2da`](2DA-placeables) defines [models](MDL-MDX-File-Format), lighting, and sounds
 - Appearance determines visual [model](MDL-MDX-File-Format) and interaction [animation](MDL-MDX-File-Format#animation-header)
-- [type](GFF-File-Format#data-types) influences behavior (container, switch, generic)
+- [type](GFF-File-Format#gff-data-types) influences behavior (container, switch, generic)
 
 ## Inventory System
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `HasInventory` | Byte | Placeable contains items |
 | `ItemList` | List | Items in inventory |
 | `BodyBag` | Byte | Container for corpse loot |
 
-**ItemList Struct [fields](GFF-File-Format#file-structure):**
+**ItemList Struct [fields](GFF-File-Format#file-structure-overview):**
 
-- `InventoryRes` ([ResRef](GFF-File-Format#resref)): [UTI](GFF-File-Format#uti-item) template [ResRef](GFF-File-Format#resref)
+- `InventoryRes` ([ResRef](GFF-File-Format#gff-data-types)): [UTI](GFF-File-Format#uti-item) template [ResRef](GFF-File-Format#gff-data-types)
 - `Repos_PosX` (Word): Grid X position (optional)
 - `Repos_Posy` (Word): Grid Y position (optional)
 - `Dropable` (Byte): Can drop item
@@ -56,15 +56,15 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Locking & Security
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Locked` | Byte | Placeable is currently locked |
 | `Lockable` | Byte | Can be locked/unlocked |
 | `KeyRequired` | Byte | Requires specific [KEY](KEY-File-Format) item |
-| `KeyName` | [CExoString](GFF-File-Format#cexostring) | Tag of required [KEY](KEY-File-Format) [item](GFF-File-Format#uti-item) |
+| `KeyName` | [CExoString](GFF-File-Format#gff-data-types) | Tag of required [KEY](KEY-File-Format) [item](GFF-File-Format#uti-item) |
 | `AutoRemoveKey` | Byte | [KEY](KEY-File-Format) consumed on use |
 | `OpenLockDC` | Byte | Security skill DC to pick lock |
-| `CloseLockDC` (KotOR2) | [byte](GFF-File-Format#byte) | Security DC to lock |
+| `CloseLockDC` (KotOR2) | [byte](GFF-File-Format#gff-data-types) | Security DC to lock |
 | `OpenLockDiff` (KotOR2) | Int | Additional difficulty modifier |
 | `OpenLockDiffMod` (KotOR2) | Int | Modifier to difficulty |
 
@@ -76,12 +76,12 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Hit Points & Durability
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `HP` | Short | Maximum hit points |
 | `CurrentHP` | Short | Current hit points |
 | `Hardness` | Byte | Damage reduction |
-| `Min1HP` (KotOR2) | [byte](GFF-File-Format#byte) | Cannot drop below 1 HP |
+| `Min1HP` (KotOR2) | [byte](GFF-File-Format#gff-data-types) | Cannot drop below 1 HP |
 | `Fort` | Byte | Fortitude save (usually 0) |
 | `Ref` | Byte | Reflex save (usually 0) |
 | `Will` | Byte | Will save (usually 0) |
@@ -94,15 +94,15 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Interaction & Behavior
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Plot` | Byte | Plot-critical (cannot be destroyed) |
 | `Static` | Byte | Static geometry (no interaction) |
 | `Useable` | Byte | Can be clicked/used |
-| `Conversation` | [ResRef](GFF-File-Format#resref) | [Dialog](GFF-DLG) [file](GFF-File-Format) when used |
+| `Conversation` | [ResRef](GFF-File-Format#gff-data-types) | [Dialog](GFF-DLG) [file](GFF-File-Format) when used |
 | `Faction` | Word | Faction identifier |
 | `PartyInteract` | Byte | Requires party member selection |
-| `NotBlastable` (KotOR2) | [byte](GFF-File-Format#byte) | Immune to area damage |
+| `NotBlastable` (KotOR2) | [byte](GFF-File-Format#gff-data-types) | Immune to area damage |
 
 **Usage Patterns:**
 
@@ -113,27 +113,27 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Script Hooks
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `OnClosed` | [ResRef](GFF-File-Format#resref) | Fires when container closes |
-| `OnDamaged` | [ResRef](GFF-File-Format#resref) | Fires when placeable takes damage |
-| `OnDeath` | [ResRef](GFF-File-Format#resref) | Fires when placeable is destroyed |
-| `OnDisarm` | [ResRef](GFF-File-Format#resref) | Fires when trap is disarmed |
-| `OnEndDialogue` | [ResRef](GFF-File-Format#resref) | Fires when conversation ends |
-| `OnHeartbeat` | [ResRef](GFF-File-Format#resref) | Fires periodically |
-| `OnInvDisturbed` | [ResRef](GFF-File-Format#resref) | Fires when inventory changed |
-| `OnLock` | [ResRef](GFF-File-Format#resref) | Fires when locked |
-| `OnMeleeAttacked` | [ResRef](GFF-File-Format#resref) | Fires when attacked in melee |
-| `OnOpen` | [ResRef](GFF-File-Format#resref) | Fires when opened |
-| `OnSpellCastAt` | [ResRef](GFF-File-Format#resref) | Fires when spell cast at placeable |
-| `OnUnlock` | [ResRef](GFF-File-Format#resref) | Fires when unlocked |
-| `OnUsed` | [ResRef](GFF-File-Format#resref) | Fires when used/clicked |
-| `OnUserDefined` | [ResRef](GFF-File-Format#resref) | Fires on user-defined events |
-| `OnFailToOpen` (KotOR2) | [ResRef](GFF-File-Format#resref) | Fires when opening fails |
+| `OnClosed` | [ResRef](GFF-File-Format#gff-data-types) | Fires when container closes |
+| `OnDamaged` | [ResRef](GFF-File-Format#gff-data-types) | Fires when placeable takes damage |
+| `OnDeath` | [ResRef](GFF-File-Format#gff-data-types) | Fires when placeable is destroyed |
+| `OnDisarm` | [ResRef](GFF-File-Format#gff-data-types) | Fires when trap is disarmed |
+| `OnEndDialogue` | [ResRef](GFF-File-Format#gff-data-types) | Fires when conversation ends |
+| `OnHeartbeat` | [ResRef](GFF-File-Format#gff-data-types) | Fires periodically |
+| `OnInvDisturbed` | [ResRef](GFF-File-Format#gff-data-types) | Fires when inventory changed |
+| `OnLock` | [ResRef](GFF-File-Format#gff-data-types) | Fires when locked |
+| `OnMeleeAttacked` | [ResRef](GFF-File-Format#gff-data-types) | Fires when attacked in melee |
+| `OnOpen` | [ResRef](GFF-File-Format#gff-data-types) | Fires when opened |
+| `OnSpellCastAt` | [ResRef](GFF-File-Format#gff-data-types) | Fires when spell cast at placeable |
+| `OnUnlock` | [ResRef](GFF-File-Format#gff-data-types) | Fires when unlocked |
+| `OnUsed` | [ResRef](GFF-File-Format#gff-data-types) | Fires when used/clicked |
+| `OnUserDefined` | [ResRef](GFF-File-Format#gff-data-types) | Fires on user-defined events |
+| `OnFailToOpen` (KotOR2) | [ResRef](GFF-File-Format#gff-data-types) | Fires when opening fails |
 
 ## Trap System
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `TrapDetectable` | Byte | Trap can be detected |
 | `TrapDetectDC` | Byte | Awareness DC to detect trap |
@@ -151,7 +151,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 ## Visual Customization
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `PortraitId` | Word | Portrait icon identifier |
 | `PaletteID` | Byte | Toolset palette category |
@@ -171,7 +171,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 - Footlockers, crates, corpses
 - Have inventory (ItemList populated)
 - Can be locked, trapped, destroyed
-- `HasInventory=1`, `BodyBag` [flag](GFF-File-Format#data-types) for corpses
+- `HasInventory=1`, `BodyBag` [flag](GFF-File-Format#gff-data-types) for corpses
 
 **Switches & Terminals:**
 
@@ -182,9 +182,9 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 **Workbenches:**
 
-- Special placeable [type](GFF-File-Format#data-types) for crafting
+- Special placeable [type](GFF-File-Format#gff-data-types) for crafting
 - Opens crafting interface on use
-- Defined by [type](GFF-File-Format#data-types) or Appearance
+- Defined by [type](GFF-File-Format#gff-data-types) or Appearance
 
 **Furniture:**
 
@@ -221,7 +221,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 - Use triggers dialog instead of direct interaction
 - Dialog can have conditional responses
 
-**Common Placeable [types](GFF-File-Format#data-types):**
+**Common Placeable [types](GFF-File-Format#gff-data-types):**
 
 **Storage Containers:**
 
@@ -231,7 +231,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 **Corpses:**
 
-- BodyBag [flag](GFF-File-Format#data-types) set
+- BodyBag [flag](GFF-File-Format#gff-data-types) set
 - Contain enemy loot
 - Disappear when looted (usually)
 
@@ -251,7 +251,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 - Crafting interface activation
 - Lab stations, upgrade benches
-- Special [type](GFF-File-Format#data-types) [value](GFF-File-Format#data-types)
+- Special [type](GFF-File-Format#gff-data-types) [value](GFF-File-Format#gff-data-types)
 
 **Decorative Objects:**
 

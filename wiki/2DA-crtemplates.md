@@ -6,12 +6,12 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: [creature templates](GFF-File-Format#utc-creature) ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | [creature templates](GFF-File-Format#utc-creature) label |
-| `strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for [creature templates](GFF-File-Format#utc-creature) name |
+| `label` | [string](GFF-File-Format#gff-data-types) | [creature templates](GFF-File-Format#utc-creature) label |
+| `strref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for [creature templates](GFF-File-Format#utc-creature) name |
 | Additional columns | Various | [creature templates](GFF-File-Format#utc-creature) properties |
 
 **References**:

@@ -6,12 +6,12 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: [texture](TPC-File-Format) Pack ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | [texture](TPC-File-Format) pack label |
-| `strrefname` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for [texture](TPC-File-Format) pack name |
+| `label` | [string](GFF-File-Format#gff-data-types) | [texture](TPC-File-Format) pack label |
+| `strrefname` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for [texture](TPC-File-Format) pack name |
 | Additional columns | Various | [texture](TPC-File-Format) pack properties and settings |
 
 **References**:

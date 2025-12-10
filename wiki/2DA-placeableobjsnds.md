@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines sound effects for placeable objects based on sound appearance [type](GFF-File-Format#data-types). The engine uses this [file](GFF-File-Format) to play appropriate sounds when interacting with placeables.
+**Engine Usage**: Defines sound effects for placeable objects based on sound appearance [type](GFF-File-Format#gff-data-types). The engine uses this [file](GFF-File-Format) to play appropriate sounds when interacting with placeables.
 
-**Row [index](2DA-File-Format#row-labels)**: Sound Appearance [type](GFF-File-Format#data-types) ID (integer)
+**Row [index](2DA-File-Format#row-labels)**: Sound Appearance [type](GFF-File-Format#gff-data-types) ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Sound appearance [type](GFF-File-Format#data-types) label |
-| Additional columns | [ResRef](GFF-File-Format#resref) | Sound effect ResRefs for different interaction [types](GFF-File-Format#data-types) |
+| `label` | [string](GFF-File-Format#gff-data-types) | Sound appearance [type](GFF-File-Format#gff-data-types) label |
+| Additional columns | [ResRef](GFF-File-Format#gff-data-types) | Sound effect ResRefs for different interaction [types](GFF-File-Format#gff-data-types) |
 
 **References**:
 

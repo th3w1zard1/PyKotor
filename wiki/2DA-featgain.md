@@ -6,11 +6,11 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Feat Gain Entry ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Feat gain entry label |
+| `label` | [string](GFF-File-Format#gff-data-types) | Feat gain entry label |
 | Additional columns | Various | Feat gain progression by class and level |
 
 **References**:

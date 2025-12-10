@@ -6,11 +6,11 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Level (integer, typically 1-20)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Level label |
+| `label` | [string](GFF-File-Format#gff-data-types) | Level label |
 | Additional columns | Integer | Experience point requirements for leveling up |
 
 **References**:

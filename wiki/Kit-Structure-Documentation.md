@@ -1,6 +1,6 @@
-# Kit [structure](GFF-File-Format#file-structure) Documentation
+# Kit [structure](GFF-File-Format#file-structure-overview) Documentation
 
-Kits [ARE](GFF-File-Format#are-area) collections of reusable indoor map components for the Holocron Toolset. They contain [room models](LYT-File-Format#room-definitions), textures, lightmaps, doors, and other resources that can be assembled into complete game modules.
+Kits [ARE](GFF-File-Format#are-area) collections of reusable indoor map components for the Holocron Toolset. They contain [room models](LYT-File-Format#room-definitions), [textures](TPC-File-Format), lightmaps, doors, and other resources that can be assembled into complete game modules.
 
 ## Table of Contents
 
@@ -78,7 +78,7 @@ A kit is a self-contained collection of resources that can be used to build indo
 
 ---
 
-## Kit Directory [structure](GFF-File-Format#file-structure)
+## Kit Directory [structure](GFF-File-Format#file-structure-overview)
 
 ```shell
 kits/
@@ -119,7 +119,7 @@ kits/
 
 ## Kit JSON [file](GFF-File-Format)
 
-The kit JSON file (`{kit_id}.json`) defines the kit [structure](GFF-File-Format#file-structure):
+The kit JSON file (`{kit_id}.json`) defines the kit [structure](GFF-File-Format#file-structure-overview):
 
 ```json5
 {
@@ -155,33 +155,33 @@ The kit JSON file (`{kit_id}.json`) defines the kit [structure](GFF-File-Format#
 }
 ```
 
-**[fields](GFF-File-Format#file-structure)**:
+**[fields](GFF-File-Format#file-structure-overview)**:
 
 - `name`: Display name for the kit
 - `id`: Unique kit identifier (matches folder name, must be lowercase, sanitized)
-- `ht`: Holocron Toolset version compatibility [string](GFF-File-Format#cexostring)
+- `ht`: Holocron Toolset version compatibility [string](GFF-File-Format#gff-data-types)
 - `version`: Kit version number (integer)
 - `components`: List of room components (can be empty for [texture](TPC-File-Format)-only kits)
 - `doors`: List of door definitions
 
-**Component [fields](GFF-File-Format#file-structure)**:
+**Component [fields](GFF-File-Format#file-structure-overview)**:
 
 - `name`: Display name for the component
 - `id`: Unique component identifier (matches [MDL](MDL-MDX-File-Format)/[WOK](BWM-File-Format) filename without extension)
-- `native`: Always 1 (legacy [field](GFF-File-Format#file-structure), indicates native [format](GFF-File-Format))
+- `native`: Always 1 (legacy [field](GFF-File-Format#file-structure-overview), indicates native [format](GFF-File-Format))
 - `doorhooks`: List of door hook points extracted from [BWM](BWM-File-Format) [edges](BWM-File-Format#edges) with transitions
 
-**Door Hook [fields](GFF-File-Format#file-structure)**:
+**Door Hook [fields](GFF-File-Format#file-structure-overview)**:
 
 - `x`, `y`, `z`: World-space [position](MDL-MDX-File-Format#node-header) of the hook point (midpoint of [BWM](BWM-File-Format) [edge](BWM-File-Format#edges) with transition)
 - `rotation`: [rotation](MDL-MDX-File-Format#node-header) angle in degrees (0-360), calculated from [edge](BWM-File-Format#edges) direction in XY plane
 - `door`: [index](2DA-File-Format#row-labels) into the kit's `doors` array (mapped from [BWM](BWM-File-Format) [edge](BWM-File-Format#edges) transition [index](2DA-File-Format#row-labels))
 - `edge`: Global [edge](BWM-File-Format#edges) [index](2DA-File-Format#row-labels) in the BWM (face_index * 3 + local_edge_index)
 
-**Door [fields](GFF-File-Format#file-structure)**:
+**Door [fields](GFF-File-Format#file-structure-overview)**:
 
-- `utd_k1`: [ResRef](GFF-File-Format#resref) of K1 door [UTD](GFF-File-Format#utd-door) file (without `.utd` extension)
-- `utd_k2`: [ResRef](GFF-File-Format#resref) of K2 door [UTD](GFF-File-Format#utd-door) file (without `.utd` extension)
+- `utd_k1`: [ResRef](GFF-File-Format#gff-data-types) of K1 door [UTD](GFF-File-Format#utd-door) file (without `.utd` extension)
+- `utd_k2`: [ResRef](GFF-File-Format#gff-data-types) of K2 door [UTD](GFF-File-Format#utd-door) file (without `.utd` extension)
 - `width`: Door width in world units (default: 2.0)
 - `height`: Door height in world units (default: 3.0)
 
@@ -211,7 +211,7 @@ Components [ARE](GFF-File-Format#are-area) reusable [room models](LYT-File-Forma
 3. Components [ARE](GFF-File-Format#are-area) [room models](LYT-File-Format#room-definitions) that have both [MDL](MDL-MDX-File-Format) and [WOK files](BWM-File-Format)
 4. Component IDs [ARE](GFF-File-Format#are-area) mapped from [model](MDL-MDX-File-Format) names using `_get_component_name_mapping()` to create friendly names
 
-**Component JSON [structure](GFF-File-Format#file-structure)**:
+**Component JSON [structure](GFF-File-Format#file-structure-overview)**:
 
 ```json5
 {
@@ -285,7 +285,7 @@ Kits contain all [textures](TPC-File-Format) and lightmaps referenced by their c
 
 **[TPC](TPC-File-Format) to TGA Conversion**: All [textures](TPC-File-Format) [ARE](GFF-File-Format#are-area) converted from TPC (BioWare's [texture](TPC-File-Format) [format](GFF-File-Format)) to TGA (Truevision Targa) [format](GFF-File-Format) during extraction. The conversion process:
 
-1. Reads [TPC file](TPC-File-Format) [data](GFF-File-Format#file-structure)
+1. Reads [TPC file](TPC-File-Format) [data](GFF-File-Format#file-structure-overview)
 2. Parses [TPC](TPC-File-Format) structure (mipmaps, [format](GFF-File-Format), embedded [TXI](TXI-File-Format))
 3. Converts mipmaps to RGBA [format](GFF-File-Format) if needed
 4. Writes TGA [file](GFF-File-Format) with BGRA pixel order (TGA [format](GFF-File-Format) requirement)
@@ -318,9 +318,9 @@ The extraction process uses the same resource resolution priority as the game en
 
 Each [texture](TPC-File-Format)/lightmap can have an accompanying `.txi` [file](GFF-File-Format) containing [texture](TPC-File-Format) metadata (filtering, wrapping, etc.). [TXI files](TXI-File-Format) [ARE](GFF-File-Format#are-area) extracted from:
 
-1. **Embedded [TXI](TXI-File-Format) in [TPC](TPC-File-Format) [files](GFF-File-Format)**: [TPC files](TPC-File-Format) can contain embedded [TXI](TXI-File-Format) [data](GFF-File-Format#file-structure)
+1. **Embedded [TXI](TXI-File-Format) in [TPC](TPC-File-Format) [files](GFF-File-Format)**: [TPC files](TPC-File-Format) can contain embedded [TXI](TXI-File-Format) [data](GFF-File-Format#file-structure-overview)
 2. **Standalone [TXI](TXI-File-Format) [files](GFF-File-Format)**: [TXI files](TXI-File-Format) in the installation (same resolution priority as [textures](TPC-File-Format))
-3. **Empty [TXI](TXI-File-Format) placeholders**: If no [TXI](TXI-File-Format) is found, an empty [TXI file](TXI-File-Format) is created to match expected kit [structure](GFF-File-Format#file-structure)
+3. **Empty [TXI](TXI-File-Format) placeholders**: If no [TXI](TXI-File-Format) is found, an empty [TXI file](TXI-File-Format) is created to match expected kit [structure](GFF-File-Format#file-structure-overview)
 
 **[TXI](TXI-File-Format) Extraction Process**:
 
@@ -375,7 +375,7 @@ The `always/` folder contains resources that [ARE](GFF-File-Format#are-area) **a
 **Processing**: Resources in the `always/` folder [ARE](GFF-File-Format#are-area) processed during indoor map generation:
 
 1. Each [file](GFF-File-Format) in `always/` is loaded into `kit.always[filename]` during kit loading
-2. When a room is processed, `add_static_resources()` extracts the resource name and [type](GFF-File-Format#data-types) from the filename
+2. When a room is processed, `add_static_resources()` extracts the resource name and [type](GFF-File-Format#gff-data-types) from the filename
 3. The resource is added to the mod with `mod.set_data(resname, restype, data)`
 4. This happens for every room, ensuring the resource is always available
 
@@ -410,7 +410,7 @@ Doors [ARE](GFF-File-Format#are-area) defined in the kit JSON and have correspon
 - `{door_model}1.dwk`: Door [walkmesh](BWM-File-Format) for open1 state
 - `{door_model}2.dwk`: Door [walkmesh](BWM-File-Format) for open2 state
 
-**Door JSON [structure](GFF-File-Format#file-structure)**:
+**Door JSON [structure](GFF-File-Format#file-structure-overview)**:
 
 ```json5
 {
@@ -508,7 +508,7 @@ Skyboxes [ARE](GFF-File-Format#are-area) optional [MDL](MDL-MDX-File-Format)/[MD
 **Skybox [files](GFF-File-Format)**:
 
 - `{skybox_name}.mdl`: Skybox [model](MDL-MDX-File-Format) [geometry](MDL-MDX-File-Format#geometry-header)
-- `{skybox_name}.mdx`: Skybox [material](MDL-MDX-File-Format#trimesh-header) [data](GFF-File-Format#file-structure)
+- `{skybox_name}.mdx`: Skybox [material](MDL-MDX-File-Format#trimesh-header) [data](GFF-File-Format#file-structure-overview)
 
 Skyboxes [ARE](GFF-File-Format#are-area) typically used for outdoor areas and provide the distant sky/background rendering. They [ARE](GFF-File-Format#are-area) loaded separately from room components and don't have [walkmeshes](BWM-File-Format).
 
@@ -532,7 +532,7 @@ The `doorway/` folder contains padding [models](MDL-MDX-File-Format) that fill g
 
 - `side_` or `top_`: Padding [orientation](MDL-MDX-File-Format#node-header)
 - `{door_id}`: Door identifier (matches door [index](2DA-File-Format#row-labels) in JSON, extracted using `get_nums()`)
-- `size{size}`: Padding [size](GFF-File-Format#file-structure) in world units (e.g., `size650`, `size800`)
+- `size{size}`: Padding [size](GFF-File-Format#file-structure-overview) in world units (e.g., `size650`, `size800`)
 
 **Reference**: [`Tools/HolocronToolset/src/toolset/data/indoorkit/indoorkit_loader.py:127-150`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/indoorkit/indoorkit_loader.py#L127-L150)
 
@@ -546,7 +546,7 @@ The `models/` directory contains additional [MDL](MDL-MDX-File-Format)/[MDX](MDL
 - **Non-[room models](LYT-File-Format#room-definitions)**: [models](MDL-MDX-File-Format) that don't have [walkmeshes](BWM-File-Format) and aren't room components
 - **Referenced [models](MDL-MDX-File-Format)**: [models](MDL-MDX-File-Format) that [ARE](GFF-File-Format#are-area) referenced by scripts or other systems
 
-**[models](MDL-MDX-File-Format) Directory [structure](GFF-File-Format#file-structure)**:
+**[models](MDL-MDX-File-Format) Directory [structure](GFF-File-Format#file-structure-overview)**:
 
 ```shell
 models/
@@ -560,13 +560,13 @@ models/
 
 ## Resource Extraction
 
-The kit extraction process (`extract_kit()`) extracts resources from module RIM or [ERF files](ERF-File-Format) and generates a complete kit [structure](GFF-File-Format#file-structure).
+The kit extraction process (`extract_kit()`) extracts resources from module RIM or [ERF files](ERF-File-Format) and generates a complete kit [structure](GFF-File-Format#file-structure-overview).
 
 ### Archive [file](GFF-File-Format) Support
 
 The extraction process supports multiple archive [formats](GFF-File-Format):
 
-- **RIM [files](GFF-File-Format)**: `.rim` (main module), `_s.rim` (supplementary [data](GFF-File-Format#file-structure))
+- **RIM [files](GFF-File-Format)**: `.rim` (main module), `_s.rim` (supplementary [data](GFF-File-Format#file-structure-overview))
 - **[ERF](ERF-File-Format) [files](GFF-File-Format)**: `.mod` (module override), `.erf` (generic [ERF](ERF-File-Format)), `.hak` (hakpak), `.sav` (savegame)
 
 **[file](GFF-File-Format) Resolution Priority**:
@@ -607,7 +607,7 @@ Components [ARE](GFF-File-Format#are-area) identified using the following proces
 5. **Priority Sorting**: Pre-sort all location results by priority once to avoid repeated sorting
 6. **Batch I/O**: Group [TPC](TPC-File-Format)/TGA [files](GFF-File-Format) by filepath for batch reading operations
 7. **TPC to TGA Conversion**: Convert all [TPC files](TPC-File-Format) to TGA [format](GFF-File-Format) during extraction
-8. **TXI Extraction**: Extract [TXI files](TXI-File-Format) from embedded [TPC](TPC-File-Format) [data](GFF-File-Format#file-structure) or standalone [files](GFF-File-Format)
+8. **TXI Extraction**: Extract [TXI files](TXI-File-Format) from embedded [TPC](TPC-File-Format) [data](GFF-File-Format#file-structure-overview) or standalone [files](GFF-File-Format)
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/tools/kit.py:769-1020`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/tools/kit.py#L769-L1020)
 
@@ -665,7 +665,7 @@ Component [WOK files](BWM-File-Format) [ARE](GFF-File-Format#are-area) **re-cent
 
 Component minimap images [ARE](GFF-File-Format#are-area) generated from re-centered [BWM](BWM-File-Format) [walkmeshes](BWM-File-Format):
 
-1. **Bounding Box Calculation**: Calculate bounding box from [BWM](BWM-File-Format) [vertices](MDL-MDX-File-Format#vertex-structure)
+1. **Bounding Box Calculation**: Calculate [bounding box](MDL-MDX-File-Format#model-header) from [BWM](BWM-File-Format) [vertices](MDL-MDX-File-Format#vertex-structure)
 2. **Image Dimensions**: [scale](MDL-MDX-File-Format#node-header) to 10 pixels per world unit, minimum 256x256
 3. **[coordinate](GFF-File-Format#are-area) [transformation](BWM-File-Format#vertex-data-processing)**: Transform world [coordinates](GFF-File-Format#are-area) to image coordinates (flip Y-axis)
 4. **[face](MDL-MDX-File-Format#face-structure) Rendering**: Draw [walkable faces](BWM-File-Format#faces) in white, non-walkable in gray
@@ -694,9 +694,9 @@ Door hooks [ARE](GFF-File-Format#are-area) extracted from [BWM](BWM-File-Format)
 
 ## Implementation Details
 
-### Kit Class [structure](GFF-File-Format#file-structure)
+### Kit Class [structure](GFF-File-Format#file-structure-overview)
 
-The `Kit` class [structure](GFF-File-Format#file-structure) in memory:
+The `Kit` class [structure](GFF-File-Format#file-structure-overview) in memory:
 
 ```python
 class Kit:
@@ -741,16 +741,16 @@ class KitDoor:
 Kits [ARE](GFF-File-Format#are-area) loaded by `load_kits()` which:
 
 1. **Scans Kits Directory**: Iterates through all `.json` [files](GFF-File-Format) in the kits directory
-2. **Validates JSON**: Skips invalid JSON [files](GFF-File-Format) and non-dict [structures](GFF-File-Format#file-structure)
+2. **Validates JSON**: Skips invalid JSON [files](GFF-File-Format) and non-dict [structures](GFF-File-Format#file-structure-overview)
 3. **Loads Kit Metadata**: Extracts `name` and `id` from JSON
 4. **Loads Always Resources**: Loads all [files](GFF-File-Format) from `always/` folder into `kit.always[filename]`
 5. **Loads [textures](TPC-File-Format)**: Loads TGA [files](GFF-File-Format) from `textures/` folder, extracts [TXI files](TXI-File-Format)
 6. **Loads Lightmaps**: Loads TGA [files](GFF-File-Format) from `lightmaps/` folder, extracts [TXI files](TXI-File-Format)
 7. **Loads Skyboxes**: Loads [MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format) pairs from `skyboxes/` folder
-8. **Loads Doorway Padding**: Parses padding filenames to extract door_id and [size](GFF-File-Format#file-structure), loads [MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format) pairs
+8. **Loads Doorway Padding**: Parses padding filenames to extract door_id and [size](GFF-File-Format#file-structure-overview), loads [MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format) pairs
 9. **Loads Doors**: Loads [UTD](GFF-File-Format#utd-door) [files](GFF-File-Format) for K1 and K2, creates `KitDoor` instances
 10. **Loads Components**: Loads [MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format)/[WOK files](BWM-File-Format) and PNG minimap images, creates `KitComponent` instances
-11. **Populates Hooks**: Extracts doorhook [data](GFF-File-Format#file-structure) from JSON and creates `KitComponentHook` instances
+11. **Populates Hooks**: Extracts doorhook [data](GFF-File-Format#file-structure-overview) from JSON and creates `KitComponentHook` instances
 12. **Error Handling**: Collects missing [files](GFF-File-Format) instead of failing fast, returns list of missing [files](GFF-File-Format)
 
 **Reference**: [`Tools/HolocronToolset/src/toolset/data/indoorkit/indoorkit_loader.py:23-260`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/indoorkit/indoorkit_loader.py#L23-L260)
@@ -783,7 +783,7 @@ When generating an indoor map from kits:
 
 ---
 
-## Kit [types](GFF-File-Format#data-types)
+## Kit [types](GFF-File-Format#gff-data-types)
 
 ### Component-Based Kits
 
@@ -809,7 +809,7 @@ Kits with empty `components` array (e.g., `jedienclave`):
 
 ## Game Engine Compatibility
 
-Kits [ARE](GFF-File-Format#are-area) designed to be compatible with the KOTOR game engine's resource resolution and module [structure](GFF-File-Format#file-structure):
+Kits [ARE](GFF-File-Format#are-area) designed to be compatible with the KOTOR game engine's resource resolution and module [structure](GFF-File-Format#file-structure-overview):
 
 **Resource Resolution**: Kits use the same resource resolution priority as the game engine:
 
@@ -819,12 +819,12 @@ Kits [ARE](GFF-File-Format#are-area) designed to be compatible with the KOTOR ga
 4. TEXTURES_TPA
 5. CHITIN (base game)
 
-**Module [structure](GFF-File-Format#file-structure)**: Generated modules follow the same [structure](GFF-File-Format#file-structure) as game modules:
+**Module [structure](GFF-File-Format#file-structure-overview)**: Generated modules follow the same [structure](GFF-File-Format#file-structure-overview) as game modules:
 
 - [ARE](GFF-File-Format#are-area) [files](GFF-File-Format) for area definitions
-- [GIT files](GFF-File-Format#git-game-instance-template) for instance [data](GFF-File-Format#file-structure)
+- [GIT files](GFF-File-Format#git-game-instance-template) for instance [data](GFF-File-Format#file-structure-overview)
 - [LYT files](LYT-File-Format) for room layouts
-- [VIS files](VIS-File-Format) for visibility [data](GFF-File-Format#file-structure)
+- [VIS files](VIS-File-Format) for visibility [data](GFF-File-Format#file-structure-overview)
 - [IFO](GFF-File-Format#ifo-module-info) [files](GFF-File-Format) for module information
 
 **[file](GFF-File-Format) [formats](GFF-File-Format)**: All kit resources use native game [formats](GFF-File-Format):
@@ -873,7 +873,7 @@ The kit extraction process is based on reverse-engineered implementations from m
 **KotOR.js Implementation** (`vendor/KotOR.js/src/module/ModulePlaceable.ts:682-698`):
 
 - Loads [walkmesh](BWM-File-Format): `ResourceLoader.loadResource(ResourceTypes['pwk'], resRef)`
-- Creates `OdysseyWalkMesh` from binary [data](GFF-File-Format#file-structure) and attaches to [model](MDL-MDX-File-Format)
+- Creates `OdysseyWalkMesh` from binary [data](GFF-File-Format#file-structure-overview) and attaches to [model](MDL-MDX-File-Format)
 - Falls back to empty [walkmesh](BWM-File-Format) if loading fails
 - **PyKotor Implementation**: Matches KotOR.js approach - extracts [PWK](BWM-File-Format) using [model](MDL-MDX-File-Format) name
 
@@ -893,7 +893,7 @@ The kit extraction process is based on reverse-engineered implementations from m
 **KotOR.js Implementation** (`vendor/KotOR.js/src/module/ModuleRoom.ts:331-342`):
 
 - Loads [walkmesh](BWM-File-Format): `ResourceLoader.loadResource(ResourceTypes['wok'], resRef)`
-- Creates `OdysseyWalkMesh` from binary [data](GFF-File-Format#file-structure) and attaches to [room model](LYT-File-Format#room-definitions)
+- Creates `OdysseyWalkMesh` from binary [data](GFF-File-Format#file-structure-overview) and attaches to [room model](LYT-File-Format#room-definitions)
 - Rooms [ARE](GFF-File-Format#are-area) identified from [LYT file](LYT-File-Format) room definitions
 - **PyKotor Implementation**: Matches KotOR.js approach - uses [LYT](LYT-File-Format) [room models](LYT-File-Format#room-definitions) to identify components
 
@@ -904,7 +904,7 @@ The kit extraction process is based on reverse-engineered implementations from m
 **reone Implementation** (`vendor/reone/src/libs/game/object/door.cpp`):
 
 - Door [models](MDL-MDX-File-Format) [ARE](GFF-File-Format#are-area) resolved from [UTD](GFF-File-Format#utd-door) [files](GFF-File-Format) using `genericdoors.2da`
-- The `appearance_id` [field](GFF-File-Format#file-structure) in [UTD](GFF-File-Format#utd-door) maps to a row in `genericdoors.2da`
+- The `appearance_id` [field](GFF-File-Format#file-structure-overview) in [UTD](GFF-File-Format#utd-door) maps to a row in `genericdoors.2da`
 - The `modelname` column in that row provides the door [model](MDL-MDX-File-Format) name
 - **PyKotor Implementation**: Matches reone exactly - uses `door_tools.get_model()` which reads `genericdoors.2da`
 
@@ -921,7 +921,7 @@ The kit extraction process is based on reverse-engineered implementations from m
 **reone Implementation** (`vendor/reone/src/libs/game/object/placeable.cpp`):
 
 - Placeable [models](MDL-MDX-File-Format) [ARE](GFF-File-Format#are-area) resolved from [UTP](GFF-File-Format#utp-placeable) [files](GFF-File-Format) using `placeables.2da`
-- The `appearance_id` [field](GFF-File-Format#file-structure) in [UTP](GFF-File-Format#utp-placeable) maps to a row in `placeables.2da`
+- The `appearance_id` [field](GFF-File-Format#file-structure-overview) in [UTP](GFF-File-Format#utp-placeable) maps to a row in `placeables.2da`
 - The `modelname` column in that row provides the placeable [model](MDL-MDX-File-Format) name
 - **PyKotor Implementation**: Matches reone exactly - uses `placeable_tools.get_model()` which reads `placeables.2da`
 
@@ -942,7 +942,7 @@ The kit extraction process is based on reverse-engineered implementations from m
 - Lightmaps [ARE](GFF-File-Format#are-area) identified by naming patterns (`_lm` suffix or `l_` prefix)
 - **Vendor Comparison**: No direct equivalent in reone/KotOR.js - they load [textures](TPC-File-Format) on-demand during rendering
 - **Discrepancy**: PyKotor proactively extracts all [textures](TPC-File-Format)/lightmaps, while engines load them lazily during rendering
-- **Rationale**: Kit extraction needs all [textures](TPC-File-Format) upfront for self-contained kit [structure](GFF-File-Format#file-structure)
+- **Rationale**: Kit extraction needs all [textures](TPC-File-Format) upfront for self-contained kit [structure](GFF-File-Format#file-structure-overview)
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/tools/model.py:99-887`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/tools/model.py#L99-L887)
 
@@ -969,13 +969,13 @@ The kit extraction process is based on reverse-engineered implementations from m
 - [walkmeshes](BWM-File-Format) [ARE](GFF-File-Format#are-area) loaded from [WOK](BWM-File-Format)/[BWM files](BWM-File-Format)
 - [face](MDL-MDX-File-Format#face-structure) [materials](MDL-MDX-File-Format#trimesh-header) determine walkability ([materials](MDL-MDX-File-Format#trimesh-header) 1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22 [ARE](GFF-File-Format#are-area) walkable)
 - [edge](BWM-File-Format#edges) transitions indicate door connections
-- **PyKotor Implementation**: Matches reone - uses same walkable [material](MDL-MDX-File-Format#trimesh-header) [values](GFF-File-Format#data-types) for minimap generation
+- **PyKotor Implementation**: Matches reone - uses same walkable [material](MDL-MDX-File-Format#trimesh-header) [values](GFF-File-Format#gff-data-types) for minimap generation
 
 **KotOR.js Implementation** (`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts`):
 
-- [walkmeshes](BWM-File-Format) [ARE](GFF-File-Format#are-area) loaded from [WOK](BWM-File-Format) binary [data](GFF-File-Format#file-structure)
-- [face](MDL-MDX-File-Format#face-structure) [materials](MDL-MDX-File-Format#trimesh-header) and walk [types](GFF-File-Format#data-types) determine walkability
-- [edge](BWM-File-Format#edges) transitions [ARE](GFF-File-Format#are-area) stored in [walkmesh](BWM-File-Format) [structure](GFF-File-Format#file-structure)
+- [walkmeshes](BWM-File-Format) [ARE](GFF-File-Format#are-area) loaded from [WOK](BWM-File-Format) binary [data](GFF-File-Format#file-structure-overview)
+- [face](MDL-MDX-File-Format#face-structure) [materials](MDL-MDX-File-Format#trimesh-header) and walk [types](GFF-File-Format#gff-data-types) determine walkability
+- [edge](BWM-File-Format#edges) transitions [ARE](GFF-File-Format#are-area) stored in [walkmesh](BWM-File-Format) [structure](GFF-File-Format#file-structure-overview)
 - **PyKotor Implementation**: Matches KotOR.js - extracts doorhooks from [BWM](BWM-File-Format) [edges](BWM-File-Format#edges) with transitions
 
 **Reference**:
@@ -1025,20 +1025,20 @@ The kit extraction process is based on reverse-engineered implementations from m
 
 ## Test Comparison Precision
 
-The kit generation tests (`Tools/HolocronToolset/tests/data/test_kit_generation.py`) use different comparison strategies depending on the [data](GFF-File-Format#file-structure) [type](GFF-File-Format#data-types):
+The kit generation tests (`Tools/HolocronToolset/tests/data/test_kit_generation.py`) use different comparison strategies depending on the [data](GFF-File-Format#file-structure-overview) [type](GFF-File-Format#gff-data-types):
 
-### Exact Matching (1:1 [byte](GFF-File-Format#byte)-for-[byte](GFF-File-Format#byte))
+### Exact Matching (1:1 [byte](GFF-File-Format#gff-data-types)-for-[byte](GFF-File-Format#gff-data-types))
 
 **Binary [files](GFF-File-Format)** (SHA256 hash comparison):
 
-- **[MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format)**: [model](MDL-MDX-File-Format) [geometry](MDL-MDX-File-Format#geometry-header) and [animations](MDL-MDX-File-Format#animation-header) - must be [byte](GFF-File-Format#byte)-for-[byte](GFF-File-Format#byte) identical
-- **[WOK](BWM-File-Format)/[BWM](BWM-File-Format)**: [walkmesh](BWM-File-Format) [data](GFF-File-Format#file-structure) - must be [byte](GFF-File-Format#byte)-for-[byte](GFF-File-Format#byte) identical
-- **[DWK](BWM-File-Format)/[PWK](BWM-File-Format)**: Door and placeable [walkmeshes](BWM-File-Format) - must be [byte](GFF-File-Format#byte)-for-[byte](GFF-File-Format#byte) identical
-- **PNG**: Minimap images - must be [byte](GFF-File-Format#byte)-for-[byte](GFF-File-Format#byte) identical
-- **[UTD](GFF-File-Format#utd-door)**: Door blueprints - must be [byte](GFF-File-Format#byte)-for-[byte](GFF-File-Format#byte) identical
-- **[TXI](TXI-File-Format)**: [texture](TPC-File-Format) metadata [files](GFF-File-Format) - must be [byte](GFF-File-Format#byte)-for-[byte](GFF-File-Format#byte) identical
+- **[MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format)**: [model](MDL-MDX-File-Format) [geometry](MDL-MDX-File-Format#geometry-header) and [animations](MDL-MDX-File-Format#animation-header) - must be [byte](GFF-File-Format#gff-data-types)-for-[byte](GFF-File-Format#gff-data-types) identical
+- **[WOK](BWM-File-Format)/[BWM](BWM-File-Format)**: [walkmesh](BWM-File-Format) [data](GFF-File-Format#file-structure-overview) - must be [byte](GFF-File-Format#gff-data-types)-for-[byte](GFF-File-Format#gff-data-types) identical
+- **[DWK](BWM-File-Format)/[PWK](BWM-File-Format)**: Door and placeable [walkmeshes](BWM-File-Format) - must be [byte](GFF-File-Format#gff-data-types)-for-[byte](GFF-File-Format#gff-data-types) identical
+- **PNG**: Minimap images - must be [byte](GFF-File-Format#gff-data-types)-for-[byte](GFF-File-Format#gff-data-types) identical
+- **[UTD](GFF-File-Format#utd-door)**: Door blueprints - must be [byte](GFF-File-Format#gff-data-types)-for-[byte](GFF-File-Format#gff-data-types) identical
+- **[TXI](TXI-File-Format)**: [texture](TPC-File-Format) metadata [files](GFF-File-Format) - must be [byte](GFF-File-Format#gff-data-types)-for-[byte](GFF-File-Format#gff-data-types) identical
 
-**Rationale**: These [files](GFF-File-Format) contain critical game [data](GFF-File-Format#file-structure) that must match exactly for functional compatibility.
+**Rationale**: These [files](GFF-File-Format) contain critical game [data](GFF-File-Format#file-structure-overview) that must match exactly for functional compatibility.
 
 **Reference**: [`Tools/HolocronToolset/tests/data/test_kit_generation.py:912-970`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/tests/data/test_kit_generation.py#L912-L970)
 
@@ -1047,25 +1047,25 @@ The kit generation tests (`Tools/HolocronToolset/tests/data/test_kit_generation.
 **Image [files](GFF-File-Format)** (TGA/[TPC](TPC-File-Format) - pixel-by-pixel comparison):
 
 - **Dimensions**: Must match exactly (width × height)
-- **Pixel [data](GFF-File-Format#file-structure)**: Allows tolerance for compression artifacts:
+- **Pixel [data](GFF-File-Format#file-structure-overview)**: Allows tolerance for [compression](BIF-File-Format#bzf-compression) artifacts:
   - Up to **2 levels difference** per channel (R, G, B, A) per pixel
   - Up to **1% of pixels** can differ by more than 2 levels
-  - Accounts for DXT compression artifacts in [TPC files](TPC-File-Format)
+  - Accounts for DXT [compression](BIF-File-Format#bzf-compression) artifacts in [TPC files](TPC-File-Format)
 
-**Rationale**: [TPC files](TPC-File-Format) use DXT compression which can introduce small pixel differences even for identical source images.
+**Rationale**: [TPC files](TPC-File-Format) use DXT [compression](BIF-File-Format#bzf-compression) which can introduce small pixel differences even for identical source images.
 
 **Reference**: [`Tools/HolocronToolset/tests/data/test_kit_generation.py:972-1111`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/tests/data/test_kit_generation.py#L972-L1111)
 
-### [structure](GFF-File-Format#file-structure)-Only Verification (No [value](GFF-File-Format#data-types) Comparison)
+### [structure](GFF-File-Format#file-structure-overview)-Only Verification (No [value](GFF-File-Format#gff-data-types) Comparison)
 
-**JSON Metadata** ([structure](GFF-File-Format#file-structure) verification only):
+**JSON Metadata** ([structure](GFF-File-Format#file-structure-overview) verification only):
 
-- **Doorhook [coordinates](GFF-File-Format#are-area)**: Only verifies that `x`, `y`, `z`, `rotation` [fields](GFF-File-Format#file-structure) exist - **does NOT compare actual [values](GFF-File-Format#data-types)**
-- **Door Dimensions**: Only verifies that `width`, `height` [fields](GFF-File-Format#file-structure) exist - **does NOT compare actual [values](GFF-File-Format#data-types)**
-- **Doorhook [count](GFF-File-Format#file-structure)**: Verifies [count](GFF-File-Format#file-structure) matches exactly
-- **Component [count](GFF-File-Format#file-structure)**: Verifies [count](GFF-File-Format#file-structure) matches exactly
-- **Door [count](GFF-File-Format#file-structure)**: Verifies [count](GFF-File-Format#file-structure) matches exactly
-- **[field](GFF-File-Format#file-structure) Presence**: Verifies required [fields](GFF-File-Format#file-structure) exist (name, id, door, [edge](BWM-File-Format#edges))
+- **Doorhook [coordinates](GFF-File-Format#are-area)**: Only verifies that `x`, `y`, `z`, `rotation` [fields](GFF-File-Format#file-structure-overview) exist - **does NOT compare actual [values](GFF-File-Format#gff-data-types)**
+- **Door Dimensions**: Only verifies that `width`, `height` [fields](GFF-File-Format#file-structure-overview) exist - **does NOT compare actual [values](GFF-File-Format#gff-data-types)**
+- **Doorhook [count](GFF-File-Format#file-structure-overview)**: Verifies [count](GFF-File-Format#file-structure-overview) matches exactly
+- **Component [count](GFF-File-Format#file-structure-overview)**: Verifies [count](GFF-File-Format#file-structure-overview) matches exactly
+- **Door [count](GFF-File-Format#file-structure-overview)**: Verifies [count](GFF-File-Format#file-structure-overview) matches exactly
+- **[field](GFF-File-Format#file-structure-overview) Presence**: Verifies required [fields](GFF-File-Format#file-structure-overview) exist (name, id, door, [edge](BWM-File-Format#edges))
 
 **Current Test Behavior**:
 
@@ -1092,7 +1092,7 @@ if "height" in exp_door:
 - **Doorhook [coordinates](GFF-File-Format#are-area) [ARE](GFF-File-Format#are-area) NOT validated** - tests will pass even if [coordinates](GFF-File-Format#are-area) [ARE](GFF-File-Format#are-area) completely wrong
 - **Door dimensions [ARE](GFF-File-Format#are-area) NOT validated** - tests will pass even if dimensions [ARE](GFF-File-Format#are-area) incorrect
 - **High granularity matching is NOT enforced** - [coordinate](GFF-File-Format#are-area) precision is not verified
-- **Error acceptability is currently 100%** - any [coordinate](GFF-File-Format#are-area) [values](GFF-File-Format#data-types) [ARE](GFF-File-Format#are-area) accepted as long as [fields](GFF-File-Format#file-structure) exist
+- **Error acceptability is currently 100%** - any [coordinate](GFF-File-Format#are-area) [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) accepted as long as [fields](GFF-File-Format#file-structure-overview) exist
 
 **Reference**: [`Tools/HolocronToolset/tests/data/test_kit_generation.py:1113-1234`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/tests/data/test_kit_generation.py#L1113-L1234)
 
@@ -1127,11 +1127,11 @@ To achieve high granularity [coordinate](GFF-File-Format#are-area) matching, the
    ```
 
 3. **Tolerance Levels**:
-   - **Coordinates (x, y, z)**: 6 decimal places (0.000001 units) - matches Python [float](GFF-File-Format#float) precision
+   - **Coordinates (x, y, z)**: 6 decimal places (0.000001 units) - matches Python [float](GFF-File-Format#gff-data-types) precision
    - **[rotation](MDL-MDX-File-Format#node-header)**: 2 decimal places (0.01 degrees) - sufficient for door placement
    - **Dimensions (width, height)**: 2 decimal places (0.01 units) - sufficient for door sizing
 
-**Current Status**: Tests [ARE](GFF-File-Format#are-area) **NOT** performing 1:1 [coordinate](GFF-File-Format#are-area) matching. They only verify [structure](GFF-File-Format#file-structure), not [values](GFF-File-Format#data-types). This means tests can pass even if [coordinates](GFF-File-Format#are-area) [ARE](GFF-File-Format#are-area) incorrect, which may [mask](GFF-File-Format#data-types) extraction bugs.
+**Current Status**: Tests [ARE](GFF-File-Format#are-area) **NOT** performing 1:1 [coordinate](GFF-File-Format#are-area) matching. They only verify [structure](GFF-File-Format#file-structure-overview), not [values](GFF-File-Format#gff-data-types). This means tests can pass even if [coordinates](GFF-File-Format#are-area) [ARE](GFF-File-Format#are-area) incorrect, which may [mask](GFF-File-Format#gff-data-types) extraction bugs.
 
 ---
 
@@ -1149,8 +1149,8 @@ To achieve high granularity [coordinate](GFF-File-Format#are-area) matching, the
 10. **Error Handling**: Collect missing [files](GFF-File-Format) instead of failing fast
 11. **Vendor Compatibility**: Follow reone/KotOR.js patterns for [walkmesh](BWM-File-Format) and [model](MDL-MDX-File-Format) handling
 12. **Comprehensive Extraction**: Extract all [DWK](BWM-File-Format) states and all referenced [textures](TPC-File-Format) for complete kits
-13. **Test Precision**: Consider enhancing tests to verify [coordinate](GFF-File-Format#are-area) [values](GFF-File-Format#data-types), not just [structure](GFF-File-Format#file-structure)
+13. **Test Precision**: Consider enhancing tests to verify [coordinate](GFF-File-Format#are-area) [values](GFF-File-Format#gff-data-types), not just [structure](GFF-File-Format#file-structure-overview)
 
 ---
 
-This documentation provides a comprehensive overview of the kit [structure](GFF-File-Format#file-structure) and how kits [ARE](GFF-File-Format#are-area) used in the Holocron Toolset for generating indoor maps.
+This documentation provides a comprehensive overview of the kit [structure](GFF-File-Format#file-structure-overview) and how kits [ARE](GFF-File-Format#are-area) used in the Holocron Toolset for generating indoor maps.

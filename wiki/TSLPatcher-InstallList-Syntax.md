@@ -41,9 +41,9 @@ The `[InstallList]` section in TSLPatcher's changes.ini [file](GFF-File-Format) 
 - [Special Cases and Edge Cases](#special-cases-and-edge-cases)
 - [Troubleshooting](#troubleshooting)
 
-## Basic [structure](GFF-File-Format#file-structure)
+## Basic [structure](GFF-File-Format#file-structure-overview)
 
-The InstallList uses a two-level hierarchical [structure](GFF-File-Format#file-structure):
+The InstallList uses a two-level hierarchical [structure](GFF-File-Format#file-structure-overview):
 
 ```ini
 [InstallList]
@@ -65,7 +65,7 @@ File0=sound1.wav
 File1=sound2.wav
 ```
 
-### [structure](GFF-File-Format#file-structure) Explanation
+### [structure](GFF-File-Format#file-structure-overview) Explanation
 
 1. **`[InstallList]` section**: Contains keys that map to folder destination names. Each key (like `Folder0`, `Folder1`, etc.) should reference a section with the same name as the value (the destination folder).
 
@@ -93,7 +93,7 @@ Each folder section (e.g., `[Override]`) supports the following configuration ke
 
 | [KEY](KEY-File-Format) | [type](GFF-File-Format#data-types) | Default | Description |
 |-----|------|---------|-------------|
-| `!SourceFolder` | [string](GFF-File-Format#cexostring) | `.` (tslpatchdata folder) | Relative path from `mod_path` (typically the `tslpatchdata` folder, the parent directory of `changes.ini` or `namespaces.ini`) where [files](GFF-File-Format) should be sourced from. The default [value](GFF-File-Format#data-types) `.` refers to the `tslpatchdata` folder itself, not its parent directory. Path resolution: `mod_path / !SourceFolder / filename`. **HoloPatcher extension** - allows subfolder organization within tslpatchdata. |
+| `!SourceFolder` | [string](GFF-File-Format#gff-data-types) | `.` (tslpatchdata folder) | Relative path from `mod_path` (typically the `tslpatchdata` folder, the parent directory of `changes.ini` or `namespaces.ini`) where [files](GFF-File-Format) should be sourced from. The default [value](GFF-File-Format#gff-data-types) `.` refers to the `tslpatchdata` folder itself, not its parent directory. Path resolution: `mod_path / !SourceFolder / filename`. **HoloPatcher extension** - allows subfolder organization within tslpatchdata. |
 
 ### Folder Section [file](GFF-File-Format) List Keys
 
@@ -128,12 +128,12 @@ Each [file](GFF-File-Format) can optionally have its own section (e.g., `[my_tex
 
 | [KEY](KEY-File-Format) | [type](GFF-File-Format#data-types) | Default | Description |
 |-----|------|---------|-------------|
-| `!SourceFile` | [string](GFF-File-Format#cexostring) | Same as filename in [file](GFF-File-Format)#/Replace# entry | Alternative source filename to load from tslpatchdata. The [file](GFF-File-Format) will be installed with the name specified in the [file](GFF-File-Format)#/Replace# entry (or `!SaveAs`/`!Filename` if specified). |
-| `!SaveAs` | [string](GFF-File-Format#cexostring) | Same as `!SourceFile` | The final filename to save the [file](GFF-File-Format) as at the destination. Allows renaming during installation. |
-| `!Filename` | [string](GFF-File-Format#cexostring) | Same as `!SaveAs` | Alias for `!SaveAs`. Both keys [ARE](GFF-File-Format#are-area) equivalent. |
-| `!Destination` | [string](GFF-File-Format#cexostring) | Inherited from folder section name | Override the destination folder for this specific [file](GFF-File-Format). Can specify a different folder or archive path. |
+| `!SourceFile` | [string](GFF-File-Format#gff-data-types) | Same as filename in [file](GFF-File-Format)#/Replace# entry | Alternative source filename to load from tslpatchdata. The [file](GFF-File-Format) will be installed with the name specified in the [file](GFF-File-Format)#/Replace# entry (or `!SaveAs`/`!Filename` if specified). |
+| `!SaveAs` | [string](GFF-File-Format#gff-data-types) | Same as `!SourceFile` | The final filename to save the [file](GFF-File-Format) as at the destination. Allows renaming during installation. |
+| `!Filename` | [string](GFF-File-Format#gff-data-types) | Same as `!SaveAs` | Alias for `!SaveAs`. Both keys [ARE](GFF-File-Format#are-area) equivalent. |
+| `!Destination` | [string](GFF-File-Format#gff-data-types) | Inherited from folder section name | Override the destination folder for this specific [file](GFF-File-Format). Can specify a different folder or archive path. |
 | `!ReplaceFile` | 0/1 | Determined by [file](GFF-File-Format)#/Replace# prefix | Whether to replace existing [files](GFF-File-Format). Takes priority over the [file](GFF-File-Format)#/Replace# prefix syntax. `1` = replace, `0` = don't replace. |
-| `!SourceFolder` | [string](GFF-File-Format#cexostring) | Inherited from folder section `!SourceFolder` | Override the source folder for this specific [file](GFF-File-Format). Relative path within tslpatchdata. |
+| `!SourceFolder` | [string](GFF-File-Format#gff-data-types) | Inherited from folder section `!SourceFolder` | Override the source folder for this specific [file](GFF-File-Format). Relative path within tslpatchdata. |
 | `!OverrideType` | `ignore`/`warn`/`rename` | `warn` (HoloPatcher) / `ignore` (TSLPatcher) | How to handle conflicts when installing to archives. See [Override Type Handling](#override-type-handling) section. |
 
 ### Example with [file](GFF-File-Format)-Level Configuration
@@ -312,7 +312,7 @@ File0=another_resource.2da
     - If `!ReplaceFile=1` or `Replace#=`: The existing resource is overwritten
     - If `!ReplaceFile=0` or `File#=`: The [file](GFF-File-Format) is skipped (see [File Replacement Behavior](#file-replacement-behavior))
 
-- **Archive [types](GFF-File-Format#data-types) Supported:**
+- **Archive [types](GFF-File-Format#gff-data-types) Supported:**
   - `.mod` (MOD/[ERF](ERF-File-Format) [format](GFF-File-Format))
   - `.erf` ([ERF](ERF-File-Format) [format](GFF-File-Format))
   - `.rim` (RIM [format](GFF-File-Format))
@@ -415,7 +415,7 @@ In this example:
 
 When installing [files](GFF-File-Format) to archives ([ERF](ERF-File-Format)/MOD/RIM), there's a potential conflict: a [file](GFF-File-Format) might already exist in the Override folder with the same name. The `!OverrideType` setting controls how this conflict is handled:
 
-| [value](GFF-File-Format#data-types) | Behavior | Description |
+| [value](GFF-File-Format#gff-data-types) | Behavior | Description |
 |-------|----------|-------------|
 | `ignore` | No action | Do nothing - don't even check for conflicts. This is the TSLPatcher default. |
 | `warn` | Log warning | Check for conflicts and log a warning if found, but continue with installation. This is the HoloPatcher default. |

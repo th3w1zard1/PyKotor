@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Maps item property [values](GFF-File-Format#data-types) to immunity [types](GFF-File-Format#data-types). The engine uses this [file](GFF-File-Format) to determine immunity calculations for item properties.
+**Engine Usage**: Maps item property [values](GFF-File-Format#gff-data-types) to immunity [types](GFF-File-Format#gff-data-types). The engine uses this [file](GFF-File-Format) to determine immunity calculations for item properties.
 
 **Row [index](2DA-File-Format#row-labels)**: Item Property Value (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Property [value](GFF-File-Format#data-types) label |
-| Additional columns | Various | Immunity [type](GFF-File-Format#data-types) mappings |
+| `label` | [string](GFF-File-Format#gff-data-types) | Property [value](GFF-File-Format#gff-data-types) label |
+| Additional columns | Various | Immunity [type](GFF-File-Format#gff-data-types) mappings |
 
 **References**:
 

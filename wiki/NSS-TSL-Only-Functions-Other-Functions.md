@@ -248,7 +248,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 815
 - RWT-OEI 03/23/04
-- Returns a [vector](GFF-File-Format#vector) containing a random destination that the
+- Returns a [vector](GFF-File-Format#gff-data-types) containing a random destination that the
 - given creature can walk to that's within the range of the
 - passed parameter.
 
@@ -262,7 +262,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `768. GetScriptParameter`
 - DJS-OEI
 - This function will take the [index](2DA-File-Format#row-labels) of a script parameter
-- and return the [value](GFF-File-Format#data-types) associated with it. The [index](2DA-File-Format#row-labels)
+- and return the [value](GFF-File-Format#gff-data-types) associated with it. The [index](2DA-File-Format#row-labels)
 - of the first parameter is 1.
 
 - `nIndex`: int
@@ -273,7 +273,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - DJS-OEI 6/21/2004
 - 831
-- This function will return the one [CExoString](GFF-File-Format#cexostring) parameter
+- This function will return the one [CExoString](GFF-File-Format#gff-data-types) parameter
 - allowed for the currently running script.
 
 <a id="getspellacquired"></a>
@@ -310,7 +310,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Get the number of Force Points that were required to
 - cast this spell. This includes modifiers such as Room Force
 - Ratings and the Force Body power.
-- - Return [value](GFF-File-Format#data-types) on error: 0
+- - Return [value](GFF-File-Format#gff-data-types) on error: 0
 
 <a id="getspellformmask"></a>
 
@@ -318,7 +318,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 817
 - DJS-OEI 3/28/2004
-- Returns the Form [mask](GFF-File-Format#data-types) of the requested spell. This is used
+- Returns the Form [mask](GFF-File-Format#gff-data-types) of the requested spell. This is used
 - to determine if a spell is affected by various Forms, usually
 - Consular forms that modify duration/range.
 
@@ -342,11 +342,11 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - 820
 - RWT-OEI 04/06/04
 - This returns TRUE or FALSE if there is a clear line of sight from
-- the source [vector](GFF-File-Format#vector) to the target [vector](GFF-File-Format#vector). This is used in the AI to
+- the source [vector](GFF-File-Format#gff-data-types) to the target [vector](GFF-File-Format#gff-data-types). This is used in the AI to
 - help the creatures using ranged weapons find better places to shoot
 
-- `vSource`: [vector](GFF-File-Format#vector)
-- `vTarget`: [vector](GFF-File-Format#vector)
+- `vSource`: [vector](GFF-File-Format#gff-data-types)
+- `vTarget`: [vector](GFF-File-Format#gff-data-types)
 - `oSource`: object
 - `oTarget`: object
 
@@ -415,8 +415,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 829
 - AWD-OEI 6/21/2004
-- This function does not return a [value](GFF-File-Format#data-types).
-- This function modifies the BASE [value](GFF-File-Format#data-types) of the FORTITUDE saving throw for aObject
+- This function does not return a [value](GFF-File-Format#gff-data-types).
+- This function modifies the BASE [value](GFF-File-Format#gff-data-types) of the FORTITUDE saving throw for aObject
 
 - `aObject`: object
 - `aModValue`: int
@@ -441,8 +441,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 828
 - AWD-OEI 6/21/2004
-- This function does not return a [value](GFF-File-Format#data-types).
-- This function modifies the BASE [value](GFF-File-Format#data-types) of the REFLEX saving throw for aObject
+- This function does not return a [value](GFF-File-Format#gff-data-types).
+- This function modifies the BASE [value](GFF-File-Format#gff-data-types) of the REFLEX saving throw for aObject
 
 - `aObject`: object
 - `aModValue`: int
@@ -453,8 +453,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 830
 - AWD-OEI 6/21/2004
-- This function does not return a [value](GFF-File-Format#data-types).
-- This function modifies the BASE [value](GFF-File-Format#data-types) of the WILL saving throw for aObject
+- This function does not return a [value](GFF-File-Format#gff-data-types).
+- This function modifies the BASE [value](GFF-File-Format#gff-data-types) of the WILL saving throw for aObject
 
 - `aObject`: object
 - `aModValue`: int
@@ -639,9 +639,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 821
 - FAK - OEI 5/3/04
-- ShowDemoScreen, displays a [texture](TPC-File-Format), timeout, [string](GFF-File-Format#cexostring) and xy for [string](GFF-File-Format#cexostring)
+- ShowDemoScreen, displays a [texture](TPC-File-Format), timeout, [string](GFF-File-Format#gff-data-types) and xy for [string](GFF-File-Format#gff-data-types)
 
-- `sTexture`: [string](GFF-File-Format#cexostring)
+- `sTexture`: [string](GFF-File-Format#gff-data-types)
 - `nTimeout`: int
 - `nDisplayString`: int
 - `nDisplayX`: int
@@ -677,7 +677,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Places an active mine on the map.
 - nMineType - Mine [type](GFF-File-Format#data-types) from [traps.2da](2DA-traps)
 - lPoint - The location in the world to place the mine.
-- nDetectDCBase - This [value](GFF-File-Format#data-types), plus the "DetectDCMod" column in [traps.2da](2DA-traps)
+- nDetectDCBase - This [value](GFF-File-Format#gff-data-types), plus the "DetectDCMod" column in [traps.2da](2DA-traps)
 
 - `nMineType`: int
 - `lPoint`: location
@@ -723,7 +723,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - FAK - OEI 1/15/04
 - minigame function that lets you psuedo-set the [position](MDL-MDX-File-Format#node-header) of a follower object
 
-- `vPos`: [vector](GFF-File-Format#vector)
+- `vPos`: [vector](GFF-File-Format#gff-data-types)
 
 <a id="swmg_setjumpspeed"></a>
 

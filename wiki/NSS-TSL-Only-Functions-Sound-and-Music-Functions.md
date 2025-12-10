@@ -23,7 +23,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - RWT-OEI 09/27/04
 - This function displays the generic Message Box with the [StrRef](TLK-File-Format#string-references-strref)
 - message in it
-- sIcon is the [ResRef](GFF-File-Format#resref) for an icon you would like to display.
+- sIcon is the [ResRef](GFF-File-Format#gff-data-types) for an icon you would like to display.
 
 - `nStrRef`: int
 - `sIcon`: string (default: ``)

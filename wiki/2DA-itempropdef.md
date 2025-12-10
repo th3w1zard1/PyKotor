@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines item property definitions and their base properties. This is the master table for all item properties in the game. The engine uses this [file](GFF-File-Format) to determine item property [types](GFF-File-Format#data-types), costs, and effects.
+**Engine Usage**: Defines item property definitions and their base properties. This is the master table for all item properties in the game. The engine uses this [file](GFF-File-Format) to determine item property [types](GFF-File-Format#gff-data-types), costs, and effects.
 
 **Row [index](2DA-File-Format#row-labels)**: Item Property ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Property label |
+| `label` | [string](GFF-File-Format#gff-data-types) | Property label |
 | Additional columns | Various | Property definitions, costs, and parameters |
 
 **Note**: This [file](GFF-File-Format) may be the same as or related to `itemprops.2da` documented earlier. The exact relationship between these [files](GFF-File-Format) may vary between KotOR 1 and 2.

@@ -25,7 +25,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Get the ability score of [type](GFF-File-Format#data-types) nAbility for a creature (otherwise 0)
 - - oCreature: the creature whose ability score we wish to find out
 - - nAbilityType: ABILITY_*
-- Return [value](GFF-File-Format#data-types) on error: 0
+- Return [value](GFF-File-Format#gff-data-types) on error: 0
 
 - `oCreature`: object
 - `nAbilityType`: int

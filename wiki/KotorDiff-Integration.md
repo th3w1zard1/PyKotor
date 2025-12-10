@@ -23,7 +23,7 @@ kotordiff
 python -m kotorcli diff-installation --gui
 ```
 
-[KEY](KEY-File-Format) [flags](GFF-File-Format#data-types):
+[KEY](KEY-File-Format) [flags](GFF-File-Format#gff-data-types):
 
 - `--path1/--path2/--path3/--path` for multi-path comparisons
 - `--filter` to constrain resources/modules

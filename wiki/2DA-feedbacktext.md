@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines feedback text [strings](GFF-File-Format#cexostring) displayed to the player for various game events and actions. The engine uses this [file](GFF-File-Format) to provide contextual feedback messages.
+**Engine Usage**: Defines feedback text [strings](GFF-File-Format#gff-data-types) displayed to the player for various game events and actions. The engine uses this [file](GFF-File-Format) to provide contextual feedback messages.
 
 **Row [index](2DA-File-Format#row-labels)**: Feedback Text ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Feedback text label |
-| Additional columns | Various | Feedback text [strings](GFF-File-Format#cexostring) and properties |
+| `label` | [string](GFF-File-Format#gff-data-types) | Feedback text label |
+| Additional columns | Various | Feedback text [strings](GFF-File-Format#gff-data-types) and properties |
 
 **References**:
 

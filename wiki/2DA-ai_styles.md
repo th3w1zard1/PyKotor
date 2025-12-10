@@ -6,15 +6,15 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: AI Style ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | AI style label |
+| `label` | [string](GFF-File-Format#gff-data-types) | AI style label |
 | Additional columns | Various | AI behavior parameters |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:572`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L572) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure) mapping: "AIStyle" -> ai_styles.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:572`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L572) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "AIStyle" -> ai_styles.2da
 
 ---

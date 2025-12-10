@@ -42,7 +42,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `710. ClearAllEffects`
 - Clear all the effects of the caller.
-- - No return [value](GFF-File-Format#data-types), but if an error occurs, the log [file](GFF-File-Format) will contain
+- - No return [value](GFF-File-Format#gff-data-types), but if an error occurs, the log [file](GFF-File-Format) will contain
 - "ClearAllEffects failed.".
 
 <a id="disablevideoeffect"></a>
@@ -87,7 +87,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - nValue
 - - nModifyType: AC_*
 - - nDamageType: DAMAGE_TYPE_*
-- - Default [value](GFF-File-Format#data-types) for nDamageType should only ever be used in this function prototype.
+- - Default [value](GFF-File-Format#gff-data-types) for nDamageType should only ever be used in this function prototype.
 
 - `nValue`: int
 - `nModifyType`: int (default: `0`)
@@ -99,10 +99,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `115. EffectACIncrease`
 - Create an AC Increase effect
-- - nValue: [size](GFF-File-Format#file-structure) of AC increase
+- - nValue: [size](GFF-File-Format#file-structure-overview) of AC increase
 - - nModifyType: AC_*_BONUS
 - - nDamageType: DAMAGE_TYPE_*
-- - Default [value](GFF-File-Format#data-types) for nDamageType should only ever be used in this function prototype.
+- - Default [value](GFF-File-Format#gff-data-types) for nDamageType should only ever be used in this function prototype.
 
 - `nValue`: int
 - `nModifyType`: int (default: `0`)
@@ -159,7 +159,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `118. EffectAttackIncrease`
 - Create an Attack Increase effect
-- - nBonus: [size](GFF-File-Format#file-structure) of attack bonus
+- - nBonus: [size](GFF-File-Format#file-structure-overview) of attack bonus
 - - nModifierType: ATTACK_BONUS_*
 
 - `nBonus`: int
@@ -174,7 +174,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - nBeamVisualEffect: VFX_BEAM_*
 - - oEffector: the beam is emitted from this creature
 - - nBodyPart: BODY_NODE_*
-- - bMissEffect: If this is TRUE, the beam will fire to a random [vector](GFF-File-Format#vector) near or
+- - bMissEffect: If this is TRUE, the beam will fire to a random [vector](GFF-File-Format#gff-data-types) near or
 
 - `nBeamVisualEffect`: int
 - `oEffector`: object
@@ -365,7 +365,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `487. EffectDamageShield`
 - Create a Damage Shield effect which does (nDamageAmount + nRandomAmount)
 - damage to any melee attacker on a successful attack of damage [type](GFF-File-Format#data-types) nDamageType.
-- - nDamageAmount: an integer [value](GFF-File-Format#data-types)
+- - nDamageAmount: an integer [value](GFF-File-Format#gff-data-types)
 - - nRandomAmount: DAMAGE_BONUS_*
 - - nDamageType: DAMAGE_TYPE_*
 
@@ -495,7 +495,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `212. EffectForceResistanceIncrease`
 - Create a Force Resistance Increase effect.
-- - nValue: [size](GFF-File-Format#file-structure) of Force Resistance increase
+- - nValue: [size](GFF-File-Format#file-structure-overview) of Force Resistance increase
 
 - `nValue`: int
 
@@ -742,7 +742,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `117. EffectSavingThrowIncrease`
 - Create an AC Decrease effect
 - - nSave: SAVING_THROW_*(not SAVING_THROW_TYPE_*)
-- - nValue: [size](GFF-File-Format#file-structure) of AC decrease
+- - nValue: [size](GFF-File-Format#file-structure-overview) of AC decrease
 - - nSaveType: SAVING_THROW_TYPE_*
 
 - `nSave`: int
@@ -863,7 +863,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `180. EffectVisualEffect`
 - - Create a Visual Effect that can be applied to an object.
 - - nVisualEffectId
-- - nMissEffect: if this is TRUE, a random [vector](GFF-File-Format#vector) near or past the target will
+- - nMissEffect: if this is TRUE, a random [vector](GFF-File-Format#gff-data-types) near or past the target will
 - be generated, on which to play the effect
 
 - `nVisualEffectId`: int
@@ -924,7 +924,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `89. GetEffectDurationType`
 - Get the duration type (DURATION_TYPE_*) of eEffect.
-- - Return [value](GFF-File-Format#data-types) if eEffect is not valid: -1
+- - Return [value](GFF-File-Format#gff-data-types) if eEffect is not valid: -1
 
 - `eEffect`: effect
 
@@ -944,7 +944,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `90. GetEffectSubType`
 - Get the subtype (SUBTYPE_*) of eEffect.
-- - Return [value](GFF-File-Format#data-types) on error: 0
+- - Return [value](GFF-File-Format#gff-data-types) on error: 0
 
 - `eEffect`: effect
 
@@ -954,7 +954,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `170. GetEffectType`
 - Get the effect type (EFFECT_TYPE_*) of eEffect.
-- - Return [value](GFF-File-Format#data-types) if eEffect is invalid: EFFECT_INVALIDEFFECT
+- - Return [value](GFF-File-Format#gff-data-types) if eEffect is invalid: EFFECT_INVALIDEFFECT
 
 - `eEffect`: effect
 
@@ -1045,7 +1045,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `87. RemoveEffect`
 - Remove eEffect from oCreature.
-- - No return [value](GFF-File-Format#data-types)
+- - No return [value](GFF-File-Format#gff-data-types)
 
 - `oCreature`: object
 - `eEffect`: effect

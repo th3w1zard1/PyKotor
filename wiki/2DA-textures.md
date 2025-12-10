@@ -6,15 +6,15 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: [texture](TPC-File-Format) Variation ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | [texture](TPC-File-Format) variation label |
+| `label` | [string](GFF-File-Format#gff-data-types) | [texture](TPC-File-Format) variation label |
 | Additional columns | Various | [texture](TPC-File-Format) variation properties |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:540`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L540) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure) mapping: "TextureVar" -> [textures](TPC-File-Format).2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:540`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L540) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "TextureVar" -> [textures](TPC-File-Format).2da
 
 ---

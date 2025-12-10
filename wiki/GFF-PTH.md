@@ -2,17 +2,17 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-PTH [files](GFF-File-Format) define pathfinding [data](GFF-File-Format#file-structure) for modules, distinct from the navigation mesh ([walkmesh](BWM-File-Format)). They store a network of waypoints and connections used for high-level AI navigation planning.
+PTH [files](GFF-File-Format) define pathfinding [data](GFF-File-Format#file-structure-overview) for modules, distinct from the navigation mesh ([walkmesh](BWM-File-Format)). They store a network of waypoints and connections used for high-level AI navigation planning.
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/pth.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/pth.py)
 
 ## Path Points
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Path_Points` | List | List of navigation [nodes](MDL-MDX-File-Format#node-structures) |
 
-**Path_Points Struct [fields](GFF-File-Format#file-structure):**
+**Path_Points Struct [fields](GFF-File-Format#file-structure-overview):**
 
 - `X` (Float): X [coordinate](GFF-File-Format#are-area)
 - `Y` (Float): Y [coordinate](GFF-File-Format#are-area)
@@ -20,11 +20,11 @@ PTH [files](GFF-File-Format) define pathfinding [data](GFF-File-Format#file-stru
 
 ## Path Connections
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Path_Connections` | List | List of [edges](BWM-File-Format#edges) between [nodes](MDL-MDX-File-Format#node-structures) |
 
-**Path_Connections Struct [fields](GFF-File-Format#file-structure):**
+**Path_Connections Struct [fields](GFF-File-Format#file-structure-overview):**
 
 - `Path_Source` (Int): [index](2DA-File-Format#row-labels) of source point
 - `Path_Dest` (Int): [index](2DA-File-Format#row-labels) of destination point

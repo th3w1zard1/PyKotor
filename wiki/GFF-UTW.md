@@ -12,25 +12,25 @@ UTW [files](GFF-File-Format) define [waypoint templates](GFF-File-Format#utw-way
 
 ---
 
-## Core Identity [fields](GFF-File-Format#file-structure)
+## Core Identity [fields](GFF-File-Format#file-structure-overview)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 |:------|:-----|:------------|
-| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | Template identifier for this waypoint |
-| `Tag` | [CExoString](GFF-File-Format#cexostring) | Unique tag for script/linking references |
-| `LocalizedName` | [CExoLocString](GFF-File-Format#localizedstring) | Waypoint name |
-| `Description` | [CExoLocString](GFF-File-Format#localizedstring) | Description (unused) |
-| `Comment` | [CExoString](GFF-File-Format#cexostring) | Developer comment/notes |
+| `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this waypoint |
+| `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script/linking references |
+| `LocalizedName` | [CExoLocString](GFF-File-Format#gff-data-types) | Waypoint name |
+| `Description` | [CExoLocString](GFF-File-Format#gff-data-types) | Description (unused) |
+| `Comment` | [CExoString](GFF-File-Format#gff-data-types) | Developer comment/notes |
 
 ---
 
 ## Map Note Functionality
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 |:------|:-----|:------------|
 | `HasMapNote` | Byte | Waypoint has a map note |
 | `MapNoteEnabled` | Byte | Map note is initially visible |
-| `MapNote` | [CExoLocString](GFF-File-Format#localizedstring) | Text displayed on map |
+| `MapNote` | [CExoLocString](GFF-File-Format#gff-data-types) | Text displayed on map |
 
 ### Map Notes
 
@@ -42,9 +42,9 @@ UTW [files](GFF-File-Format) define [waypoint templates](GFF-File-Format#utw-way
 
 ## Linking & Appearance
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 |:------|:-----|:------------|
-| `LinkedTo` | [CExoString](GFF-File-Format#cexostring) | Tag of linked object (unused) |
+| `LinkedTo` | [CExoString](GFF-File-Format#gff-data-types) | Tag of linked object (unused) |
 | `Appearance` | Byte | Appearance type (1=Waypoint) |
 | `PaletteID` | Byte | Toolset palette category |
 

@@ -6,18 +6,18 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Upgrade Crystal ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Upgrade crystal label |
-| `shortmdlvar` | [ResRef](GFF-File-Format#resref) | Short [model](MDL-MDX-File-Format) variation [ResRef](GFF-File-Format#resref) |
-| `longmdlvar` | [ResRef](GFF-File-Format#resref) | Long [model](MDL-MDX-File-Format) variation [ResRef](GFF-File-Format#resref) |
-| `doublemdlvar` | [ResRef](GFF-File-Format#resref) | [double](GFF-File-Format#double)-bladed [model](MDL-MDX-File-Format) variation [ResRef](GFF-File-Format#resref) |
+| `label` | [string](GFF-File-Format#gff-data-types) | Upgrade crystal label |
+| `shortmdlvar` | [ResRef](GFF-File-Format#gff-data-types) | Short [model](MDL-MDX-File-Format) variation [ResRef](GFF-File-Format#gff-data-types) |
+| `longmdlvar` | [ResRef](GFF-File-Format#gff-data-types) | Long [model](MDL-MDX-File-Format) variation [ResRef](GFF-File-Format#gff-data-types) |
+| `doublemdlvar` | [ResRef](GFF-File-Format#gff-data-types) | [double](GFF-File-Format#gff-data-types)-bladed [model](MDL-MDX-File-Format) variation [ResRef](GFF-File-Format#gff-data-types) |
 | Additional columns | Various | Crystal properties |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:172`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L172) - [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#resref) column definitions for upcrystals.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:172`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L172) - [model](MDL-MDX-File-Format) [ResRef](GFF-File-Format#gff-data-types) column definitions for upcrystals.2da
 
 ---

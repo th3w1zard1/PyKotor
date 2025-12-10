@@ -28,7 +28,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - been added or the template specified is invalid
 
 - `nNPC`: int
-- `sTemplate`: [string](GFF-File-Format#cexostring)
+- `sTemplate`: [string](GFF-File-Format#gff-data-types)
 
 <a id="addpartymember"></a>
 
@@ -80,7 +80,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `126. GetPartyMemberCount`
 - GetPartyMemberCount
-- Returns a [count](GFF-File-Format#file-structure) of how many members [ARE](GFF-File-Format#are-area) in the party including the player character
+- Returns a [count](GFF-File-Format#file-structure-overview) of how many members [ARE](GFF-File-Format#are-area) in the party including the player character
 
 <a id="isnpcpartymember"></a>
 

@@ -10,6 +10,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - 832
 - AWD-OEI 6/29/2004
-- This function returns the personal space [value](GFF-File-Format#data-types) of an object
+- This function returns the personal space [value](GFF-File-Format#gff-data-types) of an object
 
 - `aObject`: object

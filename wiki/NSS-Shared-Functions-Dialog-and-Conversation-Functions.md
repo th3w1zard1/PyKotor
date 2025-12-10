@@ -65,7 +65,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `711. GetLastConversation`
 - GetLastConversation
-- Gets the last conversation [string](GFF-File-Format#cexostring).
+- Gets the last conversation [string](GFF-File-Format#gff-data-types).
 
 <a id="getlastspeaker"></a>
 
@@ -136,7 +136,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Immediately speak a conversation one-liner.
 - - sDialogResRef
 - - oTokenTarget: This must be specified if there [ARE](GFF-File-Format#are-area) creature-specific tokens
-- in the [string](GFF-File-Format#cexostring).
+- in the [string](GFF-File-Format#gff-data-types).
 
 - `sDialogResRef`: string (default: ``)
 - `oTokenTarget`: object (default: `32767`)
@@ -151,5 +151,5 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - sStringToSpeak
 - - nTalkVolume: TALKVOLUME_*
 
-- `sStringToSpeak`: [string](GFF-File-Format#cexostring)
+- `sStringToSpeak`: [string](GFF-File-Format#gff-data-types)
 - `nTalkVolume`: int (default: `0`)

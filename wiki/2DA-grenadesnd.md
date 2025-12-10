@@ -6,16 +6,16 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Grenade Sound ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Grenade sound label |
-| `sound` | [ResRef](GFF-File-Format#resref) | Sound [ResRef](GFF-File-Format#resref) for grenade |
+| `label` | [string](GFF-File-Format#gff-data-types) | Grenade sound label |
+| `sound` | [ResRef](GFF-File-Format#gff-data-types) | Sound [ResRef](GFF-File-Format#gff-data-types) for grenade |
 | Additional columns | Various | Grenade sound properties |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:199`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L199) - Sound [ResRef](GFF-File-Format#resref) column definition for grenadesnd.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:199`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L199) - Sound [ResRef](GFF-File-Format#gff-data-types) column definition for grenadesnd.2da
 
 ---

@@ -1,6 +1,6 @@
 # KotOR [TPC](TPC-File-Format) [file](GFF-File-Format) [format](GFF-File-Format) Documentation
 
-TPC ([texture](TPC-File-Format) Pack Container) is KotOR's native [texture](TPC-File-Format) [format](GFF-File-Format). It supports paletteless RGB/RGBA, greyscale, and block-compressed DXT1/DXT3/DXT5 [data](GFF-File-Format#file-structure), optional mipmaps, cube maps, and [flipbook animations](TXI-File-Format#animation-and-flipbooks) controlled by companion [TXI files](TXI-File-Format).
+TPC ([texture](TPC-File-Format) Pack Container) is KotOR's native [texture](TPC-File-Format) [format](GFF-File-Format). It supports paletteless RGB/RGBA, greyscale, and block-compressed DXT1/DXT3/DXT5 [data](GFF-File-Format#file-structure-overview), optional mipmaps, cube maps, and [flipbook animations](TXI-File-Format#animation-and-flipbooks) controlled by companion [TXI files](TXI-File-Format).
 
 ## Table of Contents
 
@@ -16,16 +16,16 @@ TPC ([texture](TPC-File-Format) Pack Container) is KotOR's native [texture](TPC-
 
 ---
 
-## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure) Overview
+## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) Overview
 
-| [offset](GFF-File-Format#file-structure) | [size](GFF-File-Format#file-structure) | Description |
+| [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description |
 | ------ | ---- | ----------- |
-| 0 (0x00)   | 4    | [data](GFF-File-Format#file-structure) size (0 for uncompressed RGB; compressed [textures](TPC-File-Format) store total bytes) |
-| 4 (0x04)   | 4    | Alpha test/threshold [float](GFF-File-Format#float) |
-| 8 (0x08)   | 2    | Width ([uint16](GFF-File-Format#word)) |
-| 10 (0x0A)   | 2    | Height ([uint16](GFF-File-Format#word)) |
-| 12 (0x0C)   | 1    | Pixel encoding [flag](GFF-File-Format#data-types) |
-| 13 (0x0D)   | 1    | Mipmap [count](GFF-File-Format#file-structure) |
+| 0 (0x00)   | 4    | [data](GFF-File-Format#file-structure-overview) size (0 for uncompressed RGB; compressed [textures](TPC-File-Format) store total bytes) |
+| 4 (0x04)   | 4    | Alpha test/threshold [float](GFF-File-Format#gff-data-types) |
+| 8 (0x08)   | 2    | Width ([uint16](GFF-File-Format#gff-data-types)) |
+| 10 (0x0A)   | 2    | Height ([uint16](GFF-File-Format#gff-data-types)) |
+| 12 (0x0C)   | 1    | Pixel encoding [flag](GFF-File-Format#gff-data-types) |
+| 13 (0x0D)   | 1    | Mipmap [count](GFF-File-Format#file-structure-overview) |
 | 14 (0x0E)   | 114 (0x72) | Reserved / padding |
 | 128 (0x80)   | —    | [texture](TPC-File-Format) data (per layer, per mipmap) |
 | ...    | —    | Optional ASCII [TXI](TXI-File-Format) footer |
@@ -54,9 +54,9 @@ This layout is identical across PyKotor, Reone, Xoreos, KotOR.js, and the origin
 
 ## [header](GFF-File-Format#file-header) Layout
 
-| [field](GFF-File-Format#file-structure) | Description |
+| [field](GFF-File-Format#file-structure-overview) | Description |
 | ----- | ----------- |
-| `data_size` | If non-zero, specifies total compressed payload [size](GFF-File-Format#file-structure); uncompressed [textures](TPC-File-Format) set this to 0 and derive [size](GFF-File-Format#file-structure) from [format](GFF-File-Format)/width/height. |
+| `data_size` | If non-zero, specifies total compressed payload [size](GFF-File-Format#file-structure-overview); uncompressed [textures](TPC-File-Format) set this to 0 and derive [size](GFF-File-Format#file-structure-overview) from [format](GFF-File-Format)/width/height. |
 | `alpha_test` | Float threshold used by punch-through rendering (commonly `0.0` or `0.5`). |
 | `pixel_encoding` | Bitfield describing format (see next section). |
 | `mipmap_count` | Number of mip levels per layer (minimum 1). |
@@ -72,12 +72,12 @@ This layout is identical across PyKotor, Reone, Xoreos, KotOR.js, and the origin
 
 | Encoding | Description | Notes |
 | -------- | ----------- | ----- |
-| `0x01` (Greyscale) | 8-[bit](GFF-File-Format#data-types) luminance | Stored as linear bytes |
-| `0x02` (RGB) | 24-[bit](GFF-File-Format#data-types) RGB | Linear bytes, may be swizzled on Xbox |
-| `0x04` (RGBA) | 32-[bit](GFF-File-Format#data-types) RGBA | Linear bytes |
-| `0x0C` (BGRA) | 32-[bit](GFF-File-Format#data-types) BGRA swizzled | Xbox-specific swizzle; PyKotor deswizzles on load |
-| DXT1 | Block-compressed (4×4 blocks, 8 bytes) | Detected via `data_size` and encoding [flags](GFF-File-Format#data-types) |
-| DXT3/DXT5 | Block-compressed (4×4 blocks, 16 bytes) | Chosen based on `pixel_type` and compression [flag](GFF-File-Format#data-types) |
+| `0x01` (Greyscale) | 8-[bit](GFF-File-Format#gff-data-types) luminance | Stored as linear bytes |
+| `0x02` (RGB) | 24-[bit](GFF-File-Format#gff-data-types) RGB | Linear bytes, may be swizzled on Xbox |
+| `0x04` (RGBA) | 32-[bit](GFF-File-Format#gff-data-types) RGBA | Linear bytes |
+| `0x0C` (BGRA) | 32-[bit](GFF-File-Format#gff-data-types) BGRA swizzled | Xbox-specific swizzle; PyKotor deswizzles on load |
+| DXT1 | Block-compressed (4×4 blocks, 8 bytes) | Detected via `data_size` and encoding [flags](GFF-File-Format#gff-data-types) |
+| DXT3/DXT5 | Block-compressed (4×4 blocks, 16 bytes) | Chosen based on `pixel_type` and compression [flag](GFF-File-Format#gff-data-types) |
 
 **Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py:54-178`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py#L54-L178)
 
@@ -86,7 +86,7 @@ This layout is identical across PyKotor, Reone, Xoreos, KotOR.js, and the origin
 ## Mipmaps, Layers, and [animation](MDL-MDX-File-Format#animation-header)
 
 - Each [texture](TPC-File-Format) can have multiple **layers** (used for cube maps or animated flipbooks).  
-- Every layer stores `mipmap_count` levels. For uncompressed [textures](TPC-File-Format), each level’s [size](GFF-File-Format#file-structure) equals `width × height × bytes_per_pixel`; for DXT [formats](GFF-File-Format) it equals the block [size](GFF-File-Format#file-structure) calculation.  
+- Every layer stores `mipmap_count` levels. For uncompressed [textures](TPC-File-Format), each level’s [size](GFF-File-Format#file-structure-overview) equals `width × height × bytes_per_pixel`; for DXT [formats](GFF-File-Format) it equals the block [size](GFF-File-Format#file-structure-overview) calculation.  
 - Animated [textures](TPC-File-Format) rely on [TXI](TXI-File-Format) fields (`proceduretype cycle`, `numx`, `numy`, `fps`). PyKotor splits the sprite sheet into layers and recalculates mip counts per frame.  
 
 **Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py:216-285`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L216-L285)
@@ -116,11 +116,11 @@ This layout is identical across PyKotor, Reone, Xoreos, KotOR.js, and the origin
 ## Implementation Details
 
 - **Binary Reader/Writer:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py)  
-- **[data](GFF-File-Format#file-structure) [model](MDL-MDX-File-Format) & Conversion Utilities:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py)  
+- **[data](GFF-File-Format#file-structure-overview) [model](MDL-MDX-File-Format) & Conversion Utilities:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/graphics/format/tpcreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/tpcreader.cpp)  
   - [`vendor/xoreos-tools/src/graphics/tpc.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/graphics/tpc.cpp)  
   - [`vendor/tga2tpc`](https://github.com/th3w1zard1/tga2tpc)
   - [`vendor/KotOR.js/src/loaders/TextureLoader.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/loaders/TextureLoader.ts)  
 
-All of the engines listed above treat the [header](GFF-File-Format#file-header) and mipmap [data](GFF-File-Format#file-structure) identically. The only notable difference is that KotOR.js stores [textures](TPC-File-Format) as WebGL-friendly blobs internally, but it imports/exports the same [TPC](TPC-File-Format) binary [format](GFF-File-Format).
+All of the engines listed above treat the [header](GFF-File-Format#file-header) and mipmap [data](GFF-File-Format#file-structure-overview) identically. The only notable difference is that KotOR.js stores [textures](TPC-File-Format) as WebGL-friendly blobs internally, but it imports/exports the same [TPC](TPC-File-Format) binary [format](GFF-File-Format).

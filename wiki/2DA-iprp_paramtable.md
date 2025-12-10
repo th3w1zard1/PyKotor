@@ -2,15 +2,15 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Master table listing all item property parameter tables. The engine uses this [file](GFF-File-Format) to look up which parameter table to use for a specific item property [type](GFF-File-Format#data-types).
+**Engine Usage**: Master table listing all item property parameter tables. The engine uses this [file](GFF-File-Format) to look up which parameter table to use for a specific item property [type](GFF-File-Format#gff-data-types).
 
 **Row [index](2DA-File-Format#row-labels)**: Parameter Table ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Parameter table label |
+| `label` | [string](GFF-File-Format#gff-data-types) | Parameter table label |
 | Additional columns | Various | Parameter table ResRefs and properties |
 
 **References**:

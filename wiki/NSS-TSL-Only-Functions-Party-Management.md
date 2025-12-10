@@ -28,7 +28,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Returns 1 if successful, 0 if there was an error
 
 - `nPUP`: int
-- `sTemplate`: [string](GFF-File-Format#cexostring)
+- `sTemplate`: [string](GFF-File-Format#gff-data-types)
 
 <a id="addpartypuppet"></a>
 
@@ -73,6 +73,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - JAB-OEI 07/22/04
 - Will remove the CNPC from the 3 person party, and remove
 - him/her from the area, effectively sending the CNPC back
-- to the base. The CNPC [data](GFF-File-Format#file-structure) is still stored in the
+- to the base. The CNPC [data](GFF-File-Format#file-structure-overview) is still stored in the
 
 - `nNPC`: int

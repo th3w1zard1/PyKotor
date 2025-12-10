@@ -6,13 +6,13 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Skill ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Skill label |
-| `name` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for skill name |
-| `description` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for skill description |
+| `label` | [string](GFF-File-Format#gff-data-types) | Skill label |
+| `name` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for skill name |
+| `description` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for skill description |
 | `keyability` | Integer | [KEY](KEY-File-Format) ability score (STR, DEX, INT, etc.) |
 | `armorcheckpenalty` | Boolean | Whether armor check penalty applies |
 | `allclassescanuse` | Boolean | Whether all classes can use this skill |
@@ -21,15 +21,15 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 | `untrained` | Boolean | Whether skill can be used untrained |
 | `constant` | Integer (optional) | Constant modifier |
 | `hostileskill` | Boolean | Whether skill is hostile |
-| `icon` | ResRef (optional) | Skill icon [ResRef](GFF-File-Format#resref) |
+| `icon` | ResRef (optional) | Skill icon [ResRef](GFF-File-Format#gff-data-types) |
 
 **Column Details** (from reone implementation):
 
 The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
 
-- `name`: [string](GFF-File-Format#cexostring) reference for skill name
-- `description`: [string](GFF-File-Format#cexostring) reference for skill description
-- `icon`: Icon [ResRef](GFF-File-Format#resref)
+- `name`: [string](GFF-File-Format#gff-data-types) reference for skill name
+- `description`: [string](GFF-File-Format#gff-data-types) reference for skill description
+- `icon`: Icon [ResRef](GFF-File-Format#gff-data-types)
 - Dynamic class skill columns: For each class, there is a column named `{classname}_class` (e.g., `jedi_guardian_class`) that contains `1` if the skill is a class skill for that class
 - `droidcanuse`: Boolean - whether droids can use this skill
 - `npccanuse`: Boolean - whether NPCs can use this skill
@@ -41,7 +41,7 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:148`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L148) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [skills.2da](2DA-skills) (K1: name, description)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:326`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L326) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [skills.2da](2DA-skills) (K2: name, description)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:472`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L472) - TwoDARegistry.SKILLS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:563`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L563) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure) mapping: "SkillID" -> [skills.2da](2DA-skills)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:563`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L563) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "SkillID" -> [skills.2da](2DA-skills)
 
 **HolocronToolset:**
 

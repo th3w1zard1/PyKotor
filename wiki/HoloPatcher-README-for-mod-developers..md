@@ -66,10 +66,10 @@ File0=script_to_modify.NCS
 
 This will:
 
-- Modify [offset](GFF-File-Format#file-structure) dec 20 (hex 0x14) of `script_to_modify.ncs` and overwrite that [offset](GFF-File-Format#file-structure) with the [value](GFF-File-Format#data-types) of StrRef5.
-- Modify [offset](GFF-File-Format#file-structure) dec 40 (hex 0x28) of `script_to_modify.ncs` and overwrite that [offset](GFF-File-Format#file-structure) with the [value](GFF-File-Format#data-types) of 2DAMEMORY10.
-- Modify [offset](GFF-File-Format#file-structure) dec 60 (hex 0x3C) of `script_to_modify.ncs` and overwrite that [offset](GFF-File-Format#file-structure) with the [value](GFF-File-Format#data-types) of dec 65535 (hex 0xFFFF) i.e. the maximum possible [value](GFF-File-Format#data-types).
-In summary, HACKList writes unsigned WORDs (sized at two bytes) to [offsets](GFF-File-Format#file-structure) in the [NCS](NCS-File-Format) specified by the ini.
+- Modify [offset](GFF-File-Format#file-structure-overview) dec 20 (hex 0x14) of `script_to_modify.ncs` and overwrite that [offset](GFF-File-Format#file-structure-overview) with the [value](GFF-File-Format#gff-data-types) of StrRef5.
+- Modify [offset](GFF-File-Format#file-structure-overview) dec 40 (hex 0x28) of `script_to_modify.ncs` and overwrite that [offset](GFF-File-Format#file-structure-overview) with the [value](GFF-File-Format#gff-data-types) of 2DAMEMORY10.
+- Modify [offset](GFF-File-Format#file-structure-overview) dec 60 (hex 0x3C) of `script_to_modify.ncs` and overwrite that [offset](GFF-File-Format#file-structure-overview) with the [value](GFF-File-Format#gff-data-types) of dec 65535 (hex 0xFFFF) i.e. the maximum possible [value](GFF-File-Format#gff-data-types).
+In summary, HACKList writes unsigned WORDs (sized at two bytes) to [offsets](GFF-File-Format#file-structure-overview) in the [NCS](NCS-File-Format) specified by the ini.
 
 ### For more information on HoloPatcher's implementation, please see the following links
 

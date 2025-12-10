@@ -44,7 +44,7 @@ The bottom status bar now mirrors the Module Designer style and updates live as 
 
 - **Coords**: World X/Y under the cursor
 - **Hover**: Room under the cursor (if any)
-- **Selected**: Hook details when a hook is selected, otherwise the [count](GFF-File-Format#file-structure) of selected rooms
+- **Selected**: Hook details when a hook is selected, otherwise the [count](GFF-File-Format#file-structure-overview) of selected rooms
 - **Keys/Buttons**: Currently held keyboard modifiers and mouse buttons
 - **Status**: Paint mode/[material](MDL-MDX-File-Format#trimesh-header), colorization, and active snap modes (grid/hook)
 
@@ -101,7 +101,7 @@ Hooks snap together when you move rooms near each other (if **Snap to Hooks** is
 - **Shift + Click** to add to selection
 - **Ctrl + A** to select all rooms
 - **Escape** to deselect all
-- **[double](GFF-File-Format#double)-click** a room to select all connected rooms
+- **[double](GFF-File-Format#gff-data-types)-click** a room to select all connected rooms
 
 ### Deleting Rooms
 
@@ -127,7 +127,7 @@ Hooks snap together when you move rooms near each other (if **Snap to Hooks** is
 ### Grid Snap
 
 - **Toggle**: Press **G** or check **Snap to Grid (G)**
-- **Grid [size](GFF-File-Format#file-structure)**: Adjust in Options panel
+- **Grid [size](GFF-File-Format#file-structure-overview)**: Adjust in Options panel
 - Snaps room [positions](MDL-MDX-File-Format#node-header) to grid lines
 
 ### Hook Snap
@@ -163,7 +163,7 @@ The [walkmesh](BWM-File-Format) painter allows you to change surface materials (
 - Select room(s) with modified [walkmeshes](BWM-File-Format)
 - Click **Reset Selected** to revert to original [materials](MDL-MDX-File-Format#trimesh-header)
 
-### [material](MDL-MDX-File-Format#trimesh-header) [types](GFF-File-Format#data-types)
+### [material](MDL-MDX-File-Format#trimesh-header) [types](GFF-File-Format#gff-data-types)
 
 - **Walkable**: Dirt, Grass, Stone, Wood, Water, Carpet, Metal, etc.
 - **Non-walkable**: Obscuring, Non-walk, Transparent, Lava, Bottomless Pit, etc.
@@ -254,7 +254,7 @@ The build process creates:
 
 5. **Organize Your Layout**: Use the grid to keep rooms aligned and organized.
 
-6. **Save Frequently**: The editor supports undo/redo, but saving regularly prevents [data](GFF-File-Format#file-structure) loss.
+6. **Save Frequently**: The editor supports undo/redo, but saving regularly prevents [data](GFF-File-Format#file-structure-overview) loss.
 
 7. **Test in Game**: Always test your module in-game after building to verify connections and walkability.
 
@@ -264,7 +264,7 @@ The build process creates:
 
 - Ensure hooks [ARE](GFF-File-Format#are-area) close together (within ~1.5 units)
 - Check that **Snap to Hooks** is enabled
-- Verify both rooms have compatible door [types](GFF-File-Format#data-types)
+- Verify both rooms have compatible door [types](GFF-File-Format#gff-data-types)
 
 ### Missing Components
 
@@ -287,5 +287,5 @@ The build process creates:
 ## Related Documentation
 
 - [Indoor Map Builder - Implementation Guide](Indoor-Map-Builder-Implementation-Guide.md) - Technical details for developers
-- [LYT File Format](LYT-File-Format.md) - [layout files](LYT-File-Format) structure
-- [BWM File Format](BWM-File-Format.md) - [walkmesh](BWM-File-Format) [file](GFF-File-Format) [structure](GFF-File-Format#file-structure)
+- [LYT File Format](LYT-File-Format.md) - [layout files](LYT-File-Format) [structure](GFF-File-Format#file-structure-overview)
+- [BWM File Format](BWM-File-Format.md) - [walkmesh](BWM-File-Format) [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview)

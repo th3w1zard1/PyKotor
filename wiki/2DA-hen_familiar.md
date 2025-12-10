@@ -6,16 +6,16 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Familiar ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Familiar label |
-| `baseresref` | [ResRef](GFF-File-Format#resref) | Base [resource reference](GFF-File-Format#resref) for familiar (not used in game engine) |
+| `label` | [string](GFF-File-Format#gff-data-types) | Familiar label |
+| `baseresref` | [ResRef](GFF-File-Format#gff-data-types) | Base [resource reference](GFF-File-Format#gff-data-types) for familiar (not used in game engine) |
 | Additional columns | Various | Familiar properties |
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:158`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L158) - [ResRef](GFF-File-Format#resref) column definition for hen_familiar.2da (baseresref, not used in engine)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:158`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L158) - [ResRef](GFF-File-Format#gff-data-types) column definition for hen_familiar.2da (baseresref, not used in engine)
 
 ---

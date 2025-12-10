@@ -6,19 +6,19 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Sound ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Sound label (e.g., "Clicked_Default", "Entered_Default") |
-| `soundresref` | [ResRef](GFF-File-Format#resref) | Sound effect [ResRef](GFF-File-Format#resref) |
+| `label` | [string](GFF-File-Format#gff-data-types) | Sound label (e.g., "Clicked_Default", "Entered_Default") |
+| `soundresref` | [ResRef](GFF-File-Format#gff-data-types) | Sound effect [ResRef](GFF-File-Format#gff-data-types) |
 
 **References**:
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:200`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L200) - Sound [ResRef](GFF-File-Format#resref) column definition for guisounds.2da (K1: soundresref)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:392`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L392) - Sound [ResRef](GFF-File-Format#resref) column definition for guisounds.2da (K2: soundresref)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:200`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L200) - Sound [ResRef](GFF-File-Format#gff-data-types) column definition for guisounds.2da (K1: soundresref)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:392`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L392) - Sound [ResRef](GFF-File-Format#gff-data-types) column definition for guisounds.2da (K2: soundresref)
 
 **Vendor Implementations:**
 

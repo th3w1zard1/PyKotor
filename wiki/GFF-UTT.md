@@ -8,25 +8,25 @@ UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trig
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utt.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utt.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure)
+## Core Identity [fields](GFF-File-Format#file-structure-overview)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | Template identifier for this trigger |
-| `Tag` | [CExoString](GFF-File-Format#cexostring) | Unique tag for script references |
-| `LocName` | [CExoLocString](GFF-File-Format#localizedstring) | Trigger name (localized) |
-| `Comment` | [CExoString](GFF-File-Format#cexostring) | Developer comment/notes |
+| `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this trigger |
+| `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script references |
+| `LocName` | [CExoLocString](GFF-File-Format#gff-data-types) | Trigger name (localized) |
+| `Comment` | [CExoString](GFF-File-Format#gff-data-types) | Developer comment/notes |
 
 ## Trigger Configuration
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Type` | Int | Trigger type (0=Generic, 1=Transition, 2=Trap) |
 | `Faction` | Word | Faction identifier |
 | `Cursor` | Int | Cursor icon when hovered (0=None, 1=Door, etc) |
 | `HighlightHeight` | Float | Height of selection highlight |
 
-**Trigger [types](GFF-File-Format#data-types):**
+**Trigger [types](GFF-File-Format#gff-data-types):**
 
 - **Generic**: Script execution volume
 - **Transition**: Loads new module or moves to waypoint
@@ -34,11 +34,11 @@ UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trig
 
 ## Transition Settings
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `LinkedTo` | [CExoString](GFF-File-Format#cexostring) | Destination waypoint tag |
-| `LinkedToModule` | [ResRef](GFF-File-Format#resref) | Destination module [ResRef](GFF-File-Format#resref) |
-| `LinkedToFlags` | Byte | Transition behavior [flags](GFF-File-Format#data-types) |
+| `LinkedTo` | [CExoString](GFF-File-Format#gff-data-types) | Destination waypoint tag |
+| `LinkedToModule` | [ResRef](GFF-File-Format#gff-data-types) | Destination module [ResRef](GFF-File-Format#gff-data-types) |
+| `LinkedToFlags` | Byte | Transition behavior [flags](GFF-File-Format#gff-data-types) |
 | `LoadScreenID` | Word | Loading screen ID |
 | `PortraitId` | Word | Portrait ID (unused) |
 
@@ -50,7 +50,7 @@ UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trig
 
 ## Trap System
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `TrapFlag` | Byte | Trigger is a trap |
 | `TrapType` | Byte | [index](2DA-File-Format#row-labels) into `traps.2da` |
@@ -60,7 +60,7 @@ UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trig
 | `DisarmDC` | Byte | Security DC to disarm |
 | `TrapOneShot` | Byte | Fires once then disables |
 | `AutoRemoveKey` | Byte | [KEY](KEY-File-Format) removed on use |
-| `KeyName` | [CExoString](GFF-File-Format#cexostring) | [KEY](KEY-File-Format) tag required to disarm/bypass |
+| `KeyName` | [CExoString](GFF-File-Format#gff-data-types) | [KEY](KEY-File-Format) tag required to disarm/bypass |
 
 **Trap Mechanics:**
 
@@ -70,15 +70,15 @@ UTT [files](GFF-File-Format) define [trigger templates](GFF-File-Format#utt-trig
 
 ## Script Hooks
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `OnClick` | [ResRef](GFF-File-Format#resref) | Fires when clicked |
-| `OnDisarm` | [ResRef](GFF-File-Format#resref) | Fires when disarmed |
-| `OnHeartbeat` | [ResRef](GFF-File-Format#resref) | Fires periodically |
-| `OnScriptEnter` | [ResRef](GFF-File-Format#resref) | Fires when object enters |
-| `OnScriptExit` | [ResRef](GFF-File-Format#resref) | Fires when object exits |
-| `OnTrapTriggered` | [ResRef](GFF-File-Format#resref) | Fires when trap activates |
-| `OnUserDefined` | [ResRef](GFF-File-Format#resref) | Fires on user event |
+| `OnClick` | [ResRef](GFF-File-Format#gff-data-types) | Fires when clicked |
+| `OnDisarm` | [ResRef](GFF-File-Format#gff-data-types) | Fires when disarmed |
+| `OnHeartbeat` | [ResRef](GFF-File-Format#gff-data-types) | Fires periodically |
+| `OnScriptEnter` | [ResRef](GFF-File-Format#gff-data-types) | Fires when object enters |
+| `OnScriptExit` | [ResRef](GFF-File-Format#gff-data-types) | Fires when object exits |
+| `OnTrapTriggered` | [ResRef](GFF-File-Format#gff-data-types) | Fires when trap activates |
+| `OnUserDefined` | [ResRef](GFF-File-Format#gff-data-types) | Fires on user event |
 
 **Scripting:**
 

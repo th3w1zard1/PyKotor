@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines fractional challenge rating configurations. The engine uses this [file](GFF-File-Format) to determine fractional CR display [strings](GFF-File-Format#cexostring).
+**Engine Usage**: Defines fractional challenge rating configurations. The engine uses this [file](GFF-File-Format) to determine fractional CR display [strings](GFF-File-Format#gff-data-types).
 
 **Row [index](2DA-File-Format#row-labels)**: Fractional CR ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Fractional CR label |
-| `displaystrref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for fractional CR display text |
+| `label` | [string](GFF-File-Format#gff-data-types) | Fractional CR label |
+| `displaystrref` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for fractional CR display text |
 | Additional columns | Various | Fractional CR properties |
 
 **References**:

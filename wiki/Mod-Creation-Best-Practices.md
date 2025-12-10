@@ -52,7 +52,7 @@ void DestroyPlaceablesAndCreaturesInArea(location oLoc1, int nShape, float areaS
 
 ## Storing 2DAMEMORY without duplicating/creating a row
 
-The ExclusiveColumn [field](GFF-File-Format#file-structure) is perfect for this situation. Here's an example where we know the 'label' and we want to simply store the RowIndex.
+The ExclusiveColumn [field](GFF-File-Format#file-structure-overview) is perfect for this situation. Here's an example where we know the 'label' and we want to simply store the RowIndex.
 
 ```ini
 [genericdoors.2da]

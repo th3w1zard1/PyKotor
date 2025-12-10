@@ -1628,7 +1628,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `BASE_ITEM_DATA_PAD`
 
-(52): Base Item [data](GFF-File-Format#file-structure) Pad
+(52): Base Item [data](GFF-File-Format#file-structure-overview) Pad
 
 <a id="base_item_disrupter_pistol"></a>
 
@@ -1646,13 +1646,13 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `BASE_ITEM_DOUBLE_BLADED_LIGHTSABER`
 
-(9): Base Item [double](GFF-File-Format#double) Bladed Lightsaber
+(9): Base Item [double](GFF-File-Format#gff-data-types) Bladed Lightsaber
 
 <a id="base_item_double_bladed_sword"></a>
 
 ## `BASE_ITEM_DOUBLE_BLADED_SWORD`
 
-(6): Base Item [double](GFF-File-Format#double) Bladed Sword
+(6): Base Item [double](GFF-File-Format#gff-data-types) Bladed Sword
 
 <a id="base_item_droid_computer_spike_mount"></a>
 
@@ -1874,7 +1874,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `BASE_ITEM_MASK`
 
-(44): Base Item [mask](GFF-File-Format#data-types)
+(44): Base Item [mask](GFF-File-Format#gff-data-types)
 
 <a id="base_item_medical_equipment"></a>
 
@@ -1988,7 +1988,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `BASE_ITEM_VIBRO_DOUBLE_BLADE`
 
-(7): Base Item Vibro [double](GFF-File-Format#double) Blade
+(7): Base Item Vibro [double](GFF-File-Format#gff-data-types) Blade
 
 <a id="base_item_vibro_sword"></a>
 
@@ -2102,37 +2102,37 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `CREATURE_SIZE_HUGE`
 
-(5): Creature [size](GFF-File-Format#file-structure) Huge
+(5): Creature [size](GFF-File-Format#file-structure-overview) Huge
 
 <a id="creature_size_invalid"></a>
 
 ## `CREATURE_SIZE_INVALID`
 
-(0): Creature [size](GFF-File-Format#file-structure) Invalid
+(0): Creature [size](GFF-File-Format#file-structure-overview) Invalid
 
 <a id="creature_size_large"></a>
 
 ## `CREATURE_SIZE_LARGE`
 
-(4): Creature [size](GFF-File-Format#file-structure) Large
+(4): Creature [size](GFF-File-Format#file-structure-overview) Large
 
 <a id="creature_size_medium"></a>
 
 ## `CREATURE_SIZE_MEDIUM`
 
-(3): Creature [size](GFF-File-Format#file-structure) Medium
+(3): Creature [size](GFF-File-Format#file-structure-overview) Medium
 
 <a id="creature_size_small"></a>
 
 ## `CREATURE_SIZE_SMALL`
 
-(2): Creature [size](GFF-File-Format#file-structure) Small
+(2): Creature [size](GFF-File-Format#file-structure-overview) Small
 
 <a id="creature_size_tiny"></a>
 
 ## `CREATURE_SIZE_TINY`
 
-(1): Creature [size](GFF-File-Format#file-structure) Tiny
+(1): Creature [size](GFF-File-Format#file-structure-overview) Tiny
 
 <a id="creature_type_class"></a>
 
@@ -2168,7 +2168,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `CREATURE_TYPE_PLAYER_CHAR`
 
-(1): Creature [type](GFF-File-Format#data-types) Player [char](GFF-File-Format#char)
+(1): Creature [type](GFF-File-Format#data-types) Player [char](GFF-File-Format#gff-data-types)
 
 <a id="creature_type_racial_type"></a>
 
@@ -4724,7 +4724,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `FEAT_ADVANCED_DOUBLE_WEAPON_FIGHTING`
 
-(85): Feat Advanced [double](GFF-File-Format#double) Weapon Fighting
+(85): Feat Advanced [double](GFF-File-Format#gff-data-types) Weapon Fighting
 
 <a id="feat_advanced_guard_stance"></a>
 
@@ -4784,7 +4784,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `FEAT_DOUBLE_WEAPON_FIGHTING`
 
-(9): Feat [double](GFF-File-Format#double) Weapon Fighting
+(9): Feat [double](GFF-File-Format#gff-data-types) Weapon Fighting
 
 <a id="feat_droid_upgrade_1"></a>
 
@@ -5306,7 +5306,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `FORCE_POWER_DEATH_FIELD`
 
-(11): Force Power Death [field](GFF-File-Format#file-structure)
+(11): Force Power Death [field](GFF-File-Format#file-structure-overview)
 
 <a id="force_power_dominate"></a>
 
@@ -6410,13 +6410,13 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `PLAYER_CHAR_IS_PC`
 
-(1): Player [char](GFF-File-Format#char) Is Pc
+(1): Player [char](GFF-File-Format#gff-data-types) Is Pc
 
 <a id="player_char_not_pc"></a>
 
 ## `PLAYER_CHAR_NOT_PC`
 
-(0): Player [char](GFF-File-Format#char) Not Pc
+(0): Player [char](GFF-File-Format#gff-data-types) Not Pc
 
 <a id="plot_o_big_monsters"></a>
 
@@ -6788,37 +6788,37 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 ## `RADIUS_SIZE_COLOSSAL`
 
-(10.0): Radius [size](GFF-File-Format#file-structure) Colossal
+(10.0): Radius [size](GFF-File-Format#file-structure-overview) Colossal
 
 <a id="radius_size_gargantuan"></a>
 
 ## `RADIUS_SIZE_GARGANTUAN`
 
-(8.33): Radius [size](GFF-File-Format#file-structure) Gargantuan
+(8.33): Radius [size](GFF-File-Format#file-structure-overview) Gargantuan
 
 <a id="radius_size_huge"></a>
 
 ## `RADIUS_SIZE_HUGE`
 
-(6.67): Radius [size](GFF-File-Format#file-structure) Huge
+(6.67): Radius [size](GFF-File-Format#file-structure-overview) Huge
 
 <a id="radius_size_large"></a>
 
 ## `RADIUS_SIZE_LARGE`
 
-(5.0): Radius [size](GFF-File-Format#file-structure) Large
+(5.0): Radius [size](GFF-File-Format#file-structure-overview) Large
 
 <a id="radius_size_medium"></a>
 
 ## `RADIUS_SIZE_MEDIUM`
 
-(3.33): Radius [size](GFF-File-Format#file-structure) Medium
+(3.33): Radius [size](GFF-File-Format#file-structure-overview) Medium
 
 <a id="radius_size_small"></a>
 
 ## `RADIUS_SIZE_SMALL`
 
-(1.67): Radius [size](GFF-File-Format#file-structure) Small
+(1.67): Radius [size](GFF-File-Format#file-structure-overview) Small
 
 <a id="reputation_type_enemy"></a>
 

@@ -6,26 +6,26 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Plot ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Plot/quest label (used as quest identifier) |
+| `label` | [string](GFF-File-Format#gff-data-types) | Plot/quest label (used as quest identifier) |
 | `xp` | Integer | Experience points awarded for quest completion |
 
 **References**:
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:123-125`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L123-L125) - [UTC](GFF-File-Format#utc-creature) plot [field](GFF-File-Format#file-structure) documentation
-- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:375`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L375) - [UTC](GFF-File-Format#utc-creature) plot [field](GFF-File-Format#file-structure) initialization
-- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:579-580`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L579-L580) - Plot [field](GFF-File-Format#file-structure) parsing from [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format)
-- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:839`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L839) - Plot [field](GFF-File-Format#file-structure) writing to [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format)
-- [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py:71-73`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py#L71-L73) - [UTI](GFF-File-Format#uti-item) plot [field](GFF-File-Format#file-structure) documentation
-- [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py:129`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py#L129) - [UTI](GFF-File-Format#uti-item) plot [field](GFF-File-Format#file-structure) initialization
-- [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py:256-258`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py#L256-L258) - Plot [field](GFF-File-Format#file-structure) parsing from [UTI](GFF-File-Format#uti-item) [GFF](GFF-File-Format)
-- [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py:339`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py#L339) - Plot [field](GFF-File-Format#file-structure) writing to [UTI](GFF-File-Format#uti-item) [GFF](GFF-File-Format)
-- [`Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/gff.py:89-92`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/gff.py#L89-L92) - Dialog [node](MDL-MDX-File-Format#node-structures) PlotIndex and PlotXPPercentage [field](GFF-File-Format#file-structure) parsing
+- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:123-125`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L123-L125) - [UTC](GFF-File-Format#utc-creature) plot [field](GFF-File-Format#file-structure-overview) documentation
+- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:375`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L375) - [UTC](GFF-File-Format#utc-creature) plot [field](GFF-File-Format#file-structure-overview) initialization
+- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:579-580`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L579-L580) - Plot [field](GFF-File-Format#file-structure-overview) parsing from [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format)
+- [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:839`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L839) - Plot [field](GFF-File-Format#file-structure-overview) writing to [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format)
+- [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py:71-73`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py#L71-L73) - [UTI](GFF-File-Format#uti-item) plot [field](GFF-File-Format#file-structure-overview) documentation
+- [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py:129`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py#L129) - [UTI](GFF-File-Format#uti-item) plot [field](GFF-File-Format#file-structure-overview) initialization
+- [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py:256-258`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py#L256-L258) - Plot [field](GFF-File-Format#file-structure-overview) parsing from [UTI](GFF-File-Format#uti-item) [GFF](GFF-File-Format)
+- [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py:339`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py#L339) - Plot [field](GFF-File-Format#file-structure-overview) writing to [UTI](GFF-File-Format#uti-item) [GFF](GFF-File-Format)
+- [`Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/gff.py:89-92`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/gff.py#L89-L92) - Dialog [node](MDL-MDX-File-Format#node-structures) PlotIndex and PlotXPPercentage [field](GFF-File-Format#file-structure-overview) parsing
 
 **Vendor Implementations:**
 

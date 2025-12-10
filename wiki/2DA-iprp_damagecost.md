@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines cost calculations for damage bonus item properties. Used to determine item property costs based on damage bonus [values](GFF-File-Format#data-types).
+**Engine Usage**: Defines cost calculations for damage bonus item properties. Used to determine item property costs based on damage bonus [values](GFF-File-Format#gff-data-types).
 
 **Row [index](2DA-File-Format#row-labels)**: Damage bonus value (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Damage bonus label |
-| `cost` | Integer | Cost for this damage bonus [value](GFF-File-Format#data-types) |
+| `label` | [string](GFF-File-Format#gff-data-types) | Damage bonus label |
+| `cost` | Integer | Cost for this damage bonus [value](GFF-File-Format#gff-data-types) |
 
 **References**:
 

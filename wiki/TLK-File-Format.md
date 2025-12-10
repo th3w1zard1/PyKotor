@@ -1,6 +1,6 @@
 # KotOR [TLK](TLK-File-Format) [file](GFF-File-Format) [format](GFF-File-Format) Documentation
 
-This document provides a detailed description of the TLK ([Talk Table](TLK-File-Format)) [file](GFF-File-Format) [format](GFF-File-Format) used in Knights of the Old Republic (KotOR) games. [TLK files](TLK-File-Format) contain all text [strings](GFF-File-Format#cexostring) used in the game, both written and spoken, enabling easy localization by providing a lookup table from [string](GFF-File-Format#cexostring) reference numbers ([StrRef](TLK-File-Format#string-references-strref)) to localized text and associated voice-over audio [files](GFF-File-Format).
+This document provides a detailed description of the TLK ([Talk Table](TLK-File-Format)) [file](GFF-File-Format) [format](GFF-File-Format) used in Knights of the Old Republic (KotOR) games. [TLK files](TLK-File-Format) contain all text [strings](GFF-File-Format#gff-data-types) used in the game, both written and spoken, enabling easy localization by providing a lookup table from [string](GFF-File-Format#gff-data-types) reference numbers ([StrRef](TLK-File-Format#string-references-strref)) to localized text and associated voice-over audio [files](GFF-File-Format).
 
 **For mod developers:** To modify [TLK files](TLK-File-Format) in your mods, see the [TSLPatcher TLKList Syntax Guide](TSLPatcher-TLKList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
@@ -23,9 +23,9 @@ This document provides a detailed description of the TLK ([Talk Table](TLK-File-
 
 ---
 
-## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure) Overview
+## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) Overview
 
-[TLK files](TLK-File-Format) store localized [strings](GFF-File-Format#cexostring) in a binary [format](GFF-File-Format). The game loads [`dialog.tlk`](TLK-File-Format) at startup and references [strings](GFF-File-Format#cexostring) throughout the game using [StrRef](TLK-File-Format#string-references-strref) numbers ([array](2DA-File-Format) [indices](2DA-File-Format#row-labels)).
+[TLK files](TLK-File-Format) store localized [strings](GFF-File-Format#gff-data-types) in a binary [format](GFF-File-Format). The game loads [`dialog.tlk`](TLK-File-Format) at startup and references [strings](GFF-File-Format#gff-data-types) throughout the game using [StrRef](TLK-File-Format#string-references-strref) numbers ([array](2DA-File-Format) [indices](2DA-File-Format#row-labels)).
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/tlk/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/tlk/)
 
@@ -42,82 +42,82 @@ This document provides a detailed description of the TLK ([Talk Table](TLK-File-
 **See Also:**
 
 - [TSLPatcher TLKList Syntax](TSLPatcher-TLKList-Syntax) - Modding [TLK files](TLK-File-Format) with TSLPatcher
-- [GFF File Format](GFF-File-Format) - Dialogue and templates that reference [TLK](TLK-File-Format) strings
+- [GFF File Format](GFF-File-Format) - Dialogue and templates that reference [TLK](TLK-File-Format) [strings](GFF-File-Format#gff-data-types)
 - [SSF File Format](SSF-File-Format) - Sound sets that reference [TLK](TLK-File-Format) entries
 - [2DA File Format](2DA-File-Format) - Game tables with name/description StrRefs
 
 ---
 
-## Binary Format
+## Binary [format](GFF-File-Format)
 
-### File Header
+### [file](GFF-File-Format) [header](GFF-File-Format#file-header)
 
-The file header is 20 bytes in size:
+The [file](GFF-File-Format) [header](GFF-File-Format#file-header) is 20 bytes in [size](GFF-File-Format#file-structure-overview):
 
-| Name                | [type](GFF-File-Format#data-types)    | [offset](GFF-File-Format#file-structure) | [size](GFF-File-Format#file-structure) | Description                                    |
+| Name                | [type](GFF-File-Format#data-types)    | [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description                                    |
 | ------------------- | ------- | ------ | ---- | ---------------------------------------------- |
-| [file](GFF-File-Format) [type](GFF-File-Format#data-types)           | [char][GFF-File-Format#char](4) | 0 (0x00) | 4    | Always `"TLK "` (space-padded)                  |
-| [file](GFF-File-Format) Version        | [char][GFF-File-Format#char](4) | 4 (0x04) | 4    | `"V3.0"` for KotOR, `"V4.0"` for Jade Empire  |
-| Language ID         | [int32](GFF-File-Format#int)   | 8 (0x08) | 4    | Language identifier (see [Localization](#localization)) |
-| [string](GFF-File-Format#cexostring) [count](GFF-File-Format#file-structure)        | [int32](GFF-File-Format#int)   | 12 (0x0C) | 4    | Number of [string](GFF-File-Format#cexostring) entries in the [file](GFF-File-Format)           |
-| [string](GFF-File-Format#cexostring) Entries [offset](GFF-File-Format#file-structure) | [int32](GFF-File-Format#int) | 16 (0x10) | 4    | [offset](GFF-File-Format#file-structure) to [string](GFF-File-Format#cexostring) entries array (typically 20)  |
+| [file](GFF-File-Format) [type](GFF-File-Format#data-types)           | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](4) | 0 (0x00) | 4    | Always `"TLK "` (space-padded)                  |
+| [file](GFF-File-Format) Version        | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](4) | 4 (0x04) | 4    | `"V3.0"` for KotOR, `"V4.0"` for Jade Empire  |
+| Language ID         | [int32](GFF-File-Format#gff-data-types)   | 8 (0x08) | 4    | Language identifier (see [Localization](#localization)) |
+| [string](GFF-File-Format#gff-data-types) [count](GFF-File-Format#file-structure-overview)        | [int32](GFF-File-Format#gff-data-types)   | 12 (0x0C) | 4    | Number of [string](GFF-File-Format#gff-data-types) entries in the [file](GFF-File-Format)           |
+| [string](GFF-File-Format#gff-data-types) Entries [offset](GFF-File-Format#file-structure-overview) | [int32](GFF-File-Format#gff-data-types) | 16 (0x10) | 4    | [offset](GFF-File-Format#file-structure-overview) to [string](GFF-File-Format#gff-data-types) entries array (typically 20)  |
 
 **Reference**: [`vendor/reone/src/libs/resource/format/tlkreader.cpp:31-84`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/tlkreader.cpp#L31-L84)
 
-### String Data Table
+### [string](GFF-File-Format#gff-data-types) [data](GFF-File-Format#file-structure-overview) Table
 
-The string data table contains metadata for each [string](GFF-File-Format#cexostring) entry. Each entry is 40 bytes:
+The [string](GFF-File-Format#gff-data-types) [data](GFF-File-Format#file-structure-overview) table contains metadata for each [string](GFF-File-Format#gff-data-types) entry. Each entry is 40 bytes:
 
-| Name              | [type](GFF-File-Format#data-types)      | [offset](GFF-File-Format#file-structure) | [size](GFF-File-Format#file-structure) | Description                                                      |
+| Name              | [type](GFF-File-Format#data-types)      | [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description                                                      |
 | ----------------- | --------- | ------ | ---- | ---------------------------------------------------------------- |
-| [flags](GFF-File-Format#data-types)             | [uint32](GFF-File-Format#dword)    | 0 (0x00) | 4    | [bit](GFF-File-Format#data-types) [flags](GFF-File-Format#data-types): [bit](GFF-File-Format#data-types) 0=text present, [bit](GFF-File-Format#data-types) 1=sound present, [bit](GFF-File-Format#data-types) 2=sound length present |
-| Sound [ResRef](GFF-File-Format#resref)      | [char][GFF-File-Format#char](16)  | 4 (0x04) | 16   | Voice-over audio filename ([null-terminated](https://en.cppreference.com/w/c/string/byte), max 16 chars)        |
-| Volume Variance   | [uint32](GFF-File-Format#dword)    | 20 (0x14) | 4    | Unused in KotOR (always 0)                                      |
-| Pitch Variance    | [uint32](GFF-File-Format#dword)    | 24 (0x18) | 4    | Unused in KotOR (always 0)                                      |
-| [offset](GFF-File-Format#file-structure) to [string](GFF-File-Format#cexostring)  | [uint32](GFF-File-Format#dword)    | 28 (0x1C) | 4    | [offset](GFF-File-Format#file-structure) to [string](GFF-File-Format#cexostring) text (relative to [string](GFF-File-Format#cexostring) Entries [offset](GFF-File-Format#file-structure))       |
-| [string](GFF-File-Format#cexostring) [size](GFF-File-Format#file-structure)       | [uint32](GFF-File-Format#dword)    | 32 (0x20) | 4    | Length of [string](GFF-File-Format#cexostring) text in bytes                                  |
-| Sound Length      | [float](GFF-File-Format#float)     | 36 (0x24) | 4    | Duration of voice-over audio in seconds                         |
+| [flags](GFF-File-Format#gff-data-types)             | [uint32](GFF-File-Format#gff-data-types)    | 0 (0x00) | 4    | [bit](GFF-File-Format#gff-data-types) [flags](GFF-File-Format#gff-data-types): [bit](GFF-File-Format#gff-data-types) 0=text present, [bit](GFF-File-Format#gff-data-types) 1=sound present, [bit](GFF-File-Format#gff-data-types) 2=sound length present |
+| Sound [ResRef](GFF-File-Format#gff-data-types)      | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](16)  | 4 (0x04) | 16   | Voice-over audio filename ([null-terminated](https://en.cppreference.com/w/c/string/byte), max 16 chars)        |
+| Volume Variance   | [uint32](GFF-File-Format#gff-data-types)    | 20 (0x14) | 4    | Unused in KotOR (always 0)                                      |
+| Pitch Variance    | [uint32](GFF-File-Format#gff-data-types)    | 24 (0x18) | 4    | Unused in KotOR (always 0)                                      |
+| [offset](GFF-File-Format#file-structure-overview) to [string](GFF-File-Format#gff-data-types)  | [uint32](GFF-File-Format#gff-data-types)    | 28 (0x1C) | 4    | [offset](GFF-File-Format#file-structure-overview) to [string](GFF-File-Format#gff-data-types) text (relative to [string](GFF-File-Format#gff-data-types) Entries [offset](GFF-File-Format#file-structure-overview))       |
+| [string](GFF-File-Format#gff-data-types) [size](GFF-File-Format#file-structure-overview)       | [uint32](GFF-File-Format#gff-data-types)    | 32 (0x20) | 4    | Length of [string](GFF-File-Format#gff-data-types) text in bytes                                  |
+| Sound Length      | [float](GFF-File-Format#gff-data-types)     | 36 (0x24) | 4    | Duration of voice-over audio in seconds                         |
 
 **Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs:57-90`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs#L57-L90)
 
-**[flag](GFF-File-Format#data-types) [bits](GFF-File-Format#data-types):**
+**[flag](GFF-File-Format#gff-data-types) [bits](GFF-File-Format#gff-data-types):**
 
-- **[bit](GFF-File-Format#data-types) 0 (0x0001)**: Text present - [string](GFF-File-Format#cexostring) has text content
-- **[bit](GFF-File-Format#data-types) 1 (0x0002)**: Sound present - [string](GFF-File-Format#cexostring) has associated voice-over audio
-- **[bit](GFF-File-Format#data-types) 2 (0x0004)**: Sound length present - sound length [field](GFF-File-Format#file-structure) is valid
+- **[bit](GFF-File-Format#gff-data-types) 0 (0x0001)**: Text present - [string](GFF-File-Format#gff-data-types) has text content
+- **[bit](GFF-File-Format#gff-data-types) 1 (0x0002)**: Sound present - [string](GFF-File-Format#gff-data-types) has associated voice-over audio
+- **[bit](GFF-File-Format#gff-data-types) 2 (0x0004)**: Sound length present - sound length [field](GFF-File-Format#file-structure-overview) is valid
 
-**[flag](GFF-File-Format#data-types) Combinations:**
+**[flag](GFF-File-Format#gff-data-types) Combinations:**
 
-Common [flag](GFF-File-Format#data-types) patterns in KotOR [TLK files](TLK-File-Format):
+Common [flag](GFF-File-Format#gff-data-types) patterns in KotOR [TLK files](TLK-File-Format):
 
-| [flags](GFF-File-Format#data-types) | Hex | Description | Usage |
+| [flags](GFF-File-Format#gff-data-types) | Hex | Description | Usage |
 | ----- | --- | ----------- | ----- |
 | `0x0001` | `0x01` | Text only | Menu options, item descriptions, non-voiced dialog |
 | `0x0003` | `0x03` | Text + Sound | Voiced dialog lines (most common for party/NPC speech) |
 | `0x0007` | `0x07` | Text + Sound + Length | Fully voiced with duration data (cutscenes, important dialog) |
 | `0x0000` | `0x00` | Empty entry | Unused [StrRef](TLK-File-Format#string-references-strref) slots |
 
-The engine uses these [flags](GFF-File-Format#data-types) to decide:
+The engine uses these [flags](GFF-File-Format#gff-data-types) to decide:
 
-- Whether to display subtitles (Text present [flag](GFF-File-Format#data-types))
-- Whether to play voice-over audio (Sound present [flag](GFF-File-Format#data-types))
-- How long to wait before auto-advancing dialog (Sound length present [flag](GFF-File-Format#data-types))
+- Whether to display subtitles (Text present [flag](GFF-File-Format#gff-data-types))
+- Whether to play voice-over audio (Sound present [flag](GFF-File-Format#gff-data-types))
+- How long to wait before auto-advancing dialog (Sound length present [flag](GFF-File-Format#gff-data-types))
 
-Missing [flags](GFF-File-Format#data-types) [ARE](GFF-File-Format#are-area) treated as `false` - if Text present is not set, the [string](GFF-File-Format#cexostring) is treated as empty even if text [data](GFF-File-Format#file-structure) exists.
+Missing [flags](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) treated as `false` - if Text present is not set, the [string](GFF-File-Format#gff-data-types) is treated as empty even if text [data](GFF-File-Format#file-structure-overview) exists.
 
-### [string](GFF-File-Format#cexostring) Entries
+### [string](GFF-File-Format#gff-data-types) Entries
 
-[string](GFF-File-Format#cexostring) entries follow the [string](GFF-File-Format#cexostring) [data](GFF-File-Format#file-structure) table:
+[string](GFF-File-Format#gff-data-types) entries follow the [string](GFF-File-Format#gff-data-types) [data](GFF-File-Format#file-structure-overview) table:
 
 | Name         | [type](GFF-File-Format#data-types)   | Description                                                      |
 | ------------ | ------ | ---------------------------------------------------------------- |
-| [string](GFF-File-Format#cexostring) Text  | [char](GFF-File-Format#char)[] | [null-terminated string](https://en.cppreference.com/w/c/string/byte) data (UTF-8 or Windows-1252 encoded)     |
+| [string](GFF-File-Format#gff-data-types) Text  | [char](GFF-File-Format#gff-data-types)[] | [null-terminated string](https://en.cppreference.com/w/c/string/byte) data (UTF-8 or Windows-1252 encoded)     |
 
-[string](GFF-File-Format#cexostring) text is stored at the [offset](GFF-File-Format#file-structure) specified in the [string](GFF-File-Format#cexostring) [data](GFF-File-Format#file-structure) table entry. The encoding depends on the language ID (see [Localization](#localization)).
+[string](GFF-File-Format#gff-data-types) text is stored at the [offset](GFF-File-Format#file-structure-overview) specified in the [string](GFF-File-Format#gff-data-types) [data](GFF-File-Format#file-structure-overview) table entry. The encoding depends on the language ID (see [Localization](#localization)).
 
 ---
 
-## TLKEntry [structure](GFF-File-Format#file-structure)
+## TLKEntry [structure](GFF-File-Format#file-structure-overview)
 
 Each [TLK](TLK-File-Format) entry contains:
 
@@ -125,8 +125,8 @@ Each [TLK](TLK-File-Format) entry contains:
 
 | Attribute        | [type](GFF-File-Format#data-types)   | Description                                                      |
 | ---------------- | ------ | ---------------------------------------------------------------- |
-| `text`           | str    | Localized text [string](GFF-File-Format#cexostring)                                            |
-| `voiceover`      | [ResRef](GFF-File-Format#resref) | Voice-over audio filename ([WAV file](WAV-File-Format))                            |
+| `text`           | str    | Localized text [string](GFF-File-Format#gff-data-types)                                            |
+| `voiceover`      | [ResRef](GFF-File-Format#gff-data-types) | Voice-over audio filename ([WAV file](WAV-File-Format))                            |
 | `text_present`   | bool   | Whether text content exists                                      |
 | `sound_present`  | bool   | Whether voice-over audio exists                                  |
 | `soundlength_present` | bool | Whether sound length is valid                                    |
@@ -134,21 +134,21 @@ Each [TLK](TLK-File-Format) entry contains:
 
 ---
 
-## [string](GFF-File-Format#cexostring) References ([StrRef](TLK-File-Format#string-references-strref))
+## [string](GFF-File-Format#gff-data-types) References ([StrRef](TLK-File-Format#string-references-strref))
 
-[string](GFF-File-Format#cexostring) references ([StrRef](TLK-File-Format#string-references-strref)) [ARE](GFF-File-Format#are-area) integer [indices](2DA-File-Format#row-labels) into the [TLK file](TLK-File-Format)'s entry [array](2DA-File-Format):
+[string](GFF-File-Format#gff-data-types) references ([StrRef](TLK-File-Format#string-references-strref)) [ARE](GFF-File-Format#are-area) integer [indices](2DA-File-Format#row-labels) into the [TLK file](TLK-File-Format)'s entry [array](2DA-File-Format):
 
 - **[StrRef](TLK-File-Format#string-references-strref) 0**: First entry in the [TLK file](TLK-File-Format)
-- **[StrRef](TLK-File-Format#string-references-strref) -1**: No [string](GFF-File-Format#cexostring) reference (used to indicate missing/empty [strings](GFF-File-Format#cexostring))
+- **[StrRef](TLK-File-Format#string-references-strref) -1**: No [string](GFF-File-Format#gff-data-types) reference (used to indicate missing/empty [strings](GFF-File-Format#gff-data-types))
 - **[StrRef](TLK-File-Format#string-references-strref) N**: Nth entry (0-based indexing)
 
-The game uses [StrRef](TLK-File-Format#string-references-strref) [values](GFF-File-Format#data-types) throughout [GFF files](GFF-File-Format), scripts, and other resources to reference localized text. When displaying text, the game looks up the [StrRef](TLK-File-Format#string-references-strref) in [`dialog.tlk`](TLK-File-Format) and displays the corresponding text.
+The game uses [StrRef](TLK-File-Format#string-references-strref) [values](GFF-File-Format#gff-data-types) throughout [GFF files](GFF-File-Format), scripts, and other resources to reference localized text. When displaying text, the game looks up the [StrRef](TLK-File-Format#string-references-strref) in [`dialog.tlk`](TLK-File-Format) and displays the corresponding text.
 
 ### Custom [TLK](TLK-File-Format) [files](GFF-File-Format)
 
-Mods can add custom [TLK files](TLK-File-Format) to extend available [strings](GFF-File-Format#cexostring):
+Mods can add custom [TLK files](TLK-File-Format) to extend available [strings](GFF-File-Format#gff-data-types):
 
-**[dialog.tlk](TLK-File-Format) [structure](GFF-File-Format#file-structure):**
+**[dialog.tlk](TLK-File-Format) [structure](GFF-File-Format#file-structure-overview):**
 
 - Base game: [`dialog.tlk`](TLK-File-Format) (read-only, ~50,000-100,000 entries)
 - Custom content: `dialogf.tlk` or custom [TLK files](TLK-File-Format) placed in override
@@ -157,18 +157,18 @@ Mods can add custom [TLK files](TLK-File-Format) to extend available [strings](G
 
 - `0` to `~50,000`: Base game strings (varies by language)
 - `16,777,216` (`0x01000000`) and above: Custom [TLK](TLK-File-Format) range (TSLPatcher convention)
-- Negative [values](GFF-File-Format#data-types): Invalid/missing references
+- Negative [values](GFF-File-Format#gff-data-types): Invalid/missing references
 
 **Mod Tools Approach:**
 
-TSLPatcher and similar tools use high [StrRef](TLK-File-Format#string-references-strref) ranges for custom [strings](GFF-File-Format#cexostring):
+TSLPatcher and similar tools use high [StrRef](TLK-File-Format#string-references-strref) ranges for custom [strings](GFF-File-Format#gff-data-types):
 
 ```plaintext
 Base [StrRef](TLK-File-Format#string-references-strref):   0 - 50,000 ([dialog.tlk](TLK-File-Format))
 Custom Range:  16777216+ (custom [TLK files](TLK-File-Format))
 ```
 
-This avoids conflicts with base game [strings](GFF-File-Format#cexostring) and allows mods to add thousands of custom text entries without overwriting existing content.
+This avoids conflicts with base game [strings](GFF-File-Format#gff-data-types) and allows mods to add thousands of custom text entries without overwriting existing content.
 
 **Multiple [TLK](TLK-File-Format) [files](GFF-File-Format):**
 
@@ -185,7 +185,7 @@ Priority: Custom TLKs → dialogf.tlk → [`dialog.tlk`](TLK-File-Format)
 
 ## Localization
 
-[TLK files](TLK-File-Format) support multiple languages through the Language ID [field](GFF-File-Format#file-structure):
+[TLK files](TLK-File-Format) support multiple languages through the Language ID [field](GFF-File-Format#file-structure-overview):
 
 | Language ID | Language | Encoding      |
 | ----------- | -------- | ------------- |
@@ -199,7 +199,7 @@ Priority: Custom TLKs → dialogf.tlk → [`dialog.tlk`](TLK-File-Format)
 | 7           | Chinese  | UTF-8         |
 | 8           | Japanese | UTF-8         |
 
-**Note**: KotOR games typically ignore the Language ID [field](GFF-File-Format#file-structure) and always use [`dialog.tlk`](TLK-File-Format). The [field](GFF-File-Format#file-structure) is primarily used by modding tools to identify language.
+**Note**: KotOR games typically ignore the Language ID [field](GFF-File-Format#file-structure-overview) and always use [`dialog.tlk`](TLK-File-Format). The [field](GFF-File-Format#file-structure-overview) is primarily used by modding tools to identify language.
 
 **Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs:63`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs#L63)
 
@@ -215,4 +215,4 @@ Priority: Custom TLKs → dialogf.tlk → [`dialog.tlk`](TLK-File-Format)
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [TLK file](TLK-File-Format) [format](GFF-File-Format), focusing on the detailed [file](GFF-File-Format) [structure](GFF-File-Format#file-structure) and [data](GFF-File-Format#file-structure) [formats](GFF-File-Format) used within the games.
+This documentation aims to provide a comprehensive overview of the KotOR [TLK file](TLK-File-Format) [format](GFF-File-Format), focusing on the detailed [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) and [data](GFF-File-Format#file-structure-overview) [formats](GFF-File-Format) used within the games.

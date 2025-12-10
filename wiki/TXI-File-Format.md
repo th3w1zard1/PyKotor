@@ -24,8 +24,8 @@ TXI ([texture](TPC-File-Format) Info) [files](GFF-File-Format) [ARE](GFF-File-Fo
 
 ## [format](GFF-File-Format) Overview
 
-- [TXI files](TXI-File-Format) [ARE](GFF-File-Format#are-area) plain-text [KEY](KEY-File-Format)/[value](GFF-File-Format#data-types) lists; each command modifies a [field](GFF-File-Format#file-structure) in the [TPC](TPC-File-Format) runtime metadata.  
-- Commands [ARE](GFF-File-Format#are-area) case-insensitive but conventionally lowercase. [values](GFF-File-Format#data-types) can be integers, floats, booleans (`0`/`1`), [ResRefs](GFF-File-Format#resref), or multi-line [coordinate](GFF-File-Format#are-area) tables.  
+- [TXI files](TXI-File-Format) [ARE](GFF-File-Format#are-area) plain-text [KEY](KEY-File-Format)/[value](GFF-File-Format#gff-data-types) lists; each command modifies a [field](GFF-File-Format#file-structure-overview) in the [TPC](TPC-File-Format) runtime metadata.  
+- Commands [ARE](GFF-File-Format#are-area) case-insensitive but conventionally lowercase. [values](GFF-File-Format#gff-data-types) can be integers, floats, booleans (`0`/`1`), [ResRefs](GFF-File-Format#gff-data-types), or multi-line [coordinate](GFF-File-Format#are-area) tables.  
 - A single [TXI](TXI-File-Format) can be appended to the end of a `.tpc` file (as Bioware does) or shipped as a sibling `.txi` [file](GFF-File-Format); the parser treats both identically.  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/txi)
@@ -53,7 +53,7 @@ TXI ([texture](TPC-File-Format) Info) [files](GFF-File-Format) [ARE](GFF-File-Fo
 <command> <value(s)>
 ```
 
-- Whitespace between command and [value](GFF-File-Format#data-types) is ignored beyond the first separator.  
+- Whitespace between command and [value](GFF-File-Format#gff-data-types) is ignored beyond the first separator.  
 - Boolean toggles use `0` or `1`.  
 - Multiple values (e.g., `channelscale 1.0 0.5 0.5`) are space-separated.  
 - Comments [ARE](GFF-File-Format#are-area) not supported; unknown commands [ARE](GFF-File-Format#are-area) skipped.  
@@ -75,11 +75,11 @@ Each line encodes a UV triplet; UV [coordinates](GFF-File-Format#are-area) follo
 
 ## Command Reference
 
-> The tables below summarize the commands implemented by PyKotor’s `TXICommand` enum. [values](GFF-File-Format#data-types) map directly to the [fields](GFF-File-Format#file-structure) described in [`txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKyor/resource/formats/txi/txi_data.py#L700-L830).
+> The tables below summarize the commands implemented by PyKotor’s `TXICommand` enum. [values](GFF-File-Format#gff-data-types) map directly to the [fields](GFF-File-Format#file-structure-overview) described in [`txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKyor/resource/formats/txi/txi_data.py#L700-L830).
 
 ### Rendering and Filtering
 
-| Command | Accepted [values](GFF-File-Format#data-types) | Description |
+| Command | Accepted [values](GFF-File-Format#gff-data-types) | Description |
 | ------- | ---------------- | ----------- |
 | `mipmap` | `0`/`1` | Toggles engine mipmap usage (KotOR's sampler mishandles secondary mips; Bioware [textures](TPC-File-Format) usually set `0`). |
 | `filter` | `0`/`1` | Enables simple bilinear filtering of font atlases; `<1>` applies a blur. |
@@ -95,7 +95,7 @@ Each line encodes a UV triplet; UV [coordinates](GFF-File-Format#are-area) follo
 | ------- | ----------- |
 | `blending` | Selects additive or punchthrough blending (see [`TXIBlending.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/enums/graphics/txi/TXIBlending.ts)). |
 | `decal` | Toggles decal rendering so polygons project onto [geometry](MDL-MDX-File-Format#geometry-header). |
-| `isbumpmap`, `isdiffusebumpmap`, `isspecularbumpmap` | [flag](GFF-File-Format#data-types) the [texture](TPC-File-Format) as a bump/normal map; controls how [material](MDL-MDX-File-Format#trimesh-header) shaders sample it. |
+| `isbumpmap`, `isdiffusebumpmap`, `isspecularbumpmap` | [flag](GFF-File-Format#gff-data-types) the [texture](TPC-File-Format) as a bump/normal map; controls how [material](MDL-MDX-File-Format#trimesh-header) shaders sample it. |
 | `bumpmaptexture`, `bumpyshinytexture`, `envmaptexture`, `bumpmapscaling` | Supply companion [textures](TPC-File-Format) and scales for per-pixel lighting. |
 | `cube` | Marks the [texture](TPC-File-Format) as a cube map; used with 6-[face](MDL-MDX-File-Format#face-structure) TPCs. |
 | `unique` | Forces the renderer to keep a dedicated instance instead of sharing. |
@@ -111,7 +111,7 @@ Each line encodes a UV triplet; UV [coordinates](GFF-File-Format#are-area) follo
 | `fps` | Frames per second for playback. |
 | `speed` | Legacy alias for `fps` (still parsed for compatibility). |
 
-When `proceduretype=cycle`, PyKotor splits the [TPC](#TPC-File-Format) into `numx × numy` layers and advances them at `fps` (see [`io_tpc.py:169-190`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L169-L190)).
+When `proceduretype=cycle`, PyKotor splits the [TPC](#tpc-file-format-documentation) into `numx × numy` layers and advances them at `fps` (see [`io_tpc.py:169-190`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L169-L190)).
 
 ### Font Atlas Layout
 
@@ -122,9 +122,9 @@ KotOR’s bitmap fonts use [TXI](TXI-File-Format) commands to describe glyph box
 | `baselineheight`, `fontheight`, `fontwidth`, `caretindent`, `spacingB`, `spacingR` | Control glyph metrics for UI fonts. |
 | `rows`, `cols`, `numchars`, `numcharspersheet` | Describe how many glyphs [ARE](GFF-File-Format#are-area) stored per sheet. |
 | `upperleftcoords`, `lowerrightcoords` | [arrays](2DA-File-Format) of UV [coordinates](GFF-File-Format#are-area) for each glyph corner. |
-| `codepage`, `isdoublebyte`, `dbmapping` | Support multi-[byte](GFF-File-Format#byte) font atlases (Asian locales). |
+| `codepage`, `isdoublebyte`, `dbmapping` | Support multi-[byte](GFF-File-Format#gff-data-types) font atlases (Asian locales). |
 
-KotOR.js exposes identical [structures](GFF-File-Format#file-structure) in [`src/resource/TXI.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXI.ts#L16-L255), ensuring the [coordinates](GFF-File-Format#are-area) here match the engine’s expectations.
+KotOR.js exposes identical [structures](GFF-File-Format#file-structure-overview) in [`src/resource/TXI.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXI.ts#L16-L255), ensuring the [coordinates](GFF-File-Format#are-area) here match the engine’s expectations.
 
 ### Streaming and Platform Hints
 
@@ -139,9 +139,9 @@ KotOR.js exposes identical [structures](GFF-File-Format#file-structure) in [`src
 
 ## Relationship to [TPC](TPC-File-Format) [textures](TPC-File-Format)
 
-- A [TXI](TXI-File-Format) modifies the rendering pipeline for its paired [TPC](#TPC-File-Format): mipmap [flags](GFF-File-Format#data-types) alter sampler state, [animation](MDL-MDX-File-Format#animation-header) directives convert a single [texture](TPC-File-Format) into multiple layers, and [material](MDL-MDX-File-Format#trimesh-header) directives attach bump/shine maps.  
-- When embedded inside a `.tpc` [file](GFF-File-Format), the [TXI](TXI-File-Format) text starts immediately after the binary payload; PyKotor reads it by seeking past the [texture](TPC-File-Format) [data](GFF-File-Format#file-structure) and consuming the remaining bytes as ASCII (`io_tpc.py:158-188`).  
-- Exported `.txi` [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) plain UTF-8 text and can be edited with any text editor; tools like `tga2tpc` and KotORBlender reserialize them alongside [TPC](#TPC-File-Format) assets.
+- A [TXI](TXI-File-Format) modifies the rendering pipeline for its paired [TPC](#tpc-file-format-documentation): mipmap [flags](GFF-File-Format#gff-data-types) alter sampler state, [animation](MDL-MDX-File-Format#animation-header) directives convert a single [texture](TPC-File-Format) into multiple layers, and [material](MDL-MDX-File-Format#trimesh-header) directives attach bump/shine maps.  
+- When embedded inside a `.tpc` [file](GFF-File-Format), the [TXI](TXI-File-Format) text starts immediately after the binary payload; PyKotor reads it by seeking past the [texture](TPC-File-Format) [data](GFF-File-Format#file-structure-overview) and consuming the remaining bytes as ASCII (`io_tpc.py:158-188`).  
+- Exported `.txi` [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) plain UTF-8 text and can be edited with any text editor; tools like `tga2tpc` and KotORBlender reserialize them alongside [TPC](#tpc-file-format-documentation) assets.
 
 ### Empty [TXI](TXI-File-Format) [files](GFF-File-Format)
 
@@ -168,14 +168,14 @@ Many [TXI files](TXI-File-Format) in the game installation [ARE](GFF-File-Format
 - `lda_ehawk01a.txi` - Contains `envmaptexture CM_jedcom`
 - `lda_flr07.txi` - Contains `bumpyshinytexture CM_dantii` and `bumpmaptexture LDA_flr01B`
 
-**Kit Generation Note:** When generating kits from module RIM [files](GFF-File-Format), empty [TXI files](TXI-File-Format) should still be created as placeholders even if they don't exist in the installation. This ensures kit completeness and matches the expected kit [structure](GFF-File-Format#file-structure) where many [textures](TPC-File-Format) have corresponding (empty) [TXI files](TXI-File-Format).  
+**Kit Generation Note:** When generating kits from module RIM [files](GFF-File-Format), empty [TXI files](TXI-File-Format) should still be created as placeholders even if they don't exist in the installation. This ensures kit completeness and matches the expected kit [structure](GFF-File-Format#file-structure-overview) where many [textures](TPC-File-Format) have corresponding (empty) [TXI files](TXI-File-Format).  
 
 ---
 
 ## Implementation Details
 
 - **Parser:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/io_txi.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/io_txi.py)  
-- **[data](GFF-File-Format#file-structure) [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py)  
+- **[data](GFF-File-Format#file-structure-overview) [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/graphics/format/txireader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/txireader.cpp)  
   - [`vendor/KotOR.js/src/resource/TXI.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXI.ts)  

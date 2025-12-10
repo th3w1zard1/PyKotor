@@ -1,10 +1,10 @@
 # KotOR [SSF](SSF-File-Format) [file](GFF-File-Format) [format](GFF-File-Format) Documentation
 
-This document provides a detailed description of the SSF ([sound set files](SSF-File-Format)) [file](GFF-File-Format) [format](GFF-File-Format) used in Knights of the Old Republic (KotOR) games. [SSF files](SSF-File-Format) contain mappings from sound event [types](GFF-File-Format#data-types) to [string](GFF-File-Format#cexostring) references ([StrRefs](TLK-File-Format#string-references-strref)) in the [TLK file](TLK-File-Format).
+This document provides a detailed description of the SSF ([sound set files](SSF-File-Format)) [file](GFF-File-Format) [format](GFF-File-Format) used in Knights of the Old Republic (KotOR) games. [SSF files](SSF-File-Format) contain mappings from sound event [types](GFF-File-Format#gff-data-types) to [string](GFF-File-Format#gff-data-types) references ([StrRefs](TLK-File-Format#string-references-strref)) in the [TLK file](TLK-File-Format).
 
 **For mod developers:** To modify [SSF files](SSF-File-Format) in your mods, see the [TSLPatcher SSFList Syntax Guide](TSLPatcher-SSFList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Related [formats](GFF-File-Format):** [SSF](SSF-File-Format) [files](GFF-File-Format) reference [TLK files](TLK-File-Format) for [string](GFF-File-Format#cexostring) references ([StrRefs](TLK-File-Format#string-references-strref)) that point to the actual sound text [strings](GFF-File-Format#cexostring).
+**Related [formats](GFF-File-Format):** [SSF](SSF-File-Format) [files](GFF-File-Format) reference [TLK files](TLK-File-Format) for [string](GFF-File-Format#gff-data-types) references ([StrRefs](TLK-File-Format#string-references-strref)) that point to the actual sound text [strings](GFF-File-Format#gff-data-types).
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ This document provides a detailed description of the SSF ([sound set files](SSF-
 
 ---
 
-## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure) Overview
+## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) Overview
 
 [SSF files](SSF-File-Format) define a set of 28 sound effects that creatures can play during various game events (battle cries, pain grunts, selection sounds, etc.). The [StrRefs](TLK-File-Format#string-references-strref) point to entries in [`dialog.tlk`](TLK-File-Format) which contain the actual [WAV file](WAV-File-Format) references.
 
@@ -43,17 +43,17 @@ This document provides a detailed description of the SSF ([sound set files](SSF-
 
 ---
 
-## Binary Format
+## Binary [format](GFF-File-Format)
 
-### File Header
+### [file](GFF-File-Format) [header](GFF-File-Format#file-header)
 
-The file header is 12 bytes in size:
+The [file](GFF-File-Format) [header](GFF-File-Format#file-header) is 12 bytes in [size](GFF-File-Format#file-structure-overview):
 
-| Name                | [type](GFF-File-Format#data-types)    | [offset](GFF-File-Format#file-structure) | [size](GFF-File-Format#file-structure) | Description                                    |
+| Name                | [type](GFF-File-Format#data-types)    | [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description                                    |
 | ------------------- | ------- | ------ | ---- | ---------------------------------------------- |
-| [file](GFF-File-Format) [type](GFF-File-Format#data-types)           | [char][GFF-File-Format#char](4) | 0 (0x00) | 4    | Always `"SSF "` (space-padded)                 |
-| [file](GFF-File-Format) Version        | [char][GFF-File-Format#char](4) | 4 (0x04) | 4    | Always `"V1.1"`                                 |
-| [offset](GFF-File-Format#file-structure) to Sound Table | [uint32](GFF-File-Format#dword) | 8 (0x08) | 4    | [offset](GFF-File-Format#file-structure) to sound table (typically 12)          |
+| [file](GFF-File-Format) [type](GFF-File-Format#data-types)           | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](4) | 0 (0x00) | 4    | Always `"SSF "` (space-padded)                 |
+| [file](GFF-File-Format) Version        | [[char](GFF-File-Format#gff-data-types)][GFF-File-Format#char](4) | 4 (0x04) | 4    | Always `"V1.1"`                                 |
+| [offset](GFF-File-Format#file-structure-overview) to Sound Table | [uint32](GFF-File-Format#gff-data-types) | 8 (0x08) | 4    | [offset](GFF-File-Format#file-structure-overview) to sound table (typically 12)          |
 
 **Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorSSF/SSFBinaryStructure.cs:10-91`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorSSF/SSFBinaryStructure.cs#L10-L91)
 
@@ -61,19 +61,19 @@ The file header is 12 bytes in size:
 
 The sound table contains 28 [StrRef](TLK-File-Format#string-references-strref) entries (112 bytes total):
 
-| Name              | [type](GFF-File-Format#data-types)   | [offset](GFF-File-Format#file-structure) | [size](GFF-File-Format#file-structure) | Description                                                      |
+| Name              | [type](GFF-File-Format#data-types)   | [offset](GFF-File-Format#file-structure-overview) | [size](GFF-File-Format#file-structure-overview) | Description                                                      |
 | ----------------- | ------ | ------ | ---- | ---------------------------------------------------------------- |
-| [StrRef](TLK-File-Format#string-references-strref) [array](2DA-File-Format)      | [int32](GFF-File-Format#int)[] | 0 (0x00) | 4×28 | [array](2DA-File-Format) of 28 [StrRef](TLK-File-Format#string-references-strref) values (one per sound event [type](GFF-File-Format#data-types))            |
+| [StrRef](TLK-File-Format#string-references-strref) [array](2DA-File-Format)      | [int32](GFF-File-Format#gff-data-types)[] | 0 (0x00) | 4×28 | [array](2DA-File-Format) of 28 [StrRef](TLK-File-Format#string-references-strref) values (one per sound event [type](GFF-File-Format#data-types))            |
 
-Each entry is a [StrRef](TLK-File-Format#string-references-strref) ([string](GFF-File-Format#cexostring) reference) into [`dialog.tlk`](TLK-File-Format). [value](GFF-File-Format#data-types) `-1` indicates no sound for that event [type](GFF-File-Format#data-types).
+Each entry is a [StrRef](TLK-File-Format#string-references-strref) ([string](GFF-File-Format#gff-data-types) reference) into [`dialog.tlk`](TLK-File-Format). [value](GFF-File-Format#gff-data-types) `-1` indicates no sound for that event [type](GFF-File-Format#data-types).
 
 **Reference**: [`vendor/reone/src/libs/resource/format/ssfreader.cpp:31`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ssfreader.cpp#L31)
 
 ---
 
-## Sound Event [types](GFF-File-Format#data-types)
+## Sound Event [types](GFF-File-Format#gff-data-types)
 
-The 28 sound event [types](GFF-File-Format#data-types) correspond to [array](2DA-File-Format) [indices](2DA-File-Format#row-labels):
+The 28 sound event [types](GFF-File-Format#gff-data-types) correspond to [array](2DA-File-Format) [indices](2DA-File-Format#row-labels):
 
 | [index](2DA-File-Format#row-labels) | Event [type](GFF-File-Format#data-types)          | Description                                                      |
 | ----- | ------------------- | ---------------------------------------------------------------- |
@@ -120,4 +120,4 @@ The 28 sound event [types](GFF-File-Format#data-types) correspond to [array](2DA
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [SSF file](SSF-File-Format) [format](GFF-File-Format), focusing on the detailed [file](GFF-File-Format) [structure](GFF-File-Format#file-structure) and [data](GFF-File-Format#file-structure) [formats](GFF-File-Format) used within the games.
+This documentation aims to provide a comprehensive overview of the KotOR [SSF file](SSF-File-Format) [format](GFF-File-Format), focusing on the detailed [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview) and [data](GFF-File-Format#file-structure-overview) [formats](GFF-File-Format) used within the games.

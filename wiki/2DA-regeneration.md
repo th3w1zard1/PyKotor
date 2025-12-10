@@ -6,12 +6,12 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Regeneration State ID (integer, 0=combat, 1=non-combat)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Regeneration state label |
-| Additional columns | [float](GFF-File-Format#float) | Regeneration rates for different resource [types](GFF-File-Format#data-types) |
+| `label` | [string](GFF-File-Format#gff-data-types) | Regeneration state label |
+| Additional columns | [float](GFF-File-Format#gff-data-types) | Regeneration rates for different resource [types](GFF-File-Format#gff-data-types) |
 
 **References**:
 

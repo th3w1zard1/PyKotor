@@ -4,7 +4,7 @@ This guide explains how to modify [TLK files](TLK-File-Format) using TSLPatcher 
 
 ## Overview
 
-The `[TLKList]` section in TSLPatcher's changes.ini [file](GFF-File-Format) enables you to modify TLK ([Talk Table](TLK-File-Format)) [files](GFF-File-Format) used throughout KotOR. [TLK files](TLK-File-Format) store all in-game text [strings](GFF-File-Format#cexostring) and their associated voiceover sound references. The most important [TLK file](TLK-File-Format) is `dialog.tlk`, which contains all dialog, item descriptions, conversations, and other text displayed in the game.
+The `[TLKList]` section in TSLPatcher's changes.ini [file](GFF-File-Format) enables you to modify TLK ([Talk Table](TLK-File-Format)) [files](GFF-File-Format) used throughout KotOR. [TLK files](TLK-File-Format) store all in-game text [strings](GFF-File-Format#gff-data-types) and their associated voiceover sound references. The most important [TLK file](TLK-File-Format) is [`dialog.tlk`](TLK-File-Format), which contains all dialog, item descriptions, conversations, and other text displayed in the game.
 
 TSLPatcher was designed by Stoffe with an **append-only philosophy** for [TLK](TLK-File-Format) modifications. This design maximizes mod compatibility by non-destructively adding new entries to the end of [`dialog.tlk`](TLK-File-Format), allowing multiple mods to safely coexist without conflicts.
 
@@ -12,25 +12,25 @@ TSLPatcher was designed by Stoffe with an **append-only philosophy** for [TLK](T
 
 TSLPatcher's [TLK](TLK-File-Format) modification system provides several [KEY](KEY-File-Format) advantages:
 
-- **Avoid distributing large [files](GFF-File-Format)**: The [`dialog.tlk`](TLK-File-Format) [file](GFF-File-Format) is approximately 10 MB. Instead of distributing the entire modified [file](GFF-File-Format), TSLPatcher allows you to add only your new entries, significantly reducing mod [file](GFF-File-Format) [size](GFF-File-Format#file-structure).
+- **Avoid distributing large [files](GFF-File-Format)**: The [`dialog.tlk`](TLK-File-Format) [file](GFF-File-Format) is approximately 10 MB. Instead of distributing the entire modified [file](GFF-File-Format), TSLPatcher allows you to add only your new entries, significantly reducing mod [file](GFF-File-Format) [size](GFF-File-Format#file-structure-overview).
 
-- **Memory system integration**: TSLPatcher keeps StrRefs of newly added entries in memory, allowing you to insert those StrRefs into [2DA](2DA-File-Format) and [GFF files](GFF-File-Format) as needed. For example, if you add the name of a new force power to [`dialog.tlk`](TLK-File-Format), TSLPatcher can memorize the [StrRef](TLK-File-Format#string-references-strref) the name [string](GFF-File-Format#cexostring) ended up as, and insert that [value](GFF-File-Format#data-types) into the "name" column in `spells.2da`.
+- **Memory system integration**: TSLPatcher keeps StrRefs of newly added entries in memory, allowing you to insert those StrRefs into [2DA](2DA-File-Format) and [GFF files](GFF-File-Format) as needed. For example, if you add the name of a new force power to [`dialog.tlk`](TLK-File-Format), TSLPatcher can memorize the [StrRef](TLK-File-Format#string-references-strref) the name [string](GFF-File-Format#gff-data-types) ended up as, and insert that [value](GFF-File-Format#gff-data-types) into the "name" column in `spells.2da`.
 
 - **Cross-section token usage**: [StrRef](TLK-File-Format#string-references-strref) tokens created in `[TLKList]` can be used throughout other sections:
   - In `[2DAList]` to assign stringrefs to [2DA](2DA-File-Format) cells
-  - In `[GFFList]` to assign stringrefs to [GFF](GFF-File-Format) fields (including ExoLocString [fields](GFF-File-Format#file-structure))
+  - In `[GFFList]` to assign stringrefs to [GFF](GFF-File-Format) fields (including ExoLocString [fields](GFF-File-Format#file-structure-overview))
   - In `[CompileList]` scripts where `#StrRef#` tokens [ARE](GFF-File-Format#are-area) replaced during compilation
   - In `[SSFList]` to assign stringrefs to soundset entries
 
 ## Glossary
 
-- **TLK ([Talk Table](TLK-File-Format))**: Binary [file](GFF-File-Format) [format](GFF-File-Format) storing text [strings](GFF-File-Format#cexostring) and voiceover references. The primary [file](GFF-File-Format) is [`dialog.tlk`](TLK-File-Format).
+- **TLK ([Talk Table](TLK-File-Format))**: Binary [file](GFF-File-Format) [format](GFF-File-Format) storing text [strings](GFF-File-Format#gff-data-types) and voiceover references. The primary [file](GFF-File-Format) is [`dialog.tlk`](TLK-File-Format).
 
-- **StringRef ([StrRef](TLK-File-Format#string-references-strref))**: Short for "[string](GFF-File-Format#cexostring) Reference", this is a numeric identifier/[index](2DA-File-Format#row-labels) for an entry in a [TLK file](TLK-File-Format). StringRefs start at 0 and increment sequentially. Example: StringRef 12345 refers to the 12346th entry in a [TLK file](TLK-File-Format). The [StrRef](TLK-File-Format#string-references-strref) is the identifier number that the game engine uses to retrieve text [strings](GFF-File-Format#cexostring) from [`dialog.tlk`](TLK-File-Format).
+- **StringRef ([StrRef](TLK-File-Format#string-references-strref))**: Short for "[string](GFF-File-Format#gff-data-types) Reference", this is a numeric identifier/[index](2DA-File-Format#row-labels) for an entry in a [TLK file](TLK-File-Format). StringRefs start at 0 and increment sequentially. Example: StringRef 12345 refers to the 12346th entry in a [TLK file](TLK-File-Format). The [StrRef](TLK-File-Format#string-references-strref) is the identifier number that the game engine uses to retrieve text [strings](GFF-File-Format#gff-data-types) from [`dialog.tlk`](TLK-File-Format).
 
 - **[KEY](KEY-File-Format)**: The left side of the `=` symbol in an INI entry (e.g., `StrRef0`, `AppendFile0`)
 
-- **[value](GFF-File-Format#data-types)**: The right side of the `=` symbol in an INI entry. In `[TLKList]`, [values](GFF-File-Format#data-types) specify the [index](2DA-File-Format#row-labels) into [TLK](TLK-File-Format) source [files](GFF-File-Format) to read from.
+- **[value](GFF-File-Format#gff-data-types)**: The right side of the `=` symbol in an INI entry. In `[TLKList]`, [values](GFF-File-Format#gff-data-types) specify the [index](2DA-File-Format#row-labels) into [TLK](TLK-File-Format) source [files](GFF-File-Format) to read from.
 
 - **Token**: A placeholder like `StrRef0` or `StrRef1` that gets replaced with an actual StringRef during patching.
 
@@ -38,7 +38,7 @@ TSLPatcher's [TLK](TLK-File-Format) modification system provides several [KEY](K
 
 - **Replace**: Destructive operation that overwrites existing entries in [`dialog.tlk`](TLK-File-Format). **Should ONLY be used for fixing grammar, spelling, or typographical errors in existing game content.** See [Replace Functionality Warning](#replace-functionality-warning) for details.
 
-- **append.tlk**: Default source [file](GFF-File-Format) containing new [strings](GFF-File-Format#cexostring) to append. Created using TalkEd.exe (see [Creating TLK Files](#creating-tlk-files)). Located in `tslpatchdata` folder.
+- **append.tlk**: Default source [file](GFF-File-Format) containing new [strings](GFF-File-Format#gff-data-types) to append. Created using TalkEd.exe (see [Creating TLK Files](#creating-tlk-files)). Located in `tslpatchdata` folder.
 
 - **appendf.tlk**: Feminine/non-English localized version of `append.tlk`. Used exclusively for KotOR1 Polish localization. Must have exactly the same number of entries as `append.tlk`. See [Localized Versions](#localized-versions) for details.
 
@@ -59,7 +59,7 @@ TSLPatcher's [TLK](TLK-File-Format) modification system provides several [KEY](K
 - [Localized Versions](#localized-versions)
 - [Memory System](#memory-system)
 - [Processing Order](#processing-order)
-- [File Structure](#file-structure)
+- [File Structure](#file-structure-overview)
 - [Complete Examples](#complete-examples)
 - [Common Use Cases](#common-use-cases)
 - [Troubleshooting](#troubleshooting)
@@ -84,7 +84,7 @@ TSLPatcher was designed by Stoffe to be **append-only** for [TLK](TLK-File-Forma
 - **Non-destructive**: Appending preserves all existing game text, preventing conflicts between mods
 - **Dynamic indexing**: Uses tokens (`[StrRef](TLK-File-Format#string-references-strref)#`) to handle variable stringref assignments without hard-coding [indices](2DA-File-Format#row-labels)
 - **Mod stacking**: Multiple mods can safely add entries without interfering with each other
-- **Compatibility**: Avoids the need to distribute full [`dialog.tlk`](TLK-File-Format) files (10+ MB), reducing mod [size](GFF-File-Format#file-structure)
+- **Compatibility**: Avoids the need to distribute full [`dialog.tlk`](TLK-File-Format) files (10+ MB), reducing mod [size](GFF-File-Format#file-structure-overview)
 
 ### Acceptable Uses of Replace
 
@@ -103,12 +103,12 @@ TSLPatcher was designed by Stoffe to be **append-only** for [TLK](TLK-File-Forma
 
 ## Creating [TLK](TLK-File-Format) [files](GFF-File-Format)
 
-To use custom [dialog.tlk](TLK-File-Format) entries in your mod, you must create source [TLK files](TLK-File-Format) containing your new [strings](GFF-File-Format#cexostring):
+To use custom [dialog.tlk](TLK-File-Format) entries in your mod, you must create source [TLK files](TLK-File-Format) containing your new [strings](GFF-File-Format#gff-data-types):
 
 ### Using TalkEd.exe
 
 1. **Create a new [TLK file](TLK-File-Format)**: Use TalkEd.exe (a [TLK](TLK-File-Format) editor tool) to create a new [TLK file](TLK-File-Format)
-2. **Add your entries**: Add all your new text [strings](GFF-File-Format#cexostring) and voiceover sound references to this [file](GFF-File-Format)
+2. **Add your entries**: Add all your new text [strings](GFF-File-Format#gff-data-types) and voiceover sound references to this [file](GFF-File-Format)
 3. **Save as append.tlk**: Name the [file](GFF-File-Format) exactly `append.tlk` (case-sensitive)
 4. **Place in tslpatchdata**: Save `append.tlk` in the `tslpatchdata` folder
 
@@ -116,13 +116,13 @@ To use custom [dialog.tlk](TLK-File-Format) entries in your mod, you must create
 
 If you [ARE](GFF-File-Format#are-area) using a non-English version of KotOR1 that has a `dialogf.tlk` file (Polish localization), you must also:
 
-1. **Create appendf.tlk**: Create a new [file](GFF-File-Format) with the feminine form of your [strings](GFF-File-Format#cexostring)
+1. **Create appendf.tlk**: Create a new [file](GFF-File-Format) with the feminine form of your [strings](GFF-File-Format#gff-data-types)
 2. **Name it appendf.tlk**: Must be named exactly `appendf.tlk` (case-sensitive)
-3. **Match entry [count](GFF-File-Format#file-structure)**: **`appendf.tlk` must have exactly the same number of entries as `append.tlk`**
+3. **Match entry [count](GFF-File-Format#file-structure-overview)**: **`appendf.tlk` must have exactly the same number of entries as `append.tlk`**
 4. **Matching [indices](2DA-File-Format#row-labels)**: Each [index](2DA-File-Format#row-labels) in `appendf.tlk` should correspond to the same [index](2DA-File-Format#row-labels) in `append.tlk`
-5. **Handle missing forms**: If a [string](GFF-File-Format#cexostring) has no specific feminine form, put the same text in both [files](GFF-File-Format)
+5. **Handle missing forms**: If a [string](GFF-File-Format#gff-data-types) has no specific feminine form, put the same text in both [files](GFF-File-Format)
 
-**Important**: The entry [count](GFF-File-Format#file-structure) must match exactly. If `append.tlk` has 100 entries, `appendf.tlk` must also have exactly 100 entries, even if some [ARE](GFF-File-Format#are-area) identical between the two [files](GFF-File-Format).
+**Important**: The entry [count](GFF-File-Format#file-structure-overview) must match exactly. If `append.tlk` has 100 entries, `appendf.tlk` must also have exactly 100 entries, even if some [ARE](GFF-File-Format#are-area) identical between the two [files](GFF-File-Format).
 
 ### Using ChangeEdit (Optional)
 
@@ -133,14 +133,14 @@ The ChangeEdit application provides a user-friendly [GUI](GFF-File-Format#gui-gr
 3. **View entries**: This lists all your custom text entries in the list to the right
 4. **Select entries**: Select an entry you wish TSLPatcher to add to [`dialog.tlk`](TLK-File-Format)
 5. **Add to list**: Press the left arrow icon (←) to add the entry to the list on the left
-6. **Token creation**: Take note of the [value](GFF-File-Format#data-types) in the left column, which should look like `StrRef0` for the first entry, with an incrementing number (`StrRef1`, `StrRef2`, etc.) for each subsequent entry
-7. **Use tokens**: This token (e.g., `StrRef0`) is what you'll use in the [2DA](2DA-File-Format) and [GFF](GFF-File-Format) sections to assign the resulting [StrRef](TLK-File-Format#string-references-strref) [value](GFF-File-Format#data-types) to a [2DA](2DA-File-Format) cell or [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure)
+6. **Token creation**: Take note of the [value](GFF-File-Format#gff-data-types) in the left column, which should look like `StrRef0` for the first entry, with an incrementing number (`StrRef1`, `StrRef2`, etc.) for each subsequent entry
+7. **Use tokens**: This token (e.g., `StrRef0`) is what you'll use in the [2DA](2DA-File-Format) and [GFF](GFF-File-Format) sections to assign the resulting [StrRef](TLK-File-Format#string-references-strref) [value](GFF-File-Format#gff-data-types) to a [2DA](2DA-File-Format) cell or [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview)
 
 **Manual Editing**: While ChangeEdit provides a [GUI](GFF-File-Format#gui-graphical-user-interface) interface, you can also edit the `changes.ini` [file](GFF-File-Format) directly with any text editor (Notepad, VS Code, etc.). The INI [format](GFF-File-Format) is plain text and human-readable.
 
 **Important**: When using ChangeEdit, always verify the generated INI entries match your expectations, especially for token names and entry [indices](2DA-File-Format#row-labels).
 
-## Basic [structure](GFF-File-Format#file-structure)
+## Basic [structure](GFF-File-Format#file-structure-overview)
 
 ```ini
 [TLKList]
@@ -164,22 +164,22 @@ AppendFile0=custom_entries.tlk
 **[KEY](KEY-File-Format) Points:**
 
 - All examples use **append** operations - the recommended approach
-- [values](GFF-File-Format#data-types) specify which [StrRef](TLK-File-Format#string-references-strref) [indices](2DA-File-Format#row-labels) to read from source [files](GFF-File-Format)
+- [values](GFF-File-Format#gff-data-types) specify which [StrRef](TLK-File-Format#string-references-strref) [indices](2DA-File-Format#row-labels) to read from source [files](GFF-File-Format)
 
 ## Configuration Keys
 
 ### `!DefaultDestination`
 
-- **[type](GFF-File-Format#data-types)**: String (path)
+- **type**: String (path)
 - **Default**: `.` (kotor game installation path root)
 - **Description**: Default destination folder for [TLK files](TLK-File-Format) when not overridden
 - **Example**: `!DefaultDestination=override`
 
 ### `!DefaultSourceFolder`
 
-- **[type](GFF-File-Format#data-types)**: String (path)
+- **type**: String (path)
 - **Default**: `.` (tslpatchdata folder)
-- **Description**: Default folder to search for [TLK](TLK-File-Format) source files (e.g., `append.tlk`). This is a relative path from `mod_path`, which is typically the `tslpatchdata` folder (the parent directory of the `changes.ini` [file](GFF-File-Format)). The default [value](GFF-File-Format#data-types) `.` refers to the `tslpatchdata` folder itself.
+- **Description**: Default folder to search for [TLK](TLK-File-Format) source files (e.g., `append.tlk`). This is a relative path from `mod_path`, which is typically the `tslpatchdata` folder (the parent directory of the `changes.ini` [file](GFF-File-Format)). The default [value](GFF-File-Format#gff-data-types) `.` refers to the `tslpatchdata` folder itself.
 - **Path Resolution**: [files](GFF-File-Format) [ARE](GFF-File-Format#are-area) resolved as `mod_path / !DefaultSourceFolder / filename`. When `mod_path = "C:/Mod/tslpatchdata"`:
   - `!DefaultSourceFolder=.` resolves to e.g. `"C:/Mod/tslpatchdata"`
   - `!DefaultSourceFolder=tlk_files` resolves to e.g. `"C:/Mod/tslpatchdata/tlk_files"`
@@ -187,18 +187,18 @@ AppendFile0=custom_entries.tlk
 
 ### `!SourceFile`
 
-- **[type](GFF-File-Format#data-types)**: String (filename)
+- **type**: String (filename)
 - **Default**: `append.tlk`
 - **Description**: Name of the [TLK file](TLK-File-Format) to use when appending entries via [StrRef](TLK-File-Format#string-references-strref) syntax
 - **Example**: `!SourceFile=my_strings.tlk`
 
 ### `!SourceFileF`
 
-- **[type](GFF-File-Format#data-types)**: String (filename)
+- **type**: String (filename)
 - **Default**: `appendf.tlk`
 - **Description**: Name of the [TLK file](TLK-File-Format) to use for feminine/non-English localized versions (exclusively KotOR1 Polish)
 - **Version Added**: 1.2.8b6
-- **Note**: Must have exactly the same number of entries as `!SourceFile`. Each [index](2DA-File-Format#row-labels) in `appendf.tlk` maps directly to the same [index](2DA-File-Format#row-labels) in `append.tlk`. If a [string](GFF-File-Format#cexostring) has no specific feminine form, put the same text in both [files](GFF-File-Format).
+- **Note**: Must have exactly the same number of entries as `!SourceFile`. Each [index](2DA-File-Format#row-labels) in `appendf.tlk` maps directly to the same [index](2DA-File-Format#row-labels) in `append.tlk`. If a [string](GFF-File-Format#gff-data-types) has no specific feminine form, put the same text in both [files](GFF-File-Format).
 - **Example**: `!SourceFileF=my_strings_f.tlk`
 
 ### Unsupported Keys
@@ -217,7 +217,7 @@ The `[TLKList]` section supports two primary entry syntax patterns, both using *
 
 ### How Token Creation Works
 
-**Important**: Tokens [ARE](GFF-File-Format#are-area) created from the **[value](GFF-File-Format#data-types)** (the number on the right side of `=`). For `StrRef<number>=<number>` entries, the number in the [KEY](KEY-File-Format) and [value](GFF-File-Format#data-types) must match, and this matching number determines the token name.
+**Important**: Tokens [ARE](GFF-File-Format#are-area) created from the **[value](GFF-File-Format#gff-data-types)** (the number on the right side of `=`). For `StrRef<number>=<number>` entries, the number in the [KEY](KEY-File-Format) and [value](GFF-File-Format#gff-data-types) must match, and this matching number determines the token name.
 
 - `StrRef0=0` creates token `StrRef0` (reads [index](2DA-File-Format#row-labels) 0 from `append.tlk`)
 - `StrRef5=5` creates token `StrRef5` (reads [index](2DA-File-Format#row-labels) 5 from `append.tlk`)
@@ -237,7 +237,7 @@ StrRef<number>=<number>
 
 **Parameters**:
 
-- `<number>` - The [index](2DA-File-Format#row-labels) into `append.tlk` (or `!SourceFile`) to read from. This number must match in both the [KEY](KEY-File-Format) and [value](GFF-File-Format#data-types).
+- `<number>` - The [index](2DA-File-Format#row-labels) into `append.tlk` (or `!SourceFile`) to read from. This number must match in both the [KEY](KEY-File-Format) and [value](GFF-File-Format#gff-data-types).
 
 **Behavior**:
 
@@ -275,7 +275,7 @@ AppendFile<anything>=<tlk_filename>
 - Creates a **new section** `[<tlk_filename>]` if the [file](GFF-File-Format) doesn't exist in source
 - Maps entries from the source [TLK](TLK-File-Format) to [`dialog.tlk`](TLK-File-Format) using the subsection mappings
 - All entries [ARE](GFF-File-Format#are-area) **added** (not replaced) to [`dialog.tlk`](TLK-File-Format)
-- For AppendFile, entries [ARE](GFF-File-Format#are-area) appended and tokens [ARE](GFF-File-Format#are-area) created from the mapping [values](GFF-File-Format#data-types)
+- For AppendFile, entries [ARE](GFF-File-Format#are-area) appended and tokens [ARE](GFF-File-Format#are-area) created from the mapping [values](GFF-File-Format#gff-data-types)
 
 **Subsection Syntax**:
 
@@ -287,7 +287,7 @@ StrRef<token_identifier>=StrRef<source_index>  ; Alternative explicit syntax
 
 **Subsection Parameters**:
 
-- `<source_index>` - The [index](2DA-File-Format#row-labels) into the source [TLK file](TLK-File-Format) to read from. Token `StrRef{source_index}` is created from this [value](GFF-File-Format#data-types). The number in the [KEY](KEY-File-Format) should match the number in the [value](GFF-File-Format#data-types) for clarity.
+- `<source_index>` - The [index](2DA-File-Format#row-labels) into the source [TLK file](TLK-File-Format) to read from. Token `StrRef{source_index}` is created from this [value](GFF-File-Format#gff-data-types). The number in the [KEY](KEY-File-Format) should match the number in the [value](GFF-File-Format#gff-data-types) for clarity.
 
 **Examples**:
 
@@ -315,7 +315,7 @@ KotOR1 Polish edition uses both [`dialog.tlk`](TLK-File-Format) and `dialogf.tlk
 1. **Create both [files](GFF-File-Format)**: Create `append.tlk` (masculine/standard) and `appendf.tlk` (feminine/localized)
 2. **Match entry counts**: Both [files](GFF-File-Format) must have exactly the same number of entries
 3. **Map [indices](2DA-File-Format#row-labels)**: Entry at [index](2DA-File-Format#row-labels) 0 in `append.tlk` corresponds to [index](2DA-File-Format#row-labels) 0 in `appendf.tlk`
-4. **Handle duplicates**: If a [string](GFF-File-Format#cexostring) doesn't have a feminine form, use the same text in both [files](GFF-File-Format)
+4. **Handle duplicates**: If a [string](GFF-File-Format#gff-data-types) doesn't have a feminine form, use the same text in both [files](GFF-File-Format)
 
 ### Configuration
 
@@ -351,9 +351,9 @@ memory.memory_str[token_identifier] = new_stringref
 - For **append** operations: Stores the new stringref that was added, mapped to the token identifier (see [How Token Creation Works](#how-token-creation-works))
 - For **replace** operations: Memory is not typically stored (no need since stringref is static)
 
-### Token Creation from [values](GFF-File-Format#data-types)
+### Token Creation from [values](GFF-File-Format#gff-data-types)
 
-Tokens [ARE](GFF-File-Format#are-area) created from the matching number in both the [KEY](KEY-File-Format) and [value](GFF-File-Format#data-types). See [How Token Creation Works](#how-token-creation-works) for details. After processing, tokens [ARE](GFF-File-Format#are-area) available for use in other sections like `[2DAList]`, `[GFFList]`, and `[CompileList]`.
+Tokens [ARE](GFF-File-Format#are-area) created from the matching number in both the [KEY](KEY-File-Format) and [value](GFF-File-Format#gff-data-types). See [How Token Creation Works](#how-token-creation-works) for details. After processing, tokens [ARE](GFF-File-Format#are-area) available for use in other sections like `[2DAList]`, `[GFFList]`, and `[CompileList]`.
 
 ### Using [TLK](TLK-File-Format) Memory in Other Sections
 
@@ -454,17 +454,17 @@ HoloPatcher Execution Order:
 - Script compilation happens **after** [TLK](TLK-File-Format) processing, so `#[StrRef](TLK-File-Format#string-references-strref)#` tokens can be resolved
 - Tokens [ARE](GFF-File-Format#are-area) substituted in [2DA](2DA-File-Format), [GFF](GFF-File-Format), and script [files](GFF-File-Format) after [TLK](TLK-File-Format) entries have been appended
 
-## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure)
+## [file](GFF-File-Format) [structure](GFF-File-Format#file-structure-overview)
 
 ### [TLK](TLK-File-Format) [file](GFF-File-Format) [format](GFF-File-Format)
 
 A [TLK file](TLK-File-Format) is a binary [format](GFF-File-Format) containing:
 
-- **[header](GFF-File-Format#file-header)**: [file](GFF-File-Format) type (`TLK`), version (`V3.0`), language ID, [string](GFF-File-Format#cexostring) [count](GFF-File-Format#file-structure), entries [offset](GFF-File-Format#file-structure)
-- **Entry [headers](GFF-File-Format#file-header)**: [flags](GFF-File-Format#data-types), sound ResRef (16 bytes), volume/pitch variance (unused), text [offset](GFF-File-Format#file-structure), text length, sound length (unused)
-- **Text [data](GFF-File-Format#file-structure)**: Actual [string](GFF-File-Format#cexostring) content stored at the specified [offsets](GFF-File-Format#file-structure)
+- **[header](GFF-File-Format#file-header)**: [file](GFF-File-Format) type (`TLK`), version (`V3.0`), language ID, [string](GFF-File-Format#gff-data-types) [count](GFF-File-Format#file-structure-overview), entries [offset](GFF-File-Format#file-structure-overview)
+- **Entry [headers](GFF-File-Format#file-header)**: [flags](GFF-File-Format#gff-data-types), sound ResRef (16 bytes), volume/pitch variance (unused), text [offset](GFF-File-Format#file-structure-overview), text length, sound length (unused)
+- **Text [data](GFF-File-Format#file-structure-overview)**: Actual [string](GFF-File-Format#gff-data-types) content stored at the specified [offsets](GFF-File-Format#file-structure-overview)
 
-**[TLK](TLK-File-Format) Entry [structure](GFF-File-Format#file-structure)**:
+**[TLK](TLK-File-Format) Entry [structure](GFF-File-Format#file-structure-overview)**:
 
 ```python
 class TLKEntry:
@@ -473,11 +473,11 @@ class TLKEntry:
     sound_length: float    # Unused by KotOR (present in format but ignored)
 ```
 
-**[string](GFF-File-Format#cexostring) Length Limitations**:
+**[string](GFF-File-Format#gff-data-types) Length Limitations**:
 
-- **TSLPatcher v1.2.8b6 and later**: Can handle [TLK](TLK-File-Format) entries with [strings](GFF-File-Format#cexostring) of **any [size](GFF-File-Format#file-structure)** (no practical limit)
-- **Earlier versions**: Had a bug that prevented proper handling of [strings](GFF-File-Format#cexostring) longer than 4096 characters
-- If you encounter issues with long [strings](GFF-File-Format#cexostring), ensure you're using TSLPatcher v1.2.8b6 or later. HoloPatcher does **NOT** have this bug.
+- **TSLPatcher v1.2.8b6 and later**: Can handle [TLK](TLK-File-Format) entries with [strings](GFF-File-Format#gff-data-types) of **any [size](GFF-File-Format#file-structure-overview)** (no practical limit)
+- **Earlier versions**: Had a bug that prevented proper handling of [strings](GFF-File-Format#gff-data-types) longer than 4096 characters
+- If you encounter issues with long [strings](GFF-File-Format#gff-data-types), ensure you're using TSLPatcher v1.2.8b6 or later. HoloPatcher does **NOT** have this bug.
 
 ### KotOR [TLK](TLK-File-Format) [files](GFF-File-Format)
 
@@ -500,7 +500,7 @@ class TLKEntry:
 
 ### Example 1: Simple Append with [StrRef](TLK-File-Format#string-references-strref)
 
-Add new [string](GFF-File-Format#cexostring) entries from `append.tlk` to [`dialog.tlk`](TLK-File-Format):
+Add new [string](GFF-File-Format#gff-data-types) entries from `append.tlk` to [`dialog.tlk`](TLK-File-Format):
 
 ```ini
 [TLKList]
@@ -529,7 +529,7 @@ AppendFile0=planets.tlk
 
 **[files](GFF-File-Format)**: `tslpatchdata/planets.tlk` contains entries at [indices](2DA-File-Format#row-labels) 10, 11, 12, etc.
 
-**Result**: Each entry from `planets.tlk` is appended to [`dialog.tlk`](TLK-File-Format) and tokens `StrRef10`, `StrRef11`, `StrRef12` [ARE](GFF-File-Format#are-area) created (from the [values](GFF-File-Format#data-types), not the keys).
+**Result**: Each entry from `planets.tlk` is appended to [`dialog.tlk`](TLK-File-Format) and tokens `StrRef10`, `StrRef11`, `StrRef12` [ARE](GFF-File-Format#are-area) created (from the [values](GFF-File-Format#gff-data-types), not the keys).
 
 ### Example 3: Combined Append Operations
 
@@ -573,7 +573,7 @@ StrRef2=2
 
 - Both [files](GFF-File-Format) must have **exactly the same number of entries**
 - Entry at [index](2DA-File-Format#row-labels) 0 in `append.tlk` maps to [index](2DA-File-Format#row-labels) 0 in `appendf.tlk`
-- If a [string](GFF-File-Format#cexostring) has no feminine form, use the same text in both [files](GFF-File-Format)
+- If a [string](GFF-File-Format#gff-data-types) has no feminine form, use the same text in both [files](GFF-File-Format)
 - TSLPatcher automatically uses `appendf.tlk` when the target game has `dialogf.tlk` present
 
 ## Common Use Cases
@@ -636,7 +636,7 @@ StrRef1=1
 StrRef2=2
 ```
 
-**[files](GFF-File-Format)**: Both `append_en.tlk` (English) and `append_de.tlk` (German) must match entry [count](GFF-File-Format#file-structure) exactly. TSLPatcher uses the appropriate [file](GFF-File-Format) based on game localization.
+**[files](GFF-File-Format)**: Both `append_en.tlk` (English) and `append_de.tlk` (German) must match entry [count](GFF-File-Format#file-structure-overview) exactly. TSLPatcher uses the appropriate [file](GFF-File-Format) based on game localization.
 
 ## Troubleshooting
 
@@ -662,13 +662,13 @@ AppendFile0=file.tlk
 AppendFile1=another.tlk
 ```
 
-### Error: "Could not parse '[KEY](KEY-File-Format)=[value](GFF-File-Format#data-types)' in [TLKList]"
+### Error: "Could not parse '[KEY](KEY-File-Format)=[value](GFF-File-Format#gff-data-types)' in [TLKList]"
 
-**Cause**: Invalid numeric [values](GFF-File-Format#data-types) or malformed entries
+**Cause**: Invalid numeric [values](GFF-File-Format#gff-data-types) or malformed entries
 
 **Solutions**:
 
-- Ensure [values](GFF-File-Format#data-types) [ARE](GFF-File-Format#are-area) valid integers for [StrRef](TLK-File-Format#string-references-strref)/AppendFile mappings
+- Ensure [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) valid integers for [StrRef](TLK-File-Format#string-references-strref)/AppendFile mappings
 - Check that numeric keys can be parsed as integers if using numeric [format](GFF-File-Format)
 - Verify no extra spaces or invalid characters
 
@@ -730,15 +730,15 @@ StrRef0=0  ; Appends new entry, creates token StrRef0
 - Check [file](GFF-File-Format) encoding: should be UTF-8 or cp1252
 - Ensure the [file](GFF-File-Format) is in the tslpatchdata folder (or specified source folder)
 - Review the log for processing errors
-- Verify keys and [values](GFF-File-Format#data-types) [ARE](GFF-File-Format#are-area) correctly formatted
+- Verify keys and [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) correctly formatted
 
 ### Issue: Wrong Token Created
 
-**Cause**: Confusion about token creation from keys vs [values](GFF-File-Format#data-types)
+**Cause**: Confusion about token creation from keys vs [values](GFF-File-Format#gff-data-types)
 
 **Solutions**:
 
-- See [How Token Creation Works](#how-token-creation-works) - tokens [ARE](GFF-File-Format#are-area) created from the **[value](GFF-File-Format#data-types)** (matching number)
+- See [How Token Creation Works](#how-token-creation-works) - tokens [ARE](GFF-File-Format#are-area) created from the **[value](GFF-File-Format#gff-data-types)** (matching number)
 - `StrRef0=0` creates token `StrRef0`
 - `StrRef5=5` creates token `StrRef5`
 
@@ -770,7 +770,7 @@ name=StrRef0  ; Use the token
 
 **Best Practice**: Use AppendFile with subsections for clarity and organization
 
-**Good** (Organized by content [type](GFF-File-Format#data-types)):
+**Good** (Organized by content type):
 
 ```ini
 [TLKList]
@@ -852,7 +852,7 @@ StrRef2=2
 - **Maintain consistent naming**: Always use `append.tlk` and `appendf.tlk` (or set `!SourceFile`/`!SourceFileF` if using custom names)
 - **Version control**: Keep [TLK files](TLK-File-Format) separately from other mod [files](GFF-File-Format) for easier management
 - **Match entry counts**: If using localized versions, ensure `append.tlk` and `appendf.tlk` have **exactly the same number of entries**
-- **[file](GFF-File-Format) [size](GFF-File-Format#file-structure) considerations**: The [`dialog.tlk`](TLK-File-Format) [file](GFF-File-Format) is ~10 MB, but you only need to distribute small `append.tlk` [files](GFF-File-Format) with your mod
+- **[file](GFF-File-Format) [size](GFF-File-Format#file-structure-overview) considerations**: The [`dialog.tlk`](TLK-File-Format) [file](GFF-File-Format) is ~10 MB, but you only need to distribute small `append.tlk` [files](GFF-File-Format) with your mod
 
 ### 6. Localization
 
@@ -860,14 +860,14 @@ StrRef2=2
 - **Maintain parallel [files](GFF-File-Format)**: If supporting Polish, maintain both `append.tlk` and `appendf.tlk`
 - **Exact entry matching**: Entry counts must match exactly between `append.tlk` and `appendf.tlk`
 - **Map [indices](2DA-File-Format#row-labels)**: Each [index](2DA-File-Format#row-labels) must correspond between the two files ([index](2DA-File-Format#row-labels) 0 → [index](2DA-File-Format#row-labels) 0, [index](2DA-File-Format#row-labels) 1 → [index](2DA-File-Format#row-labels) 1, etc.)
-- **Handle duplicates**: If a [string](GFF-File-Format#cexostring) has no feminine form, use the same text in both [files](GFF-File-Format)
+- **Handle duplicates**: If a [string](GFF-File-Format#gff-data-types) has no feminine form, use the same text in both [files](GFF-File-Format)
 - **Use configuration keys**: Set `!SourceFileF` to specify the feminine version filename
 - **Documentation**: Document language support in your mod's README
 - **KotOR2/TSL**: Does not use `dialogf.tlk` - only create `append.tlk` for KotOR2 mods
 
-### 7. Key/[value](GFF-File-Format#data-types) Clarity
+### 7. Key/[value](GFF-File-Format#gff-data-types) Clarity
 
-- Keys appear on the left side of `=`, [values](GFF-File-Format#data-types) on the right
+- Keys appear on the left side of `=`, [values](GFF-File-Format#gff-data-types) on the right
 - For `[StrRef](TLK-File-Format#string-references-strref)<number>=<number>`, numbers must match for proper token creation
 - Use consistent numbering for readability
 
@@ -899,18 +899,18 @@ StrRef2=2
 1. Parse [TLKList] section
 2. Load source [TLK files](TLK-File-Format) from `!SourceFile`/`!SourceFileF` e.g. `!SourceFile=append.tlk`
 3. For each [StrRef](TLK-File-Format#string-references-strref) entry:
-   - Parse: *[KEY](KEY-File-Format)* (ignored), *[value](GFF-File-Format#data-types)* (source [index](2DA-File-Format#row-labels))
-   - Load entry from source [file](GFF-File-Format) at *[value](GFF-File-Format#data-types)* [index](2DA-File-Format#row-labels)
+   - Parse: *[KEY](KEY-File-Format)* (ignored), *[value](GFF-File-Format#gff-data-types)* (source [index](2DA-File-Format#row-labels))
+   - Load entry from source [file](GFF-File-Format) at *[value](GFF-File-Format#gff-data-types)* [index](2DA-File-Format#row-labels)
    - Append to dialog.tlk (gets new stringref)
-   - Create token [StrRef](TLK-File-Format#string-references-strref){[value](GFF-File-Format#data-types)} from *[value](GFF-File-Format#data-types)* to store the new stringref
+   - Create token [StrRef](TLK-File-Format#string-references-strref){[value](GFF-File-Format#gff-data-types)} from *[value](GFF-File-Format#gff-data-types)* to store the new stringref
 4. For each AppendFile entry:
-   - Parse: Key (part after the word 'append' is ignored), *[value](GFF-File-Format#data-types)* (filename) e.g. `AppendFile0=some_append_contents.tlk`
+   - Parse: Key (part after the word 'append' is ignored), *[value](GFF-File-Format#gff-data-types)* (filename) e.g. `AppendFile0=some_append_contents.tlk`
    - Parse subsection [filename] mappings
    - For each mapping:
-     - Parse: *[KEY](KEY-File-Format)* (ignored), *[value](GFF-File-Format#data-types)* (source [index](2DA-File-Format#row-labels))
-     - Load entry from referenced [file](GFF-File-Format) at *[value](GFF-File-Format#data-types)* [index](2DA-File-Format#row-labels)
+     - Parse: *[KEY](KEY-File-Format)* (ignored), *[value](GFF-File-Format#gff-data-types)* (source [index](2DA-File-Format#row-labels))
+     - Load entry from referenced [file](GFF-File-Format) at *[value](GFF-File-Format#gff-data-types)* [index](2DA-File-Format#row-labels)
      - Append to dialog.tlk (gets new stringref)
-     - Create token [StrRef](TLK-File-Format#string-references-strref){[value](GFF-File-Format#data-types)} from *[value](GFF-File-Format#data-types)* to store the new stringref
+     - Create token [StrRef](TLK-File-Format#string-references-strref){[value](GFF-File-Format#gff-data-types)} from *[value](GFF-File-Format#gff-data-types)* to store the new stringref
 5. Tokens [ARE](GFF-File-Format#are-area) now available for substitution in:
    - [2DAList] sections (2DAMEMORY#=[StrRef](TLK-File-Format#string-references-strref)#)
    - [GFFList] sections (FieldName=[StrRef](TLK-File-Format#string-references-strref)#)
@@ -930,8 +930,8 @@ StrRef2=2
 
 - Added optional `!SourceFile` and `!SourceFileF` keys to the `[TLKList]` section
 - If present, these can be used to set an alternative name of the [TLK file](TLK-File-Format) to use
-- If left out, default [values](GFF-File-Format#data-types) [ARE](GFF-File-Format#are-area) `append.tlk` and `appendf.tlk` as before
-- **Fixed bug**: Previously couldn't handle [TLK](TLK-File-Format) entries with [strings](GFF-File-Format#cexostring) longer than 4096 characters - now supports [strings](GFF-File-Format#cexostring) of any [size](GFF-File-Format#file-structure)
+- If left out, default [values](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) `append.tlk` and `appendf.tlk` as before
+- **Fixed bug**: Previously couldn't handle [TLK](TLK-File-Format) entries with [strings](GFF-File-Format#gff-data-types) longer than 4096 characters - now supports [strings](GFF-File-Format#gff-data-types) of any [size](GFF-File-Format#file-structure-overview)
 
 **TSLPatcher v1.2.8b0 (2006-08-06)**:
 
@@ -948,6 +948,6 @@ StrRef2=2
 - [TSLPatcher 2DAList Syntax](TSLPatcher-2DAList-Syntax.md) - How to modify [2DA](2DA-File-Format) files (can use [StrRef](TLK-File-Format#string-references-strref) tokens)
 - [TSLPatcher GFFList Syntax](TSLPatcher-GFFList-Syntax.md) - How to modify [GFF](GFF-File-Format) files (can use [StrRef](TLK-File-Format#string-references-strref) tokens)
 - [TSLPatcher SSFList Syntax](TSLPatcher-SSFList-Syntax.md) - How to modify soundset files (can use [StrRef](TLK-File-Format#string-references-strref) tokens)
-- [TSLPatcher CompileList Syntax](TSLPatcher-CompileList-Syntax.md) - How to compile scripts (can use #[StrRef](TLK-File-Format#string-references-strref)# tokens)
+- [TSLPatcher InstallList Syntax](TSLPatcher-InstallList-Syntax) - How to install files (includes script compilation)
 - [Mod Creation Best Practices](Mod-Creation-Best-Practices.md) - Best practices for modding
-- [HoloPatcher Documentation](HoloPatcher.md) - PyKotor implementation details
+- [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.) - PyKotor implementation details

@@ -8,18 +8,18 @@ UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-en
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/ute.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/ute.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure)
+## Core Identity [fields](GFF-File-Format#file-structure-overview)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `TemplateResRef` | [ResRef](GFF-File-Format#resref) | Template identifier for this encounter |
-| `Tag` | [CExoString](GFF-File-Format#cexostring) | Unique tag for script references |
-| `LocalizedName` | [CExoLocString](GFF-File-Format#localizedstring) | Encounter name (unused in game) |
-| `Comment` | [CExoString](GFF-File-Format#cexostring) | Developer comment/notes |
+| `TemplateResRef` | [ResRef](GFF-File-Format#gff-data-types) | Template identifier for this encounter |
+| `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique tag for script references |
+| `LocalizedName` | [CExoLocString](GFF-File-Format#gff-data-types) | Encounter name (unused in game) |
+| `Comment` | [CExoString](GFF-File-Format#gff-data-types) | Developer comment/notes |
 
 ## Spawn Configuration
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Active` | Byte | Encounter is currently active |
 | `Difficulty` | Int | Difficulty setting (unused) |
@@ -38,7 +38,7 @@ UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-en
 
 ## Respawn Logic
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Reset` | Byte | Encounter resets after being cleared |
 | `ResetTime` | Int | Time in seconds before reset |
@@ -52,16 +52,16 @@ UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-en
 
 ## Creature List
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `CreatureList` | List | List of creatures to spawn |
 
-**CreatureList Struct [fields](GFF-File-Format#file-structure):**
+**CreatureList Struct [fields](GFF-File-Format#file-structure-overview):**
 
-- `[ResRef](GFF-File-Format#resref)` ([ResRef](GFF-File-Format#resref)): [UTC](GFF-File-Format#utc-creature) template to spawn
+- `[ResRef](GFF-File-Format#gff-data-types)` ([ResRef](GFF-File-Format#gff-data-types)): [UTC](GFF-File-Format#utc-creature) template to spawn
 - `Appearance` (Int): Appearance type (optional override)
 - `CR` (Float): Challenge Rating
-- `SingleSpawn` (Byte): Unique spawn [flag](GFF-File-Format#data-types)
+- `SingleSpawn` (Byte): Unique spawn [flag](GFF-File-Format#gff-data-types)
 
 **Spawn Selection:**
 
@@ -70,14 +70,14 @@ UTE [files](GFF-File-Format) define [encounter templates](GFF-File-Format#ute-en
 
 ## Trigger Logic
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `PlayerOnly` | Byte | Only triggers for player (not NPCs) |
-| `OnEntered` | [ResRef](GFF-File-Format#resref) | Script fires when trigger entered |
-| `OnExit` | [ResRef](GFF-File-Format#resref) | Script fires when trigger exited |
-| `OnExhausted` | [ResRef](GFF-File-Format#resref) | Script fires when spawns depleted |
-| `OnHeartbeat` | [ResRef](GFF-File-Format#resref) | Script fires periodically |
-| `OnUserDefined` | [ResRef](GFF-File-Format#resref) | Script fires on user events |
+| `OnEntered` | [ResRef](GFF-File-Format#gff-data-types) | Script fires when trigger entered |
+| `OnExit` | [ResRef](GFF-File-Format#gff-data-types) | Script fires when trigger exited |
+| `OnExhausted` | [ResRef](GFF-File-Format#gff-data-types) | Script fires when spawns depleted |
+| `OnHeartbeat` | [ResRef](GFF-File-Format#gff-data-types) | Script fires periodically |
+| `OnUserDefined` | [ResRef](GFF-File-Format#gff-data-types) | Script fires on user events |
 
 **Implementation Notes:**
 

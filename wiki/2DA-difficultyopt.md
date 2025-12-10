@@ -6,12 +6,12 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Row [index](2DA-File-Format#row-labels)**: Difficulty Option ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Difficulty option label |
-| `desc` | [string](GFF-File-Format#cexostring) | Difficulty description (e.g., "Default") |
+| `label` | [string](GFF-File-Format#gff-data-types) | Difficulty option label |
+| `desc` | [string](GFF-File-Format#gff-data-types) | Difficulty description (e.g., "Default") |
 | Additional columns | Various | Difficulty modifiers and properties |
 
 **References**:

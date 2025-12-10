@@ -2,30 +2,30 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines reputation [values](GFF-File-Format#data-types) between different factions. The engine uses this [file](GFF-File-Format) to determine whether creatures [ARE](GFF-File-Format#are-area) enemies, friends, or neutral to each other based on their faction relationships.
+**Engine Usage**: Defines reputation [values](GFF-File-Format#gff-data-types) between different factions. The engine uses this [file](GFF-File-Format) to determine whether creatures [ARE](GFF-File-Format#are-area) enemies, friends, or neutral to each other based on their faction relationships.
 
 **Row [index](2DA-File-Format#row-labels)**: Faction ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Faction label |
-| Additional columns | Integer | Reputation [values](GFF-File-Format#data-types) for each faction (column names match faction labels) |
+| `label` | [string](GFF-File-Format#gff-data-types) | Faction label |
+| Additional columns | Integer | Reputation [values](GFF-File-Format#gff-data-types) for each faction (column names match faction labels) |
 
-**Note**: The `repute.2da` [file](GFF-File-Format) is a square [matrix](BWM-File-Format#vertex-data-processing) where each row represents a faction, and each column (after `label`) represents the reputation [value](GFF-File-Format#data-types) toward another faction. Reputation [values](GFF-File-Format#data-types) typically range from 0-100, where [values](GFF-File-Format#data-types) below 50 [ARE](GFF-File-Format#are-area) enemies, above 50 [ARE](GFF-File-Format#are-area) friends, and 50 is neutral.
+**Note**: The `repute.2da` [file](GFF-File-Format) is a square [matrix](BWM-File-Format#vertex-data-processing) where each row represents a faction, and each column (after `label`) represents the reputation [value](GFF-File-Format#gff-data-types) toward another faction. Reputation [values](GFF-File-Format#gff-data-types) typically range from 0-100, where [values](GFF-File-Format#gff-data-types) below 50 [ARE](GFF-File-Format#are-area) enemies, above 50 [ARE](GFF-File-Format#are-area) friends, and 50 is neutral.
 
 **References**:
 
 **PyKotor:**
 
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:460`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L460) - TwoDARegistry.FACTIONS constant definition (maps to "repute")
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:526-527`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L526-L527) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure) mapping: "FactionID" and "Faction" -> repute.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:526-527`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L526-L527) - [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) mapping: "FactionID" and "Faction" -> repute.2da
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:92`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L92) - REPUTE.fac documentation comment
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:1593`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L1593) - REPUTE.fac [file](GFF-File-Format) check comment
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:1627`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L1627) - REPUTE.fac documentation
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:1667`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L1667) - REPUTE_IDENTIFIER constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/savedata.py:1683-1684`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L1683-L1684) - repute [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure) initialization
+- [`Libraries/PyKotor/src/pykotor/extract/savedata.py:1683-1684`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L1683-L1684) - repute [GFF](GFF-File-Format) [field](GFF-File-Format#file-structure-overview) initialization
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:1759-1761`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L1759-L1761) - REPUTE.fac parsing
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:1795-1796`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L1795-L1796) - REPUTE.fac writing
 

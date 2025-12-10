@@ -2,16 +2,16 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines tile [colors](GFF-File-Format#color) for [walkmesh](BWM-File-Format) rendering. The engine uses this [file](GFF-File-Format) to determine [color](GFF-File-Format#color) [values](GFF-File-Format#data-types) for different [walkmesh](BWM-File-Format) tiles.
+**Engine Usage**: Defines tile [colors](GFF-File-Format#color) for [walkmesh](BWM-File-Format) rendering. The engine uses this [file](GFF-File-Format) to determine [color](GFF-File-Format#color) [values](GFF-File-Format#gff-data-types) for different [walkmesh](BWM-File-Format) tiles.
 
 **Row [index](2DA-File-Format#row-labels)**: Tile [color](GFF-File-Format#color) ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Tile [color](GFF-File-Format#color) label |
-| Additional columns | Various | [color](GFF-File-Format#color) [values](GFF-File-Format#data-types) and properties |
+| `label` | [string](GFF-File-Format#gff-data-types) | Tile [color](GFF-File-Format#color) label |
+| Additional columns | Various | [color](GFF-File-Format#color) [values](GFF-File-Format#gff-data-types) and properties |
 
 **References**:
 

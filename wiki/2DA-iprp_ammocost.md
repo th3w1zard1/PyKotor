@@ -4,13 +4,13 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Engine Usage**: Defines ammunition cost per shot for ranged weapons. Used to calculate ammunition consumption rates.
 
-**Row [index](2DA-File-Format#row-labels)**: Ammunition [type](GFF-File-Format#data-types) ID (integer)
+**Row [index](2DA-File-Format#row-labels)**: Ammunition [type](GFF-File-Format#gff-data-types) ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Ammunition [type](GFF-File-Format#data-types) label |
+| `label` | [string](GFF-File-Format#gff-data-types) | Ammunition [type](GFF-File-Format#gff-data-types) label |
 | `cost` | Integer | Ammunition cost per shot |
 
 **References**:

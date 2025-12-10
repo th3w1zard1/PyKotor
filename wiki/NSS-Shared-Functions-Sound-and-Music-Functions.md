@@ -75,8 +75,8 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `DisplayFeedBackText(oCreature, nTextConstant)` - Routine 366
 
 - `366. DisplayFeedBackText`
-- displays a feed back [string](GFF-File-Format#cexostring) for the object spicified and the constant
-- repersents the [string](GFF-File-Format#cexostring) to be displayed see:FeedBackText.2da
+- displays a feed back [string](GFF-File-Format#gff-data-types) for the object spicified and the constant
+- repersents the [string](GFF-File-Format#gff-data-types) to be displayed see:FeedBackText.2da
 
 - `oCreature`: object
 - `nTextConstant`: int
@@ -86,7 +86,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 ## `GetIsPlayableRacialType(oCreature)` - Routine 312
 
 - `312. GetIsPlayableRacialType`
-- - Returns TRUE if oCreature is of a playable racial [type](GFF-File-Format#data-types).
+- - Returns TRUE if oCreature is of a playable racial type.
 
 - `oCreature`: object
 
@@ -240,7 +240,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `733. PlayMovie`
 - Playes a Movie.
 
-- `sMovie`: [string](GFF-File-Format#cexostring)
+- `sMovie`: [string](GFF-File-Format#gff-data-types)
 
 <a id="playmoviequeue"></a>
 
@@ -267,7 +267,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - - bShowTutorial: Plays in tutorial mode (nMaxWager should be 0).
 
 - `nOpponentPazaakDeck`: int
-- `sEndScript`: [string](GFF-File-Format#cexostring)
+- `sEndScript`: [string](GFF-File-Format#gff-data-types)
 - `nMaxWager`: int
 - `bShowTutorial`: int (default: `0`)
 - `oOpponent`: object
@@ -280,7 +280,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - PlayRoomAnimation
 - Plays a looping [animation](MDL-MDX-File-Format#animation-header) on a room
 
-- `sRoom`: [string](GFF-File-Format#cexostring)
+- `sRoom`: [string](GFF-File-Format#gff-data-types)
 - `nAnimation`: int
 
 <a id="playrumblepattern"></a>
@@ -301,7 +301,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Play sSoundName
 - - sSoundName: TBD - SS
 
-- `sSoundName`: [string](GFF-File-Format#cexostring)
+- `sSoundName`: [string](GFF-File-Format#gff-data-types)
 
 <a id="setmusicvolume"></a>
 
@@ -388,7 +388,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - Set the [position](MDL-MDX-File-Format#node-header) of oSound.
 
 - `oSound`: object
-- `vPosition`: [vector](GFF-File-Format#vector)
+- `vPosition`: [vector](GFF-File-Format#gff-data-types)
 
 <a id="soundobjectsetvolume"></a>
 
@@ -450,7 +450,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - SWMG_PlayAnimation
 
 - `oObject`: object
-- `sAnimName`: [string](GFF-File-Format#cexostring)
+- `sAnimName`: [string](GFF-File-Format#gff-data-types)
 - `bLooping`: int (default: `1`)
 - `bQueue`: int (default: `0`)
 - `bOverlay`: int (default: `0`)

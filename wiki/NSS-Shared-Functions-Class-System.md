@@ -35,7 +35,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `191. GetFactionMostFrequentClass`
 - Get the most frequent class in the faction - this can be compared with the
 - constants CLASS_TYPE_*.
-- - Return [value](GFF-File-Format#data-types) on error: -1
+- - Return [value](GFF-File-Format#gff-data-types) on error: -1
 
 - `oFactionMember`: object
 

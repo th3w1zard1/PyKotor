@@ -2,19 +2,19 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are-area) including lighting, weather, ambient audio, grass rendering, fog settings, script hooks, and minimap [data](GFF-File-Format#file-structure). [ARE](GFF-File-Format#are-area) [files](GFF-File-Format) contain environmental and atmospheric [data](GFF-File-Format#file-structure) for game areas, while dynamic object placement is handled by [GIT](GFF-File-Format#git-game-instance-template) [files](GFF-File-Format).
+ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are-area) including lighting, weather, ambient audio, grass rendering, fog settings, script hooks, and minimap [data](GFF-File-Format#file-structure-overview). [ARE](GFF-File-Format#are-area) [files](GFF-File-Format) contain environmental and atmospheric [data](GFF-File-Format#file-structure-overview) for game areas, while dynamic object placement is handled by [GIT](GFF-File-Format#git-game-instance-template) [files](GFF-File-Format).
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [ARE](GFF-File-Format#are-area) [format](GFF-File-Format) specification, see [Bioware Aurora Area File Format](Bioware-Aurora-AreaFile).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/are.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py)
 
-## Core Identity [fields](GFF-File-Format#file-structure)
+## Core Identity [fields](GFF-File-Format#file-structure-overview)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `Tag` | [CExoString](GFF-File-Format#cexostring) | Unique area identifier |
-| `Name` | [CExoLocString](GFF-File-Format#localizedstring) | Area name (localized) |
-| `Comments` | [CExoString](GFF-File-Format#cexostring) | Developer notes/documentation |
+| `Tag` | [CExoString](GFF-File-Format#gff-data-types) | Unique area identifier |
+| `Name` | [CExoLocString](GFF-File-Format#gff-data-types) | Area name (localized) |
+| `Comments` | [CExoString](GFF-File-Format#gff-data-types) | Developer notes/documentation |
 | `Creator_ID` | DWord | Toolset creator identifier (unused at runtime) |
 | `ID` | DWord | Unique area ID (unused at runtime) |
 | `Version` | DWord | Area version (unused at runtime) |
@@ -22,7 +22,7 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 ## Lighting & Sun
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `SunAmbientColor` | [color](GFF-File-Format#color) | Ambient light [color](GFF-File-Format#color) RGB |
 | `SunDiffuseColor` | [color](GFF-File-Format#color) | Sun diffuse light [color](GFF-File-Format#color) RGB |
@@ -40,7 +40,7 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 ## Fog Settings
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `SunFogOn` | Byte | Enable fog rendering |
 | `SunFogNear` | Float | Fog start distance |
@@ -62,7 +62,7 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 ## Moon Lighting (Unused)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `MoonAmbientColor` | [color](GFF-File-Format#color) | Moon ambient light (unused) |
 | `MoonDiffuseColor` | [color](GFF-File-Format#color) | Moon diffuse light (unused) |
@@ -81,11 +81,11 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 ## Grass Rendering
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `Grass_TexName` | [ResRef](GFF-File-Format#resref) | Grass [texture](TPC-File-Format) name |
+| `Grass_TexName` | [ResRef](GFF-File-Format#gff-data-types) | Grass [texture](TPC-File-Format) name |
 | `Grass_Density` | Float | Grass blade density (0.0-1.0) |
-| `Grass_QuadSize` | Float | [size](GFF-File-Format#file-structure) of grass patches |
+| `Grass_QuadSize` | Float | [size](GFF-File-Format#file-structure-overview) of grass patches |
 | `Grass_Ambient` | [color](GFF-File-Format#color) | Grass ambient [color](GFF-File-Format#color) RGB |
 | `Grass_Diffuse` | [color](GFF-File-Format#color) | Grass diffuse [color](GFF-File-Format#color) RGB |
 | `Grass_Emissive` (KotOR2) | [color](GFF-File-Format#color) | Grass emissive [color](GFF-File-Format#color) RGB |
@@ -98,8 +98,8 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 - **Grass_TexName**: [texture](TPC-File-Format) for grass blades (TGA/[TPC](TPC-File-Format))
 - **Grass_Density**: Coverage density (1.0 = full coverage)
-- **Grass_QuadSize**: Patch [size](GFF-File-Format#file-structure) in world units
-- **Probability [fields](GFF-File-Format#file-structure)**: Control grass distribution across area
+- **Grass_QuadSize**: Patch [size](GFF-File-Format#file-structure-overview) in world units
+- **Probability [fields](GFF-File-Format#file-structure-overview)**: Control grass distribution across area
 
 **Grass Rendering:**
 
@@ -110,7 +110,7 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 ## Weather System (KotOR2)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `ChanceRain` (KotOR2) | Int | Rain probability (0-100) |
 | `ChanceSnow` (KotOR2) | Int | Snow probability (0-100) |
@@ -124,33 +124,33 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 ## Dirty/Dust Settings (KotOR2)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `DirtyARGBOne` (KotOR2) | DWord | First dust [color](GFF-File-Format#color) ARGB |
-| `DirtySizeOne` (KotOR2) | [float](GFF-File-Format#float) | First dust particle [size](GFF-File-Format#file-structure) |
-| `DirtyFormulaOne` (KotOR2) | Int | First dust formula [type](GFF-File-Format#data-types) |
+| `DirtySizeOne` (KotOR2) | [float](GFF-File-Format#gff-data-types) | First dust particle [size](GFF-File-Format#file-structure-overview) |
+| `DirtyFormulaOne` (KotOR2) | Int | First dust formula type |
 | `DirtyFuncOne` (KotOR2) | Int | First dust function |
 | `DirtyARGBTwo` (KotOR2) | DWord | Second dust [color](GFF-File-Format#color) ARGB |
-| `DirtySizeTwo` (KotOR2) | [float](GFF-File-Format#float) | Second dust particle [size](GFF-File-Format#file-structure) |
-| `DirtyFormulaTwo` (KotOR2) | Int | Second dust formula [type](GFF-File-Format#data-types) |
+| `DirtySizeTwo` (KotOR2) | [float](GFF-File-Format#gff-data-types) | Second dust particle [size](GFF-File-Format#file-structure-overview) |
+| `DirtyFormulaTwo` (KotOR2) | Int | Second dust formula type |
 | `DirtyFuncTwo` (KotOR2) | Int | Second dust function |
 | `DirtyARGBThree` (KotOR2) | DWord | Third dust [color](GFF-File-Format#color) ARGB |
-| `DirtySizeThree` (KotOR2) | [float](GFF-File-Format#float) | Third dust particle [size](GFF-File-Format#file-structure) |
-| `DirtyFormulaThre` (KotOR2) | Int | Third dust formula [type](GFF-File-Format#data-types) |
+| `DirtySizeThree` (KotOR2) | [float](GFF-File-Format#gff-data-types) | Third dust particle [size](GFF-File-Format#file-structure-overview) |
+| `DirtyFormulaThre` (KotOR2) | Int | Third dust formula type |
 | `DirtyFuncThree` (KotOR2) | Int | Third dust function |
 
 **Dust Particle System:**
 
 - Three independent dust layers
-- Each layer has [color](GFF-File-Format#color), [size](GFF-File-Format#file-structure), and behavior
+- Each layer has [color](GFF-File-Format#color), [size](GFF-File-Format#file-structure-overview), and behavior
 - Creates atmospheric dust/smoke effects
 
 ## Environment & Camera
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `DefaultEnvMap` | [ResRef](GFF-File-Format#resref) | Default environment map [texture](TPC-File-Format) |
-| `CameraStyle` | Int | Camera behavior [type](GFF-File-Format#data-types) |
+| `DefaultEnvMap` | [ResRef](GFF-File-Format#gff-data-types) | Default environment map [texture](TPC-File-Format) |
+| `CameraStyle` | Int | Camera behavior type |
 | `AlphaTest` | Byte | Alpha testing threshold |
 | `WindPower` | Int | Wind strength for effects |
 | `LightingScheme` | Int | Lighting scheme identifier (unused) |
@@ -165,9 +165,9 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 - `CameraStyle`: Determines camera constraints
 - Defines zoom, [rotation](MDL-MDX-File-Format#node-header), and collision behavior
 
-## Area Behavior [flags](GFF-File-Format#data-types)
+## Area Behavior [flags](GFF-File-Format#gff-data-types)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Unescapable` | Byte | Cannot use save/travel functions |
 | `DisableTransit` | Byte | Cannot travel to other modules |
@@ -188,7 +188,7 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 ## Skill Check Modifiers
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `ModSpotCheck` | Int | Awareness skill modifier (unused) |
 | `ModListenCheck` | Int | Listen skill modifier (unused) |
@@ -200,12 +200,12 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 ## Script Hooks
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
-| `OnEnter` | [ResRef](GFF-File-Format#resref) | Fires when entering area |
-| `OnExit` | [ResRef](GFF-File-Format#resref) | Fires when leaving area |
-| `OnHeartbeat` | [ResRef](GFF-File-Format#resref) | Fires periodically |
-| `OnUserDefined` | [ResRef](GFF-File-Format#resref) | Fires on user-defined events |
+| `OnEnter` | [ResRef](GFF-File-Format#gff-data-types) | Fires when entering area |
+| `OnExit` | [ResRef](GFF-File-Format#gff-data-types) | Fires when leaving area |
+| `OnHeartbeat` | [ResRef](GFF-File-Format#gff-data-types) | Fires periodically |
+| `OnUserDefined` | [ResRef](GFF-File-Format#gff-data-types) | Fires on user-defined events |
 
 **Script Execution:**
 
@@ -218,9 +218,9 @@ ARE [files](GFF-File-Format) define static [area properties](GFF-File-Format#are
 
 The [ARE](GFF-File-Format#are-area) [file](GFF-File-Format) contains a `Map` struct that defines how the minimap texture (`lbl_map<resname>`) aligns with the world space [walkmesh](BWM-File-Format). This [coordinate](GFF-File-Format#are-area) system allows the game to display the player's [position](MDL-MDX-File-Format#node-header) on the minimap and render map notes at correct locations.
 
-### Map Struct [fields](GFF-File-Format#file-structure)
+### Map Struct [fields](GFF-File-Format#file-structure-overview)
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `MapPt1X` | Float | First map point X coordinate (normalized 0.0-1.0) |
 | `MapPt1Y` | Float | First map point Y coordinate (normalized 0.0-1.0) |
@@ -288,9 +288,9 @@ originX = WorldPt1X - MapPt1X * worldScaleX
 originY = WorldPt1Y - MapPt1Y * worldScaleY
 ```
 
-### NorthAxis [values](GFF-File-Format#data-types)
+### NorthAxis [values](GFF-File-Format#gff-data-types)
 
-| [value](GFF-File-Format#data-types) | Enum | Description | [coordinate](GFF-File-Format#are-area) Mapping |
+| [value](GFF-File-Format#gff-data-types) | Enum | Description | [coordinate](GFF-File-Format#are-area) Mapping |
 | ----- | ---- | ----------- | ------------------ |
 | 0 | PositiveY | +Y is north | Direct X/Y mapping |
 | 1 | NegativeY | -Y is north | Direct X/Y mapping |
@@ -310,7 +310,7 @@ The minimap [texture](TPC-File-Format) is loaded from [texture](TPC-File-Format)
 
 - **Resource Name**: `lbl_map<resname>` (e.g., `lbl_maptat001` for area `tat001`)
 - **[format](GFF-File-Format)**: [TPC](TPC-File-Format) ([texture](TPC-File-Format) Pack Container)
-- **Typical [size](GFF-File-Format#file-structure)**: 435x256 pixels (may vary)
+- **Typical [size](GFF-File-Format#file-structure-overview)**: 435x256 pixels (may vary)
 - **Usage**: Displayed in minimap UI and overlaid on [walkmesh](BWM-File-Format) in editor
 
 **Relationship to [walkmesh](BWM-File-Format):**
@@ -353,16 +353,16 @@ When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-Fi
 
 ## Rooms & Audio Zones
 
-| [field](GFF-File-Format#file-structure) | [type](GFF-File-Format#data-types) | Description |
+| [field](GFF-File-Format#file-structure-overview) | [type](GFF-File-Format#gff-data-types) | Description |
 | ----- | ---- | ----------- |
 | `Rooms` | List | Room definitions for audio zones and minimap regions |
 
-**Rooms Struct [fields](GFF-File-Format#file-structure):**
+**Rooms Struct [fields](GFF-File-Format#file-structure-overview):**
 
-- `RoomName` ([CExoString](GFF-File-Format#cexostring)): Room identifier (referenced by [VIS files](VIS-File-Format))
+- `RoomName` ([CExoString](GFF-File-Format#gff-data-types)): Room identifier (referenced by [VIS files](VIS-File-Format))
 - `EnvAudio` (Int): Environment audio [index](2DA-File-Format#row-labels) for room acoustics
 - `AmbientScale` (Float): Ambient audio volume scaling factor
-- `DisableWeather` (KotOR2, [byte](GFF-File-Format#byte)): Disable weather effects in this room
+- `DisableWeather` (KotOR2, [byte](GFF-File-Format#gff-data-types)): Disable weather effects in this room
 - `ForceRating` (KotOR2, Int): Force rating modifier for this room
 
 **Room System:**
@@ -400,13 +400,13 @@ When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-Fi
 1. **Incorrect [rotation](MDL-MDX-File-Format#node-header)**: Do NOT rotate map points around (0.5, 0.5) - use direct linear [transformation](BWM-File-Format#vertex-data-processing)
 2. **Precision Loss**: Always use high-precision spinboxes (6+ decimals) for map [coordinate](GFF-File-Format#are-area) editing
 3. **NorthAxis Handling**: Remember that cases 2,3 swap X/Y [coordinates](GFF-File-Format#are-area) in the [transformation](BWM-File-Format#vertex-data-processing)
-4. **Negative Scales**: Negative [scale](MDL-MDX-File-Format#node-header) [values](GFF-File-Format#data-types) indicate inverted mapping - mirror the [texture](TPC-File-Format) accordingly
+4. **Negative Scales**: Negative [scale](MDL-MDX-File-Format#node-header) [values](GFF-File-Format#gff-data-types) indicate inverted mapping - mirror the [texture](TPC-File-Format) accordingly
 
 **Validation:**
 
 - Always validate map [coordinates](GFF-File-Format#are-area) preserve exactly through save/load roundtrips
 - Test minimap alignment visually in editor after [coordinate](GFF-File-Format#are-area) changes
-- Verify [walkmesh](BWM-File-Format) and minimap [texture](TPC-File-Format) align correctly for all NorthAxis [values](GFF-File-Format#data-types)
+- Verify [walkmesh](BWM-File-Format) and minimap [texture](TPC-File-Format) align correctly for all NorthAxis [values](GFF-File-Format#gff-data-types)
 
 **Lighting Performance:**
 
@@ -417,7 +417,7 @@ When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-Fi
 **Grass Optimization:**
 
 - High density grass impacts framerate significantly
-- Probability [fields](GFF-File-Format#file-structure) allow targeted grass placement
+- Probability [fields](GFF-File-Format#file-structure-overview) allow targeted grass placement
 - Grass LOD based on camera distance
 
 **Audio Zones:**
@@ -546,7 +546,7 @@ world.x = WorldPt1X - MapPt1X * worldScaleX
 
 4. **Inverted Mapping Bug:**
    - **Symptom**: Minimap [texture](TPC-File-Format) appears flipped horizontally or vertically
-   - **Cause**: Not detecting and handling negative [scale](MDL-MDX-File-Format#node-header) [values](GFF-File-Format#data-types)
+   - **Cause**: Not detecting and handling negative [scale](MDL-MDX-File-Format#node-header) [values](GFF-File-Format#gff-data-types)
    - **Fix**: Check [scale](MDL-MDX-File-Format#node-header) signs and mirror [texture](TPC-File-Format) accordingly
 
 **[walkmesh](BWM-File-Format) Alignment:**

@@ -8,4 +8,4 @@ UTM [files](GFF-File-Format) define [merchant templates](GFF-File-Format#utm-mer
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utm.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utm.py)
 
-*This section will document the UTM (Merchant) generic [type](GFF-File-Format#data-types) [structure](GFF-File-Format#file-structure) and [fields](GFF-File-Format#file-structure) in detail.*
+*This section will document the UTM (Merchant) generic [type](GFF-File-Format#gff-data-types) [structure](GFF-File-Format#file-structure-overview) and [fields](GFF-File-Format#file-structure-overview) in detail.*

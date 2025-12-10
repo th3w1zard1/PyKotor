@@ -45,7 +45,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `361. GetAttemptedAttackTarget`
 - Get the target that the caller attempted to attack - this should be used in
-- conjunction with GetAttackTarget(). This [value](GFF-File-Format#data-types) is set every time an attack is
+- conjunction with GetAttackTarget(). This [value](GFF-File-Format#gff-data-types) is set every time an attack is
 - made, and is reset at the end of combat.
 - - Returns OBJECT_INVALID if the caller is not a valid creature.
 
@@ -64,7 +64,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `211. GetGoingToBeAttackedBy`
 - Get the creature that is going to attack oTarget.
-- Note: This [value](GFF-File-Format#data-types) is cleared out at the end of every combat round and should
+- Note: This [value](GFF-File-Format#gff-data-types) is cleared out at the end of every combat round and should
 - not be used in any case except when getting a "going to be attacked" shout
 - from the master creature (and this creature is a henchman)
 - - Returns OBJECT_INVALID if oTarget is not a valid creature.
@@ -96,7 +96,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - `36. GetLastAttacker`
 - Get the last attacker of oAttackee.  This should only be used ONLY in the
 - OnAttacked events for creatures, placeables and doors.
-- - Return [value](GFF-File-Format#data-types) on error: OBJECT_INVALID
+- - Return [value](GFF-File-Format#gff-data-types) on error: OBJECT_INVALID
 
 - `oAttackee`: object
 

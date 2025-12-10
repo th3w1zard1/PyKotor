@@ -22,18 +22,18 @@
 
 The Indoor Map Builder is a complex system that combines several subsystems:
 
-1. **[data](GFF-File-Format#file-structure) Layer**: `IndoorMap`, `IndoorMapRoom`, `Kit`, `KitComponent` - Core [data](GFF-File-Format#file-structure) [structures](GFF-File-Format#file-structure)
+1. **[data](GFF-File-Format#file-structure-overview) Layer**: `IndoorMap`, `IndoorMapRoom`, `Kit`, `KitComponent` - Core [data](GFF-File-Format#file-structure-overview) [structures](GFF-File-Format#file-structure-overview)
 2. **UI Layer**: `IndoorMapBuilder`, `IndoorMapRenderer` - Qt-based user interface
 3. **Kit System**: Kit loading and component management
 4. **Module Converter**: Converts game modules to kit-like components
-5. **Build System**: Converts map [data](GFF-File-Format#file-structure) to game module [files](GFF-File-Format)
+5. **Build System**: Converts map [data](GFF-File-Format#file-structure-overview) to game module [files](GFF-File-Format)
 6. **Rendering System**: 2D top-down view with [walkmesh](BWM-File-Format) visualization
 
-## Core [data](GFF-File-Format#file-structure) [structures](GFF-File-Format#file-structure)
+## Core [data](GFF-File-Format#file-structure-overview) [structures](GFF-File-Format#file-structure-overview)
 
 ### IndoorMap
 
-The root [data](GFF-File-Format#file-structure) [structure](GFF-File-Format#file-structure) representing a complete indoor module.
+The root [data](GFF-File-Format#file-structure-overview) [structure](GFF-File-Format#file-structure-overview) representing a complete indoor module.
 
 **Location**: `Tools/HolocronToolset/src/toolset/data/indoormap.py`
 
@@ -116,10 +116,10 @@ A collection of reusable room components.
 
 - `name: str` - Kit name
 - `components: list[KitComponent]` - Available components
-- `doors: list[KitDoor]` - Door [types](GFF-File-Format#data-types)
-- `textures: CaseInsensitiveDict[bytes]` - [texture](TPC-File-Format) [data](GFF-File-Format#file-structure)
-- `lightmaps: CaseInsensitiveDict[bytes]` - Lightmap [data](GFF-File-Format#file-structure)
-- `txis: CaseInsensitiveDict[bytes]` - [texture](TPC-File-Format) info [data](GFF-File-Format#file-structure)
+- `doors: list[KitDoor]` - Door [types](GFF-File-Format#gff-data-types)
+- `textures: CaseInsensitiveDict[bytes]` - [texture](TPC-File-Format) [data](GFF-File-Format#file-structure-overview)
+- `lightmaps: CaseInsensitiveDict[bytes]` - Lightmap [data](GFF-File-Format#file-structure-overview)
+- `txis: CaseInsensitiveDict[bytes]` - [texture](TPC-File-Format) info [data](GFF-File-Format#file-structure-overview)
 - `always: dict[Path, bytes]` - Always-included resources
 - `side_padding: dict[int, dict[int, MDLMDXTuple]]` - Door width padding [models](MDL-MDX-File-Format)
 - `top_padding: dict[int, dict[int, MDLMDXTuple]]` - Door height padding [models](MDL-MDX-File-Format)
@@ -142,9 +142,9 @@ A reusable room template.
 - `kit: Kit` - Parent kit
 - `name: str` - Component name
 - `image: QImage` - Preview image (128x128 or larger)
-- `bwm: BWM` - [walkmesh](BWM-File-Format) [data](GFF-File-Format#file-structure)
-- `mdl: bytes` - [model](MDL-MDX-File-Format) [data](GFF-File-Format#file-structure)
-- `mdx: bytes` - [model](MDL-MDX-File-Format) extension [data](GFF-File-Format#file-structure)
+- `bwm: BWM` - [walkmesh](BWM-File-Format) [data](GFF-File-Format#file-structure-overview)
+- `mdl: bytes` - [model](MDL-MDX-File-Format) [data](GFF-File-Format#file-structure-overview)
+- `mdx: bytes` - [model](MDL-MDX-File-Format) extension [data](GFF-File-Format#file-structure-overview)
 - `hooks: list[KitComponentHook]` - Connection points
 
 ### KitComponentHook
@@ -158,7 +158,7 @@ A connection point on a component.
 - `position: Vector3` - Local position (relative to component center)
 - `rotation: float` - [rotation](MDL-MDX-File-Format#node-header) in degrees
 - `edge: str` - [edge](BWM-File-Format#edges) index (for transition remapping)
-- `door: KitDoor` - Door [type](GFF-File-Format#data-types) for this hook
+- `door: KitDoor` - Door type for this hook
 
 **[coordinate](GFF-File-Format#are-area) System**:
 
@@ -168,7 +168,7 @@ A connection point on a component.
 
 ### KitDoor
 
-Defines a door [type](GFF-File-Format#data-types) with K1/K2 variants.
+Defines a door [type](GFF-File-Format#gff-data-types) with K1/K2 variants.
 
 **Location**: `Tools/HolocronToolset/src/toolset/data/indoorkit/indoorkit_base.py`
 
@@ -211,7 +211,7 @@ A dynamically-generated kit from a game module.
 
 - Game BWMs [ARE](GFF-File-Format#are-area) stored in world [coordinates](GFF-File-Format#are-area)
 - Indoor Map Builder expects BWMs centered at origin
-- `_recenter_bwm()` calculates bounding box and translates to origin
+- `_recenter_bwm()` calculates [bounding box](MDL-MDX-File-Format#model-header) and translates to origin
 - Ensures preview image and [walkmesh](BWM-File-Format) align correctly
 
 **Preview Image Generation**:
@@ -235,7 +235,7 @@ Manages lazy loading and caching of ModuleKits.
 
 ## Build Process
 
-The build process converts `IndoorMap` [data](GFF-File-Format#file-structure) to game module [files](GFF-File-Format).
+The build process converts `IndoorMap` [data](GFF-File-Format#file-structure-overview) to game module [files](GFF-File-Format).
 
 **Location**: `Tools/HolocronToolset/src/toolset/data/indoormap.py:build()`
 
@@ -251,7 +251,7 @@ The build process converts `IndoorMap` [data](GFF-File-Format#file-structure) to
 
 2. **Process Rooms**:
    - Add rooms to [VIS](VIS-File-Format) graph
-   - Process room components (textures, [models](MDL-MDX-File-Format), lightmaps)
+   - Process room components ([textures](TPC-File-Format), [models](MDL-MDX-File-Format), lightmaps)
    - Handle [texture](TPC-File-Format) renaming (avoid conflicts)
    - Process lightmaps (rename, load from installation if missing)
    - Process BWM (flip, rotate, translate, remap transitions)
@@ -308,9 +308,9 @@ Each room's [BWM](BWM-File-Format) is transformed:
 Doors [ARE](GFF-File-Format#are-area) inserted at hook connection points:
 
 - One door per hook pair
-- Door [type](GFF-File-Format#data-types) chosen from larger door (width/height)
+- Door [type](GFF-File-Format#gff-data-types) chosen from larger door (width/height)
 - Static doors for unconnected hooks
-- Padding [models](MDL-MDX-File-Format) added for [size](GFF-File-Format#file-structure) mismatches
+- Padding [models](MDL-MDX-File-Format) added for [size](GFF-File-Format#file-structure-overview) mismatches
 
 ## Rendering System
 
@@ -328,7 +328,7 @@ The renderer provides a 2D top-down view of the map.
 **Screen [coordinates](GFF-File-Format#are-area)**: Widget pixel coordinates (X, Y)
 
 - Mouse [position](MDL-MDX-File-Format#node-header)
-- Widget [size](GFF-File-Format#file-structure)
+- Widget [size](GFF-File-Format#file-structure-overview)
 
 **Render [coordinates](GFF-File-Format#are-area)**: Transformed screen [coordinates](GFF-File-Format#are-area)
 
@@ -354,7 +354,7 @@ The renderer provides a 2D top-down view of the map.
 
 **Optimization**: Only repaints when dirty
 
-- `_dirty: bool` [flag](GFF-File-Format#data-types)
+- `_dirty: bool` [flag](GFF-File-Format#gff-data-types)
 - `mark_dirty()` called on changes
 - ~60 FPS target (16ms timer)
 
@@ -380,9 +380,9 @@ The renderer provides a 2D top-down view of the map.
 - Displays:
   - **Coords**: World X/Y under cursor.
   - **Hover**: Room under cursor (if any).
-  - **Selection**: Selected hook (room + [index](2DA-File-Format#row-labels)) or selected room [count](GFF-File-Format#file-structure).
+  - **Selection**: Selected hook (room + [index](2DA-File-Format#row-labels)) or selected room [count](GFF-File-Format#file-structure-overview).
   - **Keys/Buttons**: Currently held keyboard modifiers and mouse buttons.
-  - **Status**: Paint mode/[material](MDL-MDX-File-Format#trimesh-header), colorization [flag](GFF-File-Format#data-types), snap modes (grid/hook).
+  - **Status**: Paint mode/[material](MDL-MDX-File-Format#trimesh-header), colorization [flag](GFF-File-Format#gff-data-types), snap modes (grid/hook).
 - Updated from renderer mouse/scroll/press/release signals via a callback set on `IndoorMapRenderer`.
 
 ### [walkmesh](BWM-File-Format) Visualization
@@ -407,7 +407,7 @@ Rooms rendered using [walkmesh](BWM-File-Format) geometry (not preview images):
 **Grid Snap**:
 
 - Snaps [positions](MDL-MDX-File-Format#node-header) to grid lines
-- Grid [size](GFF-File-Format#file-structure) configurable
+- Grid [size](GFF-File-Format#file-structure-overview) configurable
 
 **Hook Snap**:
 
@@ -461,7 +461,7 @@ Allows editing surface [materials](MDL-MDX-File-Format#trimesh-header) on room [
 
 1. **Begin Stroke**: `_begin_paint_stroke()`
    - Records original [materials](MDL-MDX-File-Format#trimesh-header)
-   - Clears stroke [data](GFF-File-Format#file-structure)
+   - Clears stroke [data](GFF-File-Format#file-structure-overview)
 
 2. **Apply Paint**: `_apply_paint_at_world()`
    - Picks [face](MDL-MDX-File-Format#face-structure) under cursor
@@ -484,7 +484,7 @@ Allows editing surface [materials](MDL-MDX-File-Format#trimesh-header) on room [
 
 Hooks [ARE](GFF-File-Format#are-area) connection points between rooms.
 
-### Hook [types](GFF-File-Format#data-types)
+### Hook [types](GFF-File-Format#gff-data-types)
 
 - **Component Hooks**: Defined in `KitComponent` (template)
 - **Room Hooks**: Connections in `IndoorMapRoom.hooks` (instances)
@@ -568,7 +568,7 @@ Hooks can be edited per-room:
 
 ### Unit Tests
 
-- [data](GFF-File-Format#file-structure) [structure](GFF-File-Format#file-structure) serialization
+- [data](GFF-File-Format#file-structure-overview) [structure](GFF-File-Format#file-structure-overview) serialization
 - [coordinate](GFF-File-Format#are-area) [transformations](BWM-File-Format#vertex-data-processing)
 - Connection algorithms
 
@@ -582,7 +582,7 @@ Hooks can be edited per-room:
 
 ### Code Locations
 
-- **[data](GFF-File-Format#file-structure) [structures](GFF-File-Format#file-structure)**: `Tools/HolocronToolset/src/toolset/data/indoormap.py`
+- **[data](GFF-File-Format#file-structure-overview) [structures](GFF-File-Format#file-structure-overview)**: `Tools/HolocronToolset/src/toolset/data/indoormap.py`
 - **Kit System**: `Tools/HolocronToolset/src/toolset/data/indoorkit/`
 - **UI**: `Tools/HolocronToolset/src/toolset/gui/windows/indoor_builder.py`
 - **Module Converter**: `Tools/HolocronToolset/src/toolset/data/indoorkit/module_converter.py`

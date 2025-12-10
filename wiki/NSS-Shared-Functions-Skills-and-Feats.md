@@ -43,7 +43,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 - `105. GetMetaMagicFeat`
 - Get the metamagic type (METAMAGIC_*) of the last spell cast by the caller
-- - Return [value](GFF-File-Format#data-types) if the caster is not a valid object: -1
+- - Return [value](GFF-File-Format#gff-data-types) if the caster is not a valid object: -1
 
 <a id="getskillrank"></a>
 

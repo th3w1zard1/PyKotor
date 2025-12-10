@@ -2,24 +2,24 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Master table defining all item property [types](GFF-File-Format#data-types) available in the game. Each row represents a property type (damage bonuses, ability score bonuses, skill bonuses, etc.) with their cost calculations and effect parameters. The engine uses this [file](GFF-File-Format) to determine item property costs, effects, and availability.
+**Engine Usage**: Master table defining all item property [types](GFF-File-Format#gff-data-types) available in the game. Each row represents a property type (damage bonuses, ability score bonuses, skill bonuses, etc.) with their cost calculations and effect parameters. The engine uses this [file](GFF-File-Format) to determine item property costs, effects, and availability.
 
 **Row [index](2DA-File-Format#row-labels)**: Item property ID (integer)
 
-**Column [structure](GFF-File-Format#file-structure)**:
+**Column [structure](GFF-File-Format#file-structure-overview)**:
 
-| Column Name | [type](GFF-File-Format#data-types) | Description |
+| Column Name | [type](GFF-File-Format#gff-data-types) | Description |
 |------------|------|-------------|
-| `label` | [string](GFF-File-Format#cexostring) | Property label |
-| `name` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#cexostring) reference for property name |
-| `costtable` | [string](GFF-File-Format#cexostring) | Cost calculation table reference |
-| `param1` | [string](GFF-File-Format#cexostring) | Parameter 1 label |
-| `param2` | [string](GFF-File-Format#cexostring) | Parameter 2 label |
+| `label` | [string](GFF-File-Format#gff-data-types) | Property label |
+| `name` | [StrRef](TLK-File-Format#string-references-strref) | [string](GFF-File-Format#gff-data-types) reference for property name |
+| `costtable` | [string](GFF-File-Format#gff-data-types) | Cost calculation table reference |
+| `param1` | [string](GFF-File-Format#gff-data-types) | Parameter 1 label |
+| `param2` | [string](GFF-File-Format#gff-data-types) | Parameter 2 label |
 | `subtype` | Integer | Property subtype identifier |
-| `costvalue` | Integer | Base cost [value](GFF-File-Format#data-types) |
-| `param1value` | Integer | Parameter 1 default [value](GFF-File-Format#data-types) |
-| `param2value` | Integer | Parameter 2 default [value](GFF-File-Format#data-types) |
-| `description` | [StrRef](TLK-File-Format#string-references-strref) | Property description [string](GFF-File-Format#cexostring) reference |
+| `costvalue` | Integer | Base cost [value](GFF-File-Format#gff-data-types) |
+| `param1value` | Integer | Parameter 1 default [value](GFF-File-Format#gff-data-types) |
+| `param2value` | Integer | Parameter 2 default [value](GFF-File-Format#gff-data-types) |
+| `description` | [StrRef](TLK-File-Format#string-references-strref) | Property description [string](GFF-File-Format#gff-data-types) reference |
 
 **References**:
 
