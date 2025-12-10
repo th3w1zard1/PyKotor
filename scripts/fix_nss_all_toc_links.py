@@ -228,33 +228,31 @@ def fix_toc_links():
 
                 # Get target file and anchor
                 result = get_function_file_and_anchor(func_name)
-                if not result:
-                    # Skip if we can't find the function
-                    continue
-                
-                file_name, anchor = result
-                routine_str = f" - Routine {routine_num}" if routine_num else ""
+                if result:
+                    file_name, anchor = result
+                    routine_str = f" - Routine {routine_num}" if routine_num else ""
 
-                # Check if link already points to a file with wrong anchor or wrong file
-                # Match pattern: [text](file#anchor)
-                link_pattern = r"\[`[^`]+`[^\]]*\]\(([^#\)]+)(?:#([^\)]+))?\)"
-                match = re.search(link_pattern, line)
-                if match:
-                    current_file = match.group(1)
-                    current_anchor = match.group(2) if match.lastindex and match.lastindex >= 2 else None
+                    # Check if link already points to a file with wrong anchor or wrong file
+                    # Match pattern: [text](file#anchor)
+                    link_pattern = r"\[`[^`]+`[^\]]*\]\(([^#\)]+)(?:#([^\)]+))?\)"
+                    match = re.search(link_pattern, line)
+                    if match:
+                        current_file = match.group(1)
+                        current_anchor = match.group(2) if match.lastindex and match.lastindex >= 2 else None
 
-                    # Fix if file is wrong or anchor is wrong
-                    if current_file != file_name or (current_anchor and current_anchor != anchor):
-                        line = re.sub(link_pattern, f"[`{func_text}`{routine_str}]({file_name}#{anchor})", line)
+                        # Fix if file is wrong or anchor is wrong
+                        if current_file != file_name or (current_anchor and current_anchor != anchor):
+                            line = re.sub(link_pattern, f"[`{func_text}`{routine_str}]({file_name}#{anchor})", line)
+                            fixes += 1
+                    elif "](#" in line:
+                        # Replace anchor link with file link + anchor
+                        line = re.sub(r"\[`[^`]+`[^\]]*\]\([^\)]+\)", f"[`{func_text}`{routine_str}]({file_name}#{anchor})", line)
                         fixes += 1
-                elif "](#" in line:
-                    # Replace anchor link with file link + anchor
-                    line = re.sub(r"\[`[^`]+`[^\]]*\]\([^\)]+\)", f"[`{func_text}`{routine_str}]({file_name}#{anchor})", line)
-                    fixes += 1
-                elif f"]({file_name})" in line:
-                    # Add anchor to existing file link
-                    line = line.replace(f"]({file_name})", f"]({file_name}#{anchor})")
-                    fixes += 1
+                    elif f"]({file_name})" in line:
+                        # Add anchor to existing file link
+                        line = line.replace(f"]({file_name})", f"]({file_name}#{anchor})")
+                        fixes += 1
+                # If result is None, keep the original line unchanged (no continue)
 
         new_lines.append(line)
 
