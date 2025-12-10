@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import os
 import pathlib
+from pathlib import PureWindowsPath
 import sys
 import unittest
 from unittest import TestCase
+import pytest
 
 from pykotor.common.language import Gender, Language, LocalizedString
 
@@ -26,11 +28,13 @@ if UTILITY_PATH.joinpath("utility").exists():
 
 from typing import TYPE_CHECKING
 
-from pykotor.common.misc import Game, ResRef
+from pykotor.common.misc import Color, Game, ResRef
 from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.generics.dlg import (
     DLG,
     DLGAnimation,
+    DLGComputerType,
+    DLGConversationType,
     DLGEntry,
     DLGLink,
     DLGNode,
@@ -1424,6 +1428,206 @@ class TestDLGStuntSerialization(unittest.TestCase):
 
         assert stunt.participant == deserialized.participant
         assert stunt.stunt_model == deserialized.stunt_model
+
+
+class TestDLGGraphUtilities(unittest.TestCase):
+    def _build_simple_graph(self) -> tuple[DLG, DLGEntry, DLGReply, DLGEntry, DLGLink, DLGLink, DLGLink, DLGLink]:
+        dlg = DLG()
+
+        entry0 = DLGEntry(comment="start")
+        entry0.list_index = 0
+        entry1 = DLGEntry(comment="leaf")
+        entry1.list_index = 1
+
+        reply0 = DLGReply(text=LocalizedString.from_english("middle"))
+        reply0.list_index = 0
+
+        start_link0 = DLGLink(node=entry0, list_index=0)
+        start_link1 = DLGLink(node=entry1, list_index=1)
+
+        link_entry0_reply = DLGLink(node=reply0, list_index=0)
+        link_reply0_entry1 = DLGLink(node=entry1, list_index=0)
+
+        entry0.links.append(link_entry0_reply)
+        reply0.links.append(link_reply0_entry1)
+        dlg.starters.extend([start_link0, start_link1])
+        return dlg, entry0, reply0, entry1, start_link0, start_link1, link_entry0_reply, link_reply0_entry1
+
+    def test_find_paths_for_nodes_and_links(self):
+        dlg, entry0, reply0, entry1, start_link0, start_link1, link_entry0_reply, link_reply0_entry1 = self._build_simple_graph()
+
+        paths_entry = dlg.find_paths(entry1)
+        paths_reply = dlg.find_paths(reply0)
+        paths_start_link = dlg.find_paths(start_link0)
+        paths_child_link = dlg.find_paths(link_reply0_entry1)
+
+        assert PureWindowsPath("EntryList", "1") in paths_entry
+        assert PureWindowsPath("ReplyList", "0") in paths_reply
+        assert PureWindowsPath("StartingList", "0") in paths_start_link
+        assert PureWindowsPath("ReplyList", "0", "EntriesList", "0") in paths_child_link
+
+    def test_get_link_parent_and_partial_path(self):
+        dlg, entry0, reply0, entry1, start_link0, start_link1, link_entry0_reply, link_reply0_entry1 = self._build_simple_graph()
+
+        assert dlg.get_link_parent(start_link0) is dlg
+        assert dlg.get_link_parent(link_entry0_reply) is entry0
+        assert dlg.get_link_parent(link_reply0_entry1) is reply0
+        assert start_link0.partial_path(is_starter=True) == "StartingList\\0"
+        assert link_entry0_reply.partial_path(is_starter=False) == "RepliesList\\0"
+
+    def test_all_entries_and_replies_sorted_and_unique(self):
+        dlg, entry0, reply0, entry1, start_link0, start_link1, link_entry0_reply, link_reply0_entry1 = self._build_simple_graph()
+        entry2 = DLGEntry(comment="late")
+        entry2.list_index = -1
+        reply1 = DLGReply(text=LocalizedString.from_english("shared"))
+        reply1.list_index = 5
+
+        # Create additional shared references to ensure deduplication
+        reply1.links.append(DLGLink(node=entry2, list_index=0))
+        entry1.links.append(DLGLink(node=reply1, list_index=1))
+        reply1.links.append(DLGLink(node=entry0, list_index=1))
+
+        entries_unsorted = dlg.all_entries()
+        replies_unsorted = dlg.all_replies()
+        entries_sorted = dlg.all_entries(as_sorted=True)
+        replies_sorted = dlg.all_replies(as_sorted=True)
+
+        assert len(entries_unsorted) == 3
+        assert len(replies_unsorted) == 2
+        assert entries_sorted[0].list_index == 0
+        assert entries_sorted[1].list_index == 1
+        assert entries_sorted[-1].list_index == -1
+        assert replies_sorted[0].list_index == 0
+        assert replies_sorted[1].list_index == 5
+
+    def test_calculate_links_and_nodes_counts_cycles_included(self):
+        dlg, entry0, reply0, entry1, start_link0, start_link1, link_entry0_reply, link_reply0_entry1 = self._build_simple_graph()
+        # Introduce an explicit cycle entry1 -> entry0
+        entry1.links.append(DLGLink(node=entry0, list_index=2))
+
+        num_links, num_nodes = entry0.calculate_links_and_nodes()
+        # entry0 -> reply0, reply0 -> entry1, entry1 -> entry0 (cycle) => 3 links, 3 nodes
+        assert num_links == 3
+        assert num_nodes == 3
+
+    def test_shift_item_and_bounds(self):
+        dlg, entry0, reply0, entry1, start_link0, start_link1, link_entry0_reply, link_reply0_entry1 = self._build_simple_graph()
+        entry0.shift_item(entry0.links, 0, 0)  # no-op allowed
+        entry0.shift_item(entry0.links, 0, 0)  # idempotent
+        # Add second link for ordering
+        entry0.links.append(DLGLink(node=entry1, list_index=1))
+        entry0.shift_item(entry0.links, 1, 0)
+        assert entry0.links[0].node is entry1
+        assert entry0.links[1].node is reply0
+        with pytest.raises(IndexError):
+            entry0.shift_item(entry0.links, 0, 5)
+
+    def test_node_dict_roundtrip_preserves_metadata(self):
+        entry = DLGEntry()
+        entry.comment = "deep node"
+        entry.speaker = "Carth"
+        entry.camera_angle = 33
+        entry.camera_anim = 77
+        entry.camera_id = 9
+        entry.camera_effect = -3
+        entry.camera_fov = 90.5
+        entry.camera_height = 1.25
+        entry.target_height = 0.5
+        entry.fade_type = 2
+        entry.fade_color = Color(0.1, 0.2, 0.3, 1.0)
+        entry.fade_delay = 0.25
+        entry.fade_length = 1.5
+        entry.quest = "quest_flag"
+        entry.quest_entry = 4
+        entry.script1 = ResRef("script_a")
+        entry.script2 = ResRef("script_b")
+        entry.script1_param1 = 11
+        entry.script2_param6 = "str"
+        entry.wait_flags = 3
+        entry.sound_exists = 1
+        entry.vo_resref = ResRef("vo")
+        entry.sound = ResRef("snd")
+        entry.emotion_id = 12
+        entry.facial_id = 7
+        entry.node_id = 42
+        entry.post_proc_node = 17
+        entry.record_no_vo_override = True
+        entry.record_vo = True
+        entry.vo_text_changed = True
+        entry.unskippable = True
+        entry.text.set_data(Language.ENGLISH, Gender.MALE, "Line")
+        entry.text.set_data(Language.FRENCH, Gender.FEMALE, "Ligne")
+        entry.animations.append(DLGAnimation(participant="p1", animation_id=123))
+
+        reply = DLGReply(text=LocalizedString.from_english("reply"))
+        reply.camera_anim = 55
+        reply.fade_type = 9
+
+        entry.links.append(DLGLink(node=reply, list_index=0))
+        reply.links.append(DLGLink(node=entry, list_index=0))
+
+        serialized = entry.to_dict()
+        restored = DLGEntry.from_dict(serialized)
+
+        assert restored.camera_angle == 33
+        assert restored.camera_anim == 77
+        assert restored.camera_id == 9
+        assert restored.camera_effect == -3
+        assert restored.camera_fov == 90.5
+        assert restored.camera_height == 1.25
+        assert restored.target_height == 0.5
+        assert restored.fade_type == 2
+        assert restored.fade_color == Color(0.1, 0.2, 0.3, 1.0)
+        assert restored.fade_delay == 0.25
+        assert restored.fade_length == 1.5
+        assert restored.quest == "quest_flag"
+        assert restored.quest_entry == 4
+        assert restored.script1 == ResRef("script_a")
+        assert restored.script2 == ResRef("script_b")
+        assert restored.script1_param1 == 11
+        assert restored.script2_param6 == "str"
+        assert restored.wait_flags == 3
+        assert restored.sound_exists == 1
+        assert restored.vo_resref == ResRef("vo")
+        assert restored.sound == ResRef("snd")
+        assert restored.emotion_id == 12
+        assert restored.facial_id == 7
+        assert restored.node_id == 42
+        assert restored.post_proc_node == 17
+        assert restored.record_no_vo_override is True
+        assert restored.record_vo is True
+        assert restored.vo_text_changed is True
+        assert restored.unskippable is True
+        assert restored.text.get(Language.FRENCH, Gender.FEMALE) == "Ligne"
+        assert restored.animations[0].animation_id == 123
+        assert restored.links[0].node.links[0].node.comment == "deep node"
+
+    def test_find_paths_respects_multiple_starters_and_link_parenting(self):
+        dlg = DLG()
+        dlg.conversation_type = DLGConversationType.Computer
+        dlg.computer_type = DLGComputerType.Ancient
+
+        entry_a = DLGEntry(comment="A")
+        entry_a.list_index = 2
+        entry_b = DLGEntry(comment="B")
+        entry_b.list_index = 3
+        reply_a = DLGReply(text=LocalizedString.from_english("R"))
+        reply_a.list_index = 4
+
+        starter_a = DLGLink(node=entry_a, list_index=0)
+        starter_b = DLGLink(node=entry_b, list_index=1)
+        dlg.starters.extend([starter_a, starter_b])
+
+        entry_a.links.append(DLGLink(node=reply_a, list_index=0))
+        reply_a.links.append(DLGLink(node=entry_b, list_index=0))
+
+        paths_reply_a = dlg.find_paths(reply_a)
+        paths_entry_b = dlg.find_paths(entry_b)
+        parent_for_reply_link = dlg.get_link_parent(entry_a.links[0])
+
+        assert PureWindowsPath("ReplyList", "4") in paths_reply_a
+        assert PureWindowsPath("EntryList", "3") in paths_entry_b
+        assert parent_for_reply_link is entry_a
 
 
 if __name__ == "__main__":

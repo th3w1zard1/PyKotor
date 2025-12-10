@@ -476,3 +476,36 @@ def test_dangling_link_targets_are_dropped(tmp_path: Path):
     entry = dlg.all_entries()[0]
     assert isinstance(entry, DLGEntry)
     assert entry.links == []
+
+
+def test_read_twine_rejects_empty_or_missing_storydata(tmp_path: Path):
+    """Blank files or HTML without story data should error clearly."""
+    empty_path = tmp_path / "empty.txt"
+    empty_path.write_text("", encoding="utf-8")
+    with pytest.raises(ValueError, match="Invalid Twine format"):
+        read_twine(empty_path)
+
+    bad_html = tmp_path / "nostory.html"
+    bad_html.write_text("<html><head></head><body></body></html>", encoding="utf-8")
+    with pytest.raises(ValueError, match="No story data found"):
+        read_twine(bad_html)
+
+
+def test_language_variants_roundtrip_via_html(tmp_path: Path):
+    """Ensure multi-language content survives HTML write/read."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.speaker = "Polyglot"
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Hello")
+    entry.text.set_data(Language.SPANISH, Gender.FEMALE, "Hola")
+    entry.text.set_data(Language.GERMAN, Gender.MALE, "Guten Tag")
+    dlg.starters.append(DLGLink(entry))
+
+    html_path = tmp_path / "lang.html"
+    write_twine(dlg, html_path, format="html")
+    restored = read_twine(html_path)
+    restored_entry = restored.starters[0].node
+    assert isinstance(restored_entry, DLGEntry)
+    assert restored_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello"
+    assert restored_entry.text.get(Language.SPANISH, Gender.FEMALE) == "Hola"
+    assert restored_entry.text.get(Language.GERMAN, Gender.MALE) == "Guten Tag"
