@@ -59,7 +59,7 @@ else:
 K1_PATH: str | None = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
 K2_PATH: str | None = os.environ.get("K2_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Knights of the Old Republic II")
 
-BINARY_TEST_FILE = "tests/files/test.ncs"
+BINARY_TEST_FILE = str(THIS_SCRIPT_PATH.parent.parent.parent / "files" / "test.ncs")
 EXPECTED_INSTRUCTION_COUNT = 1541
 
 
