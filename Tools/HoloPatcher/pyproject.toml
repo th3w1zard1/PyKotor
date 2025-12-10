@@ -87,7 +87,7 @@ keywords = [
 python = "^3.8"
 pykotor = "^2.0.0"
 requests = ">=2.25.0"
-charset-normalizer = ">=2.0,<3.4"
+charset-normalizer = ">=2.0,<3.5"
 
 [tool.poetry.extras]
 updates = ["requests", "pycryptodome"]
