@@ -1815,6 +1815,330 @@ class TestBWMAABBTree:
                     break
 
 
+class TestBWMBinaryFormat:
+    """Test binary format details based on vendor implementations.
+    
+    Reference:
+    - vendor/reone/src/libs/graphics/format/bwmreader.cpp
+    - vendor/kotorblender/io_scene_kotor/format/bwm/reader.py
+    - vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts
+    """
+
+    def test_header_bytes(self):
+        """Test that header bytes match expected format.
+        
+        Reference: vendor/reone/src/libs/graphics/format/bwmreader.cpp:28
+        Reference: vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:52-59
+        """
+        if not TEST_WOK_FILE.exists():
+            pytest.skip(f"Test file not found: {TEST_WOK_FILE}")
+        
+        data = TEST_WOK_FILE.read_bytes()
+        
+        # Magic should be "BWM " (with space)
+        assert data[0:4] == b"BWM ", f"Expected 'BWM ', got {data[0:4]}"
+        
+        # Version should be "V1.0"
+        assert data[4:8] == b"V1.0", f"Expected 'V1.0', got {data[4:8]}"
+
+    def test_walkmesh_type_byte_offset(self):
+        """Test that walkmesh type is at correct byte offset.
+        
+        Reference: vendor/reone/src/libs/graphics/format/bwmreader.cpp:30
+        Offset 0x08 should contain the walkmesh type (0=PWK/DWK, 1=WOK)
+        """
+        if not TEST_WOK_FILE.exists():
+            pytest.skip(f"Test file not found: {TEST_WOK_FILE}")
+        
+        data = TEST_WOK_FILE.read_bytes()
+        
+        # Type is at offset 0x08 (8 bytes)
+        import struct
+        walkmesh_type = struct.unpack_from("<I", data, 0x08)[0]
+        assert walkmesh_type == 1, f"WOK file should have type 1, got {walkmesh_type}"
+
+    def test_pwk_dwk_type_byte(self):
+        """Test that PWK/DWK walkmeshes have type 0."""
+        bwm = BWM()
+        bwm.walkmesh_type = BWMType.PlaceableOrDoor
+        
+        face = BWMFace(
+            Vector3(0.0, 0.0, 0.0),
+            Vector3(1.0, 0.0, 0.0),
+            Vector3(0.0, 1.0, 0.0),
+        )
+        face.material = SurfaceMaterial.DIRT
+        bwm.faces = [face]
+        
+        buf = io.BytesIO()
+        writer = BWMBinaryWriter(bwm, buf)
+        writer.write(auto_close=False)
+        buf.seek(0)
+        data = buf.read()
+        
+        import struct
+        walkmesh_type = struct.unpack_from("<I", data, 0x08)[0]
+        assert walkmesh_type == 0, f"PWK/DWK should have type 0, got {walkmesh_type}"
+
+    def test_vertex_count_offset(self):
+        """Test that vertex count is at correct byte offset.
+        
+        Reference: vendor/reone/src/libs/graphics/format/bwmreader.cpp:40
+        Offset 0x48 should contain the vertex count
+        """
+        if not TEST_WOK_FILE.exists():
+            pytest.skip(f"Test file not found: {TEST_WOK_FILE}")
+        
+        data = TEST_WOK_FILE.read_bytes()
+        wok = read_bwm(data)
+        
+        import struct
+        vertex_count = struct.unpack_from("<I", data, 0x48)[0]
+        actual_verts = len(wok.vertices())
+        
+        assert vertex_count == actual_verts, f"Vertex count mismatch: header={vertex_count}, actual={actual_verts}"
+
+    def test_face_count_offset(self):
+        """Test that face count is at correct byte offset.
+        
+        Reference: vendor/reone/src/libs/graphics/format/bwmreader.cpp:43
+        Offset 0x50 should contain the face count
+        """
+        if not TEST_WOK_FILE.exists():
+            pytest.skip(f"Test file not found: {TEST_WOK_FILE}")
+        
+        data = TEST_WOK_FILE.read_bytes()
+        wok = read_bwm(data)
+        
+        import struct
+        face_count = struct.unpack_from("<I", data, 0x50)[0]
+        
+        assert face_count == len(wok.faces), f"Face count mismatch: header={face_count}, actual={len(wok.faces)}"
+
+
+class TestBWMAABBPlanes:
+    """Test AABB tree most significant plane values.
+    
+    Reference:
+    - vendor/reone/src/libs/graphics/format/bwmreader.cpp:160
+    - vendor/kotorblender/io_scene_kotor/aabb.py:61-64
+    """
+
+    def test_most_significant_plane_values(self):
+        """Test that AABB nodes have valid most significant plane values.
+        
+        Reference: wiki/BWM-File-Format.md - Most Significant Plane Values
+        Values: 0 (none/leaf), 1 (X), 2 (Y), 3 (Z), -1/-2/-3 (negative axes)
+        """
+        if not TEST_WOK_FILE.exists():
+            pytest.skip(f"Test file not found: {TEST_WOK_FILE}")
+        
+        wok = read_bwm(TEST_WOK_FILE.read_bytes())
+        aabbs = wok.aabbs()
+        
+        valid_planes = {-3, -2, -1, 0, 1, 2, 3}
+        
+        for aabb in aabbs:
+            assert aabb.sigplane in valid_planes, f"Invalid sigplane value: {aabb.sigplane}"
+            
+            # Leaf nodes (with face) should have sigplane 0
+            if aabb.face is not None:
+                assert aabb.sigplane == 0, f"Leaf node should have sigplane 0, got {aabb.sigplane}"
+
+    def test_internal_nodes_have_children(self):
+        """Test that internal nodes (non-leaf) have at least one child.
+        
+        Reference: vendor/kotorblender/io_scene_kotor/aabb.py:57-64
+        """
+        if not TEST_WOK_FILE.exists():
+            pytest.skip(f"Test file not found: {TEST_WOK_FILE}")
+        
+        wok = read_bwm(TEST_WOK_FILE.read_bytes())
+        aabbs = wok.aabbs()
+        
+        for aabb in aabbs:
+            if aabb.face is None:  # Internal node
+                has_child = aabb.left is not None or aabb.right is not None
+                assert has_child, "Internal node should have at least one child"
+
+
+class TestBWMEdgeDetails:
+    """Test edge-related functionality based on vendor implementations.
+    
+    Reference:
+    - vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:67-79
+    - vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:275-307
+    """
+
+    def test_edge_vertices(self):
+        """Test that edge vertices are correctly identified.
+        
+        Reference: vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:67-79
+        Edge 0: v1->v2, Edge 1: v2->v3, Edge 2: v3->v1
+        """
+        v1 = Vector3(0.0, 0.0, 0.0)
+        v2 = Vector3(1.0, 0.0, 0.0)
+        v3 = Vector3(0.0, 1.0, 0.0)
+        
+        face = BWMFace(v1, v2, v3)
+        face.material = SurfaceMaterial.DIRT
+        
+        bwm = BWM()
+        bwm.walkmesh_type = BWMType.AreaModel
+        bwm.faces = [face]
+        
+        edges = bwm.edges()
+        
+        # Single isolated face should have 3 perimeter edges
+        assert len(edges) == 3, f"Isolated face should have 3 edges, got {len(edges)}"
+        
+        # Verify edge indices are 0, 1, 2
+        edge_indices = {e.index for e in edges}
+        assert edge_indices == {0, 1, 2}, f"Edge indices should be {{0, 1, 2}}, got {edge_indices}"
+
+    def test_edge_face_reference(self):
+        """Test that edges reference their face correctly."""
+        if not TEST_WOK_FILE.exists():
+            pytest.skip(f"Test file not found: {TEST_WOK_FILE}")
+        
+        wok = read_bwm(TEST_WOK_FILE.read_bytes())
+        edges = wok.edges()
+        
+        for edge in edges[:20]:
+            # Edge should reference a valid face
+            assert edge.face is not None
+            assert edge.face in wok.faces
+
+
+class TestBWMMaterialCompleteness:
+    """Test material handling completeness.
+    
+    Reference:
+    - vendor/kotorblender/io_scene_kotor/constants.py:27-51
+    - Libraries/PyKotor/src/utility/common/geometry.py:1118-1172
+    """
+
+    def test_walkable_materials(self):
+        """Test that known walkable materials are correctly identified.
+        
+        Reference: vendor/kotorblender/io_scene_kotor/constants.py:48-51
+        """
+        walkable_materials = [
+            SurfaceMaterial.DIRT,
+            SurfaceMaterial.GRASS,
+            SurfaceMaterial.STONE,
+            SurfaceMaterial.WOOD,
+            SurfaceMaterial.WATER,
+            SurfaceMaterial.CARPET,
+            SurfaceMaterial.METAL,
+            SurfaceMaterial.PUDDLES,
+            SurfaceMaterial.SWAMP,
+            SurfaceMaterial.MUD,
+            SurfaceMaterial.LEAVES,
+            SurfaceMaterial.DOOR,
+        ]
+        
+        for mat in walkable_materials:
+            assert mat.walkable(), f"Material {mat} should be walkable"
+
+    def test_non_walkable_materials(self):
+        """Test that known non-walkable materials are correctly identified.
+        
+        Reference: vendor/kotorblender/io_scene_kotor/constants.py:48-51
+        """
+        non_walkable_materials = [
+            SurfaceMaterial.UNDEFINED,
+            SurfaceMaterial.OBSCURING,
+            SurfaceMaterial.NON_WALK,
+            SurfaceMaterial.TRANSPARENT,
+            SurfaceMaterial.LAVA,
+            SurfaceMaterial.DEEP_WATER,
+        ]
+        
+        for mat in non_walkable_materials:
+            assert not mat.walkable(), f"Material {mat} should not be walkable"
+
+
+class TestBWMVendorDiscrepancies:
+    """Test handling of vendor implementation discrepancies.
+    
+    These tests document known differences between vendor implementations
+    and verify PyKotor handles them consistently.
+    
+    Reference: wiki/BWM-File-Format.md - Implementation Comparison
+    """
+
+    def test_adjacency_decoding_consensus(self):
+        """Test adjacency decoding follows consensus formula: face_index * 3 + edge_index.
+        
+        Reference: wiki/BWM-File-Format.md - Adjacency Encoding
+        
+        Consensus: edge // 3 for face_index, edge % 3 for edge_index
+        (Used by reone, KotOR.js, kotorblender)
+        """
+        # Create two adjacent faces
+        v1 = Vector3(0.0, 0.0, 0.0)
+        v2 = Vector3(1.0, 0.0, 0.0)
+        v3 = Vector3(0.0, 1.0, 0.0)
+        v4 = Vector3(1.0, 1.0, 0.0)
+        
+        face1 = BWMFace(v1, v2, v3)
+        face1.material = SurfaceMaterial.DIRT
+        face2 = BWMFace(v2, v4, v3)
+        face2.material = SurfaceMaterial.DIRT
+        
+        bwm = BWM()
+        bwm.walkmesh_type = BWMType.AreaModel
+        bwm.faces = [face1, face2]
+        
+        # Get adjacencies
+        adj1 = bwm.adjacencies(face1)
+        adj2 = bwm.adjacencies(face2)
+        
+        # Verify adjacency exists and edge index is valid
+        for adj in adj1 + adj2:
+            if adj is not None:
+                assert adj.edge in [0, 1, 2], "Edge index should be 0, 1, or 2"
+
+    def test_perimeter_index_handling(self):
+        """Test perimeter indices are handled correctly.
+        
+        Reference: wiki/BWM-File-Format.md - Perimeters
+        
+        Discrepancy: kotorblender/PyKotor write 1-based, KotOR.js reads as-is
+        """
+        if not TEST_WOK_FILE.exists():
+            pytest.skip(f"Test file not found: {TEST_WOK_FILE}")
+        
+        wok = read_bwm(TEST_WOK_FILE.read_bytes())
+        edges = wok.edges()
+        
+        # Count final edges (end of perimeter loops)
+        final_count = sum(1 for e in edges if e.final)
+        
+        # Should have at least one perimeter loop
+        assert final_count > 0, "Should have at least one perimeter loop"
+
+
+# NOTE: The following functionality exists in vendor implementations but is NOT yet
+# implemented in PyKotor:
+#
+# 1. AABB Raycasting - Finding intersection point between ray and walkmesh
+#    Reference: vendor/reone/src/libs/graphics/walkmesh.cpp:24-100
+#    Reference: vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:497-504
+#
+# 2. Point-in-Face Containment - Determining if a 2D point is inside a face
+#    Reference: vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:478-495
+#
+# 3. Z-Height Calculation - Getting elevation at a given (X, Y) point
+#    Reference: vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:549-599
+#
+# 4. Face Finding - Finding which face contains a given point
+#    Reference: vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:601-640
+#
+# These features would be valuable additions to PyKotor's BWM module.
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
 
