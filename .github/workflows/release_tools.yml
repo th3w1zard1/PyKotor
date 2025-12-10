@@ -701,7 +701,7 @@ jobs:
         shell: bash
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
-          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Set UPX download URL
         if: runner.os != 'macOS'
