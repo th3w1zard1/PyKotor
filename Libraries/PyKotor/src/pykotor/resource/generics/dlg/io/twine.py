@@ -486,11 +486,27 @@ def _write_html(
             "size",
             f"{passage.metadata.size.x},{passage.metadata.size.y}",
         )
-        
-        # Store custom metadata (e.g., language variants) as JSON in data attribute
-        if passage.metadata.custom:
-            import json
-            p_data.set("data-custom", json.dumps(passage.metadata.custom))
+        # Store custom metadata (e.g., language variants and KotOR fields) as JSON in data attribute
+        custom_payload: dict[str, Any] = dict(passage.metadata.custom)
+        if passage.metadata.animation_id != 0:
+            custom_payload["animation_id"] = str(passage.metadata.animation_id)
+        if passage.metadata.camera_angle != 0:
+            custom_payload["camera_angle"] = str(passage.metadata.camera_angle)
+        if passage.metadata.camera_id is not None and passage.metadata.camera_id != 0:
+            custom_payload["camera_id"] = str(passage.metadata.camera_id)
+        if passage.metadata.fade_type != 0:
+            custom_payload["fade_type"] = str(passage.metadata.fade_type)
+        if passage.metadata.quest:
+            custom_payload["quest"] = passage.metadata.quest
+        if passage.metadata.sound:
+            custom_payload["sound"] = passage.metadata.sound
+        if passage.metadata.vo_resref:
+            custom_payload["vo_resref"] = passage.metadata.vo_resref
+        if passage.metadata.speaker:
+            custom_payload["speaker"] = passage.metadata.speaker
+
+        if custom_payload:
+            p_data.set("data-custom", json.dumps(custom_payload))
         
         # Embed links into text in Twine format: [[text->target]] or [[target]]
         text_with_links = passage.text

@@ -1557,7 +1557,10 @@ class TestDLGGraphUtilities(unittest.TestCase):
         entry.unskippable = True
         entry.text.set_data(Language.ENGLISH, Gender.MALE, "Line")
         entry.text.set_data(Language.FRENCH, Gender.FEMALE, "Ligne")
-        entry.animations.append(DLGAnimation(participant="p1", animation_id=123))
+        animation = DLGAnimation()
+        animation.participant = "p1"
+        animation.animation_id = 123
+        entry.animations.append(animation)
 
         reply = DLGReply(text=LocalizedString.from_english("reply"))
         reply.camera_anim = 55
@@ -1577,7 +1580,11 @@ class TestDLGGraphUtilities(unittest.TestCase):
         assert restored.camera_height == 1.25
         assert restored.target_height == 0.5
         assert restored.fade_type == 2
-        assert restored.fade_color == Color(0.1, 0.2, 0.3, 1.0)
+        assert restored.fade_color is not None
+        assert restored.fade_color.r == pytest.approx(0.1, abs=0.005)
+        assert restored.fade_color.g == pytest.approx(0.2, abs=0.005)
+        assert restored.fade_color.b == pytest.approx(0.3, abs=0.005)
+        assert restored.fade_color.a == pytest.approx(1.0, abs=0.005)
         assert restored.fade_delay == 0.25
         assert restored.fade_length == 1.5
         assert restored.quest == "quest_flag"

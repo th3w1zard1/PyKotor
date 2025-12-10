@@ -147,3 +147,12 @@ Links connect nodes and define flow control:
 - `Quest` and `QuestEntry` fields update JRL directly
 - Eliminates need for scripts to update quests
 
+## Twine Interoperability
+
+PyKotor exposes a Twine bridge for DLGs to support authoring and visualization in story tools:
+
+- Export uses `Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/twine.py::_dlg_to_story` to turn starters, entries, and replies into `TwinePassage` objects. It emits unique names for duplicate speakers, preserves `is_child` and `Active` script on links, and writes KotOR metadata into `PassageMetadata.custom` (camera anim/angle/id, fade type, quest, sound, VO, plus `text_<language>_<gender>` variants).
+- Import uses `Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/twine.py::_story_to_dlg` together with `FormatConverter.restore_kotor_metadata` to hydrate `DLGEntry`/`DLGReply` objects, restoring multilingual text from `custom` keys and mapping camera/sound/quest metadata back onto the nodes.
+- Twine-only data (style, script, tag colors, format info, zoom, creator metadata) is stored in `DLG.comment` as JSON via `FormatConverter.store_twine_metadata` and restored on export; `tag_colors` are kept as `Color` values (see `Libraries/PyKotor/src/pykotor/resource/generics/dlg/io/twine_data.py`).
+- Start node selection mirrors engine behavior: first starter becomes `startnode` when exporting, and missing `startnode` on import falls back to the first entry passage.
+

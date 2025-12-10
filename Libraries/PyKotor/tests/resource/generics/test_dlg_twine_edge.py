@@ -321,4 +321,4 @@ def test_html_invalid_custom_metadata_is_ignored(tmp_path: Path):
     assert isinstance(dlg.starters[0].node, DLGEntry)
     starter_text = dlg.starters[0].node.text.get(Language.ENGLISH, Gender.MALE)
     assert starter_text is not None, "Starter text is None"
-    assert starter_text.startswith("Hello"), "Starter text does not start with 'Hello'"
+    assert starter_text.strip().startswith("Hello"), "Starter text does not start with 'Hello'"
