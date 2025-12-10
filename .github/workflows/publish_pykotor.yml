@@ -479,16 +479,21 @@ jobs:
             $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
           }
           
-          # Ensure Python path is available
-          if ($env:pythonExePath) {
-            $env:PATH = "$(Split-Path -Parent $env:pythonExePath);$env:PATH"
-          } elseif (Test-Path variable:pythonExePath) {
-            $env:PATH = "$(Split-Path -Parent $pythonExePath);$env:PATH"
-          }
-          
           # Ensure Python path is available if set by install_python_venv.ps1
           if ($env:pythonExePath) {
-            $env:PATH = "$(Split-Path -Parent $env:pythonExePath);$env:PATH"
+            $pythonDir = Split-Path -Parent $env:pythonExePath
+            if ("${{ runner.os }}" -eq "Windows") {
+              $env:PATH = "$pythonDir;$env:PATH"
+            } else {
+              $env:PATH = "$pythonDir:$env:PATH"
+            }
+          } elseif (Test-Path variable:pythonExePath) {
+            $pythonDir = Split-Path -Parent $pythonExePath
+            if ("${{ runner.os }}" -eq "Windows") {
+              $env:PATH = "$pythonDir;$env:PATH"
+            } else {
+              $env:PATH = "$pythonDir:$env:PATH"
+            }
           }
           
           Write-Host "Using compile script $compile"
