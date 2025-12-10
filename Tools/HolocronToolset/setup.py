@@ -59,25 +59,10 @@ class SDistWithWiki(sdist):
             print(f"Copied wiki directory from {wiki_src} to {wiki_dest} for sdist")
 
         # Run standard sdist (processes MANIFEST.in, which will now find src/toolset/wiki)
+        # Note: make_release_tree() is NOT overridden because wiki is already included
+        # via MANIFEST.in from src/toolset/wiki. Overriding it would cause duplication
+        # (wiki would appear both in src/toolset/wiki/ and wiki/ in the distribution).
         super().run()
-
-    def make_release_tree(self, base_dir: str, files: list[str]) -> None:
-        """Ensure wiki is also copied to build directory for source distribution."""
-        # Get paths
-        setup_dir = Path(__file__).parent
-        repo_root = setup_dir.parent.parent
-        wiki_src = repo_root / "wiki"
-
-        # Copy wiki to build directory if it exists (idempotent: removes existing first)
-        if wiki_src.exists() and wiki_src.is_dir():
-            build_wiki = Path(base_dir) / "wiki"
-            if build_wiki.exists():
-                shutil.rmtree(build_wiki)
-            shutil.copytree(wiki_src, build_wiki, dirs_exist_ok=True)
-            print(f"Copied wiki directory to source distribution: {build_wiki}")
-
-        # Run standard sdist
-        super().make_release_tree(base_dir, files)
 
 
 # Setup configuration is read from pyproject.toml
