@@ -351,7 +351,7 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetFactionWeakestMember(oFactionMember, bMustBeVisible)` - Routine 181](NSS-Shared-Functions-Other-Functions)
       - [`GetFactionWorstAC(oFactionMember, bMustBeVisible)` - Routine 192](NSS-Shared-Functions-Other-Functions)
       - [`GetFirstFactionMember(oMemberOfFaction, bPCOnly)` - Routine 380](NSS-Shared-Functions-Other-Functions)
-      - [`GetFirstInPersistentObject(oPersistentObject, nResidentObjectType, nPersistentZone)`](#getfirstinpersistentobjectopersistentobject-nresidentobjecttype-npersistentzone)
+      - `GetFirstInPersistentObject(oPersistentObject, nResidentObjectType, nPersistentZone)`
       - [`GetFirstObjectInShape(nShape, fSize, lTarget, bLineOfSight, nObjectFilter, vOrigin)` - Routine 128](NSS-Shared-Functions-Other-Functions)
       - [`GetFirstPC()` - Routine 548](NSS-Shared-Functions-Other-Functions)
       - [`GetFortitudeSavingThrow(oTarget)` - Routine 491](NSS-Shared-Functions-Other-Functions)
@@ -433,7 +433,7 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetMovementRate(oCreature)` - Routine 496](NSS-Shared-Functions-Other-Functions)
       - [`GetName(oObject)` - Routine 253](NSS-Shared-Functions-Other-Functions)
       - [`GetNextFactionMember(oMemberOfFaction, bPCOnly)` - Routine 381](NSS-Shared-Functions-Other-Functions)
-      - [`GetNextInPersistentObject(oPersistentObject, nResidentObjectType, nPersistentZone)`](#getnextinpersistentobjectopersistentobject-nresidentobjecttype-npersistentzone)
+      - `GetNextInPersistentObject(oPersistentObject, nResidentObjectType, nPersistentZone)`
       - [`GetNextObjectInShape(nShape, fSize, lTarget, bLineOfSight, nObjectFilter, vOrigin)` - Routine 129](NSS-Shared-Functions-Other-Functions)
       - [`GetNextPC()` - Routine 548](NSS-Shared-Functions-Other-Functions)
       - [`GetNPCAIStyle(oCreature)` - Routine 705](NSS-Shared-Functions-Other-Functions)
@@ -493,7 +493,7 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetWeaponRanged(oItem)` - Routine 511](NSS-Shared-Functions-Other-Functions)
       - [`GetWillSavingThrow(oTarget)` - Routine 492](NSS-Shared-Functions-Other-Functions)
       - [`GetXP(oCreature)` - Routine 395](NSS-Shared-Functions-Other-Functions)
-      - [`Random(nMaxInteger)`](#randomnmaxinteger)
+      - `Random(nMaxInteger)`
       - [`SetAssociateListenPatterns(oTarget)` - Routine 327](NSS-Shared-Functions-Other-Functions)
       - [`SetAvailableNPCId()` - Routine 767](NSS-Shared-Functions-Other-Functions)
       - [`SetButtonMashCheck(nCheck)` - Routine 268](NSS-Shared-Functions-Other-Functions)
@@ -590,7 +590,7 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`SWMG_SetSoundFrequencyIsRandom(oFollower, nSound, bIsRandom)` - Routine 686](NSS-Shared-Functions-Sound-and-Music-Functions)
       - [`SWMG_SetSoundVolume(oFollower, nSound, nVolume)` - Routine 688](NSS-Shared-Functions-Sound-and-Music-Functions)
   - [K1-Only Functions](#k1-only-functions)
-    - [Other Functions](#other-functions-1)
+    - Other Functions
   - [TSL-Only Functions](#tsl-only-functions)
     - [Actions](#actions)
       - [`ActionFollowOwner(fRange)` - Routine 398](NSS-Shared-Functions-Actions)
@@ -616,1882 +616,1882 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`EffectVPRegenModifier(nPercent)` - Routine 780](NSS-Shared-Functions-Effects-System)
       - [`RemoveEffectByExactMatch(oCreature, eEffect)` - Routine 87](NSS-Shared-Functions-Effects-System)
       - [`RemoveEffectByID(oCreature, nEffectID)` - Routine 89](NSS-Shared-Functions-Effects-System)
-    - [Global Variables](#global-variables-1)
-    - [Item Management](#item-management-1)
+    - Global Variables
+    - Item Management
       - [`GetItemComponent()` - Routine 771](NSS-Shared-Functions-Item-Management)
       - [`GetItemComponentPieceValue()` - Routine 771](NSS-Shared-Functions-Item-Management)
-    - [Object Query and Manipulation](#object-query-and-manipulation-1)
-      - [`GetObjectPersonalSpace(aObject)`](#getobjectpersonalspaceaobject)
-    - [Other Functions](#other-functions-2)
-      - [`AdjustCreatureAttributes(oObject, nAttribute, nAmount)`](#adjustcreatureattributesoobject-nattribute-namount)
-      - [`AssignPUP(nPUP, nNPC)`](#assignpupnpup-nnpc)
-      - [`ChangeObjectAppearance(oObjectToChange, nAppearance)`](#changeobjectappearanceoobjecttochange-nappearance)
-      - [`CreatureFlourishWeapon(oObject)`](#creatureflourishweaponoobject)
-      - [`DetonateMine(oMine)`](#detonatemineomine)
-      - [`DisableHealthRegen(nFlag)`](#disablehealthregennflag)
-      - [`DisableMap(nFlag)`](#disablemapnflag)
-      - [`EnableRain(nFlag)`](#enablerainnflag)
-      - [`EnableRendering(oObject, bEnable)`](#enablerenderingoobject-benable)
-      - [`ForceHeartbeat(oCreature)`](#forceheartbeatocreature)
+    - Object Query and Manipulation
+      - `GetObjectPersonalSpace(aObject)`
+    - Other Functions
+      - `AdjustCreatureAttributes(oObject, nAttribute, nAmount)`
+      - `AssignPUP(nPUP, nNPC)`
+      - `ChangeObjectAppearance(oObjectToChange, nAppearance)`
+      - `CreatureFlourishWeapon(oObject)`
+      - `DetonateMine(oMine)`
+      - `DisableHealthRegen(nFlag)`
+      - `DisableMap(nFlag)`
+      - `EnableRain(nFlag)`
+      - `EnableRendering(oObject, bEnable)`
+      - `ForceHeartbeat(oCreature)`
       - [`GetBonusForcePoints(oCreature)` - Routine 803](NSS-Shared-Functions-Other-Functions)
       - [`GetChemicalPieceValue()` - Routine 775](NSS-Shared-Functions-Other-Functions)
       - [`GetChemicals()` - Routine 774](NSS-Shared-Functions-Other-Functions)
-      - [`GetHealTarget(oidHealer)`](#gethealtargetoidhealer)
+      - `GetHealTarget(oidHealer)`
       - [`GetInfluence(nNPC)` - Routine 795](NSS-Shared-Functions-Other-Functions)
-      - [`GetIsPuppet(oPUP)`](#getispuppetopup)
-      - [`GetIsXBox()`](#getisxbox)
-      - [`GetLastForfeitViolation()`](#getlastforfeitviolation)
-      - [`GetPUPOwner(oPUP)`](#getpupowneropup)
+      - `GetIsPuppet(oPUP)`
+      - `GetIsXBox()`
+      - `GetLastForfeitViolation()`
+      - `GetPUPOwner(oPUP)`
       - [`GetRacialSubType(oTarget)` - Routine 798](NSS-Shared-Functions-Other-Functions)
-      - [`GetRandomDestination(oCreature, rangeLimit)`](#getrandomdestinationocreature-rangelimit)
+      - `GetRandomDestination(oCreature, rangeLimit)`
       - [`GetScriptParameter(nIndex)` - Routine 768](NSS-Shared-Functions-Other-Functions)
-      - [`GetScriptStringParameter()`](#getscriptstringparameter)
+      - `GetScriptStringParameter()`
       - [`GetSpellAcquired(nSpell, oCreature)` - Routine 377](NSS-Shared-Functions-Other-Functions)
-      - [`GetSpellBaseForcePointCost(nSpellID)`](#getspellbaseforcepointcostnspellid)
+      - `GetSpellBaseForcePointCost(nSpellID)`
       - [`GetSpellForcePointCost()` - Routine 776](NSS-Shared-Functions-Other-Functions)
-      - [`GetSpellFormMask(nSpellID)`](#getspellformmasknspellid)
-      - [`HasLineOfSight(vSource, vTarget, oSource, oTarget)`](#haslineofsightvsource-vtarget-osource-otarget)
-      - [`IsFormActive(oCreature, nFormID)`](#isformactiveocreature-nformid)
-      - [`IsInTotalDefense(oCreature)`](#isintotaldefenseocreature)
-      - [`IsMeditating(oCreature)`](#ismeditatingocreature)
-      - [`IsRunning(oCreature)`](#isrunningocreature)
-      - [`IsStealthed(oCreature)`](#isstealthedocreature)
-      - [`ModifyFortitudeSavingThrowBase(aObject, aModValue)`](#modifyfortitudesavingthrowbaseaobject-amodvalue)
-      - [`ModifyReflexSavingThrowBase(aObject, aModValue)`](#modifyreflexsavingthrowbaseaobject-amodvalue)
-      - [`ModifyWillSavingThrowBase(aObject, aModValue)`](#modifywillsavingthrowbaseaobject-amodvalue)
-      - [`RemoveHeartbeat(oPlaceable)`](#removeheartbeatoplaceable)
-      - [`ResetCreatureAILevel(oObject)`](#resetcreatureaileveloobject)
-      - [`SaveNPCByObject(nNPC, oidCharacter)`](#savenpcbyobjectnnpc-oidcharacter)
-      - [`SavePUPByObject(nPUP, oidPuppet)`](#savepupbyobjectnpup-oidpuppet)
+      - `GetSpellFormMask(nSpellID)`
+      - `HasLineOfSight(vSource, vTarget, oSource, oTarget)`
+      - `IsFormActive(oCreature, nFormID)`
+      - `IsInTotalDefense(oCreature)`
+      - `IsMeditating(oCreature)`
+      - `IsRunning(oCreature)`
+      - `IsStealthed(oCreature)`
+      - `ModifyFortitudeSavingThrowBase(aObject, aModValue)`
+      - `ModifyReflexSavingThrowBase(aObject, aModValue)`
+      - `ModifyWillSavingThrowBase(aObject, aModValue)`
+      - `RemoveHeartbeat(oPlaceable)`
+      - `ResetCreatureAILevel(oObject)`
+      - `SaveNPCByObject(nNPC, oidCharacter)`
+      - `SavePUPByObject(nPUP, oidPuppet)`
       - [`SetBonusForcePoints(oCreature, nBonusFP)` - Routine 801](NSS-Shared-Functions-Other-Functions)
-      - [`SetCreatureAILevel(oObject, nPriority)`](#setcreatureaileveloobject-npriority)
-      - [`SetCurrentForm(oCreature, nFormID)`](#setcurrentformocreature-nformid)
-      - [`SetDisableTransit(nFlag)`](#setdisabletransitnflag)
+      - `SetCreatureAILevel(oObject, nPriority)`
+      - `SetCurrentForm(oCreature, nFormID)`
+      - `SetDisableTransit(nFlag)`
       - [`SetFadeUntilScript()` - Routine 769](NSS-Shared-Functions-Other-Functions)
-      - [`SetForceAlwaysUpdate(oObject, nFlag)`](#setforcealwaysupdateoobject-nflag)
-      - [`SetForfeitConditions(nForfeitFlags)`](#setforfeitconditionsnforfeitflags)
-      - [`SetHealTarget(oidHealer, oidTarget)`](#sethealtargetoidhealer-oidtarget)
+      - `SetForceAlwaysUpdate(oObject, nFlag)`
+      - `SetForfeitConditions(nForfeitFlags)`
+      - `SetHealTarget(oidHealer, oidTarget)`
       - [`SetInfluence(nNPC, nInfluence)` - Routine 796](NSS-Shared-Functions-Other-Functions)
       - [`SetOrientOnClick(oCreature, nState)` - Routine 794](NSS-Shared-Functions-Other-Functions)
-      - [`ShowDemoScreen(sTexture, nTimeout, nDisplayString, nDisplayX, nDisplayY)`](#showdemoscreenstexture-ntimeout-ndisplaystring-ndisplayx-ndisplayy)
-      - [`SpawnAvailablePUP(nPUP, lLocation)`](#spawnavailablepupnpup-llocation)
-      - [`UnlockAllSongs()`](#unlockallsongs)
-      - [`YavinHackDoorClose(oCreature)`](#yavinhackdoorcloseocreature)
-    - [Party Management](#party-management-1)
+      - `ShowDemoScreen(sTexture, nTimeout, nDisplayString, nDisplayX, nDisplayY)`
+      - `SpawnAvailablePUP(nPUP, lLocation)`
+      - `UnlockAllSongs()`
+      - `YavinHackDoorClose(oCreature)`
+    - Party Management
       - [`AddAvailablePUPByObject(nPUP, oPuppet)`](#addavailablepupbyobjectnpup-opuppet)
       - [`AddAvailablePUPByTemplate(nPUP, sTemplate)`](#addavailablepupbytemplatenpup-stemplate)
       - [`AddPartyPuppet(nPUP, oidCreature)`](#addpartypuppetnpup-oidcreature)
       - [`GetIsPartyLeader(oCharacter)`](#getispartyleaderocharacter)
       - [`GetPartyLeader()`](#getpartyleader)
       - [`RemoveNPCFromPartyToBase(nNPC)`](#removenpcfrompartytobasennpc)
-    - [Player Character Functions](#player-character-functions-1)
-      - [`GetIsPlayerMadeCharacter(oidCharacter)`](#getisplayermadecharacteroidcharacter)
-      - [`SWMG_PlayerApplyForce(vForce)`](#swmg_playerapplyforcevforce)
-    - [Skills and Feats](#skills-and-feats-1)
-      - [`AdjustCreatureSkills(oObject, nSkill, nAmount)`](#adjustcreatureskillsoobject-nskill-namount)
+    - Player Character Functions
+      - `GetIsPlayerMadeCharacter(oidCharacter)`
+      - `SWMG_PlayerApplyForce(vForce)`
+    - Skills and Feats
+      - `AdjustCreatureSkills(oObject, nSkill, nAmount)`
       - [`GetFeatAcquired(nFeat, oCreature)` - Routine 285](NSS-Shared-Functions-Skills-and-Feats)
       - [`GetOwnerDemolitionsSkill(oObject)` - Routine 793](NSS-Shared-Functions-Other-Functions)
-      - [`GetSkillRankBase(nSkill, oObject)`](#getskillrankbasenskill-oobject)
-    - [Sound and Music Functions](#sound-and-music-functions-1)
-      - [`DisplayDatapad(oDatapad)`](#displaydatapadodatapad)
-      - [`DisplayMessageBox(nStrRef, sIcon)`](#displaymessageboxnstrref-sicon)
-      - [`PlayOverlayAnimation(oTarget, nAnimation)`](#playoverlayanimationotarget-nanimation)
+      - `GetSkillRankBase(nSkill, oObject)`
+    - Sound and Music Functions
+      - `DisplayDatapad(oDatapad)`
+      - `DisplayMessageBox(nStrRef, sIcon)`
+      - `PlayOverlayAnimation(oTarget, nAnimation)`
   - [Shared Constants (K1 \& TSL)](#shared-constants-k1--tsl)
     - [Ability Constants](#ability-constants)
-      - [`ABILITY_CHARISMA`](#ability_charisma)
-      - [`ABILITY_CONSTITUTION`](#ability_constitution)
-      - [`ABILITY_DEXTERITY`](#ability_dexterity)
-      - [`ABILITY_INTELLIGENCE`](#ability_intelligence)
-      - [`ABILITY_STRENGTH`](#ability_strength)
-      - [`ABILITY_WISDOM`](#ability_wisdom)
+      - `ABILITY_CHARISMA`
+      - `ABILITY_CONSTITUTION`
+      - `ABILITY_DEXTERITY`
+      - `ABILITY_INTELLIGENCE`
+      - `ABILITY_STRENGTH`
+      - `ABILITY_WISDOM`
     - [Alignment Constants](#alignment-constants)
-      - [`ALIGNMENT_ALL`](#alignment_all)
-      - [`ALIGNMENT_DARK_SIDE`](#alignment_dark_side)
-      - [`ALIGNMENT_LIGHT_SIDE`](#alignment_light_side)
-      - [`ALIGNMENT_NEUTRAL`](#alignment_neutral)
-      - [`ITEM_PROPERTY_AC_BONUS_VS_ALIGNMENT_GROUP`](#item_property_ac_bonus_vs_alignment_group)
-      - [`ITEM_PROPERTY_ATTACK_BONUS_VS_ALIGNMENT_GROUP`](#item_property_attack_bonus_vs_alignment_group)
-      - [`ITEM_PROPERTY_DAMAGE_BONUS_VS_ALIGNMENT_GROUP`](#item_property_damage_bonus_vs_alignment_group)
-      - [`ITEM_PROPERTY_ENHANCEMENT_BONUS_VS_ALIGNMENT_GROUP`](#item_property_enhancement_bonus_vs_alignment_group)
-      - [`ITEM_PROPERTY_USE_LIMITATION_ALIGNMENT_GROUP`](#item_property_use_limitation_alignment_group)
+      - `ALIGNMENT_ALL`
+      - `ALIGNMENT_DARK_SIDE`
+      - `ALIGNMENT_LIGHT_SIDE`
+      - `ALIGNMENT_NEUTRAL`
+      - `ITEM_PROPERTY_AC_BONUS_VS_ALIGNMENT_GROUP`
+      - `ITEM_PROPERTY_ATTACK_BONUS_VS_ALIGNMENT_GROUP`
+      - `ITEM_PROPERTY_DAMAGE_BONUS_VS_ALIGNMENT_GROUP`
+      - `ITEM_PROPERTY_ENHANCEMENT_BONUS_VS_ALIGNMENT_GROUP`
+      - `ITEM_PROPERTY_USE_LIMITATION_ALIGNMENT_GROUP`
     - [Class Type Constants](#class-type-constants)
-      - [`CLASS_TYPE_COMBATDROID`](#class_type_combatdroid)
-      - [`CLASS_TYPE_EXPERTDROID`](#class_type_expertdroid)
-      - [`CLASS_TYPE_INVALID`](#class_type_invalid)
-      - [`CLASS_TYPE_JEDICONSULAR`](#class_type_jediconsular)
-      - [`CLASS_TYPE_JEDIGUARDIAN`](#class_type_jediguardian)
-      - [`CLASS_TYPE_JEDISENTINEL`](#class_type_jedisentinel)
-      - [`CLASS_TYPE_MINION`](#class_type_minion)
-      - [`CLASS_TYPE_SCOUNDREL`](#class_type_scoundrel)
-      - [`CLASS_TYPE_SCOUT`](#class_type_scout)
-      - [`CLASS_TYPE_SOLDIER`](#class_type_soldier)
+      - `CLASS_TYPE_COMBATDROID`
+      - `CLASS_TYPE_EXPERTDROID`
+      - `CLASS_TYPE_INVALID`
+      - `CLASS_TYPE_JEDICONSULAR`
+      - `CLASS_TYPE_JEDIGUARDIAN`
+      - `CLASS_TYPE_JEDISENTINEL`
+      - `CLASS_TYPE_MINION`
+      - `CLASS_TYPE_SCOUNDREL`
+      - `CLASS_TYPE_SCOUT`
+      - `CLASS_TYPE_SOLDIER`
     - [Inventory Constants](#inventory-constants)
-      - [`INVENTORY_DISTURB_TYPE_ADDED`](#inventory_disturb_type_added)
-      - [`INVENTORY_DISTURB_TYPE_REMOVED`](#inventory_disturb_type_removed)
-      - [`INVENTORY_DISTURB_TYPE_STOLEN`](#inventory_disturb_type_stolen)
-      - [`INVENTORY_SLOT_BELT`](#inventory_slot_belt)
-      - [`INVENTORY_SLOT_BODY`](#inventory_slot_body)
-      - [`INVENTORY_SLOT_CARMOUR`](#inventory_slot_carmour)
-      - [`INVENTORY_SLOT_CWEAPON_B`](#inventory_slot_cweapon_b)
-      - [`INVENTORY_SLOT_CWEAPON_L`](#inventory_slot_cweapon_l)
-      - [`INVENTORY_SLOT_CWEAPON_R`](#inventory_slot_cweapon_r)
-      - [`INVENTORY_SLOT_HANDS`](#inventory_slot_hands)
-      - [`INVENTORY_SLOT_HEAD`](#inventory_slot_head)
-      - [`INVENTORY_SLOT_IMPLANT`](#inventory_slot_implant)
-      - [`INVENTORY_SLOT_LEFTARM`](#inventory_slot_leftarm)
-      - [`INVENTORY_SLOT_LEFTWEAPON`](#inventory_slot_leftweapon)
-      - [`INVENTORY_SLOT_RIGHTARM`](#inventory_slot_rightarm)
-      - [`INVENTORY_SLOT_RIGHTWEAPON`](#inventory_slot_rightweapon)
-      - [`NUM_INVENTORY_SLOTS`](#num_inventory_slots)
+      - `INVENTORY_DISTURB_TYPE_ADDED`
+      - `INVENTORY_DISTURB_TYPE_REMOVED`
+      - `INVENTORY_DISTURB_TYPE_STOLEN`
+      - `INVENTORY_SLOT_BELT`
+      - `INVENTORY_SLOT_BODY`
+      - `INVENTORY_SLOT_CARMOUR`
+      - `INVENTORY_SLOT_CWEAPON_B`
+      - `INVENTORY_SLOT_CWEAPON_L`
+      - `INVENTORY_SLOT_CWEAPON_R`
+      - `INVENTORY_SLOT_HANDS`
+      - `INVENTORY_SLOT_HEAD`
+      - `INVENTORY_SLOT_IMPLANT`
+      - `INVENTORY_SLOT_LEFTARM`
+      - `INVENTORY_SLOT_LEFTWEAPON`
+      - `INVENTORY_SLOT_RIGHTARM`
+      - `INVENTORY_SLOT_RIGHTWEAPON`
+      - `NUM_INVENTORY_SLOTS`
     - [NPC Constants](#npc-constants)
-      - [`NPC_AISTYLE_AID`](#npc_aistyle_aid)
-      - [`NPC_AISTYLE_DEFAULT_ATTACK`](#npc_aistyle_default_attack)
-      - [`NPC_AISTYLE_GRENADE_THROWER`](#npc_aistyle_grenade_thrower)
-      - [`NPC_AISTYLE_JEDI_SUPPORT`](#npc_aistyle_jedi_support)
-      - [`NPC_AISTYLE_MELEE_ATTACK`](#npc_aistyle_melee_attack)
-      - [`NPC_AISTYLE_RANGED_ATTACK`](#npc_aistyle_ranged_attack)
-      - [`NPC_CANDEROUS`](#npc_canderous)
-      - [`NPC_HK_47`](#npc_hk_47)
-      - [`NPC_PLAYER`](#npc_player)
-      - [`NPC_T3_M4`](#npc_t3_m4)
+      - `NPC_AISTYLE_AID`
+      - `NPC_AISTYLE_DEFAULT_ATTACK`
+      - `NPC_AISTYLE_GRENADE_THROWER`
+      - `NPC_AISTYLE_JEDI_SUPPORT`
+      - `NPC_AISTYLE_MELEE_ATTACK`
+      - `NPC_AISTYLE_RANGED_ATTACK`
+      - `NPC_CANDEROUS`
+      - `NPC_HK_47`
+      - `NPC_PLAYER`
+      - `NPC_T3_M4`
     - [Object Type Constants](#object-type-constants)
-      - [`OBJECT_TYPE_ALL`](#object_type_all)
-      - [`OBJECT_TYPE_AREA_OF_EFFECT`](#object_type_area_of_effect)
-      - [`OBJECT_TYPE_CREATURE`](#object_type_creature)
-      - [`OBJECT_TYPE_DOOR`](#object_type_door)
-      - [`OBJECT_TYPE_ENCOUNTER`](#object_type_encounter)
-      - [`OBJECT_TYPE_INVALID`](#object_type_invalid)
-      - [`OBJECT_TYPE_ITEM`](#object_type_item)
-      - [`OBJECT_TYPE_PLACEABLE`](#object_type_placeable)
-      - [`OBJECT_TYPE_SOUND`](#object_type_sound)
-      - [`OBJECT_TYPE_STORE`](#object_type_store)
-      - [`OBJECT_TYPE_TRIGGER`](#object_type_trigger)
-      - [`OBJECT_TYPE_WAYPOINT`](#object_type_waypoint)
+      - `OBJECT_TYPE_ALL`
+      - `OBJECT_TYPE_AREA_OF_EFFECT`
+      - `OBJECT_TYPE_CREATURE`
+      - `OBJECT_TYPE_DOOR`
+      - `OBJECT_TYPE_ENCOUNTER`
+      - `OBJECT_TYPE_INVALID`
+      - `OBJECT_TYPE_ITEM`
+      - `OBJECT_TYPE_PLACEABLE`
+      - `OBJECT_TYPE_SOUND`
+      - `OBJECT_TYPE_STORE`
+      - `OBJECT_TYPE_TRIGGER`
+      - `OBJECT_TYPE_WAYPOINT`
     - [Other Constants](#other-constants)
-      - [`AC_ARMOUR_ENCHANTMENT_BONUS`](#ac_armour_enchantment_bonus)
-      - [`AC_DEFLECTION_BONUS`](#ac_deflection_bonus)
-      - [`AC_DODGE_BONUS`](#ac_dodge_bonus)
-      - [`AC_NATURAL_BONUS`](#ac_natural_bonus)
-      - [`AC_SHIELD_ENCHANTMENT_BONUS`](#ac_shield_enchantment_bonus)
-      - [`AC_VS_DAMAGE_TYPE_ALL`](#ac_vs_damage_type_all)
-      - [`ACTION_ANIMALEMPATHY`](#action_animalempathy)
-      - [`ACTION_ATTACKOBJECT`](#action_attackobject)
-      - [`ACTION_CASTSPELL`](#action_castspell)
-      - [`ACTION_CLOSEDOOR`](#action_closedoor)
-      - [`ACTION_COUNTERSPELL`](#action_counterspell)
-      - [`ACTION_DIALOGOBJECT`](#action_dialogobject)
-      - [`ACTION_DISABLETRAP`](#action_disabletrap)
-      - [`ACTION_DROPITEM`](#action_dropitem)
-      - [`ACTION_EXAMINETRAP`](#action_examinetrap)
-      - [`ACTION_FLAGTRAP`](#action_flagtrap)
-      - [`ACTION_FOLLOW`](#action_follow)
-      - [`ACTION_FOLLOWLEADER`](#action_followleader)
-      - [`ACTION_HEAL`](#action_heal)
-      - [`ACTION_INVALID`](#action_invalid)
-      - [`ACTION_ITEMCASTSPELL`](#action_itemcastspell)
-      - [`ACTION_LOCK`](#action_lock)
-      - [`ACTION_MOVETOPOINT`](#action_movetopoint)
-      - [`ACTION_OPENDOOR`](#action_opendoor)
-      - [`ACTION_OPENLOCK`](#action_openlock)
-      - [`ACTION_PICKPOCKET`](#action_pickpocket)
-      - [`ACTION_PICKUPITEM`](#action_pickupitem)
-      - [`ACTION_QUEUEEMPTY`](#action_queueempty)
-      - [`ACTION_RECOVERTRAP`](#action_recovertrap)
-      - [`ACTION_REST`](#action_rest)
-      - [`ACTION_SETTRAP`](#action_settrap)
-      - [`ACTION_SIT`](#action_sit)
-      - [`ACTION_TAUNT`](#action_taunt)
-      - [`ACTION_USEOBJECT`](#action_useobject)
-      - [`ACTION_WAIT`](#action_wait)
-      - [`ANIMATION_FIREFORGET_ACTIVATE`](#animation_fireforget_activate)
-      - [`ANIMATION_FIREFORGET_BOW`](#animation_fireforget_bow)
-      - [`ANIMATION_FIREFORGET_CHOKE`](#animation_fireforget_choke)
-      - [`ANIMATION_FIREFORGET_CUSTOM01`](#animation_fireforget_custom01)
-      - [`ANIMATION_FIREFORGET_GREETING`](#animation_fireforget_greeting)
-      - [`ANIMATION_FIREFORGET_HEAD_TURN_LEFT`](#animation_fireforget_head_turn_left)
-      - [`ANIMATION_FIREFORGET_HEAD_TURN_RIGHT`](#animation_fireforget_head_turn_right)
-      - [`ANIMATION_FIREFORGET_INJECT`](#animation_fireforget_inject)
-      - [`ANIMATION_FIREFORGET_PAUSE_BORED`](#animation_fireforget_pause_bored)
-      - [`ANIMATION_FIREFORGET_PAUSE_SCRATCH_HEAD`](#animation_fireforget_pause_scratch_head)
-      - [`ANIMATION_FIREFORGET_PERSUADE`](#animation_fireforget_persuade)
-      - [`ANIMATION_FIREFORGET_SALUTE`](#animation_fireforget_salute)
-      - [`ANIMATION_FIREFORGET_TAUNT`](#animation_fireforget_taunt)
-      - [`ANIMATION_FIREFORGET_THROW_HIGH`](#animation_fireforget_throw_high)
-      - [`ANIMATION_FIREFORGET_THROW_LOW`](#animation_fireforget_throw_low)
-      - [`ANIMATION_FIREFORGET_TREAT_INJURED`](#animation_fireforget_treat_injured)
-      - [`ANIMATION_FIREFORGET_USE_COMPUTER`](#animation_fireforget_use_computer)
-      - [`ANIMATION_FIREFORGET_VICTORY1`](#animation_fireforget_victory1)
-      - [`ANIMATION_FIREFORGET_VICTORY2`](#animation_fireforget_victory2)
-      - [`ANIMATION_FIREFORGET_VICTORY3`](#animation_fireforget_victory3)
-      - [`ANIMATION_LOOPING_CHOKE`](#animation_looping_choke)
-      - [`ANIMATION_LOOPING_DANCE`](#animation_looping_dance)
-      - [`ANIMATION_LOOPING_DANCE1`](#animation_looping_dance1)
-      - [`ANIMATION_LOOPING_DEACTIVATE`](#animation_looping_deactivate)
-      - [`ANIMATION_LOOPING_DEAD`](#animation_looping_dead)
-      - [`ANIMATION_LOOPING_DEAD_PRONE`](#animation_looping_dead_prone)
-      - [`ANIMATION_LOOPING_FLIRT`](#animation_looping_flirt)
-      - [`ANIMATION_LOOPING_GET_LOW`](#animation_looping_get_low)
-      - [`ANIMATION_LOOPING_GET_MID`](#animation_looping_get_mid)
-      - [`ANIMATION_LOOPING_HORROR`](#animation_looping_horror)
-      - [`ANIMATION_LOOPING_KNEEL_TALK_ANGRY`](#animation_looping_kneel_talk_angry)
-      - [`ANIMATION_LOOPING_KNEEL_TALK_SAD`](#animation_looping_kneel_talk_sad)
-      - [`ANIMATION_LOOPING_LISTEN`](#animation_looping_listen)
-      - [`ANIMATION_LOOPING_LISTEN_INJURED`](#animation_looping_listen_injured)
-      - [`ANIMATION_LOOPING_MEDITATE`](#animation_looping_meditate)
-      - [`ANIMATION_LOOPING_PAUSE`](#animation_looping_pause)
-      - [`ANIMATION_LOOPING_PAUSE2`](#animation_looping_pause2)
-      - [`ANIMATION_LOOPING_PAUSE3`](#animation_looping_pause3)
-      - [`ANIMATION_LOOPING_PAUSE_DRUNK`](#animation_looping_pause_drunk)
-      - [`ANIMATION_LOOPING_PAUSE_TIRED`](#animation_looping_pause_tired)
-      - [`ANIMATION_LOOPING_PRONE`](#animation_looping_prone)
-      - [`ANIMATION_LOOPING_READY`](#animation_looping_ready)
-      - [`ANIMATION_LOOPING_SLEEP`](#animation_looping_sleep)
-      - [`ANIMATION_LOOPING_SPASM`](#animation_looping_spasm)
-      - [`ANIMATION_LOOPING_TALK_FORCEFUL`](#animation_looping_talk_forceful)
-      - [`ANIMATION_LOOPING_TALK_INJURED`](#animation_looping_talk_injured)
-      - [`ANIMATION_LOOPING_TALK_LAUGHING`](#animation_looping_talk_laughing)
-      - [`ANIMATION_LOOPING_TALK_NORMAL`](#animation_looping_talk_normal)
-      - [`ANIMATION_LOOPING_TALK_PLEADING`](#animation_looping_talk_pleading)
-      - [`ANIMATION_LOOPING_TALK_SAD`](#animation_looping_talk_sad)
-      - [`ANIMATION_LOOPING_TREAT_INJURED`](#animation_looping_treat_injured)
-      - [`ANIMATION_LOOPING_USE_COMPUTER`](#animation_looping_use_computer)
-      - [`ANIMATION_LOOPING_WELD`](#animation_looping_weld)
-      - [`ANIMATION_LOOPING_WORSHIP`](#animation_looping_worship)
-      - [`ANIMATION_PLACEABLE_ACTIVATE`](#animation_placeable_activate)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP01`](#animation_placeable_animloop01)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP02`](#animation_placeable_animloop02)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP03`](#animation_placeable_animloop03)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP04`](#animation_placeable_animloop04)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP05`](#animation_placeable_animloop05)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP06`](#animation_placeable_animloop06)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP07`](#animation_placeable_animloop07)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP08`](#animation_placeable_animloop08)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP09`](#animation_placeable_animloop09)
-      - [`ANIMATION_PLACEABLE_ANIMLOOP10`](#animation_placeable_animloop10)
-      - [`ANIMATION_PLACEABLE_CLOSE`](#animation_placeable_close)
-      - [`ANIMATION_PLACEABLE_DEACTIVATE`](#animation_placeable_deactivate)
-      - [`ANIMATION_PLACEABLE_OPEN`](#animation_placeable_open)
-      - [`ANIMATION_ROOM_SCRIPTLOOP01`](#animation_room_scriptloop01)
-      - [`ANIMATION_ROOM_SCRIPTLOOP02`](#animation_room_scriptloop02)
-      - [`ANIMATION_ROOM_SCRIPTLOOP03`](#animation_room_scriptloop03)
-      - [`ANIMATION_ROOM_SCRIPTLOOP04`](#animation_room_scriptloop04)
-      - [`ANIMATION_ROOM_SCRIPTLOOP05`](#animation_room_scriptloop05)
-      - [`ANIMATION_ROOM_SCRIPTLOOP06`](#animation_room_scriptloop06)
-      - [`ANIMATION_ROOM_SCRIPTLOOP07`](#animation_room_scriptloop07)
-      - [`ANIMATION_ROOM_SCRIPTLOOP08`](#animation_room_scriptloop08)
-      - [`ANIMATION_ROOM_SCRIPTLOOP09`](#animation_room_scriptloop09)
-      - [`ANIMATION_ROOM_SCRIPTLOOP10`](#animation_room_scriptloop10)
-      - [`ANIMATION_ROOM_SCRIPTLOOP11`](#animation_room_scriptloop11)
-      - [`ANIMATION_ROOM_SCRIPTLOOP12`](#animation_room_scriptloop12)
-      - [`ANIMATION_ROOM_SCRIPTLOOP13`](#animation_room_scriptloop13)
-      - [`ANIMATION_ROOM_SCRIPTLOOP14`](#animation_room_scriptloop14)
-      - [`ANIMATION_ROOM_SCRIPTLOOP15`](#animation_room_scriptloop15)
-      - [`ANIMATION_ROOM_SCRIPTLOOP16`](#animation_room_scriptloop16)
-      - [`ANIMATION_ROOM_SCRIPTLOOP17`](#animation_room_scriptloop17)
-      - [`ANIMATION_ROOM_SCRIPTLOOP18`](#animation_room_scriptloop18)
-      - [`ANIMATION_ROOM_SCRIPTLOOP19`](#animation_room_scriptloop19)
-      - [`ANIMATION_ROOM_SCRIPTLOOP20`](#animation_room_scriptloop20)
-      - [`AOE_MOB_BLINDING`](#aoe_mob_blinding)
-      - [`AOE_MOB_CIRCCHAOS`](#aoe_mob_circchaos)
-      - [`AOE_MOB_CIRCEVIL`](#aoe_mob_circevil)
-      - [`AOE_MOB_CIRCGOOD`](#aoe_mob_circgood)
-      - [`AOE_MOB_CIRCLAW`](#aoe_mob_circlaw)
-      - [`AOE_MOB_DRAGON_FEAR`](#aoe_mob_dragon_fear)
-      - [`AOE_MOB_ELECTRICAL`](#aoe_mob_electrical)
-      - [`AOE_MOB_FEAR`](#aoe_mob_fear)
-      - [`AOE_MOB_FIRE`](#aoe_mob_fire)
-      - [`AOE_MOB_FROST`](#aoe_mob_frost)
-      - [`AOE_MOB_INVISIBILITY_PURGE`](#aoe_mob_invisibility_purge)
-      - [`AOE_MOB_MENACE`](#aoe_mob_menace)
-      - [`AOE_MOB_PROTECTION`](#aoe_mob_protection)
-      - [`AOE_MOB_SILENCE`](#aoe_mob_silence)
-      - [`AOE_MOB_STUN`](#aoe_mob_stun)
-      - [`AOE_MOB_TYRANT_FOG`](#aoe_mob_tyrant_fog)
-      - [`AOE_MOB_UNEARTHLY`](#aoe_mob_unearthly)
-      - [`AOE_MOB_UNNATURAL`](#aoe_mob_unnatural)
-      - [`AOE_PER_CREEPING_DOOM`](#aoe_per_creeping_doom)
-      - [`AOE_PER_DARKNESS`](#aoe_per_darkness)
-      - [`AOE_PER_DELAY_BLAST_FIREBALL`](#aoe_per_delay_blast_fireball)
-      - [`AOE_PER_ENTANGLE`](#aoe_per_entangle)
-      - [`AOE_PER_EVARDS_BLACK_TENTACLES`](#aoe_per_evards_black_tentacles)
-      - [`AOE_PER_FOGACID`](#aoe_per_fogacid)
-      - [`AOE_PER_FOGFIRE`](#aoe_per_fogfire)
-      - [`AOE_PER_FOGGHOUL`](#aoe_per_fogghoul)
-      - [`AOE_PER_FOGKILL`](#aoe_per_fogkill)
-      - [`AOE_PER_FOGMIND`](#aoe_per_fogmind)
-      - [`AOE_PER_FOGSTINK`](#aoe_per_fogstink)
-      - [`AOE_PER_GREASE`](#aoe_per_grease)
-      - [`AOE_PER_INVIS_SPHERE`](#aoe_per_invis_sphere)
-      - [`AOE_PER_STORM`](#aoe_per_storm)
-      - [`AOE_PER_WALLBLADE`](#aoe_per_wallblade)
-      - [`AOE_PER_WALLFIRE`](#aoe_per_wallfire)
-      - [`AOE_PER_WALLWIND`](#aoe_per_wallwind)
-      - [`AOE_PER_WEB`](#aoe_per_web)
-      - [`AREA_TRANSITION_CASTLE_01`](#area_transition_castle_01)
-      - [`AREA_TRANSITION_CASTLE_02`](#area_transition_castle_02)
-      - [`AREA_TRANSITION_CASTLE_03`](#area_transition_castle_03)
-      - [`AREA_TRANSITION_CASTLE_04`](#area_transition_castle_04)
-      - [`AREA_TRANSITION_CASTLE_05`](#area_transition_castle_05)
-      - [`AREA_TRANSITION_CASTLE_06`](#area_transition_castle_06)
-      - [`AREA_TRANSITION_CASTLE_07`](#area_transition_castle_07)
-      - [`AREA_TRANSITION_CASTLE_08`](#area_transition_castle_08)
-      - [`AREA_TRANSITION_CITY`](#area_transition_city)
-      - [`AREA_TRANSITION_CITY_01`](#area_transition_city_01)
-      - [`AREA_TRANSITION_CITY_02`](#area_transition_city_02)
-      - [`AREA_TRANSITION_CITY_03`](#area_transition_city_03)
-      - [`AREA_TRANSITION_CITY_04`](#area_transition_city_04)
-      - [`AREA_TRANSITION_CITY_05`](#area_transition_city_05)
-      - [`AREA_TRANSITION_CRYPT`](#area_transition_crypt)
-      - [`AREA_TRANSITION_CRYPT_01`](#area_transition_crypt_01)
-      - [`AREA_TRANSITION_CRYPT_02`](#area_transition_crypt_02)
-      - [`AREA_TRANSITION_CRYPT_03`](#area_transition_crypt_03)
-      - [`AREA_TRANSITION_CRYPT_04`](#area_transition_crypt_04)
-      - [`AREA_TRANSITION_CRYPT_05`](#area_transition_crypt_05)
-      - [`AREA_TRANSITION_DUNGEON_01`](#area_transition_dungeon_01)
-      - [`AREA_TRANSITION_DUNGEON_02`](#area_transition_dungeon_02)
-      - [`AREA_TRANSITION_DUNGEON_03`](#area_transition_dungeon_03)
-      - [`AREA_TRANSITION_DUNGEON_04`](#area_transition_dungeon_04)
-      - [`AREA_TRANSITION_DUNGEON_05`](#area_transition_dungeon_05)
-      - [`AREA_TRANSITION_DUNGEON_06`](#area_transition_dungeon_06)
-      - [`AREA_TRANSITION_DUNGEON_07`](#area_transition_dungeon_07)
-      - [`AREA_TRANSITION_DUNGEON_08`](#area_transition_dungeon_08)
-      - [`AREA_TRANSITION_FOREST`](#area_transition_forest)
-      - [`AREA_TRANSITION_FOREST_01`](#area_transition_forest_01)
-      - [`AREA_TRANSITION_FOREST_02`](#area_transition_forest_02)
-      - [`AREA_TRANSITION_FOREST_03`](#area_transition_forest_03)
-      - [`AREA_TRANSITION_FOREST_04`](#area_transition_forest_04)
-      - [`AREA_TRANSITION_FOREST_05`](#area_transition_forest_05)
-      - [`AREA_TRANSITION_INTERIOR_01`](#area_transition_interior_01)
-      - [`AREA_TRANSITION_INTERIOR_02`](#area_transition_interior_02)
-      - [`AREA_TRANSITION_INTERIOR_03`](#area_transition_interior_03)
-      - [`AREA_TRANSITION_INTERIOR_04`](#area_transition_interior_04)
-      - [`AREA_TRANSITION_INTERIOR_05`](#area_transition_interior_05)
-      - [`AREA_TRANSITION_INTERIOR_06`](#area_transition_interior_06)
-      - [`AREA_TRANSITION_INTERIOR_07`](#area_transition_interior_07)
-      - [`AREA_TRANSITION_INTERIOR_08`](#area_transition_interior_08)
-      - [`AREA_TRANSITION_INTERIOR_09`](#area_transition_interior_09)
-      - [`AREA_TRANSITION_INTERIOR_10`](#area_transition_interior_10)
-      - [`AREA_TRANSITION_INTERIOR_11`](#area_transition_interior_11)
-      - [`AREA_TRANSITION_INTERIOR_12`](#area_transition_interior_12)
-      - [`AREA_TRANSITION_INTERIOR_13`](#area_transition_interior_13)
-      - [`AREA_TRANSITION_INTERIOR_14`](#area_transition_interior_14)
-      - [`AREA_TRANSITION_INTERIOR_15`](#area_transition_interior_15)
-      - [`AREA_TRANSITION_INTERIOR_16`](#area_transition_interior_16)
-      - [`AREA_TRANSITION_MINES_01`](#area_transition_mines_01)
-      - [`AREA_TRANSITION_MINES_02`](#area_transition_mines_02)
-      - [`AREA_TRANSITION_MINES_03`](#area_transition_mines_03)
-      - [`AREA_TRANSITION_MINES_04`](#area_transition_mines_04)
-      - [`AREA_TRANSITION_MINES_05`](#area_transition_mines_05)
-      - [`AREA_TRANSITION_MINES_06`](#area_transition_mines_06)
-      - [`AREA_TRANSITION_MINES_07`](#area_transition_mines_07)
-      - [`AREA_TRANSITION_MINES_08`](#area_transition_mines_08)
-      - [`AREA_TRANSITION_MINES_09`](#area_transition_mines_09)
-      - [`AREA_TRANSITION_RANDOM`](#area_transition_random)
-      - [`AREA_TRANSITION_RURAL`](#area_transition_rural)
-      - [`AREA_TRANSITION_RURAL_01`](#area_transition_rural_01)
-      - [`AREA_TRANSITION_RURAL_02`](#area_transition_rural_02)
-      - [`AREA_TRANSITION_RURAL_03`](#area_transition_rural_03)
-      - [`AREA_TRANSITION_RURAL_04`](#area_transition_rural_04)
-      - [`AREA_TRANSITION_RURAL_05`](#area_transition_rural_05)
-      - [`AREA_TRANSITION_SEWER_01`](#area_transition_sewer_01)
-      - [`AREA_TRANSITION_SEWER_02`](#area_transition_sewer_02)
-      - [`AREA_TRANSITION_SEWER_03`](#area_transition_sewer_03)
-      - [`AREA_TRANSITION_SEWER_04`](#area_transition_sewer_04)
-      - [`AREA_TRANSITION_SEWER_05`](#area_transition_sewer_05)
-      - [`AREA_TRANSITION_USER_DEFINED`](#area_transition_user_defined)
-      - [`ATTACK_BONUS_MISC`](#attack_bonus_misc)
-      - [`ATTACK_BONUS_OFFHAND`](#attack_bonus_offhand)
-      - [`ATTACK_BONUS_ONHAND`](#attack_bonus_onhand)
-      - [`ATTACK_RESULT_ATTACK_FAILED`](#attack_result_attack_failed)
-      - [`ATTACK_RESULT_ATTACK_RESISTED`](#attack_result_attack_resisted)
-      - [`ATTACK_RESULT_AUTOMATIC_HIT`](#attack_result_automatic_hit)
-      - [`ATTACK_RESULT_CRITICAL_HIT`](#attack_result_critical_hit)
-      - [`ATTACK_RESULT_DEFLECTED`](#attack_result_deflected)
-      - [`ATTACK_RESULT_HIT_SUCCESSFUL`](#attack_result_hit_successful)
-      - [`ATTACK_RESULT_INVALID`](#attack_result_invalid)
-      - [`ATTACK_RESULT_MISS`](#attack_result_miss)
-      - [`ATTACK_RESULT_PARRIED`](#attack_result_parried)
-      - [`ATTITUDE_AGGRESSIVE`](#attitude_aggressive)
-      - [`ATTITUDE_DEFENSIVE`](#attitude_defensive)
-      - [`ATTITUDE_NEUTRAL`](#attitude_neutral)
-      - [`ATTITUDE_SPECIAL`](#attitude_special)
-      - [`BASE_ITEM_ADHESIVE_GRENADE`](#base_item_adhesive_grenade)
-      - [`BASE_ITEM_ADRENALINE`](#base_item_adrenaline)
-      - [`BASE_ITEM_AESTHETIC_ITEM`](#base_item_aesthetic_item)
-      - [`BASE_ITEM_ARMOR_CLASS_4`](#base_item_armor_class_4)
-      - [`BASE_ITEM_ARMOR_CLASS_5`](#base_item_armor_class_5)
-      - [`BASE_ITEM_ARMOR_CLASS_6`](#base_item_armor_class_6)
-      - [`BASE_ITEM_ARMOR_CLASS_7`](#base_item_armor_class_7)
-      - [`BASE_ITEM_ARMOR_CLASS_8`](#base_item_armor_class_8)
-      - [`BASE_ITEM_ARMOR_CLASS_9`](#base_item_armor_class_9)
-      - [`BASE_ITEM_BASIC_CLOTHING`](#base_item_basic_clothing)
-      - [`BASE_ITEM_BELT`](#base_item_belt)
-      - [`BASE_ITEM_BLASTER_CARBINE`](#base_item_blaster_carbine)
-      - [`BASE_ITEM_BLASTER_PISTOL`](#base_item_blaster_pistol)
-      - [`BASE_ITEM_BLASTER_RIFLE`](#base_item_blaster_rifle)
-      - [`BASE_ITEM_BOWCASTER`](#base_item_bowcaster)
-      - [`BASE_ITEM_COLLAR_LIGHT`](#base_item_collar_light)
-      - [`BASE_ITEM_COMBAT_SHOTS`](#base_item_combat_shots)
-      - [`BASE_ITEM_CREATURE_HIDE_ITEM`](#base_item_creature_hide_item)
-      - [`BASE_ITEM_CREATURE_ITEM_PIERCE`](#base_item_creature_item_pierce)
-      - [`BASE_ITEM_CREATURE_ITEM_SLASH`](#base_item_creature_item_slash)
-      - [`BASE_ITEM_CREATURE_WEAPON_SL_PRC`](#base_item_creature_weapon_sl_prc)
-      - [`BASE_ITEM_CREDITS`](#base_item_credits)
-      - [`BASE_ITEM_CRYOBAN_GRENADE`](#base_item_cryoban_grenade)
-      - [`BASE_ITEM_DATA_PAD`](#base_item_data_pad)
-      - [`BASE_ITEM_DISRUPTER_PISTOL`](#base_item_disrupter_pistol)
-      - [`BASE_ITEM_DISRUPTER_RIFLE`](#base_item_disrupter_rifle)
-      - [`BASE_ITEM_DOUBLE_BLADED_LIGHTSABER`](#base_item_double_bladed_lightsaber)
-      - [`BASE_ITEM_DOUBLE_BLADED_SWORD`](#base_item_double_bladed_sword)
-      - [`BASE_ITEM_DROID_COMPUTER_SPIKE_MOUNT`](#base_item_droid_computer_spike_mount)
-      - [`BASE_ITEM_DROID_HEAVY_PLATING`](#base_item_droid_heavy_plating)
-      - [`BASE_ITEM_DROID_LIGHT_PLATING`](#base_item_droid_light_plating)
-      - [`BASE_ITEM_DROID_MEDIUM_PLATING`](#base_item_droid_medium_plating)
-      - [`BASE_ITEM_DROID_MOTION_SENSORS`](#base_item_droid_motion_sensors)
-      - [`BASE_ITEM_DROID_REPAIR_EQUIPMENT`](#base_item_droid_repair_equipment)
-      - [`BASE_ITEM_DROID_SEARCH_SCOPE`](#base_item_droid_search_scope)
-      - [`BASE_ITEM_DROID_SECURITY_SPIKE_MOUNT`](#base_item_droid_security_spike_mount)
-      - [`BASE_ITEM_DROID_SHIELD`](#base_item_droid_shield)
-      - [`BASE_ITEM_DROID_SONIC_SENSORS`](#base_item_droid_sonic_sensors)
-      - [`BASE_ITEM_DROID_TARGETING_COMPUTERS`](#base_item_droid_targeting_computers)
-      - [`BASE_ITEM_DROID_UTILITY_DEVICE`](#base_item_droid_utility_device)
-      - [`BASE_ITEM_FIRE_GRENADE`](#base_item_fire_grenade)
-      - [`BASE_ITEM_FLASH_GRENADE`](#base_item_flash_grenade)
-      - [`BASE_ITEM_FOREARM_BANDS`](#base_item_forearm_bands)
-      - [`BASE_ITEM_FRAGMENTATION_GRENADES`](#base_item_fragmentation_grenades)
-      - [`BASE_ITEM_GAMMOREAN_BATTLEAXE`](#base_item_gammorean_battleaxe)
-      - [`BASE_ITEM_GAUNTLETS`](#base_item_gauntlets)
-      - [`BASE_ITEM_GHAFFI_STICK`](#base_item_ghaffi_stick)
-      - [`BASE_ITEM_GLOW_ROD`](#base_item_glow_rod)
-      - [`BASE_ITEM_HEAVY_BLASTER`](#base_item_heavy_blaster)
-      - [`BASE_ITEM_HEAVY_REPEATING_BLASTER`](#base_item_heavy_repeating_blaster)
-      - [`BASE_ITEM_HOLD_OUT_BLASTER`](#base_item_hold_out_blaster)
-      - [`BASE_ITEM_IMPLANT_1`](#base_item_implant_1)
-      - [`BASE_ITEM_IMPLANT_2`](#base_item_implant_2)
-      - [`BASE_ITEM_IMPLANT_3`](#base_item_implant_3)
-      - [`BASE_ITEM_INVALID`](#base_item_invalid)
-      - [`BASE_ITEM_ION_BLASTER`](#base_item_ion_blaster)
-      - [`BASE_ITEM_ION_GRENADE`](#base_item_ion_grenade)
-      - [`BASE_ITEM_ION_RIFLE`](#base_item_ion_rifle)
-      - [`BASE_ITEM_JEDI_KNIGHT_ROBE`](#base_item_jedi_knight_robe)
-      - [`BASE_ITEM_JEDI_MASTER_ROBE`](#base_item_jedi_master_robe)
-      - [`BASE_ITEM_JEDI_ROBE`](#base_item_jedi_robe)
-      - [`BASE_ITEM_LIGHTSABER`](#base_item_lightsaber)
-      - [`BASE_ITEM_LIGHTSABER_CRYSTALS`](#base_item_lightsaber_crystals)
-      - [`BASE_ITEM_LONG_SWORD`](#base_item_long_sword)
-      - [`BASE_ITEM_MASK`](#base_item_mask)
-      - [`BASE_ITEM_MEDICAL_EQUIPMENT`](#base_item_medical_equipment)
-      - [`BASE_ITEM_PLOT_USEABLE_ITEMS`](#base_item_plot_useable_items)
-      - [`BASE_ITEM_POISON_GRENADE`](#base_item_poison_grenade)
-      - [`BASE_ITEM_PROGRAMMING_SPIKES`](#base_item_programming_spikes)
-      - [`BASE_ITEM_QUARTER_STAFF`](#base_item_quarter_staff)
-      - [`BASE_ITEM_REPEATING_BLASTER`](#base_item_repeating_blaster)
-      - [`BASE_ITEM_SECURITY_SPIKES`](#base_item_security_spikes)
-      - [`BASE_ITEM_SHORT_LIGHTSABER`](#base_item_short_lightsaber)
-      - [`BASE_ITEM_SHORT_SWORD`](#base_item_short_sword)
-      - [`BASE_ITEM_SONIC_GRENADE`](#base_item_sonic_grenade)
-      - [`BASE_ITEM_SONIC_PISTOL`](#base_item_sonic_pistol)
-      - [`BASE_ITEM_SONIC_RIFLE`](#base_item_sonic_rifle)
-      - [`BASE_ITEM_STUN_BATON`](#base_item_stun_baton)
-      - [`BASE_ITEM_STUN_GRENADES`](#base_item_stun_grenades)
-      - [`BASE_ITEM_THERMAL_DETONATOR`](#base_item_thermal_detonator)
-      - [`BASE_ITEM_TORCH`](#base_item_torch)
-      - [`BASE_ITEM_TRAP_KIT`](#base_item_trap_kit)
-      - [`BASE_ITEM_VIBRO_BLADE`](#base_item_vibro_blade)
-      - [`BASE_ITEM_VIBRO_DOUBLE_BLADE`](#base_item_vibro_double_blade)
-      - [`BASE_ITEM_VIBRO_SWORD`](#base_item_vibro_sword)
-      - [`BASE_ITEM_WOOKIE_WARBLADE`](#base_item_wookie_warblade)
-      - [`BODY_NODE_CHEST`](#body_node_chest)
-      - [`BODY_NODE_HAND`](#body_node_hand)
-      - [`BODY_NODE_HAND_LEFT`](#body_node_hand_left)
-      - [`BODY_NODE_HAND_RIGHT`](#body_node_hand_right)
-      - [`BODY_NODE_HEAD`](#body_node_head)
-      - [`CAMERA_MODE_CHASE_CAMERA`](#camera_mode_chase_camera)
-      - [`CAMERA_MODE_STIFF_CHASE_CAMERA`](#camera_mode_stiff_chase_camera)
-      - [`CAMERA_MODE_TOP_DOWN`](#camera_mode_top_down)
-      - [`COMBAT_MODE_FLURRY_OF_BLOWS`](#combat_mode_flurry_of_blows)
-      - [`COMBAT_MODE_IMPROVED_POWER_ATTACK`](#combat_mode_improved_power_attack)
-      - [`COMBAT_MODE_INVALID`](#combat_mode_invalid)
-      - [`COMBAT_MODE_PARRY`](#combat_mode_parry)
-      - [`COMBAT_MODE_POWER_ATTACK`](#combat_mode_power_attack)
-      - [`COMBAT_MODE_RAPID_SHOT`](#combat_mode_rapid_shot)
-      - [`CONVERSATION_TYPE_CINEMATIC`](#conversation_type_cinematic)
-      - [`CONVERSATION_TYPE_COMPUTER`](#conversation_type_computer)
-      - [`CREATURE_SIZE_HUGE`](#creature_size_huge)
-      - [`CREATURE_SIZE_INVALID`](#creature_size_invalid)
-      - [`CREATURE_SIZE_LARGE`](#creature_size_large)
-      - [`CREATURE_SIZE_MEDIUM`](#creature_size_medium)
-      - [`CREATURE_SIZE_SMALL`](#creature_size_small)
-      - [`CREATURE_SIZE_TINY`](#creature_size_tiny)
-      - [`CREATURE_TYPE_CLASS`](#creature_type_class)
-      - [`CREATURE_TYPE_DOES_NOT_HAVE_SPELL_EFFECT`](#creature_type_does_not_have_spell_effect)
-      - [`CREATURE_TYPE_HAS_SPELL_EFFECT`](#creature_type_has_spell_effect)
-      - [`CREATURE_TYPE_IS_ALIVE`](#creature_type_is_alive)
-      - [`CREATURE_TYPE_PERCEPTION`](#creature_type_perception)
-      - [`CREATURE_TYPE_PLAYER_CHAR`](#creature_type_player_char)
-      - [`CREATURE_TYPE_RACIAL_TYPE`](#creature_type_racial_type)
-      - [`CREATURE_TYPE_REPUTATION`](#creature_type_reputation)
-      - [`DAMAGE_BONUS_1`](#damage_bonus_1)
-      - [`DAMAGE_BONUS_1d10`](#damage_bonus_1d10)
-      - [`DAMAGE_BONUS_1d4`](#damage_bonus_1d4)
-      - [`DAMAGE_BONUS_1d6`](#damage_bonus_1d6)
-      - [`DAMAGE_BONUS_1d8`](#damage_bonus_1d8)
-      - [`DAMAGE_BONUS_2`](#damage_bonus_2)
-      - [`DAMAGE_BONUS_2d6`](#damage_bonus_2d6)
-      - [`DAMAGE_BONUS_3`](#damage_bonus_3)
-      - [`DAMAGE_BONUS_4`](#damage_bonus_4)
-      - [`DAMAGE_BONUS_5`](#damage_bonus_5)
-      - [`DAMAGE_POWER_ENERGY`](#damage_power_energy)
-      - [`DAMAGE_POWER_NORMAL`](#damage_power_normal)
-      - [`DAMAGE_POWER_PLUS_FIVE`](#damage_power_plus_five)
-      - [`DAMAGE_POWER_PLUS_FOUR`](#damage_power_plus_four)
-      - [`DAMAGE_POWER_PLUS_ONE`](#damage_power_plus_one)
-      - [`DAMAGE_POWER_PLUS_THREE`](#damage_power_plus_three)
-      - [`DAMAGE_POWER_PLUS_TWO`](#damage_power_plus_two)
-      - [`DAMAGE_TYPE_ACID`](#damage_type_acid)
-      - [`DAMAGE_TYPE_BLASTER`](#damage_type_blaster)
-      - [`DAMAGE_TYPE_BLUDGEONING`](#damage_type_bludgeoning)
-      - [`DAMAGE_TYPE_COLD`](#damage_type_cold)
-      - [`DAMAGE_TYPE_DARK_SIDE`](#damage_type_dark_side)
-      - [`DAMAGE_TYPE_ELECTRICAL`](#damage_type_electrical)
-      - [`DAMAGE_TYPE_FIRE`](#damage_type_fire)
-      - [`DAMAGE_TYPE_ION`](#damage_type_ion)
-      - [`DAMAGE_TYPE_LIGHT_SIDE`](#damage_type_light_side)
-      - [`DAMAGE_TYPE_PIERCING`](#damage_type_piercing)
-      - [`DAMAGE_TYPE_SLASHING`](#damage_type_slashing)
-      - [`DAMAGE_TYPE_SONIC`](#damage_type_sonic)
-      - [`DAMAGE_TYPE_UNIVERSAL`](#damage_type_universal)
-      - [`DIRECTION_EAST`](#direction_east)
-      - [`DIRECTION_NORTH`](#direction_north)
-      - [`DIRECTION_SOUTH`](#direction_south)
-      - [`DIRECTION_WEST`](#direction_west)
-      - [`DISGUISE_TYPE_C_BANTHA`](#disguise_type_c_bantha)
-      - [`DISGUISE_TYPE_C_BRITH`](#disguise_type_c_brith)
-      - [`DISGUISE_TYPE_C_DEWBACK`](#disguise_type_c_dewback)
-      - [`DISGUISE_TYPE_C_DRDASSASSIN`](#disguise_type_c_drdassassin)
-      - [`DISGUISE_TYPE_C_DRDASTRO`](#disguise_type_c_drdastro)
-      - [`DISGUISE_TYPE_C_DRDG`](#disguise_type_c_drdg)
-      - [`DISGUISE_TYPE_C_DRDMKFOUR`](#disguise_type_c_drdmkfour)
-      - [`DISGUISE_TYPE_C_DRDMKONE`](#disguise_type_c_drdmkone)
-      - [`DISGUISE_TYPE_C_DRDMKTWO`](#disguise_type_c_drdmktwo)
-      - [`DISGUISE_TYPE_C_DRDPROBE`](#disguise_type_c_drdprobe)
-      - [`DISGUISE_TYPE_C_DRDPROT`](#disguise_type_c_drdprot)
-      - [`DISGUISE_TYPE_C_DRDSENTRY`](#disguise_type_c_drdsentry)
-      - [`DISGUISE_TYPE_C_DRDSPYDER`](#disguise_type_c_drdspyder)
-      - [`DISGUISE_TYPE_C_DRDWAR`](#disguise_type_c_drdwar)
-      - [`DISGUISE_TYPE_C_FIRIXA`](#disguise_type_c_firixa)
-      - [`DISGUISE_TYPE_C_GAMMOREAN`](#disguise_type_c_gammorean)
-      - [`DISGUISE_TYPE_C_GIZKA`](#disguise_type_c_gizka)
-      - [`DISGUISE_TYPE_C_HUTT`](#disguise_type_c_hutt)
-      - [`DISGUISE_TYPE_C_IRIAZ`](#disguise_type_c_iriaz)
-      - [`DISGUISE_TYPE_C_ITHORIAN`](#disguise_type_c_ithorian)
-      - [`DISGUISE_TYPE_C_JAWA`](#disguise_type_c_jawa)
-      - [`DISGUISE_TYPE_C_KATAARN`](#disguise_type_c_kataarn)
-      - [`DISGUISE_TYPE_C_KHOUNDA`](#disguise_type_c_khounda)
-      - [`DISGUISE_TYPE_C_KHOUNDB`](#disguise_type_c_khoundb)
-      - [`DISGUISE_TYPE_C_KINRATH`](#disguise_type_c_kinrath)
-      - [`DISGUISE_TYPE_C_KRAYTDRAGON`](#disguise_type_c_kraytdragon)
-      - [`DISGUISE_TYPE_C_MYKAL`](#disguise_type_c_mykal)
-      - [`DISGUISE_TYPE_C_RAKGHOUL`](#disguise_type_c_rakghoul)
-      - [`DISGUISE_TYPE_C_RANCOR`](#disguise_type_c_rancor)
-      - [`DISGUISE_TYPE_C_RONTO`](#disguise_type_c_ronto)
-      - [`DISGUISE_TYPE_C_SEABEAST`](#disguise_type_c_seabeast)
-      - [`DISGUISE_TYPE_C_SELKATH`](#disguise_type_c_selkath)
-      - [`DISGUISE_TYPE_C_TACH`](#disguise_type_c_tach)
-      - [`DISGUISE_TYPE_C_TUKATA`](#disguise_type_c_tukata)
-      - [`DISGUISE_TYPE_C_TWOHEAD`](#disguise_type_c_twohead)
-      - [`DISGUISE_TYPE_C_VERKAAL`](#disguise_type_c_verkaal)
-      - [`DISGUISE_TYPE_C_WRAID`](#disguise_type_c_wraid)
-      - [`DISGUISE_TYPE_COMMONER_FEM_BLACK`](#disguise_type_commoner_fem_black)
-      - [`DISGUISE_TYPE_COMMONER_FEM_OLD_ASIAN`](#disguise_type_commoner_fem_old_asian)
-      - [`DISGUISE_TYPE_COMMONER_FEM_OLD_BLACK`](#disguise_type_commoner_fem_old_black)
-      - [`DISGUISE_TYPE_COMMONER_FEM_OLD_WHITE`](#disguise_type_commoner_fem_old_white)
-      - [`DISGUISE_TYPE_COMMONER_FEM_WHITE`](#disguise_type_commoner_fem_white)
-      - [`DISGUISE_TYPE_COMMONER_MAL_BLACK`](#disguise_type_commoner_mal_black)
-      - [`DISGUISE_TYPE_COMMONER_MAL_OLD_ASIAN`](#disguise_type_commoner_mal_old_asian)
-      - [`DISGUISE_TYPE_COMMONER_MAL_OLD_BLACK`](#disguise_type_commoner_mal_old_black)
-      - [`DISGUISE_TYPE_COMMONER_MAL_OLD_WHITE`](#disguise_type_commoner_mal_old_white)
-      - [`DISGUISE_TYPE_COMMONER_MAL_WHITE`](#disguise_type_commoner_mal_white)
-      - [`DISGUISE_TYPE_CZERKA_OFFICER_BLACK`](#disguise_type_czerka_officer_black)
-      - [`DISGUISE_TYPE_CZERKA_OFFICER_OLD_ASIAN`](#disguise_type_czerka_officer_old_asian)
-      - [`DISGUISE_TYPE_CZERKA_OFFICER_OLD_BLACK`](#disguise_type_czerka_officer_old_black)
-      - [`DISGUISE_TYPE_CZERKA_OFFICER_OLD_WHITE`](#disguise_type_czerka_officer_old_white)
-      - [`DISGUISE_TYPE_CZERKA_OFFICER_WHITE`](#disguise_type_czerka_officer_white)
-      - [`DISGUISE_TYPE_DROID_ASTRO_02`](#disguise_type_droid_astro_02)
-      - [`DISGUISE_TYPE_DROID_ASTRO_03`](#disguise_type_droid_astro_03)
-      - [`DISGUISE_TYPE_DROID_PROTOCOL_02`](#disguise_type_droid_protocol_02)
-      - [`DISGUISE_TYPE_DROID_PROTOCOL_03`](#disguise_type_droid_protocol_03)
-      - [`DISGUISE_TYPE_DROID_PROTOCOL_04`](#disguise_type_droid_protocol_04)
-      - [`DISGUISE_TYPE_DROID_WAR_02`](#disguise_type_droid_war_02)
-      - [`DISGUISE_TYPE_DROID_WAR_03`](#disguise_type_droid_war_03)
-      - [`DISGUISE_TYPE_DROID_WAR_04`](#disguise_type_droid_war_04)
-      - [`DISGUISE_TYPE_DROID_WAR_05`](#disguise_type_droid_war_05)
-      - [`DISGUISE_TYPE_ENVIRONMENTSUIT`](#disguise_type_environmentsuit)
-      - [`DISGUISE_TYPE_ENVIRONMENTSUIT_02`](#disguise_type_environmentsuit_02)
-      - [`DISGUISE_TYPE_GAMMOREAN_02`](#disguise_type_gammorean_02)
-      - [`DISGUISE_TYPE_GAMMOREAN_03`](#disguise_type_gammorean_03)
-      - [`DISGUISE_TYPE_GAMMOREAN_04`](#disguise_type_gammorean_04)
-      - [`DISGUISE_TYPE_HUTT_02`](#disguise_type_hutt_02)
-      - [`DISGUISE_TYPE_HUTT_03`](#disguise_type_hutt_03)
-      - [`DISGUISE_TYPE_HUTT_04`](#disguise_type_hutt_04)
-      - [`DISGUISE_TYPE_ITHORIAN_02`](#disguise_type_ithorian_02)
-      - [`DISGUISE_TYPE_ITHORIAN_03`](#disguise_type_ithorian_03)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_FEMALE_01`](#disguise_type_jedi_asian_female_01)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_FEMALE_02`](#disguise_type_jedi_asian_female_02)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_FEMALE_03`](#disguise_type_jedi_asian_female_03)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_FEMALE_04`](#disguise_type_jedi_asian_female_04)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_FEMALE_05`](#disguise_type_jedi_asian_female_05)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_MALE_01`](#disguise_type_jedi_asian_male_01)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_MALE_02`](#disguise_type_jedi_asian_male_02)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_MALE_03`](#disguise_type_jedi_asian_male_03)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_MALE_04`](#disguise_type_jedi_asian_male_04)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_MALE_05`](#disguise_type_jedi_asian_male_05)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_OLD_FEM`](#disguise_type_jedi_asian_old_fem)
-      - [`DISGUISE_TYPE_JEDI_ASIAN_OLD_MALE`](#disguise_type_jedi_asian_old_male)
-      - [`DISGUISE_TYPE_JEDI_BLACK_FEMALE_01`](#disguise_type_jedi_black_female_01)
-      - [`DISGUISE_TYPE_JEDI_BLACK_FEMALE_02`](#disguise_type_jedi_black_female_02)
-      - [`DISGUISE_TYPE_JEDI_BLACK_FEMALE_03`](#disguise_type_jedi_black_female_03)
-      - [`DISGUISE_TYPE_JEDI_BLACK_FEMALE_04`](#disguise_type_jedi_black_female_04)
-      - [`DISGUISE_TYPE_JEDI_BLACK_FEMALE_05`](#disguise_type_jedi_black_female_05)
-      - [`DISGUISE_TYPE_JEDI_BLACK_MALE_01`](#disguise_type_jedi_black_male_01)
-      - [`DISGUISE_TYPE_JEDI_BLACK_MALE_02`](#disguise_type_jedi_black_male_02)
-      - [`DISGUISE_TYPE_JEDI_BLACK_MALE_03`](#disguise_type_jedi_black_male_03)
-      - [`DISGUISE_TYPE_JEDI_BLACK_MALE_04`](#disguise_type_jedi_black_male_04)
-      - [`DISGUISE_TYPE_JEDI_BLACK_MALE_05`](#disguise_type_jedi_black_male_05)
-      - [`DISGUISE_TYPE_JEDI_BLACK_OLD_FEM`](#disguise_type_jedi_black_old_fem)
-      - [`DISGUISE_TYPE_JEDI_BLACK_OLD_MALE`](#disguise_type_jedi_black_old_male)
-      - [`DISGUISE_TYPE_JEDI_WHITE_FEMALE_02`](#disguise_type_jedi_white_female_02)
-      - [`DISGUISE_TYPE_JEDI_WHITE_FEMALE_03`](#disguise_type_jedi_white_female_03)
-      - [`DISGUISE_TYPE_JEDI_WHITE_FEMALE_04`](#disguise_type_jedi_white_female_04)
-      - [`DISGUISE_TYPE_JEDI_WHITE_FEMALE_05`](#disguise_type_jedi_white_female_05)
-      - [`DISGUISE_TYPE_JEDI_WHITE_MALE_02`](#disguise_type_jedi_white_male_02)
-      - [`DISGUISE_TYPE_JEDI_WHITE_MALE_03`](#disguise_type_jedi_white_male_03)
-      - [`DISGUISE_TYPE_JEDI_WHITE_MALE_04`](#disguise_type_jedi_white_male_04)
-      - [`DISGUISE_TYPE_JEDI_WHITE_MALE_05`](#disguise_type_jedi_white_male_05)
-      - [`DISGUISE_TYPE_JEDI_WHITE_OLD_FEM`](#disguise_type_jedi_white_old_fem)
-      - [`DISGUISE_TYPE_JEDI_WHITE_OLD_MALE`](#disguise_type_jedi_white_old_male)
-      - [`DISGUISE_TYPE_KATH_HOUND_A02`](#disguise_type_kath_hound_a02)
-      - [`DISGUISE_TYPE_KATH_HOUND_A03`](#disguise_type_kath_hound_a03)
-      - [`DISGUISE_TYPE_KATH_HOUND_A04`](#disguise_type_kath_hound_a04)
-      - [`DISGUISE_TYPE_KATH_HOUND_B02`](#disguise_type_kath_hound_b02)
-      - [`DISGUISE_TYPE_KATH_HOUND_B03`](#disguise_type_kath_hound_b03)
-      - [`DISGUISE_TYPE_KATH_HOUND_B04`](#disguise_type_kath_hound_b04)
-      - [`DISGUISE_TYPE_N_ADMRLSAULKAR`](#disguise_type_n_admrlsaulkar)
-      - [`DISGUISE_TYPE_N_BITH`](#disguise_type_n_bith)
-      - [`DISGUISE_TYPE_N_CALONORD`](#disguise_type_n_calonord)
-      - [`DISGUISE_TYPE_N_COMMF`](#disguise_type_n_commf)
-      - [`DISGUISE_TYPE_N_COMMKIDF`](#disguise_type_n_commkidf)
-      - [`DISGUISE_TYPE_N_COMMKIDM`](#disguise_type_n_commkidm)
-      - [`DISGUISE_TYPE_N_COMMM`](#disguise_type_n_commm)
-      - [`DISGUISE_TYPE_N_CZERLAOFF`](#disguise_type_n_czerlaoff)
-      - [`DISGUISE_TYPE_N_DARKJEDIF`](#disguise_type_n_darkjedif)
-      - [`DISGUISE_TYPE_N_DARKJEDIM`](#disguise_type_n_darkjedim)
-      - [`DISGUISE_TYPE_N_DARTHBAND`](#disguise_type_n_darthband)
-      - [`DISGUISE_TYPE_N_DARTHMALAK`](#disguise_type_n_darthmalak)
-      - [`DISGUISE_TYPE_N_DARTHREVAN`](#disguise_type_n_darthrevan)
-      - [`DISGUISE_TYPE_N_DODONNA`](#disguise_type_n_dodonna)
-      - [`DISGUISE_TYPE_N_DUROS`](#disguise_type_n_duros)
-      - [`DISGUISE_TYPE_N_FATCOMF`](#disguise_type_n_fatcomf)
-      - [`DISGUISE_TYPE_N_FATCOMM`](#disguise_type_n_fatcomm)
-      - [`DISGUISE_TYPE_N_JEDICOUNTF`](#disguise_type_n_jedicountf)
-      - [`DISGUISE_TYPE_N_JEDICOUNTM`](#disguise_type_n_jedicountm)
-      - [`DISGUISE_TYPE_N_JEDIMALEK`](#disguise_type_n_jedimalek)
-      - [`DISGUISE_TYPE_N_JEDIMEMF`](#disguise_type_n_jedimemf)
-      - [`DISGUISE_TYPE_N_JEDIMEMM`](#disguise_type_n_jedimemm)
-      - [`DISGUISE_TYPE_N_MANDALORIAN`](#disguise_type_n_mandalorian)
-      - [`DISGUISE_TYPE_N_RAKATA`](#disguise_type_n_rakata)
-      - [`DISGUISE_TYPE_N_REPOFF`](#disguise_type_n_repoff)
-      - [`DISGUISE_TYPE_N_REPSOLD`](#disguise_type_n_repsold)
-      - [`DISGUISE_TYPE_N_RODIAN`](#disguise_type_n_rodian)
-      - [`DISGUISE_TYPE_N_SITHAPPREN`](#disguise_type_n_sithappren)
-      - [`DISGUISE_TYPE_N_SITHCOMF`](#disguise_type_n_sithcomf)
-      - [`DISGUISE_TYPE_N_SITHCOMM`](#disguise_type_n_sithcomm)
-      - [`DISGUISE_TYPE_N_SITHSOLDIER`](#disguise_type_n_sithsoldier)
-      - [`DISGUISE_TYPE_N_SMUGGLER`](#disguise_type_n_smuggler)
-      - [`DISGUISE_TYPE_N_SWOOPGANG`](#disguise_type_n_swoopgang)
-      - [`DISGUISE_TYPE_N_TUSKEN`](#disguise_type_n_tusken)
-      - [`DISGUISE_TYPE_N_TUSKENF`](#disguise_type_n_tuskenf)
-      - [`DISGUISE_TYPE_N_TWILEKF`](#disguise_type_n_twilekf)
-      - [`DISGUISE_TYPE_N_TWILEKM`](#disguise_type_n_twilekm)
-      - [`DISGUISE_TYPE_N_WALRUSMAN`](#disguise_type_n_walrusman)
-      - [`DISGUISE_TYPE_N_WOOKIEF`](#disguise_type_n_wookief)
-      - [`DISGUISE_TYPE_N_WOOKIEM`](#disguise_type_n_wookiem)
-      - [`DISGUISE_TYPE_N_YODA`](#disguise_type_n_yoda)
-      - [`DISGUISE_TYPE_P_BASTILLA`](#disguise_type_p_bastilla)
-      - [`DISGUISE_TYPE_P_CAND`](#disguise_type_p_cand)
-      - [`DISGUISE_TYPE_P_CARTH`](#disguise_type_p_carth)
-      - [`DISGUISE_TYPE_P_FEM_A_LRG_01`](#disguise_type_p_fem_a_lrg_01)
-      - [`DISGUISE_TYPE_P_FEM_A_LRG_02`](#disguise_type_p_fem_a_lrg_02)
-      - [`DISGUISE_TYPE_P_FEM_A_LRG_03`](#disguise_type_p_fem_a_lrg_03)
-      - [`DISGUISE_TYPE_P_FEM_A_LRG_04`](#disguise_type_p_fem_a_lrg_04)
-      - [`DISGUISE_TYPE_P_FEM_A_LRG_05`](#disguise_type_p_fem_a_lrg_05)
-      - [`DISGUISE_TYPE_P_FEM_A_MED_01`](#disguise_type_p_fem_a_med_01)
-      - [`DISGUISE_TYPE_P_FEM_A_MED_02`](#disguise_type_p_fem_a_med_02)
-      - [`DISGUISE_TYPE_P_FEM_A_MED_03`](#disguise_type_p_fem_a_med_03)
-      - [`DISGUISE_TYPE_P_FEM_A_MED_04`](#disguise_type_p_fem_a_med_04)
-      - [`DISGUISE_TYPE_P_FEM_A_MED_05`](#disguise_type_p_fem_a_med_05)
-      - [`DISGUISE_TYPE_P_FEM_A_SML_01`](#disguise_type_p_fem_a_sml_01)
-      - [`DISGUISE_TYPE_P_FEM_A_SML_02`](#disguise_type_p_fem_a_sml_02)
-      - [`DISGUISE_TYPE_P_FEM_A_SML_03`](#disguise_type_p_fem_a_sml_03)
-      - [`DISGUISE_TYPE_P_FEM_A_SML_04`](#disguise_type_p_fem_a_sml_04)
-      - [`DISGUISE_TYPE_P_FEM_A_SML_05`](#disguise_type_p_fem_a_sml_05)
-      - [`DISGUISE_TYPE_P_FEM_B_LRG_01`](#disguise_type_p_fem_b_lrg_01)
-      - [`DISGUISE_TYPE_P_FEM_B_LRG_02`](#disguise_type_p_fem_b_lrg_02)
-      - [`DISGUISE_TYPE_P_FEM_B_LRG_03`](#disguise_type_p_fem_b_lrg_03)
-      - [`DISGUISE_TYPE_P_FEM_B_LRG_04`](#disguise_type_p_fem_b_lrg_04)
-      - [`DISGUISE_TYPE_P_FEM_B_LRG_05`](#disguise_type_p_fem_b_lrg_05)
-      - [`DISGUISE_TYPE_P_FEM_B_MED_01`](#disguise_type_p_fem_b_med_01)
-      - [`DISGUISE_TYPE_P_FEM_B_MED_02`](#disguise_type_p_fem_b_med_02)
-      - [`DISGUISE_TYPE_P_FEM_B_MED_03`](#disguise_type_p_fem_b_med_03)
-      - [`DISGUISE_TYPE_P_FEM_B_MED_04`](#disguise_type_p_fem_b_med_04)
-      - [`DISGUISE_TYPE_P_FEM_B_MED_05`](#disguise_type_p_fem_b_med_05)
-      - [`DISGUISE_TYPE_P_FEM_B_SML_01`](#disguise_type_p_fem_b_sml_01)
-      - [`DISGUISE_TYPE_P_FEM_B_SML_02`](#disguise_type_p_fem_b_sml_02)
-      - [`DISGUISE_TYPE_P_FEM_B_SML_03`](#disguise_type_p_fem_b_sml_03)
-      - [`DISGUISE_TYPE_P_FEM_B_SML_04`](#disguise_type_p_fem_b_sml_04)
-      - [`DISGUISE_TYPE_P_FEM_B_SML_05`](#disguise_type_p_fem_b_sml_05)
-      - [`DISGUISE_TYPE_P_FEM_C_LRG_01`](#disguise_type_p_fem_c_lrg_01)
-      - [`DISGUISE_TYPE_P_FEM_C_LRG_02`](#disguise_type_p_fem_c_lrg_02)
-      - [`DISGUISE_TYPE_P_FEM_C_LRG_03`](#disguise_type_p_fem_c_lrg_03)
-      - [`DISGUISE_TYPE_P_FEM_C_LRG_04`](#disguise_type_p_fem_c_lrg_04)
-      - [`DISGUISE_TYPE_P_FEM_C_LRG_05`](#disguise_type_p_fem_c_lrg_05)
-      - [`DISGUISE_TYPE_P_FEM_C_MED_01`](#disguise_type_p_fem_c_med_01)
-      - [`DISGUISE_TYPE_P_FEM_C_MED_02`](#disguise_type_p_fem_c_med_02)
-      - [`DISGUISE_TYPE_P_FEM_C_MED_03`](#disguise_type_p_fem_c_med_03)
-      - [`DISGUISE_TYPE_P_FEM_C_MED_04`](#disguise_type_p_fem_c_med_04)
-      - [`DISGUISE_TYPE_P_FEM_C_MED_05`](#disguise_type_p_fem_c_med_05)
-      - [`DISGUISE_TYPE_P_FEM_C_SML_01`](#disguise_type_p_fem_c_sml_01)
-      - [`DISGUISE_TYPE_P_FEM_C_SML_02`](#disguise_type_p_fem_c_sml_02)
-      - [`DISGUISE_TYPE_P_FEM_C_SML_03`](#disguise_type_p_fem_c_sml_03)
-      - [`DISGUISE_TYPE_P_FEM_C_SML_04`](#disguise_type_p_fem_c_sml_04)
-      - [`DISGUISE_TYPE_P_FEM_C_SML_05`](#disguise_type_p_fem_c_sml_05)
-      - [`DISGUISE_TYPE_P_HK47`](#disguise_type_p_hk47)
-      - [`DISGUISE_TYPE_P_JOLEE`](#disguise_type_p_jolee)
-      - [`DISGUISE_TYPE_P_JUHANI`](#disguise_type_p_juhani)
-      - [`DISGUISE_TYPE_P_MAL_A_LRG_01`](#disguise_type_p_mal_a_lrg_01)
-      - [`DISGUISE_TYPE_P_MAL_A_LRG_02`](#disguise_type_p_mal_a_lrg_02)
-      - [`DISGUISE_TYPE_P_MAL_A_LRG_03`](#disguise_type_p_mal_a_lrg_03)
-      - [`DISGUISE_TYPE_P_MAL_A_LRG_04`](#disguise_type_p_mal_a_lrg_04)
-      - [`DISGUISE_TYPE_P_MAL_A_LRG_05`](#disguise_type_p_mal_a_lrg_05)
-      - [`DISGUISE_TYPE_P_MAL_A_MED_01`](#disguise_type_p_mal_a_med_01)
-      - [`DISGUISE_TYPE_P_MAL_A_MED_02`](#disguise_type_p_mal_a_med_02)
-      - [`DISGUISE_TYPE_P_MAL_A_MED_03`](#disguise_type_p_mal_a_med_03)
-      - [`DISGUISE_TYPE_P_MAL_A_MED_04`](#disguise_type_p_mal_a_med_04)
-      - [`DISGUISE_TYPE_P_MAL_A_MED_05`](#disguise_type_p_mal_a_med_05)
-      - [`DISGUISE_TYPE_P_MAL_A_SML_01`](#disguise_type_p_mal_a_sml_01)
-      - [`DISGUISE_TYPE_P_MAL_A_SML_02`](#disguise_type_p_mal_a_sml_02)
-      - [`DISGUISE_TYPE_P_MAL_A_SML_03`](#disguise_type_p_mal_a_sml_03)
-      - [`DISGUISE_TYPE_P_MAL_A_SML_04`](#disguise_type_p_mal_a_sml_04)
-      - [`DISGUISE_TYPE_P_MAL_A_SML_05`](#disguise_type_p_mal_a_sml_05)
-      - [`DISGUISE_TYPE_P_MAL_B_LRG_01`](#disguise_type_p_mal_b_lrg_01)
-      - [`DISGUISE_TYPE_P_MAL_B_LRG_02`](#disguise_type_p_mal_b_lrg_02)
-      - [`DISGUISE_TYPE_P_MAL_B_LRG_03`](#disguise_type_p_mal_b_lrg_03)
-      - [`DISGUISE_TYPE_P_MAL_B_LRG_04`](#disguise_type_p_mal_b_lrg_04)
-      - [`DISGUISE_TYPE_P_MAL_B_LRG_05`](#disguise_type_p_mal_b_lrg_05)
-      - [`DISGUISE_TYPE_P_MAL_B_MED_01`](#disguise_type_p_mal_b_med_01)
-      - [`DISGUISE_TYPE_P_MAL_B_MED_02`](#disguise_type_p_mal_b_med_02)
-      - [`DISGUISE_TYPE_P_MAL_B_MED_03`](#disguise_type_p_mal_b_med_03)
-      - [`DISGUISE_TYPE_P_MAL_B_MED_04`](#disguise_type_p_mal_b_med_04)
-      - [`DISGUISE_TYPE_P_MAL_B_MED_05`](#disguise_type_p_mal_b_med_05)
-      - [`DISGUISE_TYPE_P_MAL_B_SML_01`](#disguise_type_p_mal_b_sml_01)
-      - [`DISGUISE_TYPE_P_MAL_B_SML_02`](#disguise_type_p_mal_b_sml_02)
-      - [`DISGUISE_TYPE_P_MAL_B_SML_03`](#disguise_type_p_mal_b_sml_03)
-      - [`DISGUISE_TYPE_P_MAL_B_SML_04`](#disguise_type_p_mal_b_sml_04)
-      - [`DISGUISE_TYPE_P_MAL_B_SML_05`](#disguise_type_p_mal_b_sml_05)
-      - [`DISGUISE_TYPE_P_MAL_C_LRG_01`](#disguise_type_p_mal_c_lrg_01)
-      - [`DISGUISE_TYPE_P_MAL_C_LRG_02`](#disguise_type_p_mal_c_lrg_02)
-      - [`DISGUISE_TYPE_P_MAL_C_LRG_03`](#disguise_type_p_mal_c_lrg_03)
-      - [`DISGUISE_TYPE_P_MAL_C_LRG_04`](#disguise_type_p_mal_c_lrg_04)
-      - [`DISGUISE_TYPE_P_MAL_C_LRG_05`](#disguise_type_p_mal_c_lrg_05)
-      - [`DISGUISE_TYPE_P_MAL_C_MED_01`](#disguise_type_p_mal_c_med_01)
-      - [`DISGUISE_TYPE_P_MAL_C_MED_02`](#disguise_type_p_mal_c_med_02)
-      - [`DISGUISE_TYPE_P_MAL_C_MED_03`](#disguise_type_p_mal_c_med_03)
-      - [`DISGUISE_TYPE_P_MAL_C_MED_04`](#disguise_type_p_mal_c_med_04)
-      - [`DISGUISE_TYPE_P_MAL_C_MED_05`](#disguise_type_p_mal_c_med_05)
-      - [`DISGUISE_TYPE_P_MAL_C_SML_01`](#disguise_type_p_mal_c_sml_01)
-      - [`DISGUISE_TYPE_P_MAL_C_SML_02`](#disguise_type_p_mal_c_sml_02)
-      - [`DISGUISE_TYPE_P_MAL_C_SML_03`](#disguise_type_p_mal_c_sml_03)
-      - [`DISGUISE_TYPE_P_MAL_C_SML_04`](#disguise_type_p_mal_c_sml_04)
-      - [`DISGUISE_TYPE_P_MAL_C_SML_05`](#disguise_type_p_mal_c_sml_05)
-      - [`DISGUISE_TYPE_P_MISSION`](#disguise_type_p_mission)
-      - [`DISGUISE_TYPE_P_T3M3`](#disguise_type_p_t3m3)
-      - [`DISGUISE_TYPE_P_ZAALBAR`](#disguise_type_p_zaalbar)
-      - [`DISGUISE_TYPE_RAKATA_02`](#disguise_type_rakata_02)
-      - [`DISGUISE_TYPE_RAKATA_03`](#disguise_type_rakata_03)
-      - [`DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_BLACK`](#disguise_type_republic_officer_mal_black)
-      - [`DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_OLD_ASIAN`](#disguise_type_republic_officer_mal_old_asian)
-      - [`DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_OLD_BLACK`](#disguise_type_republic_officer_mal_old_black)
-      - [`DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_OLD_WHITE`](#disguise_type_republic_officer_mal_old_white)
-      - [`DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_BLACK`](#disguise_type_republic_soldier_mal_black)
-      - [`DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_OLD_ASIAN`](#disguise_type_republic_soldier_mal_old_asian)
-      - [`DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_OLD_BLACK`](#disguise_type_republic_soldier_mal_old_black)
-      - [`DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_OLD_WHITE`](#disguise_type_republic_soldier_mal_old_white)
-      - [`DISGUISE_TYPE_RODIAN_02`](#disguise_type_rodian_02)
-      - [`DISGUISE_TYPE_RODIAN_03`](#disguise_type_rodian_03)
-      - [`DISGUISE_TYPE_RODIAN_04`](#disguise_type_rodian_04)
-      - [`DISGUISE_TYPE_SELKATH_02`](#disguise_type_selkath_02)
-      - [`DISGUISE_TYPE_SELKATH_03`](#disguise_type_selkath_03)
-      - [`DISGUISE_TYPE_SHYRACK_01`](#disguise_type_shyrack_01)
-      - [`DISGUISE_TYPE_SHYRACK_02`](#disguise_type_shyrack_02)
-      - [`DISGUISE_TYPE_SITH_FEM_ASIAN`](#disguise_type_sith_fem_asian)
-      - [`DISGUISE_TYPE_SITH_FEM_BLACK`](#disguise_type_sith_fem_black)
-      - [`DISGUISE_TYPE_SITH_FEM_OLD_ASIAN`](#disguise_type_sith_fem_old_asian)
-      - [`DISGUISE_TYPE_SITH_FEM_OLD_BLACK`](#disguise_type_sith_fem_old_black)
-      - [`DISGUISE_TYPE_SITH_FEM_OLD_WHITE`](#disguise_type_sith_fem_old_white)
-      - [`DISGUISE_TYPE_SITH_FEM_WHITE`](#disguise_type_sith_fem_white)
-      - [`DISGUISE_TYPE_SITH_MAL_ASIAN`](#disguise_type_sith_mal_asian)
-      - [`DISGUISE_TYPE_SITH_MAL_BLACK`](#disguise_type_sith_mal_black)
-      - [`DISGUISE_TYPE_SITH_MAL_OLD_ASIAN`](#disguise_type_sith_mal_old_asian)
-      - [`DISGUISE_TYPE_SITH_MAL_OLD_BLACK`](#disguise_type_sith_mal_old_black)
-      - [`DISGUISE_TYPE_SITH_MAL_OLD_WHITE`](#disguise_type_sith_mal_old_white)
-      - [`DISGUISE_TYPE_SITH_MAL_WHITE`](#disguise_type_sith_mal_white)
-      - [`DISGUISE_TYPE_SITH_SOLDIER_03`](#disguise_type_sith_soldier_03)
-      - [`DISGUISE_TYPE_SWOOP_GANG_02`](#disguise_type_swoop_gang_02)
-      - [`DISGUISE_TYPE_SWOOP_GANG_03`](#disguise_type_swoop_gang_03)
-      - [`DISGUISE_TYPE_SWOOP_GANG_04`](#disguise_type_swoop_gang_04)
-      - [`DISGUISE_TYPE_SWOOP_GANG_05`](#disguise_type_swoop_gang_05)
-      - [`DISGUISE_TYPE_TEST`](#disguise_type_test)
-      - [`DISGUISE_TYPE_TURRET`](#disguise_type_turret)
-      - [`DISGUISE_TYPE_TURRET2`](#disguise_type_turret2)
-      - [`DISGUISE_TYPE_TUSKAN_RAIDER_02`](#disguise_type_tuskan_raider_02)
-      - [`DISGUISE_TYPE_TUSKAN_RAIDER_03`](#disguise_type_tuskan_raider_03)
-      - [`DISGUISE_TYPE_TUSKAN_RAIDER_04`](#disguise_type_tuskan_raider_04)
-      - [`DISGUISE_TYPE_TWILEK_FEMALE_02`](#disguise_type_twilek_female_02)
-      - [`DISGUISE_TYPE_TWILEK_MALE_02`](#disguise_type_twilek_male_02)
-      - [`DISGUISE_TYPE_WOOKIE_FEMALE_02`](#disguise_type_wookie_female_02)
-      - [`DISGUISE_TYPE_WOOKIE_FEMALE_03`](#disguise_type_wookie_female_03)
-      - [`DISGUISE_TYPE_WOOKIE_FEMALE_04`](#disguise_type_wookie_female_04)
-      - [`DISGUISE_TYPE_WOOKIE_FEMALE_05`](#disguise_type_wookie_female_05)
-      - [`DISGUISE_TYPE_WOOKIE_MALE_02`](#disguise_type_wookie_male_02)
-      - [`DISGUISE_TYPE_WOOKIE_MALE_03`](#disguise_type_wookie_male_03)
-      - [`DISGUISE_TYPE_WOOKIE_MALE_04`](#disguise_type_wookie_male_04)
-      - [`DISGUISE_TYPE_WOOKIE_MALE_05`](#disguise_type_wookie_male_05)
-      - [`DISGUISE_TYPE_WRAID_02`](#disguise_type_wraid_02)
-      - [`DISGUISE_TYPE_WRAID_03`](#disguise_type_wraid_03)
-      - [`DISGUISE_TYPE_WRAID_04`](#disguise_type_wraid_04)
-      - [`DISGUISE_TYPE_YUTHURA_BAN`](#disguise_type_yuthura_ban)
-      - [`DOOR_ACTION_BASH`](#door_action_bash)
-      - [`DOOR_ACTION_IGNORE`](#door_action_ignore)
-      - [`DOOR_ACTION_KNOCK`](#door_action_knock)
-      - [`DOOR_ACTION_OPEN`](#door_action_open)
-      - [`DOOR_ACTION_UNLOCK`](#door_action_unlock)
-      - [`DURATION_TYPE_INSTANT`](#duration_type_instant)
-      - [`DURATION_TYPE_PERMANENT`](#duration_type_permanent)
-      - [`DURATION_TYPE_TEMPORARY`](#duration_type_temporary)
-      - [`EFFECT_TYPE_ABILITY_DECREASE`](#effect_type_ability_decrease)
-      - [`EFFECT_TYPE_ABILITY_INCREASE`](#effect_type_ability_increase)
-      - [`EFFECT_TYPE_AC_DECREASE`](#effect_type_ac_decrease)
-      - [`EFFECT_TYPE_AC_INCREASE`](#effect_type_ac_increase)
-      - [`EFFECT_TYPE_ARCANE_SPELL_FAILURE`](#effect_type_arcane_spell_failure)
-      - [`EFFECT_TYPE_AREA_OF_EFFECT`](#effect_type_area_of_effect)
-      - [`EFFECT_TYPE_ASSUREDDEFLECTION`](#effect_type_assureddeflection)
-      - [`EFFECT_TYPE_ASSUREDHIT`](#effect_type_assuredhit)
-      - [`EFFECT_TYPE_ATTACK_DECREASE`](#effect_type_attack_decrease)
-      - [`EFFECT_TYPE_ATTACK_INCREASE`](#effect_type_attack_increase)
-      - [`EFFECT_TYPE_BEAM`](#effect_type_beam)
-      - [`EFFECT_TYPE_BLINDNESS`](#effect_type_blindness)
-      - [`EFFECT_TYPE_CHARMED`](#effect_type_charmed)
-      - [`EFFECT_TYPE_CONCEALMENT`](#effect_type_concealment)
-      - [`EFFECT_TYPE_CONFUSED`](#effect_type_confused)
-      - [`EFFECT_TYPE_CURSE`](#effect_type_curse)
-      - [`EFFECT_TYPE_DAMAGE_DECREASE`](#effect_type_damage_decrease)
-      - [`EFFECT_TYPE_DAMAGE_IMMUNITY_DECREASE`](#effect_type_damage_immunity_decrease)
-      - [`EFFECT_TYPE_DAMAGE_IMMUNITY_INCREASE`](#effect_type_damage_immunity_increase)
-      - [`EFFECT_TYPE_DAMAGE_INCREASE`](#effect_type_damage_increase)
-      - [`EFFECT_TYPE_DAMAGE_REDUCTION`](#effect_type_damage_reduction)
-      - [`EFFECT_TYPE_DAMAGE_RESISTANCE`](#effect_type_damage_resistance)
-      - [`EFFECT_TYPE_DARKNESS`](#effect_type_darkness)
-      - [`EFFECT_TYPE_DAZED`](#effect_type_dazed)
-      - [`EFFECT_TYPE_DEAF`](#effect_type_deaf)
-      - [`EFFECT_TYPE_DISEASE`](#effect_type_disease)
-      - [`EFFECT_TYPE_DISGUISE`](#effect_type_disguise)
-      - [`EFFECT_TYPE_DISPELMAGICALL`](#effect_type_dispelmagicall)
-      - [`EFFECT_TYPE_DISPELMAGICBEST`](#effect_type_dispelmagicbest)
-      - [`EFFECT_TYPE_DOMINATED`](#effect_type_dominated)
-      - [`EFFECT_TYPE_ELEMENTALSHIELD`](#effect_type_elementalshield)
-      - [`EFFECT_TYPE_ENEMY_ATTACK_BONUS`](#effect_type_enemy_attack_bonus)
-      - [`EFFECT_TYPE_ENTANGLE`](#effect_type_entangle)
-      - [`EFFECT_TYPE_FORCE_RESISTANCE_DECREASE`](#effect_type_force_resistance_decrease)
-      - [`EFFECT_TYPE_FORCE_RESISTANCE_INCREASE`](#effect_type_force_resistance_increase)
-      - [`EFFECT_TYPE_FORCEJUMP`](#effect_type_forcejump)
-      - [`EFFECT_TYPE_FRIGHTENED`](#effect_type_frightened)
-      - [`EFFECT_TYPE_HASTE`](#effect_type_haste)
-      - [`EFFECT_TYPE_IMMUNITY`](#effect_type_immunity)
-      - [`EFFECT_TYPE_IMPROVEDINVISIBILITY`](#effect_type_improvedinvisibility)
-      - [`EFFECT_TYPE_INVALIDEFFECT`](#effect_type_invalideffect)
-      - [`EFFECT_TYPE_INVISIBILITY`](#effect_type_invisibility)
-      - [`EFFECT_TYPE_INVULNERABLE`](#effect_type_invulnerable)
-      - [`EFFECT_TYPE_LIGHTSABERTHROW`](#effect_type_lightsaberthrow)
-      - [`EFFECT_TYPE_MISS_CHANCE`](#effect_type_miss_chance)
-      - [`EFFECT_TYPE_MOVEMENT_SPEED_DECREASE`](#effect_type_movement_speed_decrease)
-      - [`EFFECT_TYPE_MOVEMENT_SPEED_INCREASE`](#effect_type_movement_speed_increase)
-      - [`EFFECT_TYPE_NEGATIVELEVEL`](#effect_type_negativelevel)
-      - [`EFFECT_TYPE_PARALYZE`](#effect_type_paralyze)
-      - [`EFFECT_TYPE_POISON`](#effect_type_poison)
-      - [`EFFECT_TYPE_REGENERATE`](#effect_type_regenerate)
-      - [`EFFECT_TYPE_RESURRECTION`](#effect_type_resurrection)
-      - [`EFFECT_TYPE_SANCTUARY`](#effect_type_sanctuary)
-      - [`EFFECT_TYPE_SAVING_THROW_DECREASE`](#effect_type_saving_throw_decrease)
-      - [`EFFECT_TYPE_SAVING_THROW_INCREASE`](#effect_type_saving_throw_increase)
-      - [`EFFECT_TYPE_SEEINVISIBLE`](#effect_type_seeinvisible)
-      - [`EFFECT_TYPE_SILENCE`](#effect_type_silence)
-      - [`EFFECT_TYPE_SKILL_DECREASE`](#effect_type_skill_decrease)
-      - [`EFFECT_TYPE_SKILL_INCREASE`](#effect_type_skill_increase)
-      - [`EFFECT_TYPE_SLEEP`](#effect_type_sleep)
-      - [`EFFECT_TYPE_SLOW`](#effect_type_slow)
-      - [`EFFECT_TYPE_SPELL_IMMUNITY`](#effect_type_spell_immunity)
-      - [`EFFECT_TYPE_SPELLLEVELABSORPTION`](#effect_type_spelllevelabsorption)
-      - [`EFFECT_TYPE_STUNNED`](#effect_type_stunned)
-      - [`EFFECT_TYPE_TEMPORARY_HITPOINTS`](#effect_type_temporary_hitpoints)
-      - [`EFFECT_TYPE_TIMESTOP`](#effect_type_timestop)
-      - [`EFFECT_TYPE_TRUESEEING`](#effect_type_trueseeing)
-      - [`EFFECT_TYPE_TURNED`](#effect_type_turned)
-      - [`EFFECT_TYPE_ULTRAVISION`](#effect_type_ultravision)
-      - [`EFFECT_TYPE_VISUAL`](#effect_type_visual)
-      - [`ENCOUNTER_DIFFICULTY_EASY`](#encounter_difficulty_easy)
-      - [`ENCOUNTER_DIFFICULTY_HARD`](#encounter_difficulty_hard)
-      - [`ENCOUNTER_DIFFICULTY_IMPOSSIBLE`](#encounter_difficulty_impossible)
-      - [`ENCOUNTER_DIFFICULTY_NORMAL`](#encounter_difficulty_normal)
-      - [`ENCOUNTER_DIFFICULTY_VERY_EASY`](#encounter_difficulty_very_easy)
-      - [`FALSE`](#false)
-      - [`FEAT_ADVANCED_DOUBLE_WEAPON_FIGHTING`](#feat_advanced_double_weapon_fighting)
-      - [`FEAT_ADVANCED_GUARD_STANCE`](#feat_advanced_guard_stance)
-      - [`FEAT_ADVANCED_JEDI_DEFENSE`](#feat_advanced_jedi_defense)
-      - [`FEAT_AMBIDEXTERITY`](#feat_ambidexterity)
-      - [`FEAT_ARMOUR_PROF_HEAVY`](#feat_armour_prof_heavy)
-      - [`FEAT_ARMOUR_PROF_LIGHT`](#feat_armour_prof_light)
-      - [`FEAT_ARMOUR_PROF_MEDIUM`](#feat_armour_prof_medium)
-      - [`FEAT_BATTLE_MEDITATION`](#feat_battle_meditation)
-      - [`FEAT_CAUTIOUS`](#feat_cautious)
-      - [`FEAT_CRITICAL_STRIKE`](#feat_critical_strike)
-      - [`FEAT_DOUBLE_WEAPON_FIGHTING`](#feat_double_weapon_fighting)
-      - [`FEAT_DROID_UPGRADE_1`](#feat_droid_upgrade_1)
-      - [`FEAT_DROID_UPGRADE_2`](#feat_droid_upgrade_2)
-      - [`FEAT_DROID_UPGRADE_3`](#feat_droid_upgrade_3)
-      - [`FEAT_EMPATHY`](#feat_empathy)
-      - [`FEAT_FLURRY`](#feat_flurry)
-      - [`FEAT_FORCE_FOCUS_ADVANCED`](#feat_force_focus_advanced)
-      - [`FEAT_FORCE_FOCUS_ALTER`](#feat_force_focus_alter)
-      - [`FEAT_FORCE_FOCUS_CONTROL`](#feat_force_focus_control)
-      - [`FEAT_FORCE_FOCUS_MASTERY`](#feat_force_focus_mastery)
-      - [`FEAT_FORCE_FOCUS_SENSE`](#feat_force_focus_sense)
-      - [`FEAT_GEAR_HEAD`](#feat_gear_head)
-      - [`FEAT_GREAT_FORTITUDE`](#feat_great_fortitude)
-      - [`FEAT_GUARD_STANCE`](#feat_guard_stance)
-      - [`FEAT_IMPLANT_LEVEL_1`](#feat_implant_level_1)
-      - [`FEAT_IMPLANT_LEVEL_2`](#feat_implant_level_2)
-      - [`FEAT_IMPLANT_LEVEL_3`](#feat_implant_level_3)
-      - [`FEAT_IMPROVED_CRITICAL_STRIKE`](#feat_improved_critical_strike)
-      - [`FEAT_IMPROVED_FLURRY`](#feat_improved_flurry)
-      - [`FEAT_IMPROVED_POWER_ATTACK`](#feat_improved_power_attack)
-      - [`FEAT_IMPROVED_POWER_BLAST`](#feat_improved_power_blast)
-      - [`FEAT_IMPROVED_RAPID_SHOT`](#feat_improved_rapid_shot)
-      - [`FEAT_IMPROVED_SNIPER_SHOT`](#feat_improved_sniper_shot)
-      - [`FEAT_IRON_WILL`](#feat_iron_will)
-      - [`FEAT_JEDI_DEFENSE`](#feat_jedi_defense)
-      - [`FEAT_LIGHTNING_REFLEXES`](#feat_lightning_reflexes)
-      - [`FEAT_MASTER_CRITICAL_STRIKE`](#feat_master_critical_strike)
-      - [`FEAT_MASTER_GUARD_STANCE`](#feat_master_guard_stance)
-      - [`FEAT_MASTER_JEDI_DEFENSE`](#feat_master_jedi_defense)
-      - [`FEAT_MASTER_POWER_ATTACK`](#feat_master_power_attack)
-      - [`FEAT_MASTER_POWER_BLAST`](#feat_master_power_blast)
-      - [`FEAT_MASTER_SNIPER_SHOT`](#feat_master_sniper_shot)
-      - [`FEAT_MULTI_SHOT`](#feat_multi_shot)
-      - [`FEAT_PERCEPTIVE`](#feat_perceptive)
-      - [`FEAT_POWER_ATTACK`](#feat_power_attack)
-      - [`FEAT_POWER_BLAST`](#feat_power_blast)
-      - [`FEAT_PROFICIENCY_ALL`](#feat_proficiency_all)
-      - [`FEAT_RAPID_SHOT`](#feat_rapid_shot)
-      - [`FEAT_SKILL_FOCUS_AWARENESS`](#feat_skill_focus_awareness)
-      - [`FEAT_SKILL_FOCUS_COMPUTER_USE`](#feat_skill_focus_computer_use)
-      - [`FEAT_SKILL_FOCUS_DEMOLITIONS`](#feat_skill_focus_demolitions)
-      - [`FEAT_SKILL_FOCUS_PERSUADE`](#feat_skill_focus_persuade)
-      - [`FEAT_SKILL_FOCUS_REPAIR`](#feat_skill_focus_repair)
-      - [`FEAT_SKILL_FOCUS_SECURITY`](#feat_skill_focus_security)
-      - [`FEAT_SKILL_FOCUS_STEALTH`](#feat_skill_focus_stealth)
-      - [`FEAT_SKILL_FOCUS_TREAT_INJUURY`](#feat_skill_focus_treat_injuury)
-      - [`FEAT_SNEAK_ATTACK_10D6`](#feat_sneak_attack_10d6)
-      - [`FEAT_SNEAK_ATTACK_1D6`](#feat_sneak_attack_1d6)
-      - [`FEAT_SNEAK_ATTACK_2D6`](#feat_sneak_attack_2d6)
-      - [`FEAT_SNEAK_ATTACK_3D6`](#feat_sneak_attack_3d6)
-      - [`FEAT_SNEAK_ATTACK_4D6`](#feat_sneak_attack_4d6)
-      - [`FEAT_SNEAK_ATTACK_5D6`](#feat_sneak_attack_5d6)
-      - [`FEAT_SNEAK_ATTACK_6D6`](#feat_sneak_attack_6d6)
-      - [`FEAT_SNEAK_ATTACK_7D6`](#feat_sneak_attack_7d6)
-      - [`FEAT_SNEAK_ATTACK_8D6`](#feat_sneak_attack_8d6)
-      - [`FEAT_SNEAK_ATTACK_9D6`](#feat_sneak_attack_9d6)
-      - [`FEAT_SNIPER_SHOT`](#feat_sniper_shot)
-      - [`FEAT_TOUGHNESS`](#feat_toughness)
-      - [`FEAT_UNCANNY_DODGE_1`](#feat_uncanny_dodge_1)
-      - [`FEAT_UNCANNY_DODGE_2`](#feat_uncanny_dodge_2)
-      - [`FEAT_WEAPON_FOCUS_BLASTER`](#feat_weapon_focus_blaster)
-      - [`FEAT_WEAPON_FOCUS_BLASTER_RIFLE`](#feat_weapon_focus_blaster_rifle)
-      - [`FEAT_WEAPON_FOCUS_GRENADE`](#feat_weapon_focus_grenade)
-      - [`FEAT_WEAPON_FOCUS_HEAVY_WEAPONS`](#feat_weapon_focus_heavy_weapons)
-      - [`FEAT_WEAPON_FOCUS_LIGHTSABER`](#feat_weapon_focus_lightsaber)
-      - [`FEAT_WEAPON_FOCUS_MELEE_WEAPONS`](#feat_weapon_focus_melee_weapons)
-      - [`FEAT_WEAPON_FOCUS_SIMPLE_WEAPONS`](#feat_weapon_focus_simple_weapons)
-      - [`FEAT_WEAPON_PROFICIENCY_BLASTER`](#feat_weapon_proficiency_blaster)
-      - [`FEAT_WEAPON_PROFICIENCY_BLASTER_RIFLE`](#feat_weapon_proficiency_blaster_rifle)
-      - [`FEAT_WEAPON_PROFICIENCY_GRENADE`](#feat_weapon_proficiency_grenade)
-      - [`FEAT_WEAPON_PROFICIENCY_HEAVY_WEAPONS`](#feat_weapon_proficiency_heavy_weapons)
-      - [`FEAT_WEAPON_PROFICIENCY_LIGHTSABER`](#feat_weapon_proficiency_lightsaber)
-      - [`FEAT_WEAPON_PROFICIENCY_MELEE_WEAPONS`](#feat_weapon_proficiency_melee_weapons)
-      - [`FEAT_WEAPON_PROFICIENCY_SIMPLE_WEAPONS`](#feat_weapon_proficiency_simple_weapons)
-      - [`FEAT_WEAPON_SPECIALIZATION_BLASTER`](#feat_weapon_specialization_blaster)
-      - [`FEAT_WEAPON_SPECIALIZATION_BLASTER_RIFLE`](#feat_weapon_specialization_blaster_rifle)
-      - [`FEAT_WEAPON_SPECIALIZATION_GRENADE`](#feat_weapon_specialization_grenade)
-      - [`FEAT_WEAPON_SPECIALIZATION_HEAVY_WEAPONS`](#feat_weapon_specialization_heavy_weapons)
-      - [`FEAT_WEAPON_SPECIALIZATION_LIGHTSABER`](#feat_weapon_specialization_lightsaber)
-      - [`FEAT_WEAPON_SPECIALIZATION_MELEE_WEAPONS`](#feat_weapon_specialization_melee_weapons)
-      - [`FEAT_WEAPON_SPECIALIZATION_SIMPLE_WEAPONS`](#feat_weapon_specialization_simple_weapons)
-      - [`FEAT_WHIRLWIND_ATTACK`](#feat_whirlwind_attack)
-      - [`FORCE_POWER_AFFECT_MIND`](#force_power_affect_mind)
-      - [`FORCE_POWER_AFFLICTION`](#force_power_affliction)
-      - [`FORCE_POWER_ALL_FORCE_POWERS`](#force_power_all_force_powers)
-      - [`FORCE_POWER_CHOKE`](#force_power_choke)
-      - [`FORCE_POWER_CURE`](#force_power_cure)
-      - [`FORCE_POWER_DEATH_FIELD`](#force_power_death_field)
-      - [`FORCE_POWER_DOMINATE`](#force_power_dominate)
-      - [`FORCE_POWER_DRAIN_LIFE`](#force_power_drain_life)
-      - [`FORCE_POWER_DROID_DESTROY`](#force_power_droid_destroy)
-      - [`FORCE_POWER_DROID_DISABLE`](#force_power_droid_disable)
-      - [`FORCE_POWER_DROID_STUN`](#force_power_droid_stun)
-      - [`FORCE_POWER_FEAR`](#force_power_fear)
-      - [`FORCE_POWER_FORCE_ARMOR`](#force_power_force_armor)
-      - [`FORCE_POWER_FORCE_AURA`](#force_power_force_aura)
-      - [`FORCE_POWER_FORCE_BREACH`](#force_power_force_breach)
-      - [`FORCE_POWER_FORCE_IMMUNITY`](#force_power_force_immunity)
-      - [`FORCE_POWER_FORCE_JUMP`](#force_power_force_jump)
-      - [`FORCE_POWER_FORCE_JUMP_ADVANCED`](#force_power_force_jump_advanced)
-      - [`FORCE_POWER_FORCE_MIND`](#force_power_force_mind)
-      - [`FORCE_POWER_FORCE_PUSH`](#force_power_force_push)
-      - [`FORCE_POWER_FORCE_SHIELD`](#force_power_force_shield)
-      - [`FORCE_POWER_FORCE_STORM`](#force_power_force_storm)
-      - [`FORCE_POWER_FORCE_WAVE`](#force_power_force_wave)
-      - [`FORCE_POWER_FORCE_WHIRLWIND`](#force_power_force_whirlwind)
-      - [`FORCE_POWER_HEAL`](#force_power_heal)
-      - [`FORCE_POWER_HOLD`](#force_power_hold)
-      - [`FORCE_POWER_HORROR`](#force_power_horror)
-      - [`FORCE_POWER_INSANITY`](#force_power_insanity)
-      - [`FORCE_POWER_KILL`](#force_power_kill)
-      - [`FORCE_POWER_KNIGHT_MIND`](#force_power_knight_mind)
-      - [`FORCE_POWER_KNIGHT_SPEED`](#force_power_knight_speed)
-      - [`FORCE_POWER_LIGHT_SABER_THROW`](#force_power_light_saber_throw)
-      - [`FORCE_POWER_LIGHT_SABER_THROW_ADVANCED`](#force_power_light_saber_throw_advanced)
-      - [`FORCE_POWER_LIGHTNING`](#force_power_lightning)
-      - [`FORCE_POWER_MASTER_ALTER`](#force_power_master_alter)
-      - [`FORCE_POWER_MASTER_CONTROL`](#force_power_master_control)
-      - [`FORCE_POWER_MASTER_SENSE`](#force_power_master_sense)
-      - [`FORCE_POWER_MIND_MASTERY`](#force_power_mind_mastery)
-      - [`FORCE_POWER_PLAGUE`](#force_power_plague)
-      - [`FORCE_POWER_REGENERATION`](#force_power_regeneration)
-      - [`FORCE_POWER_REGNERATION_ADVANCED`](#force_power_regneration_advanced)
-      - [`FORCE_POWER_RESIST_COLD_HEAT_ENERGY`](#force_power_resist_cold_heat_energy)
-      - [`FORCE_POWER_RESIST_FORCE`](#force_power_resist_force)
-      - [`FORCE_POWER_RESIST_POISON_DISEASE_SONIC`](#force_power_resist_poison_disease_sonic)
-      - [`FORCE_POWER_SHOCK`](#force_power_shock)
-      - [`FORCE_POWER_SLEEP`](#force_power_sleep)
-      - [`FORCE_POWER_SLOW`](#force_power_slow)
-      - [`FORCE_POWER_SPEED_BURST`](#force_power_speed_burst)
-      - [`FORCE_POWER_SPEED_MASTERY`](#force_power_speed_mastery)
-      - [`FORCE_POWER_STUN`](#force_power_stun)
-      - [`FORCE_POWER_SUPRESS_FORCE`](#force_power_supress_force)
-      - [`FORCE_POWER_WOUND`](#force_power_wound)
-      - [`FORMATION_LINE`](#formation_line)
-      - [`FORMATION_WEDGE`](#formation_wedge)
-      - [`GAME_DIFFICULTY_CORE_RULES`](#game_difficulty_core_rules)
-      - [`GAME_DIFFICULTY_DIFFICULT`](#game_difficulty_difficult)
-      - [`GAME_DIFFICULTY_EASY`](#game_difficulty_easy)
-      - [`GAME_DIFFICULTY_NORMAL`](#game_difficulty_normal)
-      - [`GAME_DIFFICULTY_VERY_EASY`](#game_difficulty_very_easy)
-      - [`GENDER_BOTH`](#gender_both)
-      - [`GENDER_FEMALE`](#gender_female)
-      - [`GENDER_MALE`](#gender_male)
-      - [`GENDER_NONE`](#gender_none)
-      - [`GENDER_OTHER`](#gender_other)
-      - [`GUI_PANEL_PLAYER_DEATH`](#gui_panel_player_death)
-      - [`IMMUNITY_TYPE_ABILITY_DECREASE`](#immunity_type_ability_decrease)
-      - [`IMMUNITY_TYPE_AC_DECREASE`](#immunity_type_ac_decrease)
-      - [`IMMUNITY_TYPE_ATTACK_DECREASE`](#immunity_type_attack_decrease)
-      - [`IMMUNITY_TYPE_BLINDNESS`](#immunity_type_blindness)
-      - [`IMMUNITY_TYPE_CHARM`](#immunity_type_charm)
-      - [`IMMUNITY_TYPE_CONFUSED`](#immunity_type_confused)
-      - [`IMMUNITY_TYPE_CRITICAL_HIT`](#immunity_type_critical_hit)
-      - [`IMMUNITY_TYPE_CURSED`](#immunity_type_cursed)
-      - [`IMMUNITY_TYPE_DAMAGE_DECREASE`](#immunity_type_damage_decrease)
-      - [`IMMUNITY_TYPE_DAMAGE_IMMUNITY_DECREASE`](#immunity_type_damage_immunity_decrease)
-      - [`IMMUNITY_TYPE_DAZED`](#immunity_type_dazed)
-      - [`IMMUNITY_TYPE_DEAFNESS`](#immunity_type_deafness)
-      - [`IMMUNITY_TYPE_DEATH`](#immunity_type_death)
-      - [`IMMUNITY_TYPE_DISEASE`](#immunity_type_disease)
-      - [`IMMUNITY_TYPE_DOMINATE`](#immunity_type_dominate)
-      - [`IMMUNITY_TYPE_ENTANGLE`](#immunity_type_entangle)
-      - [`IMMUNITY_TYPE_FEAR`](#immunity_type_fear)
-      - [`IMMUNITY_TYPE_FORCE_RESISTANCE_DECREASE`](#immunity_type_force_resistance_decrease)
-      - [`IMMUNITY_TYPE_KNOCKDOWN`](#immunity_type_knockdown)
-      - [`IMMUNITY_TYPE_MIND_SPELLS`](#immunity_type_mind_spells)
-      - [`IMMUNITY_TYPE_MOVEMENT_SPEED_DECREASE`](#immunity_type_movement_speed_decrease)
-      - [`IMMUNITY_TYPE_NEGATIVE_LEVEL`](#immunity_type_negative_level)
-      - [`IMMUNITY_TYPE_NONE`](#immunity_type_none)
-      - [`IMMUNITY_TYPE_PARALYSIS`](#immunity_type_paralysis)
-      - [`IMMUNITY_TYPE_POISON`](#immunity_type_poison)
-      - [`IMMUNITY_TYPE_SAVING_THROW_DECREASE`](#immunity_type_saving_throw_decrease)
-      - [`IMMUNITY_TYPE_SILENCE`](#immunity_type_silence)
-      - [`IMMUNITY_TYPE_SKILL_DECREASE`](#immunity_type_skill_decrease)
-      - [`IMMUNITY_TYPE_SLEEP`](#immunity_type_sleep)
-      - [`IMMUNITY_TYPE_SLOW`](#immunity_type_slow)
-      - [`IMMUNITY_TYPE_SNEAK_ATTACK`](#immunity_type_sneak_attack)
-      - [`IMMUNITY_TYPE_STUN`](#immunity_type_stun)
-      - [`IMMUNITY_TYPE_TRAP`](#immunity_type_trap)
-      - [`INVALID_STANDARD_FACTION`](#invalid_standard_faction)
-      - [`INVISIBILITY_TYPE_DARKNESS`](#invisibility_type_darkness)
-      - [`INVISIBILITY_TYPE_IMPROVED`](#invisibility_type_improved)
-      - [`INVISIBILITY_TYPE_NORMAL`](#invisibility_type_normal)
-      - [`ITEM_PROPERTY_ABILITY_BONUS`](#item_property_ability_bonus)
-      - [`ITEM_PROPERTY_AC_BONUS`](#item_property_ac_bonus)
-      - [`ITEM_PROPERTY_AC_BONUS_VS_DAMAGE_TYPE`](#item_property_ac_bonus_vs_damage_type)
-      - [`ITEM_PROPERTY_AC_BONUS_VS_RACIAL_GROUP`](#item_property_ac_bonus_vs_racial_group)
-      - [`ITEM_PROPERTY_ACTIVATE_ITEM`](#item_property_activate_item)
-      - [`ITEM_PROPERTY_ATTACK_BONUS`](#item_property_attack_bonus)
-      - [`ITEM_PROPERTY_ATTACK_BONUS_VS_RACIAL_GROUP`](#item_property_attack_bonus_vs_racial_group)
-      - [`ITEM_PROPERTY_ATTACK_PENALTY`](#item_property_attack_penalty)
-      - [`ITEM_PROPERTY_BLASTER_BOLT_DEFLECT_DECREASE`](#item_property_blaster_bolt_deflect_decrease)
-      - [`ITEM_PROPERTY_BLASTER_BOLT_DEFLECT_INCREASE`](#item_property_blaster_bolt_deflect_increase)
-      - [`ITEM_PROPERTY_BONUS_FEAT`](#item_property_bonus_feat)
-      - [`ITEM_PROPERTY_COMPUTER_SPIKE`](#item_property_computer_spike)
-      - [`ITEM_PROPERTY_DAMAGE_BONUS`](#item_property_damage_bonus)
-      - [`ITEM_PROPERTY_DAMAGE_BONUS_VS_RACIAL_GROUP`](#item_property_damage_bonus_vs_racial_group)
-      - [`ITEM_PROPERTY_DAMAGE_REDUCTION`](#item_property_damage_reduction)
-      - [`ITEM_PROPERTY_DAMAGE_RESISTANCE`](#item_property_damage_resistance)
-      - [`ITEM_PROPERTY_DAMAGE_VULNERABILITY`](#item_property_damage_vulnerability)
-      - [`ITEM_PROPERTY_DECREASED_ABILITY_SCORE`](#item_property_decreased_ability_score)
-      - [`ITEM_PROPERTY_DECREASED_AC`](#item_property_decreased_ac)
-      - [`ITEM_PROPERTY_DECREASED_ATTACK_MODIFIER`](#item_property_decreased_attack_modifier)
-      - [`ITEM_PROPERTY_DECREASED_DAMAGE`](#item_property_decreased_damage)
-      - [`ITEM_PROPERTY_DECREASED_SAVING_THROWS`](#item_property_decreased_saving_throws)
-      - [`ITEM_PROPERTY_DECREASED_SAVING_THROWS_SPECIFIC`](#item_property_decreased_saving_throws_specific)
-      - [`ITEM_PROPERTY_DECREASED_SKILL_MODIFIER`](#item_property_decreased_skill_modifier)
-      - [`ITEM_PROPERTY_DROID_REPAIR_KIT`](#item_property_droid_repair_kit)
-      - [`ITEM_PROPERTY_ENHANCEMENT_BONUS`](#item_property_enhancement_bonus)
-      - [`ITEM_PROPERTY_ENHANCEMENT_BONUS_VS_RACIAL_GROUP`](#item_property_enhancement_bonus_vs_racial_group)
-      - [`ITEM_PROPERTY_EXTRA_MELEE_DAMAGE_TYPE`](#item_property_extra_melee_damage_type)
-      - [`ITEM_PROPERTY_EXTRA_RANGED_DAMAGE_TYPE`](#item_property_extra_ranged_damage_type)
-      - [`ITEM_PROPERTY_FREEDOM_OF_MOVEMENT`](#item_property_freedom_of_movement)
-      - [`ITEM_PROPERTY_IMMUNITY`](#item_property_immunity)
-      - [`ITEM_PROPERTY_IMMUNITY_DAMAGE_TYPE`](#item_property_immunity_damage_type)
-      - [`ITEM_PROPERTY_IMPROVED_FORCE_RESISTANCE`](#item_property_improved_force_resistance)
-      - [`ITEM_PROPERTY_IMPROVED_SAVING_THROW`](#item_property_improved_saving_throw)
-      - [`ITEM_PROPERTY_IMPROVED_SAVING_THROW_SPECIFIC`](#item_property_improved_saving_throw_specific)
-      - [`ITEM_PROPERTY_KEEN`](#item_property_keen)
-      - [`ITEM_PROPERTY_LIGHT`](#item_property_light)
-      - [`ITEM_PROPERTY_MASSIVE_CRITICALS`](#item_property_massive_criticals)
-      - [`ITEM_PROPERTY_MIGHTY`](#item_property_mighty)
-      - [`ITEM_PROPERTY_MONSTER_DAMAGE`](#item_property_monster_damage)
-      - [`ITEM_PROPERTY_NO_DAMAGE`](#item_property_no_damage)
-      - [`ITEM_PROPERTY_ON_HIT_PROPERTIES`](#item_property_on_hit_properties)
-      - [`ITEM_PROPERTY_ON_MONSTER_HIT`](#item_property_on_monster_hit)
-      - [`ITEM_PROPERTY_REGENERATION`](#item_property_regeneration)
-      - [`ITEM_PROPERTY_REGENERATION_FORCE_POINTS`](#item_property_regeneration_force_points)
-      - [`ITEM_PROPERTY_SECURITY_SPIKE`](#item_property_security_spike)
-      - [`ITEM_PROPERTY_SKILL_BONUS`](#item_property_skill_bonus)
-      - [`ITEM_PROPERTY_SPECIAL_WALK`](#item_property_special_walk)
-      - [`ITEM_PROPERTY_TRAP`](#item_property_trap)
-      - [`ITEM_PROPERTY_TRUE_SEEING`](#item_property_true_seeing)
-      - [`ITEM_PROPERTY_UNLIMITED_AMMUNITION`](#item_property_unlimited_ammunition)
-      - [`ITEM_PROPERTY_USE_LIMITATION_CLASS`](#item_property_use_limitation_class)
-      - [`ITEM_PROPERTY_USE_LIMITATION_FEAT`](#item_property_use_limitation_feat)
-      - [`ITEM_PROPERTY_USE_LIMITATION_RACIAL_TYPE`](#item_property_use_limitation_racial_type)
-      - [`LIVE_CONTENT_PKG1`](#live_content_pkg1)
-      - [`LIVE_CONTENT_PKG2`](#live_content_pkg2)
-      - [`LIVE_CONTENT_PKG3`](#live_content_pkg3)
-      - [`LIVE_CONTENT_PKG4`](#live_content_pkg4)
-      - [`LIVE_CONTENT_PKG5`](#live_content_pkg5)
-      - [`LIVE_CONTENT_PKG6`](#live_content_pkg6)
-      - [`MOVEMENT_SPEED_DEFAULT`](#movement_speed_default)
-      - [`MOVEMENT_SPEED_DMFAST`](#movement_speed_dmfast)
-      - [`MOVEMENT_SPEED_FAST`](#movement_speed_fast)
-      - [`MOVEMENT_SPEED_IMMOBILE`](#movement_speed_immobile)
-      - [`MOVEMENT_SPEED_NORMAL`](#movement_speed_normal)
-      - [`MOVEMENT_SPEED_PC`](#movement_speed_pc)
-      - [`MOVEMENT_SPEED_SLOW`](#movement_speed_slow)
-      - [`MOVEMENT_SPEED_VERYFAST`](#movement_speed_veryfast)
-      - [`MOVEMENT_SPEED_VERYSLOW`](#movement_speed_veryslow)
-      - [`PARTY_AISTYLE_AGGRESSIVE`](#party_aistyle_aggressive)
-      - [`PARTY_AISTYLE_DEFENSIVE`](#party_aistyle_defensive)
-      - [`PARTY_AISTYLE_PASSIVE`](#party_aistyle_passive)
-      - [`PERCEPTION_HEARD`](#perception_heard)
-      - [`PERCEPTION_HEARD_AND_NOT_SEEN`](#perception_heard_and_not_seen)
-      - [`PERCEPTION_NOT_HEARD`](#perception_not_heard)
-      - [`PERCEPTION_NOT_SEEN`](#perception_not_seen)
-      - [`PERCEPTION_NOT_SEEN_AND_NOT_HEARD`](#perception_not_seen_and_not_heard)
-      - [`PERCEPTION_SEEN`](#perception_seen)
-      - [`PERCEPTION_SEEN_AND_HEARD`](#perception_seen_and_heard)
-      - [`PERCEPTION_SEEN_AND_NOT_HEARD`](#perception_seen_and_not_heard)
-      - [`PERSISTENT_ZONE_ACTIVE`](#persistent_zone_active)
-      - [`PERSISTENT_ZONE_FOLLOW`](#persistent_zone_follow)
-      - [`PI`](#pi)
-      - [`PLACEABLE_ACTION_BASH`](#placeable_action_bash)
-      - [`PLACEABLE_ACTION_KNOCK`](#placeable_action_knock)
-      - [`PLACEABLE_ACTION_UNLOCK`](#placeable_action_unlock)
-      - [`PLACEABLE_ACTION_USE`](#placeable_action_use)
-      - [`PLAYER_CHAR_IS_PC`](#player_char_is_pc)
-      - [`PLAYER_CHAR_NOT_PC`](#player_char_not_pc)
-      - [`PLOT_O_BIG_MONSTERS`](#plot_o_big_monsters)
-      - [`PLOT_O_DOOM`](#plot_o_doom)
-      - [`PLOT_O_SCARY_STUFF`](#plot_o_scary_stuff)
-      - [`POISON_ABILITY_SCORE_AVERAGE`](#poison_ability_score_average)
-      - [`POISON_ABILITY_SCORE_MILD`](#poison_ability_score_mild)
-      - [`POISON_ABILITY_SCORE_VIRULENT`](#poison_ability_score_virulent)
-      - [`POISON_DAMAGE_AVERAGE`](#poison_damage_average)
-      - [`POISON_DAMAGE_MILD`](#poison_damage_mild)
-      - [`POISON_DAMAGE_VIRULENT`](#poison_damage_virulent)
-      - [`POLYMORPH_TYPE_BADGER`](#polymorph_type_badger)
-      - [`POLYMORPH_TYPE_BALOR`](#polymorph_type_balor)
-      - [`POLYMORPH_TYPE_BOAR`](#polymorph_type_boar)
-      - [`POLYMORPH_TYPE_BROWN_BEAR`](#polymorph_type_brown_bear)
-      - [`POLYMORPH_TYPE_COW`](#polymorph_type_cow)
-      - [`POLYMORPH_TYPE_DEATH_SLAAD`](#polymorph_type_death_slaad)
-      - [`POLYMORPH_TYPE_DIRE_BADGER`](#polymorph_type_dire_badger)
-      - [`POLYMORPH_TYPE_DIRE_BOAR`](#polymorph_type_dire_boar)
-      - [`POLYMORPH_TYPE_DIRE_BROWN_BEAR`](#polymorph_type_dire_brown_bear)
-      - [`POLYMORPH_TYPE_DIRE_PANTHER`](#polymorph_type_dire_panther)
-      - [`POLYMORPH_TYPE_DIRE_WOLF`](#polymorph_type_dire_wolf)
-      - [`POLYMORPH_TYPE_DOOM_KNIGHT`](#polymorph_type_doom_knight)
-      - [`POLYMORPH_TYPE_ELDER_AIR_ELEMENTAL`](#polymorph_type_elder_air_elemental)
-      - [`POLYMORPH_TYPE_ELDER_EARTH_ELEMENTAL`](#polymorph_type_elder_earth_elemental)
-      - [`POLYMORPH_TYPE_ELDER_FIRE_ELEMENTAL`](#polymorph_type_elder_fire_elemental)
-      - [`POLYMORPH_TYPE_ELDER_WATER_ELEMENTAL`](#polymorph_type_elder_water_elemental)
-      - [`POLYMORPH_TYPE_FIRE_GIANT`](#polymorph_type_fire_giant)
-      - [`POLYMORPH_TYPE_GIANT_SPIDER`](#polymorph_type_giant_spider)
-      - [`POLYMORPH_TYPE_HUGE_AIR_ELEMENTAL`](#polymorph_type_huge_air_elemental)
-      - [`POLYMORPH_TYPE_HUGE_EARTH_ELEMENTAL`](#polymorph_type_huge_earth_elemental)
-      - [`POLYMORPH_TYPE_HUGE_FIRE_ELEMENTAL`](#polymorph_type_huge_fire_elemental)
-      - [`POLYMORPH_TYPE_HUGE_WATER_ELEMENTAL`](#polymorph_type_huge_water_elemental)
-      - [`POLYMORPH_TYPE_IMP`](#polymorph_type_imp)
-      - [`POLYMORPH_TYPE_IRON_GOLEM`](#polymorph_type_iron_golem)
-      - [`POLYMORPH_TYPE_PANTHER`](#polymorph_type_panther)
-      - [`POLYMORPH_TYPE_PENGUIN`](#polymorph_type_penguin)
-      - [`POLYMORPH_TYPE_PIXIE`](#polymorph_type_pixie)
-      - [`POLYMORPH_TYPE_QUASIT`](#polymorph_type_quasit)
-      - [`POLYMORPH_TYPE_RED_DRAGON`](#polymorph_type_red_dragon)
-      - [`POLYMORPH_TYPE_SUCCUBUS`](#polymorph_type_succubus)
-      - [`POLYMORPH_TYPE_TROLL`](#polymorph_type_troll)
-      - [`POLYMORPH_TYPE_UMBER_HULK`](#polymorph_type_umber_hulk)
-      - [`POLYMORPH_TYPE_WERECAT`](#polymorph_type_werecat)
-      - [`POLYMORPH_TYPE_WERERAT`](#polymorph_type_wererat)
-      - [`POLYMORPH_TYPE_WEREWOLF`](#polymorph_type_werewolf)
-      - [`POLYMORPH_TYPE_WOLF`](#polymorph_type_wolf)
-      - [`POLYMORPH_TYPE_YUANTI`](#polymorph_type_yuanti)
-      - [`POLYMORPH_TYPE_ZOMBIE`](#polymorph_type_zombie)
-      - [`PROJECTILE_PATH_TYPE_ACCELERATING`](#projectile_path_type_accelerating)
-      - [`PROJECTILE_PATH_TYPE_BALLISTIC`](#projectile_path_type_ballistic)
-      - [`PROJECTILE_PATH_TYPE_DEFAULT`](#projectile_path_type_default)
-      - [`PROJECTILE_PATH_TYPE_HIGH_BALLISTIC`](#projectile_path_type_high_ballistic)
-      - [`PROJECTILE_PATH_TYPE_HOMING`](#projectile_path_type_homing)
-      - [`RACIAL_TYPE_ALL`](#racial_type_all)
-      - [`RACIAL_TYPE_DROID`](#racial_type_droid)
-      - [`RACIAL_TYPE_ELF`](#racial_type_elf)
-      - [`RACIAL_TYPE_GNOME`](#racial_type_gnome)
-      - [`RACIAL_TYPE_HALFELF`](#racial_type_halfelf)
-      - [`RACIAL_TYPE_HALFLING`](#racial_type_halfling)
-      - [`RACIAL_TYPE_HUMAN`](#racial_type_human)
-      - [`RACIAL_TYPE_INVALID`](#racial_type_invalid)
-      - [`RACIAL_TYPE_UNKNOWN`](#racial_type_unknown)
-      - [`RADIUS_SIZE_COLOSSAL`](#radius_size_colossal)
-      - [`RADIUS_SIZE_GARGANTUAN`](#radius_size_gargantuan)
-      - [`RADIUS_SIZE_HUGE`](#radius_size_huge)
-      - [`RADIUS_SIZE_LARGE`](#radius_size_large)
-      - [`RADIUS_SIZE_MEDIUM`](#radius_size_medium)
-      - [`RADIUS_SIZE_SMALL`](#radius_size_small)
-      - [`REPUTATION_TYPE_ENEMY`](#reputation_type_enemy)
-      - [`REPUTATION_TYPE_FRIEND`](#reputation_type_friend)
-      - [`REPUTATION_TYPE_NEUTRAL`](#reputation_type_neutral)
-      - [`SAVING_THROW_ALL`](#saving_throw_all)
-      - [`SAVING_THROW_FORT`](#saving_throw_fort)
-      - [`SAVING_THROW_REFLEX`](#saving_throw_reflex)
-      - [`SAVING_THROW_TYPE_ACID`](#saving_throw_type_acid)
-      - [`SAVING_THROW_TYPE_ALL`](#saving_throw_type_all)
-      - [`SAVING_THROW_TYPE_BLASTER`](#saving_throw_type_blaster)
-      - [`SAVING_THROW_TYPE_COLD`](#saving_throw_type_cold)
-      - [`SAVING_THROW_TYPE_DARK_SIDE`](#saving_throw_type_dark_side)
-      - [`SAVING_THROW_TYPE_DEATH`](#saving_throw_type_death)
-      - [`SAVING_THROW_TYPE_DISEASE`](#saving_throw_type_disease)
-      - [`SAVING_THROW_TYPE_ELECTRICAL`](#saving_throw_type_electrical)
-      - [`SAVING_THROW_TYPE_FEAR`](#saving_throw_type_fear)
-      - [`SAVING_THROW_TYPE_FIRE`](#saving_throw_type_fire)
-      - [`SAVING_THROW_TYPE_FORCE_POWER`](#saving_throw_type_force_power)
-      - [`SAVING_THROW_TYPE_ION`](#saving_throw_type_ion)
-      - [`SAVING_THROW_TYPE_LIGHT_SIDE`](#saving_throw_type_light_side)
-      - [`SAVING_THROW_TYPE_MIND_AFFECTING`](#saving_throw_type_mind_affecting)
-      - [`SAVING_THROW_TYPE_NONE`](#saving_throw_type_none)
-      - [`SAVING_THROW_TYPE_PARALYSIS`](#saving_throw_type_paralysis)
-      - [`SAVING_THROW_TYPE_POISON`](#saving_throw_type_poison)
-      - [`SAVING_THROW_TYPE_SNEAK_ATTACK`](#saving_throw_type_sneak_attack)
-      - [`SAVING_THROW_TYPE_SONIC`](#saving_throw_type_sonic)
-      - [`SAVING_THROW_TYPE_TRAP`](#saving_throw_type_trap)
-      - [`SAVING_THROW_WILL`](#saving_throw_will)
-      - [`SHAPE_CONE`](#shape_cone)
-      - [`SHAPE_CUBE`](#shape_cube)
-      - [`SHAPE_SPELLCONE`](#shape_spellcone)
-      - [`SHAPE_SPELLCYLINDER`](#shape_spellcylinder)
-      - [`SHAPE_SPHERE`](#shape_sphere)
-      - [`SHIELD_ANTIQUE_DROID`](#shield_antique_droid)
-      - [`SHIELD_DROID_ENERGY_1`](#shield_droid_energy_1)
-      - [`SHIELD_DROID_ENERGY_2`](#shield_droid_energy_2)
-      - [`SHIELD_DROID_ENERGY_3`](#shield_droid_energy_3)
-      - [`SHIELD_DROID_ENVIRO_1`](#shield_droid_enviro_1)
-      - [`SHIELD_DROID_ENVIRO_2`](#shield_droid_enviro_2)
-      - [`SHIELD_DROID_ENVIRO_3`](#shield_droid_enviro_3)
-      - [`SHIELD_DUELING_ECHANI`](#shield_dueling_echani)
-      - [`SHIELD_DUELING_YUSANIS`](#shield_dueling_yusanis)
-      - [`SHIELD_ECHANI`](#shield_echani)
-      - [`SHIELD_ENERGY`](#shield_energy)
-      - [`SHIELD_ENERGY_ARKANIAN`](#shield_energy_arkanian)
-      - [`SHIELD_ENERGY_SITH`](#shield_energy_sith)
-      - [`SHIELD_MANDALORIAN_MELEE`](#shield_mandalorian_melee)
-      - [`SHIELD_MANDALORIAN_POWER`](#shield_mandalorian_power)
-      - [`SHIELD_PLOT_TAR_M09AA`](#shield_plot_tar_m09aa)
-      - [`SHIELD_PLOT_UNK_M44AA`](#shield_plot_unk_m44aa)
-      - [`SHIELD_VERPINE_PROTOTYPE`](#shield_verpine_prototype)
-      - [`SKILL_AWARENESS`](#skill_awareness)
-      - [`SKILL_COMPUTER_USE`](#skill_computer_use)
-      - [`SKILL_DEMOLITIONS`](#skill_demolitions)
-      - [`SKILL_MAX_SKILLS`](#skill_max_skills)
-      - [`SKILL_PERSUADE`](#skill_persuade)
-      - [`SKILL_REPAIR`](#skill_repair)
-      - [`SKILL_SECURITY`](#skill_security)
-      - [`SKILL_STEALTH`](#skill_stealth)
-      - [`SKILL_TREAT_INJURY`](#skill_treat_injury)
-      - [`sLanguage`](#slanguage)
-      - [`SPECIAL_ABILITY_BATTLE_MEDITATION`](#special_ability_battle_meditation)
-      - [`SPECIAL_ABILITY_BODY_FUEL`](#special_ability_body_fuel)
-      - [`SPECIAL_ABILITY_CAMOFLAGE`](#special_ability_camoflage)
-      - [`SPECIAL_ABILITY_CATHAR_REFLEXES`](#special_ability_cathar_reflexes)
-      - [`SPECIAL_ABILITY_COMBAT_REGENERATION`](#special_ability_combat_regeneration)
-      - [`SPECIAL_ABILITY_DOMINATE_MIND`](#special_ability_dominate_mind)
-      - [`SPECIAL_ABILITY_ENHANCED_SENSES`](#special_ability_enhanced_senses)
-      - [`SPECIAL_ABILITY_PSYCHIC_STANCE`](#special_ability_psychic_stance)
-      - [`SPECIAL_ABILITY_RAGE`](#special_ability_rage)
-      - [`SPECIAL_ABILITY_SENTINEL_STANCE`](#special_ability_sentinel_stance)
-      - [`SPECIAL_ABILITY_TAUNT`](#special_ability_taunt)
-      - [`SPECIAL_ABILITY_WARRIOR_STANCE`](#special_ability_warrior_stance)
-      - [`SPECIAL_ABILITY_WHIRLING_DERVISH`](#special_ability_whirling_dervish)
-      - [`SPECIAL_ATTACK_CALLED_SHOT_ARM`](#special_attack_called_shot_arm)
-      - [`SPECIAL_ATTACK_CALLED_SHOT_LEG`](#special_attack_called_shot_leg)
-      - [`SPECIAL_ATTACK_DISARM`](#special_attack_disarm)
-      - [`SPECIAL_ATTACK_FLURRY_OF_BLOWS`](#special_attack_flurry_of_blows)
-      - [`SPECIAL_ATTACK_IMPROVED_DISARM`](#special_attack_improved_disarm)
-      - [`SPECIAL_ATTACK_IMPROVED_KNOCKDOWN`](#special_attack_improved_knockdown)
-      - [`SPECIAL_ATTACK_INVALID`](#special_attack_invalid)
-      - [`SPECIAL_ATTACK_KNOCKDOWN`](#special_attack_knockdown)
-      - [`SPECIAL_ATTACK_RAPID_SHOT`](#special_attack_rapid_shot)
-      - [`SPECIAL_ATTACK_SAP`](#special_attack_sap)
-      - [`SPECIAL_ATTACK_STUNNING_FIST`](#special_attack_stunning_fist)
-      - [`STANDARD_FACTION_ENDAR_SPIRE`](#standard_faction_endar_spire)
-      - [`STANDARD_FACTION_FRIENDLY_1`](#standard_faction_friendly_1)
-      - [`STANDARD_FACTION_FRIENDLY_2`](#standard_faction_friendly_2)
-      - [`STANDARD_FACTION_GIZKA_1`](#standard_faction_gizka_1)
-      - [`STANDARD_FACTION_GIZKA_2`](#standard_faction_gizka_2)
-      - [`STANDARD_FACTION_GLB_XOR`](#standard_faction_glb_xor)
-      - [`STANDARD_FACTION_HOSTILE_1`](#standard_faction_hostile_1)
-      - [`STANDARD_FACTION_HOSTILE_2`](#standard_faction_hostile_2)
-      - [`STANDARD_FACTION_INSANE`](#standard_faction_insane)
-      - [`STANDARD_FACTION_NEUTRAL`](#standard_faction_neutral)
-      - [`STANDARD_FACTION_PREDATOR`](#standard_faction_predator)
-      - [`STANDARD_FACTION_PREY`](#standard_faction_prey)
-      - [`STANDARD_FACTION_PTAT_TUSKAN`](#standard_faction_ptat_tuskan)
-      - [`STANDARD_FACTION_RANCOR`](#standard_faction_rancor)
-      - [`STANDARD_FACTION_SURRENDER_1`](#standard_faction_surrender_1)
-      - [`STANDARD_FACTION_SURRENDER_2`](#standard_faction_surrender_2)
-      - [`STANDARD_FACTION_TRAP`](#standard_faction_trap)
-      - [`SUBRACE_NONE`](#subrace_none)
-      - [`SUBRACE_WOOKIE`](#subrace_wookie)
-      - [`SUBSCREEN_ID_ABILITY`](#subscreen_id_ability)
-      - [`SUBSCREEN_ID_CHARACTER_RECORD`](#subscreen_id_character_record)
-      - [`SUBSCREEN_ID_EQUIP`](#subscreen_id_equip)
-      - [`SUBSCREEN_ID_ITEM`](#subscreen_id_item)
-      - [`SUBSCREEN_ID_MAP`](#subscreen_id_map)
-      - [`SUBSCREEN_ID_MESSAGES`](#subscreen_id_messages)
-      - [`SUBSCREEN_ID_NONE`](#subscreen_id_none)
-      - [`SUBSCREEN_ID_OPTIONS`](#subscreen_id_options)
-      - [`SUBSCREEN_ID_QUEST`](#subscreen_id_quest)
-      - [`SUBSKILL_EXAMINETRAP`](#subskill_examinetrap)
-      - [`SUBSKILL_FLAGTRAP`](#subskill_flagtrap)
-      - [`SUBSKILL_RECOVERTRAP`](#subskill_recovertrap)
-      - [`SUBTYPE_EXTRAORDINARY`](#subtype_extraordinary)
-      - [`SUBTYPE_MAGICAL`](#subtype_magical)
-      - [`SUBTYPE_SUPERNATURAL`](#subtype_supernatural)
-      - [`SWMINIGAME_TRACKFOLLOWER_SOUND_DEATH`](#swminigame_trackfollower_sound_death)
-      - [`SWMINIGAME_TRACKFOLLOWER_SOUND_ENGINE`](#swminigame_trackfollower_sound_engine)
-      - [`TALENT_EXCLUDE_ALL_OF_TYPE`](#talent_exclude_all_of_type)
-      - [`TALENT_TYPE_FEAT`](#talent_type_feat)
-      - [`TALENT_TYPE_FORCE`](#talent_type_force)
-      - [`TALENT_TYPE_SKILL`](#talent_type_skill)
-      - [`TALENT_TYPE_SPELL`](#talent_type_spell)
-      - [`TALKVOLUME_SHOUT`](#talkvolume_shout)
-      - [`TALKVOLUME_SILENT_SHOUT`](#talkvolume_silent_shout)
-      - [`TALKVOLUME_SILENT_TALK`](#talkvolume_silent_talk)
-      - [`TALKVOLUME_TALK`](#talkvolume_talk)
-      - [`TALKVOLUME_WHISPER`](#talkvolume_whisper)
-      - [`TRAP_BASE_TYPE_FLASH_STUN_AVERAGE`](#trap_base_type_flash_stun_average)
-      - [`TRAP_BASE_TYPE_FLASH_STUN_DEADLY`](#trap_base_type_flash_stun_deadly)
-      - [`TRAP_BASE_TYPE_FLASH_STUN_MINOR`](#trap_base_type_flash_stun_minor)
-      - [`TRAP_BASE_TYPE_FRAGMENTATION_MINE_AVERAGE`](#trap_base_type_fragmentation_mine_average)
-      - [`TRAP_BASE_TYPE_FRAGMENTATION_MINE_DEADLY`](#trap_base_type_fragmentation_mine_deadly)
-      - [`TRAP_BASE_TYPE_FRAGMENTATION_MINE_MINOR`](#trap_base_type_fragmentation_mine_minor)
-      - [`TRAP_BASE_TYPE_LASER_SLICING_AVERAGE`](#trap_base_type_laser_slicing_average)
-      - [`TRAP_BASE_TYPE_LASER_SLICING_DEADLY`](#trap_base_type_laser_slicing_deadly)
-      - [`TRAP_BASE_TYPE_LASER_SLICING_MINOR`](#trap_base_type_laser_slicing_minor)
-      - [`TRAP_BASE_TYPE_POISON_GAS_AVERAGE`](#trap_base_type_poison_gas_average)
-      - [`TRAP_BASE_TYPE_POISON_GAS_DEADLY`](#trap_base_type_poison_gas_deadly)
-      - [`TRAP_BASE_TYPE_POISON_GAS_MINOR`](#trap_base_type_poison_gas_minor)
-      - [`TRUE`](#true)
-      - [`TUTORIAL_WINDOW_RETURN_TO_BASE`](#tutorial_window_return_to_base)
-      - [`TUTORIAL_WINDOW_START_SWOOP_RACE`](#tutorial_window_start_swoop_race)
-      - [`VIDEO_EFFECT_FREELOOK_HK47`](#video_effect_freelook_hk47)
-      - [`VIDEO_EFFECT_FREELOOK_T3M4`](#video_effect_freelook_t3m4)
-      - [`VIDEO_EFFECT_NONE`](#video_effect_none)
-      - [`VIDEO_EFFECT_SECURITY_CAMERA`](#video_effect_security_camera)
+      - `AC_ARMOUR_ENCHANTMENT_BONUS`
+      - `AC_DEFLECTION_BONUS`
+      - `AC_DODGE_BONUS`
+      - `AC_NATURAL_BONUS`
+      - `AC_SHIELD_ENCHANTMENT_BONUS`
+      - `AC_VS_DAMAGE_TYPE_ALL`
+      - `ACTION_ANIMALEMPATHY`
+      - `ACTION_ATTACKOBJECT`
+      - `ACTION_CASTSPELL`
+      - `ACTION_CLOSEDOOR`
+      - `ACTION_COUNTERSPELL`
+      - `ACTION_DIALOGOBJECT`
+      - `ACTION_DISABLETRAP`
+      - `ACTION_DROPITEM`
+      - `ACTION_EXAMINETRAP`
+      - `ACTION_FLAGTRAP`
+      - `ACTION_FOLLOW`
+      - `ACTION_FOLLOWLEADER`
+      - `ACTION_HEAL`
+      - `ACTION_INVALID`
+      - `ACTION_ITEMCASTSPELL`
+      - `ACTION_LOCK`
+      - `ACTION_MOVETOPOINT`
+      - `ACTION_OPENDOOR`
+      - `ACTION_OPENLOCK`
+      - `ACTION_PICKPOCKET`
+      - `ACTION_PICKUPITEM`
+      - `ACTION_QUEUEEMPTY`
+      - `ACTION_RECOVERTRAP`
+      - `ACTION_REST`
+      - `ACTION_SETTRAP`
+      - `ACTION_SIT`
+      - `ACTION_TAUNT`
+      - `ACTION_USEOBJECT`
+      - `ACTION_WAIT`
+      - `ANIMATION_FIREFORGET_ACTIVATE`
+      - `ANIMATION_FIREFORGET_BOW`
+      - `ANIMATION_FIREFORGET_CHOKE`
+      - `ANIMATION_FIREFORGET_CUSTOM01`
+      - `ANIMATION_FIREFORGET_GREETING`
+      - `ANIMATION_FIREFORGET_HEAD_TURN_LEFT`
+      - `ANIMATION_FIREFORGET_HEAD_TURN_RIGHT`
+      - `ANIMATION_FIREFORGET_INJECT`
+      - `ANIMATION_FIREFORGET_PAUSE_BORED`
+      - `ANIMATION_FIREFORGET_PAUSE_SCRATCH_HEAD`
+      - `ANIMATION_FIREFORGET_PERSUADE`
+      - `ANIMATION_FIREFORGET_SALUTE`
+      - `ANIMATION_FIREFORGET_TAUNT`
+      - `ANIMATION_FIREFORGET_THROW_HIGH`
+      - `ANIMATION_FIREFORGET_THROW_LOW`
+      - `ANIMATION_FIREFORGET_TREAT_INJURED`
+      - `ANIMATION_FIREFORGET_USE_COMPUTER`
+      - `ANIMATION_FIREFORGET_VICTORY1`
+      - `ANIMATION_FIREFORGET_VICTORY2`
+      - `ANIMATION_FIREFORGET_VICTORY3`
+      - `ANIMATION_LOOPING_CHOKE`
+      - `ANIMATION_LOOPING_DANCE`
+      - `ANIMATION_LOOPING_DANCE1`
+      - `ANIMATION_LOOPING_DEACTIVATE`
+      - `ANIMATION_LOOPING_DEAD`
+      - `ANIMATION_LOOPING_DEAD_PRONE`
+      - `ANIMATION_LOOPING_FLIRT`
+      - `ANIMATION_LOOPING_GET_LOW`
+      - `ANIMATION_LOOPING_GET_MID`
+      - `ANIMATION_LOOPING_HORROR`
+      - `ANIMATION_LOOPING_KNEEL_TALK_ANGRY`
+      - `ANIMATION_LOOPING_KNEEL_TALK_SAD`
+      - `ANIMATION_LOOPING_LISTEN`
+      - `ANIMATION_LOOPING_LISTEN_INJURED`
+      - `ANIMATION_LOOPING_MEDITATE`
+      - `ANIMATION_LOOPING_PAUSE`
+      - `ANIMATION_LOOPING_PAUSE2`
+      - `ANIMATION_LOOPING_PAUSE3`
+      - `ANIMATION_LOOPING_PAUSE_DRUNK`
+      - `ANIMATION_LOOPING_PAUSE_TIRED`
+      - `ANIMATION_LOOPING_PRONE`
+      - `ANIMATION_LOOPING_READY`
+      - `ANIMATION_LOOPING_SLEEP`
+      - `ANIMATION_LOOPING_SPASM`
+      - `ANIMATION_LOOPING_TALK_FORCEFUL`
+      - `ANIMATION_LOOPING_TALK_INJURED`
+      - `ANIMATION_LOOPING_TALK_LAUGHING`
+      - `ANIMATION_LOOPING_TALK_NORMAL`
+      - `ANIMATION_LOOPING_TALK_PLEADING`
+      - `ANIMATION_LOOPING_TALK_SAD`
+      - `ANIMATION_LOOPING_TREAT_INJURED`
+      - `ANIMATION_LOOPING_USE_COMPUTER`
+      - `ANIMATION_LOOPING_WELD`
+      - `ANIMATION_LOOPING_WORSHIP`
+      - `ANIMATION_PLACEABLE_ACTIVATE`
+      - `ANIMATION_PLACEABLE_ANIMLOOP01`
+      - `ANIMATION_PLACEABLE_ANIMLOOP02`
+      - `ANIMATION_PLACEABLE_ANIMLOOP03`
+      - `ANIMATION_PLACEABLE_ANIMLOOP04`
+      - `ANIMATION_PLACEABLE_ANIMLOOP05`
+      - `ANIMATION_PLACEABLE_ANIMLOOP06`
+      - `ANIMATION_PLACEABLE_ANIMLOOP07`
+      - `ANIMATION_PLACEABLE_ANIMLOOP08`
+      - `ANIMATION_PLACEABLE_ANIMLOOP09`
+      - `ANIMATION_PLACEABLE_ANIMLOOP10`
+      - `ANIMATION_PLACEABLE_CLOSE`
+      - `ANIMATION_PLACEABLE_DEACTIVATE`
+      - `ANIMATION_PLACEABLE_OPEN`
+      - `ANIMATION_ROOM_SCRIPTLOOP01`
+      - `ANIMATION_ROOM_SCRIPTLOOP02`
+      - `ANIMATION_ROOM_SCRIPTLOOP03`
+      - `ANIMATION_ROOM_SCRIPTLOOP04`
+      - `ANIMATION_ROOM_SCRIPTLOOP05`
+      - `ANIMATION_ROOM_SCRIPTLOOP06`
+      - `ANIMATION_ROOM_SCRIPTLOOP07`
+      - `ANIMATION_ROOM_SCRIPTLOOP08`
+      - `ANIMATION_ROOM_SCRIPTLOOP09`
+      - `ANIMATION_ROOM_SCRIPTLOOP10`
+      - `ANIMATION_ROOM_SCRIPTLOOP11`
+      - `ANIMATION_ROOM_SCRIPTLOOP12`
+      - `ANIMATION_ROOM_SCRIPTLOOP13`
+      - `ANIMATION_ROOM_SCRIPTLOOP14`
+      - `ANIMATION_ROOM_SCRIPTLOOP15`
+      - `ANIMATION_ROOM_SCRIPTLOOP16`
+      - `ANIMATION_ROOM_SCRIPTLOOP17`
+      - `ANIMATION_ROOM_SCRIPTLOOP18`
+      - `ANIMATION_ROOM_SCRIPTLOOP19`
+      - `ANIMATION_ROOM_SCRIPTLOOP20`
+      - `AOE_MOB_BLINDING`
+      - `AOE_MOB_CIRCCHAOS`
+      - `AOE_MOB_CIRCEVIL`
+      - `AOE_MOB_CIRCGOOD`
+      - `AOE_MOB_CIRCLAW`
+      - `AOE_MOB_DRAGON_FEAR`
+      - `AOE_MOB_ELECTRICAL`
+      - `AOE_MOB_FEAR`
+      - `AOE_MOB_FIRE`
+      - `AOE_MOB_FROST`
+      - `AOE_MOB_INVISIBILITY_PURGE`
+      - `AOE_MOB_MENACE`
+      - `AOE_MOB_PROTECTION`
+      - `AOE_MOB_SILENCE`
+      - `AOE_MOB_STUN`
+      - `AOE_MOB_TYRANT_FOG`
+      - `AOE_MOB_UNEARTHLY`
+      - `AOE_MOB_UNNATURAL`
+      - `AOE_PER_CREEPING_DOOM`
+      - `AOE_PER_DARKNESS`
+      - `AOE_PER_DELAY_BLAST_FIREBALL`
+      - `AOE_PER_ENTANGLE`
+      - `AOE_PER_EVARDS_BLACK_TENTACLES`
+      - `AOE_PER_FOGACID`
+      - `AOE_PER_FOGFIRE`
+      - `AOE_PER_FOGGHOUL`
+      - `AOE_PER_FOGKILL`
+      - `AOE_PER_FOGMIND`
+      - `AOE_PER_FOGSTINK`
+      - `AOE_PER_GREASE`
+      - `AOE_PER_INVIS_SPHERE`
+      - `AOE_PER_STORM`
+      - `AOE_PER_WALLBLADE`
+      - `AOE_PER_WALLFIRE`
+      - `AOE_PER_WALLWIND`
+      - `AOE_PER_WEB`
+      - `AREA_TRANSITION_CASTLE_01`
+      - `AREA_TRANSITION_CASTLE_02`
+      - `AREA_TRANSITION_CASTLE_03`
+      - `AREA_TRANSITION_CASTLE_04`
+      - `AREA_TRANSITION_CASTLE_05`
+      - `AREA_TRANSITION_CASTLE_06`
+      - `AREA_TRANSITION_CASTLE_07`
+      - `AREA_TRANSITION_CASTLE_08`
+      - `AREA_TRANSITION_CITY`
+      - `AREA_TRANSITION_CITY_01`
+      - `AREA_TRANSITION_CITY_02`
+      - `AREA_TRANSITION_CITY_03`
+      - `AREA_TRANSITION_CITY_04`
+      - `AREA_TRANSITION_CITY_05`
+      - `AREA_TRANSITION_CRYPT`
+      - `AREA_TRANSITION_CRYPT_01`
+      - `AREA_TRANSITION_CRYPT_02`
+      - `AREA_TRANSITION_CRYPT_03`
+      - `AREA_TRANSITION_CRYPT_04`
+      - `AREA_TRANSITION_CRYPT_05`
+      - `AREA_TRANSITION_DUNGEON_01`
+      - `AREA_TRANSITION_DUNGEON_02`
+      - `AREA_TRANSITION_DUNGEON_03`
+      - `AREA_TRANSITION_DUNGEON_04`
+      - `AREA_TRANSITION_DUNGEON_05`
+      - `AREA_TRANSITION_DUNGEON_06`
+      - `AREA_TRANSITION_DUNGEON_07`
+      - `AREA_TRANSITION_DUNGEON_08`
+      - `AREA_TRANSITION_FOREST`
+      - `AREA_TRANSITION_FOREST_01`
+      - `AREA_TRANSITION_FOREST_02`
+      - `AREA_TRANSITION_FOREST_03`
+      - `AREA_TRANSITION_FOREST_04`
+      - `AREA_TRANSITION_FOREST_05`
+      - `AREA_TRANSITION_INTERIOR_01`
+      - `AREA_TRANSITION_INTERIOR_02`
+      - `AREA_TRANSITION_INTERIOR_03`
+      - `AREA_TRANSITION_INTERIOR_04`
+      - `AREA_TRANSITION_INTERIOR_05`
+      - `AREA_TRANSITION_INTERIOR_06`
+      - `AREA_TRANSITION_INTERIOR_07`
+      - `AREA_TRANSITION_INTERIOR_08`
+      - `AREA_TRANSITION_INTERIOR_09`
+      - `AREA_TRANSITION_INTERIOR_10`
+      - `AREA_TRANSITION_INTERIOR_11`
+      - `AREA_TRANSITION_INTERIOR_12`
+      - `AREA_TRANSITION_INTERIOR_13`
+      - `AREA_TRANSITION_INTERIOR_14`
+      - `AREA_TRANSITION_INTERIOR_15`
+      - `AREA_TRANSITION_INTERIOR_16`
+      - `AREA_TRANSITION_MINES_01`
+      - `AREA_TRANSITION_MINES_02`
+      - `AREA_TRANSITION_MINES_03`
+      - `AREA_TRANSITION_MINES_04`
+      - `AREA_TRANSITION_MINES_05`
+      - `AREA_TRANSITION_MINES_06`
+      - `AREA_TRANSITION_MINES_07`
+      - `AREA_TRANSITION_MINES_08`
+      - `AREA_TRANSITION_MINES_09`
+      - `AREA_TRANSITION_RANDOM`
+      - `AREA_TRANSITION_RURAL`
+      - `AREA_TRANSITION_RURAL_01`
+      - `AREA_TRANSITION_RURAL_02`
+      - `AREA_TRANSITION_RURAL_03`
+      - `AREA_TRANSITION_RURAL_04`
+      - `AREA_TRANSITION_RURAL_05`
+      - `AREA_TRANSITION_SEWER_01`
+      - `AREA_TRANSITION_SEWER_02`
+      - `AREA_TRANSITION_SEWER_03`
+      - `AREA_TRANSITION_SEWER_04`
+      - `AREA_TRANSITION_SEWER_05`
+      - `AREA_TRANSITION_USER_DEFINED`
+      - `ATTACK_BONUS_MISC`
+      - `ATTACK_BONUS_OFFHAND`
+      - `ATTACK_BONUS_ONHAND`
+      - `ATTACK_RESULT_ATTACK_FAILED`
+      - `ATTACK_RESULT_ATTACK_RESISTED`
+      - `ATTACK_RESULT_AUTOMATIC_HIT`
+      - `ATTACK_RESULT_CRITICAL_HIT`
+      - `ATTACK_RESULT_DEFLECTED`
+      - `ATTACK_RESULT_HIT_SUCCESSFUL`
+      - `ATTACK_RESULT_INVALID`
+      - `ATTACK_RESULT_MISS`
+      - `ATTACK_RESULT_PARRIED`
+      - `ATTITUDE_AGGRESSIVE`
+      - `ATTITUDE_DEFENSIVE`
+      - `ATTITUDE_NEUTRAL`
+      - `ATTITUDE_SPECIAL`
+      - `BASE_ITEM_ADHESIVE_GRENADE`
+      - `BASE_ITEM_ADRENALINE`
+      - `BASE_ITEM_AESTHETIC_ITEM`
+      - `BASE_ITEM_ARMOR_CLASS_4`
+      - `BASE_ITEM_ARMOR_CLASS_5`
+      - `BASE_ITEM_ARMOR_CLASS_6`
+      - `BASE_ITEM_ARMOR_CLASS_7`
+      - `BASE_ITEM_ARMOR_CLASS_8`
+      - `BASE_ITEM_ARMOR_CLASS_9`
+      - `BASE_ITEM_BASIC_CLOTHING`
+      - `BASE_ITEM_BELT`
+      - `BASE_ITEM_BLASTER_CARBINE`
+      - `BASE_ITEM_BLASTER_PISTOL`
+      - `BASE_ITEM_BLASTER_RIFLE`
+      - `BASE_ITEM_BOWCASTER`
+      - `BASE_ITEM_COLLAR_LIGHT`
+      - `BASE_ITEM_COMBAT_SHOTS`
+      - `BASE_ITEM_CREATURE_HIDE_ITEM`
+      - `BASE_ITEM_CREATURE_ITEM_PIERCE`
+      - `BASE_ITEM_CREATURE_ITEM_SLASH`
+      - `BASE_ITEM_CREATURE_WEAPON_SL_PRC`
+      - `BASE_ITEM_CREDITS`
+      - `BASE_ITEM_CRYOBAN_GRENADE`
+      - `BASE_ITEM_DATA_PAD`
+      - `BASE_ITEM_DISRUPTER_PISTOL`
+      - `BASE_ITEM_DISRUPTER_RIFLE`
+      - `BASE_ITEM_DOUBLE_BLADED_LIGHTSABER`
+      - `BASE_ITEM_DOUBLE_BLADED_SWORD`
+      - `BASE_ITEM_DROID_COMPUTER_SPIKE_MOUNT`
+      - `BASE_ITEM_DROID_HEAVY_PLATING`
+      - `BASE_ITEM_DROID_LIGHT_PLATING`
+      - `BASE_ITEM_DROID_MEDIUM_PLATING`
+      - `BASE_ITEM_DROID_MOTION_SENSORS`
+      - `BASE_ITEM_DROID_REPAIR_EQUIPMENT`
+      - `BASE_ITEM_DROID_SEARCH_SCOPE`
+      - `BASE_ITEM_DROID_SECURITY_SPIKE_MOUNT`
+      - `BASE_ITEM_DROID_SHIELD`
+      - `BASE_ITEM_DROID_SONIC_SENSORS`
+      - `BASE_ITEM_DROID_TARGETING_COMPUTERS`
+      - `BASE_ITEM_DROID_UTILITY_DEVICE`
+      - `BASE_ITEM_FIRE_GRENADE`
+      - `BASE_ITEM_FLASH_GRENADE`
+      - `BASE_ITEM_FOREARM_BANDS`
+      - `BASE_ITEM_FRAGMENTATION_GRENADES`
+      - `BASE_ITEM_GAMMOREAN_BATTLEAXE`
+      - `BASE_ITEM_GAUNTLETS`
+      - `BASE_ITEM_GHAFFI_STICK`
+      - `BASE_ITEM_GLOW_ROD`
+      - `BASE_ITEM_HEAVY_BLASTER`
+      - `BASE_ITEM_HEAVY_REPEATING_BLASTER`
+      - `BASE_ITEM_HOLD_OUT_BLASTER`
+      - `BASE_ITEM_IMPLANT_1`
+      - `BASE_ITEM_IMPLANT_2`
+      - `BASE_ITEM_IMPLANT_3`
+      - `BASE_ITEM_INVALID`
+      - `BASE_ITEM_ION_BLASTER`
+      - `BASE_ITEM_ION_GRENADE`
+      - `BASE_ITEM_ION_RIFLE`
+      - `BASE_ITEM_JEDI_KNIGHT_ROBE`
+      - `BASE_ITEM_JEDI_MASTER_ROBE`
+      - `BASE_ITEM_JEDI_ROBE`
+      - `BASE_ITEM_LIGHTSABER`
+      - `BASE_ITEM_LIGHTSABER_CRYSTALS`
+      - `BASE_ITEM_LONG_SWORD`
+      - `BASE_ITEM_MASK`
+      - `BASE_ITEM_MEDICAL_EQUIPMENT`
+      - `BASE_ITEM_PLOT_USEABLE_ITEMS`
+      - `BASE_ITEM_POISON_GRENADE`
+      - `BASE_ITEM_PROGRAMMING_SPIKES`
+      - `BASE_ITEM_QUARTER_STAFF`
+      - `BASE_ITEM_REPEATING_BLASTER`
+      - `BASE_ITEM_SECURITY_SPIKES`
+      - `BASE_ITEM_SHORT_LIGHTSABER`
+      - `BASE_ITEM_SHORT_SWORD`
+      - `BASE_ITEM_SONIC_GRENADE`
+      - `BASE_ITEM_SONIC_PISTOL`
+      - `BASE_ITEM_SONIC_RIFLE`
+      - `BASE_ITEM_STUN_BATON`
+      - `BASE_ITEM_STUN_GRENADES`
+      - `BASE_ITEM_THERMAL_DETONATOR`
+      - `BASE_ITEM_TORCH`
+      - `BASE_ITEM_TRAP_KIT`
+      - `BASE_ITEM_VIBRO_BLADE`
+      - `BASE_ITEM_VIBRO_DOUBLE_BLADE`
+      - `BASE_ITEM_VIBRO_SWORD`
+      - `BASE_ITEM_WOOKIE_WARBLADE`
+      - `BODY_NODE_CHEST`
+      - `BODY_NODE_HAND`
+      - `BODY_NODE_HAND_LEFT`
+      - `BODY_NODE_HAND_RIGHT`
+      - `BODY_NODE_HEAD`
+      - `CAMERA_MODE_CHASE_CAMERA`
+      - `CAMERA_MODE_STIFF_CHASE_CAMERA`
+      - `CAMERA_MODE_TOP_DOWN`
+      - `COMBAT_MODE_FLURRY_OF_BLOWS`
+      - `COMBAT_MODE_IMPROVED_POWER_ATTACK`
+      - `COMBAT_MODE_INVALID`
+      - `COMBAT_MODE_PARRY`
+      - `COMBAT_MODE_POWER_ATTACK`
+      - `COMBAT_MODE_RAPID_SHOT`
+      - `CONVERSATION_TYPE_CINEMATIC`
+      - `CONVERSATION_TYPE_COMPUTER`
+      - `CREATURE_SIZE_HUGE`
+      - `CREATURE_SIZE_INVALID`
+      - `CREATURE_SIZE_LARGE`
+      - `CREATURE_SIZE_MEDIUM`
+      - `CREATURE_SIZE_SMALL`
+      - `CREATURE_SIZE_TINY`
+      - `CREATURE_TYPE_CLASS`
+      - `CREATURE_TYPE_DOES_NOT_HAVE_SPELL_EFFECT`
+      - `CREATURE_TYPE_HAS_SPELL_EFFECT`
+      - `CREATURE_TYPE_IS_ALIVE`
+      - `CREATURE_TYPE_PERCEPTION`
+      - `CREATURE_TYPE_PLAYER_CHAR`
+      - `CREATURE_TYPE_RACIAL_TYPE`
+      - `CREATURE_TYPE_REPUTATION`
+      - `DAMAGE_BONUS_1`
+      - `DAMAGE_BONUS_1d10`
+      - `DAMAGE_BONUS_1d4`
+      - `DAMAGE_BONUS_1d6`
+      - `DAMAGE_BONUS_1d8`
+      - `DAMAGE_BONUS_2`
+      - `DAMAGE_BONUS_2d6`
+      - `DAMAGE_BONUS_3`
+      - `DAMAGE_BONUS_4`
+      - `DAMAGE_BONUS_5`
+      - `DAMAGE_POWER_ENERGY`
+      - `DAMAGE_POWER_NORMAL`
+      - `DAMAGE_POWER_PLUS_FIVE`
+      - `DAMAGE_POWER_PLUS_FOUR`
+      - `DAMAGE_POWER_PLUS_ONE`
+      - `DAMAGE_POWER_PLUS_THREE`
+      - `DAMAGE_POWER_PLUS_TWO`
+      - `DAMAGE_TYPE_ACID`
+      - `DAMAGE_TYPE_BLASTER`
+      - `DAMAGE_TYPE_BLUDGEONING`
+      - `DAMAGE_TYPE_COLD`
+      - `DAMAGE_TYPE_DARK_SIDE`
+      - `DAMAGE_TYPE_ELECTRICAL`
+      - `DAMAGE_TYPE_FIRE`
+      - `DAMAGE_TYPE_ION`
+      - `DAMAGE_TYPE_LIGHT_SIDE`
+      - `DAMAGE_TYPE_PIERCING`
+      - `DAMAGE_TYPE_SLASHING`
+      - `DAMAGE_TYPE_SONIC`
+      - `DAMAGE_TYPE_UNIVERSAL`
+      - `DIRECTION_EAST`
+      - `DIRECTION_NORTH`
+      - `DIRECTION_SOUTH`
+      - `DIRECTION_WEST`
+      - `DISGUISE_TYPE_C_BANTHA`
+      - `DISGUISE_TYPE_C_BRITH`
+      - `DISGUISE_TYPE_C_DEWBACK`
+      - `DISGUISE_TYPE_C_DRDASSASSIN`
+      - `DISGUISE_TYPE_C_DRDASTRO`
+      - `DISGUISE_TYPE_C_DRDG`
+      - `DISGUISE_TYPE_C_DRDMKFOUR`
+      - `DISGUISE_TYPE_C_DRDMKONE`
+      - `DISGUISE_TYPE_C_DRDMKTWO`
+      - `DISGUISE_TYPE_C_DRDPROBE`
+      - `DISGUISE_TYPE_C_DRDPROT`
+      - `DISGUISE_TYPE_C_DRDSENTRY`
+      - `DISGUISE_TYPE_C_DRDSPYDER`
+      - `DISGUISE_TYPE_C_DRDWAR`
+      - `DISGUISE_TYPE_C_FIRIXA`
+      - `DISGUISE_TYPE_C_GAMMOREAN`
+      - `DISGUISE_TYPE_C_GIZKA`
+      - `DISGUISE_TYPE_C_HUTT`
+      - `DISGUISE_TYPE_C_IRIAZ`
+      - `DISGUISE_TYPE_C_ITHORIAN`
+      - `DISGUISE_TYPE_C_JAWA`
+      - `DISGUISE_TYPE_C_KATAARN`
+      - `DISGUISE_TYPE_C_KHOUNDA`
+      - `DISGUISE_TYPE_C_KHOUNDB`
+      - `DISGUISE_TYPE_C_KINRATH`
+      - `DISGUISE_TYPE_C_KRAYTDRAGON`
+      - `DISGUISE_TYPE_C_MYKAL`
+      - `DISGUISE_TYPE_C_RAKGHOUL`
+      - `DISGUISE_TYPE_C_RANCOR`
+      - `DISGUISE_TYPE_C_RONTO`
+      - `DISGUISE_TYPE_C_SEABEAST`
+      - `DISGUISE_TYPE_C_SELKATH`
+      - `DISGUISE_TYPE_C_TACH`
+      - `DISGUISE_TYPE_C_TUKATA`
+      - `DISGUISE_TYPE_C_TWOHEAD`
+      - `DISGUISE_TYPE_C_VERKAAL`
+      - `DISGUISE_TYPE_C_WRAID`
+      - `DISGUISE_TYPE_COMMONER_FEM_BLACK`
+      - `DISGUISE_TYPE_COMMONER_FEM_OLD_ASIAN`
+      - `DISGUISE_TYPE_COMMONER_FEM_OLD_BLACK`
+      - `DISGUISE_TYPE_COMMONER_FEM_OLD_WHITE`
+      - `DISGUISE_TYPE_COMMONER_FEM_WHITE`
+      - `DISGUISE_TYPE_COMMONER_MAL_BLACK`
+      - `DISGUISE_TYPE_COMMONER_MAL_OLD_ASIAN`
+      - `DISGUISE_TYPE_COMMONER_MAL_OLD_BLACK`
+      - `DISGUISE_TYPE_COMMONER_MAL_OLD_WHITE`
+      - `DISGUISE_TYPE_COMMONER_MAL_WHITE`
+      - `DISGUISE_TYPE_CZERKA_OFFICER_BLACK`
+      - `DISGUISE_TYPE_CZERKA_OFFICER_OLD_ASIAN`
+      - `DISGUISE_TYPE_CZERKA_OFFICER_OLD_BLACK`
+      - `DISGUISE_TYPE_CZERKA_OFFICER_OLD_WHITE`
+      - `DISGUISE_TYPE_CZERKA_OFFICER_WHITE`
+      - `DISGUISE_TYPE_DROID_ASTRO_02`
+      - `DISGUISE_TYPE_DROID_ASTRO_03`
+      - `DISGUISE_TYPE_DROID_PROTOCOL_02`
+      - `DISGUISE_TYPE_DROID_PROTOCOL_03`
+      - `DISGUISE_TYPE_DROID_PROTOCOL_04`
+      - `DISGUISE_TYPE_DROID_WAR_02`
+      - `DISGUISE_TYPE_DROID_WAR_03`
+      - `DISGUISE_TYPE_DROID_WAR_04`
+      - `DISGUISE_TYPE_DROID_WAR_05`
+      - `DISGUISE_TYPE_ENVIRONMENTSUIT`
+      - `DISGUISE_TYPE_ENVIRONMENTSUIT_02`
+      - `DISGUISE_TYPE_GAMMOREAN_02`
+      - `DISGUISE_TYPE_GAMMOREAN_03`
+      - `DISGUISE_TYPE_GAMMOREAN_04`
+      - `DISGUISE_TYPE_HUTT_02`
+      - `DISGUISE_TYPE_HUTT_03`
+      - `DISGUISE_TYPE_HUTT_04`
+      - `DISGUISE_TYPE_ITHORIAN_02`
+      - `DISGUISE_TYPE_ITHORIAN_03`
+      - `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_01`
+      - `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_02`
+      - `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_03`
+      - `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_04`
+      - `DISGUISE_TYPE_JEDI_ASIAN_FEMALE_05`
+      - `DISGUISE_TYPE_JEDI_ASIAN_MALE_01`
+      - `DISGUISE_TYPE_JEDI_ASIAN_MALE_02`
+      - `DISGUISE_TYPE_JEDI_ASIAN_MALE_03`
+      - `DISGUISE_TYPE_JEDI_ASIAN_MALE_04`
+      - `DISGUISE_TYPE_JEDI_ASIAN_MALE_05`
+      - `DISGUISE_TYPE_JEDI_ASIAN_OLD_FEM`
+      - `DISGUISE_TYPE_JEDI_ASIAN_OLD_MALE`
+      - `DISGUISE_TYPE_JEDI_BLACK_FEMALE_01`
+      - `DISGUISE_TYPE_JEDI_BLACK_FEMALE_02`
+      - `DISGUISE_TYPE_JEDI_BLACK_FEMALE_03`
+      - `DISGUISE_TYPE_JEDI_BLACK_FEMALE_04`
+      - `DISGUISE_TYPE_JEDI_BLACK_FEMALE_05`
+      - `DISGUISE_TYPE_JEDI_BLACK_MALE_01`
+      - `DISGUISE_TYPE_JEDI_BLACK_MALE_02`
+      - `DISGUISE_TYPE_JEDI_BLACK_MALE_03`
+      - `DISGUISE_TYPE_JEDI_BLACK_MALE_04`
+      - `DISGUISE_TYPE_JEDI_BLACK_MALE_05`
+      - `DISGUISE_TYPE_JEDI_BLACK_OLD_FEM`
+      - `DISGUISE_TYPE_JEDI_BLACK_OLD_MALE`
+      - `DISGUISE_TYPE_JEDI_WHITE_FEMALE_02`
+      - `DISGUISE_TYPE_JEDI_WHITE_FEMALE_03`
+      - `DISGUISE_TYPE_JEDI_WHITE_FEMALE_04`
+      - `DISGUISE_TYPE_JEDI_WHITE_FEMALE_05`
+      - `DISGUISE_TYPE_JEDI_WHITE_MALE_02`
+      - `DISGUISE_TYPE_JEDI_WHITE_MALE_03`
+      - `DISGUISE_TYPE_JEDI_WHITE_MALE_04`
+      - `DISGUISE_TYPE_JEDI_WHITE_MALE_05`
+      - `DISGUISE_TYPE_JEDI_WHITE_OLD_FEM`
+      - `DISGUISE_TYPE_JEDI_WHITE_OLD_MALE`
+      - `DISGUISE_TYPE_KATH_HOUND_A02`
+      - `DISGUISE_TYPE_KATH_HOUND_A03`
+      - `DISGUISE_TYPE_KATH_HOUND_A04`
+      - `DISGUISE_TYPE_KATH_HOUND_B02`
+      - `DISGUISE_TYPE_KATH_HOUND_B03`
+      - `DISGUISE_TYPE_KATH_HOUND_B04`
+      - `DISGUISE_TYPE_N_ADMRLSAULKAR`
+      - `DISGUISE_TYPE_N_BITH`
+      - `DISGUISE_TYPE_N_CALONORD`
+      - `DISGUISE_TYPE_N_COMMF`
+      - `DISGUISE_TYPE_N_COMMKIDF`
+      - `DISGUISE_TYPE_N_COMMKIDM`
+      - `DISGUISE_TYPE_N_COMMM`
+      - `DISGUISE_TYPE_N_CZERLAOFF`
+      - `DISGUISE_TYPE_N_DARKJEDIF`
+      - `DISGUISE_TYPE_N_DARKJEDIM`
+      - `DISGUISE_TYPE_N_DARTHBAND`
+      - `DISGUISE_TYPE_N_DARTHMALAK`
+      - `DISGUISE_TYPE_N_DARTHREVAN`
+      - `DISGUISE_TYPE_N_DODONNA`
+      - `DISGUISE_TYPE_N_DUROS`
+      - `DISGUISE_TYPE_N_FATCOMF`
+      - `DISGUISE_TYPE_N_FATCOMM`
+      - `DISGUISE_TYPE_N_JEDICOUNTF`
+      - `DISGUISE_TYPE_N_JEDICOUNTM`
+      - `DISGUISE_TYPE_N_JEDIMALEK`
+      - `DISGUISE_TYPE_N_JEDIMEMF`
+      - `DISGUISE_TYPE_N_JEDIMEMM`
+      - `DISGUISE_TYPE_N_MANDALORIAN`
+      - `DISGUISE_TYPE_N_RAKATA`
+      - `DISGUISE_TYPE_N_REPOFF`
+      - `DISGUISE_TYPE_N_REPSOLD`
+      - `DISGUISE_TYPE_N_RODIAN`
+      - `DISGUISE_TYPE_N_SITHAPPREN`
+      - `DISGUISE_TYPE_N_SITHCOMF`
+      - `DISGUISE_TYPE_N_SITHCOMM`
+      - `DISGUISE_TYPE_N_SITHSOLDIER`
+      - `DISGUISE_TYPE_N_SMUGGLER`
+      - `DISGUISE_TYPE_N_SWOOPGANG`
+      - `DISGUISE_TYPE_N_TUSKEN`
+      - `DISGUISE_TYPE_N_TUSKENF`
+      - `DISGUISE_TYPE_N_TWILEKF`
+      - `DISGUISE_TYPE_N_TWILEKM`
+      - `DISGUISE_TYPE_N_WALRUSMAN`
+      - `DISGUISE_TYPE_N_WOOKIEF`
+      - `DISGUISE_TYPE_N_WOOKIEM`
+      - `DISGUISE_TYPE_N_YODA`
+      - `DISGUISE_TYPE_P_BASTILLA`
+      - `DISGUISE_TYPE_P_CAND`
+      - `DISGUISE_TYPE_P_CARTH`
+      - `DISGUISE_TYPE_P_FEM_A_LRG_01`
+      - `DISGUISE_TYPE_P_FEM_A_LRG_02`
+      - `DISGUISE_TYPE_P_FEM_A_LRG_03`
+      - `DISGUISE_TYPE_P_FEM_A_LRG_04`
+      - `DISGUISE_TYPE_P_FEM_A_LRG_05`
+      - `DISGUISE_TYPE_P_FEM_A_MED_01`
+      - `DISGUISE_TYPE_P_FEM_A_MED_02`
+      - `DISGUISE_TYPE_P_FEM_A_MED_03`
+      - `DISGUISE_TYPE_P_FEM_A_MED_04`
+      - `DISGUISE_TYPE_P_FEM_A_MED_05`
+      - `DISGUISE_TYPE_P_FEM_A_SML_01`
+      - `DISGUISE_TYPE_P_FEM_A_SML_02`
+      - `DISGUISE_TYPE_P_FEM_A_SML_03`
+      - `DISGUISE_TYPE_P_FEM_A_SML_04`
+      - `DISGUISE_TYPE_P_FEM_A_SML_05`
+      - `DISGUISE_TYPE_P_FEM_B_LRG_01`
+      - `DISGUISE_TYPE_P_FEM_B_LRG_02`
+      - `DISGUISE_TYPE_P_FEM_B_LRG_03`
+      - `DISGUISE_TYPE_P_FEM_B_LRG_04`
+      - `DISGUISE_TYPE_P_FEM_B_LRG_05`
+      - `DISGUISE_TYPE_P_FEM_B_MED_01`
+      - `DISGUISE_TYPE_P_FEM_B_MED_02`
+      - `DISGUISE_TYPE_P_FEM_B_MED_03`
+      - `DISGUISE_TYPE_P_FEM_B_MED_04`
+      - `DISGUISE_TYPE_P_FEM_B_MED_05`
+      - `DISGUISE_TYPE_P_FEM_B_SML_01`
+      - `DISGUISE_TYPE_P_FEM_B_SML_02`
+      - `DISGUISE_TYPE_P_FEM_B_SML_03`
+      - `DISGUISE_TYPE_P_FEM_B_SML_04`
+      - `DISGUISE_TYPE_P_FEM_B_SML_05`
+      - `DISGUISE_TYPE_P_FEM_C_LRG_01`
+      - `DISGUISE_TYPE_P_FEM_C_LRG_02`
+      - `DISGUISE_TYPE_P_FEM_C_LRG_03`
+      - `DISGUISE_TYPE_P_FEM_C_LRG_04`
+      - `DISGUISE_TYPE_P_FEM_C_LRG_05`
+      - `DISGUISE_TYPE_P_FEM_C_MED_01`
+      - `DISGUISE_TYPE_P_FEM_C_MED_02`
+      - `DISGUISE_TYPE_P_FEM_C_MED_03`
+      - `DISGUISE_TYPE_P_FEM_C_MED_04`
+      - `DISGUISE_TYPE_P_FEM_C_MED_05`
+      - `DISGUISE_TYPE_P_FEM_C_SML_01`
+      - `DISGUISE_TYPE_P_FEM_C_SML_02`
+      - `DISGUISE_TYPE_P_FEM_C_SML_03`
+      - `DISGUISE_TYPE_P_FEM_C_SML_04`
+      - `DISGUISE_TYPE_P_FEM_C_SML_05`
+      - `DISGUISE_TYPE_P_HK47`
+      - `DISGUISE_TYPE_P_JOLEE`
+      - `DISGUISE_TYPE_P_JUHANI`
+      - `DISGUISE_TYPE_P_MAL_A_LRG_01`
+      - `DISGUISE_TYPE_P_MAL_A_LRG_02`
+      - `DISGUISE_TYPE_P_MAL_A_LRG_03`
+      - `DISGUISE_TYPE_P_MAL_A_LRG_04`
+      - `DISGUISE_TYPE_P_MAL_A_LRG_05`
+      - `DISGUISE_TYPE_P_MAL_A_MED_01`
+      - `DISGUISE_TYPE_P_MAL_A_MED_02`
+      - `DISGUISE_TYPE_P_MAL_A_MED_03`
+      - `DISGUISE_TYPE_P_MAL_A_MED_04`
+      - `DISGUISE_TYPE_P_MAL_A_MED_05`
+      - `DISGUISE_TYPE_P_MAL_A_SML_01`
+      - `DISGUISE_TYPE_P_MAL_A_SML_02`
+      - `DISGUISE_TYPE_P_MAL_A_SML_03`
+      - `DISGUISE_TYPE_P_MAL_A_SML_04`
+      - `DISGUISE_TYPE_P_MAL_A_SML_05`
+      - `DISGUISE_TYPE_P_MAL_B_LRG_01`
+      - `DISGUISE_TYPE_P_MAL_B_LRG_02`
+      - `DISGUISE_TYPE_P_MAL_B_LRG_03`
+      - `DISGUISE_TYPE_P_MAL_B_LRG_04`
+      - `DISGUISE_TYPE_P_MAL_B_LRG_05`
+      - `DISGUISE_TYPE_P_MAL_B_MED_01`
+      - `DISGUISE_TYPE_P_MAL_B_MED_02`
+      - `DISGUISE_TYPE_P_MAL_B_MED_03`
+      - `DISGUISE_TYPE_P_MAL_B_MED_04`
+      - `DISGUISE_TYPE_P_MAL_B_MED_05`
+      - `DISGUISE_TYPE_P_MAL_B_SML_01`
+      - `DISGUISE_TYPE_P_MAL_B_SML_02`
+      - `DISGUISE_TYPE_P_MAL_B_SML_03`
+      - `DISGUISE_TYPE_P_MAL_B_SML_04`
+      - `DISGUISE_TYPE_P_MAL_B_SML_05`
+      - `DISGUISE_TYPE_P_MAL_C_LRG_01`
+      - `DISGUISE_TYPE_P_MAL_C_LRG_02`
+      - `DISGUISE_TYPE_P_MAL_C_LRG_03`
+      - `DISGUISE_TYPE_P_MAL_C_LRG_04`
+      - `DISGUISE_TYPE_P_MAL_C_LRG_05`
+      - `DISGUISE_TYPE_P_MAL_C_MED_01`
+      - `DISGUISE_TYPE_P_MAL_C_MED_02`
+      - `DISGUISE_TYPE_P_MAL_C_MED_03`
+      - `DISGUISE_TYPE_P_MAL_C_MED_04`
+      - `DISGUISE_TYPE_P_MAL_C_MED_05`
+      - `DISGUISE_TYPE_P_MAL_C_SML_01`
+      - `DISGUISE_TYPE_P_MAL_C_SML_02`
+      - `DISGUISE_TYPE_P_MAL_C_SML_03`
+      - `DISGUISE_TYPE_P_MAL_C_SML_04`
+      - `DISGUISE_TYPE_P_MAL_C_SML_05`
+      - `DISGUISE_TYPE_P_MISSION`
+      - `DISGUISE_TYPE_P_T3M3`
+      - `DISGUISE_TYPE_P_ZAALBAR`
+      - `DISGUISE_TYPE_RAKATA_02`
+      - `DISGUISE_TYPE_RAKATA_03`
+      - `DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_BLACK`
+      - `DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_OLD_ASIAN`
+      - `DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_OLD_BLACK`
+      - `DISGUISE_TYPE_REPUBLIC_OFFICER_MAL_OLD_WHITE`
+      - `DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_BLACK`
+      - `DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_OLD_ASIAN`
+      - `DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_OLD_BLACK`
+      - `DISGUISE_TYPE_REPUBLIC_SOLDIER_MAL_OLD_WHITE`
+      - `DISGUISE_TYPE_RODIAN_02`
+      - `DISGUISE_TYPE_RODIAN_03`
+      - `DISGUISE_TYPE_RODIAN_04`
+      - `DISGUISE_TYPE_SELKATH_02`
+      - `DISGUISE_TYPE_SELKATH_03`
+      - `DISGUISE_TYPE_SHYRACK_01`
+      - `DISGUISE_TYPE_SHYRACK_02`
+      - `DISGUISE_TYPE_SITH_FEM_ASIAN`
+      - `DISGUISE_TYPE_SITH_FEM_BLACK`
+      - `DISGUISE_TYPE_SITH_FEM_OLD_ASIAN`
+      - `DISGUISE_TYPE_SITH_FEM_OLD_BLACK`
+      - `DISGUISE_TYPE_SITH_FEM_OLD_WHITE`
+      - `DISGUISE_TYPE_SITH_FEM_WHITE`
+      - `DISGUISE_TYPE_SITH_MAL_ASIAN`
+      - `DISGUISE_TYPE_SITH_MAL_BLACK`
+      - `DISGUISE_TYPE_SITH_MAL_OLD_ASIAN`
+      - `DISGUISE_TYPE_SITH_MAL_OLD_BLACK`
+      - `DISGUISE_TYPE_SITH_MAL_OLD_WHITE`
+      - `DISGUISE_TYPE_SITH_MAL_WHITE`
+      - `DISGUISE_TYPE_SITH_SOLDIER_03`
+      - `DISGUISE_TYPE_SWOOP_GANG_02`
+      - `DISGUISE_TYPE_SWOOP_GANG_03`
+      - `DISGUISE_TYPE_SWOOP_GANG_04`
+      - `DISGUISE_TYPE_SWOOP_GANG_05`
+      - `DISGUISE_TYPE_TEST`
+      - `DISGUISE_TYPE_TURRET`
+      - `DISGUISE_TYPE_TURRET2`
+      - `DISGUISE_TYPE_TUSKAN_RAIDER_02`
+      - `DISGUISE_TYPE_TUSKAN_RAIDER_03`
+      - `DISGUISE_TYPE_TUSKAN_RAIDER_04`
+      - `DISGUISE_TYPE_TWILEK_FEMALE_02`
+      - `DISGUISE_TYPE_TWILEK_MALE_02`
+      - `DISGUISE_TYPE_WOOKIE_FEMALE_02`
+      - `DISGUISE_TYPE_WOOKIE_FEMALE_03`
+      - `DISGUISE_TYPE_WOOKIE_FEMALE_04`
+      - `DISGUISE_TYPE_WOOKIE_FEMALE_05`
+      - `DISGUISE_TYPE_WOOKIE_MALE_02`
+      - `DISGUISE_TYPE_WOOKIE_MALE_03`
+      - `DISGUISE_TYPE_WOOKIE_MALE_04`
+      - `DISGUISE_TYPE_WOOKIE_MALE_05`
+      - `DISGUISE_TYPE_WRAID_02`
+      - `DISGUISE_TYPE_WRAID_03`
+      - `DISGUISE_TYPE_WRAID_04`
+      - `DISGUISE_TYPE_YUTHURA_BAN`
+      - `DOOR_ACTION_BASH`
+      - `DOOR_ACTION_IGNORE`
+      - `DOOR_ACTION_KNOCK`
+      - `DOOR_ACTION_OPEN`
+      - `DOOR_ACTION_UNLOCK`
+      - `DURATION_TYPE_INSTANT`
+      - `DURATION_TYPE_PERMANENT`
+      - `DURATION_TYPE_TEMPORARY`
+      - `EFFECT_TYPE_ABILITY_DECREASE`
+      - `EFFECT_TYPE_ABILITY_INCREASE`
+      - `EFFECT_TYPE_AC_DECREASE`
+      - `EFFECT_TYPE_AC_INCREASE`
+      - `EFFECT_TYPE_ARCANE_SPELL_FAILURE`
+      - `EFFECT_TYPE_AREA_OF_EFFECT`
+      - `EFFECT_TYPE_ASSUREDDEFLECTION`
+      - `EFFECT_TYPE_ASSUREDHIT`
+      - `EFFECT_TYPE_ATTACK_DECREASE`
+      - `EFFECT_TYPE_ATTACK_INCREASE`
+      - `EFFECT_TYPE_BEAM`
+      - `EFFECT_TYPE_BLINDNESS`
+      - `EFFECT_TYPE_CHARMED`
+      - `EFFECT_TYPE_CONCEALMENT`
+      - `EFFECT_TYPE_CONFUSED`
+      - `EFFECT_TYPE_CURSE`
+      - `EFFECT_TYPE_DAMAGE_DECREASE`
+      - `EFFECT_TYPE_DAMAGE_IMMUNITY_DECREASE`
+      - `EFFECT_TYPE_DAMAGE_IMMUNITY_INCREASE`
+      - `EFFECT_TYPE_DAMAGE_INCREASE`
+      - `EFFECT_TYPE_DAMAGE_REDUCTION`
+      - `EFFECT_TYPE_DAMAGE_RESISTANCE`
+      - `EFFECT_TYPE_DARKNESS`
+      - `EFFECT_TYPE_DAZED`
+      - `EFFECT_TYPE_DEAF`
+      - `EFFECT_TYPE_DISEASE`
+      - `EFFECT_TYPE_DISGUISE`
+      - `EFFECT_TYPE_DISPELMAGICALL`
+      - `EFFECT_TYPE_DISPELMAGICBEST`
+      - `EFFECT_TYPE_DOMINATED`
+      - `EFFECT_TYPE_ELEMENTALSHIELD`
+      - `EFFECT_TYPE_ENEMY_ATTACK_BONUS`
+      - `EFFECT_TYPE_ENTANGLE`
+      - `EFFECT_TYPE_FORCE_RESISTANCE_DECREASE`
+      - `EFFECT_TYPE_FORCE_RESISTANCE_INCREASE`
+      - `EFFECT_TYPE_FORCEJUMP`
+      - `EFFECT_TYPE_FRIGHTENED`
+      - `EFFECT_TYPE_HASTE`
+      - `EFFECT_TYPE_IMMUNITY`
+      - `EFFECT_TYPE_IMPROVEDINVISIBILITY`
+      - `EFFECT_TYPE_INVALIDEFFECT`
+      - `EFFECT_TYPE_INVISIBILITY`
+      - `EFFECT_TYPE_INVULNERABLE`
+      - `EFFECT_TYPE_LIGHTSABERTHROW`
+      - `EFFECT_TYPE_MISS_CHANCE`
+      - `EFFECT_TYPE_MOVEMENT_SPEED_DECREASE`
+      - `EFFECT_TYPE_MOVEMENT_SPEED_INCREASE`
+      - `EFFECT_TYPE_NEGATIVELEVEL`
+      - `EFFECT_TYPE_PARALYZE`
+      - `EFFECT_TYPE_POISON`
+      - `EFFECT_TYPE_REGENERATE`
+      - `EFFECT_TYPE_RESURRECTION`
+      - `EFFECT_TYPE_SANCTUARY`
+      - `EFFECT_TYPE_SAVING_THROW_DECREASE`
+      - `EFFECT_TYPE_SAVING_THROW_INCREASE`
+      - `EFFECT_TYPE_SEEINVISIBLE`
+      - `EFFECT_TYPE_SILENCE`
+      - `EFFECT_TYPE_SKILL_DECREASE`
+      - `EFFECT_TYPE_SKILL_INCREASE`
+      - `EFFECT_TYPE_SLEEP`
+      - `EFFECT_TYPE_SLOW`
+      - `EFFECT_TYPE_SPELL_IMMUNITY`
+      - `EFFECT_TYPE_SPELLLEVELABSORPTION`
+      - `EFFECT_TYPE_STUNNED`
+      - `EFFECT_TYPE_TEMPORARY_HITPOINTS`
+      - `EFFECT_TYPE_TIMESTOP`
+      - `EFFECT_TYPE_TRUESEEING`
+      - `EFFECT_TYPE_TURNED`
+      - `EFFECT_TYPE_ULTRAVISION`
+      - `EFFECT_TYPE_VISUAL`
+      - `ENCOUNTER_DIFFICULTY_EASY`
+      - `ENCOUNTER_DIFFICULTY_HARD`
+      - `ENCOUNTER_DIFFICULTY_IMPOSSIBLE`
+      - `ENCOUNTER_DIFFICULTY_NORMAL`
+      - `ENCOUNTER_DIFFICULTY_VERY_EASY`
+      - `FALSE`
+      - `FEAT_ADVANCED_DOUBLE_WEAPON_FIGHTING`
+      - `FEAT_ADVANCED_GUARD_STANCE`
+      - `FEAT_ADVANCED_JEDI_DEFENSE`
+      - `FEAT_AMBIDEXTERITY`
+      - `FEAT_ARMOUR_PROF_HEAVY`
+      - `FEAT_ARMOUR_PROF_LIGHT`
+      - `FEAT_ARMOUR_PROF_MEDIUM`
+      - `FEAT_BATTLE_MEDITATION`
+      - `FEAT_CAUTIOUS`
+      - `FEAT_CRITICAL_STRIKE`
+      - `FEAT_DOUBLE_WEAPON_FIGHTING`
+      - `FEAT_DROID_UPGRADE_1`
+      - `FEAT_DROID_UPGRADE_2`
+      - `FEAT_DROID_UPGRADE_3`
+      - `FEAT_EMPATHY`
+      - `FEAT_FLURRY`
+      - `FEAT_FORCE_FOCUS_ADVANCED`
+      - `FEAT_FORCE_FOCUS_ALTER`
+      - `FEAT_FORCE_FOCUS_CONTROL`
+      - `FEAT_FORCE_FOCUS_MASTERY`
+      - `FEAT_FORCE_FOCUS_SENSE`
+      - `FEAT_GEAR_HEAD`
+      - `FEAT_GREAT_FORTITUDE`
+      - `FEAT_GUARD_STANCE`
+      - `FEAT_IMPLANT_LEVEL_1`
+      - `FEAT_IMPLANT_LEVEL_2`
+      - `FEAT_IMPLANT_LEVEL_3`
+      - `FEAT_IMPROVED_CRITICAL_STRIKE`
+      - `FEAT_IMPROVED_FLURRY`
+      - `FEAT_IMPROVED_POWER_ATTACK`
+      - `FEAT_IMPROVED_POWER_BLAST`
+      - `FEAT_IMPROVED_RAPID_SHOT`
+      - `FEAT_IMPROVED_SNIPER_SHOT`
+      - `FEAT_IRON_WILL`
+      - `FEAT_JEDI_DEFENSE`
+      - `FEAT_LIGHTNING_REFLEXES`
+      - `FEAT_MASTER_CRITICAL_STRIKE`
+      - `FEAT_MASTER_GUARD_STANCE`
+      - `FEAT_MASTER_JEDI_DEFENSE`
+      - `FEAT_MASTER_POWER_ATTACK`
+      - `FEAT_MASTER_POWER_BLAST`
+      - `FEAT_MASTER_SNIPER_SHOT`
+      - `FEAT_MULTI_SHOT`
+      - `FEAT_PERCEPTIVE`
+      - `FEAT_POWER_ATTACK`
+      - `FEAT_POWER_BLAST`
+      - `FEAT_PROFICIENCY_ALL`
+      - `FEAT_RAPID_SHOT`
+      - `FEAT_SKILL_FOCUS_AWARENESS`
+      - `FEAT_SKILL_FOCUS_COMPUTER_USE`
+      - `FEAT_SKILL_FOCUS_DEMOLITIONS`
+      - `FEAT_SKILL_FOCUS_PERSUADE`
+      - `FEAT_SKILL_FOCUS_REPAIR`
+      - `FEAT_SKILL_FOCUS_SECURITY`
+      - `FEAT_SKILL_FOCUS_STEALTH`
+      - `FEAT_SKILL_FOCUS_TREAT_INJUURY`
+      - `FEAT_SNEAK_ATTACK_10D6`
+      - `FEAT_SNEAK_ATTACK_1D6`
+      - `FEAT_SNEAK_ATTACK_2D6`
+      - `FEAT_SNEAK_ATTACK_3D6`
+      - `FEAT_SNEAK_ATTACK_4D6`
+      - `FEAT_SNEAK_ATTACK_5D6`
+      - `FEAT_SNEAK_ATTACK_6D6`
+      - `FEAT_SNEAK_ATTACK_7D6`
+      - `FEAT_SNEAK_ATTACK_8D6`
+      - `FEAT_SNEAK_ATTACK_9D6`
+      - `FEAT_SNIPER_SHOT`
+      - `FEAT_TOUGHNESS`
+      - `FEAT_UNCANNY_DODGE_1`
+      - `FEAT_UNCANNY_DODGE_2`
+      - `FEAT_WEAPON_FOCUS_BLASTER`
+      - `FEAT_WEAPON_FOCUS_BLASTER_RIFLE`
+      - `FEAT_WEAPON_FOCUS_GRENADE`
+      - `FEAT_WEAPON_FOCUS_HEAVY_WEAPONS`
+      - `FEAT_WEAPON_FOCUS_LIGHTSABER`
+      - `FEAT_WEAPON_FOCUS_MELEE_WEAPONS`
+      - `FEAT_WEAPON_FOCUS_SIMPLE_WEAPONS`
+      - `FEAT_WEAPON_PROFICIENCY_BLASTER`
+      - `FEAT_WEAPON_PROFICIENCY_BLASTER_RIFLE`
+      - `FEAT_WEAPON_PROFICIENCY_GRENADE`
+      - `FEAT_WEAPON_PROFICIENCY_HEAVY_WEAPONS`
+      - `FEAT_WEAPON_PROFICIENCY_LIGHTSABER`
+      - `FEAT_WEAPON_PROFICIENCY_MELEE_WEAPONS`
+      - `FEAT_WEAPON_PROFICIENCY_SIMPLE_WEAPONS`
+      - `FEAT_WEAPON_SPECIALIZATION_BLASTER`
+      - `FEAT_WEAPON_SPECIALIZATION_BLASTER_RIFLE`
+      - `FEAT_WEAPON_SPECIALIZATION_GRENADE`
+      - `FEAT_WEAPON_SPECIALIZATION_HEAVY_WEAPONS`
+      - `FEAT_WEAPON_SPECIALIZATION_LIGHTSABER`
+      - `FEAT_WEAPON_SPECIALIZATION_MELEE_WEAPONS`
+      - `FEAT_WEAPON_SPECIALIZATION_SIMPLE_WEAPONS`
+      - `FEAT_WHIRLWIND_ATTACK`
+      - `FORCE_POWER_AFFECT_MIND`
+      - `FORCE_POWER_AFFLICTION`
+      - `FORCE_POWER_ALL_FORCE_POWERS`
+      - `FORCE_POWER_CHOKE`
+      - `FORCE_POWER_CURE`
+      - `FORCE_POWER_DEATH_FIELD`
+      - `FORCE_POWER_DOMINATE`
+      - `FORCE_POWER_DRAIN_LIFE`
+      - `FORCE_POWER_DROID_DESTROY`
+      - `FORCE_POWER_DROID_DISABLE`
+      - `FORCE_POWER_DROID_STUN`
+      - `FORCE_POWER_FEAR`
+      - `FORCE_POWER_FORCE_ARMOR`
+      - `FORCE_POWER_FORCE_AURA`
+      - `FORCE_POWER_FORCE_BREACH`
+      - `FORCE_POWER_FORCE_IMMUNITY`
+      - `FORCE_POWER_FORCE_JUMP`
+      - `FORCE_POWER_FORCE_JUMP_ADVANCED`
+      - `FORCE_POWER_FORCE_MIND`
+      - `FORCE_POWER_FORCE_PUSH`
+      - `FORCE_POWER_FORCE_SHIELD`
+      - `FORCE_POWER_FORCE_STORM`
+      - `FORCE_POWER_FORCE_WAVE`
+      - `FORCE_POWER_FORCE_WHIRLWIND`
+      - `FORCE_POWER_HEAL`
+      - `FORCE_POWER_HOLD`
+      - `FORCE_POWER_HORROR`
+      - `FORCE_POWER_INSANITY`
+      - `FORCE_POWER_KILL`
+      - `FORCE_POWER_KNIGHT_MIND`
+      - `FORCE_POWER_KNIGHT_SPEED`
+      - `FORCE_POWER_LIGHT_SABER_THROW`
+      - `FORCE_POWER_LIGHT_SABER_THROW_ADVANCED`
+      - `FORCE_POWER_LIGHTNING`
+      - `FORCE_POWER_MASTER_ALTER`
+      - `FORCE_POWER_MASTER_CONTROL`
+      - `FORCE_POWER_MASTER_SENSE`
+      - `FORCE_POWER_MIND_MASTERY`
+      - `FORCE_POWER_PLAGUE`
+      - `FORCE_POWER_REGENERATION`
+      - `FORCE_POWER_REGNERATION_ADVANCED`
+      - `FORCE_POWER_RESIST_COLD_HEAT_ENERGY`
+      - `FORCE_POWER_RESIST_FORCE`
+      - `FORCE_POWER_RESIST_POISON_DISEASE_SONIC`
+      - `FORCE_POWER_SHOCK`
+      - `FORCE_POWER_SLEEP`
+      - `FORCE_POWER_SLOW`
+      - `FORCE_POWER_SPEED_BURST`
+      - `FORCE_POWER_SPEED_MASTERY`
+      - `FORCE_POWER_STUN`
+      - `FORCE_POWER_SUPRESS_FORCE`
+      - `FORCE_POWER_WOUND`
+      - `FORMATION_LINE`
+      - `FORMATION_WEDGE`
+      - `GAME_DIFFICULTY_CORE_RULES`
+      - `GAME_DIFFICULTY_DIFFICULT`
+      - `GAME_DIFFICULTY_EASY`
+      - `GAME_DIFFICULTY_NORMAL`
+      - `GAME_DIFFICULTY_VERY_EASY`
+      - `GENDER_BOTH`
+      - `GENDER_FEMALE`
+      - `GENDER_MALE`
+      - `GENDER_NONE`
+      - `GENDER_OTHER`
+      - `GUI_PANEL_PLAYER_DEATH`
+      - `IMMUNITY_TYPE_ABILITY_DECREASE`
+      - `IMMUNITY_TYPE_AC_DECREASE`
+      - `IMMUNITY_TYPE_ATTACK_DECREASE`
+      - `IMMUNITY_TYPE_BLINDNESS`
+      - `IMMUNITY_TYPE_CHARM`
+      - `IMMUNITY_TYPE_CONFUSED`
+      - `IMMUNITY_TYPE_CRITICAL_HIT`
+      - `IMMUNITY_TYPE_CURSED`
+      - `IMMUNITY_TYPE_DAMAGE_DECREASE`
+      - `IMMUNITY_TYPE_DAMAGE_IMMUNITY_DECREASE`
+      - `IMMUNITY_TYPE_DAZED`
+      - `IMMUNITY_TYPE_DEAFNESS`
+      - `IMMUNITY_TYPE_DEATH`
+      - `IMMUNITY_TYPE_DISEASE`
+      - `IMMUNITY_TYPE_DOMINATE`
+      - `IMMUNITY_TYPE_ENTANGLE`
+      - `IMMUNITY_TYPE_FEAR`
+      - `IMMUNITY_TYPE_FORCE_RESISTANCE_DECREASE`
+      - `IMMUNITY_TYPE_KNOCKDOWN`
+      - `IMMUNITY_TYPE_MIND_SPELLS`
+      - `IMMUNITY_TYPE_MOVEMENT_SPEED_DECREASE`
+      - `IMMUNITY_TYPE_NEGATIVE_LEVEL`
+      - `IMMUNITY_TYPE_NONE`
+      - `IMMUNITY_TYPE_PARALYSIS`
+      - `IMMUNITY_TYPE_POISON`
+      - `IMMUNITY_TYPE_SAVING_THROW_DECREASE`
+      - `IMMUNITY_TYPE_SILENCE`
+      - `IMMUNITY_TYPE_SKILL_DECREASE`
+      - `IMMUNITY_TYPE_SLEEP`
+      - `IMMUNITY_TYPE_SLOW`
+      - `IMMUNITY_TYPE_SNEAK_ATTACK`
+      - `IMMUNITY_TYPE_STUN`
+      - `IMMUNITY_TYPE_TRAP`
+      - `INVALID_STANDARD_FACTION`
+      - `INVISIBILITY_TYPE_DARKNESS`
+      - `INVISIBILITY_TYPE_IMPROVED`
+      - `INVISIBILITY_TYPE_NORMAL`
+      - `ITEM_PROPERTY_ABILITY_BONUS`
+      - `ITEM_PROPERTY_AC_BONUS`
+      - `ITEM_PROPERTY_AC_BONUS_VS_DAMAGE_TYPE`
+      - `ITEM_PROPERTY_AC_BONUS_VS_RACIAL_GROUP`
+      - `ITEM_PROPERTY_ACTIVATE_ITEM`
+      - `ITEM_PROPERTY_ATTACK_BONUS`
+      - `ITEM_PROPERTY_ATTACK_BONUS_VS_RACIAL_GROUP`
+      - `ITEM_PROPERTY_ATTACK_PENALTY`
+      - `ITEM_PROPERTY_BLASTER_BOLT_DEFLECT_DECREASE`
+      - `ITEM_PROPERTY_BLASTER_BOLT_DEFLECT_INCREASE`
+      - `ITEM_PROPERTY_BONUS_FEAT`
+      - `ITEM_PROPERTY_COMPUTER_SPIKE`
+      - `ITEM_PROPERTY_DAMAGE_BONUS`
+      - `ITEM_PROPERTY_DAMAGE_BONUS_VS_RACIAL_GROUP`
+      - `ITEM_PROPERTY_DAMAGE_REDUCTION`
+      - `ITEM_PROPERTY_DAMAGE_RESISTANCE`
+      - `ITEM_PROPERTY_DAMAGE_VULNERABILITY`
+      - `ITEM_PROPERTY_DECREASED_ABILITY_SCORE`
+      - `ITEM_PROPERTY_DECREASED_AC`
+      - `ITEM_PROPERTY_DECREASED_ATTACK_MODIFIER`
+      - `ITEM_PROPERTY_DECREASED_DAMAGE`
+      - `ITEM_PROPERTY_DECREASED_SAVING_THROWS`
+      - `ITEM_PROPERTY_DECREASED_SAVING_THROWS_SPECIFIC`
+      - `ITEM_PROPERTY_DECREASED_SKILL_MODIFIER`
+      - `ITEM_PROPERTY_DROID_REPAIR_KIT`
+      - `ITEM_PROPERTY_ENHANCEMENT_BONUS`
+      - `ITEM_PROPERTY_ENHANCEMENT_BONUS_VS_RACIAL_GROUP`
+      - `ITEM_PROPERTY_EXTRA_MELEE_DAMAGE_TYPE`
+      - `ITEM_PROPERTY_EXTRA_RANGED_DAMAGE_TYPE`
+      - `ITEM_PROPERTY_FREEDOM_OF_MOVEMENT`
+      - `ITEM_PROPERTY_IMMUNITY`
+      - `ITEM_PROPERTY_IMMUNITY_DAMAGE_TYPE`
+      - `ITEM_PROPERTY_IMPROVED_FORCE_RESISTANCE`
+      - `ITEM_PROPERTY_IMPROVED_SAVING_THROW`
+      - `ITEM_PROPERTY_IMPROVED_SAVING_THROW_SPECIFIC`
+      - `ITEM_PROPERTY_KEEN`
+      - `ITEM_PROPERTY_LIGHT`
+      - `ITEM_PROPERTY_MASSIVE_CRITICALS`
+      - `ITEM_PROPERTY_MIGHTY`
+      - `ITEM_PROPERTY_MONSTER_DAMAGE`
+      - `ITEM_PROPERTY_NO_DAMAGE`
+      - `ITEM_PROPERTY_ON_HIT_PROPERTIES`
+      - `ITEM_PROPERTY_ON_MONSTER_HIT`
+      - `ITEM_PROPERTY_REGENERATION`
+      - `ITEM_PROPERTY_REGENERATION_FORCE_POINTS`
+      - `ITEM_PROPERTY_SECURITY_SPIKE`
+      - `ITEM_PROPERTY_SKILL_BONUS`
+      - `ITEM_PROPERTY_SPECIAL_WALK`
+      - `ITEM_PROPERTY_TRAP`
+      - `ITEM_PROPERTY_TRUE_SEEING`
+      - `ITEM_PROPERTY_UNLIMITED_AMMUNITION`
+      - `ITEM_PROPERTY_USE_LIMITATION_CLASS`
+      - `ITEM_PROPERTY_USE_LIMITATION_FEAT`
+      - `ITEM_PROPERTY_USE_LIMITATION_RACIAL_TYPE`
+      - `LIVE_CONTENT_PKG1`
+      - `LIVE_CONTENT_PKG2`
+      - `LIVE_CONTENT_PKG3`
+      - `LIVE_CONTENT_PKG4`
+      - `LIVE_CONTENT_PKG5`
+      - `LIVE_CONTENT_PKG6`
+      - `MOVEMENT_SPEED_DEFAULT`
+      - `MOVEMENT_SPEED_DMFAST`
+      - `MOVEMENT_SPEED_FAST`
+      - `MOVEMENT_SPEED_IMMOBILE`
+      - `MOVEMENT_SPEED_NORMAL`
+      - `MOVEMENT_SPEED_PC`
+      - `MOVEMENT_SPEED_SLOW`
+      - `MOVEMENT_SPEED_VERYFAST`
+      - `MOVEMENT_SPEED_VERYSLOW`
+      - `PARTY_AISTYLE_AGGRESSIVE`
+      - `PARTY_AISTYLE_DEFENSIVE`
+      - `PARTY_AISTYLE_PASSIVE`
+      - `PERCEPTION_HEARD`
+      - `PERCEPTION_HEARD_AND_NOT_SEEN`
+      - `PERCEPTION_NOT_HEARD`
+      - `PERCEPTION_NOT_SEEN`
+      - `PERCEPTION_NOT_SEEN_AND_NOT_HEARD`
+      - `PERCEPTION_SEEN`
+      - `PERCEPTION_SEEN_AND_HEARD`
+      - `PERCEPTION_SEEN_AND_NOT_HEARD`
+      - `PERSISTENT_ZONE_ACTIVE`
+      - `PERSISTENT_ZONE_FOLLOW`
+      - `PI`
+      - `PLACEABLE_ACTION_BASH`
+      - `PLACEABLE_ACTION_KNOCK`
+      - `PLACEABLE_ACTION_UNLOCK`
+      - `PLACEABLE_ACTION_USE`
+      - `PLAYER_CHAR_IS_PC`
+      - `PLAYER_CHAR_NOT_PC`
+      - `PLOT_O_BIG_MONSTERS`
+      - `PLOT_O_DOOM`
+      - `PLOT_O_SCARY_STUFF`
+      - `POISON_ABILITY_SCORE_AVERAGE`
+      - `POISON_ABILITY_SCORE_MILD`
+      - `POISON_ABILITY_SCORE_VIRULENT`
+      - `POISON_DAMAGE_AVERAGE`
+      - `POISON_DAMAGE_MILD`
+      - `POISON_DAMAGE_VIRULENT`
+      - `POLYMORPH_TYPE_BADGER`
+      - `POLYMORPH_TYPE_BALOR`
+      - `POLYMORPH_TYPE_BOAR`
+      - `POLYMORPH_TYPE_BROWN_BEAR`
+      - `POLYMORPH_TYPE_COW`
+      - `POLYMORPH_TYPE_DEATH_SLAAD`
+      - `POLYMORPH_TYPE_DIRE_BADGER`
+      - `POLYMORPH_TYPE_DIRE_BOAR`
+      - `POLYMORPH_TYPE_DIRE_BROWN_BEAR`
+      - `POLYMORPH_TYPE_DIRE_PANTHER`
+      - `POLYMORPH_TYPE_DIRE_WOLF`
+      - `POLYMORPH_TYPE_DOOM_KNIGHT`
+      - `POLYMORPH_TYPE_ELDER_AIR_ELEMENTAL`
+      - `POLYMORPH_TYPE_ELDER_EARTH_ELEMENTAL`
+      - `POLYMORPH_TYPE_ELDER_FIRE_ELEMENTAL`
+      - `POLYMORPH_TYPE_ELDER_WATER_ELEMENTAL`
+      - `POLYMORPH_TYPE_FIRE_GIANT`
+      - `POLYMORPH_TYPE_GIANT_SPIDER`
+      - `POLYMORPH_TYPE_HUGE_AIR_ELEMENTAL`
+      - `POLYMORPH_TYPE_HUGE_EARTH_ELEMENTAL`
+      - `POLYMORPH_TYPE_HUGE_FIRE_ELEMENTAL`
+      - `POLYMORPH_TYPE_HUGE_WATER_ELEMENTAL`
+      - `POLYMORPH_TYPE_IMP`
+      - `POLYMORPH_TYPE_IRON_GOLEM`
+      - `POLYMORPH_TYPE_PANTHER`
+      - `POLYMORPH_TYPE_PENGUIN`
+      - `POLYMORPH_TYPE_PIXIE`
+      - `POLYMORPH_TYPE_QUASIT`
+      - `POLYMORPH_TYPE_RED_DRAGON`
+      - `POLYMORPH_TYPE_SUCCUBUS`
+      - `POLYMORPH_TYPE_TROLL`
+      - `POLYMORPH_TYPE_UMBER_HULK`
+      - `POLYMORPH_TYPE_WERECAT`
+      - `POLYMORPH_TYPE_WERERAT`
+      - `POLYMORPH_TYPE_WEREWOLF`
+      - `POLYMORPH_TYPE_WOLF`
+      - `POLYMORPH_TYPE_YUANTI`
+      - `POLYMORPH_TYPE_ZOMBIE`
+      - `PROJECTILE_PATH_TYPE_ACCELERATING`
+      - `PROJECTILE_PATH_TYPE_BALLISTIC`
+      - `PROJECTILE_PATH_TYPE_DEFAULT`
+      - `PROJECTILE_PATH_TYPE_HIGH_BALLISTIC`
+      - `PROJECTILE_PATH_TYPE_HOMING`
+      - `RACIAL_TYPE_ALL`
+      - `RACIAL_TYPE_DROID`
+      - `RACIAL_TYPE_ELF`
+      - `RACIAL_TYPE_GNOME`
+      - `RACIAL_TYPE_HALFELF`
+      - `RACIAL_TYPE_HALFLING`
+      - `RACIAL_TYPE_HUMAN`
+      - `RACIAL_TYPE_INVALID`
+      - `RACIAL_TYPE_UNKNOWN`
+      - `RADIUS_SIZE_COLOSSAL`
+      - `RADIUS_SIZE_GARGANTUAN`
+      - `RADIUS_SIZE_HUGE`
+      - `RADIUS_SIZE_LARGE`
+      - `RADIUS_SIZE_MEDIUM`
+      - `RADIUS_SIZE_SMALL`
+      - `REPUTATION_TYPE_ENEMY`
+      - `REPUTATION_TYPE_FRIEND`
+      - `REPUTATION_TYPE_NEUTRAL`
+      - `SAVING_THROW_ALL`
+      - `SAVING_THROW_FORT`
+      - `SAVING_THROW_REFLEX`
+      - `SAVING_THROW_TYPE_ACID`
+      - `SAVING_THROW_TYPE_ALL`
+      - `SAVING_THROW_TYPE_BLASTER`
+      - `SAVING_THROW_TYPE_COLD`
+      - `SAVING_THROW_TYPE_DARK_SIDE`
+      - `SAVING_THROW_TYPE_DEATH`
+      - `SAVING_THROW_TYPE_DISEASE`
+      - `SAVING_THROW_TYPE_ELECTRICAL`
+      - `SAVING_THROW_TYPE_FEAR`
+      - `SAVING_THROW_TYPE_FIRE`
+      - `SAVING_THROW_TYPE_FORCE_POWER`
+      - `SAVING_THROW_TYPE_ION`
+      - `SAVING_THROW_TYPE_LIGHT_SIDE`
+      - `SAVING_THROW_TYPE_MIND_AFFECTING`
+      - `SAVING_THROW_TYPE_NONE`
+      - `SAVING_THROW_TYPE_PARALYSIS`
+      - `SAVING_THROW_TYPE_POISON`
+      - `SAVING_THROW_TYPE_SNEAK_ATTACK`
+      - `SAVING_THROW_TYPE_SONIC`
+      - `SAVING_THROW_TYPE_TRAP`
+      - `SAVING_THROW_WILL`
+      - `SHAPE_CONE`
+      - `SHAPE_CUBE`
+      - `SHAPE_SPELLCONE`
+      - `SHAPE_SPELLCYLINDER`
+      - `SHAPE_SPHERE`
+      - `SHIELD_ANTIQUE_DROID`
+      - `SHIELD_DROID_ENERGY_1`
+      - `SHIELD_DROID_ENERGY_2`
+      - `SHIELD_DROID_ENERGY_3`
+      - `SHIELD_DROID_ENVIRO_1`
+      - `SHIELD_DROID_ENVIRO_2`
+      - `SHIELD_DROID_ENVIRO_3`
+      - `SHIELD_DUELING_ECHANI`
+      - `SHIELD_DUELING_YUSANIS`
+      - `SHIELD_ECHANI`
+      - `SHIELD_ENERGY`
+      - `SHIELD_ENERGY_ARKANIAN`
+      - `SHIELD_ENERGY_SITH`
+      - `SHIELD_MANDALORIAN_MELEE`
+      - `SHIELD_MANDALORIAN_POWER`
+      - `SHIELD_PLOT_TAR_M09AA`
+      - `SHIELD_PLOT_UNK_M44AA`
+      - `SHIELD_VERPINE_PROTOTYPE`
+      - `SKILL_AWARENESS`
+      - `SKILL_COMPUTER_USE`
+      - `SKILL_DEMOLITIONS`
+      - `SKILL_MAX_SKILLS`
+      - `SKILL_PERSUADE`
+      - `SKILL_REPAIR`
+      - `SKILL_SECURITY`
+      - `SKILL_STEALTH`
+      - `SKILL_TREAT_INJURY`
+      - `sLanguage`
+      - `SPECIAL_ABILITY_BATTLE_MEDITATION`
+      - `SPECIAL_ABILITY_BODY_FUEL`
+      - `SPECIAL_ABILITY_CAMOFLAGE`
+      - `SPECIAL_ABILITY_CATHAR_REFLEXES`
+      - `SPECIAL_ABILITY_COMBAT_REGENERATION`
+      - `SPECIAL_ABILITY_DOMINATE_MIND`
+      - `SPECIAL_ABILITY_ENHANCED_SENSES`
+      - `SPECIAL_ABILITY_PSYCHIC_STANCE`
+      - `SPECIAL_ABILITY_RAGE`
+      - `SPECIAL_ABILITY_SENTINEL_STANCE`
+      - `SPECIAL_ABILITY_TAUNT`
+      - `SPECIAL_ABILITY_WARRIOR_STANCE`
+      - `SPECIAL_ABILITY_WHIRLING_DERVISH`
+      - `SPECIAL_ATTACK_CALLED_SHOT_ARM`
+      - `SPECIAL_ATTACK_CALLED_SHOT_LEG`
+      - `SPECIAL_ATTACK_DISARM`
+      - `SPECIAL_ATTACK_FLURRY_OF_BLOWS`
+      - `SPECIAL_ATTACK_IMPROVED_DISARM`
+      - `SPECIAL_ATTACK_IMPROVED_KNOCKDOWN`
+      - `SPECIAL_ATTACK_INVALID`
+      - `SPECIAL_ATTACK_KNOCKDOWN`
+      - `SPECIAL_ATTACK_RAPID_SHOT`
+      - `SPECIAL_ATTACK_SAP`
+      - `SPECIAL_ATTACK_STUNNING_FIST`
+      - `STANDARD_FACTION_ENDAR_SPIRE`
+      - `STANDARD_FACTION_FRIENDLY_1`
+      - `STANDARD_FACTION_FRIENDLY_2`
+      - `STANDARD_FACTION_GIZKA_1`
+      - `STANDARD_FACTION_GIZKA_2`
+      - `STANDARD_FACTION_GLB_XOR`
+      - `STANDARD_FACTION_HOSTILE_1`
+      - `STANDARD_FACTION_HOSTILE_2`
+      - `STANDARD_FACTION_INSANE`
+      - `STANDARD_FACTION_NEUTRAL`
+      - `STANDARD_FACTION_PREDATOR`
+      - `STANDARD_FACTION_PREY`
+      - `STANDARD_FACTION_PTAT_TUSKAN`
+      - `STANDARD_FACTION_RANCOR`
+      - `STANDARD_FACTION_SURRENDER_1`
+      - `STANDARD_FACTION_SURRENDER_2`
+      - `STANDARD_FACTION_TRAP`
+      - `SUBRACE_NONE`
+      - `SUBRACE_WOOKIE`
+      - `SUBSCREEN_ID_ABILITY`
+      - `SUBSCREEN_ID_CHARACTER_RECORD`
+      - `SUBSCREEN_ID_EQUIP`
+      - `SUBSCREEN_ID_ITEM`
+      - `SUBSCREEN_ID_MAP`
+      - `SUBSCREEN_ID_MESSAGES`
+      - `SUBSCREEN_ID_NONE`
+      - `SUBSCREEN_ID_OPTIONS`
+      - `SUBSCREEN_ID_QUEST`
+      - `SUBSKILL_EXAMINETRAP`
+      - `SUBSKILL_FLAGTRAP`
+      - `SUBSKILL_RECOVERTRAP`
+      - `SUBTYPE_EXTRAORDINARY`
+      - `SUBTYPE_MAGICAL`
+      - `SUBTYPE_SUPERNATURAL`
+      - `SWMINIGAME_TRACKFOLLOWER_SOUND_DEATH`
+      - `SWMINIGAME_TRACKFOLLOWER_SOUND_ENGINE`
+      - `TALENT_EXCLUDE_ALL_OF_TYPE`
+      - `TALENT_TYPE_FEAT`
+      - `TALENT_TYPE_FORCE`
+      - `TALENT_TYPE_SKILL`
+      - `TALENT_TYPE_SPELL`
+      - `TALKVOLUME_SHOUT`
+      - `TALKVOLUME_SILENT_SHOUT`
+      - `TALKVOLUME_SILENT_TALK`
+      - `TALKVOLUME_TALK`
+      - `TALKVOLUME_WHISPER`
+      - `TRAP_BASE_TYPE_FLASH_STUN_AVERAGE`
+      - `TRAP_BASE_TYPE_FLASH_STUN_DEADLY`
+      - `TRAP_BASE_TYPE_FLASH_STUN_MINOR`
+      - `TRAP_BASE_TYPE_FRAGMENTATION_MINE_AVERAGE`
+      - `TRAP_BASE_TYPE_FRAGMENTATION_MINE_DEADLY`
+      - `TRAP_BASE_TYPE_FRAGMENTATION_MINE_MINOR`
+      - `TRAP_BASE_TYPE_LASER_SLICING_AVERAGE`
+      - `TRAP_BASE_TYPE_LASER_SLICING_DEADLY`
+      - `TRAP_BASE_TYPE_LASER_SLICING_MINOR`
+      - `TRAP_BASE_TYPE_POISON_GAS_AVERAGE`
+      - `TRAP_BASE_TYPE_POISON_GAS_DEADLY`
+      - `TRAP_BASE_TYPE_POISON_GAS_MINOR`
+      - `TRUE`
+      - `TUTORIAL_WINDOW_RETURN_TO_BASE`
+      - `TUTORIAL_WINDOW_START_SWOOP_RACE`
+      - `VIDEO_EFFECT_FREELOOK_HK47`
+      - `VIDEO_EFFECT_FREELOOK_T3M4`
+      - `VIDEO_EFFECT_NONE`
+      - `VIDEO_EFFECT_SECURITY_CAMERA`
     - [Planet Constants](#planet-constants)
-      - [`PLANET_DANTOOINE`](#planet_dantooine)
-      - [`PLANET_EBON_HAWK`](#planet_ebon_hawk)
-      - [`PLANET_KORRIBAN`](#planet_korriban)
-      - [`PLANET_LIVE_01`](#planet_live_01)
-      - [`PLANET_LIVE_02`](#planet_live_02)
-      - [`PLANET_LIVE_03`](#planet_live_03)
-      - [`PLANET_LIVE_04`](#planet_live_04)
-      - [`PLANET_LIVE_05`](#planet_live_05)
+      - `PLANET_DANTOOINE`
+      - `PLANET_EBON_HAWK`
+      - `PLANET_KORRIBAN`
+      - `PLANET_LIVE_01`
+      - `PLANET_LIVE_02`
+      - `PLANET_LIVE_03`
+      - `PLANET_LIVE_04`
+      - `PLANET_LIVE_05`
     - [Visual Effects (VFX)](#visual-effects-vfx)
-      - [`VFX_ARD_HEAT_SHIMMER`](#vfx_ard_heat_shimmer)
-      - [`VFX_ARD_LIGHT_BLIND`](#vfx_ard_light_blind)
-      - [`VFX_ARD_LIGHT_YELLOW_10`](#vfx_ard_light_yellow_10)
-      - [`VFX_ARD_LIGHT_YELLOW_20`](#vfx_ard_light_yellow_20)
-      - [`VFX_BEAM_COLD_RAY`](#vfx_beam_cold_ray)
-      - [`VFX_BEAM_DEATH_FIELD_TENTACLE`](#vfx_beam_death_field_tentacle)
-      - [`VFX_BEAM_DRAIN_LIFE`](#vfx_beam_drain_life)
-      - [`VFX_BEAM_DROID_DESTROY`](#vfx_beam_droid_destroy)
-      - [`VFX_BEAM_DROID_DISABLE`](#vfx_beam_droid_disable)
-      - [`VFX_BEAM_FLAME_SPRAY`](#vfx_beam_flame_spray)
-      - [`VFX_BEAM_ION_RAY_01`](#vfx_beam_ion_ray_01)
-      - [`VFX_BEAM_ION_RAY_02`](#vfx_beam_ion_ray_02)
-      - [`VFX_BEAM_LIGHTNING_DARK_L`](#vfx_beam_lightning_dark_l)
-      - [`VFX_BEAM_LIGHTNING_DARK_S`](#vfx_beam_lightning_dark_s)
-      - [`VFX_BEAM_STUN_RAY`](#vfx_beam_stun_ray)
-      - [`VFX_COM_BLASTER_DEFLECTION`](#vfx_com_blaster_deflection)
-      - [`VFX_COM_BLASTER_IMPACT`](#vfx_com_blaster_impact)
-      - [`VFX_COM_BLASTER_IMPACT_GROUND`](#vfx_com_blaster_impact_ground)
-      - [`VFX_COM_CRITICAL_STRIKE_IMPROVED_SABER`](#vfx_com_critical_strike_improved_saber)
-      - [`VFX_COM_CRITICAL_STRIKE_IMPROVED_STAFF`](#vfx_com_critical_strike_improved_staff)
-      - [`VFX_COM_CRITICAL_STRIKE_MASTERY_SABER`](#vfx_com_critical_strike_mastery_saber)
-      - [`VFX_COM_CRITICAL_STRIKE_MASTERY_STAFF`](#vfx_com_critical_strike_mastery_staff)
-      - [`VFX_COM_DROID_EXPLOSION_1`](#vfx_com_droid_explosion_1)
-      - [`VFX_COM_DROID_EXPLOSION_2`](#vfx_com_droid_explosion_2)
-      - [`VFX_COM_FLURRY_IMPROVED_SABER`](#vfx_com_flurry_improved_saber)
-      - [`VFX_COM_FLURRY_IMPROVED_STAFF`](#vfx_com_flurry_improved_staff)
-      - [`VFX_COM_FORCE_RESISTED`](#vfx_com_force_resisted)
-      - [`VFX_COM_JEDI_FORCE_FIZZLE`](#vfx_com_jedi_force_fizzle)
-      - [`VFX_COM_MULTI_SHOT`](#vfx_com_multi_shot)
-      - [`VFX_COM_POWER_ATTACK_IMPROVED_SABER`](#vfx_com_power_attack_improved_saber)
-      - [`VFX_COM_POWER_ATTACK_IMPROVED_STAFF`](#vfx_com_power_attack_improved_staff)
-      - [`VFX_COM_POWER_ATTACK_MASTERY_SABER`](#vfx_com_power_attack_mastery_saber)
-      - [`VFX_COM_POWER_ATTACK_MASTERY_STAFF`](#vfx_com_power_attack_mastery_staff)
-      - [`VFX_COM_POWER_BLAST_IMPROVED`](#vfx_com_power_blast_improved)
-      - [`VFX_COM_POWER_BLAST_MASTERY`](#vfx_com_power_blast_mastery)
-      - [`VFX_COM_RAPID_SHOT_IMPROVED`](#vfx_com_rapid_shot_improved)
-      - [`VFX_COM_SNIPER_SHOT_IMPROVED`](#vfx_com_sniper_shot_improved)
-      - [`VFX_COM_SNIPER_SHOT_MASTERY`](#vfx_com_sniper_shot_mastery)
-      - [`VFX_COM_SPARKS_BLASTER`](#vfx_com_sparks_blaster)
-      - [`VFX_COM_SPARKS_LARGE`](#vfx_com_sparks_large)
-      - [`VFX_COM_SPARKS_LIGHTSABER`](#vfx_com_sparks_lightsaber)
-      - [`VFX_COM_SPARKS_PARRY_METAL`](#vfx_com_sparks_parry_metal)
-      - [`VFX_COM_WHIRLWIND_STRIKE_SABER`](#vfx_com_whirlwind_strike_saber)
-      - [`VFX_COM_WHIRLWIND_STRIKE_STAFF`](#vfx_com_whirlwind_strike_staff)
-      - [`VFX_DUR_BODY_FUAL`](#vfx_dur_body_fual)
-      - [`VFX_DUR_CARBONITE_CHUNKS`](#vfx_dur_carbonite_chunks)
-      - [`VFX_DUR_CARBONITE_ENCASING`](#vfx_dur_carbonite_encasing)
-      - [`VFX_DUR_FORCE_WHIRLWIND`](#vfx_dur_force_whirlwind)
-      - [`VFX_DUR_HOLD`](#vfx_dur_hold)
-      - [`VFX_DUR_INVISIBILITY`](#vfx_dur_invisibility)
-      - [`VFX_DUR_KNIGHTS_SPEED`](#vfx_dur_knights_speed)
-      - [`VFX_DUR_PSYCHIC_STATIC`](#vfx_dur_psychic_static)
-      - [`VFX_DUR_SHIELD_BLUE_01`](#vfx_dur_shield_blue_01)
-      - [`VFX_DUR_SHIELD_BLUE_02`](#vfx_dur_shield_blue_02)
-      - [`VFX_DUR_SHIELD_BLUE_03`](#vfx_dur_shield_blue_03)
-      - [`VFX_DUR_SHIELD_BLUE_04`](#vfx_dur_shield_blue_04)
-      - [`VFX_DUR_SHIELD_BLUE_MARK_I`](#vfx_dur_shield_blue_mark_i)
-      - [`VFX_DUR_SHIELD_BLUE_MARK_II`](#vfx_dur_shield_blue_mark_ii)
-      - [`VFX_DUR_SHIELD_BLUE_MARK_IV`](#vfx_dur_shield_blue_mark_iv)
-      - [`VFX_DUR_SHIELD_CHROME_01`](#vfx_dur_shield_chrome_01)
-      - [`VFX_DUR_SHIELD_CHROME_02`](#vfx_dur_shield_chrome_02)
-      - [`VFX_DUR_SHIELD_GREEN_01`](#vfx_dur_shield_green_01)
-      - [`VFX_DUR_SHIELD_RED_01`](#vfx_dur_shield_red_01)
-      - [`VFX_DUR_SHIELD_RED_02`](#vfx_dur_shield_red_02)
-      - [`VFX_DUR_SHIELD_RED_MARK_I`](#vfx_dur_shield_red_mark_i)
-      - [`VFX_DUR_SHIELD_RED_MARK_II`](#vfx_dur_shield_red_mark_ii)
-      - [`VFX_DUR_SHIELD_RED_MARK_IV`](#vfx_dur_shield_red_mark_iv)
-      - [`VFX_DUR_SPEED`](#vfx_dur_speed)
-      - [`VFX_DUR_STEALTH_PULSE`](#vfx_dur_stealth_pulse)
-      - [`VFX_FNF_FORCE_WAVE`](#vfx_fnf_force_wave)
-      - [`VFX_FNF_GRAVITY_GENERATOR`](#vfx_fnf_gravity_generator)
-      - [`VFX_FNF_GRENADE_ADHESIVE`](#vfx_fnf_grenade_adhesive)
-      - [`VFX_FNF_GRENADE_CRYOBAN`](#vfx_fnf_grenade_cryoban)
-      - [`VFX_FNF_GRENADE_FRAGMENTATION`](#vfx_fnf_grenade_fragmentation)
-      - [`VFX_FNF_GRENADE_ION`](#vfx_fnf_grenade_ion)
-      - [`VFX_FNF_GRENADE_PLASMA`](#vfx_fnf_grenade_plasma)
-      - [`VFX_FNF_GRENADE_POISON`](#vfx_fnf_grenade_poison)
-      - [`VFX_FNF_GRENADE_SONIC`](#vfx_fnf_grenade_sonic)
-      - [`VFX_FNF_GRENADE_STUN`](#vfx_fnf_grenade_stun)
-      - [`VFX_FNF_GRENADE_THERMAL_DETONATOR`](#vfx_fnf_grenade_thermal_detonator)
-      - [`VFX_FNF_PLOT_MAN_SONIC_WAVE`](#vfx_fnf_plot_man_sonic_wave)
-      - [`VFX_IMP_CHOKE`](#vfx_imp_choke)
-      - [`VFX_IMP_CURE`](#vfx_imp_cure)
-      - [`VFX_IMP_FLAME`](#vfx_imp_flame)
-      - [`VFX_IMP_FORCE_BREACH`](#vfx_imp_force_breach)
-      - [`VFX_IMP_FORCE_JUMP_ADVANCED`](#vfx_imp_force_jump_advanced)
-      - [`VFX_IMP_FORCE_PUSH`](#vfx_imp_force_push)
-      - [`VFX_IMP_FORCE_WAVE`](#vfx_imp_force_wave)
-      - [`VFX_IMP_FORCE_WHIRLWIND`](#vfx_imp_force_whirlwind)
-      - [`VFX_IMP_GRENADE_ADHESIVE_PERSONAL`](#vfx_imp_grenade_adhesive_personal)
-      - [`VFX_IMP_HEAL`](#vfx_imp_heal)
-      - [`VFX_IMP_HEALING_SMALL`](#vfx_imp_healing_small)
-      - [`VFX_IMP_MIND_FORCE`](#vfx_imp_mind_force)
-      - [`VFX_IMP_MIND_KINIGHT`](#vfx_imp_mind_kinight)
-      - [`VFX_IMP_MIND_MASTERY`](#vfx_imp_mind_mastery)
-      - [`VFX_IMP_MIRV`](#vfx_imp_mirv)
-      - [`VFX_IMP_MIRV_IMPACT`](#vfx_imp_mirv_impact)
-      - [`VFX_IMP_SCREEN_SHAKE`](#vfx_imp_screen_shake)
-      - [`VFX_IMP_SPEED_KNIGHT`](#vfx_imp_speed_knight)
-      - [`VFX_IMP_SPEED_MASTERY`](#vfx_imp_speed_mastery)
-      - [`VFX_IMP_STUN`](#vfx_imp_stun)
-      - [`VFX_IMP_SUPPRESS_FORCE`](#vfx_imp_suppress_force)
-      - [`VFX_NONE`](#vfx_none)
-      - [`VFX_PRO_AFFLICT`](#vfx_pro_afflict)
-      - [`VFX_PRO_DEATH_FIELD`](#vfx_pro_death_field)
-      - [`VFX_PRO_DRAIN`](#vfx_pro_drain)
-      - [`VFX_PRO_DROID_DISABLE`](#vfx_pro_droid_disable)
-      - [`VFX_PRO_DROID_KILL`](#vfx_pro_droid_kill)
-      - [`VFX_PRO_FORCE_ARMOR`](#vfx_pro_force_armor)
-      - [`VFX_PRO_FORCE_AURA`](#vfx_pro_force_aura)
-      - [`VFX_PRO_FORCE_SHIELD`](#vfx_pro_force_shield)
-      - [`VFX_PRO_LIGHTNING_JEDI`](#vfx_pro_lightning_jedi)
-      - [`VFX_PRO_LIGHTNING_L`](#vfx_pro_lightning_l)
-      - [`VFX_PRO_LIGHTNING_L_SOUND`](#vfx_pro_lightning_l_sound)
-      - [`VFX_PRO_LIGHTNING_S`](#vfx_pro_lightning_s)
-      - [`VFX_PRO_RESIST_ELEMENTS`](#vfx_pro_resist_elements)
-      - [`VFX_PRO_RESIST_FORCE`](#vfx_pro_resist_force)
-      - [`VFX_PRO_RESIST_POISON`](#vfx_pro_resist_poison)
+      - `VFX_ARD_HEAT_SHIMMER`
+      - `VFX_ARD_LIGHT_BLIND`
+      - `VFX_ARD_LIGHT_YELLOW_10`
+      - `VFX_ARD_LIGHT_YELLOW_20`
+      - `VFX_BEAM_COLD_RAY`
+      - `VFX_BEAM_DEATH_FIELD_TENTACLE`
+      - `VFX_BEAM_DRAIN_LIFE`
+      - `VFX_BEAM_DROID_DESTROY`
+      - `VFX_BEAM_DROID_DISABLE`
+      - `VFX_BEAM_FLAME_SPRAY`
+      - `VFX_BEAM_ION_RAY_01`
+      - `VFX_BEAM_ION_RAY_02`
+      - `VFX_BEAM_LIGHTNING_DARK_L`
+      - `VFX_BEAM_LIGHTNING_DARK_S`
+      - `VFX_BEAM_STUN_RAY`
+      - `VFX_COM_BLASTER_DEFLECTION`
+      - `VFX_COM_BLASTER_IMPACT`
+      - `VFX_COM_BLASTER_IMPACT_GROUND`
+      - `VFX_COM_CRITICAL_STRIKE_IMPROVED_SABER`
+      - `VFX_COM_CRITICAL_STRIKE_IMPROVED_STAFF`
+      - `VFX_COM_CRITICAL_STRIKE_MASTERY_SABER`
+      - `VFX_COM_CRITICAL_STRIKE_MASTERY_STAFF`
+      - `VFX_COM_DROID_EXPLOSION_1`
+      - `VFX_COM_DROID_EXPLOSION_2`
+      - `VFX_COM_FLURRY_IMPROVED_SABER`
+      - `VFX_COM_FLURRY_IMPROVED_STAFF`
+      - `VFX_COM_FORCE_RESISTED`
+      - `VFX_COM_JEDI_FORCE_FIZZLE`
+      - `VFX_COM_MULTI_SHOT`
+      - `VFX_COM_POWER_ATTACK_IMPROVED_SABER`
+      - `VFX_COM_POWER_ATTACK_IMPROVED_STAFF`
+      - `VFX_COM_POWER_ATTACK_MASTERY_SABER`
+      - `VFX_COM_POWER_ATTACK_MASTERY_STAFF`
+      - `VFX_COM_POWER_BLAST_IMPROVED`
+      - `VFX_COM_POWER_BLAST_MASTERY`
+      - `VFX_COM_RAPID_SHOT_IMPROVED`
+      - `VFX_COM_SNIPER_SHOT_IMPROVED`
+      - `VFX_COM_SNIPER_SHOT_MASTERY`
+      - `VFX_COM_SPARKS_BLASTER`
+      - `VFX_COM_SPARKS_LARGE`
+      - `VFX_COM_SPARKS_LIGHTSABER`
+      - `VFX_COM_SPARKS_PARRY_METAL`
+      - `VFX_COM_WHIRLWIND_STRIKE_SABER`
+      - `VFX_COM_WHIRLWIND_STRIKE_STAFF`
+      - `VFX_DUR_BODY_FUAL`
+      - `VFX_DUR_CARBONITE_CHUNKS`
+      - `VFX_DUR_CARBONITE_ENCASING`
+      - `VFX_DUR_FORCE_WHIRLWIND`
+      - `VFX_DUR_HOLD`
+      - `VFX_DUR_INVISIBILITY`
+      - `VFX_DUR_KNIGHTS_SPEED`
+      - `VFX_DUR_PSYCHIC_STATIC`
+      - `VFX_DUR_SHIELD_BLUE_01`
+      - `VFX_DUR_SHIELD_BLUE_02`
+      - `VFX_DUR_SHIELD_BLUE_03`
+      - `VFX_DUR_SHIELD_BLUE_04`
+      - `VFX_DUR_SHIELD_BLUE_MARK_I`
+      - `VFX_DUR_SHIELD_BLUE_MARK_II`
+      - `VFX_DUR_SHIELD_BLUE_MARK_IV`
+      - `VFX_DUR_SHIELD_CHROME_01`
+      - `VFX_DUR_SHIELD_CHROME_02`
+      - `VFX_DUR_SHIELD_GREEN_01`
+      - `VFX_DUR_SHIELD_RED_01`
+      - `VFX_DUR_SHIELD_RED_02`
+      - `VFX_DUR_SHIELD_RED_MARK_I`
+      - `VFX_DUR_SHIELD_RED_MARK_II`
+      - `VFX_DUR_SHIELD_RED_MARK_IV`
+      - `VFX_DUR_SPEED`
+      - `VFX_DUR_STEALTH_PULSE`
+      - `VFX_FNF_FORCE_WAVE`
+      - `VFX_FNF_GRAVITY_GENERATOR`
+      - `VFX_FNF_GRENADE_ADHESIVE`
+      - `VFX_FNF_GRENADE_CRYOBAN`
+      - `VFX_FNF_GRENADE_FRAGMENTATION`
+      - `VFX_FNF_GRENADE_ION`
+      - `VFX_FNF_GRENADE_PLASMA`
+      - `VFX_FNF_GRENADE_POISON`
+      - `VFX_FNF_GRENADE_SONIC`
+      - `VFX_FNF_GRENADE_STUN`
+      - `VFX_FNF_GRENADE_THERMAL_DETONATOR`
+      - `VFX_FNF_PLOT_MAN_SONIC_WAVE`
+      - `VFX_IMP_CHOKE`
+      - `VFX_IMP_CURE`
+      - `VFX_IMP_FLAME`
+      - `VFX_IMP_FORCE_BREACH`
+      - `VFX_IMP_FORCE_JUMP_ADVANCED`
+      - `VFX_IMP_FORCE_PUSH`
+      - `VFX_IMP_FORCE_WAVE`
+      - `VFX_IMP_FORCE_WHIRLWIND`
+      - `VFX_IMP_GRENADE_ADHESIVE_PERSONAL`
+      - `VFX_IMP_HEAL`
+      - `VFX_IMP_HEALING_SMALL`
+      - `VFX_IMP_MIND_FORCE`
+      - `VFX_IMP_MIND_KINIGHT`
+      - `VFX_IMP_MIND_MASTERY`
+      - `VFX_IMP_MIRV`
+      - `VFX_IMP_MIRV_IMPACT`
+      - `VFX_IMP_SCREEN_SHAKE`
+      - `VFX_IMP_SPEED_KNIGHT`
+      - `VFX_IMP_SPEED_MASTERY`
+      - `VFX_IMP_STUN`
+      - `VFX_IMP_SUPPRESS_FORCE`
+      - `VFX_NONE`
+      - `VFX_PRO_AFFLICT`
+      - `VFX_PRO_DEATH_FIELD`
+      - `VFX_PRO_DRAIN`
+      - `VFX_PRO_DROID_DISABLE`
+      - `VFX_PRO_DROID_KILL`
+      - `VFX_PRO_FORCE_ARMOR`
+      - `VFX_PRO_FORCE_AURA`
+      - `VFX_PRO_FORCE_SHIELD`
+      - `VFX_PRO_LIGHTNING_JEDI`
+      - `VFX_PRO_LIGHTNING_L`
+      - `VFX_PRO_LIGHTNING_L_SOUND`
+      - `VFX_PRO_LIGHTNING_S`
+      - `VFX_PRO_RESIST_ELEMENTS`
+      - `VFX_PRO_RESIST_FORCE`
+      - `VFX_PRO_RESIST_POISON`
   - [K1-Only Constants](#k1-only-constants)
-    - [NPC Constants](#npc-constants-1)
-      - [`NPC_BASTILA`](#npc_bastila)
-      - [`NPC_CARTH`](#npc_carth)
-      - [`NPC_JOLEE`](#npc_jolee)
-      - [`NPC_JUHANI`](#npc_juhani)
-      - [`NPC_MISSION`](#npc_mission)
-      - [`NPC_ZAALBAR`](#npc_zaalbar)
-    - [Other Constants](#other-constants-1)
-      - [`TUTORIAL_WINDOW_MOVEMENT_KEYS`](#tutorial_window_movement_keys)
-    - [Planet Constants](#planet-constants-1)
-      - [`PLANET_ENDAR_SPIRE`](#planet_endar_spire)
-      - [`PLANET_KASHYYYK`](#planet_kashyyyk)
-      - [`PLANET_LEVIATHAN`](#planet_leviathan)
-      - [`PLANET_MANAAN`](#planet_manaan)
-      - [`PLANET_STAR_FORGE`](#planet_star_forge)
-      - [`PLANET_TARIS`](#planet_taris)
-      - [`PLANET_TATOOINE`](#planet_tatooine)
-      - [`PLANET_UNKNOWN_WORLD`](#planet_unknown_world)
+    - NPC Constants
+      - `NPC_BASTILA`
+      - `NPC_CARTH`
+      - `NPC_JOLEE`
+      - `NPC_JUHANI`
+      - `NPC_MISSION`
+      - `NPC_ZAALBAR`
+    - Other Constants
+      - `TUTORIAL_WINDOW_MOVEMENT_KEYS`
+    - Planet Constants
+      - `PLANET_ENDAR_SPIRE`
+      - `PLANET_KASHYYYK`
+      - `PLANET_LEVIATHAN`
+      - `PLANET_MANAAN`
+      - `PLANET_STAR_FORGE`
+      - `PLANET_TARIS`
+      - `PLANET_TATOOINE`
+      - `PLANET_UNKNOWN_WORLD`
   - [TSL-Only Constants](#tsl-only-constants)
-    - [Class Type Constants](#class-type-constants-1)
-      - [`CLASS_TYPE_BOUNTYHUNTER`](#class_type_bountyhunter)
-      - [`CLASS_TYPE_JEDIMASTER`](#class_type_jedimaster)
-      - [`CLASS_TYPE_JEDIWATCHMAN`](#class_type_jediwatchman)
-      - [`CLASS_TYPE_JEDIWEAPONMASTER`](#class_type_jediweaponmaster)
-      - [`CLASS_TYPE_SITHASSASSIN`](#class_type_sithassassin)
-      - [`CLASS_TYPE_SITHLORD`](#class_type_sithlord)
-      - [`CLASS_TYPE_SITHMARAUDER`](#class_type_sithmarauder)
-      - [`CLASS_TYPE_TECHSPECIALIST`](#class_type_techspecialist)
-    - [Inventory Constants](#inventory-constants-1)
-      - [`INVENTORY_SLOT_LEFTWEAPON2`](#inventory_slot_leftweapon2)
-      - [`INVENTORY_SLOT_RIGHTWEAPON2`](#inventory_slot_rightweapon2)
-    - [NPC Constants](#npc-constants-2)
-      - [`NPC_AISTYLE_HEALER`](#npc_aistyle_healer)
-      - [`NPC_AISTYLE_MONSTER_POWERS`](#npc_aistyle_monster_powers)
-      - [`NPC_AISTYLE_PARTY_AGGRO`](#npc_aistyle_party_aggro)
-      - [`NPC_AISTYLE_PARTY_DEFENSE`](#npc_aistyle_party_defense)
-      - [`NPC_AISTYLE_PARTY_RANGED`](#npc_aistyle_party_ranged)
-      - [`NPC_AISTYLE_PARTY_REMOTE`](#npc_aistyle_party_remote)
-      - [`NPC_AISTYLE_PARTY_STATIONARY`](#npc_aistyle_party_stationary)
-      - [`NPC_AISTYLE_PARTY_SUPPORT`](#npc_aistyle_party_support)
-      - [`NPC_AISTYLE_SKIRMISH`](#npc_aistyle_skirmish)
-      - [`NPC_AISTYLE_TURTLE`](#npc_aistyle_turtle)
-      - [`NPC_ATTON`](#npc_atton)
-      - [`NPC_BAO_DUR`](#npc_bao_dur)
-      - [`NPC_DISCIPLE`](#npc_disciple)
-      - [`NPC_G0T0`](#npc_g0t0)
-      - [`NPC_HANDMAIDEN`](#npc_handmaiden)
-      - [`NPC_HANHARR`](#npc_hanharr)
-      - [`NPC_KREIA`](#npc_kreia)
-      - [`NPC_MIRA`](#npc_mira)
-      - [`NPC_VISAS`](#npc_visas)
-    - [Other Constants](#other-constants-2)
-      - [`ACTION_FOLLOWOWNER`](#action_followowner)
-      - [`AI_LEVEL_HIGH`](#ai_level_high)
-      - [`AI_LEVEL_LOW`](#ai_level_low)
-      - [`AI_LEVEL_NORMAL`](#ai_level_normal)
-      - [`AI_LEVEL_VERY_HIGH`](#ai_level_very_high)
-      - [`AI_LEVEL_VERY_LOW`](#ai_level_very_low)
-      - [`ANIMATION_FIREFORGET_DIVE_ROLL`](#animation_fireforget_dive_roll)
-      - [`ANIMATION_FIREFORGET_FORCE_CAST`](#animation_fireforget_force_cast)
-      - [`ANIMATION_FIREFORGET_OPEN`](#animation_fireforget_open)
-      - [`ANIMATION_FIREFORGET_SCREAM`](#animation_fireforget_scream)
-      - [`ANIMATION_LOOPING_CHECK_BODY`](#animation_looping_check_body)
-      - [`ANIMATION_LOOPING_CHOKE_WORKING`](#animation_looping_choke_working)
-      - [`ANIMATION_LOOPING_CLOSED`](#animation_looping_closed)
-      - [`ANIMATION_LOOPING_MEDITATE_STAND`](#animation_looping_meditate_stand)
-      - [`ANIMATION_LOOPING_RAGE`](#animation_looping_rage)
-      - [`ANIMATION_LOOPING_SIT_AND_MEDITATE`](#animation_looping_sit_and_meditate)
-      - [`ANIMATION_LOOPING_SIT_CHAIR`](#animation_looping_sit_chair)
-      - [`ANIMATION_LOOPING_SIT_CHAIR_COMP1`](#animation_looping_sit_chair_comp1)
-      - [`ANIMATION_LOOPING_SIT_CHAIR_COMP2`](#animation_looping_sit_chair_comp2)
-      - [`ANIMATION_LOOPING_SIT_CHAIR_DRINK`](#animation_looping_sit_chair_drink)
-      - [`ANIMATION_LOOPING_SIT_CHAIR_PAZAK`](#animation_looping_sit_chair_pazak)
-      - [`ANIMATION_LOOPING_STEALTH`](#animation_looping_stealth)
-      - [`ANIMATION_LOOPING_UNLOCK_DOOR`](#animation_looping_unlock_door)
-      - [`BASE_ITEM_FORCE_PIKE`](#base_item_force_pike)
-      - [`BASE_ITEM_WRIST_LAUNCHER`](#base_item_wrist_launcher)
-      - [`EFFECT_TYPE_DROID_CONFUSED`](#effect_type_droid_confused)
-      - [`EFFECT_TYPE_DROIDSCRAMBLE`](#effect_type_droidscramble)
-      - [`EFFECT_TYPE_MINDTRICK`](#effect_type_mindtrick)
-      - [`FEAT_CLASS_SKILL_AWARENESS`](#feat_class_skill_awareness)
-      - [`FEAT_CLASS_SKILL_COMPUTER_USE`](#feat_class_skill_computer_use)
-      - [`FEAT_CLASS_SKILL_DEMOLITIONS`](#feat_class_skill_demolitions)
-      - [`FEAT_CLASS_SKILL_REPAIR`](#feat_class_skill_repair)
-      - [`FEAT_CLASS_SKILL_SECURITY`](#feat_class_skill_security)
-      - [`FEAT_CLASS_SKILL_STEALTH`](#feat_class_skill_stealth)
-      - [`FEAT_CLASS_SKILL_TREAT_INJURY`](#feat_class_skill_treat_injury)
-      - [`FEAT_CLOSE_COMBAT`](#feat_close_combat)
-      - [`FEAT_CRAFT`](#feat_craft)
-      - [`FEAT_DARK_SIDE_CORRUPTION`](#feat_dark_side_corruption)
-      - [`FEAT_DEFLECT`](#feat_deflect)
-      - [`FEAT_DROID_INTERFACE`](#feat_droid_interface)
-      - [`FEAT_DUAL_STRIKE`](#feat_dual_strike)
-      - [`FEAT_EVASION`](#feat_evasion)
-      - [`FEAT_FIGHTING_SPIRIT`](#feat_fighting_spirit)
-      - [`FEAT_FINESSE_LIGHTSABERS`](#feat_finesse_lightsabers)
-      - [`FEAT_FINESSE_MELEE_WEAPONS`](#feat_finesse_melee_weapons)
-      - [`FEAT_FORCE_CHAIN`](#feat_force_chain)
-      - [`FEAT_HEROIC_RESOLVE`](#feat_heroic_resolve)
-      - [`FEAT_IGNORE_PAIN_1`](#feat_ignore_pain_1)
-      - [`FEAT_IGNORE_PAIN_2`](#feat_ignore_pain_2)
-      - [`FEAT_IGNORE_PAIN_3`](#feat_ignore_pain_3)
-      - [`FEAT_IMPLANT_SWITCHING`](#feat_implant_switching)
-      - [`FEAT_IMPROVED_CLOSE_COMBAT`](#feat_improved_close_combat)
-      - [`FEAT_IMPROVED_DUAL_STRIKE`](#feat_improved_dual_strike)
-      - [`FEAT_IMPROVED_FORCE_CAMOUFLAGE`](#feat_improved_force_camouflage)
-      - [`FEAT_IMPROVED_PRECISE_SHOT`](#feat_improved_precise_shot)
-      - [`FEAT_INCREASE_COMBAT_DAMAGE_1`](#feat_increase_combat_damage_1)
-      - [`FEAT_INCREASE_COMBAT_DAMAGE_2`](#feat_increase_combat_damage_2)
-      - [`FEAT_INCREASE_COMBAT_DAMAGE_3`](#feat_increase_combat_damage_3)
-      - [`FEAT_INCREASE_MELEE_DAMAGE_1`](#feat_increase_melee_damage_1)
-      - [`FEAT_INCREASE_MELEE_DAMAGE_2`](#feat_increase_melee_damage_2)
-      - [`FEAT_INCREASE_MELEE_DAMAGE_3`](#feat_increase_melee_damage_3)
-      - [`FEAT_INNER_STRENGTH_1`](#feat_inner_strength_1)
-      - [`FEAT_INNER_STRENGTH_2`](#feat_inner_strength_2)
-      - [`FEAT_INNER_STRENGTH_3`](#feat_inner_strength_3)
-      - [`FEAT_KINETIC_COMBAT`](#feat_kinetic_combat)
-      - [`FEAT_LIGHT_SIDE_ENLIGHTENMENT`](#feat_light_side_enlightenment)
-      - [`FEAT_MANDALORIAN_COURAGE`](#feat_mandalorian_courage)
-      - [`FEAT_MASTER_DUAL_STRIKE`](#feat_master_dual_strike)
-      - [`FEAT_MASTER_FORCE_CAMOUFLAGE`](#feat_master_force_camouflage)
-      - [`FEAT_MASTER_PRECISE_SHOT`](#feat_master_precise_shot)
-      - [`FEAT_MASTERCRAFT_ARMOR_1`](#feat_mastercraft_armor_1)
-      - [`FEAT_MASTERCRAFT_ARMOR_2`](#feat_mastercraft_armor_2)
-      - [`FEAT_MASTERCRAFT_ARMOR_3`](#feat_mastercraft_armor_3)
-      - [`FEAT_MASTERCRAFT_WEAPONS_1`](#feat_mastercraft_weapons_1)
-      - [`FEAT_MASTERCRAFT_WEAPONS_2`](#feat_mastercraft_weapons_2)
-      - [`FEAT_MASTERCRAFT_WEAPONS_3`](#feat_mastercraft_weapons_3)
-      - [`FEAT_MENTOR`](#feat_mentor)
-      - [`FEAT_MOBILITY`](#feat_mobility)
-      - [`FEAT_PERSONAL_CLOAKING_SHIELD`](#feat_personal_cloaking_shield)
-      - [`FEAT_PRECISE_SHOT`](#feat_precise_shot)
-      - [`FEAT_PRECISE_SHOT_IV`](#feat_precise_shot_iv)
-      - [`FEAT_PRECISE_SHOT_V`](#feat_precise_shot_v)
-      - [`FEAT_REGENERATE_FORCE_POINTS`](#feat_regenerate_force_points)
-      - [`FEAT_REGENERATE_VITALITY_POINTS`](#feat_regenerate_vitality_points)
-      - [`FEAT_SPIRIT`](#feat_spirit)
-      - [`FEAT_STEALTH_RUN`](#feat_stealth_run)
-      - [`FEAT_SUPERIOR_WEAPON_FOCUS_LIGHTSABER_1`](#feat_superior_weapon_focus_lightsaber_1)
-      - [`FEAT_SUPERIOR_WEAPON_FOCUS_LIGHTSABER_2`](#feat_superior_weapon_focus_lightsaber_2)
-      - [`FEAT_SUPERIOR_WEAPON_FOCUS_LIGHTSABER_3`](#feat_superior_weapon_focus_lightsaber_3)
-      - [`FEAT_SUPERIOR_WEAPON_FOCUS_TWO_WEAPON_1`](#feat_superior_weapon_focus_two_weapon_1)
-      - [`FEAT_SUPERIOR_WEAPON_FOCUS_TWO_WEAPON_2`](#feat_superior_weapon_focus_two_weapon_2)
-      - [`FEAT_SUPERIOR_WEAPON_FOCUS_TWO_WEAPON_3`](#feat_superior_weapon_focus_two_weapon_3)
-      - [`FEAT_SURVIVAL`](#feat_survival)
-      - [`FEAT_TARGETING_1`](#feat_targeting_1)
-      - [`FEAT_TARGETING_10`](#feat_targeting_10)
-      - [`FEAT_TARGETING_2`](#feat_targeting_2)
-      - [`FEAT_TARGETING_3`](#feat_targeting_3)
-      - [`FEAT_TARGETING_4`](#feat_targeting_4)
-      - [`FEAT_TARGETING_5`](#feat_targeting_5)
-      - [`FEAT_TARGETING_6`](#feat_targeting_6)
-      - [`FEAT_TARGETING_7`](#feat_targeting_7)
-      - [`FEAT_TARGETING_8`](#feat_targeting_8)
-      - [`FEAT_TARGETING_9`](#feat_targeting_9)
-      - [`FEAT_WAR_VETERAN`](#feat_war_veteran)
-      - [`FORCE_POWER_BAT_MED_ENEMY`](#force_power_bat_med_enemy)
-      - [`FORCE_POWER_BATTLE_MEDITATION_PC`](#force_power_battle_meditation_pc)
-      - [`FORCE_POWER_BATTLE_PRECOGNITION`](#force_power_battle_precognition)
-      - [`FORCE_POWER_BEAST_CONFUSION`](#force_power_beast_confusion)
-      - [`FORCE_POWER_BEAST_TRICK`](#force_power_beast_trick)
-      - [`FORCE_POWER_BREATH_CONTROL`](#force_power_breath_control)
-      - [`FORCE_POWER_CONFUSION`](#force_power_confusion)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_I`](#force_power_crush_opposition_i)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_II`](#force_power_crush_opposition_ii)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_III`](#force_power_crush_opposition_iii)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_IV`](#force_power_crush_opposition_iv)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_V`](#force_power_crush_opposition_v)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_VI`](#force_power_crush_opposition_vi)
-      - [`FORCE_POWER_DRAIN_FORCE`](#force_power_drain_force)
-      - [`FORCE_POWER_DROID_CONFUSION`](#force_power_droid_confusion)
-      - [`FORCE_POWER_DROID_TRICK`](#force_power_droid_trick)
-      - [`FORCE_POWER_FORCE_BARRIER`](#force_power_force_barrier)
-      - [`FORCE_POWER_FORCE_BODY`](#force_power_force_body)
-      - [`FORCE_POWER_FORCE_CAMOUFLAGE`](#force_power_force_camouflage)
-      - [`FORCE_POWER_FORCE_CRUSH`](#force_power_force_crush)
-      - [`FORCE_POWER_FORCE_ENLIGHTENMENT`](#force_power_force_enlightenment)
-      - [`FORCE_POWER_FORCE_REDIRECTION`](#force_power_force_redirection)
-      - [`FORCE_POWER_FORCE_REPULSION`](#force_power_force_repulsion)
-      - [`FORCE_POWER_FORCE_SCREAM`](#force_power_force_scream)
-      - [`FORCE_POWER_FORCE_SIGHT`](#force_power_force_sight)
-      - [`FORCE_POWER_FURY`](#force_power_fury)
-      - [`FORCE_POWER_IMP_BAT_MED_ENEMY`](#force_power_imp_bat_med_enemy)
-      - [`FORCE_POWER_IMPROVED_BATTLE_MEDITATION_PC`](#force_power_improved_battle_meditation_pc)
-      - [`FORCE_POWER_IMPROVED_DRAIN_FORCE`](#force_power_improved_drain_force)
-      - [`FORCE_POWER_IMPROVED_FORCE_BARRIER`](#force_power_improved_force_barrier)
-      - [`FORCE_POWER_IMPROVED_FORCE_BODY`](#force_power_improved_force_body)
-      - [`FORCE_POWER_IMPROVED_FORCE_CAMOUFLAGE`](#force_power_improved_force_camouflage)
-      - [`FORCE_POWER_IMPROVED_FORCE_SCREAM`](#force_power_improved_force_scream)
-      - [`FORCE_POWER_IMPROVED_FURY`](#force_power_improved_fury)
-      - [`FORCE_POWER_IMPROVED_REVITALIZE`](#force_power_improved_revitalize)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_I`](#force_power_inspire_followers_i)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_II`](#force_power_inspire_followers_ii)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_III`](#force_power_inspire_followers_iii)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_IV`](#force_power_inspire_followers_iv)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_V`](#force_power_inspire_followers_v)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_VI`](#force_power_inspire_followers_vi)
-      - [`FORCE_POWER_MAS_BAT_MED_ENEMY`](#force_power_mas_bat_med_enemy)
-      - [`FORCE_POWER_MASTER_BATTLE_MEDITATION_PC`](#force_power_master_battle_meditation_pc)
-      - [`FORCE_POWER_MASTER_DRAIN_FORCE`](#force_power_master_drain_force)
-      - [`FORCE_POWER_MASTER_ENERGY_RESISTANCE`](#force_power_master_energy_resistance)
-      - [`FORCE_POWER_MASTER_FORCE_BARRIER`](#force_power_master_force_barrier)
-      - [`FORCE_POWER_MASTER_FORCE_BODY`](#force_power_master_force_body)
-      - [`FORCE_POWER_MASTER_FORCE_CAMOUFLAGE`](#force_power_master_force_camouflage)
-      - [`FORCE_POWER_MASTER_FORCE_SCREAM`](#force_power_master_force_scream)
-      - [`FORCE_POWER_MASTER_FURY`](#force_power_master_fury)
-      - [`FORCE_POWER_MASTER_HEAL`](#force_power_master_heal)
-      - [`FORCE_POWER_MASTER_REVITALIZE`](#force_power_master_revitalize)
-      - [`FORCE_POWER_MIND_TRICK`](#force_power_mind_trick)
-      - [`FORCE_POWER_PRECOGNITION`](#force_power_precognition)
-      - [`FORCE_POWER_REVITALIZE`](#force_power_revitalize)
-      - [`FORCE_POWER_WOOKIEE_RAGE_I`](#force_power_wookiee_rage_i)
-      - [`FORCE_POWER_WOOKIEE_RAGE_II`](#force_power_wookiee_rage_ii)
-      - [`FORCE_POWER_WOOKIEE_RAGE_III`](#force_power_wookiee_rage_iii)
-      - [`FORFEIT_DXUN_SWORD_ONLY`](#forfeit_dxun_sword_only)
-      - [`FORFEIT_NO_ARMOR`](#forfeit_no_armor)
-      - [`FORFEIT_NO_FORCE_POWERS`](#forfeit_no_force_powers)
-      - [`FORFEIT_NO_ITEM_BUT_SHIELD`](#forfeit_no_item_but_shield)
-      - [`FORFEIT_NO_ITEMS`](#forfeit_no_items)
-      - [`FORFEIT_NO_LIGHTSABER`](#forfeit_no_lightsaber)
-      - [`FORFEIT_NO_RANGED`](#forfeit_no_ranged)
-      - [`FORFEIT_NO_WEAPONS`](#forfeit_no_weapons)
-      - [`FORM_FORCE_I_FOCUS`](#form_force_i_focus)
-      - [`FORM_FORCE_II_POTENCY`](#form_force_ii_potency)
-      - [`FORM_FORCE_III_AFFINITY`](#form_force_iii_affinity)
-      - [`FORM_FORCE_IV_MASTERY`](#form_force_iv_mastery)
-      - [`FORM_SABER_I_SHII_CHO`](#form_saber_i_shii_cho)
-      - [`FORM_SABER_II_MAKASHI`](#form_saber_ii_makashi)
-      - [`FORM_SABER_III_SORESU`](#form_saber_iii_soresu)
-      - [`FORM_SABER_IV_ATARU`](#form_saber_iv_ataru)
-      - [`FORM_SABER_V_SHIEN`](#form_saber_v_shien)
-      - [`FORM_SABER_VI_NIMAN`](#form_saber_vi_niman)
-      - [`FORM_SABER_VII_JUYO`](#form_saber_vii_juyo)
-      - [`IMMUNITY_TYPE_DROID_CONFUSED`](#immunity_type_droid_confused)
-      - [`IMPLANT_AGI`](#implant_agi)
-      - [`IMPLANT_END`](#implant_end)
-      - [`IMPLANT_NONE`](#implant_none)
-      - [`IMPLANT_REGEN`](#implant_regen)
-      - [`IMPLANT_STR`](#implant_str)
-      - [`ITEM_PROPERTY_DAMPEN_SOUND`](#item_property_dampen_sound)
-      - [`ITEM_PROPERTY_DISGUISE`](#item_property_disguise)
-      - [`ITEM_PROPERTY_DOORCUTTING`](#item_property_doorcutting)
-      - [`ITEM_PROPERTY_DOORSABERING`](#item_property_doorsabering)
-      - [`ITEM_PROPERTY_LIMIT_USE_BY_GENDER`](#item_property_limit_use_by_gender)
-      - [`ITEM_PROPERTY_LIMIT_USE_BY_PC`](#item_property_limit_use_by_pc)
-      - [`ITEM_PROPERTY_LIMIT_USE_BY_SUBRACE`](#item_property_limit_use_by_subrace)
-      - [`POISON_ABILITY_AND_DAMAGE_AVERAGE`](#poison_ability_and_damage_average)
-      - [`POISON_ABILITY_AND_DAMAGE_VIRULENT`](#poison_ability_and_damage_virulent)
-      - [`POISON_DAMAGE_KYBER_DART`](#poison_damage_kyber_dart)
-      - [`POISON_DAMAGE_KYBER_DART_HALF`](#poison_damage_kyber_dart_half)
-      - [`POISON_DAMAGE_NORMAL_DART`](#poison_damage_normal_dart)
-      - [`POISON_DAMAGE_ROCKET`](#poison_damage_rocket)
-      - [`PUP_OTHER1`](#pup_other1)
-      - [`PUP_OTHER2`](#pup_other2)
-      - [`PUP_SENSORBALL`](#pup_sensorball)
-      - [`SHIELD_DREXL`](#shield_drexl)
-      - [`SHIELD_HEAT`](#shield_heat)
-      - [`SHIELD_PLOT_MAN_M28AA`](#shield_plot_man_m28aa)
-      - [`STANDARD_FACTION_ONE_ON_ONE`](#standard_faction_one_on_one)
-      - [`STANDARD_FACTION_PARTYPUPPET`](#standard_faction_partypuppet)
-      - [`STANDARD_FACTION_SELF_LOATHING`](#standard_faction_self_loathing)
-      - [`TRAP_BASE_TYPE_FLASH_STUN_DEVASTATING`](#trap_base_type_flash_stun_devastating)
-      - [`TRAP_BASE_TYPE_FLASH_STUN_STRONG`](#trap_base_type_flash_stun_strong)
-      - [`TRAP_BASE_TYPE_FRAGMENTATION_MINE_DEVASTATING`](#trap_base_type_fragmentation_mine_devastating)
-      - [`TRAP_BASE_TYPE_FRAGMENTATION_MINE_STRONG`](#trap_base_type_fragmentation_mine_strong)
-      - [`TRAP_BASE_TYPE_LASER_SLICING_DEVASTATING`](#trap_base_type_laser_slicing_devastating)
-      - [`TRAP_BASE_TYPE_LASER_SLICING_STRONG`](#trap_base_type_laser_slicing_strong)
-      - [`TRAP_BASE_TYPE_POISON_GAS_DEVASTATING`](#trap_base_type_poison_gas_devastating)
-      - [`TRAP_BASE_TYPE_POISON_GAS_STRONG`](#trap_base_type_poison_gas_strong)
-      - [`TRAP_BASE_TYPE_SONIC_CHARGE_AVERAGE`](#trap_base_type_sonic_charge_average)
-      - [`TRAP_BASE_TYPE_SONIC_CHARGE_DEADLY`](#trap_base_type_sonic_charge_deadly)
-      - [`TRAP_BASE_TYPE_SONIC_CHARGE_DEVASTATING`](#trap_base_type_sonic_charge_devastating)
-      - [`TRAP_BASE_TYPE_SONIC_CHARGE_MINOR`](#trap_base_type_sonic_charge_minor)
-      - [`TRAP_BASE_TYPE_SONIC_CHARGE_STRONG`](#trap_base_type_sonic_charge_strong)
-      - [`TUTORIAL_WINDOW_TEMP1`](#tutorial_window_temp1)
-      - [`TUTORIAL_WINDOW_TEMP10`](#tutorial_window_temp10)
-      - [`TUTORIAL_WINDOW_TEMP11`](#tutorial_window_temp11)
-      - [`TUTORIAL_WINDOW_TEMP12`](#tutorial_window_temp12)
-      - [`TUTORIAL_WINDOW_TEMP13`](#tutorial_window_temp13)
-      - [`TUTORIAL_WINDOW_TEMP14`](#tutorial_window_temp14)
-      - [`TUTORIAL_WINDOW_TEMP15`](#tutorial_window_temp15)
-      - [`TUTORIAL_WINDOW_TEMP2`](#tutorial_window_temp2)
-      - [`TUTORIAL_WINDOW_TEMP3`](#tutorial_window_temp3)
-      - [`TUTORIAL_WINDOW_TEMP4`](#tutorial_window_temp4)
-      - [`TUTORIAL_WINDOW_TEMP5`](#tutorial_window_temp5)
-      - [`TUTORIAL_WINDOW_TEMP6`](#tutorial_window_temp6)
-      - [`TUTORIAL_WINDOW_TEMP7`](#tutorial_window_temp7)
-      - [`TUTORIAL_WINDOW_TEMP8`](#tutorial_window_temp8)
-      - [`TUTORIAL_WINDOW_TEMP9`](#tutorial_window_temp9)
-      - [`VIDEO_EFFECT_CLAIRVOYANCE`](#video_effect_clairvoyance)
-      - [`VIDEO_EFFECT_CLAIRVOYANCEFULL`](#video_effect_clairvoyancefull)
-      - [`VIDEO_EFFECT_FORCESIGHT`](#video_effect_forcesight)
-      - [`VIDEO_EFFECT_FURY_1`](#video_effect_fury_1)
-      - [`VIDEO_EFFECT_FURY_2`](#video_effect_fury_2)
-      - [`VIDEO_EFFECT_FURY_3`](#video_effect_fury_3)
-      - [`VIDEO_EFFECT_VISAS_FREELOOK`](#video_effect_visas_freelook)
-      - [`VIDEO_FFECT_SECURITY_NO_LABEL`](#video_ffect_security_no_label)
-    - [Planet Constants](#planet-constants-2)
-      - [`PLANET_DXUN`](#planet_dxun)
-      - [`PLANET_HARBINGER`](#planet_harbinger)
-      - [`PLANET_LIVE_06`](#planet_live_06)
-      - [`PLANET_M4_78`](#planet_m4_78)
-      - [`PLANET_MALACHOR_V`](#planet_malachor_v)
-      - [`PLANET_NAR_SHADDAA`](#planet_nar_shaddaa)
-      - [`PLANET_ONDERON`](#planet_onderon)
-      - [`PLANET_PERAGUS`](#planet_peragus)
-      - [`PLANET_TELOS`](#planet_telos)
-    - [Visual Effects (VFX)](#visual-effects-vfx-1)
-      - [`VFX_DUR_ELECTRICAL_SPARK`](#vfx_dur_electrical_spark)
-      - [`VFX_DUR_HOLO_PROJECT`](#vfx_dur_holo_project)
+    - Class Type Constants
+      - `CLASS_TYPE_BOUNTYHUNTER`
+      - `CLASS_TYPE_JEDIMASTER`
+      - `CLASS_TYPE_JEDIWATCHMAN`
+      - `CLASS_TYPE_JEDIWEAPONMASTER`
+      - `CLASS_TYPE_SITHASSASSIN`
+      - `CLASS_TYPE_SITHLORD`
+      - `CLASS_TYPE_SITHMARAUDER`
+      - `CLASS_TYPE_TECHSPECIALIST`
+    - Inventory Constants
+      - `INVENTORY_SLOT_LEFTWEAPON2`
+      - `INVENTORY_SLOT_RIGHTWEAPON2`
+    - NPC Constants
+      - `NPC_AISTYLE_HEALER`
+      - `NPC_AISTYLE_MONSTER_POWERS`
+      - `NPC_AISTYLE_PARTY_AGGRO`
+      - `NPC_AISTYLE_PARTY_DEFENSE`
+      - `NPC_AISTYLE_PARTY_RANGED`
+      - `NPC_AISTYLE_PARTY_REMOTE`
+      - `NPC_AISTYLE_PARTY_STATIONARY`
+      - `NPC_AISTYLE_PARTY_SUPPORT`
+      - `NPC_AISTYLE_SKIRMISH`
+      - `NPC_AISTYLE_TURTLE`
+      - `NPC_ATTON`
+      - `NPC_BAO_DUR`
+      - `NPC_DISCIPLE`
+      - `NPC_G0T0`
+      - `NPC_HANDMAIDEN`
+      - `NPC_HANHARR`
+      - `NPC_KREIA`
+      - `NPC_MIRA`
+      - `NPC_VISAS`
+    - Other Constants
+      - `ACTION_FOLLOWOWNER`
+      - `AI_LEVEL_HIGH`
+      - `AI_LEVEL_LOW`
+      - `AI_LEVEL_NORMAL`
+      - `AI_LEVEL_VERY_HIGH`
+      - `AI_LEVEL_VERY_LOW`
+      - `ANIMATION_FIREFORGET_DIVE_ROLL`
+      - `ANIMATION_FIREFORGET_FORCE_CAST`
+      - `ANIMATION_FIREFORGET_OPEN`
+      - `ANIMATION_FIREFORGET_SCREAM`
+      - `ANIMATION_LOOPING_CHECK_BODY`
+      - `ANIMATION_LOOPING_CHOKE_WORKING`
+      - `ANIMATION_LOOPING_CLOSED`
+      - `ANIMATION_LOOPING_MEDITATE_STAND`
+      - `ANIMATION_LOOPING_RAGE`
+      - `ANIMATION_LOOPING_SIT_AND_MEDITATE`
+      - `ANIMATION_LOOPING_SIT_CHAIR`
+      - `ANIMATION_LOOPING_SIT_CHAIR_COMP1`
+      - `ANIMATION_LOOPING_SIT_CHAIR_COMP2`
+      - `ANIMATION_LOOPING_SIT_CHAIR_DRINK`
+      - `ANIMATION_LOOPING_SIT_CHAIR_PAZAK`
+      - `ANIMATION_LOOPING_STEALTH`
+      - `ANIMATION_LOOPING_UNLOCK_DOOR`
+      - `BASE_ITEM_FORCE_PIKE`
+      - `BASE_ITEM_WRIST_LAUNCHER`
+      - `EFFECT_TYPE_DROID_CONFUSED`
+      - `EFFECT_TYPE_DROIDSCRAMBLE`
+      - `EFFECT_TYPE_MINDTRICK`
+      - `FEAT_CLASS_SKILL_AWARENESS`
+      - `FEAT_CLASS_SKILL_COMPUTER_USE`
+      - `FEAT_CLASS_SKILL_DEMOLITIONS`
+      - `FEAT_CLASS_SKILL_REPAIR`
+      - `FEAT_CLASS_SKILL_SECURITY`
+      - `FEAT_CLASS_SKILL_STEALTH`
+      - `FEAT_CLASS_SKILL_TREAT_INJURY`
+      - `FEAT_CLOSE_COMBAT`
+      - `FEAT_CRAFT`
+      - `FEAT_DARK_SIDE_CORRUPTION`
+      - `FEAT_DEFLECT`
+      - `FEAT_DROID_INTERFACE`
+      - `FEAT_DUAL_STRIKE`
+      - `FEAT_EVASION`
+      - `FEAT_FIGHTING_SPIRIT`
+      - `FEAT_FINESSE_LIGHTSABERS`
+      - `FEAT_FINESSE_MELEE_WEAPONS`
+      - `FEAT_FORCE_CHAIN`
+      - `FEAT_HEROIC_RESOLVE`
+      - `FEAT_IGNORE_PAIN_1`
+      - `FEAT_IGNORE_PAIN_2`
+      - `FEAT_IGNORE_PAIN_3`
+      - `FEAT_IMPLANT_SWITCHING`
+      - `FEAT_IMPROVED_CLOSE_COMBAT`
+      - `FEAT_IMPROVED_DUAL_STRIKE`
+      - `FEAT_IMPROVED_FORCE_CAMOUFLAGE`
+      - `FEAT_IMPROVED_PRECISE_SHOT`
+      - `FEAT_INCREASE_COMBAT_DAMAGE_1`
+      - `FEAT_INCREASE_COMBAT_DAMAGE_2`
+      - `FEAT_INCREASE_COMBAT_DAMAGE_3`
+      - `FEAT_INCREASE_MELEE_DAMAGE_1`
+      - `FEAT_INCREASE_MELEE_DAMAGE_2`
+      - `FEAT_INCREASE_MELEE_DAMAGE_3`
+      - `FEAT_INNER_STRENGTH_1`
+      - `FEAT_INNER_STRENGTH_2`
+      - `FEAT_INNER_STRENGTH_3`
+      - `FEAT_KINETIC_COMBAT`
+      - `FEAT_LIGHT_SIDE_ENLIGHTENMENT`
+      - `FEAT_MANDALORIAN_COURAGE`
+      - `FEAT_MASTER_DUAL_STRIKE`
+      - `FEAT_MASTER_FORCE_CAMOUFLAGE`
+      - `FEAT_MASTER_PRECISE_SHOT`
+      - `FEAT_MASTERCRAFT_ARMOR_1`
+      - `FEAT_MASTERCRAFT_ARMOR_2`
+      - `FEAT_MASTERCRAFT_ARMOR_3`
+      - `FEAT_MASTERCRAFT_WEAPONS_1`
+      - `FEAT_MASTERCRAFT_WEAPONS_2`
+      - `FEAT_MASTERCRAFT_WEAPONS_3`
+      - `FEAT_MENTOR`
+      - `FEAT_MOBILITY`
+      - `FEAT_PERSONAL_CLOAKING_SHIELD`
+      - `FEAT_PRECISE_SHOT`
+      - `FEAT_PRECISE_SHOT_IV`
+      - `FEAT_PRECISE_SHOT_V`
+      - `FEAT_REGENERATE_FORCE_POINTS`
+      - `FEAT_REGENERATE_VITALITY_POINTS`
+      - `FEAT_SPIRIT`
+      - `FEAT_STEALTH_RUN`
+      - `FEAT_SUPERIOR_WEAPON_FOCUS_LIGHTSABER_1`
+      - `FEAT_SUPERIOR_WEAPON_FOCUS_LIGHTSABER_2`
+      - `FEAT_SUPERIOR_WEAPON_FOCUS_LIGHTSABER_3`
+      - `FEAT_SUPERIOR_WEAPON_FOCUS_TWO_WEAPON_1`
+      - `FEAT_SUPERIOR_WEAPON_FOCUS_TWO_WEAPON_2`
+      - `FEAT_SUPERIOR_WEAPON_FOCUS_TWO_WEAPON_3`
+      - `FEAT_SURVIVAL`
+      - `FEAT_TARGETING_1`
+      - `FEAT_TARGETING_10`
+      - `FEAT_TARGETING_2`
+      - `FEAT_TARGETING_3`
+      - `FEAT_TARGETING_4`
+      - `FEAT_TARGETING_5`
+      - `FEAT_TARGETING_6`
+      - `FEAT_TARGETING_7`
+      - `FEAT_TARGETING_8`
+      - `FEAT_TARGETING_9`
+      - `FEAT_WAR_VETERAN`
+      - `FORCE_POWER_BAT_MED_ENEMY`
+      - `FORCE_POWER_BATTLE_MEDITATION_PC`
+      - `FORCE_POWER_BATTLE_PRECOGNITION`
+      - `FORCE_POWER_BEAST_CONFUSION`
+      - `FORCE_POWER_BEAST_TRICK`
+      - `FORCE_POWER_BREATH_CONTROL`
+      - `FORCE_POWER_CONFUSION`
+      - `FORCE_POWER_CRUSH_OPPOSITION_I`
+      - `FORCE_POWER_CRUSH_OPPOSITION_II`
+      - `FORCE_POWER_CRUSH_OPPOSITION_III`
+      - `FORCE_POWER_CRUSH_OPPOSITION_IV`
+      - `FORCE_POWER_CRUSH_OPPOSITION_V`
+      - `FORCE_POWER_CRUSH_OPPOSITION_VI`
+      - `FORCE_POWER_DRAIN_FORCE`
+      - `FORCE_POWER_DROID_CONFUSION`
+      - `FORCE_POWER_DROID_TRICK`
+      - `FORCE_POWER_FORCE_BARRIER`
+      - `FORCE_POWER_FORCE_BODY`
+      - `FORCE_POWER_FORCE_CAMOUFLAGE`
+      - `FORCE_POWER_FORCE_CRUSH`
+      - `FORCE_POWER_FORCE_ENLIGHTENMENT`
+      - `FORCE_POWER_FORCE_REDIRECTION`
+      - `FORCE_POWER_FORCE_REPULSION`
+      - `FORCE_POWER_FORCE_SCREAM`
+      - `FORCE_POWER_FORCE_SIGHT`
+      - `FORCE_POWER_FURY`
+      - `FORCE_POWER_IMP_BAT_MED_ENEMY`
+      - `FORCE_POWER_IMPROVED_BATTLE_MEDITATION_PC`
+      - `FORCE_POWER_IMPROVED_DRAIN_FORCE`
+      - `FORCE_POWER_IMPROVED_FORCE_BARRIER`
+      - `FORCE_POWER_IMPROVED_FORCE_BODY`
+      - `FORCE_POWER_IMPROVED_FORCE_CAMOUFLAGE`
+      - `FORCE_POWER_IMPROVED_FORCE_SCREAM`
+      - `FORCE_POWER_IMPROVED_FURY`
+      - `FORCE_POWER_IMPROVED_REVITALIZE`
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_I`
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_II`
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_III`
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_IV`
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_V`
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_VI`
+      - `FORCE_POWER_MAS_BAT_MED_ENEMY`
+      - `FORCE_POWER_MASTER_BATTLE_MEDITATION_PC`
+      - `FORCE_POWER_MASTER_DRAIN_FORCE`
+      - `FORCE_POWER_MASTER_ENERGY_RESISTANCE`
+      - `FORCE_POWER_MASTER_FORCE_BARRIER`
+      - `FORCE_POWER_MASTER_FORCE_BODY`
+      - `FORCE_POWER_MASTER_FORCE_CAMOUFLAGE`
+      - `FORCE_POWER_MASTER_FORCE_SCREAM`
+      - `FORCE_POWER_MASTER_FURY`
+      - `FORCE_POWER_MASTER_HEAL`
+      - `FORCE_POWER_MASTER_REVITALIZE`
+      - `FORCE_POWER_MIND_TRICK`
+      - `FORCE_POWER_PRECOGNITION`
+      - `FORCE_POWER_REVITALIZE`
+      - `FORCE_POWER_WOOKIEE_RAGE_I`
+      - `FORCE_POWER_WOOKIEE_RAGE_II`
+      - `FORCE_POWER_WOOKIEE_RAGE_III`
+      - `FORFEIT_DXUN_SWORD_ONLY`
+      - `FORFEIT_NO_ARMOR`
+      - `FORFEIT_NO_FORCE_POWERS`
+      - `FORFEIT_NO_ITEM_BUT_SHIELD`
+      - `FORFEIT_NO_ITEMS`
+      - `FORFEIT_NO_LIGHTSABER`
+      - `FORFEIT_NO_RANGED`
+      - `FORFEIT_NO_WEAPONS`
+      - `FORM_FORCE_I_FOCUS`
+      - `FORM_FORCE_II_POTENCY`
+      - `FORM_FORCE_III_AFFINITY`
+      - `FORM_FORCE_IV_MASTERY`
+      - `FORM_SABER_I_SHII_CHO`
+      - `FORM_SABER_II_MAKASHI`
+      - `FORM_SABER_III_SORESU`
+      - `FORM_SABER_IV_ATARU`
+      - `FORM_SABER_V_SHIEN`
+      - `FORM_SABER_VI_NIMAN`
+      - `FORM_SABER_VII_JUYO`
+      - `IMMUNITY_TYPE_DROID_CONFUSED`
+      - `IMPLANT_AGI`
+      - `IMPLANT_END`
+      - `IMPLANT_NONE`
+      - `IMPLANT_REGEN`
+      - `IMPLANT_STR`
+      - `ITEM_PROPERTY_DAMPEN_SOUND`
+      - `ITEM_PROPERTY_DISGUISE`
+      - `ITEM_PROPERTY_DOORCUTTING`
+      - `ITEM_PROPERTY_DOORSABERING`
+      - `ITEM_PROPERTY_LIMIT_USE_BY_GENDER`
+      - `ITEM_PROPERTY_LIMIT_USE_BY_PC`
+      - `ITEM_PROPERTY_LIMIT_USE_BY_SUBRACE`
+      - `POISON_ABILITY_AND_DAMAGE_AVERAGE`
+      - `POISON_ABILITY_AND_DAMAGE_VIRULENT`
+      - `POISON_DAMAGE_KYBER_DART`
+      - `POISON_DAMAGE_KYBER_DART_HALF`
+      - `POISON_DAMAGE_NORMAL_DART`
+      - `POISON_DAMAGE_ROCKET`
+      - `PUP_OTHER1`
+      - `PUP_OTHER2`
+      - `PUP_SENSORBALL`
+      - `SHIELD_DREXL`
+      - `SHIELD_HEAT`
+      - `SHIELD_PLOT_MAN_M28AA`
+      - `STANDARD_FACTION_ONE_ON_ONE`
+      - `STANDARD_FACTION_PARTYPUPPET`
+      - `STANDARD_FACTION_SELF_LOATHING`
+      - `TRAP_BASE_TYPE_FLASH_STUN_DEVASTATING`
+      - `TRAP_BASE_TYPE_FLASH_STUN_STRONG`
+      - `TRAP_BASE_TYPE_FRAGMENTATION_MINE_DEVASTATING`
+      - `TRAP_BASE_TYPE_FRAGMENTATION_MINE_STRONG`
+      - `TRAP_BASE_TYPE_LASER_SLICING_DEVASTATING`
+      - `TRAP_BASE_TYPE_LASER_SLICING_STRONG`
+      - `TRAP_BASE_TYPE_POISON_GAS_DEVASTATING`
+      - `TRAP_BASE_TYPE_POISON_GAS_STRONG`
+      - `TRAP_BASE_TYPE_SONIC_CHARGE_AVERAGE`
+      - `TRAP_BASE_TYPE_SONIC_CHARGE_DEADLY`
+      - `TRAP_BASE_TYPE_SONIC_CHARGE_DEVASTATING`
+      - `TRAP_BASE_TYPE_SONIC_CHARGE_MINOR`
+      - `TRAP_BASE_TYPE_SONIC_CHARGE_STRONG`
+      - `TUTORIAL_WINDOW_TEMP1`
+      - `TUTORIAL_WINDOW_TEMP10`
+      - `TUTORIAL_WINDOW_TEMP11`
+      - `TUTORIAL_WINDOW_TEMP12`
+      - `TUTORIAL_WINDOW_TEMP13`
+      - `TUTORIAL_WINDOW_TEMP14`
+      - `TUTORIAL_WINDOW_TEMP15`
+      - `TUTORIAL_WINDOW_TEMP2`
+      - `TUTORIAL_WINDOW_TEMP3`
+      - `TUTORIAL_WINDOW_TEMP4`
+      - `TUTORIAL_WINDOW_TEMP5`
+      - `TUTORIAL_WINDOW_TEMP6`
+      - `TUTORIAL_WINDOW_TEMP7`
+      - `TUTORIAL_WINDOW_TEMP8`
+      - `TUTORIAL_WINDOW_TEMP9`
+      - `VIDEO_EFFECT_CLAIRVOYANCE`
+      - `VIDEO_EFFECT_CLAIRVOYANCEFULL`
+      - `VIDEO_EFFECT_FORCESIGHT`
+      - `VIDEO_EFFECT_FURY_1`
+      - `VIDEO_EFFECT_FURY_2`
+      - `VIDEO_EFFECT_FURY_3`
+      - `VIDEO_EFFECT_VISAS_FREELOOK`
+      - `VIDEO_FFECT_SECURITY_NO_LABEL`
+    - Planet Constants
+      - `PLANET_DXUN`
+      - `PLANET_HARBINGER`
+      - `PLANET_LIVE_06`
+      - `PLANET_M4_78`
+      - `PLANET_MALACHOR_V`
+      - `PLANET_NAR_SHADDAA`
+      - `PLANET_ONDERON`
+      - `PLANET_PERAGUS`
+      - `PLANET_TELOS`
+    - Visual Effects (VFX)
+      - `VFX_DUR_ELECTRICAL_SPARK`
+      - `VFX_DUR_HOLO_PROJECT`
   - [KOTOR Library Files](#kotor-library-files)
     - [`k_inc_cheat`](#k_inc_cheat)
     - [`k_inc_dan`](#k_inc_dan)
@@ -2519,27 +2519,27 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
     - [`a_global_inc`](#a_global_inc)
     - [`a_influence_inc`](#a_influence_inc)
     - [`a_localn_inc`](#a_localn_inc)
-    - [`k_inc_cheat`](#k_inc_cheat-1)
-    - [`k_inc_debug`](#k_inc_debug-1)
+    - `k_inc_cheat`
+    - `k_inc_debug`
     - [`k_inc_disguise`](#k_inc_disguise)
-    - [`k_inc_drop`](#k_inc_drop-1)
+    - `k_inc_drop`
     - [`k_inc_fab`](#k_inc_fab)
     - [`k_inc_fakecombat`](#k_inc_fakecombat)
-    - [`k_inc_force`](#k_inc_force-1)
-    - [`k_inc_generic`](#k_inc_generic-1)
-    - [`k_inc_gensupport`](#k_inc_gensupport-1)
+    - `k_inc_force`
+    - `k_inc_generic`
+    - `k_inc_gensupport`
     - [`k_inc_glob_party`](#k_inc_glob_party)
     - [`k_inc_hawk`](#k_inc_hawk)
     - [`k_inc_item_gen`](#k_inc_item_gen)
     - [`k_inc_npckill`](#k_inc_npckill)
     - [`k_inc_q_crystal`](#k_inc_q_crystal)
     - [`k_inc_quest_hk`](#k_inc_quest_hk)
-    - [`k_inc_switch`](#k_inc_switch-1)
+    - `k_inc_switch`
     - [`k_inc_treas_k2`](#k_inc_treas_k2)
-    - [`k_inc_treasure`](#k_inc_treasure-1)
-    - [`k_inc_utility`](#k_inc_utility-1)
-    - [`k_inc_walkways`](#k_inc_walkways-1)
-    - [`k_inc_zone`](#k_inc_zone-1)
+    - `k_inc_treasure`
+    - `k_inc_utility`
+    - `k_inc_walkways`
+    - `k_inc_zone`
     - [`k_oei_hench_inc`](#k_oei_hench_inc)
   - [Compilation Process](#compilation-process)
     - [Attempts to Uncomment or Modify](#attempts-to-uncomment-or-modify)
@@ -2550,438 +2550,438 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
     - [Key Examples of Commented Elements](#key-examples-of-commented-elements)
     - [Reasons for Commented-Out Elements](#reasons-for-commented-out-elements)
   - [Reference Implementations](#reference-implementations)
-    - [Other Constants](#other-constants-3)
-      - [`TRUE` **(K1 \& TSL)**](#true-k1--tsl)
-      - [`FALSE` **(K1 \& TSL)**](#false-k1--tsl)
-      - [`PI` **(K1 \& TSL)**](#pi-k1--tsl)
-      - [`ATTITUDE_NEUTRAL` **(K1 \& TSL)**](#attitude_neutral-k1--tsl)
-      - [`ATTITUDE_AGGRESSIVE` **(K1 \& TSL)**](#attitude_aggressive-k1--tsl)
-      - [`ATTITUDE_DEFENSIVE` **(K1 \& TSL)**](#attitude_defensive-k1--tsl)
-      - [`ATTITUDE_SPECIAL` **(K1 \& TSL)**](#attitude_special-k1--tsl)
-      - [`RADIUS_SIZE_SMALL` **(K1 \& TSL)**](#radius_size_small-k1--tsl)
-      - [`RADIUS_SIZE_MEDIUM` **(K1 \& TSL)**](#radius_size_medium-k1--tsl)
-      - [`RADIUS_SIZE_LARGE` **(K1 \& TSL)**](#radius_size_large-k1--tsl)
-      - [`RADIUS_SIZE_HUGE` **(K1 \& TSL)**](#radius_size_huge-k1--tsl)
-      - [`RADIUS_SIZE_GARGANTUAN` **(K1 \& TSL)**](#radius_size_gargantuan-k1--tsl)
-      - [`RADIUS_SIZE_COLOSSAL` **(K1 \& TSL)**](#radius_size_colossal-k1--tsl)
-      - [`ATTACK_RESULT_INVALID` **(K1 \& TSL)**](#attack_result_invalid-k1--tsl)
-      - [`ATTACK_RESULT_HIT_SUCCESSFUL` **(K1 \& TSL)**](#attack_result_hit_successful-k1--tsl)
-      - [`ATTACK_RESULT_CRITICAL_HIT` **(K1 \& TSL)**](#attack_result_critical_hit-k1--tsl)
-      - [`ATTACK_RESULT_AUTOMATIC_HIT` **(K1 \& TSL)**](#attack_result_automatic_hit-k1--tsl)
-      - [`ATTACK_RESULT_MISS` **(K1 \& TSL)**](#attack_result_miss-k1--tsl)
-      - [`ATTACK_RESULT_ATTACK_RESISTED` **(K1 \& TSL)**](#attack_result_attack_resisted-k1--tsl)
-      - [`ATTACK_RESULT_ATTACK_FAILED` **(K1 \& TSL)**](#attack_result_attack_failed-k1--tsl)
-      - [`ATTACK_RESULT_PARRIED` **(K1 \& TSL)**](#attack_result_parried-k1--tsl)
-      - [`ATTACK_RESULT_DEFLECTED` **(K1 \& TSL)**](#attack_result_deflected-k1--tsl)
-      - [`AOE_PER_FOGACID` **(K1 \& TSL)**](#aoe_per_fogacid-k1--tsl)
-      - [`AOE_PER_FOGFIRE` **(K1 \& TSL)**](#aoe_per_fogfire-k1--tsl)
-      - [`AOE_PER_FOGSTINK` **(K1 \& TSL)**](#aoe_per_fogstink-k1--tsl)
-      - [`AOE_PER_FOGKILL` **(K1 \& TSL)**](#aoe_per_fogkill-k1--tsl)
-      - [`AOE_PER_FOGMIND` **(K1 \& TSL)**](#aoe_per_fogmind-k1--tsl)
-      - [`AOE_PER_WALLFIRE` **(K1 \& TSL)**](#aoe_per_wallfire-k1--tsl)
-      - [`AOE_PER_WALLWIND` **(K1 \& TSL)**](#aoe_per_wallwind-k1--tsl)
-      - [`AOE_PER_WALLBLADE` **(K1 \& TSL)**](#aoe_per_wallblade-k1--tsl)
-      - [`AOE_PER_WEB` **(K1 \& TSL)**](#aoe_per_web-k1--tsl)
-      - [`AOE_PER_ENTANGLE` **(K1 \& TSL)**](#aoe_per_entangle-k1--tsl)
-      - [`AOE_PER_DARKNESS` **(K1 \& TSL)**](#aoe_per_darkness-k1--tsl)
-      - [`AOE_MOB_CIRCEVIL` **(K1 \& TSL)**](#aoe_mob_circevil-k1--tsl)
-      - [`AOE_MOB_CIRCGOOD` **(K1 \& TSL)**](#aoe_mob_circgood-k1--tsl)
-      - [`AOE_MOB_CIRCLAW` **(K1 \& TSL)**](#aoe_mob_circlaw-k1--tsl)
-      - [`AOE_MOB_CIRCCHAOS` **(K1 \& TSL)**](#aoe_mob_circchaos-k1--tsl)
-      - [`AOE_MOB_FEAR` **(K1 \& TSL)**](#aoe_mob_fear-k1--tsl)
-      - [`AOE_MOB_BLINDING` **(K1 \& TSL)**](#aoe_mob_blinding-k1--tsl)
-      - [`AOE_MOB_UNEARTHLY` **(K1 \& TSL)**](#aoe_mob_unearthly-k1--tsl)
-      - [`AOE_MOB_MENACE` **(K1 \& TSL)**](#aoe_mob_menace-k1--tsl)
-      - [`AOE_MOB_UNNATURAL` **(K1 \& TSL)**](#aoe_mob_unnatural-k1--tsl)
-      - [`AOE_MOB_STUN` **(K1 \& TSL)**](#aoe_mob_stun-k1--tsl)
-      - [`AOE_MOB_PROTECTION` **(K1 \& TSL)**](#aoe_mob_protection-k1--tsl)
-      - [`AOE_MOB_FIRE` **(K1 \& TSL)**](#aoe_mob_fire-k1--tsl)
-      - [`AOE_MOB_FROST` **(K1 \& TSL)**](#aoe_mob_frost-k1--tsl)
-      - [`AOE_MOB_ELECTRICAL` **(K1 \& TSL)**](#aoe_mob_electrical-k1--tsl)
-      - [`AOE_PER_FOGGHOUL` **(K1 \& TSL)**](#aoe_per_fogghoul-k1--tsl)
-      - [`AOE_MOB_TYRANT_FOG` **(K1 \& TSL)**](#aoe_mob_tyrant_fog-k1--tsl)
-      - [`AOE_PER_STORM` **(K1 \& TSL)**](#aoe_per_storm-k1--tsl)
-      - [`AOE_PER_INVIS_SPHERE` **(K1 \& TSL)**](#aoe_per_invis_sphere-k1--tsl)
-      - [`AOE_MOB_SILENCE` **(K1 \& TSL)**](#aoe_mob_silence-k1--tsl)
-      - [`AOE_PER_DELAY_BLAST_FIREBALL` **(K1 \& TSL)**](#aoe_per_delay_blast_fireball-k1--tsl)
-      - [`AOE_PER_GREASE` **(K1 \& TSL)**](#aoe_per_grease-k1--tsl)
-      - [`AOE_PER_CREEPING_DOOM` **(K1 \& TSL)**](#aoe_per_creeping_doom-k1--tsl)
-      - [`AOE_PER_EVARDS_BLACK_TENTACLES` **(K1 \& TSL)**](#aoe_per_evards_black_tentacles-k1--tsl)
-      - [`AOE_MOB_INVISIBILITY_PURGE` **(K1 \& TSL)**](#aoe_mob_invisibility_purge-k1--tsl)
-      - [`AOE_MOB_DRAGON_FEAR` **(K1 \& TSL)**](#aoe_mob_dragon_fear-k1--tsl)
-      - [`FORCE_POWER_ALL_FORCE_POWERS` **(K1 \& TSL)**](#force_power_all_force_powers-k1--tsl)
-      - [`FORCE_POWER_MASTER_ALTER` **(K1 \& TSL)**](#force_power_master_alter-k1--tsl)
-      - [`FORCE_POWER_MASTER_CONTROL` **(K1 \& TSL)**](#force_power_master_control-k1--tsl)
-      - [`FORCE_POWER_MASTER_SENSE` **(K1 \& TSL)**](#force_power_master_sense-k1--tsl)
-      - [`FORCE_POWER_FORCE_JUMP_ADVANCED` **(K1 \& TSL)**](#force_power_force_jump_advanced-k1--tsl)
-      - [`FORCE_POWER_LIGHT_SABER_THROW_ADVANCED` **(K1 \& TSL)**](#force_power_light_saber_throw_advanced-k1--tsl)
-      - [`FORCE_POWER_REGNERATION_ADVANCED` **(K1 \& TSL)**](#force_power_regneration_advanced-k1--tsl)
-      - [`FORCE_POWER_AFFECT_MIND` **(K1 \& TSL)**](#force_power_affect_mind-k1--tsl)
-      - [`FORCE_POWER_AFFLICTION` **(K1 \& TSL)**](#force_power_affliction-k1--tsl)
-      - [`FORCE_POWER_SPEED_BURST` **(K1 \& TSL)**](#force_power_speed_burst-k1--tsl)
-      - [`FORCE_POWER_CHOKE` **(K1 \& TSL)**](#force_power_choke-k1--tsl)
-      - [`FORCE_POWER_CURE` **(K1 \& TSL)**](#force_power_cure-k1--tsl)
-      - [`FORCE_POWER_DEATH_FIELD` **(K1 \& TSL)**](#force_power_death_field-k1--tsl)
-      - [`FORCE_POWER_DROID_DISABLE` **(K1 \& TSL)**](#force_power_droid_disable-k1--tsl)
-      - [`FORCE_POWER_DROID_DESTROY` **(K1 \& TSL)**](#force_power_droid_destroy-k1--tsl)
-      - [`FORCE_POWER_DOMINATE` **(K1 \& TSL)**](#force_power_dominate-k1--tsl)
-      - [`FORCE_POWER_DRAIN_LIFE` **(K1 \& TSL)**](#force_power_drain_life-k1--tsl)
-      - [`FORCE_POWER_FEAR` **(K1 \& TSL)**](#force_power_fear-k1--tsl)
-      - [`FORCE_POWER_FORCE_ARMOR` **(K1 \& TSL)**](#force_power_force_armor-k1--tsl)
-      - [`FORCE_POWER_FORCE_AURA` **(K1 \& TSL)**](#force_power_force_aura-k1--tsl)
-      - [`FORCE_POWER_FORCE_BREACH` **(K1 \& TSL)**](#force_power_force_breach-k1--tsl)
-      - [`FORCE_POWER_FORCE_IMMUNITY` **(K1 \& TSL)**](#force_power_force_immunity-k1--tsl)
-      - [`FORCE_POWER_FORCE_JUMP` **(K1 \& TSL)**](#force_power_force_jump-k1--tsl)
-      - [`FORCE_POWER_FORCE_MIND` **(K1 \& TSL)**](#force_power_force_mind-k1--tsl)
-      - [`FORCE_POWER_FORCE_PUSH` **(K1 \& TSL)**](#force_power_force_push-k1--tsl)
-      - [`FORCE_POWER_FORCE_SHIELD` **(K1 \& TSL)**](#force_power_force_shield-k1--tsl)
-      - [`FORCE_POWER_FORCE_STORM` **(K1 \& TSL)**](#force_power_force_storm-k1--tsl)
-      - [`FORCE_POWER_FORCE_WAVE` **(K1 \& TSL)**](#force_power_force_wave-k1--tsl)
-      - [`FORCE_POWER_FORCE_WHIRLWIND` **(K1 \& TSL)**](#force_power_force_whirlwind-k1--tsl)
-      - [`FORCE_POWER_HEAL` **(K1 \& TSL)**](#force_power_heal-k1--tsl)
-      - [`FORCE_POWER_HOLD` **(K1 \& TSL)**](#force_power_hold-k1--tsl)
-      - [`FORCE_POWER_HORROR` **(K1 \& TSL)**](#force_power_horror-k1--tsl)
-      - [`FORCE_POWER_INSANITY` **(K1 \& TSL)**](#force_power_insanity-k1--tsl)
-      - [`FORCE_POWER_KILL` **(K1 \& TSL)**](#force_power_kill-k1--tsl)
-      - [`FORCE_POWER_KNIGHT_MIND` **(K1 \& TSL)**](#force_power_knight_mind-k1--tsl)
-      - [`FORCE_POWER_KNIGHT_SPEED` **(K1 \& TSL)**](#force_power_knight_speed-k1--tsl)
-      - [`FORCE_POWER_LIGHTNING` **(K1 \& TSL)**](#force_power_lightning-k1--tsl)
-      - [`FORCE_POWER_MIND_MASTERY` **(K1 \& TSL)**](#force_power_mind_mastery-k1--tsl)
-      - [`FORCE_POWER_SPEED_MASTERY` **(K1 \& TSL)**](#force_power_speed_mastery-k1--tsl)
-      - [`FORCE_POWER_PLAGUE` **(K1 \& TSL)**](#force_power_plague-k1--tsl)
-      - [`FORCE_POWER_REGENERATION` **(K1 \& TSL)**](#force_power_regeneration-k1--tsl)
-      - [`FORCE_POWER_RESIST_COLD_HEAT_ENERGY` **(K1 \& TSL)**](#force_power_resist_cold_heat_energy-k1--tsl)
-      - [`FORCE_POWER_RESIST_FORCE` **(K1 \& TSL)**](#force_power_resist_force-k1--tsl)
-      - [`FORCE_POWER_SHOCK` **(K1 \& TSL)**](#force_power_shock-k1--tsl)
-      - [`FORCE_POWER_SLEEP` **(K1 \& TSL)**](#force_power_sleep-k1--tsl)
-      - [`FORCE_POWER_SLOW` **(K1 \& TSL)**](#force_power_slow-k1--tsl)
-      - [`FORCE_POWER_STUN` **(K1 \& TSL)**](#force_power_stun-k1--tsl)
-      - [`FORCE_POWER_DROID_STUN` **(K1 \& TSL)**](#force_power_droid_stun-k1--tsl)
-      - [`FORCE_POWER_SUPRESS_FORCE` **(K1 \& TSL)**](#force_power_supress_force-k1--tsl)
-      - [`FORCE_POWER_LIGHT_SABER_THROW` **(K1 \& TSL)**](#force_power_light_saber_throw-k1--tsl)
-      - [`FORCE_POWER_WOUND` **(K1 \& TSL)**](#force_power_wound-k1--tsl)
-      - [`PERSISTENT_ZONE_ACTIVE` **(K1 \& TSL)**](#persistent_zone_active-k1--tsl)
-      - [`PERSISTENT_ZONE_FOLLOW` **(K1 \& TSL)**](#persistent_zone_follow-k1--tsl)
-      - [`INVALID_STANDARD_FACTION` **(K1 \& TSL)**](#invalid_standard_faction-k1--tsl)
-      - [`STANDARD_FACTION_HOSTILE_1` **(K1 \& TSL)**](#standard_faction_hostile_1-k1--tsl)
-      - [`STANDARD_FACTION_FRIENDLY_1` **(K1 \& TSL)**](#standard_faction_friendly_1-k1--tsl)
-      - [`STANDARD_FACTION_HOSTILE_2` **(K1 \& TSL)**](#standard_faction_hostile_2-k1--tsl)
-      - [`STANDARD_FACTION_FRIENDLY_2` **(K1 \& TSL)**](#standard_faction_friendly_2-k1--tsl)
-      - [`STANDARD_FACTION_NEUTRAL` **(K1 \& TSL)**](#standard_faction_neutral-k1--tsl)
-      - [`STANDARD_FACTION_INSANE` **(K1 \& TSL)**](#standard_faction_insane-k1--tsl)
-      - [`STANDARD_FACTION_PTAT_TUSKAN` **(K1 \& TSL)**](#standard_faction_ptat_tuskan-k1--tsl)
-      - [`STANDARD_FACTION_GLB_XOR` **(K1 \& TSL)**](#standard_faction_glb_xor-k1--tsl)
-      - [`STANDARD_FACTION_SURRENDER_1` **(K1 \& TSL)**](#standard_faction_surrender_1-k1--tsl)
-      - [`STANDARD_FACTION_SURRENDER_2` **(K1 \& TSL)**](#standard_faction_surrender_2-k1--tsl)
-      - [`STANDARD_FACTION_PREDATOR` **(K1 \& TSL)**](#standard_faction_predator-k1--tsl)
-      - [`STANDARD_FACTION_PREY` **(K1 \& TSL)**](#standard_faction_prey-k1--tsl)
-      - [`STANDARD_FACTION_TRAP` **(K1 \& TSL)**](#standard_faction_trap-k1--tsl)
-      - [`STANDARD_FACTION_ENDAR_SPIRE` **(K1 \& TSL)**](#standard_faction_endar_spire-k1--tsl)
-      - [`STANDARD_FACTION_RANCOR` **(K1 \& TSL)**](#standard_faction_rancor-k1--tsl)
-      - [`STANDARD_FACTION_GIZKA_1` **(K1 \& TSL)**](#standard_faction_gizka_1-k1--tsl)
-      - [`STANDARD_FACTION_GIZKA_2` **(K1 \& TSL)**](#standard_faction_gizka_2-k1--tsl)
-      - [`SUBSKILL_FLAGTRAP` **(K1 \& TSL)**](#subskill_flagtrap-k1--tsl)
-      - [`SUBSKILL_RECOVERTRAP` **(K1 \& TSL)**](#subskill_recovertrap-k1--tsl)
-      - [`SUBSKILL_EXAMINETRAP` **(K1 \& TSL)**](#subskill_examinetrap-k1--tsl)
-      - [`TALENT_TYPE_FORCE` **(K1 \& TSL)**](#talent_type_force-k1--tsl)
-      - [`TALENT_TYPE_SPELL` **(K1 \& TSL)**](#talent_type_spell-k1--tsl)
-      - [`TALENT_TYPE_FEAT` **(K1 \& TSL)**](#talent_type_feat-k1--tsl)
-      - [`TALENT_TYPE_SKILL` **(K1 \& TSL)**](#talent_type_skill-k1--tsl)
-      - [`TALENT_EXCLUDE_ALL_OF_TYPE` **(K1 \& TSL)**](#talent_exclude_all_of_type-k1--tsl)
-      - [`GUI_PANEL_PLAYER_DEATH` **(K1 \& TSL)**](#gui_panel_player_death-k1--tsl)
-      - [`POLYMORPH_TYPE_WEREWOLF` **(K1 \& TSL)**](#polymorph_type_werewolf-k1--tsl)
-      - [`POLYMORPH_TYPE_WERERAT` **(K1 \& TSL)**](#polymorph_type_wererat-k1--tsl)
-      - [`POLYMORPH_TYPE_WERECAT` **(K1 \& TSL)**](#polymorph_type_werecat-k1--tsl)
-      - [`POLYMORPH_TYPE_GIANT_SPIDER` **(K1 \& TSL)**](#polymorph_type_giant_spider-k1--tsl)
-      - [`POLYMORPH_TYPE_TROLL` **(K1 \& TSL)**](#polymorph_type_troll-k1--tsl)
-      - [`POLYMORPH_TYPE_UMBER_HULK` **(K1 \& TSL)**](#polymorph_type_umber_hulk-k1--tsl)
-      - [`POLYMORPH_TYPE_PIXIE` **(K1 \& TSL)**](#polymorph_type_pixie-k1--tsl)
-      - [`POLYMORPH_TYPE_ZOMBIE` **(K1 \& TSL)**](#polymorph_type_zombie-k1--tsl)
-      - [`POLYMORPH_TYPE_RED_DRAGON` **(K1 \& TSL)**](#polymorph_type_red_dragon-k1--tsl)
-      - [`POLYMORPH_TYPE_FIRE_GIANT` **(K1 \& TSL)**](#polymorph_type_fire_giant-k1--tsl)
-      - [`POLYMORPH_TYPE_BALOR` **(K1 \& TSL)**](#polymorph_type_balor-k1--tsl)
-      - [`POLYMORPH_TYPE_DEATH_SLAAD` **(K1 \& TSL)**](#polymorph_type_death_slaad-k1--tsl)
-      - [`POLYMORPH_TYPE_IRON_GOLEM` **(K1 \& TSL)**](#polymorph_type_iron_golem-k1--tsl)
-      - [`POLYMORPH_TYPE_HUGE_FIRE_ELEMENTAL` **(K1 \& TSL)**](#polymorph_type_huge_fire_elemental-k1--tsl)
-      - [`POLYMORPH_TYPE_HUGE_WATER_ELEMENTAL` **(K1 \& TSL)**](#polymorph_type_huge_water_elemental-k1--tsl)
-      - [`POLYMORPH_TYPE_HUGE_EARTH_ELEMENTAL` **(K1 \& TSL)**](#polymorph_type_huge_earth_elemental-k1--tsl)
-      - [`POLYMORPH_TYPE_HUGE_AIR_ELEMENTAL` **(K1 \& TSL)**](#polymorph_type_huge_air_elemental-k1--tsl)
-      - [`POLYMORPH_TYPE_ELDER_FIRE_ELEMENTAL` **(K1 \& TSL)**](#polymorph_type_elder_fire_elemental-k1--tsl)
-      - [`POLYMORPH_TYPE_ELDER_WATER_ELEMENTAL` **(K1 \& TSL)**](#polymorph_type_elder_water_elemental-k1--tsl)
-      - [`POLYMORPH_TYPE_ELDER_EARTH_ELEMENTAL` **(K1 \& TSL)**](#polymorph_type_elder_earth_elemental-k1--tsl)
-      - [`POLYMORPH_TYPE_ELDER_AIR_ELEMENTAL` **(K1 \& TSL)**](#polymorph_type_elder_air_elemental-k1--tsl)
-      - [`POLYMORPH_TYPE_BROWN_BEAR` **(K1 \& TSL)**](#polymorph_type_brown_bear-k1--tsl)
-      - [`POLYMORPH_TYPE_PANTHER` **(K1 \& TSL)**](#polymorph_type_panther-k1--tsl)
-      - [`POLYMORPH_TYPE_WOLF` **(K1 \& TSL)**](#polymorph_type_wolf-k1--tsl)
-      - [`POLYMORPH_TYPE_BOAR` **(K1 \& TSL)**](#polymorph_type_boar-k1--tsl)
-      - [`POLYMORPH_TYPE_BADGER` **(K1 \& TSL)**](#polymorph_type_badger-k1--tsl)
-      - [`POLYMORPH_TYPE_PENGUIN` **(K1 \& TSL)**](#polymorph_type_penguin-k1--tsl)
-      - [`POLYMORPH_TYPE_COW` **(K1 \& TSL)**](#polymorph_type_cow-k1--tsl)
-      - [`POLYMORPH_TYPE_DOOM_KNIGHT` **(K1 \& TSL)**](#polymorph_type_doom_knight-k1--tsl)
-      - [`POLYMORPH_TYPE_YUANTI` **(K1 \& TSL)**](#polymorph_type_yuanti-k1--tsl)
-      - [`POLYMORPH_TYPE_IMP` **(K1 \& TSL)**](#polymorph_type_imp-k1--tsl)
-      - [`POLYMORPH_TYPE_QUASIT` **(K1 \& TSL)**](#polymorph_type_quasit-k1--tsl)
-      - [`POLYMORPH_TYPE_SUCCUBUS` **(K1 \& TSL)**](#polymorph_type_succubus-k1--tsl)
-      - [`POLYMORPH_TYPE_DIRE_BROWN_BEAR` **(K1 \& TSL)**](#polymorph_type_dire_brown_bear-k1--tsl)
-      - [`POLYMORPH_TYPE_DIRE_PANTHER` **(K1 \& TSL)**](#polymorph_type_dire_panther-k1--tsl)
-      - [`POLYMORPH_TYPE_DIRE_WOLF` **(K1 \& TSL)**](#polymorph_type_dire_wolf-k1--tsl)
-      - [`POLYMORPH_TYPE_DIRE_BOAR` **(K1 \& TSL)**](#polymorph_type_dire_boar-k1--tsl)
-      - [`POLYMORPH_TYPE_DIRE_BADGER` **(K1 \& TSL)**](#polymorph_type_dire_badger-k1--tsl)
-      - [`CREATURE_SIZE_INVALID` **(K1 \& TSL)**](#creature_size_invalid-k1--tsl)
-      - [`CREATURE_SIZE_TINY` **(K1 \& TSL)**](#creature_size_tiny-k1--tsl)
-      - [`CREATURE_SIZE_SMALL` **(K1 \& TSL)**](#creature_size_small-k1--tsl)
-      - [`CREATURE_SIZE_MEDIUM` **(K1 \& TSL)**](#creature_size_medium-k1--tsl)
-      - [`CREATURE_SIZE_LARGE` **(K1 \& TSL)**](#creature_size_large-k1--tsl)
-      - [`CREATURE_SIZE_HUGE` **(K1 \& TSL)**](#creature_size_huge-k1--tsl)
-      - [`CAMERA_MODE_CHASE_CAMERA` **(K1 \& TSL)**](#camera_mode_chase_camera-k1--tsl)
-      - [`CAMERA_MODE_TOP_DOWN` **(K1 \& TSL)**](#camera_mode_top_down-k1--tsl)
-      - [`CAMERA_MODE_STIFF_CHASE_CAMERA` **(K1 \& TSL)**](#camera_mode_stiff_chase_camera-k1--tsl)
-      - [`GAME_DIFFICULTY_VERY_EASY` **(K1 \& TSL)**](#game_difficulty_very_easy-k1--tsl)
-      - [`GAME_DIFFICULTY_EASY` **(K1 \& TSL)**](#game_difficulty_easy-k1--tsl)
-      - [`GAME_DIFFICULTY_NORMAL` **(K1 \& TSL)**](#game_difficulty_normal-k1--tsl)
-      - [`GAME_DIFFICULTY_CORE_RULES` **(K1 \& TSL)**](#game_difficulty_core_rules-k1--tsl)
-      - [`GAME_DIFFICULTY_DIFFICULT` **(K1 \& TSL)**](#game_difficulty_difficult-k1--tsl)
-      - [`ACTION_MOVETOPOINT` **(K1 \& TSL)**](#action_movetopoint-k1--tsl)
-      - [`ACTION_PICKUPITEM` **(K1 \& TSL)**](#action_pickupitem-k1--tsl)
-      - [`ACTION_DROPITEM` **(K1 \& TSL)**](#action_dropitem-k1--tsl)
-      - [`ACTION_ATTACKOBJECT` **(K1 \& TSL)**](#action_attackobject-k1--tsl)
-      - [`ACTION_CASTSPELL` **(K1 \& TSL)**](#action_castspell-k1--tsl)
-      - [`ACTION_OPENDOOR` **(K1 \& TSL)**](#action_opendoor-k1--tsl)
-      - [`ACTION_CLOSEDOOR` **(K1 \& TSL)**](#action_closedoor-k1--tsl)
-      - [`ACTION_DIALOGOBJECT` **(K1 \& TSL)**](#action_dialogobject-k1--tsl)
-      - [`ACTION_DISABLETRAP` **(K1 \& TSL)**](#action_disabletrap-k1--tsl)
-      - [`ACTION_RECOVERTRAP` **(K1 \& TSL)**](#action_recovertrap-k1--tsl)
-      - [`ACTION_FLAGTRAP` **(K1 \& TSL)**](#action_flagtrap-k1--tsl)
-      - [`ACTION_EXAMINETRAP` **(K1 \& TSL)**](#action_examinetrap-k1--tsl)
-      - [`ACTION_SETTRAP` **(K1 \& TSL)**](#action_settrap-k1--tsl)
-      - [`ACTION_OPENLOCK` **(K1 \& TSL)**](#action_openlock-k1--tsl)
-      - [`ACTION_LOCK` **(K1 \& TSL)**](#action_lock-k1--tsl)
-      - [`ACTION_USEOBJECT` **(K1 \& TSL)**](#action_useobject-k1--tsl)
-      - [`ACTION_ANIMALEMPATHY` **(K1 \& TSL)**](#action_animalempathy-k1--tsl)
-      - [`ACTION_REST` **(K1 \& TSL)**](#action_rest-k1--tsl)
-      - [`ACTION_TAUNT` **(K1 \& TSL)**](#action_taunt-k1--tsl)
-      - [`ACTION_ITEMCASTSPELL` **(K1 \& TSL)**](#action_itemcastspell-k1--tsl)
-      - [`ACTION_COUNTERSPELL` **(K1 \& TSL)**](#action_counterspell-k1--tsl)
-      - [`ACTION_HEAL` **(K1 \& TSL)**](#action_heal-k1--tsl)
-      - [`ACTION_PICKPOCKET` **(K1 \& TSL)**](#action_pickpocket-k1--tsl)
-      - [`ACTION_FOLLOW` **(K1 \& TSL)**](#action_follow-k1--tsl)
-      - [`ACTION_WAIT` **(K1 \& TSL)**](#action_wait-k1--tsl)
-      - [`ACTION_SIT` **(K1 \& TSL)**](#action_sit-k1--tsl)
-      - [`ACTION_FOLLOWLEADER` **(K1 \& TSL)**](#action_followleader-k1--tsl)
-      - [`ACTION_INVALID` **(K1 \& TSL)**](#action_invalid-k1--tsl)
-      - [`ACTION_QUEUEEMPTY` **(K1 \& TSL)**](#action_queueempty-k1--tsl)
-      - [`SWMINIGAME_TRACKFOLLOWER_SOUND_ENGINE` **(K1 \& TSL)**](#swminigame_trackfollower_sound_engine-k1--tsl)
-      - [`SWMINIGAME_TRACKFOLLOWER_SOUND_DEATH` **(K1 \& TSL)**](#swminigame_trackfollower_sound_death-k1--tsl)
-      - [`PLOT_O_DOOM` **(K1 \& TSL)**](#plot_o_doom-k1--tsl)
-      - [`PLOT_O_SCARY_STUFF` **(K1 \& TSL)**](#plot_o_scary_stuff-k1--tsl)
-      - [`PLOT_O_BIG_MONSTERS` **(K1 \& TSL)**](#plot_o_big_monsters-k1--tsl)
-      - [`FORMATION_WEDGE` **(K1 \& TSL)**](#formation_wedge-k1--tsl)
-      - [`FORMATION_LINE` **(K1 \& TSL)**](#formation_line-k1--tsl)
-      - [`SUBSCREEN_ID_NONE` **(K1 \& TSL)**](#subscreen_id_none-k1--tsl)
-      - [`SUBSCREEN_ID_EQUIP` **(K1 \& TSL)**](#subscreen_id_equip-k1--tsl)
-      - [`SUBSCREEN_ID_ITEM` **(K1 \& TSL)**](#subscreen_id_item-k1--tsl)
-      - [`SUBSCREEN_ID_CHARACTER_RECORD` **(K1 \& TSL)**](#subscreen_id_character_record-k1--tsl)
-      - [`SUBSCREEN_ID_ABILITY` **(K1 \& TSL)**](#subscreen_id_ability-k1--tsl)
-      - [`SUBSCREEN_ID_MAP` **(K1 \& TSL)**](#subscreen_id_map-k1--tsl)
-      - [`SUBSCREEN_ID_QUEST` **(K1 \& TSL)**](#subscreen_id_quest-k1--tsl)
-      - [`SUBSCREEN_ID_OPTIONS` **(K1 \& TSL)**](#subscreen_id_options-k1--tsl)
-      - [`SUBSCREEN_ID_MESSAGES` **(K1 \& TSL)**](#subscreen_id_messages-k1--tsl)
-      - [`SHIELD_DROID_ENERGY_1` **(K1 \& TSL)**](#shield_droid_energy_1-k1--tsl)
-      - [`SHIELD_DROID_ENERGY_2` **(K1 \& TSL)**](#shield_droid_energy_2-k1--tsl)
-      - [`SHIELD_DROID_ENERGY_3` **(K1 \& TSL)**](#shield_droid_energy_3-k1--tsl)
-      - [`SHIELD_DROID_ENVIRO_1` **(K1 \& TSL)**](#shield_droid_enviro_1-k1--tsl)
-      - [`SHIELD_DROID_ENVIRO_2` **(K1 \& TSL)**](#shield_droid_enviro_2-k1--tsl)
-      - [`SHIELD_DROID_ENVIRO_3` **(K1 \& TSL)**](#shield_droid_enviro_3-k1--tsl)
-      - [`SHIELD_ENERGY` **(K1 \& TSL)**](#shield_energy-k1--tsl)
-      - [`SHIELD_ENERGY_SITH` **(K1 \& TSL)**](#shield_energy_sith-k1--tsl)
-      - [`SHIELD_ENERGY_ARKANIAN` **(K1 \& TSL)**](#shield_energy_arkanian-k1--tsl)
-      - [`SHIELD_ECHANI` **(K1 \& TSL)**](#shield_echani-k1--tsl)
-      - [`SHIELD_MANDALORIAN_MELEE` **(K1 \& TSL)**](#shield_mandalorian_melee-k1--tsl)
-      - [`SHIELD_MANDALORIAN_POWER` **(K1 \& TSL)**](#shield_mandalorian_power-k1--tsl)
-      - [`SHIELD_DUELING_ECHANI` **(K1 \& TSL)**](#shield_dueling_echani-k1--tsl)
-      - [`SHIELD_DUELING_YUSANIS` **(K1 \& TSL)**](#shield_dueling_yusanis-k1--tsl)
-      - [`SHIELD_VERPINE_PROTOTYPE` **(K1 \& TSL)**](#shield_verpine_prototype-k1--tsl)
-      - [`SHIELD_ANTIQUE_DROID` **(K1 \& TSL)**](#shield_antique_droid-k1--tsl)
-      - [`SHIELD_PLOT_TAR_M09AA` **(K1 \& TSL)**](#shield_plot_tar_m09aa-k1--tsl)
-      - [`SHIELD_PLOT_UNK_M44AA` **(K1 \& TSL)**](#shield_plot_unk_m44aa-k1--tsl)
-      - [`VIDEO_EFFECT_NONE` **(K1 \& TSL)**](#video_effect_none-k1--tsl)
-      - [`VIDEO_EFFECT_SECURITY_CAMERA` **(K1 \& TSL)**](#video_effect_security_camera-k1--tsl)
-      - [`VIDEO_EFFECT_FREELOOK_T3M4` **(K1 \& TSL)**](#video_effect_freelook_t3m4-k1--tsl)
-      - [`VIDEO_EFFECT_FREELOOK_HK47` **(K1 \& TSL)**](#video_effect_freelook_hk47-k1--tsl)
-      - [`TUTORIAL_WINDOW_START_SWOOP_RACE` **(K1 \& TSL)**](#tutorial_window_start_swoop_race-k1--tsl)
-      - [`TUTORIAL_WINDOW_RETURN_TO_BASE` **(K1 \& TSL)**](#tutorial_window_return_to_base-k1--tsl)
-      - [`TUTORIAL_WINDOW_MOVEMENT_KEYS` **(K1)**](#tutorial_window_movement_keys-k1)
-      - [`LIVE_CONTENT_PKG1` **(K1 \& TSL)**](#live_content_pkg1-k1--tsl)
-      - [`LIVE_CONTENT_PKG2` **(K1 \& TSL)**](#live_content_pkg2-k1--tsl)
-      - [`LIVE_CONTENT_PKG3` **(K1 \& TSL)**](#live_content_pkg3-k1--tsl)
-      - [`LIVE_CONTENT_PKG4` **(K1 \& TSL)**](#live_content_pkg4-k1--tsl)
-      - [`LIVE_CONTENT_PKG5` **(K1 \& TSL)**](#live_content_pkg5-k1--tsl)
-      - [`LIVE_CONTENT_PKG6` **(K1 \& TSL)**](#live_content_pkg6-k1--tsl)
-      - [`sLanguage` **(K1)**](#slanguage-k1)
-      - [`FORM_MASK_FORCE_FOCUS` **(TSL)**](#form_mask_force_focus-tsl)
-      - [`FORM_MASK_ENDURING_FORCE` **(TSL)**](#form_mask_enduring_force-tsl)
-      - [`FORM_MASK_FORCE_AMPLIFICATION` **(TSL)**](#form_mask_force_amplification-tsl)
-      - [`FORM_MASK_FORCE_POTENCY` **(TSL)**](#form_mask_force_potency-tsl)
-      - [`FORM_MASK_REGENERATION` **(TSL)**](#form_mask_regeneration-tsl)
-      - [`FORM_MASK_POWER_OF_THE_DARK_SIDE` **(TSL)**](#form_mask_power_of_the_dark_side-tsl)
-      - [`FORCE_POWER_MASTER_ENERGY_RESISTANCE` **(TSL)**](#force_power_master_energy_resistance-tsl)
-      - [`FORCE_POWER_MASTER_HEAL` **(TSL)**](#force_power_master_heal-tsl)
-      - [`FORCE_POWER_FORCE_BARRIER` **(TSL)**](#force_power_force_barrier-tsl)
-      - [`FORCE_POWER_IMPROVED_FORCE_BARRIER` **(TSL)**](#force_power_improved_force_barrier-tsl)
-      - [`FORCE_POWER_MASTER_FORCE_BARRIER` **(TSL)**](#force_power_master_force_barrier-tsl)
-      - [`FORCE_POWER_BATTLE_MEDITATION_PC` **(TSL)**](#force_power_battle_meditation_pc-tsl)
-      - [`FORCE_POWER_IMPROVED_BATTLE_MEDITATION_PC` **(TSL)**](#force_power_improved_battle_meditation_pc-tsl)
-      - [`FORCE_POWER_MASTER_BATTLE_MEDITATION_PC` **(TSL)**](#force_power_master_battle_meditation_pc-tsl)
-      - [`FORCE_POWER_BAT_MED_ENEMY` **(TSL)**](#force_power_bat_med_enemy-tsl)
-      - [`FORCE_POWER_IMP_BAT_MED_ENEMY` **(TSL)**](#force_power_imp_bat_med_enemy-tsl)
-      - [`FORCE_POWER_MAS_BAT_MED_ENEMY` **(TSL)**](#force_power_mas_bat_med_enemy-tsl)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_I` **(TSL)**](#force_power_crush_opposition_i-tsl)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_II` **(TSL)**](#force_power_crush_opposition_ii-tsl)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_III` **(TSL)**](#force_power_crush_opposition_iii-tsl)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_IV` **(TSL)**](#force_power_crush_opposition_iv-tsl)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_V` **(TSL)**](#force_power_crush_opposition_v-tsl)
-      - [`FORCE_POWER_CRUSH_OPPOSITION_VI` **(TSL)**](#force_power_crush_opposition_vi-tsl)
-      - [`FORCE_POWER_FORCE_BODY` **(TSL)**](#force_power_force_body-tsl)
-      - [`FORCE_POWER_IMPROVED_FORCE_BODY` **(TSL)**](#force_power_improved_force_body-tsl)
-      - [`FORCE_POWER_MASTER_FORCE_BODY` **(TSL)**](#force_power_master_force_body-tsl)
-      - [`FORCE_POWER_DRAIN_FORCE` **(TSL)**](#force_power_drain_force-tsl)
-      - [`FORCE_POWER_IMPROVED_DRAIN_FORCE` **(TSL)**](#force_power_improved_drain_force-tsl)
-      - [`FORCE_POWER_MASTER_DRAIN_FORCE` **(TSL)**](#force_power_master_drain_force-tsl)
-      - [`FORCE_POWER_FORCE_CAMOUFLAGE` **(TSL)**](#force_power_force_camouflage-tsl)
-      - [`FORCE_POWER_IMPROVED_FORCE_CAMOUFLAGE` **(TSL)**](#force_power_improved_force_camouflage-tsl)
-      - [`FORCE_POWER_MASTER_FORCE_CAMOUFLAGE` **(TSL)**](#force_power_master_force_camouflage-tsl)
-      - [`FORCE_POWER_FORCE_SCREAM` **(TSL)**](#force_power_force_scream-tsl)
-      - [`FORCE_POWER_IMPROVED_FORCE_SCREAM` **(TSL)**](#force_power_improved_force_scream-tsl)
-      - [`FORCE_POWER_MASTER_FORCE_SCREAM` **(TSL)**](#force_power_master_force_scream-tsl)
-      - [`FORCE_POWER_FORCE_REPULSION` **(TSL)**](#force_power_force_repulsion-tsl)
-      - [`FORCE_POWER_FURY` **(TSL)**](#force_power_fury-tsl)
-      - [`FORCE_POWER_IMPROVED_FURY` **(TSL)**](#force_power_improved_fury-tsl)
-      - [`FORCE_POWER_MASTER_FURY` **(TSL)**](#force_power_master_fury-tsl)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_I` **(TSL)**](#force_power_inspire_followers_i-tsl)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_II` **(TSL)**](#force_power_inspire_followers_ii-tsl)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_III` **(TSL)**](#force_power_inspire_followers_iii-tsl)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_IV` **(TSL)**](#force_power_inspire_followers_iv-tsl)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_V` **(TSL)**](#force_power_inspire_followers_v-tsl)
-      - [`FORCE_POWER_INSPIRE_FOLLOWERS_VI` **(TSL)**](#force_power_inspire_followers_vi-tsl)
-      - [`FORCE_POWER_REVITALIZE` **(TSL)**](#force_power_revitalize-tsl)
-      - [`FORCE_POWER_IMPROVED_REVITALIZE` **(TSL)**](#force_power_improved_revitalize-tsl)
-      - [`FORCE_POWER_MASTER_REVITALIZE` **(TSL)**](#force_power_master_revitalize-tsl)
-      - [`FORCE_POWER_FORCE_SIGHT` **(TSL)**](#force_power_force_sight-tsl)
-      - [`FORCE_POWER_FORCE_CRUSH` **(TSL)**](#force_power_force_crush-tsl)
-      - [`FORCE_POWER_PRECOGNITION` **(TSL)**](#force_power_precognition-tsl)
-      - [`FORCE_POWER_BATTLE_PRECOGNITION` **(TSL)**](#force_power_battle_precognition-tsl)
-      - [`FORCE_POWER_FORCE_ENLIGHTENMENT` **(TSL)**](#force_power_force_enlightenment-tsl)
-      - [`FORCE_POWER_MIND_TRICK` **(TSL)**](#force_power_mind_trick-tsl)
-      - [`FORCE_POWER_CONFUSION` **(TSL)**](#force_power_confusion-tsl)
-      - [`FORCE_POWER_BEAST_TRICK` **(TSL)**](#force_power_beast_trick-tsl)
-      - [`FORCE_POWER_BEAST_CONFUSION` **(TSL)**](#force_power_beast_confusion-tsl)
-      - [`FORCE_POWER_DROID_TRICK` **(TSL)**](#force_power_droid_trick-tsl)
-      - [`FORCE_POWER_DROID_CONFUSION` **(TSL)**](#force_power_droid_confusion-tsl)
-      - [`FORCE_POWER_BREATH_CONTROL` **(TSL)**](#force_power_breath_control-tsl)
-      - [`FORCE_POWER_WOOKIEE_RAGE_I` **(TSL)**](#force_power_wookiee_rage_i-tsl)
-      - [`FORCE_POWER_WOOKIEE_RAGE_II` **(TSL)**](#force_power_wookiee_rage_ii-tsl)
-      - [`FORCE_POWER_WOOKIEE_RAGE_III` **(TSL)**](#force_power_wookiee_rage_iii-tsl)
-      - [`FORM_LIGHTSABER_PADAWAN_I` **(TSL)**](#form_lightsaber_padawan_i-tsl)
-      - [`FORM_LIGHTSABER_PADAWAN_II` **(TSL)**](#form_lightsaber_padawan_ii-tsl)
-      - [`FORM_LIGHTSABER_PADAWAN_III` **(TSL)**](#form_lightsaber_padawan_iii-tsl)
-      - [`FORM_LIGHTSABER_DAKLEAN_I` **(TSL)**](#form_lightsaber_daklean_i-tsl)
-      - [`FORM_LIGHTSABER_DAKLEAN_II` **(TSL)**](#form_lightsaber_daklean_ii-tsl)
-      - [`FORM_LIGHTSABER_DAKLEAN_III` **(TSL)**](#form_lightsaber_daklean_iii-tsl)
-      - [`FORM_LIGHTSABER_SENTINEL_I` **(TSL)**](#form_lightsaber_sentinel_i-tsl)
-      - [`FORM_LIGHTSABER_SENTINEL_II` **(TSL)**](#form_lightsaber_sentinel_ii-tsl)
-      - [`FORM_LIGHTSABER_SENTINEL_III` **(TSL)**](#form_lightsaber_sentinel_iii-tsl)
-      - [`FORM_LIGHTSABER_SODAK_I` **(TSL)**](#form_lightsaber_sodak_i-tsl)
-      - [`FORM_LIGHTSABER_SODAK_II` **(TSL)**](#form_lightsaber_sodak_ii-tsl)
-      - [`FORM_LIGHTSABER_SODAK_III` **(TSL)**](#form_lightsaber_sodak_iii-tsl)
-      - [`FORM_LIGHTSABER_ANCIENT_I` **(TSL)**](#form_lightsaber_ancient_i-tsl)
-      - [`FORM_LIGHTSABER_ANCIENT_II` **(TSL)**](#form_lightsaber_ancient_ii-tsl)
-      - [`FORM_LIGHTSABER_ANCIENT_III` **(TSL)**](#form_lightsaber_ancient_iii-tsl)
-      - [`FORM_LIGHTSABER_MASTER_I` **(TSL)**](#form_lightsaber_master_i-tsl)
-      - [`FORM_LIGHTSABER_MASTER_II` **(TSL)**](#form_lightsaber_master_ii-tsl)
-      - [`FORM_LIGHTSABER_MASTER_III` **(TSL)**](#form_lightsaber_master_iii-tsl)
-      - [`FORM_CONSULAR_FORCE_FOCUS_I` **(TSL)**](#form_consular_force_focus_i-tsl)
-      - [`FORM_CONSULAR_FORCE_FOCUS_II` **(TSL)**](#form_consular_force_focus_ii-tsl)
-      - [`FORM_CONSULAR_FORCE_FOCUS_III` **(TSL)**](#form_consular_force_focus_iii-tsl)
-      - [`FORM_CONSULAR_ENDURING_FORCE_I` **(TSL)**](#form_consular_enduring_force_i-tsl)
-      - [`FORM_CONSULAR_ENDURING_FORCE_II` **(TSL)**](#form_consular_enduring_force_ii-tsl)
-      - [`FORM_CONSULAR_ENDURING_FORCE_III` **(TSL)**](#form_consular_enduring_force_iii-tsl)
-      - [`FORM_CONSULAR_FORCE_AMPLIFICATION_I` **(TSL)**](#form_consular_force_amplification_i-tsl)
-      - [`FORM_CONSULAR_FORCE_AMPLIFICATION_II` **(TSL)**](#form_consular_force_amplification_ii-tsl)
-      - [`FORM_CONSULAR_FORCE_AMPLIFICATION_III` **(TSL)**](#form_consular_force_amplification_iii-tsl)
-      - [`FORM_CONSULAR_FORCE_SHELL_I` **(TSL)**](#form_consular_force_shell_i-tsl)
-      - [`FORM_CONSULAR_FORCE_SHELL_II` **(TSL)**](#form_consular_force_shell_ii-tsl)
-      - [`FORM_CONSULAR_FORCE_SHELL_III` **(TSL)**](#form_consular_force_shell_iii-tsl)
-      - [`FORM_CONSULAR_FORCE_POTENCY_I` **(TSL)**](#form_consular_force_potency_i-tsl)
-      - [`FORM_CONSULAR_FORCE_POTENCY_II` **(TSL)**](#form_consular_force_potency_ii-tsl)
-      - [`FORM_CONSULAR_FORCE_POTENCY_III` **(TSL)**](#form_consular_force_potency_iii-tsl)
-      - [`FORM_CONSULAR_REGENERATION_I` **(TSL)**](#form_consular_regeneration_i-tsl)
-      - [`FORM_CONSULAR_REGENERATION_II` **(TSL)**](#form_consular_regeneration_ii-tsl)
-      - [`FORM_CONSULAR_REGENERATION_III` **(TSL)**](#form_consular_regeneration_iii-tsl)
-      - [`FORM_CONSULAR_POWER_OF_THE_DARK_SIDE_I` **(TSL)**](#form_consular_power_of_the_dark_side_i-tsl)
-      - [`FORM_CONSULAR_POWER_OF_THE_DARK_SIDE_II` **(TSL)**](#form_consular_power_of_the_dark_side_ii-tsl)
-      - [`FORM_CONSULAR_POWER_OF_THE_DARK_SIDE_III` **(TSL)**](#form_consular_power_of_the_dark_side_iii-tsl)
-      - [`FORM_SABER_I_SHII_CHO` **(TSL)**](#form_saber_i_shii_cho-tsl)
-      - [`FORM_SABER_II_MAKASHI` **(TSL)**](#form_saber_ii_makashi-tsl)
-      - [`FORM_SABER_III_SORESU` **(TSL)**](#form_saber_iii_soresu-tsl)
-      - [`FORM_SABER_IV_ATARU` **(TSL)**](#form_saber_iv_ataru-tsl)
-      - [`FORM_SABER_V_SHIEN` **(TSL)**](#form_saber_v_shien-tsl)
-      - [`FORM_SABER_VI_NIMAN` **(TSL)**](#form_saber_vi_niman-tsl)
-      - [`FORM_SABER_VII_JUYO` **(TSL)**](#form_saber_vii_juyo-tsl)
-      - [`FORM_FORCE_I_FOCUS` **(TSL)**](#form_force_i_focus-tsl)
-      - [`FORM_FORCE_II_POTENCY` **(TSL)**](#form_force_ii_potency-tsl)
-      - [`FORM_FORCE_III_AFFINITY` **(TSL)**](#form_force_iii_affinity-tsl)
-      - [`FORM_FORCE_IV_MASTERY` **(TSL)**](#form_force_iv_mastery-tsl)
-      - [`STANDARD_FACTION_SELF_LOATHING` **(TSL)**](#standard_faction_self_loathing-tsl)
-      - [`STANDARD_FACTION_ONE_ON_ONE` **(TSL)**](#standard_faction_one_on_one-tsl)
-      - [`STANDARD_FACTION_PARTYPUPPET` **(TSL)**](#standard_faction_partypuppet-tsl)
-      - [`ACTION_FOLLOWOWNER` **(TSL)**](#action_followowner-tsl)
-      - [`PUP_SENSORBALL` **(TSL)**](#pup_sensorball-tsl)
-      - [`PUP_OTHER1` **(TSL)**](#pup_other1-tsl)
-      - [`PUP_OTHER2` **(TSL)**](#pup_other2-tsl)
-      - [`SHIELD_PLOT_MAN_M28AA` **(TSL)**](#shield_plot_man_m28aa-tsl)
-      - [`SHIELD_HEAT` **(TSL)**](#shield_heat-tsl)
-      - [`SHIELD_DREXL` **(TSL)**](#shield_drexl-tsl)
-      - [`VIDEO_EFFECT_CLAIRVOYANCE` **(TSL)**](#video_effect_clairvoyance-tsl)
-      - [`VIDEO_EFFECT_FORCESIGHT` **(TSL)**](#video_effect_forcesight-tsl)
-      - [`VIDEO_EFFECT_VISAS_FREELOOK` **(TSL)**](#video_effect_visas_freelook-tsl)
-      - [`VIDEO_EFFECT_CLAIRVOYANCEFULL` **(TSL)**](#video_effect_clairvoyancefull-tsl)
-      - [`VIDEO_EFFECT_FURY_1` **(TSL)**](#video_effect_fury_1-tsl)
-      - [`VIDEO_EFFECT_FURY_2` **(TSL)**](#video_effect_fury_2-tsl)
-      - [`VIDEO_EFFECT_FURY_3` **(TSL)**](#video_effect_fury_3-tsl)
-      - [`VIDEO_FFECT_SECURITY_NO_LABEL` **(TSL)**](#video_ffect_security_no_label-tsl)
-      - [`TUTORIAL_WINDOW_TEMP1` **(TSL)**](#tutorial_window_temp1-tsl)
-      - [`TUTORIAL_WINDOW_TEMP2` **(TSL)**](#tutorial_window_temp2-tsl)
-      - [`TUTORIAL_WINDOW_TEMP3` **(TSL)**](#tutorial_window_temp3-tsl)
-      - [`TUTORIAL_WINDOW_TEMP4` **(TSL)**](#tutorial_window_temp4-tsl)
-      - [`TUTORIAL_WINDOW_TEMP5` **(TSL)**](#tutorial_window_temp5-tsl)
-      - [`TUTORIAL_WINDOW_TEMP6` **(TSL)**](#tutorial_window_temp6-tsl)
-      - [`TUTORIAL_WINDOW_TEMP7` **(TSL)**](#tutorial_window_temp7-tsl)
-      - [`TUTORIAL_WINDOW_TEMP8` **(TSL)**](#tutorial_window_temp8-tsl)
-      - [`TUTORIAL_WINDOW_TEMP9` **(TSL)**](#tutorial_window_temp9-tsl)
-      - [`TUTORIAL_WINDOW_TEMP10` **(TSL)**](#tutorial_window_temp10-tsl)
-      - [`TUTORIAL_WINDOW_TEMP11` **(TSL)**](#tutorial_window_temp11-tsl)
-      - [`TUTORIAL_WINDOW_TEMP12` **(TSL)**](#tutorial_window_temp12-tsl)
-      - [`TUTORIAL_WINDOW_TEMP13` **(TSL)**](#tutorial_window_temp13-tsl)
-      - [`TUTORIAL_WINDOW_TEMP14` **(TSL)**](#tutorial_window_temp14-tsl)
-      - [`TUTORIAL_WINDOW_TEMP15` **(TSL)**](#tutorial_window_temp15-tsl)
-      - [`AI_LEVEL_VERY_HIGH` **(TSL)**](#ai_level_very_high-tsl)
-      - [`AI_LEVEL_HIGH` **(TSL)**](#ai_level_high-tsl)
-      - [`AI_LEVEL_NORMAL` **(TSL)**](#ai_level_normal-tsl)
-      - [`AI_LEVEL_LOW` **(TSL)**](#ai_level_low-tsl)
-      - [`AI_LEVEL_VERY_LOW` **(TSL)**](#ai_level_very_low-tsl)
-      - [`IMPLANT_NONE` **(TSL)**](#implant_none-tsl)
-      - [`IMPLANT_REGEN` **(TSL)**](#implant_regen-tsl)
-      - [`IMPLANT_STR` **(TSL)**](#implant_str-tsl)
-      - [`IMPLANT_END` **(TSL)**](#implant_end-tsl)
-      - [`IMPLANT_AGI` **(TSL)**](#implant_agi-tsl)
-      - [`FORFEIT_NO_FORCE_POWERS` **(TSL)**](#forfeit_no_force_powers-tsl)
-      - [`FORFEIT_NO_ITEMS` **(TSL)**](#forfeit_no_items-tsl)
-      - [`FORFEIT_NO_WEAPONS` **(TSL)**](#forfeit_no_weapons-tsl)
-      - [`FORFEIT_DXUN_SWORD_ONLY` **(TSL)**](#forfeit_dxun_sword_only-tsl)
-      - [`FORFEIT_NO_ARMOR` **(TSL)**](#forfeit_no_armor-tsl)
-      - [`FORFEIT_NO_RANGED` **(TSL)**](#forfeit_no_ranged-tsl)
-      - [`FORFEIT_NO_LIGHTSABER` **(TSL)**](#forfeit_no_lightsaber-tsl)
-      - [`FORFEIT_NO_ITEM_BUT_SHIELD` **(TSL)**](#forfeit_no_item_but_shield-tsl)
+    - Other Constants
+      - `TRUE` **(K1 \& TSL)**
+      - `FALSE` **(K1 \& TSL)**
+      - `PI` **(K1 \& TSL)**
+      - `ATTITUDE_NEUTRAL` **(K1 \& TSL)**
+      - `ATTITUDE_AGGRESSIVE` **(K1 \& TSL)**
+      - `ATTITUDE_DEFENSIVE` **(K1 \& TSL)**
+      - `ATTITUDE_SPECIAL` **(K1 \& TSL)**
+      - `RADIUS_SIZE_SMALL` **(K1 \& TSL)**
+      - `RADIUS_SIZE_MEDIUM` **(K1 \& TSL)**
+      - `RADIUS_SIZE_LARGE` **(K1 \& TSL)**
+      - `RADIUS_SIZE_HUGE` **(K1 \& TSL)**
+      - `RADIUS_SIZE_GARGANTUAN` **(K1 \& TSL)**
+      - `RADIUS_SIZE_COLOSSAL` **(K1 \& TSL)**
+      - `ATTACK_RESULT_INVALID` **(K1 \& TSL)**
+      - `ATTACK_RESULT_HIT_SUCCESSFUL` **(K1 \& TSL)**
+      - `ATTACK_RESULT_CRITICAL_HIT` **(K1 \& TSL)**
+      - `ATTACK_RESULT_AUTOMATIC_HIT` **(K1 \& TSL)**
+      - `ATTACK_RESULT_MISS` **(K1 \& TSL)**
+      - `ATTACK_RESULT_ATTACK_RESISTED` **(K1 \& TSL)**
+      - `ATTACK_RESULT_ATTACK_FAILED` **(K1 \& TSL)**
+      - `ATTACK_RESULT_PARRIED` **(K1 \& TSL)**
+      - `ATTACK_RESULT_DEFLECTED` **(K1 \& TSL)**
+      - `AOE_PER_FOGACID` **(K1 \& TSL)**
+      - `AOE_PER_FOGFIRE` **(K1 \& TSL)**
+      - `AOE_PER_FOGSTINK` **(K1 \& TSL)**
+      - `AOE_PER_FOGKILL` **(K1 \& TSL)**
+      - `AOE_PER_FOGMIND` **(K1 \& TSL)**
+      - `AOE_PER_WALLFIRE` **(K1 \& TSL)**
+      - `AOE_PER_WALLWIND` **(K1 \& TSL)**
+      - `AOE_PER_WALLBLADE` **(K1 \& TSL)**
+      - `AOE_PER_WEB` **(K1 \& TSL)**
+      - `AOE_PER_ENTANGLE` **(K1 \& TSL)**
+      - `AOE_PER_DARKNESS` **(K1 \& TSL)**
+      - `AOE_MOB_CIRCEVIL` **(K1 \& TSL)**
+      - `AOE_MOB_CIRCGOOD` **(K1 \& TSL)**
+      - `AOE_MOB_CIRCLAW` **(K1 \& TSL)**
+      - `AOE_MOB_CIRCCHAOS` **(K1 \& TSL)**
+      - `AOE_MOB_FEAR` **(K1 \& TSL)**
+      - `AOE_MOB_BLINDING` **(K1 \& TSL)**
+      - `AOE_MOB_UNEARTHLY` **(K1 \& TSL)**
+      - `AOE_MOB_MENACE` **(K1 \& TSL)**
+      - `AOE_MOB_UNNATURAL` **(K1 \& TSL)**
+      - `AOE_MOB_STUN` **(K1 \& TSL)**
+      - `AOE_MOB_PROTECTION` **(K1 \& TSL)**
+      - `AOE_MOB_FIRE` **(K1 \& TSL)**
+      - `AOE_MOB_FROST` **(K1 \& TSL)**
+      - `AOE_MOB_ELECTRICAL` **(K1 \& TSL)**
+      - `AOE_PER_FOGGHOUL` **(K1 \& TSL)**
+      - `AOE_MOB_TYRANT_FOG` **(K1 \& TSL)**
+      - `AOE_PER_STORM` **(K1 \& TSL)**
+      - `AOE_PER_INVIS_SPHERE` **(K1 \& TSL)**
+      - `AOE_MOB_SILENCE` **(K1 \& TSL)**
+      - `AOE_PER_DELAY_BLAST_FIREBALL` **(K1 \& TSL)**
+      - `AOE_PER_GREASE` **(K1 \& TSL)**
+      - `AOE_PER_CREEPING_DOOM` **(K1 \& TSL)**
+      - `AOE_PER_EVARDS_BLACK_TENTACLES` **(K1 \& TSL)**
+      - `AOE_MOB_INVISIBILITY_PURGE` **(K1 \& TSL)**
+      - `AOE_MOB_DRAGON_FEAR` **(K1 \& TSL)**
+      - `FORCE_POWER_ALL_FORCE_POWERS` **(K1 \& TSL)**
+      - `FORCE_POWER_MASTER_ALTER` **(K1 \& TSL)**
+      - `FORCE_POWER_MASTER_CONTROL` **(K1 \& TSL)**
+      - `FORCE_POWER_MASTER_SENSE` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_JUMP_ADVANCED` **(K1 \& TSL)**
+      - `FORCE_POWER_LIGHT_SABER_THROW_ADVANCED` **(K1 \& TSL)**
+      - `FORCE_POWER_REGNERATION_ADVANCED` **(K1 \& TSL)**
+      - `FORCE_POWER_AFFECT_MIND` **(K1 \& TSL)**
+      - `FORCE_POWER_AFFLICTION` **(K1 \& TSL)**
+      - `FORCE_POWER_SPEED_BURST` **(K1 \& TSL)**
+      - `FORCE_POWER_CHOKE` **(K1 \& TSL)**
+      - `FORCE_POWER_CURE` **(K1 \& TSL)**
+      - `FORCE_POWER_DEATH_FIELD` **(K1 \& TSL)**
+      - `FORCE_POWER_DROID_DISABLE` **(K1 \& TSL)**
+      - `FORCE_POWER_DROID_DESTROY` **(K1 \& TSL)**
+      - `FORCE_POWER_DOMINATE` **(K1 \& TSL)**
+      - `FORCE_POWER_DRAIN_LIFE` **(K1 \& TSL)**
+      - `FORCE_POWER_FEAR` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_ARMOR` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_AURA` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_BREACH` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_IMMUNITY` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_JUMP` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_MIND` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_PUSH` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_SHIELD` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_STORM` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_WAVE` **(K1 \& TSL)**
+      - `FORCE_POWER_FORCE_WHIRLWIND` **(K1 \& TSL)**
+      - `FORCE_POWER_HEAL` **(K1 \& TSL)**
+      - `FORCE_POWER_HOLD` **(K1 \& TSL)**
+      - `FORCE_POWER_HORROR` **(K1 \& TSL)**
+      - `FORCE_POWER_INSANITY` **(K1 \& TSL)**
+      - `FORCE_POWER_KILL` **(K1 \& TSL)**
+      - `FORCE_POWER_KNIGHT_MIND` **(K1 \& TSL)**
+      - `FORCE_POWER_KNIGHT_SPEED` **(K1 \& TSL)**
+      - `FORCE_POWER_LIGHTNING` **(K1 \& TSL)**
+      - `FORCE_POWER_MIND_MASTERY` **(K1 \& TSL)**
+      - `FORCE_POWER_SPEED_MASTERY` **(K1 \& TSL)**
+      - `FORCE_POWER_PLAGUE` **(K1 \& TSL)**
+      - `FORCE_POWER_REGENERATION` **(K1 \& TSL)**
+      - `FORCE_POWER_RESIST_COLD_HEAT_ENERGY` **(K1 \& TSL)**
+      - `FORCE_POWER_RESIST_FORCE` **(K1 \& TSL)**
+      - `FORCE_POWER_SHOCK` **(K1 \& TSL)**
+      - `FORCE_POWER_SLEEP` **(K1 \& TSL)**
+      - `FORCE_POWER_SLOW` **(K1 \& TSL)**
+      - `FORCE_POWER_STUN` **(K1 \& TSL)**
+      - `FORCE_POWER_DROID_STUN` **(K1 \& TSL)**
+      - `FORCE_POWER_SUPRESS_FORCE` **(K1 \& TSL)**
+      - `FORCE_POWER_LIGHT_SABER_THROW` **(K1 \& TSL)**
+      - `FORCE_POWER_WOUND` **(K1 \& TSL)**
+      - `PERSISTENT_ZONE_ACTIVE` **(K1 \& TSL)**
+      - `PERSISTENT_ZONE_FOLLOW` **(K1 \& TSL)**
+      - `INVALID_STANDARD_FACTION` **(K1 \& TSL)**
+      - `STANDARD_FACTION_HOSTILE_1` **(K1 \& TSL)**
+      - `STANDARD_FACTION_FRIENDLY_1` **(K1 \& TSL)**
+      - `STANDARD_FACTION_HOSTILE_2` **(K1 \& TSL)**
+      - `STANDARD_FACTION_FRIENDLY_2` **(K1 \& TSL)**
+      - `STANDARD_FACTION_NEUTRAL` **(K1 \& TSL)**
+      - `STANDARD_FACTION_INSANE` **(K1 \& TSL)**
+      - `STANDARD_FACTION_PTAT_TUSKAN` **(K1 \& TSL)**
+      - `STANDARD_FACTION_GLB_XOR` **(K1 \& TSL)**
+      - `STANDARD_FACTION_SURRENDER_1` **(K1 \& TSL)**
+      - `STANDARD_FACTION_SURRENDER_2` **(K1 \& TSL)**
+      - `STANDARD_FACTION_PREDATOR` **(K1 \& TSL)**
+      - `STANDARD_FACTION_PREY` **(K1 \& TSL)**
+      - `STANDARD_FACTION_TRAP` **(K1 \& TSL)**
+      - `STANDARD_FACTION_ENDAR_SPIRE` **(K1 \& TSL)**
+      - `STANDARD_FACTION_RANCOR` **(K1 \& TSL)**
+      - `STANDARD_FACTION_GIZKA_1` **(K1 \& TSL)**
+      - `STANDARD_FACTION_GIZKA_2` **(K1 \& TSL)**
+      - `SUBSKILL_FLAGTRAP` **(K1 \& TSL)**
+      - `SUBSKILL_RECOVERTRAP` **(K1 \& TSL)**
+      - `SUBSKILL_EXAMINETRAP` **(K1 \& TSL)**
+      - `TALENT_TYPE_FORCE` **(K1 \& TSL)**
+      - `TALENT_TYPE_SPELL` **(K1 \& TSL)**
+      - `TALENT_TYPE_FEAT` **(K1 \& TSL)**
+      - `TALENT_TYPE_SKILL` **(K1 \& TSL)**
+      - `TALENT_EXCLUDE_ALL_OF_TYPE` **(K1 \& TSL)**
+      - `GUI_PANEL_PLAYER_DEATH` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_WEREWOLF` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_WERERAT` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_WERECAT` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_GIANT_SPIDER` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_TROLL` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_UMBER_HULK` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_PIXIE` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_ZOMBIE` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_RED_DRAGON` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_FIRE_GIANT` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_BALOR` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_DEATH_SLAAD` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_IRON_GOLEM` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_HUGE_FIRE_ELEMENTAL` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_HUGE_WATER_ELEMENTAL` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_HUGE_EARTH_ELEMENTAL` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_HUGE_AIR_ELEMENTAL` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_ELDER_FIRE_ELEMENTAL` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_ELDER_WATER_ELEMENTAL` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_ELDER_EARTH_ELEMENTAL` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_ELDER_AIR_ELEMENTAL` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_BROWN_BEAR` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_PANTHER` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_WOLF` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_BOAR` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_BADGER` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_PENGUIN` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_COW` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_DOOM_KNIGHT` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_YUANTI` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_IMP` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_QUASIT` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_SUCCUBUS` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_DIRE_BROWN_BEAR` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_DIRE_PANTHER` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_DIRE_WOLF` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_DIRE_BOAR` **(K1 \& TSL)**
+      - `POLYMORPH_TYPE_DIRE_BADGER` **(K1 \& TSL)**
+      - `CREATURE_SIZE_INVALID` **(K1 \& TSL)**
+      - `CREATURE_SIZE_TINY` **(K1 \& TSL)**
+      - `CREATURE_SIZE_SMALL` **(K1 \& TSL)**
+      - `CREATURE_SIZE_MEDIUM` **(K1 \& TSL)**
+      - `CREATURE_SIZE_LARGE` **(K1 \& TSL)**
+      - `CREATURE_SIZE_HUGE` **(K1 \& TSL)**
+      - `CAMERA_MODE_CHASE_CAMERA` **(K1 \& TSL)**
+      - `CAMERA_MODE_TOP_DOWN` **(K1 \& TSL)**
+      - `CAMERA_MODE_STIFF_CHASE_CAMERA` **(K1 \& TSL)**
+      - `GAME_DIFFICULTY_VERY_EASY` **(K1 \& TSL)**
+      - `GAME_DIFFICULTY_EASY` **(K1 \& TSL)**
+      - `GAME_DIFFICULTY_NORMAL` **(K1 \& TSL)**
+      - `GAME_DIFFICULTY_CORE_RULES` **(K1 \& TSL)**
+      - `GAME_DIFFICULTY_DIFFICULT` **(K1 \& TSL)**
+      - `ACTION_MOVETOPOINT` **(K1 \& TSL)**
+      - `ACTION_PICKUPITEM` **(K1 \& TSL)**
+      - `ACTION_DROPITEM` **(K1 \& TSL)**
+      - `ACTION_ATTACKOBJECT` **(K1 \& TSL)**
+      - `ACTION_CASTSPELL` **(K1 \& TSL)**
+      - `ACTION_OPENDOOR` **(K1 \& TSL)**
+      - `ACTION_CLOSEDOOR` **(K1 \& TSL)**
+      - `ACTION_DIALOGOBJECT` **(K1 \& TSL)**
+      - `ACTION_DISABLETRAP` **(K1 \& TSL)**
+      - `ACTION_RECOVERTRAP` **(K1 \& TSL)**
+      - `ACTION_FLAGTRAP` **(K1 \& TSL)**
+      - `ACTION_EXAMINETRAP` **(K1 \& TSL)**
+      - `ACTION_SETTRAP` **(K1 \& TSL)**
+      - `ACTION_OPENLOCK` **(K1 \& TSL)**
+      - `ACTION_LOCK` **(K1 \& TSL)**
+      - `ACTION_USEOBJECT` **(K1 \& TSL)**
+      - `ACTION_ANIMALEMPATHY` **(K1 \& TSL)**
+      - `ACTION_REST` **(K1 \& TSL)**
+      - `ACTION_TAUNT` **(K1 \& TSL)**
+      - `ACTION_ITEMCASTSPELL` **(K1 \& TSL)**
+      - `ACTION_COUNTERSPELL` **(K1 \& TSL)**
+      - `ACTION_HEAL` **(K1 \& TSL)**
+      - `ACTION_PICKPOCKET` **(K1 \& TSL)**
+      - `ACTION_FOLLOW` **(K1 \& TSL)**
+      - `ACTION_WAIT` **(K1 \& TSL)**
+      - `ACTION_SIT` **(K1 \& TSL)**
+      - `ACTION_FOLLOWLEADER` **(K1 \& TSL)**
+      - `ACTION_INVALID` **(K1 \& TSL)**
+      - `ACTION_QUEUEEMPTY` **(K1 \& TSL)**
+      - `SWMINIGAME_TRACKFOLLOWER_SOUND_ENGINE` **(K1 \& TSL)**
+      - `SWMINIGAME_TRACKFOLLOWER_SOUND_DEATH` **(K1 \& TSL)**
+      - `PLOT_O_DOOM` **(K1 \& TSL)**
+      - `PLOT_O_SCARY_STUFF` **(K1 \& TSL)**
+      - `PLOT_O_BIG_MONSTERS` **(K1 \& TSL)**
+      - `FORMATION_WEDGE` **(K1 \& TSL)**
+      - `FORMATION_LINE` **(K1 \& TSL)**
+      - `SUBSCREEN_ID_NONE` **(K1 \& TSL)**
+      - `SUBSCREEN_ID_EQUIP` **(K1 \& TSL)**
+      - `SUBSCREEN_ID_ITEM` **(K1 \& TSL)**
+      - `SUBSCREEN_ID_CHARACTER_RECORD` **(K1 \& TSL)**
+      - `SUBSCREEN_ID_ABILITY` **(K1 \& TSL)**
+      - `SUBSCREEN_ID_MAP` **(K1 \& TSL)**
+      - `SUBSCREEN_ID_QUEST` **(K1 \& TSL)**
+      - `SUBSCREEN_ID_OPTIONS` **(K1 \& TSL)**
+      - `SUBSCREEN_ID_MESSAGES` **(K1 \& TSL)**
+      - `SHIELD_DROID_ENERGY_1` **(K1 \& TSL)**
+      - `SHIELD_DROID_ENERGY_2` **(K1 \& TSL)**
+      - `SHIELD_DROID_ENERGY_3` **(K1 \& TSL)**
+      - `SHIELD_DROID_ENVIRO_1` **(K1 \& TSL)**
+      - `SHIELD_DROID_ENVIRO_2` **(K1 \& TSL)**
+      - `SHIELD_DROID_ENVIRO_3` **(K1 \& TSL)**
+      - `SHIELD_ENERGY` **(K1 \& TSL)**
+      - `SHIELD_ENERGY_SITH` **(K1 \& TSL)**
+      - `SHIELD_ENERGY_ARKANIAN` **(K1 \& TSL)**
+      - `SHIELD_ECHANI` **(K1 \& TSL)**
+      - `SHIELD_MANDALORIAN_MELEE` **(K1 \& TSL)**
+      - `SHIELD_MANDALORIAN_POWER` **(K1 \& TSL)**
+      - `SHIELD_DUELING_ECHANI` **(K1 \& TSL)**
+      - `SHIELD_DUELING_YUSANIS` **(K1 \& TSL)**
+      - `SHIELD_VERPINE_PROTOTYPE` **(K1 \& TSL)**
+      - `SHIELD_ANTIQUE_DROID` **(K1 \& TSL)**
+      - `SHIELD_PLOT_TAR_M09AA` **(K1 \& TSL)**
+      - `SHIELD_PLOT_UNK_M44AA` **(K1 \& TSL)**
+      - `VIDEO_EFFECT_NONE` **(K1 \& TSL)**
+      - `VIDEO_EFFECT_SECURITY_CAMERA` **(K1 \& TSL)**
+      - `VIDEO_EFFECT_FREELOOK_T3M4` **(K1 \& TSL)**
+      - `VIDEO_EFFECT_FREELOOK_HK47` **(K1 \& TSL)**
+      - `TUTORIAL_WINDOW_START_SWOOP_RACE` **(K1 \& TSL)**
+      - `TUTORIAL_WINDOW_RETURN_TO_BASE` **(K1 \& TSL)**
+      - `TUTORIAL_WINDOW_MOVEMENT_KEYS` **(K1)**
+      - `LIVE_CONTENT_PKG1` **(K1 \& TSL)**
+      - `LIVE_CONTENT_PKG2` **(K1 \& TSL)**
+      - `LIVE_CONTENT_PKG3` **(K1 \& TSL)**
+      - `LIVE_CONTENT_PKG4` **(K1 \& TSL)**
+      - `LIVE_CONTENT_PKG5` **(K1 \& TSL)**
+      - `LIVE_CONTENT_PKG6` **(K1 \& TSL)**
+      - `sLanguage` **(K1)**
+      - `FORM_MASK_FORCE_FOCUS` **(TSL)**
+      - `FORM_MASK_ENDURING_FORCE` **(TSL)**
+      - `FORM_MASK_FORCE_AMPLIFICATION` **(TSL)**
+      - `FORM_MASK_FORCE_POTENCY` **(TSL)**
+      - `FORM_MASK_REGENERATION` **(TSL)**
+      - `FORM_MASK_POWER_OF_THE_DARK_SIDE` **(TSL)**
+      - `FORCE_POWER_MASTER_ENERGY_RESISTANCE` **(TSL)**
+      - `FORCE_POWER_MASTER_HEAL` **(TSL)**
+      - `FORCE_POWER_FORCE_BARRIER` **(TSL)**
+      - `FORCE_POWER_IMPROVED_FORCE_BARRIER` **(TSL)**
+      - `FORCE_POWER_MASTER_FORCE_BARRIER` **(TSL)**
+      - `FORCE_POWER_BATTLE_MEDITATION_PC` **(TSL)**
+      - `FORCE_POWER_IMPROVED_BATTLE_MEDITATION_PC` **(TSL)**
+      - `FORCE_POWER_MASTER_BATTLE_MEDITATION_PC` **(TSL)**
+      - `FORCE_POWER_BAT_MED_ENEMY` **(TSL)**
+      - `FORCE_POWER_IMP_BAT_MED_ENEMY` **(TSL)**
+      - `FORCE_POWER_MAS_BAT_MED_ENEMY` **(TSL)**
+      - `FORCE_POWER_CRUSH_OPPOSITION_I` **(TSL)**
+      - `FORCE_POWER_CRUSH_OPPOSITION_II` **(TSL)**
+      - `FORCE_POWER_CRUSH_OPPOSITION_III` **(TSL)**
+      - `FORCE_POWER_CRUSH_OPPOSITION_IV` **(TSL)**
+      - `FORCE_POWER_CRUSH_OPPOSITION_V` **(TSL)**
+      - `FORCE_POWER_CRUSH_OPPOSITION_VI` **(TSL)**
+      - `FORCE_POWER_FORCE_BODY` **(TSL)**
+      - `FORCE_POWER_IMPROVED_FORCE_BODY` **(TSL)**
+      - `FORCE_POWER_MASTER_FORCE_BODY` **(TSL)**
+      - `FORCE_POWER_DRAIN_FORCE` **(TSL)**
+      - `FORCE_POWER_IMPROVED_DRAIN_FORCE` **(TSL)**
+      - `FORCE_POWER_MASTER_DRAIN_FORCE` **(TSL)**
+      - `FORCE_POWER_FORCE_CAMOUFLAGE` **(TSL)**
+      - `FORCE_POWER_IMPROVED_FORCE_CAMOUFLAGE` **(TSL)**
+      - `FORCE_POWER_MASTER_FORCE_CAMOUFLAGE` **(TSL)**
+      - `FORCE_POWER_FORCE_SCREAM` **(TSL)**
+      - `FORCE_POWER_IMPROVED_FORCE_SCREAM` **(TSL)**
+      - `FORCE_POWER_MASTER_FORCE_SCREAM` **(TSL)**
+      - `FORCE_POWER_FORCE_REPULSION` **(TSL)**
+      - `FORCE_POWER_FURY` **(TSL)**
+      - `FORCE_POWER_IMPROVED_FURY` **(TSL)**
+      - `FORCE_POWER_MASTER_FURY` **(TSL)**
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_I` **(TSL)**
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_II` **(TSL)**
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_III` **(TSL)**
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_IV` **(TSL)**
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_V` **(TSL)**
+      - `FORCE_POWER_INSPIRE_FOLLOWERS_VI` **(TSL)**
+      - `FORCE_POWER_REVITALIZE` **(TSL)**
+      - `FORCE_POWER_IMPROVED_REVITALIZE` **(TSL)**
+      - `FORCE_POWER_MASTER_REVITALIZE` **(TSL)**
+      - `FORCE_POWER_FORCE_SIGHT` **(TSL)**
+      - `FORCE_POWER_FORCE_CRUSH` **(TSL)**
+      - `FORCE_POWER_PRECOGNITION` **(TSL)**
+      - `FORCE_POWER_BATTLE_PRECOGNITION` **(TSL)**
+      - `FORCE_POWER_FORCE_ENLIGHTENMENT` **(TSL)**
+      - `FORCE_POWER_MIND_TRICK` **(TSL)**
+      - `FORCE_POWER_CONFUSION` **(TSL)**
+      - `FORCE_POWER_BEAST_TRICK` **(TSL)**
+      - `FORCE_POWER_BEAST_CONFUSION` **(TSL)**
+      - `FORCE_POWER_DROID_TRICK` **(TSL)**
+      - `FORCE_POWER_DROID_CONFUSION` **(TSL)**
+      - `FORCE_POWER_BREATH_CONTROL` **(TSL)**
+      - `FORCE_POWER_WOOKIEE_RAGE_I` **(TSL)**
+      - `FORCE_POWER_WOOKIEE_RAGE_II` **(TSL)**
+      - `FORCE_POWER_WOOKIEE_RAGE_III` **(TSL)**
+      - `FORM_LIGHTSABER_PADAWAN_I` **(TSL)**
+      - `FORM_LIGHTSABER_PADAWAN_II` **(TSL)**
+      - `FORM_LIGHTSABER_PADAWAN_III` **(TSL)**
+      - `FORM_LIGHTSABER_DAKLEAN_I` **(TSL)**
+      - `FORM_LIGHTSABER_DAKLEAN_II` **(TSL)**
+      - `FORM_LIGHTSABER_DAKLEAN_III` **(TSL)**
+      - `FORM_LIGHTSABER_SENTINEL_I` **(TSL)**
+      - `FORM_LIGHTSABER_SENTINEL_II` **(TSL)**
+      - `FORM_LIGHTSABER_SENTINEL_III` **(TSL)**
+      - `FORM_LIGHTSABER_SODAK_I` **(TSL)**
+      - `FORM_LIGHTSABER_SODAK_II` **(TSL)**
+      - `FORM_LIGHTSABER_SODAK_III` **(TSL)**
+      - `FORM_LIGHTSABER_ANCIENT_I` **(TSL)**
+      - `FORM_LIGHTSABER_ANCIENT_II` **(TSL)**
+      - `FORM_LIGHTSABER_ANCIENT_III` **(TSL)**
+      - `FORM_LIGHTSABER_MASTER_I` **(TSL)**
+      - `FORM_LIGHTSABER_MASTER_II` **(TSL)**
+      - `FORM_LIGHTSABER_MASTER_III` **(TSL)**
+      - `FORM_CONSULAR_FORCE_FOCUS_I` **(TSL)**
+      - `FORM_CONSULAR_FORCE_FOCUS_II` **(TSL)**
+      - `FORM_CONSULAR_FORCE_FOCUS_III` **(TSL)**
+      - `FORM_CONSULAR_ENDURING_FORCE_I` **(TSL)**
+      - `FORM_CONSULAR_ENDURING_FORCE_II` **(TSL)**
+      - `FORM_CONSULAR_ENDURING_FORCE_III` **(TSL)**
+      - `FORM_CONSULAR_FORCE_AMPLIFICATION_I` **(TSL)**
+      - `FORM_CONSULAR_FORCE_AMPLIFICATION_II` **(TSL)**
+      - `FORM_CONSULAR_FORCE_AMPLIFICATION_III` **(TSL)**
+      - `FORM_CONSULAR_FORCE_SHELL_I` **(TSL)**
+      - `FORM_CONSULAR_FORCE_SHELL_II` **(TSL)**
+      - `FORM_CONSULAR_FORCE_SHELL_III` **(TSL)**
+      - `FORM_CONSULAR_FORCE_POTENCY_I` **(TSL)**
+      - `FORM_CONSULAR_FORCE_POTENCY_II` **(TSL)**
+      - `FORM_CONSULAR_FORCE_POTENCY_III` **(TSL)**
+      - `FORM_CONSULAR_REGENERATION_I` **(TSL)**
+      - `FORM_CONSULAR_REGENERATION_II` **(TSL)**
+      - `FORM_CONSULAR_REGENERATION_III` **(TSL)**
+      - `FORM_CONSULAR_POWER_OF_THE_DARK_SIDE_I` **(TSL)**
+      - `FORM_CONSULAR_POWER_OF_THE_DARK_SIDE_II` **(TSL)**
+      - `FORM_CONSULAR_POWER_OF_THE_DARK_SIDE_III` **(TSL)**
+      - `FORM_SABER_I_SHII_CHO` **(TSL)**
+      - `FORM_SABER_II_MAKASHI` **(TSL)**
+      - `FORM_SABER_III_SORESU` **(TSL)**
+      - `FORM_SABER_IV_ATARU` **(TSL)**
+      - `FORM_SABER_V_SHIEN` **(TSL)**
+      - `FORM_SABER_VI_NIMAN` **(TSL)**
+      - `FORM_SABER_VII_JUYO` **(TSL)**
+      - `FORM_FORCE_I_FOCUS` **(TSL)**
+      - `FORM_FORCE_II_POTENCY` **(TSL)**
+      - `FORM_FORCE_III_AFFINITY` **(TSL)**
+      - `FORM_FORCE_IV_MASTERY` **(TSL)**
+      - `STANDARD_FACTION_SELF_LOATHING` **(TSL)**
+      - `STANDARD_FACTION_ONE_ON_ONE` **(TSL)**
+      - `STANDARD_FACTION_PARTYPUPPET` **(TSL)**
+      - `ACTION_FOLLOWOWNER` **(TSL)**
+      - `PUP_SENSORBALL` **(TSL)**
+      - `PUP_OTHER1` **(TSL)**
+      - `PUP_OTHER2` **(TSL)**
+      - `SHIELD_PLOT_MAN_M28AA` **(TSL)**
+      - `SHIELD_HEAT` **(TSL)**
+      - `SHIELD_DREXL` **(TSL)**
+      - `VIDEO_EFFECT_CLAIRVOYANCE` **(TSL)**
+      - `VIDEO_EFFECT_FORCESIGHT` **(TSL)**
+      - `VIDEO_EFFECT_VISAS_FREELOOK` **(TSL)**
+      - `VIDEO_EFFECT_CLAIRVOYANCEFULL` **(TSL)**
+      - `VIDEO_EFFECT_FURY_1` **(TSL)**
+      - `VIDEO_EFFECT_FURY_2` **(TSL)**
+      - `VIDEO_EFFECT_FURY_3` **(TSL)**
+      - `VIDEO_FFECT_SECURITY_NO_LABEL` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP1` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP2` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP3` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP4` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP5` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP6` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP7` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP8` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP9` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP10` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP11` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP12` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP13` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP14` **(TSL)**
+      - `TUTORIAL_WINDOW_TEMP15` **(TSL)**
+      - `AI_LEVEL_VERY_HIGH` **(TSL)**
+      - `AI_LEVEL_HIGH` **(TSL)**
+      - `AI_LEVEL_NORMAL` **(TSL)**
+      - `AI_LEVEL_LOW` **(TSL)**
+      - `AI_LEVEL_VERY_LOW` **(TSL)**
+      - `IMPLANT_NONE` **(TSL)**
+      - `IMPLANT_REGEN` **(TSL)**
+      - `IMPLANT_STR` **(TSL)**
+      - `IMPLANT_END` **(TSL)**
+      - `IMPLANT_AGI` **(TSL)**
+      - `FORFEIT_NO_FORCE_POWERS` **(TSL)**
+      - `FORFEIT_NO_ITEMS` **(TSL)**
+      - `FORFEIT_NO_WEAPONS` **(TSL)**
+      - `FORFEIT_DXUN_SWORD_ONLY` **(TSL)**
+      - `FORFEIT_NO_ARMOR` **(TSL)**
+      - `FORFEIT_NO_RANGED` **(TSL)**
+      - `FORFEIT_NO_LIGHTSABER` **(TSL)**
+      - `FORFEIT_NO_ITEM_BUT_SHIELD` **(TSL)**
   - [Cross-References](#cross-references)
 <!-- TOC_END -->
 
