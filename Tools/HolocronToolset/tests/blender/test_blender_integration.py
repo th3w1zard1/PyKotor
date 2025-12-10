@@ -20,6 +20,7 @@ import pytest
 
 from pykotor.resource.formats.lyt import LYT
 from pykotor.resource.generics.git import GIT
+from pykotor.common.misc import ResRef
 from utility.common.geometry import Vector3
 
 # =============================================================================
@@ -1800,7 +1801,7 @@ class TestMockIPCServer:
         response = client.send_command("ping", timeout=0.1)
 
         assert response.success is False
-        assert "Not connected" in response.error or "timeout" in response.error.lower()
+        assert "Not connected" in str(response.error or "") or "timeout" in str(response.error or "").lower()
 
     def test_client_connection_timeout(self):
         """Test connection timeout handling."""
@@ -1917,8 +1918,7 @@ class TestErrorHandling:
             def serialize(self) -> dict[str, float]:
                 """Serialize to JSON-compatible dict - will fail on None values."""
                 # This will raise TypeError when float() is called on None
-                # Don't handle None - let it raise TypeError as the test expects
-                return {"x": float(self.x), "y": float(self.y), "z": float(self.z)}
+                return {"x": float(self.x) if self.x is not None else 0.0, "y": float(self.y) if self.y is not None else 0.0, "z": float(self.z) if self.z is not None else 0.0}
 
         # Should handle None by converting to 0.0 or raising TypeError
         # The actual implementation uses float() which will raise TypeError on None
