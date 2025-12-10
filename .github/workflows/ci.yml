@@ -8,6 +8,54 @@ on:
   workflow_dispatch:
 
 jobs:
+  detect-packages:
+    name: Detect Packages
+    runs-on: ubuntu-latest
+    outputs:
+      tools_matrix: ${{ steps.detect.outputs.tools_matrix }}
+      libraries_matrix: ${{ steps.detect.outputs.libraries_matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Discover libraries and tools
+        id: detect
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import json
+          import os
+          from pathlib import Path
+
+          def list_dirs(root: Path):
+              if not root.exists():
+                  return []
+              return sorted([
+                  d.name for d in root.iterdir()
+                  if d.is_dir() and not d.name.startswith(".")
+              ])
+
+          def derive_build_name(name: str) -> str:
+              lower = name.lower()
+              if lower == "holocrontoolset":
+                  return "toolset"
+              return lower
+
+          libraries_root = Path("Libraries")
+          tools_root = Path("Tools")
+
+          libraries = [f"Libraries/{d}" for d in list_dirs(libraries_root)]
+          tools = []
+          for d in list_dirs(tools_root):
+              build = derive_build_name(d)
+              tools.append(f"Tools/{d}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"libraries_matrix={json.dumps(libraries)}\n")
+              fh.write(f"tools_matrix={json.dumps(tools)}\n")
+
+          print("Libraries:", libraries)
+          print("Tools:", tools)
+          PYTHON_SCRIPT
+
   test:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -75,18 +123,10 @@ jobs:
   build:
     name: Build packages
     runs-on: ubuntu-latest
-    needs: test
+    needs: [test, detect-packages]
     strategy:
       matrix:
-        package:
-          - Libraries/PyKotor
-          - Libraries/PyKotorGL
-          - Libraries/PyKotorFont
-          - Tools/HolocronToolset
-          - Tools/HoloPatcher
-          - Tools/BatchPatcher
-          - Tools/KotorDiff
-          - Tools/GuiConverter
+        package: ${{ fromJson(format('["{0}","{1}"]', join('","', fromJson(needs.detect-packages.outputs.libraries_matrix)), join('","', fromJson(needs.detect-packages.outputs.tools_matrix)))) }}
 
     steps:
       - name: Checkout code
