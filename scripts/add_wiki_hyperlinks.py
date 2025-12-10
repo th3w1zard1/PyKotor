@@ -413,6 +413,13 @@ REPLACEMENT_RULES.extend([
     ReplacementRule(r"\bself-contained archives?\b(?!\s*\([^)]*\))", "[self-contained archives](ERF-File-Format)", LinkCategory.GAME_TERMS, priority=8),
     ReplacementRule(r"\bmodule archives?\b(?!\s*\([^)]*\))", "[module archives](ERF-File-Format)", LinkCategory.GAME_TERMS, priority=8),
     ReplacementRule(r"\bsave game archives?\b(?!\s*\([^)]*\))", "[save game archives](ERF-File-Format)", LinkCategory.GAME_TERMS, priority=8),
+    # Compression and encoding terms
+    ReplacementRule(r"\bcompression\b(?!\s*\([^)]*\))", "[compression](BIF-File-Format#bzf-compression)", LinkCategory.TECHNICAL_TERMS, priority=5),
+    ReplacementRule(r"\bbounding box\b(?!\s*\([^)]*\))", "[bounding box](MDL-MDX-File-Format#model-header)", LinkCategory.TECHNICAL_TERMS, priority=5),
+    ReplacementRule(r"\bbounding boxes\b(?!\s*\([^)]*\))", "[bounding boxes](MDL-MDX-File-Format#model-header)", LinkCategory.TECHNICAL_TERMS, priority=5),
+    ReplacementRule(r"\bocclusion culling\b(?!\s*\([^)]*\))", "[occlusion culling](VIS-File-Format)", LinkCategory.TECHNICAL_TERMS, priority=5),
+    # Keep Wikipedia links for fundamental CS concepts (endianness, ASCII, IEEE 754, binary file, modular programming)
+    # These are well-established concepts where Wikipedia is the best free online source
 ])
 
 # 2DA file references
