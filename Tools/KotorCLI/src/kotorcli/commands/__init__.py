@@ -23,6 +23,7 @@ from kotorcli.commands.format_convert import (
 from kotorcli.commands.init import cmd_init  # type: ignore[module-not-found]
 from kotorcli.commands.install import cmd_install  # type: ignore[module-not-found]
 from kotorcli.commands.key_pack import cmd_key_pack  # type: ignore[module-not-found]
+from kotorcli.commands.kit_generate import cmd_kit_generate
 from kotorcli.commands.launch import cmd_launch  # type: ignore[module-not-found]
 from kotorcli.commands.list import cmd_list  # type: ignore[module-not-found]
 from kotorcli.commands.list_archive import cmd_list_archive  # type: ignore[module-not-found]
@@ -86,6 +87,7 @@ __all__ = [
     "cmd_investigate_module",
     "cmd_json2gff",
     "cmd_key_pack",
+    "cmd_kit_generate",
     "cmd_launch",
     "cmd_list",
     "cmd_list_archive",

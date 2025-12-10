@@ -15,6 +15,7 @@ from qtpy.QtCore import (
     QItemSelectionModel,
     QMimeData,
     QModelIndex,
+    QSignalBlocker,
     QTimer,
     Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
@@ -657,6 +658,8 @@ class DLGStandardItemModel(QStandardItemModel):
         item_row: int | None = (parent_item or self).rowCount() if row in (-1, None) else row
         assert item_row is not None, "item_row cannot be None in _process_link"
         links_list: list[DLGLink] = self.editor.core_dlg.starters if parent_item is None else parent_item.link.node.links  # pyright: ignore[reportOptionalMemberAccess]  # type: ignore[union-attr]
+        # Defensive cleanup: ensure there are no dangling None placeholders before reindexing.
+        links_list[:] = [lnk for lnk in links_list if lnk is not None]
         node_to_items: list[DLGStandardItem] = self.node_to_items.setdefault(item.link.node, [])
         if item not in node_to_items:
             node_to_items.append(item)
@@ -675,6 +678,8 @@ class DLGStandardItemModel(QStandardItemModel):
             # Link is new, insert it at the specified position
             links_list.insert(item_row, item.link)
         for i, link in enumerate(links_list):
+            if link is None:
+                continue
             link.list_index = i
         if isinstance(parent_item, DLGStandardItem):
             assert parent_item.link is not None, f"parent_item.link cannot be None. {parent_item.__class__.__name__}: {parent_item}"
@@ -955,10 +960,14 @@ class DLGStandardItemModel(QStandardItemModel):
             self.update_item_display_text(parent_item)
             self.sync_item_copies(parent_item.link, parent_item)
 
-        def expand_item(new_item: DLGStandardItem):
-            self.tree_view.expand(new_item.index())
-
-        QTimer.singleShot(0, expand_item)
+        # Expand immediately if the index is still valid; avoid delayed callbacks that might
+        # reference deleted Qt objects in headless test environments.
+        persistent_index = new_item.index()
+        if persistent_index.isValid():
+            try:
+                self.tree_view.expand(persistent_index)
+            except RuntimeError:
+                pass
         self.layoutChanged.emit()
         viewport: QWidget | None = self.tree_view.viewport()
         assert viewport is not None
@@ -1250,22 +1259,22 @@ class DLGStandardItemModel(QStandardItemModel):
         if new_row >= (item_parent or self).rowCount() or new_row < 0:
             return
         assert self.editor is not None, "self.editor is None in shift_item"
-        assert item_parent is not None, "item_parent is None in shift_item"
-        assert item_parent.link is not None, "item_parent.link is None in shift_item"
-        assert item_parent.link.node is not None, "item_parent.link.node is None in shift_item"
-        _temp_link: DLGLink = (
-            self.editor.core_dlg.starters[old_row]
-            if item_parent is None
-            else item_parent.link.node.links[old_row]  # pyright: ignore[reportOptionalMemberAccess]
-        )
+        sel_model: QItemSelectionModel | None = self.tree_view.selectionModel()
+        blocker: QSignalBlocker | None = QSignalBlocker(sel_model) if sel_model is not None else None
+        # Temporarily suppress update hooks so we can reposition the item, then
+        # re-synchronize the backing dialog graph explicitly.
+        self.ignoring_updates = True
         item_to_move: DLGStandardItem = (item_parent or self).takeRow(old_row)[0]
         (item_parent or self).insertRow(new_row, item_to_move)
-        sel_model: QItemSelectionModel | None = self.tree_view.selectionModel()
+        self.ignoring_updates = False
+        self._process_link(item_parent, item_to_move, new_row)
         if sel_model is not None and not no_selection_update:
             sel_model.select(
                 item_to_move.index(),
                 QItemSelectionModel.SelectionFlag.ClearAndSelect,
             )
+        # Re-enable selection change signals after selection has been updated.
+        blocker = None  # noqa: F841
 
         item_parent = item_to_move.parent()
         if isinstance(item_parent, DLGStandardItem):

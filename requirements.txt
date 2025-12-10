@@ -17,7 +17,6 @@
 -r Tools/KotorCLI/requirements.txt
 -r Tools/KotorDiff/requirements.txt
 -r Tools/HoloPazaak/requirements.txt
--r Tools/KitGenerator/requirements.txt
 -r Tools/HolocronAI/requirements.txt
 
 # Additional dependencies that may be needed across the workspace

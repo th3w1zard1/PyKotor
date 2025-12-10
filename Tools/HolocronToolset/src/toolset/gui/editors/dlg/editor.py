@@ -138,6 +138,7 @@ class DLGEditor(Editor):
 
         self.setup_dlg_tree_mvc()
         self.setup_extra_widgets()
+        self._normalize_enum_comboboxes()
         self._setup_signals()
         self._setup_menus()
         self._add_help_action()
@@ -289,6 +290,16 @@ class DLGEditor(Editor):
             parent = parent.parent()
             level += 1
         raise RuntimeError(f"DLGEditor is not in the parent hierarchy, attempted {level} levels.")
+
+    def _normalize_enum_comboboxes(self) -> None:
+        """Ensure enum-backed combo boxes align with their enum sizes across Qt backends."""
+        max_conv = len(DLGConversationType)
+        while self.ui.conversationSelect.count() > max_conv:
+            self.ui.conversationSelect.removeItem(self.ui.conversationSelect.count() - 1)
+
+        max_computer = len(DLGComputerType)
+        while self.ui.computerSelect.count() > max_computer:
+            self.ui.computerSelect.removeItem(self.ui.computerSelect.count() - 1)
 
     def _setup_signals(self):  # noqa: PLR0915
         """Connects UI signals to update node/link on change."""
@@ -1222,7 +1233,13 @@ Should return 1 or 0, representing a boolean.
         self.core_dlg.vo_id = self.ui.voIdEdit.text()
         self.core_dlg.ambient_track = ResRef(self.ui.ambientTrackCombo.currentText())
         self.core_dlg.camera_model = ResRef(self.ui.cameraModelSelect.currentText())
-        self.core_dlg.conversation_type = DLGConversationType(self.ui.conversationSelect.currentIndex())
+        conv_index: int = self.ui.conversationSelect.currentIndex()
+        try:
+            self.core_dlg.conversation_type = DLGConversationType(conv_index)
+        except ValueError:
+            # Some Qt backends may surface extra sentinel rows; clamp to the highest valid enum.
+            max_conv_value: int = max(ct.value for ct in DLGConversationType)
+            self.core_dlg.conversation_type = DLGConversationType(min(conv_index, max_conv_value))
         self.core_dlg.computer_type = DLGComputerType(self.ui.computerSelect.currentIndex())
         self.core_dlg.skippable = self.ui.skippableCheckbox.isChecked()
         self.core_dlg.animated_cut = self.ui.animatedCutCheckbox.isChecked()
@@ -2526,15 +2543,9 @@ Should return 1 or 0, representing a boolean.
             self.handle_sound_checked()
             self.model.sig_core_dlg_item_data_changed.emit(item)
             if not self.ui.cameraModelSelect.currentText() or not self.ui.cameraModelSelect.currentText().strip():
-                self.ui.cameraAnimSpin.blockSignals(True)
-                self.ui.cameraAnimSpin.setValue(-1)
-                self.ui.cameraAnimSpin.blockSignals(False)
                 self.ui.cameraAnimSpin.setDisabled(True)
                 self.ui.cameraAnimSpin.setToolTip("You must setup your custom `CameraModel` first (in the 'File Globals' dockpanel at the top.)")
             elif self.ui.cameraAngleSelect.currentText() != "Animated Camera":
-                self.ui.cameraAnimSpin.blockSignals(True)
-                self.ui.cameraAnimSpin.setValue(-1)
-                self.ui.cameraAnimSpin.blockSignals(False)
                 self.ui.cameraAnimSpin.setDisabled(True)
                 self.ui.cameraAnimSpin.setToolTip("CameraAngle must be set to 'Animated' to use this feature.")
             else:

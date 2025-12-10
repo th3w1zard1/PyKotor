@@ -172,7 +172,9 @@ class DLGLink(Generic[T_co]):
         if node_map is None:
             node_map = {}
 
-        link_key: int = hash(self)
+        # Use the stored hash cache directly to avoid platform-dependent truncation
+        # that can occur when calling the builtin ``hash`` on large integers.
+        link_key: int = self._hash_cache
         if link_key in node_map:
             return {"type": self.__class__.__name__, "ref": link_key}
 

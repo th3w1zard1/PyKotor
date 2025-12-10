@@ -53,6 +53,7 @@ from kotorcli.commands import (  # type: ignore[import-not-found, module-not-fou
     cmd_investigate_module,
     cmd_json2gff,
     cmd_key_pack,
+    cmd_kit_generate,
     cmd_launch,
     cmd_list,
     cmd_list_archive,
@@ -90,6 +91,7 @@ def create_parser() -> ArgumentParser:
     parser = ArgumentParser(
         prog="kotorcli",
         description="A build tool for KOTOR projects (cli-compatible syntax)",
+        add_help=False,
     )
 
     # Global options
@@ -465,6 +467,22 @@ def create_parser() -> ArgumentParser:
     module_resources_parser.add_argument("--output", "-o", help="Output JSON file")
     module_resources_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed information")
 
+    kit_generate_parser = subparsers.add_parser(
+        "kit-generate",
+        aliases=["kit"],
+        help="Generate a Holocron-compatible kit from a module",
+    )
+    kit_generate_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
+    kit_generate_parser.add_argument("--module", "-m", required=True, help="Module name (e.g., danm13)")
+    kit_generate_parser.add_argument("--output", "-o", required=True, help="Output directory for generated kit")
+    kit_generate_parser.add_argument("--kit-id", help="Optional kit id (defaults to module name)")
+    kit_generate_parser.add_argument(
+        "--log-level",
+        choices=["debug", "info", "warning", "error", "critical"],
+        default="info",
+        help="Logging level for kit generation",
+    )
+
     # Batch patching commands
     batch_patch_parser = subparsers.add_parser(
         "batch-patch",
@@ -525,22 +543,19 @@ def create_parser() -> ArgumentParser:
     return parser
 
 
-def main(argv: Sequence[str] | None = None) -> int:
-    """Main entry point for KotorCLI."""
+def cli_main(argv: Sequence[str]) -> int:
+    """Entry point for CLI execution (headless-friendly)."""
     parser = create_parser()
     args = parser.parse_args(argv)
 
-    # Setup logging
     log_level = "DEBUG" if args.debug else ("ERROR" if args.quiet else ("INFO" if not args.verbose else "DEBUG"))
     use_color = not args.no_color
     logger = setup_logger(log_level, use_color)
 
-    # Show help if no command specified
-    if not args.command or (hasattr(args, "help") and args.help):
+    if not args.command or getattr(args, "help", False):
         parser.print_help()
         return 0
 
-    # Dispatch to appropriate command handler
     try:
         if args.command == "config":
             return cmd_config(args, logger)
@@ -634,6 +649,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return cmd_check_missing_resources(args, logger)
         if args.command == "module-resources":
             return cmd_module_resources(args, logger)
+        if args.command in ("kit-generate", "kit"):
+            return cmd_kit_generate(args, logger)
         # Patching commands
         if args.command == "batch-patch":
             return cmd_batch_patch(args, logger)
@@ -649,14 +666,92 @@ def main(argv: Sequence[str] | None = None) -> int:
     except Exception:
         logger.exception("Unhandled error")
         return 1
-    else:
-        logger.error(f"Unknown command: {args.command}")  # noqa: G004
-        parser.print_help()
-        return 1
+
+    logger.error(f"Unknown command: {args.command}")  # noqa: G004
+    parser.print_help()
+    return 1
+
+
+def launch_gui() -> int:
+    """Launch the Tkinter GUI when no CLI args are provided."""
+    try:
+        from kotorcli.app import App  # noqa: PLC0415
+    except Exception as exc:
+        from loggerplus import RobustLogger  # noqa: PLC0415
+
+        RobustLogger().warning("GUI not available: %s", exc)
+        print("[Warning] Display driver not available, cannot run in GUI mode without command-line arguments.")  # noqa: T201
+        print("[Info] Use --help to see CLI options")  # noqa: T201
+        return 0
+
+    app = App()
+    app.root.mainloop()
+    return 0
+
+
+def _parse_kitgenerator_args(argv: Sequence[str]) -> ArgumentParser:
+    """Create a lightweight parser compatible with the legacy KitGenerator CLI.
+
+    This keeps the GUI import-free when CLI args are supplied, matching the
+    HoloPatcher pattern of headless-first execution.
+    """
+    parser = ArgumentParser(
+        prog="kitgenerator",
+        description="Generate Holocron-compatible kits from a module (KotorCLI entrypoint).",
+    )
+    parser.add_argument("--installation", "-i", help="Path to KOTOR installation")
+    parser.add_argument("--module", "-m", help="Module name (e.g., danm13)")
+    parser.add_argument("--output", "-o", help="Output directory for generated kit")
+    parser.add_argument("--kit-id", help="Optional kit id (defaults to module name)")
+    parser.add_argument(
+        "--log-level",
+        choices=["debug", "info", "warning", "error", "critical"],
+        default="info",
+        help="Logging level for kit generation",
+    )
+    parser.add_argument(
+        "--console",
+        action="store_true",
+        help="(Compatibility) request console output even when the GUI would be shown",
+    )
+    return parser
+
+
+def kitgenerator_entry(argv: Sequence[str] | None = None) -> int:
+    """Entry point for the merged KitGenerator.
+
+    - No arguments -> launch the Tkinter GUI.
+    - Any arguments -> stay headless and run the kit-generate command.
+    """
+    arg_list = list(sys.argv[1:] if argv is None else argv)
+    if not arg_list:
+        return launch_gui()
+
+    parser = _parse_kitgenerator_args(arg_list)
+    args = parser.parse_args(arg_list)
+
+    missing: list[str] = []
+    if not args.installation:
+        missing.append("--installation")
+    if not args.module:
+        missing.append("--module")
+    if not args.output:
+        missing.append("--output")
+    if missing:
+        parser.error(f"Missing required arguments: {', '.join(missing)}")
+
+    log_level = args.log_level.upper()
+    logger = setup_logger(log_level, use_color=True)
+    return cmd_kit_generate(args, logger)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Main entry point that selects CLI vs GUI based on arguments."""
+    arg_list = list(sys.argv[1:] if argv is None else argv)
+    if not arg_list:
+        return launch_gui()
+    return cli_main(arg_list)
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
-
-

@@ -30,6 +30,7 @@ class DLGConversationType(IntEnum):
     Human = 0
     Computer = 1
     Other = 2
+    Unknown = 3  # Fallback for UI variants that surface an extra option
 
 
 class DLG:

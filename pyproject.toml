@@ -187,7 +187,6 @@ members = [
     "Tools/HoloGenerator",
     "Tools/HoloPatcher",
     "Tools/HoloPazaak",
-    "Tools/KitGenerator",
     "Tools/KotorCLI",
     "Tools/KotorDiff",
 ]
@@ -202,7 +201,6 @@ holocrontoolset = { workspace = true }
 hologenerator = { workspace = true }
 holopatcher = { workspace = true }
 holopazaak = { workspace = true }
-kit-generator = { workspace = true }
 kotorcli = { workspace = true }
 kotor-diff = { workspace = true }
 
@@ -260,7 +258,6 @@ extraPaths = [
     "Tools/HoloGenerator/src",
     "Tools/HoloPatcher/src",
     "Tools/HoloPazaak/src",
-    "Tools/KitGenerator/src",
     "Tools/KotorCLI/src",
     "Tools/KotorDiff/src",
 ]
