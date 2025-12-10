@@ -117,7 +117,7 @@ KotOR [models](MDL-MDX-File-Format) [ARE](GFF-File-Format#are-area) defined usin
 
 - [TPC File Format](TPC-File-Format) - [texture](TPC-File-Format) format referenced by [MDL](MDL-MDX-File-Format) [materials](MDL-MDX-File-Format#trimesh-header)
 - [TXI File Format](TXI-File-Format) - [texture](TPC-File-Format) metadata used with [MDL](MDL-MDX-File-Format) [textures](TPC-File-Format)
-- [BWM File Format](BWM-File-Format) - [walkmesh](BWM-File-Format) format ([WOK files](BWM-File-Format)) paired with [room models](LYT-File-Format.md#room-models)
+- [BWM File Format](BWM-File-Format) - [walkmesh](BWM-File-Format) format ([WOK files](BWM-File-Format)) paired with room models
 - [GFF File Format](GFF-File-Format) - Templates ([UTC](GFF-File-Format#utc-creature), [UTP](GFF-File-Format#utp-placeable), etc.) that reference [models](MDL-MDX-File-Format)
 - [LYT File Format](LYT-File-Format) - [layout files](LYT-File-Format) positioning [models](MDL-MDX-File-Format) in areas
 
