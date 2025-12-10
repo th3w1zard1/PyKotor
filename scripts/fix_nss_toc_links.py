@@ -1,98 +1,67 @@
 #!/usr/bin/env python3
-"""Fix NSS-File-Format.md TOC links to point to correct files and anchors."""
+"""Fix NSS-File-Format.md TOC links by removing anchors that no longer exist."""
+
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent
-WIKI_DIR = REPO_ROOT / "wiki"
-NSS_FILE = WIKI_DIR / "NSS-File-Format.md"
+NSS_FILE = REPO_ROOT / "wiki" / "NSS-File-Format.md"
 
-# Map function names to their file and anchor
-FUNCTION_MAPPINGS = {
-    # Abilities and Stats
-    "GetAbilityModifier": ("NSS-Shared-Functions-Abilities-and-Stats", "getabilitymodifier"),
-    "GetAbilityScore": ("NSS-Shared-Functions-Abilities-and-Stats", "getabilityscore"),
-    "GetNPCSelectability": ("NSS-Shared-Functions-Abilities-and-Stats", "getnpcselectability"),
-    "SetNPCSelectability": ("NSS-Shared-Functions-Abilities-and-Stats", "setnpcselectability"),
-    "SWMG_StartInvulnerability": ("NSS-Shared-Functions-Abilities-and-Stats", "swmg_startinvulnerability"),
-    # Actions - map to Actions file
-    "ActionAttack": ("NSS-Shared-Functions-Actions", None),
-    "ActionBarkString": ("NSS-Shared-Functions-Actions", None),
-    "ActionCastFakeSpellAtLocation": ("NSS-Shared-Functions-Actions", None),
-    "ActionCastFakeSpellAtObject": ("NSS-Shared-Functions-Actions", None),
-    "ActionCastSpellAtLocation": ("NSS-Shared-Functions-Actions", None),
-    "ActionCastSpellAtObject": ("NSS-Shared-Functions-Actions", None),
-    "ActionCloseDoor": ("NSS-Shared-Functions-Actions", None),
-    "ActionDoCommand": ("NSS-Shared-Functions-Actions", None),
-    "ActionEquipItem": ("NSS-Shared-Functions-Actions", None),
-    "ActionEquipMostDamagingMelee": ("NSS-Shared-Functions-Actions", None),
-    "ActionEquipMostDamagingRanged": ("NSS-Shared-Functions-Actions", None),
-    "ActionFollowLeader": ("NSS-Shared-Functions-Actions", None),
-    "ActionForceFollowObject": ("NSS-Shared-Functions-Actions", None),
-    "ActionForceMoveToLocation": ("NSS-Shared-Functions-Actions", None),
-    "ActionForceMoveToObject": ("NSS-Shared-Functions-Actions", None),
-}
 
-def normalize_function_name(text: str) -> str:
-    """Extract function name from TOC link text."""
-    # Pattern: `FunctionName(params)` - Routine N
-    match = re.match(r'`([^(]+)\(', text)
-    if match:
-        return match.group(1)
-    return ""
-
-def fix_toc_links():
-    """Fix TOC links in NSS-File-Format.md."""
+def fix_toc_links() -> int:
+    """Remove anchor parts from links in NSS-File-Format.md."""
     content = NSS_FILE.read_text(encoding='utf-8')
-    original_content = content
-    fixes = 0
     
-    # Pattern matches TOC links like [`FunctionName(params)` - Routine N](#anchor)
-    def fix_link(match):
-        nonlocal fixes
-        full_link_text = match.group(0)
-        link_text = match.group(1)  # The text inside backticks
-        routine_num = match.group(2)  # Routine number (optional, can be None)
-        link_url = match.group(3)  # URL
-        
-        # Only fix same-file anchors that look like function references
-        if link_url and link_url.startswith('#') and len(link_url) > 20:  # Function anchors are long
-            func_name = normalize_function_name(link_text)
-            if func_name and func_name in FUNCTION_MAPPINGS:
-                file_name, anchor = FUNCTION_MAPPINGS[func_name]
-                routine_part = f" - Routine {routine_num}" if routine_num else ""
-                if anchor:
-                    fixes += 1
-                    # Preserve the full link text format
-                    return f"[`{link_text}`{routine_part}]({file_name}#{anchor})"
-                else:
-                    # Just point to the file
-                    fixes += 1
-                    return f"[`{link_text}`{routine_part}]({file_name})"
-        
-        return full_link_text
+    # Detect original line ending style and trailing newline state
+    has_crlf = '\r\n' in content
+    has_trailing_newline = content.endswith('\n') or content.endswith('\r\n')
+    line_ending = '\r\n' if has_crlf else '\n'
     
-    # Fix function links in TOC - match pattern: [`Function(params)` - Routine N](#anchor)
-    # Group 1: function name, Group 2: routine number (optional), Group 3: anchor URL
-    pattern = r'\[`([^`]+)`(?:\s+-\s+Routine\s+(\d+))?\]\(([^\)]+)\)'
-    content = re.sub(pattern, fix_link, content)
+    lines = content.splitlines()
+    changes = 0
     
-    # Fix the main document anchor
-    content = re.sub(
-        r'\[KotOR NSS File Format Documentation\]\(#kotor-nss-file-format-documentation\)',
-        r'[KotOR NSS File Format Documentation](#kotor-nss-files-format-documentation)',
-        content
-    )
+    # Pattern to match links with anchors: [text](File-Name#anchor)
+    pattern = r'(\[([^\]]+)\]\(([^#\)]+)#([^\)]+)\))'
     
-    if content != original_content:
-        NSS_FILE.write_text(content, encoding='utf-8')
-        print(f"Fixed TOC links in NSS-File-Format.md")
+    for i, line in enumerate(lines):
+        # Find all matches in this line
+        matches = list(re.finditer(pattern, line))
+        if matches:
+            new_line = line
+            # Process in reverse to maintain positions
+            for match in reversed(matches):
+                full_match = match.group(1)
+                link_text = match.group(2)
+                file_part = match.group(3)
+                # Remove the anchor part, keep just the file link
+                replacement = f'[{link_text}]({file_part})'
+                new_line = new_line[:match.start()] + replacement + new_line[match.end():]
+            
+            if new_line != line:
+                lines[i] = new_line
+                changes += 1
     
-    return fixes
+    if changes > 0:
+        # Reconstruct file with original line endings and trailing newline state
+        reconstructed = line_ending.join(lines)
+        if has_trailing_newline:
+            reconstructed += line_ending
+        # Use binary mode to preserve exact line endings
+        NSS_FILE.write_bytes(reconstructed.encode('utf-8'))
+    
+    return changes
+
+
+def main() -> None:
+    """Main entry point."""
+    changes = fix_toc_links()
+    if changes > 0:
+        print(f"Fixed {NSS_FILE.name}: {changes} links updated (anchors removed)")
+    else:
+        print(f"No changes needed in {NSS_FILE.name}")
+
 
 if __name__ == "__main__":
-    fixes = fix_toc_links()
-    print(f"Total fixes: {fixes}")
-
+    main()
