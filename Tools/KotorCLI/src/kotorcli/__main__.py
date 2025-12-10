@@ -44,7 +44,6 @@ from kotorcli.commands import (  # type: ignore[import-not-found, module-not-fou
     cmd_csv22da,
     cmd_decompile,
     cmd_diff,
-    cmd_diff_installation,
     cmd_disassemble,
     cmd_extract,
     cmd_gff2json,
@@ -81,6 +80,7 @@ from kotorcli.commands import (  # type: ignore[import-not-found, module-not-fou
     cmd_xml2ssf,
     cmd_xml2tlk,
 )
+from kotorcli.commands.diff_installation import cmd_diff_installation
 from kotorcli.config import VERSION  # type: ignore[import-not-found, module-not-found]
 from kotorcli.diff_tool.cli import add_kotordiff_arguments
 from kotorcli.logger import setup_logger  # type: ignore[import-not-found, module-not-found]
