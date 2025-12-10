@@ -418,7 +418,7 @@ function Invoke-BashCommandOptional {
     }
     
     try {
-        $output = & bash -c $Command 2>&1
+        & bash -c $Command 2>&1
         if (-not $? -or $LASTEXITCODE -ne 0) {
             Write-Log -Level "Warn" -Message "$FallbackMessage. Exit code: $LASTEXITCODE"
             return $false
@@ -1112,7 +1112,6 @@ function Set-EnvironmentVariablesFromEnvFile {
             Write-Log -Level "Debug" -Message "Processing env var: $key"
             
             # Expand ${env:VAR} references
-            $originalValue = $value
             $value = $value -replace '\$\{env:(.*?)\}', {
                 $envVarName = $matches[1]
                 $retrievedEnvValue = [System.Environment]::GetEnvironmentVariable($envVarName, [System.EnvironmentVariableTarget]::Process)
