@@ -15,9 +15,10 @@ from typing import TYPE_CHECKING, Callable, cast
 
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "PyKotor", "src")
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "Utility", "src")
-KOTORDIFF_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Tools", "KotorDiff", "src")
+REPO_ROOT = THIS_SCRIPT_PATH.parents[4]
+PYKOTOR_PATH = REPO_ROOT.joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = REPO_ROOT.joinpath("Libraries", "Utility", "src")
+KOTORDIFF_PATH = REPO_ROOT.joinpath("Tools", "KotorDiff", "src")
 
 
 def add_sys_path(p: pathlib.Path):

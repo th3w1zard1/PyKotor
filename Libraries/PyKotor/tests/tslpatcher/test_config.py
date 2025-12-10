@@ -8,8 +8,9 @@ from typing import cast
 from unittest.mock import MagicMock, Mock, patch
 
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "PyKotor", "src")
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5].joinpath("Libraries", "Utility", "src")
+REPO_ROOT = THIS_SCRIPT_PATH.parents[4]
+PYKOTOR_PATH = REPO_ROOT.joinpath("Libraries", "PyKotor", "src")
+UTILITY_PATH = REPO_ROOT.joinpath("Libraries", "Utility", "src")
 
 
 def add_sys_path(p: pathlib.Path):

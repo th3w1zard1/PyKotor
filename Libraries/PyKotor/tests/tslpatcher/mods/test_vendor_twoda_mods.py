@@ -5,13 +5,13 @@ from pathlib import Path
 from unittest import TestCase
 
 
-REPO_ROOT = Path(__file__).resolve().parents[6]
+REPO_ROOT = Path(__file__).resolve().parents[5]
 PYKOTOR_SRC = REPO_ROOT / "Libraries" / "PyKotor" / "src"
 UTILITY_SRC = REPO_ROOT / "Libraries" / "Utility" / "src"
 for candidate in (PYKOTOR_SRC, UTILITY_SRC):
     candidate_str = str(candidate)
     if candidate.exists() and candidate_str not in sys.path:
-        sys.path.append(candidate_str)
+        sys.path.insert(0, candidate_str)
 
 
 from pykotor.resource.formats.twoda import TwoDA

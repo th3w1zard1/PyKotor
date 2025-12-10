@@ -31,10 +31,11 @@ from typing import TYPE_CHECKING
 
 # Set up import paths
 THIS_SCRIPT_PATH = pathlib.Path(__file__).resolve()
-PYKOTOR_PATH = THIS_SCRIPT_PATH.parents[5] / "Libraries" / "PyKotor" / "src"
-UTILITY_PATH = THIS_SCRIPT_PATH.parents[5] / "Libraries" / "Utility" / "src"
-KOTORDIFF_PATH = THIS_SCRIPT_PATH.parents[5] / "Tools" / "KotorDiff" / "src"
-HOLOPATCHER_PATH = THIS_SCRIPT_PATH.parents[5] / "Tools" / "HoloPatcher" / "src"
+REPO_ROOT = THIS_SCRIPT_PATH.parents[4]
+PYKOTOR_PATH = REPO_ROOT / "Libraries" / "PyKotor" / "src"
+UTILITY_PATH = REPO_ROOT / "Libraries" / "Utility" / "src"
+KOTORDIFF_PATH = REPO_ROOT / "Tools" / "KotorDiff" / "src"
+HOLOPATCHER_PATH = REPO_ROOT / "Tools" / "HoloPatcher" / "src"
 
 if PYKOTOR_PATH.as_posix() not in sys.path:
     sys.path.insert(0, PYKOTOR_PATH.as_posix())

@@ -36,10 +36,10 @@ def add_sys_path(p: pathlib.Path):
 
 
 # Add paths
-add_sys_path(pathlib.Path(__file__).parents[5] / "Libraries" / "PyKotor" / "src" / "pykotor")
-add_sys_path(pathlib.Path(__file__).parents[5] / "Libraries" / "PyKotor" / "src")
-add_sys_path(pathlib.Path(__file__).parents[5] / "Libraries" / "Utility" / "src")
-add_sys_path(pathlib.Path(__file__).parents[5] / "Tools" / "KotorDiff" / "src")
+REPO_ROOT = pathlib.Path(__file__).parents[4]
+add_sys_path(REPO_ROOT / "Libraries" / "PyKotor" / "src")
+add_sys_path(REPO_ROOT / "Libraries" / "Utility" / "src")
+add_sys_path(REPO_ROOT / "Tools" / "KotorDiff" / "src")
 
 
 from pykotor.common.misc import Game, ResRef
