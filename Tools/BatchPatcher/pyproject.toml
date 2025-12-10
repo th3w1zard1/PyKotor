@@ -11,7 +11,7 @@ dependencies = [
   "pykotor>=2.0.0",
   "pykotorfont>=2.0.0",
   "setuptools>=67.8.0,<70",
-  "deep_translator==1.9.2",
+  "deep_translator==1.11.4",
   "deepl-cli==0.3.0",
   "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
   "requests>=2.25.0; python_version>=\"3.9\"",
