@@ -58,7 +58,12 @@ FUNCTION_FILE_MAP = {
     "SetLockOrientationInDialog": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
     "SpeakOneLinerConversation": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
     "SpeakString": "NSS-Shared-Functions-Dialog-and-Conversation-Functions",
-    # Module and Area
+    # Module and Area (more specific patterns first)
+    "GetAreaOfEffectCreator": "NSS-Shared-Functions-Module-and-Area-Functions",
+    "GetModuleItemAcquired": "NSS-Shared-Functions-Module-and-Area-Functions",
+    "GetModuleItemAcquiredFrom": "NSS-Shared-Functions-Module-and-Area-Functions",
+    "GetModuleItemLost": "NSS-Shared-Functions-Module-and-Area-Functions",
+    "GetModuleItemLostBy": "NSS-Shared-Functions-Module-and-Area-Functions",
     "GetModule": "NSS-Shared-Functions-Module-and-Area-Functions",
     "SetModule": "NSS-Shared-Functions-Module-and-Area-Functions",
     "GetArea": "NSS-Shared-Functions-Module-and-Area-Functions",
@@ -79,31 +84,73 @@ FUNCTION_FILE_MAP = {
     "GetSound": "NSS-Shared-Functions-Sound-and-Music-Functions",
     "SetSound": "NSS-Shared-Functions-Sound-and-Music-Functions",
     "PlaySound": "NSS-Shared-Functions-Sound-and-Music-Functions",
-    # Effects
-    "Effect": "NSS-Shared-Functions-Effects-System",
+    # Effects (more specific patterns first)
+    "EnableVideoEffect": "NSS-Shared-Functions-Effects-System",
+    "DisableVideoEffect": "NSS-Shared-Functions-Effects-System",
+    "GetFirstEffect": "NSS-Shared-Functions-Effects-System",
+    "GetHasFeatEffect": "NSS-Shared-Functions-Effects-System",
+    "GetHasSpellEffect": "NSS-Shared-Functions-Effects-System",
+    "GetIsEffectValid": "NSS-Shared-Functions-Effects-System",
+    "GetNextEffect": "NSS-Shared-Functions-Effects-System",
+    "GetIsWeaponEffective": "NSS-Shared-Functions-Effects-System",
+    "PlayVisualAreaEffect": "NSS-Shared-Functions-Effects-System",
+    "MagicalEffect": "NSS-Shared-Functions-Effects-System",
+    "SupernaturalEffect": "NSS-Shared-Functions-Effects-System",
+    "ExtraordinaryEffect": "NSS-Shared-Functions-Effects-System",
+    "VersusRacialTypeEffect": "NSS-Shared-Functions-Effects-System",
+    "VersusTrapEffect": "NSS-Shared-Functions-Effects-System",
     "GetEffect": "NSS-Shared-Functions-Effects-System",
     "SetEffect": "NSS-Shared-Functions-Effects-System",
     "RemoveEffect": "NSS-Shared-Functions-Effects-System",
+    "Effect": "NSS-Shared-Functions-Effects-System",
     # Global Variables
     "GetGlobal": "NSS-Shared-Functions-Global-Variables",
     "SetGlobal": "NSS-Shared-Functions-Global-Variables",
-    # Item Management
+    # Item Management (more specific patterns first)
+    "ChangeItemCost": "NSS-Shared-Functions-Item-Management",
+    "EventActivateItem": "NSS-Shared-Functions-Item-Management",
+    "GetBaseItemType": "NSS-Shared-Functions-Item-Management",
+    "GetFirstItemInInventory": "NSS-Shared-Functions-Item-Management",
+    "GetNextItemInInventory": "NSS-Shared-Functions-Item-Management",
+    "GetInventoryDisturbItem": "NSS-Shared-Functions-Item-Management",
+    "GetLastItemEquipped": "NSS-Shared-Functions-Item-Management",
+    "GetNumStackedItems": "NSS-Shared-Functions-Item-Management",
+    "GetSpellCastItem": "NSS-Shared-Functions-Item-Management",
     "GetItem": "NSS-Shared-Functions-Item-Management",
     "SetItem": "NSS-Shared-Functions-Item-Management",
     "CreateItem": "NSS-Shared-Functions-Item-Management",
     "DestroyItem": "NSS-Shared-Functions-Item-Management",
+    # SWMG functions in specific files
+    "SWMG_GetPlayer": "NSS-Shared-Functions-Player-Character-Functions",
+    "SWMG_SetPlayer": "NSS-Shared-Functions-Player-Character-Functions",
+    "SWMG_IsPlayer": "NSS-Shared-Functions-Player-Character-Functions",
+    "SWMG_GetSound": "NSS-Shared-Functions-Sound-and-Music-Functions",
+    "SWMG_SetSound": "NSS-Shared-Functions-Sound-and-Music-Functions",
+    "SWMG_PlayAnimation": "NSS-Shared-Functions-Sound-and-Music-Functions",
+    "SWMG_GetObject": "NSS-Shared-Functions-Object-Query-and-Manipulation",
+    "SWMG_SetSpeedBlur": "NSS-Shared-Functions-Effects-System",
     # Other (catch-all - must be last)
     "Get": "NSS-Shared-Functions-Other-Functions",
     "Set": "NSS-Shared-Functions-Other-Functions",
 }
 
 
-def get_function_file(func_name: str) -> str | None:
-    """Get the file name for a function."""
+def get_function_file_and_anchor(func_name: str) -> tuple[str, str] | None:
+    """Get the file name and anchor for a function.
+    
+    Returns: (file_name, anchor) or None if not found
+    """
+    # First try exact match from comprehensive map
+    if func_name in FUNCTION_FILE_MAP:
+        return FUNCTION_FILE_MAP[func_name], func_name.lower()
+    
+    # Fallback to prefix-based mapping (for functions not yet indexed)
     for prefix, file_name in FUNCTION_FILE_MAP.items():
         if func_name.startswith(prefix):
-            return file_name
-    return "NSS-Shared-Functions-Other-Functions"  # Default
+            # Generate anchor from function name
+            return file_name, func_name.lower()
+    
+    return None
 
 
 def normalize_function_name(text: str) -> str:
@@ -138,12 +185,14 @@ def fix_toc_links():
                 func_text_match = re.search(r"`([^`]+)`", line)
                 func_text = func_text_match.group(1) if func_text_match else func_name
 
-                # Get target file
-                file_name = get_function_file(func_name)
+                # Get target file and anchor
+                result = get_function_file_and_anchor(func_name)
+                if not result:
+                    # Skip if we can't find the function
+                    continue
+                
+                file_name, anchor = result
                 routine_str = f" - Routine {routine_num}" if routine_num else ""
-
-                # Create anchor from function name (lowercase, preserve underscores to match HTML anchor format)
-                anchor = func_name.lower()
 
                 # Check if link already points to a file with wrong anchor or wrong file
                 # Match pattern: [text](file#anchor)
