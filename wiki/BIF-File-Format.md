@@ -43,7 +43,7 @@ The [modular structure](https://en.wikipedia.org/wiki/Modular_programming) allow
 **Vendor References:**
 
 - [`vendor/reone/src/libs/resource/format/bifreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp) - Complete C++ [BIF](BIF-File-Format) reader implementation
-- [`vendor/xoreos/src/aurora/biffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/biffile.cpp) - Generic Aurora [BIF](BIF-File-Format) implementation (shared format)
+- [`vendor/xoreos/src/aurora/biffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/biffile.cpp) - Generic Aurora [BIF](BIF-File-Format) implementation (shared format across KotOR, NWN, and other Aurora games)
 - [`vendor/KotOR.js/src/resource/BIFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/BIFObject.ts) - TypeScript [BIF](BIF-File-Format) parser with decompression
 - [`vendor/Kotor.NET/Kotor.NET/Formats/KotorBIF/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorBIF) - .NET BIF reader/writer
 - [`vendor/xoreos-tools/src/aurora/biffile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/biffile.cpp) - Command-line [BIF](BIF-File-Format) extraction tools
@@ -70,7 +70,7 @@ The file header is 20 bytes in size:
 | Fixed Resource count      | [uint32](GFF-File-Format#gff-data-types)  | 12 (0x0C) | 4    | Number of fixed-size resources (unused, always 0) |
 | offset to Variable Resource Table | [uint32](GFF-File-Format#gff-data-types) | 16 (0x10) | 4 | offset to variable resource entries            |
 
-**Note on Fixed Resources:** The "Fixed Resource count" field is a legacy holdover from Neverwinter Nights where some resource types had predetermined sizes. In KotOR, this field is always `0` and fixed resource tables [ARE](GFF-File-Format#are-area) never used. All resources [ARE](GFF-File-Format#are-area) stored in the variable resource table regardless of their size.
+**Note on Fixed Resources:** The "Fixed Resource count" field is a legacy holdover from **Neverwinter Nights** (not used in KotOR) where some resource types had predetermined sizes. In KotOR, this field is always `0` and fixed resource tables [ARE](GFF-File-Format#are-area) never used. All resources [ARE](GFF-File-Format#are-area) stored in the variable resource table regardless of their size.
 
 **Note on header Variations**: [`vendor/xoreos-docs/specs/torlack/bif.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/bif.html) (Tim Smith/Torlack's reverse-engineered documentation) shows the field at offset 0x000C as "Unknown value" rather than "Fixed Resource count". This reflects the field's historical ambiguity, but in practice it serves as the fixed resource count (always 0 in KotOR).
 

@@ -4,15 +4,15 @@ LYT (Layout) files define how area [room models](LYT-File-Format#room-definition
 
 ## Table of Contents
 
-- [KotOR LYT files Format Documentation](#kotor-lyt-files-format-documentation)
+- [KotOR LYT files format Documentation](#kotor-lyt-files-format-documentation)
   - [Table of Contents](#table-of-contents)
-  - [Format Overview](#format-overview)
+  - [format Overview](#format-overview)
   - [Syntax](#syntax)
     - [Room Definitions](#room-definitions)
     - [Track Definitions](#track-definitions)
     - [Obstacle Definitions](#obstacle-definitions)
     - [Door Hooks](#door-hooks)
-  - [Coordinate System](#coordinate-system)
+  - [coordinate System](#coordinate-system)
   - [Implementation Details](#implementation-details)
 
 ---
@@ -90,7 +90,7 @@ trackcount <N>
 **Usage:**
 
 - Tracks [ARE](GFF-File-Format#are-area) optional - most modules omit this section entirely
-- Primarily used in [KotOR II](KotOR-II) swoop racing modules (e.g., Telos surface racing)
+- Primarily used in KotOR II swoop racing modules (e.g., Telos surface racing)
 - Each track element represents a booster that can be placed along the racing track
 - The engine uses these positions to spawn track boosters during racing mini-games
 
@@ -100,7 +100,7 @@ trackcount <N>
 
 ### Obstacle Definitions
 
-Obstacles (`LYTObstacle`) [ARE](GFF-File-Format#are-area) hazard elements used exclusively in swoop racing mini-games, primarily in [KotOR II](KotOR-II). Each obstacle entry defines a hazard element that can be placed along a racing track to create challenges or obstacles for the player.
+Obstacles (`LYTObstacle`) [ARE](GFF-File-Format#are-area) hazard elements used exclusively in swoop racing mini-games, primarily in KotOR II. Each obstacle entry defines a hazard element that can be placed along a racing track to create challenges or obstacles for the player.
 
 **format:**
 
@@ -118,7 +118,7 @@ obstaclecount <N>
 **Usage:**
 
 - Obstacles [ARE](GFF-File-Format#are-area) optional - most modules omit this section entirely
-- Typically only present in [KotOR II](KotOR-II) racing modules (e.g., Telos surface racing)
+- Typically only present in KotOR II racing modules (e.g., Telos surface racing)
 - Each obstacle element represents a hazard that can be placed along the racing track
 - The engine uses these positions to spawn obstacles during racing mini-games
 - Mirrors the track format but represents hazards instead of boosters

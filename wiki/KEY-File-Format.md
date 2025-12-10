@@ -48,7 +48,7 @@ The [KEY](KEY-File-Format) file only manages [BIF](BIF-File-Format) resources (s
 **Vendor References:**
 
 - [`vendor/reone/src/libs/resource/format/keyreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/keyreader.cpp) - Complete C++ [KEY](KEY-File-Format) reader implementation
-- [`vendor/xoreos/src/aurora/keyfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/keyfile.cpp) - Generic Aurora [KEY](KEY-File-Format) implementation (shared format)
+- [`vendor/xoreos/src/aurora/keyfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/keyfile.cpp) - Generic Aurora [KEY](KEY-File-Format) implementation (shared format across KotOR, NWN, and other Aurora games)
 - [`vendor/KotOR.js/src/resource/KEYObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/KEYObject.ts) - TypeScript [KEY](KEY-File-Format) parser
 - [`vendor/Kotor.NET/Kotor.NET/Formats/KotorKEY/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorKEY) - .NET KEY reader/writer
 - [`vendor/xoreos-tools/src/aurora/keyfile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/keyfile.cpp) - Command-line [KEY](KEY-File-Format) tools

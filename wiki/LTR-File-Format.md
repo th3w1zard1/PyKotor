@@ -4,13 +4,13 @@ LTR (Letter) resources store third-order Markov chain probability tables that th
 
 ## Table of Contents
 
-- [KotOR LTR File Format Documentation](#kotor-ltr-file-format-documentation)
+- [KotOR LTR files format Documentation](#kotor-ltr-files-format-documentation)
   - [Table of Contents](#table-of-contents)
-  - [File Structure Overview](#file-structure-overview)
-  - [Binary Format](#binary-format)
-    - [Header](#header)
+  - [file structure Overview](#file-structure-overview)
+  - [Binary format](#binary-format)
+    - [header](#header)
     - [Single-Letter Block](#single-letter-block)
-    - [Double-Letter Blocks](#double-letter-blocks)
+    - [double-Letter Blocks](#double-letter-blocks)
     - [Triple-Letter Blocks](#triple-letter-blocks)
   - [Probability Blocks](#probability-blocks)
   - [Name Generation Process](#name-generation-process)

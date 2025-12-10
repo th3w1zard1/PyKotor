@@ -52,7 +52,7 @@ This document provides a detailed description of the [MDL](MDL-MDX-File-Format)/
     - [node Relationships](#node-relationships)
     - [node transformations](#node-transformations)
   - [Smoothing Groups](#smoothing-groups)
-  - [Binary model format Details (Aurora Engine)](#binary-model-format-details-aurora-engine)
+  - [Binary model format Details (Aurora Engine - KotOR)](#binary-model-format-details-aurora-engine---kotor)
     - [Binary model file Layout](#binary-model-file-layout)
     - [pointers and arrays in Binary models](#pointers-and-arrays-in-binary-models)
     - [model Routines and node type Identification](#model-routines-and-node-type-identification)
@@ -99,7 +99,7 @@ KotOR [models](MDL-MDX-File-Format) [ARE](GFF-File-Format#are-area) defined usin
 
 - [`vendor/reone/src/libs/graphics/format/mdlreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlreader.cpp) - Complete C++ [MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format) parser with [animation](MDL-MDX-File-Format#animation-header) support
 - [`vendor/reone/include/reone/graphics/model.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/graphics/model.h) - Runtime [model](MDL-MDX-File-Format) class definition
-- [`vendor/xoreos/src/graphics/aurora/model.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model.cpp) - Generic Aurora [model](MDL-MDX-File-Format) implementation (shared format)
+- [`vendor/xoreos/src/graphics/aurora/model.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model.cpp) - Generic Aurora [model](MDL-MDX-File-Format) implementation (shared format across KotOR, NWN, and other Aurora games)
 - [`vendor/KotOR.js/src/odyssey/OdysseyModel.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyModel.ts) - TypeScript [MDL](MDL-MDX-File-Format) parser with WebGL rendering
 - [`vendor/KotOR.js/src/odyssey/OdysseyModel3.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyModel3.ts) - Enhanced [model](MDL-MDX-File-Format) loader with skinning support
 - [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/AuroraModel.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/AuroraModel.cs) - C# Unity [model](MDL-MDX-File-Format) loader
@@ -158,7 +158,7 @@ The [MDL file](MDL-MDX-File-Format) header is 12 bytes in size and contains the 
 **Reference**: [`vendor/mdlops/MDLOpsM.pm:162`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L162) - file header structure definition  
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:56-59`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L56-L59) - file header reading  
 **Reference**: [`vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:100-104`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/mdl/reader.py#L100-L104) - file header reading  
-**Reference**: [`vendor/kotor/docs/mdl.md`](vendor/kotor/docs/mdl.md) - [node](MDL-MDX-File-Format#node-structures) chunk structure analysis  
+**Reference**: [`vendor/kotor/docs/mdl.md`](https://github.com/th3w1zard1/kotor/blob/master/docs/mdl.md) - [node](MDL-MDX-File-Format#node-structures) chunk structure analysis  
 **Reference**: [`vendor/KotOR.js/src/loaders/MDLLoader.ts:96-124`](vendor/KotOR.js/src/loaders/MDLLoader.ts) - [MDL](MDL-MDX-File-Format)/[MDX files](MDL-MDX-File-Format) loading and caching implementation
 
 ### [model](MDL-MDX-File-Format) header
@@ -954,9 +954,9 @@ The game version can be determined by examining Function pointer 0 in the [geome
 
 ---
 
-## Binary [model](MDL-MDX-File-Format) format Details (Aurora Engine)
+## Binary [model](MDL-MDX-File-Format) format Details (Aurora Engine - KotOR)
 
-The following information is derived from Tim Smith (Torlack)'s reverse-engineered specifications and xoreos-docs, documenting the Aurora engine's binary [model](MDL-MDX-File-Format) format shared across Neverwinter Nights, KotOR, and other BioWare games.
+> **Note**: The binary [model](MDL-MDX-File-Format) format described in this section is **shared across Aurora engine games** (KotOR, Neverwinter Nights, etc.). The information is derived from Tim Smith (Torlack)'s reverse-engineered specifications and xoreos-docs, which originally documented Neverwinter Nights but applies to KotOR as well. All field descriptions and structures in this section are **applicable to KotOR [models](MDL-MDX-File-Format)**.
 
 **Source**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/binmdl.html) - Tim Smith's binary [model](MDL-MDX-File-Format) format documentation  
 **Source**: [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) - Partial KotOR-specific [model](MDL-MDX-File-Format) format notes
@@ -1295,7 +1295,7 @@ Each [vertex](MDL-MDX-File-Format#vertex-structure) can be influenced by up to 4
 
 #### Bone Weight Format ([MDX](MDL-MDX-File-Format))
 
-Per-[vertex](MDL-MDX-File-Format#vertex-structure) data stored in [MDX files](MDX-Data-Format):
+Per-[vertex](MDL-MDX-File-Format#vertex-structure) data stored in MDX files:
 
 - 4 bone indices (as floats, cast to int)
 - 4 bone weights (as floats, should sum to 1.0)
@@ -1405,10 +1405,10 @@ mat4 computeBoneMatrix(int bone_idx, Animation anim, float time) {
 - [xoreos Model Definitions](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model_kotor.h)
 - [xoreos Model Implementation](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model_kotor.cpp)
 - [KotOR.js MDL Loader](vendor/KotOR.js/src/loaders/MDLLoader.ts) - TypeScript implementation  
-- [KotOR Model Documentation](vendor/kotor/docs/mdl.md) - Binary structure analysis  
-- [MDLOps Perl Module](vendor/mdlops/MDLOpsM.pm) - Complete Perl implementation with ASCII and binary format support  
-- [reone MDL/MDX Reader](vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp) - C++ implementation for game engine  
-- [KotorBlender MDL Reader](vendor/kotorblender/io_scene_kotor/format/mdl/reader.py) - Python implementation for Blender import
+- [KotOR Model Documentation](https://github.com/th3w1zard1/kotor/blob/master/docs/mdl.md) - Binary structure analysis  
+- [MDLOps Perl Module](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm) - Complete Perl implementation with ASCII and binary format support  
+- [reone MDL/MDX Reader](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp) - C++ implementation for game engine  
+- [KotorBlender MDL Reader](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/mdl/reader.py) - Python implementation for Blender import
 
 ---
 

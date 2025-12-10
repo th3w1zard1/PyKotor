@@ -1,6 +1,6 @@
 # KotOR [NCS files](NCS-File-Format) format Documentation
 
-[NCS files](NCS-File-Format) contain compiled NWScript bytecode. Scripts run inside a stack-based virtual machine shared by KotOR, NWN, and other Aurora-derived games. KotOR inherits the same format with minor opcode additions for game-specific systems.
+[NCS files](NCS-File-Format) contain compiled NWScript bytecode used in **KotOR and TSL**. Scripts run inside a stack-based virtual machine **shared across Aurora engine games** (KotOR, Neverwinter Nights, etc.). KotOR inherits the same format with minor opcode additions for game-specific systems. **This documentation focuses on KotOR-specific behavior**, though the core format is shared with Neverwinter Nights.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/)
 
@@ -20,22 +20,22 @@
 
 ## Table of Contents
 
-- [KotOR NCS File Format Documentation](#kotor-ncs-file-format-documentation)
+- [KotOR NCS files format Documentation](#kotor-ncs-files-format-documentation)
   - [Table of Contents](#table-of-contents)
-  - [File Structure Overview](#file-structure-overview)
+  - [file structure Overview](#file-structure-overview)
     - [Stack-Based Virtual Machine](#stack-based-virtual-machine)
-  - [Header](#header)
+  - [header](#header)
   - [Instruction Encoding](#instruction-encoding)
     - [Bytecode](#bytecode)
     - [Qualifier](#qualifier)
     - [Arguments](#arguments)
     - [Instruction Encoding Examples](#instruction-encoding-examples)
       - [Example 1: Integer Constant](#example-1-integer-constant)
-      - [Example 2: String Constant](#example-2-string-constant)
+      - [Example 2: string Constant](#example-2-string-constant)
       - [Example 3: Jump Instruction](#example-3-jump-instruction)
       - [Example 4: Stack Copy Operation](#example-4-stack-copy-operation)
       - [Example 5: Engine Function Call](#example-5-engine-function-call)
-      - [Example 6: Float Constant](#example-6-float-constant)
+      - [Example 6: float Constant](#example-6-float-constant)
       - [Example 7: Object Constant (OBJECT\_SELF)](#example-7-object-constant-object_self)
       - [Example 8: Conditional Jump (JZ)](#example-8-conditional-jump-jz)
   - [Instruction Categories](#instruction-categories)

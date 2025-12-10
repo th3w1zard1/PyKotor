@@ -33,7 +33,7 @@ This document provides a detailed description of the ERF (Encapsulated Resource 
 
 - [`vendor/reone/src/libs/resource/format/erfreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/erfreader.cpp) - Complete C++ [ERF](ERF-File-Format) reader implementation with MOD/SAV/HAK support
 - [`vendor/reone/include/reone/resource/format/erfreader.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/format/erfreader.h) - [ERF](ERF-File-Format) reader type definitions
-- [`vendor/xoreos/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/erffile.cpp) - Generic Aurora [ERF](ERF-File-Format) implementation (shared format)
+- [`vendor/xoreos/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/erffile.cpp) - Generic Aurora [ERF](ERF-File-Format) implementation (shared format across KotOR, NWN, and other Aurora games)
 - [`vendor/KotOR.js/src/resource/ERFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/ERFObject.ts) - TypeScript [ERF](ERF-File-Format) parser with streaming support
 - [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/ERFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/ERFObject.cs) - C# Unity [ERF](ERF-File-Format) loader
 - [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorERF) - .NET ERF reader/writer with builder API
@@ -93,7 +93,7 @@ The Description [StrRef](TLK-File-Format#string-references-strref) field (offset
 
 - **MOD files**: `-1` (no [TLK](TLK-File-Format) reference, uses localized strings instead)
 - **SAV files**: `0` (typically no description)
-- **NWM files**: `-1` (Neverwinter Nights module format, not used in KotOR)
+- **NWM files**: `-1` (**Neverwinter Nights module format, NOT used in KotOR**)
 - **[ERF](ERF-File-Format)/HAK files**: Unpredictable (may contain valid [StrRef](TLK-File-Format#string-references-strref) or `-1`)
 
 **Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:11-46`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs#L11-L46)  

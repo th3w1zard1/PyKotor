@@ -169,13 +169,13 @@ Complex field types store their data in the field data section:
 | ----------------- | ------------------------------------------------------------------- |
 | UInt64            | 8 bytes (uint64)                                                    |
 | Int64             | 8 bytes (int64)                                                     |
-| [double](GFF-File-Format#gff-data-types)            | 8 bytes ([double](GFF-File-Format#gff-data-types))                                                    |
+| double            | 8 bytes (double)                                                    |
 | string            | 4 bytes length + N bytes string data                                |
-| [ResRef](GFF-File-Format#gff-data-types)            | 1 [byte](GFF-File-Format#gff-data-types) length + N bytes [ResRef](GFF-File-Format#gff-data-types) data (max 16 chars)                  |
+| ResRef            | 1 byte length + N bytes ResRef data (max 16 chars)                  |
 | LocalizedString   | 4 bytes count + N×8 bytes (Language ID + [StrRef](TLK-File-Format#string-references-strref) pairs)              |
 | Binary            | 4 bytes length + N bytes binary data                                 |
-| Vector3           | 12 bytes (3×[float](GFF-File-Format#gff-data-types))                                                   |
-| Vector4           | 16 bytes (4×[float](GFF-File-Format#gff-data-types))                                                   |
+| Vector3           | 12 bytes (3×float)                                                   |
+| Vector4           | 16 bytes (4×float)                                                   |
 
 **Reference**: [`vendor/reone/src/libs/resource/format/gffreader.cpp:78-146`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/gffreader.cpp#L78-L146)
 
@@ -183,7 +183,7 @@ Complex field types store their data in the field data section:
 
 When a struct has multiple fields, the struct's data field contains an offset into the field indices array (also called the "Multiple Element Map" or "MultiMap" in [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html)), which lists the field indices for that struct.
 
-**Access Pattern**: When a struct has exactly one field, the struct's data field directly contains the field index. When a struct has more than one field, the data field contains a [byte](GFF-File-Format#gff-data-types) offset into the field indices array, which is an array of [uint32](GFF-File-Format#gff-data-types) values listing the field indices.
+**Access Pattern**: When a struct has exactly one field, the struct's data field directly contains the field index. When a struct has more than one field, the data field contains a byte offset into the field indices array, which is an array of uint32 values listing the field indices.
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - Entry/Entity table access patterns and MultiMap explanation
 
@@ -191,7 +191,7 @@ When a struct has multiple fields, the struct's data field contains an offset in
 
 Lists [ARE](GFF-File-Format#are-area) stored as arrays of struct indices. The list field contains an offset into the list indices array, which contains the struct indices that make up the list.
 
-**Access Pattern**: For a LIST type field, the field's data/offset value specifies a [byte](GFF-File-Format#gff-data-types) offset into the list indices table. At that offset, the first [uint32](GFF-File-Format#gff-data-types) is the count of entries, followed by that many [uint32](GFF-File-Format#gff-data-types) values representing the struct indices.
+**Access Pattern**: For a LIST type field, the field's data/offset value specifies a byte offset into the list indices table. At that offset, the first uint32 is the count of entries, followed by that many uint32 values representing the struct indices.
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - LIST type access pattern
 
@@ -203,38 +203,38 @@ Lists [ARE](GFF-File-Format#are-area) stored as arrays of struct indices. The li
 
 | type ID | Name              | Size (inline) | Description                                                      |
 | ------- | ----------------- | ------------- | ---------------------------------------------------------------- |
-| 0       | [byte](GFF-File-Format#gff-data-types)              | 1             | 8-bit unsigned integer                                           |
-| 1       | [char](GFF-File-Format#gff-data-types)              | 1             | 8-bit signed integer                                              |
+| 0       | byte              | 1             | 8-bit unsigned integer                                           |
+| 1       | char              | 1             | 8-bit signed integer                                              |
 | 2       | Word              | 2             | 16-bit unsigned integer                                          |
 | 3       | Short             | 2             | 16-bit signed integer                                             |
 | 4       | DWord             | 4             | 32-bit unsigned integer                                          |
 | 5       | Int               | 4             | 32-bit signed integer                                             |
 | 6       | DWord64           | 8             | 64-bit unsigned integer (stored in field data)                  |
 | 7       | Int64              | 8             | 64-bit signed integer (stored in field data)                      |
-| 8       | [float](GFF-File-Format#gff-data-types)             | 4             | 32-bit floating point                                             |
-| 9       | [double](GFF-File-Format#gff-data-types)            | 8             | 64-bit floating point (stored in field data)                     |
-| 10      | [CExoString](GFF-File-Format#gff-data-types)        | varies        | [null-terminated](https://en.cppreference.com/w/c/string/byte) string (stored in field data)                    |
-| 11      | [ResRef](GFF-File-Format#gff-data-types)            | varies        | Resource reference (stored in field data, max 16 chars)          |
-| 12      | [CExoLocString](GFF-File-Format#gff-data-types)     | varies        | Localized string (stored in field data)                           |
+| 8       | float             | 4             | 32-bit floating point                                             |
+| 9       | double            | 8             | 64-bit floating point (stored in field data)                     |
+| 10      | CExoString        | varies        | [null-terminated](https://en.cppreference.com/w/c/string/byte) string (stored in field data)                    |
+| 11      | ResRef            | varies        | Resource reference (stored in field data, max 16 chars)          |
+| 12      | CExoLocString     | varies        | Localized string (stored in field data)                           |
 | 13      | Void              | varies        | Binary data blob (stored in field data)                          |
 | 14      | Struct            | 4             | Nested struct (struct index stored inline)                       |
 | 15      | List              | 4             | List of structs (offset to list indices stored inline)            |
-| 16      | orientation       | 16            | Quaternion (4×[float](GFF-File-Format#gff-data-types), stored in field data as Vector4)            |
-| 17      | vector            | 12            | 3D vector (3×[float](GFF-File-Format#gff-data-types), stored in field data)                       |
-| 18      | [StrRef](TLK-File-Format#string-references-strref)            | 4             | string reference ([TLK](TLK-File-Format) [StrRef](TLK-File-Format#string-references-strref), stored inline as [int32](GFF-File-Format#gff-data-types))             |
+| 16      | orientation       | 16            | Quaternion (4×float, stored in field data as Vector4)            |
+| 17      | vector            | 12            | 3D vector (3×float, stored in field data)                       |
+| 18      | [StrRef](TLK-File-Format#string-references-strref)            | 4             | string reference ([TLK](TLK-File-Format) [StrRef](TLK-File-Format#string-references-strref), stored inline as int32)             |
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py:73-108`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py#L73-L108)
 
 **type Selection Guidelines:**
 
-- Use **[byte](GFF-File-Format#gff-data-types)/[char](GFF-File-Format#gff-data-types)** for small integers (-128 to 255) and boolean [flags](GFF-File-Format#gff-data-types)
+- Use **byte/char** for small integers (-128 to 255) and boolean flags
 - Use **Word/Short** for medium integers like IDs and counts
 - Use **DWord/Int** for large values and most numeric fields
-- Use **[float](GFF-File-Format#gff-data-types)** for decimals that don't need high precision (positions, angles)
-- Use **[double](GFF-File-Format#gff-data-types)** for high-precision calculations (rare in KotOR)
-- Use **[CExoString](GFF-File-Format#gff-data-types)** for text that doesn't need localization
-- Use **[CExoLocString](GFF-File-Format#gff-data-types)** for player-visible text that should be translated
-- Use **[ResRef](GFF-File-Format#gff-data-types)** for filenames without extensions ([models](MDL-MDX-File-Format), [textures](TPC-File-Format), scripts)
+- Use **float** for decimals that don't need high precision (positions, angles)
+- Use **double** for high-precision calculations (rare in KotOR)
+- Use **CExoString** for text that doesn't need localization
+- Use **CExoLocString** for player-visible text that should be translated
+- Use **ResRef** for filenames without extensions ([models](MDL-MDX-File-Format), [textures](TPC-File-Format), scripts)
 - Use **Void** for binary blobs like encrypted data or custom structures
 - Use **Struct** for nested objects with multiple fields
 - Use **List** for arrays of structs (inventory items, dialogue replies)
@@ -374,7 +374,7 @@ The [GFF](GFF-File-Format) format is also known as "ITP" in [`vendor/xoreos-docs
 | ----------------- | --------------------- | ----------- |
 | Struct array | Entry Table / Entity Table | array of struct entries |
 | field array | Element Table | array of field/element entries |
-| Label array | Variable Names Table | array of 16-[byte](GFF-File-Format#gff-data-types) field name strings |
+| Label array | Variable Names Table | array of 16-byte field name strings |
 | field data | Variable data Section | Storage for complex field types |
 | field indices | Multiple Element Map (MultiMap) | array mapping structs to their fields |
 | List indices | List Section | array mapping list fields to struct indices |

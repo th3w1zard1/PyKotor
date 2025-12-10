@@ -6,7 +6,7 @@ PLT ([texture](TPC-File-Format) Palette file) is a variant [texture](TPC-File-Fo
 
 ## Table of Contents
 
-- [PLT files format Documentation (Neverwinter Nights)](#plt-files-format-documentation-neverwinter-nights)
+- [PLT files format Documentation](#plt-files-format-documentation)
   - [Table of Contents](#table-of-contents)
   - [file structure Overview](#file-structure-overview)
   - [Palette System](#palette-system)

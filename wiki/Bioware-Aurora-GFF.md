@@ -21,9 +21,12 @@ The backward and forward compatibility of GFF was important to the development o
 because file formats changed rapidly. For example, if a designer needed creatures in the game to have a
 new property to store their Last Name, it was easy to add that field to the creature file format. New
 versions of the game and tools would write out the new field, and old versions would just ignore it.
-In Neverwinter Nights, a BioWare game, most of the non-plain-text data contained in a module is in
+
+> **Note**: This official BioWare documentation was originally written for **Neverwinter Nights**, but the GFF format is **identical in KotOR**. All file types and structures described here apply to KotOR as well. The examples reference NWN module structure, but KotOR modules use the same GFF-based file types.
+
+In Neverwinter Nights (and KotOR), most of the non-plain-text data contained in a module is in
 GFF, although the compiled scripts are a notable exception.
-The following file types within a module are all in GFF:
+The following file types within a module are all in GFF (applies to both NWN and KotOR):
 •
 Module info file (ifo)
 •
