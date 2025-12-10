@@ -558,16 +558,19 @@ def extract_kit(
                         SearchLocation.CHITIN,
                     ],
                 )
+                # Pre-sort all WOK location lists by priority once to avoid repeated sorting
+                for res_ident, loc_list in wok_locations.items():
+                    if loc_list:
+                        wok_locations[res_ident] = sorted(
+                            loc_list,
+                            key=lambda loc: _get_resource_priority(loc, installation),
+                        )
                 for room_model in lyt_room_model_names:
                     wok_ident = ResourceIdentifier(resname=room_model, restype=ResourceType.WOK)
                     location_list = wok_locations.get(wok_ident, [])
                     if location_list:
-                        # Sort by priority and get highest priority location
-                        location_list_sorted = sorted(
-                            location_list,
-                            key=lambda loc: _get_resource_priority(loc, installation),
-                        )
-                        location = location_list_sorted[0]
+                        # Location list is already sorted by priority (done in batch lookup)
+                        location = location_list[0]
                         try:
                             with location.filepath.open("rb") as f:
                                 f.seek(location.offset)
@@ -603,6 +606,13 @@ def extract_kit(
                 SearchLocation.CHITIN,
             ],
         )
+        # Pre-sort all component location lists by priority once to avoid repeated sorting
+        for res_ident, loc_list in component_locations.items():
+            if loc_list:
+                component_locations[res_ident] = sorted(
+                    loc_list,
+                    key=lambda loc: _get_resource_priority(loc, installation),
+                )
     
     for room_model in lyt_room_model_names:
         room_model_lower = room_model.lower()
@@ -620,11 +630,8 @@ def extract_kit(
         # Resolve MDL
         mdl_location_list = component_locations.get(mdl_ident, [])
         if mdl_location_list:
-            mdl_location_list_sorted = sorted(
-                mdl_location_list,
-                key=lambda loc: _get_resource_priority(loc, installation),
-            )
-            mdl_location = mdl_location_list_sorted[0]
+            # Location list is already sorted by priority (done in batch lookup)
+            mdl_location = mdl_location_list[0]
             try:
                 with mdl_location.filepath.open("rb") as f:
                     f.seek(mdl_location.offset)
@@ -635,11 +642,8 @@ def extract_kit(
         # Resolve MDX
         mdx_location_list = component_locations.get(mdx_ident, [])
         if mdx_location_list:
-            mdx_location_list_sorted = sorted(
-                mdx_location_list,
-                key=lambda loc: _get_resource_priority(loc, installation),
-            )
-            mdx_location = mdx_location_list_sorted[0]
+            # Location list is already sorted by priority (done in batch lookup)
+            mdx_location = mdx_location_list[0]
             try:
                 with mdx_location.filepath.open("rb") as f:
                     f.seek(mdx_location.offset)
@@ -650,11 +654,8 @@ def extract_kit(
         # Resolve WOK
         wok_location_list = component_locations.get(wok_ident, [])
         if wok_location_list:
-            wok_location_list_sorted = sorted(
-                wok_location_list,
-                key=lambda loc: _get_resource_priority(loc, installation),
-            )
-            wok_location = wok_location_list_sorted[0]
+            # Location list is already sorted by priority (done in batch lookup)
+            wok_location = wok_location_list[0]
             try:
                 with wok_location.filepath.open("rb") as f:
                     f.seek(wok_location.offset)
@@ -825,6 +826,15 @@ def extract_kit(
     )
     logger.info(f"Found locations for {len([r for r in batch_location_results.values() if r])} resources")
 
+    # Pre-sort all location lists by priority once to avoid repeated sorting
+    # This is a major performance optimization - sort once instead of sorting every time we access a location
+    for res_ident, loc_list in batch_location_results.items():
+        if loc_list:
+            batch_location_results[res_ident] = sorted(
+                loc_list,
+                key=lambda loc: _get_resource_priority(loc, installation),
+            )
+
     # Batch all TXI lookups upfront to avoid expensive individual calls
     # This is a major performance optimization - instead of calling installation.locations()
     # individually for each texture/lightmap (potentially 100+ times), we call it once
@@ -846,6 +856,14 @@ def extract_kit(
         ],
     )
     logger.info(f"Found locations for {len([r for r in batch_txi_location_results.values() if r])} TXI resources")
+
+    # Pre-sort all TXI location lists by priority once to avoid repeated sorting
+    for res_ident, loc_list in batch_txi_location_results.items():
+        if loc_list:
+            batch_txi_location_results[res_ident] = sorted(
+                loc_list,
+                key=lambda loc: _get_resource_priority(loc, installation),
+            )
 
     def extract_texture_or_lightmap(name: str, is_lightmap: bool) -> None:
         """Extract a texture or lightmap from RIM files or installation.
@@ -872,16 +890,13 @@ def extract_kit(
 
             # Process like main.py _process_texture and _save_texture
             # Prioritize locations: select highest priority location (Override > Modules > Textures > Chitin)
+            # Location lists are already pre-sorted, so just take the first one
             for res_ident, loc_list in location_results.items():
                 if not loc_list:
                     continue
 
-                # Sort by priority and select highest priority location
-                loc_list_sorted = sorted(
-                    loc_list,
-                    key=lambda loc: _get_resource_priority(loc, installation),
-                )
-                location: LocationResult = loc_list_sorted[0]
+                # Location list is already sorted by priority (done in batch lookup)
+                location: LocationResult = loc_list[0]
 
                 # Always convert to TGA format (like main.py with tpcDecompileCheckbox)
                 if res_ident.restype == ResourceType.TPC:
@@ -914,12 +929,8 @@ def extract_kit(
                         txi_loc_list = batch_txi_location_results[txi_res_ident]
                         if txi_loc_list:
                             try:
-                                # Prioritize locations and select highest priority
-                                txi_loc_list_sorted = sorted(
-                                    txi_loc_list,
-                                    key=lambda loc: _get_resource_priority(loc, installation),
-                                )
-                                txi_location = txi_loc_list_sorted[0]
+                                # Location list is already sorted by priority (done in batch lookup)
+                                txi_location = txi_loc_list[0]
                                 with txi_location.filepath.open("rb") as f:
                                     f.seek(txi_location.offset)
                                     target_txis[name_lower] = f.read(txi_location.size)
@@ -965,12 +976,8 @@ def extract_kit(
                     txi_loc_list = batch_txi_location_results[txi_res_ident]
                     if txi_loc_list:
                         try:
-                            # Prioritize locations and select highest priority
-                            txi_loc_list_sorted = sorted(
-                                txi_loc_list,
-                                key=lambda loc: _get_resource_priority(loc, installation),
-                            )
-                            txi_location = txi_loc_list_sorted[0]
+                            # Location list is already sorted by priority (done in batch lookup)
+                            txi_location = txi_loc_list[0]
                             with txi_location.filepath.open("rb") as f:
                                 f.seek(txi_location.offset)
                                 texture_txis[texture_name_lower] = f.read(txi_location.size)
@@ -1011,12 +1018,8 @@ def extract_kit(
                     txi_loc_list = batch_txi_location_results[txi_res_ident]
                     if txi_loc_list:
                         try:
-                            # Prioritize locations and select highest priority
-                            txi_loc_list_sorted = sorted(
-                                txi_loc_list,
-                                key=lambda loc: _get_resource_priority(loc, installation),
-                            )
-                            txi_location = txi_loc_list_sorted[0]
+                            # Location list is already sorted by priority (done in batch lookup)
+                            txi_location = txi_loc_list[0]
                             with txi_location.filepath.open("rb") as f:
                                 f.seek(txi_location.offset)
                                 lightmap_txis[lightmap_name_lower] = f.read(txi_location.size)
