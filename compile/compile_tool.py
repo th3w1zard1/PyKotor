@@ -12,7 +12,6 @@ import os
 import platform
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from typing import Iterable, List
 
@@ -146,14 +145,53 @@ def main() -> None:
 
     if not args.skip_venv:
         install_venv(repo_root, args.venv_name, args.noprompt)
+        # Use venv Python executable if venv was installed
+        venv_python = repo_root / args.venv_name / ("Scripts" if os_name == "Windows" else "bin") / ("python.exe" if os_name == "Windows" else "python")
+        if venv_python.exists():
+            # Check if pip is available in this venv
+            result = subprocess.run(
+                [str(venv_python), "-c", "import pip"],
+                capture_output=True,
+                text=True
+            )
+            if result.returncode == 0:
+                args.python_exe = str(venv_python)
+            else:
+                # Try to find another venv with pip (e.g., .venv_3.13)
+                for alt_venv_name in [".venv_3.13", ".venv_3.12", ".venv_3.11", ".venv_3.10", ".venv_3.9"]:
+                    alt_venv_python = repo_root / alt_venv_name / ("Scripts" if os_name == "Windows" else "bin") / ("python.exe" if os_name == "Windows" else "python")
+                    if alt_venv_python.exists():
+                        result = subprocess.run(
+                            [str(alt_venv_python), "-c", "import pip"],
+                            capture_output=True,
+                            text=True
+                        )
+                        if result.returncode == 0:
+                            args.python_exe = str(alt_venv_python)
+                            print(f"Using venv with pip: {alt_venv_name}")
+                            break
 
     if args.pre_pip:
         run([args.python_exe, "-m", "pip", "install", *args.pre_pip, "--prefer-binary", "--progress-bar", "on"])
 
     if args.preinstall_playwright:
+        # Install playwright if not already installed
+        try:
+            result = subprocess.run(
+                [args.python_exe, "-c", "import playwright"],
+                env=env,
+                capture_output=True,
+                text=True
+            )
+            if result.returncode != 0:
+                print("Installing playwright...")
+                run([args.python_exe, "-m", "pip", "install", "playwright", "--prefer-binary", "--progress-bar", "on"], env=env)
+        except Exception:
+            print("Installing playwright...")
+            run([args.python_exe, "-m", "pip", "install", "playwright", "--prefer-binary", "--progress-bar", "on"], env=env)
         env["PLAYWRIGHT_BROWSERS_PATH"] = env.get("PLAYWRIGHT_BROWSERS_PATH", "0")
         for browser in args.playwright_browser:
-            run([args.python_exe, "-m", "playwright", "install", browser])
+            run([args.python_exe, "-m", "playwright", "install", browser], env=env)
 
     # Collect PyInstaller args
     pyinstaller_args: list[str] = []
