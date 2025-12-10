@@ -1,4 +1,4 @@
-# [spells.2da](2DA-spells)
+# spells.2da
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
@@ -78,20 +78,20 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 - `impactscript`: Impact script [ResRef](GFF-File-Format#gff-data-types)
 - `casthandvisual`: Cast hand visual effect
 
-**Note**: The `[spells.2da](2DA-spells)` file contains many optional columns for projectile [models](MDL-MDX-File-Format), icons, and immunity types (numbered 1-50). These [ARE](GFF-File-Format#are-area) used for spell variations and visual effects.
+**Note**: The `spells.2da` file contains many optional columns for projectile [models](MDL-MDX-File-Format), icons, and immunity types (numbered 1-50). These [ARE](GFF-File-Format#are-area) used for spell variations and visual effects.
 
 **References**:
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:149`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L149) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [spells.2da](2DA-spells) (K1: name, spelldesc)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:327`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L327) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [spells.2da](2DA-spells) (K2: name, spelldesc)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:239`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L239) - Script [ResRef](GFF-File-Format#gff-data-types) column definition for [spells.2da](2DA-spells) (impactscript)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:432`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L432) - Script [ResRef](GFF-File-Format#gff-data-types) column definition for [spells.2da](2DA-spells) (K2: impactscript)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:149`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L149) - [StrRef](TLK-File-Format#string-references-strref) column definitions for spells.2da (K1: name, spelldesc)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:327`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L327) - [StrRef](TLK-File-Format#string-references-strref) column definitions for spells.2da (K2: name, spelldesc)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:239`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L239) - Script [ResRef](GFF-File-Format#gff-data-types) column definition for spells.2da (impactscript)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:432`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L432) - Script [ResRef](GFF-File-Format#gff-data-types) column definition for spells.2da (K2: impactscript)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:465`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L465) - TwoDARegistry.POWERS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:558-560`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L558-L560) - [GFF](GFF-File-Format) field mapping: "Subtype", "SpellId", and "Spell" -> [spells.2da](2DA-spells)
-- [`Libraries/PyKotor/src/pykotor/common/scriptdefs.py:9380-9381`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptdefs.py#L9380-L9381) - GetLastForcePowerUsed function comment referencing [spells.2da](2DA-spells)
-- [`Libraries/PyKotor/src/pykotor/common/scriptlib.py:5676`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptlib.py#L5676) - Debug print referencing [spells.2da](2DA-spells) ID
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:558-560`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L558-L560) - [GFF](GFF-File-Format) field mapping: "Subtype", "SpellId", and "Spell" -> spells.2da
+- [`Libraries/PyKotor/src/pykotor/common/scriptdefs.py:9380-9381`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptdefs.py#L9380-L9381) - GetLastForcePowerUsed function comment referencing spells.2da
+- [`Libraries/PyKotor/src/pykotor/common/scriptlib.py:5676`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptlib.py#L5676) - Debug print referencing spells.2da ID
 
 **HolocronToolset:**
 

@@ -1,10 +1,10 @@
-# KotOR [SSF](SSF-File-Format) file format Documentation
+# KotOR SSF file format Documentation
 
-This document provides a detailed description of the SSF ([sound set files](SSF-File-Format)) file format used in Knights of the Old Republic (KotOR) games. [SSF files](SSF-File-Format) contain mappings from sound event types to string references ([StrRefs](TLK-File-Format#string-references-strref)) in the [TLK file](TLK-File-Format).
+This document provides a detailed description of the SSF (sound set files) file format used in Knights of the Old Republic (KotOR) games. SSF files contain mappings from sound event types to string references ([StrRefs](TLK-File-Format#string-references-strref)) in the [TLK file](TLK-File-Format).
 
-**For mod developers:** To modify [SSF files](SSF-File-Format) in your mods, see the [TSLPatcher SSFList Syntax Guide](TSLPatcher-SSFList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
+**For mod developers:** To modify SSF files in your mods, see the [TSLPatcher SSFList Syntax Guide](TSLPatcher-SSFList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Related formats:** [SSF](SSF-File-Format) files reference [TLK files](TLK-File-Format) for string references ([StrRefs](TLK-File-Format#string-references-strref)) that point to the actual sound text strings.
+**Related formats:** SSF files reference [TLK files](TLK-File-Format) for string references ([StrRefs](TLK-File-Format#string-references-strref)) that point to the actual sound text strings.
 
 ## Table of Contents
 
@@ -21,24 +21,24 @@ This document provides a detailed description of the SSF ([sound set files](SSF-
 
 ## file structure Overview
 
-[SSF files](SSF-File-Format) define a set of 28 sound effects that creatures can play during various game events (battle cries, pain grunts, selection sounds, etc.). The [StrRefs](TLK-File-Format#string-references-strref) point to entries in [`dialog.tlk`](TLK-File-Format) which contain the actual [WAV file](WAV-File-Format) references.
+SSF files define a set of 28 sound effects that creatures can play during various game events (battle cries, pain grunts, selection sounds, etc.). The [StrRefs](TLK-File-Format#string-references-strref) point to entries in [`dialog.tlk`](TLK-File-Format) which contain the actual [WAV file](WAV-File-Format) references.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/)
 
 **Vendor References:**
 
-- [`vendor/reone/src/libs/resource/format/ssfreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ssfreader.cpp) - Complete C++ [SSF](SSF-File-Format) reader implementation
-- [`vendor/xoreos/src/aurora/ssffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ssffile.cpp) - Generic Aurora [SSF](SSF-File-Format) implementation (shared format)
-- [`vendor/KotOR.js/src/resource/SSFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/SSFObject.ts) - TypeScript [SSF](SSF-File-Format) parser
-- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/SSFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/SSFObject.cs) - C# Unity [SSF](SSF-File-Format) loader
+- [`vendor/reone/src/libs/resource/format/ssfreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ssfreader.cpp) - Complete C++ SSF reader implementation
+- [`vendor/xoreos/src/aurora/ssffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ssffile.cpp) - Generic Aurora SSF implementation (shared format)
+- [`vendor/KotOR.js/src/resource/SSFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/SSFObject.ts) - TypeScript SSF parser
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/SSFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/SSFObject.cs) - C# Unity SSF loader
 - [`vendor/Kotor.NET/Kotor.NET/Formats/KotorSSF/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorSSF) - .NET SSF reader/writer
 
 **See Also:**
 
-- [TSLPatcher SSFList Syntax](TSLPatcher-SSFList-Syntax) - Modding [SSF files](SSF-File-Format) with TSLPatcher
+- [TSLPatcher SSFList Syntax](TSLPatcher-SSFList-Syntax) - Modding SSF files with TSLPatcher
 - [TLK File Format](TLK-File-Format) - [Talk Table](TLK-File-Format) containing actual sound references
 - [Bioware Aurora SSF Format](Bioware-Aurora-SSF) - Official BioWare specification
-- [GFF-UTC](GFF-UTC) - [creature templates](GFF-File-Format#utc-creature) that reference [SSF](SSF-File-Format) files
+- [GFF-UTC](GFF-UTC) - [creature templates](GFF-File-Format#utc-creature) that reference SSF files
 - [2DA-soundset](2DA-soundset) - Sound set definitions table
 
 ---
@@ -116,8 +116,8 @@ The 28 sound event types correspond to array indices:
 
 **Binary Writing**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py)
 
-**[SSF](SSF-File-Format) Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py:50-258`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py#L50-L258)
+**SSF Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py:50-258`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py#L50-L258)
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [SSF file](SSF-File-Format) format, focusing on the detailed file structure and data formats used within the games.
+This documentation aims to provide a comprehensive overview of the KotOR SSF file format, focusing on the detailed file structure and data formats used within the games.

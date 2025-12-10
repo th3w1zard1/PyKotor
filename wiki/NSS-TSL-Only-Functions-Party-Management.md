@@ -4,6 +4,7 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Functions
 
+
 <a id="addavailablepupbyobject"></a>
 
 ## `AddAvailablePUPByObject(nPUP, oPuppet)`
@@ -76,3 +77,4 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 - to the base. The CNPC data is still stored in the
 
 - `nNPC`: int
+

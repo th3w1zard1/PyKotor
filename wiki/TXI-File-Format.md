@@ -1,6 +1,6 @@
-# KotOR [TXI](TXI-File-Format) file format Documentation
+# KotOR TXI file format Documentation
 
-TXI ([texture](TPC-File-Format) Info) files [ARE](GFF-File-Format#are-area) compact ASCII descriptors that attach metadata to [TPC](TPC-File-Format) [textures](TPC-File-Format). They control mipmap usage, filtering, [flipbook animation](#animation-and-flipbooks), environment mapping, font atlases, and platform-specific downsampling. Every [TXI file](TXI-File-Format) is parsed at runtime to configure how a [TPC](TPC-File-Format) image is rendered.
+TXI ([texture](TPC-File-Format) Info) files [ARE](GFF-File-Format#are-area) compact ASCII descriptors that attach metadata to [TPC](TPC-File-Format) [textures](TPC-File-Format). They control mipmap usage, filtering, [flipbook animation](#animation-and-flipbooks), environment mapping, font atlases, and platform-specific downsampling. Every TXI file is parsed at runtime to configure how a [TPC](TPC-File-Format) image is rendered.
 
 ## Table of Contents
 
@@ -24,24 +24,24 @@ TXI ([texture](TPC-File-Format) Info) files [ARE](GFF-File-Format#are-area) comp
 
 ## format Overview
 
-- [TXI files](TXI-File-Format) [ARE](GFF-File-Format#are-area) plain-text [KEY](KEY-File-Format)/value lists; each command modifies a field in the [TPC](TPC-File-Format) runtime metadata.  
+- TXI files [ARE](GFF-File-Format#are-area) plain-text [KEY](KEY-File-Format)/value lists; each command modifies a field in the [TPC](TPC-File-Format) runtime metadata.  
 - Commands [ARE](GFF-File-Format#are-area) case-insensitive but conventionally lowercase. values can be integers, floats, booleans (`0`/`1`), [ResRefs](GFF-File-Format#gff-data-types), or multi-line coordinate tables.  
-- A single [TXI](TXI-File-Format) can be appended to the end of a `.tpc` file (as Bioware does) or shipped as a sibling `.txi` file; the parser treats both identically.  
+- A single TXI can be appended to the end of a `.tpc` file (as Bioware does) or shipped as a sibling `.txi` file; the parser treats both identically.  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/txi)
 
 **Vendor References:**
 
-- [`vendor/reone/src/libs/graphics/format/txireader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/txireader.cpp) - Complete C++ [TXI](TXI-File-Format) parser implementation
-- [`vendor/xoreos/src/graphics/images/txi.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/images/txi.cpp) - Generic Aurora [TXI](TXI-File-Format) implementation (shared format)
-- [`vendor/KotOR.js/src/resource/TXIObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXIObject.ts) - TypeScript [TXI](TXI-File-Format) parser with metadata extraction
-- [`vendor/KotOR.js/src/enums/graphics/txi/`](https://github.com/th3w1zard1/KotOR.js/tree/master/src/enums/graphics/txi) - [TXI](TXI-File-Format) command enumerations
-- [`vendor/KotOR-Unity/Assets/Scripts/Resource/TXI.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/Resource/TXI.cs) - C# Unity [TXI](TXI-File-Format) loader
+- [`vendor/reone/src/libs/graphics/format/txireader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/txireader.cpp) - Complete C++ TXI parser implementation
+- [`vendor/xoreos/src/graphics/images/txi.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/images/txi.cpp) - Generic Aurora TXI implementation (shared format)
+- [`vendor/KotOR.js/src/resource/TXIObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXIObject.ts) - TypeScript TXI parser with metadata extraction
+- [`vendor/KotOR.js/src/enums/graphics/txi/`](https://github.com/th3w1zard1/KotOR.js/tree/master/src/enums/graphics/txi) - TXI command enumerations
+- [`vendor/KotOR-Unity/Assets/Scripts/Resource/TXI.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/Resource/TXI.cs) - C# Unity TXI loader
 
 **See Also:**
 
-- [TPC File Format](TPC-File-Format) - [texture](TPC-File-Format) format that [TXI](TXI-File-Format) metadata describes
-- [MDL/MDX File Format](MDL-MDX-File-Format) - [models](MDL-MDX-File-Format) that reference [textures](TPC-File-Format) with [TXI](TXI-File-Format) metadata  
+- [TPC File Format](TPC-File-Format) - [texture](TPC-File-Format) format that TXI metadata describes
+- [MDL/MDX File Format](MDL-MDX-File-Format) - [models](MDL-MDX-File-Format) that reference [textures](TPC-File-Format) with TXI metadata  
 
 ---
 
@@ -115,7 +115,7 @@ When `proceduretype=cycle`, PyKotor splits the [TPC](TPC-File-Format) into `numx
 
 ### Font Atlas Layout
 
-KotOR’s bitmap fonts use [TXI](TXI-File-Format) commands to describe glyph boxes:
+KotOR’s bitmap fonts use TXI commands to describe glyph boxes:
 
 | Command | Description |
 | ------- | ----------- |
@@ -139,15 +139,15 @@ KotOR.js exposes identical structures in [`src/resource/TXI.ts`](https://github.
 
 ## Relationship to [TPC](TPC-File-Format) [textures](TPC-File-Format)
 
-- A [TXI](TXI-File-Format) modifies the rendering pipeline for its paired [TPC](TPC-File-Format): mipmap [flags](GFF-File-Format#gff-data-types) alter sampler state, [animation](MDL-MDX-File-Format#animation-header) directives convert a single [texture](TPC-File-Format) into multiple layers, and [material](MDL-MDX-File-Format#trimesh-header) directives attach bump/shine maps.  
-- When embedded inside a `.tpc` file, the [TXI](TXI-File-Format) text starts immediately after the binary payload; PyKotor reads it by seeking past the [texture](TPC-File-Format) data and consuming the remaining bytes as ASCII (`io_tpc.py:158-188`).  
+- A TXI modifies the rendering pipeline for its paired [TPC](TPC-File-Format): mipmap [flags](GFF-File-Format#gff-data-types) alter sampler state, [animation](MDL-MDX-File-Format#animation-header) directives convert a single [texture](TPC-File-Format) into multiple layers, and [material](MDL-MDX-File-Format#trimesh-header) directives attach bump/shine maps.  
+- When embedded inside a `.tpc` file, the TXI text starts immediately after the binary payload; PyKotor reads it by seeking past the [texture](TPC-File-Format) data and consuming the remaining bytes as ASCII (`io_tpc.py:158-188`).  
 - Exported `.txi` files [ARE](GFF-File-Format#are-area) plain UTF-8 text and can be edited with any text editor; tools like `tga2tpc` and KotORBlender reserialize them alongside [TPC](TPC-File-Format) assets.
 
-### Empty [TXI](TXI-File-Format) files
+### Empty TXI files
 
-Many [TXI files](TXI-File-Format) in the game installation [ARE](GFF-File-Format#are-area) **empty** (0 bytes). These empty [TXI files](TXI-File-Format) serve as placeholders and indicate that the [texture](TPC-File-Format) should use default rendering settings. When a [TXI file](TXI-File-Format) is empty or missing, the engine falls back to default [texture](TPC-File-Format) parameters.
+Many TXI files in the game installation [ARE](GFF-File-Format#are-area) **empty** (0 bytes). These empty TXI files serve as placeholders and indicate that the [texture](TPC-File-Format) should use default rendering settings. When a TXI file is empty or missing, the engine falls back to default [texture](TPC-File-Format) parameters.
 
-**Examples of [textures](TPC-File-Format) with empty [TXI files](TXI-File-Format):**
+**Examples of [textures](TPC-File-Format) with empty TXI files:**
 
 - `lda_bark04.txi` (0 bytes)
 - `lda_flr11.txi` (0 bytes)
@@ -162,13 +162,13 @@ Many [TXI files](TXI-File-Format) in the game installation [ARE](GFF-File-Format
 - `lda_unwal07.txi` (0 bytes)
 - `lda_wall02.txi`, `lda_wall03.txi`, `lda_wall04.txi` (0 bytes)
 
-**Examples of [textures](TPC-File-Format) with non-empty [TXI files](TXI-File-Format):**
+**Examples of [textures](TPC-File-Format) with non-empty TXI files:**
 
 - `lda_ehawk01.txi` - Contains `envmaptexture CM_jedcom`
 - `lda_ehawk01a.txi` - Contains `envmaptexture CM_jedcom`
 - `lda_flr07.txi` - Contains `bumpyshinytexture CM_dantii` and `bumpmaptexture LDA_flr01B`
 
-**Kit Generation Note:** When generating kits from module RIM files, empty [TXI files](TXI-File-Format) should still be created as placeholders even if they don't exist in the installation. This ensures kit completeness and matches the expected kit structure where many [textures](TPC-File-Format) have corresponding (empty) [TXI files](TXI-File-Format).  
+**Kit Generation Note:** When generating kits from module RIM files, empty TXI files should still be created as placeholders even if they don't exist in the installation. This ensures kit completeness and matches the expected kit structure where many [textures](TPC-File-Format) have corresponding (empty) TXI files.  
 
 ---
 

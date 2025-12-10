@@ -1,6 +1,6 @@
-# KotOR [WAV](WAV-File-Format) file format Documentation
+# KotOR WAV file format Documentation
 
-KotOR stores both standard [WAV](WAV-File-Format) voice-over lines and Bioware-obfuscated sound-effect files. Voice-over assets [ARE](GFF-File-Format#are-area) regular RIFF containers with PCM headers, while SFX assets prepend a 470-[byte](GFF-File-Format#gff-data-types) custom block before the RIFF data. PyKotor handles both variants transparently.
+KotOR stores both standard WAV voice-over lines and Bioware-obfuscated sound-effect files. Voice-over assets [ARE](GFF-File-Format#are-area) regular RIFF containers with PCM headers, while SFX assets prepend a 470-[byte](GFF-File-Format#gff-data-types) custom block before the RIFF data. PyKotor handles both variants transparently.
 
 ## Table of Contents
 
@@ -79,7 +79,7 @@ KotOR voice-over WAVs add a `"fact"` chunk with a 32-bit sample count, which PyK
 ## Encoding Details
 
 - **PCM (`audio_format = 0x0001`)**: Most dialogue is 16-bit mono PCM, which streams directly through the engine mixer.  
-- **IMA ADPCM (`audio_format = 0x0011`)**: Some ambient SFX use compressed ADPCM frames; when present, the `fmt` chunk includes the extra coefficient block defined by the [WAV](WAV-File-Format) spec.  
+- **IMA ADPCM (`audio_format = 0x0011`)**: Some ambient SFX use compressed ADPCM frames; when present, the `fmt` chunk includes the extra coefficient block defined by the WAV spec.  
 - KotOR requires `block_align` and `bytes_per_sec` to match the values implied by the codec; mismatched headers can crash the in-engine decoder.  
 
 External tooling such as SithCodec and `SWKotOR-Audio-Encoder` implement the same formats; PyKotor simply exposes the metadata so conversions stay lossless.
@@ -95,6 +95,6 @@ External tooling such as SithCodec and `SWKotOR-Audio-Encoder` implement the sam
   - [`vendor/SithCodec`](https://github.com/th3w1zard1/SithCodec) (encoding/decoding utility)  
   - [`vendor/SWKotOR-Audio-Encoder`](https://github.com/th3w1zard1/SWKotOR-Audio-Encoder)  
 
-With this structure, [WAV](WAV-File-Format) assets authored in PyKotor will play identically in the base game and in the other vendor tools.
+With this structure, WAV assets authored in PyKotor will play identically in the base game and in the other vendor tools.
 
 ---

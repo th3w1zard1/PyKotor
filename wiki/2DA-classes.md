@@ -1,4 +1,4 @@
-# [classes.2da](2DA-classes)
+# classes.2da
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
@@ -54,17 +54,17 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:75`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L75) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [classes.2da](2DA-classes) (K1: name, description)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:250`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L250) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [classes.2da](2DA-classes) (K2: name, description)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:75`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L75) - [StrRef](TLK-File-Format#string-references-strref) column definitions for classes.2da (K1: name, description)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:250`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L250) - [StrRef](TLK-File-Format#string-references-strref) column definitions for classes.2da (K2: name, description)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:463`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L463) - TwoDARegistry.CLASSES constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:531`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L531) - [GFF](GFF-File-Format) field mapping: "Class" -> [classes.2da](2DA-classes)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:531`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L531) - [GFF](GFF-File-Format) field mapping: "Class" -> classes.2da
 
 **HolocronToolset:**
 
 - [`Tools/HolocronToolset/src/toolset/data/installation.py:62`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L62) - HTInstallation.TwoDA_CLASSES constant
-- [`Tools/HolocronToolset/src/toolset/gui/editors/utc.py:242`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utc.py#L242) - [classes.2da](2DA-classes) included in batch cache for [UTC](GFF-File-Format#utc-creature) editor
-- [`Tools/HolocronToolset/src/toolset/gui/editors/utc.py:256`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utc.py#L256) - [classes.2da](2DA-classes) loading from cache
-- [`Tools/HolocronToolset/src/toolset/gui/editors/utc.py:291-298`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utc.py#L291-L298) - [classes.2da](2DA-classes) usage in class selection comboboxes and label population
+- [`Tools/HolocronToolset/src/toolset/gui/editors/utc.py:242`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utc.py#L242) - classes.2da included in batch cache for [UTC](GFF-File-Format#utc-creature) editor
+- [`Tools/HolocronToolset/src/toolset/gui/editors/utc.py:256`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utc.py#L256) - classes.2da loading from cache
+- [`Tools/HolocronToolset/src/toolset/gui/editors/utc.py:291-298`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utc.py#L291-L298) - classes.2da usage in class selection comboboxes and label population
 
 **Vendor Implementations:**
 

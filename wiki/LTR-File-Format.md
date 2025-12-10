@@ -1,4 +1,4 @@
-# KotOR [LTR files](LTR-File-Format) format Documentation
+# KotOR LTR files format Documentation
 
 LTR (Letter) resources store third-order Markov chain probability tables that the game uses to procedurally generate NPC names. The data encodes likelihoods for characters appearing at the start, middle, and end of names given zero, one, or two-character context.
 
@@ -21,7 +21,7 @@ LTR (Letter) resources store third-order Markov chain probability tables that th
 ## file structure Overview
 
 - KotOR always uses the **28-character alphabet** (`a–z` plus `'` and `-`). **Neverwinter Nights (NWN) used 26 characters**; the header explicitly stores the count. This is a **KotOR-specific difference** from NWN.  
-- [LTR files](LTR-File-Format) [ARE](GFF-File-Format#are-area) binary and consist of a short header followed by three probability tables (singles, doubles, triples) stored as contiguous [float](GFF-File-Format#gff-data-types) arrays.  
+- LTR files [ARE](GFF-File-Format#are-area) binary and consist of a short header followed by three probability tables (singles, doubles, triples) stored as contiguous [float](GFF-File-Format#gff-data-types) arrays.  
 - field offsets below trace directly to the reader implementations in [`vendor/reone/src/libs/resource/format/ltrreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ltrreader.cpp#L27-L74), [`vendor/xoreos/src/aurora/ltrfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ltrfile.cpp#L135-L168), and [`vendor/KotOR.js/src/resource/LTRObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/LTRObject.ts#L61-L117).  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr)

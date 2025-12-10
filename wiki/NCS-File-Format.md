@@ -1,22 +1,22 @@
-# KotOR [NCS files](NCS-File-Format) format Documentation
+# KotOR NCS files format Documentation
 
-[NCS files](NCS-File-Format) contain compiled NWScript bytecode used in **KotOR and TSL**. Scripts run inside a stack-based virtual machine **shared across Aurora engine games** (KotOR, Neverwinter Nights, etc.). KotOR inherits the same format with minor opcode additions for game-specific systems. **This documentation focuses on KotOR-specific behavior**, though the core format is shared with Neverwinter Nights.
+NCS files contain compiled NWScript bytecode used in **KotOR and TSL**. Scripts run inside a stack-based virtual machine **shared across Aurora engine games** (KotOR, Neverwinter Nights, etc.). KotOR inherits the same format with minor opcode additions for game-specific systems. **This documentation focuses on KotOR-specific behavior**, though the core format is shared with Neverwinter Nights.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/)
 
 **Vendor References:**
 
-- [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp) - Complete [NCS](NCS-File-Format) VM implementation with decompilation
-- [`vendor/xoreos-tools/src/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/ncsfile.cpp) - [NCS](NCS-File-Format) decompiler tool
-- [`vendor/reone/src/libs/script/format/ncsreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp) - C++ [NCS](NCS-File-Format) parser and VM
+- [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp) - Complete NCS VM implementation with decompilation
+- [`vendor/xoreos-tools/src/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/ncsfile.cpp) - NCS decompiler tool
+- [`vendor/reone/src/libs/script/format/ncsreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp) - C++ NCS parser and VM
 - [`vendor/KotOR.js/src/odyssey/NWScriptInstance.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/NWScriptInstance.ts) - TypeScript NWScript VM with bytecode execution
-- [`vendor/NorthernLights/Assets/Scripts/ncs/NCSReader.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/NCSReader.cs) - C# Unity [NCS](NCS-File-Format) parser
+- [`vendor/NorthernLights/Assets/Scripts/ncs/NCSReader.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/NCSReader.cs) - C# Unity NCS parser
 - [`Vanilla KOTOR Script Source`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source) - Decompiled vanilla scripts
 
 **See Also:**
 
-- [NSS File Format](NSS-File-Format) - NWScript source code that compiles to [NCS](NCS-File-Format)
-- [GFF-DLG](GFF-DLG) - [dialogue files](GFF-File-Format#dlg-dialogue) that trigger [NCS](NCS-File-Format) scripts
+- [NSS File Format](NSS-File-Format) - NWScript source code that compiles to NCS
+- [GFF-DLG](GFF-DLG) - [dialogue files](GFF-File-Format#dlg-dialogue) that trigger NCS scripts
 
 ## Table of Contents
 
@@ -264,7 +264,7 @@ Jump offsets [ARE](GFF-File-Format#are-area) **relative to the start of the jump
 
 **Byte Order:**
 
-All multi-[byte](GFF-File-Format#gff-data-types) values in [NCS files](NCS-File-Format) [ARE](GFF-File-Format#are-area) stored in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** ([network byte order](https://en.wikipedia.org/wiki/Endianness#Networking)):
+All multi-[byte](GFF-File-Format#gff-data-types) values in NCS files [ARE](GFF-File-Format#are-area) stored in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** ([network byte order](https://en.wikipedia.org/wiki/Endianness#Networking)):
 
 - 16-bit values ([uint16](GFF-File-Format#gff-data-types), [int16](GFF-File-Format#gff-data-types)): Most significant [byte](GFF-File-Format#gff-data-types) first
 - 32-bit values ([uint32](GFF-File-Format#gff-data-types), [int32](GFF-File-Format#gff-data-types), [float32](GFF-File-Format#gff-data-types)): Most significant [byte](GFF-File-Format#gff-data-types) first
@@ -557,16 +557,16 @@ The decompiler parses this file to build a lookup table mapping routine numbers 
 **Special Instructions:**
 
 - `NOP` (0x2D): No-operation, used as placeholder for debugger. format: `[0x2D][qualifier]`. Does nothing, SP remains unchanged.
-- Program size marker (0x42): Always found at offset 8 in [NCS file](NCS-File-Format) header. format: `[0x42][uint32 fileSize]`. This is not a real instruction and is never executed. It contains the total file size in bytes ([big-endian](https://en.wikipedia.org/wiki/Endianness)). All implementations validate this marker before parsing instructions.
+- Program size marker (0x42): Always found at offset 8 in NCS file header. format: `[0x42][uint32 fileSize]`. This is not a real instruction and is never executed. It contains the total file size in bytes ([big-endian](https://en.wikipedia.org/wiki/Endianness)). All implementations validate this marker before parsing instructions.
 
-**Note:** All multi-[byte](GFF-File-Format#gff-data-types) values in [NCS files](NCS-File-Format) [ARE](GFF-File-Format#are-area) stored in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** [byte](GFF-File-Format#gff-data-types) order. This includes all integers, floats, offsets, and size fields.
+**Note:** All multi-[byte](GFF-File-Format#gff-data-types) values in NCS files [ARE](GFF-File-Format#are-area) stored in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** [byte](GFF-File-Format#gff-data-types) order. This includes all integers, floats, offsets, and size fields.
 
 **Special Instruction Details:**
 
 - `NOP` (0x2D) is a no-operation instruction that does nothing. It is typically used as a placeholder by debuggers or during script compilation. The qualifier is typically `0x00`.
 - The program size marker (0x42) at offset 8 is never executed as an instruction. It is a metadata field that all implementations check before parsing the instruction stream. If this byte is not `0x42`, implementations should reject the file as invalid.
 
-**Reference:** [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp:342-350`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp#L342-L350) (header validation including 0x42 check), [`vendor/xoreos-docs/specs/torlack/ncs.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/ncs.html) (Torlack's original [NCS](NCS-File-Format) specification), [`vendor/NorthernLights/Assets/Scripts/ncs/NCSReader.cs:876-886`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/NCSReader.cs#L876-L886) (0x42 marker handling), [`vendor/Kotor.NET/Kotor.NET/Formats/KotorNCS/NCS.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorNCS/NCS.cs) (NOP instruction handling), [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_data.py:144-242`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_data.py#L144-L242) (instruction definitions)
+**Reference:** [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp:342-350`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp#L342-L350) (header validation including 0x42 check), [`vendor/xoreos-docs/specs/torlack/ncs.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/ncs.html) (Torlack's original NCS specification), [`vendor/NorthernLights/Assets/Scripts/ncs/NCSReader.cs:876-886`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/NCSReader.cs#L876-L886) (0x42 marker handling), [`vendor/Kotor.NET/Kotor.NET/Formats/KotorNCS/NCS.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorNCS/NCS.cs) (NOP instruction handling), [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_data.py:144-242`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_data.py#L144-L242) (instruction definitions)
 
 ---
 

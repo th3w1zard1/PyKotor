@@ -1,4 +1,4 @@
-# [racialtypes.2da](2DA-racialtypes)
+# racialtypes.2da
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 

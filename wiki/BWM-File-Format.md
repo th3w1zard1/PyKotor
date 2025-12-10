@@ -1,8 +1,8 @@
-# KotOR [BWM](BWM-File-Format) file format Documentation
+# KotOR BWM file format Documentation
 
-This document provides a detailed description of the [BWM (Binary WalkMesh)](BWM-File-Format) file format used in Knights of the Old Republic (KotOR) games. [BWM files](BWM-File-Format), stored on disk as [WOK files](BWM-File-Format), define [walkable surfaces](BWM-File-Format) for pathfinding and collision detection in game areas.
+This document provides a detailed description of the BWM (Binary WalkMesh) file format used in Knights of the Old Republic (KotOR) games. BWM files, stored on disk as WOK files, define walkable surfaces for pathfinding and collision detection in game areas.
 
-**Related formats:** [BWM files](BWM-File-Format) [ARE](GFF-File-Format#are-area) used in conjunction with [GFF ARE files](GFF-File-Format#are-area) which define [area properties](GFF-File-Format#are-area) and contain references to [walkmesh](BWM-File-Format) files.
+**Related formats:** BWM files [ARE](GFF-File-Format#are-area) used in conjunction with [GFF ARE files](GFF-File-Format#are-area) which define [area properties](GFF-File-Format#are-area) and contain references to walkmesh files.
 
 ## Table of Contents
 
@@ -36,30 +36,30 @@ This document provides a detailed description of the [BWM (Binary WalkMesh)](BWM
 
 ## file structure Overview
 
-[BWM (Binary WalkMesh)](BWM-File-Format) files define [walkable surfaces](BWM-File-Format) using triangular [faces](MDL-MDX-File-Format#face-structure). Each [face](MDL-MDX-File-Format#face-structure) has [material](MDL-MDX-File-Format#trimesh-header) properties that determine whether it's walkable, [adjacency](BWM-File-Format#walkable-adjacencies) information for pathfinding, and optional [edge](BWM-File-Format#edges) transitions for area connections. The format supports two distinct [walkmesh](BWM-File-Format) types: area walkmeshes ([WOK](BWM-File-Format)) for level [geometry](MDL-MDX-File-Format#geometry-header) and placeable/door walkmeshes ([PWK](BWM-File-Format)/[DWK](BWM-File-Format)) for interactive objects.
+BWM (Binary WalkMesh) files define walkable surfaces using triangular [faces](MDL-MDX-File-Format#face-structure). Each [face](MDL-MDX-File-Format#face-structure) has [material](MDL-MDX-File-Format#trimesh-header) properties that determine whether it's walkable, [adjacency](BWM-File-Format#walkable-adjacencies) information for pathfinding, and optional [edge](BWM-File-Format#edges) transitions for area connections. The format supports two distinct walkmesh types: area walkmeshes (WOK) for level [geometry](MDL-MDX-File-Format#geometry-header) and placeable/door walkmeshes (PWK/DWK) for interactive objects.
 
-[walkmeshes](BWM-File-Format) serve multiple critical functions in KotOR:
+walkmeshes serve multiple critical functions in KotOR:
 
-- **Pathfinding**: NPCs and the player use [walkmeshes](BWM-File-Format) to navigate areas, with [adjacency](BWM-File-Format#walkable-adjacencies) data enabling pathfinding algorithms to find routes between [walkable faces](BWM-File-Format#faces)
-- **Collision Detection**: The engine uses [walkmeshes](BWM-File-Format) to prevent characters from walking through walls, objects, and impassable terrain
+- **Pathfinding**: NPCs and the player use walkmeshes to navigate areas, with [adjacency](BWM-File-Format#walkable-adjacencies) data enabling pathfinding algorithms to find routes between [walkable faces](BWM-File-Format#faces)
+- **Collision Detection**: The engine uses walkmeshes to prevent characters from walking through walls, objects, and impassable terrain
 - **Spatial Queries**: [AABB](BWM-File-Format#aabb-tree) trees enable efficient ray casting (mouse clicks, projectiles) and point-in-triangle tests (determining which [face](MDL-MDX-File-Format#face-structure) a character stands on)
-- **Area Transitions**: [edge](BWM-File-Format#edges) transitions link [walkmeshes](BWM-File-Format) to door connections and area boundaries, enabling seamless movement between rooms
+- **Area Transitions**: [edge](BWM-File-Format#edges) transitions link walkmeshes to door connections and area boundaries, enabling seamless movement between rooms
 
-The binary format uses a header-based structure where offsets point to various data tables, allowing efficient random access to [vertices](MDL-MDX-File-Format#vertex-structure), [faces](MDL-MDX-File-Format#face-structure), [materials](MDL-MDX-File-Format#trimesh-header), and acceleration structures. This design enables the engine to load only necessary portions of large [walkmeshes](BWM-File-Format) or stream data as needed.
+The binary format uses a header-based structure where offsets point to various data tables, allowing efficient random access to [vertices](MDL-MDX-File-Format#vertex-structure), [faces](MDL-MDX-File-Format#face-structure), [materials](MDL-MDX-File-Format#trimesh-header), and acceleration structures. This design enables the engine to load only necessary portions of large walkmeshes or stream data as needed.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/)
 
 **Reference Implementations:**
 
-- [`vendor/reone/src/libs/graphics/format/bwmreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp) - C++ [BWM](BWM-File-Format) reader with complete parsing logic
-- [`vendor/reone/include/reone/graphics/format/bwmreader.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/graphics/format/bwmreader.h) - [BWM](BWM-File-Format) reader header with type definitions
-- [`vendor/reone/include/reone/graphics/walkmesh.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/graphics/walkmesh.h) - Runtime [walkmesh](BWM-File-Format) class definition
+- [`vendor/reone/src/libs/graphics/format/bwmreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp) - C++ BWM reader with complete parsing logic
+- [`vendor/reone/include/reone/graphics/format/bwmreader.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/graphics/format/bwmreader.h) - BWM reader header with type definitions
+- [`vendor/reone/include/reone/graphics/walkmesh.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/graphics/walkmesh.h) - Runtime walkmesh class definition
 - [`vendor/reone/src/libs/graphics/walkmesh.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/walkmesh.cpp) - Runtime raycasting implementation
-- [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py) - Python [BWM](BWM-File-Format) reader for Blender import
-- [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py) - Python [BWM](BWM-File-Format) writer for Blender export with [adjacency](BWM-File-Format#walkable-adjacencies) calculation
+- [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py) - Python BWM reader for Blender import
+- [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py) - Python BWM writer for Blender export with [adjacency](BWM-File-Format#walkable-adjacencies) calculation
 - [`vendor/kotorblender/io_scene_kotor/aabb.py`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/aabb.py) - [AABB](BWM-File-Format#aabb-tree) tree generation algorithm
-- [`vendor/xoreos/src/engines/kotorbase/path/walkmeshloader.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/path/walkmeshloader.cpp) - xoreos [walkmesh](BWM-File-Format) loader with pathfinding integration
-- [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts) - Complete TypeScript [walkmesh](BWM-File-Format) implementation with raycasting and spatial queries
+- [`vendor/xoreos/src/engines/kotorbase/path/walkmeshloader.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/path/walkmeshloader.cpp) - xoreos walkmesh loader with pathfinding integration
+- [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts) - Complete TypeScript walkmesh implementation with raycasting and spatial queries
 - [`vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/WalkmeshEdge.ts) - WalkmeshEdge class for [perimeter](BWM-File-Format#perimeters) [edge](BWM-File-Format#edges) handling
 - [`vendor/KotOR.js/src/odyssey/WalkmeshPerimeter.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/WalkmeshPerimeter.ts) - WalkmeshPerimeter class for boundary loop management
 
@@ -74,82 +74,82 @@ The binary format uses a header-based structure where offsets point to various d
 | Magic        | [char](GFF-File-Format#gff-data-types) | 0 (0x00)   | 4    | Always `"BWM "` (space-padded)                 |
 | Version      | [char](GFF-File-Format#gff-data-types) | 4 (0x04)   | 4    | Always `"V1.0"`                                 |
 
-The file header begins with an 8-[byte](GFF-File-Format#gff-data-types) signature that must exactly match `"BWM V1.0"` (the space after "[BWM](BWM-File-Format)" is significant). This signature serves as both a file type identifier and version marker. The version string "V1.0" indicates this is the first and only version of the [BWM](BWM-File-Format) format used in KotOR games. Implementations should validate this header before proceeding with file parsing to ensure they're reading a valid [BWM file](BWM-File-Format).
+The file header begins with an 8-[byte](GFF-File-Format#gff-data-types) signature that must exactly match `"BWM V1.0"` (the space after "BWM" is significant). This signature serves as both a file type identifier and version marker. The version string "V1.0" indicates this is the first and only version of the BWM format used in KotOR games. Implementations should validate this header before proceeding with file parsing to ensure they're reading a valid BWM file.
 
 **Vendor Consensus:** All implementations (reone, xoreos, KotOR.js, kotorblender, PyKotor) agree on this header format and validation.
 
 **Reference**: [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:28`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L28), [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:52-59`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L52-L59), [`vendor/xoreos/src/engines/kotorbase/path/walkmeshloader.cpp:73-75`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/path/walkmeshloader.cpp#L73-L75), [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:452-454`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts#L452-L454)
 
-### [walkmesh](BWM-File-Format) Properties
+### walkmesh Properties
 
-The [walkmesh](BWM-File-Format) properties section immediately follows the header and contains type information, hook vectors, and position data. This section is 52 bytes total (from offset 0x08 to 0x3C), providing essential metadata about the [walkmesh](BWM-File-Format)'s purpose and positioning.
+The walkmesh properties section immediately follows the header and contains type information, hook vectors, and position data. This section is 52 bytes total (from offset 0x08 to 0x3C), providing essential metadata about the walkmesh's purpose and positioning.
 
 | Name                    | type      | offset | size | Description                                                      |
 | ----------------------- | --------- | ------ | ---- | ---------------------------------------------------------------- |
-| type                    | [uint32](GFF-File-Format#gff-data-types)    | 8 (0x08)   | 4    | [walkmesh](BWM-File-Format) type (0=[PWK](BWM-File-Format)/[DWK](BWM-File-Format), 1=[WOK](BWM-File-Format)/Area)                            |
+| type                    | [uint32](GFF-File-Format#gff-data-types)    | 8 (0x08)   | 4    | walkmesh type (0=PWK/DWK, 1=WOK/Area)                            |
 | Relative Use position 1 | [float32](GFF-File-Format#gff-data-types)| 12 (0x0C)   | 12   | Relative use hook position 1 (x, y, z)                           |
 | Relative Use position 2 | [float32](GFF-File-Format#gff-data-types)| 24 (0x18)   | 12   | Relative use hook position 2 (x, y, z)                           |
 | Absolute Use position 1 | [float32](GFF-File-Format#gff-data-types)| 36 (0x24)   | 12   | Absolute use hook position 1 (x, y, z)                           |
 | Absolute Use position 2 | [float32](GFF-File-Format#gff-data-types)| 48 (0x30)   | 12   | Absolute use hook position 2 (x, y, z)                           |
-| position                | [float32](GFF-File-Format#gff-data-types)| 60 (0x3C)   | 12   | [walkmesh](BWM-File-Format) position offset (x, y, z)                               |
+| position                | [float32](GFF-File-Format#gff-data-types)| 60 (0x3C)   | 12   | walkmesh position offset (x, y, z)                               |
 
 **Reference**: [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:30-38`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L30-L38), [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:60-67`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L60-L67), [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:455-457`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts#L455-L457)
 
-**[walkmesh](BWM-File-Format) types:**
+**walkmesh types:**
 
-KotOR uses different [walkmesh](BWM-File-Format) types for different purposes, each optimized for its specific use case:
+KotOR uses different walkmesh types for different purposes, each optimized for its specific use case:
 
-- **WOK (type 1)**: Area [walkmesh](BWM-File-Format) - defines walkable regions in game areas
+- **WOK (type 1)**: Area walkmesh - defines walkable regions in game areas
   - Stored as `<area_name>.wok` files (e.g., `m12aa.wok` for Dantooine area)
   - Large planar surfaces covering entire rooms or outdoor areas for player movement and NPC pathfinding
-  - Often split across multiple rooms in complex areas, with each room having its own [walkmesh](BWM-File-Format)
+  - Often split across multiple rooms in complex areas, with each room having its own walkmesh
   - Includes complete spatial acceleration ([AABB](BWM-File-Format#aabb-tree) tree), [adjacencies](BWM-File-Format#walkable-adjacencies) for pathfinding, [edges](BWM-File-Format#edges) for transitions, and [perimeters](BWM-File-Format#perimeters) for boundary detection
   - Used by the pathfinding system to compute routes between [walkable faces](BWM-File-Format#faces)
   - **Reference**: [`vendor/reone/include/reone/graphics/format/bwmreader.h:40-43`](https://github.com/th3w1zard1/reone/blob/master/include/reone/graphics/format/bwmreader.h#L40-L43), [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:52-64`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L52-L64), [`vendor/KotOR.js/src/enums/odyssey/OdysseyWalkMeshType.ts:11-14`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/enums/odyssey/OdysseyWalkMeshType.ts#L11-L14)
   
-- **[PWK](BWM-File-Format)/DWK (type 0)**: Placeable/Door [walkmesh](BWM-File-Format) - collision for placeable objects and doors
-  - **[PWK](BWM-File-Format)**: Stored as `<model_name>.pwk` files - collision [geometry](MDL-MDX-File-Format#geometry-header) for containers, furniture, and other interactive placeable objects
+- **PWK/DWK (type 0)**: Placeable/Door walkmesh - collision for placeable objects and doors
+  - **PWK**: Stored as `<model_name>.pwk` files - collision [geometry](MDL-MDX-File-Format#geometry-header) for containers, furniture, and other interactive placeable objects
     - Prevents the player from walking through solid objects like crates, tables, and containers
-    - Typically much simpler than area [walkmeshes](BWM-File-Format), containing only the essential collision [geometry](MDL-MDX-File-Format#geometry-header)
-  - **[DWK](BWM-File-Format)**: Stored as `<door_model>.dwk` files, often with multiple states:
+    - Typically much simpler than area walkmeshes, containing only the essential collision [geometry](MDL-MDX-File-Format#geometry-header)
+  - **DWK**: Stored as `<door_model>.dwk` files, often with multiple states:
     - `<name>0.dwk` - Closed door state
     - `<name>1.dwk` - Partially open state (if applicable)
     - `<name>2.dwk` - Fully open state
-    - Door [walkmeshes](BWM-File-Format) update dynamically as doors open and close, switching between states
-    - The engine loads the appropriate [DWK](BWM-File-Format) file based on the door's current [animation](MDL-MDX-File-Format#animation-header) state
+    - Door walkmeshes update dynamically as doors open and close, switching between states
+    - The engine loads the appropriate DWK file based on the door's current [animation](MDL-MDX-File-Format#animation-header) state
   - Compact collision [geometry](MDL-MDX-File-Format#geometry-header) optimized for small objects rather than large areas
   - Does not include [AABB](BWM-File-Format#aabb-tree) tree or [adjacency](BWM-File-Format#walkable-adjacencies) data (simpler structure, faster loading)
   - Hook vectors (USE1, USE2) define interaction points where the player can activate doors or placeables
   - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:179-231`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L179-L231)
 
-**Hook vectors** [ARE](GFF-File-Format#are-area) reference points used by the engine for positioning and interaction. These [ARE](GFF-File-Format#are-area) **NOT** related to [walkmesh](BWM-File-Format) [geometry](MDL-MDX-File-Format#geometry-header) itself ([faces](MDL-MDX-File-Format#face-structure), [edges](BWM-File-Format#edges), [vertices](MDL-MDX-File-Format#vertex-structure)), but rather define interaction points for doors and placeables.
+**Hook vectors** [ARE](GFF-File-Format#are-area) reference points used by the engine for positioning and interaction. These [ARE](GFF-File-Format#are-area) **NOT** related to walkmesh [geometry](MDL-MDX-File-Format#geometry-header) itself ([faces](MDL-MDX-File-Format#face-structure), [edges](BWM-File-Format#edges), [vertices](MDL-MDX-File-Format#vertex-structure)), but rather define interaction points for doors and placeables.
 
-**Important Distinction**: [BWM](BWM-File-Format) hooks [ARE](GFF-File-Format#are-area) different from [LYT](LYT-File-Format) doorhooks:
+**Important Distinction**: BWM hooks [ARE](GFF-File-Format#are-area) different from [LYT](LYT-File-Format) doorhooks:
 
-- **[BWM](BWM-File-Format) Hooks**: Interaction points stored in the [walkmesh](BWM-File-Format) file itself (relative/absolute positions)
+- **BWM Hooks**: Interaction points stored in the walkmesh file itself (relative/absolute positions)
 - **[LYT](LYT-File-Format) Doorhooks**: Door placement points defined in layout files (see [LYT File Format](LYT-File-Format.md#door-hooks))
 
-- **Relative Hook positions** (Relative Use position 1/2): positions relative to the [walkmesh](BWM-File-Format) origin, used when the [walkmesh](BWM-File-Format) itself may be transformed or positioned
+- **Relative Hook positions** (Relative Use position 1/2): positions relative to the walkmesh origin, used when the walkmesh itself may be transformed or positioned
   - For doors: Define where the player must stand to interact with the door (relative to door [model](MDL-MDX-File-Format))
   - For placeables: Define interaction points relative to the object's local coordinate system
-  - Stored as `relative_hook1` and `relative_hook2` in the [BWM](BWM-File-Format) class
+  - Stored as `relative_hook1` and `relative_hook2` in the BWM class
   - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:61-64`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L61-L64), [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:309-310`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L309-L310), [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py:165-175`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py#L165-L175)
 
-- **Absolute Hook positions** (Absolute Use position 1/2): positions in world space, used when the [walkmesh](BWM-File-Format) position is known
+- **Absolute Hook positions** (Absolute Use position 1/2): positions in world space, used when the walkmesh position is known
   - For doors: Precomputed world-space interaction points (position + relative hook)
   - For placeables: World-space interaction points accounting for object placement
-  - Stored as `absolute_hook1` and `absolute_hook2` in the [BWM](BWM-File-Format) class
+  - Stored as `absolute_hook1` and `absolute_hook2` in the BWM class
   - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:313-318`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L313-L318), [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py:177-187`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py#L177-L187)
 
-- **position**: The [walkmesh](BWM-File-Format)'s origin offset in world space
-  - For area walkmeshes ([WOK](BWM-File-Format)): Typically `(0, 0, 0)` as areas define their own coordinate system
-  - For placeable/door [walkmeshes](BWM-File-Format): The position where the object is placed in the area
+- **position**: The walkmesh's origin offset in world space
+  - For area walkmeshes (WOK): Typically `(0, 0, 0)` as areas define their own coordinate system
+  - For placeable/door walkmeshes: The position where the object is placed in the area
   - Used to transform [vertices](MDL-MDX-File-Format#vertex-structure) from local to world coordinates
   - **Reference**: [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:37-38`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L37-L38), [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:65`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L65), [`vendor/xoreos/src/engines/kotorbase/path/walkmeshloader.cpp:103`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/path/walkmeshloader.cpp#L103), [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py:158-163`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py#L158-L163)
 
 Hook vectors enable the engine to:
 
-- Spawn creatures at designated locations relative to [walkable surfaces](BWM-File-Format)
+- Spawn creatures at designated locations relative to walkable surfaces
 - position triggers and encounters at specific points
 - Align objects to the walkable surface (e.g., placing items on tables)
 - Define door interaction points (USE1, USE2) where the player can activate doors or placeables
@@ -157,7 +157,7 @@ Hook vectors enable the engine to:
 
 ### data Table offsets
 
-After the [walkmesh](BWM-File-Format) properties, the header contains offset and count information for all data tables:
+After the walkmesh properties, the header contains offset and count information for all data tables:
 
 | Name                | type   | offset | size | Description                                                      |
 | ------------------- | ------ | ------ | ---- | ---------------------------------------------------------------- |
@@ -168,15 +168,15 @@ After the [walkmesh](BWM-File-Format) properties, the header contains offset and
 | [materials](MDL-MDX-File-Format#trimesh-header) offset    | [uint32](GFF-File-Format#gff-data-types) | 88 (0x58)   | 4    | offset to [materials](MDL-MDX-File-Format#trimesh-header) array                                       |
 | Normals offset      | [uint32](GFF-File-Format#gff-data-types) | 92 (0x5C)   | 4    | offset to [face](MDL-MDX-File-Format#face-structure) normals array                                     |
 | Distances offset    | [uint32](GFF-File-Format#gff-data-types) | 96 (0x60)   | 4    | offset to planar distances array                                 |
-| [AABB](BWM-File-Format#aabb-tree) count          | [uint32](GFF-File-Format#gff-data-types) | 100 (0x64)   | 4    | Number of [AABB](BWM-File-Format#aabb-tree) nodes ([WOK](BWM-File-Format) only, 0 for [PWK](BWM-File-Format)/[DWK](BWM-File-Format))                  |
-| [AABB](BWM-File-Format#aabb-tree) offset         | [uint32](GFF-File-Format#gff-data-types) | 104 (0x68)   | 4    | offset to [AABB](BWM-File-Format#aabb-tree) [nodes](MDL-MDX-File-Format#node-structures) array ([WOK](BWM-File-Format) only)                            |
+| [AABB](BWM-File-Format#aabb-tree) count          | [uint32](GFF-File-Format#gff-data-types) | 100 (0x64)   | 4    | Number of [AABB](BWM-File-Format#aabb-tree) nodes (WOK only, 0 for PWK/DWK)                  |
+| [AABB](BWM-File-Format#aabb-tree) offset         | [uint32](GFF-File-Format#gff-data-types) | 104 (0x68)   | 4    | offset to [AABB](BWM-File-Format#aabb-tree) [nodes](MDL-MDX-File-Format#node-structures) array (WOK only)                            |
 | Unknown             | [uint32](GFF-File-Format#gff-data-types) | 108 (0x6C)   | 4    | Unknown field (typically 0 or 4)                                 |
-| [adjacency](BWM-File-Format#walkable-adjacencies) count     | [uint32](GFF-File-Format#gff-data-types) | 112 (0x70)   | 4    | Number of [walkable faces](BWM-File-Format#faces) for adjacency ([WOK](BWM-File-Format) only)                |
-| [adjacency](BWM-File-Format#walkable-adjacencies) offset    | [uint32](GFF-File-Format#gff-data-types) | 116 (0x74)   | 4    | offset to [adjacency](BWM-File-Format#walkable-adjacencies) array ([WOK](BWM-File-Format) only)                            |
-| [edge](BWM-File-Format#edges) count          | [uint32](GFF-File-Format#gff-data-types) | 120 (0x78)   | 4    | Number of [perimeter](BWM-File-Format#perimeters) edges ([WOK](BWM-File-Format) only)                            |
-| [edge](BWM-File-Format#edges) offset         | [uint32](GFF-File-Format#gff-data-types) | 124 (0x7C)   | 4    | offset to [edge](BWM-File-Format#edges) array ([WOK](BWM-File-Format) only)                                  |
-| [perimeter](BWM-File-Format#perimeters) count     | [uint32](GFF-File-Format#gff-data-types) | 128 (0x80)   | 4    | Number of [perimeter](BWM-File-Format#perimeters) markers ([WOK](BWM-File-Format) only)                           |
-| [perimeter](BWM-File-Format#perimeters) offset    | [uint32](GFF-File-Format#gff-data-types) | 132 (0x84)   | 4    | offset to [perimeter](BWM-File-Format#perimeters) array ([WOK](BWM-File-Format) only)                            |
+| [adjacency](BWM-File-Format#walkable-adjacencies) count     | [uint32](GFF-File-Format#gff-data-types) | 112 (0x70)   | 4    | Number of [walkable faces](BWM-File-Format#faces) for adjacency (WOK only)                |
+| [adjacency](BWM-File-Format#walkable-adjacencies) offset    | [uint32](GFF-File-Format#gff-data-types) | 116 (0x74)   | 4    | offset to [adjacency](BWM-File-Format#walkable-adjacencies) array (WOK only)                            |
+| [edge](BWM-File-Format#edges) count          | [uint32](GFF-File-Format#gff-data-types) | 120 (0x78)   | 4    | Number of [perimeter](BWM-File-Format#perimeters) edges (WOK only)                            |
+| [edge](BWM-File-Format#edges) offset         | [uint32](GFF-File-Format#gff-data-types) | 124 (0x7C)   | 4    | offset to [edge](BWM-File-Format#edges) array (WOK only)                                  |
+| [perimeter](BWM-File-Format#perimeters) count     | [uint32](GFF-File-Format#gff-data-types) | 128 (0x80)   | 4    | Number of [perimeter](BWM-File-Format#perimeters) markers (WOK only)                           |
+| [perimeter](BWM-File-Format#perimeters) offset    | [uint32](GFF-File-Format#gff-data-types) | 132 (0x84)   | 4    | offset to [perimeter](BWM-File-Format#perimeters) array (WOK only)                            |
 
 **Total header size**: 136 bytes (0x88)
 
@@ -192,13 +192,13 @@ After the [walkmesh](BWM-File-Format) properties, the header contains offset and
 
 **[vertex](MDL-MDX-File-Format#vertex-structure) coordinate Systems:**
 
-The coordinate system used for [vertices](MDL-MDX-File-Format#vertex-structure) depends on the [walkmesh](BWM-File-Format) type and how implementations choose to process them:
+The coordinate system used for [vertices](MDL-MDX-File-Format#vertex-structure) depends on the walkmesh type and how implementations choose to process them:
 
-- **For area walkmeshes ([WOK](BWM-File-Format))**: [vertices](MDL-MDX-File-Format#vertex-structure) [ARE](GFF-File-Format#are-area) stored in [world space](https://en.wikipedia.org/wiki/World_coordinates) coordinates. However, some implementations (e.g., [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:84-87`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L84-L87)) subtract the [walkmesh](BWM-File-Format) position during reading to work in [local coordinates](https://en.wikipedia.org/wiki/Local_coordinates), which simplifies geometric operations. The [walkmesh](BWM-File-Format) position is then added back when transforming to [world space](https://en.wikipedia.org/wiki/World_coordinates). This approach allows the [walkmesh](BWM-File-Format) to be positioned anywhere in the world while keeping local calculations simple.
+- **For area walkmeshes (WOK)**: [vertices](MDL-MDX-File-Format#vertex-structure) [ARE](GFF-File-Format#are-area) stored in [world space](https://en.wikipedia.org/wiki/World_coordinates) coordinates. However, some implementations (e.g., [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:84-87`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L84-L87)) subtract the walkmesh position during reading to work in [local coordinates](https://en.wikipedia.org/wiki/Local_coordinates), which simplifies geometric operations. The walkmesh position is then added back when transforming to [world space](https://en.wikipedia.org/wiki/World_coordinates). This approach allows the walkmesh to be positioned anywhere in the world while keeping local calculations simple.
   - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:84-87`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L84-L87) - Subtracts position during reading
   - **Reference**: [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:94-103`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L94-L103) - Reads [vertices](MDL-MDX-File-Format#vertex-structure) directly without offset
 
-- **For placeable/door walkmeshes ([PWK](BWM-File-Format)/[DWK](BWM-File-Format))**: [vertices](MDL-MDX-File-Format#vertex-structure) [ARE](GFF-File-Format#are-area) stored relative to the object's local origin. When the object is placed in an area, the engine applies a [transformation matrix](https://en.wikipedia.org/wiki/Transformation_matrix) (including translation, rotation, and scale) to convert these [local coordinates](https://en.wikipedia.org/wiki/Local_coordinates) to [world space](https://en.wikipedia.org/wiki/World_coordinates). This allows the same [walkmesh](BWM-File-Format) to be reused for multiple instances of the same object at different positions and orientations.
+- **For placeable/door walkmeshes (PWK/DWK)**: [vertices](MDL-MDX-File-Format#vertex-structure) [ARE](GFF-File-Format#are-area) stored relative to the object's local origin. When the object is placed in an area, the engine applies a [transformation matrix](https://en.wikipedia.org/wiki/Transformation_matrix) (including translation, rotation, and scale) to convert these [local coordinates](https://en.wikipedia.org/wiki/Local_coordinates) to [world space](https://en.wikipedia.org/wiki/World_coordinates). This allows the same walkmesh to be reused for multiple instances of the same object at different positions and orientations.
   - **Reference**: [`vendor/xoreos/src/engines/kotorbase/path/walkmeshloader.cpp:182-206`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/path/walkmeshloader.cpp#L182-L206) - Applies [transformation](BWM-File-Format#walkable-adjacencies) [matrix](BWM-File-Format#walkable-adjacencies) to [vertices](MDL-MDX-File-Format#vertex-structure)
 
 **Vendor Discrepancy ([vertex](MDL-MDX-File-Format#vertex-structure) position Handling):**
@@ -215,7 +215,7 @@ The coordinate system used for [vertices](MDL-MDX-File-Format#vertex-structure) 
 
 **[vertex](MDL-MDX-File-Format#vertex-structure) Sharing and Indexing:**
 
-[vertices](MDL-MDX-File-Format#vertex-structure) [ARE](GFF-File-Format#are-area) shared by reference through the index system: multiple [faces](MDL-MDX-File-Format#face-structure) can reference the same [vertex](MDL-MDX-File-Format#vertex-structure) index, ensuring that adjacent [faces](MDL-MDX-File-Format#face-structure) share exact [vertex](MDL-MDX-File-Format#vertex-structure) positions. This is critical for [adjacency](BWM-File-Format#walkable-adjacencies) calculations, as two [faces](MDL-MDX-File-Format#face-structure) [ARE](GFF-File-Format#are-area) considered adjacent only if they share exactly two vertices (forming a shared [edge](BWM-File-Format#edges)). The [vertex](MDL-MDX-File-Format#vertex-structure) array is typically deduplicated during [walkmesh](BWM-File-Format) generation, with similar vertices (within a small tolerance) merged to reduce memory usage and ensure geometric consistency.
+[vertices](MDL-MDX-File-Format#vertex-structure) [ARE](GFF-File-Format#are-area) shared by reference through the index system: multiple [faces](MDL-MDX-File-Format#face-structure) can reference the same [vertex](MDL-MDX-File-Format#vertex-structure) index, ensuring that adjacent [faces](MDL-MDX-File-Format#face-structure) share exact [vertex](MDL-MDX-File-Format#vertex-structure) positions. This is critical for [adjacency](BWM-File-Format#walkable-adjacencies) calculations, as two [faces](MDL-MDX-File-Format#face-structure) [ARE](GFF-File-Format#are-area) considered adjacent only if they share exactly two vertices (forming a shared [edge](BWM-File-Format#edges)). The [vertex](MDL-MDX-File-Format#vertex-structure) array is typically deduplicated during walkmesh generation, with similar vertices (within a small tolerance) merged to reduce memory usage and ensure geometric consistency.
 
 - **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:155-166`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L155-L166) - [vertex](MDL-MDX-File-Format#vertex-structure) deduplication using SimilarVertex class
 - **Reference**: [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:264-269`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts#L264-L269) - [vertex](MDL-MDX-File-Format#vertex-structure) array reading
@@ -248,7 +248,7 @@ Each [face](MDL-MDX-File-Format#face-structure) is a triangle defined by three [
 **Consensus**: [adjacency](BWM-File-Format#walkable-adjacencies) array contains `num_walkable_faces` entries (not `num_faces`). When [faces](MDL-MDX-File-Format#face-structure) [ARE](GFF-File-Format#are-area) ordered walkable-first, [adjacency](BWM-File-Format#walkable-adjacencies) index `i` maps directly to [face](MDL-MDX-File-Format#face-structure) index `i` in the overall array. xoreos demonstrates an alternative mapping approach that works regardless of file ordering.
 
 **[face](MDL-MDX-File-Format#face-structure) Winding:**
-The [vertex](MDL-MDX-File-Format#vertex-structure) order determines the [face](MDL-MDX-File-Format#face-structure)'s normal direction (via the right-hand rule). The engine uses this to determine which side of the [face](MDL-MDX-File-Format#face-structure) is "up" (walkable) versus "down" (non-walkable). [faces](MDL-MDX-File-Format#face-structure) should be oriented such that their normals point upward for [walkable surfaces](BWM-File-Format).
+The [vertex](MDL-MDX-File-Format#vertex-structure) order determines the [face](MDL-MDX-File-Format#face-structure)'s normal direction (via the right-hand rule). The engine uses this to determine which side of the [face](MDL-MDX-File-Format#face-structure) is "up" (walkable) versus "down" (non-walkable). [faces](MDL-MDX-File-Format#face-structure) should be oriented such that their normals point upward for walkable surfaces.
 
 **Vendor Implementation Analysis:**
 
@@ -260,7 +260,7 @@ The [vertex](MDL-MDX-File-Format#vertex-structure) order determines the [face](M
 | **xoreos** | Reads precomputed normals from file | Reads as stored | Not explicitly shown in walkmeshloader.cpp |
 | **PyKotor** | Uses `Face.normal()` from [geometry](MDL-MDX-File-Format#geometry-header) module | Counter-clockwise expected | [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py) |
 
-**Consensus**: Normals follow right-hand rule: counter-clockwise [vertex](MDL-MDX-File-Format#vertex-structure) order (v1 → v2 → v3) when viewed from front yields upward-pointing normal for [walkable surfaces](BWM-File-Format). Cross product formulas `(v2 - v1) × (v3 - v1)` and `(v3 - v2) × (v1 - v2)` [ARE](GFF-File-Format#are-area) mathematically equivalent. Most implementations read precomputed normals from file to avoid runtime overhead.
+**Consensus**: Normals follow right-hand rule: counter-clockwise [vertex](MDL-MDX-File-Format#vertex-structure) order (v1 → v2 → v3) when viewed from front yields upward-pointing normal for walkable surfaces. Cross product formulas `(v2 - v1) × (v3 - v1)` and `(v3 - v2) × (v1 - v2)` [ARE](GFF-File-Format#are-area) mathematically equivalent. Most implementations read precomputed normals from file to avoid runtime overhead.
 
 ### [materials](MDL-MDX-File-Format#trimesh-header)
 
@@ -284,7 +284,7 @@ Each [face](MDL-MDX-File-Format#face-structure) is assigned a [material](MDL-MDX
 | 5  | Wood              | Yes      | Walkable with wood sound effects                                 | All |
 | 6  | Water             | Yes      | Shallow water - walkable with water sounds                       | All |
 | 7  | Nonwalk/NON_WALK  | No       | Impassable surface - blocks character movement                  | All |
-| 8  | Transparent       | No       | Transparent non-[walkable surfaces](BWM-File-Format)                                 | All |
+| 8  | Transparent       | No       | Transparent non-walkable surfaces                                 | All |
 | 9  | Carpet            | Yes      | Walkable with muffled footstep sounds                           | All |
 | 10 | Metal             | Yes      | Walkable with metallic sound effects                            | All |
 | 11 | Puddles           | Yes      | Walkable water puddles                                          | All |
@@ -331,7 +331,7 @@ Each [face](MDL-MDX-File-Format#face-structure) is assigned a [material](MDL-MDX
 | [face](MDL-MDX-File-Format#face-structure) Normals   | [float32](GFF-File-Format#gff-data-types) | 12×N | Normal vectors for each face (normalized)                        |
 | Planar Distances | [float32](GFF-File-Format#gff-data-types) | 4×N | D component of plane equation (ax + by + cz + d = 0) for each [face](MDL-MDX-File-Format#face-structure) |
 
-[face](MDL-MDX-File-Format#face-structure) normals [ARE](GFF-File-Format#are-area) precomputed unit vectors perpendicular to each [face](MDL-MDX-File-Format#face-structure). They [ARE](GFF-File-Format#are-area) calculated using the cross product of two [edge](BWM-File-Format#edges) vectors: `normal = normalize((v2 - v1) × (v3 - v1))`. The normal direction follows the right-hand rule based on [vertex](MDL-MDX-File-Format#vertex-structure) winding order, with normals typically pointing upward for [walkable surfaces](BWM-File-Format).
+[face](MDL-MDX-File-Format#face-structure) normals [ARE](GFF-File-Format#are-area) precomputed unit vectors perpendicular to each [face](MDL-MDX-File-Format#face-structure). They [ARE](GFF-File-Format#are-area) calculated using the cross product of two [edge](BWM-File-Format#edges) vectors: `normal = normalize((v2 - v1) × (v3 - v1))`. The normal direction follows the right-hand rule based on [vertex](MDL-MDX-File-Format#vertex-structure) winding order, with normals typically pointing upward for walkable surfaces.
 
 **Normal Calculation (from KotOR.js):**
 
@@ -354,7 +354,7 @@ distance = -1.0 * (normal @ vert1)  # Dot product: -normal · v1
 
 Planar distances [ARE](GFF-File-Format#are-area) the D component of the plane equation `ax + by + cz + d = 0`, where (a, b, c) is the [face](MDL-MDX-File-Format#face-structure) normal. The D component is calculated as `d = -normal · vertex1` for each [face](MDL-MDX-File-Format#face-structure), where vertex1 is typically the first [vertex](MDL-MDX-File-Format#vertex-structure) of the triangle. This precomputed value allows the engine to quickly test point-plane relationships without recalculating the plane equation each time.
 
-These derived values [ARE](GFF-File-Format#are-area) stored in the file to avoid recomputation during runtime, which is especially important for large [walkmeshes](BWM-File-Format) where thousands of [faces](MDL-MDX-File-Format#face-structure) need to be tested for intersection or containment queries.
+These derived values [ARE](GFF-File-Format#are-area) stored in the file to avoid recomputation during runtime, which is especially important for large walkmeshes where thousands of [faces](MDL-MDX-File-Format#face-structure) need to be tested for intersection or containment queries.
 
 **Reference**: [`vendor/reone/src/libs/graphics/format/bwmreader.cpp:125-134`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/bwmreader.cpp#L125-L134), [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:98-105`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L98-L105), [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:700-710`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts#L700-L710)
 
@@ -362,7 +362,7 @@ These derived values [ARE](GFF-File-Format#are-area) stored in the file to avoid
 
 | Name          | type    | size | Description                                                      |
 | ------------- | ------- | ---- | ---------------------------------------------------------------- |
-| AABB [nodes](MDL-MDX-File-Format#node-structures)    | varies  | varies | [bounding box](MDL-MDX-File-Format#model-header) tree [nodes](MDL-MDX-File-Format#node-structures) for spatial acceleration ([WOK](BWM-File-Format) only)      |
+| AABB [nodes](MDL-MDX-File-Format#node-structures)    | varies  | varies | [bounding box](MDL-MDX-File-Format#model-header) tree [nodes](MDL-MDX-File-Format#node-structures) for spatial acceleration (WOK only)      |
 
 Each AABB [node](MDL-MDX-File-Format#node-structures) is **44 bytes** and contains:
 
@@ -409,14 +409,14 @@ Both interpretations yield the same result when reading, but differ in semantics
 
 **[AABB](BWM-File-Format#aabb-tree) Tree Purpose:**
 
-The Axis-Aligned Bounding Box ([AABB](BWM-File-Format#aabb-tree)) tree is a spatial acceleration structure that dramatically improves performance for common operations. Without it, the engine would need to test every [face](MDL-MDX-File-Format#face-structure) individually (O(N) complexity), which becomes prohibitively slow for large [walkmeshes](BWM-File-Format) with thousands of [faces](MDL-MDX-File-Format#face-structure). The tree reduces this to O(log N) average case complexity.
+The Axis-Aligned Bounding Box ([AABB](BWM-File-Format#aabb-tree)) tree is a spatial acceleration structure that dramatically improves performance for common operations. Without it, the engine would need to test every [face](MDL-MDX-File-Format#face-structure) individually (O(N) complexity), which becomes prohibitively slow for large walkmeshes with thousands of [faces](MDL-MDX-File-Format#face-structure). The tree reduces this to O(log N) average case complexity.
 
 **Key Operations Enabled:**
 
-- **Ray Casting**: Finding where a ray intersects the [walkmesh](BWM-File-Format)
+- **Ray Casting**: Finding where a ray intersects the walkmesh
   - Mouse clicks: Determining which [walkable face](BWM-File-Format#faces) the player clicked on for movement commands
-  - Projectiles: Testing if projectiles hit [walkable surfaces](BWM-File-Format) or obstacles
-  - Line of sight: Checking if a line between two points intersects the [walkmesh](BWM-File-Format)
+  - Projectiles: Testing if projectiles hit walkable surfaces or obstacles
+  - Line of sight: Checking if a line between two points intersects the walkmesh
   - **Reference**: [`vendor/reone/src/libs/graphics/walkmesh.cpp:24-100`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/walkmesh.cpp#L24-L100)
 
 - **Point Queries**: Determining which [face](MDL-MDX-File-Format#face-structure) a character is standing on
@@ -516,7 +516,7 @@ This formula `(edge + (2 - edge % 3)) / 3` appears to map [adjacency](BWM-File-F
 
 | Name  | type     | size | Description                                                      |
 | ----- | -------- | ---- | ---------------------------------------------------------------- |
-| edges | varies   | varies | [perimeter](BWM-File-Format#perimeters) edge data (edge_index, transition pairs) ([WOK](BWM-File-Format) only)  |
+| edges | varies   | varies | [perimeter](BWM-File-Format#perimeters) edge data (edge_index, transition pairs) (WOK only)  |
 
 The edges array contains [perimeter](BWM-File-Format#perimeters) edges (boundary edges with no walkable neighbor). Each edge entry is **8 bytes**:
 
@@ -548,7 +548,7 @@ perimeter [edges](BWM-File-Format#edges) [ARE](GFF-File-Format#are-area) [edges]
 
 - **Area Transitions**: [edges](BWM-File-Format#edges) with non-negative transition IDs link to door connections or area boundaries
 - **Boundary Detection**: perimeter [edges](BWM-File-Format#edges) define the limits of walkable space
-- **Visual Debugging**: perimeter [edges](BWM-File-Format#edges) can be visualized to show [walkmesh](BWM-File-Format) boundaries in level editors
+- **Visual Debugging**: perimeter [edges](BWM-File-Format#edges) can be visualized to show walkmesh boundaries in level editors
 
 **Reference**: [`vendor/kotorblender/io_scene_kotor/format/bwm/reader.py:138-143`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/reader.py#L138-L143), [`vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:275-307`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/bwm/writer.py#L275-L307), [`vendor/KotOR.js/src/odyssey/WalkmeshEdge.ts:15-110`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/WalkmeshEdge.ts#L15-L110), [`vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:339-345`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/OdysseyWalkMesh.ts#L339-L345)
 
@@ -556,7 +556,7 @@ perimeter [edges](BWM-File-Format#edges) [ARE](GFF-File-Format#are-area) [edges]
 
 | Name      | type   | size | Description                                                      |
 | --------- | ------ | ---- | ---------------------------------------------------------------- |
-| perimeters | [uint32](GFF-File-Format#gff-data-types) | 4×N  | indices into [edge](BWM-File-Format#edges) array marking end of perimeter loops ([WOK](BWM-File-Format) only) |
+| perimeters | [uint32](GFF-File-Format#gff-data-types) | 4×N  | indices into [edge](BWM-File-Format#edges) array marking end of perimeter loops (WOK only) |
 
 perimeters mark the end of closed loops of perimeter [edges](BWM-File-Format#edges). Each perimeter value is an index into the [edge](BWM-File-Format#edges) array, indicating where a perimeter loop ends. This allows the engine to traverse complete boundary loops for pathfinding and area transitions.
 
@@ -608,21 +608,21 @@ while(edges.length){
 
 ## Runtime [model](MDL-MDX-File-Format)
 
-The runtime [model](MDL-MDX-File-Format) provides high-level, in-memory representations of [walkmesh](BWM-File-Format) data that [ARE](GFF-File-Format#are-area) easier to work with than raw binary structures. These classes abstract away the binary format details and provide convenient methods for common operations.
+The runtime [model](MDL-MDX-File-Format) provides high-level, in-memory representations of walkmesh data that [ARE](GFF-File-Format#are-area) easier to work with than raw binary structures. These classes abstract away the binary format details and provide convenient methods for common operations.
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py:25-496`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/bwm_data.py#L25-L496)
 
-### [BWM](BWM-File-Format) Class
+### BWM Class
 
-The `BWM` class represents a complete [walkmesh](BWM-File-Format) in memory, providing a high-level interface for working with [walkmesh](BWM-File-Format) data.
+The `BWM` class represents a complete walkmesh in memory, providing a high-level interface for working with walkmesh data.
 
 **Key Attributes:**
 
-- **`faces`**: Ordered list of `BWMFace` objects representing all triangular [faces](MDL-MDX-File-Format#face-structure) in the [walkmesh](BWM-File-Format)
+- **`faces`**: Ordered list of `BWMFace` objects representing all triangular [faces](MDL-MDX-File-Format#face-structure) in the walkmesh
   - [faces](MDL-MDX-File-Format#face-structure) [ARE](GFF-File-Format#are-area) typically ordered with [walkable faces](BWM-File-Format#faces) first, followed by non-[walkable faces](BWM-File-Format#faces)
-  - The [face](MDL-MDX-File-Format#face-structure) list is the primary data structure for accessing [walkmesh](BWM-File-Format) [geometry](MDL-MDX-File-Format#geometry-header)
-- **`walkmesh_type`**: type of walkmesh (`BWMType.AreaModel` for [WOK](BWM-File-Format), `BWMType.PlaceableOrDoor` for [PWK](BWM-File-Format)/[DWK](BWM-File-Format))
-- **`position`**: 3D position offset for the [walkmesh](BWM-File-Format) in world space
+  - The [face](MDL-MDX-File-Format#face-structure) list is the primary data structure for accessing walkmesh [geometry](MDL-MDX-File-Format#geometry-header)
+- **`walkmesh_type`**: type of walkmesh (`BWMType.AreaModel` for WOK, `BWMType.PlaceableOrDoor` for PWK/DWK)
+- **`position`**: 3D position offset for the walkmesh in world space
 - **Positional hooks**: `relative_hook1`, `relative_hook2`, `absolute_hook1`, `absolute_hook2` - Used by the engine for positioning and interaction points
 
 **Helper Methods:**
@@ -638,7 +638,7 @@ The `BWM` class represents a complete [walkmesh](BWM-File-Format) in memory, pro
 
 ### BWMFace Class
 
-Each `BWMFace` represents a single triangular [face](MDL-MDX-File-Format#face-structure) in the [walkmesh](BWM-File-Format), containing all information needed for collision detection, pathfinding, and rendering.
+Each `BWMFace` represents a single triangular [face](MDL-MDX-File-Format#face-structure) in the walkmesh, containing all information needed for collision detection, pathfinding, and rendering.
 
 **Key Attributes:**
 
@@ -716,13 +716,13 @@ Based on vendor analysis:
 PyKotor's `test_bwm.py` provides comprehensive coverage including:
 
 - ✅ header validation (magic, version)
-- ✅ [walkmesh](BWM-File-Format) type ([WOK](BWM-File-Format) vs [PWK](BWM-File-Format)/[DWK](BWM-File-Format))
+- ✅ walkmesh type (WOK vs PWK/DWK)
 - ✅ [vertex](MDL-MDX-File-Format#vertex-structure) roundtrip and deduplication
 - ✅ [face](MDL-MDX-File-Format#face-structure) ordering (walkable first)
 - ✅ [material](MDL-MDX-File-Format#trimesh-header) preservation
 - ✅ [adjacency](BWM-File-Format#walkable-adjacencies) calculation
 - ✅ [edge](BWM-File-Format#edges)/[perimeter](BWM-File-Format#perimeters) identification
-- ✅ [AABB](BWM-File-Format#aabb-tree) tree generation ([WOK](BWM-File-Format) only)
+- ✅ [AABB](BWM-File-Format#aabb-tree) tree generation (WOK only)
 - ✅ Hook vector preservation
 - ✅ Complete roundtrip testing
 
@@ -731,36 +731,36 @@ PyKotor's `test_bwm.py` provides comprehensive coverage including:
 - ⚠️ [AABB](BWM-File-Format#aabb-tree) tree raycasting functionality
 - ⚠️ Point-in-[face](MDL-MDX-File-Format#face-structure) queries
 - ⚠️ Comparison against actual game files
-- ⚠️ Multi-room [walkmesh](BWM-File-Format) loading
+- ⚠️ Multi-room walkmesh loading
 - ⚠️ [transformation](BWM-File-Format#walkable-adjacencies) [matrix](BWM-File-Format#walkable-adjacencies) application
 
 ---
 
 ## Implementation Details
 
-This section covers important implementation considerations and best practices when working with [BWM files](BWM-File-Format).
+This section covers important implementation considerations and best practices when working with BWM files.
 
 **Binary Reading**: [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/io_bwm.py:42-182`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/io_bwm.py#L42-L182)
 
-The binary reader follows a standard pattern that efficiently loads [walkmesh](BWM-File-Format) data using the offset-based structure:
+The binary reader follows a standard pattern that efficiently loads walkmesh data using the offset-based structure:
 
-1. **Validate header**: Check magic "[BWM](BWM-File-Format) " and version "V1.0" to ensure file format compatibility
-2. **Read [walkmesh](BWM-File-Format) properties**: Load type, hook vectors, and position
+1. **Validate header**: Check magic "BWM " and version "V1.0" to ensure file format compatibility
+2. **Read walkmesh properties**: Load type, hook vectors, and position
 3. **Read data table offsets**: Load all offset and count values from the header
 4. **Seek and read data tables**: For each data table, seek to the specified offset and read the appropriate number of elements
-5. **Process [WOK](BWM-File-Format)-specific data** (if type is [WOK](BWM-File-Format)): Load [AABB](BWM-File-Format#aabb-tree) tree [nodes](MDL-MDX-File-Format#node-structures), [adjacency](BWM-File-Format#walkable-adjacencies) data, [edges](BWM-File-Format#edges), and [perimeters](BWM-File-Format#perimeters)
+5. **Process WOK-specific data** (if type is WOK): Load [AABB](BWM-File-Format#aabb-tree) tree [nodes](MDL-MDX-File-Format#node-structures), [adjacency](BWM-File-Format#walkable-adjacencies) data, [edges](BWM-File-Format#edges), and [perimeters](BWM-File-Format#perimeters)
 6. **Process [edges](BWM-File-Format#edges) and transitions**: Extract transition information from the [edges](BWM-File-Format#edges) array and apply it to the corresponding [faces](MDL-MDX-File-Format#face-structure)
-7. **Construct runtime `BWM` object**: Create the high-level [walkmesh](BWM-File-Format) representation with all loaded data
+7. **Construct runtime `BWM` object**: Create the high-level walkmesh representation with all loaded data
 
 **Binary Writing**: [`Libraries/PyKotor/src/pykotor/resource/formats/bwm/io_bwm.py:185-355`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bwm/io_bwm.py#L185-L355)
 
 The binary writer must perform several complex operations:
 
 1. **Calculate all data table offsets**: This requires computing the size of each data table before writing
-2. **Write header with offsets**: Write the magic, version, [walkmesh](BWM-File-Format) properties, and all offset/count values
+2. **Write header with offsets**: Write the magic, version, walkmesh properties, and all offset/count values
 3. **Write data tables in order**: Write [vertices](MDL-MDX-File-Format#vertex-structure), [face](MDL-MDX-File-Format#face-structure) indices, [materials](MDL-MDX-File-Format#trimesh-header), normals, planar distances, [AABB](BWM-File-Format#aabb-tree) [nodes](MDL-MDX-File-Format#node-structures), [adjacencies](BWM-File-Format#walkable-adjacencies), [edges](BWM-File-Format#edges), and [perimeters](BWM-File-Format#perimeters)
 4. **Compute [adjacencies](BWM-File-Format#walkable-adjacencies) from [geometry](MDL-MDX-File-Format#geometry-header)**: The runtime [model](MDL-MDX-File-Format) doesn't store [adjacency](BWM-File-Format#walkable-adjacencies) data directly, so it must be computed
-5. **Generate [AABB](BWM-File-Format#aabb-tree) tree if writing [WOK file](BWM-File-Format)**: [AABB](BWM-File-Format#aabb-tree) tree generation is a complex recursive operation
+5. **Generate [AABB](BWM-File-Format#aabb-tree) tree if writing WOK file**: [AABB](BWM-File-Format#aabb-tree) tree generation is a complex recursive operation
 6. **Compute [edges](BWM-File-Format#edges) and [perimeters](BWM-File-Format#perimeters) from [adjacency](BWM-File-Format#walkable-adjacencies) data**: Identify [perimeter](BWM-File-Format#perimeters) [edges](BWM-File-Format#edges) and group them into loops
 
 **Critical Implementation Notes:**
@@ -792,4 +792,4 @@ The binary writer must perform several complex operations:
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [BWM file](BWM-File-Format) format, focusing on the detailed file structure and data formats used within the games, with particular attention to vendor implementation discrepancies and consensus recommendations.
+This documentation aims to provide a comprehensive overview of the KotOR BWM file format, focusing on the detailed file structure and data formats used within the games, with particular attention to vendor implementation discrepancies and consensus recommendations.

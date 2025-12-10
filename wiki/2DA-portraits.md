@@ -1,4 +1,4 @@
-# [portraits.2da](2DA-portraits)
+# portraits.2da
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
@@ -23,7 +23,7 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 **PyKotor:**
 
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:455`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L455) - TwoDARegistry.PORTRAITS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:523`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L523) - [GFF](GFF-File-Format) field mapping: "PortraitId" -> [portraits.2da](2DA-portraits)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:523`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L523) - [GFF](GFF-File-Format) field mapping: "PortraitId" -> portraits.2da
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:66`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L66) - Party portraits documentation comment
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:226-228`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L226-L228) - Portrait rotation logic documentation
 - [`Libraries/PyKotor/src/pykotor/extract/savedata.py:241`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/savedata.py#L241) - Party portraits field documentation
@@ -36,7 +36,7 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 **HolocronToolset:**
 
 - [`Tools/HolocronToolset/src/toolset/data/installation.py:54`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L54) - HTInstallation.TwoDA_PORTRAITS constant
-- [`Tools/HolocronToolset/src/toolset/gui/editors/utc.py:140-152`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utc.py#L140-L152) - [portraits.2da](2DA-portraits) usage for portrait selection with alignment-based variant selection (baseresref, baseresrefe, baseresrefve, baseresrefvve, baseresrefvvve)
+- [`Tools/HolocronToolset/src/toolset/gui/editors/utc.py:140-152`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utc.py#L140-L152) - portraits.2da usage for portrait selection with alignment-based variant selection (baseresref, baseresrefe, baseresrefve, baseresrefvve, baseresrefvvve)
 - [`Tools/HolocronToolset/src/ui/editors/utc.ui:407`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/ui/editors/utc.ui#L407) - Portrait selection combobox in [UTC](GFF-File-Format#utc-creature) editor UI
 - [`Tools/HolocronToolset/src/toolset/gui/editors/savegame.py:51`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/savegame.py#L51) - Portraits documentation in save game editor
 - [`Tools/HolocronToolset/src/ui/editors/savegame.ui:94-98`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/ui/editors/savegame.ui#L94-L98) - Portraits group box in save game editor UI

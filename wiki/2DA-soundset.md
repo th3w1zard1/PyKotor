@@ -1,4 +1,4 @@
-# [soundset.2da](2DA-soundset)
+# soundset.2da
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
@@ -17,10 +17,10 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:143`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L143) - [StrRef](TLK-File-Format#string-references-strref) column definition for [soundset.2da](2DA-soundset) (K1: [StrRef](TLK-File-Format#string-references-strref))
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:321`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L321) - [StrRef](TLK-File-Format#string-references-strref) column definition for [soundset.2da](2DA-soundset) (K2: [StrRef](TLK-File-Format#string-references-strref))
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:143`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L143) - [StrRef](TLK-File-Format#string-references-strref) column definition for soundset.2da (K1: [StrRef](TLK-File-Format#string-references-strref))
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:321`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L321) - [StrRef](TLK-File-Format#string-references-strref) column definition for soundset.2da (K2: [StrRef](TLK-File-Format#string-references-strref))
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:459`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L459) - TwoDARegistry.SOUNDSETS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:522`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L522) - [GFF](GFF-File-Format) field mapping: "SoundSetFile" -> [soundset.2da](2DA-soundset)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:522`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L522) - [GFF](GFF-File-Format) field mapping: "SoundSetFile" -> soundset.2da
 - [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:90-92`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L90-L92) - [UTC](GFF-File-Format#utc-creature) soundset_id field documentation
 - [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:359`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L359) - [UTC](GFF-File-Format#utc-creature) soundset_id field initialization
 - [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:549-550`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L549-L550) - SoundSetFile field parsing from [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format)

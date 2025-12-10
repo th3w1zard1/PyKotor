@@ -1,6 +1,6 @@
-# KotOR [ERF](ERF-File-Format) file format Documentation
+# KotOR ERF file format Documentation
 
-This document provides a detailed description of the ERF (Encapsulated Resource file) file format used in Knights of the Old Republic (KotOR) games. [ERF files](ERF-File-Format) [ARE](GFF-File-Format#are-area) [self-contained archives](ERF-File-Format) used for modules, save games, [texture](TPC-File-Format) packs, and hak paks.
+This document provides a detailed description of the ERF (Encapsulated Resource file) file format used in Knights of the Old Republic (KotOR) games. ERF files [ARE](GFF-File-Format#are-area) self-contained archives used for modules, save games, [texture](TPC-File-Format) packs, and hak paks.
 
 ## Table of Contents
 
@@ -25,26 +25,26 @@ This document provides a detailed description of the ERF (Encapsulated Resource 
 
 ## file structure Overview
 
-[ERF files](ERF-File-Format) [ARE](GFF-File-Format#are-area) [self-contained archives](ERF-File-Format) that store both resource names ([ResRefs](GFF-File-Format#gff-data-types)) and data in the same file. Unlike [BIF files](BIF-File-Format) which require a [KEY file](KEY-File-Format) for filename lookups, [ERF](ERF-File-Format) files include [ResRef](GFF-File-Format#gff-data-types) information directly in the [archive](ERF-File-Format).
+ERF files [ARE](GFF-File-Format#are-area) self-contained archives that store both resource names ([ResRefs](GFF-File-Format#gff-data-types)) and data in the same file. Unlike [BIF files](BIF-File-Format) which require a [KEY file](KEY-File-Format) for filename lookups, ERF files include [ResRef](GFF-File-Format#gff-data-types) information directly in the archive.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/erf/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/erf/)
 
 **Vendor References:**
 
-- [`vendor/reone/src/libs/resource/format/erfreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/erfreader.cpp) - Complete C++ [ERF](ERF-File-Format) reader implementation with MOD/SAV/HAK support
-- [`vendor/reone/include/reone/resource/format/erfreader.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/format/erfreader.h) - [ERF](ERF-File-Format) reader type definitions
-- [`vendor/xoreos/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/erffile.cpp) - Generic Aurora [ERF](ERF-File-Format) implementation (shared format across KotOR, NWN, and other Aurora games)
-- [`vendor/KotOR.js/src/resource/ERFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/ERFObject.ts) - TypeScript [ERF](ERF-File-Format) parser with streaming support
-- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/ERFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/ERFObject.cs) - C# Unity [ERF](ERF-File-Format) loader
+- [`vendor/reone/src/libs/resource/format/erfreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/erfreader.cpp) - Complete C++ ERF reader implementation with MOD/SAV/HAK support
+- [`vendor/reone/include/reone/resource/format/erfreader.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/format/erfreader.h) - ERF reader type definitions
+- [`vendor/xoreos/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/erffile.cpp) - Generic Aurora ERF implementation (shared format across KotOR, NWN, and other Aurora games)
+- [`vendor/KotOR.js/src/resource/ERFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/ERFObject.ts) - TypeScript ERF parser with streaming support
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/ERFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/ERFObject.cs) - C# Unity ERF loader
 - [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorERF) - .NET ERF reader/writer with builder API
-- [`vendor/xoreos-tools/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/erffile.cpp) - Command-line [ERF](ERF-File-Format) extraction tools
+- [`vendor/xoreos-tools/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/erffile.cpp) - Command-line ERF extraction tools
 
 **See Also:**
 
 - [BIF File Format](BIF-File-Format) - Alternative archive format used with [KEY](KEY-File-Format) files
 - [KEY File Format](KEY-File-Format) - index file for [BIF archives](BIF-File-Format)
-- [GFF File Format](GFF-File-Format) - Common content type stored in [ERF](ERF-File-Format) archives
-- [RIM File Format](ERF-File-Format) - Similar archive format for area resources
+- [GFF File Format](GFF-File-Format) - Common content type stored in ERF archives
+- RIM File Format - Similar archive format for area resources
 
 ---
 
@@ -71,7 +71,7 @@ The file header is 160 bytes in size:
 
 **Build Date fields:**
 
-The Build Year and Build Day fields timestamp when the [ERF file](ERF-File-Format) was created:
+The Build Year and Build Day fields timestamp when the ERF file was created:
 
 - **Build Year**: Years since 1900 (e.g., `103` = year 2003)
 - **Build Day**: Day of year (1-365/366, with January 1 = day 1)
@@ -85,19 +85,19 @@ Build Year: 103 → 1900 + 103 = 2003
 Build Day: 247 → September 4th (the 247th day of 2003)
 ```
 
-Most mod tools either zero out these fields or set them to the current date when creating/modifying [ERF files](ERF-File-Format).
+Most mod tools either zero out these fields or set them to the current date when creating/modifying ERF files.
 
 **Description [StrRef](TLK-File-Format#string-references-strref) values by file type:**
 
-The Description [StrRef](TLK-File-Format#string-references-strref) field (offset 0x0028 / 0x28) varies depending on the [ERF](ERF-File-Format) variant:
+The Description [StrRef](TLK-File-Format#string-references-strref) field (offset 0x0028 / 0x28) varies depending on the ERF variant:
 
 - **MOD files**: `-1` (no [TLK](TLK-File-Format) reference, uses localized strings instead)
 - **SAV files**: `0` (typically no description)
 - **NWM files**: `-1` (**Neverwinter Nights module format, NOT used in KotOR**)
-- **[ERF](ERF-File-Format)/HAK files**: Unpredictable (may contain valid [StrRef](TLK-File-Format#string-references-strref) or `-1`)
+- **ERF/HAK files**: Unpredictable (may contain valid [StrRef](TLK-File-Format#string-references-strref) or `-1`)
 
 **Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:11-46`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs#L11-L46)  
-**Reference**: [`vendor/xoreos-docs/specs/torlack/mod.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/mod.html) - Tim Smith (Torlack)'s reverse-engineered [ERF](ERF-File-Format) format documentation
+**Reference**: [`vendor/xoreos-docs/specs/torlack/mod.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/mod.html) - Tim Smith (Torlack)'s reverse-engineered ERF format documentation
 
 ### Localized string List
 
@@ -111,7 +111,7 @@ Localized strings provide descriptions in multiple languages:
 
 **Localized string Usage:**
 
-[ERF](ERF-File-Format) localized strings provide multi-language descriptions for the archive itself. These [ARE](GFF-File-Format#are-area) primarily used in MOD files to display module names and descriptions in the game's module selection screen.
+ERF localized strings provide multi-language descriptions for the archive itself. These [ARE](GFF-File-Format#are-area) primarily used in MOD files to display module names and descriptions in the game's module selection screen.
 
 **Language IDs:**
 
@@ -125,7 +125,7 @@ Localized strings provide descriptions in multiple languages:
 
 **Important Notes:**
 
-- Most [ERF files](ERF-File-Format) have zero localized strings (Language count = 0)
+- Most ERF files have zero localized strings (Language count = 0)
 - MOD files may include localized module names for the load screen
 - Localized strings [ARE](GFF-File-Format#are-area) optional metadata and don't affect resource access
 - The Description [StrRef](TLK-File-Format#string-references-strref) field (in header) provides an alternative via [TLK](TLK-File-Format) reference
@@ -171,26 +171,26 @@ Resource data is stored at the offsets specified in the resource list:
 
 ### MOD/NWM file format Quirk: Blank data Block
 
-**Note**: For MOD and NWM files only, there exists an unusual block of data between the resource structures ([KEY](KEY-File-Format) List) and the position structures (Resource List). This block is 8 bytes per resource and appears to be all NULL bytes in practice. This data block is not referenced by any offset in the [ERF file](ERF-File-Format) header, which is uncharacteristic of BioWare's file format design.
+**Note**: For MOD and NWM files only, there exists an unusual block of data between the resource structures ([KEY](KEY-File-Format) List) and the position structures (Resource List). This block is 8 bytes per resource and appears to be all NULL bytes in practice. This data block is not referenced by any offset in the ERF file header, which is uncharacteristic of BioWare's file format design.
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/mod.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/mod.html) - "Strange Blank data" section documenting this MOD/NWM-specific quirk
 
 ---
 
-## [ERF](ERF-File-Format) Variants
+## ERF Variants
 
-[ERF files](ERF-File-Format) come in several variants based on file type:
+ERF files come in several variants based on file type:
 
 | file type | Extension | Description                                                      |
 | --------- | --------- | ---------------------------------------------------------------- |
-| [ERF](ERF-File-Format)       | `.erf`    | Generic encapsulated resource file                               |
+| ERF       | `.erf`    | Generic encapsulated resource file                               |
 | MOD       | `.mod`    | Module file (contains area resources)                            |
 | SAV       | `.sav`    | Save game file (contains saved game state)                       |
 | HAK       | `.hak`    | Hak pak file (contains override resources)                      |
 
 All variants use the same binary format structure, differing only in the file type signature.
 
-### MOD Files ([module archives](ERF-File-Format))
+### MOD Files (module archives)
 
 MOD files package all resources needed for a game module (level/area):
 
@@ -205,7 +205,7 @@ MOD files package all resources needed for a game module (level/area):
 
 The game loads MOD files from the `modules/` directory. When entering a module, the engine mounts the MOD archive and prioritizes its resources over [BIF files](BIF-File-Format) but below the `override/` folder.
 
-### SAV Files ([save game archives](ERF-File-Format))
+### SAV Files (save game archives)
 
 SAV files store complete game state:
 
@@ -238,9 +238,9 @@ Unlike the `override/` directory, HAK files:
 - Support multiple HAKs with defined load order
 - [ARE](GFF-File-Format#are-area) referenced by module `.ifo` files
 
-### [ERF](ERF-File-Format) Files (Generic Archives)
+### ERF Files (Generic Archives)
 
-Generic [ERF files](ERF-File-Format) serve miscellaneous purposes:
+Generic ERF files serve miscellaneous purposes:
 
 - [texture](TPC-File-Format) packs
 - Audio replacement packs
@@ -257,8 +257,8 @@ Generic [ERF files](ERF-File-Format) serve miscellaneous purposes:
 
 **Binary Writing**: [`Libraries/PyKotor/src/pykotor/resource/formats/erf/io_erf.py`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/erf/io_erf.py)
 
-**[ERF](ERF-File-Format) Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/erf/erf_data.py:100-229`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/erf/erf_data.py#L100-L229)
+**ERF Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/erf/erf_data.py:100-229`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/erf/erf_data.py#L100-L229)
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [ERF file](ERF-File-Format) format, focusing on the detailed file structure and data formats used within the games.
+This documentation aims to provide a comprehensive overview of the KotOR ERF file format, focusing on the detailed file structure and data formats used within the games.

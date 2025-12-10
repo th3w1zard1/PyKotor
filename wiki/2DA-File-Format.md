@@ -1,14 +1,14 @@
-# KotOR [2DA](2DA-File-Format) file format Documentation
+# KotOR 2DA file format Documentation
 
-This document provides a detailed description of the 2DA (Two-Dimensional array) file format used in **Knights of the Old Republic (KotOR)** and **Knights of the Old Republic II: The Sith Lords (KotOR 2)**. [2DA files](2DA-File-Format) store tabular game data in a spreadsheet-like format, containing configuration data for nearly all game systems: items, Force powers, creatures, skills, feats, and many other game mechanics.
+This document provides a detailed description of the 2DA (Two-Dimensional array) file format used in **Knights of the Old Republic (KotOR)** and **Knights of the Old Republic II: The Sith Lords (KotOR 2)**. 2DA files store tabular game data in a spreadsheet-like format, containing configuration data for nearly all game systems: items, Force powers, creatures, skills, feats, and many other game mechanics.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [2DA](2DA-File-Format) format specification, see [Bioware Aurora 2DA Format](Bioware-Aurora-2DA).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine 2DA format specification, see [Bioware Aurora 2DA Format](Bioware-Aurora-2DA).
 
-**For mod developers:** To modify [2DA files](2DA-File-Format) in your mods, see the [TSLPatcher 2DAList Syntax Guide](TSLPatcher-2DAList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
+**For mod developers:** To modify 2DA files in your mods, see the [TSLPatcher 2DAList Syntax Guide](TSLPatcher-2DAList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Related formats:** [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) often referenced by [GFF files](GFF-File-Format) (such as [UTC (Creature)](GFF-File-Format#utc-creature), [UTI (Item)](GFF-File-Format#uti-item), [UTP (Placeable)](GFF-File-Format#utp-placeable) templates) and may contain references to [TLK files](TLK-File-Format) for text strings.
+**Related formats:** 2DA files [ARE](GFF-File-Format#are-area) often referenced by [GFF files](GFF-File-Format) (such as [UTC (Creature)](GFF-File-Format#utc-creature), [UTI (Item)](GFF-File-Format#uti-item), [UTP (Placeable)](GFF-File-Format#utp-placeable) templates) and may contain references to [TLK files](TLK-File-Format) for text strings.
 
-**Important**: While the [2DA file](2DA-File-Format) format structure is shared across BioWare's Aurora engine games (including Neverwinter Nights, Dragon Age, and Jade Empire), this documentation focuses exclusively on KotOR and KotOR 2. All [2DA file](2DA-File-Format) examples, column structures, and engine usage descriptions [ARE](GFF-File-Format#are-area) specific to these games. References to vendor implementations [ARE](GFF-File-Format#are-area) marked as either KotOR-specific or generic Aurora engine code (shared format).
+**Important**: While the 2DA file format structure is shared across BioWare's Aurora engine games (including Neverwinter Nights, Dragon Age, and Jade Empire), this documentation focuses exclusively on KotOR and KotOR 2. All 2DA file examples, column structures, and engine usage descriptions [ARE](GFF-File-Format#are-area) specific to these games. References to vendor implementations [ARE](GFF-File-Format#are-area) marked as either KotOR-specific or generic Aurora engine code (shared format).
 
 ## Table of Contents
 
@@ -179,30 +179,30 @@ This document provides a detailed description of the 2DA (Two-Dimensional array)
 
 ## file structure Overview
 
-[2DA files](2DA-File-Format) store tabular game data in a compact format used by the KotOR game engine. files use version "V2.b" and have the `.2da` extension.
+2DA files store tabular game data in a compact format used by the KotOR game engine. files use version "V2.b" and have the `.2da` extension.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/twoda/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/twoda/)
 
 **Vendor References:**
 
 - [`vendor/kotor/docs/2da.md`](https://github.com/th3w1zard1/kotor/blob/master/docs/2da.md) - Basic format structure and parsing overview
-- [`vendor/reone/src/libs/resource/format/2dareader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp) - Complete C++ [2DA](2DA-File-Format) parser implementation
-- [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine [2DA](2DA-File-Format) implementation (shared format)
-- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs) - C# Unity [2DA](2DA-File-Format) loader
-- [`vendor/KotOR.js/src/resource/TwoDAObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TwoDAObject.ts) - TypeScript [2DA](2DA-File-Format) parser with memory-efficient caching
+- [`vendor/reone/src/libs/resource/format/2dareader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/2dareader.cpp) - Complete C++ 2DA parser implementation
+- [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine 2DA implementation (shared format)
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs) - C# Unity 2DA loader
+- [`vendor/KotOR.js/src/resource/TwoDAObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TwoDAObject.ts) - TypeScript 2DA parser with memory-efficient caching
 - [`vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/Kotor2DA.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/Kotor2DA/Kotor2DA.cs) - .NET 2DA reader/writer
 
 **See Also:**
 
-- [TSLPatcher 2DAList Syntax](TSLPatcher-2DAList-Syntax) - Modding [2DA files](2DA-File-Format) with TSLPatcher
-- [GFF File Format](GFF-File-Format) - Related format that often references [2DA](2DA-File-Format) data
-- [TLK File Format](TLK-File-Format) - Text strings referenced by [2DA](2DA-File-Format) entries
+- [TSLPatcher 2DAList Syntax](TSLPatcher-2DAList-Syntax) - Modding 2DA files with TSLPatcher
+- [GFF File Format](GFF-File-Format) - Related format that often references 2DA data
+- [TLK File Format](TLK-File-Format) - Text strings referenced by 2DA entries
 
 ---
 
 ## format
 
-The [2DA file format](2DA-File-Format) (version "V2.b") is the representation used by the game engine.
+The 2DA file format (version "V2.b") is the representation used by the game engine.
 
 ### File header
 
@@ -324,7 +324,7 @@ The cell data string table begins immediately after the `cell_data_size` field. 
 
 ### TwoDA Class
 
-The `TwoDA` class represents a complete [2DA file](2DA-File-Format) in memory:
+The `TwoDA` class represents a complete 2DA file in memory:
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/formats/twoda/twoda_data.py:77-119`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/twoda/twoda_data.py#L77-L119)
 
@@ -357,7 +357,7 @@ The `TwoDARow` class provides a convenient interface for accessing row data:
 
 ## Cell value types
 
-All cell values [ARE](GFF-File-Format#are-area) stored as strings in the [2DA file](2DA-File-Format), but [ARE](GFF-File-Format#are-area) interpreted as different types by the game engine:
+All cell values [ARE](GFF-File-Format#are-area) stored as strings in the 2DA file, but [ARE](GFF-File-Format#are-area) interpreted as different types by the game engine:
 
 - **Integers**: Numeric strings parsed as [`int32`](https://en.wikipedia.org/wiki/Integer_(computer_science)) - used for numeric identifiers, counts, and enumerated values
 - **Floats**: Decimal strings parsed as [`float`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) - used for calculations like damage multipliers, timers, and percentages
@@ -372,7 +372,7 @@ The game engine parses cell values based on context and expected data type for e
 
 ## Confirmed Engine Usage
 
-The following [2DA files](2DA-File-Format) have been confirmed to be actively loaded and used by the KotOR game engine through reverse engineering analysis of the game binaries and engine reimplementations (reone, xoreos):
+The following 2DA files have been confirmed to be actively loaded and used by the KotOR game engine through reverse engineering analysis of the game binaries and engine reimplementations (reone, xoreos):
 
 **Core Game Systems:**
 
@@ -414,15 +414,15 @@ The following [2DA files](2DA-File-Format) have been confirmed to be actively lo
 
 - `repute.2da` - Faction/reputation definitions
 
-**Note:** Many other [2DA files](2DA-File-Format) documented below may be remnants from Neverwinter Nights (NWN) or may be used in ways not yet identified through reverse engineering. The files listed above [ARE](GFF-File-Format#are-area) confirmed to be actively loaded and referenced by the game engine during normal gameplay.
+**Note:** Many other 2DA files documented below may be remnants from Neverwinter Nights (NWN) or may be used in ways not yet identified through reverse engineering. The files listed above [ARE](GFF-File-Format#are-area) confirmed to be actively loaded and referenced by the game engine during normal gameplay.
 
-## Known [2DA](2DA-File-Format) files
+## Known 2DA files
 
-This section documents all known [2DA files](2DA-File-Format) used in KotOR and KotOR 2, organized by category. Each entry includes engine usage, column definitions, and data structure details.
+This section documents all known 2DA files used in KotOR and KotOR 2, organized by category. Each entry includes engine usage, column definitions, and data structure details.
 
 ---
 
-## Character & Combat [2DA](2DA-File-Format) files
+## Character & Combat 2DA files
 
 ### [appearance.2da](2DA-appearance)
 
@@ -448,7 +448,7 @@ See [skills.2da](2DA-skills) for detailed documentation.
 
 See [spells.2da](2DA-spells) for detailed documentation.
 
-## Items & Properties [2DA](2DA-File-Format) files
+## Items & Properties 2DA files
 
 ### itemprops.2da
 
@@ -470,7 +470,7 @@ See [iprp_ammocost.2da](2DA-iprp_ammocost) for detailed documentation.
 
 See [iprp_damagecost.2da](2DA-iprp_damagecost) for detailed documentation.
 
-## Objects & Area [2DA](2DA-File-Format) files
+## Objects & Area 2DA files
 
 ### [placeables.2da](2DA-placeables)
 
@@ -488,7 +488,7 @@ See [doortypes.2da](2DA-doortypes) for detailed documentation.
 
 See [soundset.2da](2DA-soundset) for detailed documentation.
 
-## Visual Effects & [animations](MDL-MDX-File-Format#animation-header) [2DA](2DA-File-Format) files
+## Visual Effects & [animations](MDL-MDX-File-Format#animation-header) 2DA files
 
 ### [visualeffects.2da](2DA-visualeffects)
 
@@ -502,7 +502,7 @@ See [portraits.2da](2DA-portraits) for detailed documentation.
 
 See [heads.2da](2DA-heads) for detailed documentation.
 
-## Progression Tables [2DA](2DA-File-Format) files
+## Progression Tables 2DA files
 
 ### classpowergain.2da
 
@@ -516,7 +516,7 @@ See [cls_atk_*.2da](2DA-cls_atk__pattern) for detailed documentation.
 
 See [cls_savthr_*.2da](2DA-cls_savthr__pattern) for detailed documentation.
 
-## Name Generation [2DA](2DA-File-Format) files
+## Name Generation 2DA files
 
 ### humanfirst.2da
 
@@ -541,7 +541,7 @@ Similar name generation files exist for other species:
 
 ---
 
-## Additional [2DA](2DA-File-Format) files
+## Additional 2DA files
 
 ### ambientmusic.2da
 
@@ -695,9 +695,9 @@ See [planetary.2da](2DA-planetary) for detailed documentation.
 
 See [cursors.2da](2DA-cursors) for detailed documentation.
 
-## Item Property Parameter & Cost Tables [2DA](2DA-File-Format) files
+## Item Property Parameter & Cost Tables 2DA files
 
-The following [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) used for item property parameter and cost calculations:
+The following 2DA files [ARE](GFF-File-Format#are-area) used for item property parameter and cost calculations:
 
 ### iprp_paramtable.2da
 
@@ -1009,11 +1009,11 @@ See [areaeffects.2da](2DA-areaeffects) for detailed documentation.
 
 **xoreos** (C++):
 
-- Reading: [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine [2DA](2DA-File-Format) format parser (shared across KotOR, Neverwinter Nights, and other Aurora engine games). The format structure is the same, but specific [2DA files](2DA-File-Format) and their columns [ARE](GFF-File-Format#are-area) KotOR-specific.
+- Reading: [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine 2DA format parser (shared across KotOR, Neverwinter Nights, and other Aurora engine games). The format structure is the same, but specific 2DA files and their columns [ARE](GFF-File-Format#are-area) KotOR-specific.
 
 **KotOR-Unity** (C#):
 
-- Reading: [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:23-105`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L23-L105) - Complete [2DA](2DA-File-Format) reading implementation with column parsing, row indices, and cell data reading
+- Reading: [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/2DAObject.cs:23-105`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/2DAObject.cs#L23-L105) - Complete 2DA reading implementation with column parsing, row indices, and cell data reading
 
 **TSLPatcher** (Perl):
 
@@ -1021,8 +1021,8 @@ See [areaeffects.2da](2DA-areaeffects) for detailed documentation.
 
 **KotOR.js** (TypeScript):
 
-- Reading: [`vendor/KotOR.js/src/resource/TwoDAObject.ts:69-145`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TwoDAObject.ts#L69-L145) - Complete [2DA](2DA-File-Format) reading implementation
-- Manager: [`vendor/KotOR.js/src/managers/TwoDAManager.ts:21-37`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/managers/TwoDAManager.ts#L21-L37) - [2DA](2DA-File-Format) table loading from game archives
+- Reading: [`vendor/KotOR.js/src/resource/TwoDAObject.ts:69-145`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TwoDAObject.ts#L69-L145) - Complete 2DA reading implementation
+- Manager: [`vendor/KotOR.js/src/managers/TwoDAManager.ts:21-37`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/managers/TwoDAManager.ts#L21-L37) - 2DA table loading from game archives
 - Usage: [`vendor/KotOR.js/src/talents/TalentFeat.ts:122-132`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/talents/TalentFeat.ts#L122-L132) - Feat loading from `feat.2da`
 
 **Kotor.NET** (C#):
@@ -1031,4 +1031,4 @@ See [areaeffects.2da](2DA-areaeffects) for detailed documentation.
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [2DA file](2DA-File-Format) format, focusing on the detailed file structure and data formats used within the games.
+This documentation aims to provide a comprehensive overview of the KotOR 2DA file format, focusing on the detailed file structure and data formats used within the games.

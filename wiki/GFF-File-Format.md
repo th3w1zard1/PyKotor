@@ -1,17 +1,17 @@
-# KotOR [GFF](GFF-File-Format) file format Documentation
+# KotOR GFF file format Documentation
 
 This document provides a detailed description of the GFF (Generic file format) used in Knights of the Old Republic (KotOR) games. GFF is a container format used for many different game resource types, including character templates, areas, dialogs, placeables, creatures, items, and more.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [GFF](GFF-File-Format) format specification, see [Bioware Aurora GFF Format](Bioware-Aurora-GFF) and [Bioware Aurora Common GFF Structs](Bioware-Aurora-CommonGFFStructs).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine GFF format specification, see [Bioware Aurora GFF Format](Bioware-Aurora-GFF) and [Bioware Aurora Common GFF Structs](Bioware-Aurora-CommonGFFStructs).
 
-**For mod developers:** To modify [GFF files](GFF-File-Format) in your mods, see the [TSLPatcher GFFList Syntax Guide](TSLPatcher-GFFList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
+**For mod developers:** To modify GFF files in your mods, see the [TSLPatcher GFFList Syntax Guide](TSLPatcher-GFFList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Related formats:** [GFF files](GFF-File-Format) often reference other formats such as [2DA files](2DA-File-Format) for configuration data, [TLK files](TLK-File-Format) for text strings, [MDL/MDX files](MDL-MDX-File-Format) for 3D [models](MDL-MDX-File-Format), and [NCS files](NCS-File-Format) for scripts.
+**Related formats:** GFF files often reference other formats such as [2DA files](2DA-File-Format) for configuration data, [TLK files](TLK-File-Format) for text strings, [MDL/MDX files](MDL-MDX-File-Format) for 3D [models](MDL-MDX-File-Format), and [NCS files](NCS-File-Format) for scripts.
 
 ## Table of Contents
 
 - [KotOR GFF file format Documentation](#kotor-gff-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
     - [GFF as a Universal Container](#gff-as-a-universal-container)
   - [Binary format](#binary-format)
@@ -55,11 +55,11 @@ This document provides a detailed description of the GFF (Generic file format) u
 
 ## file structure Overview
 
-[GFF files](GFF-File-Format) use a hierarchical structure with structs containing fields, which can be simple values or nested structs and lists. The format supports version V3.2 (KotOR) and later versions (V3.3, V4.0, V4.1) used in other BioWare games.
+GFF files use a hierarchical structure with structs containing fields, which can be simple values or nested structs and lists. The format supports version V3.2 (KotOR) and later versions (V3.3, V4.0, V4.1) used in other BioWare games.
 
-### [GFF](GFF-File-Format) as a Universal Container
+### GFF as a Universal Container
 
-[GFF](GFF-File-Format) is BioWare's universal container format for structured game data. Think of it as a binary JSON or XML with strong typing:
+GFF is BioWare's universal container format for structured game data. Think of it as a binary JSON or XML with strong typing:
 
 **Advantages:**
 
@@ -76,28 +76,28 @@ This document provides a detailed description of the GFF (Generic file format) u
 - Dialogue trees ([DLG](GFF-File-Format#dlg-dialogue))
 - Quest journals ([JRL](GFF-File-Format#jrl-journal))
 - Module information ([IFO](GFF-File-Format#ifo-module-info))
-- Save game state (SAV files contain [GFF](GFF-File-Format) resources)
+- Save game state (SAV files contain GFF resources)
 - User interface layouts ([GUI](GFF-File-Format#gui-graphical-user-interface))
 
-Every `.utc` ([UTC](GFF-File-Format#utc-creature)), `.uti` ([UTI](GFF-File-Format#uti-item)), `.dlg` ([DLG](GFF-File-Format#dlg-dialogue)), `.are` ([ARE](GFF-File-Format#are-area)), and dozens of other KotOR file types [ARE](GFF-File-Format#are-area) [GFF files](GFF-File-Format) with different file type signatures and field schemas.
+Every `.utc` ([UTC](GFF-File-Format#utc-creature)), `.uti` ([UTI](GFF-File-Format#uti-item)), `.dlg` ([DLG](GFF-File-Format#dlg-dialogue)), `.are` ([ARE](GFF-File-Format#are-area)), and dozens of other KotOR file types [ARE](GFF-File-Format#are-area) GFF files with different file type signatures and field schemas.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/gff/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/)
 
 **Vendor References:**
 
-- [`vendor/reone/src/libs/resource/gff.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/gff.cpp) - Complete C++ [GFF](GFF-File-Format) reader/writer implementation
-- [`vendor/reone/include/reone/resource/gff.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/gff.h) - [GFF](GFF-File-Format) type definitions and API
+- [`vendor/reone/src/libs/resource/gff.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/gff.cpp) - Complete C++ GFF reader/writer implementation
+- [`vendor/reone/include/reone/resource/gff.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/gff.h) - GFF type definitions and API
 - [`vendor/xoreos/src/aurora/gff3file.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/gff3file.cpp) - Generic Aurora GFF3 implementation (shared format)
-- [`vendor/KotOR.js/src/resource/GFFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/GFFObject.ts) - TypeScript [GFF](GFF-File-Format) parser with schema validation
-- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/GFFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/GFFObject.cs) - C# Unity [GFF](GFF-File-Format) loader
+- [`vendor/KotOR.js/src/resource/GFFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/GFFObject.ts) - TypeScript GFF parser with schema validation
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/GFFObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/GFFObject.cs) - C# Unity GFF loader
 - [`vendor/Kotor.NET/Kotor.NET/Formats/KotorGFF/GFF.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorGFF/GFF.cs) - .NET GFF reader/writer
-- [`vendor/xoreos-tools/src/aurora/gff3file.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/gff3file.cpp) - Command-line [GFF](GFF-File-Format) tools implementation
+- [`vendor/xoreos-tools/src/aurora/gff3file.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/gff3file.cpp) - Command-line GFF tools implementation
 
 **See Also:**
 
-- [TSLPatcher GFFList Syntax](TSLPatcher-GFFList-Syntax) - Modding [GFF files](GFF-File-Format) with TSLPatcher
-- [2DA File Format](2DA-File-Format) - Configuration data referenced by [GFF](GFF-File-Format) files
-- [TLK File Format](TLK-File-Format) - Text strings used by [GFF](GFF-File-Format) LocalizedString fields
+- [TSLPatcher GFFList Syntax](TSLPatcher-GFFList-Syntax) - Modding GFF files with TSLPatcher
+- [2DA File Format](2DA-File-Format) - Configuration data referenced by GFF files
+- [TLK File Format](TLK-File-Format) - Text strings used by GFF LocalizedString fields
 - [Bioware Aurora GFF Format](Bioware-Aurora-GFF) - Official BioWare specification
 
 ---
@@ -197,9 +197,9 @@ Lists [ARE](GFF-File-Format#are-area) stored as arrays of struct indices. The li
 
 ---
 
-## [GFF](GFF-File-Format) data types
+## GFF data types
 
-[GFF](GFF-File-Format) supports the following field types:
+GFF supports the following field types:
 
 | type ID | Name              | Size (inline) | Description                                                      |
 | ------- | ----------------- | ------------- | ---------------------------------------------------------------- |
@@ -244,15 +244,15 @@ Lists [ARE](GFF-File-Format#are-area) stored as arrays of struct indices. The li
 
 **Storage Optimization:**
 
-Inline types (0-5, 8, 14, 15, 18) store their value directly in the field entry, saving space and improving access speed. Complex types (6-7, 9-13, 16-17) require an offset to field data, adding overhead. When designing custom [GFF](GFF-File-Format) schemas, prefer inline types where possible.
+Inline types (0-5, 8, 14, 15, 18) store their value directly in the field entry, saving space and improving access speed. Complex types (6-7, 9-13, 16-17) require an offset to field data, adding overhead. When designing custom GFF schemas, prefer inline types where possible.
 
 ---
 
-## [GFF](GFF-File-Format) structure
+## GFF structure
 
 ### GFFStruct
 
-A [GFF](GFF-File-Format) struct is a collection of named fields. Each struct has:
+A GFF struct is a collection of named fields. Each struct has:
 
 - **Struct ID**: type identifier (often 0xFFFFFFFF for generic structs)
 - **fields**: Dictionary mapping field names (labels) to field values
@@ -275,7 +275,7 @@ fields can be accessed using type-specific getter/setter methods:
 
 ### GFFList
 
-A [GFF](GFF-File-Format) list is an ordered collection of structs. Lists [ARE](GFF-File-Format#are-area) accessed via:
+A GFF list is an ordered collection of structs. Lists [ARE](GFF-File-Format#are-area) accessed via:
 
 - `get_list(label)`: Returns a `GFFList` object
 - `GFFList.get(i)`: Gets struct at index `i`
@@ -298,9 +298,9 @@ When modifying lists, always maintain struct IDs and parent references to avoid 
 
 ---
 
-## [GFF](GFF-File-Format) Generic types
+## GFF Generic types
 
-[GFF files](GFF-File-Format) are used as containers for various game resource types. Each generic type has its own structure and field definitions.
+GFF files are used as containers for various game resource types. Each generic type has its own structure and field definitions.
 
 ### ARE (Area)
 
@@ -368,9 +368,9 @@ See [UTW (Waypoint)](GFF-UTW) for detailed documentation.
 
 ## Alternative Terminology (Historical)
 
-The [GFF](GFF-File-Format) format is also known as "ITP" in [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) (Tim Smith/Torlack's reverse-engineered documentation from the **Neverwinter Nights era**, but the format is **identical in KotOR**). The following terminology mapping may be helpful when reading older specifications:
+The GFF format is also known as "ITP" in [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) (Tim Smith/Torlack's reverse-engineered documentation from the **Neverwinter Nights era**, but the format is **identical in KotOR**). The following terminology mapping may be helpful when reading older specifications:
 
-| Modern Term ([GFF](GFF-File-Format)) | Historical Term (ITP) | Description |
+| Modern Term (GFF) | Historical Term (ITP) | Description |
 | ----------------- | --------------------- | ----------- |
 | Struct array | Entry Table / Entity Table | array of struct entries |
 | field array | Element Table | array of field/element entries |
@@ -381,7 +381,7 @@ The [GFF](GFF-File-Format) format is also known as "ITP" in [`vendor/xoreos-docs
 
 **Note**: The first entry in the struct array is always the root of the entire hierarchy. All other structs and fields can be accessed from this root entry.
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - Tim Smith (Torlack)'s reverse-engineered [GFF](GFF-File-Format)/ITP format documentation
+**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) - Tim Smith (Torlack)'s reverse-engineered GFF/ITP format documentation
 
 ## field data Access Patterns
 
@@ -421,10 +421,10 @@ Complex types require accessing data from the field data section:
 
 **Binary Writing**: [`Libraries/PyKotor/src/pykotor/resource/formats/gff/io_gff.py:421-800`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/io_gff.py#L421-L800)
 
-**[GFF](GFF-File-Format) Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py:200-400`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py#L200-L400)
+**GFF Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py:200-400`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py#L200-L400)
 
 **GFFStruct Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py:400-800`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py#L400-L800)
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [GFF file](GFF-File-Format) format, focusing on the detailed file structure and data formats used within the games.
+This documentation aims to provide a comprehensive overview of the KotOR GFF file format, focusing on the detailed file structure and data formats used within the games.

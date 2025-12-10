@@ -1,4 +1,4 @@
-# [itempropdef.2da](2DA-itempropdef)
+# itempropdef.2da
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 

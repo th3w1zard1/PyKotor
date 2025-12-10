@@ -4,9 +4,9 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** Shared Functions (K1 & TSL)
 
+
 <a id="addavailablenpcbyobject"></a>
 
-## `AddAvailableNPCByObject(nNPC, oCreature)` - Routine 694
 
 - `694. AddAvailableNPCByObject`
 - This adds a NPC to the list of available party members using
@@ -19,7 +19,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 <a id="addavailablenpcbytemplate"></a>
 
-## `AddAvailableNPCByTemplate(nNPC, sTemplate)` - Routine 697
 
 - `697. AddAvailableNPCByTemplate`
 - This adds a NPC to the list of available party members using
@@ -32,7 +31,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 <a id="addpartymember"></a>
 
-## `AddPartyMember(nNPC, oCreature)` - Routine 574
 
 - `574. AddPartyMember`
 - Adds a creature to the party
@@ -44,7 +42,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 <a id="addtoparty"></a>
 
-## `AddToParty(oPC, oPartyLeader)` - Routine 572
 
 - `572. AddToParty`
 - Add oPC to oPartyLeader's party.  This will only work on two PCs.
@@ -84,7 +81,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 <a id="isnpcpartymember"></a>
 
-## `IsNPCPartyMember(nNPC)` - Routine 699
 
 - `699. IsNPCPartyMember`
 - Returns if a given NPC constant is in the party currently
@@ -93,7 +89,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 <a id="isobjectpartymember"></a>
 
-## `IsObjectPartyMember(oCreature)` - Routine 576
 
 - `576. IsObjectPartyMember`
 - Returns whether a specified creature is a party member
@@ -103,7 +98,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 <a id="removefromparty"></a>
 
-## `RemoveFromParty(oPC)` - Routine 573
 
 - `573. RemoveFromParty`
 - Remove oPC from their current party. This will only work on a PC.
@@ -113,7 +107,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 <a id="removepartymember"></a>
 
-## `RemovePartyMember(nNPC)` - Routine 575
 
 - `575. RemovePartyMember`
 - Removes a creature from the party
@@ -143,7 +136,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 <a id="showpartyselectiongui"></a>
 
-## `ShowPartySelectionGUI(sExitScript, nForceNPC1, nForceNPC2)` - Routine 712
 
 - `712. ShowPartySelectionGUI`
 - ShowPartySelectionGUI
@@ -158,10 +150,10 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 <a id="switchplayercharacter"></a>
 
-## `SwitchPlayerCharacter(nNPC)` - Routine 11
 
 - `11. SwitchPlayerCharacter`
 - Switches the main character to a specified NPC
 - -1 specifies to switch back to the original PC
 
 - `nNPC`: int
+

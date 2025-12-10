@@ -4,12 +4,6 @@ Part of the [NSS File Format Documentation](NSS-File-Format).
 
 **Category:** TSL-Only Functions
 
-<a id="getobjectpersonalspace"></a>
 
-## `GetObjectPersonalSpace(aObject)`
+See Object Query and Manipulation for detailed documentation.
 
-- 832
-- AWD-OEI 6/29/2004
-- This function returns the personal space value of an object
-
-- `aObject`: object

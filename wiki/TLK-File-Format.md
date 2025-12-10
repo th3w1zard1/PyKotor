@@ -1,10 +1,10 @@
-# KotOR [TLK](TLK-File-Format) file format Documentation
+# KotOR TLK file format Documentation
 
-This document provides a detailed description of the TLK ([Talk Table](TLK-File-Format)) file format used in Knights of the Old Republic (KotOR) games. [TLK files](TLK-File-Format) contain all text strings used in the game, both written and spoken, enabling easy localization by providing a lookup table from string reference numbers ([StrRef](TLK-File-Format#string-references-strref)) to localized text and associated voice-over audio files.
+This document provides a detailed description of the TLK (Talk Table) file format used in Knights of the Old Republic (KotOR) games. TLK files contain all text strings used in the game, both written and spoken, enabling easy localization by providing a lookup table from string reference numbers ([StrRef](TLK-File-Format#string-references-strref)) to localized text and associated voice-over audio files.
 
-**For mod developers:** To modify [TLK files](TLK-File-Format) in your mods, see the [TSLPatcher TLKList Syntax Guide](TSLPatcher-TLKList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
+**For mod developers:** To modify TLK files in your mods, see the [TSLPatcher TLKList Syntax Guide](TSLPatcher-TLKList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Related formats:** [TLK files](TLK-File-Format) [ARE](GFF-File-Format#are-area) referenced by [GFF files](GFF-File-Format) (especially [DLG](GFF-File-Format#dlg-dialogue) [dialogue files](GFF-File-Format#dlg-dialogue)), [2DA files](2DA-File-Format) for item names and descriptions, and [SSF files](SSF-File-Format) for character sound sets.
+**Related formats:** TLK files [ARE](GFF-File-Format#are-area) referenced by [GFF files](GFF-File-Format) (especially [DLG](GFF-File-Format#dlg-dialogue) [dialogue files](GFF-File-Format#dlg-dialogue)), [2DA files](2DA-File-Format) for item names and descriptions, and [SSF files](SSF-File-Format) for character sound sets.
 
 ## Table of Contents
 
@@ -25,25 +25,25 @@ This document provides a detailed description of the TLK ([Talk Table](TLK-File-
 
 ## file structure Overview
 
-[TLK files](TLK-File-Format) store localized strings in a binary format. The game loads [`dialog.tlk`](TLK-File-Format) at startup and references strings throughout the game using [StrRef](TLK-File-Format#string-references-strref) numbers (array indices).
+TLK files store localized strings in a binary format. The game loads `dialog.tlk` at startup and references strings throughout the game using [StrRef](TLK-File-Format#string-references-strref) numbers (array indices).
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/tlk/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/tlk/)
 
 **Vendor References:**
 
-- [`vendor/TSLPatcher/lib/site/Bioware/TLK.pm`](https://github.com/th3w1zard1/TSLPatcher/blob/master/lib/site/Bioware/TLK.pm) - Original Perl [TLK](TLK-File-Format) implementation from TSLPatcher
-- [`vendor/reone/src/libs/resource/format/tlkreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/tlkreader.cpp) - Complete C++ [TLK](TLK-File-Format) reader implementation
-- [`vendor/xoreos/src/aurora/talktable.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/talktable.cpp) - Generic Aurora [Talk Table](TLK-File-Format) implementation (shared format)
-- [`vendor/KotOR.js/src/resource/TLKObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TLKObject.ts) - TypeScript [TLK](TLK-File-Format) parser with localization support
-- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/TLKObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/TLKObject.cs) - C# Unity [TLK](TLK-File-Format) loader
+- [`vendor/TSLPatcher/lib/site/Bioware/TLK.pm`](https://github.com/th3w1zard1/TSLPatcher/blob/master/lib/site/Bioware/TLK.pm) - Original Perl TLK implementation from TSLPatcher
+- [`vendor/reone/src/libs/resource/format/tlkreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/tlkreader.cpp) - Complete C++ TLK reader implementation
+- [`vendor/xoreos/src/aurora/talktable.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/talktable.cpp) - Generic Aurora Talk Table implementation (shared format)
+- [`vendor/KotOR.js/src/resource/TLKObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TLKObject.ts) - TypeScript TLK parser with localization support
+- [`vendor/KotOR-Unity/Assets/Scripts/FileObjects/TLKObject.cs`](https://github.com/th3w1zard1/KotOR-Unity/blob/master/Assets/Scripts/FileObjects/TLKObject.cs) - C# Unity TLK loader
 - [`vendor/Kotor.NET/Kotor.NET/Formats/KotorTLK/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorTLK) - .NET TLK reader/writer with builder API
-- [`vendor/xoreos-tools/src/aurora/talktable.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/talktable.cpp) - Command-line [TLK](TLK-File-Format) extraction and editing tools
+- [`vendor/xoreos-tools/src/aurora/talktable.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/talktable.cpp) - Command-line TLK extraction and editing tools
 
 **See Also:**
 
-- [TSLPatcher TLKList Syntax](TSLPatcher-TLKList-Syntax) - Modding [TLK files](TLK-File-Format) with TSLPatcher
-- [GFF File Format](GFF-File-Format) - Dialogue and templates that reference [TLK](TLK-File-Format) strings
-- [SSF File Format](SSF-File-Format) - Sound sets that reference [TLK](TLK-File-Format) entries
+- [TSLPatcher TLKList Syntax](TSLPatcher-TLKList-Syntax) - Modding TLK files with TSLPatcher
+- [GFF File Format](GFF-File-Format) - Dialogue and templates that reference TLK strings
+- [SSF File Format](SSF-File-Format) - Sound sets that reference TLK entries
 - [2DA File Format](2DA-File-Format) - Game tables with name/description StrRefs
 
 ---
@@ -88,7 +88,7 @@ The string data table contains metadata for each string entry. Each entry is 40 
 
 **[flag](GFF-File-Format#gff-data-types) Combinations:**
 
-Common [flag](GFF-File-Format#gff-data-types) patterns in KotOR [TLK files](TLK-File-Format):
+Common [flag](GFF-File-Format#gff-data-types) patterns in KotOR TLK files:
 
 | [flags](GFF-File-Format#gff-data-types) | Hex | Description | Usage |
 | ----- | --- | ----------- | ----- |
@@ -119,7 +119,7 @@ string text is stored at the offset specified in the string data table entry. Th
 
 ## TLKEntry structure
 
-Each [TLK](TLK-File-Format) entry contains:
+Each TLK entry contains:
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/formats/tlk/tlk_data.py:293-424`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tlk/tlk_data.py#L293-L424)
 
@@ -136,27 +136,27 @@ Each [TLK](TLK-File-Format) entry contains:
 
 ## string References (StrRef)
 
-string references (StrRef) [ARE](GFF-File-Format#are-area) integer indices into the [TLK file](TLK-File-Format)'s entry array:
+string references (StrRef) [ARE](GFF-File-Format#are-area) integer indices into the TLK file's entry array:
 
-- **StrRef 0**: First entry in the [TLK file](TLK-File-Format)
+- **StrRef 0**: First entry in the TLK file
 - **StrRef -1**: No string reference (used to indicate missing/empty strings)
 - **StrRef N**: Nth entry (0-based indexing)
 
-The game uses StrRef values throughout [GFF files](GFF-File-Format), scripts, and other resources to reference localized text. When displaying text, the game looks up the StrRef in [`dialog.tlk`](TLK-File-Format) and displays the corresponding text.
+The game uses StrRef values throughout [GFF files](GFF-File-Format), scripts, and other resources to reference localized text. When displaying text, the game looks up the StrRef in `dialog.tlk` and displays the corresponding text.
 
-### Custom [TLK](TLK-File-Format) files
+### Custom TLK files
 
-Mods can add custom [TLK files](TLK-File-Format) to extend available strings:
+Mods can add custom TLK files to extend available strings:
 
-**[dialog.tlk](TLK-File-Format) structure:**
+**dialog.tlk structure:**
 
-- Base game: [`dialog.tlk`](TLK-File-Format) (read-only, ~50,000-100,000 entries)
-- Custom content: `dialogf.tlk` or custom [TLK files](TLK-File-Format) placed in override
+- Base game: `dialog.tlk` (read-only, ~50,000-100,000 entries)
+- Custom content: `dialogf.tlk` or custom TLK files placed in override
 
 **[StrRef](TLK-File-Format#string-references-strref) Ranges:**
 
 - `0` to `~50,000`: Base game strings (varies by language)
-- `16,777,216` (`0x01000000`) and above: Custom [TLK](TLK-File-Format) range (TSLPatcher convention)
+- `16,777,216` (`0x01000000`) and above: Custom TLK range (TSLPatcher convention)
 - Negative values: Invalid/missing references
 
 **Mod Tools Approach:**
@@ -164,20 +164,20 @@ Mods can add custom [TLK files](TLK-File-Format) to extend available strings:
 TSLPatcher and similar tools use high [StrRef](TLK-File-Format#string-references-strref) ranges for custom strings:
 
 ```plaintext
-Base [StrRef](TLK-File-Format#string-references-strref):   0 - 50,000 ([dialog.tlk](TLK-File-Format))
-Custom Range:  16777216+ (custom [TLK files](TLK-File-Format))
+Base [StrRef](TLK-File-Format#string-references-strref):   0 - 50,000 (dialog.tlk)
+Custom Range:  16777216+ (custom TLK files)
 ```
 
 This avoids conflicts with base game strings and allows mods to add thousands of custom text entries without overwriting existing content.
 
-**Multiple [TLK](TLK-File-Format) files:**
+**Multiple TLK files:**
 
-The game can load multiple [TLK](TLK-File-Format) files:
+The game can load multiple TLK files:
 
-1. [`dialog.tlk`](TLK-File-Format) - Primary game text
+1. `dialog.tlk` - Primary game text
 2. `dialogf.tlk` - Female-specific variants (polish K1 only)
 
-Priority: Custom TLKs → dialogf.tlk → [`dialog.tlk`](TLK-File-Format)
+Priority: Custom TLKs → dialogf.tlk → `dialog.tlk`
 
 **Reference**: [`vendor/TSLPatcher/lib/site/Bioware/TLK.pm:31-123`](https://github.com/th3w1zard1/TSLPatcher/blob/master/lib/site/Bioware/TLK.pm#L31-L123)
 
@@ -185,7 +185,7 @@ Priority: Custom TLKs → dialogf.tlk → [`dialog.tlk`](TLK-File-Format)
 
 ## Localization
 
-[TLK files](TLK-File-Format) support multiple languages through the Language ID field:
+TLK files support multiple languages through the Language ID field:
 
 | Language ID | Language | Encoding      |
 | ----------- | -------- | ------------- |
@@ -199,7 +199,7 @@ Priority: Custom TLKs → dialogf.tlk → [`dialog.tlk`](TLK-File-Format)
 | 7           | Chinese  | UTF-8         |
 | 8           | Japanese | UTF-8         |
 
-**Note**: KotOR games typically ignore the Language ID field and always use [`dialog.tlk`](TLK-File-Format). The field is primarily used by modding tools to identify language.
+**Note**: KotOR games typically ignore the Language ID field and always use `dialog.tlk`. The field is primarily used by modding tools to identify language.
 
 **Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs:63`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs#L63)
 
@@ -211,8 +211,8 @@ Priority: Custom TLKs → dialogf.tlk → [`dialog.tlk`](TLK-File-Format)
 
 **Binary Writing**: [`Libraries/PyKotor/src/pykotor/resource/formats/tlk/io_tlk.py:117-178`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tlk/io_tlk.py#L117-L178)
 
-**[TLK](TLK-File-Format) Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/tlk/tlk_data.py:56-291`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tlk/tlk_data.py#L56-L291)
+**TLK Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/tlk/tlk_data.py:56-291`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tlk/tlk_data.py#L56-L291)
 
 ---
 
-This documentation aims to provide a comprehensive overview of the KotOR [TLK file](TLK-File-Format) format, focusing on the detailed file structure and data formats used within the games.
+This documentation aims to provide a comprehensive overview of the KotOR TLK file format, focusing on the detailed file structure and data formats used within the games.

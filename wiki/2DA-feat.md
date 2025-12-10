@@ -1,4 +1,4 @@
-# [feat.2da](2DA-feat)
+# feat.2da
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
@@ -69,11 +69,11 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:82`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L82) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [feat.2da](2DA-feat) (K1: name, description)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:260`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L260) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [feat.2da](2DA-feat) (K2: name, description)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:227`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L227) - [ResRef](GFF-File-Format#gff-data-types) column definition for [feat.2da](2DA-feat) (icon)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:82`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L82) - [StrRef](TLK-File-Format#string-references-strref) column definitions for feat.2da (K1: name, description)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:260`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L260) - [StrRef](TLK-File-Format#string-references-strref) column definitions for feat.2da (K2: name, description)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:227`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L227) - [ResRef](GFF-File-Format#gff-data-types) column definition for feat.2da (icon)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:464`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L464) - TwoDARegistry.FEATS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:561-562`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L561-L562) - [GFF](GFF-File-Format) field mapping: "FeatID" and "Feat" -> [feat.2da](2DA-feat)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:561-562`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L561-L562) - [GFF](GFF-File-Format) field mapping: "FeatID" and "Feat" -> feat.2da
 - [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:321-323`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L321-L323) - [UTC](GFF-File-Format#utc-creature) feat list field documentation
 - [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:432`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L432) - [UTC](GFF-File-Format#utc-creature) feats list initialization
 - [`Libraries/PyKotor/src/pykotor/resource/generics/utc.py:762-768`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utc.py#L762-L768) - Feat list parsing from [UTC](GFF-File-Format#utc-creature) [GFF](GFF-File-Format)

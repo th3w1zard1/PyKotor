@@ -1,4 +1,4 @@
-# [traps.2da](2DA-traps)
+# traps.2da
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
@@ -20,10 +20,10 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:150`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L150) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [traps.2da](2DA-traps) (K1: trapname, name)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:328`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L328) - [StrRef](TLK-File-Format#string-references-strref) column definitions for [traps.2da](2DA-traps) (K2: trapname, name)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:150`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L150) - [StrRef](TLK-File-Format#string-references-strref) column definitions for traps.2da (K1: trapname, name)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:328`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L328) - [StrRef](TLK-File-Format#string-references-strref) column definitions for traps.2da (K2: trapname, name)
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:470`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L470) - TwoDARegistry.TRAPS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:568`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L568) - [GFF](GFF-File-Format) field mapping: "TrapType" -> [traps.2da](2DA-traps)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:568`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L568) - [GFF](GFF-File-Format) field mapping: "TrapType" -> traps.2da
 - [`Libraries/PyKotor/src/pykotor/common/scriptdefs.py:6347-6348`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptdefs.py#L6347-L6348) - VersusTrapEffect function comments
 - [`Libraries/PyKotor/src/pykotor/common/scriptdefs.py:7975-7976`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptdefs.py#L7975-L7976) - GetLastHostileActor function comment mentioning traps
 - [`Libraries/PyKotor/src/pykotor/common/scriptlib.py:21692`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/scriptlib.py#L21692) - Trap targeting comment
@@ -31,9 +31,9 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 **HolocronToolset:**
 
 - [`Tools/HolocronToolset/src/toolset/data/installation.py:69`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L69) - HTInstallation.TwoDA_TRAPS constant
-- [`Tools/HolocronToolset/src/toolset/gui/editors/utt.py:73-87`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utt.py#L73-L87) - [traps.2da](2DA-traps) loading and usage in trap type selection combobox
-- [`Tools/HolocronToolset/src/toolset/gui/editors/utt.py:167`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utt.py#L167) - [traps.2da](2DA-traps) usage for setting trap type index
-- [`Tools/HolocronToolset/src/toolset/gui/editors/utt.py:216`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utt.py#L216) - [traps.2da](2DA-traps) usage for getting trap type index
+- [`Tools/HolocronToolset/src/toolset/gui/editors/utt.py:73-87`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utt.py#L73-L87) - traps.2da loading and usage in trap type selection combobox
+- [`Tools/HolocronToolset/src/toolset/gui/editors/utt.py:167`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utt.py#L167) - traps.2da usage for setting trap type index
+- [`Tools/HolocronToolset/src/toolset/gui/editors/utt.py:216`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/utt.py#L216) - traps.2da usage for getting trap type index
 - [`Tools/HolocronToolset/src/ui/editors/utt.ui:252`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/ui/editors/utt.ui#L252) - Trap selection combobox in [UTT](GFF-File-Format#utt-trigger) editor UI
 
 **Vendor Implementations:**

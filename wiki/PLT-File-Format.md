@@ -1,8 +1,8 @@
-# [PLT files](PLT-File-Format) format Documentation
+# PLT files format Documentation
 
-> **⚠️ NOT USED IN KOTOR**: This format is **Neverwinter Nights-specific** and is **NOT used in KotOR games**. While the [PLT](PLT-File-Format) resource type (0x0006) exists in KotOR's resource system due to shared Aurora engine heritage, **KotOR does not load, parse, or use [PLT files](PLT-File-Format)**. KotOR uses standard [TPC](TPC-File-Format)/TGA/DDS [textures](TPC-File-Format) for all [textures](TPC-File-Format), including character [models](MDL-MDX-File-Format). This documentation is provided for reference only, as NWN-derived tools may encounter [PLT](PLT-File-Format) resource type identifiers when working with KotOR's resource system.
+> **⚠️ NOT USED IN KOTOR**: This format is **Neverwinter Nights-specific** and is **NOT used in KotOR games**. While the PLT resource type (0x0006) exists in KotOR's resource system due to shared Aurora engine heritage, **KotOR does not load, parse, or use PLT files**. KotOR uses standard [TPC](TPC-File-Format)/TGA/DDS [textures](TPC-File-Format) for all [textures](TPC-File-Format), including character [models](MDL-MDX-File-Format). This documentation is provided for reference only, as NWN-derived tools may encounter PLT resource type identifiers when working with KotOR's resource system.
 
-PLT ([texture](TPC-File-Format) Palette file) is a variant [texture](TPC-File-Format) format used in **Neverwinter Nights** that allows runtime color palette selection. Instead of fixed colors, [PLT files](PLT-File-Format) store palette group indices and color indices that reference external palette files, enabling dynamic color customization for character [models](MDL-MDX-File-Format) (skin, hair, armor colors, etc.).
+PLT ([texture](TPC-File-Format) Palette file) is a variant [texture](TPC-File-Format) format used in **Neverwinter Nights** that allows runtime color palette selection. Instead of fixed colors, PLT files store palette group indices and color indices that reference external palette files, enabling dynamic color customization for character [models](MDL-MDX-File-Format) (skin, hair, armor colors, etc.).
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@ PLT ([texture](TPC-File-Format) Palette file) is a variant [texture](TPC-File-Fo
 
 ## file structure Overview
 
-[PLT files](PLT-File-Format) work in conjunction with external palette files (`.pal` files) that contain the actual color values. The [PLT file](PLT-File-Format) itself stores:
+PLT files work in conjunction with external palette files (`.pal` files) that contain the actual color values. The PLT file itself stores:
 
 1. **Palette Group index**: Which palette group (0-9) to use for each pixel
 2. **color index**: Which color (0-255) within the selected palette to use
@@ -30,9 +30,9 @@ At runtime, the game:
 
 1. Loads the appropriate palette file for the selected palette group
 2. Uses the palette index (supplied by the content creator) to select a row in the palette file
-3. Uses the color index from the [PLT file](PLT-File-Format) to retrieve the final color value
+3. Uses the color index from the PLT file to retrieve the final color value
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/plt.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/plt.html) - Tim Smith (Torlack)'s reverse-engineered [PLT](PLT-File-Format) format documentation
+**Reference**: [`vendor/xoreos-docs/specs/torlack/plt.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/plt.html) - Tim Smith (Torlack)'s reverse-engineered PLT format documentation
 
 ---
 
@@ -61,12 +61,12 @@ There [ARE](GFF-File-Format#are-area) ten palette groups, each corresponding to 
 
 ### color Resolution Process
 
-To determine the final color for a pixel in a [PLT](PLT-File-Format) [texture](TPC-File-Format):
+To determine the final color for a pixel in a PLT [texture](TPC-File-Format):
 
-1. **Get Palette Group**: Read the palette group index (0-9) from the [PLT](PLT-File-Format) pixel data
-2. **Get Palette index**: Retrieve the palette index (0-255) for that group from the content creator's settings (supplied at runtime, not stored in [PLT](PLT-File-Format))
+1. **Get Palette Group**: Read the palette group index (0-9) from the PLT pixel data
+2. **Get Palette index**: Retrieve the palette index (0-255) for that group from the content creator's settings (supplied at runtime, not stored in PLT)
 3. **Select Palette Row**: Use the palette index to select a row in the corresponding palette file
-4. **Get Color index**: Read the color index (0-255) from the [PLT](PLT-File-Format) pixel data
+4. **Get Color index**: Read the color index (0-255) from the PLT pixel data
 5. **Retrieve color**: Use the color index to get the final RGB color value from the selected palette row
 
 **Example**: A pixel with palette group index `2` (Metal 1) and color index `128`:
@@ -83,7 +83,7 @@ To determine the final color for a pixel in a [PLT](PLT-File-Format) [texture](T
 
 ### file header
 
-The [PLT file](PLT-File-Format) header is 24 bytes:
+The PLT file header is 24 bytes:
 
 | Name      | type    | offset | size | Description                                    |
 | --------- | ------- | ------ | ---- | ---------------------------------------------- |
@@ -94,7 +94,7 @@ The [PLT file](PLT-File-Format) header is 24 bytes:
 | Width     | [uint32](GFF-File-Format#gff-data-types)  | 16 (0x0010) | 4    | [texture](TPC-File-Format) width in pixels                         |
 | Height    | [uint32](GFF-File-Format#gff-data-types)  | 20 (0x0014) | 4    | [texture](TPC-File-Format) height in pixels                       |
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/plt.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/plt.html) - [PLT file](PLT-File-Format) header structure
+**Reference**: [`vendor/xoreos-docs/specs/torlack/plt.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/plt.html) - PLT file header structure
 
 ### Pixel data
 
@@ -117,20 +117,20 @@ Each pixel entry is 2 bytes:
 
 **KotOR vs Neverwinter Nights**:
 
-- **Neverwinter Nights**: [PLT files](PLT-File-Format) [ARE](GFF-File-Format#are-area) actively used for character customization. The xoreos engine includes a complete [PLT](PLT-File-Format) implementation (`vendor/xoreos/src/graphics/aurora/pltfile.cpp`) that is used in NWN's creature system (`vendor/xoreos/src/engines/nwn/creature.cpp`).
+- **Neverwinter Nights**: PLT files [ARE](GFF-File-Format#are-area) actively used for character customization. The xoreos engine includes a complete PLT implementation (`vendor/xoreos/src/graphics/aurora/pltfile.cpp`) that is used in NWN's creature system (`vendor/xoreos/src/engines/nwn/creature.cpp`).
 
-- **KotOR**: While the [PLT](PLT-File-Format) resource type (0x0006) is defined in KotOR's resource type system, **[PLT files](PLT-File-Format) [ARE](GFF-File-Format#are-area) not actually used in KotOR games**. KotOR uses standard [TPC](TPC-File-Format) [textures](TPC-File-Format) for all [textures](TPC-File-Format), including character [models](MDL-MDX-File-Format). No KotOR-specific implementations load or parse [PLT files](PLT-File-Format).
+- **KotOR**: While the PLT resource type (0x0006) is defined in KotOR's resource type system, **PLT files [ARE](GFF-File-Format#are-area) not actually used in KotOR games**. KotOR uses standard [TPC](TPC-File-Format) [textures](TPC-File-Format) for all [textures](TPC-File-Format), including character [models](MDL-MDX-File-Format). No KotOR-specific implementations load or parse PLT files.
 
-**Why Document [PLT](PLT-File-Format) for KotOR?**: The format is documented here because:
+**Why Document PLT for KotOR?**: The format is documented here because:
 
 1. The resource type exists in KotOR's resource system (shared Aurora engine heritage)
-2. NWN-derived tools may need to understand [PLT](PLT-File-Format) when working with KotOR resources
+2. NWN-derived tools may need to understand PLT when working with KotOR resources
 3. The xoreos-docs specification is part of the Aurora engine documentation corpus
 
-**Reference**: [`vendor/xoreos-docs/specs/torlack/plt.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/plt.html) - Complete [PLT](PLT-File-Format) format specification  
-**Reference**: [`vendor/xoreos/src/graphics/aurora/pltfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/pltfile.cpp) - xoreos [PLT](PLT-File-Format) implementation (NWN-specific)  
-**Reference**: [`vendor/xoreos/src/engines/nwn/creature.cpp:573-589`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/nwn/creature.cpp#L573-L589) - NWN creature [PLT](PLT-File-Format) usage
+**Reference**: [`vendor/xoreos-docs/specs/torlack/plt.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/plt.html) - Complete PLT format specification  
+**Reference**: [`vendor/xoreos/src/graphics/aurora/pltfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/pltfile.cpp) - xoreos PLT implementation (NWN-specific)  
+**Reference**: [`vendor/xoreos/src/engines/nwn/creature.cpp:573-589`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/nwn/creature.cpp#L573-L589) - NWN creature PLT usage
 
 ---
 
-This documentation aims to provide a comprehensive overview of the [PLT file](PLT-File-Format) format, focusing on the detailed file structure and palette system used in Neverwinter Nights (part of the BioWare Aurora engine family).
+This documentation aims to provide a comprehensive overview of the PLT file format, focusing on the detailed file structure and palette system used in Neverwinter Nights (part of the BioWare Aurora engine family).
