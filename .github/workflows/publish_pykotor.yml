@@ -23,6 +23,59 @@ permissions:
   contents: write
 
 jobs:
+  detect-tools:
+    name: Detect Tools
+    runs-on: ubuntu-latest
+    outputs:
+      tools_matrix: ${{ steps.detect.outputs.tools_matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Discover tools and compile scripts
+        id: detect
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import json
+          import os
+          from pathlib import Path
+
+          tools_dir = Path("Tools")
+          tools = []
+
+          def derive_build_name(name: str) -> str:
+              lower = name.lower()
+              special = {"holocrontoolset": "toolset"}
+              return special.get(lower, lower)
+
+          def has_compile_script(build_name: str) -> bool:
+              return any(Path(path).exists() for path in [
+                  f"compile/compile_{build_name}.ps1",
+                  f"compile/compile_{build_name}.sh",
+                  f"compile/compile_{build_name}.bat",
+              ])
+
+          if tools_dir.exists():
+              for tool_path in sorted(tools_dir.iterdir()):
+                  if tool_path.is_dir() and not tool_path.name.startswith("."):
+                      build_name = derive_build_name(tool_path.name)
+                      if not has_compile_script(build_name):
+                          print(f"Skipping {tool_path.name}: no compile script found")
+                          continue
+                      tools.append({
+                          "tool_dir": tool_path.name,
+                          "build_name": build_name,
+                          "display_name": tool_path.name,
+                      })
+          else:
+              print("❌ Tools directory not found")
+
+          print("Detected tools:")
+          for t in tools:
+              print(f" - {t['display_name']} (build: {t['build_name']})")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"tools_matrix={json.dumps(tools)}\n")
+          PYTHON_SCRIPT
   setup:
     runs-on: ubuntu-latest
     outputs:
@@ -58,11 +111,12 @@ jobs:
         shell: pwsh
 
   build:
-    needs: setup
+    needs: [setup, detect-tools]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false  # Disable automatic cancellation of other jobs
       matrix:
+        tool: ${{ fromJson(needs.detect-tools.outputs.tools_matrix) }}
         os: ${{ fromJson(needs.setup.outputs.os) }}
         python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
         architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
@@ -241,462 +295,31 @@ jobs:
         Remove-Item -Path $output
       shell: pwsh
 
-    - name: Install Holocron Toolset dependencies
-      if: ${{ success() || failure() }}
-      env:
-        MATRIX_ARCH: ${{ matrix.architecture }}
-      id: toolset_deps
-      run: |  # known pyinstaller versions that work with upx compressions, not all are available on all python versions.
-        try {
-          . ./install_python_venv.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
-          Write-Host "Python executable path: $pythonExePath"
-          & $pythonExePath -m pip install --upgrade pip
-          if ("${{ runner.os }}" -eq "Windows") {
-            if ("${{ matrix.python-version }}" -eq "3.12") {
-              pip install pyinstaller --prefer-binary -U
-            } elseif ("${{ matrix.python-version }}" -eq "3.11") {
-              pip install "pyinstaller==5.13.2" --prefer-binary
-            } else {
-              pip install "pyinstaller==5.4" --prefer-binary
-            }
-          } else {
-            pip install pyinstaller -U --prefer-binary
-          }
-          $env:QT_API = if (-not [string]::IsNullOrEmpty($env:QT_API)) { $env:QT_API } else { "${{ matrix.qt_version }}" }
-          $output = ""
-          $errorLines = @()
-          . ./compile/deps_toolset.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} 2>&1 | ForEach-Object {
-            Write-Output $_.ToString()
-            $output += $_.ToString() + "`n"
-            if($_ -match 'ERROR:') {
-              $errorLines += $_.ToString()
-            }
-          }
-          if ($errorLines.Count -gt 0) {
-            $errorLines | ForEach-Object { Write-Error $_ }
-            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-            exit 1
-          } else {
-            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
-          }
-        } catch {
-          Write-Host -ForegroundColor Red "Detailed Error Report:"
-          Write-Host -ForegroundColor Red "Message: $($_.Exception.Message)"
-          
-          # Attempt to provide a more detailed location of the error
-          if ($_.InvocationInfo -and $_.InvocationInfo.MyCommand) {
-              Write-Host -ForegroundColor Red "Command Name: $($_.InvocationInfo.MyCommand.Name)"
-              Write-Host -ForegroundColor Red "Script Name: $($_.InvocationInfo.ScriptName)"
-              Write-Host -ForegroundColor Red "Line Number: $($_.InvocationInfo.ScriptLineNumber)"
-              Write-Host -ForegroundColor Red "Line: $($_.InvocationInfo.Line)"
-          } else {
-              Write-Host -ForegroundColor Red "No invocation information available."
-          }
-      
-          # Extract and display the script stack trace if available
-          if ($_.ScriptStackTrace) {
-              Write-Host -ForegroundColor Red "Script Stack Trace:"
-              Write-Host -ForegroundColor Red $_.ScriptStackTrace
-          } else {
-              Write-Host -ForegroundColor Red "No script stack trace available."
-          }
-
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        }
+    - name: Locate compile and dependency scripts
+      id: locate-scripts
       shell: pwsh
-
-    - name: HolocronToolset - Adjust RPATH for shared libraries in the virtual environment
-      if: ${{ (success() || failure()) && runner.os == 'Disabled_Linux' && steps.toolset_deps.outputs.success == 'true' }}
       run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        # Ensure patchelf is installed
-        sudo apt-get update && sudo apt-get install -y patchelf
+        $buildName = "${{ matrix.tool.build_name }}"
+        $compileCandidates = @("compile/compile_${buildName}.ps1","compile/compile_${buildName}.sh","compile/compile_${buildName}.bat")
+        $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat")
+        $compileScript = ""
+        foreach ($c in $compileCandidates) { if (Test-Path $c) { $compileScript = $c; break } }
+        $depsScript = ""
+        foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
+        if (-not $compileScript) { Write-Error "Compile script not found for $buildName"; exit 1 }
+        echo "compile_script=$compileScript" >> $env:GITHUB_OUTPUT
+        echo "deps_script=$depsScript" >> $env:GITHUB_OUTPUT
+        echo "Using compile script $compileScript"
+        if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
 
-        # Find the virtual environment's site-packages directory
-        $venvPath = $env:VIRTUAL_ENV
-        Write-Host "Virtual environment path: $venvPath"
-        
-        # Dynamically find the Python version directory inside the venv
-        $pythonLibPath = Get-ChildItem -LiteralPath "$venvPath/lib" | Where-Object { $_.PSIsContainer } | Select-Object -First 1
-        $sitePackagesPath = Join-Path -Path $pythonLibPath.FullName -ChildPath "site-packages"
-        
-        Write-Host "Site-packages path: $sitePackagesPath"
-
-        # Use patchelf to adjust RPATH for all shared libraries in the virtual environment
-        Get-ChildItem -LiteralPath $sitePackagesPath -Filter *.so -Recurse | ForEach-Object {
-          $libPath = $_.FullName
-          Write-Host "Patching $libPath"
-          sudo patchelf --set-rpath '$ORIGIN' $libPath
-        }
+    - name: Create virtual environment
       shell: pwsh
-
-    - name: Search for DLL files
-      if: ${{ matrix.python-version == '3.12_Disabled' && runner.os == 'Windows' }}
       run: |
-        Get-PSDrive -PSProvider FileSystem | ForEach-Object {
-          $drive = $_.Root
-          Write-Host "Searching in $drive"
-          Get-ChildItem -LiteralPath $drive -Filter 'api-ms-win-crt-*.dll' -Recurse -ErrorAction SilentlyContinue -Force | ForEach-Object {
-            Write-Host $_.FullName
-          }
-        }
-      shell: pwsh
-
-    - name: Search for DLL files
-      if: ${{ matrix.python-version == '3.12' && runner.os == 'Windows' }}
-      run: |
-        $nullDir = New-Item -Path "NullDir" -ItemType Directory -Force
-        Get-PSDrive -PSProvider FileSystem | ForEach-Object {
-          $drive = $_.Root
-          Write-Host "Searching in $drive"
-          robocopy $drive $nullDir 'api-ms-win-core-path-l1-1-0.dll' /s /ndl /njh /njs /nc /ns /np | Where-Object { $_ -notlike '*Bytes*' } | ForEach-Object {
-            $path = Join-Path -Path $drive -ChildPath $_.Trim()
-            if(Test-Path $path) {
-              Write-Host $path
-            }
-          }
-        }
-        Remove-Item -Path "NullDir" -Force
-      shell: pwsh
-    
-
-    - name: Compile Holocron Toolset
-      if: ${{ (success() || failure()) && steps.toolset_deps.outputs.success == 'true' }}
-      run: |
-        $upxDir = $env:UPX_DIR
-        Write-Host "Using UPX directory at '$upxDir'"
-        $output = ""
-        $env:PYTHONOPTIMIZE = "1"
-        . ./compile/compile_toolset.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_.ToString()
-          $output += $_.ToString() + "`n"
-          if($_ -match 'ERROR:') {
-            $errorLines += $_.ToString()
-          }
-        }
-        $warningCount = 0
-        $output -split "`n" | ForEach-Object {
-            if ($_ -match 'WARNING: Library not found: could not resolve' -or
-                $_ -match 'WARNING: Cannot find ' -or
-                $_ -match 'WARNING: lib not found:' -or
-                $_ -match 'WARNING: Tcl modules directory' -or
-                $_ -match 'WARNING: Failed to upx strip') {
-                $warningCount++
-            }
-        }
-        if ($errorLines.Count -gt 0) {
-          $errorLines | ForEach-Object { Write-Error $_ }
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        } elseif ($warningCount -ge 3) {
-          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        } else {
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
-        }
-      shell: pwsh
-
-    - name: HolocronToolset - Create Static Binary
-      if: ${{ (success() || failure()) && runner.os == 'Disabled_Linux' && steps.toolset_deps.outputs.success == 'true' }}
-      run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        & $pythonExePath -m pip install staticx
-        staticx ./dist/HolocronToolset ./dist/HolocronToolset-static
-        # Rename the static binary for clarity and consistency
-        Write-Output "./dist/HolocronToolset-static  --> ./dist/HolocronToolset"
-        Move-Item -LiteralPath ./dist/HolocronToolset-static -Destination ./dist/HolocronToolset -Force
-      shell: pwsh
-
-    - name: Install HoloPatcher dependencies
-      if: ${{ success() || failure() }}
-      env:
-        MATRIX_ARCH: ${{ matrix.architecture }}
-      id: holopatcher_deps
-      run: |  # known pyinstaller versions that work with upx compressions, not all are available on all python versions.
-        try {
-          . ./install_python_venv.ps1 -noprompt -venv_name .venv_holopatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
-          & $pythonExePath -m pip install --upgrade pip
-          if ("${{ runner.os }}" -eq "Windows") {
-            if ("${{ matrix.python-version }}" -eq "3.12") {
-              pip install "pyinstaller==5.13.2" --prefer-binary
-            } elseif ("${{ matrix.python-version }}" -eq "3.11") {
-              pip install "pyinstaller==5.13.2" --prefer-binary
-            } else {
-              pip install "pyinstaller==5.4" --prefer-binary
-            }
-          } else {
-            pip install pyinstaller -U --prefer-binary
-          }
-          $output = ""
-          $errorLines = @()
-          . ./compile/deps_holopatcher.ps1 -noprompt -venv_name .venv_holopatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} 2>&1 | ForEach-Object {
-            Write-Output $_.ToString()
-            $output += $_.ToString() + "`n"
-            if($_ -match 'ERROR:') {
-              $errorLines += $_.ToString()
-            }
-          }
-          if ($errorLines.Count -gt 0) {
-            $errorLines | ForEach-Object { Write-Error $_ }
-            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-            exit 1
-          } else {
-            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
-          }
-        } catch {
-          Write-Host -ForegroundColor Red "Detailed Error Report:"
-          Write-Host -ForegroundColor Red "Message: $($_.Exception.Message)"
-          
-          # Attempt to provide a more detailed location of the error
-          if ($_.InvocationInfo -and $_.InvocationInfo.MyCommand) {
-              Write-Host -ForegroundColor Red "Command Name: $($_.InvocationInfo.MyCommand.Name)"
-              Write-Host -ForegroundColor Red "Script Name: $($_.InvocationInfo.ScriptName)"
-              Write-Host -ForegroundColor Red "Line Number: $($_.InvocationInfo.ScriptLineNumber)"
-              Write-Host -ForegroundColor Red "Line: $($_.InvocationInfo.Line)"
-          } else {
-              Write-Host -ForegroundColor Red "No invocation information available."
-          }
-      
-          # Extract and display the script stack trace if available
-          if ($_.ScriptStackTrace) {
-              Write-Host -ForegroundColor Red "Script Stack Trace:"
-              Write-Host -ForegroundColor Red $_.ScriptStackTrace
-          } else {
-              Write-Host -ForegroundColor Red "No script stack trace available."
-          }
-      
-          # Log the error to GitHub Actions output or another logging mechanism
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        }
-      shell: pwsh
-
-    - name: HoloPatcher - Adjust RPATH for shared libraries in the virtual environment
-      if: ${{ (success() || failure()) && runner.os == 'Disabled_Linux' && steps.holopatcher_deps.outputs.success == 'true' }}
-      run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_holopatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        # Ensure patchelf is installed
-        sudo apt-get update && sudo apt-get install -y patchelf
-
-        # Find the virtual environment's site-packages directory
-        $venvPath = $env:VIRTUAL_ENV
-        Write-Host "Virtual environment path: $venvPath"
-        
-        # Dynamically find the Python version directory inside the venv
-        $pythonLibPath = Get-ChildItem -LiteralPath "$venvPath/lib" | Where-Object { $_.PSIsContainer } | Select-Object -First 1
-        $sitePackagesPath = Join-Path -Path $pythonLibPath.FullName -ChildPath "site-packages"
-        
-        Write-Host "Site-packages path: $sitePackagesPath"
-
-        # Use patchelf to adjust RPATH for all shared libraries in the virtual environment
-        Get-ChildItem -LiteralPath $sitePackagesPath -Filter *.so -Recurse | ForEach-Object {
-          $libPath = $_.FullName
-          Write-Host "Patching $libPath"
-          sudo patchelf --set-rpath '$ORIGIN' $libPath
-        }
-      shell: pwsh
-    
-    - name: Compile HoloPatcher
-      if: ${{ (success() || failure()) && steps.holopatcher_deps.outputs.success == 'true' }}
-      run: |
-        $upxDir = $env:UPX_DIR
-        Write-Host "Using UPX directory at '$upxDir'"
-        $output = ""
-        $env:PYTHONOPTIMIZE = "1"
-        . ./compile/compile_holopatcher.ps1 -noprompt -venv_name .venv_holopatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_.ToString()
-          $output += $_.ToString() + "`n"
-          if($_ -match 'ERROR:') {
-            $errorLines += $_.ToString()
-          }
-        }
-        $warningCount = 0
-        $output -split "`n" | ForEach-Object {
-            if ($_ -match 'WARNING: Library not found: could not resolve' -or
-                $_ -match 'WARNING: Cannot find ' -or
-                $_ -match 'WARNING: lib not found:' -or
-                $_ -match 'WARNING: Tcl modules directory' -or
-                $_ -match 'WARNING: Failed to upx strip') {
-                $warningCount++
-            }
-        }
-        if ($errorLines.Count -gt 0) {
-          $errorLines | ForEach-Object { Write-Error $_ }
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        } elseif ($warningCount -ge 3) {
-          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        } else {
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
-        }
-      shell: pwsh
-
-    - name: HoloPatcher - Create Static Binary
-      if: ${{ (success() || failure()) && runner.os == 'Disabled_Linux' && steps.holopatcher_deps.outputs.success == 'true' }}
-      run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_holopatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        & $pythonExePath -m pip install staticx
-        staticx ./dist/HoloPatcher ./dist/HoloPatcher-static
-        # Rename the static binary for clarity and consistency
-        Write-Output "./dist/HoloPatcher-static  --> ./dist/HoloPatcher"
-        Move-Item -LiteralPath ./dist/HoloPatcher-static -Destination ./dist/HoloPatcher -Force
-      shell: pwsh
-
-    - name: Install BatchPatcher dependencies
-      if: ${{ success() || failure() }}
-      env:
-        MATRIX_ARCH: ${{ matrix.architecture }}
-      id: batchpatcher_deps
-      run: |  # known pyinstaller versions that work with upx compressions, not all are available on all python versions.
-        try {
-          . ./install_python_venv.ps1 -noprompt -venv_name .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
-          & $pythonExePath -m pip install --upgrade pip
-          if ("${{ runner.os }}" -eq "Windows") {
-            if ("${{ matrix.python-version }}" -eq "3.12") {
-              pip install pyinstaller --prefer-binary -U
-            } elseif ("${{ matrix.python-version }}" -eq "3.11") {
-              pip install "pyinstaller==5.13.2" --prefer-binary
-            } else {
-              pip install "pyinstaller==5.4" --prefer-binary
-            }
-          } else {
-            pip install pyinstaller -U --prefer-binary
-          }
-          $output = ""
-          $errorLines = @()
-          . ./compile/deps_batchpatcher.ps1 -noprompt -venv_name .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} 2>&1 | ForEach-Object {
-            Write-Output $_.ToString()
-            $output += $_.ToString() + "`n"
-            if($_ -match 'ERROR:') {
-              $errorLines += $_.ToString()
-            }
-          }
-          if ($errorLines.Count -gt 0) {
-            $errorLines | ForEach-Object { Write-Error $_ }
-            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-            exit 1
-          } else {
-            Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
-          }
-        } catch {
-          Write-Host -ForegroundColor Red "Detailed Error Report:"
-          Write-Host -ForegroundColor Red "Message: $($_.Exception.Message)"
-          
-          # Attempt to provide a more detailed location of the error
-          if ($_.InvocationInfo -and $_.InvocationInfo.MyCommand) {
-              Write-Host -ForegroundColor Red "Command Name: $($_.InvocationInfo.MyCommand.Name)"
-              Write-Host -ForegroundColor Red "Script Name: $($_.InvocationInfo.ScriptName)"
-              Write-Host -ForegroundColor Red "Line Number: $($_.InvocationInfo.ScriptLineNumber)"
-              Write-Host -ForegroundColor Red "Line: $($_.InvocationInfo.Line)"
-          } else {
-              Write-Host -ForegroundColor Red "No invocation information available."
-          }
-      
-          # Extract and display the script stack trace if available
-          if ($_.ScriptStackTrace) {
-              Write-Host -ForegroundColor Red "Script Stack Trace:"
-              Write-Host -ForegroundColor Red $_.ScriptStackTrace
-          } else {
-              Write-Host -ForegroundColor Red "No script stack trace available."
-          }
-      
-          # Log the error to GitHub Actions output or another logging mechanism
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        }
-      shell: pwsh
-
-    - name: BatchPatcher - Adjust RPATH for shared libraries in the virtual environment
-      if: ${{ (success() || failure()) && runner.os == 'Disabled_Linux' && steps.batchpatcher_deps.outputs.success == 'true' }}
-      run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        # Ensure patchelf is installed
-        sudo apt-get update && sudo apt-get install -y patchelf
-
-        # Find the virtual environment's site-packages directory
-        $venvPath = $env:VIRTUAL_ENV
-        Write-Host "Virtual environment path: $venvPath"
-        
-        # Dynamically find the Python version directory inside the venv
-        $pythonLibPath = Get-ChildItem -LiteralPath "$venvPath/lib" | Where-Object { $_.PSIsContainer } | Select-Object -First 1
-        $sitePackagesPath = Join-Path -Path $pythonLibPath.FullName -ChildPath "site-packages"
-        
-        Write-Host "Site-packages path: $sitePackagesPath"
-
-        # Use patchelf to adjust RPATH for all shared libraries in the virtual environment
-        Get-ChildItem -LiteralPath $sitePackagesPath -Filter *.so -Recurse | ForEach-Object {
-          $libPath = $_.FullName
-          Write-Host "Patching $libPath"
-          sudo patchelf --set-rpath '$ORIGIN' $libPath
-        }
-      shell: pwsh
-
-    - name: Compile BatchPatcher
-      if: ${{ (success() || failure()) && steps.batchpatcher_deps.outputs.success == 'true' }}
-      run: |
-        $upxDir = $env:UPX_DIR
-        Write-Host "Using UPX directory at '$upxDir'"
-        $output = ""
-        $env:PYTHONOPTIMIZE = "1"
-        . ./compile/compile_batchpatcher.ps1 -noprompt -venv_name .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_.ToString()
-          $output += $_.ToString() + "`n"
-          if($_ -match 'ERROR:') {
-            $errorLines += $_.ToString()
-          }
-        }
-        $warningCount = 0
-        $output -split "`n" | ForEach-Object {
-            if ($_ -match 'WARNING: Library not found: could not resolve' -or
-                $_ -match 'WARNING: Cannot find ' -or
-                $_ -match 'WARNING: lib not found:' -or
-                $_ -match 'WARNING: Tcl modules directory' -or
-                $_ -match 'WARNING: Failed to upx strip') {
-                $warningCount++
-            }
-        }
-        if ($errorLines.Count -gt 0) {
-          $errorLines | ForEach-Object { Write-Error $_ }
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        } elseif ($warningCount -ge 3) {
-          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        } else {
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
-        }
-      shell: pwsh
-
-    - name: BatchPatcher - Create Static Binary
-      if: ${{ (success() || failure()) && runner.os == 'Disabled_Linux' && steps.batchpatcher_deps.outputs.success == 'true' }}
-      run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_batchpatcher_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        & $pythonExePath -m pip install staticx
-        staticx ./dist/K_BatchPatcher ./dist/K_BatchPatcher-static
-        # Rename the static binary for clarity and consistency
-        Write-Output "./dist/K_BatchPatcher-static  --> ./dist/K_BatchPatcher"
-        Move-Item -LiteralPath ./dist/K_BatchPatcher-static -Destination ./dist/K_BatchPatcher -Force
-      shell: pwsh
-
-    - name: Compile KotorDiff
-      if: ${{ success() || failure() }}
-      env:
-        MATRIX_ARCH: ${{ matrix.architecture }}
-      run: |
-        $upxDir = $env:UPX_DIR
-        Write-Host "Using UPX directory at '$upxDir'"
-        $env:PYTHONOPTIMIZE = "1"
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_kotordiff_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
+        . ./install_python_venv.ps1 -noprompt -venv_name .venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
+        Write-Host "Python executable path: $pythonExePath"
         & $pythonExePath -m pip install --upgrade pip
         if ("${{ runner.os }}" -eq "Windows") {
-          if ("${{ matrix.python-version }}" -eq "3.12") {
-            pip install "pyinstaller==5.13.2" --prefer-binary
-          } elseif ("${{ matrix.python-version }}" -eq "3.11") {
+          if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
             pip install "pyinstaller==5.13.2" --prefer-binary
           } else {
             pip install "pyinstaller==5.4" --prefer-binary
@@ -704,118 +327,50 @@ jobs:
         } else {
           pip install pyinstaller -U --prefer-binary
         }
-        pip install -r Tools/KotorDiff/requirements.txt --prefer-binary
-        $output = ""
-        . ./compile/compile_kotordiff.ps1 -noprompt -venv_name .venv_kotordiff_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_.ToString()
-          $output += $_.ToString() + "`n"
-          if($_ -match 'ERROR:') {
-            $errorLines += $_.ToString()
-          }
-        }
-        $warningCount = 0
-        $output -split "`n" | ForEach-Object {
-            if ($_ -match 'WARNING: Library not found: could not resolve' -or
-                $_ -match 'WARNING: Cannot find ' -or
-                $_ -match 'WARNING: lib not found:' -or
-                $_ -match 'WARNING: Tcl modules directory' -or
-                $_ -match 'WARNING: Failed to upx strip') {
-                $warningCount++
-            }
-        }
-        if ($errorLines.Count -gt 0) {
-          $errorLines | ForEach-Object { Write-Error $_ }
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        } elseif ($warningCount -ge 3) {
-          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
+
+    - name: Install tool dependencies
+      if: ${{ steps.locate-scripts.outputs.deps_script != '' }}
+      shell: pwsh
+      run: |
+        $script = "${{ steps.locate-scripts.outputs.deps_script }}"
+        $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+        Write-Host "Running deps script $script"
+        if ($script.EndsWith(".ps1")) {
+          . "./$script" -noprompt -venv_name $venvName
+        } elseif ($script.EndsWith(".sh")) {
+          bash "./$script" -noprompt -venv_name $venvName
+        } elseif ($script.EndsWith(".bat")) {
+          cmd /c ".\\$script -noprompt -venv_name $venvName"
         } else {
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
+          Write-Error "Unknown deps script type: $script"
+          exit 1
         }
-      shell: pwsh
 
-    - name: KotorDiff - Create Static Binary
-      if: ${{ (success() || failure()) && runner.os == 'Linux' }}
-      run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_kotordiff_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        & $pythonExePath -m pip install staticx
-        staticx ./dist/KotorDiff ./dist/KotorDiff-static
-        # Rename the static binary for clarity and consistency
-        Write-Output "./dist/KotorDiff-static  --> ./dist/KotorDiff"
-        Move-Item -LiteralPath ./dist/KotorDiff-static -Destination ./dist/KotorDiff -Force
+    - name: Compile tool
       shell: pwsh
-
-    - name: Compile GUIConverter
-      if: ${{ success() || failure() }}
-      env:
-        MATRIX_ARCH: ${{ matrix.architecture }}
       run: |
+        $compile = "${{ steps.locate-scripts.outputs.compile_script }}"
+        $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
         $upxDir = $env:UPX_DIR
-        Write-Host "Using UPX directory at '$upxDir'"
         $env:PYTHONOPTIMIZE = "1"
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_guiconverter_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
-        & $pythonExePath -m pip install --upgrade pip
-        if ("${{ runner.os }}" -eq "Windows") {
-          if ("${{ matrix.python-version }}" -eq "3.12") {
-            pip install "pyinstaller==5.13.2" --prefer-binary
-          } elseif ("${{ matrix.python-version }}" -eq "3.11") {
-            pip install "pyinstaller==5.13.2" --prefer-binary
-          } else {
-            pip install "pyinstaller==5.4" --prefer-binary
-          }
+        Write-Host "Using compile script $compile"
+        if ($compile.EndsWith(".ps1")) {
+          . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
+        } elseif ($compile.EndsWith(".sh")) {
+          bash "./$compile" -noprompt -venv_name $venvName
+        } elseif ($compile.EndsWith(".bat")) {
+          cmd /c ".\\$compile -noprompt -venv_name $venvName"
         } else {
-          pip install pyinstaller -U --prefer-binary
-        }
-        pip install -r Tools/GuiConverter/requirements.txt --prefer-binary
-        $output = ""
-        . ./compile/compile_gui_converter.ps1 -noprompt -venv_name .venv_guiconverter_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
-          Write-Output $_.ToString()
-          if($_ -match 'ERROR:') {
-            $errorLines += $_.ToString()
-          }
-        }
-        $warningCount = 0
-        $output -split "`n" | ForEach-Object {
-            if ($_ -match 'WARNING: Library not found: could not resolve' -or
-                $_ -match 'WARNING: Cannot find ' -or
-                $_ -match 'WARNING: lib not found:' -or
-                $_ -match 'WARNING: Tcl modules directory' -or
-                $_ -match 'WARNING: Failed to upx strip') {
-                $warningCount++
-            }
-        }
-        if ($errorLines.Count -gt 0) {
-          $errorLines | ForEach-Object { Write-Error $_ }
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
+          Write-Error "Unknown compile script type: $compile"
           exit 1
-        } elseif ($warningCount -ge 3) {
-          Write-Output "Many warnings raised, pyinstaller was probably unsuccessful."
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
-          exit 1
-        } else {
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
         }
-      shell: pwsh
-
-    - name: GUIConverter - Create Static Binary
-      if: ${{ (success() || failure()) && runner.os == 'Linux' }}
-      run: |
-        . ./install_python_venv.ps1 -noprompt -venv_name .venv_guiconverter_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
-        & $pythonExePath -m pip install staticx
-        staticx ./dist/GuiConverter ./dist/GuiConverter-static
-        # Rename the static binary for clarity and consistency
-        Write-Output "./dist/GuiConverter-static  --> ./dist/GuiConverter"
-        Move-Item -LiteralPath ./dist/GuiConverter-static -Destination ./dist/GuiConverter -Force
-      shell: pwsh
 
     - name: Upload compiled binaries attempt 1
       if: ${{ success() || failure() }}
       id: upload_attempt_1
       uses: actions/upload-artifact@v4
       with:
-        name: publish_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
         path: ./dist/**
         retention-days: 90
       continue-on-error: true
@@ -825,7 +380,7 @@ jobs:
       if: ${{ (success() || failure()) && steps.upload_attempt_1.outcome == 'failure' }}
       uses: actions/upload-artifact@v4
       with:
-        name: publish_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
         path: ./dist/**
         retention-days: 90
       continue-on-error: true
@@ -835,7 +390,7 @@ jobs:
       if: ${{ (success() || failure()) && steps.upload_attempt_2.outcome == 'failure' }}
       uses: actions/upload-artifact@v4
       with:
-        name: publish_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
         path: ./dist/**
         retention-days: 90
       continue-on-error: true
@@ -845,7 +400,7 @@ jobs:
       if: ${{ (success() || failure()) && steps.upload_attempt_3.outcome == 'failure' }}
       uses: actions/upload-artifact@v4
       with:
-        name: publish_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
         path: ./dist/**
         retention-days: 90
       continue-on-error: true
@@ -855,7 +410,7 @@ jobs:
       if: ${{ (success() || failure()) && steps.upload_attempt_4.outcome == 'failure' }}
       uses: actions/upload-artifact@v4
       with:
-        name: publish_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
+        name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}
         path: ./dist/**
         retention-days: 90
 
@@ -884,11 +439,11 @@ jobs:
           Set-Location -Path "published_workflow_builds"
 
           $artifactNames = New-Object 'System.Collections.Generic.HashSet[string]'
-          # Iterate through each os_pythonversion_arch folder.
+          # Iterate through each tool_os_pythonversion_arch folder.
           Get-ChildItem -Filter "publish_*" | ForEach-Object {
             $matrixPackagePath = $_.FullName
             Write-Output "Found matrix package '$matrixPackagePath'"
-            $os, $python_or_pypy, $pythonVersion, $architecture = $_.BaseName -replace '^publish_', '' -split '_'
+            $toolName, $os, $python_or_pypy, $pythonVersion, $architecture = $_.BaseName -replace '^publish_', '' -split '_',5
 
             $shortOsName = $os
             if ($os -eq "ubuntu-20.04" -or $os -eq "ubuntu-22.04" -or $os -eq "ubuntu-latest") {
@@ -906,9 +461,9 @@ jobs:
               $fileBaseName = [IO.Path]::GetFileNameWithoutExtension($_.Name)
               $fileExtension = $_.Extension
 
-              $outerArchiveName = "$fileBaseName`_$pythonVersion"
+              $outerArchiveName = "${toolName}_$fileBaseName`_$pythonVersion"
               $outerZipPath = Join-Path -Path $packagedArtifactsPath -ChildPath $outerArchiveName
-              $osSpecificArchiveName = "$fileBaseName`_$shortOsName-$architecture"
+              $osSpecificArchiveName = "${toolName}_$fileBaseName`_$shortOsName-$architecture"
               $osSpecificArchivePath = Join-Path -Path $outerZipPath -ChildPath $osSpecificArchiveName
 
               Write-Output "   ToolFileName: '$toolFileName'"
