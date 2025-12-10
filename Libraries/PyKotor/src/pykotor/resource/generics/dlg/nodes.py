@@ -416,10 +416,8 @@ class DLGNode:
         else:
             raise ValueError(f"Unknown node type: {node_type}")
 
-        node_map[node_key] = node
-
         node._hash_cache = int(node_key)  # noqa: SLF001
-        # Process non-link fields first to ensure all attributes are set before links are deserialized
+        # Process non-link fields first to ensure all attributes are set before adding to node_map
         # This prevents incomplete nodes from being returned when referenced through links
         for key, value in node_data.items():
             if not isinstance(value, dict):
@@ -452,7 +450,10 @@ class DLGNode:
             else:
                 raise ValueError(f"Unsupported type: {py_type} for key: {key}")
 
-        # Process links after all other fields are set
+        # Add to node_map AFTER all non-link fields are set to prevent incomplete nodes from being returned
+        node_map[node_key] = node
+
+        # Process links after all other fields are set and node is in node_map
         for key, value in node_data.items():
             if not isinstance(value, dict):
                 continue
