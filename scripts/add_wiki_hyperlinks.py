@@ -378,6 +378,10 @@ REPLACEMENT_RULES.extend([
     ReplacementRule(r"\[null terminator\]\(https://en\.wikipedia\.org/wiki/Null-terminated_string\)", "[null terminator](https://en.cppreference.com/w/c/string/byte)", LinkCategory.WIKIPEDIA_REPLACEMENTS, priority=20),
     ReplacementRule(r"\[null-terminated string\]\(https://en\.wikipedia\.org/wiki/Null-terminated_string\)", "[null-terminated string](https://en.cppreference.com/w/c/string/byte)", LinkCategory.WIKIPEDIA_REPLACEMENTS, priority=20),
     ReplacementRule(r"\[null-terminated\]\(https://en\.wikipedia\.org/wiki/Null-terminated_string\)", "[null-terminated](https://en.cppreference.com/w/c/string/byte)", LinkCategory.WIKIPEDIA_REPLACEMENTS, priority=20),
+    # Replace "Archive file" Wikipedia link - keep as is (no better source for general concept)
+    # Replace "Binary file" Wikipedia link - keep as is (no better source for general concept)
+    # Replace "Modular programming" Wikipedia link - keep as is (no better source for general concept)
+    # Endianness, IEEE 754, ASCII are fundamental CS concepts - Wikipedia is acceptable
 ])
 
 # Final comprehensive links
@@ -401,6 +405,14 @@ REPLACEMENT_RULES.extend([
     ReplacementRule(r"\bstring references\b(?!\s*\([^)]*\))", "[string references](TLK-File-Format#string-references-strref)", LinkCategory.FINAL_LINKS, priority=5),
     ReplacementRule(r"\bresource reference\b(?!\s*\([^)]*\))", "[resource reference](GFF-File-Format#resref)", LinkCategory.FINAL_LINKS, priority=5),
     ReplacementRule(r"\bresource references\b(?!\s*\([^)]*\))", "[resource references](GFF-File-Format#resref)", LinkCategory.FINAL_LINKS, priority=5),
+])
+
+# Additional common terms that should be linked
+REPLACEMENT_RULES.extend([
+    ReplacementRule(r"\barchive containers?\b(?!\s*\([^)]*\))", "[archive containers](ERF-File-Format)", LinkCategory.GAME_TERMS, priority=8),
+    ReplacementRule(r"\bself-contained archives?\b(?!\s*\([^)]*\))", "[self-contained archives](ERF-File-Format)", LinkCategory.GAME_TERMS, priority=8),
+    ReplacementRule(r"\bmodule archives?\b(?!\s*\([^)]*\))", "[module archives](ERF-File-Format)", LinkCategory.GAME_TERMS, priority=8),
+    ReplacementRule(r"\bsave game archives?\b(?!\s*\([^)]*\))", "[save game archives](ERF-File-Format)", LinkCategory.GAME_TERMS, priority=8),
 ])
 
 # 2DA file references
