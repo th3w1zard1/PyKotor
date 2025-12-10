@@ -25,10 +25,10 @@ if UTILITY_PATH.joinpath("utility").exists():
 from typing import TYPE_CHECKING, cast
 
 from utility.common.geometry import Vector3  # pyright: ignore[reportMissingImports]
-from pykotor.common.language import Gender, Language
-from pykotor.common.misc import Color
+from pykotor.common.language import Gender, Language, LocalizedString
+from pykotor.common.misc import Color, ResRef
 from pykotor.resource.formats.gff import read_gff
-from pykotor.resource.generics.git import construct_git, dismantle_git
+from pykotor.resource.generics.git import GITDoor, GITModuleLink, GITTrigger, construct_git, dismantle_git
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
@@ -438,6 +438,79 @@ class TestGIT(unittest.TestCase):
         self.assertAlmostEqual(-16.065, waypoint_0.position.y, 2)
         self.assertAlmostEqual(1.0, waypoint_0.position.z, 2)
         self.assertAlmostEqual(0.000, waypoint_0.bearing, 2)
+
+
+class TestGITSerializeStrictTyping(unittest.TestCase):
+    """Test GIT serialize methods with strict type checking (no hasattr/getattr)."""
+
+    def test_git_door_serialize_localized_string_stringref(self):
+        """Test that transition_destination.stringref is accessed directly."""
+        door = GITDoor()
+        door.transition_destination = LocalizedString(12345)
+        door.linked_to_flags = GITModuleLink.NoLink
+
+        result = door._serialize_instance_data()
+
+        # LocalizedString always has stringref attribute - should access directly
+        self.assertEqual(result["transition_destination_stringref"], 12345)
+        self.assertIsInstance(result["transition_destination_stringref"], int)
+
+    def test_git_door_serialize_linked_to_flags_enum_value(self):
+        """Test that linked_to_flags.value is accessed directly."""
+        door = GITDoor()
+        door.transition_destination = LocalizedString(-1)
+        door.linked_to_flags = GITModuleLink.ToDoor
+
+        result = door._serialize_instance_data()
+
+        # GITModuleLink is IntEnum, always has .value
+        self.assertEqual(result["linked_to_flags"], GITModuleLink.ToDoor.value)
+        self.assertIsInstance(result["linked_to_flags"], int)
+
+    def test_git_door_serialize_invalid_stringref(self):
+        """Test serializing with invalid stringref (-1)."""
+        door = GITDoor()
+        door.transition_destination = LocalizedString.from_invalid()  # Creates with -1
+        door.linked_to_flags = GITModuleLink.NoLink
+
+        result = door._serialize_instance_data()
+
+        # Should access stringref directly even when -1
+        self.assertEqual(result["transition_destination_stringref"], -1)
+
+    def test_git_trigger_serialize_localized_string_stringref(self):
+        """Test that GITTrigger transition_destination.stringref works."""
+        trigger = GITTrigger()
+        trigger.transition_destination = LocalizedString(99999)
+        trigger.linked_to_flags = GITModuleLink.ToWaypoint
+
+        result = trigger._serialize_instance_data()
+
+        # Should access stringref directly
+        self.assertEqual(result["transition_destination_stringref"], 99999)
+        self.assertEqual(result["linked_to_flags"], GITModuleLink.ToWaypoint.value)
+
+    def test_git_door_serialize_all_fields(self):
+        """Test serializing all GITDoor fields."""
+        door = GITDoor()
+        door.resref = ResRef("testdoor")
+        door.bearing = 1.5
+        door.tag = "test_tag"
+        door.linked_to_module = ResRef("testmod")
+        door.linked_to = "test_link"
+        door.transition_destination = LocalizedString(54321)
+        door.linked_to_flags = GITModuleLink.ToDoor
+
+        result = door._serialize_instance_data()
+
+        # Verify all fields, especially enum and LocalizedString access
+        self.assertEqual(result["resref"], "testdoor")
+        self.assertEqual(result["bearing"], 1.5)
+        self.assertEqual(result["tag"], "test_tag")
+        self.assertEqual(result["linked_to_module"], "testmod")
+        self.assertEqual(result["linked_to"], "test_link")
+        self.assertEqual(result["transition_destination_stringref"], 54321)
+        self.assertEqual(result["linked_to_flags"], GITModuleLink.ToDoor.value)
 
 
 if __name__ == "__main__":
