@@ -22,9 +22,30 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
+            const path = require('path');
+
             const title = context.payload.issue?.title || '';
             const body = context.payload.issue?.body || '';
             const labels = [];
+            const lcBody = body.toLowerCase();
+            
+            // Discover tools dynamically from Tools/ (HolocronToolset -> toolset)
+            const toolsDir = path.join(process.cwd(), 'Tools');
+            let tools = [];
+            const deriveBuildName = (name) => {
+              const lower = name.toLowerCase();
+              if (lower === 'holocrontoolset') return 'toolset';
+              return lower;
+            };
+            if (fs.existsSync(toolsDir)) {
+              tools = fs.readdirSync(toolsDir, { withFileTypes: true })
+                .filter((d) => d.isDirectory() && !d.name.startsWith('.'))
+                .map((d) => ({
+                  dir: d.name,
+                  build: deriveBuildName(d.name),
+                }));
+            }
             
             // Label based on title prefixes
             if (title.startsWith('[BUG]') || title.startsWith('[bug]')) {
@@ -46,30 +67,25 @@ jobs:
               labels.push('security');
             }
             
-            // Label based on package mentions
-            if (body.includes('PyKotor') && !body.includes('PyKotorGL') && !body.includes('PyKotorFont')) {
-              labels.push('package: pykotor');
+            // Label based on package mentions (dynamic tools + known packages)
+            const addPackageLabel = (pkg) => labels.push(`package: ${pkg}`);
+
+            if (lcBody.includes('pykotor') && !lcBody.includes('pykotorgl') && !lcBody.includes('pykotorfont')) {
+              addPackageLabel('pykotor');
             }
-            if (body.includes('PyKotorGL') || body.includes('pykotorgl')) {
-              labels.push('package: pykotorgl');
+            if (lcBody.includes('pykotorgl')) {
+              addPackageLabel('pykotorgl');
             }
-            if (body.includes('PyKotorFont') || body.includes('pykotorfont')) {
-              labels.push('package: pykotorfont');
+            if (lcBody.includes('pykotorfont')) {
+              addPackageLabel('pykotorfont');
             }
-            if (body.includes('HolocronToolset') || body.includes('toolset')) {
-              labels.push('package: toolset');
-            }
-            if (body.includes('HoloPatcher') || body.includes('holopatcher')) {
-              labels.push('package: holopatcher');
-            }
-            if (body.includes('BatchPatcher') || body.includes('batchpatcher')) {
-              labels.push('package: batchpatcher');
-            }
-            if (body.includes('KotorDiff') || body.includes('kotordiff')) {
-              labels.push('package: kotordiff');
-            }
-            if (body.includes('GuiConverter') || body.includes('guiconverter')) {
-              labels.push('package: guiconverter');
+
+            for (const t of tools) {
+              const dirMatch = lcBody.includes(t.dir.toLowerCase());
+              const buildMatch = lcBody.includes(t.build.toLowerCase());
+              if (dirMatch || buildMatch) {
+                addPackageLabel(t.build);
+              }
             }
             
             if (labels.length > 0) {
