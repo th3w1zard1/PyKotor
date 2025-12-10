@@ -21,7 +21,7 @@ for path in (PYKOTOR_SRC, UTILITY_SRC):
 
 
 from utility.system.app_process.util import is_frozen as is_frozen_app_process
-from utility.system.os_helper import get_main_script_directory, is_frozen
+from utility.system.os_helper import get_app_dir, is_frozen
 from utility.tkinter.app_entry import is_frozen as is_frozen_tkinter
 
 
@@ -49,12 +49,13 @@ class TestSysAttributesStrictTyping:
         result = is_frozen_tkinter()
         assert isinstance(result, bool)
 
-    def test_get_main_script_directory_uses_getattr_for_file(self):
-        """Test that get_main_script_directory() uses getattr for __file__."""
-        result = get_main_script_directory()
+    def test_get_app_dir_uses_getattr_for_file(self):
+        """Test that get_app_dir() uses getattr for __file__."""
+        result = get_app_dir()
 
         # Should return a Path
         assert result is not None
+        assert isinstance(result, pathlib.Path)
         # The key is that it uses getattr for optional __file__ attribute
 
     def test_sys_frozen_attribute_check(self):
