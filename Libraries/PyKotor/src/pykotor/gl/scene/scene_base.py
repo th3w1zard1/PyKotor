@@ -537,7 +537,7 @@ class SceneBase:
             return self._loading_texture
         
         # Start async loading if location resolver available
-        if self.async_loader.texture_location_resolver is not None:
+        if self.async_loader is not None and self.async_loader.texture_location_resolver is not None:
             future = self.async_loader.load_texture_async(name)
             self._pending_texture_futures[name] = future
             # Return gray placeholder immediately
