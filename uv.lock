@@ -52,7 +52,6 @@ resolution-markers = [
 [manifest]
 members = [
     "batchpatcher",
-    "gui-converter",
     "holocrontoolset",
     "hologenerator",
     "holopatcher",
@@ -1364,28 +1363,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d6/70/2ac5375b4b35a65142ca66a2093bd2f6107a2d293a36bf4f036ad272fcd8/greenlet-3.0.0-cp39-cp39-win32.whl", hash = "sha256:0d3f83ffb18dc57243e0151331e3c383b05e5b6c5029ac29f754745c800f8ed9", size = 269038, upload-time = "2023-10-02T19:59:15.903Z" },
     { url = "https://files.pythonhosted.org/packages/61/ad/94208c68fa3c80d407adafb940269f15523584c61ac2c6e7cd21af3cab71/greenlet-3.0.0-cp39-cp39-win_amd64.whl", hash = "sha256:831d6f35037cf18ca5e80a737a27d822d87cd922521d18ed3dbc8a6967be50ce", size = 286908, upload-time = "2023-10-02T19:52:32.206Z" },
 ]
-
-[[package]]
-name = "gui-converter"
-version = "1.0.0"
-source = { editable = "Tools/GuiConverter" }
-dependencies = [
-    { name = "pykotor" },
-]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pykotor", editable = "Libraries/PyKotor" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "holocrontoolset"
@@ -3498,7 +3475,6 @@ dependencies = [
 [package.optional-dependencies]
 all = [
     { name = "batchpatcher" },
-    { name = "gui-converter" },
     { name = "holocrontoolset" },
     { name = "holopatcher" },
     { name = "holopazaak" },
@@ -3511,7 +3487,6 @@ all-extensions = [
 ]
 all-tools = [
     { name = "batchpatcher" },
-    { name = "gui-converter" },
     { name = "holocrontoolset" },
     { name = "holopatcher" },
     { name = "holopazaak" },
@@ -3551,9 +3526,6 @@ font = [
 gl = [
     { name = "pykotor", extra = ["gl"] },
 ]
-gui-converter = [
-    { name = "gui-converter" },
-]
 holocrontoolset = [
     { name = "holocrontoolset" },
 ]
@@ -3577,9 +3549,6 @@ requires-dist = [
     { name = "batchpatcher", marker = "extra == 'all'", editable = "Tools/BatchPatcher" },
     { name = "batchpatcher", marker = "extra == 'all-tools'", editable = "Tools/BatchPatcher" },
     { name = "batchpatcher", marker = "extra == 'batchpatcher'", editable = "Tools/BatchPatcher" },
-    { name = "gui-converter", marker = "extra == 'all'", editable = "Tools/GuiConverter" },
-    { name = "gui-converter", marker = "extra == 'all-tools'", editable = "Tools/GuiConverter" },
-    { name = "gui-converter", marker = "extra == 'gui-converter'", editable = "Tools/GuiConverter" },
     { name = "holocrontoolset", marker = "extra == 'all'", editable = "Tools/HolocronToolset" },
     { name = "holocrontoolset", marker = "extra == 'all-tools'", editable = "Tools/HolocronToolset" },
     { name = "holocrontoolset", marker = "extra == 'holocrontoolset'", editable = "Tools/HolocronToolset" },
@@ -3616,7 +3585,7 @@ requires-dist = [
     { name = "typing-extensions", marker = "python_full_version >= '3.9' and extra == 'dev'", specifier = ">=4.5.0" },
     { name = "typing-extensions", marker = "python_full_version < '3.9' and extra == 'dev'", specifier = ">=4.5.0,<4.9.0" },
 ]
-provides-extras = ["font", "gl", "all-extensions", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "gui-converter", "kotorcli", "holopazaak", "all-tools", "all", "dev"]
+provides-extras = ["font", "gl", "all-extensions", "holocrontoolset", "holopatcher", "kotor-diff", "batchpatcher", "kotorcli", "holopazaak", "all-tools", "all", "dev"]
 
 [package.metadata.requires-dev]
 dev = []

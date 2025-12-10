@@ -58,7 +58,6 @@ git push origin --delete test-v3.1.99-toolset
 v3.1.4-toolset      → HolocronToolset
 v1.0.1-kotordiff    → KotorDiff
 v1.7.1-patcher      → HoloPatcher
-v1.0.0-guiconverter → GuiConverter
 v1.0.0-translator   → Translator
 ```
 
@@ -68,7 +67,6 @@ v1.0.0-translator   → Translator
 test-v3.1.99-toolset      → HolocronToolset (TEST)
 test-v1.0.99-kotordiff    → KotorDiff (TEST)
 test-v1.7.99-patcher      → HoloPatcher (TEST)
-test-v1.0.99-guiconverter → GuiConverter (TEST)
 test-v1.0.99-translator   → Translator (TEST)
 ```
 

@@ -13,7 +13,6 @@
 -r Tools/HolocronToolset/requirements.txt
 -r Tools/HoloPatcher/requirements.txt
 -r Tools/BatchPatcher/requirements.txt
--r Tools/GuiConverter/requirements.txt
 -r Tools/KotorCLI/requirements.txt
 -r Tools/KotorDiff/requirements.txt
 -r Tools/HoloPazaak/requirements.txt

@@ -20,11 +20,13 @@ This guide covers setting up the PyKotor development environment using different
 #### Installation
 
 **Windows (PowerShell):**
+
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 **macOS/Linux:**
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -32,21 +34,25 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 #### Setup Steps
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/th3w1zard1/PyKotor.git
    cd PyKotor
    ```
 
 2. **Sync dependencies:**
+
    ```bash
    uv sync
    ```
+
    This will:
    - Create a virtual environment (`.venv`)
    - Install all dependencies from `pyproject.toml`
    - Install the workspace in editable mode
 
 3. **Activate the virtual environment:**
+
    ```bash
    # Windows
    .venv\Scripts\activate
@@ -56,6 +62,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
 
 4. **Verify installation:**
+
    ```bash
    python -c "import pykotor; print(pykotor.__version__)"
    ```
@@ -105,16 +112,19 @@ Poetry provides excellent dependency management and virtual environment handling
 #### Installation
 
 **Windows (PowerShell):**
+
 ```powershell
 (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | python -
 ```
 
 **macOS/Linux:**
+
 ```bash
 curl -sSL https://install.python-poetry.org | python3 -
 ```
 
 **Add to PATH** (if needed):
+
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
 export PATH="$HOME/.local/bin:$PATH"
@@ -123,26 +133,31 @@ export PATH="$HOME/.local/bin:$PATH"
 #### Setup Steps
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/th3w1zard1/PyKotor.git
    cd PyKotor
    ```
 
 2. **Install dependencies:**
+
    ```bash
    poetry install
    ```
+
    This installs:
    - Core dependencies
    - Development dependencies
    - The workspace in editable mode
 
 3. **Activate the virtual environment:**
+
    ```bash
    poetry shell
    ```
 
    Or run commands within the environment:
+
    ```bash
    poetry run python -c "import pykotor; print(pykotor.__version__)"
    ```
@@ -192,12 +207,14 @@ Standard pip installation - works everywhere Python is available.
 #### Setup Steps
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/th3w1zard1/PyKotor.git
    cd PyKotor
    ```
 
 2. **Create a virtual environment:**
+
    ```bash
    # Windows
    python -m venv .venv
@@ -209,16 +226,19 @@ Standard pip installation - works everywhere Python is available.
    ```
 
 3. **Upgrade pip and build tools:**
+
    ```bash
    pip install --upgrade pip setuptools wheel build
    ```
 
 4. **Install core library:**
+
    ```bash
    pip install -e Libraries/PyKotor
    ```
 
 5. **Install optional extensions:**
+
    ```bash
    # With OpenGL support
    pip install -e Libraries/PyKotorGL
@@ -228,6 +248,7 @@ Standard pip installation - works everywhere Python is available.
    ```
 
 6. **Install development dependencies:**
+
    ```bash
    pip install -e .[dev]
    ```
@@ -277,7 +298,6 @@ Each tool is a standalone application:
 - **Tools/HoloPatcher/** - TSLPatcher alternative
 - **Tools/BatchPatcher/** - Batch translation tool
 - **Tools/KotorDiff/** - Diff generation tool
-- **Tools/GuiConverter/** - GUI conversion tool
 
 ## Dependency Management
 
@@ -293,16 +313,19 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 ### Core Dependencies
 
 **PyKotor** (core library):
+
 - `loggerplus>=0.1.3` - Logging utilities
 - `ply>=3.11,<4` - Parser generator for NSS compiler
 
 **PyKotorGL** (OpenGL extension):
+
 - `pykotor>=1.8.0` - Core library
 - `numpy>=1.22` - Numerical operations
 - `PyOpenGL~=3.1` - OpenGL bindings
 - `PyGLM>=2.0,<2.8` - GLM math library (CPython only)
 
 **PyKotorFont** (font extension):
+
 - `pykotor>=1.8.0` - Core library
 - `pillow>=9.5` - Image processing (CPython)
 - `pillow>10,<11.1.0` - Image processing (PyPy)
@@ -310,17 +333,20 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 ### Tool Dependencies
 
 **HolocronToolset**:
+
 - `pykotor>=1.8.0`
 - `pykotorgl>=1.8.0`
 - Qt bindings (PyQt5/PySide6)
 - Various UI libraries
 
 **HoloPatcher**:
+
 - `pykotor>=1.8.0`
 - `requests` - For update checking
 - `charset-normalizer` - Encoding detection
 
 **BatchPatcher**:
+
 - `pykotor>=1.8.0`
 - `pykotorfont>=1.8.0`
 - Translation libraries
@@ -331,11 +357,13 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 ### Working on a Library
 
 1. Navigate to the library:
+
    ```bash
    cd Libraries/PyKotor
    ```
 
 2. Install in editable mode:
+
    ```bash
    # With uv
    uv pip install -e .
@@ -350,6 +378,7 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 3. Make your changes
 
 4. Test your changes:
+
    ```bash
    pytest ../../tests/test_pykotor/
    ```
@@ -357,11 +386,13 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 ### Working on a Tool
 
 1. Navigate to the tool:
+
    ```bash
    cd Tools/HolocronToolset
    ```
 
 2. Install in editable mode:
+
    ```bash
    # With uv
    uv pip install -e .
@@ -376,6 +407,7 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 3. Make your changes
 
 4. Test your changes:
+
    ```bash
    pytest ../../tests/test_toolset/
    ```
@@ -389,6 +421,7 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 **Problem:** `uv sync` or `poetry install` fails to create venv
 
 **Solution:**
+
 ```bash
 # With uv
 uv venv
@@ -409,6 +442,7 @@ pip install -e .
 **Problem:** Conflicting package versions
 
 **Solution:**
+
 ```bash
 # With uv (handles conflicts automatically)
 uv sync --upgrade
@@ -425,6 +459,7 @@ pip install --upgrade --force-reinstall -e .
 **Problem:** `ModuleNotFoundError` when importing pykotor
 
 **Solution:**
+
 ```bash
 # Ensure package is installed in editable mode
 pip install -e Libraries/PyKotor
@@ -481,4 +516,3 @@ Output will be in the `dist/` directory.
 - **GitHub Issues**: [Report bugs or request features](https://github.com/th3w1zard1/PyKotor/issues)
 - **Discussions**: [Ask questions](https://github.com/th3w1zard1/PyKotor/discussions)
 - **Documentation**: Check the `docs/` directory
-

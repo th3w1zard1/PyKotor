@@ -190,7 +190,6 @@ This workflow is **separate** from:
 - `release_toolset.yml` - Creates .exe binaries and GitHub releases
 - `release_holopatcher.yml` - Creates .exe binaries and GitHub releases
 - `release_kotordiff.yml` - Creates .exe binaries and GitHub releases
-- `release_guiconverter.yml` - Creates .exe binaries and GitHub releases
 - All other `release_*.yml` workflows - Create .exe binaries and GitHub releases (no PyPI publishing)
 
 Release workflows do **NOT** publish to PyPI. Only this auto-publish workflow handles PyPI publishing.

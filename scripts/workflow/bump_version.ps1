@@ -7,7 +7,7 @@
     and optionally commits/pushes and creates a GitHub pre-release.
 
 .PARAMETER Tool
-    The tool to bump version for: toolset, holopatcher, kotordiff, guiconverter
+    The tool to bump version for: toolset, holopatcher, kotordiff, batchpatcher, kitgenerator
 
 .PARAMETER Version
     The new version (e.g., 3.1.3 or 1.8.0)
@@ -36,7 +36,7 @@
 
 param(
     [Parameter(Mandatory=$true)]
-    [ValidateSet("toolset", "holopatcher", "kotordiff", "guiconverter", "batchpatcher", "kitgenerator")]
+    [ValidateSet("toolset", "holopatcher", "kotordiff", "batchpatcher", "kitgenerator")]
     [string]$Tool,
     
     [Parameter(Mandatory=$true)]
@@ -73,11 +73,6 @@ $ToolConfig = @{
         ConfigFile = "Tools/KotorDiff/src/kotordiff/__main__.py"
         VersionKey = "CURRENT_VERSION"
         TagPattern = "v{0}-kotordiff"
-    }
-    "guiconverter" = @{
-        ConfigFile = "Tools/GuiConverter/src/gui_converter/__init__.py"
-        VersionKey = "__version__"
-        TagPattern = "v{0}-guiconverter"
     }
     "batchpatcher" = @{
         ConfigFile = "Tools/BatchPatcher/src/batchpatcher/__init__.py"

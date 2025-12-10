@@ -782,7 +782,6 @@
             "options": {
                 "shell": {},
                 "env": {},
-                "cwd": "${workspaceFolder}${pathSeparator}tools${pathSeparator}GuiConverter${pathSeparator}src"
             }
         },
         {

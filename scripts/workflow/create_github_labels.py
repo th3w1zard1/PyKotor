@@ -34,7 +34,6 @@ LABELS = [
     {"name": "package: holopatcher", "color": "1d76db", "description": "Related to HoloPatcher"},
     {"name": "package: batchpatcher", "color": "1d76db", "description": "Related to BatchPatcher"},
     {"name": "package: kotordiff", "color": "1d76db", "description": "Related to KotorDiff"},
-    {"name": "package: guiconverter", "color": "1d76db", "description": "Related to GuiConverter"},
     
     # Size labels (for PRs)
     {"name": "size/XS", "color": "3cbf00", "description": "Extra small PR (< 30 lines)"},

@@ -169,7 +169,6 @@ extraPaths = [
     "Libraries/PyKotorFont/src",
     "Libraries/PyKotorGL/src",
     "Tools/BatchPatcher/src",
-    "Tools/GuiConverter/src",
     "Tools/HolocronAI/src",
     "Tools/HolocronToolset/src",
     "Tools/HoloGenerator/src",

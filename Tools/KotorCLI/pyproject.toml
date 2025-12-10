@@ -51,6 +51,8 @@ dev = [
 kotorcli = "kotorcli.__main__:main"
 kitgenerator = "kotorcli.__main__:kitgenerator_entry"
 kit-generator = "kotorcli.__main__:kitgenerator_entry"
+gui-converter = "kotorcli.__main__:gui_converter_entry"
+guiconverter = "kotorcli.__main__:gui_converter_entry"
 
 [project.urls]
 Homepage = "https://github.com/th3w1zard1/PyKotor"
@@ -81,6 +83,8 @@ loggerplus = ">=0.1.3"
 kotorcli = "kotorcli.__main__:main"
 kitgenerator = "kotorcli.__main__:kitgenerator_entry"
 kit-generator = "kotorcli.__main__:kitgenerator_entry"
+gui-converter = "kotorcli.__main__:gui_converter_entry"
+guiconverter = "kotorcli.__main__:gui_converter_entry"
 
 [tool.poetry.urls]
 Homepage = "https://github.com/th3w1zard1/PyKotor"

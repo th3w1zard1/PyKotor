@@ -27,7 +27,6 @@ holocrontoolset = ["holocrontoolset>=4.0.0a7"]
 holopatcher = ["holopatcher>=1.8.0"]
 kotor-diff = ["kotor-diff>=1.0.0"]
 batchpatcher = ["batchpatcher>=2.2.0"]
-gui-converter = ["gui-converter>=1.0.0"]
 kotorcli = ["kotorcli>=0.1.0"]
 holopazaak = ["holopazaak>=0.1.0"]
 all-tools = [
@@ -35,7 +34,6 @@ all-tools = [
     "holopatcher>=1.8.0",
     "kotor-diff>=1.0.0",
     "batchpatcher>=2.2.0",
-    "gui-converter>=1.0.0",
     "kotorcli>=0.1.0",
     "holopazaak>=0.1.0",
 ]
@@ -47,7 +45,6 @@ all = [
     "holopatcher>=1.8.0",
     "kotor-diff>=1.0.0",
     "batchpatcher>=2.2.0",
-    "gui-converter>=1.0.0",
     "kotorcli>=0.1.0",
     "holopazaak>=0.1.0",
 ]
@@ -111,7 +108,6 @@ holocrontoolset = ["holocrontoolset"]
 holopatcher = ["holopatcher"]
 kotor-diff = ["kotor-diff"]
 batchpatcher = ["batchpatcher"]
-gui-converter = ["gui-converter"]
 kotorcli = ["kotorcli"]
 holopazaak = ["holopazaak"]
 all-tools = [
@@ -119,7 +115,6 @@ all-tools = [
     "holopatcher",
     "kotor-diff",
     "batchpatcher",
-    "gui-converter",
     "kotorcli",
     "holopazaak",
 ]
@@ -131,7 +126,6 @@ all = [
     "holopatcher",
     "kotor-diff",
     "batchpatcher",
-    "gui-converter",
     "kotorcli",
     "holopazaak",
 ]
@@ -176,7 +170,6 @@ members = [
     "Engines/PyKotorEngine",
     "Libraries/PyKotor",
     "Tools/BatchPatcher",
-    "Tools/GuiConverter",
     "Tools/HolocronToolset",
     "Tools/HoloGenerator",
     "Tools/HoloPatcher",
@@ -189,7 +182,6 @@ members = [
 # Use workspace members instead of PyPI
 pykotor = { workspace = true }
 batchpatcher = { workspace = true }
-gui-converter = { workspace = true }
 holocron-ai = { workspace = true }
 holocrontoolset = { workspace = true }
 hologenerator = { workspace = true }
@@ -246,7 +238,6 @@ extraPaths = [
     "Engines/PyKotorEngine/src",
     "Libraries/PyKotor/src",
     "Tools/BatchPatcher/src",
-    "Tools/GuiConverter/src",
     "Tools/HolocronAI/src",
     "Tools/HolocronToolset/src",
     "Tools/HoloGenerator/src",
@@ -307,7 +298,6 @@ src = [
     "Libraries/PyKotor/src",
     "Libraries/PyKotor/src",
     "Tools/BatchPatcher/src",
-    "Tools/GuiConverter/src",
     "Tools/HolocronAI/src",
     "Tools/HolocronToolset/src",
     "Tools/HoloGenerator/src",
@@ -519,7 +509,6 @@ mypy_path = [
     "Libraries/PyKotor/src",
     "tests",
     "Tools/BatchPatcher/src",
-    "Tools/GuiConverter/src",
     "Tools/HolocronAI/src",
     "Tools/HolocronToolset/src",
     "Tools/HoloGenerator/src",
@@ -544,7 +533,6 @@ testpaths = [
     "Libraries/PyKotor/tests",
     "tests",
     "Tools/BatchPatcher/tests",
-    "Tools/GuiConverter/tests",
     "Tools/HolocronAI/tests",
     "Tools/HolocronToolset/tests",
     "Tools/HoloGenerator/tests",

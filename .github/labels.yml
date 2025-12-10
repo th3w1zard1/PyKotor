@@ -46,44 +46,41 @@ labels:
     description: Stale issue or PR
 
   # Priority labels
-  - name: priority: critical
+  - name: "priority: critical"
     color: b60205
     description: Critical priority
-  - name: priority: high
+  - name: "priority: high"
     color: d93f0b
     description: High priority
-  - name: priority: medium
+  - name: "priority: medium"
     color: fbca04
     description: Medium priority
-  - name: priority: low
+  - name: "priority: low"
     color: 0e8a16
     description: Low priority
 
   # Package labels
-  - name: package: pykotor
+  - name: "package: pykotor"
     color: 1d76db
     description: Related to PyKotor core
-  - name: package: pykotorgl
+  - name: "package: pykotorgl"
     color: 1d76db
     description: Related to PyKotorGL
-  - name: package: pykotorfont
+  - name: "package: pykotorfont"
     color: 1d76db
     description: Related to PyKotorFont
-  - name: package: toolset
+  - name: "package: toolset"
     color: 1d76db
     description: Related to HolocronToolset
-  - name: package: holopatcher
+  - name: "package: holopatcher"
     color: 1d76db
     description: Related to HoloPatcher
-  - name: package: batchpatcher
+  - name: "package: batchpatcher"
     color: 1d76db
     description: Related to BatchPatcher
-  - name: package: kotordiff
+  - name: "package: kotordiff"
     color: 1d76db
     description: Related to KotorDiff
-  - name: package: guiconverter
-    color: 1d76db
-    description: Related to GuiConverter
 
   # Size labels
   - name: size/XS
@@ -106,22 +103,22 @@ labels:
     description: XXL PR (> 1000 lines)
 
   # Area labels
-  - name: area: libraries
+  - name: "area: libraries"
     color: c2e0c6
     description: Related to libraries
-  - name: area: tools
+  - name: "area: tools"
     color: c2e0c6
     description: Related to tools
-  - name: area: tests
+  - name: "area: tests"
     color: c2e0c6
     description: Related to tests
-  - name: area: ci/cd
+  - name: "area: ci/cd"
     color: c2e0c6
     description: Related to CI/CD
-  - name: area: documentation
+  - name: "area: documentation"
     color: c2e0c6
     description: Related to documentation
-  - name: area: dependencies
+  - name: "area: dependencies"
     color: c2e0c6
     description: Related to dependencies
 
@@ -150,4 +147,3 @@ labels:
   - name: ignore-for-release
     color: ededed
     description: Ignore in release notes
-

@@ -168,7 +168,6 @@ PyKotor/
 │   ├── HoloPatcher/      # TSLPatcher alternative
 │   ├── BatchPatcher/     # Batch translation tool
 │   ├── KotorDiff/        # Diff generation tool
-│   └── GuiConverter/    # GUI conversion tool
 ├── tests/                # Test suite
 ├── docs/                 # Documentation
 └── scripts/              # Helper scripts

@@ -45,6 +45,7 @@ from kotorcli.commands import (  # type: ignore[import-not-found, module-not-fou
     cmd_diff,
     cmd_disassemble,
     cmd_extract,
+    cmd_gui_convert,
     cmd_gff2json,
     cmd_gff2xml,
     cmd_grep,
@@ -483,6 +484,21 @@ def create_parser() -> ArgumentParser:
         help="Logging level for kit generation",
     )
 
+    gui_convert_parser = subparsers.add_parser(
+        "gui-convert",
+        aliases=["gui"],
+        help="Convert KotOR GUI layouts to target resolutions",
+    )
+    gui_convert_parser.add_argument("--input", "-i", action="append", help="Input GUI file or folder (can be passed multiple times)")
+    gui_convert_parser.add_argument("--output", "-o", help="Output directory for converted GUI files")
+    gui_convert_parser.add_argument("--resolution", "-r", help="Resolution spec (WIDTHxHEIGHT, comma separated) or ALL")
+    gui_convert_parser.add_argument(
+        "--log-level",
+        choices=["debug", "info", "warning", "error", "critical"],
+        default="info",
+        help="Logging level for GUI conversion",
+    )
+
     # Batch patching commands
     batch_patch_parser = subparsers.add_parser(
         "batch-patch",
@@ -651,6 +667,8 @@ def cli_main(argv: Sequence[str]) -> int:
             return cmd_module_resources(args, logger)
         if args.command in ("kit-generate", "kit"):
             return cmd_kit_generate(args, logger)
+        if args.command in ("gui-convert", "gui"):
+            return cmd_gui_convert(args, logger)
         # Patching commands
         if args.command == "batch-patch":
             return cmd_batch_patch(args, logger)
@@ -743,6 +761,38 @@ def kitgenerator_entry(argv: Sequence[str] | None = None) -> int:
     log_level = args.log_level.upper()
     logger = setup_logger(log_level, use_color=True)
     return cmd_kit_generate(args, logger)
+
+
+def gui_converter_entry(argv: Sequence[str] | None = None) -> int:
+    """Entry point for the merged GUI converter.
+
+    - Any arguments -> headless conversion.
+    - Missing arguments -> launch the Tk GUI.
+    """
+    arg_list = list(sys.argv[1:] if argv is None else argv)
+    parser = ArgumentParser(
+        prog="gui-converter",
+        description="Convert KotOR GUI layouts to target resolutions",
+    )
+    parser.add_argument("--input", "-i", action="append", help="Input GUI file or folder (can be passed multiple times)")
+    parser.add_argument("--output", "-o", help="Output directory")
+    parser.add_argument("--resolution", "-r", help="Resolution spec (WIDTHxHEIGHT, comma separated) or ALL")
+    parser.add_argument(
+        "--log-level",
+        choices=["debug", "info", "warning", "error", "critical"],
+        default="info",
+        help="Logging level for GUI conversion",
+    )
+    args = parser.parse_args(arg_list)
+    logger = setup_logger(args.log_level.upper(), use_color=True)
+
+    if not args.input or not args.output or not args.resolution:
+        from kotorcli.gui_converter import launch_gui_converter  # noqa: PLC0415
+
+        launch_gui_converter()
+        return 0
+
+    return cmd_gui_convert(args, logger)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

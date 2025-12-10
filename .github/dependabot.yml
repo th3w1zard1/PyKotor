@@ -76,13 +76,3 @@ updates:
     commit-message:
       prefix: "chore(kotordiff)"
       include: "scope"
-
-  - package-ecosystem: "pip"
-    directory: "/Tools/GuiConverter"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    commit-message:
-      prefix: "chore(guiconverter)"
-      include: "scope"

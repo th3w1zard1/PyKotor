@@ -992,6 +992,18 @@ python -m kotorcli kit-generate --installation <path> --module <module> --output
 - Requires installation path, module name (stem is normalized), and output directory
 - Supplying required args keeps execution headless; running `python -m kotorcli` with no args opens the Tkinter GUI for interactive kit generation
 
+### gui-convert
+
+Convert KotOR GUI layouts to target resolutions. Headless when arguments are provided; launches a Tk GUI when arguments are omitted.
+
+```bash
+python -m kotorcli gui-convert --input <file_or_folder> --output <dir> --resolution <WIDTHxHEIGHT|ALL>
+```
+
+- Multiple `--input` values are allowed
+- `--resolution` accepts comma-separated WIDTHxHEIGHT or `ALL` for every supported aspect ratio/resolution pair
+- Internally uses `pykotor.resource.formats.gff` to resize controls (`Libraries/PyKotor/src/pykotor/resource/formats/gff`)
+
 ### Advanced Commands (To Add)
 
 - `resman` - Resource manager interface

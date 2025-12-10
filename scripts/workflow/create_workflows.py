@@ -95,7 +95,6 @@ jobs:
           - Tools/HoloPatcher
           - Tools/BatchPatcher
           - Tools/KotorDiff
-          - Tools/GuiConverter
 
     steps:
       - name: Checkout code
@@ -351,8 +350,6 @@ jobs:
         run: |
           python -m build
 
-      - name: Build GuiConverter
-        working-directory: Tools/GuiConverter
         run: |
           python -m build
 
@@ -558,13 +555,11 @@ updates:
       include: "scope"
 
   - package-ecosystem: "pip"
-    directory: "/Tools/GuiConverter"
     schedule:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
     commit-message:
-      prefix: "chore(guiconverter)"
       include: "scope"
 """
 

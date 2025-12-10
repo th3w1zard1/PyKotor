@@ -38,7 +38,6 @@ That's it! The workflow automatically:
 - ✅ `.github/workflows/release_toolset.yml`
 - ✅ `.github/workflows/release_kotordiff.yml`
 - ✅ `.github/workflows/release_holopatcher.yml`
-- ✅ `.github/workflows/release_guiconverter.yml`
 - ✅ `.github/workflows/release_translator.yml`
 
 ### New Test Infrastructure
@@ -111,7 +110,7 @@ Your requirement was met perfectly:
 
 ### Old Process (Manual)
 
-```
+```text
 1. Edit config.py → currentVersion
 2. Create release branch
 3. Create pre-release on GitHub
@@ -124,7 +123,7 @@ Your requirement was met perfectly:
 
 ### New Process (Automated)
 
-```
+```text
 1. Create pre-release on GitHub
 ```
 

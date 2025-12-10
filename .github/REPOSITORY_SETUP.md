@@ -46,45 +46,55 @@ Located in `.github/ISSUE_TEMPLATE/`:
 All labels have been created via GitHub API:
 
 ### Type Labels
+
 - bug, enhancement, documentation, question, duplicate, invalid, wontfix
 - help wanted, good first issue
 
 ### Status Labels
+
 - needs-triage, in-progress, blocked, stale
 
 ### Priority Labels
+
 - priority: critical, priority: high, priority: medium, priority: low
 
 ### Package Labels
-- package: pykotor, package: pykotorgl, package: pykotorfont
+
+- package: pykotor
 - package: toolset, package: holopatcher, package: batchpatcher
-- package: kotordiff, package: guiconverter
+- package: kotordiff
 
 ### Size Labels (for PRs)
+
 - size/XS, size/S, size/M, size/L, size/XL, size/XXL
 
 ### Area Labels
+
 - area: libraries, area: tools, area: tests, area: ci/cd
 - area: documentation, area: dependencies
 
 ### Special Labels
+
 - security, breaking-change, performance, refactor, chore
 - pinned, work-in-progress, ignore-for-release
 
 ## GitHub Actions Workflows
 
 ### Core Workflows
+
 1. **ci.yml** - Main CI workflow with multi-platform testing
 2. **lint.yml** - Linting and type checking
 3. **test.yml** - Test suite with coverage
 4. **publish-pypi-auto.yml** - Automated releases to PyPI (scans and publishes packages with newer versions)
 
 ### Security & Quality
+
 5. **codeql.yml** - CodeQL security analysis
 6. **code-scanning.yml** - Bandit and Safety security scans
 7. **dependency-review.yml** - Dependency vulnerability review
 
 ### Automation
+
 8. **stale.yml** - Mark stale issues and PRs
 9. **pr-check.yml** - PR validation and size checks
 10. **label.yml** - Auto-label PRs based on files
@@ -92,6 +102,7 @@ All labels have been created via GitHub API:
 12. **auto-merge.yml** - Auto-merge Dependabot PRs
 
 ### Additional Workflows
+
 13. **validate-pr.yml** - Validate PR format and content
 14. **changelog.yml** - Generate changelog on release
 15. **license-check.yml** - Check license headers
@@ -130,6 +141,7 @@ All labels have been created via GitHub API:
 ## Summary
 
 This repository now has:
+
 - ✅ Comprehensive issue templates
 - ✅ PR template
 - ✅ Security policy
@@ -145,4 +157,3 @@ This repository now has:
 - ✅ Compatibility testing
 
 All configurations follow industry best practices and are tailored to the PyKotor multi-package repository structure.
-

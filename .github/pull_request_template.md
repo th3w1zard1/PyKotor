@@ -18,13 +18,10 @@
 <!-- Mark all that apply -->
 
 - [ ] PyKotor (core library)
-- [ ] PyKotorGL
-- [ ] PyKotorFont
 - [ ] HolocronToolset
 - [ ] HoloPatcher
 - [ ] BatchPatcher
 - [ ] KotorDiff
-- [ ] GuiConverter
 - [ ] Documentation
 - [ ] CI/CD
 - [ ] Other: ___________
@@ -42,6 +39,7 @@
 - [ ] I have tested on multiple operating systems (if applicable)
 
 ### Test Results
+
 ```
 Paste test output or describe test results here
 ```
@@ -70,4 +68,3 @@ Related to #
 
 ## Additional Notes
 <!-- Add any additional context, notes, or considerations for reviewers -->
-

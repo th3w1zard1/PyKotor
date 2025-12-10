@@ -81,7 +81,7 @@ jobs:
               Looks for (in order):
                 1. src/<toolnamelower>/config.py (e.g. Tools/HoloPatcher/src/holopatcher/config.py)
                 2. src/<toolnamelower>/config/config_info.py (e.g. Tools/HolocronToolset/src/toolset/config/config_info.py)
-                3. src/<toolnamelower>/__main__.py (e.g. Tools/KotorDiff/src/kotordiff/__main__.py, Tools/GuiConverter/src/gui_converter/__main__.py, Tools/Translator/src/translator/__main__.py - contains CURRENT_VERSION)
+                3. src/<toolnamelower>/__main__.py (e.g. Tools/KotorDiff/src/kotordiff/__main__.py, Tools/Translator/src/translator/__main__.py - contains CURRENT_VERSION)
                 4. src/<toolnamelower>/__init__.py (contains __version__)
               """
               src_dir = tool_dir / "src" / tool_name_lower
@@ -96,7 +96,7 @@ jobs:
               if config_info_py.exists():
                   return config_info_py
               
-              # Check for __main__.py with CURRENT_VERSION (e.g. KotorDiff, GuiConverter, Translator)
+              # Check for __main__.py with CURRENT_VERSION (e.g. KotorDiff, Translator)
               main_py = src_dir / "__main__.py"
               if main_py.exists():
                   content = main_py.read_text()

@@ -55,7 +55,6 @@ The unified `release_tools.yml` workflow **dynamically discovers tools** from th
 | **HolocronToolset** | `v*-toolset` | `Tools/HolocronToolset/src/toolset/config/config_info.py` | `currentVersion` |
 | **HoloPatcher** | `v*-patcher` | `Tools/HoloPatcher/src/holopatcher/config.py` | `currentVersion` |
 | **KotorDiff** | `v*-kotordiff` | `Tools/KotorDiff/src/kotordiff/__main__.py` | `CURRENT_VERSION` |
-| **GuiConverter** | `v*-guiconverter` | `Tools/GuiConverter/src/guiconverter/__main__.py` | `CURRENT_VERSION` |
 | **Translator** | `v*-translator` | `Tools/Translator/src/translator/__main__.py` | `CURRENT_VERSION` |
 
 ### Config File Discovery

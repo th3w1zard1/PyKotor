@@ -18,6 +18,7 @@ KotorCLI is a command-line tool for converting KOTOR modules, ERFs, and haks bet
 - **Flexible source trees** - Organize your source files however you want
 - **Pure Python** - No external tool dependencies required (nwnnsscomp optional)
 - **Holocron kit generator** - Generate Holocron-compatible kits via `kit-generate` in headless mode or by launching the Tkinter GUI when no CLI args are provided
+- **GUI converter** - Resize KotOR `.gui` layouts to common resolutions (`gui-convert` headless, GUI when arguments are omitted)
 
 ## Installation
 
@@ -71,6 +72,20 @@ GUI (no arguments provided):
 
 ```bash
 python -m kotorcli
+```
+
+### 6. Convert GUI layouts (GUI or headless)
+
+Headless CLI:
+
+```bash
+python -m kotorcli gui-convert --input ./gui_inputs --output ./gui_outputs --resolution 1920x1080,1280x720 --log-level info
+```
+
+Interactive GUI (omit args):
+
+```bash
+python -m kotorcli gui-convert
 ```
 
 ## PyKotor Integration
