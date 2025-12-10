@@ -39,9 +39,11 @@ class TestWriteBitmapFont(unittest.TestCase):
     def test_bitmap_font(self):
         write_bitmap_fonts(self.test_dir, r"C:\Windows\Fonts\Inkfree.ttf", (2048, 2048), Language.ENGLISH, custom_scaling=1.0, draw_debug_box=True)
 
+    @unittest.skipIf(not THAI_FONT_PATH_FILE.exists(), f"Thai font file not found: {THAI_FONT_PATH_FILE}")
     def test_bitmap_font_thai(self):
         write_bitmap_font(Path(self.test_dir) / "test_font_thai.tga", THAI_FONT_PATH_FILE, (2048, 2048), Language.THAI, draw_debug_box=True)
 
+    @unittest.skipIf(not FONT_PATH_FILE.exists(), f"Font file not found: {FONT_PATH_FILE}")
     def test_valid_inputs(self):
         # Test with valid inputs
         target_path: Path = Path(self.test_dir) / "font2.tga"
