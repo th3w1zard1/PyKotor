@@ -1052,6 +1052,8 @@ def extract_kit(
     # Write door files
     # Use simple door identifiers (door0, door1, etc.) for file names and JSON
     # This matches the expected kit format from the examples
+    # Ensure kit_dir exists before writing door files (in case no components/textures were written)
+    kit_dir.mkdir(parents=True, exist_ok=True)
     door_list: list[dict] = []
     for door_idx, (door_name, door_data) in enumerate(doors.items()):
         # Use simple identifier: door0, door1, door2, etc.
