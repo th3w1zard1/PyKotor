@@ -129,7 +129,7 @@ obstaclecount <N>
 
 ### Door Hooks
 
-Door hooks (`LYTDoorHook`) bind [door models](MDL-MDX-File-Format#door-models) (DYN or placeable) to rooms. Each entry defines a position and orientation where a door can be placed, enabling area transitions and room connections.
+Door hooks (`LYTDoorHook`) bind door models (DYN or placeable) to rooms. Each entry defines a position and orientation where a door can be placed, enabling area transitions and room connections.
 
 **format:**
 
