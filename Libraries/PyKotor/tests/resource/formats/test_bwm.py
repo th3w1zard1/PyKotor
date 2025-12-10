@@ -48,7 +48,7 @@ from pykotor.resource.formats.bwm.bwm_auto import BWMBinaryReader, BWMBinaryWrit
 from pykotor.resource.formats.bwm.bwm_data import BWM, BWMType, BWMFace  # noqa: E402  # pyright: ignore[reportMissingImports]
 
 # Test file paths
-TESTS_DIR = THIS_FILE.parents[3]  # Goes up to 'tests' directory
+TESTS_DIR = THIS_FILE.parents[2]  # Goes up to 'tests' directory
 TEST_WOK_FILE = TESTS_DIR / "test_files" / "test.wok"
 TEST_TOOLSET_WOK_FILE = REPO_ROOT / "tests" / "test_toolset" / "test_files" / "zio006j.wok"
 
