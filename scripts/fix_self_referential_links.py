@@ -60,6 +60,12 @@ def extract_links(content: str) -> list[tuple[str, str, int]]:
 def fix_self_referential_links(filepath: Path) -> int:
     """Fix self-referential links in a markdown file."""
     content = filepath.read_text(encoding='utf-8')
+    
+    # Detect original line ending style and trailing newline state
+    has_crlf = '\r\n' in content
+    has_trailing_newline = content.endswith('\n') or content.endswith('\r\n')
+    line_ending = '\r\n' if has_crlf else '\n'
+    
     headings = extract_headings(content)
     links = extract_links(content)
     
@@ -91,13 +97,19 @@ def fix_self_referential_links(filepath: Path) -> int:
                         line = lines[line_num - 1]
                         # Find and replace the link
                         pattern = re.escape(f'[{link_text}]({link_url})')
-                        new_line = re.sub(pattern, link_text, line)
+                        # Use lambda to avoid regex backreference interpretation in link_text
+                        new_line = re.sub(pattern, lambda m: link_text, line)
                         if new_line != line:
                             lines[line_num - 1] = new_line
                             changes += 1
     
     if changes > 0:
-        filepath.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+        # Reconstruct file with original line endings and trailing newline state
+        reconstructed = line_ending.join(lines)
+        if has_trailing_newline:
+            reconstructed += line_ending
+        # Use binary mode to preserve exact line endings
+        filepath.write_bytes(reconstructed.encode('utf-8'))
     
     return changes
 
