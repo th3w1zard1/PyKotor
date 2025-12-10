@@ -443,7 +443,7 @@ def get_existing_comments(target_repo: str, issue_number: int) -> list[dict[str,
     return get_issue_comments(target_repo, issue_number)
 
 
-def migrate_issues(source_repo: str, target_repo: str) -> tuple[int, int]:
+def migrate_issues(source_repo: str, target_repo: str) -> tuple[int, int, int]:
     """Migrate all issues from source to target. Idempotent - checks for existing issues."""
     print("\n" + "=" * 60)
     print("STEP 2: MIGRATING ISSUES")
@@ -532,7 +532,7 @@ def migrate_issues(source_repo: str, target_repo: str) -> tuple[int, int]:
         time.sleep(1)  # Rate limiting
 
     print(f"\nIssues: {migrated_issues} migrated, {skipped_issues} skipped, {failed_issues} failed")
-    return migrated_issues, failed_issues
+    return migrated_issues, skipped_issues, failed_issues
 
 
 def fix_migrated_issues(source_repo: str, target_repo: str) -> tuple[int, int, int]:
@@ -692,7 +692,7 @@ def main():
     else:
         # Full migration
         migrated_releases, skipped_releases = migrate_releases(source_repo, target_repo, recreate_in_order=args.recreate_releases)
-        migrated_issues, failed_issues = migrate_issues(source_repo, target_repo)
+        migrated_issues, skipped_issues, failed_issues = migrate_issues(source_repo, target_repo)
         matched, updated, closed = fix_migrated_issues(source_repo, target_repo)
         verify_and_fix_remaining(source_repo, target_repo)
         discussions_count = migrate_discussions(source_repo, target_repo)
@@ -702,7 +702,7 @@ def main():
         print("MIGRATION SUMMARY")
         print("=" * 60)
         print(f"Releases:  {migrated_releases} migrated, {skipped_releases} skipped")
-        print(f"Issues:    {migrated_issues} migrated, {failed_issues} failed")
+        print(f"Issues:    {migrated_issues} migrated, {skipped_issues} skipped, {failed_issues} failed")
         print(f"Fixed:     {matched} matched, {updated} updated, {closed} closed")
         print(f"Discussions: {discussions_count} found (require manual migration)")
         print("\nMigration complete!")
