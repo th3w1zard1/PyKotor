@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 import json
+
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-import pytest
-
-from pykotor.common.language import Gender, Language, LocalizedString
+from pykotor.common.language import Gender, Language
 from pykotor.resource.generics.dlg.base import DLG
+from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 from pykotor.resource.generics.dlg.links import DLGLink
 from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
-from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
 
 if TYPE_CHECKING:
     from typing import Any
@@ -140,11 +139,11 @@ def test_missing_required_fields(tmp_path: Path):
                 "name": "Start",
                 "text": "Some text",
                 "pid": "1",
-                "tags": ["entry"]  # Add tag so it's recognized as entry
+                "tags": ["entry"],  # Add tag so it's recognized as entry
                 # Missing metadata, etc.
             }
         ],
-        "startnode": "1"  # Add startnode so it's used
+        "startnode": "1",  # Add startnode so it's used
     }
 
     path = tmp_path / "missing_fields.json"
@@ -209,6 +208,7 @@ def test_empty_text(tmp_path: Path):
 def test_large_dialog(tmp_path: Path):
     """Test handling of large dialog structures."""
     import sys
+
     # Increase recursion limit for this test
     old_limit = sys.getrecursionlimit()
     sys.setrecursionlimit(3000)
