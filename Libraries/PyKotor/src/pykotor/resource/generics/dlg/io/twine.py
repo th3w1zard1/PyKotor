@@ -283,9 +283,23 @@ def _write_json(
     }
 
     for passage in story.passages:
+        # Embed links into text in Twine format: [[text->target]] or [[target]]
+        text_with_links = passage.text
+        if passage.links:
+            link_texts = []
+            for link in passage.links:
+                if link.target:
+                    if link.text and link.text != link.target:
+                        link_texts.append(f"[[{link.text}->{link.target}]]")
+                    else:
+                        link_texts.append(f"[[{link.target}]]")
+            if link_texts:
+                # Append links to the text (Twine convention is to append links at the end)
+                text_with_links = passage.text + (" " if passage.text else "") + " ".join(link_texts)
+        
         p_data: PassageDict = {
             "name": passage.name,
-            "text": passage.text,
+            "text": text_with_links,
             "tags": passage.tags,
             "pid": passage.pid,
             "metadata": {
@@ -349,7 +363,22 @@ def _write_html(
             "size",
             f"{passage.metadata.size.x},{passage.metadata.size.y}",
         )
-        p_data.text = passage.text
+        
+        # Embed links into text in Twine format: [[text->target]] or [[target]]
+        text_with_links = passage.text
+        if passage.links:
+            link_texts = []
+            for link in passage.links:
+                if link.target:
+                    if link.text and link.text != link.target:
+                        link_texts.append(f"[[{link.text}->{link.target}]]")
+                    else:
+                        link_texts.append(f"[[{link.target}]]")
+            if link_texts:
+                # Append links to the text (Twine convention is to append links at the end)
+                text_with_links = passage.text + (" " if passage.text else "") + " ".join(link_texts)
+        
+        p_data.text = text_with_links
 
     # Mark starting passage if known
     if story.start_pid:
