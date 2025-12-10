@@ -11,7 +11,7 @@ This document provides a detailed description of the GFF (Generic file format) u
 ## Table of Contents
 
 - [KotOR GFF file format Documentation](#kotor-gff-file-format-documentation)
-  - Table of Contents
+  - [Table of Contents](#table-of-contents)
   - [file structure Overview](#file-structure-overview)
     - [GFF as a Universal Container](#gff-as-a-universal-container)
   - [Binary format](#binary-format)
@@ -368,7 +368,7 @@ See [UTW (Waypoint)](GFF-UTW) for detailed documentation.
 
 ## Alternative Terminology (Historical)
 
-The [GFF](GFF-File-Format) format is also known as "ITP" in [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) (Tim Smith/Torlack's reverse-engineered documentation from the Neverwinter Nights era). The following terminology mapping may be helpful when reading older specifications:
+The [GFF](GFF-File-Format) format is also known as "ITP" in [`vendor/xoreos-docs/specs/torlack/itp.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/itp.html) (Tim Smith/Torlack's reverse-engineered documentation from the **Neverwinter Nights era**, but the format is **identical in KotOR**). The following terminology mapping may be helpful when reading older specifications:
 
 | Modern Term ([GFF](GFF-File-Format)) | Historical Term (ITP) | Description |
 | ----------------- | --------------------- | ----------- |

@@ -78,7 +78,7 @@ KotOR uses hexadecimal resource type identifiers inherited from the Aurora engin
 | MVE           | 0x0002  | Movie/video file (legacy)                          |
 | TGA           | 0x0003  | Targa image format (legacy)                          |
 | [WAV](WAV-File-Format)           | 0x0004  | Wave audio file (see [WAV File Format](WAV-File-Format))                          |
-| [PLT](PLT-File-Format)           | 0x0006  | [texture](TPC-File-Format) palette (Neverwinter Nights, see [PLT File Format](PLT-File-Format)) |
+| [PLT](PLT-File-Format)           | 0x0006  | [texture](TPC-File-Format) palette (**Neverwinter Nights only**, NOT used in KotOR - see [PLT File Format](PLT-File-Format)) |
 | INI           | 0x0007  | Configuration file (e.g., `kotor.ini`)                          |
 | BMU           | 0x0008  | Unknown (legacy)                                |
 | MPG           | 0x0009  | MPEG video (legacy)                            |
@@ -433,7 +433,7 @@ Reference documentation from related projects (external sources):
   - **Official BioWare specifications** (`specs/bioware/`): Official Aurora Engine file format PDFs from the now-defunct nwn.bioware.com developer site. These documents are authoritative references for formats used across Aurora engine games including KotOR.
   - **Torlack's reverse-engineered specs** (`specs/torlack/`): Tim Smith (Torlack)'s reverse-engineered format documentation from his now-defunct website (torlock.com). These include detailed field-by-field breakdowns for formats like BIF, KEY, ERF (MOD), GFF (ITP), NCS, and binary MDL files.
   - **KotOR-specific documentation** (`specs/kotor_mdl.html`): Partial KotOR model format specifications with detailed field descriptions.
-  - **Binary templates** (`templates/`): 010 Editor binary template files for analyzing binary file structures (NWN1, NWN2, Jade Empire formats).
+  - **Binary templates** (`templates/`): 010 Editor binary template files for analyzing binary file structures (**NWN1, NWN2, Jade Empire formats - NOT KotOR-specific**).
   
   **Note:** Much of the KotOR-relevant content from xoreos-docs has been comprehensively integrated into this wiki. See individual format documentation pages for specific source references.
 - **[nwn-docs](https://github.com/kucik/nwn-docs)** - Neverwinter Nights documentation (shares Aurora formats)

@@ -205,56 +205,58 @@ def normalize_function_name(text: str) -> str:
 
 def fix_toc_links():
     """Fix TOC links in NSS-File-Format.md."""
-    content = NSS_FILE.read_text(encoding="utf-8")
-    original_content = content
-    fixes = 0
-    lines = content.splitlines()
-    new_lines = []
+    content: str = NSS_FILE.read_text(encoding="utf-8")
+    original_content: str = content
+    fixes: int = 0
+    lines: list[str] = content.splitlines()
+    new_lines: list[str] = []
 
-    for line in lines:
+    for line_num, line in enumerate(lines, 1):
+        parsed_line = line
         # Match lines with function links: - [`Function(params)` - Routine N](#anchor or file)
         # Pattern: backtick, function name, backtick, optional routine, link
-        if "`" in line and ("Routine" in line or "](NSS-" in line):
+        if "`" in parsed_line and ("Routine" in parsed_line or "](NSS-" in parsed_line):
             # Extract function name
-            func_match = re.search(r"`([^(]+)\(", line)
+            func_match: re.Match[str] | None = re.search(r"`([^(]+)\(", parsed_line)
             if func_match:
-                func_name = func_match.group(1)
+                func_name: str = func_match.group(1)
                 # Extract routine number if present
-                routine_match = re.search(r"Routine\s+(\d+)", line)
-                routine_num = routine_match.group(1) if routine_match else None
+                routine_match: re.Match[str] | None = re.search(r"Routine\s+(\d+)", parsed_line)
+                routine_num: str | None = routine_match.group(1) if routine_match else None
                 # Extract the full function text in backticks
-                func_text_match = re.search(r"`([^`]+)`", line)
-                func_text = func_text_match.group(1) if func_text_match else func_name
+                func_text_match: re.Match[str] | None = re.search(r"`([^`]+)`", parsed_line)
+                func_text: str = func_text_match.group(1) if func_text_match else func_name
 
                 # Get target file and anchor
-                result = get_function_file_and_anchor(func_name)
+                result: tuple[str, str] | None = get_function_file_and_anchor(func_name)
                 if result:
-                    file_name, anchor = result
-                    routine_str = f" - Routine {routine_num}" if routine_num else ""
+                    file_name: str = result[0]
+                    anchor: str = result[1]
+                    routine_str: str = f" - Routine {routine_num}" if routine_num else ""
 
                     # Check if link already points to a file with wrong anchor or wrong file
                     # Match pattern: [text](file#anchor)
-                    link_pattern = r"\[`[^`]+`[^\]]*\]\(([^#\)]+)(?:#([^\)]+))?\)"
-                    match = re.search(link_pattern, line)
+                    link_pattern: str = r"\[`[^`]+`[^\]]*\]\(([^#\)]+)(?:#([^\)]+))?\)"
+                    match: re.Match[str] | None = re.search(link_pattern, parsed_line)
                     if match:
-                        current_file = match.group(1)
-                        current_anchor = match.group(2) if match.lastindex and match.lastindex >= 2 else None
+                        current_file: str = match.group(1)
+                        current_anchor: str | None = match.group(2) if match.lastindex and match.lastindex >= 2 else None
 
                         # Fix if file is wrong or anchor is wrong
                         if current_file != file_name or (current_anchor and current_anchor != anchor):
-                            line = re.sub(link_pattern, f"[`{func_text}`{routine_str}]({file_name}#{anchor})", line)
+                            parsed_line = re.sub(link_pattern, f"[`{func_text}`{routine_str}]({file_name}#{anchor})", parsed_line)
                             fixes += 1
-                    elif "](#" in line:
+                    elif "](#" in parsed_line:
                         # Replace anchor link with file link + anchor
-                        line = re.sub(r"\[`[^`]+`[^\]]*\]\([^\)]+\)", f"[`{func_text}`{routine_str}]({file_name}#{anchor})", line)
+                        parsed_line = re.sub(r"\[`[^`]+`[^\]]*\]\([^\)]+\)", f"[`{func_text}`{routine_str}]({file_name}#{anchor})", parsed_line)
                         fixes += 1
-                    elif f"]({file_name})" in line:
+                    elif f"]({file_name})" in parsed_line:
                         # Add anchor to existing file link
-                        line = line.replace(f"]({file_name})", f"]({file_name}#{anchor})")
+                        parsed_line = parsed_line.replace(f"]({file_name})", f"]({file_name}#{anchor})")
                         fixes += 1
                 # If result is None, keep the original line unchanged (no continue)
 
-        new_lines.append(line)
+        new_lines.append(parsed_line)
 
     content = "\n".join(new_lines)
 

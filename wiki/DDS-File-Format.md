@@ -3,7 +3,7 @@
 DirectDraw Surface (DDS) [textures](TPC-File-Format) appear in two flavours across KotOR-era content:
 
 - **Standard DirectX DDS** (header magic `0x44445320`, 124-byte header) used by downstream tools/ports.
-- **BioWare DDS variant** (no magic; width/height/bpp/dataSize leading integers) used in Neverwinter Nights/KotOR game assets.
+- **BioWare DDS variant** (no magic; width/height/bpp/dataSize leading integers) used in **KotOR and Neverwinter Nights** game assets (shared Aurora engine format).
 
 This page documents how PyKotor interprets both formats and how it aligns with reference implementations in `vendor/xoreos` and `vendor/xoreos-tools`.
 

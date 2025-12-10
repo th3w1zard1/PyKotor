@@ -108,10 +108,8 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetLastAttackMode(oCreature)` - Routine 318](NSS-Shared-Functions-Combat-Functions#getlastattackmode)
       - [`GetLastAttackResult(oAttacker)` - Routine 725](NSS-Shared-Functions-Combat-Functions#getlastattackresult)
       - [`GetLastAttackType(oCreature)` - Routine 317](NSS-Shared-Functions-Combat-Functions#getlastattacktype)
-      - [`GetLastKiller()` - Routine 437](NSS-Shared-Functions-Other-Functions#getlastkiller)
-      - [`GetNextAttacker(oCreature)` - Routine 728](NSS-Shared-Functions-Other-Functions#getnextattacker)
-      - [`TouchAttackMelee(oTarget, bDisplayFeedback)` - Routine 146](NSS-Shared-Functions-Other-Functions#touchattackmelee)
-      - [`TouchAttackRanged(oTarget, bDisplayFeedback)` - Routine 147](NSS-Shared-Functions-Other-Functions#touchattackranged)
+      - [`GetLastKiller()` - Routine 437](NSS-Shared-Functions-Combat-Functions#getlastkiller)
+      - [`GetNextAttacker(oCreature)` - Routine 728](NSS-Shared-Functions-Combat-Functions#getnextattacker)
     - [Dialog and Conversation Functions](#dialog-and-conversation-functions)
       - [`BarkString(oCreature, strRef)` - Routine 671](NSS-Shared-Functions-Dialog-and-Conversation-Functions#barkstring)
       - [`BeginConversation(sResRef, oObjectToDialog)` - Routine 255](NSS-Shared-Functions-Dialog-and-Conversation-Functions#beginconversation)
@@ -129,11 +127,8 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`SpeakOneLinerConversation(sDialogResRef, oTokenTarget)` - Routine 417](NSS-Shared-Functions-Dialog-and-Conversation-Functions#speakonelinerconversation)
       - [`SpeakString(sStringToSpeak, nTalkVolume)` - Routine 221](NSS-Shared-Functions-Dialog-and-Conversation-Functions#speakstring)
     - [Effects System](#effects-system)
-      - [`ActionEquipMostEffectiveArmor()` - Routine 404](NSS-Shared-Functions-Actions#actionequipmosteffectivearmor)
-      - [`ApplyEffectAtLocation(nDurationType, eEffect, lLocation, fDuration)` - Routine 216](NSS-Shared-Functions-Other-Functions#applyeffectatlocation)
-      - [`ApplyEffectToObject(nDurationType, eEffect, oTarget, fDuration)` - Routine 220](NSS-Shared-Functions-Other-Functions#applyeffecttoobject)
-      - [`ClearAllEffects()` - Routine 710](NSS-Shared-Functions-Other-Functions#clearalleffects)
-      - [`DisableVideoEffect()` - Routine 508](NSS-Shared-Functions-Other-Functions#disablevideoeffect)
+      - [`ActionEquipMostEffectiveArmor()` - Routine 404](NSS-Shared-Functions-Effects-System#actionequipmosteffectivearmor)
+      - [`DisableVideoEffect()` - Routine 508](NSS-Shared-Functions-Effects-System#disablevideoeffect)
       - [`EffectAbilityDecrease(nAbility, nModifyBy)` - Routine 446](NSS-Shared-Functions-Effects-System#effectabilitydecrease)
       - [`EffectAbilityIncrease(nAbilityToIncrease, nModifyBy)` - Routine 80](NSS-Shared-Functions-Effects-System#effectabilityincrease)
       - [`EffectACDecrease(nValue, nModifyType, nDamageType)` - Routine 450](NSS-Shared-Functions-Effects-System#effectacdecrease)
@@ -212,28 +207,28 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`EffectTrueSeeing()` - Routine 465](NSS-Shared-Functions-Effects-System#effecttrueseeing)
       - [`EffectVisualEffect(nVisualEffectId, nMissEffect)` - Routine 180](NSS-Shared-Functions-Effects-System#effectvisualeffect)
       - [`EffectWhirlWind()` - Routine 703](NSS-Shared-Functions-Effects-System#effectwhirlwind)
-      - [`EnableVideoEffect(nEffectType)` - Routine 508](NSS-Shared-Functions-Other-Functions#enablevideoeffect)
-      - [`ExtraordinaryEffect(eEffect)` - Routine 114](NSS-Shared-Functions-Other-Functions#extraordinaryeffect)
-      - [`GetAreaOfEffectCreator(oAreaOfEffectObject)` - Routine 264](NSS-Shared-Functions-Module-and-Area-Functions#getareaofeffectcreator)
+      - [`EnableVideoEffect(nEffectType)` - Routine 508](NSS-Shared-Functions-Effects-System#enablevideoeffect)
+      - [`ExtraordinaryEffect(eEffect)` - Routine 114](NSS-Shared-Functions-Effects-System#extraordinaryeffect)
+      - [`GetAreaOfEffectCreator(oAreaOfEffectObject)` - Routine 264](NSS-Shared-Functions-Effects-System#getareaofeffectcreator)
       - [`GetEffectCreator(eEffect)` - Routine 91](NSS-Shared-Functions-Effects-System#geteffectcreator)
       - [`GetEffectDurationType(eEffect)` - Routine 89](NSS-Shared-Functions-Effects-System#geteffectdurationtype)
       - [`GetEffectSpellId(eSpellEffect)` - Routine 305](NSS-Shared-Functions-Effects-System#geteffectspellid)
       - [`GetEffectSubType(eEffect)` - Routine 90](NSS-Shared-Functions-Effects-System#geteffectsubtype)
       - [`GetEffectType(eEffect)` - Routine 170](NSS-Shared-Functions-Effects-System#geteffecttype)
-      - [`GetFirstEffect(oCreature)` - Routine 85](NSS-Shared-Functions-Other-Functions#getfirsteffect)
-      - [`GetHasFeatEffect(nFeat, oObject)` - Routine 543](NSS-Shared-Functions-Other-Functions#gethasfeateffect)
-      - [`GetHasSpellEffect(nSpell, oObject)` - Routine 304](NSS-Shared-Functions-Other-Functions#gethasspelleffect)
-      - [`GetIsEffectValid(eEffect)` - Routine 88](NSS-Shared-Functions-Other-Functions#getiseffectvalid)
-      - [`GetIsWeaponEffective(oVersus, bOffHand)` - Routine 422](NSS-Shared-Functions-Other-Functions#getisweaponeffective)
-      - [`GetNextEffect(oCreature)` - Routine 86](NSS-Shared-Functions-Other-Functions#getnexteffect)
-      - [`MagicalEffect(eEffect)` - Routine 112](NSS-Shared-Functions-Other-Functions#magicaleffect)
-      - [`PlayVisualAreaEffect(nEffectID, lTarget)` - Routine 677](NSS-Shared-Functions-Other-Functions#playvisualareaeffect)
+      - [`GetFirstEffect(oCreature)` - Routine 85](NSS-Shared-Functions-Effects-System#getfirsteffect)
+      - [`GetHasFeatEffect(nFeat, oObject)` - Routine 543](NSS-Shared-Functions-Effects-System#gethasfeateffect)
+      - [`GetHasSpellEffect(nSpell, oObject)` - Routine 304](NSS-Shared-Functions-Effects-System#gethasspelleffect)
+      - [`GetIsEffectValid(eEffect)` - Routine 88](NSS-Shared-Functions-Effects-System#getiseffectvalid)
+      - [`GetIsWeaponEffective(oVersus, bOffHand)` - Routine 422](NSS-Shared-Functions-Effects-System#getisweaponeffective)
+      - [`GetNextEffect(oCreature)` - Routine 86](NSS-Shared-Functions-Effects-System#getnexteffect)
+      - [`MagicalEffect(eEffect)` - Routine 112](NSS-Shared-Functions-Effects-System#magicaleffect)
+      - [`PlayVisualAreaEffect(nEffectID, lTarget)` - Routine 677](NSS-Shared-Functions-Effects-System#playvisualareaeffect)
       - [`RemoveEffect(oCreature, eEffect)` - Routine 87](NSS-Shared-Functions-Effects-System#removeeffect)
       - [`SetEffectIcon(eEffect, nIcon)` - Routine 552](NSS-Shared-Functions-Effects-System#seteffecticon)
-      - [`SupernaturalEffect(eEffect)` - Routine 113](NSS-Shared-Functions-Other-Functions#supernaturaleffect)
-      - [`SWMG_SetSpeedBlurEffect(bEnabled, fRatio)` - Routine 563](NSS-Shared-Functions-Other-Functions#swmg_setspeedblureffect)
-      - [`VersusRacialTypeEffect(eEffect, nRacialType)` - Routine 356](NSS-Shared-Functions-Other-Functions#versusracialtypeeffect)
-      - [`VersusTrapEffect(eEffect)` - Routine 357](NSS-Shared-Functions-Other-Functions#versustrapeffect)
+      - [`SupernaturalEffect(eEffect)` - Routine 113](NSS-Shared-Functions-Effects-System#supernaturaleffect)
+      - [`SWMG_SetSpeedBlurEffect(bEnabled, fRatio)` - Routine 563](NSS-Shared-Functions-Effects-System#swmg_setspeedblureffect)
+      - [`VersusRacialTypeEffect(eEffect, nRacialType)` - Routine 356](NSS-Shared-Functions-Effects-System#versusracialtypeeffect)
+      - [`VersusTrapEffect(eEffect)` - Routine 357](NSS-Shared-Functions-Effects-System#versustrapeffect)
     - [Global Variables](#global-variables)
       - [`GetGlobalBoolean(sIdentifier)` - Routine 578](NSS-Shared-Functions-Global-Variables#getglobalboolean)
       - [`GetGlobalLocation(sIdentifier)` - Routine 692](NSS-Shared-Functions-Global-Variables#getgloballocation)
@@ -246,13 +241,13 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`SetGlobalNumber(sIdentifier, nValue)` - Routine 581](NSS-Shared-Functions-Global-Variables#setglobalnumber)
       - [`SetGlobalString(sIdentifier, sValue)` - Routine 160](NSS-Shared-Functions-Global-Variables#setglobalstring)
     - [Item Management](#item-management)
-      - [`ChangeItemCost(sItem, fCostMultiplier)` - Routine 747](NSS-Shared-Functions-Other-Functions#changeitemcost)
+      - [`ChangeItemCost(sItem, fCostMultiplier)` - Routine 747](NSS-Shared-Functions-Item-Management#changeitemcost)
       - [`CreateItemOnFloor(sTemplate, lLocation, bUseAppearAnimation)` - Routine 766](NSS-Shared-Functions-Item-Management#createitemonfloor)
       - [`CreateItemOnObject(sItemTemplate, oTarget, nStackSize)` - Routine 31](NSS-Shared-Functions-Item-Management#createitemonobject)
-      - [`EventActivateItem(oItem, lTarget, oTarget)` - Routine 424](NSS-Shared-Functions-Other-Functions#eventactivateitem)
-      - [`GetBaseItemType(oItem)` - Routine 397](NSS-Shared-Functions-Other-Functions#getbaseitemtype)
-      - [`GetFirstItemInInventory(oTarget)` - Routine 339](NSS-Shared-Functions-Other-Functions#getfirstitemininventory)
-      - [`GetInventoryDisturbItem()` - Routine 353](NSS-Shared-Functions-Other-Functions#getinventorydisturbitem)
+      - [`EventActivateItem(oItem, lTarget, oTarget)` - Routine 424](NSS-Shared-Functions-Item-Management#eventactivateitem)
+      - [`GetBaseItemType(oItem)` - Routine 397](NSS-Shared-Functions-Item-Management#getbaseitemtype)
+      - [`GetFirstItemInInventory(oTarget)` - Routine 339](NSS-Shared-Functions-Item-Management#getfirstitemininventory)
+      - [`GetInventoryDisturbItem()` - Routine 353](NSS-Shared-Functions-Item-Management#getinventorydisturbitem)
       - [`GetItemActivated()` - Routine 439](NSS-Shared-Functions-Item-Management#getitemactivated)
       - [`GetItemActivatedTarget()` - Routine 442](NSS-Shared-Functions-Item-Management#getitemactivatedtarget)
       - [`GetItemActivatedTargetLocation()` - Routine 441](NSS-Shared-Functions-Item-Management#getitemactivatedtargetlocation)
@@ -262,101 +257,49 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetItemPossessedBy(oCreature, sItemTag)` - Routine 30](NSS-Shared-Functions-Item-Management#getitempossessedby)
       - [`GetItemPossessor(oItem)` - Routine 29](NSS-Shared-Functions-Item-Management#getitempossessor)
       - [`GetItemStackSize(oItem)` - Routine 138](NSS-Shared-Functions-Item-Management#getitemstacksize)
-      - [`GetLastItemEquipped()` - Routine 52](NSS-Shared-Functions-Other-Functions#getlastitemequipped)
-      - [`GetModuleItemAcquired()` - Routine 282](NSS-Shared-Functions-Module-and-Area-Functions#getmoduleitemacquired)
-      - [`GetModuleItemAcquiredFrom()` - Routine 283](NSS-Shared-Functions-Module-and-Area-Functions#getmoduleitemacquiredfrom)
-      - [`GetModuleItemLost()` - Routine 292](NSS-Shared-Functions-Module-and-Area-Functions#getmoduleitemlost)
-      - [`GetModuleItemLostBy()` - Routine 293](NSS-Shared-Functions-Module-and-Area-Functions#getmoduleitemlostby)
-      - [`GetNextItemInInventory(oTarget)` - Routine 340](NSS-Shared-Functions-Other-Functions#getnextitemininventory)
-      - [`GetNumStackedItems(oItem)` - Routine 475](NSS-Shared-Functions-Other-Functions#getnumstackeditems)
-      - [`GetSpellCastItem()` - Routine 438](NSS-Shared-Functions-Other-Functions#getspellcastitem)
-      - [`GiveItem(oItem, oGiveTo)` - Routine 271](NSS-Shared-Functions-Other-Functions#giveitem)
+      - [`GetLastItemEquipped()` - Routine 52](NSS-Shared-Functions-Item-Management#getlastitemequipped)
+      - [`GetModuleItemAcquired()` - Routine 282](NSS-Shared-Functions-Item-Management#getmoduleitemacquired)
+      - [`GetModuleItemAcquiredFrom()` - Routine 283](NSS-Shared-Functions-Item-Management#getmoduleitemacquiredfrom)
+      - [`GetModuleItemLost()` - Routine 292](NSS-Shared-Functions-Item-Management#getmoduleitemlost)
+      - [`GetModuleItemLostBy()` - Routine 293](NSS-Shared-Functions-Item-Management#getmoduleitemlostby)
+      - [`GetNextItemInInventory(oTarget)` - Routine 340](NSS-Shared-Functions-Item-Management#getnextitemininventory)
+      - [`GetNumStackedItems(oItem)` - Routine 475](NSS-Shared-Functions-Item-Management#getnumstackeditems)
+      - [`GetSpellCastItem()` - Routine 438](NSS-Shared-Functions-Item-Management#getspellcastitem)
       - [`SetItemNonEquippable(oItem, bNonEquippable)` - Routine 266](NSS-Shared-Functions-Item-Management#setitemnonequippable)
       - [`SetItemStackSize(oItem, nStackSize)` - Routine 150](NSS-Shared-Functions-Item-Management#setitemstacksize)
     - [Item Properties](#item-properties)
-      - [`GetItemHasItemProperty(oItem, nProperty)` - Routine 398](NSS-Shared-Functions-Item-Management#getitemhasitemproperty)
+      - [`GetItemHasItemProperty(oItem, nProperty)` - Routine 398](NSS-Shared-Functions-Item-Properties#getitemhasitemproperty)
     - [Local Variables](#local-variables)
-      - [`GetLocalBoolean(oObject, nIndex)` - Routine 679](NSS-Shared-Functions-Other-Functions#getlocalboolean)
-      - [`GetLocalNumber(oObject, nIndex)` - Routine 681](NSS-Shared-Functions-Other-Functions#getlocalnumber)
-      - [`SetLocalBoolean(oObject, nIndex, nValue)` - Routine 680](NSS-Shared-Functions-Other-Functions#setlocalboolean)
-      - [`SetLocalNumber(oObject, nIndex, nValue)` - Routine 682](NSS-Shared-Functions-Other-Functions#setlocalnumber)
+      - [`GetLocalBoolean(oObject, nIndex)` - Routine 679](NSS-Shared-Functions-Local-Variables#getlocalboolean)
+      - [`GetLocalNumber(oObject, nIndex)` - Routine 681](NSS-Shared-Functions-Local-Variables#getlocalnumber)
+      - [`SetLocalBoolean(oObject, nIndex, nValue)` - Routine 680](NSS-Shared-Functions-Local-Variables#setlocalboolean)
+      - [`SetLocalNumber(oObject, nIndex, nValue)` - Routine 682](NSS-Shared-Functions-Local-Variables#setlocalnumber)
     - [Module and Area Functions](#module-and-area-functions)
       - [`GetArea(oTarget)` - Routine 24](NSS-Shared-Functions-Module-and-Area-Functions#getarea)
       - [`GetAreaUnescapable()` - Routine 15](NSS-Shared-Functions-Module-and-Area-Functions#getareaunescapable)
-      - [`GetFirstObjectInArea(oArea, nObjectFilter)` - Routine 93](NSS-Shared-Functions-Other-Functions#getfirstobjectinarea)
+      - [`GetFirstObjectInArea(oArea, nObjectFilter)` - Routine 93](NSS-Shared-Functions-Module-and-Area-Functions#getfirstobjectinarea)
       - [`GetModule()` - Routine 242](NSS-Shared-Functions-Module-and-Area-Functions#getmodule)
       - [`GetModuleFileName()` - Routine 210](NSS-Shared-Functions-Module-and-Area-Functions#getmodulefilename)
       - [`GetModuleName()` - Routine 561](NSS-Shared-Functions-Module-and-Area-Functions#getmodulename)
-      - [`GetNextObjectInArea(oArea, nObjectFilter)` - Routine 94](NSS-Shared-Functions-Other-Functions#getnextobjectinarea)
-      - [`SetAreaFogColor(oArea, fRed, fGreen, fBlue)` - Routine 746](NSS-Shared-Functions-Other-Functions#setareafogcolor)
-      - [`SetAreaTransitionBMP(nPredefinedAreaTransition, sCustomAreaTransitionBMP)` - Routine 203](NSS-Shared-Functions-Other-Functions#setareatransitionbmp)
-      - [`SetAreaUnescapable(bUnescapable)` - Routine 14](NSS-Shared-Functions-Other-Functions#setareaunescapable)
-      - [`StartNewModule(sModuleName, sWayPoint, sMovie1, sMovie2, sMovie3, sMovie4, sMovie5, sMovie6)` - Routine 509](NSS-Shared-Functions-Other-Functions#startnewmodule)
+      - [`GetNextObjectInArea(oArea, nObjectFilter)` - Routine 94](NSS-Shared-Functions-Module-and-Area-Functions#getnextobjectinarea)
+      - [`SetAreaFogColor(oArea, fRed, fGreen, fBlue)` - Routine 746](NSS-Shared-Functions-Module-and-Area-Functions#setareafogcolor)
+      - [`SetAreaTransitionBMP(nPredefinedAreaTransition, sCustomAreaTransitionBMP)` - Routine 203](NSS-Shared-Functions-Module-and-Area-Functions#setareatransitionbmp)
+      - [`SetAreaUnescapable(bUnescapable)` - Routine 14](NSS-Shared-Functions-Module-and-Area-Functions#setareaunescapable)
     - [Object Query and Manipulation](#object-query-and-manipulation)
-      - [`CreateObject(nObjectType, sTemplate, lLocation, bUseAppearAnimation)` - Routine 243](NSS-Shared-Functions-Other-Functions#createobject)
-      - [`DestroyObject(oDestroy, fDelay, bNoFade, fDelayUntilFade)` - Routine 241](NSS-Shared-Functions-Other-Functions#destroyobject)
-      - [`GetNearestCreature(nFirstCriteriaType, nFirstCriteriaValue, oTarget, nNth, nSecondCriteriaType, nSecondCriteriaValue, nThirdCriteriaType, nThirdCriteriaValue)` - Routine 38](NSS-Shared-Functions-Other-Functions#getnearestcreature)
-      - [`GetNearestCreatureToLocation(nFirstCriteriaType, nFirstCriteriaValue, lLocation, nNth, nSecondCriteriaType, nSecondCriteriaValue, nThirdCriteriaType, nThirdCriteriaValue)` - Routine 226](NSS-Shared-Functions-Other-Functions#getnearestcreaturetolocation)
-      - [`GetNearestObject(nObjectType, oTarget, nNth)` - Routine 227](NSS-Shared-Functions-Other-Functions#getnearestobject)
-      - [`GetNearestObjectByTag(sTag, oTarget, nNth)` - Routine 229](NSS-Shared-Functions-Other-Functions#getnearestobjectbytag)
-      - [`GetNearestObjectToLocation(nObjectType, lLocation, nNth)` - Routine 228](NSS-Shared-Functions-Other-Functions#getnearestobjecttolocation)
-      - [`GetNearestTrapToObject(oTarget, nTrapDetected)` - Routine 488](NSS-Shared-Functions-Other-Functions#getnearesttraptoobject)
+      - [`GetNearestCreature(nFirstCriteriaType, nFirstCriteriaValue, oTarget, nNth, nSecondCriteriaType, nSecondCriteriaValue, nThirdCriteriaType, nThirdCriteriaValue)` - Routine 38](NSS-Shared-Functions-Object-Query-and-Manipulation#getnearestcreature)
+      - [`GetNearestCreatureToLocation(nFirstCriteriaType, nFirstCriteriaValue, lLocation, nNth, nSecondCriteriaType, nSecondCriteriaValue, nThirdCriteriaType, nThirdCriteriaValue)` - Routine 226](NSS-Shared-Functions-Object-Query-and-Manipulation#getnearestcreaturetolocation)
+      - [`GetNearestObject(nObjectType, oTarget, nNth)` - Routine 227](NSS-Shared-Functions-Object-Query-and-Manipulation#getnearestobject)
+      - [`GetNearestObjectByTag(sTag, oTarget, nNth)` - Routine 229](NSS-Shared-Functions-Object-Query-and-Manipulation#getnearestobjectbytag)
+      - [`GetNearestObjectToLocation(nObjectType, lLocation, nNth)` - Routine 228](NSS-Shared-Functions-Object-Query-and-Manipulation#getnearestobjecttolocation)
+      - [`GetNearestTrapToObject(oTarget, nTrapDetected)` - Routine 488](NSS-Shared-Functions-Object-Query-and-Manipulation#getnearesttraptoobject)
       - [`GetObjectByTag(sTag, nNth)` - Routine 200](NSS-Shared-Functions-Object-Query-and-Manipulation#getobjectbytag)
       - [`GetObjectHeard(oTarget, oSource)` - Routine 290](NSS-Shared-Functions-Object-Query-and-Manipulation#getobjectheard)
       - [`GetObjectSeen(oTarget, oSource)` - Routine 289](NSS-Shared-Functions-Object-Query-and-Manipulation#getobjectseen)
       - [`GetObjectType(oTarget)` - Routine 106](NSS-Shared-Functions-Object-Query-and-Manipulation#getobjecttype)
-      - [`GetSpellTargetObject()` - Routine 47](NSS-Shared-Functions-Other-Functions#getspelltargetobject)
-      - [`SWMG_GetObjectByName(sName)` - Routine 585](NSS-Shared-Functions-Other-Functions#swmg_getobjectbyname)
-      - [`SWMG_GetObjectName(oid)` - Routine 597](NSS-Shared-Functions-Other-Functions#swmg_getobjectname)
+      - [`GetSpellTargetObject()` - Routine 47](NSS-Shared-Functions-Object-Query-and-Manipulation#getspelltargetobject)
+      - [`SWMG_GetObjectByName(sName)` - Routine 585](NSS-Shared-Functions-Object-Query-and-Manipulation#swmg_getobjectbyname)
+      - [`SWMG_GetObjectName(oid)` - Routine 597](NSS-Shared-Functions-Object-Query-and-Manipulation#swmg_getobjectname)
     - [Other Functions](#other-functions)
-      - [`abs(nValue)` - Routine 77](NSS-Shared-Functions-Other-Functions#abs)
-      - [`acos(fValue)` - Routine 71](NSS-Shared-Functions-Other-Functions#acos)
-      - [`AddJournalQuestEntry(szPlotID, nState, bAllowOverrideHigher)` - Routine 367](NSS-Shared-Functions-Other-Functions#addjournalquestentry)
-      - [`AddJournalWorldEntry(nIndex, szEntry, szTitle)` - Routine 669](NSS-Shared-Functions-Other-Functions#addjournalworldentry)
-      - [`AddJournalWorldEntryStrref(strref, strrefTitle)` - Routine 670](NSS-Shared-Functions-Other-Functions#addjournalworldentrystrref)
-      - [`AdjustReputation(oTarget, oSourceFactionMember, nAdjustment)` - Routine 209](NSS-Shared-Functions-Other-Functions#adjustreputation)
-      - [`AngleToVector(fAngle)` - Routine 144](NSS-Shared-Functions-Other-Functions#angletovector)
-      - [`asin(fValue)` - Routine 72](NSS-Shared-Functions-Other-Functions#asin)
-      - [`AssignCommand(oActionSubject, aActionToAssign)` - Routine 6](NSS-Shared-Functions-Other-Functions#assigncommand)
-      - [`atan(fValue)` - Routine 73](NSS-Shared-Functions-Other-Functions#atan)
-      - [`AurPostString(sString, nX, nY, fLife)` - Routine 582](NSS-Shared-Functions-Other-Functions#aurpoststring)
-      - [`AwardStealthXP(oTarget)` - Routine 480](NSS-Shared-Functions-Other-Functions#awardstealthxp)
-      - [`ChangeFaction(oObjectToChangeFaction, oMemberOfFactionToJoin)` - Routine 173](NSS-Shared-Functions-Other-Functions#changefaction)
-      - [`ChangeFactionByFaction(nFactionFrom, nFactionTo)` - Routine 737](NSS-Shared-Functions-Other-Functions#changefactionbyfaction)
-      - [`ChangeToStandardFaction(oCreatureToChange, nStandardFaction)` - Routine 412](NSS-Shared-Functions-Other-Functions#changetostandardfaction)
-      - [`ClearAllActions()` - Routine 9](NSS-Shared-Functions-Other-Functions#clearallactions)
-      - [`cos(fValue)` - Routine 68](NSS-Shared-Functions-Other-Functions#cos)
-      - [`CutsceneMove(oObject, vPosition, nRun)` - Routine 507](NSS-Shared-Functions-Other-Functions#cutscenemove)
-      - [`d10(nNumDice)` - Routine 100](NSS-Shared-Functions-Other-Functions#d10)
-      - [`d100(nNumDice)` - Routine 103](NSS-Shared-Functions-Other-Functions#d100)
-      - [`d12(nNumDice)` - Routine 101](NSS-Shared-Functions-Other-Functions#d12)
-      - [`d2(nNumDice)` - Routine 95](NSS-Shared-Functions-Other-Functions#d2)
-      - [`d20(nNumDice)` - Routine 102](NSS-Shared-Functions-Other-Functions#d20)
-      - [`d3(nNumDice)` - Routine 96](NSS-Shared-Functions-Other-Functions#d3)
-      - [`d4(nNumDice)` - Routine 97](NSS-Shared-Functions-Other-Functions#d4)
-      - [`d6(nNumDice)` - Routine 98](NSS-Shared-Functions-Other-Functions#d6)
-      - [`d8(nNumDice)` - Routine 99](NSS-Shared-Functions-Other-Functions#d8)
-      - [`DelayCommand(fSeconds, aActionToDelay)` - Routine 7](NSS-Shared-Functions-Other-Functions#delaycommand)
-      - [`DeleteJournalWorldAllEntries()` - Routine 672](NSS-Shared-Functions-Other-Functions#deletejournalworldallentries)
-      - [`DeleteJournalWorldEntry(nIndex)` - Routine 673](NSS-Shared-Functions-Other-Functions#deletejournalworldentry)
-      - [`DeleteJournalWorldEntryStrref(strref)` - Routine 674](NSS-Shared-Functions-Other-Functions#deletejournalworldentrystrref)
-      - [`DoDoorAction(oTargetDoor, nDoorAction)` - Routine 338](NSS-Shared-Functions-Other-Functions#dodooraction)
-      - [`DoPlaceableObjectAction(oPlaceable, nPlaceableAction)` - Routine 547](NSS-Shared-Functions-Other-Functions#doplaceableobjectaction)
-      - [`DuplicateHeadAppearance(oidCreatureToChange, oidCreatureToMatch)` - Routine 500](NSS-Shared-Functions-Other-Functions#duplicateheadappearance)
-      - [`EndGame(nShowEndGameGui)` - Routine 564](NSS-Shared-Functions-Other-Functions#endgame)
-      - [`EventSpellCastAt(oCaster, nSpell, bHarmful)` - Routine 244](NSS-Shared-Functions-Other-Functions#eventspellcastat)
-      - [`EventUserDefined(nUserDefinedEventNumber)` - Routine 132](NSS-Shared-Functions-Other-Functions#eventuserdefined)
-      - [`ExecuteScript(sScript, oTarget, nScriptVar)` - Routine 8](NSS-Shared-Functions-Other-Functions#executescript)
-      - [`ExportAllCharacters()` - Routine 557](NSS-Shared-Functions-Other-Functions#exportallcharacters)
-      - [`fabs(fValue)` - Routine 67](NSS-Shared-Functions-Other-Functions#fabs)
-      - [`FaceObjectAwayFromObject(oFacer, oObjectToFaceAwayFrom)` - Routine 553](NSS-Shared-Functions-Other-Functions#faceobjectawayfromobject)
-      - [`FeetToMeters(fFeet)` - Routine 218](NSS-Shared-Functions-Other-Functions#feettometers)
-      - [`FindSubString(sString, sSubString)` - Routine 66](NSS-Shared-Functions-Other-Functions#findsubstring)
-      - [`FloatingTextStringOnCreature(sStringToDisplay, oCreatureToFloatAbove, bBroadcastToFaction)` - Routine 526](NSS-Shared-Functions-Other-Functions#floatingtextstringoncreature)
-      - [`FloatingTextStrRefOnCreature(nStrRefToDisplay, oCreatureToFloatAbove, bBroadcastToFaction)` - Routine 525](NSS-Shared-Functions-Other-Functions#floatingtextstrrefoncreature)
-      - [`FloatToInt(fFloat)` - Routine 231](NSS-Shared-Functions-Other-Functions#floattoint)
-      - [`FloatToString(fFloat, nWidth, nDecimals)` - Routine 3](NSS-Shared-Functions-Other-Functions#floattostring)
-      - [`FortitudeSave(oCreature, nDC, nSaveType, oSaveVersus)` - Routine 108](NSS-Shared-Functions-Other-Functions#fortitudesave)
       - [`GetAC(oObject, nForFutureUse)` - Routine 116](NSS-Shared-Functions-Other-Functions#getac)
       - [`GetAppearanceType(oCreature)` - Routine 524](NSS-Shared-Functions-Other-Functions#getappearancetype)
       - [`GetAttemptedMovementTarget()` - Routine 489](NSS-Shared-Functions-Other-Functions#getattemptedmovementtarget)
@@ -449,7 +392,7 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetJournalQuestExperience(szPlotID)` - Routine 384](NSS-Shared-Functions-Other-Functions#getjournalquestexperience)
       - [`GetLastAssociateCommand(oAssociate)` - Routine 321](NSS-Shared-Functions-Other-Functions#getlastassociatecommand)
       - [`GetLastClosedBy()` - Routine 260](NSS-Shared-Functions-Other-Functions#getlastclosedby)
-      - [`GetLastDamager()` - Routine 346](NSS-Shared-Functions-Combat-Functions#getlastdamager)
+      - [`GetLastDamager()` - Routine 346](NSS-Shared-Functions-Other-Functions#getlastdamager)
       - [`GetLastDisarmed()` - Routine 347](NSS-Shared-Functions-Other-Functions#getlastdisarmed)
       - [`GetLastDisturbed()` - Routine 348](NSS-Shared-Functions-Other-Functions#getlastdisturbed)
       - [`GetLastForcePowerUsed(oAttacker)` - Routine 723](NSS-Shared-Functions-Other-Functions#getlastforcepowerused)
@@ -493,8 +436,8 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetNextInPersistentObject(oPersistentObject, nResidentObjectType, nPersistentZone)`](#getnextinpersistentobjectopersistentobject-nresidentobjecttype-npersistentzone)
       - [`GetNextObjectInShape(nShape, fSize, lTarget, bLineOfSight, nObjectFilter, vOrigin)` - Routine 129](NSS-Shared-Functions-Other-Functions#getnextobjectinshape)
       - [`GetNextPC()` - Routine 548](NSS-Shared-Functions-Other-Functions#getnextpc)
-      - [`GetNPCAIStyle(oCreature)` - Routine 705](NSS-Shared-Functions-Abilities-and-Stats#getnpcaistyle)
-      - [`GetPCLevellingUp()` - Routine 542](NSS-Shared-Functions-Player-Character-Functions#getpclevellingup)
+      - [`GetNPCAIStyle(oCreature)` - Routine 705](NSS-Shared-Functions-Other-Functions#getnpcaistyle)
+      - [`GetPCLevellingUp()` - Routine 542](NSS-Shared-Functions-Other-Functions#getpclevellingup)
       - [`GetPlaceableIllumination(oPlaceable)` - Routine 545](NSS-Shared-Functions-Other-Functions#getplaceableillumination)
       - [`GetPlanetAvailable(nPlanet)` - Routine 743](NSS-Shared-Functions-Other-Functions#getplanetavailable)
       - [`GetPlanetSelectable(nPlanet)` - Routine 741](NSS-Shared-Functions-Other-Functions#getplanetselectable)
@@ -550,43 +493,7 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetWeaponRanged(oItem)` - Routine 511](NSS-Shared-Functions-Other-Functions#getweaponranged)
       - [`GetWillSavingThrow(oTarget)` - Routine 492](NSS-Shared-Functions-Other-Functions#getwillsavingthrow)
       - [`GetXP(oCreature)` - Routine 395](NSS-Shared-Functions-Other-Functions#getxp)
-      - [`GiveGoldToCreature(oCreature, nGP)` - Routine 322](NSS-Shared-Functions-Other-Functions#givegoldtocreature)
-      - [`GivePlotXP(sPlotName, nPercentage)` - Routine 714](NSS-Shared-Functions-Other-Functions#giveplotxp)
-      - [`GiveXPToCreature(oCreature, nXpAmount)` - Routine 393](NSS-Shared-Functions-Other-Functions#givexptocreature)
-      - [`HoursToSeconds(nHours)` - Routine 122](NSS-Shared-Functions-Other-Functions#hourstoseconds)
-      - [`InsertString(sDestination, sString, nPosition)` - Routine 64](NSS-Shared-Functions-Other-Functions#insertstring)
-      - [`IntToFloat(nInteger)` - Routine 230](NSS-Shared-Functions-Other-Functions#inttofloat)
-      - [`IntToHexString(nInteger)` - Routine 396](NSS-Shared-Functions-Other-Functions#inttohexstring)
-      - [`IntToString(nInteger)` - Routine 92](NSS-Shared-Functions-Other-Functions#inttostring)
-      - [`IsAvailableCreature(nNPC)` - Routine 696](NSS-Shared-Functions-Other-Functions#isavailablecreature)
-      - [`IsCreditSequenceInProgress()` - Routine 519](NSS-Shared-Functions-Other-Functions#iscreditsequenceinprogress)
-      - [`JumpToLocation(lDestination)` - Routine 313](NSS-Shared-Functions-Other-Functions#jumptolocation)
-      - [`JumpToObject(oToJumpTo, nWalkStraightLineToPoint)` - Routine 385](NSS-Shared-Functions-Other-Functions#jumptoobject)
-      - [`Location(vPosition, fOrientation)` - Routine 215](NSS-Shared-Functions-Other-Functions#location)
-      - [`log(fValue)` - Routine 74](NSS-Shared-Functions-Other-Functions#log)
-      - [`NoClicksFor(fDuration)` - Routine 759](NSS-Shared-Functions-Other-Functions#noclicksfor)
-      - [`ObjectToString(oObject)` - Routine 272](NSS-Shared-Functions-Other-Functions#objecttostring)
-      - [`OpenStore(oStore, oPC, nBonusMarkUp, nBonusMarkDown)` - Routine 378](NSS-Shared-Functions-Other-Functions#openstore)
-      - [`PauseGame(bPause)` - Routine 57](NSS-Shared-Functions-Other-Functions#pausegame)
-      - [`PopUpDeathGUIPanel(oPC, bRespawnButtonEnabled, bWaitForHelpButtonEnabled, nHelpStringReference, sHelpString)` - Routine 554](NSS-Shared-Functions-Other-Functions#popupdeathguipanel)
-      - [`PopUpGUIPanel(oPC, nGUIPanel)` - Routine 388](NSS-Shared-Functions-Other-Functions#popupguipanel)
-      - [`pow(fValue, fExponent)` - Routine 75](NSS-Shared-Functions-Other-Functions#pow)
-      - [`PrintFloat(fFloat, nWidth, nDecimals)` - Routine 2](NSS-Shared-Functions-Other-Functions#printfloat)
-      - [`PrintInteger(nInteger)` - Routine 4](NSS-Shared-Functions-Other-Functions#printinteger)
-      - [`PrintObject(oObject)` - Routine 5](NSS-Shared-Functions-Other-Functions#printobject)
-      - [`PrintString(sString)` - Routine 1](NSS-Shared-Functions-Other-Functions#printstring)
-      - [`PrintVector(vVector, bPrepend)` - Routine 141](NSS-Shared-Functions-Other-Functions#printvector)
-      - [`QueueMovie(sMovie, bSkippable)` - Routine 769](NSS-Shared-Functions-Other-Functions#queuemovie)
       - [`Random(nMaxInteger)`](#randomnmaxinteger)
-      - [`RandomName()` - Routine 249](NSS-Shared-Functions-Other-Functions#randomname)
-      - [`ReflexSave(oCreature, nDC, nSaveType, oSaveVersus)` - Routine 109](NSS-Shared-Functions-Other-Functions#reflexsave)
-      - [`RemoveAvailableNPC(nNPC)` - Routine 695](NSS-Shared-Functions-Other-Functions#removeavailablenpc)
-      - [`RemoveJournalQuestEntry(szPlotID)` - Routine 368](NSS-Shared-Functions-Other-Functions#removejournalquestentry)
-      - [`ResistForce(oSource, oTarget)` - Routine 169](NSS-Shared-Functions-Other-Functions#resistforce)
-      - [`RevealMap(vPoint, nRadius)` - Routine 515](NSS-Shared-Functions-Other-Functions#revealmap)
-      - [`RoundsToSeconds(nRounds)` - Routine 121](NSS-Shared-Functions-Other-Functions#roundstoseconds)
-      - [`SaveNPCState(nNPC)` - Routine 734](NSS-Shared-Functions-Other-Functions#savenpcstate)
-      - [`SendMessageToPC(oPlayer, szMessage)` - Routine 374](NSS-Shared-Functions-Other-Functions#sendmessagetopc)
       - [`SetAssociateListenPatterns(oTarget)` - Routine 327](NSS-Shared-Functions-Other-Functions#setassociatelistenpatterns)
       - [`SetAvailableNPCId()` - Routine 767](NSS-Shared-Functions-Other-Functions#setavailablenpcid)
       - [`SetButtonMashCheck(nCheck)` - Routine 268](NSS-Shared-Functions-Other-Functions#setbuttonmashcheck)
@@ -615,7 +522,7 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`SetMaxHitPoints(oObject, nMaxHP)` - Routine 758](NSS-Shared-Functions-Other-Functions#setmaxhitpoints)
       - [`SetMaxStealthXP(nMax)` - Routine 468](NSS-Shared-Functions-Other-Functions#setmaxstealthxp)
       - [`SetMinOneHP(oObject, nMinOneHP)` - Routine 716](NSS-Shared-Functions-Other-Functions#setminonehp)
-      - [`SetNPCAIStyle(oCreature, nStyle)` - Routine 707](NSS-Shared-Functions-Abilities-and-Stats#setnpcaistyle)
+      - [`SetNPCAIStyle(oCreature, nStyle)` - Routine 707](NSS-Shared-Functions-Other-Functions#setnpcaistyle)
       - [`SetPlaceableIllumination(oPlaceable, bIlluminate)` - Routine 544](NSS-Shared-Functions-Other-Functions#setplaceableillumination)
       - [`SetPlanetAvailable(nPlanet, bAvailable)` - Routine 742](NSS-Shared-Functions-Other-Functions#setplanetavailable)
       - [`SetPlanetSelectable(nPlanet, bSelectable)` - Routine 740](NSS-Shared-Functions-Other-Functions#setplanetselectable)
@@ -629,239 +536,93 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`SetTrapDisabled(oTrap)` - Routine 555](NSS-Shared-Functions-Other-Functions#settrapdisabled)
       - [`SetTutorialWindowsEnabled(bEnabled)` - Routine 516](NSS-Shared-Functions-Other-Functions#settutorialwindowsenabled)
       - [`SetXP(oCreature, nXpAmount)` - Routine 394](NSS-Shared-Functions-Other-Functions#setxp)
-      - [`ShipBuild()` - Routine 761](NSS-Shared-Functions-Other-Functions#shipbuild)
-      - [`ShowGalaxyMap(nPlanet)` - Routine 739](NSS-Shared-Functions-Other-Functions#showgalaxymap)
-      - [`ShowLevelUpGUI()` - Routine 265](NSS-Shared-Functions-Other-Functions#showlevelupgui)
-      - [`ShowTutorialWindow(nWindow)` - Routine 517](NSS-Shared-Functions-Other-Functions#showtutorialwindow)
-      - [`ShowUpgradeScreen(oItem)` - Routine 354](NSS-Shared-Functions-Other-Functions#showupgradescreen)
-      - [`SignalEvent(oObject, evToRun)` - Routine 131](NSS-Shared-Functions-Other-Functions#signalevent)
-      - [`sin(fValue)` - Routine 69](NSS-Shared-Functions-Other-Functions#sin)
-      - [`SpawnAvailableNPC(nNPC, lPosition)` - Routine 698](NSS-Shared-Functions-Other-Functions#spawnavailablenpc)
-      - [`sqrt(fValue)` - Routine 76](NSS-Shared-Functions-Other-Functions#sqrt)
-      - [`StartCreditSequence(bTransparentBackground)` - Routine 518](NSS-Shared-Functions-Other-Functions#startcreditsequence)
-      - [`StopRumblePattern(nPattern)` - Routine 371](NSS-Shared-Functions-Other-Functions#stoprumblepattern)
-      - [`StringToFloat(sNumber)` - Routine 233](NSS-Shared-Functions-Other-Functions#stringtofloat)
-      - [`StringToInt(sNumber)` - Routine 232](NSS-Shared-Functions-Other-Functions#stringtoint)
-      - [`SuppressStatusSummaryEntry(nNumEntries)` - Routine 763](NSS-Shared-Functions-Other-Functions#suppressstatussummaryentry)
-      - [`SurrenderByFaction(nFactionFrom, nFactionTo)` - Routine 736](NSS-Shared-Functions-Other-Functions#surrenderbyfaction)
-      - [`SurrenderRetainBuffs()` - Routine 762](NSS-Shared-Functions-Other-Functions#surrenderretainbuffs)
-      - [`SurrenderToEnemies()` - Routine 476](NSS-Shared-Functions-Other-Functions#surrendertoenemies)
-      - [`SWMG_AdjustFollowerHitPoints(oFollower, nHP, nAbsolute)` - Routine 590](NSS-Shared-Functions-Other-Functions#swmg_adjustfollowerhitpoints)
-      - [`SWMG_GetCameraFarClip()` - Routine 609](NSS-Shared-Functions-Other-Functions#swmg_getcamerafarclip)
-      - [`SWMG_GetCameraNearClip()` - Routine 608](NSS-Shared-Functions-Other-Functions#swmg_getcameranearclip)
-      - [`SWMG_GetEnemy(nEntry)` - Routine 613](NSS-Shared-Functions-Other-Functions#swmg_getenemy)
-      - [`SWMG_GetEnemyCount()` - Routine 612](NSS-Shared-Functions-Other-Functions#swmg_getenemycount)
-      - [`SWMG_GetGunBankBulletModel(oFollower, nGunBank)` - Routine 625](NSS-Shared-Functions-Other-Functions#swmg_getgunbankbulletmodel)
-      - [`SWMG_GetGunBankCount(oFollower)` - Routine 624](NSS-Shared-Functions-Other-Functions#swmg_getgunbankcount)
-      - [`SWMG_GetGunBankDamage(oFollower, nGunBank)` - Routine 627](NSS-Shared-Functions-Other-Functions#swmg_getgunbankdamage)
-      - [`SWMG_GetGunBankGunModel(oFollower, nGunBank)` - Routine 626](NSS-Shared-Functions-Other-Functions#swmg_getgunbankgunmodel)
-      - [`SWMG_GetGunBankHorizontalSpread(oEnemy, nGunBank)` - Routine 657](NSS-Shared-Functions-Other-Functions#swmg_getgunbankhorizontalspread)
-      - [`SWMG_GetGunBankInaccuracy(oEnemy, nGunBank)` - Routine 660](NSS-Shared-Functions-Other-Functions#swmg_getgunbankinaccuracy)
-      - [`SWMG_GetGunBankLifespan(oFollower, nGunBank)` - Routine 629](NSS-Shared-Functions-Other-Functions#swmg_getgunbanklifespan)
-      - [`SWMG_GetGunBankSensingRadius(oEnemy, nGunBank)` - Routine 659](NSS-Shared-Functions-Other-Functions#swmg_getgunbanksensingradius)
-      - [`SWMG_GetGunBankSpeed(oFollower, nGunBank)` - Routine 630](NSS-Shared-Functions-Other-Functions#swmg_getgunbankspeed)
-      - [`SWMG_GetGunBankTarget(oFollower, nGunBank)` - Routine 631](NSS-Shared-Functions-Other-Functions#swmg_getgunbanktarget)
-      - [`SWMG_GetGunBankTimeBetweenShots(oFollower, nGunBank)` - Routine 628](NSS-Shared-Functions-Other-Functions#swmg_getgunbanktimebetweenshots)
-      - [`SWMG_GetGunBankVerticalSpread(oEnemy, nGunBank)` - Routine 658](NSS-Shared-Functions-Other-Functions#swmg_getgunbankverticalspread)
-      - [`SWMG_GetHitPoints(oFollower)` - Routine 616](NSS-Shared-Functions-Other-Functions#swmg_gethitpoints)
-      - [`SWMG_GetIsInvulnerable(oFollower)` - Routine 665](NSS-Shared-Functions-Other-Functions#swmg_getisinvulnerable)
-      - [`SWMG_GetLastBulletFiredDamage()` - Routine 595](NSS-Shared-Functions-Other-Functions#swmg_getlastbulletfireddamage)
-      - [`SWMG_GetLastBulletFiredTarget()` - Routine 596](NSS-Shared-Functions-Other-Functions#swmg_getlastbulletfiredtarget)
-      - [`SWMG_GetLastBulletHitDamage()` - Routine 587](NSS-Shared-Functions-Other-Functions#swmg_getlastbullethitdamage)
-      - [`SWMG_GetLastBulletHitPart()` - Routine 639](NSS-Shared-Functions-Other-Functions#swmg_getlastbullethitpart)
-      - [`SWMG_GetLastBulletHitShooter()` - Routine 589](NSS-Shared-Functions-Other-Functions#swmg_getlastbullethitshooter)
-      - [`SWMG_GetLastBulletHitTarget()` - Routine 588](NSS-Shared-Functions-Other-Functions#swmg_getlastbullethittarget)
-      - [`SWMG_GetLastEvent()` - Routine 583](NSS-Shared-Functions-Other-Functions#swmg_getlastevent)
-      - [`SWMG_GetLastEventModelName()` - Routine 584](NSS-Shared-Functions-Other-Functions#swmg_getlasteventmodelname)
-      - [`SWMG_GetLastFollowerHit()` - Routine 593](NSS-Shared-Functions-Other-Functions#swmg_getlastfollowerhit)
-      - [`SWMG_GetLastHPChange()` - Routine 606](NSS-Shared-Functions-Other-Functions#swmg_getlasthpchange)
-      - [`SWMG_GetLastObstacleHit()` - Routine 594](NSS-Shared-Functions-Other-Functions#swmg_getlastobstaclehit)
-      - [`SWMG_GetLateralAccelerationPerSecond()` - Routine 521](NSS-Shared-Functions-Other-Functions#swmg_getlateralaccelerationpersecond)
-      - [`SWMG_GetMaxHitPoints(oFollower)` - Routine 617](NSS-Shared-Functions-Other-Functions#swmg_getmaxhitpoints)
-      - [`SWMG_GetNumLoops(oFollower)` - Routine 621](NSS-Shared-Functions-Other-Functions#swmg_getnumloops)
-      - [`SWMG_GetObstacle(nEntry)` - Routine 615](NSS-Shared-Functions-Other-Functions#swmg_getobstacle)
-      - [`SWMG_GetObstacleCount()` - Routine 614](NSS-Shared-Functions-Other-Functions#swmg_getobstaclecount)
-      - [`SWMG_GetPosition(oFollower)` - Routine 623](NSS-Shared-Functions-Other-Functions#swmg_getposition)
-      - [`SWMG_GetSphereRadius(oFollower)` - Routine 619](NSS-Shared-Functions-Other-Functions#swmg_getsphereradius)
-      - [`SWMG_IsEnemy(oid)` - Routine 601](NSS-Shared-Functions-Other-Functions#swmg_isenemy)
-      - [`SWMG_IsFollower(oid)` - Routine 599](NSS-Shared-Functions-Other-Functions#swmg_isfollower)
-      - [`SWMG_IsGunBankTargetting(oFollower, nGunBank)` - Routine 640](NSS-Shared-Functions-Other-Functions#swmg_isgunbanktargetting)
-      - [`SWMG_IsObstacle(oid)` - Routine 603](NSS-Shared-Functions-Other-Functions#swmg_isobstacle)
-      - [`SWMG_IsTrigger(oid)` - Routine 602](NSS-Shared-Functions-Other-Functions#swmg_istrigger)
-      - [`SWMG_OnBulletHit()` - Routine 591](NSS-Shared-Functions-Other-Functions#swmg_onbullethit)
-      - [`SWMG_OnDamage()` - Routine 605](NSS-Shared-Functions-Other-Functions#swmg_ondamage)
-      - [`SWMG_OnDeath()` - Routine 598](NSS-Shared-Functions-Other-Functions#swmg_ondeath)
-      - [`SWMG_OnObstacleHit()` - Routine 592](NSS-Shared-Functions-Other-Functions#swmg_onobstaclehit)
-      - [`SWMG_RemoveAnimation(oObject, sAnimName)` - Routine 607](NSS-Shared-Functions-Other-Functions#swmg_removeanimation)
-      - [`SWMG_SetCameraClip(fNear, fFar)` - Routine 610](NSS-Shared-Functions-Other-Functions#swmg_setcameraclip)
-      - [`SWMG_SetFollowerHitPoints(oFollower, nHP)` - Routine 604](NSS-Shared-Functions-Other-Functions#swmg_setfollowerhitpoints)
-      - [`SWMG_SetGunBankBulletModel(oFollower, nGunBank, sBulletModel)` - Routine 632](NSS-Shared-Functions-Other-Functions#swmg_setgunbankbulletmodel)
-      - [`SWMG_SetGunBankDamage(oFollower, nGunBank, nDamage)` - Routine 634](NSS-Shared-Functions-Other-Functions#swmg_setgunbankdamage)
-      - [`SWMG_SetGunBankGunModel(oFollower, nGunBank, sGunModel)` - Routine 633](NSS-Shared-Functions-Other-Functions#swmg_setgunbankgunmodel)
-      - [`SWMG_SetGunBankHorizontalSpread(oEnemy, nGunBank, fHorizontalSpread)` - Routine 661](NSS-Shared-Functions-Other-Functions#swmg_setgunbankhorizontalspread)
-      - [`SWMG_SetGunBankInaccuracy(oEnemy, nGunBank, fInaccuracy)` - Routine 664](NSS-Shared-Functions-Other-Functions#swmg_setgunbankinaccuracy)
-      - [`SWMG_SetGunBankLifespan(oFollower, nGunBank, fLifespan)` - Routine 636](NSS-Shared-Functions-Other-Functions#swmg_setgunbanklifespan)
-      - [`SWMG_SetGunBankSensingRadius(oEnemy, nGunBank, fSensingRadius)` - Routine 663](NSS-Shared-Functions-Other-Functions#swmg_setgunbanksensingradius)
-      - [`SWMG_SetGunBankSpeed(oFollower, nGunBank, fSpeed)` - Routine 637](NSS-Shared-Functions-Other-Functions#swmg_setgunbankspeed)
-      - [`SWMG_SetGunBankTarget(oFollower, nGunBank, nTarget)` - Routine 638](NSS-Shared-Functions-Other-Functions#swmg_setgunbanktarget)
-      - [`SWMG_SetGunBankTimeBetweenShots(oFollower, nGunBank, fTBS)` - Routine 635](NSS-Shared-Functions-Other-Functions#swmg_setgunbanktimebetweenshots)
-      - [`SWMG_SetGunBankVerticalSpread(oEnemy, nGunBank, fVerticalSpread)` - Routine 662](NSS-Shared-Functions-Other-Functions#swmg_setgunbankverticalspread)
-      - [`SWMG_SetLateralAccelerationPerSecond(fLAPS)` - Routine 520](NSS-Shared-Functions-Other-Functions#swmg_setlateralaccelerationpersecond)
-      - [`SWMG_SetMaxHitPoints(oFollower, nMaxHP)` - Routine 618](NSS-Shared-Functions-Other-Functions#swmg_setmaxhitpoints)
-      - [`SWMG_SetNumLoops(oFollower, nNumLoops)` - Routine 622](NSS-Shared-Functions-Other-Functions#swmg_setnumloops)
-      - [`SWMG_SetSphereRadius(oFollower, fRadius)` - Routine 620](NSS-Shared-Functions-Other-Functions#swmg_setsphereradius)
-      - [`TakeGoldFromCreature(nAmount, oCreatureToTakeFrom, bDestroy)` - Routine 444](NSS-Shared-Functions-Other-Functions#takegoldfromcreature)
-      - [`TalentSpell(nSpell)` - Routine 301](NSS-Shared-Functions-Other-Functions#talentspell)
-      - [`tan(fValue)` - Routine 70](NSS-Shared-Functions-Other-Functions#tan)
-      - [`TestStringAgainstPattern(sPattern, sStringToTest)` - Routine 177](NSS-Shared-Functions-Other-Functions#teststringagainstpattern)
-      - [`TurnsToSeconds(nTurns)` - Routine 123](NSS-Shared-Functions-Other-Functions#turnstoseconds)
-      - [`Vector(x, y, z)` - Routine 142](NSS-Shared-Functions-Other-Functions#vector)
-      - [`VectorMagnitude(vVector)` - Routine 104](NSS-Shared-Functions-Other-Functions#vectormagnitude)
-      - [`VectorNormalize(vVector)` - Routine 137](NSS-Shared-Functions-Other-Functions#vectornormalize)
-      - [`VectorToAngle(vVector)` - Routine 145](NSS-Shared-Functions-Other-Functions#vectortoangle)
-      - [`WillSave(oCreature, nDC, nSaveType, oSaveVersus)` - Routine 110](NSS-Shared-Functions-Other-Functions#willsave)
-      - [`WriteTimestampedLogEntry(sLogEntry)` - Routine 560](NSS-Shared-Functions-Other-Functions#writetimestampedlogentry)
-      - [`YardsToMeters(fYards)` - Routine 219](NSS-Shared-Functions-Other-Functions#yardstometers)
     - [Party Management](#party-management)
-      - [`AddAvailableNPCByObject(nNPC, oCreature)` - Routine 694](NSS-Shared-Functions-Other-Functions#addavailablenpcbyobject)
-      - [`AddAvailableNPCByTemplate(nNPC, sTemplate)` - Routine 697](NSS-Shared-Functions-Other-Functions#addavailablenpcbytemplate)
-      - [`AddPartyMember(nNPC, oCreature)` - Routine 574](NSS-Shared-Functions-Other-Functions#addpartymember)
-      - [`AddToParty(oPC, oPartyLeader)` - Routine 572](NSS-Shared-Functions-Other-Functions#addtoparty)
       - [`GetPartyAIStyle()` - Routine 704](NSS-Shared-Functions-Party-Management#getpartyaistyle)
       - [`GetPartyMemberByIndex(nIndex)` - Routine 577](NSS-Shared-Functions-Party-Management#getpartymemberbyindex)
       - [`GetPartyMemberCount()` - Routine 126](NSS-Shared-Functions-Party-Management#getpartymembercount)
-      - [`IsNPCPartyMember(nNPC)` - Routine 699](NSS-Shared-Functions-Other-Functions#isnpcpartymember)
-      - [`IsObjectPartyMember(oCreature)` - Routine 576](NSS-Shared-Functions-Other-Functions#isobjectpartymember)
-      - [`RemoveFromParty(oPC)` - Routine 573](NSS-Shared-Functions-Other-Functions#removefromparty)
-      - [`RemovePartyMember(nNPC)` - Routine 575](NSS-Shared-Functions-Other-Functions#removepartymember)
       - [`SetPartyAIStyle(nStyle)` - Routine 706](NSS-Shared-Functions-Party-Management#setpartyaistyle)
       - [`SetPartyLeader(nNPC)` - Routine 13](NSS-Shared-Functions-Party-Management#setpartyleader)
-      - [`ShowPartySelectionGUI(sExitScript, nForceNPC1, nForceNPC2)` - Routine 712](NSS-Shared-Functions-Other-Functions#showpartyselectiongui)
-      - [`SwitchPlayerCharacter(nNPC)` - Routine 11](NSS-Shared-Functions-Other-Functions#switchplayercharacter)
     - [Player Character Functions](#player-character-functions)
-      - [`DoSinglePlayerAutoSave()` - Routine 512](NSS-Shared-Functions-Other-Functions#dosingleplayerautosave)
-      - [`ExploreAreaForPlayer(oArea, oPlayer)` - Routine 403](NSS-Shared-Functions-Other-Functions#exploreareaforplayer)
-      - [`GetIsPC(oCreature)` - Routine 217](NSS-Shared-Functions-Other-Functions#getispc)
-      - [`GetLastPlayerDied()` - Routine 291](NSS-Shared-Functions-Other-Functions#getlastplayerdied)
-      - [`GetLastPlayerDying()` - Routine 410](NSS-Shared-Functions-Other-Functions#getlastplayerdying)
+      - [`GetIsPC(oCreature)` - Routine 217](NSS-Shared-Functions-Player-Character-Functions#getispc)
+      - [`GetLastPlayerDied()` - Routine 291](NSS-Shared-Functions-Player-Character-Functions#getlastplayerdied)
+      - [`GetLastPlayerDying()` - Routine 410](NSS-Shared-Functions-Player-Character-Functions#getlastplayerdying)
       - [`GetPCSpeaker()` - Routine 238](NSS-Shared-Functions-Player-Character-Functions#getpcspeaker)
-      - [`GetPlayerRestrictMode(oObject)` - Routine 83](NSS-Shared-Functions-Other-Functions#getplayerrestrictmode)
-      - [`SetPlayerRestrictMode(bRestrict)` - Routine 58](NSS-Shared-Functions-Other-Functions#setplayerrestrictmode)
-      - [`SWMG_GetPlayer()` - Routine 611](NSS-Shared-Functions-Other-Functions#swmg_getplayer)
-      - [`SWMG_GetPlayerAccelerationPerSecond()` - Routine 645](NSS-Shared-Functions-Other-Functions#swmg_getplayeraccelerationpersecond)
-      - [`SWMG_GetPlayerInvincibility()` - Routine 642](NSS-Shared-Functions-Other-Functions#swmg_getplayerinvincibility)
-      - [`SWMG_GetPlayerMaxSpeed()` - Routine 667](NSS-Shared-Functions-Other-Functions#swmg_getplayermaxspeed)
-      - [`SWMG_GetPlayerMinSpeed()` - Routine 644](NSS-Shared-Functions-Other-Functions#swmg_getplayerminspeed)
-      - [`SWMG_GetPlayerOffset()` - Routine 641](NSS-Shared-Functions-Other-Functions#swmg_getplayeroffset)
-      - [`SWMG_GetPlayerOrigin()` - Routine 655](NSS-Shared-Functions-Other-Functions#swmg_getplayerorigin)
-      - [`SWMG_GetPlayerSpeed()` - Routine 643](NSS-Shared-Functions-Other-Functions#swmg_getplayerspeed)
-      - [`SWMG_GetPlayerTunnelInfinite()` - Routine 717](NSS-Shared-Functions-Other-Functions#swmg_getplayertunnelinfinite)
-      - [`SWMG_GetPlayerTunnelNeg()` - Routine 653](NSS-Shared-Functions-Other-Functions#swmg_getplayertunnelneg)
-      - [`SWMG_GetPlayerTunnelPos()` - Routine 646](NSS-Shared-Functions-Other-Functions#swmg_getplayertunnelpos)
-      - [`SWMG_IsPlayer(oid)` - Routine 600](NSS-Shared-Functions-Other-Functions#swmg_isplayer)
-      - [`SWMG_SetPlayerAccelerationPerSecond(fAPS)` - Routine 651](NSS-Shared-Functions-Other-Functions#swmg_setplayeraccelerationpersecond)
-      - [`SWMG_SetPlayerInvincibility(fInvincibility)` - Routine 648](NSS-Shared-Functions-Other-Functions#swmg_setplayerinvincibility)
-      - [`SWMG_SetPlayerMaxSpeed(fMaxSpeed)` - Routine 668](NSS-Shared-Functions-Other-Functions#swmg_setplayermaxspeed)
-      - [`SWMG_SetPlayerMinSpeed(fMinSpeed)` - Routine 650](NSS-Shared-Functions-Other-Functions#swmg_setplayerminspeed)
-      - [`SWMG_SetPlayerOffset(vOffset)` - Routine 647](NSS-Shared-Functions-Other-Functions#swmg_setplayeroffset)
-      - [`SWMG_SetPlayerOrigin(vOrigin)` - Routine 656](NSS-Shared-Functions-Other-Functions#swmg_setplayerorigin)
-      - [`SWMG_SetPlayerSpeed(fSpeed)` - Routine 649](NSS-Shared-Functions-Other-Functions#swmg_setplayerspeed)
-      - [`SWMG_SetPlayerTunnelInfinite(vInfinite)` - Routine 718](NSS-Shared-Functions-Other-Functions#swmg_setplayertunnelinfinite)
-      - [`SWMG_SetPlayerTunnelNeg(vTunnel)` - Routine 654](NSS-Shared-Functions-Other-Functions#swmg_setplayertunnelneg)
-      - [`SWMG_SetPlayerTunnelPos(vTunnel)` - Routine 652](NSS-Shared-Functions-Other-Functions#swmg_setplayertunnelpos)
+      - [`GetPlayerRestrictMode(oObject)` - Routine 83](NSS-Shared-Functions-Player-Character-Functions#getplayerrestrictmode)
+      - [`SetPlayerRestrictMode(bRestrict)` - Routine 58](NSS-Shared-Functions-Player-Character-Functions#setplayerrestrictmode)
+      - [`SWMG_GetPlayer()` - Routine 611](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayer)
+      - [`SWMG_GetPlayerAccelerationPerSecond()` - Routine 645](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayeraccelerationpersecond)
+      - [`SWMG_GetPlayerInvincibility()` - Routine 642](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayerinvincibility)
+      - [`SWMG_GetPlayerMaxSpeed()` - Routine 667](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayermaxspeed)
+      - [`SWMG_GetPlayerMinSpeed()` - Routine 644](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayerminspeed)
+      - [`SWMG_GetPlayerOffset()` - Routine 641](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayeroffset)
+      - [`SWMG_GetPlayerOrigin()` - Routine 655](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayerorigin)
+      - [`SWMG_GetPlayerSpeed()` - Routine 643](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayerspeed)
+      - [`SWMG_GetPlayerTunnelInfinite()` - Routine 717](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayertunnelinfinite)
+      - [`SWMG_GetPlayerTunnelNeg()` - Routine 653](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayertunnelneg)
+      - [`SWMG_GetPlayerTunnelPos()` - Routine 646](NSS-Shared-Functions-Player-Character-Functions#swmg_getplayertunnelpos)
+      - [`SWMG_IsPlayer(oid)` - Routine 600](NSS-Shared-Functions-Player-Character-Functions#swmg_isplayer)
+      - [`SWMG_SetPlayerAccelerationPerSecond(fAPS)` - Routine 651](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayeraccelerationpersecond)
+      - [`SWMG_SetPlayerInvincibility(fInvincibility)` - Routine 648](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayerinvincibility)
+      - [`SWMG_SetPlayerMaxSpeed(fMaxSpeed)` - Routine 668](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayermaxspeed)
+      - [`SWMG_SetPlayerMinSpeed(fMinSpeed)` - Routine 650](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayerminspeed)
+      - [`SWMG_SetPlayerOffset(vOffset)` - Routine 647](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayeroffset)
+      - [`SWMG_SetPlayerOrigin(vOrigin)` - Routine 656](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayerorigin)
+      - [`SWMG_SetPlayerSpeed(fSpeed)` - Routine 649](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayerspeed)
+      - [`SWMG_SetPlayerTunnelInfinite(vInfinite)` - Routine 718](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayertunnelinfinite)
+      - [`SWMG_SetPlayerTunnelNeg(vTunnel)` - Routine 654](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayertunnelneg)
+      - [`SWMG_SetPlayerTunnelPos(vTunnel)` - Routine 652](NSS-Shared-Functions-Player-Character-Functions#swmg_setplayertunnelpos)
     - [Skills and Feats](#skills-and-feats)
-      - [`GetHasFeat(nFeat, oCreature)` - Routine 285](NSS-Shared-Functions-Other-Functions#gethasfeat)
-      - [`GetHasSkill(nSkill, oCreature)` - Routine 286](NSS-Shared-Functions-Other-Functions#gethasskill)
-      - [`GetLastCombatFeatUsed(oAttacker)` - Routine 724](NSS-Shared-Functions-Other-Functions#getlastcombatfeatused)
-      - [`GetMetaMagicFeat()` - Routine 105](NSS-Shared-Functions-Other-Functions#getmetamagicfeat)
+      - [`GetHasFeat(nFeat, oCreature)` - Routine 285](NSS-Shared-Functions-Skills-and-Feats#gethasfeat)
+      - [`GetHasSkill(nSkill, oCreature)` - Routine 286](NSS-Shared-Functions-Skills-and-Feats#gethasskill)
+      - [`GetLastCombatFeatUsed(oAttacker)` - Routine 724](NSS-Shared-Functions-Skills-and-Feats#getlastcombatfeatused)
+      - [`GetMetaMagicFeat()` - Routine 105](NSS-Shared-Functions-Skills-and-Feats#getmetamagicfeat)
       - [`GetSkillRank(nSkill, oTarget)` - Routine 315](NSS-Shared-Functions-Skills-and-Feats#getskillrank)
-      - [`TalentFeat(nFeat)` - Routine 302](NSS-Shared-Functions-Other-Functions#talentfeat)
-      - [`TalentSkill(nSkill)` - Routine 303](NSS-Shared-Functions-Other-Functions#talentskill)
     - [Sound and Music Functions](#sound-and-music-functions)
-      - [`AmbientSoundChangeDay(oArea, nTrack)` - Routine 435](NSS-Shared-Functions-Other-Functions#ambientsoundchangeday)
-      - [`AmbientSoundChangeNight(oArea, nTrack)` - Routine 436](NSS-Shared-Functions-Other-Functions#ambientsoundchangenight)
-      - [`AmbientSoundPlay(oArea)` - Routine 433](NSS-Shared-Functions-Other-Functions#ambientsoundplay)
-      - [`AmbientSoundSetDayVolume(oArea, nVolume)` - Routine 567](NSS-Shared-Functions-Other-Functions#ambientsoundsetdayvolume)
-      - [`AmbientSoundSetNightVolume(oArea, nVolume)` - Routine 568](NSS-Shared-Functions-Other-Functions#ambientsoundsetnightvolume)
-      - [`AmbientSoundStop(oArea)` - Routine 434](NSS-Shared-Functions-Other-Functions#ambientsoundstop)
-      - [`DisplayFeedBackText(oCreature, nTextConstant)` - Routine 366](NSS-Shared-Functions-Other-Functions#displayfeedbacktext)
-      - [`GetIsPlayableRacialType(oCreature)` - Routine 312](NSS-Shared-Functions-Other-Functions#getisplayableracialtype)
-      - [`GetStrRefSoundDuration(nStrRef)` - Routine 571](NSS-Shared-Functions-Other-Functions#getstrrefsoundduration)
-      - [`IsMoviePlaying()` - Routine 768](NSS-Shared-Functions-Other-Functions#ismovieplaying)
-      - [`MusicBackgroundChangeDay(oArea, nTrack)` - Routine 428](NSS-Shared-Functions-Other-Functions#musicbackgroundchangeday)
-      - [`MusicBackgroundChangeNight(oArea, nTrack)` - Routine 429](NSS-Shared-Functions-Other-Functions#musicbackgroundchangenight)
-      - [`MusicBackgroundGetBattleTrack(oArea)` - Routine 569](NSS-Shared-Functions-Other-Functions#musicbackgroundgetbattletrack)
-      - [`MusicBackgroundGetDayTrack(oArea)` - Routine 558](NSS-Shared-Functions-Other-Functions#musicbackgroundgetdaytrack)
-      - [`MusicBackgroundGetNightTrack(oArea)` - Routine 559](NSS-Shared-Functions-Other-Functions#musicbackgroundgetnighttrack)
-      - [`MusicBackgroundPlay(oArea)` - Routine 425](NSS-Shared-Functions-Other-Functions#musicbackgroundplay)
-      - [`MusicBackgroundSetDelay(oArea, nDelay)` - Routine 427](NSS-Shared-Functions-Other-Functions#musicbackgroundsetdelay)
-      - [`MusicBackgroundStop(oArea)` - Routine 426](NSS-Shared-Functions-Other-Functions#musicbackgroundstop)
-      - [`MusicBattleChange(oArea, nTrack)` - Routine 432](NSS-Shared-Functions-Other-Functions#musicbattlechange)
-      - [`MusicBattlePlay(oArea)` - Routine 430](NSS-Shared-Functions-Other-Functions#musicbattleplay)
-      - [`MusicBattleStop(oArea)` - Routine 431](NSS-Shared-Functions-Other-Functions#musicbattlestop)
-      - [`PlayAnimation(nAnimation, fSpeed, fSeconds)` - Routine 300](NSS-Shared-Functions-Other-Functions#playanimation)
-      - [`PlayMovie(sMovie)` - Routine 733](NSS-Shared-Functions-Other-Functions#playmovie)
-      - [`PlayMovieQueue(bAllowSeparateSkips)` - Routine 770](NSS-Shared-Functions-Other-Functions#playmoviequeue)
-      - [`PlayPazaak(nOpponentPazaakDeck, sEndScript, nMaxWager, bShowTutorial, oOpponent)` - Routine 364](NSS-Shared-Functions-Other-Functions#playpazaak)
-      - [`PlayRoomAnimation(sRoom, nAnimation)` - Routine 738](NSS-Shared-Functions-Other-Functions#playroomanimation)
-      - [`PlayRumblePattern(nPattern)` - Routine 370](NSS-Shared-Functions-Other-Functions#playrumblepattern)
+      - [`GetIsPlayableRacialType(oCreature)` - Routine 312](NSS-Shared-Functions-Sound-and-Music-Functions#getisplayableracialtype)
+      - [`GetStrRefSoundDuration(nStrRef)` - Routine 571](NSS-Shared-Functions-Sound-and-Music-Functions#getstrrefsoundduration)
       - [`PlaySound(sSoundName)` - Routine 46](NSS-Shared-Functions-Sound-and-Music-Functions#playsound)
-      - [`SetMusicVolume(fVolume)` - Routine 765](NSS-Shared-Functions-Other-Functions#setmusicvolume)
-      - [`SoundObjectFadeAndStop(oSound, fSeconds)` - Routine 745](NSS-Shared-Functions-Other-Functions#soundobjectfadeandstop)
-      - [`SoundObjectGetFixedVariance(oSound)` - Routine 188](NSS-Shared-Functions-Other-Functions#soundobjectgetfixedvariance)
-      - [`SoundObjectGetPitchVariance(oSound)` - Routine 689](NSS-Shared-Functions-Other-Functions#soundobjectgetpitchvariance)
-      - [`SoundObjectGetVolume(oSound)` - Routine 691](NSS-Shared-Functions-Other-Functions#soundobjectgetvolume)
-      - [`SoundObjectPlay(oSound)` - Routine 413](NSS-Shared-Functions-Other-Functions#soundobjectplay)
-      - [`SoundObjectSetFixedVariance(oSound, fFixedVariance)` - Routine 124](NSS-Shared-Functions-Other-Functions#soundobjectsetfixedvariance)
-      - [`SoundObjectSetPitchVariance(oSound, fVariance)` - Routine 690](NSS-Shared-Functions-Other-Functions#soundobjectsetpitchvariance)
-      - [`SoundObjectSetPosition(oSound, vPosition)` - Routine 416](NSS-Shared-Functions-Other-Functions#soundobjectsetposition)
-      - [`SoundObjectSetVolume(oSound, nVolume)` - Routine 415](NSS-Shared-Functions-Other-Functions#soundobjectsetvolume)
-      - [`SoundObjectStop(oSound)` - Routine 414](NSS-Shared-Functions-Other-Functions#soundobjectstop)
-      - [`SWMG_GetSoundFrequency(oFollower, nSound)` - Routine 683](NSS-Shared-Functions-Other-Functions#swmg_getsoundfrequency)
-      - [`SWMG_GetSoundFrequencyIsRandom(oFollower, nSound)` - Routine 685](NSS-Shared-Functions-Other-Functions#swmg_getsoundfrequencyisrandom)
-      - [`SWMG_GetSoundVolume(oFollower, nSound)` - Routine 687](NSS-Shared-Functions-Other-Functions#swmg_getsoundvolume)
-      - [`SWMG_PlayAnimation(oObject, sAnimName, bLooping, bQueue, bOverlay)` - Routine 586](NSS-Shared-Functions-Other-Functions#swmg_playanimation)
-      - [`SWMG_SetSoundFrequency(oFollower, nSound, nFrequency)` - Routine 684](NSS-Shared-Functions-Other-Functions#swmg_setsoundfrequency)
-      - [`SWMG_SetSoundFrequencyIsRandom(oFollower, nSound, bIsRandom)` - Routine 686](NSS-Shared-Functions-Other-Functions#swmg_setsoundfrequencyisrandom)
-      - [`SWMG_SetSoundVolume(oFollower, nSound, nVolume)` - Routine 688](NSS-Shared-Functions-Other-Functions#swmg_setsoundvolume)
+      - [`SetMusicVolume(fVolume)` - Routine 765](NSS-Shared-Functions-Sound-and-Music-Functions#setmusicvolume)
+      - [`SWMG_GetSoundFrequency(oFollower, nSound)` - Routine 683](NSS-Shared-Functions-Sound-and-Music-Functions#swmg_getsoundfrequency)
+      - [`SWMG_GetSoundFrequencyIsRandom(oFollower, nSound)` - Routine 685](NSS-Shared-Functions-Sound-and-Music-Functions#swmg_getsoundfrequencyisrandom)
+      - [`SWMG_GetSoundVolume(oFollower, nSound)` - Routine 687](NSS-Shared-Functions-Sound-and-Music-Functions#swmg_getsoundvolume)
+      - [`SWMG_PlayAnimation(oObject, sAnimName, bLooping, bQueue, bOverlay)` - Routine 586](NSS-Shared-Functions-Sound-and-Music-Functions#swmg_playanimation)
+      - [`SWMG_SetSoundFrequency(oFollower, nSound, nFrequency)` - Routine 684](NSS-Shared-Functions-Sound-and-Music-Functions#swmg_setsoundfrequency)
+      - [`SWMG_SetSoundFrequencyIsRandom(oFollower, nSound, bIsRandom)` - Routine 686](NSS-Shared-Functions-Sound-and-Music-Functions#swmg_setsoundfrequencyisrandom)
+      - [`SWMG_SetSoundVolume(oFollower, nSound, nVolume)` - Routine 688](NSS-Shared-Functions-Sound-and-Music-Functions#swmg_setsoundvolume)
   - [K1-Only Functions](#k1-only-functions)
     - [Other Functions](#other-functions-1)
-      - [`YavinHackCloseDoor(oidDoor)` - Routine 771](NSS-Shared-Functions-Other-Functions#yavinhackclosedoor)
   - [TSL-Only Functions](#tsl-only-functions)
-    - [Actions](#actions-1)
-      - [`ActionFollowOwner(fRange)`](#actionfollowownerfrange)
-      - [`ActionSwitchWeapons()`](#actionswitchweapons)
-    - [Class System](#class-system-1)
-      - [`SetInputClass(nClass)`](#setinputclassnclass)
-    - [Combat Functions](#combat-functions-1)
-      - [`GetCombatActionsPending(oCreature)`](#getcombatactionspendingocreature)
+    - [Actions](#actions)
+      - [`ActionFollowOwner(fRange)` - Routine 398](NSS-Shared-Functions-Actions#actionfollowowner)
+      - [`ActionSwitchWeapons()` - Routine 401](NSS-Shared-Functions-Actions#actionswitchweapons)
+    - [Class System](#class-system)
+      - [`SetInputClass(nClass)` - Routine 342](NSS-Shared-Functions-Other-Functions#setinputclass)
+    - [Combat Functions](#combat-functions)
+      - [`GetCombatActionsPending(oCreature)` - Routine 315](NSS-Shared-Functions-Other-Functions#getcombatactionspending)
       - [`SetFakeCombatState(oObject, nEnable)` - Routine 791](NSS-Shared-Functions-Other-Functions#setfakecombatstate)
-    - [Dialog and Conversation Functions](#dialog-and-conversation-functions-1)
-      - [`SetKeepStealthInDialog(nStealthState)`](#setkeepstealthindialognstealthstate)
-    - [Effects System](#effects-system-1)
+    - [Dialog and Conversation Functions](#dialog-and-conversation-functions)
+      - [`SetKeepStealthInDialog(nStealthState)` - Routine 507](NSS-Shared-Functions-Other-Functions#setkeepstealthindialog)
+    - [Effects System](#effects-system)
       - [`EffectBlind()` - Routine 778](NSS-Shared-Functions-Effects-System#effectblind)
       - [`EffectCrush()` - Routine 781](NSS-Shared-Functions-Effects-System#effectcrush)
-      - [`EffectDroidConfused()`](#effectdroidconfused)
-      - [`EffectDroidScramble()`](#effectdroidscramble)
-      - [`EffectFactionModifier(nNewFaction)`](#effectfactionmodifiernnewfaction)
+      - [`EffectDroidConfused()` - Routine 782](NSS-Shared-Functions-Effects-System#effectdroidconfused)
+      - [`EffectDroidScramble()` - Routine 783](NSS-Shared-Functions-Effects-System#effectdroidscramble)
+      - [`EffectFactionModifier(nNewFaction)` - Routine 784](NSS-Shared-Functions-Effects-System#effectfactionmodifier)
       - [`EffectForceBody(nLevel)` - Routine 770](NSS-Shared-Functions-Effects-System#effectforcebody)
-      - [`EffectForceSight()`](#effectforcesight)
+      - [`EffectForceSight()` - Routine 771](NSS-Shared-Functions-Effects-System#effectforcesight)
       - [`EffectFPRegenModifier(nPercent)` - Routine 779](NSS-Shared-Functions-Effects-System#effectfpregenmodifier)
       - [`EffectFury()` - Routine 777](NSS-Shared-Functions-Effects-System#effectfury)
-      - [`EffectMindTrick()`](#effectmindtrick)
+      - [`EffectMindTrick()` - Routine 772](NSS-Shared-Functions-Effects-System#effectmindtrick)
       - [`EffectVPRegenModifier(nPercent)` - Routine 780](NSS-Shared-Functions-Effects-System#effectvpregenmodifier)
-      - [`RemoveEffectByExactMatch(oCreature, eEffect)`](#removeeffectbyexactmatchocreature-eeffect)
-      - [`RemoveEffectByID(oCreature, nEffectID)`](#removeeffectbyidocreature-neffectid)
+      - [`RemoveEffectByExactMatch(oCreature, eEffect)` - Routine 87](NSS-Shared-Functions-Effects-System#removeeffectbyexactmatch)
+      - [`RemoveEffectByID(oCreature, nEffectID)` - Routine 89](NSS-Shared-Functions-Effects-System#removeeffectbyid)
     - [Global Variables](#global-variables-1)
-      - [`DecrementGlobalNumber(sIdentifier, nAmount)` - Routine 800](NSS-Shared-Functions-Other-Functions#decrementglobalnumber)
-      - [`IncrementGlobalNumber(sIdentifier, nAmount)` - Routine 799](NSS-Shared-Functions-Other-Functions#incrementglobalnumber)
     - [Item Management](#item-management-1)
       - [`GetItemComponent()` - Routine 771](NSS-Shared-Functions-Item-Management#getitemcomponent)
       - [`GetItemComponentPieceValue()` - Routine 771](NSS-Shared-Functions-Item-Management#getitemcomponentpiecevalue)
     - [Object Query and Manipulation](#object-query-and-manipulation-1)
       - [`GetObjectPersonalSpace(aObject)`](#getobjectpersonalspaceaobject)
     - [Other Functions](#other-functions-2)
-      - [`AddBonusForcePoints(oCreature, nBonusFP)` - Routine 802](NSS-Shared-Functions-Other-Functions#addbonusforcepoints)
       - [`AdjustCreatureAttributes(oObject, nAttribute, nAmount)`](#adjustcreatureattributesoobject-nattribute-namount)
       - [`AssignPUP(nPUP, nNPC)`](#assignpupnpup-nnpc)
       - [`ChangeObjectAppearance(oObjectToChange, nAppearance)`](#changeobjectappearanceoobjecttochange-nappearance)
@@ -889,7 +650,6 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetSpellBaseForcePointCost(nSpellID)`](#getspellbaseforcepointcostnspellid)
       - [`GetSpellForcePointCost()` - Routine 776](NSS-Shared-Functions-Other-Functions#getspellforcepointcost)
       - [`GetSpellFormMask(nSpellID)`](#getspellformmasknspellid)
-      - [`GrantSpell(nSpell, oCreature)` - Routine 787](NSS-Shared-Functions-Other-Functions#grantspell)
       - [`HasLineOfSight(vSource, vTarget, oSource, oTarget)`](#haslineofsightvsource-vtarget-osource-otarget)
       - [`IsFormActive(oCreature, nFormID)`](#isformactiveocreature-nformid)
       - [`IsInTotalDefense(oCreature)`](#isintotaldefenseocreature)
@@ -897,7 +657,6 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`IsRunning(oCreature)`](#isrunningocreature)
       - [`IsStealthed(oCreature)`](#isstealthedocreature)
       - [`ModifyFortitudeSavingThrowBase(aObject, aModValue)`](#modifyfortitudesavingthrowbaseaobject-amodvalue)
-      - [`ModifyInfluence(nNPC, nModifier)` - Routine 797](NSS-Shared-Functions-Other-Functions#modifyinfluence)
       - [`ModifyReflexSavingThrowBase(aObject, aModValue)`](#modifyreflexsavingthrowbaseaobject-amodvalue)
       - [`ModifyWillSavingThrowBase(aObject, aModValue)`](#modifywillsavingthrowbaseaobject-amodvalue)
       - [`RemoveHeartbeat(oPlaceable)`](#removeheartbeatoplaceable)
@@ -914,16 +673,8 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`SetHealTarget(oidHealer, oidTarget)`](#sethealtargetoidhealer-oidtarget)
       - [`SetInfluence(nNPC, nInfluence)` - Routine 796](NSS-Shared-Functions-Other-Functions#setinfluence)
       - [`SetOrientOnClick(oCreature, nState)` - Routine 794](NSS-Shared-Functions-Other-Functions#setorientonclick)
-      - [`ShowChemicalUpgradeScreen(oCharacter)` - Routine 773](NSS-Shared-Functions-Other-Functions#showchemicalupgradescreen)
       - [`ShowDemoScreen(sTexture, nTimeout, nDisplayString, nDisplayX, nDisplayY)`](#showdemoscreenstexture-ntimeout-ndisplaystring-ndisplayx-ndisplayy)
-      - [`ShowSwoopUpgradeScreen()` - Routine 785](NSS-Shared-Functions-Other-Functions#showswoopupgradescreen)
       - [`SpawnAvailablePUP(nPUP, lLocation)`](#spawnavailablepupnpup-llocation)
-      - [`SpawnMine(nMineType, lPoint, nDetectDCBase, nDisarmDCBase, oCreator)` - Routine 788](NSS-Shared-Functions-Other-Functions#spawnmine)
-      - [`SWMG_DestroyMiniGameObject(oObject)` - Routine 792](NSS-Shared-Functions-Other-Functions#swmg_destroyminigameobject)
-      - [`SWMG_GetSwoopUpgrade(nSlot)` - Routine 782](NSS-Shared-Functions-Other-Functions#swmg_getswoopupgrade)
-      - [`SWMG_GetTrackPosition(oFollower)` - Routine 789](NSS-Shared-Functions-Other-Functions#swmg_gettrackposition)
-      - [`SWMG_SetFollowerPosition(vPos)` - Routine 790](NSS-Shared-Functions-Other-Functions#swmg_setfollowerposition)
-      - [`SWMG_SetJumpSpeed(fSpeed)` - Routine 804](NSS-Shared-Functions-Other-Functions#swmg_setjumpspeed)
       - [`UnlockAllSongs()`](#unlockallsongs)
       - [`YavinHackDoorClose(oCreature)`](#yavinhackdoorcloseocreature)
     - [Party Management](#party-management-1)
@@ -941,7 +692,6 @@ NSS (NWScript Source) files contain human-readable NWScript source code that com
       - [`GetFeatAcquired(nFeat, oCreature)` - Routine 285](NSS-Shared-Functions-Skills-and-Feats#getfeatacquired)
       - [`GetOwnerDemolitionsSkill(oObject)` - Routine 793](NSS-Shared-Functions-Other-Functions#getownerdemolitionsskill)
       - [`GetSkillRankBase(nSkill, oObject)`](#getskillrankbasenskill-oobject)
-      - [`GrantFeat(nFeat, oCreature)` - Routine 786](NSS-Shared-Functions-Other-Functions#grantfeat)
     - [Sound and Music Functions](#sound-and-music-functions-1)
       - [`DisplayDatapad(oDatapad)`](#displaydatapadodatapad)
       - [`DisplayMessageBox(nStrRef, sIcon)`](#displaymessageboxnstrref-sicon)
@@ -3262,7 +3012,6 @@ PyKotor implements `nwscript.nss` definitions in three Python modules:
 
 ### Compilation Integration
 
-During [NSS](NSS-File-Format) compilation (see [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py:126-205`](NSS-Shared-Functions-Other-Functions#libraries/pykotor/src/pykotor/resource/formats/ncs/ncs_auto.py:126-205`])):
 
 1. **Parser Initialization**: The `NssParser` is created with game-specific functions and constants:
 
@@ -3359,7 +3108,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="addavailablenpcbyobject"></a>
 
-#### `AddAvailableNPCByObject(nNPC, oCreature)` - Routine 694
 
 - `694. AddAvailableNPCByObject`
 - This adds a NPC to the list of available party members using
@@ -3372,7 +3120,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="addavailablenpcbytemplate"></a>
 
-#### `AddAvailableNPCByTemplate(nNPC, sTemplate)` - Routine 697
 
 - `697. AddAvailableNPCByTemplate`
 - This adds a NPC to the list of available party members using
@@ -3385,7 +3132,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="addpartymember"></a>
 
-#### `AddPartyMember(nNPC, oCreature)` - Routine 574
 
 - `574. AddPartyMember`
 - Adds a creature to the party
@@ -3397,7 +3143,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="addtoparty"></a>
 
-#### `AddToParty(oPC, oPartyLeader)` - Routine 572
 
 - `572. AddToParty`
 - Add oPC to oPartyLeader's party.  This will only work on two PCs.
@@ -3437,7 +3182,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="isnpcpartymember"></a>
 
-#### `IsNPCPartyMember(nNPC)` - Routine 699
 
 - `699. IsNPCPartyMember`
 - Returns if a given NPC constant is in the party currently
@@ -3446,7 +3190,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="isobjectpartymember"></a>
 
-#### `IsObjectPartyMember(oCreature)` - Routine 576
 
 - `576. IsObjectPartyMember`
 - Returns whether a specified creature is a party member
@@ -3456,7 +3199,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="removefromparty"></a>
 
-#### `RemoveFromParty(oPC)` - Routine 573
 
 - `573. RemoveFromParty`
 - Remove oPC from their current party. This will only work on a PC.
@@ -3466,7 +3208,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="removepartymember"></a>
 
-#### `RemovePartyMember(nNPC)` - Routine 575
 
 - `575. RemovePartyMember`
 - Removes a creature from the party
@@ -3496,7 +3237,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="showpartyselectiongui"></a>
 
-#### `ShowPartySelectionGUI(sExitScript, nForceNPC1, nForceNPC2)` - Routine 712
 
 - `712. ShowPartySelectionGUI`
 - ShowPartySelectionGUI
@@ -3511,7 +3251,6 @@ See [Other Functions](NSS-Shared-Functions-Other-Functions) for detailed documen
 
 <a id="switchplayercharacter"></a>
 
-#### `SwitchPlayerCharacter(nNPC)` - Routine 11
 
 - `11. SwitchPlayerCharacter`
 - Switches the main character to a specified NPC
@@ -6642,7 +6381,6 @@ void DoSpecialSpawnIn(object pObject)
 
 ## Compilation Process
 
-When compiling [NSS](NSS-File-Format) to NCS (see [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/ncs_auto.py:126-205`](NSS-Shared-Functions-Other-Functions#libraries/pykotor/src/pykotor/resource/formats/ncs/ncs_auto.py:126-205`])):
 
 1. **Parser Creation**: `NssParser` initialized with game-specific functions/constants
 2. **Source Parsing**: [NSS](NSS-File-Format) source code parsed into Abstract Syntax Tree (AST)
@@ -6683,7 +6421,7 @@ if (nPlanet == PLANET_TARIS) { ... }
 
 ## Commented-Out Elements in nwscript.nss
 
-The `nwscript.nss` files in KOTOR 1 and 2 contain numerous constants and functions that [ARE](GFF-File-Format#are-area) commented out (prefixed with `//`). These represent features from the original Neverwinter Nights (NWN) scripting system that were not implemented or supported in the Aurora engine variant used by KOTOR. BioWare deliberately disabled these elements to prevent crashes, errors, or undefined behavior if used.
+The `nwscript.nss` files in **KotOR 1 and 2** contain numerous constants and functions that [ARE](GFF-File-Format#are-area) commented out (prefixed with `//`). These represent features from the original **Neverwinter Nights (NWN)** scripting system that were **not implemented or supported in KotOR's Aurora engine variant**. BioWare deliberately disabled these elements to prevent crashes, errors, or undefined behavior if used.
 
 ### Reasons for Commented-Out Elements
 
@@ -6793,7 +6531,6 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 - [`vendor/KotOR.js/src/nwscript/NWScriptDefK1.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptDefK1.ts) - KotOR 1 definitions
 - [`vendor/KotOR.js/src/nwscript/NWScriptDefK2.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptDefK2.ts) - KotOR 2 definitions
 - [`vendor/KotOR.js/src/nwscript/NWScriptParser.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptParser.ts) - TypeScript parser for nwscript.nss
-- [`vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts`](NSS-Shared-Functions-Other-Functions#vendor/kotor.js/src/nwscript/nwscriptcompiler.ts`]) - TypeScript [NSS](NSS-File-Format) compiler
 - [`vendor/KotOR.js/src/nwscript/NWScriptInstructionSet.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptInstructionSet.ts) - Instruction set definitions
 - [`vendor/KotOR.js/src/nwscript/NWScriptConstants.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/nwscript/NWScriptConstants.ts) - Constant definitions
 - [`vendor/HoloLSP/server/src/nwscript/`](https://github.com/th3w1zard1/HoloLSP/blob/master/server/src/nwscript/) - Language server definitions
@@ -6829,7 +6566,6 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 
 **NWScript VM and Execution:**
 
-- [`vendor/reone/src/libs/script/routine/`](NSS-Shared-Functions-Other-Functions#vendor/reone/src/libs/script/routine/`]) - Routine implementations for engine functions
 - [`vendor/reone/src/libs/script/format/ncsreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp) - [NCS](NCS-File-Format) bytecode reader
 - [`vendor/reone/src/libs/script/format/ncswriter.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncswriter.cpp) - [NCS](NCS-File-Format) bytecode writer
 - [`vendor/xoreos/src/aurora/nwscript/`](https://github.com/th3w1zard1/xoreos/tree/master/src/aurora/nwscript) - NWScript VM implementation
@@ -6856,9 +6592,6 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 
 **NWScript Parsing and Compilation:**
 
-- [`vendor/reone/src/libs/script/parser/`](NSS-Shared-Functions-Other-Functions#vendor/reone/src/libs/script/parser/`]) - [NSS](NSS-File-Format) parser implementation
-- [`vendor/reone/src/libs/script/compiler/`](NSS-Shared-Functions-Other-Functions#vendor/reone/src/libs/script/compiler/`]) - [NSS](NSS-File-Format) to [NCS](NCS-File-Format) compiler
-- [`vendor/xoreos-tools/src/nwscript/compiler.cpp`](NSS-Shared-Functions-Other-Functions#vendor/xoreos-tools/src/nwscript/compiler.cpp`]) - [NSS](NSS-File-Format) compiler implementation
 - [`vendor/xoreos-tools/src/nwscript/decompiler.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/decompiler.cpp) - [NCS](NCS-File-Format) decompiler implementation
 
 **NWScript Execution:**
@@ -6876,7 +6609,6 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 - [`vendor/reone/src/libs/script/routine/main/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script/routine/main) - Main routine implementations
 - [`vendor/reone/src/libs/script/routine/action/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script/routine/action) - Action routine implementations
 - [`vendor/reone/src/libs/script/routine/effect/`](https://github.com/th3w1zard1/reone/tree/master/src/libs/script/routine/effect) - Effect routine implementations
-- [`vendor/xoreos/src/aurora/nwscript/routines.cpp`](NSS-Shared-Functions-Other-Functions#vendor/xoreos/src/aurora/nwscript/routines.cpp`]) - Routine implementations
 - [`vendor/xoreos/src/engines/kotorbase/script/routines.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/script/routines.cpp) - KotOR-specific routine implementations
 
 **NWScript type System:**
@@ -6917,13 +6649,9 @@ In summary, while no one has publicly shared a "uncomment everything" patch (lik
 **Game-Specific NWScript Extensions:**
 
 - [`vendor/xoreos/src/engines/kotorbase/script/routines.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/kotorbase/script/routines.cpp) - KotOR-specific routine implementations
-- [`vendor/reone/src/libs/script/routine/`](NSS-Shared-Functions-Other-Functions#vendor/reone/src/libs/script/routine/`]) - Routine implementations for K1 and K2
 - [`vendor/xoreos/src/engines/nwn/script/functions_action.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/engines/nwn/script/functions_action.cpp) - NWN action function implementations
 - [`vendor/NorthernLights/Assets/Scripts/ncs/constants.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/constants.cs) - NWScript constant definitions
-- [`vendor/reone/src/libs/script/routine.cpp`](NSS-Shared-Functions-Other-Functions#vendor/reone/src/libs/script/routine.cpp`]) - Routine base class implementation
 - [`vendor/reone/src/libs/game/script/routines.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/script/routines.cpp) - Game-specific routine implementations
-- [`vendor/reone/include/reone/script/routines.h`](NSS-Shared-Functions-Other-Functions#vendor/reone/include/reone/script/routines.h`]) - Routine header definitions
-- [`vendor/reone/include/reone/script/routine.h`](NSS-Shared-Functions-Other-Functions#vendor/reone/include/reone/script/routine.h`]) - Routine base class header
 - [`vendor/reone/include/reone/game/script/routines.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/game/script/routines.h) - Game routine header
 - [`vendor/xoreos-tools/src/nwscript/subroutine.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/subroutine.cpp) - Subroutine handling
 - [`vendor/xoreos-tools/src/nwscript/subroutine.h`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/subroutine.h) - Subroutine header

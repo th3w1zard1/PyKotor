@@ -2,6 +2,8 @@
 
 *Official Bioware Aurora Documentation*
 
+> **Note**: This official BioWare documentation was originally written for **Neverwinter Nights**, but the Waypoint (UTW) format is **identical in KotOR**. All structures, fields, and behaviors described here apply to KotOR as well. The examples may reference NWN-specific features, but the core format is the same.
+
 ---
 
 ## Page 1

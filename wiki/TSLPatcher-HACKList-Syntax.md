@@ -4,7 +4,7 @@ This guide explains how to modify [NCS files](NCS-File-Format) directly using TS
 
 ## Overview
 
-The `[HACKList]` section in TSLPatcher's changes.ini file enables you to modify compiled NCS (Neverwinter Compiled Script) [bytecode](https://en.wikipedia.org/wiki/Bytecode) files directly at the binary level. This advanced feature allows precise [byte](GFF-File-Format#gff-data-types)-level modifications to script files without recompiling from [NSS](NSS-File-Format) source code, making it ideal for:
+The `[HACKList]` section in TSLPatcher's changes.ini file enables you to modify compiled [NCS files](NCS-File-Format) (NWScript bytecode, historically called "Neverwinter Compiled Script" but used identically in **KotOR**) directly at the binary level. This advanced feature allows precise [byte](GFF-File-Format#gff-data-types)-level modifications to script files without recompiling from [NSS](NSS-File-Format) source code, making it ideal for:
 
 - Patching numerical values in existing compiled scripts
 - Injecting dynamically-generated string references (StrRefs) and [2DA](2DA-File-Format) memory values
