@@ -13,6 +13,7 @@ This document provides a detailed description of the ERF (Encapsulated Resource 
     - [Key List](#key-list)
     - [Resource List](#resource-list)
     - [Resource Data](#resource-data)
+    - [MOD/NWM File Format Quirk: Blank Data Block](#modnwm-file-format-quirk-blank-data-block)
   - [ERF Variants](#erf-variants)
     - [MOD Files (Module Archives)](#mod-files-module-archives)
     - [SAV Files (Save Game Archives)](#sav-files-save-game-archives)
@@ -29,6 +30,7 @@ ERF files are self-contained [archives](https://en.wikipedia.org/wiki/Archive_fi
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/erf/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/erf/)
 
 **Vendor References:**
+
 - [`vendor/reone/src/libs/resource/format/erfreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/erfreader.cpp) - Complete C++ ERF reader implementation with MOD/SAV/HAK support
 - [`vendor/reone/include/reone/resource/format/erfreader.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/format/erfreader.h) - ERF reader type definitions
 - [`vendor/xoreos/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/erffile.cpp) - Generic Aurora ERF implementation (shared format)
@@ -38,6 +40,7 @@ ERF files are self-contained [archives](https://en.wikipedia.org/wiki/Archive_fi
 - [`vendor/xoreos-tools/src/aurora/erffile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/erffile.cpp) - Command-line ERF extraction tools
 
 **See Also:**
+
 - [BIF File Format](BIF-File-Format) - Alternative archive format used with KEY files
 - [KEY File Format](KEY-File-Format) - Index file for BIF archives
 - [GFF File Format](GFF-File-Format) - Common content type stored in ERF archives
@@ -77,14 +80,24 @@ These timestamps are primarily informational and used by development tools to tr
 
 **Example Calculation:**
 
-```
+```plaintext
 Build Year: 103 → 1900 + 103 = 2003
 Build Day: 247 → September 4th (the 247th day of 2003)
 ```
 
 Most mod tools either zero out these fields or set them to the current date when creating/modifying ERF files.
 
-**Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:11-46`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs#L11-L46)
+**Description StrRef Values by File Type:**
+
+The Description StrRef field (offset 0x0028 / 0x28) varies depending on the ERF variant:
+
+- **MOD files**: `-1` (no TLK reference, uses localized strings instead)
+- **SAV files**: `0` (typically no description)
+- **NWM files**: `-1` (Neverwinter Nights module format, not used in KotOR)
+- **ERF/HAK files**: Unpredictable (may contain valid StrRef or `-1`)
+
+**Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:11-46`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs#L11-L46)  
+**Reference**: [`vendor/xoreos-docs/specs/torlack/mod.html`](vendor/xoreos-docs/specs/torlack/mod.html) - Tim Smith (Torlack)'s reverse-engineered ERF format documentation
 
 ### Localized String List
 
@@ -130,7 +143,12 @@ Each key entry is 24 bytes and maps ResRefs to resource indices:
 | Resource Type | uint16 | 20   | 2    | Resource type identifier                                         |
 | Unused      | uint16   | 22     | 2    | Padding                                                           |
 
-**Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:115-168`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs#L115-L168)
+**ResRef Padding Notes:**
+
+Resource names are padded with NULL bytes to 16 characters, but are not necessarily NULL-terminated. If a resource name is exactly 16 characters long, no NULL terminator exists. Resource names can be mixed case, though most are lowercase in practice.
+
+**Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:115-168`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs#L115-L168)  
+**Reference**: [`vendor/xoreos-docs/specs/torlack/mod.html`](vendor/xoreos-docs/specs/torlack/mod.html) - Resource structure details and ResRef padding notes
 
 ### Resource List
 
@@ -150,6 +168,12 @@ Resource data is stored at the offsets specified in the resource list:
 | Name         | Type   | Description                                                      |
 | ------------ | ------ | ---------------------------------------------------------------- |
 | Resource Data | byte[] | Raw binary data for each resource                               |
+
+### MOD/NWM File Format Quirk: Blank Data Block
+
+**Note**: For MOD and NWM files only, there exists an unusual block of data between the resource structures (Key List) and the position structures (Resource List). This block is 8 bytes per resource and appears to be all NULL bytes in practice. This data block is not referenced by any offset in the ERF file header, which is uncharacteristic of BioWare's file format design.
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/mod.html`](vendor/xoreos-docs/specs/torlack/mod.html) - "Strange Blank Data" section documenting this MOD/NWM-specific quirk
 
 ---
 

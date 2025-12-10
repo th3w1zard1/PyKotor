@@ -39,6 +39,7 @@ This document provides a detailed description of the MDL/MDX file format used in
   - [Vertex and Face Data](#vertex-and-face-data)
     - [Vertex Structure](#vertex-structure)
     - [Face Structure](#face-structure)
+    - [Vertex Index Arrays](#vertex-index-arrays)
   - [Vertex Data Processing](#vertex-data-processing)
     - [Vertex Normal Calculation](#vertex-normal-calculation)
     - [Tangent Space Calculation](#tangent-space-calculation)
@@ -50,6 +51,14 @@ This document provides a detailed description of the MDL/MDX file format used in
     - [Node Relationships](#node-relationships)
     - [Node Transformations](#node-transformations)
   - [Smoothing Groups](#smoothing-groups)
+  - [Binary Model Format Details (Aurora Engine)](#binary-model-format-details-aurora-engine)
+    - [Binary Model File Layout](#binary-model-file-layout)
+    - [Pointers and Arrays in Binary Models](#pointers-and-arrays-in-binary-models)
+    - [Model Routines and Node Type Identification](#model-routines-and-node-type-identification)
+    - [Part Numbers](#part-numbers)
+    - [Controller Data Storage](#controller-data-storage)
+    - [Bezier Interpolation](#bezier-interpolation)
+    - [AABB (Axis-Aligned Bounding Box) Mesh Nodes](#aabb-axis-aligned-bounding-box-mesh-nodes)
   - [ASCII MDL Format](#ascii-mdl-format)
     - [Model Header Section](#model-header-section)
     - [Geometry Section](#geometry-section)
@@ -86,6 +95,7 @@ KotOR models are defined using two files:
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/mdl/`](Libraries/PyKotor/src/pykotor/resource/formats/mdl/)
 
 **Vendor References:**
+
 - [`vendor/reone/src/libs/graphics/format/mdlreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlreader.cpp) - Complete C++ MDL/MDX parser with animation support
 - [`vendor/reone/include/reone/graphics/model.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/graphics/model.h) - Runtime model class definition
 - [`vendor/xoreos/src/graphics/aurora/model.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/model.cpp) - Generic Aurora model implementation (shared format)
@@ -97,7 +107,13 @@ KotOR models are defined using two files:
 - [`vendor/mdlops/mdlops/`](https://github.com/th3w1zard1/mdlops/tree/master/mdlops) - Legacy Python MDL toolkit for conversions
 - [`vendor/xoreos-tools/src/aurora/model.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/model.cpp) - Command-line model extraction tools
 
+**Additional Documentation Sources:**
+
+- [`vendor/xoreos-docs/specs/kotor_mdl.html`](vendor/xoreos-docs/specs/kotor_mdl.html) - Partial KotOR model format specification from xoreos-docs
+- [`vendor/xoreos-docs/specs/torlack/binmdl.html`](vendor/xoreos-docs/specs/torlack/binmdl.html) - Tim Smith (Torlack)'s binary model format documentation for Aurora engine models
+
 **See Also:**
+
 - [TPC File Format](TPC-File-Format) - Texture format referenced by MDL materials
 - [TXI File Format](TXI-File-Format) - Texture metadata used with MDL textures
 - [BWM File Format](BWM-File-Format) - Walkmesh format (WOK files) paired with room models
@@ -911,6 +927,110 @@ The game version can be determined by examining Function Pointer 0 in the Geomet
 
 **Reference**: [`vendor/mdlops/MDLOpsM.pm`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm) - Smoothing group calculation (see version history notes about cross-mesh smoothing using world-space normals)  
 **Reference**: [`vendor/mdlops/MDLOpsM.pm:92-93`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L92-L93) - Version history notes on cross-mesh smoothing improvements
+
+---
+
+## Binary Model Format Details (Aurora Engine)
+
+The following information is derived from Tim Smith (Torlack)'s reverse-engineered specifications and xoreos-docs, documenting the Aurora engine's binary model format shared across Neverwinter Nights, KotOR, and other BioWare games.
+
+**Source**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](vendor/xoreos-docs/specs/torlack/binmdl.html) - Tim Smith's binary model format documentation  
+**Source**: [`vendor/xoreos-docs/specs/kotor_mdl.html`](vendor/xoreos-docs/specs/kotor_mdl.html) - Partial KotOR-specific model format notes
+
+### Binary Model File Layout
+
+The binary model file structure consists of three main sections:
+
+1. **File Header** (12 bytes): Provides offset and size information for the raw data section
+2. **Model Data**: Contains all node structures, geometry headers, and animation data
+3. **Raw Data**: Contains vertex buffers, texture coordinates, and other per-vertex data
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](vendor/xoreos-docs/specs/torlack/binmdl.html) - Binary model file structure overview
+
+### Pointers and Arrays in Binary Models
+
+Binary model files use two types of pointers:
+
+- **Model Data Pointers**: 32-bit offsets from the start of the model data section. A value of `0` represents a NULL pointer.
+- **Raw Data Pointers**: 32-bit offsets from the start of the raw data section. A value of `0xFFFFFFFF` (or `-1` signed) represents a NULL pointer, since offset `0` is a valid position in raw data.
+
+**Note**: After loading from disk, these offsets can be converted to actual memory pointers on 32-bit address processors, improving runtime performance.
+
+Arrays in binary models consist of three elements:
+
+| Offset | Type   | Description                                    |
+| ------ | ------ | ---------------------------------------------- |
+| 0x0000 | UInt32 | Pointer/Offset to the first element            |
+| 0x0004 | UInt32 | Number of used entries in the array            |
+| 0x0008 | UInt32 | Number of allocated entries in the array       |
+
+For binary model files, the number of used entries and allocated entries are always the same. During runtime or compilation, these values may differ as arrays grow dynamically.
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](vendor/xoreos-docs/specs/torlack/binmdl.html) - Arrays and pointers explanation
+
+### Model Routines and Node Type Identification
+
+**Important**: Early reverse-engineering efforts incorrectly used "tokens" (six 4-byte values at the start of nodes) to identify node types. These values are actually function routine addresses from the Win32/NT image loader (which loads images at `0x0041000`), and should **not** be relied upon for node type identification.
+
+The proper method to identify node types is using the **32-bit bitmask** stored in each node header (offset 0x006C in the node structure). This bitmask identifies which structures make up the node.
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](vendor/xoreos-docs/specs/torlack/binmdl.html) - Model routines and node type identification
+
+### Part Numbers
+
+Part numbers are values assigned to nodes during model compilation. After geometry compilation, these values are adjusted:
+
+- If a model has a supermodel, the geometry is compared against the supermodel's geometry. Nodes matching names in the supermodel receive the supermodel's part number. Nodes not found receive part number `-1`.
+- If no supermodel exists, part numbers remain as assigned during compilation.
+- After animation geometry compilation, the same process matches animation nodes against the main model geometry (not the supermodel).
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](vendor/xoreos-docs/specs/torlack/binmdl.html) - Part numbers explanation
+
+### Controller Data Storage
+
+Controllers are stored as two arrays in the model data:
+
+1. **Controller Structure Array**: Contains metadata about each controller (type, row count, data indices)
+2. **Float Array**: Contains the actual controller data (time keys and property values)
+
+All time keys are stored contiguously, followed by all data values stored contiguously. For example, if a keyed controller has 3 rows with time keys starting at float index 5, the time keys would be at indices 5, 6, and 7.
+
+**Note**: Controllers that aren't time-keyed are still stored as if they are time-keyed but with a single row and a time key value of zero. It's impossible to distinguish between a non-keyed controller and a keyed controller with one row at time zero.
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](vendor/xoreos-docs/specs/torlack/binmdl.html) - Controller structure and data storage
+
+### Bezier Interpolation
+
+Bezier interpolation provides smooth, non-linear animation curves using control points (tangents). In the controller structure, Bezier interpolation is indicated by ORing `0x10` into the column count byte. When this flag is set, the controller stores 3 values per column per keyframe: (value, in-tangent, out-tangent).
+
+**Note**: At the time of the original xoreos-docs documentation, it was unclear if any BioWare models actually use bezier interpolation or if the rendering engine supports it. However, the format specification includes support for it.
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](vendor/xoreos-docs/specs/torlack/binmdl.html) - Bezier interpolation notes  
+**See Also**: [Controller Data Formats - Bezier Interpolation](#bezier-interpolation) section below for ASCII format details
+
+### AABB (Axis-Aligned Bounding Box) Mesh Nodes
+
+AABB mesh nodes provide collision detection capabilities. The AABB structure uses a binary tree for efficient collision queries:
+
+| Offset | Type           | Description                                    |
+| ------ | -------------- | ---------------------------------------------- |
+| 0x0000 | Float[3]       | Min bounding box coordinates                   |
+| 0x000C | Float[3]       | Max bounding box coordinates                   |
+| 0x0018 | AABB Entry Ptr | Left child node pointer                        |
+| 0x001C | AABB Entry Ptr | Right child node pointer                       |
+| 0x0020 | Int32          | Leaf face part number (or -1 if not a leaf)   |
+| 0x0024 | UInt32         | Most significant plane bitmask                |
+
+The plane bitmask indicates which axis plane is used for tree splitting:
+
+- `0x01` = Positive X
+- `0x02` = Positive Y
+- `0x04` = Positive Z
+- `0x08` = Negative X
+- `0x10` = Negative Y
+- `0x20` = Negative Z
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](vendor/xoreos-docs/specs/torlack/binmdl.html) - AABB node structure
 
 ---
 

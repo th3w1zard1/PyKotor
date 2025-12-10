@@ -46,6 +46,7 @@ The KEY file only manages BIF resources (step 4). Higher-priority locations can 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/key/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/key/)
 
 **Vendor References:**
+
 - [`vendor/reone/src/libs/resource/format/keyreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/keyreader.cpp) - Complete C++ KEY reader implementation
 - [`vendor/xoreos/src/aurora/keyfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/keyfile.cpp) - Generic Aurora KEY implementation (shared format)
 - [`vendor/KotOR.js/src/resource/KEYObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/KEYObject.ts) - TypeScript KEY parser
@@ -53,6 +54,7 @@ The KEY file only manages BIF resources (step 4). Higher-priority locations can 
 - [`vendor/xoreos-tools/src/aurora/keyfile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/keyfile.cpp) - Command-line KEY tools
 
 **See Also:**
+
 - [BIF File Format](BIF-File-Format) - Archive format indexed by KEY files
 - [ERF File Format](ERF-File-Format) - Self-contained alternative to KEY+BIF
 - [Bioware Aurora KeyBIF Format](Bioware-Aurora-KeyBIF) - Official BioWare specification
@@ -77,7 +79,10 @@ The file header is 64 bytes in size:
 | Build Day           | uint32  | 28     | 4    | Build day (days since Jan 1)                   |
 | Reserved            | byte[32] | 32   | 32   | Padding (usually zeros)                        |
 
-**Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorKEY/KEYBinaryStructure.cs:13-114`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorKEY/KEYBinaryStructure.cs#L13-L114)
+**Note on Header Variations**: Some older documentation (e.g., xoreos-docs) shows the header ending at offset 0x0040 with unknown values at offset 0x0018. The structure shown here (with Build Year/Day and Reserved fields) matches the actual KotOR KEY file format.
+
+**Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorKEY/KEYBinaryStructure.cs:13-114`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorKEY/KEYBinaryStructure.cs#L13-L114)  
+**Reference**: [`vendor/xoreos-docs/specs/torlack/key.html`](vendor/xoreos-docs/specs/torlack/key.html) - Tim Smith (Torlack)'s reverse-engineered KEY format documentation (may show variant header structure)
 
 ### File Table
 
@@ -181,7 +186,7 @@ These limits are more than sufficient for KotOR, which typically has:
 
 Given Resource ID `0x00123456`:
 
-```
+```plaintext
 Binary: 0000 0000 0001 0010 0011 0100 0101 0110
         |---- 12 bits -----|------ 20 bits ------|
 BIF Index:     0x001 (BIF #1)
@@ -190,7 +195,8 @@ Resource Index: 0x23456 (Resource #144,470 within that BIF)
 
 The encoding allows a single 32-bit integer to precisely locate any resource in the entire BIF system.
 
-**Reference**: [`vendor/reone/src/libs/resource/format/keyreader.cpp:95-100`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/keyreader.cpp#L95-L100)
+**Reference**: [`vendor/reone/src/libs/resource/format/keyreader.cpp:95-100`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/keyreader.cpp#L95-L100)  
+**Reference**: [`vendor/xoreos-docs/specs/torlack/key.html`](vendor/xoreos-docs/specs/torlack/key.html) - BIF ID encoding explanation with example (0x00400029 → BIF #4, Resource #41)
 
 ---
 

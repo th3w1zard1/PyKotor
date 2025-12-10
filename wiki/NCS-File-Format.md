@@ -5,6 +5,7 @@ NCS files contain compiled NWScript [bytecode](https://en.wikipedia.org/wiki/Byt
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ncs/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ncs/)
 
 **Vendor References:**
+
 - [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp) - Complete NCS VM implementation with decompilation
 - [`vendor/xoreos-tools/src/nwscript/ncsfile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/nwscript/ncsfile.cpp) - NCS decompiler tool
 - [`vendor/reone/src/libs/script/format/ncsreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp) - C++ NCS parser and VM
@@ -13,6 +14,7 @@ NCS files contain compiled NWScript [bytecode](https://en.wikipedia.org/wiki/Byt
 - [`Vanilla KOTOR Script Source`](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source) - Decompiled vanilla scripts
 
 **See Also:**
+
 - [NSS File Format](NSS-File-Format) - NWScript source code that compiles to NCS
 - [GFF-DLG](GFF-DLG) - Dialogue files that trigger NCS scripts
 
@@ -60,7 +62,8 @@ NCS files contain compiled NWScript [bytecode](https://en.wikipedia.org/wiki/Byt
 - All major reverse-engineered engines (`vendor/reone`, `vendor/xoreos`, `vendor/Kotor.NET`, `vendor/NorthernLights`) decode the same structure; KotOR.js uses a [WebAssembly](https://en.wikipedia.org/wiki/WebAssembly) VM but identical byte layouts.
 - The program size marker at offset 8 (`0x42`) is not a real instruction but a metadata field containing the total file size. Execution begins at offset 13 (0x0D) after the header.
 
-**Reference:** [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp:342-350`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp#L342-L350), [`vendor/xoreos-tools/src/nwscript/ncsfile.cpp:116-125`](https://github.com/th3w1zard1/xoreos/blob/master/xoreos-tools/src/nwscript/ncsfile.cpp#L116-L125), [`vendor/reone/src/libs/script/format/ncsreader.cpp:28-40`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp#L28-L40)
+**Reference:** [`vendor/xoreos/src/aurora/nwscript/ncsfile.cpp:342-350`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.cpp#L342-L350), [`vendor/xoreos-tools/src/nwscript/ncsfile.cpp:116-125`](https://github.com/th3w1zard1/xoreos/blob/master/xoreos-tools/src/nwscript/ncsfile.cpp#L116-L125), [`vendor/reone/src/libs/script/format/ncsreader.cpp:28-40`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp#L28-L40)  
+**Reference**: [`vendor/xoreos-docs/specs/torlack/ncs.html`](vendor/xoreos-docs/specs/torlack/ncs.html) - Tim Smith (Torlack)'s comprehensive NWScript bytecode documentation with detailed opcode tables, stack operation examples, and subroutine calling conventions
 
 ### Stack-Based Virtual Machine
 

@@ -20,7 +20,7 @@ This document provides a detailed description of the GFF (Generic File Format) u
     - [Struct Array](#struct-array)
     - [Field Array](#field-array)
     - [Field Data](#field-data)
-    - [Field Indices](#field-indices)
+    - [Field Indices (Multiple Element Map / MultiMap)](#field-indices-multiple-element-map--multimap)
     - [List Indices](#list-indices)
   - [GFF Data Types](#gff-data-types)
   - [GFF Structure](#gff-structure)
@@ -31,7 +31,7 @@ This document provides a detailed description of the GFF (Generic File Format) u
     - [ARE (Area)](#are-area)
     - [DLG (Dialogue)](#dlg-dialogue)
     - [GIT (Game Instance Template)](#git-game-instance-template)
-    - [GUI](#gui)
+    - [GUI (Graphical User Interface)](#gui-graphical-user-interface)
     - [IFO (Module Info)](#ifo-module-info)
     - [JRL (Journal)](#jrl-journal)
     - [PTH (Path)](#pth-path)
@@ -44,6 +44,11 @@ This document provides a detailed description of the GFF (Generic File Format) u
     - [UTS (Sound)](#uts-sound)
     - [UTT (Trigger)](#utt-trigger)
     - [UTW (Waypoint)](#utw-waypoint)
+  - [Alternative Terminology (Historical)](#alternative-terminology-historical)
+  - [Field Data Access Patterns](#field-data-access-patterns)
+    - [Direct Access Types](#direct-access-types)
+    - [Indirect Access Types](#indirect-access-types)
+    - [Complex Access Types](#complex-access-types)
   - [Implementation Details](#implementation-details)
 
 ---
@@ -79,6 +84,7 @@ Every `.utc`, `.uti`, `.dlg`, `.are`, and dozens of other KotOR file types are G
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/gff/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/)
 
 **Vendor References:**
+
 - [`vendor/reone/src/libs/resource/gff.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/gff.cpp) - Complete C++ GFF reader/writer implementation
 - [`vendor/reone/include/reone/resource/gff.h`](https://github.com/th3w1zard1/reone/blob/master/include/reone/resource/gff.h) - GFF type definitions and API
 - [`vendor/xoreos/src/aurora/gff3file.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/gff3file.cpp) - Generic Aurora GFF3 implementation (shared format)
@@ -88,6 +94,7 @@ Every `.utc`, `.uti`, `.dlg`, `.are`, and dozens of other KotOR file types are G
 - [`vendor/xoreos-tools/src/aurora/gff3file.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/gff3file.cpp) - Command-line GFF tools implementation
 
 **See Also:**
+
 - [TSLPatcher GFFList Syntax](TSLPatcher-GFFList-Syntax) - Modding GFF files with TSLPatcher
 - [2DA File Format](2DA-File-Format) - Configuration data referenced by GFF files
 - [TLK File Format](TLK-File-Format) - Text strings used by GFF LocalizedString fields
@@ -172,13 +179,21 @@ Complex field types store their data in the field data section:
 
 **Reference**: [`vendor/reone/src/libs/resource/format/gffreader.cpp:78-146`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/gffreader.cpp#L78-L146)
 
-### Field Indices
+### Field Indices (Multiple Element Map / MultiMap)
 
-When a struct has multiple fields, the struct's data field contains an offset into the field indices array, which lists the field indices for that struct.
+When a struct has multiple fields, the struct's data field contains an offset into the field indices array (also called the "Multiple Element Map" or "MultiMap" in older documentation), which lists the field indices for that struct.
+
+**Access Pattern**: When a struct has exactly one field, the struct's data field directly contains the field index. When a struct has more than one field, the data field contains a byte offset into the field indices array, which is an array of UInt32 values listing the field indices.
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](vendor/xoreos-docs/specs/torlack/itp.html) - Entry/Entity table access patterns and MultiMap explanation
 
 ### List Indices
 
 Lists are stored as arrays of struct indices. The list field contains an offset into the list indices array, which contains the struct indices that make up the list.
+
+**Access Pattern**: For a LIST type field, the field's data/offset value specifies a byte offset into the list indices table. At that offset, the first UInt32 is the count of entries, followed by that many UInt32 values representing the struct indices.
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](vendor/xoreos-docs/specs/torlack/itp.html) - LIST type access pattern
 
 ---
 
@@ -299,9 +314,9 @@ See [DLG (Dialogue)](GFF-DLG) for detailed documentation.
 
 See [GIT (Game Instance Template)](GFF-GIT) for detailed documentation.
 
-### GUI
+### GUI (Graphical User Interface)
 
-See [GUI](GFF-GUI) for detailed documentation.
+See [GUI (Graphical User Interface)](GFF-GUI) for detailed documentation.
 
 ### IFO (Module Info)
 
@@ -350,6 +365,55 @@ See [UTT (Trigger)](GFF-UTT) for detailed documentation.
 ### UTW (Waypoint)
 
 See [UTW (Waypoint)](GFF-UTW) for detailed documentation.
+
+## Alternative Terminology (Historical)
+
+The GFF format is also known as "ITP" in older documentation (from Neverwinter Nights era). The following terminology mapping may be helpful when reading older specifications:
+
+| Modern Term (GFF) | Historical Term (ITP) | Description |
+| ----------------- | --------------------- | ----------- |
+| Struct Array | Entry Table / Entity Table | Array of struct entries |
+| Field Array | Element Table | Array of field/element entries |
+| Label Array | Variable Names Table | Array of 16-byte field name strings |
+| Field Data | Variable Data Section | Storage for complex field types |
+| Field Indices | Multiple Element Map (MultiMap) | Array mapping structs to their fields |
+| List Indices | List Section | Array mapping list fields to struct indices |
+
+**Note**: The first entry in the struct array is always the root of the entire hierarchy. All other structs and fields can be accessed from this root entry.
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](vendor/xoreos-docs/specs/torlack/itp.html) - Tim Smith (Torlack)'s reverse-engineered GFF/ITP format documentation
+
+## Field Data Access Patterns
+
+### Direct Access Types
+
+Simple types (UInt8, Int8, UInt16, Int16, UInt32, Int32, Float) store their values directly in the field entry's data/offset field (offset 0x0008 in the element structure). These values are stored in little-endian format.
+
+### Indirect Access Types
+
+Complex types require accessing data from the field data section:
+
+- **UInt64, Int64, Double**: The field's data/offset contains a byte offset into the field data section where the 8-byte value is stored.
+- **String (CExoString)**: The offset points to a UInt32 length followed by the string bytes (not null-terminated).
+- **ResRef**: The offset points to a UInt8 length (max 16) followed by the resource name bytes (not null-terminated).
+- **LocalizedString (CExoLocString)**: The offset points to a structure containing:
+  - UInt32: Total size (not including this count)
+  - Int32: StrRef ID (dialog.tlk reference, -1 if none)
+  - UInt32: Number of language-specific strings
+  - For each language string (if count > 0):
+    - UInt32: Language ID
+    - UInt32: String length in bytes
+    - Char[]: String data
+- **Void (Binary)**: The offset points to a UInt32 length followed by the binary data bytes.
+- **Vector3**: The offset points to 12 bytes (3×float) in the field data section.
+- **Vector4 / Orientation**: The offset points to 16 bytes (4×float) in the field data section.
+
+### Complex Access Types
+
+- **Struct (CAPREF)**: The field's data/offset contains a struct index (not an offset). This references a struct in the struct array.
+- **List**: The field's data/offset contains a byte offset into the list indices array. At that offset, the first UInt32 is the entry count, followed by that many UInt32 struct indices.
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/itp.html`](vendor/xoreos-docs/specs/torlack/itp.html) - Detailed field data access patterns and code examples
 
 ## Implementation Details
 

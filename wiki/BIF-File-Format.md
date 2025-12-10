@@ -41,6 +41,7 @@ The [modular structure](https://en.wikipedia.org/wiki/Modular_programming) allow
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/bif/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/bif/)
 
 **Vendor References:**
+
 - [`vendor/reone/src/libs/resource/format/bifreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp) - Complete C++ BIF reader implementation
 - [`vendor/xoreos/src/aurora/biffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/biffile.cpp) - Generic Aurora BIF implementation (shared format)
 - [`vendor/KotOR.js/src/resource/BIFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/BIFObject.ts) - TypeScript BIF parser with decompression
@@ -48,6 +49,7 @@ The [modular structure](https://en.wikipedia.org/wiki/Modular_programming) allow
 - [`vendor/xoreos-tools/src/aurora/biffile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/biffile.cpp) - Command-line BIF extraction tools
 
 **See Also:**
+
 - [KEY File Format](KEY-File-Format) - Index file that references BIF archives
 - [ERF File Format](ERF-File-Format) - Alternative self-contained archive format
 - [Bioware Aurora KeyBIF Format](Bioware-Aurora-KeyBIF) - Official BioWare specification
@@ -70,9 +72,11 @@ The file header is 20 bytes in size:
 
 **Note on Fixed Resources:** The "Fixed Resource Count" field is a legacy holdover from Neverwinter Nights where some resource types had predetermined sizes. In KotOR, this field is always `0` and fixed resource tables are never used. All resources are stored in the variable resource table regardless of their size.
 
-**Reference**: [`vendor/xoreos/src/aurora/biffile.cpp:64-67`](https://github.com/xoreos/xoreos/blob/master/src/aurora/biffile.cpp#L64-L67) explicitly checks that fixed resource count is 0 and throws an exception if it's not. [`vendor/reone/src/libs/resource/format/bifreader.cpp:34`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp#L34) reads the fixed resource count but does not use it.
+**Note on Header Variations**: Some older documentation (e.g., xoreos-docs) shows the field at offset 0x000C as "Unknown value" rather than "Fixed Resource Count". This reflects the field's historical ambiguity, but in practice it serves as the fixed resource count (always 0 in KotOR).
 
-**Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorBIF/BIFBinaryStructure.cs:13-67`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorBIF/BIFBinaryStructure.cs#L13-L67)
+**Reference**: [`vendor/xoreos/src/aurora/biffile.cpp:64-67`](https://github.com/xoreos/xoreos/blob/master/src/aurora/biffile.cpp#L64-L67) explicitly checks that fixed resource count is 0 and throws an exception if it's not. [`vendor/reone/src/libs/resource/format/bifreader.cpp:34`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp#L34) reads the fixed resource count but does not use it.  
+**Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorBIF/BIFBinaryStructure.cs:13-67`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorBIF/BIFBinaryStructure.cs#L13-L67)  
+**Reference**: [`vendor/xoreos-docs/specs/torlack/bif.html`](vendor/xoreos-docs/specs/torlack/bif.html) - Tim Smith (Torlack)'s reverse-engineered BIF format documentation
 
 ### Variable Resource Table
 
@@ -118,7 +122,8 @@ The engine reads resources through the following process:
 5. **Entry Lookup**: Find the resource entry at the specified index in the variable resource table
 6. **Data Reading**: Seek to the offset specified in the entry and read the number of bytes specified by the file size
 
-**Reference**: [`vendor/xoreos/src/aurora/biffile.cpp:84-96`](https://github.com/xoreos/xoreos/blob/master/src/aurora/biffile.cpp#L84-L96) shows how variable resource entries are read. [`vendor/reone/src/libs/resource/format/bifreader.cpp:41-48`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp#L41-L48) demonstrates resource table loading. [`vendor/xoreos/src/aurora/biffile.cpp:99-123`](https://github.com/xoreos/xoreos/blob/master/src/aurora/biffile.cpp#L99-L123) shows the mergeKEY process that combines KEY and BIF information.
+**Reference**: [`vendor/xoreos/src/aurora/biffile.cpp:84-96`](https://github.com/xoreos/xoreos/blob/master/src/aurora/biffile.cpp#L84-L96) shows how variable resource entries are read. [`vendor/reone/src/libs/resource/format/bifreader.cpp:41-48`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp#L41-L48) demonstrates resource table loading. [`vendor/xoreos/src/aurora/biffile.cpp:99-123`](https://github.com/xoreos/xoreos/blob/master/src/aurora/biffile.cpp#L99-L123) shows the mergeKEY process that combines KEY and BIF information.  
+**Reference**: [`vendor/xoreos-docs/specs/torlack/bif.html`](vendor/xoreos-docs/specs/torlack/bif.html) - Resource structure details (Resource ID, Offset, Length, Type)
 
 **Resource IDs:**
 

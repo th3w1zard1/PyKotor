@@ -47,6 +47,75 @@ The following documents are official Bioware Aurora Engine file format specifica
 - **[Faction Format](Bioware-Aurora-Faction)** - Official faction data format
 - **[Palette/ITP Format](Bioware-Aurora-PaletteITP)** - Official palette and ITP formats
 
+### Aurora Engine Basics
+
+The BioWare Aurora Engine (used by KotOR, TSL, and Neverwinter Nights) uses a standardized resource system:
+
+**Key Files:**
+
+- **`chitin.key`**: Master index file that maps resource names to BIF archive locations
+- **`dialog.tlk`**: Text resource file containing localized strings referenced by StrRef IDs
+- **`kotor.ini` / `nwn.ini`**: Configuration file with `[Alias]` section mapping logical directory names to physical paths
+
+**Resource Resolution Order:**
+
+1. Override folder (`override/`)
+2. Currently loaded MOD/ERF files
+3. Currently loaded SAV file (if in-game)
+4. BIF files via KEY lookup
+5. Hardcoded defaults
+
+**Resource Types:**
+
+The Aurora engine uses hexadecimal resource type identifiers. Common types include:
+
+| Resource Name | Type ID | Description                                    |
+| ------------- | ------- | ---------------------------------------------- |
+| MDL           | 0x07D2  | 3D model file                                   |
+| NCS           | 0x07DA  | Compiled NWScript bytecode                     |
+| NSS           | 0x07D9  | NWScript source code                            |
+| ARE           | 0x07DC  | Area definition                                 |
+| IFO           | 0x07DE  | Module information                              |
+| 2DA           | 0x07E1  | Two-dimensional array data                      |
+| TLK           | 0x07E2  | Talk table (localized strings)                 |
+| TXI           | 0x07E6  | Texture information                             |
+| GIT           | 0x07E7  | Game instance template                          |
+| UTI           | 0x07E9  | Item template                                   |
+| UTC           | 0x07EB  | Creature template                               |
+| DLG           | 0x07ED  | Dialogue/conversation                           |
+| GFF           | 0x07F5  | Generic file format (container)                 |
+| UTE           | 0x07F8  | Encounter template                              |
+| UTD           | 0x07FA  | Door template                                   |
+| UTP           | 0x07FC  | Placeable template                              |
+| GUI           | 0x07FF  | User interface definition                       |
+| UTM           | 0x0803  | Merchant/store template                         |
+| JRL           | 0x0808  | Journal/quest log                               |
+| SAV           | 0x0809  | Save game archive                               |
+| UTW           | 0x080A  | Waypoint template                               |
+| SSF           | 0x080C  | Sound set file                                  |
+| HAK           | 0x080D  | Hak pak archive                                 |
+| ERF           | 0x270D  | Encapsulated resource file                      |
+| BIF           | 0x270E  | BioWare index file (archive)                    |
+| KEY           | 0x270F  | Key table (BIF index)                          |
+
+**Language IDs:**
+
+Localized strings use language identifiers:
+
+| Language        | ID |
+| --------------- | -- |
+| English         | 0  |
+| French (Male)   | 2  |
+| French (Female) | 3  |
+| German (Male)   | 4  |
+| German (Female) | 5  |
+| Italian (Male)  | 6  |
+| Italian (Female)| 7  |
+| Spanish (Male)  | 8  |
+| Spanish (Female)| 9  |
+
+**Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](vendor/xoreos-docs/specs/torlack/basics.html) - Tim Smith (Torlack)'s NWN Data File Basics documentation (Aurora engine fundamentals)
+
 ### File Formats
 
 - **[MDL/MDX File Format](MDL-MDX-File-Format)** ← Complete reference for 3D model files
@@ -195,7 +264,7 @@ The following documents are official Bioware Aurora Engine file format specifica
   - [ARE (Area)](GFF-ARE)
   - [DLG (Dialogue)](GFF-DLG)
   - [GIT (Game Instance Template)](GFF-GIT)
-  - [GUI](GFF-GUI)
+  - [GUI (Graphical User Interface)](GFF-GUI)
   - [IFO (Module Info)](GFF-IFO)
   - [JRL (Journal)](GFF-JRL)
   - [PTH (Path)](GFF-PTH)
@@ -306,7 +375,7 @@ Guides, patches, and community-maintained resources:
 - **[kotor_combat_faq](https://github.com/statsjedi/kotor_combat_faq)** - Combat mechanics documentation ([Mirror: th3w1zard1/kotor_combat_faq](https://github.com/th3w1zard1/kotor_combat_faq))
 - **[ds-kotor-modding-wiki](https://github.com/DeadlyStream/ds-kotor-modding-wiki)** - DeadlyStream modding wiki archive ([Mirror: th3w1zard1/ds-kotor-modding-wiki](https://github.com/th3w1zard1/ds-kotor-modding-wiki))
 
-### Documentation
+### External Documentation
 
 Reference documentation from related projects (external sources):
 
