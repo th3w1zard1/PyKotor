@@ -30,9 +30,10 @@ if TYPE_CHECKING:
 
     Format: TypeAlias = Literal["html", "json"]
 
-    class PassageMetadataDict(TypedDict):
+    class PassageMetadataDict(TypedDict, total=False):
         position: str
         size: str
+        custom: dict[str, str]  # Optional: for storing language variants and other custom data
 
     class PassageDict(TypedDict):
         name: str
@@ -136,6 +137,10 @@ def _read_json(content: str) -> TwineStory:
             position=Vector2(float(position[0]), float(position[1])),
             size=Vector2(float(size[0]), float(size[1])),
         )
+        
+        # Restore custom metadata (e.g., language variants)
+        if "custom" in p_meta and isinstance(p_meta["custom"], dict):
+            passage_metadata.custom.update(p_meta["custom"])
 
         # Create passage
         passage: TwinePassage = TwinePassage(
@@ -224,6 +229,17 @@ def _read_html(content: str) -> TwineStory:
             position=Vector2(float(position[0]), float(position[1])),
             size=Vector2(float(size[0]), float(size[1])),
         )
+        
+        # Restore custom metadata from data-custom attribute
+        custom_data = p_data.get("data-custom")
+        if custom_data:
+            try:
+                custom_dict = json.loads(custom_data)
+                if isinstance(custom_dict, dict):
+                    passage_metadata.custom.update(custom_dict)
+            except (json.JSONDecodeError, ValueError):
+                # Skip invalid JSON
+                pass
 
         # Create passage
         passage = TwinePassage(
@@ -297,15 +313,21 @@ def _write_json(
                 # Append links to the text (Twine convention is to append links at the end)
                 text_with_links = passage.text + (" " if passage.text else "") + " ".join(link_texts)
         
+        metadata_dict: PassageMetadataDict = {
+            "position": f"{passage.metadata.position.x},{passage.metadata.position.y}",
+            "size": f"{passage.metadata.size.x},{passage.metadata.size.y}",
+        }
+        
+        # Include custom metadata (e.g., language variants)
+        if passage.metadata.custom:
+            metadata_dict["custom"] = passage.metadata.custom
+        
         p_data: PassageDict = {
             "name": passage.name,
             "text": text_with_links,
             "tags": passage.tags,
             "pid": passage.pid,
-            "metadata": {
-                "position": f"{passage.metadata.position.x},{passage.metadata.position.y}",
-                "size": f"{passage.metadata.size.x},{passage.metadata.size.y}",
-            },
+            "metadata": metadata_dict,
         }
         data["passages"].append(p_data)
 
@@ -364,6 +386,11 @@ def _write_html(
             f"{passage.metadata.size.x},{passage.metadata.size.y}",
         )
         
+        # Store custom metadata (e.g., language variants) as JSON in data attribute
+        if passage.metadata.custom:
+            import json
+            p_data.set("data-custom", json.dumps(passage.metadata.custom))
+        
         # Embed links into text in Twine format: [[text->target]] or [[target]]
         text_with_links = passage.text
         if passage.links:
@@ -403,9 +430,27 @@ def _story_to_dlg(story: TwineStory) -> DLG:
         else:
             node = DLGReply()
 
-        # Set text
+        # Set text - restore all language/gender combinations from custom metadata
         node.text = LocalizedString(-1)
         node.text.set_data(Language.ENGLISH, Gender.MALE, passage.text)
+        
+        # Restore additional language variants from custom metadata
+        for key, value in passage.metadata.custom.items():
+            if key.startswith("text_") and isinstance(value, str):
+                # Parse key format: "text_language_gender" (e.g., "text_french_0")
+                parts = key.split("_")
+                if len(parts) == 3 and parts[0] == "text":
+                    try:
+                        lang_name = parts[1].upper()
+                        gender_val = int(parts[2])
+                        # Try to find matching Language enum
+                        for lang in Language:
+                            if lang.name == lang_name:
+                                node.text.set_data(lang, Gender(gender_val), value)
+                                break
+                    except (ValueError, KeyError):
+                        # Skip invalid language/gender combinations
+                        continue
 
         # Store metadata
         converter.store_kotor_metadata(passage, node)
@@ -486,13 +531,24 @@ def _dlg_to_story(
         if node in node_to_passage:
             return node_to_passage[node]
 
+        # Get primary text (English, Male) for main passage text
+        primary_text = node.text.get(Language.ENGLISH, Gender.MALE) or ""
+        
         passage: TwinePassage = TwinePassage(
             name=_assign_name(node),
-            text=node.text.get(Language.ENGLISH, Gender.MALE) or "",
+            text=primary_text,
             type=PassageType.ENTRY if isinstance(node, DLGEntry) else PassageType.REPLY,
             pid=pid,
             tags=["entry"] if isinstance(node, DLGEntry) else ["reply"],
         )
+        
+        # Store all language/gender combinations in custom metadata
+        if node.text.stringref == -1:  # Only store if using custom strings, not TLK reference
+            for language, gender, text in node.text:
+                if text:  # Only store non-empty strings
+                    key = f"text_{language.name.lower()}_{gender.value}"
+                    passage.metadata.custom[key] = text
+        
         converter.store_kotor_metadata(passage, node)
         node_to_passage[node] = passage
         story.passages.append(passage)
