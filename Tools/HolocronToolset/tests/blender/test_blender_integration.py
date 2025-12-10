@@ -1918,7 +1918,8 @@ class TestErrorHandling:
             def serialize(self) -> dict[str, float]:
                 """Serialize to JSON-compatible dict - will fail on None values."""
                 # This will raise TypeError when float() is called on None
-                return {"x": float(self.x) if self.x is not None else 0.0, "y": float(self.y) if self.y is not None else 0.0, "z": float(self.z) if self.z is not None else 0.0}
+                # Don't handle None - let it raise TypeError as the test expects
+                return {"x": float(self.x), "y": float(self.y), "z": float(self.z)}
 
         # Should handle None by converting to 0.0 or raising TypeError
         # The actual implementation uses float() which will raise TypeError on None

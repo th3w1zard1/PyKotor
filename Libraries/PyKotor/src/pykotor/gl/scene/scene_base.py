@@ -104,6 +104,10 @@ class SceneBase:
         installation: Installation | None = None,
         module: Module | None = None,
     ):
+        # Initialize async_loader to None early to handle partial initialization
+        # If __init__ raises an exception before line 195, __del__ can safely check is not None
+        self.async_loader: AsyncResourceLoader | None = None
+        
         # Only set up GL state if PyOpenGL is available (legacy mode) and ModernGL is absent
         if USE_PYOPENGL:
             glEnable(GL_DEPTH_TEST)
@@ -192,7 +196,8 @@ class SceneBase:
             
             return (mdl_loc, mdx_loc)
         
-        self.async_loader: AsyncResourceLoader = AsyncResourceLoader(
+        # Now assign the actual AsyncResourceLoader instance
+        self.async_loader = AsyncResourceLoader(
             texture_location_resolver=_resolve_texture_location,
             model_location_resolver=_resolve_model_location,
         )
@@ -691,7 +696,7 @@ class SceneBase:
             return self.models["empty"]
         
         # Start async loading if location resolver available
-        if self.async_loader.model_location_resolver is not None:
+        if self.async_loader is not None and self.async_loader.model_location_resolver is not None:
             future = self.async_loader.load_model_async(name)
             self._pending_model_futures[name] = future
             # Return empty model immediately as placeholder
