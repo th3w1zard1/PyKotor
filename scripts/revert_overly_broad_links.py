@@ -123,6 +123,17 @@ REPLACEMENTS = [
     (r"\[scale\]\(MDL-MDX-File-Format#node-header\)", "scale"),
     # types
     (r"\[types\]\(GFF-File-Format#data-types\)", "types"),
+    (r"\[types\]\(GFF-File-Format#gff-data-types\)", "types"),
+    # Additional variations with different anchors
+    (r"\[data\]\(GFF-File-Format#file-structure-overview\)", "data"),
+    (r"\[field\]\(GFF-File-Format#file-structure-overview\)", "field"),
+    (r"\[fields\]\(GFF-File-Format#file-structure-overview\)", "fields"),
+    (r"\[count\]\(GFF-File-Format#file-structure-overview\)", "count"),
+    (r"\[size\]\(GFF-File-Format#file-structure-overview\)", "size"),
+    (r"\[offset\]\(GFF-File-Format#file-structure-overview\)", "offset"),
+    (r"\[offsets\]\(GFF-File-Format#file-structure-overview\)", "offsets"),
+    (r"\[structure\]\(GFF-File-Format#file-structure-overview\)", "structure"),
+    (r"\[structures\]\(GFF-File-Format#file-structure-overview\)", "structures"),
 ]
 
 
