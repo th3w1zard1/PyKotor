@@ -1919,7 +1919,7 @@ class TestErrorHandling:
                 """Serialize to JSON-compatible dict - will fail on None values."""
                 # This will raise TypeError when float() is called on None
                 # Don't handle None - let it raise TypeError as the test expects
-                return {"x": float(self.x), "y": float(self.y), "z": float(self.z)}
+                return {"x": float(self.x), "y": float(self.y), "z": float(self.z)}  # pyright: ignore[reportArgumentType]
 
         # Should handle None by converting to 0.0 or raising TypeError
         # The actual implementation uses float() which will raise TypeError on None

@@ -201,6 +201,8 @@ class SceneBase:
             texture_location_resolver=_resolve_texture_location,
             model_location_resolver=_resolve_model_location,
         )
+        # Type narrowing: async_loader is guaranteed to be non-None after assignment
+        assert self.async_loader is not None  # Type narrowing for type checker
         self.async_loader.start()
         self._pending_texture_futures: dict[str, Any] = {}  # name -> Future
         self._pending_model_futures: dict[str, Any] = {}  # name -> Future
