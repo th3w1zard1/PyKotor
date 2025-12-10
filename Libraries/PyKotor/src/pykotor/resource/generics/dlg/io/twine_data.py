@@ -49,9 +49,9 @@ class PassageMetadata:
     size: Vector2 = field(default_factory=lambda: Vector2(100.0, 100.0))  # Size in editor
     # KotOR-specific metadata
     speaker: str = ""  # For entries only
-    animation_id: int = 0  # Animation to play
+    animation_id: int = 0  # Animation to play (0 means not set, use None for DLGNode.camera_anim)
     camera_angle: int = 0  # Camera angle
-    camera_id: int = 0  # Camera ID
+    camera_id: int | None = None  # Camera ID (None means not set, matching DLGNode default)
     fade_type: int = 0  # Type of fade
     quest: str = ""  # Associated quest
     sound: str = ""  # Sound to play
@@ -210,28 +210,36 @@ class FormatConverter:
         """
         meta: PassageMetadata = passage.metadata
         # animation_id in PassageMetadata maps to camera_anim in DLGNode
-        # Since we explicitly store this value, always set it (even if 0)
-        dlg_node.camera_anim = meta.animation_id
+        # 0 means not set (use None), non-zero means explicitly set
+        if meta.animation_id != 0:
+            dlg_node.camera_anim = meta.animation_id
+        # else: leave as None (DLGNode default) for new files with no metadata
         
-        # camera_angle is always an int (defaults to 0)
+        # camera_angle is always an int (defaults to 0, which is valid)
         dlg_node.camera_angle = meta.camera_angle
         
-        # camera_id can be None or int - always set it since we store it
-        dlg_node.camera_id = meta.camera_id
+        # camera_id can be None or int - None means not set (new file), int means explicitly set
+        if meta.camera_id is not None:
+            dlg_node.camera_id = meta.camera_id
+        # else: leave as None (DLGNode default) for new files with no metadata
         
-        # fade_type is always an int (defaults to 0)
+        # fade_type is always an int (defaults to 0, which is valid)
         dlg_node.fade_type = meta.fade_type
         
-        # quest is a string (defaults to "")
+        # quest is a string (defaults to "", which is valid)
         dlg_node.quest = meta.quest
         
         # sound is a ResRef, stored as string in metadata
+        # Only set if non-empty (empty string means not set for new files)
         if meta.sound:
             dlg_node.sound = ResRef(meta.sound)
+        # else: leave as ResRef.from_blank() (DLGNode default) for new files
         
         # vo_resref is a ResRef, stored as string in metadata
+        # Only set if non-empty (empty string means not set for new files)
         if meta.vo_resref:
             dlg_node.vo_resref = ResRef(meta.vo_resref)
+        # else: leave as ResRef.from_blank() (DLGNode default) for new files
 
     def store_twine_metadata(
         self,

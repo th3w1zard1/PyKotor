@@ -197,8 +197,9 @@ def test_missing_fields():
     minimal_json = {
         "passages": [
             {
+                "name": "Start",
                 "text": "Some text"
-                # Missing name, tags, etc.
+                # Missing tags, metadata, etc.
             }
         ]
     }
@@ -208,6 +209,123 @@ def test_missing_fields():
     json_path.write_text(json.dumps(minimal_json), encoding="utf-8")
     dlg = read_twine(json_path)
     assert len(dlg.all_entries()) + len(dlg.all_replies()) > 0
+
+
+def test_create_new_dlg_from_scratch():
+    """Test creating a new DLG file from Twine with zero KOTOR metadata.
+    
+    This tests that users can create brand new .dlg files using the Twine editor
+    without needing any existing KOTOR metadata. All fields should be initialized
+    with appropriate defaults.
+    """
+    # Create a minimal Twine JSON with no KOTOR metadata
+    twine_json = {
+        "name": "New Dialog",
+        "format": "Harlowe",
+        "format-version": "3.3.7",
+        "startnode": "1",
+        "passages": [
+            {
+                "name": "Entry1",
+                "text": "Hello, player! [[Reply1]]",  # Link to reply
+                "pid": "1",
+                "tags": ["entry"],
+                "metadata": {
+                    "position": "0,0",
+                    "size": "100,100"
+                    # No custom metadata = no KOTOR metadata
+                }
+            },
+            {
+                "name": "Reply1",
+                "text": "Hello! [[Entry2]]",  # Links are embedded in text in Twine format
+                "pid": "2",
+                "tags": ["reply"],
+                "metadata": {
+                    "position": "200,0",
+                    "size": "100,100"
+                    # No custom metadata = no KOTOR metadata
+                }
+            },
+            {
+                "name": "Entry2",
+                "text": "How can I help you?",
+                "pid": "3",
+                "tags": ["entry"],
+                "metadata": {
+                    "position": "0,200",
+                    "size": "100,100"
+                    # No custom metadata = no KOTOR metadata
+                }
+            }
+        ]
+    }
+    
+    tmpdir = Path(tempfile.mkdtemp())
+    json_path = tmpdir / "new_dialog.json"
+    json_path.write_text(json.dumps(twine_json), encoding="utf-8")
+    
+    # Read and convert to DLG
+    dlg = read_twine(json_path)
+    
+    # Verify DLG was created successfully
+    assert dlg is not None
+    assert len(dlg.starters) > 0, "Should have at least one starter node"
+    
+    # Verify entries were created with proper defaults
+    entries = dlg.all_entries()
+    assert len(entries) == 2, "Should have 2 entries"
+    
+    entry1 = entries[0]
+    assert isinstance(entry1, DLGEntry)
+    # Text may contain link syntax [[Reply1]], which is expected in Twine format
+    text1 = entry1.text.get(Language.ENGLISH, Gender.MALE)
+    assert "Hello, player!" in text1, f"Text should contain 'Hello, player!', got: {text1}"
+    assert entry1.speaker == "Entry1"
+    # Verify defaults for new files (should be None for optional fields)
+    assert entry1.camera_anim is None, "camera_anim should be None for new files with no metadata"
+    assert entry1.camera_id is None, "camera_id should be None for new files with no metadata"
+    assert entry1.camera_angle == 0, "camera_angle should default to 0"
+    assert entry1.fade_type == 0, "fade_type should default to 0"
+    assert entry1.quest == "", "quest should default to empty string"
+    assert str(entry1.sound) == "", "sound should default to blank ResRef"
+    assert str(entry1.vo_resref) == "", "vo_resref should default to blank ResRef"
+    
+    # Verify replies were created with proper defaults
+    replies = dlg.all_replies()
+    assert len(replies) == 1, "Should have 1 reply"
+    
+    reply1 = replies[0]
+    assert isinstance(reply1, DLGReply)
+    reply_text = reply1.text.get(Language.ENGLISH, Gender.MALE)
+    assert "Hello!" in reply_text, f"Text should contain 'Hello!', got: {reply_text}"
+    # Verify defaults for new files
+    assert reply1.camera_anim is None, "camera_anim should be None for new files with no metadata"
+    assert reply1.camera_id is None, "camera_id should be None for new files with no metadata"
+    assert reply1.camera_angle == 0, "camera_angle should default to 0"
+    
+    # Verify links were preserved
+    assert len(reply1.links) == 1, "Reply should have 1 link"
+    # Find Entry2 by checking all entries
+    entry2 = None
+    for entry in entries:
+        entry_text = entry.text.get(Language.ENGLISH, Gender.MALE)
+        if "How can I help you?" in entry_text:
+            entry2 = entry
+            break
+    assert entry2 is not None, "Entry2 should exist"
+    assert reply1.links[0].node == entry2, "Link should point to Entry2"
+    
+    # Test round-trip: write and read back
+    json_path2 = tmpdir / "new_dialog2.json"
+    write_twine(dlg, json_path2, format="json")
+    dlg2 = read_twine(json_path2)
+    
+    # Verify round-trip preserves structure
+    assert len(dlg2.all_entries()) == 2
+    assert len(dlg2.all_replies()) == 1
+    text_after_roundtrip = dlg2.all_entries()[0].text.get(Language.ENGLISH, Gender.MALE)
+    assert "Hello, player!" in text_after_roundtrip, f"Text should contain 'Hello, player!', got: {text_after_roundtrip}"
 
 
 def test_duplicate_passage_names():

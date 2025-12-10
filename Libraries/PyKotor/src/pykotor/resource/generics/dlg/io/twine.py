@@ -154,7 +154,12 @@ def _read_json(content: str) -> TwineStory:
                     pass
             if "camera_id" in custom_data:
                 try:
-                    passage_metadata.camera_id = int(custom_data["camera_id"])
+                    camera_id_val = custom_data["camera_id"]
+                    # Handle both string and int values, None means not set
+                    if camera_id_val is None or camera_id_val == "":
+                        passage_metadata.camera_id = None
+                    else:
+                        passage_metadata.camera_id = int(camera_id_val)
                 except (ValueError, TypeError):
                     pass
             if "fade_type" in custom_data:
@@ -271,7 +276,45 @@ def _read_html(content: str) -> TwineStory:
             try:
                 custom_dict = json.loads(custom_data)
                 if isinstance(custom_dict, dict):
-                    passage_metadata.custom.update(custom_dict)
+                    # Extract KotOR-specific fields from custom dict (same as JSON format)
+                    if "animation_id" in custom_dict:
+                        try:
+                            passage_metadata.animation_id = int(custom_dict["animation_id"])
+                        except (ValueError, TypeError):
+                            pass
+                    if "camera_angle" in custom_dict:
+                        try:
+                            passage_metadata.camera_angle = int(custom_dict["camera_angle"])
+                        except (ValueError, TypeError):
+                            pass
+                    if "camera_id" in custom_dict:
+                        try:
+                            camera_id_val = custom_dict["camera_id"]
+                            if camera_id_val is None or camera_id_val == "":
+                                passage_metadata.camera_id = None
+                            else:
+                                passage_metadata.camera_id = int(camera_id_val)
+                        except (ValueError, TypeError):
+                            pass
+                    if "fade_type" in custom_dict:
+                        try:
+                            passage_metadata.fade_type = int(custom_dict["fade_type"])
+                        except (ValueError, TypeError):
+                            pass
+                    if "quest" in custom_dict:
+                        passage_metadata.quest = str(custom_dict["quest"])
+                    if "sound" in custom_dict:
+                        passage_metadata.sound = str(custom_dict["sound"]) if custom_dict["sound"] else ""
+                    if "vo_resref" in custom_dict:
+                        passage_metadata.vo_resref = str(custom_dict["vo_resref"]) if custom_dict["vo_resref"] else ""
+                    if "speaker" in custom_dict:
+                        passage_metadata.speaker = str(custom_dict["speaker"])
+                    
+                    # Store remaining custom metadata that aren't KotOR-specific fields
+                    kotorf_fields = {"animation_id", "camera_angle", "camera_id", "fade_type", "quest", "sound", "vo_resref", "speaker"}
+                    for key, value in custom_dict.items():
+                        if key not in kotorf_fields:
+                            passage_metadata.custom[key] = str(value)
             except (json.JSONDecodeError, ValueError):
                 # Skip invalid JSON
                 pass
