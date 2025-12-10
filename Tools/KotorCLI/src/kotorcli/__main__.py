@@ -3,6 +3,7 @@
 
 This is a 1:1 implementation of cli's syntax for KOTOR development.
 """
+
 from __future__ import annotations
 
 import pathlib
@@ -28,7 +29,7 @@ if not getattr(sys, "frozen", False):
     if kotorcli_path.exists():
         update_sys_path(kotorcli_path.parent)
 
-from kotorcli.commands import (  # type: ignore[import-not-found, module-not-found]
+from kotorcli.commands import (  # type: ignore[import-not-found, module-not-found]  # isort: skip
     cmd_2da2csv,
     cmd_assemble,
     cmd_batch_patch,
@@ -43,12 +44,13 @@ from kotorcli.commands import (  # type: ignore[import-not-found, module-not-fou
     cmd_csv22da,
     cmd_decompile,
     cmd_diff,
+    cmd_diff_installation,
     cmd_disassemble,
     cmd_extract,
-    cmd_gui_convert,
     cmd_gff2json,
     cmd_gff2xml,
     cmd_grep,
+    cmd_gui_convert,
     cmd_init,
     cmd_install,
     cmd_investigate_module,
@@ -80,6 +82,7 @@ from kotorcli.commands import (  # type: ignore[import-not-found, module-not-fou
     cmd_xml2tlk,
 )
 from kotorcli.config import VERSION  # type: ignore[import-not-found, module-not-found]
+from kotorcli.diff_tool.cli import add_kotordiff_arguments
 from kotorcli.logger import setup_logger  # type: ignore[import-not-found, module-not-found]
 
 if TYPE_CHECKING:
@@ -87,7 +90,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-def create_parser() -> ArgumentParser:
+def create_parser() -> ArgumentParser:  # noqa: PLR0915
     """Create the main argument parser."""
     parser = ArgumentParser(
         prog="kotorcli",
@@ -116,9 +119,13 @@ def create_parser() -> ArgumentParser:
     )
     config_parser.add_argument("key", nargs="?", help="Configuration key")
     config_parser.add_argument("value", nargs="?", help="Configuration value")
-    config_parser.add_argument("--global", action="store_true", dest="global_config", help="Apply to all packages (default)")
+    config_parser.add_argument(
+        "--global", action="store_true", dest="global_config", help="Apply to all packages (default)"
+    )
     config_parser.add_argument("--local", action="store_true", help="Apply to current package only")
-    config_parser.add_argument("--get", action="store_true", help="Get the value of key (default when value not passed)")
+    config_parser.add_argument(
+        "--get", action="store_true", help="Get the value of key (default when value not passed)"
+    )
     config_parser.add_argument("--set", action="store_true", help="Set key to value (default when value is passed)")
     config_parser.add_argument("--unset", action="store_true", help="Delete the key/value pair for key")
     config_parser.add_argument("--list", action="store_true", help="List all key/value pairs in the config file")
@@ -150,9 +157,18 @@ def create_parser() -> ArgumentParser:
     )
     unpack_parser.add_argument("target", nargs="?", help="Target to unpack")
     unpack_parser.add_argument("file", nargs="?", help="File to unpack")
-    unpack_parser.add_argument("--file", dest="unpack_file", help="File or directory to unpack into the target's source tree")
-    unpack_parser.add_argument("--removeDeleted", action="store_true", help="Remove source files not present in the file being unpacked")
-    unpack_parser.add_argument("--no-removeDeleted", action="store_false", dest="removeDeleted", help="Do not remove source files not present in the file being unpacked")
+    unpack_parser.add_argument(
+        "--file", dest="unpack_file", help="File or directory to unpack into the target's source tree"
+    )
+    unpack_parser.add_argument(
+        "--removeDeleted", action="store_true", help="Remove source files not present in the file being unpacked"
+    )
+    unpack_parser.add_argument(
+        "--no-removeDeleted",
+        action="store_false",
+        dest="removeDeleted",
+        help="Do not remove source files not present in the file being unpacked",
+    )
 
     # convert command
     convert_parser = subparsers.add_parser(
@@ -189,9 +205,17 @@ def create_parser() -> ArgumentParser:
     pack_parser.add_argument("--modName", help="Set Mod_Name value in module.ifo")
     pack_parser.add_argument("--modMinGameVersion", help="Set Mod_MinGameVersion in module.ifo")
     pack_parser.add_argument("--modDescription", help="Set Mod_Description in module.ifo")
-    pack_parser.add_argument("--abortOnCompileError", action="store_true", help="Abort packing if errors encountered during compilation")
-    pack_parser.add_argument("--packUnchanged", action="store_true", help="Continue packing if there are no changed files")
-    pack_parser.add_argument("--overwritePackedFile", choices=["ask", "default", "always", "never"], help="How to handle existing packed file in project dir")
+    pack_parser.add_argument(
+        "--abortOnCompileError", action="store_true", help="Abort packing if errors encountered during compilation"
+    )
+    pack_parser.add_argument(
+        "--packUnchanged", action="store_true", help="Continue packing if there are no changed files"
+    )
+    pack_parser.add_argument(
+        "--overwritePackedFile",
+        choices=["ask", "default", "always", "never"],
+        help="How to handle existing packed file in project dir",
+    )
 
     # install command
     install_parser = subparsers.add_parser(
@@ -202,17 +226,31 @@ def create_parser() -> ArgumentParser:
     install_parser.add_argument("--clean", action="store_true", help="Clear the cache before packing")
     install_parser.add_argument("--noConvert", action="store_true", help="Do not convert updated json files")
     install_parser.add_argument("--noCompile", action="store_true", help="Do not recompile updated scripts")
-    install_parser.add_argument("--noPack", action="store_true", help="Do not re-pack the file (implies --noConvert and --noCompile)")
+    install_parser.add_argument(
+        "--noPack", action="store_true", help="Do not re-pack the file (implies --noConvert and --noCompile)"
+    )
     install_parser.add_argument("--skipCompile", action="append", help="Don't compile specific file(s)")
     install_parser.add_argument("--file", dest="install_file", help="Specify the file to install")
     install_parser.add_argument("--installDir", help="The location of the KOTOR user directory")
     install_parser.add_argument("--modName", help="Set Mod_Name value in module.ifo")
     install_parser.add_argument("--modMinGameVersion", help="Set Mod_MinGameVersion in module.ifo")
     install_parser.add_argument("--modDescription", help="Set Mod_Description in module.ifo")
-    install_parser.add_argument("--abortOnCompileError", action="store_true", help="Abort installation if errors encountered during compilation")
-    install_parser.add_argument("--packUnchanged", action="store_true", help="Continue packing if there are no changed files")
-    install_parser.add_argument("--overwritePackedFile", choices=["ask", "default", "always", "never"], help="How to handle existing packed file in project dir")
-    install_parser.add_argument("--overwriteInstalledFile", choices=["ask", "default", "always", "never"], help="How to handle existing installed file in installDir")
+    install_parser.add_argument(
+        "--abortOnCompileError", action="store_true", help="Abort installation if errors encountered during compilation"
+    )
+    install_parser.add_argument(
+        "--packUnchanged", action="store_true", help="Continue packing if there are no changed files"
+    )
+    install_parser.add_argument(
+        "--overwritePackedFile",
+        choices=["ask", "default", "always", "never"],
+        help="How to handle existing packed file in project dir",
+    )
+    install_parser.add_argument(
+        "--overwriteInstalledFile",
+        choices=["ask", "default", "always", "never"],
+        help="How to handle existing installed file in installDir",
+    )
 
     # launch command (with aliases)
     for launch_alias in ["launch", "serve", "play", "test"]:
@@ -231,8 +269,14 @@ def create_parser() -> ArgumentParser:
         launch_parser.add_argument("--modName", help="Set Mod_Name value in module.ifo")
         launch_parser.add_argument("--modMinGameVersion", help="Set Mod_MinGameVersion in module.ifo")
         launch_parser.add_argument("--modDescription", help="Set Mod_Description in module.ifo")
-        launch_parser.add_argument("--abortOnCompileError", action="store_true", help="Abort launching if errors encountered during compilation")
-        launch_parser.add_argument("--packUnchanged", action="store_true", help="Continue packing if there are no changed files")
+        launch_parser.add_argument(
+            "--abortOnCompileError",
+            action="store_true",
+            help="Abort launching if errors encountered during compilation",
+        )
+        launch_parser.add_argument(
+            "--packUnchanged", action="store_true", help="Continue packing if there are no changed files"
+        )
         launch_parser.add_argument("--gameBin", help="Path to the swkotor binary file")
         launch_parser.add_argument("--serverBin", help="Path to the kotor server binary file (if applicable)")
 
@@ -345,7 +389,9 @@ def create_parser() -> ArgumentParser:
     assemble_parser.add_argument("input", help="Input NSS file")
     assemble_parser.add_argument("--output", "-o", dest="output", help="Output NCS file")
     assemble_parser.add_argument("--tsl", action="store_true", help="Target TSL instead of KOTOR 1")
-    assemble_parser.add_argument("--include", "-I", action="append", dest="include", help="Include directory for #include files")
+    assemble_parser.add_argument(
+        "--include", "-I", action="append", dest="include", help="Include directory for #include files"
+    )
     assemble_parser.add_argument("--debug", action="store_true", help="Enable debug output")
 
     # Resource tools
@@ -366,6 +412,14 @@ def create_parser() -> ArgumentParser:
     model_parser.add_argument("--output", "-o", dest="output", help="Output MDL file")
     model_parser.add_argument("--to-ascii", action="store_true", help="Convert to ASCII format")
     model_parser.add_argument("--mdx", help="MDX file path (for MDL↔ASCII conversion)")
+
+    # KotorDiff structured comparisons
+    diff_install_parser = subparsers.add_parser(
+        "diff-installation",
+        aliases=["diff-paths", "kotordiff", "diff-kotor"],
+        help="Compare installations/files/modules using structured KotorDiff (headless with CLI args, GUI otherwise)",
+    )
+    add_kotordiff_arguments(diff_install_parser)
 
     # Utility commands
     diff_parser = subparsers.add_parser("diff", help="Compare two files and show differences")
@@ -400,7 +454,9 @@ def create_parser() -> ArgumentParser:
     search_archive_parser.add_argument("--file", "-f", dest="file", required=True, help="Archive file to search")
     search_archive_parser.add_argument("pattern", help="Search pattern (supports wildcards)")
     search_archive_parser.add_argument("--case-sensitive", action="store_true", help="Case-sensitive search")
-    search_archive_parser.add_argument("--content", action="store_true", dest="search_content", help="Search in resource content (not just names)")
+    search_archive_parser.add_argument(
+        "--content", action="store_true", dest="search_content", help="Search in resource content (not just names)"
+    )
 
     # cat command
     cat_parser = subparsers.add_parser("cat", help="Display resource contents to stdout")
@@ -414,8 +470,12 @@ def create_parser() -> ArgumentParser:
         aliases=["create-key"],
         help="Create KEY file from directory containing BIF files",
     )
-    key_pack_parser.add_argument("--directory", "-d", dest="directory", required=True, help="Directory containing BIF files")
-    key_pack_parser.add_argument("--bif-dir", dest="bif_dir", help="Directory where BIF files are located (for relative paths in KEY)")
+    key_pack_parser.add_argument(
+        "--directory", "-d", dest="directory", required=True, help="Directory containing BIF files"
+    )
+    key_pack_parser.add_argument(
+        "--bif-dir", dest="bif_dir", help="Directory where BIF files are located (for relative paths in KEY)"
+    )
     key_pack_parser.add_argument("--output", "-o", dest="output", required=True, help="Output KEY file")
     key_pack_parser.add_argument("--filter", help="Filter BIF files by pattern (supports wildcards)")
 
@@ -425,21 +485,27 @@ def create_parser() -> ArgumentParser:
         help="Check if TXI files exist for specific textures",
     )
     check_txi_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
-    check_txi_parser.add_argument("--textures", "-t", nargs="+", required=True, help="Texture names to check (without extension)")
+    check_txi_parser.add_argument(
+        "--textures", "-t", nargs="+", required=True, help="Texture names to check (without extension)"
+    )
 
     check_2da_parser = subparsers.add_parser(
         "check-2da",
         help="Check if a 2DA file exists in installation",
     )
     check_2da_parser.add_argument("--2da", dest="two_da_name", required=True, help="2DA file name (without extension)")
-    check_2da_parser.add_argument("--installation", "-i", dest="two_da_installation", required=True, help="Path to KOTOR installation")
+    check_2da_parser.add_argument(
+        "--installation", "-i", dest="two_da_installation", required=True, help="Path to KOTOR installation"
+    )
 
     validate_installation_parser = subparsers.add_parser(
         "validate-installation",
         help="Validate a KOTOR installation",
     )
     validate_installation_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
-    validate_installation_parser.add_argument("--check-essential", action="store_true", default=True, help="Check for essential game files")
+    validate_installation_parser.add_argument(
+        "--check-essential", action="store_true", default=True, help="Check for essential game files"
+    )
 
     investigate_module_parser = subparsers.add_parser(
         "investigate-module",
@@ -455,7 +521,9 @@ def create_parser() -> ArgumentParser:
         help="Check if missing resources are referenced by module models",
     )
     check_missing_resources_parser.add_argument("--module", "-m", required=True, help="Module name to check")
-    check_missing_resources_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
+    check_missing_resources_parser.add_argument(
+        "--installation", "-i", required=True, help="Path to KOTOR installation"
+    )
     check_missing_resources_parser.add_argument("--textures", "-t", nargs="+", help="Texture names to check")
     check_missing_resources_parser.add_argument("--lightmaps", "-l", nargs="+", help="Lightmap names to check")
 
@@ -489,7 +557,9 @@ def create_parser() -> ArgumentParser:
         aliases=["gui"],
         help="Convert KotOR GUI layouts to target resolutions",
     )
-    gui_convert_parser.add_argument("--input", "-i", action="append", help="Input GUI file or folder (can be passed multiple times)")
+    gui_convert_parser.add_argument(
+        "--input", "-i", action="append", help="Input GUI file or folder (can be passed multiple times)"
+    )
     gui_convert_parser.add_argument("--output", "-o", help="Output directory for converted GUI files")
     gui_convert_parser.add_argument("--resolution", "-r", help="Resolution spec (WIDTHxHEIGHT, comma separated) or ALL")
     gui_convert_parser.add_argument(
@@ -550,10 +620,18 @@ def create_parser() -> ArgumentParser:
     patch_installation_parser.add_argument("--translate", action="store_true", help="Enable translation")
     patch_installation_parser.add_argument("--to-lang", help="Target language for translation")
     patch_installation_parser.add_argument("--set-unskippable", action="store_true", help="Set dialogs as unskippable")
-    patch_installation_parser.add_argument("--convert-tga", choices=["TGA to TPC", "TPC to TGA"], help="Convert textures")
-    patch_installation_parser.add_argument("--convert-gffs-to-k1", action="store_true", help="Convert GFFs to K1 format")
-    patch_installation_parser.add_argument("--convert-gffs-to-tsl", action="store_true", help="Convert GFFs to TSL format")
-    patch_installation_parser.add_argument("--always-backup", action="store_true", default=True, help="Always create backups")
+    patch_installation_parser.add_argument(
+        "--convert-tga", choices=["TGA to TPC", "TPC to TGA"], help="Convert textures"
+    )
+    patch_installation_parser.add_argument(
+        "--convert-gffs-to-k1", action="store_true", help="Convert GFFs to K1 format"
+    )
+    patch_installation_parser.add_argument(
+        "--convert-gffs-to-tsl", action="store_true", help="Convert GFFs to TSL format"
+    )
+    patch_installation_parser.add_argument(
+        "--always-backup", action="store_true", default=True, help="Always create backups"
+    )
     patch_installation_parser.add_argument("--max-threads", type=int, default=2, help="Maximum translation threads")
 
     return parser
@@ -635,6 +713,8 @@ def cli_main(argv: Sequence[str]) -> int:
         if args.command == "model-convert":
             return cmd_model_convert(args, logger)
         # Utility commands
+        if args.command in ("diff-installation", "diff-paths", "kotordiff", "diff-kotor"):
+            return cmd_diff_installation(args, logger)
         if args.command == "diff":
             return cmd_diff(args, logger)
         if args.command == "grep":
@@ -774,7 +854,9 @@ def gui_converter_entry(argv: Sequence[str] | None = None) -> int:
         prog="gui-converter",
         description="Convert KotOR GUI layouts to target resolutions",
     )
-    parser.add_argument("--input", "-i", action="append", help="Input GUI file or folder (can be passed multiple times)")
+    parser.add_argument(
+        "--input", "-i", action="append", help="Input GUI file or folder (can be passed multiple times)"
+    )
     parser.add_argument("--output", "-o", help="Output directory")
     parser.add_argument("--resolution", "-r", help="Resolution spec (WIDTHxHEIGHT, comma separated) or ALL")
     parser.add_argument(
@@ -793,6 +875,17 @@ def gui_converter_entry(argv: Sequence[str] | None = None) -> int:
         return 0
 
     return cmd_gui_convert(args, logger)
+
+
+def kotordiff_entry(argv: Sequence[str] | None = None) -> int:
+    """Entry point for the integrated KotorDiff tool.
+
+    CLI arguments keep execution headless; omitting them falls back to the GUI.
+    """
+    arg_list = list(sys.argv[1:] if argv is None else argv)
+    from kotorcli.diff_tool.__main__ import main as kotordiff_main  # noqa: PLC0415
+
+    return kotordiff_main(arg_list)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
