@@ -40,7 +40,17 @@ The [modular structure](https://en.wikipedia.org/wiki/Modular_programming) allow
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/bif/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/bif/)
 
-**Reference**: [`vendor/reone/src/libs/resource/format/bifreader.cpp:24-73`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp#L24-L73)
+**Vendor References:**
+- [`vendor/reone/src/libs/resource/format/bifreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp) - Complete C++ BIF reader implementation
+- [`vendor/xoreos/src/aurora/biffile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/biffile.cpp) - Generic Aurora BIF implementation (shared format)
+- [`vendor/KotOR.js/src/resource/BIFObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/BIFObject.ts) - TypeScript BIF parser with decompression
+- [`vendor/Kotor.NET/Kotor.NET/Formats/KotorBIF/`](https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorBIF) - .NET BIF reader/writer
+- [`vendor/xoreos-tools/src/aurora/biffile.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/biffile.cpp) - Command-line BIF extraction tools
+
+**See Also:**
+- [KEY File Format](KEY-File-Format) - Index file that references BIF archives
+- [ERF File Format](ERF-File-Format) - Alternative self-contained archive format
+- [Bioware Aurora KeyBIF Format](Bioware-Aurora-KeyBIF) - Official BioWare specification
 
 ---
 
