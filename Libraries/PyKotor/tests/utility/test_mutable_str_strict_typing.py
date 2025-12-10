@@ -19,9 +19,7 @@ for path in (PYKOTOR_SRC, UTILITY_SRC):
     if as_posix not in sys.path:
         sys.path.insert(0, as_posix)
 
-import pytest
-
-from utility.common.misc_string.mutable_str import MutableStr
+from utility.common.misc_string.mutable_str import WrappedStr
 
 
 class TestMutableStrStrictTyping:
@@ -29,14 +27,14 @@ class TestMutableStrStrictTyping:
 
     def test_attribute_forwarding_uses_getattr(self):
         """Test that __getattr__ uses getattr for forwarding to _content."""
-        mutable = MutableStr("test")
+        mutable = WrappedStr("test")
         
         # Access str method through forwarding (uses getattr internally)
         result = mutable.upper()
         assert result == "TEST"
         
         # Access str attribute through forwarding
-        assert mutable.__class__.__name__ == "MutableStr"
+        assert mutable.__class__.__name__ == "WrappedStr"
 
     def test_hasattr_checks_for_compatibility_methods(self):
         """Test that hasattr is used for checking optional str methods."""
@@ -47,17 +45,17 @@ class TestMutableStrStrictTyping:
 
     def test_removeprefix_if_not_available(self):
         """Test removeprefix implementation when str doesn't have it."""
-        mutable = MutableStr("test_string")
+        mutable = WrappedStr("test_string")
         
         # If str has removeprefix, use it; otherwise use custom implementation
         result = mutable.removeprefix("test_")
-        assert result == "string" or result == MutableStr("string")
+        assert result == "string" or result == WrappedStr("string")
 
     def test_removesuffix_if_not_available(self):
         """Test removesuffix implementation when str doesn't have it."""
-        mutable = MutableStr("test_string")
+        mutable = WrappedStr("test_string")
         
         # If str has removesuffix, use it; otherwise use custom implementation
         result = mutable.removesuffix("_string")
-        assert result == "test" or result == MutableStr("test")
+        assert result == "test" or result == WrappedStr("test")
 

@@ -23,7 +23,6 @@ import winreg
 
 import pytest
 
-from pykotor.tools.registry import resolve_registry_key
 from utility.system.win32.registry import resolve_reg_key_to_path
 
 
@@ -50,9 +49,9 @@ class TestRegistryStrictTyping:
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows registry only")
     def test_resolve_registry_key_uses_getattr(self):
-        """Test that resolve_registry_key uses getattr for dynamic lookup."""
+        """Test that resolve_reg_key_to_path uses getattr for dynamic lookup."""
         # Test with HKEY_LOCAL_MACHINE (valid winreg attribute)
-        result = resolve_registry_key("HKEY_LOCAL_MACHINE", "SOFTWARE\\Microsoft\\Windows\\CurrentVersion", "ProgramFilesDir")
+        result = resolve_reg_key_to_path("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion", "ProgramFilesDir")
 
         # Should handle gracefully using getattr
         assert result is None or isinstance(result, str)
