@@ -963,7 +963,15 @@ def extract_kit(
                 except Exception:  # noqa: BLE001
                     continue
     
-    # Extract TXI files for textures/lightmaps that don't have them yet
+    # Batch extract TXI files grouped by filepath to minimize I/O
+    # Group TXI files by filepath for batch reading
+    txi_files: dict[Path, list[tuple[str, bool, LocationResult]]] = {}
+    
+    # Collect all TXI files that need to be extracted
+    texture_name_map: dict[str, str] = {}  # Map lowercase -> original case
+    for orig_name in all_texture_names:
+        texture_name_map[orig_name.lower()] = orig_name
+    
     for name in all_texture_names:
         name_lower = name.lower()
         if name_lower in textures and name_lower not in texture_txis:
@@ -971,13 +979,10 @@ def extract_kit(
             if txi_res_ident in batch_txi_location_results:
                 txi_loc_list = batch_txi_location_results[txi_res_ident]
                 if txi_loc_list:
-                    try:
-                        txi_location = txi_loc_list[0]
-                        with txi_location.filepath.open("rb") as f:
-                            f.seek(txi_location.offset)
-                            texture_txis[name_lower] = f.read(txi_location.size)
-                    except Exception:  # noqa: BLE001
-                        pass
+                    txi_location = txi_loc_list[0]
+                    if txi_location.filepath not in txi_files:
+                        txi_files[txi_location.filepath] = []
+                    txi_files[txi_location.filepath].append((name_lower, False, txi_location))
     
     for name in all_lightmap_names:
         name_lower = name.lower()
@@ -986,100 +991,33 @@ def extract_kit(
             if txi_res_ident in batch_txi_location_results:
                 txi_loc_list = batch_txi_location_results[txi_res_ident]
                 if txi_loc_list:
-                    try:
-                        txi_location = txi_loc_list[0]
-                        with txi_location.filepath.open("rb") as f:
-                            f.seek(txi_location.offset)
-                            lightmap_txis[name_lower] = f.read(txi_location.size)
-                    except Exception:  # noqa: BLE001
-                        pass
-
-    # After extracting all textures/lightmaps, try to find TXI files for any that don't have them yet
-    # Use pre-batched TXI results instead of individual installation.locations() calls
-    # This is a major performance optimization
-    texture_name_map: dict[str, str] = {}  # Map lowercase -> original case
-    for orig_name in all_texture_names:
-        texture_name_map[orig_name.lower()] = orig_name
-
-    missing_txi_count: int = 0
-    found_txi_count: int = 0
-
+                    txi_location = txi_loc_list[0]
+                    if txi_location.filepath not in txi_files:
+                        txi_files[txi_location.filepath] = []
+                    txi_files[txi_location.filepath].append((name_lower, True, txi_location))
+    
+    # Process TXI files in batches
+    for filepath, items in txi_files.items():
+        with filepath.open("rb") as f:
+            for name_lower, is_lightmap, location in items:
+                target_txis_dict = lightmap_txis if is_lightmap else texture_txis
+                if name_lower in target_txis_dict:
+                    continue  # Already extracted
+                try:
+                    f.seek(location.offset)
+                    target_txis_dict[name_lower] = f.read(location.size)
+                except Exception:  # noqa: BLE001
+                    pass
+    
+    # Create empty TXI placeholders for textures/lightmaps that don't have TXI files
+    # This matches the expected kit structure where textures have corresponding TXI files
     for texture_name_lower in textures.keys():
         if texture_name_lower not in texture_txis:
-            missing_txi_count += 1
-            # Try to find TXI file from pre-batched results
-            # Try both lowercase and original case
-            names_to_try_tx = [texture_name_lower]
-            if texture_name_lower in texture_name_map:
-                orig_name = texture_name_map[texture_name_lower]
-                if orig_name != texture_name_lower:
-                    names_to_try_tx.append(orig_name)
-
-            found: bool = False
-            for name_to_try_tx in names_to_try_tx:
-                txi_res_ident = ResourceIdentifier(resname=name_to_try_tx, restype=ResourceType.TXI)
-                if txi_res_ident in batch_txi_location_results:
-                    txi_loc_list = batch_txi_location_results[txi_res_ident]
-                    if txi_loc_list:
-                        try:
-                            # Location list is already sorted by priority (done in batch lookup)
-                            txi_location = txi_loc_list[0]
-                            with txi_location.filepath.open("rb") as f:
-                                f.seek(txi_location.offset)
-                                texture_txis[texture_name_lower] = f.read(txi_location.size)
-                            found = True
-                            found_txi_count += 1
-                            break
-                        except Exception:  # noqa: BLE001
-                            pass
-
-            if not found:
-                # Create empty TXI file as placeholder (many TXI files in the game are empty)
-                # This matches the expected kit structure where textures have corresponding TXI files
-                texture_txis[texture_name_lower] = b""
-
-    # Same for lightmaps - use pre-batched TXI results
-    lightmap_name_map: dict[str, str] = {}  # Map lowercase -> original case
-    for orig_name in all_lightmap_names:
-        lightmap_name_map[orig_name.lower()] = orig_name
-
-    missing_lm_txi_count = 0
-    found_lm_txi_count = 0
-
+            texture_txis[texture_name_lower] = b""
+    
     for lightmap_name_lower in lightmaps.keys():
         if lightmap_name_lower not in lightmap_txis:
-            missing_lm_txi_count += 1
-            # Try to find TXI file from pre-batched results
-            # Try both lowercase and original case
-            names_to_try_lm: list[str] = [lightmap_name_lower]
-            if lightmap_name_lower in lightmap_name_map:
-                orig_name = lightmap_name_map[lightmap_name_lower]
-                if orig_name != lightmap_name_lower:
-                    names_to_try_lm.append(orig_name)
-
-            found_lm = False
-            for name_to_try_lm in names_to_try_lm:
-                txi_res_ident = ResourceIdentifier(resname=name_to_try_lm, restype=ResourceType.TXI)
-                if txi_res_ident in batch_txi_location_results:
-                    txi_loc_list = batch_txi_location_results[txi_res_ident]
-                    if txi_loc_list:
-                        try:
-                            # Location list is already sorted by priority (done in batch lookup)
-                            txi_location = txi_loc_list[0]
-                            with txi_location.filepath.open("rb") as f:
-                                f.seek(txi_location.offset)
-                                lightmap_txis[lightmap_name_lower] = f.read(txi_location.size)
-                            found_lm = True
-                            found_lm_txi_count += 1
-                            break
-                        except Exception:  # noqa: BLE001
-                            pass
-                if found_lm:
-                    break  # Found it, no need to try other names
-
-            if not found_lm:
-                # Create empty TXI file as placeholder (many TXI files in the game are empty)
-                lightmap_txis[lightmap_name_lower] = b""
+            lightmap_txis[lightmap_name_lower] = b""
 
     # Create kit directory structure
     kit_dir: Path = output_path / kit_id
@@ -1153,30 +1091,164 @@ def extract_kit(
     # Reference: vendor/reone/src/libs/game/object/door.cpp:80-94
     # Doors have 3 walkmesh states: closed (0), open1 (1), open2 (2)
     # Format: <modelname>0.dwk, <modelname>1.dwk, <modelname>2.dwk
+    # Batch DWK lookups to avoid repeated installation.locations() calls (performance optimization)
+    genericdoors_2da_for_dwk = door_tools.load_genericdoors_2da(installation, logger)
+    door_model_names: list[str] = []
+    door_model_map: dict[str, str] = {}  # model_name -> door_name
+    
+    # Get all door model names first
     for door_name, door_data in doors.items():
-        door_walkmeshes[door_name] = door_tools.extract_door_walkmeshes(
-            door_data,
-            installation,
-            module=module,
-            logger=logger,
+        try:
+            utd = read_utd(door_data)
+            if genericdoors_2da_for_dwk:
+                door_model_name = door_tools.get_model(utd, installation, genericdoors=genericdoors_2da_for_dwk)
+                if door_model_name:
+                    door_model_names.append(door_model_name)
+                    door_model_map[door_model_name] = door_name
+        except Exception:  # noqa: BLE001
+            continue
+    
+    # Batch lookup all DWK files (3 states per door: 0, 1, 2)
+    dwk_identifiers: list[ResourceIdentifier] = []
+    dwk_model_map: dict[ResourceIdentifier, tuple[str, str]] = {}  # identifier -> (model_name, door_name)
+    for model_name in door_model_names:
+        for suffix in ["0", "1", "2"]:
+            dwk_resname = f"{model_name}{suffix}"
+            dwk_ident = ResourceIdentifier(resname=dwk_resname, restype=ResourceType.DWK)
+            dwk_identifiers.append(dwk_ident)
+            dwk_model_map[dwk_ident] = (model_name, door_model_map[model_name])
+    
+    dwk_locations: dict[ResourceIdentifier, list[LocationResult]] = {}
+    if dwk_identifiers:
+        dwk_locations = installation.locations(
+            dwk_identifiers,
+            [
+                SearchLocation.OVERRIDE,
+                SearchLocation.MODULES,
+                SearchLocation.CHITIN,
+            ],
         )
+    
+    # Extract DWK files using batched results
+    for door_name, door_data in doors.items():
+        door_walkmeshes[door_name] = {}
+        try:
+            utd = read_utd(door_data)
+            if not genericdoors_2da_for_dwk:
+                continue
+            door_model_name = door_tools.get_model(utd, installation, genericdoors=genericdoors_2da_for_dwk)
+            if not door_model_name:
+                continue
+            
+            # Try module first (fastest), then fall back to batched installation locations
+            for suffix in ["0", "1", "2"]:
+                dwk_key = f"dwk{suffix}"
+                dwk_resname = f"{door_model_name}{suffix}"
+                dwk_found = False
+                
+                # Try module first
+                if module is not None:
+                    dwk_resource = module.resource(resname=dwk_resname, restype=ResourceType.DWK)
+                    if dwk_resource is not None:
+                        dwk_data = dwk_resource.data()
+                        if dwk_data is not None:
+                            door_walkmeshes[door_name][dwk_key] = dwk_data
+                            logger.debug(f"Found DWK '{dwk_resname}' (state: {dwk_key}) from module")
+                            dwk_found = True
+                
+                # Try batched installation locations if not found in module
+                if not dwk_found:
+                    dwk_ident = ResourceIdentifier(resname=dwk_resname, restype=ResourceType.DWK)
+                    dwk_loc_list = dwk_locations.get(dwk_ident, [])
+                    if dwk_loc_list:
+                        dwk_loc = dwk_loc_list[0]
+                        try:
+                            with dwk_loc.filepath.open("rb") as f:
+                                f.seek(dwk_loc.offset)
+                                dwk_data = f.read(dwk_loc.size)
+                            door_walkmeshes[door_name][dwk_key] = dwk_data
+                            logger.debug(f"Found DWK '{dwk_resname}' (state: {dwk_key}) from installation")
+                        except Exception:  # noqa: BLE001
+                            pass
+        except Exception:  # noqa: BLE001
+            continue
 
     # Extract placeable walkmeshes (PWK files)
     # Reference: vendor/reone/src/libs/game/object/placeable.cpp:73
     # Format: <modelname>.pwk
     from pykotor.tools import placeable as placeable_tools
-
+    
+    # Load placeables.2da once for all placeables (performance optimization)
+    placeables_2da = placeable_tools.load_placeables_2da(installation, logger)
+    
+    # First, try to get all placeable model names and batch PWK lookups
+    # This avoids calling installation.locations() individually for each placeable
+    placeable_model_names: list[str] = []
+    placeable_model_map: dict[str, str] = {}  # model_name -> placeable_name
+    
     for placeable_name, placeable_data in placeables.items():
-        result = placeable_tools.extract_placeable_walkmesh(
-            placeable_data,
-            installation,
-            module=module,
-            logger=logger,
+        try:
+            from pykotor.resource.generics.utp import read_utp
+            from pykotor.tools.placeable import get_model
+            utp = read_utp(placeable_data)
+            if placeables_2da:
+                placeable_model_name = get_model(utp, installation, placeables=placeables_2da)
+                if placeable_model_name:
+                    placeable_model_names.append(placeable_model_name)
+                    placeable_model_map[placeable_model_name] = placeable_name
+        except Exception:  # noqa: BLE001
+            continue
+    
+    # Batch lookup all PWK files at once
+    pwk_identifiers = [ResourceIdentifier(resname=model_name, restype=ResourceType.PWK) for model_name in placeable_model_names]
+    pwk_locations: dict[ResourceIdentifier, list[LocationResult]] = {}
+    if pwk_identifiers:
+        pwk_locations = installation.locations(
+            pwk_identifiers,
+            [
+                SearchLocation.OVERRIDE,
+                SearchLocation.MODULES,
+                SearchLocation.CHITIN,
+            ],
         )
-        if result:
-            placeable_model_name, pwk_data = result
-            placeable_walkmeshes[placeable_model_name] = pwk_data
-            logger.debug(f"Found PWK '{placeable_model_name}' for placeable '{placeable_name}'")
+    
+    # Extract PWK files using batched results
+    for placeable_name, placeable_data in placeables.items():
+        try:
+            from pykotor.resource.generics.utp import read_utp
+            from pykotor.tools.placeable import get_model
+            utp = read_utp(placeable_data)
+            if not placeables_2da:
+                continue
+            placeable_model_name = get_model(utp, installation, placeables=placeables_2da)
+            if not placeable_model_name:
+                continue
+            
+            # Try module first (fastest)
+            if module is not None:
+                pwk_resource = module.resource(resname=placeable_model_name, restype=ResourceType.PWK)
+                if pwk_resource is not None:
+                    pwk_data = pwk_resource.data()
+                    if pwk_data is not None:
+                        placeable_walkmeshes[placeable_model_name] = pwk_data
+                        logger.debug(f"Found PWK '{placeable_model_name}' for placeable '{placeable_name}' from module")
+                        continue
+            
+            # Try batched installation locations
+            pwk_ident = ResourceIdentifier(resname=placeable_model_name, restype=ResourceType.PWK)
+            pwk_loc_list = pwk_locations.get(pwk_ident, [])
+            if pwk_loc_list:
+                pwk_loc = pwk_loc_list[0]
+                try:
+                    with pwk_loc.filepath.open("rb") as f:
+                        f.seek(pwk_loc.offset)
+                        pwk_data = f.read(pwk_loc.size)
+                    placeable_walkmeshes[placeable_model_name] = pwk_data
+                    logger.debug(f"Found PWK '{placeable_model_name}' for placeable '{placeable_name}' from installation")
+                except Exception:  # noqa: BLE001
+                    pass
+        except Exception:  # noqa: BLE001
+            continue
 
     # Write door files
     # Use simple door identifiers (door0, door1, etc.) for file names and JSON

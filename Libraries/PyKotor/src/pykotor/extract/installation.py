@@ -1424,13 +1424,17 @@ class Installation:
                 check_list(resource_list)
 
         def check_list(resource_list: list[FileResource]):
-            # Index resources by identifier
+            # Index resources by identifier once, then check only relevant queries
+            # This is more efficient than iterating through all queries for each resource
             lookup_dict: dict[ResourceIdentifier, FileResource] = {resource.identifier(): resource for resource in resource_list}
-
-            for query in real_queries:
-                resource = lookup_dict.get(query)
-                if resource is None:
-                    continue
+            
+            # Only check queries that might be in this resource list (intersection optimization)
+            # Build set of identifiers in this list for fast lookup
+            resource_identifiers = set(lookup_dict.keys())
+            relevant_queries = real_queries & resource_identifiers
+            
+            for query in relevant_queries:
+                resource = lookup_dict[query]  # Safe because we filtered to intersection
                 location = LocationResult(
                     resource.filepath(),
                     resource.offset(),

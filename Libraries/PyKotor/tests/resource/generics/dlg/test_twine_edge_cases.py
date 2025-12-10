@@ -415,3 +415,63 @@ def test_file_not_found():
 
     with pytest.raises(FileNotFoundError):
         read_twine("nonexistent.html")
+
+
+def test_invalid_custom_metadata_is_ignored(tmp_path: Path):
+    """Gracefully ignore malformed custom metadata blocks."""
+    broken_json = {
+        "passages": [
+            {
+                "name": "Start",
+                "text": "Hello",
+                "pid": "1",
+                "tags": ["entry"],
+                "metadata": {"custom": "not-a-dict"},
+            }
+        ],
+        "startnode": "1",
+    }
+    json_path = tmp_path / "broken.json"
+    json_path.write_text(json.dumps(broken_json), encoding="utf-8")
+
+    dlg = read_twine(json_path)
+    assert len(dlg.all_entries()) == 1
+    assert dlg.starters  # starter still created
+
+
+def test_missing_startnode_still_loads_passages(tmp_path: Path):
+    """Ensure dialogs without startnode are still parsed without crashing."""
+    content = {
+        "passages": [
+            {"name": "EntryOnly", "text": "Hi", "pid": "1", "tags": ["entry"]},
+        ]
+    }
+    path = tmp_path / "nostart.json"
+    path.write_text(json.dumps(content), encoding="utf-8")
+    dlg = read_twine(path)
+
+    assert len(dlg.all_entries()) == 1
+    assert len(dlg.starters) == 0
+
+
+def test_dangling_link_targets_are_dropped(tmp_path: Path):
+    """Drop links that reference non-existent passages instead of raising."""
+    content = {
+        "startnode": "1",
+        "passages": [
+            {
+                "name": "Entry1",
+                "text": "Has bad link [[Missing]]",
+                "pid": "1",
+                "tags": ["entry"],
+            },
+        ],
+    }
+    path = tmp_path / "dangling.json"
+    path.write_text(json.dumps(content), encoding="utf-8")
+
+    dlg = read_twine(path)
+    assert len(dlg.all_entries()) == 1
+    entry = dlg.all_entries()[0]
+    assert isinstance(entry, DLGEntry)
+    assert entry.links == []

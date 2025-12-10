@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
+import pytest
+
 from pykotor.common.language import Gender, Language
 from pykotor.resource.generics.dlg.base import DLG
 from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
@@ -266,3 +268,14 @@ def test_unicode_characters(tmp_path: Path):
     assert loaded_entry.text.get(Language.ENGLISH, Gender.MALE) == "Hello 世界"
     assert loaded_entry.text.get(Language.FRENCH, Gender.MALE) == "Bonjour 🌍"
     # Note: comment field is used for story-level Twine metadata, not node-level custom data
+
+
+def test_invalid_fmt_argument_raises(tmp_path: Path):
+    """Invalid fmt values should raise ValueError early."""
+    dlg = DLG()
+    entry = DLGEntry()
+    entry.text.set_data(Language.ENGLISH, Gender.MALE, "Test")
+    dlg.starters.append(DLGLink(entry))
+
+    with pytest.raises(ValueError):
+        write_twine(dlg, tmp_path / "invalid.bin", fmt="xml")  # type: ignore[arg-type]
