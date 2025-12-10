@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 from xml.etree import ElementTree
 
 import pytest
@@ -15,9 +15,6 @@ from pykotor.resource.generics.dlg.base import DLG
 from pykotor.resource.generics.dlg.links import DLGLink
 from pykotor.resource.generics.dlg.nodes import DLGEntry, DLGReply
 from pykotor.resource.generics.dlg.io.twine import read_twine, write_twine
-
-if TYPE_CHECKING:
-    from typing import Any
 
 
 def test_html_structure():
