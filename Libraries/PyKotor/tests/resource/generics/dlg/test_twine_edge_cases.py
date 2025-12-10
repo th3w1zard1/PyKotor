@@ -174,19 +174,19 @@ def test_large_dialog():
 
         # Create a long chain of 1000 nodes
         for i in range(1000):
-        entry = DLGEntry()
-        entry.speaker = f"NPC{i}"
-        entry.text.set_data(Language.ENGLISH, Gender.MALE, f"Text {i}")
+            entry = DLGEntry()
+            entry.speaker = f"NPC{i}"
+            entry.text.set_data(Language.ENGLISH, Gender.MALE, f"Text {i}")
 
-        if prev_entry is None:
-            dlg.starters.append(DLGLink(entry))
-        else:
-            reply = DLGReply()
-            reply.text.set_data(Language.ENGLISH, Gender.MALE, f"Reply {i}")
-            prev_entry.links.append(DLGLink(reply))
-            reply.links.append(DLGLink(entry))
+            if prev_entry is None:
+                dlg.starters.append(DLGLink(entry))
+            else:
+                reply = DLGReply()
+                reply.text.set_data(Language.ENGLISH, Gender.MALE, f"Reply {i}")
+                prev_entry.links.append(DLGLink(reply))
+                reply.links.append(DLGLink(entry))
 
-        prev_entry = entry
+            prev_entry = entry
 
         tmpdir = Path(tempfile.mkdtemp())
         json_path = tmpdir / "large.json"
