@@ -49,6 +49,13 @@ def get_all_issues(repo: str) -> list[dict[str, Any]]:
     return issues
 
 
+def delete_issue(repo: str, issue_number: int) -> bool:
+    """Delete an issue (requires admin permissions)."""
+    endpoint = f"repos/{repo}/issues/{issue_number}"
+    result = run_gh_api(endpoint, "DELETE")
+    return result is None  # DELETE returns 204 No Content on success
+
+
 def close_issue(repo: str, issue_number: int) -> bool:
     """Close an issue."""
     data = {"state": "closed"}
@@ -87,6 +94,8 @@ def main():
     
     print(f"\nFound {len(duplicates_to_delete)} duplicate issues to delete")
     print("Keeping oldest issue for each title, deleting newer duplicates")
+    print("\nNOTE: GitHub API doesn't allow deleting issues directly.")
+    print("      Closing duplicates instead (they'll be filtered out by idempotent script).")
     
     deleted = 0
     failed = 0
@@ -94,17 +103,29 @@ def main():
     for issue in duplicates_to_delete:
         print(f"\nClosing duplicate issue #{issue['number']}: {issue['title'][:50]}")
         print(f"  Created: {issue.get('created_at', 'N/A')}")
-        if close_issue(repo, issue["number"]):
-            print(f"  SUCCESS: Closed #{issue['number']}")
+        print(f"  State: {issue.get('state', 'unknown')}")
+        
+        # Try to delete first (may not work without admin)
+        if delete_issue(repo, issue["number"]):
+            print(f"  SUCCESS: Deleted #{issue['number']}")
             deleted += 1
+        elif issue.get("state") != "closed":
+            # Fall back to closing if delete fails
+            if close_issue(repo, issue["number"]):
+                print(f"  SUCCESS: Closed #{issue['number']} (delete not permitted)")
+                deleted += 1
+            else:
+                print(f"  FAILED: Could not close #{issue['number']}")
+                failed += 1
         else:
-            print(f"  FAILED: Could not close #{issue['number']}")
-            failed += 1
+            print(f"  SKIP: Already closed #{issue['number']}")
+            deleted += 1
+        
         time.sleep(0.5)
     
-    print(f"\nDeleted: {deleted}, Failed: {failed}")
+    print(f"\nProcessed: {deleted}, Failed: {failed}")
+    print("\nNote: The idempotent migration script will skip closed issues with same titles.")
 
 
 if __name__ == "__main__":
     main()
-
