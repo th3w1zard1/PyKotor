@@ -70,12 +70,35 @@ def get_all_releases(source_repo: str) -> list[dict[str, Any]]:
     return releases
 
 
-def create_release(target_repo: str, release_data: dict[str, Any]) -> bool:
+def create_release_metadata_footer(original_release: dict[str, Any], source_repo: str) -> str:
+    """Create metadata footer with original release information."""
+    footer = "\n\n---\n"
+    footer += "**Migrated from:** "
+    footer += f"[{source_repo}#{original_release['tag_name']}](https://github.com/{source_repo}/releases/tag/{original_release['tag_name']})\n"
+    footer += f"**Original published:** {original_release.get('published_at', original_release.get('created_at', 'N/A'))}\n"
+    footer += f"**Original author:** @{original_release.get('author', {}).get('login', 'N/A')}\n"
+    
+    if original_release.get("assets"):
+        footer += f"**Original assets:** {len(original_release['assets'])} file(s) (not migrated - download from original release)\n"
+    
+    footer += "\n*Note: Release date cannot be preserved via GitHub API. This release was recreated to maintain chronological order.*"
+    
+    return footer
+
+
+def create_release(target_repo: str, release_data: dict[str, Any], source_repo: str = "") -> bool:
     """Create a release in target repository."""
+    body = release_data.get("body", "")
+    
+    # Add metadata footer if source_repo is provided
+    if source_repo:
+        footer = create_release_metadata_footer(release_data, source_repo)
+        body = body + footer
+    
     data = {
         "tag_name": release_data["tag_name"],
-        "name": release_data["name"],
-        "body": release_data["body"],
+        "name": release_data.get("name", release_data["tag_name"]),
+        "body": body,
         "draft": release_data.get("draft", False),
         "prerelease": release_data.get("prerelease", False),
     }
@@ -83,6 +106,13 @@ def create_release(target_repo: str, release_data: dict[str, Any]) -> bool:
     endpoint = f"repos/{target_repo}/releases"
     result = run_gh_api(endpoint, "POST", data)
     return result is not None
+
+
+def delete_release(target_repo: str, release_id: int) -> bool:
+    """Delete a release."""
+    endpoint = f"repos/{target_repo}/releases/{release_id}"
+    result = run_gh_api(endpoint, "DELETE")
+    return result is None  # DELETE returns 204 No Content on success
 
 
 def get_all_issues(source_repo: str, state: str = "all") -> list[dict[str, Any]]:
@@ -271,35 +301,103 @@ def get_all_discussions(source_repo: str) -> list[dict[str, Any]]:
     return discussions
 
 
-def migrate_releases(source_repo: str, target_repo: str) -> tuple[int, int]:
-    """Migrate all releases from source to target."""
+def migrate_releases(source_repo: str, target_repo: str, recreate_in_order: bool = False) -> tuple[int, int]:
+    """Migrate all releases from source to target.
+    
+    If recreate_in_order is True, deletes all existing releases and recreates
+    them in exact chronological order to ensure proper sorting.
+    """
     print("=" * 60)
     print("STEP 1: MIGRATING RELEASES")
     print("=" * 60)
+    
     releases = get_all_releases(source_repo)
     print(f"Found {len(releases)} releases in source repository")
 
-    existing_releases = {r["tag_name"] for r in get_all_releases(target_repo)}
-    print(f"Found {len(existing_releases)} existing releases in target repository")
+    # Sort by published_at date (oldest first) for chronological order
+    def get_published_date(release: dict[str, Any]) -> str:
+        return release.get("published_at", release.get("created_at", "1970-01-01T00:00:00Z"))
+    
+    sorted_releases = sorted(releases, key=get_published_date)
+    
+    if recreate_in_order:
+        print("\nRECREATE MODE: Deleting all existing releases and recreating in chronological order")
+        
+        # Get and delete all existing releases
+        existing_releases = get_all_releases(target_repo)
+        print(f"Found {len(existing_releases)} existing releases to delete")
+        
+        deleted = 0
+        failed = 0
+        
+        for release in existing_releases:
+            print(f"  Deleting: {release['tag_name']}")
+            if delete_release(target_repo, release["id"]):
+                print(f"    SUCCESS: Deleted {release['tag_name']}")
+                deleted += 1
+            else:
+                print(f"    FAILED: Could not delete {release['tag_name']}")
+                failed += 1
+            time.sleep(0.5)  # Rate limiting
+        
+        print(f"\nDeleted: {deleted}, Failed: {failed}")
+        
+        if failed > 0:
+            print("\nWARNING: Some releases could not be deleted. Continuing anyway...")
+        
+        # Wait for deletions to propagate
+        print("\nWaiting 5 seconds for deletions to propagate...")
+        time.sleep(5)
+        
+        # Recreate in exact chronological order
+        print("\nRecreating releases in chronological order (oldest to newest):")
+        migrated_releases = 0
+        skipped_releases = 0
+        
+        for i, release in enumerate(sorted_releases, 1):
+            print(f"\n[{i}/{len(sorted_releases)}] Creating: {release['tag_name']}")
+            print(f"  Name: {release.get('name', 'N/A')[:50]}")
+            print(f"  Original date: {get_published_date(release)}")
+            
+            if create_release(target_repo, release, source_repo):
+                print(f"    SUCCESS: Created {release['tag_name']}")
+                migrated_releases += 1
+            else:
+                print(f"    FAILED: Could not create {release['tag_name']}")
+                skipped_releases += 1
+            
+            # Wait between creations to ensure proper ordering
+            if i < 5:
+                time.sleep(2)  # Longer wait for first few
+            else:
+                time.sleep(1)
+        
+        print(f"\nReleases: {migrated_releases} created, {skipped_releases} failed")
+    else:
+        # Standard migration (skip existing)
+        existing_releases = {r["tag_name"] for r in get_all_releases(target_repo)}
+        print(f"Found {len(existing_releases)} existing releases in target repository")
 
-    migrated_releases = 0
-    skipped_releases = 0
+        migrated_releases = 0
+        skipped_releases = 0
 
-    for release in releases:
-        if release["tag_name"] in existing_releases:
-            print(f"  SKIP: {release['tag_name']} (already exists)")
-            skipped_releases += 1
-            continue
+        for release in sorted_releases:
+            if release["tag_name"] in existing_releases:
+                print(f"  SKIP: {release['tag_name']} (already exists)")
+                skipped_releases += 1
+                continue
 
-        print(f"  Creating: {release['tag_name']} - {release['name']}")
-        if create_release(target_repo, release):
-            print(f"    SUCCESS: Created {release['tag_name']}")
-            migrated_releases += 1
-        else:
-            print(f"    FAILED: Could not create {release['tag_name']}")
-        time.sleep(1)  # Rate limiting
+            print(f"  Creating: {release['tag_name']} - {release.get('name', 'N/A')[:50]}")
+            if create_release(target_repo, release, source_repo):
+                print(f"    SUCCESS: Created {release['tag_name']}")
+                migrated_releases += 1
+            else:
+                print(f"    FAILED: Could not create {release['tag_name']}")
+                skipped_releases += 1
+            time.sleep(1)  # Rate limiting
 
-    print(f"\nReleases: {migrated_releases} migrated, {skipped_releases} skipped")
+        print(f"\nReleases: {migrated_releases} migrated, {skipped_releases} skipped")
+    
     return migrated_releases, skipped_releases
 
 
@@ -489,6 +587,7 @@ def main():
     parser.add_argument("--source", default="NickHugi/PyKotor", help="Source repository (default: NickHugi/PyKotor)")
     parser.add_argument("--target", default="OldRepublicDevs/PyKotor", help="Target repository (default: OldRepublicDevs/PyKotor)")
     parser.add_argument("--fix-only", action="store_true", help="Only fix existing migrated issues, don't migrate new ones")
+    parser.add_argument("--recreate-releases", action="store_true", help="Delete all existing releases and recreate in exact chronological order")
     args = parser.parse_args()
 
     source_repo = args.source
@@ -508,7 +607,7 @@ def main():
         verify_and_fix_remaining(source_repo, target_repo)
     else:
         # Full migration
-        migrated_releases, skipped_releases = migrate_releases(source_repo, target_repo)
+        migrated_releases, skipped_releases = migrate_releases(source_repo, target_repo, recreate_in_order=args.recreate_releases)
         migrated_issues, failed_issues = migrate_issues(source_repo, target_repo)
         matched, updated, closed = fix_migrated_issues(source_repo, target_repo)
         verify_and_fix_remaining(source_repo, target_repo)
