@@ -2,15 +2,17 @@
 
 ## ⚠️ CRITICAL: Git Commit Requirement ⚠️
 
-**MANDATORY FOR ALL AI AGENTS**: After making ANY changes to files in this repository, you MUST:
+**MANDATORY FOR ALL AI AGENTS**: After making ANY changes to files in this repository, you MUST commit them using a single chained command.
 
-1. **Stage all modified files**: `git add <file1> <file2> ...` (or `git add .` for all changes)
-2. **Commit with a descriptive message**: `git commit -m "type: descriptive message"`
-3. **Verify the commit succeeded**: Check that `git commit` returns successfully with no errors
+**Required command format**: `git add <file1> <file2> ...; git commit -m "type: descriptive message"`
+
+**CRITICAL RULES:**
+- **ALWAYS chain `git add` and `git commit` together** in a single command using `;` (semicolon). NEVER execute them separately.
+- **NEVER use wildcards** with `git add`. You MUST specify each file explicitly: `git add file1.py file2.py` (NOT `git add .` or `git add *.py` or `git add -A`).
+- **Always stage files individually** by listing each modified file explicitly. This prevents conflicts when multiple agents work simultaneously.
+- **Verify the commit succeeded**: Check that the command returns successfully with no errors.
 
 **This is NOT optional.** Do NOT summarize changes without committing them. Do NOT skip this step. Every code change, file modification, or configuration update MUST be committed before you consider the task complete.
-
-**NEVER use `git add .` or `git add -A` to stage changes.** Always stage files individually. This is because we may have multiple agents working on multiple files simultaneously.
 
 **Commit message format**: Use conventional commits format:
 
@@ -21,7 +23,9 @@
 - `chore:` for maintenance tasks
 - `test:` for test changes
 
-Example: `git commit -m "fix: correct finalize job condition in workflow"`
+**Examples:**
+- `git add .cursorrules; git commit -m "docs: update git commit requirements"`
+- `git add file1.py file2.py; git commit -m "fix: correct finalize job condition in workflow"`
 
 ---
 
@@ -214,12 +218,11 @@ When tests consistently hit timeouts or take excessive time, AI agents MUST auto
    - Ensure technical accuracy matches what you found in the codebase
 4. **Commit wiki changes to the wiki repository**:
    - The `wiki/` directory is a separate git repository (`pykotor.wiki.git`)
-   - After updating wiki files, you MUST commit them to the wiki repository:
+   - After updating wiki files, you MUST commit them to the wiki repository using a chained command with explicit file paths:
 
      ```powershell
      cd wiki
-     git add .
-     git commit -m "docs: <descriptive message about what was updated>"
+     git add file1.md file2.md; git commit -m "docs: <descriptive message about what was updated>"
      cd ..
      ```
 
