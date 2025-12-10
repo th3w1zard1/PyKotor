@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 
 from collections import deque
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import Color, ResRef
@@ -224,7 +224,8 @@ class DLGNode:
         # Use UUID int to avoid hash collisions that would collapse shared nodes
         self._hash_cache: int = uuid.uuid4().int
         self.comment: str = ""
-        self.links: list[DLGLink] = []
+        # links is typed in subclasses (DLGEntry.links: list[DLGLink[DLGReply]], DLGReply.links: list[DLGLink[DLGEntry]])
+        self.links = []  # type: ignore[assignment]
         self.list_index: int = -1
 
         self.camera_angle: int = 0
@@ -461,7 +462,15 @@ class DLGNode:
             actual_value: Any = value.get("value")
 
             if py_type == "list" and key == "links":
-                node.links = [DLGLink.from_dict(link, node_map) for link in actual_value]
+                # Cast to correct type based on node type:
+                # DLGEntry.links is list[DLGLink[DLGReply]]
+                # DLGReply.links is list[DLGLink[DLGEntry]]
+                if node_type == "DLGEntry":
+                    node.links = cast("list[DLGLink[DLGReply]]", [DLGLink.from_dict(link, node_map) for link in actual_value])
+                elif node_type == "DLGReply":
+                    node.links = cast("list[DLGLink[DLGEntry]]", [DLGLink.from_dict(link, node_map) for link in actual_value])
+                else:
+                    node.links = [DLGLink.from_dict(link, node_map) for link in actual_value]
 
         return node
 
