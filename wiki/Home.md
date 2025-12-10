@@ -307,7 +307,7 @@ Guides, patches, and community-maintained resources:
 
 ### Documentation
 
-Reference documentation from related projects:
+Reference documentation from related projects (external sources):
 
-- **[xoreos-docs](https://github.com/xoreos/xoreos-docs)** - Aurora engine format documentation
+- **[xoreos-docs](https://github.com/xoreos/xoreos-docs)** - Aurora engine format documentation (xoreos project)
 - **[nwn-docs](https://github.com/kucik/nwn-docs)** - Neverwinter Nights documentation (shares Aurora formats)
