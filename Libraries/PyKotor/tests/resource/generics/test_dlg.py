@@ -1354,14 +1354,11 @@ class TestDLGLinkSerialization(unittest.TestCase):
         reply_one.links.append(link_leaf)
         reply_one.links.append(link_secondary)
 
-        visited_nodes = {"root"}
-        visited_nodes.update(
-            {
-                link.node.comment if isinstance(link.node, DLGEntry) else link.node.text.get(Language.ENGLISH, Gender.MALE)
-                for link in link_root
-            }
-        )
-        assert visited_nodes == {"root", "r1", "r2", "leaf"}
+        visited_nodes = {
+            link.node.comment if isinstance(link.node, DLGEntry) else link.node.text.get(Language.ENGLISH, Gender.MALE)
+            for link in link_root
+        }
+        assert visited_nodes == {"r1", "r2", "leaf"}
 
 class TestDLGAnimationSerialization(unittest.TestCase):
     def test_dlg_animation_serialization_basic(self):
