@@ -1,1450 +1,602 @@
 #!/usr/bin/env pwsh
-[CmdletBinding(PositionalBinding=$false)]
+<# 
+    install_python_venv.ps1
+    Robust, idempotent Python + venv bootstrapper for PyKotor.
+
+    Key improvements:
+    - Single consistent error trap; respects -noprompt.
+    - OS/distro detection without WMI on non-Windows.
+    - Idempotent venv creation/activation; clear reuse semantics.
+    - Fixed undefined variables (env refresh, activation fallbacks).
+    - Non-interactive mode honored everywhere (no stray Read-Host).
+    - Secure downloads with optional SHA256 verification and cleanup.
+    - Centralized version map; defaults to Python 3.13.x, pip/setuptools recent pins.
+    - Optional dry-run, verbose logging, and skip toggles for env load/venv.
+    - Avoids echoing secrets from .env; masks values unless -ShowEnvValues.
+#>
+
+[CmdletBinding(PositionalBinding = $false)]
 param(
     [switch]$noprompt,
     [string]$venv_name = ".venv",
-    [string]$force_python_version
+    [string]$force_python_version,     # MAJOR.MINOR; overrides default target
+    [switch]$forceInstall,             # proceed with installs without prompts
+    [switch]$skipVenv,                 # only detect/ensure python, skip venv creation
+    [switch]$skipEnvLoad,              # skip loading .env
+    [switch]$dryRun,                   # print planned actions, make no changes
+    [switch]$acceptLicense,            # auto-accept external installer licenses
+    [string]$logLevel = "Info",        # Trace|Debug|Info|Warn|Error|Silent
+    [string]$venvPathOverride,         # explicit venv path if not repo-root joined
+    [switch]$ShowEnvValues             # when loading .env, print full values (otherwise masked)
 )
+
+#region Globals and configuration
 $ErrorActionPreference = "Stop"
-$script:ErrorVerbosity = 3
-$PSNativeCommandUseErrorActionPreference = $false
-trap {
-    if ($null -eq $_) { Handle-Error -ErrorRecord $Error[0] } else { Handle-Error -ErrorRecord $_ }
+$PSNativeCommandUseErrorActionPreference = $true
+$script:ExitCode = 1
+
+# Normalize log level
+$script:LogLevels = @{
+    "Trace"  = 0
+    "Debug"  = 1
+    "Info"   = 2
+    "Warn"   = 3
+    "Error"  = 4
+    "Silent" = 5
+}
+if (-not $LogLevels.ContainsKey($logLevel)) { $logLevel = "Info" }
+$script:CurrentLogLevel = $LogLevels[$logLevel]
+
+# Version pins (override with -force_python_version if desired)
+$script:VersionPins = [pscustomobject]@{
+    PythonDefaultMajorMinor = "3.13"
+    PythonAltMajors         = @("3.13","3.12","3.11","3.10","3.9","3.8")
+    PythonSources           = @{
+        "3.13" = "3.13.0"
+        "3.12" = "3.12.8"
+        "3.11" = "3.11.10"
+        "3.10" = "3.10.15"
+        "3.9"  = "3.9.20"
+        "3.8"  = "3.8.19"
+    }
+    PipVersion        = "24.3.1"
+    SetuptoolsVersion = "75.2.0"
+    TclTkVersion      = "8.6.14"
 }
 
+# Repo paths
+$scriptPath   = $MyInvocation.MyCommand.Definition
+$repoRootPath = (Resolve-Path -LiteralPath (Join-Path -Path $scriptPath -ChildPath "..")).Path
+$pathSep      = [IO.Path]::DirectorySeparatorChar
+$venvPath     = if ($venvPathOverride) { $venvPathOverride } else { Join-Path -Path $repoRootPath -ChildPath $venv_name }
 
-$global:force_python_version = $force_python_version
+# Console colors toggle
+$script:UseColor = $Host.Name -notmatch "VSCode" -and $Host.UI -and $Host.UI.RawUI -and $Host.UI.SupportsVirtualTerminal
+#endregion Globals
 
-$latestPipVersion = "24.0"
-$latestPipPackageUrl = "https://files.pythonhosted.org/packages/94/59/6638090c25e9bc4ce0c42817b5a234e183872a1129735a9330c472cc2056/pip-$latestPipVersion.tar.gz"
-$latestSetuptoolsVersion = "69.2.0"
-$latestSetuptoolsUrl = "https://files.pythonhosted.org/packages/4d/5b/dc575711b6b8f2f866131a40d053e30e962e633b332acf7cd2c24843d83d/setuptools-$latestSetuptoolsVersion.tar.gz"
-
-$global:pythonInstallPath = ""
-$global:pythonVersion = ""
-
-$scriptPath = $MyInvocation.MyCommand.Definition  # Absolute path to this script.
-$repoRootPath = (Resolve-Path -LiteralPath "$scriptPath/..").Path  # Path to PyKotor repo root.
-Write-Host "The path to the script directory is: $scriptPath"
-Write-Host "The path to the root directory is: $repoRootPath"
-
-function Handle-Error {
-    param (
-        [Parameter(Mandatory = $true)][System.Management.Automation.ErrorRecord]$ErrorRecord,
-        [int]$Verbosity = $script:ErrorVerbosity
-    )
-    if ($Verbosity -eq 5) { return }
-
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss,fff"
-    $excType = $ErrorRecord.Exception.GetType().FullName
-    $excMessage = $ErrorRecord.Exception.Message
-    $helpLink = $ErrorRecord.Exception.HelpLink
-
-    if ($Verbosity -ge 1) {
-        Write-Host -ForegroundColor Red "$timestamp - $excType"
-        Write-Host -ForegroundColor Red $excMessage
-        if ($ErrorRecord.InvocationInfo) {
-            Write-Host -ForegroundColor Red "Line $($ErrorRecord.InvocationInfo.ScriptLineNumber): $($ErrorRecord.InvocationInfo.Line.Trim())"
-        }
-    }
-
-    if ($Verbosity -ge 2) {
-        Write-Host -ForegroundColor Red "Traceback (most recent call last):"
-        if ($null -ne (Get-Member -InputObject $ErrorRecord -Name ScriptStackTrace -ErrorAction SilentlyContinue)) {
-            #PS 3.0 has a stack trace on the ErrorRecord; if we have it, use it & skip the manual stack trace below
-            Write-Host -ForegroundColor Red $ErrorRecord.ScriptStackTrace
-            return
-        }
-        else {
-            $callStack = Get-PSCallStack
-            for ($i = 0; $i -lt $callStack.Count; $i++) {
-                $frame = $callStack[$i]
-                Write-Host -ForegroundColor Red "  File `"$($frame.ScriptName)`", line $($frame.ScriptLineNumber), in $($frame.FunctionName)"
-            }
-        }
-    }
-
-    if ($Verbosity -ge 3) {
-        if ($i -eq 0 -and $null -ne $ErrorRecord.InvocationInfo) {
-            $invInfo = $ErrorRecord.InvocationInfo
-            #Write-Host -ForegroundColor Red "    ScriptLineNumber = $($invInfo.ScriptLineNumber)"
-            Write-Host -ForegroundColor Red "    OffsetInLine = $($invInfo.OffsetInLine)"
-            Write-Host -ForegroundColor Red "    HistoryId = $($invInfo.HistoryId)"
-            Write-Host -ForegroundColor Red "    ScriptName = `"$($invInfo.ScriptName)`""
-            #Write-Host -ForegroundColor Red "    Line = `"$($invInfo.Line)`""
-            Write-Host -ForegroundColor Red "    PositionMessage = `"$($invInfo.PositionMessage)`""
-            Write-Host -ForegroundColor Red "    PSScriptRoot = `"$($invInfo.PSScriptRoot)`""
-            Write-Host -ForegroundColor Red "    PSCommandPath = `"$($invInfo.PSCommandPath)`""
-            Write-Host -ForegroundColor Red "    InvocationName = `"$($invInfo.InvocationName)`""
-            Write-Host -ForegroundColor Red "    PipelineLength = $($invInfo.PipelineLength)"
-            Write-Host -ForegroundColor Red "    PipelinePosition = $($invInfo.PipelinePosition)"
-            Write-Host -ForegroundColor Red "    ExpectingInput = $($invInfo.ExpectingInput)"
-            Write-Host -ForegroundColor Red "    CommandOrigin = $($invInfo.CommandOrigin)"
-            Write-Host -ForegroundColor Red "    DisplayScriptPosition = $($invInfo.DisplayScriptPosition)"
-        }
-    }
-    if ($Verbosity -ge 4) {
-        $callStack = Get-PSCallStack
-        for ($i = $callStack.Count - 1; $i -ge 0; $i--) {
-            $frame = $callStack[$i]
-            $variables = if ($i -eq 0) { Get-Variable } else { try { Get-Variable -Scope $i } catch { @() } }
-            foreach ($var in $variables) {
-                if ($var.Name -notmatch '^(PSCommandPath|PSScriptRoot|args|input|_|StackTrace|Error)$') {
-                    Write-Host -ForegroundColor Red "    $($var.Name) = $(Format-VariableOutput $var.Value -maxLength 50)"
-                }
-            }
-        }
-    }
-    if ($Verbosity -ge 5) {
-        Write-Host -ForegroundColor Red $ErrorRecord.Exception.Message
-        if ($null -ne $ErrorRecord.Exception.Source) { Write-Host -ForegroundColor Red "Source: $($ErrorRecord.Exception.Source)" }
-        if ($null -ne $ErrorRecord.Exception.HResult) { Write-Host -ForegroundColor Red "HRESULT: $($ErrorRecord.Exception.HResult)" }
-        if ($null -ne $ErrorRecord.Exception.TargetSite) { Write-Host -ForegroundColor Red "TargetSite: $($ErrorRecord.Exception.TargetSite)" }
-        if ($null -ne $ErrorRecord.CategoryInfo) {
-            if ($null -ne $ErrorRecord.CategoryInfo.Category -and "NotSpecified" -ne $ErrorRecord.CategoryInfo.Category) { Write-Host -ForegroundColor Red "Category: $($ErrorRecord.CategoryInfo.Category)" }
-            if (-not [string]::IsNullOrWhiteSpace($ErrorRecord.CategoryInfo.Activity)) { Write-Host -ForegroundColor Red "Activity: $($ErrorRecord.CategoryInfo.Activity)" }
-            if (-not [string]::IsNullOrWhiteSpace($ErrorRecord.CategoryInfo.TargetName)) { Write-Host -ForegroundColor Red "TargetName: $($ErrorRecord.CategoryInfo.TargetName)" }
-            if (-not [string]::IsNullOrWhiteSpace($ErrorRecord.CategoryInfo.TargetType)) { Write-Host -ForegroundColor Red "TargetType: $($ErrorRecord.CategoryInfo.TargetType)" }
-        }
-    }
-
-    if ($Verbosity -ge 1) {
-        if ($helpLink) { Write-Host -ForegroundColor Red "Help: $helpLink" }
-        if ($ErrorRecord.InvocationInfo) {
-            Write-Host -ForegroundColor Red "$($ErrorRecord.InvocationInfo.PositionMessage)"
-            if ($null -ne $ErrorRecord.CategoryInfo.Reason) { Write-Host -ForegroundColor Red "Reason: $($ErrorRecord.CategoryInfo.Reason)" }
-            if ($null -ne $ErrorRecord.Exception.HelpLink) { Write-Host -ForegroundColor Red "Help docs available: $($ErrorRecord.Exception.HelpLink)" }
-        }
-        Write-Host -ForegroundColor Red "$excType"
-        Write-Host -ForegroundColor Red "$excMessage"
-    }
-    Write-Host -ForegroundColor Red "----------------------------------------------------------------"
-}
-function Format-VariableOutput {
-    param ($value, [int]$maxLength = 100, [int]$maxDepth = 3, [int]$currentDepth = 0)
-    if ($currentDepth -ge $maxDepth) { return "<max depth reached>" }
-    if ($null -eq $value) { return "None" }
-    elseif ($value -is [string]) { return "`"$($value.Substring(0, [Math]::Min($value.Length, $maxLength)))$(if ($value.Length -gt $maxLength) {"..."})`"" }
-    elseif ($value -is [int] -or $value -is [double]) { return $value.ToString() }
-    elseif ($value -is [bool]) { return $value.ToString().ToLower() }
-    elseif ($value -is [array] -or $value -is [System.Collections.IList]) {
-        $elements = $value | Select-Object -First 10 | ForEach-Object { Format-VariableOutput $_ -maxLength $maxLength -maxDepth $maxDepth -currentDepth ($currentDepth + 1) }
-        $var_output = "[" + ($elements -join ", ") + $(if ($value.Count -gt 10) { ", ..." }) + "]"
-        return $(if ($var_output.Length -gt $maxLength) { $var_output.Substring(0, $maxLength) + "..." } else { $var_output })
-    }
-    elseif ($value -is [hashtable] -or $value -is [System.Collections.IDictionary]) {
-        $elements = $value.GetEnumerator() | Select-Object -First 10 | ForEach-Object { 
-            "$((Format-VariableOutput $_.Key -maxLength $maxLength -maxDepth $maxDepth -currentDepth ($currentDepth + 1))) = $((Format-VariableOutput $_.Value -maxLength $maxLength -maxDepth $maxDepth -currentDepth ($currentDepth + 1)))"
-        }
-        $var_output = "{" + ($elements -join ", ") + $(if ($value.Count -gt 10) { ", ..." }) + "}"
-        return $(if ($var_output.Length -gt $maxLength) { $var_output.Substring(0, $maxLength) + "..." } else { $var_output })
-    }
-    elseif ($value -is [System.Management.Automation.PSCustomObject]) {
-        $properties = $value.PSObject.Properties | Select-Object -First 10 | ForEach-Object {
-            "    $($_.Name) = $((Format-VariableOutput $_.Value -maxLength $maxLength -maxDepth $maxDepth -currentDepth ($currentDepth + 1)))"
-        }
-        $var_output = "PSCustomObject(`n" + ($properties -join ",`n") + $(if ($value.PSObject.Properties.Count -gt 10) { ",`n    ..." }) + "`n)"
-        return $(if ($var_output.Length -gt $maxLength) { $var_output.Substring(0, $maxLength) + "..." } else { $var_output })
-    }
-    else {
-        $var_output = $value.ToString()
-        return $(if ($var_output.Length -gt $maxLength) { $var_output.Substring(0, $maxLength) + "..." } else { $var_output })
-    }
-}
-
-trap {
-    Write-Error "An error occurred: $_"
-    $response = Read-Host "Press Enter to continue or type 'q' or the hotkey `ctrl+c` to quit."
-    if ($response -eq 'exit') { exit }
-    continue
-}
-
-function Get-OS {
-    if ($IsWindows) {
-        return "Windows"
-    } elseif ($IsMacOS) {
-        return "Mac"
-    } elseif ($IsLinux) {
-        return "Linux"
-    }
-    $os = (Get-WmiObject -Class Win32_OperatingSystem).Caption
-    if ($os -match "Windows") {
-        return "Windows"
-    } elseif ($os -match "Mac") {
-        return "Mac"
-    } elseif ($os -match "Linux") {
-        return "Linux"
-    } else {
-        Write-Error "Unknown Operating System"
-        Write-Host "Press any key to exit..."
-        if (-not $noprompt) {
-            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        }
-        exit
-    }
-}
-
-
-function Invoke-BashCommand {
-    param (
-        [string]$Command
-    )
-
-    try {
-        # Execute the bash command and capture its output
-        $output = & bash -c $Command 2>&1
-        # Check if the command was successful
-        if (-not $? -or $LASTEXITCODE -ne 0) {
-            $errorMessage = "Bash command `'$Command`' failed with exit code $LASTEXITCODE. Output: $output"
-            # Throw an exception with the error message
-            throw $errorMessage
-        }
-    } catch {
-        # Rethrow the caught exception after adding more context
-        throw "Failed to execute Bash command `'$Command`'. Error: $_"
-    }
-    # Return the captured output if successful
-    return $output
-}
-
-function Invoke-BashCommandOptional {
-    param (
-        [string]$Command,
-        [string]$FallbackMessage = "Command failed but continuing"
-    )
-
-    try {
-        # Execute the bash command and capture its output
-        $output = & bash -c $Command 2>&1
-        # Check if the command was successful
-        if (-not $? -or $LASTEXITCODE -ne 0) {
-            Write-Warning "$FallbackMessage. Exit code: $LASTEXITCODE"
-            return $false
-        }
-        return $true
-    } catch {
-        Write-Warning "$FallbackMessage. Error: $_"
-        return $false
-    }
-}
-
-$pathSep = "/"
-if ((Get-OS) -eq "Windows") {
-    $pathSep = "\"
-} else {
-    # LD_LIBRARY_PATH must be set on unix systems.
-    $ldLibraryPath = [System.Environment]::GetEnvironmentVariable('LD_LIBRARY_PATH', 'Process')
-    if ([string]::IsNullOrEmpty($ldLibraryPath)) {
-        Write-Warning "LD_LIBRARY_PATH not defined, creating it with /usr/lib:/usr/local/lib ..."
-        [System.Environment]::SetEnvironmentVariable('LD_LIBRARY_PATH', '/usr/lib:/usr/local/lib', 'Process')
-    } elseif (-not $ldLibraryPath.Contains('/usr/local/lib')) {
-        Write-Warning "LD_LIBRARY_PATH defined but no definition for /usr/local/lib, adding it now..."
-        $newLdLibraryPath = $ldLibraryPath + ':/usr/local/lib'
-        if (-not $newLdLibraryPath.Contains('/usr/lib')) {
-            Write-Host "Also adding /usr/lib"
-            $newLdLibraryPath = $ldLibraryPath + ':/usr/lib'
-        }
-        [System.Environment]::SetEnvironmentVariable('LD_LIBRARY_PATH', $newLdLibraryPath, 'Process')
-    }
-}
-
-# Ensure script is running with elevated permissions
-If ((Get-OS) -eq "Windows" -and -NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Warning "Please run PowerShell with administrator rights!"
-    #Break
-}
-
-# Function to parse and set environment variables from .env file
-function Set-EnvironmentVariablesFromEnvFile {
-    Param (
-        [string]$envFilePath
-    )
-    if (Test-Path -LiteralPath $envFilePath) {
-        Get-Content $envFilePath | ForEach-Object {
-            if ($_ -match '^\s*(\w+)\s*=\s*(?:"(.*?)"|''(.*?)''|(.*?))\s*$') {
-                $key, $value = $matches[1], $matches[2] + $matches[3] + $matches[4]
-                
-                Write-Debug "Processing variable: $key"
-                Write-Debug "Retrieved from regex - Key: $key, Value: $value"
-
-                # Replace ${env:VARIABLE} with actual environment variable value
-                $originalValue = $value
-                $value = $value -replace '\$\{env:(.*?)\}', {
-                    $envVarName = $matches[1]
-                    $retrievedEnvValue = [System.Environment]::GetEnvironmentVariable($envVarName, [System.EnvironmentVariableTarget]::Process)
-                    # If the environment variable isn't set, use an empty string instead
-                    if ($null -eq $retrievedEnvValue) {
-                        $retrievedEnvValue = ""
-                    }
-                    Write-Debug "Replacing $envVarName '${env:$envVarName}' with '$retrievedEnvValue'"
-                    return $retrievedEnvValue
-                }
-                
-                # Split paths, trim whitespace, and remove duplicates
-                $uniquePaths = @{}
-                ($value -split ';').ForEach({
-                    $trimmedPath = $_.Trim()
-                    if (-not [string]::IsNullOrWhiteSpace($trimmedPath)) {
-                        Write-Debug "Trimmed Path: $trimmedPath"
-                        $absolutePath = "$repoRootPath/$trimmedPath"
-                        if ( Test-Path -LiteralPath $absolutePath -ErrorAction SilentlyContinue )
-                        {
-                            $resolvedPath = (Resolve-Path -LiteralPath $absolutePath).Path
-                            if ($null -ne $resolvedPath) {
-                                $uniquePaths[$resolvedPath] = $true
-                            }
-                        }
-                    }
-                })
-                $value = ($uniquePaths.Keys -join ';')
-
-                Write-Debug "Original value: $originalValue, Final value: $value"
-
-                # Set environment variable
-                Write-Host "`$env:$key='$value'"
-                Set-Item -LiteralPath "env:$key" -Value $value
-            }
-        }
-        Write-Host "Environment variables set from .env file."
-        return $true
-    }
-
-    # environment file not found.
-    return $false
-}
-
-function Get-Linux-Distro-Name {
-    if (Test-Path "/etc/os-release" -ErrorAction SilentlyContinue) {
-        $osInfo = Get-Content "/etc/os-release" -Raw
-        if ($osInfo -match '\nID="?([^"\n]*)"?') {
-            $distroName = $Matches[1].Trim('"')
-            if ($distroName -eq "ol") {
-                return "oracle"
-            }
-            return $distroName
-        }
-    }
-    return $null
-}
-
-function Get-Linux-Distro-Version {
-    $osInfo = Get-Content "/etc/os-release" -Raw
-    if (Test-Path "/etc/os-release" -ErrorAction SilentlyContinue) {
-        if ($osInfo -match '\nVERSION_ID="?([^"\n]*)"?') {
-            $distroVersion = $Matches[1].Trim('"')
-            return $distroVersion
-        }
-    }
-    return $null
-}
-
-# Helper function to run a command and capture output with a timeout
-function Invoke-WithTimeout {
+#region Logging helpers
+function Write-Log {
     param(
-        [ScriptBlock]$ScriptBlock,
-        [TimeSpan]$Timeout
+        [Parameter(Mandatory = $true)][ValidateSet("Trace","Debug","Info","Warn","Error")]
+        [string]$Level,
+        [Parameter(Mandatory = $true)][string]$Message
     )
-    $ps = [powershell]::Create().AddScript($ScriptBlock)
-    $task = $ps.BeginInvoke()
-    if ($task.AsyncWaitHandle.WaitOne($Timeout)) {
-        $output = $ps.EndInvoke($task)
-        $ps.Dispose()
-        return $output
-    } else {
-        $ps.Dispose()
-        throw "Command timed out."
+    if ($LogLevels[$Level] -lt $CurrentLogLevel) { return }
+    $prefix = "[{0}] " -f $Level.ToUpper()
+    $color = switch ($Level) {
+        "Trace" { "DarkGray" }
+        "Debug" { "Gray" }
+        "Info"  { "White" }
+        "Warn"  { "Yellow" }
+        "Error" { "Red" }
     }
+    if ($UseColor) { Write-Host "$prefix$Message" -ForegroundColor $color }
+    else { Write-Host "$prefix$Message" }
 }
 
+function Throw-Logged {
+    param([string]$Message)
+    Write-Log -Level "Error" -Message $Message
+    throw $Message
+}
+#endregion Logging
 
-# Needed for tkinter-based apps, common in Python and subsequently most of PyKotor's tools.
-function Install-TclTk {
-    function GetAndCompareVersion($command, $scriptCommand, $requiredVersion) {
-        $commandInfo = Get-Command -Name $command -ErrorAction SilentlyContinue
-        if (-not ($commandInfo)) {
-            Write-Host "'$command' not found during CommandExists check."
-            # Attempt to find version-specific command if 'wish' is not found
-            if ($command -eq 'wish') {
-                $versionSpecificCommand = Get-Command 'wish*' -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($null -ne $versionSpecificCommand) {
-                    $command = $versionSpecificCommand.Name
-                    Write-Host "'wish' command not found but versioned '$command' was found. Symlinking $($versionSpecificCommand.Source) >> /usr/local/bin/wish"
-                    Invoke-BashCommand "sudo ln -sv $($versionSpecificCommand.Source) /usr/local/bin/wish"
-                } else {
-                    Write-Host "Command 'wish' not found."
-                    return $false
-                }
-            } else {
-                Write-Host "Command '$command' not found."
-                return $false
-            }
+#region Error trap
+trap {
+    $err = $_
+    Write-Log -Level "Error" -Message ("Unhandled error: {0}" -f $err)
+    if ($err.ScriptStackTrace) {
+        Write-Log -Level "Debug" -Message $err.ScriptStackTrace
+    }
+    $global:LASTEXITCODE = 1
+    exit 1
+}
+#endregion Error trap
+
+#region Utility helpers
+function Test-Command {
+    param([Parameter(Mandatory = $true)][string]$Name)
+    return [bool](Get-Command -Name $Name -ErrorAction SilentlyContinue)
+}
+
+function Require-Command {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [string]$InstallHint
+    )
+    if (-not (Test-Command $Name)) {
+        if ($InstallHint) {
+            Throw-Logged "$Name is required. $InstallHint"
         } else {
-            Write-Host "Command info for $command"
-            Write-Host $commandInfo
-            Write-Host $commandInfo.Path
-            Write-Host $commandInfo.Name
-        }
-    
-        try {
-            $versionScript = "echo `$scriptCommand` | $command"
-            $versionString = Invoke-Expression $versionScript 2>&1
-            if ([string]::IsNullOrWhiteSpace($versionString)) {
-                Write-Host "No version output detected for '$command'."
-                return $false
-            }
-            $versionString = $versionString -replace '[^\d.]+', ''  # Clean the version string of non-numeric characters
-            Write-Host "Output of $command : '$versionString'"
-    
-            if ($versionString -eq '') {
-                Write-Host "Version string for '$command' is empty."
-                return $false
-            }
-    
-            $version = New-Object System.Version $versionString.Trim()
-            return $version -ge $requiredVersion
-        } catch {
-            Handle-Error -ErrorRecord $_
-            return $false
-        }
-    }
-    
-    # Correctly invoke tclsh and wish with the version check script
-    $tclVersionScript = "puts [info patchlevel];exit"
-    $tkVersionScript = "puts [info patchlevel];exit"
-    
-    # Initialize required version
-    $recommendedVersion = "8.6.10"
-    if ((Get-OS) -eq "macOS") {
-        $requiredVersion = New-Object -TypeName "System.Version" $recommendedVersion
-    } else {
-        $requiredVersion = New-Object -TypeName "System.Version" "8.6.0"
-    }
-    
-    # Perform version checks
-    $tclCheck = GetAndCompareVersion "tclsh" $tclVersionScript $requiredVersion
-    $tkCheck = GetAndCompareVersion "wish" $tkVersionScript $requiredVersion
-
-    # Handle the result of the version checks
-    if ($tclCheck -and $tkCheck) {
-        Write-Host "Tcl and Tk version $requiredVersion or higher are already installed."
-        return
-    } else {
-        Write-Host "Tcl/Tk version must be updated now."
-    }
-
-    if ((Get-OS) -eq "Mac") {
-        #  OSSpinLock is deprecated in favor of os_unfair_lock starting with 10.12. I can't modify the src of tcl here so this'll just need to brew it.
-        # More info: https://www.python.org/download/mac/tcltk/
-        # Retrieve current macOS version
-        $macOSVersion = Invoke-BashCommand -Command "sw_vers -productVersion"
-        $majorMacOSVersion = [int]$macOSVersion.Split('.')[0]
-        $minorMacOSVersion = [int]$macOSVersion.Split('.')[1]
-        if (($majorMacOSVersion -eq 10 -and $minorMacOSVersion -ge 12) -or $majorMacOSVersion -gt 10) {
-            bash -c 'brew install tcl-tk --overwrite --force || true'
-            Write-Host '"brew install tcl-tk --overwrite --force || true" completed.'
-            $tclCheck = GetAndCompareVersion "tclsh", $tclVersionScript, $requiredVersion
-            $tkCheck = GetAndCompareVersion "wish", $tkVersionScript, $requiredVersion
-    
-            if ($tclCheck -and $tkCheck) {
-                Write-Host "Tcl and Tk version $requiredVersion or higher are already installed."
-                return
-            } else {
-                Write-Error "Could not get tcl/tk versions after brew install!"
-            }
-            return
-        }
-    }
-
-    Write-Host "Installing Tcl from source..."
-    $originalDir = Get-Location
-    Invoke-BashCommand "curl -O -L https://prdownloads.sourceforge.net/tcl/tcl$recommendedVersion-src.tar.gz"
-    Invoke-BashCommand "tar -xzvf tcl$recommendedVersion-src.tar.gz"
-    Set-Location "tcl$recommendedVersion/unix"
-    Invoke-BashCommand "./configure --prefix=/usr/local"
-    Invoke-BashCommand "make"
-    Invoke-BashCommand "sudo make install"
-
-    Set-Location $originalDir
-    Write-Host "Installing Tk from source..."
-    Invoke-BashCommand "curl -O -L https://prdownloads.sourceforge.net/tcl/tk$recommendedVersion-src.tar.gz"
-    Invoke-BashCommand "tar -xzvf tk$recommendedVersion-src.tar.gz"
-    Set-Location "tk$recommendedVersion/unix"
-    Invoke-BashCommand "./configure --prefix=/usr/local --with-tcl=/usr/local/lib"
-    Invoke-BashCommand "make"
-    Invoke-BashCommand "sudo make install"
-    Set-Location $originalDir
-
-    # Refresh the env after installing tcl/tk
-    #$userPath = [System.Environment]::GetEnvironmentVariable("PATH", [System.EnvironmentVariableTarget]::User)
-    #$systemPath = [System.Environment]::GetEnvironmentVariable("PATH", [System.EnvironmentVariableTarget]::Machine)
-    #$env:PATH = $userPath + ";" + $systemPath
-    
-    # Perform version checks
-    $tclCheck = GetAndCompareVersion "tclsh" $tclVersionScript $requiredVersion
-    $tkCheck = GetAndCompareVersion "wish" $tkVersionScript $requiredVersion
-
-    # Handle the result of the version checks
-    if ($tclCheck -and $tkCheck) {
-        Write-Host "Tcl and Tk version $requiredVersion or higher have been installed."
-        return
-    } else {
-        if ((Get-OS) -ne "Linux") {
-            Write-Error "Tcl/Tk could not be installed! See above logs for the issue"
-        } else {
-            Write-Warning "Known problem with wish on linux, assuming it's installed and continuing..."
+            Throw-Logged "$Name is required but not found."
         }
     }
 }
 
-function Install-Python-Linux {
-    Param (
-        [string]$pythonVersion="3",  # MAJOR.MINOR!!!
-        [bool]$skipSource
+function Confirm-Action {
+    param(
+        [string]$Prompt,
+        [switch]$DefaultYes
     )
-
-    # Set default value if null or empty string is passed
-    if (-not $pythonVersion) {
-        $pythonVersion = "3"
-    }
-
-    #Install-Deps-Linux
-
-    if (Test-Path "/etc/os-release") {
-        $distro = (Get-Linux-Distro-Name)
-        $versionId = (Get-Linux-Distro-Version)
-        
-        try {
-            switch ($distro) {
-                "debian" {
-                    Invoke-BashCommand -Command "sudo apt-get update -y"
-                    # Try to install pip package, but fall back gracefully if it doesn't exist (common in deadsnakes PPA)
-                    $pipPackageSuccess = Invoke-BashCommandOptional -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv python$pythonVersion-pip" -FallbackMessage "python$pythonVersion-pip package not available, installing without it"
-                    if (-not $pipPackageSuccess) {
-                        Invoke-BashCommand -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv"
-                    }
-                    break
-                }
-                "ubuntu" {
-                    Invoke-BashCommand -Command "sudo apt-get update -y"
-                    # Try to install pip package, but fall back gracefully if it doesn't exist (common in deadsnakes PPA)
-                    $pipPackageSuccess = Invoke-BashCommandOptional -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv python$pythonVersion-pip" -FallbackMessage "python$pythonVersion-pip package not available, installing without it"
-                    if (-not $pipPackageSuccess) {
-                        Invoke-BashCommand -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv"
-                    }
-                    break
-                }
-                "alpine" {
-                    if ($pythonVersion -eq "3") {
-                        Invoke-BashCommand -Command "sudo apk update"
-                        Invoke-BashCommand -Command "sudo apk add --update --no-cache tk-dev tcl-dev tcl tk python$pythonVersion python$pythonVersion-tkinter"
-    
-                        # Check if /usr/local/bin/python3 already exists and create or overwrite the symlink based on that
-                        Invoke-BashCommand -Command "
-                        if [ ! -f /usr/local/bin/python3 ]; then
-                            sudo ln -sf /usr/bin/python$pythonVersion /usr/local/bin/python3
-                        fi
-                        sudo ln -sf /usr/bin/python$pythonVersion /usr/local/bin/python$pythonVersion
-                        "
-                        Invoke-BashCommand -Command "/usr/local/bin/python$pythonVersion -m ensurepip"
-                        Invoke-BashCommand -Command "/usr/local/bin/python$pythonVersion -m pip install --no-cache --upgrade pip setuptools"
-                    } else {
-                        throw "Python version $pythonVersion cannot be installed from package manager on Alpine."
-                    }
-                    break
-                }
-                "almalinux" {
-                    Invoke-BashCommand -Command "sudo dnf update -y"
-                    #Invoke-BashCommand -Command "sudo dnf upgrade -y"
-                    Invoke-BashCommand -Command "sudo dnf install python$pythonVersion python$pythonVersion tk tcl tk-devel tcl-devel -y"
-                    break
-                }
-                "fedora" {
-                    Invoke-BashCommand -Command "sudo dnf update -y"
-                    #Invoke-BashCommand -Command "sudo dnf upgrade -y"
-                    Invoke-BashCommand -Command "sudo dnf install python$pythonVersion python$pythonVersion tk tcl tk-devel tcl-devel dnf-plugins-core -y"
-                    break
-                }
-                "centos" {
-                    Invoke-BashCommand -Command "sudo yum update -y"
-                    if ( $versionId -eq "7" ) {
-                        Invoke-BashCommand -Command "sudo yum install epel-release -y"
-                    }
-                    #Invoke-BashCommand -Command "sudo dnf upgrade -y"
-                    Invoke-BashCommand -Command "sudo yum install python$pythonVersion python$pythonVersion tk tcl tk-devel tcl-devel -y"
-                    break
-                }
-                "arch" {
-                    Write-Host "Initializing pacman keyring..."
-                    Invoke-BashCommand -Command "sudo pacman-key --init"
-                    Invoke-BashCommand -Command "sudo pacman-key --populate archlinux"
-                    Invoke-BashCommand -Command "sudo pacman -Sy archlinux-keyring --noconfirm"
-                    if ($pythonVersion -eq "3") {
-                        Invoke-BashCommand -Command "sudo pacman -Sy --noconfirm"
-                        Invoke-BashCommand -Command "sudo pacman -Sy base-devel python-pip python tk tcl --noconfirm"
-                    } else {
-                        throw "Package manager does not support version '$pythonVersion' on arch."
-                    }
-                }
-                default {
-                    Write-Error "Unsupported Linux distribution for package manager install of Python: $distro"
-                }
-            }
-            Find-Python -installIfNotFound $false
-            if ( -not $global:pythonInstallPath ) {
-                throw "Python not found/installed"
-            }
-
-            # Ensure pip is available - bootstrap if needed
-            try {
-                $pipCheck = & $global:pythonInstallPath -m pip --version 2>&1
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Host "Pip not available, bootstrapping with ensurepip..."
-                    & $global:pythonInstallPath -m ensurepip --upgrade --default-pip
-                    if ($LASTEXITCODE -eq 0) {
-                        Write-Host "Pip bootstrapped successfully."
-                    } else {
-                        Write-Warning "ensurepip failed. Pip may not be available."
-                    }
-                } else {
-                    Write-Host "Pip is already available."
-                }
-            } catch {
-                Write-Warning "Failed to check/bootstrap pip: $($_.Exception.Message)"
-            }
-        } catch {
-            $errMsg = $_.Exception.Message
-            Handle-Error -ErrorRecord $_
-            $errStr = "Error: $errMsg`nCould not install python from your package manager`n`nWould you like to attempt to build from source instead? (y/N)"
-            if ($noprompt) {
-                Write-Host $errStr
-                Write-Host "Non-interactive mode: Skipping source build to avoid hanging CI."
-                Write-Error "Python installation failed and cannot proceed in non-interactive mode."
-                throw "Python installation failed in non-interactive mode"
-            } else {
-                $userInput = Read-Host $errStr
-                if ( $userInput -ne "Y" -and $userInput -ne "y" ) {
-                    Write-Host "Press any key to exit..."
-                    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-                    exit 1
-                }
-            }
-
-            # Fallback mechanism for each distribution
-            Install-TclTk  # TODO(th3w1zard1): move this up and separate tk/tcl package manager installs from python. Tk/tcl needs to be installed first.
-            switch ($distro) {
-                "debian" {
-                    Invoke-BashCommand -Command 'sudo apt-get update -y'
-                    Invoke-BashCommand -Command 'sudo apt-get install -y tk tcl build-essential zlib1g-dev libncurses5-dev libgdbm-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev libbz2-dev tk-dev'
-                }
-                "ubuntu" {
-                    Invoke-BashCommand -Command 'sudo apt-get update -y'
-                    Invoke-BashCommand -Command 'sudo apt-get install -y tk tcl build-essential zlib1g-dev libncurses5-dev libgdbm-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev libbz2-dev tk-dev'
-                }
-                "alpine" {
-                    Invoke-BashCommand -Command 'sudo apk add --update --no-cache tk tcl tk-dev tcl-dev alpine-sdk linux-headers zlib-dev bzip2-dev readline-dev sqlite-dev openssl-dev libffi-dev'
-                }
-                "fedora" {
-                    Invoke-BashCommand -Command 'sudo dnf groupinstall "Development Tools" -y'
-                    Invoke-BashCommand -Command 'sudo dnf install -y tk tcl tk-devel dnf-plugins-core tcl-devel zlib-devel bzip2-devel readline-devel sqlite-devel openssl-devel libffi-devel'
-                }
-                "almalinux" {
-                    Invoke-BashCommand -Command 'sudo yum groupinstall "Development Tools" -y'
-                    Invoke-BashCommand -Command 'sudo yum install -y tk tcl tk-devel tcl-devel zlib-devel bzip2-devel readline-devel sqlite-devel openssl-devel libffi-devel'
-                    Invoke-BashCommand -Command "gcc --version"
-                }
-                "centos" {
-                    Invoke-BashCommand -Command 'sudo yum groupinstall "Development Tools" -y'
-                    Invoke-BashCommand -Command 'sudo yum install -y tk tcl tk-devel tcl-devel zlib-devel bzip2-devel readline-devel sqlite-devel openssl-devel libffi-devel'
-                    Invoke-BashCommand -Command "gcc --version"
-                } default {
-                    # Check for the presence of package managers and execute corresponding commands
-                    if (Get-Command apt-get -ErrorAction SilentlyContinue) {
-                        Invoke-BashCommand -Command 'sudo apt-get update -y'
-                        Invoke-BashCommand -Command 'sudo apt-get install -y build-essential zlib1g-dev libncurses5-dev libgdbm-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev libbz2-dev tk-dev tcl-dev tk tcl'
-                    } elseif (Get-Command apk -ErrorAction SilentlyContinue) {
-                        Invoke-BashCommand -Command 'sudo apk add --update --no-cache tcl tk tk-dev linux-headers zlib-dev bzip2-dev readline-dev sqlite-dev openssl-dev libffi-dev'
-                    } elseif (Get-Command yum -ErrorAction SilentlyContinue) {
-                        Invoke-BashCommand -Command 'sudo yum groupinstall "Development Tools" -y'
-                        Invoke-BashCommand -Command 'sudo yum install -y tk tcl tk-devel tcl-devel zlib-devel bzip2-devel readline-devel sqlite-devel openssl-devel libffi-devel'
-                    } elseif (Get-Command dnf -ErrorAction SilentlyContinue) {
-                        Invoke-BashCommand -Command 'sudo dnf groupinstall "Development Tools" -y'
-                        Invoke-BashCommand -Command 'sudo dnf install -y tk tcl tk-devel tcl-devel zlib-devel bzip2-devel readline-devel sqlite-devel openssl-devel libffi-devel'
-                    } elseif (Get-Command zypper -ErrorAction SilentlyContinue) {
-                        Invoke-BashCommand -Command 'sudo zypper install -t pattern devel_basis'
-                        Invoke-BashCommand -Command 'sudo zypper install -y zlib-devel bzip2-devel readline-devel sqlite3-devel openssl-devel tk-devel tcl-devel libffi-devel'
-                    } elseif (Get-Command pacman -ErrorAction SilentlyContinue) {
-                        Invoke-BashCommand -Command 'sudo pacman -Sy base-devel zlib bzip2 readline sqlite openssl tk tcl libffi --noconfirm'
-                    } elseif (Get-Command brew -ErrorAction SilentlyContinue) {
-                        brew update
-                        brew install zlib bzip2 readline sqlite openssl libffi tcl-tk
-                    } elseif (Get-Command snap -ErrorAction SilentlyContinue) {
-                        Write-Warning "Snap packages are not directly applicable for building Python. Please ensure build dependencies are installed using another package manager."
-                    } elseif (Get-Command flatpak -ErrorAction SilentlyContinue) {
-                        Write-Warning "Flatpak is not suitable for installing build dependencies. Please use another package manager."
-                    } else {
-                        Write-Warning "Compatible package manager not found. Please install the build dependencies manually."
-                    }
-                }
-            }
-            Install-PythonUnixSource -pythonVersion $pythonVersion
-            Invoke-BashCommand -Command "python$pythonVersion --version"
-        }
-    } else {
-        Write-Host "Cannot determine Linux distribution."
-        exit 1
-    }
+    if ($dryRun) { return $true }
+    if ($noprompt -or $forceInstall) { return $true }
+    $suffix = if ($DefaultYes) { " [Y/n]" } else { " [y/N]" }
+    $resp = Read-Host "$Prompt$suffix"
+    if ($DefaultYes) { return ($resp -eq "" -or $resp -match '^(?i)y') }
+    return ($resp -match '^(?i)y')
 }
 
-function Install-Python-Mac {
-    Param (
-        [string]$pythonVersion  # MAJOR.MINOR!!!
-    )
-
-    $pyVersion = switch ($pythonVersion) {
-        "3.7" { "3.7.9" }
-        "3.8" { "3.8.10" }
-        "3.9" { "3.9.13" }
-        "3.10" { "3.10.11" }
-        "3.11" { "3.11.8" }
-        "3.12" { "3.12.2" }
-        "3.13" { "3.13.0a5" }
-        default { throw "Unsupported Python version: $pythonVersion" }
-    }
-    
-    # Map of Python versions to their detailed installer information
-    $pythonInstallers = @{
-        "3.7" = @("python-$pyVersion-macosx10.9.pkg")
-        "3.8" = @("python-$pyVersion-macos11.pkg", "python-$pyVersion-macosx10.9.pkg")
-        "3.9" = @("python-$pyVersion-macos11.pkg", "python-$pyVersion-macosx10.9.pkg")
-        "3.10" = @("python-$pyVersion-macos11.pkg")
-        "3.11" = @("python-$pyVersion-macos11.pkg")
-        "3.12" = @("python-$pyVersion-macos11.pkg")
-        "3.13" = @("python-$pyVersion-macos11.pkg")
-    }
-
-    Install-TclTk
-
-    try {
-        # Retrieve current macOS version
-        $macOSVersion = bash -c "sw_vers -productVersion"
-        $majorMacOSVersion = [int]$macOSVersion.Split('.')[0]
-        $minorMacOSVersion = [int]$macOSVersion.Split('.')[1]
-
-        Write-Host "macOS version: $macOSVersion"
-        Write-Host "macOS version major: $majorMacOSVersion"
-        Write-Host "macOS version minor: $minorMacOSVersion"
-
-        $installerSelection = $pythonInstallers[$pythonVersion] | Where-Object {
-            $_ -match "macosx?($majorMacOSVersion)\.(\d+)" -or $_ -match "macos($majorMacOSVersion)"
-        } | Sort-Object -Descending | Select-Object -First 1
-
-        Write-Host "installer selection: $installerSelection"
-
-        if (-not $installerSelection) {
-            # Fallback to the highest available lower macOS version installer
-            $installerSelection = $pythonInstallers[$pythonVersion] | Sort-Object -Descending | Select-Object -First 1
-            Write-Warning "No matching macOS version installer found. Falling back to highest available version: $installerSelection"
-        }
-
-        $pythonInstallerUrl = "https://www.python.org/ftp/python/$pyVersion/$installerSelection"
-
-        # Download the installer
-        $installerPath = "$HOME/Downloads/$installerSelection"
-        Invoke-WebRequest -Uri $pythonInstallerUrl -OutFile $installerPath
-        Write-Host "Downloaded $installerSelection and ready for installation."
-        # Execute the installer command with sudo
-        Invoke-BashCommand "sudo installer -pkg $installerPath -target /"
-    } catch {
-        Handle-Error -ErrorRecord $_
-        try {
-            Install-PythonUnixSource -pythonVersion $pythonVersion
-        } catch {
-            Handle-Error -ErrorRecord $_
-            Write-Host "Attempting to install via brew."
-            brew install python@$pyVersion python-tk@$pyVersion
-            return $true
-        }
-        return $false
-    }
+function Mask-Value {
+    param([string]$Value)
+    if ($ShowEnvValues) { return $Value }
+    if ($Value.Length -le 4) { return "***" }
+    return ("{0}***" -f $Value.Substring(0,4))
 }
 
-function Install-PythonUnixSource {
-    Param (
-        [string]$pythonVersion  # MAJOR.MINOR!!!
-    )
-    $pyVersion = switch ($pythonVersion) {
-        "3.7" { "3.7.17" }
-        "3.8" { "3.8.18" }
-        "3.9" { "3.9.18" }
-        "3.10" { "3.10.13" }
-        "3.11" { "3.11.8" }
-        "3.12" { "3.12.2" }
-        "3.13" { "3.13.0a5" }
-        default { throw "Unsupported Python version: $pythonVersion" }
-    }
-
-    $pythonSrcUrl = "https://www.python.org/ftp/python/$pyVersion/Python-$pyVersion.tgz"
-    Write-Output "Downloading python $pyVersion from $pythonSrcUrl..."
-    Invoke-WebRequest -Uri $pythonSrcUrl -OutFile Python-$pyVersion.tgz
-    Invoke-BashCommand -Command "tar -xvf Python-$pyVersion.tgz"
-    $current_working_dir = (Get-Location).Path
-    Set-Location -LiteralPath "Python-$pyVersion" -ErrorAction Stop
-
-    # Conditionally apply --disable-new-dtags based on platform
-    $configureOptions = "--enable-optimizations --with-ensurepip=install --enable-shared"
-    if ((Get-OS) -eq "Linux") {
-        $configureOptions += ' LDFLAGS="-Wl,--disable-new-dtags"'
-    }
-
-    Invoke-BashCommand -Command "sudo ./configure $configureOptions"
-
-    # Check platform and set command for parallel make
-    $makeParallel = if ((Get-OS) -eq "Linux") { "$(Invoke-BashCommand -Command 'nproc')" } elseif ((Get-OS) -eq "Mac") { "$(Invoke-BashCommand -Command 'sysctl -n hw.ncpu')" } else { "1" }
-
-    Invoke-BashCommand -Command "sudo make -j $makeParallel"
-    # Do NOT use `make install`. `make altinstall` will install it system-wide, but not as the default system python. (e.g. /usr/local/bin/python3.8)
-    # Using `make install` may break system packages, so we use `make altinstall` here.
-    Invoke-BashCommand -Command "sudo make altinstall"
-    Set-Location -LiteralPath $current_working_dir
-    $global:pythonInstallPath = "/usr/local/bin/python$pythonVersion"
+function New-TempFileIn {
+    param([Parameter(Mandatory = $true)][string]$Directory)
+    if (-not (Test-Path $Directory)) { New-Item -ItemType Directory -Path $Directory | Out-Null }
+    $name = [System.IO.Path]::GetRandomFileName()
+    return Join-Path -Path $Directory -ChildPath $name
 }
+#endregion Utility helpers
 
-function RefreshEnvVar {
-    Param (
-        [string]$varName
-    )
-    if ((Get-OS) -eq "Windows") {
-        $userPath = Get-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Environment' -Name $varName | Select-Object -ExpandProperty $varName
-        $systemPath = Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name $varName | Select-Object -ExpandProperty $varName
-    } else {  # FIXME(th3w1zard1): [System.Environment]::GetEnvironmentVariable only takes the session's env variable, we need to source .bashrc or whatever for linux/mac to truly update.
-        $userPath = [System.Environment]::GetEnvironmentVariable($varName, [System.EnvironmentVariableTarget]::User)
-        $systemPath = [System.Environment]::GetEnvironmentVariable($varName, [System.EnvironmentVariableTarget]::Machine)
+#region OS detection
+function Get-OSInfo {
+    $isWin = $IsWindows
+    $isMac = $IsMacOS
+    $isLin = $IsLinux
+
+    $distroId = $null
+    $distroVersion = $null
+
+    if ($isLin -and (Test-Path "/etc/os-release")) {
+        $kv = @{}
+        Get-Content "/etc/os-release" | ForEach-Object {
+            if ($_ -match '^\s*([^=]+)=(.*)$') {
+                $k = $matches[1].Trim()
+                $v = $matches[2].Trim('"')
+                $kv[$k] = $v
+            }
+        }
+        $distroId = $kv["ID"]
+        $distroVersion = $kv["VERSION_ID"]
     }
-    Set-Item -Path $envVarName -Value ($userPath + ";" + $systemPath)
+    return [pscustomobject]@{
+        IsWindows = $isWin
+        IsMacOS   = $isMac
+        IsLinux   = $isLin
+        DistroId  = $distroId
+        DistroVer = $distroVersion
+        Name      = if ($isWin) { "Windows" } elseif ($isMac) { "Mac" } elseif ($isLin) { "Linux" } else { "Unknown" }
+    }
 }
+$OSInfo = Get-OSInfo
+#endregion OS detection
 
-function Install-PythonWindows {
-    Param (
-        [string]$pythonVersion  # MAJOR.MINOR!!!
+#region Download + checksum
+function Invoke-Download {
+    param(
+        [Parameter(Mandatory = $true)][string]$Uri,
+        [Parameter(Mandatory = $true)][string]$Destination,
+        [string]$Sha256,
+        [string]$Description = "download",
+        [int]$Retries = 3
     )
-    $pyVersion = switch ($pythonVersion) {
-        "3.7" { "3.7.9" }
-        "3.8" { "3.8.10" }
-        "3.9" { "3.9.13" }
-        "3.10" { "3.10.11" }
-        "3.11" { "3.11.8" }
-        "3.12" { "3.12.2" }
-        default { throw "Unsupported Python version: $pythonVersion" }
-    }
-    # Check if running on GitHub Actions
-    if ($env:GITHUB_ACTIONS -eq "true") {
-        Write-Host "Running on GitHub Actions."
-        $runnerArch = $env:MATRIX_ARCH
-        Write-Host "Runner architecture is $runnerArch."
-        $installerName = switch ($runnerArch) {
-            "x86" { "python-$pyVersion.exe" }
-            "x64" { "python-$pyVersion-amd64.exe" }
-            default { throw "Unknown runner architecture: $runnerArch" }
-        }
-    }
-    else {
-        Write-Host "Not running on GitHub Actions."
-        $installerName = if ([System.Environment]::Is64BitOperatingSystem) {
-            "python-$pyVersion-amd64.exe"
-        } else {
-            "python-$pyVersion.exe"
-        }
-    }
-
-    try {
-        # Download and install Python
-        $pythonInstallerUrl = "https://www.python.org/ftp/python/$pyVersion/$installerName"
-        $installerPath = "$env:TEMP/$installerName"
-        $curPath = Get-Location
-        $logPath = "$curPath/PythonInstall.log"
-        Write-Host "Downloading '$installerName' to '$env:TEMP', please wait..."
-        Invoke-WebRequest -Uri $pythonInstallerUrl -OutFile $installerPath
-        Write-Host "Download completed."
-        Write-Host "Installing '$installerName', please wait..."
-        Start-Process -FilePath $installerPath -Args "/quiet /log $logPath InstallAllUsers=0 PrependPath=1 InstallLauncherAllUsers=0" -Wait -NoNewWindow
-        Write-Host "Python install process has finished."
-        Get-Content -Path $logPath | ForEach-Object { Write-Host $_ }
-    
-        Write-Host "Refresh environment variables to detect new Python installation"
-        $systemPath = Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH | Select-Object -ExpandProperty PATH
-        $userPath = Get-ItemProperty -Path 'Registry::HKEY_CURRENT_USER\Environment' -Name PATH | Select-Object -ExpandProperty PATH
-        $env:Path = $userPath + ";" + $systemPath
-        Write-Debug "New PATH env: $env:PATH"
+    if ($dryRun) {
+        Write-Log -Level "Info" -Message "[dry-run] Would download $Description from $Uri to $Destination"
         return $true
-    } catch {
-        Write-Error "$($_.InvocationInfo.PositionMessage)`n$($_.Exception.Message)"
-        return $false
     }
-}
-
-function Get-Python-Version {
-    Param (
-        [string]$pythonPath
-    )
-
-    $parseVersionString = {
-        param([string]$versionString)
-
-        if ([string]::IsNullOrWhiteSpace($versionString)) {
-            return $null
-        }
-
-        $trimmed = $versionString.Trim()
-        $match = [System.Text.RegularExpressions.Regex]::Match($trimmed, '(\d+)(\.\d+){1,3}')
-        if (-not $match.Success) {
-            return $null
-        }
-
-        $numericVersion = $match.Value
-
-        # Ensure the version string contains at least Major.Minor.Build for [Version] parsing
-        $segments = $numericVersion.Split('.')
-        while ($segments.Count -lt 3) {
-            $segments += '0'
-        }
-
-        return [Version]::Parse(($segments -join '.'))
-    }
-
-    try {
-        if (Test-Path $pythonPath -ErrorAction SilentlyContinue) {
-            $pythonVersionOutput = & $pythonPath --version 2>&1 | Out-String
-            $pythonVersion = & $parseVersionString $pythonVersionOutput
-
-            if ($null -eq $pythonVersion) {
-                $platformVersionOutput = & $pythonPath -c "import platform; print(platform.python_version())" 2>&1 | Out-String
-                $pythonVersion = & $parseVersionString $platformVersionOutput
+    for ($i = 1; $i -le $Retries; $i++) {
+        try {
+            Write-Log -Level "Info" -Message "Downloading $Description (attempt $i/$Retries)..."
+            Invoke-WebRequest -Uri $Uri -OutFile $Destination -UseBasicParsing
+            if ($Sha256) {
+                $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $Destination).Hash.ToLowerInvariant()
+                if ($hash -ne $Sha256.ToLowerInvariant()) {
+                    Throw-Logged "SHA256 mismatch for $Description. Expected $Sha256, got $hash"
+                }
             }
-
-            if ($null -eq $pythonVersion) {
-                $sysVersionOutput = & $pythonPath -c "import sys; print('.'.join(str(x) for x in sys.version_info[:3]))" 2>&1 | Out-String
-                $pythonVersion = & $parseVersionString $sysVersionOutput
-            }
-
-            if ($null -ne $pythonVersion) {
-                return $pythonVersion
-            }
-        }
-    } catch {
-        Write-Debug "Failed to parse python version for path '$pythonPath': $($_.Exception.Message)"
-    }
-
-    return [Version]"0.0.0"
-}
-
-$minVersion = [Version]"3.7.0"
-$maxVersion = [Version]"3.13.0"
-$recommendedVersion = [Version]"3.8.10"
-$lessThanVersion = [Version]"3.9"
-
-function Initialize-Python {
-    Param (
-        [string]$pythonPath
-    )
-
-    # Check Python version
-    $pythonVersion = Get-Python-Version $pythonPath
-
-    if ($pythonVersion -ge $minVersion -and $pythonVersion -le $lessThanVersion) {
-        Write-Host "Python $pythonVersion install detected."
-    } elseif ($pythonVersion -ge $minVersion) {
-        Write-Warning "The Python version on PATH ($pythonVersion) is not fully tested, please consider using python 3.8. Continuing anyway..."
-    } else {
-        Write-Error "Your installed Python version '$pythonVersion' is not supported. Please install a python version between '$minVersion' and '$maxVersion'"
-        Write-Host "Press any key to exit..."
-        if (-not $noprompt) {
-            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        }
-        exit
-    }
-
-    return [PSCustomObject]@{
-        Version = $pythonVersion
-        Path = $pythonPath
-    }
-}
-
-function Get-PythonPaths {
-    Param (
-        [string]$version
-    )
-
-    $windowsVersion = $version -replace '\.', ''  # "3.8" becomes "38"
-
-    $windowsPaths = @(
-        "C:\Program Files\Python$windowsVersion\python.exe",
-        "$env:ProgramFiles\Python$windowsVersion\python.exe",
-        "C:\Program Files (x86)\Python$windowsVersion\python.exe",
-        "$env:ProgramFiles(x86)\Python$windowsVersion\python.exe"
-        "C:\Program Files\Python$windowsVersion-32\python.exe",
-        "C:\Program Files (x86)\Python$windowsVersion-32\python.exe",
-        "$env:USERPROFILE\AppData\Local\Programs\Python\Python$windowsVersion\python.exe",
-        "$env:USERPROFILE\AppData\Local\Programs\Python\Python$windowsVersion-32\python.exe",
-        "$env:LOCALAPPDATA\Programs\Python\Python$windowsVersion-64\python.exe",
-        "$env:LOCALAPPDATA\Programs\Python\Python$windowsVersion\python.exe",
-        "$env:LOCALAPPDATA\Programs\Python\Python$windowsVersion-32\python.exe"
-    )
-
-    $linuxAndMacPaths = @(
-        "/usr/bin/python$version",
-        "/usr/local/bin/python$version",
-        "/bin/python$version",
-        "/sbin/python$version",
-        "~/.local/bin/python$version",
-        "~/.pyenv/versions/$version/bin/python3",
-        "~/.pyenv/versions/$version/bin/python",
-        "/usr/local/Cellar/python/$version/bin/python3",  # Homebrew on macOS
-        "/opt/local/bin/python$version",                  # MacPorts on macOS
-        "/opt/python$version"                             # Custom installations
-    )
-
-    return @{ Windows = $windowsPaths; Linux = $linuxAndMacPaths; Darwin = $linuxAndMacPaths }
-}
-
-function Get-Path-From-Command {
-    Param(
-        [string]$command
-    )
-    $pythonCommand = Get-Command -Name $command -ErrorAction SilentlyContinue
-
-    if ($null -ne $pythonCommand) {
-        $pythonPath = $pythonCommand.Source
-        Write-Host "Command: '$command' Path to Python executable: $pythonPath"
-        return $pythonPath
-    } else {
-        return ""
-    }
-}
-
-function Test-PythonCommand {
-    param (
-        [string]$CommandName
-    )
-    $pythonCommand = Get-Command -Name $CommandName -ErrorAction SilentlyContinue
-    if ($null -ne $pythonCommand) {
-        $testPath = Get-Path-From-Command $CommandName
-        $global:pythonVersion = Get-Python-Version $testPath
-        if ($global:pythonVersion -ge $minVersion -and $global:pythonVersion -lt $maxVersion) {
-            Write-Host "Found python command with version $global:pythonVersion at path $testPath"
-            $global:pythonInstallPath = $testPath
             return $true
-        } else {
-            Write-Host "python '$testPath' version '$global:pythonVersion' not supported"
-            $global:pythonInstallPath = ""
-            $global:pythonVersion = ""
+        } catch {
+            if ($i -eq $Retries) { throw }
+            Start-Sleep -Seconds 2
         }
     }
     return $false
+}
+#endregion Download + checksum
+
+#region Python version parsing
+function Parse-PythonVersionString {
+    param([string]$VersionString)
+    if ([string]::IsNullOrWhiteSpace($VersionString)) { return $null }
+    $match = [regex]::Match($VersionString, '(\d+)(\.\d+){1,3}')
+    if (-not $match.Success) { return $null }
+    $segments = $match.Value.Split('.')
+    while ($segments.Count -lt 3) { $segments += '0' }
+    return [version]($segments -join '.')
+}
+#endregion Python version parsing
+
+#region Python discovery
+function Get-CandidatePythonCommands {
+    param([string]$forced)
+    if ($forced) { return @("python$forced", "python$($forced.Replace('.',''))") }
+    $defaults = @(
+        "python3.13","python3.12","python3.11","python3.10","python3.9","python3.8","python3","python"
+    )
+    return $defaults
+}
+
+function Get-CandidatePythonPaths {
+    param([string]$majorMinor,[string]$osName)
+    $winVer = $majorMinor -replace '\.',''
+    $pathsWin = @(
+        "C:\Program Files\Python$winVer\python.exe",
+        "C:\Program Files (x86)\Python$winVer\python.exe",
+        "$env:USERPROFILE\AppData\Local\Programs\Python\Python$winVer\python.exe",
+        "$env:LOCALAPPDATA\Programs\Python\Python$winVer\python.exe"
+    )
+    $pathsNix = @(
+        "/usr/local/bin/python$majorMinor",
+        "/usr/bin/python$majorMinor",
+        "/bin/python$majorMinor",
+        "/usr/local/bin/python3",
+        "/usr/bin/python3",
+        "/bin/python3"
+    )
+    switch ($osName) {
+        "Windows" { return $pathsWin }
+        default   { return $pathsNix }
+    }
 }
 
 function Find-Python {
-    Param (
-        [bool]$installIfNotFound
+    param(
+        [string]$TargetMajorMinor,
+        [switch]$InstallIfMissing
     )
-    if ($global:pythonInstallPath) {
-        $testVersion = Get-Python-Version -pythonPath $global:pythonInstallPath
-        if ($testVersion -ne [Version]"0.0.0") {
-            $global:pythonVersion = Get-Python-Version $global:pythonInstallPath
-            if ($global:pythonVersion -ge $minVersion -and $global:pythonVersion -lt $maxVersion) {
-                Write-Host "Found python command with version $global:pythonVersion at path $global:pythonInstallPath"
-                return
-            }
-        }
-    }
+    $preferred = $TargetMajorMinor
+    $allTargets = if ($TargetMajorMinor) { @($TargetMajorMinor) } else { $VersionPins.PythonAltMajors }
+    $found = @()
 
-    # Check for Python 3 command and version
-    if ($global:force_python_version) {
-        $fallbackVersion = $global:force_python_version
-        Write-Host "Fallback version: $fallbackVersion"
-        $pythonVersions = @("python$fallbackVersion")
-    } else {
-        $fallbackVersion = "{0}.{1}" -f $recommendedVersion.Major, $recommendedVersion.Minor
-        $pythonVersions = @('python3.8', 'python3', 'python3.9', 'python3.10', 'python3.11', 'python3.12', 'python3.13', 'python3.14', 'python')
-    }
-    foreach ($pyCommandPathCheck in $pythonVersions) {
-        if (Test-PythonCommand -CommandName $pyCommandPathCheck) {
-            break
-        }
-    }
-
-    if ( -not $global:pythonInstallPath -or ($global:pythonVersion -and $global:pythonVersion -ge $recommendedVersion) ) {
-        Write-Host "Check 1 pass"
-        foreach ($version in $pythonVersions) {
-            $version = $version -replace "python", ""
-            $paths = (Get-PythonPaths $version)[(Get-OS)]
-            foreach ($path in $paths) {
-                try {
-                    # Resolve potential environment variables in the path
-                    $resolvedPath = [Environment]::ExpandEnvironmentVariables($path)
-                    Write-Host "Check 2: $resolvedPath"
-                    if (Test-Path $resolvedPath -ErrorAction SilentlyContinue) {
-                        Write-Host "Check 3: $resolvedPath exists!"
-                        $thisVersion = Get-Python-Version $resolvedPath
-                        if ($thisVersion -ge $minVersion -and $thisVersion -le $maxVersion) {
-                            Write-Host "Check 4: $resolvedPath has $thisVersion which matches our version range."
-                            # Valid path or better recommended path found.
-                            if (-not $global:pythonInstallPath -or $thisVersion -le $recommendedVersion) {
-                                Write-Host "Found better python install path with version $thisVersion at path '$resolvedPath'"
-                                $global:pythonInstallPath = $resolvedPath
-                                $global:pythonVersion = $thisVersion
-                            }
-
-                            # HACK: to prevent ubuntu/debian reinstalls
-                            if ($resolvedPath.StartsWith("/usr/local/bin/python") -and ((Get-Linux-Distro-Name) -eq "debian" -or (Get-Linux-Distro-Name) -eq "ubuntu")) {
-                                Write-Host "altinstall detected with version $thisVersion at path '$resolvedPath', not running custom install hook."
-                                $global:pythonInstallPath = $resolvedPath
-                                $global:pythonVersion = $thisVersion
-                                return
-                            }
-                        }
-                    }
-                } catch {
-                    Handle-Error -ErrorRecord $_
+    # Command search
+    foreach ($majMin in $allTargets) {
+        foreach ($cmd in Get-CandidatePythonCommands -forced $majMin) {
+            if (Test-Command $cmd) {
+                $path = (Get-Command $cmd).Source
+                $ver = Parse-PythonVersionString (& $path --version 2>&1 | Out-String)
+                if ($ver) {
+                    $found += [pscustomobject]@{ Path=$path; Version=$ver; Source="command:$cmd" }
                 }
             }
         }
     }
-    
-    # Even if python is installed, debian-based distros need python3-venv packages and a few others.
-    # Example: while a venv can be partially created, the 
-    # partial won't create stuff like the activation scripts (so they need sudo apt-get install python3-venv)
-    # they'll also be missing things like pip. This step fixes that.
-    if ($installIfNotFound -and ((Get-Linux-Distro-Name) -eq "debian" -or (Get-Linux-Distro-Name) -eq "ubuntu")) {
-        try {
-            $versionTypeObj = New-Object -TypeName "System.Version" $global:pythonVersion
-        } catch {
-            $versionTypeObj = New-Object -TypeName "System.Version" $fallbackVersion
+
+    # Path search
+    foreach ($majMin in $allTargets) {
+        foreach ($p in Get-CandidatePythonPaths -majorMinor $majMin -osName $OSInfo.Name) {
+            $resolved = [Environment]::ExpandEnvironmentVariables($p)
+            if (Test-Path $resolved) {
+                $ver = Parse-PythonVersionString (& $resolved --version 2>&1 | Out-String)
+                if ($ver) {
+                    $found += [pscustomobject]@{ Path=$resolved; Version=$ver; Source="path" }
+                }
+            }
         }
-        $shortVersion = "{0}.{1}" -f $versionTypeObj.Major, $versionTypeObj.Minor
-        Install-Python-Linux -pythonVersion $shortVersion
     }
 
-    if ( -not $global:pythonInstallPath ) {
-        if ($installIfNotFound) {
-            if (-not $noprompt) {
-                $displayVersion = $global:force_python_version
-                if (-not $displayVersion) {
-                    $displayVersion = $recommendedVersion
-                }
-                Write-Host "A supported Python version was not detected on your system. Install Python version $displayVersion now automatically?"
-                $userInput = Read-Host "(Y/N)"
-                if ( $userInput -ne "Y" -and $userInput -ne "y" ) {
-                    Write-Host "A python install between versions $minVersion and $maxVersion is required for PyKotor."
-                    Write-Host "Press any key to exit..."
-                    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-                    exit
-                }
-            }
-            try {
-                if ( (Get-OS) -eq "Windows" ) {
-                    Install-PythonWindows -pythonVersion $fallbackVersion
-                } elseif ( (Get-OS) -eq "Linux" ) {  # use $global:force_python_version, don't use $fallbackVersion for linux.
-                    Install-Python-Linux -pythonVersion $global:force_python_version
-                } elseif ( (Get-OS) -eq "Mac" ) {
-                    Install-Python-Mac -pythonVersion $fallbackVersion
-                }
-            } catch {
-                Handle-Error -ErrorRecord $_
-                Write-Host "The Python install either failed or has been cancelled."
-                Write-Host "A python install between versions $minVersion and $maxVersion is required for PyKotor."
-                Write-Host "Press any key to exit..."
-                $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-                exit
-            }
-            Write-Host "Find python again now that it's been installed."
-            Find-Python -installIfNotFound $false
+    # Choose best
+    $best = $found |
+        Sort-Object @{Expression = { $_.Version.Major }; Descending=$false},
+                    @{Expression = { $_.Version.Minor }; Descending=$false} |
+        Select-Object -First 1
+
+    if ($best) {
+        Write-Log -Level "Info" -Message ("Found Python {0} at {1} ({2})" -f $best.Version, $best.Path, $best.Source)
+        return $best
+    }
+
+    if (-not $InstallIfMissing) { return $null }
+    return $null
+}
+#endregion Python discovery
+
+#region Python install helpers
+function Ensure-SudoAvailable {
+    if ($OSInfo.IsLinux -or $OSInfo.IsMacOS) {
+        if (-not (Test-Command "sudo")) {
+            Throw-Logged "sudo is required to install system packages."
         }
     }
 }
 
-# (This check is disabled - this should already happen when activating a new venv)
-# Check if the 'deactivate' function already exists
-# if (-not (Get-Command -Name 'deactivate' -CommandType Function -ErrorAction SilentlyContinue)) {
-
-<#
-.SYNOPSIS
-Fallback deactivate function
-
-.DESCRIPTION
-Sometimes the deactivate function isn't found for whatever reason. This definition ensures it can always be used.
-
-.Parameter NonDestructive
-If present, do not remove this function from the global namespace for the session.
-
-.NOTES
-This function will ALWAYS be overridden by the activation script.
-#>
-function global:deactivate ([switch]$NonDestructive) {
-    # Revert to original values
-
-    # The prior prompt:
-    if (Test-Path -Path Function:_OLD_VIRTUAL_PROMPT) {
-        Copy-Item -Path Function:_OLD_VIRTUAL_PROMPT -Destination Function:prompt
-        Remove-Item -Path Function:_OLD_VIRTUAL_PROMPT
-    }
-
-    # The prior PYTHONHOME:
-    if (Test-Path -Path Env:_OLD_VIRTUAL_PYTHONHOME) {
-        Copy-Item -Path Env:_OLD_VIRTUAL_PYTHONHOME -Destination Env:PYTHONHOME
-        Remove-Item -Path Env:_OLD_VIRTUAL_PYTHONHOME
-    }
-
-    # The prior PATH:
-    if (Test-Path -Path Env:_OLD_VIRTUAL_PATH) {
-        Copy-Item -Path Env:_OLD_VIRTUAL_PATH -Destination Env:PATH
-        Remove-Item -Path Env:_OLD_VIRTUAL_PATH
-    }
-
-    # Just remove the VIRTUAL_ENV altogether:
-    if (Test-Path -Path Env:VIRTUAL_ENV) {
-        Remove-Item -Path env:VIRTUAL_ENV
-    }
-
-    # Just remove VIRTUAL_ENV_PROMPT altogether.
-    if (Test-Path -Path Env:VIRTUAL_ENV_PROMPT) {
-        Remove-Item -Path env:VIRTUAL_ENV_PROMPT
-    }
-
-    # Just remove the _PYTHON_VENV_PROMPT_PREFIX altogether:
-    if (Get-Variable -Name "_PYTHON_VENV_PROMPT_PREFIX" -ErrorAction SilentlyContinue) {
-        Remove-Variable -Name _PYTHON_VENV_PROMPT_PREFIX -Scope Global -Force
-    }
-
-    # Leave deactivate function in the global namespace if requested:
-    if (-not $NonDestructive) {
-        Remove-Item -Path function:deactivate
-    }
+function Install-PythonWindows {
+    param([string]$MajorMinor,[switch]$AcceptLicense)
+    $full = $VersionPins.PythonSources[$MajorMinor]
+    if (-not $full) { Throw-Logged "Unsupported Python version $MajorMinor for Windows installer." }
+    $installer = if ([Environment]::Is64BitOperatingSystem) { "python-$full-amd64.exe" } else { "python-$full.exe" }
+    $uri = "https://www.python.org/ftp/python/$full/$installer"
+    $tmp = New-TempFileIn -Directory $env:TEMP
+    $dest = "$tmp.exe"
+    Write-Log -Level "Info" -Message "Downloading Python $full for Windows..."
+    Invoke-Download -Uri $uri -Destination $dest -Description "python-installer"
+    if ($dryRun) { return $true }
+    $args = "/quiet InstallAllUsers=0 PrependPath=1 Include_test=0"
+    if ($AcceptLicense -or $forceInstall -or $noprompt) { $args += " Include_launcher=0" }
+    Write-Log -Level "Info" -Message "Running installer..."
+    $proc = Start-Process -FilePath $dest -ArgumentList $args -PassThru -Wait
+    if ($proc.ExitCode -ne 0) { Throw-Logged "Python installer failed with exit code $($proc.ExitCode)" }
+    Remove-Item -LiteralPath $dest -ErrorAction SilentlyContinue
+    return $true
 }
 
-$venvPath = $repoRootPath + $pathSep + $venv_name
-$findVenvExecutable = $true
-$installPipToVenvManually = $false
-if (Get-ChildItem Env:VIRTUAL_ENV -ErrorAction SilentlyContinue) {  # Check if a venv is already activated
-    $venvPath = $env:VIRTUAL_ENV
-    Write-Host "A currently activated virtual environment found: $venvPath"
-    deactivate
-} elseif ($venvPath -ne ($repoRootPath + $pathSep) -and (Test-Path $venvPath -ErrorAction SilentlyContinue)) {
-    Write-Host "Found non-activated existing python virtual environment at '$venvPath'"
-} else {
-    Find-Python -installIfNotFound $true
-    if ( -not $global:pythonInstallPath ) {
-        if ( -not $noprompt ) {
-            Write-Warning "Could not find path to python. Try again?"
-            $userInput = Read-Host "(Y/N)"
-            if ( $userInput -ne "Y" -and $userInput -ne "y" ) {
-                $userInput = Read-Host "Enter the path to python executable:"
-                if ( Test-Path -LiteralPath $userInput -ErrorAction SilentlyContinue ) {
-                    $global:pythonInstallPath = $userInput
-                } else {
-                    Write-Error "Python executable not found at '$userInput'"
-                    Write-Host "Press any key to exit..."
-                    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-                    exit
-                }
-            } else {
-                Find-Python -installIfNotFound $true
-            }
-        } else {
-            Write-Error "Could not find path to python."
-            exit
-        }
+function Install-PythonMac {
+    param([string]$MajorMinor,[switch]$AcceptLicense)
+    $full = $VersionPins.PythonSources[$MajorMinor]
+    if (-not $full) { Throw-Logged "Unsupported Python version $MajorMinor for macOS installer." }
+    $pkg = "python-$full-macos11.pkg"
+    $uri = "https://www.python.org/ftp/python/$full/$pkg"
+    $dest = New-TempFileIn -Directory "/tmp"
+    $pkgPath = "$dest.pkg"
+    Write-Log -Level "Info" -Message "Downloading Python $full for macOS..."
+    Invoke-Download -Uri $uri -Destination $pkgPath -Description "python-pkg"
+    if ($dryRun) { return $true }
+    if (-not $AcceptLicense -and -not $forceInstall -and -not $noprompt) {
+        if (-not (Confirm-Action -Prompt "Proceed to install Python $full (pkg)?" -DefaultYes)) { Throw-Logged "User declined installation." }
     }
-    Write-Host "Attempting to create a python virtual environment. This might take a while..."
-    $pythonVenvCreation = & $global:pythonInstallPath -m venv $venvPath 2>&1
-    if ($pythonVenvCreation -like "*Error*") {
-        Write-Error $pythonVenvCreation
-        Write-Error "Failed to create virtual environment. Ensure Python is installed correctly."
-        Write-Warning "Attempt to use main python install at $global:pythonInstallPath instead of a venv? (not recommended)"
-        if (-not $noprompt) {
-            $userInput = Read-Host "(Y/N)"
-            if ( $userInput -ne "Y" -and $userInput -ne "y" ) {
-                Write-Host "Press any key to exit..."
-                $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-                exit
-            }
-        }
-        $pythonExePath = $global:pythonInstallPath
-        $findVenvExecutable = $false
-    } else {
-        #Write-Host $pythonVenvCreation
-        Write-Host "Virtual environment created."
-        if ((Get-OS) -ne "Windows") {
-
-            $activateScriptBash = Join-Path -Path $venvPath -ChildPath "bin/activate"
-            $activateScriptPs1 = Join-Path -Path $venvPath -ChildPath "bin/Activate.ps1"
-    
-            # Check if activate scripts are created
-            # The below code fixes a bug on a specific linux distro. I cannot remember which distro, I wish I documented it, and the issue thread this was inspired by.
-            # Could be ubuntu without `sudo apt-get install python3-pip python3-venv`, but I don't believe it was that specific case.
-            if (-not (Test-Path $activateScriptPs1) -and -not (Test-Path $activateScriptBash)) {
-                Write-Warning "Neither activate nor Activate.ps1 scripts were found. Deleting the virtual environment and attempting to recreate it with --without-pip..."
-                Remove-Item -LiteralPath $venvPath -Recurse -Force
-                & $global:pythonInstallPath -m venv --without-pip $venvPath 2>&1
-                $installPipToVenvManually = $true
-    
-                Write-Warning "Virtual environment recreated without pip. Will install pip in a later step."
-            } else {
-                Write-Host "Virtual environment created and activate scripts found."
-            }
-        }
-    }
+    Ensure-SudoAvailable
+    $proc = Start-Process -FilePath "sudo" -ArgumentList @("installer","-pkg",$pkgPath,"-target","/") -PassThru -Wait
+    if ($proc.ExitCode -ne 0) { Throw-Logged "Installer failed with exit code $($proc.ExitCode)" }
+    Remove-Item -LiteralPath $pkgPath -ErrorAction SilentlyContinue
+    return $true
 }
 
-if ( $findVenvExecutable -eq $true) {
-    # Define potential paths for Python executable within the virtual environment
-    $pythonExePaths = switch ((Get-OS)) {
-        'Windows' { @("$venvPath\Scripts\python.exe") }
-        'Linux' { @("$venvPath/bin/python3", "$venvPath/bin/python") }
-        'Mac' { @("$venvPath/bin/python3", "$venvPath/bin/python") }
+function Install-PythonLinuxPackage {
+    param([string]$MajorMinor)
+    $distro = $OSInfo.DistroId
+    Ensure-SudoAvailable
+    switch ($distro) {
+        "ubuntu" { $cmd = "sudo apt-get update && sudo apt-get install -y python$MajorMinor python$MajorMinor-venv python$MajorMinor-dev tk tcl" }
+        "debian" { $cmd = "sudo apt-get update && sudo apt-get install -y python$MajorMinor python$MajorMinor-venv python$MajorMinor-dev tk tcl" }
+        "alpine" { $cmd = "sudo apk add --no-cache python$MajorMinor python$MajorMinor-tkinter tk tcl" }
+        "fedora" { $cmd = "sudo dnf install -y python$MajorMinor python$MajorMinor-devel tk tcl" }
+        "almalinux" { $cmd = "sudo dnf install -y python$MajorMinor python$MajorMinor-devel tk tcl" }
+        "centos" { $cmd = "sudo yum install -y python$MajorMinor python$MajorMinor-devel tk tcl" }
+        "arch" { $cmd = "sudo pacman -Sy --noconfirm python tk tcl" }
+        default { Throw-Logged "Unsupported or unknown Linux distro '$distro' for package install." }
     }
-
-    # Find the Python executable
-    $pythonExePath = $pythonExePaths | Where-Object { Test-Path $_ } | Select-Object -First 1
-    if ($null -ne $pythonExePath) {
-        Write-Host "Python venv executable found at '$pythonExePath'"
-    } else {
-        Write-Error "No python executables found in virtual environment."
-        Write-Error "Not found: [$pythonExePaths]"
-        Write-Host "Press any key to exit..."
-        if (-not $noprompt) {
-            $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-        }
-        exit
-    }
+    Write-Log -Level "Info" -Message "Installing Python $MajorMinor via package manager..."
+    if ($dryRun) { Write-Log -Level "Info" -Message "[dry-run] $cmd"; return $true }
+    $proc = if ($IsWindows) { Throw-Logged "Package install not valid on Windows." } else { bash -lc $cmd }
+    return $true
 }
 
-function Activate-Script {
-    param (
-        [string]$scriptPath
-    )
+function Build-PythonFromSource {
+    param([string]$MajorMinor)
+    $full = $VersionPins.PythonSources[$MajorMinor]
+    if (-not $full) { Throw-Logged "Unsupported Python version $MajorMinor for source build." }
+    Ensure-SudoAvailable
+    $uri = "https://www.python.org/ftp/python/$full/Python-$full.tgz"
+    $tmpDir = Join-Path ([IO.Path]::GetTempPath()) ("pybuild-" + [Guid]::NewGuid().ToString("N"))
+    $tarPath = Join-Path $tmpDir "Python-$full.tgz"
+    if (-not $dryRun) { New-Item -ItemType Directory -Path $tmpDir | Out-Null }
+    Write-Log -Level "Info" -Message "Downloading Python $full source..."
+    Invoke-Download -Uri $uri -Destination $tarPath -Description "python-source"
+    if ($dryRun) { Write-Log -Level "Info" -Message "[dry-run] Would unpack and build in $tmpDir"; return $true }
+
+    Push-Location $tmpDir
     try {
-        & $scriptPath
-        return $true
-    } catch {
-        Handle-Error -ErrorRecord $_
-        return $false
+        tar -xvf $tarPath | Out-Null
+        Set-Location "Python-$full"
+        $jobs = 1
+        try {
+            $jobs = if ($OSInfo.IsMacOS) { (sysctl -n hw.ncpu) } elseif ($OSInfo.IsLinux) { (nproc) } else { 1 }
+        } catch { $jobs = 1 }
+        Write-Log -Level "Info" -Message "Configuring..."
+        ./configure --enable-optimizations --with-ensurepip=install --enable-shared
+        Write-Log -Level "Info" -Message "Building with $jobs jobs..."
+        make -j $jobs
+        Write-Log -Level "Info" -Message "Installing with sudo make altinstall..."
+        sudo make altinstall
+    } finally {
+        Pop-Location
+        Remove-Item -LiteralPath $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
     }
+    return $true
 }
 
-function Activate-PythonVenv {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$venvPath,
-        [switch]$noRecurse
+function Install-Python {
+    param(
+        [string]$MajorMinor,
+        [switch]$AcceptLicense
     )
+    Write-Log -Level "Info" -Message "Attempting to install Python $MajorMinor..."
+    if ($OSInfo.IsWindows) {
+        Install-PythonWindows -MajorMinor $MajorMinor -AcceptLicense:$AcceptLicense
+    } elseif ($OSInfo.IsMacOS) {
+        try {
+            Install-PythonMac -MajorMinor $MajorMinor -AcceptLicense:$AcceptLicense
+        } catch {
+            Write-Log -Level "Warn" -Message "macOS pkg install failed, falling back to source build: $_"
+            Build-PythonFromSource -MajorMinor $MajorMinor
+        }
+    } elseif ($OSInfo.IsLinux) {
+        try {
+            Install-PythonLinuxPackage -MajorMinor $MajorMinor
+        } catch {
+            Write-Log -Level "Warn" -Message "Package install failed, falling back to source build: $_"
+            Build-PythonFromSource -MajorMinor $MajorMinor
+        }
+    } else {
+        Throw-Logged "Unsupported OS."
+    }
+}
+#endregion Python install helpers
 
-    # Check if the venvPath exists
-    if (-not (Test-Path -LiteralPath $venvPath)) {
-        Write-Error "Virtual environment path '$venvPath' does not exist."
+#region Pip/Setuptools bootstrap
+function Ensure-Pip {
+    param(
+        [string]$PythonExe
+    )
+    $pip = & $PythonExe -m pip --version 2>$null
+    if ($pip) {
+        Write-Log -Level "Info" -Message "pip already present ($pip)"
         return
     }
-
-    Write-Host "Activating venv at '$venvPath'"
-    if ((Get-OS) -eq "Windows") {
-        $venvScriptBinPath = Join-Path -Path $venvPath -ChildPath "Scripts"
-    } else {
-        $venvScriptBinPath = Join-Path -Path $venvPath -ChildPath "bin"
-    }
-    try {
-        $activateScriptPathPwsh = Join-Path -Path $venvScriptBinPath -ChildPath "Activate.ps1"
-        $activateScriptPathBash = Join-Path -Path $venvScriptBinPath -ChildPath "activate"
-        if (Test-Path $activateScriptPathPwsh) {
-            if (-not (Activate-Script -scriptPath $activateScriptPathPwsh)) {
-                if (Test-Path $activateScriptPathBash) {
-                    Activate-Script -scriptPath $activateScriptPathBash
-                } else {
-                    throw "Bash script did not exist as a fallback."
-                }
-            }
-        } elseif (Test-Path $activateScriptPathBash) {
-            if (-not (Activate-Script -scriptPath $activateScriptPathBash)) {
-                if (Test-Path $activateScriptPathPwsh) {
-                    Activate-Script -scriptPath $activateScriptPathPwsh
-                } else {
-                    throw "PowerShell script did not exist as a fallback."
-                }
-            }
-        } else {
-            Write-Warning "venv activation script at '$activateScriptPath' did not exist, attempting to create activation scripts manually..."
-            $activateBashScriptContents | Out-File -FilePath $activateScriptPathBash
-            $activatePwshScriptContents | Out-File -FilePath $activateScriptPathPwsh
-            if (-not $noRecurse) {
-                Activate-PythonVenv -venvPath $venvPath -noRecurse
-            }
-        }
-    } catch {
-        Handle-Error -ErrorRecord $_
-        Write-Error $_.Exception.Message
-        Write-Error "venv activation script at '$activateScriptPath' failed."
-    }
+    Write-Log -Level "Info" -Message "Installing pip via ensurepip..."
+    if ($dryRun) { Write-Log -Level "Info" -Message "[dry-run] python -m ensurepip --upgrade"; return }
+    & $PythonExe -m ensurepip --upgrade
 }
 
-Activate-PythonVenv $venvPath
-
-if ($installPipToVenvManually) {
-    Write-Host "Installing pip to venv manually..."
-    $originalLocation = Get-Location
-    $tempPath = [System.IO.Path]::GetTempPath()
-    try {
-        # Download get-pip.py
-        $getPipScriptPath = Join-Path -Path $tempPath -ChildPath "get-pip.py"
-        Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile $getPipScriptPath
-
-        # Attempt to install pip
-        & $pythonExePath $getPipScriptPath
-        $pipPathUnix = Join-Path -Path $venvPath -ChildPath "bin/pip"
-        if (-not $? -or (-not (Test-Path $pipPathUnix -ErrorAction SilentlyContinue))) {
-            # Fallback to manual setuptools and pip installation
-            Write-Error "Failed to install pip with get-pip.py, attempting fallback method..."
-
-            Write-Host "Downloading/Installing setuptools-$latestSetuptoolsVersion"
-            Invoke-WebRequest -Uri $latestSetuptoolsUrl -OutFile "setuptools-$latestSetuptoolsVersion.tar.gz"
-            Invoke-BashCommand "tar -xzf `"setuptools-$latestSetuptoolsVersion.tar.gz`""
-            Set-Location -LiteralPath "setuptools-$latestSetuptoolsVersion"
-            & $pythonExePath setup.py install
-            Set-Location -LiteralPath $originalLocation
-
-            Write-Host "Downloading/Installing pip-$latestPipVersion"
-            Invoke-WebRequest -Uri $latestPipPackageUrl -OutFile "pip-$latestPipVersion.tar.gz"
-            Invoke-BashCommand -Command "tar -xzf `"pip-$latestPipVersion.tar.gz`""
-            Set-Location -LiteralPath "pip-$latestPipVersion"
-            & $pythonExePath setup.py install
-            Set-Location -LiteralPath $originalLocation
-
-            Activate-PythonVenv
-        } else {
-            Write-Host "pip installed successfully."
-        }
-    } finally {
-        Set-Location -LiteralPath $originalLocation
+function Upgrade-PipSetuptools {
+    param(
+        [string]$PythonExe
+    )
+    $pipVer = $VersionPins.PipVersion
+    $setVer = $VersionPins.SetuptoolsVersion
+    if ($dryRun) {
+        Write-Log -Level "Info" -Message "[dry-run] Would upgrade pip to $pipVer and setuptools to $setVer"
+        return
     }
+    Write-Log -Level "Info" -Message "Upgrading pip -> $pipVer, setuptools -> $setVer"
+    & $PythonExe -m pip install --upgrade ("pip==$pipVer") ("setuptools==$setVer")
+}
+#endregion Pip/Setuptools bootstrap
+
+#region Virtual environment
+function Ensure-Venv {
+    param(
+        [string]$PythonExe,
+        [string]$Path
+    )
+    if (Test-Path -LiteralPath $Path) {
+        Write-Log -Level "Info" -Message "Existing venv detected at $Path (idempotent reuse)."
+        return
+    }
+    if ($dryRun) { Write-Log -Level "Info" -Message "[dry-run] Would create venv at $Path"; return }
+    Write-Log -Level "Info" -Message "Creating virtual environment at $Path..."
+    & $PythonExe -m venv $Path
 }
 
-$pythonInfo = Initialize-Python $pythonExePath
-Write-Host "`nInitialized Python Version: $($pythonInfo.Version)    Path: $($pythonInfo.Path)"
-$pythonVersion = $pythonInfo.Version
-$pythonExePath = $pythonInfo.Path
+function Get-VenvPython {
+    param([string]$Path)
+    if ($OSInfo.IsWindows) { return (Join-Path $Path "Scripts\python.exe") }
+    else { return (Join-Path $Path "bin/python3") }
+}
 
-# Use Python to find the site-packages directory using sysconfig for compatibility with virtual environments
-$sitePackagesPath = & $pythonExePath -c "import sysconfig; print(sysconfig.get_paths()['purelib'])"
-Write-Host "`nSite-Packages Path: $sitePackagesPath"
+function Activate-Venv {
+    param([string]$Path)
+    $scriptPath = if ($OSInfo.IsWindows) { Join-Path $Path "Scripts\Activate.ps1" } else { Join-Path $Path "bin/activate" }
+    if (-not (Test-Path $scriptPath)) { Throw-Logged "Activation script not found at $scriptPath" }
+    Write-Log -Level "Info" -Message "Activating venv at $Path"
+    if (-not $dryRun) { . $scriptPath }
+}
+#endregion Virtual environment
 
-# Set environment variables from .env file
-$dotenv_path = "$repoRootPath$pathSep.env"
-Write-Host "-----------------`nLoading project environment variables from '$dotenv_path':"
-$envFileFound = Set-EnvironmentVariablesFromEnvFile "$dotenv_path"
-if ($envFileFound) {
-    Write-Host ".env file has been loaded into session."
+#region .env loader
+function Load-DotEnv {
+    param(
+        [Parameter(Mandatory = $true)][string]$FilePath
+    )
+    if (-not (Test-Path -LiteralPath $FilePath)) {
+        Throw-Logged ".env file not found at $FilePath"
+    }
+    $lines = Get-Content -LiteralPath $FilePath
+    foreach ($line in $lines) {
+        if ($line -match '^\s*#') { continue }
+        if ($line -match '^\s*$') { continue }
+        if ($line -match '^\s*([\w\.]+)\s*=\s*(.*)\s*$') {
+            $key = $matches[1]
+            $raw = $matches[2].Trim()
+            # Strip optional quotes
+            if ($raw.StartsWith('"') -and $raw.EndsWith('"')) { $raw = $raw.Trim('"') }
+            elseif ($raw.StartsWith("'") -and $raw.EndsWith("'")) { $raw = $raw.Trim("'") }
+            # Expand ${env:VAR}
+            $value = [regex]::Replace($raw, '\$\{env:([^}]+)\}', { param($m) [Environment]::GetEnvironmentVariable($m.Groups[1].Value) })
+            Set-Item -LiteralPath "env:$key" -Value $value
+            Write-Log -Level "Info" -Message ("Loaded {0}={1}" -f $key, (Mask-Value $value))
+        }
+    }
+}
+#endregion .env loader
+
+#region Main flow
+Write-Log -Level "Info" -Message "PyKotor Python/Venv bootstrap starting..."
+Write-Log -Level "Debug" -Message "OS: $($OSInfo.Name) Dist: $($OSInfo.DistroId) $($OSInfo.DistroVer)"
+Write-Log -Level "Debug" -Message "Repo root: $repoRootPath"
+Write-Log -Level "Debug" -Message "Target venv: $venvPath"
+
+$targetVersion = if ($force_python_version) { $force_python_version } else { $VersionPins.PythonDefaultMajorMinor }
+
+# 1) Find existing Python
+$python = Find-Python -TargetMajorMinor $targetVersion -InstallIfMissing:$false
+
+# 2) Install if missing
+if (-not $python) {
+    if (-not $noprompt -and -not $forceInstall) {
+        if (-not (Confirm-Action -Prompt "Python $targetVersion not found. Install it?" -DefaultYes)) {
+            Throw-Logged "User declined installation; cannot proceed."
+        }
+    }
+    Install-Python -MajorMinor $targetVersion -AcceptLicense:$acceptLicense
+    $python = Find-Python -TargetMajorMinor $targetVersion -InstallIfMissing:$false
+    if (-not $python) { Throw-Logged "Python $targetVersion installation appears to have failed." }
+}
+
+# 3) Validate version range
+$min = [version]"3.8.0"
+$max = [version]"3.14.0"
+if ($python.Version -lt $min -or $python.Version -gt $max) {
+    Throw-Logged "Python version $($python.Version) is outside supported range $min - $max"
+}
+
+# 4) Ensure pip + upgraded packaging tools
+Ensure-Pip -PythonExe $python.Path
+Upgrade-PipSetuptools -PythonExe $python.Path
+
+# 5) Create venv (if not skipped)
+if (-not $skipVenv) {
+    Ensure-Venv -PythonExe $python.Path -Path $venvPath
+    $venvPy = Get-VenvPython -Path $venvPath
+    if (-not (Test-Path $venvPy)) { Throw-Logged "Venv python not found at $venvPy" }
+    Activate-Venv -Path $venvPath
+    # Re-upgrade pip/setuptools inside venv
+    Ensure-Pip -PythonExe $venvPy
+    Upgrade-PipSetuptools -PythonExe $venvPy
+}
+
+# 6) Load .env (optional)
+if (-not $skipEnvLoad) {
+    $dotenv = Join-Path $repoRootPath ".env"
+    Load-DotEnv -FilePath $dotenv
 } else {
-    Write-Warning "'$dotenv_path' file not found, this may mean you need to fetch the repo's latest changes. Please resolve this problem and try again."
-    Write-Host "Press any key to exit..."
-    if (-not $noprompt) {
-        $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-    }
-    exit
+    Write-Log -Level "Info" -Message ".env loading skipped."
 }
+
+$script:ExitCode = 0
+Write-Log -Level "Info" -Message "Bootstrap complete."
+#endregion Main flow
+
+exit $script:ExitCode
