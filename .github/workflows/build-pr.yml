@@ -4,13 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      # Trigger on tool changes
-      - 'Tools/HolocronToolset/**'
-      - 'Tools/HoloPatcher/**'
-      - 'Tools/KotorDiff/**'
-      - 'Tools/GuiConverter/**'
-      - 'Tools/BatchPatcher/**'
-      - 'Tools/KitGenerator/**'
+      # Trigger on tool changes (any tool under Tools/)
+      - 'Tools/*/**'
       # Trigger on library changes (affects all tools)
       - 'Libraries/PyKotor/**'
       # Trigger on compile script changes
@@ -46,7 +41,6 @@ jobs:
       kotordiff: ${{ steps.changes.outputs.kotordiff }}
       guiconverter: ${{ steps.changes.outputs.guiconverter }}
       batchpatcher: ${{ steps.changes.outputs.batchpatcher }}
-      kitgenerator: ${{ steps.changes.outputs.kitgenerator }}
       libraries: ${{ steps.changes.outputs.libraries }}
       compile: ${{ steps.changes.outputs.compile }}
       any_tool: ${{ steps.changes.outputs.any_tool }}
@@ -74,7 +68,6 @@ jobs:
           KOTORDIFF="false"
           GUICONVERTER="false"
           BATCHPATCHER="false"
-          KITGENERATOR="false"
           LIBRARIES="false"
           COMPILE="false"
           
@@ -93,9 +86,6 @@ jobs:
           if echo "$CHANGED_FILES" | grep -q "^Tools/BatchPatcher/"; then
             BATCHPATCHER="true"
           fi
-          if echo "$CHANGED_FILES" | grep -q "^Tools/KitGenerator/"; then
-            KITGENERATOR="true"
-          fi
           if echo "$CHANGED_FILES" | grep -q "^Libraries/"; then
             LIBRARIES="true"
           fi
@@ -110,13 +100,12 @@ jobs:
             KOTORDIFF="true"
             GUICONVERTER="true"
             BATCHPATCHER="true"
-            KITGENERATOR="true"
           fi
           
           # Check if any tool changed
           ANY_TOOL="false"
           if [ "$TOOLSET" = "true" ] || [ "$HOLOPATCHER" = "true" ] || [ "$KOTORDIFF" = "true" ] || \
-             [ "$GUICONVERTER" = "true" ] || [ "$BATCHPATCHER" = "true" ] || [ "$KITGENERATOR" = "true" ]; then
+             [ "$GUICONVERTER" = "true" ] || [ "$BATCHPATCHER" = "true" ]; then
             ANY_TOOL="true"
           fi
           
@@ -125,7 +114,6 @@ jobs:
           echo "kotordiff=$KOTORDIFF" >> $GITHUB_OUTPUT
           echo "guiconverter=$GUICONVERTER" >> $GITHUB_OUTPUT
           echo "batchpatcher=$BATCHPATCHER" >> $GITHUB_OUTPUT
-          echo "kitgenerator=$KITGENERATOR" >> $GITHUB_OUTPUT
           echo "libraries=$LIBRARIES" >> $GITHUB_OUTPUT
           echo "compile=$COMPILE" >> $GITHUB_OUTPUT
           echo "any_tool=$ANY_TOOL" >> $GITHUB_OUTPUT
@@ -137,7 +125,6 @@ jobs:
           echo "  KotorDiff: $KOTORDIFF"
           echo "  GuiConverter: $GUICONVERTER"
           echo "  BatchPatcher: $BATCHPATCHER"
-          echo "  KitGenerator: $KITGENERATOR"
           echo "  Libraries: $LIBRARIES"
           echo "  Compile scripts: $COMPILE"
           echo "  Any tool affected: $ANY_TOOL"
@@ -389,43 +376,10 @@ jobs:
           upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
           artifact_retention_days: '3'
 
-  # Build validation for KitGenerator
-  build-kitgenerator:
-    name: Build KitGenerator (${{ matrix.os }})
-    needs: [detect-changes, version-check]
-    if: needs.detect-changes.outputs.kitgenerator == 'true'
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-20.04]
-        include:
-          - os: windows-latest
-            architecture: x64
-          - os: ubuntu-20.04
-            architecture: x64
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-
-      - name: Build KitGenerator (validation)
-        uses: ./.github/actions/build-tool
-        with:
-          tool_name: kitgenerator
-          python_version: '3.8'
-          architecture: ${{ matrix.architecture }}
-          dry_run: ${{ github.event.inputs.full_build != 'true' && 'true' || 'false' }}
-          upload_artifact: ${{ github.event.inputs.full_build == 'true' && 'true' || 'false' }}
-          artifact_retention_days: '3'
-
   # Summary job that reports overall status
   build-summary:
     name: Build Summary
-    needs: [detect-changes, version-check, build-toolset, build-holopatcher, build-kotordiff, build-guiconverter, build-batchpatcher, build-kitgenerator]
+    needs: [detect-changes, version-check, build-toolset, build-holopatcher, build-kotordiff, build-guiconverter, build-batchpatcher]
     if: always() && needs.detect-changes.outputs.any_tool == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -441,8 +395,7 @@ jobs:
               'build-holopatcher': '${{ needs.build-holopatcher.result }}' || 'skipped',
               'build-kotordiff': '${{ needs.build-kotordiff.result }}' || 'skipped',
               'build-guiconverter': '${{ needs.build-guiconverter.result }}' || 'skipped',
-              'build-batchpatcher': '${{ needs.build-batchpatcher.result }}' || 'skipped',
-              'build-kitgenerator': '${{ needs.build-kitgenerator.result }}' || 'skipped'
+              'build-batchpatcher': '${{ needs.build-batchpatcher.result }}' || 'skipped'
             };
             
             const changes = {
@@ -450,8 +403,7 @@ jobs:
               holopatcher: '${{ needs.detect-changes.outputs.holopatcher }}' === 'true',
               kotordiff: '${{ needs.detect-changes.outputs.kotordiff }}' === 'true',
               guiconverter: '${{ needs.detect-changes.outputs.guiconverter }}' === 'true',
-              batchpatcher: '${{ needs.detect-changes.outputs.batchpatcher }}' === 'true',
-              kitgenerator: '${{ needs.detect-changes.outputs.kitgenerator }}' === 'true'
+              batchpatcher: '${{ needs.detect-changes.outputs.batchpatcher }}' === 'true'
             };
             
             let summary = '## 🔨 Build Validation Summary\n\n';
@@ -476,8 +428,7 @@ jobs:
               holopatcher: { name: 'HoloPatcher', job: 'build-holopatcher' },
               kotordiff: { name: 'KotorDiff', job: 'build-kotordiff' },
               guiconverter: { name: 'GuiConverter', job: 'build-guiconverter' },
-              batchpatcher: { name: 'BatchPatcher', job: 'build-batchpatcher' },
-              kitgenerator: { name: 'KitGenerator', job: 'build-kitgenerator' }
+              batchpatcher: { name: 'BatchPatcher', job: 'build-batchpatcher' }
             };
             
             for (const [key, info] of Object.entries(toolMap)) {
