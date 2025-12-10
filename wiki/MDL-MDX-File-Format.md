@@ -6,8 +6,8 @@ This document provides a detailed description of the [MDL](MDL-MDX-File-Format)/
 
 ## Table of Contents
 
-- [KotOR MDL/MDX file format Documentation](#kotor-mdlmdx-file-format-documentation)
-  - [Table of Contents](#table-of-contents)
+- KotOR MDL/MDX file format Documentation
+  - Table of Contents
   - [file structure Overview](#file-structure-overview)
   - [file headers](#file-headers)
     - [MDL file header](#mdl-file-header)
@@ -189,11 +189,11 @@ The [model](MDL-MDX-File-Format) header is 92 bytes in size and immediately foll
 **Reference**: [`vendor/mdlops/MDLOpsM.pm:238-240`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L238-L240) - [model](MDL-MDX-File-Format) classification constants definition  
 **Reference**: [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) - [model](MDL-MDX-File-Format) header field-by-field breakdown (88 bytes total)
 
-**Note:** The [model](MDL-MDX-File-Format) header immediately follows the [geometry](MDL-MDX-File-Format#geometry-header) header. The supermodel name field (offset 56) is used to reference parent [models](MDL-MDX-File-Format) for inheritance. If the value is "null", it should be treated as empty.
+**Note:** The [model](MDL-MDX-File-Format) header immediately follows the geometry header. The supermodel name field (offset 56) is used to reference parent [models](MDL-MDX-File-Format) for inheritance. If the value is "null", it should be treated as empty.
 
-### [geometry](MDL-MDX-File-Format#geometry-header) header
+### geometry header
 
-The [geometry](MDL-MDX-File-Format#geometry-header) header is 80 bytes in size and is located at offset 12 in the file (immediately after the file header). It contains fundamental [model](MDL-MDX-File-Format) information and game engine version identifiers.
+The geometry header is 80 bytes in size and is located at offset 12 in the file (immediately after the file header). It contains fundamental [model](MDL-MDX-File-Format) information and game engine version identifiers.
 
 | Name                        | type        | offset | Description                                                                                     |
 | --------------------------- | ----------- | ------ | ----------------------------------------------------------------------------------------------- |
@@ -237,17 +237,17 @@ The Names header is located at file offset 180 (28 bytes). It contains metadata 
 
 **Note:** [Node](MDL-MDX-File-Format#node-structures) names [ARE](GFF-File-Format#are-area) stored as [null-terminated](https://en.cppreference.com/w/c/string/byte) strings (max 32 bytes) and [ARE](GFF-File-Format#are-area) typically converted to lowercase during parsing. The names array contains offsets to string data, not the strings themselves. Names [ARE](GFF-File-Format#are-area) stored consecutively in the array, separated only by null terminators.
 
-### [animation](MDL-MDX-File-Format#animation-header) header
+### animation header
 
-Each [animation](MDL-MDX-File-Format#animation-header) begins with a [Geometry Header](MDL-MDX-File-Format#geometry-header) (80 bytes) followed by an [Animation Header](MDL-MDX-File-Format#animation-header) (56 bytes), for a combined size of 136 bytes.
+Each animation begins with a [Geometry Header](MDL-MDX-File-Format#geometry-header) (80 bytes) followed by an Animation Header (56 bytes), for a combined size of 136 bytes.
 
 | Name                  | type            | offset | Description                                                |
 | --------------------- | --------------- | ------ | ---------------------------------------------------------- |
 | [geometry](MDL-MDX-File-Format#geometry-header) header       | GeometryHeader  | 0 (0x0)     | Standard 80-[byte](GFF-File-Format#gff-data-types) [Geometry Header](MDL-MDX-File-Format#geometry-header) ([geometry](MDL-MDX-File-Format#geometry-header) type = `0x01`).|
-| [animation](MDL-MDX-File-Format#animation-header) Length      | [float](GFF-File-Format#gff-data-types)           | 80 (0x50)    | Duration of the [animation](MDL-MDX-File-Format#animation-header) in seconds.                      |
-| Transition Time       | [float](GFF-File-Format#gff-data-types)           | 84 (0x54)    | Transition/blend time to this [animation](MDL-MDX-File-Format#animation-header) in seconds.        |
-| [animation](MDL-MDX-File-Format#animation-header) Root        | [byte](GFF-File-Format#gff-data-types)        | 88 (0x58)    | Root [node](MDL-MDX-File-Format#node-structures) name for the [animation](MDL-MDX-File-Format#animation-header) ([null-terminated](https://en.cppreference.com/w/c/string/byte) string). |
-| Event array offset    | [uint32](GFF-File-Format#gff-data-types)          | 120 (0x78)   | offset to [animation](MDL-MDX-File-Format#animation-header) events array.                          |
+| animation Length      | [float](GFF-File-Format#gff-data-types)           | 80 (0x50)    | Duration of the animation in seconds.                      |
+| Transition Time       | [float](GFF-File-Format#gff-data-types)           | 84 (0x54)    | Transition/blend time to this animation in seconds.        |
+| animation Root        | [byte](GFF-File-Format#gff-data-types)        | 88 (0x58)    | Root [node](MDL-MDX-File-Format#node-structures) name for the animation ([null-terminated](https://en.cppreference.com/w/c/string/byte) string). |
+| Event array offset    | [uint32](GFF-File-Format#gff-data-types)          | 120 (0x78)   | offset to animation events array.                          |
 | Event count           | [uint32](GFF-File-Format#gff-data-types)          | 124 (0x7C)   | Number of [animation](MDL-MDX-File-Format#animation-header) events.                                |
 | Event Count (dup)     | [uint32](GFF-File-Format#gff-data-types)          | 128 (0x80)   | Duplicate value of event count.                            |
 | Unknown               | [uint32](GFF-File-Format#gff-data-types)          | 132 (0x84)   | Purpose unknown.                                           |
@@ -273,17 +273,17 @@ Each [animation](MDL-MDX-File-Format#animation-header) event is 36 bytes in size
 
 ---
 
-## [node](MDL-MDX-File-Format#node-structures) structures
+## node structures
 
-### [node](MDL-MDX-File-Format#node-structures) header
+### node header
 
-The [Node Header](MDL-MDX-File-Format#node-header) is 80 bytes in size and is present in all [node](MDL-MDX-File-Format#node-structures) types. It defines the [node](MDL-MDX-File-Format#node-structures)'s position in the hierarchy, its transform, and references to child [nodes](MDL-MDX-File-Format#node-structures) and [animation](MDL-MDX-File-Format#animation-header) [controllers](MDL-MDX-File-Format#controllers).
+The Node Header is 80 bytes in size and is present in all node types. It defines the node's position in the hierarchy, its transform, and references to child nodes and [animation](MDL-MDX-File-Format#animation-header) [controllers](MDL-MDX-File-Format#controllers).
 
 | Name                     | type        | offset | Description                                                                        |
 | ------------------------ | ----------- | ------ | ---------------------------------------------------------------------------------- |
-| [node](MDL-MDX-File-Format#node-structures) type [flags](GFF-File-Format#gff-data-types)          | [uint16](GFF-File-Format#gff-data-types)      | 0 (0x0)     | [bitmask](GFF-File-Format#gff-data-types) indicating [node](MDL-MDX-File-Format#node-structures) features (see [Node Type Bitmasks](#node-type-bitmasks)). Field #1 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("node type"). |
-| [node](MDL-MDX-File-Format#node-structures) index               | [uint16](GFF-File-Format#gff-data-types)      | 2 (0x2)     | Sequential index of this [node](MDL-MDX-File-Format#node-structures) in the [model](MDL-MDX-File-Format). Field #3 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("node number").                                        |
-| [node](MDL-MDX-File-Format#node-structures) Name index          | [uint16](GFF-File-Format#gff-data-types)      | 4 (0x4)     | index into the names array for this [node](MDL-MDX-File-Format#node-structures)'s name. Field #2 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("supernode").                                   |
+| node type [flags](GFF-File-Format#gff-data-types)          | [uint16](GFF-File-Format#gff-data-types)      | 0 (0x0)     | [bitmask](GFF-File-Format#gff-data-types) indicating node features (see [Node Type Bitmasks](#node-type-bitmasks)). Field #1 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("node type"). |
+| node index               | [uint16](GFF-File-Format#gff-data-types)      | 2 (0x2)     | Sequential index of this node in the [model](MDL-MDX-File-Format). Field #3 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("node number").                                        |
+| node Name index          | [uint16](GFF-File-Format#gff-data-types)      | 4 (0x4)     | index into the names array for this node's name. Field #2 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("supernode").                                   |
 | Padding                  | [uint16](GFF-File-Format#gff-data-types)      | 6 (0x6)     | Padding for alignment. Fields #4-5 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure (described as "unknown").                                                             |
 | Root [node](MDL-MDX-File-Format#node-structures) offset         | [uint32](GFF-File-Format#gff-data-types)      | 8 (0x8)     | offset to the [model](MDL-MDX-File-Format)'s root [node](MDL-MDX-File-Format#node-structures).                                                   |
 | Parent [node](MDL-MDX-File-Format#node-structures) offset       | [uint32](GFF-File-Format#gff-data-types)      | 12 (0xC)    | offset to this [node](MDL-MDX-File-Format#node-structures)'s parent node (0 if root). Field #6 in [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) node header structure ("location of parent node").                                     |
@@ -310,14 +310,14 @@ The [Node Header](MDL-MDX-File-Format#node-header) is 80 bytes in size and is pr
 
 ### Trimesh header
 
-The Trimesh header defines static [mesh](MDL-MDX-File-Format#trimesh-header) [geometry](MDL-MDX-File-Format#geometry-header) and is 332 bytes in KotOR 1 and 340 bytes in KotOR 2 [models](MDL-MDX-File-Format). This header immediately follows the 80-[byte](GFF-File-Format#gff-data-types) [node](MDL-MDX-File-Format#node-structures) header.
+The Trimesh header defines static mesh [geometry](MDL-MDX-File-Format#geometry-header) and is 332 bytes in KotOR 1 and 340 bytes in KotOR 2 [models](MDL-MDX-File-Format). This header immediately follows the 80-[byte](GFF-File-Format#gff-data-types) [node](MDL-MDX-File-Format#node-structures) header.
 
 | Name                         | type         | offset     | Description                                                                                 |
 | ---------------------------- | ------------ | ---------- | ------------------------------------------------------------------------------------------- |
 | Function pointer 0           | [uint32](GFF-File-Format#gff-data-types)       | 0 (0x0)         | Game engine function pointer (version-specific).                                            |
 | Function pointer 1           | [uint32](GFF-File-Format#gff-data-types)       | 4 (0x4)         | Secondary game engine function pointer.                                                     |
 | [faces](MDL-MDX-File-Format#face-structure) array offset           | [uint32](GFF-File-Format#gff-data-types)       | 8 (0x8)         | offset to [face](MDL-MDX-File-Format#face-structure) definitions array.                                                           |
-| [faces](MDL-MDX-File-Format#face-structure) count                  | [uint32](GFF-File-Format#gff-data-types)       | 12 (0xC)        | Number of triangular [faces](MDL-MDX-File-Format#face-structure) in the [mesh](MDL-MDX-File-Format#trimesh-header).                                                     |
+| [faces](MDL-MDX-File-Format#face-structure) count                  | [uint32](GFF-File-Format#gff-data-types)       | 12 (0xC)        | Number of triangular [faces](MDL-MDX-File-Format#face-structure) in the mesh.                                                     |
 | [faces](MDL-MDX-File-Format#face-structure) Count (dup)            | [uint32](GFF-File-Format#gff-data-types)       | 16 (0x10)        | Duplicate of [faces](MDL-MDX-File-Format#face-structure) count.                                                                   |
 | [bounding box](MDL-MDX-File-Format#model-header) Min             | [float](GFF-File-Format#gff-data-types)     | 20 (0x14)        | Minimum [bounding box](MDL-MDX-File-Format#model-header) coordinates (X, Y, Z).                                                 |
 | [bounding box](MDL-MDX-File-Format#model-header) Max             | [float](GFF-File-Format#gff-data-types)     | 32 (0x20)        | Maximum [bounding box](MDL-MDX-File-Format#model-header) coordinates (X, Y, Z).                                                 |
@@ -517,17 +517,17 @@ The Reference header follows the [node](MDL-MDX-File-Format#node-structures) hea
 
 ---
 
-## [controllers](MDL-MDX-File-Format#controllers)
+## controllers
 
-### [controller](MDL-MDX-File-Format#controllers) structure
+### controller structure
 
-Each [controller](MDL-MDX-File-Format#controllers) is 16 bytes in size and defines [animation](MDL-MDX-File-Format#animation-header) data for a [node](MDL-MDX-File-Format#node-structures) property over time. [controllers](MDL-MDX-File-Format#controllers) reference shared [keyframe](MDL-MDX-File-Format#controller-structure)/data arrays stored separately in the [model](MDL-MDX-File-Format).
+Each controller is 16 bytes in size and defines [animation](MDL-MDX-File-Format#animation-header) data for a [node](MDL-MDX-File-Format#node-structures) property over time. controllers reference shared keyframe/data arrays stored separately in the [model](MDL-MDX-File-Format).
 
 | Name              | type     | offset | Description                                                                                    |
 | ----------------- | -------- | ------ | ---------------------------------------------------------------------------------------------- |
-| type              | [uint32](GFF-File-Format#gff-data-types)   | 0 (0x0)     | [controller](MDL-MDX-File-Format#controllers) type identifier (e.g., 8=position, 20=orientation, 36=scale).                       |
+| type              | [uint32](GFF-File-Format#gff-data-types)   | 0 (0x0)     | controller type identifier (e.g., 8=position, 20=orientation, 36=scale).                       |
 | Unknown           | [uint16](GFF-File-Format#gff-data-types)   | 4 (0x4)     | Purpose unknown, typically `0xFFFF`.                                                           |
-| Row count         | [uint16](GFF-File-Format#gff-data-types)   | 6 (0x6)     | Number of [keyframe](MDL-MDX-File-Format#controller-structure) rows (timepoints) for this [controller](MDL-MDX-File-Format#controllers).                                      |
+| Row count         | [uint16](GFF-File-Format#gff-data-types)   | 6 (0x6)     | Number of keyframe rows (timepoints) for this controller.                                      |
 | Time index        | [uint16](GFF-File-Format#gff-data-types)   | 8 (0x8)     | index into [controller](MDL-MDX-File-Format#controllers) data array where time values begin.                                      |
 | data index        | [uint16](GFF-File-Format#gff-data-types)   | 10 (0xA)    | index into [controller](MDL-MDX-File-Format#controllers) data array where property values begin.                                  |
 | Column count      | [uint8](GFF-File-Format#gff-data-types)    | 12 (0xC)    | Number of [float](GFF-File-Format#gff-data-types) values per keyframe (e.g., 3 for position XYZ, 4 for [quaternion](MDL-MDX-File-Format#node-header) WXYZ).        |
@@ -721,15 +721,15 @@ The [MDX](MDL-MDX-File-Format) data for skin [meshes](MDL-MDX-File-Format#trimes
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:263-295`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L263-L295) - Skin [mesh](MDL-MDX-File-Format#trimesh-header) header and bone data reading  
 **Reference**: [`vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:508-529`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/mdl/reader.py#L508-L529) - Skin [mesh](MDL-MDX-File-Format#trimesh-header) bone map and bone [node](MDL-MDX-File-Format#node-structures) processing
 
-**Note:** Bone weights [ARE](GFF-File-Format#are-area) stored as 4 floats per [vertex](MDL-MDX-File-Format#vertex-structure) and should sum to 1.0. Bone indices [ARE](GFF-File-Format#are-area) stored as 4 floats but [ARE](GFF-File-Format#are-area) cast to [uint16](GFF-File-Format#gff-data-types) when used. A weight of 0.0 indicates no influence from that bone. The bone indices reference the bone map array, which maps to skeleton bone numbers.
+**Note:** Bone weights [ARE](GFF-File-Format#are-area) stored as 4 floats per vertex and should sum to 1.0. Bone indices [ARE](GFF-File-Format#are-area) stored as 4 floats but [ARE](GFF-File-Format#are-area) cast to [uint16](GFF-File-Format#gff-data-types) when used. A weight of 0.0 indicates no influence from that bone. The bone indices reference the bone map array, which maps to skeleton bone numbers.
 
 ---
 
-## [vertex](MDL-MDX-File-Format#vertex-structure) and [face](MDL-MDX-File-Format#face-structure) data
+## vertex and [face](MDL-MDX-File-Format#face-structure) data
 
-### [vertex](MDL-MDX-File-Format#vertex-structure) structure
+### vertex structure
 
-Each [vertex](MDL-MDX-File-Format#vertex-structure) has the following structure:
+Each vertex has the following structure:
 
 | Name | type  | Description         |
 | ---- | ----- | ------------------- |
@@ -737,17 +737,17 @@ Each [vertex](MDL-MDX-File-Format#vertex-structure) has the following structure:
 | Y    | [float](GFF-File-Format#gff-data-types) | Y-coordinate        |
 | Z    | [float](GFF-File-Format#gff-data-types) | Z-coordinate        |
 
-### [face](MDL-MDX-File-Format#face-structure) structure
+### face structure
 
 Each face (triangle) is defined by:
 
 | Name                | type    | Description                                      |
 | ------------------- | ------- | ------------------------------------------------ |
-| Normal              | [vertex](MDL-MDX-File-Format#vertex-structure)  | Normal vector of the [face](MDL-MDX-File-Format#face-structure) plane.                 |
-| Plane Coefficient   | [float](GFF-File-Format#gff-data-types)   | D component of the [face](MDL-MDX-File-Format#face-structure) plane equation.          |
+| Normal              | [vertex](MDL-MDX-File-Format#vertex-structure)  | Normal vector of the face plane.                 |
+| Plane Coefficient   | [float](GFF-File-Format#gff-data-types)   | D component of the face plane equation.          |
 | [material](MDL-MDX-File-Format#trimesh-header)            | [uint32](GFF-File-Format#gff-data-types)  | [material](MDL-MDX-File-Format#trimesh-header) index (refers to `surfacemat.2da`).     |
-| [face](MDL-MDX-File-Format#face-structure) [adjacency](BWM-File-Format#walkable-adjacencies) 1    | [uint16](GFF-File-Format#gff-data-types)  | index of adjacent [face](MDL-MDX-File-Format#face-structure) 1.                        |
-| [face](MDL-MDX-File-Format#face-structure) [adjacency](BWM-File-Format#walkable-adjacencies) 2    | [uint16](GFF-File-Format#gff-data-types)  | index of adjacent [face](MDL-MDX-File-Format#face-structure) 2.                        |
+| face [adjacency](BWM-File-Format#walkable-adjacencies) 1    | [uint16](GFF-File-Format#gff-data-types)  | index of adjacent face 1.                        |
+| face [adjacency](BWM-File-Format#walkable-adjacencies) 2    | [uint16](GFF-File-Format#gff-data-types)  | index of adjacent face 2.                        |
 | [face](MDL-MDX-File-Format#face-structure) [adjacency](BWM-File-Format#walkable-adjacencies) 3    | [uint16](GFF-File-Format#gff-data-types)  | index of adjacent [face](MDL-MDX-File-Format#face-structure) 3.                        |
 | [vertex](MDL-MDX-File-Format#vertex-structure) 1            | [uint16](GFF-File-Format#gff-data-types)  | index of the first [vertex](MDL-MDX-File-Format#vertex-structure).                       |
 | [vertex](MDL-MDX-File-Format#vertex-structure) 2            | [uint16](GFF-File-Format#gff-data-types)  | index of the second [vertex](MDL-MDX-File-Format#vertex-structure).                      |
@@ -1030,7 +1030,7 @@ Bezier interpolation provides smooth, non-linear [animation](MDL-MDX-File-Format
 **Note**: At the time of [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) documentation, it was unclear if any BioWare [models](MDL-MDX-File-Format) actually use bezier interpolation or if the rendering engine supports it. However, the format specification includes support for it.
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/binmdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/binmdl.html) - Bezier interpolation notes  
-**See Also**: [Controller Data Formats - Bezier Interpolation](#bezier-interpolation) section below for ASCII format details
+**See Also**: Controller Data Formats - Bezier Interpolation section below for ASCII format details
 
 ### AABB (Axis-Aligned [bounding box](MDL-MDX-File-Format#model-header)) [mesh](MDL-MDX-File-Format#trimesh-header) [nodes](MDL-MDX-File-Format#node-structures)
 
