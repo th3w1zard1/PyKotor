@@ -168,6 +168,13 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Install PowerShell on non-Windows
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          chmod +x ./install_powershell.sh
+          bash ./install_powershell.sh
+
       - name: Set up pypy ${{ matrix.python-version }}
         if: ${{ matrix.python_pypy == 'pypy' }}
         uses: actions/setup-python@v5
