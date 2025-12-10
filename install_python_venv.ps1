@@ -207,6 +207,27 @@ function Invoke-BashCommand {
     return $output
 }
 
+function Invoke-BashCommandOptional {
+    param (
+        [string]$Command,
+        [string]$FallbackMessage = "Command failed but continuing"
+    )
+
+    try {
+        # Execute the bash command and capture its output
+        $output = & bash -c $Command 2>&1
+        # Check if the command was successful
+        if (-not $? -or $LASTEXITCODE -ne 0) {
+            Write-Warning "$FallbackMessage. Exit code: $LASTEXITCODE"
+            return $false
+        }
+        return $true
+    } catch {
+        Write-Warning "$FallbackMessage. Error: $_"
+        return $false
+    }
+}
+
 $pathSep = "/"
 if ((Get-OS) -eq "Windows") {
     $pathSep = "\"
@@ -496,12 +517,20 @@ function Install-Python-Linux {
             switch ($distro) {
                 "debian" {
                     Invoke-BashCommand -Command "sudo apt-get update -y"
-                    Invoke-BashCommand -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv python$pythonVersion-pip"
+                    # Try to install pip package, but fall back gracefully if it doesn't exist (common in deadsnakes PPA)
+                    $pipPackageSuccess = Invoke-BashCommandOptional -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv python$pythonVersion-pip" -FallbackMessage "python$pythonVersion-pip package not available, installing without it"
+                    if (-not $pipPackageSuccess) {
+                        Invoke-BashCommand -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv"
+                    }
                     break
                 }
                 "ubuntu" {
                     Invoke-BashCommand -Command "sudo apt-get update -y"
-                    Invoke-BashCommand -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv python$pythonVersion-pip"
+                    # Try to install pip package, but fall back gracefully if it doesn't exist (common in deadsnakes PPA)
+                    $pipPackageSuccess = Invoke-BashCommandOptional -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv python$pythonVersion-pip" -FallbackMessage "python$pythonVersion-pip package not available, installing without it"
+                    if (-not $pipPackageSuccess) {
+                        Invoke-BashCommand -Command "sudo apt-get install -y tk tcl libpython$pythonVersion-dev python$pythonVersion python$pythonVersion-dev python$pythonVersion-venv"
+                    }
                     break
                 }
                 "alpine" {
@@ -564,21 +593,40 @@ function Install-Python-Linux {
             if ( -not $global:pythonInstallPath ) {
                 throw "Python not found/installed"
             }
+
+            # Ensure pip is available - bootstrap if needed
+            try {
+                $pipCheck = & $global:pythonInstallPath -m pip --version 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Host "Pip not available, bootstrapping with ensurepip..."
+                    & $global:pythonInstallPath -m ensurepip --upgrade --default-pip
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Host "Pip bootstrapped successfully."
+                    } else {
+                        Write-Warning "ensurepip failed. Pip may not be available."
+                    }
+                } else {
+                    Write-Host "Pip is already available."
+                }
+            } catch {
+                Write-Warning "Failed to check/bootstrap pip: $($_.Exception.Message)"
+            }
         } catch {
             $errMsg = $_.Exception.Message
             Handle-Error -ErrorRecord $_
             $errStr = "Error: $errMsg`nCould not install python from your package manager`n`nWould you like to attempt to build from source instead? (y/N)"
             if ($noprompt) {
                 Write-Host $errStr
-                $userInput = "y"
-                Write-Host $userInput
+                Write-Host "Non-interactive mode: Skipping source build to avoid hanging CI."
+                Write-Error "Python installation failed and cannot proceed in non-interactive mode."
+                throw "Python installation failed in non-interactive mode"
             } else {
                 $userInput = Read-Host $errStr
-            }
-            if ( $userInput -ne "Y" -and $userInput -ne "y" ) {
-                Write-Host "Press any key to exit..."
-                $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-                exit 1
+                if ( $userInput -ne "Y" -and $userInput -ne "y" ) {
+                    Write-Host "Press any key to exit..."
+                    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+                    exit 1
+                }
             }
 
             # Fallback mechanism for each distribution
