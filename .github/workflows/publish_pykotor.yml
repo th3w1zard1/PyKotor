@@ -287,6 +287,25 @@ jobs:
           echo "Using compile script $compileScript"
           if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
 
+      - name: Pre-install Python packages (Linux workaround)
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          # Workaround: Pre-install Python without pip package (python3.X-pip doesn't exist in deadsnakes PPA)
+          # This prevents install_python_venv.ps1 from failing and prompting for input
+          PYTHON_VERSION="${{ matrix.python-version }}"
+          PYTHON_MAJOR_MINOR=$(echo $PYTHON_VERSION | cut -d. -f1,2)
+          
+          echo "Pre-installing Python $PYTHON_VERSION packages (without pip package)..."
+          sudo apt-get install -y \
+            python${PYTHON_MAJOR_MINOR} \
+            python${PYTHON_MAJOR_MINOR}-dev \
+            python${PYTHON_MAJOR_MINOR}-venv \
+            libpython${PYTHON_MAJOR_MINOR}-dev || true
+          
+          # Verify Python is available
+          python${PYTHON_MAJOR_MINOR} --version || (echo "Failed to install Python $PYTHON_VERSION" && exit 1)
+
       - name: Create virtual environment
         shell: pwsh
         env:
@@ -304,8 +323,15 @@ jobs:
             Write-Host "Calling install_python_venv.ps1 with venv_name=$venvName and force_python_version=${{ matrix.python-version }}"
             Write-Host "OS: ${{ runner.os }}, Architecture: ${{ matrix.architecture }}, Python version: ${{ matrix.python-version }}"
             
-            # Source the script to run it in current session (allows it to set variables)
-            . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
+            # On Linux, pipe "N" to answer any prompts (don't build from source)
+            # Also capture output to handle any errors
+            if ("${{ runner.os }}" -eq "Linux") {
+              $output = "N" | . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }} 2>&1
+              Write-Host $output
+            } else {
+              # Source the script to run it in current session (allows it to set variables)
+              . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
+            }
             
             # Check if script set pythonExePath variable
             if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
@@ -339,6 +365,20 @@ jobs:
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Python executable at $pythonExePath is not working"
               exit 1
+            }
+            
+            # On Linux, ensure pip is available (bootstrap if needed)
+            if ("${{ runner.os }}" -eq "Linux") {
+              # Try to bootstrap pip if it's not available
+              $pipCheck = & $pythonExePath -m pip --version 2>&1
+              if ($LASTEXITCODE -ne 0) {
+                Write-Host "Pip not available, bootstrapping with ensurepip..."
+                & $pythonExePath -m ensurepip --upgrade --default-pip
+                if ($LASTEXITCODE -ne 0) {
+                  Write-Error "Failed to bootstrap pip"
+                  exit 1
+                }
+              }
             }
             
             & $pythonExePath -m pip install --upgrade pip
