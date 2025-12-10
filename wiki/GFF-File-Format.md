@@ -11,7 +11,7 @@ This document provides a detailed description of the GFF (Generic file format) u
 ## Table of Contents
 
 - [KotOR GFF file format Documentation](#kotor-gff-file-format-documentation)
-  - Table of Contents
+  - [Table of Contents](#table-of-contents)
   - [file structure Overview](#file-structure-overview)
     - [GFF as a Universal Container](#gff-as-a-universal-container)
   - [Binary format](#binary-format)
