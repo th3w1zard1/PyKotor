@@ -234,17 +234,17 @@ PyKotor includes many vendor submodules that provide alternative implementations
 
 Complete game engine rewrites that can load and play KotOR:
 
-- **[xoreos](https://github.com/th3w1zard1/xoreos)** - C++ reimplementation of BioWare's Aurora engine, supports multiple Aurora games including KotOR. Focus on accuracy and cross-platform compatibility.
-- **[reone](https://github.com/th3w1zard1/reone)** - Modern C++ KotOR engine with OpenGL rendering. Focus on performance and clean architecture.
+- **[xoreos](https://github.com/xoreos/xoreos)** - C++ reimplementation of BioWare's Aurora engine, supports multiple Aurora games including KotOR. Focus on accuracy and cross-platform compatibility. ([Mirror: th3w1zard1/xoreos](https://github.com/th3w1zard1/xoreos))
+- **[reone](https://github.com/seedhartha/reone)** - Modern C++ KotOR engine with OpenGL rendering. Focus on performance and clean architecture. ([Mirror: th3w1zard1/reone](https://github.com/th3w1zard1/reone))
 - **[KotOR.js](https://github.com/th3w1zard1/KotOR.js)** - TypeScript/JavaScript engine running in browsers via WebGL. Enables playing KotOR directly in web browsers.
 - **[NorthernLights](https://github.com/th3w1zard1/NorthernLights)** - .NET/C# engine implementation with Unity integration capabilities.
-- **[KotOR-Unity](https://github.com/th3w1zard1/KotOR-Unity)** - Unity-based KotOR engine rewrite. Leverages Unity's rendering and physics.
+- **[KotOR-Unity](https://github.com/reubenduncan/KotOR-Unity)** - Unity-based KotOR engine rewrite. Leverages Unity's rendering and physics. ([Mirror: th3w1zard1/KotOR-Unity](https://github.com/th3w1zard1/KotOR-Unity))
 
 ### File Format Libraries
 
 Libraries focused on reading/writing KotOR file formats:
 
-- **[xoreos-tools](https://github.com/th3w1zard1/xoreos-tools)** - Command-line tools for extracting and converting Aurora file formats
+- **[xoreos-tools](https://github.com/xoreos/xoreos-tools)** - Command-line tools for extracting and converting Aurora file formats ([Mirror: th3w1zard1/xoreos-tools](https://github.com/th3w1zard1/xoreos-tools))
 - **[Kotor.NET](https://github.com/th3w1zard1/Kotor.NET)** - .NET library for KotOR file formats with builder APIs
 - **[kotor](https://github.com/th3w1zard1/kotor)** - Documentation and basic format parsers
 
@@ -252,11 +252,11 @@ Libraries focused on reading/writing KotOR file formats:
 
 Tools for working with KotOR 3D models and textures:
 
-- **[kotorblender](https://github.com/th3w1zard1/kotorblender)** - Blender add-on for importing/exporting KotOR MDL files with full animation support
+- **[kotorblender](https://github.com/ndixUR/kotorblender)** - Blender add-on for importing/exporting KotOR MDL files with full animation support ([Mirror: th3w1zard1/kotorblender](https://github.com/th3w1zard1/kotorblender))
 - **[mdlops](https://github.com/th3w1zard1/mdlops)** - Legacy Python MDL toolkit for model conversions
 - **[tga2tpc](https://github.com/th3w1zard1/tga2tpc)** - Standalone TGA to TPC texture converter
 - **[DLZ-Tool](https://github.com/th3w1zard1/DLZ-Tool)** - DLZ file decompression tool
-- **[WalkmeshVisualizer](https://github.com/th3w1zard1/WalkmeshVisualizer)** - Walkmesh viewing and debugging tool
+- **[WalkmeshVisualizer](https://github.com/glasnonck/WalkmeshVisualizer)** - Walkmesh viewing and debugging tool ([Mirror: th3w1zard1/WalkmeshVisualizer](https://github.com/th3w1zard1/WalkmeshVisualizer))
 
 ### Script Development
 
@@ -264,26 +264,26 @@ Tools for writing and editing NWScript:
 
 - **[KotOR-Scripting-Tool](https://github.com/th3w1zard1/KotOR-Scripting-Tool)** - Visual NWScript IDE with integrated compiler
 - **[HoloLSP](https://github.com/th3w1zard1/HoloLSP)** - Language Server Protocol implementation for NWScript (enables IDE integration)
-- **[nwscript-mode.el](https://github.com/th3w1zard1/nwscript-mode.el)** - Emacs major mode for NWScript editing
-- **[Vanilla_KOTOR_Script_Source](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source)** - Decompiled vanilla KotOR scripts for reference
+- **[nwscript-mode.el](https://github.com/implicit-image/nwscript-mode.el)** - Emacs major mode for NWScript editing ([Mirror: th3w1zard1/nwscript-mode.el](https://github.com/th3w1zard1/nwscript-mode.el))
+- **[Vanilla_KOTOR_Script_Source](https://github.com/KOTORCommunityPatches/Vanilla_KOTOR_Script_Source)** - Decompiled vanilla KotOR scripts for reference ([Mirror: th3w1zard1/Vanilla_KOTOR_Script_Source](https://github.com/th3w1zard1/Vanilla_KOTOR_Script_Source))
 
 ### Modding Tools
 
 Tools for creating and installing mods:
 
-- **[TSLPatcher](https://github.com/th3w1zard1/TSLPatcher)** - Original Perl mod installer (reference implementation)
+- **[TSLPatcher](https://github.com/Fair-Strides/TSLPatcher)** - Original Perl mod installer (reference implementation) ([Mirror: th3w1zard1/TSLPatcher](https://github.com/th3w1zard1/TSLPatcher))
 - **[HoloPatcher.NET](https://github.com/th3w1zard1/HoloPatcher.NET)** - .NET reimplementation of TSLPatcher
-- **[Kotor-Patch-Manager](https://github.com/th3w1zard1/Kotor-Patch-Manager)** - Alternative mod manager
+- **[Kotor-Patch-Manager](https://github.com/LaneDibello/Kotor-Patch-Manager)** - Alternative mod manager ([Mirror: th3w1zard1/Kotor-Patch-Manager](https://github.com/th3w1zard1/Kotor-Patch-Manager))
 - **[KotORModSync](https://github.com/th3w1zard1/KotORModSync)** - Mod synchronization and installation
 - **[StarForge](https://github.com/th3w1zard1/StarForge)** - Module editor and modding toolkit
-- **[KotorModTools](https://github.com/th3w1zard1/KotorModTools)** - Collection of modding utilities
+- **[KotorModTools](https://github.com/Box65535/KotorModTools)** - Collection of modding utilities ([Mirror: th3w1zard1/KotorModTools](https://github.com/th3w1zard1/KotorModTools))
 
 ### Save Editors
 
 Tools for editing KotOR save games:
 
-- **[sotor](https://github.com/th3w1zard1/sotor)** - Terminal-based save editor
-- **[KSELinux](https://github.com/th3w1zard1/KSELinux)** - KotOR Save Editor for Linux
+- **[sotor](https://github.com/StarfishXeno/sotor)** - Terminal-based save editor ([Mirror: th3w1zard1/sotor](https://github.com/th3w1zard1/sotor))
+- **[KSELinux](https://github.com/Bolche/KSELinux)** - KotOR Save Editor for Linux ([Mirror: th3w1zard1/KSELinux](https://github.com/th3w1zard1/KSELinux))
 - **[KotOR-Save-Editor](https://github.com/th3w1zard1/KotOR-Save-Editor)** - GUI save editor
 - **[kotor-savegame-editor](https://github.com/th3w1zard1/kotor-savegame-editor)** - Web-based save editor
 
@@ -291,18 +291,18 @@ Tools for editing KotOR save games:
 
 Tools for working with KotOR audio:
 
-- **[SithCodec](https://github.com/th3w1zard1/SithCodec)** - KotOR audio codec implementation
-- **[SWKotOR-Audio-Encoder](https://github.com/th3w1zard1/SWKotOR-Audio-Encoder)** - Audio encoding tool for KotOR
+- **[SithCodec](https://github.com/BBBrassil/SithCodec)** - KotOR audio codec implementation ([Mirror: th3w1zard1/SithCodec](https://github.com/th3w1zard1/SithCodec))
+- **[SWKotOR-Audio-Encoder](https://github.com/LoranRendel/SWKotOR-Audio-Encoder)** - Audio encoding tool for KotOR ([Mirror: th3w1zard1/SWKotOR-Audio-Encoder](https://github.com/th3w1zard1/SWKotOR-Audio-Encoder))
 
 ### Community Resources
 
 Guides, patches, and community-maintained resources:
 
-- **[K1_Community_Patch](https://github.com/th3w1zard1/K1_Community_Patch)** - Community bug fix patch for KotOR 1
-- **[TSL_Community_Patch](https://github.com/th3w1zard1/TSL_Community_Patch)** - Community bug fix patch for KotOR 2
+- **[K1_Community_Patch](https://github.com/KOTORCommunityPatches/K1_Community_Patch)** - Community bug fix patch for KotOR 1 ([Mirror: th3w1zard1/K1_Community_Patch](https://github.com/th3w1zard1/K1_Community_Patch))
+- **[TSL_Community_Patch](https://github.com/KOTORCommunityPatches/TSL_Community_Patch)** - Community bug fix patch for KotOR 2 ([Mirror: th3w1zard1/TSL_Community_Patch](https://github.com/th3w1zard1/TSL_Community_Patch))
 - **[KOTOR-utils](https://github.com/th3w1zard1/KOTOR-utils)** - JCarter426's utility scripts and tools
-- **[KotOR-Bioware-Libs](https://github.com/th3w1zard1/KotOR-Bioware-Libs)** - BioWare library references
-- **[kotor_combat_faq](https://github.com/th3w1zard1/kotor_combat_faq)** - Combat mechanics documentation
+- **[KotOR-Bioware-Libs](https://github.com/Fair-Strides/KotOR-Bioware-Libs)** - BioWare library references ([Mirror: th3w1zard1/KotOR-Bioware-Libs](https://github.com/th3w1zard1/KotOR-Bioware-Libs))
+- **[kotor_combat_faq](https://github.com/statsjedi/kotor_combat_faq)** - Combat mechanics documentation ([Mirror: th3w1zard1/kotor_combat_faq](https://github.com/th3w1zard1/kotor_combat_faq))
 - **[ds-kotor-modding-wiki](https://github.com/th3w1zard1/ds-kotor-modding-wiki)** - DeadlyStream modding wiki archive
 
 ### Documentation
