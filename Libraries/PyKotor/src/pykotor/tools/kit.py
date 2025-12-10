@@ -232,7 +232,10 @@ def _get_component_name_mapping(kit_id: str | None, model_names: list[str]) -> d
                             # Remove module prefix
                             clean_name = f"component_{parts[1]}"
                         else:
-                            clean_name = f"component_{parts[1]}"
+                            # Keep full name with component_ prefix
+                            clean_name = f"component_{model_lower}"
+                else:
+                    clean_name = f"component_{model_lower}"
                 mapping[model_lower] = clean_name
     
     # Default: use model names as-is (sanitized)
@@ -240,14 +243,15 @@ def _get_component_name_mapping(kit_id: str | None, model_names: list[str]) -> d
         for model_name in model_names:
             model_lower = model_name.lower()
             # Sanitize model name for use as component ID
-            # Remove module prefix if present
+            # Remove module prefix if present (based on length only)
             clean_name = model_lower
             if "_" in clean_name:
                 parts = clean_name.split("_", 1)
                 if len(parts) > 1:
-                    # Check if first part looks like a module prefix (e.g., "m09aa")
                     first_part = parts[0]
-                    if first_part.startswith("m") and len(first_part) > 1:
+                    # Only check length: typical KOTOR module prefixes are 4-6 characters
+                    # (e.g., "m09aa" = 5, "m28ab" = 5, "m05aa" = 5)
+                    if 4 <= len(first_part) <= 6:
                         # Remove module prefix (e.g., "m09aa" from "m09aa_01a")
                         clean_name = parts[1]
             mapping[model_lower] = clean_name
