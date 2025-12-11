@@ -115,11 +115,13 @@ if ($List) {
     if (-not $DryRun) {
         if ($Event -eq "workflow_dispatch" -and (Test-Path $eventFile)) {
             act -l -W $Workflow -e $eventFile
-        } else {
+        }
+        else {
             act -l -W $Workflow
         }
         exit $LASTEXITCODE
-    } else {
+    }
+    else {
         exit 0
     }
 }
@@ -154,9 +156,11 @@ if ($ActVerbose) {
 # Note: Act simulates Windows/macOS in Linux containers, so all jobs run on Linux
 # The workflow installs PowerShell on non-Windows (via install_powershell.sh) before using it
 # We map all platforms to ubuntu-latest so PowerShell gets installed properly
+# Use --pull=false to avoid rate limits if image is already cached
 $actArgs += @("-P", "ubuntu-latest=catthehacker/ubuntu:act-latest")
 $actArgs += @("-P", "windows-latest=catthehacker/ubuntu:act-latest")
 $actArgs += @("-P", "macos-latest=catthehacker/ubuntu:act-latest")
+$actArgs += @("--pull=false")
 
 # Add --rm to automatically clean up containers/volumes after failure
 # This helps avoid Docker volume cleanup issues with submodules
@@ -206,7 +210,8 @@ try {
         Write-Host "========================================="
         Write-Host "Workflow completed successfully!" -ForegroundColor Green
         Write-Host "========================================="
-    } else {
+    }
+    else {
         Write-Host ""
         Write-Host "========================================="
         Write-Host "Workflow completed with errors (exit code: $exitCode)" -ForegroundColor Yellow
@@ -217,7 +222,8 @@ try {
     }
     
     exit $exitCode
-} catch {
+}
+catch {
     Write-Host ""
     Write-Host "========================================="
     Write-Host "Error running workflow:" -ForegroundColor Red
