@@ -53,18 +53,48 @@ jobs:
                   f"compile/compile_{build_name}.bat",
               ])
 
+          def has_main_entrypoint(tool_path: Path) -> bool:
+              """Check if tool has a __main__.py entrypoint that can be compiled with compile_tool.py"""
+              # Look for src/<toolname>/__main__.py pattern
+              tool_name_lower = tool_path.name.lower()
+              main_path = tool_path / "src" / tool_name_lower / "__main__.py"
+              if main_path.exists():
+                  return True
+              # Also check for alternative patterns (e.g., holocron_ai vs holocronai)
+              for src_subdir in (tool_path / "src").iterdir():
+                  if src_subdir.is_dir() and (src_subdir / "__main__.py").exists():
+                      return True
+              return False
+
           if tools_dir.exists():
               for tool_path in sorted(tools_dir.iterdir()):
                   if tool_path.is_dir() and not tool_path.name.startswith("."):
-                      build_name = derive_build_name(tool_path.name)
-                      if not has_compile_script(build_name):
-                          print(f"Skipping {tool_path.name}: no compile script found")
+                      # Skip 'tests' directory - it's not a tool
+                      if tool_path.name.lower() == "tests":
                           continue
-                      tools.append({
-                          "tool_dir": tool_path.name,
-                          "build_name": build_name,
-                          "display_name": tool_path.name,
-                      })
+                      
+                      build_name = derive_build_name(tool_path.name)
+                      
+                      # Check if tool has a compile script OR can use compile_tool.py
+                      if has_compile_script(build_name):
+                          # Has explicit compile script
+                          tools.append({
+                              "tool_dir": tool_path.name,
+                              "build_name": build_name,
+                              "display_name": tool_path.name,
+                              "use_compile_tool": False,
+                          })
+                      elif has_main_entrypoint(tool_path):
+                          # Can use compile_tool.py dynamically
+                          tools.append({
+                              "tool_dir": tool_path.name,
+                              "build_name": build_name,
+                              "display_name": tool_path.name,
+                              "use_compile_tool": True,
+                          })
+                      else:
+                          print(f"Skipping {tool_path.name}: no compile script found and no __main__.py entrypoint")
+                          continue
           else:
               print("❌ Tools directory not found")
 
@@ -140,14 +170,6 @@ jobs:
             architecture: x86
 
     steps:
-      - name: Determine Python version string
-        id: set-python-version
-        run: |
-          Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
-        shell: pwsh
-        env:
-          MATRIX_ARCH: ${{ matrix.architecture }}
-
       - uses: actions/checkout@v4
 
       - name: Install PowerShell on non-Windows
@@ -156,6 +178,14 @@ jobs:
         run: |
           chmod +x ./install_powershell.sh
           bash ./install_powershell.sh
+
+      - name: Determine Python version string
+        id: set-python-version
+        run: |
+          Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
+        shell: pwsh
+        env:
+          MATRIX_ARCH: ${{ matrix.architecture }}
 
       - name: Reset APT sources to default
         if: ${{ runner.os == 'Linux' }}
@@ -294,15 +324,35 @@ jobs:
         shell: pwsh
         run: |
           $buildName = "${{ matrix.tool.build_name }}"
-          $compileCandidates = @("compile/compile_${buildName}.ps1","compile/compile_${buildName}.sh","compile/compile_${buildName}.bat")
-          $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat")
+          $toolDir = "${{ matrix.tool.tool_dir }}"
+          $useCompileTool = "${{ matrix.tool.use_compile_tool }}" -eq "True"
+          
           $compileScript = ""
-          foreach ($c in $compileCandidates) { if (Test-Path $c) { $compileScript = $c; break } }
           $depsScript = ""
-          foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
-          if (-not $compileScript) { Write-Error "Compile script not found for $buildName"; exit 1 }
+          
+          if ($useCompileTool) {
+            # Use compile_tool.py dynamically
+            $compileScript = "compile/compile_tool.py"
+            # Check for deps script, but it's optional
+            $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat","compile/deps_tool.ps1","compile/deps_tool.sh","compile/deps_tool.bat")
+            foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
+          } else {
+            # Use explicit compile script
+            $compileCandidates = @("compile/compile_${buildName}.ps1","compile/compile_${buildName}.sh","compile/compile_${buildName}.bat")
+            $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat")
+            foreach ($c in $compileCandidates) { if (Test-Path $c) { $compileScript = $c; break } }
+            foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
+          }
+          
+          if (-not $compileScript -or -not (Test-Path $compileScript)) { 
+            Write-Error "Compile script not found for $buildName (use_compile_tool=$useCompileTool)"; 
+            exit 1 
+          }
+          
           echo "compile_script=$compileScript" >> $env:GITHUB_OUTPUT
           echo "deps_script=$depsScript" >> $env:GITHUB_OUTPUT
+          echo "use_compile_tool=$useCompileTool" >> $env:GITHUB_OUTPUT
+          echo "tool_dir=$toolDir" >> $env:GITHUB_OUTPUT
           echo "Using compile script $compileScript"
           if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
 
@@ -553,8 +603,65 @@ jobs:
           Write-Host "Venv name: $venvName"
           Write-Host "UPX directory: $upxDir"
           
+          $useCompileTool = "${{ steps.locate-scripts.outputs.use_compile_tool }}" -eq "True"
+          $toolDir = "${{ steps.locate-scripts.outputs.tool_dir }}"
+          
           try {
-            if ($compile.EndsWith(".ps1")) {
+            if ($useCompileTool -and $compile.EndsWith(".py")) {
+              # Use compile_tool.py dynamically
+              $toolPath = "Tools/$toolDir"
+              $entrypoint = ""
+              
+              # Find the entrypoint (src/<toolname>/__main__.py)
+              $toolNameLower = $toolDir.ToLower()
+              $possibleEntrypoints = @(
+                "$toolNameLower/__main__.py",
+                "$toolDir/__main__.py"
+              )
+              
+              foreach ($ep in $possibleEntrypoints) {
+                $epPath = Join-Path $toolPath "src/$ep"
+                if (Test-Path $epPath) {
+                  $entrypoint = $ep
+                  break
+                }
+              }
+              
+              # If not found, search for any __main__.py in src subdirectories
+              if (-not $entrypoint) {
+                $srcDir = Join-Path $toolPath "src"
+                if (Test-Path $srcDir) {
+                  $mainFiles = Get-ChildItem -Path $srcDir -Recurse -Filter "__main__.py" -ErrorAction SilentlyContinue
+                  if ($mainFiles) {
+                    $relativePath = $mainFiles[0].FullName.Replace((Resolve-Path $srcDir).Path + [System.IO.Path]::DirectorySeparatorChar, "")
+                    $entrypoint = $relativePath.Replace([System.IO.Path]::DirectorySeparatorChar, "/")
+                  }
+                }
+              }
+              
+              if (-not $entrypoint) {
+                Write-Error "Could not find __main__.py entrypoint for tool $toolDir"
+                exit 1
+              }
+              
+              Write-Host "Using compile_tool.py with entrypoint: $entrypoint"
+              
+              # Build compile_tool.py command
+              $pythonExe = if (Test-Path variable:pythonExePath) { $pythonExePath } else { "python" }
+              $compileArgs = @(
+                "$compile",
+                "--tool-path", $toolPath,
+                "--entrypoint", $entrypoint,
+                "--venv-name", $venvName,
+                "--noprompt"
+              )
+              
+              if ($upxDir) {
+                $compileArgs += @("--upx-dir", $upxDir)
+              }
+              
+              & $pythonExe $compileArgs
+            } elseif ($compile.EndsWith(".ps1")) {
               if ($upxDir) {
                 . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
               } else {

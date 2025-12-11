@@ -151,8 +151,25 @@ if ($ActVerbose) {
 
 # Add platform-specific runner
 # Act needs to know which runner image to use
-# For Windows, we'll use ubuntu-latest as a fallback since act doesn't fully support Windows runners
+# Note: Act simulates Windows/macOS in Linux containers, so all jobs run on Linux
+# The workflow installs PowerShell on non-Windows (via install_powershell.sh) before using it
+# We map all platforms to ubuntu-latest so PowerShell gets installed properly
 $actArgs += @("-P", "ubuntu-latest=catthehacker/ubuntu:act-latest")
+$actArgs += @("-P", "windows-latest=catthehacker/ubuntu:act-latest")
+$actArgs += @("-P", "macos-latest=catthehacker/ubuntu:act-latest")
+
+# Add --rm to automatically clean up containers/volumes after failure
+# This helps avoid Docker volume cleanup issues with submodules
+$actArgs += @("--rm")
+
+# Use --bind to bind working directory instead of copying (avoids vendor submodule issues)
+$actArgs += @("--bind")
+
+# Set environment variables to help act work better
+# ACTIONS_RUNTIME_TOKEN is needed for artifact uploads (but act doesn't fully support this)
+# We'll set a dummy value to prevent errors
+$env:ACTIONS_RUNTIME_TOKEN = "dummy-token-for-act"
+$env:ACTIONS_RUNTIME_URL = "http://localhost:8080"
 
 # Build the full command
 $actCommand = "act $($actArgs -join ' ')"
