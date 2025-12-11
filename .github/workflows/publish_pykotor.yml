@@ -480,14 +480,14 @@ jobs:
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "$pythonDir:$env:PATH"
+              $env:PATH = "${pythonDir}:$env:PATH"
             }
           } elseif (Test-Path variable:pythonExePath) {
             $pythonDir = Split-Path -Parent $pythonExePath
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "$pythonDir:$env:PATH"
+              $env:PATH = "${pythonDir}:$env:PATH"
             }
           }
           
@@ -538,14 +538,14 @@ jobs:
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "$pythonDir:$env:PATH"
+              $env:PATH = "${pythonDir}:$env:PATH"
             }
           } elseif (Test-Path variable:pythonExePath) {
             $pythonDir = Split-Path -Parent $pythonExePath
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "$pythonDir:$env:PATH"
+              $env:PATH = "${pythonDir}:$env:PATH"
             }
           }
           
@@ -654,14 +654,14 @@ jobs:
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "$pythonDir:$env:PATH"
+              $env:PATH = "${pythonDir}:$env:PATH"
             }
           } elseif (Test-Path variable:pythonExePath) {
             $pythonDir = Split-Path -Parent $pythonExePath
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "$pythonDir:$env:PATH"
+              $env:PATH = "${pythonDir}:$env:PATH"
             }
           }
           
