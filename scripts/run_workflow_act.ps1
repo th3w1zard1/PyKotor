@@ -144,6 +144,15 @@ if ($Event -eq "workflow_dispatch" -and (Test-Path $eventFile)) {
 # Add specific job if specified
 if ($Job) {
     $actArgs += @("-j", $Job)
+    
+    # For build job, enable test mode to limit matrix combinations
+    # This makes testing much faster (1 tool, 1 OS, 1 Python version, 1 architecture)
+    if ($Job -eq "build") {
+        $env:ACT_TEST_MODE = "true"
+        # Optionally specify a tool to test (defaults to first tool)
+        # $env:ACT_TEST_TOOL = "BatchPatcher"
+        Write-Host "Test mode enabled: limiting matrix to 1 tool, 1 OS, 1 Python version, 1 architecture" -ForegroundColor Cyan
+    }
 }
 
 # Add verbose flag
@@ -175,6 +184,17 @@ $actArgs += @("--bind")
 $env:ACTIONS_RUNTIME_TOKEN = "dummy-token-for-act"
 $env:ACTIONS_RUNTIME_URL = "http://localhost:8080"
 
+# For build job, enable test mode to dramatically speed up testing
+# This limits matrix to: 1 tool, 1 OS (ubuntu-latest), 1 Python version (3.13), 1 architecture (x64)
+# This reduces matrix from ~288 combinations (8 tools × 3 OS × 6 Python × 2 arch) to just 1
+if ($Job -eq "build") {
+    # Pass environment variable to act using --env flag
+    $actArgs += @("--env", "ACT_TEST_MODE=true")
+    Write-Host "Test mode enabled: limiting to 1 tool, ubuntu-latest, Python 3.13, x64" -ForegroundColor Cyan
+    Write-Host "This reduces matrix from ~288 combinations to just 1" -ForegroundColor Cyan
+    Write-Host ""
+}
+
 # Build the full command
 $actCommand = "act $($actArgs -join ' ')"
 
@@ -197,13 +217,31 @@ Write-Host "Press Ctrl+C to cancel, or wait 5 seconds to continue..."
 Start-Sleep -Seconds 5
 Write-Host ""
 
-# Run act
+# Run act with timeout (2 minutes for build job, 30 seconds for others)
 Write-Host "Executing workflow with act..."
 Write-Host ""
 
+$timeoutSeconds = if ($Job -eq "build") { 120 } else { 30 }
+Write-Host "Timeout set to $timeoutSeconds seconds" -ForegroundColor Cyan
+Write-Host ""
+
 try {
-    & act @actArgs
-    $exitCode = $LASTEXITCODE
+    # Run act directly but with a timeout wrapper
+    $actProcess = Start-Process -FilePath "act" -ArgumentList $actArgs -PassThru -NoNewWindow
+    
+    $completed = $actProcess.WaitForExit($timeoutSeconds * 1000)
+    
+    if (-not $completed) {
+        Write-Host "Workflow execution exceeded $timeoutSeconds second timeout!" -ForegroundColor Red
+        Write-Host "Killing act process..." -ForegroundColor Yellow
+        $actProcess.Kill()
+        $actProcess.WaitForExit(5000)
+        Write-Host "This indicates a bottleneck - check matrix combinations and workflow steps" -ForegroundColor Yellow
+        Write-Host "Test mode should limit to 1 combination - verify ACT_TEST_MODE is set correctly" -ForegroundColor Yellow
+        exit 1
+    }
+    
+    $exitCode = $actProcess.ExitCode
     
     if ($exitCode -eq 0) {
         Write-Host ""

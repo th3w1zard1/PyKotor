@@ -66,12 +66,26 @@ jobs:
                       return True
               return False
 
+          # Check if we're in test mode (limit to one tool)
+          test_mode = os.environ.get("ACT_TEST_MODE", "").lower() == "true"
+          test_tool = os.environ.get("ACT_TEST_TOOL", "").strip()
+          
           if tools_dir.exists():
               for tool_path in sorted(tools_dir.iterdir()):
                   if tool_path.is_dir() and not tool_path.name.startswith("."):
                       # Skip 'tests' directory - it's not a tool
                       if tool_path.name.lower() == "tests":
                           continue
+                      
+                      # In test mode, only process the specified tool (or first tool if none specified)
+                      if test_mode:
+                          if test_tool:
+                              if tool_path.name.lower() != test_tool.lower() and derive_build_name(tool_path.name) != test_tool.lower():
+                                  continue
+                          else:
+                              # Only process first tool in test mode if no specific tool specified
+                              if len(tools) > 0:
+                                  continue
                       
                       build_name = derive_build_name(tool_path.name)
                       
@@ -125,18 +139,34 @@ jobs:
 
       - name: Set environment variables
         id: set_env
+        env:
+          ACT_TEST_MODE: ${{ env.ACT_TEST_MODE }}
         run: |
-          $singleLineJson = '${{ env.OS_RUNNERS_JSON }}' -replace "`r", "" -replace "`n", ""
+          # In test mode, limit matrix to speed up testing
+          $testMode = $env:ACT_TEST_MODE -eq "true"
+          
+          if ($testMode) {
+              $osJson = '["ubuntu-latest"]'
+              $pythonJson = '["3.13"]'
+              $archJson = '["x64"]'
+              Write-Host "Test mode: limiting matrix to ubuntu-latest, Python 3.13, x64"
+          } else {
+              $osJson = '${{ env.OS_RUNNERS_JSON }}'
+              $pythonJson = '${{ env.PYTHON_VERSIONS_JSON }}'
+              $archJson = '${{ env.ARCHITECTURES_JSON }}'
+          }
+          
+          $singleLineJson = $osJson -replace "`r", "" -replace "`n", ""
           echo "os<<EOF" >> $env:GITHUB_OUTPUT
           echo $singleLineJson >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
 
-          $singleLineJson = '${{ env.PYTHON_VERSIONS_JSON }}' -replace "`r", "" -replace "`n", ""
+          $singleLineJson = $pythonJson -replace "`r", "" -replace "`n", ""
           echo "python-version<<EOF" >> $env:GITHUB_OUTPUT
           echo $singleLineJson >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
 
-          $singleLineJson = '${{ env.ARCHITECTURES_JSON }}' -replace "`r", "" -replace "`n", ""
+          $singleLineJson = $archJson -replace "`r", "" -replace "`n", ""
           echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
           echo $singleLineJson >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
