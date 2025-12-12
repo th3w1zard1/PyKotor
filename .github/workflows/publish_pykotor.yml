@@ -633,41 +633,37 @@ jobs:
             Write-Host "Calling install_python_venv.ps1 with venv_name=$venvName and force_python_version=${{ matrix.python-version }}"
             Write-Host "OS: ${{ runner.os }}, Architecture: ${{ matrix.architecture }}, Python version: ${{ matrix.python-version }}"
             
-            # Source the script to run it in current session (allows it to set variables)
-            # -noprompt and -forceInstall flags ensure non-interactive mode
-            # Wrap in try-catch to handle any errors before the script exits
-            $scriptError = $null
-            try {
-              . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }}
-            } catch {
-              $scriptError = $_
-              Write-Error "Error running install_python_venv.ps1: $scriptError"
-              throw
+            # Determine expected venv path
+            $venvPath = $venvName
+            if ("${{ runner.os }}" -eq "Windows") {
+              $expectedPythonPath = Join-Path $venvPath "Scripts\python.exe"
+            } else {
+              $expectedPythonPath = Join-Path $venvPath "bin\python"
             }
             
-            # Check if script set pythonExePath variable
+            # Source the script to run it in current session
+            # Note: Script may call exit, which will terminate this step
+            # If that happens, we'll rely on the venv existing and find Python manually
+            . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }} 2>&1 | ForEach-Object { Write-Host $_ }
+            
+            # If we get here, script completed. Check for pythonExePath variable
             if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
-              Write-Host "Warning: install_python_venv.ps1 did not set pythonExePath variable"
-              Write-Host "Checking for venv Python executable directly..."
-              
-              # Try to find Python in the venv
-              $venvPath = $venvName
-              if ("${{ runner.os }}" -eq "Windows") {
-                $pythonExePath = Join-Path $venvPath "Scripts\python.exe"
+              Write-Host "Script did not set pythonExePath, using expected path: $expectedPythonPath"
+              $pythonExePath = $expectedPythonPath
+            }
+            
+            # Verify venv was created and Python exists
+            if (-not (Test-Path $pythonExePath)) {
+              Write-Error "Python executable not found at: $pythonExePath"
+              Write-Host "Checking if venv directory exists: $venvPath"
+              if (Test-Path $venvPath) {
+                Write-Host "Venv exists but Python not found. Listing contents:"
+                Get-ChildItem -Path $venvPath -Recurse -Depth 2 | Select-Object FullName | Select-Object -First 20
               } else {
-                $pythonExePath = Join-Path $venvPath "bin\python"
+                Write-Error "Venv directory does not exist: $venvPath"
+                Write-Host "This suggests install_python_venv.ps1 failed to create the venv"
               }
-              
-              if (-not (Test-Path $pythonExePath)) {
-                Write-Error "Python executable not found at expected path: $pythonExePath"
-                Write-Host "Listing venv directory contents:"
-                if (Test-Path $venvPath) {
-                  Get-ChildItem -Path $venvPath -Recurse -Depth 2 | Select-Object FullName
-                } else {
-                  Write-Error "Venv directory does not exist: $venvPath"
-                }
-                exit 1
-              }
+              exit 1
             }
             
             Write-Host "Python executable path: $pythonExePath"
