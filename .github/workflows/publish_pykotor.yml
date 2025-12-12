@@ -32,7 +32,6 @@ jobs:
 
       - name: Discover tools and compile scripts
         id: detect
-        if: ${{ (success() || failure()) }}
         run: |
           python3 << 'PYTHON_SCRIPT'
           import json
