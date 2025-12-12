@@ -198,8 +198,6 @@ jobs:
         python-version: ${{ fromJSON(needs.setup.outputs.python-version) }}
         architecture: ${{ fromJSON(needs.setup.outputs.architecture) }}
         qt_version: ["pyqt5"]
-      # Debug: Add a step to verify matrix is populated
-      # If matrix is empty, this job will be skipped entirely
         include:
           - arch: x86
             vc_redist2015: "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe"
