@@ -338,55 +338,8 @@ jobs:
           Write-Host "Outputs set successfully"
         shell: pwsh
 
-  test-matrix-tool:
-    needs: [detect-tools]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        tool: ${{ fromJson(needs.detect-tools.outputs.tools_matrix) }}
-    steps:
-      - run: |
-          echo "Tool: ${{ matrix.tool.build_name }}"
-          echo "Tool: ${{ matrix.tool.display_name }}"
-          echo "Tool: ${{ matrix.tool.tool_dir }}"
-          echo "Tool: ${{ matrix.tool.tool_name }}"
-          echo "Tool: ${{ matrix.tool.tool_version }}"
-          echo "Tool: ${{ matrix.tool.tool_url }}"
-          echo "Tool: ${{ matrix.tool.tool_hash }}"
-          echo "Tool: ${{ matrix.tool.tool_hash_type }}"
-  
-  test-matrix-os:
-    needs: [setup]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: ${{ fromJson(needs.setup.outputs.os) }}
-    steps:
-      - run: |
-          echo "OS: ${{ matrix.os }}"
-  
-  test-matrix-python:
-    needs: [setup]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
-    steps:
-      - run: |
-          echo "Python: ${{ matrix.python-version }}"
-  
-  test-matrix-arch:
-    needs: [setup]
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
-    steps:
-      - run: |
-          echo "Arch: ${{ matrix.architecture }}"
-
   build:
-    needs: [setup, detect-tools, test-matrix-tool, test-matrix-os, test-matrix-python, test-matrix-arch]
+    needs: [setup, detect-tools]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false # Disable automatic cancellation of other jobs
