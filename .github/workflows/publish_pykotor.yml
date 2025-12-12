@@ -635,7 +635,14 @@ jobs:
             
             # Source the script to run it in current session (allows it to set variables)
             # -noprompt flag ensures non-interactive mode (no prompts)
-            . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
+            # Use -forceInstall to proceed without prompts
+            . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }}
+            
+            # Check exit code from script
+            if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne $null) {
+              Write-Error "install_python_venv.ps1 exited with code $LASTEXITCODE"
+              exit $LASTEXITCODE
+            }
             
             # Check if script set pythonExePath variable
             if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
