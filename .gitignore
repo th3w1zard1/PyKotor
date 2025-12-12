@@ -118,3 +118,4 @@ vendor/REVIEW_STATUS.md
 vendor/vendor_submodule_analysis.md
 venv/
 upx-dir/
+temp_log_*.txt
