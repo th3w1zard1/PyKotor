@@ -341,65 +341,6 @@ jobs:
 
   build:
     needs: [setup, detect-tools]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Debug matrix evaluation
-        if: ${{ (success() || failure()) }}
-        run: |
-          echo "Checking if outputs are accessible..."
-          echo "tools_matrix: ${{ needs.detect-tools.outputs.tools_matrix }}"
-          echo "os: ${{ needs.setup.outputs.os }}"
-          echo "python-version: ${{ needs.setup.outputs.python-version }}"
-          echo "architecture: ${{ needs.setup.outputs.architecture }}"
-          
-          # Test fromJson parsing
-          python3 << 'EOF'
-          import json
-          import os
-          
-          tools_str = os.environ.get('TOOLS_MATRIX', '')
-          os_str = os.environ.get('OS_OUTPUT', '')
-          python_str = os.environ.get('PYTHON_OUTPUT', '')
-          arch_str = os.environ.get('ARCH_OUTPUT', '')
-          
-          print(f"tools_str length: {len(tools_str)}")
-          print(f"os_str length: {len(os_str)}")
-          print(f"python_str length: {len(python_str)}")
-          print(f"arch_str length: {len(arch_str)}")
-          
-          try:
-              tools = json.loads(tools_str) if tools_str else []
-              print(f"✓ tools parsed: {len(tools)} items")
-          except Exception as e:
-              print(f"✗ tools failed: {e}")
-          
-          try:
-              os_list = json.loads(os_str) if os_str else []
-              print(f"✓ os parsed: {len(os_list)} items")
-          except Exception as e:
-              print(f"✗ os failed: {e}")
-          
-          try:
-              python_list = json.loads(python_str) if python_str else []
-              print(f"✓ python parsed: {len(python_list)} items")
-          except Exception as e:
-              print(f"✗ python failed: {e}")
-          
-          try:
-              arch_list = json.loads(arch_str) if arch_str else []
-              print(f"✓ arch parsed: {len(arch_list)} items")
-          except Exception as e:
-              print(f"✗ arch failed: {e}")
-          EOF
-        env:
-          TOOLS_MATRIX: ${{ needs.detect-tools.outputs.tools_matrix }}
-          OS_OUTPUT: ${{ needs.setup.outputs.os }}
-          PYTHON_OUTPUT: ${{ needs.setup.outputs.python-version }}
-          ARCH_OUTPUT: ${{ needs.setup.outputs.architecture }}
-        shell: bash
-
-  build-matrix:
-    needs: [setup, detect-tools, build]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false # Disable automatic cancellation of other jobs
@@ -1100,7 +1041,7 @@ jobs:
 
   package: # The goal of this job is to repackage by toolname, rather than all tools by os_pyversion_arch
     needs: build # do not start this job until all 'build' jobs complete
-    if: ${{ (success() || failure()) && (needs['build-matrix'].result == 'success' || needs['build-matrix'].result == 'failure') }}
+    if: ${{ always() && (needs.build.result == 'success' || needs.build.result == 'failure') }}
     runs-on: ubuntu-latest
     outputs:
       filesToArchive: ${{ steps.set-matrix.outputs.matrixJson }}
