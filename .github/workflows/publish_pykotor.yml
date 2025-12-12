@@ -513,6 +513,7 @@ jobs:
           $ErrorActionPreference = "Stop"
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $env:PYKOTOR_VENV_NAME = $venvName
           
           # Set LD_LIBRARY_PATH for Linux (needed for some Python installations)
           if ("${{ runner.os }}" -eq "Linux") {
@@ -520,62 +521,36 @@ jobs:
           }
           
           try {
-            Write-Host "Calling install_python_venv.ps1 with venv_name=$venvName and force_python_version=${{ matrix.python-version }}"
-            Write-Host "OS: ${{ runner.os }}, Architecture: ${{ matrix.architecture }}, Python version: ${{ matrix.python-version }}"
-            
-            # Determine expected venv path
-            $venvPath = $venvName
-            if ("${{ runner.os }}" -eq "Windows") {
-              $expectedPythonPath = Join-Path $venvPath "Scripts\python.exe"
-            } else {
-              $expectedPythonPath = Join-Path $venvPath "bin\python"
-            }
-            
-            # Source the script to activate venv and set up environment
-            # The script sets $pythonExePath and activates the venv, then calls exit
-            # When sourced, exit terminates the current PowerShell session (this step)
-            # However, the venv is created and the environment is set up before exit
-            # We'll source it and let it do its work - the venv activation persists
-            # After sourcing (if we get here), construct pythonExePath from venv name
-            # since the variable may not persist after exit
-            . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }} 2>&1 | ForEach-Object { Write-Host $_ }
-            
-            # If we reach here, the script didn't call exit (unlikely but possible)
-            # Check if pythonExePath was set, otherwise use expected path
-            if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
-              $pythonExePath = $expectedPythonPath
-            }
-            
-            # Verify venv was created and Python exists
-            if (-not (Test-Path $pythonExePath)) {
-              Write-Error "Python executable not found at: $pythonExePath"
-              Write-Host "Checking if venv directory exists: $venvPath"
-              if (Test-Path $venvPath) {
-                Write-Host "Venv exists but Python not found. Listing contents:"
-                Get-ChildItem -Path $venvPath -Recurse -Depth 2 | Select-Object FullName | Select-Object -First 20
-              } else {
-                Write-Error "Venv directory does not exist: $venvPath"
-                Write-Host "This suggests install_python_venv.ps1 failed to create the venv"
-              }
+            Write-Host "Sourcing install_python_venv.ps1 (venv_name=$venvName, python=${{ matrix.python-version }}, arch=${{ matrix.architecture }}, os=${{ runner.os }})"
+            . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }} -logLevel Debug
+
+            if (-not $env:pythonExePath) {
+              Write-Error "install_python_venv.ps1 did not set env:pythonExePath"
+              Write-Host "Listing venv directory (if present): $venvName"
+              if (Test-Path $venvName) { Get-ChildItem -Path $venvName -Recurse -Depth 2 | Select-Object FullName | Select-Object -First 50 }
               exit 1
             }
-            
-            Write-Host "Python executable path: $pythonExePath"
-            
-            # Verify Python exists and works
-            & $pythonExePath --version
-            if ($LASTEXITCODE -ne 0) {
-              Write-Error "Python executable at $pythonExePath is not working"
-              exit 1
-            }
+
+            Write-Host "pythonExePath=$env:pythonExePath"
+            & $env:pythonExePath --version
+
+            # Persist across subsequent steps (each step is a fresh process)
+            Add-Content -Path $env:GITHUB_ENV -Value "pythonExePath=$($env:pythonExePath)"
+            Add-Content -Path $env:GITHUB_ENV -Value "PYKOTOR_VENV_NAME=$venvName"
+            if ($env:VIRTUAL_ENV) { Add-Content -Path $env:GITHUB_ENV -Value "VIRTUAL_ENV=$($env:VIRTUAL_ENV)" }
+            if ($env:PYKOTOR_VENV_PATH) { Add-Content -Path $env:GITHUB_ENV -Value "PYKOTOR_VENV_PATH=$($env:PYKOTOR_VENV_PATH)" }
+
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### Python/Venv"
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Venv: `$venvName`"
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Python: `$($env:pythonExePath)`"
             
             # On Linux and macOS, ensure pip is available (bootstrap if needed)
             if ("${{ runner.os }}" -eq "Linux" -or "${{ runner.os }}" -eq "macOS") {
               # Try to bootstrap pip if it's not available
-              $pipCheck = & $pythonExePath -m pip --version 2>&1
+              $pipCheck = & $env:pythonExePath -m pip --version 2>&1
               if ($LASTEXITCODE -ne 0) {
                 Write-Host "Pip not available, bootstrapping with ensurepip..."
-                & $pythonExePath -m ensurepip --upgrade --default-pip
+                & $env:pythonExePath -m ensurepip --upgrade --default-pip
                 if ($LASTEXITCODE -ne 0) {
                   Write-Error "Failed to bootstrap pip"
                   exit 1
@@ -583,7 +558,7 @@ jobs:
               }
             }
             
-            & $pythonExePath -m pip install --upgrade pip
+            & $env:pythonExePath -m pip install --upgrade pip
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Failed to upgrade pip"
               exit 1
@@ -591,12 +566,12 @@ jobs:
             
             if ("${{ runner.os }}" -eq "Windows") {
               if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
-                & $pythonExePath -m pip install "pyinstaller==5.13.2" --prefer-binary
+                & $env:pythonExePath -m pip install "pyinstaller==5.13.2" --prefer-binary
               } else {
-                & $pythonExePath -m pip install "pyinstaller==5.4" --prefer-binary
+                & $env:pythonExePath -m pip install "pyinstaller==5.4" --prefer-binary
               }
             } else {
-              & $pythonExePath -m pip install pyinstaller -U --prefer-binary
+              & $env:pythonExePath -m pip install pyinstaller -U --prefer-binary
             }
             
             if ($LASTEXITCODE -ne 0) {
@@ -618,26 +593,9 @@ jobs:
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
-          # Use pythonExePath if set by install_python_venv.ps1, otherwise construct from venv name
-          if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
-            if ("${{ runner.os }}" -eq "Windows") {
-              $pythonExePath = Join-Path $venvName "Scripts\python.exe"
-            } else {
-              $pythonExePath = Join-Path $venvName "bin\python"
-            }
-          }
-          
-          # Verify Python exists and add to PATH
-          if (Test-Path $pythonExePath) {
-            $pythonDir = Split-Path -Parent $pythonExePath
-            if ("${{ runner.os }}" -eq "Windows") {
-              $env:PATH = "$pythonDir;$env:PATH"
-            } else {
-              $env:PATH = "$pythonDir" + ":" + $env:PATH
-            }
-            Write-Host "Using Python: $pythonExePath"
-          } else {
-            Write-Warning "Python executable not found at: $pythonExePath (continuing anyway)"
+          if (-not $env:pythonExePath) {
+            Write-Error "env:pythonExePath is missing. Expected Create virtual environment step to populate GITHUB_ENV."
+            exit 1
           }
           
           Write-Host "Running deps script $script"
@@ -681,27 +639,16 @@ jobs:
           if ("${{ runner.os }}" -eq "Linux") {
             $env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $env:LD_LIBRARY_PATH
           }
-          
-          # Ensure Python path is available if set by install_python_venv.ps1
-          if ($env:pythonExePath) {
-            $pythonDir = Split-Path -Parent $env:pythonExePath
-            if ("${{ runner.os }}" -eq "Windows") {
-              $env:PATH = "$pythonDir;$env:PATH"
-            } else {
-              $env:PATH = "$pythonDir" + ":" + $env:PATH
-            }
-          } elseif (Test-Path variable:pythonExePath) {
-            $pythonDir = Split-Path -Parent $pythonExePath
-            if ("${{ runner.os }}" -eq "Windows") {
-              $env:PATH = "$pythonDir;$env:PATH"
-            } else {
-              $env:PATH = "$pythonDir" + ":" + $env:PATH
-            }
+
+          if (-not $env:pythonExePath) {
+            Write-Error "env:pythonExePath is missing. Expected Create virtual environment step to populate GITHUB_ENV."
+            exit 1
           }
           
           Write-Host "Using compile script $compile"
           Write-Host "Venv name: $venvName"
           Write-Host "UPX directory: $upxDir"
+          Write-Host "pythonExePath=$env:pythonExePath"
           
           $useCompileTool = "${{ steps.locate-scripts.outputs.use_compile_tool }}" -eq "True"
           $toolDir = "${{ steps.locate-scripts.outputs.tool_dir }}"
@@ -759,7 +706,7 @@ jobs:
                 $compileArgs += @("--upx-dir", $upxDir)
               }
               
-              & $pythonExePath $compileArgs
+              & $env:pythonExePath $compileArgs
             } elseif ($compile.EndsWith(".ps1")) {
               if ($upxDir) {
                 . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
@@ -792,7 +739,7 @@ jobs:
           }
 
       - name: Upload compiled binaries attempt 1
-        if: ${{ success() || failure() }}
+        if: ${{ (success() || failure()) && !env.ACT }}
         id: upload_attempt_1
         uses: actions/upload-artifact@v4
         with:
@@ -803,7 +750,7 @@ jobs:
 
       - name: Upload compiled binaries attempt 2
         id: upload_attempt_2
-        if: ${{ (success() || failure()) && steps.upload_attempt_1.outcome == 'failure' }}
+        if: ${{ (success() || failure()) && !env.ACT && steps.upload_attempt_1.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
           name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
@@ -813,7 +760,7 @@ jobs:
 
       - name: Upload compiled binaries attempt 3
         id: upload_attempt_3
-        if: ${{ (success() || failure()) && steps.upload_attempt_2.outcome == 'failure' }}
+        if: ${{ (success() || failure()) && !env.ACT && steps.upload_attempt_2.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
           name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
@@ -823,7 +770,7 @@ jobs:
 
       - name: Upload compiled binaries attempt 4
         id: upload_attempt_4
-        if: ${{ (success() || failure()) && steps.upload_attempt_3.outcome == 'failure' }}
+        if: ${{ (success() || failure()) && !env.ACT && steps.upload_attempt_3.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
           name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
@@ -833,7 +780,7 @@ jobs:
 
       - name: Upload compiled binaries attempt 5
         id: upload_attempt_5
-        if: ${{ (success() || failure()) && steps.upload_attempt_4.outcome == 'failure' }}
+        if: ${{ (success() || failure()) && !env.ACT && steps.upload_attempt_4.outcome == 'failure' }}
         uses: actions/upload-artifact@v4
         with:
           name: publish_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}
@@ -942,7 +889,7 @@ jobs:
 
   package: # The goal of this job is to repackage by toolname, rather than all tools by os_pyversion_arch
     needs: build # do not start this job until all 'build' jobs complete
-    if: ${{ always() && (needs.build.result == 'success' || needs.build.result == 'failure') }}
+    if: ${{ !env.ACT && always() && (needs.build.result == 'success' || needs.build.result == 'failure') }}
     runs-on: ubuntu-latest
     outputs:
       filesToArchive: ${{ steps.set-matrix.outputs.matrixJson }}
@@ -1104,7 +1051,7 @@ jobs:
 
   upload:
     needs: package
-    if: ${{ success() || failure() }}
+    if: ${{ !env.ACT && (success() || failure()) }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

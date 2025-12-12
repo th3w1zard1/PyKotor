@@ -37,6 +37,12 @@ $PSNativeCommandUseErrorActionPreference = $true
 $script:ExitCode = 1
 $script:ErrorVerbosity = 3  # Compatibility with old error handler
 
+# Detect whether this script is being dot-sourced.
+# When dot-sourced, we MUST NOT call `exit`, because that terminates the caller's PowerShell session
+# (e.g., a GitHub Actions step). In that case, we `return` on success and `throw` on failure,
+# while still setting $env:pythonExePath and activating the venv in the caller session.
+$script:IsDotSourced = $MyInvocation.InvocationName -eq '.'
+
 # Normalize log level
 $script:LogLevels = @{
     "Trace"  = 0
@@ -152,6 +158,9 @@ trap {
     if (-not $noprompt) {
         Write-Host "Press Enter to exit..."
         Read-Host
+    }
+    if ($script:IsDotSourced) {
+        throw $err
     }
     exit 1
 }
@@ -1297,5 +1306,18 @@ else {
 
 $script:ExitCode = 0
 Write-Log -Level "Info" -Message "Bootstrap complete!"
+
+# Export commonly needed values for callers (workflows/scripts) that dot-source this script.
+# - $pythonExePath is a local variable in this script; persist it to both $global: and $env:
+# - The venv activation modifies env vars in the current session; keeping pythonExePath explicit
+#   makes subsequent tooling deterministic.
+$global:pythonExePath = $pythonExePath
+$env:pythonExePath = $pythonExePath
+$global:venvPath = $venvPath
+$env:PYKOTOR_VENV_PATH = $venvPath
+
+if ($script:IsDotSourced) {
+    return
+}
 exit $script:ExitCode
 #endregion Main execution flow
