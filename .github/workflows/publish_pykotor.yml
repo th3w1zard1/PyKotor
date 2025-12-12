@@ -531,16 +531,23 @@ jobs:
               $expectedPythonPath = Join-Path $venvPath "bin\python"
             }
             
-            # Source the script to run it in current session
-            # Note: Script may call exit, which will terminate this step
-            # If that happens, we'll rely on the venv existing and find Python manually
-            . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }} 2>&1 | ForEach-Object { Write-Host $_ }
+            # Run script in a separate PowerShell process to avoid exit terminating this step
+            # Capture output and exit code
+            $scriptOutput = & pwsh -NoProfile -Command ". ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }}; exit `$LASTEXITCODE" 2>&1
+            $scriptExitCode = $LASTEXITCODE
             
-            # If we get here, script completed. Check for pythonExePath variable
-            if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
-              Write-Host "Script did not set pythonExePath, using expected path: $expectedPythonPath"
-              $pythonExePath = $expectedPythonPath
+            # Display script output
+            $scriptOutput | ForEach-Object { Write-Host $_ }
+            
+            # Check exit code
+            if ($scriptExitCode -ne 0) {
+              Write-Error "install_python_venv.ps1 exited with code $scriptExitCode"
+              # Don't exit yet - check if venv was created anyway
             }
+            
+            # Check for pythonExePath variable (won't be set since we ran in separate process)
+            # Use expected path instead
+            $pythonExePath = $expectedPythonPath
             
             # Verify venv was created and Python exists
             if (-not (Test-Path $pythonExePath)) {
