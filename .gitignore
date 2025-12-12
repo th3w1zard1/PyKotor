@@ -119,3 +119,4 @@ vendor/vendor_submodule_analysis.md
 venv/
 upx-dir/
 temp_log_*.txt
+Tools/HolocronToolset/tests/test_files/

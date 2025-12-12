@@ -203,7 +203,7 @@ jobs:
           ACT_TEST_MODE: ${{ env.ACT_TEST_MODE }}
         run: |
           # In test mode, limit matrix to speed up testing
-          $testMode = $env:ACT_TEST_MODE -eq "true"
+          $testMode = $Env:ACT_TEST_MODE -eq "true"
           
           if ($testMode) {
               $osJson = '["ubuntu-latest"]'
@@ -219,13 +219,13 @@ jobs:
           # Use simple format (no EOF delimiters) to match detect-tools job format
           # This ensures fromJSON() can parse the outputs correctly
           $singleLineJson = $osJson -replace "`r", "" -replace "`n", ""
-          echo "os=$singleLineJson" >> $env:GITHUB_OUTPUT
+          echo "os=$singleLineJson" >> $Env:GITHUB_OUTPUT
 
           $singleLineJson = $pythonJson -replace "`r", "" -replace "`n", ""
-          echo "python-version=$singleLineJson" >> $env:GITHUB_OUTPUT
+          echo "python-version=$singleLineJson" >> $Env:GITHUB_OUTPUT
 
           $singleLineJson = $archJson -replace "`r", "" -replace "`n", ""
-          echo "architecture=$singleLineJson" >> $env:GITHUB_OUTPUT
+          echo "architecture=$singleLineJson" >> $Env:GITHUB_OUTPUT
         shell: pwsh
 
   build:
@@ -269,7 +269,7 @@ jobs:
         id: set-python-version
         if: ${{ (success() || failure()) }}
         run: |
-          Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
+          Add-Content -Path $Env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
         shell: pwsh
         env:
           MATRIX_ARCH: ${{ matrix.architecture }}
@@ -325,9 +325,9 @@ jobs:
           }
           $url = "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/$archiveName"
 
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "build=$build"
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "url=$url"
-          Add-Content -Path $env:GITHUB_OUTPUT -Value "archiveName=$archiveName"
+          Add-Content -Path $Env:GITHUB_OUTPUT -Value "build=$build"
+          Add-Content -Path $Env:GITHUB_OUTPUT -Value "url=$url"
+          Add-Content -Path $Env:GITHUB_OUTPUT -Value "archiveName=$archiveName"
         shell: pwsh
 
       - name: Download and prepare UPX
@@ -370,7 +370,7 @@ jobs:
           $upx_dir = "./upx-dir"
           $upx_dir = $([System.IO.Path]::GetFullPath('./upx-dir'))
           Dir -Recurse $upx_dir | Get-Childitem
-          echo "UPX_DIR=$upx_dir" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "UPX_DIR=$upx_dir" | Out-File -FilePath $Env:GITHUB_ENV -Append
           Write-Output "UPX_DIR set to '$upx_dir'"
         shell: pwsh
 
@@ -438,10 +438,10 @@ jobs:
             exit 1 
           }
           
-          echo "compile_script=$compileScript" >> $env:GITHUB_OUTPUT
-          echo "deps_script=$depsScript" >> $env:GITHUB_OUTPUT
-          echo "use_compile_tool=$useCompileTool" >> $env:GITHUB_OUTPUT
-          echo "tool_dir=$toolDir" >> $env:GITHUB_OUTPUT
+          echo "compile_script=$compileScript" >> $Env:GITHUB_OUTPUT
+          echo "deps_script=$depsScript" >> $Env:GITHUB_OUTPUT
+          echo "use_compile_tool=$useCompileTool" >> $Env:GITHUB_OUTPUT
+          echo "tool_dir=$toolDir" >> $Env:GITHUB_OUTPUT
           echo "Using compile script $compileScript"
           if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
 
@@ -489,8 +489,8 @@ jobs:
         id: pip-cache-path
         shell: pwsh
         run: |
-          $pipCache = "$env:LOCALAPPDATA\pip\Cache"
-          echo "path=$pipCache" >> $env:GITHUB_OUTPUT
+          $pipCache = "$Env:LOCALAPPDATA\pip\Cache"
+          echo "path=$pipCache" >> $Env:GITHUB_OUTPUT
 
       - name: Cache pip packages (Windows)
         if: ${{ (success() || failure()) && runner.os == 'Windows' }}
@@ -513,44 +513,44 @@ jobs:
           $ErrorActionPreference = "Stop"
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-          $env:PYKOTOR_VENV_NAME = $venvName
+          $Env:PYKOTOR_VENV_NAME = $venvName
           
           # Set LD_LIBRARY_PATH for Linux (needed for some Python installations)
           if ("${{ runner.os }}" -eq "Linux") {
-            $env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $env:LD_LIBRARY_PATH
+            $Env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $Env:LD_LIBRARY_PATH
           }
           
           try {
             Write-Host "Sourcing install_python_venv.ps1 (venv_name=$venvName, python=${{ matrix.python-version }}, arch=${{ matrix.architecture }}, os=${{ runner.os }})"
             . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }} -logLevel Debug
 
-            if (-not $env:pythonExePath) {
+            if (-not $Env:pythonExePath) {
               Write-Error "install_python_venv.ps1 did not set env:pythonExePath"
               Write-Host "Listing venv directory (if present): $venvName"
               if (Test-Path $venvName) { Get-ChildItem -Path $venvName -Recurse -Depth 2 | Select-Object FullName | Select-Object -First 50 }
               exit 1
             }
 
-            Write-Host "pythonExePath=$env:pythonExePath"
-            & $env:pythonExePath --version
+            Write-Host "pythonExePath=$Env:pythonExePath"
+            & $Env:pythonExePath --version
 
             # Persist across subsequent steps (each step is a fresh process)
-            Add-Content -Path $env:GITHUB_ENV -Value "pythonExePath=$($env:pythonExePath)"
-            Add-Content -Path $env:GITHUB_ENV -Value "PYKOTOR_VENV_NAME=$venvName"
-            if ($env:VIRTUAL_ENV) { Add-Content -Path $env:GITHUB_ENV -Value "VIRTUAL_ENV=$($env:VIRTUAL_ENV)" }
-            if ($env:PYKOTOR_VENV_PATH) { Add-Content -Path $env:GITHUB_ENV -Value "PYKOTOR_VENV_PATH=$($env:PYKOTOR_VENV_PATH)" }
+            Add-Content -Path $Env:GITHUB_ENV -Value "pythonExePath=$($Env:pythonExePath)"
+            Add-Content -Path $Env:GITHUB_ENV -Value "PYKOTOR_VENV_NAME=$venvName"
+            if ($Env:VIRTUAL_ENV) { Add-Content -Path $Env:GITHUB_ENV -Value "VIRTUAL_ENV=$($Env:VIRTUAL_ENV)" }
+            if ($Env:PYKOTOR_VENV_PATH) { Add-Content -Path $Env:GITHUB_ENV -Value "PYKOTOR_VENV_PATH=$($Env:PYKOTOR_VENV_PATH)" }
 
-            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### Python/Venv"
-            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Venv: `$venvName`"
-            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Python: `$($env:pythonExePath)`"
+            Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "### Python/Venv"
+            Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "- Venv: `$venvName`"
+            Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "- Python: `$($Env:pythonExePath)`"
             
             # On Linux and macOS, ensure pip is available (bootstrap if needed)
             if ("${{ runner.os }}" -eq "Linux" -or "${{ runner.os }}" -eq "macOS") {
               # Try to bootstrap pip if it's not available
-              $pipCheck = & $env:pythonExePath -m pip --version 2>&1
+              $pipCheck = & $Env:pythonExePath -m pip --version 2>&1
               if ($LASTEXITCODE -ne 0) {
                 Write-Host "Pip not available, bootstrapping with ensurepip..."
-                & $env:pythonExePath -m ensurepip --upgrade --default-pip
+                & $Env:pythonExePath -m ensurepip --upgrade --default-pip
                 if ($LASTEXITCODE -ne 0) {
                   Write-Error "Failed to bootstrap pip"
                   exit 1
@@ -558,7 +558,7 @@ jobs:
               }
             }
             
-            & $env:pythonExePath -m pip install --upgrade pip
+            & $Env:pythonExePath -m pip install --upgrade pip
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Failed to upgrade pip"
               exit 1
@@ -566,12 +566,12 @@ jobs:
             
             if ("${{ runner.os }}" -eq "Windows") {
               if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
-                & $env:pythonExePath -m pip install "pyinstaller==5.13.2" --prefer-binary
+                & $Env:pythonExePath -m pip install "pyinstaller==5.13.2" --prefer-binary
               } else {
-                & $env:pythonExePath -m pip install "pyinstaller==5.4" --prefer-binary
+                & $Env:pythonExePath -m pip install "pyinstaller==5.4" --prefer-binary
               }
             } else {
-              & $env:pythonExePath -m pip install pyinstaller -U --prefer-binary
+              & $Env:pythonExePath -m pip install pyinstaller -U --prefer-binary
             }
             
             if ($LASTEXITCODE -ne 0) {
@@ -593,7 +593,7 @@ jobs:
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
-          if (-not $env:pythonExePath) {
+          if (-not $Env:pythonExePath) {
             Write-Error "env:pythonExePath is missing. Expected Create virtual environment step to populate GITHUB_ENV."
             Write-Host "Available environment variables:" -ForegroundColor Yellow
             Get-ChildItem Env: | Where-Object { $_.Name -like "*python*" -or $_.Name -like "*venv*" } | ForEach-Object { Write-Host "  $($_.Name)=$($_.Value)" }
@@ -601,16 +601,16 @@ jobs:
           }
           
           # Add Python to PATH for deps scripts
-          $pythonDir = Split-Path -Parent $env:pythonExePath
+          $pythonDir = Split-Path -Parent $Env:pythonExePath
           if ("${{ runner.os }}" -eq "Windows") {
-            $env:PATH = "$pythonDir;$env:PATH"
+            $Env:PATH = "$pythonDir;$Env:PATH"
           } else {
-            $env:PATH = "$pythonDir" + ":" + $env:PATH
+            $Env:PATH = "$pythonDir" + ":" + $Env:PATH
           }
           
           Write-Host "Running deps script $script"
           Write-Host "Venv name: $venvName"
-          Write-Host "pythonExePath=$env:pythonExePath"
+          Write-Host "pythonExePath=$Env:pythonExePath"
           Write-Host "Python directory added to PATH: $pythonDir"
           
           try {
@@ -644,15 +644,15 @@ jobs:
           $compile = "${{ steps.locate-scripts.outputs.compile_script }}"
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-          $upxDir = $env:UPX_DIR
-          $env:PYTHONOPTIMIZE = "1"
+          $upxDir = $Env:UPX_DIR
+          $Env:PYTHONOPTIMIZE = "1"
           
           # Set LD_LIBRARY_PATH for Linux
           if ("${{ runner.os }}" -eq "Linux") {
-            $env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $env:LD_LIBRARY_PATH
+            $Env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $Env:LD_LIBRARY_PATH
           }
 
-          if (-not $env:pythonExePath) {
+          if (-not $Env:pythonExePath) {
             Write-Error "env:pythonExePath is missing. Expected Create virtual environment step to populate GITHUB_ENV."
             Write-Host "Available environment variables:" -ForegroundColor Yellow
             Get-ChildItem Env: | Where-Object { $_.Name -like "*python*" -or $_.Name -like "*venv*" } | ForEach-Object { Write-Host "  $($_.Name)=$($_.Value)" }
@@ -660,17 +660,17 @@ jobs:
           }
           
           # Add Python to PATH for compilation
-          $pythonDir = Split-Path -Parent $env:pythonExePath
+          $pythonDir = Split-Path -Parent $Env:pythonExePath
           if ("${{ runner.os }}" -eq "Windows") {
-            $env:PATH = "$pythonDir;$env:PATH"
+            $Env:PATH = "$pythonDir;$Env:PATH"
           } else {
-            $env:PATH = "$pythonDir" + ":" + $env:PATH
+            $Env:PATH = "$pythonDir" + ":" + $Env:PATH
           }
           
           Write-Host "Using compile script $compile"
           Write-Host "Venv name: $venvName"
           Write-Host "UPX directory: $upxDir"
-          Write-Host "pythonExePath=$env:pythonExePath"
+          Write-Host "pythonExePath=$Env:pythonExePath"
           Write-Host "Python directory added to PATH: $pythonDir"
           
           $useCompileTool = "${{ steps.locate-scripts.outputs.use_compile_tool }}" -eq "True"
@@ -729,7 +729,7 @@ jobs:
                 $compileArgs += @("--upx-dir", $upxDir)
               }
               
-              & $env:pythonExePath $compileArgs
+              & $Env:pythonExePath $compileArgs
             } elseif ($compile.EndsWith(".ps1")) {
               if ($upxDir) {
                 . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
@@ -738,12 +738,12 @@ jobs:
               }
             } elseif ($compile.EndsWith(".sh")) {
               if ($upxDir) {
-                $env:UPX_DIR = $upxDir
+                $Env:UPX_DIR = $upxDir
               }
               bash "./$compile" -noprompt -venv_name $venvName
             } elseif ($compile.EndsWith(".bat")) {
               if ($upxDir) {
-                $env:UPX_DIR = $upxDir
+                $Env:UPX_DIR = $upxDir
               }
               cmd /c ".\\$compile -noprompt -venv_name $venvName"
             } else {
@@ -822,11 +822,11 @@ jobs:
           
           # Set LD_LIBRARY_PATH for Linux
           if ("${{ runner.os }}" -eq "Linux") {
-            $env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $env:LD_LIBRARY_PATH
+            $Env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $Env:LD_LIBRARY_PATH
           }
           
           # Use pythonExePath from GITHUB_ENV (set by Create virtual environment step)
-          if (-not $env:pythonExePath) {
+          if (-not $Env:pythonExePath) {
             Write-Host "env:pythonExePath not found, constructing from venv name..." -ForegroundColor Yellow
             $venvPath = $venvName
             if ("${{ runner.os }}" -eq "Windows") {
@@ -835,7 +835,7 @@ jobs:
               $pythonExePath = Join-Path $venvPath "bin\python"
             }
           } else {
-            $pythonExePath = $env:pythonExePath
+            $pythonExePath = $Env:pythonExePath
           }
           
           if (-not (Test-Path $pythonExePath)) {
@@ -846,9 +846,9 @@ jobs:
           # Add Python to PATH
           $pythonDir = Split-Path -Parent $pythonExePath
           if ("${{ runner.os }}" -eq "Windows") {
-            $env:PATH = "$pythonDir;$env:PATH"
+            $Env:PATH = "$pythonDir;$Env:PATH"
           } else {
-            $env:PATH = "$pythonDir" + ":" + $env:PATH
+            $Env:PATH = "$pythonDir" + ":" + $Env:PATH
           }
           
           Write-Host "Running tests for ${{ matrix.tool.display_name }}"
@@ -1055,9 +1055,9 @@ jobs:
           Write-Host "Matrix JSON:"
           Write-Host $singleLineJsonMatrix
 
-          echo "matrixJson<<EOF" >> $env:GITHUB_OUTPUT
-          echo $singleLineJsonMatrix >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
+          echo "matrixJson<<EOF" >> $Env:GITHUB_OUTPUT
+          echo $singleLineJsonMatrix >> $Env:GITHUB_OUTPUT
+          echo "EOF" >> $Env:GITHUB_OUTPUT
 
       - name: Upload all repackages for next job
         if: ${{ success() || failure() }}
