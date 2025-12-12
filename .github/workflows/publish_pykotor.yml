@@ -120,8 +120,11 @@ jobs:
           print(f"Tools matrix JSON: {tools_json}")
           print(f"Number of tools: {len(tools)}")
           
+          # Use multiline format for GitHub Actions outputs
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-              fh.write(f"tools_matrix={tools_json}\n")
+              fh.write("tools_matrix<<EOF\n")
+              fh.write(f"{tools_json}\n")
+              fh.write("EOF\n")
           PYTHON_SCRIPT
   setup:
     runs-on: ubuntu-latest
