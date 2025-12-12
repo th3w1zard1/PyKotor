@@ -531,29 +531,29 @@ jobs:
               $expectedPythonPath = Join-Path $venvPath "bin\python"
             }
             
-            # Source the script to get all variables (pythonExePath, etc.)
-            # The script may call exit, so we need to handle that
-            # We'll use a try-catch and check if variables were set before exit
+            # Source the script to activate venv and set up environment
+            # Note: The script calls exit at the end, which terminates this step
+            # However, the venv is created and activated before the exit
+            # After the script runs, we'll verify the venv exists and use it
+            # We need to capture pythonExePath before exit, or construct it from venv path
+            $scriptOutput = @()
             try {
-              # Source the script - this will set variables in current scope
-              . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }} 2>&1 | ForEach-Object { Write-Host $_ }
-              
-              # If we get here, script completed without exit
-              # Check if pythonExePath was set
-              if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
-                Write-Host "Script did not set pythonExePath variable, using expected path: $expectedPythonPath"
-                $pythonExePath = $expectedPythonPath
+              # Source the script - variables set before exit will be available
+              # Capture output to see what happened
+              . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }} 2>&1 | ForEach-Object { 
+                $scriptOutput += $_
+                Write-Host $_
               }
             } catch {
-              # Script may have called exit, which throws a terminating error
-              # Check if variables were set before the exit
-              if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
-                Write-Host "Script exited, checking if venv was created anyway..."
-                $pythonExePath = $expectedPythonPath
-              } else {
-                Write-Host "Script exited but pythonExePath was set: $pythonExePath"
-              }
+              # Script may have called exit, which terminates the step
+              # But if we get here, it means exit wasn't called or was caught
+              Write-Host "Script execution completed (or was caught)"
             }
+            
+            # The script's exit will have terminated the step if it was called
+            # So if we reach here, either exit wasn't called or we need to check venv
+            # Construct pythonExePath from venv name (script may have set it, but exit cleared it)
+            $pythonExePath = $expectedPythonPath
             
             # Verify venv was created and Python exists
             if (-not (Test-Path $pythonExePath)) {
