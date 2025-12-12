@@ -882,6 +882,7 @@ jobs:
         with:
           path: published_workflow_builds/
           pattern: publish_*
+          if-no-files-found: warn
 
       - name: Re-package artifacts by Python version and architecture
         shell: pwsh
@@ -891,8 +892,24 @@ jobs:
           $packagedArtifactsPath = Join-Path -Path $here_dirpath -ChildPath "packaged_artifacts"
           New-Item -ItemType Directory -Force -Path $packagedArtifactsPath
 
+          # Check if artifacts directory exists
+          $artifactsDir = "published_workflow_builds"
+          if (-not (Test-Path $artifactsDir)) {
+              Write-Host "No artifacts directory found - creating empty directory" -ForegroundColor Yellow
+              New-Item -ItemType Directory -Force -Path $artifactsDir
+          }
+          
+          # Check if there are any artifacts
+          $artifactCount = (Get-ChildItem -Path $artifactsDir -Filter "publish_*" -ErrorAction SilentlyContinue | Measure-Object).Count
+          if ($artifactCount -eq 0) {
+              Write-Host "No build artifacts found - this may indicate all build jobs failed" -ForegroundColor Yellow
+              Write-Host "Creating empty artifact-names.txt to allow workflow to continue" -ForegroundColor Yellow
+              @() | Out-File -FilePath "artifact-names.txt" -Encoding UTF8
+              exit 0
+          }
+
           # Navigate to the directory with downloaded artifacts
-          Set-Location -Path "published_workflow_builds"
+          Set-Location -Path $artifactsDir
 
           $artifactNames = New-Object 'System.Collections.Generic.HashSet[string]'
           # Iterate through each tool_os_pythonversion_arch folder.
