@@ -193,10 +193,10 @@ jobs:
     strategy:
       fail-fast: false # Disable automatic cancellation of other jobs
       matrix:
-        tool: ${{ fromJson(needs.detect-tools.outputs.tools_matrix) }}
-        os: ${{ fromJson(needs.setup.outputs.os) }}
-        python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
-        architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
+        tool: ${{ fromJSON(needs.detect-tools.outputs.tools_matrix) }}
+        os: ${{ fromJSON(needs.setup.outputs.os) }}
+        python-version: ${{ fromJSON(needs.setup.outputs.python-version) }}
+        architecture: ${{ fromJSON(needs.setup.outputs.architecture) }}
         qt_version: ["pyqt5"]
       # Debug: Add a step to verify matrix is populated
       # If matrix is empty, this job will be skipped entirely
