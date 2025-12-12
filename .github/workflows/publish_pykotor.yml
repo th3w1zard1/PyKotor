@@ -872,7 +872,7 @@ jobs:
 
   package: # The goal of this job is to repackage by toolname, rather than all tools by os_pyversion_arch
     needs: build # do not start this job until all 'build' jobs complete
-    if: ${{ success() || failure() }}
+    if: ${{ always() && (needs.build.result == 'success' || needs.build.result == 'failure') }}
     runs-on: ubuntu-latest
     outputs:
       filesToArchive: ${{ steps.set-matrix.outputs.matrixJson }}
