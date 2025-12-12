@@ -565,15 +565,9 @@ jobs:
             Write-Host "Calling install_python_venv.ps1 with venv_name=$venvName and force_python_version=${{ matrix.python-version }}"
             Write-Host "OS: ${{ runner.os }}, Architecture: ${{ matrix.architecture }}, Python version: ${{ matrix.python-version }}"
             
-            # On Linux, pipe "N" to answer any prompts (don't build from source)
-            # Also capture output to handle any errors
-            if ("${{ runner.os }}" -eq "Linux") {
-              $output = "N" | . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }} 2>&1
-              Write-Host $output
-            } else {
-              # Source the script to run it in current session (allows it to set variables)
-              . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
-            }
+            # Source the script to run it in current session (allows it to set variables)
+            # -noprompt flag ensures non-interactive mode (no prompts)
+            . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
             
             # Check if script set pythonExePath variable
             if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
