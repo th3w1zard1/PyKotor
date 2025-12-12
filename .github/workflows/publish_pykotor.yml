@@ -32,6 +32,7 @@ jobs:
 
       - name: Discover tools and compile scripts
         id: detect
+        if: ${{ (success() || failure()) }}
         run: |
           python3 << 'PYTHON_SCRIPT'
           import json
@@ -183,7 +184,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install PowerShell on non-Windows
-        if: runner.os != 'Windows'
+        if: ${{ (success() || failure()) && runner.os != 'Windows' }}
         shell: bash
         run: |
           chmod +x ./install_powershell.sh
@@ -191,6 +192,7 @@ jobs:
 
       - name: Set environment variables
         id: set_env
+        if: ${{ (success() || failure()) }}
         env:
           ACT_TEST_MODE: ${{ env.ACT_TEST_MODE }}
         run: |
@@ -314,6 +316,7 @@ jobs:
       
       - name: Set outputs explicitly
         id: set-outputs
+        if: ${{ (success() || failure()) }}
         run: |
           # Explicitly set outputs to ensure they're properly evaluated
           # This helps GitHub Actions properly evaluate fromJSON() in matrix context
@@ -341,6 +344,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Debug matrix evaluation
+        if: ${{ (success() || failure()) }}
         run: |
           echo "Checking if outputs are accessible..."
           echo "tools_matrix: ${{ needs.detect-tools.outputs.tools_matrix }}"
@@ -353,10 +357,10 @@ jobs:
           import json
           import os
           
-          tools_str = "${{ needs.detect-tools.outputs.tools_matrix }}"
-          os_str = "${{ needs.setup.outputs.os }}"
-          python_str = "${{ needs.setup.outputs.python-version }}"
-          arch_str = "${{ needs.setup.outputs.architecture }}"
+          tools_str = os.environ.get('TOOLS_MATRIX', '')
+          os_str = os.environ.get('OS_OUTPUT', '')
+          python_str = os.environ.get('PYTHON_OUTPUT', '')
+          arch_str = os.environ.get('ARCH_OUTPUT', '')
           
           print(f"tools_str length: {len(tools_str)}")
           print(f"os_str length: {len(os_str)}")
@@ -364,29 +368,34 @@ jobs:
           print(f"arch_str length: {len(arch_str)}")
           
           try:
-              tools = json.loads(tools_str)
+              tools = json.loads(tools_str) if tools_str else []
               print(f"✓ tools parsed: {len(tools)} items")
           except Exception as e:
               print(f"✗ tools failed: {e}")
           
           try:
-              os_list = json.loads(os_str)
+              os_list = json.loads(os_str) if os_str else []
               print(f"✓ os parsed: {len(os_list)} items")
           except Exception as e:
               print(f"✗ os failed: {e}")
           
           try:
-              python_list = json.loads(python_str)
+              python_list = json.loads(python_str) if python_str else []
               print(f"✓ python parsed: {len(python_list)} items")
           except Exception as e:
               print(f"✗ python failed: {e}")
           
           try:
-              arch_list = json.loads(arch_str)
+              arch_list = json.loads(arch_str) if arch_str else []
               print(f"✓ arch parsed: {len(arch_list)} items")
           except Exception as e:
               print(f"✗ arch failed: {e}")
           EOF
+        env:
+          TOOLS_MATRIX: ${{ needs.detect-tools.outputs.tools_matrix }}
+          OS_OUTPUT: ${{ needs.setup.outputs.os }}
+          PYTHON_OUTPUT: ${{ needs.setup.outputs.python-version }}
+          ARCH_OUTPUT: ${{ needs.setup.outputs.architecture }}
         shell: bash
 
   build-matrix:
@@ -420,7 +429,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install PowerShell on non-Windows
-        if: runner.os != 'Windows'
+        if: ${{ (success() || failure()) && runner.os != 'Windows' }}
         shell: bash
         run: |
           chmod +x ./install_powershell.sh
@@ -428,6 +437,7 @@ jobs:
 
       - name: Determine Python version string
         id: set-python-version
+        if: ${{ (success() || failure()) }}
         run: |
           Add-Content -Path $env:GITHUB_ENV -Value "PYTHON_VERSION=${{ matrix.python-version }}"
         shell: pwsh
@@ -435,7 +445,7 @@ jobs:
           MATRIX_ARCH: ${{ matrix.architecture }}
 
       - name: Reset APT sources to default
-        if: ${{ runner.os == 'Linux' }}
+        if: ${{ (success() || failure()) && runner.os == 'Linux' }}
         run: |
           echo "Resetting APT sources to default Ubuntu repositories"
           sudo rm /etc/apt/sources.list
@@ -447,7 +457,7 @@ jobs:
         shell: bash
 
       - name: Add deadsnakes PPA for older Python versions (Linux)
-        if: ${{ runner.os == 'Linux' }}
+        if: ${{ (success() || failure()) && runner.os == 'Linux' }}
         run: |
           sudo apt-get install -y software-properties-common
           sudo add-apt-repository -y ppa:deadsnakes/ppa
@@ -455,7 +465,7 @@ jobs:
         shell: bash
 
       - name: Cache UPX
-        if: runner.os != 'macOS'
+        if: ${{ (success() || failure()) && runner.os != 'macOS' }}
         uses: actions/cache@v4.3.0
         id: cache-upx
         with:
@@ -466,7 +476,7 @@ jobs:
 
       - name: Set UPX download URL
         # upx docs express that crashes are happening on ventura and above with upx, don't use on mac.
-        if: runner.os != 'macOS'
+        if: ${{ (success() || failure()) && runner.os != 'macOS' }}
         id: upx_setup
         run: |
           $build = "no"
@@ -491,7 +501,7 @@ jobs:
         shell: pwsh
 
       - name: Download and prepare UPX
-        if: runner.os != 'macOS' && steps.cache-upx.outputs.cache-hit != 'true'
+        if: ${{ (success() || failure()) && runner.os != 'macOS' && steps.cache-upx.outputs.cache-hit != 'true' }}
         run: |
           $ext = "${{ runner.os }}" -eq "Windows" ? "zip" : "tar.xz"
           $url = "${{ steps.upx_setup.outputs.url }}"
@@ -524,7 +534,7 @@ jobs:
         shell: pwsh
 
       - name: Set UPX directory path
-        if: runner.os != 'macOS'
+        if: ${{ (success() || failure()) && runner.os != 'macOS' }}
         id: upx_dir
         run: |
           $upx_dir = "./upx-dir"
@@ -535,7 +545,7 @@ jobs:
         shell: pwsh
 
       - name: Install Visual Studio 2015 C++ Redistributable
-        if: runner.os == 'Windows'
+        if: ${{ (success() || failure()) && runner.os == 'Windows' }}
         run: |
           $url = "${{ matrix.vc_redist2015 }}"
           $output = "vc_redist.exe"
@@ -546,7 +556,7 @@ jobs:
         shell: pwsh
 
       - name: Install Visual Studio 2019 C++ Redistributable
-        if: runner.os == 'Windows'
+        if: ${{ (success() || failure()) && runner.os == 'Windows' }}
         run: |
           $url = "${{ matrix.vc_redist2019 }}"
           $output = "vc_redist.exe"
@@ -557,7 +567,7 @@ jobs:
         shell: pwsh
 
       - name: Install Visual Studio latest C++ Redistributable
-        if: runner.os == 'Windows'
+        if: ${{ (success() || failure()) && runner.os == 'Windows' }}
         run: |
           $url = "${{ matrix.vc_redist-latest }}"
           $output = "vc_redist.exe"
@@ -568,6 +578,7 @@ jobs:
 
       - name: Locate compile and dependency scripts
         id: locate-scripts
+        if: ${{ (success() || failure()) }}
         shell: pwsh
         run: |
           # Matrix now contains tool object directly
@@ -605,7 +616,7 @@ jobs:
           if ($depsScript) { echo "Using deps script $depsScript" } else { echo "No deps script found" }
 
       - name: Pre-install Python packages (Linux workaround)
-        if: ${{ runner.os == 'Linux' }}
+        if: ${{ (success() || failure()) && runner.os == 'Linux' }}
         shell: bash
         run: |
           # Workaround: Pre-install Python without pip package (python3.X-pip doesn't exist in deadsnakes PPA)
@@ -630,7 +641,7 @@ jobs:
           python${PYTHON_MAJOR_MINOR} --version || (echo "Failed to install Python $PYTHON_VERSION" && exit 1)
 
       - name: Cache pip packages (Linux/macOS)
-        if: runner.os != 'Windows'
+        if: ${{ (success() || failure()) && runner.os != 'Windows' }}
         uses: actions/cache@v4.3.0
         id: cache-pip-unix
         with:
@@ -644,7 +655,7 @@ jobs:
             pip-${{ runner.os }}-
 
       - name: Get Windows pip cache path
-        if: runner.os == 'Windows'
+        if: ${{ (success() || failure()) && runner.os == 'Windows' }}
         id: pip-cache-path
         shell: pwsh
         run: |
@@ -652,7 +663,7 @@ jobs:
           echo "path=$pipCache" >> $env:GITHUB_OUTPUT
 
       - name: Cache pip packages (Windows)
-        if: runner.os == 'Windows'
+        if: ${{ (success() || failure()) && runner.os == 'Windows' }}
         uses: actions/cache@v4.3.0
         id: cache-pip-windows
         with:
@@ -665,6 +676,7 @@ jobs:
 
       - name: Create virtual environment
         shell: pwsh
+        if: ${{ (success() || failure()) }}
         env:
           MATRIX_ARCH: ${{ matrix.architecture }}
         run: |
@@ -760,7 +772,7 @@ jobs:
           }
 
       - name: Install tool dependencies
-        if: ${{ steps.locate-scripts.outputs.deps_script != '' }}
+        if: ${{ (success() || failure()) && (steps.locate-scripts.outputs.deps_script != '') }}
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
@@ -1088,7 +1100,7 @@ jobs:
 
   package: # The goal of this job is to repackage by toolname, rather than all tools by os_pyversion_arch
     needs: build # do not start this job until all 'build' jobs complete
-    if: ${{ always() && (needs['build-matrix'].result == 'success' || needs['build-matrix'].result == 'failure') }}
+    if: ${{ (success() || failure()) && (needs['build-matrix'].result == 'success' || needs['build-matrix'].result == 'failure') }}
     runs-on: ubuntu-latest
     outputs:
       filesToArchive: ${{ steps.set-matrix.outputs.matrixJson }}
