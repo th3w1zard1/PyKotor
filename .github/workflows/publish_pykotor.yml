@@ -69,7 +69,7 @@ jobs:
           # Check if we're in test mode (limit to one tool)
           test_mode = os.environ.get("ACT_TEST_MODE", "").lower() == "true"
           test_tool = os.environ.get("ACT_TEST_TOOL", "").strip()
-          
+
           if tools_dir.exists():
               for tool_path in sorted(tools_dir.iterdir()):
                   if tool_path.is_dir() and not tool_path.name.startswith("."):
@@ -92,10 +92,10 @@ jobs:
                       # Check if tool has a compile script OR can use compile_tool.py
                       if has_compile_script(build_name):
                           # Has explicit compile script
-                          tools.append({
-                              "tool_dir": tool_path.name,
-                              "build_name": build_name,
-                              "display_name": tool_path.name,
+                      tools.append({
+                          "tool_dir": tool_path.name,
+                          "build_name": build_name,
+                          "display_name": tool_path.name,
                               "use_compile_tool": False,
                           })
                       elif has_main_entrypoint(tool_path):
@@ -126,7 +126,7 @@ jobs:
           # CRITICAL: Ensure no newlines in the JSON string
           tools_json_clean = tools_json.replace("\n", "").replace("\r", "")
           print(f"Cleaned JSON length: {len(tools_json_clean)}")
-          
+
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
               fh.write(f"tools_matrix={tools_json_clean}\n")
           
@@ -326,11 +326,11 @@ jobs:
           echo "os<<EOF" >> $env:GITHUB_OUTPUT
           echo "${{ needs.setup.outputs.os }}" >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
-          
+
           echo "python-version<<EOF" >> $env:GITHUB_OUTPUT
           echo "${{ needs.setup.outputs.python-version }}" >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
-          
+
           echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
           echo "${{ needs.setup.outputs.architecture }}" >> $env:GITHUB_OUTPUT
           echo "EOF" >> $env:GITHUB_OUTPUT
@@ -537,10 +537,10 @@ jobs:
             foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
           } else {
             # Use explicit compile script
-            $compileCandidates = @("compile/compile_${buildName}.ps1","compile/compile_${buildName}.sh","compile/compile_${buildName}.bat")
-            $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat")
-            foreach ($c in $compileCandidates) { if (Test-Path $c) { $compileScript = $c; break } }
-            foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
+          $compileCandidates = @("compile/compile_${buildName}.ps1","compile/compile_${buildName}.sh","compile/compile_${buildName}.bat")
+          $depsCandidates = @("compile/deps_${buildName}.ps1","compile/deps_${buildName}.sh","compile/deps_${buildName}.bat")
+          foreach ($c in $compileCandidates) { if (Test-Path $c) { $compileScript = $c; break } }
+          foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
           }
           
           if (-not $compileScript -or -not (Test-Path $compileScript)) { 
@@ -626,7 +626,7 @@ jobs:
           
           # Set LD_LIBRARY_PATH for Linux (needed for some Python installations)
           if ("${{ runner.os }}" -eq "Linux") {
-            $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
+            $env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $env:LD_LIBRARY_PATH
           }
           
           try {
@@ -653,17 +653,17 @@ jobs:
             }
             
             # Verify venv was created and Python exists
-            if (-not (Test-Path $pythonExePath)) {
+              if (-not (Test-Path $pythonExePath)) {
               Write-Error "Python executable not found at: $pythonExePath"
               Write-Host "Checking if venv directory exists: $venvPath"
-              if (Test-Path $venvPath) {
+                if (Test-Path $venvPath) {
                 Write-Host "Venv exists but Python not found. Listing contents:"
                 Get-ChildItem -Path $venvPath -Recurse -Depth 2 | Select-Object FullName | Select-Object -First 20
-              } else {
-                Write-Error "Venv directory does not exist: $venvPath"
+                } else {
+                  Write-Error "Venv directory does not exist: $venvPath"
                 Write-Host "This suggests install_python_venv.ps1 failed to create the venv"
-              }
-              exit 1
+                }
+                exit 1
             }
             
             Write-Host "Python executable path: $pythonExePath"
@@ -725,19 +725,19 @@ jobs:
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
           # Ensure Python path is available if set by install_python_venv.ps1
+          $pythonDir = $null
           if ($env:pythonExePath) {
             $pythonDir = Split-Path -Parent $env:pythonExePath
-            if ("${{ runner.os }}" -eq "Windows") {
-              $env:PATH = "$pythonDir;$env:PATH"
-            } else {
-              $env:PATH = "${pythonDir}:$env:PATH"
-            }
           } elseif (Test-Path variable:pythonExePath) {
             $pythonDir = Split-Path -Parent $pythonExePath
+          }
+          
+          # Add Python directory to PATH if it exists
+          if ($pythonDir -and (Test-Path $pythonDir)) {
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "${pythonDir}:$env:PATH"
+              $env:PATH = "$pythonDir" + ":" + $env:PATH
             }
           }
           
@@ -780,7 +780,7 @@ jobs:
           
           # Set LD_LIBRARY_PATH for Linux
           if ("${{ runner.os }}" -eq "Linux") {
-            $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
+            $env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $env:LD_LIBRARY_PATH
           }
           
           # Ensure Python path is available if set by install_python_venv.ps1
@@ -789,14 +789,14 @@ jobs:
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "${pythonDir}:$env:PATH"
+              $env:PATH = "$pythonDir" + ":" + $env:PATH
             }
           } elseif (Test-Path variable:pythonExePath) {
             $pythonDir = Split-Path -Parent $pythonExePath
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "${pythonDir}:$env:PATH"
+              $env:PATH = "$pythonDir" + ":" + $env:PATH
             }
           }
           
@@ -954,7 +954,7 @@ jobs:
           
           # Set LD_LIBRARY_PATH for Linux
           if ("${{ runner.os }}" -eq "Linux") {
-            $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
+            $env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $env:LD_LIBRARY_PATH
           }
           
           # Ensure Python path is available if set by install_python_venv.ps1
@@ -963,14 +963,14 @@ jobs:
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "${pythonDir}:$env:PATH"
+              $env:PATH = "$pythonDir" + ":" + $env:PATH
             }
           } elseif (Test-Path variable:pythonExePath) {
             $pythonDir = Split-Path -Parent $pythonExePath
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
-              $env:PATH = "${pythonDir}:$env:PATH"
+              $env:PATH = "$pythonDir" + ":" + $env:PATH
             }
           }
           
