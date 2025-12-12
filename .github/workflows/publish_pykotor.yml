@@ -119,13 +119,20 @@ jobs:
           tools_json = json.dumps(tools)
           print(f"Tools matrix JSON: {tools_json}")
           print(f"Number of tools: {len(tools)}")
+          print(f"JSON length: {len(tools_json)}")
           
           # GitHub Actions outputs: use simple single-line format (same as build-pr.yml)
           # fromJson() can parse single-line JSON arrays
-          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-              fh.write(f"tools_matrix={tools_json}\n")
+          # CRITICAL: Ensure no newlines in the JSON string
+          tools_json_clean = tools_json.replace("\n", "").replace("\r", "")
+          print(f"Cleaned JSON length: {len(tools_json_clean)}")
           
-          print(f"Output written: tools_matrix={tools_json[:100]}..." if len(tools_json) > 100 else f"Output written: tools_matrix={tools_json}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"tools_matrix={tools_json_clean}\n")
+          
+          print(f"✓ Output written to GITHUB_OUTPUT")
+          print(f"  Key: tools_matrix")
+          print(f"  Value (first 200 chars): {tools_json_clean[:200]}...")
           PYTHON_SCRIPT
   setup:
     runs-on: ubuntu-latest
