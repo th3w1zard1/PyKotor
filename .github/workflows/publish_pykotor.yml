@@ -116,8 +116,12 @@ jobs:
           for t in tools:
               print(f" - {t['display_name']} (build: {t['build_name']})")
 
+          tools_json = json.dumps(tools)
+          print(f"Tools matrix JSON: {tools_json}")
+          print(f"Number of tools: {len(tools)}")
+          
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-              fh.write(f"tools_matrix={json.dumps(tools)}\n")
+              fh.write(f"tools_matrix={tools_json}\n")
           PYTHON_SCRIPT
   setup:
     runs-on: ubuntu-latest
