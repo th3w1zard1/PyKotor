@@ -304,17 +304,17 @@ jobs:
         shell: pwsh
 
   build:
-    needs: [setup, detect-tools, validate-matrix]
+    needs: [setup, detect-tools]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false # Disable automatic cancellation of other jobs
       matrix:
-        # Use outputs from validate-matrix job which passes them through
-        # This ensures the outputs are validated before being used in fromJSON()
-        tool: ${{ fromJSON(needs.validate-matrix.outputs.tools_matrix) }}
-        os: ${{ fromJSON(needs.validate-matrix.outputs.os) }}
-        python-version: ${{ fromJSON(needs.validate-matrix.outputs.python-version) }}
-        architecture: ${{ fromJSON(needs.validate-matrix.outputs.architecture) }}
+        # Use outputs directly from detect-tools and setup jobs
+        # These outputs are already validated to be valid JSON
+        tool: ${{ fromJSON(needs.detect-tools.outputs.tools_matrix) }}
+        os: ${{ fromJSON(needs.setup.outputs.os) }}
+        python-version: ${{ fromJSON(needs.setup.outputs.python-version) }}
+        architecture: ${{ fromJSON(needs.setup.outputs.architecture) }}
         include:
           - arch: x86
             vc_redist2015: "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe"
