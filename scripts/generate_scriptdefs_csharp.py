@@ -78,7 +78,7 @@ def token_type_to_datatype(token_type: str) -> str | None:
 
 def parse_constant_from_tokens(tokens: list, start_idx: int, lines: list[str]) -> tuple[dict, int] | None:
     """Parse a constant declaration from tokens.
-    
+
     Grammar: global_variable_initialization : data_type IDENTIFIER '=' expression ';'
     Note: TRUE and FALSE are tokenized as TRUE_VALUE/FALSE_VALUE, not IDENTIFIER
     Note: Negative numbers are tokenized as MINUS followed by INT_VALUE
@@ -223,7 +223,7 @@ def parse_constant_from_tokens(tokens: list, start_idx: int, lines: list[str]) -
 
 def parse_function_from_tokens(tokens: list, start_idx: int, lines: list[str], line_numbers: dict) -> tuple[dict, int] | None:
     """Parse a function forward declaration from tokens.
-    
+
     Grammar: function_forward_declaration : data_type IDENTIFIER '(' function_definition_params ')' ';'
     """
     # Find the function signature in tokens
@@ -290,7 +290,7 @@ def parse_function_from_tokens(tokens: list, start_idx: int, lines: list[str], l
 
 def parse_function_params(param_tokens: list) -> list[dict]:
     """Parse function parameters from tokens.
-    
+
     Grammar: function_definition_param : data_type IDENTIFIER ['=' expression]
     """
     params: list[dict[str, Any]] = []
@@ -387,32 +387,6 @@ def parse_function_params(param_tokens: list) -> list[dict]:
                     else:
                         # Vector literal not in expected format, set to None as fallback
                         default_value = None
-                elif default_token.type == "INT_VALUE":
-                    # Extract value from IntExpression
-                    expr = default_token.value
-                    if hasattr(expr, "value"):
-                        default_value = str(expr.value)
-                    else:
-                        default_value = str(expr)
-                elif default_token.type == "FLOAT_VALUE":
-                    # Extract value from FloatExpression
-                    expr = default_token.value
-                    if hasattr(expr, "value"):
-                        default_value = f"{str(expr.value).rstrip('f')}f"
-                    else:
-                        default_value = f"{str(expr).rstrip('f')}f"
-                elif default_token.type == "STRING_VALUE":
-                    # Extract value from StringExpression
-                    expr = default_token.value
-                    if hasattr(expr, "value"):
-                        # expr.value is the actual string (without quotes)
-                        # For C#, escape properly
-                        str_value = expr.value
-                        default_value = repr(str_value).replace("'", '"')  # Use double quotes for C#
-                    else:
-                        # Not an expression object, treat as string
-                        str_val = str(expr)
-                        default_value = repr(str_val).replace("'", '"')
                 elif default_token.type == "OBJECTINVALID_VALUE":
                     # OBJECT_INVALID is a special constant - keep as identifier name, not value
                     default_value = "OBJECT_INVALID"
@@ -424,13 +398,45 @@ def parse_function_params(param_tokens: list) -> list[dict]:
                 elif default_token.type == "FALSE_VALUE":
                     default_value = "0"
                 elif default_token.type == "IDENTIFIER":
-                    # Could be a constant like OBJECT_SELF, OBJECT_INVALID, TALKVOLUME_TALK, etc.
+                    # Could be a constant like OBJECT_SELF, OBJECT_INVALID, TALKVOLUME_TALK, OBJECT_TYPE_INVALID, etc.
+                    # For object/effect/event/etc types, keep as constant names (don't resolve to values)
+                    # For int/float types with constant defaults, also keep names for readability
                     if hasattr(default_token.value, "name"):
-                        default_value = default_token.value.name
+                        constant_name = default_token.value.name
                     else:
-                        default_value = str(default_token.value)
+                        constant_name = str(default_token.value)
+
+                    # Always keep constant names - don't resolve to numeric values
+                    # The C# compiler will handle constant resolution at runtime
+                    default_value = constant_name
+                elif default_token.type == "INT_VALUE":
+                    # Extract value from IntExpression - this is a literal number
+                    expr = default_token.value
+                    if hasattr(expr, "value"):
+                        default_value = str(expr.value)
+                    else:
+                        default_value = str(expr)
+                elif default_token.type == "FLOAT_VALUE":
+                    # Extract value from FloatExpression - this is a literal number
+                    expr = default_token.value
+                    if hasattr(expr, "value"):
+                        default_value = f"{str(expr.value).rstrip('f')}f"
+                    else:
+                        default_value = f"{str(expr).rstrip('f')}f"
+                elif default_token.type == "STRING_VALUE":
+                    # Extract value from StringExpression - this is a literal string
+                    expr = default_token.value
+                    if hasattr(expr, "value"):
+                        # expr.value is the actual string (without quotes)
+                        # For C#, escape properly
+                        str_value = expr.value
+                        default_value = repr(str_value).replace("'", '"')  # Use double quotes for C#
+                    else:
+                        # Not an expression object, treat as string
+                        str_val = str(expr)
+                        default_value = repr(str_val).replace("'", '"')
                 elif default_token.type == "INT_HEX_VALUE":
-                    # Hex value
+                    # Hex value - this is a literal hex number
                     hex_str = default_token.value
                     if isinstance(hex_str, str):
                         default_value = str(int(hex_str, 16))
@@ -440,7 +446,7 @@ def parse_function_params(param_tokens: list) -> list[dict]:
                     # Vector or array default - should have been handled above for vector type
                     # This is a fallback for non-vector types with [ token
                     default_value = None
-                # Try to extract value from expression object
+                # Try to extract value from expression object (fallback path)
                 # Never use str() or repr() on expression objects - always extract .value
                 elif hasattr(default_token, "value"):
                     expr = default_token.value
@@ -555,7 +561,6 @@ def parse_nss_file(nss_path: Path, game: Game) -> tuple[list[dict], list[dict]]:
 
     # Create line number mapping for tokens
     line_numbers: dict[int, int] = {}
-    current_line = 1
     for token in tokens:
         if hasattr(token, "lineno"):
             line_numbers[id(token)] = token.lineno - 1  # Convert to 0-based index
@@ -655,45 +660,11 @@ def generate_function_csharp(func: dict, constants: list[dict]) -> str:
     for param in func["params"]:
         param_type_cs = csharp_type_from_nss(param["type"])
         param_name = param["name"]
+
         if param["default"] is not None:
             default = param["default"]
-            # Convert default to C# value
-            # If default is a string that looks like a constant name, try to resolve it
-            if isinstance(default, str):
-                # Check if it's a constant reference (all caps with underscores, not a string literal)
-                if default.isupper() and "_" in default and not default.startswith('"'):
-                    # For OBJECT_SELF and OBJECT_INVALID, keep as string
-                    # The compiler will look them up as constants by name
-                    # Do NOT convert to null - that would make the parameter required
-                    # We'll format it as a string literal in the code generation step
-                    if default in ["OBJECT_SELF", "OBJECT_INVALID"]:
-                        # Keep as string - will be formatted as string literal later
-                        pass
-                    else:
-                        # Try to resolve other constant references to their actual values
-                        # This prevents NameError when the module is imported
-                        resolved = resolve_constant_value(default, constants)
-                        if resolved is not None:
-                            # Successfully resolved to actual value
-                            default = resolved
-                        else:
-                            # Couldn't resolve - this is likely an error in the NSS or a missing constant
-                            # Leave as-is and let it fail, so we can debug
-                            print(f"WARNING: Could not resolve constant '{default}' for parameter '{param_name}' in function context")
-                # If it's already a string literal (starts with "), it's already properly formatted
-                elif default.startswith('"') and default.endswith('"'):
-                    # Already a string literal from repr(), use as-is
-                    pass
-                # If it's a repr() string (starts and ends with ' or "), use as-is
-                elif (default.startswith("'") and default.endswith("'")) or (default.startswith('"') and default.endswith('"')):
-                    # Already properly formatted by repr(), use as-is but convert single to double quotes
-                    if default.startswith("'") and default.endswith("'"):
-                        default = default.replace("'", '"')
-                    pass
-                # Check if it's a Vector3 constructor call
-                elif default.startswith("new Vector3("):
-                    # Already formatted as C# Vector3, use as-is
-                    pass
+            # Default values from parse_function_params are already correctly formatted
+            # Just need to ensure proper quoting/formatting for C# output
 
             # If default is None after processing, use null
             if default is None:
@@ -702,25 +673,37 @@ def generate_function_csharp(func: dict, constants: list[dict]) -> str:
                 # Format default value for C# code
                 # If default is a string, check if it should be a string literal or C# code
                 if isinstance(default, str):
-                    # Check if it's already a formatted string literal (starts/ends with quotes)
-                    if (default.startswith('"') and default.endswith('"')) or (default.startswith("'") and default.endswith("'")):
-                        # Already formatted, use as-is (convert single to double quotes)
-                        if default.startswith("'") and default.endswith("'"):
-                            default_formatted = default.replace("'", '"')
-                        else:
+                    # Check if it's a numeric value (integer or float)
+                    # These should NOT be quoted in C# - they're code values
+                    try:
+                        # Try parsing as int first (including negative)
+                        int(default)
+                        # It's a valid integer literal, use without quotes
+                        default_formatted = default
+                    except ValueError:
+                        try:
+                            # Try parsing as float (including negative)
+                            float(default.rstrip('f'))
+                            # It's a valid float literal, use without quotes
                             default_formatted = default
-                    # Check if it looks like C# code (function calls, etc.)
-                    elif default.startswith("new Vector3("):
-                        # It's C# code (Vector3 constructor), use as-is (don't quote it)
-                        default_formatted = default
-                    # OBJECT_SELF and OBJECT_INVALID are defined as constants at module level
-                    # Use them directly (not as string literals)
-                    elif default in ["OBJECT_SELF", "OBJECT_INVALID"]:
-                        # Use the constant name directly - it's defined at module level
-                        default_formatted = default
-                    else:
-                        # Need to format as string literal
-                        default_formatted = repr(default).replace("'", '"')
+                        except ValueError:
+                            # Not a numeric value, check other cases
+                            # Check if it's already a formatted string literal (starts/ends with quotes)
+                            if (default.startswith('"') and default.endswith('"')) or (default.startswith("'") and default.endswith("'")):
+                                # Already formatted, use as-is (convert single to double quotes)
+                                if default.startswith("'") and default.endswith("'"):
+                                    default_formatted = default.replace("'", '"')
+                                else:
+                                    default_formatted = default
+                            # Check if it looks like C# code (function calls, constructors, etc.)
+                            elif default.startswith("new Vector3("):
+                                # It's C# code (Vector3 constructor), use as-is (don't quote it)
+                                default_formatted = default
+                            # Check if it's a constant name (identifiers, not literals)
+                            # These should remain unquoted as C# constant references
+                            else:
+                                # It's a constant name or identifier - use without quotes
+                                default_formatted = default
                 else:
                     # Not a string, use directly
                     default_formatted = str(default)
@@ -812,10 +795,14 @@ namespace CSharpKOTOR.Common.Script
 
 def main():
     """Main entry point."""
-    repo_root = Path(__file__).parent.parent
-    k1_nss = repo_root / "vendor" / "NorthernLights" / "Scripts" / "k1_nwscript.nss"
-    k2_nss = repo_root / "vendor" / "NorthernLights" / "Scripts" / "k2_nwscript.nss"
-    output_file = repo_root / "src" / "CSharpKOTOR" / "Common" / "Script" / "ScriptDefs.cs"
+    # Script is at vendor/PyKotor/scripts/, so parent.parent is vendor/PyKotor
+    pykotor_root = Path(__file__).parent.parent
+    k1_nss = pykotor_root / "vendor" / "NorthernLights" / "Scripts" / "k1_nwscript.nss"
+    k2_nss = pykotor_root / "vendor" / "NorthernLights" / "Scripts" / "k2_nwscript.nss"
+
+    # Output to HoloPatcher.NET root (parent of vendor)
+    holopatcher_root = pykotor_root.parent.parent
+    output_file = holopatcher_root / "src" / "CSharpKOTOR" / "Common" / "Script" / "ScriptDefs.cs"
 
     print(f"Parsing {k1_nss}...")
     k1_constants, k1_functions = parse_nss_file(k1_nss, Game.K1)
