@@ -633,15 +633,16 @@ jobs:
             Write-Host "Calling install_python_venv.ps1 with venv_name=$venvName and force_python_version=${{ matrix.python-version }}"
             Write-Host "OS: ${{ runner.os }}, Architecture: ${{ matrix.architecture }}, Python version: ${{ matrix.python-version }}"
             
-            # Run script as separate process to capture exit code properly
+            # Source the script to run it in current session (allows it to set variables)
             # -noprompt and -forceInstall flags ensure non-interactive mode
-            $scriptExitCode = 0
-            & pwsh -File ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }}
-            $scriptExitCode = $LASTEXITCODE
-            
-            if ($scriptExitCode -ne 0) {
-              Write-Error "install_python_venv.ps1 exited with code $scriptExitCode"
-              exit $scriptExitCode
+            # Wrap in try-catch to handle any errors before the script exits
+            $scriptError = $null
+            try {
+              . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }}
+            } catch {
+              $scriptError = $_
+              Write-Error "Error running install_python_venv.ps1: $scriptError"
+              throw
             }
             
             # Check if script set pythonExePath variable
