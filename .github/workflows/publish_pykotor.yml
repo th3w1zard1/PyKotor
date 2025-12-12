@@ -825,34 +825,30 @@ jobs:
             $env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $env:LD_LIBRARY_PATH
           }
           
-          # Ensure Python path is available if set by install_python_venv.ps1
-          if ($env:pythonExePath) {
-            $pythonDir = Split-Path -Parent $env:pythonExePath
+          # Use pythonExePath from GITHUB_ENV (set by Create virtual environment step)
+          if (-not $env:pythonExePath) {
+            Write-Host "env:pythonExePath not found, constructing from venv name..." -ForegroundColor Yellow
+            $venvPath = $venvName
             if ("${{ runner.os }}" -eq "Windows") {
-              $env:PATH = "$pythonDir;$env:PATH"
+              $pythonExePath = Join-Path $venvPath "Scripts\python.exe"
             } else {
-              $env:PATH = "$pythonDir" + ":" + $env:PATH
+              $pythonExePath = Join-Path $venvPath "bin\python"
             }
-          } elseif (Test-Path variable:pythonExePath) {
-            $pythonDir = Split-Path -Parent $pythonExePath
-            if ("${{ runner.os }}" -eq "Windows") {
-              $env:PATH = "$pythonDir;$env:PATH"
-            } else {
-              $env:PATH = "$pythonDir" + ":" + $env:PATH
-            }
-          }
-          
-          # Find Python executable
-          $venvPath = $venvName
-          if ("${{ runner.os }}" -eq "Windows") {
-            $pythonExePath = Join-Path $venvPath "Scripts\python.exe"
           } else {
-            $pythonExePath = Join-Path $venvPath "bin\python"
+            $pythonExePath = $env:pythonExePath
           }
           
           if (-not (Test-Path $pythonExePath)) {
-            Write-Host "Python executable not found at $pythonExePath, skipping tests"
+            Write-Host "Python executable not found at $pythonExePath, skipping tests" -ForegroundColor Yellow
             exit 0
+          }
+          
+          # Add Python to PATH
+          $pythonDir = Split-Path -Parent $pythonExePath
+          if ("${{ runner.os }}" -eq "Windows") {
+            $env:PATH = "$pythonDir;$env:PATH"
+          } else {
+            $env:PATH = "$pythonDir" + ":" + $env:PATH
           }
           
           Write-Host "Running tests for ${{ matrix.tool.display_name }}"
