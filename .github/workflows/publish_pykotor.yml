@@ -284,21 +284,21 @@ jobs:
         run: |
           # Explicitly set outputs to ensure they're properly evaluated
           # This helps GitHub Actions properly evaluate fromJSON() in matrix context
-          echo "tools_matrix<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ needs.detect-tools.outputs.tools_matrix }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "tools_matrix<<EOF" >> $env:GITHUB_OUTPUT
+          echo "${{ needs.detect-tools.outputs.tools_matrix }}" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
           
-          echo "os<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ needs.setup.outputs.os }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "os<<EOF" >> $env:GITHUB_OUTPUT
+          echo "${{ needs.setup.outputs.os }}" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
           
-          echo "python-version<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ needs.setup.outputs.python-version }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "python-version<<EOF" >> $env:GITHUB_OUTPUT
+          echo "${{ needs.setup.outputs.python-version }}" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
           
-          echo "architecture<<EOF" >> $GITHUB_OUTPUT
-          echo "${{ needs.setup.outputs.architecture }}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
+          echo "${{ needs.setup.outputs.architecture }}" >> $env:GITHUB_OUTPUT
+          echo "EOF" >> $env:GITHUB_OUTPUT
           
           Write-Host "Outputs set successfully"
         shell: pwsh
