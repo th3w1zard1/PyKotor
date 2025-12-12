@@ -148,7 +148,7 @@ jobs:
                   for py_ver in python_versions:
                       for arch in architectures:
                           # Skip unsupported combinations
-                          if os_name in ["ubuntu-20.04", "macos-12"] and arch == "x86":
+                          if os_name in ["ubuntu-latest", "macos-latest"] and arch == "x86":
                               continue
                           full_matrix.append({
                               "tool": tool,
@@ -345,7 +345,15 @@ jobs:
       matrix:
         tool: ${{ fromJson(needs.detect-tools.outputs.tools_matrix) }}
     steps:
-      - run: echo "Tool: ${{ matrix.tool.build_name }}"
+      - run: |
+          echo "Tool: ${{ matrix.tool.build_name }}"
+          echo "Tool: ${{ matrix.tool.display_name }}"
+          echo "Tool: ${{ matrix.tool.tool_dir }}"
+          echo "Tool: ${{ matrix.tool.tool_name }}"
+          echo "Tool: ${{ matrix.tool.tool_version }}"
+          echo "Tool: ${{ matrix.tool.tool_url }}"
+          echo "Tool: ${{ matrix.tool.tool_hash }}"
+          echo "Tool: ${{ matrix.tool.tool_hash_type }}"
   
   test-matrix-os:
     needs: [setup]
@@ -354,7 +362,8 @@ jobs:
       matrix:
         os: ${{ fromJson(needs.setup.outputs.os) }}
     steps:
-      - run: echo "OS: ${{ matrix.os }}"
+      - run: |
+          echo "OS: ${{ matrix.os }}"
   
   test-matrix-python:
     needs: [setup]
@@ -363,7 +372,8 @@ jobs:
       matrix:
         python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
     steps:
-      - run: echo "Python: ${{ matrix.python-version }}"
+      - run: |
+          echo "Python: ${{ matrix.python-version }}"
   
   test-matrix-arch:
     needs: [setup]
@@ -372,7 +382,8 @@ jobs:
       matrix:
         architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
     steps:
-      - run: echo "Arch: ${{ matrix.architecture }}"
+      - run: |
+          echo "Arch: ${{ matrix.architecture }}"
 
   build:
     needs: [setup, detect-tools, test-matrix-tool, test-matrix-os, test-matrix-python, test-matrix-arch]
@@ -396,9 +407,9 @@ jobs:
             vc_redist2019: "https://aka.ms/vs/17/release/vc_redist.x64.exe"
         exclude:
           # unix x86 is definitely not supported.
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             architecture: x86
-          - os: macos-12
+          - os: macos-latest
             architecture: x86
 
     steps:
@@ -1123,11 +1134,11 @@ jobs:
             $toolName, $os, $pythonVersion, $architecture = $_.BaseName -replace '^publish_', '' -split '_',4
 
             $shortOsName = $os
-            if ($os -eq "ubuntu-20.04" -or $os -eq "ubuntu-22.04" -or $os -eq "ubuntu-latest") {
+            if ($os -eq "ubuntu-latest") {
               $shortOsName = "Linux"
-            } elseif ($os -eq "macos-11" -or $os -eq "macos-12" -or $os -eq "macos-latest") {
+            } elseif ($os -eq "macos-latest") {
               $shortOsName = "Mac"
-            } elseif ($os -eq "windows-latest" -or $os -eq "windows-2022") {
+            } elseif ($os -eq "windows-latest") {
               $shortOsName = "Win"
             }
 
