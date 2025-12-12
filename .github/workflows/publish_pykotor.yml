@@ -654,13 +654,24 @@ jobs:
 
           if (-not $env:pythonExePath) {
             Write-Error "env:pythonExePath is missing. Expected Create virtual environment step to populate GITHUB_ENV."
+            Write-Host "Available environment variables:" -ForegroundColor Yellow
+            Get-ChildItem Env: | Where-Object { $_.Name -like "*python*" -or $_.Name -like "*venv*" } | ForEach-Object { Write-Host "  $($_.Name)=$($_.Value)" }
             exit 1
+          }
+          
+          # Add Python to PATH for compilation
+          $pythonDir = Split-Path -Parent $env:pythonExePath
+          if ("${{ runner.os }}" -eq "Windows") {
+            $env:PATH = "$pythonDir;$env:PATH"
+          } else {
+            $env:PATH = "$pythonDir" + ":" + $env:PATH
           }
           
           Write-Host "Using compile script $compile"
           Write-Host "Venv name: $venvName"
           Write-Host "UPX directory: $upxDir"
           Write-Host "pythonExePath=$env:pythonExePath"
+          Write-Host "Python directory added to PATH: $pythonDir"
           
           $useCompileTool = "${{ steps.locate-scripts.outputs.use_compile_tool }}" -eq "True"
           $toolDir = "${{ steps.locate-scripts.outputs.tool_dir }}"
