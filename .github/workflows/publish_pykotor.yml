@@ -744,8 +744,7 @@ jobs:
               
               Write-Host "Using compile_tool.py with entrypoint: $entrypoint"
               
-              # Build compile_tool.py command
-              $pythonExe = if (Test-Path variable:pythonExePath) { $pythonExePath } else { "python" }
+              # Build compile_tool.py command using the Python from venv
               $compileArgs = @(
                 "$compile",
                 "--tool-path", $toolPath,
@@ -758,7 +757,7 @@ jobs:
                 $compileArgs += @("--upx-dir", $upxDir)
               }
               
-              & $pythonExe $compileArgs
+              & $pythonExePath $compileArgs
             } elseif ($compile.EndsWith(".ps1")) {
               if ($upxDir) {
                 . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
