@@ -279,54 +279,29 @@ jobs:
           PYTHON_OUTPUT: ${{ needs.setup.outputs.python-version }}
           ARCH_OUTPUT: ${{ needs.setup.outputs.architecture }}
       
-      - name: Test fromJSON evaluation
+      - name: Set outputs explicitly
+        id: set-outputs
         run: |
-          echo "Testing fromJSON() evaluation..."
-          echo "tools_matrix: ${{ needs.detect-tools.outputs.tools_matrix }}"
-          echo "os: ${{ needs.setup.outputs.os }}"
-          echo "python-version: ${{ needs.setup.outputs.python-version }}"
-          echo "architecture: ${{ needs.setup.outputs.architecture }}"
+          # Explicitly set outputs to ensure they're properly evaluated
+          # This helps GitHub Actions properly evaluate fromJSON() in matrix context
+          echo "tools_matrix<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ needs.detect-tools.outputs.tools_matrix }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
-          # Test if fromJSON can parse these
-          python3 << 'EOF'
-          import json
-          import os
+          echo "os<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ needs.setup.outputs.os }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
-          tools_str = os.environ.get('TOOLS_MATRIX', '')
-          os_str = os.environ.get('OS_OUTPUT', '')
-          python_str = os.environ.get('PYTHON_OUTPUT', '')
-          arch_str = os.environ.get('ARCH_OUTPUT', '')
+          echo "python-version<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ needs.setup.outputs.python-version }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
-          print(f"Testing fromJSON() equivalent parsing...")
-          try:
-              tools = json.loads(tools_str)
-              print(f"✓ tools_matrix: {len(tools)} items")
-          except Exception as e:
-              print(f"✗ tools_matrix failed: {e}")
+          echo "architecture<<EOF" >> $GITHUB_OUTPUT
+          echo "${{ needs.setup.outputs.architecture }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
           
-          try:
-              os_list = json.loads(os_str)
-              print(f"✓ os: {len(os_list)} items")
-          except Exception as e:
-              print(f"✗ os failed: {e}")
-          
-          try:
-              python_list = json.loads(python_str)
-              print(f"✓ python-version: {len(python_list)} items")
-          except Exception as e:
-              print(f"✗ python-version failed: {e}")
-          
-          try:
-              arch_list = json.loads(arch_str)
-              print(f"✓ architecture: {len(arch_list)} items")
-          except Exception as e:
-              print(f"✗ architecture failed: {e}")
-          EOF
-        env:
-          TOOLS_MATRIX: ${{ needs.detect-tools.outputs.tools_matrix }}
-          OS_OUTPUT: ${{ needs.setup.outputs.os }}
-          PYTHON_OUTPUT: ${{ needs.setup.outputs.python-version }}
-          ARCH_OUTPUT: ${{ needs.setup.outputs.architecture }}
+          Write-Host "Outputs set successfully"
+        shell: pwsh
 
   build:
     needs: [setup, detect-tools, validate-matrix]
