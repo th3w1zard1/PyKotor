@@ -120,12 +120,16 @@ jobs:
           print(f"Tools matrix JSON: {tools_json}")
           print(f"Number of tools: {len(tools)}")
           
-          # GitHub Actions outputs: use simple format for JSON arrays
-          # The fromJson() function expects a JSON array string
-          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-              # Remove newlines and ensure single-line JSON
-              single_line_json = tools_json.replace("\n", "").replace("\r", "")
-              fh.write(f"tools_matrix={single_line_json}\n")
+          # GitHub Actions outputs: use multiline format for complex JSON
+          # This is required for fromJson() to work correctly with arrays
+          output_file = os.environ["GITHUB_OUTPUT"]
+          with open(output_file, "a") as fh:
+              fh.write("tools_matrix<<EOF\n")
+              fh.write(f"{tools_json}\n")
+              fh.write("EOF\n")
+          
+          print(f"Output written to {output_file}")
+          print(f"Output format: multiline (tools_matrix<<EOF)")
           PYTHON_SCRIPT
   setup:
     runs-on: ubuntu-latest
