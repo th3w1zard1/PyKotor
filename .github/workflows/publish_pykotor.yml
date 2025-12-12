@@ -92,10 +92,10 @@ jobs:
                       # Check if tool has a compile script OR can use compile_tool.py
                       if has_compile_script(build_name):
                           # Has explicit compile script
-                      tools.append({
-                          "tool_dir": tool_path.name,
-                          "build_name": build_name,
-                          "display_name": tool_path.name,
+                          tools.append({
+                              "tool_dir": tool_path.name,
+                              "build_name": build_name,
+                              "display_name": tool_path.name,
                               "use_compile_tool": False,
                           })
                       elif has_main_entrypoint(tool_path):
