@@ -627,21 +627,26 @@ jobs:
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
-          # Ensure Python path is available if set by install_python_venv.ps1
-          $pythonDir = $null
-          if ($env:pythonExePath) {
-            $pythonDir = Split-Path -Parent $env:pythonExePath
-          } elseif (Test-Path variable:pythonExePath) {
-            $pythonDir = Split-Path -Parent $pythonExePath
+          # Use pythonExePath if set by install_python_venv.ps1, otherwise construct from venv name
+          if (-not (Test-Path variable:pythonExePath) -or -not $pythonExePath) {
+            if ("${{ runner.os }}" -eq "Windows") {
+              $pythonExePath = Join-Path $venvName "Scripts\python.exe"
+            } else {
+              $pythonExePath = Join-Path $venvName "bin\python"
+            }
           }
           
-          # Add Python directory to PATH if it exists
-          if ($pythonDir -and (Test-Path $pythonDir)) {
+          # Verify Python exists and add to PATH
+          if (Test-Path $pythonExePath) {
+            $pythonDir = Split-Path -Parent $pythonExePath
             if ("${{ runner.os }}" -eq "Windows") {
               $env:PATH = "$pythonDir;$env:PATH"
             } else {
               $env:PATH = "$pythonDir" + ":" + $env:PATH
             }
+            Write-Host "Using Python: $pythonExePath"
+          } else {
+            Write-Warning "Python executable not found at: $pythonExePath (continuing anyway)"
           }
           
           Write-Host "Running deps script $script"
