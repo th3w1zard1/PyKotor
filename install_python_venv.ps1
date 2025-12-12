@@ -300,6 +300,9 @@ function Get-OS {
         Write-Host "Press any key to exit..."
         $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
     }
+    if ($script:IsDotSourced) {
+        throw "Unknown Operating System"
+    }
     exit 1
 }
 
