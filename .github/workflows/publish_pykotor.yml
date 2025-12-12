@@ -2,7 +2,7 @@ name: Publish PyKotor Tools CI/CD
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   OS_RUNNERS_JSON: '["windows-latest", "ubuntu-latest", "macos-latest"]'
