@@ -133,7 +133,44 @@ jobs:
           print(f"✓ Output written to GITHUB_OUTPUT")
           print(f"  Key: tools_matrix")
           print(f"  Value (first 200 chars): {tools_json_clean[:200]}...")
+          
+          # Also generate full build matrix for easier fromJSON() parsing
+          # This creates a single matrix with all combinations
+          import os as os_module
+          os_runners = json.loads(os_module.environ.get("OS_RUNNERS_JSON", '["windows-latest", "ubuntu-latest", "macos-latest"]'))
+          python_versions = json.loads(os_module.environ.get("PYTHON_VERSIONS_JSON", '["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]'))
+          architectures = json.loads(os_module.environ.get("ARCHITECTURES_JSON", '["x86", "x64"]'))
+          
+          # Generate full matrix
+          full_matrix = []
+          for tool in tools:
+              for os_name in os_runners:
+                  for py_ver in python_versions:
+                      for arch in architectures:
+                          # Skip unsupported combinations
+                          if os_name in ["ubuntu-20.04", "macos-12"] and arch == "x86":
+                              continue
+                          full_matrix.append({
+                              "tool": tool,
+                              "os": os_name,
+                              "python-version": py_ver,
+                              "architecture": arch,
+                              "qt_version": "pyqt5"
+                          })
+          
+          full_matrix_json = json.dumps(full_matrix)
+          full_matrix_json_clean = full_matrix_json.replace("\n", "").replace("\r", "")
+          print(f"Full matrix: {len(full_matrix)} combinations")
+          
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"full_matrix={full_matrix_json_clean}\n")
+          
+          print(f"✓ Full matrix written to GITHUB_OUTPUT")
           PYTHON_SCRIPT
+        env:
+          OS_RUNNERS_JSON: ${{ env.OS_RUNNERS_JSON }}
+          PYTHON_VERSIONS_JSON: ${{ env.PYTHON_VERSIONS_JSON }}
+          ARCHITECTURES_JSON: ${{ env.ARCHITECTURES_JSON }}
   setup:
     runs-on: ubuntu-latest
     outputs:
@@ -305,12 +342,9 @@ jobs:
     strategy:
       fail-fast: false # Disable automatic cancellation of other jobs
       matrix:
-        # Use outputs directly from detect-tools and setup jobs
-        # These outputs are already validated to be valid JSON
-        tool: ${{ fromJSON(needs.detect-tools.outputs.tools_matrix) }}
-        os: ${{ fromJSON(needs.setup.outputs.os) }}
-        python-version: ${{ fromJSON(needs.setup.outputs.python-version) }}
-        architecture: ${{ fromJSON(needs.setup.outputs.architecture) }}
+        # Use full matrix generated in detect-tools job
+        # This avoids multiple fromJSON() calls which may be causing issues
+        include: ${{ fromJSON(needs.detect-tools.outputs.full_matrix) }}
         include:
           - arch: x86
             vc_redist2015: "https://download.microsoft.com/download/9/3/F/93FCF1E7-E6A4-478B-96E7-D4B285925B00/vc_redist.x86.exe"
@@ -481,6 +515,7 @@ jobs:
         id: locate-scripts
         shell: pwsh
         run: |
+          # Matrix now contains tool object directly
           $buildName = "${{ matrix.tool.build_name }}"
           $toolDir = "${{ matrix.tool.tool_dir }}"
           $useCompileTool = "${{ matrix.tool.use_compile_tool }}" -eq "True"
@@ -579,7 +614,8 @@ jobs:
           MATRIX_ARCH: ${{ matrix.architecture }}
         run: |
           $ErrorActionPreference = "Stop"
-          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $buildName = "${{ matrix.tool.build_name }}"
+          $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
           # Set LD_LIBRARY_PATH for Linux (needed for some Python installations)
           if ("${{ runner.os }}" -eq "Linux") {
@@ -674,7 +710,8 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $script = "${{ steps.locate-scripts.outputs.deps_script }}"
-          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $buildName = "${{ matrix.tool.build_name }}"
+          $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           
           # Ensure Python path is available if set by install_python_venv.ps1
           if ($env:pythonExePath) {
@@ -725,7 +762,8 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
           $compile = "${{ steps.locate-scripts.outputs.compile_script }}"
-          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $buildName = "${{ matrix.tool.build_name }}"
+          $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $upxDir = $env:UPX_DIR
           $env:PYTHONOPTIMIZE = "1"
           
@@ -899,7 +937,8 @@ jobs:
           MATRIX_ARCH: ${{ matrix.architecture }}
         run: |
           $ErrorActionPreference = "Stop"
-          $venvName = ".venv_${{ matrix.tool.build_name }}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+          $buildName = "${{ matrix.tool.build_name }}"
+          $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $toolDir = "Tools/${{ matrix.tool.tool_dir }}"
           
           # Set LD_LIBRARY_PATH for Linux
