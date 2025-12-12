@@ -171,20 +171,16 @@ jobs:
               $archJson = '${{ env.ARCHITECTURES_JSON }}'
           }
           
+          # Use simple format (no EOF delimiters) to match detect-tools job format
+          # This ensures fromJSON() can parse the outputs correctly
           $singleLineJson = $osJson -replace "`r", "" -replace "`n", ""
-          echo "os<<EOF" >> $env:GITHUB_OUTPUT
-          echo $singleLineJson >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
+          echo "os=$singleLineJson" >> $env:GITHUB_OUTPUT
 
           $singleLineJson = $pythonJson -replace "`r", "" -replace "`n", ""
-          echo "python-version<<EOF" >> $env:GITHUB_OUTPUT
-          echo $singleLineJson >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
+          echo "python-version=$singleLineJson" >> $env:GITHUB_OUTPUT
 
           $singleLineJson = $archJson -replace "`r", "" -replace "`n", ""
-          echo "architecture<<EOF" >> $env:GITHUB_OUTPUT
-          echo $singleLineJson >> $env:GITHUB_OUTPUT
-          echo "EOF" >> $env:GITHUB_OUTPUT
+          echo "architecture=$singleLineJson" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
   validate-matrix:
