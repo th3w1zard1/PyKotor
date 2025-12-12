@@ -232,9 +232,20 @@ jobs:
     needs: [setup, detect-tools]
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false  # Disable automatic cancellation of other jobs
+      fail-fast: false
       matrix:
+        tool: ${{ fromJson(needs.detect-tools.outputs.tools_matrix) }}
+        os: ${{ fromJson(needs.setup.outputs.os) }}
+        python-version: ${{ fromJson(needs.setup.outputs.python-version) }}
+        architecture: ${{ fromJson(needs.setup.outputs.architecture) }}
+        qt_version: ["pyqt5"]
         include: ${{ fromJson(needs.detect-tools.outputs.full_matrix) }}
+        exclude:
+          # unix x86 is definitely not supported.
+          - os: ubuntu-latest
+            architecture: x86
+          - os: macos-latest
+            architecture: x86
 
     steps:
       - uses: actions/checkout@v4
