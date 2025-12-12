@@ -192,10 +192,10 @@ jobs:
     needs: [setup, detect-tools]
     runs-on: ubuntu-latest
     outputs:
-      tools_matrix: ${{ needs.detect-tools.outputs.tools_matrix }}
-      os: ${{ needs.setup.outputs.os }}
-      python-version: ${{ needs.setup.outputs.python-version }}
-      architecture: ${{ needs.setup.outputs.architecture }}
+      tools_matrix: ${{ steps.set-outputs.outputs.tools_matrix }}
+      os: ${{ steps.set-outputs.outputs.os }}
+      python-version: ${{ steps.set-outputs.outputs.python-version }}
+      architecture: ${{ steps.set-outputs.outputs.architecture }}
     steps:
       - name: Validate outputs are valid JSON
         run: |
