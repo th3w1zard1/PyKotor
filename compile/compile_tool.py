@@ -52,11 +52,26 @@ def add_flag_values(flag: str, values: Iterable[str], buffer: list[str]) -> None
         buffer.append(f"--{flag}={value}")
 
 
-def compute_final_executable(distpath: Path, name: str, os_name: str) -> Path:
-    extension = "exe" if os_name == "Windows" else ("app" if os_name == "Mac" else "")
-    if extension:
-        return distpath / f"{name}.{extension}"
-    return distpath / name
+def compute_final_executable(distpath: Path, name: str, os_name: str, windowed: bool = False) -> Path:
+    """Compute the expected executable path based on OS and windowed mode.
+    
+    On macOS:
+    - windowed=True: Creates .app bundle
+    - windowed=False: Creates regular executable (no extension)
+    On Windows:
+    - Always creates .exe
+    On Linux:
+    - Always creates regular executable (no extension)
+    """
+    if os_name == "Windows":
+        return distpath / f"{name}.exe"
+    elif os_name == "Mac":
+        if windowed:
+            return distpath / f"{name}.app"
+        else:
+            return distpath / name
+    else:  # Linux
+        return distpath / name
 
 
 def normalize_add_data(entries: Iterable[str], sep: str) -> list[str]:

@@ -949,7 +949,6 @@ jobs:
         with:
           path: published_workflow_builds/
           pattern: publish_*
-          if-no-files-found: warn
 
       - name: Re-package artifacts by Python version and architecture
         shell: pwsh
@@ -1122,4 +1121,3 @@ jobs:
           name: ${{ matrix.artifactb }}
           path: all_tool_dists_onearchive/all_tool_dists_onearchive/${{ matrix.artifactb }}
           compression-level: 9
-          if-no-files-found: error
