@@ -104,15 +104,55 @@ void CP_ReturnToBase(location lLoc, int bRun = FALSE) {
 }
 ```
 
-### Common Issues
+### Common Issues and Troubleshooting
 
-1. **NPC Stays Frozen**: If the animation doesn't play, the most common cause is that the NPC is still moving or has queued actions. Always call `ClearAllActions()` first.
+#### 1. NPC Stays Frozen / Animation Doesn't Play
 
-2. **Animation Doesn't Loop**: For looping animations, use `-1.0` as the duration parameter, not a positive value. Positive values create timed animations that stop after the duration.
+If `ActionPlayAnimation` doesn't work even with `ClearAllActions()`, check the following:
 
-3. **Invalid Animation Error**: Ensure the animation constant includes the 10000 offset. If using raw indices from `Animations.2da`, add 10000: `ActionPlayAnimation(10000 + iAnim, 1.0, -1.0)`
+**A. Overlay Animation Active**
+- If an overlay animation is currently playing, `ActionPlayAnimation` will fail immediately
+- **Solution**: Wait for overlay animations to complete, or clear them first
 
-4. **Animation Missing from Model**: Even if an animation exists in `Animations.2da`, it may not exist in the specific model file. Verify the animation exists in the model's MDL/MDX files.
+**B. NPC in Conversation/Dialog State**
+- Animations are blocked during active conversations (dialog mode)
+- **Check**: `GetIsInConversation(oNPC)` returns TRUE
+- **Solution**: Wait for conversation to end, or use conversation-specific animation functions
+
+**C. Animation Missing from Model**
+- The animation constant may be valid, but the actual animation may not exist in the NPC's model file
+- **Check**: Verify the animation exists in the model's MDL/MDX file
+- **Solution**: Use a different animation that exists in the model, or check the model file
+
+**D. NPC is Dead or Invalid**
+- Dead NPCs or invalid objects cannot play animations
+- **Check**: `GetIsDead(oNPC)` or `GetIsObjectValid(oNPC)`
+
+**E. Use `PlayAnimation()` Instead**
+- `PlayAnimation()` executes immediately rather than queuing, which can bypass some blocking conditions
+- **Example**: `AssignCommand(oNPC, PlayAnimation(ANIMATION_LOOPING_PAUSE, 1.0, -1.0))`
+
+**F. Try a Longer Delay**
+- Sometimes a small delay after `ClearAllActions()` helps ensure the NPC is fully stationary
+```nss
+ClearAllActions();
+DelayCommand(0.3, ActionPlayAnimation(ANIMATION_LOOPING_PAUSE, 1.0, -1.0));
+```
+
+**G. Check AI State**
+- NPCs with AI turned off or in special states may not respond to animations
+- **Solution**: Temporarily disable AI if needed, or check spawn-in conditions
+
+#### 2. Animation Doesn't Loop
+For looping animations, use `-1.0` as the duration parameter, not a positive value. Positive values create timed animations that stop after the duration.
+
+#### 3. Invalid Animation Error
+Ensure the animation constant includes the 10000 offset. If using raw indices from `Animations.2da`, add 10000: `ActionPlayAnimation(10000 + iAnim, 1.0, -1.0)`
+
+#### 4. Animation Plays But NPC Still Looks Frozen
+- The animation may be playing but visually similar to the default pose
+- Try a more distinct animation like `ANIMATION_LOOPING_TALK_NORMAL` to verify it's working
+- Check if the animation speed is too slow (try `fSpeed = 2.0` to see if it's just slow)
 
 ### Implementation References
 
@@ -120,9 +160,62 @@ void CP_ReturnToBase(location lLoc, int bRun = FALSE) {
 - **reone**: [`vendor/reone/src/libs/game/action/playanimation.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/action/playanimation.cpp) - Animation execution logic
 - **reone Creature**: [`vendor/reone/src/libs/game/object/creature.cpp:256-290`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/object/creature.cpp#L256-L290) - Movement blocking check
 
+### Troubleshooting Script Example
+
+If `ActionPlayAnimation` isn't working, try this diagnostic approach:
+
+```nss
+void main() {
+    object oNPC = OBJECT_SELF; // or GetObjectByTag("your_npc_tag")
+    
+    // Diagnostic checks
+    if (!GetIsObjectValid(oNPC)) {
+        PrintString("ERROR: Invalid NPC");
+        return;
+    }
+    
+    if (GetIsDead(oNPC)) {
+        PrintString("ERROR: NPC is dead");
+        return;
+    }
+    
+    if (GetIsInConversation(oNPC)) {
+        PrintString("WARNING: NPC in conversation - animations may be blocked");
+    }
+    
+    // Clear everything first
+    AssignCommand(oNPC, ClearAllActions());
+    CancelCombat(oNPC);
+    
+    // Try PlayAnimation instead (immediate, not queued)
+    DelayCommand(0.5, AssignCommand(oNPC, PlayAnimation(ANIMATION_LOOPING_PAUSE, 1.0, -1.0)));
+    
+    // Alternative: Try ActionPlayAnimation with longer delay
+    // DelayCommand(0.5, AssignCommand(oNPC, ActionPlayAnimation(ANIMATION_LOOPING_PAUSE, 1.0, -1.0)));
+}
+```
+
+### Alternative: Use PlayAnimation() Instead
+
+If `ActionPlayAnimation` consistently fails, try `PlayAnimation()` which executes immediately:
+
+```nss
+void main() {
+    object oNPC = OBJECT_SELF;
+    ClearAllActions();
+    AssignCommand(oNPC, PlayAnimation(ANIMATION_LOOPING_PAUSE, 1.0, -1.0));
+}
+```
+
+**Key Difference:**
+- `ActionPlayAnimation()` - Queued action (respects action queue order)
+- `PlayAnimation()` - Immediate execution (may bypass some blocking conditions)
+
 ### Related Functions
 
-- `PlayAnimation()` - Immediate animation execution (non-queued)
+- `PlayAnimation()` - Immediate animation execution (non-queued) - **Try this if ActionPlayAnimation fails**
 - `ClearAllActions()` - Clear action queue and stop movement
+- `CancelCombat()` - Cancel combat state which may block animations
 - `AssignCommand()` - Queue actions on other objects
 - `DelayCommand()` - Delay action execution
+- `GetIsInConversation()` - Check if object is in conversation (may block animations)
