@@ -717,11 +717,14 @@ jobs:
               Write-Host "Using compile_tool.py with entrypoint: $entrypoint"
               
               # Build compile_tool.py command using the Python from venv
+              # We've already created the venv, so skip venv creation in compile_tool.py
               $compileArgs = @(
                 "$compile",
                 "--tool-path", $toolPath,
                 "--entrypoint", $entrypoint,
                 "--venv-name", $venvName,
+                "--skip-venv",
+                "--python-exe", $Env:pythonExePath,
                 "--noprompt"
               )
               
@@ -729,6 +732,7 @@ jobs:
                 $compileArgs += @("--upx-dir", $upxDir)
               }
               
+              Write-Host "Running: $Env:pythonExePath $($compileArgs -join ' ')"
               & $Env:pythonExePath $compileArgs
             } elseif ($compile.EndsWith(".ps1")) {
               if ($upxDir) {

@@ -1314,10 +1314,13 @@ Write-Log -Level "Info" -Message "Bootstrap complete!"
 # - $pythonExePath is a local variable in this script; persist it to both $global: and $env:
 # - The venv activation modifies env vars in the current session; keeping pythonExePath explicit
 #   makes subsequent tooling deterministic.
+# Export to both global and environment for maximum compatibility
 $global:pythonExePath = $pythonExePath
 $env:pythonExePath = $pythonExePath
+$Env:pythonExePath = $pythonExePath  # Also set uppercase variant for consistency
 $global:venvPath = $venvPath
 $env:PYKOTOR_VENV_PATH = $venvPath
+$Env:PYKOTOR_VENV_PATH = $venvPath  # Also set uppercase variant
 
 if ($script:IsDotSourced) {
     return
