@@ -733,7 +733,27 @@ jobs:
               }
               
               Write-Host "Running: $Env:pythonExePath $($compileArgs -join ' ')"
-              & $Env:pythonExePath $compileArgs
+              Write-Host "Python executable exists: $(Test-Path $Env:pythonExePath)"
+              if (-not (Test-Path $Env:pythonExePath)) {
+                Write-Error "Python executable not found at: $Env:pythonExePath"
+                exit 1
+              }
+              
+              # Execute compile_tool.py with explicit error handling
+              $exitCode = 0
+              try {
+                & $Env:pythonExePath $compileArgs
+                $exitCode = $LASTEXITCODE
+              } catch {
+                Write-Host -ForegroundColor Red "Error executing compile_tool.py: $($_.Exception.Message)"
+                Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
+                $exitCode = 1
+              }
+              
+              if ($exitCode -ne 0) {
+                Write-Error "compile_tool.py failed with exit code $exitCode"
+                exit $exitCode
+              }
             } elseif ($compile.EndsWith(".ps1")) {
               if ($upxDir) {
                 . "./$compile" -noprompt -venv_name $venvName -upx_dir $upxDir
