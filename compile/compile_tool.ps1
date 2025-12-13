@@ -10,32 +10,45 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $repoRoot = (Resolve-Path "$scriptDir/..").Path
 $pythonScript = Join-Path $scriptDir "compile_tool.py"
 
-# Source install_python_venv.ps1 to set up the venv and Python environment
-# This properly activates the venv in the current PowerShell session
-$venvInstaller = Join-Path $repoRoot "install_python_venv.ps1"
-if (Test-Path $venvInstaller) {
-    Write-Host "Sourcing install_python_venv.ps1 to set up Python environment..."
-    # Extract venv_name and noprompt from Passthru if present
-    $venvName = ".venv"
-    $nopromptFlag = $false
-    for ($i = 0; $i -lt $Passthru.Count; $i++) {
-        if ($Passthru[$i] -eq "--venv-name" -and ($i + 1) -lt $Passthru.Count) {
-            $venvName = $Passthru[$i + 1]
-        }
-        if ($Passthru[$i] -eq "--noprompt") {
-            $nopromptFlag = $true
-        }
+# Check if --skip-venv is already in Passthru (venv already created by workflow)
+$skipVenv = $false
+for ($i = 0; $i -lt $Passthru.Count; $i++) {
+    if ($Passthru[$i] -eq "--skip-venv") {
+        $skipVenv = $true
+        break
     }
-    
-    # Source the script with . to run it in the current session
-    if ($nopromptFlag) {
-        . $venvInstaller -noprompt -venv_name $venvName
-    } else {
-        . $venvInstaller -venv_name $venvName
+}
+
+# Only source install_python_venv.ps1 if --skip-venv is NOT present
+# When --skip-venv is present, the venv is already created and pythonExePath should be set
+if (-not $skipVenv) {
+    $venvInstaller = Join-Path $repoRoot "install_python_venv.ps1"
+    if (Test-Path $venvInstaller) {
+        Write-Host "Sourcing install_python_venv.ps1 to set up Python environment..."
+        # Extract venv_name and noprompt from Passthru if present
+        $venvName = ".venv"
+        $nopromptFlag = $false
+        for ($i = 0; $i -lt $Passthru.Count; $i++) {
+            if ($Passthru[$i] -eq "--venv-name" -and ($i + 1) -lt $Passthru.Count) {
+                $venvName = $Passthru[$i + 1]
+            }
+            if ($Passthru[$i] -eq "--noprompt") {
+                $nopromptFlag = $true
+            }
+        }
+        
+        # Source the script with . to run it in the current session
+        if ($nopromptFlag) {
+            . $venvInstaller -noprompt -venv_name $venvName
+        } else {
+            . $venvInstaller -venv_name $venvName
+        }
+        
+        # Add --skip-venv to Passthru since we've already handled venv setup
+        $Passthru += "--skip-venv"
     }
-    
-    # Add --skip-venv to Passthru since we've already handled venv setup
-    $Passthru += "--skip-venv"
+} else {
+    Write-Host "Skipping venv setup (--skip-venv present, venv already created)"
 }
 
 $pythonExe = if ($env:pythonExePath) { $env:pythonExePath } else { "python" }

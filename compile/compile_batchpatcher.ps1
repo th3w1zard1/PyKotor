@@ -83,6 +83,12 @@ $argsList = @(
 if ($noprompt) { $argsList += "--noprompt" }
 if ($upx_dir) { $argsList += @("--upx-dir", $upx_dir) }
 
+# If pythonExePath is set (venv already created by workflow), pass --skip-venv and --python-exe
+if ($env:pythonExePath) {
+    $argsList += "--skip-venv"
+    $argsList += @("--python-exe", $env:pythonExePath)
+}
+
 if ((Get-LocalOS) -eq "Mac") {
     try {
         $tclTkPath = $(brew --prefix tcl-tk)
