@@ -84,9 +84,29 @@ if ($noprompt) { $argsList += "--noprompt" }
 if ($upx_dir) { $argsList += @("--upx-dir", $upx_dir) }
 
 # If pythonExePath is set (venv already created by workflow), pass --skip-venv and --python-exe
+# Check both $env:pythonExePath (from GITHUB_ENV) and try to construct from venv_name if needed
+$pythonExeToUse = $null
 if ($env:pythonExePath) {
+    $pythonExeToUse = $env:pythonExePath
+} else {
+    # Try to construct from venv_name (workflow creates venv with specific naming)
+    $os = Get-LocalOS
+    if ($os -eq "Windows") {
+        $possiblePython = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "..\$venv_name\Scripts\python.exe"
+    } else {
+        $possiblePython = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Definition) "..\$venv_name\bin\python"
+    }
+    if (Test-Path $possiblePython) {
+        $pythonExeToUse = $possiblePython
+    }
+}
+
+if ($pythonExeToUse) {
     $argsList += "--skip-venv"
-    $argsList += @("--python-exe", $env:pythonExePath)
+    $argsList += @("--python-exe", $pythonExeToUse)
+    Write-Host "Using pre-created venv Python: $pythonExeToUse"
+} else {
+    Write-Host "Warning: pythonExePath not found, compile_tool.ps1 will handle venv setup"
 }
 
 if ((Get-LocalOS) -eq "Mac") {
