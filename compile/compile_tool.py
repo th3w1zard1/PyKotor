@@ -273,7 +273,9 @@ def main() -> None:
     entry_arg = str(Path(entrypoint))
     pyinstaller_args.append(entry_arg)
 
-    final_executable = compute_final_executable(distpath, name, os_name)
+    # Determine if windowed mode is used (for macOS .app bundle detection)
+    is_windowed = args.windowed and not args.console
+    final_executable = compute_final_executable(distpath, name, os_name, windowed=is_windowed)
     if args.remove_previous:
         if final_executable.exists():
             if final_executable.is_dir():
