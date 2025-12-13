@@ -115,6 +115,16 @@ def main() -> None:
     parser.add_argument("--remove-previous", action="store_true", default=True, help="Remove prior dist artifacts for this tool")
     parser.add_argument("--no-remove-previous", dest="remove_previous", action="store_false")
     args = parser.parse_args()
+    
+    # Validate python_exe exists if skip_venv is True (when venv is pre-created)
+    if args.skip_venv and args.python_exe:
+        python_exe_path = Path(args.python_exe)
+        if not python_exe_path.exists():
+            raise SystemExit(
+                f"Python executable not found at {args.python_exe}. "
+                f"This is required when --skip-venv is used. "
+                f"Ensure the venv was created and pythonExePath is set correctly."
+            )
 
     os_name = detect_os()
     tool_path = (repo_root / args.tool_path).resolve() if not Path(args.tool_path).is_absolute() else Path(args.tool_path)
