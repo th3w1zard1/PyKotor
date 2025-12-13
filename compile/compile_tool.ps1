@@ -40,6 +40,12 @@ if (Test-Path $venvInstaller) {
 
 $pythonExe = if ($env:pythonExePath) { $env:pythonExePath } else { "python" }
 
+# If pythonExePath is set, pass it to compile_tool.py so it uses the venv Python
+# This is critical when --skip-venv is used (venv already created)
+if ($env:pythonExePath) {
+    $Passthru += @("--python-exe", $env:pythonExePath)
+}
+
 Write-Host "Delegating to compile_tool.py with arguments: $Passthru"
 & $pythonExe $pythonScript @Passthru
 if ($LASTEXITCODE -ne 0) {
