@@ -84,7 +84,7 @@ def find_software_key(software_name: str) -> str | None:
 
 
 def resolve_reg_key_to_path(
-    registry: str | HKEYType,
+    registry: str | int | HKEYType,
     subkey: str,
     value_name: str | None = None,
 ) -> str | None:
@@ -99,7 +99,8 @@ def resolve_reg_key_to_path(
             if root_key is None:
                 return None
             value_to_lookup = subkey
-        else:
+        else:  # e.g. int
+            # treat as HKEYType, use as-is
             root_key = registry
             if value_name is None:
                 msg = "value_name must be provided when a registry handle is supplied."
@@ -109,7 +110,7 @@ def resolve_reg_key_to_path(
 
         with winreg.OpenKey(root_key, key_path) as key:
             resolved_path, _ = winreg.QueryValueEx(key, value_to_lookup)
-            return resolved_path
+            return str(resolved_path or "")
     except (AttributeError, FileNotFoundError, PermissionError):
         return None
 
