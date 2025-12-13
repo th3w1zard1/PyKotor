@@ -29,7 +29,7 @@ class CompileError(Exception):
     """Base exception for NSS compilation errors.
 
     Provides detailed error messages to help debug script issues.
-    
+
     References:
     ----------
         vendor/HoloLSP/server/src/nwscript-parser.ts (NSS parser error handling)
@@ -337,10 +337,10 @@ class StructMember:
 
 class CodeRoot:
     """Root compilation context for NSS compilation.
-    
+
     Manages global scope, function definitions, constants, and compilation state.
     Provides symbol resolution and type checking during NSS to NCS compilation.
-    
+
     References:
     ----------
         vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts (TypeScript compiler architecture)
@@ -485,7 +485,7 @@ class CodeRoot:
         else:
             msg = f"Trying to return unsupported type '{definition.return_type.builtin.name}'"
             raise CompileError(msg)
-        
+
         # Track return value space in temp_stack
         block.temp_stack += return_type_size
 
@@ -612,12 +612,17 @@ class CodeBlock:
                     )
                     ncs.add(NCSInstructionType.MOVSP, args=[-return_type.size(root)])
 
-                ncs.add(NCSInstructionType.MOVSP, args=[-scope_size])
+                # External compiler optimizes away MOVSP with offset 0, so we should match that behavior
+                if scope_size != 0:
+                    ncs.add(NCSInstructionType.MOVSP, args=[-scope_size])
                 ncs.add(NCSInstructionType.JMP, jump=return_instruction)
                 return
-        ncs.instructions.append(
-            NCSInstruction(NCSInstructionType.MOVSP, [-self.scope_size(root)]),
-        )
+        # External compiler optimizes away MOVSP with offset 0, so we should match that behavior
+        scope_size = self.scope_size(root)
+        if scope_size != 0:
+            ncs.instructions.append(
+                NCSInstruction(NCSInstructionType.MOVSP, [-scope_size]),
+            )
 
         if self.temp_stack != 0:
             # If the temp stack is 0 after the whole block has compiled there must be a logic error
@@ -922,10 +927,10 @@ class StructDefinition(TopLevelObject):
 
 class Expression(ABC):
     """Abstract base class for NSS expressions.
-    
+
     Expressions compile to NCS bytecode instructions that evaluate to values.
     All expression types (literals, operators, function calls, etc.) inherit from this.
-    
+
     References:
     ----------
         vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts (Expression compilation)
@@ -942,10 +947,10 @@ class Expression(ABC):
 
 class Statement(ABC):
     """Abstract base class for NSS statements.
-    
+
     Statements compile to NCS bytecode instructions that perform actions (control flow,
     assignments, declarations, etc.). All statement types inherit from this.
-    
+
     References:
     ----------
         vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts (Statement compilation)
@@ -1025,7 +1030,7 @@ class FieldAccess:
             else:
                 msg = f"Attempting to access unknown member '{next_ident}' on datatype '{datatype}'."
                 raise CompileError(msg)
-        
+
         return GetScopedResult(is_global, datatype, offset, is_const)
 
     def compile(self, ncs: NCS, root: CodeRoot, block: CodeBlock) -> DynamicDataType:  # noqa: A003
@@ -1306,7 +1311,7 @@ class EngineCallExpression(Expression):
                     self._args.append(ObjectExpression(int(constant.value)))
         this_stack = 0
         # DEBUG: Log arguments before compilation
-        
+
         # Compile arguments in FORWARD order (left to right, first argument first)
         # NCS bytecode pushes arguments left-to-right, so when the interpreter
         # pops them (last-in-first-out), args_snap has them in reverse order.
@@ -1452,7 +1457,7 @@ class TernaryConditionalExpression(Expression):
     def compile(self, ncs: NCS, root: CodeRoot, block: CodeBlock) -> DynamicDataType:
         # Save initial stack state
         initial_stack = block.temp_stack
-        
+
         # Compile condition (leaves value on stack)
         condition_type = self.condition.compile(ncs, root, block)
         if condition_type != DynamicDataType.INT:
@@ -1484,7 +1489,7 @@ class TernaryConditionalExpression(Expression):
         false_type = self.false_expr.compile(ncs, root, block)
         # Explicitly track that false branch result is on the stack
         block.temp_stack += false_type.size(root)
-        
+
         # Type check - both branches must have same type
         if true_type != false_type:
             msg = (
@@ -1494,7 +1499,7 @@ class TernaryConditionalExpression(Expression):
                 f"  Both branches must have the same type"
             )
             raise CompileError(msg)
-        
+
         # False branch leaves result on stack at same position as true branch
         # Both branches: initial_stack + result_size (already set above)
 
@@ -1590,24 +1595,24 @@ class Assignment(Expression):
         # Compile expression - expressions may or may not add to temp_stack themselves
         variable_type = self.expression.compile(ncs, root, block)
         temp_stack_after = block.temp_stack
-        
+
         # Only add to temp_stack if the expression didn't already add it
         # (FunctionCallExpression and EngineCallExpression already add their return values)
         if temp_stack_after == temp_stack_before:
             # Expression didn't add to temp_stack, so we need to add it
             block.temp_stack += variable_type.size(root)
-        
+
         # Get variable location - get_scoped uses temp_stack (including expression result) in its calculation
         is_global, expression_type, stack_index, is_const = self.field_access.get_scoped(
             block,
             root,
         )
-        
+
         if is_const and not allow_const:
             var_name = ".".join(str(ident) for ident in self.field_access.identifiers)
             msg = f"Cannot assign to const variable '{var_name}'"
             raise CompileError(msg)
-        
+
         instruction_type = NCSInstructionType.CPDOWNBP if is_global else NCSInstructionType.CPDOWNSP
         # get_scoped() already accounts for temp_stack (which includes the expression result),
         # so stack_index points to the correct variable location
@@ -2485,7 +2490,7 @@ class VariableInitializer:
         # Allow const variables to be initialized (but not reassigned)
         assignment = Assignment(FieldAccess([self.identifier]), self.expression)
         result_type = assignment.compile(ncs, root, block, allow_const=True)
-        
+
         # Assignment leaves result on stack for ExpressionStatement to clean up,
         # but VariableInitializer is NOT in an ExpressionStatement, so we need to clean it up ourselves
         result_size = result_type.size(root)
@@ -2607,7 +2612,7 @@ class WhileLoopBlock(Statement):
 
         loopstart = ncs.add(NCSInstructionType.NOP, args=[])
         loopend = NCSInstruction(NCSInstructionType.NOP, args=[])
-        
+
         # Save temp_stack before condition (condition pushes a value, JZ consumes it)
         initial_temp_stack = block.temp_stack
         condition_type = self.condition.compile(ncs, root, block)
@@ -2623,7 +2628,7 @@ class WhileLoopBlock(Statement):
         ncs.add(NCSInstructionType.JZ, jump=loopend)
         # Restore temp_stack since JZ consumed the condition
         block.temp_stack = initial_temp_stack
-        
+
         self.block.compile(ncs, root, block, return_instruction, loopend, loopstart)
         ncs.add(NCSInstructionType.JMP, jump=loopstart)
 
@@ -2662,7 +2667,7 @@ class DoWhileLoopBlock(Statement):
         )
 
         ncs.instructions.append(conditionstart)
-        
+
         # Save temp_stack before condition (condition pushes a value, JZ consumes it)
         initial_temp_stack = block.temp_stack
         condition_type = self.condition.compile(ncs, root, block)
@@ -2677,7 +2682,7 @@ class DoWhileLoopBlock(Statement):
         ncs.add(NCSInstructionType.JZ, jump=loopend)
         # Restore temp_stack since JZ consumed the condition
         block.temp_stack = initial_temp_stack
-        
+
         ncs.add(NCSInstructionType.JMP, jump=loopstart)
         ncs.instructions.append(loopend)
 
@@ -2742,7 +2747,7 @@ class ForLoopBlock(Statement):
         ncs.add(NCSInstructionType.JZ, jump=loopend)
         # Restore temp_stack since JZ consumed the condition
         block.temp_stack = initial_temp_stack
-        
+
         self.block.compile(ncs, root, block, return_instruction, loopend, updatestart)
 
         ncs.instructions.append(updatestart)
