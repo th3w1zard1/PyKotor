@@ -718,13 +718,20 @@ jobs:
               
               # Build compile_tool.py command using the Python from venv
               # We've already created the venv, so skip venv creation in compile_tool.py
+              # Ensure pythonExePath is quoted if it contains spaces
+              $pythonExePathQuoted = if ($Env:pythonExePath -match '\s') {
+                "`"$Env:pythonExePath`""
+              } else {
+                $Env:pythonExePath
+              }
+              
               $compileArgs = @(
                 "$compile",
                 "--tool-path", $toolPath,
                 "--entrypoint", $entrypoint,
                 "--venv-name", $venvName,
                 "--skip-venv",
-                "--python-exe", $Env:pythonExePath,
+                "--python-exe", $pythonExePathQuoted,
                 "--noprompt"
               )
               
