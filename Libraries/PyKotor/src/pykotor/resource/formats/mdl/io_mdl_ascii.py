@@ -331,11 +331,11 @@ class MDLAsciiWriter:
             self.write_line(0, f"headlink {mdl.headlink}")
         self.write_line(0, "")
         self.write_line(0, f"setanimationscale {mdl.animation_scale}")
-        self.write_line(0, f"bmin {mdl.bmin.x} {mdl.bmin.y} {mdl.bmin.z}")
-        self.write_line(0, f"bmax {mdl.bmax.x} {mdl.bmax.y} {mdl.bmax.z}")
-        self.write_line(0, f"radius {mdl.radius}")
         self.write_line(0, "")
         self.write_line(0, "beginmodelgeom " + mdl.name)
+        self.write_line(1, f"bmin {mdl.bmin.x} {mdl.bmin.y} {mdl.bmin.z}")
+        self.write_line(1, f"bmax {mdl.bmax.x} {mdl.bmax.y} {mdl.bmax.z}")
+        self.write_line(1, f"radius {mdl.radius}")
         self.write_line(0, "")
         self._write_node(1, mdl.root)
         self.write_line(0, "")
@@ -545,7 +545,7 @@ class MDLAsciiWriter:
             MDLControllerType.VELOCITY: "velocitykey",
             MDLControllerType.XSIZE: "xsizekey",
             MDLControllerType.YSIZE: "ysizekey",
-            MDLControllerType.BLUR: "blurkey",
+            MDLControllerType.BLURLENGTH: "blurkey",
             MDLControllerType.LIGHTNINGDELAY: "lightningdelaykey",
             MDLControllerType.LIGHTNINGRADIUS: "lightningradiuskey",
             MDLControllerType.LIGHTNINGSCALE: "lightningscalekey",
