@@ -592,14 +592,38 @@ class MDLAsciiWriter:
 
         # Write animation nodes (vendor/mdlops/MDLOpsM.pm:3504-3555)
         # Animation nodes are written as "node dummy <node_name>" with controllers
-        # We need to traverse the animation's root node hierarchy
-        if anim.root and anim.root.name:
-            self._write_animation_node(1, anim.root)
+        # Build a mapping from animation nodes to their parents for parent writing
+        parent_map: dict[MDLNode, MDLNode | None] = {}
+        self._build_animation_parent_map(anim.root, None, parent_map)
+
+        # Write all animation nodes (sorted by name to match MDLOps behavior)
+        all_anim_nodes = anim.all_nodes()
+        all_anim_nodes.sort(key=lambda n: n.name)
+
+        for node in all_anim_nodes:
+            if node.name:  # Skip root if it has no name
+                self._write_animation_node(1, node, parent_map.get(node))
 
         self.write_line(0, "")
         self.write_line(0, f"doneanim {anim.name} {model_name}")
 
-    def _write_animation_node(self, indent: int, node: MDLNode) -> None:
+    def _build_animation_parent_map(
+        self,
+        node: MDLNode,
+        parent: MDLNode | None,
+        parent_map: dict[MDLNode, MDLNode | None],
+    ) -> None:
+        """Build a mapping of animation nodes to their parents."""
+        parent_map[node] = parent
+        for child in node.children:
+            self._build_animation_parent_map(child, node, parent_map)
+
+    def _write_animation_node(
+        self,
+        indent: int,
+        node: MDLNode,
+        parent: MDLNode | None = None,
+    ) -> None:
         """Write an animation node with its controllers.
 
         Reference: vendor/mdlops/MDLOpsM.pm:3507-3554
@@ -608,17 +632,14 @@ class MDLAsciiWriter:
         # Animation nodes are always written as "dummy" type (vendor/mdlops/MDLOpsM.pm:3507)
         self.write_line(indent, f"node dummy {node.name}")
 
-        # Write parent if this node has one (we need to find parent name from model)
-        # For now, we'll skip parent writing as it requires model node mapping
-        # This is a limitation - in MDLOps, animation nodes reference model nodes by index
+        # Write parent if this node has one (vendor/mdlops/MDLOpsM.pm:3508)
+        # In MDLOps, parent is a model node index, but we use the parent node's name
+        if parent and parent.name:
+            self.write_line(indent + 1, f"parent {parent.name}")
 
         # Write controllers (vendor/mdlops/MDLOpsM.pm:3510-3553)
         for controller in node.controllers:
             self._write_controller(indent + 1, controller)
-
-        # Write children
-        for child in node.children:
-            self._write_animation_node(indent, child)
 
         self.write_line(indent, "endnode")
 
