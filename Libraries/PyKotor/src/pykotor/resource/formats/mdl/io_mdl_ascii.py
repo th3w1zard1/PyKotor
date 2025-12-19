@@ -339,6 +339,15 @@ class MDLAsciiWriter:
         self.write_line(0, "")
         self._write_node(1, mdl.root)
         self.write_line(0, "")
+        self.write_line(0, "endmodelgeom " + mdl.name)
+        self.write_line(0, "")
+
+        # Write animations if any (vendor/mdlops/MDLOpsM.pm:3488-3560)
+        if mdl.anims:
+            for anim in mdl.anims:
+                self._write_animation(anim, mdl.name)
+
+        self.write_line(0, "")
         self.write_line(0, "donemodel " + mdl.name)
 
         # If writing to bytearray/bytes, convert StringIO to bytes
@@ -511,7 +520,7 @@ class MDLAsciiWriter:
             MDLControllerType.ALPHASTART: "alphastartkey",
             MDLControllerType.BIRTHRATE: "birthratekey",
             MDLControllerType.BOUNCECO: "bouncecokey",
-            MDLControllerType.COMBINEETIME: "combineetimekey",
+            MDLControllerType.COMBINETIME: "combineetimekey",
             MDLControllerType.DRAG: "dragkey",
             MDLControllerType.FOCUSZONETX: "focuszonetxkey",
             MDLControllerType.FOCUSZONETY: "focuszonetykey",
@@ -562,6 +571,56 @@ class MDLAsciiWriter:
         for row in controller.rows:
             data_str = " ".join(str(d) for d in row.data)
             self.write_line(indent + 1, f"{row.time} {data_str}")
+        self.write_line(indent, "endlist")
+
+    def _write_animation(self, anim: MDLAnimation, model_name: str) -> None:
+        """Write animation data.
+
+        Reference: vendor/mdlops/MDLOpsM.pm:3488-3560
+        """
+        self.write_line(0, "")
+        self.write_line(0, f"newanim {anim.name} {model_name}")
+        self.write_line(1, f"length {anim.anim_length:.7g}")
+        self.write_line(1, f"transtime {anim.transition_length:.7g}")
+        if anim.root_model:
+            self.write_line(1, f"animroot {anim.root_model}")
+
+        # Write events (vendor/mdlops/MDLOpsM.pm:3496-3503)
+        if anim.events:
+            for event in anim.events:
+                self.write_line(1, f"event {event.activation_time:.7g} {event.name}")
+
+        # Write animation nodes (vendor/mdlops/MDLOpsM.pm:3504-3555)
+        # Animation nodes are written as "node dummy <node_name>" with controllers
+        # We need to traverse the animation's root node hierarchy
+        if anim.root and anim.root.name:
+            self._write_animation_node(1, anim.root)
+
+        self.write_line(0, "")
+        self.write_line(0, f"doneanim {anim.name} {model_name}")
+
+    def _write_animation_node(self, indent: int, node: MDLNode) -> None:
+        """Write an animation node with its controllers.
+
+        Reference: vendor/mdlops/MDLOpsM.pm:3507-3554
+        Animation nodes are written as "node dummy <node_name>" regardless of actual type.
+        """
+        # Animation nodes are always written as "dummy" type (vendor/mdlops/MDLOpsM.pm:3507)
+        self.write_line(indent, f"node dummy {node.name}")
+
+        # Write parent if this node has one (we need to find parent name from model)
+        # For now, we'll skip parent writing as it requires model node mapping
+        # This is a limitation - in MDLOps, animation nodes reference model nodes by index
+
+        # Write controllers (vendor/mdlops/MDLOpsM.pm:3510-3553)
+        for controller in node.controllers:
+            self._write_controller(indent + 1, controller)
+
+        # Write children
+        for child in node.children:
+            self._write_animation_node(indent, child)
+
+        self.write_line(indent, "endnode")
 
 
 class MDLAsciiReader:
