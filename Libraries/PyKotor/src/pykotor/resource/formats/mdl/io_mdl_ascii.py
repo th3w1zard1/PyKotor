@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import io
+import os
 import re
 
-from dataclasses import dataclass
 from math import cos, sin, sqrt
-from typing import TYPE_CHECKING, TextIO
+from typing import TYPE_CHECKING
 
 from pykotor.common.misc import Color
 from pykotor.common.stream import BinaryReader
@@ -32,7 +32,7 @@ from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLControl
 from utility.common.geometry import Vector2, Vector3, Vector4
 
 if TYPE_CHECKING:
-    from pykotor.resource.type import SOURCE_TYPES
+    from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES
 
 
 _FACE_SURFACE_MASK = 0x1F
@@ -275,18 +275,48 @@ def _normalize_vector(vec: list[float]) -> list[float]:
     return [0.0, 0.0, 0.0]
 
 
-@dataclass
 class MDLAsciiWriter:
-    """Writer for ASCII MDL files."""
+    """Writer for ASCII MDL files.
 
-    _writer: TextIO
+    Reference: vendor/mdlops/MDLOpsM.pm:3004-3900 (writeasciimdl)
+    """
+
+    def __init__(
+        self,
+        mdl: MDL,
+        target: TARGET_TYPES,
+    ):
+        """Initialize the ASCII MDL writer.
+
+        Args:
+            mdl: The MDL data to write
+            target: The target to write to (file path, stream, or bytes buffer)
+        """
+        self._mdl = mdl
+
+        # Open the target file/stream for writing
+        if isinstance(target, (str, bytes, os.PathLike)):
+            self._writer = open(target, "w", encoding="utf-8", newline="\n")
+        elif isinstance(target, io.TextIOBase):
+            self._writer = target
+        elif isinstance(target, (bytearray, io.BytesIO)):
+            # For bytearray/bytes, create a StringIO and we'll convert at the end
+            self._writer = io.StringIO()
+            self._target_bytes = target
+        else:
+            # Try to treat as file-like object
+            self._writer = target
 
     def write_line(self, indent: int, line: str) -> None:
         """Write a line with indentation."""
         self._writer.write("  " * indent + line + "\n")
 
-    def write_mdl(self, mdl: MDL) -> None:
-        """Write MDL data to ASCII format."""
+    def write(self) -> None:
+        """Write MDL data to ASCII format.
+
+        Reference: vendor/mdlops/MDLOpsM.pm:3004-3900 (writeasciimdl)
+        """
+        mdl = self._mdl
         self.write_line(0, "# ASCII MDL")
         self.write_line(0, "filedependancy unknown.tga")
         self.write_line(0, f"newmodel {mdl.name}")
@@ -310,6 +340,15 @@ class MDLAsciiWriter:
         self._write_node(1, mdl.root)
         self.write_line(0, "")
         self.write_line(0, "donemodel " + mdl.name)
+
+        # If writing to bytearray/bytes, convert StringIO to bytes
+        if hasattr(self, "_target_bytes"):
+            content = self._writer.getvalue()
+            if isinstance(self._target_bytes, bytearray):
+                self._target_bytes.clear()
+                self._target_bytes.extend(content.encode("utf-8"))
+            elif isinstance(self._target_bytes, io.BytesIO):
+                self._target_bytes.write(content.encode("utf-8"))
 
     def _write_node(self, indent: int, node: MDLNode) -> None:
         """Write a node and its children."""
