@@ -256,8 +256,12 @@ class BWMBinaryWriter(ResourceWriter):
             aabb_data += struct.pack("I", 4)
             aabb_data += struct.pack("I", aabb.sigplane.value)
             # Find AABB indices by object identity
-            left_idx = 0xFFFFFFFF if aabb.left is None else next(i for i, a in enumerate(aabbs) if a is aabb.left) + 1
-            right_idx = 0xFFFFFFFF if aabb.right is None else next(i for i, a in enumerate(aabbs) if a is aabb.right) + 1
+            # CRITICAL FIX: Use 0-based indices (not 1-based) for AABB children
+            # The game engine (swkotor.exe/swkotor2.exe) reads these as direct array indices.
+            # Reference: vendor/reone/src/libs/graphics/format/bwmreader.cpp:164-167
+            # Reference: wiki/BWM-File-Format.md - AABB Tree section - Vendor Discrepancy
+            left_idx = 0xFFFFFFFF if aabb.left is None else next(i for i, a in enumerate(aabbs) if a is aabb.left)
+            right_idx = 0xFFFFFFFF if aabb.right is None else next(i for i, a in enumerate(aabbs) if a is aabb.right)
             aabb_data += struct.pack("I", left_idx)
             aabb_data += struct.pack("I", right_idx)
 

@@ -396,7 +396,7 @@ Each AABB [node](MDL-MDX-File-Format#node-structures) is **44 bytes** and contai
 | xoreos | Multiplies by 44 ([node](MDL-MDX-File-Format#node-structures) size) to get [byte](GFF-File-Format#gff-data-types) offset | `walkmeshloader.cpp:241-243` |
 | KotOR.js | Reads as 0-based index | `OdysseyWalkMesh.ts:443-444` |
 | kotorblender (write) | Uses 0-based index during generation | `aabb.py:61-64` |
-| PyKotor (write) | Uses 1-based indices in output (0 = no child becomes 0xFFFFFFFF) | `io_bwm.py:259-262` |
+| PyKotor (write) | Uses 0-based indices in output (consistent with game engine expectations) | `io_bwm.py:259-266` |
 
 **Critical Note**: The xoreos implementation multiplies child indices by 44 (the [node](MDL-MDX-File-Format#node-structures) size) to compute [byte](GFF-File-Format#gff-data-types) offsets, while reone and KotOR.js use 0-based array indices. This suggests **two interpretations [ARE](GFF-File-Format#are-area) possible**:
 
