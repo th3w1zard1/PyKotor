@@ -569,6 +569,51 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
         help="Logging level for GUI conversion",
     )
 
+    # Indoor map building commands
+    indoor_build_parser = subparsers.add_parser(
+        "indoor-build",
+        aliases=["indoormap-build"],
+        help="Build a .mod file from a .indoor file",
+    )
+    indoor_build_parser.add_argument("--input", "-i", required=True, help="Input .indoor file")
+    indoor_build_parser.add_argument("--output", "-o", required=True, help="Output .mod file")
+    indoor_build_parser.add_argument("--installation", required=True, help="Path to KOTOR installation")
+    indoor_build_parser.add_argument("--kits", "-k", required=True, help="Path to kits directory")
+    indoor_build_parser.add_argument(
+        "--game", "-g",
+        choices=["k1", "k2", "kotor1", "kotor2", "tsl"],
+        help="Target game version (default: auto-detect from installation)"
+    )
+    indoor_build_parser.add_argument("--module-filename", help="Module filename (overrides .indoor module_id)")
+    indoor_build_parser.add_argument("--loading-screen", help="Path to loading screen image (TPC/TGA format)")
+    indoor_build_parser.add_argument(
+        "--log-level",
+        choices=["debug", "info", "warning", "error", "critical"],
+        default="info",
+        help="Logging level",
+    )
+
+    indoor_extract_parser = subparsers.add_parser(
+        "indoor-extract",
+        aliases=["indoormap-extract"],
+        help="Extract a .indoor file from a composite module",
+    )
+    indoor_extract_parser.add_argument("--module", "-m", required=True, help="Module name (e.g., danm13)")
+    indoor_extract_parser.add_argument("--output", "-o", required=True, help="Output .indoor file")
+    indoor_extract_parser.add_argument("--installation", required=True, help="Path to KOTOR installation")
+    indoor_extract_parser.add_argument("--kits", "-k", required=True, help="Path to kits directory")
+    indoor_extract_parser.add_argument(
+        "--game", "-g",
+        choices=["k1", "k2", "kotor1", "kotor2", "tsl"],
+        help="Target game version (default: auto-detect from installation)"
+    )
+    indoor_extract_parser.add_argument(
+        "--log-level",
+        choices=["debug", "info", "warning", "error", "critical"],
+        default="info",
+        help="Logging level",
+    )
+
     # Batch patching commands
     batch_patch_parser = subparsers.add_parser(
         "batch-patch",
@@ -749,6 +794,13 @@ def cli_main(argv: Sequence[str]) -> int:
             return cmd_kit_generate(args, logger)
         if args.command in ("gui-convert", "gui"):
             return cmd_gui_convert(args, logger)
+        # Indoor map commands
+        if args.command in ("indoor-build", "indoormap-build"):
+            from kotorcli.commands.indoor_builder import cmd_indoor_build  # noqa: PLC0415
+            return cmd_indoor_build(args, logger)
+        if args.command in ("indoor-extract", "indoormap-extract"):
+            from kotorcli.commands.indoor_builder import cmd_indoor_extract  # noqa: PLC0415
+            return cmd_indoor_extract(args, logger)
         # Patching commands
         if args.command == "batch-patch":
             return cmd_batch_patch(args, logger)
