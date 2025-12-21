@@ -176,12 +176,32 @@ class ResRef(str):
         cls,
         text: str,
     ) -> bool:
-        if not isinstance(text, str):
+        """Validates that text is a valid ResRef.
+        
+        Checks (in order):
+        1. Must be a non-empty string
+        2. Must be trimmed (no leading/trailing whitespace)
+        3. Strict ASCII validation (ASCII only, 0-127)
+        4. Strict maximum length validation (16 characters maximum)
+        5. Must not contain invalid characters (Windows filename restrictions)
+        """
+        if not isinstance(text, str) or text == "":
             return False
-        return next(
-            (False for char in cls.INVALID_CHARACTERS if char in text),
-            (text != "" and text.isascii() and len(text) <= cls.MAX_LENGTH and text == text.strip()),
-        )
+
+        # Must be trimmed (no leading/trailing whitespace)
+        if text != text.strip():
+            return False
+
+        # Strict ASCII validation
+        if not text.isascii():
+            return False
+
+        # Strict maximum length validation (16 characters)
+        if len(text) > cls.MAX_LENGTH:
+            return False
+
+        # Must not contain invalid characters
+        return not any(char in cls.INVALID_CHARACTERS for char in text)
 
     def set_data(
         self,
@@ -203,44 +223,29 @@ class ResRef(str):
             InvalidFormatError - text starts/ends with a space or contains windows invalid filename characters.
             All of the above exceptions inherit ValueError.
         """
-        parsed_text: str = str(text).strip()
-        # Check for leading or trailing whitespace. Ensure text doesn't start/end with whitespace.
+        # Strip whitespace and warn if original had leading/trailing whitespace
         raw_text = str(text)
-        text = raw_text.strip()
-        if raw_text != text:
-            msg = f"String '{raw_text}' starts or ends with whitespace. It will be stripped to '{text}'"
+        parsed_text = raw_text.strip()
+        if raw_text != parsed_text:
+            msg = f"String '{raw_text}' starts or ends with whitespace. It will be stripped to '{parsed_text}'"
             warnings.warn(msg, stacklevel=2)
 
-        # Check for maximum length
-        if len(text) > self.MAX_LENGTH:
-            if not truncate:
-                raise self.ExceedsMaxLengthError(text)
-            warnings.warn(f"String '{raw_text}' exceeds the maximum allowed length ({self.MAX_LENGTH}) and will be truncated to '{text}'", stacklevel=2)
-            text = text[: self.MAX_LENGTH]
+        # Strict ASCII validation - must be checked first
+        if not parsed_text.isascii():
+            raise self.InvalidEncodingError(parsed_text)
 
-        if any(
-            (char, pos)  # Check for invalid characters and their positions
-            for pos, char in enumerate(text)
-            if char in self.INVALID_CHARACTERS
-        ):
-            raise self.InvalidFormatError(text)
-
-        if not text.isascii():  # Ensure text only contains ASCII characters.
-            raise self.InvalidEncodingError(text)
-
-        # Validate text length.
+        # Strict maximum length validation (16 characters)
         if len(parsed_text) > self.MAX_LENGTH:
             if not truncate:
                 raise self.ExceedsMaxLengthError(parsed_text)
+            warnings.warn(f"String '{raw_text}' exceeds the maximum allowed length ({self.MAX_LENGTH}) and will be truncated to '{parsed_text[:self.MAX_LENGTH]}'", stacklevel=2)
             parsed_text = parsed_text[: self.MAX_LENGTH]
 
-        # Ensure text doesn't contain any invalid ASCII characters.
-        for i in range(len(parsed_text)):
-            if parsed_text[i] in self.INVALID_CHARACTERS:
-                msg = f"ResRef '{text}' cannot contain any invalid characters in [{self.INVALID_CHARACTERS}]"
-                raise self.InvalidFormatError(msg)
+        # Check for invalid characters (Windows filename restrictions)
+        if any(char in self.INVALID_CHARACTERS for char in parsed_text):
+            raise self.InvalidFormatError(parsed_text)
 
-        self._value = parsed_text.strip()
+        self._value = parsed_text
 
     def get(self) -> str:
         """Returns a case-insensitive wrapped string."""
