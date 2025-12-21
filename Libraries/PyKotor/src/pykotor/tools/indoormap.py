@@ -40,8 +40,8 @@ INDOOR_EMBED_RESTYPE = ResourceType.TXT
 
 class DoorInsertion(NamedTuple):
     door: KitDoor
-    room: "IndoorMapRoom"
-    room2: "IndoorMapRoom | None"
+    room: IndoorMapRoom
+    room2: IndoorMapRoom | None
     static: bool
     position: Vector3
     rotation: float
@@ -71,7 +71,7 @@ class IndoorMap:
 
     def __init__(
         self,
-        rooms: list["IndoorMapRoom"] | None = None,
+        rooms: list[IndoorMapRoom] | None = None,
         module_id: str | None = None,
         name: LocalizedString | None = None,
         lighting: Color | None = None,
@@ -191,7 +191,7 @@ class IndoorMap:
 
         # Additionally, later `process_lightmaps` will pull missing lightmaps from installation if needed.
 
-    def add_static_resources(self, room: "IndoorMapRoom"):
+    def add_static_resources(self, room: IndoorMapRoom):
         assert self.mod is not None
         for filename, data in room.component.kit.always.items():
             resname, restype = ResourceIdentifier.from_path(filename).unpack()
@@ -199,7 +199,7 @@ class IndoorMap:
                 continue
             self.mod.set_data(resname, restype, data)
 
-    def process_model(self, room: "IndoorMapRoom", installation: Installation, target_tsl: bool) -> tuple[bytes, bytes]:
+    def process_model(self, room: IndoorMapRoom, installation: Installation, target_tsl: bool) -> tuple[bytes, bytes]:
         mdl, mdx = model.flip(room.component.mdl, room.component.mdx, flip_x=room.flip_x, flip_y=room.flip_y)
         mdl_transformed: bytes = model.transform(mdl, Vector3.from_null(), room.rotation)
         mdl_converted: bytes = model.convert_to_k2(mdl_transformed) if target_tsl else model.convert_to_k1(mdl_transformed)
@@ -228,7 +228,7 @@ class IndoorMap:
                     self.mod.set_data(renamed, ResourceType.TGA, bytes_tpc(tex, ResourceType.TGA))
         return model.change_lightmaps(mdl_data, lm_renames)
 
-    def process_bwm(self, room: "IndoorMapRoom") -> BWM:
+    def process_bwm(self, room: IndoorMapRoom) -> BWM:
         bwm: BWM = deepcopy(room.base_walkmesh())
         bwm.flip(room.flip_x, room.flip_y)
         bwm.rotate(room.rotation)
@@ -358,10 +358,10 @@ class IndoorMap:
         self,
         installation: Installation,
         kits: list[Kit],
-        output_path: "os.PathLike | str",
+        output_path: os.PathLike | str,
         *,
         game_override: Game | None = None,
-        loadscreen_path: "os.PathLike | str | None" = None,
+        loadscreen_path: os.PathLike | str | None = None,
     ):
         self.mod = ERF(ERFType.MOD)
         self.lyt = LYT()
@@ -544,7 +544,7 @@ class IndoorMapRoom:
             pos = pos + self.position
         return pos
 
-    def rebuild_connections(self, rooms: list["IndoorMapRoom"]):
+    def rebuild_connections(self, rooms: list[IndoorMapRoom]):
         self.hooks = [None] * len(self.component.hooks)
         for hook in self.component.hooks:
             hook_index = self.component.hooks.index(hook)
@@ -560,14 +560,14 @@ class IndoorMapRoom:
 
 
 def build_mod_from_indoor_file(
-    indoor_path: "os.PathLike | str",
+    indoor_path: os.PathLike | str,
     *,
-    output_mod_path: "os.PathLike | str",
-    installation_path: "os.PathLike | str",
-    kits_path: "os.PathLike | str",
+    output_mod_path: os.PathLike | str,
+    installation_path: os.PathLike | str,
+    kits_path: os.PathLike | str,
     game: Game | None,
     module_id: str | None = None,
-    loadscreen_path: "os.PathLike | str | None" = None,
+    loadscreen_path: os.PathLike | str | None = None,
 ) -> None:
     installation = Installation(CaseAwarePath(installation_path))
     kits = load_kits(kits_path)
