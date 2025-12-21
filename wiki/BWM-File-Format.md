@@ -46,6 +46,10 @@ Walkmeshes serve multiple critical functions in KotOR:
   - [BWMEdge Class](#bwmedge-class)
   - [BWMNodeAABB Class](#bwmnodeaabb-class)
   - [BWMAdjacency Class](#bwmadjacency-class)
+- [Implementation Approaches and Differences](#implementation-approaches-and-differences)
+  - [AABB Tree Child Index Encoding](#aabb-tree-child-index-encoding)
+  - [AABB Tree Reading Strategies](#aabb-tree-reading-strategies)
+  - [Room Link Methodologies](#room-link-methodologies)
 
 ---
 
@@ -56,6 +60,7 @@ The binary format uses a header-based structure where offsets point to various d
 **Total header size**: 136 bytes (0x88)
 
 The file structure is:
+
 1. **Header** (8 bytes): Magic "BWM " and version "V1.0"
 2. **Walkmesh Properties** (52 bytes): Type, hook vectors, position
 3. **Data Table Offsets** (76 bytes): Counts and offsets for all data sections
@@ -114,6 +119,7 @@ The walkmesh properties section immediately follows the header and contains type
 Hook vectors are reference points used by the engine for positioning and interaction. These are **NOT** related to walkmesh geometry itself (faces, edges, vertices), but rather define interaction points for doors and placeables.
 
 **Important Distinction**: BWM hooks are different from LYT doorhooks:
+
 - **BWM Hooks**: Interaction points stored in the walkmesh file itself (relative/absolute positions)
 - **LYT Doorhooks**: Door placement points defined in layout files
 
@@ -131,6 +137,7 @@ Hook vectors are reference points used by the engine for positioning and interac
   - Used to transform vertices from local to world coordinates
 
 Hook vectors enable the engine to:
+
 - Spawn creatures at designated locations relative to walkable surfaces
 - Position triggers and encounters at specific points
 - Align objects to the walkable surface (e.g., placing items on tables)
@@ -188,6 +195,7 @@ Each face is a triangle defined by three vertex indices (0-based) into the verte
 **Face Ordering:**
 
 Faces are typically ordered with walkable faces first, followed by non-walkable faces. This ordering is important because:
+
 - Adjacency data is stored only for walkable faces, and the adjacency array index corresponds to the walkable face's position in the walkable face list (not the overall face list)
 - The engine can quickly iterate through walkable faces for pathfinding without checking material types
 - Non-walkable faces are still needed for collision detection (preventing characters from walking through walls)
@@ -201,6 +209,7 @@ Normals follow right-hand rule: counter-clockwise vertex order (v1 → v2 → v3
 **Edge Numbering:**
 
 Each triangle has 3 edges, numbered 0, 1, and 2:
+
 - Edge 0: From vertex V1 to vertex V2 (V1 → V2)
 - Edge 1: From vertex V2 to vertex V3 (V2 → V3)
 - Edge 2: From vertex V3 to vertex V1 (V3 → V1)
@@ -245,6 +254,7 @@ Each face is assigned a material type that determines its physical properties an
 **Note**: Material 16 (BottomlessPit) walkability may vary between implementations. Some mark it as walkable (allowing the player to fall), while some game logic may treat it differently.
 
 Materials control not just walkability but also:
+
 - Footstep sound effects during movement
 - Visual effects (ripples on water, dust on dirt)
 - Damage-over-time mechanics (lava, acid)
@@ -281,6 +291,7 @@ An AABB tree is a way of organizing triangles into boxes so we can find them qui
 **How it Works:**
 
 The tree is built using a recursive top-down approach:
+
 1. Start with all triangles in one big box (the root)
 2. Split the box in half along the longest axis (X, Y, or Z)
 3. Put triangles on the left side of the split into one box, triangles on the right side into another
@@ -292,6 +303,7 @@ The tree is built using a recursive top-down approach:
 - **Leaf nodes**: Boxes that contain exactly one triangle. They have a Face pointer instead of children.
 
 Each node stores:
+
 - **BbMin**: The minimum corner of the bounding box (smallest X, Y, Z values)
 - **BbMax**: The maximum corner of the bounding box (largest X, Y, Z values)
 - **Face**: The triangle (only for leaf nodes, null for internal nodes)
@@ -336,6 +348,8 @@ Each AABB node is **44 bytes** and contains:
 | Most Significant Plane| uint32  | 32 (0x20) | 4    | Split axis/plane identifier (see below)                          |
 | Left Child index      | uint32  | 36 (0x24) | 4    | Index to left child node (0-based array index, 0xFFFFFFFF = no child) |
 | Right Child index     | uint32  | 40 (0x28) | 4    | Index to right child node (0-based array index, 0xFFFFFFFF = no child) |
+
+**Important**: Child indices use **0-based array indexing**. The first node in the AABB array is at index 0, the second at index 1, and so on. The value `0xFFFFFFFF` indicates no child (leaf node or missing child). This matches standard array indexing in most programming languages. For implementation details and how different tools handle this, see the [Implementation Approaches and Differences](#implementation-approaches-and-differences) section.
 
 **Most Significant Plane values:**
 
@@ -392,6 +406,7 @@ edge_index = adjacency_index % 3
 **Bidirectional Linking:**
 
 Adjacency is always bidirectional. If face A's edge connects to face B's edge, then:
+
 - Face A's adjacency points to face B
 - Face B's adjacency points to face A
 
@@ -400,6 +415,7 @@ This ensures pathfinding can traverse in both directions along shared edges.
 **Adjacency Calculation:**
 
 The algorithm computes adjacency by:
+
 1. Looking at each edge of each walkable triangle
 2. Finding if any other walkable triangle shares that same edge (same two vertices)
 3. If found, creates an adjacency linking them using the encoding: `face_index * 3 + edge_index`
@@ -425,12 +441,14 @@ The edges array contains perimeter edges (boundary edges with no walkable neighb
 **Edge Index Encoding:**
 
 The edge index uses the same encoding as adjacency indices: `edge_index = face_index * 3 + local_edge_index`. This identifies:
+
 - Which face the edge belongs to (`face_index = edge_index // 3`)
 - Which edge of that face (0, 1, or 2) (`local_edge_index = edge_index % 3`)
 
 **Perimeter Edges:**
 
 Perimeter edges are edges of walkable faces that have no adjacent walkable neighbor. These edges form the boundaries of walkable regions and are critical for:
+
 - **Area Transitions**: Edges with non-negative transition IDs link to door connections or area boundaries
 - **Boundary Detection**: Perimeter edges define the limits of walkable space
 - **Visual Debugging**: Perimeter edges can be visualized to show walkmesh boundaries in level editors
@@ -438,10 +456,12 @@ Perimeter edges are edges of walkable faces that have no adjacent walkable neigh
 **How are Edges Identified as Perimeter?**
 
 An edge is a perimeter edge if:
+
 1. It belongs to a walkable face (non-walkable faces don't have perimeter edges)
 2. It doesn't have an adjacent neighbor face (no other triangle shares that edge)
 
 The BWM.Edges() method finds all perimeter edges by:
+
 1. Getting all walkable faces
 2. Computing adjacency for each walkable face
 3. Finding edges that have no adjacency (null adjacency = perimeter edge)
@@ -452,6 +472,7 @@ The BWM.Edges() method finds all perimeter edges by:
 Transitions tell the game which rooms or areas are connected at this edge. When you place a door in the indoor map builder, it uses transitions to know where doors should go.
 
 The transition value comes from the face's Trans1, Trans2, or Trans3 property, depending on which edge this is:
+
 - Edge 0 (V1->V2): Uses face.Trans1
 - Edge 1 (V2->V3): Uses face.Trans2
 - Edge 2 (V3->V1): Uses face.Trans3
@@ -471,12 +492,14 @@ Perimeters mark the end of closed loops of perimeter edges. Each perimeter value
 **Perimeter Loop Construction:**
 
 Perimeter edges form closed loops around walkable areas. The algorithm:
+
 1. Starts at a perimeter edge
 2. Follows connected perimeter edges in a loop
 3. Marks the last edge in each loop with Final = true
 4. Continues until all perimeter edges are processed
 
 These loops define the boundaries of walkable areas and are used for:
+
 - Door placement (doors go on perimeter edges with transitions)
 - Area visualization (drawing boundaries)
 - Collision detection (knowing where walkable area ends)
@@ -484,6 +507,7 @@ These loops define the boundaries of walkable areas and are used for:
 **Perimeter Index Encoding:**
 
 Perimeter indices are 1-based indices marking the end of each loop:
+
 - **Loop 1**: Edges from index 0 to `perimeters[0] - 1`
 - **Loop N**: Edges from `perimeters[N-2]` to `perimeters[N-1] - 1`
 
@@ -543,6 +567,7 @@ A BWMFace is a single triangle in a walkmesh. It represents one small piece of t
 Transitions tell the game which rooms or areas are connected at each edge of the triangle. When you place a door in the indoor map builder, it uses transitions to know where doors should go. The transition value is an index into the list of rooms in the module.
 
 For example:
+
 - If Trans1 = 5, it means edge 0 connects to room index 5
 - If Trans1 = null, it means edge 0 has no connection (is a boundary or wall)
 
@@ -551,6 +576,7 @@ When the indoor map builder processes a room's walkmesh, it remaps transitions f
 **Material Inheritance:**
 
 BWMFace inherits from Face, which provides:
+
 - V1, V2, V3: The three vertices
 - Material: The surface material
 - Normal(): Calculates the triangle's normal vector
@@ -632,6 +658,7 @@ Adjacency tells which triangles share edges with each other. Two triangles are a
 **What Data Does it Store?**
 
 A BWMAdjacency stores:
+
 1. **Face**: The adjacent (neighbor) triangle that shares an edge
 2. **Edge**: Which edge of the neighbor triangle connects to the current face
    - Edge 0: V1 -> V2
@@ -641,12 +668,14 @@ A BWMAdjacency stores:
 **How is it Used?**
 
 When computing adjacency for a walkmesh, the algorithm:
+
 1. Looks at each edge of each triangle
 2. Finds if any other triangle shares that same edge
 3. If found, creates a BWMAdjacency object linking them
 4. Stores this in the adjacency array using encoding: `faceIndex * 3 + edgeIndex`
 
 For example, if face 5's edge 1 is adjacent to face 12's edge 2:
+
 - The adjacency for face 5, edge 1 would be: BWMAdjacency(face12, edge2)
 - This is stored at index 5*3+1 = 16 in the adjacency array
 - The value stored is: 12*3+2 = 38 (encoding of face 12, edge 2)
@@ -654,10 +683,255 @@ For example, if face 5's edge 1 is adjacent to face 12's edge 2:
 **Bidirectional Linking:**
 
 Adjacency is always bidirectional. If face A's edge connects to face B's edge, then:
+
 - Face A's adjacency points to face B
 - Face B's adjacency points to face A
 
 This ensures pathfinding can traverse in both directions along shared edges.
+
+---
+
+## Implementation Approaches and Differences
+
+This section describes how different implementations handle various aspects of the BWM file format, particularly focusing on AABB tree encoding and reading/writing strategies. Understanding these differences can help when working with files generated by different tools or when implementing BWM support in new projects.
+
+### AABB Tree Child Index Encoding
+
+One of the critical aspects of BWM file format compatibility is how AABB tree child indices are encoded. The BWM format stores AABB nodes sequentially in an array, and parent nodes reference their children using indices into this array.
+
+#### Specification
+
+The game engine (`swkotor.exe` / `swkotor2.exe`) expects **0-based array indices** for AABB child nodes. This means:
+
+- The first node in the array is at index 0
+- The second node is at index 1
+- The Nth node is at index N-1
+- When a parent node references its left child, it stores the 0-based position of that child in the array
+
+**Binary Format**: Child indices are stored as 32-bit unsigned integers (`uint32`) at offsets 0x24 (left child) and 0x28 (right child) within each AABB node. The value `0xFFFFFFFF` indicates no child (leaf node or missing child).
+
+#### Why This Matters
+
+Child indices must be encoded correctly for the game engine to properly traverse the AABB tree. Incorrect encoding (e.g., using 1-based indexing instead of 0-based) will cause the engine to:
+
+1. Read an incorrect index from the file
+2. Access the wrong node in the array when traversing the tree
+3. Follow incorrect paths through the tree structure
+4. Fail to find walkable triangles for spatial queries
+5. Result in characters being unable to move or interact with the walkmesh
+
+#### Implementation Approaches
+
+Different projects have taken different approaches to handling AABB trees:
+
+##### Game Engine (swkotor.exe / swkotor2.exe)
+
+**Strategy**: Reads AABB data directly from file, uses indices as 0-based array offsets.
+
+**Evidence**: Reverse engineering via Ghidra analysis shows the game engine writes child indices as raw 32-bit integers without offset calculation, confirming 0-based encoding. The BWM writing function writes AABB nodes sequentially with child indices stored directly as array positions.
+
+**Reference**: This is the canonical implementation that defines the correct format specification.
+
+##### reone (C++ Engine Rewrite)
+
+**Strategy**: Reads AABB data from file, interprets child indices as 0-based array indices.
+
+**Implementation Approach**: Two-pass reading - first reads all nodes into memory, then links children using the stored indices as direct array references. This matches the game engine's behavior and is based on reverse engineering of the original executables.
+
+**Key Code Pattern**:
+
+```cpp
+// Reads child indices directly from file
+uint32_t childIdx1 = _bwm.readUint32();
+uint32_t childIdx2 = _bwm.readUint32();
+
+// Uses indices directly as array indices (0-based)
+aabbs[i]->left = aabbs[childIdx1];   // Direct array access
+aabbs[i]->right = aabbs[childIdx2];  // Direct array access
+```
+
+##### xoreos (C++ Engine Rewrite)
+
+**Strategy**: Reads AABB data from file, interprets child indices as byte offset multipliers.
+
+**Implementation Approach**: Multiplies indices by the node size (44 bytes) to compute byte offsets. While this is a different interpretation (byte offset multiplier vs. array index), it still requires indices to be 0-based for correct calculation. If indices were 1-based, the multiplication would produce incorrect offsets.
+
+**Key Code Pattern**:
+
+```cpp
+const uint32_t leftOffset = stream.readUint32LE();
+const uint32_t rightOffset = stream.readUint32LE();
+
+// Multiplies indices by node size (44 bytes) to get byte offsets
+const uint32_t AABBNodeSize = 44;
+Common::AABBNode *leftNode = getAABB(stream, leftOffset * AABBNodeSize + AABBsOffset, ...);
+Common::AABBNode *rightNode = getAABB(stream, rightOffset * AABBNodeSize + AABBsOffset, ...);
+```
+
+##### kotorblender (Blender Add-on)
+
+**Strategy**: Generates AABB tree during export, writes 0-based indices.
+
+**Implementation Approach**: Builds AABB tree recursively during export, using Python list length (`len(aabb_tree)`) to compute child indices. Since Python lists use 0-based indexing and `len()` returns the current count (which equals the next index), this naturally produces 0-based indices.
+
+**Key Code Pattern**:
+
+```python
+# Generation uses array length (0-based indexing)
+node[6] = len(aabb_tree)  # Set left child to current tree length
+generate_tree(aabb_tree, left_faces, depth + 1)
+
+# Writing writes indices directly without modification
+self.bwm.write_int32(aabb.child_idx1)  # 0-based index
+self.bwm.write_int32(aabb.child_idx2)  # 0-based index
+```
+
+##### KOTORMax / KAurora (3DS Max Plugins)
+
+**Strategy**: Export ASCII WOK format, which is compiled to binary by external tools.
+
+**Implementation Details**:
+
+- KOTORMax and KAurora are 3DS Max plugins based on BioWare's original export scripts
+- They export ASCII WOK files (`.wok.ascii`) containing walkmesh data in text format
+- ASCII files are compiled to binary BWM format by the game engine's compiler or separate compilation tools
+- The `BuildAABBTreeNode` function in KAurora builds trees recursively by appending nodes to an array in order
+- Since nodes are appended sequentially, their array positions are naturally 0-based
+- Compiled output works correctly in-game, confirming proper 0-based encoding
+
+**Note**: These tools don't directly write binary child index encoding - the compilation process handles the binary conversion. The working in-game behavior confirms compiled output uses 0-based indices.
+
+##### PyKotor / Andastra.Parsing
+
+**Strategy**: Generates AABB trees on-the-fly when reading, writes 0-based indices when writing.
+
+**Key Design Choice**: PyKotor (and its C# port Andastra.Parsing) takes a different approach compared to most implementations:
+
+- **Reader**: Does NOT read AABB data from files - always generates trees on-the-fly when `bwm.Aabbs()` is called
+- **Writer**: Generates AABB tree and writes it to file using 0-based indices
+
+**Reading Implementation**:
+
+```python
+# Reads AABB count and offset from header but does not read actual AABB data
+_reader.ReadUInt32(); // aabb_count
+_reader.ReadUInt32(); // aabb_offset
+_reader.Skip(4);
+
+# AABB tree is generated on-demand
+bwm.Aabbs()  # Generates tree using BWM._AabbsRec()
+```
+
+**Writing Implementation**:
+
+```python
+# Finds child indices in array
+left_idx = next(i for i, a in enumerate(aabbs) if a is aabb.left)  # 0-based
+right_idx = next(i for i, a in enumerate(aabbs) if a is aabb.right)  # 0-based
+
+# Writes indices directly
+writer.write_uint32(left_idx)   # 0-based index
+writer.write_uint32(right_idx)  # 0-based index
+```
+
+**Rationale**: Generating trees on-the-fly ensures structural correctness and simplifies the reader code (no need to parse binary AABB structure and link child nodes). The trade-off is that the original tree structure from files is not preserved, and trees must be regenerated each time (O(n log n) complexity, which is acceptable for typical walkmesh sizes).
+
+**Important**: Even though the reader generates trees, the writer must still produce files compatible with the game engine and other tools. Therefore, PyKotor/Andastra.Parsing writes 0-based indices to match the game engine's expectations.
+
+#### Comparison Summary
+
+| Implementation | Reads AABB from File? | Generates AABB? | Child Index Encoding | Notes |
+|---------------|----------------------|-----------------|---------------------|--------|
+| **swkotor.exe / swkotor2.exe** | ✅ Yes | ❌ No | 0-based array indices | Reference implementation |
+| **reone** | ✅ Yes | ❌ No | 0-based array indices | Matches game engine behavior |
+| **xoreos** | ✅ Yes | ❌ No | 0-based (as byte offset multiplier) | Different interpretation, same result |
+| **kotorblender** | ✅ Yes | ✅ Yes (on export) | 0-based array indices | Generates during export, reads from files |
+| **KOTORMax** | ⚠️ N/A (exports ASCII) | ✅ Yes (ASCII export) | 0-based (compiled output) | Compilation handles binary conversion |
+| **KAurora** | ✅ Yes (can process binary) | ✅ Yes (generates ASCII) | 0-based (compiled output) | Can process/regenerate BWM files |
+| **PyKotor/Andastra.Parsing Reader** | ❌ No | ✅ Yes (on demand) | N/A (generates, doesn't read) | Non-standard approach, generates on-the-fly |
+| **PyKotor/Andastra.Parsing Writer** | ❌ No | ✅ Yes | 0-based array indices | Must match game engine format |
+
+### AABB Tree Reading Strategies
+
+When implementing BWM file support, there are two main approaches for handling AABB trees:
+
+#### Reading from Files (Standard Approach)
+
+**Advantages**:
+
+- Preserves original tree structure from source files
+- Faster loading for large walkmeshes (no tree construction overhead)
+- Matches how the game engine and most tools work
+- Enables format verification and round-trip testing
+
+**Disadvantages**:
+
+- Must correctly parse binary AABB structure
+- Must handle child index linking correctly
+- More complex reader code
+
+**Used by**: reone, xoreos, kotorblender, game engine
+
+#### Generating On-the-Fly (Alternative Approach)
+
+**Advantages**:
+
+- Always structurally correct trees (no dependency on file format encoding)
+- Simpler reader code (no AABB parsing needed)
+- Immune to file format bugs in AABB encoding
+
+**Disadvantages**:
+
+- Original tree structure is lost (cannot preserve exact tree from files)
+- Must regenerate every time (O(n log n) complexity)
+- Slightly slower loading for large walkmeshes
+- Non-standard approach (fewer implementations use this)
+
+**Used by**: PyKotor, Andastra.Parsing
+
+**Note**: Even when using generation for reading, the writer must still produce files with correct encoding (0-based indices) because files may be consumed by other tools or the game engine.
+
+#### Recommendations for Implementers
+
+1. **For Writers**: Always use 0-based array indices for AABB child nodes. This matches the game engine's expectations and ensures compatibility with all tools.
+
+2. **For Readers**: You have two choices:
+   - **Standard Approach**: Read AABB data from files (like reone, xoreos, kotorblender). This preserves the original tree structure and is faster for large walkmeshes.
+   - **Generation Approach**: Generate trees on-the-fly (like PyKotor). This ensures structural correctness and simplifies code, but loses the original tree structure and requires regeneration each time.
+
+3. **Index Interpretation**: When reading child indices, treat them as 0-based array positions. While xoreos multiplies by node size to compute byte offsets, this still requires 0-based indices for correct calculation.
+
+4. **Testing**: Test your implementation with files generated by different tools (game engine, kotorblender, etc.) to ensure compatibility. Verify that spatial queries (raycasting, point-in-triangle tests) work correctly.
+
+### Room Link Methodologies
+
+Different tools use different approaches for defining room links (transitions between rooms):
+
+#### KOTORMax: Edge Selection
+
+- **Method**: Users select edges directly in 3DS Max edge selection mode
+- **Tool**: "Room Link Editor" (`kx_roomlinker.ms`)
+- **Storage**: Edge selection converted to vertex color data in map channel (`kx_roomlinkChannel`)
+- **Encoding**: Green channel stores room number (value = 100 + room_number)
+- **Advantages**: Visual edge selection is intuitive and user-friendly
+- **Workflow**: Select edges → Pick room number → Apply → Tool handles encoding
+
+#### KotorBlender: Vertex Painting
+
+- **Method**: Users manually paint vertex colors using Blender's vertex paint mode
+- **Storage**: Vertex colors with green channel encoding room numbers
+- **Encoding**: Red=0, Blue=0, Green=(100 + room_number)
+- **Workflow**: Switch to vertex paint → Select color based on room number → Paint vertices of connecting edges
+- **Considerations**: Requires understanding encoding scheme, more manual work, error-prone if vertices are painted incorrectly
+
+#### Indoor Map Builder (HolocronToolset)
+
+- **Method**: Programmatic module building without manual vertex painting
+- **Approach**: Uses proximity-based hook matching to automatically connect rooms
+- **Workflow**: Automated - no manual room link definition required
+- **Advantages**: No manual work, consistent results, suitable for procedural generation
+
+**Note**: These different methodologies all ultimately store the same data (room transition indices in the BWM file), but use different user interfaces and workflows. Understanding these differences helps when working with files from different tools or when choosing a workflow for module creation.
 
 ---
 
