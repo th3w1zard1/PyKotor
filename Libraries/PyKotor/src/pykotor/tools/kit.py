@@ -33,6 +33,7 @@ if TYPE_CHECKING:
 from pykotor.common.module import Module
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.extract.installation import SearchLocation
+from pykotor.tools.module import get_resource_priority
 from pykotor.resource.formats.bwm import bytes_bwm, read_bwm
 from pykotor.resource.formats.erf import read_erf
 from pykotor.resource.formats.rim import read_rim
@@ -69,45 +70,6 @@ except ImportError:
     if not TYPE_CHECKING:
         Image = None  # type: ignore[assignment, misc]
         ImageDraw = None  # type: ignore[assignment, misc]
-
-
-def _get_resource_priority(location: LocationResult, installation: Installation) -> int:
-    """Get resource priority based on KOTOR resolution order.
-
-    Resolution order (from highest to lowest priority):
-    1. Override folder (priority 0 - highest)
-    2. Modules (.mod files) (priority 1)
-    3. Modules (.rim/_s.rim/_dlg.erf files) (priority 2)
-    4. Chitin BIFs (priority 3 - lowest)
-
-    Reference: Libraries/PyKotor/src/pykotor/tslpatcher/writer.py _get_resource_priority
-
-    Args:
-    ----
-        location: LocationResult from installation.locations()
-        installation: The installation instance
-
-    Returns:
-    -------
-        Priority value (lower = higher priority)
-    """
-    filepath = location.filepath
-    parent_names_lower = [parent.name.lower() for parent in filepath.parents]
-
-    if "override" in parent_names_lower:
-        return 0
-    if "modules" in parent_names_lower:
-        name_lower = filepath.name.lower()
-        if name_lower.endswith(".mod"):
-            return 1
-        return 2  # .rim/_s.rim/_dlg.erf
-    if "data" in parent_names_lower or filepath.suffix.lower() == ".bif":
-        return 3
-    # Files directly in installation root treated as Override priority
-    if filepath.parent == installation.path():
-        return 0
-    # Default to lowest priority if unknown
-    return 3
 
 
 def _resolve_resource_with_priority(
@@ -160,14 +122,14 @@ def _resolve_resource_with_priority(
     # If multiple resources exist, use the one with highest priority (lowest number)
     location_list_sorted = sorted(
         location_list,
-        key=lambda loc: _get_resource_priority(loc, installation),
+        key=lambda loc: get_resource_priority(loc, installation),
     )
 
     # Get the highest priority location
     best_location = location_list_sorted[0]
 
     # Get priority for logging
-    priority = _get_resource_priority(best_location, installation)
+    priority = get_resource_priority(best_location, installation)
     priority_names = ["Override", "Modules (.mod)", "Modules (.rim)", "Chitin"]
     if logger and len(location_list) > 1:
         logger.debug(f"Found {len(location_list)} locations for {resname}.{restype.extension}, using {priority_names[priority]} (highest priority)")
@@ -574,7 +536,7 @@ def extract_kit(
                     if loc_list:
                         wok_locations[res_ident] = sorted(
                             loc_list,
-                            key=lambda loc: _get_resource_priority(loc, installation),
+                            key=lambda loc: get_resource_priority(loc, installation),
                         )
                 for room_model in lyt_room_model_names:
                     wok_ident = ResourceIdentifier(resname=room_model, restype=ResourceType.WOK)
@@ -622,7 +584,7 @@ def extract_kit(
             if loc_list:
                 component_locations[res_ident] = sorted(
                     loc_list,
-                    key=lambda loc: _get_resource_priority(loc, installation),
+                    key=lambda loc: get_resource_priority(loc, installation),
                 )
     
     for room_model in lyt_room_model_names:
@@ -843,7 +805,7 @@ def extract_kit(
         if loc_list:
             batch_location_results[res_ident] = sorted(
                 loc_list,
-                key=lambda loc: _get_resource_priority(loc, installation),
+                key=lambda loc: get_resource_priority(loc, installation),
             )
 
     # Batch all TXI lookups upfront to avoid expensive individual calls
@@ -873,7 +835,7 @@ def extract_kit(
         if loc_list:
             batch_txi_location_results[res_ident] = sorted(
                 loc_list,
-                key=lambda loc: _get_resource_priority(loc, installation),
+                key=lambda loc: get_resource_priority(loc, installation),
             )
 
     # Batch extract all textures and lightmaps for better performance

@@ -30,6 +30,7 @@ This document provides a detailed description of the GFF (Generic file format) u
   - [GFF Generic types](#gff-generic-types)
     - [ARE (Area)](#are-area)
     - [DLG (Dialogue)](#dlg-dialogue)
+    - [FAC (Faction)](#fac-faction)
     - [GIT (game instance template)](#git-game-instance-template)
     - [GUI (Graphical User Interface)](#gui-graphical-user-interface)
     - [IFO (module info)](#ifo-module-info)
@@ -309,6 +310,10 @@ See [ARE (Area)](GFF-ARE) for detailed documentation.
 ### DLG (Dialogue)
 
 See [DLG (Dialogue)](GFF-DLG) for detailed documentation.
+
+### FAC (Faction)
+
+See [FAC (Faction)](GFF-FAC) for detailed documentation.
 
 ### GIT (game instance template)
 

@@ -6,6 +6,7 @@ EDITOR_WIKI_MAP: dict[str, str | None] = {
     "BWMEditor": "BWM-File-Format.md",
     "DLGEditor": "GFF-DLG.md",
     "ERFEditor": "ERF-File-Format.md",
+    "FACEditor": "GFF-FAC.md",
     "GFFEditor": "GFF-File-Format.md",  # Generic GFF editor uses general format doc
     "GITEditor": "GFF-GIT.md",
     "IFOEditor": "GFF-IFO.md",

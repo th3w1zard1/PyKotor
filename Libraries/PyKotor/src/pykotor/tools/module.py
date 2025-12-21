@@ -6,6 +6,7 @@ from loggerplus import RobustLogger
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import ResRef
 from pykotor.common.module import Module
+from pykotor.extract.file import LocationResult
 from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf
 from pykotor.resource.formats.gff import bytes_gff
@@ -338,6 +339,45 @@ def rim_to_mod(
             mod.set_data(str(res.resref), res.restype, res.data)
 
     write_erf(mod, filepath, ResourceType.MOD)
+
+
+def get_resource_priority(location: LocationResult, installation: Installation) -> int:
+    """Get resource priority based on KOTOR resolution order.
+
+    Resolution order (from highest to lowest priority):
+    1. Override folder (priority 0 - highest)
+    2. Modules (.mod files) (priority 1)
+    3. Modules (.rim/_s.rim/_dlg.erf files) (priority 2)
+    4. Chitin BIFs (priority 3 - lowest)
+
+    Reference: Libraries/PyKotor/src/pykotor/tslpatcher/writer.py _get_resource_priority
+
+    Args:
+    ----
+        location: LocationResult from installation.locations()
+        installation: The installation instance
+
+    Returns:
+    -------
+        Priority value (lower = higher priority)
+    """
+    filepath = location.filepath
+    parent_names_lower = [parent.name.lower() for parent in filepath.parents]
+
+    if "override" in parent_names_lower:
+        return 0
+    if "modules" in parent_names_lower:
+        name_lower = filepath.name.lower()
+        if name_lower.endswith(".mod"):
+            return 1
+        return 2  # .rim/_s.rim/_dlg.erf
+    if "data" in parent_names_lower or filepath.suffix.lower() == ".bif":
+        return 3
+    # Files directly in installation root treated as Override priority
+    if filepath.parent == installation.path():
+        return 0
+    # Default to lowest priority if unknown
+    return 3
 
 
 def prioritize_module_files(module_files: list[os.PathLike | str]) -> list[Path]:
