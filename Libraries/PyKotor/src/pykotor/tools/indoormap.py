@@ -16,9 +16,8 @@ from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm
-from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf
+from pykotor.resource.formats.erf import ERF, ERFType, write_erf
 from pykotor.resource.formats.lyt import LYT, LYTRoom, bytes_lyt
-from pykotor.resource.formats.rim import read_rim
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, bytes_tpc
 from pykotor.resource.formats.vis import VIS, bytes_vis
 from pykotor.resource.generics.are import ARE, ARENorthAxis, bytes_are
@@ -27,8 +26,8 @@ from pykotor.resource.generics.ifo import IFO, bytes_ifo
 from pykotor.resource.generics.utd import bytes_utd
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
-from pykotor.tools.path import CaseAwarePath
 from pykotor.tools.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor, load_kits
+from pykotor.tools.path import CaseAwarePath
 from utility.common.geometry import Vector2, Vector3
 
 if TYPE_CHECKING:
@@ -580,9 +579,9 @@ def build_mod_from_indoor_file(
 
 
 def extract_indoor_from_module_files(
-    module_files: list["os.PathLike | str"],
+    module_files: list[os.PathLike | str],
     *,
-    output_indoor_path: "os.PathLike | str",
+    output_indoor_path: os.PathLike | str,
 ) -> bool:
     """Extract embedded `.indoor` JSON from module containers.
 
@@ -590,6 +589,7 @@ def extract_indoor_from_module_files(
     """
     # Highest priority: if any container is .mod, use that first.
     # Otherwise, scan in provided order.
+    output_indoor_path_obj = Path(output_indoor_path).absolute()
     ordered = sorted([Path(p) for p in module_files], key=lambda p: 0 if p.suffix.lower() == ".mod" else 1)
     for container in ordered:
         try:
@@ -601,10 +601,8 @@ def extract_indoor_from_module_files(
                 cap = Capsule(container)
                 if cap.contains(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE):
                     data = cap.resource(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE)
-                    Path(output_indoor_path).write_bytes(data)
+                    output_indoor_path_obj.write_bytes(data)
                     return True
         except Exception:  # noqa: BLE001
             continue
     return False
-
-
