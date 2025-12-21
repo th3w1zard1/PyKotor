@@ -799,16 +799,39 @@ self.bwm.write_int32(aabb.child_idx2)  # 0-based index
 - Since nodes are appended sequentially, their array positions are naturally 0-based
 - Compiled output works correctly in-game, confirming proper 0-based encoding
 
+**ASCII Format Structure**:
+
+The ASCII WOK format exported by these tools includes:
+
+- Vertex coordinates (in world space, converted from Max units)
+- Face definitions with vertex indices and material IDs
+- Room links/transitions (via vertex color encoding in KOTORMax's `do_aabb` function)
+- AABB tree data (in KAurora, via `BuildAABBTreeNode` and `ExportAABBTree` functions)
+
+**KAurora AABB Tree Generation**:
+
+KAurora's `BuildAABBTreeNode` function recursively builds AABB trees by:
+
+1. Calculating bounding box for current face list
+2. If single face remains, creating a leaf node with face index
+3. If multiple faces, creating an internal node with "-1" marker
+4. Splitting faces along longest axis (X, Y, or Z)
+5. Recursively building left and right subtrees
+6. Appending nodes to array in order (naturally 0-based)
+
+The ASCII format stores AABB nodes as text lines containing bounding box coordinates (6 floats: minX, minY, minZ, maxX, maxY, maxZ) followed by either a face index (leaf nodes) or "-1" (internal nodes).
+
 **Note**: These tools don't directly write binary child index encoding - the compilation process handles the binary conversion. The working in-game behavior confirms compiled output uses 0-based indices.
 
 ##### PyKotor / Andastra.Parsing
 
-**Strategy**: Generates AABB trees on-the-fly when reading, writes 0-based indices when writing.
+**Strategy**: Generates AABB trees on-the-fly when reading, writes 0-based indices when writing. Currently supports binary BWM format only.
 
 **Key Design Choice**: PyKotor (and its C# port Andastra.Parsing) takes a different approach compared to most implementations:
 
 - **Reader**: Does NOT read AABB data from files - always generates trees on-the-fly when `bwm.Aabbs()` is called
 - **Writer**: Generates AABB tree and writes it to file using 0-based indices
+- **Format Support**: Currently supports binary BWM format only (no ASCII WOK export/import)
 
 **Reading Implementation**:
 
@@ -838,6 +861,15 @@ writer.write_uint32(right_idx)  # 0-based index
 
 **Important**: Even though the reader generates trees, the writer must still produce files compatible with the game engine and other tools. Therefore, PyKotor/Andastra.Parsing writes 0-based indices to match the game engine's expectations.
 
+**Future ASCII Support**: PyKotor could be extended to support ASCII WOK format (similar to KOTORMax/KAurora) by implementing `BWMBinaryWriter.write_ascii()` and `BWMBinaryReader.read_ascii()` methods. The ASCII format would export:
+
+- Vertex coordinates as text
+- Face definitions with vertex indices and material IDs
+- Room links/transitions (if supported)
+- AABB tree data as text lines (bounding box coordinates + face index or "-1" marker)
+
+Such an implementation would follow the same patterns as PyKotor's existing `MDLAsciiWriter` and `MDLAsciiReader` classes, matching the ASCII format structure used by KOTORMax and KAurora.
+
 #### Comparison Summary
 
 | Implementation | Reads AABB from File? | Generates AABB? | Child Index Encoding | Notes |
@@ -848,8 +880,8 @@ writer.write_uint32(right_idx)  # 0-based index
 | **kotorblender** | ✅ Yes | ✅ Yes (on export) | 0-based array indices | Generates during export, reads from files |
 | **KOTORMax** | ⚠️ N/A (exports ASCII) | ✅ Yes (ASCII export) | 0-based (compiled output) | Compilation handles binary conversion |
 | **KAurora** | ✅ Yes (can process binary) | ✅ Yes (generates ASCII) | 0-based (compiled output) | Can process/regenerate BWM files |
-| **PyKotor/Andastra.Parsing Reader** | ❌ No | ✅ Yes (on demand) | N/A (generates, doesn't read) | Non-standard approach, generates on-the-fly |
-| **PyKotor/Andastra.Parsing Writer** | ❌ No | ✅ Yes | 0-based array indices | Must match game engine format |
+| **PyKotor/Andastra.Parsing Reader** | ❌ No | ✅ Yes (on demand) | N/A (generates, doesn't read) | Non-standard approach, generates on-the-fly; binary format only |
+| **PyKotor/Andastra.Parsing Writer** | ❌ No | ✅ Yes | 0-based array indices | Must match game engine format; binary format only |
 
 ### AABB Tree Reading Strategies
 
