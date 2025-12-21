@@ -5,8 +5,11 @@ This script parses the raw BWM header and edge data to understand
 how transitions ended up on the wrong faces.
 """
 
+from __future__ import annotations
+
 import struct
 import sys
+
 from pathlib import Path
 
 # Add PyKotor to path
@@ -19,7 +22,7 @@ from pykotor.resource.type import ResourceType
 
 def parse_bwm_header(data: bytes) -> dict:
     """Parse BWM header and return offsets/counts.
-    
+
     Header structure (136 bytes total):
     - 0-3: "BWM " (4 bytes)
     - 4-7: "V1.0" (4 bytes)
@@ -46,25 +49,25 @@ def parse_bwm_header(data: bytes) -> dict:
     - 128-131: perimeters_count (4 bytes)
     - 132-135: perimeters_offset (4 bytes)
     """
-    file_type = data[0:4].decode('ascii')
-    version = data[4:8].decode('ascii')
-    
+    file_type = data[0:4].decode("ascii")
+    version = data[4:8].decode("ascii")
+
     walkmesh_type = struct.unpack_from("I", data, 8)[0]
     position = struct.unpack_from("fff", data, 60)
-    
+
     vertex_count = struct.unpack_from("I", data, 72)[0]
     vertex_offset = struct.unpack_from("I", data, 76)[0]
     face_count = struct.unpack_from("I", data, 80)[0]
     indices_offset = struct.unpack_from("I", data, 84)[0]
     material_offset = struct.unpack_from("I", data, 88)[0]
-    
+
     adjacency_count = struct.unpack_from("I", data, 112)[0]  # walkable face count
     adjacency_offset = struct.unpack_from("I", data, 116)[0]
     edge_count = struct.unpack_from("I", data, 120)[0]
     edge_offset = struct.unpack_from("I", data, 124)[0]
     perimeter_count = struct.unpack_from("I", data, 128)[0]
     perimeter_offset = struct.unpack_from("I", data, 132)[0]
-    
+
     return {
         "file_type": file_type,
         "version": version,
@@ -88,19 +91,21 @@ def analyze_edges(data: bytes, header: dict) -> list:
     edges = []
     edge_offset = header["edge_offset"]
     edge_count = header["edge_count"]
-    
+
     for i in range(edge_count):
         offset = edge_offset + i * 8
         edge_index, transition = struct.unpack_from("ii", data, offset)
         face_idx = edge_index // 3
         edge_idx = edge_index % 3
-        edges.append({
-            "raw_index": edge_index,
-            "face_idx": face_idx,
-            "edge_idx": edge_idx,
-            "transition": transition,
-        })
-    
+        edges.append(
+            {
+                "raw_index": edge_index,
+                "face_idx": face_idx,
+                "edge_idx": edge_idx,
+                "transition": transition,
+            }
+        )
+
     return edges
 
 
@@ -109,31 +114,31 @@ def analyze_materials(data: bytes, header: dict) -> list:
     materials = []
     material_offset = header["material_offset"]
     face_count = header["face_count"]
-    
+
     for i in range(face_count):
         offset = material_offset + i * 4
         material = struct.unpack_from("I", data, offset)[0]
         materials.append(material)
-    
+
     return materials
 
 
 def analyze_mod_wok(mod_path: Path, wok_name: str) -> None:
     """Analyze a specific WOK file from a MOD."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"RAW BINARY ANALYSIS: {wok_name}")
-    print(f"{'='*70}")
-    
+    print(f"{'=' * 70}")
+
     erf = read_erf(mod_path.read_bytes())
     data = erf.get(wok_name, ResourceType.WOK)
-    
+
     if data is None:
         print(f"ERROR: WOK '{wok_name}' not found in {mod_path}")
         return
-    
+
     header = parse_bwm_header(data)
-    
-    print(f"\nHeader Info:")
+
+    print("\nHeader Info:")
     print(f"  File Type: {header['file_type']}")
     print(f"  Version: {header['version']}")
     print(f"  Walkmesh Type: {header['walkmesh_type']}")
@@ -142,61 +147,61 @@ def analyze_mod_wok(mod_path: Path, wok_name: str) -> None:
     print(f"  Walkable Count: {header['walkable_count']}")
     print(f"  Edge Count: {header['edge_count']}")
     print(f"  Perimeter Count: {header['perimeter_count']}")
-    
+
     # Analyze materials
     materials = analyze_materials(data, header)
     walkable_materials = {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}
-    
+
     walkable_faces = [i for i, m in enumerate(materials) if m in walkable_materials]
     unwalkable_faces = [i for i, m in enumerate(materials) if m not in walkable_materials]
-    
-    print(f"\nMaterial Analysis:")
+
+    print("\nMaterial Analysis:")
     print(f"  Walkable faces (by material): {len(walkable_faces)}")
     print(f"  Unwalkable faces (by material): {len(unwalkable_faces)}")
-    print(f"  Walkable range should be: 0-{header['walkable_count']-1}")
-    print(f"  Unwalkable range should be: {header['walkable_count']}-{header['face_count']-1}")
-    
+    print(f"  Walkable range should be: 0-{header['walkable_count'] - 1}")
+    print(f"  Unwalkable range should be: {header['walkable_count']}-{header['face_count'] - 1}")
+
     # Analyze edges
     edges = analyze_edges(data, header)
     edges_with_trans = [e for e in edges if e["transition"] >= 0]
-    
-    print(f"\nEdge Analysis:")
+
+    print("\nEdge Analysis:")
     print(f"  Total edges: {len(edges)}")
     print(f"  Edges with transitions (transition >= 0): {len(edges_with_trans)}")
-    
+
     if edges_with_trans:
-        print(f"\n  Edges with transitions:")
+        print("\n  Edges with transitions:")
         for e in edges_with_trans:
             in_walkable = e["face_idx"] < header["walkable_count"]
             mat = materials[e["face_idx"]] if e["face_idx"] < len(materials) else "?"
             status = "WALKABLE" if in_walkable else "**UNWALKABLE**"
             print(f"    Face {e['face_idx']} edge {e['edge_idx']}: transition={e['transition']}, material={mat}, {status}")
     else:
-        print(f"\n  ** NO EDGES WITH TRANSITIONS! This is the bug. **")
-        print(f"  The BWM writer computed edges only from walkable faces,")
-        print(f"  but the transitions were on unwalkable faces, so no edges were written.")
+        print("\n  ** NO EDGES WITH TRANSITIONS! This is the bug. **")
+        print("  The BWM writer computed edges only from walkable faces,")
+        print("  but the transitions were on unwalkable faces, so no edges were written.")
 
 
 def main():
     repo_root = Path(__file__).resolve().parent.parent.parent.parent
-    
+
     step01_mod = repo_root / "reproduce_walkbug_indoorbuilder" / "step01" / "step01.mod"
     step02_mod = repo_root / "reproduce_walkbug_indoorbuilder" / "step02 from beta" / "step02.mod"
-    
-    print("="*70)
+
+    print("=" * 70)
     print("RAW BWM BINARY STRUCTURE ANALYSIS")
-    print("="*70)
-    
+    print("=" * 70)
+
     # Analyze step01 (working)
     analyze_mod_wok(step01_mod, "step01_room0")
-    
+
     # Analyze step02 (buggy)
     analyze_mod_wok(step02_mod, "test01_room0")
-    
+
     # Compare edge data
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CONCLUSION")
-    print("="*70)
+    print("=" * 70)
     print("""
 The bug is confirmed:
 
@@ -221,4 +226,3 @@ ROOT CAUSE:
 
 if __name__ == "__main__":
     main()
-

@@ -96,9 +96,9 @@ def analyze_mod_woks(mod_path: Path, mod_name: str):
                 if transition_info:
                     all_walkable = all(t["is_walkable"] for t in transition_info)
                     if all_walkable:
-                        print(f"    [OK] Status: CORRECT - All transitions on walkable faces")
+                        print("    [OK] Status: CORRECT - All transitions on walkable faces")
                     else:
-                        print(f"    [BUG] Status: Transitions on non-walkable faces!")
+                        print("    [BUG] Status: Transitions on non-walkable faces!")
     
     return results
 
