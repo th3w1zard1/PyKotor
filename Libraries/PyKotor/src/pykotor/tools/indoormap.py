@@ -27,6 +27,7 @@ from pykotor.resource.generics.utd import bytes_utd
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
 from pykotor.tools.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor, load_kits
+from pykotor.tools.module import prioritize_module_files
 from pykotor.tools.path import CaseAwarePath
 from utility.common.geometry import Vector2, Vector3
 
@@ -585,19 +586,20 @@ def extract_indoor_from_module_files(
 ) -> bool:
     """Extract embedded `.indoor` JSON from module containers.
 
+    Uses canonical composite module loading priority:
+    - `.mod` files are prioritized first
+    - If no `.mod` exists, combines `.rim`, `_s.rim`, and `_dlg.erf` files
+
     Returns True if embedded data was found and written.
     """
-    # Highest priority: if any container is .mod, use that first.
-    # Otherwise, scan in provided order.
     output_indoor_path_obj = Path(output_indoor_path).absolute()
-    ordered = sorted([Path(p) for p in module_files], key=lambda p: 0 if p.suffix.lower() == ".mod" else 1)
-    for container in ordered:
+    # Use canonical composite module loading priority logic
+    prioritized_files = prioritize_module_files(module_files)
+
+    for container in prioritized_files:
         try:
-            if container.name.lower() in {
-                ".mod",
-                ".erf",
-                ".rim",
-            }:
+            # Check if it's a capsule file we can read
+            if container.suffix.lower() in {".mod", ".erf", ".rim", ".sav", ".hak"}:
                 cap = Capsule(container)
                 if cap.contains(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE):
                     data = cap.resource(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE)

@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
-
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import ResRef
 from pykotor.common.module import Module
@@ -81,7 +80,7 @@ def clone_module(  # noqa: C901, PLR0915, PLR0912, PLR0913
         2. Rename resources and change identifiers
         3. Copy textures and lightmaps if specified
         4. Write new module resources to file.
-    
+
     References:
     ----------
         vendor/TSLPatcher/TSLPatcher.pl (Module installation/cloning logic)
@@ -339,3 +338,82 @@ def rim_to_mod(
             mod.set_data(str(res.resref), res.restype, res.data)
 
     write_erf(mod, filepath, ResourceType.MOD)
+
+
+def prioritize_module_files(module_files: list[os.PathLike | str]) -> list[Path]:
+    """Prioritize module files using canonical composite loading logic.
+
+    This implements the same priority logic used by kotordiff's composite module loading:
+    - If a `.mod` file exists for a module root, use only that (highest priority)
+    - If no `.mod` exists, combine all rim-like files (`.rim`, `_s.rim`, `_dlg.erf`)
+
+    Args:
+    ----
+        module_files: List of module file paths to prioritize
+
+    Returns:
+    -------
+        Prioritized list of Path objects representing the files to use.
+        Files are grouped by module root, with `.mod` files taking priority
+        over rim-like files for the same module root.
+
+    Examples:
+    --------
+        >>> files = ["mymod.rim", "mymod.mod", "mymod_s.rim"]
+        >>> prioritize_module_files(files)
+        [Path("mymod.mod")]  # .mod takes priority
+
+        >>> files = ["mymod.rim", "mymod_s.rim", "mymod_dlg.erf"]
+        >>> prioritize_module_files(files)
+        [Path("mymod.rim"), Path("mymod_s.rim"), Path("mymod_dlg.erf")]  # All used when no .mod
+
+    Note:
+    ----
+        This matches the logic from `pykotor.tslpatcher.diff.engine.apply_folder_resolution_order`
+        and `pykotor.tslpatcher.diff.engine.CompositeModuleCapsule`.
+    """
+    from pathlib import Path  # noqa: PLC0415
+
+    # Group files by module root
+    module_groups: dict[str, list[Path]] = {}
+    non_module_files: list[Path] = []
+
+    for file_path in module_files:
+        path = Path(file_path)
+        file_name_lower = path.name.lower()
+
+        # Check if this is a module file
+        is_module_file = file_name_lower.endswith(".mod") or file_name_lower.endswith(".rim") or file_name_lower.endswith("_s.rim") or file_name_lower.endswith("_dlg.erf")
+
+        if is_module_file:
+            try:
+                root = Installation.get_module_root(path)
+                if root not in module_groups:
+                    module_groups[root] = []
+                module_groups[root].append(path)
+            except Exception:  # noqa: BLE001
+                # If we can't determine module root, treat as non-module file
+                non_module_files.append(path)
+        else:
+            non_module_files.append(path)
+
+    # Apply priority logic to each module group
+    prioritized_files: list[Path] = list(non_module_files)
+
+    for root, group_files in module_groups.items():
+        # Partition into .mod (highest priority) and rim-like group
+        mod_files = [f for f in group_files if f.name.lower().endswith(".mod")]
+        rimlike_files = [
+            f
+            for f in group_files
+            if (f.name.lower().endswith(".rim") and not f.name.lower().endswith("_s.rim")) or f.name.lower().endswith("_s.rim") or f.name.lower().endswith("_dlg.erf")
+        ]
+
+        if mod_files:
+            # .mod exists - use it, ignore rim-like group
+            prioritized_files.append(mod_files[0])
+        else:
+            # No .mod - use all rim-like files
+            prioritized_files.extend(rimlike_files)
+
+    return prioritized_files
