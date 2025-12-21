@@ -522,20 +522,12 @@ class MDLAsciiWriter:
             MDLControllerType.BOUNCECO: "bouncecokey",
             MDLControllerType.COMBINETIME: "combineetimekey",
             MDLControllerType.DRAG: "dragkey",
-            MDLControllerType.FOCUSZONETX: "focuszonetxkey",
-            MDLControllerType.FOCUSZONETY: "focuszonetykey",
-            MDLControllerType.FRAME: "framekey",
             MDLControllerType.GRAV: "gravkey",
             MDLControllerType.LIFEEXP: "lifeexpkey",
             MDLControllerType.MASS: "masskey",
             MDLControllerType.P2P_BEZIER2: "p2p_bezier2key",
             MDLControllerType.P2P_BEZIER3: "p2p_bezier3key",
-            MDLControllerType.PARTICLEROTX: "particlerotxkey",
-            MDLControllerType.PARTICLEROTY: "particlerotykey",
-            MDLControllerType.PARTICLEROTZ: "particlerotzkey",
-            MDLControllerType.RANDVELX: "randvelxkey",
-            MDLControllerType.RANDVELY: "randvelykey",
-            MDLControllerType.RANDVELZ: "randvelzkey",
+            MDLControllerType.PARTICLEROT: "particlerotkey",
             MDLControllerType.SIZESTART: "sizestartkey",
             MDLControllerType.SIZEEND: "sizeendkey",
             MDLControllerType.SIZESTART_Y: "sizestart_ykey",
@@ -553,13 +545,8 @@ class MDLAsciiWriter:
             MDLControllerType.ALPHAMID: "alphamidkey",
             MDLControllerType.SIZEMID: "sizemidkey",
             MDLControllerType.SIZEMID_Y: "sizemid_ykey",
-            MDLControllerType.BOUNCE_CO: "bounce_cokey",
-            MDLControllerType.RANDOMVELX: "randomvelxkey",
-            MDLControllerType.RANDOMVELY: "randomvelykey",
-            MDLControllerType.RANDOMVELZ: "randomvelzkey",
-            MDLControllerType.TILING: "tilingkey",
-            MDLControllerType.ILLUM: "illumkey",
-            MDLControllerType.ILLUM_COLOR: "selfillumcolorkey",
+            MDLControllerType.RANDVEL: "randvelkey",
+            MDLControllerType.SELFILLUMCOLOR: "selfillumcolorkey",
             MDLControllerType.ALPHA: "alphakey",
         }
 
@@ -593,7 +580,7 @@ class MDLAsciiWriter:
         # Write animation nodes (vendor/mdlops/MDLOpsM.pm:3504-3555)
         # Animation nodes are written as "node dummy <node_name>" with controllers
         # Build a mapping from animation nodes to their parents for parent writing
-        parent_map: dict[MDLNode, MDLNode | None] = {}
+        parent_map: dict[str, MDLNode | None] = {}
         self._build_animation_parent_map(anim.root, None, parent_map)
 
         # Write all animation nodes (sorted by name to match MDLOps behavior)
@@ -602,7 +589,8 @@ class MDLAsciiWriter:
 
         for node in all_anim_nodes:
             if node.name:  # Skip root if it has no name
-                self._write_animation_node(1, node, parent_map.get(node))
+                parent = parent_map.get(node.name)
+                self._write_animation_node(1, node, parent)
 
         self.write_line(0, "")
         self.write_line(0, f"doneanim {anim.name} {model_name}")
@@ -611,10 +599,13 @@ class MDLAsciiWriter:
         self,
         node: MDLNode,
         parent: MDLNode | None,
-        parent_map: dict[MDLNode, MDLNode | None],
+        parent_map: dict[str, MDLNode | None],
     ) -> None:
-        """Build a mapping of animation nodes to their parents."""
-        parent_map[node] = parent
+        """Build a mapping of animation nodes to their parents.
+
+        Uses node names as keys instead of node objects to avoid hashing issues.
+        """
+        parent_map[node.name] = parent
         for child in node.children:
             self._build_animation_parent_map(child, node, parent_map)
 
@@ -1722,6 +1713,9 @@ class MDLAsciiReader:
 
         # Build parent-child relationships
         for node in self._nodes:
-            if node.parent_id >= 0 and node.parent_id < len(self._nodes):
+            if node.parent_id == -1:
+                # Attach to root
+                self._mdl.root.children.append(node)
+            elif node.parent_id >= 0 and node.parent_id < len(self._nodes):
                 parent = self._nodes[node.parent_id]
                 parent.children.append(node)

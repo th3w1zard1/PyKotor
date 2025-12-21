@@ -40,14 +40,14 @@ class MDLClassification(IntEnum):
 
 class MDLNodeFlags(IntFlag):
     """Node flags indicating what type of data is attached to the node.
-    
+
     These flags are combined to create specific node types. For example:
     - mesh = HEADER + MESH = 0x021 = 33
     - skin mesh = HEADER + MESH + SKIN = 0x061 = 97
     - dangly mesh = HEADER + MESH + DANGLY = 0x121 = 289
     - aabb mesh = HEADER + MESH + AABB = 0x221 = 545
     - saber mesh = HEADER + MESH + SABER = 0x821 = 2081
-    
+
     References:
     - vendor/mdlops/MDLOpsM.pm:301-311 (Node type quick reference)
     - vendor/mdlops/MDLOpsM.pm:313-323 (Node Type constants)
@@ -89,27 +89,27 @@ class MDLNodeType(IntEnum):
 # region Controller Data
 class MDLControllerType(IntEnum):
     """Controller types for animations and node properties.
-    
+
     These controller types are used to animate various properties of nodes in MDL models.
     Controllers can be indexed by node type since some IDs are reused for different node types.
-    
+
     References:
     - vendor/mdlops/MDLOpsM.pm:325-405 (Comprehensive controller mapping)
     - vendor/kotorblender/io_scene_kotor/format/mdl/types.py:140-197 (Controller constants)
     - vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:663-701 (Controller reading)
-    
+
     Note: Controller indexing by node type is necessary because at least one controller ID (100)
     is used for different purposes in different node types (per vendor/mdlops/MDLOpsM.pm:325)
     """
     INVALID = -1
-    
+
     # Base node controllers (NODE_HAS_HEADER)
     # Reference: vendor/mdlops/MDLOpsM.pm:329-335
     POSITION = 8            # position - All nodes (mdlops:329)
     ORIENTATION = 20        # orientation - All nodes (mdlops:330)
     SCALE = 36              # scale - All nodes (mdlops:331)
     ALPHA = 132             # alpha - All nodes (mdlops:332, was 128)
-    
+
     # Light controllers (NODE_HAS_LIGHT)
     # Reference: vendor/mdlops/MDLOpsM.pm:342-346, vendor/kotorblender:145-149
     COLOR = 76              # color - Light nodes (mdlops:342)
@@ -117,7 +117,7 @@ class MDLControllerType(IntEnum):
     SHADOWRADIUS = 96       # shadowradius - Light nodes (mdlops:344)
     VERTICALDISPLACEMENT = 100  # verticaldisplacement - Light nodes (mdlops:345)
     MULTIPLIER = 140        # multiplier - Light nodes (mdlops:346)
-    
+
     # Emitter controllers (NODE_HAS_EMITTER)
     # Reference: vendor/mdlops/MDLOpsM.pm:357-405, vendor/kotorblender:150-196
     # These mappings were updated based on fx_flame01.mdl analysis (mdlops:352-355)
@@ -169,11 +169,11 @@ class MDLControllerType(IntEnum):
     COLOREND = 380          # colorEnd - Emitter, was 96 (mdlops:402)
     COLORSTART = 392        # colorStart - Emitter, was 108 (mdlops:403)
     DETONATE = 502          # detonate - Emitter, was 228 (mdlops:404)
-    
+
     # Mesh controllers (NODE_HAS_MESH)
     # Reference: vendor/mdlops/MDLOpsM.pm:406, vendor/kotorblender:143
     SELFILLUMCOLOR = 100    # selfillumcolor - Mesh (mdlops:406, same as DRAG and VERTICALDISPLACEMENT)
-    
+
     # Legacy aliases for backward compatibility
     BOUNCE_CO = BOUNCECO
     P2P_BEZIER_2 = P2P_BEZIER2
@@ -187,7 +187,7 @@ class MDLControllerType(IntEnum):
     ALPHAMID_emitter = ALPHAMID
     SIZEMID_emitter = SIZEMID
     DETONATE_emitter = DETONATE
-    
+
     # Note: Some controller IDs that were previously defined have been removed or
     # corrected based on vendor analysis. See fx_flame01.mdl analysis in mdlops:352-355
 
@@ -268,10 +268,10 @@ class MDLLightFlags(IntFlag):
 
 class MDLEmitterFlags(IntFlag):
     """Particle emitter behavior flags.
-    
+
     These flags control various aspects of particle emitter behavior including physics,
     inheritance, and rendering properties.
-    
+
     References:
     - vendor/kotorblender/io_scene_kotor/format/mdl/types.py:115-127 (Comprehensive list)
     - vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:35-49 (EmitterFlags struct)
@@ -292,7 +292,7 @@ class MDLEmitterFlags(IntFlag):
     INHERIT_PART = 0x0400      # EMITTER_FLAG_INHERIT_PART - Inherit particle properties (kotorblender:125, reone:46)
     DEPTH_TEXTURE = 0x0800     # EMITTER_FLAG_DEPTH_TEXTURE - Use depth texture (kotorblender:126, reone:47)
     FLAG_13 = 0x1000           # Unknown flag 13 (kotorblender:127, reone:48)
-    
+
     # Legacy aliases
     LOOP = P2P  # Backward compatibility
 

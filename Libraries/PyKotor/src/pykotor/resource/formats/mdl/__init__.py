@@ -10,6 +10,7 @@ from pykotor.resource.formats.mdl.mdl_data import (
     MDLController,
     MDLControllerRow,
     MDLBoneVertex,
+    MDLEvent,
     MDLLight,
     MDLFace,
     MDLReference,
@@ -20,7 +21,7 @@ from pykotor.resource.formats.mdl.mdl_data import (
 from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLControllerType, MDLData, MDLEmitter
 from pykotor.resource.formats.mdl.io_mdl import MDLBinaryReader, MDLBinaryWriter
 from pykotor.resource.formats.mdl.io_mdl_ascii import MDLAsciiReader, MDLAsciiWriter
-from pykotor.resource.formats.mdl.mdl_auto import bytes_mdl, write_mdl, read_mdl, read_mdl_fast
+from pykotor.resource.formats.mdl.mdl_auto import bytes_mdl, write_mdl, read_mdl, read_mdl_fast, detect_mdl
 
 __all__ = [
     "MDLClassification",
@@ -35,6 +36,7 @@ __all__ = [
     "MDLConstraint",
     "MDLDangly",
     "MDLEmitter",
+    "MDLEvent",
     "MDLFace",
     "MDL",
     "MDLLight",
@@ -51,4 +53,5 @@ __all__ = [
     "read_mdl",
     "read_mdl_fast",
     "write_mdl",
+    "detect_mdl",
 ]

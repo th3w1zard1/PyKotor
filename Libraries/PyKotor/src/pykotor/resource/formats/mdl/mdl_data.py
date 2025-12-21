@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from pykotor.common.misc import Color
 from pykotor.resource.formats._base import ComparableMixin
-from pykotor.resource.formats.mdl.mdl_types import MDLClassification
+from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLNodeType, MDLNodeFlags
 from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector3, Vector4
 
@@ -637,6 +637,33 @@ class MDLNode(ComparableMixin):
         # vendor/reone/include/reone/graphics/modelnode.h:99
         # Lightsaber blade mesh with special rendering (node type & 0x800)
         self.saber: MDLSaber | None = None
+        
+        # Node type for ASCII MDL format compatibility
+        self.node_type: MDLNodeType = MDLNodeType.DUMMY
+        
+        # Parent ID for ASCII MDL format compatibility
+        self.parent_id: int = -1
+
+    def get_flags(self) -> MDLNodeFlags:
+        """Get the node flags based on attached data."""
+        flags = MDLNodeFlags.HEADER
+        if self.light:
+            flags |= MDLNodeFlags.LIGHT
+        if self.emitter:
+            flags |= MDLNodeFlags.EMITTER
+        if self.reference:
+            flags |= MDLNodeFlags.REFERENCE
+        if self.mesh:
+            flags |= MDLNodeFlags.MESH
+        if self.skin:
+            flags |= MDLNodeFlags.SKIN
+        if self.dangly:
+            flags |= MDLNodeFlags.DANGLY
+        if self.aabb:
+            flags |= MDLNodeFlags.AABB
+        if self.saber:
+            flags |= MDLNodeFlags.SABER
+        return flags
 
     def __eq__(self, other):
         if not isinstance(other, MDLNode):
