@@ -26,7 +26,10 @@ add_sys_path(UTILITY_PATH)
 
 from pykotor.common.misc import Game
 from pykotor.resource.formats.erf import ERF, ERFType, write_erf
+from pykotor.resource.formats.bwm import BWM, BWMFace
 from pykotor.resource.type import ResourceType
+from pykotor.tools.indoormap import infer_room_transform_bwm
+from utility.common.geometry import SurfaceMaterial, Vector3
 
 from kotorcli.commands.indoor_builder import (  # pyright: ignore[reportMissingImports]
     cmd_indoor_build,
@@ -161,3 +164,43 @@ class TestIndoorExtract:
             assert result == 0
             assert output_file.exists()
             assert output_file.read_bytes() == payload
+
+
+class TestInferRoomTransform:
+    """Unit tests for the walkmesh transform inference used by reverse-extraction."""
+
+    def test_infer_transform_roundtrip(self):
+        base = BWM()
+        v1 = Vector3(0.0, 0.0, 0.0)
+        v2 = Vector3(1.0, 0.0, 0.0)
+        v3 = Vector3(0.0, 1.0, 0.0)
+        face = BWMFace(v1, v2, v3)
+        face.material = SurfaceMaterial.GRASS
+        base.faces.append(face)
+
+        instance = BWM()
+        instance.faces.append(BWMFace(Vector3(0.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0)))
+        instance.faces[0].material = SurfaceMaterial.GRASS
+
+        # Apply known transform to the instance mesh
+        instance.flip(True, False)
+        instance.rotate(90.0)
+        instance.translate(10.0, -5.0, 2.0)
+
+        inferred = infer_room_transform_bwm(base, instance, max_rms=1e-6)
+        assert inferred is not None
+        flip_x, flip_y, rot_deg, translation, rms = inferred
+        assert rms <= 1e-6
+
+        # Validate the inferred transform reproduces the instance geometry.
+        check = BWM()
+        check.faces.append(BWMFace(Vector3(0.0, 0.0, 0.0), Vector3(1.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0)))
+        check.faces[0].material = SurfaceMaterial.GRASS
+        check.flip(flip_x, flip_y)
+        check.rotate(rot_deg)
+        check.translate(translation.x, translation.y, translation.z)
+
+        for a, b in zip(check.vertices(), instance.vertices()):
+            assert abs(a.x - b.x) < 1e-6
+            assert abs(a.y - b.y) < 1e-6
+            assert abs(a.z - b.z) < 1e-6

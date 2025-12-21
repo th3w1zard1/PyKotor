@@ -12,7 +12,10 @@ from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from pykotor.tools.indoormap import build_mod_from_indoor_file, extract_indoor_from_module_files
+from pykotor.extract.installation import Installation
+from pykotor.tools.indoorkit import load_kits
+from pykotor.tools.indoormap import IndoorMap, extract_indoor_from_module_files, extract_indoor_from_module_name
+from pykotor.tools.path import CaseAwarePath
 from utility.error_handling import universal_simplify_exception
 
 from kotorcli.indoor_builder import determine_game_from_installation, parse_game_argument
@@ -27,6 +30,35 @@ LEVEL_MAP = {
     "error": logging.ERROR,
     "critical": logging.CRITICAL,
 }
+
+
+def _resolve_context(args: Namespace, logger: RobustLogger):
+    """Shared setup for indoor-build and indoor-extract.
+
+    Validates installation/kits paths, resolves the game, and returns (game, installation, kits).
+    """
+    installation_path = Path(args.installation) if args.installation else None
+    kits_path = Path(args.kits) if args.kits else None
+
+    if installation_path is None:
+        raise ValueError("No installation path specified. Use --installation <path>")
+    if kits_path is None:
+        raise ValueError("No kits directory specified. Use --kits <path>")
+    if not installation_path.exists():
+        raise ValueError(f"Installation path does not exist: {installation_path}")
+    if not kits_path.exists():
+        raise ValueError(f"Kits directory does not exist: {kits_path}")
+
+    game = parse_game_argument(args.game)
+    if game is None:
+        game = determine_game_from_installation(installation_path)
+    if game is None:
+        raise ValueError("Could not determine game type. Please specify --game k1 or --game k2")
+
+    installation = Installation(CaseAwarePath(installation_path))
+    kits = load_kits(kits_path)
+    logger.debug("Loaded %d kit(s) from '%s'", len(kits), kits_path)
+    return game, installation_path, kits_path, installation, kits
 
 
 def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:
@@ -78,13 +110,7 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:
         return 1
 
     try:
-        # Determine game type
-        game = parse_game_argument(args.game)
-        if game is None:
-            game = determine_game_from_installation(installation_path)
-            if game is None:
-                logger.error("Could not determine game type. Please specify --game k1 or --game k2")
-                return 1
+        game, _install_path, _kits_path, installation, kits = _resolve_context(args, logger)
 
         logger.info("Building module from indoor map: %s", input_path.name)
         logger.info("Installation: %s", installation_path)
@@ -92,15 +118,20 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:
         logger.info("Output: %s", output_path)
         logger.info("Game: %s", game.name)
 
-        build_mod_from_indoor_file(
-            input_path,
-            output_mod_path=output_path,
-            installation_path=installation_path,
-            kits_path=kits_path,
-            game=game,
-            module_id=args.module_filename.lower().strip() if args.module_filename else None,
-            loadscreen_path=args.loading_screen,
-        )
+        indoor = IndoorMap()
+        missing = indoor.load(input_path.read_bytes(), kits)
+        if missing:
+            logger.warning("Some rooms could not be loaded: %d missing", len(missing))
+            for m in missing[:25]:
+                logger.warning("  - Kit '%s', Component '%s': %s", m.kit_name, m.component_name, m.reason)
+            if len(missing) > 25:
+                logger.warning("  - ... and %d more", len(missing) - 25)
+
+        if args.module_filename:
+            indoor.module_id = args.module_filename.lower().strip()
+            logger.info("Module ID set to: %s", indoor.module_id)
+
+        indoor.build(installation, kits, output_path, game_override=game, loadscreen_path=args.loading_screen)
 
         logger.info("Module build completed successfully.")
         return 0
@@ -149,22 +180,8 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:
     installation_path = Path(args.installation)
     kits_path = Path(args.kits)
 
-    # Validate paths exist
-    if not installation_path.exists():
-        logger.error("Installation path does not exist: %s", installation_path)
-        return 1
-    if not kits_path.exists():
-        logger.error("Kits directory does not exist: %s", kits_path)
-        return 1
-
     try:
-        # Determine game type
-        game = parse_game_argument(args.game)
-        if game is None:
-            game = determine_game_from_installation(installation_path)
-            if game is None:
-                logger.error("Could not determine game type. Please specify --game k1 or --game k2")
-                return 1
+        game, _install_path, _kits_path, _installation, _kits = _resolve_context(args, logger)
 
         logger.info("Extracting indoor map from module: %s", module_name)
         logger.info("Installation: %s", installation_path)
@@ -188,17 +205,25 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:
             return 1
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        found = extract_indoor_from_module_files(candidate_files, output_indoor_path=output_path)
-        if not found:
-            logger.error(
-                "No embedded indoor data found in module containers. "
-                "This works for modules built by the indoor builder (it embeds '%s.%s').",
-                "indoormap",
-                "txt",
-            )
-            return 1
 
-        logger.info("Extracted embedded indoor data to: %s", output_path)
+        # Fast path: extract embedded indoor JSON if present.
+        embedded_found = extract_indoor_from_module_files(candidate_files, output_indoor_path=output_path)
+        if embedded_found:
+            logger.info("Extracted embedded indoor data to: %s", output_path)
+            return 0
+
+        # Full reverse-extraction path: rebuild `.indoor` by matching room WOKs back to kits.
+        logger.info("No embedded indoor data found; attempting full reverse-extraction from module resources...")
+        indoor = extract_indoor_from_module_name(
+            module_name,
+            installation_path=installation_path,
+            kits_path=kits_path,
+            game=game,
+            strict=True,
+            logger=logger,
+        )
+        output_path.write_bytes(indoor.write())
+        logger.info("Extracted indoor map via reverse-extraction to: %s", output_path)
         return 0
     except Exception as exc:
         error_name, msg = universal_simplify_exception(exc)

@@ -344,8 +344,10 @@ def prioritize_module_files(module_files: list[os.PathLike | str]) -> list[Path]
     """Prioritize module files using canonical composite loading logic.
 
     This implements the same priority logic used by kotordiff's composite module loading:
-    - If a `.mod` file exists for a module root, use only that (highest priority)
-    - If no `.mod` exists, combine all rim-like files (`.rim`, `_s.rim`, `_dlg.erf`)
+    - `.mod` files overshadow rim-like files (`.rim`, `_s.rim`, `_dlg.erf`) - if a `.mod` exists
+      for a module root, only the `.mod` is used and rim-like files are ignored
+    - Only rim-like files can form a composite module group - if no `.mod` exists, all rim-like
+      files (`.rim`, `_s.rim`, `_dlg.erf`) are combined together
 
     Args:
     ----
@@ -354,18 +356,18 @@ def prioritize_module_files(module_files: list[os.PathLike | str]) -> list[Path]
     Returns:
     -------
         Prioritized list of Path objects representing the files to use.
-        Files are grouped by module root, with `.mod` files taking priority
-        over rim-like files for the same module root.
+        Files are grouped by module root, with `.mod` files overshadowing rim-like files
+        for the same module root. Only rim-like files form composite groups when no `.mod` exists.
 
     Examples:
     --------
         >>> files = ["mymod.rim", "mymod.mod", "mymod_s.rim"]
         >>> prioritize_module_files(files)
-        [Path("mymod.mod")]  # .mod takes priority
+        [Path("mymod.mod")]  # .mod overshadows rim-like files
 
         >>> files = ["mymod.rim", "mymod_s.rim", "mymod_dlg.erf"]
         >>> prioritize_module_files(files)
-        [Path("mymod.rim"), Path("mymod_s.rim"), Path("mymod_dlg.erf")]  # All used when no .mod
+        [Path("mymod.rim"), Path("mymod_s.rim"), Path("mymod_dlg.erf")]  # Rim-like files form composite when no .mod
 
     Note:
     ----
