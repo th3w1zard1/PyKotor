@@ -436,7 +436,8 @@ class Module:  # noqa: PLR0904
             mod_filepath = module_path.joinpath(root + KModuleType.MOD.value)
             if mod_filepath.is_file():
                 capsules[KModuleType.MOD.name] = ModuleFullOverridePiece(mod_filepath)
-            elif not strict:
+            else:
+                # Engine is permissive: fall back to rim files when .mod doesn't exist
                 capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(root + KModuleType.MAIN.value))
                 capsules[KModuleType.DATA.name] = ModuleDataPiece(module_path.joinpath(root + KModuleType.DATA.value))
                 if not isinstance(install_or_path, Installation) or install_or_path.game().is_k2():
