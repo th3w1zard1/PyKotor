@@ -72,6 +72,7 @@ class IndoorMap:
         lighting: Color | None = None,
         skybox: str | None = None,
         warp_point: Vector3 | None = None,
+        target_game_type: bool | None = None,
     ):
         self.rooms: list[IndoorMapRoom] = rooms if rooms is not None else []
         self.module_id: str = module_id if module_id is not None else "test01"
@@ -79,6 +80,8 @@ class IndoorMap:
         self.lighting: Color = lighting if lighting is not None else Color(0.5, 0.5, 0.5)
         self.skybox: str = skybox if skybox is not None else ""
         self.warp_point: Vector3 = warp_point if warp_point is not None else Vector3.from_null()
+        # target_game_type: None = use installation.tsl, True = TSL/K2, False = K1
+        self.target_game_type: bool | None = target_game_type
 
     def rebuild_room_connections(self):
         for room in self.rooms:
@@ -281,7 +284,9 @@ class IndoorMap:
         """
         mdl, mdx = model.flip(room.component.mdl, room.component.mdx, flip_x=room.flip_x, flip_y=room.flip_y)
         mdl_transformed: bytes = model.transform(mdl, Vector3.from_null(), room.rotation)
-        mdl_converted: bytes = model.convert_to_k2(mdl_transformed) if installation.tsl else model.convert_to_k1(mdl_transformed)
+        # Use target_game_type override if set, otherwise use installation.tsl
+        target_tsl: bool = self.target_game_type if self.target_game_type is not None else installation.tsl
+        mdl_converted: bytes = model.convert_to_k2(mdl_transformed) if target_tsl else model.convert_to_k1(mdl_transformed)
         return mdl_converted, mdx
 
     def process_lightmaps(
@@ -472,6 +477,9 @@ class IndoorMap:
             4. Adds door to layout and visibility graphs
             5. Checks for height/width padding needs and adds if needed.
         """
+        # Use target_game_type override if set, otherwise use installation.tsl
+        target_tsl: bool = self.target_game_type if self.target_game_type is not None else installation.tsl
+        
         padding_count = 0
         for i, insert in enumerate(self.door_insertions()):
             door = GITDoor(*insert.position)
@@ -481,7 +489,7 @@ class IndoorMap:
             door.tweak_color = None
             self.git.doors.append(door)
 
-            utd: UTD = deepcopy(insert.door.utd_k2 if installation.tsl else insert.door.utd_k1)
+            utd: UTD = deepcopy(insert.door.utd_k2 if target_tsl else insert.door.utd_k1)
             utd.resref = door.resref
             utd.static = insert.static
             utd.tag = door_resname.title().replace("_", "")
@@ -520,7 +528,7 @@ class IndoorMap:
                             Vector3.from_null(),
                             insert.rotation,
                         )
-                        pad_mdl_converted: bytes = model.convert_to_k2(pad_mdl) if installation.tsl else model.convert_to_k1(pad_mdl)
+                        pad_mdl_converted: bytes = model.convert_to_k2(pad_mdl) if target_tsl else model.convert_to_k1(pad_mdl)
                         pad_mdl_converted = model.change_textures(pad_mdl_converted, self.tex_renames)
                         lmRenames: dict[str, str] = {}
                         for lightmap in model.iterate_lightmaps(pad_mdl_converted):
@@ -560,7 +568,7 @@ class IndoorMap:
                             Vector3.from_null(),
                             insert.rotation,
                         )
-                        pad_mdl = model.convert_to_k2(pad_mdl) if installation.tsl else model.convert_to_k1(pad_mdl)
+                        pad_mdl = model.convert_to_k2(pad_mdl) if target_tsl else model.convert_to_k1(pad_mdl)
                         pad_mdl = model.change_textures(pad_mdl, self.tex_renames)
                         lmRenames = {}
                         for lightmap in model.iterate_lightmaps(pad_mdl):
@@ -646,9 +654,11 @@ class IndoorMap:
             - Sets the loaded TGA as load screen data for the module.
         """
         try:
-            load_tga: bytes = Path("./kits/load_k2.tga" if installation.tsl else "./kits/load_k1.tga").read_bytes()
+            # Use target_game_type override if set, otherwise use installation.tsl
+            target_tsl: bool = self.target_game_type if self.target_game_type is not None else installation.tsl
+            load_tga: bytes = Path("./kits/load_k2.tga" if target_tsl else "./kits/load_k1.tga").read_bytes()
         except FileNotFoundError:
-            RobustLogger().error(f"Load screen file not found for installation '{installation.name}'.")
+            RobustLogger().exception(f"Load screen file not found for installation '{installation.name}'. Expected in toolset directory?")
         else:
             self.mod.set_data(f"load_{self.module_id}", ResourceType.TGA, load_tga)
 
@@ -809,6 +819,8 @@ class IndoorMap:
         data["lighting"] = [self.lighting.r, self.lighting.g, self.lighting.b]
         data["skybox"] = self.skybox
         data["warp"] = self.module_id
+        if self.target_game_type is not None:
+            data["target_game_type"] = self.target_game_type
 
         data["rooms"] = []
         for room in self.rooms:
@@ -896,6 +908,7 @@ class IndoorMap:
 
         self.module_id = data["warp"]
         self.skybox = data.get("skybox", "")
+        self.target_game_type = data.get("target_game_type", None)
 
         for room_data in data["rooms"]:
             sKit: Kit | None = next((kit for kit in kits if kit.name == room_data["kit"]), None)
@@ -935,6 +948,7 @@ class IndoorMap:
         self.module_id = "test01"
         self.name = LocalizedString.from_english("New Module")
         self.lighting = Color(0.5, 0.5, 0.5)
+        self.target_game_type = None
 
     def generate_mipmap(self) -> MinimapData:
         """Generates a minimap image from room data to display an overview of the level layout.

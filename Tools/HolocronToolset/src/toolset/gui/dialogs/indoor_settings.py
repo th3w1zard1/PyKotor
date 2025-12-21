@@ -83,6 +83,19 @@ class IndoorMapSettings(QDialog):
                 self.ui.skyboxSelect.setCurrentIndex(0)  # Default to [None]
         else:
             self.ui.skyboxSelect.setCurrentIndex(0)  # Default to [None]
+        
+        # Populate and set target game type selector
+        self.ui.gameTypeSelect.addItem(tr("Use Installation Default"), None)
+        self.ui.gameTypeSelect.addItem("Knights of the Old Republic (K1)", False)
+        self.ui.gameTypeSelect.addItem("The Sith Lords (TSL/K2)", True)
+        
+        # Set current selection based on indoor_map.target_game_type
+        if indoor_map.target_game_type is None:
+            self.ui.gameTypeSelect.setCurrentIndex(0)  # Use Installation Default
+        elif indoor_map.target_game_type:
+            self.ui.gameTypeSelect.setCurrentIndex(2)  # TSL/K2
+        else:
+            self.ui.gameTypeSelect.setCurrentIndex(1)  # K1
 
     def _setup_signals(self): ...
 
@@ -93,3 +106,5 @@ class IndoorMapSettings(QDialog):
         self._indoorMap.lighting = self.ui.colorEdit.color()
         self._indoorMap.module_id = self.ui.warpCodeEdit.text()
         self._indoorMap.skybox = self.ui.skyboxSelect.currentData()
+        # Get target_game_type from combo box (None = use installation default, True = TSL, False = K1)
+        self._indoorMap.target_game_type = self.ui.gameTypeSelect.currentData()
