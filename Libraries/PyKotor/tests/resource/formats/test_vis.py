@@ -25,14 +25,40 @@ if UTILITY_PATH.joinpath("utility").exists():
 from pykotor.resource.formats.vis import VIS, VISAsciiReader, read_vis, write_vis
 from pykotor.resource.type import ResourceType
 
-ASCII_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.vis"
+# Inlined test.vis content
+ASCII_TEST_DATA = """room_01 3
+  room_02
+     room_03
+  room_04
+room_02 1
+     room_01
+room_03 2
+room_01
+  room_04
+room_04 2
+  room_03
+ room_01"""
+
+# Inlined test_corrupted.vis content
+CORRUPT_ASCII_TEST_DATA = """room_01 77
+  room_02
+     room_03
+  room_04
+room_02 1
+     room_01
+room_03 2
+room_01
+  room_04
+room_04 2
+  room_03
+ room_01"""
+
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_ASCII_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.vis"
 
 
 class TestVIS(TestCase):
     def test_binary_io(self):
-        vis = VISAsciiReader(ASCII_TEST_FILE).load()
+        vis = VISAsciiReader(ASCII_TEST_DATA.encode('utf-8')).load()
         self.validate_io(vis)
 
         data = bytearray()
@@ -64,7 +90,7 @@ class TestVIS(TestCase):
         else:
             self.assertRaises(IsADirectoryError, read_vis, ".")
         self.assertRaises(FileNotFoundError, read_vis, DOES_NOT_EXIST_FILE)
-        self.assertRaises(ValueError, read_vis, CORRUPT_ASCII_TEST_FILE)
+        self.assertRaises(ValueError, read_vis, CORRUPT_ASCII_TEST_DATA.encode('utf-8'))
 
     def test_write_raises(self):
         # sourcery skip: no-conditionals-in-tests
