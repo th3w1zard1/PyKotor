@@ -26,34 +26,66 @@ from pykotor.resource.formats.lip import LIP, LIPBinaryReader, LIPShape, LIPXMLR
 
 from pykotor.resource.type import ResourceType
 
-BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.lip"
-XML_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.lip.xml"
+# Inlined test.lip binary content
+BINARY_TEST_DATA = b'LIP V1.0\x00\x00\xc0?\x03\x00\x00\x00\x00\x00\x00\x00\x00Y\x17G?\x05\x00\x00\xa0?\n'
+
+# Inlined test.lip.xml content
+XML_TEST_DATA = """<lip duration="1.50">
+  <keyframe time="0.0" shape="0" />
+  <keyframe time="0.7777" shape="5" />
+  <keyframe time="1.25" shape="10" />
+</lip>"""
+
+# Inlined test_corrupted.lip binary content
+CORRUPT_BINARY_TEST_DATA = b'LIP V1.0345345\x00\x00\x00\x00\x00\x00\x00Y\x17G?\x05\x00\x00\xa0?\n'
+
+# Inlined test_corrupted.lip.xml content
+CORRUPT_XML_TEST_DATA = """<lip duration="1.50">
+  <keyframe time="0.0" shape="0" />
+  <keyframe time="0.7777" shape="5" />
+  <keyframe time="1.25" shape="10" /
+</lip>"""
+
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.lip"
-CORRUPT_XML_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.lip.xml"
 
 
 class TestLIP(TestCase):
     def test_binary_io(self):
-        assert detect_lip(BINARY_TEST_FILE) == ResourceType.LIP
+        assert detect_lip(BINARY_TEST_DATA) == ResourceType.LIP
 
-        lip: LIP = LIPBinaryReader(BINARY_TEST_FILE).load()
+        lip: LIP = LIPBinaryReader(BINARY_TEST_DATA).load()
         self.validate_io(lip)
 
         data = bytearray()
         write_lip(lip, data, ResourceType.LIP)
-        lip = LIPBinaryReader(data).load()
+        lip = read_lip(data)
         self.validate_io(lip)
 
-    def test_xml_io(self):
-        assert detect_lip(XML_TEST_FILE) == ResourceType.LIP_XML
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
 
-        lip: LIP = LIPXMLReader(XML_TEST_FILE).load()
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.lip', delete=False) as tmp:
+            tmp.write(BINARY_TEST_DATA)
+            tmp_path = tmp.name
+
+        try:
+            assert detect_lip(tmp_path) == ResourceType.LIP
+            lip: LIP = LIPBinaryReader(tmp_path).load()
+            self.validate_io(lip)
+        finally:
+            os.unlink(tmp_path)
+
+    def test_xml_io(self):
+        assert detect_lip(XML_TEST_DATA.encode('utf-8')) == ResourceType.LIP_XML
+
+        lip: LIP = LIPXMLReader(XML_TEST_DATA.encode('utf-8')).load()
         self.validate_io(lip)
 
         data = bytearray()
         write_lip(lip, data, ResourceType.LIP_XML)
-        lip = LIPXMLReader(data).load()
+        lip = read_lip(data)
         self.validate_io(lip)
 
     def validate_io(
@@ -74,8 +106,8 @@ class TestLIP(TestCase):
         else:
             self.assertRaises(IsADirectoryError, read_lip, ".")
         self.assertRaises(FileNotFoundError, read_lip, DOES_NOT_EXIST_FILE)
-        self.assertRaises(ValueError, read_lip, CORRUPT_BINARY_TEST_FILE)
-        self.assertRaises(ValueError, read_lip, CORRUPT_XML_TEST_FILE)
+        self.assertRaises(ValueError, read_lip, CORRUPT_BINARY_TEST_DATA)
+        self.assertRaises(ValueError, read_lip, CORRUPT_XML_TEST_DATA.encode('utf-8'))
 
     def test_write_raises(self):
         if os.name == "nt":
