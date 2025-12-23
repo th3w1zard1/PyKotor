@@ -52,6 +52,12 @@ class Ui_Dialog(object):
         self.label_4 = QtWidgets.QLabel(Dialog)
         self.label_4.setObjectName("label_4")
         self.formLayout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.label_4)
+        self.label_5 = QtWidgets.QLabel(Dialog)
+        self.label_5.setObjectName("label_5")
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.label_5)
+        self.gameTypeSelect = QtWidgets.QComboBox(Dialog)
+        self.gameTypeSelect.setObjectName("gameTypeSelect")
+        self.formLayout.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.gameTypeSelect)
         self.verticalLayout.addLayout(self.formLayout)
         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
@@ -71,5 +77,6 @@ class Ui_Dialog(object):
         self.label_2.setText(_translate("Dialog", "Lighting:"))
         self.label_3.setText(_translate("Dialog", "Warp Code:"))
         self.label_4.setText(_translate("Dialog", "Skybox:"))
+        self.label_5.setText(_translate("Dialog", "Target Game:"))
 from toolset.gui.widgets.edit.color import ColorEdit
 from toolset.gui.widgets.edit.locstring import LocalizedStringLineEdit
