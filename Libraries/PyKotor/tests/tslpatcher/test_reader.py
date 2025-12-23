@@ -31,7 +31,7 @@ from pykotor.common.language import Gender, Language  # pyright: ignore[reportMi
 from pykotor.common.misc import ResRef  # pyright: ignore[reportMissingImports]
 from pykotor.resource.formats.gff.gff_data import GFFFieldType, GFFStruct  # pyright: ignore[reportMissingImports]
 from pykotor.resource.formats.ssf import SSFSound  # pyright: ignore[reportMissingImports]
-from pykotor.resource.formats.tlk import TLK, write_tlk  # pyright: ignore[reportMissingImports]
+from pykotor.resource.formats.tlk import TLK, read_tlk, write_tlk  # pyright: ignore[reportMissingImports]
 from pykotor.resource.type import ResourceType  # pyright: ignore[reportMissingImports]
 from pykotor.tslpatcher.config import PatcherConfig  # pyright: ignore[reportMissingImports]
 from pykotor.tslpatcher.memory import NoTokenUsage, TokenUsage2DA, TokenUsageTLK  # pyright: ignore[reportMissingImports]
@@ -68,6 +68,87 @@ if TYPE_CHECKING:
     )
 
 K1_PATH: str = os.environ.get("K1_PATH", r"C:\Program Files (x86)\Steam\steamapps\common\swkotor")
+
+# Inlined TLK data for testing
+COMPLEX_TLK_XML = """<tlk language="0">
+  <string id="0">Climate: None
+Terrain: Asteroid
+Docking: Peragus Mining Station
+Native Species: None</string>
+  <string id="1">Lehon</string>
+  <string id="2">Climate: Tropical
+Terrain: Islands
+Docking: Beach Landing
+Native Species: Rakata</string>
+  <string id="3">Climate: Temperate
+Terrain: Decaying urban zones
+Docking: Refugee Landing Pad
+Native Species: None</string>
+  <string id="4">Climate: Tropical
+Terrain: Jungle
+Docking: Jungle Clearing
+Native Species: None</string>
+  <string id="5">Climate: Temperate
+Terrain: Forest
+Docking: Iziz Spaceport
+Native Species: None</string>
+  <string id="6">Climate: Temperate
+Terrain: Grasslands
+Docking: Khoonda Plains Settlement
+Native Species: None</string>
+  <string id="7">Climate: Tectonic-Generated Storms
+Terrain: Shattered Planetoid
+Docking: No Docking Facilities Present
+Native Species: None</string>
+  <string id="8">Climate: Arid
+Terrain: Volcanic
+Docking: Dreshae Settlement
+Native Species: Unknown</string>
+  <string id="9">Climate: Artificially Maintained
+Terrain: Droid Cityscape
+Docking: Landing Arm
+Native Species: Unknown</string>
+  <string id="10">Climate: Artificially Maintained
+Terrain: Space Station
+Docking: Landing Zone
+Native Species: None</string>
+  <string id="11">Opo Chano, Czerka's contracted droid technician, can't give you his droid credentials unless you help relieve his 2,500 credit gambling debt to the Exchange. Without them, you can't take B-4D4.</string>
+  </tlk>"""
+
+APPEND_TLK_XML = """<tlk language="0">
+  <string id="0">Yavin</string>
+  <string id="1">Climate: Artificially Controled
+Terrain: Space Station
+Docking: Orbital Docking
+Native Species: Unknown</string>
+  <string id="2">Tatooine</string>
+  <string id="3">Climate: Arid
+Terrain: Desert
+Docking: Anchorhead Spaceport
+Native Species: Unknown</string>
+  <string id="4">Manaan</string>
+  <string id="5">Climate: Temperate
+Terrain: Ocean
+Docking: Ahto City Docking Bay
+Native Species: Selkath</string>
+  <string id="6">Kashyyyk</string>
+  <string id="7">Climate: Temperate
+Terrain: Forest
+Docking: Czerka Landing Pad
+Native Species: Wookies</string>
+  <string id="8"></string>
+  <string id="9"></string>
+  <string id="10">Sleheyron</string>
+  <string id="11">Climate: Unknown
+Terrain: Cityscape
+Docking: Unknown
+Native Species: Unknown</string>
+  <string id="12">Coruscant</string>
+  <string id="13">Climate: Unknown
+Terrain: Unknown
+Docking: Unknown
+Native Species: Unknown</string>
+  </tlk>"""
 
 
 class TestConfigReader(unittest.TestCase):
@@ -116,8 +197,14 @@ class TestConfigReader(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.mod_path = Path(self.temp_dir) / "tslpatchdata"
         self.mod_path.mkdir(exist_ok=True, parents=True)
-        shutil.copy(Path("Libraries/PyKotor/tests/test_files/complex.tlk").resolve(), self.mod_path / "complex.tlk")
-        shutil.copy(Path("Libraries/PyKotor/tests/test_files/append.tlk").resolve(), self.mod_path / "append.tlk")
+
+        # Create complex.tlk from inlined XML data
+        complex_tlk = read_tlk(COMPLEX_TLK_XML.encode('utf-8'), file_format=ResourceType.TLK_XML)
+        write_tlk(complex_tlk, str(self.mod_path / "complex.tlk"), ResourceType.TLK)
+
+        # Create append.tlk from inlined XML data
+        append_tlk = read_tlk(APPEND_TLK_XML.encode('utf-8'), file_format=ResourceType.TLK_XML)
+        write_tlk(append_tlk, str(self.mod_path / "append.tlk"), ResourceType.TLK)
 
         # write it to a real file
         write_tlk(
