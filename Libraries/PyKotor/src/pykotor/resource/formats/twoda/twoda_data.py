@@ -515,11 +515,18 @@ class TwoDA(ComparableMixin):
 
         Processing Logic:
         ----------------
-            - Iterate through the 2D array and enumerate the rows.
-            - Check if the current row equals the searching row.
-            - If a match is found, return the index i.
-            - If no match is found after full iteration, return None.
+            - Use O(1) label lookup for efficiency
+            - Fallback to linear search only if needed
         """
+        # Fast O(1) lookup by label
+        row_label = row.label()
+        if row_label in self._label_to_index:
+            index = self._label_to_index[row_label]
+            # Verify the row data matches (in case of hash collision or stale cache)
+            if index < len(self._rows) and self._rows[index] == row._data:
+                return index
+
+        # Fallback to linear search for edge cases
         return next((i for i, searching in enumerate(self) if searching == row), None)
 
     def add_row(
@@ -595,6 +602,8 @@ class TwoDA(ComparableMixin):
             override_cells[header] = str(override_cells[header])
 
         for header in self._headers:
+            if source_index is None:
+                raise ValueError("Source index cannot be None")
             self._rows[-1][header] = override_cells[header] if header in override_cells else self.get_cell(source_index, header)  # FIXME: source_index cannot be None
 
         return row_index
@@ -893,30 +902,31 @@ class TwoDA(ComparableMixin):
         # Common headers
         common_headers: set[str] = old_headers.intersection(new_headers)
 
-        # Check for row mismatches
-        old_indices: set[int | None] = {self.row_index(row) for row in self}
-        new_indices: set[int | None] = {other.row_index(row) for row in other}
-        missing_rows: set[int | None] = old_indices - new_indices
-        extra_rows: set[int | None] = new_indices - old_indices
+        # Check for row mismatches by comparing label sets (much more efficient)
+        old_labels = set(self.get_labels())
+        new_labels = set(other.get_labels())
+        missing_rows: set[str] = old_labels - new_labels
+        extra_rows: set[str] = new_labels - old_labels
         if missing_rows:
-            log_func(f"Missing rows in new TwoDA: {', '.join(map(str, missing_rows))}")
+            log_func(f"Missing rows in new TwoDA: {', '.join(missing_rows)}")
             ret = False
         if extra_rows:
-            log_func(f"Extra rows in new TwoDA: {', '.join(map(str, extra_rows))}")
+            log_func(f"Extra rows in new TwoDA: {', '.join(extra_rows)}")
             ret = False
 
-        # Check cell values for common rows
-        for index in old_indices.intersection(new_indices):
-            if index is None:
-                log_func("Row mismatch")
+        # Check cell values for common rows by label (efficient O(1) lookup)
+        common_labels: set[str] = old_labels.intersection(new_labels)
+        for label in common_labels:
+            old_row: TwoDARow | None = self.find_row(label)
+            new_row: TwoDARow | None = other.find_row(label)
+            if old_row is None or new_row is None:
+                log_func(f"Row '{label}' not found during comparison")
                 return False
-            old_row: TwoDARow = self.get_row(index)
-            new_row: TwoDARow = other.get_row(index)
             for header in common_headers:
                 old_value: str = old_row.get_string(header)
                 new_value: str = new_row.get_string(header)
                 if old_value != new_value:
-                    log_func(f"Cell mismatch at RowIndex '{index}' Header '{header}': '{old_value}' --> '{new_value}'")
+                    log_func(f"Cell mismatch at Row '{label}' Header '{header}': '{old_value}' --> '{new_value}'")
                     ret = False
 
         return ret
