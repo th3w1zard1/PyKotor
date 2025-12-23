@@ -49,8 +49,6 @@ if TYPE_CHECKING:
 
     from pykotor.resource.formats.gff import GFF
 
-TEST_FILE = "Libraries/PyKotor/tests/test_files/test.dlg"
-TEST_K1_FILE = "Libraries/PyKotor/tests/test_files/test_k1.dlg"
 
 TEST_DLG_XML = """<gff3>
   <struct id="-1">
@@ -731,14 +729,14 @@ class TestDLG(TestCase):
         self.log_messages.extend(args)
 
     def test_k1_reconstruct(self):
-        gff: GFF = read_gff(TEST_K1_FILE)
+        gff: GFF = read_gff(TEST_K1_DLG_XML.encode('utf-8'), file_format=ResourceType.GFF_XML)
         reconstructed_gff: GFF = dismantle_dlg(construct_dlg(gff), Game.K1)
         result = gff.compare(reconstructed_gff, self.log_func, ignore_default_changes=True)
         output = os.linesep.join(self.log_messages)
         assert result, output
 
     def test_k1_reconstruct_from_reconstruct(self):
-        gff: GFF = read_gff(TEST_K1_FILE)
+        gff: GFF = read_gff(TEST_K1_DLG_XML.encode('utf-8'), file_format=ResourceType.GFF_XML)
         reconstructed_gff: GFF = dismantle_dlg(construct_dlg(gff), Game.K1)
         re_reconstructed_gff: GFF = dismantle_dlg(construct_dlg(reconstructed_gff), Game.K1)
         result: bool = reconstructed_gff.compare(re_reconstructed_gff, self.log_func)
@@ -746,20 +744,20 @@ class TestDLG(TestCase):
         assert result, output
 
     def test_k1_serialization(self):
-        gff: GFF = read_gff(TEST_K1_DLG_XML.encode())
+        gff: GFF = read_gff(TEST_K1_DLG_XML.encode('utf-8'), file_format=ResourceType.GFF_XML)
         dlg: DLG = construct_dlg(gff)
         for node in dlg.all_entries():
             assert node == DLGNode.from_dict(node.to_dict())
 
     def test_k2_reconstruct(self):
-        gff: GFF = read_gff(TEST_FILE)
+        gff: GFF = read_gff(TEST_DLG_XML.encode('utf-8'), file_format=ResourceType.GFF_XML)
         reconstructed_gff: GFF = dismantle_dlg(construct_dlg(gff), Game.K2)
         print(reconstructed_gff.root.get_list("EntryList").at(0).get_int32("RecordNoOverri"))
         reconstructed_gff.root.get_list("EntryList").at(0).set_int32("RecordNoOverri", 1)
         assert gff.compare(reconstructed_gff, self.log_func, ignore_default_changes=True), os.linesep.join(self.log_messages)
 
     def test_k2_reconstruct_from_reconstruct(self):
-        gff: GFF = read_gff(TEST_FILE)
+        gff: GFF = read_gff(TEST_DLG_XML.encode('utf-8'), file_format=ResourceType.GFF_XML)
         reconstructed_gff: GFF = dismantle_dlg(construct_dlg(gff), Game.K2)
         re_reconstructed_gff: GFF = dismantle_dlg(construct_dlg(reconstructed_gff), Game.K2)
         result = reconstructed_gff.compare(re_reconstructed_gff, self.log_func)
@@ -767,7 +765,7 @@ class TestDLG(TestCase):
         assert result, output
 
     def test_io_construct(self):
-        gff = read_gff(TEST_DLG_XML.encode())
+        gff = read_gff(TEST_DLG_XML.encode('utf-8'), file_format=ResourceType.GFF_XML)
         dlg = construct_dlg(gff)
         self.validate_io(dlg)
 
