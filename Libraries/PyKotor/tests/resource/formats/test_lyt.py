@@ -36,14 +36,48 @@ from pykotor.common.misc import ResRef
 from pykotor.resource.formats.lyt.lyt_auto import read_lyt, write_lyt
 from pykotor.resource.type import ResourceType
 
-ASCII_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.lyt"
+# Inlined test.lyt content
+ASCII_TEST_DATA = """#MAXLAYOUT ASCII
+   filedependancy M17mg.max
+beginlayout
+     roomcount    2
+           M17mg_01a    100.0   100.0 0.0
+         M17mg_01b 100.0  100.0 0.0
+   trackcount 2
+      M17mg_MGT01   0.0 0.0 0.0
+         M17mg_MGT02 112.047 209.04 0.0
+   obstaclecount 2
+      M17mg_MGO01 103.309 3691.61 0.0
+         M17mg_MGO02 118.969 3688.0 0.0
+     doorhookcount 2
+      M02ac_02h door_01 0 170.475 66.375 0.0 0.707107 0.0 0.0 -0.707107
+         M02ac_02a door_06 0 90.0 129.525 0.0 1.0 0.0 0.0 0.0
+    donelayout"""
+
+# Inlined test_corrupted.lyt content
+CORRUPT_BINARY_TEST_DATA = """#MAXLAYOUT ASCII
+   filedependancy M17mg.max
+beginlayout
+     roomcount    5
+           M17mg_01a    100.0   100.0 0.0
+         M17mg_01b 100.0  100.0 0.0
+   trackcount 2
+      M17mg_MGT01   0.0 0.0 0.0
+         M17mg_MGT02 112.047 209.04 0.0
+   obstaclecount 2
+      M17mg_MGO01 103.309 3691.61 0.0
+         M17mg_MGO02 118.969 3688.0 0.0
+     doorhookcount 2
+      M02ac_02h door_01 0 170.475 66.375 0.0 0.707107 0.0 0.0 -0.707107
+         M02ac_02a door_06 0 90.0 129.525 0.0 1.0 0.0 0.0 0.0
+    donelayout"""
+
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test_corrupted.lyt"
 
 
 class TestLYT(TestCase):
     def test_binary_io(self):
-        lyt = LYTAsciiReader(ASCII_TEST_FILE).load()
+        lyt = LYTAsciiReader(ASCII_TEST_DATA.encode('utf-8')).load()
         self.validate_io(lyt)
 
         data = bytearray()
@@ -67,7 +101,7 @@ class TestLYT(TestCase):
         else:
             self.assertRaises(IsADirectoryError, read_lyt, ".")
         self.assertRaises(FileNotFoundError, read_lyt, DOES_NOT_EXIST_FILE)
-        self.assertRaises(ValueError, read_lyt, CORRUPT_BINARY_TEST_FILE)
+        self.assertRaises(ValueError, read_lyt, CORRUPT_BINARY_TEST_DATA.encode('utf-8'))
 
     def test_write_raises(self):
         if os.name == "nt":
