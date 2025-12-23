@@ -955,11 +955,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         from toolset.gui.common.localization import translate as tr, trf
 
         if not self._installation:
-            title = tr("No installation - Map Builder")
+            title = tr("No installation - Indoor Map Builder")
         elif not self._filepath:
-            title = trf("{name} - Map Builder", name=self._installation.name)
+            title = trf("{name} - Indoor Map Builder", name=self._installation.name)
         else:
-            title = trf("{path} - {name} - Map Builder", path=self._filepath, name=self._installation.name)
+            title = trf("{path} - {name} - Indoor Map Builder", path=self._filepath, name=self._installation.name)
 
         # Add asterisk if there are unsaved changes
         if self._undo_stack.canUndo():

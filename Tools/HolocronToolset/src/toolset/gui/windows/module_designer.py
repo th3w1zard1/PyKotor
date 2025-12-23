@@ -263,6 +263,10 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         self.settings: ModuleDesignerSettings = ModuleDesignerSettings()
         self.log: RobustLogger = RobustLogger()
 
+        # Track unsaved changes
+        self._has_unsaved_changes: bool = False
+        self._clean_undo_index: int = 0
+
         self.target_frame_rate = 120  # Target higher for smoother camera
         self.camera_update_timer = QTimer()
         self.camera_update_timer.timeout.connect(self.update_camera)
@@ -289,6 +293,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
 
         self.ui: Ui_MainWindow = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.setWindowTitle("Module Designer")  # Re-set after UI setup
         self._init_ui()
         self._install_view_stack()
         self._setup_signals()
@@ -352,21 +357,24 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
     def closeEvent(self, event: QCloseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         from toolset.gui.common.localization import translate as tr
 
-        reply = QMessageBox.question(
-            self,
-            tr("Confirm Exit"),
-            tr("Really quit the module designer? You may lose unsaved changes."),
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,
-        )
+        # Only show confirmation dialog if there are unsaved changes
+        if self.has_unsaved_changes():
+            reply = QMessageBox.question(
+                self,
+                tr("Confirm Exit"),
+                tr("Really quit the module designer? You may lose unsaved changes."),
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
 
-        if reply == QMessageBox.StandardButton.Yes:
-            # Stop Blender mode if active
-            if self.is_blender_mode():
-                self.stop_blender_mode()
-            event.accept()  # Let the window close
-        else:
-            event.ignore()  # Ignore the close event
+            if reply != QMessageBox.StandardButton.Yes:
+                event.ignore()  # Ignore the close event
+                return
+
+        # Stop Blender mode if active
+        if self.is_blender_mode():
+            self.stop_blender_mode()
+        event.accept()  # Let the window close
 
     def _setup_signals(self):
         self.ui.actionOpen.triggered.connect(self.open_module_with_dialog)
@@ -378,8 +386,9 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         self.ui.actionUndo.triggered.connect(self._on_undo)
         self.ui.actionRedo.triggered.connect(self._on_redo)
 
-        # Connect undo stack signals for Blender sync
+        # Connect undo stack signals for Blender sync and change tracking
         self.undo_stack.indexChanged.connect(self._on_undo_stack_changed)
+        self.undo_stack.indexChanged.connect(self._on_undo_stack_index_changed)
 
         # Layout tab actions
         self.ui.actionAddRoom.triggered.connect(self.on_add_room)
@@ -977,10 +986,11 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
 
     def _refresh_window_title(self):
         if self._module is None:
-            title = f"No Module - {self._installation.name} - Module Designer"
+            title = f"No Module - {self._installation.name} - Module Designer[*]"
         else:
-            title = f"{self._module.root()} - {self._installation.name} - Module Designer"
+            title = f"{self._module.root()} - {self._installation.name} - Module Designer[*]"
         self.setWindowTitle(title)
+        self.setWindowModified(self.has_unsaved_changes())
 
     def on_lyt_updated(self, lyt: LYT):
         """Handle LYT updates from the editor."""
@@ -1094,6 +1104,9 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         self.show()
         # Inherently calls On3dSceneInitialized when done.
 
+        # Mark initial state as clean (no unsaved changes)
+        self._mark_clean_state()
+
     def _ensure_mod_file(self, mod_filepath: Path, mod_root: str) -> Path:
         mod_file = mod_filepath.with_name(f"{mod_root}.mod")
         if not mod_file.is_file():
@@ -1195,6 +1208,9 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         layout_module = self._module.layout()
         if layout_module is not None:
             layout_module.save()
+
+        # Mark the current state as clean after saving
+        self._mark_clean_state()
 
     def rebuild_resource_tree(self):
         """Rebuilds the resource tree widget.
@@ -2524,6 +2540,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             self._blender_controller.add_room(room.model, room.position.x, room.position.y, room.position.z)
 
         self.rebuild_layout_tree()
+        self._mark_changes_made()
         self.log.info(f"Added room '{room.model}' to layout")
 
     def on_add_door_hook(self):
@@ -2557,6 +2574,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             )
 
         self.rebuild_layout_tree()
+        self._mark_changes_made()
         self.log.info(f"Added door hook '{doorhook.door}' to layout")
 
     def on_add_track(self):
@@ -2583,6 +2601,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             self._blender_controller.add_track(track.model, track.position.x, track.position.y, track.position.z)
 
         self.rebuild_layout_tree()
+        self._mark_changes_made()
         self.log.info(f"Added track '{track.model}' to layout")
 
     def on_add_obstacle(self):
@@ -2609,6 +2628,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             self._blender_controller.add_obstacle(obstacle.model, obstacle.position.x, obstacle.position.y, obstacle.position.z)
 
         self.rebuild_layout_tree()
+        self._mark_changes_made()
         self.log.info(f"Added obstacle '{obstacle.model}' to layout")
 
     def on_import_texture(self):
@@ -2790,6 +2810,9 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         element.position.y = self.ui.posYSpin.value()
         element.position.z = self.ui.posZSpin.value()
 
+        # Mark changes made
+        self._mark_changes_made()
+
         # Sync to Blender
         if self.is_blender_mode() and self._blender_controller is not None:
             obj_name = f"Room_{element.model}"
@@ -2831,6 +2854,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             )
 
         self.rebuild_layout_tree()
+        self._mark_changes_made()
 
     def on_browse_model(self):
         """Browse for a model file to assign to the room."""
@@ -2849,6 +2873,9 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             return
 
         element.room = self.ui.roomNameCombo.currentText()
+
+        # Mark changes made
+        self._mark_changes_made()
 
         # Sync to Blender
         if self.is_blender_mode() and self._blender_controller is not None:
@@ -2876,6 +2903,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             )
 
         self.rebuild_layout_tree()
+        self._mark_changes_made()
 
     def on_lyt_tree_context_menu(self, point: QPoint):
         """Show context menu for layout tree items."""
@@ -2993,6 +3021,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
                 )
 
         self.rebuild_layout_tree()
+        self._mark_changes_made()
         self.log.info(f"Duplicated {type(element).__name__}")
 
     def delete_lyt_element(self, element: LYTRoom | LYTDoorHook | LYTTrack | LYTObstacle):
@@ -3064,6 +3093,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
                 self._blender_controller.remove_lyt_element(obj_name, blender_type)
 
         self.rebuild_layout_tree()
+        self._mark_changes_made()
         self.log.info(f"Deleted {element_type} '{element_name}'")
 
     def load_room_model(self, room: LYTRoom):
@@ -3090,6 +3120,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             doorhook.position.y = scene.cursor.position().y
             doorhook.position.z = scene.cursor.position().z
             self.rebuild_layout_tree()
+            self._mark_changes_made()
             self.log.info(f"Placed door hook '{doorhook.door}' in 3D view")
 
     # endregion
@@ -3145,6 +3176,27 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
             self._blender_controller.redo()
 
         self._last_undo_index = index
+
+    def _on_undo_stack_index_changed(self, index: int):
+        """Track unsaved changes based on undo stack state."""
+        # If we're at the clean index, there are no unsaved changes
+        self._has_unsaved_changes = (index != self._clean_undo_index)
+        self._refresh_window_title()
+
+    def _mark_clean_state(self):
+        """Mark the current state as clean (no unsaved changes)."""
+        self._clean_undo_index = self.undo_stack.index()
+        self._has_unsaved_changes = False
+        self._refresh_window_title()
+
+    def _mark_changes_made(self):
+        """Mark that changes have been made."""
+        self._has_unsaved_changes = True
+        self._refresh_window_title()
+
+    def has_unsaved_changes(self) -> bool:
+        """Return True if there are unsaved changes."""
+        return self._has_unsaved_changes
 
     def update_camera(self):
         if self._use_blender_mode and not self.ui.mainRenderer._scene:

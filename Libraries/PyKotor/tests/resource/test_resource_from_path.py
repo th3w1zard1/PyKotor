@@ -31,42 +31,6 @@ class TestResourceType(unittest.TestCase):
             test_set: set[ResourceType | str] = {restype, restype.extension}
             assert len(test_set) == 1, f"{repr(test_set)} != 1"
 
-    @unittest.skip("ResourceType.from_invalid usage in this manner is deprecated")
-    def test_from_invalid(self):
-        invalid: ResourceType = ResourceType.from_invalid(extension="aSdF")
-        assert invalid == ResourceType.INVALID, f"{invalid!r} != {ResourceType.INVALID!r}"
-        assert invalid.type_id == ResourceType.INVALID.type_id, f"{invalid.type_id!r} != {ResourceType.INVALID.type_id!r}"
-        assert invalid.contents == ResourceType.INVALID.contents, f"{invalid.contents!r} != {ResourceType.INVALID.contents!r}"
-        assert invalid.category == ResourceType.INVALID.category, f"{invalid.category!r} != {ResourceType.INVALID.category!r}"
-        assert invalid.extension == "asdf", f"{invalid.extension!r} != asdf"
-        assert repr(invalid) == "ResourceType.from_invalid(type_id=-1, extension=asdf, category=Undefined, contents=binary)", f"{repr(invalid)!r} != ResourceType.from_invalid(type_id=-1, extension=asdf, category=Undefined, contents=binary)"
-        assert invalid.name == "INVALID_aSdF", f"{invalid.name!r} != INVALID_aSdF"
-        assert repr(ResourceType.INVALID) == "ResourceType.INVALID", f"{repr(ResourceType.INVALID)!r} != ResourceType.INVALID"
-        assert str(invalid) == "ASDF", f"{str(invalid)!r} != ASDF"
-        assert invalid.extension != ResourceType.INVALID.extension, f"{invalid.extension!r} != {ResourceType.INVALID.extension!r}"
-
-    @unittest.skip("ResourceType.from_invalid usage in this manner is deprecated")
-    def test_from_invalid_with_valid_extension(self):  # sourcery skip: class-extract-method
-        acquired_type: ResourceType = ResourceType.from_invalid(extension="tlk")
-        assert acquired_type == ResourceType.INVALID, f"{acquired_type!r} != {ResourceType.INVALID!r}"
-        assert acquired_type == "Tlk", f"{acquired_type!r} != Tlk"
-        assert acquired_type.extension == "tlk", f"{acquired_type.extension!r} != tlk"
-        assert acquired_type.type_id == -1, f"{acquired_type.type_id!r} != -1"
-        assert str(acquired_type) == "TLK", f"{str(acquired_type)!r} != TLK"
-        assert acquired_type.contents == "binary", f"{acquired_type.contents!r} != binary"
-        assert acquired_type.category == "Undefined", f"{acquired_type.category!r} != Undefined"
-        assert acquired_type == ResourceType.INVALID, f"{acquired_type!r} != {ResourceType.INVALID!r}"
-        assert acquired_type.type_id == ResourceType.INVALID.type_id, f"{acquired_type.type_id!r} != {ResourceType.INVALID.type_id!r}"
-        assert acquired_type.contents == ResourceType.INVALID.contents, f"{acquired_type.contents!r} != {ResourceType.INVALID.contents!r}"
-        assert acquired_type.category == ResourceType.INVALID.category, f"{acquired_type.category!r} != {ResourceType.INVALID.category!r}"
-        assert acquired_type.extension == "tlk", f"{acquired_type.extension!r} != tlk"
-        assert repr(acquired_type) == "ResourceType.from_invalid(type_id=-1, extension=tlk, category=Undefined, contents=binary)", f"{repr(acquired_type)!r} != ResourceType.from_invalid(type_id=-1, extension=tlk, category=Undefined, contents=binary)"
-        assert acquired_type.name == "INVALID_tlk", f"{acquired_type.name!r} != INVALID_tlk"
-        assert repr(ResourceType.INVALID) == "ResourceType.INVALID", f"{repr(ResourceType.INVALID)!r} != ResourceType.INVALID"
-        assert acquired_type.extension != ResourceType.INVALID.extension, f"{acquired_type.extension!r} != {ResourceType.INVALID.extension!r}"
-        assert acquired_type != ResourceType.TLK, f"{acquired_type!r} != {ResourceType.TLK!r}"
-        assert acquired_type.extension == ResourceType.TLK.extension, f"{acquired_type.extension!r} != {ResourceType.TLK.extension!r}"
-
     def test_from_extension(self):  # sourcery skip: class-extract-method
         acquired_type: ResourceType = ResourceType.from_extension("tlk")
         assert acquired_type == ResourceType.TLK, f"{acquired_type!r} != {ResourceType.TLK!r}"
@@ -98,16 +62,6 @@ class TestResourceType(unittest.TestCase):
         assert acquired_type.type_id == 2018, f"{acquired_type.type_id!r} != 2018"
         assert acquired_type.contents == "binary", f"{acquired_type.contents!r} != binary"
         assert acquired_type.category == "Talk Tables", f"{acquired_type.category!r} != Talk Tables"
-
-    @unittest.skip("ResourceType.from_extension usage in this manner is deprecated")
-    def test_from_path_long_extension(self):
-        test1: str = ResourceIdentifier.from_path("C:/path/to/l.o.n.g._ex.te.nsio.n.xyz").restype.extension
-        expected1: str = "xyz"
-        assert test1 == expected1, f"{test1!r} != {expected1!r}"
-
-        test2: str = ResourceType.from_extension(".l.o.n.g._ex.te.nsio.n.xyz").extension
-        expected2: str = "l.o.n.g._ex.te.nsio.n.xyz"
-        assert test2 == expected2, f"{test2!r} != {expected2!r}"
 
 
 class TestResourceIdentifier(unittest.TestCase):

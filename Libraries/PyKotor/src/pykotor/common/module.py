@@ -92,10 +92,20 @@ class KModuleType(Enum):
     
     File Organization:
     -----------------
-        - MAIN (.rim): Contains core module files (IFO, ARE, GIT)
+        - MAIN (.rim): Contains core module files (IFO, ARE, GIT) - only loaded in simple mode
+        - AREA (_a.rim): Area-specific RIM (complex mode) - replaces .rim
+        - AREA_EXTENDED (_adx.rim): Extended area RIM (complex mode) - replaces .rim if _a.rim not found
         - DATA (_s.rim): Contains module data (creatures, items, placeables, etc.)
         - K2_DLG (_dlg.erf): KotOR 2 only - contains dialog files
         - MOD (.mod): Community override format, replaces all above files
+    
+    Reverse Engineering Notes:
+    -------------------------
+        Based on swkotor.exe: FUN_004094a0 and swkotor2.exe: FUN_004096b0
+        - Simple Mode (flag at offset 0x54 == 0): Loads .rim directly
+        - Complex Mode (flag != 0): Checks for _a.rim, _adx.rim, .mod, _s.rim, _dlg.erf
+        - _a.rim and _adx.rim REPLACE .rim in complex mode
+        - .mod REPLACES all other files if it exists
     """
     MAIN = ".rim"  # Contains the IFO/ARE/GIT
     """Main module archive containing core module files.
@@ -103,6 +113,26 @@ class KModuleType(Enum):
     Reference: Original BioWare Odyssey Engine module structure
     Contains: IFO (module info), ARE (area data), GIT (dynamic area info)
     File naming: <modulename>.rim
+    Note: Only loaded in simple mode (flag at offset 0x54 == 0)
+    swkotor.exe: FUN_004094a0 line 32-42
+    """
+    
+    AREA = "_a.rim"  # Area-specific RIM (complex mode)
+    """Area-specific module archive (complex mode).
+    
+    Reference: swkotor.exe: FUN_004094a0 line 61, 159
+    Contains: ARE (area data) and related area resources
+    File naming: <modulename>_a.rim
+    Behavior: REPLACES .rim in complex mode
+    """
+    
+    AREA_EXTENDED = "_adx.rim"  # Extended area RIM (complex mode)
+    """Extended area module archive (complex mode).
+    
+    Reference: swkotor.exe: FUN_004094a0 line 74, 85
+    Contains: ARE (area data) and extended area resources
+    File naming: <modulename>_adx.rim
+    Behavior: REPLACES .rim if _a.rim not found
     """
     
     DATA = "_s.rim"  # Contains everything else
@@ -163,6 +193,9 @@ class KModuleType(Enum):
         if self is self.MOD:
             return self is not ResourceType.TwoDA
         if self is self.MAIN:
+            return restype in {ResourceType.ARE, ResourceType.IFO, ResourceType.GIT}
+        # _a.rim and _adx.rim contain ARE resources (swkotor.exe: FUN_004094a0 line 61, 74 - checks for ARE type 0xbba)
+        if self is self.AREA or self is self.AREA_EXTENDED:
             return restype in {ResourceType.ARE, ResourceType.IFO, ResourceType.GIT}
         if self is self.DATA:
             return restype in {
@@ -227,6 +260,10 @@ class ModulePieceResource(Capsule):
                 new_cls = ModuleDataPiece
             elif piece_info.modtype is KModuleType.MAIN:
                 new_cls = ModuleLinkPiece
+            elif piece_info.modtype is KModuleType.AREA:
+                new_cls = ModuleLinkPiece  # _a.rim uses same structure as .rim
+            elif piece_info.modtype is KModuleType.AREA_EXTENDED:
+                new_cls = ModuleLinkPiece  # _adx.rim uses same structure as .rim
             elif piece_info.modtype is KModuleType.K2_DLG:
                 new_cls = ModuleDLGPiece
             elif piece_info.modtype is KModuleType.MOD:
@@ -323,6 +360,8 @@ class ModuleFullOverridePiece(ModuleDLGPiece, ModuleDataPiece, ModuleLinkPiece):
 
 class _CapsuleDictTypes(TypedDict, total=False):
     MAIN: ModuleLinkPiece | None
+    AREA: ModuleLinkPiece | None
+    AREA_EXTENDED: ModuleLinkPiece | None
     DATA: ModuleDataPiece | None
     K2_DLG: ModuleDLGPiece | None
     MOD: ModuleFullOverridePiece | None
@@ -391,27 +430,61 @@ class Module:  # noqa: PLR0904
         self._cached_sort_id: str | None = None
 
         # Build all capsules relevant to this root in the provided installation
+        # Based on swkotor.exe: FUN_004094a0 and swkotor2.exe: FUN_004096b0
         self._capsules: _CapsuleDictTypes = {
             KModuleType.MAIN.name: None,
+            KModuleType.AREA.name: None,
+            KModuleType.AREA_EXTENDED.name: None,
             KModuleType.DATA.name: None,
             KModuleType.K2_DLG.name: None,
             KModuleType.MOD.name: None,
         }
+        module_path = installation.module_path()
+        
         if self.dot_mod:
-            mod_filepath = installation.module_path().joinpath(self._root + KModuleType.MOD.value)
+            # .mod file overrides all rim-like files
+            # swkotor.exe: FUN_004094a0 line 136: Loads .mod, skips _s.rim
+            mod_filepath = module_path.joinpath(self._root + KModuleType.MOD.value)
             if mod_filepath.is_file():
                 self._capsules[KModuleType.MOD.name] = ModuleFullOverridePiece(mod_filepath)
             else:
                 self.dot_mod = False
-                self._capsules[KModuleType.MAIN.name] = ModuleLinkPiece(installation.module_path().joinpath(self._root + KModuleType.MAIN.value))
-                self._capsules[KModuleType.DATA.name] = ModuleDataPiece(installation.module_path().joinpath(self._root + KModuleType.DATA.value))
+                # Fallback to rim files when .mod doesn't exist
+                self._capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(self._root + KModuleType.MAIN.value))
+                self._capsules[KModuleType.DATA.name] = ModuleDataPiece(module_path.joinpath(self._root + KModuleType.DATA.value))
                 if self._installation.game().is_k2():
-                    self._capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(installation.module_path().joinpath(self._root + KModuleType.K2_DLG.value))
+                    self._capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(module_path.joinpath(self._root + KModuleType.K2_DLG.value))
         else:
-            self._capsules[KModuleType.MAIN.name] = ModuleLinkPiece(installation.module_path().joinpath(self._root + KModuleType.MAIN.value))
-            self._capsules[KModuleType.DATA.name] = ModuleDataPiece(installation.module_path().joinpath(self._root + KModuleType.DATA.value))
+            # Complex mode: Check for _a.rim or _adx.rim (replaces .rim), then _s.rim and _dlg.erf
+            # swkotor.exe: FUN_004094a0 line 49-216
+            area_rim_path = module_path.joinpath(self._root + KModuleType.AREA.value)
+            area_extended_rim_path = module_path.joinpath(self._root + KModuleType.AREA_EXTENDED.value)
+            
+            # Step 1: Load _a.rim if exists (REPLACES .rim)
+            # swkotor.exe: FUN_004094a0 line 159
+            if area_rim_path.is_file():
+                self._capsules[KModuleType.AREA.name] = ModuleLinkPiece(area_rim_path)
+            # Step 2: Load _adx.rim if _a.rim not found (REPLACES .rim)
+            # swkotor.exe: FUN_004094a0 line 85
+            elif area_extended_rim_path.is_file():
+                self._capsules[KModuleType.AREA_EXTENDED.name] = ModuleLinkPiece(area_extended_rim_path)
+            else:
+                # Simple mode: Just load .rim file directly
+                # swkotor.exe: FUN_004094a0 line 32-42
+                self._capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(self._root + KModuleType.MAIN.value))
+            
+            # Step 3: Load _s.rim if exists (ADDS to base)
+            # swkotor.exe: FUN_004094a0 line 118 (only if .mod not found)
+            data_rim_path = module_path.joinpath(self._root + KModuleType.DATA.value)
+            if data_rim_path.is_file():
+                self._capsules[KModuleType.DATA.name] = ModuleDataPiece(data_rim_path)
+            
+            # Step 4: Load _dlg.erf if exists (K2 only, ADDS to base)
+            # swkotor2.exe: FUN_004096b0 line 147 (only if .mod not found)
             if self._installation.game().is_k2():
-                self._capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(installation.module_path().joinpath(self._root + KModuleType.K2_DLG.value))
+                dlg_erf_path = module_path.joinpath(self._root + KModuleType.K2_DLG.value)
+                if dlg_erf_path.is_file():
+                    self._capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(dlg_erf_path)
 
         self.reload_resources()
 
@@ -425,13 +498,17 @@ class Module:  # noqa: PLR0904
 
         root = cls.name_to_root(filename)
         # Build all capsules relevant to this root in the provided installation
+        # Based on swkotor.exe: FUN_004094a0 and swkotor2.exe: FUN_004096b0
         capsules: _CapsuleDictTypes = {
             KModuleType.MAIN.name: None,
+            KModuleType.AREA.name: None,
+            KModuleType.AREA_EXTENDED.name: None,
             KModuleType.DATA.name: None,
             KModuleType.K2_DLG.name: None,
             KModuleType.MOD.name: None,
         }
         module_path: Path = install_or_path if isinstance(install_or_path, Path) else install_or_path.module_path()
+        
         if filename.lower().endswith(".mod"):
             mod_filepath = module_path.joinpath(root + KModuleType.MOD.value)
             if mod_filepath.is_file():
@@ -443,10 +520,30 @@ class Module:  # noqa: PLR0904
                 if not isinstance(install_or_path, Installation) or install_or_path.game().is_k2():
                     capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(module_path.joinpath(root + KModuleType.K2_DLG.value))
         else:
-            capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(root + KModuleType.MAIN.value))
-            capsules[KModuleType.DATA.name] = ModuleDataPiece(module_path.joinpath(root + KModuleType.DATA.value))
+            # Complex mode: Check for _a.rim or _adx.rim (replaces .rim), then _s.rim and _dlg.erf
+            area_rim_path = module_path.joinpath(root + KModuleType.AREA.value)
+            area_extended_rim_path = module_path.joinpath(root + KModuleType.AREA_EXTENDED.value)
+            
+            # Load _a.rim if exists (REPLACES .rim)
+            if area_rim_path.is_file():
+                capsules[KModuleType.AREA.name] = ModuleLinkPiece(area_rim_path)
+            # Load _adx.rim if _a.rim not found (REPLACES .rim)
+            elif area_extended_rim_path.is_file():
+                capsules[KModuleType.AREA_EXTENDED.name] = ModuleLinkPiece(area_extended_rim_path)
+            else:
+                # Simple mode: Just .rim file
+                capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(root + KModuleType.MAIN.value))
+            
+            # Load _s.rim if exists (ADDS to base)
+            data_rim_path = module_path.joinpath(root + KModuleType.DATA.value)
+            if data_rim_path.is_file():
+                capsules[KModuleType.DATA.name] = ModuleDataPiece(data_rim_path)
+            
+            # Load _dlg.erf if exists (K2 only, ADDS to base)
             if not isinstance(install_or_path, Installation) or install_or_path.game().is_k2():
-                capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(module_path.joinpath(root + KModuleType.K2_DLG.value))
+                dlg_erf_path = module_path.joinpath(root + KModuleType.K2_DLG.value)
+                if dlg_erf_path.is_file():
+                    capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(dlg_erf_path)
         return capsules
 
     @classmethod
@@ -469,12 +566,20 @@ class Module:  # noqa: PLR0904
         """Returns main capsule either from the override or the module."""
         relevant_capsule: ModuleFullOverridePiece | ModuleLinkPiece | None
         if self.dot_mod:
+            # .mod overrides all
             if KModuleType.MOD.name in self._capsules:
                 relevant_capsule = self._capsules[KModuleType.MOD.name]
             else:
                 relevant_capsule = self._capsules[KModuleType.MAIN.name]  # pyright: ignore[reportTypedDictNotRequiredAccess]
         else:
-            relevant_capsule = self._capsules[KModuleType.MAIN.name]  # pyright: ignore[reportTypedDictNotRequiredAccess]
+            # Complex mode: Check for _a.rim or _adx.rim first (replaces .rim)
+            # Simple mode: Just .rim
+            if KModuleType.AREA.name in self._capsules and self._capsules[KModuleType.AREA.name] is not None:
+                relevant_capsule = self._capsules[KModuleType.AREA.name]
+            elif KModuleType.AREA_EXTENDED.name in self._capsules and self._capsules[KModuleType.AREA_EXTENDED.name] is not None:
+                relevant_capsule = self._capsules[KModuleType.AREA_EXTENDED.name]
+            else:
+                relevant_capsule = self._capsules[KModuleType.MAIN.name]  # pyright: ignore[reportTypedDictNotRequiredAccess]
         assert relevant_capsule is not None
         return relevant_capsule
 
@@ -546,6 +651,8 @@ class Module:  # noqa: PLR0904
         casefold_root: str = root.casefold()
         root = root[:-2] if casefold_root.endswith("_s") else root
         root = root[:-4] if casefold_root.endswith("_dlg") else root
+        root = root[:-2] if casefold_root.endswith("_a") else root
+        root = root[:-4] if casefold_root.endswith("_adx") else root
         return root  # noqa: RET504
 
     @staticmethod

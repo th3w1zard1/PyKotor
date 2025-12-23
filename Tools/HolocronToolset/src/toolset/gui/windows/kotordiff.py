@@ -91,7 +91,7 @@ class KotorDiffWindow(QMainWindow):
         active_installation: HTInstallation | None = None,
     ):
         super().__init__(parent)
-        self.setWindowTitle("KotorDiff - Holocron Toolset")
+        self.setWindowTitle("Kotor Diff - Holocron Toolset")
         self.resize(900, 700)
 
         self._diff_thread: KotorDiffThread | None = None

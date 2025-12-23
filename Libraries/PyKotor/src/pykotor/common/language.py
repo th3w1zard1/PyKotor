@@ -14,7 +14,7 @@ class Language(IntEnum):
     """Language IDs recognized by both the games.
 
     Found in the TalkTable header, and CExoLocStrings (LocalizedStrings) within GFFs.
-    
+
     References:
     ----------
         vendor/reone/include/reone/resource/types.h (Language enum)
@@ -671,13 +671,13 @@ class LocalizedString:
         Supports both enum and integer arguments for backward compatibility.
         Can be called as:
         - get(Language.ENGLISH, Gender.MALE) - enum arguments
-        - get(0, 0) - integer arguments  
+        - get(0, 0) - integer arguments
         - get(0) - single integer (gender defaults to 0/MALE)
 
         Args:
         ----
             language: The language (Language enum or int).
-            gender: The gender (Gender enum or int). 
+            gender: The gender (Gender enum or int).
                 If None and language is int, defaults to Gender.MALE (0) for backward compatibility with get(0).
 
         Returns:

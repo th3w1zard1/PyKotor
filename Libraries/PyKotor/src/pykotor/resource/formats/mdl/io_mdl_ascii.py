@@ -442,8 +442,49 @@ class MDLAsciiWriter:
             self.write_line(indent + 1, f"{i} {constraint.type} {constraint.target} {constraint.target_node}")
 
     def _write_light(self, indent: int, light: MDLLight) -> None:
-        """Write light data."""
-        self.write_line(indent, f"flareradius {light.flare_radius}")
+        """Write light data.
+        
+        Reference: vendor/mdlops/MDLOpsM.pm:3228-3266
+        """
+        # Write flare data arrays if present (vendor/mdlops/MDLOpsM.pm:3235-3256)
+        has_flares = light.flare and (
+            (light.flare_textures and len(light.flare_textures) > 0) or
+            (light.flare_positions and len(light.flare_positions) > 0) or
+            (light.flare_sizes and len(light.flare_sizes) > 0) or
+            (light.flare_color_shifts and len(light.flare_color_shifts) > 0)
+        )
+        
+        if has_flares:
+            # Write lensflares count (vendor/mdlops/MDLOpsM.pm:3233)
+            if light.flare_positions:
+                self.write_line(indent, f"lensflares {len(light.flare_positions)}")
+            
+            # Write texturenames (vendor/mdlops/MDLOpsM.pm:3235-3239)
+            if light.flare_textures and len(light.flare_textures) > 0:
+                self.write_line(indent, f"texturenames {len(light.flare_textures)}")
+                for texture in light.flare_textures:
+                    self.write_line(indent + 1, texture)
+            
+            # Write flarepositions (vendor/mdlops/MDLOpsM.pm:3240-3244)
+            if light.flare_positions and len(light.flare_positions) > 0:
+                self.write_line(indent, f"flarepositions {len(light.flare_positions)}")
+                for pos in light.flare_positions:
+                    self.write_line(indent + 1, f"{pos:.7g}")
+            
+            # Write flaresizes (vendor/mdlops/MDLOpsM.pm:3245-3249)
+            if light.flare_sizes and len(light.flare_sizes) > 0:
+                self.write_line(indent, f"flaresizes {len(light.flare_sizes)}")
+                for size in light.flare_sizes:
+                    self.write_line(indent + 1, f"{size:.7g}")
+            
+            # Write flarecolorshifts (vendor/mdlops/MDLOpsM.pm:3250-3256)
+            if light.flare_color_shifts and len(light.flare_color_shifts) > 0:
+                self.write_line(indent, f"flarecolorshifts {len(light.flare_color_shifts)}")
+                for color_shift in light.flare_color_shifts:
+                    if isinstance(color_shift, (list, tuple)) and len(color_shift) >= 3:
+                        self.write_line(indent + 1, f"{color_shift[0]:.7g} {color_shift[1]:.7g} {color_shift[2]:.7g}")
+        
+        self.write_line(indent, f"flareradius {light.flare_radius:.7g}")
         self.write_line(indent, f"priority {light.light_priority}")
         if light.ambient_only:
             self.write_line(indent, "ambientonly")
@@ -455,30 +496,88 @@ class MDLAsciiWriter:
             self.write_line(indent, "fadinglight")
 
     def _write_emitter(self, indent: int, emitter: MDLEmitter) -> None:
-        """Write emitter data."""
-        self.write_line(indent, f"deadspace {emitter.dead_space}")
-        self.write_line(indent, f"blastradius {emitter.blast_radius}")
-        self.write_line(indent, f"blastlength {emitter.blast_length}")
-        self.write_line(indent, f"branchcount {emitter.branch_count}")
-        self.write_line(indent, f"controlpointsmoothing {emitter.control_point_smoothing}")
+        """Write emitter data.
+        
+        Reference: vendor/mdlops/MDLOpsM.pm:3268-3307
+        """
+        self.write_line(indent, f"deadspace {emitter.dead_space:.7g}")
+        self.write_line(indent, f"blastRadius {emitter.blast_radius:.7g}")
+        self.write_line(indent, f"blastLength {emitter.blast_length:.7g}")
+        self.write_line(indent, f"numBranches {emitter.branch_count}")
+        self.write_line(indent, f"controlptsmoothing {emitter.control_point_smoothing:.7g}")
         self.write_line(indent, f"xgrid {emitter.x_grid}")
         self.write_line(indent, f"ygrid {emitter.y_grid}")
+        # mdlops writes spawntype (vendor/mdlops/MDLOpsM.pm:3278)
+        self.write_line(indent, f"spawntype {emitter.spawn_type}")
         # mdlops writes render/update/blend as strings (vendor/mdlops/MDLOpsM.pm:3279-3281)
-        self.write_line(indent, f"render {emitter.render}")
-        self.write_line(indent, f"update {emitter.update}")
-        self.write_line(indent, f"blend {emitter.blend}")
+        # Handle both MDLEmitter classes: mdl_data has update/render/blend (str), mdl_types has update_type/render_type/blend_type (enum)
+        update_str = getattr(emitter, 'update', '')
+        if not update_str:
+            update_type = getattr(emitter, 'update_type', None)
+            if update_type:
+                update_str = update_type.name.lower() if hasattr(update_type, 'name') else str(update_type).lower()
+        self.write_line(indent, f"update {update_str}")
+        
+        render_str = getattr(emitter, 'render', '')
+        if not render_str:
+            render_type = getattr(emitter, 'render_type', None)
+            if render_type:
+                render_str = render_type.name.lower() if hasattr(render_type, 'name') else str(render_type).lower()
+        self.write_line(indent, f"render {render_str}")
+        
+        blend_str = getattr(emitter, 'blend', '')
+        if not blend_str:
+            blend_type = getattr(emitter, 'blend_type', None)
+            if blend_type:
+                blend_str = blend_type.name.lower() if hasattr(blend_type, 'name') else str(blend_type).lower()
+        self.write_line(indent, f"blend {blend_str}")
         self.write_line(indent, f"texture {emitter.texture}")
-        self.write_line(indent, f"chunkname {emitter.chunk_name}")
+        if emitter.chunk_name:
+            self.write_line(indent, f"chunkname {emitter.chunk_name}")
         # mdlops writes twosidedtex as integer (vendor/mdlops/MDLOpsM.pm:3286)
-        self.write_line(indent, f"twosidedtex {emitter.two_sided_texture}")
+        # Handle both MDLEmitter classes: mdl_data has two_sided_texture (int), mdl_types has twosided (bool)
+        two_sided_value = getattr(emitter, 'two_sided_texture', getattr(emitter, 'twosided', 0))
+        if isinstance(two_sided_value, bool):
+            two_sided_value = 1 if two_sided_value else 0
+        self.write_line(indent, f"twosidedtex {two_sided_value}")
         # mdlops writes loop as integer (vendor/mdlops/MDLOpsM.pm:3287)
-        self.write_line(indent, f"loop {emitter.loop}")
+        # Handle both MDLEmitter classes: mdl_data has loop (int), mdl_types has loop (bool)
+        loop_value = getattr(emitter, 'loop', 0)
+        if isinstance(loop_value, bool):
+            loop_value = 1 if loop_value else 0
+        self.write_line(indent, f"loop {loop_value}")
         self.write_line(indent, f"renderorder {emitter.render_order}")
         # mdlops writes m_bFrameBlending as integer (vendor/mdlops/MDLOpsM.pm:3289)
-        self.write_line(indent, f"m_bFrameBlending {emitter.frame_blender}")
+        # Handle both MDLEmitter classes: mdl_data has frame_blender (int), mdl_types has frame_blend (bool)
+        frame_blend_value = getattr(emitter, 'frame_blender', getattr(emitter, 'frame_blend', 0))
+        if isinstance(frame_blend_value, bool):
+            frame_blend_value = 1 if frame_blend_value else 0
+        self.write_line(indent, f"m_bFrameBlending {frame_blend_value}")
         # mdlops writes m_sDepthTextureName as string (vendor/mdlops/MDLOpsM.pm:3290)
-        if emitter.depth_texture:
-            self.write_line(indent, f"m_sDepthTextureName {emitter.depth_texture}")
+        self.write_line(indent, f"m_sDepthTextureName {emitter.depth_texture or ''}")
+        
+        # Write emitter flags (vendor/mdlops/MDLOpsM.pm:3295-3307)
+        # Handle both MDLEmitter classes: mdl_data has flags (int), mdl_types has emitter_flags (MDLEmitterFlags)
+        from pykotor.resource.formats.mdl.mdl_types import MDLEmitterFlags
+        flags = getattr(emitter, 'flags', 0)
+        if not flags:
+            emitter_flags = getattr(emitter, 'emitter_flags', None)
+            if emitter_flags:
+                flags = int(emitter_flags) if hasattr(emitter_flags, '__int__') else 0
+        
+        self.write_line(indent, f"p2p {1 if (flags & MDLEmitterFlags.P2P) else 0}")
+        self.write_line(indent, f"p2p_sel {1 if (flags & MDLEmitterFlags.P2P_SEL) else 0}")
+        self.write_line(indent, f"affectedByWind {1 if (flags & MDLEmitterFlags.AFFECTED_WIND) else 0}")
+        self.write_line(indent, f"m_isTinted {1 if (flags & MDLEmitterFlags.TINTED) else 0}")
+        self.write_line(indent, f"bounce {1 if (flags & MDLEmitterFlags.BOUNCE) else 0}")
+        self.write_line(indent, f"random {1 if (flags & MDLEmitterFlags.RANDOM) else 0}")
+        self.write_line(indent, f"inherit {1 if (flags & MDLEmitterFlags.INHERIT) else 0}")
+        self.write_line(indent, f"inheritvel {1 if (flags & MDLEmitterFlags.INHERIT_VEL) else 0}")
+        self.write_line(indent, f"inherit_local {1 if (flags & MDLEmitterFlags.INHERIT_LOCAL) else 0}")
+        self.write_line(indent, f"splat {1 if (flags & MDLEmitterFlags.SPLAT) else 0}")
+        self.write_line(indent, f"inherit_part {1 if (flags & MDLEmitterFlags.INHERIT_PART) else 0}")
+        self.write_line(indent, f"depth_texture {1 if (flags & MDLEmitterFlags.DEPTH_TEXTURE) else 0}")
+        self.write_line(indent, f"emitterflag13 {1 if (flags & MDLEmitterFlags.FLAG_13) else 0}")
 
     def _write_reference(self, indent: int, reference: MDLReference) -> None:
         """Write reference data."""

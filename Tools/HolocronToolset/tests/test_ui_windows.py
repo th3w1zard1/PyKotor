@@ -33,8 +33,8 @@ def test_module_designer_init(qtbot: QtBot, installation: HTInstallation):
     assert "Module Designer" in window.windowTitle()
     
     # Test basic UI elements existence
-    assert window.ui.moduleTree is not None
-    assert window.ui.propertiesTable is not None
+    assert window.ui.resourceTree is not None
+    assert window.ui.lytTree is not None
 
 def test_kotordiff_init(qtbot: QtBot, installation: HTInstallation):
     """Test KotorDiff window initialization."""
@@ -48,7 +48,7 @@ def test_kotordiff_init(qtbot: QtBot, installation: HTInstallation):
     # Check interactions
     # Clicking 'Compare' without files should probably show error or do nothing safe
     with patch("qtpy.QtWidgets.QMessageBox.warning") as mock_warn:
-        window.compare()
+        window._run_diff()
         # Likely warns about missing files
         # Verify mocking worked if implemented
 
