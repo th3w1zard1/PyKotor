@@ -33,6 +33,7 @@ Always:
 
 - Use `--no-pager` on ALL git commands that may page
 - PowerShell is default (Windows target)
+- Always use `uv run` instead of `python -m`. e.g. `uv --directory="Tools/KotorCLI/src" run --module kotorcli --help`
 - NEVER run tests without timeout: 120s individual, 300s suite
 
 Test example:
@@ -69,8 +70,94 @@ YOU MUST:
 ## 7. KotorCLI Priority
 
 ALWAYS prefer CLI over raw Python:
-- `uv run python -m kotorcli …`
+- `uv --directory="Tools/KotorCLI/src" run --module kotorcli ...`
 - Use `list`, `extract`, `search-archive --content`, `diff`, `validate`, etc.
+```bash
+usage: kotorcli [--version] [-h] [--yes] [--no] [--default] [--verbose] [--debug] [--quiet] [--no-color]
+                {config,init,list,unpack,convert,compile,pack,install,launch,serve,play,test,extract,list-archive,ls-archive,create-archive,pack-archive,gff2xml,xml2gff,gff2json,json2gff,tlk2xml,xml2tlk,tlk2json,ssf2xml,xml2ssf,2da2csv,csv22da,decompile,disassemble,assemble,texture-convert,sound-convert,model-convert,diff-installation,diff-paths,kotordiff,diff-kotor,diff,grep,stats,validate,merge,search-archive,grep-archive,cat,key-pack,create-key,check-txi,check-2da,validate-installation,investigate-module,check-missing-resources,module-resources,kit-generate,kit,gui-convert,gui,indoor-build,indoormap-build,indoor-extract,indoormap-extract,batch-patch,patch-file,patch-folder,patch-installation} ...
+
+A build tool for KOTOR projects (cli-compatible syntax)
+
+positional arguments:
+  {config,init,list,unpack,convert,compile,pack,install,launch,serve,play,test,extract,list-archive,ls-archive,create-archive,pack-archive,gff2xml,xml2gff,gff2json,json2gff,tlk2xml,xml2tlk,tlk2json,ssf2xml,xml2ssf,2da2csv,csv22da,decompile,disassemble,assemble,texture-convert,sound-convert,model-convert,diff-installation,diff-paths,kotordiff,diff-kotor,diff,grep,stats,validate,merge,search-archive,grep-archive,cat,key-pack,create-key,check-txi,check-2da,validate-installation,investigate-module,check-missing-resources,module-resources,kit-generate,kit,gui-convert,gui,indoor-build,indoormap-build,indoor-extract,indoormap-extract,batch-patch,patch-file,patch-folder,patch-installation}
+                        Command to execute
+    config              Get, set, or unset user-defined configuration options
+    init                Create a new kotorcli package
+    list                List all targets defined in kotorcli.cfg
+    unpack              Unpack a file into the project source tree
+    convert             Convert all JSON sources to their GFF counterparts
+    compile             Compile all nss sources for target
+    pack                Convert, compile, and pack all sources for target
+    install             Convert, compile, pack, and install target
+    launch              Convert, compile, pack, install, and launch target in-game
+    serve               Convert, compile, pack, install, and launch target in-game
+    play                Convert, compile, pack, install, and launch target in-game
+    test                Convert, compile, pack, install, and launch target in-game
+    extract             Extract resources from archive files (KEY/BIF, RIM, ERF, etc.)
+    list-archive (ls-archive)
+                        List contents of archive files (KEY/BIF, RIM, ERF, etc.)
+    create-archive (pack-archive)
+                        Create archive (ERF, RIM) from directory
+    gff2xml             Convert GFF to XML
+    xml2gff             Convert XML to GFF
+    gff2json            Convert GFF to JSON
+    json2gff            Convert JSON to GFF
+    tlk2xml             Convert TLK to XML
+    xml2tlk             Convert XML to TLK
+    tlk2json            Convert TLK to JSON
+    ssf2xml             Convert SSF to XML
+    xml2ssf             Convert XML to SSF
+    2da2csv             Convert 2DA to CSV
+    csv22da             Convert CSV to 2DA
+    decompile           Decompile NCS bytecode to NSS source
+    disassemble         Disassemble NCS bytecode to text
+    assemble            Assemble/compile NSS source to NCS bytecode
+    texture-convert     Convert texture files (TPC↔TGA)
+    sound-convert       Convert sound files (WAV↔clean WAV)
+    model-convert       Convert model files (MDL↔ASCII)
+    diff-installation (diff-paths, kotordiff, diff-kotor)
+                        Compare installations/files/modules using structured KotorDiff (headless with CLI args, GUI
+                        otherwise)
+    diff                Compare two files and show differences
+    grep                Search for patterns in files
+    stats               Show statistics about a file
+    validate            Validate file format and structure
+    merge               Merge two GFF files
+    search-archive (grep-archive)
+                        Search for resources in archive files
+    cat                 Display resource contents to stdout
+    key-pack (create-key)
+                        Create KEY file from directory containing BIF files
+    check-txi           Check if TXI files exist for specific textures
+    check-2da           Check if a 2DA file exists in installation
+    validate-installation
+                        Validate a KOTOR installation
+    investigate-module  Investigate a module's structure
+    check-missing-resources
+                        Check if missing resources are referenced by module models
+    module-resources    Get all resources referenced by a module's models
+    kit-generate (kit)  Generate a Holocron-compatible kit from a module
+    gui-convert (gui)   Convert KotOR GUI layouts to target resolutions
+    indoor-build (indoormap-build)
+                        Build a .mod file from a .indoor file
+    indoor-extract (indoormap-extract)
+                        Extract a .indoor file from a composite module
+    batch-patch         Batch patch files, folders, or installations
+    patch-file          Patch a single file
+    patch-folder        Patch all files in a folder recursively
+    patch-installation  Patch a KOTOR installation
+
+options:
+  --version             show program's version number and exit
+  -h, --help            Show this help message and exit
+  --yes                 Automatically answer yes to all prompts
+  --no                  Automatically answer no to all prompts
+  --default             Automatically accept the default answer to prompts
+  --verbose             Increase feedback verbosity
+  --debug               Enable debug logging (implies --verbose)
+  --quiet               Disable all logging except errors
+  --no-color            Disable color output
+```
 
 ## 8. Paths & Environment
 
