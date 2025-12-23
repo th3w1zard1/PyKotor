@@ -11,7 +11,7 @@ maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "LGPL-3.0-or-later License"}
 keywords = ["kotor", "library", "holocron", "toolset", "pykotor", "editor", "holopatcher", "tslpatcher"]
-requires-python = ">=3.8"
+requires-python = ">=3.9,<4"
 dependencies = [
     "pykotor>=2.0.0",
 ]
@@ -162,8 +162,8 @@ issues = "https://github.com/th3w1zard1/PyKotor/issues"
 ## UV workspace configuration                         ##
 ########################################################
 
-[tool.uv]
-dev-dependencies = []
+[dependency-groups]
+dev = []
 
 [tool.uv.workspace]
 members = [
