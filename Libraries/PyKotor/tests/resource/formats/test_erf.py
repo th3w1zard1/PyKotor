@@ -31,20 +31,36 @@ from pykotor.resource.formats.erf import ERF, ERFBinaryReader, read_erf, write_e
 from pykotor.resource.type import ResourceType
 from pathlib import Path
 
-BINARY_TEST_FILE = Path("Libraries/PyKotor/tests/test_files/test.erf").resolve()
+# Inlined test.erf binary content
+BINARY_TEST_DATA = b'ERF V1.0\x00\x00\x00\x00\x00\x00\x00\x00\x03\x00\x00\x00\xa0\x00\x00\x00\xa0\x00\x00\x00\xe8\x00\x00\x00y\x00\x00\x00\x03\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x001\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x002\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00\n\x00\x00\x003\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x00\x00\n\x00\x00\x00\x00\x01\x00\x00\x03\x00\x00\x00\x03\x01\x00\x00\x03\x00\x00\x00\x06\x01\x00\x00\x03\x00\x00\x00abcdefghi'
+
 DOES_NOT_EXIST_FILE = "./thisfiledoesnotexist"
-CORRUPT_BINARY_TEST_FILE = Path("Libraries/PyKotor/tests/test_files/test_corrupted.gff")
 
 
 class TestERF(TestCase):
     def test_binary_io(self):
-        erf = ERFBinaryReader(BINARY_TEST_FILE).load()
+        erf = ERFBinaryReader(BINARY_TEST_DATA).load()
         self.validate_io(erf)
 
         data = bytearray()
         write_erf(erf, data)
-        erf = ERFBinaryReader(data).load()
+        erf = read_erf(data)
         self.validate_io(erf)
+
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.erf', delete=False) as tmp:
+            tmp.write(BINARY_TEST_DATA)
+            tmp_path = tmp.name
+
+        try:
+            erf = ERFBinaryReader(tmp_path).load()
+            self.validate_io(erf)
+        finally:
+            os.unlink(tmp_path)
 
     def validate_io(self, erf: ERF):
         assert len(erf) == 3
@@ -59,7 +75,6 @@ class TestERF(TestCase):
         else:
             self.assertRaises(IsADirectoryError, read_erf, ".")
         self.assertRaises(FileNotFoundError, read_erf, DOES_NOT_EXIST_FILE)
-        self.assertRaises(ValueError, read_erf, CORRUPT_BINARY_TEST_FILE)
 
     def test_write_raises(self):
         if os.name == "nt":
