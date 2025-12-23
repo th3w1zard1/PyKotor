@@ -66,6 +66,21 @@ class TestVIS(TestCase):
         vis = read_vis(data)
         self.validate_io(vis)
 
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.vis', delete=False, encoding='utf-8') as tmp:
+            tmp.write(ASCII_TEST_DATA)
+            tmp_path = tmp.name
+
+        try:
+            vis = VISAsciiReader(tmp_path).load()
+            self.validate_io(vis)
+        finally:
+            os.unlink(tmp_path)
+
     def validate_io(self, vis: VIS):
         assert vis.get_visible("room_01", "room_02")
         assert vis.get_visible("room_01", "room_03")

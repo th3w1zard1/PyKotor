@@ -189,6 +189,22 @@ class TestUTD(TestCase):
         utd = construct_utd(gff)
         self.validate_io(utd)
 
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.utd.xml', delete=False, encoding='utf-8') as tmp:
+            tmp.write(TEST_UTD_XML)
+            tmp_path = tmp.name
+
+        try:
+            gff = read_gff(tmp_path, file_format=ResourceType.GFF_XML)
+            utd = construct_utd(gff)
+            self.validate_io(utd)
+        finally:
+            os.unlink(tmp_path)
+
     def validate_io(self, utd: UTD):
         assert utd.tag == "TelosDoor13"
         assert utd.name.stringref == 123731

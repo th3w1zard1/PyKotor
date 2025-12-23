@@ -85,6 +85,21 @@ class TestLYT(TestCase):
         lyt = read_lyt(data)
         self.validate_io(lyt)
 
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.lyt', delete=False, encoding='utf-8') as tmp:
+            tmp.write(ASCII_TEST_DATA)
+            tmp_path = tmp.name
+
+        try:
+            lyt = LYTAsciiReader(tmp_path).load()
+            self.validate_io(lyt)
+        finally:
+            os.unlink(tmp_path)
+
     def validate_io(self, lyt: LYT):
         assert LYTRoom(ResRef("M17mg_01a"), Vector3(100.0, 100.0, 0.0)) in lyt.rooms
         assert LYTRoom(ResRef("M17mg_01b"), Vector3(100.0, 100.0, 0.0)) in lyt.rooms

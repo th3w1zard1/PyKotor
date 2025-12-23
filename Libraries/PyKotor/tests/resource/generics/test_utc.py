@@ -226,6 +226,22 @@ class TestUTC(TestCase):
         utc = construct_utc(gff)
         self.validate_io(utc)
 
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.utc.xml', delete=False, encoding='utf-8') as tmp:
+            tmp.write(TEST_UTC_XML)
+            tmp_path = tmp.name
+
+        try:
+            gff = read_gff(tmp_path, file_format=ResourceType.GFF_XML)
+            utc = construct_utc(gff)
+            self.validate_io(utc)
+        finally:
+            os.unlink(tmp_path)
+
     def validate_io(self, utc: UTC):
         assert utc.appearance_id == 636
         assert utc.body_variation == 1

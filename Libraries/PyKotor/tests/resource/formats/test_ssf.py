@@ -143,6 +143,22 @@ class TestSSF(unittest.TestCase):
         ssf = read_ssf(data)
         self.validate_io(ssf)
 
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.ssf', delete=False) as tmp:
+            tmp.write(BINARY_TEST_DATA)
+            tmp_path = tmp.name
+
+        try:
+            assert detect_ssf(tmp_path) == ResourceType.SSF
+            ssf = SSFBinaryReader(tmp_path).load()
+            self.validate_io(ssf)
+        finally:
+            os.unlink(tmp_path)
+
     def test_xml_io(self):
         assert detect_ssf(XML_TEST_DATA.encode('utf-8')) == ResourceType.SSF_XML
 

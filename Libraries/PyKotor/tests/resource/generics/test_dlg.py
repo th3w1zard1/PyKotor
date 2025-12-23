@@ -769,6 +769,22 @@ class TestDLG(TestCase):
         dlg = construct_dlg(gff)
         self.validate_io(dlg)
 
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.dlg.xml', delete=False, encoding='utf-8') as tmp:
+            tmp.write(TEST_DLG_XML)
+            tmp_path = tmp.name
+
+        try:
+            gff = read_gff(tmp_path, file_format=ResourceType.GFF_XML)
+            dlg = construct_dlg(gff)
+            self.validate_io(dlg)
+        finally:
+            os.unlink(tmp_path)
+
     def validate_io(self, dlg: DLG):
         all_entries: list[DLGEntry] = dlg.all_entries()
         all_replies: list[DLGReply] = dlg.all_replies()

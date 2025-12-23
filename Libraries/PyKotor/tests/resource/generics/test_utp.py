@@ -140,6 +140,22 @@ class Test(TestCase):
         utp: UTP = construct_utp(gff)
         self.validate_io(utp)
 
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.utp.xml', delete=False, encoding='utf-8') as tmp:
+            tmp.write(TEST_UTP_XML)
+            tmp_path = tmp.name
+
+        try:
+            gff: GFF = read_gff(tmp_path, file_format=ResourceType.GFF_XML)
+            utp: UTP = construct_utp(gff)
+            self.validate_io(utp)
+        finally:
+            os.unlink(tmp_path)
+
     def validate_io(self, utp: UTP):
         assert utp.tag == "SecLoc"
         assert utp.name.stringref == 74450

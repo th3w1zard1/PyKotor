@@ -163,6 +163,22 @@ class TestARE(unittest.TestCase):
         are = construct_are(gff)
         self.validate_io(are)
 
+    def test_file_io(self):
+        """Test reading from a temporary file to ensure file-based reading still works."""
+        import tempfile
+        import os
+
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.are.xml', delete=False, encoding='utf-8') as tmp:
+            tmp.write(TEST_ARE_XML)
+            tmp_path = tmp.name
+
+        try:
+            gff: GFF = read_gff(tmp_path, file_format=ResourceType.GFF_XML)
+            are: ARE = construct_are(gff)
+            self.validate_io(are)
+        finally:
+            os.unlink(tmp_path)
+
     def validate_io(self, are: ARE):
         assert are.unused_id == 0, f"{are.unused_id} != 0"
         assert are.creator_id == 0, f"{are.creator_id} != 0"
