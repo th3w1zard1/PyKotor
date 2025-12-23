@@ -26,8 +26,8 @@ from pykotor.resource.formats.mdl import (
     MDLAnimation,
     MDLAsciiReader,
     MDLAsciiWriter,
-    MDLBinaryReader,
-    MDLBinaryWriter,
+    MDLBoneVertex,
+    MDLConstraint,
     MDLController,
     MDLControllerRow,
     MDLDangly,
@@ -44,7 +44,6 @@ from pykotor.resource.formats.mdl import (
     bytes_mdl,
     detect_mdl,
     read_mdl,
-    write_mdl,
 )
 from pykotor.resource.formats.mdl.mdl_types import (
     MDLClassification,
@@ -113,27 +112,23 @@ def create_test_controller(
     is_bezier: bool = False,
 ) -> MDLController:
     """Create a test controller with specified type."""
-    controller = MDLController()
-    controller.controller_type = controller_type
-    controller.is_bezier = is_bezier
-
-    # Add a row
-    row = MDLControllerRow()
-    row.time = 0.0
+    # Determine row data based on controller type
     if controller_type == MDLControllerType.POSITION:
-        row.data = [1.0, 2.0, 3.0]
+        row_data = [1.0, 2.0, 3.0]
     elif controller_type == MDLControllerType.ORIENTATION:
-        row.data = [0.0, 0.0, 0.0, 1.0]  # quaternion
+        row_data = [0.0, 0.0, 0.0, 1.0]  # quaternion
     elif controller_type == MDLControllerType.SCALE:
-        row.data = [1.0]
+        row_data = [1.0]
     elif controller_type == MDLControllerType.COLOR:
-        row.data = [1.0, 1.0, 1.0]
+        row_data = [1.0, 1.0, 1.0]
     elif controller_type == MDLControllerType.RADIUS:
-        row.data = [5.0]
+        row_data = [5.0]
     else:
-        row.data = [1.0]
+        row_data = [1.0]
 
-    controller.rows = [row]
+    # Create row and controller with proper constructors
+    row = MDLControllerRow(0.0, row_data)
+    controller = MDLController(controller_type, [row], is_bezier)
     return controller
 
 
@@ -1186,7 +1181,6 @@ donemodel test
         """Test writing dangly mesh with constraints."""
         mdl = create_test_mdl("dangly_test")
         node = create_test_node("dangly_node", MDLNodeType.DANGLYMESH)
-        mesh = create_test_mesh()
 
         # Create dangly data
         dangly = MDLDangly()
@@ -1662,9 +1656,7 @@ beginmodelgeom test
         mdl = create_test_mdl("no_rows_test")
         node = create_test_node("test_node")
 
-        controller = MDLController()
-        controller.controller_type = MDLControllerType.POSITION
-        controller.rows = []  # Empty
+        controller = MDLController(MDLControllerType.POSITION, [], False)  # Empty rows
 
         node.controllers.append(controller)
         mdl.root.children.append(node)
@@ -2182,6 +2174,108 @@ class TestMDLAsciiPerformance(unittest.TestCase):
         # Should complete in reasonable time
         self.assertLess(read_time, 1.0, "Reading should be fast")
         self.assertEqual(len(mdl.all_nodes()), 101)  # root + 100 children
+
+
+# ============================================================================
+# ASCII Round-Trip Tests: ASCII -> Binary -> ASCII
+# ============================================================================
+
+
+def compare_mdl_basic(mdl1: MDL, mdl2: MDL, test_case: unittest.TestCase, context: str = ""):
+    """Compare basic MDL properties between two models."""
+    msg_prefix = f"{context}: " if context else ""
+    test_case.assertEqual(mdl1.name, mdl2.name, f"{msg_prefix}Model names should match")
+    test_case.assertEqual(mdl1.supermodel, mdl2.supermodel, f"{msg_prefix}Supermodels should match")
+    test_case.assertEqual(mdl1.classification, mdl2.classification, f"{msg_prefix}Classifications should match")
+
+
+def compare_mdl_nodes(mdl1: MDL, mdl2: MDL, test_case: unittest.TestCase, context: str = ""):
+    """Compare node hierarchies between two models."""
+    msg_prefix = f"{context}: " if context else ""
+    nodes1 = mdl1.all_nodes()
+    nodes2 = mdl2.all_nodes()
+    test_case.assertEqual(len(nodes1), len(nodes2), f"{msg_prefix}Node counts should match")
+
+
+class TestMDLRoundTripAsciiToBinaryToAscii(unittest.TestCase):
+    """Test round-trip conversion: ASCII -> Binary -> ASCII using diverse models."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        self.test_dir = Path("Libraries/PyKotor/tests/test_files/mdl")
+        if not self.test_dir.exists():
+            self.skipTest(f"Test directory {self.test_dir} does not exist")
+
+        self.test_models = {
+            "character": ("c_dewback.mdl", "c_dewback.mdx"),
+            "door": ("dor_lhr02.mdl", "dor_lhr02.mdx"),
+            "placeable": ("m02aa_09b.mdl", "m02aa_09b.mdx"),
+            "animation": ("m12aa_c03_char02.mdl", "m12aa_c03_char02.mdx"),
+            "camera": ("m12aa_c04_cam.mdl", "m12aa_c04_cam.mdx"),
+        }
+
+    def _create_ascii_from_binary(self, mdl_path: Path, mdx_path: Path) -> bytes:
+        """Helper to convert binary MDL to ASCII for testing."""
+        mdl_binary = read_mdl(mdl_path, source_ext=mdx_path, file_format=ResourceType.MDL)
+        return bytes_mdl(mdl_binary, ResourceType.MDL_ASCII)
+
+    def test_roundtrip_character_model_reverse(self):
+        """Test ASCII -> Binary -> ASCII round-trip with character model."""
+        mdl_path = self.test_dir / self.test_models["character"][0]
+        mdx_path = self.test_dir / self.test_models["character"][1]
+
+        if not mdl_path.exists():
+            self.skipTest("Test file c_dewback.mdl not found")
+
+        # Start with ASCII (created from binary for consistency)
+        ascii_bytes_original = self._create_ascii_from_binary(mdl_path, mdx_path)
+        mdl_from_ascii_original = read_mdl(ascii_bytes_original, file_format=ResourceType.MDL_ASCII)
+
+        # Convert to binary
+        binary_bytes = bytes_mdl(mdl_from_ascii_original, ResourceType.MDL)
+        mdl_from_binary = read_mdl(binary_bytes, file_format=ResourceType.MDL)
+
+        # Compare after binary conversion
+        compare_mdl_basic(mdl_from_ascii_original, mdl_from_binary, self, "Character model: ASCII->Binary")
+        compare_mdl_nodes(mdl_from_ascii_original, mdl_from_binary, self, "Character model: ASCII->Binary")
+
+        # Convert back to ASCII
+        ascii_bytes_final = bytes_mdl(mdl_from_binary, ResourceType.MDL_ASCII)
+        mdl_final = read_mdl(ascii_bytes_final, file_format=ResourceType.MDL_ASCII)
+
+        # Compare final
+        compare_mdl_basic(mdl_from_ascii_original, mdl_final, self, "Character model: Final ASCII")
+        compare_mdl_nodes(mdl_from_ascii_original, mdl_final, self, "Character model: Final ASCII")
+
+    def test_roundtrip_all_models_reverse(self):
+        """Test ASCII -> Binary -> ASCII round-trip for all available models."""
+        for model_type, (mdl_file, mdx_file) in self.test_models.items():
+            with self.subTest(model_type=model_type):
+                mdl_path = self.test_dir / mdl_file
+                mdx_path = self.test_dir / mdx_file
+
+                if not mdl_path.exists():
+                    self.skipTest(f"Test file {mdl_file} not found")
+
+                # Start with ASCII
+                ascii_bytes_original = self._create_ascii_from_binary(mdl_path, mdx_path)
+                mdl_from_ascii_original = read_mdl(ascii_bytes_original, file_format=ResourceType.MDL_ASCII)
+
+                # Convert to binary
+                binary_bytes = bytes_mdl(mdl_from_ascii_original, ResourceType.MDL)
+                mdl_from_binary = read_mdl(binary_bytes, file_format=ResourceType.MDL)
+
+                # Compare after binary conversion
+                compare_mdl_basic(mdl_from_ascii_original, mdl_from_binary, self, f"{model_type}: ASCII->Binary")
+                compare_mdl_nodes(mdl_from_ascii_original, mdl_from_binary, self, f"{model_type}: ASCII->Binary")
+
+                # Convert back to ASCII
+                ascii_bytes_final = bytes_mdl(mdl_from_binary, ResourceType.MDL_ASCII)
+                mdl_final = read_mdl(ascii_bytes_final, file_format=ResourceType.MDL_ASCII)
+
+                # Compare final
+                compare_mdl_basic(mdl_from_ascii_original, mdl_final, self, f"{model_type}: Final ASCII")
+                compare_mdl_nodes(mdl_from_ascii_original, mdl_final, self, f"{model_type}: Final ASCII")
 
 
 if __name__ == "__main__":
