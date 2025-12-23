@@ -15,7 +15,7 @@ dependencies = [
   "deepl-cli==1.1.1",
   "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
   "requests>=2.25.0; python_version>=\"3.9\"",
-  "opencv-contrib-python==4.12.0.88",
+  "opencv-contrib-python==4.8.0.76",
   "notify-py==0.3.43",
   "playwright>=1.49.1,<2",
   "pyquery==2.0.1",
@@ -79,6 +79,7 @@ packages = [{ include = "batchpatcher", from = "src" }]
 python = "^3.8"
 pykotor = "^2.0.0"
 pykotorfont = "^2.0.0"
+opencv-contrib-python = "4.8.0.76"
 
 [tool.poetry.scripts]
 batchpatcher = "batchpatcher.__main__:main"
