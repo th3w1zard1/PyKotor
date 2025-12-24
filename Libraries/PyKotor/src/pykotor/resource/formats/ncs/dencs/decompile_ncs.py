@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator
 
 if TYPE_CHECKING:
     import io
@@ -38,7 +38,7 @@ class SubroutinePrototypingError(DecompilationError):
 
 
 @contextmanager
-def _managed_decompilation_context(actions: ActionsData):
+def _managed_decompilation_context(actions: ActionsData) -> Iterator[DecompilationContext]:
     """Context manager for decompilation resources."""
     # Import here to avoid circular imports
     from pykotor.resource.formats.ncs.dencs.utils.file_script_data import FileScriptData
@@ -221,8 +221,12 @@ def _perform_initial_prototyping(context: DecompilationContext):
             if context.subroutine_data.is_prototyped(context.node_data.get_pos(sub), True):
                 continue
 
+            sub_state = context.subroutine_data.get_state(sub)
+            if sub_state is None:
+                continue
+
             path_finder = SubroutinePathFinder(
-                context.subroutine_data.get_state(sub),
+                sub_state,
                 context.node_data,
                 context.subroutine_data,
                 pass_num
@@ -231,7 +235,7 @@ def _perform_initial_prototyping(context: DecompilationContext):
 
             if context.subroutine_data.is_being_prototyped(context.node_data.get_pos(sub)):
                 typer = DoTypes(
-                    context.subroutine_data.get_state(sub),
+                    sub_state,
                     context.node_data,
                     context.subroutine_data,
                     context.actions,
@@ -391,7 +395,7 @@ def _generate_code(context: DecompilationContext):
     cleanup.done()
 
     # Set subroutine data
-    context.file_data.subdata(context.subroutine_data)
+    context.file_data.subdata(context.subroutine_data)  # type: ignore
 
     # Process global variables if present
     # Note: Global variable processing is handled during the main pass
