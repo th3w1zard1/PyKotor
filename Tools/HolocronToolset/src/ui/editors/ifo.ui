@@ -1137,6 +1137,11 @@
    <header location="global">toolset.gui.widgets.edit.locstring</header>
    <container>1</container>
   </customwidget>
+  <customwidget>
+   <class>FilterComboBox</class>
+   <extends>QComboBox</extends>
+   <header location="global">utility.ui_libraries.qt.widgets.widgets.combobox</header>
+  </customwidget>
  </customwidgets>
  <resources/>
  <connections/>
