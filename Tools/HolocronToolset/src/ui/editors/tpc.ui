@@ -583,7 +583,7 @@
                 <string>Ctrl+V</string>
             </property>
         </action>
-    <action name="actionToggleProperties"><property name="text"><string>Toggle &amp;amp;Properties</string></property><property name="toolTip"><string>Show/hide properties panel</string></property><property name="checkable"><bool>true</bool></property><property name="checked"><bool>true</bool></property></action></widget>
+    <action name="actionToggleProperties"><property name="text"><string>Toggle &amp;Properties</string></property><property name="toolTip"><string>Show/hide properties panel</string></property><property name="checkable"><bool>true</bool></property><property name="checked"><bool>true</bool></property></action></widget>
     <resources />
     <connections />
 </ui>
