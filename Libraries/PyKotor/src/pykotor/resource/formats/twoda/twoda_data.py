@@ -964,6 +964,13 @@ class TwoDARow(ComparableMixin):
         # Row label (typically numeric index as string)
         self._row_label: str = row_label
 
+        # vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:152
+        # vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:70
+        # Cell data: column_header -> cell_value (all strings)
+        self._data: dict[str, str] = row_data
+
+    def __repr__(
+        self,
     ):
         return f"{self.__class__.__name__}(row_label={self._row_label}, row_data={self._data})"
 
