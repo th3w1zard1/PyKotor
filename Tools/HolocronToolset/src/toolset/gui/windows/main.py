@@ -66,6 +66,7 @@ from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow
 from toolset.gui.dialogs.save.generic_file_saver import FileSaveHandler
 from toolset.gui.dialogs.search import FileResults, FileSearcher
 from toolset.gui.dialogs.settings import SettingsDialog
+from toolset.gui.dialogs.theme_selector import ThemeSelectorDialog
 from toolset.gui.dialogs.tslpatchdata_editor import TSLPatchDataEditor
 from toolset.gui.editors.dlg import DLGEditor
 from toolset.gui.editors.erf import ERFEditor
@@ -240,9 +241,8 @@ class ToolWindow(QMainWindow):
 
         self.previous_game_combo_index: int = 0
         self._mouse_move_pos: QPoint | None = None
-        # Initialize theme menu action dictionaries
-        self._theme_actions: dict[str, _QAction] = {}
-        self._style_actions: dict[str, _QAction] = {}
+        # Initialize theme dialog (non-blocking)
+        self._theme_dialog: ThemeSelectorDialog | None = None
         # Initialize language menu action dictionary
         self._language_actions: dict[int, _QAction] = {}
         
@@ -599,99 +599,65 @@ class ToolWindow(QMainWindow):
         self.ui.actionDiscordKotOR.triggered.connect(lambda: open_link("http://discord.gg/kotor"))
         self.ui.actionDiscordHolocronToolset.triggered.connect(lambda: open_link("https://discord.gg/3ME278a9tQ"))
 
-        # Setup Theme menu with both stylesheet themes and application styles in the same menu
-        current_theme = self.settings.selectedTheme or "fusion (light)"
-        current_style = self.settings.selectedStyle or ""
-        
-        # Configure menu to be scrollable with single column layout
-        # Set maximum height to enable scrolling (Qt will show scroll arrows when needed)
-        # This prevents the menu from flooding the screen with multiple columns
-        self.ui.menuTheme.setMaximumHeight(600)  # Adjust height as needed (pixels)
-        # Ensure single column layout (prevent multi-column flooding)
-        self.ui.menuTheme.setStyleSheet("QMenu { menu-scrollable: 1; }")
-        
-        # Add stylesheet themes directly to Theme menu
-        available_themes = sorted(set(self.theme_manager.get_available_themes()))
-        for theme_name in available_themes:
-            def make_theme_handler(theme=theme_name):
-                def change_theme(*args):
-                    self._update_theme_menu_checkmarks(theme, None)
-                    self.theme_manager.change_theme(theme)
-                return change_theme
-            theme_action: _QAction | None = self.ui.menuTheme.addAction(theme_name)
-            assert theme_action is not None
-            theme_action.setCheckable(True)
-            theme_action.triggered.connect(make_theme_handler())
-            self._theme_actions[theme_name.lower()] = theme_action
-            # Mark current theme as checked
-            if theme_name.lower() == current_theme.lower():
-                theme_action.setChecked(True)
-        
-        # Add separator between stylesheet themes and application styles
-        self.ui.menuTheme.addSeparator()
-        
-        # Add "Native" option for application style (system default)
-        def change_to_native(*args):
-            self._update_theme_menu_checkmarks(None, "")
-            self.theme_manager.change_style("")  # Empty string means use theme default / native
-        native_action: _QAction | None = self.ui.menuTheme.addAction(tr("Native (System Default)"))
-        assert native_action is not None
-        native_action.setCheckable(True)
-        native_action.triggered.connect(change_to_native)
-        self._style_actions[""] = native_action
-        if current_style == "":
-            native_action.setChecked(True)
-        
-        # Add all available Qt application styles
-        available_styles = self.theme_manager.get_default_styles()
-        for style_name in available_styles:
-            def make_style_handler(style=style_name):
-                def change_style(*args):
-                    self._update_theme_menu_checkmarks(None, style)
-                    self.theme_manager.change_style(style)
-                return change_style
-            style_action: _QAction | None = self.ui.menuTheme.addAction(style_name)
-            assert style_action is not None
-            style_action.setCheckable(True)
-            style_action.triggered.connect(make_style_handler())
-            self._style_actions[style_name] = style_action
-            # Mark current style as checked
-            if style_name == current_style:
-                style_action.setChecked(True)
+        # Setup Theme button to open theme selector dialog
+        # Replace menuTheme with a button action
+        if hasattr(self.ui, "menuTheme"):
+            # Clear existing menu items
+            self.ui.menuTheme.clear()
+            # Create and add action that opens dialog
+            theme_action = QAction(tr("Theme..."), self)
+            theme_action.triggered.connect(self._open_theme_dialog)
+            self.ui.menuTheme.addAction(theme_action)
 
         self.ui.menuRecentFiles.aboutToShow.connect(self.populate_recent_files_menu)
         
         # Setup Language menu
         self._setup_language_menu()
 
-    def _update_theme_menu_checkmarks(
-        self,
-        theme_name: str | None = None,
-        style_name: str | None = None,
-    ):
-        """Update checkmarks in the theme menu based on current selection.
-        
-        Args:
-        ----
-            theme_name: The selected theme name (if changing theme)
-            style_name: The selected style name (if changing style)
-        """
-        # Uncheck all theme actions
-        for action in self._theme_actions.values():
-            action.setChecked(False)
-        
-        # Uncheck all style actions
-        for action in self._style_actions.values():
-            action.setChecked(False)
-        
-        # Check the appropriate theme or style
-        if theme_name is not None:
-            theme_key = theme_name.lower()
-            if theme_key in self._theme_actions:
-                self._theme_actions[theme_key].setChecked(True)
-        elif style_name is not None:
-            if style_name in self._style_actions:
-                self._style_actions[style_name].setChecked(True)
+    def _open_theme_dialog(self):
+        """Open the theme selector dialog (non-blocking)."""
+        if self._theme_dialog is None or not self._theme_dialog.isVisible():
+            current_theme = self.settings.selectedTheme or "fusion (light)"
+            current_style = self.settings.selectedStyle or ""
+            available_themes = sorted(set(self.theme_manager.get_available_themes()))
+            available_styles = list(self.theme_manager.get_default_styles())
+            
+            self._theme_dialog = ThemeSelectorDialog(
+                parent=self,
+                available_themes=available_themes,
+                available_styles=available_styles,
+                current_theme=current_theme,
+                current_style=current_style,
+            )
+            
+            # Connect signals to existing theme change logic
+            self._theme_dialog.theme_changed.connect(self._on_theme_changed)
+            self._theme_dialog.style_changed.connect(self._on_style_changed)
+            
+            # Make dialog non-blocking
+            self._theme_dialog.show()
+            self._theme_dialog.raise_()
+            self._theme_dialog.activateWindow()
+        else:
+            # If dialog is already open, bring it to front
+            self._theme_dialog.raise_()
+            self._theme_dialog.activateWindow()
+    
+    def _on_theme_changed(self, theme_name: str):
+        """Handle theme change from dialog."""
+        self.theme_manager.change_theme(theme_name)
+        self.settings.selectedTheme = theme_name
+        # Update dialog selection if it's still open
+        if self._theme_dialog and self._theme_dialog.isVisible():
+            self._theme_dialog.update_current_selection(theme_name=theme_name, style_name=None)
+    
+    def _on_style_changed(self, style_name: str):
+        """Handle style change from dialog."""
+        self.theme_manager.change_style(style_name)
+        self.settings.selectedStyle = style_name
+        # Update dialog selection if it's still open
+        if self._theme_dialog and self._theme_dialog.isVisible():
+            self._theme_dialog.update_current_selection(theme_name=None, style_name=style_name)
 
     def _setup_language_menu(self):
         """Set up the Language menu with all available languages."""
