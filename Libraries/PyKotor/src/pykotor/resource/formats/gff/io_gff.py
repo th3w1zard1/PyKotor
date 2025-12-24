@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryWriter
 from pykotor.resource.formats.gff.gff_data import GFF, GFFContent, GFFFieldType, GFFList, GFFStruct
+from pykotor.resource.formats.gff.vm_validation import validate_gff_for_engine
 from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose
 
 if TYPE_CHECKING:
@@ -101,6 +102,9 @@ class GFFBinaryReader(ResourceReader):
         self._reader.seek(label_offset)
         self._labels.extend(self._reader.read_string(16) for _ in range(label_count))
         self._load_struct(self._gff.root, 0)
+
+        # Validate the GFF for engine compatibility based on reverse engineering findings
+        validate_gff_for_engine(self._gff)
 
         return self._gff
 

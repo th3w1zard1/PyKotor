@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pykotor.resource.formats.ncs.ncs_data import NCS, NCSByteCode, NCSInstruction, NCSInstructionType, NCSInstructionTypeValue
+from pykotor.resource.formats.ncs.vm_validation import validate_ncs_for_vm
 from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose
 
 if TYPE_CHECKING:
@@ -156,6 +157,9 @@ class NCSBinaryReader(ResourceReader):
             instruction.jump = self._instructions[jumpToOffset]
 
         self._ncs.instructions = list(self._instructions.values())
+
+        # Validate the NCS for VM compatibility based on reverse engineering findings
+        validate_ncs_for_vm(self._ncs)
 
         return self._ncs
 
