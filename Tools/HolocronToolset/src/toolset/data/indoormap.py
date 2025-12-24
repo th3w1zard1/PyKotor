@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped]
 from qtpy import QtCore
-from qtpy.QtGui import QColor, QImage, QPainter, QPixmap, QTransform
+from qtpy.QtGui import QColor, QImage, QLinearGradient, QPainter, QPixmap, QTransform
 
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Color, ResRef
@@ -638,6 +638,80 @@ class IndoorMap:
         minimap_tpc.set_single(tpc_data, TPCTextureFormat.RGBA, 512, 256)
         self.mod.set_data(f"lbl_map{self.module_id}", ResourceType.TGA, bytes_tpc(minimap_tpc, ResourceType.TGA))
 
+    def _create_placeholder_loadscreen(self, is_tsl: bool) -> bytes:
+        """Create a placeholder loadscreen image using QImage/QPainter.
+        
+        Args:
+        ----
+            is_tsl: Whether this is for TSL (KotOR 2) or KotOR 1
+            
+        Returns:
+        -------
+            TGA image data as bytes
+        """
+        from io import BytesIO
+        
+        from pykotor.resource.formats.tpc.tga import TGAImage, write_tga
+        
+        # Create a 640x480 placeholder image (standard loadscreen size)
+        width, height = 640, 480
+        image = QImage(width, height, QImage.Format.Format_RGBA8888)
+        image.fill(QColor(20, 20, 30))  # Dark blue-gray background
+        
+        painter = QPainter(image)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Draw gradient background
+        gradient = QLinearGradient(0, 0, 0, height)
+        if is_tsl:
+            gradient.setColorAt(0, QColor(30, 20, 40))  # Dark purple for TSL
+            gradient.setColorAt(1, QColor(15, 10, 25))
+        else:
+            gradient.setColorAt(0, QColor(20, 30, 40))  # Dark blue for KotOR 1
+            gradient.setColorAt(1, QColor(10, 15, 25))
+        
+        painter.fillRect(0, 0, width, height, gradient)
+        
+        # Draw title text
+        painter.setPen(QColor(200, 180, 140))  # Gold/beige text color
+        font = painter.font()
+        font.setPointSize(24)
+        font.setBold(True)
+        painter.setFont(font)
+        
+        game_title = "Knights of the Old Republic II" if is_tsl else "Knights of the Old Republic"
+        title_rect = QtCore.QRect(0, height // 2 - 60, width, 40)
+        painter.drawText(title_rect, QtCore.Qt.AlignmentFlag.AlignCenter, game_title)
+        
+        # Draw subtitle
+        font.setPointSize(14)
+        font.setBold(False)
+        painter.setFont(font)
+        subtitle_rect = QtCore.QRect(0, height // 2, width, 30)
+        painter.drawText(subtitle_rect, QtCore.Qt.AlignmentFlag.AlignCenter, "Loading...")
+        
+        # Draw decorative border
+        painter.setPen(QColor(100, 80, 60))
+        painter.setBrush(QColor(0, 0, 0, 0))  # Transparent fill
+        border_rect = QtCore.QRect(20, 20, width - 40, height - 40)
+        painter.drawRect(border_rect)
+        
+        painter.end()
+        
+        # Convert QImage to TGA bytes
+        # Get RGBA data from QImage
+        const_bits = image.constBits()
+        if const_bits is None:
+            raise RuntimeError("Failed to get pixel data from QImage")
+        
+        rgba_data = bytes(const_bits.asarray(width * height * 4))
+        
+        # Create TGAImage and write to bytes
+        tga_image = TGAImage(width=width, height=height, data=rgba_data)
+        tga_buffer = BytesIO()
+        write_tga(tga_image, tga_buffer, rle=False)
+        return tga_buffer.getvalue()
+
     def handle_loadscreen(
         self,
         installation: HTInstallation,
@@ -651,16 +725,23 @@ class IndoorMap:
         Processing Logic:
         ----------------
             - Loads the appropriate load screen TGA file based on installation type
+            - If file not found, creates a placeholder image using QImage/QPainter
             - Sets the loaded TGA as load screen data for the module.
         """
+        # Use target_game_type override if set, otherwise use installation.tsl
+        target_tsl: bool = self.target_game_type if self.target_game_type is not None else installation.tsl
+        
         try:
-            # Use target_game_type override if set, otherwise use installation.tsl
-            target_tsl: bool = self.target_game_type if self.target_game_type is not None else installation.tsl
             load_tga: bytes = Path("./kits/load_k2.tga" if target_tsl else "./kits/load_k1.tga").read_bytes()
         except FileNotFoundError:
-            RobustLogger().exception(f"Load screen file not found for installation '{installation.name}'. Expected in toolset directory?")
-        else:
-            self.mod.set_data(f"load_{self.module_id}", ResourceType.TGA, load_tga)
+            RobustLogger().warning(
+                f"Load screen file not found for installation '{installation.name}'. "
+                f"Generating placeholder loadscreen image."
+            )
+            # Generate placeholder loadscreen
+            load_tga = self._create_placeholder_loadscreen(target_tsl)
+        
+        self.mod.set_data(f"load_{self.module_id}", ResourceType.TGA, load_tga)
 
     def set_area_attributes(
         self,
