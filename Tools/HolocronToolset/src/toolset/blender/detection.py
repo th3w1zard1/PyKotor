@@ -845,15 +845,90 @@ except Exception as e:
 
 
 # Settings integration
-@dataclass
 class BlenderSettings:
-    """Settings for Blender integration."""
+    """Settings for Blender integration with persistence via QSettings."""
 
-    custom_path: str = ""
-    auto_launch: bool = True
-    ipc_port: int = 7531
-    prefer_blender: bool = False
-    remember_choice: bool = False
+    _SETTINGS_KEY_PREFIX = "BlenderSettings/"
+
+    def __init__(self):
+        """Initialize BlenderSettings and load persisted values."""
+        from qtpy.QtCore import QSettings
+        from toolset.utils.misc import get_qsettings_organization
+        
+        self._qsettings = QSettings(get_qsettings_organization("HolocronToolsetV4"), "Blender")
+        self._load_settings()
+
+    def _load_settings(self):
+        """Load settings from QSettings."""
+        self._custom_path = self._qsettings.value(f"{self._SETTINGS_KEY_PREFIX}custom_path", "", str)
+        self._auto_launch = self._qsettings.value(f"{self._SETTINGS_KEY_PREFIX}auto_launch", True, bool)
+        self._ipc_port = self._qsettings.value(f"{self._SETTINGS_KEY_PREFIX}ipc_port", 7531, int)
+        self._prefer_blender = self._qsettings.value(f"{self._SETTINGS_KEY_PREFIX}prefer_blender", False, bool)
+        self._remember_choice = self._qsettings.value(f"{self._SETTINGS_KEY_PREFIX}remember_choice", False, bool)
+
+    def _save_settings(self):
+        """Save settings to QSettings."""
+        self._qsettings.setValue(f"{self._SETTINGS_KEY_PREFIX}custom_path", self._custom_path)
+        self._qsettings.setValue(f"{self._SETTINGS_KEY_PREFIX}auto_launch", self._auto_launch)
+        self._qsettings.setValue(f"{self._SETTINGS_KEY_PREFIX}ipc_port", self._ipc_port)
+        self._qsettings.setValue(f"{self._SETTINGS_KEY_PREFIX}prefer_blender", self._prefer_blender)
+        self._qsettings.setValue(f"{self._SETTINGS_KEY_PREFIX}remember_choice", self._remember_choice)
+        self._qsettings.sync()
+
+    @property
+    def custom_path(self) -> str:
+        """Get custom Blender path."""
+        return self._custom_path
+
+    @custom_path.setter
+    def custom_path(self, value: str):
+        """Set custom Blender path and save."""
+        self._custom_path = value
+        self._save_settings()
+
+    @property
+    def auto_launch(self) -> bool:
+        """Get auto-launch setting."""
+        return self._auto_launch
+
+    @auto_launch.setter
+    def auto_launch(self, value: bool):
+        """Set auto-launch setting and save."""
+        self._auto_launch = value
+        self._save_settings()
+
+    @property
+    def ipc_port(self) -> int:
+        """Get IPC port setting."""
+        return self._ipc_port
+
+    @ipc_port.setter
+    def ipc_port(self, value: int):
+        """Set IPC port setting and save."""
+        self._ipc_port = value
+        self._save_settings()
+
+    @property
+    def prefer_blender(self) -> bool:
+        """Get prefer Blender setting."""
+        return self._prefer_blender
+
+    @prefer_blender.setter
+    def prefer_blender(self, value: bool):
+        """Set prefer Blender setting and save."""
+        self._prefer_blender = value
+        self._save_settings()
+
+    @property
+    def remember_choice(self) -> bool:
+        """Get remember choice setting."""
+        return self._remember_choice
+
+    @remember_choice.setter
+    def remember_choice(self, value: bool):
+        """Set remember choice setting and save."""
+        self._remember_choice = value
+        self._save_settings()
 
     def get_blender_info(self) -> BlenderInfo:
         """Get BlenderInfo using current settings."""
