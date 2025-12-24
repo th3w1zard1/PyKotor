@@ -32,6 +32,7 @@ from qtpy.QtWidgets import (
     QPlainTextEdit,
     QProgressDialog,
     QPushButton,
+    QSplitter,
     QStackedWidget,
     QStatusBar,
     QVBoxLayout,
@@ -526,15 +527,30 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # Get mainSplitter - handle cases where attribute might not exist in older UI versions
+        # Fallback to finding it by object name if direct attribute access fails
+        main_splitter = getattr(self.ui, "mainSplitter", None)
+        if main_splitter is None:
+            main_splitter = self.findChild(QSplitter, "mainSplitter")
+            if main_splitter is None:
+                # Last resort: find it in the central widget
+                main_splitter = self.centralWidget().findChild(QSplitter, "mainSplitter")  # pyright: ignore[reportOptionalMemberAccess]
+            if main_splitter is not None:
+                # Store it for future access
+                self.ui.mainSplitter = main_splitter
+
+        if main_splitter is None:
+            raise RuntimeError("Could not find mainSplitter widget in UI")
+
         # Set initial splitter sizes (left panel ~250px, rest to map renderer)
         # Set initial sizes: left panel gets ~250 pixels (a few inches), rest goes to map renderer
         total_width = self.width() if self.width() > 0 else 1024
         left_panel_size = min(300, max(200, total_width // 4))  # 200-300px or 1/4 of width, whichever is smaller
-        self.ui.mainSplitter.setSizes([left_panel_size, total_width - left_panel_size])
+        main_splitter.setSizes([left_panel_size, total_width - left_panel_size])
         # Make splitter handle resizable
-        self.ui.mainSplitter.setChildrenCollapsible(False)
+        main_splitter.setChildrenCollapsible(False)
         # Connect splitter resize to update preview image if needed
-        self.ui.mainSplitter.splitterMoved.connect(self._on_splitter_moved)
+        main_splitter.splitterMoved.connect(self._on_splitter_moved)
 
         self._setup_status_bar()
         # Walkmesh painter state
