@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Any, Callable, TextIO, cast
 import qtpy
 
 from qtpy import QtCore
-from qtpy.QtCore import QPoint, QPointF, QRectF, QSize, QTimer, Qt
+from qtpy.QtCore import QEvent, QPoint, QPointF, QRectF, QSize, QTimer, Qt
 from qtpy.QtGui import QColor, QIcon, QImage, QKeyEvent, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTransform, QWheelEvent
 from qtpy.QtWidgets import (
     QApplication,
@@ -527,7 +527,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
-        # Get mainSplitter - handle cases where attribute might not exist in older UI versions
+        # Get mainSplitter - handle cases where it might not exist (new UI uses dock widgets)
         # Fallback to finding it by object name if direct attribute access fails
         main_splitter = getattr(self.ui, "mainSplitter", None)
         if main_splitter is None:
@@ -539,18 +539,27 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 # Store it for future access
                 self.ui.mainSplitter = main_splitter
 
-        if main_splitter is None:
-            raise RuntimeError("Could not find mainSplitter widget in UI")
-
-        # Set initial splitter sizes (left panel ~250px, rest to map renderer)
-        # Set initial sizes: left panel gets ~250 pixels (a few inches), rest goes to map renderer
-        total_width = self.width() if self.width() > 0 else 1024
-        left_panel_size = min(300, max(200, total_width // 4))  # 200-300px or 1/4 of width, whichever is smaller
-        main_splitter.setSizes([left_panel_size, total_width - left_panel_size])
-        # Make splitter handle resizable
-        main_splitter.setChildrenCollapsible(False)
-        # Connect splitter resize to update preview image if needed
-        main_splitter.splitterMoved.connect(self._on_splitter_moved)
+        if main_splitter is not None:
+            # Set initial splitter sizes (left panel ~250px, rest to map renderer)
+            # Set initial sizes: left panel gets ~250 pixels (a few inches), rest goes to map renderer
+            total_width = self.width() if self.width() > 0 else 1024
+            left_panel_size = min(300, max(200, total_width // 4))  # 200-300px or 1/4 of width, whichever is smaller
+            main_splitter.setSizes([left_panel_size, total_width - left_panel_size])
+            # Make splitter handle resizable
+            main_splitter.setChildrenCollapsible(False)
+            # Connect splitter resize to update preview image if needed
+            main_splitter.splitterMoved.connect(self._on_splitter_moved)
+        else:
+            # New UI uses dock widgets - connect to dock widget signals for preview updates
+            left_dock = getattr(self.ui, "leftDockWidget", None)
+            if left_dock is not None:
+                # Update preview when dock widget is resized or visibility changes
+                left_dock.visibilityChanged.connect(self._on_dock_visibility_changed)
+                # Use event filter to update preview after geometry changes
+                left_dock.installEventFilter(self)
+            right_dock = getattr(self.ui, "rightDockWidget", None)
+            if right_dock is not None:
+                right_dock.visibilityChanged.connect(self._on_dock_visibility_changed)
 
         self._setup_status_bar()
         # Walkmesh painter state
@@ -861,6 +870,20 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if self._preview_source_image is not None:
             # Use QTimer to update after layout has adjusted
             QTimer.singleShot(10, self._update_preview_image_size)
+
+    def _on_dock_visibility_changed(self, visible: bool):
+        """Handle dock widget visibility changes - update preview image if it exists."""
+        if visible and self._preview_source_image is not None:
+            # Use QTimer to update after layout has adjusted
+            QTimer.singleShot(10, self._update_preview_image_size)
+
+    def eventFilter(self, obj, event):
+        """Event filter for dock widgets to detect resize events."""
+        if event.type() == QEvent.Type.Resize:
+            if self._preview_source_image is not None:
+                # Use QTimer to update after layout has adjusted
+                QTimer.singleShot(10, self._update_preview_image_size)
+        return super().eventFilter(obj, event)
 
     # ------------------------------------------------------------------
     # Status bar
