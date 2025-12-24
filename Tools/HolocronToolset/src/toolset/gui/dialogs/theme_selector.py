@@ -6,6 +6,7 @@ from qtpy.QtCore import Qt, Signal  # pyright: ignore[reportPrivateImportUsage]
 from qtpy.QtWidgets import (
     QDialog,
     QDialogButtonBox,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QListWidget,
@@ -78,8 +79,16 @@ class ThemeSelectorDialog(QDialog):
         main_layout.addLayout(search_layout)
         
         # Themes section
+        themes_header_layout = QHBoxLayout()
         themes_label = QLabel(tr("Themes:"))
         themes_label.setStyleSheet("font-weight: bold; font-size: 12pt; margin-top: 5px;")
+        self._current_theme_display = QLineEdit()
+        self._current_theme_display.setReadOnly(True)
+        self._current_theme_display.setPlaceholderText(tr("No theme selected"))
+        self._current_theme_display.setStyleSheet("background-color: palette(base); border: 1px solid palette(mid); padding: 2px;")
+        themes_header_layout.addWidget(themes_label)
+        themes_header_layout.addWidget(self._current_theme_display, 1)  # Stretch factor 1 to take remaining space
+        
         self._themes_list = QListWidget()
         self._themes_list.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
         self._themes_list.itemClicked.connect(self._on_theme_selected)
@@ -88,13 +97,21 @@ class ThemeSelectorDialog(QDialog):
         
         themes_layout = QVBoxLayout()
         themes_layout.setSpacing(5)
-        themes_layout.addWidget(themes_label)
+        themes_layout.addLayout(themes_header_layout)
         themes_layout.addWidget(self._themes_list)
         main_layout.addLayout(themes_layout)
         
         # Styles section
+        styles_header_layout = QHBoxLayout()
         styles_label = QLabel(tr("Application Styles:"))
         styles_label.setStyleSheet("font-weight: bold; font-size: 12pt; margin-top: 5px;")
+        self._current_style_display = QLineEdit()
+        self._current_style_display.setReadOnly(True)
+        self._current_style_display.setPlaceholderText(tr("No style selected"))
+        self._current_style_display.setStyleSheet("background-color: palette(base); border: 1px solid palette(mid); padding: 2px;")
+        styles_header_layout.addWidget(styles_label)
+        styles_header_layout.addWidget(self._current_style_display, 1)  # Stretch factor 1 to take remaining space
+        
         self._styles_list = QListWidget()
         self._styles_list.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
         self._styles_list.itemClicked.connect(self._on_style_selected)
@@ -102,7 +119,8 @@ class ThemeSelectorDialog(QDialog):
         self._styles_list.setMaximumHeight(150)
         
         styles_layout = QVBoxLayout()
-        styles_layout.addWidget(styles_label)
+        styles_layout.setSpacing(5)
+        styles_layout.addLayout(styles_header_layout)
         styles_layout.addWidget(self._styles_list)
         main_layout.addLayout(styles_layout)
         
@@ -124,6 +142,12 @@ class ThemeSelectorDialog(QDialog):
         
     def _populate_lists(self):
         """Populate the theme and style lists."""
+        # Update current theme display
+        if self._current_theme:
+            self._current_theme_display.setText(self._current_theme)
+        else:
+            self._current_theme_display.clear()
+        
         # Populate themes
         self._themes_list.clear()
         for theme_name in sorted(self._available_themes):
@@ -134,6 +158,14 @@ class ThemeSelectorDialog(QDialog):
                 self._themes_list.setCurrentItem(item)
                 self._themes_list.scrollToItem(item)
             self._themes_list.addItem(item)
+        
+        # Update current style display
+        if self._current_style == "":
+            self._current_style_display.setText(tr("Native (System Default)"))
+        elif self._current_style:
+            self._current_style_display.setText(self._current_style)
+        else:
+            self._current_style_display.clear()
         
         # Populate styles
         self._styles_list.clear()
@@ -183,6 +215,9 @@ class ThemeSelectorDialog(QDialog):
         
         # Check selected theme
         item.setCheckState(Qt.CheckState.Checked)
+        
+        # Update current theme display
+        self._current_theme_display.setText(item.text())
     
     def _on_style_selected(self, item: QListWidgetItem):
         """Handle style selection."""
@@ -194,6 +229,10 @@ class ThemeSelectorDialog(QDialog):
         
         # Check selected style
         item.setCheckState(Qt.CheckState.Checked)
+        
+        # Update current style display
+        style_display_name = item.text()  # Use the display text (e.g., "Native (System Default)" or style name)
+        self._current_style_display.setText(style_display_name)
     
     def _on_theme_double_clicked(self, item: QListWidgetItem):
         """Handle theme double-click - apply immediately."""
