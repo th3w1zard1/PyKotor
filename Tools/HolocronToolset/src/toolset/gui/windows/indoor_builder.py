@@ -1507,7 +1507,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         filepath, _ = QFileDialog.getOpenFileName(self, "Open Map", "", "Indoor Map File (*.indoor)")
         if filepath and str(filepath).strip():
             try:
-                missing_rooms = self._map.load(Path(filepath).read_bytes(), self._kits)
+                missing_rooms = self._map.load(Path(filepath).read_bytes(), self._kits, self._module_kit_manager)
                 self._map.rebuild_room_connections()
                 self.ui.mapRenderer._cached_walkmeshes.clear()
                 self._filepath = filepath

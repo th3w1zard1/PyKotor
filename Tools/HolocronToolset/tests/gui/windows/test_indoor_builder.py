@@ -6750,7 +6750,7 @@ class TestIndoorMapBuildAndSave:
         # Load it back
         loaded_map = IndoorMap()
         loaded_data = indoor_path.read_bytes()
-        missing = loaded_map.load(loaded_data, builder._kits)
+        missing = loaded_map.load(loaded_data, builder._kits, None)
 
         # Verify load succeeded
         assert len(missing) == 0, f"Should have no missing rooms, got {missing}"

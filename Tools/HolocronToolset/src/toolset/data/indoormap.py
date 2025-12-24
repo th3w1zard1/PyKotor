@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
     from pykotor.resource.formats.bwm import BWM  # pyright: ignore[reportMissingImports]
     from pykotor.resource.generics.utd import UTD  # pyright: ignore[reportMissingImports]
-    from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
+    from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor, ModuleKitManager
     from toolset.data.installation import HTInstallation
 
 
@@ -913,6 +913,9 @@ class IndoorMap:
                 "kit": room.component.kit.name,
                 "component": room.component.name,
             }
+            # Save module_root if this is a ModuleKit (for proper loading later)
+            if hasattr(room.component.kit, "is_module_kit") and room.component.kit.is_module_kit:
+                room_data["module_root"] = room.component.kit.module_root
             if room.walkmesh_override is not None:
                 room_data["walkmesh_override"] = base64.b64encode(bytes_bwm(room.walkmesh_override)).decode("ascii")
             data["rooms"].append(room_data)  # type: ignore[union-attr]
@@ -923,6 +926,7 @@ class IndoorMap:
         self,
         raw: bytes,
         kits: list[Kit],
+        module_kit_manager: "ModuleKitManager | None" = None,
     ) -> list[MissingRoomInfo]:
         """Load raw data and initialize the map.
 
@@ -945,7 +949,7 @@ class IndoorMap:
         data: dict[str, Any] = json.loads(raw)
 
         try:
-            return self._load_data(data, kits)
+            return self._load_data(data, kits, module_kit_manager)
         except KeyError as e:
             msg = "Map file is corrupted."
             raise ValueError(msg) from e
@@ -954,6 +958,7 @@ class IndoorMap:
         self,
         data: dict[str, Any],
         kits: list[Kit],
+        module_kit_manager: "ModuleKitManager | None" = None,
     ) -> list[MissingRoomInfo]:
         """Load data into an indoor map object.
 
@@ -993,6 +998,31 @@ class IndoorMap:
 
         for room_data in data["rooms"]:
             sKit: Kit | None = next((kit for kit in kits if kit.name == room_data["kit"]), None)
+            
+            # If kit not found in regular kits, try ModuleKitManager if module_root is saved
+            if sKit is None and module_kit_manager is not None and "module_root" in room_data:
+                try:
+                    sKit = module_kit_manager.get_module_kit(room_data["module_root"])
+                    if not sKit.ensure_loaded():
+                        RobustLogger().warning(f"Failed to load module kit '{room_data['module_root']}'")
+                        sKit = None
+                except Exception as exc:  # noqa: BLE001
+                    RobustLogger().warning(f"Error loading module kit '{room_data.get('module_root', 'unknown')}': {exc}")
+                    sKit = None
+            
+            # If still not found, try to find by name in ModuleKitManager (backward compatibility)
+            if sKit is None and module_kit_manager is not None:
+                # Try to extract module root from kit name (format: "MODULE_ROOT - Area Name")
+                kit_name = room_data["kit"]
+                if " - " in kit_name:
+                    potential_module_root = kit_name.split(" - ")[0].lower()
+                    try:
+                        sKit = module_kit_manager.get_module_kit(potential_module_root)
+                        if not sKit.ensure_loaded():
+                            sKit = None
+                    except Exception:  # noqa: BLE001
+                        sKit = None
+            
             if sKit is None:
                 RobustLogger().warning(f"Kit '{room_data['kit']}' is missing, skipping room.")
                 missing_rooms.append(MissingRoomInfo(kit_name=room_data["kit"], component_name=room_data.get("component"), reason="kit_missing"))
