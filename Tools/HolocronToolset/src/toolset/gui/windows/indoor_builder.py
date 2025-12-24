@@ -56,12 +56,11 @@ else:
 from pykotor.common.misc import Color  # type: ignore[reportPrivateImportUsage]
 from pykotor.common.stream import BinaryWriter  # type: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm  # type: ignore[reportPrivateImportUsage]
-from pykotor.tools.indoormap import extract_indoor_from_module_name
+from pykotor.tools.indoormap import IndoorMap, IndoorMapRoom, extract_indoor_from_module_name
 from toolset.blender import BlenderEditorMode, ConnectionState, check_blender_and_ask, get_blender_settings
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
 from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, ModuleKit, ModuleKitManager, load_kits
-from toolset.data.indoormap import IndoorMap, IndoorMapRoom
 from toolset.data.installation import HTInstallation
 from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.dialogs.asyncloader import AsyncLoader
@@ -408,7 +407,10 @@ class PaintWalkmeshCommand(QUndoCommand):
 
     def _apply(self, materials: list[SurfaceMaterial]):
         for room, face_index, material in zip(self.rooms, self.face_indices, materials):
-            base_bwm = room.ensure_walkmesh_override()
+            # Ensure we have a writable walkmesh override
+            if room.walkmesh_override is None:
+                room.walkmesh_override = deepcopy(room.component.bwm)
+            base_bwm = room.walkmesh_override
             if 0 <= face_index < len(base_bwm.faces):
                 base_bwm.faces[face_index].material = material
         self._invalidate_cb(self.rooms)
@@ -888,7 +890,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def _update_preview_from_selection(self):
         """Update preview image based on selected rooms.
-        
+
         Shows the most recently selected room's component image.
         Only updates if no component is being dragged (cursor_component is None).
         """
@@ -896,13 +898,13 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # Don't update preview if we're dragging a component (placement mode)
         if renderer.cursor_component is not None:
             return
-        
+
         # Get selected rooms - most recent is last in the list
         sel_rooms = renderer.selected_rooms()
         if sel_rooms:
             # Show the most recently selected room (last in list)
             most_recent_room = sel_rooms[-1]
-            if hasattr(most_recent_room, 'component') and hasattr(most_recent_room.component, 'image'):
+            if hasattr(most_recent_room, "component") and hasattr(most_recent_room.component, "image"):
                 self._set_preview_image(most_recent_room.component.image)
         else:
             # No rooms selected, clear preview (unless dragging)
@@ -1383,7 +1385,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         else:
             sel_text = f"<b><span style=\"{self._emoji_style}\">🟦</span>&nbsp;Selected:</b> <span style='color:#a6a6a6'><i>None</i></span>"
         self._selection_label.setText(sel_text)
-        
+
         # Update preview based on selection (only if not dragging a component)
         self._update_preview_from_selection()
 
@@ -1692,23 +1694,25 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def load_module_from_name(self, module_name: str) -> bool:
         """Load a module by extracting it from the installation.
-        
+
         Args:
         ----
             module_name: The module name (e.g., "end_m01aa" or "end_m01aa.rim")
-            
+
         Returns:
         -------
             bool: True if the module was successfully loaded, False otherwise
         """
         if not isinstance(self._installation, HTInstallation):
             from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
+
             RobustLogger().error("No installation available to load module from")
             return False
-        
+
         # Check for unsaved changes
         if not self._undo_stack.isClean():
             from toolset.gui.common.localization import translate as tr
+
             result = QMessageBox.question(
                 self,
                 tr("Unsaved Changes"),
@@ -1719,22 +1723,22 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 self.save()
             elif result == QMessageBox.StandardButton.Cancel:
                 return False
-        
+
         try:
             from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
-            
+
             # Remove .rim or .mod extension if present
             module_root = module_name
-            if module_root.endswith(('.rim', '.mod')):
-                module_root = module_root.rsplit('.', 1)[0]
-            
+            if module_root.endswith((".rim", ".mod")):
+                module_root = module_root.rsplit(".", 1)[0]
+
             # Get installation path and kits path
             installation_path = self._installation.path()
             kits_path = Path("./kits").resolve()
             game = self._installation.game()
-            
+
             # Extract the module
-            def extract_task() -> IndoorMap | None:
+            def extract_task() -> IndoorMap:
                 return extract_indoor_from_module_name(
                     module_root,
                     installation_path=installation_path,
@@ -1744,21 +1748,21 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                     max_rms=1e-3,
                     logger=RobustLogger(),
                 )
-            
+
             loader = AsyncLoader(
                 self,
                 f"Extracting module '{module_root}'...",
                 extract_task,
                 f"Failed to extract module '{module_root}'",
             )
-            
+
             if not loader.exec():
                 return False
-            
+
             extracted_map = loader.result()
             if extracted_map is None:
                 return False
-            
+
             # Load the extracted map into the builder
             self._map = extracted_map
             self._map.rebuild_room_connections()
@@ -1768,33 +1772,29 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self._undo_stack.setClean()
             self._filepath = ""  # Clear filepath since this is extracted, not loaded from file
             self._refresh_window_title()
-            
+
             # Show success message
             room_count = len(self._map.rooms)
             from toolset.gui.common.localization import translate as tr, trf
+
             QMessageBox(
                 QMessageBox.Icon.Information,
                 tr("Module Loaded"),
-                trf("Successfully loaded module '{module}' with {count} room{plural}.",
-                    module=module_root,
-                    count=room_count,
-                    plural="s" if room_count != 1 else ""),
+                trf("Successfully loaded module '{module}' with {count} room{plural}.", module=module_root, count=room_count, plural="s" if room_count != 1 else ""),
             ).exec()
-            
+
             return True
-            
+
         except Exception as e:  # noqa: BLE001
             from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
             from toolset.gui.common.localization import translate as tr, trf
             from utility.error_handling import universal_simplify_exception
-            
+
             RobustLogger().exception(f"Failed to load module '{module_name}'")
             QMessageBox(
                 QMessageBox.Icon.Critical,
                 tr("Failed to load module"),
-                trf("Failed to load module '{module}': {error}",
-                    module=module_name,
-                    error=str(universal_simplify_exception(e))),
+                trf("Failed to load module '{module}': {error}", module=module_name, error=str(universal_simplify_exception(e))),
             ).exec()
             return False
 
@@ -2248,7 +2248,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         room, face_index = self.ui.mapRenderer.pick_face(world)
         if room is None or face_index is None:
             return
-        base_bwm = room.ensure_walkmesh_override()
+        # Ensure we have a writable walkmesh override
+        if room.walkmesh_override is None:
+            room.walkmesh_override = deepcopy(room.component.bwm)
+        base_bwm = room.walkmesh_override
         if not (0 <= face_index < len(base_bwm.faces)):
             return
 
@@ -3249,7 +3252,7 @@ class IndoorMapRenderer(QWidget):
 
     def zoom_in_camera(self, zoom_factor: float):
         """Zoom camera by a multiplicative factor for linear visual zoom.
-        
+
         Args:
             zoom_factor: Multiplier for zoom (e.g., 1.15 to zoom in 15%, 0.869 to zoom out 15%)
         """
