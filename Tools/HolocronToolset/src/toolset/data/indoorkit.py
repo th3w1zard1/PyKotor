@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 
 from pathlib import Path
@@ -45,6 +46,33 @@ class KitComponent:
         self.bwm: BWM = bwm
         self.mdl: bytes = mdl
         self.mdx: bytes = mdx
+    
+    def __deepcopy__(self, memo: dict) -> KitComponent:
+        """Custom deep copy implementation that handles QImage properly.
+        
+        QImage objects cannot be pickled, so we need to manually copy them
+        using QImage.copy() instead of relying on the default deepcopy behavior.
+        """
+        # Create a new KitComponent with copied attributes
+        # Copy the QImage using its copy() method (QImage is not pickleable)
+        image_copy = self.image.copy() if self.image is not None else None
+        
+        # Deep copy other attributes
+        bwm_copy = copy.deepcopy(self.bwm, memo)
+        hooks_copy = copy.deepcopy(self.hooks, memo)
+        
+        # Create new instance
+        new_component = KitComponent(
+            self.kit,  # Keep reference to same kit (don't deep copy)
+            self.name,  # String is immutable, can share
+            image_copy,
+            bwm_copy,
+            self.mdl,  # bytes are immutable, can share
+            self.mdx,  # bytes are immutable, can share
+        )
+        new_component.hooks = hooks_copy
+        
+        return new_component
 
 
 class KitComponentHook:
