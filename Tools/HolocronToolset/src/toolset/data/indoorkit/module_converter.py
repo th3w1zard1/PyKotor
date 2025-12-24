@@ -312,14 +312,46 @@ class ModuleKit(Kit):
 
         return bwm
 
+    def _get_default_material_color(self, material: SurfaceMaterial) -> QColor:
+        """Get default color for a material type for preview rendering.
+        
+        Uses colors that match typical walkmesh painter defaults to show
+        what the piece looks like when fully rendered with material colors.
+        """
+        # Default material colors (matching typical walkmesh painter settings)
+        material_colors: dict[SurfaceMaterial, QColor] = {
+            SurfaceMaterial.UNDEFINED: QColor(128, 128, 128),  # Gray
+            SurfaceMaterial.OBSCURING: QColor(64, 64, 64),  # Dark gray
+            SurfaceMaterial.DIRT: QColor(139, 90, 43),  # Brown
+            SurfaceMaterial.GRASS: QColor(34, 139, 34),  # Green
+            SurfaceMaterial.STONE: QColor(192, 192, 192),  # Light gray
+            SurfaceMaterial.WOOD: QColor(101, 67, 33),  # Brown
+            SurfaceMaterial.WATER: QColor(0, 100, 200),  # Blue
+            SurfaceMaterial.NON_WALK: QColor(64, 64, 64),  # Dark gray
+            SurfaceMaterial.TRANSPARENT: QColor(128, 128, 128, 128),  # Semi-transparent gray
+            SurfaceMaterial.CARPET: QColor(139, 69, 19),  # Saddle brown
+            SurfaceMaterial.METAL: QColor(192, 192, 192),  # Silver
+            SurfaceMaterial.PUDDLES: QColor(0, 150, 255),  # Light blue
+            SurfaceMaterial.SWAMP: QColor(85, 107, 47),  # Dark olive green
+            SurfaceMaterial.MUD: QColor(101, 67, 33),  # Brown
+            SurfaceMaterial.LEAVES: QColor(34, 139, 34),  # Green
+            SurfaceMaterial.LAVA: QColor(255, 69, 0),  # Red-orange
+            SurfaceMaterial.BOTTOMLESS_PIT: QColor(25, 25, 25),  # Very dark gray
+            SurfaceMaterial.DEEP_WATER: QColor(0, 0, 139),  # Dark blue
+            SurfaceMaterial.DOOR: QColor(184, 134, 11),  # Dark goldenrod
+            SurfaceMaterial.NON_WALK_GRASS: QColor(85, 107, 47),  # Dark olive green
+            SurfaceMaterial.TRIGGER: QColor(255, 215, 0),  # Gold
+        }
+        return material_colors.get(material, QColor(128, 128, 128))
+
     def _create_preview_image_from_bwm(self, bwm: BWM) -> QImage:
-        """Create a preview image from a walkmesh.
+        """Create a preview image from a walkmesh showing fully rendered materials.
         
-        Creates a top-down view of the walkmesh for use as a component preview.
-        This method generates an image IDENTICAL to what kit.py generates, then
-        mirrors it to match what the Kit loader does when loading from disk.
+        Creates a top-down view of the walkmesh with material-based colors to show
+        what the piece looks like when fully rendered, matching how the walkmesh
+        painter displays materials in the main renderer.
         
-        CRITICAL: Must match kit.py/_generate_component_minimap EXACTLY:
+        Uses the same rendering approach as kit.py/_generate_component_minimap:
         - 10 pixels per unit scale
         - Format_RGB888 (not RGB32)
         - Minimum 256x256 pixels
@@ -372,14 +404,13 @@ class ModuleKit(Kit):
             y = height - (v.y - min_y) * PIXELS_PER_UNIT  # Flip Y
             return x, y
 
-        # Draw walkmesh faces (same logic as kit.py)
+        # Draw walkmesh faces with material-based colors (fully rendered appearance)
         painter = QPainter(image)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
 
         for face in bwm.faces:
-            # Determine if face is walkable based on material (same logic as kit.py)
-            is_walkable = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
-            color = QColor(255, 255, 255) if is_walkable else QColor(128, 128, 128)
+            # Use material-based color to show what it looks like when fully rendered
+            color = self._get_default_material_color(face.material)
 
             painter.setBrush(color)
             painter.setPen(color)
