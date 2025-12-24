@@ -46,10 +46,10 @@
       <item>
        <widget class="QCheckBox" name="mdlDecompileCheckbox">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="toolTip">
-         <string>Decompile feature is not available.</string>
+         <string>Decompile MDL to ASCII format</string>
         </property>
         <property name="text">
          <string>Decompile</string>

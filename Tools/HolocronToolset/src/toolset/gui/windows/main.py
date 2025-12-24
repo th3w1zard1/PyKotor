@@ -780,7 +780,7 @@ class ToolWindow(QMainWindow):
         self.ui.tpcDecompileCheckbox.setText(tr("Decompile"))
         self.ui.tpcTxiCheckbox.setText(tr("Extract TXI"))
         self.ui.mdlDecompileCheckbox.setText(tr("Decompile"))
-        self.ui.mdlDecompileCheckbox.setToolTip(tr("Decompile feature is not available."))
+        self.ui.mdlDecompileCheckbox.setToolTip(tr("Decompile MDL to ASCII format"))
         self.ui.mdlTexturesCheckbox.setText(tr("Extract Textures"))
         
         # Update window title
