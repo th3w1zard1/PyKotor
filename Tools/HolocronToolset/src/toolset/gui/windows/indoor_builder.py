@@ -442,7 +442,8 @@ class ResetWalkmeshCommand(QUndoCommand):
 
     def redo(self):
         for room in self.rooms:
-            room.clear_walkmesh_override()
+            # Clear walkmesh override by setting it to None
+            room.walkmesh_override = None
         self._invalidate_cb(self.rooms)
 
 
