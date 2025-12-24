@@ -6,10 +6,20 @@ reverse engineering analysis of swkotor.exe.
 
 Key findings from reverse engineering:
 - VM uses stack-based execution with CVirtualMachineStack
-- ExecuteCode function is a large switch-based interpreter (5529 bytes)
+- ExecuteCode function is a large switch-based interpreter (5529 bytes at 0x005d2bd0)
 - Stack operations must maintain proper types and depths
-- Call stack size is tracked and validated
+- Call stack size is tracked and validated (max 0x1ffff instructions)
 - Error handling includes stack unwinding on failures
+
+Instruction set identified in ExecuteCode switch statement:
+- CPDOWNSP/CPDOWNBP: Copy down stack/base pointer operations with offset/size parameters
+- RSADDx: Reserve space and add (types: int=3, float=4, string=5, object=6, engine_structs=16-25)
+- CPTOPSP/CPTOPBP: Copy to top of stack/base pointer
+- CONSTx: Constants (int=3, float=4, string=5, object=6) with embedded values
+- ACTION: Execute command with 16-bit command ID parameter
+- LOGANDII: Logical operations on integers
+- Stack size validation prevents buffer overflows
+- Invalid instruction types return INVALID_INSTRUCTION_TYPE error
 """
 
 from __future__ import annotations
@@ -18,7 +28,7 @@ from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
 
-from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstructionType
+from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstruction, NCSInstructionType
 
 if TYPE_CHECKING:
     pass
@@ -52,6 +62,9 @@ def validate_ncs_for_vm(ncs: NCS) -> None:
 
     # Check stack operations
     _validate_stack_operations(ncs, issues)
+
+    # Validate against known VM instruction set
+    _validate_vm_instruction_set(ncs, issues)
 
     # Validate control flow
     _validate_control_flow(ncs, issues)
@@ -138,7 +151,7 @@ def _validate_control_flow(ncs: NCS, issues: list[str]) -> None:
                 issues.append(f"Unusually long jump at position {i} (distance: {abs(target_index - i)})")
 
             # Check for jumps to invalid locations (e.g., into middle of instructions)
-            if instr.type == NCSInstructionType.JSR and target_index == 0:
+            if instr.ins_type == NCSInstructionType.JSR and target_index == 0:
                 issues.append(f"JSR at position {i} jumps to script start (potential recursion issue)")
 
 
@@ -160,6 +173,64 @@ def _validate_execution_safety(ncs: NCS, issues: list[str]) -> None:
                 break
         else:
             consecutive_noops = 0
+
+
+def _validate_vm_instruction_set(ncs: NCS, issues: list[str]) -> None:
+    """Validate instructions against known VM instruction set from ExecuteCode analysis.
+
+    Based on reverse engineering of CVirtualMachineInternal::ExecuteCode,
+    this validates that instructions are compatible with the actual VM implementation.
+    """
+    # Known instruction types from ExecuteCode switch statement analysis
+    known_instructions = {
+        # Stack manipulation
+        NCSInstructionType.CPDOWNSP, NCSInstructionType.CPDOWNBP,
+        NCSInstructionType.CPTOPSP, NCSInstructionType.CPTOPBP,
+        NCSInstructionType.RSADDx, NCSInstructionType.CONSTx,
+
+        # Actions/commands
+        NCSInstructionType.ACTION,
+
+        # Logical operations
+        NCSInstructionType.LOGANDII,
+
+        # Control flow
+        NCSInstructionType.JMP, NCSInstructionType.JZ, NCSInstructionType.JNZ,
+        NCSInstructionType.RETN,
+
+        # Arithmetic
+        NCSInstructionType.ADDII, NCSInstructionType.ADDIF, NCSInstructionType.ADDFF,
+        NCSInstructionType.SUBII, NCSInstructionType.SUBIF, NCSInstructionType.SUBFF,
+        NCSInstructionType.MULII, NCSInstructionType.MULIF, NCSInstructionType.MULFF,
+        NCSInstructionType.DIVII, NCSInstructionType.DIVIF, NCSInstructionType.DIVFF,
+
+        # Comparison
+        NCSInstructionType.EQUALII, NCSInstructionType.EQUALIF, NCSInstructionType.EQUALFF,
+        NCSInstructionType.NEQUALII, NCSInstructionType.NEQUALIF, NCSInstructionType.NEQUALFF,
+        NCSInstructionType.GTII, NCSInstructionType.GTIF, NCSInstructionType.GTFF,
+        NCSInstructionType.GEII, NCSInstructionType.GEIF, NCSInstructionType.GEFF,
+        NCSInstructionType.LTII, NCSInstructionType.LTIF, NCSInstructionType.LTFF,
+        NCSInstructionType.LEII, NCSInstructionType.LEIF, NCSInstructionType.LEFF,
+    }
+
+    for i, instr in enumerate(ncs.instructions):
+        if instr.ins_type not in known_instructions:
+            issues.append(f"Unknown instruction type {instr.ins_type} at position {i} - "
+                         "not recognized by KOTOR VM ExecuteCode function")
+
+        # Validate RSADDx type parameter (must be 3-6 or 16-25 based on ExecuteCode)
+        if instr.ins_type == NCSInstructionType.RSADDx:
+            type_param = instr.args[0] if instr.args else 0
+            if not ((3 <= type_param <= 6) or (16 <= type_param <= 25)):
+                issues.append(f"RSADDx at position {i} has invalid type parameter {type_param} - "
+                             "must be 3-6 (basic types) or 16-25 (engine structs)")
+
+        # Validate CONSTx type parameter
+        if instr.ins_type == NCSInstructionType.CONSTx:
+            type_param = instr.args[0] if instr.args else 0
+            if type_param not in (3, 4, 5, 6):  # int, float, string, object
+                issues.append(f"CONSTx at position {i} has invalid type parameter {type_param} - "
+                             "must be 3 (int), 4 (float), 5 (string), or 6 (object)")
 
 
 def _is_stack_operation(instr_type: NCSInstructionType) -> bool:

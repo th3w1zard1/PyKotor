@@ -20,7 +20,18 @@ class Chitin:
     """Chitin object is used for loading the list of resources stored in the chitin.key/.bif files used by the game.
 
     Chitin support is read-only and you cannot write your own key/bif files with this class yet.
-    
+
+    Reverse Engineering Notes:
+    -------------------------
+    The KOTOR engine uses CExoResMan (Resource Manager) to handle multiple archive types:
+    - FIXED (0x00000000): KEY/BIF files (chitin.key + data/*.bif)
+    - DIRECTORY (0x80000000): Loose files in directories
+    - ERF (0x40000000): ERF/RIM archives (modules/*.rim, modules/*.erf)
+    - RIM (0x20000000): RIM archives (specifically for texture packs)
+
+    CExoResMan::AddKeyTable manages archive loading with these type flags.
+    CExoResMan::ReadResource handles the actual resource loading from archives.
+
     References:
     ----------
         vendor/reone/src/libs/resource/format/keyreader.cpp:26-65 (KEY reading)

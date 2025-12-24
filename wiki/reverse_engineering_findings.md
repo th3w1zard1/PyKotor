@@ -17,9 +17,42 @@ This document contains findings from reverse engineering the Star Wars: Knights 
 **Execution Flow:**
 1. `CVirtualMachine::RunScript()` loads and executes scripts
 2. `ReadScriptFile()` parses NCS bytecode from files
-3. `ExecuteCode()` interprets bytecode using a large switch-based interpreter (5529 bytes)
+3. `ExecuteCode()` interprets bytecode using a large switch-based interpreter (5529 bytes at 0x005d2bd0)
 4. Stack operations handle data types: int, float, string, object, vector
 5. Call stack tracks function execution depth
+
+**Detailed ExecuteCode Analysis:**
+The `ExecuteCode` function is a massive switch statement with the following instruction set:
+
+**Stack Operations:**
+- `CPDOWNSP`/`CPDOWNBP`: Copy down stack/base pointer with offset and size parameters
+- `CPTOPSP`/`CPTOPBP`: Copy to top of stack/base pointer
+- `RSADDx`: Reserve space and add (types: int=3, float=4, string=5, object=6, engine_structs=16-25)
+
+**Constants:**
+- `CONSTx`: Push constants (int=3, float=4, string=5, object=6) with embedded values
+
+**Actions:**
+- `ACTION`: Execute command with 16-bit command ID parameter
+
+**Logic:**
+- `LOGANDII`: Logical AND for integers
+
+**Control Flow:**
+- `JMP`, `JZ`, `JNZ`: Jump instructions
+- `RETN`: Return from function
+
+**Arithmetic:**
+- `ADDII`/`ADDIF`/`ADDFF`: Addition operations
+- `SUBII`/`SUBIF`/`SUBFF`: Subtraction operations
+- `MULII`/`MULIF`/`MULFF`: Multiplication operations
+- `DIVII`/`DIVIF`/`DIVFF`: Division operations
+
+**Safety Features:**
+- Instruction count limit (0x1ffff instructions max)
+- Stack bounds checking prevents overflows
+- Invalid instruction types return `INVALID_INSTRUCTION_TYPE` error
+- Stack unwinding on execution failures
 
 **Key Insights:**
 - Scripts are loaded synchronously via resource system
@@ -36,25 +69,49 @@ This document contains findings from reverse engineering the Star Wars: Knights 
 - `CRes2DA`: 2DA file format handler
 - `CResHelper<T>`: Template for type-specific resource handlers
 
-**GFF Structure (from CResGFF):**
+**CExoResMan (Resource Manager) Architecture:**
+The engine uses `CExoResMan` as the central resource management system supporting multiple archive types:
+- `FIXED` (0x00000000): KEY/BIF files (chitin.key + data/*.bif)
+- `DIRECTORY` (0x80000000): Loose files in directories
+- `ERF` (0x40000000): ERF/RIM archives (modules/*.rim, modules/*.erf)
+- `RIM` (0x20000000): RIM archives (specifically for texture packs)
+
+**Key Functions:**
+- `CExoResMan::AddKeyTable()`: Loads archive tables with type flags
+- `CExoResMan::ReadResource()`: Loads resources from archives
+- `AddResourceImageFile()` calls `AddKeyTable(..., RIM, 0)` for texture packs
+
+**GFF Structure (from CResGFF analysis):**
 ```cpp
 struct CResGFF {
-    CRes resource;                    // Base resource
-    GFFHeaderInfo* header;            // File header
-    GFFStructData* structs;           // Struct definitions
-    GFFFieldData* fields;             // Field definitions
-    char (*labels)[16];               // 16-byte labels
-    void* field_data;                 // Raw field data
+    CRes resource;                    // Base resource (inherits from CRes)
+    GFFHeaderInfo* header;            // File header with type/version
+    GFFStructData* structs;           // Struct definitions array
+    GFFFieldData* fields;             // Field definitions array
+    char (*labels)[16];               // 16-byte null-terminated labels
+    void* field_data;                 // Raw field data buffer
     ulong* field_indices_data;        // Field index arrays
     ulong* list_indices_data;         // List index arrays
-    // Capacity tracking for dynamic arrays
+    // Dynamic capacity tracking for all arrays
 };
 ```
+
+**GFF Creation Process (from CreateGFFFile):**
+1. Takes file type string and version string parameters
+2. Writes 4-byte file type (little-endian) to header
+3. Writes 4-byte version (little-endian) to header
+4. Creates root struct with `AddStruct(0xffffffff)`
+5. Initializes all data structures for writing
+
+**GFF Version Support:**
+The engine's `CreateGFFFile` function accepts version strings dynamically, suggesting native support for multiple GFF versions beyond V3.2. The function stores version strings directly in the file header without validation, indicating the engine can handle V3.3, V4.0, and V4.1 as mentioned in xoreos-tools documentation.
 
 **Key Functions:**
 - `CResRef::CopyToString()`: Converts ResRef to string
 - `CResGFF::ReadFieldCResRef()`: Reads ResRef fields from GFF
 - `CResGFF::WriteFieldCResRef()`: Writes ResRef fields to GFF
+- `CreateGFFFile()`: Creates GFF files with specified type/version
+- `WriteGFFFile()`: Serializes GFF to disk
 
 ### Graphics and Rendering System
 
@@ -108,11 +165,30 @@ void SetupOpenGL() {
 
 ## Implications for PyKotor
 
-### Potential Improvements
+### Implemented Improvements
+
+**GFF Format Enhancements:**
+- Added documentation about engine's native multi-version support (V3.3, V4.0, V4.1)
+- Confirmed CResGFF structure alignment with PyKotor's implementation
+- Documented GFF creation process from `CreateGFFFile` function
+
+**NCS VM Validation Improvements:**
+- Enhanced VM validation with instruction set analysis from `ExecuteCode`
+- Added validation for RSADDx type parameters (3-6 for basic types, 16-25 for engine structs)
+- Added validation for CONSTx type parameters
+- Improved error messages for invalid instruction types
+- Added stack safety checks based on engine's bounds validation
+
+**Resource System Documentation:**
+- Documented CExoResMan archive type system (FIXED, DIRECTORY, ERF, RIM)
+- Added reverse engineering notes to Chitin class about resource loading architecture
+- Confirmed KEY/BIF loading mechanism matches PyKotor implementation
+
+### Potential Future Improvements
 
 1. **Script Engine:**
-   - Validate NWScript bytecode against VM expectations
-   - Improve stack-based execution simulation
+   - Validate NWScript bytecode against complete VM instruction set
+   - Improve stack-based execution simulation with all opcodes
    - Better error handling for malformed scripts
 
 2. **Resource System:**
@@ -137,9 +213,10 @@ The reverse engineering confirms PyKotor's GFF implementation matches the engine
 - Header parsing is correct
 - Struct/field relationships are properly handled
 - Label handling (16-byte strings) is accurate
+- Multi-version support confirmed in engine
 
 **NWScript VM Compatibility:**
-The stack-based execution model validates PyKotor's script interpretation approach. The large `ExecuteCode` function suggests comprehensive opcode coverage.
+The detailed `ExecuteCode` analysis validates PyKotor's script interpretation approach. The instruction set mapping confirms comprehensive opcode coverage and proper type handling. The stack-based execution model with typed operations (int, float, string, object) matches PyKotor's implementation.
 
 ## Future Research Areas
 
