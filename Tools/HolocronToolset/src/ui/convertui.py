@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 import pathlib
+import shutil
+import subprocess
 import sys
 
 from typing import TYPE_CHECKING
@@ -71,13 +73,13 @@ def compile_ui(
         if not ui_target.is_file():
             print("mkdir", ui_target.parent)
             ui_target.parent.mkdir(exist_ok=True, parents=True)
-            temp_path: Path = ui_target.parent
-            new_init_file: Path = temp_path.joinpath("__init__.py")
-            while not new_init_file.is_file() and temp_path.resolve() != UI_TARGET_DIR.resolve():
-                print(f"touch {new_init_file}")
-                new_init_file.touch()
-                temp_path: Path = temp_path.parent
-                new_init_file: Path = temp_path.joinpath("__init__.py")
+            current_path: Path = ui_target.parent
+            init_file: Path = current_path.joinpath("__init__.py")
+            while not init_file.is_file() and current_path.resolve() != UI_TARGET_DIR.resolve():
+                print(f"touch {init_file}")
+                init_file.touch()
+                current_path = current_path.parent
+                init_file = current_path.joinpath("__init__.py")
 
         # If the target file does not yet exist, use timestamp=0 as this will force the timestamp check to pass
         source_timestamp: float = ui_file.stat().st_mtime
@@ -88,11 +90,50 @@ def compile_ui(
             # Resolve paths to absolute to avoid "Failed to canonicalize script path" errors
             ui_file_abs = ui_file.resolve()
             ui_target_abs = ui_target.resolve()
-            command = f'{ui_compiler} "{ui_file_abs}" -o "{ui_target_abs}"'
-            if debug:
-                command += " -d"
-            print(command)
-            os.system(command)  # noqa: S605
+            
+            # Use subprocess instead of os.system for better path handling on Windows
+            # Try to find the compiler executable
+            compiler_path = shutil.which(ui_compiler)
+            if compiler_path is None:
+                # Fallback: try running as Python module (e.g., python -m PyQt5.uic.pyuic)
+                if qt_version == "PyQt5":
+                    module_name = "PyQt5.uic.pyuic"
+                elif qt_version == "PyQt6":
+                    module_name = "PyQt6.uic.pyuic"
+                elif qt_version == "PySide2":
+                    module_name = "PySide2.uic"
+                elif qt_version == "PySide6":
+                    module_name = "PySide6.uic"
+                else:
+                    raise RuntimeError(f"Unknown Qt version: {qt_version}")
+                
+                args = [
+                    sys.executable,
+                    "-m",
+                    module_name,
+                    str(ui_file_abs),
+                    "-o",
+                    str(ui_target_abs),
+                ]
+                if debug:
+                    args.append("-d")
+                print(f"Running: {' '.join(args)}")
+                result = subprocess.run(args, check=True, capture_output=True, text=True)
+                if result.stdout:
+                    print(result.stdout)
+                if result.stderr:
+                    print(result.stderr, file=sys.stderr)
+            else:
+                args = [compiler_path, str(ui_file_abs), "-o", str(ui_target_abs)]
+                if debug:
+                    args.append("-d")
+                print(f"Running: {' '.join(args)}")
+                result = subprocess.run(args, check=True, capture_output=True, text=True)
+                if result.stdout:
+                    print(result.stdout)
+                if result.stderr:
+                    print(result.stderr, file=sys.stderr)
+            
             filedata: str = ui_target.read_text(encoding="utf-8")
             new_filedata: str = filedata.replace(f"from {qt_version}", "from qtpy").replace(f"import {qt_version}", "import qtpy")
             if filedata != new_filedata:
@@ -125,9 +166,45 @@ def compile_qrc(
         # qrc_source and qrc_target are already resolved, but ensure they're absolute for the command
         qrc_source_abs = qrc_source.resolve()
         qrc_target_abs = qrc_target.resolve()
-        command: str = f'{rc_compiler} "{qrc_source_abs}" -o "{qrc_target_abs}"'
-        os.system(command)  # noqa: S605
-        print(command)
+        
+        # Use subprocess instead of os.system for better path handling on Windows
+        compiler_path = shutil.which(rc_compiler)
+        if compiler_path is None:
+            # Fallback: try running as Python module
+            if qt_version == "PyQt5":
+                module_name = "PyQt5.pyrcc_main"
+            elif qt_version == "PyQt6":
+                module_name = "PySide6.rcc"
+            elif qt_version == "PySide2":
+                module_name = "PySide2.rcc"
+            elif qt_version == "PySide6":
+                module_name = "PySide6.rcc"
+            else:
+                raise RuntimeError(f"Unknown Qt version: {qt_version}")
+            
+            args = [
+                sys.executable,
+                "-m",
+                module_name,
+                str(qrc_source_abs),
+                "-o",
+                str(qrc_target_abs),
+            ]
+            print(f"Running: {' '.join(args)}")
+            result = subprocess.run(args, check=True, capture_output=True, text=True)
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+        else:
+            args = [compiler_path, str(qrc_source_abs), "-o", str(qrc_target_abs)]
+            print(f"Running: {' '.join(args)}")
+            result = subprocess.run(args, check=True, capture_output=True, text=True)
+            if result.stdout:
+                print(result.stdout)
+            if result.stderr:
+                print(result.stderr, file=sys.stderr)
+        
         filedata: str = qrc_target.read_text(encoding="utf-8")
         new_filedata: str = filedata.replace(f"from {qt_version}", "from qtpy").replace(f"import {qt_version}", "import qtpy")
         if filedata != new_filedata:
