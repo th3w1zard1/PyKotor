@@ -285,7 +285,7 @@ def _perform_final_prototyping(context: DecompilationContext):
 
     # Iterative refinement passes
     max_iterations = 1000
-    for iteration in range(max_iterations):
+    for _ in range(max_iterations):
         all_done = context.subroutine_data.count_subs_done() == context.subroutine_data.num_subs()
 
         if all_done:
