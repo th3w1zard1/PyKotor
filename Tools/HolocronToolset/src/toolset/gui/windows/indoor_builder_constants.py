@@ -21,11 +21,12 @@ DEFAULT_CAMERA_POSITION_Y: Final[float] = 0.0
 DEFAULT_CAMERA_ROTATION: Final[float] = 0.0
 DEFAULT_CAMERA_ZOOM: Final[float] = 1.0
 MIN_CAMERA_ZOOM: Final[float] = 0.1
-MAX_CAMERA_ZOOM: Final[float] = 10.0
+MAX_CAMERA_ZOOM: Final[float] = 50.0  # Increased to allow much closer zoom
 
 # Zoom controls
-ZOOM_STEP: Final[float] = 0.2
-ZOOM_WHEEL_SENSITIVITY: Final[float] = 50.0
+# Use multiplicative factor for linear visual zoom (each step changes by the same percentage)
+ZOOM_STEP_FACTOR: Final[float] = 1.15  # 15% zoom change per keyboard step (linear visual change)
+ZOOM_WHEEL_SENSITIVITY: Final[float] = 0.03  # Percentage change per wheel click (3% per click for finer control)
 
 # =============================================================================
 # Snapping Constants

@@ -124,7 +124,7 @@ from toolset.gui.windows.indoor_builder_constants import (
     WARP_POINT_PEN_WIDTH_ACTIVE,
     WARP_POINT_PEN_WIDTH_NORMAL,
     WARP_POINT_RADIUS,
-    ZOOM_STEP,
+    ZOOM_STEP_FACTOR,
     ZOOM_WHEEL_SENSITIVITY,
     DragMode,
 )
@@ -631,8 +631,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.actionDeselectAll.triggered.connect(self.deselect_all)
 
         # View menu
-        self.ui.actionZoomIn.triggered.connect(lambda: self.ui.mapRenderer.zoom_in_camera(ZOOM_STEP))
-        self.ui.actionZoomOut.triggered.connect(lambda: self.ui.mapRenderer.zoom_in_camera(-ZOOM_STEP))
+        self.ui.actionZoomIn.triggered.connect(lambda: self.ui.mapRenderer.zoom_in_camera(ZOOM_STEP_FACTOR))
+        self.ui.actionZoomOut.triggered.connect(lambda: self.ui.mapRenderer.zoom_in_camera(1.0 / ZOOM_STEP_FACTOR))
         self.ui.actionResetView.triggered.connect(self.reset_view)
         self.ui.actionCenterOnSelection.triggered.connect(self.center_on_selection)
 
@@ -2183,7 +2183,14 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         keys: set[int | Qt.Key],
     ):
         if Qt.Key.Key_Control in keys:
-            self.ui.mapRenderer.zoom_in_camera(delta.y / ZOOM_WHEEL_SENSITIVITY)
+            # Use multiplicative zoom for linear visual zoom
+            # Normalize delta.y by typical wheel click (120) to get number of clicks
+            # Apply consistent percentage change per click
+            # Positive delta.y means scrolling up (zoom in), negative means scrolling down (zoom out)
+            clicks = delta.y / 120.0  # Normalize to number of wheel clicks
+            # Calculate zoom factor: 1.0 + sensitivity for zoom in, 1.0 - sensitivity for zoom out
+            zoom_factor = (1.0 + ZOOM_WHEEL_SENSITIVITY) ** clicks
+            self.ui.mapRenderer.zoom_in_camera(zoom_factor)
             return
 
         # When dragging existing rooms, allow scroll-wheel rotation just like placement mode.
@@ -3131,8 +3138,13 @@ class IndoorMapRenderer(QWidget):
         self._cam_scale = max(MIN_CAMERA_ZOOM, min(zoom, MAX_CAMERA_ZOOM))
         self.mark_dirty()
 
-    def zoom_in_camera(self, zoom: float):
-        self.set_camera_zoom(self._cam_scale + zoom)
+    def zoom_in_camera(self, zoom_factor: float):
+        """Zoom camera by a multiplicative factor for linear visual zoom.
+        
+        Args:
+            zoom_factor: Multiplier for zoom (e.g., 1.15 to zoom in 15%, 0.869 to zoom out 15%)
+        """
+        self.set_camera_zoom(self._cam_scale * zoom_factor)
 
     def camera_position(self) -> Vector2:
         return Vector2(*self._cam_position)
