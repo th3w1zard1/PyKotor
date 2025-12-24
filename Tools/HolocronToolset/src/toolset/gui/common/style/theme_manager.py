@@ -303,7 +303,14 @@ class ThemeManager:
             },
             "fusion (light)": {
                 "style": "Fusion",
-                "palette": None,
+                "palette": lambda: self.create_palette(
+                    QColor(240, 240, 240),   # primary - button/base (light gray)
+                    QColor(255, 255, 255),   # secondary - window background (white)
+                    QColor(30, 30, 30),      # text - dark text on light background
+                    QColor(250, 250, 250),   # tooltip base - light gray
+                    QColor(0, 120, 212),     # highlight - blue accent
+                    QColor(0, 0, 0),         # bright text - black for light theme
+                ),
                 "sheet": "",
             },
             "fusion (dark)": {
@@ -2936,10 +2943,15 @@ class ThemeManager:
 
             # Determine effective style:
             # - Empty string ("") means use native/system default (self.original_style)
+            #   EXCEPT for fusion (light) theme which should use Fusion style
             # - None means use theme's default style from config
             # - Non-empty string means use that specific style
             if style_name == "":
-                effective_style = self.original_style
+                # For fusion (light), default to Fusion style instead of native
+                if theme_name.lower() == "fusion (light)":
+                    effective_style = "Fusion"
+                else:
+                    effective_style = self.original_style
             elif style_name:
                 effective_style = style_name
             else:

@@ -183,12 +183,6 @@ class ThemeSelectorDialog(QDialog):
         
         # Check selected theme
         item.setCheckState(Qt.CheckState.Checked)
-        
-        # Uncheck all styles when theme is selected
-        for i in range(self._styles_list.count()):
-            list_item = self._styles_list.item(i)
-            if list_item:
-                list_item.setCheckState(Qt.CheckState.Unchecked)
     
     def _on_style_selected(self, item: QListWidgetItem):
         """Handle style selection."""
@@ -200,12 +194,6 @@ class ThemeSelectorDialog(QDialog):
         
         # Check selected style
         item.setCheckState(Qt.CheckState.Checked)
-        
-        # Uncheck all themes when style is selected
-        for i in range(self._themes_list.count()):
-            list_item = self._themes_list.item(i)
-            if list_item:
-                list_item.setCheckState(Qt.CheckState.Unchecked)
     
     def _on_theme_double_clicked(self, item: QListWidgetItem):
         """Handle theme double-click - apply immediately."""
@@ -218,22 +206,30 @@ class ThemeSelectorDialog(QDialog):
         self._apply_selection()
     
     def _apply_selection(self):
-        """Apply the selected theme or style."""
+        """Apply the selected theme and/or style."""
         # Check for selected theme
+        selected_theme = None
         for i in range(self._themes_list.count()):
             item = self._themes_list.item(i)
             if item and item.checkState() == Qt.CheckState.Checked:
-                theme_name = item.text()
-                self.theme_changed.emit(theme_name)
-                return
+                selected_theme = item.text()
+                break
         
         # Check for selected style
+        selected_style = None
         for i in range(self._styles_list.count()):
             item = self._styles_list.item(i)
             if item and item.checkState() == Qt.CheckState.Checked:
-                style_name = item.data(Qt.ItemDataRole.UserRole) or ""
-                self.style_changed.emit(style_name)
-                return
+                selected_style = item.data(Qt.ItemDataRole.UserRole) or ""
+                break
+        
+        # Apply theme if selected
+        if selected_theme:
+            self.theme_changed.emit(selected_theme)
+        
+        # Apply style if selected
+        if selected_style is not None:
+            self.style_changed.emit(selected_style)
     
     def update_current_selection(self, theme_name: str | None = None, style_name: str | None = None):
         """Update the current selection in the dialog."""
