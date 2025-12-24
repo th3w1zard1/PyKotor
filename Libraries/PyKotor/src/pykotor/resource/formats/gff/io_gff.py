@@ -76,13 +76,15 @@ class GFFBinaryReader(ResourceReader):
         # NOTE: Only V3.2 supported. xoreos-tools supports V3.2, V3.3, V4.0, V4.1
         # vendor/xoreos-tools/src/xml/gffdumper.cpp:100-103
         #
-        # REVERSE ENGINEERING FINDINGS:
-        # The KOTOR engine's CResGFF::CreateGFFFile function accepts a version string parameter
-        # and writes it directly to the file header. This suggests the engine natively supports
-        # multiple GFF versions. The CreateGFFFile function calls:
-        # - CExoString::operator[] to extract version bytes
-        # - *(uint *)this->header->file_version = CONCAT31(CONCAT21(CONCAT11(cVar1,cVar2),cVar3),cVar4)
-        # This indicates little-endian storage of version string as 4 bytes.
+        # REVERSE ENGINEERING FINDINGS (swkotor.exe:0x00411260):
+        # The KOTOR engine's CResGFF::CreateGFFFile function does NOT accept a version parameter.
+        # Instead, it uses a hardcoded global variable GFFVersion (0x0073e2c8) containing "V3.2".
+        # The function copies this hardcoded version to the file header using:
+        # - CExoString::CExoString(&local_14, GFFVersion_ptr);  // Copy "V3.2" string
+        # - CExoString::operator[] to extract individual bytes [3],[2],[1],[0]
+        # - *(uint *)this->header->file_version = CONCAT31(CONCAT21(CONCAT11(cVar1,cVar2),cVar3),cVar4);
+        # This indicates little-endian storage of the hardcoded "V3.2" version as 4 bytes.
+        # The engine appears hardcoded to only create V3.2 GFF files.
         if file_version != "V3.2":
             msg = "The GFF version of the file is unsupported."
             raise ValueError(msg)

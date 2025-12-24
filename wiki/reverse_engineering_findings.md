@@ -96,15 +96,16 @@ struct CResGFF {
 };
 ```
 
-**GFF Creation Process (from CreateGFFFile):**
-1. Takes file type string and version string parameters
-2. Writes 4-byte file type (little-endian) to header
-3. Writes 4-byte version (little-endian) to header
-4. Creates root struct with `AddStruct(0xffffffff)`
-5. Initializes all data structures for writing
+**GFF Creation Process (from CreateGFFFile at 0x00411260):**
+1. Takes file type string parameter (param_3)
+2. Uses hardcoded global GFFVersion variable (0x0073e2c8) containing "V3.2" for version
+3. Writes 4-byte file type (little-endian) to header using param_3 bytes
+4. Writes hardcoded 4-byte version "V3.2" (little-endian) to header from global variable
+5. Creates root struct with `AddStruct(this, 0xffffffff)`
+6. Initializes all data structures for writing
 
 **GFF Version Support:**
-The engine's `CreateGFFFile` function accepts version strings dynamically, suggesting native support for multiple GFF versions beyond V3.2. The function stores version strings directly in the file header without validation, indicating the engine can handle V3.3, V4.0, and V4.1 as mentioned in xoreos-tools documentation.
+The engine's `CreateGFFFile` function is hardcoded to only create V3.2 GFF files. It does not accept version parameters - instead uses a global GFFVersion variable containing "V3.2". The xoreos-tools support for V3.3, V4.0, and V4.1 suggests these formats may be supported for reading but not writing by the original engine.
 
 **Key Functions:**
 - `CResRef::CopyToString()`: Converts ResRef to string
