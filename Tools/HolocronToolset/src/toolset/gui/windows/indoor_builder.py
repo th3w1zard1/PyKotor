@@ -904,8 +904,15 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if sel_rooms:
             # Show the most recently selected room (last in list)
             most_recent_room = sel_rooms[-1]
-            if hasattr(most_recent_room, "component") and hasattr(most_recent_room.component, "image"):
-                self._set_preview_image(most_recent_room.component.image)
+            if hasattr(most_recent_room, "component"):
+                # Use getattr to safely access image attribute
+                component_image = getattr(most_recent_room.component, "image", None)
+                if component_image is not None:
+                    self._set_preview_image(component_image)
+                else:
+                    self._set_preview_image(None)
+            else:
+                self._set_preview_image(None)
         else:
             # No rooms selected, clear preview (unless dragging)
             self._set_preview_image(None)
