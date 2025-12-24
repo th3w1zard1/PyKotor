@@ -794,7 +794,7 @@ class TreeSettings:
         self,
         settings_name: str = "RobustTreeView",
     ):
-        org_name = get_qsettings_organization("HolocronToolsetV3")
+        org_name = get_qsettings_organization("HolocronToolsetV4")
         self.robust_tree_settings: QSettings = QSettings(org_name, "RobustTreeView")
         self.settings: QSettings = self.robust_tree_settings if settings_name == "RobustTreeView" else QSettings(org_name, settings_name)
 

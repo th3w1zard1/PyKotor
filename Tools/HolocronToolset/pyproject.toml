@@ -32,7 +32,7 @@ dependencies = [
   "Markdown>=3.4.4,<3.9; python_version<\"3.9\"",
   "Markdown>=3.4.4; python_version>=\"3.9\"",
   "numpy>=1.19.0,<1.25.0; python_version<\"3.9\"",
-  "numpy>=1.19.0,<2; python_version>=\"3.9\"",
+  "numpy>=1.19.0; python_version>=\"3.9\"",
   "PyQt6>=6.6.1,<6.10.1; python_version==\"3.8\"",
   "PyQt6>=6.10.1; python_version>=\"3.9\"",
   "PyQt6-Qt6>=6.6.1,<6.10.1; python_version==\"3.8\"",

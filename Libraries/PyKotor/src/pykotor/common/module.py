@@ -747,7 +747,7 @@ class Module:  # noqa: PLR0904
             # No idea why static types aren't working here as that's the whole point of the TypedDict...
             typed_capsule: ModulePieceResource = cast("ModulePieceResource", capsule)
             for resource in typed_capsule:
-                RobustLogger().info("Adding location '%s' for resource '%s' from erf/rim '%s'", typed_capsule.filepath(), resource.identifier(), typed_capsule.identifier())
+                #RobustLogger().debug("Adding location '%s' for resource '%s' from erf/rim '%s'", typed_capsule.filepath(), resource.identifier(), typed_capsule.identifier())
                 self.add_locations(resource.resname(), resource.restype(), [typed_capsule.filepath()])
 
         # Any resource referenced by the GIT/LYT/VIS not present in the module files

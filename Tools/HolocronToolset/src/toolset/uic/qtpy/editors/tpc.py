@@ -390,5 +390,5 @@ class Ui_MainWindow(object):
         self.actionPaste.setText(_translate("MainWindow", "&Paste"))
         self.actionPaste.setToolTip(_translate("MainWindow", "Paste texture from clipboard (Ctrl+V)"))
         self.actionPaste.setShortcut(_translate("MainWindow", "Ctrl+V"))
-        self.actionToggleProperties.setText(_translate("MainWindow", "Toggle &amp;Properties"))
+        self.actionToggleProperties.setText(_translate("MainWindow", "Toggle &Properties"))
         self.actionToggleProperties.setToolTip(_translate("MainWindow", "Show/hide properties panel"))

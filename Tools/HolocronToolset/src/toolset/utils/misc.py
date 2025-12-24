@@ -122,11 +122,11 @@ def get_qsettings_organization(organization: str) -> str:
     
     Args:
     ----
-        organization: Base organization name (e.g., "HolocronToolsetV3")
+        organization: Base organization name (e.g., "HolocronToolsetV4")
     
     Returns:
     -------
-        Organization name with Qt API suffix (e.g., "HolocronToolsetV3_PyQt6")
+        Organization name with Qt API suffix (e.g., "HolocronToolsetV4_PyQt6")
     """
     # Get the Qt API name from qtpy or environment variable
     try:

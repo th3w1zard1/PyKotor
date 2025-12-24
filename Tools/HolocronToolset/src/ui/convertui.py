@@ -65,12 +65,14 @@ def get_available_qt_version() -> Literal["PyQt5", "PyQt6", "PySide6", "PySide2"
                     __import__(mapped_version.replace("Side", ""))
                 print(f"Using Qt version from QT_API environment variable: {mapped_version}")
                 return mapped_version  # pyright: ignore[reportReturnType]
-            except ImportError as e:
+            except ImportError as e:  # noqa: F841
+                # If the specified version isn't available, fall through to auto-detection
+                pass
                 # If the specified version isn't available, raise an error
-                raise RuntimeError(
-                    f"QT_API environment variable is set to '{qt_api_env}' (mapped to '{mapped_version}'), "
-                    f"but {mapped_version} cannot be imported. Please install it or unset QT_API."
-                ) from e
+                #raise RuntimeError(
+                #    f"QT_API environment variable is set to '{qt_api_env}' (mapped to '{mapped_version}'), "
+                #    f"but {mapped_version} cannot be imported. Please install it or unset QT_API."
+                #) from e
         else:
             print(f"Warning: QT_API='{qt_api_env}' is not a recognized value. Valid values: pyqt5, pyqt6, pyside6, pyside2. Falling back to auto-detection.")
     
@@ -272,6 +274,6 @@ def compile_qrc(
 
 if __name__ == "__main__":
     qt_version = get_available_qt_version()
-    compile_ui(qt_version, ignore_timestamp=True, debug=True)
+    compile_ui(qt_version, ignore_timestamp=False, debug=False)
     compile_qrc(qt_version, ignore_timestamp=False)
     print("All ui compilations completed in", TOOLSET_DIR)

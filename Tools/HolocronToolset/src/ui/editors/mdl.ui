@@ -84,7 +84,7 @@
  <customwidgets>
   <customwidget>
    <class>ModelRenderer</class>
-   <extends>QWidget</extends>
+   <extends>QOpenGLWidget</extends>
    <header location="global">toolset.gui.widgets.renderer.model</header>
   </customwidget>
  </customwidgets>

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from utility.common.more_collections import CaseInsensitiveDict
 
@@ -106,7 +106,7 @@ class KitComponent:
         self.mdl: bytes = mdl
         self.mdx: bytes = mdx
     
-    def __deepcopy__(self, memo: dict) -> KitComponent:
+    def __deepcopy__(self, memo: dict[int, Any]) -> KitComponent:
         """Custom deep copy implementation that handles QImage properly.
         
         QImage objects cannot be pickled, so we need to manually copy them
@@ -124,7 +124,7 @@ class KitComponent:
         new_component = KitComponent(
             self.kit,  # Keep reference to same kit (don't deep copy)
             self.name,  # String is immutable, can share
-            image_copy,
+            image_copy if image_copy is not None else QImage(),
             bwm_copy,
             self.mdl,  # bytes are immutable, can share
             self.mdx,  # bytes are immutable, can share

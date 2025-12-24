@@ -97,27 +97,10 @@ Installing from source is not strictly necessary, you can grab from PyPI using p
 ```bash
 git clone https://github.com/th3w1zard1/PyKotor.git
 cd PyKotor
-```
-
-#### Using uv
-
-```shell
-uv sync
-uv tool run holocrontoolset
-uv tool run holopatcher
-uv tool run kotorcli --help
-uv tool run kotordiff --help
-```
-
-#### bare Python (without uv)
-
-```bash
-git clone https://github.com/th3w1zard1/PyKotor.git
-cd PyKotor
 python -m venv .venv
 
 # Windows
-.venv\Scripts\activate
+.venv\Scripts\Activate.ps1
 
 # macOS/Linux
 source .venv/bin/activate
@@ -126,6 +109,7 @@ pip install -e "Libraries/PyKotor[all]"
 pip install -e "Tools/HolocronToolset"
 pip install -e "Tools/HoloPatcher"
 pip install -e "Tools/KotorCLI"
+pip install -e "Tools/KotorDiff"
 ```
 
 #### Running Tools
@@ -138,8 +122,21 @@ Run the latest version directly from PyPI without installing:
 
 **Windows (PowerShell):**
 
+- Toolset example
+
 ```powershell
 powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"; uvx holocrontoolset
+```'
+
+- HoloPatcher v1.5.2 example
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"; uvx holopatcher@1.5.2
+```
+
+- KotorCLI example
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"; uvx kotorcli --help
 ```
 
 **macOS/Linux:**
@@ -155,9 +152,20 @@ curl -LsSf https://astral.sh/uv/install.sh | sh && uvx holocrontoolset
 **From source (development mode):**
 
 ```bash
+# after installing in development mode with --with-editable
+uv run holocrontoolset
+
+# otherwise, run as a module
 uv --directory="Tools/HolocronToolset/src" run --module toolset
+
+# after installing in development mode with --with-editable
+uv run holopatcher
+# otherwise, run as a module
 uv --directory="Tools/HoloPatcher/src" run --module holopatcher
-uv --directory="Tools/KotorCLI/src" run --module kotorcli --help
+
+# after installing in development mode with --with-editable
+uv run kotordiff --help
+# otherwise, run as a module
 uv --directory="Tools/KotorDiff/src" run --module kotordiff --help
 ```
 

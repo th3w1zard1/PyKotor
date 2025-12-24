@@ -162,7 +162,7 @@ class Settings:
         self,
         scope: str,
     ):
-        self.settings: QSettings = QSettings(get_qsettings_organization("HolocronToolsetV3"), scope)
+        self.settings: QSettings = QSettings(get_qsettings_organization("HolocronToolsetV4"), scope)
 
     @staticmethod
     def addSetting(
