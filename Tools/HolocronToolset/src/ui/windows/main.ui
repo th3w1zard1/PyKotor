@@ -118,11 +118,35 @@
                   </attribute>
                   <layout class="QVBoxLayout" name="verticalLayoutModulesTab">
                     <item>
-                      <widget class="QPushButton" name="specialActionButton">
-                        <property name="text">
-                          <string>Designer</string>
-                        </property>
-                      </widget>
+                      <layout class="QHBoxLayout" name="horizontalLayoutModuleButtons">
+                        <item>
+                          <widget class="QPushButton" name="specialActionButton">
+                            <property name="text">
+                              <string>Designer</string>
+                            </property>
+                          </widget>
+                        </item>
+                        <item>
+                          <widget class="QPushButton" name="levelBuilderButton">
+                            <property name="text">
+                              <string>Level Builder</string>
+                            </property>
+                          </widget>
+                        </item>
+                        <item>
+                          <spacer name="horizontalSpacerModuleButtons">
+                            <property name="orientation">
+                              <enum>Qt::Horizontal</enum>
+                            </property>
+                            <property name="sizeHint" stdset="0">
+                              <size>
+                                <width>40</width>
+                                <height>20</height>
+                              </size>
+                            </property>
+                          </spacer>
+                        </item>
+                      </layout>
                     </item>
                     <item>
                       <layout class="QGridLayout" name="gridLayoutModules">

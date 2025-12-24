@@ -467,15 +467,18 @@ class ToolWindow(QMainWindow):
         modules_section_combo: QComboBox = modules_resource_list.sectionCombo  # type: ignore[attr-defined]
         refresh_button: QPushButton = modules_resource_list.refreshButton  # type: ignore[attr-defined]
         designer_button: QPushButton = self.ui.specialActionButton  # type: ignore[attr-defined]
+        level_builder_button: QPushButton = self.ui.levelBuilderButton  # type: ignore[attr-defined]
         modules_resource_list.horizontalLayout_2.removeWidget(modules_section_combo)  # type: ignore[arg-type]
         modules_resource_list.horizontalLayout_2.removeWidget(refresh_button)  # type: ignore[arg-type]
         modules_resource_list.verticalLayout.removeItem(modules_resource_list.horizontalLayout_2)  # type: ignore[arg-type]
         refresh_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)  # type: ignore[arg-type]
         designer_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)  # type: ignore[arg-type]
+        level_builder_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)  # type: ignore[arg-type]
         stack_button_layout = QVBoxLayout()
         stack_button_layout.setSpacing(1)
         stack_button_layout.addWidget(refresh_button)  # type: ignore[arg-type]
         stack_button_layout.addWidget(designer_button)  # type: ignore[arg-type]
+        stack_button_layout.addWidget(level_builder_button)  # type: ignore[arg-type]
         top_layout = QHBoxLayout()
         top_layout.addWidget(modules_section_combo)  # type: ignore[arg-type]
         top_layout.addLayout(stack_button_layout)
@@ -542,6 +545,23 @@ class ToolWindow(QMainWindow):
             add_window(designer_window)
 
         self.ui.specialActionButton.clicked.connect(open_module_designer)
+
+        def open_indoor_map_builder_with_module(*args) -> IndoorMapBuilder | None:
+            """Open the Indoor Map Builder with the selected module."""
+            assert self.active is not None
+            module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
+            module_path: Path | None = None
+            if module_data:
+                module_path = self.active.module_path() / Path(str(module_data))
+            builder = IndoorMapBuilder(None, self.active)
+            builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            builder.show()
+            builder.activateWindow()
+            add_window(builder)
+            # TODO: If needed, select the module in the builder's module combobox
+            # This would require adding a method to IndoorMapBuilder to set the selected module
+            
+        self.ui.levelBuilderButton.clicked.connect(open_indoor_map_builder_with_module)
 
         self.ui.overrideWidget.sig_section_changed.connect(self.on_override_changed)
         self.ui.overrideWidget.sig_request_reload.connect(self.on_override_reload)
