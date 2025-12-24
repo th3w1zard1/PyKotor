@@ -709,6 +709,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # Update action enabled states
         self._undo_stack.canUndoChanged.connect(self.ui.actionUndo.setEnabled)
         self._undo_stack.canRedoChanged.connect(self.ui.actionRedo.setEnabled)
+        self._undo_stack.cleanChanged.connect(self._refresh_window_title)  # Update title when clean state changes
 
         # Update action text with command names
         self._undo_stack.undoTextChanged.connect(lambda text: self.ui.actionUndo.setText(f"Undo {text}" if text else "Undo"))
@@ -977,8 +978,9 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         else:
             title = trf("{path} - {name} - Indoor Map Builder", path=self._filepath, name=self._installation.name)
 
-        # Add asterisk if there are unsaved changes
-        if self._undo_stack.canUndo():
+        # Add asterisk if there are unsaved changes (use isClean() instead of canUndo())
+        # isClean() tracks whether the document matches the saved state
+        if not self._undo_stack.isClean():
             title = "* " + title
         self.setWindowTitle(title)
 
@@ -1470,7 +1472,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._refresh_window_title()
 
     def new(self):
-        if self._undo_stack.canUndo():
+        if not self._undo_stack.isClean():
             result = QMessageBox.question(
                 self,
                 "Unsaved Changes",
@@ -1486,10 +1488,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._map.reset()
         self.ui.mapRenderer._cached_walkmeshes.clear()
         self._undo_stack.clear()
+        self._undo_stack.setClean()  # Mark as clean for new file
         self._refresh_window_title()
 
     def open(self):
-        if self._undo_stack.canUndo():
+        if not self._undo_stack.isClean():
             result = QMessageBox.question(
                 self,
                 "Unsaved Changes",
@@ -1509,6 +1512,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 self.ui.mapRenderer._cached_walkmeshes.clear()
                 self._filepath = filepath
                 self._undo_stack.clear()
+                self._undo_stack.setClean()  # Mark as clean after loading
                 self._refresh_window_title()
 
                 if missing_rooms:
