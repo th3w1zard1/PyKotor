@@ -85,7 +85,10 @@ def compile_ui(
 
         # Only recompile if source file is newer than the existing target file or ignore_timestamp is set to True
         if source_timestamp > target_timestamp or ignore_timestamp:
-            command = f'{ui_compiler} "{ui_file}" -o "{ui_target}"'
+            # Resolve paths to absolute to avoid "Failed to canonicalize script path" errors
+            ui_file_abs = ui_file.resolve()
+            ui_target_abs = ui_target.resolve()
+            command = f'{ui_compiler} "{ui_file_abs}" -o "{ui_target_abs}"'
             if debug:
                 command += " -d"
             print(command)
@@ -119,7 +122,10 @@ def compile_qrc(
             "PySide2": "pyside2-rcc",
             "PySide6": "pyside6-rcc",
         }[qt_version]
-        command: str = f'{rc_compiler} "{qrc_source}" -o "{qrc_target}"'
+        # qrc_source and qrc_target are already resolved, but ensure they're absolute for the command
+        qrc_source_abs = qrc_source.resolve()
+        qrc_target_abs = qrc_target.resolve()
+        command: str = f'{rc_compiler} "{qrc_source_abs}" -o "{qrc_target_abs}"'
         os.system(command)  # noqa: S605
         print(command)
         filedata: str = qrc_target.read_text(encoding="utf-8")
