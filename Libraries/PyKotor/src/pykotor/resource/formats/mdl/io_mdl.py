@@ -57,7 +57,7 @@ class _ModelHeader:
         self.anim_scale: float = 0.0
         self.supermodel: str = ""
         self.offset_to_super_root: int = 0
-        self.unknown3: int = 0  # TODO: what is this?
+        self.unknown3: int = 0  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
         self.mdx_size: int = 0
         self.mdx_offset: int = 0
         self.offset_to_name_offsets: int = 0
@@ -84,7 +84,7 @@ class _ModelHeader:
         self.anim_scale = reader.read_single()
         self.supermodel = reader.read_terminated_string("\0", 32)
         self.offset_to_super_root = reader.read_uint32()
-        self.unknown3 = reader.read_uint32()  # TODO: what is this?
+        self.unknown3 = reader.read_uint32()  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
         self.mdx_size = reader.read_uint32()
         self.mdx_offset = reader.read_uint32()
         self.offset_to_name_offsets = reader.read_uint32()
@@ -112,7 +112,7 @@ class _ModelHeader:
         writer.write_single(self.anim_scale)
         writer.write_string(self.supermodel, string_length=32, encoding="ascii", errors="ignore")
         writer.write_uint32(self.offset_to_super_root)
-        writer.write_uint32(self.unknown3)
+        writer.write_uint32(self.unknown3)  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
         writer.write_uint32(self.mdx_size)
         writer.write_uint32(self.mdx_offset)
         writer.write_uint32(self.offset_to_name_offsets)

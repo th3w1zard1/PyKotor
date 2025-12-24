@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
 
-from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstructionType
+from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstruction, NCSInstructionType
 
 if TYPE_CHECKING:
     pass
@@ -143,7 +143,7 @@ def _validate_execution_safety(ncs: NCS, issues: list[str]) -> None:
         issues.append(f"Script is unusually long ({len(instructions)} instructions)")
 
     # Check for excessive consecutive NOP-like operations
-    consecutive_noops = 0
+    consecutive_noops: int = 0
     for instr in instructions:
         if instr.ins_type in (NCSInstructionType.NOP,):  # Add other no-op instructions as identified
             consecutive_noops += 1

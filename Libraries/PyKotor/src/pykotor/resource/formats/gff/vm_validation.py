@@ -14,12 +14,12 @@ Key findings from reverse engineering:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterator
 
 from loggerplus import RobustLogger
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.gff.gff_data import GFF
+    from pykotor.resource.formats.gff.gff_data import GFF, GFFStruct
 
 logger: RobustLogger = RobustLogger()
 
@@ -38,7 +38,7 @@ def validate_gff_for_engine(gff: GFF) -> None:
     ------
         ValueError: If validation fails with details about the issue
     """
-    issues = []
+    issues: list[str] = []
 
     # Validate struct hierarchy
     _validate_struct_hierarchy(gff, issues)
@@ -60,22 +60,21 @@ def validate_gff_for_engine(gff: GFF) -> None:
 def _validate_struct_hierarchy(gff: GFF, issues: list[str]) -> None:
     """Validate the struct hierarchy for engine compatibility."""
     # Check for excessively deep nesting (based on engine limitations)
-    max_depth = _calculate_max_struct_depth(gff.root)
+    max_depth: int = _calculate_max_struct_depth(gff.root)
     if max_depth > 10:  # Conservative limit based on typical GFF complexity
         issues.append(f"Struct hierarchy is unusually deep (max depth: {max_depth})")
 
     # Validate struct IDs are reasonable
-    struct_ids = set()
-    def collect_struct_ids(struct):
+    struct_ids: set[int] = set()
+    def collect_struct_ids(struct: GFFStruct) -> None:
         if struct.struct_id in struct_ids:
             issues.append(f"Duplicate struct ID: {struct.struct_id}")
         else:
             struct_ids.add(struct.struct_id)
-        for child in struct:
-            if hasattr(child, 'value') and hasattr(child.value, '__iter__'):
-                for item in child.value:
-                    if hasattr(item, 'struct_id'):
-                        collect_struct_ids(item)
+        for _field_type, _field_label, child in struct:
+            if not isinstance(child, GFFStruct):
+                continue
+            collect_struct_ids(child)
 
     collect_struct_ids(gff.root)
 
@@ -84,7 +83,7 @@ def _validate_field_data_integrity(gff: GFF, issues: list[str]) -> None:
     """Validate field data integrity."""
     # Check for empty or invalid field names
     for struct in _iterate_all_structs(gff.root):
-        for label, field_type, value in struct:
+        for label, _, _ in struct:
             if not label or len(label.strip()) == 0:
                 issues.append(f"Struct {struct.struct_id} has field with empty label")
 
@@ -95,10 +94,10 @@ def _validate_field_data_integrity(gff: GFF, issues: list[str]) -> None:
 
 def _validate_label_constraints(gff: GFF, issues: list[str]) -> None:
     """Validate label constraints based on engine requirements."""
-    labels_seen = set()
+    labels_seen: set[str] = set()
 
     for struct in _iterate_all_structs(gff.root):
-        for label, field_type, value in struct:
+        for label, _, _ in struct:
             label_bytes = label.encode('utf-8')
 
             # Engine uses 16-byte labels
@@ -118,7 +117,7 @@ def _validate_label_constraints(gff: GFF, issues: list[str]) -> None:
 
 def _validate_performance_constraints(gff: GFF, issues: list[str]) -> None:
     """Validate for potential performance issues."""
-    total_structs = sum(1 for _ in _iterate_all_structs(gff.root))
+    total_structs: int = sum(1 for _ in _iterate_all_structs(gff.root))
     total_fields = sum(len(list(struct)) for struct in _iterate_all_structs(gff.root))
 
     # Check for files that might be too large for efficient loading
@@ -140,23 +139,26 @@ def _calculate_max_struct_depth(struct) -> int:
     if not hasattr(struct, '__iter__'):
         return 0
 
-    max_child_depth = 0
-    for field in struct:
-        if hasattr(field, 'value') and hasattr(field.value, '__iter__'):
-            for item in field.value:
-                if hasattr(item, 'struct_id'):  # It's a struct
-                    child_depth = _calculate_max_struct_depth(item)
-                    max_child_depth = max(max_child_depth, child_depth)
+    max_child_depth: int = 0
+    for _field_type, _field_label, value in struct:
+        if hasattr(value, '__iter__'):
+            for item in value:
+                if not isinstance(item, GFFStruct):
+                    continue
+                child_depth: int = _calculate_max_struct_depth(item)
+                max_child_depth = max(max_child_depth, child_depth)  # noqa: PLW2901
 
     return max_child_depth + 1
 
 
-def _iterate_all_structs(root_struct):
+def _iterate_all_structs(root_struct: GFFStruct) -> Iterator[GFFStruct]:
     """Iterate through all structs in the GFF hierarchy."""
     yield root_struct
 
     for field in root_struct:
-        if hasattr(field, 'value') and hasattr(field.value, '__iter__'):
-            for item in field.value:
-                if hasattr(item, 'struct_id'):  # It's a struct
-                    yield from _iterate_all_structs(item)
+        if not isinstance(field[2], list):
+            continue
+        for item in field[2]:
+            if not isinstance(item, GFFStruct):
+                continue
+            yield from _iterate_all_structs(item)

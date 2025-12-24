@@ -455,8 +455,11 @@ class TestManipulate2DA(TestCase):
         memory = PatcherMemory()
         config = Modifications2DA("")
         config.modifiers.append(AddRow2DA("", "Col4", "2", {}))
-        # twoda = read_2da(config.apply(bytes_2da(twoda), memory))
-        # TODO
+        config.apply(twoda, memory, logger, Game.K1)
+
+        # Should have logged a warning because exclusive_column "Col4" is not in cells dict
+        assert len(logger.warnings) == 1
+        assert "Exclusive column Col4 does not exists" in logger.warnings[0].message
 
     def test_add_exclusive_none(self):
         twoda = TwoDA(["Col1", "Col2", "Col3"])

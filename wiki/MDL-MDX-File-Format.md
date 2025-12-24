@@ -527,13 +527,13 @@ The Reference header follows the [node](MDL-MDX-File-Format#node-structures) hea
 
 ## controllers
 
-### controller structure
+### `Controller` structure
 
-Each controller is 16 bytes in size and defines [animation](MDL-MDX-File-Format#animation-header) data for a [node](MDL-MDX-File-Format#node-structures) property over time. controllers reference shared keyframe/data arrays stored separately in the model.
+Each `Controller` is 16 bytes in size and defines [animation](MDL-MDX-File-Format#animation-header) data for a [node](MDL-MDX-File-Format#node-structures) property over time. `Controllers` reference shared keyframe/data arrays stored separately in the model.
 
 | Name              | type     | offset | Description                                                                                    |
 | ----------------- | -------- | ------ | ---------------------------------------------------------------------------------------------- |
-| type              | [uint32](GFF-File-Format#gff-data-types)   | 0 (0x0)     | controller type identifier (e.g., 8=position, 20=orientation, 36=scale).                       |
+| type              | [uint32](GFF-File-Format#gff-data-types)   | 0 (0x0)     | `Controller` type identifier (e.g., 8=position, 20=orientation, 36=scale).                       |
 | Unknown           | [uint16](GFF-File-Format#gff-data-types)   | 4 (0x4)     | Purpose unknown, typically `0xFFFF`.                                                           |
 | Row count         | [uint16](GFF-File-Format#gff-data-types)   | 6 (0x6)     | Number of keyframe rows (timepoints) for this controller.                                      |
 | Time index        | [uint16](GFF-File-Format#gff-data-types)   | 8 (0x8)     | index into [controller](MDL-MDX-File-Format#controllers) data array where time values begin.                                      |
