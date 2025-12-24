@@ -37,7 +37,6 @@ from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector3, Vector4
 from utility.common.misc_string.util import format_text
 from utility.error_handling import safe_repr  # pyright: ignore[reportMissingImports]
-from utility.string_util import format_text  # pyright: ignore[reportMissingImports]
 
 if TYPE_CHECKING:
     import os
@@ -46,6 +45,7 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 U = TypeVar("U")
+GFFStructType = TypeVar("GFFStructType", bound="GFFStruct")
 
 
 def format_diff(
@@ -445,7 +445,7 @@ class _GFFField:
         return self._value
 
 
-class GFFStruct(ComparableMixin):
+class GFFStruct(ComparableMixin, dict):
     """Stores a collection of GFFFields in a GFF tree node.
     
     GFFStruct represents a single structure (node) in the GFF tree hierarchy. Each struct
@@ -498,16 +498,63 @@ class GFFStruct(ComparableMixin):
         self,
         struct_id: int = 0,
     ):
+        # Initialize dict first
+        super().__init__()
+
         # vendor/TSLPatcher/lib/site/Bioware/GFF.pm:90 - 'ID'=>-1
         # vendor/Kotor.NET/Kotor.NET/Formats/KotorGFF/GFF.cs:74 - uint ID
         # User-defined struct type identifier (uint32 in binary)
         self.struct_id: int = struct_id
-        
+
         # vendor/TSLPatcher/lib/site/Bioware/GFF.pm:94 - Main struct
         # vendor/Kotor.NET/Kotor.NET/Formats/KotorGFF/GFF.cs:75 - List<GFFField> Fields
         # vendor/reone/include/reone/resource/gff.h:57 - std::unordered_map<std::string, Field>
         # Ordered dictionary of field labels to field instances
         self._fields: dict[str, _GFFField] = {}
+
+    def __getitem__(self, key: str) -> Any:
+        """Get field value by label, supporting both dict-style and existing API access."""
+        if isinstance(key, str):
+            return self._fields[key].value()
+        return NotImplemented
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Set field value by label. For backwards compatibility, this is not allowed directly."""
+        # For backwards compatibility, we don't allow direct dict-style setting
+        # Users should use the typed setter methods (set_string, set_int32, etc.)
+        raise TypeError("Cannot set GFF field values directly. Use typed setter methods like set_string(), set_int32(), etc.")
+
+    def __delitem__(self, key: str) -> None:
+        """Remove field by label."""
+        if isinstance(key, str):
+            if key in self._fields:
+                del self._fields[key]
+        else:
+            raise TypeError("GFFStruct keys must be strings")
+
+    def __contains__(self, key: object) -> bool:
+        """Check if field exists."""
+        return isinstance(key, str) and key in self._fields
+
+    def keys(self):
+        """Return field labels (dict compatibility)."""
+        return self._fields.keys()
+
+    def values(self):
+        """Return field values (dict compatibility)."""
+        for field in self._fields.values():
+            yield field.value()
+
+    def items(self):
+        """Return field label-value pairs (dict compatibility)."""
+        for label, field in self._fields.items():
+            yield label, field.value()
+
+    def get(self, key: str, default=None):
+        """Get field value with default (dict compatibility)."""
+        if key in self._fields:
+            return self._fields[key].value()
+        return default
 
     def __repr__(self) -> str:
         if not self._fields:
@@ -548,12 +595,6 @@ class GFFStruct(ComparableMixin):
 
         return "\n".join(lines)
 
-    def __len__(
-        self,
-    ) -> int:
-        """Returns the number of fields."""
-        return len(self._fields)
-
     def __iter__(
         self,
     ) -> Generator[tuple[str, GFFFieldType, Any], Any, None]:
@@ -569,13 +610,6 @@ class GFFStruct(ComparableMixin):
         cannot mutate `_fields` directly.
         """
         return [GFFFieldView(label or "", field.field_type(), field.value()) for label, field in self._fields.items()]
-
-    def __getitem__(
-        self,
-        item: str,
-    ) -> Any:
-        """Returns the value of the specified field."""
-        return self._fields[item].value() if isinstance(item, str) else NotImplemented
 
     def remove(
         self,
@@ -1726,7 +1760,7 @@ class GFFStruct(ComparableMixin):
         return results
 
 
-class GFFList(ComparableMixin):
+class GFFList(ComparableMixin, list[GFFStruct]):
     """A collection of GFFStructs."""
 
     COMPARABLE_SEQUENCE_FIELDS = ("_structs",)
@@ -1734,26 +1768,62 @@ class GFFList(ComparableMixin):
     def __init__(
         self,
     ):
+        # Initialize list first
+        super().__init__()
         self._structs: list[GFFStruct] = []
 
-    def __len__(
-        self,
-    ) -> int:
+    def __getitem__(self, index: int) -> GFFStruct:
+        """Returns the struct at the specified index."""
+        return self._structs[index]
+
+    def __setitem__(self, index: int, value: GFFStruct) -> None:
+        """Set struct at specified index."""
+        if not isinstance(value, GFFStruct):
+            raise TypeError("GFFList elements must be GFFStruct instances")
+        self._structs[index] = value
+
+    def __delitem__(self, index: int) -> None:
+        """Remove struct at specified index."""
+        del self._structs[index]
+
+    def __iter__(self):
+        """Iterate through structs."""
+        return iter(self._structs)
+
+    def __len__(self) -> int:
         """Returns the number of elements in _structs."""
         return len(self._structs)
 
-    def __iter__(
-        self,
-    ) -> Iterator[GFFStruct]:
-        """Iterates through _structs yielding each element."""
-        yield from self._structs
+    def append(self, struct: GFFStruct) -> None:
+        """Appends an existing struct to the list without creating a copy.
 
-    def __getitem__(
-        self,
-        item: int,
-    ) -> GFFStruct:
-        """Returns the struct at the specified index."""
-        return self._structs[item] if isinstance(item, int) else NotImplemented
+        Args:
+        ----
+            struct: The `GFFStruct` instance to append.
+
+        Raises:
+        ------
+            TypeError: If `struct` is not an instance of `GFFStruct`.
+        """
+        if not isinstance(struct, GFFStruct):
+            struct_type = type(struct)
+            RobustLogger().error(f"Failed to append struct; expected GFFStruct, received {struct_type!r}.")
+            msg = f"The struct must be a GFFStruct instance, got {struct_type!r} instead."
+            raise TypeError(msg)
+
+        self._structs.append(struct)
+        RobustLogger().debug(f"Appended Struct#{struct.struct_id} to GFFList; list_length={len(self._structs)}.")
+
+    def extend(self, other):
+        """Extend list with another iterable of GFFStructs."""
+        for item in other:
+            self.append(item)
+
+    def insert(self, index: int, struct: GFFStruct) -> None:
+        """Insert struct at specified index."""
+        if not isinstance(struct, GFFStruct):
+            raise TypeError("GFFList elements must be GFFStruct instances")
+        self._structs.insert(index, struct)
 
     def __repr__(self) -> str:
         """Returns a detailed string representation of the GFFList."""
@@ -1808,29 +1878,6 @@ class GFFList(ComparableMixin):
         new_struct = GFFStruct(struct_id)
         self._structs.append(new_struct)
         return new_struct
-
-    def append(
-        self,
-        struct: GFFStruct,
-    ) -> None:
-        """Appends an existing struct to the list without creating a copy.
-
-        Args:
-        ----
-            struct: The `GFFStruct` instance to append.
-
-        Raises:
-        ------
-            TypeError: If `struct` is not an instance of `GFFStruct`.
-        """
-        if not isinstance(struct, GFFStruct):
-            struct_type = type(struct)
-            RobustLogger().error(f"Failed to append struct; expected GFFStruct, received {struct_type!r}.")
-            msg = f"The struct must be a GFFStruct instance, got {struct_type!r} instead."
-            raise TypeError(msg)
-
-        self._structs.append(struct)
-        RobustLogger().debug(f"Appended Struct#{struct.struct_id} to GFFList; list_length={len(self._structs)}.")
 
     def at(
         self,
