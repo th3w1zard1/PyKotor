@@ -64,6 +64,7 @@
         "-v"
     ],
     "python.testing.pytestEnabled": true,
+    "python.testing.pytestPath": "uv run --extra dev pytest",
     "pythonTestExplorer.outputs.showOutputsOnRun": true,
     "pythonTestExplorer.testFramework": "pytest",
     "remote.WSL.fileWatcher.polling": true,
