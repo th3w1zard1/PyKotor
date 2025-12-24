@@ -63,10 +63,16 @@ def get_available_qt_version() -> Literal["PyQt5", "PyQt6", "PySide6", "PySide2"
                     __import__(mapped_version)
                 else:
                     __import__(mapped_version.replace("Side", ""))
+                print(f"Using Qt version from QT_API environment variable: {mapped_version}")
                 return mapped_version  # pyright: ignore[reportReturnType]
-            except ImportError:
-                # If the specified version isn't available, fall through to auto-detection
-                pass
+            except ImportError as e:
+                # If the specified version isn't available, raise an error
+                raise RuntimeError(
+                    f"QT_API environment variable is set to '{qt_api_env}' (mapped to '{mapped_version}'), "
+                    f"but {mapped_version} cannot be imported. Please install it or unset QT_API."
+                ) from e
+        else:
+            print(f"Warning: QT_API='{qt_api_env}' is not a recognized value. Valid values: pyqt5, pyqt6, pyside6, pyside2. Falling back to auto-detection.")
     
     # Fall back to auto-detection if QT_API is not set or the specified version is unavailable
     qt_versions = ["PyQt5", "PyQt6", "PySide6", "PySide2"]
