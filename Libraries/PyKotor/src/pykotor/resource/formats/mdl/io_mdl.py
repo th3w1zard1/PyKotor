@@ -689,9 +689,9 @@ class _TrimeshHeader:
         self.unknown9: int = 0  # TODO: what is this?
         self.dirt_coordinate_space: int = 0  # UV coordinate space for dirt texture overlay
         self.total_area: float = 0.0
-        self.unknown11: int = 0  # TODO: what is this?
-        self.unknown12: int = 0  # TODO: what is this?
-        self.unknown13: int = 0  # TODO: what is this?
+        self.unknown11: int = 0  # Reserved field (part of L[3] sequence after total_area) - always 0
+        self.unknown12: int = 0  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
+        self.unknown13: int = 0  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
         self.mdx_data_offset: int = 0
         self.vertices_offset: int = 0
 
@@ -762,14 +762,14 @@ class _TrimeshHeader:
         self.unknown9 = reader.read_uint8()  # TODO: what is this?
         self.dirt_coordinate_space = reader.read_uint8()  # UV coordinate space for dirt texture overlay
         self.total_area = reader.read_single()
-        self.unknown11 = reader.read_uint32()  # TODO: what is this?
+        self.unknown11 = reader.read_uint32()  # Reserved field (part of L[3] sequence after total_area) - always 0
         if self.function_pointer0 in {
             _TrimeshHeader.K2_FUNCTION_POINTER0,
             _TrimeshHeader.K2_DANGLY_FUNCTION_POINTER0,
             _TrimeshHeader.K2_SKIN_FUNCTION_POINTER0,
         }:
-            self.unknown12 = reader.read_uint32()  # TODO: what is this?
-            self.unknown13 = reader.read_uint32()  # TODO: what is this?
+            self.unknown12 = reader.read_uint32()  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
+            self.unknown13 = reader.read_uint32()  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
         self.mdx_data_offset = reader.read_uint32()
         self.vertices_offset = reader.read_uint32()
         return self
@@ -846,10 +846,10 @@ class _TrimeshHeader:
         writer.write_uint8(self.unknown9)  # TODO: what is this?
         writer.write_uint8(self.dirt_coordinate_space)  # UV coordinate space for dirt texture overlay
         writer.write_single(self.total_area)
-        writer.write_uint32(self.unknown11)  # TODO: what is this?
+        writer.write_uint32(self.unknown11)  # Reserved field (part of L[3] sequence after total_area) - always 0
         if game == Game.K2:
-            writer.write_uint32(self.unknown12)  # TODO: what is this?
-            writer.write_uint32(self.unknown13)  # TODO: what is this?
+            writer.write_uint32(self.unknown12)  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
+            writer.write_uint32(self.unknown13)  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
         writer.write_uint32(self.mdx_data_offset)
         writer.write_uint32(self.vertices_offset)
 
