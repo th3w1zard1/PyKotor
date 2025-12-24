@@ -885,6 +885,28 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 QTimer.singleShot(10, self._update_preview_image_size)
         return super().eventFilter(obj, event)
 
+    def _update_preview_from_selection(self):
+        """Update preview image based on selected rooms.
+        
+        Shows the most recently selected room's component image.
+        Only updates if no component is being dragged (cursor_component is None).
+        """
+        renderer = self.ui.mapRenderer
+        # Don't update preview if we're dragging a component (placement mode)
+        if renderer.cursor_component is not None:
+            return
+        
+        # Get selected rooms - most recent is last in the list
+        sel_rooms = renderer.selected_rooms()
+        if sel_rooms:
+            # Show the most recently selected room (last in list)
+            most_recent_room = sel_rooms[-1]
+            if hasattr(most_recent_room, 'component') and hasattr(most_recent_room.component, 'image'):
+                self._set_preview_image(most_recent_room.component.image)
+        else:
+            # No rooms selected, clear preview (unless dragging)
+            self._set_preview_image(None)
+
     # ------------------------------------------------------------------
     # Status bar
     # ------------------------------------------------------------------
@@ -1360,6 +1382,9 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         else:
             sel_text = f"<b><span style=\"{self._emoji_style}\">🟦</span>&nbsp;Selected:</b> <span style='color:#a6a6a6'><i>None</i></span>"
         self._selection_label.setText(sel_text)
+        
+        # Update preview based on selection (only if not dragging a component)
+        self._update_preview_from_selection()
 
         # Keys/buttons (sorted with modifiers first)
         def sort_with_modifiers(
@@ -1985,7 +2010,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         finally:
             self.ui.componentList.blockSignals(False)
             self.ui.moduleComponentList.blockSignals(False)
-        self._set_preview_image(None)
+        # Update preview to show selected rooms (if any) now that placement mode is cleared
+        self._update_preview_from_selection()
 
     def on_mouse_released(
         self,
