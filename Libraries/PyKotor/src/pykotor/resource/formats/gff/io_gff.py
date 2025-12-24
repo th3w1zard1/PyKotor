@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Any
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryWriter
 from pykotor.resource.formats.gff.gff_data import GFF, GFFContent, GFFFieldType, GFFList, GFFStruct
-from pykotor.resource.formats.gff.vm_validation import validate_gff_for_engine
 from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose
 
 if TYPE_CHECKING:
@@ -62,10 +61,7 @@ class GFFBinaryReader(ResourceReader):
 
     @autoclose
     def load(self, *, auto_close: bool = True) -> GFF:  # noqa: FBT001, FBT002, ARG002
-        # vendor/reone/src/libs/resource/format/gffreader.cpp:26-65
         self._gff = GFF()
-
-        # vendor/reone/src/libs/resource/format/gffreader.cpp:30-32
         file_type = self._reader.read_string(4)
         file_version = self._reader.read_string(4)
 
@@ -73,9 +69,6 @@ class GFFBinaryReader(ResourceReader):
             msg = "Not a valid binary GFF file."
             raise ValueError(msg)
 
-        # NOTE: Only V3.2 supported. xoreos-tools supports V3.2, V3.3, V4.0, V4.1
-        # vendor/xoreos-tools/src/xml/gffdumper.cpp:100-103
-        #
         # REVERSE ENGINEERING FINDINGS (swkotor.exe:0x00411260):
         # The KOTOR engine's CResGFF::CreateGFFFile function does NOT accept a version parameter.
         # Instead, it uses a hardcoded global variable GFFVersion (0x0073e2c8) containing "V3.2".
@@ -85,6 +78,9 @@ class GFFBinaryReader(ResourceReader):
         # - *(uint *)this->header->file_version = CONCAT31(CONCAT21(CONCAT11(cVar1,cVar2),cVar3),cVar4);
         # This indicates little-endian storage of the hardcoded "V3.2" version as 4 bytes.
         # The engine appears hardcoded to only create V3.2 GFF files.
+        #
+        # NOTE: xoreos-tools supports V3.2, V3.3, V4.0, V4.1 (probably for other games/engines)
+        # vendor/xoreos-tools/src/xml/gffdumper.cpp:100-103
         if file_version != "V3.2":
             msg = "The GFF version of the file is unsupported."
             raise ValueError(msg)
@@ -97,8 +93,10 @@ class GFFBinaryReader(ResourceReader):
         self._reader.read_uint32()  # struct count
         self._field_offset = self._reader.read_uint32()
         self._reader.read_uint32()  # field count
-        label_offset = self._reader.read_uint32()
-        label_count = self._reader.read_uint32()
+
+        label_offset: int = self._reader.read_uint32()
+        label_count: int = self._reader.read_uint32()
+
         self._field_data_offset = self._reader.read_uint32()
         self._reader.read_uint32()  # field data count
         self._field_indices_offset = self._reader.read_uint32()
@@ -108,13 +106,10 @@ class GFFBinaryReader(ResourceReader):
 
         # vendor/reone/src/libs/resource/format/gffreader.cpp:151-154
         # Read label array (16-byte null-terminated strings)
-        self._labels = []
+        self._labels.clear()
         self._reader.seek(label_offset)
         self._labels.extend(self._reader.read_string(16) for _ in range(label_count))
         self._load_struct(self._gff.root, 0)
-
-        # Validate the GFF for engine compatibility based on reverse engineering findings
-        validate_gff_for_engine(self._gff)
 
         return self._gff
 
